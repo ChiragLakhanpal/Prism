@@ -4,7 +4,10 @@ reports, and grading the notice queries, each through the HTTP routes as a viewe
 
 One connection to the copy serves every request: the viewer's engine reads through it and refuses writes, as the
 warehouse refuses a viewer with no MODIFY grant, and the app's own engine writes through it, so a test proves the
-app's own identity writes every row. The scripted agent answers the showcase question (tests/fixtures/agent), and
+app's own identity writes every row. The viewer's engine is also the fixture's stand-in for the readers group: it
+reads every masked column (strata.lakehouse.masks) as NULL, as the warehouse's column masks give it to anyone but
+the app and the catalog's owner, so a test proves no page needs to know who sent a report or asked a question
+when it reads as the viewer (ticket 64). The scripted agent answers the showcase question (tests/fixtures/agent), and
 the answer cites ICR P130164 paragraph 54, which search_passages found.
 """
 
@@ -24,6 +27,7 @@ from strata.config import load_roles, load_thresholds
 from strata.knowledge.lessons.review import LessonReview
 from strata.knowledge.retrieval.judging import Judging
 from strata.knowledge.retrieval.reports import CitationLog, PassageReports
+from strata.lakehouse import masks
 from strata.lakehouse.engine import DuckDBEngine, PermissionDenied
 from strata.server.app import create_app
 from strata.server.evidence import OpenedLog
@@ -55,13 +59,15 @@ NOOR = headers("noor.example@worldbank.org")
 
 
 class ReadsOnly:
+    """A viewer's engine: a reader, who may not write and reads each masked column as NULL."""
+
     def __init__(self, engine):
         self.engine = engine
 
     def run(self, sql, params=None):
         if sql.lstrip().upper().startswith(("INSERT", "MERGE", "UPDATE", "DELETE", "CREATE", "DROP", "ALTER")):
             raise PermissionDenied("The viewer may not write the retrieval loop's tables.")
-        return self.engine.run(sql, params)
+        return self.engine.run(masks.as_a_reader(sql), params)
 
     def insert_rows(self, table, columns, rows):
         raise PermissionDenied(f"The viewer may not write {table}.")
@@ -95,7 +101,7 @@ class Loop:
 
         @contextmanager
         def engine_for(_viewer):
-            yield ReadsOnly(self.database.cursor())
+            yield self.reader()
 
         def new_run_id():
             self.runs += 1
@@ -118,6 +124,10 @@ class Loop:
 
     def the_app(self):
         return self.database.cursor()
+
+    def reader(self):
+        """The engine every viewer reads through: the stand-in for the readers group."""
+        return ReadsOnly(self.database.cursor())
 
     def later(self, **delta):
         self.at += dt.timedelta(**delta)

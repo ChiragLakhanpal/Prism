@@ -11,7 +11,7 @@ import datetime as dt
 
 import pytest
 
-from retrieval_scenario import ANA, DANIEL, LEELA, PARAGRAPH_54, PRIYA, Loop
+from retrieval_scenario import ANA, DANIEL, KOFI, LEELA, PARAGRAPH_54, PRIYA, Loop
 from strata.dbx import Viewer
 from strata.harness.sse import events
 from strata.lakehouse.engine import DuckDBEngine
@@ -107,6 +107,40 @@ def test_a_report_can_be_withdrawn_until_a_reviewer_decides_and_nothing_is_delet
         "sent", "withdrawn"]
     assert loop.request("GET", "/api/feedback", ANA, params={"evidence_id": PARAGRAPH_54, "run_id": run}).json()[
         "my_report"] is None
+
+
+def test_a_reader_reads_no_one_s_email_or_user_id_in_the_reports_or_the_cited_sources(loop):
+    """Ticket 64, criterion 1. Everyone who can sign in may read strata.ops (bundle/catalog.yml), so who sent each
+    report and who asked each question are masked for readers: the fixture's stand-in for the readers group, the
+    engine every viewer reads through, gets NULL in every masked column, even in a filter, as the warehouse's column
+    masks give it. The app's own identity writes them and reads them back."""
+    run = loop.ask(ANA)
+    assert loop.report(ANA, run).status_code == 200
+
+    as_the_app = loop.rows("SELECT viewer_id, viewer_email FROM strata.ops.candidate_labels")
+    assert as_the_app == [{"viewer_id": "id-ana.example@worldbank.org", "viewer_email": "ana.example@worldbank.org"}]
+    assert {row["viewer_id"] for row in loop.rows("SELECT viewer_id FROM strata.ops.answer_citations")} == {
+        "id-ana.example@worldbank.org"}
+    reader = loop.reader()
+    labels = reader.run("SELECT * FROM strata.ops.candidate_labels", {})
+    [label] = [dict(zip(labels.columns, row)) for row in labels.rows]
+    assert (label["viewer_id"], label["viewer_email"], label["viewer_role"], label["passage_id"]) == (
+        None, None, "staff", "31525018/v1/54")
+    citations = reader.run("SELECT c.run_id, c.viewer_id FROM strata.ops.answer_citations AS c", {})
+    assert citations.rows and {viewer for _, viewer in citations.rows} == {None}
+    assert reader.run("SELECT count(*) FROM strata.ops.candidate_labels WHERE viewer_email = :email "
+                      "OR viewer_id = :id", {"email": "ana.example@worldbank.org",
+                                             "id": "id-ana.example@worldbank.org"}).rows == ((0,),)
+
+
+def test_a_person_cannot_report_a_passage_from_someone_else_s_answer(loop):
+    """The answer's own record says who asked it, and only the app reads that, so the check holds for a reader."""
+    run = loop.ask(ANA)
+
+    refused = loop.report(KOFI, run)
+
+    assert (refused.status_code, refused.json()["code"]) == (403, "not_your_answer")
+    assert loop.rows("SELECT * FROM strata.ops.candidate_labels") == []
 
 
 def test_ranking_changes_only_once_a_passage_reviewer_accepts_the_label(loop):

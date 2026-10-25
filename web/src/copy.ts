@@ -1226,6 +1226,15 @@ export const copy = {
         count === 1
           ? "{count} disagreement rested on a document that a later version replaced"
           : "{count} disagreements rested on documents that later versions replaced",
+      // These two count passages, not disagreements: the sides whose words the tool kept from the agent (ticket 64).
+      prompt_shields_hit: (count: number) =>
+        count === 1
+          ? "{count} passage behind a side held a prompt attack that Prompt Shields found, so I left out its words"
+          : "{count} passages behind the sides held a prompt attack that Prompt Shields found, so I left out their words",
+      not_screened: (count: number) =>
+        count === 1
+          ? "{count} passage behind a side was never screened by Prompt Shields, so I left out its words"
+          : "{count} passages behind the sides were never screened by Prompt Shields, so I left out their words",
     },
   },
 

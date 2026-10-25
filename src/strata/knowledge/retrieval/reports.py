@@ -23,7 +23,10 @@ audit sample, who leaves it ranked lower or restores its ranking.
 
 The server decides every act and says, for each item, what the viewer may do and, if nothing, a reason code
 whose sentence is in web/src/copy.ts. PassageReports keeps the roles file and the settings, never a viewer: each
-call gets the engine that reads as the viewer and, for a write, the app's own engine.
+call gets the engine that reads as the viewer, for the passages a page shows, and the app's own engine, for the
+loop's record. Who sent each report and who asked each question are masked for every reader (strata.lakehouse.masks;
+ticket 64), so the record is read as well as written by the app's own identity, which alone can tell whether a
+report is the viewer's own. A page names every other sender by role only.
 """
 
 from __future__ import annotations
@@ -351,12 +354,12 @@ class PassageReports:
                  and report.evidence_id == evidence_id and report.run_id == run_id and self.sent_by(report, viewer)]
         return found[-1] if found else None
 
-    def mine(self, engine: Engine, viewer: Viewer, evidence_id: str, run_id: str) -> dict:
-        ledger = Ledger(engine)
+    def mine(self, viewer: Viewer, evidence_id: str, run_id: str, record: Engine) -> dict:
+        ledger = Ledger(record)
         return {"my_report": self.my_report(ledger, self._mine(ledger, viewer, evidence_id, run_id)),
                 "mode": self.mode}
 
-    def send(self, engine: Engine, viewer: Viewer, body: dict, view: str, writer: Engine) -> dict:
+    def send(self, viewer: Viewer, body: dict, view: str, writer: Engine) -> dict:
         """Write one passage report from the answer's own record, or refuse it."""
         if view != STAFF:
             raise Refused(403, "preview")
@@ -366,7 +369,7 @@ class PassageReports:
         if len(reason) > int(self.value("reason_max_chars")):
             raise Refused(422, "reason_too_long")
         evidence_id, run_id = body["evidence_id"], body["run_id"]
-        cited = rows(engine, "citation", run_id=run_id, evidence_id=evidence_id)
+        cited = rows(writer, "citation", run_id=run_id, evidence_id=evidence_id)
         sentence = body.get("sentence_id")
         chosen = [row for row in cited if sentence is None or int(row["sentence_index"]) == int(sentence)] or cited
         if not chosen:
@@ -379,7 +382,7 @@ class PassageReports:
             raise Refused(403, "no_question")
         if citation["viewer_id"] and viewer.user_id and citation["viewer_id"] != viewer.user_id:
             raise Refused(403, "not_your_answer")
-        ledger = Ledger(engine)
+        ledger = Ledger(writer)
         held = self._mine(ledger, viewer, evidence_id, run_id)
         if held is not None:
             raise Refused(409, "already_sent", {"my_report": self.my_report(ledger, held)})
@@ -398,8 +401,8 @@ class PassageReports:
                 report.question, report.query_kind, report.kind, report.reason, report.as_of, report.own_project, at,
                 at.astimezone(dt.UTC).date())
 
-    def withdraw(self, engine: Engine, viewer: Viewer, report_id: str, writer: Engine) -> dict:
-        ledger = Ledger(engine)
+    def withdraw(self, viewer: Viewer, report_id: str, writer: Engine) -> dict:
+        ledger = Ledger(writer)
         report = ledger.reports.get(report_id)
         if report is None or not self.sent_by(report, viewer) or report.withdrawn_at is not None:
             raise Refused(404, "unknown_report")
@@ -428,11 +431,15 @@ class PassageReports:
 
     # ── Passage reports: the queue, a group, and the decided table ───────
 
-    def me(self, engine: Engine, viewer: Viewer) -> dict:
+    def me(self, viewer: Viewer, record: Engine | None) -> dict:
+        """Whether the viewer reviews passage reports, and how many groups wait for them; without the app's own
+        identity, which alone can tell their own reports, the count is not known."""
         person = self.reviewer(viewer)
         if person is None:
             return {"can_review_reports": False, "reports_waiting": None}
-        ledger = Ledger(engine)
+        if record is None:
+            return {"can_review_reports": True, "reports_waiting": None}
+        ledger = Ledger(record)
         return {"can_review_reports": True,
                 "reports_waiting": sum(1 for group in self._open(ledger) if self.can(ledger, group, viewer)["decide"])}
 
@@ -482,9 +489,9 @@ class PassageReports:
                 "agreeing": agreement.agreeing if agreement else None,
                 "can": can["decide"], "reason_code": can["reason_code"], "state": ledger.state(group)}
 
-    def queue(self, engine: Engine, viewer: Viewer, page: int = 1) -> dict:
+    def queue(self, engine: Engine, viewer: Viewer, record: Engine, page: int = 1) -> dict:
         self._require(viewer)
-        ledger = Ledger(engine)
+        ledger = Ledger(record)
         waiting, since = self._open(ledger), self._since()
         decided_groups = [group for group in ledger.groups.values()
                           if (act := ledger.decided(group)) is not None and act.decided_at >= since]
@@ -524,9 +531,9 @@ class PassageReports:
     def _role(self, report: Report, viewer: Viewer) -> str:
         return "you" if self.sent_by(report, viewer) else report.viewer_role
 
-    def item(self, engine: Engine, viewer: Viewer, wanted: str) -> dict:
+    def item(self, engine: Engine, viewer: Viewer, wanted: str, record: Engine) -> dict:
         self._require(viewer)
-        ledger = Ledger(engine)
+        ledger = Ledger(record)
         group = ledger.groups.get(wanted)
         if group is None:
             raise Refused(404, "unknown_group", {"group_id": wanted})
@@ -575,7 +582,7 @@ class PassageReports:
 
     def decide(self, engine: Engine, viewer: Viewer, wanted: str, body: dict, writer: Engine) -> dict:
         person = self._require(viewer)
-        ledger = Ledger(engine)
+        ledger = Ledger(writer)
         group = ledger.groups.get(wanted)
         if group is None:
             raise Refused(404, "unknown_group", {"group_id": wanted})
@@ -602,7 +609,7 @@ class PassageReports:
         covered = [report.report_id for report in (waiting or audit_reports(ledger, group, audit))]
         self._write_act(writer, group, ACTS[outcome], reason, person, covered, body.get("expected_state"),
                         agreeing=audit.agreeing if audit else None)
-        fresh = Ledger(engine)
+        fresh = Ledger(writer)
         return {"saved": {"outcome": outcome, "next": self._next(fresh, viewer, group.group_id)},
                 "item": self.detail(engine, fresh, fresh.groups[group.group_id], viewer)}
 
@@ -615,7 +622,7 @@ class PassageReports:
 
     def reopen(self, engine: Engine, viewer: Viewer, wanted: str, reason: str, writer: Engine) -> dict:
         person = self._require(viewer)
-        ledger = Ledger(engine)
+        ledger = Ledger(writer)
         group = ledger.groups.get(wanted)
         if group is None:
             raise Refused(404, "unknown_group", {"group_id": wanted})
@@ -626,7 +633,7 @@ class PassageReports:
         if not reason:
             raise Refused(422, "no_reason")
         self._write_act(writer, group, "reopened", reason, person, list(decided.report_ids), ledger.state(group))
-        fresh = Ledger(engine)
+        fresh = Ledger(writer)
         return {"item": self.detail(engine, fresh, fresh.groups[group.group_id], viewer)}
 
     # ── The weekly run: the rules for scale, and the loop's measures ─────
