@@ -27,6 +27,16 @@ MASK = "strata.ops.mask_viewer"  # the mask function, one for every masked colum
 MASKED: dict[str, tuple[str, ...]] = {
     "strata.ops.candidate_labels": ("viewer_id", "viewer_email"),  # who sent a passage report
     "strata.ops.answer_citations": ("viewer_id",),  # who asked the question an answer answered
+    # Ticket 38: an implementing agency's upload is Official Use Only, seen only by its team through the app, so a SQL
+    # editor reads none of the officer's words: the file's name, how it was read, and each activity's reference,
+    # Description and values. The drafts a team makes, an agency's planned dates and PPSD rows among them, keep their
+    # words in the same way: each draft's content, each export's snapshot and each exported file. The app reads all
+    # of them as itself (src/strata/uploads/store.py, src/strata/drafts/store.py).
+    "strata.ops.uploads": ("uploader_name", "file_name", "reading"),
+    "strata.ops.upload_rows": ("activity_reference_no", "description", "content"),
+    "strata.ops.drafts": ("content",),
+    "strata.ops.draft_exports": ("snapshot",),
+    "strata.ops.draft_files": ("content",),
 }
 
 

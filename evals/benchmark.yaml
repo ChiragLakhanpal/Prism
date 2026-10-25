@@ -42,6 +42,10 @@ questions:
       # them (ticket 36): the nine activities the plan lists, with the marks above.
       activities: [9]
       counts_cited_as: ["strata.tools.check_plan:P156634/Northern%20Water%20Works%20Development%20Agency@2026-10-22?plan_date=2026-10-09"]
+      # Ticket 38: a row's place in an implementing agency's upload. A published plan's rows have none, and the
+      # tool reads an upload only through the app's team rule (upload_id), which no benchmark call passes, so an
+      # upload never reaches an answer; tests/test_uploads.py checks an upload of this plan by team.
+      upload_positions: []
     ground_truth: tests/ground_truth/check_plan_nwwda_2026_10_09.sql
     source: >-
       The marks the blueprint's Check a plan wireframe gives the plan's eight activities

@@ -103,6 +103,14 @@ _Avoid_: Slippage
 The version of an implementing agency's Procurement Plan that World Bank staff saved as the plan agreed at negotiations. Later checks of that agency's plans also give the delay from the baseline's planned dates, beside the delay from the first published planned date; the baseline never changes a signal.
 _Avoid_: Original plan (the first published version is a different thing)
 
+**Upload**:
+A Procurement Plan an implementing agency team gave Strata to check. It is Official Use Only, and only that team sees it.
+_Avoid_: Submission
+
+**STEP row**:
+One activity in STEP's own columns, with the planned dates filled by Strata and the references, actual dates and ratings left to people and STEP.
+_Avoid_: STEP line, export row
+
 **Rebidding**:
 Inviting bids again after a procurement process was canceled or all bids were rejected.
 _Avoid_: Re-bid, re-tender

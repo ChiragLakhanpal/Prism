@@ -2332,6 +2332,12 @@ export const copy = {
       actual_amount_zero: "{status}, but Actual Amount reads {actual}.",
       no_planned_date: "The plan gives no planned date for {step}, so I couldn't check its timing.",
       no_estimate: "The plan gives no Estimated Amount, so I couldn't compare the signed amount with it.",
+      // Ticket 38: the data notes on an upload's rows (the 38 brief, 5.4). The officer's own cell values are quoted on
+      // their own team's page.
+      unread_date: 'I couldn\'t read the date in "{column}": "{value}". I left that step undated.',
+      unread_amount: 'I couldn\'t read the amount in "{column}": "{value}".',
+      no_method: "The row gives no Method, so I couldn't choose its steps.",
+      duplicate_ref: "Another row in your file has the same reference, {ref}. I checked both.",
     },
     // The states a plan check can end in, other than its rows (the 10 brief, section 6).
     noPlanTitle: (agency: string) => `I don't have a Procurement Plan from ${agency} yet.`,

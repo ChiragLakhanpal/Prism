@@ -26,7 +26,7 @@ from __future__ import annotations
 import datetime as dt
 import importlib
 import re
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 from typing import Any
 from urllib.parse import quote
@@ -68,6 +68,10 @@ class Context:
     # counted from the day the passages it rests on became public, not from its decision. None everywhere else,
     # where a lesson counts from the day two people decided it (ADR 0002).
     decided_by: dt.date | None = None
+    # An implementing agency's private uploads (ticket 38): the upload with this id as the viewer may read it, through
+    # the one access rule (src/strata/server/access.py), or None for one they may not read or that does not exist. Only
+    # the server gives it, per request; without it, a tool reads no upload, so no other caller can reach one.
+    uploads: Callable[[str], Mapping[str, Any] | None] | None = None
 
 
 @dataclass(frozen=True)
@@ -80,6 +84,7 @@ class Call:
     as_of: dt.date
     thresholds: Thresholds
     decided_by: dt.date | None = None  # Context.decided_by
+    uploads: Callable[[str], Mapping[str, Any] | None] | None = None  # Context.uploads
 
 
 # ── The agent's tool list ────────────────────────────────────────────────
@@ -177,7 +182,7 @@ def call(name: str, arguments: Mapping[str, Any], context: Context, tools: dict[
     asked = [date for date in (bound.pop("as_of", None), context.as_of) if date is not None]
     as_of = min(asked) if asked else today()
     output = _adapter(tool)(Call(context.engine, context.viewer, context.view, as_of, context.thresholds,
-                                 context.decided_by), **bound)
+                                 context.decided_by, context.uploads), **bound)
     result = {"tool": name, "as_of": as_of.isoformat(), "view": context.view, **output}
     if tool.result.summary_fields:
         result["summary"] = summary(tool, bound, result)

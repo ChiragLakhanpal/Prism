@@ -197,6 +197,8 @@ def marked(result, question) -> dict[str, list[str]]:
     # Ticket 36: the plan's counts come back as a citable summary, which a Project Paper summary cites.
     found["activities"] = [result["summary"]["counts"]["activities"]]
     found["counts_cited_as"] = [result["summary"]["evidence_id"]]
+    # Ticket 38: the rows that came from an upload, by their place in its file.
+    found["upload_positions"] = sorted(row["position"] for row in result["rows"] if row["position"] is not None)
     return found
 
 

@@ -25,6 +25,8 @@ request lands in one file (CLAUDE.md rule 9). This module reads them:
 - load_editions()    config/editions.toml, the editions of the procurement rules a project followed
 - load_package_form() config/package_form.toml, the package form schema: the groups and fields a
                      package planned from a sentence has, each one a chip (ticket 15)
+- load_uploads()     config/uploads.toml, the upload and STEP row registry: what an implementing agency's
+                     upload may be and the STEP columns its reader and the STEP rows CSV use (ticket 38)
 
 Each function checks the file's shape and raises ConfigError with a sentence that names the
 file, the entry and the fix. It uses only the standard library, so the nightly job can call it.
@@ -1470,11 +1472,14 @@ class Person:
 
 @dataclass(frozen=True)
 class Team:
-    """A team of World Bank staff that shares its drafts, by the workspace groups its members are in."""
+    """A team that shares its drafts, by the workspace groups its members are in. A team that names an implementing
+    agency is that agency's team (ticket 38): its members are implementing agency officers, who upload their plans and
+    draft for their own agency, and everything the team makes is Official Use Only."""
 
     key: str
     name: str
     groups: tuple[str, ...]
+    agency: str | None = None  # the implementing agency, as the projects API's records name it
 
 
 @dataclass(frozen=True)
@@ -1509,10 +1514,10 @@ def load_roles(path: Path = CONFIG_DIR / "roles.toml") -> Roles:
     teams = []
     for key, table in (data.get("teams") or {}).items():
         entry = _Entry(path, f"teams.{key}", table)
-        entry.only({"name", "groups"})
+        entry.only({"name", "groups", "agency"})
         if not entry.texts("groups"):
             entry._fail("groups", "must name at least one workspace group")
-        teams.append(Team(key, entry.text("name"), entry.texts("groups")))
+        teams.append(Team(key, entry.text("name"), entry.texts("groups"), entry.text("agency", required=False)))
     groups = {}
     for key, table in (data.get("groups") or {}).items():
         entry = _Entry(path, f"groups.{key}", table)
@@ -2175,3 +2180,67 @@ def load_package_form(path: Path = CONFIG_DIR / "package_form.toml") -> PackageF
             optional=bool(table.get("optional", False)), asked=bool(table.get("asked", table["source"] != "computed")),
             unit=table.get("unit"), unit_one=table.get("unit_one"), aliases=bool(table.get("aliases", False))))
     return PackageForm(tuple(groups), tuple(fields))
+
+
+# ── The upload and STEP row registry (ticket 38) ─────────────────────────
+
+UPLOAD_FORMATS = ("step_export", "published_tables")
+UPLOAD_CSV = ("copied", "left", "split")
+UPLOAD_STEP_CSV = ("planned", "left")
+
+
+@dataclass(frozen=True)
+class UploadColumn:
+    """One of STEP's descriptive columns, by its key in src/strata/reader/step.py's COLUMNS."""
+
+    key: str
+    need: bool
+    csv: str  # copied, left or split
+
+
+@dataclass(frozen=True)
+class Uploads:
+    """What an implementing agency's upload may be, and how the STEP rows CSV lays out STEP's columns."""
+
+    accept: tuple[str, ...]
+    max_size_bytes: int
+    max_rows: int
+    format: str
+    columns: tuple[UploadColumn, ...]
+    step_planned: str
+    step_actual: str
+    one_row: str
+    aliases: dict[str, tuple[str, ...]]
+
+
+def load_uploads(path: Path = CONFIG_DIR / "uploads.toml") -> Uploads:
+    """The upload and STEP row registry, in its file's order. src/strata/reader/step_columns.py checks its keys against
+    STEP's columns."""
+    data = _read(path)
+    _Entry(path, "the file", data).only({"uploads", "columns", "steps", "aliases"})
+    limits = _Entry(path, "uploads", data.get("uploads"))
+    limits.only({"accept", "max_size_bytes", "max_rows", "format"})
+    accept = limits.texts("accept")
+    if not accept or not all(ending.startswith(".") for ending in accept):
+        limits._fail("accept", "must list file name endings, such as .xlsx")
+    if limits.text("format") not in UPLOAD_FORMATS:
+        limits._fail("format", f"must be one of {', '.join(UPLOAD_FORMATS)}")
+    columns = []
+    for key, table in (data.get("columns") or {}).items():
+        entry = _Entry(path, f"columns.{key}", table)
+        entry.only({"need", "csv"})
+        if entry.text("csv") not in UPLOAD_CSV:
+            entry._fail("csv", f"must be one of {', '.join(UPLOAD_CSV)}")
+        columns.append(UploadColumn(key, bool(table.get("need", False)), entry.text("csv")))
+    steps = _Entry(path, "steps", data.get("steps"))
+    steps.only({"planned", "actual", "one_row"})
+    for name in ("planned", "actual"):
+        if steps.text(name) not in UPLOAD_STEP_CSV:
+            steps._fail(name, f"must be one of {', '.join(UPLOAD_STEP_CSV)}")
+    if "{step}" not in steps.text("one_row") or "{head}" not in steps.text("one_row"):
+        steps._fail("one_row", "must hold {step} and {head}")
+    aliases = {}
+    for key, names in (data.get("aliases") or {}).items():
+        aliases[key] = _Entry(path, "aliases", {key: names}).texts(key)
+    return Uploads(accept, limits.integer("max_size_bytes"), limits.integer("max_rows"), limits.text("format"),
+                   tuple(columns), steps.text("planned"), steps.text("actual"), steps.text("one_row"), aliases)

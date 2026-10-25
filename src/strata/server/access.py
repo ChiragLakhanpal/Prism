@@ -13,6 +13,8 @@ decides who reads what a team keeps, on every route.
 - Access.may_read(viewer, team_key, author_id) says whether the viewer may read what was saved under that
   team by that author: they are its author, or on that team now.
 - is_author(viewer, author_id) says whether the viewer is the author.
+- Access.agency(viewer) is the implementing agency whose team the viewer is on (ticket 38), or None. Such a viewer
+  is an implementing agency officer: they may upload their agency's plans, and they are not World Bank staff.
 
 A viewer's workspace groups come from an adapter: WorkspaceGroups asks the workspace's SCIM API for the
 viewer's own groups with their forwarded token, which only the workspace can answer, and StaticGroups is
@@ -76,11 +78,13 @@ class WorkspaceGroups:
 
 @dataclass(frozen=True)
 class Membership:
-    """The team a viewer is on: its key, its name, and whether the roles file names it."""
+    """The team a viewer is on: its key, its name, whether the roles file names it, and the implementing agency it
+    is the team of, if any (ticket 38)."""
 
     key: str
     name: str | None
     named: bool
+    agency: str | None = None
 
 
 def is_author(viewer: Viewer, author_id: str) -> bool:
@@ -95,13 +99,20 @@ class Access:
         held = set(self.reader.groups(viewer))
         for team in self.roles.teams:
             if held & set(team.groups):
-                return Membership(f"team:{team.key}", team.name, True)
+                return Membership(f"team:{team.key}", team.name, True, team.agency)
         return Membership(f"viewer:{viewer.user_id}", None, False)
+
+    def agency(self, viewer: Viewer) -> str | None:
+        """The implementing agency whose team the viewer is on (ticket 38), or None: such a viewer is an implementing
+        agency officer, who uploads their plans and drafts for their own agency."""
+        return self.team(viewer).agency if viewer.user_id else None
 
     def is_staff(self, viewer: Viewer) -> bool:
         """Whether the viewer has the World Bank staff role: one of their workspace groups is one the roles file's
-        [staff] names (ticket 37). A viewer no one is signed in for, or whose groups could not be read, has not."""
-        return bool(viewer.user_id) and bool(set(self.reader.groups(viewer)) & set(self.roles.staff))
+        [staff] names (ticket 37), and they are not on an implementing agency's team (ticket 38), whose members see
+        the implementing agency view. A viewer no one is signed in for, or whose groups could not be read, has not."""
+        held = set(self.reader.groups(viewer))
+        return bool(viewer.user_id) and bool(held & set(self.roles.staff)) and self.agency(viewer) is None
 
     def may_read(self, viewer: Viewer, team_key: str, author_id: str) -> bool:
         return is_author(viewer, author_id) or (bool(viewer.user_id) and self.team(viewer).key == team_key)
