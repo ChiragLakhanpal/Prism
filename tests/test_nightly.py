@@ -213,6 +213,57 @@ def test_each_task_reads_its_keys_from_the_job_s_secret_scope_and_never_from_its
     assert bundle.load().data["variables"]["secret_scope"]["default"] == "strata"
 
 
+def test_sync_index_on_the_workspace_syncs_the_ai_search_index_the_bundle_names(engine, monkeypatch):
+    """The AI Search endpoint is no secret, so the job passes it as a parameter from the bundle variable the deploy
+    fills (review B4), and sync_index asks that index to sync from strata.gold.passage."""
+    from strata.lakehouse import readers
+
+    synced = []
+    monkeypatch.setattr(readers, "_index", lambda endpoint: lambda engine: synced.append(endpoint))
+    nightly.main(["--task", "sync_index", "--run-id", "1", "--src", "src", "--secret-scope", "strata",
+                  "--search-endpoint", "strata-search"], engine)
+
+    assert synced == ["strata-search"]
+    for task in nightly.job_tasks():
+        assert task.parameters[task.parameters.index("--search-endpoint") + 1] == "${var.ai_search_endpoint}"
+    assert "AI_SEARCH_ENDPOINT" not in nightly.SCOPE_KEYS
+
+
+def test_a_live_score_task_replays_the_signals_for_their_track_record_and_an_offline_one_does_not(engine, monkeypatch):
+    """Ticket 37 left the signals' track record to the score task (strata.estimates.signals_track). Its replay
+    dates are fixed past dates, so a second live night within signals.track_record_every_days keeps the stored
+    record instead of replaying it again inside the job's window (review B6)."""
+    from strata.estimates import signals_track, tracking
+
+    experiments = []
+
+    class Tracker(tracking.OfflineTracker):
+        def __init__(self, experiment, mkdirs=None):
+            super().__init__()
+            experiments.append(experiment)
+
+    monkeypatch.setattr(tracking, "MlflowTracker", Tracker)
+    night = dt.datetime(2026, 10, 24, 7, tzinfo=dt.UTC)
+
+    nightly.main(["--task", "score", "--run-id", "offline", "--src", "src"], engine, no_pages, lambda: night)
+    assert signals_track.stored(engine) is None and experiments == []
+
+    nightly.main(["--task", "score", "--run-id", "1", "--src", "src"], engine, clock=lambda: night)
+    first = signals_track.stored(engine)
+    assert first is not None and first["ran_on"] == "2026-10-24"
+    assert config.load_time_estimate().experiment in experiments
+    assert runs(engine, "1")[0][2] > 0  # the replay's rows count as rows changed
+
+    days = config.load_thresholds().value("signals.track_record_every_days")
+    nightly.main(["--task", "score", "--run-id", "2", "--src", "src"], engine,
+                 clock=lambda: night + dt.timedelta(days=days - 1))
+    assert signals_track.stored(engine)["run_id"] == first["run_id"]
+
+    nightly.main(["--task", "score", "--run-id", "3", "--src", "src"], engine,
+                 clock=lambda: night + dt.timedelta(days=days))
+    assert signals_track.stored(engine)["run_id"] != first["run_id"]
+
+
 # ── Concurrency ──────────────────────────────────────────────────────────
 
 def test_the_job_never_runs_more_tasks_at_once_than_the_workspace_allows():

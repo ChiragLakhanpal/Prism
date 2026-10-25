@@ -20,7 +20,8 @@ Every task has its work (tickets 07, 17, 19, 20, 22, 28, 29 and 43), in docs/PLA
    (strata.knowledge.lessons.propose).
 7. detect_disagreements rebuilds the assertions and the disagreements between them (strata.knowledge.assertions).
 8. score counts the rebidding labels from each source and, on the workspace, scores every planned activity
-   with the rebidding champion (strata.estimates.rebidding).
+   with the rebidding champion (strata.estimates.rebidding) and replays the signals for their track record
+   once a week (strata.estimates.signals_track).
 9. measure_data_readiness writes the data readiness measures and each table's size to strata.ops.
 10. refresh_drafts marks each open draft row that cites a lesson at a version a lead has since changed or
     retired (strata.knowledge.lessons.notices). It never changes a draft.
@@ -55,7 +56,7 @@ from importlib import resources
 from strata.config import Source, load_sources
 from strata.lakehouse import bronze, gold, pages, quality, readers, readiness, silver, storage
 from strata.lakehouse.engine import Engine
-from strata.lakehouse.schedule import Window, daily_start
+from strata.lakehouse.schedule import Window, as_utc, daily_start
 
 JOB = "nightly"  # the job's key under resources.jobs in the bundle
 
@@ -65,7 +66,7 @@ JOB = "nightly"  # the job's key under resources.jobs in the bundle
 RUN_LOGS = ("strata.ops.pipeline_runs", "strata.ops.quality_checks", "strata.ops.data_readiness",
             "strata.ops.table_sizes", "strata.ops.readiness_snapshot", "strata.ops.parse_runs",
             "strata.ops.documents_read", "strata.ops.stress_shelf", "strata.ops.rebidding_labels",
-            "strata.ops.supplier_match_quality")
+            "strata.ops.supplier_match_quality", "strata.ops.evaluation_result")
 
 # Where a source's pages come from: the live API on the workspace, the recorded fixture here.
 Fetch = Callable[[Source, Engine], Iterable[pages.Page]]
@@ -108,12 +109,13 @@ class Run:
     fetch: Fetch
     clock: Callable[[], dt.datetime] = _now
     readers_for: ReadersFor | None = None
+    search_endpoint: str | None = None  # the AI Search endpoint the bundle names; the live readers sync its index
 
     def document_readers(self) -> readers.Readers | None:
         if self.readers_for is not None:
             return self.readers_for(self.engine)
         if self.fetch is fetch_live:
-            return readers.live(self.engine)
+            return readers.live(self.engine, search_endpoint=self.search_endpoint)
         return readers.recorded() if self.fetch is fetch_recorded else None
 
 
@@ -213,25 +215,54 @@ def _propose_lessons(run: Run) -> int:
 
 
 def _score(run: Run) -> int:
-    """How many packages each rebidding label source names, in strata.ops.rebidding_labels, and the rebidding
-    champion's chance for every activity a Procurement Plan lists, in strata.ops.rebidding_scores (ticket 28). Only a
-    run that fetches from the live APIs reads the champion from MLflow and Unity Catalog, and only once a backtest
-    has registered one; any other run scores nothing. Ticket 43 adds the time estimates, the what-if grid and the
-    signals."""
+    """How many packages each rebidding label source names, in strata.ops.rebidding_labels, and, on a run that
+    fetches from the live APIs, the rebidding champion's chance for every activity a Procurement Plan lists, in
+    strata.ops.rebidding_scores (ticket 28), and the signals' track record (ticket 37). Any other run only counts.
+    The time estimates and the what-if grid wait for tickets 26 and 44, which have not landed."""
     from strata.estimates import rebidding
 
     changed = rebidding.record_label_counts(run.engine, run.run_id, run.clock)
     if run.fetch is fetch_live:
-        from strata.config import load_rebidding
-        from strata.estimates import rebidding_backtest
-        from strata.estimates.tracking import MlflowTracker
-
-        try:
-            tracker = MlflowTracker(load_rebidding().experiment)
-        except Exception:  # MLflow missing or not signed in: the counts stand, and nothing is scored tonight
-            return changed
-        changed += rebidding_backtest.score_packages(run.engine, tracker, run.run_id, run.clock)
+        changed += _score_packages(run) + _replay_signals(run)
     return changed
+
+
+def _tracker(experiment: str):
+    """MLflow on the workspace, or None when MLflow is missing or not signed in: the counts stand, and nothing that
+    needs MLflow runs tonight."""
+    from strata.estimates.tracking import MlflowTracker
+
+    try:
+        return MlflowTracker(experiment)
+    except Exception:  # noqa: BLE001 - MLflow raises its own errors, and the import may fail
+        return None
+
+
+def _score_packages(run: Run) -> int:
+    """The rebidding champion's chance for every planned activity, once a backtest has registered a champion."""
+    from strata.config import load_rebidding
+    from strata.estimates import rebidding_backtest
+
+    tracker = _tracker(load_rebidding().experiment)
+    return 0 if tracker is None else rebidding_backtest.score_packages(run.engine, tracker, run.run_id, run.clock)
+
+
+def _replay_signals(run: Run) -> int:
+    """The signals' checks replayed on their track record dates (strata.estimates.signals_track.backtest), for the
+    Following page, when the stored record is signals.track_record_every_days old or there is none. Returns the
+    rows the replay stored in strata.ops.evaluation_result."""
+    from strata.config import load_thresholds, load_time_estimate
+    from strata.estimates import harness, signals_track
+
+    now = run.clock()
+    held = signals_track.stored(run.engine)
+    every = int(load_thresholds().value("signals.track_record_every_days"))
+    if held is not None and (now.astimezone(dt.UTC).date() - dt.date.fromisoformat(held["ran_on"])).days < every:
+        return 0
+    tracker = _tracker(load_time_estimate().experiment)
+    if tracker is None:
+        return 0
+    return len(harness.run_rows(run.engine, signals_track.backtest(run.engine, tracker, ran_at=now)))
 
 
 def _measure_data_readiness(run: Run) -> int:
@@ -282,22 +313,21 @@ def night_of(engine: Engine, run_id: str, started: dt.datetime) -> dt.date:
     a later day keeps the night of the run it finishes."""
     from zoneinfo import ZoneInfo
 
-    first = engine.run(FIRST_STARTED, {"run_id": run_id}).rows[0][0]
-    if first is not None and not isinstance(first, dt.datetime):
-        first = dt.datetime.fromisoformat(str(first).replace("Z", "+00:00").replace(" ", "T"))
-    when = min(started, first.replace(tzinfo=first.tzinfo or dt.UTC)) if first else started
+    first = as_utc(engine.run(FIRST_STARTED, {"run_id": run_id}).rows[0][0])
+    when = min(started, first) if first else started
     return when.astimezone(ZoneInfo(window().timezone)).date()
 
 
 def run_task(engine: Engine, task_key: str, run_id: str, fetch: Fetch,
-             clock: Callable[[], dt.datetime] = _now, readers_for: ReadersFor | None = None) -> None:
+             clock: Callable[[], dt.datetime] = _now, readers_for: ReadersFor | None = None,
+             search_endpoint: str | None = None) -> None:
     """Do one task's work, run its quality checks (strata.lakehouse.quality) and record it. A task that fails is
     recorded as failed, with no checks, then raises again."""
     work = TASKS[task_key]
     started = clock()
     status, changed = "failed", 0
     try:
-        changed = work(Run(engine, run_id, fetch, clock, readers_for))
+        changed = work(Run(engine, run_id, fetch, clock, readers_for, search_endpoint))
         quality.record(engine, quality.check(engine, task_key), run_id, night_of(engine, run_id, started), task_key,
                        clock())
         status = "succeeded"
@@ -310,9 +340,10 @@ def run_task(engine: Engine, task_key: str, run_id: str, fetch: Fetch,
 
 
 # The keys the tasks read from their environment, which on Databricks the job reads from its secret scope
-# (bundle variable secret_scope; ops/app/deploy_app.py and the wizard save them there under these names).
+# (bundle variable secret_scope; ops/app/deploy_app.py and the wizard save them there under these names). The AI
+# Search endpoint is no secret, so it comes as the --search-endpoint parameter (bundle variable ai_search_endpoint).
 SCOPE_KEYS = ("AZURE_OPENAI_ENDPOINT", "AZURE_OPENAI_API_KEY", "FOUNDRY_PROJECT_ENDPOINT", "FOUNDRY_TENANT_ID",
-              "FOUNDRY_CLIENT_ID", "FOUNDRY_CLIENT_SECRET", "AI_SEARCH_ENDPOINT")
+              "FOUNDRY_CLIENT_ID", "FOUNDRY_CLIENT_SECRET")
 
 
 def keys_from_scope(get: Callable[[str, str], str], scope: str, environ: MutableMapping[str, str]) -> list[str]:
@@ -343,11 +374,12 @@ def main(argv: list[str], engine: Engine, fetch: Fetch = fetch_live, clock: Call
     parser.add_argument("--run-id", required=True)
     parser.add_argument("--src", help="the folder that holds the strata package; nightly_task.py uses it")
     parser.add_argument("--secret-scope", help="the scope nightly_task.py reads the tasks' keys from")
+    parser.add_argument("--search-endpoint", help="the AI Search endpoint whose index sync_index syncs")
     args = parser.parse_args(argv)
     if args.task not in TASKS:
         raise SystemExit(f"The nightly job has no task called {args.task}. "
                          f"Its tasks are: {', '.join(TASKS)}.")
-    run_task(engine, args.task, args.run_id, fetch, clock, readers_for)
+    run_task(engine, args.task, args.run_id, fetch, clock, readers_for, args.search_endpoint)
     return 0
 
 
@@ -403,14 +435,12 @@ class Freshness:
 def freshness(engine: Engine, now: dt.datetime, bundle=None) -> Freshness:
     """When a run of the job last finished its last task, after every check before it, and whether more than
     nightly.stale_after_hours have passed since (config/thresholds.toml), for the freshness stamp's stale marker
-    and the stale alerts (briefs 06, 37 and 41). No finished run is stale."""
+    and the stale alerts (briefs 06, 37 and 41). No finished run is stale. Nothing reads it yet: no ticket owns
+    drawing the stale marker (a parked decision from brief 06), and ticket 41's briefing is the first ticket
+    whose brief names the stale alerts."""
     from strata.config import load_thresholds
 
-    found = engine.run(LAST_FINISHED, {"task_key": job_tasks(bundle)[-1].key}).rows[0][0]
-    if found is not None and not isinstance(found, dt.datetime):
-        found = dt.datetime.fromisoformat(str(found).replace("Z", "+00:00").replace(" ", "T"))
-    if found is not None and found.tzinfo is None:
-        found = found.replace(tzinfo=dt.UTC)
+    found = as_utc(engine.run(LAST_FINISHED, {"task_key": job_tasks(bundle)[-1].key}).rows[0][0])
     hours = float(load_thresholds().value("nightly.stale_after_hours"))
     return Freshness(found, found is None or now - found > dt.timedelta(hours=hours))
 

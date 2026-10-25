@@ -27,6 +27,7 @@ import datetime as dt
 import hashlib
 import json
 import re
+from collections import Counter
 from collections.abc import Callable
 from dataclasses import astuple, dataclass, fields
 from decimal import Decimal
@@ -688,26 +689,32 @@ WRITTEN = (("strata.gold.assertion", ASSERTION_COLUMNS, ()), ("strata.gold.disag
 def write(engine: Engine, projects: list[str], assertions: list[Assertion], rejections: list[Rejection],
           disagreements: list[Disagreement]) -> int:
     """Rebuild strata.gold.assertion, strata.gold.disagreement and strata.ops.assertion_rejections for the run's
-    projects, when what the run found differs from what they hold (leaving out a rejection's run and time,
-    strata.lakehouse.rewrites), so a night with nothing new changes no row. Returns the assertions and
-    disagreements it added or removed."""
+    projects whose rows differ from what the tables hold (leaving out a rejection's run and time,
+    strata.lakehouse.rewrites), so a night with nothing new changes no row. It sends one DELETE a table for all
+    those projects together, not one a project: for the workspace's 15,933 projects, three a project would be
+    hours of statements (ticket 43, review B2). Returns the assertions and disagreements it added or removed."""
     where = "array_contains(split(:projects, ','), project_id)"
-    joined = ",".join(projects)
     new = {"strata.gold.assertion": [astuple(row) for row in assertions],
            "strata.gold.disagreement": [astuple(row) for row in disagreements],
            "strata.ops.assertion_rejections": [astuple(row) for row in rejections]}
-    differs = {table: rewrites.differing(
-        rewrites.comparable(rewrites.held(engine, table, columns, where, {"projects": joined}), stamps),
-        rewrites.comparable(new[table], stamps)) for table, columns, stamps in WRITTEN}
-    if not any(differs.values()):
+    differing, counted = set(), {}
+    for table, columns, stamps in WRITTEN:
+        at = columns.index("project_id")
+        before = rewrites.by_key(rewrites.held(engine, table, columns, where, {"projects": ",".join(projects)}),
+                                 at, stamps)
+        after = rewrites.by_key(new[table], at, stamps)
+        changes = {project: rewrites.differing(before.get(project, Counter()), after.get(project, Counter()))
+                   for project in set(before) | set(after)}
+        differing |= {project for project, count in changes.items() if count}
+        counted[table] = sum(changes.values())
+    if not differing:
         return 0
-    for project_id in projects:
-        for table in ("strata.gold.assertion", "strata.gold.disagreement", "strata.ops.assertion_rejections"):
-            engine.run(f"DELETE FROM {table} WHERE project_id = :project_id",  # sql-lint: names only
-                       {"project_id": project_id})
+    chosen = ",".join(sorted(differing))
     for table, columns, _ in WRITTEN:
-        engine.insert_rows(table, columns, new[table])
-    return differs["strata.gold.assertion"] + differs["strata.gold.disagreement"]
+        engine.run(f"DELETE FROM {table} WHERE {where}", {"projects": chosen})  # sql-lint: names only, from WRITTEN
+        at = columns.index("project_id")
+        engine.insert_rows(table, columns, [row for row in new[table] if row[at] in differing])
+    return counted["strata.gold.assertion"] + counted["strata.gold.disagreement"]
 
 
 def run(engine: Engine, projects: list[str], *, model: BatchModel, ladder: Ladder | None = None,

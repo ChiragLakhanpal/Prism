@@ -117,3 +117,17 @@ def test_a_task_that_fails_records_no_checks(fixture_copy, monkeypatch):
         run(fixture_copy, "relink")
 
     assert checks(fixture_copy) == []
+
+
+@pytest.mark.parametrize("task", ["score", "measure_data_readiness"])
+def test_a_task_tried_again_under_the_same_run_id_passes_its_own_duplicates_check(task):
+    """A Databricks repair run keeps the run id, so a task that failed after writing its run's rows writes them
+    again. Each try's rows carry their own time, so the second try is no duplicate (review follow-up 4)."""
+    with DuckDBEngine.open() as engine:
+        catalog.build(engine)
+        run(engine, task)
+        run(engine, task, when=NIGHT + dt.timedelta(minutes=5))
+
+        failed = engine.run("SELECT table_name, found FROM strata.ops.quality_checks "
+                            "WHERE run_id = 'night-2' AND check_kind = 'duplicates' AND NOT passed").rows
+    assert list(failed) == []

@@ -37,9 +37,14 @@ variables:
     default: UNPAUSED
   secret_scope:
     description: >-
-      The secret scope the nightly job's tasks read their Azure OpenAI, Foundry and AI Search keys from,
+      The secret scope the nightly job's tasks read their Azure OpenAI and Foundry keys from,
       the one ops/app/deploy_app.py and the wizard save them in (names.secret_scope in ops/dayone/dayone.toml).
     default: strata
+  ai_search_endpoint:
+    description: >-
+      The AI Search endpoint whose index the nightly job's sync_index task syncs. It is no secret, so it
+      travels as a parameter. ops/bundle/deploy.py passes the env file's AI_SEARCH_ENDPOINT, or the name
+      the wizard gives it (names.ai_search_endpoint in ops/dayone/dayone.toml).
   warehouse_id:
     description: >-
       The SQL warehouse the dashboard's queries run on. ops/bundle/deploy.py passes the env file's

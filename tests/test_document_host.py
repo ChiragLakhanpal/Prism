@@ -14,7 +14,7 @@ import pytest
 from strata import config
 from strata.lakehouse import catalog, nightly, readers
 from strata.lakehouse.engine import DuckDBEngine
-from strata.reader.documents import HostRefused, PoliteFetch, RecordedDocuments, list_url
+from strata.reader.documents import BudgetSpent, HostRefused, PoliteFetch, RecordedDocuments, list_url
 
 NIGHT = dt.datetime(2026, 10, 24, 7, tzinfo=dt.UTC)
 
@@ -81,6 +81,31 @@ def test_the_job_asks_for_each_project_s_document_list_every_night_and_keeps_onl
     assert host.asked == [listing, pdf, listing]
 
 
+def test_the_fetch_stops_asking_once_the_night_s_reading_time_is_spent(tmp_path):
+    """At 3 seconds a request, the backlog of plans and reports would outlast the job's 150 minutes and cancel
+    every task after parse_and_embed (review B3). The job's fetch stops at the night's budget instead."""
+    host, clock = Host(), Clock()
+    fetch = PoliteFetch(host, pause=3.0, cache=tmp_path, sleep=clock.sleep, clock=clock, budget=60.0)
+
+    fetch("https://documents.worldbank.org/a.pdf")
+    clock.now += 58.0
+    fetch("https://documents.worldbank.org/b.pdf")  # second 58 of the budget's 60
+    clock.now += 1.0
+    with pytest.raises(BudgetSpent, match="1 minute"):
+        fetch("https://documents.worldbank.org/c.pdf")  # the pause runs to second 61, past the budget
+    with pytest.raises(BudgetSpent):
+        fetch("https://documents.worldbank.org/a.pdf")  # even a kept document: the night's reading is over
+
+    assert host.asked == ["https://documents.worldbank.org/a.pdf", "https://documents.worldbank.org/b.pdf"]
+
+
+def test_the_job_s_reading_budget_comes_from_the_thresholds_file(tmp_path):
+    minutes = config.load_thresholds().value("ingestion.document_host_minutes")
+
+    assert minutes == 60
+    assert readers.document_host(Host(), tmp_path).budget == minutes * 60
+
+
 def test_a_refusal_from_the_host_stops_the_fetch(tmp_path):
     fetch = PoliteFetch(Host(refuse_from=1), pause=0.0, cache=tmp_path)
 
@@ -90,17 +115,18 @@ def test_a_refusal_from_the_host_stops_the_fetch(tmp_path):
 
 
 class RefusesAfter:
-    """The recorded documents, with a host that refuses every text after the first few, as the real one did."""
+    """The recorded documents, with a host that refuses every text after the first few, as the real one did, or
+    a fetch that has spent the night's reading time by then."""
 
-    def __init__(self, documents, texts: int | None):
-        self.documents, self.texts, self.given = documents, texts, 0
+    def __init__(self, documents, texts: int | None, stop=lambda url: HostRefused(url, 403)):
+        self.documents, self.texts, self.given, self.stop = documents, texts, 0, stop
 
     def listing(self, url):
         return self.documents.listing(url)
 
     def text(self, url):
         if self.texts is not None and self.given >= self.texts:
-            raise HostRefused(url, 403)
+            raise self.stop(url)
         found = self.documents.text(url)  # a plan the fixture does not record raises NotFetched, and is skipped
         self.given += 1
         return found
@@ -115,26 +141,35 @@ def plans_only(documents):
                            report_projects=lambda engine: [])
 
 
-def test_a_night_the_host_refuses_finishes_with_a_note_and_the_next_night_goes_on_from_there():
+STOPS = {
+    "document_host_refused": (lambda url: HostRefused(url, 403), "The document host answered HTTP 403 on October 24, 2026"),
+    "document_host_budget_spent": (lambda url: BudgetSpent(url, 3600),
+                                   "I stopped reading documents on October 24, 2026, after the night's 60 minutes"),
+}
+
+
+@pytest.mark.parametrize("measure", list(STOPS))
+def test_a_night_the_reading_stops_finishes_with_a_note_and_the_next_night_goes_on_from_there(measure):
     from strata.fixture import recorded as fmt
 
+    stop, sentence = STOPS[measure]
     documents = RecordedDocuments(fmt.load_manifest())
     with DuckDBEngine.open() as engine:
         catalog.build(engine)
 
-        def night(run_id, refusing):
+        def night(run_id, stopping):
             nightly.main(["--task", "parse_and_embed", "--run-id", run_id, "--src", "src"], engine,
                          fetch=lambda source, _: (), clock=lambda: NIGHT,
-                         readers_for=lambda _: plans_only(RefusesAfter(documents, refusing)))
+                         readers_for=lambda _: plans_only(RefusesAfter(documents, stopping, stop)))
             return engine.run("SELECT count(*) FROM strata.bronze.document_texts").rows[0][0]
 
-        held = night("night-1", refusing=2)
+        held = night("night-1", stopping=2)
 
         status = engine.run("SELECT status FROM strata.ops.pipeline_runs WHERE run_id = 'night-1'").rows
         note = engine.run("SELECT measure, kind, as_of, detail FROM strata.ops.data_readiness "
-                          "WHERE run_id = 'night-1' AND measure = 'document_host_refused'").rows
+                          "WHERE run_id = 'night-1' AND source = 'documents' AND subject = 'all'").rows
         assert (held, list(status)) == (2, [("succeeded",)])
-        assert note[0][:3] == ("document_host_refused", "fresh", NIGHT.date())
-        assert note[0][3].startswith("The document host answered HTTP 403 on October 24, 2026")
+        assert note[0][:3] == (measure, "fresh", NIGHT.date())
+        assert note[0][3].startswith(sentence)
 
-        assert night("night-2", refusing=None) == 11  # data/fixture/README.md: P156634's 11 plan versions
+        assert night("night-2", stopping=None) == 11  # data/fixture/README.md: P156634's 11 plan versions

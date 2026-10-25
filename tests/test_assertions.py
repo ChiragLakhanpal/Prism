@@ -378,13 +378,15 @@ class Counting:
     """The fixture's engine, counting the queries a run sends."""
 
     def __init__(self, engine):
-        self.engine, self.queries = engine, 0
+        self.engine, self.queries, self.deletes = engine, 0, []
 
     def __getattr__(self, name):
         return getattr(self.engine, name)
 
     def run(self, sql, params=None):
         self.queries += 1
+        if sql.lstrip().upper().startswith("DELETE"):
+            self.deletes.append((sql.split()[2], dict(params or {})))
         return self.engine.run(sql, params)
 
 
@@ -401,6 +403,9 @@ def test_the_run_reads_each_family_with_one_query_for_every_project(copy_db, mon
     projects = assertions.default_projects(copy_db)
     one, every = Counting(copy_db), Counting(copy_db)
     assertions.run(one, ["P176758"], model=batch.RecordedBatch())
+    held = copy_db.run("SELECT count(*) FROM strata.gold.assertion", {}).rows[0][0]
+    copy_db.run("DELETE FROM strata.gold.assertion WHERE assertion_id = (SELECT min(assertion_id) "
+                "FROM strata.gold.assertion WHERE project_id = 'P176758')", {})  # so the run over every project writes
     started = time.perf_counter()
     report = assertions.run(every, projects, model=batch.RecordedBatch())
     took = time.perf_counter() - started
@@ -410,4 +415,9 @@ def test_the_run_reads_each_family_with_one_query_for_every_project(copy_db, mon
     reports = sum(len(assertions.reports(copy_db, project_id, config.load_ladder())) for project_id in with_text)
     assert every.queries <= one.queries + 3 * len(with_text) + reports  # per report: its passages; per project: its answers
     assert report.assertions > 0 and took < 30
+    # Review B2: the rewrite sends one DELETE a table, for only the projects whose rows differ, not three a project.
+    assert report.changed == 1
+    assert copy_db.run("SELECT count(*) FROM strata.gold.assertion", {}).rows[0][0] == held
+    assert every.deletes == [(table, {"projects": "P176758"}) for table in
+                             ("strata.gold.assertion", "strata.gold.disagreement", "strata.ops.assertion_rejections")]
 

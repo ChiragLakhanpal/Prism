@@ -121,15 +121,17 @@ task = "detect_disagreements"
 table = "strata.gold.disagreement"
 key = ["disagreement_id"]
 
+# The two run logs below take each row's time into their key: a Databricks repair run keeps the run id, so a task
+# that failed after writing its rows writes them again on its second try, and that try is no duplicate.
 [[tables]]
 task = "score"
 table = "strata.ops.rebidding_labels"
-key = ["run_id", "source"]
+key = ["run_id", "source", "measured_at"]
 
 [[tables]]
 task = "measure_data_readiness"
 table = "strata.ops.data_readiness"
-key = ["run_id", "source", "subject", "measure"]
+key = ["run_id", "source", "subject", "measure", "measured_at"]
 
 [[tables]]
 task = "refresh_drafts"

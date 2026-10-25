@@ -43,6 +43,14 @@ def comparable(rows: Iterable[tuple], leave_out: Iterable[int] = ()) -> Counter:
     return Counter(tuple(_text(value) for number, value in enumerate(row) if number not in skip) for row in rows)
 
 
+def by_key(rows: Iterable[tuple], at: int, leave_out: Iterable[int] = ()) -> dict[str, Counter]:
+    """The rows as comparable() gives them, apart by the value at place at, such as each row's project."""
+    found: dict[str, list[tuple]] = {}
+    for row in rows:
+        found.setdefault(_text(row[at]), []).append(row)
+    return {key: comparable(group, leave_out) for key, group in found.items()}
+
+
 def held(engine: Engine, table: str, columns: tuple[str, ...], where: str = "", params: dict | None = None) -> list:
     """The table's rows, in the columns given, optionally filtered by a WHERE clause with bound parameters."""
     query = f"SELECT {', '.join(columns)} FROM {table}" + (f" WHERE {where}" if where else "")  # sql-lint: names only

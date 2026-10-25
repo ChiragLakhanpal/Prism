@@ -137,14 +137,8 @@ def job_run(workspace, run_id: str | None) -> int:
     return 0
 
 
-def _moment(value) -> dt.datetime:
-    if isinstance(value, dt.datetime):
-        return value
-    return dt.datetime.fromisoformat(str(value).replace("Z", "+00:00").replace(" ", "T"))
-
-
 def _minutes(started, finished) -> float:
-    return (_moment(finished) - _moment(started)).total_seconds() / 60
+    return (schedule.as_utc(finished) - schedule.as_utc(started)).total_seconds() / 60
 
 
 # ── same-rows ────────────────────────────────────────────────────────────

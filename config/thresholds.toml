@@ -35,6 +35,13 @@ page_match_shared_words = 0.5
 # cover the whole document slice: docs/PLAN.md section 3 plans 128 projects, and a project rarely has
 # more than 40 such reports. A value for the owner to confirm.
 passage_documents = 5000
+# The minutes the nightly job's parse_and_embed task may spend reading from the World Bank's document host each
+# night, from its first request (strata.lakehouse.readers.document_host). At 3 seconds a request
+# (config/sources.toml, the documents source's pause_seconds) the first nights' backlog would outlast the job's
+# 150 minutes and cancel every task after it, so the readers stop here, write a data readiness note and go on
+# the next night. Source: the ticket 43 review (B3), which named 90 minutes as an example; 60 leaves the rest of
+# the chain the time it took on the live runs. A value for the owner to confirm.
+document_host_minutes = 60
 
 # Structured data for every country stays under 0.5 GB (docs/PLAN.md section 3, "Scope"): every
 # table but the documents' text, layout, passages and vectors, as strata.ops.table_sizes records
@@ -256,6 +263,12 @@ disbursement_months = 12
 track_record_dates = [2023-06-30, 2024-06-30, 2025-06-30]
 track_record_window_months = 12
 track_record_min = 20
+# The nightly job's score task replays the checks again once the stored track record is this many days old
+# (strata.lakehouse.nightly). The replay reads Strata as it was on the dates above, so its counts change only when
+# a record newly fetched turns out public before one of them, and the replay calls the warehouse for every
+# project with a loan history, which is too long to repeat every night inside the job's 150 minutes. Source: the
+# ticket 43 review (B6); a starting value for the owner to confirm.
+track_record_every_days = 7
 
 # The review thresholds that compute review type (ticket 15). The package workspace computes a planned
 # package's Review Type from its category and its whole estimated amount, never per lot, so dividing a

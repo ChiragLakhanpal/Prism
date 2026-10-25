@@ -15,8 +15,9 @@ Readers holds what the readers need, which is the one thing that differs between
   files volume, and a stop at the first refusal), ai_parse_document, Prompt Shields and the embedding
   deployment with the keys the job reads from the secret scope, and the AI Search index.
 
-When the document host refuses a request (HostRefused), the task stops reading, writes a data readiness note and
-finishes, so the job goes on and the next night starts where this one stopped.
+When the document host refuses a request (HostRefused), or the night's reading time is spent (BudgetSpent), the
+task stops reading, writes a data readiness note and finishes, so the job goes on and the next night starts where
+this one stopped.
 """
 
 from __future__ import annotations
@@ -29,7 +30,7 @@ from dataclasses import dataclass
 from strata.config import load_slice, load_sources
 from strata.lakehouse import gold, passages, plans
 from strata.lakehouse.engine import Engine
-from strata.reader.documents import Documents, HostRefused
+from strata.reader.documents import Documents, HostRefused, StopReading
 
 SOURCE = "documents"
 NOTE_COLUMNS = ("run_id", "source", "subject", "measure", "kind", "count", "denominator", "as_of", "detail",
@@ -80,20 +81,25 @@ CACHE = "/Volumes/strata/bronze/files/fetched"  # the bundle's bronze files volu
 
 def document_host(fetch, cache, sleep=None, clock=None):
     """fetch(url) for the World Bank's document host as the job asks it: the documents source's pause between
-    requests (config/sources.toml), each document kept in cache once fetched, and each project's document list,
-    the documents API's endpoint, asked for again every night, so a document disclosed since is found."""
+    requests (config/sources.toml), each document kept in cache once fetched, each project's document list, the
+    documents API's endpoint, asked for again every night, so a document disclosed since is found, and no request
+    after the night's reading time (config/thresholds.toml, ingestion.document_host_minutes), so the tasks after
+    parse_and_embed still run inside the job's window."""
+    from strata.config import load_thresholds
     from strata.reader.documents import PoliteFetch
     from strata.reader.layout import https
 
     source = load_sources()[SOURCE]
     lists = https(source.endpoint)
+    minutes = float(load_thresholds().value("ingestion.document_host_minutes"))
     return PoliteFetch(fetch, source.pause_seconds or 0.0, cache, sleep=sleep, clock=clock,
-                       keep=lambda url: not https(url).startswith(lists))
+                       keep=lambda url: not https(url).startswith(lists), budget=minutes * 60)
 
 
-def live(engine: Engine, environ: Mapping[str, str] | None = None) -> Readers:
+def live(engine: Engine, environ: Mapping[str, str] | None = None, search_endpoint: str | None = None) -> Readers:
     """The readers on the workspace, as the job runs them on serverless compute. Without Azure OpenAI's keys the
-    plan reader still runs, and the passage reader waits for a night that has them."""
+    plan reader still runs, and the passage reader waits for a night that has them. search_endpoint is the AI
+    Search endpoint the bundle names (variable ai_search_endpoint); without it sync_index syncs only gold."""
     from strata.config import load_layout_parser, load_models
     from strata.fixture.record import fetch_url
     from strata.knowledge.embed import AzureOpenAIEmbeddings
@@ -110,7 +116,7 @@ def live(engine: Engine, environ: Mapping[str, str] | None = None) -> Readers:
         model = load_models()["embed"]
         shield = PromptShields(content_safety_endpoint(endpoint), key)
         embedder = AzureOpenAIEmbeddings(endpoint, key, model.deployment, model.dimensions)
-    search = env.get("AI_SEARCH_ENDPOINT", "").strip()
+    search = (search_endpoint or "").strip()
     return Readers(LiveDocuments(fetch), layout, shield, embedder,
                    plan_projects=passages.default_projects, report_projects=passages.default_projects,
                    index=_index(search) if search else None)
@@ -164,18 +170,25 @@ def read(engine: Engine, readers: Readers, run_id: str, clock: Callable[[], dt.d
             report = passages.run(engine, readers.documents, readers.report_projects(engine), shield=readers.shield,
                                   embedder=readers.embedder, layout=readers.layout, clock=clock, run_id=run_id)
             synced += report.synced
-    except HostRefused as refused:
-        note_refusal(engine, run_id, clock(), refused)
+    except StopReading as stopped:
+        note_stop(engine, run_id, clock(), stopped)
     return synced + sum(_count(engine, table) - count for table, count in before.items())
 
 
-def note_refusal(engine: Engine, run_id: str, when: dt.datetime, refused: HostRefused) -> None:
-    """A data readiness note that the document host refused a request, so the readers stopped for the night."""
+def note_stop(engine: Engine, run_id: str, when: dt.datetime, stopped: StopReading) -> None:
+    """A data readiness note that the readers stopped for the night: the document host refused a request, or the
+    night's reading time was spent."""
+    day = f"{when:%B} {when.day}, {when.year}"
+    if isinstance(stopped, HostRefused):
+        why = f"The document host answered HTTP {stopped.status} on {day}, so the readers stopped for the night."
+    else:
+        minutes = getattr(stopped, "minutes", None)
+        why = (f"I stopped reading documents on {day}, after the night's {minutes} minutes for the document host, "
+               "so the job's later tasks had time to run.")
     engine.insert_rows("strata.ops.data_readiness", NOTE_COLUMNS, [(
-        run_id, SOURCE, "all", "document_host_refused", "fresh", None, None, when.date(),
-        f"The document host answered HTTP {refused.status} on {when:%B} {when.day}, {when.year}, so the readers "
-        "stopped for the night. The documents and pages read before it are kept, and the next night goes on "
-        "from there.", when, when.date())])
+        run_id, SOURCE, "all", stopped.measure, "fresh", None, None, when.date(),
+        f"{why} The documents and pages read before it are kept, and the next night goes on from there.",
+        when, when.date())])
 
 
 def sync_index(engine: Engine, readers: Readers | None) -> int:
