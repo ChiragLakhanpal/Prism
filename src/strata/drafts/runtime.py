@@ -258,7 +258,7 @@ async def write(writing: Writing, engine_for: EngineFor, agent_for: Callable[[st
     yield step("save", "running")
     draft_id = new_draft_id()
     # What the writer wrote, for the steps the draft page lists ("I wrote six sentences in three notes.").
-    content |= {"kind": writing.kind.key, "written": wrote,
+    content |= {"kind": writing.kind.key, "written": wrote, "lang": writing.language,
                 "writer": {"agent": writing.agent, "version": writing.agent_version, "run_id": writing.run_id}}
     record = NewDraft(draft_id, writing.kind.key, writing.team_key, writing.viewer.user_id, writing.viewer.name,
                       writing.idempotency_key, content["subject"].get("project_id"), module.subject_key(facts),
@@ -389,6 +389,8 @@ def draft_view(saved: Saved, viewer: Viewer, view: str, kinds: DraftKinds, opene
             "files": list(export.files),
             "files_available": bool(export.files)},
         "writer": saved.content.get("writer"),
+        # The language the writer wrote it in, fixed when it was written (ticket 42); a draft in English says nothing.
+        **({"lang": saved.content["lang"]} if saved.content.get("lang", "en") != "en" else {}),
         # The disagreements check 6 attached, and the report kept on each (ticket 36).
         "disagreements": saved.content.get("disagreements") or [],
         "choices": [{"disagreement_id": key, "kept": choice.kept, "reason": choice.reason, "at": iso(choice.set_at),

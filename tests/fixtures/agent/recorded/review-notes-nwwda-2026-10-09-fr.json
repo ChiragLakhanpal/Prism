@@ -1,0 +1,36 @@
+{
+ "about": "One answer of the Foundry agent strata-review-notes-writer through the Responses API for a draft asked for in French (lang=fr), written by hand in the shape the API documents, because the gate's machine has no key (ticket 42). It writes the same notes as review-notes-nwwda-2026-10-09 in French: numbers and dates the French way at the plan's digits, STEP's field names and values in English word for word, and a quote of the plan's description in its own English words. Replace it with a recording: uv run --script ops/agent/record.py --env-file .env --writers",
+ "recorded": false,
+ "recorded_on": null,
+ "question": "Write review notes on the Northern Water Works Development Agency's Procurement Plan of October 9, 2026 for P156634.",
+ "scope": "P156634",
+ "as_of": "2026-10-23",
+ "language": "fr",
+ "agent": {
+  "name": "strata-review-notes-writer",
+  "version": null
+ },
+ "responses": [
+  {
+   "id": "resp_review_notes_nwwda_fr_1",
+   "object": "response",
+   "status": "completed",
+   "model": "gpt-5.4",
+   "output": [
+    {
+     "type": "message",
+     "id": "msg_review_notes_nwwda_fr_1",
+     "role": "assistant",
+     "status": "completed",
+     "content": [
+      {
+       "type": "output_text",
+       "annotations": [],
+       "text": "{\"notes\": [{\"activity_reference_no\": \"KE-NWWDA-541055-CW-RFB\", \"claims\": [{\"sentence\": \"Le plan indique que cette activité est Pending Implementation, avec un Actual Amount de 0,00.\", \"kind\": \"record\", \"evidence_ids\": [\"strata.silver.plan_rows:40132287/KE-NWWDA-541055-CW-RFB\"], \"numbers\": [\"0,00\"], \"dates\": [], \"quote\": null}, {\"sentence\": \"Son achèvement prévu le 31 juillet 2026, publié pour la première fois dans le plan du 5 mars 2026, est dépassé sans contrat signé.\", \"kind\": \"record\", \"evidence_ids\": [\"strata.silver.plan_rows:40132287/KE-NWWDA-541055-CW-RFB\"], \"numbers\": [], \"dates\": [\"31 juillet 2026\", \"5 mars 2026\"], \"quote\": null}, {\"sentence\": \"Le plan la décrit comme l’équipement de forages pour le réseau \\\"Tarbaj Water Supply\\\".\", \"kind\": \"record\", \"evidence_ids\": [\"strata.silver.plan_rows:40132287/KE-NWWDA-541055-CW-RFB\"], \"numbers\": [], \"dates\": [], \"quote\": null}]}, {\"activity_reference_no\": \"KE-NWWDA-229129-CW-RFB\", \"claims\": [{\"sentence\": \"Le contrat a été signé le 3 janvier 2022, 186 jours après sa date de signature prévue du 1er juillet 2021.\", \"kind\": \"record\", \"evidence_ids\": [\"strata.silver.plan_rows:40132287/KE-NWWDA-229129-CW-RFB\"], \"numbers\": [\"186\"], \"dates\": [\"3 janvier 2022\", \"1er juillet 2021\"], \"quote\": null}, {\"sentence\": \"Le plan indique un Actual Amount de 1 245 092,76 pour un Estimated Amount de 300 000,00, soit 4,15 fois l’estimation.\", \"kind\": \"record\", \"evidence_ids\": [\"strata.silver.plan_rows:40132287/KE-NWWDA-229129-CW-RFB\"], \"numbers\": [\"1 245 092,76\", \"300 000,00\", \"4,15\"], \"dates\": [], \"quote\": null}]}, {\"activity_reference_no\": \"KE-NWWDA-541062-CW-RFQ\", \"claims\": [{\"sentence\": \"Le plan indique toujours cette activité comme Pending Implementation, avec un Actual Amount de 0,00, et le projet se termine le 31 octobre 2026.\", \"kind\": \"record\", \"evidence_ids\": [\"strata.silver.plan_rows:40132287/KE-NWWDA-541062-CW-RFQ\"], \"numbers\": [\"0,00\"], \"dates\": [\"31 octobre 2026\"], \"quote\": null}, {\"sentence\": \"Sa date de signature prévue du 31 mars 2026 et son achèvement prévu le 30 juin 2026 sont dépassés.\", \"kind\": \"record\", \"evidence_ids\": [\"strata.silver.plan_rows:40132287/KE-NWWDA-541062-CW-RFQ\"], \"numbers\": [], \"dates\": [\"31 mars 2026\", \"30 juin 2026\"], \"quote\": null}]}]}"
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

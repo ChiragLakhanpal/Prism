@@ -6,6 +6,7 @@ The sentences here cite nothing and no tool ran, so check 2 removes each one (no
 alone show how the verifier read each number and date, as tests/test_answer_stream.py's check_1 does.
 """
 
+import datetime as dt
 import tomllib
 from contextlib import contextmanager
 from pathlib import Path
@@ -100,3 +101,140 @@ def test_a_french_sentence_whose_numbers_and_dates_a_cited_record_holds_is_kept(
     assert [number["text"] for number in kept["numbers"]] == [estimated]
     assert all(found["evidence_id"] for found in kept["numbers"] + kept["dates"])
     assert removed_reasons(parsed) == [[("number_not_in_records", "1\u202f300\u202f000,00")]]
+
+
+# ── A scripted answer in French (the ticket's criterion 3) ───────────────
+
+FRENCH_CASE = "p127203-fr-procurement-delays"
+
+
+def ask_scripted(fixture_db, case_id):
+    """Ask a scripted case over HTTP in the case's language, as the screen's ?lang= asks it."""
+    from strata.agent.scripted import ScriptedAgent, ScriptedJudge, load_cases
+
+    case = load_cases()[case_id]
+
+    @contextmanager
+    def engine_for(viewer):
+        with DuckDBEngine.open(fixture_db, read_only=True) as engine:
+            yield engine
+
+    app = create_app(runner=answer_runner(lambda turn: ScriptedAgent(case), engine_for, today=lambda: case.as_of),
+                     engine_for=engine_for, judge=ScriptedJudge(case), new_run_id=lambda: "run-0001")
+    return events(ask_with(app, case.question, scope=case.scope, asof=case.as_of.isoformat(), lang=case.language))
+
+
+def test_with_lang_fr_the_scripted_answer_is_written_in_french_and_its_quotes_stay_word_for_word(fixture_db):
+    """The question is asked in English with lang=fr. The answer's sentences are in French, each quote is the French
+    completion report's own words on its page, the answer says which language it was written in and which language
+    the question was in, and all six checks pass with nothing removed."""
+    from strata.config import load_languages
+    from strata.knowledge.language import LangidDetector
+
+    parsed = ask_scripted(fixture_db, FRENCH_CASE)
+
+    [said] = of(parsed, "language")
+    assert said == {"lang": "fr", "question_lang": "en"}
+    assert [kind for kind, _ in parsed].index("language") < [kind for kind, _ in parsed].index("step")
+    assert of(parsed, "removed") == []
+    sentences = of(parsed, "sentence")
+    assert len(sentences) == 4
+    assert all(LangidDetector().detect(sentence["text"]).code == "fr" for sentence in sentences)
+    never = load_languages().get("fr").never_write
+    assert not [word for sentence in sentences for word in never if word in sentence["text"].lower()]
+    # Each quote is word for word on its French page, and the evidence it cites is marked French.
+    evidence = {item["id"]: item for item in of(parsed, "evidence")}
+    quoted = [sentence for sentence in sentences if sentence["quote"]]
+    assert len(quoted) == 2
+    for sentence in quoted:
+        cited = evidence[sentence["quote"]["evidence_id"]]
+        assert cited["row"]["language"] == "fr"
+        [mark] = [mark for mark in cited["highlights"] if mark["sentence"] == sentence["index"]]
+        on_page = cited["row"]["text"][mark["start"]:mark["end"]]
+        assert on_page == sentence["quote"]["text"] and f'"{on_page}"' in sentence["text"]
+    checks = of(parsed, "checks")[0]
+    assert checks["checks_run"] == [1, 2, 3, 4, 5, 6]
+    assert checks["dates"] == {"total": 1, "matched": 1}
+    assert checks["quotes"] == {"total": 2, "found": 2}
+    assert checks["judge"]["judged"] == checks["judge"]["followed"] == 1
+    assert [date["text"] for sentence in sentences for date in sentence["dates"]] == ["29 juillet 2021"]
+
+
+# ── A scripted draft in French (the ticket's criterion 3) ────────────────
+
+def test_with_lang_fr_review_notes_are_written_in_french_and_keep_their_language_in_the_word_file(fixture_db, tmp_path):
+    """The draft is asked for with lang=fr. Its notes are in French, all six checks pass with nothing removed, the
+    draft says it was written in French, the plan's description is quoted in its own English words, and the Word
+    file's note runs carry French proofing while its headings stay English."""
+    import io
+    import zipfile
+    from xml.etree import ElementTree
+
+    from strata.knowledge.language import LangidDetector
+    from test_drafts import ANA, NWWDA, act, call
+    from test_drafts import events as draft_events
+
+    app = drafting_app(fixture_db, tmp_path, "review-notes-nwwda-2026-10-09-fr")
+    sent = draft_events(call(app, "POST", "/api/drafts", ANA, json={**NWWDA, "idempotency_key": "fr-1", "lang": "fr"}).text)
+    [draft_id] = [data["draft_id"] for kind, data in sent if kind == "draft"]
+    draft = call(app, "GET", f"/api/drafts/{draft_id}", ANA).json()
+
+    assert draft["lang"] == "fr"
+    assert draft["removed"] == [] and draft["checks"]["checks_run"] == [1, 2, 3, 4, 5, 6]
+    sentences = [sentence for note in draft["notes"] for sentence in note["sentences"]]
+    assert len(sentences) == draft["checks"]["sentences"]["written"] == 7
+    assert all(LangidDetector().detect(sentence["text"]).code == "fr" for sentence in sentences)
+    quoted = [sentence["text"] for sentence in sentences if '"' in sentence["text"]]
+    description = next(note["description"] for note in draft["notes"]
+                       if note["activity_reference_no"] == "KE-NWWDA-541055-CW-RFB")
+    assert len(quoted) == 1 and "Tarbaj Water Supply" in description and '"Tarbaj Water Supply"' in quoted[0]
+
+    act(app, draft_id, "check", "draft")
+    exported = act(app, draft_id, "export", "checked").json()
+    [docx] = [file["name"] for file in exported["export"]["files"] if file["name"].endswith(".docx")]
+    parts = zipfile.ZipFile(io.BytesIO(call(app, "GET", f"/api/drafts/{draft_id}/files/{docx}", ANA).content))
+    document = ElementTree.fromstring(parts.read("word/document.xml"))
+    w = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
+
+    def locale(run):
+        found = run.find(f"{w}rPr/{w}lang")
+        return None if found is None else found.get(f"{w}val")
+
+    runs = [(("".join(t.text for t in run.iter(f"{w}t"))), locale(run)) for run in document.iter(f"{w}r")]
+    french = [text for text, where in runs if where == "fr-FR"]
+    assert sentences[0]["text"] in french
+    # The quote keeps its source's English, and the headings and origin keep the Normal style's English.
+    assert ("Tarbaj Water Supply", "en-US") in runs
+    heading = next(text for text, _ in runs if text.startswith("Review notes on"))
+    assert (heading, None) in runs and 'w:lang w:val="en-US"' in parts.read("word/styles.xml").decode()
+
+
+def drafting_app(fixture_db, tmp_path, case):
+    from strata.agent.runs import RunLog
+    from strata.agent.scripted import WRITER_CASES, ScriptedAgent, load_cases
+    from strata.config import load_roles
+    from strata.drafts.store import DraftStore
+    from strata.lakehouse import catalog
+    from strata.server.access import Access, StaticGroups
+    from strata.server.evidence import OpenedLog
+    from test_drafts import GROUPS, Clock
+
+    state_db = tmp_path / "state.duckdb"
+    with DuckDBEngine.open(state_db) as engine:
+        catalog.build(engine)
+
+    @contextmanager
+    def reading(viewer):
+        with DuckDBEngine.open(fixture_db, read_only=True) as engine:
+            yield engine
+
+    def state():
+        return DuckDBEngine.open(state_db)
+
+    clock = Clock(dt.datetime(2026, 10, 23, 14, 0, tzinfo=dt.UTC))
+    written = load_cases(WRITER_CASES)[case]
+    numbers = iter(range(1, 100))
+    return create_app(engine_for=reading, drafts=DraftStore(state), opened=OpenedLog(state, now=clock),
+                      writers=lambda kind: ScriptedAgent(written), runs=RunLog(state),
+                      access=Access(load_roles(), StaticGroups(GROUPS)), today=lambda: TODAY, now=clock,
+                      new_draft_id=lambda: f"draft-{next(numbers):04d}", new_run_id=lambda: "run-0001")

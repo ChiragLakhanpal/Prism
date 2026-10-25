@@ -17,6 +17,9 @@
 #   [[cases.plant_claims]]   a claim added to the end of the agent's answer, in the claims' own shape:
 #                            sentence, kind, evidence_ids, numbers, dates and quote ({text, passage_id}).
 #
+# A case asked in another language (ticket 42) gives it as language, "fr", which the stream asks with as ?lang=
+# does; it is English when left out.
+#
 # The tests in tests/test_answer_stream.py replay each case on the fixture database and say what it
 # must show.
 
@@ -618,3 +621,14 @@ question = "Did the reports agree on how P130164 was progressing towards its dev
 scope = "P130164"
 as_of = 2026-10-23
 recording = "p130164-both-sides"
+
+[[cases]]
+id = "p127203-fr-procurement-delays"
+says = """Asked in English with lang=fr, the agent searches the French completion report of P127203 and answers in French: \
+two quotes in the report's own words, a summary the judge finds follows, and the report's date written the French way. \
+Every check passes (ticket 42)."""
+question = "Why were procurement processes delayed in P127203?"
+scope = "P127203"
+as_of = 2026-10-23
+recording = "p127203-fr-procurement-delays"
+language = "fr"

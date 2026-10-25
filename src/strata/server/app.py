@@ -124,9 +124,10 @@ from strata.agent.answer_check import Asker, SixChecks
 from strata.agent.judge import Judge
 from strata.agent.runs import RunLog, run_row
 from strata.agent.verifier import Verdict, answer_events
-from strata.config import DraftKinds, load_draft_kinds, load_roles, load_thresholds, load_tools
+from strata.config import ENGLISH, DraftKinds, load_draft_kinds, load_roles, load_thresholds, load_tools
 from strata.dbx import Viewer, viewer_from_headers
 from strata.drafts.store import DraftStore
+from strata.knowledge import language
 from strata.knowledge.lessons.review import LessonReview, Refused
 from strata.harness.aio import HEARTBEAT, with_heartbeats
 from strata.harness.turn import (ERROR_CODES, Event, RunError, Runner, Scope, TraceIds, Turn,
@@ -163,7 +164,7 @@ log = logging.getLogger("strata.server")
 KEEP_ALIVE = ": keep-alive\n\n"
 STREAM_HEADERS = {"Cache-Control": "no-cache", "X-Accel-Buffering": "no"}
 # Only the verifier writes these, from the claims a runner hands over.
-ANSWER_EVENTS = {"refusal", "sentence", "evidence", "disagreement", "checks", "removed", "done"}
+ANSWER_EVENTS = {"refusal", "sentence", "evidence", "disagreement", "checks", "removed", "done", "language"}
 # The platform's check that the app is up. It is not a viewer's request, so it is not counted.
 UNCOUNTED = {"/api/health"}
 # The view the server applies. Until ticket 40 adds the implementing agency and public previews,
@@ -1007,6 +1008,12 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
 
     async def run_events(turn: Turn, outcome: dict) -> AsyncIterator[str]:
         verdict, error_code = None, None
+        # Which language the answer is written in, and which the question was asked in when the detector is sure
+        # (ticket 42), before anything else, so the panel can say so while the answer streams. An answer asked for in
+        # English to a question in English says nothing.
+        question_lang = await asyncio.to_thread(language.detect, turn.question, thresholds)
+        if turn.scope.language != ENGLISH or question_lang not in (None, ENGLISH):
+            yield frame(Event("language", {"lang": turn.scope.language, "question_lang": question_lang}))
         try:
             async for item in with_heartbeats(runner(turn), heartbeat_seconds):
                 if item is HEARTBEAT:
