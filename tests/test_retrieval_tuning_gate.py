@@ -35,7 +35,9 @@ def test_the_current_setup_passes_the_gate_and_the_hindsight_set_is_not_compared
     verdict = run_gate(fixture_db, store, load_search().setup, "gate-current")
 
     assert (verdict.ships, verdict.held_out, verdict.hindsight, verdict.losses) == (True, "passed", "not_compared", [])
-    assert {comparison.query_set for comparison in verdict.comparisons} == {"icr_review_citations", "pad_lessons"}
+    # The bilingual query set (ticket 42) has held-out queries too, so a setup that loses across languages is blocked.
+    assert {comparison.query_set for comparison in verdict.comparisons} == {
+        "icr_review_citations", "pad_lessons", "bilingual_en_fr", "bilingual_fr_en"}
     rows = {(row["segment"], row["measure"]): (row["value"], row["value_text"])
             for row in harness.run_rows(store, "gate-current") if row["scorer"] == "retrieval_tuning_gate"}
     assert rows[("held_out", "passed")] == (1, None)
