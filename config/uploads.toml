@@ -27,6 +27,9 @@
 #   accept          the file name endings a person may choose, which the file field offers
 #   max_size_bytes  the largest file Strata reads
 #   max_rows        the most activities one upload may list
+#   max_unzipped_bytes  the most an Excel file may hold once unzipped; a larger one is refused as unreadable
+#   max_columns     the last column Strata reads on a sheet; a cell further right is left unread, so a file cannot
+#                   make every row as wide as Excel's 16,384 columns
 #   format          which hint the upload page shows: step_export when a STEP export is confirmed, or
 #                   published_tables when Strata reads the published tables' columns (the answer above)
 #
@@ -54,6 +57,8 @@
 accept = [".xlsx", ".csv"]
 max_size_bytes = 5_242_880
 max_rows = 500
+max_unzipped_bytes = 26_214_400
+max_columns = 300
 format = "published_tables"
 
 [columns.activity]

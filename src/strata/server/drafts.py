@@ -341,12 +341,20 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: DraftStore 
         yield frame(Event("done", done))
 
     def _run_row(writing: runtime.Writing, trace: TraceIds, error_code: str | None, started: dt.datetime) -> dict:
-        """The writer's run for strata.ops.agent_runs, in the shape the answer stream logs its runs."""
-        turn = Turn(question=writing.question or writing.kind.key, viewer=writing.viewer, run_id=writing.run_id,
+        """The writer's run for strata.ops.agent_runs, in the shape the answer stream logs its runs. Every account user
+        can read that table, so an implementing agency team's run keeps the kind's key for its question and only each
+        removed sentence's reason, never the team's words (CLAUDE.md rule 8)."""
+        private = writing.kind.agency_only
+        turn = Turn(question=writing.kind.key if private else (writing.question or writing.kind.key),
+                    viewer=writing.viewer, run_id=writing.run_id,
                     scope=Scope(chip=writing.request.get("project_id"), as_of=today(), language=writing.language),
                     trace=trace)
         turn.notes.agent, turn.notes.agent_version, turn.notes.as_of = writing.agent, writing.agent_version, today()
-        return run_row(turn, writing.verdict, error_code, started, dt.datetime.now(dt.UTC))
+        row = run_row(turn, writing.verdict, error_code, started, dt.datetime.now(dt.UTC))
+        if private:
+            row["removed"] = json.dumps([{"reason": sentence.reasons[0].code}
+                                         for sentence in (writing.verdict.removed if writing.verdict else [])])
+        return row
 
     # ── The Drafts tab ───────────────────────────────────────────────────
 

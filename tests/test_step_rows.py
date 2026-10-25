@@ -31,6 +31,7 @@ from strata.lakehouse.engine import DuckDBEngine
 from strata.reader.step_columns import registry as step_columns
 from strata.server.access import Access, StaticGroups
 from strata.server.app import create_app
+from strata.server.evidence import OpenedLog
 from strata.uploads.store import UploadStore
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -66,6 +67,7 @@ def app_on(database, state, today, at):
     numbers = iter(range(1, 100))
     return create_app(engine_for=reading, uploads=UploadStore(lambda: DuckDBEngine.open(state)),
                       drafts=DraftStore(lambda: DuckDBEngine.open(state)), access=Access(roles(), StaticGroups(GROUPS)),
+                      opened=OpenedLog(lambda: DuckDBEngine.open(state), now=lambda: at),
                       today=lambda: today, now=lambda: at, new_upload_id=lambda: f"upl-{next(numbers):012d}",
                       new_draft_id=lambda: f"draft-{next(numbers):04d}", new_run_id=lambda: "run-0001")
 
@@ -140,9 +142,10 @@ def hand(tmp_path):
 STEPS = step_set.STEPS
 
 
-def hand_file() -> bytes:
+def hand_file(shift: dt.timedelta = dt.timedelta(0)) -> bytes:
     """Team A's draft plan on the hand-made set: the target package with its own planned dates and one actual date,
-    and a new activity with no reference and no dates yet, laid out as STEP prints a table."""
+    and a new activity with no reference and no dates yet, laid out as STEP prints a table. shift moves the target's
+    planned dates away from the dates its published plan first gave."""
     head = ["Activity Reference No. / Description", "Loan / Credit No.", "Review Type", "Method", "Market Approach",
             "High SEA/SH Risk", "Estimated Amount (US$)", "Actual Amount (US$)", "Process Status"]
     out = io.StringIO()
@@ -150,7 +153,7 @@ def hand_file() -> bytes:
     sheet.writerow(["WORKS"])
     sheet.writerow(head + [cell for step in STEPS for cell in (step, "")])
     sheet.writerow([""] * len(head) + ["Planned", "Actual"] * len(STEPS))
-    planned = [day.isoformat() for day in step_set.TARGET_PLANNED]
+    planned = [(day + shift).isoformat() for day in step_set.TARGET_PLANNED]
     sheet.writerow([f"{step_set.TARGET} / Hand-made works", "IDA / 99999", "Post", "Request for Bids", "Open - National",
                     "Y", "1,000,000.00", "0.00", "Pending Implementation",
                     planned[0], "2021-03-10", *[cell for day in planned[1:] for cell in (day, "")]])
@@ -178,11 +181,27 @@ def test_an_upload_gets_the_dates_worked_out_by_hand_checked_and_exported_as_ste
     assert target["steps"][5]["cautious"]["planned_date"] is None and target["steps"][5]["abstain_reason"]
     # The new activity gives no dates, so its steps wait for a start date.
     assert (new["reference"], new["needs_start_date"]) == (None, True)
+    # Each activity's "Steps dated" is counted by the server: five of the target's six steps, and none of the five
+    # the new activity can take, whose first step is the start date it waits for.
+    assert [(activity["counts"]["dated"]["cautious"], activity["counts"]["steps"]) for activity in (target, new)] == [
+        (5, len(STEPS)), (0, len(STEPS) - 1)]
     # Every date and count on the page matched what estimate_time returned for its list.
     checks = shown["checks"]
     assert checks["dates"]["matched"] == checks["dates"]["total"] > 0
     assert checks["numbers"]["matched"] == checks["numbers"]["total"] > 0 and shown["removed"] == []
     assert shown["opened"]["of"] == shown["dates"]["counts"]["lists"] == 5
+    # Each dated step's list of comparable packages opens in the drawer from what the draft keeps: the packages
+    # estimate_time returned for that step this turn, the hand-made set's 25.
+    for step in dated:
+        held = shown["evidence"][step["list_id"]]
+        assert (held["kind"], held["row"]["step"]["step_key"]) == ("steps", step["step_key"])
+        assert sorted(entry["step_reference"] for entry in held["row"]["step"]["comparables"]) == sorted(
+            step_set.comparable(i) for i in range(1, DATES["comparables"] + 1))
+    # Opening one list moves the bar's count from 0 to 1.
+    assert shown["opened"]["count"] == 0
+    call(app, "POST", "/api/evidence/opened", AMINA, json={"evidence_id": dated[0]["list_id"],
+                                                            "route": f"/drafts/{draft_id}"})
+    assert call(app, "GET", f"/api/drafts/{draft_id}", AMINA).json()["opened"]["count"] == 1
     # The team reads it; another team and World Bank staff find nothing.
     assert call(app, "GET", f"/api/drafts/{draft_id}", BARAKA).status_code == 200
     for outsider in (CHEGE, DANA):
@@ -235,6 +254,23 @@ def test_an_upload_gets_the_dates_worked_out_by_hand_checked_and_exported_as_ste
         "Hand-made works", "IDA / 99999", "1,000,000.00", "Request for Bids")
     assert dict(zip(header, second))["Description"] == "New boreholes in the north"
     assert all(dict(zip(header, second))[column.name] == "" for column in columns if column.fill == "planned")
+
+
+def test_the_steps_are_dated_from_the_uploads_own_dates_not_the_published_plans(hand, state):
+    """The page says "I started from the dates in your plan": with every planned date in the upload two weeks later
+    than its published plan's, each step's baseline and each date move by the same two weeks."""
+    later = dt.timedelta(days=14)
+    app = app_on(hand, state, DATES["as_of"], dt.datetime(2021, 1, 15, 10, 0, tzinfo=dt.UTC))
+    upload_id = upload(app, data=hand_file(later), name="team-a-plan.csv", project=HAND_PROJECT).json()["upload_id"]
+
+    _, draft_id = draft(app, AMINA, f"upload:{upload_id}")
+    target = call(app, "GET", f"/api/drafts/{draft_id}", AMINA).json()["dates"]["activities"][0]
+
+    dated = target["steps"][:5]
+    assert [step["plan_first_date"] for step in dated] == [(day + later).isoformat() for day in step_set.TARGET_PLANNED[:5]]
+    assert [step["cautious"]["planned_date"] for step in dated] == [(day + later).isoformat()
+                                                                    for day in DATES["cautious_dates"]]
+    assert [step["middle"]["planned_date"] for step in dated] == [(day + later).isoformat() for day in DATES["middle_dates"]]
 
 
 def test_the_upload_screens_recorded_answers_are_what_the_routes_answer(fixture_db, tmp_path):

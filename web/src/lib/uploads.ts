@@ -64,12 +64,13 @@ export type UploadRefusal = {
 export const uploadHref = (uploadId: string) => `/packages/uploads/${encodeURIComponent(uploadId)}`;
 export const CHECK_MY_PLAN = "/packages/check";
 
-// One upload: the file itself is the request's body, so the server holds it only while it reads it.
+// One upload: the file itself is the request's body, so the server holds it only while it reads it. Its name goes in
+// a header, percent-encoded, never in the address, where a proxy's log may keep it.
 export async function sendUpload(file: File, projectId: string, key: string): Promise<UploadCheck & { upload_id: string }> {
-  const query = new URLSearchParams({ project_id: projectId, file_name: file.name, idempotency_key: key });
+  const query = new URLSearchParams({ project_id: projectId, idempotency_key: key });
   const response = await fetch(`/api/uploads?${query.toString()}`, {
     method: "POST",
-    headers: { "Content-Type": "application/octet-stream", Accept: "application/json" },
+    headers: { "Content-Type": "application/octet-stream", Accept: "application/json", "X-Strata-File-Name": encodeURIComponent(file.name) },
     body: file,
   });
   const body = await response.json().catch(() => ({ code: "service" }));

@@ -19,6 +19,7 @@ import json
 import tomllib
 from contextlib import contextmanager
 from pathlib import Path
+from urllib.parse import quote
 
 import httpx
 import pytest
@@ -91,7 +92,8 @@ def make(fixture_db, state_db):
 
 
 def upload(app, headers=AMINA, data=None, name="nwwda-plan-2026-10-09.csv", project="P156634", **query):
-    return call(app, "POST", "/api/uploads", headers, params={"project_id": project, "file_name": name, **query},
+    return call(app, "POST", "/api/uploads", {**headers, "X-Strata-File-Name": quote(name)},
+                params={"project_id": project, **query},
                 content=FIXTURE.read_bytes() if data is None else data)
 
 
@@ -217,6 +219,17 @@ def test_a_question_about_the_upload_from_another_team_is_refused_and_returns_no
     seen = answer.text + json.dumps(agents[0].received, ensure_ascii=False)
     private = [kept["upload_id"], "nwwda-draft-plan.csv"] + [row["description"] for row in kept["rows"]]
     assert [value for value in private if value in seen] == []
+    # Had the agent asked for the upload by its id, the tool would have found nothing: /api/ask's tools get the
+    # Context answer_runner builds (src/strata/agent/loop.py), which carries no reader of uploads.
+    from strata.config import load_thresholds
+    from strata.dbx import viewer_from_headers
+    from strata.tools import registry
+
+    with engine_for(viewer_from_headers(CHEGE)) as engine:
+        asked = registry.call("check_plan", {"project_id": "P156634", "implementing_agency": NWWDA,
+                                             "upload_id": kept["upload_id"]},
+                              registry.Context(engine, viewer_from_headers(CHEGE), "staff", case.as_of, load_thresholds()))
+    assert (asked["abstention"], asked["rows"]) == ({"reason": "unknown_upload"}, [])
 
 
 def test_no_upload_text_ever_reaches_the_shared_search_index(fixture_db, tmp_path):
@@ -264,8 +277,9 @@ def test_no_upload_text_ever_reaches_the_shared_search_index(fixture_db, tmp_pat
     assert sorted(set(holding)) == ["strata.ops.upload_rows"] and SOURCE_TABLE not in holding
     readers = [path.relative_to(ROOT).as_posix() for path in (ROOT / "src" / "strata").rglob("*")
                if path.suffix in (".py", ".sql") and "upload_rows" in path.read_text()]
+    # The table's definition, its mask and the store; the app's settings name it only to say where uploads are kept.
     assert sorted(readers) == ["src/strata/lakehouse/masks.py", "src/strata/lakehouse/tables/ops/upload_rows.sql",
-                               "src/strata/lakehouse/tables/ops/uploads.sql",
+                               "src/strata/lakehouse/tables/ops/uploads.sql", "src/strata/server/settings.py",
                                "src/strata/uploads/sql/remove_rows.sql", "src/strata/uploads/sql/rows.sql",
                                "src/strata/uploads/store.py"]
 
@@ -309,6 +323,44 @@ def test_a_file_that_cannot_be_read_says_why_and_keeps_nothing(make, state_db, n
 
     assert answer.status_code == 422
     assert {key: answer.json()[key] for key in ("code", "kept", *details)} == {"code": code, "kept": False, **details}
+    assert kept_rows(state_db) == (0, 0)
+
+
+def test_a_file_over_the_size_limit_is_refused_before_the_server_reads_it_all(make, state_db):
+    """The server stops reading a body as soon as it passes uploads.max_size_bytes (config/uploads.toml), whether
+    the request says its length or not, and keeps nothing."""
+    limit = tomllib.loads((ROOT / "config" / "uploads.toml").read_text())["uploads"]["max_size_bytes"]
+    sent = []
+
+    async def chunks():
+        for _ in range(4 * limit // 1_000_000 + 4):
+            sent.append(1_000_000)
+            yield b"x" * 1_000_000
+
+    told = upload(make(), data=b"x" * (limit + 1))
+    streamed = call(make(), "POST", "/api/uploads", {**AMINA, "X-Strata-File-Name": "big.csv"},
+                    params={"project_id": "P156634"},
+                    content=chunks())
+
+    for answer in (told, streamed):
+        assert (answer.status_code, answer.json()["code"], answer.json()["kept"]) == (422, "size", False)
+    assert sum(sent) <= limit + 2_000_000
+    assert kept_rows(state_db) == (0, 0)
+
+
+def test_two_requests_with_one_key_keep_one_upload(make, state_db):
+    """A second request with the same idempotency key that kept its upload while this one was read and checked:
+    this one keeps nothing and answers with that upload."""
+    class Racing(UploadStore):
+        asked = 0
+
+        def by_key(self, uploader_id, idempotency_key):
+            self.asked += 1  # nothing kept yet when the request arrives; the other request's upload by the save
+            return None if self.asked == 1 else "upl-000000000099"
+
+    answer = upload(make(store=Racing(lambda: DuckDBEngine.open(state_db))), idempotency_key="key-1")
+
+    assert answer.json() == {"upload_id": "upl-000000000099", "kept": True}
     assert kept_rows(state_db) == (0, 0)
 
 
@@ -357,6 +409,19 @@ def test_an_excel_file_with_one_header_row_is_read_like_the_csv(make):
     assert answer.json()["upload"]["reading"]["unused"] == ["Remarks"]
 
 
+def test_an_excel_cell_past_the_last_column_strata_reads_is_left_unread(make):
+    """An Excel file may name a cell as far right as column XFD, the 16,384th. The reader skips any cell past
+    uploads.max_columns (config/uploads.toml), so one far cell cannot make every row that wide."""
+    limit = tomllib.loads((ROOT / "config" / "uploads.toml").read_text())["uploads"]["max_columns"]
+    header = {0: "Activity Reference No.", 1: "Description", 2: "Method", limit - 1: "Remarks", 16_383: "Far away"}
+    rows = [header, {0: "KE-NWWDA-541055-CW-RFB", 1: "Equipping of boreholes, lot 1", 2: "Request for Bids"}]
+
+    answer = upload(make(), data=xlsx(rows), name="plan.xlsx")
+
+    assert answer.status_code == 200, answer.text
+    assert answer.json()["upload"]["reading"]["unused"] == ["Remarks"]
+
+
 TOO_LONG = "1" + "0" * 27  # 28 digits, as a pasted ID number would be: more than an amount's 28 places can hold
 EXCEL_HEADER = ["Activity Reference No.", "Description", "Method", "Estimated Amount (US$)", "Signed Contract (Planned)"]
 EXCEL_ROW = ["KE-NWWDA-541055-CW-RFB", "Equipping of boreholes, lot 1", "Request for Bids"]
@@ -382,19 +447,30 @@ def test_a_value_too_large_to_read_becomes_a_data_note_on_its_row(make, state_db
     assert kept_rows(state_db) == (1, 1)
 
 
-def xlsx(rows: list[list]) -> bytes:
-    """A one-sheet Excel file, as the standard library can write one: strings inline, numbers as numbers."""
+def xlsx(rows: list[list | dict]) -> bytes:
+    """A one-sheet Excel file, as the standard library can write one: strings inline, numbers as numbers. A row is
+    its cells in order, or a dict of cells by column index from 0."""
     import io
     import zipfile
     from xml.sax.saxutils import escape
 
+    def letters(column: int) -> str:
+        name = ""
+        column += 1
+        while column:
+            column, left = divmod(column - 1, 26)
+            name = chr(65 + left) + name
+        return name
+
     def cell(column: int, value) -> str:
         if isinstance(value, int | float):
-            return f'<c r="{chr(65 + column)}1" t="n"><v>{value}</v></c>'
-        return f'<c r="{chr(65 + column)}1" t="inlineStr"><is><t>{escape(str(value))}</t></is></c>'
+            return f'<c r="{letters(column)}1" t="n"><v>{value}</v></c>'
+        return f'<c r="{letters(column)}1" t="inlineStr"><is><t>{escape(str(value))}</t></is></c>'
 
-    sheet = "".join(f'<row r="{n}">{"".join(cell(i, value) for i, value in enumerate(row))}</row>'
-                    for n, row in enumerate(rows, 1))
+    def cells(row: list | dict) -> str:
+        return "".join(cell(i, value) for i, value in (row.items() if isinstance(row, dict) else enumerate(row)))
+
+    sheet = "".join(f'<row r="{n}">{cells(row)}</row>' for n, row in enumerate(rows, 1))
     main = "http://schemas.openxmlformats.org/spreadsheetml/2006/main"
     rels = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
     out = io.BytesIO()

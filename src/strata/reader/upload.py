@@ -30,6 +30,7 @@ from pathlib import PurePosixPath
 
 from defusedxml import ElementTree
 
+from strata.config import Uploads
 from strata.lakehouse.clean import parse_date
 from strata.reader.step import AMOUNTS, REFERENCE, SECTION_NAMES, VALUES, _amount, _known, squash, tidy
 from strata.reader.step_columns import ACTUAL, DESCRIPTION, NAMES, PLANNED, Registry
@@ -38,7 +39,6 @@ from strata.reader.step_columns import REFERENCE as REFERENCE_HALF
 ACTIVITY = "activity"
 EXCEL_EPOCH = dt.date(1899, 12, 30)  # day 0 of Excel's dates on Windows and Mac since 2011
 EXCEL_DAYS = range(20_000, 80_000)  # 1954 to 2119: a number in a date column outside these is not a date
-UNZIPPED_LIMIT = 100_000_000  # the most an Excel file may hold once unzipped
 LONGEST_NUMBER = 30  # an Excel number with more digits than this before or after the point is read as its text
 ONE_ROW_STEP = re.compile(r"^(?P<step>.+?)\s*[(\[:-]?\s*(?P<head>planned|actual)\s*[)\]]?$", re.I)
 MAIN = "{http://schemas.openxmlformats.org/spreadsheetml/2006/main}"
@@ -100,9 +100,9 @@ def _column_index(reference: str) -> int:
     return index - 1
 
 
-def _xlsx_sheets(data: bytes) -> list[tuple[str | None, list[list]]]:
+def _xlsx_sheets(data: bytes, limits: Uploads) -> list[tuple[str | None, list[list]]]:
     with zipfile.ZipFile(io.BytesIO(data)) as book:
-        if sum(info.file_size for info in book.infolist()) > UNZIPPED_LIMIT:
+        if sum(info.file_size for info in book.infolist()) > limits.max_unzipped_bytes:
             raise UploadError("unreadable")
         names = set(book.namelist())
 
@@ -125,6 +125,8 @@ def _xlsx_sheets(data: bytes) -> list[tuple[str | None, list[list]]]:
                 cells: dict[int, object] = {}
                 for position, cell in enumerate(row.iter(f"{MAIN}c")):
                     index = _column_index(cell.get("r")) if cell.get("r") else position
+                    if index >= limits.max_columns:  # past the last column Strata reads
+                        continue
                     kind, value = cell.get("t"), cell.find(f"{MAIN}v")
                     if kind == "inlineStr":
                         cells[index] = "".join(text.text or "" for text in cell.iter(f"{MAIN}t"))
@@ -147,11 +149,11 @@ def _xlsx_sheets(data: bytes) -> list[tuple[str | None, list[list]]]:
         return sheets
 
 
-def sheets_of(file_name: str, data: bytes) -> list[tuple[str | None, list[list]]]:
+def sheets_of(file_name: str, data: bytes, limits: Uploads) -> list[tuple[str | None, list[list]]]:
     """Each sheet of the file, with its rows of cells: text, a Decimal for an Excel number, or None."""
     try:
         if file_name.lower().endswith(".xlsx"):
-            return _xlsx_sheets(data)
+            return _xlsx_sheets(data, limits)
         return _csv_sheets(data)
     except UploadError:
         raise
@@ -340,7 +342,7 @@ def read_upload(file_name: str, data: bytes, registry: Registry) -> Reading:
     used: list[dict] = []
     unused: list[str] = []
     found_header = False
-    for sheet, cells in sheets_of(file_name, data):
+    for sheet, cells in sheets_of(file_name, data, limits):
         section = SECTION_NAMES.get(squash(sheet)) if sheet else None
         index = 0
         while index < len(cells):

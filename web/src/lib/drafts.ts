@@ -169,6 +169,8 @@ export type DatesActivity = {
   needs_start_date: boolean | null;
   abstain_all: { n: number } | null;
   steps: DatesStep[];
+  // The steps that can take a date and how many each choice dated, counted by the server after the verifier.
+  counts: { steps: number; dated: { middle: number; cautious: number } };
 };
 export type DatesView = {
   choice: "middle" | "cautious";

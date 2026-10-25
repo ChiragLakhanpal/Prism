@@ -82,19 +82,19 @@ def answers(folder: Path, fixture_db: Path = FIXTURE_DB) -> dict[str, str]:
             found["me-officer.json"] = _text(await client.get("/api/me", headers=AMINA))
             found["uploads-form-officer.json"] = _text(await client.get("/api/uploads/form", headers=AMINA))
             found["uploads-form-staff.json"] = _text(await client.get("/api/uploads/form", headers=DANA))
-            kept = await client.post("/api/uploads", headers=AMINA, content=FIXTURE.read_bytes(),
-                                     params={"project_id": "P156634", "file_name": "nwwda-plan-2026-10-09.csv"})
+            kept = await client.post("/api/uploads", headers={**AMINA, "X-Strata-File-Name": "nwwda-plan-2026-10-09.csv"},
+                                     content=FIXTURE.read_bytes(), params={"project_id": "P156634"})
             found["upload-kept.json"] = _text(kept)
             upload_id = kept.json()["upload_id"]
             found["upload-check-nwwda.json"] = _text(await client.get(f"/api/uploads/{upload_id}", headers=AMINA))
             found["uploads-list-nwwda.json"] = _text(await client.get("/api/uploads", headers=AMINA))
             found["upload-not-found.json"] = _text(await client.get(f"/api/uploads/{upload_id}", headers=DANA))
             found["upload-missing-columns.json"] = _text(await client.post(
-                "/api/uploads", headers=AMINA, params={"project_id": "P156634", "file_name": "draft-plan.csv"},
+                "/api/uploads", headers={**AMINA, "X-Strata-File-Name": "draft-plan.csv"}, params={"project_id": "P156634"},
                 content=b"Activity Reference No. / Description,Review Type\r\n / New works,Post\r\n"))
         async with httpx.AsyncClient(transport=httpx.ASGITransport(app=hand), base_url="http://strata.test") as client:
-            kept = await client.post("/api/uploads", headers=AMINA, content=hand_file(),
-                                     params={"project_id": HAND_PROJECT, "file_name": "team-a-plan.csv"})
+            kept = await client.post("/api/uploads", headers={**AMINA, "X-Strata-File-Name": "team-a-plan.csv"},
+                                     content=hand_file(), params={"project_id": HAND_PROJECT})
             source = f"upload:{kept.json()['upload_id']}"
             sent = await client.post("/api/drafts", headers=AMINA, json={"kind": "step_rows", "source": source,
                                                                          "idempotency_key": "key-1"})

@@ -11,14 +11,15 @@ reads only the environment it is given:
   service principal: usage events are written to strata.ops.usage_events, each answer stream's run
   to strata.ops.agent_runs, each source a viewer opens in the evidence drawer to
   strata.ops.evidence_opened, each side of a disagreement a person keeps to strata.ops.disagreement_choices
-  (ticket 23), drafts to strata.ops.drafts and the tables beside it (ticket 35), and
+  (ticket 23), drafts to strata.ops.drafts and the tables beside it (ticket 35), an implementing agency's
+  uploads to strata.ops.uploads and upload_rows (ticket 38), and
   each decision or label a person gives a candidate pair of supplier name matching to
   strata.ops.supplier_review_decisions or supplier_pair_labels, and each lesson reviewer's act to the
   lesson review tables (ticket 29), with its token. Each row names the viewer the Databricks App
   forwarded. Without them, the server
   keeps no usage events, records no opened sources, decisions, labels or lesson reviews and keeps no drafts, and runs go
   to the server log only. On this computer, STRATA_APP_STATE_FILE can name a DuckDB file that keeps the
-  opened sources and the drafts instead.
+  opened sources, the drafts and the uploads instead.
 - PGHOST, PGPORT, PGDATABASE, PGUSER and PGSSLMODE, which the platform sets for the app's Lakebase database
   resource: app state lives there (ADR 0005; src/strata/appstate), starting with the packages a person
   plans and the plan checks they open (ticket 15). The app signs in as its own service principal, with the
@@ -75,6 +76,7 @@ from strata.server.choices import ChoiceLog
 from strata.server.evidence import OpenedLog
 from strata.server.suppliers import SupplierLog
 from strata.server.usage import UsageLog
+from strata.uploads.store import UploadStore
 
 ROOT = Path(__file__).resolve().parents[3]
 WEB_DIST = ROOT / "web" / "dist"
@@ -176,6 +178,7 @@ def app_from_env(environ: Mapping[str, str] | None = None) -> FastAPI:
                       opened=OpenedLog(state) if state else None,
                       choices=ChoiceLog(state) if state else None,
                       drafts=DraftStore(state) if state else None,
+                      uploads=UploadStore(state) if state else None,
                       follows=FollowStore(state) if state else None,
                       packages=PackageStore(app_state) if app_state else None,
                       package_reader=agent_runner.agent_from_environment(environ, "package_reader"),

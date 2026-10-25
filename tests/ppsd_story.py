@@ -22,6 +22,7 @@ import httpx
 
 import lesson_scenario as scenario
 from strata import appstate
+from strata.agent.runs import RunLog
 from strata.agent.scripted import WRITER_CASES, ScriptedAgent, ScriptedJudge, load_cases
 from strata.config import load_roles
 from strata.drafts.store import DraftStore
@@ -91,6 +92,7 @@ class Story:
             return DuckDBEngine.open(self.state_db)
 
         self.app = create_app(engine_for=reading, drafts=DraftStore(state), opened=OpenedLog(state, now=self.clock),
+                              runs=RunLog(state),
                               choices=ChoiceLog(state, now=self.clock, new_id=lambda: next(choice_ids)),
                               packages=PackageStore(state), writers=lambda kind: ScriptedAgent(self.cases[self.case]),
                               judge=Judge(), access=access or Access(load_roles(), StaticGroups(GROUPS)),

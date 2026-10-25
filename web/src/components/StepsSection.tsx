@@ -73,7 +73,7 @@ export type StartField = {
 
 const EMPTY_START: StartField = { value: "", error: null, committing: false, slow: false, status: "" };
 
-type Opener = (id: string, element: HTMLElement) => void;
+export type Opener = (id: string, element: HTMLElement) => void;
 
 // ── Small helpers ────────────────────────────────────────────────────────
 
@@ -294,7 +294,7 @@ function ChoiceControl({
 
 // ── One step's cells ─────────────────────────────────────────────────────
 
-type Row = {
+export type Row = {
   step: StepDate;
   entry: StepEntry;
   previous: StepEntry | null;
@@ -324,8 +324,8 @@ function Abstention({ children, days }: { children: ReactNode; days?: ReactNode 
 
 // What hover or focus on a step's planned date, or on the days of a step that needs an earlier one, says about it,
 // and what selecting it opens: the step's comparable packages. One place, so the row and the caption's signed date
-// say the same.
-function dateCheck(point: StepPoint, row: Row, family: StepFamily, onOpen: Opener): NumCheck {
+// say the same. A draft of planned dates (ticket 38) uses it for its own dates.
+export function dateCheck(point: StepPoint, row: Row, family: StepFamily, onOpen: Opener): NumCheck {
   const n = row.step.comparables_n ?? 0;
   const slots = {
     longer: number(point.longer ?? 0),

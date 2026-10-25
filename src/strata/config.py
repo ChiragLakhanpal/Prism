@@ -2231,6 +2231,8 @@ class Uploads:
     step_actual: str
     one_row: str
     aliases: dict[str, tuple[str, ...]]
+    max_unzipped_bytes: int  # the most an Excel file may hold once unzipped
+    max_columns: int  # the last column read on a sheet
 
 
 def load_uploads(path: Path = CONFIG_DIR / "uploads.toml") -> Uploads:
@@ -2239,7 +2241,7 @@ def load_uploads(path: Path = CONFIG_DIR / "uploads.toml") -> Uploads:
     data = _read(path)
     _Entry(path, "the file", data).only({"uploads", "columns", "steps", "aliases"})
     limits = _Entry(path, "uploads", data.get("uploads"))
-    limits.only({"accept", "max_size_bytes", "max_rows", "format"})
+    limits.only({"accept", "max_size_bytes", "max_rows", "format", "max_unzipped_bytes", "max_columns"})
     accept = limits.texts("accept")
     if not accept or not all(ending.startswith(".") for ending in accept):
         limits._fail("accept", "must list file name endings, such as .xlsx")
@@ -2263,7 +2265,8 @@ def load_uploads(path: Path = CONFIG_DIR / "uploads.toml") -> Uploads:
     for key, names in (data.get("aliases") or {}).items():
         aliases[key] = _Entry(path, "aliases", {key: names}).texts(key)
     return Uploads(accept, limits.integer("max_size_bytes"), limits.integer("max_rows"), limits.text("format"),
-                   tuple(columns), steps.text("planned"), steps.text("actual"), steps.text("one_row"), aliases)
+                   tuple(columns), steps.text("planned"), steps.text("actual"), steps.text("one_row"), aliases,
+                   limits.integer("max_unzipped_bytes"), limits.integer("max_columns"))
 
 
 # ── The nightly job's quality checks ─────────────────────────────────────

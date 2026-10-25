@@ -562,3 +562,22 @@ def test_an_officer_drafts_the_agency_kind_and_world_bank_staff_the_staff_kind(a
 
     assert (officer.status_code, officer.json()["code"]) == (403, "not_staff")
     assert (staff.status_code, staff.json()["code"]) == (403, "not_agency_team")
+
+
+def test_an_officers_run_row_keeps_none_of_the_teams_words(agency_story):
+    """strata.ops.agent_runs is read by every account user, so an agency draft's run keeps the kind's key for its
+    question and only the reason each removed sentence was removed, never the team's package or the sentences."""
+    story = agency_story
+    sent, draft_id = story.write("ppsd-rows-a-row-removed", {"kind": "ppsd_rows_agency", "package": story_of.PACKAGE,
+                                                             "criteria": story_of.INDIA, "idempotency_key": "agency-2"})
+    assert draft_id, sent
+    removed = story.get(f"/api/drafts/{draft_id}").json()["removed"]
+    assert len(removed) == 2
+
+    with DuckDBEngine.open(story.state_db, read_only=True) as engine:
+        result = engine.run("SELECT question, removed FROM strata.ops.agent_runs")
+    [(question, logged)] = result.rows
+    assert question == "ppsd_rows_agency"
+    assert json.loads(logged) == [{"reason": "id_not_returned"}] * 2
+    texts = [item[key] for item in removed for key in ("sentence", "text") if item.get(key)]
+    assert texts and [text for text in texts if text in logged] == []

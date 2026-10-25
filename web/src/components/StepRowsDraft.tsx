@@ -1,13 +1,19 @@
 // A draft of planned dates (ticket 38; the 38 brief, sections 3.5, 4.2.3 and 6.7): the one choice of dates for the
 // whole draft, what the STEP rows file leaves empty, the activity overview table, then one section per activity with
 // its Step table, all open, in the order of the officer's file. Every date, count and day is the server's: the page
-// adds no days and counts nothing.
+// adds no days and counts nothing. A step's count, and its planned date, open its list of comparable packages in the
+// evidence drawer, as section 2 of the package workspace does (DESIGN.md, Step table), from the list the draft keeps.
 import type { ReactNode } from "react";
 import { copy } from "../copy";
+import type { EvidenceEvent } from "../lib/answer";
 import { formatCount, formatDate } from "../lib/format";
 import type { DatesActivity, DatesStep, DatesView } from "../lib/drafts";
+import type { StepDate, StepListRow, StepPoint } from "../lib/steps";
+import { familyStep, stepFamily, type StepFamily } from "../steps";
 import { Fill } from "./Fill";
+import { Num } from "./Num";
 import { SegmentedControl } from "./SegmentedControl";
+import { dateCheck, type Opener, type Row } from "./StepsSection";
 
 const kind = copy.draft.kinds.step_rows;
 const words = kind.dates;
@@ -28,9 +34,25 @@ function signedCell(activity: DatesActivity, choice: "middle" | "cautious", min:
   );
 }
 
-function stepCell(step: DatesStep, choice: "middle" | "cautious", min: number, abstainAll: boolean): ReactNode {
+// The step as the drawer's list holds it, with its place in the family, so its date and count open that list. A step
+// whose list the draft does not keep (no comparable package recorded it) opens nothing.
+function rowOf(activity: DatesActivity, index: number, lists: Record<string, EvidenceEvent>): { row: Row; family: StepFamily } | null {
+  const step = activity.steps[index];
+  const held = lists[step.list_id];
+  const family = stepFamily(activity.family);
+  if (!held || held.kind !== "steps" || !family) return null;
+  const fallback = { key: step.step_key, label: step.label ?? step.step_key, step_name: step.step_name ?? step.step_key, phrase: step.label ?? step.step_key, stage: null };
+  const previous = index > 0 ? familyStep(family, activity.steps[index - 1].step_key) : null;
+  const row: Row = { step: (held.row as StepListRow).step as StepDate, entry: familyStep(family, step.step_key) ?? fallback, previous, listId: step.list_id };
+  return { row, family };
+}
+
+function stepCell(step: DatesStep, choice: "middle" | "cautious", min: number, abstainAll: boolean, held: { row: Row; family: StepFamily } | null, onOpen: Opener): ReactNode {
   if (step.removed) return <span className="text-small text-ink-muted">{words.removed}</span>;
   const value = step[choice];
+  if (value?.planned_date && held) {
+    return <Num date={value.planned_date} style="table" check={dateCheck(value as StepPoint, held.row, held.family, onOpen)} />;
+  }
   if (value?.planned_date) return <span className="tabular-nums">{short(value.planned_date)}</span>;
   if (step.abstain_reason === "not_in_plan") return <span className="text-small text-ink-muted">{words.notInPlan}</span>;
   if (step.abstain_reason === "not_reached") return <span className="text-small text-ink-muted">{words.notReached}</span>;
@@ -45,16 +67,35 @@ function stepCell(step: DatesStep, choice: "middle" | "cautious", min: number, a
   return <span className="text-small text-ink-muted">{words.undated}</span>;
 }
 
-function datedCount(activity: DatesActivity, choice: "middle" | "cautious") {
-  const dateable = activity.steps.filter((step) => !step.is_anchor);
-  return { dated: dateable.filter((step) => step[choice]?.planned_date).length, total: dateable.length };
+// A step's count of comparable packages: a button that opens their list when the draft keeps it.
+function countCell(step: DatesStep, held: { row: Row; family: StepFamily } | null, onOpen: Opener): ReactNode {
+  const n = step.comparables_n;
+  if (n === null) return "";
+  if (!held || n === 0) return <Num value={n} options={{ compact: false }} />;
+  return (
+    // Padded 12 px each side and pulled back as far, so a one-digit count's target is at least 24 px wide.
+    <Num
+      value={n}
+      options={{ compact: false }}
+      className="-mx-3 px-3 text-small"
+      check={{
+        tooltip: copy.stepDates.tips.count(held.row.entry.phrase),
+        name: copy.stepDates.countName(String(n), held.row.entry.label),
+        onOpen: (element) => onOpen(step.list_id, element),
+      }}
+    />
+  );
 }
 
-export function StepRowsDraft({ view, editable, onChoice }: {
+export function StepRowsDraft({ view, lists, editable, onChoice, onOpen }: {
   view: DatesView;
+  // The lists of comparable packages the draft keeps, by their ids, as the evidence drawer shows them.
+  lists: Record<string, EvidenceEvent>;
   // Only the author switches the choice, and only in Draft; once checked, the control becomes a sentence.
   editable: boolean;
   onChoice: (choice: "middle" | "cautious") => void;
+  // Opens the drawer at a list, with the number that opened it as the place focus goes back to.
+  onOpen: Opener;
 }) {
   const choice = view.choice;
   const min = view.min_comparables ?? 0;
@@ -97,7 +138,7 @@ export function StepRowsDraft({ view, editable, onChoice }: {
           </thead>
           <tbody>
             {view.activities.map((activity) => {
-              const counted = datedCount(activity, choice);
+              const counted = { dated: activity.counts.dated[choice], total: activity.counts.steps };
               return (
                 <tr key={activity.key} className="border-t border-line align-top" data-overview-row>
                   <th scope="row" className="px-3 py-3 text-left font-normal">
@@ -139,14 +180,17 @@ export function StepRowsDraft({ view, editable, onChoice }: {
                 </tr>
               </thead>
               <tbody>
-                {activity.steps.map((step) => (
-                  <tr key={step.step_key} className="border-t border-line align-top" data-step={step.step_key}>
-                    <th scope="row" className="px-3 py-2 text-left font-normal text-ink">{step.label}</th>
-                    <td className="px-3 py-2 tabular-nums">{step.plan_first_date ? short(step.plan_first_date) : ""}</td>
-                    <td className="px-3 py-2">{stepCell(step, choice, min, Boolean(activity.abstain_all))}</td>
-                    <td className="px-3 py-2 text-right tabular-nums">{step.comparables_n ?? ""}</td>
-                  </tr>
-                ))}
+                {activity.steps.map((step, index) => {
+                  const held = rowOf(activity, index, lists);
+                  return (
+                    <tr key={step.step_key} className="border-t border-line align-top" data-step={step.step_key}>
+                      <th scope="row" className="px-3 py-2 text-left font-normal text-ink">{step.label}</th>
+                      <td className="px-3 py-2 tabular-nums">{step.plan_first_date ? short(step.plan_first_date) : ""}</td>
+                      <td className="px-3 py-2">{stepCell(step, choice, min, Boolean(activity.abstain_all), held, onOpen)}</td>
+                      <td className="px-3 py-2 text-right tabular-nums">{countCell(step, held, onOpen)}</td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           )}

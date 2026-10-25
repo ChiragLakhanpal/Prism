@@ -82,10 +82,15 @@ test("Uploading the fixture plan opens its check: nine activities with the label
   await page.goto("/packages/check");
   await page.getByLabel("Procurement Plan file").setInputFiles(fileURLToPath(new URL("../../tests/fixtures/uploads/nwwda-plan-2026-10-09.csv", import.meta.url)));
   await expect(page.locator("[data-file-status]")).toContainText("nwwda-plan-2026-10-09.csv");
+  const sent = page.waitForRequest((request) => request.method() === "POST" && new URL(request.url()).pathname === "/api/uploads");
   await page.getByRole("button", { name: "Upload and check" }).click();
 
   await expect(page).toHaveURL(UPLOAD);
   expect(asked).toContain("POST /api/uploads");
+  // The file's name travels in a header, never in the address a proxy's log may keep.
+  const request = await sent;
+  expect(request.url()).not.toContain("nwwda-plan");
+  expect(request.headers()["x-strata-file-name"]).toBe("nwwda-plan-2026-10-09.csv");
   await expect(page.locator("[data-check-pill]")).toHaveText("9 activities checked");
   expect(await shownText(page, "[data-upload-check-page] [data-access-label]")).toBe(ACCESS);
   await expect(page.getByRole("button", { name: "Draft planned dates (9 activities)" })).toBeVisible();
@@ -143,4 +148,21 @@ test("A draft of planned dates shows each activity's dates in the file's order, 
   await expect(bar.getByRole("button", { name: "Export STEP rows" })).toBeVisible();
   await expect(bar).toContainText("You opened 0 of 5 lists of comparable packages");
   expect(await violations(page)).toEqual([]);
+});
+
+test("A count of comparable packages on a draft of planned dates opens its list, and the bar counts it as opened", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  const asked = await serve(page, { "GET /api/drafts/draft-0002": { body: await recorded("drafts-step-rows-draft.json") } });
+  await page.goto("/drafts/draft-0002");
+  const bar = page.getByRole("region", { name: "Check and export" });
+  await expect(bar).toContainText("You opened 0 of 5 lists of comparable packages");
+
+  // The hand-made set's 25 comparable packages, C01 to C25 (tests/step_set.py), behind the bid invitation's count.
+  await page.locator("#activity-1 [data-step='bid_invitation']").getByRole("button", { name: /^25 comparable packages/ }).click();
+
+  const drawer = page.getByRole("dialog");
+  await expect(drawer.locator("[data-step-entry]")).toHaveCount(25);
+  await expect(drawer.locator("[data-step-entry='KE-HAND-900001-CW-RFB']")).toBeVisible();
+  await expect(bar).toContainText("You opened 1 of 5 lists of comparable packages");
+  expect(asked).toContain("POST /api/evidence/opened");
 });

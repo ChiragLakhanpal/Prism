@@ -4,11 +4,13 @@
   agency officer, their agency, the projects whose records name it, its latest published plans, how many earlier
   uploads the team kept, the columns the reader needs and also reads (the STEP column registry), and the file
   limits. A viewer on no implementing agency's team gets officer false and no agency.
-- POST /api/uploads?project_id=&file_name=&idempotency_key= takes the file itself as the request's body, reads it,
-  checks it with check_plan, and only then keeps its activities in strata.ops with the uploader's team. It answers
-  with the upload's id and its check, or 422 with the reading's error code and kept false, when nothing was kept.
-  The file is held in memory for the request and never written anywhere. A second request with the same
-  idempotency key answers with the upload it kept and keeps nothing new.
+- POST /api/uploads?project_id=&idempotency_key= takes the file itself as the request's body and its name,
+  percent-encoded, in the X-Strata-File-Name header, so the name never sits in an address a proxy's log may keep.
+  It reads the file, checks it with check_plan, and only then keeps its activities in strata.ops with the
+  uploader's team. It answers with the upload's id and its check, or 422 with the reading's error code and kept
+  false, when nothing was kept. The file is held in memory for the request and never written anywhere, and the
+  server stops reading a body that passes uploads.max_size_bytes. A second request with the same idempotency key
+  answers with the upload it kept and keeps nothing new.
 - GET /api/uploads lists the uploads the viewer's team kept, newest first, for the Packages tab.
 - GET /api/uploads/{upload_id} gives the upload's check, run again on today's records, with how the file was read.
   An upload of another team, or one that does not exist, gets the same 404, so a link reveals nothing.
@@ -29,7 +31,9 @@ import uuid
 from collections.abc import Callable, Mapping
 from typing import Any
 
-from fastapi import Depends, FastAPI, Query, Request
+from urllib.parse import unquote
+
+from fastapi import Depends, FastAPI, Header, Query, Request
 from fastapi.responses import JSONResponse
 
 from strata.dbx import Viewer, viewer_from_headers
@@ -192,9 +196,13 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: UploadStore
 
     @app.post("/api/uploads")
     async def upload(request: Request, project_id: str = Query(pattern=r"^P\d{6}$"),
-                     file_name: str = Query(min_length=1, max_length=255),
+                     sent_name: str = Header(alias="X-Strata-File-Name", min_length=1, max_length=2048),
                      idempotency_key: str | None = Query(None, max_length=128), view: str = "staff",
                      viewer: Viewer = Depends(current_viewer)):
+        # The file's name comes percent-encoded in a header, never in the address, where a proxy's log may keep it.
+        file_name = unquote(sent_name).strip()
+        if not file_name or len(file_name) > 255:
+            return refused(422, "bad_request", kept=False)
         if not viewer.user_id:
             return refused(401, "no_identity")
         if view != STAFF:
@@ -211,8 +219,10 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: UploadStore
                 return failed("an earlier upload", error)
             if made is not None:
                 return {"upload_id": made, "kept": True}
-        data = await request.body()
         columns = step_columns()
+        data = await _body(request, columns.uploads.max_size_bytes)
+        if data is None:
+            return refused(422, "size", kept=False, file_name=file_name, max_size=columns.uploads.max_size_bytes)
         try:
             with engine_for(viewer) as engine:
                 named = [entry["project_id"] for entry in agency_projects(engine, agency, today())]
@@ -238,6 +248,10 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: UploadStore
         kept = NewUpload(upload_id, access.team(viewer).key, viewer.user_id, viewer.name, idempotency_key, project_id,
                          agency, file_name, reading_of(reading, file_name), at, rows)
         try:
+            # A second request with the same key may have kept its upload while this one was read and checked.
+            made = store.by_key(viewer.user_id, idempotency_key) if idempotency_key else None
+            if made is not None:
+                return {"upload_id": made, "kept": True}
             store.create(kept)
         except PermissionDenied:
             return refused(503, "upload_store", kept=False, file_name=file_name, trace_id=reference())
@@ -291,6 +305,20 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: UploadStore
             return refused(404, "unknown_evidence")
         return {"id": f"{ROW_ID}{upload_id}:{position}", "kind": "upload_row",
                 "upload": listing(saved, viewer), "row": row}
+
+
+async def _body(request: Request, limit: int) -> bytes | None:
+    """The request's body, or None as soon as it passes the limit: a length the request states over the limit is
+    refused unread, and a body with no stated length is read only until it passes the limit."""
+    stated = request.headers.get("content-length", "")
+    if stated.isdigit() and int(stated) > limit:
+        return None
+    data = bytearray()
+    async for chunk in request.stream():
+        data.extend(chunk)
+        if len(data) > limit:
+            return None
+    return bytes(data)
 
 
 def _stored(row: dict) -> dict:

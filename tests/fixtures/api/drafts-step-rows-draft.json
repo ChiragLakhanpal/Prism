@@ -34,8 +34,10 @@
   "evidence": {
     "steps:upload:upl-000000000001:1:bid_invitation": {
       "id": "steps:upload:upl-000000000001:1:bid_invitation",
-      "kind": "step_list",
+      "kind": "steps",
       "tool": "estimate_time",
+      "stratum": "How",
+      "short_name": null,
       "row": {
         "evidence_id": "steps:upload:upl-000000000001:1:bid_invitation",
         "public_from": "2021-01-15",
@@ -65,13 +67,205 @@
           "days_relation": "after_plan",
           "longer": 5,
           "in10": 2
-        }
-      }
+        },
+        "family": "goods",
+        "step": {
+          "step_key": "bid_invitation",
+          "is_anchor": false,
+          "comparables_n": 25,
+          "reached_n": 25,
+          "comparables": [
+            {
+              "step_reference": "KE-HAND-900001-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900001-CW-RFB",
+              "days": -4,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900002-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900002-CW-RFB",
+              "days": -3,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900003-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900003-CW-RFB",
+              "days": -2,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900004-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900004-CW-RFB",
+              "days": -1,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900005-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900005-CW-RFB",
+              "days": 0,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900006-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900006-CW-RFB",
+              "days": 1,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900007-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900007-CW-RFB",
+              "days": 2,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900008-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900008-CW-RFB",
+              "days": 3,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900009-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900009-CW-RFB",
+              "days": 4,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900010-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900010-CW-RFB",
+              "days": 5,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900011-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900011-CW-RFB",
+              "days": 6,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900012-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900012-CW-RFB",
+              "days": 7,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900013-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900013-CW-RFB",
+              "days": 8,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900014-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900014-CW-RFB",
+              "days": 9,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900015-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900015-CW-RFB",
+              "days": 10,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900016-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900016-CW-RFB",
+              "days": 11,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900017-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900017-CW-RFB",
+              "days": 12,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900018-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900018-CW-RFB",
+              "days": 13,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900019-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900019-CW-RFB",
+              "days": 14,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900020-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900020-CW-RFB",
+              "days": 15,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900021-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900021-CW-RFB",
+              "days": 16,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900022-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900022-CW-RFB",
+              "days": 17,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900023-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900023-CW-RFB",
+              "days": 18,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900024-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900024-CW-RFB",
+              "days": 19,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900025-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900025-CW-RFB",
+              "days": 20,
+              "still_open": false
+            }
+          ],
+          "plan_first_date": "2021-03-01",
+          "plan_first_version_date": "2021-01-15",
+          "plan_latest_date": "2021-03-01",
+          "plan_latest_version_date": "2021-01-15",
+          "abstain_reason": null,
+          "middle": {
+            "planned_date": "2021-03-09",
+            "days": 8,
+            "days_relation": "after_plan",
+            "longer": 12,
+            "in10": 5
+          },
+          "cautious": {
+            "planned_date": "2021-03-16",
+            "days": 15,
+            "days_relation": "after_plan",
+            "longer": 5,
+            "in10": 2
+          }
+        },
+        "previous_key": null,
+        "basis": "delay",
+        "records_through": "2020-08-03",
+        "sources": [
+          "Procurement Notices",
+          "Contract Awards in Investment Project Financing (Since FY 2020)",
+          "Documents & Reports: Documents API",
+          "World Bank Projects & Operations"
+        ],
+        "abstain_all": false,
+        "min_comparables": 20
+      },
+      "highlights": []
     },
     "steps:upload:upl-000000000001:1:bidding_document_issued": {
       "id": "steps:upload:upl-000000000001:1:bidding_document_issued",
-      "kind": "step_list",
+      "kind": "steps",
       "tool": "estimate_time",
+      "stratum": "How",
+      "short_name": null,
       "row": {
         "evidence_id": "steps:upload:upl-000000000001:1:bidding_document_issued",
         "public_from": "2021-01-15",
@@ -101,13 +295,205 @@
           "days_relation": "after_plan",
           "longer": 5,
           "in10": 2
-        }
-      }
+        },
+        "family": "goods",
+        "step": {
+          "step_key": "bidding_document_issued",
+          "is_anchor": false,
+          "comparables_n": 25,
+          "reached_n": 25,
+          "comparables": [
+            {
+              "step_reference": "KE-HAND-900001-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900001-CW-RFB",
+              "days": -4,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900002-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900002-CW-RFB",
+              "days": -3,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900003-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900003-CW-RFB",
+              "days": -2,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900004-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900004-CW-RFB",
+              "days": -1,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900005-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900005-CW-RFB",
+              "days": 0,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900006-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900006-CW-RFB",
+              "days": 1,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900007-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900007-CW-RFB",
+              "days": 2,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900008-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900008-CW-RFB",
+              "days": 3,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900009-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900009-CW-RFB",
+              "days": 4,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900010-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900010-CW-RFB",
+              "days": 5,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900011-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900011-CW-RFB",
+              "days": 6,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900012-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900012-CW-RFB",
+              "days": 7,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900013-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900013-CW-RFB",
+              "days": 8,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900014-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900014-CW-RFB",
+              "days": 9,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900015-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900015-CW-RFB",
+              "days": 10,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900016-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900016-CW-RFB",
+              "days": 11,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900017-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900017-CW-RFB",
+              "days": 12,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900018-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900018-CW-RFB",
+              "days": 13,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900019-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900019-CW-RFB",
+              "days": 14,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900020-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900020-CW-RFB",
+              "days": 15,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900021-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900021-CW-RFB",
+              "days": 16,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900022-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900022-CW-RFB",
+              "days": 17,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900023-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900023-CW-RFB",
+              "days": 18,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900024-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900024-CW-RFB",
+              "days": 19,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900025-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900025-CW-RFB",
+              "days": 20,
+              "still_open": false
+            }
+          ],
+          "plan_first_date": "2021-03-08",
+          "plan_first_version_date": "2021-01-15",
+          "plan_latest_date": "2021-03-08",
+          "plan_latest_version_date": "2021-01-15",
+          "abstain_reason": null,
+          "middle": {
+            "planned_date": "2021-03-16",
+            "days": 8,
+            "days_relation": "after_plan",
+            "longer": 12,
+            "in10": 5
+          },
+          "cautious": {
+            "planned_date": "2021-03-23",
+            "days": 15,
+            "days_relation": "after_plan",
+            "longer": 5,
+            "in10": 2
+          }
+        },
+        "previous_key": "bid_invitation",
+        "basis": "delay",
+        "records_through": "2020-08-03",
+        "sources": [
+          "Procurement Notices",
+          "Contract Awards in Investment Project Financing (Since FY 2020)",
+          "Documents & Reports: Documents API",
+          "World Bank Projects & Operations"
+        ],
+        "abstain_all": false,
+        "min_comparables": 20
+      },
+      "highlights": []
     },
     "steps:upload:upl-000000000001:1:bid_opening": {
       "id": "steps:upload:upl-000000000001:1:bid_opening",
-      "kind": "step_list",
+      "kind": "steps",
       "tool": "estimate_time",
+      "stratum": "How",
+      "short_name": null,
       "row": {
         "evidence_id": "steps:upload:upl-000000000001:1:bid_opening",
         "public_from": "2021-01-15",
@@ -137,13 +523,205 @@
           "days_relation": "after_plan",
           "longer": 5,
           "in10": 2
-        }
-      }
+        },
+        "family": "goods",
+        "step": {
+          "step_key": "bid_opening",
+          "is_anchor": false,
+          "comparables_n": 25,
+          "reached_n": 25,
+          "comparables": [
+            {
+              "step_reference": "KE-HAND-900001-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900001-CW-RFB",
+              "days": -4,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900002-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900002-CW-RFB",
+              "days": -3,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900003-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900003-CW-RFB",
+              "days": -2,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900004-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900004-CW-RFB",
+              "days": -1,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900005-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900005-CW-RFB",
+              "days": 0,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900006-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900006-CW-RFB",
+              "days": 1,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900007-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900007-CW-RFB",
+              "days": 2,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900008-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900008-CW-RFB",
+              "days": 3,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900009-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900009-CW-RFB",
+              "days": 4,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900010-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900010-CW-RFB",
+              "days": 5,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900011-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900011-CW-RFB",
+              "days": 6,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900012-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900012-CW-RFB",
+              "days": 7,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900013-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900013-CW-RFB",
+              "days": 8,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900014-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900014-CW-RFB",
+              "days": 9,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900015-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900015-CW-RFB",
+              "days": 10,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900016-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900016-CW-RFB",
+              "days": 11,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900017-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900017-CW-RFB",
+              "days": 12,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900018-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900018-CW-RFB",
+              "days": 13,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900019-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900019-CW-RFB",
+              "days": 14,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900020-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900020-CW-RFB",
+              "days": 15,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900021-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900021-CW-RFB",
+              "days": 16,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900022-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900022-CW-RFB",
+              "days": 17,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900023-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900023-CW-RFB",
+              "days": 18,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900024-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900024-CW-RFB",
+              "days": 19,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900025-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900025-CW-RFB",
+              "days": 20,
+              "still_open": false
+            }
+          ],
+          "plan_first_date": "2021-04-07",
+          "plan_first_version_date": "2021-01-15",
+          "plan_latest_date": "2021-04-07",
+          "plan_latest_version_date": "2021-01-15",
+          "abstain_reason": null,
+          "middle": {
+            "planned_date": "2021-04-15",
+            "days": 8,
+            "days_relation": "after_plan",
+            "longer": 12,
+            "in10": 5
+          },
+          "cautious": {
+            "planned_date": "2021-04-22",
+            "days": 15,
+            "days_relation": "after_plan",
+            "longer": 5,
+            "in10": 2
+          }
+        },
+        "previous_key": "bidding_document_issued",
+        "basis": "delay",
+        "records_through": "2020-08-03",
+        "sources": [
+          "Procurement Notices",
+          "Contract Awards in Investment Project Financing (Since FY 2020)",
+          "Documents & Reports: Documents API",
+          "World Bank Projects & Operations"
+        ],
+        "abstain_all": false,
+        "min_comparables": 20
+      },
+      "highlights": []
     },
     "steps:upload:upl-000000000001:1:bid_evaluation_report": {
       "id": "steps:upload:upl-000000000001:1:bid_evaluation_report",
-      "kind": "step_list",
+      "kind": "steps",
       "tool": "estimate_time",
+      "stratum": "How",
+      "short_name": null,
       "row": {
         "evidence_id": "steps:upload:upl-000000000001:1:bid_evaluation_report",
         "public_from": "2021-01-15",
@@ -173,13 +751,205 @@
           "days_relation": "after_plan",
           "longer": 5,
           "in10": 2
-        }
-      }
+        },
+        "family": "goods",
+        "step": {
+          "step_key": "bid_evaluation_report",
+          "is_anchor": false,
+          "comparables_n": 25,
+          "reached_n": 25,
+          "comparables": [
+            {
+              "step_reference": "KE-HAND-900001-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900001-CW-RFB",
+              "days": -5,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900002-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900002-CW-RFB",
+              "days": -2,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900003-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900003-CW-RFB",
+              "days": 1,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900004-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900004-CW-RFB",
+              "days": 4,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900005-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900005-CW-RFB",
+              "days": 7,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900006-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900006-CW-RFB",
+              "days": 10,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900007-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900007-CW-RFB",
+              "days": 13,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900008-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900008-CW-RFB",
+              "days": 16,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900009-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900009-CW-RFB",
+              "days": 19,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900010-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900010-CW-RFB",
+              "days": 22,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900011-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900011-CW-RFB",
+              "days": 25,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900012-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900012-CW-RFB",
+              "days": 28,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900013-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900013-CW-RFB",
+              "days": 31,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900014-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900014-CW-RFB",
+              "days": 34,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900015-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900015-CW-RFB",
+              "days": 37,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900016-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900016-CW-RFB",
+              "days": 40,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900017-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900017-CW-RFB",
+              "days": 43,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900018-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900018-CW-RFB",
+              "days": 46,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900019-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900019-CW-RFB",
+              "days": 49,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900020-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900020-CW-RFB",
+              "days": 52,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900021-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900021-CW-RFB",
+              "days": 55,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900022-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900022-CW-RFB",
+              "days": 58,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900023-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900023-CW-RFB",
+              "days": 61,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900024-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900024-CW-RFB",
+              "days": 64,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900025-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900025-CW-RFB",
+              "days": 67,
+              "still_open": false
+            }
+          ],
+          "plan_first_date": "2021-04-30",
+          "plan_first_version_date": "2021-01-15",
+          "plan_latest_date": "2021-04-30",
+          "plan_latest_version_date": "2021-01-15",
+          "abstain_reason": null,
+          "middle": {
+            "planned_date": "2021-05-31",
+            "days": 31,
+            "days_relation": "after_plan",
+            "longer": 12,
+            "in10": 5
+          },
+          "cautious": {
+            "planned_date": "2021-06-21",
+            "days": 52,
+            "days_relation": "after_plan",
+            "longer": 5,
+            "in10": 2
+          }
+        },
+        "previous_key": "bid_opening",
+        "basis": "delay",
+        "records_through": "2020-08-03",
+        "sources": [
+          "Procurement Notices",
+          "Contract Awards in Investment Project Financing (Since FY 2020)",
+          "Documents & Reports: Documents API",
+          "World Bank Projects & Operations"
+        ],
+        "abstain_all": false,
+        "min_comparables": 20
+      },
+      "highlights": []
     },
     "steps:upload:upl-000000000001:1:contract_signed": {
       "id": "steps:upload:upl-000000000001:1:contract_signed",
-      "kind": "step_list",
+      "kind": "steps",
       "tool": "estimate_time",
+      "stratum": "How",
+      "short_name": null,
       "row": {
         "evidence_id": "steps:upload:upl-000000000001:1:contract_signed",
         "public_from": "2021-01-15",
@@ -209,8 +979,1338 @@
           "days_relation": "after_plan",
           "longer": 5,
           "in10": 2
-        }
-      }
+        },
+        "family": "goods",
+        "step": {
+          "step_key": "contract_signed",
+          "is_anchor": false,
+          "comparables_n": 25,
+          "reached_n": 25,
+          "comparables": [
+            {
+              "step_reference": "KE-HAND-900001-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900001-CW-RFB",
+              "days": -5,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900002-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900002-CW-RFB",
+              "days": -2,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900003-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900003-CW-RFB",
+              "days": 1,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900004-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900004-CW-RFB",
+              "days": 4,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900005-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900005-CW-RFB",
+              "days": 7,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900006-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900006-CW-RFB",
+              "days": 10,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900007-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900007-CW-RFB",
+              "days": 13,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900008-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900008-CW-RFB",
+              "days": 16,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900009-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900009-CW-RFB",
+              "days": 19,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900010-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900010-CW-RFB",
+              "days": 22,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900011-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900011-CW-RFB",
+              "days": 25,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900012-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900012-CW-RFB",
+              "days": 28,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900013-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900013-CW-RFB",
+              "days": 31,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900014-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900014-CW-RFB",
+              "days": 34,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900015-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900015-CW-RFB",
+              "days": 37,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900016-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900016-CW-RFB",
+              "days": 40,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900017-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900017-CW-RFB",
+              "days": 43,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900018-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900018-CW-RFB",
+              "days": 46,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900019-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900019-CW-RFB",
+              "days": 49,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900020-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900020-CW-RFB",
+              "days": 52,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900021-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900021-CW-RFB",
+              "days": 55,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900022-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900022-CW-RFB",
+              "days": 58,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900023-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900023-CW-RFB",
+              "days": 61,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900024-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900024-CW-RFB",
+              "days": 64,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900025-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900025-CW-RFB",
+              "days": 67,
+              "still_open": false
+            }
+          ],
+          "plan_first_date": "2021-06-10",
+          "plan_first_version_date": "2021-01-15",
+          "plan_latest_date": "2021-06-10",
+          "plan_latest_version_date": "2021-01-15",
+          "abstain_reason": null,
+          "middle": {
+            "planned_date": "2021-07-11",
+            "days": 31,
+            "days_relation": "after_plan",
+            "longer": 12,
+            "in10": 5
+          },
+          "cautious": {
+            "planned_date": "2021-08-01",
+            "days": 52,
+            "days_relation": "after_plan",
+            "longer": 5,
+            "in10": 2
+          }
+        },
+        "previous_key": "bid_evaluation_report",
+        "basis": "delay",
+        "records_through": "2020-08-03",
+        "sources": [
+          "Procurement Notices",
+          "Contract Awards in Investment Project Financing (Since FY 2020)",
+          "Documents & Reports: Documents API",
+          "World Bank Projects & Operations"
+        ],
+        "abstain_all": false,
+        "min_comparables": 20
+      },
+      "highlights": []
+    },
+    "steps:upload:upl-000000000001:2:bidding_document_issued": {
+      "id": "steps:upload:upl-000000000001:2:bidding_document_issued",
+      "kind": "steps",
+      "tool": "estimate_time",
+      "stratum": "How",
+      "short_name": null,
+      "row": {
+        "evidence_id": "steps:upload:upl-000000000001:2:bidding_document_issued",
+        "public_from": "2021-01-15",
+        "source": {
+          "tool": "estimate_time",
+          "sources": [
+            "notices",
+            "awards",
+            "documents",
+            "projects"
+          ]
+        },
+        "step_key": "bidding_document_issued",
+        "comparables_n": 25,
+        "abstain_reason": null,
+        "plan_first_date": null,
+        "middle": {
+          "planned_date": null,
+          "days": 7,
+          "days_relation": "after_previous",
+          "longer": 0,
+          "in10": 0
+        },
+        "cautious": {
+          "planned_date": null,
+          "days": 7,
+          "days_relation": "after_previous",
+          "longer": 0,
+          "in10": 0
+        },
+        "family": "goods",
+        "step": {
+          "step_key": "bidding_document_issued",
+          "is_anchor": false,
+          "comparables_n": 25,
+          "reached_n": 25,
+          "comparables": [
+            {
+              "step_reference": "KE-HAND-900001-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900001-CW-RFB",
+              "days": 7,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900002-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900002-CW-RFB",
+              "days": 7,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900003-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900003-CW-RFB",
+              "days": 7,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900004-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900004-CW-RFB",
+              "days": 7,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900005-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900005-CW-RFB",
+              "days": 7,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900006-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900006-CW-RFB",
+              "days": 7,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900007-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900007-CW-RFB",
+              "days": 7,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900008-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900008-CW-RFB",
+              "days": 7,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900009-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900009-CW-RFB",
+              "days": 7,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900010-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900010-CW-RFB",
+              "days": 7,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900011-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900011-CW-RFB",
+              "days": 7,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900012-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900012-CW-RFB",
+              "days": 7,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900013-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900013-CW-RFB",
+              "days": 7,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900014-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900014-CW-RFB",
+              "days": 7,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900015-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900015-CW-RFB",
+              "days": 7,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900016-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900016-CW-RFB",
+              "days": 7,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900017-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900017-CW-RFB",
+              "days": 7,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900018-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900018-CW-RFB",
+              "days": 7,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900019-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900019-CW-RFB",
+              "days": 7,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900020-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900020-CW-RFB",
+              "days": 7,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900021-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900021-CW-RFB",
+              "days": 7,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900022-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900022-CW-RFB",
+              "days": 7,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900023-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900023-CW-RFB",
+              "days": 7,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900024-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900024-CW-RFB",
+              "days": 7,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900025-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900025-CW-RFB",
+              "days": 7,
+              "still_open": false
+            }
+          ],
+          "plan_first_date": null,
+          "plan_first_version_date": null,
+          "plan_latest_date": null,
+          "plan_latest_version_date": null,
+          "abstain_reason": null,
+          "middle": {
+            "planned_date": null,
+            "days": 7,
+            "days_relation": "after_previous",
+            "longer": 0,
+            "in10": 0
+          },
+          "cautious": {
+            "planned_date": null,
+            "days": 7,
+            "days_relation": "after_previous",
+            "longer": 0,
+            "in10": 0
+          }
+        },
+        "previous_key": "bid_invitation",
+        "basis": "duration",
+        "records_through": "2020-08-03",
+        "sources": [
+          "Procurement Notices",
+          "Contract Awards in Investment Project Financing (Since FY 2020)",
+          "Documents & Reports: Documents API",
+          "World Bank Projects & Operations"
+        ],
+        "abstain_all": false,
+        "min_comparables": 20
+      },
+      "highlights": []
+    },
+    "steps:upload:upl-000000000001:2:bid_opening": {
+      "id": "steps:upload:upl-000000000001:2:bid_opening",
+      "kind": "steps",
+      "tool": "estimate_time",
+      "stratum": "How",
+      "short_name": null,
+      "row": {
+        "evidence_id": "steps:upload:upl-000000000001:2:bid_opening",
+        "public_from": "2021-01-15",
+        "source": {
+          "tool": "estimate_time",
+          "sources": [
+            "notices",
+            "awards",
+            "documents",
+            "projects"
+          ]
+        },
+        "step_key": "bid_opening",
+        "comparables_n": 25,
+        "abstain_reason": null,
+        "plan_first_date": null,
+        "middle": {
+          "planned_date": null,
+          "days": 30,
+          "days_relation": "after_previous",
+          "longer": 0,
+          "in10": 0
+        },
+        "cautious": {
+          "planned_date": null,
+          "days": 30,
+          "days_relation": "after_previous",
+          "longer": 0,
+          "in10": 0
+        },
+        "family": "goods",
+        "step": {
+          "step_key": "bid_opening",
+          "is_anchor": false,
+          "comparables_n": 25,
+          "reached_n": 25,
+          "comparables": [
+            {
+              "step_reference": "KE-HAND-900001-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900001-CW-RFB",
+              "days": 30,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900002-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900002-CW-RFB",
+              "days": 30,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900003-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900003-CW-RFB",
+              "days": 30,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900004-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900004-CW-RFB",
+              "days": 30,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900005-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900005-CW-RFB",
+              "days": 30,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900006-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900006-CW-RFB",
+              "days": 30,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900007-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900007-CW-RFB",
+              "days": 30,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900008-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900008-CW-RFB",
+              "days": 30,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900009-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900009-CW-RFB",
+              "days": 30,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900010-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900010-CW-RFB",
+              "days": 30,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900011-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900011-CW-RFB",
+              "days": 30,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900012-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900012-CW-RFB",
+              "days": 30,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900013-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900013-CW-RFB",
+              "days": 30,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900014-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900014-CW-RFB",
+              "days": 30,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900015-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900015-CW-RFB",
+              "days": 30,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900016-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900016-CW-RFB",
+              "days": 30,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900017-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900017-CW-RFB",
+              "days": 30,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900018-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900018-CW-RFB",
+              "days": 30,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900019-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900019-CW-RFB",
+              "days": 30,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900020-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900020-CW-RFB",
+              "days": 30,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900021-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900021-CW-RFB",
+              "days": 30,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900022-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900022-CW-RFB",
+              "days": 30,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900023-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900023-CW-RFB",
+              "days": 30,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900024-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900024-CW-RFB",
+              "days": 30,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900025-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900025-CW-RFB",
+              "days": 30,
+              "still_open": false
+            }
+          ],
+          "plan_first_date": null,
+          "plan_first_version_date": null,
+          "plan_latest_date": null,
+          "plan_latest_version_date": null,
+          "abstain_reason": null,
+          "middle": {
+            "planned_date": null,
+            "days": 30,
+            "days_relation": "after_previous",
+            "longer": 0,
+            "in10": 0
+          },
+          "cautious": {
+            "planned_date": null,
+            "days": 30,
+            "days_relation": "after_previous",
+            "longer": 0,
+            "in10": 0
+          }
+        },
+        "previous_key": "bidding_document_issued",
+        "basis": "duration",
+        "records_through": "2020-08-03",
+        "sources": [
+          "Procurement Notices",
+          "Contract Awards in Investment Project Financing (Since FY 2020)",
+          "Documents & Reports: Documents API",
+          "World Bank Projects & Operations"
+        ],
+        "abstain_all": false,
+        "min_comparables": 20
+      },
+      "highlights": []
+    },
+    "steps:upload:upl-000000000001:2:bid_evaluation_report": {
+      "id": "steps:upload:upl-000000000001:2:bid_evaluation_report",
+      "kind": "steps",
+      "tool": "estimate_time",
+      "stratum": "How",
+      "short_name": null,
+      "row": {
+        "evidence_id": "steps:upload:upl-000000000001:2:bid_evaluation_report",
+        "public_from": "2021-01-15",
+        "source": {
+          "tool": "estimate_time",
+          "sources": [
+            "notices",
+            "awards",
+            "documents",
+            "projects"
+          ]
+        },
+        "step_key": "bid_evaluation_report",
+        "comparables_n": 25,
+        "abstain_reason": null,
+        "plan_first_date": null,
+        "middle": {
+          "planned_date": null,
+          "days": 46,
+          "days_relation": "after_previous",
+          "longer": 12,
+          "in10": 5
+        },
+        "cautious": {
+          "planned_date": null,
+          "days": 60,
+          "days_relation": "after_previous",
+          "longer": 5,
+          "in10": 2
+        },
+        "family": "goods",
+        "step": {
+          "step_key": "bid_evaluation_report",
+          "is_anchor": false,
+          "comparables_n": 25,
+          "reached_n": 25,
+          "comparables": [
+            {
+              "step_reference": "KE-HAND-900001-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900001-CW-RFB",
+              "days": 22,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900002-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900002-CW-RFB",
+              "days": 24,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900003-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900003-CW-RFB",
+              "days": 26,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900004-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900004-CW-RFB",
+              "days": 28,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900005-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900005-CW-RFB",
+              "days": 30,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900006-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900006-CW-RFB",
+              "days": 32,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900007-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900007-CW-RFB",
+              "days": 34,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900008-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900008-CW-RFB",
+              "days": 36,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900009-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900009-CW-RFB",
+              "days": 38,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900010-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900010-CW-RFB",
+              "days": 40,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900011-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900011-CW-RFB",
+              "days": 42,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900012-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900012-CW-RFB",
+              "days": 44,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900013-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900013-CW-RFB",
+              "days": 46,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900014-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900014-CW-RFB",
+              "days": 48,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900015-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900015-CW-RFB",
+              "days": 50,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900016-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900016-CW-RFB",
+              "days": 52,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900017-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900017-CW-RFB",
+              "days": 54,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900018-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900018-CW-RFB",
+              "days": 56,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900019-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900019-CW-RFB",
+              "days": 58,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900020-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900020-CW-RFB",
+              "days": 60,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900021-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900021-CW-RFB",
+              "days": 62,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900022-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900022-CW-RFB",
+              "days": 64,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900023-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900023-CW-RFB",
+              "days": 66,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900024-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900024-CW-RFB",
+              "days": 68,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900025-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900025-CW-RFB",
+              "days": 70,
+              "still_open": false
+            }
+          ],
+          "plan_first_date": null,
+          "plan_first_version_date": null,
+          "plan_latest_date": null,
+          "plan_latest_version_date": null,
+          "abstain_reason": null,
+          "middle": {
+            "planned_date": null,
+            "days": 46,
+            "days_relation": "after_previous",
+            "longer": 12,
+            "in10": 5
+          },
+          "cautious": {
+            "planned_date": null,
+            "days": 60,
+            "days_relation": "after_previous",
+            "longer": 5,
+            "in10": 2
+          }
+        },
+        "previous_key": "bid_opening",
+        "basis": "duration",
+        "records_through": "2020-08-03",
+        "sources": [
+          "Procurement Notices",
+          "Contract Awards in Investment Project Financing (Since FY 2020)",
+          "Documents & Reports: Documents API",
+          "World Bank Projects & Operations"
+        ],
+        "abstain_all": false,
+        "min_comparables": 20
+      },
+      "highlights": []
+    },
+    "steps:upload:upl-000000000001:2:contract_signed": {
+      "id": "steps:upload:upl-000000000001:2:contract_signed",
+      "kind": "steps",
+      "tool": "estimate_time",
+      "stratum": "How",
+      "short_name": null,
+      "row": {
+        "evidence_id": "steps:upload:upl-000000000001:2:contract_signed",
+        "public_from": "2021-01-15",
+        "source": {
+          "tool": "estimate_time",
+          "sources": [
+            "notices",
+            "awards",
+            "documents",
+            "projects"
+          ]
+        },
+        "step_key": "contract_signed",
+        "comparables_n": 25,
+        "abstain_reason": null,
+        "plan_first_date": null,
+        "middle": {
+          "planned_date": null,
+          "days": 41,
+          "days_relation": "after_previous",
+          "longer": 0,
+          "in10": 0
+        },
+        "cautious": {
+          "planned_date": null,
+          "days": 41,
+          "days_relation": "after_previous",
+          "longer": 0,
+          "in10": 0
+        },
+        "family": "goods",
+        "step": {
+          "step_key": "contract_signed",
+          "is_anchor": false,
+          "comparables_n": 25,
+          "reached_n": 25,
+          "comparables": [
+            {
+              "step_reference": "KE-HAND-900001-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900001-CW-RFB",
+              "days": 41,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900002-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900002-CW-RFB",
+              "days": 41,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900003-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900003-CW-RFB",
+              "days": 41,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900004-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900004-CW-RFB",
+              "days": 41,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900005-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900005-CW-RFB",
+              "days": 41,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900006-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900006-CW-RFB",
+              "days": 41,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900007-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900007-CW-RFB",
+              "days": 41,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900008-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900008-CW-RFB",
+              "days": 41,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900009-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900009-CW-RFB",
+              "days": 41,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900010-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900010-CW-RFB",
+              "days": 41,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900011-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900011-CW-RFB",
+              "days": 41,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900012-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900012-CW-RFB",
+              "days": 41,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900013-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900013-CW-RFB",
+              "days": 41,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900014-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900014-CW-RFB",
+              "days": 41,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900015-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900015-CW-RFB",
+              "days": 41,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900016-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900016-CW-RFB",
+              "days": 41,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900017-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900017-CW-RFB",
+              "days": 41,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900018-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900018-CW-RFB",
+              "days": 41,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900019-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900019-CW-RFB",
+              "days": 41,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900020-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900020-CW-RFB",
+              "days": 41,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900021-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900021-CW-RFB",
+              "days": 41,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900022-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900022-CW-RFB",
+              "days": 41,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900023-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900023-CW-RFB",
+              "days": 41,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900024-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900024-CW-RFB",
+              "days": 41,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-HAND-900025-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900025-CW-RFB",
+              "days": 41,
+              "still_open": false
+            }
+          ],
+          "plan_first_date": null,
+          "plan_first_version_date": null,
+          "plan_latest_date": null,
+          "plan_latest_version_date": null,
+          "abstain_reason": null,
+          "middle": {
+            "planned_date": null,
+            "days": 41,
+            "days_relation": "after_previous",
+            "longer": 0,
+            "in10": 0
+          },
+          "cautious": {
+            "planned_date": null,
+            "days": 41,
+            "days_relation": "after_previous",
+            "longer": 0,
+            "in10": 0
+          }
+        },
+        "previous_key": "bid_evaluation_report",
+        "basis": "duration",
+        "records_through": "2020-08-03",
+        "sources": [
+          "Procurement Notices",
+          "Contract Awards in Investment Project Financing (Since FY 2020)",
+          "Documents & Reports: Documents API",
+          "World Bank Projects & Operations"
+        ],
+        "abstain_all": false,
+        "min_comparables": 20
+      },
+      "highlights": []
+    },
+    "steps:upload:upl-000000000001:2:contract_completed": {
+      "id": "steps:upload:upl-000000000001:2:contract_completed",
+      "kind": "steps",
+      "tool": "estimate_time",
+      "stratum": "How",
+      "short_name": null,
+      "row": {
+        "evidence_id": "steps:upload:upl-000000000001:2:contract_completed",
+        "public_from": "2021-01-15",
+        "source": {
+          "tool": "estimate_time",
+          "sources": [
+            "notices",
+            "awards",
+            "documents",
+            "projects"
+          ]
+        },
+        "step_key": "contract_completed",
+        "comparables_n": 25,
+        "abstain_reason": "not_reached",
+        "plan_first_date": null,
+        "middle": {
+          "planned_date": null,
+          "days": null,
+          "days_relation": null,
+          "longer": null,
+          "in10": null
+        },
+        "cautious": {
+          "planned_date": null,
+          "days": null,
+          "days_relation": null,
+          "longer": null,
+          "in10": null
+        },
+        "family": "goods",
+        "step": {
+          "step_key": "contract_completed",
+          "is_anchor": false,
+          "comparables_n": 25,
+          "reached_n": 0,
+          "comparables": [
+            {
+              "step_reference": "KE-HAND-900025-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900025-CW-RFB",
+              "days": 165,
+              "still_open": true
+            },
+            {
+              "step_reference": "KE-HAND-900024-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900024-CW-RFB",
+              "days": 175,
+              "still_open": true
+            },
+            {
+              "step_reference": "KE-HAND-900023-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900023-CW-RFB",
+              "days": 185,
+              "still_open": true
+            },
+            {
+              "step_reference": "KE-HAND-900022-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900022-CW-RFB",
+              "days": 195,
+              "still_open": true
+            },
+            {
+              "step_reference": "KE-HAND-900021-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900021-CW-RFB",
+              "days": 205,
+              "still_open": true
+            },
+            {
+              "step_reference": "KE-HAND-900020-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900020-CW-RFB",
+              "days": 215,
+              "still_open": true
+            },
+            {
+              "step_reference": "KE-HAND-900019-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900019-CW-RFB",
+              "days": 225,
+              "still_open": true
+            },
+            {
+              "step_reference": "KE-HAND-900018-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900018-CW-RFB",
+              "days": 235,
+              "still_open": true
+            },
+            {
+              "step_reference": "KE-HAND-900017-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900017-CW-RFB",
+              "days": 245,
+              "still_open": true
+            },
+            {
+              "step_reference": "KE-HAND-900016-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900016-CW-RFB",
+              "days": 255,
+              "still_open": true
+            },
+            {
+              "step_reference": "KE-HAND-900015-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900015-CW-RFB",
+              "days": 265,
+              "still_open": true
+            },
+            {
+              "step_reference": "KE-HAND-900014-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900014-CW-RFB",
+              "days": 275,
+              "still_open": true
+            },
+            {
+              "step_reference": "KE-HAND-900013-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900013-CW-RFB",
+              "days": 285,
+              "still_open": true
+            },
+            {
+              "step_reference": "KE-HAND-900012-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900012-CW-RFB",
+              "days": 295,
+              "still_open": true
+            },
+            {
+              "step_reference": "KE-HAND-900011-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900011-CW-RFB",
+              "days": 305,
+              "still_open": true
+            },
+            {
+              "step_reference": "KE-HAND-900010-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900010-CW-RFB",
+              "days": 315,
+              "still_open": true
+            },
+            {
+              "step_reference": "KE-HAND-900009-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900009-CW-RFB",
+              "days": 325,
+              "still_open": true
+            },
+            {
+              "step_reference": "KE-HAND-900008-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900008-CW-RFB",
+              "days": 335,
+              "still_open": true
+            },
+            {
+              "step_reference": "KE-HAND-900007-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900007-CW-RFB",
+              "days": 345,
+              "still_open": true
+            },
+            {
+              "step_reference": "KE-HAND-900006-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900006-CW-RFB",
+              "days": 355,
+              "still_open": true
+            },
+            {
+              "step_reference": "KE-HAND-900005-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900005-CW-RFB",
+              "days": 365,
+              "still_open": true
+            },
+            {
+              "step_reference": "KE-HAND-900004-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900004-CW-RFB",
+              "days": 375,
+              "still_open": true
+            },
+            {
+              "step_reference": "KE-HAND-900003-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900003-CW-RFB",
+              "days": 385,
+              "still_open": true
+            },
+            {
+              "step_reference": "KE-HAND-900002-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900002-CW-RFB",
+              "days": 395,
+              "still_open": true
+            },
+            {
+              "step_reference": "KE-HAND-900001-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-HAND-900001-CW-RFB",
+              "days": 405,
+              "still_open": true
+            }
+          ],
+          "plan_first_date": null,
+          "plan_first_version_date": null,
+          "plan_latest_date": null,
+          "plan_latest_version_date": null,
+          "abstain_reason": "not_reached",
+          "middle": {
+            "planned_date": null,
+            "days": null,
+            "days_relation": null,
+            "longer": null,
+            "in10": null
+          },
+          "cautious": {
+            "planned_date": null,
+            "days": null,
+            "days_relation": null,
+            "longer": null,
+            "in10": null
+          }
+        },
+        "previous_key": "contract_signed",
+        "basis": "duration",
+        "records_through": "2020-08-03",
+        "sources": [
+          "Procurement Notices",
+          "Contract Awards in Investment Project Financing (Since FY 2020)",
+          "Documents & Reports: Documents API",
+          "World Bank Projects & Operations"
+        ],
+        "abstain_all": false,
+        "min_comparables": 20
+      },
+      "highlights": []
     }
   },
   "checks": {
@@ -516,7 +2616,14 @@
             "list_id": "steps:upload:upl-000000000001:1:contract_completed",
             "removed": null
           }
-        ]
+        ],
+        "counts": {
+          "steps": 6,
+          "dated": {
+            "middle": 5,
+            "cautious": 5
+          }
+        }
       },
       {
         "key": "activity-2",
@@ -702,7 +2809,14 @@
             "list_id": "steps:upload:upl-000000000001:2:contract_completed",
             "removed": null
           }
-        ]
+        ],
+        "counts": {
+          "steps": 5,
+          "dated": {
+            "middle": 0,
+            "cautious": 0
+          }
+        }
       }
     ],
     "counts": {

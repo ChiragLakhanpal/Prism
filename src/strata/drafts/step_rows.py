@@ -18,7 +18,9 @@ draft runtime (runtime.py, write_computed) runs this module's steps:
 
 Each dated step rests on its list of comparable packages, cited as steps:{activity}:{step_key}, where the activity
 is the upload's row (upload:{upload_id}:{position}) or the STEP reference; the draft lists those lists as its
-sources, so the bar counts the lists the viewer opened and the evidence pack records them.
+sources, so the bar counts the lists the viewer opened and the evidence pack records them. The draft keeps each
+list as estimate_time returned it this turn, in the evidence drawer's shape for a step's list (web/src/lib/steps.ts,
+StepListRow), so a count or a date on the page opens its comparable packages with no request.
 
 step_rows_csv() writes the STEP rows file: STEP's columns from the STEP column registry (config/uploads.toml), one
 row per activity in the file's order, the checked choice's planned dates filled in, the officer's other values
@@ -206,6 +208,26 @@ def _seen(facts: Facts) -> Seen:
     return seen
 
 
+def _lists(facts: Facts, seen: Seen) -> dict[str, dict]:
+    """Each step's list of comparable packages, by its id, as the evidence drawer shows a step's list: the step as
+    estimate_time returned it this turn, with its comparable packages, and what the list's words need. The row keeps
+    what the verifier saw, so the evidence pack names its source as it does any tool's."""
+    found = {}
+    for activity in facts.activities:
+        answer = activity["answer"]
+        dated = answer["step_dates"] or {}
+        steps = dated.get("steps") or []
+        for index, step in enumerate(steps):
+            evidence_id = list_id(activity, step["step_key"])
+            found[evidence_id] = {**(seen.get(evidence_id) or {}), "family": dated.get("family"), "step": step,
+                                  "previous_key": steps[index - 1]["step_key"] if index else None,
+                                  "basis": dated.get("basis"), "records_through": answer.get("records_through"),
+                                  "sources": [source["dataset_name"] for source in answer.get("sources") or ()],
+                                  "abstain_all": dated.get("abstain_all") is not None,
+                                  "min_comparables": dated.get("min_comparables")}
+    return found
+
+
 def compose(facts: Facts) -> tuple[dict, Verdict]:
     """The draft, checked: every date and count matches what estimate_time returned for its list this turn."""
     labels = _labels()
@@ -227,8 +249,18 @@ def compose(facts: Facts) -> tuple[dict, Verdict]:
               "comparables_n": step["comparables_n"]}
              for activity in activities for step in activity["steps"]
              if any(step[choice] and step[choice]["planned_date"] for choice in CHOICES)]
-    evidence = {entry["evidence_id"]: {"id": entry["evidence_id"], "kind": "step_list", "tool": TOOL,
-                                       "row": seen.get(entry["evidence_id"])} for entry in lists}
+    # Every count on the page opens its list, a step that is not dated too; only the lists a date rests on are the
+    # draft's sources, which the bar counts and the evidence pack records.
+    held = _lists(facts, seen)
+    evidence = {step["list_id"]: {"id": step["list_id"], "kind": "steps", "tool": TOOL, "stratum": "How",
+                                  "short_name": None, "row": held[step["list_id"]], "highlights": []}
+                for activity in activities for step in activity["steps"]
+                if step["list_id"] in held and (step["comparables_n"] or any(entry["evidence_id"] == step["list_id"]
+                                                                              for entry in lists))}
+    for activity in activities:  # each activity's "Steps dated", counted here after the verifier, never in the browser
+        own = [step for step in activity["steps"] if not step["is_anchor"]]
+        activity["counts"] = {"steps": len(own), "dated": {choice: sum(1 for step in own if step[choice] and
+                                                                       step[choice]["planned_date"]) for choice in CHOICES}}
     dateable = [step for activity in activities for step in activity["steps"] if not step["is_anchor"]]
     counts = {"activities": len(activities), "steps": len(dateable),
               "dated": {choice: sum(1 for step in dateable if step[choice] and step[choice]["planned_date"])
