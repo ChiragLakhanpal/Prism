@@ -314,7 +314,7 @@ def summary(engine: Engine, project_id: str, as_of: dt.date) -> dict | None:
         key = ISR_RATINGS.get(row["rating_name"])
         if not key:
             continue
-        event = (evidence_routes.read(engine, f"strata.gold.passage:{row['passage_id']}", as_of)
+        event = (evidence_routes.read(engine, f"strata.gold.passage:{row['passage_id']}", as_of, why=False)
                  if row["passage_id"] else _isr_rating_record(project_id, row))
         ratings.append(_fact(key, row["current_rating"], sources.cite(
             event, kind="isr", date=iso_day(row["isr_date"]), sequence=row["sequence"])))
@@ -324,7 +324,7 @@ def summary(engine: Engine, project_id: str, as_of: dt.date) -> dict | None:
             ratings.append(_fact("procurement", row["value"], sources.cite(
                 _api_rating_record(project_id, row), kind="projects_api_ratings", date=iso_day(row["isr_date"]))))
     if icr:
-        event = evidence_routes.read(engine, icr[0]["evidence_id"], as_of)
+        event = evidence_routes.read(engine, icr[0]["evidence_id"], as_of, why=False)
         ratings.append(_fact("icr_outcome", icr[0]["value"], sources.cite(
             event, kind="icr", date=iso_day(icr[0]["made_at"]))))
     review = next((row for row in ieg if row["evaluation_type"] == ICR_REVIEW), None)

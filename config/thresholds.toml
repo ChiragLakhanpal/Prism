@@ -329,6 +329,13 @@ mentions_max = 0.40
 # neighbourhood of at most about 20 nodes", past which a graph stops being readable.
 [connections]
 max_nodes = 20
+# A document's node shows at most this many paragraph chips, the strongest links first, and says how many more
+# paragraphs appeared together, so the diagram stays near the brief's 30 tab stops. Source: the 22 design brief,
+# section 8.2 ("At most about 30 stops with the chips"); a starting value for the owner to confirm.
+chips_per_document = 3
+# "Why this source" lists at most this many other contracts a paragraph appeared together with, strongest first,
+# then counts the rest. Source: the 22 design brief, section 4.2 (why.othersItem).
+other_contracts_listed = 5
 
 # How the run tells two assertions apart (ticket 20, src/strata/knowledge/assertions.py).
 [disagreements]

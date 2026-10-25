@@ -23,7 +23,7 @@ from pathlib import Path
 
 from strata.agent.verifier import labels
 from strata.lakehouse.engine import Engine
-from strata.server import baseline, summary
+from strata.server import baseline, edges, summary, trail
 from strata.tools import find_comparables, rejected_bids, search_passages
 
 log = logging.getLogger("strata.server.evidence")
@@ -47,21 +47,36 @@ def _comparable(engine: Engine, key: str, as_of: dt.date) -> dict | None:
     return None if row is None else {"kind": "package", "row": row}
 
 
+def _notice(engine: Engine, key: str, as_of: dt.date) -> dict | None:
+    """A notice: one reason of an award notice for a rejected bid in section 5 (OP00125282/reason/1, ticket 31), or
+    a notice of any type from the contract trail (ticket 22)."""
+    if "/" in key:
+        return rejected_bids.read_award_notice(engine, key, as_of)
+    return trail.read_notice(engine, key, as_of)
+
+
 # The reader for each kind of evidence id, by the table its id names before the colon: a passage, a
 # comparable package from the range chart (ticket 15), each record a project's Summary cites, an
-# agency's baseline, which check_plan's baseline reasons cite (ticket 21), and an award notice, which a
-# rejected bid in section 5 cites with the reason it quoted (ticket 31).
+# agency's baseline, which check_plan's baseline reasons cite (ticket 21), an award notice, which a
+# rejected bid in section 5 cites with the reason it quoted (ticket 31), and the contract trail's notices,
+# contracts and plan rows (ticket 22).
 READERS: dict[str, Callable[[Engine, str, dt.date], dict | None]] = {
     search_passages.TABLE: _passage,
     "strata.gold.package": _comparable,
-    "strata.gold.notice": rejected_bids.read_award_notice,
+    "strata.gold.notice": _notice,
+    "strata.gold.contract": trail.read_contract,
+    "strata.silver.plan_rows": trail.read_plan_row,
     **summary.RECORD_READERS,
     baseline.TABLE: baseline.read_record,
 }
 
 
-def read(engine: Engine, evidence_id: str, as_of: dt.date) -> dict | None:
-    """The source this evidence id names, as the viewer could see it on the as-of date, or None."""
+def read(engine: Engine, evidence_id: str, as_of: dt.date, step_ref: str | None = None, why: bool = True) -> dict | None:
+    """The source this evidence id names, as the viewer could see it on the as-of date, or None. A passage also
+    says why it is a source for a contract it appeared together with (ticket 22): for the route's activity when the
+    page names one (step_ref), otherwise for the strongest link, or null when no link was public then. A page that
+    embeds passages in its own answer, such as a project's Summary, leaves it out (why=False) to keep its answer
+    small; the drawer then asks for it when it opens the passage."""
     table, _, key = evidence_id.partition(":")
     reader = READERS.get(table)
     if reader is None or not key or "," in key:
@@ -69,8 +84,11 @@ def read(engine: Engine, evidence_id: str, as_of: dt.date) -> dict | None:
     found = reader(engine, key, as_of)
     if found is None:
         return None
-    return {"id": evidence_id, "kind": found["kind"], "tool": None, **labels(found["row"]), "row": found["row"],
-            "highlights": []}
+    event = {"id": evidence_id, "kind": found["kind"], "tool": None, **labels(found["row"]), "row": found["row"],
+             "highlights": []}
+    if found["kind"] == "passage" and why:
+        event["why"] = edges.why(engine, found["row"], step_ref, as_of)
+    return event
 
 
 def _close(engine) -> None:
