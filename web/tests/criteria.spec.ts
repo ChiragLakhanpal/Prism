@@ -179,7 +179,7 @@ test("a reading the judge said does not follow from your words is removed in its
   await expect(row.locator("[data-same-or-less]")).toHaveCount(0);
   // The box reports the reading as Strata wrote it, "I" kept a capital, with the judge's reason.
   await expect(section(page).locator("[data-section-checks]")).toContainText(
-    `It said ${similar.reading.replace(/\.$/, "")}, and ${copy.removed.reasons.not_supported.joined}.`,
+    `It said ${similar.reading.replace(/\.$/, "")}, and ${copy.criteria.readingNotSupported.joined}.`,
   );
   await expect(section(page).locator("table [data-item=turnover]")).not.toContainText(copy.criteria.removedInPlace);
 });

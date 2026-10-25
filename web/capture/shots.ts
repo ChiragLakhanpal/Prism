@@ -963,7 +963,7 @@ const CRITERIA_SHOTS: Shot[] = [
   // View C with the requirement highlighted, and view F with the lesson's words highlighted and its IEG line.
   criteriaShot("drawer-notice", {
     api: { "/api/evidence": { recorded: "evidence-passage-op00077276-s3.json" } },
-    act: then(compareCriteria, click("#check-criteria [data-same-or-less] [data-num]:visible"), click("[role=dialog] [data-entry^='strata.gold.passage:']")),
+    act: then(compareCriteria, click("#check-criteria [data-same-or-less] [data-num]:visible"), click("[role=dialog] [data-entry='strata.gold.passage:OP00077276/v1/s3']")),
   }),
   criteriaShot("drawer-lesson", {
     api: { "/api/evidence": { recorded: "evidence-icr-p130164-54.json" } },

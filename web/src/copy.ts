@@ -2744,6 +2744,8 @@ export const copy = {
     // A quote from an award notice that is not in it: the notice is a record, with no pages (removed.reasons'
     // quote_not_on_page in this section's words).
     quoteNotInSource: { item: "The quote is not in the record it cites.", joined: "the quote is not in the record it cited" },
+    // A reading of your words that check 4's judge said does not follow from them: its source is your text.
+    readingNotSupported: { item: "Your words do not say this.", joined: "your words do not say that" },
     // Why a run could not finish, by its code (src/strata/criteria/workflow.py, COMPARE_ERRORS).
     // unsaved: the request never reached the server, so the text was not saved either.
     errors: {

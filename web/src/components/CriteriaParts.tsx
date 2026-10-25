@@ -186,21 +186,21 @@ export function CriteriaTable({ comparison }: { comparison: Comparison }) {
           <thead className="bg-surface-2">
             <tr>
               <th scope="col" className="p-3 align-bottom">
-                <span className="block text-small font-semibold text-ink">{words.items.columns.item}</span>
+                <span className="block text-small font-semibold text-balance text-ink">{words.items.columns.item}</span>
                 <span className="block text-caption font-normal text-ink-muted">{words.items.columns.itemDefinition}</span>
               </th>
               <th scope="col" className="p-3 align-bottom">
-                <span className="block text-small font-semibold text-ink">{words.items.columns.words}</span>
+                <span className="block text-small font-semibold text-balance text-ink">{words.items.columns.words}</span>
                 <span className="block text-caption font-normal text-ink-muted">{words.items.columns.wordsDefinition}</span>
               </th>
               <th scope="col" className="p-3 text-right align-bottom">
-                <span className="block text-small font-semibold text-ink">{words.items.columns.asked}</span>
+                <span className="block text-small font-semibold text-balance text-ink">{words.items.columns.asked}</span>
                 <span className="block text-caption font-normal text-ink-muted">
                   <Fill template={words.items.columns.askedDefinition} slots={{ n: String(total) }} />
                 </span>
               </th>
               <th scope="col" className="p-3 text-right align-bottom">
-                <span className="block text-small font-semibold text-ink">{words.items.columns.sameOrLess}</span>
+                <span className="block text-small font-semibold text-balance text-ink">{words.items.columns.sameOrLess}</span>
                 <span className="block text-caption font-normal text-ink-muted">{words.items.columns.sameOrLessDefinition}</span>
               </th>
             </tr>

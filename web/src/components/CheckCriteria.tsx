@@ -171,7 +171,9 @@ function toRemoved(entries: RemovedEntry[]): Removed[] {
   const reasons = copy.removed.reasons as Record<string, { item: string; joined: string }>;
   return entries.map((entry) => {
     const onRecord = entry.reason === "quote_not_on_page" && entry.about.startsWith(RECORD);
-    const reason = onRecord ? words.quoteNotInSource : (reasons[entry.reason] ?? copy.removed.unknownReason);
+    // A reading is about an item of your text (its key), not a record or a passage.
+    const reading = entry.reason === "not_supported" && !entry.about.startsWith("strata.");
+    const reason = onRecord ? words.quoteNotInSource : reading ? words.readingNotSupported : (reasons[entry.reason] ?? copy.removed.unknownReason);
     return { sentence: entry.sentence, reason: reason.item, reasonJoined: reason.joined };
   });
 }
