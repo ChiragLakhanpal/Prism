@@ -295,3 +295,40 @@ def test_the_route_s_tools_and_the_reference_answer_run_as_the_gate_s_viewer_wit
 
     assert scored.passed, scored.problems
     assert len(tokens) >= 2 and set(tokens) == {"not-a-real-key"}
+
+
+def test_an_abstention_with_nothing_to_cite_passes_through_the_route_when_its_sentence_cites_nothing(engine_for):
+    """estimate_time abstains with no rows on both of its questions, so the agent is shown no evidence id (the answer
+    loop's for_agent hides an abstaining tool's summary). The verifier keeps a sentence that cites nothing, and the
+    full gate holds the answer to what the agent was shown, so a right answer passes."""
+    import stand_in_agent
+
+    items = [question("estimate-time-ke-nwwda-541055"), question("estimate-time-planned-ke-works-rfb")]
+    with engine_for(answer_benchmark.GATE) as engine:
+        agents = {item["id"]: stand_in_agent.for_question(item, engine, answer_benchmark.GATE) for item in items}
+
+    results = ask(engine_for, items, agents)
+
+    assert [(scored.id, scored.passed, scored.problems) for _, scored in results] == [
+        (item["id"], True, ()) for item in items]
+
+
+def test_an_answer_that_cites_only_another_tool_fails_when_its_tool_showed_the_agent_rows_it_could_cite():
+    """The verifier keeps a sentence that cites another tool's record. When the question's tool showed the agent rows,
+    the answer must cite one of them; when it showed nothing citable, no citation of it is asked for."""
+    from strata.evals import scoring
+
+    plan = question("check-plan-nwwda-2026-10-09")
+    sentence = ("sentence", {"text": "A kept sentence.", "evidence_ids": ["strata.gold.passage:31525018/v1/54"]})
+    rows = {"rows": [{"evidence_id": "strata.gold.package:KE-NWWDA-541062-CW-RFQ"}], "summary": None}
+    nothing = {"rows": [], "summary": None, "abstention": {"reason": "version_not_public"}}
+    whole = {**nothing, "summary": {"evidence_id": "strata.tools.check_plan:P174046@2026-10-09"}}
+
+    def scored(result, shown):
+        call = {"tool": "check_plan", "arguments": plan["arguments"], "result": result, "shown": shown}
+        return scoring.score(scoring.Asked(plan, [sentence], "", [call], {"read": True}), ()).problems
+
+    with pytest.MonkeyPatch.context() as patch:
+        patch.setattr(scoring, "reading", lambda result, question: {"read": True})
+        assert scored(rows, rows) == ("No kept sentence cites anything check_plan returned.",)
+        assert scored(whole, nothing) == ()

@@ -12,7 +12,9 @@ and scores what came back by the question's kind (docs/PLAN.md section 10):
   gate needs no literal from the fixture, and the offline gate proves each reference equals the question's
   expected answer on the fixture (tests/test_tools.py).
 - citations: every evidence id in the question's cites is cited by a kept sentence. A question with a tool and
-  no cites needs at least one kept sentence that cites something the tool returned.
+  no cites needs at least one kept sentence that cites something the tool showed the agent (the answer loop's
+  for_agent, which the verifier checks citations against). When the tool showed it nothing it could cite, such
+  as an abstention with no rows, a kept sentence that cites nothing answers, as the verifier allows.
 
 Each failure is one sentence that names the gap, which the full gate prints and stores.
 """
@@ -30,12 +32,12 @@ from strata.evals import answers
 @dataclass
 class Asked:
     """One question as the full gate asked it: the question, the stream's events and text, every tool call with its
-    whole result, and the reference answer its tool gives for the question's own arguments."""
+    whole result and what the agent was shown of it, and the reference answer its tool gives for the question's own arguments."""
 
     question: dict
     events: list[tuple[str, dict]]
     text: str
-    calls: list[dict] = field(default_factory=list)  # {"tool", "arguments", "result"}
+    calls: list[dict] = field(default_factory=list)  # {"tool", "arguments", "result", "shown"}
     reference: dict | None = None
     reference_error: str | None = None  # why the reference could not be worked out, when it could not
 
@@ -118,6 +120,9 @@ def score(asked: Asked, restricted: Iterable[str] = ()) -> Scored:
     if missing:
         problems.append(f"Its kept sentences do not cite {', '.join(missing)}.")
     elif tool and calls and sentences and not question.get("cites"):
-        if not shown & set().union(*(returned(call["result"]) for call in calls)):
+        # Only what the agent was shown can be cited: the verifier removes any other id. A tool that showed the
+        # agent nothing citable, such as an abstention with no rows, is answered by a kept sentence citing nothing.
+        citable = set().union(*(returned(call.get("shown", call["result"])) for call in calls))
+        if citable and not shown & citable:
             problems.append(f"No kept sentence cites anything {tool} returned.")
     return Scored(qid, kind, not problems, tuple(problems))

@@ -4,7 +4,7 @@ run() asks each question of the benchmark file through /api/ask, the same route 
 the agent agent_for gives each turn: the Foundry agent in the full gate (ops/evals/full_gate.py), a stand-in in
 the offline tests. The tools run as the viewer on engine_for's engine, and the verifier checks every answer as it
 does in the app. For each question it keeps the stream, every tool call with its whole result (the answer loop's
-on_result), and the reference answer the question's tool gives on the same data (strata.evals.answers.reference),
+on_result) and what the agent was shown of it, and the reference answer the question's tool gives on the same data (strata.evals.answers.reference),
 then scores it (strata.evals.scoring). A question added to the file is asked in the next run with no other change.
 
 The run's answers, with the passages and records they cite, are also what Foundry evaluates
@@ -17,7 +17,7 @@ import asyncio
 from collections import defaultdict
 from collections.abc import Callable, Iterable
 
-from strata.agent.loop import Agent, answer_runner
+from strata.agent.loop import Agent, answer_runner, for_agent
 from strata.dbx import Viewer
 from strata.evals import answers, scoring
 from strata.harness.sse import events as stream_events
@@ -47,7 +47,10 @@ def run(questions: list[dict], agent_for: Callable[[Turn], Agent], engine_for: E
     calls: dict[str, list[dict]] = defaultdict(list)
 
     def keep(turn: Turn, name: str, arguments: dict, result: dict) -> None:
-        calls[turn.run_id].append({"tool": name, "arguments": arguments, "result": result})
+        # The whole result gives the tool's answer. What the agent was shown, which the verifier checks citations
+        # against, is the same result through for_agent at the turn's as-of date, so scoring checks them alike.
+        calls[turn.run_id].append({"tool": name, "arguments": arguments, "result": result,
+                                   "shown": for_agent(result, turn.notes.as_of)})
 
     app = create_app(runner=answer_runner(agent_for, engine_for, on_result=keep), engine_for=engine_for, judge=judge)
     restricted = set(restricted)
