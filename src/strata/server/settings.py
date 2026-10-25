@@ -59,6 +59,7 @@ from strata.agent.runs import RunLog
 from strata.appstate import lakebase
 from strata.config import load_roles, load_thresholds
 from strata.drafts.store import DraftStore
+from strata.server.following import FollowStore
 from strata.knowledge.lessons.review import LessonReview
 from strata.lakehouse.engine import Engine, EngineError, Transport, WarehouseEngine, base_url, http_transport
 from strata.packages.store import PackageStore
@@ -170,6 +171,7 @@ def app_from_env(environ: Mapping[str, str] | None = None) -> FastAPI:
                       runs=RunLog(the_app) if the_app else None,
                       opened=OpenedLog(state) if state else None,
                       drafts=DraftStore(state) if state else None,
+                      follows=FollowStore(state) if state else None,
                       packages=PackageStore(app_state) if app_state else None,
                       package_reader=agent_runner.agent_from_environment(environ, "package_reader"),
                       criteria=CriteriaStore(app_state) if app_state else None,

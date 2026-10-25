@@ -161,6 +161,13 @@ class Limits:
                 "disbursement_months": self.disbursement_months}
 
 
+def thresholds_used(thresholds) -> dict:
+    """The values the checks use, read from the thresholds file without running them, for a page with no
+    project to check (Following when you follow none)."""
+    call = Call(None, None, "staff", dt.date.min, thresholds)
+    return Limits.read(call).as_values(call)
+
+
 # ── The project ──────────────────────────────────────────────────────────
 
 def _project(call: Call, project_id: str, history: list[dict]) -> dict | None:
