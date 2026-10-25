@@ -5077,6 +5077,8 @@ export const copy = {
         ? "I left out {n} rating or date that I read from this project's documents, because I couldn't find its words on the cited page."
         : "I left out {n} ratings or dates that I read from this project's documents, because I couldn't find their words on the cited pages.",
     abstentionCheck: "Counted by the disagreement check for this project.",
+    // The title's count: where it came from, and that it opens the table.
+    findingCheck: "Counted by the disagreement check for this project. Select it to show the table.",
     failed:
       "I couldn't read this project's ISR ratings or check its reports for disagreements just now, so the chart shows no rating bands and no dashed lines.",
     hidden: "I don't show disagreements on active projects in this view, so a project still under way isn't prejudged.",

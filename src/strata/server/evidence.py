@@ -69,13 +69,15 @@ READERS: dict[str, Callable[[Engine, str, dt.date], dict | None]] = {
 }
 
 
-def read(engine: Engine, evidence_id: str, as_of: dt.date) -> dict | None:
-    """The source this evidence id names, as the viewer could see it on the as-of date, or None."""
+def read(engine: Engine, evidence_id: str, as_of: dt.date, view: str = "staff") -> dict | None:
+    """The source this evidence id names, as the viewer could see it on the as-of date and in the page's view, or
+    None. The public view of a project still under way shows no disagreement (timeline.in_view)."""
     table, _, key = evidence_id.partition(":")
     reader = READERS.get(table)
     if reader is None or not key or "," in key:
         return None
     found = reader(engine, key, as_of)
+    found = None if found is None else timeline.in_view(engine, found, view, as_of)
     if found is None:
         return None
     # A reader may name the stratum itself, as the timeline's views do, since their rows are no passage.

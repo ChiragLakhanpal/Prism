@@ -630,7 +630,7 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
             return JSONResponse({"code": "unknown_evidence"}, status_code=404)
 
         def read(engine: Engine):
-            found = evidence.read(engine, evidence_id, as_of_for(asof))
+            found = evidence.read(engine, evidence_id, as_of_for(asof), view)
             return found if found is not None else JSONResponse({"code": "unknown_evidence"}, status_code=404)
         return read_for(f"evidence {evidence_id}", viewer, read)
 

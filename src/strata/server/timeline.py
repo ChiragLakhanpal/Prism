@@ -586,6 +586,18 @@ def read_signing(engine: Engine, key: str, as_of: dt.date) -> dict | None:
                    "document_date": _iso(row["signed_on"])}}}
 
 
+def in_view(engine: Engine, found: dict, view: str, as_of: dt.date) -> dict | None:
+    """A drawer view as a preview shows it: the public view of a project still under way shows no disagreement
+    (spec, user story 55), from a link as on the timeline. A disagreement gives None; a document view keeps its
+    report and loses the disagreements it is a side of. Any other view, or any other preview, is unchanged."""
+    if view != "public" or found["kind"] not in ("disagreement", "document"):
+        return found
+    project = _project(engine, found["row"]["project_id"], as_of)
+    if project is None or project["status"] != ACTIVE:
+        return found
+    return None if found["kind"] == "disagreement" else {**found, "row": {**found["row"], "disagreements": []}}
+
+
 READERS: dict[str, Callable[[Engine, str, dt.date], dict | None]] = {
     DOC: read_document, RATINGS: read_ratings, CONTRACTS: read_contracts, DISAGREEMENT: read_disagreement,
 }

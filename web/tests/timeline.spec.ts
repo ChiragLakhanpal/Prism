@@ -125,6 +125,9 @@ test("the chart is one tab stop with arrow keys between marks, and the dashed li
   await open(page);
 
   await page.locator("[data-timeline] h2").focus();
+  // The title's count comes first, then the chart's one tab stop.
+  await page.keyboard.press("Tab");
+  await expect(page.locator("[data-timeline-finding]").getByRole("button", { name: "Two" })).toBeFocused();
   await page.keyboard.press("Tab");
   await expect(items(page).first()).toBeFocused();
   await page.keyboard.press("ArrowRight");
@@ -240,6 +243,11 @@ test("below 768 px the chart is a list in date order, and as of August 26, 2016 
 
 test("Show the table lists every item in arrow-key order, under its caption", async ({ page }) => {
   await open(page);
+  // The count in the title opens the table and takes you to it.
+  await page.locator("[data-timeline-finding]").getByRole("button", { name: "Two" }).click();
+  await expect(page.locator("[data-timeline-table]")).toBeVisible();
+  await expect(page.locator("[data-timeline-table] [tabindex='0']").first()).toBeFocused();
+  await page.getByRole("button", { name: "Hide the table" }).click();
   const toggle = page.getByRole("button", { name: "Show the table" });
   await toggle.click();
   await expect(page.getByRole("button", { name: "Hide the table" })).toHaveAttribute("aria-expanded", "true");

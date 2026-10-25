@@ -27,6 +27,8 @@ import {
 } from "../lib/evidence";
 import { highlightsFor, lessonOf, passageFields, placeOf, recordReference } from "../lib/sources";
 import { useStore } from "../lib/store";
+import { address } from "../lib/router";
+import { viewOf } from "../lib/view";
 import { Alert } from "./Alert";
 import { Button } from "./Button";
 import { Highlight, highlighted, withoutMarkers } from "./Document";
@@ -65,6 +67,8 @@ export function useEvidence(id: string, asOf: string | null): DrawerData {
   const [fetched, setFetched] = useState<{ id: string; data: DrawerData } | null>(null);
   const [attempt, setAttempt] = useState(0);
   const held = all[id];
+  // A preview asks for what its view may see: the public view of a project still under way shows no disagreement.
+  const view = viewOf(useStore(address).search);
   useEffect(() => {
     // A quantile dot's list is no source on the server: the page that draws the dots holds it (ticket 15). So are
     // section 5's lists and cost records (ticket 31), the risks section's lists of completion reports (ticket 30),
@@ -72,7 +76,7 @@ export function useEvidence(id: string, asOf: string | null): DrawerData {
     if (held || id.startsWith(DOT) || heldOnPage(id) || isRiskList(id) || isStepList(id)) return;
     const controller = new AbortController();
     setFetched({ id, data: { status: "loading" } });
-    const query = `/api/evidence?id=${encodeURIComponent(id)}${asOf ? `&asof=${encodeURIComponent(asOf)}` : ""}`;
+    const query = `/api/evidence?id=${encodeURIComponent(id)}${asOf ? `&asof=${encodeURIComponent(asOf)}` : ""}${view !== "staff" ? `&view=${view}` : ""}`;
     getJson<EvidenceEvent>(query, { signal: controller.signal }).then(
       (evidence) => setFetched({ id, data: { status: "ready", evidence } }),
       (error: unknown) => {
@@ -82,7 +86,7 @@ export function useEvidence(id: string, asOf: string | null): DrawerData {
       },
     );
     return () => controller.abort();
-  }, [id, held, asOf, attempt]);
+  }, [id, held, asOf, view, attempt]);
   if (held) return { status: "ready", evidence: held };
   return fetched?.id === id ? fetched.data : { status: "loading" };
 }

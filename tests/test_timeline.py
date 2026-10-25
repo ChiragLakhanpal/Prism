@@ -209,6 +209,22 @@ def test_the_public_view_of_a_project_still_under_way_shows_no_disagreement(serv
     assert not any("disagree" in segment.get("text", "") for segment in body["finding"] + body["alt"])
 
 
+def test_the_public_view_of_a_project_still_under_way_shows_no_disagreement_from_a_drawer_link_either(
+        server, p130164, monkeypatch):
+    from strata.server import timeline
+
+    # No active project in the fixture has a disagreement, so P130164 stands in for one still under way.
+    monkeypatch.setattr(timeline, "ACTIVE", p130164["project"]["status"])
+    line = next(item for item in placed(p130164, kind="disagreement") if item["attribute"] == "pdo_progress")
+    icr = one(p130164, kind="report", type="icr")
+
+    assert get(server, f"/api/evidence?id={line['evidence_id']}&{DAY}&view=public").status_code == 404
+    assert get(server, f"/api/evidence?id={icr['evidence_id']}&{DAY}&view=public").json()["row"]["disagreements"] == []
+    # World Bank staff still see both.
+    assert get(server, f"/api/evidence?id={line['evidence_id']}&{DAY}").status_code == 200
+    assert get(server, f"/api/evidence?id={icr['evidence_id']}&{DAY}").json()["row"]["disagreements"] != []
+
+
 def test_a_crowded_what_lane_groups_contracts_by_year_and_the_table_keeps_every_contract(server):
     body = get(server, f"/api/projects/P156634/timeline?{DAY}").json()
 

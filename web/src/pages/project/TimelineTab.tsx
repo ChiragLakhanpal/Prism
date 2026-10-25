@@ -336,12 +336,17 @@ export function TimelineCard({
   const [table, setTable] = useState(false);
   const [codes, setCodes] = useState<string[]>([]);
   const chart = wide && width >= CHART_MIN;
+  // The title's count (the 23 brief, section 7.2) opens the table and moves focus to it, named by its caption.
+  const openTable = () => {
+    setTable(true);
+    requestAnimationFrame(() => document.getElementById(tableId)?.querySelector<HTMLElement>("[tabindex='0']")?.focus());
+  };
   const empty = (lane: Lane) => !data.items.some((item) => item.lane === lane);
   const lanesEmpty = Object.fromEntries(LANES.map((lane) => [lane, empty(lane)])) as Record<Lane, boolean>;
   return (
     <figure aria-labelledby={titleId} data-timeline-card className="rounded-md border border-line bg-surface p-4 @md/page:p-6">
       <p id={titleId} data-timeline-finding className="text-pretty font-bold text-ink-heading" style={{ fontSize: chart ? (width > 700 ? 20 : 18) : 16 }}>
-        <SegmentText segments={data.finding} />
+        <SegmentText segments={data.finding} check={chart ? { tooltip: words.findingCheck, onOpen: openTable } : undefined} />
       </p>
       <p className="mt-1 max-w-prose text-small text-chart-text-subtle">
         {chart ? (
