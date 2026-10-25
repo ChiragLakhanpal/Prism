@@ -1269,3 +1269,68 @@ It worked if it exits 0 and prints a line for each test year 2021 to 2025, each 
     WHERE scorer = 'step_dates_backtest' AND measure LIKE '%.n'
 
 must return rows for each test year 2021 to 2025, one `<family>.<step>.n` measure for each step of each family, each with a non-null `mlflow_run_id`, and each of those ids must be a run in the experiment `/Shared/strata/time_estimate` (`config/models.toml`, `experiment`) with the same id the script printed for that year.
+
+## Ticket 32, step 1 of 6: deploy the retrieval loop's tables and the weekly retrieval job
+
+The merger parked this step on October 25, 2026, after merge commit 5909913. All ten keys were set, but the header above holds workspace steps back while the user runs the backlog. It needs the Databricks keys in `.env`. It is ticket 04's deploy command, and one deploy from 5909913 or later serves every block that needs these tables. This workspace's earlier deploys passed `--fairshare-catalog workspace`, so this one does too.
+
+Run this from the main checkout, twice:
+
+    uv run --script ops/bundle/deploy.py --env-file .env --fairshare-catalog workspace
+
+It worked if both runs exit 0. The first run lists these eleven tables as new and changes no existing table: `strata.ops.answer_citations`, `strata.ops.candidate_labels`, `strata.ops.label_decisions`, `strata.ops.retrieval_agreement`, `strata.ops.retrieval_feedback_viewers`, `strata.ops.retrieval_feedback_weekly`, `strata.ops.retrieval_grades`, `strata.ops.retrieval_label_builds`, `strata.ops.retrieval_labels`, `strata.ops.retrieval_pool` and `strata.ops.retrieval_queries`. The job "strata retrieval weekly" (`bundle/retrieval.yml`, Mondays at 06:30 New York time) is on the workspace's Jobs page. The second run prints "No changes."
+
+## Ticket 32, step 2 of 6: redeploy the App, which writes the retrieval loop's rows as itself
+
+The merger parked this step on October 25, 2026, after merge commit 5909913. All ten keys were set, but the header above holds workspace steps back while the user runs the backlog. Run it after step 1, so the tables exist to grant. It needs the Databricks keys in `.env`. It is ticket 06's deploy command, and one deploy from 5909913 or later serves every block that names it. From this merge on, the deploy grants the App's service principal SELECT and MODIFY on `strata.ops.retrieval_queries`, `candidate_labels`, `label_decisions`, `answer_citations` and `retrieval_grades` (`ops/app/deploy_app.py`, `RETRIEVAL_TABLES`).
+
+Run this from the main checkout:
+
+    uv run --script ops/app/deploy_app.py --env-file .env
+
+It worked if the deploy exits 0 and its last line is `Strata is running at https://...`, and `SHOW GRANTS ON TABLE strata.ops.retrieval_queries` on the SQL warehouse lists the App's service principal with SELECT and MODIFY. The same query on the other four tables shows the same two grants.
+
+## Ticket 32, step 3 of 6: run the weekly retrieval job once by hand
+
+The merger parked this step on October 25, 2026, after merge commit 5909913. Run it after step 1, and after the documents run has filled `strata.gold.passage` on the warehouse (ticket 11's `uv run --script ops/documents/run_live.py --env-file .env`). It needs the Databricks keys in `.env`. Its first scheduled run is the next Monday at 06:30 New York time. Start it by hand instead with "Run now" on the Jobs page, or from the repo root:
+
+    databricks bundle run retrieval_weekly
+
+It worked if the run succeeds and this query on the SQL warehouse gives a row for each query set (criterion 1, workspace half):
+
+    SELECT query_set, queries, labels, documents FROM strata.ops.retrieval_label_builds ORDER BY built_at DESC
+
+The two silver sets read 12 queries, 13 labels and 1 document for `icr_review_citations`, and 2, 7 and 2 for `pad_lessons`, if the workspace holds the fixture's documents, or more if the documents run read more. `notice_queries` and `feedback` read 0 until step 4 and later reviews add to them.
+
+## Ticket 32, step 4 of 6: load the queries written from award notices, with their pools
+
+The merger parked this step on October 25, 2026, after merge commit 5909913. Run it after steps 1 to 3, and after the documents run has synced the AI Search index (ticket 11's step that runs `ops/documents/run_live.py`). It needs `DATABRICKS_HOST`, `DATABRICKS_WAREHOUSE_ID`, `DATABRICKS_TOKEN`, `AZURE_OPENAI_ENDPOINT` and `AZURE_OPENAI_API_KEY` in `.env`. It runs as a person's token, because the weekly job's own identity has no AI Search token.
+
+Run this from the main checkout:
+
+    uv run --script ops/retrieval/evaluate_live.py --env-file .env --load-queries
+
+It worked if it prints how many queries it loaded (3, from `evals/retrieval_queries.toml`), and `strata.ops.retrieval_queries` and `strata.ops.retrieval_pool` hold their rows. Then, once `config/roles.toml` maps `strata-query-judges` to real people and the App is deployed again with them (step 2's command), a query judge's first grade on one of these queries answers 200 on the App, not 403 permission.
+
+## Ticket 32, step 5 of 6: measure retrieval live
+
+The merger parked this step on October 25, 2026, after merge commit 5909913. Run it after step 4. It needs the keys of step 4. It ranks with AI Search's hybrid query and its reranker, logs each query set's run to the MLflow experiment `/Shared/strata/retrieval` (the tracker makes the folder first, as d39f1fc added), and appends its rows to `strata.ops.evaluation_result`, which ticket 25's deploy added.
+
+Run this from the main checkout:
+
+    uv run --script ops/retrieval/evaluate_live.py --env-file .env
+
+It worked if it exits 0 and prints precision at 10, recall at 20 and nDCG at 10 for each query set, with the run id, and this query returns the three measures for each query set (criterion 2, workspace half):
+
+    SELECT segment, measure, value FROM strata.ops.evaluation_result
+    WHERE scorer = 'retrieval_evaluation' AND run_id = '<the printed run id>'
+
+## Ticket 32, step 6 of 6: the tuning gate blocks a worse setup live
+
+The merger parked this step on October 25, 2026, after merge commit 5909913. Run it after step 5. It needs the keys of step 4.
+
+Run this from the main checkout:
+
+    uv run --script ops/retrieval/evaluate_live.py --env-file .env --gate --no-rerank
+
+It worked if it prints "Held-out set: lost. Hindsight set: not compared. The gate blocks the candidate." and exits 1 (criterion 3, live half). If the labeled set has no held-out query yet, it prints "Held-out set: not compared" and also exits 1, which means step 3 or step 4 has not filled the set.
