@@ -222,12 +222,18 @@ def readiness_answer(result, question) -> dict[str, list]:
 
 def lessons_answer(result, question) -> dict[str, list]:
     """get_lessons' answer: the first lesson, the evidence ids it rests on and IEG's part in them, and the
-    editions of the rules the lessons' projects followed."""
+    editions of the rules the lessons' projects followed; with packages, from the summary record, the completion
+    reports counted and each risk factor they raised with how many raised it (ticket 30)."""
     rows = result["rows"]
-    return {"first": [rows[0]["statement"]] if rows else [],
-            "first_evidence": [source["evidence_id"] for source in rows[0]["evidence"]] if rows else [],
-            "first_ieg_status": [rows[0]["ieg_status"]] if rows else [],
-            "editions": sorted({row["edition"]["key"] for row in rows if row["edition"]})}
+    found = {"first": [rows[0]["statement"]] if rows else [],
+             "first_evidence": [source["evidence_id"] for source in rows[0]["evidence"]] if rows else [],
+             "first_ieg_status": [rows[0]["ieg_status"]] if rows else [],
+             "editions": sorted({row["edition"]["key"] for row in rows if row["edition"]})}
+    reports = result["summary"]["reports"]
+    if reports is not None:
+        found |= {"reports_read": [reports["read"]],
+                  "raised": [[factor["key"], factor["k"]] for factor in reports["risk_factors"]]}
+    return found
 
 
 def past_range(result, question) -> dict[str, list]:
