@@ -101,7 +101,9 @@ def test_a_table_outside_its_expected_range_fails_the_row_count_check(fixture_co
 
     counted = {row["table"]: row for row in checks(fixture_copy) if row["check"] == "row_count"}
     assert (counted["strata.gold.assertion"]["min"], counted["strata.gold.assertion"]["max"]) == (1, 100)
-    assert (counted["strata.gold.assertion"]["found"], counted["strata.gold.assertion"]["passed"]) == (784, False)
+    held = fixture_copy.run("SELECT count(*) FROM strata.gold.assertion").rows[0][0]
+    assert (counted["strata.gold.assertion"]["found"], counted["strata.gold.assertion"]["passed"]) == (held, False)
+    assert held > 100
     assert counted["strata.gold.disagreement"]["passed"]
 
 

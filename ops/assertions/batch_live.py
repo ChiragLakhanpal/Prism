@@ -73,8 +73,10 @@ def record(model: batch.AzureOpenAIBatch, resume: str | None = None) -> int:
     wanted = {line["custom_id"] for line in held["lines"]}
     ladder = load_ladder()
     with DuckDBEngine.open(FIXTURE_DB, read_only=True) as engine:
-        asked = [assertions.request(report, ladder) for project_id in assertions.default_projects(engine)
-                 for report in assertions.reports(engine, project_id, ladder)]
+        projects = assertions.default_projects(engine)
+        rows = assertions.ProjectRows(engine, projects, ladder)  # one query a family for every project
+        asked = [assertions.request(report, ladder) for project_id in projects
+                 for report in assertions.reports(engine, project_id, ladder, rows)]
     requests = [request for request in asked if request.custom_id in wanted]
     print(f"I'm asking {model.deployment} about {len(requests)} reports on Global Batch.")
     try:
