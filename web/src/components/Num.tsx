@@ -43,6 +43,8 @@ export type NumCheck = {
   tabStop?: boolean;
   // A name that says more than the number, starting with it: "1 of 1 completion reports, for {risk}" (ticket 30).
   name?: string;
+  // Where its tooltip opens: below the number unless it would cover text that must stay in view (ticket 23).
+  side?: "top" | "bottom";
 };
 
 export function numText(num: NumValue): string {
@@ -114,6 +116,7 @@ export function NumLines({
           {second && <span className={cx(DOTTED_UNDERLINE, "group-hover:decoration-solid", secondClassName)}>{second}</span>}
         </button>
       }
+      side={check.side}
     >
       {check.tooltip}
     </Tooltip>
@@ -157,6 +160,7 @@ export function Num({ check, className, inCaption = false, ...num }: NumValue & 
           {body}
         </button>
       }
+      side={check.side}
     >
       {check.tooltip}
     </Tooltip>

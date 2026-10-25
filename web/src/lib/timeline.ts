@@ -355,14 +355,17 @@ export function lineFor(item: DisagreementItem, x: Scale, chipWidth: number, lan
 
 // Mark labels (section 4.5): in date order within each lane, after the chips, each takes the first place that
 // fits: row A centred on its mark, row A ending 8 px left of it, row A starting 8 px right of it, then the same
-// three in row B. A label fits inside the plot, 8 px from every placed label and chip, and 3 px from every point of
-// a dashed line (avoid), so no line runs through a label. When a lane's labels cannot all fit in that order, an
+// three in row B. A label fits inside the plot, 16 px from every placed label (closer, two labels read as one
+// phrase), 8 px from every chip, and 3 px from every point of a dashed line (avoid), so no line runs through a
+// label. When a lane's labels cannot all fit in that order, an
 // earlier label tries its next place, so the first layout in which none is dropped wins; when keeping off the lines
 // would drop a label, the lane keeps its labels and lets the line pass behind them, on their surface knockouts. The
 // same data and width always give the same layout. A label with no place left is dropped, and its mark keeps its
 // name, its tooltip and its table row.
 type LabelMark = { id: string; lane: Lane; x: number; text: string; width: number };
 const LINE_GAP = 3;
+const LABEL_GAP = 16;
+const apart = (a: Box, b: Box) => a.x1 + LABEL_GAP <= b.x0 || b.x1 + LABEL_GAP <= a.x0 || a.y1 <= b.y0 || b.y1 <= a.y0;
 const near = (box: Box, point: Point) =>
   point.x >= box.x0 - LINE_GAP && point.x <= box.x1 + LINE_GAP && point.y >= box.y0 - LINE_GAP && point.y <= box.y1 + LINE_GAP;
 
@@ -394,7 +397,7 @@ function laneLabels(mine: LabelMark[], lane: Lane, blocks: Box[], avoid: Point[]
       tries += 1;
       if (tries > 4000) return false;
       const place = options[at][k];
-      if (taken.every((box) => clear(place.box, box))) {
+      if (taken.every((box) => apart(place.box, box))) {
         chosen[at] = k;
         if (solve(at + 1, [...taken, place.box])) return true;
       }
@@ -410,7 +413,7 @@ function laneLabels(mine: LabelMark[], lane: Lane, blocks: Box[], avoid: Point[]
   // No layout keeps every label: place them in order and drop the ones with no room.
   const taken: Box[] = [];
   return mine.map((mark, index): Placed => {
-    const place = options[index].find((option) => taken.every((box) => clear(option.box, box)));
+    const place = options[index].find((option) => taken.every((box) => apart(option.box, box)));
     if (!place) return { id: mark.id, dropped: true };
     taken.push(place.box);
     return { id: mark.id, text: mark.text, x: place.x, y: place.y, anchor: place.anchor, box: place.box };

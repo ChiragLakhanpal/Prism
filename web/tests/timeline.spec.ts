@@ -109,6 +109,22 @@ async function ticksOutside(page: Page): Promise<string[]> {
   });
 }
 
+// Two mark labels in one row that sit closer than 15 px, which reads as one phrase (design review, round 2, P7).
+async function labelsTooClose(page: Page): Promise<string[]> {
+  return chart(page).evaluate((root) => {
+    const boxes = [...root.querySelectorAll<SVGTextElement>("[data-mark-label]")].map((label) => ({ id: label.dataset.markLabel, box: label.getBBox() }));
+    const found: string[] = [];
+    for (const [at, a] of boxes.entries()) {
+      for (const b of boxes.slice(at + 1)) {
+        const sameRow = a.box.y < b.box.y + b.box.height && b.box.y < a.box.y + a.box.height;
+        const gap = Math.max(b.box.x - (a.box.x + a.box.width), a.box.x - (b.box.x + b.box.width));
+        if (sameRow && gap < 15) found.push(`${a.id} and ${b.id}: ${Math.round(gap)} px`);
+      }
+    }
+    return found;
+  });
+}
+
 test("P130164's timeline places each report, event and record at its date, names each band's rating, and reads as one chart", async ({ page }) => {
   const { requests, unrecorded } = await open(page);
 
@@ -238,6 +254,8 @@ test("at 1024 px the chart redraws beside the drawer at 524 px and keeps every l
   await expect(dialog.getByRole("heading", { level: 2 })).toHaveText("ISRs 1–9, rated Satisfactory");
   await expect(dialog).toContainText("I show them as a trajectory, not a disagreement.");
   await expect(dialog.locator("tbody tr")).toHaveCount(9);
+  // The 410 px drawer is too narrow for the three columns, so each ISR is a card.
+  await expect(dialog.getByRole("table")).toBeHidden();
   expect(Math.round((await chart(page).boundingBox())!.width)).toBe(524);
   await expect(chart(page).locator("[data-mark-label]")).toHaveCount(9);
   expect(await linesThroughLabels(page)).toEqual([]);
@@ -298,8 +316,52 @@ test("as of a date after the ICR Review's re-issue, no dashed line or chip cover
   }
 });
 
+test("the skeleton title is sized to the title, so the chart does not move when the timeline arrives", async ({ page }) => {
+  for (const width of [1440, 1024, 390]) {
+    let release = () => {};
+    const held = new Promise<void>((resolve) => (release = resolve));
+    await page.setViewportSize({ width, height: 900 });
+    await mockApi(page, await timelineApi());
+    await page.route("**/api/projects/P130164/timeline", async (route) => {
+      await held;
+      await route.fulfill({ contentType: "application/json", body: await recorded("timeline-p130164.json") });
+    });
+    await page.goto("/projects/P130164/timeline");
+    await expect(page.locator("[data-timeline=loading]")).toBeVisible();
+    await page.evaluate(() => document.fonts.ready);
+    const before = (await page.locator("[data-timeline-subtitle]").boundingBox())!.y;
+    release();
+    await expect(page.locator("[data-timeline=ready]")).toBeVisible();
+    const after = (await page.locator("[data-timeline-subtitle]").boundingBox())!.y;
+    expect(Math.abs(after - before), `at ${width} px`).toBeLessThanOrEqual(2);
+    await page.unrouteAll({ behavior: "ignoreErrors" });
+  }
+});
+
+test("two labels in one row keep 16 px apart at every chart width, beside the drawer too, and none is dropped", async ({ page }) => {
+  // 1246 and 830 px with the drawer closed; 718 and 524 px beside it.
+  for (const [width, evidence] of [[1440, ""], [1024, ""], [1440, "?evidence=ratings:P130164:pdo_progress:1-9"], [1024, "?evidence=ratings:P130164:pdo_progress:1-9"]] as const) {
+    await open(page, `/projects/P130164/timeline${evidence}`, width);
+    // In the 576 px drawer at 1440 px the band's nine ISRs are one table of three columns, not nine tall cards.
+    if (evidence) await expect(drawer(page).getByRole("table")).toBeVisible({ visible: width === 1440 });
+    // And it fits the drawer: a table never scrolls sideways inside its frame (DESIGN.md section 5, Tables).
+    if (evidence && width === 1440) expect(await drawer(page).getByRole("table").evaluate((table) => table.parentElement!.scrollWidth <= table.parentElement!.clientWidth)).toBe(true);
+    await expect(chart(page).locator("[data-mark-label]")).toHaveCount(9);
+    expect(await labelsTooClose(page), `at ${Math.round((await chart(page).boundingBox())!.width)} px`).toEqual([]);
+    expect(await linesThroughLabels(page)).toEqual([]);
+  }
+});
+
 test("Show the table lists every item in arrow-key order, under its caption", async ({ page }) => {
-  await open(page);
+  // At 1024 px the finding takes two lines; the count's tooltip opens above it, so it never hides the second.
+  await open(page, "/projects/P130164/timeline", 1024);
+  await page.locator("[data-timeline-finding]").getByRole("button", { name: "Two" }).focus();
+  const tip = page.getByRole("tooltip");
+  await expect(tip).toContainText("Counted by the disagreement check for this project.");
+  const [finding, shown] = [(await page.locator("[data-timeline-finding]").boundingBox())!, (await tip.boundingBox())!];
+  expect(shown.y + shown.height <= finding.y || shown.y >= finding.y + finding.height).toBe(true);
+
+  await page.setViewportSize({ width: 1440, height: 900 });
   // The count in the title opens the table and takes you to it.
   await page.locator("[data-timeline-finding]").getByRole("button", { name: "Two" }).click();
   await expect(page.locator("[data-timeline-table]")).toBeVisible();

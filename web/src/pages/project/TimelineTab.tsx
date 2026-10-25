@@ -80,6 +80,13 @@ function useWidth<T extends HTMLElement>(): [React.RefObject<T | null>, number] 
   return [ref, width];
 }
 
+// The title's size, in pixels, which the loading card's placeholder takes too, so nothing moves when the finding
+// arrives: 20 on a chart card wider than 700 px, 18 on a narrower chart, 16 over the list.
+const titleSize = (chart: boolean, width: number) => (chart ? (width > 700 ? 20 : 18) : 16);
+// How many lines the placeholder draws: a finding fits on one line from a 1,000 px chart card, takes two on a
+// narrower chart, and about four over the list on a phone.
+const titleLines = (chart: boolean, width: number) => (chart ? (width >= 1000 ? 1 : 2) : 4);
+
 // A disagreement's line takes its card's state: amber only while an answer open on this page has a sentence it
 // changes (the 23 brief, section 4.4), and the default otherwise.
 export function lineStates(data: Timeline, run: Run | null): Record<string, LineState> {
@@ -314,6 +321,35 @@ export function TimelineSkeleton({ wide }: { wide: boolean }) {
   );
 }
 
+// The chart card while the timeline loads. Its title placeholder has the finding's size and its likely number of
+// lines at this card's width, so the subtitle and the chart stay where they are when the data arrive.
+function TimelineLoading({ wide, slow }: { wide: boolean; slow: boolean }) {
+  const [box, width] = useWidth<HTMLDivElement>();
+  const chart = wide && width >= CHART_MIN;
+  const lines = titleLines(chart, width);
+  return (
+    <div data-timeline-card className="rounded-md border border-line bg-surface p-4 @md/page:p-6">
+      <div ref={box}>
+        <p aria-hidden="true" className="font-bold" style={{ fontSize: titleSize(chart, width) }}>
+          {Array.from({ length: lines }, (_, at) => (
+            <SkeletonLine key={at} width={at === lines - 1 && lines > 1 ? "w-[40%]" : "w-[70%]"} />
+          ))}
+        </p>
+      </div>
+      {slow && <p className="mt-1 text-caption text-ink-muted">{words.stillLoading}</p>}
+      <p data-timeline-subtitle className="mt-1 max-w-prose text-small text-chart-text-subtle">
+        {wide ? <Fill template={words.subtitle} slots={{ report: <Glyph kind="report" />, event: <Glyph kind="event" />, record: <Glyph kind="record" /> }} /> : words.subtitleList}
+      </p>
+      <TimelineSkeleton wide={wide} />
+      <SkeletonLine width="w-3/5" className="mt-4 text-caption" />
+      <SkeletonLine width="w-2/5" className="text-caption" />
+      <p role="status" className="sr-only">
+        {words.loading}
+      </p>
+    </div>
+  );
+}
+
 // The chart card, in any state the payload gives: the finding, the subtitle, the chart or the list, the notes, the
 // source line and the table twin. The design gallery draws it as it is.
 export function TimelineCard({
@@ -347,8 +383,9 @@ export function TimelineCard({
   return (
     // tabIndex -1: Try again in the disagreements alert brings you back to the chart (the 23 brief, section 8.4).
     <figure aria-labelledby={titleId} tabIndex={-1} data-timeline-card className="rounded-md border border-line bg-surface p-4 focus:outline-none @md/page:p-6">
-      <p id={titleId} data-timeline-finding className="text-pretty font-bold text-ink-heading" style={{ fontSize: chart ? (width > 700 ? 20 : 18) : 16 }}>
-        <SegmentText segments={data.finding} check={chart ? { tooltip: words.findingCheck, onOpen: openTable } : undefined} />
+      <p id={titleId} data-timeline-finding className="text-pretty font-bold text-ink-heading" style={{ fontSize: titleSize(chart, width) }}>
+        {/* The count's tooltip opens above it, so it never hides the finding's second line. */}
+        <SegmentText segments={data.finding} check={chart ? { tooltip: words.findingCheck, onOpen: openTable, side: "top" } : undefined} />
       </p>
       <p data-timeline-subtitle className="mt-1 max-w-prose text-small text-chart-text-subtle">
         {chart ? (
@@ -438,20 +475,7 @@ export function TimelineTab({ pid }: { pid: string }) {
 
   let body: ReactNode;
   if (load.status === "loading") {
-    body = (
-      <div data-timeline-card className="rounded-md border border-line bg-surface p-4 @md/page:p-6">
-        <SkeletonLine width="w-[70%]" className="text-h3" />
-        <SkeletonLine width="w-[40%]" className="text-h3" />
-        {load.slow && <p className="mt-1 text-caption text-ink-muted">{words.stillLoading}</p>}
-        <p className="mt-1 max-w-prose text-small text-chart-text-subtle">{wide ? <Fill template={words.subtitle} slots={{ report: <Glyph kind="report" />, event: <Glyph kind="event" />, record: <Glyph kind="record" /> }} /> : words.subtitleList}</p>
-        <TimelineSkeleton wide={wide} />
-        <SkeletonLine width="w-3/5" className="mt-4 text-caption" />
-        <SkeletonLine width="w-2/5" className="text-caption" />
-        <p role="status" className="sr-only">
-          {words.loading}
-        </p>
-      </div>
-    );
+    body = <TimelineLoading wide={wide} slow={load.slow} />;
   } else if (load.status === "error") {
     body = <LoadError error={load.error} message={words.error} permission={words.permission} onRetry={retry} retrying={load.retrying} attempt={load.attempt} />;
   } else if (load.data.items.length === 0) {

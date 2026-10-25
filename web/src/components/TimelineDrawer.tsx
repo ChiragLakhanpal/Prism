@@ -199,7 +199,7 @@ function RatingsView({ evidence }: { evidence: EvidenceEvent }) {
       <Table
         title={words.ratings.caption}
         level={3}
-        cardsBelow="fit"
+        cardsBelow="narrow"
         count={{ noun: copy.timeline.itemsNoun, total: row.count, text: words.ratings.count(String(row.count)) }}
         columns={columns}
         rowHeader="isr"

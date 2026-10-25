@@ -79,6 +79,8 @@
   /* A table's own frame, for Table's cardsBelow="fit" (DESIGN.md section 5, Tables): the past
      range's six columns need about 776 px with one line per cell. */
   --container-table-fit: 49rem;
+  /* Table's cardsBelow="narrow": a table of three short columns keeps its columns from a 480 px frame. */
+  --container-table-narrow: 30rem;
   /* A fact table's own frame (DESIGN.md section 5, Fact table): from 45rem, as the Summary's 7 columns are at
      1440 px, its value column has room for "Moderately Unsatisfactory" on one line. */
   --container-fact-wide: 45rem;
