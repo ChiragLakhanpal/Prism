@@ -15,9 +15,17 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[1]
-for folder in (REPO / "src", REPO / "ops" / "dayone", REPO / "ops" / "bundle"):
-    if str(folder) not in sys.path:
-        sys.path.insert(0, str(folder))
+
+
+def on_path() -> None:
+    """Put src/ and the live helpers' folders on the import path, as the other live scripts do. Each command calls
+    it before it imports them, so a caller that restored the path in between (a test) still finds them."""
+    for folder in (REPO / "src", REPO / "ops" / "dayone", REPO / "ops" / "bundle"):
+        if str(folder) not in sys.path:
+            sys.path.insert(0, str(folder))
+
+
+on_path()
 
 
 class StoreError(RuntimeError):
@@ -30,13 +38,10 @@ def add_arguments(parser: argparse.ArgumentParser) -> None:
     where.add_argument("--env-file", help="the env file with the workspace's address, warehouse and sign-in")
 
 
-def live(args: argparse.Namespace) -> bool:
-    return not args.database
-
-
 @contextmanager
 def opened(args: argparse.Namespace):
     """The engine the command reads and writes with, closed afterwards when it is a DuckDB file."""
+    on_path()
     if args.database:
         from strata.lakehouse.engine import DuckDBEngine
 
@@ -58,6 +63,7 @@ def opened(args: argparse.Namespace):
 
 def tracker(args: argparse.Namespace, experiment: str):
     """Where runs are logged: MLflow on the workspace for the env file, an in-memory stand-in for a DuckDB file."""
+    on_path()
     from strata.estimates.tracking import MlflowTracker, OfflineTracker
 
     if args.database:
