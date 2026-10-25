@@ -55,6 +55,28 @@ index = "strata.gold.passage_index"
 reranker = "databricks_reranker"
 rerank_columns = ["header", "text"]
 
+# The search setup that production uses, and the one the tuning gate compares a candidate with (ticket 32;
+# strata.estimates.retrieval). A candidate ships only when the gate finds it loses nothing on the held-out
+# set (and on the hindsight set, once ticket 34 makes one), and then it is written here.
+#
+# keyword_weight   how much the keyword ranking (BM25 on each passage's words) counts in the fusion
+# vector_weight    how much the vector ranking (the cosine of the embeddings) counts in the fusion
+# rerank           whether the reranker reorders the best fused passages
+# rerank_depth     how many of the best fused passages the reranker reorders
+# header_in_words  whether keyword search and the reranker read each passage's header with its text
+#
+# The fixture search fuses the two rankings itself, so it applies every value. AI Search fuses its hybrid
+# query with equal weights of its own, so on the workspace only rerank applies until a live run shows
+# how to weight it (a workspace step). The header is always embedded with the text: changing that needs
+# new embeddings, which only the recording command or the nightly run makes. Source: ticket 11's search,
+# whose values these are.
+[search.setup]
+keyword_weight = 1.0
+vector_weight = 1.0
+rerank = true
+rerank_depth = 20
+header_in_words = true
+
 # The name-matching model for suppliers (ticket 19; docs/PLAN.md section 5). A STEP supplier ID
 # decides first. A row with no ID is matched by name with Splink's Fellegi-Sunter model, on DuckDB
 # inside the nightly task on both engines, against the suppliers with IDs and the other rows with no

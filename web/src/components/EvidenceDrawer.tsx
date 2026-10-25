@@ -45,6 +45,8 @@ import { AllReportsView, backToReports, RiskReportsView, RowClaim, RowSwitcher }
 import { isStepList } from "../lib/steps";
 import { LongestView, StepComparablesView } from "./StepsDrawer";
 import { LoadingLabel, Skeleton, SkeletonLine, SkeletonText } from "./Skeleton";
+import { FeedbackRow, type RowStart } from "./FeedbackRow";
+import { showsRow } from "../lib/retrieval";
 import { criteriaLessonOf, heldOnPage, pageLessons, type LessonEntry } from "../lib/criteria";
 import { routeStepRef, useWhy, WhyThisSource } from "./WhyThisSource";
 import { backLabel, criteriaClose, criteriaEyebrow, CriteriaDrawerBody, criteriaTitle, LessonClaim } from "./CriteriaDrawer";
@@ -206,6 +208,12 @@ function RowCells({ fields, ranges }: { fields: ReturnType<typeof passageFields>
       </tbody>
     </table>
   );
+}
+
+// The passage block outside the drawer (ticket 32): a passage under review on Passage reports, or one to grade on
+// Judging, shown whole with its meta strip and "Open at page", and no highlight, since no sentence opened it.
+export function PassageBlock({ evidence }: { evidence: EvidenceEvent }) {
+  return <PassageView evidence={evidence} sentence={null} fromAnswer={false} given={[]} />;
 }
 
 // given: the quote's place when no answer's sentence opened the drawer, such as a lesson's evidence card.
@@ -455,6 +463,7 @@ export function EvidenceDrawerView({
   onOpenListEntry,
   onChooseRow,
   onOpenReport,
+  feedbackStart,
   lesson: givenLesson,
 }: {
   id: string;
@@ -486,6 +495,8 @@ export function EvidenceDrawerView({
   // (ticket 30).
   onChooseRow?: (id: string) => void;
   onOpenReport?: (evidenceId: string) => void;
+  // A design gallery sample's feedback row state (ticket 32), which also shows the row without an answer.
+  feedbackStart?: RowStart;
   // Section 5's lesson whose paragraph this is, for the design gallery; the page finds it in the section's lessons.
   lesson?: LessonEntry | null;
 }) {
@@ -547,6 +558,10 @@ export function EvidenceDrawerView({
   const stepList = isStepList(id);
   const backTo = (comparable || criteriaList || evidence?.kind === "passage") && from?.id === id && from.list ? from.list : null;
   const criteriaView = evidence && (evidence.kind === "criteria_public" || evidence.kind === "criteria_item" || evidence.kind === "package_cost");
+  // The feedback row: a passage a search found, opened from the answer it belongs to (a marker, a number or a
+  // switcher tab of that answer), never from a bare link to the source (the 32 brief, section 4.1).
+  const fromItsAnswer = Boolean(claim) || (from?.id === id && Boolean(from.runId) && from.runId === evidence?.feedback?.run_id);
+  const row = evidence?.kind === "passage" && showsRow(evidence.feedback) && (fromItsAnswer || feedbackStart !== undefined);
   const region = evidence?.kind === "dot" ? dotRegion(evidence) : comparableRef ? copy.evidence.package.region(comparableRef) : undefined;
 
   return (
@@ -708,7 +723,13 @@ export function EvidenceDrawerView({
               </div>
             )}
           </div>
-          {preview && <p className="text-caption text-ink-muted">{copy.evidence.preview}</p>}
+          {/* Ticket 32: "Was this the right passage?", after the paragraph, for a passage a search found for the
+              question of the answer it was opened from; never from a bare link. Its own preview line replaces
+              brief 14's. */}
+          {row && evidence?.feedback && (
+            <FeedbackRow evidenceId={id} feedback={evidence.feedback} sentence={claim ? claim.index : null} preview={preview} start={feedbackStart} />
+          )}
+          {preview && !row && <p className="text-caption text-ink-muted">{copy.evidence.preview}</p>}
         </div>
       </div>
     </div>

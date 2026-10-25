@@ -26,6 +26,8 @@ It builds four things, with no network:
 - The proposed lessons and the review queue, by the nightly job's propose_lessons task
   (strata.knowledge.lessons.propose) with the batch model's recorded answers, run again once the
   passage reader has read the documents it proposes from (ticket 29).
+- The labeled set retrieval is measured on, with each query set's size, by the weekly retrieval run
+  (strata.knowledge.retrieval.weekly), once the passages are read (ticket 32).
 
 The build stops when any table outside the `recorded` schema lacks a public_from DATE column
 (ADR 0002).
@@ -49,6 +51,7 @@ from strata.dashboard import snapshot
 from strata.fixture import recorded as fmt
 from strata.knowledge import assertions, links
 from strata.knowledge.lessons import propose
+from strata.knowledge.retrieval import weekly
 from strata.lakehouse import catalog, nightly, pages, passages, plans
 from strata.lakehouse.catalog import CatalogError
 from strata.lakehouse.engine import DuckDBEngine, EngineError
@@ -139,6 +142,9 @@ def build(out=FIXTURE_DB, manifest=None, tables=catalog.TABLES, plans_for=PLAN_P
                 # The nightly job's relink task again, now that the passages are read (ticket 22): the edge
                 # table, with each contract scored against the paragraphs of its project's reports.
                 links.relink(engine, RUN_ID, clock)
+                # The weekly retrieval run, once the passages are read (ticket 32): the labeled set, with
+                # each query set's size, and the loop's measures.
+                weekly.run(engine, now=clock)
                 # The dashboard's copy of the Data readiness page, once every reader has measured.
                 snapshot.write(engine, RUN_ID, clock)
             catalog.check_public_from(engine, skip=("recorded",))  # every other table, whatever made it

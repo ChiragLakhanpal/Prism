@@ -2688,3 +2688,77 @@ bids = [
   { name = "BRAHM PRAKASH MODI", id = "", section = "evaluated", opening = "71,068,526.66", evaluated = "71,068,526.66", reason = "" },
   { name = "SHIV SHAKTI ENTERPRISES", id = "", section = "evaluated", opening = "75,610,293.78", evaluated = "75,610,293.78", reason = "" },
 ]
+
+# The retrieval loop's silver labels (ticket 32; the spec's "Evaluation"), read from the recorded documents
+# by the builder on October 24, 2026, apart from Strata's code, with the page of each in the recorded
+# .pages.txt. tests/test_retrieval_labels.py checks each quote on its page and that the weekly retrieval
+# run finds the same counts.
+#
+# The ICR Review's "ICR para N" citations. The March 27, 2020 review and its May 4, 2023 re-issue (both
+# report ICRR0021929) print the same twelve citations on the same pages, so the two versions give one set,
+# not two. One citation names two paragraphs ("ICR para 11 and 43"), and one names a paragraph of another
+# document after the ICR's ("ICR para 18 and Restructuring Paper para 8c"), whose ICR paragraph alone counts.
+# The citation on page 13, "ICR para 72", breaks across two lines in the recorded text. Each cited paragraph
+# is a numbered paragraph of the ICR's main text, outside its annexes, one passage each.
+[silver_labels.icr_review_citations]
+says = "The ICR Review cites the P130164 ICR 12 times, naming 13 of its paragraphs."
+documents = ["documents/P130164/icr-review-2020-03-27", "documents/P130164/icr-review-2023-05-04"]
+report_number = "ICRR0021929"
+icr = "documents/P130164/icr-2019-10-10"
+queries = 12
+labels = 13
+reports = 1
+citations = [
+  { pdf_page = 3, quote = "(ICR para 18 and Restructuring Paper para 8c)", paragraphs = [18] },
+  { pdf_page = 5, quote = "(ICR para 27)", paragraphs = [27] },
+  { pdf_page = 6, quote = "(ICR para 33)", paragraphs = [33] },
+  { pdf_page = 7, quote = "(ICR para 38)", paragraphs = [38] },
+  { pdf_page = 8, quote = "(ICR para 26)", paragraphs = [26] },
+  { pdf_page = 8, quote = "(ICR para 11 and 43)", paragraphs = [11, 43] },
+  { pdf_page = 10, quote = "(ICR para 84)", paragraphs = [84] },
+  { pdf_page = 12, quote = "(ICR para 56)", paragraphs = [56] },
+  { pdf_page = 12, quote = "(ICR para 70)", paragraphs = [70] },
+  { pdf_page = 13, quote = "(ICR para 72)", paragraphs = [72] },
+  { pdf_page = 13, quote = "(ICR para 53)", paragraphs = [53] },
+  { pdf_page = 13, quote = "(ICR para 54)", paragraphs = [54] },
+]
+
+# The PADs' "Lessons Learned and Reflected in the Project Design" sections. Each PAD prints the heading
+# twice: once in its table of contents, with dot leaders and a page number, which is not the section, and
+# once over the section. The section's numbered paragraphs run until the next heading. Each paragraph is one
+# passage of the PAD's section III.C.
+[silver_labels.pad_lessons]
+says = "The two PADs' lessons sections hold seven numbered paragraphs: 30 to 35 in P130164's and 39 in P156634's."
+queries = 2
+labels = 7
+reports = 2
+
+[[silver_labels.pad_lessons.sections]]
+document = "documents/P130164/pad-2013-10-01"
+project = "P130164"
+contents_page = 5
+pdf_page = 22
+quote = "C. Lessons Learned and Reflected in the Project Design 30. The project builds upon"
+paragraphs = [30, 31, 32, 33, 34, 35]
+last_pdf_page = 23
+last_quote = "35. Regular project performance and quality audits during project implementation"
+
+[[silver_labels.pad_lessons.sections]]
+document = "documents/P156634/pad-2017-04-05"
+project = "P156634"
+contents_page = 4
+pdf_page = 22
+quote = "C. Lessons Learned and Reflected in the Project Design 39. Having subprojects ready for implementation"
+paragraphs = [39]
+last_pdf_page = 22
+last_quote = "39. Having subprojects ready for implementation helps avoid delays in project execution."
+
+# The day the P156634 PAD became public, which dates its lessons query (ticket 32). The P130164 PAD's is
+# stress_shelf.pad_disclosed above.
+[[value]]
+id = "pad-p156634-disclosed"
+says = "The P156634 PAD became public on July 25, 2017."
+value = 2017-07-25
+quote = "2017-07-25T14:17:07Z"
+record = "api/documents/P156634.json"
+at = "documents.D27348420.disclosure_date"

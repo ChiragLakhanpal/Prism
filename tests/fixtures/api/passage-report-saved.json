@@ -1,0 +1,118 @@
+{
+  "saved": {
+    "outcome": "rank_lower",
+    "next": "grp-e80319312005"
+  },
+  "item": {
+    "group_id": "grp-6fa04e510789",
+    "stage": "decided",
+    "kind_label": "both",
+    "query_kind": "rebidding_and_prices",
+    "state": "dec-0001",
+    "mode": "pilot",
+    "passage": {
+      "passage_id": "31525018/v1/54",
+      "evidence_id": "strata.gold.passage:31525018/v1/54",
+      "project_name": "Rajasthan Road Sector Modernization Project",
+      "pid": "P130164",
+      "doc_type": "Implementation Completion and Results Report",
+      "doc_date": "2019-10-10",
+      "para": "54",
+      "paragraph_numbered": true,
+      "section": "III.B",
+      "page": 23,
+      "pages": 66,
+      "row": {
+        "evidence_id": "strata.gold.passage:31525018/v1/54",
+        "public_from": "2019-11-02",
+        "source": {
+          "document_type": "Implementation Completion and Results Report",
+          "project_id": "P130164",
+          "project_name": "Rajasthan Road Sector Modernization Project",
+          "document_id": "31525018",
+          "document_date": "2019-10-10",
+          "report_number": "ICR4803",
+          "version": 1,
+          "section_path": "III.B",
+          "paragraph": "54",
+          "paragraph_numbered": true,
+          "pdf_page": 23,
+          "pdf_pages": 66,
+          "pdf_url": "http://documents.worldbank.org/curated/en/258481572631321132/pdf/India-Rajasthan-Road-Sector-Modernization-Project.pdf",
+          "doc_key": "icr-2019-10-10",
+          "notice_id": null,
+          "notice_url": null
+        },
+        "passage_id": "31525018/v1/54",
+        "document_id": "31525018",
+        "document_type": "Implementation Completion and Results Report",
+        "project_id": "P130164",
+        "version": 1,
+        "section_path": "III.B",
+        "paragraph": "54",
+        "paragraph_numbered": true,
+        "part": 1,
+        "parts": 1,
+        "pdf_page": 23,
+        "last_pdf_page": 23,
+        "printed_page": "19 of 62",
+        "language": "en",
+        "parse_route": "A",
+        "kind": "paragraph",
+        "route": "published_text",
+        "scanned": false,
+        "table_title": null,
+        "table_row": null,
+        "cells": null,
+        "notice_id": null,
+        "header": "ICR, P130164, India, roads, III.B, ¶54, p.23",
+        "text": "54. Another lesson to be highlighted is that the works contract estimates should have been based on the market rate to avoid instances of rebidding: 108 of 328 cases had to go through rebidding."
+      }
+    },
+    "report_count": 2,
+    "first_on": "2026-10-23T09:00:03Z",
+    "own_project": true,
+    "audit": null,
+    "reports": [
+      {
+        "report_id": "rep-0001",
+        "role": "staff",
+        "is_you": false,
+        "kind": "wrong_passage",
+        "reported_on": "2026-10-23T09:00:03Z",
+        "question": "Why were works contracts in P130164 advertised again?",
+        "sentence": "The completion report says the works contract estimates should have been based on the market rate, because \"108 of 328 cases had to go through rebidding\".",
+        "reason": "It is about estimates in general, not why these contracts were advertised again.",
+        "run_id": "run-0001",
+        "own_project": false
+      },
+      {
+        "report_id": "rep-0002",
+        "role": "staff",
+        "is_you": false,
+        "kind": "not_useful",
+        "reported_on": "2026-10-23T09:20:04Z",
+        "question": "Why were works contracts in P130164 advertised again?",
+        "sentence": "The completion report says the works contract estimates should have been based on the market rate, because \"108 of 328 cases had to go through rebidding\".",
+        "reason": null,
+        "run_id": "run-0002",
+        "own_project": true
+      }
+    ],
+    "can": {
+      "decide": false,
+      "reopen": true,
+      "reason_code": null
+    },
+    "outcome": {
+      "outcome": "ranked_lower",
+      "decided_on": "2026-10-23T11:40:16Z",
+      "reviewer_name": "Daniel Okafor",
+      "reason": "The paragraph is about estimates in general. Questions about these contracts need paragraph 55.",
+      "agreeing": null
+    },
+    "limits": {
+      "reason_max_chars": 500
+    }
+  }
+}

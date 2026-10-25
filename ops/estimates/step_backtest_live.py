@@ -63,8 +63,10 @@ def main(argv=None) -> int:
     os.environ.update({key: value for key, value in cli_env(env, {}).items() if key.startswith("DATABRICKS_")})
     started = time.monotonic()
     try:
-        engine = LiveWorkspace(env).engine()
-        run_id = step_dates.backtest(engine, MlflowTracker(load_time_estimate().experiment),
+        workspace = LiveWorkspace(env)
+        engine = workspace.engine()
+        tracker = MlflowTracker(load_time_estimate().experiment, mkdirs=workspace.w.workspace.mkdirs)
+        run_id = step_dates.backtest(engine, tracker,
                                      outcomes_through=args.outcomes_through,
                                      years=tuple(args.years) if args.years else None)
     except EngineError as error:

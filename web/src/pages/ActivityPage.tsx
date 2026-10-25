@@ -142,14 +142,19 @@ function Pairs({ trail }: { trail: Trail }) {
   );
 }
 
+// The labelled pairs while the activity loads, above the page's purpose, as the loaded page has them.
+function PairsSkeleton() {
+  return (
+    <div aria-hidden="true" className="mt-2 flex gap-6">
+      <SkeletonText widths={["w-24", "w-48"]} />
+      <SkeletonText widths={["w-32", "w-56"]} />
+    </div>
+  );
+}
+
 function TrailSkeleton() {
   return (
     <div aria-hidden="true">
-      <div className="mt-2 flex gap-6">
-        <SkeletonText widths={["w-24", "w-48"]} />
-        <SkeletonText widths={["w-32", "w-56"]} />
-      </div>
-      <SkeletonText className="mt-2 text-body" widths={["w-full", "w-3/5"]} />
       <div className="mt-6 max-w-prose">
         <SkeletonText className="text-h3" widths={["w-full", "w-4/5"]} />
         <SkeletonLine className="mt-4 text-caption" width="w-3/4" />
@@ -232,6 +237,7 @@ export function ActivityPage({ pid, stepRef }: { pid: string; stepRef: string })
           </>
         ) : (
           <>
+            <PairsSkeleton />
             <p className="mt-2 max-w-prose text-body text-ink-muted">{words.purpose}</p>
             <TrailSkeleton />
           </>

@@ -7,6 +7,7 @@
 // the history entry it was asked on (web/src/lib/router.ts), so Back to that page shows it again and a
 // full reload drops it.
 import { closeDrawerOf, remember } from "./evidence";
+import type { Feedback } from "./retrieval";
 import { StreamError, streamEvents } from "./sse";
 import { createStore } from "./store";
 import type { Why } from "./trail";
@@ -60,8 +61,11 @@ export type EvidenceEvent = {
   highlights: { sentence: number; start: number; end: number }[];
   // A passage opened by its id says why it is a source for a contract it appeared together with (ticket 22), or
   // null when no link was public. A passage an answer or a page sent with it leaves it out (undefined), and the
-  // drawer asks for it.
+  // drawer shows no such block for it.
   why?: Why | null;
+  // Whether the drawer offers "Was this the right passage?" for this source of this answer (ticket 32). Only the
+  // answer stream sends it; a source read from a link has none, and the row does not show.
+  feedback?: Feedback;
 };
 // The verifier's counts. numbers, dates, quotes and sources are over every sentence the agent wrote, as the
 // steps' six-check list gives them; shown is over the sentences on screen, as the check line gives them. The

@@ -62,13 +62,13 @@ const FIXED_RULES: Rule[] = [
   })),
 ];
 
-// A link is "appeared together", never a cause (DESIGN.md section 7, rule 28): the causal words, in the copy
+// A link is "appeared together", never a cause (DESIGN.md section 7, rule 32): the causal words, in the copy
 // blocks that write about links.
 export function causalChecker(): CopyChecker {
   const pattern = new RegExp(`\\b(?:${CAUSAL_WORDS.map((word) => escape(word).replace(/ /g, "\\s+")).join("|")})\\b`, "gi");
   return (text) =>
     [...text.matchAll(pattern)].map(
-      (match) => `uses "${match[0]}", which says a cause. DESIGN.md section 7, rule 28 says a link is written "appeared together".`,
+      (match) => `uses "${match[0]}", which says a cause. DESIGN.md section 7, rule 32 says a link is written "appeared together".`,
     );
 }
 

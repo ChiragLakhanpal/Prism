@@ -6,7 +6,7 @@ Read first: docs/PLAN.md sections 3 and 5; the blueprint's "Who reaches for Stra
 
 **Blocked by:** 32 (The retrieval loop: a labeled set, tuned hybrid search and feedback)
 
-**Status:** ready-for-agent
+**Status:** in-progress
 **Area:** knowledge
 **Phase:** P2
 **Design review:** yes
@@ -17,3 +17,7 @@ Read first: docs/PLAN.md sections 3 and 5; the blueprint's "Who reaches for Stra
 - [ ] Passages render with their language attribute in the evidence drawer and the source view (DESIGN.md section 10), checked by Playwright.
 - [ ] A French method name in a fixture plan maps to the current Regulations' name.
 - [ ] Interface strings stay English: the copy file is unchanged by this ticket, and the drawer follows the Evidence drawer wireframe in every language; axe finds no WCAG 2.2 AA violations.
+
+## Comments
+
+- October 23, 2026, orchestrator: dispatched to an implementer in its own worktree on branch strata/42-other-languages, as soon as ticket 32 landed. Credentials are still missing, so every live step is parked in docs/workspace-catchup.md; the offline side is built against the fixtures.

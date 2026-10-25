@@ -20,7 +20,7 @@ export const FIXED_TERMS = [
   "the Bank's no-objection",
 ];
 
-// DESIGN.md section 7, rule 28 (ticket 22; the 22 brief, section 11): a link between a contract and a paragraph is
+// DESIGN.md section 7, rule 32 (ticket 22; the 22 brief, section 11): a link between a contract and a paragraph is
 // always "appeared together", never a cause. These words and phrases are banned, whole and in any case, in the copy
 // blocks CAUSAL_SCOPES names: the activity page, its trail, a project's Connections tab, "Why this source", and the
 // two words the Data readiness page says those pages are. "because" is on the list on purpose, so an error there is
@@ -149,6 +149,16 @@ export const NON_COPY_PROPS = new Set([
   "d",
   // NoteSentences' type size: "small" in a draft, "body" in a lesson review's summary (ticket 29).
   "textSize",
+  // The feedback row (ticket 32): the report kind a sample has chosen ("wrong_passage" or "not_useful"), why a
+  // withdrawal failed ("failed" or "decided"), the server's reason code for no row ("preview"), and the loop's
+  // mode ("pilot" or "scale"). Each is a code the copy file turns into words.
+  "chosen",
+  "withdrawFailed",
+  "why_not",
+  "mode",
+  // The grade bar's two grades once a query is locked (ticket 32): grade codes such as "partly".
+  "mine",
+  "theirs",
 ]);
 
 // A prop or key that ends in one of these holds an address, an id or a class, such as pdfHref,

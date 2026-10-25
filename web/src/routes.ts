@@ -10,7 +10,9 @@
 // /projects/:pid/documents/:doc, where :doc is a document's key such as icr-2019-10-10. Ticket 12 builds the
 // package workspace at /packages/:id, where :id is the package's STEP reference. Ticket 35 adds the
 // Drafts tab's pages: /drafts, /drafts/new and /drafts/:draftId. Ticket 29 adds the Lessons tab's
-// Waiting for review (/lessons/review) and one item's review page (/lessons/review/:itemId).
+// Waiting for review (/lessons/review) and one item's review page (/lessons/review/:itemId). Ticket 32 adds
+// Passage reports (/lessons/reports, /lessons/reports/:groupId) and Judging (/lessons/judging,
+// /lessons/judging/:queryId).
 import type { copy } from "./copy";
 import type { Section } from "./components/TopNav";
 
@@ -112,6 +114,12 @@ export function matchRoute(pathname: string): Match {
   // Ticket 29: the lesson review queue and one item's review page, for lesson reviewers.
   if (first === "lessons" && second === "review" && parts.length === 2) return page("lessonsQueue", "lessons");
   if (first === "lessons" && second === "review" && parts.length === 3) return page("lessonReview", "lessons", { itemId: third });
+  // Ticket 32: Passage reports and one passage's reports, for passage reviewers, and Judging and one query, for
+  // query judges.
+  if (first === "lessons" && second === "reports" && parts.length === 2) return page("lessonsReports", "lessons");
+  if (first === "lessons" && second === "reports" && parts.length === 3) return page("passageReport", "lessons", { groupId: third });
+  if (first === "lessons" && second === "judging" && parts.length === 2) return page("lessonsJudging", "lessons");
+  if (first === "lessons" && second === "judging" && parts.length === 3) return page("judgingQuery", "lessons", { queryId: third });
   if (first === "drafts" && parts.length === 1) return page("drafts", "drafts");
   // Ticket 35: writing a draft (/drafts/new?kind=...), and a draft by its id. PLAN.md section 8 does not
   // list these two routes; "new" is never a draft's id.
