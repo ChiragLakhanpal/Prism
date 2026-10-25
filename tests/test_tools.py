@@ -237,20 +237,30 @@ def past_range(result, question) -> dict[str, list]:
     """find_comparables' answer: the quartiles and 8-in-10 point in months, read from the summary record
     the agent cites them by, the packages still open, the canceled ones it left out, the packages
     signed within the plan's months, and the numbers each "in 10" phrase states, with the words that go
-    with the plan's."""
-    plan_months = result["plan"]["months"]
-    return {
+    with the plan's. A package with no plan row (ticket 15) has no plan, so its question asks nothing of one.
+    A question about the quantile dots (ticket 15) asks only how many there are and which packages the last
+    one stands for."""
+    if "last_dot" in question["expected"]:
+        dots = result["quantile_dots"] or []
+        return {"quantile_dots": [len(dots)], "last_dot": sorted(dots[-1]["step_references"]) if dots else [],
+                "last_dot_still_open": [dots[-1]["still_open"]] if dots else []}
+    found = {
         "past_range_months": [result["summary"]["past_range"][name] for name in ("q25", "q50", "q75", "q80")],
         "cited_as": [result["summary"]["evidence_id"]],
         "still_open": sorted(row["step_reference"] for row in result["rows"] if row["still_open"]),
         "canceled_left_out": sorted(evidence.split(":", 1)[1] for entry in result["coverage"]["not_used"]
                                     if entry["reason"] == "canceled" for evidence in entry["evidence_ids"]),
-        "signed_within_plan": sorted(row["step_reference"] for row in result["rows"]
-                                     if not row["still_open"] and row["months"] <= plan_months),
         "eight_in_ten": result["summary"]["frequencies"]["q80"],
-        "plan_in_ten": result["summary"]["frequencies"]["plan"]["states"],
-        "plan_in_ten_words": [result["summary"]["frequencies"]["plan"]["words"]],
     }
+    if result["plan"] is not None:
+        plan_months = result["plan"]["months"]
+        found |= {
+            "signed_within_plan": sorted(row["step_reference"] for row in result["rows"]
+                                         if not row["still_open"] and row["months"] <= plan_months),
+            "plan_in_ten": result["summary"]["frequencies"]["plan"]["states"],
+            "plan_in_ten_words": [result["summary"]["frequencies"]["plan"]["words"]],
+        }
+    return found
 
 
 def disagreement_answer(result, question) -> dict[str, list]:

@@ -44,6 +44,8 @@ export const TAB_PATH: Record<ProjectTab, string> = {
 };
 
 const PROJECT_ID = /^[Pp]\d{6}$/;
+// A planned package's id (src/strata/server/packages.py): pkg- and twelve lowercase hex digits or digits.
+export const PLANNED_ID = /^pkg-[0-9a-f]{12}$/;
 const DAY = /^(\d{4})-(\d{2})-(\d{2})$/;
 
 // A real calendar day written as an ISO date, such as 2026-10-09.
@@ -99,6 +101,10 @@ export function matchRoute(pathname: string): Match {
 
   if (parts.length === 0) return page("home");
   if (first === "packages" && parts.length === 1) return page("packages", "packages");
+  // Ticket 15: a package planned from a sentence, while I read the sentence (/packages/new) and once it is
+  // saved (/packages/pkg-...). A STEP reference is never "new" and never starts with "pkg-".
+  if (first === "packages" && parts.length === 2 && second === "new") return page("packageNew", "packages");
+  if (first === "packages" && parts.length === 2 && PLANNED_ID.test(second)) return page("plannedPackage", "packages", { id: second });
   if (first === "packages" && parts.length === 2) return page("package", "packages", { id: second });
   if (first === "lessons" && parts.length === 1) return page("lessons", "lessons");
   // Ticket 29: the lesson review queue and one item's review page, for lesson reviewers.

@@ -5,5 +5,5 @@ On October 24, 2026, the Lakebase probe (`ops/app/probe_lakebase.py`) timed a wr
 ## Consequences
 
 - Follows, packages, drafts and their states, uploads and feedback live in Lakebase. Usage events, agent runs and every measure stay in `strata.ops`, because the dashboard reads them there.
-- Ticket 15 designs how the app reaches Lakebase as each viewer, and keeps the uploader's team rule (CLAUDE.md rule 8).
+- Ticket 15 designed how the app reaches Lakebase. As built, the app signs in as its own service principal, with the token its client id and secret get, as it does for drafts in `strata.ops`. Every read and write names the viewer it is for, and the routes show a person only their own packages (`src/strata/appstate/`, `docs/app-state.md`). A Lakebase role per viewer was not built: the user is to confirm this choice (a parked decision, ticket 15's review round 2). The uploader's team rule (CLAUDE.md rule 8) is kept the same way when uploads arrive.
 - Every row still keeps the day it became public (ADR 0002), and the deploy creates the tables from one definition each.

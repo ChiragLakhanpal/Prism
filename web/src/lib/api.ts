@@ -427,6 +427,20 @@ export type CoverageReason =
 
 // GET /api/packages/{stepRef}/comparables: find_comparables' result. Every number the section
 // states is in it, except the plan line's readout, which counts its rows.
+// A quantile dot (ticket 12), with the packages it stands for, how many of them are still open, and their
+// shortest and longest months, as find_comparables gives them (ticket 15: a dot opens the drawer at them).
+export type QuantileDot = {
+  k: number;
+  days: number;
+  months: number;
+  reached: boolean;
+  step_references: string[];
+  count: number;
+  still_open: number;
+  low_months: number;
+  high_months: number;
+};
+
 export type ComparablesResult = {
   tool: "find_comparables";
   as_of: string;
@@ -464,7 +478,7 @@ export type ComparablesResult = {
     within: number;
     in10: number | null;
   } | null;
-  quantile_dots: { k: number; days: number; months: number; reached: boolean }[] | null;
+  quantile_dots: QuantileDot[] | null;
   // The numbers each "in 10" phrase states, and the words that go with the plan's share, as the tool
   // decided them: the screen picks its title from these words and never works them out again.
   frequencies: {

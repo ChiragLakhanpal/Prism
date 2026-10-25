@@ -19,6 +19,8 @@ import { DraftsPage } from "./pages/DraftsPage";
 import { LessonsPage, QueuePage } from "./pages/LessonsPages";
 import { ReviewPage } from "./pages/ReviewPage";
 import { PackagePage } from "./pages/PackagePage";
+import { PackagesPage } from "./pages/PackagesPage";
+import { PlannedPackagePage } from "./pages/PlannedPackagePage";
 import { ProjectPage } from "./pages/ProjectPage";
 import { ProjectsPage } from "./pages/ProjectsPage";
 import { SourcePage } from "./pages/SourcePage";
@@ -38,6 +40,9 @@ export function RoutePage({ match, search = "" }: { match: Match; search?: strin
   if (match.key === "lessonsQueue") return <QueuePage search={search} />;
   if (match.key === "lessonReview") return <ReviewPage itemId={match.values.itemId} />;
   if (match.key === "package") return <PackagePage stepRef={match.values.id} />;
+  if (match.key === "packages") return <PackagesPage search={search} />;
+  if (match.key === "packageNew") return <PlannedPackagePage packageId={null} search={search} />;
+  if (match.key === "plannedPackage") return <PlannedPackagePage packageId={match.values.id} search={search} />;
   return (
     <div className="layout-grid">
       <div className="col-span-12 @md/page:col-span-8">

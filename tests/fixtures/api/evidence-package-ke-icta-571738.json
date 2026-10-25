@@ -1,0 +1,72 @@
+{
+  "id": "strata.gold.package:KE-ICTA-571738-CW-RFB",
+  "kind": "package",
+  "tool": null,
+  "stratum": "What",
+  "short_name": null,
+  "row": {
+    "evidence_id": "strata.gold.package:KE-ICTA-571738-CW-RFB",
+    "public_from": "2026-09-29",
+    "source": {
+      "project_id": "P170941",
+      "notice_id": "OP00471871",
+      "contract_id": null,
+      "award_notice_id": null,
+      "signed_in": null
+    },
+    "step_reference": "KE-ICTA-571738-CW-RFB",
+    "project_id": "P170941",
+    "country_code": "KE",
+    "country_name": "Kenya",
+    "notice_id": "OP00471871",
+    "notice_date": "2026-09-29",
+    "signed_on": null,
+    "still_open": true,
+    "days": 24,
+    "months": 0.8,
+    "rank": null,
+    "counted_to": "2026-10-23",
+    "canceled": false,
+    "description": "REFURBISHMENT OF HUDUMA CENTRES IN BORDERLAND AREAS IN THREE (3) LOTS LOT 1: AMAGORO, BUSIA COUNTY, LOT 2: TAVETA, TAITA TAVETA COUNTY, LOT 3: MOYALE, MARSABIT COUNTY",
+    "project_name": "Kenya Digital Economy Acceleration Project",
+    "method": "Request for Bids",
+    "category": "Works",
+    "market_approach": null,
+    "review_type": null,
+    "amount_usd": null,
+    "process_status": null,
+    "notice": {
+      "notice_id": "OP00471871",
+      "notice_type": "Invitation for Bids",
+      "notice_date": "2026-09-29",
+      "bid_reference_no": "KE-ICTA-571738-CW-RFB",
+      "bid_description": "REFURBISHMENT OF HUDUMA CENTRES IN BORDERLAND AREAS IN THREE (3) LOTS LOT 1: AMAGORO, BUSIA COUNTY, LOT 2: TAVETA, TAITA TAVETA COUNTY, LOT 3: MOYALE, MARSABIT COUNTY",
+      "procurement_category": "Works",
+      "procurement_method": "Request for Bids",
+      "market_approach": null,
+      "submission_deadline": "2026-11-10",
+      "contract_signature_date": null,
+      "signed_contract_price": null,
+      "signed_contract_currency": null,
+      "public_from": "2026-09-29"
+    },
+    "contract": null,
+    "award_notice": null,
+    "records_through": "2026-10-13",
+    "datasets": {
+      "notices": {
+        "dataset_name": "Procurement Notices",
+        "license": "CC BY 4.0",
+        "data_source": "Systematic Tracking of Exchanges in Procurement (STEP)",
+        "record_url": "https://projects.worldbank.org/en/projects-operations/procurement-detail/{id}"
+      },
+      "awards": {
+        "dataset_name": "Contract Awards in Investment Project Financing (Since FY 2020)",
+        "license": "CC BY 4.0",
+        "data_source": "Systematic Tracking of Exchanges in Procurement (STEP)",
+        "record_url": null
+      }
+    }
+  },
+  "highlights": []
+}

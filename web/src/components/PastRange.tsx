@@ -21,6 +21,7 @@ import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type 
 import { CircleDashed } from "lucide-react";
 import { copy } from "../copy";
 import type { ApiError, Comparable, ComparablesResult } from "../lib/api";
+import { forgetDotList, rememberDots, type OpenComparable } from "../lib/packages";
 import { cx } from "../lib/cx";
 import { formatCount, formatDate, formatNumber } from "../lib/format";
 import { dataReadinessHref } from "../routes";
@@ -48,7 +49,7 @@ const tableDate = (iso: string) => formatDate(iso, { style: "table" });
 
 export type PastRangeState =
   | { status: "loading" }
-  | { status: "error"; error: ApiError | null; retrying: boolean; attempt: number; onRetry: () => void }
+  | { status: "error"; error: ApiError | null; retrying: boolean; attempt: number; onRetry: () => void; message?: string }
   | { status: "ready"; result: ComparablesResult };
 
 // Whether the page area is narrower than 48rem, the width @md/page: starts at. It measures the page
@@ -87,15 +88,59 @@ function useWidth<T extends HTMLElement>(): [RefObject<T | null>, number] {
   return [element, width];
 }
 
-export function PastRange({ state, headingRef }: { state: PastRangeState; headingRef?: Ref<HTMLHeadingElement> }) {
+// Ticket 15: a dot or a table row opens its comparable package in the evidence drawer, and the opened one
+// stays marked (web/src/lib/packages.ts, useOpenComparable); and for a package planned from a sentence, the
+// plan is the person's own months, kept in their plan chip, rather than a plan row's dates.
+export type PlannedMonths = { months: number | null; onChange: (months: number) => void };
+
+export function PastRange({
+  state,
+  headingRef,
+  open,
+  planned,
+  body,
+  status,
+  busy = false,
+  lead,
+  more,
+  quiet = false,
+}: {
+  state: PastRangeState;
+  headingRef?: Ref<HTMLHeadingElement>;
+  open?: OpenComparable;
+  planned?: PlannedMonths;
+  // The section's body in place of the result, such as a planned package's plan prompt (ticket 15).
+  body?: ReactNode;
+  // A status line under the heading, such as "Finding comparable packages for your new criteria.", which
+  // the section announces; busy marks the section as updating.
+  status?: ReactNode;
+  busy?: boolean;
+  // A line under the heading before the finding, such as the criteria find_comparables used. While a status
+  // line shows, the status takes its place, since the line is out of date until the rerun answers.
+  lead?: ReactNode;
+  // Where find_comparables gave no range, how to compare with more, after the sentence that says why
+  // (ticket 15, brief 7.7).
+  more?: ReactNode;
+  // The page says what is happening in its own live region, such as the planned package's steps and
+  // reruns, so the section's own loading status stays silent and nothing is heard twice.
+  quiet?: boolean;
+}) {
   const headingId = useId();
   const loading = state.status === "loading";
   const result = state.status === "ready" ? state.result : null;
+  // Where a dot opens the drawer, each quantile dot's list is held for it (ticket 15). A link to a dot's list
+  // that these comparables have no dots for closes the drawer, rather than leave it waiting.
+  const canOpen = Boolean(open);
+  useEffect(() => {
+    if (!canOpen || !result) return;
+    if (result.quantile_dots) rememberDots(result);
+    else forgetDotList();
+  }, [canOpen, result]);
   return (
     <section
       aria-labelledby={headingId}
-      aria-busy={loading || undefined}
-      data-past-range={state.status === "ready" ? kind(state.result) : state.status}
+      aria-busy={loading || busy || undefined}
+      data-past-range={body ? "custom" : state.status === "ready" ? kind(state.result) : state.status}
       className="rounded-md border border-line bg-surface p-4 @md/page:p-6"
     >
       <p className="text-label text-ink-muted uppercase">{words.eyebrow}</p>
@@ -103,12 +148,20 @@ export function PastRange({ state, headingRef }: { state: PastRangeState; headin
         <span aria-hidden="true">{words.number} </span>
         {words.heading}
       </h2>
-      {state.status === "loading" && <PastRangeSkeleton />}
-      {state.status === "error" && (
+      {status ? (
+        <p className="mt-2 text-small text-ink-muted" data-section-status>
+          {status}
+        </p>
+      ) : (
+        lead && (body || state.status === "ready") && <div className="mt-2">{lead}</div>
+      )}
+      {body}
+      {!body && state.status === "loading" && <PastRangeSkeleton />}
+      {!body && state.status === "error" && (
         <div className="mt-4">
           <LoadError
             error={state.error}
-            message={words.error}
+            message={state.message ?? words.error}
             permission={words.permission}
             onRetry={state.onRetry}
             retrying={state.retrying}
@@ -116,8 +169,8 @@ export function PastRange({ state, headingRef }: { state: PastRangeState; headin
           />
         </div>
       )}
-      {result && <Ready result={result} />}
-      {loading && (
+      {!body && result && <Ready result={result} open={open} planned={planned} more={more} />}
+      {loading && !quiet && (
         <p role="status" className="sr-only">
           {words.loading}
         </p>
@@ -144,7 +197,7 @@ function kind(result: ComparablesResult): Kind {
   }
 }
 
-function Ready({ result }: { result: ComparablesResult }) {
+function Ready({ result, open, planned, more }: { result: ComparablesResult; open?: OpenComparable; planned?: PlannedMonths; more?: ReactNode }) {
   const abstention = result.abstention;
   if (abstention?.reason === "no_public_notice") {
     return (
@@ -173,10 +226,21 @@ function Ready({ result }: { result: ComparablesResult }) {
         <div className="mt-2">
           <Unmeasured result={result} />
         </div>
+        {more}
       </NoChart>
     );
   }
   if (abstention?.reason === "no_comparables" || abstention?.reason === "unknown_package" || result.rows.length === 0) {
+    // A planned package's criteria are the person's, so the state says how to compare with more (the 15 brief).
+    if (planned) {
+      return (
+        <NoChart title={copy.packageWorkspace.section.noneFound}>
+          <p className="mt-4">
+            <TextLink href={readinessHref(result)}>{words.empty.noneLink}</TextLink>
+          </p>
+        </NoChart>
+      );
+    }
     return (
       <NoChart title={words.empty.noneTitle}>
         <p className="mt-2 max-w-prose text-body text-ink">
@@ -188,7 +252,7 @@ function Ready({ result }: { result: ComparablesResult }) {
       </NoChart>
     );
   }
-  return <Populated result={result} />;
+  return <Populated result={result} open={open} planned={planned} more={more} />;
 }
 
 // A state with no chart: a first-person title beside the dashed circle of the neutral state.
@@ -338,17 +402,18 @@ function SourceLine({ result }: { result: ComparablesResult }) {
 
 // ── The populated states ─────────────────────────────────────────────────
 
-function Populated({ result }: { result: ComparablesResult }) {
+function Populated({ result, open: opening, planned, more }: { result: ComparablesResult; open?: OpenComparable; planned?: PlannedMonths; more?: ReactNode }) {
   const abstained = result.abstention?.reason === "too_few_comparables";
   const rows = result.rows;
   const total = rows.length;
   const counts = result.counts!;
   const open = counts.still_open;
   const quantile = !abstained && result.quantile_dots ? result.quantile_dots : null;
-  // The plan row's own months, from its planned dates, as find_comparables returned them.
-  const planRowMonths = result.plan?.months ?? null;
+  // The plan row's own months, from its planned dates, as find_comparables returned them; for a package
+  // planned from a sentence, the person's own plan from their plan chip (ticket 15).
+  const planRowMonths = planned ? planned.months : (result.plan?.months ?? null);
   const maxMonths = result.thresholds.max_plan_months;
-  const pkg = result.package!;
+  const pkg = result.package;
 
   const [plan, setPlan] = useState<number | null>(planRowMonths);
   const [text, setText] = useState(planRowMonths === null ? "" : months1(planRowMonths));
@@ -370,6 +435,15 @@ function Populated({ result }: { result: ComparablesResult }) {
     },
     [],
   );
+  // The plan chip and the plan line are one value: a plan typed in the chip moves the line (ticket 15).
+  const plannedMonths = planned?.months;
+  useEffect(() => {
+    if (plannedMonths === undefined || plannedMonths === null) return;
+    setPlan((now) => (now === plannedMonths ? now : plannedMonths));
+    setText((now) => (Number(now.replace(",", ".")) === plannedMonths ? now : months1(plannedMonths)));
+    setAxisValue(plannedMonths);
+    setInvalid(false);
+  }, [plannedMonths]);
 
   const ids = { title: useId(), input: useId(), helper: useId(), error: useId(), table: useId() };
   const withinOf = useCallback(
@@ -386,14 +460,17 @@ function Populated({ result }: { result: ComparablesResult }) {
   const axis = axisFor(largest, width || Number.POSITIVE_INFINITY);
   const say = (months: number) => setAnnounce(words.chart.announce(whole(withinOf(months)), whole(total), months1(months)));
 
+  const onPlannedChange = planned?.onChange;
   const onPlan = useCallback(
     (value: number, how: PlanMove) => {
       setPlan(value);
       setText(months1(value));
       setInvalid(false);
       if (how === "drag-end" || how === "axis") setAnnounce(words.chart.announce(whole(withinOf(value)), whole(total), months1(value)));
+      // A planned package keeps the line's months as its plan; the page saves it once the movement stops.
+      if (how !== "drag") onPlannedChange?.(value);
     },
-    [withinOf, total],
+    [withinOf, total, onPlannedChange],
   );
 
   const onType = (raw: string) => {
@@ -406,6 +483,7 @@ function Populated({ result }: { result: ComparablesResult }) {
     }
     setInvalid(false);
     setPlan(value);
+    onPlannedChange?.(value);
     clearTimeout(axisTimer.current);
     axisTimer.current = setTimeout(() => setAxisValue(value), 300);
     clearTimeout(sayTimer.current);
@@ -431,9 +509,9 @@ function Populated({ result }: { result: ComparablesResult }) {
     onOpen: showRows,
   };
   const explainQuantiles: NumCheck = { tooltip: words.explain.quantiles(whole(total), spelled(open)), onOpen: showRows };
-  const explainPlan: NumCheck = {
-    tooltip: words.explain.plan(pkg.plan.implementing_agency, formatDate(pkg.plan.plan_date)),
-  };
+  const explainPlan: NumCheck | undefined = pkg
+    ? { tooltip: words.explain.plan(pkg.plan.implementing_agency, formatDate(pkg.plan.plan_date)) }
+    : undefined;
 
   const type = chartType(width || 800);
 
@@ -579,10 +657,11 @@ function Populated({ result }: { result: ComparablesResult }) {
       text={text}
       invalid={invalid}
       maxMonths={maxMonths}
-      planRowMonths={planRowMonths}
+      planRowMonths={planned ? null : planRowMonths}
       plan={plan}
       notice={result.plan?.planned_notice_on ?? null}
       signing={result.plan?.planned_signing_on ?? null}
+      planned={Boolean(planned)}
       onType={onType}
       onReset={reset}
     />
@@ -599,6 +678,7 @@ function Populated({ result }: { result: ComparablesResult }) {
       <h3 id={ids.title} className="font-bold text-pretty text-ink-heading" style={{ fontSize: type.l, lineHeight: 1.3 }} data-finding>
         {title}
       </h3>
+      {abstained && more}
       {narrow && <div className="mt-2">{summaryBlock}</div>}
       <p className="mt-2 text-ink-muted" style={{ fontSize: type.m }}>
         {quantile ? <Fill template={words.subtitleDots} slots={{ total: whole(total) }} /> : words.subtitle}
@@ -632,10 +712,24 @@ function Populated({ result }: { result: ComparablesResult }) {
             axisLastLabel={c.axisLast(whole(axis.max))}
             alt={altParts.join(" ")}
             groupName={quantile ? c.groupDots(whole(total)) : c.group(whole(total))}
-            groupHelp={c.groupHelp}
+            groupHelp={opening ? (quantile ? c.groupHelpOpenDots : c.groupHelpOpen) : c.groupHelp}
             sliderName={c.slider}
             valueText={valueText}
             onPlan={onPlan}
+            onOpen={
+              opening
+                ? (key, element) => {
+                    // A quantile dot lists the packages it stands for; any other dot is one package.
+                    const dot = quantile?.find((one) => `dot-${one.k}` === key);
+                    const row = quantile ? undefined : rows.find((one) => one.step_reference === key);
+                    if (dot) opening.onOpenDot(dot, element);
+                    else if (row) opening.onOpen(row, element);
+                  }
+                : undefined
+            }
+            opened={opening?.opened ?? null}
+            openHint={quantile ? c.openHintDots : c.openHint}
+            openLabel={quantile ? c.openDots : c.openRecords}
           />
         )}
         {width === 0 && <div style={{ height: CHART_HEIGHT }} />}
@@ -667,6 +761,7 @@ function Populated({ result }: { result: ComparablesResult }) {
             page={page}
             onPage={setPage}
             captionRef={captionRef}
+            open={opening}
           />
         )}
       </div>
@@ -711,9 +806,12 @@ function PlanControl({
   plan,
   notice,
   signing,
+  planned = false,
   onType,
   onReset,
 }: {
+  // A package planned from a sentence: the line is the person's own plan, with no plan row behind it.
+  planned?: boolean;
   ids: { input: string; helper: string; error: string };
   inputRef: Ref<HTMLInputElement>;
   text: string;
@@ -775,7 +873,9 @@ function PlanControl({
       </p>
       <div className="grid @md/page:block">
       <p id={ids.helper} className={cx("col-start-1 row-start-1 text-caption text-ink-muted", moved && "invisible @md/page:visible")}>
-        {notice && signing ? (
+        {planned ? (
+          plan !== null ? w.helperPlanned : w.helperPlannedNone
+        ) : notice && signing ? (
           // Plain plan values, so they carry no popover (ticket 10's rule); the months worked out from them do.
           <Fill template={w.helper} slots={{ notice: <Num date={notice} />, signing: <Num date={signing} /> }} />
         ) : plan !== null ? (
@@ -798,12 +898,14 @@ function ComparablesTable({
   page,
   onPage,
   captionRef,
+  open,
 }: {
   result: ComparablesResult;
   plan: number | null;
   page: number;
   onPage: (page: number) => void;
   captionRef: Ref<HTMLSpanElement>;
+  open?: OpenComparable;
 }) {
   const t = words.table;
   const rows = result.rows;
@@ -840,8 +942,21 @@ function ComparablesTable({
     id: row.step_reference,
     cells: {
       // A reference with a county's name breaks at its spaces first (MonoWords); one with no spaces
-      // keeps to one line in the table, where its column fits it.
-      package: <MonoWords text={row.step_reference} />,
+      // keeps to one line in the table, where its column fits it. Where the drawer can open, the
+      // reference is a button that opens the package's records (ticket 15), the full-size way in on a phone.
+      package: open ? (
+        <button
+          type="button"
+          data-open-row={row.step_reference}
+          aria-label={t.openRow(row.step_reference)}
+          onClick={(event) => open.onOpen(row, event.currentTarget)}
+          className="inline cursor-pointer py-1 text-left text-primary underline decoration-1 underline-offset-3 hover:text-link-hover"
+        >
+          <MonoWords text={row.step_reference} />
+        </button>
+      ) : (
+        <MonoWords text={row.step_reference} />
+      ),
       country: row.country_name ?? copy.notInRecord,
       notice: tableDate(row.notice_date),
       signed: row.signed_on ? tableDate(row.signed_on) : t.stillOpen,
@@ -863,6 +978,7 @@ function ComparablesTable({
         rowHeader="package"
         cardsBelow="fit"
         cardsNote={t.columns.monthsCards}
+        selected={open?.opened ?? null}
         state={{ status: "ready", rows: tableRows }}
         source={<SourceLine result={result} />}
       />

@@ -5,6 +5,8 @@
 # DATABRICKS_CLIENT_SECRET. It forwards each viewer's token in a header, because the deploy gives
 # the app the "sql" user authorization scope. src/strata/server/settings.py says what each one does.
 # The deploy leaves the four FOUNDRY_ entries out of the copy it uploads when .env lacks any of them.
+# The app state database resource (ADR 0005) needs no entry here: the platform sets PGHOST, PGPORT,
+# PGDATABASE, PGUSER and PGSSLMODE from it.
 command: ["python", "-m", "strata.server"]
 env:
   - name: PYTHONPATH

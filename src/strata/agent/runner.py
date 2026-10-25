@@ -52,6 +52,17 @@ def writers_from_environment(environ: Mapping[str, str]) -> Callable[[str], Foun
     return writer
 
 
+def agent_from_environment(environ: Mapping[str, str], key: str) -> Callable[[], FoundryAgent | None]:
+    """One Foundry agent by its key in config/agents.toml, such as the package reader (ticket 15), as the app's
+    own principal, or None when the environment names no Foundry project."""
+    foundry = _foundry(environ)
+    if foundry is None:
+        return lambda: None
+    endpoint, token = foundry
+    spec = load_agent(key)
+    return lambda: FoundryAgent(endpoint, spec, token)
+
+
 def lesson_writer_from_environment(environ: Mapping[str, str]) -> Callable[[], FoundryAgent | None]:
     """The lesson review writer (config/agents.toml, lesson_review_writer), as the app's own principal, or
     None when the environment names no Foundry project (ticket 29)."""

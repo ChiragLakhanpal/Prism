@@ -116,6 +116,7 @@ export function Table({
   labelledBy,
   busy,
   countLead = false,
+  selected,
 }: {
   // The finding the rows show, as a sentence.
   title: ReactNode;
@@ -142,6 +143,9 @@ export function Table({
   busy?: ReactNode;
   // The count line takes focus after Previous page or Next page (data-page-lead, App.tsx), so the new range is read.
   countLead?: boolean;
+  // The row whose details show elsewhere, such as the comparable the evidence drawer shows (ticket 15):
+  // it takes the selected row's tint fill.
+  selected?: string | null;
 }) {
   const ownTitleId = useId();
   const titleId = labelledBy ?? ownTitleId;
@@ -275,7 +279,11 @@ export function Table({
               </tr>
             ))}
             {rows.map((row) => (
-              <tr key={row.id} className="border-t border-line align-top">
+              <tr
+                key={row.id}
+                data-selected={row.id === selected || undefined}
+                className={cx("border-t border-line align-top", row.id === selected && "bg-tint")}
+              >
                 {columns.map((column) =>
                   column.key === rowHeader ? (
                     <th key={column.key} scope="row" className={cx("px-3 py-2 font-normal wrap-break-word text-ink", align(column))}>
@@ -318,7 +326,11 @@ export function Table({
           </li>
         ))}
         {rows.map((row) => (
-          <li key={row.id} className="rounded-md border border-line bg-surface p-4">
+          <li
+            key={row.id}
+            data-selected={row.id === selected || undefined}
+            className={cx("rounded-md border border-line p-4", row.id === selected ? "bg-tint" : "bg-surface")}
+          >
             {createElement(cardHeading, { className: "text-small font-semibold wrap-break-word text-ink-heading" }, row.cells[rowHeader])}
             <dl className={cx("mt-2", CARD_FIELDS)} data-numbers>
               {fields.map((column) => (

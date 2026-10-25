@@ -100,6 +100,8 @@ export const NON_COPY_PROPS = new Set([
   "htmlFor",
   // Table's breakpoint for cards: "md" or "lg".
   "cardsBelow",
+  // The plan prompt's "Show the past range" weight, "primary" or "secondary" (ticket 15, brief 36).
+  "showRangeVariant",
   // A readiness column's label in a card: "hidden" leaves it to screen readers (ticket 18).
   "cardLabel",
   // EightColumns' breakpoint: "lg" or "xl".

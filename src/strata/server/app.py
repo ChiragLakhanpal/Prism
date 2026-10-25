@@ -46,6 +46,10 @@
   unknown_package. GET /api/packages/{step_reference}/comparables runs find_comparables through the
   tool registry for the workspace's section 1, with the tool's criteria as query parameters
   (?review_type=Prior, ?category=any), ?asof= and ?view=, as the viewer.
+- POST, GET /api/planned-packages and GET, POST /api/planned-packages/{package_id} plan a package from a
+  sentence, list a viewer's packages and the plans they checked, and open or change one package, and GET
+  /api/comparables runs find_comparables for a package with no STEP row (ticket 15; src/strata/server/
+  packages.py). Each plan check a signed-in viewer opens is recorded for their Packages tab.
 - GET /api/suppliers/review is the review list for supplier name matching (ticket 19): each candidate
   pair that waits for a person, with both names, countries and contracts, read as the viewer. POST
   /api/suppliers/review records a person's decision on one, merge or no merge with a reason, and the
@@ -89,7 +93,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Annotated, Literal
 
-from fastapi import Depends, FastAPI, Query, Request
+from fastapi import BackgroundTasks, Depends, FastAPI, Query, Request
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from starlette.middleware.gzip import GZipMiddleware
 from opentelemetry import trace
@@ -106,9 +110,12 @@ from strata.harness.aio import HEARTBEAT, with_heartbeats
 from strata.harness.turn import (ERROR_CODES, Event, RunError, Runner, Scope, TraceIds, Turn,
                                  new_run_id as random_run_id, no_agent)
 from strata.lakehouse.engine import Engine, EngineError, PermissionDenied
+from strata.config import PackageForm, load_package_form
+from strata.packages.store import PackageStore
 from strata.server import drafts as draft_routes
 from strata.server import (baseline, changes, documents, engines, evidence, lookup, projects, summary, suppliers,
                            tracing)
+from strata.server import packages as package_routes
 from strata.server.access import Access, NoGroups
 from strata.server.evidence import OpenedLog
 from strata.server.suppliers import SupplierLog
@@ -220,7 +227,10 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                writers: Callable[[str], object | None] | None = None, access: Access | None = None,
                kinds: DraftKinds | None = None, today: Callable[[], dt.date] = registry.today,
                now: Callable[[], dt.datetime] = lambda: dt.datetime.now(dt.UTC),
-               new_draft_id: Callable[[], str] = new_draft_id, lessons: LessonReview | None = None,
+               new_draft_id: Callable[[], str] = new_draft_id, packages: PackageStore | None = None,
+               package_reader: Callable[[], object | None] | None = None, package_thresholds=None,
+               package_form: PackageForm | None = None, new_package_id: Callable[[], str] = package_routes.new_package_id,
+               new_save_id: Callable[[], str] = package_routes.new_save_id, lessons: LessonReview | None = None,
                lesson_writer: Callable[[], object | None] = lambda: None,
                lesson_record: Callable[[], Engine] | None = None) -> FastAPI:
     """The app.
@@ -247,6 +257,13 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
     without it, every viewer is on a team of their own. kinds is the draft-kind registry, today the day
     a draft's facts are read as of, now the clock (also for when a baseline was saved) and new_draft_id
     the ids drafts get.
+
+    packages keeps planned packages and the plan checks each viewer opened (src/strata/packages/store.py),
+    written as the app's own service principal; without it, planning a package says there is no data service
+    and no plan check is recorded. package_reader gives the package reader agent, or None when none is
+    connected; package_thresholds and package_form stand in for config/thresholds.toml and
+    config/package_form.toml, so a test can change a threshold or a field; new_package_id and new_save_id are
+    the ids packages and their saves get.
     """
     engine_for = engine_for or engines.from_environment()
     runner = runner or no_agent
@@ -425,17 +442,37 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
             result["project"]["display_name"] = projects.display_name(result["project"]["project_name"])
         return result
 
+    def checked(result, viewer: Viewer, view: str, latest: bool, background: BackgroundTasks):
+        """A plan check the viewer opened, recorded for their Packages tab (ticket 15) as the app's own service
+        principal, after the answer is sent, so a slow or absent Lakebase never holds Check a plan. A preview
+        records nothing, and a failed write changes nothing the viewer sees."""
+        if packages is None or not isinstance(result, dict) or result.get("abstention") or view != STAFF \
+                or not viewer.user_id or not result.get("plan"):
+            return result
+        plan, at = result["plan"], now()
+
+        def record():
+            try:
+                packages.record_plan_check(viewer.user_id, plan["project_id"], plan["agency_id"],
+                                           plan.get("implementing_agency"), dt.date.fromisoformat(plan["plan_date"]),
+                                           latest, (result.get("counts") or {}).get("checked"), at)
+            except Exception:  # the warehouse, the network or a token: none of them may change the page
+                log.exception("I could not record that %s opened the plan check of %s.", viewer.user_id, plan["document_id"])
+        background.add_task(record)
+        return result
+
     @app.get("/api/projects/{project_id}/procurement/{agency_id}")
-    def check_latest_plan(project_id: str, agency_id: str, asof: dt.date | None = None, view: str = "staff",
-                          viewer: Viewer = Depends(current_viewer)):
-        return named(run_tool("check_plan", {"project_id": project_id, "implementing_agency": agency_id},
-                              viewer, view, asof))
+    def check_latest_plan(project_id: str, agency_id: str, background: BackgroundTasks, asof: dt.date | None = None,
+                          view: str = "staff", viewer: Viewer = Depends(current_viewer)):
+        return named(checked(run_tool("check_plan", {"project_id": project_id, "implementing_agency": agency_id},
+                                      viewer, view, asof), viewer, view, latest=True, background=background))
 
     @app.get("/api/projects/{project_id}/procurement/{agency_id}/{version}")
-    def check_plan_version(project_id: str, agency_id: str, version: dt.date, asof: dt.date | None = None,
-                           view: str = "staff", viewer: Viewer = Depends(current_viewer)):
-        return named(run_tool("check_plan", {"project_id": project_id, "implementing_agency": agency_id,
-                                             "plan_date": version}, viewer, view, asof))
+    def check_plan_version(project_id: str, agency_id: str, version: dt.date, background: BackgroundTasks,
+                           asof: dt.date | None = None, view: str = "staff", viewer: Viewer = Depends(current_viewer)):
+        return named(checked(run_tool("check_plan", {"project_id": project_id, "implementing_agency": agency_id,
+                                                     "plan_date": version}, viewer, view, asof), viewer, view, latest=False,
+                             background=background))
 
     @app.get("/api/projects/{project_id}/procurement/{agency_id}/{version}/changes")
     def plan_changes(project_id: str, agency_id: str, version: dt.date, asof: dt.date | None = None,
@@ -536,6 +573,12 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                             new_run_id=new_run_id, runs=runs, trace_ids=trace_ids, reference=request_reference,
                             heartbeat_seconds=heartbeat_seconds)
 
+    package_routes.add_routes(app, engine_for=engine_for, store=packages, reader_for=package_reader or (lambda: None),
+                              form=package_form or load_package_form(), thresholds=package_thresholds or thresholds,
+                              today=today, now=now, new_package_id=new_package_id, new_save_id=new_save_id,
+                              new_run_id=new_run_id, runs=runs, trace_ids=trace_ids, reference=request_reference,
+                              heartbeat_seconds=heartbeat_seconds)
+
     @app.get("/api/packages/{step_reference}")
     def open_package(step_reference: str, asof: dt.date | None = None, viewer: Viewer = Depends(current_viewer)):
         as_of = asof or registry.today()
@@ -551,19 +594,9 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
     def comparables(step_reference: str, request: Request, asof: dt.date | None = None, view: str = "staff",
                     viewer: Viewer = Depends(current_viewer)):
         # The criteria come from the query as the tool's own parameter names; the registry checks them.
-        criteria = {name: value for name, value in request.query_params.items() if name not in ("asof", "view")}
-        for name in ("size_from_usd", "size_to_usd"):
-            if name in criteria:
-                try:
-                    criteria[name] = float(criteria[name])
-                except ValueError:
-                    return JSONResponse({"code": "bad_request", "detail": f"{name} must be a number."}, status_code=422)
-        for name in ("notice_from", "notice_to"):
-            if name in criteria:
-                try:
-                    criteria[name] = dt.date.fromisoformat(criteria[name])
-                except ValueError:
-                    return JSONResponse({"code": "bad_request", "detail": f"{name} must be a date."}, status_code=422)
+        criteria = package_routes.comparables_criteria(request)
+        if isinstance(criteria, JSONResponse):
+            return criteria
         return run_tool("find_comparables", {**criteria, "step_reference": step_reference}, viewer, view, asof)
 
     def write_about_a_pair(viewer: Viewer, write: Callable[[SupplierLog, str], None]):

@@ -9,7 +9,8 @@
 import { ApiError, getJson } from "./api";
 
 export type Found =
-  | { kind: "project"; pcode: string; name: string; country: string | null }
+  // plans: each implementing agency's latest published plan that I read, for the box's check mode (ticket 15).
+  | { kind: "project"; pcode: string; name: string; country: string | null; plans?: { agency: string; agencyId: string; planDate: string }[] }
   | { kind: "loan"; loan: string; pcode: string; name: string | null }
   | { kind: "activity"; stepRef: string; pcode: string; agency: string; agencyId: string; planDate: string; isLatest: boolean };
 
@@ -72,10 +73,22 @@ export const RULES: Rule[] = [
     whole: (text) => (whole(PCODE, text) ? project(text) : null),
     within: (text) => [...text.matchAll(PCODE)].map((match) => project(match[0])),
     lookup: (intent, signal) =>
-      found<{ project: { project_id: string; project_name: string; country: string | null } }>(
+      found<{
+        project: { project_id: string; project_name: string; country: string | null };
+        agencies?: { implementing_agency: string; agency_id: string; versions: { plan_date: string; is_latest: boolean; read: boolean }[] }[];
+      }>(
         `/api/projects/${encodeURIComponent(intent.query)}`,
         signal,
-        (body) => ({ kind: "project", pcode: body.project.project_id, name: body.project.project_name, country: body.project.country }),
+        (body) => ({
+          kind: "project",
+          pcode: body.project.project_id,
+          name: body.project.project_name,
+          country: body.project.country,
+          plans: (body.agencies ?? []).flatMap((agency) => {
+            const latest = agency.versions.find((version) => version.is_latest && version.read);
+            return latest ? [{ agency: agency.implementing_agency, agencyId: agency.agency_id, planDate: latest.plan_date }] : [];
+          }),
+        }),
       ),
     href: (record) => `/projects/${record.kind === "project" ? record.pcode : ""}`,
   },

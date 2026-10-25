@@ -89,6 +89,23 @@ class LiveApps:
     def put_secret(self, scope: str, key: str, value: str) -> None:
         self.w.secrets.put_secret(scope, key, string_value=value)
 
+    def app_state_database(self, instance: str) -> None:
+        """Make the Lakebase instance that holds app state (ADR 0005), or start it if it is stopped."""
+        from databricks.sdk.errors import NotFound
+        from databricks.sdk.service import database
+
+        try:
+            found = self.w.database.get_database_instance(instance)
+        except NotFound:
+            self.w.database.create_database_instance_and_wait(
+                database.DatabaseInstance(name=instance, capacity=LAKEBASE_CAPACITY),
+                timeout=dt.timedelta(minutes=MINUTES))
+            return
+        if found.stopped:
+            self.w.database.update_database_instance(
+                instance, database.DatabaseInstance(name=instance, stopped=False), "stopped")
+            self.w.database.wait_get_database_instance_database_available(instance)
+
 
 def warehouse(w, env: dict) -> WarehouseEngine:
     return WarehouseEngine(env["DATABRICKS_WAREHOUSE_ID"], lambda method, path, body: w.api_client.do(method, path, body=body))

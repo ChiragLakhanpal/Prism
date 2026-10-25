@@ -2,6 +2,7 @@
 // band with the box and the data-freshness stamp in its five states, the page alerts, and the
 // footer, against the mocked API. The words are the 06 design brief's.
 import { createHash } from "node:crypto";
+import type { Page } from "@playwright/test";
 import { expect, mockShell, recorded, test } from "./mocked";
 
 // web/src/assets/world-bank-logo.md: the official file's hash when it was downloaded.
@@ -9,6 +10,14 @@ const LOGO_SHA256 = "c11d30bf69ad0f6f224b350e93ea976bbac438ff18c82786d1c11454a03
 
 // The stamp writes "Oct 21" in the current year, so the tests fix today.
 const TODAY = new Date("2026-10-24T12:00:00Z");
+
+// The Packages tab lists the viewer's packages and checked plans (ticket 15). An empty list keeps the tab's
+// own alert, for a list it could not load, out of the page's alerts that these tests count.
+async function noPlannedPackages(page: Page) {
+  await page.route("**/api/planned-packages", async (route) =>
+    route.fulfill({ contentType: "application/json", body: await recorded("planned-packages-empty.json") }),
+  );
+}
 
 test("the navy bar carries the official World Bank Group logo, unaltered, 24 px tall with clear space of half its height", async ({ page }) => {
   await mockShell(page);
@@ -149,6 +158,7 @@ test("when the server fails, the stamp says it can't read the date, and tries ag
 
 test("an account the warehouse refuses gets one error alert that says how to get access", async ({ page }) => {
   await mockShell(page, { freshness: { status: 403, body: await recorded("freshness-no-access.json") } });
+  await noPlannedPackages(page);
   await page.goto("/packages");
 
   await expect(page.getByRole("alert")).toHaveText(
@@ -160,6 +170,10 @@ test("an account the warehouse refuses gets one error alert that says how to get
 test("while the stamp tries again, the access alert stays where it is, so it is not announced twice", async ({ page }) => {
   await page.clock.install({ time: TODAY });
   await mockShell(page);
+  // The Packages tab lists the viewer's packages (ticket 15); an empty list keeps its own alert out of the count.
+  await page.route("**/api/planned-packages", async (route) =>
+    route.fulfill({ contentType: "application/json", body: await recorded("planned-packages-empty.json") }),
+  );
   let reads = 0;
   let answer: () => void = () => {};
   const answered = new Promise<void>((resolve) => (answer = resolve));
@@ -242,10 +256,11 @@ const ADDRESS_ALERTS: [string, string][] = [
   ["?asof=last-tuesday", "I can't read the date in this link, so you are seeing today's data."],
 ];
 
+// Home, which applies none of these: the draft pages and the Packages tab apply the previews themselves.
 for (const [query, sentence] of ADDRESS_ALERTS) {
   test(`a link with ${query} says what I can't show yet, above the title`, async ({ page }) => {
     await mockShell(page);
-    await page.goto(`/packages${query}`);
+    await page.goto(`/${query}`);
 
     const alert = page.locator("[data-alert=info]");
     await expect(alert).toHaveText(sentence);
@@ -256,6 +271,7 @@ for (const [query, sentence] of ADDRESS_ALERTS) {
 
 test("a link with ?view=staff, ?lang= or ?evidence= shows no alert", async ({ page }) => {
   await mockShell(page);
+  await noPlannedPackages(page);
   await page.goto("/packages?view=staff&lang=fr&evidence=ev-1");
 
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Packages");

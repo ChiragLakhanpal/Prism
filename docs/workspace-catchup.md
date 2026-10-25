@@ -960,3 +960,56 @@ It worked if:
 - the reviewer's `INSERT` is refused for lack of permission;
 - get_lessons returns the decided lesson with its evidence ids, `restated` and the edition `guidelines_2011`;
 - the January run writes `cross_check` items assigned to another region (one tenth of the quarter's decisions, rounded up, at least one), and the second run in the same quarter writes none (criterion 7, workspace half). A quarter with no decisions writes nothing.
+
+## Ticket 15, step 1 of 4: the Foundry package reader matches the repo
+
+The merger parked this step on October 24, 2026, after merge commit d356ba7. All ten keys were set, but the header above holds workspace steps back while the user runs the backlog. It needs the four Foundry keys that ticket 14's step 1 names, and the `az` command line signed in to the subscription that holds the Foundry resource. Run it after ticket 13's step 1, which makes the guardrail `strata-guardrail`. Ticket 15 adds the agent `package_reader` to `config/agents.toml`, with its instructions in `package_reader.md`.
+
+Run this from the main checkout, twice:
+
+    uv run --script ops/agent/sync.py --env-file .env --agent package_reader
+
+It worked if both runs exit 0. The first run prints what differed and ends "I made version 1 of strata-package-reader, which matches the repo." The second run reports no difference: "Foundry's agent strata-package-reader, version 1, matches the repo: there is no difference in its model, instructions, tools, description or guardrail (strata-guardrail)."
+
+## Ticket 15, step 2 of 4: re-record the package reader's cases from the live reader
+
+The merger parked this step on October 24, 2026, after merge commit d356ba7. It needs the four Foundry keys. Run it after step 1. The three package reader recordings in `tests/fixtures/agent/recorded/` were written by hand (`"recorded": false`), because no live reader existed when the ticket was built (criterion 1, live half).
+
+Run this from the main checkout:
+
+    uv run --script ops/agent/record.py --env-file .env --packages
+    uv run --frozen pytest tests/test_planned_packages.py
+
+It worked if the record command exits 0 and prints a unified diff for each of the three recordings named in `tests/fixtures/agent/packages.toml`, each recording now carries `"recorded": true`, and the tests pass, `test_the_sentence_yields_the_wireframe_s_chips_with_two_computed_and_one_guess` among them. The recordings change tracked files, so commit them on `build/strata` through the gate. If the live reader reads "rural roads, Kenya, about US$15 million" differently from the hand-written answer (for example, with no guessed "2 lots"), the test fails and the diff shows why. Tell the orchestrator before you change a test or a recording by hand.
+
+## Ticket 15, step 3 of 4: the Lakebase instance and a planned package on the deployed App
+
+The merger parked this step on October 24, 2026, after merge commit d356ba7. It needs the Databricks keys in `.env`, and the four Foundry keys so that `/api/ask` and the package reader answer through Foundry. Run it after step 1, after ticket 12's step 3, and after ticket 09's step 1 has turned on user authorization. Ticket 06's step 1 runs the same deploy command. Run it again here if that deploy came from a commit before d356ba7, because the Lakebase resource and the planned package routes arrived in this merge (criterion 6, live half).
+
+Run this from the main checkout:
+
+    uv run --script ops/app/deploy_app.py --env-file .env
+
+It worked if the deploy exits 0, its step 3 prints "The Lakebase instance strata-state is running, so the app keeps app state there." (not "I could not make or start the Lakebase instance"), and its last line is `Strata is running at https://...`. The app makes the tables `planned_packages`, `planned_package_saves` and `plan_checks_opened` in its Lakebase database the first time it needs them.
+
+Then sign in to the workspace in a browser as a user with USE CATALOG, USE SCHEMA and SELECT on `strata`:
+
+1. Open `<App url>/projects/P156634/procurement/northern-water-works-development-agency/2026-10-09` to check the NWWDA plan of October 9, 2026.
+2. Type "rural roads, Kenya, about US$15 million" into the box and choose "Plan a package from this sentence".
+3. Change one chip, for example the method to "ICB", and wait for the "Saved" stamp. Then reload the page.
+4. Open the Packages tab.
+5. Open the package's address as a second person.
+
+It worked if the chips after the reload are the same as before it, with Request for Bids (RFB) and Open international after "ICB"; the Packages tab lists "Rural roads, Kenya" and "Northern Water Works Development Agency, plan of October 9, 2026" with "Plan check", newest first; and the second person sees "I can't find this package." and none of the first person's rows on their Packages tab.
+
+## Ticket 15, step 4 of 4: find_comparables for a planned package on the SQL warehouse
+
+The merger parked this step on October 24, 2026, after merge commit d356ba7. It needs the Databricks keys in `.env`. Run it after ticket 12's step 1. It is the same command as ticket 12's step 1 and ticket 04's step 3, and one run after d356ba7 serves every block that names it. Ticket 15 adds the benchmark question `find-comparables-planned-ke-works-rfb`, which asks find_comparables about a package with no STEP row (method Request for Bids, category Works, country KE, as of October 22, 2026), and names `tests/ground_truth/past_range_coverage_ke_works_rfb.sql` as its ground truth.
+
+Run this from the main checkout:
+
+    uv run --script ops/bundle/check.py same-rows --env-file .env
+
+Then ask the benchmark question `find-comparables-planned-ke-works-rfb` through `WarehouseEngine`, with the arguments `evals/benchmark.yaml` gives it.
+
+It worked if the check exits 0 and prints "DuckDB and the SQL warehouse returned the same ... rows, and they are the rows the file expects." for `past_range_coverage_ke_works_rfb.sql`, and the question's answer holds the same 49 comparables, with the quartiles 3.3, 4.4, 7.9 and 9.1 months, and the four still-open packages and three canceled packages left out that the benchmark lists. If the warehouse holds Kenya works packages that the fixture does not record, the rows differ. Tell the orchestrator before you change a file's expected rows.

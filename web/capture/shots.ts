@@ -59,11 +59,10 @@ const WIDE = [1440, 1024];
 const NARROW = [390];
 
 // The app's routes, as the 06 design brief lists them, and both not-found pages. All projects, a
-// project's page and Check a plan have their own shots below (ticket 10), and so does the package
-// workspace (ticket 12).
+// project's page and Check a plan have their own shots below (ticket 10), and so do the package
+// workspace (ticket 12) and the Packages tab (ticket 15).
 const ROUTES: [string, string][] = [
   ["home", "/"],
-  ["packages", "/packages"],
   ["activity", "/projects/P130164/packages/IN-RRSMP-7431-CW-RFB"],
   ["lessons", "/lessons"],
   ["drafts", "/drafts"],
@@ -901,6 +900,177 @@ const PACKAGE_SHOTS: Shot[] = [
   }),
 ];
 
+// Ticket 15: a package planned from a sentence, in the states the 15 brief's section 12 lists. The answers are
+// the server's own on the fixture (tests/record_packages_api.py). A saved package after a change is the change's
+// recorded answer with the schema beside it, which is what the package's page reads. The capture answers by
+// path for any method, so a change posted to the package's address gets the same package back; a shot that
+// needs another answer to a change sets it up in its action. Section 1's abstention and none-found states
+// answer with ticket 12's recordings, since no recorded planned package has fewer than 20 comparables.
+const SENTENCE = "rural roads, Kenya, about US$15 million";
+const PLANNED = "/packages/pkg-000000000001";
+const PLANNED_API = "/api/planned-packages/pkg-000000000001";
+const PLANNED_FILE = "planned-package-rural-roads.json";
+const MOWI = "strata.gold.package:KE-MOWI-47509-CW-RFB";
+const ICTA = "strata.gold.package:KE-ICTA-571738-CW-RFB";
+const KIMAWASCO = "strata.gold.package:KE-KIMAWASCO-149448-CW-RFB";
+const read = (name: string) => JSON.parse(readFileSync(new URL(name, RECORDED), "utf8"));
+// A change's recorded package as the package's page reads it, with the schema.
+const changed = (name: string): Answer => ({ body: JSON.stringify({ ...read(PLANNED_FILE), package: read(name).package }) });
+const PLANNED_ANSWERS: Shot["api"] = {
+  "/api/comparables": { recorded: "comparables-planned-works-rfb-ke.json" },
+  "/api/evidence": { recorded: "evidence-package-ke-mowi-47509.json" },
+  "/api/evidence/opened": OPENED,
+  "/api/planned-packages": { recorded: "planned-packages-list.json" },
+  "/api/projects/P156634": { recorded: "project-p156634.json" },
+};
+const plannedShot = (name: string, pkg: Answer = { recorded: PLANNED_FILE }, rest: Partial<Shot> = {}, path = PLANNED, read = PLANNED_API): Shot =>
+  app(name, path, {}, { ...rest, api: { ...app(name, path).api, ...PLANNED_ANSWERS, [read]: pkg, ...rest.api } });
+// The Packages tab, with its list answered.
+const tabShot = (name: string, list: Answer, rest: Partial<Shot> = {}, path = "/packages"): Shot =>
+  app(name, path, {}, { ...rest, api: { ...app(name, path).api, ...PLANNED_ANSWERS, "/api/planned-packages": list, ...rest.api } });
+// From Home, the sentence typed into the box and "Plan a package from this sentence" chosen, with the stream
+// the reading page answers with.
+const planFromBox = (name: string, stream: Answer | null, rest: Partial<Shot> = {}): Shot =>
+  app(name, "/", {}, {
+    full: true,
+    ...rest,
+    api: { ...app(name, "/").api, ...PLANNED_ANSWERS, [PLANNED_API]: { recorded: PLANNED_FILE }, ...(stream ? { "/api/planned-packages": stream } : {}), ...rest.api },
+    pending: stream ? rest.pending : ["/api/planned-packages", ...(rest.pending ?? [])],
+    act: async (page) => {
+      await typeInBox(SENTENCE)(page);
+      await page.locator("[data-box-option=plan]").click();
+      await page.waitForTimeout(stream ? 900 : 300);
+    },
+  });
+const openChip = (key: string, ...after: ((page: Page) => Promise<void>)[]) =>
+  then(click(`[data-chip='${key}']`), ...after);
+const typeInEditor = (text: string, enter = false) => async (page: Page) => {
+  await page.locator("[data-chip-editor] input:not([type=radio])").first().fill(text);
+  if (enter) await page.keyboard.press("Enter");
+  await page.waitForTimeout(250);
+};
+// A change whose save the server refuses: the chip keeps its new value and the stamp says it was not saved.
+const saveFails = async (page: Page) => {
+  await page.route(`**${PLANNED_API}`, (route) =>
+    route.request().method() === "POST" ? route.fulfill({ status: 503, contentType: "application/json", body: SERVICE_DOWN }) : route.fallback());
+  await openChip("lots", typeInEditor("3", true))(page);
+  await page.waitForTimeout(400);
+};
+// A chip that picks the comparables changed, with find_comparables still running.
+const rerunning = async (page: Page) => {
+  await page.route(`**${PLANNED_API}`, (route) =>
+    route.request().method() === "POST"
+      ? route.fulfill({ contentType: "application/json", body: readFileSync(new URL("planned-package-change-method-rfq.json", RECORDED), "utf8") })
+      : route.fallback());
+  await page.route("**/api/comparables**", () => undefined);
+  await openChip("method", click("[data-chip-editor] label:has-text('Request for Quotations (RFQ)')"))(page);
+  await page.waitForTimeout(600);
+};
+const withoutPlan = click("[data-plan-prompt] [data-button=ghost]");
+const evidenceAt = (id: string) => `${PLANNED}?evidence=${encodeURIComponent(id)}`;
+// More than 60 comparables, so 20 quantile dots: no planned package's criteria match that many on the fixture,
+// so section 1 answers with ticket 12's comparables with the category left open, without its plan row's plan.
+const DOTS: Answer = (() => {
+  const body = read("comparables-ke-nwwda-541055-any-category.json");
+  return { body: JSON.stringify({ ...body, package: null, plan: null, frequencies: { ...body.frequencies, plan: null } }) };
+})();
+
+const PLANNED_SHOTS: Shot[] = [
+  // The box: free text lists the plan option second, the Packages tab's buttons put it in plan or check mode,
+  // and a preview holds the option with its reason.
+  plannedShot("box--plan-option", undefined, { full: false, act: typeInBox(SENTENCE) }, "/"),
+  tabShot("box--plan-mode", { recorded: "planned-packages-list.json" }, { act: click("main [data-button=secondary]") }),
+  tabShot("box--plan-mode-typed", { recorded: "planned-packages-list.json" }, { act: then(click("main [data-button=secondary]"), async (page) => {
+    await page.keyboard.type(SENTENCE);
+    await page.waitForTimeout(300);
+  }) }),
+  tabShot("box--check-mode", { recorded: "planned-packages-list.json" }, { act: then(click("main [data-button=primary]"), async (page) => {
+    await page.keyboard.type("P156634");
+    await page.waitForTimeout(400);
+  }) }),
+  plannedShot("box--plan-option-preview", undefined, { full: false, act: typeInBox(SENTENCE) }, "/?view=piu"),
+  // The reading page, and the reading's three ends that save nothing.
+  planFromBox("planned--reading", null),
+  planFromBox("planned--no-package", { recorded: "package-plan-no-package.sse" }),
+  planFromBox("planned--read-failed", { recorded: "package-plan-reader-unavailable.sse" }),
+  planFromBox("planned--arrived", { recorded: "package-plan-rural-roads.sse" }),
+  // The workspace: one guess, with the plan prompt; the guess kept; a computed chip set by you; the note after
+  // a recompute; the dividing refusal; set yourself, with the criteria that pick comparables missing.
+  plannedShot("planned"),
+  plannedShot("planned--loading", undefined, { pending: [PLANNED_API] }),
+  plannedShot("planned--guess-kept", changed("planned-package-change-keep-lots.json")),
+  plannedShot("planned--set-by-you", changed("planned-package-change-review-post.json")),
+  plannedShot("planned--recomputed", changed("planned-package-change-amount.json")),
+  // Goods in Kenya: no market approach threshold, so the chip asks for one and the note says why it emptied.
+  plannedShot("planned--emptied", changed("planned-package-change-category-goods.json"), { full: false }),
+  plannedShot("planned--dividing", { recorded: "planned-package-dividing.json" }, {}, "/packages/pkg-000000000003", "/api/planned-packages/pkg-000000000003"),
+  plannedShot("planned--missing", { recorded: "planned-package-yourself.json" }, {}, "/packages/pkg-000000000002", "/api/planned-packages/pkg-000000000002"),
+  // Section 1: the chart with a plan and without one, updating, abstention, none found, none measurable, error.
+  plannedShot("planned--with-plan", changed("planned-package-change-plan.json")),
+  plannedShot("planned--without-plan", undefined, { full: true, act: withoutPlan }),
+  plannedShot("planned--updating", undefined, { full: true, act: rerunning }),
+  plannedShot("planned--abstention", changed("planned-package-change-plan.json"), { api: { "/api/comparables": { recorded: "comparables-ke-nwwda-541055-prior.json" } } }),
+  plannedShot("planned--none-found", undefined, { api: { "/api/comparables": { recorded: "comparables-ke-nwwda-541055-india.json" } } }),
+  plannedShot("planned--none-measurable", changed("planned-package-change-method-rfq.json"), { api: { "/api/comparables": { recorded: "comparables-planned-works-rfq-ke.json" } } }),
+  plannedShot("planned--section-error", undefined, { api: { "/api/comparables": { status: 503, body: SERVICE_DOWN } } }),
+  plannedShot("planned--save-failed", undefined, { full: true, act: saveFails }),
+  // Each kind of chip editor: a popover from 768 px, a bottom sheet below.
+  plannedShot("planned--editor-computed", undefined, { full: false, act: openChip("review_type") }),
+  // By its words: below 768 px the sheet's close is the first ghost button.
+  plannedShot("planned--editor-set-it-yourself", undefined, { full: false, act: openChip("review_type", click("[data-chip-editor] button:has-text('Set it yourself')")) }),
+  plannedShot("planned--editor-method-old-name", undefined, { full: false, act: openChip("method", typeInEditor("ICB")) }),
+  plannedShot("planned--editor-amount", undefined, { full: false, act: openChip("estimated_amount_usd", typeInEditor("12m")) }),
+  plannedShot("planned--editor-amount-error", undefined, { full: false, act: openChip("estimated_amount_usd", typeInEditor("about fifteen", true)) }),
+  plannedShot("planned--editor-country", undefined, { full: false, act: openChip("country", typeInEditor("ken")) }),
+  plannedShot("planned--editor-guess", undefined, { full: false, act: openChip("lots") }),
+  plannedShot("planned--editor-months", changed("planned-package-change-plan.json"), { full: false, act: openChip("plan_months") }),
+  plannedShot("planned--editor-preview", undefined, { full: false, act: openChip("method") }, `${PLANNED}?view=piu`),
+  // Hover and keyboard focus on a chip and a mark.
+  plannedShot("planned--hover-chip", undefined, { widths: WIDE, act: hover("[data-chip='lots']") }),
+  plannedShot("planned--focus-chip", undefined, { act: focus("[data-chip='market_approach']") }),
+  plannedShot("planned--focus-dot", changed("planned-package-change-plan.json"), { widths: wideAndNarrow, act: focus("[data-dot-target='0']") }),
+  plannedShot("planned--hover-dot", changed("planned-package-change-plan.json"), { widths: wideAndNarrow, act: hoverDot(20) }),
+  // A comparable package's records in the evidence drawer: signed, still open, loading, failed, and its close
+  // button focused. At 390 px it is the full-screen sheet.
+  plannedShot("planned--drawer-signed", changed("planned-package-change-plan.json"), { full: false }, evidenceAt(MOWI)),
+  plannedShot("planned--drawer-still-open", changed("planned-package-change-plan.json"), { full: false, api: { "/api/evidence": { recorded: "evidence-package-ke-icta-571738.json" } } }, evidenceAt(ICTA)),
+  plannedShot("planned--drawer-canceled", changed("planned-package-change-plan.json"), { full: false, api: { "/api/evidence": { recorded: "evidence-package-ke-kimawasco-149448.json" } } }, evidenceAt(KIMAWASCO)),
+  // The drawer reads /api/evidence?id=..., which a route for the bare path does not match.
+  plannedShot("planned--drawer-loading", changed("planned-package-change-plan.json"), { full: false, pending: ["/api/evidence?id=**"] }, evidenceAt(MOWI)),
+  plannedShot("planned--drawer-error", changed("planned-package-change-plan.json"), { full: false, api: { "/api/evidence": { status: 503, body: SERVICE_DOWN } } }, evidenceAt(MOWI)),
+  plannedShot("planned--drawer-from-dot", changed("planned-package-change-plan.json"), { full: false, widths: WIDE, act: then(focus("[data-dot-target='0']"), async (page) => {
+    await page.keyboard.press("Enter");
+    await page.waitForTimeout(500);
+  }) }),
+  plannedShot("planned--focus-drawer-close", changed("planned-package-change-plan.json"), { full: false, act: focus("[data-evidence-drawer] [data-drawer-header] button") }, evidenceAt(MOWI)),
+  // A quantile dot's packages in the drawer: the last dot, which stands for the last signed package and four
+  // still open, then the signed one opened from that list, with the way back above its title.
+  plannedShot("planned--drawer-dot-list", changed("planned-package-change-plan.json"), { full: false, api: { "/api/comparables": DOTS } }, evidenceAt("comparables-dot:20")),
+  plannedShot("planned--drawer-dot-package", changed("planned-package-change-plan.json"), {
+    full: false,
+    api: { "/api/comparables": DOTS },
+    act: async (page) => {
+      await page.locator("[data-dot-entry='KE-MOWI-47509-CW-RFB']").click();
+      await page.waitForTimeout(500);
+    },
+  }, evidenceAt("comparables-dot:20")),
+  // The page's other states.
+  plannedShot("planned--not-found", { status: 404, recorded: "planned-package-not-found.json" }, {}, "/packages/pkg-00000000000a", "/api/planned-packages/pkg-00000000000a"),
+  plannedShot("planned--error", { status: 503, body: SERVICE_DOWN }),
+  plannedShot("planned--preview", undefined, {}, `${PLANNED}?view=piu`),
+  plannedShot("planned--public", undefined, {}, `${PLANNED}?view=public`),
+  plannedShot("planned--320", undefined, { widths: [320] }),
+  // The Packages tab.
+  tabShot("packages-tab", { recorded: "planned-packages-list.json" }),
+  tabShot("packages-tab--loading", { recorded: "planned-packages-list.json" }, { pending: ["/api/planned-packages"] }),
+  tabShot("packages-tab--empty", { recorded: "planned-packages-empty.json" }),
+  tabShot("packages-tab--error", { status: 503, body: SERVICE_DOWN }),
+  tabShot("packages-tab--preview", { recorded: "planned-packages-list.json" }, {}, "/packages?view=piu"),
+  tabShot("packages-tab--public", { recorded: "planned-packages-list.json" }, {}, "/packages?view=public"),
+  tabShot("packages-tab--focus-row", { recorded: "planned-packages-list.json" }, { act: focus("main [data-table] a:visible") }),
+  tabShot("packages-tab--320", { recorded: "planned-packages-list.json" }, { widths: [320] }),
+];
+
 const pages: Shot[] = Object.keys(galleryCopy.pages).map((slug) => ({ name: slug, path: `/gallery/${slug}` }));
 
 export const SHOTS: Shot[] = [
@@ -1047,4 +1217,5 @@ export const SHOTS: Shot[] = [
   ...DRAFT_SHOTS,
   ...LESSON_SHOTS,
   ...PACKAGE_SHOTS,
+  ...PLANNED_SHOTS,
 ];

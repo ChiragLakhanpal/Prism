@@ -1756,6 +1756,39 @@ q50_months = 4.4
 q75_months = 7.9
 q80_months = 9.1
 quantile_dot_days = [46, 85, 89, 89, 94, 102, 106, 108, 119, 125, 140, 162, 206, 213, 218, 254, 277, 290, 408, 530]
+# The packages each quantile dot stands for (ticket 15), worked out by hand from the dates above. Dot k
+# stands for the k-th twentieth of the curve: each signed package holds the share of the curve its
+# signing took off it, and belongs to the dot whose twentieth holds the middle of that share. Three of
+# the four packages still open (13, 23 and 31 days) leave the risk set before the first signing (34
+# days), so the first package signed holds 1/46 of the curve. KE-KAJIADO COUNTY-567787-CW-RFB (37 days)
+# leaves before the second, so each of the other 44 holds (45/46)/44 = 45/2024. The middle of package
+# i's share, for i from 2, is (44 + 45(i - 1.5))/2024, so it falls in twentieth ceil((900i - 470)/2024):
+# packages 1 and 2 in the first, 3 to 5 in the second, then two, two, two, three, and so on, the same
+# pattern as 45 equal shares. Packages signed on the same day are taken in STEP reference order, so
+# the five signed in 89 days are split between dots 2, 3 and 4. Each dot's day lies within its own
+# packages' days.
+quantile_dot_packages = [
+  ["KE-WAJWASCO-372776-CW-RFB", "KE-WAJWASCO-356671-CW-RFB"],
+  ["KE-TAVEVO-449427-CW-RFB", "KE-WAJWASCO-456993-CW-RFB", "KE-GAWASCO-111742-CW-RFB"],
+  ["KE-GAWASCO-436012-CW-RFB", "KE-KWAWASCO-201675-CW-RFB"],
+  ["KE-KWAWASCO-203571-CW-RFB", "KE-TAVEVO-170154-CW-RFB"],
+  ["KE-TAVEVO-175703-CW-RFB", "KE-WAJWASCO-205491-CW-RFB"],
+  ["KE-MOWASCO-113723-CW-RFB", "KE-TAVEVO-451075-CW-RFB", "KE-MOWASCO-228804-CW-RFB"],
+  ["KE-GAWASCO-54771-CW-RFB", "KE-WAJWASCO-226565-CW-RFB"],
+  ["KE-NWWDA-229129-CW-RFB", "KE-TAVEVO-338455-CW-RFB"],
+  ["KE-CWSB-233052-CW-RFB", "KE-GAWASCO-266383-CW-RFB"],
+  ["KE-WAJWASCO-220077-CW-RFB", "KE-MAWASCO-236802-CW-RFB", "KE-TAVEVO-151330-CW-RFB"],
+  ["KE-MAWASCO-236797-CW-RFB", "KE-MAWASCO-178688-CW-RFB"],
+  ["KE-TAVEVO-466579-GO-RFB", "KE-MAWASCO-149056-CW-RFB"],
+  ["KE-KIMAWASCO-416959-CW-RFB", "KE-GAWASCO-54761-CW-RFB"],
+  ["KE-GAWASCO-54759-CW-RFB", "KE-GAWASCO-54763-CW-RFB", "KE-GAWASCO-54775-CW-RFB"],
+  ["KE-MAWASCO-156444-CW-RFB", "KE-CWSB-232660-CW-RFB"],
+  ["KE-TAVEVO-151304-CW-RFB", "KE-KWAWASCO-206973-CW-RFB"],
+  ["KE-KWAWASCO-203531-CW-RFB", "KE-KWAWASCO-203535-CW-RFB"],
+  ["KE-CWSB-150896-CW-RFB", "KE-KIMAWASCO-141042-CW-RFB", "KE-MAWASCO-69899-CW-RFB"],
+  ["KE-KIMAWASCO-158691-CW-RFB", "KE-KIMAWASCO-142995-CW-RFB"],
+  ["KE-WAJWASCO-26664-CW-RFB", "KE-MOWI-47509-CW-RFB"],
+]
 plan_days = 45
 plan_months = 1.5
 signed_within_plan = ["KE-WAJWASCO-356671-CW-RFB", "KE-WAJWASCO-372776-CW-RFB"]

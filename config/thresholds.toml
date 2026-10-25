@@ -146,11 +146,39 @@ no_notice_market_approaches = ["Limited"]
 # disbursement lag, and the "Needs a look" rule of three signals or one strong one (ticket 37).
 [signals]
 
-# The review thresholds that compute review type (ticket 15).
+# The review thresholds that compute review type (ticket 15). The package workspace computes a planned
+# package's Review Type from its category and its whole estimated amount, never per lot, so dividing a
+# package never changes it (strata.packages.compute). A package whose estimated amount is at or above its
+# category's threshold goes to Prior review; below it, Post. The thresholds depend on the implementing
+# agency's procurement risk rating, which Strata cannot know at concept stage, so it assumes risk_rating
+# and says so beside the review type. The computed note quotes source as its source line, and as_of
+# after it once the owner has checked the values against the World Bank's table and gives that table's
+# date. Source: the blueprint's Package workspace wireframe ("works of US$10 million or more go to prior
+# review"), which is the High risk threshold for works. The other values are starting values for the
+# owner to confirm against the World Bank's current table, with the other ratings added beside High.
+# Until then the source says so, and there is no as_of (a parked decision, ticket 15's review round 2).
 [review]
+risk_rating = "High"
+source = "Strata's starting values from the blueprint, not yet checked against the World Bank's prior review thresholds"
 
-# The market approach thresholds, per country (ticket 15).
+[review.prior_from_usd.High]
+Works = 10_000_000
+Goods = 2_000_000
+"Non-consulting Services" = 2_000_000
+"Consultant Services" = 1_000_000
+
+# The market approach thresholds, per country (ticket 15), by ISO code and category. A planned package
+# whose estimated amount is at or above its country's threshold for its category gets Open -
+# International; below it, Open - National. A country or category with no threshold here gets no computed
+# market approach, and the chip asks the person for one. Source: the blueprint's Package workspace
+# wireframe ("this country's plans send works of US$15 million or more to international bidding"), for
+# Kenya's works; a starting value for the owner to confirm, with other countries and categories added
+# beside it. As for [review], the source says the value is unchecked, and as_of waits for the check.
 [market_approach]
+source = "Strata's starting value from the blueprint, not yet checked against the World Bank's thresholds for Kenya"
+
+[market_approach.international_from_usd.KE]
+Works = 15_000_000
 
 # The PPSD guidance's Table I thresholds, which decide when the Long Form applies (ticket 36).
 [ppsd_table_i]

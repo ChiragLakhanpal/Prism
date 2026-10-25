@@ -346,6 +346,24 @@ def test_above_the_quantile_dot_threshold_the_tool_gives_20_dots_at_the_ground_t
     assert result["thresholds"]["quantile_dots_above"] == 40
 
 
+def test_each_quantile_dot_names_the_packages_it_stands_for_with_their_shortest_and_longest_months(engine):
+    """A quantile dot opens the evidence drawer at the packages it stands for (ticket 15), so the tool names
+    them: the lists in values.toml were worked out by hand from the comparables' dates."""
+    context = registry.Context(engine=engine, viewer=ANA, thresholds=with_past_range(quantile_dots_above=40))
+
+    result = registry.call("find_comparables", {"step_reference": PACKAGE, "as_of": AS_OF}, context)
+
+    dots = result["quantile_dots"]
+    assert [dot["step_references"] for dot in dots] == PAST_RANGE["quantile_dot_packages"]
+    assert [dot["count"] for dot in dots] == [len(names) for names in PAST_RANGE["quantile_dot_packages"]]
+    assert all(dot["still_open"] == 0 for dot in dots)
+    # Dot 2 sits at 85 days (2.8 months) among packages signed in 82, 85 and 89 days.
+    assert (dots[1]["low_months"], dots[1]["high_months"]) == (2.7, 2.9)
+    # Dots 3 and 4 both sit at 89 days, and each stands for two of the five packages signed then.
+    assert (dots[2]["low_months"], dots[2]["high_months"], dots[3]["low_months"], dots[3]["high_months"]) == (2.9, 2.9, 2.9, 2.9)
+    assert (dots[19]["low_months"], dots[19]["high_months"]) == (17.4, 17.7)
+
+
 def test_a_wider_variant_with_more_than_60_comparables_gives_20_quantile_dots_and_every_row(engine):
     # Leaving the category open adds Kenya's goods packages under Request for Bids.
     result = find(engine, category="any")
@@ -354,6 +372,30 @@ def test_a_wider_variant_with_more_than_60_comparables_gives_20_quantile_dots_an
     assert len(result["rows"]) > 60
     assert len(result["quantile_dots"]) == 20
     assert result["past_range"]["q50"] is not None
+
+
+def test_with_packages_still_open_at_the_end_the_last_dot_stands_for_them_and_every_dot_for_its_own_packages(engine):
+    """With the category open, four goods packages were still open after the last signing (539 days), and the
+    curve never reaches 39 in 40, so the last dot is hollow. Kaplan-Meier leaves them the share the last
+    signings did not take, about 4 in 100, and KE-MOWI-47509-CW-RFB, the last signed, holds the share just
+    before theirs, so the last dot stands for those five. The four packages that left the risk set within
+    37 days, before most signings, pass their share on and no dot stands for them."""
+    result = find(engine, category="any")
+    rows = {row["step_reference"]: row for row in result["rows"]}
+    dots = result["quantile_dots"]
+
+    last = dots[-1]
+    assert (last["reached"], last["step_references"]) == (False, [
+        "KE-MOWI-47509-CW-RFB", "KE-MOWASCO-285253-GO-RFB", "KE-WASREB-187622-GO-RFB", "KE-WAJWASCO-154021-GO-RFB",
+        "KE-KWAWASCO-63985-GO-RFB"])
+    assert (last["count"], last["still_open"], last["low_months"], last["high_months"]) == (5, 4, 17.7, 87.4)
+    named = [reference for dot in dots for reference in dot["step_references"]]
+    early = {"KE-MIGORI COUNTY-532367-CW-RFB", "KE-ICTA-571738-CW-RFB", "KE-UASIN GISHU COUNTY-571338-CW-RFB",
+             "KE-KAJIADO COUNTY-567787-CW-RFB"}
+    assert sorted(named) == sorted(set(rows) - early)
+    for dot in dots:
+        days = [rows[reference]["days"] for reference in dot["step_references"]]
+        assert min(days) <= dot["days"] <= max(days), dot["k"]
 
 
 def test_counting_canceled_packages_as_still_open_is_one_line_in_the_thresholds_file(engine):
