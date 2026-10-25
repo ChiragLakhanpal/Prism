@@ -57,6 +57,34 @@ def test_the_nightly_run_records_how_many_packages_each_label_source_names_in_st
     assert {row[3] for row in held.rows} == {dt.date.fromisoformat(case.params["as_of"])}
 
 
+def test_each_reason_code_the_tool_may_group_under_has_its_heading_in_the_copy_file():
+    """A reason code is renamed in the registry, the tool and the copy together (config/tools.toml)."""
+    from strata import config
+    from strata.tools import find_comparables
+
+    codes = set(config.load_tools()["rebidding_risk"].result.reasons) - set(find_comparables.REASONS)
+    copy = (ROOT / "web" / "src" / "copy.ts").read_text()
+    rebid = copy[copy.index("\n  rebid: {"):]
+    headings = rebid[rebid.index("reasons: {"):rebid.index("} as Record<string, string>", rebid.index("reasons: {"))]
+    assert {reason.code for reason in config.load_rebidding_reasons()} <= codes
+    assert [code for code in sorted(codes) if f"{code}:" not in headings] == []
+
+
+def test_the_mocked_answers_say_they_are_mocks_and_use_none_of_the_ticket_s_or_the_blueprint_s_figures():
+    """The model shown and the model that did no better are not in the fixture, so the screens' mocks for them are
+    labeled, made up, and never the illustrative "6 of 37" or "about 2 in 10" (spec, "Wireframe numbers")."""
+    import json
+
+    mocks = sorted((ROOT / "tests" / "fixtures" / "api").glob("*mock*.json"))
+    assert {path.name for path in mocks} >= {"rebidding-mock-model-shown.json", "rebidding-mock-not-better.json"}
+    for path in mocks:
+        body = json.loads(path.read_text())
+        assert "made up" in body["mock"], path.name
+        if body.get("tool") == "rebidding_risk":
+            assert (body["n"], body["m"]) != (6, 37) and body["m"] not in (37, 118), path.name
+            assert body["model"]["in10"] != 2, path.name
+
+
 def test_the_one_reason_in_words_is_quoted_word_for_word_with_its_notice(engine):
     """No award notice gives a reason on the fixture: the reason is the canceled package's own Invitation for
     Bids, so here a notice, not an award notice, gives the quote."""

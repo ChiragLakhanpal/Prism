@@ -30,7 +30,7 @@ from __future__ import annotations
 import datetime as dt
 
 from strata.config import load_rebidding_reasons
-from strata.estimates import rebidding, rebidding_backtest
+from strata.estimates import rebidding
 from strata.estimates.rebidding import CANCELED_ROW, NO_AWARD, SAME_REFERENCE, Label, Reason
 from strata.tools import common, find_comparables
 from strata.tools.registry import Call
@@ -44,6 +44,56 @@ CANCELED_INCLUDED = "canceled_included"
 # The tool's sources that hold notices, for the Data readiness link of "I found no sign" (the 28 brief, 7.4).
 NOTICE_SOURCES = ("notices",)
 PACKAGE_TABLE = "strata.gold.package"
+
+
+# ── The records a row cites, as the evidence drawer opens them ───────────
+
+def read_notice(engine, key: str, as_of: dt.date) -> dict | None:
+    """One notice as the drawer shows it from a row (strata.silver.notices:{notice_id}): its type, date, STEP
+    reference and project, and, when its text gives a reason for advertising again, that sentence word for word,
+    highlighted. It never lists a bidder. None when no notice has the id by the as-of date."""
+    found = rebidding.engine_rows(engine, as_of)(common.sql(TOOL, "notice"), notice_id=key)
+    if not found:
+        return None
+    notice = found[0]
+    award = notice["notice_type"] == "Contract Award"
+    fields = [{"key": "notice_type", "value": notice["notice_type"], "kind": "text"},
+              {"key": "published", "value": common.iso(notice["notice_date"]), "kind": "date"},
+              {"key": "bid_reference", "value": notice["step_reference"], "kind": "text"},
+              {"key": "project_id", "value": notice["project_id"], "kind": "text"}]
+    given = rebidding.reason_in(notice["notice_text"] or "")
+    if given:
+        fields.append({"key": "notice_says", "value": given[1], "kind": "text", "highlight": True})
+    return {"kind": "record", "row": {
+        "reference": key, "notice_id": key, "fields": fields, "public_from": common.iso(notice["public_from"]),
+        "source": {"source_key": "award_notices" if award else "notices", "document_type": notice["notice_type"],
+                   "project_id": notice["project_id"], "document_date": common.iso(notice["notice_date"])}}}
+
+
+def read_plan_row(engine, key: str, as_of: dt.date) -> dict | None:
+    """One activity's row in one plan version as the drawer shows it from a row
+    (strata.silver.plan_rows:{document_id}/{STEP reference}): STEP's fields word for word, with its Process Status
+    highlighted. None when the version was not public by the as-of date or does not list the activity."""
+    document_id, _, reference = key.partition("/")
+    found = rebidding.engine_rows(engine, as_of)(common.sql(TOOL, "plan_row"), document_id=document_id,
+                                                 step_reference=reference)
+    if not document_id or not reference or not found:
+        return None
+    row = found[0]
+    amount = row["estimated_amount_usd"]
+    fields = [{"key": "description", "value": row["description"], "kind": "text"},
+              {"key": "method", "value": row["method"], "kind": "text"},
+              {"key": "market_approach", "value": row["market_approach"], "kind": "text"},
+              {"key": "review_type", "value": row["review_type"], "kind": "text"},
+              {"key": "estimated_amount_usd", "value": None if amount is None else str(amount), "kind": "usd"},
+              {"key": "process_status", "value": row["process_status"], "kind": "text", "highlight": True}]
+    return {"kind": "record", "row": {
+        "reference": reference, "activity_reference_no": reference,
+        "fields": [field for field in fields if field["value"] not in (None, "")],
+        "public_from": common.iso(row["public_from"]),
+        "source": {"document_type": "Procurement Plan", "implementing_agency": row["implementing_agency"],
+                   "project_id": row["project_id"], "document_id": document_id,
+                   "document_date": common.iso(row["plan_date"]), "pdf_page": int(row["pdf_page"])}}}
 
 
 def _canceled_left_out(found: dict) -> list[str]:
@@ -121,8 +171,9 @@ def rebidding_risk(call: Call, step_reference: str | None = None, method: str | 
     result = {"rows": [], "coverage": coverage, "package": found["package"], "criteria": found["criteria"],
               "m": m, "n": 0, "past_range_total": past_total,
               "denominator_reason": CANCELED_INCLUDED if m != past_total else None, "groups": [],
-              "model": rebidding_backtest.natural_frequency(call, 0, floor, None), "sources": common.sources(TOOL),
-              "notice_source_keys": list(NOTICE_SOURCES), "records_through": found["records_through"]}
+              "model": rebidding.natural_frequency(call, 0, floor, None), "sources": common.sources(TOOL),
+              "notice_source_keys": list(NOTICE_SOURCES), "records_through": found["records_through"],
+              "rows_per_group": int(call.thresholds.value("rebidding.rows_per_group"))}
     abstention = found["abstention"]
     if abstention is not None and abstention["reason"] != "too_few_comparables":
         return {**result, "abstention": abstention, "m": 0, "past_range_total": past_total, "denominator_reason": None}
@@ -131,5 +182,5 @@ def rebidding_risk(call: Call, step_reference: str | None = None, method: str | 
     again = [labeled[ref] for ref in refs if ref in labeled and labeled[ref].advertised_again]
     given = rebidding.reasons(rows_of, [label.step_reference for label in again])
     rows, groups = _ordered([_case(label, given.get(label.step_reference)) for label in again])
-    model = rebidding_backtest.natural_frequency(call, m, floor, step_reference if found["package"] else None)
+    model = rebidding.natural_frequency(call, m, floor, step_reference if found["package"] else None)
     return {**result, "rows": rows, "n": len(rows), "groups": groups, "model": model, "abstention": None}

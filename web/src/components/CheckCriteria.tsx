@@ -36,6 +36,7 @@ import { Num } from "./Num";
 import { Skeleton, SkeletonLine } from "./Skeleton";
 import { Steps, type Step } from "./Steps";
 import { TextLink } from "./TextLink";
+import { SECTION_5, usePageNumbers } from "../lib/markers";
 
 const words = copy.criteria;
 export const SECTION_ID = "check-criteria";
@@ -349,7 +350,9 @@ export function CheckCriteriaView(props: ViewProps) {
   const data = summary.status === "ready" ? summary.data : null;
   const compared = comparison.status === "ready" ? comparison.result : comparison.status === "idle" ? null : comparison.previous;
   const result = run.status === "ready" ? run.result : null;
-  const numbers = useMemo(() => markerNumbers(result?.rejected ?? null, result?.lessons.groups ?? null), [result]);
+  // Numbered once per page (brief 28): section 1's "Advertised again" markers come first.
+  const cited = useMemo(() => [...markerNumbers(result?.rejected ?? null, result?.lessons.groups ?? null).keys()], [result]);
+  const numbers = usePageNumbers(SECTION_5, cited);
   const yours = useMemo(() => new Set((compared?.items ?? []).map((item) => item.item_key)), [compared]);
   const removed = [...(result?.removed ?? []), ...(compared?.removed ?? [])];
   const readiness = (from: string, keys: string[]) => dataReadinessHref(keys, from);

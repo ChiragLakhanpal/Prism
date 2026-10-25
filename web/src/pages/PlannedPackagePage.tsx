@@ -25,6 +25,8 @@ import { CardTop, ChipGroups, ChipSkeletons, ComputedNote, CriterionChip, Refusa
 import { Fill } from "../components/Fill";
 import { Num } from "../components/Num";
 import { PastRange, type PastRangeState } from "../components/PastRange";
+import { Rebidding } from "../components/RebiddingBlock";
+import { plannedRebiddingPath } from "../lib/rebidding";
 import { RisksSection } from "../components/RisksSection";
 import { CheckCriteria } from "../components/CheckCriteria";
 import { POPOVER } from "../components/Popover";
@@ -813,6 +815,12 @@ function Workspace({ initial, preview, focusHeading }: { initial: PlannedPage; p
             lead={lead}
             more={more}
             quiet
+            after={
+              <Rebidding
+                path={pkg.comparables_query && missing.length === 0 ? plannedRebiddingPath(pkg.comparables_query) : null}
+                section={section.status === "ready" && !skeleton ? section.result : null}
+              />
+            }
           />
         </div>
         {/* Section 3, procurement risks and what helped (ticket 30): it reruns with section 1's criteria, and its

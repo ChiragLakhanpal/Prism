@@ -766,8 +766,9 @@ notice gives one, its dates and Process Status, and the records that say it was 
 row_fields = ["evidence_id", "public_from", "source", "step_reference", "project_id", "country_name", "reason_code",
               "row_kind", "quote", "dates", "process_status", "evidence", "label_sources", "rank"]
 source_fields = ["project_id", "notice_id", "plan_document_id"]
+# rows_per_group is the thresholds file's rebidding.rows_per_group: how many rows a group shows before "Show more".
 fields = ["package", "criteria", "m", "n", "past_range_total", "denominator_reason", "groups", "model", "sources",
-          "notice_source_keys", "records_through"]
+          "notice_source_keys", "records_through", "rows_per_group"]
 # The coverage line's codes are find_comparables' own, less canceled, which this tool counts. Each row's
 # reason_code is one of the last six, and each has its group heading in web/src/copy.ts (rebid.reason).
 reasons = ["no_step_reference", "no_notice", "signed_before_notice", "no_review_type", "no_market_approach",

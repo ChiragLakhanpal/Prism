@@ -155,11 +155,12 @@ def _score(run: Run) -> int:
     run that fetches from the live APIs reads the champion from MLflow and Unity Catalog, and only once a backtest
     has registered one; any other run scores nothing. Ticket 43 adds the time estimates, the what-if grid and the
     signals."""
-    from strata.estimates import rebidding, rebidding_backtest
+    from strata.estimates import rebidding
 
     changed = rebidding.record_label_counts(run.engine, run.run_id, run.clock)
     if run.fetch is fetch_live:
         from strata.config import load_rebidding
+        from strata.estimates import rebidding_backtest
         from strata.estimates.tracking import MlflowTracker
 
         try:

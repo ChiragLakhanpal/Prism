@@ -27,6 +27,7 @@ import datetime as dt
 import re
 from collections.abc import Callable
 from dataclasses import dataclass, field
+from decimal import ROUND_HALF_UP, Decimal
 from importlib import resources
 
 from strata.config import RebiddingReason, Thresholds, load_rebidding_reasons, load_thresholds
@@ -238,3 +239,61 @@ def record_label_counts(engine, run_id: str, clock: Callable[[], dt.datetime],
     found = labels(engine_rows(engine, as_of), as_of, thresholds)
     rows = [(run_id, source, count, len(found), as_of, measured_at, as_of) for source, count in label_counts(found).items()]
     return engine.insert_rows(COUNTS_TABLE, COUNT_COLUMNS, rows)
+
+
+# ── The champion's natural frequency ─────────────────────────────────────
+# What rebidding_risk reads, kept apart from the models (strata.estimates.rebidding_model), so the app's server
+# never imports numpy or XGBoost. The backtests write these rows (strata.estimates.rebidding_backtest).
+
+SCORER = "rebidding_backtest"
+REGISTERED = "registered_model"
+CHAMPION = "champion"
+# The baseline each model must beat: the share advertised again among a package's comparable packages, as
+# rebidding_risk counted them on the cutoff (the 28 design brief, section 7.2).
+BASELINE = "comparables_rate"
+
+
+def in10(probability: float) -> int:
+    """A chance as a whole number in 10, rounded half up."""
+    return int((Decimal(str(probability)) * 10).quantize(Decimal(1), ROUND_HALF_UP))
+
+
+def band(k: int) -> str:
+    """The words that go with k in 10: fewer than 1, about k, or more than 9 (find_comparables' rule)."""
+    return "below_1" if k == 0 else "above_9" if k == 10 else "about"
+
+
+def champion(rows: Rows) -> dict | None:
+    """The latest champion registered by a run public on the reader's date, as one record, or None."""
+    found = rows(sql("champion.sql"), scorer=SCORER)
+    if not found:
+        return None
+    record = {"run_id": found[0]["run_id"], "model": found[0]["model"], "version": int(found[0]["segment"]),
+              "run_date": iso(found[0]["public_from"])}
+    for row in found:
+        value = row["value"]
+        record[row["measure"]] = row["value_text"] if value is None else (int(value) if float(value).is_integer() else float(value))
+    return record
+
+
+def natural_frequency(call, m: int, floor: int, step_reference: str | None) -> dict:
+    """The model block of rebidding_risk's result, as of the call's date."""
+    block = {"shown": False, "in10": None, "band": None, "not_shown_reason": None, "min_comparables": floor,
+             "learner": None, "track_record": None, "score_date": None}
+    if m < floor:
+        return {**block, "not_shown_reason": "too_few"}
+    rows = engine_rows(call.engine, call.as_of)
+    held = champion(rows)
+    if held is None:
+        return {**block, "not_shown_reason": "no_results"}
+    track = {"n_test": int(held["n_test"]), "test_year": int(held["test_year"]),
+             "beat_baseline": bool(held["beat_baseline"]), "baseline_code": BASELINE, "run_date": held["run_date"]}
+    block = {**block, "learner": held["learner"], "track_record": track}
+    if not track["beat_baseline"]:
+        return {**block, "not_shown_reason": "not_better"}
+    scored = rows(sql("score.sql"), step_reference=step_reference, model=held["model"],
+                  version=held["version"]) if step_reference else []
+    if not scored:
+        return {**block, "not_shown_reason": "not_scored"}
+    k = int(scored[0]["in10"])
+    return {**block, "shown": True, "in10": k, "band": band(k), "score_date": iso(scored[0]["scored_on"])}

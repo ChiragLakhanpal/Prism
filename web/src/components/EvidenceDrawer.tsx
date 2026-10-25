@@ -41,6 +41,8 @@ import { ComparableDotList, ComparableRecords, dotRegion } from "./ComparableRec
 import { COMPARABLE, DOT, type DotEntry } from "../lib/packages";
 import { isRiskList, pageRows, REPORTS, rowOf } from "../lib/risks";
 import { AllReportsView, backToReports, RiskReportsView, RowClaim, RowSwitcher } from "./RiskDrawer";
+import { CaseClaim, CaseSwitcher } from "./RebidDrawer";
+import { caseOf, pageCases } from "../lib/rebidding";
 import { LoadingLabel, Skeleton, SkeletonLine, SkeletonText } from "./Skeleton";
 import { criteriaLessonOf, heldOnPage, pageLessons, type LessonEntry } from "../lib/criteria";
 import { backLabel, criteriaClose, criteriaEyebrow, CriteriaDrawerBody, criteriaTitle, LessonClaim } from "./CriteriaDrawer";
@@ -498,7 +500,18 @@ export function EvidenceDrawerView({
   const rows = useStore(pageRows);
   const riskRow = !claim && evidence?.kind === "passage" ? rowOf(id, rows) : null;
   const rowSwitcher = riskRow && riskRow.sources.length > 1 ? riskRow : null;
-  const switcherIds = claim && claim.evidence_ids.length > 1 ? claim.evidence_ids : rowSwitcher ? rowSwitcher.sources.map((source) => source.evidence_id) : null;
+  // A record opened from a row of section 1's "Advertised again" block (ticket 28), or from the address while the
+  // row shows: the row's line as the claim, and a tab for each of its records when it has two or more.
+  const cases = useStore(pageCases);
+  const rebidCase = !claim && !riskRow ? caseOf(id, cases.rows) : null;
+  const caseSwitcher = rebidCase && rebidCase.evidence.length > 1 ? rebidCase : null;
+  const switcherIds = claim && claim.evidence_ids.length > 1
+    ? claim.evidence_ids
+    : rowSwitcher
+      ? rowSwitcher.sources.map((source) => source.evidence_id)
+      : caseSwitcher
+        ? caseSwitcher.evidence.map((item) => item.evidence_id)
+        : null;
   // A lesson's paragraph opened from section 5 (ticket 31, view F): the lesson and its IEG line.
   const lessons = useStore(pageLessons);
   const criteriaLesson = !claim && !riskRow && evidence?.kind === "passage" ? (givenLesson ?? criteriaLessonOf(id, lessons)) : null;
@@ -604,11 +617,13 @@ export function EvidenceDrawerView({
             </div>
           )}
           {riskRow && <RowClaim row={riskRow} />}
+          {rebidCase && <CaseClaim row={rebidCase} id={id} through={cases.through} />}
           {criteriaLesson && <LessonClaim lesson={criteriaLesson} />}
           {switcherIds && claim && run && (
             <SourceSwitcher ids={switcherIds} current={id} run={run} panelId={passageId} onChoose={onChoose} />
           )}
           {rowSwitcher && <RowSwitcher row={rowSwitcher} current={id} panelId={passageId} onChoose={onChooseRow ?? onChoose} />}
+          {caseSwitcher && <CaseSwitcher row={caseSwitcher} current={id} panelId={passageId} onChoose={onChooseRow ?? onChoose} />}
           <div
             id={passageId}
             role={switcherIds ? "tabpanel" : undefined}

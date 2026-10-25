@@ -89,6 +89,7 @@ import { hubPage } from "./hub";
 import { lessonsPage } from "./lessons";
 import { packagesPage } from "./packages";
 import { risksPage } from "./risks";
+import { rebiddingPage } from "./rebidding";
 import { criteriaPage } from "./criteria";
 
 // ── The package workspace's samples (ticket 12) ──────────────────────────
@@ -442,6 +443,7 @@ const BADGES: [string, BadgeKind[]][] = [
   [t.signals, ["needs-a-look", "watch", "no-signals"]],
   [t.readiness, ["partial", "gap"]],
   [t.planChecks, ["data-note"]],
+  [t.estimates, ["experimental"]],
 ];
 
 const ICONS: Record<string, LucideIcon> = {
@@ -1376,6 +1378,7 @@ export const PAGES: GalleryPage[] = [
     ],
   },
   packagesPage(),
+  rebiddingPage(),
   risksPage(),
   criteriaPage(),
   {

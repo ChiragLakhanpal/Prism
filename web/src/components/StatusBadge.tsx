@@ -6,7 +6,9 @@
 // note. A dashed border marks the ones that mean something is missing from the record. Lessons (ticket
 // 29): the four evidence badges (Restated by IEG, IEG's lesson, Awaiting IEG review, Rests on the ICR
 // alone), May repeat a lesson, Being re-checked, and Overdue, amber because a late decision is stale work.
-import { Circle, CircleDashed, Info, TriangleAlert, type LucideIcon } from "lucide-react";
+// Rebidding risk (ticket 28): Experimental, neutral with a flask, no visible border and an 8 px icon gap, the one
+// quiet mark of an estimate the blueprint labels experimental (the 28 brief, section 4.2).
+import { Circle, CircleDashed, FlaskConical, Info, TriangleAlert, type LucideIcon } from "lucide-react";
 import { copy } from "../copy";
 import { cx } from "../lib/cx";
 import { STATES, type State } from "./state";
@@ -27,11 +29,14 @@ export type BadgeKind =
   | "overdue"
   | "ieg-restates"
   | "two-reports-disagree"
-  | "sources-differ";
+  | "sources-differ"
+  | "experimental";
 
 const lessons = copy.lessons.badges;
 
-const KINDS: Record<BadgeKind, { state: State; Icon: LucideIcon; dashed: boolean; text: string }> = {
+type Kind = { state: State; Icon: LucideIcon; dashed: boolean; text: string; quiet?: boolean };
+
+const KINDS: Record<BadgeKind, Kind> = {
   "needs-a-look": { state: "warning", Icon: TriangleAlert, dashed: false, text: copy.badge.needsALook },
   watch: { state: "info", Icon: Info, dashed: false, text: copy.badge.watch },
   "no-signals": { state: "neutral", Icon: Circle, dashed: false, text: copy.badge.noSignals },
@@ -50,21 +55,24 @@ const KINDS: Record<BadgeKind, { state: State; Icon: LucideIcon; dashed: boolean
   // A disagreement card's (ticket 24): warning only when it changes the answer.
   "two-reports-disagree": { state: "warning", Icon: TriangleAlert, dashed: false, text: copy.badge.twoReportsDisagree },
   "sources-differ": { state: "info", Icon: Info, dashed: false, text: copy.badge.sourcesDiffer },
+  // Quiet: its 1px border is transparent, so it keeps every badge's height, and its icon sits 8 px from the word.
+  experimental: { state: "neutral", Icon: FlaskConical, dashed: false, text: copy.badge.experimental, quiet: true },
 };
 
 export function StatusBadge({ kind, className, describedBy }: { kind: BadgeKind; className?: string; describedBy?: string }) {
-  const { state, Icon, dashed, text } = KINDS[kind];
+  const { state, Icon, dashed, text, quiet = false } = KINDS[kind];
   const look = STATES[state];
   return (
     <span
       data-badge={kind}
       aria-describedby={describedBy}
       className={cx(
-        "inline-flex items-center gap-1 rounded-pill border px-3 py-1 text-small font-semibold whitespace-nowrap",
+        "inline-flex items-center rounded-pill border px-3 py-1 text-small font-semibold whitespace-nowrap",
+        quiet ? "gap-2" : "gap-1",
         dashed ? "border-dashed" : "border-solid",
         look.box,
         look.text,
-        look.border,
+        quiet ? "border-transparent" : look.border,
         className,
       )}
     >

@@ -1,0 +1,148 @@
+{
+  "tool": "rebidding_risk",
+  "as_of": "2026-10-22",
+  "view": "staff",
+  "rows": [],
+  "coverage": {
+    "matched": 13,
+    "used": 7,
+    "not_used": [
+      {
+        "reason": "no_review_type",
+        "count": 6,
+        "evidence_ids": [
+          "strata.gold.package:KE-GAWASCO-111742-CW-RFB",
+          "strata.gold.package:KE-GAWASCO-54771-CW-RFB",
+          "strata.gold.package:KE-ICTA-571738-CW-RFB",
+          "strata.gold.package:KE-KAJIADO COUNTY-567787-CW-RFB",
+          "strata.gold.package:KE-MIGORI COUNTY-532367-CW-RFB",
+          "strata.gold.package:KE-UASIN GISHU COUNTY-571338-CW-RFB"
+        ]
+      }
+    ]
+  },
+  "package": {
+    "evidence_id": "strata.silver.plan_rows:40132287/KE-NWWDA-541055-CW-RFB",
+    "public_from": "2026-10-09",
+    "step_reference": "KE-NWWDA-541055-CW-RFB",
+    "description": "Equipping of Exploratory Bo reholes Project-Lot 1- Sarma n - Tarbaj Water Supply",
+    "project_id": "P156634",
+    "project_name": "Water and Sanitation Development Project",
+    "country_code": "KE",
+    "country_name": "Kenya",
+    "section": "WORKS",
+    "category": "Works",
+    "method": "Request for Bids",
+    "market_approach": "Open - National",
+    "review_type": "Post",
+    "estimated_amount_usd": "1230000.00",
+    "process_status": "Pending Implementation",
+    "planned_notice_on": "2026-03-10",
+    "planned_signing_on": "2026-04-24",
+    "plan": {
+      "document_id": "40132287",
+      "implementing_agency": "Northern Water Works Development Agency",
+      "agency_id": "northern-water-works-development-agency",
+      "plan_date": "2026-10-09",
+      "disclosed_on": "2026-10-09",
+      "pdf_page": 3
+    }
+  },
+  "criteria": {
+    "method": "Request for Bids",
+    "category": "Works",
+    "market_approach": null,
+    "review_type": "Prior",
+    "country": "KE",
+    "notice_from": "2019-07-01",
+    "notice_to": "2026-10-09",
+    "size_from_usd": null,
+    "size_to_usd": null,
+    "from_package": [
+      "method",
+      "category",
+      "country",
+      "notice_to"
+    ],
+    "country_name": "Kenya"
+  },
+  "m": 7,
+  "n": 0,
+  "past_range_total": 7,
+  "denominator_reason": null,
+  "groups": [],
+  "model": {
+    "shown": false,
+    "in10": null,
+    "band": null,
+    "not_shown_reason": "too_few",
+    "min_comparables": 20,
+    "learner": null,
+    "track_record": null,
+    "score_date": null
+  },
+  "sources": [
+    {
+      "key": "notices",
+      "dataset_name": "Procurement Notices"
+    },
+    {
+      "key": "awards",
+      "dataset_name": "Contract Awards in Investment Project Financing (Since FY 2020)"
+    },
+    {
+      "key": "documents",
+      "dataset_name": "Documents & Reports: Documents API"
+    }
+  ],
+  "notice_source_keys": [
+    "notices"
+  ],
+  "records_through": "2026-10-13",
+  "rows_per_group": 5,
+  "abstention": null,
+  "summary": {
+    "evidence_id": "strata.tools.rebidding_risk:KE-NWWDA-541055-CW-RFB@2026-10-22?review_type=Prior",
+    "public_from": "2026-10-22",
+    "source": {
+      "tool": "rebidding_risk",
+      "sources": [
+        "notices",
+        "awards",
+        "documents"
+      ]
+    },
+    "m": 7,
+    "n": 0,
+    "past_range_total": 7,
+    "groups": [],
+    "model": {
+      "shown": false,
+      "in10": null,
+      "band": null,
+      "not_shown_reason": "too_few",
+      "min_comparables": 20,
+      "learner": null,
+      "track_record": null,
+      "score_date": null
+    },
+    "coverage": {
+      "matched": 13,
+      "used": 7,
+      "not_used": [
+        {
+          "reason": "no_review_type",
+          "count": 6,
+          "evidence_ids": [
+            "strata.gold.package:KE-GAWASCO-111742-CW-RFB",
+            "strata.gold.package:KE-GAWASCO-54771-CW-RFB",
+            "strata.gold.package:KE-ICTA-571738-CW-RFB",
+            "strata.gold.package:KE-KAJIADO COUNTY-567787-CW-RFB",
+            "strata.gold.package:KE-MIGORI COUNTY-532367-CW-RFB",
+            "strata.gold.package:KE-UASIN GISHU COUNTY-571338-CW-RFB"
+          ]
+        }
+      ]
+    }
+  }
+}

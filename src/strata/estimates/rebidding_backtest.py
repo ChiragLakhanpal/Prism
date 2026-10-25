@@ -23,8 +23,8 @@ holds that alias yet, else as challenger. Its registered_model segment stores ve
 (its latest), n_test and beat_baseline there, which rebidding_risk reads. Both models stay labeled experimental.
 
 score_packages() is the nightly job's score task: the champion's chance for every activity a Procurement Plan
-lists, as planned today, written to strata.ops.rebidding_scores. natural_frequency() is what rebidding_risk
-returns: the champion's "about k in 10 packages like this one", shown only from past_range.min_comparables
+lists, as planned today, written to strata.ops.rebidding_scores. natural_frequency(), in strata.estimates.rebidding
+so the app's server never imports numpy or XGBoost, is what rebidding_risk returns: the champion's "about k in 10 packages like this one", shown only from past_range.min_comparables
 comparables and a champion that beat its baseline in its latest test year. Otherwise it says why not, by code:
 too_few, no_results (no champion registered yet), not_better, or not_scored (no score for this package: the
 nightly job scores the activities in Procurement Plans, and a package planned from a sentence has none).
@@ -41,16 +41,12 @@ from decimal import ROUND_HALF_UP, Decimal
 from strata.config import RebiddingSettings, Thresholds, load_rebidding, load_thresholds
 from strata.estimates import harness, rebidding, rebidding_model
 from strata.estimates.harness import Replay, Score, Scored, Window
+from strata.estimates.rebidding import BASELINE, CHAMPION, REGISTERED, SCORER, band, champion, in10, natural_frequency  # noqa: F401
 from strata.estimates.rebidding_model import NoModel, RebiddingModel
 from strata.estimates.tracking import MODEL_CARD
 
-SCORER = "rebidding_backtest"
 TEST_YEAR = "test_year"
-REGISTERED = "registered_model"
-CHAMPION, CHALLENGER = "champion", "challenger"
-# The baseline each model must beat: the share advertised again among a package's comparable packages, as
-# rebidding_risk counted them on the cutoff (the 28 design brief, section 7.2).
-BASELINE = "comparables_rate"
+CHALLENGER = "challenger"
 STATE = "model_state.json"
 SCORES_TABLE = "strata.ops.rebidding_scores"
 SCORE_COLUMNS = ("run_id", "step_reference", "model", "version", "learner", "probability", "in10", "scored_on",
@@ -59,16 +55,6 @@ SCORE_COLUMNS = ("run_id", "step_reference", "model", "version", "learner", "pro
 
 def _four(value: float) -> float:
     return float(Decimal(str(value)).quantize(Decimal("0.0001"), ROUND_HALF_UP))
-
-
-def in10(probability: float) -> int:
-    """A chance as a whole number in 10, rounded half up."""
-    return int((Decimal(str(probability)) * 10).quantize(Decimal(1), ROUND_HALF_UP))
-
-
-def band(k: int) -> str:
-    """The words that go with k in 10: fewer than 1, about k, or more than 9 (find_comparables' rule)."""
-    return "below_1" if k == 0 else "above_9" if k == 10 else "about"
 
 
 def window(year: int, outcomes_through: dt.date) -> Window:
@@ -245,19 +231,6 @@ def run(engine, tracker, *, years: tuple[int, ...] | None = None, outcomes_throu
 
 # ── The champion's scores and natural frequency ──────────────────────────
 
-def champion(rows: rebidding.Rows) -> dict | None:
-    """The latest champion registered by a run public on the reader's date, as one record, or None."""
-    found = rows(rebidding.sql("champion.sql"), scorer=SCORER)
-    if not found:
-        return None
-    record = {"run_id": found[0]["run_id"], "model": found[0]["model"], "version": int(found[0]["segment"]),
-              "run_date": rebidding.iso(found[0]["public_from"])}
-    for row in found:
-        value = row["value"]
-        record[row["measure"]] = row["value_text"] if value is None else (int(value) if float(value).is_integer() else float(value))
-    return record
-
-
 def score_packages(engine, tracker, run_id: str, clock: Callable[[], dt.datetime]) -> int:
     """The nightly job's score task: the champion's chance for every activity a plan public today lists, as planned
     today, in strata.ops.rebidding_scores. Nothing is scored before a champion is registered."""
@@ -275,29 +248,6 @@ def score_packages(engine, tracker, run_id: str, clock: Callable[[], dt.datetime
     found = [(run_id, ref, held["model"], held["version"], model.learner, float(chance), in10(chance), today, today)
              for ref, chance in zip(references, chances)]
     return engine.insert_rows(SCORES_TABLE, SCORE_COLUMNS, found) if found else 0
-
-
-def natural_frequency(call, m: int, floor: int, step_reference: str | None) -> dict:
-    """The model block of rebidding_risk's result, as of the call's date."""
-    block = {"shown": False, "in10": None, "band": None, "not_shown_reason": None, "min_comparables": floor,
-             "learner": None, "track_record": None, "score_date": None}
-    if m < floor:
-        return {**block, "not_shown_reason": "too_few"}
-    rows = rebidding.engine_rows(call.engine, call.as_of)
-    held = champion(rows)
-    if held is None:
-        return {**block, "not_shown_reason": "no_results"}
-    track = {"n_test": int(held["n_test"]), "test_year": int(held["test_year"]),
-             "beat_baseline": bool(held["beat_baseline"]), "baseline_code": BASELINE, "run_date": held["run_date"]}
-    block = {**block, "learner": held["learner"], "track_record": track}
-    if not track["beat_baseline"]:
-        return {**block, "not_shown_reason": "not_better"}
-    scored = rows(rebidding.sql("score.sql"), step_reference=step_reference, model=held["model"],
-                  version=held["version"]) if step_reference else []
-    if not scored:
-        return {**block, "not_shown_reason": "not_scored"}
-    k = int(scored[0]["in10"])
-    return {**block, "shown": True, "in10": k, "band": band(k), "score_date": rebidding.iso(scored[0]["scored_on"])}
 
 
 # ── The model card ───────────────────────────────────────────────────────

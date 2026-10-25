@@ -136,6 +136,11 @@ export const galleryCopy = {
       purpose:
         "Section 3 of the package workspace: source pills, checkboxes and the risk table in each of its states, and the evidence drawer's views of a row. Each sample is an answer the server wrote, recorded in tests/fixtures/api, or one with a value changed.",
     },
+    rebidding: {
+      title: "Advertised again",
+      purpose:
+        "Section 1's experimental count of comparable packages advertised again, in each state, with its reasons list and the evidence drawer's views of a row. The fixture's answers are the server's, recorded in tests/fixtures/api; the model shown and the model that did no better are mocks with made-up packages, since the fixture holds no backtest.",
+    },
     "check-criteria": {
       title: "Check your criteria",
       purpose:
@@ -307,6 +312,7 @@ export const galleryCopy = {
     signals: "Signals",
     readiness: "Data readiness",
     planChecks: "Plan checks",
+    estimates: "Experimental estimates",
     breadcrumb: "The trail above a project's pages",
     pill: "Check pill",
     planReady: "A checked plan, with two activities folded",
@@ -407,6 +413,24 @@ export const galleryCopy = {
     notRestated: "The IEG line, when IEG's review did not restate the lesson",
     reports: "The reports behind a row's count",
     allReports: "Every report counted",
+  },
+  // The rebidding page's sections (ticket 28).
+  rebidSections: {
+    fixture: "Three of the 52 comparable packages, with the canceled ones counted here and not in the past range",
+    fixtureOpen: "The same, with the reasons open",
+    shown: "My model's estimate, with a group of more than five, a reason in French and an activity advertised twice (mock)",
+    notBetter: "My model did no better than its baseline (mock)",
+    under20: "Fewer than 20 comparable packages, none advertised again",
+    planned: "A package planned from a sentence",
+    comparing: "While a Compare with toggle is on",
+    asOf: "As of a date",
+    loading: "Loading",
+    updating: "Updating after a criterion changed, past 400 ms",
+    error: "Error",
+    claim: "The drawer's claim and its tabs, for an activity advertised twice (mock)",
+    notice: "The drawer at the notice whose words a row quotes, with them highlighted",
+    planRow: "The drawer at a canceled plan row, with its Process Status highlighted",
+    awardNotice: "The drawer at an award notice whose reason a row quotes (mock)",
   },
   riskStates: {
     // A third risk from the closed list (config/lessons.toml), for the three-way tie the fixture never reaches.
