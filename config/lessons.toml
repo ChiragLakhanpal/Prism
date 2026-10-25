@@ -17,7 +17,7 @@
 # [[risk_factors]]: what made a procurement go wrong or right.
 [[risk_factors]]
 key = "cost_estimates"
-label = "Cost estimates out of line with market prices"
+label = "Cost estimates below market rates"
 
 [[risk_factors]]
 key = "permits_before_award"
