@@ -106,7 +106,11 @@ class Limits:
 
     @classmethod
     def read(cls, call: Call) -> Limits:
-        value = call.thresholds.value
+        return cls.from_thresholds(call.thresholds)
+
+    @classmethod
+    def from_thresholds(cls, thresholds) -> Limits:
+        value = thresholds.value
         return cls(int(value("past_range.min_comparables")), int(value("past_range.quantile_dots_above")),
                    int(value("past_range.quantile_dots")), _date(value("past_range.period_from")),
                    int(value("past_range.max_plan_months")), bool(value("past_range.canceled_as_still_open")),
@@ -296,6 +300,22 @@ def _select(candidates: list[dict], unlinked: list[dict], criteria: dict, limits
     for rank, row in enumerate(rows, 1):
         row["rank"] = rank
     return rows, left_out, canceled
+
+
+# Every package from the earliest notice Strata holds: the period a call to every_package covers.
+EARLIEST = dt.date(1900, 1, 1)
+
+
+def every_package(engine, as_of: dt.date, limits: Limits) -> list[dict]:
+    """Every package Strata can measure as of a date, from every project, each as a comparable row: its
+    days from its specific procurement notice to its signed contract, or, still open, its days so far.
+    The rules are the comparables' own, canceled_as_still_open included, so the time estimate learns
+    from and is scored on exactly the packages the past range would count (ticket 25)."""
+    open_criteria = {"review_type": None, "market_approach": None, "size_from_usd": None, "size_to_usd": None}
+    candidates = _rows(engine, "candidates.sql", as_of=as_of, step_reference="", country=None, method=None,
+                       category=None, notice_from=EARLIEST, notice_to=as_of)
+    rows, _, _ = _select(candidates, [], open_criteria, limits, as_of)
+    return rows
 
 
 def _coverage(rows: list[dict], left_out: dict[str, list[str]]) -> dict:

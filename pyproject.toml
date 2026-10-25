@@ -14,6 +14,8 @@ dependencies = [
     "opentelemetry-api>=1.45.1",
     "fpdf2==2.8.9",
     "splink==5.0.0",
+    "xgboost==3.4.1",
+    "numpy>=2.3",
 ]
 
 [dependency-groups]
