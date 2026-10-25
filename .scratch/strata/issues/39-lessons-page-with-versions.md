@@ -6,7 +6,7 @@ Read first: docs/PLAN.md section 11 (Lesson governance); the blueprint's Lessons
 
 **Blocked by:** 29 (The knowledge loop: proposed lessons with verified quotes, the review queue and versions); 32 (The retrieval loop: a labeled set, tuned hybrid search and feedback); 36 (Suggested PPSD risk rows and the Project Paper summary, exported to Word)
 
-**Status:** ready-for-agent
+**Status:** in-progress
 **Area:** app
 **Phase:** P2
 **Design review:** yes
@@ -19,3 +19,7 @@ Read first: docs/PLAN.md section 11 (Lesson governance); the blueprint's Lessons
 - [ ] The library filters by stage, method, sector and status with a count line ("showing N of M"), and no proposed lesson appears for a non-reviewer.
 - [ ] The feedback line reads from the retrieval loop's per-viewer counts in the form "You marked 2 passages as wrong; 1 is fixed, and 14 answers now cite the right paragraph."
 - [ ] The page follows the Lessons wireframe and DESIGN.md sections 5 (cards, info badge) and 7; states (first visit, nothing new) are captured at 1440, 1024 and 390 px; axe finds no WCAG 2.2 AA violations.
+
+## Comments
+
+- October 23, 2026, orchestrator: dispatched to an implementer in its own worktree on branch strata/39-lessons-page-with-versions, as soon as ticket 36 landed. Credentials are still missing, so every live step is parked in docs/workspace-catchup.md; the offline side is built against the fixtures.
