@@ -1768,6 +1768,8 @@ Run this from the main checkout:
 
 It worked if the first run's diff shows the change in `### estimate_time` and ends "I made version N of strata-orchestrator, which matches the repo.", and the `--check` run exits 0.
 
+**Ran on October 25, 2026 (orchestrator), from a1e037d7.** Both passed. The first run found that `strata-orchestrator` version 4 differed from the repo in its instructions and its tools, with `estimate_time` in the diff, and made version 5, which matches the repo. The `--check` run exited 0: version 5 matches the repo with no difference in its model, instructions, tools, description or guardrail (strata-guardrail).
+
 ## Ticket 26, step 5 of 5: redeploy the App with lane 2, section 4 and the plan dates
 
 The merger parked this step on October 25, 2026, after merge commit a4ed00d. Run it after steps 1 to 3. It needs the Databricks keys in `.env`. It is ticket 06's deploy command, and one deploy from a4ed00d or later serves every block that names it, ticket 36's step 4 included. From this merge on, the App serves `GET /api/packages/<ref>/estimate`, `GET /api/planned-packages/<id>/estimate` and `PUT .../plan-dates` (`src/strata/server/estimates.py`).
