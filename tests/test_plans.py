@@ -561,6 +561,24 @@ def test_a_page_ai_parse_document_answers_with_nothing_fails_as_that_one_page():
         parser.parse(Page("40132287", "http://documents.worldbank.org/plan.pdf", 2))
 
 
+def test_a_pdf_the_host_refuses_stops_the_run_and_names_the_pdf():
+    """On October 25, 2026 the documents host answered 403 to every request from the orchestrator's
+    computer after some hundreds of plan PDFs, and the live run crashed with urllib's traceback. The
+    parser now raises NotFetched with the PDF's address, which both live scripts print and exit 2 on."""
+    import urllib.error
+
+    from strata.reader.documents import NotFetched
+    from strata.reader.layout import AiParseDocument, Page
+
+    def refused(url):
+        raise urllib.error.HTTPError(url, 403, "Forbidden", {}, None)
+
+    parser = AiParseDocument(None, upload=lambda path, data: None, fetch=refused)
+
+    with pytest.raises(NotFetched, match="could not fetch https://documents.worldbank.org/plan.pdf: HTTP Error 403"):
+        parser.parse(Page("29750379", "http://documents.worldbank.org/plan.pdf", 1))
+
+
 @pytest.mark.parametrize("rejoin", [False, True], ids=["as-the-pdf-gives-them", "rejoined"])
 def test_words_a_cell_wrapped_at_its_edge_read_as_the_pdf_gives_them_unless_the_flag_rejoins_them(fresh, rejoin):
     """Parked decision 8 (tickets 08, 10 and 18): a STEP cell wraps "Exploratory" as "Explor" then

@@ -149,6 +149,8 @@ If the name of fairshare's job does not contain "fairshare", add `--fairshare-jo
 
 **Fourth run, the same UTC day, on October 24, 2026 (orchestrator):** exit 0, from 22:30 to 23:18 UTC. It printed "Run plans-P156634-20261024T223020001503 read 231 plan versions of P156634 and parsed 0 of the 195 pages waiting for ai_parse_document, under a cap of 500 pages a day." and the same six measures as the third run; `strata.ops.parse_runs` holds its row with `pages_parsed` 0 and `pages_failed` 0 (criterion 5). Passed. Two things to carry: the 195 pages left wait for a later UTC day, and they share the 500-page cap with the document reader (ticket 18's step 3); and the five oversized versions were fetched again from the World Bank's host, about 190 million characters, because a version that is not kept has no bronze row to skip it by, so a run spends most of its time on them (follow-up).
 
+**Fifth run, inside the documents run, on October 25, 2026 (orchestrator):** `ops/documents/run_live.py` runs this reader for each slice project first, so at 00:46 UTC it went on from page 6 of document 30374121 and parsed 102 more pages, 602 of the 695 Route B pages, until documents.worldbank.org answered 403 at 01:50 UTC (ticket 11's step 1 has the details). 93 pages wait, and `strata.ops.parse_runs` has no row for this part because the run stopped before it wrote one; the pages are in `strata.bronze.layout_pages`.
+
 Decision for the user: the five oversized texts. Keeping them needs either the text split into parts across rows, a Delta write that does not go through statement parameters (a volume file plus COPY INTO), or a per-version character cap. `read_versions` also selects every text in one statement, and inline results are capped at 25 MiB, so a split alone does not settle it.
 
 The merger parked this step on October 23, 2026, after merge commit eba87ed. It needs the Databricks keys in `.env`. Run it after ticket 04's step 1, because the deploy makes the plan tables and the volume `strata.bronze.files`. Run it after ticket 03's step 2 too, because day-one test 3 decides the layout parser. If test 3 failed in `docs/day-one-results.md`, stop here: Strata has an adapter only for `ai_parse_document`, so a Content Understanding adapter must first join `PARSERS` in `src/strata/reader/layout.py`.
@@ -246,6 +248,8 @@ Sign in to the App in a browser as a user with USE CATALOG, USE SCHEMA and SELEC
 It worked if the answer is HTTP 200 and its body equals `tests/fixtures/api/check-plan-p156634-nwwda-2026-10-09.json`. Its counts say 9 activities were checked: 1 `needs_a_look`, 2 `watch`, 3 `data_note` and 3 with no mark. This one call also proves that check_plan's four SQL files in `src/strata/tools/sql/check_plan/` run on the SQL warehouse without transpiling (`GREATEST` over columns that may be empty, and a correlated subquery in `project.sql`).
 
 ## Ticket 11, step 1 of 4: read the first 20 documents into passages and sync the AI Search index
+
+**First run on October 25, 2026 (orchestrator):** started at 00:01 UTC, right after the UTC day rolled, so the page cap was fresh. The script first runs the plan reader for every slice project, then the passage reader. P130164's plans went first: run `plans-P130164-20261025T000129723756` parsed 23 pages from 00:01 to 00:16 UTC, and `strata.ops.parse_runs` holds its row with `pages_parsed` 23, `pages_failed` 0 and `pages_waiting` 23. P156634's plans went on from page 6 of document 30374121 and parsed 102 more pages, so 602 of its 695 Route B pages are now in `strata.bronze.layout_pages` and 93 wait. At 01:50 UTC documents.worldbank.org answered "HTTP Error 403: Forbidden" for document 29750379's PDF (Plan-Archive-5.pdf), and the script stopped with urllib's traceback before the passage reader began. Since then the host's Cloudflare front answers 403 to every request from this computer, whatever the user agent, including a PDF it served minutes earlier, while search.worldbank.org still answers 200: a rate block after some hundreds of PDF and text requests, which Strata waits out rather than works around. The 125 pages parsed stay in bronze and count against the day's cap, so 375 pages are left for today. Two fixes: `AiParseDocument.parse` in `src/strata/reader/layout.py` now raises `NotFetched` naming the PDF, and `ops/documents/run_live.py` prints "The run stopped before it finished: ..." and exits 2, as `ops/plans/run_live.py` already did (`tests/test_plans.py`). The run is recorded again below when the host answers and it finishes. Follow-up for the orchestrator: a run over P156634 asks the host for about 240 plan texts and some hundreds of PDFs, and fetches the five oversized texts (about 190 million characters) again every run; a cached copy of each fetched PDF in the bronze files volume, or a pause between fetches, would keep the host from blocking.
 
 The merger parked this step on October 23, 2026, after merge commit e0721da. It needs the Databricks keys, `AI_SEARCH_ENDPOINT`, `AZURE_OPENAI_ENDPOINT` and `AZURE_OPENAI_API_KEY` in `.env`. Run it after ticket 04's step 1, because the deploy makes the passage tables, and after ticket 04's step 2, because the nightly job fills `strata.gold.project`.
 
@@ -666,6 +670,8 @@ It worked if it shows no `notice_url`, and the gold sync MERGE in step 2 succeed
 
 ## Ticket 18, step 2 of 5: read the document slice on the warehouse
 
+**First run on October 25, 2026 (orchestrator):** the same run as ticket 11's step 1, recorded there. It stopped at 01:50 UTC, in P156634's plan reader, when documents.worldbank.org began answering 403 to every request from this computer. The passage reader did not start, so the stress shelf, `strata.ops.documents_read` and the slice measures have no row yet. Recorded again below when the host answers and the run finishes.
+
 The merger parked this step on October 24, 2026, after merge commit a8d605c. It needs `DATABRICKS_HOST`, `DATABRICKS_WAREHOUSE_ID`, a token or a service principal, `AI_SEARCH_ENDPOINT`, `AZURE_OPENAI_ENDPOINT` and `AZURE_OPENAI_API_KEY` in `.env`. At 08:24 on October 24, `.env` held the host, the warehouse and the AI Search endpoint, but no Databricks token and no Azure OpenAI keys, and day-one test 7 had just failed. It is the same command as ticket 11's step 1.
 
 Run it after step 1, and after ticket 04's steps 1 and 2: the deploy makes the tables, and the nightly job fills `strata.gold.project`, which the slice is chosen from. The deploy must come from a8d605c or later. This merge adds `strata.ops.stress_shelf`, `strata.ops.documents_read` and `strata.silver.isr_ratings`, adds columns to `strata.bronze.layout_pages`, `strata.silver.document_page_routes`, `strata.silver.documents`, `strata.silver.passages` and `strata.gold.passage`, and adds the dashboard's tiles 5 and 7. If a deploy from an earlier commit already made those five tables, `CREATE TABLE IF NOT EXISTS` left them as they were. In that case stop and tell the orchestrator, because no one has written the changes for them yet.
@@ -963,6 +969,8 @@ It worked if:
 
 ## Ticket 15, step 1 of 4: the Foundry package reader matches the repo
 
+**Ran on October 25, 2026 (orchestrator).** Both runs exited 0. The first printed "Foundry's agent strata-package-reader differed from the repo:", the diff, and "I made version 1 of strata-package-reader, which matches the repo." The second printed "Foundry's agent strata-package-reader, version 1, matches the repo: there is no difference in its model, instructions, tools, description or guardrail (strata-guardrail)." Passed.
+
 The merger parked this step on October 24, 2026, after merge commit d356ba7. All ten keys were set, but the header above holds workspace steps back while the user runs the backlog. It needs the four Foundry keys that ticket 14's step 1 names, and the `az` command line signed in to the subscription that holds the Foundry resource. Run it after ticket 13's step 1, which makes the guardrail `strata-guardrail`. Ticket 15 adds the agent `package_reader` to `config/agents.toml`, with its instructions in `package_reader.md`.
 
 Run this from the main checkout, twice:
@@ -972,6 +980,8 @@ Run this from the main checkout, twice:
 It worked if both runs exit 0. The first run prints what differed and ends "I made version 1 of strata-package-reader, which matches the repo." The second run reports no difference: "Foundry's agent strata-package-reader, version 1, matches the repo: there is no difference in its model, instructions, tools, description or guardrail (strata-guardrail)."
 
 ## Ticket 15, step 2 of 4: re-record the package reader's cases from the live reader
+
+**Ran on October 25, 2026 (orchestrator):** the record command exited 0 and printed a diff for each of the three recordings, each now `"recorded": true` with `"recorded_on": "2026-10-25"` and agent version 1. `package-no-package` and `package-dividing` came back with the same answers as the hand-written ones, down to the fields. `package-rural-roads-kenya` came back without the guess: the live reader answered category Works, description "Rural roads", estimated amount 15,000,000 (approximate) and country KE, and no `lots` field, where the hand-written answer guessed `lots` 2 with `stated` false. Five tests in `tests/test_planned_packages.py` then failed, among them `test_the_sentence_yields_the_wireframe_s_chips_with_two_computed_and_one_guess`: the first (`test_the_screens_recorded_package_answers_are_what_the_routes_answer`) because `tests/fixtures/api/package-plan-rural-roads.sse` carries "count": 5, "guesses": 1 and the live answer gives 4 and 0. As this block asks, nothing was changed by hand: the three tracked recordings were restored, the live recordings and their diff are kept in the orchestrator's scratchpad (`recorded15/`), and strata-eb was told. Decision for the orchestrator: either the reader's instructions (`package_reader.md`) should ask for a guessed lot count when the sentence gives none, so the wireframe's "two computed and one guess" holds, or the fixture, the SSE recording and the five tests follow the live answer with no guess. Not passed yet.
 
 The merger parked this step on October 24, 2026, after merge commit d356ba7. It needs the four Foundry keys. Run it after step 1. The three package reader recordings in `tests/fixtures/agent/recorded/` were written by hand (`"recorded": false`), because no live reader existed when the ticket was built (criterion 1, live half).
 
@@ -1013,3 +1023,29 @@ Run this from the main checkout:
 Then ask the benchmark question `find-comparables-planned-ke-works-rfb` through `WarehouseEngine`, with the arguments `evals/benchmark.yaml` gives it.
 
 It worked if the check exits 0 and prints "DuckDB and the SQL warehouse returned the same ... rows, and they are the rows the file expects." for `past_range_coverage_ke_works_rfb.sql`, and the question's answer holds the same 49 comparables, with the quartiles 3.3, 4.4, 7.9 and 9.1 months, and the four still-open packages and three canceled packages left out that the benchmark lists. If the warehouse holds Kenya works packages that the fixture does not record, the rows differ. Tell the orchestrator before you change a file's expected rows.
+
+## Ticket 25, step 1 of 2: backtest 2025 alone on the workspace and register the champion
+
+The merger parked this step on October 24, 2026, after merge commit e7c6e38. All ten keys were set, but the header above holds workspace steps back while the user runs the backlog. It needs the Databricks keys in `.env`. This merge adds the table `strata.ops.evaluation_result`, so first deploy from e7c6e38 or later with ticket 04's command, `uv run --script ops/bundle/deploy.py --env-file .env`, which must list `strata.ops.evaluation_result` as new and change no existing table. Run this step after that deploy and after a nightly run has filled gold and silver (ticket 04's step 2, `uv run --script ops/bundle/check.py job-run --env-file .env`). The merge already ran the builder's local step: `scripts/install` exited 0 and `uv run --frozen python -c 'import xgboost'` exited 0 (xgboost 3.4.1).
+
+Run this from the main checkout:
+
+    uv run --script ops/estimates/backtest_live.py --env-file .env --years 2025
+
+It worked if it exits 0 and prints the 2025 line with an MLflow run id, "Registered strata.gold.time_estimate version 1 as champion.", the track-record sentence, the model card's coverage section, and "Run time_estimate_backtest-... is in strata.ops.evaluation_result. It took N seconds." Each package the year had not seen calls find_comparables once on the warehouse, so note N before step 2. Then (criterion 4, Unity Catalog half): `MlflowClient().get_model_version_by_alias("strata.gold.time_estimate", "champion")` returns a version, that version's run holds `model_card.md`, and its description gives the track-record sentence.
+
+## Ticket 25, step 2 of 2: backtest 2021 to 2025 on the workspace
+
+The merger parked this step on October 24, 2026, after merge commit e7c6e38. It needs the Databricks keys in `.env`. Run it after step 1, and only if step 1's year took a reasonable time.
+
+Run this from the main checkout:
+
+    uv run --script ops/estimates/backtest_live.py --env-file .env
+
+It worked if it exits 0 and prints five test-year lines, 2021 to 2025, each with its own MLflow run id, then the track-record sentence and the card's coverage section (criterion 2). Then this query:
+
+    SELECT segment, measure, value, mlflow_run_id FROM strata.ops.evaluation_result
+    WHERE scorer = 'time_estimate_backtest' AND segment_kind = 'test_year'
+      AND measure IN ('coverage', 'width_80_months', 'error_past_range_months', 'error_plan_months')
+
+must return rows for 2021 to 2025, and each `mlflow_run_id` must be a run in the experiment `/Shared/strata/time_estimate`. Criterion 3, workspace half: the `model_card.md` this run logged has a line for each test year, and each year outside 75 to 85 percent gives its gap and a cause sentence (or "The stored results do not show the cause."). This run registers version 2 as challenger, because version 1 from step 1 already holds champion, and the champion's card lists only 2025. Moving champion to version 2 is the user's call; ticket 25's merge comment names it.

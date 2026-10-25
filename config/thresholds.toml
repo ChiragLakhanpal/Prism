@@ -134,6 +134,42 @@ canceled_as_still_open = false
 no_notice_methods = ["Direct Selection"]
 no_notice_market_approaches = ["Limited"]
 
+# The time estimate (ticket 25): Strata's own model of procurement cycle time, with ranges for the
+# middle half and 8 in 10, and its backtests (src/strata/estimates/). The backtests and the model card
+# read these, and ticket 26's estimate_time returns the values it used, so no screen writes one itself.
+[time_estimate]
+# Below this many comparables (find_comparables' count), the time estimate gives no range and says
+# why. Source: docs/PLAN.md section 7 ("Strata abstains below 20 comparables, subgroups included"),
+# DESIGN.md section 7, rules 6 and 15, and the 26 design brief, which names the key. It is the same
+# rule as past_range.min_comparables, kept as its own key so the two can be told apart.
+min_comparables = 20
+# A model sizes its ranges on at least this many packages it did not learn from (its calibration
+# packages). With fewer, that model gives no range, and its test year says so. Source: DESIGN.md
+# section 7, rules 6 and 15 (no range from fewer than 20 cases).
+min_calibration_packages = 20
+# The track record needs at least this many packages from the latest test year that the model had
+# not seen. With fewer, it says so instead of giving counts. Source: the 26 design brief, section 7.6.
+min_unseen_packages = 20
+# In each test year, the share of unseen packages that finished inside the 8-in-10 range should fall
+# from coverage_low to coverage_high. A year outside the band is written into the model card with its
+# likely cause. Source: ticket 25's acceptance criteria (75 to 85 percent). Ticket 44's retrain watch
+# and the 45 design brief's dashboard target lines read these two values, so the band is set once.
+coverage_low = 0.75
+coverage_high = 0.85
+# For a test year short of the band, the model card names still-open packages as a likely cause when
+# at least this share of the packages that sized the range were still open at the cutoff, and the
+# stored middles do not already show that the year's packages took longer. Source: the ticket 25
+# review, round 2 (a quarter: enough still-open packages to pull a range sized on the rest short); a
+# starting value for the owner to confirm.
+cause_still_open_share = 0.25
+
+# What-ifs (tickets 25 and 26): a range for the comparables that went with one option, such as
+# prequalification or 3 lots.
+[what_if]
+# Below this many comparables that went with an option, that option gets no range. Source: the spec
+# ("subgroups included") and the 26 design brief, section 6.4, which names the key.
+min_subgroup = 20
+
 # Signals on followed projects: late direct selection, closing-date moves, rating downgrades,
 # disbursement lag, and the "Needs a look" rule of three signals or one strong one (ticket 37).
 [signals]

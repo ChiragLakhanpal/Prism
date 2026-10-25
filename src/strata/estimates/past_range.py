@@ -16,6 +16,7 @@ rounding every month Strata states takes, so a dot, a quantile and the plan line
 
 from __future__ import annotations
 
+import datetime as dt
 import math
 from dataclasses import dataclass
 from decimal import ROUND_HALF_UP, Decimal
@@ -28,6 +29,30 @@ TENTH = Decimal("0.1")
 def months(days: int) -> Decimal:
     """Days as months, to one decimal."""
     return (Decimal(days) / DAYS_PER_MONTH).quantize(TENTH, ROUND_HALF_UP)
+
+
+def rounded(value: int | float | Decimal | Fraction, places: int = 0) -> Decimal:
+    """A number to a number of decimal places, half up: the one rounding the estimates use. A float is
+    read as it prints, so 0.745 is 0.745 and not the binary number just below it."""
+    if isinstance(value, Fraction):
+        exact = Decimal(value.numerator) / Decimal(value.denominator)
+    else:
+        exact = Decimal(str(value)) if isinstance(value, float) else Decimal(value)
+    return exact.quantize(Decimal(1).scaleb(-places), ROUND_HALF_UP)
+
+
+def whole(value: int | float | Decimal | Fraction) -> int:
+    """A number rounded to a whole number, half up."""
+    return int(rounded(value))
+
+
+def as_date(value) -> dt.date | None:
+    """A date from a stored value: a date, a timestamp's day, or ISO text; None when there is none."""
+    if value is None or value == "":
+        return None
+    if isinstance(value, dt.datetime):
+        return value.date()
+    return value if isinstance(value, dt.date) else dt.date.fromisoformat(str(value)[:10])
 
 
 @dataclass(frozen=True)

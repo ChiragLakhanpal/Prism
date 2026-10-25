@@ -6,7 +6,7 @@ Read first: docs/PLAN.md sections 3 (Quirks) and 7; the blueprint's Package work
 
 **Blocked by:** 18 (The document slice, the page router's Route B and the stress shelf); 25 (The replay harness and the survival model's backtests)
 
-**Status:** ready-for-agent
+**Status:** in-progress
 **Area:** ml
 **Phase:** P2
 **Design review:** yes
@@ -18,3 +18,7 @@ Read first: docs/PLAN.md sections 3 (Quirks) and 7; the blueprint's Package work
 - [ ] Each step's planned date defaults to the cautious choice, names its comparables count, and abstains below 20.
 - [ ] No actual date is ever written by Strata into a step.
 - [ ] The section follows the Package workspace wireframe and DESIGN.md sections 5 and 7 (rule 17, STEP's words); states are captured at 1440, 1024 and 390 px; axe finds no WCAG 2.2 AA violations.
+
+## Comments
+
+- October 23, 2026, orchestrator: dispatched to an implementer in its own worktree on branch strata/27-planned-date-per-step, as soon as ticket 25 landed. Credentials are still missing, so every live step is parked in docs/workspace-catchup.md; the offline side is built against the fixtures.

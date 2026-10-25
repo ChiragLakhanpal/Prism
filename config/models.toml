@@ -81,3 +81,39 @@ different = { m = 0.02, u = 0.98855 }
 [supplier_matching.projects]
 shared = { m = 0.5, u = 0.02 }
 none_shared = { m = 0.5, u = 0.98 }
+
+# The time estimate's model (ticket 25; docs/PLAN.md section 7): XGBoost's survival model (accelerated
+# failure time) on procurement cycle time, with conformal ranges. src/strata/estimates/ reads this
+# table with strata.config.load_time_estimate().
+#
+# learner                 the model, by its name in LEARNERS in src/strata/estimates/time_estimate.py
+# registered_model        its name in Unity Catalog, where the champion and challenger aliases live
+# experiment              the MLflow experiment the backtests and the model card are logged to
+# test_years              the rolling backtests: each year's model learns from packages advertised
+#                         before January 1 and is tested on the packages advertised in that year
+# calibration_every       every this-many-th training package, in the order they were advertised, sizes
+#                         the ranges (the conformal step), and the model learns from the others
+# governance_indicators   the CPIA and WGI scores the model reads, each as published on the day the
+#                         package was advertised (strata.lakehouse.governance.score_as_of)
+# range_checked           the features whose values the model must have seen: a package outside their
+#                         training range gets no time estimate (outside_training)
+# Source: the spec's "Estimates"; each value is a starting value for the owner to confirm.
+[time_estimate]
+learner = "xgboost_aft"
+registered_model = "strata.gold.time_estimate"
+experiment = "/Shared/strata/time_estimate"
+test_years = [2021, 2022, 2023, 2024, 2025]
+calibration_every = 4
+governance_indicators = ["GOV_WGI_GE.EST", "IQ.CPA.IRAI.XQ"]
+range_checked = ["estimated_amount_usd", "planned_days"]
+
+# The settings of the learner above, under its name. seed and nthread = 1 make a fit repeat exactly.
+[time_estimate.xgboost_aft]
+max_depth = 3
+eta = 0.05
+num_boost_round = 300
+min_child_weight = 5
+aft_loss_distribution = "normal"
+aft_loss_distribution_scale = 1.0
+seed = 7
+nthread = 1

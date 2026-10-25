@@ -533,13 +533,19 @@ class AiParseDocument:
 
     def parse(self, page: Page) -> Layout:
         """One page's layout. A page that cannot be cut out of its PDF, or that ai_parse_document
-        refuses or answers with nothing it can read, raises ParseFailed. A PDF that cannot be fetched,
-        or a volume that refuses the upload, stops the run, because every page would fail the same way."""
+        refuses or answers with nothing it can read, raises ParseFailed. A PDF that cannot be fetched
+        raises NotFetched, naming the PDF, and a volume that refuses the upload raises the SDK's error:
+        both stop the run, because every page would fail the same way."""
         from strata.lakehouse.engine import EngineError
+        from strata.reader.documents import NotFetched
 
         url = https(page.pdf_url)
         if url not in self._pdfs:
-            self._pdfs = {url: self.fetch(url)}  # keep one PDF at a time: pages come document by document
+            try:
+                fetched = self.fetch(url)
+            except OSError as error:  # urllib's errors are OSErrors; the host's answer is in the message
+                raise NotFetched(f"I could not fetch {url}: {error}") from error
+            self._pdfs = {url: fetched}  # keep one PDF at a time: pages come document by document
         path = f"{self.volume}/{page.document_id}/page-{page.pdf_page}.pdf"
         try:
             one_page = single_page(self._pdfs[url], page.pdf_page)

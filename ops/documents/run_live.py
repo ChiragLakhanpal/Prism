@@ -26,7 +26,8 @@ strata.ops.stress_shelf. Then it makes the Delta Sync index that config/models.t
 names on the AI Search endpoint the env file names (AI_SEARCH_ENDPOINT), when it is missing, syncs it,
 and waits until it holds every passage. A second run the same day parses no page it read.
 It exits 0 when the index holds every passage, 1 when the run finished but the index did not catch
-up in time, and 2 when it could not run.
+up in time, and 2 when it could not run or stopped before it finished, as when a World Bank host refuses
+a PDF: the pages parsed before that are kept, and the next run goes on from there.
 
 It needs DATABRICKS_HOST, DATABRICKS_WAREHOUSE_ID, a token or a service principal, AI_SEARCH_ENDPOINT,
 AZURE_OPENAI_ENDPOINT and AZURE_OPENAI_API_KEY. Then check the ground-truth queries on both engines, as
@@ -52,6 +53,7 @@ for folder in (REPO / "src", REPO / "ops" / "dayone", REPO / "ops" / "bundle"):
 from strata.config import load_layout_parser, load_models  # noqa: E402
 from strata.lakehouse import passages, plans  # noqa: E402
 from strata.lakehouse.engine import EngineError  # noqa: E402
+from strata.reader.documents import NotFetched  # noqa: E402
 from workspace_env import WorkspaceEnvError, load_workspace_env  # noqa: E402
 
 NEEDS = ("AI_SEARCH_ENDPOINT", "AZURE_OPENAI_ENDPOINT", "AZURE_OPENAI_API_KEY")
@@ -110,6 +112,10 @@ def main(argv=None) -> int:
         report = passages.run(engine, LiveDocuments(), projects, shield=shield, embedder=embedder, layout=layout)
     except (EngineError, ShieldError, EmbedError) as error:
         print(f"The run stopped: {error}")
+        return 2
+    except (NotFetched, OSError) as error:  # urllib's errors and the Databricks SDK's are OSErrors
+        print(f"The run stopped before it finished: {str(error).rstrip('.')}. The pages it parsed are kept, "
+              "and the next run goes on from there.")
         return 2
     print(f"Run {report.run_id} counted {report.slice_projects} projects in the slice and read {report.documents} "
           f"documents into {report.passages} passages, with {report.scans} scans read by {layout.name}, and "

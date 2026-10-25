@@ -6,7 +6,7 @@ Read first: docs/PLAN.md section 7; DESIGN.md sections 5 (Range chart), 6 and 7;
 
 **Blocked by:** 15 (Plan a package from a sentence); 25 (The replay harness and the survival model's backtests)
 
-**Status:** ready-for-agent
+**Status:** in-progress
 **Area:** ml
 **Phase:** P2
 **Design review:** yes
@@ -19,3 +19,7 @@ Read first: docs/PLAN.md section 7; DESIGN.md sections 5 (Range chart), 6 and 7;
 - [ ] Section 4 lists up to three approach options with "N of M" counts from find_comparables and opens on demand.
 - [ ] With fewer than 20 comparables, lane 2 shows the first-person abstention and no bar.
 - [ ] Toggles are a segmented control at least 32px tall and keyboard operable, the chart's alt text updates with its statistics, motion stops under reduced-motion, states are captured at 1440, 1024 and 390 px, and axe finds no WCAG 2.2 AA violations.
+
+## Comments
+
+- October 23, 2026, orchestrator: dispatched to an implementer in its own worktree on branch strata/26-time-estimate-on-screen, as soon as ticket 25 landed. Credentials are still missing, so every live step is parked in docs/workspace-catchup.md; the offline side is built against the fixtures.

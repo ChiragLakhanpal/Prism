@@ -1648,6 +1648,85 @@ plan_days = 45
 plan_months = 1.5
 signed_within_plan = ["KE-WAJWASCO-356671-CW-RFB", "KE-WAJWASCO-372776-CW-RFB"]
 
+# The replay harness's known answer (ticket 25): the time estimate's backtest for the test year 2021
+# on a small hand-made set, not on recorded data, so these are statistical literals, not quotes.
+# tests/test_replay_harness.py builds the set in a DuckDB file of its own, with these rules:
+#
+# - One Kenya project (P900001) and one implementing agency's two plan versions: 900000001 (dated and
+#   public January 1, 2019) and 900000002 (dated and public December 15, 2020). Both list every package
+#   below as WORKS, Request for Bids, Open - National, Post review, no prequalification, estimated
+#   US$1,000,000.00, so every package has the same features and the model gives each the same middle.
+#   The first version is every package's first listing, with its notice planned 120 days before its
+#   signed contract. Each package has an agency code of its own, so none has an agency history, and
+#   all share Kenya's 2017 CPIA and WGI scores, published September 25, 2018.
+# - 80 training packages, i = 1 to 80: notice on January 2, 2019 plus 9 * (i - 1) days, signed
+#   30 + (7 * i * i mod 251) days later. As of the cutoff, January 1, 2021, 17 are still open.
+#   One more package, advertised March 2, 2020 and never signed, is Canceled in the second version,
+#   so it is left out, as the past range leaves it out (past_range.canceled_as_still_open = false).
+# - Every fourth training package in notice order (i = 4, 8, ... 80) sizes the ranges
+#   (time_estimate.calibration_every = 4): 20 packages, 3 of them still open at the cutoff.
+# - 24 test packages, j = 1 to 24: notice on January 11, 2021 plus 14 * (j - 1) days, signed
+#   60 + (71 * j mod 300) days later, read as of June 30, 2022. One more, a Request for Quotations
+#   works package advertised March 1, 2021, has no comparables, so it gets no range.
+#
+# With one middle for every package, each point of the time estimate equals the Kaplan-Meier quantile
+# of the 20 calibration packages' days at its conformal level, ceil(21 * p) / 20: 0.30, 0.55, 0.80
+# and 0.85 for the points 0.25, 0.5, 0.75 and 0.8. These were computed once with lifelines 0.30.3
+# (KaplanMeierFitter, then lifelines.utils.qth_survival_time) and checked with an exact-fraction
+# Kaplan-Meier written for the purpose, which gave the same days. The past range's middle is
+# lifelines' median of the 60 training packages advertised from July 1, 2019 to December 15, 2020, as
+# of the cutoff. The counts and the medians of the errors (numpy 2.5.4, numpy.median) were counted from
+# the rules above. A test package counts in n when it was signed by June 30, 2022, or when it was still
+# open then and had already run past its 8-in-10 point; the one still open short of it is left out.
+# Months are days divided by 30.4375, rounded to one decimal, half up; "in 10" figures are rounded
+# half up.
+#
+# The two middles the model card compares when a year falls outside the coverage band were computed
+# the same way, with lifelines 0.30.3's median_survival_time_: calibration_middle_days over the 20
+# calibration packages as of the cutoff (the 3 still open counted as not signed yet), and
+# unseen_middle_days over the n = 23 packages it scored, as of June 30, 2022 (the 2 still open then
+# counted as not signed yet: j = 20 at 269 days and j = 21 at 255 days so far). coverage_percent is
+# coverage as a whole percent, and band_gap_points is its distance from the band's low end, 75.
+[time_estimate_backtest]
+cutoff = 2021-01-01
+outcomes_through = 2022-06-30
+training_packages = 80
+calibration_packages = 20
+proper_packages = 60
+calibration_still_open = 3
+calibration_middle_days = 133
+calibration_middle_months = 4.4
+unseen_middle_days = 202
+unseen_middle_months = 6.6
+coverage_percent = 61
+band_gap_points = 14
+e25_days = 69
+e50_days = 133
+e75_days = 186
+e80_days = 227
+e25_months = 2.3
+e50_months = 4.4
+e75_months = 6.1
+e80_months = 7.5
+ranges_given = 24
+abstained = 1
+still_open_undecided = 1
+n = 23
+m = 14
+expected = 18
+coverage = 0.609
+width_80_months = 7.5
+width_50_months = 3.8
+past_range_middle_days = 144
+error_packages = 21
+error_estimate_months = 2.2
+error_past_range_months = 2.0
+error_plan_months = 2.4
+middle_ran_longer = 17
+middle_in10 = 7
+eight_in_ten_ran_longer = 9
+eight_in_ten_in10 = 4
+
 # Awkward cases the lakehouse must handle on purpose. The signed plan row with an Actual
 # Amount of 0.00 (plan-503455-actual-zero) and the reference whose method differs from the
 # Method column (plan-199461-method-column) are values above.
