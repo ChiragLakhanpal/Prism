@@ -39,6 +39,8 @@ import { Num } from "./Num";
 import { MethodText } from "./PlanCheck";
 import { ComparableDotList, ComparableRecords, dotRegion } from "./ComparableRecords";
 import { COMPARABLE, DOT, type DotEntry } from "../lib/packages";
+import { isRiskList, pageRows, REPORTS, rowOf } from "../lib/risks";
+import { AllReportsView, backToReports, RiskReportsView, RowClaim, RowSwitcher } from "./RiskDrawer";
 import { LoadingLabel, Skeleton, SkeletonLine, SkeletonText } from "./Skeleton";
 import { heldOnPage } from "../lib/criteria";
 import { backLabel, criteriaClose, criteriaEyebrow, CriteriaDrawerBody, criteriaTitle } from "./CriteriaDrawer";
@@ -56,9 +58,9 @@ export function useEvidence(id: string, asOf: string | null): DrawerData {
   const [attempt, setAttempt] = useState(0);
   const held = all[id];
   useEffect(() => {
-    // A quantile dot's list is no source on the server: the page that draws the dots holds it (ticket 15). So
-    // are section 5's lists and cost records (ticket 31).
-    if (held || id.startsWith(DOT) || heldOnPage(id)) return;
+    // A quantile dot's list is no source on the server: the page that draws the dots holds it (ticket 15). So are
+    // section 5's lists and cost records (ticket 31), and the risks section's lists of completion reports (ticket 30).
+    if (held || id.startsWith(DOT) || heldOnPage(id) || isRiskList(id)) return;
     const controller = new AbortController();
     setFetched({ id, data: { status: "loading" } });
     const query = `/api/evidence?id=${encodeURIComponent(id)}${asOf ? `&asof=${encodeURIComponent(asOf)}` : ""}`;
@@ -418,6 +420,8 @@ export function EvidenceDrawerView({
   onOpenEntry,
   onBack,
   onOpenListEntry,
+  onChooseRow,
+  onOpenReport,
 }: {
   id: string;
   data: DrawerData;
@@ -444,6 +448,10 @@ export function EvidenceDrawerView({
   onBack?: (listId: string) => void;
   // A notice in one of section 5's lists was chosen (ticket 31).
   onOpenListEntry?: (entry: string, list: { id: string; count: number }) => void;
+  // A switcher tab of a risk's row chose another of its sources, and a report in a risk's list was chosen
+  // (ticket 30).
+  onChooseRow?: (id: string) => void;
+  onOpenReport?: (evidenceId: string) => void;
 }) {
   const headingId = useId();
   const passageId = useId();
@@ -470,7 +478,12 @@ export function EvidenceDrawerView({
       : undefined;
   const numbering = run ? citationNumbers(run) : new Map<string, number>();
   const evidence = data.status === "ready" ? data.evidence : null;
-  const switcherIds = claim && claim.evidence_ids.length > 1 ? claim.evidence_ids : null;
+  // A source opened from a risk's row, or from the address while the row shows (ticket 30): the drawer restores
+  // the row's claim, its IEG line and its switcher when the source belongs to exactly one row on the page.
+  const rows = useStore(pageRows);
+  const riskRow = !claim && evidence?.kind === "passage" ? rowOf(id, rows) : null;
+  const rowSwitcher = riskRow && riskRow.sources.length > 1 ? riskRow : null;
+  const switcherIds = claim && claim.evidence_ids.length > 1 ? claim.evidence_ids : rowSwitcher ? rowSwitcher.sources.map((source) => source.evidence_id) : null;
   // A comparable package from the range chart (ticket 15): its region names it as one, and its close says
   // what it closes. A quantile dot's list of packages is named by its count and its dot, and a package
   // opened from that list has a way back to it above its title.
@@ -479,7 +492,8 @@ export function EvidenceDrawerView({
   const dotList = id.startsWith(DOT);
   // A notice opened from one of section 5's lists has a way back to that list too (ticket 31).
   const criteriaList = from?.list && heldOnPage(from.list.id) ? from.list : null;
-  const backTo = (comparable || criteriaList) && from?.id === id && from.list ? from.list : null;
+  const riskList = isRiskList(id);
+  const backTo = (comparable || criteriaList || evidence?.kind === "passage") && from?.id === id && from.list ? from.list : null;
   const criteriaView = evidence && (evidence.kind === "criteria_public" || evidence.kind === "criteria_item" || evidence.kind === "package_cost");
   const region = evidence?.kind === "dot" ? dotRegion(evidence) : comparableRef ? copy.evidence.package.region(comparableRef) : undefined;
 
@@ -516,7 +530,11 @@ export function EvidenceDrawerView({
               <Button variant="ghost" icon={ChevronLeft} onClick={() => onBack(backTo.id)} className="-mt-2 mb-2 -ml-3">
                 {heldOnPage(backTo.id)
                   ? backLabel(backTo)
-                  : backTo.count === 1 ? copy.evidence.package.dot.backOne : copy.evidence.package.dot.back(formatCount(backTo.count))}
+                  : backTo.id.startsWith(REPORTS)
+                    ? backToReports(backTo.count)
+                    : backTo.count === 1
+                      ? copy.evidence.package.dot.backOne
+                      : copy.evidence.package.dot.back(formatCount(backTo.count))}
               </Button>
             )}
             {evidence && <p className="text-label text-ink-muted uppercase">{criteriaView ? criteriaEyebrow(evidence) : eyebrow(evidence)}</p>}
@@ -542,7 +560,15 @@ export function EvidenceDrawerView({
             onClick={onClose}
             className="-mt-2 -mr-2"
           >
-            {heldOnPage(id) ? criteriaClose(evidence, id) : dotList ? copy.evidence.package.dot.close : comparable ? copy.evidence.package.close : copy.evidence.close}
+            {heldOnPage(id)
+              ? criteriaClose(evidence, id)
+              : dotList
+                ? copy.evidence.package.dot.close
+                : riskList
+                  ? copy.packageRisks.drawer.close
+                  : comparable
+                    ? copy.evidence.package.close
+                    : copy.evidence.close}
           </Button>
         </div>
         <div className="flex animate-drawer-in flex-col gap-4 px-6 pt-2 pb-6">
@@ -559,9 +585,11 @@ export function EvidenceDrawerView({
               </p>
             </div>
           )}
-          {switcherIds && run && (
+          {riskRow && <RowClaim row={riskRow} />}
+          {switcherIds && claim && run && (
             <SourceSwitcher ids={switcherIds} current={id} run={run} panelId={passageId} onChoose={onChoose} />
           )}
+          {rowSwitcher && <RowSwitcher row={rowSwitcher} current={id} panelId={passageId} onChoose={onChooseRow ?? onChoose} />}
           <div
             id={passageId}
             role={switcherIds ? "tabpanel" : undefined}
@@ -608,6 +636,10 @@ export function EvidenceDrawerView({
                 onOpen={(entry, list) => onOpenListEntry?.(entry, list)}
               />
             )}
+            {evidence?.kind === "risk-reports" && (
+              <RiskReportsView evidence={evidence} focusEntry={from?.id === id ? (from.entry ?? null) : null} onOpen={onOpenReport} />
+            )}
+            {evidence?.kind === "risk-reports-all" && <AllReportsView evidence={evidence} />}
             {data.status === "loading" && comparable && (
               <div aria-hidden="true" className="flex flex-col gap-4">
                 <Skeleton className="h-48 w-full rounded-md" />
@@ -649,7 +681,7 @@ export function EvidenceDrawer({
 
   // Every source the drawer shows is marked visited and recorded for the viewer, once per opening.
   useEffect(() => {
-    if (id.startsWith(DOT)) return;
+    if (id.startsWith(DOT) || isRiskList(id)) return;
     recordOpened(id, from?.runId ?? run?.runId ?? null);
     // The source is recorded when it changes, not when the answer does.
   }, [id]);
@@ -745,8 +777,12 @@ export function EvidenceDrawer({
         openEvidence(
           listId,
           {
-            serial: null, sentence: null, marker: from?.marker ?? null, runId: null, fallback: from?.fallback,
-            entry: heldOnPage(listId) ? id : id.slice(COMPARABLE.length),
+            serial: null,
+            sentence: null,
+            marker: from?.marker ?? null,
+            runId: null,
+            fallback: from?.fallback,
+            entry: heldOnPage(listId) || listId.startsWith(REPORTS) ? id : id.slice(COMPARABLE.length),
           },
           { replace: true, focus: false },
         )
@@ -759,6 +795,19 @@ export function EvidenceDrawer({
           { replace: true },
         )
       }
+      // A risk's row: another of its sources, in place, keeping the row's pill or count as the opener.
+      onChooseRow={(next) =>
+        openEvidence(next, { serial: null, sentence: null, marker: from?.marker ?? null, runId: null, fallback: from?.fallback }, { replace: true, focus: false })
+      }
+      // From a risk's list of reports to one report's paragraph and back, as a dot's list does.
+      onOpenReport={(evidenceId) => {
+        const count = data.status === "ready" ? Number(data.evidence.row.entries?.length ?? 0) : 0;
+        openEvidence(
+          evidenceId,
+          { serial: null, sentence: null, marker: from?.marker ?? null, runId: null, fallback: from?.fallback, list: { id, count } },
+          { replace: true },
+        );
+      }}
     />
   );
 }

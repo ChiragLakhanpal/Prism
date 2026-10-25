@@ -335,6 +335,14 @@ decided_page_size = 20
 summary_poll_seconds = 15
 summary_poll_minutes = 10
 
+# The package workspace's section 3, procurement risks and what helped (ticket 30). The risk-table
+# builder (src/strata/packages/risks.py) reads them, and returns the one the section states.
+[package_risks]
+# The builder returns at most this many risks per package, in the order it ranked them. Source: the spec's
+# hindsight test ("its top five risks per package") and the 30 design brief, section 5.1 (the Pareto
+# principle: at most five risks).
+max_rows = 5
+
 # Check your criteria (ticket 31): section 5 of the package workspace. The 20-comparable floor of the cost
 # estimate is past_range.min_comparables, the one floor every range uses.
 [criteria]

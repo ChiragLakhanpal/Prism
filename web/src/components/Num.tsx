@@ -41,6 +41,8 @@ export type NumCheck = {
   onOpen?: (element: HTMLElement) => void;
   // Numbers inside an answer leave the tab order to the citation markers beside them.
   tabStop?: boolean;
+  // A name that says more than the number, starting with it: "1 of 1 completion reports, for {risk}" (ticket 30).
+  name?: string;
 };
 
 export function numText(num: NumValue): string {
@@ -96,6 +98,7 @@ export function Num({ check, className, inCaption = false, ...num }: NumValue & 
           type="button"
           data-num
           tabIndex={check.tabStop === false ? -1 : undefined}
+          aria-label={check.name}
           onClick={check.onOpen && ((event) => check.onOpen!(event.currentTarget))}
           className={cx(
             // A button lays out as an inline block, so its padding would make its line taller than the

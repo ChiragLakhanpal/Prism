@@ -142,29 +142,38 @@ export function asReported(sentence: string, names: string[] = []): string {
   return keep ? text : text.charAt(0).toLowerCase() + text.slice(1);
 }
 
+// The removed box's lead in another unit than sentences, such as the risks section's rows (ticket 30): "I
+// removed one risk."
+export type RemovedLead = { none: string; one: string; several: (count: string) => string; all: (count: string) => string; allOne: string };
+
 export function RemovedBox({
   removed,
   all = false,
   names,
+  lead: leads = copy.removed,
+  item = copy.removed.item,
 }: {
   removed: Removed[];
   // Every sentence the agent wrote failed a check.
   all?: boolean;
   // Words that stay capitalized when a sentence is reported, from the answer and its passages.
   names?: string[];
+  lead?: RemovedLead;
+  // One removed item after the first, from what it said and its reason.
+  item?: (sentence: string, reason: string) => string;
 }) {
   const words = copy.removed;
   const count = removed.length;
   const lead =
     count === 0
-      ? words.none
+      ? leads.none
       : all
         ? count === 1
-          ? words.allOne
-          : words.all(numText({ count }))
+          ? leads.allOne
+          : leads.all(numText({ count }))
         : count === 1
-          ? words.one
-          : words.several(numText({ count }));
+          ? leads.one
+          : leads.several(numText({ count }));
   const [first, ...others] = removed;
   return (
     <div data-removed-box className="flex gap-3 rounded-r-md border-l-4 border-line-strong bg-neutral-bg px-4 py-3 text-small text-neutral">
@@ -183,8 +192,8 @@ export function RemovedBox({
           <>
             {!all && <p className="mt-2">{others.length === 1 ? words.other : words.others}</p>}
             <ul className="mt-2 flex list-disc flex-col gap-1 pl-4">
-              {(all ? removed : others).map((item, index) => (
-                <li key={index}>{words.item(item.sentence, item.reason)}</li>
+              {(all ? removed : others).map((entry, index) => (
+                <li key={index}>{item(entry.sentence, entry.reason)}</li>
               ))}
             </ul>
           </>

@@ -95,6 +95,22 @@ def test_rows_are_added_by_column_name_with_every_value_bound():
     assert added == 2
 
 
+def test_a_risk_selection_reaches_lakebase_as_a_merge_with_its_values_bound():
+    """Ticket 30 keeps one row per viewer, package and risk, changed by a MERGE, so unselecting deletes nothing."""
+    from strata.packages.store import PackageStore
+
+    connection = FakeConnection()
+    store = PackageStore(lambda: LakebaseEngine(connection))
+    store._built = True
+    store.select_risks("4021@1984", "planned", "pkg-000000000001", {"cost_estimates": False},
+                       dt.datetime(2026, 10, 28, 9, tzinfo=dt.UTC))
+
+    [(sql, params)] = connection.statements
+    assert sql.startswith("MERGE INTO app.risk_selections AS t USING (SELECT %(viewer_id)s AS viewer_id")
+    assert "DELETE" not in sql
+    assert (params["risk_key"], params["selected"]) == ("cost_estimates", False)
+
+
 def test_insert_rows_takes_only_plain_names():
     with pytest.raises(EngineError):
         LakebaseEngine(FakeConnection()).insert_rows("strata.app.planned_packages; DROP", ("package_id",), [("x",)])
@@ -108,7 +124,7 @@ def test_the_app_state_tables_are_made_in_postgres_types_in_the_schema_app():
     statements = [sql for sql, _ in connection.statements]
     assert statements[0] == "CREATE SCHEMA IF NOT EXISTS app"
     assert made == ["strata.app.criteria_checks", "strata.app.plan_checks_opened", "strata.app.planned_package_saves",
-                    "strata.app.planned_packages"]
+                    "strata.app.planned_packages", "strata.app.risk_selections"]
     saves = next(sql for sql in statements if "app.planned_package_saves" in sql)
     assert saves.startswith("CREATE TABLE IF NOT EXISTS app.planned_package_saves")
     assert "saved_at TIMESTAMPTZ NOT NULL" in saves and "criteria TEXT NOT NULL" in saves

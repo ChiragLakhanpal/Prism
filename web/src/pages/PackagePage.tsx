@@ -19,6 +19,7 @@ import { LoadError } from "../components/LoadError";
 import { MonoWords } from "../components/MonoWords";
 import { FactsSkeleton, mono, PackageFactsList, PackageHeader } from "../components/PackageFacts";
 import { PastRange, type PastRangeState } from "../components/PastRange";
+import { RisksSection } from "../components/RisksSection";
 import { CheckCriteria } from "../components/CheckCriteria";
 import { SkeletonLine, SkeletonText } from "../components/Skeleton";
 import { TextLink } from "../components/TextLink";
@@ -140,7 +141,11 @@ export function PackagePage({ stepRef }: { stepRef: string }) {
         <div className="mt-8">
           <PastRange state={sectionState} headingRef={sectionHeading} open={opening} />
         </div>
-        {/* Section 5, "Check your criteria" (ticket 31): sections 2 to 4 sit between them as their tickets land. */}
+        {/* Section 3, procurement risks and what helped (ticket 30), with section 1's default criteria. */}
+        <div className="mt-6 @lg/page:mt-8">
+          <RisksSection apiHref={base} packageKey={facts.step_reference} kind="step" />
+        </div>
+        {/* Section 5, "Check your criteria" (ticket 31): sections 2 and 4 take their places as their tickets land. */}
         <div className="mt-6 @lg/page:mt-8">
           <CheckCriteria base={base} preview={viewOf(here.search) !== "staff"} />
         </div>

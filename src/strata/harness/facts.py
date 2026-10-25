@@ -30,5 +30,9 @@ class Facts:
     def get(self, evidence_id: str) -> Mapping[str, Any] | None:
         return self._rows.get(evidence_id)
 
+    def items(self) -> list[tuple[str, Mapping[str, Any]]]:
+        """Every row and passage kept this turn, by evidence id, in the order they came back."""
+        return list(self._rows.items())
+
     def __len__(self) -> int:
         return len(self._rows)

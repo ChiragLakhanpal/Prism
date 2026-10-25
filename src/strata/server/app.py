@@ -54,6 +54,9 @@
   and /api/planned-packages/{package_id} are section 5 of the package workspace, "Check your criteria"
   (ticket 31; src/strata/server/criteria.py): the collapsed summary, the package-level run and the comparison
   of a person's pasted qualification criteria, whose text only they read back.
+- GET /api/packages/{step_reference}/risks and GET /api/planned-packages/{package_id}/risks run the risk-table
+  builder for the workspace's section 3, procurement risks and what helped, and PUT .../risk-selection keeps the
+  risks a viewer selected for the PPSD (ticket 30; src/strata/server/risks.py).
 - GET /api/suppliers/review is the review list for supplier name matching (ticket 19): each candidate
   pair that waits for a person, with both names, countries and contracts, read as the viewer. POST
   /api/suppliers/review records a person's decision on one, merge or no merge with a reason, and the
@@ -123,6 +126,7 @@ from strata.server import packages as package_routes
 from strata.server import criteria as criteria_routes
 from strata.criteria.store import CriteriaStore
 from strata.criteria.workflow import Package as CriteriaPackage
+from strata.server import risks as risk_routes
 from strata.server.access import Access, NoGroups
 from strata.server.evidence import OpenedLog
 from strata.server.suppliers import SupplierLog
@@ -592,6 +596,9 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                               today=today, now=now, new_package_id=new_package_id, new_save_id=new_save_id,
                               new_run_id=new_run_id, runs=runs, trace_ids=trace_ids, reference=request_reference,
                               heartbeat_seconds=heartbeat_seconds)
+    risk_routes.add_routes(app, engine_for=engine_for, store=packages, form=package_form or load_package_form(),
+                           thresholds=package_thresholds or thresholds, today=today, now=now,
+                           reference=request_reference)
 
     def planned_criteria_package(viewer: Viewer, package_id: str) -> CriteriaPackage | None:
         """A planned package as section 5 reads it, for the person who made it only: its comparables' criteria,

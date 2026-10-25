@@ -70,6 +70,46 @@ const ROUTES: [string, string][] = [
   ["not-a-project", "/projects/130164"],
 ];
 
+// Ticket 30: section 3 of the package workspace, procurement risks and what helped, on the demo package. The
+// table with rows is the server's answer with section 1's country set to India, whose comparables reach P130164's
+// completion report (tests/record_risks_api.py); the fixture's Kenya comparables reach none. The other states are
+// in the gallery (/gallery/risks), from the same answers.
+const RISKS_PATH = "/packages/KE-NWWDA-541055-CW-RFB";
+const RISKS_API = "/api/packages/KE-NWWDA-541055-CW-RFB";
+function riskShot(name: string, risks: Answer | null, rest: Partial<Shot> = {}): Shot {
+  const answers: Record<string, Answer> = {
+    ...app(name, RISKS_PATH).api,
+    [RISKS_API]: { recorded: "package-ke-nwwda-541055.json" },
+    [`${RISKS_API}/comparables`]: { recorded: "comparables-ke-nwwda-541055.json" },
+    [`${RISKS_API}/risk-selection`]: { recorded: "risks-selection-saved.json" },
+    "/api/evidence": { recorded: "evidence-icr-p130164-54.json" },
+    "/api/evidence/opened": { body: '{"opened":[],"recorded":true}' },
+    ...rest.api,
+  };
+  if (risks) answers[`${RISKS_API}/risks`] = risks;
+  return app(`risks--${name}`, RISKS_PATH, {}, { full: true, ...rest, api: answers, pending: risks ? rest.pending : [`${RISKS_API}/risks`] });
+}
+const INDIA: Answer = { recorded: "risks-ke-nwwda-541055-india.json" };
+const toRisks = async (page: Page) => {
+  await page.locator("section#risks").scrollIntoViewIfNeeded();
+  await page.waitForTimeout(250);
+};
+const openPill = click("section#risks [data-risk-view]:visible [data-source-pill]");
+const RISK_SHOTS: Shot[] = [
+  riskShot("table", INDIA, { act: toRisks }),
+  riskShot("selected", { recorded: "risks-ke-nwwda-541055-india-selected.json" }, { act: toRisks }),
+  riskShot("no-reports", { recorded: "risks-ke-nwwda-541055.json" }, { act: toRisks }),
+  riskShot("loading", null, { act: toRisks }),
+  riskShot("error", { status: 503, body: '{"code":"data_service","trace_id":"0af7651916cd43dd8448eb211c80319c"}' }, { act: toRisks }),
+  riskShot("drawer", INDIA, { act: openPill }),
+  riskShot("count-reports", INDIA, { act: click("section#risks [data-risk-view]:visible [data-count] button") }),
+  riskShot("hover-pill", INDIA, { full: false, widths: WIDE, act: hover("section#risks [data-risk-view]:visible [data-source-pill]") }),
+  riskShot("focus-pill", INDIA, { full: false, act: focus("section#risks [data-risk-view]:visible [data-source-pill]") }),
+  riskShot("focus-checkbox", INDIA, { full: false, act: focus("section#risks [data-risk-view]:visible input[type=checkbox]") }),
+  riskShot("hover-count", INDIA, { full: false, widths: WIDE, act: hover("section#risks [data-risk-view]:visible [data-count] button") }),
+  riskShot("320", INDIA, { widths: [320], act: toRisks }),
+];
+
 const SIGNED_OUT = '{"email":null,"name":null,"signed_in":false,"has_token":false}';
 type Answer = { recorded?: string; body?: string; status?: number };
 
@@ -802,6 +842,8 @@ function packageShot(name: string, answer: Answer | null, rest: Partial<Shot> = 
   const answers: Record<string, Answer> = { ...app(name, path).api };
   if (pkg) answers[api] = pkg;
   if (answer) answers[`${api}/comparables`] = answer;
+  // Section 3 (ticket 30): the fixture's Kenya comparables reach no completion report.
+  answers[`${api}/risks`] = { recorded: "risks-ke-nwwda-541055.json" };
   // Section 5, "Check your criteria" (ticket 31), collapsed under section 1, as the server answered on the fixture.
   if (path === PACKAGE) {
     answers[`${api}/criteria`] = { recorded: "criteria-summary-ke-nwwda-541055.json" };
@@ -989,6 +1031,8 @@ const PLANNED_ANSWERS: Shot["api"] = {
   "/api/evidence/opened": OPENED,
   "/api/planned-packages": { recorded: "planned-packages-list.json" },
   "/api/projects/P156634": { recorded: "project-p156634.json" },
+  // Section 3 (ticket 30): the rural roads package's Kenya comparables reach no completion report.
+  "/api/planned-packages/pkg-000000000001/risks": { recorded: "risks-planned-rural-roads.json" },
 };
 const plannedShot = (name: string, pkg: Answer = { recorded: PLANNED_FILE }, rest: Partial<Shot> = {}, path = PLANNED, read = PLANNED_API): Shot =>
   app(name, path, {}, { ...rest, api: { ...app(name, path).api, ...PLANNED_ANSWERS, [read]: pkg, ...rest.api } });
@@ -1285,5 +1329,6 @@ export const SHOTS: Shot[] = [
   ...LESSON_SHOTS,
   ...PACKAGE_SHOTS,
   ...PLANNED_SHOTS,
+  ...RISK_SHOTS,
   ...CRITERIA_SHOTS,
 ];

@@ -145,6 +145,23 @@ class PackageStore:
             engine.insert_rows("strata.app.plan_checks_opened", PLAN_CHECK_COLUMNS, [(
                 viewer_id, project_id, agency_id, implementing_agency, plan_date, latest, activities, at, at.date())])
 
+    def select_risks(self, viewer_id: str, package_kind: str, package_key: str, changes: dict[str, bool],
+                     at: dt.datetime) -> None:
+        """Keep the risks a viewer selected or unselected for a package's PPSD (ticket 30): one row per risk, made
+        or changed with a MERGE, so unselecting sets a value and deletes nothing."""
+        with self._open() as engine:
+            for risk_key, selected in changes.items():
+                engine.run(_sql("select_risk"), {"viewer_id": viewer_id, "package_kind": package_kind,
+                                                 "package_key": package_key, "risk_key": risk_key,
+                                                 "selected": bool(selected), "saved_at": at})
+
+    def selected_risks(self, viewer_id: str, package_kind: str, package_key: str) -> list[str]:
+        """The risk keys a viewer has selected now for a package, shown in its table or not."""
+        with self._open() as engine:
+            rows = self._rows(engine, "selected_risks", viewer_id=viewer_id, package_kind=package_kind,
+                              package_key=package_key)
+        return [row["risk_key"] for row in rows]
+
     def plan_checks(self, viewer_id: str) -> list[PlanCheck]:
         with self._open() as engine:
             rows = self._rows(engine, "plan_checks", viewer_id=viewer_id)

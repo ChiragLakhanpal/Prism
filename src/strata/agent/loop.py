@@ -110,6 +110,19 @@ def keep_nested(facts: Facts, record: Mapping, tool: str | None) -> None:
                      tool=facts.tool(record["evidence_id"]))
 
 
+def keep_result(facts: Facts, name: str, result: Mapping, tools: dict[str, Tool]) -> None:
+    """Keep every row a tool returned in the turn's Facts, with the records inside its rows that the registry
+    names (nested_rows) and its summary of derived figures when it has one, so the verifier can check what a
+    sentence cites against them. The answer loop and the risk-table builder (ticket 30) keep results this way."""
+    nested = tools[name].result.nested_rows if name in tools else ()
+    for row in result["rows"]:
+        facts.record(row["evidence_id"], row, tool=name)
+        for record in (inner for field in nested for inner in row.get(field) or ()):
+            keep_nested(facts, record, name)
+    if result.get("summary"):  # the tool's derived figures, such as a past range, as one citable record
+        facts.record(result["summary"]["evidence_id"], result["summary"], tool=name)
+
+
 def answer_runner(agent_for: Callable[[Turn], Agent], engine_for: EngineFor, tools: dict[str, Tool] | None = None,
                   thresholds: Thresholds | None = None,
                   today: Callable[[], dt.date] = registry.today) -> Runner:
@@ -142,13 +155,7 @@ def answer_runner(agent_for: Callable[[Turn], Agent], engine_for: EngineFor, too
             return {"error": "permission"}, note
         except EngineError as error:  # the warehouse timed out or is down: not the agent's doing, nor a bug
             raise AgentError("data_service", str(error)) from error
-        nested = tools_held[name].result.nested_rows if name in tools_held else ()
-        for row in result["rows"]:
-            turn.facts.record(row["evidence_id"], row, tool=name)
-            for record in (inner for field in nested for inner in row.get(field) or ()):
-                keep_nested(turn.facts, record, name)
-        if result.get("summary"):  # the tool's derived figures, such as a past range, as one citable record
-            turn.facts.record(result["summary"]["evidence_id"], result["summary"], tool=name)
+        keep_result(turn.facts, name, result, tools_held)
         note.update(rows=len(result["rows"]), abstention=(result["abstention"] or {}).get("reason"))
         return for_agent(result, as_of), note
 
