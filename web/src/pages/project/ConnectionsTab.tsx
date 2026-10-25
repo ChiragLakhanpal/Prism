@@ -103,7 +103,7 @@ function ChipLink({ chip, doc, hot, setHot, withDoc = false }: { chip: Chip; doc
       onFocus={() => setHot({ kind: "chip", key: chip.evidence_id })}
       onBlur={() => setHot(null)}
       className={cx(
-        "relative z-10 inline-flex h-8 items-center rounded-pill border px-3 text-small tabular-nums no-underline transition-paint duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus",
+        "relative z-10 inline-flex min-h-8 items-center rounded-pill border px-3 py-1 text-left text-small tabular-nums no-underline transition-paint duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus",
         active
           ? "border-line-strong bg-tint text-ink shadow-[inset_0_0_0_1px_var(--color-primary)]"
           : opened
@@ -274,6 +274,20 @@ export function NeighbourhoodDiagram({ data, list }: { data: Neighbourhood; list
   const twoColumns = list ? "flex flex-col gap-6" : "flex flex-col gap-6 @md/page:grid @md/page:grid-cols-12 @md/page:gap-x-6";
   return (
     <section data-diagram={list ? "list" : "diagram"} aria-labelledby="connections-finding" className="relative" ref={frame}>
+      {/* The lines come first, so the cards paint over them: a line shows in the gap between the columns and ends at
+          the edge of the card that holds its chip, never over a card's words. */}
+      <svg aria-hidden="true" className={cx("pointer-events-none absolute inset-0 size-full overflow-visible", list ? "hidden" : "hidden @md/page:block")}>
+        {paths.map((path, index) => (
+          <path
+            key={index}
+            d={path.d}
+            fill="none"
+            className={cx("transition-paint duration-150", path.lit ? "stroke-primary" : "stroke-line-strong")}
+            strokeWidth={path.kind === "project" ? 2 : path.lit ? 2 : 1.5}
+            strokeDasharray={path.kind === "together" ? "4 4" : undefined}
+          />
+        ))}
+      </svg>
       <div className={cx(list ? "" : "@md/page:flex @md/page:justify-center")}>
         <div data-node="project" className={cx("relative rounded-md border-2 border-primary bg-surface p-3", list ? "" : "@md/page:w-1/3")}>
           <p className="text-small">
@@ -308,18 +322,6 @@ export function NeighbourhoodDiagram({ data, list }: { data: Neighbourhood; list
           <MoreRows data={data} side="documents" />
         </div>
       </div>
-      <svg aria-hidden="true" className={cx("pointer-events-none absolute inset-0 size-full overflow-visible", list ? "hidden" : "hidden @md/page:block")}>
-        {paths.map((path, index) => (
-          <path
-            key={index}
-            d={path.d}
-            fill="none"
-            className={cx("transition-paint duration-150", path.lit ? "stroke-primary" : "stroke-line-strong")}
-            strokeWidth={path.kind === "project" ? 2 : path.lit ? 2 : 1.5}
-            strokeDasharray={path.kind === "together" ? "4 4" : undefined}
-          />
-        ))}
-      </svg>
     </section>
   );
 }

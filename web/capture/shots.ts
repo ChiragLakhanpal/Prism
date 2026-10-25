@@ -403,7 +403,7 @@ const TRAIL_SHOTS: Shot[] = [
     await page.locator("[data-record]").first().waitFor();
   } }),
   trailShot("activity--focus-pill", KENYA_ACTIVITY, { widths: [1440, 390], act: focus("[data-stage=bids] [data-citation]") }),
-  trailShot("activity--focus-crumb", KENYA_ACTIVITY, { widths: [1440, 390], act: focus("[data-breadcrumb] a") }),
+  trailShot("activity--focus-crumb", KENYA_ACTIVITY, { widths: [1440, 390], act: focus("[data-breadcrumb] a:visible") }),
   trailShot("activity--320", KENYA_ACTIVITY, { widths: [320] }),
   trailShot("connections--loading", "/projects/P130164/connections", { pending: ["/api/projects/P130164/connections"] }),
   trailShot("connections--populated", "/projects/P130164/connections"),
