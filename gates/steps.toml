@@ -22,8 +22,12 @@
 # FIXTURE_READERS in tests/test_gate.py, which checks that each of those folders runs after
 # the build.
 
-# The whole run fails when it takes longer than this.
+# The whole run fails when it takes longer than this. The clock starts when the gate holds the lock.
 limit_seconds = 120
+
+# One gate runs at a time on this computer. A gate that finds another gate running waits for
+# the lock this long (20 minutes), then gives up.
+lock_wait_seconds = 1200
 
 [[step]]
 name = "Scan the staged changes and the history for secrets"
