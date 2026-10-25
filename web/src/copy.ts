@@ -2933,6 +2933,7 @@ export const copy = {
           removed: "I removed this date, because it didn't match my delay model's results.",
           stepAbstain: "Fewer than {min} comparable packages recorded this step, so I'm not dating it.",
           notInPlan: "Your plan gives no date for this step, so I can't date it from your plan.",
+          notReached: "Too many comparable packages have not reached this step yet, so I'm not dating it.",
           exportButton: "Export STEP rows",
           barOpened: (opened: string, total: string) => `You opened ${opened} of ${total} lists of comparable packages`,
           exportedTitle: (count: number) => (count === 1 ? "Exported. I made one STEP row and an evidence pack." : "Exported. I made {count} STEP rows and an evidence pack."),

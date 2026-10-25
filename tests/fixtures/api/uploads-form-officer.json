@@ -61,7 +61,7 @@
       ".xlsx",
       ".csv"
     ],
-    "max_size_bytes": 5000000,
+    "max_size_bytes": 5242880,
     "max_rows": 500
   },
   "format": "published_tables"

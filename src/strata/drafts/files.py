@@ -339,7 +339,8 @@ def check_line(checks: dict, kind: DraftKind) -> str:
     parts = [ratio(line[name], shown[name][found], shown[name]["total"])
              for name, found in (("numbers", "matched"), ("dates", "matched"), ("quotes", "found"))
              if shown[name]["total"] > 0]
-    clauses = [key for key in ([] if 4 in checks["checks_run"] else ["sentences"])]
+    # A draft no model wrote, such as planned dates (ticket 38), has no sentences to follow from their sources.
+    clauses = [key for key in ([] if 4 in checks["checks_run"] or checks.get("computed") else ["sentences"])]
     clauses += [key for key in line["notCheckedClauses"] if key in checks["tools"]]
     clauses += [key for key in kind.not_checked if key in line["notCheckedClauses"]]
     said = [line["notCheckedClauses"][key] for key in clauses]

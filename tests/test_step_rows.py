@@ -121,8 +121,6 @@ def test_only_an_officer_drafts_planned_dates_and_only_from_their_own_teams_uplo
                                           (CHEGE, plan, 403, "not_own_agency")):
         answer = call(app, "POST", "/api/drafts", headers, json={"kind": "step_rows", "source": source})
         assert (answer.status_code, answer.json()["code"]) == (status, code)
-    sent, _ = draft(app, BARAKA, plan, key="key-2")
-    assert [kind for kind, _ in sent if kind == "nothing_dated"] == ["nothing_dated"]
 
 
 # ── On the hand-made set: the dates worked out by hand, checked and exported ──

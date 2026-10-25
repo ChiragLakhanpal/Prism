@@ -236,7 +236,7 @@ def compose(facts: Facts) -> tuple[dict, Verdict]:
               "lists": len(lists), "no_family": sum(1 for activity in activities if not activity["family"])}
     content = {"subject": {**facts.subject, "as_of": facts.as_of.isoformat(), "activities": len(activities)},
                "notes": [], "activities": activities, "lists": lists, "evidence": evidence,
-               "checks": {**verdict.counts(), "tools": list(TOOLS)}, "removed": removed, "disagreements": [],
+               "checks": {**verdict.counts(), "tools": list(TOOLS), "computed": True}, "removed": removed, "disagreements": [],
                "counts": counts,
                "min_comparables": int(load_thresholds().value("time_estimate.min_comparables"))}
     return content, verdict

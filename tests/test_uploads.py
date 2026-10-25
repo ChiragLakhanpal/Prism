@@ -245,17 +245,19 @@ def test_no_upload_text_ever_reaches_the_shared_search_index(fixture_db, tmp_pat
 
     with DuckDBEngine.open(shared, read_only=True) as engine:
         holding = []
-        tables = engine.run("SELECT table_schema, table_name FROM system.information_schema.tables "
-                            "WHERE table_catalog = 'strata' AND table_type = 'BASE TABLE'")
-        for schema, table in tables.rows:
-            columns = engine.run("SELECT column_name FROM system.information_schema.columns WHERE table_catalog = "
-                                 "'strata' AND table_schema = :schema AND table_name = :table AND data_type = 'VARCHAR'",
-                                 {"schema": schema, "table": table})
-            for (column,) in columns.rows:
-                hits = engine.run(f"SELECT count(*) FROM strata.`{schema}`.`{table}` "  # sql-lint: names only
-                                  f"WHERE `{column}` LIKE :marker", {"marker": "%Zebrafinch%"})
-                if hits.rows[0][0]:
-                    holding.append(f"strata.{schema}.{table}")
+        columns = engine.run("SELECT c.table_schema, c.table_name, c.column_name FROM system.information_schema.columns AS c "
+                             "JOIN system.information_schema.tables AS t ON t.table_catalog = c.table_catalog "
+                             "AND t.table_schema = c.table_schema AND t.table_name = c.table_name "
+                             "WHERE c.table_catalog = 'strata' AND t.table_type = 'BASE TABLE' AND c.data_type = 'VARCHAR'")
+        texts: dict[tuple[str, str], list[str]] = {}
+        for schema, table, column in columns.rows:
+            texts.setdefault((schema, table), []).append(column)
+        for (schema, table), names in texts.items():
+            joined = ", ".join(f"coalesce(`{name}`, '')" for name in names)
+            hits = engine.run(f"SELECT count(*) FROM strata.`{schema}`.`{table}` "  # sql-lint: names only
+                              f"WHERE concat_ws('|', {joined}) LIKE :marker", {"marker": "%Zebrafinch%"})
+            if hits.rows[0][0]:
+                holding.append(f"strata.{schema}.{table}")
         found = registry.call("search_passages", {"query": marker},
                               registry.Context(engine, Viewer(user_id="5033@1984"), as_of=TODAY))
         assert [row for row in found["rows"] if "Zebrafinch" in json.dumps(row)] == []

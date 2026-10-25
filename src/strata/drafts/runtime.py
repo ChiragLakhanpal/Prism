@@ -325,6 +325,9 @@ async def write_computed(writing: Writing, module, engine_for: EngineFor, store:
 # ── What the screens read ────────────────────────────────────────────────
 
 def written_notes(saved: Saved) -> int:
+    """How many notes the draft holds; a draft of planned dates (ticket 38) counts its activities."""
+    if saved.content.get("activities") is not None:
+        return len(saved.content["activities"])
     return sum(1 for note in saved.content["notes"] if note["state"] == "written")
 
 

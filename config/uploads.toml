@@ -52,7 +52,7 @@
 
 [uploads]
 accept = [".xlsx", ".csv"]
-max_size_bytes = 5_000_000
+max_size_bytes = 5_242_880
 max_rows = 500
 format = "published_tables"
 

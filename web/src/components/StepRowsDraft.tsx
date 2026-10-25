@@ -33,6 +33,8 @@ function stepCell(step: DatesStep, choice: "middle" | "cautious", min: number, a
   const value = step[choice];
   if (value?.planned_date) return <span className="tabular-nums">{short(value.planned_date)}</span>;
   if (step.abstain_reason === "not_in_plan") return <span className="text-small text-ink-muted">{words.notInPlan}</span>;
+  if (step.abstain_reason === "not_reached") return <span className="text-small text-ink-muted">{words.notReached}</span>;
+  if (step.abstain_reason === "needs_earlier_step") return <span className="text-small text-ink-muted">{words.undated}</span>;
   if (step.abstain_reason || abstainAll) {
     return (
       <span className="text-small text-ink-muted">

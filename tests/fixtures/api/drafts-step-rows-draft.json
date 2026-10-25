@@ -25,7 +25,7 @@
   },
   "counts": {
     "signal": null,
-    "written": 0
+    "written": 2
   },
   "written": {
     "activities": 2
@@ -241,7 +241,8 @@
     },
     "tools": [
       "estimate_time"
-    ]
+    ],
+    "computed": true
   },
   "checks_count": 2,
   "removed": [],

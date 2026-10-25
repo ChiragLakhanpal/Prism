@@ -221,6 +221,26 @@ function app(name: string, path: string, answers: { me?: Answer; freshness?: Ans
   };
 }
 
+// Ticket 38: an implementing agency officer's Check my plan, an upload's check, a draft of planned dates, and what World
+// Bank staff and another team get, with /api answered from the server's own answers (tests/record_uploads_api.py). Under
+// the function-first rule each is taken at 1440 px only; the other widths wait for the design pass.
+const OFFICER: Answer = { recorded: "me-officer.json" };
+const UPLOAD_SHOTS: Shot[] = [
+  app("uploads--check-my-plan", "/packages/check", { me: OFFICER }, { widths: [1440],
+    api: { "/api/me": OFFICER, "/api/freshness": { recorded: "freshness.json" }, "/api/uploads/form": { recorded: "uploads-form-officer.json" } } }),
+  app("uploads--check-my-plan-staff", "/packages/check", {}, { widths: [1440],
+    api: { "/api/me": { recorded: "me.json" }, "/api/freshness": { recorded: "freshness.json" }, "/api/uploads/form": { recorded: "uploads-form-staff.json" } } }),
+  app("uploads--check", "/packages/uploads/upl-000000000001", { me: OFFICER }, { widths: [1440], full: true,
+    api: { "/api/me": OFFICER, "/api/freshness": { recorded: "freshness.json" },
+      "/api/uploads/upl-000000000001": { recorded: "upload-check-nwwda.json" } } }),
+  app("uploads--not-found", "/packages/uploads/upl-000000000001", {}, { widths: [1440],
+    api: { "/api/me": { recorded: "me.json" }, "/api/freshness": { recorded: "freshness.json" },
+      "/api/uploads/upl-000000000001": { status: 404, recorded: "upload-not-found.json" } } }),
+  app("uploads--step-rows-draft", "/drafts/draft-0002", { me: OFFICER }, { widths: [1440], full: true,
+    api: { "/api/me": OFFICER, "/api/freshness": { recorded: "freshness.json" }, "/api/drafts/draft-0002": { recorded: "drafts-step-rows-draft.json" },
+      "/api/evidence/opened": { body: '{"recorded":true}' } } }),
+];
+
 // A Data tab shot (ticket 16): the page with the Data readiness answer it names, recorded from the
 // server on the fixture, and the registry's datasets.
 function data(name: string, path: string, readiness: Answer = { recorded: "data-readiness.json" }, rest: Partial<Shot> = {}, sources: Answer = { recorded: "data-sources.json" }): Shot {
@@ -1908,4 +1928,5 @@ export const SHOTS: Shot[] = [
   ...TIMELINE_SHOTS,
   ...TRAIL_SHOTS,
   ...PPSD_SHOTS,
+  ...UPLOAD_SHOTS,
 ];
