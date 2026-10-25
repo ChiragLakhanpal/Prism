@@ -1036,6 +1036,8 @@ It worked if the check exits 0 and prints "DuckDB and the SQL warehouse returned
 
 ## Ticket 25, step 1 of 2: backtest 2025 alone on the workspace and register the champion
 
+**Deploy on October 25, 2026 (orchestrator):** the deploy recorded under ticket 21's step 1 listed `strata.ops.evaluation_result` as new and changed no existing table. The backtest for 2025 started at 10:09 UTC and is recorded below when it finishes.
+
 The merger parked this step on October 24, 2026, after merge commit e7c6e38. All ten keys were set, but the header above holds workspace steps back while the user runs the backlog. It needs the Databricks keys in `.env`. This merge adds the table `strata.ops.evaluation_result`, so first deploy from e7c6e38 or later with ticket 04's command, `uv run --script ops/bundle/deploy.py --env-file .env`, which must list `strata.ops.evaluation_result` as new and change no existing table. Run this step after that deploy and after a nightly run has filled gold and silver (ticket 04's step 2, `uv run --script ops/bundle/check.py job-run --env-file .env`). The merge already ran the builder's local step: `scripts/install` exited 0 and `uv run --frozen python -c 'import xgboost'` exited 0 (xgboost 3.4.1).
 
 Run this from the main checkout:
@@ -1061,6 +1063,8 @@ It worked if it exits 0 and prints five test-year lines, 2021 to 2025, each with
 must return rows for 2021 to 2025, and each `mlflow_run_id` must be a run in the experiment `/Shared/strata/time_estimate`. Criterion 3, workspace half: the `model_card.md` this run logged has a line for each test year, and each year outside 75 to 85 percent gives its gap and a cause sentence (or "The stored results do not show the cause."). This run registers version 2 as challenger, because version 1 from step 1 already holds champion, and the champion's card lists only 2025. Moving champion to version 2 is the user's call; ticket 25's merge comment names it.
 
 ## Ticket 21, step 1 of 4: deploy the baseline tables and the Summary's two silver tables
+
+**Ran on October 25, 2026 (orchestrator).** `ops/bundle/deploy.py --fairshare-catalog workspace` from 106c7da, twice. The first run exited 0 and listed five new tables and no changed one: `strata.ops.plan_baseline_steps`, `strata.ops.plan_baselines`, `strata.silver.project_environment`, `strata.silver.project_sectors`, and ticket 25's `strata.ops.evaluation_result`. The second printed "No changes." The column query returned the four rows (ops.plan_baseline_steps, ops.plan_baselines, silver.project_environment, silver.project_sectors). Passed. `SELECT count(*) FROM strata.silver.project_sectors WHERE project_id = 'P130164'` returned 0 at 10:08 UTC, before any nightly run since the deploy; it is checked again after the next run.
 
 The merger parked this step on October 24, 2026, after merge commit d596000. All ten keys were set, but the header above holds workspace steps back while the user runs the backlog. It needs the Databricks keys in `.env`. It is ticket 04's deploy command, and one deploy from d596000 or later also serves ticket 25's step 1, which needs a deploy from e7c6e38 or later.
 
