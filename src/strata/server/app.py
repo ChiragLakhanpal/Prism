@@ -779,8 +779,12 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                     if refusal is not None and not refusal.partial:
                         verdict = Verdict((), ())  # nothing was written, so no check ran
                     else:
-                        async for event in verified(item.data["claims"], turn):
-                            if isinstance(event, Verdict):
+                        # Checks 6 and 4 can wait on the data service and the judge, so the stream keeps the
+                        # connection alive while they run, as it does while the agent works.
+                        async for event in with_heartbeats(verified(item.data["claims"], turn), heartbeat_seconds):
+                            if event is HEARTBEAT:
+                                yield KEEP_ALIVE
+                            elif isinstance(event, Verdict):
                                 verdict = event
                             else:
                                 yield frame(event)

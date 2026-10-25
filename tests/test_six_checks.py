@@ -134,6 +134,27 @@ def test_when_the_judge_does_not_respond_the_sentences_it_had_to_judge_are_remov
     assert (judge["called"], judge["responded"], judge["judged"], judge["unjudged"]) == (True, False, 1, 1)
 
 
+def test_the_stream_keeps_the_connection_alive_while_the_judge_takes_its_time(fixture_db):
+    """The live judge may take up to verifier.judge_timeout_seconds (config/thresholds.toml): the stream sends a
+    keep-alive comment while it waits, as it does while the agent works, so a proxy that closes quiet streams
+    does not drop the answer (ticket 24's review, round 2, follow-up 2)."""
+    import time
+
+    from strata.agent.scripted import ScriptedJudge, load_cases
+
+    class Slow(ScriptedJudge):
+        def judge(self, questions):
+            time.sleep(0.3)
+            return super().judge(questions)
+
+    asked = ask(fixture_db, "p130164-unsupported-summary", judge=Slow(load_cases()["p130164-unsupported-summary"]),
+                heartbeat_seconds=0.05)
+
+    judging = asked.text.index('"kind": "judge", "count": 1, "status": "running"')
+    assert ": keep-alive" in asked.text[judging:asked.text.index("event: checks")]
+    assert [item["reason"] for item in asked.of("removed")] == ["not_supported"]
+
+
 def test_a_judge_that_times_out_or_answers_with_no_json_counts_as_one_that_did_not_respond(fixture_db):
     """The live judge on Azure OpenAI: a read that times out, or a body that is not JSON, removes the sentences it
     had to judge, as a judge that did not respond does, and never ends the answer with an error."""
