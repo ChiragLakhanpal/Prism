@@ -17,7 +17,9 @@
   answer the runner hands over, so no runner can send a sentence the checks did not see: checks 1 to
   3 and 5 at once, check 6 with get_disagreements asked as the viewer, and check 4 with one call to
   the judge (src/strata/agent/judge.py). A run that breaks ends with an error event whose details
-  stay in the server log. Each run is written to strata.ops.agent_runs (src/strata/agent/runs.py).
+  stay in the server log. Each run is written to strata.ops.agent_runs (src/strata/agent/runs.py). Each past range
+  or time estimate a kept sentence cited, for a package with a STEP reference in the World Bank staff view, is an
+  exposure (ticket 44; src/strata/estimates/exposures.py), written to strata.ops.exposures beside the run row.
 - GET /api/projects lists every project Strata holds a record for, and GET /api/projects/{project_id}
   gives a project page's header and each agency's Procurement Plan versions (src/strata/server/
   projects.py), as the viewer and as of ?asof=; an unknown project gets 404 with the code
@@ -105,6 +107,7 @@ Each request builds its own Viewer, Turn and engine; create_app keeps only setti
 """
 
 import asyncio
+import dataclasses
 import datetime as dt
 import json
 import logging
@@ -129,6 +132,7 @@ from strata.agent.verifier import Verdict, answer_events
 from strata.config import ENGLISH, DraftKinds, load_draft_kinds, load_roles, load_thresholds, load_tools
 from strata.dbx import Viewer, viewer_from_headers
 from strata.drafts.store import DraftStore
+from strata.estimates import exposures as exposure_log
 from strata.estimates.exposures import ExposureLog, Shown
 from strata.knowledge import language
 from strata.knowledge.lessons.review import LessonReview, Refused
@@ -815,14 +819,25 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
             return
 
         def write() -> None:
-            shown = Shown("find_comparables", result, step_reference, view, as_of, route, viewer.user_id,
-                          saved_choice(viewer, step_reference))
-            try:
-                with engine_for(viewer) as engine:
-                    exposures.record(engine, shown)
-            except Exception:  # the data service: the answer has gone, and the log says why no row was written
-                log.exception("I could not open the data service to record an exposure for %s.", step_reference)
+            exposures.record_as(engine_for, viewer, [Shown("find_comparables", result, step_reference, view, as_of,
+                                                           route, viewer.user_id, saved_choice(viewer, step_reference))])
         background.add_task(write)
+
+    def exposed_in(turn: Turn, verdict: Verdict) -> list[Shown]:
+        """The past ranges and time estimates the answer's kept sentences cited, as the exposures POST /api/ask
+        writes (ticket 44): in the staff view, for calls that named a STEP reference."""
+        if exposures is None or engine_for is None or turn.scope.view != exposure_log.STAFF:
+            return []
+        cited = [evidence for sentence in verdict.kept for evidence in sentence.claim.evidence_ids]
+        as_of = as_of_of(turn)
+        return [Shown(tool, result, reference, turn.scope.view, as_of, exposure_log.ASK_ROUTE, turn.viewer.user_id,
+                      None) for tool, reference, result in exposure_log.stated(cited, turn.notes.tool_calls,
+                                                                              turn.facts.get)]
+
+    def expose_answer(turn: Turn, shown: list[Shown]) -> None:
+        """Write the answer's exposures with the viewer's saved plan-date choice for each package."""
+        exposures.record_as(engine_for, turn.viewer, [
+            dataclasses.replace(item, saved_option=saved_choice(turn.viewer, item.step_reference)) for item in shown])
 
     @app.get("/api/packages/{step_reference}/comparables")
     def comparables(step_reference: str, request: Request, background: BackgroundTasks, asof: dt.date | None = None,
@@ -1067,6 +1082,18 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                 else:
                     writers.append(threading.Thread(target=citations.record, args=(cited,),
                                                     name=f"strata-cited-{turn.run_id}"))
+                    writers[-1].start()
+            # Each past range or time estimate the kept sentences cited, for a STEP package in the staff view, is
+            # an exposure (ticket 44), written beside the run row.
+            if outcome["verdict"] is not None:
+                try:
+                    shown = exposed_in(turn, outcome["verdict"])
+                except Exception:  # a fact in a shape the log doesn't expect: the answer and its run row stand
+                    log.exception("Run %s could not list the ranges it showed.", turn.run_id)
+                    shown = []
+                if shown:
+                    writers.append(threading.Thread(target=expose_answer, args=(turn, shown),
+                                                    name=f"strata-exposed-{turn.run_id}"))
                     writers[-1].start()
             for writer in writers:
                 await asyncio.to_thread(writer.join, 60)

@@ -2,11 +2,12 @@
 -- sent a viewer a past range or a time estimate for a package with a STEP reference, in the World Bank staff view.
 -- A range shown in a preview is not an exposure, and an abstention shows no range, so neither writes a row (the 45
 -- design brief, decision 13). The replay harness, batch scoring, the hindsight test and the nightly job call the
--- same tools and never write here: only the server's routes do (src/strata/estimates/exposures.py).
+-- same tools and never write here: only the server's routes do (src/strata/estimates/exposures.py): the estimate
+-- and comparables routes, and POST /api/ask for each range a sentence the verifier kept cited.
 --
 -- This is the one place "exposed to Strata" is defined (CLAUDE.md rule 4): the hindsight test's gate set
 -- (src/strata/estimates/sql/hindsight/exposed.sql) and the estimates loop's anchored plan rows
--- (src/strata/estimates/sql/loop/anchored.sql) both read it. The app writes it as its own service principal,
+-- (src/strata/estimates/watch.py, marked_rows) both read it. The app writes it as its own service principal,
 -- with the viewer's user id, never their email, because every account user can read strata.ops. Rows only join.
 --
 -- exposure_id              a random id
@@ -14,7 +15,7 @@
 -- exposed_on               that day
 -- viewer_id                the viewer's user id, as the Databricks App forwarded it
 -- view                     the view the range was shown in: staff
--- route                    the route that sent it, such as /api/packages/{step_reference}/estimate
+-- route                    the route that sent it: /api/packages/{step_reference}/estimate, /comparables or /api/ask
 -- as_of                    the as-of date the tool was called with
 -- step_reference           the package's STEP reference
 -- project_id, country_code the package's project and its country, from its newest public plan row

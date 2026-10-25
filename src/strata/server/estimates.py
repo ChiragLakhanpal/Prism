@@ -84,14 +84,7 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: PackageStor
         """Write the exposure after the answer has gone, reading the package as the viewer (ticket 44)."""
         if exposures is None or engine_for is None or not shown.counts():
             return
-
-        def write() -> None:
-            try:
-                with engine_for(viewer) as engine:
-                    exposures.record(engine, shown)
-            except Exception:  # the data service: the answer has gone, and the log says why no row was written
-                log.exception("I could not open the data service to record an exposure for %s.", shown.step_reference)
-        background.add_task(write)
+        background.add_task(exposures.record_as, engine_for, viewer, [shown])
 
     def answer(viewer: Viewer, view: str, asof: dt.date | None, arguments: dict, kind: str, key: str,
                background: BackgroundTasks | None = None, route: str | None = None):

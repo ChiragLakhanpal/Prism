@@ -36,7 +36,9 @@ class Asked:
         return [data for found, data in self.parsed if found == kind]
 
 
-def ask(fixture_db, case_id: str, today: dt.date = TODAY, **app_options) -> Asked:
+def ask(fixture_db, case_id: str, today: dt.date = TODAY, view: str | None = None, **app_options) -> Asked:
+    """Ask the case's question as Ana, in the case's scope and as-of date, and in view when given (the request's
+    default, staff, otherwise). app_options go to create_app."""
     case = load_cases()[case_id]
     agents: list[ScriptedAgent] = []
     judge = app_options.pop("judge", None) or ScriptedJudge(case)
@@ -58,7 +60,8 @@ def ask(fixture_db, case_id: str, today: dt.date = TODAY, **app_options) -> Aske
         transport = httpx.ASGITransport(app=app)
         async with httpx.AsyncClient(transport=transport, base_url="http://strata.test") as client:
             return await client.post("/api/ask", headers=ANA, json={
-                "question": case.question, "scope": case.scope, "asof": case.as_of.isoformat()})
+                "question": case.question, "scope": case.scope, "asof": case.as_of.isoformat(),
+                **({"view": view} if view else {})})
 
     response = asyncio.run(go())
     assert response.status_code == 200

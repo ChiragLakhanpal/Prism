@@ -2,10 +2,17 @@
 influence on plans can be told apart from its accuracy.
 
 An exposure is one past range (find_comparables) or one time estimate (estimate_time) the server sent a viewer for a
-package with a STEP reference, in the World Bank staff view. The server's routes write it at the moment the range
-reaches the viewer through the answer contract (src/strata/server/estimates.py and app.py), never the tools
-themselves: the replay harness, batch scoring, the hindsight test and the nightly job call the same tools, and none
-of them may write an exposure. So:
+package with a STEP reference, in the World Bank staff view. The server writes it at the moment the range reaches the
+viewer through the answer contract (seam 3), never the tools themselves: the replay harness, batch scoring, the
+hindsight test and the nightly job call the same tools, and none of them may write an exposure. Three routes write:
+
+- GET /api/packages/{step_reference}/estimate (src/strata/server/estimates.py) and GET
+  /api/packages/{step_reference}/comparables (src/strata/server/app.py), for the range each one answers with.
+- POST /api/ask (src/strata/server/app.py), for each past range or time estimate a sentence the verifier kept cited:
+  the summary of a find_comparables or estimate_time call that named a STEP reference (stated() below), once per tool
+  and STEP reference in one answer.
+
+So:
 
 - A range shown in a preview of another view is not an exposure (the 45 design brief, decision 13). The view is the
   tool contract's view argument (ticket 09), and only staff counts.
@@ -19,7 +26,7 @@ id and the day, and the two dates Strata offered: the middle and the 8-in-10 poi
 package's first specific procurement notice when it had been published by the as-of date, or else from the
 planned notice date of its newest public plan row. A later plan row is "dated within 14 days of a date I offered"
 when its planned signing date falls within estimates_loop.anchored_within_days of either
-(src/strata/estimates/sql/loop/anchored.sql).
+(src/strata/estimates/watch.py, marked_rows).
 
 The log writes as the app's own service principal, from a background task after the answer has gone, so the page
 never waits for it and a failed write never changes the answer.
@@ -31,7 +38,7 @@ import datetime as dt
 import json
 import logging
 import uuid
-from collections.abc import Callable
+from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass
 from importlib import resources
 
@@ -42,8 +49,10 @@ TABLE = "strata.ops.exposures"
 COLUMNS = ("exposure_id", "shown_at", "exposed_on", "viewer_id", "view", "route", "as_of", "step_reference",
            "project_id", "country_code", "shown", "range_shown", "model", "model_version", "option_chosen",
            "option_saved", "start_date", "start_from", "offered_middle_on", "offered_eight_in_ten_on", "public_from")
-# What each tool shows, by the name the registry gives it.
+# What each tool shows, by the name the registry gives it, and the field of its result (and summary) that holds it.
 SHOWN = {"find_comparables": "past_range", "estimate_time": "time_estimate"}
+FIELD = {"find_comparables": "past_range", "estimate_time": "estimate"}
+ASK_ROUTE = "/api/ask"
 POINTS = ("q25", "q50", "q75", "q80")
 STAFF = "staff"  # the one view whose ranges are exposures
 OPTIONS = ("middle", "eight_in_ten")
@@ -58,7 +67,7 @@ def range_shown(tool: str, result: dict) -> dict | None:
     """The points a tool's answer showed, or None when it showed no range: an abstention, or no middle."""
     if tool not in SHOWN or result.get("abstention") is not None:
         return None
-    points = result.get("estimate") if tool == "estimate_time" else result.get("past_range")
+    points = result.get(FIELD[tool])
     if not points or points.get("q50") is None or not points.get("days"):
         return None
     return {**{name: points[name] for name in POINTS}, "days": dict(points["days"])}
@@ -81,6 +90,23 @@ class Shown:
         """Whether this answer is an exposure: a range, for a package with a STEP reference, in the staff view."""
         return (self.view == STAFF and bool(self.step_reference)
                 and range_shown(self.tool, self.result) is not None)
+
+
+def stated(cited: Iterable[str], calls: Iterable[Mapping], fact: Callable[[str], Mapping | None]) -> list[tuple[str, str, dict]]:
+    """The past ranges and time estimates an answer stated, as (tool, STEP reference, result) for Shown: each
+    find_comparables or estimate_time call that named a STEP reference and whose summary a kept sentence cited, once
+    per tool and STEP reference. cited is the evidence ids the kept sentences cite, calls the run's tool-call notes
+    (each with its arguments and its summary's evidence id) and fact gives the row a tool returned for an id."""
+    wanted, found = set(cited), {}
+    for call in calls:
+        tool, summary_id = call.get("tool"), call.get("summary_id")
+        arguments = call.get("arguments") if isinstance(call.get("arguments"), Mapping) else {}
+        reference = arguments.get("step_reference")
+        if tool not in SHOWN or summary_id not in wanted or not reference or (tool, reference) in found:
+            continue
+        summary = fact(summary_id) or {}
+        found[(tool, reference)] = {"abstention": None, FIELD[tool]: summary.get(FIELD[tool])}
+    return [(tool, reference, result) for (tool, reference), result in found.items()]
 
 
 def _date(value) -> dt.date | None:
@@ -162,3 +188,18 @@ class ExposureLog:
                           SHOWN[shown.tool], shown.step_reference)
             return False
         return True
+
+    def record_as(self, engine_for, viewer, shown: Iterable[Shown]) -> int:
+        """Write each answer that is an exposure, reading the packages as the viewer through engine_for(viewer), a
+        context manager. Returns how many rows were written; when the data service cannot be opened, none are, and
+        the log says why. The routes call it from a background task after the answer has gone."""
+        counted = [item for item in shown if item.counts()]
+        if not counted:
+            return 0
+        try:
+            with engine_for(viewer) as reader:
+                return sum(self.record(reader, item) for item in counted)
+        except Exception:  # the data service: the answer has gone, and the log says why no row was written
+            log.exception("I could not open the data service to record an exposure for %s.",
+                          ", ".join(sorted({item.step_reference for item in counted})))
+            return 0

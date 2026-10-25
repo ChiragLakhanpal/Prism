@@ -17,8 +17,9 @@ from pathlib import Path
 import httpx
 import pytest
 
+from scripted_answers import ask
 from strata import appstate
-from strata.estimates.exposures import ExposureLog
+from strata.estimates.exposures import ExposureLog, stated
 from strata.lakehouse import catalog
 from strata.lakehouse.engine import DuckDBEngine
 from strata.packages.store import PackageStore
@@ -129,3 +130,48 @@ def test_a_preview_an_abstention_and_a_package_with_no_step_reference_write_no_e
     assert too_few.json()["abstention"]["reason"] == too_few_range.json()["abstention"]["reason"] == "too_few_comparables"
     assert no_step_row.status_code == 200 and no_step_row.json()["past_range"] is not None
     assert logged(log) == []
+
+
+ASKED = "ke-nwwda-541055-past-range"  # the recorded answer that states the demo package's past range
+
+
+def test_an_answer_that_states_a_past_range_writes_one_exposure_with_the_range_it_cited(fixture_db, tmp_path):
+    log = tmp_path / "ops.duckdb"
+    ops_table(log, "exposures")
+
+    asked = ask(fixture_db, ASKED, exposures=ExposureLog(lambda: DuckDBEngine.open(log), now=lambda: SHOWN_AT))
+
+    [cited] = [event for event in asked.of("evidence") if event["tool"] == "find_comparables"
+               and "past_range" in event["row"]]
+    assert any(cited["id"] in sentence["evidence_ids"] for sentence in asked.of("sentence"))
+    [row] = logged(log)
+    assert (row["step_reference"], row["shown"], row["route"], row["view"], row["viewer_id"]) == (
+        DEMO, "past_range", "/api/ask", "staff", "4021@1984")
+    assert json.loads(row["range_shown"]) == cited["row"]["past_range"]
+    assert row["as_of"] == asked.case.as_of
+    # No choice saved: the cautious 8-in-10 date is the option chosen (the 26 design brief, section 6.3).
+    assert (row["option_chosen"], row["option_saved"]) == ("eight_in_ten", False)
+    assert row["offered_eight_in_ten_on"] == row["start_date"] + dt.timedelta(days=cited["row"]["past_range"]["days"]["q80"])
+
+
+def test_the_same_answer_in_a_preview_writes_no_exposure(fixture_db, tmp_path):
+    log = tmp_path / "ops.duckdb"
+    ops_table(log, "exposures")
+
+    asked = ask(fixture_db, ASKED, view="piu",
+                exposures=ExposureLog(lambda: DuckDBEngine.open(log), now=lambda: SHOWN_AT))
+
+    assert asked.of("sentence") and logged(log) == []
+
+
+def test_an_answer_states_a_time_estimate_once_per_package_and_only_when_a_kept_sentence_cites_it():
+    estimate = {"q25": 4.0, "q50": 5.0, "q75": 6.0, "q80": 7.0, "days": {"q25": 120, "q50": 150, "q75": 180, "q80": 210}}
+    facts = {"estimate-a": {"estimate": estimate}, "range-b": {"past_range": estimate}}
+    calls = [{"tool": "estimate_time", "arguments": {"step_reference": DEMO}, "summary_id": "estimate-a"},
+             {"tool": "estimate_time", "arguments": {"step_reference": DEMO}, "summary_id": "estimate-a"},
+             {"tool": "find_comparables", "arguments": {"step_reference": DEMO}, "summary_id": "range-b"},
+             {"tool": "estimate_time", "arguments": {"country": "KE"}, "summary_id": "estimate-c"}]
+
+    found = stated(["estimate-a", "estimate-c", "strata.gold.package:KE-ICTA-571738-CW-RFB"], calls, facts.get)
+
+    assert found == [("estimate_time", DEMO, {"abstention": None, "estimate": estimate})]

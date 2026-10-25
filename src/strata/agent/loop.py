@@ -176,6 +176,8 @@ def answer_runner(agent_for: Callable[[Turn], Agent], engine_for: EngineFor, too
         if on_result is not None:
             on_result(turn, name, arguments, result)
         note.update(rows=len(result["rows"]), abstention=(result["abstention"] or {}).get("reason"))
+        if shown.get("summary"):  # which call a cited summary came from, such as the past range an exposure logs
+            note["summary_id"] = shown["summary"]["evidence_id"]
         return shown, note
 
     async def run(turn: Turn) -> AsyncIterator[Event]:
