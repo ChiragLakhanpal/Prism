@@ -14,6 +14,7 @@ The run's answers, with the passages and records they cite, are also what Foundr
 from __future__ import annotations
 
 import asyncio
+import datetime as dt
 from collections import defaultdict
 from collections.abc import Callable, Iterable
 
@@ -23,6 +24,7 @@ from strata.evals import answers, scoring
 from strata.harness.sse import events as stream_events
 from strata.harness.turn import Turn
 from strata.server.engines import EngineFor
+from strata.tools import registry
 
 # Who the full gate asks as. It holds no token: on the workspace, ops/evals/full_gate.py gives run() a copy that
 # carries the env file's token for that one run, so its grants decide what the tools read (CLAUDE.md rule 7).
@@ -39,7 +41,11 @@ def scope_of(question: dict) -> tuple[str | None, str | None]:
 
 
 def run(questions: list[dict], agent_for: Callable[[Turn], Agent], engine_for: EngineFor, judge=None,
-        restricted: Iterable[str] = (), viewer: Viewer = GATE) -> list[tuple[scoring.Asked, scoring.Scored]]:
+        restricted: Iterable[str] = (), viewer: Viewer = GATE,
+        today: Callable[[], dt.date] = registry.today) -> list[tuple[scoring.Asked, scoring.Scored]]:
+    """Ask each question and score it. today is the day the gate runs: the route asks as of that day at the
+    latest, and each reference answer is worked out as of the same day, so a question as of a later day is held
+    to the answer the agent could give."""
     import httpx
 
     from strata.server.app import create_app
@@ -52,7 +58,8 @@ def run(questions: list[dict], agent_for: Callable[[Turn], Agent], engine_for: E
         calls[turn.run_id].append({"tool": name, "arguments": arguments, "result": result,
                                    "shown": for_agent(result, turn.notes.as_of)})
 
-    app = create_app(runner=answer_runner(agent_for, engine_for, on_result=keep), engine_for=engine_for, judge=judge)
+    app = create_app(runner=answer_runner(agent_for, engine_for, on_result=keep, today=today), engine_for=engine_for,
+                     judge=judge)
     restricted = set(restricted)
 
     # The headers the App's proxy would forward. The token reaches the tools the agent calls, which sign their
@@ -76,7 +83,7 @@ def run(questions: list[dict], agent_for: Callable[[Turn], Agent], engine_for: E
         reference, problem = None, None
         try:
             with engine_for(viewer) as engine:
-                reference = answers.reference(question, engine, viewer)
+                reference = answers.reference(question, engine, viewer, today=today())
         except Exception as error:  # a question written wrong, or a tool or query that failed for it alone
             problem = f"{type(error).__name__}: {error}"
         asked = scoring.Asked(question, events, text, calls.pop(run_id, []), reference, problem)

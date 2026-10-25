@@ -332,3 +332,19 @@ def test_an_answer_that_cites_only_another_tool_fails_when_its_tool_showed_the_a
         patch.setattr(scoring, "reading", lambda result, question: {"read": True})
         assert scored(rows, rows) == ("No kept sentence cites anything check_plan returned.",)
         assert scored(whole, nothing) == ()
+
+
+def test_a_question_as_of_a_day_after_the_gate_runs_is_held_to_the_answer_as_of_that_day(engine_for):
+    """The route asks as of the day the gate runs at the latest (the answer loop caps a turn's as-of date at today),
+    so the reference answer is worked out as of the same day, or a right answer would fail."""
+    import datetime as dt
+
+    comparables = question("find-comparables-ke-nwwda-541055")
+    run_day = dt.date.fromisoformat(comparables["arguments"]["as_of"]) - dt.timedelta(days=1)
+
+    [(asked, scored)] = answer_benchmark.run(
+        [comparables], lambda turn: StandIn("find_comparables", comparables["arguments"]), engine_for,
+        judge=Agrees(), today=lambda: run_day)
+
+    assert scored.passed, scored.problems
+    assert asked.reference["cited_as"] == [f"strata.tools.find_comparables:KE-NWWDA-541055-CW-RFB@{run_day}"]

@@ -303,24 +303,26 @@ def expected(question) -> dict[str, list[str]]:
     return question["expected"]
 
 
-def arguments_of(question, engine, viewer) -> dict:
+def arguments_of(question, engine, viewer, today: dt.date | None = None) -> dict:
     """A tool question's arguments. A check-your-criteria tool's question (ticket 31) names the find_comparables call
-    its comparables come from, and their STEP references become its comparables argument."""
+    its comparables come from, and their STEP references become its comparables argument, as of today at the
+    latest when given."""
     from strata.tools import registry
 
     arguments = dict(question["arguments"])
     if "comparables_of" in question:
         found = registry.call("find_comparables", question["comparables_of"],
-                              registry.Context(engine=engine, viewer=viewer))
+                              registry.Context(engine=engine, viewer=viewer, as_of=today))
         arguments["comparables"] = ",".join(row["step_reference"] for row in found["rows"])
     return arguments
 
 
-def reference(question, engine, viewer, root: Path = ROOT) -> dict | None:
+def reference(question, engine, viewer, root: Path = ROOT, today: dt.date | None = None) -> dict | None:
     """What a tool question's answer must be on this engine's data: for ask_genie, the rows its ground-truth SQL
     returns here; for any other tool, the reading of what the tool gives for the question's own arguments. On the
     fixture both equal the question's expected answer (tests/test_tools.py), so the full gate can score the live
-    agent on the workspace's data with no literal from the fixture. None for a question with no tool."""
+    agent on the workspace's data with no literal from the fixture. None for a question with no tool. today, the
+    day the full gate runs, caps the as-of date as the answer loop caps a turn's (ADR 0002: the earlier wins)."""
     from strata.tools import registry
 
     tool = question.get("tool")
@@ -329,5 +331,6 @@ def reference(question, engine, viewer, root: Path = ROOT) -> dict | None:
     if tool == "ask_genie":
         case = ground_truth.read(root / question["ground_truth"])
         return {"rows": same_rows(engine.run(case.sql, case.params).rows)}
-    result = registry.call(tool, arguments_of(question, engine, viewer), registry.Context(engine=engine, viewer=viewer))
+    result = registry.call(tool, arguments_of(question, engine, viewer, today),
+                           registry.Context(engine=engine, viewer=viewer, as_of=today))
     return answered(result, question)
