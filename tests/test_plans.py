@@ -579,6 +579,38 @@ def test_a_pdf_the_host_refuses_stops_the_run_and_names_the_pdf():
         parser.parse(Page("29750379", "http://documents.worldbank.org/plan.pdf", 1))
 
 
+def test_a_page_whose_text_pypdf_cannot_decode_reads_as_empty_and_a_file_that_is_not_a_pdf_is_not_fetched(monkeypatch):
+    """On October 25, 2026 the live run stopped after six hours of fetching, in pypdf, on a plan PDF with a
+    font whose encoding it could not decode (UnicodeDecodeError). Such a page now reads as empty, like a
+    scanned page, so the page router sends it to Route B; a file pypdf cannot open at all is NotFetched."""
+    import io
+
+    import pypdf
+    from pypdf import PdfWriter
+
+    from strata.reader.documents import LiveDocuments, NotFetched
+
+    writer = PdfWriter()
+    for _ in range(2):
+        writer.add_blank_page(width=792, height=612)
+    pdf = io.BytesIO()
+    writer.write(pdf)
+    calls = []
+
+    def extract_text(self, *args, **kwargs):
+        calls.append(1)
+        if len(calls) == 2:
+            raise UnicodeDecodeError("utf-16-be", b"\x14", 0, 1, "truncated data")
+        return "Procurement Plan"
+
+    monkeypatch.setattr(pypdf.PageObject, "extract_text", extract_text)
+    source = LiveDocuments(fetch=lambda url: pdf.getvalue(), clock=lambda: dt.datetime(2026, 10, 25, tzinfo=dt.UTC))
+
+    assert source.pages("http://documents.worldbank.org/plan.pdf").body == ["Procurement Plan", ""]
+    with pytest.raises(NotFetched, match="could not read the PDF at http://documents.worldbank.org/broken.pdf"):
+        LiveDocuments(fetch=lambda url: b"<html>not a pdf</html>").pages("http://documents.worldbank.org/broken.pdf")
+
+
 @pytest.mark.parametrize("rejoin", [False, True], ids=["as-the-pdf-gives-them", "rejoined"])
 def test_words_a_cell_wrapped_at_its_edge_read_as_the_pdf_gives_them_unless_the_flag_rejoins_them(fresh, rejoin):
     """Parked decision 8 (tickets 08, 10 and 18): a STEP cell wraps "Exploratory" as "Explor" then

@@ -253,6 +253,8 @@ It worked if the answer is HTTP 200 and its body equals `tests/fixtures/api/chec
 
 **Second run on October 25, 2026 (orchestrator):** started at 02:05 UTC, a minute after the host answered a probe with 302 again (it had answered 403 at 01:53 and 302 at 02:03, so the block lasted under 15 minutes). The plan reader spent until 02:43 UTC fetching P156634's plan texts again, then parsed 87 more pages of 24 versions, until the host answered 403 at 03:25 UTC for document 27677290's PDF (Plan-Archive-2.pdf). The script printed "The run stopped before it finished: I could not fetch https://documents.worldbank.org/curated/en/313111498489351105/pdf/Plan-Archive-2.pdf: HTTP Error 403: Forbidden. The pages it parsed are kept, and the next run goes on from there." and exited 2, as a688a81 intended. A probe at 03:26 UTC got 302 again, so each block is a short burst after about 80 minutes of fetching. P156634 now has 689 of its 695 Route B pages in `strata.bronze.layout_pages`; the 6 left are in four versions from June 2017 (27677290, 27677163, 27677200, 27669055). 212 pages were tried today, under the cap of 500. The passage reader has still not started. A third run began at 03:26 UTC and is recorded below.
 
+**Third run on October 25, 2026 (orchestrator):** started at 03:27 UTC. P130164's plan reader finished at 03:29 UTC with 0 pages to parse (`plans-P130164-20261025T032703552021`). P156634's plan reader then spent until 09:56 UTC, six and a half hours, fetching again the nine versions bronze does not hold (the five oversized texts and four more), where the second run had spent 38 minutes on the same fetches, so the host was answering slowly. At 09:56 UTC it stopped in pypdf: one of those PDFs has a font whose encoding pypdf cannot decode, `extract_text` raised `UnicodeDecodeError: 'utf-16-be' codec can't decode byte 0x14 in position 0: truncated data`, and `LiveDocuments.pages` in `src/strata/reader/documents.py` let it through. No page was parsed and no passage written. Fix: `LiveDocuments.pages` now reads a page whose text pypdf cannot decode as empty, like a scanned page, so the page router sends it to Route B, and raises `NotFetched` for a file pypdf cannot open at all (`tests/test_plans.py`). The fourth run is recorded below.
+
 The merger parked this step on October 23, 2026, after merge commit e0721da. It needs the Databricks keys, `AI_SEARCH_ENDPOINT`, `AZURE_OPENAI_ENDPOINT` and `AZURE_OPENAI_API_KEY` in `.env`. Run it after ticket 04's step 1, because the deploy makes the passage tables, and after ticket 04's step 2, because the nightly job fills `strata.gold.project`.
 
 Run this from the main checkout:
@@ -673,6 +675,8 @@ It worked if it shows no `notice_url`, and the gold sync MERGE in step 2 succeed
 ## Ticket 18, step 2 of 5: read the document slice on the warehouse
 
 **Second run on October 25, 2026 (orchestrator):** the same run as ticket 11's step 1, recorded there: it stopped at 03:25 UTC, again in P156634's plan reader, when the host answered 403 once more. The passage reader has still not started. A third run began at 03:26 UTC.
+
+**Third run on October 25, 2026 (orchestrator):** stopped at 09:56 UTC in pypdf on a plan PDF with a broken font encoding, after six and a half hours of fetching; recorded under ticket 11's step 1. The passage reader has still not started.
 
 **First run on October 25, 2026 (orchestrator):** the same run as ticket 11's step 1, recorded there. It stopped at 01:50 UTC, in P156634's plan reader, when documents.worldbank.org began answering 403 to every request from this computer. The passage reader did not start, so the stress shelf, `strata.ops.documents_read` and the slice measures have no row yet. Recorded again below when the host answers and the run finishes.
 
@@ -1220,3 +1224,28 @@ Run this from the main checkout:
     uv run --script ops/app/deploy_app.py --env-file .env
 
 It worked if the deploy exits 0 and its last line is `Strata is running at https://...`. Then sign in to the App as one viewer, open `/packages/KE-CWSB-224323-CS-QCBS`, open section 5, and paste "at least two contracts of similar works of US$10 million each". It worked if the comparison shows its counts under "Asked for it" and "Asked for the same or less", with "Judged by a model" on the check line, the pasted text is in Lakebase's `strata.app.criteria_checks` with that viewer as its owner, and a second viewer's `GET /api/packages/KE-CWSB-224323-CS-QCBS/criteria` shows no comparison and none of the first viewer's words (CLAUDE.md rule 8).
+
+## Ticket 27, step 1 of 2: backtest the planned date for each step for 2025 alone on the workspace
+
+The merger parked this step on October 25, 2026, after merge commit abadca3. All ten keys were set, but the header above holds workspace steps back while the user runs the backlog. It needs the Databricks keys in `.env`. Run it after the live plan run has filled `strata.silver.plan_step_delays` on the warehouse: ticket 08's step 1 (`uv run --script ops/plans/run_live.py --env-file .env`) and ticket 18's run of the slice. It writes to `strata.ops.evaluation_result`, which ticket 25's deploy adds, so run it after that deploy too. Ticket 27 is criterion 1's live half: the offline half passed in `.notes/27-verify-r2.md`.
+
+Run this from the main checkout:
+
+    uv run --script ops/estimates/step_backtest_live.py --env-file .env --years 2025
+
+It worked if it exits 0 and prints the 2025 line with its counts and an MLflow run id, then one line for each step the year scored. Note how long it took before step 2: each step first planned in 2025 calls find_comparables once on the warehouse.
+
+## Ticket 27, step 2 of 2: backtest the planned date for each step for 2021 to 2025 on the workspace
+
+The merger parked this step on October 25, 2026, after merge commit abadca3. It needs the Databricks keys in `.env`. Run it after step 1, and only if step 1's year took a reasonable time.
+
+Run this from the main checkout:
+
+    uv run --script ops/estimates/step_backtest_live.py --env-file .env
+
+It worked if it exits 0 and prints a line for each test year 2021 to 2025, each with its counts and its own MLflow run id (criterion 1). Then this query:
+
+    SELECT segment, measure, value, mlflow_run_id FROM strata.ops.evaluation_result
+    WHERE scorer = 'step_dates_backtest' AND measure LIKE '%.n'
+
+must return rows for each test year 2021 to 2025, one `<family>.<step>.n` measure for each step of each family, each with a non-null `mlflow_run_id`, and each of those ids must be a run in the experiment `/Shared/strata/time_estimate` (`config/models.toml`, `experiment`) with the same id the script printed for that year.
