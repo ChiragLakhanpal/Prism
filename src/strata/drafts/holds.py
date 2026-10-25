@@ -31,6 +31,8 @@ class Draft:
     choices: Mapping = field(default_factory=dict)
     # Whether the draft page shows disagreement cards, so a warning card can hold export (config/drafts.toml).
     cards_on_drafts: bool = False
+    # Ticket 39: the open version notices on its rows (strata.knowledge.lessons.notices.row_notices).
+    notices: tuple = ()
 
 
 @dataclass(frozen=True)
@@ -81,3 +83,11 @@ def disagreements(draft: Draft) -> Held | None:
     open_cards = [disagreement_key(found) for found in draft.content.get("disagreements") or ()
                   if found.get("changes_answer") and disagreement_key(found) not in draft.choices]
     return Held(len(open_cards), f"disagreement-{open_cards[0]}") if open_cards else None
+
+
+def lesson_retired_wrong(draft: Draft) -> Held | None:
+    """A row that cites a lesson a lead retired as wrong, until its author removes the row or keeps it with a reason
+    (ticket 39; spec story 87: export is blocked only by a version retired as wrong). A changed lesson, or one retired
+    as out of date, holds nothing."""
+    held = [notice for notice in draft.notices if notice.get("holds_export")]
+    return Held(len(held), held[0]["anchor"]) if held else None

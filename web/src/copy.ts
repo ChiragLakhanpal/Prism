@@ -2807,6 +2807,12 @@ export const copy = {
           one: "choose which report to keep in one disagreement",
           many: "choose which report to keep in {count} disagreements",
         },
+        // Ticket 39: a row that cites a lesson a lead retired as wrong. It joins the one composed sentence, as DESIGN.md
+        // section 5's Draft bar row sets, and links to the row's notice.
+        lessonRetiredWrong: {
+          one: "remove or keep, with a reason, one row that cites a lesson retired as wrong",
+          many: "remove or keep, with a reason, {count} rows that cite lessons retired as wrong",
+        },
       } as Record<string, string | { one: string; many: string }>,
       // Two clauses join with " and "; three or more take commas, with ", and " before the last (the 24 brief's
       // serial comma).
@@ -5815,6 +5821,55 @@ export const copy = {
         be: { one: "is", many: "are" },
         have: { one: "has", many: "have" },
         itsTheir: { one: "its", many: "their" },
+      },
+      // The Lessons page's opening sentence, the digest (ticket 39; the 39 brief, section 5.2). The server picks each
+      // part above zero, joins them and writes each count's word, so the page counts nothing. {count} is a count
+      // word that opens the items it counts.
+      digest: {
+        since: "Since your last visit on {date}, {reports} came in.",
+        noReports: "Since your last visit on {date}, no completion report or ICR Review came in.",
+        reports: {
+          icr: { one: "{count} completion report", many: "{count} completion reports" },
+          review: { one: "{count} ICR Review", many: "{count} ICR Reviews" },
+          ppar: { one: "{count} PPAR", many: "{count} PPARs" },
+        },
+        lessons: {
+          new: { one: "{count} lesson is new", many: "{count} lessons are new" },
+          changed: { one: "{count} changed", many: "{count} changed" },
+          retired: { one: "{count} was retired", many: "{count} were retired" },
+          proposed: { one: "{count} proposed lesson is with reviewers", many: "{count} proposed lessons are with reviewers" },
+        },
+        lessonsEnd: ".",
+        none: "No lesson is new or changed.",
+        noneProposed: "No lesson is new or changed, and {proposed}.",
+        nothing: "Nothing came in since your last visit on {date}, and no lesson changed.",
+        nothingProposed: " {proposed}.",
+        first: "This is your first visit to Lessons. The library holds {total}.",
+        firstProposed: "This is your first visit to Lessons. The library holds {total}, and {proposed}.",
+        firstTotal: { one: "{count} current lesson", many: "{count} current lessons" },
+        firstEmpty: "This is your first visit to Lessons. The library has no lessons yet.",
+        // The quiet line under the sentence: lessons the reader cites that only gained a quote.
+        strengthened: {
+          one: "{count} lesson you cite gained evidence since your last visit. Your drafts don't need to change.",
+          many: "{count} lessons you cite gained evidence since your last visit. Your drafts don't need to change.",
+        },
+        // Parts join with commas, ", and " before the last, and " and " between two.
+        join: ", ",
+        lastJoin: ", and ",
+        pairJoin: " and ",
+      },
+      // The library's count line (the 39 brief, section 5.6). Status sets the population, so "of {m}" always counts
+      // that status with no other filter; stage, method and sector narrow {n}.
+      count: {
+        all: "Showing all {m} {noun}, newest first.",
+        range: "Showing {from}–{to} of {m} {noun}, newest first.",
+        narrowed: "Showing {n} of {m} {noun}, newest first.",
+        narrowedRange: "{n} of {m} {noun} match. Showing {from}–{to}, newest first.",
+        nouns: {
+          current: { one: "current lesson", many: "current lessons" },
+          rechecking: { one: "lesson being re-checked", many: "lessons being re-checked" },
+          retired: { one: "retired lesson", many: "retired lessons" },
+        },
       },
     },
   },

@@ -282,6 +282,8 @@ def footnotes(content: dict, words: dict) -> list[dict]:
     notes = {note["key"]: note for note in content["notes"]}
     found = []
     for row in content["ppsd"]["rows"]:
+        if row.get("removed"):  # a removed row (ticket 39) is left out of the Word file and its footnotes
+            continue
         for cell in CELLS:
             note = notes.get(row["cells"][cell])
             for index, sentence in enumerate((note or {}).get("sentences") or ()):
@@ -371,6 +373,110 @@ def check_value(content: dict, row_key: str, field: str, value: str | None) -> s
     if column.control == "stage":
         return "empty" if not text else "too_long" if len(text) > (column.max_length or 80) else None
     return "unknown_field"
+
+
+# ── A row that cites a changed lesson (ticket 39) ────────────────────────
+
+def row_label(content: dict, row_key: str) -> dict | None:
+    """The values of the sentence that names a row on the Lessons page: "Row {n}, {risk_label}." with n counted among
+    the rows the draft shows."""
+    shown = [row for row in content["ppsd"]["rows"] if not row.get("removed") or row["row_key"] == row_key]
+    for number, row in enumerate(shown, 1):
+        if row["row_key"] == row_key:
+            return {"n": number, "risk_label": row["risk_label"]}
+    return None
+
+
+@dataclass
+class RowRewrite:
+    """One suggested PPSD row rewritten from the current version of the lesson its mitigation cites ("Update the
+    row", ticket 39). The draft runtime reads it as it reads a kind's module (runtime.note_check and compose): the
+    writer rewrites the one cell that cites the lesson, and the verifier checks it against what get_lessons returned
+    for that lesson, as the viewer, today. The Risk Description cites the counts record, which a lesson's change
+    leaves as it was."""
+
+    row: dict
+    lesson: dict  # get_lessons' row for the lesson at its current version
+    facts: object  # strata.harness.facts.Facts: every row get_lessons returned
+    package: dict
+    KEY = KEY
+    TOOL = TOOL
+    TOOLS = ("get_lessons",)
+
+    @property
+    def cell_key(self) -> str:
+        return _cell(self.row, "mitigation")
+
+    @property
+    def version(self) -> int:
+        return int(self.lesson["version"])
+
+    @property
+    def sources(self) -> list[dict]:
+        from strata.packages.risks import _source
+
+        name = (self.lesson.get("project") or {}).get("project_name")
+        return [{key: value for key, value in _source(evidence, name).items()
+                 if key in ("evidence_id", "doc_short", "doc_type", "pcode", "locator", "page", "date")}
+                for evidence in self.lesson["evidence"]]
+
+    def evidence_ids(self) -> list[str]:
+        return [self.lesson["evidence_id"], *(evidence["evidence_id"] for evidence in self.lesson["evidence"])]
+
+    def question(self) -> str:
+        return f"Rewrite the suggested PPSD row {self.row['risk_label']} from version {self.version} of its lesson."
+
+    def message(self, language: str = "en") -> dict:
+        header = {column.key: column.header for column in load_ppsd_templates().forms["short"].columns}["mitigation"]
+        return {"task": "ppsd_row_update", "language": language, "package": self.package,
+                "row": {"risk_key": self.row["row_key"], "risk_label": self.row["risk_label"],
+                        "lesson": {"evidence_id": self.lesson["evidence_id"], "text": self.lesson["statement"]},
+                        "sources": [{"evidence_id": evidence["evidence_id"], "doc_short": evidence["doc_short"],
+                                     "pcode": evidence["project_id"], "locator": evidence["locator"],
+                                     "page": evidence["page"], "quote": evidence["quote"]}
+                                    for evidence in self.lesson["evidence"]],
+                        "cells": [{"cell_key": self.cell_key, "column": header, "evidence_ids": self.evidence_ids()}]}}
+
+    def items(self, facts) -> list[dict]:
+        cites = self.evidence_ids()
+        return [{"key": self.cell_key, "evidence_id": cites[0], "evidence_ids": cites,
+                 "description": self.row["risk_label"], "mark": None,
+                 "extra": {"row_key": self.row["row_key"], "cell": "mitigation"}}]
+
+    def cited_rows(self, facts) -> list[tuple[dict, str]]:
+        return [(row, facts.tool(evidence_id)) for evidence_id, row in facts.items()]
+
+    def subject(self, facts) -> dict:
+        return {}
+
+
+class CannotRewrite(Exception):
+    """The lesson is no longer in the library at a version a row can be rewritten from."""
+
+
+def rewrite_row(engine: Engine, viewer: Viewer, content: dict, row_key: str, lesson_id: str,
+                today: dt.date) -> RowRewrite:
+    """What "Update the row" writes from: the row, and the lesson at its current version as get_lessons returns it to
+    the viewer, today, through the registry, so every record the new sentences cite is one a tool returned."""
+    from strata.agent.loop import keep_result
+    from strata.config import load_tools
+    from strata.harness.facts import Facts
+    from strata.tools import registry
+
+    row = next((row for row in content["ppsd"]["rows"] if row["row_key"] == row_key), None)
+    if row is None:
+        raise CannotRewrite(row_key)
+    held = load_tools()
+    facts = Facts()
+    result = registry.call("get_lessons", {"lesson_id": lesson_id}, registry.Context(engine, viewer, "staff", today),
+                           held)
+    keep_result(facts, "get_lessons", result, held)
+    if not result["rows"]:
+        raise CannotRewrite(lesson_id)
+    subject = content.get("subject") or {}
+    package = {"title": subject.get("package_title"), "step_reference": subject.get("step_reference"),
+               "category": subject.get("category")}
+    return RowRewrite(row, result["rows"][0], facts, package)
 
 
 # ── The Word file ────────────────────────────────────────────────────────

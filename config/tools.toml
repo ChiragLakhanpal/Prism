@@ -469,6 +469,13 @@ Strata read, say why the other projects have none, and count how many of those r
 factor, with the paragraph that raised it. Leave it out to count nothing."""
 
 [[tools.get_lessons.parameters]]
+name = "lesson_id"
+type = "string"
+required = false
+description = """Only this lesson, by its id, such as lesson-e903b07ad1, at its current version. A draft row that \
+cites an older version of a lesson is rewritten from what this returns (ticket 39). Leave it out for every lesson."""
+
+[[tools.get_lessons.parameters]]
 name = "as_of"
 type = "date"
 required = false

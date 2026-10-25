@@ -155,13 +155,15 @@ def _dated_by_evidence(versions: list[dict], evidence: list[dict], as_of: dt.dat
 
 
 def get_lessons(call: Call, query: str | None = None, risk_factor: str | None = None, stage: str | None = None,
-                limit: int | None = None, packages: str | None = None) -> dict:
+                limit: int | None = None, packages: str | None = None, lesson_id: str | None = None) -> dict:
     """The current lessons that fit the query and the filters, as of call.as_of, best first; with packages, the
-    completion reports of their projects and the risk factors those reports raised."""
+    completion reports of their projects and the risk factors those reports raised; with lesson_id, only that lesson,
+    as a draft row that cites it is rewritten from its current version (ticket 39)."""
     lists, editions = load_lesson_lists(), load_editions()
     most = int(call.thresholds.value("lesson_review.get_lessons_max_results"))
     limit = min(max(limit or most, 1), most)
-    filters = {"risk_factor": risk_factor, "stage": stage}
+    wanted = lesson_id  # the loop below names each lesson lesson_id
+    filters = {"risk_factor": risk_factor, "stage": stage, **({"lesson_id": wanted} if wanted else {})}
     empty = {"rows": [], "coverage": {"matched": 0, "used": 0, "not_used": []}, "query": query, "filters": filters,
              "ranking": "fit, then evidence", "reports": reports(call, packages, lists) if packages else None}
     if risk_factor and lists.risk_factor(risk_factor) is None:
@@ -194,7 +196,8 @@ def get_lessons(call: Call, query: str | None = None, risk_factor: str | None = 
             retired.append(f"{TABLE}:{lesson_id}/v{_int(version['version'])}")
             continue
         factors = json.loads(version["risk_factors"] or "[]")
-        if (risk_factor and risk_factor not in factors) or (stage and version["stage"] != stage):
+        if ((risk_factor and risk_factor not in factors) or (stage and version["stage"] != stage)
+                or (wanted and wanted != lesson_id)):
             filtered += 1
             continue
         rows = sorted(evidence.get(lesson_id, []), key=lambda row: (_int(row["added_at_version"]), row["role"] != "source",

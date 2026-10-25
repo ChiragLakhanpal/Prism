@@ -271,6 +271,58 @@ async def write(writing: Writing, engine_for: EngineFor, agent_for: Callable[[st
     yield Event("draft", {"draft_id": draft_id})
 
 
+# ── Updating one row from a changed lesson (ticket 39) ───────────────────
+
+async def rewrite(saved: Saved, kind: DraftKind, row_key: str, lesson_id: str, viewer: Viewer, engine_for: EngineFor,
+                  agent_for: Callable[[str], object | None], six_checks: SixChecks, today: dt.date,
+                  run_id: str, checked: list | None = None) -> dict | None:
+    """"Update the row": the kind's writer rewrites the one row from the lesson's current version, and the verifier
+    checks every sentence, as it does when a draft is written. Returns the row's new notes, the evidence they cite,
+    the verifier's counts and the row's sources, or None when no sentence passed, so nothing is saved. A step that
+    cannot run raises WriteError with its code. checked, when given, receives the verdict, the question, and the
+    agent's name and version, for the run log."""
+    checked = checked if checked is not None else []
+    def read():
+        with engine_for(viewer) as engine:
+            return function(kind.rewrite_row)(engine, viewer, saved.content, row_key, lesson_id, today)
+
+    try:
+        plan = await asyncio.to_thread(read)
+    except PermissionDenied as error:
+        raise WriteError("permission") from error
+    except EngineError as error:
+        raise WriteError("data_service") from error
+    agent = agent_for(kind.key)
+    if agent is None:
+        raise WriteError("no_agent")
+    message = [{"role": "user", "content": json.dumps(plan.message(), ensure_ascii=False, default=str)}]
+    try:
+        response = await asyncio.to_thread(agent.respond, message, None)
+        written = parse_notes(output_text(response), plan.KEY)
+    except AgentError as error:
+        raise WriteError(error.code) from error
+    except ClaimsError as error:
+        log.warning("The writer of run %s answered in a shape I can't read: %s", run_id, error)
+        raise WriteError("agent_output") from error
+    check_notes, seen, owners = note_check(plan, plan.facts, written, six_checks)
+    verdict = None
+    async for item in six_checks.finish(check_notes, seen, Asker(viewer, STAFF, today, run_id)):
+        if isinstance(item, Verdict):
+            verdict = item
+    checked[:] = [verdict, plan.question(), getattr(agent, "name", None), getattr(agent, "version", None)]
+    if verdict is None or not verdict.kept:
+        return None
+    content = compose(plan, plan.facts, written, verdict, seen, owners)
+    # The new sentences take numbers after the draft's own, so a citation marker names one sentence on the page.
+    start = 1 + max((sentence["index"] for note in saved.content["notes"] for sentence in note.get("sentences") or ()),
+                    default=-1)
+    notes = [{**note, "sentences": [{**sentence, "index": sentence["index"] + start}
+                                    for sentence in note.get("sentences") or ()]}
+             for note in content["notes"] if note["state"] == "written"]
+    return {"notes": notes, "evidence": content["evidence"], "checks": content["checks"],
+            "sources": plan.sources, "version": plan.version, "question": plan.question()}
+
+
 # ── What the screens read ────────────────────────────────────────────────
 
 def written_notes(saved: Saved) -> int:
@@ -320,18 +372,21 @@ def kind_view(saved: Saved) -> dict:
     return shown
 
 
-def hold_input(saved: Saved, kinds: DraftKinds, view: str) -> HoldDraft:
-    """The draft as the holds read it: its state now, the view, what it holds, its fields and its choices."""
+def hold_input(saved: Saved, kinds: DraftKinds, view: str, notices: list[dict] = ()) -> HoldDraft:
+    """The draft as the holds read it: its state now, the view, what it holds, its fields and its choices, and the
+    open version notices on its rows (ticket 39)."""
     return HoldDraft(saved.state.state, view, saved.kind, saved.content,
                      {key: value.value for key, value in saved.fields.items()},
-                     {key: choice.kept for key, choice in saved.choices.items()}, kinds.cards_on_drafts)
+                     {key: choice.kept for key, choice in saved.choices.items()}, kinds.cards_on_drafts,
+                     tuple(notices))
 
 
-def holds(saved: Saved, kinds: DraftKinds, view: str) -> list[dict]:
+def holds(saved: Saved, kinds: DraftKinds, view: str, notices: list[dict] = ()) -> list[dict]:
     """The holds that keep the draft from export now, in the order its kind names them, each with how many items
-    it has left and the anchor of the first, for the bar's link to it (the 36 brief, section 4.5)."""
+    it has left and the anchor of the first, for the bar's link to it (the 36 brief, section 4.5). notices are the
+    open version notices on its rows, which a lesson retired as wrong holds export by (ticket 39)."""
     kind = kinds.kinds[saved.kind]
-    draft = hold_input(saved, kinds, view)
+    draft = hold_input(saved, kinds, view, notices)
     found = []
     for key in kind.holds:
         held = function(kinds.holds[key].test)(draft)
@@ -347,8 +402,37 @@ def _who(step, viewer: Viewer) -> dict | None:
     return {"at": iso(step.changed_at), "by": step.actor_name, "you": bool(viewer.user_id) and step.actor_id == viewer.user_id}
 
 
-def draft_view(saved: Saved, viewer: Viewer, view: str, kinds: DraftKinds, opened: dict[str, dt.datetime]) -> dict:
-    """A draft as its page shows it to this viewer, in this view."""
+def lesson_rows(saved: Saved, notices: list[dict], viewer: Viewer, view: str) -> dict:
+    """The version notices on a draft's rows and what its author chose, for its page (ticket 39): each open notice,
+    and each row its author updated, kept or removed. Only the author acts, in Draft or Checked by you, in the staff
+    view; anyone else reads them."""
+    state = saved.state.state
+    may = is_author(viewer, saved.author_id) and view == STAFF and state in OPEN_STATES
+    module = writer_module_for(saved.kind)
+    kind = load_kind(saved.kind)
+    if not notices and not (kind and kind.row_label):
+        return {}  # a kind whose rows cite no lesson
+    labels = getattr(module, "row_label", None) if kind and kind.row_label else None
+    shown = []
+    for notice in notices:
+        actions = (["remove", "keep"] if notice["tier"] in ("retired_wrong", "retired_outdated")
+                   else (["update", "keep"] if kind and kind.rewrite_row else ["keep"]))
+        shown.append({**notice, "can_act": may, "actions": actions,
+                      "row_label": labels(saved.content, notice["row_key"]) if labels else None})
+    return {"lesson_notices": shown, "lesson_updated": saved.content.get("lesson_updated") or [],
+            "lesson_kept": saved.content.get("lesson_kept") or [],
+            "lesson_removed": saved.content.get("lesson_removed") or []}
+
+
+def load_kind(key: str):
+    from strata.config import load_draft_kinds
+
+    return load_draft_kinds().kinds.get(key)
+
+
+def draft_view(saved: Saved, viewer: Viewer, view: str, kinds: DraftKinds, opened: dict[str, dt.datetime],
+               notices: list[dict] = ()) -> dict:
+    """A draft as its page shows it to this viewer, in this view, with the open version notices on its rows."""
     kind = kinds.kinds[saved.kind]
     listed = [{**entry, "opened": entry["evidence_id"] in opened,
                "last_opened_at": iso(opened.get(entry["evidence_id"]))} for entry in sources(saved.content)]
@@ -378,7 +462,7 @@ def draft_view(saved: Saved, viewer: Viewer, view: str, kinds: DraftKinds, opene
         "opened": {"count": sum(1 for entry in listed if entry["opened"]), "of": len(listed)},
         "layout": {"columns": list(kind.columns), "export": kind.export, "sources_list": kind.sources_list,
                    "removed_box": kind.removed_box, "not_checked": list(kind.not_checked)},
-        "holds": holds(saved, kinds, view),
+        "holds": holds(saved, kinds, view, notices),
         "may_act": is_author(viewer, saved.author_id) and view == STAFF and state.state != "exported",
         "export": None if export is None else {
             "export_id": export.export_id, "exported_at": iso(export.exported_at), "by": export.actor_name,
@@ -392,6 +476,7 @@ def draft_view(saved: Saved, viewer: Viewer, view: str, kinds: DraftKinds, opene
         "disagreements": saved.content.get("disagreements") or [],
         "choices": [{"disagreement_id": key, "kept": choice.kept, "reason": choice.reason, "at": iso(choice.set_at),
                      "by": choice.set_by_name} for key, choice in saved.choices.items()],
+        **lesson_rows(saved, list(notices), viewer, view),
         **extra,
     }
 

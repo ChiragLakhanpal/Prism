@@ -11,6 +11,10 @@ Ticket 36 adds two more: each value a person set on a field only people fill (a 
 ratings, and the form the draft uses), and each report a draft's author kept on a disagreement card. Each save is a
 new row; views in src/strata/lakehouse/views/ops/ give the latest value of each, so nothing is overwritten.
 
+Ticket 39 adds the choices an author makes for rows that cite a changed lesson (strata.ops.draft_lesson_choices).
+A Saved draft's content is the draft as those choices leave it (strata.drafts.lesson_choices.apply), so its page,
+its counts, its holds and its files all read the same rows.
+
 The store holds no access rule. The draft routes (src/strata/server/drafts.py) ask the one access rule
 (src/strata/server/access.py) before they show or change anything. Values arrive typed from DuckDB and
 as text from the SQL warehouse, so each is read once here.
@@ -27,6 +31,8 @@ from dataclasses import dataclass, field
 from functools import cache
 from importlib import resources
 
+from strata.drafts.lesson_choices import COLUMNS as CHOICE_COLUMNS
+from strata.drafts.lesson_choices import LessonChoice, apply, from_row
 from strata.lakehouse.engine import Engine, EngineError
 
 STATES = ("draft", "checked", "exported", "discarded")
@@ -119,6 +125,9 @@ class Saved:
     export: Export | None = None
     fields: dict = field(default_factory=dict)
     choices: dict = field(default_factory=dict)
+    # Ticket 39: the choices its author made for rows that cite a changed lesson, oldest first. content already shows
+    # the draft as they leave it.
+    lesson_choices: tuple[LessonChoice, ...] = ()
 
     @property
     def state(self) -> State:
@@ -235,10 +244,15 @@ class DraftStore:
             kept = "lean" if row["kept_assertion_id"] == row["leaned_assertion_id"] else "other"
             choices.setdefault(row["draft_id"], {})[row["disagreement_id"]] = Choice(
                 kept, row["reason"] or None, author_name, moment(row["made_at"]))
+        lessons: dict[str, list[LessonChoice]] = {}
+        for row in self._rows(engine, "lesson_choices", ids=ids):
+            lessons.setdefault(row["draft_id"], []).append(from_row(row, moment))
         return [Saved(row["draft_id"], row["kind"], row["team_key"], row["author_id"], row["author_name"],
-                      row["project_id"], row["subject"], json.loads(row["content"]), moment(row["created_at"]),
+                      row["project_id"], row["subject"],
+                      apply(json.loads(row["content"]), lessons.get(row["draft_id"], [])), moment(row["created_at"]),
                       tuple(sorted(states.get(row["draft_id"], []), key=lambda step: step.step)),
-                      exports.get(row["draft_id"]), fields.get(row["draft_id"], {}), choices.get(row["draft_id"], {}))
+                      exports.get(row["draft_id"]), fields.get(row["draft_id"], {}), choices.get(row["draft_id"], {}),
+                      tuple(lessons.get(row["draft_id"], [])))
                 for row in rows if states.get(row["draft_id"])]
 
     def get(self, draft_id: str) -> Saved | None:
@@ -293,6 +307,18 @@ class DraftStore:
             saves = int(self._rows(engine, "field_saves", draft_id=draft_id)[0]["saves"])
             engine.insert_rows("strata.ops.draft_fields", FIELD_COLUMNS, [(
                 draft_id, saves + 1, row_key, name, value, actor_id, actor_name, at, at.date())])
+
+    def choose(self, draft_id: str, row_key: str, lesson_id: str, action: str, cited_version: int,
+               current_version: int, reason: str | None, rewrite: dict | None, draft_state: str, actor_id: str,
+               actor_name: str | None, at: dt.datetime) -> None:
+        """Keep one choice an author made for a row that cites a changed lesson, as a new row (ticket 39). Nothing is
+        updated or deleted; the draft reads its choices in order."""
+        with self._open() as engine:
+            made = int(self._rows(engine, "lesson_choice_count", draft_id=draft_id)[0]["choices"])
+            engine.insert_rows("strata.ops.draft_lesson_choices", CHOICE_COLUMNS, [(
+                draft_id, made + 1, row_key, lesson_id, action, cited_version, current_version, reason,
+                json.dumps(rewrite, ensure_ascii=False) if rewrite is not None else None, draft_state, actor_id,
+                actor_name, at, at.date())])
 
     def field_history(self, draft_id: str) -> list[dict]:
         """Every save of a draft's fields, oldest first, for the evidence pack's "Fields you set" table."""

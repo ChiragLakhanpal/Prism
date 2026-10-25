@@ -505,6 +505,10 @@
   },
   "disagreements": [],
   "choices": [],
+  "lesson_notices": [],
+  "lesson_updated": [],
+  "lesson_kept": [],
+  "lesson_removed": [],
   "ppsd": {
     "form": "short",
     "forms": {

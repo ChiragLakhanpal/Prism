@@ -1,0 +1,27 @@
+{
+ "about": "The judge's answer for this case's sentences, through Azure OpenAI's chat completions, written by hand in the shape the API documents, because the gate's machine has no key. The judge is config/models.toml's draft role. Replace it with a recording: uv run --script ops/agent/record.py --judge --env-file .env",
+ "recorded": false,
+ "recorded_on": null,
+ "case": "ppsd-row-update-cost-estimates",
+ "judge": {
+  "deployment": "gpt-5.4"
+ },
+ "asked": [
+  "Base the works cost estimates on current market rates before the contracts go to bid."
+ ],
+ "response": {
+  "id": "chatcmpl-ppsd-row-update-cost-estimates",
+  "object": "chat.completion",
+  "model": "gpt-5.4",
+  "choices": [
+   {
+    "index": 0,
+    "finish_reason": "stop",
+    "message": {
+     "role": "assistant",
+     "content": "{\"judgements\": [{\"index\": 0, \"follows\": true, \"reason\": \"Version 2 of the lesson says to base works cost estimates on current market rates to avoid rebidding, and both passages say so.\"}]}"
+    }
+   }
+  ]
+ }
+}

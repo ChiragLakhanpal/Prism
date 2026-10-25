@@ -127,7 +127,9 @@ from strata.agent.verifier import Verdict, answer_events
 from strata.config import DraftKinds, load_draft_kinds, load_roles, load_thresholds, load_tools
 from strata.dbx import Viewer, viewer_from_headers
 from strata.drafts.store import DraftStore
+from strata.knowledge.lessons.page import LessonsPage
 from strata.knowledge.lessons.review import LessonReview, Refused
+from strata.knowledge.lessons.visits import LessonVisits, Visit
 from strata.harness.aio import HEARTBEAT, with_heartbeats
 from strata.harness.turn import (ERROR_CODES, Event, RunError, Runner, Scope, TraceIds, Turn,
                                  new_run_id as random_run_id, no_agent)
@@ -150,7 +152,7 @@ from strata.server import estimates as estimate_routes
 from strata.server import following as following_routes
 from strata.server.following import FollowStore
 from strata.estimates import signals_track
-from strata.server.access import Access, NoGroups
+from strata.server.access import Access, NoGroups, is_author
 from strata.server.choices import REASON_LIMIT, ChoiceLog
 from strata.server.evidence import OpenedLog
 from strata.server.suppliers import SupplierLog
@@ -284,7 +286,7 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                passage_reports: PassageReports | None = None, judging: Judging | None = None,
                feedback_record: Callable[[], Engine] | None = None,
                citations: CitationLog | None = None, choices: ChoiceLog | None = None,
-               follows: FollowStore | None = None) -> FastAPI:
+               follows: FollowStore | None = None, visits: LessonVisits | None = None) -> FastAPI:
     """The app.
 
     engine_for makes the engine for each request's viewer; without it, the environment names one.
@@ -897,6 +899,35 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                              *(["judging"] if found["is_judge"] else [])]
             return found
         return lesson_read("the viewer's lesson tabs", viewer, read)
+
+    # ── The Lessons page (ticket 39): the digest, the notices, what is new, the reader's reports and the library ──
+
+    lessons_page = LessonsPage(lessons)
+    visit_gap = dt.timedelta(minutes=int(thresholds.value("lessons.visit_gap_minutes")))
+
+    @app.get("/api/lessons/page")
+    def lessons_page_route(view: Literal["staff", "piu", "public"] = STAFF, asof: dt.date | None = None,
+                           viewer: Viewer = Depends(current_viewer)):
+        """The whole Lessons tab in one answer, so the page renders once (the 39 brief, section 9). It records the
+        visit, unless it is a preview or an as-of view, which can only take things away (ticket 40 moves the preview
+        rule into the roles file's views)."""
+        preview = view != STAFF
+        moment = now()
+        try:
+            visit = (visits.visit(viewer.user_id, moment, visit_gap, record=not preview and asof is None)
+                     if visits is not None and viewer.user_id else Visit(moment, None))
+            # The reader's own drafts, for "Changed where you used it": read as the app, which keeps them, and
+            # filtered by the one access rule (src/strata/server/access.py) to the drafts they wrote.
+            mine = ([draft for draft in drafts.for_team(access.team(viewer).key, viewer.user_id)
+                     if is_author(viewer, draft.author_id)]
+                    if drafts is not None and viewer.user_id and not preview and asof is None else [])
+        except EngineError:
+            reference = request_reference()
+            log.exception("I could not read the Lessons visits or drafts of %s, reference %s.", viewer.user_id,
+                          reference)
+            return JSONResponse({"code": "data_service", "trace_id": reference}, status_code=503)
+        return lesson_read("the Lessons page", viewer,
+                           lambda engine: lessons_page.build(engine, visit=visit, preview=preview, drafts=mine))
 
     @app.get("/api/lessons")
     def lesson_library(page: int = Query(1, ge=1, le=10_000), viewer: Viewer = Depends(current_viewer)):

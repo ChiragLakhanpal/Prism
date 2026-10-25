@@ -566,6 +566,16 @@ decided_page_size = 20
 summary_poll_seconds = 15
 summary_poll_minutes = 10
 
+# The Lessons page, which opens on what came in since the reader's last visit (ticket 39).
+[lessons]
+# A visit is a session on any Lessons page: a new one starts when the reader opens Lessons after this many minutes
+# away, so a reload or a trip to a draft and back keeps the counts while they work through them. Source: the 39
+# design brief, section 4.2; a starting value for the owner to confirm.
+visit_gap_minutes = 30
+# "New" shows at most this many lesson cards, then a caption that points to the library. Source: the 39 design
+# brief, section 5.4 (DESIGN.md section 5: eight cards to a group at most).
+new_cards_max = 8
+
 # The package workspace's section 3, procurement risks and what helped (ticket 30). The risk-table
 # builder (src/strata/packages/risks.py) reads them, and returns the one the section states.
 [package_risks]

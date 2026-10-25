@@ -42,13 +42,14 @@ from pydantic import BaseModel, Field
 
 from strata.agent.answer_check import SixChecks
 from strata.agent.runs import RunLog, run_row
-from strata.config import DraftKinds
+from strata.config import DraftKinds, load_thresholds
 from strata.dbx import Viewer, viewer_from_headers
 from strata.drafts import files as draft_files
 from strata.drafts import runtime
 from strata.drafts.store import DraftStore, NewExport, Saved, Stale
 from strata.harness.aio import HEARTBEAT, with_heartbeats
 from strata.harness.turn import Event, Scope, TraceIds, Turn
+from strata.knowledge.lessons import notices
 from strata.lakehouse.engine import EngineError, PermissionDenied
 from strata.packages.store import PackageStore
 from strata.server.access import Access, is_author
@@ -97,6 +98,18 @@ class FieldRequest(BaseModel):
 
 class FormRequest(BaseModel):
     form: str = Field(min_length=1, max_length=32)
+    view: VIEWS = "staff"
+
+
+class LessonChoiceRequest(BaseModel):
+    """What a draft's author chose for a row that cites a changed lesson (ticket 39), with the versions they saw, so a
+    choice made in another tab or window is never written over. The author is the forwarded viewer, never a field."""
+
+    lesson_id: str = Field(min_length=1, max_length=64)
+    action: Literal["update", "keep", "remove", "restore", "revert"]
+    expected_cited_version: int = Field(ge=1)
+    expected_current_version: int = Field(ge=1)
+    reason: str | None = Field(default=None, max_length=4000)
     view: VIEWS = "staff"
 
 
@@ -149,8 +162,17 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: DraftStore 
         ids = [entry["evidence_id"] for entry in runtime.sources(saved.content)]
         return store.opened_since(viewer_id or "", ids, saved.created_at)
 
+    def lesson_notices(viewer: Viewer, saved: Saved) -> list[dict]:
+        """The open version notices on a draft's rows (ticket 39), from the lesson versions as the viewer reads them.
+        A draft that cites no lesson needs no read."""
+        if engine_for is None or not any(notices.citations(saved.content)):
+            return []
+        with engine_for(viewer) as engine:
+            return notices.row_notices(saved.content, notices.history(engine))
+
     def shown(saved: Saved, viewer: Viewer, view: str) -> dict:
-        return runtime.draft_view(saved, viewer, view, kinds, opened_by(viewer.user_id, saved))
+        return runtime.draft_view(saved, viewer, view, kinds, opened_by(viewer.user_id, saved),
+                                  lesson_notices(viewer, saved))
 
     # ── Writing ──────────────────────────────────────────────────────────
 
@@ -252,7 +274,7 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: DraftStore 
             rows = [{"risk_label": row["risk_label"], "row_key": row["row_key"],
                      "sentences": [sentence for cell in row["cells"].values()
                                    for sentence in (notes.get(cell) or {}).get("sentences") or ()]}
-                    for row in draft.content["ppsd"]["rows"]]
+                    for row in draft.content["ppsd"]["rows"] if not row.get("removed")]
             cited = {evidence for row in rows for sentence in row["sentences"] for evidence in sentence["evidence_ids"]}
             found.append({"draft_id": draft.draft_id, "package_title": subject.get("package_title"),
                           "checked_by": checked.actor_name if checked else None,
@@ -446,7 +468,7 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: DraftStore 
             state = saved.state.state
             if state != body.expected_state:
                 return refused(409, "stale", state=state)
-            left = runtime.holds(saved, kinds, body.view)
+            left = runtime.holds(saved, kinds, body.view, lesson_notices(viewer, saved))
             if state not in rule.starts:
                 return refused(409, "draft_state", state=state, holds=[hold["key"] for hold in left])
             if action == "export" and left:
@@ -468,7 +490,7 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: DraftStore 
         kind = kinds.kinds[saved.kind]
         opened = store.opened_since(saved.author_id, [entry["evidence_id"] for entry in runtime.sources(saved.content)],
                                     saved.created_at)
-        draft = runtime.draft_view(saved, viewer, STAFF, kinds, opened)
+        draft = runtime.draft_view(saved, viewer, STAFF, kinds, opened, lesson_notices(viewer, saved))
         draft["field_history"] = store.field_history(saved.draft_id) if "ppsd" in draft else []
         made = draft_files.make(kind, draft, exporter=viewer.name, exported_at=moment)
         return NewExport(f"{saved.draft_id}-export-{moment:%Y%m%d%H%M%S}", moment, viewer.user_id, viewer.name,
@@ -522,6 +544,117 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: DraftStore 
     def set_form(draft_id: str, body: FormRequest, viewer: Viewer = Depends(current_viewer)):
         """The risk table form the draft uses: the Short Form, or the Long Form where Table I offers it."""
         return set_value(viewer, draft_id, body.view, "", "form", body.form)
+
+    # ── A row that cites a changed lesson (ticket 39) ────────────────────
+
+    reason_max = int(load_thresholds().value("lesson_review.reason_max_chars"))
+
+    def choice_check(viewer: Viewer, draft_id: str, row_key: str, body: LessonChoiceRequest):
+        """The draft and what the choice changes, or the refusal: not found, a preview, not the author, a state where
+        nothing changes, a choice the row does not offer (422), or versions other than the ones the author saw (409
+        stale, with the draft as it is now)."""
+        saved = fillable(viewer, draft_id, body.view, "choose")
+        if isinstance(saved, JSONResponse):
+            return saved
+        with engine_for(viewer) as engine:
+            history = notices.history(engine)
+        versions = sorted(int(row["version"]) for row in history.get(body.lesson_id, []))
+        latest = versions[-1] if versions else None
+        shown_now = runtime.draft_view(saved, viewer, body.view, kinds, opened_by(viewer.user_id, saved),
+                                       notices.row_notices(saved.content, history))
+
+        def stale():
+            return refused(409, "stale", state=saved.state.state, draft=shown_now)
+
+        if body.action in ("keep", "update", "remove"):
+            notice = next((one for one in shown_now["lesson_notices"]
+                           if one["row_key"] == row_key and one["lesson_id"] == body.lesson_id), None)
+            if notice is None or (notice["a"], notice["b"]) != (body.expected_cited_version, body.expected_current_version):
+                return stale()
+            if body.action not in notice["actions"]:
+                return refused(422, "not_offered")
+            reason = (body.reason or "").strip()
+            if body.action == "keep" and not reason:
+                return refused(422, "no_reason")
+            if body.action == "keep" and len(reason) > reason_max:
+                return refused(422, "reason_too_long", limit=reason_max)
+            return saved, notice["a"], latest, reason or None
+        if body.action == "restore":
+            gone = [entry for entry in saved.content.get("lesson_removed") or [] if entry["row_key"] == row_key]
+            if not gone or (gone[0]["cited_version"], latest) != (body.expected_cited_version,
+                                                                   body.expected_current_version):
+                return stale()
+            return saved, gone[0]["cited_version"], latest, None
+        updated = [entry for entry in saved.content.get("lesson_updated") or []
+                   if entry["row_key"] == row_key and entry["lesson_id"] == body.lesson_id]
+        if not updated or (updated[-1]["current_version"], latest) != (body.expected_cited_version,
+                                                                       body.expected_current_version):
+            return stale()
+        return saved, updated[-1]["current_version"], latest, None
+
+    @app.post("/api/drafts/{draft_id}/rows/{row_key}/lesson")
+    async def choose_for_row(draft_id: str, row_key: str, body: LessonChoiceRequest,
+                             viewer: Viewer = Depends(current_viewer)):
+        """The author's choice for a row whose lesson changed (the 39 brief, section 9): update rewrites the row from
+        the current version with the kind's writer and the verifier, and a draft marked as checked goes back to Draft,
+        since new text needs a new check; keep keeps the cited version with a reason; remove takes the row out, and
+        restore brings it back; revert undoes an update with no model call. Each writes a new row, as the author."""
+        if not viewer.user_id:
+            return refused(401, "no_identity")
+        if store is None or engine_for is None:
+            return JSONResponse({"code": "no_data_service"}, status_code=503)
+        checked = await asyncio.to_thread(guarded, f"a lesson choice on draft {draft_id}",
+                                          lambda: choice_check(viewer, draft_id, row_key, body))
+        if isinstance(checked, JSONResponse):
+            return checked
+        saved, cited, latest, reason = checked
+        rewrite = None
+        if body.action == "update":
+            kind = kinds.kinds[saved.kind]
+            run_id, started, noted = new_run_id(), dt.datetime.now(dt.UTC), []
+            error_code = None
+            try:
+                rewrite = await runtime.rewrite(saved, kind, row_key, body.lesson_id, viewer, engine_for, writers,
+                                                six_checks, today(), run_id, noted)
+            except runtime.WriteError as error:
+                error_code = error.code if error.code in runtime.WRITE_ERRORS else "internal"
+            except Exception as error:  # the kind's own refusal that the row cannot be rewritten
+                if type(error).__name__ != "CannotRewrite":
+                    raise
+                error_code = "stale"
+            finally:
+                if runs is not None and noted:
+                    turn = Turn(question=noted[1], viewer=viewer, run_id=run_id,
+                                scope=Scope(chip=saved.project_id, as_of=today(), language="en"), trace=trace_ids())
+                    turn.notes.agent, turn.notes.agent_version, turn.notes.as_of = noted[2], noted[3], today()
+                    row = run_row(turn, noted[0], error_code or (None if rewrite else "no_answer"), started,
+                                  dt.datetime.now(dt.UTC))
+                    await asyncio.to_thread(runs.record, row)
+            if error_code == "stale":
+                return refused(409, "stale", state=saved.state.state)
+            if error_code:
+                return refused(502, "update_failed", reason_code=error_code)
+            if rewrite is None:
+                return JSONResponse({"outcome": "nothing_passed",
+                                     "draft": await asyncio.to_thread(guarded, f"draft {draft_id}",
+                                                                      lambda: shown(saved, viewer, body.view))},
+                                    headers={"Cache-Control": "no-store"})
+
+        def save():
+            moment = now()
+            state = saved.state.state
+            store.choose(draft_id, row_key, body.lesson_id, body.action, cited, latest, reason, rewrite, state,
+                         viewer.user_id, viewer.name, moment)
+            if body.action == "update" and state == "checked":
+                try:  # "Checked by you" describes the text you checked, so new text goes back to Draft
+                    store.change(draft_id, "checked", "draft", viewer.user_id, viewer.name, moment)
+                except Stale:
+                    pass
+            outcome = {"update": "updated", "keep": "kept", "remove": "removed", "restore": "restored",
+                       "revert": "reverted"}[body.action]
+            return {"outcome": outcome, "back_to_draft": body.action == "update" and state == "checked",
+                    "draft": shown(store.get(draft_id), viewer, body.view)}
+        return await asyncio.to_thread(guarded, f"a lesson choice on draft {draft_id}", save)
 
     @app.get("/api/drafts/{draft_id}/files/{name}")
     def download(draft_id: str, name: str, viewer: Viewer = Depends(current_viewer)):

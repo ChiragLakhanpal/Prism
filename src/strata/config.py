@@ -1271,6 +1271,10 @@ class DraftKind:
     files: str
     # Only viewers with the World Bank staff role may start one (ticket 37's mission brief).
     staff_only: bool = False
+    # Ticket 39: the values of the sentence that names a row ("Row 1, Cost estimates below market rates."), and the
+    # writer that rewrites one row from a lesson's current version, each as module:function, or None.
+    row_label: str | None = None
+    rewrite_row: str | None = None
 
 
 @dataclass(frozen=True)
@@ -1298,7 +1302,7 @@ def load_draft_kinds(path: Path = CONFIG_DIR / "drafts.toml") -> DraftKinds:
     for key, table in (data.get("kinds") or {}).items():
         entry = _Entry(path, f"kinds.{key}", table)
         entry.only({"writer", "agent", "word", "export", "csv", "columns", "holds", "sources_list", "removed_box",
-                    "not_checked", "files", "staff_only"})
+                    "not_checked", "files", "staff_only", "row_label", "rewrite_row"})
         if not MODULE.fullmatch(entry.text("writer")):
             entry._fail("writer", "must name a module, such as strata.drafts.review_notes")
         if not FUNCTION.fullmatch(entry.text("word")):
@@ -1307,6 +1311,9 @@ def load_draft_kinds(path: Path = CONFIG_DIR / "drafts.toml") -> DraftKinds:
             entry._fail("csv", "must list functions as module:function")
         if entry.text("export") not in EXPORTS:
             entry._fail("export", f"must be one of {', '.join(EXPORTS)}")
+        for name in ("row_label", "rewrite_row"):
+            if name in table and not FUNCTION.fullmatch(entry.text(name)):
+                entry._fail(name, "must name a function as module:function")
         unknown = [hold for hold in entry.texts("holds") if hold not in holds]
         if unknown:
             entry._fail("holds", f"names {', '.join(unknown)}, which [holds] does not define")
@@ -1317,7 +1324,9 @@ def load_draft_kinds(path: Path = CONFIG_DIR / "drafts.toml") -> DraftKinds:
         kinds[key] = DraftKind(key, entry.text("writer"), entry.text("agent"), entry.text("word"),
                                entry.text("export"), entry.texts("csv"), entry.texts("columns"), entry.texts("holds"),
                                entry.boolean("sources_list"), entry.text("removed_box"), entry.texts("not_checked"),
-                               entry.text("files"), entry.boolean("staff_only") if "staff_only" in table else False)
+                               entry.text("files"), entry.boolean("staff_only") if "staff_only" in table else False,
+                               entry.text("row_label") if "row_label" in table else None,
+                               entry.text("rewrite_row") if "rewrite_row" in table else None)
     if not kinds:
         raise ConfigError(f"{path.name} defines no draft kind. Add a [kinds.<key>] table.")
     return DraftKinds(kinds, holds, cards.boolean("cards_on_drafts"))
