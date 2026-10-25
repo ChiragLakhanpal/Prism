@@ -511,8 +511,8 @@ endpoint = "https://search.worldbank.org/api/v3/wds"
 watermark_field = "disclosure_date"
 # The seconds the job waits between two requests to documents.worldbank.org, which refused every request from
 # one computer on October 25, 2026 after some hundreds of PDFs asked for back to back. Each answer is also kept in
-# the bronze files volume, so no document is asked for twice. A value for the owner to confirm: at 3 seconds,
-# a night's 150 minutes allow about 3,000 requests.
+# the bronze files volume, so no document is asked for twice. A value for the owner to confirm. The night's
+# requests stop when its reading time, ingestion.document_host_minutes in config/thresholds.toml, is spent.
 pause_seconds = 3
 cadence = "daily"
 license = "CC BY 4.0"

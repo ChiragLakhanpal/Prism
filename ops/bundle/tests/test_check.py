@@ -178,7 +178,7 @@ def deployed_warehouse():
     engine = DuckDBEngine.open()
     catalog.build(engine)
     plans.run_on_fixture(engine)
-    nightly.run_locally(engine)
+    nightly.run_locally(engine, readers_for=nightly.no_documents)  # the readers run around it, as in the build
     passages.run_on_fixture(engine)
     assertions.run_on_fixture(engine)
     return engine

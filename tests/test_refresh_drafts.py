@@ -11,6 +11,7 @@ import datetime as dt
 import json
 
 import pytest
+from nightly_helpers import Unclosed
 
 from strata.drafts.store import DraftStore, NewDraft
 from strata.lakehouse import catalog, nightly
@@ -19,19 +20,6 @@ from strata.lakehouse.engine import DuckDBEngine
 LESSON = "lesson-3f2a9c1d0b"
 CITED = f"strata.ops.lesson_versions:{LESSON}/v1"
 DECIDED = dt.date(2026, 10, 20)
-
-
-class Unclosed:
-    """The test's engine, which the draft store's close leaves open."""
-
-    def __init__(self, engine):
-        self.engine = engine
-
-    def __getattr__(self, name):
-        return getattr(self.engine, name)
-
-    def close(self):
-        pass
 
 
 @pytest.fixture

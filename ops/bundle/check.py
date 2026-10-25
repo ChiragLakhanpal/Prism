@@ -156,7 +156,7 @@ def _local_engine() -> DuckDBEngine:
     engine = DuckDBEngine.open()
     catalog.build(engine)
     plans.run_on_fixture(engine)
-    nightly.run_locally(engine, run_id="fixture")
+    nightly.run_locally(engine, run_id="fixture", readers_for=nightly.no_documents)  # the readers run around it
     passages.run_on_fixture(engine, run_id="fixture")
     assertions.run_on_fixture(engine, run_id="fixture")
     return engine

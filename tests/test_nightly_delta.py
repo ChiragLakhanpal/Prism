@@ -16,6 +16,7 @@ from pathlib import Path
 
 import pytest
 from lesson_scenario import ASHA, IEG_LESSON, OMAR, WANJIRU, decide, review_on
+from nightly_helpers import Unclosed, clock
 
 from strata.drafts.store import DraftStore, NewDraft
 from strata.fixture import recorded as fmt
@@ -52,22 +53,6 @@ class TheNightBefore:
 
 def projects_only(source, engine):
     return pages.recorded_pages(source) if source.key == "projects" else ()
-
-
-def clock(start):
-    ticks = iter(range(10**7))
-    return lambda: start + dt.timedelta(milliseconds=next(ticks))
-
-
-class Unclosed:
-    def __init__(self, engine):
-        self.engine = engine
-
-    def __getattr__(self, name):
-        return getattr(self.engine, name)
-
-    def close(self):
-        pass
 
 
 def one(engine, sql, **params):

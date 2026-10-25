@@ -170,17 +170,22 @@ def _count(engine: Engine, table: str) -> int:
 def read(engine: Engine, readers: Readers, run_id: str, clock: Callable[[], dt.datetime]) -> int:
     """The parse_and_embed task: both readers, over only what changed. Returns the rows they added or changed."""
     before = {table: _count(engine, table) for table in ADDED_TO}
-    synced = 0
+    stop: StopReading | None = None
     try:
         for project_id in readers.plan_projects(engine):
             plans.run(engine, readers.documents, readers.layout, project_id, clock=clock, run_id=run_id)
-        synced += gold.sync(engine, "package")  # its query reads the plan rows the plan reader just wrote
-        if readers.shield is not None and readers.embedder is not None:
+    except StopReading as stopped:
+        stop = stopped
+    synced = gold.sync(engine, "package")  # its query reads the plan rows read tonight, before any stop
+    if stop is None and readers.shield is not None and readers.embedder is not None:
+        try:
             report = passages.run(engine, readers.documents, readers.report_projects(engine), shield=readers.shield,
                                   embedder=readers.embedder, layout=readers.layout, clock=clock, run_id=run_id)
             synced += report.synced
-    except StopReading as stopped:
-        note_stop(engine, run_id, clock(), stopped)
+        except StopReading as stopped:
+            stop = stopped
+    if stop is not None:
+        note_stop(engine, run_id, clock(), stop)
     return synced + sum(_count(engine, table) - count for table, count in before.items())
 
 
@@ -189,7 +194,8 @@ def note_stop(engine: Engine, run_id: str, when: dt.datetime, stopped: StopReadi
     night's reading time was spent."""
     day = f"{when:%B} {when.day}, {when.year}"
     if isinstance(stopped, HostRefused):
-        why = f"The document host answered HTTP {stopped.status} on {day}, so the readers stopped for the night."
+        why = (f"The document host answered HTTP {stopped.status} on {day}, so I stopped reading documents "
+               "for the night.")
     else:
         minutes = getattr(stopped, "minutes", None)
         why = (f"I stopped reading documents on {day}, after the night's {minutes} minutes for the document host, "

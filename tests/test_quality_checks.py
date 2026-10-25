@@ -10,6 +10,7 @@ import datetime as dt
 import shutil
 
 import pytest
+from nightly_helpers import clock
 
 from strata import config
 from strata.lakehouse import catalog, nightly
@@ -26,14 +27,9 @@ def fixture_copy(fixture_db, tmp_path):
         yield engine
 
 
-def clock(start=NIGHT):
-    ticks = iter(range(10**6))
-    return lambda: start + dt.timedelta(seconds=next(ticks))
-
-
 def run(engine, task, run_id="night-2", when=NIGHT):
     nightly.main(["--task", task, "--run-id", run_id, "--src", "src"], engine, fetch=lambda s, e: (),
-                 clock=clock(when))
+                 clock=clock(when, step=dt.timedelta(seconds=1)))
 
 
 def checks(engine, run_id="night-2", task=None):

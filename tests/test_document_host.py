@@ -142,16 +142,22 @@ def plans_only(documents):
 
 
 STOPS = {
-    "document_host_refused": (lambda url: HostRefused(url, 403), "The document host answered HTTP 403 on October 24, 2026"),
+    "document_host_refused": (lambda url: HostRefused(url, 403),
+                              "The document host answered HTTP 403 on October 24, 2026, so I stopped reading documents "
+                              "for the night."),
     "document_host_budget_spent": (lambda url: BudgetSpent(url, 3600),
                                    "I stopped reading documents on October 24, 2026, after the night's 60 minutes"),
 }
 
 
 @pytest.mark.parametrize("measure", list(STOPS))
-def test_a_night_the_reading_stops_finishes_with_a_note_and_the_next_night_goes_on_from_there(measure):
+def test_a_night_the_reading_stops_finishes_with_a_note_and_the_next_night_goes_on_from_there(measure, monkeypatch):
+    """The plan rows read before the stop reach strata.gold.package the same night (review r2 follow-up 2)."""
     from strata.fixture import recorded as fmt
+    from strata.lakehouse import gold
 
+    synced, sync = [], gold.sync
+    monkeypatch.setattr(gold, "sync", lambda engine, table: synced.append(table) or sync(engine, table))
     stop, sentence = STOPS[measure]
     documents = RecordedDocuments(fmt.load_manifest())
     with DuckDBEngine.open() as engine:
@@ -168,7 +174,7 @@ def test_a_night_the_reading_stops_finishes_with_a_note_and_the_next_night_goes_
         status = engine.run("SELECT status FROM strata.ops.pipeline_runs WHERE run_id = 'night-1'").rows
         note = engine.run("SELECT measure, kind, as_of, detail FROM strata.ops.data_readiness "
                           "WHERE run_id = 'night-1' AND source = 'documents' AND subject = 'all'").rows
-        assert (held, list(status)) == (2, [("succeeded",)])
+        assert (held, list(status), synced) == (2, [("succeeded",)], ["package"])
         assert note[0][:3] == (measure, "fresh", NIGHT.date())
         assert note[0][3].startswith(sentence)
 

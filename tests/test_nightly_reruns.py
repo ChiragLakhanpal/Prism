@@ -16,6 +16,7 @@ import shutil
 from collections import Counter
 
 import pytest
+from nightly_helpers import clock
 
 from strata.lakehouse import nightly, pages
 from strata.lakehouse.silver import projects as silver_projects
@@ -31,11 +32,6 @@ def fixture_copy(fixture_db, tmp_path):
     shutil.copy(fixture_db, target)
     with DuckDBEngine.open(target) as engine:
         yield engine
-
-
-def clock(start):
-    ticks = iter(range(10**7))
-    return lambda: start + dt.timedelta(milliseconds=next(ticks))
 
 
 def snapshot(engine) -> dict[str, Counter]:
