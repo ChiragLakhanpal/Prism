@@ -86,6 +86,23 @@ def test_add_to_mission_brief_writes_five_parts_with_numbers_from_tools_and_cita
     assert draft["checks"]["tools"] == ["project_records"]
 
 
+def test_the_brief_writes_amounts_in_millions_in_its_sentences_from_tool_columns_and_dates_its_records(story):
+    """DESIGN.md rule 11: "US$2.5 million" in text, cents only in tables. Each figure is a column a tool returned:
+    the two contracts' total in millions, and each loan's amounts in millions. The brief keeps the data-freshness day
+    its records run through, which on the fixture is the day it was written."""
+    draft = read(story, "drafts-mission-brief-draft.json")
+    said = {note["key"]: [sentence["text"] for sentence in note["sentences"]] for note in draft["notes"]}
+
+    assert said["awards"][0] == "Two contracts were signed after the ISR dated June 30, 2026, for US$2.5 million together."
+    assert "at US$2.4 million, against an Estimated Amount of US$2.6 million" in said["awards"][1]
+    assert said["disbursement"][0] == "By September 30, 2026, IDA60300 had disbursed US$275.9 million, with US$183.98 left to disburse."
+    assert said["closing"][1] == "The loan history shows the closing date moved three times, most recently in November 2025."
+    assert draft["subject"]["data_through"] == "2026-10-23"
+    disbursement = next(note for note in draft["notes"] if note["key"] == "disbursement")
+    # IDA60300 reports more disbursed than its original principal (values.toml), and the tool says so.
+    assert disbursement["totals"]["amounts_exceed_commitment"] is True
+
+
 def test_the_brief_moves_through_the_draft_states_and_exports_a_word_file_with_its_five_parts(story):
     checked, exported = read(story, "drafts-mission-brief-checked.json"), read(story, "drafts-mission-brief-exported.json")
     [(name, word)] = story[1].items()
@@ -98,6 +115,11 @@ def test_the_brief_moves_through_the_draft_states_and_exports_a_word_file_with_i
         assert heading in document
     assert "This brief is not a World Bank review, clearance or no-objection." in document
     assert exported["export"]["footnotes"] == exported["citations"]
+    assert "Kenya. Public records through October 23, 2026." in document
+    assert "The loans and credits data reports more disbursed and canceled than committed for this project." in document
+    footnotes = zipfile.ZipFile(io.BytesIO(word)).read("word/footnotes.xml").decode()
+    assert "Strata's totals of this project's records, as of October 23, 2026." in footnotes
+    assert "API. P156634" not in footnotes
 
 
 def test_the_following_row_names_the_open_brief_its_author_started(story):
@@ -172,3 +194,10 @@ def test_the_word_file_says_why_a_part_has_no_records_by_the_reason_the_tool_gav
     assert "No closing date is recorded for this project, so there is no closing check." in text
     assert "No contract was signed after the ISR dated June 30, 2026." in text
     assert "No ISR was read for this project." in text
+
+
+def test_the_word_file_dates_the_records_by_the_day_they_run_through_not_the_day_it_was_written(story):
+    draft = read(story, "drafts-mission-brief-exported.json")
+    draft["subject"].update(as_of="2026-10-23", data_through="2026-10-22")
+
+    assert "Kenya. Public records through October 22, 2026." in word_text(draft)

@@ -287,6 +287,12 @@ export function MissionBriefParts({ notes, evidence, numbers, opened, open, subj
               )}
             </div>
             {data && <PartTable title={tableTitle} data={data} caption={note.key === "ratings" ? words.pdo : undefined} foldable={note.key === "awards"} />}
+            {/* The tool's flag, worded as the Summary's Money table words it: the browser compares no amounts. */}
+            {data && note.key === "disbursement" && note.totals?.amounts_exceed_commitment && (
+              <p className="mt-2 max-w-[72ch] text-caption text-ink-muted" data-exceeds>
+                {copy.summary.money.exceeds}
+              </p>
+            )}
             {note.key === "closing" && !data && !note.reason && <p className="mt-4 max-w-[72ch] text-small text-ink-muted">{words.noneAfter}</p>}
             {history && <PartTable title={words.tables.history} data={history} />}
           </section>

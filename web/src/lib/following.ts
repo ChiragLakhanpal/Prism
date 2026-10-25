@@ -13,7 +13,8 @@ export type SignalItem = Record<string, any> & { evidence_id: string; public_fro
 export type Signal = {
   evidence_id: string;
   public_from: string;
-  source: { source_key: string; project_id: string; document_id: string | null; date: string | null };
+  // evidence_id: the record the line's marker opens and names (the latest move, for the closing date).
+  source: { source_key: string; project_id: string; document_id: string | null; date: string | null; evidence_id?: string };
   check: SignalKey;
   strong: boolean;
   count: number;
@@ -156,3 +157,6 @@ export function missingReasons(entry: FollowedProject): string[] {
 }
 
 export const shortDate = (iso: string) => formatDate(iso, { style: "table" });
+
+// The record a signal's marker opens: the one its source names, so the marker's name and its drawer agree.
+export const markerRecord = (signal: Signal): string | undefined => signal.source.evidence_id ?? signal.items[0]?.evidence_id;

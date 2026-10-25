@@ -274,7 +274,14 @@ const PARTS = ["plans", "awards", "ratings", "disbursement", "closing"];
 function briefSteps(current: Writing): Step[] {
   const s = copy.draft.kinds.mission_brief.steps;
   const by = Object.fromEntries(current.steps.map((step) => [step.id, step]));
-  const lines: Step[] = [{ key: "read", running: s.read.running, done: s.read.done(""), state: by.read?.status ?? "running" }];
+  const read = by.read ?? {};
+  const counted = (n: number | undefined) => [n ?? 0, formatCount(n ?? 0)] as const;
+  const lines: Step[] = [{
+    key: "read",
+    running: s.read.running,
+    done: s.read.counted(...counted(read.plans), ...counted(read.awards), ...counted(read.isrs)),
+    state: by.read?.status ?? "running",
+  }];
   if (by.write) {
     lines.push({
       key: "write",

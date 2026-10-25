@@ -57,6 +57,8 @@ export type DraftSubject = {
   // A mission brief's (ticket 37).
   country?: string | null;
   as_of?: string;
+  // The data-freshness day the brief's records run through.
+  data_through?: string | null;
   isr_date?: string | null;
   isr_sequence?: number | null;
   closing_date?: string | null;

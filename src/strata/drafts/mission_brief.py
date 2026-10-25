@@ -26,6 +26,7 @@ from dataclasses import dataclass
 
 from strata.dbx import Viewer
 from strata.lakehouse.engine import Engine
+from strata.server.viewer_sql import data_through
 from strata.tools import registry
 
 TOOL = "project_records"
@@ -52,6 +53,8 @@ class Facts:
     request: dict
     result: dict
     marked: list[dict]
+    # The data-freshness day the records run through, never after the as-of date (ADR 0002).
+    through: dt.date | None = None
 
     @property
     def rows(self) -> list[dict]:
@@ -73,7 +76,8 @@ def read(engine: Engine, viewer: Viewer, request: dict, today: dt.date) -> Facts
         checked = registry.call("check_plan", {"project_id": request["project_id"], "implementing_agency": agency},
                                 context)
         marked += [activity for activity in checked["rows"] if any(mark["mark"] in SIGNALS for mark in activity["marks"])]
-    return Facts(request, result, marked)
+    through = data_through(engine)
+    return Facts(request, result, marked, min(through, today) if through else None)
 
 
 def cited_rows(facts: Facts) -> list[tuple[dict, str]]:
@@ -130,6 +134,7 @@ def subject(facts: Facts) -> dict:
     project, isr = facts.result["project"], facts.result["isr"]
     return {"project_id": project["project_id"], "project_name": project["project_name"], "country": project["country"],
             "closing_date": project["closing_date"], "as_of": facts.result["as_of"],
+            "data_through": facts.through.isoformat() if facts.through else None,
             "isr_date": isr["isr_date"] if isr else None, "isr_sequence": isr["sequence"] if isr else None,
             "date": facts.result["as_of"], "signal": None}
 
@@ -205,7 +210,8 @@ def word(document, draft: dict, words: dict, say) -> None:
     layout = words["files"]["word"]["mission_brief"]
     about = draft["subject"]
     document.heading(say(layout["heading"], project_name=about["project_name"], project_id=about["project_id"]))
-    document.paragraph(say(layout["line"], country=about.get("country") or "", date=say.date(about["as_of"])))
+    through = about.get("data_through") or about["as_of"]
+    document.paragraph(say(layout["line"], country=about.get("country") or "", date=say.date(through)))
     checked = draft["checked"] or {}
     document.paragraph(say(layout["origin"], created=say.date(draft["created_at"]), checker=checked.get("by") or "",
                            checked=say.date(checked["at"]) if checked.get("at") else ""))
@@ -222,4 +228,6 @@ def word(document, draft: dict, words: dict, say) -> None:
             header, body, widths = table
             document.bold(say(layout["tables"][part], date=say.date(about["isr_date"]) if about.get("isr_date") else ""))
             document.table(header, [[[[cell or ""]] for cell in row] for row in body], widths=widths)
+        if part == "disbursement" and (note.get("totals") or {}).get("amounts_exceed_commitment"):
+            document.paragraph(layout["exceeds"])
     document.paragraph(words["notVisible"])

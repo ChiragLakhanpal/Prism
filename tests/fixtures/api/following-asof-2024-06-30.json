@@ -26,7 +26,8 @@
       "source_key": "loan_history",
       "project_id": "P156634",
       "document_id": null,
-      "date": "2024-04-30"
+      "date": "2024-04-30",
+      "evidence_id": "strata.gold.project_closing_date:P156634/2024-04-30"
      },
      "check": "closing_moves",
      "strong": false,

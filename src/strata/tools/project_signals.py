@@ -32,7 +32,8 @@ is not checked (not_active), since the checks look for reasons to look during im
 
 Each row is one signal: the check, whether it is strong, its count, the values its line states and the
 records it rests on (items), each record cited by its own evidence id and public date, so a citation
-marker opens the record and an answer can cite it. Every number a line states is a value here, at its
+marker opens the record and an answer can cite it. Its source names the one record the line's marker opens (the
+first item, or for the closing date the latest move), so the marker's name and its drawer agree. Every number a line states is a value here, at its
 rounding: a ratio as the whole number "about" rounds it to, an amount in US$ millions to one decimal.
 """
 
@@ -326,6 +327,8 @@ def _signal(project: dict, key: str, items: list[dict], values: dict, limits: Li
     count = values.pop("count", len(items))
     strong = key in limits.strong or (key in limits.strong_from and count >= limits.strong_from[key])
     public = max((_date(item["public_from"]) for item in items), default=as_of)
+    # The record the line's marker opens, which the source names: the first item, unless the source says another.
+    source = {**source, "evidence_id": source.get("evidence_id") or items[0]["evidence_id"]}
     return {"evidence_id": f"strata.tools.project_signals:{project['project_id']}/{key}@{as_of.isoformat()}",
             "public_from": _iso(min(public, as_of)), "source": source, "check": key, "strong": strong,
             "count": count, "values": values, "items": items}
@@ -388,8 +391,9 @@ def project_signals(call: Call, project_id: str) -> dict:
         found["closing_moves"] = moves if len(moves) >= limits.closing_moves_min else []
         if found["closing_moves"]:
             values["closing_moves"] = {"since_year": _date(moves[0]["reported_on"]).year}
+            # The marker names and opens the latest move, the one that set today's closing date.
             sources["closing_moves"] = {"source_key": "loan_history", "project_id": project_id, "document_id": None,
-                                        "date": moves[-1]["reported_on"]}
+                                        "date": moves[-1]["reported_on"], "evidence_id": moves[-1]["evidence_id"]}
 
     latest = _latest_isr(_rows(call, "isr_ratings.sql", project_id=project_id))
     if not latest:

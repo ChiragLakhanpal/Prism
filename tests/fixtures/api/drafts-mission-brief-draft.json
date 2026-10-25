@@ -16,6 +16,7 @@
   "country": "Kenya",
   "closing_date": "2026-10-31",
   "as_of": "2026-10-23",
+  "data_through": "2026-10-23",
   "isr_date": "2026-06-30",
   "isr_sequence": 19,
   "date": "2026-10-23",
@@ -285,7 +286,7 @@
    "sentences": [
     {
      "index": 3,
-     "text": "Two contracts were signed after the ISR dated June 30, 2026, for US$2,544,201.48 together.",
+     "text": "Two contracts were signed after the ISR dated June 30, 2026, for US$2.5 million together.",
      "kind": "record",
      "evidence_ids": [
       "strata.tools.project_records:P156634@2026-10-23"
@@ -296,7 +297,7 @@
        "evidence_id": "strata.tools.project_records:P156634@2026-10-23"
       },
       {
-       "text": "2,544,201.48",
+       "text": "2.5",
        "evidence_id": "strata.tools.project_records:P156634@2026-10-23"
       }
      ],
@@ -310,18 +311,18 @@
     },
     {
      "index": 4,
-     "text": "KE-CWSB-567630-CW-DIR was signed on August 28, 2026 at US$2,432,125.50, against an Estimated Amount of US$2,600,000.00.",
+     "text": "KE-CWSB-567630-CW-DIR was signed on August 28, 2026 at US$2.4 million, against an Estimated Amount of US$2.6 million.",
      "kind": "record",
      "evidence_ids": [
       "strata.gold.contract:1901323"
      ],
      "numbers": [
       {
-       "text": "2,432,125.50",
+       "text": "2.4",
        "evidence_id": "strata.gold.contract:1901323"
       },
       {
-       "text": "2,600,000.00",
+       "text": "2.6",
        "evidence_id": "strata.gold.contract:1901323"
       }
      ],
@@ -377,6 +378,16 @@
        "key": "estimated_amount_usd",
        "value": "2600000.00",
        "kind": "usd"
+      },
+      {
+       "key": "signed_millions",
+       "value": "2.4",
+       "kind": "millions"
+      },
+      {
+       "key": "estimated_millions",
+       "value": "2.6",
+       "kind": "millions"
       }
      ]
     },
@@ -421,6 +432,16 @@
        "key": "estimated_amount_usd",
        "value": "116000.00",
        "kind": "usd"
+      },
+      {
+       "key": "signed_millions",
+       "value": "0.1",
+       "kind": "millions"
+      },
+      {
+       "key": "estimated_millions",
+       "value": "0.1",
+       "kind": "millions"
       }
      ]
     }
@@ -2165,14 +2186,14 @@
    "sentences": [
     {
      "index": 7,
-     "text": "By September 30, 2026, IDA60300 had disbursed US$275,912,875.34, with US$183.98 left to disburse.",
+     "text": "By September 30, 2026, IDA60300 had disbursed US$275.9 million, with US$183.98 left to disburse.",
      "kind": "record",
      "evidence_ids": [
       "strata.gold.loan:P156634/IDA60300"
      ],
      "numbers": [
       {
-       "text": "275,912,875.34",
+       "text": "275.9",
        "evidence_id": "strata.gold.loan:P156634/IDA60300"
       },
       {
@@ -2190,14 +2211,14 @@
     },
     {
      "index": 8,
-     "text": "IDA60290 had disbursed US$17,599,724.38, with US$68,157.99 left to disburse and US$19,445,255.47 canceled.",
+     "text": "IDA60290 had disbursed US$17.6 million, with US$68,157.99 left to disburse and US$19.4 million canceled.",
      "kind": "record",
      "evidence_ids": [
       "strata.gold.loan:P156634/IDA60290"
      ],
      "numbers": [
       {
-       "text": "17,599,724.38",
+       "text": "17.6",
        "evidence_id": "strata.gold.loan:P156634/IDA60290"
       },
       {
@@ -2205,7 +2226,7 @@
        "evidence_id": "strata.gold.loan:P156634/IDA60290"
       },
       {
-       "text": "19,445,255.47",
+       "text": "19.4",
        "evidence_id": "strata.gold.loan:P156634/IDA60290"
       }
      ],
@@ -2351,7 +2372,8 @@
     "undisbursed_millions": "0.1",
     "canceled_millions": "19.4",
     "available_millions": "293.6",
-    "disbursed_percent": 100,
+    "disbursed_percent": 99,
+    "amounts_exceed_commitment": true,
     "as_of_date": "2026-09-30"
    }
   },
@@ -2387,7 +2409,7 @@
     },
     {
      "index": 10,
-     "text": "The loan history shows the closing date moved three times, most recently in the month that ended November 30, 2025.",
+     "text": "The loan history shows the closing date moved three times, most recently in November 2025.",
      "kind": "record",
      "evidence_ids": [
       "strata.tools.project_records:P156634@2026-10-23",
@@ -2401,7 +2423,7 @@
      ],
      "dates": [
       {
-       "text": "November 30, 2025",
+       "text": "November 2025",
        "evidence_id": "strata.gold.project_closing_date:P156634/2025-11-30"
       }
      ],
@@ -2701,7 +2723,8 @@
       "undisbursed_millions": "0.1",
       "canceled_millions": "19.4",
       "available_millions": "293.6",
-      "disbursed_percent": 100,
+      "disbursed_percent": 99,
+      "amounts_exceed_commitment": true,
       "as_of_date": "2026-09-30"
      },
      "closing": {
@@ -2762,6 +2785,16 @@
       "key": "estimated_amount_usd",
       "value": "2600000.00",
       "kind": "usd"
+     },
+     {
+      "key": "signed_millions",
+      "value": "2.4",
+      "kind": "millions"
+     },
+     {
+      "key": "estimated_millions",
+      "value": "2.6",
+      "kind": "millions"
      }
     ]
    },

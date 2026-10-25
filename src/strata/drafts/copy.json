@@ -72,6 +72,7 @@
           "no_closing_date": "No closing date is recorded for this project, so there is no closing check."
         },
         "ratingsNone": "No ISR was read for this project.",
+        "exceeds": "The loans and credits data reports more disbursed and canceled than committed for this project. Each amount is shown as it reports it.",
         "planVersion": "Plan of {date}",
         "noPlan": "No plan read",
         "individual": "Individual consultant",
@@ -157,7 +158,7 @@
     "awards": "World Bank contract awards data, contract signed {date}.",
     "plans": "Procurement Plan of {date}, from the World Bank documents API."
   },
-  "toolSource": "Strata's totals of the records above, as of {date}.",
+  "toolSource": "Strata's totals of this project's records, as of {date}.",
   "checkLine": {
     "checked": "Checked:",
     "judged": "Judged by a model:",

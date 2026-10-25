@@ -102,23 +102,52 @@ def _iso_day(value) -> str | None:
     return value.isoformat() if isinstance(value, dt.date) else str(value)[:10]
 
 
+# A plan row's fields in the evidence drawer, under STEP's names, as ticket 28 lays out a plan row: each with the
+# kind it is written as. Then the fields a check adds, and the fields it fired on, which the drawer highlights
+# (the 37 brief, section 4.3): the date or amounts its line states.
+PLAN_FIELDS = (("description", "text"), ("method", "text"), ("market_approach", "text"), ("review_type", "text"),
+               ("estimated_amount_usd", "usd"), ("process_status", "text"))
+CHECK_FIELDS = {"completion_passed": (("planned_completion_on", "date"), ("planned_completion_plan_date", "date")),
+                "above_estimate": (("signed_on", "date"), ("actual_amount_usd", "usd")),
+                "late_direct": (("first_plan_date", "date"),)}
+FIRED_ON = {"completion_passed": ("planned_completion_on",), "above_estimate": ("actual_amount_usd", "estimated_amount_usd"),
+            "late_direct": ("estimated_amount_usd", "first_plan_date")}
+
+
+def _plan_record(item: dict, checks: list[str]) -> dict:
+    """A plan row a signal rests on, as the drawer's record view shows it, with the fields its checks fired on
+    highlighted."""
+    wanted = [*PLAN_FIELDS, *(field for check in checks for field in CHECK_FIELDS.get(check, ()))]
+    marked = {key for check in checks for key in FIRED_ON.get(check, ())}
+    fields, seen = [], set()
+    for key, kind in wanted:
+        if key in seen or item.get(key) in (None, ""):
+            continue
+        seen.add(key)
+        fields.append({"key": key, "value": item[key], "kind": kind, **({"highlight": True} if key in marked else {})})
+    return {"reference": item["activity_reference_no"], "activity_reference_no": item["activity_reference_no"],
+            "fields": fields, "public_from": item["public_from"], "source": item["source"]}
+
+
 def _evidence(engine: Engine, result: dict, as_of: dt.date) -> list[dict]:
-    """The source each signal's citation marker opens, as the evidence drawer shows it: a plan row as check_plan
-    returned it, and any other record as the drawer reads it by its evidence id."""
-    events: dict[str, dict] = {}
+    """The source each signal's citation marker opens, as the evidence drawer shows it: a plan row with the fields
+    its checks fired on highlighted, and any other record as the drawer reads it by its evidence id."""
+    plans: dict[str, tuple[dict, list[str]]] = {}
+    others: list[str] = []
     for row in result.get("rows") or []:
         for item in row["items"]:
             evidence_id = item["evidence_id"]
-            if evidence_id in events:
-                continue
             if isinstance(item.get("source"), dict) and item["source"].get("document_type") == "Procurement Plan":
-                events[evidence_id] = {"id": evidence_id, "kind": "record", "tool": "check_plan", "stratum": "What",
-                                       "short_name": None, "row": item, "highlights": []}
-                continue
-            found = evidence_routes.read(engine, evidence_id, as_of)
-            if found is not None:
-                events[evidence_id] = found
-    return list(events.values())
+                plans.setdefault(evidence_id, (item, []))[1].append(row["check"])
+            elif evidence_id not in others:
+                others.append(evidence_id)
+    events = [{"id": evidence_id, "kind": "record", "tool": None, "stratum": "What", "short_name": None,
+               "row": _plan_record(item, checks), "highlights": []} for evidence_id, (item, checks) in plans.items()]
+    for evidence_id in others:
+        found = evidence_routes.read(engine, evidence_id, as_of)
+        if found is not None:
+            events.append(found)
+    return events
 
 
 def _order(entry: dict) -> tuple:

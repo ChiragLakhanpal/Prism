@@ -82,9 +82,10 @@ class Say:
         source = row.get("source") or {}
         date = source.get("plan_date") or source.get("document_date")
         # A record a project's Summary or a mission brief cites names its source by its key (ticket 37).
+        # The file is about one project, which its heading names, so the line adds no project ID.
         keyed = words()["summaryRecordSources"].get(source.get("source_key") or "")
         if keyed and not source.get("implementing_agency"):
-            return f"{_fill(keyed, date=self.date(date) if date else '')} {source.get('project_id') or ''}".strip()
+            return _fill(keyed, date=self.date(date) if date else "")
         if isinstance(source, dict) and source.get("tool"):  # a tool's summary record: the tool and its sources
             return _fill(words()["toolSource"], date=self.date(row["public_from"]))
         if source.get("implementing_agency") and source.get("pdf_page") and date:

@@ -21,13 +21,15 @@ as), with the part it belongs to:
 Every figure a sentence may state that no single record holds (how many contracts were signed and their total,
 the commitment, disbursed and undisbursed totals and the share disbursed, the days and whole months left before
 closing, how many times the closing date moved, how many activities finish after it) is a column of the result's
-summary record (CLAUDE.md rule 1), and parts says which parts have no records and why.
+summary record (CLAUDE.md rule 1), and parts says which parts have no records and why. Amounts come in US$ millions
+to one decimal too, as a sentence writes them (DESIGN.md rule 11), and the share disbursed is a whole percent
+rounded down, so a project with money still to pay out never reads 100.
 """
 
 from __future__ import annotations
 
 import datetime as dt
-from decimal import ROUND_HALF_UP, Decimal
+from decimal import ROUND_DOWN, Decimal
 from importlib import resources
 
 from strata.config import load_project_page, load_sources
@@ -138,7 +140,11 @@ def _awards(call: Call, project_id: str, since: dt.date) -> list[dict]:
                              ("signed_amount_usd", _cents(usd), "usd"),
                              ("signed_amount", None if usd is not None else _cents(row["contract_amount"]), "amount"),
                              ("currency", None if usd is not None else row["contract_currency"], "text"),
-                             ("estimated_amount_usd", _cents(estimate["estimated_amount_usd"]) if estimate else None, "usd")]))
+                             ("estimated_amount_usd", _cents(estimate["estimated_amount_usd"]) if estimate else None, "usd"),
+                             # The amounts in US$ millions to one decimal, as a sentence writes them (DESIGN.md rule 11).
+                             ("signed_millions", signals.millions(Decimal(str(usd))) if usd is not None else None, "millions"),
+                             ("estimated_millions", signals.millions(Decimal(str(estimate["estimated_amount_usd"])))
+                              if estimate and estimate["estimated_amount_usd"] is not None else None, "millions")]))
     return rows
 
 
@@ -234,7 +240,12 @@ def project_records(call: Call, project_id: str) -> dict:
                          "undisbursed_millions": signals.millions(summed("undisbursed_usd")),
                          "canceled_millions": signals.millions(summed("cancelled_usd")),
                          "available_millions": signals.millions(available),
-                         "disbursed_percent": int((share * 100).quantize(WHOLE, ROUND_HALF_UP)) if raw else None,
+                         # Whole percent, rounded down, so a project with money still to pay out never reads 100.
+                         "disbursed_percent": int((share * 100).quantize(WHOLE, ROUND_DOWN)) if raw else None,
+                         # Whether the loans data reports more disbursed and canceled than committed, as when a credit
+                         # committed in another currency is reported in US$ at a later rate (the Summary's flag).
+                         "amounts_exceed_commitment": bool(raw) and (disbursed + summed("cancelled_usd")
+                                                                     > summed("original_principal_usd")),
                          "as_of_date": _iso(max((row["as_of"] for row in raw), default=None))},
         "closing": {"closing_date": project["closing_date"], "days_to_close": project["days_to_close"],
                     "months_to_close": signals.whole_months(call.as_of, closing) if closing and closing >= call.as_of else None,

@@ -8,7 +8,7 @@ import type { ReactNode } from "react";
 import { copy } from "../copy";
 import { evidenceHref, openEvidence } from "../lib/evidence";
 import { formatDate, formatNumber } from "../lib/format";
-import type { Signal } from "../lib/following";
+import { markerRecord, type Signal } from "../lib/following";
 import { CitationMarker } from "./CitationMarker";
 import { EvidenceCard } from "./EvidenceCard";
 import { Fill } from "./Fill";
@@ -131,7 +131,7 @@ export function signalSourceName(signal: Signal): string {
 }
 
 export function SignalLine({ signal, n, event, opened }: { signal: Signal; n: number | undefined; event?: EvidenceEvent; opened: boolean }) {
-  const id = signal.items[0]?.evidence_id;
+  const id = markerRecord(signal);
   return (
     <li data-signal={signal.check} className="max-w-[72ch] text-small text-ink">
       {sentence(signal)}

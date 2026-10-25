@@ -91,7 +91,21 @@ test("a signal's marker opens the plan row behind it in the evidence drawer", as
   await marker.click();
 
   await expect(page).toHaveURL(/evidence=strata\.silver\.plan_rows%3A40132287%2FKE-NWWDA-541055-CW-RFB/);
-  await expect(page.locator("[data-evidence-drawer]")).toContainText("Pending Implementation");
+  const drawer = page.locator("[data-evidence-drawer]");
+  await expect(drawer).toContainText("Pending Implementation");
+  // The date the line states, as first published, is the field the drawer highlights.
+  await expect(drawer.locator("[data-record] mark")).toHaveText(/Highlight starts\.\s*July 31, 2026\s*Highlight ends\./);
+  await expect(drawer.locator("[data-record]")).toContainText("Planned completion first published in the plan of");
+});
+
+test("the closing date signal's marker names the latest move and opens that record", async ({ page }) => {
+  await openFollowing(page);
+  const marker = page.locator("[data-following-view=table] [data-signal=closing_moves] [data-citation]");
+
+  await expect(marker).toHaveAccessibleName(/World Bank monthly loan history, reported November 30, 2025/);
+  await marker.click();
+
+  await expect(page).toHaveURL(/evidence=strata\.gold\.project_closing_date%3AP156634%2F2025-11-30/);
 });
 
 test("below a 1,200 px page area each row is a block, with the Status and Next definitions above the list", async ({ page }) => {
@@ -208,7 +222,7 @@ test("Add to mission brief writes the five parts, then becomes the draft in plac
   await expect(parts).toHaveCount(5);
   await expect(page.getByRole("heading", { level: 2, name: "I drafted all five parts of the mission brief." })).toBeVisible();
   const awards = page.locator("[data-brief-part=awards]");
-  await expect(awards).toContainText("Two contracts were signed after the ISR dated June 30, 2026, for US$2,544,201.48 together.");
+  await expect(awards).toContainText("Two contracts were signed after the ISR dated June 30, 2026, for US$2.5 million together.");
   await expect(awards.locator("[data-brief-view=table] tbody tr")).toHaveCount(2);
   await expect(awards.locator("[data-brief-view=table] tbody tr").first()).toContainText("2,432,125.50");
   await expect(page.locator("[data-check-line]")).toContainText(
@@ -222,6 +236,20 @@ async function openBrief(page: Page, width: number, draft?: object) {
   await page.goto("/drafts/draft-0001");
   await expect(page.locator("[data-brief-parts=draft]")).toBeVisible();
 }
+
+test("each source of the brief says which record it is, and the disbursement table says why it reads more than committed", async ({ page }) => {
+  await openBrief(page, 1440);
+  const titles = page.locator("[data-source-title]");
+
+  await expect(titles.nth(0)).toHaveText("Latest plan of Northern Water Works Development Agency");
+  await expect(titles.nth(3)).toHaveText("Totals for P156634");
+  await expect(titles.nth(5)).toHaveText("ISR 19, Progress towards achievement of PDO");
+  await expect(titles.nth(7)).toHaveText("ISR 19, Overall Implementation Progress (IP)");
+  await expect(page.locator("[data-sources] [data-source-item]").nth(3)).toContainText("Strata's totals of this project's records, as of");
+  await expect(page.locator("[data-brief-part=disbursement]")).toContainText(
+    "The loans and credits data reports more disbursed and canceled than committed for this project.");
+  await expect(page.getByText("I wrote each part from public records through October 23, 2026")).toBeVisible();
+});
 
 test("on a phone, each block of the mission brief keeps its labels clear of their values", async ({ page }) => {
   for (const width of [390, 320]) {

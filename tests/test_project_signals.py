@@ -99,6 +99,19 @@ def test_the_closing_date_has_moved_three_times_since_2022_counted_per_project_n
         TRUTH[f"closing-p156634-move-{n}"]["value"].isoformat() for n in (1, 2, 3)]
 
 
+def test_each_signal_names_the_record_its_marker_opens_and_the_closing_date_signal_opens_the_latest_move(today):
+    """The marker's name, its hover card and its drawer agree: the closing date signal names the month the loan history
+    first showed the third move, November 2025 (values.toml, closing-p156634-move-3), and opens that record."""
+    moves = fired(today)["closing_moves"]
+
+    assert moves["source"]["date"] == "2025-11-30"
+    assert moves["source"]["evidence_id"] == "strata.gold.project_closing_date:P156634/2025-11-30"
+    assert [item["closing_date"] for item in moves["items"] if item["evidence_id"] == moves["source"]["evidence_id"]] == [
+        TRUTH["closing-p156634-move-3"]["value"].isoformat()]
+    completion = fired(today)["completion_passed"]
+    assert completion["source"]["evidence_id"] == "strata.silver.plan_rows:40132287/KE-NWWDA-541055-CW-RFB"
+
+
 def test_restructurings_ratings_and_disbursement_ran_and_found_nothing(today):
     result = today
     checks = {check["key"]: check for check in result["checks"]}

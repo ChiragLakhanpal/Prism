@@ -162,7 +162,7 @@ description = "Run the checks as they would have run on this date, on records pu
 row = """One signal: the check that fired, whether it is strong, how many things it fired on, the values its \
 sentence states and the records it rests on."""
 row_fields = ["evidence_id", "public_from", "source", "check", "strong", "count", "values", "items"]
-source_fields = ["source_key", "project_id", "document_id", "date"]
+source_fields = ["source_key", "project_id", "document_id", "date", "evidence_id"]
 fields = ["project", "status", "checks", "counts", "thresholds", "plans"]
 reasons = ["no_plans", "no_recent_plans", "no_loan_history", "no_isr", "no_loans"]
 abstentions = ["unknown_project", "not_active", "no_records"]

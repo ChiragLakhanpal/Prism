@@ -791,6 +791,11 @@ export const copy = {
     title: "{project}, paragraph {para}",
     titleSection: "{project}, section {section}",
     recordTitle: "{kind} {reference}",
+    // A mission brief's records (ticket 37), named for what they are: the totals record by its project, an agency's
+    // latest plan by the agency, and an ISR's rating by the ISR and the rating.
+    totalsTitle: "Totals for {pid}",
+    planVersionTitle: "Latest plan of {agency}",
+    isrRatingTitle: "ISR {n}, {rating}",
     // What a record is called, by the table its evidence id names (web/src/lib/sources.ts).
     recordKinds: {
       "strata.silver.plan_rows": "Activity",
@@ -885,7 +890,6 @@ export const copy = {
       signed_amount: "Signed amount",
       currency: "Currency",
       estimated_amount_usd: "Estimated Amount (US$)",
-      rating_key: "Rating, as Strata names it",
       undisbursed_usd: "Undisbursed (US$)",
       original_principal_millions: "Original principal (US$, millions)",
       disbursed_millions: "Disbursed (US$, millions)",
@@ -895,6 +899,12 @@ export const copy = {
       activity_reference_no: "Activity",
       planned_completion_on: "Planned completion",
       days_after_closing: "Days after closing",
+      // The fields a plan signal adds to its plan row (ticket 37): the date as first published, and the amounts.
+      planned_completion_plan_date: "Planned completion first published in the plan of",
+      actual_amount_usd: "Actual Amount (US$)",
+      first_plan_date: "First listed in the plan of",
+      signed_millions: "Signed amount (US$, millions)",
+      estimated_millions: "Estimated Amount (US$, millions)",
       // A notice and a plan row a package advertised again cites (ticket 28): the sentence that gives a reason,
       // and STEP's own field names for the plan row.
       notice_says: "The notice says",
@@ -920,7 +930,7 @@ export const copy = {
     recordSource: "{doc}, {agency}, {pid}, version of {date}, page\u00a0{page}.",
     recordSourceShort: "{doc}, {pid}, {date}.",
     // A tool's totals record, such as the mission brief's totals (ticket 37), as a footnote names it.
-    toolSource: "Strata's totals of the records above, as of {date}.",
+    toolSource: "Strata's totals of this project's records, as of {date}.",
     // The heading when no source could be shown.
     untitled: "Source",
     visited: "You have opened this source.",
@@ -2348,6 +2358,12 @@ export const copy = {
           read: {
             running: "I'm reading the project's records.",
             done: (_date: string) => "I read the project's latest plans, its contracts since the last ISR, its ISRs and its loan records.",
+            // The writing page's line, with the counts the read step sends: the latest plans read, the contracts
+            // since the last ISR, the ISRs.
+            counted: (plans: number, plansText: string, awards: number, awardsText: string, isrs: number, isrsText: string) =>
+              `I read ${plans === 1 ? "one implementing agency's latest Procurement Plan" : `${plansText} implementing agencies' latest Procurement Plans`}, ` +
+              `${awards === 1 ? "one contract" : `${awardsText} contracts`} signed since the last ISR, ` +
+              `${isrs === 1 ? "one ISR" : `${isrsText} ISRs`} and the loan records.`,
           },
           write: {
             running: (_count: number, _countText: string) => "I'm writing the five parts.",
@@ -2574,6 +2590,10 @@ export const copy = {
           },
           // The ratings part's line when no ISR was read.
           ratingsNone: "No ISR was read for this project.",
+          // Under the disbursement table, when the loans data reports more disbursed and canceled than committed.
+          exceeds:
+            "The loans and credits data reports more disbursed and canceled than committed for this project. Each amount " +
+            "is shown as it reports it.",
           planVersion: "Plan of {date}",
           noPlan: "No plan read",
           individual: "Individual consultant",

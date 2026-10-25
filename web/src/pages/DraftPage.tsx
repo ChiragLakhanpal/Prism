@@ -556,7 +556,7 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
           </h2>
           <p className="mt-2 text-body text-ink">
             {brief ? (
-              <Fill template={copy.mission.method} slots={{ date: formatDate(subject.as_of ?? created) }} />
+              <Fill template={copy.mission.method} slots={{ date: formatDate(subject.data_through ?? subject.as_of ?? created) }} />
             ) : (
               <Fill template={kind.method} slots={{ check: <TextLink href={planHref}>{kind.methodLink}</TextLink> }} />
             )}

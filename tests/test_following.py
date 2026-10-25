@@ -11,6 +11,7 @@ they share one app state. The fixture database is opened read-only, and today is
 import asyncio
 import datetime as dt
 import json
+import tomllib
 from contextlib import contextmanager
 from pathlib import Path
 
@@ -26,6 +27,8 @@ from strata.server.following import FollowStore
 
 TODAY = dt.date(2026, 10, 22)
 RECORDED = Path(__file__).resolve().parent / "fixtures" / "api"
+TRUTH = {entry["id"]: entry["value"] for entry in
+         tomllib.loads((Path(__file__).resolve().parent / "ground_truth" / "values.toml").read_text())["value"]}
 
 
 def viewer(number: int, name: str) -> dict:
@@ -84,3 +87,26 @@ def test_the_following_route_and_follows_refuse_a_viewer_without_the_world_bank_
 def test_a_preview_reads_no_following_list_and_writes_no_follow(app):
     assert call(app, "GET", "/api/following?view=piu", ANA).json()["code"] == "preview"
     assert call(app, "PUT", "/api/projects/P156634/follow?view=public", ANA).status_code == 403
+
+
+def test_a_plan_signals_record_shows_the_fields_that_set_off_its_check_highlighted(app):
+    """The drawer behind "passed its planned completion (July 31, 2026)" shows that date, as first published in the
+    plan of March 5, 2026, and the one behind "about 4 times its estimate" the signed amount and the Estimated Amount
+    (the 37 brief, section 4.3; values.toml)."""
+    call(app, "PUT", "/api/projects/P156634/follow", ANA)
+    events = {event["id"]: event for event in call(app, "GET", "/api/following", ANA).json()["evidence"]}
+
+    def highlighted(evidence_id):
+        fields = events[evidence_id]["row"]["fields"]
+        return {field["key"]: field["value"] for field in fields if field.get("highlight")}, {field["key"]: field["value"] for field in fields}
+
+    marked, fields = highlighted("strata.silver.plan_rows:40132287/KE-NWWDA-541055-CW-RFB")
+    assert marked == {"planned_completion_on": TRUTH["plan-541055-planned-completion"].isoformat()}
+    assert fields["planned_completion_plan_date"] == TRUTH["plan-541055-first-listed"].isoformat()
+    assert fields["process_status"] == TRUTH["plan-541055-status"]
+    marked, _ = highlighted("strata.silver.plan_rows:40132287/KE-NWWDA-229129-CW-RFB")
+    assert marked == {"actual_amount_usd": f'{TRUTH["plan-229129-actual"]:.2f}',
+                      "estimated_amount_usd": f'{TRUTH["plan-229129-estimated"]:.2f}'}
+    marked, _ = highlighted("strata.silver.plan_rows:40122770/KE-CWSB-567630-CW-DIR")
+    assert marked == {"estimated_amount_usd": TRUTH["plan-cwsb-567630-estimated"].replace(",", ""),
+                      "first_plan_date": TRUTH["plan-cwsb-567630-first-listed"].isoformat()}

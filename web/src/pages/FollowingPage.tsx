@@ -40,6 +40,7 @@ import {
   FOLDED,
   FOLLOWING_HREF,
   finding,
+  markerRecord,
   metaTemplate,
   missingReasons,
   shortDate,
@@ -176,7 +177,7 @@ export function FollowingBody({ data }: { data: Following }) {
     const found = new Map<string, number>();
     for (const entry of data.projects) {
       for (const signal of entry.rows) {
-        const id = signal.items[0]?.evidence_id;
+        const id = markerRecord(signal);
         if (id && !found.has(id)) found.set(id, found.size + 1);
       }
     }
@@ -404,7 +405,7 @@ function SignalsCell({ entry, numbers, events, seen, data }: RowProps) {
     <>
       <ul aria-label={words.signalsLabel(entry.project.project_name)} className="flex flex-col gap-2">
         {entry.rows.map((signal) => {
-          const id = signal.items[0]?.evidence_id;
+          const id = markerRecord(signal);
           return <SignalLine key={signal.check} signal={signal} n={id ? numbers.get(id) : undefined} event={id ? events[id] : undefined} opened={id ? seen.has(id) : false} />;
         })}
       </ul>
