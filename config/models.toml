@@ -26,6 +26,12 @@ deployment = "text-embedding-3-large"
 purpose = "Embeddings for the passage index."
 dimensions = 1024
 
+# The judge of the verifier's check 4 (ticket 24): the role whose deployment decides, in one call per answer or
+# draft, whether each sentence that checks 1 to 3 did not prove follows from its sources. The draft role's
+# purpose line names it. No role is added for it. strata.config.load_judge_role() reads it.
+[judge]
+role = "draft"
+
 # The layout parser that reads table pages on the workspace (Route B, docs/PLAN.md section 5), such
 # as the STEP tables of a Procurement Plan. Day-one test 3 (docs/day-one-results.md) decides it:
 # ai_parse_document on the SQL warehouse when the test passes, Content Understanding's
@@ -48,6 +54,28 @@ rejoin_split_words = false
 index = "strata.gold.passage_index"
 reranker = "databricks_reranker"
 rerank_columns = ["header", "text"]
+
+# The search setup that production uses, and the one the tuning gate compares a candidate with (ticket 32;
+# strata.estimates.retrieval). A candidate ships only when the gate finds it loses nothing on the held-out
+# set (and on the hindsight set, once ticket 34 makes one), and then it is written here.
+#
+# keyword_weight   how much the keyword ranking (BM25 on each passage's words) counts in the fusion
+# vector_weight    how much the vector ranking (the cosine of the embeddings) counts in the fusion
+# rerank           whether the reranker reorders the best fused passages
+# rerank_depth     how many of the best fused passages the reranker reorders
+# header_in_words  whether keyword search and the reranker read each passage's header with its text
+#
+# The fixture search fuses the two rankings itself, so it applies every value. AI Search fuses its hybrid
+# query with equal weights of its own, so on the workspace only rerank applies until a live run shows
+# how to weight it (a workspace step). The header is always embedded with the text: changing that needs
+# new embeddings, which only the recording command or the nightly run makes. Source: ticket 11's search,
+# whose values these are.
+[search.setup]
+keyword_weight = 1.0
+vector_weight = 1.0
+rerank = true
+rerank_depth = 20
+header_in_words = true
 
 # The name-matching model for suppliers (ticket 19; docs/PLAN.md section 5). A STEP supplier ID
 # decides first. A row with no ID is matched by name with Splink's Fellegi-Sunter model, on DuckDB
@@ -145,3 +173,37 @@ feature = ""
 [what_if.prequalification]
 feature = "prequalification"
 values = ["N", "Y"]
+
+# The rebidding models (ticket 28; docs/PLAN.md section 7): the chance that a package like this one is
+# advertised again, from the labels in strata.estimates.rebidding. Calibrated gradient boosting is compared with
+# logistic regression in rolling backtests, and the better calibrated becomes the champion; both stay labeled
+# experimental. src/strata/estimates/rebidding_backtest.py reads this table with strata.config.load_rebidding().
+#
+# learners            the two models, by their names in LEARNERS in src/strata/estimates/rebidding_model.py
+# registered_model    the champion's name in Unity Catalog, where the champion and challenger aliases live
+# experiment          the MLflow experiment the backtests and the model card are logged to
+# test_years          the rolling backtests: each year's models learn from packages advertised before January 1
+#                     whose outcome was known then, and are tested on the packages advertised in that year
+# calibration_every   every this-many-th training package, in the order they were advertised, calibrates the
+#                     gradient boosting (Platt scaling), and the booster learns from the others
+# Source: the spec's "Estimates" ("calibrated gradient boosting compared against logistic regression, labeled
+# experimental"); each value is a starting value for the owner to confirm.
+[rebidding]
+learners = ["gbm", "logistic"]
+registered_model = "strata.gold.rebidding_risk"
+experiment = "/Shared/strata/rebidding_risk"
+test_years = [2021, 2022, 2023, 2024, 2025]
+calibration_every = 4
+
+# Gradient boosting: XGBoost's binary logistic booster. seed and nthread = 1 make a fit repeat exactly.
+[rebidding.gbm]
+max_depth = 2
+eta = 0.1
+num_boost_round = 100
+min_child_weight = 1
+seed = 7
+nthread = 1
+
+# Logistic regression with an L2 penalty on every weight but the intercept, fitted by Newton's method.
+[rebidding.logistic]
+l2 = 1.0

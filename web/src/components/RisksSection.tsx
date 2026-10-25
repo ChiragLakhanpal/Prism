@@ -265,22 +265,13 @@ function Finding({
     <Num
       value={most.k_max}
       options={{ compact: false }}
-      check={one ? { tooltip: tips.k(kText), onOpen: opener((element) => onCount(one, element)) } : { tooltip: tips.tie(kText) }}
+      check={one ? { tooltip: tips.k(kText), onOpen: (element) => onCount(one, element) } : { tooltip: tips.tie(kText) }}
     />
   );
-  const all = <Num value={m} options={{ compact: false }} check={{ tooltip: tips.m(formatNumber(m, { compact: false })), onOpen: opener(onAll) }} />;
+  const all = <Num value={m} options={{ compact: false }} check={{ tooltip: tips.m(formatNumber(m, { compact: false })), onOpen: onAll }} />;
   if (one) return <Fill template={words.finding} slots={{ risk: one.risk_label, k, m: all }} />;
   if (tied.length === 2) return <Fill template={words.findingTwo} slots={{ a: tied[0].risk_label, b: tied[1].risk_label, k, m: all }} />;
   return <Fill template={words.findingMany} slots={{ tied: formatCount(tied.length, { capital: true }), k, m: all }} />;
-}
-
-// A Num's click handler that hands on the button it was clicked on, so the drawer can give focus back to it.
-// React passes the click to Num's onOpen as its first argument.
-function opener(open: (element: HTMLElement) => void): () => void {
-  return ((event?: { currentTarget?: unknown }) => {
-    const element = event?.currentTarget;
-    if (element instanceof HTMLElement) open(element);
-  }) as () => void;
 }
 
 function CountCell({ row, m, onCount }: { row: RiskRow; m: number; onCount: (row: RiskRow, element: HTMLElement) => void }) {
@@ -292,7 +283,7 @@ function CountCell({ row, m, onCount }: { row: RiskRow; m: number; onCount: (row
           part={row.k}
           whole={m}
           show="count"
-          check={{ tooltip: words.numTips.k(k), name: words.countName(k, formatNumber(m, { compact: false }), row.risk_label), onOpen: opener((element) => onCount(row, element)) }}
+          check={{ tooltip: words.numTips.k(k), name: words.countName(k, formatNumber(m, { compact: false }), row.risk_label), onOpen: (element) => onCount(row, element) }}
         />
       </span>
       <span className="text-caption text-ink-muted">{words.reports}</span>
@@ -437,7 +428,7 @@ function ListCount({ row, m, onCount }: { row: RiskRow; m: number; onCount: (row
           part={row.k}
           whole={m}
           show="count"
-          check={{ tooltip: words.numTips.k(k), name: words.countName(k, formatNumber(m, { compact: false }), row.risk_label), onOpen: opener((element) => onCount(row, element)) }}
+          check={{ tooltip: words.numTips.k(k), name: words.countName(k, formatNumber(m, { compact: false }), row.risk_label), onOpen: (element) => onCount(row, element) }}
         />
       </span>{" "}
       <span className="text-caption text-ink-muted">{words.reports}</span>

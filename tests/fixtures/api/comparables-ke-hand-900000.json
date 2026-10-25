@@ -1,0 +1,735 @@
+{
+  "tool": "find_comparables",
+  "as_of": "2021-01-15",
+  "view": "staff",
+  "rows": [
+    {
+      "evidence_id": "strata.gold.package:KE-HAND-900001-CW-RFB",
+      "public_from": "2019-12-07",
+      "source": {
+        "project_id": "P900002",
+        "notice_id": "N-KE-HAND-900001-CW-RFB",
+        "contract_id": "C-KE-HAND-900001-CW-RFB",
+        "award_notice_id": null,
+        "signed_in": "contract awards"
+      },
+      "step_reference": "KE-HAND-900001-CW-RFB",
+      "project_id": "P900002",
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "notice_id": "N-KE-HAND-900001-CW-RFB",
+      "notice_date": "2019-08-29",
+      "signed_on": "2019-12-07",
+      "still_open": false,
+      "days": 100,
+      "months": 3.3,
+      "rank": 1
+    },
+    {
+      "evidence_id": "strata.gold.package:KE-HAND-900002-CW-RFB",
+      "public_from": "2019-12-17",
+      "source": {
+        "project_id": "P900002",
+        "notice_id": "N-KE-HAND-900002-CW-RFB",
+        "contract_id": "C-KE-HAND-900002-CW-RFB",
+        "award_notice_id": null,
+        "signed_in": "contract awards"
+      },
+      "step_reference": "KE-HAND-900002-CW-RFB",
+      "project_id": "P900002",
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "notice_id": "N-KE-HAND-900002-CW-RFB",
+      "notice_date": "2019-09-06",
+      "signed_on": "2019-12-17",
+      "still_open": false,
+      "days": 102,
+      "months": 3.4,
+      "rank": 2
+    },
+    {
+      "evidence_id": "strata.gold.package:KE-HAND-900003-CW-RFB",
+      "public_from": "2019-12-27",
+      "source": {
+        "project_id": "P900002",
+        "notice_id": "N-KE-HAND-900003-CW-RFB",
+        "contract_id": "C-KE-HAND-900003-CW-RFB",
+        "award_notice_id": null,
+        "signed_in": "contract awards"
+      },
+      "step_reference": "KE-HAND-900003-CW-RFB",
+      "project_id": "P900002",
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "notice_id": "N-KE-HAND-900003-CW-RFB",
+      "notice_date": "2019-09-14",
+      "signed_on": "2019-12-27",
+      "still_open": false,
+      "days": 104,
+      "months": 3.4,
+      "rank": 3
+    },
+    {
+      "evidence_id": "strata.gold.package:KE-HAND-900004-CW-RFB",
+      "public_from": "2020-01-06",
+      "source": {
+        "project_id": "P900002",
+        "notice_id": "N-KE-HAND-900004-CW-RFB",
+        "contract_id": "C-KE-HAND-900004-CW-RFB",
+        "award_notice_id": null,
+        "signed_in": "contract awards"
+      },
+      "step_reference": "KE-HAND-900004-CW-RFB",
+      "project_id": "P900002",
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "notice_id": "N-KE-HAND-900004-CW-RFB",
+      "notice_date": "2019-09-22",
+      "signed_on": "2020-01-06",
+      "still_open": false,
+      "days": 106,
+      "months": 3.5,
+      "rank": 4
+    },
+    {
+      "evidence_id": "strata.gold.package:KE-HAND-900005-CW-RFB",
+      "public_from": "2020-01-16",
+      "source": {
+        "project_id": "P900002",
+        "notice_id": "N-KE-HAND-900005-CW-RFB",
+        "contract_id": "C-KE-HAND-900005-CW-RFB",
+        "award_notice_id": null,
+        "signed_in": "contract awards"
+      },
+      "step_reference": "KE-HAND-900005-CW-RFB",
+      "project_id": "P900002",
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "notice_id": "N-KE-HAND-900005-CW-RFB",
+      "notice_date": "2019-09-30",
+      "signed_on": "2020-01-16",
+      "still_open": false,
+      "days": 108,
+      "months": 3.5,
+      "rank": 5
+    },
+    {
+      "evidence_id": "strata.gold.package:KE-HAND-900006-CW-RFB",
+      "public_from": "2020-01-26",
+      "source": {
+        "project_id": "P900002",
+        "notice_id": "N-KE-HAND-900006-CW-RFB",
+        "contract_id": "C-KE-HAND-900006-CW-RFB",
+        "award_notice_id": null,
+        "signed_in": "contract awards"
+      },
+      "step_reference": "KE-HAND-900006-CW-RFB",
+      "project_id": "P900002",
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "notice_id": "N-KE-HAND-900006-CW-RFB",
+      "notice_date": "2019-10-08",
+      "signed_on": "2020-01-26",
+      "still_open": false,
+      "days": 110,
+      "months": 3.6,
+      "rank": 6
+    },
+    {
+      "evidence_id": "strata.gold.package:KE-HAND-900007-CW-RFB",
+      "public_from": "2020-02-05",
+      "source": {
+        "project_id": "P900002",
+        "notice_id": "N-KE-HAND-900007-CW-RFB",
+        "contract_id": "C-KE-HAND-900007-CW-RFB",
+        "award_notice_id": null,
+        "signed_in": "contract awards"
+      },
+      "step_reference": "KE-HAND-900007-CW-RFB",
+      "project_id": "P900002",
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "notice_id": "N-KE-HAND-900007-CW-RFB",
+      "notice_date": "2019-10-16",
+      "signed_on": "2020-02-05",
+      "still_open": false,
+      "days": 112,
+      "months": 3.7,
+      "rank": 7
+    },
+    {
+      "evidence_id": "strata.gold.package:KE-HAND-900008-CW-RFB",
+      "public_from": "2020-02-15",
+      "source": {
+        "project_id": "P900002",
+        "notice_id": "N-KE-HAND-900008-CW-RFB",
+        "contract_id": "C-KE-HAND-900008-CW-RFB",
+        "award_notice_id": null,
+        "signed_in": "contract awards"
+      },
+      "step_reference": "KE-HAND-900008-CW-RFB",
+      "project_id": "P900002",
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "notice_id": "N-KE-HAND-900008-CW-RFB",
+      "notice_date": "2019-10-24",
+      "signed_on": "2020-02-15",
+      "still_open": false,
+      "days": 114,
+      "months": 3.7,
+      "rank": 8
+    },
+    {
+      "evidence_id": "strata.gold.package:KE-HAND-900009-CW-RFB",
+      "public_from": "2020-02-25",
+      "source": {
+        "project_id": "P900002",
+        "notice_id": "N-KE-HAND-900009-CW-RFB",
+        "contract_id": "C-KE-HAND-900009-CW-RFB",
+        "award_notice_id": null,
+        "signed_in": "contract awards"
+      },
+      "step_reference": "KE-HAND-900009-CW-RFB",
+      "project_id": "P900002",
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "notice_id": "N-KE-HAND-900009-CW-RFB",
+      "notice_date": "2019-11-01",
+      "signed_on": "2020-02-25",
+      "still_open": false,
+      "days": 116,
+      "months": 3.8,
+      "rank": 9
+    },
+    {
+      "evidence_id": "strata.gold.package:KE-HAND-900010-CW-RFB",
+      "public_from": "2020-03-06",
+      "source": {
+        "project_id": "P900002",
+        "notice_id": "N-KE-HAND-900010-CW-RFB",
+        "contract_id": "C-KE-HAND-900010-CW-RFB",
+        "award_notice_id": null,
+        "signed_in": "contract awards"
+      },
+      "step_reference": "KE-HAND-900010-CW-RFB",
+      "project_id": "P900002",
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "notice_id": "N-KE-HAND-900010-CW-RFB",
+      "notice_date": "2019-11-09",
+      "signed_on": "2020-03-06",
+      "still_open": false,
+      "days": 118,
+      "months": 3.9,
+      "rank": 10
+    },
+    {
+      "evidence_id": "strata.gold.package:KE-HAND-900011-CW-RFB",
+      "public_from": "2020-03-16",
+      "source": {
+        "project_id": "P900002",
+        "notice_id": "N-KE-HAND-900011-CW-RFB",
+        "contract_id": "C-KE-HAND-900011-CW-RFB",
+        "award_notice_id": null,
+        "signed_in": "contract awards"
+      },
+      "step_reference": "KE-HAND-900011-CW-RFB",
+      "project_id": "P900002",
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "notice_id": "N-KE-HAND-900011-CW-RFB",
+      "notice_date": "2019-11-17",
+      "signed_on": "2020-03-16",
+      "still_open": false,
+      "days": 120,
+      "months": 3.9,
+      "rank": 11
+    },
+    {
+      "evidence_id": "strata.gold.package:KE-HAND-900012-CW-RFB",
+      "public_from": "2020-03-26",
+      "source": {
+        "project_id": "P900002",
+        "notice_id": "N-KE-HAND-900012-CW-RFB",
+        "contract_id": "C-KE-HAND-900012-CW-RFB",
+        "award_notice_id": null,
+        "signed_in": "contract awards"
+      },
+      "step_reference": "KE-HAND-900012-CW-RFB",
+      "project_id": "P900002",
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "notice_id": "N-KE-HAND-900012-CW-RFB",
+      "notice_date": "2019-11-25",
+      "signed_on": "2020-03-26",
+      "still_open": false,
+      "days": 122,
+      "months": 4.0,
+      "rank": 12
+    },
+    {
+      "evidence_id": "strata.gold.package:KE-HAND-900013-CW-RFB",
+      "public_from": "2020-04-05",
+      "source": {
+        "project_id": "P900002",
+        "notice_id": "N-KE-HAND-900013-CW-RFB",
+        "contract_id": "C-KE-HAND-900013-CW-RFB",
+        "award_notice_id": null,
+        "signed_in": "contract awards"
+      },
+      "step_reference": "KE-HAND-900013-CW-RFB",
+      "project_id": "P900002",
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "notice_id": "N-KE-HAND-900013-CW-RFB",
+      "notice_date": "2019-12-03",
+      "signed_on": "2020-04-05",
+      "still_open": false,
+      "days": 124,
+      "months": 4.1,
+      "rank": 13
+    },
+    {
+      "evidence_id": "strata.gold.package:KE-HAND-900014-CW-RFB",
+      "public_from": "2020-04-15",
+      "source": {
+        "project_id": "P900002",
+        "notice_id": "N-KE-HAND-900014-CW-RFB",
+        "contract_id": "C-KE-HAND-900014-CW-RFB",
+        "award_notice_id": null,
+        "signed_in": "contract awards"
+      },
+      "step_reference": "KE-HAND-900014-CW-RFB",
+      "project_id": "P900002",
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "notice_id": "N-KE-HAND-900014-CW-RFB",
+      "notice_date": "2019-12-11",
+      "signed_on": "2020-04-15",
+      "still_open": false,
+      "days": 126,
+      "months": 4.1,
+      "rank": 14
+    },
+    {
+      "evidence_id": "strata.gold.package:KE-HAND-900015-CW-RFB",
+      "public_from": "2020-04-25",
+      "source": {
+        "project_id": "P900002",
+        "notice_id": "N-KE-HAND-900015-CW-RFB",
+        "contract_id": "C-KE-HAND-900015-CW-RFB",
+        "award_notice_id": null,
+        "signed_in": "contract awards"
+      },
+      "step_reference": "KE-HAND-900015-CW-RFB",
+      "project_id": "P900002",
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "notice_id": "N-KE-HAND-900015-CW-RFB",
+      "notice_date": "2019-12-19",
+      "signed_on": "2020-04-25",
+      "still_open": false,
+      "days": 128,
+      "months": 4.2,
+      "rank": 15
+    },
+    {
+      "evidence_id": "strata.gold.package:KE-HAND-900016-CW-RFB",
+      "public_from": "2020-05-05",
+      "source": {
+        "project_id": "P900002",
+        "notice_id": "N-KE-HAND-900016-CW-RFB",
+        "contract_id": "C-KE-HAND-900016-CW-RFB",
+        "award_notice_id": null,
+        "signed_in": "contract awards"
+      },
+      "step_reference": "KE-HAND-900016-CW-RFB",
+      "project_id": "P900002",
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "notice_id": "N-KE-HAND-900016-CW-RFB",
+      "notice_date": "2019-12-27",
+      "signed_on": "2020-05-05",
+      "still_open": false,
+      "days": 130,
+      "months": 4.3,
+      "rank": 16
+    },
+    {
+      "evidence_id": "strata.gold.package:KE-HAND-900017-CW-RFB",
+      "public_from": "2020-05-15",
+      "source": {
+        "project_id": "P900002",
+        "notice_id": "N-KE-HAND-900017-CW-RFB",
+        "contract_id": "C-KE-HAND-900017-CW-RFB",
+        "award_notice_id": null,
+        "signed_in": "contract awards"
+      },
+      "step_reference": "KE-HAND-900017-CW-RFB",
+      "project_id": "P900002",
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "notice_id": "N-KE-HAND-900017-CW-RFB",
+      "notice_date": "2020-01-04",
+      "signed_on": "2020-05-15",
+      "still_open": false,
+      "days": 132,
+      "months": 4.3,
+      "rank": 17
+    },
+    {
+      "evidence_id": "strata.gold.package:KE-HAND-900018-CW-RFB",
+      "public_from": "2020-05-25",
+      "source": {
+        "project_id": "P900002",
+        "notice_id": "N-KE-HAND-900018-CW-RFB",
+        "contract_id": "C-KE-HAND-900018-CW-RFB",
+        "award_notice_id": null,
+        "signed_in": "contract awards"
+      },
+      "step_reference": "KE-HAND-900018-CW-RFB",
+      "project_id": "P900002",
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "notice_id": "N-KE-HAND-900018-CW-RFB",
+      "notice_date": "2020-01-12",
+      "signed_on": "2020-05-25",
+      "still_open": false,
+      "days": 134,
+      "months": 4.4,
+      "rank": 18
+    },
+    {
+      "evidence_id": "strata.gold.package:KE-HAND-900019-CW-RFB",
+      "public_from": "2020-06-04",
+      "source": {
+        "project_id": "P900002",
+        "notice_id": "N-KE-HAND-900019-CW-RFB",
+        "contract_id": "C-KE-HAND-900019-CW-RFB",
+        "award_notice_id": null,
+        "signed_in": "contract awards"
+      },
+      "step_reference": "KE-HAND-900019-CW-RFB",
+      "project_id": "P900002",
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "notice_id": "N-KE-HAND-900019-CW-RFB",
+      "notice_date": "2020-01-20",
+      "signed_on": "2020-06-04",
+      "still_open": false,
+      "days": 136,
+      "months": 4.5,
+      "rank": 19
+    },
+    {
+      "evidence_id": "strata.gold.package:KE-HAND-900020-CW-RFB",
+      "public_from": "2020-06-14",
+      "source": {
+        "project_id": "P900002",
+        "notice_id": "N-KE-HAND-900020-CW-RFB",
+        "contract_id": "C-KE-HAND-900020-CW-RFB",
+        "award_notice_id": null,
+        "signed_in": "contract awards"
+      },
+      "step_reference": "KE-HAND-900020-CW-RFB",
+      "project_id": "P900002",
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "notice_id": "N-KE-HAND-900020-CW-RFB",
+      "notice_date": "2020-01-28",
+      "signed_on": "2020-06-14",
+      "still_open": false,
+      "days": 138,
+      "months": 4.5,
+      "rank": 20
+    },
+    {
+      "evidence_id": "strata.gold.package:KE-HAND-900021-CW-RFB",
+      "public_from": "2020-06-24",
+      "source": {
+        "project_id": "P900002",
+        "notice_id": "N-KE-HAND-900021-CW-RFB",
+        "contract_id": "C-KE-HAND-900021-CW-RFB",
+        "award_notice_id": null,
+        "signed_in": "contract awards"
+      },
+      "step_reference": "KE-HAND-900021-CW-RFB",
+      "project_id": "P900002",
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "notice_id": "N-KE-HAND-900021-CW-RFB",
+      "notice_date": "2020-02-05",
+      "signed_on": "2020-06-24",
+      "still_open": false,
+      "days": 140,
+      "months": 4.6,
+      "rank": 21
+    },
+    {
+      "evidence_id": "strata.gold.package:KE-HAND-900022-CW-RFB",
+      "public_from": "2020-07-04",
+      "source": {
+        "project_id": "P900002",
+        "notice_id": "N-KE-HAND-900022-CW-RFB",
+        "contract_id": "C-KE-HAND-900022-CW-RFB",
+        "award_notice_id": null,
+        "signed_in": "contract awards"
+      },
+      "step_reference": "KE-HAND-900022-CW-RFB",
+      "project_id": "P900002",
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "notice_id": "N-KE-HAND-900022-CW-RFB",
+      "notice_date": "2020-02-13",
+      "signed_on": "2020-07-04",
+      "still_open": false,
+      "days": 142,
+      "months": 4.7,
+      "rank": 22
+    },
+    {
+      "evidence_id": "strata.gold.package:KE-HAND-900023-CW-RFB",
+      "public_from": "2020-07-14",
+      "source": {
+        "project_id": "P900002",
+        "notice_id": "N-KE-HAND-900023-CW-RFB",
+        "contract_id": "C-KE-HAND-900023-CW-RFB",
+        "award_notice_id": null,
+        "signed_in": "contract awards"
+      },
+      "step_reference": "KE-HAND-900023-CW-RFB",
+      "project_id": "P900002",
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "notice_id": "N-KE-HAND-900023-CW-RFB",
+      "notice_date": "2020-02-21",
+      "signed_on": "2020-07-14",
+      "still_open": false,
+      "days": 144,
+      "months": 4.7,
+      "rank": 23
+    },
+    {
+      "evidence_id": "strata.gold.package:KE-HAND-900024-CW-RFB",
+      "public_from": "2020-07-24",
+      "source": {
+        "project_id": "P900002",
+        "notice_id": "N-KE-HAND-900024-CW-RFB",
+        "contract_id": "C-KE-HAND-900024-CW-RFB",
+        "award_notice_id": null,
+        "signed_in": "contract awards"
+      },
+      "step_reference": "KE-HAND-900024-CW-RFB",
+      "project_id": "P900002",
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "notice_id": "N-KE-HAND-900024-CW-RFB",
+      "notice_date": "2020-02-29",
+      "signed_on": "2020-07-24",
+      "still_open": false,
+      "days": 146,
+      "months": 4.8,
+      "rank": 24
+    },
+    {
+      "evidence_id": "strata.gold.package:KE-HAND-900025-CW-RFB",
+      "public_from": "2020-08-03",
+      "source": {
+        "project_id": "P900002",
+        "notice_id": "N-KE-HAND-900025-CW-RFB",
+        "contract_id": "C-KE-HAND-900025-CW-RFB",
+        "award_notice_id": null,
+        "signed_in": "contract awards"
+      },
+      "step_reference": "KE-HAND-900025-CW-RFB",
+      "project_id": "P900002",
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "notice_id": "N-KE-HAND-900025-CW-RFB",
+      "notice_date": "2020-03-08",
+      "signed_on": "2020-08-03",
+      "still_open": false,
+      "days": 148,
+      "months": 4.9,
+      "rank": 25
+    }
+  ],
+  "coverage": {
+    "matched": 25,
+    "used": 25,
+    "not_used": []
+  },
+  "package": {
+    "evidence_id": "strata.silver.plan_rows:910000002/KE-HAND-900000-CW-RFB",
+    "public_from": "2020-12-15",
+    "step_reference": "KE-HAND-900000-CW-RFB",
+    "description": "Hand-made works",
+    "project_id": "P900002",
+    "project_name": "Hand-made roads project",
+    "country_code": "KE",
+    "country_name": "Kenya",
+    "section": "WORKS",
+    "category": "Works",
+    "method": "Request for Bids",
+    "market_approach": "Open - National",
+    "review_type": "Post",
+    "estimated_amount_usd": "1000000.00",
+    "process_status": "Pending Implementation",
+    "planned_notice_on": "2021-03-01",
+    "planned_signing_on": "2021-06-10",
+    "plan": {
+      "document_id": "910000002",
+      "implementing_agency": "Hand-made Roads Agency",
+      "agency_id": "hand-made-roads-agency",
+      "plan_date": "2020-12-15",
+      "disclosed_on": "2020-12-15",
+      "pdf_page": 1
+    }
+  },
+  "criteria": {
+    "method": "Request for Bids",
+    "category": "Works",
+    "market_approach": null,
+    "review_type": null,
+    "country": "KE",
+    "notice_from": "2019-07-01",
+    "notice_to": "2020-12-15",
+    "size_from_usd": null,
+    "size_to_usd": null,
+    "from_package": [
+      "method",
+      "category",
+      "country",
+      "notice_to"
+    ],
+    "country_name": "Kenya"
+  },
+  "counts": {
+    "comparables": 25,
+    "signed": 25,
+    "still_open": 0,
+    "canceled": 0,
+    "canceled_as_still_open": false
+  },
+  "past_range": {
+    "q25": 3.7,
+    "q50": 4.1,
+    "q75": 4.5,
+    "q80": 4.5,
+    "days": {
+      "q25": 112,
+      "q50": 124,
+      "q75": 136,
+      "q80": 138
+    }
+  },
+  "plan": {
+    "days": 101,
+    "months": 3.3,
+    "planned_notice_on": "2021-03-01",
+    "planned_signing_on": "2021-06-10",
+    "plan_date": "2020-12-15",
+    "within": 1,
+    "in10": 0
+  },
+  "frequencies": {
+    "q80": [
+      8,
+      10
+    ],
+    "plan": {
+      "words": "fewer_than",
+      "states": [
+        1,
+        10
+      ]
+    }
+  },
+  "quantile_dots": null,
+  "thresholds": {
+    "min_comparables": 20,
+    "quantile_dots_above": 60,
+    "quantile_dots": 20,
+    "max_plan_months": 60,
+    "canceled_as_still_open": false
+  },
+  "sources": [
+    {
+      "key": "notices",
+      "dataset_name": "Procurement Notices"
+    },
+    {
+      "key": "awards",
+      "dataset_name": "Contract Awards in Investment Project Financing (Since FY 2020)"
+    },
+    {
+      "key": "documents",
+      "dataset_name": "Documents & Reports: Documents API"
+    },
+    {
+      "key": "projects",
+      "dataset_name": "World Bank Projects & Operations"
+    }
+  ],
+  "records_through": "2020-08-03",
+  "abstention": null,
+  "summary": {
+    "evidence_id": "strata.tools.find_comparables:KE-HAND-900000-CW-RFB@2021-01-15",
+    "public_from": "2021-01-15",
+    "source": {
+      "tool": "find_comparables",
+      "sources": [
+        "notices",
+        "awards",
+        "documents",
+        "projects"
+      ]
+    },
+    "past_range": {
+      "q25": 3.7,
+      "q50": 4.1,
+      "q75": 4.5,
+      "q80": 4.5,
+      "days": {
+        "q25": 112,
+        "q50": 124,
+        "q75": 136,
+        "q80": 138
+      }
+    },
+    "plan": {
+      "days": 101,
+      "months": 3.3,
+      "planned_notice_on": "2021-03-01",
+      "planned_signing_on": "2021-06-10",
+      "plan_date": "2020-12-15",
+      "within": 1,
+      "in10": 0
+    },
+    "frequencies": {
+      "q80": [
+        8,
+        10
+      ],
+      "plan": {
+        "words": "fewer_than",
+        "states": [
+          1,
+          10
+        ]
+      }
+    },
+    "counts": {
+      "comparables": 25,
+      "signed": 25,
+      "still_open": 0,
+      "canceled": 0,
+      "canceled_as_still_open": false
+    },
+    "coverage": {
+      "matched": 25,
+      "used": 25,
+      "not_used": []
+    }
+  }
+}

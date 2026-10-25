@@ -13,11 +13,20 @@ that change on every call, such as its usage and creation time, stay out, so the
 changed in the agent's answers.
 
 ops/agent/record.py runs it with the Foundry agent and the SQL warehouse, as the env file's token.
+
+record_judged() re-records the judge of the verifier's check 4 (ticket 24): it replays every scripted case
+through the answer stream, and every writer case through its draft workflow's six checks, with the scripted
+agent and its plants, and keeps the live judge's answer for each case that asks it, in
+tests/fixtures/agent/judged/<case id>.json. Run it after record_all(), since the
+sentences the judge is asked about come from the agent's recordings. Given the criteria reader's cases (ticket
+31), it also replays each through section 5's comparison and its six checks, where the judge is asked about the
+readings.
 """
 
 from __future__ import annotations
 
 import asyncio
+import copy
 import datetime as dt
 import difflib
 import json
@@ -27,7 +36,7 @@ from pathlib import Path
 
 from strata.agent.loop import Agent, answer_runner, output_text
 from strata.agent.scripted import Case
-from strata.agent.verifier import verify
+from strata.agent.verifier import Verdict, verify
 from strata.dbx import Viewer
 from strata.harness.turn import Scope, Turn
 from strata.server.engines import EngineFor
@@ -38,6 +47,9 @@ ABOUT = ("The Foundry agent's answers through the Responses API, recorded by ops
 ABOUT_READER = ("The Foundry package reader's answer through the Responses API, recorded by ops/agent/record.py "
                 "--packages from the live reader, given the sentence and the package form's fields as the "
                 "plan-a-package workflow sends them. The scripted reader replays it in the offline gate.")
+ABOUT_CRITERIA = ("The Foundry criteria reader's answer through the Responses API, recorded by ops/agent/record.py "
+                  "--criteria from the live reader, given the pasted text and the item registry's items as the "
+                  "check-your-criteria workflow sends them. The scripted reader replays it in the offline gate.")
 ABOUT_WRITER = ("The Foundry writer's answer through the Responses API, recorded by ops/agent/record.py --writers "
                 "from the live writer, given the facts its workflow read on the workspace. The scripted writer "
                 "replays it in the offline gate.")
@@ -100,7 +112,11 @@ def _record_writer(case: Case, agent: Agent, engine_for: EngineFor, viewer: View
     keeper = Keeper(agent)
     response = keeper.respond([{"role": "user", "content": json.dumps(module.message(facts), ensure_ascii=False,
                                                                       default=str)}], None)
-    _, verdict = runtime.compose(module, facts, runtime.parse_notes(output_text(response), module.KEY))
+    from strata.agent.answer_check import SixChecks
+
+    check, _, _ = runtime.note_check(module, facts, runtime.parse_notes(output_text(response), module.KEY),
+                                     SixChecks(None, None))
+    verdict = Verdict(tuple(sentence for _, sentence in sorted(check.sentences.items())))
     recording = {"about": ABOUT_WRITER, "recorded": True, "recorded_on": today.isoformat(), "question": case.question,
                  "scope": case.scope, "as_of": case.as_of.isoformat(),
                  "agent": {"name": keeper.name, "version": keeper.version}, "responses": keeper.responses}
@@ -124,6 +140,29 @@ def _record_package(case: Case, agent: Agent, engine_for: EngineFor, viewer: Vie
     return recording, None
 
 
+def _record_criteria(case: Case, agent: Agent, engine_for: EngineFor, viewer: Viewer,
+                     today: dt.date) -> tuple[dict, dict | None]:
+    """A criteria reader's case (tests/fixtures/agent/criteria.toml): the live reader is sent the case's pasted text
+    with the item registry's items, as the check-your-criteria workflow sends it (ticket 31). The workflow checks
+    and verifies its readings when it replays them, so no verifier counts go with the recording."""
+    from strata.config import load_criteria_items
+    from strata.criteria import workflow
+
+    keeper = Keeper(agent)
+    keeper.respond([{"role": "user", "content": json.dumps(workflow.message(case.question, load_criteria_items()),
+                                                           ensure_ascii=False)}], None)
+    recording = {"about": ABOUT_CRITERIA, "recorded": True, "recorded_on": today.isoformat(), "question": case.question,
+                 "scope": case.scope, "as_of": case.as_of.isoformat(),
+                 "agent": {"name": keeper.name, "version": keeper.version}, "responses": keeper.responses}
+    return recording, None
+
+
+def record_criteria(cases: dict[str, Case], agent_for: Callable[[], Agent], engine_for: EngineFor, viewer: Viewer,
+                    today: dt.date | None = None) -> list[Recorded]:
+    """Re-record every recording the criteria reader's cases name, once each, and write it over its file."""
+    return record_all(cases, agent_for, engine_for, viewer, today, record_one=_record_criteria)
+
+
 def record_packages(cases: dict[str, Case], agent_for: Callable[[], Agent], engine_for: EngineFor, viewer: Viewer,
                     today: dt.date | None = None) -> list[Recorded]:
     """Re-record every recording the package reader's cases name, once each, and write it over its file."""
@@ -134,6 +173,135 @@ def record_writers(cases: dict[str, Case], agent_for: Callable[[], Agent], engin
                    today: dt.date | None = None) -> list[Recorded]:
     """Re-record every recording the draft writers' cases name, once each, and write it over its file."""
     return record_all(cases, agent_for, engine_for, viewer, today, record_one=_record_writer)
+
+
+ABOUT_JUDGE = ("The judge's answer for this case's sentences through Azure OpenAI's chat completions, recorded by "
+               "ops/agent/record.py --judge from config/models.toml's draft role. ScriptedJudge replays it in the "
+               "offline gate.")
+
+
+class JudgeKeeper:
+    """The live judge, with the questions it was asked and the answer it gave kept. It keeps them by wrapping a copy
+    of the judge's transport, so the judge the app runs keeps no viewer's sentences."""
+
+    def __init__(self, judge):
+        self.name = judge.name
+        self.asked, self.response = None, None
+        self.judge_ = copy.copy(judge)
+        post = judge.post
+
+        def keep(url, headers, body):
+            self.response = post(url, headers, body)
+            return self.response
+
+        self.judge_.post = keep
+
+    def judge(self, questions):
+        judged = self.judge_.judge(questions)
+        self.asked = list(questions)
+        return judged
+
+
+def _ask_through_the_stream(case: Case, engine_for: EngineFor, judge) -> None:
+    from strata.agent.scripted import ScriptedAgent
+    from strata.server.app import create_app
+
+    import httpx
+
+    app = create_app(runner=answer_runner(lambda turn: ScriptedAgent(case), engine_for, today=lambda: case.as_of),
+                     engine_for=engine_for, judge=judge)
+
+    async def ask():
+        transport = httpx.ASGITransport(app=app)
+        async with httpx.AsyncClient(transport=transport, base_url="http://strata.test") as client:
+            await client.post("/api/ask", headers={"X-Forwarded-User": "record@strata"}, json={
+                "question": case.question, "scope": case.scope, "asof": case.as_of.isoformat()})
+
+    asyncio.run(ask())
+
+
+def _ask_through_the_draft(case: Case, engine_for: EngineFor, judge) -> None:
+    """A writer case's notes through its draft workflow's six checks, as the draft runtime runs them, with the
+    scripted writer and its plants: nothing is saved."""
+    from strata.agent.answer_check import Asker, SixChecks
+    from strata.agent.scripted import ScriptedAgent
+    from strata.config import load_draft_kinds
+    from strata.drafts import runtime
+
+    viewer = Viewer(user_id="record@strata", name="record@strata")
+    module = runtime.writer_module(load_draft_kinds().kinds[case.request["kind"]])
+    with engine_for(viewer) as engine:
+        facts = module.read(engine, viewer, case.request, case.as_of)
+    response = ScriptedAgent(case).respond([{"role": "user", "content": json.dumps(
+        module.message(facts), ensure_ascii=False, default=str)}], None)
+    six = SixChecks(engine_for, judge)
+    check, seen, _ = runtime.note_check(module, facts, runtime.parse_notes(output_text(response), module.KEY), six)
+
+    async def drain():
+        async for _ in six.finish(check, seen, Asker(viewer, "staff", case.as_of, f"record-{case.id}")):
+            pass
+
+    asyncio.run(drain())
+
+
+def _ask_through_the_criteria(case: Case, engine_for: EngineFor, judge) -> None:
+    """A criteria reader's case through section 5's comparison and its six checks, with the scripted reader, on the
+    case's package as of its date. Its app state is a throwaway file, so nothing is kept."""
+    import tempfile
+
+    import httpx
+
+    from strata import appstate
+    from strata.agent.scripted import ScriptedAgent
+    from strata.criteria.store import CriteriaStore
+    from strata.lakehouse.engine import DuckDBEngine
+    from strata.server.app import create_app
+
+    with tempfile.TemporaryDirectory() as folder:
+        state = Path(folder) / "state.duckdb"
+        with DuckDBEngine.open(state) as engine:
+            appstate.build(engine)
+        app = create_app(engine_for=engine_for, criteria=CriteriaStore(lambda: DuckDBEngine.open(state)),
+                         criteria_reader=lambda: ScriptedAgent(case), today=lambda: case.as_of, judge=judge)
+
+        async def ask():
+            transport = httpx.ASGITransport(app=app)
+            async with httpx.AsyncClient(transport=transport, base_url="http://strata.test") as client:
+                await client.post(f"/api/packages/{case.scope}/criteria/compare",
+                                  headers={"X-Forwarded-User": "record@strata"}, json={"text": case.question})
+
+        asyncio.run(ask())
+
+
+def record_judged(cases: dict[str, Case], judge, engine_for: EngineFor, today: dt.date | None = None,
+                  criteria: dict[str, Case] | None = None) -> list[Recorded]:
+    """Re-record the judge's answer for every case whose answer or draft asks it, and write it over its file. A
+    writer case (one with a request) runs through its draft workflow's six checks, an answer case through the
+    answer stream, and a criteria reader's case (criteria) through section 5's comparison."""
+    from strata.agent.scripted import NO_RESPONSE
+
+    today = today or dt.datetime.now(dt.UTC).date()
+    done = []
+    asking = [(case, _ask_through_the_draft if case.request is not None else _ask_through_the_stream)
+              for case in cases.values()]
+    asking += [(case, _ask_through_the_criteria) for case in (criteria or {}).values()]
+    for case, ask in asking:
+        if case.judge == NO_RESPONSE:
+            continue
+        keeper = JudgeKeeper(judge)
+        ask(case, engine_for, keeper)
+        if keeper.asked is None:
+            continue
+        path = case.folder.parent / "judged" / f"{case.id}.json"
+        path.parent.mkdir(exist_ok=True)
+        before = path.read_text() if path.exists() else ""
+        after = json.dumps({"about": ABOUT_JUDGE, "recorded": True, "recorded_on": today.isoformat(), "case": case.id,
+                            "judge": {"deployment": judge.name},
+                            "asked": [question.sentence for question in keeper.asked],
+                            "response": keeper.response}, indent=1, ensure_ascii=False) + "\n"
+        path.write_text(after)
+        done.append(Recorded(case.id, path, (case.id,), before, after, None))
+    return done
 
 
 def record_all(cases: dict[str, Case], agent_for: Callable[[], Agent], engine_for: EngineFor, viewer: Viewer,

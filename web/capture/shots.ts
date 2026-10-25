@@ -63,7 +63,6 @@ const NARROW = [390];
 // workspace (ticket 12) and the Packages tab (ticket 15).
 const ROUTES: [string, string][] = [
   ["home", "/"],
-  ["activity", "/projects/P130164/packages/IN-RRSMP-7431-CW-RFB"],
   ["lessons", "/lessons"],
   ["drafts", "/drafts"],
   ["not-found", "/nowhere"],
@@ -108,6 +107,103 @@ const RISK_SHOTS: Shot[] = [
   riskShot("focus-checkbox", INDIA, { full: false, act: focus("section#risks [data-risk-view]:visible input[type=checkbox]") }),
   riskShot("hover-count", INDIA, { full: false, widths: WIDE, act: hover("section#risks [data-risk-view]:visible [data-count] button") }),
   riskShot("320", INDIA, { widths: [320], act: toRisks }),
+];
+
+// Ticket 27: section 2 of the package workspace, the planned date for each STEP step. On the fixture every step
+// abstains, so the dated states are the server's answers on the hand-made set (tests/record_steps_api.py) for its
+// works package KE-HAND-900000-CW-RFB, and for a package from a sentence on the same set. The other states are in the
+// gallery (/gallery/steps), from the same answers.
+const STEPS_PATH = "/packages/KE-HAND-900000-CW-RFB";
+const STEPS_API = "/api/packages/KE-HAND-900000-CW-RFB";
+function stepShot(name: string, steps: Answer | null, rest: Partial<Shot> = {}): Shot {
+  const answers: Record<string, Answer> = {
+    ...app(name, STEPS_PATH).api,
+    [STEPS_API]: { recorded: "package-ke-hand-900000.json" },
+    [`${STEPS_API}/comparables`]: { recorded: "comparables-ke-hand-900000.json" },
+    [`${STEPS_API}/risks`]: { recorded: "risks-ke-hand-900000.json" },
+    [`${STEPS_API}/plan-dates`]: { recorded: "steps-plan-dates-saved.json" },
+    "/api/evidence/opened": { body: '{"opened":[],"recorded":true}' },
+    ...rest.api,
+  };
+  if (steps) answers[`${STEPS_API}/steps`] = steps;
+  // Section 5 (ticket 31) has no recorded answer for the hand-made set, so its summary stays loading in these shots.
+  const pending = [`${STEPS_API}/criteria`, ...(steps ? (rest.pending ?? []) : [`${STEPS_API}/steps`])];
+  return app(`steps--${name}`, STEPS_PATH, {}, { full: true, ...rest, api: answers, pending });
+}
+const DATED_STEPS: Answer = { recorded: "steps-ke-hand-900000.json" };
+const SECTION_2 = "section#planned-dates";
+const toSteps = async (page: Page) => {
+  await page.locator(SECTION_2).scrollIntoViewIfNeeded();
+  await page.waitForTimeout(250);
+};
+const openSteps = async (page: Page) => {
+  await page.locator(`${SECTION_2} [data-section-toggle]`).click();
+  await toSteps(page);
+};
+const inOrder = (...acts: ((page: Page) => Promise<void>)[]) => async (page: Page) => {
+  for (const act of acts) await act(page);
+};
+const STEP_SHOTS: Shot[] = [
+  stepShot("collapsed", DATED_STEPS, { act: toSteps }),
+  stepShot("cautious", DATED_STEPS, { act: openSteps }),
+  stepShot("middle", DATED_STEPS, { act: inOrder(openSteps, click(`${SECTION_2} [data-segment=middle]`)) }),
+  // The demo package on the fixture, where every step abstains.
+  app("steps--fixture", "/packages/KE-NWWDA-541055-CW-RFB", {}, {
+    full: true,
+    act: openSteps,
+    api: {
+      ...app("steps--fixture", "/packages/KE-NWWDA-541055-CW-RFB").api,
+      "/api/packages/KE-NWWDA-541055-CW-RFB": { recorded: "package-ke-nwwda-541055.json" },
+      "/api/packages/KE-NWWDA-541055-CW-RFB/comparables": { recorded: "comparables-ke-nwwda-541055.json" },
+      "/api/packages/KE-NWWDA-541055-CW-RFB/risks": { recorded: "risks-ke-nwwda-541055.json" },
+      "/api/packages/KE-NWWDA-541055-CW-RFB/steps": { recorded: "steps-ke-nwwda-541055.json" },
+    },
+  }),
+  stepShot("abstain", { recorded: "steps-ke-hand-900000-few.json" }, { act: openSteps }),
+  stepShot("loading", null, { act: toSteps }),
+  stepShot("error", { status: 503, body: '{"code":"data_service","trace_id":"0af7651916cd43dd8448eb211c80319c"}' }, { act: toSteps }),
+  stepShot("count-drawer", DATED_STEPS, { widths: WIDE, act: inOrder(openSteps, click(`${SECTION_2} [data-step-row=contract_signed] td:last-child button`)) }),
+  stepShot("count-sheet", DATED_STEPS, { widths: NARROW, act: inOrder(openSteps, click(`${SECTION_2} [data-step-item=contract_signed] dd:last-child button`)) }),
+  stepShot("longest-drawer", DATED_STEPS, { widths: WIDE, act: click(`${SECTION_2} [data-section-summary] button`) }),
+  stepShot("hover-disclosure", DATED_STEPS, { full: false, widths: WIDE, act: hover(`${SECTION_2} [data-section-toggle]`) }),
+  stepShot("focus-disclosure", DATED_STEPS, { full: false, act: focus(`${SECTION_2} [data-section-toggle]`) }),
+  stepShot("focus-choice", DATED_STEPS, { full: false, act: inOrder(openSteps, focus(`${SECTION_2} input[type=radio]:checked`)) }),
+  stepShot("hover-choice", DATED_STEPS, { full: false, widths: WIDE, act: inOrder(openSteps, hover(`${SECTION_2} [data-segment=middle]`)) }),
+  // A step label's full STEP name on hover, on keyboard focus with no Enter, and pinned open by Enter (criterion 4).
+  stepShot("term-open", DATED_STEPS, { full: false, widths: WIDE, act: inOrder(openSteps, hover(`${SECTION_2} [data-step-table] [data-term]`)) }),
+  stepShot("term-focus", DATED_STEPS, { full: false, widths: WIDE, act: inOrder(openSteps, focus(`${SECTION_2} [data-step-table] [data-term]`)) }),
+  stepShot("term-pinned", DATED_STEPS, { full: false, widths: WIDE, act: inOrder(openSteps, focus(`${SECTION_2} [data-step-table] [data-term]`), async (page) => page.keyboard.press("Enter")) }),
+  stepShot("focus-date", DATED_STEPS, { full: false, widths: WIDE, act: inOrder(openSteps, focus(`${SECTION_2} [data-step-table] [data-num-lines]`)) }),
+  stepShot("focus-count", DATED_STEPS, { full: false, widths: WIDE, act: inOrder(openSteps, focus(`${SECTION_2} [data-step-table] td:last-child button`)) }),
+  stepShot("320", DATED_STEPS, { widths: [320], act: openSteps }),
+  app("steps--sentence-undated", "/packages/pkg-000000000001", {}, {
+    full: true,
+    act: openSteps,
+    api: {
+      ...app("steps--sentence-undated", "/packages/pkg-000000000001").api,
+      "/api/planned-packages/pkg-000000000001": { recorded: "planned-package-hand-made.json" },
+      "/api/comparables": { recorded: "comparables-planned-hand-made.json" },
+      "/api/planned-packages/pkg-000000000001/risks": { recorded: "risks-planned-hand-made.json" },
+      "/api/planned-packages/pkg-000000000001/steps": { recorded: "steps-planned-hand-made.json" },
+      "/api/planned-packages/pkg-000000000001/step-start": { recorded: "steps-planned-hand-made-dated.json" },
+    },
+    pending: ["/api/planned-packages/pkg-000000000001/criteria"],
+  }),
+  app("steps--sentence-dated", "/packages/pkg-000000000001", {}, {
+    full: true,
+    // 360 and 320 px too: the narrow list's longest values are this package's days captions.
+    widths: [1440, 1024, 390, 360, 320],
+    act: inOrder(openSteps, type(`${SECTION_2} input[type=date]`, "2021-03-01"), click(`${SECTION_2} [data-commit-start]`)),
+    api: {
+      ...app("steps--sentence-dated", "/packages/pkg-000000000001").api,
+      "/api/planned-packages/pkg-000000000001": { recorded: "planned-package-hand-made.json" },
+      "/api/comparables": { recorded: "comparables-planned-hand-made.json" },
+      "/api/planned-packages/pkg-000000000001/risks": { recorded: "risks-planned-hand-made.json" },
+      "/api/planned-packages/pkg-000000000001/steps": { recorded: "steps-planned-hand-made.json" },
+      "/api/planned-packages/pkg-000000000001/step-start": { recorded: "steps-planned-hand-made-dated.json" },
+    },
+    pending: ["/api/planned-packages/pkg-000000000001/criteria"],
+  }),
 ];
 
 const SIGNED_OUT = '{"email":null,"name":null,"signed_in":false,"has_token":false}';
@@ -264,6 +360,85 @@ const longVersions = derived("project-p156634-baseline.json", (body) => {
   }
   Object.assign(nwwda, { version_count: 7, shown_count: 5 });
 });
+
+// Ticket 22: the activity page's contract trail and a project's Connections tab, in every state the 22 brief's
+// section 14 lists, with /api answered from the server's own answers on the fixture (tests/record_api.py).
+const KENYA_ACTIVITY = "/projects/P156634/packages/KE-NWWDA-229129-CW-RFB";
+const SHOWCASE_ACTIVITY = "/projects/P130164/packages/IN-RRSMP-7431-CW-RFB";
+const TRAIL_ICR_54 = "strata.gold.passage:31525018/v1/54";
+const TRAIL_API: Shot["api"] = {
+  "/api/projects/P130164": { recorded: "project-p130164.json" },
+  "/api/projects/P156634": { recorded: "project-p156634.json" },
+  "/api/projects/P127203": { recorded: "project-p130164.json" },
+  [`/api${KENYA_ACTIVITY}`]: { recorded: "activity-ke-nwwda-229129.json" },
+  [`/api${KENYA_ACTIVITY}?asof=2022-01-02`]: { recorded: "activity-ke-nwwda-229129-before-signing.json" },
+  [`/api${SHOWCASE_ACTIVITY}`]: { recorded: "activity-in-rrsmp-7431.json" },
+  "/api/projects/P156634/packages/KE-MAWASCO-501974-CS-INDV": { recorded: "activity-ke-mawasco-501974-indv.json" },
+  "/api/projects/P156634/packages/KE-NWWDA-000000-CW-RFB": { status: 404, recorded: "activity-unknown.json" },
+  "/api/projects/P156634/packages/KE-KIMAWASCO-372408-GO-RFQ": { recorded: "activity-ke-kimawasco-372408.json" },
+  "/api/projects/P156634/packages/KE-NWWDA-503455-CW-RFQ": { recorded: "activity-ke-nwwda-503455.json" },
+  "/api/projects/P156634/packages/KE-WASREB-235524-CS-QCBS": { recorded: "activity-ke-wasreb-235524.json" },
+  "/api/projects/P156634/packages/KE-CWSB-102977-CS-QCBS": { recorded: "activity-ke-cwsb-102977.json" },
+  "/api/projects/P130164/connections?asof=2017-06-14": { recorded: "connections-p130164-2017-06-14.json" },
+  "/api/projects/P130164/connections": { recorded: "connections-p130164.json" },
+  "/api/projects/P156634/connections": { recorded: "connections-p156634.json" },
+  "/api/projects/P127203/connections": { recorded: "connections-p127203.json" },
+  "/api/evidence": { recorded: "evidence-icr-p130164-54.json" },
+  [`/api/evidence?id=${TRAIL_ICR_54}&step_ref=IN-RRSMP-7431-CW-RFB`]: { recorded: "evidence-icr-p130164-54-why.json" },
+  "/api/evidence?id=strata.gold.notice:OP00164589": { recorded: "evidence-award-notice-op00164589.json" },
+  "/api/evidence/opened": { body: '{"opened":[],"recorded":true}' },
+};
+const trailShot = (name: string, path: string, rest: Partial<Shot> = {}, answers: Shot["api"] = {}): Shot =>
+  app(name, path, {}, { ...rest, api: { ...app(name, path).api, ...TRAIL_API, ...answers } });
+const TRAIL_SHOTS: Shot[] = [
+  trailShot("activity--loading", KENYA_ACTIVITY, { pending: [`/api${KENYA_ACTIVITY}`] }),
+  trailShot("activity--full-trail", SHOWCASE_ACTIVITY),
+  trailShot("activity--kenya", KENYA_ACTIVITY),
+  trailShot("activity--individual-consultant", "/projects/P156634/packages/KE-MAWASCO-501974-CS-INDV"),
+  trailShot("activity--before-signing", `${KENYA_ACTIVITY}?asof=2022-01-02`),
+  trailShot("activity--public", `${KENYA_ACTIVITY}?view=public`),
+  trailShot("activity--not-found", "/projects/P156634/packages/KE-NWWDA-000000-CW-RFB"),
+  trailShot("activity--error", KENYA_ACTIVITY, {}, { [`/api${KENYA_ACTIVITY}`]: { status: 503, body: SERVICE_DOWN } }),
+  trailShot("activity--permission", KENYA_ACTIVITY, {}, { [`/api${KENYA_ACTIVITY}`]: { status: 403, body: '{"code":"permission"}' } }),
+  trailShot("activity--drawer-why", `${SHOWCASE_ACTIVITY}?evidence=${TRAIL_ICR_54}`, { full: false, act: async (page) => {
+    await page.locator("[data-why]").waitFor();
+  } }),
+  trailShot("activity--drawer-why-score", `${SHOWCASE_ACTIVITY}?evidence=${TRAIL_ICR_54}`, { full: false, act: click("[data-why] button[aria-expanded]") }),
+  trailShot("activity--drawer-award-notice", `${KENYA_ACTIVITY}?evidence=strata.gold.notice:OP00164589`, { full: false, act: async (page) => {
+    await page.locator("[data-record]").first().waitFor();
+  } }),
+  trailShot("activity--focus-pill", KENYA_ACTIVITY, { widths: [1440, 390], act: focus("[data-stage=bids] [data-citation]") }),
+  trailShot("activity--focus-crumb", KENYA_ACTIVITY, { widths: [1440, 390], act: focus("[data-breadcrumb] a:visible") }),
+  trailShot("activity--320", KENYA_ACTIVITY, { widths: [320] }),
+  // Round 2: two award notices and two contracts in one card each; the missing notice of a Limited market approach;
+  // a consultant award notice with scores left out; one with a rejected firm whose price is blank; the showcase's
+  // ICR group opened; and the plan row in the drawer, where no field is highlighted.
+  trailShot("activity--several-notices", "/projects/P156634/packages/KE-KIMAWASCO-372408-GO-RFQ"),
+  trailShot("activity--approach-no-notice", "/projects/P156634/packages/KE-NWWDA-503455-CW-RFQ"),
+  trailShot("activity--proposals-no-scores", "/projects/P156634/packages/KE-WASREB-235524-CS-QCBS"),
+  trailShot("activity--rejected-no-price", "/projects/P156634/packages/KE-CWSB-102977-CS-QCBS"),
+  trailShot("activity--report-opened", SHOWCASE_ACTIVITY, { widths: [1440, 390], act: click("[data-report]:last-child button[aria-expanded]") }),
+  trailShot("connections--loading", "/projects/P130164/connections", { pending: ["/api/projects/P130164/connections"] }),
+  trailShot("connections--populated", "/projects/P130164/connections"),
+  trailShot("connections--over-the-cap", "/projects/P156634/connections"),
+  trailShot("connections--no-links", "/projects/P127203/connections"),
+  trailShot("connections--empty", "/projects/P130164/connections", {}, {
+    "/api/projects/P130164/connections": { body: derived("connections-p130164.json", (body) => Object.assign(body, { packages: [], documents: [], edges: [], more: [] })) },
+  }),
+  trailShot("connections--error", "/projects/P130164/connections", {}, { "/api/projects/P130164/connections": { status: 503, body: SERVICE_DOWN } }),
+  trailShot("connections--permission", "/projects/P130164/connections", {}, { "/api/projects/P130164/connections": { status: 403, body: '{"code":"permission"}' } }),
+  trailShot("connections--list", "/projects/P130164/connections", { widths: [1440], act: click("[data-list-toggle]"), full: true }),
+  trailShot("connections--hover-package", "/projects/P130164/connections", { widths: [1440], act: hover("[data-package] a[data-node-link]") }),
+  trailShot("connections--focus-package", "/projects/P130164/connections", { widths: [1440, 390], act: focus("[data-package] a[data-node-link]") }),
+  trailShot("connections--hover-chip", "/projects/P130164/connections", { widths: [1440], act: hover("[data-node=document] [data-chip]") }),
+  trailShot("connections--focus-toggle", "/projects/P130164/connections", { widths: [1440], act: focus("[data-list-toggle]") }),
+  trailShot("connections--drawer", `/projects/P130164/connections?evidence=${TRAIL_ICR_54}`, { widths: [1440, 1024], full: false, act: async (page) => {
+    await page.locator("[data-why]").waitFor();
+  } }),
+  trailShot("connections--320", "/projects/P130164/connections", { widths: [320] }),
+  trailShot("connections--as-of", "/projects/P130164/connections?asof=2017-06-14"),
+  trailShot("connections--hover-over-the-cap", "/projects/P156634/connections", { widths: [1440], act: hover("[data-package=KE-NWWDA-229129-CW-RFB] a[data-node-link]") }),
+];
 
 const PROJECT_SHOTS: Shot[] = [
   // Ticket 21: a project's address opens its Summary, so the plan versions are on /procurement.
@@ -551,6 +726,82 @@ const filesMissing = draftWith((body) => {
 const failingAct: Shot["api"] = { "/api/drafts/draft-0001/check": { status: 503, body: SERVICE_DOWN } };
 const MARKER = "[data-draft-notes] [data-view]:visible [data-citation='1']";
 const LAST_MARKER = "[data-draft-notes] [data-view]:visible [data-citation='3']";
+
+// Ticket 37: Following, the follow control and the mission brief, with /api answered from the server's answers on
+// the fixture (tests/record_following_api.py). The states the fixture cannot reach are the following-made-up-*.json
+// answers, made up from the real one and saying so.
+const STAFF = { recorded: "me-staff.json" };
+const following = (name: string, file: string | null, rest: Partial<Shot> = {}, path = "/projects/following"): Shot =>
+  app(`following--${name}`, path, { me: STAFF }, {
+    ...rest,
+    api: { ...app(name, path, { me: STAFF }).api, ...(file ? { "/api/following": { recorded: file } } : {}), "/api/evidence/opened": { body: '{"recorded":true}' }, ...rest.api },
+  });
+const BRIEF_DRAFT = { "/api/drafts/draft-0001": { recorded: "drafts-mission-brief-draft.json" } };
+const projectWithFollow = (name: string, follow: Answer, rest: Partial<Shot> = {}): Shot =>
+  app(`following--${name}`, "/projects/P156634", { me: STAFF }, {
+    ...rest,
+    api: {
+      ...app(name, "/projects/P156634", { me: STAFF }).api,
+      "/api/projects/P156634": { recorded: "project-p156634.json" },
+      "/api/projects/P156634/summary": { recorded: "summary-p156634.json" },
+      "/api/projects/P156634/follow": follow,
+      ...rest.api,
+    },
+  });
+
+const FOLLOWING_SHOTS: Shot[] = [
+  following("loading", null, { pending: ["/api/following"] }),
+  following("populated", "following-p156634.json"),
+  following("fold-open", "following-p156634.json", { full: true, act: click("[data-following-view]:visible [data-fold]") }),
+  following("states", "following-made-up-states.json"),
+  following("many-quiet", "following-made-up-many-quiet.json", { full: true, act: click("[data-following-view]:visible [data-fold]") }),
+  following("all-quiet", "following-made-up-all-quiet.json"),
+  following("one", "following-made-up-one.json"),
+  following("track-record", "following-made-up-track-record.json", { full: true, act: click("[data-track-record] button[aria-expanded]") }),
+  following("asof", "following-asof-2024-06-30.json", {}, "/projects/following?asof=2024-06-30"),
+  following("empty", "following-empty.json"),
+  following("error", null, { api: { "/api/following": { status: 503, body: '{"code":"data_service","trace_id":"4bf92f3577b34da6a3ce929d0e0e4736"}' } } }),
+  following("permission", null, { api: { "/api/following": { status: 403, body: '{"code":"permission"}' } } }),
+  following("not-staff", null, { api: { "/api/me": { recorded: "me-not-staff.json" }, "/api/following": { status: 403, recorded: "following-not-staff.json" } } }),
+  following("preview-piu", null, {}, "/projects/following?view=piu"),
+  following("preview-public", null, {}, "/projects/following?view=public"),
+  // The visible Status term: the table's header from 1,200 px, the definitions above the list below it.
+  following("status-term", "following-p156634.json", { widths: WIDE, act: click("[data-term]:visible >> nth=0") }),
+  following("ratio-num", "following-p156634.json", { widths: WIDE, act: click("[data-following-view]:visible [data-signal=above_estimate] [data-num]") }),
+  following("hover-add", "following-p156634.json", { widths: WIDE, act: hover("[data-following-view]:visible [data-add-brief]") }),
+  following("focus-add", "following-p156634.json", { act: focus("[data-following-view]:visible [data-add-brief]") }),
+  following("focus-marker", "following-p156634.json", { act: focus("[data-following-view]:visible [data-citation]") }),
+  following("drawer", "following-p156634.json", { act: click("[data-following-view]:visible [data-signal=completion_passed] [data-citation]") }),
+  following("all-projects", null, { api: { "/api/projects": { recorded: "projects.json" } } }, "/projects"),
+  projectWithFollow("project-not-following", { recorded: "follow-off.json" }),
+  projectWithFollow("project-following", { recorded: "follow-on.json" }),
+  // Only the PUT is held, so the control first reads that you don't follow and then shows Saving.
+  projectWithFollow("project-saving", { recorded: "follow-off.json" }, {
+    act: async (page) => {
+      await page.route("**/api/projects/P156634/follow", (route) => (route.request().method() === "PUT" ? undefined : route.fallback()));
+      await page.locator("[data-follow] button").first().click();
+      await page.waitForTimeout(200);
+    },
+  }),
+  projectWithFollow("project-loading", { recorded: "follow-off.json" }, { pending: ["/api/projects/P156634/follow"] }),
+  projectWithFollow("project-hover-follow", { recorded: "follow-off.json" }, { widths: WIDE, act: hover("[data-follow] button") }),
+  following("brief-writing", "following-p156634.json", {
+    full: true,
+    pending: ["/api/drafts"],
+    api: BRIEF_DRAFT,
+    act: async (page) => {
+      await page.locator("[data-following-view]:visible [data-add-brief]").first().click();
+      await page.waitForTimeout(300);
+    },
+  }),
+  app("following--brief-draft", "/drafts/draft-0001", { me: STAFF }, { api: { ...app("b", "/").api, ...BRIEF_DRAFT, "/api/evidence/opened": { body: '{"recorded":true}' } } }),
+  app("following--brief-checked", "/drafts/draft-0001", { me: STAFF }, {
+    api: { ...app("b", "/").api, "/api/drafts/draft-0001": { recorded: "drafts-mission-brief-checked.json" }, "/api/evidence/opened": { body: '{"recorded":true}' } },
+  }),
+  app("following--brief-exported", "/drafts/draft-0001", { me: STAFF }, {
+    api: { ...app("b", "/").api, "/api/drafts/draft-0001": { recorded: "drafts-mission-brief-exported.json" }, "/api/evidence/opened": { body: '{"recorded":true}' } },
+  }),
+];
 
 const DRAFT_SHOTS: Shot[] = [
   planWithDraft("draft--plan-action", NO_EXISTING),
@@ -844,6 +1095,13 @@ function packageShot(name: string, answer: Answer | null, rest: Partial<Shot> = 
   if (answer) answers[`${api}/comparables`] = answer;
   // Section 3 (ticket 30): the fixture's Kenya comparables reach no completion report.
   answers[`${api}/risks`] = { recorded: "risks-ke-nwwda-541055.json" };
+  // Section 2 (ticket 27): on the fixture every step abstains.
+  answers[`${api}/steps`] = { recorded: "steps-ke-nwwda-541055.json" };
+  // Section 5, "Check your criteria" (ticket 31), collapsed under section 1, as the server answered on the fixture.
+  if (path === PACKAGE) {
+    answers[`${api}/criteria`] = { recorded: "criteria-summary-ke-nwwda-541055.json" };
+    answers[`${api}/criteria/run`] = { recorded: "criteria-run-ke-nwwda-541055.sse" };
+  }
   const pending = [...(pkg ? [] : [api]), ...(answer ? [] : [`${api}/comparables`]), ...(rest.pending ?? [])];
   return app(name, path, {}, { ...rest, api: answers, pending });
 }
@@ -887,6 +1145,140 @@ const focusReset = async (page: Page) => {
   await page.locator("[data-plan-reset] button:visible").focus();
   await page.waitForTimeout(250);
 };
+
+// Ticket 31: section 5 of the package workspace, "Check your criteria", on a works package whose comparables
+// published no qualification criteria (KE-NWWDA-541055-CW-RFB) and on a consultant services package whose
+// comparables did (KE-CWSB-224323-CS-QCBS), each answered as the server answered on the fixture
+// (tests/record_criteria_api.py). The section's other states are on the gallery's check-criteria page.
+const CONSULTANT = "/packages/KE-CWSB-224323-CS-QCBS";
+const CONSULTANT_API = "/api/packages/KE-CWSB-224323-CS-QCBS";
+const PASTED =
+  "1. Similar experience: at least two contracts of similar works of US$10 million each.\n" +
+  "2. Average annual turnover: US$25 million over the last three years.\n" +
+  "3. The bid must be signed by a person with a power of attorney.";
+function criteriaShot(name: string, rest: Partial<Shot> = {}, compare = "criteria-compare-similar-experience.sse", path = CONSULTANT): Shot {
+  const api = `/api${path}`;
+  const slug = path === CONSULTANT ? "ke-cwsb-224323" : "ke-nwwda-541055";
+  // Section 3 (ticket 30) sits above section 5: the works package's risks as recorded; the consultant package has
+  // no recorded risks, so its section 3 stays loading rather than showing an error the server never gave.
+  const risks = path === CONSULTANT ? [`${api}/risks`] : [];
+  return app(`criteria--${name}`, path, {}, {
+    ...rest,
+    pending: [...risks, ...(rest.pending ?? [])],
+    api: {
+      ...(path === CONSULTANT ? {} : { [`${api}/risks`]: { recorded: "risks-ke-nwwda-541055.json" } }),
+      ...app(name, path).api,
+      [api]: { recorded: `package-${slug}.json` },
+      [`${api}/comparables`]: { recorded: `comparables-${slug}.json` },
+      [`${api}/criteria`]: { recorded: `criteria-summary-${slug}.json` },
+      [`${api}/criteria/run`]: { recorded: `criteria-run-${slug}.sse` },
+      [`${api}/criteria/compare`]: { recorded: compare },
+      "/api/evidence/opened": OPENED,
+      "/api/evidence": { recorded: "evidence-award-notice-op00125282.json" },
+      ...rest.api,
+    },
+  });
+}
+const openCheck = click("#check-criteria [data-section-toggle]");
+const compareCriteria = then(openCheck, async (page) => {
+  await page.locator("#check-criteria textarea").fill(PASTED);
+  await page.locator("#check-criteria [data-compare]").click();
+  await page.locator("#check-criteria :is([data-criteria-notes], [data-refusal], [data-none-found])").first().waitFor();
+});
+const CRITERIA_SHOTS: Shot[] = [
+  criteriaShot("collapsed"),
+  criteriaShot("collapsed-none-public", {}, undefined, PACKAGE),
+  criteriaShot("collapsed-loading", { pending: [`${CONSULTANT_API}/criteria`] }),
+  criteriaShot("works-open", { full: true, act: openCheck }, undefined, PACKAGE),
+  criteriaShot("open-before-comparing", { full: true, act: openCheck }),
+  criteriaShot("run-in-progress", { full: true, act: openCheck, pending: [`${CONSULTANT_API}/criteria/run`] }),
+  criteriaShot("compared", { full: true, act: compareCriteria }),
+  criteriaShot("live-tender-refused", { full: true, act: compareCriteria }, "criteria-compare-live-tender.sse"),
+  criteriaShot("partial-refusal", { full: true, act: compareCriteria }, "criteria-compare-partial-refusal.sse"),
+  criteriaShot("none-found", { full: true, act: compareCriteria }, "criteria-compare-none-found.sse"),
+  criteriaShot("empty-on-press", { act: then(openCheck, click("#check-criteria [data-compare]")) }),
+  criteriaShot("focus-toggle", { act: focus("#check-criteria [data-section-toggle]") }),
+  criteriaShot("focus-textarea", { act: then(openCheck, focus("#check-criteria textarea")) }),
+  criteriaShot("hover-count", { widths: WIDE, act: then(compareCriteria, hover("#check-criteria [data-same-or-less] [data-num]:visible")) }),
+  criteriaShot("drawer-item", { act: then(compareCriteria, click("#check-criteria [data-same-or-less] [data-num]:visible")) }),
+  criteriaShot("drawer-public", { act: then(openCheck, click("#check-criteria [data-summary-text] [data-num]")) }),
+  criteriaShot("hover-cost-dot", { widths: WIDE, act: then(openCheck, hover("[data-cost-dot] >> nth=0")) }, undefined, PACKAGE),
+  criteriaShot("focus-cost-dot", { act: then(openCheck, focus("[data-cost-dot] >> nth=0")) }, undefined, PACKAGE),
+  criteriaShot("drawer-cost", { act: then(openCheck, click("[data-cost-row]:visible >> nth=0")) }, undefined, PACKAGE),
+  criteriaShot("drawer-award-notice", { act: then(openCheck, click("[data-rejected-row] [data-citation] >> nth=0")) }, undefined, PACKAGE),
+  criteriaShot("focus-marker", { act: then(openCheck, focus("[data-lesson-card] [data-citation]")) }, undefined, PACKAGE),
+  criteriaShot("320", { widths: [320], full: true, act: compareCriteria }),
+  criteriaShot("works-320", { widths: [320], full: true, act: openCheck }, undefined, PACKAGE),
+  criteriaShot("review-decisions-refused", { full: true, act: compareCriteria }, "criteria-compare-review-decisions.sse"),
+  criteriaShot("focus-intro-count", { act: then(openCheck, focus("#check-criteria [data-criteria-intro] [data-num]")) }),
+  // A reading check 4's judge said does not follow: removed in its place, its reason in the box above.
+  criteriaShot("reading-removed", { full: true, act: compareCriteria }, "criteria-compare-swapped-reading.sse"),
+  // View C with the requirement highlighted, and view F with the lesson's words highlighted and its IEG line.
+  criteriaShot("drawer-notice", {
+    api: { "/api/evidence": { recorded: "evidence-passage-op00077276-s3.json" } },
+    act: then(compareCriteria, click("#check-criteria [data-same-or-less] [data-num]:visible"), click("[role=dialog] [data-entry='strata.gold.passage:OP00077276/v1/s3']")),
+  }),
+  criteriaShot("drawer-lesson", {
+    api: { "/api/evidence": { recorded: "evidence-icr-p130164-54.json" } },
+    act: then(openCheck, click("[data-lesson-card] [data-citation]")),
+  }, undefined, PACKAGE),
+];
+
+// Ticket 28: section 1's "Advertised again" block on the demo package. The fixture's answers are the server's
+// (tests/record_rebidding_api.py): three of the 52 comparable packages, and with review type Prior, none of 7. The
+// model shown and the model that did no better are mocks (rebidding-mock-*.json), labeled as such. The other states
+// are in the gallery (/gallery/rebidding).
+function rebidShot(name: string, rebidding: Answer | null, rest: Partial<Shot> = {}, comparables = "comparables-ke-nwwda-541055.json"): Shot {
+  const answers: Record<string, Answer> = {
+    ...app(name, RISKS_PATH).api,
+    [RISKS_API]: { recorded: "package-ke-nwwda-541055.json" },
+    [`${RISKS_API}/comparables`]: { recorded: comparables },
+    [`${RISKS_API}/risks`]: { recorded: "risks-ke-nwwda-541055.json" },
+    [`${RISKS_API}/criteria`]: { recorded: "criteria-summary-ke-nwwda-541055.json" },
+    "/api/evidence": { recorded: "evidence-notice-op00083890.json" },
+    "/api/evidence/opened": { body: '{"opened":[],"recorded":true}' },
+    ...rest.api,
+  };
+  if (rebidding) answers[`${RISKS_API}/rebidding`] = rebidding;
+  return app(`rebidding--${name}`, RISKS_PATH, {}, { full: true, ...rest, api: answers, pending: rebidding ? rest.pending : [`${RISKS_API}/rebidding`] });
+}
+const REBID: Answer = { recorded: "rebidding-ke-nwwda-541055.json" };
+const REBID_SHOWN: Answer = { recorded: "rebidding-mock-model-shown.json" };
+const toRebid = async (page: Page) => {
+  await page.locator("[data-rebidding]").scrollIntoViewIfNeeded();
+  await page.waitForTimeout(250);
+};
+const openReasons = click("[data-rebid-disclosure]");
+const REBID_SHOTS: Shot[] = [
+  rebidShot("fixture", REBID, { act: toRebid }),
+  rebidShot("fixture-open", REBID, { act: openReasons }),
+  rebidShot("under-20", { recorded: "rebidding-ke-nwwda-541055-prior.json" }, { act: toRebid }, "comparables-ke-nwwda-541055-prior.json"),
+  rebidShot("model-shown", REBID_SHOWN, { act: openReasons }),
+  rebidShot("not-better", { recorded: "rebidding-mock-not-better.json" }, { act: toRebid }),
+  rebidShot("loading", null, { act: toRebid }),
+  rebidShot("error", { status: 503, body: '{"code":"data_service","trace_id":"0af7651916cd43dd8448eb211c80319c"}' }, { act: toRebid }),
+  rebidShot("drawer-notice", REBID, { act: then(openReasons, click("[data-rebidding] [data-citation-id='strata.silver.notices:OP00083890']")) }),
+  rebidShot("drawer-plan-row", REBID, {
+    api: { "/api/evidence": { recorded: "evidence-plan-row-ke-kimawasco-157517.json" } },
+    act: then(openReasons, click("[data-rebidding] [data-citation] >> nth=0")),
+  }),
+  rebidShot("drawer-two-notices", REBID_SHOWN, {
+    api: { "/api/evidence": { recorded: "evidence-mock-notice-op90000011.json" } },
+    act: then(openReasons, click("[data-rebidding] [data-citation-id='strata.silver.notices:OP90000011']")),
+  }),
+  rebidShot("drawer-award-notice", REBID_SHOWN, {
+    api: { "/api/evidence": { recorded: "evidence-mock-award-notice-op90000006.json" } },
+    act: then(openReasons, click("[data-rebidding] [data-citation] >> nth=0")),
+  }),
+  rebidShot("show-more", REBID_SHOWN, { act: then(openReasons, click("[data-rebid-group=all_bids_rejected] [data-button=ghost]")) }),
+  rebidShot("hover-marker", REBID, { full: false, widths: WIDE, act: then(openReasons, hover("[data-rebidding] [data-citation]")) }),
+  rebidShot("focus-marker", REBID, { full: false, act: then(openReasons, focus("[data-rebidding] [data-citation]")) }),
+  rebidShot("focus-disclosure", REBID, { full: false, act: focus("[data-rebid-disclosure]") }),
+  rebidShot("focus-step-ref", REBID, { full: false, act: then(openReasons, focus("[data-rebidding] [data-step-ref]")) }),
+  rebidShot("hover-count", REBID, { full: false, widths: WIDE, act: hover("[data-rebid-count] button") }),
+  rebidShot("focus-count", REBID, { full: false, act: focus("[data-rebid-count] button") }),
+  rebidShot("320", REBID_SHOWN, { widths: [320], act: openReasons }),
+];
 
 const PACKAGE_SHOTS: Shot[] = [
   packageShot("package", comparables(COMPARABLES)),
@@ -960,12 +1352,17 @@ const read = (name: string) => JSON.parse(readFileSync(new URL(name, RECORDED), 
 const changed = (name: string): Answer => ({ body: JSON.stringify({ ...read(PLANNED_FILE), package: read(name).package }) });
 const PLANNED_ANSWERS: Shot["api"] = {
   "/api/comparables": { recorded: "comparables-planned-works-rfb-ke.json" },
+  // Section 5 of the first planned package (ticket 31).
+  [`${PLANNED_API}/criteria`]: { recorded: "criteria-summary-planned-rural-roads.json" },
+  [`${PLANNED_API}/criteria/run`]: { recorded: "criteria-run-planned-rural-roads.sse" },
   "/api/evidence": { recorded: "evidence-package-ke-mowi-47509.json" },
   "/api/evidence/opened": OPENED,
   "/api/planned-packages": { recorded: "planned-packages-list.json" },
   "/api/projects/P156634": { recorded: "project-p156634.json" },
   // Section 3 (ticket 30): the rural roads package's Kenya comparables reach no completion report.
   "/api/planned-packages/pkg-000000000001/risks": { recorded: "risks-planned-rural-roads.json" },
+  // Section 2 (ticket 27): the rural roads package asks for its first step's date.
+  "/api/planned-packages/pkg-000000000001/steps": { recorded: "steps-planned-rural-roads.json" },
 };
 const plannedShot = (name: string, pkg: Answer = { recorded: PLANNED_FILE }, rest: Partial<Shot> = {}, path = PLANNED, read = PLANNED_API): Shot =>
   app(name, path, {}, { ...rest, api: { ...app(name, path).api, ...PLANNED_ANSWERS, [read]: pkg, ...rest.api } });
@@ -1115,7 +1512,178 @@ const PLANNED_SHOTS: Shot[] = [
   tabShot("packages-tab--320", { recorded: "planned-packages-list.json" }, { widths: [320] }),
 ];
 
+
+// Ticket 24: the six checks and the refusals, as the 24 brief's section 12 lists them, each answer the stream
+// its scripted case gives (tests/fixtures/agent/cases.toml). Every state is taken at 1440, 1024 and 390 px. A
+// question about another project or package than P130164 is asked from the home page, with no scope chip, so the
+// panel never reads "Asked within P130164." over it.
+const steps = "[data-answer-panel] [aria-expanded][aria-controls]:not([data-citation])";
+const cardMarker = "[data-answer-panel] [data-disagreement] [data-citation='2']";
+// Each answer is asked with its scripted case's own question, from the gallery's copy of them.
+const { questions: CASE_QUESTIONS, refusalQuestions: REFUSED } = galleryCopy.sixChecks;
+const PAST_RANGE = CASE_QUESTIONS.pastRange;
+const SUMMARIES = CASE_QUESTIONS.summaries;
+const ISR_7 = CASE_QUESTIONS.isr7;
+const BOTH_SIDES = CASE_QUESTIONS.bothSides;
+const PARTIAL = REFUSED.partial;
+// Ticket 23: a project's Timeline tab, as the 23 brief's section 13 lists it, against the answers the server wrote on
+// the fixture (tests/record_timeline_api.py): loading, populated, the drawer on the disagreement and on a mark and a
+// band (at 1440 and 1024 the chart redraws at 718 and 524 px beside it), the table open, as of August 26, 2016, the
+// public view of an active project, an error, hover and focus on a mark and the chip, and at 390 px the list and the
+// sheet. The card's states and the drawer's views are also in the gallery (/gallery/timeline); the card under an
+// answer is above (checks--disagreement-*), with its keep form and a kept choice here.
+const PDO_DISAGREEMENT = "disagreement:437378890475ef48";
+const TIMELINE = "/projects/P130164/timeline";
+const TIMELINE_API: Shot["api"] = {
+  ...HUB_API,
+  "/api/projects/P130164/timeline": { recorded: "timeline-p130164.json" },
+  "/api/projects/P130164/timeline?asof=2016-08-26": { recorded: "timeline-p130164-2016-08-26.json" },
+  "/api/projects/P130164/timeline?asof=2024-01-01": { recorded: "timeline-p130164-2024-01-01.json" },
+  "/api/projects/P156634/timeline": { recorded: "timeline-p156634.json" },
+  "/api/projects/P156634/timeline?view=public": { recorded: "timeline-p156634-public.json" },
+  [`/api/evidence?id=${PDO_DISAGREEMENT}`]: { recorded: "evidence-disagreement-p130164-pdo.json" },
+  "/api/evidence?id=doc:26733307": { recorded: "evidence-doc-p130164-isr-7.json" },
+  "/api/evidence?id=doc:31525018": { recorded: "evidence-doc-p130164-icr.json" },
+  "/api/evidence?id=ratings:P130164:pdo_progress:1-9": { recorded: "evidence-ratings-p130164-1-9.json" },
+  "/api/evidence?id=strata.gold.passage:31525018/v1/78": { recorded: "evidence-icr-p130164-78.json" },
+  "/api/evidence?id=strata.gold.passage:26733307/v1/s4": { recorded: "evidence-isr-p130164-7-s4.json" },
+};
+const timelineShot = (name: string, path: string, rest: Partial<Shot> = {}): Shot => hubShot(name, path, rest, TIMELINE_API);
+const mark = (id: string) => `[data-evidence-trail] [data-item="${id}"]`;
+const KEPT_CHOICE = JSON.stringify({
+  recorded: true,
+  choice: {
+    choice_id: "choice-0000000000000001",
+    kept_assertion_id: "strata.gold.passage:26733307/v1/s4#P130164/pdo_progress",
+    leaned_assertion_id: "strata.gold.passage:31525018/v1/78#P130164/pdo_progress",
+    reason: galleryCopy.timelineReason,
+    run_id: "run-0001",
+    draft_id: null,
+    made_at: "2026-10-23T15:00:00+00:00",
+    kept_other: true,
+  },
+});
+const TIMELINE_SHOTS: Shot[] = [
+  timelineShot("project-timeline", TIMELINE),
+  timelineShot("project-timeline--loading", TIMELINE, { pending: ["/api/projects/P130164/timeline"] }),
+  // hubShot takes the answers as its last argument: an api in the shot's options would be replaced by them.
+  hubShot("project-timeline--error", TIMELINE, {}, {
+    ...TIMELINE_API,
+    "/api/projects/P130164/timeline": { status: 503, body: '{"code":"data_service","trace_id":"0af7651916cd43dd8448eb211c80319c"}' },
+  }),
+  timelineShot("project-timeline--drawer-disagreement", `${TIMELINE}?evidence=${PDO_DISAGREEMENT}`),
+  timelineShot("project-timeline--drawer-side", `${TIMELINE}?evidence=${PDO_DISAGREEMENT}`, { act: click("[role=tab]:has-text('78')"), full: true }),
+  timelineShot("project-timeline--drawer-document", `${TIMELINE}?evidence=doc:26733307`),
+  timelineShot("project-timeline--drawer-band", `${TIMELINE}?evidence=ratings:P130164:pdo_progress:1-9`, { widths: WIDE }),
+  timelineShot("project-timeline--table", TIMELINE, { widths: WIDE, act: click("[data-timeline-card] button[aria-controls]"), full: true }),
+  timelineShot("project-timeline--as-of", `${TIMELINE}?asof=2016-08-26`),
+  // After the ICR Review's re-issue: the second dashed line ends near the as-of date's label (round 2's B1).
+  timelineShot("project-timeline--as-of-late", `${TIMELINE}?asof=2024-01-01`, { widths: WIDE }),
+  // get_disagreements did not answer: the server's own recorded answer (tests/record_timeline_api.py, FAILED).
+  hubShot("project-timeline--disagreements-failed", TIMELINE, { widths: WIDE }, { ...TIMELINE_API, "/api/projects/P130164/timeline": { recorded: "timeline-p130164-failed.json" } }),
+  timelineShot("project-timeline--public-active", "/projects/P156634/timeline?view=public", { widths: WIDE }),
+  timelineShot("project-timeline--crowded", "/projects/P156634/timeline", { widths: WIDE }),
+  timelineShot("project-timeline--hover-mark", TIMELINE, { widths: WIDE, act: hover(mark("doc:26733307")) }),
+  timelineShot("project-timeline--focus-mark", TIMELINE, { widths: WIDE, act: focus(mark("doc:18381488")) }),
+  timelineShot("project-timeline--hover-band", TIMELINE, { widths: WIDE, act: hover(mark("ratings:P130164:pdo_progress:1-9")) }),
+  timelineShot("project-timeline--hover-chip", TIMELINE, { widths: WIDE, act: hover(mark(PDO_DISAGREEMENT)) }),
+  timelineShot("project-timeline--focus-list-item", TIMELINE, { widths: NARROW, act: focus("[data-timeline-list] a") }),
+  timelineShot("project-timeline--320", TIMELINE, { widths: [320] }),
+  answerShot("checks--disagreement-keep-form", "ask-p130164-isr-7-rating.sse", {
+    widths: WIDE,
+    act: then(askInBox(ISR_7), click("[data-answer-panel] [data-disagreement] [data-keep] button")),
+  }),
+  answerShot("checks--disagreement-kept", "ask-p130164-isr-7-rating.sse", {
+    widths: WIDE,
+    api: { "/api/disagreements/437378890475ef48/choices": { body: KEPT_CHOICE } },
+    act: askInBox(ISR_7),
+  }),
+];
+
+const CHECK_SHOTS: Shot[] = [
+  answerShot("checks--ticket-form", "ask-ke-nwwda-541055-past-range.sse", { act: askInBox(PAST_RANGE) }, "/"),
+  answerShot("checks--judged", "ask-ke-nwwda-541055-advice.sse", { act: askInBox(PAST_RANGE) }, "/"),
+  answerShot("checks--every-sentence-judged", "ask-p130164-summaries.sse", { act: askInBox(SUMMARIES) }),
+  answerShot("checks--six-checks-judged", "ask-ke-nwwda-541055-advice.sse", { act: then(askInBox(PAST_RANGE), click(steps)) }, "/"),
+  answerShot("checks--six-checks-not-judged", "ask-ke-nwwda-541055-past-range.sse", { act: then(askInBox(PAST_RANGE), click(steps)) }, "/"),
+  answerShot("checks--six-checks-attached", "ask-p130164-isr-7-rating.sse", { act: then(askInBox(ISR_7), click(steps)) }),
+  answerShot("checks--removed-check-4", "ask-p130164-unsupported.sse", { act: askInBox() }),
+  answerShot("checks--removed-check-5", "ask-p130164-advice-without-lesson.sse", { act: askInBox() }),
+  answerShot("checks--removed-check-6", "ask-p130164-disagreements-unavailable.sse", { act: askInBox() }),
+  answerShot("checks--removed-several", "ask-p130164-several-removed.sse", { act: askInBox() }),
+  answerShot("checks--judge-silent", "ask-p130164-judge-no-response.sse", { act: askInBox() }),
+  answerShot("checks--judge-silent-nothing-kept", "ask-p130164-judge-no-response-none-kept.sse", { act: askInBox(SUMMARIES) }),
+  answerShot("checks--focus-try-again", "ask-p130164-judge-no-response.sse", { full: false, act: then(askInBox(), focus("[data-removed-box] [data-button]")) }),
+  answerShot("checks--disagreement-warning", "ask-p130164-isr-7-rating.sse", { act: askInBox(ISR_7) }),
+  answerShot("checks--disagreement-info", "ask-p130164-both-sides.sse", { act: askInBox(BOTH_SIDES) }),
+  answerShot("checks--disagreement-focus-marker", "ask-p130164-isr-7-rating.sse", { full: false, act: then(askInBox(ISR_7), focus(cardMarker)) }),
+  answerShot("checks--disagreement-hover-marker", "ask-p130164-isr-7-rating.sse", { full: false, widths: WIDE, act: then(askInBox(ISR_7), hover(cardMarker)) }),
+  answerShot("checks--disagreement-drawer", "ask-p130164-isr-7-rating.sse", { full: false, widths: [1440], act: then(askInBox(ISR_7), click(cardMarker)) }),
+  answerShot("checks--320", "ask-p130164-isr-7-rating.sse", { widths: [320], act: askInBox(ISR_7) }),
+  answerShot("refusal--supplier-scores", "ask-refuses-supplier-scores.sse", { act: askInBox(REFUSED.supplier_scores) }, "/"),
+  answerShot("refusal--fraud-and-redactions", "ask-refuses-fraud-and-redactions.sse", { act: askInBox(REFUSED.fraud_and_redactions) }),
+  answerShot("refusal--live-tenders", "ask-refuses-live-tenders.sse", { act: askInBox(REFUSED.live_tenders) }, "/"),
+  answerShot("refusal--review-decisions", "ask-refuses-review-decisions.sse", { act: askInBox(REFUSED.review_decisions) }, "/"),
+  answerShot("refusal--estimates-for-decisions", "ask-refuses-estimates-for-decisions.sse", { act: askInBox(REFUSED.estimates_for_decisions) }, "/"),
+  answerShot("refusal--dividing-packages", "ask-refuses-dividing-packages.sse", { act: askInBox(REFUSED.dividing_packages) }, "/"),
+  answerShot("refusal--rule-breach-findings", "ask-refuses-rule-breach-findings.sse", { act: askInBox(REFUSED.rule_breach_findings) }, "/"),
+  answerShot("refusal--personal-details", "ask-refuses-personal-details.sse", { act: askInBox(REFUSED.personal_details) }, "/"),
+  answerShot("refusal--wrong-edition", "ask-refuses-wrong-edition.sse", { act: askInBox(REFUSED.wrong_edition) }),
+  answerShot("refusal--private-uploads", "ask-refuses-private-uploads.sse", { act: askInBox(REFUSED.private_uploads) }, "/"),
+  answerShot("refusal--partial", "ask-refuses-part-supplier-scores.sse", { act: askInBox(PARTIAL) }),
+  answerShot("refusal--focus-link", "ask-refuses-supplier-scores.sse", { full: false, act: then(askInBox(REFUSED.supplier_scores), focus("[data-answer-panel] [data-answer=refused] a")) }, "/"),
+  answerShot("refusal--how-strata-works", "ask-refuses-supplier-scores.sse", { full: false, act: then(askInBox(REFUSED.supplier_scores), click("[data-answer-panel] [data-answer=refused] a")) }, "/"),
+];
+
 const pages: Shot[] = Object.keys(galleryCopy.pages).map((slug) => ({ name: slug, path: `/gallery/${slug}` }));
+
+// Ticket 32: the evidence drawer's feedback row, opened from the showcase answer's first marker, in the states the 32
+// brief's section 12 lists, and Lessons > Passage reports and Lessons > Judging. The answers are the server's own,
+// recorded on the fixture by tests/record_retrieval_api.py. Each page is served with the frame's counts from the
+// same moment of that story (retrieval-me-*.json), so the sub-tab's count and the page's lead agree. The other states
+// are in the gallery (/gallery/retrieval and /gallery/judging), from the same answers.
+const FEEDBACK_API: Shot["api"] = {
+  "/api/feedback": { recorded: "feedback-sent.json" },
+};
+const openRow = then(askInBox(QUESTION), click(marker), async (page) => {
+  await page.locator("[data-feedback-row]").scrollIntoViewIfNeeded();
+  await page.waitForTimeout(250);
+});
+const rowShot = (name: string, act: (page: Page) => Promise<void>, rest: Partial<Shot> = {}) =>
+  answerShot(`feedback--${name}`, "ask-p130164-rebidding.sse", { full: false, ...rest, act, api: { ...FEEDBACK_API, ...rest.api } });
+const retrievalShot = (name: string, path: string, me: string, answers: Shot["api"], rest: Partial<Shot> = {}) =>
+  app(`retrieval--${name}`, path, {}, { full: true, ...rest, api: { ...app(name, path).api, "/api/lessons/me": { recorded: me }, ...answers } });
+const GROUP = "/lessons/reports/grp-6fa04e510789";
+const QUERY_PATH = "/lessons/judging/nq-rural-works-delays";
+const RETRIEVAL_SHOTS: Shot[] = [
+  rowShot("idle", openRow),
+  rowShot("chosen", then(openRow, click("[data-feedback-row] [data-report-kind=wrong_passage]"))),
+  rowShot("typed", then(openRow, click("[data-feedback-row] [data-report-kind=not_useful]"), type("[data-feedback-row] textarea", "It is about estimates in general."))),
+  rowShot("sent", then(openRow, click("[data-feedback-row] [data-report-kind=wrong_passage]"), type("[data-feedback-row] textarea", "It is about estimates in general."), click("[data-send-report]"))),
+  rowShot("hover-kind", then(openRow, hover("[data-feedback-row] [data-report-kind=wrong_passage]")), { widths: WIDE }),
+  rowShot("focus-kind", then(openRow, focus("[data-feedback-row] [data-report-kind=not_useful]"))),
+  rowShot("preview", openRow, { path: "/projects/P130164?view=piu" }),
+  retrievalShot("frame-reviewer", "/lessons/reports", "retrieval-me-passage-reviewer.json", { "/api/passage-reports": { recorded: "passage-reports-empty.json" } }),
+  retrievalShot("frame-judge", "/lessons/judging", "retrieval-me-judge.json", { "/api/judging/queries": { recorded: "judging-queries-start.json" } }),
+  retrievalShot("reports", "/lessons/reports", "retrieval-me-both-waiting.json", { "/api/passage-reports": { recorded: "passage-reports-own-report.json" } }),
+  retrievalShot("reports-decided", "/lessons/reports", "retrieval-me-passage-reviewer-decided.json", { "/api/passage-reports": { recorded: "passage-reports-decided.json" } }),
+  retrievalShot("reports-audit", "/lessons/reports", "retrieval-me-passage-reviewer-audit.json", { "/api/passage-reports": { recorded: "passage-reports-audit.json" } }),
+  retrievalShot("reports-loading", "/lessons/reports", "retrieval-me-passage-reviewer-waiting.json", {}, { pending: ["/api/passage-reports"] }),
+  retrievalShot("reports-no-access", "/lessons/reports", "lessons-me-viewer.json", { "/api/passage-reports": refusal("passage-reports-no-access.json") }),
+  retrievalShot("report", GROUP, "retrieval-me-passage-reviewer-waiting.json", { "/api/passage-reports/grp-6fa04e510789": { recorded: "passage-report.json" } }),
+  retrievalShot("report-decided", GROUP, "retrieval-me-passage-reviewer-decided.json", { [`/api/passage-reports/grp-6fa04e510789`]: { recorded: "passage-report-decided.json" } }),
+  retrievalShot("report-audit", GROUP, "retrieval-me-passage-reviewer-audit.json", { [`/api/passage-reports/grp-6fa04e510789`]: { recorded: "passage-report-audit.json" } }),
+  retrievalShot("report-not-found", "/lessons/reports/grp-000000000000", "retrieval-me-passage-reviewer-waiting.json", { "/api/passage-reports/grp-000000000000": refusal("passage-report-not-found.json") }),
+  retrievalShot("judging", "/lessons/judging", "retrieval-me-judge-after.json", { "/api/judging/queries": { recorded: "judging-queries.json" } }),
+  retrievalShot("judging-both", "/lessons/judging?show=finished_by_both", "retrieval-me-judge-after.json", { "/api/judging/queries": { recorded: "judging-queries-both.json" } }),
+  retrievalShot("judging-no-access", "/lessons/judging", "lessons-me-viewer.json", { "/api/judging/queries": refusal("judging-no-access.json") }),
+  retrievalShot("query", QUERY_PATH, "retrieval-me-judge.json", { "/api/judging/queries/nq-rural-works-delays": { recorded: "judging-query.json" } }, { full: false }),
+  retrievalShot("query-progress", QUERY_PATH, "retrieval-me-judge-after.json", { "/api/judging/queries/nq-rural-works-delays": { recorded: "judging-query-progress.json" } }, { full: false, act: click("[data-passage-map] button") }),
+  retrievalShot("query-locked", "/lessons/judging/nq-water-works-readiness", "retrieval-me-judge-after.json", { "/api/judging/queries/nq-water-works-readiness": { recorded: "judging-query-locked.json" } }),
+  retrievalShot("query-not-found", "/lessons/judging/nq-nothing", "retrieval-me-judge-after.json", { "/api/judging/queries/nq-nothing": refusal("judging-query-not-found.json") }),
+  retrievalShot("query-focus-grade", QUERY_PATH, "retrieval-me-judge.json", { "/api/judging/queries/nq-rural-works-delays": { recorded: "judging-query.json" } }, { full: false, act: focus("[data-grade-bar] [data-grade=partly]") }),
+  retrievalShot("query-320", QUERY_PATH, "retrieval-me-judge.json", { "/api/judging/queries/nq-rural-works-delays": { recorded: "judging-query.json" } }, { widths: [320] }),
+];
 
 export const SHOTS: Shot[] = [
   { name: "index", path: "/gallery" },
@@ -1258,9 +1826,17 @@ export const SHOTS: Shot[] = [
   ...PROJECT_SHOTS,
   ...HUB_SHOTS,
   ...ANSWER_SHOTS,
+  ...CHECK_SHOTS,
   ...DRAFT_SHOTS,
+  ...FOLLOWING_SHOTS,
   ...LESSON_SHOTS,
   ...PACKAGE_SHOTS,
   ...PLANNED_SHOTS,
+  ...STEP_SHOTS,
   ...RISK_SHOTS,
+  ...RETRIEVAL_SHOTS,
+  ...REBID_SHOTS,
+  ...CRITERIA_SHOTS,
+  ...TIMELINE_SHOTS,
+  ...TRAIL_SHOTS,
 ];

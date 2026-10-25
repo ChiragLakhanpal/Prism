@@ -191,6 +191,20 @@ def no_supplier_written_null(gold, value):
     assert contract["supplier_id"] is None and named == ((0,),)
 
 
+def notice_description(gold, value):
+    """A notice keeps its description word for word, as STEP typed it (ticket 22 names the activity by it)."""
+    notice = one(gold, "SELECT bid_description FROM strata.gold.notice WHERE notice_id = :notice",
+                 notice=value["at"].split("id=")[1].split("]")[0])
+    assert notice["bid_description"] == value["value"]
+
+
+def rejected_bid_reason(gold, value):
+    """A rejected bid keeps its Reason for Rejection word for word, even when the price before it is blank."""
+    found = gold.run("SELECT evaluated_price, reason FROM strata.silver.notice_bids WHERE notice_id = :notice "
+                     "AND name = :name", {"notice": value["notice"], "name": value["bidder"]}).rows
+    assert found and all(row == (None, value["value"]) for row in found)
+
+
 CHECKS = {
     "award-supplier-written-null": no_supplier_written_null,
     "notice-losai-no-id": awarded_bidder_without_an_id,
@@ -213,8 +227,19 @@ CHECKS = {
     "award-541055-signed": contract_signed,
     "award-541062-signed": contract_signed,
     "award-229129-signed": contract_signed,
+    # KE-NWWDA-229129-CW-RFB's contract trail (ticket 22).
+    "award-229129-amount": supplier_share,
+    "award-229129-supplier": contract_supplier_id,
+    "notice-229129-invitation": notice_date,
+    "award-notice-229129-published": notice_date,
+    "notice-229129-description": notice_description,
+    "award-notice-102977-rejected": rejected_bid_reason,
     "award-541055-amount": supplier_share,
     "award-notice-541055": notice_date,
+    # The two contracts the mission brief's awards part lists since ISR 19 (ticket 37).
+    "award-567630-signed": contract_signed,
+    "award-565568-signed": contract_signed,
+    "award-567630-amount": supplier_share,
     # The evidence ladder's two record ties (ticket 20).
     "award-199461-signed": contract_signed,
     "notice-199461-signed": notice_signature_date,
@@ -309,13 +334,21 @@ def test_no_email_address_or_phone_number_is_left_in_bronze_silver_or_gold(gold)
     # Plain booleans and places, so a failure never prints the contact details themselves.
     assert all(notice[field] in found for field in ("contact_name", "contact_email", "contact_phone_no"))
 
+    # The same text sits in many places (a page in bronze.api_pages and bronze.current_pages, a passage in
+    # silver and gold): 210,000 values hold 18,000 distinct texts. Each text is searched once and its
+    # findings are reported at every place that holds it (ticket 55).
+    searched = {}
     leaks = []
     for where, value in text_values(gold):
-        leaks += [(where, "an email or phone number")
-                  for _ in EMAIL.findall(value) + AT_SIGN.findall(value) + PHONE.findall(value)
-                  + LABELLED_PHONE.findall(value) + AFTER_REMOVED.findall(value) + SPACED_EMAIL.findall(value)]
-        leaks += [(where, "a recorded contact detail") for contact in found if contact in value
-                  and not (contact in JOB_TITLES and where.startswith(REPORT_TEXT))]
+        if value not in searched:
+            searched[value] = (
+                len(EMAIL.findall(value) + AT_SIGN.findall(value) + PHONE.findall(value)
+                    + LABELLED_PHONE.findall(value) + AFTER_REMOVED.findall(value) + SPACED_EMAIL.findall(value)),
+                [contact for contact in found if contact in value])
+        numbers, contacts_in_value = searched[value]
+        leaks += [(where, "an email or phone number")] * numbers
+        leaks += [(where, "a recorded contact detail") for contact in contacts_in_value
+                  if not (contact in JOB_TITLES and where.startswith(REPORT_TEXT))]
     assert leaks == []
 
 

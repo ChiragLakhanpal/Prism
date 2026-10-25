@@ -98,5 +98,10 @@ class Access:
                 return Membership(f"team:{team.key}", team.name, True)
         return Membership(f"viewer:{viewer.user_id}", None, False)
 
+    def is_staff(self, viewer: Viewer) -> bool:
+        """Whether the viewer has the World Bank staff role: one of their workspace groups is one the roles file's
+        [staff] names (ticket 37). A viewer no one is signed in for, or whose groups could not be read, has not."""
+        return bool(viewer.user_id) and bool(set(self.reader.groups(viewer)) & set(self.roles.staff))
+
     def may_read(self, viewer: Viewer, team_key: str, author_id: str) -> bool:
         return is_author(viewer, author_id) or (bool(viewer.user_id) and self.team(viewer).key == team_key)

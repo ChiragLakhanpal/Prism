@@ -102,3 +102,85 @@ claims = [
   { sentence = "The plan lists this activity as Pending Implementation, with an Actual Amount of 0.00.", kind = "record", evidence_ids = ["strata.silver.plan_rows:40132287/KE-NWWDA-541055-CW-RFB"], numbers = ["0.00"], dates = [] },
   { sentence = "The plan records an Actual Amount of 1,245,092.76.", kind = "record", evidence_ids = ["strata.silver.plan_rows:40132287/KE-NWWDA-229129-CW-RFB"], numbers = ["1,245,092.76"], dates = [] },
 ]
+
+[[cases]]
+id = "review-notes-checks-4-and-5"
+says = """The note on KE-NWWDA-541062-CW-RFQ keeps a sentence its row proves, and adds two claims with no number, \
+date or quote, which only the judge can check: one its row does not support (check 4) and one it does. It also adds \
+advice that cites no lesson or comparable package (check 5). The judge is asked once, about the two claims only."""
+question = "Write review notes on the Northern Water Works Development Agency's Procurement Plan of October 9, 2026 for P156634."
+scope = "P156634"
+as_of = 2026-10-23
+recording = "review-notes-nwwda-2026-10-09"
+request = { kind = "review_notes", project_id = "P156634", agency_id = "northern-water-works-development-agency", plan_date = "2026-10-09" }
+
+[[cases.plant_notes]]
+activity_reference_no = "KE-NWWDA-541062-CW-RFQ"
+claims = [
+  { sentence = "The plan lists this activity as Pending Implementation, with an Actual Amount of 0.00.", kind = "record", evidence_ids = ["strata.silver.plan_rows:40132287/KE-NWWDA-541062-CW-RFQ"], numbers = ["0.00"], dates = [] },
+  { sentence = "The agency has stopped working on this activity.", kind = "record", evidence_ids = ["strata.silver.plan_rows:40132287/KE-NWWDA-541062-CW-RFQ"], numbers = [], dates = [] },
+  { sentence = "The plan records no signed contract for this activity.", kind = "record", evidence_ids = ["strata.silver.plan_rows:40132287/KE-NWWDA-541062-CW-RFQ"], numbers = [], dates = [] },
+  { sentence = "Ask the agency to publish a new planned signing date.", kind = "advice", evidence_ids = ["strata.silver.plan_rows:40132287/KE-NWWDA-541062-CW-RFQ"], numbers = [], dates = [] },
+]
+
+[[cases]]
+id = "review-notes-uncited-summary"
+says = """The note on KE-NWWDA-541062-CW-RFQ keeps a sentence its row proves, and adds a summary that cites nothing and \
+blames the agency (ticket 24's verify F1, round 2). No tool abstained, so check 2 removes it (no_source), and the \
+judge is never called, because checks 1 to 3 prove every other sentence."""
+question = "Write review notes on the Northern Water Works Development Agency's Procurement Plan of October 9, 2026 for P156634."
+scope = "P156634"
+as_of = 2026-10-23
+recording = "review-notes-nwwda-2026-10-09"
+request = { kind = "review_notes", project_id = "P156634", agency_id = "northern-water-works-development-agency", plan_date = "2026-10-09" }
+
+[[cases.plant_notes]]
+activity_reference_no = "KE-NWWDA-541062-CW-RFQ"
+claims = [
+  { sentence = "The plan lists this activity as Pending Implementation, with an Actual Amount of 0.00.", kind = "record", evidence_ids = ["strata.silver.plan_rows:40132287/KE-NWWDA-541062-CW-RFQ"], numbers = ["0.00"], dates = [] },
+  { sentence = "The agency was to blame for the delay.", kind = "summary", evidence_ids = [], numbers = [], dates = [] },
+]
+
+# The write-the-mission-brief workflow's writer (ticket 37).
+
+[[cases]]
+id = "mission-brief-p156634"
+says = """The writer writes the five parts of a mission brief for P156634 as of October 23, 2026: the latest plans, the \
+two contracts signed after ISR 19, the ratings of ISRs 18 and 19, the two credits' disbursement and the closing date. \
+Each sentence cites only its own part's records or the totals record, and every sentence passes the checks."""
+question = "Write a mission brief for Water and Sanitation Development Project (P156634)."
+scope = "P156634"
+as_of = 2026-10-23
+recording = "mission-brief-p156634"
+request = { kind = "mission_brief", project_id = "P156634" }
+
+[[cases]]
+id = "mission-brief-a-part-removed"
+says = """The disbursement part states a disbursed amount no loan record holds, and cites a contract of the awards part. \
+The verifier removes both sentences, so the part keeps its table and has no sentence."""
+question = "Write a mission brief for Water and Sanitation Development Project (P156634)."
+scope = "P156634"
+as_of = 2026-10-23
+recording = "mission-brief-p156634"
+request = { kind = "mission_brief", project_id = "P156634" }
+
+[[cases.plant_notes]]
+part = "disbursement"
+claims = [
+  { sentence = "By September 30, 2026, IDA60300 had disbursed US$280,000,000.00.", kind = "record", evidence_ids = ["strata.gold.loan:P156634/IDA60300"], numbers = ["280,000,000.00"], dates = ["September 30, 2026"] },
+  { sentence = "KE-CWSB-567630-CW-DIR was signed at US$2,432,125.50.", kind = "record", evidence_ids = ["strata.gold.contract:1901323"], numbers = ["2,432,125.50"], dates = [] },
+]
+
+[[cases]]
+id = "mission-brief-a-refused-part"
+says = """The writer refuses the disbursement part as out of scope. The part keeps its table, the draft says the writer \
+refused it, and no sentence is removed."""
+question = "Write a mission brief for Water and Sanitation Development Project (P156634)."
+scope = "P156634"
+as_of = 2026-10-23
+recording = "mission-brief-p156634"
+request = { kind = "mission_brief", project_id = "P156634" }
+
+[[cases.plant_notes]]
+part = "disbursement"
+refusal = "out_of_scope"

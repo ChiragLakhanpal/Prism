@@ -22,16 +22,29 @@ export const POPOVER =
 export const DOTTED_UNDERLINE =
   "underline decoration-line-strong decoration-dotted decoration-1 underline-offset-3 hover:decoration-solid";
 
-const DELAY = 150;
+// How long hover waits before it opens a card, and before it closes one the pointer left.
+export const HOVER_DELAY = 150;
+const DELAY = HOVER_DELAY;
 export const RETURNING = "data-returning";
-const returning = (element: Element) => element.hasAttribute(RETURNING);
+export const returning = (element: Element) => element.hasAttribute(RETURNING);
 const open = new Set<() => void>();
+
+// Only one card that hover or focus opened is open at a time: claiming the place closes the others, each by its
+// own hide. A step label's definition window opened on hover takes part too (Term.tsx, openOnHover).
+export function claimHoverCard(hide: () => void) {
+  for (const other of open) if (other !== hide) other();
+  open.add(hide);
+}
+export function releaseHoverCard(hide: () => void) {
+  open.delete(hide);
+}
 
 export function Tooltip({
   trigger,
   children,
   width = "max-w-[20rem]",
   quiet = false,
+  side = "bottom",
 }: {
   // One element that can take focus, such as a link or a button.
   trigger: ReactNode;
@@ -39,6 +52,8 @@ export function Tooltip({
   width?: string;
   // Opens on nothing, as a marker whose source the evidence drawer already shows in full.
   quiet?: boolean;
+  // Below the trigger, or above it where text under it must stay in view, as under a title's count (ticket 23).
+  side?: "top" | "bottom";
 }) {
   const [shown, setShown] = useState(false);
   const id = useId();
@@ -47,12 +62,11 @@ export function Tooltip({
   const hide = useCallback(() => {
     clearTimeout(timer.current);
     setShown(false);
-    open.delete(hide);
+    releaseHoverCard(hide);
   }, []);
   const show = useCallback(() => {
     clearTimeout(timer.current);
-    for (const other of open) if (other !== hide) other();
-    open.add(hide);
+    claimHoverCard(hide);
     setShown(true);
   }, [hide]);
   const after = (action: () => void) => {
@@ -88,7 +102,7 @@ export function Tooltip({
         <RadixPopover.Content
           id={id}
           role="tooltip"
-          side="bottom"
+          side={side}
           align="start"
           sideOffset={8}
           collisionPadding={16}

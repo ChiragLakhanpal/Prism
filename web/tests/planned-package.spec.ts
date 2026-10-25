@@ -4,13 +4,12 @@
 // on the fixture (tests/record_packages_api.py), which tests/test_planned_packages.py checks the server
 // still gives. The words below are the ticket's and the 15 design brief's, copied here so the test checks the
 // copy file against an independent source.
-import AxeBuilder from "@axe-core/playwright";
+import { scan } from "./axe";
 import type { Page, Request } from "@playwright/test";
 import { expect, recorded, test } from "./mocked";
 
 const SENTENCE = "rural roads, Kenya, about US$15 million";
 const PACKAGE = "/packages/pkg-000000000001";
-const WCAG_22_AA = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 
 type Answer = { status?: number; body: string; type?: string; delay?: number; hold?: boolean };
 
@@ -31,6 +30,10 @@ async function serve(page: Page, answers: Record<string, Answer>) {
       body: JSON.stringify({ ...JSON.parse(await recorded("risks-planned-rural-roads.json")), empty_reason: "missing_criteria", p: null, m: null }),
     },
     "/api/planned-packages/pkg-000000000003/risks": { body: await recorded("risks-planned-rural-roads.json") },
+    // Section 2, the planned date for each step (ticket 27).
+    "/api/planned-packages/pkg-000000000001/steps": { body: await recorded("steps-planned-rural-roads.json") },
+    "/api/planned-packages/pkg-000000000002/steps": { body: await recorded("steps-planned-rural-roads.json") },
+    "/api/planned-packages/pkg-000000000003/steps": { body: await recorded("steps-planned-rural-roads.json") },
   };
   const all = { ...base, ...answers };
   await page.route("**/api/**", async (route) => {
@@ -83,7 +86,7 @@ const chipTexts = async (page: Page, name: string) =>
 
 async function axe(page: Page) {
   await page.waitForFunction(() => document.getAnimations().every((animation) => animation.playState !== "running"));
-  const results = await new AxeBuilder({ page }).withTags(WCAG_22_AA).analyze();
+  const results = await scan(page);
   return results.violations.map((v) => `${v.id}: ${v.nodes.map((node) => node.target.join(" ")).join(", ")}`);
 }
 

@@ -9,6 +9,7 @@ import type { Page } from "@playwright/test";
 import { PROJECT_ID_EXEMPT } from "../src/lib/projectId";
 import { askFromTheBox, landed, marker } from "./answer-page";
 import { hubApi } from "./hub-api";
+import { trailApi } from "./trail-api";
 import { expect, mockApi, recorded, test } from "./mocked";
 
 type Answer = { status?: number; body: string };
@@ -20,9 +21,11 @@ const LESSON_ITEM = "new-e903b07ad1";
 async function everyRecording(): Promise<Record<string, Answer>> {
   const file = async (name: string) => ({ body: await recorded(name) });
   return {
+    ...(await trailApi()),
     ...(await hubApi()),
     "/api/ask": await file("ask-p130164-removed-number.sse"),
     "/api/projects": await file("projects.json"),
+    "/api/following": await file("following-p156634.json"),
     "/api/projects?q=india": await file("projects-india.json"),
     "/api/projects/P156634": await file("project-p156634-baseline.json"),
     "/api/projects/P156634/summary": await file("summary-p156634.json"),
@@ -73,6 +76,8 @@ const ROUTES: [string, string][] = [
   [`/lessons/review/${LESSON_ITEM}`, `[data-review-page="${LESSON_ITEM}"]`],
   ["/projects", "[data-projects-page=ready]"],
   ["/projects?q=india", "[data-projects-page=ready]"],
+  // Ticket 37: Following, whose rows' meta lines set the P-code in plain mono beside the heading's link.
+  ["/projects/following", "[data-following-page=ready]"],
   ["/projects/P130164", "[data-summary=ready]"],
   ["/projects/P130164/procurement", "[data-procurement-tab=ready]"],
   ["/projects/P130164/documents", "[data-documents=ready]"],
@@ -81,7 +86,11 @@ const ROUTES: [string, string][] = [
   ["/projects/P156634", "[data-summary=ready]"],
   ["/projects/P156634/procurement", "[data-packages=ready]"],
   [`${NWWDA}/2026-10-09`, "[data-changes]"],
-  ["/projects/P130164/packages/IN-RRSMP-7431-CW-RFB", "main h1"],
+  // Ticket 22: the activity page and the Connections tab.
+  ["/projects/P130164/packages/IN-RRSMP-7431-CW-RFB", "[data-activity-page=ready]"],
+  ["/projects/P156634/packages/KE-NWWDA-229129-CW-RFB", "[data-activity-page=ready]"],
+  ["/projects/P130164/connections", "[data-connections=ready]"],
+  ["/projects/P156634/connections", "[data-connections=ready]"],
   [PACKAGE, "[data-past-range]:not([data-past-range=loading])"],
   ["/drafts", "main h1"],
   ["/drafts/draft-0001", "[data-draft-page]:not([data-draft-page=loading])"],

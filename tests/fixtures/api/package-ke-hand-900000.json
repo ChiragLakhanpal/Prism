@@ -1,0 +1,30 @@
+{
+  "as_of": "2021-01-15",
+  "package": {
+    "evidence_id": "strata.silver.plan_rows:910000002/KE-HAND-900000-CW-RFB",
+    "public_from": "2020-12-15",
+    "step_reference": "KE-HAND-900000-CW-RFB",
+    "description": "Hand-made works",
+    "project_id": "P900002",
+    "project_name": "Hand-made roads project",
+    "country_code": "KE",
+    "country_name": "Kenya",
+    "section": "WORKS",
+    "category": "Works",
+    "method": "Request for Bids",
+    "market_approach": "Open - National",
+    "review_type": "Post",
+    "estimated_amount_usd": "1000000.00",
+    "process_status": "Pending Implementation",
+    "planned_notice_on": "2021-03-01",
+    "planned_signing_on": "2021-06-10",
+    "plan": {
+      "document_id": "910000002",
+      "implementing_agency": "Hand-made Roads Agency",
+      "agency_id": "hand-made-roads-agency",
+      "plan_date": "2020-12-15",
+      "disclosed_on": "2020-12-15",
+      "pdf_page": 1
+    }
+  }
+}

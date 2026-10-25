@@ -42,6 +42,11 @@
 #   nested_rows    the row fields that hold records of their own, each with its own evidence_id and
 #                  public_from, such as each side of a disagreement. The answer loop keeps each one as a
 #                  citable record beside its row, so a claim can cite or quote it.
+#   backs_advice   true when its rows are lessons or comparable packages, so a sentence of kind advice
+#                  may rest on them (the verifier's check 5, ticket 24).
+#   not_checked_when   when the check line's "Not checked" clause for this tool applies (web/src/copy.ts,
+#                  checkLine.notCheckedClauses): "ran" (the default), or "cited" when it applies only once a
+#                  sentence on screen cites the tool's evidence, as a lesson cited is not a lesson that fits.
 #
 # [tools.<name>.readiness], for a tool that answers a kind of question people ask. The Data
 # readiness page lists each such kind under "What you can ask" (ticket 16):
@@ -114,6 +119,97 @@ reasons = ["completion_passed_no_contract", "pending_near_closing", "pending_on_
            "no_planned_date", "no_estimate"]
 abstentions = ["unknown_project", "no_plan_from_agency", "no_plan_as_of", "version_not_found", "version_not_public",
                "no_activities"]
+
+# project_signals (ticket 37): the fixed signals on a project that World Bank staff follow. The Following page
+# and the mission brief writer read it, and ticket 41's Home reads the same result.
+[tools.project_signals]
+description = """Runs Strata's seven fixed checks on one active project's public records and says which found \
+a reason to look. A signal is a reason to look, never a finding. The checks: an activity in an implementing \
+agency's latest Procurement Plan passed its planned completion with no signed contract; a contract was signed \
+at {plan_check.actual_to_estimate_ratio} times its estimate or more; a Direct Selection activity of \
+US${signals.late_direct_min_usd} or more first appears in a plan published {signals.late_direct_months} months \
+or less before the closing date, when the agency's previous plan does not list it; the loan history shows the \
+closing date moved {signals.closing_moves_min} times or more; the latest ISR lists a restructuring of a level \
+the result's thresholds name, dated in the last {signals.restructured_months} months; the latest ISR lowered \
+the rating for progress towards the development objective or for overall implementation progress; and less \
+than the share the result's thresholds name of the money committed and not canceled was disbursed, with \
+{signals.disbursement_months} months or less left before closing. The plan checks read each agency's latest \
+plan only when it is dated within {signals.plan_months} months of the as-of date. Each row is one check that \
+fired, with how many activities, contracts, moves or ratings it fired on, the values its sentence states and \
+the records it rests on, each with its own evidence id. The status is needs_a_look with \
+{signals.look_min} signals or one strong signal, watch with fewer, no_signals when the checks that ran found \
+nothing, and not_checked when none could run; the result says which checks could not run and why. Closed and \
+pipeline projects are not checked. It never combines the checks into a score. Cite a record a signal rests \
+on by its own evidence id. The status and the counts come back in the result's summary, which you cite for \
+them. It cannot see the prior-review queue, complaints, contract amendments or contract management reports."""
+adapter = "strata.tools.project_signals:project_signals"
+benchmark = "project-signals-p156634"
+sources = ["documents", "projects", "ida_credit_history", "ibrd_loan_history", "ida_credits", "ibrd_loans"]
+
+[[tools.project_signals.parameters]]
+name = "project_id"
+type = "string"
+required = true
+description = "The project ID, P followed by six digits, such as P156634."
+
+[[tools.project_signals.parameters]]
+name = "as_of"
+type = "date"
+required = false
+description = "Run the checks as they would have run on this date, on records public by then. Leave it out for today."
+
+[tools.project_signals.result]
+row = """One signal: the check that fired, whether it is strong, how many things it fired on, the values its \
+sentence states and the records it rests on."""
+row_fields = ["evidence_id", "public_from", "source", "check", "strong", "count", "values", "items"]
+source_fields = ["source_key", "project_id", "document_id", "date", "evidence_id"]
+fields = ["project", "status", "checks", "counts", "thresholds", "plans"]
+reasons = ["no_plans", "no_recent_plans", "no_loan_history", "no_isr", "no_loans"]
+abstentions = ["unknown_project", "not_active", "no_records"]
+# The status and the counts are figures an answer may state ("it needs a look, with four signals").
+summary_fields = ["status", "counts"]
+# Each record a signal rests on (a plan row, a closing-date move, an ISR rating, a passage, a loan) is cited by
+# its own evidence id, so an answer or a draft can cite the record and state its values.
+nested_rows = ["items"]
+
+# project_records (ticket 37): what the mission brief writer drafts from, part by part.
+[tools.project_records]
+description = """Returns the records a mission brief for one project is written from, in five parts: plans \
+(each implementing agency's latest Procurement Plan, with how many activities it lists and how many need a look \
+or are worth watching), awards (each contract signed after the latest ISR's date, with its supplier as the award \
+record names it and the Estimated Amount of the latest plan that lists it), ratings (each ISR's ratings for \
+progress towards the development objective and overall implementation progress), disbursement (each loan or \
+credit's commitment, disbursed, undisbursed and canceled amounts in its newest snapshot) and closing (each month \
+the loan history showed a new closing date, and each activity planned to finish after the closing date). Each \
+row is one record with its part and its fields, cited by its own evidence id. The totals a sentence may state, \
+such as how many contracts were signed and their total, the share of the money committed and not canceled that \
+was disbursed, the days left before closing and how many times the closing date moved, come back in the result's \
+summary, which you cite for them. A part with no records says why. It cannot see the prior-review queue, \
+complaints, contract amendments or contract management reports."""
+adapter = "strata.tools.project_records:project_records"
+benchmark = "project-records-p156634"
+sources = ["documents", "projects", "awards", "ida_credits", "ibrd_loans", "ida_credit_history", "ibrd_loan_history"]
+
+[[tools.project_records.parameters]]
+name = "project_id"
+type = "string"
+required = true
+description = "The project ID, P followed by six digits, such as P156634."
+
+[[tools.project_records.parameters]]
+name = "as_of"
+type = "date"
+required = false
+description = "Use only records public on or before this date. Leave it out for today."
+
+[tools.project_records.result]
+row = "One record behind a mission brief's part: its part, what it names and its fields by key."
+row_fields = ["evidence_id", "public_from", "source", "part", "reference", "fields"]
+source_fields = ["source_key", "document_type", "project_id", "document_date"]
+fields = ["project", "isr", "parts", "unmatched_agencies", "totals"]
+reasons = ["no_plans", "no_isr", "no_awards", "no_loans", "closed", "no_closing_date"]
+abstentions = ["unknown_project"]
+summary_fields = ["totals"]
 
 [tools.search_passages]
 description = """Searches the numbered passages of World Bank project documents (PADs, ISRs, ICRs, \
@@ -202,7 +298,7 @@ row_fields = ["evidence_id", "public_from", "source", "passage_id", "document_id
 source_fields = ["document_type", "project_id", "project_name", "document_id", "document_date", "report_number",
                  "version", "section_path", "paragraph", "paragraph_numbered", "pdf_page", "pdf_pages", "pdf_url",
                  "doc_key", "notice_id", "notice_url"]
-fields = ["query", "filters", "search"]
+fields = ["query", "filters", "search", "ranked_lower"]
 reasons = ["prompt_shields_hit", "not_screened", "ranked_below_limit"]
 abstentions = ["no_match", "unknown_document_type", "unknown_sector"]
 
@@ -331,6 +427,10 @@ abstentions = ["no_lessons", "unknown_risk_factor", "unknown_stage"]
 # can cite the paragraph its lesson came from.
 summary_fields = ["reports"]
 nested_rows = ["evidence"]
+# Its rows are lessons, so advice may rest on them (the verifier's check 5, ticket 24).
+backs_advice = true
+# "Not checked: whether these lessons apply here" only once a sentence on screen cites a lesson (the 24 brief).
+not_checked_when = "cited"
 
 [tools.find_comparables]
 description = """Finds the comparable packages for one package in a Procurement Plan, or for a package someone \
@@ -450,6 +550,8 @@ abstentions_with_rows = ["too_few_comparables"]
 # the coverage line are derived figures, so they come back as one citable record too (spec, "a derived
 # figure the agent needs is returned as a column").
 summary_fields = ["past_range", "plan", "frequencies", "counts", "coverage"]
+# Its rows and summary are comparable packages, so advice may rest on them (the verifier's check 5, ticket 24).
+backs_advice = true
 
 [tools.estimate_time]
 description = """Gives Strata's time estimate for one package: the months by which a quarter, half, three quarters \
@@ -472,7 +574,22 @@ that the approach made them faster or slower. Each \
 row is one stored combination of market approach and qualification with its range; the estimate, the \
 difference, the track record, the plan dates, the comparisons, the approaches and the counts also come back in \
 the result's summary, which you cite for them. For a package that is not in a plan yet, leave out \
-step_reference and describe it with the described_ parameters."""
+step_reference and describe it with the described_ parameters.
+
+It also gives the planned date for each STEP step of the package, in step_dates (ticket 27): the steps STEP uses \
+for the package's method family (goods, works and non-consulting services; consulting firms; or individual \
+consultants), in STEP's order. For a package whose Procurement Plan gives planned dates, each step's date is the \
+plan's date as first published plus how far comparable packages ran past their own first published dates at that \
+step, because later plans can move them. For a package with no plan dates, each step counts from the one before, \
+by how long that stretch took in comparable packages, starting from start_date, which the person gives; without \
+it, it gives each step's days and no dates. Each step comes with two dates: the middle date, which half of the \
+comparable packages ran later than, and the cautious date, the point by which a share of \
+{time_estimate.step_cautious_share} of them had reached the step. It counts the comparable packages whose plans \
+recorded the step and, for each date, how many ran later. Below {time_estimate.min_comparables} comparable \
+packages for a step it gives that step no date and says why, and a later step that counts from it cannot be dated \
+either. It says which stage, up to the signed contract, ran longest in the most comparable packages, and the track \
+record of the step dates from the stored backtests. It never gives an actual date: it counts the steps STEP \
+records actual dates for. The step dates come back even when the package has no time estimate."""
 adapter = "strata.tools.estimate_time:estimate_time"
 benchmark = "estimate-time-ke-nwwda-541055"
 sources = ["notices", "awards", "documents", "projects"]
@@ -573,6 +690,13 @@ required = false
 description = "For a package not in a plan yet, or to say a planned package's lots: its number of lots."
 
 [[tools.estimate_time.parameters]]
+name = "start_date"
+type = "date"
+required = false
+description = """For a package whose plan gives no planned dates: the date of its first step, which the person \
+chose. Every later step is dated from it. Leave it out to get each step's days and no dates."""
+
+[[tools.estimate_time.parameters]]
 name = "as_of"
 type = "date"
 required = false
@@ -586,17 +710,20 @@ row_fields = ["evidence_id", "public_from", "source", "as_described", "market_ap
               "review_type", "q25", "q50", "q75", "q80", "days", "abstention"]
 source_fields = ["model", "model_version", "run_id", "scored"]
 fields = ["package", "comparables", "estimate", "difference", "track_record", "test_years", "plan_dates",
-          "comparisons", "options", "axis_max_months", "thresholds", "sources", "records_through"]
+          "comparisons", "options", "axis_max_months", "thresholds", "step_dates", "sources", "records_through"]
 # Why a combination has no range: a feature outside what the model learned from, or a lever's value it never saw.
-reasons = ["outside_training", "value_not_learned"]
+# no_plan_dates is step_dates' own coverage reason (ticket 27): a comparable package whose published plans dated
+# none of the family's steps.
+reasons = ["outside_training", "value_not_learned", "no_plan_dates"]
 # The closed list of why there is no time estimate (brief 40 adds view_public_active here). The first four come
 # from find_comparables for the same criteria.
 abstentions = ["unknown_package", "no_public_notice", "no_comparables", "none_measurable", "too_few_comparables",
                "asof_before_training", "outside_training", "no_model"]
 # The time estimate, the difference and its reasons, the track record, the plan dates, the comparisons and the
 # approaches are figures the agent may state, so they come back as one citable record too.
+# The planned dates for each step, their counts, ran longest and their track record (ticket 27) are too.
 summary_fields = ["estimate", "difference", "track_record", "plan_dates", "comparisons", "options", "comparables",
-                  "coverage"]
+                  "coverage", "step_dates"]
 
 [tools.get_disagreements]
 description = """Says where two sources disagree about a project or a package, and which one Strata leans on. \
@@ -655,3 +782,262 @@ summary_fields = ["trajectories", "rejected"]
 # Each side is the assertion as its source made it, under the evidence id of the passage or record it rests
 # on, with the passage's text when it rests on one, so a claim can cite it or quote from it.
 nested_rows = ["sides"]
+
+# The check-your-criteria tools (ticket 31): section 5 of the package workspace. Each takes the comparable
+# packages find_comparables returned, by STEP reference, so the reference class is defined once (in
+# find_comparables) and every count names it.
+
+[tools.compare_cost_estimates]
+description = """Compares the cost estimates of comparable packages with the amounts their contracts were \
+signed for. A package's cost estimate is the Estimated Amount (US$) of the first version of its Procurement \
+Plan that lists it with one, among the versions public on the as-of date: the cost estimate as first published, \
+as delay is measured from the first published planned date. Its signed amount adds every contract it signed \
+in the contract awards data, in US dollars, a joint venture's contract once. Each row is one comparable \
+package with both amounts, with how far its signed amount was from its own cost estimate, in percent, \
+positive above it, at one decimal up to 100 and none above. The result counts the packages signed above, \
+below and at their cost estimates, and the lowest and highest cost estimate among them. Below \
+{past_range.min_comparables} packages with both amounts it gives no quartiles and abstains, and still returns \
+every package. The coverage line says how many comparables had no signed contract yet, no cost estimate in a \
+Procurement Plan, or a signed amount only in a local currency. It also gives the package's own cost estimate: \
+its plan row's Estimated Amount (US$), or the amount you give for a package that has no plan row. The counts, \
+the band of cost estimates, the quartiles and the package's own cost estimate also come back in the result's \
+summary, which you cite for them."""
+adapter = "strata.tools.compare_cost_estimates:compare_cost_estimates"
+benchmark = "compare-cost-estimates-ke-nwwda-541055"
+sources = ["documents", "awards", "notices"]
+
+[[tools.compare_cost_estimates.parameters]]
+name = "comparables"
+type = "string"
+required = true
+description = """The STEP references of the comparable packages, separated by commas, as find_comparables \
+returned them."""
+
+[[tools.compare_cost_estimates.parameters]]
+name = "step_reference"
+type = "string"
+required = false
+key = true
+description = """The package's own STEP activity reference, such as KE-NWWDA-541055-CW-RFB, for its own cost \
+estimate. Leave it out for a package that is not in a plan yet."""
+
+[[tools.compare_cost_estimates.parameters]]
+name = "estimate_usd"
+type = "number"
+required = false
+description = "Your cost estimate in US dollars, for a package that is not in a plan yet. Leave it out otherwise."
+
+[[tools.compare_cost_estimates.parameters]]
+name = "as_of"
+type = "date"
+required = false
+description = """Use only plan versions and contracts public on or before this date. A package signed after it \
+counts as having no signed contract yet. Leave it out for today."""
+
+[tools.compare_cost_estimates.result]
+row = """One comparable package with a cost estimate and a signed contract: both amounts, its contracts, and how \
+far its signed amount was from its cost estimate, in percent."""
+row_fields = ["evidence_id", "public_from", "source", "step_reference", "project_id", "country_code", "country_name",
+              "description", "estimated_amount_usd", "signed_amount_usd", "diff_pct", "contracts", "rank"]
+source_fields = ["plan", "contract_ids"]
+fields = ["package", "counts", "band", "quartiles", "quantile_dots", "min_comparables", "sources", "records_through"]
+reasons = ["still_open", "no_estimate", "no_usd_amount"]
+abstentions = ["no_comparables", "none_with_both_amounts", "too_few_comparables"]
+abstentions_with_rows = ["too_few_comparables"]
+# The package's own cost estimate, the counts above, below and at, the band of cost estimates and the quartiles
+# are derived figures, so they come back as one citable record too.
+summary_fields = ["package", "counts", "band", "quartiles", "coverage"]
+
+[tools.rejected_bids]
+description = """Says how many comparable packages had bids rejected, and why, from their contract award \
+notices. It counts the comparables with an award notice published by the as-of date, since award notices are \
+where rejected bids are listed, and those whose award notice rejected at least one bid with a reason. Each row \
+is one Reason for Rejection in one award notice, word for word, with the notice's id and date, how many bids \
+that notice rejected for it, and the kind of requirement it concerned, such as bid security or key staff, or \
+other reasons. It never names a bidder. Quote a reason only word for word. The counts and the groups by kind \
+of requirement also come back in the result's summary, which you cite for them."""
+adapter = "strata.tools.rejected_bids:rejected_bids"
+benchmark = "rejected-bids-ke-nwwda-541055"
+sources = ["notices"]
+
+[[tools.rejected_bids.parameters]]
+name = "comparables"
+type = "string"
+required = true
+description = """The STEP references of the comparable packages, separated by commas, as find_comparables \
+returned them."""
+
+[[tools.rejected_bids.parameters]]
+name = "as_of"
+type = "date"
+required = false
+description = "Use only award notices published on or before this date. Leave it out for today."
+
+[tools.rejected_bids.result]
+row = """One reason one award notice gave for rejecting bids: its words, its language, the notice, how many bids \
+it rejected for it and the kind of requirement it concerned."""
+row_fields = ["evidence_id", "public_from", "source", "step_reference", "country_name", "notice_id", "notice_date",
+              "item_key", "reason", "bids", "rank"]
+source_fields = ["notice_id", "notice_type", "project_id"]
+fields = ["counts", "groups", "sources", "records_through"]
+reasons = ["no_award_notice"]
+abstentions = ["no_comparables", "no_award_notices"]
+summary_fields = ["counts", "groups", "coverage"]
+
+[tools.compare_criteria]
+description = """Compares a bidding document's qualification criteria, read into items such as similar \
+experience or average annual turnover, with the comparable packages whose notices published theirs. It reads \
+the scope and qualification text of each comparable's specific procurement notice, and never a package that \
+was not signed by the as-of date, since that tender may still be open. Each row is one comparable whose \
+notice set at least one requirement: the notice, each requirement word for word with the notice passage it \
+is in, and, for each of your items it set, whether it asked for less than you, the same, more, or set it in \
+other terms (such as more contracts of a smaller amount). Parts your items do not set are not compared. \
+Amounts in another currency are not converted. Without items it counts the comparables whose criteria are \
+public. The counts per item and the counts of packages also come back in the result's summary, which you \
+cite for them. Quote a requirement only word for word, from its passage."""
+adapter = "strata.tools.compare_criteria:compare_criteria"
+benchmark = "compare-criteria-ke-cwsb-224323"
+sources = ["notices", "awards"]
+
+[[tools.compare_criteria.parameters]]
+name = "comparables"
+type = "string"
+required = true
+description = """The STEP references of the comparable packages, separated by commas, as find_comparables \
+returned them."""
+
+[[tools.compare_criteria.parameters]]
+name = "items"
+type = "string"
+required = false
+description = """Your items, as a JSON list of objects. Each has item_key, a key of the item registry such as \
+similar_experience, and parts, an object with only the parts your text sets: contracts (a count), amount (an \
+object with value, in US dollars, and currency, USD), window_years (the years a contract must fall within) and \
+years (a minimum number of years). Leave it out to count the comparables whose criteria are public."""
+
+[[tools.compare_criteria.parameters]]
+name = "as_of"
+type = "date"
+required = false
+description = "Use only notices, passages and contracts public on or before this date. Leave it out for today."
+
+[tools.compare_criteria.result]
+row = """One comparable package whose notice published its qualification criteria: the notice, each requirement \
+it set with its passage, and how each compares with your items."""
+row_fields = ["evidence_id", "public_from", "source", "step_reference", "country_name", "notice_id", "notice_date",
+              "requirements", "relations", "rank"]
+source_fields = ["notice_id", "project_id"]
+fields = ["items", "counts", "sources", "records_through"]
+reasons = ["still_open", "no_notice", "no_public_criteria"]
+abstentions = ["no_comparables", "none_public"]
+summary_fields = ["items", "counts", "coverage"]
+# Each requirement is quoted from a notice passage, which the row carries whole, so a claim can cite and quote it.
+nested_rows = ["requirements"]
+
+[tools.rebidding_risk]
+description = """Says how many comparable packages were advertised again, and why, for one package in a \
+Procurement Plan or one someone is planning. It is experimental: no field in the records says a package was \
+advertised again, so three sources say it: a notice that no award followed {rebidding.no_award_after_days} days \
+after its bids were due, a later notice of the same type under the same STEP reference, and a Procurement Plan \
+row whose Process Status is Canceled. It takes find_comparables' criteria, with the same defaults, and counts over \
+the same comparable packages, with the canceled ones put back: m is how many it counted and n how many were \
+advertised again. When m differs from the past range's total, past_range_total and denominator_reason say why. \
+Each row is one package advertised again, under one reason: a reason a notice gives in words, quoted word for \
+word with the notice's id; a second notice under its STEP reference; a canceled plan row with its Process Status; \
+or no award. Each row cites the records that say so. A package still open counts among those with no sign of \
+being advertised again. Its model gives a natural frequency, about k in 10 packages like this one, only from \
+{past_range.min_comparables} comparables and a champion model that beat its baseline in its backtest; otherwise \
+model.not_shown_reason says why and you give only the counts. Quote a reason only word for word. The counts, the \
+groups and the model also come back in the result's summary, which you cite for them. Never write that an agency \
+or a bidder failed."""
+adapter = "strata.tools.rebidding_risk:rebidding_risk"
+benchmark = "rebidding-risk-ke-nwwda-541055"
+sources = ["notices", "awards", "documents"]
+
+[[tools.rebidding_risk.parameters]]
+name = "step_reference"
+type = "string"
+required = false
+key = true
+description = """The package's STEP activity reference, as its Procurement Plan writes it, such as \
+KE-NWWDA-541055-CW-RFB. Leave it out for a package that is not in a plan yet, and give its criteria yourself."""
+
+[[tools.rebidding_risk.parameters]]
+name = "method"
+type = "string"
+required = false
+description = "As in find_comparables: only packages with this selection method. Leave it out for the package's own Method, or write any."
+
+[[tools.rebidding_risk.parameters]]
+name = "category"
+type = "string"
+required = false
+description = "As in find_comparables: only packages in this procurement category. Leave it out for the package's own, or write any."
+
+[[tools.rebidding_risk.parameters]]
+name = "market_approach"
+type = "string"
+required = false
+description = "As in find_comparables: only packages with this Market Approach, in STEP's words. Leave it out to leave it open."
+
+[[tools.rebidding_risk.parameters]]
+name = "review_type"
+type = "string"
+required = false
+description = "As in find_comparables: only packages with this Review Type, Prior or Post. Leave it out to leave it open."
+
+[[tools.rebidding_risk.parameters]]
+name = "size_from_usd"
+type = "number"
+required = false
+description = "As in find_comparables: only packages whose signed contracts add up to at least this many US dollars."
+
+[[tools.rebidding_risk.parameters]]
+name = "size_to_usd"
+type = "number"
+required = false
+description = "As in find_comparables: only packages whose signed contracts add up to at most this many US dollars."
+
+[[tools.rebidding_risk.parameters]]
+name = "country"
+type = "string"
+required = false
+description = "As in find_comparables: only packages in this country, by its two-letter ISO code. Leave it out for the package's own, or write any."
+
+[[tools.rebidding_risk.parameters]]
+name = "notice_from"
+type = "date"
+required = false
+description = "Only packages whose specific procurement notice is dated on or after this date. Leave it out for {past_range.period_from}."
+
+[[tools.rebidding_risk.parameters]]
+name = "notice_to"
+type = "date"
+required = false
+description = "Only packages whose specific procurement notice is dated on or before this date. Leave it out for the plan's date."
+
+[[tools.rebidding_risk.parameters]]
+name = "as_of"
+type = "date"
+required = false
+description = """Use only notices, contracts, plan versions, backtests and scores public on or before this date. A \
+plan row marked Canceled after it does not count. Leave it out for today."""
+
+[tools.rebidding_risk.result]
+row = """One comparable package advertised again: the reason it is grouped under, the reason word for word when a \
+notice gives one, its dates and Process Status, and the records that say it was advertised again."""
+row_fields = ["evidence_id", "public_from", "source", "step_reference", "project_id", "country_name", "reason_code",
+              "row_kind", "quote", "dates", "process_status", "evidence", "label_sources", "rank"]
+source_fields = ["project_id", "notice_id", "plan_document_id"]
+# rows_per_group is the thresholds file's rebidding.rows_per_group: how many rows a group shows before "Show more".
+fields = ["package", "criteria", "m", "n", "past_range_total", "denominator_reason", "groups", "model", "sources",
+          "notice_source_keys", "records_through", "rows_per_group"]
+# The coverage line's codes are find_comparables' own, less canceled, which this tool counts. Each row's
+# reason_code is one of the last six, and each has its group heading in web/src/copy.ts (rebid.reason).
+reasons = ["no_step_reference", "no_notice", "signed_before_notice", "no_review_type", "no_market_approach",
+           "no_amount", "all_bids_rejected", "process_canceled", "again_no_reason", "canceled_row", "no_award",
+           "other"]
+abstentions = ["unknown_package", "no_public_notice", "no_comparables", "none_measurable"]
+summary_fields = ["m", "n", "past_range_total", "groups", "model", "coverage"]
+# Each record a row rests on is cited and dated like a row, so a claim can cite it.
+nested_rows = ["evidence"]

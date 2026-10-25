@@ -25,7 +25,11 @@ import { CardTop, ChipGroups, ChipSkeletons, ComputedNote, CriterionChip, Refusa
 import { Fill } from "../components/Fill";
 import { Num } from "../components/Num";
 import { PastRange, type PastRangeState } from "../components/PastRange";
+import { Rebidding } from "../components/RebiddingBlock";
+import { plannedRebiddingPath } from "../lib/rebidding";
 import { RisksSection } from "../components/RisksSection";
+import { CheckCriteria } from "../components/CheckCriteria";
+import { StepsSection } from "../components/StepsSection";
 import { POPOVER } from "../components/Popover";
 import { SkeletonLine } from "../components/Skeleton";
 import { Steps, type Step } from "../components/Steps";
@@ -812,7 +816,18 @@ function Workspace({ initial, preview, focusHeading }: { initial: PlannedPage; p
             lead={lead}
             more={more}
             quiet
+            after={
+              <Rebidding
+                path={pkg.comparables_query && missing.length === 0 ? plannedRebiddingPath(pkg.comparables_query) : null}
+                section={section.status === "ready" && !skeleton ? section.result : null}
+              />
+            }
           />
+        </div>
+        {/* Section 2, the planned date for each STEP step (ticket 27): it reruns when a criterion changes, since the
+            method family and the comparables follow the criteria. */}
+        <div className="mt-6 @lg/page:mt-8">
+          <StepsSection packageKey={pkg.package_id} kind="planned" rerunKey={`${queryKey(pkg)}|${pkg.missing.join(",")}`} />
         </div>
         {/* Section 3, procurement risks and what helped (ticket 30): it reruns with section 1's criteria, and its
             selection saves with the package under the saved stamp. */}
@@ -829,6 +844,11 @@ function Workspace({ initial, preview, focusHeading }: { initial: PlannedPage; p
               setSaving(state === "saved" ? { status: "saved", at: new Date().toISOString() } : { status: state });
             }}
           />
+        </div>
+        {/* Section 5, "Check your criteria" (ticket 31), on this package's comparables: a change of criteria
+            reads its summary again. */}
+        <div className="mt-6 @lg/page:mt-8">
+          <CheckCriteria base={`/api/planned-packages/${encodeURIComponent(pkg.package_id)}`} version={queryKey(pkg)} preview={preview} />
         </div>
         <p role="status" className="sr-only" data-workspace-live>
           {announce}

@@ -8,14 +8,13 @@
 // market rates", the lesson "Base works estimates on market rates to avoid rebidding", ICR P130164 paragraph 54
 // (icr-para-54) and its restatement in the ICR Review's section 10.b (icr-review-2023-restates-para-54). The
 // words are the 30 brief's, copied here so the test checks the screen against an independent source.
-import AxeBuilder from "@axe-core/playwright";
+import { scan } from "./axe";
 import type { Locator, Page, Request } from "@playwright/test";
 import { expect, recorded, test } from "./mocked";
 
 const REF = "KE-NWWDA-541055-CW-RFB";
 const PATH = `/packages/${REF}`;
 const API = `/api/packages/${REF}`;
-const WCAG_22_AA = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 const ICR_54 = "strata.gold.passage:31525018/v1/54";
 const REVIEW_10B = "strata.gold.passage:34056616/v2/10.b";
 const RISK = "Cost estimates below market rates";
@@ -32,6 +31,7 @@ async function openPackage(page: Page, { width = 1440, risks = "risks-ke-nwwda-5
     [API]: { body: await recorded("package-ke-nwwda-541055.json") },
     [`${API}/comparables`]: { body: await recorded("comparables-ke-nwwda-541055.json") },
     [`${API}/risks`]: { body: await recorded(risks) },
+    [`${API}/steps`]: { body: await recorded("steps-ke-nwwda-541055.json") },
     [`${API}/risk-selection`]: save ?? { body: await recorded("risks-selection-saved.json") },
     "/api/evidence/opened": { body: '{"opened":[],"recorded":true}' },
   };
@@ -62,7 +62,7 @@ const drawer = (page: Page) => page.getByRole("dialog");
 
 async function axe(page: Page, scope = "section#risks") {
   await page.waitForFunction(() => document.getAnimations().every((animation) => animation.playState !== "running"));
-  const results = await new AxeBuilder({ page }).include(scope).withTags(WCAG_22_AA).analyze();
+  const results = await scan(page, scope);
   return results.violations.map((v) => `${v.id}: ${v.nodes.map((node) => node.target.join(" ")).join(", ")}`);
 }
 

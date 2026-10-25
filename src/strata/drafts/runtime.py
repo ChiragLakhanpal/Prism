@@ -2,8 +2,8 @@
 (ticket 35; adapted from fairshare's server/drafts.py and harness/agents.py).
 
 Writing (write) runs one draft kind's workflow (config/drafts.toml) in four steps, each announced as a
-step event: read the facts as the viewer, have the writer agent write, run the verifier on every sentence
-(CLAUDE.md rule 1), and save. Nothing is saved until the writer and the verifier finish, and nothing is
+step event: read the facts as the viewer, have the writer agent write, run the verifier's six checks on every
+sentence (CLAUDE.md rule 1; src/strata/agent/answer_check.py, shared with the answer stream), and save. Nothing is saved until the writer and the verifier finish, and nothing is
 saved when no sentence passed the checks, so a failed model call leaves nothing in Drafts.
 
 A draft moves from draft to checked to exported, and to discarded and back, only when its author acts
@@ -25,9 +25,10 @@ from collections.abc import AsyncIterator, Callable
 from dataclasses import dataclass
 from functools import cache
 
+from strata.agent.answer_check import Asker, SixChecks
 from strata.agent.claims import ClaimsError, claims_from
 from strata.agent.loop import AgentError, output_text
-from strata.agent.verifier import Verdict, answer_events, check
+from strata.agent.verifier import AnswerCheck, Verdict, answer_events, check
 from strata.config import DraftKind, DraftKinds
 from strata.dbx import Viewer
 from strata.drafts.store import DraftStore, NewDraft, Saved, iso
@@ -44,7 +45,9 @@ STAFF = "staff"
 # permission is the viewer's own read of the facts refused; draft_store is the app's own account unable to
 # save the draft, which the viewer cannot fix.
 WRITE_ERRORS = ("no_agent", "agent_unavailable", "content_filter", "agent_output", "data_service", "no_plan",
-                "nothing_marked", "permission", "draft_store", "internal")
+                "nothing_marked", "permission", "draft_store", "internal",
+                # A mission brief (ticket 37): no such project, or one no longer active.
+                "no_project", "not_active")
 OPEN_STATES = ("draft", "checked")
 
 
@@ -107,28 +110,37 @@ def parse_notes(text: str, key: str) -> dict[str, dict]:
     return notes
 
 
-def compose(module, facts, written: dict[str, dict]) -> tuple[dict, Verdict]:
-    """The draft from what the writer wrote and what the verifier kept: one note per item, in order, each
-    with its kept sentences, the evidence they cite, the verifier's counts and the removed sentences.
+def note_check(module, facts, written: dict[str, dict], six_checks: SixChecks) -> tuple[AnswerCheck, Facts, list[str]]:
+    """Checks 1 to 3 on what the writer wrote, each note against its own item's row, then check 5, ready for
+    checks 6 and 4 (SixChecks.finish); with every row the check returned, and the item each sentence belongs to.
 
-    Each note cites only its own item's row, so the verifier checks each note's sentences against that
-    row alone: a sentence that cites another item's row is removed as a source the check did not return
-    for this note (id_not_returned), even though the tool returned that row for another note."""
-    items = module.items(facts)
+    Each note cites only its own item's row, so the verifier checks each note's sentences against that row
+    alone: a sentence that cites another item's row is removed as a source the check did not return for this
+    note (id_not_returned), even though the tool returned that row for another note."""
     seen = Facts()
-    for row in facts.rows:
-        seen.record(row["evidence_id"], row, tool=module.TOOL)
+    # A kind whose items cite several tools' rows, such as the mission brief's (ticket 37), names each row's tool.
+    cited = module.cited_rows(facts) if hasattr(module, "cited_rows") else [(row, module.TOOL) for row in facts.rows]
+    for row, tool in cited:
+        seen.record(row["evidence_id"], row, tool=tool)
     checked, owners = [], []
-    for item in items:
+    for item in module.items(facts):
         own = Facts()
-        own.record(item["evidence_id"], seen.get(item["evidence_id"]), tool=module.TOOL)
+        for evidence_id in item.get("evidence_ids") or [item["evidence_id"]]:
+            own.record(evidence_id, seen.get(evidence_id), tool=seen.tool(evidence_id))
         for claim in (written.get(item["key"]) or {}).get("claims") or []:
             checked.append(check(len(checked), claim, own))
             owners.append(item["key"])
-    verdict = Verdict(tuple(checked))
-    events = answer_events(verdict, seen, [module.TOOL])
+    return six_checks.checked(checked, seen), seen, owners
+
+
+def compose(module, facts, written: dict[str, dict], verdict: Verdict, seen: Facts, owners: list[str]) -> dict:
+    """The draft from what the writer wrote and what the six checks kept: one note per item, in order, each
+    with its kept sentences, the evidence they cite, the verifier's counts, the removed sentences, and any
+    disagreement check 6 shows under a note's sentence."""
+    items = module.items(facts)
+    events = answer_events(verdict, seen, list(getattr(module, "TOOLS", (module.TOOL,))))
     kept: dict[str, list[dict]] = {}
-    evidence, checks, removed = {}, None, []
+    evidence, checks, removed, disagreements = {}, None, [], []
     for event in events:
         data = dict(event.data)
         if event.type == "sentence":
@@ -139,6 +151,8 @@ def compose(module, facts, written: dict[str, dict]) -> tuple[dict, Verdict]:
             checks = data
         elif event.type == "removed":
             removed.append({**data, "key": owners[data["index"]]})
+        elif event.type == "disagreement":
+            disagreements.append({**data, "key": owners[data["after"]]})
     notes = []
     for item in items:
         wrote = written.get(item["key"]) or {}
@@ -146,10 +160,9 @@ def compose(module, facts, written: dict[str, dict]) -> tuple[dict, Verdict]:
         notes.append({"key": item["key"], module.KEY: item["key"], "evidence_id": item["evidence_id"],
                       "description": item["description"],
                       "mark": item["mark"], "state": state, "refusal": wrote.get("refusal"),
-                      "sentences": kept.get(item["key"], [])})
-    content = {"subject": module.subject(facts), "notes": notes, "evidence": evidence, "checks": checks,
-               "removed": removed}
-    return content, verdict
+                      "sentences": kept.get(item["key"], []), **item.get("extra", {})})
+    return {"subject": module.subject(facts), "notes": notes, "evidence": evidence, "checks": checks,
+            "removed": removed, "disagreements": disagreements}
 
 
 @dataclass
@@ -173,9 +186,11 @@ class Writing:
 
 async def write(writing: Writing, engine_for: EngineFor, agent_for: Callable[[str], object | None],
                 store: DraftStore, today: dt.date, now: Callable[[], dt.datetime],
-                new_draft_id: Callable[[], str]) -> AsyncIterator[Event]:
+                new_draft_id: Callable[[], str], six_checks: SixChecks) -> AsyncIterator[Event]:
     """The writing of one draft, as events: the four steps, then the saved draft's id, or the removed
-    sentences when none passed. A step that cannot run raises WriteError with its code."""
+    sentences when none passed. A step that cannot run raises WriteError with its code. The check step runs all
+    six checks (src/strata/agent/answer_check.py), as the viewer and as of today: its own steps inside it are not
+    sent, since the writing page lists four."""
     module = writer_module(writing.kind)
 
     def read():
@@ -192,7 +207,9 @@ async def write(writing: Writing, engine_for: EngineFor, agent_for: Callable[[st
     except EngineError as error:
         raise WriteError("data_service") from error
     writing.question = module.question(facts)
-    yield step("read", "done", plan_date=facts.result["plan"]["plan_date"])
+    # What the read step says it read: a plan's date for review notes, or the kind's own counts (ticket 37).
+    read_done = module.read_done(facts) if hasattr(module, "read_done") else {"plan_date": facts.result["plan"]["plan_date"]}
+    yield step("read", "done", **read_done)
 
     items = module.items(facts)
     yield step("write", "running", count=len(items))
@@ -216,7 +233,12 @@ async def write(writing: Writing, engine_for: EngineFor, agent_for: Callable[[st
     yield step("write", "done", **wrote)
 
     yield step("check", "running")
-    content, verdict = compose(module, facts, written)
+    check_notes, seen, owners = note_check(module, facts, written, six_checks)
+    verdict = None
+    async for item in six_checks.finish(check_notes, seen, Asker(writing.viewer, STAFF, today, writing.run_id)):
+        if isinstance(item, Verdict):
+            verdict = item
+    content = compose(module, facts, written, verdict, seen, owners)
     writing.verdict = verdict
     counts = content["checks"]
     yield step("check", "done", checks_run=counts["checks_run"], checks=len(counts["checks_run"]),

@@ -104,6 +104,7 @@ export function PastRange({
   lead,
   more,
   quiet = false,
+  after,
 }: {
   state: PastRangeState;
   headingRef?: Ref<HTMLHeadingElement>;
@@ -124,6 +125,9 @@ export function PastRange({
   // The page says what is happening in its own live region, such as the planned package's steps and
   // reruns, so the section's own loading status stays silent and nothing is heard twice.
   quiet?: boolean;
+  // A block at the end of the card that counts the same comparable packages, such as "Advertised again" (ticket
+  // 28), drawn after the result and never in place of a body such as the plan prompt.
+  after?: ReactNode;
 }) {
   const headingId = useId();
   const loading = state.status === "loading";
@@ -170,6 +174,7 @@ export function PastRange({
         </div>
       )}
       {!body && result && <Ready result={result} open={open} planned={planned} more={more} />}
+      {!body && result && after}
       {loading && !quiet && (
         <p role="status" className="sr-only">
           {words.loading}

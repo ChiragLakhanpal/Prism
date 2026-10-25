@@ -5,6 +5,7 @@ Offline, the tool results come from search_passages on the fixture database, and
 agent. ops/agent/shields_live.py sends the same results to the live Foundry agent.
 """
 
+import copy
 import datetime as dt
 
 import pytest
@@ -18,11 +19,18 @@ from strata.lakehouse.engine import DuckDBEngine
 AS_OF = dt.date(2026, 10, 23)
 
 
-@pytest.fixture
-def results(fixture_db):
+@pytest.fixture(scope="module")
+def searched(fixture_db):
+    """The five searches take about two seconds, so the tests in this file share them (ticket 55)."""
     with DuckDBEngine.open(fixture_db, read_only=True) as engine:
         return {passage.evidence_id: shields.tool_result(passage, engine, Viewer(name="test"), AS_OF)
                 for passage in shields.load_passages()}
+
+
+@pytest.fixture
+def results(searched):
+    """Each test's own copy of the shared results, so no test sees what another one changed."""
+    return copy.deepcopy(searched)
 
 
 def test_the_set_holds_five_real_passages_each_found_by_its_own_rule_like_sentence(results):

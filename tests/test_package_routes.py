@@ -40,6 +40,17 @@ ROUTES = [
     # A Request for Quotations with a Limited market approach: no public notice to measure from.
     ("/api/packages/KE-NWWDA-541062-CW-RFQ", "package-ke-nwwda-541062.json"),
     ("/api/packages/KE-NWWDA-541062-CW-RFQ/comparables", "comparables-ke-nwwda-541062.json"),
+    # rebidding_risk for section 1's "Advertised again" block (ticket 28; tests/record_rebidding_api.py): three of
+    # the 52 comparables, the canceled ones put back; and with review type Prior, none of 7, too few for a model.
+    ("/api/packages/KE-NWWDA-541055-CW-RFB/rebidding", "rebidding-ke-nwwda-541055.json"),
+    ("/api/packages/KE-NWWDA-541055-CW-RFB/rebidding?review_type=Prior", "rebidding-ke-nwwda-541055-prior.json"),
+    # A package planned from a sentence, with its criteria in the query, as /api/comparables takes them.
+    ("/api/rebidding?category=Works&country=KE&method=Request%20for%20Bids", "rebidding-planned-works-rfb-ke.json"),
+    # The records its rows cite, as the evidence drawer opens them: the notice whose words it quotes, and a
+    # canceled plan row.
+    ("/api/evidence?id=strata.silver.notices:OP00083890", "evidence-notice-op00083890.json"),
+    ("/api/evidence?id=strata.silver.plan_rows:40001676/KE-KIMAWASCO-157517-CW-RFB",
+     "evidence-plan-row-ke-kimawasco-157517.json"),
 ]
 
 
@@ -68,6 +79,23 @@ def fixture_app(fixture_db, viewers_seen):
         with DuckDBEngine.open(fixture_db, read_only=True) as engine:
             yield engine
     return create_app(engine_for=engine_for)
+
+
+def test_the_drawer_highlights_the_words_and_the_process_status_a_package_advertised_again_rests_on(fixture_app):
+    """tests/ground_truth/values.toml's [rebidding]: OP00083890's own words, and the Kilifi plan's Canceled."""
+    import tomllib
+
+    rebidding = tomllib.loads((Path(__file__).parent / "ground_truth" / "values.toml").read_text())["rebidding"]
+    notice = get(fixture_app, with_as_of(f"/api/evidence?id=strata.silver.notices:{rebidding['quote_notice']}"), ANA).json()
+    plan = get(fixture_app, with_as_of("/api/evidence?id=strata.silver.plan_rows:40001676/KE-KIMAWASCO-157517-CW-RFB"),
+               ANA).json()
+    early = get(fixture_app, f"/api/evidence?id=strata.silver.plan_rows:40001676/KE-KIMAWASCO-157517-CW-RFB&asof="
+                             f"{rebidding['before_the_plan']}", ANA)
+
+    assert [field["value"] for field in notice["row"]["fields"] if field.get("highlight")] == [rebidding["quote"]]
+    assert [field["value"] for field in plan["row"]["fields"] if field.get("highlight")] == ["Canceled"]
+    assert plan["row"]["source"]["document_date"] == rebidding["canceled_plan_date"].isoformat()
+    assert early.status_code == 404
 
 
 @pytest.mark.parametrize("path, name", ROUTES, ids=[name for _, name in ROUTES])

@@ -7,12 +7,16 @@
 // the history entry it was asked on (web/src/lib/router.ts), so Back to that page shows it again and a
 // full reload drops it.
 import { closeDrawerOf, remember } from "./evidence";
+import type { Feedback } from "./retrieval";
 import { StreamError, streamEvents } from "./sse";
 import { createStore } from "./store";
+import type { Why } from "./trail";
 
 export type StepEvent = {
   id: string;
-  kind: "tool" | "write" | "check";
+  // judge and disagreement are steps the verifier takes inside its own (ticket 24): asking the model
+  // that judges sentences, and getting the other side of a disagreement.
+  kind: "tool" | "write" | "check" | "judge" | "disagreement";
   tool?: string;
   project_id?: string | null;
   status: "running" | "done";
@@ -32,8 +36,28 @@ export type SentenceEvent = {
 export type EvidenceEvent = {
   id: string;
   // A quantile dot's packages (ticket 15) are no source: the page holds them, and the drawer lists them. So are
-  // the completion reports behind a risk's count and every report the risks section counted (ticket 30).
-  kind: "passage" | "record" | "package" | "dot" | "risk-reports" | "risk-reports-all";
+  // section 5's lists and cost records (ticket 31): the packages whose criteria are public, the notices behind one
+  // item, and a comparable package's cost records. And so are the completion reports behind a risk's count and
+  // every report the risks section counted (ticket 30), and the comparable packages behind a step's planned date
+  // or behind "ran longest" (ticket 27).
+  kind:
+    | "passage"
+    | "record"
+    | "package"
+    | "dot"
+    | "criteria_public"
+    | "criteria_item"
+    | "package_cost"
+    | "risk-reports"
+    | "risk-reports-all"
+    | "steps"
+    | "steps-longest"
+    // A project timeline's marks (ticket 23): a report's document view, a band's ratings, a year's contracts and a
+    // disagreement's two reports.
+    | "document"
+    | "ratings"
+    | "contracts"
+    | "disagreement";
   tool: string | null;
   stratum: "What" | "How" | "Why" | null;
   short_name: string | null;
@@ -41,7 +65,17 @@ export type EvidenceEvent = {
   row: Record<string, any>;
   // Where each sentence's quote sits in the paragraph.
   highlights: { sentence: number; start: number; end: number }[];
+  // A passage opened by its id says why it is a source for a contract it appeared together with (ticket 22), or
+  // null when no link was public. A passage an answer or a page sent with it leaves it out (undefined), and the
+  // drawer shows no such block for it.
+  why?: Why | null;
+  // Whether the drawer offers "Was this the right passage?" for this source of this answer (ticket 32). Only the
+  // answer stream sends it; a source read from a link has none, and the row does not show.
+  feedback?: Feedback;
 };
+// The verifier's counts. numbers, dates, quotes and sources are over every sentence the agent wrote, as the
+// steps' six-check list gives them; shown is over the sentences on screen, as the check line gives them. The
+// rest come with checks 4 to 6 (ticket 24), so an answer that ran only checks 1 to 3 lacks them.
 export type ChecksEvent = {
   checks_run: number[];
   sentences: { written: number; kept: number; removed: number };
@@ -50,8 +84,74 @@ export type ChecksEvent = {
   quotes: { total: number; found: number };
   sources: { total: number; returned: number };
   tools: string[];
+  shown?: {
+    numbers: { total: number; matched: number };
+    dates: { total: number; matched: number };
+    quotes: { total: number; found: number };
+    judged: number;
+    proven: number;
+  };
+  // Numbers and dates together, over every sentence written, for check 1's item in the steps.
+  checked?: { total: number; matched: number };
+  judge?: { called: boolean; responded: boolean | null; judged: number; followed: number; unjudged: number; proven: number };
+  advice?: { total: number; cited: number };
+  // warned: the sentences a warning card follows, which the status line announces.
+  // unasked: the sentences removed because I couldn't ask which reports disagree (absent before ticket 24's round 3).
+  disagreements?: { disputed: number; shown: number; attached: number; unasked?: number; warned: number };
+  // The tools whose evidence the kept sentences cite, and those whose "Not checked" clause needs that.
+  cited_tools?: string[];
+  cited_only?: string[];
 };
-export type RemovedEvent = { index: number; sentence: string; reason: string; reasons: { check: number; code: string; text: string | null }[] };
+// kind is the claim's kind (record, quote, summary, advice), sent since ticket 24's round 2.
+export type RemovedEvent = {
+  index: number;
+  sentence: string;
+  kind?: string;
+  reason: string;
+  reasons: { check: number; code: string; text: string | null }[];
+};
+// A request on the refusal list (ticket 24): its key in the copy file's refusals, and whether the rest of the
+// question was answered.
+export type RefusalEvent = { key: string; partial: boolean };
+// One side of a disagreement, as get_disagreements returned it.
+export type DisagreementSide = {
+  evidence_id: string;
+  // The assertion keeping a side posts (ticket 23), and the kind of report (config/project_page.toml's groups).
+  assertion_id: string | null;
+  type: string | null;
+  document_type: string | null;
+  report_number: string | null;
+  sequence: number | null;
+  paragraph: string | null;
+  paragraph_numbered: boolean | null;
+  evidence_tier: string | null;
+  made_at: string | null;
+  field_name: string | null;
+  value: string | null;
+  value_form: string | null;
+  quote: string | null;
+  months_after_event?: number | null;
+  doc_key?: string | null;
+  leaned: boolean;
+};
+// A disagreement the verifier's check 6 shows under the sentence it concerns (after), with both sides in the
+// order they were written.
+export type DisagreementEvent = {
+  id: string;
+  // The id keeping a side posts to (POST /api/disagreements/{id}/choices), the sentences keeping the other side
+  // would change and how many they are, which the card says as it comes (ticket 23): one shape for both cards.
+  disagreement_id?: string | null;
+  changes_sentence_ids?: number[];
+  changes_count?: number;
+  period_event?: string | null;
+  after: number;
+  changes_answer: boolean;
+  attached_by_verifier: boolean;
+  attribute: string | null;
+  rule_id: string | null;
+  sides: DisagreementSide[];
+  if_you_keep: { field_name: string | null; value: string | null } | null;
+};
 
 export type Asked = {
   question: string;
@@ -73,6 +173,8 @@ export type Run = {
   evidence: Record<string, EvidenceEvent>;
   checks: ChecksEvent | null;
   removed: RemovedEvent[];
+  refusal: RefusalEvent | null;
+  disagreements: DisagreementEvent[];
   error: string | null;
   runId: string | null;
   // When the last event arrived, for "I'm still working on this step."
@@ -117,6 +219,10 @@ export function withEvent(run: Run, type: string, data: any): Run {
       return { ...run, checks: data as ChecksEvent };
     case "removed":
       return { ...run, removed: [...run.removed, data as RemovedEvent] };
+    case "refusal":
+      return { ...run, refusal: data as RefusalEvent };
+    case "disagreement":
+      return { ...run, disagreements: [...run.disagreements, data as DisagreementEvent] };
     case "error":
       return { ...run, error: String(data.code ?? "internal") };
     case "done":
@@ -127,11 +233,19 @@ export function withEvent(run: Run, type: string, data: any): Run {
 }
 
 // Each source the answer cites, numbered once, in order of first appearance; a source cited again
-// keeps its number (the 14 brief, section 4.1). The panel's markers and the drawer's claim block both
-// read it, so the two never disagree.
-export function citationNumbers(run: Pick<Run, "sentences">): Map<string, number> {
+// keeps its number (the 14 brief, section 4.1). A disagreement shown under a sentence comes next in
+// reading order, so the side the sentence cited keeps its number and the other side gets the next one
+// (the 24 brief, section 4.4). The panel's markers and the drawer's claim block both read it, so the
+// two never disagree.
+export function citationNumbers(run: Pick<Run, "sentences"> & { disagreements?: DisagreementEvent[] }): Map<string, number> {
   const numbers = new Map<string, number>();
-  for (const sentence of run.sentences) for (const id of sentence.evidence_ids) if (!numbers.has(id)) numbers.set(id, numbers.size + 1);
+  const add = (id: string) => {
+    if (!numbers.has(id)) numbers.set(id, numbers.size + 1);
+  };
+  for (const sentence of run.sentences) {
+    sentence.evidence_ids.forEach(add);
+    for (const found of run.disagreements ?? []) if (found.after === sentence.index) found.sides.forEach((side) => add(side.evidence_id));
+  }
   return numbers;
 }
 
@@ -146,6 +260,8 @@ export function newRun(serialNumber: number, asked: Asked): Run {
     evidence: {},
     checks: null,
     removed: [],
+    refusal: null,
+    disagreements: [],
     error: null,
     runId: null,
     lastEventAt: Date.now(),

@@ -4,7 +4,7 @@
 // the ticket's and the 14 design brief's, and the source's details are the ICR of October 10, 2019
 // (tests/ground_truth/values.toml, icr-para-54), copied here so the test checks the screen against an
 // independent source.
-import AxeBuilder from "@axe-core/playwright";
+import { scan } from "./axe";
 import { readEvents } from "../src/lib/sse";
 import { askFromTheBox, box, drawer, ICR_54, landed, marker, open, panel, QUESTION } from "./answer-page";
 import type { Page } from "@playwright/test";
@@ -13,10 +13,11 @@ import { expect, recorded, test } from "./mocked";
 const META =
   "Implementation Completion and Results Report · Rajasthan Road Sector Modernization (P130164) · October 10, 2019 · Section III.B · ¶54 · PDF page 23 of 66";
 const REMOVED = "I removed one sentence. It said bids were usually opened within 45 days, and no record supports that number.";
+// The check line counts the sentences on screen, and since ticket 24 every answer runs the fourth check, so
+// "whether each sentence follows from its sources" is no longer a gap (the 24 brief, section 4.1).
 const CHECK_LINE =
-  "Checked: 2 of 3 numbers match records; 1 of 1 date matches records; 2 of 2 quotes are on their pages. " +
-  "Not checked: whether each sentence follows from its sources, or whether I found every passage that matters.";
-const WCAG_22_AA = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
+  "Checked: 2 of 2 numbers match records; 1 of 1 date matches records; 2 of 2 quotes are on their pages. " +
+  "Not checked: whether I found every passage that matters.";
 
 test("Ask this streams the answer into the panel under the band: steps one at a time, then In short, the check line and the removed box", async ({ page }) => {
   const seen = await open(page);
@@ -41,7 +42,7 @@ test("Ask this streams the answer into the panel under the band: steps one at a 
     "I'm reading your question.",
     "I'm searching the documents for P130164.",
     "I'm writing the answer.",
-    "I'm checking each number and quote against the sources.",
+    "I'm checking each sentence against its sources.",
     "The answer is ready. I removed one sentence that failed a check.",
   ]);
   await expect(panel(page)).toHaveAttribute("aria-busy", "false");
@@ -68,7 +69,7 @@ test("the steps still to come are listed in muted text while the answer streams"
   await askFromTheBox(page);
 
   const steps = panel(page).locator("[data-steps] li");
-  await expect(steps).toHaveText(["I'm reading your question.", "To do: write the answer.", "To do: check each number and quote against the sources."]);
+  await expect(steps).toHaveText(["I'm reading your question.", "To do: write the answer.", "To do: check each sentence against its sources."]);
   await expect(panel(page)).toHaveAttribute("aria-busy", "true");
   await expect(panel(page).locator("[data-check-line]")).toHaveCount(0);
 });
@@ -313,7 +314,8 @@ test("a question a content filter stopped is a refusal, in plain words, with no 
   );
   await expect(panel(page).getByRole("alert")).toHaveCount(0);
   await expect(panel(page).locator("[data-check-line]")).toHaveCount(0);
-  await expect(panel(page).getByRole("link", { name: "How Strata works" })).toHaveAttribute("href", "/data");
+  // How Strata works' "What I don't do", the route the 16 brief settled (the 24 brief, section 4.5).
+  await expect(panel(page).getByRole("link", { name: "How Strata works" })).toHaveAttribute("href", "/data/how-strata-works#what-i-dont-do");
 });
 
 test("an agent that found nothing to cite says so for the scope, and Ask across all projects asks again with no chip", async ({ page }) => {
@@ -708,7 +710,11 @@ test("an answer asked with ?view=public names no preview, and page alerts sit ab
   expect(alert.y + alert.height).toBeLessThanOrEqual((await panel(page).boundingBox())!.y);
 
   await marker(page, 1).click();
-  await expect(drawer(page)).toContainText("The address asks for a preview, so I'm not recording the sources you open.");
+  // Ticket 32: a passage a search found shows the feedback row, disabled in a preview, and its line replaces brief
+  // 14's preview line (the 32 brief, section 10, item 7).
+  await expect(drawer(page)).toContainText(
+    "This is a preview, so I'm not recording the sources you open, and you can't report a passage.",
+  );
 });
 
 test("the check line never uses the success state", async ({ page }) => {
@@ -728,13 +734,13 @@ for (const width of [1440, 390]) {
     await askFromTheBox(page);
     await landed(page);
     await page.waitForFunction(() => document.getAnimations().every((a) => a.playState !== "running" || a.effect?.getTiming().iterations === Infinity));
-    let results = await new AxeBuilder({ page }).withTags(WCAG_22_AA).analyze();
+    let results = await scan(page);
     expect(results.violations.map((v) => `${v.id}: ${v.nodes.map((node) => node.target.join(" ")).join(", ")}`)).toEqual([]);
 
     await marker(page, 1).click();
     await expect(drawer(page)).toBeVisible();
     await page.waitForFunction(() => document.getAnimations().every((a) => a.playState !== "running" || a.effect?.getTiming().iterations === Infinity));
-    results = await new AxeBuilder({ page }).withTags(WCAG_22_AA).analyze();
+    results = await scan(page);
     expect(results.violations.map((v) => `${v.id}: ${v.nodes.map((node) => node.target.join(" ")).join(", ")}`)).toEqual([]);
   });
 }

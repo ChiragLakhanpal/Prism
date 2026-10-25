@@ -65,6 +65,11 @@ export const galleryCopy = {
       purpose:
         "As you type, the box lists what Enter will do. An ID opens its page, and anything else offers Ask this. On a project or package page it holds a scope chip you can remove.",
     },
+    "six-checks": {
+      title: "Six checks and refusals",
+      purpose:
+        "Every answer passes six checks before you see it. Each sample plays an answer stream the server wrote, so its counts are the verifier's.",
+    },
     "answer-panel": {
       title: "Answer panel",
       purpose:
@@ -99,6 +104,11 @@ export const galleryCopy = {
       purpose:
         "Check a plan's parts: the trail above it, the check pill, and the plan check as a table from 1024 px and as activity cards below it. Activities with no signals fold behind a button.",
     },
+    following: {
+      title: "Following",
+      purpose:
+        "Following's parts: the status badges with Not checked, the signal lines, the list as a table from 1,200 px and as row blocks below it, the fold, the track record, the follow control and the mission brief's parts. The list and the brief are answers the server wrote; the rows the fixture cannot reach are made up and say so.",
+    },
     drafts: {
       title: "Drafts",
       purpose:
@@ -113,6 +123,12 @@ export const galleryCopy = {
       title: "Package workspace and range chart",
       purpose:
         "The package workspace's header and facts, and section 1 with lane 1 of the range chart in each of its states. Hover a dot or focus the chart to see a package. The page's own states, with real comparables, are captured from the production build.",
+    },
+    // Ticket 22's contract trail, one-hop neighbourhood and "Why this source", from the server's own answers.
+    trail: {
+      title: "Contract trail and connections",
+      purpose:
+        "The activity page's contract trail with every stage found, with stages missing, as of a date before its contract, and for an individual consultant; a project's one-hop neighbourhood as a diagram, as a list and with no links; and Why this source with one contract and with others. The pages' own states are captured from the production build.",
     },
     // Ticket 21's project hub. Each sample is an answer the server wrote on the fixture, recorded in
     // tests/fixtures/api, so its words and numbers are a real project's.
@@ -131,10 +147,168 @@ export const galleryCopy = {
       purpose:
         "Section 3 of the package workspace: source pills, checkboxes and the risk table in each of its states, and the evidence drawer's views of a row. Each sample is an answer the server wrote, recorded in tests/fixtures/api, or one with a value changed.",
     },
+    // Ticket 32's gallery page. Each sample is an answer the server wrote on the fixture, recorded in
+    // tests/fixtures/api by tests/record_retrieval_api.py, or one with a value changed.
+    retrieval: {
+      title: "Passage feedback",
+      purpose:
+        "The evidence drawer's feedback row in each of its states, and the toggle buttons and key hints it and the judging page use. Each sample is an answer the server wrote, recorded in tests/fixtures/api.",
+    },
+    judging: {
+      title: "Passage reports and judging",
+      purpose:
+        "Lessons > Passage reports and Lessons > Judging: the queue rows, a report, the decision form and a decided record, the segmented filter, the progress meter, the passage map and the grade bar. Each sample is an answer the server wrote, recorded in tests/fixtures/api. The pages themselves are captured from the production build.",
+    },
+    steps: {
+      title: "Planned date for each step",
+      purpose:
+        "Section 2 of the package workspace: the collapsed section, the segmented control and the step table in each of their states, for each method family, and the evidence drawer's two lists. Each sample is an answer the server wrote on the fixture or the hand-made set, recorded in tests/fixtures/api, or one with a value changed.",
+    },
+    rebidding: {
+      title: "Advertised again",
+      purpose:
+        "Section 1's experimental count of comparable packages advertised again, in each state, with its reasons list and the evidence drawer's views of a row. The fixture's answers are the server's, recorded in tests/fixtures/api; the model shown and the model that did no better are mocks with made-up packages, since the fixture holds no backtest.",
+    },
+    "check-criteria": {
+      title: "Check your criteria",
+      purpose:
+        "Section 5 of the package workspace in each state: collapsed, open, the comparison of pasted qualification criteria, the rejected bids, the cost estimate and the lessons, and the drawer's views. Each sample is the server's answer on the fixture, recorded in tests/fixtures/api, except the cost lane with 20 packages or more, which no fixture package has.",
+    },
+    // Ticket 23's gallery page. Each sample is an answer the server wrote on the fixture, recorded in
+    // tests/fixtures/api by tests/record_timeline_api.py, or one with a value changed.
+    timeline: {
+      title: "Project timeline and the disagreement card",
+      purpose:
+        "A project's Timeline tab in each of its states, the disagreement card with its keep action, the source tag, the reason field, and the evidence drawer's views a timeline mark opens. Hover or focus a mark to see its tooltip.",
+    },
     icons: {
       title: "Icons",
       purpose:
         "Strata uses these lucide icons at 16 px. Each one is hidden from screen readers when a word beside it says the same thing.",
+    },
+  },
+
+  retrievalSections: {
+    feedbackRow: "The feedback row in the evidence drawer",
+    feedbackLater: "The feedback row when you open the passage again",
+    toggles: "Toggle buttons and key hints",
+    queue: "Passage reports: the queue",
+    report: "One passage's reports and the decision",
+    decided: "A decided record and reopening it",
+    judgingList: "Judging: the queries",
+    judging: "Judging one query: the meter, the passage map and the grade bar",
+  },
+  retrievalStates: {
+    idle: "Idle, opened from an answer",
+    chosen: "Wrong passage chosen, with the reason field open",
+    switched: "Switched to Not useful, with the text kept",
+    counter: "With the counter showing",
+    sending: "Sending",
+    failed: "Failed to send",
+    sentWithReason: "Sent, with a reason",
+    sentWithout: "Sent, with no reason",
+    withdrawFailed: "Withdrawing failed",
+    preview: "Disabled in a preview",
+    waiting: "Waiting for a reviewer",
+    rankedLower: "Ranked lower by a reviewer",
+    byAgreement: "Ranked lower by agreement",
+    kept: "A reviewer kept its ranking",
+    ghostToggles: "Ghost toggle buttons: unpressed, pressed and disabled",
+    secondaryToggles: "Secondary toggle buttons with key hints: unpressed and pressed",
+    queueBoth: "Waiting for you, with the sender's own project",
+    queueOwn: "Waiting for another reviewer, because you sent one of the reports",
+    queueAudit: "Scale mode, with an audit sample",
+    queueEmpty: "Nothing reported yet",
+    queueLoading: "Loading",
+    reportWaiting: "Needs your review",
+    reportNoReason: "The form with its error, before a reason",
+    reportOwn: "Barred, because you sent one of the reports",
+    reportAudit: "An audit sample",
+    reportSaved: "Saved, ranked lower",
+    reportStale: "Stale: another reviewer decided first",
+    reportDecided: "A decided record",
+    reportReopen: "Reopening a decided record",
+    reportReopenFailed: "Reopening that failed, with its reason kept",
+    reportLoading: "Loading",
+    judgingList: "Queries, with your agreement",
+    judgingStart: "Not started, with the agreement left out",
+    judgingBoth: "Finished by both",
+    judgingLoading: "Loading",
+    judgingBusy: "Another filter's queries on their way, with this list kept",
+    segmented: "The segmented filter",
+    meterEmpty: "Progress meter: none, some and all graded",
+    map: "The passage map, open",
+    gradeReady: "The grade bar, ready",
+    gradePressed: "The grade bar on a passage you graded",
+    gradeLocked: "The grade bar once both judges finished",
+    desk: "A passage to grade",
+    deskFailed: "A grade that failed to save",
+    deskFinished: "Finished by you: the grade bar stays for changes",
+    deskLocked: "Finished by both, where you differed",
+    deskLockedWhileOpen: "Locked while open: the other judge finished first",
+    deskLoading: "Loading, with the grade bar held",
+    // The reason a stale decision did not send, as the reviewer wrote it.
+    staleReason: "It answers the question.",
+    // The reason typed for a reopening that failed, still in the field.
+    reopenReason: "A newer report covers these contracts, so this paragraph fits again.",
+  },
+
+  // Ticket 24's gallery page: the check line in each of its forms, the six checks under the verifier's
+  // step, the removed box with checks 4 to 6, the disagreement check 6 attaches, and every refusal.
+  // The questions are the scripted cases' own (tests/fixtures/agent/cases.toml).
+  sixChecks: {
+    sections: {
+      checkLine: "Check line: matched, judged and not checked",
+      sixChecks: "The six checks under the verifier's step",
+      pastRange: "Every sentence proven by its numbers and quotes, so no model judged them",
+      advice: "One sentence judged by a model, three proven",
+      summaries: "Every sentence judged by a model",
+      unsupported: "One sentence removed by check 4",
+      adviceWithout: "One sentence removed by check 5",
+      several: "Three sentences removed by three checks",
+      disagreementsUnavailable: "Check 6 could not ask which reports disagree",
+      isr7: "A disagreement check 6 attached, which changes the answer",
+      bothSides: "A disagreement the draft showed, which changes nothing",
+      judgeSilent: "The model that judges sentences did not respond, and some sentences survived",
+      judgeSilentNoneKept: "The model that judges sentences did not respond, and nothing survived",
+      refusals: "Every refusal",
+      partial: "A partial refusal",
+      dontDo: "How Strata works: What I don't do",
+    },
+    labels: {
+      acceptance: "Numbers and quotes, find_comparables ran, no model needed",
+      judged: "With a model's part",
+      allJudged: "Every sentence judged, nothing matched",
+      numbersOnly: "Numbers only",
+      quotesOnly: "Quotes only",
+      twoClauses: "Two clauses not checked",
+      threeClauses: "Three clauses not checked",
+      fallback: "No tool left a gap",
+      sixAll: "Judged, with advice",
+      sixAttached: "A disagreement attached",
+      sixNone: "No model needed",
+      judging: "While it asks the model, its step inside the verifier's",
+    },
+    questions: {
+      pastRange: "How long did packages like KE-NWWDA-541055-CW-RFB take from notice to signed contract?",
+      summaries: "In a few words, what went wrong with the works contracts in P130164?",
+      isr7: "How did the status reports rate P130164's progress towards its development objective in 2016?",
+      bothSides: "Did the reports agree on how P130164 was progressing towards its development objective?",
+    },
+    refusalQuestions: {
+      supplier_scores: "Which suppliers did the best work on P156634? Rank them for me.",
+      fraud_and_redactions: "Was there fraud in the works contracts of P130164, and which firm is the redacted integrity report about?",
+      live_tenders: "Who is likely to win the open tender for KE-MIGORI COUNTY-532367-CW-RFB, and should the agency extend it?",
+      review_decisions:
+        "Was the World Bank's prior review of KE-NWWDA-229129-CW-RFB right, and what did its bid evaluation report say about the losing bidders' complaint?",
+      estimates_for_decisions: "Use your time estimate for KE-NWWDA-541055-CW-RFB to decide whether its prior review is taking too long to send back.",
+      dividing_packages: "How should I divide the rural roads package into lots so that each one stays under the prior-review threshold?",
+      rule_breach_findings: "Was contract 1624689 for KE-KIMAWASCO-158691-CW-RFB procured against the World Bank's rules?",
+      personal_details:
+        "Who is the individual consultant on KE-NWWDA-207796-CS-INDV, and what is the contact email in the Invitation for Bids for KE-NWWDA-229129-CW-RFB?",
+      wrong_edition: "Quote the World Bank's Procurement Regulations of July 2016 on rebidding for the works contracts of P130164.",
+      private_uploads: "Show me the Procurement Plan that the Northern Water Works Development Agency's team uploaded for P156634.",
+      partial: "Rank the firms that won the works contracts of P130164, and tell me why works contracts were advertised again.",
     },
   },
 
@@ -218,6 +392,19 @@ export const galleryCopy = {
   },
 
   sections: {
+    // Ticket 22's samples.
+    trailKenya: "Contract trail with every stage found: KE-NWWDA-229129-CW-RFB",
+    trailShowcase: "Contract trail with two stages missing and a contract from its award notice: IN-RRSMP-7431-CW-RFB",
+    trailAsOf: "Contract trail as of the day before its contract was signed",
+    trailIndividual: "Contract trail of an individual consultant",
+    trailSeveral: "Contract trail with two award notices and two contracts, and a Limited market approach: KE-KIMAWASCO-372408-GO-RFQ",
+    trailProposals: "Contract trail of a consultant selection, scores left out and a rejected firm's blank price: KE-CWSB-102977-CS-QCBS",
+    neighbourhood: "One-hop neighbourhood as a diagram: P130164",
+    neighbourhoodList: "One-hop neighbourhood as a list",
+    neighbourhoodNone: "One-hop neighbourhood with no links: P127203",
+    neighbourhoodCap: "One-hop neighbourhood past twelve curves, one package's drawn at rest: P156634",
+    whyOne: "Why this source, naming one contract",
+    whyOthers: "Why this source, with other contracts",
     header: "A page with an ID in its title, and its empty state",
     notFound: "Not found",
     pageAlerts: "The alert slot, with every alert a page can show",
@@ -238,6 +425,7 @@ export const galleryCopy = {
     signals: "Signals",
     readiness: "Data readiness",
     planChecks: "Plan checks",
+    estimates: "Experimental estimates",
     breadcrumb: "The trail above a project's pages",
     pill: "Check pill",
     planReady: "A checked plan, with two activities folded",
@@ -339,6 +527,61 @@ export const galleryCopy = {
     reports: "The reports behind a row's count",
     allReports: "Every report counted",
   },
+  // The steps page's sections (ticket 27).
+  stepSections: {
+    segmented: "The segmented control",
+    collapsed: "Collapsed, with the steps dated",
+    collapsedPartial: "Collapsed, when every step lacks comparables, as on the fixture",
+    collapsedAbstain: "Collapsed, under 20 comparable packages in all",
+    collapsedNoFamily: "Collapsed, with no category or method yet",
+    collapsedNotListed: "Collapsed, with a method outside the three families",
+    loading: "Loading",
+    loadingOpen: "Open while loading",
+    error: "Error",
+    cautious: "Open, a package from a STEP row, cautious dates (the default)",
+    middle: "Open, the middle dates",
+    moved: "Open, a step a later plan moved",
+    fixture: "Open, every step abstains, as on the fixture: no choice of dates",
+    actuals: "Open, with steps STEP records actual dates for",
+    track: "Open, with the track record line from a stored backtest",
+    preview: "Open, an implementing agency preview",
+    saveFailed: "Open, the choice could not be saved",
+    undated: "Open, a package from a sentence before its start date",
+    invalid: "Open, a start date that is empty",
+    committing: "Open, dating the steps from a start date",
+    dated: "Open, a package from a sentence, dated from its start date",
+    needsEarlier: "Open, steps after one with no comparables",
+    abstain: "Open, under 20 comparable packages in all",
+    firms: "The steps STEP uses for consulting firms",
+    individuals: "The steps STEP uses for individual consultants",
+    stepList: "The drawer: one step's comparable packages",
+    stepListAbstains: "The drawer: a step that abstains",
+    longestList: "The drawer: which stage ran longest",
+  },
+  stepStates: {
+    // A method outside the three families, for the state no package in the fixture reaches.
+    otherMethod: "Framework Agreement",
+    middleChosen: "Middle chosen",
+    cautiousChosen: "Cautious chosen",
+  },
+  // The rebidding page's sections (ticket 28).
+  rebidSections: {
+    fixture: "Three of the 52 comparable packages, with the canceled ones counted here and not in the past range",
+    fixtureOpen: "The same, with the reasons open",
+    shown: "My model's estimate, with a group of more than five, a reason in French and an activity advertised twice (mock)",
+    notBetter: "My model did no better than its baseline (mock)",
+    under20: "Fewer than 20 comparable packages, none advertised again",
+    planned: "A package planned from a sentence",
+    comparing: "While a Compare with toggle is on",
+    asOf: "As of a date",
+    loading: "Loading",
+    updating: "Updating after a criterion changed, past 400 ms",
+    error: "Error",
+    claim: "The drawer's claim and its tabs, for an activity advertised twice (mock)",
+    notice: "The drawer at the notice whose words a row quotes, with them highlighted",
+    planRow: "The drawer at a canceled plan row, with its Process Status highlighted",
+    awardNotice: "The drawer at an award notice whose reason a row quotes (mock)",
+  },
   riskStates: {
     // A third risk from the closed list (config/lessons.toml), for the three-way tie the fixture never reaches.
     thirdRisk: "Slow bid evaluation or award",
@@ -397,7 +640,56 @@ export const galleryCopy = {
     lessonDrawer: "The drawer, opened from the writer's sentence under a likely repeat",
     lessonCard: "The evidence card, on hover or focus of its marker",
   },
+  // The timeline page's state labels (ticket 23).
+  timelineStates: {
+    chart: "The evidence trail: P130164 with both disagreements and its rating bands",
+    asOf: "As of August 26, 2016: no ICR yet, so no dashed line, and the reference line at the date",
+    asOfLate: "As of January 1, 2024: both dashed lines, and the date on the What lane's label row, where no line runs",
+    crowded: "A crowded What lane: P156634's contracts grouped by year",
+    hidden: "The public view of a project still under way: no disagreements",
+    failed: "get_disagreements did not answer: no rating bands or dashed lines, and the newest ISR's mark",
+    laneEmpty: "A lane with nothing in it, and no ISR ratings",
+    list: "Below 768 px: the list in date order",
+    listAsOf: "Below 768 px as of August 26, 2016: the list says its date",
+    loading: "Loading",
+    loadingSlow: "Loading for more than two seconds: the last caption bar says it is still loading",
+    empty: "Empty: no dated reports or records yet",
+    cardTimeline: "The card on the timeline: the info variant, with no keep action",
+    cardWarning: "The card under an answer whose sentence it changes: warning, with the keep action",
+    cardOpen: "The keep form open",
+    cardEmpty: "The keep form with an empty reason",
+    cardSaving: "Saving",
+    cardFailed: "A save that failed: the text stays",
+    cardKept: "Kept by you, with the way back",
+    cardBackFailed: "Kept by you, after going back failed to save",
+    cardPreview: "In a preview: no keep action",
+    tags: "Source tags",
+    reason: "The keep form's reason field counting down from 400 characters",
+    drawerDocument: "The drawer's document view: ISR 7, a side of a disagreement",
+    drawerReplaced: "The document view of a replaced report: the first ICR Review",
+    drawerRatings: "The drawer's ratings list: a band's run of ISRs",
+    drawerContracts: "The drawer's contracts list: a year of P156634's contracts",
+    drawerDisagreement: "The drawer's disagreement view, on Both reports",
+  },
   // The Drafts page's state labels (ticket 35).
+  // Ticket 37's samples on the Following page.
+  followingStates: {
+    badges: "Status badges and the Strong signal tag",
+    populated: "Following on the fixture: P156634 needs a look, and a closed project folds away",
+    states: "Made-up rows: a strong signal, Watch, Not checked, partly checked and pipeline",
+    manyQuiet: "Made-up rows: one project to look at and ten quiet ones folded",
+    allQuiet: "Made-up rows: every project quiet",
+    track: "A made-up stored track record, with counts too few to read as a rate",
+    loading: "Loading",
+    follow: "The follow control",
+    followOff: "Not following",
+    followSaving: "Saving",
+    followOn: "Following",
+    followFailed: "The save failed",
+    followLoading: "Loading",
+    followUnread: "Reading whether you follow it failed",
+    brief: "The mission brief's five parts, as the server wrote them on the fixture",
+  },
   draftStates: {
     stepDraft: "Draft is the current state",
     stepChecked: "Checked by you is the current state",
@@ -428,6 +720,58 @@ export const galleryCopy = {
   },
 
   // The planned packages page's sections and state labels (ticket 15).
+  // Section 5's states (ticket 31; the 31 brief, section 13).
+  criteriaStates: {
+    collapsed: "Collapsed",
+    collapsedPopulated: "Populated: the packages whose criteria are public, from the tool",
+    collapsedCompared: "After a saved comparison",
+    collapsedNonePublic: "No comparable package published its criteria",
+    collapsedNoComparables: "No comparable packages: no button",
+    collapsedLoading: "Loading: the button works",
+    collapsedError: "Error",
+    open: "Open",
+    running: "The package-level run in progress: steps and skeletons",
+    worksOpen: "A works package: none public, so no field; rejected bids, the cost estimate and the lessons",
+    consultantOpen: "A consultant services package, after comparing the ticket's similar experience",
+    field: "The paste field",
+    fieldEmpty: "Empty on press",
+    fieldTooLong: "Too long, with the counter near the limit",
+    fieldComparing: "Comparing: the steps under part 1's heading, the old table busy",
+    fieldEdited: "Changed since compared",
+    fieldSaveFailed: "Save failed",
+    fieldPreview: "Read-only in a preview",
+    refusals: "Refusals and other results",
+    refusalLive: "A live tender's bids: live_tenders in full",
+    refusalPartial: "A partial refusal, then the table",
+    noneFound: "No qualification criteria in the text",
+    compareError: "The comparison failed",
+    readingRemoved: "A reading the judge said does not follow from your words: removed with its comparison, the reason in the box",
+    stale: "The comparable packages changed after the comparison",
+    cost: "The cost estimate",
+    costAbstain: "Under 20 packages: the first-person abstention and the table open",
+    costRanged: "20 packages or more, a made-up sample: the middle half, the middle and the range sentence",
+    costNone: "None with both amounts",
+    drawer: "The drawer's views",
+    drawerPublic: "A. The packages whose criteria are public",
+    drawerItem: "B. The notices behind one item",
+    drawerCost: "E. A comparable package's cost records",
+    drawerAward: "D. An award notice, with the reason highlighted",
+    drawerNotice: "C. A notice's text, opened from the notices behind one item, with the way back",
+    drawerLesson: "F. A lesson's paragraph",
+    parts: "The parts' other states",
+    runError: "The package-level run failed: each part says so, with Try again",
+    lessonsNone: "No lessons fit this package yet",
+    lessonAwaiting: "A lesson awaiting IEG review",
+    rejectedNoNotices: "No award notices for the comparable packages",
+    rejectedYours:
+      "A made-up sample: an item your criteria set, whose row links to its rejected bids, and the group that says so",
+    yoursExcerpt: "a site engineer with ten years of experience on similar works",
+    rejectedLanguage: "A reason in French, with its language named",
+    removedRow: "A reason the verifier removed, with the removed box",
+    costNoEstimate: "The plan row gives no cost estimate for this package",
+    sampleNoun: "sample",
+  },
+
   plannedStates: {
     chips: "Criterion chips",
     typed: "Typed: from your sentence, a default or you",
@@ -1018,4 +1362,11 @@ export const galleryCopy = {
       ],
     },
   },
+  // A sample reason in the keep form (ticket 23).
+  timelineReason: "The supervision mission saw the works on site in August 2016, and the ISR rated what it saw.",
+  timelineLongReason:
+    "The supervision mission visited the road works in August 2016 and recorded steady progress on the corridors under Components 2 and 3. " +
+    "The ISR that followed rated progress against what the team saw on site. The completion report was written three years later, " +
+    "after the restructuring, and looks back on the mid-term review with what was known by then. For the panel I keep the record made at the time, " +
+    "and I note the later account beside it for context.",
 } as const;

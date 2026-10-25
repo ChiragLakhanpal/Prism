@@ -1,0 +1,127 @@
+# The item registry: the kinds of requirement section 5 of the package workspace compares, "Check your criteria"
+# (ticket 31; the 31 brief, section 4.7).
+#
+# This is the one place an item kind is defined (CLAUDE.md rule 9). The criteria reader is told these keys, the
+# app checks each item it reads against them, compare_criteria finds each item in comparable notices by its
+# synonyms, rejected_bids groups each rejection reason under the first item whose synonyms it holds, and the
+# screen names each item by its label. strata.config.load_criteria_items() reads it, and the gate's copy lint
+# checks every label and phrase as it checks the copy file. Adding an item is one entry here.
+#
+# Each [[items]] table has:
+#   key           a stable id, also the screen's in-page anchor (#rejected-{key})
+#   label         its name on screen, in sentence case
+#   phrase        the item inside a sentence, in lower case
+#   is_criterion  true for a qualification requirement a bidding document sets; false for a kind that only
+#                 groups rejection reasons
+#   synonyms      the words notices and award notices use for it, matched whole and whatever their case.
+#                 They are never shown on screen. A notice's requirement is a sentence that holds one.
+#   parts         what a requirement of this kind can measure, each compared on its own: contracts (how many),
+#                 amount (a minimum amount, in its currency), window_years (the years a contract must fall
+#                 within, where more years asks for less) and years (a minimum number of years)
+#
+# The order matters twice: a reason goes to the first item whose synonyms it holds, so the more specific items
+# come first, and groups with as many packages come in this order. "other" holds every reason no item names.
+# The labels and phrases are the 31 brief's; synonyms were read from the fixture's notices and award notices
+# (data/fixture/recorded/api/notices), such as "similar assignments" and "key experts".
+#
+# [requirements].cues: a notice sentence that holds an item's synonym sets a requirement only when it, or the
+# heading of the notice section it sits in, also holds one of these words, so a scope sentence such as "supply
+# and installation of equipment" is never read as a requirement. "qualified" is not a cue: every works notice
+# invites "eligible and qualified bidders". Read from the same notices: their short-listing
+# criteria and qualification text.
+
+[requirements]
+cues = ["qualification", "qualifications", "criteria", "at least", "minimum", "must have",
+        "should have", "requirement", "requirements", "demonstrate", "demonstration", "has been involved"]
+
+[[items]]
+key = "similar_experience"
+label = "Similar experience"
+phrase = "similar experience"
+is_criterion = true
+synonyms = ["similar experience", "specific experience", "similar assignment", "similar assignments", "similar nature",
+            "similar projects", "similar contracts", "similar works", "similar size", "similar contract"]
+parts = ["contracts", "amount", "window_years"]
+
+[[items]]
+key = "general_experience"
+label = "General experience"
+phrase = "general experience"
+is_criterion = true
+synonyms = ["general experience", "years relevant experience", "years of relevant experience", "years of experience",
+            "years experience", "core business"]
+parts = ["years"]
+
+[[items]]
+key = "turnover"
+label = "Average annual turnover"
+phrase = "average annual turnover"
+is_criterion = true
+synonyms = ["average annual turnover", "annual turnover", "turnover"]
+parts = ["amount", "window_years"]
+
+[[items]]
+key = "financial_resources"
+label = "Financial resources"
+phrase = "financial resources"
+is_criterion = true
+synonyms = ["financial resources", "financial capacity", "liquid assets", "line of credit", "lines of credit",
+            "working capital", "access to credit"]
+parts = ["amount"]
+
+[[items]]
+key = "key_staff"
+label = "Key staff"
+phrase = "key staff"
+is_criterion = true
+synonyms = ["key staff", "key personnel", "key experts", "key expert", "key consultant staff"]
+parts = ["contracts", "years"]
+
+[[items]]
+key = "equipment"
+label = "Equipment"
+phrase = "equipment"
+is_criterion = true
+synonyms = ["key equipment", "major equipment", "construction equipment", "equipment requirements",
+            "equipment capability", "plant and machinery"]
+parts = ["contracts"]
+
+[[items]]
+key = "past_performance"
+label = "Past contract performance"
+phrase = "past contract performance"
+is_criterion = true
+synonyms = ["past performance", "contract performance", "non-performance", "non performance", "nonperformance"]
+parts = ["window_years"]
+
+[[items]]
+key = "litigation"
+label = "Pending litigation"
+phrase = "pending litigation"
+is_criterion = true
+synonyms = ["litigation", "pending litigation", "litigation history"]
+parts = ["amount", "window_years"]
+
+[[items]]
+key = "bid_security"
+label = "Bid security"
+phrase = "bid security"
+is_criterion = false
+synonyms = ["bid security", "bid securing", "bid guarantee", "tender security"]
+parts = []
+
+[[items]]
+key = "documents"
+label = "Missing or incomplete documents"
+phrase = "missing or incomplete documents"
+is_criterion = false
+synonyms = ["not signed", "unsigned", "missing", "incomplete", "documents", "document", "power of attorney"]
+parts = []
+
+[[items]]
+key = "other"
+label = "Other reasons"
+phrase = "other reasons"
+is_criterion = false
+synonyms = []
+parts = []

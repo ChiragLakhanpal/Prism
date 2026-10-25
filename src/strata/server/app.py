@@ -10,16 +10,26 @@
   viewer, 504 when the warehouse takes longer than the thresholds file's
   app.stamp_timeout_seconds, and 502 when it fails, with the details only in the server log.
 - POST /api/ask takes a question, with the page's scope chip, as-of date, view and language, and
-  streams a run's events as text/event-stream: steps, then the answer's sentences with their
-  evidence ids, the evidence they cite, the check counts and the removed sentences, then a final
-  done event with the run id and its trace ids. The verifier runs here, in the stream, on every
-  answer the runner hands over, so no runner can send a sentence the checks did not see. A run that
-  breaks ends with an error event whose details stay in the server log. Each run is written to
-  strata.ops.agent_runs (src/strata/agent/runs.py).
+  streams a run's events as text/event-stream: steps, then the refusal when the agent turned the
+  request down, the answer's sentences with their evidence ids, the evidence they cite, the
+  disagreements check 6 shows, the check counts and the removed sentences, then a final done event
+  with the run id and its trace ids. The verifier's six checks run here, in the stream, on every
+  answer the runner hands over, so no runner can send a sentence the checks did not see: checks 1 to
+  3 and 5 at once, check 6 with get_disagreements asked as the viewer, and check 4 with one call to
+  the judge (src/strata/agent/judge.py). A run that breaks ends with an error event whose details
+  stay in the server log. Each run is written to strata.ops.agent_runs (src/strata/agent/runs.py).
 - GET /api/projects lists every project Strata holds a record for, and GET /api/projects/{project_id}
   gives a project page's header and each agency's Procurement Plan versions (src/strata/server/
   projects.py), as the viewer and as of ?asof=; an unknown project gets 404 with the code
   unknown_project.
+- GET /api/projects/{project_id}/timeline gives a project's Timeline tab (ticket 23; src/strata/server/timeline.py):
+  its reports, events and records in three lanes, the ISRs' rating bands and the disagreements get_disagreements
+  found, as the viewer, as of ?asof= and in ?view=, whose public view shows no disagreement on an active project.
+- POST /api/disagreements/{id}/choices keeps one side of a disagreement for an answer (run_id) or a draft
+  (draft_id), with a reason when it is the side Strata does not lean on: one new row in
+  strata.ops.disagreement_choices with the forwarded viewer, written as the app's own service principal. A preview
+  records nothing ({"recorded": false}). GET with ?run_id= or ?draft_id= gives the latest choice
+  (src/strata/server/choices.py).
 - GET /api/data/readiness runs the tool registry's data_readiness_for as the viewer, for every
   source or for ?sources= (registry keys, separated by commas) from the coverage line of ?from=, as
   of ?asof=. It answers like the stamp when it cannot: 401, 403 with the code permission, 504 with
@@ -50,9 +60,16 @@
   sentence, list a viewer's packages and the plans they checked, and open or change one package, and GET
   /api/comparables runs find_comparables for a package with no STEP row (ticket 15; src/strata/server/
   packages.py). Each plan check a signed-in viewer opens is recorded for their Packages tab.
+- GET .../criteria, POST .../criteria/run and POST .../criteria/compare under /api/packages/{step_reference}
+  and /api/planned-packages/{package_id} are section 5 of the package workspace, "Check your criteria"
+  (ticket 31; src/strata/server/criteria.py): the collapsed summary, the package-level run and the comparison
+  of a person's pasted qualification criteria, whose text only they read back.
 - GET /api/packages/{step_reference}/risks and GET /api/planned-packages/{package_id}/risks run the risk-table
   builder for the workspace's section 3, procurement risks and what helped, and PUT .../risk-selection keeps the
   risks a viewer selected for the PPSD (ticket 30; src/strata/server/risks.py).
+- GET /api/packages/{step_reference}/rebidding and GET /api/rebidding run rebidding_risk through the tool
+  registry for section 1's "Advertised again" block, for a STEP row and for a package planned from a sentence,
+  with find_comparables' criteria as query parameters, ?asof= and ?view=, as the viewer (ticket 28).
 - GET /api/suppliers/review is the review list for supplier name matching (ticket 19): each candidate
   pair that waits for a person, with both names, countries and contracts, read as the viewer. POST
   /api/suppliers/review records a person's decision on one, merge or no merge with a reason, and the
@@ -103,9 +120,11 @@ from opentelemetry import trace
 from pydantic import BaseModel, Field, StringConstraints
 
 from strata.agent import traces
+from strata.agent.answer_check import Asker, SixChecks
+from strata.agent.judge import Judge
 from strata.agent.runs import RunLog, run_row
-from strata.agent.verifier import answer_events, verify
-from strata.config import DraftKinds, load_draft_kinds, load_roles, load_thresholds
+from strata.agent.verifier import Verdict, answer_events
+from strata.config import DraftKinds, load_draft_kinds, load_roles, load_thresholds, load_tools
 from strata.dbx import Viewer, viewer_from_headers
 from strata.drafts.store import DraftStore
 from strata.knowledge.lessons.review import LessonReview, Refused
@@ -115,13 +134,24 @@ from strata.harness.turn import (ERROR_CODES, Event, RunError, Runner, Scope, Tr
 from strata.lakehouse.engine import Engine, EngineError, PermissionDenied
 from strata.config import PackageForm, load_package_form
 from strata.packages.store import PackageStore
+from strata.knowledge.retrieval.judging import Judging
+from strata.knowledge.retrieval.reports import CitationLog, PassageReports
+from strata.server import steps as step_routes
 from strata.server import drafts as draft_routes
-from strata.server import (baseline, changes, documents, engines, evidence, lookup, projects, summary, suppliers,
-                           tracing)
+from strata.server import feedback as feedback_routes
+from strata.server import (baseline, changes, choices as choice_routes, documents, edges, engines, evidence, lookup,
+                           projects, summary, suppliers, timeline, tracing, trail)
 from strata.server import packages as package_routes
+from strata.server import criteria as criteria_routes
+from strata.criteria.store import CriteriaStore
+from strata.criteria.workflow import Package as CriteriaPackage
 from strata.server import risks as risk_routes
 from strata.server import estimates as estimate_routes
+from strata.server import following as following_routes
+from strata.server.following import FollowStore
+from strata.estimates import signals_track
 from strata.server.access import Access, NoGroups
+from strata.server.choices import REASON_LIMIT, ChoiceLog
 from strata.server.evidence import OpenedLog
 from strata.server.suppliers import SupplierLog
 from strata.server.usage import UsageEvent, UsageLog
@@ -134,7 +164,7 @@ log = logging.getLogger("strata.server")
 KEEP_ALIVE = ": keep-alive\n\n"
 STREAM_HEADERS = {"Cache-Control": "no-cache", "X-Accel-Buffering": "no"}
 # Only the verifier writes these, from the claims a runner hands over.
-ANSWER_EVENTS = {"sentence", "evidence", "disagreement", "checks", "removed", "done"}
+ANSWER_EVENTS = {"refusal", "sentence", "evidence", "disagreement", "checks", "removed", "done"}
 # The platform's check that the app is up. It is not a viewer's request, so it is not counted.
 UNCOUNTED = {"/api/health"}
 # The view the server applies. Until ticket 40 adds the implementing agency and public previews,
@@ -166,6 +196,17 @@ class OpenedRequest(BaseModel):
     evidence_id: str = Field(min_length=1, max_length=512)
     run_id: str | None = Field(default=None, max_length=128)  # the answer it was opened from, if any
     route: str | None = Field(default=None, max_length=512)  # the page it was opened on
+    view: Literal["staff", "piu", "public"] = "staff"
+
+
+class ChoiceRequest(BaseModel):
+    """Keeping one side of a disagreement for an answer or a draft (ticket 23). The person is the forwarded viewer,
+    never a field here."""
+
+    kept_assertion_id: str = Field(min_length=1, max_length=512)
+    reason: Annotated[str, StringConstraints(strip_whitespace=True, max_length=REASON_LIMIT)] = ""
+    run_id: str | None = Field(default=None, max_length=128)
+    draft_id: str | None = Field(default=None, max_length=128)
     view: Literal["staff", "piu", "public"] = "staff"
 
 
@@ -237,7 +278,13 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                package_form: PackageForm | None = None, new_package_id: Callable[[], str] = package_routes.new_package_id,
                new_save_id: Callable[[], str] = package_routes.new_save_id, lessons: LessonReview | None = None,
                lesson_writer: Callable[[], object | None] = lambda: None,
-               lesson_record: Callable[[], Engine] | None = None) -> FastAPI:
+               lesson_record: Callable[[], Engine] | None = None, criteria: CriteriaStore | None = None,
+               criteria_reader: Callable[[], object | None] | None = None,
+               new_check_id: Callable[[], str] = criteria_routes.new_check_id, judge: Judge | None = None,
+               passage_reports: PassageReports | None = None, judging: Judging | None = None,
+               feedback_record: Callable[[], Engine] | None = None,
+               citations: CitationLog | None = None, choices: ChoiceLog | None = None,
+               follows: FollowStore | None = None) -> FastAPI:
     """The app.
 
     engine_for makes the engine for each request's viewer; without it, the environment names one.
@@ -256,6 +303,10 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
     the built web app: its files are served as they are, and every other address outside /api gets
     its index.html, whose router shows the page or the not-found page.
 
+    judge answers the verifier's check 4 for every answer (src/strata/agent/judge.py; app_from_env gives
+    the draft role's deployment). Without it, every sentence that needed the judge is removed, never shown
+    unchecked. Check 6 asks get_disagreements with engine_for, as the viewer.
+
     drafts keeps the drafts (src/strata/drafts/store.py), written as the app's own service principal;
     without it, the draft routes say there is no data service. writers gives each draft kind's writer
     agent, or None when none is connected. access is the one access rule (src/strata/server/access.py);
@@ -263,16 +314,35 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
     a draft's facts are read as of, now the clock (also for when a baseline was saved) and new_draft_id
     the ids drafts get.
 
+    passage_reports and judging are the retrieval loop (ticket 32; src/strata/knowledge/retrieval): the evidence
+    drawer's passage reports, Lessons > Passage reports and Lessons > Judging, with the roles file; without them,
+    config/roles.toml. feedback_record opens the engine that writes their rows as the app's own service
+    principal; without it, nothing is recorded. citations keeps the sources each answer cited
+    (strata.ops.answer_citations), which a passage report reads its question and sentence from; without it, an
+    answer's sources are not kept and no passage in it can be reported.
+
     packages keeps planned packages and the plan checks each viewer opened (src/strata/packages/store.py),
     written as the app's own service principal; without it, planning a package says there is no data service
     and no plan check is recorded. package_reader gives the package reader agent, or None when none is
     connected; package_thresholds and package_form stand in for config/thresholds.toml and
     config/package_form.toml, so a test can change a threshold or a field; new_package_id and new_save_id are
     the ids packages and their saves get.
+
+    choices keeps the side of a disagreement each person kept for an answer or a draft, with their reason
+    (strata.ops.disagreement_choices, ticket 23), written as the app's own service principal; without it, keeping
+    the other report says nothing was recorded.
+
+    criteria keeps the runs of "Check your criteria", section 5 of the package workspace (src/strata/criteria/
+    store.py), with each person's pasted text readable only by them, written as the app's own service principal;
+    without it, comparing criteria says there is no data service and no run is kept. criteria_reader gives the
+    criteria reader agent, or None when none is connected; new_check_id the ids its runs get (ticket 31).
     """
     engine_for = engine_for or engines.from_environment()
     runner = runner or no_agent
     lessons = lessons or LessonReview(load_roles())
+    access = access or Access(load_roles(), NoGroups())
+    passage_reports = passage_reports or PassageReports(load_roles())
+    judging = judging or Judging(load_roles())
     web = web_dist.resolve() if web_dist is not None else None
 
     def web_file(path: str) -> Path | None:
@@ -300,6 +370,8 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
     # brief, section 3.5). Starlette leaves text/event-stream alone, so /api/ask still streams.
     app.add_middleware(GZipMiddleware, minimum_size=1024)
     thresholds = load_thresholds()
+    tools = load_tools()
+    six_checks = SixChecks(engine_for, judge, tools, thresholds)
     timeout = stamp_timeout_seconds or thresholds.value("app.stamp_timeout_seconds")
     labeled_pairs_target = int(thresholds.value("supplier_matching.labeled_pairs_target"))
     tracer = (tracer_provider or trace.get_tracer_provider()).get_tracer("strata.server")
@@ -416,6 +488,17 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
             return found if found is not None else JSONResponse({"code": "unknown_project"}, status_code=404)
         return read_for(f"the summary of {project_id}", viewer, read)
 
+    @app.get("/api/projects/{project_id}/timeline")
+    def project_timeline(project_id: str, asof: dt.date | None = None, view: Literal["staff", "piu", "public"] = "staff",
+                         viewer: Viewer = Depends(current_viewer)):
+        def read(engine: Engine):
+            # The page's as-of date, never later than today, by the clock create_app was given (today), so a
+            # recording of the plain page holds still. The date the tab names is the one it read as of.
+            as_of = min(asof, today()) if asof else today()
+            found = timeline.timeline(engine, viewer, project_id, as_of, view, as_of if asof else None)
+            return found if found is not None else JSONResponse({"code": "unknown_project"}, status_code=404)
+        return read_for(f"the timeline of {project_id}", viewer, read)
+
     documents_shown = int(thresholds.value("app.documents_shown"))
 
     @app.get("/api/projects/{project_id}/packages")
@@ -423,6 +506,21 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                          page: int = Query(1, ge=1), viewer: Viewer = Depends(current_viewer)):
         return read_for(f"the packages of {project_id}", viewer,
                         lambda engine: projects.packages(engine, project_id, as_of_for(asof), q.strip(), page, page_size))
+
+    @app.get("/api/projects/{project_id}/packages/{step_reference}")
+    def activity(project_id: str, step_reference: str, asof: dt.date | None = None,
+                 viewer: Viewer = Depends(current_viewer)):
+        def read(engine: Engine):
+            found = trail.activity_trail(engine, project_id, step_reference, as_of_for(asof))
+            return found if found is not None else JSONResponse({"code": "unknown_activity"}, status_code=404)
+        return read_for(f"the trail of {step_reference}", viewer, read)
+
+    @app.get("/api/projects/{project_id}/connections")
+    def connections(project_id: str, asof: dt.date | None = None, viewer: Viewer = Depends(current_viewer)):
+        def read(engine: Engine):
+            found = edges.neighbourhood(engine, project_id, as_of_for(asof))
+            return found if found is not None else JSONResponse({"code": "unknown_project"}, status_code=404)
+        return read_for(f"the connections of {project_id}", viewer, read)
 
     @app.get("/api/projects/{project_id}/documents")
     def project_documents(project_id: str, asof: dt.date | None = None, viewer: Viewer = Depends(current_viewer)):
@@ -547,13 +645,14 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
 
     @app.get("/api/evidence")
     def open_evidence(evidence_id: str = Query(alias="id", min_length=1, max_length=512), asof: dt.date | None = None,
-                      view: Literal["staff", "piu", "public"] = STAFF, viewer: Viewer = Depends(current_viewer)):
+                      view: Literal["staff", "piu", "public"] = STAFF,
+                      step_ref: str | None = Query(None, max_length=128), viewer: Viewer = Depends(current_viewer)):
         # The public view hides the baseline, and a preview only takes things away (the 21 review, round 3).
         if view == "public" and evidence_id.startswith(f"{baseline.TABLE}:"):
             return JSONResponse({"code": "unknown_evidence"}, status_code=404)
 
         def read(engine: Engine):
-            found = evidence.read(engine, evidence_id, as_of_for(asof))
+            found = evidence.read(engine, evidence_id, as_of_for(asof), step_ref, view=view)
             return found if found is not None else JSONResponse({"code": "unknown_evidence"}, status_code=404)
         return read_for(f"evidence {evidence_id}", viewer, read)
 
@@ -572,20 +671,91 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
             return {"opened": []}
         return {"opened": opened.opened(viewer.user_id, evidence_ids)}
 
+    @app.post("/api/disagreements/{disagreement_id}/choices")
+    def keep_a_side(disagreement_id: str, body: ChoiceRequest, viewer: Viewer = Depends(current_viewer)):
+        """Keep one side of a disagreement for an answer or a draft (ticket 23): one new row, with the viewer and the
+        reason. Keeping the side Strata does not lean on needs a reason; keeping Strata's side is going back to it.
+        A preview of another view records nothing."""
+        if not viewer.token or not viewer.user_id:
+            return refused(401, "no_identity")
+        if body.view != STAFF:
+            return {"recorded": False}
+        if bool(body.run_id) == bool(body.draft_id):
+            return refused(422, "bad_request", detail="Give the answer's run_id or the draft's draft_id, not both.")
+        found = read_for(f"disagreement {disagreement_id}", viewer,
+                         lambda engine: choice_routes.sides(engine, disagreement_id))
+        if isinstance(found, JSONResponse):
+            return found
+        if found is None:
+            return refused(404, "unknown_disagreement")
+        if body.kept_assertion_id not in found["sides"]:
+            return refused(422, "bad_request", detail="The kept assertion is not a side of this disagreement.")
+        if body.kept_assertion_id != found["leaned"] and not body.reason:
+            return refused(422, "reason_required")
+        if choices is None:
+            return refused(503, "not_recorded")
+        reason = body.reason if body.kept_assertion_id != found["leaned"] else ""
+        choice = choices.record(viewer.user_id, disagreement_id, body.kept_assertion_id, found["leaned"], reason,
+                                body.run_id, body.draft_id)
+        return {"recorded": True, "choice": choice} if choice else refused(503, "not_recorded")
+
+    @app.get("/api/disagreements/{disagreement_id}/choices")
+    def kept_side(disagreement_id: str, run_id: str | None = Query(default=None, max_length=128),
+                  draft_id: str | None = Query(default=None, max_length=128), viewer: Viewer = Depends(current_viewer)):
+        """The latest side this viewer kept for the answer or the draft, so the card shows it again after Back."""
+        if choices is None or not viewer.user_id or bool(run_id) == bool(draft_id):
+            return {"choice": None}
+        try:
+            return {"choice": choices.latest(viewer.user_id, disagreement_id, run_id, draft_id)}
+        except Exception:  # the page shows Strata's choice, as for a new answer
+            log.exception("I could not read %s's choice on disagreement %s.", viewer.user_id, disagreement_id)
+            return {"choice": None}
+
     draft_routes.add_routes(app, engine_for=engine_for, store=drafts,
-                            access=access or Access(load_roles(), NoGroups()), writers=writers or (lambda kind: None),
+                            access=access, writers=writers or (lambda kind: None),
                             kinds=kinds or load_draft_kinds(), today=today, now=now, new_draft_id=new_draft_id,
                             new_run_id=new_run_id, runs=runs, trace_ids=trace_ids, reference=request_reference,
-                            heartbeat_seconds=heartbeat_seconds)
+                            heartbeat_seconds=heartbeat_seconds, six_checks=six_checks)
+
+    # Following and the follow buttons (ticket 37).
+    following_routes.add_routes(app, engine_for=engine_for, store=follows, access=access, drafts=drafts, today=today,
+                                now=now, reference=request_reference, track_record=signals_track.stored)
 
     package_routes.add_routes(app, engine_for=engine_for, store=packages, reader_for=package_reader or (lambda: None),
                               form=package_form or load_package_form(), thresholds=package_thresholds or thresholds,
                               today=today, now=now, new_package_id=new_package_id, new_save_id=new_save_id,
                               new_run_id=new_run_id, runs=runs, trace_ids=trace_ids, reference=request_reference,
                               heartbeat_seconds=heartbeat_seconds)
+    # Section 2, the planned date for each STEP step (ticket 27).
+    step_routes.add_routes(app, engine_for=engine_for, store=packages, form=package_form or load_package_form(),
+                           thresholds=package_thresholds or thresholds, today=today, now=now,
+                           reference=request_reference)
     risk_routes.add_routes(app, engine_for=engine_for, store=packages, form=package_form or load_package_form(),
                            thresholds=package_thresholds or thresholds, today=today, now=now,
                            reference=request_reference)
+    feedback_routes.add_routes(app, engine_for=engine_for, record=feedback_record, reports=passage_reports,
+                               judging=judging, reference=request_reference)
+
+    def planned_criteria_package(viewer: Viewer, package_id: str) -> CriteriaPackage | None:
+        """A planned package as section 5 reads it, for the person who made it only: its comparables' criteria,
+        its cost estimate and its description (ticket 31)."""
+        if packages is None:
+            return None
+        saved = packages.get(package_id)
+        if saved is None or saved.author_id != viewer.user_id:
+            return None
+        from strata.packages.workflow import package_view
+
+        shown = package_view(saved, package_form or load_package_form(), package_thresholds or thresholds)
+        values = {entry["key"]: entry["value"] for entry in shown["fields"]}
+        amount = values.get("estimated_amount_usd")
+        return CriteriaPackage(f"planned:{package_id}", None, shown["comparables_query"],
+                               float(amount) if isinstance(amount, int | float) else None, values.get("description"))
+
+    criteria_routes.add_routes(app, engine_for=engine_for, store=criteria, reader_for=criteria_reader or (lambda: None),
+                               planned=planned_criteria_package, thresholds=thresholds, today=today, now=now,
+                               new_check_id=new_check_id, reference=request_reference,
+                               heartbeat_seconds=heartbeat_seconds, six_checks=six_checks)
     estimate_routes.add_routes(app, engine_for=engine_for, store=packages, form=package_form or load_package_form(),
                                thresholds=package_thresholds or thresholds, today=today, now=now,
                                reference=request_reference)
@@ -609,6 +779,27 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
         if isinstance(criteria, JSONResponse):
             return criteria
         return run_tool("find_comparables", {**criteria, "step_reference": step_reference}, viewer, view, asof)
+
+    @app.get("/api/packages/{step_reference}/rebidding")
+    def rebidding(step_reference: str, request: Request, asof: dt.date | None = None, view: str = "staff",
+                  viewer: Viewer = Depends(current_viewer)):
+        # Section 1's "Advertised again" block (ticket 28): rebidding_risk with section 1's own criteria.
+        criteria = package_routes.comparables_criteria(request)
+        if isinstance(criteria, JSONResponse):
+            return criteria
+        return run_tool("rebidding_risk", {**criteria, "step_reference": step_reference}, viewer, view, asof)
+
+    @app.get("/api/rebidding")
+    def planned_rebidding(request: Request, asof: dt.date | None = None, view: str = "staff",
+                          viewer: Viewer = Depends(current_viewer)):
+        # The same for a package planned from a sentence, with its criteria as /api/comparables takes them.
+        criteria = package_routes.comparables_criteria(request)
+        if isinstance(criteria, JSONResponse):
+            return criteria
+        if "step_reference" in criteria:
+            return JSONResponse({"code": "bad_request", "detail": "This route is for a package with no STEP reference."},
+                                status_code=422)
+        return run_tool("rebidding_risk", criteria, viewer, view, asof)
 
     def write_about_a_pair(viewer: Viewer, write: Callable[[SupplierLog, str], None]):
         """A decision or a label on a candidate pair, recorded with the viewer's user id, or why it was not."""
@@ -680,7 +871,14 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
 
     @app.get("/api/lessons/me")
     def lessons_me(viewer: Viewer = Depends(current_viewer)):
-        return lesson_read("the viewer's lesson tabs", viewer, lambda engine: lessons.me(engine, viewer))
+        def read(engine: Engine) -> dict:
+            # Each Lessons page the viewer may open, with its count, so the frame decides its sub-tabs before
+            # any content renders (the 32 brief, section 2.3): Passage reports and Judging join brief 29's tabs.
+            found = {**lessons.me(engine, viewer), **passage_reports.me(engine, viewer), **judging.me(engine, viewer)}
+            found["tabs"] = [*found["tabs"], *(["reports"] if found["can_review_reports"] else []),
+                             *(["judging"] if found["is_judge"] else [])]
+            return found
+        return lesson_read("the viewer's lesson tabs", viewer, read)
 
     @app.get("/api/lessons")
     def lesson_library(page: int = Query(1, ge=1, le=10_000), viewer: Viewer = Depends(current_viewer)):
@@ -716,8 +914,10 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
 
     @app.get("/api/me")
     def me(viewer: Viewer = Depends(current_viewer)) -> dict:
+        # Whether the viewer has the World Bank staff role (ticket 37): the navy bar's Projects tab then opens
+        # Following, and the project page offers Follow.
         return {"email": viewer.email, "name": viewer.name, "signed_in": viewer.signed_in,
-                "has_token": viewer.token is not None}
+                "has_token": viewer.token is not None, "staff": access.is_staff(viewer)}
 
     @app.get("/api/me/warehouse")
     async def me_on_the_warehouse(viewer: Viewer = Depends(current_viewer)):
@@ -744,10 +944,51 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
         finally:
             row = run_row(turn, outcome["verdict"], outcome["error_code"], started, dt.datetime.now(dt.UTC))
             log.info("Run %s ended: %s.", turn.run_id, row["error_code"] or row["status"])
-            if runs is not None:  # its own thread, so a dropped connection cannot stop the write
-                writer = threading.Thread(target=runs.record, args=(row,), name=f"strata-run-{turn.run_id}")
-                writer.start()
+            # Each write in its own thread, so a dropped connection cannot stop it. The run row and the sources the
+            # answer cited (ticket 32) are written side by side, so a report sent right after the answer finds them.
+            # The run row starts first, so a fault while listing the cited sources never keeps it from being written.
+            writers = []
+            if runs is not None:
+                writers.append(threading.Thread(target=runs.record, args=(row,), name=f"strata-run-{turn.run_id}"))
+                writers[-1].start()
+            if citations is not None and outcome["verdict"] is not None:
+                try:
+                    cited = cited_rows(turn, outcome["verdict"], row["as_of"], row["finished_at"])
+                except Exception:  # a fact in a shape the list doesn't expect: the answer and its run row stand
+                    log.exception("Run %s could not list its cited sources.", turn.run_id)
+                else:
+                    writers.append(threading.Thread(target=citations.record, args=(cited,),
+                                                    name=f"strata-cited-{turn.run_id}"))
+                    writers[-1].start()
+            for writer in writers:
                 await asyncio.to_thread(writer.join, 60)
+
+    def cited_rows(turn: Turn, verdict: Verdict, as_of: dt.date, at: dt.datetime) -> list[tuple]:
+        def project_of(evidence: str):
+            found = turn.facts.get(evidence) or {}
+            return found.get("project_id") or (found.get("source") or {}).get("project_id")
+        return passage_reports.citation_rows(
+            turn.run_id, turn.viewer.user_id, turn.question, as_of, turn.scope.view,
+            [(sentence.index, sentence.claim.sentence, list(sentence.claim.evidence_ids)) for sentence in verdict.kept],
+            turn.facts.tool, project_of, at, kind_of=turn.facts.kind)
+
+    def as_of_of(turn: Turn) -> dt.date:
+        return turn.notes.as_of or min(turn.scope.as_of or today(), today())
+
+    async def verified(claims: list, turn: Turn) -> AsyncIterator[Event | Verdict]:
+        """The six checks on the claims (src/strata/agent/answer_check.py), inside the verifier's step, with the two
+        steps it may take inside it: getting the other side of a disagreement, and asking the judge. Ends with the
+        verdict."""
+        yield Event("step", {"id": "check", "kind": "check", "status": "running"})
+        verdict = None
+        asker = Asker(turn.viewer, turn.scope.view, as_of_of(turn), turn.run_id)
+        async for item in six_checks.finish(six_checks.check(claims, turn.facts), turn.facts, asker):
+            if isinstance(item, Verdict):
+                verdict = item
+            else:
+                yield item
+        yield Event("step", {"id": "check", "kind": "check", "status": "done", "removed": len(verdict.removed)})
+        yield verdict
 
     async def run_events(turn: Turn, outcome: dict) -> AsyncIterator[str]:
         verdict, error_code = None, None
@@ -756,12 +997,26 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                 if item is HEARTBEAT:
                     yield KEEP_ALIVE
                 elif item.type == "claims":  # the verifier, with its own step, then the answer's events
-                    yield frame(Event("step", {"id": "check", "kind": "check", "status": "running"}))
-                    verdict = verify(item.data["claims"], turn.facts)
-                    yield frame(Event("step", {"id": "check", "kind": "check", "status": "done",
-                                               "removed": len(verdict.removed)}))
+                    refusal = item.data.get("refusal")
+                    if refusal is not None:
+                        yield frame(Event("refusal", {"key": refusal.key, "partial": refusal.partial}))
+                    if refusal is not None and not refusal.partial:
+                        verdict = Verdict((), ())  # nothing was written, so no check ran
+                    else:
+                        # Checks 6 and 4 can wait on the data service and the judge, so the stream keeps the
+                        # connection alive while they run, as it does while the agent works.
+                        async for event in with_heartbeats(verified(item.data["claims"], turn), heartbeat_seconds):
+                            if event is HEARTBEAT:
+                                yield KEEP_ALIVE
+                            elif isinstance(event, Verdict):
+                                verdict = event
+                            else:
+                                yield frame(event)
                     ran = [call["tool"] for call in turn.notes.tool_calls if call.get("ran")]
-                    for event in answer_events(verdict, turn.facts, ran):
+                    for event in answer_events(verdict, turn.facts, ran, six_checks.cited_only):
+                        if event.type == "evidence":  # whether the drawer offers "Was this the right passage?"
+                            event = Event("evidence", {**event.data, "feedback": passage_reports.feedback(
+                                event.data, turn.run_id, turn.scope.view)})
                         yield frame(event)
                 elif item.type in ANSWER_EVENTS:
                     raise RuntimeError(f"A runner sent a {item.type} event, which only the verifier writes.")

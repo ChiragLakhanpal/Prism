@@ -135,6 +135,26 @@ def test_the_transpile_step_refuses_what_duckdb_cannot_express_instead_of_droppi
         engine.run("CREATE TABLE strata.main.t (id STRING COMMENT 'the id', public_from DATE)")
 
 
+def test_duckdb_rewrites_a_statement_it_has_run_before_only_once_and_refuses_bad_sql_every_time(monkeypatch):
+    """The fixture build and the tests run the same statements thousands of times (ticket 55)."""
+    import sqlglot
+
+    parsed = []
+    parse = sqlglot.parse
+    monkeypatch.setattr(sqlglot, "parse", lambda sql, **kw: parsed.append(sql) or parse(sql, **kw))
+    statement = "SELECT CAST(:day AS DATE) AS day, 'ticket 55' AS note"
+
+    with DuckDBEngine.open() as engine:
+        days = [engine.run(statement, {"day": day}).as_text() for day in ("2026-10-23", "2026-10-24", "2026-10-23")]
+        for _ in range(2):
+            with pytest.raises(EngineError, match="transpile"):
+                engine.run("CREATE TABLE strata.main.t55 (id STRING COMMENT 'the id', public_from DATE)")
+
+    assert days == [[("2026-10-23", "ticket 55")], [("2026-10-24", "ticket 55")], [("2026-10-23", "ticket 55")]]
+    assert parsed.count(statement) == 1
+    assert len(parsed) == 3  # the statement once, and the refused one each time it was run
+
+
 # ── Rows that Python built ───────────────────────────────────────────────
 
 ROWS = [("1624689", "503708", "NICHOLAS O'DWYER LIMITED"), ("1624689", "503711", None)]

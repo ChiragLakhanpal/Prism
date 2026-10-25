@@ -1,0 +1,322 @@
+{
+  "tool": "rebidding_risk",
+  "as_of": "2026-10-22",
+  "view": "staff",
+  "rows": [
+    {
+      "evidence_id": "strata.silver.plan_rows:40001676/KE-KIMAWASCO-157517-CW-RFB",
+      "public_from": "2025-03-19",
+      "source": {
+        "project_id": "P156634",
+        "notice_id": "OP00124313",
+        "plan_document_id": "40001676"
+      },
+      "step_reference": "KE-KIMAWASCO-157517-CW-RFB",
+      "project_id": "P156634",
+      "country_name": "Kenya",
+      "reason_code": "canceled_row",
+      "row_kind": "canceled_row",
+      "quote": null,
+      "dates": {
+        "notice_date": "2021-04-07",
+        "bids_due": "2021-05-10",
+        "again_on": null,
+        "plan_date": "2025-03-19"
+      },
+      "process_status": "Canceled",
+      "evidence": [
+        {
+          "evidence_id": "strata.silver.plan_rows:40001676/KE-KIMAWASCO-157517-CW-RFB",
+          "public_from": "2025-03-19",
+          "record_kind": "plan_row",
+          "reference": "KE-KIMAWASCO-157517-CW-RFB",
+          "date": "2025-03-19",
+          "agency": "Kilifi - Mariakani Water and Sewerage Company Ltd"
+        }
+      ],
+      "label_sources": [
+        "no_award",
+        "canceled_row"
+      ],
+      "rank": 1
+    },
+    {
+      "evidence_id": "strata.silver.plan_rows:40001676/KE-KIMAWASCO-377450-CW-RFB",
+      "public_from": "2025-03-19",
+      "source": {
+        "project_id": "P156634",
+        "notice_id": "OP00244373",
+        "plan_document_id": "40001676"
+      },
+      "step_reference": "KE-KIMAWASCO-377450-CW-RFB",
+      "project_id": "P156634",
+      "country_name": "Kenya",
+      "reason_code": "canceled_row",
+      "row_kind": "canceled_row",
+      "quote": null,
+      "dates": {
+        "notice_date": "2023-08-28",
+        "bids_due": "2023-10-06",
+        "again_on": null,
+        "plan_date": "2025-03-19"
+      },
+      "process_status": "Canceled",
+      "evidence": [
+        {
+          "evidence_id": "strata.silver.plan_rows:40001676/KE-KIMAWASCO-377450-CW-RFB",
+          "public_from": "2025-03-19",
+          "record_kind": "plan_row",
+          "reference": "KE-KIMAWASCO-377450-CW-RFB",
+          "date": "2025-03-19",
+          "agency": "Kilifi - Mariakani Water and Sewerage Company Ltd"
+        }
+      ],
+      "label_sources": [
+        "no_award",
+        "canceled_row"
+      ],
+      "rank": 2
+    },
+    {
+      "evidence_id": "strata.silver.notices:OP00083890",
+      "public_from": "2020-02-04",
+      "source": {
+        "project_id": "P156634",
+        "notice_id": "OP00083890",
+        "plan_document_id": "40001676"
+      },
+      "step_reference": "KE-KIMAWASCO-149448-CW-RFB",
+      "project_id": "P156634",
+      "country_name": "Kenya",
+      "reason_code": "process_canceled",
+      "row_kind": "quote",
+      "quote": {
+        "text": "The Request for Bids has been cancelled.",
+        "lang": "en",
+        "notice_id": "OP00083890"
+      },
+      "dates": {
+        "notice_date": "2020-02-04",
+        "bids_due": "2020-03-06",
+        "again_on": null,
+        "plan_date": "2025-03-19"
+      },
+      "process_status": null,
+      "evidence": [
+        {
+          "evidence_id": "strata.silver.notices:OP00083890",
+          "public_from": "2020-02-04",
+          "record_kind": "notice",
+          "reference": "OP00083890",
+          "date": "2020-02-04",
+          "agency": null
+        }
+      ],
+      "label_sources": [
+        "no_award",
+        "canceled_row"
+      ],
+      "rank": 3
+    }
+  ],
+  "coverage": {
+    "matched": 65,
+    "used": 52,
+    "not_used": [
+      {
+        "reason": "no_step_reference",
+        "count": 3,
+        "evidence_ids": [
+          "strata.gold.contract:1670533",
+          "strata.gold.contract:1878691",
+          "strata.gold.contract:1903099"
+        ]
+      },
+      {
+        "reason": "no_notice",
+        "count": 10,
+        "evidence_ids": [
+          "strata.gold.package:KE-BUSIA COUNTY-561519-CW-RFB",
+          "strata.gold.package:KE-EMBU COUNTY-493078-CW-RFB",
+          "strata.gold.package:KE-EMBU COUNTY-493099-CW-RFB",
+          "strata.gold.package:KE-ICTA-459492-CW-RFB",
+          "strata.gold.package:KE-KIAMBU COUNTY-492369-CW-RFB",
+          "strata.gold.package:KE-KIAMBU COUNTY-510866-CW-RFB",
+          "strata.gold.package:KE-SIAYA COUNTY-519173-CW-RFB",
+          "strata.gold.package:KE-SIAYA COUNTY-554186-CW-RFB",
+          "strata.gold.package:KE-VIHIGA COUNTY-519405-CW-RFB",
+          "strata.gold.package:KE-VIHIGA COUNTY-519423-CW-RFB"
+        ]
+      }
+    ]
+  },
+  "package": {
+    "evidence_id": "strata.silver.plan_rows:40132287/KE-NWWDA-541055-CW-RFB",
+    "public_from": "2026-10-09",
+    "step_reference": "KE-NWWDA-541055-CW-RFB",
+    "description": "Equipping of Exploratory Bo reholes Project-Lot 1- Sarma n - Tarbaj Water Supply",
+    "project_id": "P156634",
+    "project_name": "Water and Sanitation Development Project",
+    "country_code": "KE",
+    "country_name": "Kenya",
+    "section": "WORKS",
+    "category": "Works",
+    "method": "Request for Bids",
+    "market_approach": "Open - National",
+    "review_type": "Post",
+    "estimated_amount_usd": "1230000.00",
+    "process_status": "Pending Implementation",
+    "planned_notice_on": "2026-03-10",
+    "planned_signing_on": "2026-04-24",
+    "plan": {
+      "document_id": "40132287",
+      "implementing_agency": "Northern Water Works Development Agency",
+      "agency_id": "northern-water-works-development-agency",
+      "plan_date": "2026-10-09",
+      "disclosed_on": "2026-10-09",
+      "pdf_page": 3
+    }
+  },
+  "criteria": {
+    "method": "Request for Bids",
+    "category": "Works",
+    "market_approach": null,
+    "review_type": null,
+    "country": "KE",
+    "notice_from": "2019-07-01",
+    "notice_to": "2026-10-09",
+    "size_from_usd": null,
+    "size_to_usd": null,
+    "from_package": [
+      "method",
+      "category",
+      "country",
+      "notice_to"
+    ],
+    "country_name": "Kenya"
+  },
+  "m": 52,
+  "n": 3,
+  "past_range_total": 49,
+  "denominator_reason": "canceled_included",
+  "groups": [
+    {
+      "reason_code": "canceled_row",
+      "count": 2,
+      "step_references": [
+        "KE-KIMAWASCO-157517-CW-RFB",
+        "KE-KIMAWASCO-377450-CW-RFB"
+      ]
+    },
+    {
+      "reason_code": "process_canceled",
+      "count": 1,
+      "step_references": [
+        "KE-KIMAWASCO-149448-CW-RFB"
+      ]
+    }
+  ],
+  "model": {
+    "shown": false,
+    "in10": null,
+    "band": null,
+    "not_shown_reason": "no_results",
+    "min_comparables": 20,
+    "learner": null,
+    "track_record": null,
+    "score_date": null
+  },
+  "sources": [
+    {
+      "key": "notices",
+      "dataset_name": "Procurement Notices"
+    },
+    {
+      "key": "awards",
+      "dataset_name": "Contract Awards in Investment Project Financing (Since FY 2020)"
+    },
+    {
+      "key": "documents",
+      "dataset_name": "Documents & Reports: Documents API"
+    }
+  ],
+  "notice_source_keys": [
+    "notices"
+  ],
+  "records_through": "2026-10-13",
+  "rows_per_group": 5,
+  "abstention": null,
+  "summary": {
+    "evidence_id": "strata.tools.rebidding_risk:KE-NWWDA-541055-CW-RFB@2026-10-22",
+    "public_from": "2026-10-22",
+    "source": {
+      "tool": "rebidding_risk",
+      "sources": [
+        "notices",
+        "awards",
+        "documents"
+      ]
+    },
+    "m": 52,
+    "n": 3,
+    "past_range_total": 49,
+    "groups": [
+      {
+        "reason_code": "canceled_row",
+        "count": 2,
+        "step_references": [
+          "KE-KIMAWASCO-157517-CW-RFB",
+          "KE-KIMAWASCO-377450-CW-RFB"
+        ]
+      },
+      {
+        "reason_code": "process_canceled",
+        "count": 1,
+        "step_references": [
+          "KE-KIMAWASCO-149448-CW-RFB"
+        ]
+      }
+    ],
+    "model": {
+      "shown": false,
+      "in10": null,
+      "band": null,
+      "not_shown_reason": "no_results",
+      "min_comparables": 20,
+      "learner": null,
+      "track_record": null,
+      "score_date": null
+    },
+    "coverage": {
+      "matched": 65,
+      "used": 52,
+      "not_used": [
+        {
+          "reason": "no_step_reference",
+          "count": 3,
+          "evidence_ids": [
+            "strata.gold.contract:1670533",
+            "strata.gold.contract:1878691",
+            "strata.gold.contract:1903099"
+          ]
+        },
+        {
+          "reason": "no_notice",
+          "count": 10,
+          "evidence_ids": [
+            "strata.gold.package:KE-BUSIA COUNTY-561519-CW-RFB",
+            "strata.gold.package:KE-EMBU COUNTY-493078-CW-RFB",
+            "strata.gold.package:KE-EMBU COUNTY-493099-CW-RFB",
+            "strata.gold.package:KE-ICTA-459492-CW-RFB",
+            "strata.gold.package:KE-KIAMBU COUNTY-492369-CW-RFB",
+            "strata.gold.package:KE-KIAMBU COUNTY-510866-CW-RFB",
+            "strata.gold.package:KE-SIAYA COUNTY-519173-CW-RFB",
+            "strata.gold.package:KE-SIAYA COUNTY-554186-CW-RFB",
+            "strata.gold.package:KE-VIHIGA COUNTY-519405-CW-RFB",
+            "strata.gold.package:KE-VIHIGA COUNTY-519423-CW-RFB"
+          ]
+        }
+      ]
+    }
+  }
+}

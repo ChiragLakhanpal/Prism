@@ -40,6 +40,7 @@ from fastapi import Depends, FastAPI, Query, Request
 from fastapi.responses import JSONResponse, Response, StreamingResponse
 from pydantic import BaseModel, Field
 
+from strata.agent.answer_check import SixChecks
 from strata.agent.runs import RunLog, run_row
 from strata.config import DraftKinds
 from strata.dbx import Viewer, viewer_from_headers
@@ -63,8 +64,9 @@ KEEP_ALIVE = ": keep-alive\n\n"
 class DraftRequest(BaseModel):
     kind: str = Field(min_length=1, max_length=64)
     project_id: str = Field(pattern=r"^P\d{6}$")
-    agency_id: str = Field(min_length=1, max_length=200)
-    plan_date: dt.date
+    # The plan version review notes are written on; a mission brief (ticket 37) names only its project.
+    agency_id: str | None = Field(default=None, min_length=1, max_length=200)
+    plan_date: dt.date | None = None
     idempotency_key: str | None = Field(default=None, max_length=128)
     view: VIEWS = "staff"
     lang: Literal["en", "fr", "es", "pt"] = "en"
@@ -89,7 +91,8 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: DraftStore 
                writers: Callable[[str], object | None], kinds: DraftKinds, today: Callable[[], dt.date],
                now: Callable[[], dt.datetime], new_draft_id: Callable[[], str], new_run_id: Callable[[], str],
                runs: RunLog | None, trace_ids: Callable[[], TraceIds], reference: Callable[[], str],
-               heartbeat_seconds: float) -> None:
+               heartbeat_seconds: float, six_checks: SixChecks) -> None:
+    """six_checks runs the verifier's checks 4 to 6 on every draft, with the app's judge, as the answer stream does."""
     running: set[tuple[str, str]] = set()  # (author, idempotency key) of the drafts being written now
     lock = threading.Lock()
 
@@ -133,6 +136,8 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: DraftStore 
             return refused(422, "unknown_kind")
         if body.view != STAFF:
             return refused(403, "preview", capability="draft", copy="preview")
+        if kinds.kinds[body.kind].staff_only and not access.is_staff(viewer):
+            return refused(403, "not_staff")
         if store is None or engine_for is None:
             return JSONResponse({"code": "no_data_service"}, status_code=503)
         key = body.idempotency_key
@@ -148,7 +153,7 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: DraftStore 
                     return refused(409, "in_progress")
                 running.add((viewer.user_id, key))
         request = {"kind": body.kind, "project_id": body.project_id, "agency_id": body.agency_id,
-                   "plan_date": body.plan_date.isoformat()}
+                   "plan_date": body.plan_date.isoformat() if body.plan_date else None}
         writing = runtime.Writing(kinds.kinds[body.kind], request, viewer, access.team(viewer).key, key,
                                   new_run_id(), body.lang)
         return StreamingResponse(_stream(writing, trace_ids()), media_type="text/event-stream", headers=STREAM_HEADERS)
@@ -176,7 +181,7 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: DraftStore 
     async def _events(writing: runtime.Writing, trace: TraceIds, outcome: dict) -> AsyncIterator[str]:
         error_code = None
         try:
-            events = runtime.write(writing, engine_for, writers, store, today(), now, new_draft_id)
+            events = runtime.write(writing, engine_for, writers, store, today(), now, new_draft_id, six_checks)
             async for item in with_heartbeats(events, heartbeat_seconds):
                 yield KEEP_ALIVE if item is HEARTBEAT else frame(item)
         except runtime.WriteError as error:

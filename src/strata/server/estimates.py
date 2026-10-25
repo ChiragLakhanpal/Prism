@@ -7,10 +7,9 @@ record, the plan-date choice and section 4's procurement approach options, all f
   default). A package from a STEP row takes section 1's criteria as find_comparables' own parameter names, as GET
   /api/packages/{step_reference}/comparables does; a package from a sentence uses the criteria its author saved,
   and describes itself with its saved fields, and only its author may open it (404 unknown_package for anyone else).
-- PUT /api/packages/{step_reference}/plan-dates and PUT /api/planned-packages/{package_id}/plan-dates take
-  {"choice": "middle"} or {"choice": "eight_in_ten"} and keep it for the viewer in the app state store
-  (strata.app.plan_date_choices), written as the app's own service principal. The same choice sets the dates
-  section 2 drafts (ticket 27). A preview changes nothing (403 preview).
+- The plan-date choice under the chart is the one stored choice section 2's "Date each step with" keeps (ticket 27),
+  so it is saved through ticket 27's PUT /api/packages/{step_reference}/plan-dates and PUT
+  /api/planned-packages/{package_id}/plan-dates (src/strata/server/steps.py), in strata.app.plan_date_choices.
 
 A read the store cannot answer still answers the estimate, with no saved choice, and the failure goes to the log, so
 Lakebase being down never hides the time estimate.
@@ -21,11 +20,9 @@ from __future__ import annotations
 import datetime as dt
 import logging
 from collections.abc import Callable
-from typing import Literal
 
 from fastapi import Depends, FastAPI, Request
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel
 
 from strata.config import PackageForm, Thresholds
 from strata.dbx import Viewer, viewer_from_headers
@@ -39,16 +36,10 @@ from strata.tools import registry
 log = logging.getLogger("strata.server.estimates")
 STAFF = "staff"
 STEP_ROW, PLANNED = "step_reference", "planned"
-CHOICES = ("middle", "eight_in_ten")
 # A saved package's fields that describe it to estimate_time, by the tool's parameter names.
 DESCRIBED = {"estimated_amount_usd": "described_amount_usd", "market_approach": "described_market_approach",
              "review_type": "described_review_type", "prequalification": "described_prequalification",
              "lots": "described_lots"}
-
-
-class ChoiceRequest(BaseModel):
-    choice: Literal["middle", "eight_in_ten"]
-    view: Literal["staff", "piu", "public"] = "staff"
 
 
 def refused(status: int, code: str, **details) -> JSONResponse:
@@ -108,22 +99,6 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: PackageStor
         saved = store.get(package_id) if store is not None else None
         return saved if saved is not None and saved.author_id == viewer.user_id else None
 
-    def save(viewer: Viewer, body: ChoiceRequest, kind: str, key: str):
-        if not viewer.user_id:
-            return refused(401, "no_identity")
-        if body.view != STAFF:
-            return refused(403, "preview", capability="choose", copy="preview")
-        if store is None:
-            return refused(503, "no_data_service")
-        try:
-            store.choose_plan_date(viewer.user_id, kind, key, body.choice, now())
-            return {"plan_date_choice": store.plan_date_choice(viewer.user_id, kind, key)}
-        except Exception:  # Lakebase or the network: the page keeps the choice on screen and offers Try again
-            ref = reference()
-            log.exception("I could not save %s's plan-date choice for %s %s, reference %s.", viewer.user_id, kind,
-                          key, ref)
-            return refused(503, "not_saved", trace_id=ref)
-
     def planned(viewer: Viewer, package_id: str):
         """The viewer's own saved package, or the answer that says why there is none."""
         if not viewer.user_id:
@@ -146,10 +121,6 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: PackageStor
             return criteria
         return answer(viewer, view, asof, {**criteria, "step_reference": step_reference}, STEP_ROW, step_reference)
 
-    @app.put("/api/packages/{step_reference}/plan-dates")
-    def step_row_choice(step_reference: str, body: ChoiceRequest, viewer: Viewer = Depends(current_viewer)):
-        return save(viewer, body, STEP_ROW, step_reference)
-
     @app.get("/api/planned-packages/{package_id}/estimate")
     def planned_estimate(package_id: str, asof: dt.date | None = None, view: str = STAFF,
                          viewer: Viewer = Depends(current_viewer)):
@@ -161,10 +132,3 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: PackageStor
             return refused(422, "missing_criteria", missing=shown["missing"])
         values = {field["key"]: field["value"] for field in shown["fields"]}
         return answer(viewer, view, asof, {**shown["comparables_query"], **described(values)}, PLANNED, package_id)
-
-    @app.put("/api/planned-packages/{package_id}/plan-dates")
-    def planned_choice(package_id: str, body: ChoiceRequest, viewer: Viewer = Depends(current_viewer)):
-        saved, refusal = planned(viewer, package_id)
-        if refusal is not None:
-            return refusal
-        return save(viewer, body, PLANNED, package_id)

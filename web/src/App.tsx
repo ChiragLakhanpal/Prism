@@ -24,6 +24,7 @@ import { copy } from "./copy";
 import { answer, ask, earlier, removedScopes } from "./lib/answer";
 import { getJson, type Me } from "./lib/api";
 import { draftScope } from "./lib/drafts";
+import { FOLLOWING_HREF, staffRole } from "./lib/following";
 import { drawerClosed, evidenceIn, origin, routeOf, visited } from "./lib/evidence";
 import { readStamp, retryStamp, stamp, type Problem } from "./lib/freshness";
 import { formatDate } from "./lib/format";
@@ -39,8 +40,10 @@ async function readViewer() {
   try {
     const me = await getJson<Me>("/api/me");
     viewer.set(me.signed_in && me.email ? { status: "signed-in", email: me.email } : me.signed_in ? { status: "error" } : { status: "signed-out" });
+    staffRole.set(Boolean(me.staff));
   } catch {
     viewer.set({ status: "error" });
+    staffRole.set(false);
   }
 }
 
@@ -88,13 +91,21 @@ function returnFocus() {
 }
 
 const VIEW_ALERTS: Record<string, string> = { piu: copy.alerts.viewPiu, public: copy.alerts.viewPublic };
-// The pages that apply the implementing agency and public previews themselves: the draft pages (ticket 35)
-// and the Packages tab with its planned packages (ticket 15).
-const VIEW_PAGES: ReadonlySet<string> = new Set(["drafts", "draft", "draftNew", "packages", "packageNew", "plannedPackage"]);
+// The pages that apply the implementing agency and public previews themselves: the draft pages (ticket 35),
+// the Packages tab with its planned packages (ticket 15), Following (ticket 37), and the activity page, which
+// hides "See the past range" in the public view and is the same in every other (ticket 22).
+const VIEW_PAGES: ReadonlySet<string> = new Set(["drafts", "draft", "draftNew", "packages", "packageNew", "plannedPackage", "following", "activity"]);
+
+// How a page treats the address's ?asof=: it applies the date itself (the Data readiness page, whose reads
+// take one, Following, whose checks run as of the page's date (ticket 37), and the activity page, whose trail
+// is all as of the date); only its own part does (a project's Connections tab, whose links are as of the date
+// under a header that shows today's); or not yet. Ticket 40's banner replaces this.
+type AsOfUse = "page" | "part" | "none";
+const AS_OF_PAGES: ReadonlySet<string> = new Set(["data", "following", "activity"]);
 
 // The alert slot: errors first, then what the address asks for that I can't show yet. Ticket 40
 // replaces the view and as-of alerts with its preview and as-of banners in this same slot.
-function alerts(problem: Problem, search: string, appliesAsOf: boolean, page: string): { state: "error" | "info"; text: string }[] {
+function alerts(problem: Problem, search: string, asOfUse: AsOfUse, appliesView: boolean): { state: "error" | "info"; text: string }[] {
   const params = new URLSearchParams(search);
   const found: { state: "error" | "info"; text: string }[] = [];
   if (problem === "no_access") found.push({ state: "error", text: copy.alerts.noAccess });
@@ -102,18 +113,33 @@ function alerts(problem: Problem, search: string, appliesAsOf: boolean, page: st
   const view = params.get("view");
   // These pages show what each preview holds, so the alert that says the page shows the staff view would be
   // untrue there.
-  const appliesView = (view === "piu" || view === "public") && VIEW_PAGES.has(page);
-  if (view !== null && view !== "staff" && !appliesView) found.push({ state: "info", text: VIEW_ALERTS[view] ?? copy.alerts.viewUnknown });
+  const shown = (view === "piu" || view === "public") && appliesView;
+  if (view !== null && view !== "staff" && !shown) found.push({ state: "info", text: VIEW_ALERTS[view] ?? copy.alerts.viewUnknown });
   const asOf = params.get("asof");
-  if (asOf !== null && !appliesAsOf) {
-    found.push({ state: "info", text: isDay(asOf) ? copy.alerts.asOf(formatDate(asOf)) : copy.alerts.asOfUnreadable });
+  // A page that applies the date itself still gets the alert when it can't read it, since it then shows today's data.
+  if (asOf !== null && (asOfUse !== "page" || !isDay(asOf))) {
+    const text = !isDay(asOf) ? copy.alerts.asOfUnreadable : asOfUse === "part" ? copy.alerts.asOfPart(formatDate(asOf)) : copy.alerts.asOf(formatDate(asOf));
+    found.push({ state: "info", text });
   }
   return found;
+}
+
+// What the page at this address does with ?asof= and ?view= (see AsOfUse and VIEW_PAGES).
+function pageUse(match: { key: string; values: Record<string, string> }): { asOf: AsOfUse; view: boolean } {
+  const connections = match.key === "project" && match.values.tab === "connections";
+  // A project's Timeline tab ends its axis at the as-of date (ticket 23), and applies the view too: its server
+  // hides the disagreements of a project still under way in the public preview, and the implementing agency's
+  // preview shows what World Bank staff see (the 23 brief, section 7.3).
+  const timeline = match.key === "project" && match.values.tab === "timeline";
+  const asOf: AsOfUse = AS_OF_PAGES.has(match.key) || timeline ? "page" : connections ? "part" : "none";
+  // Every node and link on the Connections tab is public data, so each preview sees the staff view's tab.
+  return { asOf, view: VIEW_PAGES.has(match.key) || connections || timeline };
 }
 
 export function App() {
   const here = useStore(address);
   const who = useStore(viewer);
+  const staff = useStore(staffRole);
   const { freshness, problem } = useStore(stamp);
   const run = useStore(answer);
   const kept = useStore(earlier);
@@ -161,8 +187,20 @@ export function App() {
   // sources", focuses the new page's lead instead, as the title has not changed (the 16 brief).
   // A new page brings its scope chip back. Opening or closing the evidence drawer changes only
   // ?evidence=, which is not a route change (routeOf), so it leaves focus where the drawer put it;
-  // a change to any other part of the address, such as ?asof=, is one.
+  // a change to any other part of the address, such as ?asof=, is one. An address that names a
+  // section of the page, such as How Strata works' #what-i-dont-do from the link under a refusal
+  // (ticket 24), scrolls to that section and focuses its heading instead, on arrival or on load.
   const route = routeOf(here);
+  // The section of the page the address names, by the heading that takes focus.
+  const namedSection = () => {
+    const id = decodeURIComponent(window.location.hash.slice(1));
+    return id ? document.querySelector<HTMLElement>(`main [id="${CSS.escape(id)}"][tabindex="-1"]`) : null;
+  };
+  useEffect(() => {
+    const named = namedSection();
+    named?.scrollIntoView();
+    named?.focus({ preventScroll: true });
+  }, []);
   const lastRoute = useRef(route);
   const lastPath = useRef(here.pathname);
   const section = useRef(match.section);
@@ -177,6 +215,13 @@ export function App() {
     section.current = match.section;
     if (!moved || here.moves === 0 || here.quiet) return;
     removedScopes.set(new Set());
+    retryStamp();
+    const named = namedSection();
+    if (named) {
+      named.scrollIntoView();
+      named.focus({ preventScroll: true });
+      return;
+    }
     window.scrollTo(0, 0);
     // Back to a page with the evidence drawer open, such as from the source view the drawer's "Open at
     // page" opened (ticket 21): the drawer's heading takes focus, where the person was.
@@ -184,7 +229,6 @@ export function App() {
     const pageLead = samePage ? document.querySelector<HTMLElement>("main [data-page-lead]") : null;
     const lead = within ? document.querySelector<HTMLElement>("main [data-lead]") : null;
     (drawerHeading ?? pageLead ?? lead ?? document.querySelector<HTMLElement>("main h1"))?.focus();
-    retryStamp();
   }, [route, here.moves]);
 
   const onAsk = (question: string, chip: string | null) =>
@@ -197,9 +241,10 @@ export function App() {
       key: address.get().key,
     });
 
-  // The Data readiness page applies an as-of date itself (data_readiness_for takes one), so the
-  // alert that says the page shows today's data does not show there.
-  const slot = alerts(problem, here.search, match.key === "data", match.key);
+  // A page that applies the as-of date itself, such as the Data readiness page (data_readiness_for takes one),
+  // Following or the activity page, gets no alert that says it shows today's data (pageUse).
+  const use = pageUse(match);
+  const slot = alerts(problem, here.search, use.asOf, use.view);
   return (
     <Frame
       nav={
@@ -208,6 +253,8 @@ export function App() {
           current={match.section}
           home={match.key === "home"}
           viewer={who}
+          // World Bank staff open Following from the Projects tab (ticket 37); a preview, and everyone else, All projects.
+          projectsHref={staff && (view === null || view === "staff") ? FOLLOWING_HREF : undefined}
         />
       }
       band={<BoxBand box={<IntentBox scope={scope} scopeKind={kind} onAsk={onAsk} />} stamp={<FreshnessStamp freshness={freshness} />} />}

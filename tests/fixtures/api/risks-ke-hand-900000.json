@@ -1,0 +1,37 @@
+{
+  "rows": [],
+  "p": 1,
+  "m": 0,
+  "most_common": null,
+  "max_rows": 5,
+  "coverage": {
+    "missing": [
+      {
+        "reason_code": "no_report",
+        "count": 1
+      }
+    ],
+    "sources": [
+      "notices",
+      "awards",
+      "documents",
+      "projects"
+    ]
+  },
+  "counted": [],
+  "verifier": null,
+  "empty_reason": "no_reports",
+  "missing": [],
+  "written": null,
+  "selected_keys": [],
+  "selected_not_shown": [],
+  "counts_evidence_id": "strata.tools.get_lessons:@2021-01-15?query=Hand-made%20works&packages=KE-HAND-900001-CW-RFB%2CKE-HAND-900002-CW-RFB%2CKE-HAND-900003-CW-RFB%2CKE-HAND-900004-CW-RFB%2CKE-HAND-900005-CW-RFB%2CKE-HAND-900006-CW-RFB%2CKE-HAND-900007-CW-RFB%2CKE-HAND-900008-CW-RFB%2CKE-HAND-900009-CW-RFB%2CKE-HAND-900010-CW-RFB%2CKE-HAND-900011-CW-RFB%2CKE-HAND-900012-CW-RFB%2CKE-HAND-900013-CW-RFB%2CKE-HAND-900014-CW-RFB%2CKE-HAND-900015-CW-RFB%2CKE-HAND-900016-CW-RFB%2CKE-HAND-900017-CW-RFB%2CKE-HAND-900018-CW-RFB%2CKE-HAND-900019-CW-RFB%2CKE-HAND-900020-CW-RFB%2CKE-HAND-900021-CW-RFB%2CKE-HAND-900022-CW-RFB%2CKE-HAND-900023-CW-RFB%2CKE-HAND-900024-CW-RFB%2CKE-HAND-900025-CW-RFB",
+  "source_names": [
+    "Procurement Notices",
+    "Contract Awards in Investment Project Financing (Since FY 2020)",
+    "Documents & Reports: Documents API",
+    "World Bank Projects & Operations"
+  ],
+  "data_through": "2020-08-03",
+  "as_of": "2021-01-15"
+}

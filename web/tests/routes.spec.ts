@@ -3,7 +3,7 @@
 // and its purpose, shows the empty state that says what will appear there, and sits in the frame
 // with the footer. Unknown addresses show a not-found page in the same frame. The words are the
 // 06 design brief's, copied here so the test checks the copy file against an independent source.
-import AxeBuilder from "@axe-core/playwright";
+import { scan } from "./axe";
 import type { Page } from "@playwright/test";
 import { footerSentence } from "./design-md";
 import { expect, mockApi, mockShell, recorded, test } from "./mocked";
@@ -36,18 +36,8 @@ export const ROUTES: Route[] = [
   // All projects and a project's page are built in ticket 10; web/tests/projects.spec.ts tests them.
   // The package workspace is built in ticket 12; web/tests/package.spec.ts tests it. The Packages tab and a
   // package planned from a sentence are built in ticket 15; web/tests/planned-package.spec.ts tests them. The
-  // source view at /projects/:pid/documents/:doc is built in ticket 21; web/tests/hub.spec.ts tests it.
-  {
-    path: "/projects/P130164/packages/IN-RRSMP-7431-CW-RFB",
-    h1: "Activity IN-RRSMP-7431-CW-RFB",
-    tab: "Projects",
-    purpose: "This page traces one activity from its row in the Procurement Plan to its notice, bids and signed contract.",
-    empty: {
-      title: "I can't trace activity IN-RRSMP-7431-CW-RFB on this page yet.",
-      body: "When I can, this page follows the activity from its row in the Procurement Plan to its signed contract.",
-      link: ["Go to project P130164", "/projects/P130164"],
-    },
-  },
+  // source view at /projects/:pid/documents/:doc is built in ticket 21; web/tests/hub.spec.ts tests it. The activity
+  // page at /projects/:pid/packages/:stepRef is built in ticket 22; web/tests/trail.spec.ts tests it.
   {
     path: "/lessons",
     h1: "Lessons",
@@ -248,7 +238,7 @@ for (const route of [...ROUTES, ...NOT_FOUND]) {
     await expect(page.getByRole("main")).toBeFocused();
 
     const check = async () =>
-      (await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"]).analyze()).violations.map(
+      (await scan(page)).violations.map(
         (v) => `${v.id}: ${v.nodes.map((node) => node.target.join(" ")).join(", ")}`,
       );
     expect(await check(), "1440 px").toEqual([]);

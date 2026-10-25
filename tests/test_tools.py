@@ -198,13 +198,17 @@ def marked(result, question) -> dict[str, list[str]]:
 
 
 def in_top_three(result, question) -> dict[str, list[str]]:
-    """search_passages' answer: which of the expected passages are among its first three, and which
-    matched passages it left out because Prompt Shields found an attack or never screened them."""
+    """search_passages' answer: which of the expected passages are among its first three, which matched passages
+    it left out because Prompt Shields found an attack or never screened them, and which a passage reviewer
+    ranked lower for the query's kind of question (ticket 32)."""
     top = {row["evidence_id"] for row in result["rows"][:3]}
     left_out = [evidence for entry in result["coverage"]["not_used"]
                 if entry["reason"] in ("prompt_shields_hit", "not_screened") for evidence in entry["evidence_ids"]]
-    return {"top_three_include": sorted(set(question["expected"]["top_three_include"]) & top),
-            "left_out": sorted(left_out)}
+    found = {"top_three_include": sorted(set(question["expected"]["top_three_include"]) & top),
+             "left_out": sorted(left_out)}
+    if "ranked_lower" in question["expected"]:
+        found["ranked_lower"] = sorted(result["ranked_lower"]["evidence_ids"])
+    return found
 
 
 def readiness_answer(result, question) -> dict[str, list]:
@@ -285,19 +289,91 @@ def disagreement_answer(result, question) -> dict[str, list]:
             "rejected": [result["summary"]["rejected"]["count"]]}
 
 
-def time_estimate_answer(result, question) -> dict[str, list]:
-    """estimate_time's answer (ticket 26): why it gives no time estimate, and for which feature; how many
-    comparable packages it counted; the summary's evidence id; and why there is no track record, if there is none."""
+def estimate_time_answer(result, question) -> dict[str, list]:
+    """estimate_time's answer, from the summary record the agent cites it by. The time estimate (ticket 26): why it
+    gives no time estimate, and for which feature; how many comparable packages it counted; and why there is no
+    track record, if there is none. The planned dates for each step (ticket 27): the method family, the basis, the
+    steps that got a cautious date, how many steps the tool counts as undated, and one named comparable's delay at
+    the signed contract."""
     abstention = result["abstention"] or {}
     track = result["summary"]["track_record"] or {}
+    steps = result["summary"]["step_dates"]
+    signed = next(entry for entry in steps["steps"] if entry["step_key"] == "contract_signed")
+    named = {reference for reference, _ in question["expected"]["signed_delay"]}
     return {"abstention": [abstention.get("reason")], "feature": [abstention.get("feature")],
             "comparables": [result["summary"]["comparables"]["n"]], "cited_as": [result["summary"]["evidence_id"]],
-            "track_record": [(track.get("abstention") or {}).get("reason")]}
+            "track_record": [(track.get("abstention") or {}).get("reason")],
+            "family": [steps["family"]], "basis": [steps["basis"]], "step_comparables": [steps["coverage"]["total"]],
+            "dated_steps": [entry["step_key"] for entry in steps["steps"]
+                            if entry["cautious"] and entry["cautious"]["planned_date"]],
+            "undated_steps": [steps["undated_n"]],
+            "signed_delay": [[entry["step_reference"], entry["days"]] for entry in signed["comparables"]
+                             if entry["step_reference"] in named]}
+
+
+def cost_answer(result, question) -> dict[str, list]:
+    """compare_cost_estimates' answer: the packages signed above and below their own cost estimates, its
+    abstention, and the package's own cost estimate (ticket 31)."""
+    return {"signed_above": sorted(row["step_reference"] for row in result["rows"] if row["diff_pct"] > 0),
+            "signed_below": sorted(row["step_reference"] for row in result["rows"] if row["diff_pct"] < 0),
+            "abstention": [result["abstention"]["reason"]] if result["abstention"] else [],
+            "own_estimate": [result["package"]["estimated_amount_usd"]]}
+
+
+def rejected_answer(result, question) -> dict[str, list]:
+    """rejected_bids' answer: n of m from the summary, the packages in two of its groups, and the groups' order
+    (ticket 31)."""
+    def packages(key: str) -> list[str]:
+        return sorted({row["step_reference"] for row in result["rows"] if row["item_key"] == key})
+    counts = result["summary"]["counts"]
+    return {"n_of_m": [counts["n"], counts["m"]], "bid_security": packages("bid_security"),
+            "key_staff": packages("key_staff"),
+            "group_order": [group["item_key"] for group in result["summary"]["groups"]]}
+
+
+def criteria_answer(result, question) -> dict[str, list]:
+    """compare_criteria's answer: n of the total whose criteria are public, one item's stated, compared and same or
+    less, and the comparables still open, which it never compares (ticket 31)."""
+    counts = result["summary"]["counts"]
+    items = {item["item_key"]: item for item in result["summary"]["items"]}
+    found = {"public": [counts["n"], counts["total"]],
+             "still_open": sorted(evidence.split(":", 1)[1] for entry in result["coverage"]["not_used"]
+                                  if entry["reason"] == "still_open" for evidence in entry["evidence_ids"])}
+    for key in items:
+        found[key] = [items[key]["stated"], items[key]["compared"], items[key]["same_or_less"]]
+    return found
+
+
+def signals_answer(result, question) -> dict[str, list]:
+    """project_signals' answer: the status, and what each check that fired fired on: the activities by STEP
+    reference, or the months the loan history first showed a new closing date (ticket 37)."""
+    found = {"status": [result["status"]]}
+    for row in result["rows"]:
+        found[row["check"]] = sorted(item.get("activity_reference_no") or item.get("reported_on") for item in row["items"])
+    return found
+
+
+def rebidding_answer(result, question) -> dict[str, list]:
+    """rebidding_risk's answer: n of m and the past range's total from the summary, the packages advertised again,
+    each reason quoted with its notice, the groups' order and why the model is not shown (ticket 28)."""
+    summary = result["summary"]
+    return {"n_of_m": [summary["n"], summary["m"]], "past_range_total": [summary["past_range_total"]],
+            "advertised_again": sorted(row["step_reference"] for row in result["rows"]),
+            "quoted": [[row["step_reference"], row["quote"]["notice_id"], row["quote"]["text"]]
+                       for row in result["rows"] if row["quote"]],
+            "group_order": [group["reason_code"] for group in summary["groups"]],
+            "model_not_shown": [summary["model"]["not_shown_reason"]] if not summary["model"]["shown"] else [],
+            "cited_as": [summary["evidence_id"]]}
 
 
 ANSWERS = {"check_plan": marked, "search_passages": in_top_three, "data_readiness_for": readiness_answer,
            "find_comparables": past_range, "get_disagreements": disagreement_answer,
-           "get_lessons": lessons_answer, "estimate_time": time_estimate_answer}
+           "get_lessons": lessons_answer, "estimate_time": estimate_time_answer, "compare_cost_estimates": cost_answer,
+           "rejected_bids": rejected_answer, "compare_criteria": criteria_answer, "project_signals": signals_answer,
+           "rebidding_risk": rebidding_answer,
+           "project_records": lambda result, question: {
+               part: sorted(row["reference"] for row in result["rows"] if row["part"] == part)
+               for part in question["expected"]}}
 
 
 def answered(result, question) -> dict[str, list[str]]:
@@ -306,7 +382,9 @@ def answered(result, question) -> dict[str, list[str]]:
 
 
 def expected(question) -> dict[str, list[str]]:
-    if question["tool"] in ("data_readiness_for", "get_disagreements", "get_lessons", "estimate_time"):
+    if question["tool"] in ("data_readiness_for", "get_disagreements", "get_lessons", "estimate_time",
+                            "compare_cost_estimates", "rejected_bids", "compare_criteria", "project_signals",
+                            "project_records", "rebidding_risk"):
         return question["expected"]
     return {mark: sorted(refs) for mark, refs in question["expected"].items()}
 
@@ -336,9 +414,20 @@ def engine_for(question, engine, library):
     return library if question.get("needs") == "decided_lessons" else engine
 
 
+def arguments_of(question, engine, library) -> dict:
+    """The question's arguments. A check-your-criteria tool's question (ticket 31) names the find_comparables call
+    its comparables come from, and their STEP references become its comparables argument."""
+    arguments = dict(question["arguments"])
+    if "comparables_of" in question:
+        found = registry.call("find_comparables", question["comparables_of"],
+                              registry.Context(engine=engine_for(question, engine, library), viewer=ANA))
+        arguments["comparables"] = ",".join(row["step_reference"] for row in found["rows"])
+    return arguments
+
+
 def test_each_tool_answers_its_benchmark_question_on_the_fixture_as_expected(engine, library):
     for question in tool_questions():
-        result = registry.call(question["tool"], question["arguments"],
+        result = registry.call(question["tool"], arguments_of(question, engine, library),
                                registry.Context(engine=engine_for(question, engine, library), viewer=ANA))
 
         assert answered(result, question) == expected(question)
@@ -349,7 +438,7 @@ def test_without_an_as_of_date_each_tool_answers_as_of_today(engine, library, mo
     for question in tool_questions():
         today = dt.date.fromisoformat(question["arguments"]["as_of"])
         monkeypatch.setattr(registry, "today", lambda: today)
-        arguments = {name: given for name, given in question["arguments"].items() if name != "as_of"}
+        arguments = {name: given for name, given in arguments_of(question, engine, library).items() if name != "as_of"}
 
         result = registry.call(question["tool"], arguments,
                                registry.Context(engine=engine_for(question, engine, library), viewer=ANA))
@@ -362,7 +451,7 @@ def test_without_an_as_of_date_each_tool_answers_as_of_today(engine, library, mo
 def test_each_tool_answers_under_each_view(engine, library, view):
     """Until ticket 40 applies each view's rules, every view gets the World Bank staff result."""
     for question in tool_questions():
-        result = registry.call(question["tool"], question["arguments"],
+        result = registry.call(question["tool"], arguments_of(question, engine, library),
                                registry.Context(engine=engine_for(question, engine, library), viewer=ANA, view=view))
 
         assert result["view"] == view

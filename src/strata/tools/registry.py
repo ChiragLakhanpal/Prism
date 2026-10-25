@@ -64,6 +64,10 @@ class Context:
     view: str = "staff"
     as_of: dt.date | None = None
     thresholds: Thresholds = field(default_factory=load_thresholds)
+    # The hindsight test's replays only (ticket 34): the lesson library as decided by this date, each lesson
+    # counted from the day the passages it rests on became public, not from its decision. None everywhere else,
+    # where a lesson counts from the day two people decided it (ADR 0002).
+    decided_by: dt.date | None = None
 
 
 @dataclass(frozen=True)
@@ -75,6 +79,7 @@ class Call:
     view: str
     as_of: dt.date
     thresholds: Thresholds
+    decided_by: dt.date | None = None  # Context.decided_by
 
 
 # ── The agent's tool list ────────────────────────────────────────────────
@@ -171,7 +176,8 @@ def call(name: str, arguments: Mapping[str, Any], context: Context, tools: dict[
     bound = _bind(tool, arguments)
     asked = [date for date in (bound.pop("as_of", None), context.as_of) if date is not None]
     as_of = min(asked) if asked else today()
-    output = _adapter(tool)(Call(context.engine, context.viewer, context.view, as_of, context.thresholds), **bound)
+    output = _adapter(tool)(Call(context.engine, context.viewer, context.view, as_of, context.thresholds,
+                                 context.decided_by), **bound)
     result = {"tool": name, "as_of": as_of.isoformat(), "view": context.view, **output}
     if tool.result.summary_fields:
         result["summary"] = summary(tool, bound, result)

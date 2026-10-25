@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, mockShell, test } from "./mocked";
 import { galleryCopy } from "../src/gallery/copy";
+import { appDir, galleryDir } from "../out-dirs";
 
 const dist = (name: string) => fileURLToPath(new URL(`../${name}/`, import.meta.url));
 
@@ -23,9 +24,9 @@ const holdsGallery = (dir: string) =>
     .filter((file) => MARKS.some((mark) => readFileSync(file, "utf8").includes(mark)));
 
 test("the production build holds none of the gallery's code, and the gallery build does", () => {
-  expect(holdsGallery(dist("dist"))).toEqual([]);
+  expect(holdsGallery(dist(appDir))).toEqual([]);
   // The marker the check looks for is real: the gallery build carries it.
-  expect(holdsGallery(dist("dist-gallery")).length).toBeGreaterThan(0);
+  expect(holdsGallery(dist(galleryDir)).length).toBeGreaterThan(0);
 });
 
 test("the gallery's address in the production build shows the app's not-found page, not the gallery", async ({ page }) => {

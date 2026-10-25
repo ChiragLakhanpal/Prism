@@ -723,7 +723,8 @@ class Model:
 def load_models(path: Path = CONFIG_DIR / "models.toml") -> dict[str, Model]:
     """The deployment each role uses, in the order of ROLES."""
     data = _read(path)
-    _Entry(path, "the file", data).only({"roles", "layout", "search", "supplier_matching", "time_estimate", "what_if"})
+    _Entry(path, "the file", data).only({"roles", "layout", "search", "supplier_matching", "time_estimate", "what_if",
+                                         "rebidding", "judge"})
     roles = data.get("roles", {})
     missing = [role for role in ROLES if role not in roles]
     unknown = sorted(set(roles) - set(ROLES))
@@ -741,6 +742,16 @@ def load_models(path: Path = CONFIG_DIR / "models.toml") -> dict[str, Model]:
     return models
 
 
+def load_judge_role(path: Path = CONFIG_DIR / "models.toml") -> str:
+    """The role whose deployment judges whether each sentence follows from its sources (the verifier's check 4)."""
+    entry = _Entry(path, "judge", _read(path).get("judge"))
+    entry.only({"role"})
+    role = entry.text("role")
+    if role not in ROLES:
+        entry._fail("role", f"must be one of the model file's roles: {', '.join(ROLES)}")
+    return role
+
+
 def load_layout_parser(path: Path = CONFIG_DIR / "models.toml") -> str:
     """The name of the layout parser that reads table pages on the workspace (Route B)."""
     entry = _Entry(path, "layout", _read(path).get("layout"))
@@ -756,19 +767,88 @@ def load_rejoin_split_words(path: Path = CONFIG_DIR / "models.toml") -> bool:
 
 
 @dataclass(frozen=True)
+class SearchSetup:
+    """One search setup (ticket 32): how the two rankings are fused, whether the reranker runs, and whether
+    keyword search reads each passage's header. The model file's [search.setup] is production's; the tuning
+    gate compares a candidate with it."""
+
+    keyword_weight: float = 1.0
+    vector_weight: float = 1.0
+    rerank: bool = True
+    rerank_depth: int = 20
+    header_in_words: bool = True
+
+
+@dataclass(frozen=True)
 class SearchSettings:
-    """How search_passages ranks on the workspace: the AI Search index and the reranker it runs."""
+    """How search_passages ranks on the workspace: the AI Search index and the reranker it runs, and the
+    search setup production uses."""
 
     index: str  # the Delta Sync index over strata.gold.passage, by its three-part name
     reranker: str  # the model AI Search reranks the best hits with
     rerank_columns: tuple[str, ...]  # the columns of each passage the reranker reads
+    setup: SearchSetup = SearchSetup()
+
+
+def _weight(entry: _Entry, key: str) -> float:
+    value = entry.table.get(key)
+    if not isinstance(value, int | float) or isinstance(value, bool) or value < 0:
+        entry._fail(key, "must be a number, zero or more")
+    return float(value)
 
 
 def load_search(path: Path = CONFIG_DIR / "models.toml") -> SearchSettings:
-    """The AI Search index and the reranker search_passages uses on the workspace."""
+    """The AI Search index and the reranker search_passages uses on the workspace, and the search setup."""
     entry = _Entry(path, "search", _read(path).get("search"))
-    entry.only({"index", "reranker", "rerank_columns"})
-    return SearchSettings(entry.text("index"), entry.text("reranker"), entry.texts("rerank_columns"))
+    entry.only({"index", "reranker", "rerank_columns", "setup"})
+    setup = SearchSetup()
+    if "setup" in entry.table:
+        table = _Entry(path, "search.setup", entry.table["setup"])
+        table.only({"keyword_weight", "vector_weight", "rerank", "rerank_depth", "header_in_words"})
+        depth = table.integer("rerank_depth")
+        if depth < 1:
+            table._fail("rerank_depth", "must be 1 or more")
+        setup = SearchSetup(_weight(table, "keyword_weight"), _weight(table, "vector_weight"), table.boolean("rerank"),
+                            depth, table.boolean("header_in_words"))
+        if setup.keyword_weight == 0 and setup.vector_weight == 0:
+            table._fail("keyword_weight", "or vector_weight must be more than zero, or nothing ranks")
+    return SearchSettings(entry.text("index"), entry.text("reranker"), entry.texts("rerank_columns"), setup)
+
+
+# ── The retrieval loop's lists (ticket 32) ───────────────────────────────
+
+@dataclass(frozen=True)
+class QueryKind:
+    """One kind of question, which a passage report and a ranking-lower decision are about. words are the
+    stemmed words (strata.knowledge.embed.terms) whose presence in a question picks it."""
+
+    key: str
+    words: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class RetrievalLists:
+    query_kinds: tuple[QueryKind, ...]  # in the file's order, which breaks a tie; the last has no words
+    fallback: str  # the kind a question with none of the words gets
+
+
+def load_retrieval(path: Path = CONFIG_DIR / "retrieval.toml") -> RetrievalLists:
+    """config/retrieval.toml: the kinds of question passage reports are grouped by, each with its words, and
+    the fallback kind."""
+    data = _read(path)
+    _Entry(path, "the file", data).only({"query_kinds", "fallback"})
+    kinds = []
+    for key, table in (data.get("query_kinds") or {}).items():
+        entry = _Entry(path, f"query_kinds.{key}", table)
+        entry.only({"words"})
+        kinds.append(QueryKind(key, entry.texts("words")))
+    fallback = data.get("fallback")
+    if not isinstance(fallback, str) or fallback not in {kind.key for kind in kinds}:
+        raise ConfigError(f"In {path.name}, fallback must name one of the query_kinds: "
+                          f"{', '.join(kind.key for kind in kinds)}.")
+    if not kinds:
+        raise ConfigError(f"In {path.name}, list at least one kind of question under [query_kinds].")
+    return RetrievalLists(tuple(kinds), fallback)
 
 
 @dataclass(frozen=True)
@@ -923,6 +1003,7 @@ def load_thresholds(path: Path = CONFIG_DIR / "thresholds.toml") -> Thresholds:
 # ── The tool registry ────────────────────────────────────────────────────
 
 PARAMETER_TYPES = ("string", "date", "integer", "number", "boolean")
+NOT_CHECKED_WHEN = ("ran", "cited")  # when a tool's "Not checked" clause applies (config/tools.toml)
 ROW_CONTRACT = ("evidence_id", "public_from", "source")  # spec, seam 2: every row carries these
 ADAPTER = re.compile(r"[a-z_][a-z0-9_.]*:[a-z_][a-z0-9_]*")
 TOOL_NAME = re.compile(r"[a-z][a-z0-9_]*")
@@ -952,6 +1033,12 @@ class ToolResult:
     abstentions_with_rows: tuple[str, ...] = ()  # the abstentions that still come with rows
     summary_fields: tuple[str, ...] = ()  # the derived figures returned as one citable record, the summary
     nested_rows: tuple[str, ...] = ()  # the row fields whose items are citable records of their own
+    # Its rows are lessons or comparable packages, so a sentence of kind advice may rest on them (the
+    # verifier's check 5: no advice without a lesson or a comparable among its evidence).
+    backs_advice: bool = False
+    # When the check line's "Not checked" clause for the tool applies: "ran", or "cited" once a sentence on screen
+    # cites its evidence (ticket 24).
+    not_checked_when: str = "ran"
 
 
 @dataclass(frozen=True)
@@ -1050,10 +1137,14 @@ def _tool_result(path: Path, name: str, table: dict) -> ToolResult:
                           f"with row, row_fields, source_fields and fields.")
     entry = _Entry(path, f"tools.{name}.result", table["result"])
     entry.only({"row", "row_fields", "source_fields", "fields", "reasons", "abstentions", "abstentions_with_rows",
-                "summary_fields", "nested_rows"})
+                "summary_fields", "nested_rows", "backs_advice", "not_checked_when"})
+    not_checked_when = entry.table.get("not_checked_when", "ran")
+    if not_checked_when not in NOT_CHECKED_WHEN:
+        entry._fail("not_checked_when", f"must be one of {', '.join(NOT_CHECKED_WHEN)}")
     result = ToolResult(entry.text("row"), entry.texts("row_fields"), entry.texts("source_fields"),
                         entry.texts("fields"), entry.texts("reasons"), entry.texts("abstentions"),
-                        entry.texts("abstentions_with_rows"), entry.texts("summary_fields"), entry.texts("nested_rows"))
+                        entry.texts("abstentions_with_rows"), entry.texts("summary_fields"), entry.texts("nested_rows"),
+                        bool(entry.table.get("backs_advice", False)), not_checked_when)
     # A summary carries the tool's own fields, and the coverage line's counts, which every result has.
     strays = [field for field in result.summary_fields if field not in (*result.fields, "coverage")]
     if strays:
@@ -1169,6 +1260,8 @@ class DraftKind:
     removed_box: str
     not_checked: tuple[str, ...]
     files: str
+    # Only viewers with the World Bank staff role may start one (ticket 37's mission brief).
+    staff_only: bool = False
 
 
 @dataclass(frozen=True)
@@ -1192,7 +1285,7 @@ def load_draft_kinds(path: Path = CONFIG_DIR / "drafts.toml") -> DraftKinds:
     for key, table in (data.get("kinds") or {}).items():
         entry = _Entry(path, f"kinds.{key}", table)
         entry.only({"writer", "agent", "word", "export", "csv", "columns", "holds", "sources_list", "removed_box",
-                    "not_checked", "files"})
+                    "not_checked", "files", "staff_only"})
         if not MODULE.fullmatch(entry.text("writer")):
             entry._fail("writer", "must name a module, such as strata.drafts.review_notes")
         if not FUNCTION.fullmatch(entry.text("word")):
@@ -1211,7 +1304,7 @@ def load_draft_kinds(path: Path = CONFIG_DIR / "drafts.toml") -> DraftKinds:
         kinds[key] = DraftKind(key, entry.text("writer"), entry.text("agent"), entry.text("word"),
                                entry.text("export"), entry.texts("csv"), entry.texts("columns"), entry.texts("holds"),
                                entry.boolean("sources_list"), entry.text("removed_box"), entry.texts("not_checked"),
-                               entry.text("files"))
+                               entry.text("files"), entry.boolean("staff_only") if "staff_only" in table else False)
     if not kinds:
         raise ConfigError(f"{path.name} defines no draft kind. Add a [kinds.<key>] table.")
     return DraftKinds(kinds, holds)
@@ -1220,7 +1313,9 @@ def load_draft_kinds(path: Path = CONFIG_DIR / "drafts.toml") -> DraftKinds:
 # ── The roles file ───────────────────────────────────────────────────────
 
 # The reviewer pages a group's members may open, and what they may do there. Later tickets add theirs.
-ROLE_PAGES = ("lesson_review",)
+# Ticket 32 adds Lessons > Passage reports (passage_reports), where passage reviewers decide on reports, and
+# Lessons > Judging (judging), where query judges grade the labeled set; each page is its own act.
+ROLE_PAGES = ("lesson_review", "passage_reports", "judging")
 ROLE_ACTS = ("recommend", "decide", "cross_check")
 
 
@@ -1275,6 +1370,9 @@ class Roles:
     teams: tuple[Team, ...]
     groups: dict[str, Group]
     people: tuple[Person, ...]
+    # The workspace groups whose members have the World Bank staff role (ticket 37): they may open Following and
+    # follow projects. A roles file with no [staff] section names no one.
+    staff: tuple[str, ...] = ()
 
     def person(self, email: str | None) -> Person | None:
         """The person with this email, ignoring case, or None for anyone the file does not list."""
@@ -1288,7 +1386,14 @@ def load_roles(path: Path = CONFIG_DIR / "roles.toml") -> Roles:
     """The roles file's teams, in the file's order, each with at least one workspace group, then its reviewer
     groups and the people in them."""
     data = _read(path)
-    _Entry(path, "the file", data).only({"teams", "groups", "people"})
+    _Entry(path, "the file", data).only({"teams", "groups", "people", "staff"})
+    staff: tuple[str, ...] = ()
+    if "staff" in data:
+        entry = _Entry(path, "staff", data["staff"])
+        entry.only({"groups"})
+        staff = entry.texts("groups")
+        if not staff:
+            entry._fail("groups", "must name at least one workspace group")
     teams = []
     for key, table in (data.get("teams") or {}).items():
         entry = _Entry(path, f"teams.{key}", table)
@@ -1323,14 +1428,16 @@ def load_roles(path: Path = CONFIG_DIR / "roles.toml") -> Roles:
                 entry._fail("groups", f"names the group {key}, which [groups] does not define. It defines "
                                       f"{', '.join(groups) or 'none'}")
         regions = entry.texts("regions")
-        if not regions:
+        # A lesson reviewer reviews the lessons of their regions. A query judge or a passage reviewer works on
+        # every region's passages, so needs none.
+        if not regions and any("lesson_review" in groups[key].pages for key in named):
             entry._fail("regions", "must name at least one region, as strata.gold.project.region writes it")
         projects = entry.texts("projects")
         for project in projects:
             if not PROJECT_ID.fullmatch(project):
                 entry._fail("projects", f"must be a project ID, P followed by six digits, not {project!r}")
         people.append(Person(email, entry.text("name"), named, regions, projects))
-    return Roles(tuple(teams), groups, tuple(people))
+    return Roles(tuple(teams), groups, tuple(people), staff)
 
 
 # ── The evidence ladder ──────────────────────────────────────────────────
@@ -1583,6 +1690,132 @@ def load_lesson_lists(path: Path = CONFIG_DIR / "lessons.toml") -> LessonLists:
     return LessonLists(**lists, example_projects=examples)
 
 
+# ── The item registry of "Check your criteria" (ticket 31) ───────────────
+
+CRITERIA_PARTS = ("contracts", "amount", "window_years", "years")
+
+
+@dataclass(frozen=True)
+class CriteriaItem:
+    key: str
+    label: str
+    phrase: str
+    is_criterion: bool
+    synonyms: tuple[str, ...]
+    parts: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class CriteriaItems:
+    items: tuple[CriteriaItem, ...]
+    cues: tuple[str, ...]
+
+    def item(self, key: str) -> CriteriaItem:
+        for item in self.items:
+            if item.key == key:
+                return item
+        raise KeyError(key)
+
+    def has(self, key: str) -> bool:
+        return any(item.key == key for item in self.items)
+
+    @property
+    def criteria(self) -> tuple[CriteriaItem, ...]:
+        return tuple(item for item in self.items if item.is_criterion)
+
+
+def load_criteria_items(path: Path = CONFIG_DIR / "criteria_items.toml") -> CriteriaItems:
+    """The kinds of requirement section 5 compares, in the registry's order. The last is other, which has no
+    synonyms and holds every rejection reason no other item names."""
+    data = _read(path)
+    _Entry(path, "the file", data).only({"items", "requirements"})
+    items: list[CriteriaItem] = []
+    for entry in _tables(path, data, "items"):
+        entry.only({"key", "label", "phrase", "is_criterion", "synonyms", "parts"})
+        item = CriteriaItem(entry.text("key"), entry.text("label"), entry.text("phrase"), entry.boolean("is_criterion"),
+                            tuple(word.lower() for word in entry.texts("synonyms")), entry.texts("parts"))
+        if not re.fullmatch(r"[a-z][a-z0-9_]*", item.key):
+            entry._fail("key", "must be lower case letters, digits and _")
+        if item.key in {seen.key for seen in items}:
+            entry._fail("key", f"repeats {item.key!r}. Each key is listed once")
+        strays = [part for part in item.parts if part not in CRITERIA_PARTS]
+        if strays:
+            entry._fail("parts", f"names {', '.join(strays)}; the parts are {', '.join(CRITERIA_PARTS)}")
+        items.append(item)
+    if not items or items[-1].key != "other" or items[-1].synonyms or items[-1].is_criterion:
+        raise ConfigError(f"{path.name} must end with the item other, which has no synonyms and is no criterion.")
+    requirements = _Entry(path, "requirements", data.get("requirements", {}))
+    requirements.only({"cues"})
+    cues = tuple(word.lower() for word in requirements.texts("cues"))
+    if not cues:
+        requirements._fail("cues", "must list the words that mark a sentence as setting a requirement")
+    return CriteriaItems(tuple(items), cues)
+
+
+# ── Rebidding risk (ticket 28) ───────────────────────────────────────────
+
+@dataclass(frozen=True)
+class RebiddingReason:
+    """A reason a notice gives in words for advertising a package again, with the patterns that find its sentence."""
+
+    code: str
+    patterns: tuple[re.Pattern, ...]
+
+
+def load_rebidding_reasons(path: Path = CONFIG_DIR / "rebidding_reasons.toml") -> tuple[RebiddingReason, ...]:
+    """The reasons a notice gives in words, in the registry's order."""
+    data = _read(path)
+    _Entry(path, "the file", data).only({"reason"})
+    reasons: list[RebiddingReason] = []
+    for entry in _tables(path, data, "reason"):
+        entry.only({"code", "patterns"})
+        code = entry.text("code")
+        if not re.fullmatch(r"[a-z][a-z0-9_]*", code) or code in {seen.code for seen in reasons}:
+            entry._fail("code", "must be lower case letters, digits and _, and listed once")
+        try:
+            patterns = tuple(re.compile(pattern, re.IGNORECASE) for pattern in entry.texts("patterns"))
+        except re.error as error:
+            entry._fail("patterns", f"must be regular expressions ({error})")
+        if not patterns:
+            entry._fail("patterns", "must list at least one pattern")
+        reasons.append(RebiddingReason(code, patterns))
+    return tuple(reasons)
+
+
+@dataclass(frozen=True)
+class RebiddingSettings:
+    """The rebidding models (ticket 28): the model file's [rebidding] table."""
+
+    learners: tuple[str, ...]  # the two models compared, by their names in strata.estimates.rebidding_model
+    registered_model: str  # catalog.schema.model in Unity Catalog
+    experiment: str  # the MLflow experiment
+    test_years: tuple[int, ...]  # the rolling backtests, each tested on one calendar year
+    calibration_every: int  # every this-many-th training package calibrates the gradient boosting
+    learner_settings: dict  # each learner's own settings, from [rebidding.<learner>]
+
+
+def load_rebidding(path: Path = CONFIG_DIR / "models.toml") -> RebiddingSettings:
+    """The model file's [rebidding] table, with each learner's settings."""
+    entry = _Entry(path, "rebidding", _read(path).get("rebidding"))
+    learners = entry.texts("learners")
+    entry.only({"learners", "registered_model", "experiment", "test_years", "calibration_every", *learners})
+    if len(learners) < 2:
+        entry._fail("learners", "must name the two models the backtests compare")
+    registered = entry.text("registered_model")
+    if registered.count(".") != 2:
+        entry._fail("registered_model", "must be a three-part Unity Catalog name, such as strata.gold.rebidding_risk")
+    years = entry.table.get("test_years")
+    if not isinstance(years, list) or not years or not all(isinstance(y, int) and not isinstance(y, bool) for y in years):
+        entry._fail("test_years", "must be a list of years, such as [2021, 2022]")
+    every = entry.integer("calibration_every")
+    if every < 2:
+        entry._fail("calibration_every", "must be 2 or more, so the model learns from some packages")
+    settings = {}
+    for learner in learners:
+        settings[learner] = dict(_Entry(path, f"rebidding.{learner}", entry.table.get(learner, {})).table)
+    return RebiddingSettings(learners, registered, entry.text("experiment"), tuple(sorted(years)), every, settings)
+
+
 # ── The editions of the procurement rules ────────────────────────────────
 
 @dataclass(frozen=True)
@@ -1633,21 +1866,70 @@ def load_editions(path: Path = CONFIG_DIR / "editions.toml") -> Editions:
 
 # ── The project page's lists (ticket 21) ─────────────────────────────────
 
+LINE_STATES = ("info", "warning")
+KEY_DATE = "key_date"  # an event dated by the assertions reader's own key-date pattern (KEY_DATE_LABELS)
+
+
+@dataclass(frozen=True)
+class TimelineEvent:
+    """An event the timeline's How lane draws (ticket 23): the words a passage must hold, and the pattern whose one
+    group reads the event's date in date_format, or key_date for the assertions reader's pattern for this kind."""
+    kind: str
+    words: tuple[str, ...]
+    pattern: str
+    date_format: str
+
+
+@dataclass(frozen=True)
+class TimelineSettings:
+    """A project timeline's settings (ticket 23): the state a dashed line takes when no answer or draft open on the
+    page depends on it, and the events the How lane draws, in file order."""
+    disagreement_line_state: str
+    events: tuple[TimelineEvent, ...]
+
+
 @dataclass(frozen=True)
 class ProjectPage:
     """The project page's lists: the documents API's type for each Documents group, in project-cycle
-    order; the groups re-issued under one report number; and the Summary's ISR ratings and the projects
-    API's Procurement rating code."""
+    order; the groups re-issued under one report number; the Summary's ISR ratings and the projects
+    API's Procurement rating code; and the Timeline tab's settings."""
     document_groups: dict[str, str]
     reissued: frozenset[str]
     isr_ratings: dict[str, str]
     procurement_rating_code: str
+    timeline: TimelineSettings
+
+
+def _timeline(path: Path, data: dict) -> TimelineSettings:
+    timeline = _Entry(path, "timeline", data.get("timeline", {}))
+    timeline.only({"disagreement_line_state", "events"})
+    state = timeline.text("disagreement_line_state")
+    if state not in LINE_STATES:
+        timeline._fail("disagreement_line_state", f"must be info or warning, not {state!r}")
+    events: list[TimelineEvent] = []
+    for entry in _tables(path, timeline.table, "events"):
+        entry.only({"kind", "words", "pattern", "date_format"})
+        pattern = entry.text("pattern")
+        if pattern != KEY_DATE:
+            try:
+                groups = re.compile(pattern).groups
+            except re.error:
+                groups = 0
+            if groups != 1:
+                entry._fail("pattern", "must be key_date or a pattern with one group, which reads the date")
+        event = TimelineEvent(entry.text("kind"), entry.texts("words"), pattern, entry.text("date_format"))
+        if not event.words:
+            entry._fail("words", "must name at least one phrase a passage holds")
+        if any(other.kind == event.kind for other in events):
+            entry._fail("kind", f"repeats {event.kind!r}. Each event is listed once")
+        events.append(event)
+    return TimelineSettings(state, tuple(events))
 
 
 def load_project_page(path: Path = CONFIG_DIR / "project_page.toml") -> ProjectPage:
     """The project page's lists, in file order, which is the order the page shows them in."""
     data = _read(path)
-    _Entry(path, "the file", data).only({"documents", "summary"})
+    _Entry(path, "the file", data).only({"documents", "summary", "timeline"})
     documents = _Entry(path, "documents", data.get("documents", {}))
     documents.only({"groups", "reissued"})
     groups: dict[str, str] = {}
@@ -1666,7 +1948,7 @@ def load_project_page(path: Path = CONFIG_DIR / "project_page.toml") -> ProjectP
     for entry in _tables(path, summary.table, "isr_ratings"):
         entry.only({"name", "key"})
         ratings[entry.text("name")] = entry.text("key")
-    return ProjectPage(groups, reissued, ratings, summary.text("procurement_rating_code"))
+    return ProjectPage(groups, reissued, ratings, summary.text("procurement_rating_code"), _timeline(path, data))
 
 # ── The package form schema (ticket 15) ──────────────────────────────────
 

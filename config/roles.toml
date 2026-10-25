@@ -23,7 +23,11 @@
 #                    names the person in the row. The names below wait for the workspace
 #                    (docs/workspace-catchup.md).
 #   role             what its members are called on reviewer pages, such as "lead procurement specialist"
-#   pages            the reviewer pages its members may open: lesson_review is Lessons > Waiting for review
+#   pages            the reviewer pages its members may open: lesson_review is Lessons > Waiting for review,
+#                    passage_reports is Lessons > Passage reports, where passage reviewers decide whether a
+#                    reported passage is ranked lower, and judging is Lessons > Judging, where query judges
+#                    grade the passages pooled for each query of the labeled set (ticket 32). Opening
+#                    passage_reports or judging is the act itself, so those groups list no acts.
 #   acts             what its members may do there: recommend, decide or cross_check a lesson
 #
 # [[people]], one per person in any reviewer group:
@@ -31,7 +35,8 @@
 #   name      their name, shown only on reviewer-only pages (the 29 design brief, section 4.1)
 #   groups    the keys of the reviewer groups they belong to
 #   regions   the regions whose lessons they review, written word for word as strata.gold.project.region
-#             writes them, such as "South Asia" or "Eastern and Southern Africa"
+#             writes them, such as "South Asia" or "Eastern and Southern Africa". A query judge or a
+#             passage reviewer who reviews no lessons may leave it empty.
 #   projects  the projects they work on, by project ID. They never recommend or decide on a lesson
 #             from one of these (recusal, docs/PLAN.md section 11).
 #
@@ -40,9 +45,25 @@
 # A lead may also recommend, and then a different lead decides. Either may cross-check another
 # region's decisions when the quarterly job assigns them.
 #
+# The retrieval loop (ticket 32; docs/PLAN.md section 11, "Feedback"): each query of the labeled set gets two
+# query judges, who grade its pooled passages each on their own. A passage reviewer decides whether a
+# passage people reported is ranked lower for that kind of question, and never decides on reports they sent
+# themselves. The search owner is one of the passage reviewers.
+#
 # The people are left out until the owner names them (a parked decision), so until then no one is a
-# lesson reviewer and the review queue stays hidden. tests/fixtures/roles.toml lists the made-up
-# reviewers the offline tests use.
+# lesson reviewer, query judge or passage reviewer, and their pages stay hidden. tests/fixtures/roles.toml
+# lists the made-up reviewers the offline tests use.
+
+# [staff], the World Bank staff role (ticket 37):
+#   groups   the workspace groups whose members are World Bank staff in Strata. Only they may open Following
+#            and follow projects; the server refuses everyone else (403 not_staff). A viewer whose groups
+#            could not be read is in none, so they see less, never more.
+#
+# Every workspace user defaults to the World Bank staff view (spec, "The app"), and every workspace user is in
+# the workspace's built-in users group, so that group is the starting value. Ticket 38 narrows it when the
+# implementing agency teams join the workspace (a parked decision, ticket 37).
+[staff]
+groups = ["users"]
 
 [teams.kenya-water]
 name = "Kenya water and sanitation"
@@ -59,3 +80,15 @@ workspace_group = "strata-lead-procurement-specialists"
 role = "lead procurement specialist"
 pages = ["lesson_review"]
 acts = ["recommend", "decide", "cross_check"]
+
+[groups.passage_reviewer]
+workspace_group = "strata-passage-reviewers"
+role = "passage reviewer"
+pages = ["passage_reports"]
+acts = []
+
+[groups.query_judge]
+workspace_group = "strata-query-judges"
+role = "query judge"
+pages = ["judging"]
+acts = []

@@ -30,6 +30,12 @@ record, the plan-date choice and section 4 need, so no comparison and no choice 
 - Section 4's approaches: the combinations of market approach, lots and qualification that comparable packages
   whose records give all three went with, most first, up to three, leaving out what the thresholds rule out.
 
+- The planned date for each STEP step (ticket 27, section 2 of the workspace) comes back in step_dates, from the
+  same comparable packages: strata.estimates.step_dates picks the package's method family from the step-label
+  registry and holds that model, its thresholds and its rules. Both choices, middle and cautious, come in one
+  answer, so the screen switches between them with no second call. The step dates come back whatever the time
+  estimate does, since section 2 stands on its own; they are left out only for a package no record holds.
+
 Every number is a tool column at its rounding: days whole, months to one decimal. The browser counts nothing.
 The call's view is returned with the result but not applied until ticket 40.
 """
@@ -38,21 +44,25 @@ from __future__ import annotations
 
 import datetime as dt
 import json
+import logging
 import statistics
 from collections import Counter
 from decimal import Decimal
 from importlib import resources
 
-from strata.config import Lever, load_time_estimate, load_what_if
+from strata.config import Lever, load_sources, load_time_estimate, load_tools, load_what_if
 from strata.estimates import backtest, model_card, portable, scoring
+from strata.estimates import step_dates as steps
 from strata.estimates.harness import Reader
 from strata.estimates.past_range import QUARTERS, months, whole
 from strata.estimates.time_estimate import described_features, packages_as_of
 from strata.packages import compute
+from strata.lakehouse.engine import EngineError
 from strata.tools.find_comparables import find_comparables
-from strata.tools.registry import Call
+from strata.tools.registry import Call, ToolError
 
 TOOL = "estimate_time"
+log = logging.getLogger("strata.tools.estimate_time")
 POINTS = tuple(QUARTERS)  # q25, q50, q75, q80
 # find_comparables' abstentions for a package with nothing to compare, which this tool gives too.
 FROM_COMPARABLES = ("unknown_package", "no_public_notice", "no_comparables", "none_measurable")
@@ -231,6 +241,9 @@ def _comparisons(levers: tuple[Lever, ...], described: dict, went: dict[str, dic
         if not compute.allows(thresholds, values, lever.key, value):
             continue
         matching = sorted(reference for reference, record in went.items() if record[lever.key] == value)
+        # Those whose records give no value for the lever: the chart counts them among the others, and the table
+        # twin says "Not recorded" for them rather than "No".
+        unrecorded = sorted(reference for reference, record in went.items() if record[lever.key] is None)
         if lever.feature is None:
             estimate, abstention = None, {"reason": "not_in_model", "lever": lever.key}
         elif k < fewest:
@@ -238,15 +251,18 @@ def _comparisons(levers: tuple[Lever, ...], described: dict, went: dict[str, dic
         else:
             estimate, abstention = _cell_estimate(_cell_for(cells, described, {lever.feature: value}))
         found.append({"lever": lever.key, "value": value, "own": own, "k": k, "rest": n - k, "n": n,
-                      "matching_ids": matching, "estimate": estimate, "abstention": abstention})
+                      "matching_ids": matching, "unrecorded_ids": unrecorded, "estimate": estimate,
+                      "abstention": abstention})
     return found
 
 
 def _options(described: dict, went: dict[str, dict], cells: dict[tuple, dict], thresholds, values: dict) -> dict:
     fewest = int(thresholds.value("what_if.min_subgroup"))
     n = len(went)
-    whole_records = [(record["market_approach"], record["lots"], record["prequalification"]) for record in went.values()
-                     if None not in (record["market_approach"], record["lots"], record["prequalification"])]
+    approach_of = {reference: (record["market_approach"], record["lots"], record["prequalification"])
+                   for reference, record in went.items()
+                   if None not in (record["market_approach"], record["lots"], record["prequalification"])}
+    whole_records = list(approach_of.values())
     counts = Counter(approach for approach in whole_records
                      if compute.allows(thresholds, values, "market_approach", approach[0]))
     ranked = sorted(counts.items(), key=lambda item: (-item[1], str(item[0])))
@@ -260,9 +276,10 @@ def _options(described: dict, went: dict[str, dict], cells: dict[tuple, dict], t
         else:
             estimate, abstention = _cell_estimate(
                 _cell_for(cells, described, {"market_approach": approach, "prequalification": qualification}))
+        matching = sorted(reference for reference, whole in approach_of.items() if whole == (approach, lots, qualification))
         approaches.append({"market_approach": approach, "lots": lots, "prequalification": qualification, "k": k,
-                           "is_as_described": (approach, lots, qualification) == own, "estimate": estimate,
-                           "abstention": abstention})
+                           "matching_ids": matching, "is_as_described": (approach, lots, qualification) == own,
+                           "estimate": estimate, "abstention": abstention})
     return {"approaches": approaches, "count": len(ranked), "recorded": len(whole_records), "n": n,
             "review_type": described["review_type"]}
 
@@ -334,6 +351,40 @@ def _plan_dates(estimate: dict, latest: dict | None) -> dict:
             "default": "eight_in_ten"}
 
 
+# ── The planned date for each step (ticket 27) ──────────────────────────
+
+def _sources() -> list[dict]:
+    registry = load_sources()
+    return [{"key": key, "dataset_name": registry[key].dataset_name} for key in load_tools()[TOOL].sources]
+
+
+def _step_dates(call: Call, found: dict, criteria: dict, start_date: dt.date | None, settings: steps.Settings,
+                sources: list[dict]) -> dict:
+    """Section 2's planned date for each step, as of call.as_of, from find_comparables' comparable packages. With
+    no STEP row, for a package someone is planning, the category and method come from the criteria."""
+    package = found["package"]
+    category_now = package["category"] if package else criteria.get("category")
+    method_now = package["method"] if package else criteria.get("method")
+
+    def rows(sql: str, **params) -> list[dict]:
+        result = call.engine.run(sql, {**params, "as_of": call.as_of})
+        return [dict(zip(result.columns, values)) for values in result.rows]
+
+    comparables = [row["step_reference"] for row in found["rows"]]
+    try:
+        track = steps.track_record(call.engine, call.as_of, settings)
+    except EngineError:  # a viewer who cannot read strata.ops still gets the dates, with no track record line
+        log.warning("I could not read the step backtests' track record for %s.", call.viewer.name, exc_info=True)
+        track = None
+    dated = steps.step_dates(rows, category=category_now, method=method_now,
+                             package_reference=package["step_reference"] if package else None,
+                             comparables=comparables, as_of=call.as_of, start_date=start_date, settings=settings,
+                             track=track, sources=[source["key"] for source in sources])
+    # The comparable packages whose plans dated none of the family's steps: step_dates' own coverage counts them.
+    dated.pop("not_used", None)
+    return dated
+
+
 # ── The tool ─────────────────────────────────────────────────────────────
 
 def estimate_time(call: Call, step_reference: str | None = None, method: str | None = None,
@@ -342,9 +393,14 @@ def estimate_time(call: Call, step_reference: str | None = None, method: str | N
                   notice_from: dt.date | None = None, notice_to: dt.date | None = None,
                   described_amount_usd: float | None = None, described_market_approach: str | None = None,
                   described_review_type: str | None = None, described_prequalification: str | None = None,
-                  described_lots: int | None = None) -> dict:
-    """The time estimate for one package as of call.as_of, with everything section 1's lane 2 and section 4 show."""
+                  described_lots: int | None = None, start_date: dt.date | None = None) -> dict:
+    """The time estimate for one package as of call.as_of, with everything section 1's lane 2 and section 4 show,
+    and section 2's planned date for each step."""
     thresholds, settings, levers = call.thresholds, load_time_estimate(), load_what_if()
+    step_settings = steps.Settings.read(thresholds)
+    window = step_settings.start_range(call.as_of)
+    if start_date is not None and not window["from"] <= start_date.isoformat() <= window["to"]:
+        raise ToolError(f"estimate_time takes a start_date from {window['from']} to {window['to']}, not {start_date}.")
     criteria = {"method": method, "category": category, "market_approach": market_approach, "review_type": review_type,
                 "size_from_usd": size_from_usd, "size_to_usd": size_to_usd, "country": country,
                 "notice_from": notice_from, "notice_to": notice_to}
@@ -352,6 +408,9 @@ def estimate_time(call: Call, step_reference: str | None = None, method: str | N
              "review_type": described_review_type, "prequalification": described_prequalification, "lots": described_lots}
     found = find_comparables(call, step_reference=step_reference, **criteria)
     used = found["criteria"] or {}
+    sources = _sources()
+    unknown = found["abstention"] is not None and found["abstention"]["reason"] == "unknown_package"
+    dated = None if unknown else _step_dates(call, found, used, start_date, step_settings, sources)
     comparables = found["rows"]
     n = len(comparables)
     counts = found["counts"]
@@ -365,7 +424,8 @@ def estimate_time(call: Call, step_reference: str | None = None, method: str | N
               "comparisons": [], "options": None, "axis_max_months": None,
               "thresholds": {"min_comparables": fewest, "min_subgroup": int(thresholds.value("what_if.min_subgroup")),
                              "min_unseen_packages": int(thresholds.value("time_estimate.min_unseen_packages"))},
-              "sources": found["sources"], "records_through": found["records_through"], "abstention": None}
+              "step_dates": dated, "sources": sources, "records_through": found["records_through"],
+              "abstention": None}
     abstention = found["abstention"]
     if abstention is not None and abstention["reason"] in FROM_COMPARABLES:
         return {**result, "abstention": abstention}

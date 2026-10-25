@@ -29,3 +29,9 @@ env:
     valueFrom: foundry-client-id
   - name: FOUNDRY_CLIENT_SECRET
     valueFrom: foundry-client-secret
+  # The judge of the verifier's check 4: its two Azure OpenAI keys, which the deploy saves in the secret
+  # scope the same way (src/strata/agent/judge.py). The deploy leaves them out when .env lacks either.
+  - name: AZURE_OPENAI_ENDPOINT
+    valueFrom: azure-openai-endpoint
+  - name: AZURE_OPENAI_API_KEY
+    valueFrom: azure-openai-key

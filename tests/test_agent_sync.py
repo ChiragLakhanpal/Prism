@@ -48,9 +48,10 @@ def test_the_instructions_name_the_summary_record_wherever_a_tool_returns_one():
 
 
 def test_the_instructions_say_a_record_inside_a_row_is_cited_by_its_own_evidence_id():
-    """get_disagreements returns each side of a disagreement as a record of its own (nested_rows), and get_lessons
-    each quote a lesson rests on (ticket 30), so the agent is told it may cite such a record, and quote it only
-    from its text (CLAUDE.md rule 2)."""
+    """get_disagreements returns each side of a disagreement as a record of its own (nested_rows), get_lessons each
+    quote a lesson rests on (ticket 30), compare_criteria each requirement's notice passage (ticket 31), and
+    rebidding_risk each record that says a package was advertised again (ticket 28), so the agent is told it may
+    cite such a record, and quote it only from its text (CLAUDE.md rule 2)."""
     from strata.config import load_tools
 
     nested = [name for name, tool in load_tools().items() if tool.result.nested_rows]
@@ -58,7 +59,8 @@ def test_the_instructions_say_a_record_inside_a_row_is_cited_by_its_own_evidence
         "definition"]["instructions"]
     tools_section = instructions.split("## Your tools", 1)[1]
 
-    assert nested == ["get_lessons", "get_disagreements"]
+    # project_signals (ticket 37) returns the records each signal rests on the same way.
+    assert nested == ["project_signals", "get_lessons", "get_disagreements", "compare_criteria", "rebidding_risk"]
     assert "Cite such a record by its evidence_id, and quote it only from its text." in tools_section
 
 

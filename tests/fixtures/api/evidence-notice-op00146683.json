@@ -1,0 +1,56 @@
+{
+  "id": "strata.gold.notice:OP00146683",
+  "kind": "record",
+  "tool": null,
+  "stratum": "What",
+  "short_name": null,
+  "row": {
+    "reference": "OP00146683",
+    "notice_id": "OP00146683",
+    "record_kind": "notice",
+    "fields": [
+      {
+        "key": "notice_type",
+        "value": "Invitation for Bids",
+        "kind": "text"
+      },
+      {
+        "key": "published",
+        "value": "2021-09-17",
+        "kind": "date"
+      },
+      {
+        "key": "bid_reference",
+        "value": "KE-NWWDA-229129-CW-RFB",
+        "kind": "text"
+      },
+      {
+        "key": "procurement_method",
+        "value": "Request for Bids",
+        "kind": "text"
+      },
+      {
+        "key": "submission_deadline",
+        "value": "2021-10-19",
+        "kind": "date"
+      },
+      {
+        "key": "bid_description",
+        "value": "Drilling of 4 Number Exploratory Boreholes In Wajir County",
+        "kind": "text"
+      }
+    ],
+    "public_from": "2021-09-17",
+    "step_reference": "KE-NWWDA-229129-CW-RFB",
+    "project_id": "P156634",
+    "activity_href": "/projects/P156634/packages/KE-NWWDA-229129-CW-RFB",
+    "url": "https://projects.worldbank.org/en/projects-operations/procurement-detail/OP00146683",
+    "source": {
+      "source_key": "notices",
+      "document_type": "Invitation for Bids",
+      "project_id": "P156634",
+      "document_date": "2021-09-17"
+    }
+  },
+  "highlights": []
+}

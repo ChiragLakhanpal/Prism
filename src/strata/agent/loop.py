@@ -13,7 +13,8 @@ answer_runner() makes the runner the server's /api/ask stream runs. For each que
    can check the answer against it. The results go back to the agent.
 3. This repeats for at most agent.tool_rounds rounds (config/thresholds.toml). A call the agent asks
    for after that is not run: the agent gets a result that says so, and must answer from what it has.
-4. The agent's claims go to the stream, which runs the verifier on them before anything is shown.
+4. The agent's claims go to the stream, which runs the verifier on them before anything is shown, with
+   the refusal key when the agent turned the request down (ticket 24).
 
 Each tool call is a step, announced as it starts and when it is done. A tool the agent called with
 arguments the registry refuses gets the refusal back, so the agent can try again in its next round. A
@@ -29,7 +30,7 @@ import logging
 from collections.abc import AsyncIterator, Callable, Mapping
 from typing import Any, Protocol
 
-from strata.agent.claims import ClaimsError, parse_claims
+from strata.agent.claims import ClaimsError, parse_answer
 from strata.config import Thresholds, Tool, load_thresholds, load_tools
 from strata.harness.facts import Facts
 from strata.harness.turn import Event, RunError, Runner, Turn
@@ -112,15 +113,20 @@ def keep_nested(facts: Facts, record: Mapping, tool: str | None) -> None:
 
 def keep_result(facts: Facts, name: str, result: Mapping, tools: dict[str, Tool]) -> None:
     """Keep every row a tool returned in the turn's Facts, with the records inside its rows that the registry
-    names (nested_rows) and its summary of derived figures when it has one, so the verifier can check what a
-    sentence cites against them. The answer loop and the risk-table builder (ticket 30) keep results this way."""
+    names (nested_rows, such as each side of a disagreement), its summary of derived figures when it has one and
+    its abstention, so the verifier can check what a sentence cites against them. The answer loop, check 6's
+    get_disagreements call (ticket 24) and the risk-table builder (ticket 30) keep results this way."""
     nested = tools[name].result.nested_rows if name in tools else ()
+    # The kind of question of the search that found these rows, which a passage report on one of them takes (ticket 32).
+    kind = (result.get("ranked_lower") or {}).get("query_kind")
     for row in result["rows"]:
-        facts.record(row["evidence_id"], row, tool=name)
+        facts.record(row["evidence_id"], row, tool=name, kind=kind)
         for record in (inner for field in nested for inner in row.get(field) or ()):
             keep_nested(facts, record, name)
     if result.get("summary"):  # the tool's derived figures, such as a past range, as one citable record
         facts.record(result["summary"]["evidence_id"], result["summary"], tool=name)
+    if result.get("abstention"):  # what the tool could not answer, which a summary citing nothing may say
+        facts.abstained(name, result["abstention"])
 
 
 def answer_runner(agent_for: Callable[[Turn], Agent], engine_for: EngineFor, tools: dict[str, Tool] | None = None,
@@ -155,9 +161,12 @@ def answer_runner(agent_for: Callable[[Turn], Agent], engine_for: EngineFor, too
             return {"error": "permission"}, note
         except EngineError as error:  # the warehouse timed out or is down: not the agent's doing, nor a bug
             raise AgentError("data_service", str(error)) from error
-        keep_result(turn.facts, name, result, tools_held)
+        shown = for_agent(result, as_of)
+        # The turn keeps what the agent got: the same rows, and an abstention with no date after the as-of date, so
+        # the judge reads a summary that cites nothing against what the agent read (src/strata/agent/verifier.py).
+        keep_result(turn.facts, name, shown, tools_held)
         note.update(rows=len(result["rows"]), abstention=(result["abstention"] or {}).get("reason"))
-        return for_agent(result, as_of), note
+        return shown, note
 
     async def run(turn: Turn) -> AsyncIterator[Event]:
         agent = agent_for(turn)
@@ -176,11 +185,11 @@ def answer_runner(agent_for: Callable[[Turn], Agent], engine_for: EngineFor, too
             if not calls:
                 yield Event("step", {"id": "write", "kind": "write", "status": "running"})
                 try:
-                    claims = parse_claims(output_text(response))
+                    answer = parse_answer(output_text(response))
                 except ClaimsError as error:
                     raise AgentError("agent_output", str(error)) from error
-                yield Event("step", {"id": "write", "kind": "write", "status": "done", "count": len(claims)})
-                yield Event("claims", {"claims": claims})
+                yield Event("step", {"id": "write", "kind": "write", "status": "done", "count": len(answer.claims)})
+                yield Event("claims", {"claims": answer.claims, "refusal": answer.refusal})
                 return
             if turn.notes.tool_rounds >= rounds:
                 refusals += 1

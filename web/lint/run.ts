@@ -14,20 +14,26 @@
 // sentences), and every one is checked like the copy. So are the package form schema's words,
 // config/package_form.toml, each criterion chip's words (ticket 15), the lesson lists' labels
 // (config/lessons.toml), the editions' names (config/editions.toml) and the roles' names
-// (config/roles.toml), which the Lessons pages show (ticket 29). src/strata/tools/data_readiness_copy.json and
-// src/strata/drafts/copy.json are the server's copies of copy.dataReadiness.server and of a draft's
-// files' words, and the lint fails when either is out of date (web/lint/server-copy.ts writes them).
+// (config/roles.toml), which the Lessons pages show (ticket 29), and the item registry's labels and
+// phrases (config/criteria_items.toml), which section 5 of the package workspace shows (ticket 31).
+// src/strata/tools/data_readiness_copy.json and src/strata/drafts/copy.json are the server's copies of
+// copy.dataReadiness.server and of a draft's files' words, and the lint fails when either is out of date
+// (web/lint/server-copy.ts writes them), as src/strata/estimates/steps.json is of the step-label registry,
+// web/src/steps.ts (ticket 27).
 import { readFileSync, readdirSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { copyChecker } from "./copy.ts";
-import { copyStrings, lineOf, literalText, offTokenClasses, termLiterals } from "./source.ts";
+import { causalChecker, copyChecker } from "./copy.ts";
+import { CAUSAL_SCOPES } from "./rules.ts";
+import { copyStrings, lineOf, literalText, offTokenClasses, scopedRanges, termLiterals } from "./source.ts";
 import { staleServerCopies } from "./server-copy.ts";
 import { definitions } from "../src/lib/definitions.ts";
 
 const WEB = fileURLToPath(new URL("..", import.meta.url));
 const REPO = resolve(WEB, "..");
-const COPY_FILES = [join(WEB, "src/copy.ts"), join(WEB, "src/gallery/copy.ts")];
+// The step-label registry holds words people read too (ticket 27): each step's label and phrase, each stage and
+// each family's name and abbreviation note, so it is checked like the copy file.
+const COPY_FILES = [join(WEB, "src/copy.ts"), join(WEB, "src/gallery/copy.ts"), join(WEB, "src/steps.ts")];
 
 function sourceFiles(dir: string): string[] {
   return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
@@ -49,7 +55,7 @@ function options(argv: string[]) {
       given.registry ??
       (custom
         ? []
-        : ["sources.toml", "package_form.toml", "lessons.toml", "editions.toml", "roles.toml"].map((name) => join(REPO, "config", name))),
+        : ["sources.toml", "package_form.toml", "lessons.toml", "editions.toml", "roles.toml", "criteria_items.toml"].map((name) => join(REPO, "config", name))),
     design: given.design?.[0] ?? join(REPO, "DESIGN.md"),
     custom,
   };
@@ -61,7 +67,7 @@ function options(argv: string[]) {
 // options' labels and a count's units; STEP's own values and field names are left out, as they are words
 // Strata copies word for word.
 const REGISTRY_WORDS =
-  /\b(label|add_label|unit|unit_one|noun|noun_one|covers|note|sentence|counts|counts_one|lack|name|short|publisher|origin|data_source)\s*=\s*"([^"]*)"/g;
+  /\b(label|phrase|add_label|unit|unit_one|noun|noun_one|covers|note|sentence|counts|counts_one|lack|name|short|publisher|origin|data_source)\s*=\s*"([^"]*)"/g;
 
 function registryWords(text: string): { line: number; text: string }[] {
   return text.split("\n").flatMap((line, index) =>
@@ -84,10 +90,14 @@ function main(): number {
   const at = (file: string, line: number) => `${relative(process.cwd(), file) || file}:${line}`;
   const terms = definitions(readFileSync(join(REPO, "GLOSSARY.md"), "utf8"));
 
+  const causal = causalChecker();
   for (const file of copy) {
     const source = readFileSync(file, "utf8");
+    // The blocks that write about links between a contract and a paragraph also refuse causal words (ticket 22).
+    const scoped = scopedRanges(source, file, CAUSAL_SCOPES);
     for (const found of copyStrings(source, file)) {
-      for (const problem of check(found.text)) {
+      const inScope = scoped.some(([start, end]) => found.offset >= start && found.offset < end);
+      for (const problem of [...check(found.text), ...(inScope ? causal(found.text) : [])]) {
         problems.push(`${at(file, lineOf(source, found.offset))}: "${found.text.trim()}" ${problem}`);
       }
     }
@@ -104,10 +114,8 @@ function main(): number {
   }
   if (!custom) {
     for (const stale of staleServerCopies()) {
-      problems.push(
-        `${at(stale.file, 1)}: it is out of date with ${stale.from} in web/src/copy.ts. ` +
-          "Run node web/lint/server-copy.ts --write.",
-      );
+      const from = stale.from.includes("/") ? stale.from : `${stale.from} in web/src/copy.ts`;
+      problems.push(`${at(stale.file, 1)}: it is out of date with ${from}. Run node web/lint/server-copy.ts --write.`);
     }
   }
   for (const file of components) {

@@ -41,6 +41,9 @@ export type Origin = {
   // list, shown again, names the package it came back from, which takes focus (ticket 15).
   list?: { id: string; count: number } | null;
   entry?: string | null;
+  // Where a timeline's event mark opened it (ticket 23): "From the timeline" and the event with its date, above the
+  // passage or record that dates it, as "From the answer" sits above a sentence's source.
+  context?: { lead: string; line: string } | null;
 };
 export const origin = createStore<Origin | null>(null);
 

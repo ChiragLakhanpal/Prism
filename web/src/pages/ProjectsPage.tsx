@@ -23,6 +23,9 @@ import { copy } from "../copy";
 import type { ProjectList } from "../lib/api";
 import { formatDate } from "../lib/format";
 import { usePagedList } from "../lib/paged";
+import { staffRole } from "../lib/following";
+import { useStore } from "../lib/store";
+import { ProjectsTabs } from "../components/ProjectsTabs";
 
 const words = copy.projectsPage;
 const NAMES = { query: "q", page: "page" };
@@ -50,6 +53,7 @@ const PROJECT_SKELETON = (
 
 export function ProjectsPage() {
   const list = usePagedList<ProjectList>("/api/projects", NAMES);
+  const staff = useStore(staffRole) === true;
   const { load, shown, query } = list;
   const headingId = useId();
   // The count line, said once each time a search settles, through a polite status.
@@ -138,11 +142,16 @@ export function ProjectsPage() {
 
   return (
     <div className="layout-grid">
-      <div className="col-span-12 @md/page:col-span-8">
-        <PageHeader title={copy.pages.projects.title} purpose={copy.pages.projects.purpose} />
+      <div className="col-span-12">
+        <div className="@md/page:w-2/3">
+          <PageHeader title={copy.pages.projects.title} purpose={staff ? copy.pages.following.purpose : copy.pages.projects.purpose} />
+        </div>
+        {/* World Bank staff get the Projects sub-tabs, Following and All projects (ticket 37). */}
+        {staff && <ProjectsTabs following={false} />}
       </div>
       <section aria-labelledby={headingId} className="col-span-12 mt-8 @lg/page:mt-8" data-projects-page={load.status}>
-        <h2 id={headingId} className="text-title text-ink-heading">
+        {/* With the sub-tabs showing, the selected one already names the list, so its heading is for screen readers. */}
+        <h2 id={headingId} className={staff ? "sr-only" : "text-title text-ink-heading"}>
           {words.tableTitle}
         </h2>
         <div className="layout-grid mt-3">

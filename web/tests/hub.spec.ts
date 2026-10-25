@@ -5,14 +5,13 @@
 // tests/ground_truth/values.toml quotes them (project-p130164-*, pad-date, icr-date, icr-review-date,
 // icr-review-reissue-date, icr-para-54 and icr-pdf-pages), copied here so the screen is checked against an
 // independent source.
-import AxeBuilder from "@axe-core/playwright";
+import { scan } from "./axe";
 import type { Locator, Page, Request } from "@playwright/test";
 import { copy } from "../src/copy";
 import { askFromTheBox, landed, marker, panel } from "./answer-page";
 import { hubApi, KENHA_PLAN } from "./hub-api";
 import { expect, mockApi, recorded, test } from "./mocked";
 
-const WCAG_22_AA = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 type Answer = { status?: number; body: string };
 
 async function open(page: Page, path: string, width = 1440, extra: Record<string, Answer> = {}) {
@@ -24,7 +23,7 @@ async function open(page: Page, path: string, width = 1440, extra: Record<string
 }
 
 async function axe(page: Page) {
-  const results = await new AxeBuilder({ page }).withTags(WCAG_22_AA).analyze();
+  const results = await scan(page);
   return results.violations.map((v) => `${v.id}: ${v.nodes.map((node) => node.target.join(" ")).join(", ")}`);
 }
 
@@ -49,9 +48,9 @@ test("P130164's header reads as the wireframe's one line with its implementing a
   expect(copy.projectPage.statusInline.Closed).toBe("closed");
 
   // The built tabs, in the copy file's order, which is the wireframe's: Summary, Procurement, Timeline,
-  // Documents, Connections. Timeline and Connections join when their tickets land.
+  // Documents, Connections. Timeline joined with ticket 23 and Connections with ticket 22.
   expect(Object.keys(copy.projectPage.tab)).toEqual(["summary", "procurement", "timeline", "documents", "connections"]);
-  await expect(tabs(page)).toHaveText(["Summary", "Procurement", "Documents"]);
+  await expect(tabs(page)).toHaveText(["Summary", "Procurement", "Timeline", "Documents", "Connections"]);
   await expect(tabs(page).first()).toHaveAttribute("aria-current", "page");
   await expect(page).toHaveTitle("Rajasthan Road Sector Modernization (P130164), Summary | Strata");
   // The current crumb names the project as the h1 does, with its ID in plain mono: the h1's P-code just
@@ -68,12 +67,12 @@ test("switching tabs keeps the header in place and focus on the tab, says which 
   const h1 = main(page).getByRole("heading", { level: 1 });
   await h1.evaluate((el) => el.setAttribute("data-same-element", ""));
 
-  await tabs(page).nth(2).focus();
+  await tabs(page).nth(3).focus();
   await page.keyboard.press("Enter");
 
   await expect(page).toHaveURL(/\/projects\/P130164\/documents$/);
-  await expect(tabs(page).nth(2)).toBeFocused();
-  await expect(tabs(page).nth(2)).toHaveAttribute("aria-current", "page");
+  await expect(tabs(page).nth(3)).toBeFocused();
+  await expect(tabs(page).nth(3)).toHaveAttribute("aria-current", "page");
   await expect(page.getByRole("status").filter({ hasText: "Showing Documents." })).toHaveCount(1);
   // The header did not redraw: it is the same element, and the project was read once.
   await expect(main(page).locator("h1[data-same-element]")).toHaveCount(1);
@@ -741,7 +740,7 @@ test("Packages lists every activity in each agency's latest plan by STEP referen
   await expect(packages.getByRole("heading", { level: 2, name: "Packages" })).toBeVisible();
   await expect(packages.locator("[data-page-lead]")).toHaveText("Showing 1–20 of 46 packages");
   const first = packages.locator("[data-table-view=table] tbody tr").first();
-  await expect(first.getByRole("link", { name: "KE-NWWDA-229129-CW-RFB" })).toHaveAttribute("href", `${NWWDA}/2026-10-09#KE-NWWDA-229129-CW-RFB`);
+  await expect(first.getByRole("link", { name: "KE-NWWDA-229129-CW-RFB" })).toHaveAttribute("href", "/projects/P156634/packages/KE-NWWDA-229129-CW-RFB");
   await expect(first.locator("td")).toHaveText(["Northern Water Works Development Agency", "Request for Bids · Open - National", "300,000.00", "Signed"]);
   await expect(packages.getByRole("navigation", { name: "Pages of the package list" })).toContainText("Page 1 of 3");
 
@@ -984,29 +983,35 @@ async function throttle(page: Page) {
   });
 }
 
-test("the Summary is one request of at most 15 KB, populated within 2 s from another tab and 5 s cold on the throttled 3G profile", async ({ page }) => {
-  // One request, small enough for a slow link.
-  expect(Buffer.byteLength(await recorded("summary-p130164.json"))).toBeLessThanOrEqual(15 * 1024);
+// The app's own files cross the throttled profile gzipped, as they reach a reader's browser, so this test
+// sends the browser's own Accept-Encoding header, not the plain-files one playwright.config.ts sets.
+test.describe(() => {
+  test.use({ extraHTTPHeaders: {} });
 
-  await open(page, "/projects/P130164/procurement");
-  await expect(page.locator("[data-procurement-tab=ready]")).toBeVisible();
-  await throttle(page);
-  const started = Date.now();
-  await tabs(page).first().click();
-  await expect(page.locator("[data-summary=ready]")).toBeVisible({ timeout: 10_000 });
-  const fromTab = Date.now() - started;
-  expect(fromTab, "from another tab, in ms").toBeLessThanOrEqual(2000);
+  test("the Summary is one request of at most 15 KB, populated within 2 s from another tab and 5 s cold on the throttled 3G profile", async ({ page }) => {
+    // One request, small enough for a slow link.
+    expect(Buffer.byteLength(await recorded("summary-p130164.json"))).toBeLessThanOrEqual(15 * 1024);
 
-  // Cold: a new page, with nothing cached.
-  const cold = await page.context().newPage();
-  await mockApi(cold, await hubApi());
-  await throttle(cold);
-  const coldStart = Date.now();
-  await cold.goto("/projects/P130164");
-  await expect(cold.locator("[data-summary=ready]")).toBeVisible({ timeout: 15_000 });
-  const coldTime = Date.now() - coldStart;
-  test.info().annotations.push({ type: "timing", description: `from another tab ${fromTab} ms, cold ${coldTime} ms` });
-  expect(coldTime, "cold, in ms").toBeLessThanOrEqual(5000);
+    await open(page, "/projects/P130164/procurement");
+    await expect(page.locator("[data-procurement-tab=ready]")).toBeVisible();
+    await throttle(page);
+    const started = Date.now();
+    await tabs(page).first().click();
+    await expect(page.locator("[data-summary=ready]")).toBeVisible({ timeout: 10_000 });
+    const fromTab = Date.now() - started;
+    expect(fromTab, "from another tab, in ms").toBeLessThanOrEqual(2000);
+
+    // Cold: a new page, with nothing cached.
+    const cold = await page.context().newPage();
+    await mockApi(cold, await hubApi());
+    await throttle(cold);
+    const coldStart = Date.now();
+    await cold.goto("/projects/P130164");
+    await expect(cold.locator("[data-summary=ready]")).toBeVisible({ timeout: 15_000 });
+    const coldTime = Date.now() - coldStart;
+    test.info().annotations.push({ type: "timing", description: `from another tab ${fromTab} ms, cold ${coldTime} ms` });
+    expect(coldTime, "cold, in ms").toBeLessThanOrEqual(5000);
+  });
 });
 
 test("axe finds no WCAG 2.2 AA violations on Check a plan's change list and baseline panel, and in the hub's loading and error states", async ({ page }) => {

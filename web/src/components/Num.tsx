@@ -10,6 +10,7 @@ import {
   formatDate,
   formatNumber,
   formatRatio,
+  formatSignedPercent,
   formatToolShare,
   formatYear,
   type DateStyle,
@@ -27,6 +28,8 @@ export type NumValue =
   | { part: number; whole: number; show?: "text" | "count"; style?: "sentence" | "table" }
   // A share a tool rounded, written as it came: the browser divides nothing.
   | { share: ToolShare; style?: "sentence" | "table" }
+  // A package's own difference from its cost estimate, as a tool rounded it (ticket 31): "+21.4%", or in words.
+  | { signedPercent: number; words?: boolean }
   // A number or date as a checked answer sentence wrote it: the verifier matched it to a record at
   // that rounding, so it is shown as written (ticket 14).
   | { written: string };
@@ -34,12 +37,14 @@ export type NumValue =
 export type NumCheck = {
   // What a tooltip says about where the number came from, from the copy file and the tool.
   tooltip: ReactNode;
-  // Opens the rows behind the number, or its definition.
-  onOpen?: () => void;
+  // Opens the rows behind the number, or its definition, with the number as the opener focus goes back to.
+  onOpen?: (element: HTMLElement) => void;
   // Numbers inside an answer leave the tab order to the citation markers beside them.
   tabStop?: boolean;
   // A name that says more than the number, starting with it: "1 of 1 completion reports, for {risk}" (ticket 30).
   name?: string;
+  // Where its tooltip opens: below the number unless it would cover text that must stay in view (ticket 23).
+  side?: "top" | "bottom";
 };
 
 export function numText(num: NumValue): string {
@@ -49,6 +54,7 @@ export function numText(num: NumValue): string {
   if ("year" in num) return formatYear(num.year);
   if ("date" in num) return formatDate(num.date, { style: num.style, today: num.today });
   if ("share" in num) return formatToolShare(num.share, { style: num.style }).text;
+  if ("signedPercent" in num) return formatSignedPercent(num.signedPercent, { style: num.words ? "words" : "short" });
   const ratio = formatRatio(num.part, num.whole, { style: num.style });
   return num.show === "count" ? ratio.count : ratio.text;
 }
@@ -68,6 +74,52 @@ function written(num: NumValue, text: string): ReactNode {
       <span className="whitespace-nowrap">{text.slice(0, text.length - frequency.length).trimEnd()}</span>{" "}
       <span className="whitespace-nowrap">{frequency}</span>
     </>
+  );
+}
+
+// NumLines (ticket 27; DESIGN.md section 5, Num): one checkable number on two lines, such as a step's planned date
+// over the days it rests on ("Apr 1, 2027" over "28 days after the plan's date"). The lines are given already
+// written, each number in them through Num with no check of its own, so one tab stop, one dotted underline and one
+// tooltip cover both, and a click opens the rows behind them. The first line may be words instead of a number, as
+// "Not dated yet" is before a start date, with the second line's days still under it. With no second line it is one
+// checkable line of words with numbers in it, such as the days of a step that needs an earlier step's date. Its
+// lines start on the left; className can set them on the right, as the narrow step list does (items-end text-right).
+export function NumLines({
+  first,
+  second,
+  check,
+  firstClassName,
+  secondClassName,
+  className = "items-start text-left",
+}: {
+  first: ReactNode;
+  second?: ReactNode;
+  check: NumCheck;
+  firstClassName?: string;
+  secondClassName?: string;
+  className?: string;
+}) {
+  return (
+    <Tooltip
+      trigger={
+        <button
+          type="button"
+          data-num
+          data-num-lines
+          tabIndex={check.tabStop === false ? -1 : undefined}
+          aria-label={check.name}
+          onClick={check.onOpen && ((event) => check.onOpen!(event.currentTarget))}
+          // One line of caption text keeps a 24 px target (WCAG 2.5.8), centred in it.
+          className={cx("group inline-flex max-w-full cursor-pointer flex-col py-0.5 tabular-nums", !second && "min-h-6 justify-center", className)}
+        >
+          <span className={cx(DOTTED_UNDERLINE, "group-hover:decoration-solid", firstClassName)}>{first}</span>
+          {second && <span className={cx(DOTTED_UNDERLINE, "group-hover:decoration-solid", secondClassName)}>{second}</span>}
+        </button>
+      }
+      side={check.side}
+    >
+      {check.tooltip}
+    </Tooltip>
   );
 }
 
@@ -95,7 +147,7 @@ export function Num({ check, className, inCaption = false, ...num }: NumValue & 
           data-num
           tabIndex={check.tabStop === false ? -1 : undefined}
           aria-label={check.name}
-          onClick={check.onOpen}
+          onClick={check.onOpen && ((event) => check.onOpen!(event.currentTarget))}
           className={cx(
             // A button lays out as an inline block, so its padding would make its line taller than the
             // body's 24 px; the negative margin keeps the 28 px hit area inside the line's own height.
@@ -108,6 +160,7 @@ export function Num({ check, className, inCaption = false, ...num }: NumValue & 
           {body}
         </button>
       }
+      side={check.side}
     >
       {check.tooltip}
     </Tooltip>

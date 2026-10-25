@@ -81,6 +81,13 @@ class Say:
         row = draft["evidence"][evidence_id]["row"]
         source = row.get("source") or {}
         date = source.get("plan_date") or source.get("document_date")
+        # A record a project's Summary or a mission brief cites names its source by its key (ticket 37).
+        # The file is about one project, which its heading names, so the line adds no project ID.
+        keyed = words()["summaryRecordSources"].get(source.get("source_key") or "")
+        if keyed and not source.get("implementing_agency"):
+            return _fill(keyed, date=self.date(date) if date else "")
+        if isinstance(source, dict) and source.get("tool"):  # a tool's summary record: the tool and its sources
+            return _fill(words()["toolSource"], date=self.date(row["public_from"]))
         if source.get("implementing_agency") and source.get("pdf_page") and date:
             return _fill(words()["recordSource"], doc=source.get("document_type"), agency=source["implementing_agency"],
                          pid=source.get("project_id"), date=self.date(date), page=source["pdf_page"])
@@ -137,8 +144,16 @@ class Word:
         self.title = self.title or text
         self.body.append(self._paragraph([text], "Heading1"))
 
+    def subheading(self, text: str) -> None:
+        """A Heading 2, such as each part of a mission brief (ticket 37)."""
+        self.body.append(self._paragraph([text], "Heading2"))
+
     def paragraph(self, *runs) -> None:
         self.body.append(self._paragraph(list(runs)))
+
+    def bold(self, text: str) -> None:
+        """A bold Normal paragraph, such as a table's title."""
+        self.body.append(self._paragraph([text], bold=True))
 
     def table(self, header: list[str], rows: list[list[list[list]]], widths: tuple[int, ...]) -> None:
         """A Table Grid table: a header row repeated on each page, then rows of cells, each a list of
@@ -238,6 +253,10 @@ STYLES = (
     '<w:next w:val="Normal"/><w:uiPriority w:val="9"/><w:qFormat/><w:pPr><w:keepNext/><w:spacing w:before="240" '
     'w:after="120"/><w:outlineLvl w:val="0"/></w:pPr><w:rPr><w:b/><w:color w:val="000000"/><w:sz w:val="28"/>'
     '<w:szCs w:val="28"/></w:rPr></w:style>'
+    '<w:style w:type="paragraph" w:styleId="Heading2"><w:name w:val="heading 2"/><w:basedOn w:val="Normal"/>'
+    '<w:next w:val="Normal"/><w:uiPriority w:val="9"/><w:qFormat/><w:pPr><w:keepNext/><w:spacing w:before="240" '
+    'w:after="80"/><w:outlineLvl w:val="1"/></w:pPr><w:rPr><w:b/><w:color w:val="000000"/><w:sz w:val="24"/>'
+    '<w:szCs w:val="24"/></w:rPr></w:style>'
     '<w:style w:type="character" w:default="1" w:styleId="DefaultParagraphFont"><w:name w:val="Default Paragraph Font"/>'
     '<w:uiPriority w:val="1"/><w:semiHidden/></w:style>'
     '<w:style w:type="table" w:default="1" w:styleId="TableNormal"><w:name w:val="Normal Table"/><w:semiHidden/>'
@@ -262,24 +281,41 @@ STYLES = (
 
 # ── The evidence pack ────────────────────────────────────────────────────
 
+COUNT_WORDS = ("one", "two", "three", "four", "five", "six", "seven", "eight", "nine")
+
+
+def _count(value: int) -> str:
+    """A count standing alone, as the page writes it: a word from one to nine, then numerals (DESIGN.md section 7)."""
+    return COUNT_WORDS[value - 1] if 1 <= value <= 9 else f"{value:,}"
+
+
 def check_line(checks: dict, kind: DraftKind) -> str:
-    """The check line, word for word as the page writes it (web/src/components/Checks.tsx)."""
+    """The check line, word for word as the page writes it (web/src/components/Checks.tsx): its counts over the
+    sentences on screen, the model's part when a sentence on screen was judged (check 4), and what was not
+    checked."""
     line = words()["checkLine"]
 
     def ratio(forms: dict, part: int, whole: int) -> str:
         return _fill(forms["one"] if whole == 1 else forms["many"], part=f"{part:,}", whole=f"{whole:,}")
 
-    parts = [ratio(line[name], checks[name][found], checks[name]["total"])
+    shown = checks.get("shown") or checks
+    parts = [ratio(line[name], shown[name][found], shown[name]["total"])
              for name, found in (("numbers", "matched"), ("dates", "matched"), ("quotes", "found"))
-             if checks[name]["total"] > 0]
+             if shown[name]["total"] > 0]
     clauses = [key for key in ([] if 4 in checks["checks_run"] else ["sentences"])]
     clauses += [key for key in line["notCheckedClauses"] if key in checks["tools"]]
     clauses += [key for key in kind.not_checked if key in line["notCheckedClauses"]]
     said = [line["notCheckedClauses"][key] for key in clauses]
     joined = line["notCheckedJoin"].join(said) if len(said) <= 2 else \
         line["notCheckedComma"].join(said[:-1]) + line["notCheckedJoin"] + said[-1]
-    checked = f"{line['checked']} {line['clauseJoin'].join(parts) if parts else line['sourcesOnly']}{line['end']}"
-    return f"{checked} {line['notChecked']} {joined}{line['end']}" if said else checked
+    text = f"{line['checked']} {line['clauseJoin'].join(parts) if parts else line['sourcesOnly']}{line['end']}"
+    judged, proven = shown.get("judged", 0), shown.get("proven", 0)
+    if judged:
+        text += f" {line['judged']} {ratio(line['judgedSentences'], judged, judged)}{line['end']}"
+        if proven:
+            others = line["provenOthers"]
+            text += " " + (others["one"] if proven == 1 else _fill(others["many"], count=_count(proven)))
+    return f"{text} {line['notChecked']} {joined or line['notCheckedFallback']}{line['end']}"
 
 
 def snapshot(draft: dict, say: Say) -> dict:

@@ -939,6 +939,30 @@ record = "api/notices/P156634.json"
 at = "procnotices[id=OP00474946].noticedate"
 
 [[value]]
+id = "award-567630-signed"
+says = "Since ISR 19 (June 30, 2026), the first contract signed for P156634 is KE-CWSB-567630-CW-DIR, on August 28, 2026: the first row of the mission brief's awards (ticket 37)."
+value = 2026-08-28
+quote = "28-Aug-2026"
+record = "api/awards/P156634.json"
+at = "data[wb_contract_number=1901323].contract_signing_date"
+
+[[value]]
+id = "award-567630-amount"
+says = "The awards dataset's amount for KE-CWSB-567630-CW-DIR is US$2,432,125.50, against the plan's US$2,600,000.00."
+value = 2432125.50
+quote = "2432125.5"
+record = "api/awards/P156634.json"
+at = "data[wb_contract_number=1901323].supplier_contract_amount_usd"
+
+[[value]]
+id = "award-565568-signed"
+says = "The second contract signed since ISR 19 is KE-CWSB-565568-GO-RFQ, on September 4, 2026."
+value = 2026-09-04
+quote = "04-Sep-2026"
+record = "api/awards/P156634.json"
+at = "data[wb_contract_number=1902413].contract_signing_date"
+
+[[value]]
 id = "award-541062-signed"
 says = "The awards dataset shows KE-NWWDA-541062-CW-RFQ signed on May 11, 2026, while the October 9, 2026 plan shows it Pending Implementation."
 value = 2026-05-11
@@ -1005,12 +1029,113 @@ date = 2026-10-09
 pdf_page = 3
 
 [[value]]
+id = "plan-496786-planned-invitation"
+says = "P161305's September 24, 2026 plan lists KE-KENHA-496786-CS-CDS in its INDIVIDUAL CONSULTANTS table, hired by Direct Selection, with its Invitation to Identified/Selected Consultant planned for June 23, 2025 (the third date, after the Terms of Reference's planned and actual dates). Its Draft Negotiated Contract has no date."
+value = 2025-06-23
+quote = "Prior Direct Selection Direct - International 1,310,000.00 0.00 Signed 2025-06-04 2025-06-12 2025-06-23 2025-10-24"
+document = "documents/P161305/procurement-plan-2026-09-24"
+document_type = "Procurement Plan"
+project = "P161305"
+date = 2026-09-24
+pdf_page = 14
+
+[[value]]
 id = "award-229129-signed"
 says = "The contract awards dataset agrees: KE-NWWDA-229129-CW-RFB was signed on January 3, 2022 at US$1,245,092.76."
 value = 2022-01-03
 quote = "03-Jan-2022"
 record = "api/awards/P156634.json"
 at = "data[wb_contract_number=1686165].contract_signing_date"
+
+# KE-NWWDA-229129-CW-RFB's contract trail (ticket 22): the contract's amount and supplier in the awards
+# dataset, its Invitation for Bids and its award notice. The bids the award notice lists are in
+# [award_notice_bids] below.
+[[value]]
+id = "award-229129-amount"
+says = "The contract awards dataset gives contract 1686165, KE-NWWDA-229129-CW-RFB, an amount of US$1,245,092.76."
+value = 1245092.76
+quote = "1245092.76"
+record = "api/awards/P156634.json"
+at = "data[wb_contract_number=1686165].supplier_contract_amount_usd"
+
+[[value]]
+id = "award-229129-supplier"
+says = "The contract awards dataset names contract 1686165's supplier by its STEP supplier ID, 626335."
+value = "626335"
+quote = "626335"
+contract = "1686165"
+record = "api/awards/P156634.json"
+at = "data[wb_contract_number=1686165].supplier_id"
+
+[[value]]
+id = "notice-229129-invitation"
+says = "Notice OP00146683, the Invitation for Bids for KE-NWWDA-229129-CW-RFB, was published on September 17, 2021."
+value = 2021-09-17
+quote = "17-Sep-2021"
+record = "api/notices/P156634.json"
+at = "procnotices[id=OP00146683].noticedate"
+
+[[value]]
+id = "notice-229129-description"
+says = "Notice OP00146683, the Invitation for Bids for KE-NWWDA-229129-CW-RFB, describes it as the drilling of four exploratory boreholes in Wajir County, word for word as the activity page names it."
+value = "Drilling of 4 Number Exploratory Boreholes In Wajir County"
+quote = "Drilling of 4 Number Exploratory Boreholes In Wajir County"
+record = "api/notices/P156634.json"
+at = "procnotices[id=OP00146683].bid_description"
+
+[[value]]
+id = "award-notice-102977-rejected"
+says = "Award notice OP00112374 for KE-CWSB-102977-CS-QCBS lists NICHOLAS O'DWYER under Rejected Firm(s) with an empty Final Evaluation Price, then the Reason for Rejection Non Responsive."
+value = "Non Responsive"
+quote = "Non Responsive"
+bidder = "NICHOLAS O'DWYER"
+notice = "OP00112374"
+record = "api/notices/P156634.json"
+at = "procnotices[id=OP00112374].notice_text"
+
+[[value]]
+id = "award-notice-229129-published"
+says = "Award notice OP00164589 for KE-NWWDA-229129-CW-RFB was published on February 2, 2022."
+value = 2022-02-02
+quote = "02-Feb-2022"
+record = "api/notices/P156634.json"
+at = "procnotices[id=OP00164589].noticedate"
+
+[[value]]
+id = "award-notice-7431-published"
+says = "Award notice OP00044090 for IN-RRSMP-7431-CW-RFB was published on July 19, 2017."
+value = 2017-07-19
+quote = "19-Jul-2017"
+record = "api/notices/P130164.json"
+at = "procnotices[id=OP00044090].noticedate"
+
+[[value]]
+id = "award-notice-7431-signed-price"
+says = "Award notice OP00044090 gives IN-RRSMP-7431-CW-RFB's signed contract price in Indian rupees: INR 69,826,127.64."
+value = "INR 69,826,127.64"
+quote = "Signed Contract price<br/>INR 69,826,127.64"
+record = "api/notices/P130164.json"
+at = "procnotices[id=OP00044090].notice_text"
+
+[[value]]
+id = "project-p130164-sector-roads"
+says = "The projects API puts 97 percent of P130164 in the sector TI, FY17 - Rural and Inter-Urban Roads, the sector the contract trail's links name as roads."
+value = "FY17 - Rural and Inter-Urban Roads"
+quote = "FY17 - Rural and Inter-Urban Roads"
+record = "api/projects/P130164.json"
+at = "projects.P130164.major_sectors.0.major_sector.sectors[sector_code=TI].sector_name"
+
+[[value]]
+id = "icr-months-after-7431"
+says = "The ICR, dated October 10, 2019, came 28 months after IN-RRSMP-7431-CW-RFB was signed on June 15, 2017: 847 days, at 30.4375 days a month (365.25 / 12), rounded to the nearest month."
+value = 28
+months_between = ["award-7431-signed", "icr-date"]
+quote = "October 10, 2019"
+document = "documents/P130164/icr-2019-10-10"
+document_type = "Implementation Completion and Results Report"
+project = "P130164"
+date = 2019-10-10
+pdf_page = 1
 
 # The evidence ladder's two record ties (ticket 20). Each package has one contract in the awards dataset
 # and one Contract Award notice that gives a signature date, so the sources are about one signing.
@@ -1125,6 +1250,19 @@ date = 2026-08-17
 pdf_page = 3
 first_lists = "KE-CWSB-567630-CW-DIR"
 not_in = "documents/P156634/procurement-plan-2026-07-31"
+
+[[value]]
+id = "plan-cwsb-567630-estimated"
+says = """The Coast Water Services Board's plan of August 17, 2026 estimates KE-CWSB-567630-CW-DIR at US$2,600,000.00 \
+(Estimated Amount), Pending Implementation: the US$2.6 million direct-selection works activity of P156634's late \
+direct selection signal (ticket 37). The award signed on August 28, 2026 at US$2,432,125.50 is a later record."""
+value = "2,600,000.00"
+quote = "2,600,000.00 0.00 Pending Implementation 2026-08-14"
+document = "documents/P156634/procurement-plan-2026-08-17"
+document_type = "Procurement Plan"
+project = "P156634"
+date = 2026-08-17
+pdf_page = 3
 
 [[value]]
 id = "plan-541055-first-listed"
@@ -1803,6 +1941,51 @@ plan_days = 45
 plan_months = 1.5
 signed_within_plan = ["KE-WAJWASCO-356671-CW-RFB", "KE-WAJWASCO-372776-CW-RFB"]
 
+# Which of these comparables were advertised again (ticket 28), counted by hand from the recorded files.
+#
+# No field in the records says a package was advertised again, so three sources say it: a notice that no
+# award followed long after its bids were due, a second notice of the same kind under the same STEP
+# reference, and a Procurement Plan row whose Process Status is Canceled. The count runs over all 52
+# comparables above, the three canceled included, since a canceled package is the plainest case; the past
+# range leaves the three out (past_total), so the two counts differ by them.
+#
+# - Canceled and with no award (3). The three canceled packages above have no award row and no award notice
+#   (the comparables test checks both), their bids were due in 2020, 2021 and 2023, and the March 19, 2025
+#   plan of the Kilifi agency (document 40001676, public that day) marks each one Canceled (their
+#   canceled_in, pdf_page and quote). These three are the advertised_again list.
+# - Still open (4). Their bids were due from October 13 to November 10, 2026, days before the as-of date,
+#   so no award was due yet, and no plan row marks them Canceled.
+# - The same STEP reference advertised twice (0). No comparable has two Invitation for Bids notices in the
+#   recorded notices (same_reference_notices). The canceled works were advertised again under new
+#   references, KE-KIMAWASCO-158691-CW-RFB and KE-KIMAWASCO-416959-CW-RFB, which only their titles link.
+# - Reasons. No Contract Award notice of a comparable gives a reason for advertising again. The one
+#   reason in words is inside Invitation for Bids OP00083890 itself, for KE-KIMAWASCO-149448-CW-RFB: quote,
+#   word for word with its British spelling. In the notice text it follows "2020." with no space.
+#
+# With review type Prior (the comparables' narrower criteria, narrower_count 7), none is canceled, so none
+# was advertised again (narrower_advertised_again).
+[rebidding]
+step_reference = "KE-NWWDA-541055-CW-RFB"
+as_of = 2026-10-22
+m = 52
+n = 3
+past_total = 49
+advertised_again = ["KE-KIMAWASCO-149448-CW-RFB", "KE-KIMAWASCO-157517-CW-RFB", "KE-KIMAWASCO-377450-CW-RFB"]
+canceled_in = "documents/P156634/procurement-plan-2025-03-19"
+canceled_in_document_id = "40001676"
+canceled_plan_date = 2025-03-19
+# Each canceled package's bids were due on its Invitation for Bids' submission deadline. On December 31, 2024,
+# before the March 19, 2025 plan was public, only the first two had waited 548 days (rebidding.no_award_after_days)
+# with no award, so only they were advertised again as of that day.
+bids_due = { "KE-KIMAWASCO-149448-CW-RFB" = 2020-03-06, "KE-KIMAWASCO-157517-CW-RFB" = 2021-05-10, "KE-KIMAWASCO-377450-CW-RFB" = 2023-10-06 }
+before_the_plan = 2024-12-31
+advertised_again_before_the_plan = ["KE-KIMAWASCO-149448-CW-RFB", "KE-KIMAWASCO-157517-CW-RFB"]
+same_reference_notices = 0
+quote_reference = "KE-KIMAWASCO-149448-CW-RFB"
+quote_notice = "OP00083890"
+quote = "The Request for Bids has been cancelled."
+narrower_advertised_again = 0
+
 # The replay harness's known answer (ticket 25): the time estimate's backtest for the test year 2021
 # on a small hand-made set, not on recorded data, so these are statistical literals, not quotes.
 # tests/test_replay_harness.py builds the set in a DuckDB file of its own, with these rules:
@@ -1881,6 +2064,164 @@ middle_ran_longer = 17
 middle_in10 = 7
 eight_in_ten_ran_longer = 9
 eight_in_ten_in10 = 4
+
+# The planned date for each STEP step (ticket 27), on a small hand-made set, not on recorded data, so these are
+# literals worked out by hand, not quotes. tests/step_set.py builds the set in a DuckDB file of its own:
+#
+# - 25 comparable works packages under Request for Bids, i = 1 to 25, first listed in a plan of August 1, 2019 with
+#   the bid invitation planned on B = September 2, 2019 plus 7 * (i - 1) days, the bidding document 7 days after
+#   B, the bid opening 37, the bid evaluation report 60 and the signed contract 101 days after B. Their actual
+#   dates, in a plan of December 15, 2020: the bid invitation i - 5 days after its plan, then 7 days to the
+#   bidding document, 30 to the opening, 20 + 2i to the report and 41 to the signed contract. So the delay, the
+#   days from the first published planned date to the actual date, is i - 5 at each of the first three steps
+#   and 3i - 8 at the report and the signed contract. No package plans a completion date.
+# - The target, KE-HAND-900000-CW-RFB, first listed in the plan of December 15, 2020, plans March 1, March 8,
+#   April 7, April 30 and June 10, 2021 for those five steps and June 10, 2022 for its completion.
+#
+# No comparable is still open at any step, so the Kaplan-Meier quantile for a share p is the k-th smallest
+# delay, k = ceil(25p): the 13th for the middle date (half ran later) and the 20th for the cautious date (2 in 10
+# ran later). That is i = 13 and i = 20: 8 and 15 days at the first three steps, 31 and 52 at the report and the
+# signed contract. More than 15 days late at the first three steps (or 52 at the last two): i = 21 to 25, 5 of
+# 25, about 2 in 10. More than 8 (or 31): i = 14 to 25, 12 of 25, about 5 in 10 (4.8 rounded half up). The
+# planned dates are the target's plan dates plus those days, counted on a calendar. The completion step has no
+# comparable that planned it, so it abstains.
+#
+# Ran longest: each comparable's stages up to the signed contract last 7, 30, 20 + 2i and 41 days. The bid
+# evaluation stage (20 + 2i) is the longest when 2i > 21, i = 11 to 25: in 15 of the 25 packages, all of which
+# recorded every step up to the signed contract. For i = 1 to 10 the signing stage (41) is.
+#
+# The backtest for the test year 2021 (frozen on January 1, 2021, outcomes read as of June 30, 2022) scores the
+# target's five steps first planned in 2021. A plan of December 1, 2021 gives their actual dates: March 10,
+# March 30, April 20, May 20 and July 20, 2021, 9, 22, 13, 20 and 40 days after their plans. Each came on or
+# before its cautious date except the bidding document (22 > 15): 4 of 5. Only the report (20 <= 31) came on or
+# before its middle date: 1 of 5. The typical errors, the median distance in days from the actual date: to the
+# cautious date |9-15|, |22-15|, |13-15|, |20-52|, |40-52| = 6, 7, 2, 32, 12, median 7; to the middle date 1,
+# 14, 5, 11, 9, median 9; to the plan's first date 9, 22, 13, 20, 40, median 20.
+#
+# A package from a sentence (works, Request for Bids, Kenya) has no plan, so each step counts from the one before
+# it, by how long that stretch took in the comparables: 7 days to the bidding document, 30 to the opening, 20 + 2i
+# to the report and 41 to the signing. The middle and cautious stretches are the 13th and 20th smallest: 7 and 7,
+# 30 and 30, 46 and 60, 41 and 41. From a bid invitation on March 1, 2021, counted on a calendar, they give the
+# duration dates below. Every comparable is still open at its completion, so that step's curve never reaches half
+# and it gets no date.
+[step_dates]
+as_of = 2021-01-15
+target = "KE-HAND-900000-CW-RFB"
+comparables = 25
+middle_days = [8, 8, 8, 31, 31]
+cautious_days = [15, 15, 15, 52, 52]
+middle_dates = [2021-03-09, 2021-03-16, 2021-04-15, 2021-05-31, 2021-07-11]
+cautious_dates = [2021-03-16, 2021-03-23, 2021-04-22, 2021-06-21, 2021-08-01]
+middle_longer = 12
+middle_in10 = 5
+cautious_longer = 5
+cautious_in10 = 2
+longest_step = "bid_evaluation_report"
+longest_n = 15
+longest_m = 25
+backtest_cutoff = 2021-01-01
+backtest_outcomes_through = 2022-06-30
+backtest_total = 5
+backtest_inside_cautious = 4
+backtest_inside_middle = 1
+backtest_error_cautious_days = 7
+backtest_error_middle_days = 9
+backtest_error_plan_days = 20
+duration_start = 2021-03-01
+duration_middle_days = [7, 30, 46, 41]
+duration_cautious_days = [7, 30, 60, 41]
+duration_middle_dates = [2021-03-08, 2021-04-07, 2021-05-23, 2021-07-03]
+duration_cautious_dates = [2021-03-08, 2021-04-07, 2021-06-06, 2021-07-17]
+
+# The rebidding models' known answer (ticket 28): their backtest for the test year 2021 on a small hand-made set,
+# not on recorded data, so these are statistical literals, not quotes. The fixture has three packages advertised
+# again among 52 comparables, too few for any backtest to show calibration. tests/test_rebidding_backtest.py
+# builds the set in a DuckDB file of its own, with these rules:
+#
+# - One Kenya project (P900002) and one implementing agency's plan versions: 900000101 (dated and public July 1,
+#   2019) and 900000102 (December 15, 2020) list every package below as WORKS, Request for Bids, Open - National,
+#   no prequalification, estimated US$1,000,000.00, with Review Type Prior or Post as given. 900000103 (March 1,
+#   2022) lists the packages of 2021 again. Review type is the only feature that differs between packages.
+# - 84 training packages, i = 1 to 84: notice on July 2, 2019 plus 5 * (i - 1) days, bids due 30 days later, and
+#   Prior review when i is a multiple of 3 (28 packages), else Post (56). 22 were advertised again: unsigned, and
+#   Canceled in the version of December 15, 2020 (Prior: i = 3, 6, 9, 12, 15, 18, 21, 27, 30, 33, 36, 39 and 60;
+#   Post: i = 1, 2, 4, 5, 7, 10, 11, 28 and 52). The other 62 were signed 60 days after their notice, all before
+#   the cutoff, January 1, 2021.
+# - Every fourth training package in notice order (i = 4, 8, ... 84; rebidding.calibration_every = 4 in
+#   config/models.toml) calibrates the gradient boosting: 7 Prior, 3 of them advertised again, and 14 Post, 3 of
+#   them. The booster learns from the other 63 (Prior 10 of 21, Post 6 of 42), so it ranks Prior above Post, and
+#   Platt scaling on the two calibration groups gives each group its share: 3/7 for Prior and 3/14 for Post.
+# - 24 packages of 2021, j = 1 to 24: notice on January 11, 2021 plus 14 * (j - 1) days, Prior when j is a multiple
+#   of 3 (8), else Post (16). Seven were advertised again (Prior: j = 3, 6, 9, 12 and 15; Post: j = 1 and 2),
+#   Canceled in the version of March 1, 2022; the rest were signed 60 days after their notice. One more, advertised
+#   December 1, 2021, was neither signed nor canceled by June 30, 2022, the outcomes date, and its bids were due
+#   fewer than 548 days before then, so it is undecided and left out.
+# - Each package's baseline is the share advertised again among its comparable packages on the cutoff: the 84
+#   training packages, 22 of them, 11/42.
+#
+# Logistic regression's chances were computed once with scikit-learn 1.7.2 (LogisticRegression(C=1.0), since
+# rebidding.logistic.l2 = 1.0, with Review Type one-hot encoded and the intercept unpenalized): 0.44056 for Prior
+# and 0.17258 for Post. The Brier scores are scikit-learn's brier_score_loss over the 24 packages. The calibration
+# error is the expected calibration error over ten equal bins from 0 to 1 (rebidding.calibration_bins), worked
+# out with numpy from the same chances. Values are rounded to four decimals, half up. Logistic regression has the
+# lower calibration error, so it is the champion; both models beat the baseline's Brier score.
+#
+# The champion is then trained on every package decided by the outcomes date, the 84 and the 24 (108, 29 of them
+# advertised again), and scores each planned package. scikit-learn's LogisticRegression(C=1.0) on those gives
+# 0.47852 for Prior and 0.16352 for Post: about 5 in 10 and 2 in 10, rounded half up.
+[rebidding_backtest]
+cutoff = 2021-01-01
+outcomes_through = 2022-06-30
+training_packages = 84
+training_advertised_again = 22
+test_packages = 24
+test_advertised_again = 7
+undecided_left_out = 1
+gbm_brier = 0.1692
+gbm_calibration_error = 0.125
+logistic_brier = 0.1639
+logistic_calibration_error = 0.0932
+baseline_brier = 0.2075
+baseline_calibration_error = 0.0298
+champion = "logistic"
+champion_training_packages = 108
+champion_in10_prior = 5
+champion_in10_post = 2
+
+# The hindsight test's hand-made set (ticket 34; tests/test_hindsight.py, HAND_MADE, CHAMPION, WORSE and MILDER):
+# eight pilot projects whose ICRs blamed three risks each, 24 in all. A lesson covered 19 of them at approval, counted
+# by hand from each project's approval date and the two ICRs the seven lessons rest on (public January 15, 2013 and
+# June 1, 2016). The champion builder shows 18 of the 24: every covered one but P900003's market_response.
+#
+# The checklist is each project's sector's five commonest blamed risks among the other projects of that sector,
+# ties in config/lessons.toml's order, worked by hand. Water (P900001, 2, 4, 6 and 8) caught 2, 2, 1, 2 and 2;
+# transport (P900003, 5 and 7) caught 1, 0 and 1: 11 in all.
+#
+# The interval is Wilson's score interval for 18 of 24 at 95 percent, computed once with SciPy 1.18.1
+# (scipy.stats.binomtest(18, 24).proportion_ci(confidence_level=0.95, method="wilson")) and checked with
+# statsmodels 0.15.0 (proportion_confint(18, 24, alpha=0.05, method="wilson")), rounded to four decimals: 0.5510
+# and 0.8800, or 55 to 88 percent.
+#
+# McNemar's exact test compares two runs on the same 24 blamed risks, from the discordant pairs only. The worse
+# challenger misses six risks the champion caught and catches none it missed: SciPy 1.18.1's
+# scipy.stats.binomtest(0, 6, 0.5).pvalue is 0.03125, and statsmodels 0.15.0's mcnemar([[12, 6], [0, 6]],
+# exact=True).pvalue agrees, below hindsight.mcnemar_alpha (0.05), so it loses. The milder challenger misses two:
+# 0.5 by both libraries, so it does not lose.
+[hindsight]
+blamed = 24
+covered = 19
+champion_caught = 18
+checklist_caught = 11
+interval_low = 0.551
+interval_high = 0.88
+worse_caught = 12
+worse_champion_only = 6
+worse_challenger_only = 0
+worse_mcnemar_p = 0.03125
+milder_caught = 16
+milder_champion_only = 2
+milder_challenger_only = 0
+milder_mcnemar_p = 0.5
 
 # Awkward cases the lakehouse must handle on purpose. The signed plan row with an Actual
 # Amount of 0.00 (plan-503455-actual-zero) and the reference whose method differs from the
@@ -2498,3 +2839,116 @@ record = "api/documents/P130164.json"
 at = "documents.D18381488.disclosure_date"
 value = "2013-11-06T05:00:00Z"
 fiscal_year = 2014
+
+# The bids two award notices list (ticket 22), each in the notice's own order and section, with the
+# bidder's name as written, its STEP supplier ID in brackets (empty when it writes none), its price at
+# opening and evaluated price without the currency (empty when the notice leaves the price blank), and
+# the reason for rejection word for word. tests/test_ground_truth_values.py checks that each bid's name,
+# prices and reason appear in the recorded notice's own HTML, in this order.
+[award_notice_bids.kenya]
+says = "Award notice OP00164589 for KE-NWWDA-229129-CW-RFB lists 11 bids in KES: one awarded, seven evaluated (two with no Evaluated Bid Price) and three rejected as Non Responsive."
+record = "api/notices/P156634.json"
+at = "procnotices[id=OP00164589].notice_text"
+notice = "OP00164589"
+reference = "KE-NWWDA-229129-CW-RFB"
+currency = "KES"
+bids = [
+  { name = "OSB AFRICA LIMITED", id = "626335", section = "awarded", opening = "61503269.60", evaluated = "61503269.60", reason = "" },
+  { name = "GARGAR CONSTRUCTION COMPANY LIMITED", id = "626356", section = "evaluated", opening = "58921156.00", evaluated = "58921156.00", reason = "" },
+  { name = "TEAMSOL LIMITED", id = "626344", section = "evaluated", opening = "67185994.00", evaluated = "67185994.00", reason = "" },
+  { name = "HYDRO WATER WELL (K) LIMITED", id = "626342", section = "evaluated", opening = "69346168.80", evaluated = "", reason = "" },
+  { name = "EXPORT -HYDRO PUMP AND SERVICES (AFRICA) LIMITED", id = "626353", section = "evaluated", opening = "64972583.91", evaluated = "", reason = "" },
+  { name = "YATICO SUPPLIES & CONSTRUCTION LIMITED", id = "626352", section = "evaluated", opening = "58699127.36", evaluated = "58699127.36", reason = "" },
+  { name = "WAASO CONSTRUCTION LIMITED", id = "626340", section = "evaluated", opening = "59747625.84", evaluated = "59747625.84", reason = "" },
+  { name = "BLOOMERG AFRICA LIMITED", id = "626361", section = "evaluated", opening = "55220415.00", evaluated = "55220415.00", reason = "" },
+  { name = "ALWAHAB ENTERPRISES LIMITED", id = "626339", section = "rejected", opening = "56417957.00", evaluated = "", reason = "Non Responsive" },
+  { name = "TEBO INVESTMENT COMPANY LIMITED", id = "626357", section = "rejected", opening = "56857530.00", evaluated = "56857530.00", reason = "Non Responsive" },
+  { name = "BITAT LIMITED", id = "626343", section = "rejected", opening = "54770811.00", evaluated = "54770811.00", reason = "Non Responsive" },
+]
+
+[award_notice_bids.showcase]
+says = "Award notice OP00044090 for IN-RRSMP-7431-CW-RFB lists three bids in INR, with no STEP supplier IDs: AMIT CONSTRUCTION awarded and two evaluated."
+record = "api/notices/P130164.json"
+at = "procnotices[id=OP00044090].notice_text"
+notice = "OP00044090"
+reference = "IN-RRSMP-7431-CW-RFB"
+currency = "INR"
+bids = [
+  { name = "AMIT CONSTRUCTION", id = "", section = "awarded", opening = "69,826,127.64", evaluated = "69,826,127.64", reason = "" },
+  { name = "BRAHM PRAKASH MODI", id = "", section = "evaluated", opening = "71,068,526.66", evaluated = "71,068,526.66", reason = "" },
+  { name = "SHIV SHAKTI ENTERPRISES", id = "", section = "evaluated", opening = "75,610,293.78", evaluated = "75,610,293.78", reason = "" },
+]
+
+# The retrieval loop's silver labels (ticket 32; the spec's "Evaluation"), read from the recorded documents
+# by the builder on October 24, 2026, apart from Strata's code, with the page of each in the recorded
+# .pages.txt. tests/test_retrieval_labels.py checks each quote on its page and that the weekly retrieval
+# run finds the same counts.
+#
+# The ICR Review's "ICR para N" citations. The March 27, 2020 review and its May 4, 2023 re-issue (both
+# report ICRR0021929) print the same twelve citations on the same pages, so the two versions give one set,
+# not two. One citation names two paragraphs ("ICR para 11 and 43"), and one names a paragraph of another
+# document after the ICR's ("ICR para 18 and Restructuring Paper para 8c"), whose ICR paragraph alone counts.
+# The citation on page 13, "ICR para 72", breaks across two lines in the recorded text. Each cited paragraph
+# is a numbered paragraph of the ICR's main text, outside its annexes, one passage each.
+[silver_labels.icr_review_citations]
+says = "The ICR Review cites the P130164 ICR 12 times, naming 13 of its paragraphs."
+documents = ["documents/P130164/icr-review-2020-03-27", "documents/P130164/icr-review-2023-05-04"]
+report_number = "ICRR0021929"
+icr = "documents/P130164/icr-2019-10-10"
+queries = 12
+labels = 13
+reports = 1
+citations = [
+  { pdf_page = 3, quote = "(ICR para 18 and Restructuring Paper para 8c)", paragraphs = [18] },
+  { pdf_page = 5, quote = "(ICR para 27)", paragraphs = [27] },
+  { pdf_page = 6, quote = "(ICR para 33)", paragraphs = [33] },
+  { pdf_page = 7, quote = "(ICR para 38)", paragraphs = [38] },
+  { pdf_page = 8, quote = "(ICR para 26)", paragraphs = [26] },
+  { pdf_page = 8, quote = "(ICR para 11 and 43)", paragraphs = [11, 43] },
+  { pdf_page = 10, quote = "(ICR para 84)", paragraphs = [84] },
+  { pdf_page = 12, quote = "(ICR para 56)", paragraphs = [56] },
+  { pdf_page = 12, quote = "(ICR para 70)", paragraphs = [70] },
+  { pdf_page = 13, quote = "(ICR para 72)", paragraphs = [72] },
+  { pdf_page = 13, quote = "(ICR para 53)", paragraphs = [53] },
+  { pdf_page = 13, quote = "(ICR para 54)", paragraphs = [54] },
+]
+
+# The PADs' "Lessons Learned and Reflected in the Project Design" sections. Each PAD prints the heading
+# twice: once in its table of contents, with dot leaders and a page number, which is not the section, and
+# once over the section. The section's numbered paragraphs run until the next heading. Each paragraph is one
+# passage of the PAD's section III.C.
+[silver_labels.pad_lessons]
+says = "The two PADs' lessons sections hold seven numbered paragraphs: 30 to 35 in P130164's and 39 in P156634's."
+queries = 2
+labels = 7
+reports = 2
+
+[[silver_labels.pad_lessons.sections]]
+document = "documents/P130164/pad-2013-10-01"
+project = "P130164"
+contents_page = 5
+pdf_page = 22
+quote = "C. Lessons Learned and Reflected in the Project Design 30. The project builds upon"
+paragraphs = [30, 31, 32, 33, 34, 35]
+last_pdf_page = 23
+last_quote = "35. Regular project performance and quality audits during project implementation"
+
+[[silver_labels.pad_lessons.sections]]
+document = "documents/P156634/pad-2017-04-05"
+project = "P156634"
+contents_page = 4
+pdf_page = 22
+quote = "C. Lessons Learned and Reflected in the Project Design 39. Having subprojects ready for implementation"
+paragraphs = [39]
+last_pdf_page = 22
+last_quote = "39. Having subprojects ready for implementation helps avoid delays in project execution."
+
+# The day the P156634 PAD became public, which dates its lessons query (ticket 32). The P130164 PAD's is
+# stress_shelf.pad_disclosed above.
+[[value]]
+id = "pad-p156634-disclosed"
+says = "The P156634 PAD became public on July 25, 2017."
+value = 2017-07-25
+quote = "2017-07-25T14:17:07Z"
+record = "api/documents/P156634.json"
+at = "documents.D27348420.disclosure_date"

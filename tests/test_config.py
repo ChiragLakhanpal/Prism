@@ -530,7 +530,7 @@ def test_a_threshold_added_to_the_file_is_read(tmp_path):
 def test_review_notes_are_a_draft_kind_with_their_writer_columns_and_holds():
     # The 35 design brief, sections 1, 3.5 and 11: two columns, Activity and Review note, and two holds,
     # not yet checked and a preview, with the hold line for not yet checked named first.
-    [kind] = config.load_draft_kinds().kinds.values()
+    kind = config.load_draft_kinds().kinds["review_notes"]
 
     assert (kind.key, kind.agent, kind.export) == ("review_notes", "review_notes_writer", "word")
     assert kind.columns == ("activity", "note")
@@ -540,12 +540,13 @@ def test_review_notes_are_a_draft_kind_with_their_writer_columns_and_holds():
 
 def test_adding_a_draft_kind_is_one_entry(tmp_path):
     path = copy("drafts.toml", tmp_path, old="[holds.notChecked]", new=(
-        '[kinds.mission_brief]\nwriter = "strata.drafts.review_notes"\nagent = "review_notes_writer"\n'
-        'word = "strata.drafts.review_notes:word"\nexport = "word"\ncsv = []\ncolumns = ["part"]\n'
+        '[kinds.ppsd_rows]\nwriter = "strata.drafts.review_notes"\nagent = "review_notes_writer"\n'
+        'word = "strata.drafts.review_notes:word"\nexport = "word"\ncsv = []\ncolumns = ["risk"]\n'
         'holds = ["notChecked"]\nsources_list = true\nremoved_box = "always"\nnot_checked = []\n'
-        'files = "mission-brief-{project_id}"\n\n[holds.notChecked]'))
+        'files = "ppsd-rows-{project_id}"\n\n[holds.notChecked]'))
 
-    assert list(config.load_draft_kinds(path).kinds) == ["review_notes", "mission_brief"]
+    # Ticket 37 added the mission brief the same way.
+    assert list(config.load_draft_kinds(path).kinds) == ["review_notes", "mission_brief", "ppsd_rows"]
 
 
 def test_a_draft_kind_with_a_hold_the_registry_does_not_define_is_refused(tmp_path):
@@ -626,6 +627,70 @@ def test_the_project_page_registry_gives_document_groups_in_project_cycle_order_
     assert page.isr_ratings == {"Progress towards achievement of PDO": "pdo",
                                 "Overall Implementation Progress (IP)": "implementation"}
     assert page.procurement_rating_code == "27"
+
+
+def test_the_project_page_registry_gives_the_timeline_s_events_and_its_dashed_line_s_default_state():
+    from strata.config import load_project_page
+
+    timeline = load_project_page().timeline
+
+    # The 23 brief, section 10: a line is info blue unless an open answer or draft depends on it.
+    assert timeline.disagreement_line_state == "info"
+    assert [event.kind for event in timeline.events] == ["mid_term_review", "restructuring"]
+    mid_term = timeline.events[0]
+    # The mid-term review is dated by the assertions reader's own key-date pattern, as the ISRs print it.
+    assert (mid_term.words, mid_term.pattern, mid_term.date_format) == (
+        ("mid-term review date", "mid term review date"), "key_date", "%d-%b-%Y")
+
+
+TIMELINE_PAGE = """
+[documents]
+reissued = ["icr"]
+[[documents.groups]]
+type = "Implementation Completion and Results Report"
+group = "icr"
+[summary]
+procurement_rating_code = "27"
+[[summary.isr_ratings]]
+name = "Overall Implementation Progress (IP)"
+key = "implementation"
+[timeline]
+disagreement_line_state = "{state}"
+[[timeline.events]]
+kind = "restructuring"
+words = ["restructured"]
+pattern = '{pattern}'
+date_format = "%B %d, %Y"
+"""
+
+
+@pytest.mark.parametrize("state, pattern, message", [
+    ("amber", r"restructured on ([A-Z][a-z]+ \d{1,2}, \d{4})", "disagreement_line_state must be info or warning"),
+    ("info", "restructured on", "pattern must be key_date or a pattern with one group"),
+    ("info", "restructured on ([A-Z", "pattern must be key_date or a pattern with one group"),
+])
+def test_the_project_page_registry_names_a_wrong_timeline_setting(tmp_path, state, pattern, message):
+    from strata.config import ConfigError, load_project_page
+
+    path = tmp_path / "project_page.toml"
+    path.write_text(TIMELINE_PAGE.replace("{state}", state).replace("{pattern}", pattern))
+
+    with pytest.raises(ConfigError, match=message):
+        load_project_page(path)
+
+
+def test_an_event_dated_by_key_date_needs_the_assertions_reader_s_pattern_for_its_kind(tmp_path):
+    # The assertions reader has a key-date pattern only for the mid-term review, so the restructuring cannot use
+    # key_date. The server names the setting rather than stopping on a bare KeyError (code review, round 3).
+    from strata.config import ConfigError, load_project_page
+    from strata.server.timeline import events_of
+
+    path = tmp_path / "project_page.toml"
+    path.write_text(TIMELINE_PAGE.replace("{state}", "info").replace("{pattern}", "key_date"))
+
+    with pytest.raises(ConfigError, match=r"\[\[timeline.events\]\] restructuring uses key_date, but the assertions "
+                                          r"reader has no key-date pattern for it"):
+        events_of(load_project_page(path).timeline)
 
 
 def test_the_project_page_registry_names_a_repeated_group(tmp_path):

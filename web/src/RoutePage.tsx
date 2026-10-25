@@ -6,18 +6,22 @@
 // All projects, a project's page and Check a plan (ticket 10), the package workspace (ticket 12), the
 // Data tab's three pages (ticket 16), the Drafts tab's pages (ticket 35), the Lessons tab's pages
 // (ticket 29), and a project's Summary, Documents and the source view (ticket 21) are built, so
-// they render their own pages.
+// they render their own pages, as do the activity page and a project's Connections tab (ticket 22).
 import { EmptyState } from "./components/Card";
 import { PageHeader, WithIds } from "./components/PageHeader";
 import { TextLink } from "./components/TextLink";
 import { copy } from "./copy";
+import { ActivityPage } from "./pages/ActivityPage";
 import { CheckPlanPage } from "./pages/CheckPlanPage";
 import { DataPage } from "./pages/data/DataPage";
 import { DraftNewPage } from "./pages/DraftNewPage";
 import { DraftPage } from "./pages/DraftPage";
 import { DraftsPage } from "./pages/DraftsPage";
+import { FollowingPage } from "./pages/FollowingPage";
 import { LessonsPage, QueuePage } from "./pages/LessonsPages";
 import { ReviewPage } from "./pages/ReviewPage";
+import { JudgingPage, JudgingQueryPage } from "./pages/JudgingPages";
+import { PassageReportPage, PassageReportsPage } from "./pages/PassageReportsPages";
 import { PackagePage } from "./pages/PackagePage";
 import { PackagesPage } from "./pages/PackagesPage";
 import { PlannedPackagePage } from "./pages/PlannedPackagePage";
@@ -29,7 +33,9 @@ import type { Match, ProjectTab } from "./routes";
 export function RoutePage({ match, search = "" }: { match: Match; search?: string }) {
   const { pid, agencyId, version } = match.values;
   if (match.key === "projects") return <ProjectsPage />;
+  if (match.key === "following") return <FollowingPage search={search} />;
   if (match.key === "project") return <ProjectPage pid={pid} tab={match.values.tab as ProjectTab} />;
+  if (match.key === "activity") return <ActivityPage pid={pid} stepRef={match.values.stepRef} />;
   if (match.key === "document") return <SourcePage pid={pid} doc={match.values.doc} search={search} />;
   if (match.key === "checkPlan") return <CheckPlanPage pid={pid} agencyId={agencyId} version={version} />;
   if (match.key === "data" || match.key === "dataSources" || match.key === "dataHow") return <DataPage match={match} search={search} />;
@@ -39,6 +45,10 @@ export function RoutePage({ match, search = "" }: { match: Match; search?: strin
   if (match.key === "lessons") return <LessonsPage search={search} />;
   if (match.key === "lessonsQueue") return <QueuePage search={search} />;
   if (match.key === "lessonReview") return <ReviewPage itemId={match.values.itemId} />;
+  if (match.key === "lessonsReports") return <PassageReportsPage search={search} />;
+  if (match.key === "passageReport") return <PassageReportPage groupId={match.values.groupId} />;
+  if (match.key === "lessonsJudging") return <JudgingPage search={search} />;
+  if (match.key === "judgingQuery") return <JudgingQueryPage queryId={match.values.queryId} search={search} />;
   if (match.key === "package") return <PackagePage stepRef={match.values.id} />;
   if (match.key === "packages") return <PackagesPage search={search} />;
   if (match.key === "packageNew") return <PlannedPackagePage packageId={null} search={search} />;

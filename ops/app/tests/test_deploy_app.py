@@ -23,6 +23,9 @@ ENV = {"DATABRICKS_HOST": "https://dbc-1.cloud.databricks.com", "DATABRICKS_TOKE
 FOUNDRY = {"FOUNDRY_PROJECT_ENDPOINT": "https://wb-strata.services.ai.azure.com/api/projects/Strata",
            "FOUNDRY_TENANT_ID": "tenant-0001", "FOUNDRY_CLIENT_ID": "client-0001",
            "FOUNDRY_CLIENT_SECRET": "not-a-real-key"}
+# The judge of the verifier's check 4 (src/strata/agent/judge.py), on Azure OpenAI.
+JUDGE = {"AZURE_OPENAI_ENDPOINT": "https://wb-strata.openai.azure.com/openai/deployments/gpt-5.4",
+         "AZURE_OPENAI_API_KEY": "not-a-real-key"}
 
 
 class FakeWorkspace:
@@ -85,7 +88,7 @@ def deploy(workspace, tmp_path, capsys, build=None, env=None):
 def test_one_command_uploads_the_app_with_its_lean_requirements_deploys_it_and_prints_its_address(tmp_path, capsys):
     workspace = FakeWorkspace()
 
-    code, out = deploy(workspace, tmp_path, capsys, env=ENV | FOUNDRY)
+    code, out = deploy(workspace, tmp_path, capsys, env=ENV | FOUNDRY | JUDGE)
 
     assert code == 0
     files = workspace.uploaded["files"]
@@ -155,6 +158,36 @@ def test_the_app_gets_the_foundry_agent_s_four_keys_as_secrets_when_the_env_file
         "FOUNDRY_CLIENT_ID": "foundry-client-id", "FOUNDRY_CLIENT_SECRET": "foundry-client-secret"}
 
 
+def test_the_app_gets_the_judge_s_two_keys_as_secrets_when_the_env_file_has_them(tmp_path, capsys):
+    """Without them, every sentence the verifier's check 4 must judge is removed (ticket 24's review)."""
+    workspace = FakeWorkspace()
+
+    code, out = deploy(workspace, tmp_path, capsys, env=ENV | FOUNDRY | JUDGE)
+
+    assert code == 0
+    assert {key: value for (_, key), value in workspace.secrets.items() if key in JUDGE} == JUDGE
+    [(_, _, resources, _)] = workspace.configured
+    assert resources[-2:] == [
+        {"name": name, "secret": {"scope": "strata", "key": key, "permission": "READ"}}
+        for name, key in (("azure-openai-endpoint", "AZURE_OPENAI_ENDPOINT"), ("azure-openai-key", "AZURE_OPENAI_API_KEY"))]
+    started = yaml.safe_load(workspace.uploaded["files"]["app.yaml"])
+    assert {entry["name"]: entry.get("valueFrom") for entry in started["env"] if entry["name"].startswith("AZURE_")} == {
+        "AZURE_OPENAI_ENDPOINT": "azure-openai-endpoint", "AZURE_OPENAI_API_KEY": "azure-openai-key"}
+    assert "the model that judges sentences" in out
+
+
+def test_without_the_judge_s_keys_the_app_deploys_with_no_judge_and_says_so(tmp_path, capsys):
+    workspace = FakeWorkspace()
+
+    code, out = deploy(workspace, tmp_path, capsys, env=ENV | FOUNDRY)
+
+    assert code == 0
+    assert [key for (_, key) in workspace.secrets if key in JUDGE] == []
+    started = yaml.safe_load(workspace.uploaded["files"]["app.yaml"])
+    assert [entry["name"] for entry in started["env"] if entry["name"].startswith("AZURE_")] == []
+    assert "AZURE_OPENAI_ENDPOINT" in out and "removes every sentence" in out
+
+
 def test_the_deploy_says_it_saved_the_foundry_keys_only_after_saving_them(tmp_path, capsys):
     class Refusing(FakeWorkspace):
         def put_secret(self, scope, key, value):
@@ -198,6 +231,10 @@ def test_the_app_s_own_principal_may_write_usage_events_agent_runs_opened_source
         f"GRANT SELECT, MODIFY ON TABLE strata.ops.draft_states TO `{PRINCIPAL}`",
         f"GRANT SELECT, MODIFY ON TABLE strata.ops.draft_exports TO `{PRINCIPAL}`",
         f"GRANT SELECT, MODIFY ON TABLE strata.ops.draft_files TO `{PRINCIPAL}`",
+        # Ticket 37: the projects each World Bank staff viewer follows.
+        f"GRANT SELECT, MODIFY ON TABLE strata.ops.follows TO `{PRINCIPAL}`",
+        # Ticket 23: the side of a disagreement each person kept, with their reason, for the evidence pack.
+        f"GRANT SELECT, MODIFY ON TABLE strata.ops.disagreement_choices TO `{PRINCIPAL}`",
         f"GRANT SELECT ON TABLE strata.ops.supplier_pairs TO `{PRINCIPAL}`",
         f"GRANT SELECT, MODIFY ON TABLE strata.ops.supplier_review_decisions TO `{PRINCIPAL}`",
         f"GRANT SELECT, MODIFY ON TABLE strata.ops.supplier_pair_labels TO `{PRINCIPAL}`",
@@ -208,6 +245,14 @@ def test_the_app_s_own_principal_may_write_usage_events_agent_runs_opened_source
         f"GRANT SELECT, MODIFY ON TABLE strata.ops.lesson_versions TO `{PRINCIPAL}`",
         f"GRANT SELECT, MODIFY ON TABLE strata.ops.lesson_sources TO `{PRINCIPAL}`",
         f"GRANT SELECT, MODIFY ON TABLE strata.ops.lesson_review_notes TO `{PRINCIPAL}`",
+        # Ticket 32's retrieval loop: passage reports, the decisions on them, each answer's sources, the query
+        # judges' grades and each query's pair of judges. No one may write them outside the app.
+        f"GRANT SELECT, MODIFY ON TABLE strata.ops.candidate_labels TO `{PRINCIPAL}`",
+        f"GRANT SELECT, MODIFY ON TABLE strata.ops.label_decisions TO `{PRINCIPAL}`",
+        f"GRANT SELECT, MODIFY ON TABLE strata.ops.answer_citations TO `{PRINCIPAL}`",
+        f"GRANT SELECT, MODIFY ON TABLE strata.ops.retrieval_grades TO `{PRINCIPAL}`",
+        # The pair of judges a query loaded before the roles file named any keeps at its first grade.
+        f"GRANT SELECT, MODIFY ON TABLE strata.ops.retrieval_queries TO `{PRINCIPAL}`",
     ]
 
 

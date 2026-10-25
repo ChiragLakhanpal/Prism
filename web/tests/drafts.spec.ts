@@ -4,7 +4,7 @@
 // are the ticket's, DESIGN.md's and the 35 design brief's, copied here so the test checks the copy file
 // against an independent source. The network is off: the shared fixture fails any test whose page asks
 // for anything outside its own origin, so these tests also prove that exporting reaches nothing outside.
-import AxeBuilder from "@axe-core/playwright";
+import { scan } from "./axe";
 import type { Page } from "@playwright/test";
 import { draftBarSentence } from "./design-md";
 import { expect, recorded, test } from "./mocked";
@@ -12,7 +12,6 @@ import { expect, recorded, test } from "./mocked";
 const PLAN = "/projects/P156634/procurement/northern-water-works-development-agency/2026-10-09";
 const DRAFT = "/drafts/draft-0001";
 const MARKED = ["KE-NWWDA-541055-CW-RFB", "KE-NWWDA-229129-CW-RFB", "KE-NWWDA-541062-CW-RFQ"];
-const WCAG_22_AA = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 const CONSEQUENCE = "Exporting sends nothing and is not a World Bank review, clearance or no-objection.";
 const WORD = "review-notes-P156634-northern-water-works-development-agency-2026-10-09.docx";
 
@@ -55,7 +54,7 @@ const notes = (page: Page) => page.locator("[data-draft-notes] [data-view]:visib
 
 async function axe(page: Page) {
   await page.waitForFunction(() => document.getAnimations().every((animation) => animation.playState !== "running"));
-  const results = await new AxeBuilder({ page }).withTags(WCAG_22_AA).analyze();
+  const results = await scan(page);
   return results.violations.map((v) => `${v.id}: ${v.nodes.map((node) => node.target.join(" ")).join(", ")}`);
 }
 
@@ -303,10 +302,10 @@ test("the draft's notes cite their plan rows, and the bar says what exporting do
   await expect(page.locator("[data-lede]")).toHaveText("I drafted a note on each of the three activities that need a look or are worth watching.");
   await expect(notes(page).locator("[data-activity-ref]")).toHaveText(MARKED);
   await expect(page.locator("[data-count-line]")).toHaveText("Showing all 3 activities with a signal");
-  // The check line names what this draft's checks did not cover. Until ticket 24 adds the fourth check,
-  // it also says whether each sentence follows from its sources was not checked.
+  // The check line names what this draft's checks did not cover. A draft passes all six checks (ticket 24),
+  // so whether each sentence follows from its sources is no longer a gap.
   await expect(page.locator("[data-check-line]")).toContainText(
-    "Not checked: whether each sentence follows from its sources, whether the plan's published records are complete, or whether these notes are what you would tell the borrower.",
+    "Not checked: whether the plan's published records are complete, or whether these notes are what you would tell the borrower.",
   );
   // The evidence pack writes the same check line, word for word (the server wrote it on the fixture).
   expect(await page.locator("[data-check-line]").evaluate((element) => (element as HTMLElement).innerText.replace(/\s+/g, " ").trim())).toBe(

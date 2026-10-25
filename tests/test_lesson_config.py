@@ -48,15 +48,17 @@ def test_the_roles_file_names_the_two_lesson_reviewer_groups_and_what_each_may_d
 def test_the_fixture_roles_name_the_reviewers_the_tests_need():
     """The 29 brief, section 13: an accredited procurement specialist for South Asia, leads for South Asia
     (one works on P130164, and two do not, so a lesson one of them recommended has a lead left to decide it),
-    a reviewer for another region, and nobody else."""
+    a reviewer for another region, and no other lesson reviewer. Ticket 32's query judges and passage reviewers
+    review no lessons."""
     roles = config.load_roles(ROLES_FIXTURE)
+    reviewers = [person for person in roles.people if "lesson_review" in person.pages(roles)]
 
-    south_asia = [person for person in roles.people if "South Asia" in person.regions]
+    south_asia = [person for person in reviewers if "South Asia" in person.regions]
     assert sorted(person.role(roles) for person in south_asia) == [
         "accredited procurement specialist", "lead procurement specialist", "lead procurement specialist",
         "lead procurement specialist"]
     assert [person.name for person in south_asia if "P130164" in person.projects] != []
-    elsewhere = [person for person in roles.people if "South Asia" not in person.regions]
+    elsewhere = [person for person in reviewers if "South Asia" not in person.regions]
     assert [person.regions for person in elsewhere] == [("Eastern and Southern Africa",)]
 
 
@@ -102,7 +104,7 @@ def test_the_lesson_lists_hold_the_two_kinds_and_closed_lists_of_risk_factors_an
     assert "Procurement planning" in [stage.label for stage in lists.stages]
     assert len(lists.risk_factors) >= 5
     assert lists.risk_factor("cost_estimates").key == "cost_estimates"
-    assert lists.example_projects == ()
+    assert lists.example_projects == ("P130164",)  # the extractor's sample is its ICR paragraph 54
 
 
 def test_a_risk_factor_listed_twice_is_refused(tmp_path):

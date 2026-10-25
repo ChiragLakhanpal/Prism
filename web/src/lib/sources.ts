@@ -116,6 +116,14 @@ export function lessonOf(evidence: EvidenceEvent): LessonRecord | null {
 // in its evidence id, so a contract a later tool cites is never called an activity.
 export function recordKind(evidence: EvidenceEvent): string {
   const table = evidence.id.split(":")[0];
+  // A record the contract trail opens names its own kind, since one table holds every type of notice (ticket 22).
+  const own = typeof evidence.row?.record_kind === "string" ? copy.evidence.recordKindsByKey[evidence.row.record_kind] : undefined;
+  if (own) return own;
+  // A notice a package advertised again cites (ticket 28) is named by its type.
+  if (table === "strata.silver.notices") {
+    const type = ((evidence.row.source ?? {}) as Record<string, unknown>).document_type;
+    return type === "Contract Award" ? copy.evidence.noticeRecordKinds.award : copy.evidence.noticeRecordKinds.other;
+  }
   return copy.evidence.recordKinds[table] ?? copy.evidence.summaryRecordKinds[table] ?? copy.evidence.recordKindOther;
 }
 

@@ -10,7 +10,9 @@
 // /projects/:pid/documents/:doc, where :doc is a document's key such as icr-2019-10-10. Ticket 12 builds the
 // package workspace at /packages/:id, where :id is the package's STEP reference. Ticket 35 adds the
 // Drafts tab's pages: /drafts, /drafts/new and /drafts/:draftId. Ticket 29 adds the Lessons tab's
-// Waiting for review (/lessons/review) and one item's review page (/lessons/review/:itemId).
+// Waiting for review (/lessons/review) and one item's review page (/lessons/review/:itemId). Ticket 32 adds
+// Passage reports (/lessons/reports, /lessons/reports/:groupId) and Judging (/lessons/judging,
+// /lessons/judging/:queryId).
 import type { copy } from "./copy";
 import type { Section } from "./components/TopNav";
 
@@ -32,9 +34,9 @@ export type Match = {
 };
 
 // A project page's tabs, in the copy file's order (copy.projectPage.tab), and the ones built so far.
-// Ticket 23 adds "timeline" and ticket 22 "connections" here, and the tab row shows them.
+// Ticket 23 added "timeline" and ticket 22 "connections", and the tab row shows each built tab.
 export type ProjectTab = "summary" | "procurement" | "timeline" | "documents" | "connections";
-export const BUILT_TABS: ProjectTab[] = ["summary", "procurement", "documents"];
+export const BUILT_TABS: ProjectTab[] = ["summary", "procurement", "timeline", "documents", "connections"];
 export const TAB_PATH: Record<ProjectTab, string> = {
   summary: "",
   procurement: "/procurement",
@@ -58,6 +60,8 @@ export function isDay(text: string): boolean {
 // The Data tab's sub-pages under /data (the 16 design brief, section 2): Data readiness is /data.
 export const DATA_PAGES = { dataSources: "sources", dataHow: "how-strata-works" } as const;
 export const DATA_HREF = { data: "/data", dataSources: "/data/sources", dataHow: "/data/how-strata-works" } as const;
+// How Strata works' "What I don't do" (ticket 24), where the link under every refusal goes.
+export const WHAT_I_DONT_DO = { id: "what-i-dont-do", href: `${DATA_HREF.dataHow}#what-i-dont-do` } as const;
 
 // Where a coverage line links (DESIGN.md section 5): Data readiness, showing only the sources behind
 // the answer, by their source registry keys, and the tool that wrote the line, such as
@@ -110,6 +114,12 @@ export function matchRoute(pathname: string): Match {
   // Ticket 29: the lesson review queue and one item's review page, for lesson reviewers.
   if (first === "lessons" && second === "review" && parts.length === 2) return page("lessonsQueue", "lessons");
   if (first === "lessons" && second === "review" && parts.length === 3) return page("lessonReview", "lessons", { itemId: third });
+  // Ticket 32: Passage reports and one passage's reports, for passage reviewers, and Judging and one query, for
+  // query judges.
+  if (first === "lessons" && second === "reports" && parts.length === 2) return page("lessonsReports", "lessons");
+  if (first === "lessons" && second === "reports" && parts.length === 3) return page("passageReport", "lessons", { groupId: third });
+  if (first === "lessons" && second === "judging" && parts.length === 2) return page("lessonsJudging", "lessons");
+  if (first === "lessons" && second === "judging" && parts.length === 3) return page("judgingQuery", "lessons", { queryId: third });
   if (first === "drafts" && parts.length === 1) return page("drafts", "drafts");
   // Ticket 35: writing a draft (/drafts/new?kind=...), and a draft by its id. PLAN.md section 8 does not
   // list these two routes; "new" is never a draft's id.
@@ -120,6 +130,9 @@ export function matchRoute(pathname: string): Match {
   if (first === "data" && parts.length === 2 && second === DATA_PAGES.dataHow) return page("dataHow", "data");
   if (first !== "projects") return page("notFound");
   if (parts.length === 1) return page("projects", "projects");
+  // Ticket 37: Following, before a project's address, so "following" is never read as a malformed project ID.
+  // PLAN.md section 8 does not list this route.
+  if (parts.length === 2 && second === "following") return page("following", "projects");
 
   if (!PROJECT_ID.test(second)) return page("notAProject");
   const pid = second.toUpperCase();

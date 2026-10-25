@@ -69,6 +69,32 @@ test("the copy lint checks the words the source registry puts on the Data readin
   expect(passed.code).toBe(0);
 });
 
+// Ticket 22: a link between a contract and a paragraph is "appeared together", never a cause, so the blocks that
+// write about links refuse causal words, "because" included, and only those blocks.
+test("the copy lint refuses causal wording on the contract trail, the Connections tab and Why this source, and only there", () => {
+  const scoped = (text: string) => `export const copy = {\n  why: {\n    link: ${JSON.stringify(text)},\n  },\n  other: {\n    line: ${JSON.stringify(text)},\n  },\n} as const;\n`;
+  for (const [wrong, word] of [
+    ["The contract was late because the paragraph says so.", "because"],
+    ["This lesson informed the contract.", "informed"],
+    ["The delay led to rebidding.", "led to"],
+  ]) {
+    const failed = lint({ copy: scoped(wrong) });
+    expect(failed.code, failed.output).toBe(1);
+    expect(failed.output).toContain(`copy.ts:3: "${wrong}" uses "${word}", which says a cause.`);
+    // The same words outside the scoped blocks are not checked for cause.
+    expect(failed.output).not.toContain("copy.ts:6:");
+  }
+  const passed = lint({ copy: scoped("This paragraph appeared together with the contract.") });
+  expect(passed.output).toBe("");
+});
+
+test("every block the causal-wording rule names is in the copy file", async () => {
+  const { scopedRanges } = await import("../lint/source.ts");
+  const { CAUSAL_SCOPES } = await import("../lint/rules.ts");
+  const file = fileURLToPath(new URL("../src/copy.ts", import.meta.url));
+  expect(scopedRanges(readFileSync(file, "utf8"), file, CAUSAL_SCOPES)).toHaveLength(CAUSAL_SCOPES.length);
+});
+
 test("the server's copies of the Data readiness sentences and the draft files' words say what the copy file says", async () => {
   const { serverCopyIsCurrent, staleServerCopies } = await import("../lint/server-copy.ts");
   expect(serverCopyIsCurrent(), "run node web/lint/server-copy.ts --write").toBe(true);

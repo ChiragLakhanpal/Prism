@@ -53,11 +53,20 @@ export function DraftRow({ row, linkRef }: { row: Row; linkRef?: (element: HTMLA
   return (
     <li className="border-t border-line p-4 first:border-t-0" data-draft-row={row.draft_id}>
       <TextLink ref={linkRef} href={draftHref(row.draft_id)} className="text-body font-semibold">
-        {kind.rowTitle(subject.implementing_agency, short(subject.plan_date))}
+        {row.kind === "mission_brief"
+          ? kind.rowTitle(subject.project_name, "")
+          : kind.rowTitle(subject.implementing_agency, short(subject.plan_date))}
       </TextLink>
       <p className="mt-1 text-small text-ink-muted">
-        <Fill template={words.project} slots={{ name: subject.project_name, pid: <ProjectId pid={subject.project_id} /> }} />{" "}
-        {row.state !== "discarded" && <>{kind.rowNotes(row.notes, formatCount(row.notes, { capital: true }))} </>}
+        {row.kind === "mission_brief" ? (
+          // The title already names the project (the 37 brief, section 9.8): "P156634, Kenya. Drafted by you on ...".
+          <Fill template={subject.country ? words.projectCountry : words.projectOnly} slots={{ pid: <ProjectId pid={subject.project_id} />, country: subject.country ?? "" }} />
+        ) : (
+          <>
+            <Fill template={words.project} slots={{ name: subject.project_name, pid: <ProjectId pid={subject.project_id} /> }} />{" "}
+            {row.state !== "discarded" && <>{kind.rowNotes(row.notes, formatCount(row.notes, { capital: true }))} </>}
+          </>
+        )}{" "}
         {lineTwo(row)}
       </p>
       {row.opened && (

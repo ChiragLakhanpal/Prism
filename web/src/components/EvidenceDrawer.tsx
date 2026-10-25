@@ -25,11 +25,13 @@ import {
   takeFocusRequest,
   type Origin,
 } from "../lib/evidence";
+import { address } from "../lib/router";
 import { highlightsFor, lessonOf, passageFields, placeOf, recordReference } from "../lib/sources";
 import { useStore } from "../lib/store";
+import { viewOf } from "../lib/view";
 import { Alert } from "./Alert";
 import { Button } from "./Button";
-import { highlighted, withoutMarkers } from "./Document";
+import { Highlight, highlighted, withoutMarkers } from "./Document";
 import { sourcePageHref } from "../lib/documents";
 import { ExternalLink, pdfPageHref } from "./ExternalLink";
 import { linkProjectIds, ProjectId } from "./ProjectId";
@@ -41,7 +43,18 @@ import { ComparableDotList, ComparableRecords, dotRegion } from "./ComparableRec
 import { COMPARABLE, DOT, type DotEntry } from "../lib/packages";
 import { isRiskList, pageRows, REPORTS, rowOf } from "../lib/risks";
 import { AllReportsView, backToReports, RiskReportsView, RowClaim, RowSwitcher } from "./RiskDrawer";
+import { isStepList } from "../lib/steps";
+import { LongestView, StepComparablesView } from "./StepsDrawer";
+import { CaseClaim, CaseSwitcher } from "./RebidDrawer";
+import { caseOf, pageCases } from "../lib/rebidding";
 import { LoadingLabel, Skeleton, SkeletonLine, SkeletonText } from "./Skeleton";
+import { FeedbackRow, type RowStart } from "./FeedbackRow";
+import { showsRow } from "../lib/retrieval";
+import { criteriaLessonOf, heldOnPage, pageLessons, type LessonEntry } from "../lib/criteria";
+import { routeStepRef, useWhy, WhyThisSource } from "./WhyThisSource";
+import { backLabel, criteriaClose, criteriaEyebrow, CriteriaDrawerBody, criteriaTitle, LessonClaim } from "./CriteriaDrawer";
+import { ClaimLine, isTimelineView, timelineClose, timelineEyebrow, timelineTitle, TimelineView, UnknownDisagreement } from "./TimelineDrawer";
+import { sideShort, type SideData } from "../lib/disagreement";
 
 export type DrawerData =
   | { status: "loading" }
@@ -49,19 +62,48 @@ export type DrawerData =
   | { status: "missing" }
   | { status: "failed"; onRetry: () => void };
 
+// The passages' table, before the colon of a passage's evidence id.
+const PASSAGE_TABLE = "strata.gold.passage:";
+
 // The source an evidence id names: from the stream if it sent it, or else from the server.
 export function useEvidence(id: string, asOf: string | null): DrawerData {
   const all = useStore(known);
   const [fetched, setFetched] = useState<{ id: string; data: DrawerData } | null>(null);
   const [attempt, setAttempt] = useState(0);
   const held = all[id];
+  const here = useStore(address);
+  // A preview asks for what its view may see: the public view of a project still under way shows no disagreement.
+  const view = viewOf(here.search);
+  // On an activity page, a passage's "Why this source" names the page's own activity (ticket 22).
+  const stepRef = routeStepRef(here.pathname);
+  // A passage an answer or a page sent with it carries no "Why this source" (undefined): ask the server for it
+  // once, with the route's activity, and add it to the passage the page sent (the 22 review, item 3).
+  const [why, setWhy] = useState<{ id: string; why: EvidenceEvent["why"] } | null>(null);
+  const asksWhy = Boolean(held && held.kind === "passage" && held.why === undefined && id.startsWith(PASSAGE_TABLE));
   useEffect(() => {
-    // A quantile dot's list is no source on the server: the page that draws the dots holds it (ticket 15), and so
-    // does the risks section its lists of completion reports (ticket 30).
-    if (held || id.startsWith(DOT) || isRiskList(id)) return;
+    if (!asksWhy) return;
+    const controller = new AbortController();
+    const query =
+      `/api/evidence?id=${encodeURIComponent(id)}${asOf ? `&asof=${encodeURIComponent(asOf)}` : ""}` +
+      (stepRef ? `&step_ref=${encodeURIComponent(stepRef)}` : "") +
+      (view !== "staff" ? `&view=${view}` : "");
+    getJson<EvidenceEvent>(query, { signal: controller.signal }).then(
+      (found) => setWhy({ id, why: found.why ?? null }),
+      () => undefined, // the passage still shows; only its "Why this source" is left out
+    );
+    return () => controller.abort();
+  }, [id, asksWhy, asOf, stepRef, view]);
+  useEffect(() => {
+    // A quantile dot's list is no source on the server: the page that draws the dots holds it (ticket 15). So are
+    // section 5's lists and cost records (ticket 31), the risks section's lists of completion reports (ticket 30),
+    // and section 2's steps' lists (ticket 27).
+    if (held || id.startsWith(DOT) || heldOnPage(id) || isRiskList(id) || isStepList(id)) return;
     const controller = new AbortController();
     setFetched({ id, data: { status: "loading" } });
-    const query = `/api/evidence?id=${encodeURIComponent(id)}${asOf ? `&asof=${encodeURIComponent(asOf)}` : ""}`;
+    const query =
+      `/api/evidence?id=${encodeURIComponent(id)}${asOf ? `&asof=${encodeURIComponent(asOf)}` : ""}` +
+      (stepRef ? `&step_ref=${encodeURIComponent(stepRef)}` : "") +
+      (view !== "staff" ? `&view=${view}` : "");
     getJson<EvidenceEvent>(query, { signal: controller.signal }).then(
       (evidence) => setFetched({ id, data: { status: "ready", evidence } }),
       (error: unknown) => {
@@ -71,8 +113,8 @@ export function useEvidence(id: string, asOf: string | null): DrawerData {
       },
     );
     return () => controller.abort();
-  }, [id, held, asOf, attempt]);
-  if (held) return { status: "ready", evidence: held };
+  }, [id, held, asOf, view, attempt, stepRef]);
+  if (held) return { status: "ready", evidence: asksWhy && why?.id === id ? { ...held, why: why.why } : held };
   return fetched?.id === id ? fetched.data : { status: "loading" };
 }
 
@@ -197,12 +239,23 @@ function RowCells({ fields, ranges }: { fields: ReturnType<typeof passageFields>
   );
 }
 
+// The passage block outside the drawer (ticket 32): a passage under review on Passage reports, or one to grade on
+// Judging, shown whole with its meta strip and "Open at page", and no highlight, since no sentence opened it.
+export function PassageBlock({ evidence }: { evidence: EvidenceEvent }) {
+  return <PassageView evidence={evidence} sentence={null} fromAnswer={false} given={[]} />;
+}
+
 // given: the quote's place when no answer's sentence opened the drawer, such as a lesson's evidence card.
 function PassageView({ evidence, sentence, fromAnswer, given = null }: { evidence: EvidenceEvent; sentence: number | null; fromAnswer: boolean; given?: [number, number][] | null }) {
   const fields = passageFields(evidence);
   const place = placeOf(fields);
   const section = place.kind === "section";
-  const ranges = given ?? highlightsFor(evidence, sentence);
+  // Ticket 22: a passage that appeared together with a contract highlights the words they share, unless a
+  // sentence or a card opened it at its own quote.
+  const why = useWhy(evidence);
+  const shared = why ? why.mentions.map((mention) => [mention.start, mention.end] as [number, number]) : [];
+  const quoted = highlightsFor(evidence, sentence);
+  const ranges = given ?? (quoted.length > 0 || fromAnswer ? quoted : shared);
   const pdf = fields.pdfUrl && fields.page ? pdfPageHref(fields.pdfUrl, fields.page) : null;
   // Ticket 21: "Open at page N" opens the in-app source view at the page, in the same tab, with the
   // paragraph highlighted, or the passage when it has no paragraph number. The PDF link lives there.
@@ -246,6 +299,7 @@ function PassageView({ evidence, sentence, fromAnswer, given = null }: { evidenc
         )}
       </div>
       {note && <p className="text-caption text-ink-muted">{note}</p>}
+      {why && <WhyThisSource why={why} />}
       {notice && fields.noticeUrl ? (
         <p>
           <ExternalLink href={fields.noticeUrl}>{copy.evidence.openNotice}</ExternalLink>
@@ -267,12 +321,37 @@ function PassageView({ evidence, sentence, fromAnswer, given = null }: { evidenc
   );
 }
 
+// A side of a disagreement in the drawer's disagreement view (ticket 23): its passage or record, read as any source
+// opened from a link is, with no highlight, since no sentence opened it.
+function SidePassage({ id, asOf }: { id: string; asOf: string | null }) {
+  const data = useEvidence(id, asOf);
+  if (data.status === "loading") {
+    return (
+      <div aria-busy="true" className="rounded-md border border-line">
+        <Skeleton className="h-8 w-full rounded-b-none" />
+        <SkeletonText className="max-w-prose p-4 text-body" widths={["w-full", "w-full", "w-3/5"]} />
+      </div>
+    );
+  }
+  if (data.status === "missing") return <Alert state="neutral">{copy.document.missing}</Alert>;
+  if (data.status === "failed") {
+    return (
+      <Alert state="error" action={<Button variant="secondary" onClick={data.onRetry}>{copy.answer.tryAgain}</Button>}>
+        {copy.document.failed}
+      </Alert>
+    );
+  }
+  if (data.evidence.kind === "record") return <RecordView evidence={data.evidence} />;
+  return <PassageView evidence={data.evidence} sentence={null} fromAnswer={false} />;
+}
+
 // The What stratum's view: the fields of the record a tool returned, under STEP's own names, in a
 // two-column definition list (the 14 brief, section 4.5.3): the Description, the Method and the
 // Process status across, Review and the amount side by side, the amount right-aligned on the list's
 // edge in STEP's form with its cents (DESIGN.md section 6), then the source line.
 function RecordView({ evidence }: { evidence: EvidenceEvent }) {
   const row = evidence.row;
+  const here = useStore(address).pathname;
   const columns = copy.checkPlan.columns;
   const given = (value: unknown) => value !== null && value !== undefined && value !== "";
   const fields: { label: string; value: ReactNode; wide?: boolean; numeric?: boolean; ledger?: boolean }[] = [];
@@ -280,12 +359,31 @@ function RecordView({ evidence }: { evidence: EvidenceEvent }) {
   // their source's form with cents, and text as the record gives it. Each amount takes a whole line, its
   // label on the left and the amount on the list's right edge, so a loan's three amounts line up and the
   // date after them starts its own line at the left (the 21 design review, round 2, F19).
-  for (const field of (Array.isArray(row.fields) ? row.fields : []) as { key: string; value: string; kind: string }[]) {
-    const label = copy.evidence.summaryRecordFields[field.key] ?? field.key;
-    if (field.kind === "date") fields.push({ label, value: <Num date={field.value} /> });
-    else if (field.kind === "usd") {
-      fields.push({ label, value: <Num value={Number(field.value)} options={{ decimals: 2, compact: false }} />, numeric: true, ledger: true });
+  const listed = (Array.isArray(row.fields) ? row.fields : []) as { key: string; value: string; kind: string; highlight?: boolean }[];
+  // A signed amount's currency: the trail's contract carries it on the row (ticket 22), and a mission brief's
+  // award record as its own field beside an amount it has in no other currency (ticket 37).
+  const listedCurrency = listed.find((field) => field.key === "currency")?.value;
+  const currency = typeof row.currency === "string" ? row.currency : typeof listedCurrency === "string" ? listedCurrency : null;
+  for (const field of listed) {
+    // A key is Strata's own name for a value, such as a rating's "pdo", which means nothing to a reader.
+    if (field.kind === "key") continue;
+    // A contract's signed amount carries its currency in its label (ticket 22): "Signed amount (INR)".
+    const label =
+      field.key === "signed_amount"
+        ? !currency || currency === "USD"
+          ? copy.trail.contract.field.signedAmountUsd
+          : copy.trail.contract.field.signedAmount(currency)
+        : (copy.evidence.summaryRecordFields[field.key] ?? field.key);
+    // The field a line states, such as the date a plan signal fired on (ticket 37), is highlighted.
+    const marked = (value: ReactNode) => (field.highlight ? <Highlight>{value}</Highlight> : value);
+    if (field.kind === "date") fields.push({ label, value: marked(<Num date={field.value} />) });
+    else if (field.kind === "usd" || field.kind === "amount") {
+      fields.push({ label, value: marked(<Num value={Number(field.value)} options={{ decimals: 2, compact: false }} />), numeric: true, ledger: true });
     }
+    // A contract signed by an individual consultant names no one (ticket 22).
+    else if (field.kind === "supplier" && field.value === "individual_consultant") fields.push({ label, value: copy.trail.bids.individual, wide: true });
+    // The field a sentence or a row quoted, such as an award notice's Reason for Rejection (ticket 31), is highlighted.
+    else if (field.highlight) fields.push({ label, value: <Highlight>{String(field.value)}</Highlight>, wide: true });
     else fields.push({ label, value: linkProjectIds(String(field.value)), wide: String(field.value).length > 24 });
   }
   if (given(row.description)) fields.push({ label: copy.evidence.recordDescription, value: String(row.description), wide: true });
@@ -314,6 +412,16 @@ function RecordView({ evidence }: { evidence: EvidenceEvent }) {
         )}
       </dl>}
       <RecordSourceLine evidence={evidence} />
+      {/* A notice, award notice, contract or plan row whose activity Strata holds opens its trail (ticket 22), unless
+          the drawer is open on that trail already. */}
+      {typeof row.activity_href === "string" && row.activity_href !== here && (
+        <p>
+          <TextLink href={row.activity_href} className="inline-flex min-h-6 items-center text-small" data-record-activity>
+            {copy.evidence.openActivity}
+            <span className="clip-visually">{copy.evidence.openActivityFor(String(row.step_reference ?? ""))}</span>
+          </TextLink>
+        </p>
+      )}
     </div>
   );
 }
@@ -415,8 +523,11 @@ export function EvidenceDrawerView({
   onChoose,
   onOpenEntry,
   onBack,
+  onOpenListEntry,
   onChooseRow,
   onOpenReport,
+  feedbackStart,
+  lesson: givenLesson,
 }: {
   id: string;
   data: DrawerData;
@@ -441,10 +552,16 @@ export function EvidenceDrawerView({
   // A package in a quantile dot's list was chosen, or the way back to that list (ticket 15).
   onOpenEntry?: (entry: DotEntry) => void;
   onBack?: (listId: string) => void;
+  // A notice in one of section 5's lists was chosen (ticket 31).
+  onOpenListEntry?: (entry: string, list: { id: string; count: number }, highlight?: [number, number] | null) => void;
   // A switcher tab of a risk's row chose another of its sources, and a report in a risk's list was chosen
   // (ticket 30).
   onChooseRow?: (id: string) => void;
   onOpenReport?: (evidenceId: string) => void;
+  // A design gallery sample's feedback row state (ticket 32), which also shows the row without an answer.
+  feedbackStart?: RowStart;
+  // Section 5's lesson whose paragraph this is, for the design gallery; the page finds it in the section's lessons.
+  lesson?: LessonEntry | null;
 }) {
   const headingId = useId();
   const passageId = useId();
@@ -469,6 +586,18 @@ export function EvidenceDrawerView({
     from && run && from.id === id && from.serial === run.serial && from.sentence !== null
       ? run.sentences.find((sentence) => sentence.index === from.sentence && sentence.evidence_ids.includes(id))
       : undefined;
+  // A side of a disagreement shown under a sentence, opened from the card's marker (ticket 24): the sentence does
+  // not cite it, so no claim block shows, but the drawer highlights the words the side quotes, as the stream marks
+  // them for the sentence the card follows.
+  const cardSentence =
+    !claim &&
+    from &&
+    run &&
+    from.id === id &&
+    from.serial === run.serial &&
+    run.disagreements.some((found) => found.after === from.sentence && found.sides.some((side) => side.evidence_id === id))
+      ? from.sentence
+      : null;
   const numbering = run ? citationNumbers(run) : new Map<string, number>();
   const evidence = data.status === "ready" ? data.evidence : null;
   // A source opened from a risk's row, or from the address while the row shows (ticket 30): the drawer restores
@@ -476,16 +605,44 @@ export function EvidenceDrawerView({
   const rows = useStore(pageRows);
   const riskRow = !claim && evidence?.kind === "passage" ? rowOf(id, rows) : null;
   const rowSwitcher = riskRow && riskRow.sources.length > 1 ? riskRow : null;
-  const switcherIds = claim && claim.evidence_ids.length > 1 ? claim.evidence_ids : rowSwitcher ? rowSwitcher.sources.map((source) => source.evidence_id) : null;
+  // A record opened from a row of section 1's "Advertised again" block (ticket 28), or from the address while the
+  // row shows: the row's line as the claim, and a tab for each of its records when it has two or more.
+  const cases = useStore(pageCases);
+  const rebidCase = !claim && !riskRow ? caseOf(id, cases.rows) : null;
+  const caseSwitcher = rebidCase && rebidCase.evidence.length > 1 ? rebidCase : null;
+  const switcherIds = claim && claim.evidence_ids.length > 1
+    ? claim.evidence_ids
+    : rowSwitcher
+      ? rowSwitcher.sources.map((source) => source.evidence_id)
+      : caseSwitcher
+        ? caseSwitcher.evidence.map((item) => item.evidence_id)
+        : null;
+  // A lesson's paragraph opened from section 5 (ticket 31, view F): the lesson and its IEG line.
+  const lessons = useStore(pageLessons);
+  const criteriaLesson = !claim && !riskRow && evidence?.kind === "passage" ? (givenLesson ?? criteriaLessonOf(id, lessons)) : null;
   // A comparable package from the range chart (ticket 15): its region names it as one, and its close says
   // what it closes. A quantile dot's list of packages is named by its count and its dot, and a package
   // opened from that list has a way back to it above its title.
   const comparable = id.startsWith(COMPARABLE);
   const comparableRef = comparable ? id.slice(COMPARABLE.length) : null;
   const dotList = id.startsWith(DOT);
+  // A notice opened from one of section 5's lists has a way back to that list too (ticket 31).
+  const criteriaList = from?.list && heldOnPage(from.list.id) ? from.list : null;
   const riskList = isRiskList(id);
-  const backTo = (comparable || evidence?.kind === "passage") && from?.id === id && from.list ? from.list : null;
+  const stepList = isStepList(id);
+  const backTo = (comparable || criteriaList || evidence?.kind === "passage") && from?.id === id && from.list ? from.list : null;
+  const criteriaView = evidence && (evidence.kind === "criteria_public" || evidence.kind === "criteria_item" || evidence.kind === "package_cost");
+  // The feedback row: a passage a search found, opened from the answer it belongs to (a marker, a number or a
+  // switcher tab of that answer), never from a bare link to the source (the 32 brief, section 4.1).
+  const fromItsAnswer = Boolean(claim) || (from?.id === id && Boolean(from.runId) && from.runId === evidence?.feedback?.run_id);
+  const row = evidence?.kind === "passage" && showsRow(evidence.feedback) && (fromItsAnswer || feedbackStart !== undefined);
   const region = evidence?.kind === "dot" ? dotRegion(evidence) : comparableRef ? copy.evidence.package.region(comparableRef) : undefined;
+  // A project timeline's views (ticket 23), and a disagreement of the answer that opened the drawer from its sentence.
+  const timelineView = isTimelineView(evidence);
+  const timelineId = /^(doc|ratings|contracts|disagreement):/.test(id);
+  // Every sentence the disagreement changes gets the line, not only the one its card follows.
+  const claimDisagreement =
+    claim && run ? (run.disagreements.find((found) => found.after === claim.index || found.changes_sentence_ids?.includes(claim.index)) ?? null) : null;
 
   return (
     <div
@@ -518,18 +675,24 @@ export function EvidenceDrawerView({
           <div className="min-w-0 flex-1">
             {backTo && onBack && (
               <Button variant="ghost" icon={ChevronLeft} onClick={() => onBack(backTo.id)} className="-mt-2 mb-2 -ml-3">
-                {backTo.id.startsWith(REPORTS)
-                  ? backToReports(backTo.count)
-                  : backTo.count === 1
-                    ? copy.evidence.package.dot.backOne
-                    : copy.evidence.package.dot.back(formatCount(backTo.count))}
+                {heldOnPage(backTo.id)
+                  ? backLabel(backTo)
+                  : backTo.id.startsWith(REPORTS)
+                    ? backToReports(backTo.count)
+                    : backTo.count === 1
+                      ? copy.evidence.package.dot.backOne
+                      : copy.evidence.package.dot.back(formatCount(backTo.count))}
               </Button>
             )}
-            {evidence && <p className="text-label text-ink-muted uppercase">{eyebrow(evidence)}</p>}
+            {evidence && (
+              <p className="text-label text-ink-muted uppercase">
+                {criteriaView ? criteriaEyebrow(evidence) : timelineView ? timelineEyebrow(evidence) : eyebrow(evidence)}
+              </p>
+            )}
             {data.status === "loading" && <SkeletonLine className="text-label" width="w-1/3" />}
             <h2 ref={headingRef} id={headingId} tabIndex={-1} className="mt-1 text-title wrap-break-word text-ink-heading focus:outline-none">
               {evidence ? (
-                sourceTitle(evidence)
+                criteriaView ? criteriaTitle(evidence) : timelineView ? timelineTitle(evidence) : sourceTitle(evidence)
               ) : data.status === "loading" ? (
                 <LoadingLabel />
               ) : comparableRef ? (
@@ -548,7 +711,19 @@ export function EvidenceDrawerView({
             onClick={onClose}
             className="-mt-2 -mr-2"
           >
-            {dotList ? copy.evidence.package.dot.close : riskList ? copy.packageRisks.drawer.close : comparable ? copy.evidence.package.close : copy.evidence.close}
+            {heldOnPage(id)
+              ? criteriaClose(evidence, id)
+              : dotList
+                ? copy.evidence.package.dot.close
+                : riskList
+                  ? copy.packageRisks.drawer.close
+                  : stepList
+                    ? copy.stepDates.drawer.close
+                    : comparable
+                      ? copy.evidence.package.close
+                      : timelineView || timelineId
+                        ? timelineClose(evidence, id)
+                        : copy.evidence.close}
           </Button>
         </div>
         <div className="flex animate-drawer-in flex-col gap-4 px-6 pt-2 pb-6">
@@ -565,11 +740,30 @@ export function EvidenceDrawerView({
               </p>
             </div>
           )}
+          {/* A timeline's event mark: "From the timeline" and the event, above the passage that dates it (ticket 23). */}
+          {!claim && from?.id === id && from.context && (
+            <div data-from-timeline>
+              <p className="text-caption text-ink-muted">{from.context.lead}</p>
+              <p className="mt-1 border-l-2 border-line-strong pl-3 text-small text-ink">{from.context.line}</p>
+            </div>
+          )}
+          {claim && claimDisagreement && (
+            <ClaimLine
+              warning={claimDisagreement.changes_answer}
+              disagreementId={`disagreement:${claimDisagreement.disagreement_id ?? claimDisagreement.id.split(":").pop()}`}
+              text={copy.timeline.drawer.claimLine
+                .replace("{side1}", sideShort(claimDisagreement.sides[0] as SideData))
+                .replace("{side2}", sideShort(claimDisagreement.sides[1] as SideData))}
+            />
+          )}
           {riskRow && <RowClaim row={riskRow} />}
+          {rebidCase && <CaseClaim row={rebidCase} id={id} through={cases.through} />}
+          {criteriaLesson && <LessonClaim lesson={criteriaLesson} />}
           {switcherIds && claim && run && (
             <SourceSwitcher ids={switcherIds} current={id} run={run} panelId={passageId} onChoose={onChoose} />
           )}
           {rowSwitcher && <RowSwitcher row={rowSwitcher} current={id} panelId={passageId} onChoose={onChooseRow ?? onChoose} />}
+          {caseSwitcher && <CaseSwitcher row={caseSwitcher} current={id} panelId={passageId} onChoose={onChooseRow ?? onChoose} />}
           <div
             id={passageId}
             role={switcherIds ? "tabpanel" : undefined}
@@ -582,7 +776,12 @@ export function EvidenceDrawerView({
                 <SkeletonText className="max-w-prose p-4 text-body" widths={["w-full", "w-full", "w-full", "w-full", "w-full", "w-3/5"]} />
               </div>
             )}
-            {data.status === "missing" && <Alert state="neutral">{asOf ? copy.document.missingAsOf(formatDate(asOf)) : copy.document.missing}</Alert>}
+            {data.status === "missing" &&
+              (id.startsWith("disagreement:") ? (
+                <UnknownDisagreement asOf={asOf} />
+              ) : (
+                <Alert state="neutral">{asOf ? copy.document.missingAsOf(formatDate(asOf)) : copy.document.missing}</Alert>
+              ))}
             {data.status === "failed" && (
               <Alert
                 state="error"
@@ -599,20 +798,34 @@ export function EvidenceDrawerView({
             {evidence?.kind === "passage" && (
               <PassageView
                 evidence={evidence}
-                sentence={claim ? claim.index : null}
+                sentence={claim ? claim.index : cardSentence}
                 fromAnswer={Boolean(claim)}
                 given={!claim && from?.id === id && from.highlight ? [from.highlight] : null}
               />
             )}
             {evidence?.kind === "record" && <RecordView evidence={evidence} />}
+            {evidence && timelineView && <TimelineView evidence={evidence} renderSide={(sideId) => <SidePassage id={sideId} asOf={asOf} />} />}
             {evidence?.kind === "package" && <ComparableRecords evidence={evidence} />}
             {evidence?.kind === "dot" && (
               <ComparableDotList evidence={evidence} focusEntry={from?.id === id ? (from.entry ?? null) : null} onOpen={onOpenEntry} />
+            )}
+            {criteriaView && evidence && (
+              <CriteriaDrawerBody
+                evidence={evidence}
+                focusEntry={from?.id === id ? (from.entry ?? null) : null}
+                onOpen={(entry, list, _element, highlight) => onOpenListEntry?.(entry, list, highlight)}
+              />
             )}
             {evidence?.kind === "risk-reports" && (
               <RiskReportsView evidence={evidence} focusEntry={from?.id === id ? (from.entry ?? null) : null} onOpen={onOpenReport} />
             )}
             {evidence?.kind === "risk-reports-all" && <AllReportsView evidence={evidence} />}
+            {evidence?.kind === "steps" && (
+              <StepComparablesView evidence={evidence} focusEntry={from?.id === id ? (from.entry ?? null) : null} onOpen={onOpenEntry} />
+            )}
+            {evidence?.kind === "steps-longest" && (
+              <LongestView evidence={evidence} focusEntry={from?.id === id ? (from.entry ?? null) : null} onOpen={onOpenEntry} />
+            )}
             {data.status === "loading" && comparable && (
               <div aria-hidden="true" className="flex flex-col gap-4">
                 <Skeleton className="h-48 w-full rounded-md" />
@@ -620,7 +833,13 @@ export function EvidenceDrawerView({
               </div>
             )}
           </div>
-          {preview && <p className="text-caption text-ink-muted">{copy.evidence.preview}</p>}
+          {/* Ticket 32: "Was this the right passage?", after the paragraph, for a passage a search found for the
+              question of the answer it was opened from; never from a bare link. Its own preview line replaces
+              brief 14's. */}
+          {row && evidence?.feedback && (
+            <FeedbackRow evidenceId={id} feedback={evidence.feedback} sentence={claim ? claim.index : null} preview={preview} start={feedbackStart} />
+          )}
+          {preview && !row && <p className="text-caption text-ink-muted">{copy.evidence.preview}</p>}
         </div>
       </div>
     </div>
@@ -654,7 +873,7 @@ export function EvidenceDrawer({
 
   // Every source the drawer shows is marked visited and recorded for the viewer, once per opening.
   useEffect(() => {
-    if (id.startsWith(DOT) || isRiskList(id)) return;
+    if (id.startsWith(DOT) || isRiskList(id) || isStepList(id)) return;
     recordOpened(id, from?.runId ?? run?.runId ?? null);
     // The source is recorded when it changes, not when the answer does.
   }, [id]);
@@ -739,7 +958,15 @@ export function EvidenceDrawer({
       // From a quantile dot's list to one of its packages and back, in place: the dot stays the drawer's
       // opener, so closing gives focus back to it.
       onOpenEntry={(entry) => {
-        const count = data.status === "ready" ? Number(data.evidence.row.count) : 0;
+        // A dot's list counts its packages; a step's list and the ran-longest list count their entries (ticket 27).
+        const row = data.status === "ready" ? data.evidence.row : null;
+        const count = !row
+          ? 0
+          : data.status === "ready" && data.evidence.kind === "steps"
+            ? row.step.comparables.length
+            : data.status === "ready" && data.evidence.kind === "steps-longest"
+              ? row.longest.entries.length
+              : Number(row.count);
         openEvidence(
           entry.evidence_id,
           { serial: null, sentence: null, marker: from?.marker ?? null, runId: null, fallback: from?.fallback, list: { id, count } },
@@ -755,9 +982,18 @@ export function EvidenceDrawer({
             marker: from?.marker ?? null,
             runId: null,
             fallback: from?.fallback,
-            entry: listId.startsWith(REPORTS) ? id : id.slice(COMPARABLE.length),
+            entry: heldOnPage(listId) || listId.startsWith(REPORTS) ? id : id.slice(COMPARABLE.length),
           },
           { replace: true, focus: false },
+        )
+      }
+      // From one of section 5's lists to a notice and back, in place, as from a quantile dot's list (ticket 31),
+      // with the requirement's words highlighted in the notice.
+      onOpenListEntry={(entry, list, highlight) =>
+        openEvidence(
+          entry,
+          { serial: null, sentence: null, marker: from?.marker ?? null, runId: null, fallback: from?.fallback, list, highlight },
+          { replace: true },
         )
       }
       // A risk's row: another of its sources, in place, keeping the row's pill or count as the opener.

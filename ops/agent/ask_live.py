@@ -40,6 +40,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from live import LiveSetupError, az, foundry_agent, load_env, warehouse_engine_for  # noqa: E402
 
+from strata.agent import judge  # noqa: E402
 from strata.agent.loop import answer_runner  # noqa: E402
 from strata.agent.runs import RunLog  # noqa: E402
 from strata.agent.scripted import load_cases  # noqa: E402
@@ -84,7 +85,7 @@ def ask(env: dict) -> tuple[list[tuple[str, dict]], str]:
     writer = RunLog(lambda: WarehouseEngine(env["DATABRICKS_WAREHOUSE_ID"],
                                             http_transport(env["DATABRICKS_HOST"], env["DATABRICKS_TOKEN"])))
     app = create_app(runner=answer_runner(lambda turn: foundry_agent(env, spec), engine_for), engine_for=engine_for,
-                     runs=writer)
+                     runs=writer, judge=judge.from_environment(env))
 
     async def post() -> str:
         transport = httpx.ASGITransport(app=app)

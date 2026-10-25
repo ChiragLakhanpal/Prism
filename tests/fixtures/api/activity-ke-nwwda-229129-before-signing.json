@@ -1,0 +1,206 @@
+{
+  "as_of": "2022-01-02",
+  "data_through": "2022-01-02",
+  "activity": {
+    "step_reference": "KE-NWWDA-229129-CW-RFB",
+    "project_id": "P156634",
+    "project_name": "Water and Sanitation Development Project",
+    "display_name": "Water and Sanitation Development",
+    "description": "Drilling of 4 Number Exploratory Boreholes In Wajir County",
+    "method": "Request for Bids",
+    "consultants": false,
+    "implementing_agency": "Northern Water Works Development Agency",
+    "href": "/projects/P156634/packages/KE-NWWDA-229129-CW-RFB"
+  },
+  "moved": false,
+  "lead": {
+    "parts": [
+      {
+        "kind": "estimated",
+        "amount": "300000.00",
+        "currency": "USD",
+        "evidence_id": "strata.silver.plan_rows:33014836/KE-NWWDA-229129-CW-RFB"
+      },
+      {
+        "kind": "advertised",
+        "date": "2021-09-17",
+        "evidence_id": "strata.gold.notice:OP00146683",
+        "reference": "OP00146683"
+      }
+    ],
+    "no_estimate": false,
+    "missing": "contract",
+    "bids": [],
+    "many_contracts": false,
+    "paragraphs": null
+  },
+  "stages": [
+    {
+      "stage": "plan",
+      "found": true,
+      "reason": null,
+      "joined_on": "key",
+      "records": [
+        {
+          "evidence_id": "strata.silver.plan_rows:33014836/KE-NWWDA-229129-CW-RFB",
+          "public_from": "2021-04-21",
+          "description": "Drilling of 4 Number Exploratory Boreholes In Wajir County",
+          "method": "Request for Bids",
+          "market_approach": "Open - National",
+          "review_type": "Post",
+          "estimated_amount_usd": "300000.00",
+          "process_status": "Pending Implementation",
+          "fields": [
+            {
+              "key": "method",
+              "value": "Request for Bids",
+              "kind": "text"
+            },
+            {
+              "key": "market_approach",
+              "value": "Open - National",
+              "kind": "text"
+            },
+            {
+              "key": "review_type",
+              "value": "Post",
+              "kind": "text"
+            },
+            {
+              "key": "estimated_amount_usd",
+              "value": "300000.00",
+              "kind": "usd"
+            },
+            {
+              "key": "process_status",
+              "value": "Pending Implementation",
+              "kind": "text"
+            }
+          ],
+          "steps": [
+            {
+              "step": "Draft Bidding Document / Justification",
+              "first_planned_on": "2021-04-23",
+              "actual_on": null
+            },
+            {
+              "step": "Specific Procurement Notice / Invitation",
+              "first_planned_on": "2021-04-28",
+              "actual_on": null
+            },
+            {
+              "step": "Proposal Submission / Opening / Minutes",
+              "first_planned_on": "2021-05-19",
+              "actual_on": null
+            },
+            {
+              "step": "Bid Evaluation Report and Recommendation for Award",
+              "first_planned_on": "2021-05-26",
+              "actual_on": null
+            },
+            {
+              "step": "Signed Contract",
+              "first_planned_on": "2021-07-01",
+              "actual_on": null
+            },
+            {
+              "step": "Contract Completion",
+              "first_planned_on": "2021-10-15",
+              "actual_on": null
+            }
+          ],
+          "first_plan_date": "2021-04-21",
+          "plan_date": "2021-04-21",
+          "agency_id": "northern-water-works-development-agency",
+          "implementing_agency": "Northern Water Works Development Agency",
+          "source": {
+            "document_type": "Procurement Plan",
+            "project_id": "P156634",
+            "implementing_agency": "Northern Water Works Development Agency",
+            "plan_date": "2021-04-21",
+            "disclosed_on": "2021-04-21",
+            "document_id": "33014836",
+            "pdf_page": 3
+          }
+        }
+      ]
+    },
+    {
+      "stage": "notice",
+      "found": true,
+      "reason": null,
+      "joined_on": "key",
+      "records": [
+        {
+          "evidence_id": "strata.gold.notice:OP00146683",
+          "public_from": "2021-09-17",
+          "notice_id": "OP00146683",
+          "notice_type": "Invitation for Bids",
+          "notice_date": "2021-09-17",
+          "readvertised": false,
+          "url": "https://projects.worldbank.org/en/projects-operations/procurement-detail/OP00146683",
+          "fields": [
+            {
+              "key": "notice_type",
+              "value": "Invitation for Bids",
+              "kind": "text"
+            },
+            {
+              "key": "published",
+              "value": "2021-09-17",
+              "kind": "date"
+            },
+            {
+              "key": "procurement_method",
+              "value": "Request for Bids",
+              "kind": "text"
+            },
+            {
+              "key": "submission_deadline",
+              "value": "2021-10-19",
+              "kind": "date"
+            },
+            {
+              "key": "bid_description",
+              "value": "Drilling of 4 Number Exploratory Boreholes In Wajir County",
+              "kind": "text"
+            }
+          ],
+          "source": {
+            "source_key": "notices",
+            "dataset_name": "Procurement Notices",
+            "license": "CC BY 4.0",
+            "data_source": "Systematic Tracking of Exchanges in Procurement (STEP)",
+            "record_url": "https://projects.worldbank.org/en/projects-operations/procurement-detail/{id}",
+            "document_type": "Invitation for Bids",
+            "project_id": "P156634",
+            "document_date": "2021-09-17"
+          }
+        }
+      ]
+    },
+    {
+      "stage": "bids",
+      "found": false,
+      "joined_on": "key",
+      "reason": "after_asof",
+      "records": []
+    },
+    {
+      "stage": "contract",
+      "found": false,
+      "joined_on": "key",
+      "reason": "after_asof",
+      "records": []
+    },
+    {
+      "stage": "paragraphs",
+      "found": false,
+      "joined_on": "together",
+      "records": [],
+      "groups": [],
+      "threshold": "0.50",
+      "reason": "after_asof"
+    }
+  ]
+}

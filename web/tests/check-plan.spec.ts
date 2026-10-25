@@ -5,7 +5,7 @@
 //
 // The plan lists nine activities. The wireframe draws eight and leaves out KE-NWWDA-207796-CS-INDV,
 // which has no signals, so the screen shows six marked activities and folds three.
-import AxeBuilder from "@axe-core/playwright";
+import { scan } from "./axe";
 import type { Page } from "@playwright/test";
 import { expect, mockApi, recorded, test } from "./mocked";
 
@@ -21,7 +21,6 @@ const MARKED = [
 ];
 const FOLDED = ["KE-NWWDA-199471-GO-RFQ", "NWWDA-WSDP-03-2019-2020", "KE-NWWDA-207796-CS-INDV"];
 const FINDING = "One needs a look and two are worth watching; three have data notes.";
-const WCAG_22_AA = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 // At 1440 px, columns 1 to 8 of the 12-column grid: 8 columns of 78.67 px and 7 gutters of 32 px.
 const EIGHT_COLUMNS = 853;
 const widthOf = async (page: Page, selector: string) => Math.round((await page.locator(selector).boundingBox())!.width);
@@ -60,7 +59,7 @@ const textLines = (element: Element) => {
 async function axe(page: Page) {
   // Let the fold's fade-in finish, so contrast is measured on what stays on screen.
   await page.waitForFunction(() => document.getAnimations().every((animation) => animation.playState !== "running"));
-  const results = await new AxeBuilder({ page }).withTags(WCAG_22_AA).analyze();
+  const results = await scan(page);
   return results.violations.map((v) => `${v.id}: ${v.nodes.map((node) => node.target.join(" ")).join(", ")}`);
 }
 

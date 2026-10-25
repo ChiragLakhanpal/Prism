@@ -107,6 +107,14 @@ _Avoid_: Original plan (the first published version is a different thing)
 Inviting bids again after a procurement process was canceled or all bids were rejected.
 _Avoid_: Re-bid, re-tender
 
+**Qualification criteria**:
+The requirements a bidding document sets for bidders, such as similar experience, average annual turnover, equipment and key staff. Strata compares them item by item with comparable packages whose notices published theirs.
+_Avoid_: Criteria on its own (it means how comparable packages are chosen)
+
+**Cost estimate**:
+The amount a Procurement Plan gives a package before it goes to market, STEP's Estimated Amount (US$).
+_Avoid_: Estimate on its own (it reads as a time estimate)
+
 ### Analysis
 
 **Comparable**:
@@ -143,6 +151,22 @@ _Avoid_: Appeal, revision request, undo
 **Cross-check**:
 A sample of each quarter's lesson decisions, read by reviewers in another region, who agree or disagree. A disagreement starts a re-check where the lesson was decided.
 _Avoid_: Audit, second review, spot check (in user-facing copy)
+
+**Passage report**:
+A person's mark that a passage was the wrong one, or not useful, for the question they asked, sent from the evidence drawer with an optional reason. It changes nothing in how Strata ranks passages until a passage reviewer decides.
+_Avoid_: Flag, feedback flag
+
+**Passage reviewer**:
+A person the roles file names to decide whether a passage people reported is ranked lower for a kind of question. A passage reviewer never decides on a report they sent.
+_Avoid_: Moderator, approver
+
+**Audit sample**:
+At scale, one in ten of the passages Strata ranked lower on its own, because several people made the same passage report and nobody disagreed, sent to a passage reviewer to leave it ranked lower or restore its ranking. It checks Strata's own decisions on passage reports; a cross-check is about lesson decisions, read in another region.
+_Avoid_: Spot check, audit (alone), cross-check (for passages)
+
+**Query judge**:
+One of two people who grade, each on their own, the passages pooled for a query in the labeled set Strata measures search on.
+_Avoid_: Rater, annotator (in user-facing copy)
 
 **Edition (of the procurement rules)**:
 The version of the World Bank's procurement rules a project followed, such as the January 2011 Guidelines or a numbered edition of the Procurement Regulations, read from its appraisal document.

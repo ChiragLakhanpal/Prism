@@ -40,7 +40,8 @@
   --color-error-bg: #fdf2f2;  --color-error: #9d161d;  --color-error-icon: #c91c25;
   --color-neutral-bg: #e7edf3;  --color-neutral: #3d4c5c;
   --color-chart-text: #111111;  --color-chart-text-subtle: #666666;  --color-chart-cat1-text: #106ca1;
-  --color-chart-grey200: #ced4de;  --color-chart-grey400: #666666;  --color-chart-grey500: #111111;
+  --color-chart-grey100: #ebeef4;  --color-chart-grey200: #ced4de;  --color-chart-grey300: #8a969f;
+  --color-chart-grey400: #666666;  --color-chart-grey500: #111111;
   --font-sans: "Open Sans", "Open Sans Fallback", "Helvetica Neue", Arial, sans-serif;
   --font-mono: "Roboto Mono", Menlo, Consolas, "Liberation Mono", monospace;
   --radius-xs: 2px;  --radius-sm: 4px;  --radius-md: 8px;  --radius-lg: 16px;  --radius-pill: 32px;
@@ -78,6 +79,8 @@
   /* A table's own frame, for Table's cardsBelow="fit" (DESIGN.md section 5, Tables): the past
      range's six columns need about 776 px with one line per cell. */
   --container-table-fit: 49rem;
+  /* Table's cardsBelow="narrow": a table of three short columns keeps its columns from a 480 px frame. */
+  --container-table-narrow: 30rem;
   /* A fact table's own frame (DESIGN.md section 5, Fact table): from 45rem, as the Summary's 7 columns are at
      1440 px, its value column has room for "Moderately Unsatisfactory" on one line. */
   --container-fact-wide: 45rem;
@@ -167,14 +170,18 @@
   }
 }
 
+/* A device that can hover (DESIGN.md section 5, Key hint; the 32 brief, section 3.2): key hints show from 768 px
+   only there, since a phone or a tablet with no keyboard has no use for them. */
+@custom-variant can-hover (@media (hover: hover));
+
 /* A control inside a sticky part shifts its scroll margin by the part's scroll padding, so the Tab key does
    not scroll the page to bring it out of that padding (DESIGN.md section 10). The pages set --sticky-top
    and --sticky-bottom on html only while their header or bar sticks. */
-:is([data-draft-bar], [data-discarded-notice]) :is(a, button) {
+:is([data-draft-bar], [data-discarded-notice], [data-grade-bar]) :is(a, button) {
   scroll-margin-top: var(--sticky-bottom, 0px);
   scroll-margin-bottom: calc(-1 * var(--sticky-bottom, 0px));
 }
-:is([data-draft-header], [data-plan-header]) :is(a, button) {
+:is([data-draft-header], [data-plan-header], [data-judging-header]) :is(a, button) {
   scroll-margin-top: calc(-1 * var(--sticky-top, 0px));
   scroll-margin-bottom: var(--sticky-top, 0px);
 }
@@ -217,6 +224,19 @@
   }
   &[data-more="both"] {
     mask-image: linear-gradient(to right, transparent, black var(--tab-fade), black calc(100% - var(--tab-fade)), transparent);
+  }
+}
+
+/* The contract trail's rail (ticket 22; DESIGN.md section 5, Contract trail): the 2 px segment from a stage's
+   marker to the next stage, in line-strong, solid for records joined on a shared key and dashed 4/4 for a scored
+   "appeared together" link. It is drawn as a background, so the dash is exact and the segment takes no space. */
+@utility trail-rail {
+  position: absolute;
+  width: 2px;
+  background-color: var(--color-line-strong);
+  &[data-join="together"] {
+    background-color: transparent;
+    background-image: repeating-linear-gradient(to bottom, var(--color-line-strong) 0 4px, transparent 4px 8px);
   }
 }
 
