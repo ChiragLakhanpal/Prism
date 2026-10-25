@@ -14,9 +14,23 @@ in strata.ops (the 45 design brief, sections 7.3 and 7.4):
   [[onboarded]]). Plan accuracy is the median days between a row's planned signing date and the package's actual
   one, early or late; duration is the median months from the package's first notice to its signing (procurement
   cycle time). The actual dates come from strata.gold.package, never from a plan's Actual column.
+- Rolling coverage: of the packages that finished in the estimates_loop.coverage_window_months to the month, those
+  inside the 8-in-10 range Strata gave them before their first notice (the champion's batch score), out of those it
+  gave one; and on the same packages the typical error of the time estimate's middle and of the past range's middle
+  as find_comparables gave it on the notice's day.
+- The input mix: for each input in estimates_loop.drift_inputs, Pearson's chi-square test of the mix the champion
+  learned from against the packages advertised in the month.
 
-Every median is kept only from estimates_loop.min_cases cases; below that the row keeps its counts and says
-too_few_cases (the 45 design brief, decision 14).
+Every median, statistic and share is kept only from estimates_loop.min_cases cases; below that the row keeps its
+counts and says too_few_cases (the 45 design brief, decision 14).
+
+decide() then raises a retrain, with a reason code, in strata.ops.retrain_triggers: coverage outside the band for
+coverage_outside_months months in a row, the error more than error_trail_share behind the past range's, an input's
+mix drifting, or a new edition of the procurement rules taking effect in the month (config/editions.toml's
+effective_from), which first starts a re-check of each current lesson of another edition (ticket 29's being
+re-checked state) and marks the champion as being re-checked (strata.ops.model_states). run() is the score task's:
+it watches each whole month not watched yet, so a rerun watches nothing twice. retrain_due() says when the score task
+retrains, quarterly or after a trigger.
 """
 
 from __future__ import annotations

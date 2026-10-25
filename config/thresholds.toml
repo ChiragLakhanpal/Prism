@@ -829,3 +829,9 @@ retrain_every_months = 3
 # p-value below this. It shares the signals' replay dates, follow-up window and track_record_min ([signals]).
 # Source: none; the usual 5 percent level, as hindsight.mcnemar_alpha, a starting value for the owner to confirm.
 hazard_beats_alpha = 0.05
+# The discrete-time hazard model learns from one row per open project every hazard_period_months, from each
+# project's loan history, whose follow-up window (signals.track_record_window_months) ended by the day it is trained
+# on. Its logistic regression is shrunk toward no effect by hazard_ridge, so a small cohort cannot give it extreme
+# weights. Source: none; quarterly rows and a ridge of 1 are starting values for the model owner to confirm.
+hazard_period_months = 3
+hazard_ridge = 1.0
