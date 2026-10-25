@@ -51,27 +51,36 @@ export function CheckLine({
   dates,
   quotes,
   notChecked,
+  quoteWords,
+  notCheckedText = [],
 }: {
   numbers?: { matched: number; total: number };
   dates?: { matched: number; total: number };
   quotes?: { found: number; total: number };
   notChecked: NotChecked[];
+  // The quotes' clause in other words, such as "quotes are in their sources" where some quotes come from a notice,
+  // which has no pages (ticket 31; the 31 brief, section 6.4).
+  quoteWords?: { one: string; many: string };
+  // Clauses a part of a page adds to what was not checked, already in words, such as section 5's "whether I found
+  // every item in your qualification criteria".
+  notCheckedText?: string[];
 }) {
   const words = copy.checkLine;
   const clauses = [
     numbers && numbers.total > 0 && ratio(words.numbers, numbers.matched, numbers.total),
     dates && dates.total > 0 && ratio(words.dates, dates.matched, dates.total),
-    quotes && quotes.total > 0 && ratio(words.quotes, quotes.found, quotes.total),
+    quotes && quotes.total > 0 && ratio(quoteWords ?? words.quotes, quotes.found, quotes.total),
   ].filter((clause): clause is string => Boolean(clause));
+  const unchecked = [...notChecked.map((clause) => words.notCheckedClauses[clause]), ...notCheckedText];
   const checked = (clauses.length ? clauses : [words.sourcesOnly]).join(words.clauseJoin);
   return (
     <p data-check-line data-numbers className="rounded-md bg-neutral-bg py-2 pr-4 pl-12 text-small text-neutral">
       <span className="font-semibold">{words.checked}</span> {checked}
       {words.end}{" "}
-      {notChecked.length > 0 && (
+      {unchecked.length > 0 && (
         <>
           <span className="font-semibold">{words.notChecked}</span>{" "}
-          {joinClauses(notChecked.map((clause) => words.notCheckedClauses[clause]))}
+          {joinClauses(unchecked)}
           {words.end}
         </>
       )}

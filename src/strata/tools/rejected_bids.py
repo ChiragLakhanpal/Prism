@@ -62,6 +62,34 @@ def notice_reasons(text: str) -> list[tuple[str, int]]:
     return list(counted.items())
 
 
+def read_award_notice(engine, key: str, as_of: dt.date) -> dict | None:
+    """One award notice as the evidence drawer shows it from a rejected-bid row (strata.gold.notice:{notice_id}/
+    reason/{k}): its type, date, STEP reference and project, and the reason that row quoted, highlighted, with how
+    many bids it rejected for it. Like the rows, it never names a bidder. None when no award notice has the id by
+    the as-of date, or the notice gives no such reason."""
+    notice_id, _, rest = key.partition("/")
+    place = int(rest.split("/")[-1]) if rest.startswith("reason/") and rest.split("/")[-1].isdigit() else None
+    result = engine.run(_sql("award_notice"), {"notice_id": notice_id, "as_of": as_of})
+    if not result.rows:
+        return None
+    notice = dict(zip(result.columns, result.rows[0], strict=True))
+    reasons = notice_reasons(notice["notice_text"] or "")
+    if place is not None and not 0 < place <= len(reasons):
+        return None
+    fields = [{"key": "notice_type", "value": "Contract Award", "kind": "text"},
+              {"key": "published", "value": _iso(notice["notice_date"]), "kind": "date"},
+              {"key": "bid_reference", "value": notice["step_reference"], "kind": "text"},
+              {"key": "project_id", "value": notice["project_id"], "kind": "text"}]
+    if place is not None:
+        reason, bids = reasons[place - 1]
+        fields += [{"key": "reason_for_rejection", "value": reason, "kind": "text", "highlight": True},
+                   {"key": "bids_rejected", "value": str(bids), "kind": "text"}]
+    return {"kind": "record", "row": {
+        "reference": notice_id, "notice_id": notice_id, "fields": fields, "public_from": _iso(notice["public_from"]),
+        "source": {"source_key": "award_notices", "document_type": "Contract Award", "project_id": notice["project_id"],
+                   "date": _iso(notice["notice_date"])}}}
+
+
 def rejected_bids(call: Call, comparables: str) -> dict:
     refs = _references(comparables)
     items = load_criteria_items()

@@ -126,6 +126,11 @@ export const galleryCopy = {
       purpose:
         "A planned package's parts: the criterion chips in each state, the What I understood card, each kind of chip editor, the saved stamp, the plan prompt, a comparable package's records and the Packages tab's list. Each sample is a package the server saved, recorded in tests/fixtures/api.",
     },
+    "check-criteria": {
+      title: "Check your criteria",
+      purpose:
+        "Section 5 of the package workspace in each state: collapsed, open, the comparison of pasted qualification criteria, the rejected bids, the cost estimate and the lessons, and the drawer's views. Each sample is the server's answer on the fixture, recorded in tests/fixtures/api, except the cost lane with 20 packages or more, which no fixture package has.",
+    },
     icons: {
       title: "Icons",
       purpose:
@@ -380,6 +385,44 @@ export const galleryCopy = {
   },
 
   // The planned packages page's sections and state labels (ticket 15).
+  // Section 5's states (ticket 31; the 31 brief, section 13).
+  criteriaStates: {
+    collapsed: "Collapsed",
+    collapsedPopulated: "Populated: the packages whose criteria are public, from the tool",
+    collapsedCompared: "After a saved comparison",
+    collapsedNonePublic: "No comparable package published its criteria",
+    collapsedNoComparables: "No comparable packages: no button",
+    collapsedLoading: "Loading: the button works",
+    collapsedError: "Error",
+    open: "Open",
+    running: "The package-level run in progress: steps and skeletons",
+    worksOpen: "A works package: none public, so no field; rejected bids, the cost estimate and the lessons",
+    consultantOpen: "A consultant services package, after comparing the ticket's similar experience",
+    field: "The paste field",
+    fieldEmpty: "Empty on press",
+    fieldTooLong: "Too long, with the counter near the limit",
+    fieldComparing: "Comparing: the steps under part 1's heading, the old table busy",
+    fieldEdited: "Changed since compared",
+    fieldSaveFailed: "Save failed",
+    fieldPreview: "Read-only in a preview",
+    refusals: "Refusals and other results",
+    refusalLive: "A live tender's bids: live_tenders in full",
+    refusalPartial: "A partial refusal, then the table",
+    noneFound: "No qualification criteria in the text",
+    compareError: "The comparison failed",
+    stale: "The comparable packages changed after the comparison",
+    cost: "The cost estimate",
+    costAbstain: "Under 20 packages: the first-person abstention and the table open",
+    costRanged: "20 packages or more, a made-up sample: the middle half, the middle and the range sentence",
+    costNone: "None with both amounts",
+    drawer: "The drawer's views",
+    drawerPublic: "A. The packages whose criteria are public",
+    drawerItem: "B. The notices behind one item",
+    drawerCost: "E. A comparable package's cost records",
+    drawerAward: "D. An award notice, with the reason highlighted",
+    sampleNoun: "sample",
+  },
+
   plannedStates: {
     chips: "Criterion chips",
     typed: "Typed: from your sentence, a default or you",

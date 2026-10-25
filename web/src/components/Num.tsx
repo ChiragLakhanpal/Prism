@@ -10,6 +10,7 @@ import {
   formatDate,
   formatNumber,
   formatRatio,
+  formatSignedPercent,
   formatToolShare,
   formatYear,
   type DateStyle,
@@ -27,6 +28,8 @@ export type NumValue =
   | { part: number; whole: number; show?: "text" | "count"; style?: "sentence" | "table" }
   // A share a tool rounded, written as it came: the browser divides nothing.
   | { share: ToolShare; style?: "sentence" | "table" }
+  // A package's own difference from its cost estimate, as a tool rounded it (ticket 31): "+21.4%", or in words.
+  | { signedPercent: number; words?: boolean }
   // A number or date as a checked answer sentence wrote it: the verifier matched it to a record at
   // that rounding, so it is shown as written (ticket 14).
   | { written: string };
@@ -34,8 +37,8 @@ export type NumValue =
 export type NumCheck = {
   // What a tooltip says about where the number came from, from the copy file and the tool.
   tooltip: ReactNode;
-  // Opens the rows behind the number, or its definition.
-  onOpen?: () => void;
+  // Opens the rows behind the number, or its definition, with the number as the opener focus goes back to.
+  onOpen?: (element: HTMLElement) => void;
   // Numbers inside an answer leave the tab order to the citation markers beside them.
   tabStop?: boolean;
 };
@@ -47,6 +50,7 @@ export function numText(num: NumValue): string {
   if ("year" in num) return formatYear(num.year);
   if ("date" in num) return formatDate(num.date, { style: num.style, today: num.today });
   if ("share" in num) return formatToolShare(num.share, { style: num.style }).text;
+  if ("signedPercent" in num) return formatSignedPercent(num.signedPercent, { style: num.words ? "words" : "short" });
   const ratio = formatRatio(num.part, num.whole, { style: num.style });
   return num.show === "count" ? ratio.count : ratio.text;
 }
@@ -92,7 +96,7 @@ export function Num({ check, className, inCaption = false, ...num }: NumValue & 
           type="button"
           data-num
           tabIndex={check.tabStop === false ? -1 : undefined}
-          onClick={check.onOpen}
+          onClick={check.onOpen && ((event) => check.onOpen!(event.currentTarget))}
           className={cx(
             // A button lays out as an inline block, so its padding would make its line taller than the
             // body's 24 px; the negative margin keeps the 28 px hit area inside the line's own height.

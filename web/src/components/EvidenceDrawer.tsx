@@ -29,7 +29,7 @@ import { highlightsFor, lessonOf, passageFields, placeOf, recordReference } from
 import { useStore } from "../lib/store";
 import { Alert } from "./Alert";
 import { Button } from "./Button";
-import { highlighted, withoutMarkers } from "./Document";
+import { Highlight, highlighted, withoutMarkers } from "./Document";
 import { sourcePageHref } from "../lib/documents";
 import { ExternalLink, pdfPageHref } from "./ExternalLink";
 import { linkProjectIds, ProjectId } from "./ProjectId";
@@ -40,6 +40,8 @@ import { MethodText } from "./PlanCheck";
 import { ComparableDotList, ComparableRecords, dotRegion } from "./ComparableRecords";
 import { COMPARABLE, DOT, type DotEntry } from "../lib/packages";
 import { LoadingLabel, Skeleton, SkeletonLine, SkeletonText } from "./Skeleton";
+import { heldOnPage } from "../lib/criteria";
+import { backLabel, criteriaClose, criteriaEyebrow, CriteriaDrawerBody, criteriaTitle } from "./CriteriaDrawer";
 
 export type DrawerData =
   | { status: "loading" }
@@ -54,8 +56,9 @@ export function useEvidence(id: string, asOf: string | null): DrawerData {
   const [attempt, setAttempt] = useState(0);
   const held = all[id];
   useEffect(() => {
-    // A quantile dot's list is no source on the server: the page that draws the dots holds it (ticket 15).
-    if (held || id.startsWith(DOT)) return;
+    // A quantile dot's list is no source on the server: the page that draws the dots holds it (ticket 15). So
+    // are section 5's lists and cost records (ticket 31).
+    if (held || id.startsWith(DOT) || heldOnPage(id)) return;
     const controller = new AbortController();
     setFetched({ id, data: { status: "loading" } });
     const query = `/api/evidence?id=${encodeURIComponent(id)}${asOf ? `&asof=${encodeURIComponent(asOf)}` : ""}`;
@@ -277,12 +280,14 @@ function RecordView({ evidence }: { evidence: EvidenceEvent }) {
   // their source's form with cents, and text as the record gives it. Each amount takes a whole line, its
   // label on the left and the amount on the list's right edge, so a loan's three amounts line up and the
   // date after them starts its own line at the left (the 21 design review, round 2, F19).
-  for (const field of (Array.isArray(row.fields) ? row.fields : []) as { key: string; value: string; kind: string }[]) {
+  for (const field of (Array.isArray(row.fields) ? row.fields : []) as { key: string; value: string; kind: string; highlight?: boolean }[]) {
     const label = copy.evidence.summaryRecordFields[field.key] ?? field.key;
     if (field.kind === "date") fields.push({ label, value: <Num date={field.value} /> });
     else if (field.kind === "usd") {
       fields.push({ label, value: <Num value={Number(field.value)} options={{ decimals: 2, compact: false }} />, numeric: true, ledger: true });
     }
+    // The field a sentence or a row quoted, such as an award notice's Reason for Rejection (ticket 31), is highlighted.
+    else if (field.highlight) fields.push({ label, value: <Highlight>{String(field.value)}</Highlight>, wide: true });
     else fields.push({ label, value: linkProjectIds(String(field.value)), wide: String(field.value).length > 24 });
   }
   if (given(row.description)) fields.push({ label: copy.evidence.recordDescription, value: String(row.description), wide: true });
@@ -412,6 +417,7 @@ export function EvidenceDrawerView({
   onChoose,
   onOpenEntry,
   onBack,
+  onOpenListEntry,
 }: {
   id: string;
   data: DrawerData;
@@ -436,6 +442,8 @@ export function EvidenceDrawerView({
   // A package in a quantile dot's list was chosen, or the way back to that list (ticket 15).
   onOpenEntry?: (entry: DotEntry) => void;
   onBack?: (listId: string) => void;
+  // A notice in one of section 5's lists was chosen (ticket 31).
+  onOpenListEntry?: (entry: string, list: { id: string; count: number }) => void;
 }) {
   const headingId = useId();
   const passageId = useId();
@@ -469,7 +477,10 @@ export function EvidenceDrawerView({
   const comparable = id.startsWith(COMPARABLE);
   const comparableRef = comparable ? id.slice(COMPARABLE.length) : null;
   const dotList = id.startsWith(DOT);
-  const backTo = comparable && from?.id === id && from.list ? from.list : null;
+  // A notice opened from one of section 5's lists has a way back to that list too (ticket 31).
+  const criteriaList = from?.list && heldOnPage(from.list.id) ? from.list : null;
+  const backTo = (comparable || criteriaList) && from?.id === id && from.list ? from.list : null;
+  const criteriaView = evidence && (evidence.kind === "criteria_public" || evidence.kind === "criteria_item" || evidence.kind === "package_cost");
   const region = evidence?.kind === "dot" ? dotRegion(evidence) : comparableRef ? copy.evidence.package.region(comparableRef) : undefined;
 
   return (
@@ -503,14 +514,16 @@ export function EvidenceDrawerView({
           <div className="min-w-0 flex-1">
             {backTo && onBack && (
               <Button variant="ghost" icon={ChevronLeft} onClick={() => onBack(backTo.id)} className="-mt-2 mb-2 -ml-3">
-                {backTo.count === 1 ? copy.evidence.package.dot.backOne : copy.evidence.package.dot.back(formatCount(backTo.count))}
+                {heldOnPage(backTo.id)
+                  ? backLabel(backTo)
+                  : backTo.count === 1 ? copy.evidence.package.dot.backOne : copy.evidence.package.dot.back(formatCount(backTo.count))}
               </Button>
             )}
-            {evidence && <p className="text-label text-ink-muted uppercase">{eyebrow(evidence)}</p>}
+            {evidence && <p className="text-label text-ink-muted uppercase">{criteriaView ? criteriaEyebrow(evidence) : eyebrow(evidence)}</p>}
             {data.status === "loading" && <SkeletonLine className="text-label" width="w-1/3" />}
             <h2 ref={headingRef} id={headingId} tabIndex={-1} className="mt-1 text-title wrap-break-word text-ink-heading focus:outline-none">
               {evidence ? (
-                sourceTitle(evidence)
+                criteriaView ? criteriaTitle(evidence) : sourceTitle(evidence)
               ) : data.status === "loading" ? (
                 <LoadingLabel />
               ) : comparableRef ? (
@@ -529,7 +542,7 @@ export function EvidenceDrawerView({
             onClick={onClose}
             className="-mt-2 -mr-2"
           >
-            {dotList ? copy.evidence.package.dot.close : comparable ? copy.evidence.package.close : copy.evidence.close}
+            {heldOnPage(id) ? criteriaClose(evidence, id) : dotList ? copy.evidence.package.dot.close : comparable ? copy.evidence.package.close : copy.evidence.close}
           </Button>
         </div>
         <div className="flex animate-drawer-in flex-col gap-4 px-6 pt-2 pb-6">
@@ -587,6 +600,13 @@ export function EvidenceDrawerView({
             {evidence?.kind === "package" && <ComparableRecords evidence={evidence} />}
             {evidence?.kind === "dot" && (
               <ComparableDotList evidence={evidence} focusEntry={from?.id === id ? (from.entry ?? null) : null} onOpen={onOpenEntry} />
+            )}
+            {criteriaView && evidence && (
+              <CriteriaDrawerBody
+                evidence={evidence}
+                focusEntry={from?.id === id ? (from.entry ?? null) : null}
+                onOpen={(entry, list) => onOpenListEntry?.(entry, list)}
+              />
             )}
             {data.status === "loading" && comparable && (
               <div aria-hidden="true" className="flex flex-col gap-4">
@@ -724,8 +744,19 @@ export function EvidenceDrawer({
       onBack={(listId) =>
         openEvidence(
           listId,
-          { serial: null, sentence: null, marker: from?.marker ?? null, runId: null, fallback: from?.fallback, entry: id.slice(COMPARABLE.length) },
+          {
+            serial: null, sentence: null, marker: from?.marker ?? null, runId: null, fallback: from?.fallback,
+            entry: heldOnPage(listId) ? id : id.slice(COMPARABLE.length),
+          },
           { replace: true, focus: false },
+        )
+      }
+      // From one of section 5's lists to a notice and back, in place, as from a quantile dot's list (ticket 31).
+      onOpenListEntry={(entry, list) =>
+        openEvidence(
+          entry,
+          { serial: null, sentence: null, marker: from?.marker ?? null, runId: null, fallback: from?.fallback, list },
+          { replace: true },
         )
       }
     />

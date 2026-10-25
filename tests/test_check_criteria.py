@@ -318,6 +318,27 @@ def test_the_package_run_finds_the_lessons_on_cost_estimates_with_icr_p130164_pa
     assert paragraph["value"] in lesson["quote"] and lesson["ieg_status"] == "restated" and not lesson["removed"]
 
 
+def test_a_rejected_bid_opens_its_award_notice_with_the_reason_highlighted_and_no_bidder_named(fixture_db, state_db):
+    @contextmanager
+    def reading(_viewer):
+        with DuckDBEngine.open(fixture_db, read_only=True) as engine:
+            yield engine
+
+    app = create_app(engine_for=reading, today=lambda: TODAY)
+    opened = call(app, "GET", "/api/evidence", ANA, params={"id": "strata.gold.notice:OP00125282/reason/1"})
+
+    record = opened.json()
+    fields = {field["key"]: field for field in record["row"]["fields"]}
+    assert (record["kind"], record["row"]["reference"]) == ("record", "OP00125282")
+    assert fields["reason_for_rejection"] == {"key": "reason_for_rejection", "value": "Bid Security not Provided",
+                                              "kind": "text", "highlight": True}
+    assert fields["bid_reference"]["value"] == "KE-MOWI-47509-CW-RFB"
+    with DuckDBEngine.open(fixture_db, read_only=True) as engine:
+        names = [name for (name,) in engine.run("SELECT name FROM strata.silver.notice_bidders WHERE notice_id = :id "
+                                                "AND name IS NOT NULL", {"id": "OP00125282"}).rows]
+    assert names and not any(name in opened.text for name in names)
+
+
 def test_a_saved_package_run_shows_at_once_while_the_comparable_packages_are_the_same(app):
     call(app, "POST", f"/api/packages/{WORKS}/criteria/run", ANA, json={})
 

@@ -98,10 +98,16 @@ def answers(folder: Path) -> dict[str, str]:
 
             found["criteria-summary-ke-nwwda-541055.json"] = await get(f"/api/packages/{WORKS}/criteria")
             found["criteria-run-ke-nwwda-541055.sse"] = await post(f"/api/packages/{WORKS}/criteria/run", {})
+            # The award notice a rejected bid of KE-MOWI-47509-CW-RFB cites, with the reason it quoted.
+            found["evidence-award-notice-op00125282.json"] = await get(
+                "/api/evidence?id=strata.gold.notice:OP00125282/reason/1&asof=2026-10-28")
             found["package-ke-cwsb-224323.json"] = await get(f"/api/packages/{CONSULTANT}")
             found["comparables-ke-cwsb-224323.json"] = await get(f"/api/packages/{CONSULTANT}/comparables")
             found["criteria-summary-ke-cwsb-224323.json"] = await get(f"/api/packages/{CONSULTANT}/criteria")
             found["criteria-run-ke-cwsb-224323.sse"] = await post(f"/api/packages/{CONSULTANT}/criteria/run", {})
+            # A notice whose short-listing criteria a comparison counted, as the drawer opens it from an item's list.
+            found["evidence-passage-op00077276-s3.json"] = await get(
+                "/api/evidence?id=strata.gold.passage:OP00077276/v1/s3&asof=2026-10-28")
             for name, reader_case in COMPARISONS.items():
                 case[0] = reader_case
                 found[name] = await post(f"/api/packages/{CONSULTANT}/criteria/compare",

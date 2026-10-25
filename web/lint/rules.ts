@@ -106,6 +106,11 @@ export const NON_COPY_PROPS = new Set([
   "cardLabel",
   // EightColumns' breakpoint: "lg" or "xl".
   "breakpoint",
+  // Section 5 of the package workspace (ticket 31): a part's and a section's key for tests and focus, and the
+  // package's API path.
+  "partKey",
+  "sectionKey",
+  "base",
   // Keys of copy.checkLine.notCheckedClauses, such as "comparables".
   "notChecked",
   // The Data readiness page (ticket 16): which tooltip a measure's number gets ("ratio", "count" or

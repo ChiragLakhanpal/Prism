@@ -1,0 +1,52 @@
+{
+  "id": "strata.gold.notice:OP00125282/reason/1",
+  "kind": "record",
+  "tool": null,
+  "stratum": "What",
+  "short_name": null,
+  "row": {
+    "reference": "OP00125282",
+    "notice_id": "OP00125282",
+    "fields": [
+      {
+        "key": "notice_type",
+        "value": "Contract Award",
+        "kind": "text"
+      },
+      {
+        "key": "published",
+        "value": "2021-04-14",
+        "kind": "date"
+      },
+      {
+        "key": "bid_reference",
+        "value": "KE-MOWI-47509-CW-RFB",
+        "kind": "text"
+      },
+      {
+        "key": "project_id",
+        "value": "P156634",
+        "kind": "text"
+      },
+      {
+        "key": "reason_for_rejection",
+        "value": "Bid Security not Provided",
+        "kind": "text",
+        "highlight": true
+      },
+      {
+        "key": "bids_rejected",
+        "value": "3",
+        "kind": "text"
+      }
+    ],
+    "public_from": "2021-04-14",
+    "source": {
+      "source_key": "award_notices",
+      "document_type": "Contract Award",
+      "project_id": "P156634",
+      "date": "2021-04-14"
+    }
+  },
+  "highlights": []
+}

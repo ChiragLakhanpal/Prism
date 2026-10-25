@@ -25,6 +25,7 @@ import { CardTop, ChipGroups, ChipSkeletons, ComputedNote, CriterionChip, Refusa
 import { Fill } from "../components/Fill";
 import { Num } from "../components/Num";
 import { PastRange, type PastRangeState } from "../components/PastRange";
+import { CheckCriteria } from "../components/CheckCriteria";
 import { POPOVER } from "../components/Popover";
 import { SkeletonLine } from "../components/Skeleton";
 import { Steps, type Step } from "../components/Steps";
@@ -800,6 +801,11 @@ function Workspace({ initial, preview, focusHeading }: { initial: PlannedPage; p
             more={more}
             quiet
           />
+        </div>
+        {/* Section 5, "Check your criteria" (ticket 31), on this package's comparables: a change of criteria
+            reads its summary again. */}
+        <div className="mt-6 @lg/page:mt-8">
+          <CheckCriteria base={`/api/planned-packages/${encodeURIComponent(pkg.package_id)}`} version={queryKey(pkg)} preview={preview} />
         </div>
         <p role="status" className="sr-only" data-workspace-live>
           {announce}
