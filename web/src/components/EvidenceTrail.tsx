@@ -392,11 +392,13 @@ export function EvidenceTrail({
             );
           })}
         </g>
-        {/* The as-of date's reference line, behind the lines and the marks, so a mark on that date stays whole. */}
+        {/* The as-of date's reference line, behind the lines and the marks, so a mark on that date stays whole. Its
+            label sits at the right of the What lane's label row, which no dashed line or chip reaches: a disagreement
+            joins two reports, reports sit only in the Why and How lanes, and two ISRs never form one. */}
         {asOf && (
           <g data-as-of>
             <line x1={width - PAD} x2={width - PAD} y1={0} y2={AXIS_Y} className="stroke-chart-grey300" strokeWidth={3} />
-            <text x={width - PAD - 6} y={16} textAnchor="end" className="fill-chart-text-subtle font-semibold uppercase">
+            <text x={width - PAD - 6} y={ROWS.what.label + 16} textAnchor="end" className="fill-chart-text-subtle font-semibold uppercase">
               {words.asOf.replace("{date}", formatDate(asOf, { style: "table" }))}
             </text>
           </g>
@@ -441,14 +443,21 @@ export function EvidenceTrail({
         {/* The time axis: no title, ticks on whole years, no gridlines. */}
         <g data-axis>
           <line x1={PAD} x2={width - PAD} y1={AXIS_Y} y2={AXIS_Y} className="stroke-line-strong" strokeWidth={1} />
-          {layout.axis.ticks.map((year) => (
-            <g key={year}>
-              <line x1={yearX(year, x)} x2={yearX(year, x)} y1={AXIS_Y} y2={AXIS_Y + 4} className="stroke-line-strong" strokeWidth={1} />
-              <text x={yearX(year, x)} y={AXIS_Y + 20} textAnchor="middle" className="fill-chart-text-subtle tabular-nums" data-tick>
-                {String(year)}
-              </text>
-            </g>
-          ))}
+          {layout.axis.ticks.map((year) => {
+            const at = yearX(year, x);
+            // A year centred on its tick would run off the drawing near an edge, as the last one does when the
+            // as-of date falls on January 1: there it ends, or starts, at its tick.
+            const half = measure(String(year), type.s) / 2;
+            const anchor = at + half > width ? "end" : at - half < 0 ? "start" : "middle";
+            return (
+              <g key={year}>
+                <line x1={at} x2={at} y1={AXIS_Y} y2={AXIS_Y + 4} className="stroke-line-strong" strokeWidth={1} />
+                <text x={at} y={AXIS_Y + 20} textAnchor={anchor} className="fill-chart-text-subtle tabular-nums" data-tick>
+                  {String(year)}
+                </text>
+              </g>
+            );
+          })}
         </g>
       </svg>
 

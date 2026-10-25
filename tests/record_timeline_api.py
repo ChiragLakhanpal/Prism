@@ -10,7 +10,9 @@ Each answer comes from the fixture database as of October 23, 2026, the day its 
 date its address names:
 
 - timeline-p130164.json: the showcase's timeline as the plain page asks for it, with no ?asof=, with both disagreements, the three rating bands and the contract
-  signed only in its award notice; timeline-p130164-2016-08-26.json, the same as of the day ISR 7 was disclosed.
+  signed only in its award notice; timeline-p130164-2016-08-26.json, the same as of the day ISR 7 was disclosed; and
+  timeline-p130164-2024-01-01.json, as of a date after the ICR Review's re-issue, whose second dashed line ends near
+  the chart's right edge, where the as-of date is.
 - timeline-p156634.json: a project with a crowded What lane, whose contracts group by year; and
   timeline-p156634-public.json, its public view, which shows no disagreement on a project still under way.
 - timeline-p130164-failed.json: the showcase's timeline when get_disagreements does not answer (FAILED): the marks,
@@ -47,6 +49,7 @@ EFFICIENCY = "51ea6e6516c0ea63"  # ICR paragraph 44 and the re-issued ICR Review
 TIMELINE = {
     "timeline-p130164.json": "/api/projects/P130164/timeline",
     "timeline-p130164-2016-08-26.json": "/api/projects/P130164/timeline?asof=2016-08-26",
+    "timeline-p130164-2024-01-01.json": "/api/projects/P130164/timeline?asof=2024-01-01",
     "timeline-p156634.json": "/api/projects/P156634/timeline",
     "timeline-p156634-public.json": "/api/projects/P156634/timeline?view=public",
     "evidence-doc-p130164-isr-7.json": f"/api/evidence?id=doc:26733307&{DAY}",
@@ -56,6 +59,7 @@ TIMELINE = {
     "evidence-doc-p130164-icr-review-2020.json": f"/api/evidence?id=doc:31906731&{DAY}",
     "evidence-doc-p130164-icr-review-2023.json": f"/api/evidence?id=doc:34056616&{DAY}",
     "evidence-ratings-p130164-1-9.json": f"/api/evidence?id=ratings:P130164:pdo_progress:1-9&{DAY}",
+    "evidence-ratings-p130164-1-9-2024-01-01.json": "/api/evidence?id=ratings:P130164:pdo_progress:1-9&asof=2024-01-01",
     "evidence-ratings-p130164-10-11.json": f"/api/evidence?id=ratings:P130164:pdo_progress:10-11&{DAY}",
     "evidence-ratings-p130164-12-13.json": f"/api/evidence?id=ratings:P130164:pdo_progress:12-13&{DAY}",
     "evidence-disagreement-p130164-pdo.json": f"/api/evidence?id=disagreement:{PDO}&{DAY}",

@@ -9,6 +9,7 @@ import reviewDoc from "../../../tests/fixtures/api/evidence-doc-p130164-icr-revi
 import isr7Doc from "../../../tests/fixtures/api/evidence-doc-p130164-isr-7.json";
 import ratings19 from "../../../tests/fixtures/api/evidence-ratings-p130164-1-9.json";
 import asOf from "../../../tests/fixtures/api/timeline-p130164-2016-08-26.json";
+import asOfLate from "../../../tests/fixtures/api/timeline-p130164-2024-01-01.json";
 import failed from "../../../tests/fixtures/api/timeline-p130164-failed.json";
 import p130164 from "../../../tests/fixtures/api/timeline-p130164.json";
 import p156634Public from "../../../tests/fixtures/api/timeline-p156634-public.json";
@@ -108,6 +109,7 @@ export function timelinePage(): GalleryPage {
     sections: [
       { id: "chart", title: s.chart, body: <Card data={SHOWCASE} /> },
       { id: "as-of", title: s.asOf, body: <Card data={asOf as unknown as Timeline} /> },
+      { id: "as-of-late", title: s.asOfLate, body: <Card data={asOfLate as unknown as Timeline} /> },
       { id: "crowded", title: s.crowded, body: <Card data={p156634 as unknown as Timeline} /> },
       { id: "hidden", title: s.hidden, body: <Card data={p156634Public as unknown as Timeline} /> },
       { id: "failed", title: s.failed, body: <Card data={FAILED} /> },

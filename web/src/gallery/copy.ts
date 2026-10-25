@@ -625,6 +625,7 @@ export const galleryCopy = {
   timelineStates: {
     chart: "The evidence trail: P130164 with both disagreements and its rating bands",
     asOf: "As of August 26, 2016: no ICR yet, so no dashed line, and the reference line at the date",
+    asOfLate: "As of January 1, 2024: both dashed lines, and the date on the What lane's label row, where no line runs",
     crowded: "A crowded What lane: P156634's contracts grouped by year",
     hidden: "The public view of a project still under way: no disagreements",
     failed: "get_disagreements did not answer: no rating bands or dashed lines, and the newest ISR's mark",

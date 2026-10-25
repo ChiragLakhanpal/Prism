@@ -21,10 +21,12 @@ async function timelineApi() {
     ...(await hubApi()),
     "/api/projects/P130164/timeline": await file("timeline-p130164.json"),
     "/api/projects/P130164/timeline?asof=2016-08-26": await file("timeline-p130164-2016-08-26.json"),
+    "/api/projects/P130164/timeline?asof=2024-01-01": await file("timeline-p130164-2024-01-01.json"),
     [`/api/evidence?id=${PDO}`]: await file("evidence-disagreement-p130164-pdo.json"),
     "/api/evidence?id=doc:26733307": await file("evidence-doc-p130164-isr-7.json"),
     "/api/evidence?id=doc:31525018": await file("evidence-doc-p130164-icr.json"),
     "/api/evidence?id=ratings:P130164:pdo_progress:1-9": await file("evidence-ratings-p130164-1-9.json"),
+    "/api/evidence?id=ratings:P130164:pdo_progress:1-9&asof=2024-01-01": await file("evidence-ratings-p130164-1-9-2024-01-01.json"),
     "/api/evidence?id=strata.gold.passage:31525018/v1/78": await file("evidence-icr-p130164-78.json"),
     "/api/evidence?id=strata.gold.passage:26733307/v1/s4": await file("evidence-isr-p130164-7-s4.json"),
   };
@@ -67,6 +69,43 @@ async function linesThroughLabels(page: Page): Promise<string[]> {
       }
     }
     return [...new Set(found.map((one) => one.split(" at ")[0]))];
+  });
+}
+
+// What covers the as-of label: each disagreement chip whose box meets the label's box, and each dashed line with a
+// point inside it, sampled every 2 px as linesThroughLabels does. The label is the only place the tab shows its date.
+async function overAsOf(page: Page): Promise<string[]> {
+  return chart(page).evaluate((root) => {
+    const label = root.querySelector<SVGTextElement>("[data-as-of] text");
+    if (!label) return ["no as-of label"];
+    const found = new Set<string>();
+    const box = label.getBoundingClientRect();
+    for (const chip of root.querySelectorAll<HTMLElement>("[data-item-kind=disagreement]")) {
+      const at = chip.getBoundingClientRect();
+      if (at.left < box.right && at.right > box.left && at.top < box.bottom && at.bottom > box.top) found.add(`chip ${chip.dataset.item}`);
+    }
+    const inner = label.getBBox();
+    for (const path of root.querySelectorAll<SVGPathElement>("[data-disagreement-line]")) {
+      const length = path.getTotalLength();
+      for (let at = 0; at <= length; at += 2) {
+        const point = path.getPointAtLength(at);
+        if (point.x > inner.x + 1 && point.x < inner.x + inner.width - 1 && point.y > inner.y + 1 && point.y < inner.y + inner.height - 1) found.add("dashed line");
+      }
+    }
+    return [...found];
+  });
+}
+
+// The ticks whose year is not wholly inside the drawing.
+async function ticksOutside(page: Page): Promise<string[]> {
+  return chart(page).evaluate((root) => {
+    const svg = root.querySelector<SVGSVGElement>("svg[role=img]")!.getBoundingClientRect();
+    return [...root.querySelectorAll<SVGTextElement>("[data-tick]")]
+      .filter((tick) => {
+        const box = tick.getBoundingClientRect();
+        return box.left < svg.left || box.right > svg.right;
+      })
+      .map((tick) => tick.textContent ?? "");
   });
 }
 
@@ -239,6 +278,22 @@ test("below 768 px the chart is a list in date order, and as of August 26, 2016 
   // The tab applies the date itself, so no alert says it shows today's data.
   await expect(page.locator("main [data-alert]")).toHaveCount(0);
   await expect(chart(page).locator("[data-disagreement-line]")).toHaveCount(0);
+});
+
+test("as of a date after the ICR Review's re-issue, no dashed line or chip covers the as-of date, beside the drawer too", async ({ page }) => {
+  for (const width of [1440, 1024]) {
+    await open(page, "/projects/P130164/timeline?asof=2024-01-01", width);
+    await expect(chart(page).locator("[data-as-of]")).toContainText("Jan 1, 2024");
+    // Both disagreements are public by then, so the second line ends near the chart's right edge.
+    await expect(chart(page).locator("[data-disagreement-line]")).toHaveCount(2);
+    expect(await overAsOf(page)).toEqual([]);
+    // The 2024 tick falls on the as-of date, at the chart's right edge, and stays whole there.
+    expect(await ticksOutside(page)).toEqual([]);
+    await item(page, "ratings:P130164:pdo_progress:1-9").click();
+    await expect(drawer(page).getByRole("heading", { level: 2 })).toHaveText("ISRs 1–9, rated Satisfactory");
+    expect(await overAsOf(page)).toEqual([]);
+    expect(await ticksOutside(page)).toEqual([]);
+  }
 });
 
 test("Show the table lists every item in arrow-key order, under its caption", async ({ page }) => {

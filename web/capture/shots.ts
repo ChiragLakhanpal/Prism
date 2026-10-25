@@ -1460,6 +1460,7 @@ const TIMELINE_API: Shot["api"] = {
   ...HUB_API,
   "/api/projects/P130164/timeline": { recorded: "timeline-p130164.json" },
   "/api/projects/P130164/timeline?asof=2016-08-26": { recorded: "timeline-p130164-2016-08-26.json" },
+  "/api/projects/P130164/timeline?asof=2024-01-01": { recorded: "timeline-p130164-2024-01-01.json" },
   "/api/projects/P156634/timeline": { recorded: "timeline-p156634.json" },
   "/api/projects/P156634/timeline?view=public": { recorded: "timeline-p156634-public.json" },
   [`/api/evidence?id=${PDO_DISAGREEMENT}`]: { recorded: "evidence-disagreement-p130164-pdo.json" },
@@ -1498,6 +1499,8 @@ const TIMELINE_SHOTS: Shot[] = [
   timelineShot("project-timeline--drawer-band", `${TIMELINE}?evidence=ratings:P130164:pdo_progress:1-9`, { widths: WIDE }),
   timelineShot("project-timeline--table", TIMELINE, { widths: WIDE, act: click("[data-timeline-card] button[aria-controls]"), full: true }),
   timelineShot("project-timeline--as-of", `${TIMELINE}?asof=2016-08-26`),
+  // After the ICR Review's re-issue: the second dashed line ends near the as-of date's label (round 2's B1).
+  timelineShot("project-timeline--as-of-late", `${TIMELINE}?asof=2024-01-01`, { widths: WIDE }),
   // get_disagreements did not answer: the server's own recorded answer (tests/record_timeline_api.py, FAILED).
   hubShot("project-timeline--disagreements-failed", TIMELINE, { widths: WIDE }, { ...TIMELINE_API, "/api/projects/P130164/timeline": { recorded: "timeline-p130164-failed.json" } }),
   timelineShot("project-timeline--public-active", "/projects/P156634/timeline?view=public", { widths: WIDE }),
