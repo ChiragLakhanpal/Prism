@@ -117,7 +117,7 @@ const words = copy.following;
 // The finding: "You follow 14 projects. One needs a look, one is worth watching, and 12 have no signals."
 export function finding(counts: Counts, statusOfOne: Status | null): string {
   if (counts.total === 1 && statusOfOne) return words.one[statusOfOne];
-  if (counts.shown === 0 && counts.not_checked === 0) return words.allQuiet.replace("{total}", String(counts.total));
+  if (counts.shown === 0 && counts.not_checked === 0) return words.allQuiet.replace("{total}", formatCount(counts.total));
   const word = (n: number, first: boolean) => formatCount(n, { capital: first });
   const made: string[] = [];
   const add = (n: number, part: (n: number, word: string) => string) => {

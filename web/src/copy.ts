@@ -1242,6 +1242,8 @@ export const copy = {
     madeByUndated: "I ran these {checks} checks on {checked}, on public records. No model wrote this list.",
     madeByAsOf: "I ran these {checks} checks as they would have run on {date}, on records public by then. No model wrote this list.",
     coverage: "I ran every check on {k} of {n} projects. On the other {m}, I lacked some records, and each row says which.",
+    // When no project I checked had every check run.
+    coverageNone: "I couldn't run every check on any project I checked. Each row says which records I lacked.",
     coverageLink: "See which records I hold",
     countLine: (shown: number, total: number) => `Showing ${shown} of ${total} projects you follow`,
     tableCaption: "Projects you follow, with their status, signals and next step",
@@ -1260,7 +1262,10 @@ export const copy = {
         `Needs a look: ${look} or more signals, or one strong signal. Watch: at least one signal but fewer than ${look}, and none of them strong. ` +
         `No signals: none of the ${checks} checks found anything. Not checked: I couldn't run any check, because I don't hold the records. ` +
         "A signal is a fixed check on public records that gives a reason to look, never a finding.",
-      strongNone: "No check is strong on its own: only many activities on one check make it strong.",
+      // No check is strong by itself; {names} each turn strong from {n} activities (the thresholds file's strong_from).
+      strongNone: (names: string, n: string) =>
+        `No check is strong on its own. ${names} each become strong when they fire on ${n} activities or more.`,
+      strongNoneMixed: "No check is strong on its own. The table under How I check the projects you follow says when each one becomes strong.",
       strong: (names: string) => `The strong signals are ${names}.`,
       link: "How I check the projects you follow",
     },
@@ -1294,11 +1299,17 @@ export const copy = {
     closedNext: "I draft mission briefs only for active projects.",
     status: { closed: "Closed", dropped: "Closed", pipeline: "Pipeline" } as Record<string, string>,
     fold: (n: number, word: string) => (n === 1 ? "One project has no signals." : `${word} projects have no signals.`),
-    foldClosed: (closed: number, word: string) =>
-      closed === 1 ? `${word} has closed or is in the pipeline.` : `${word} have closed or are in the pipeline.`,
-    foldOnlyClosed: (closed: number, word: string) =>
-      closed === 1 ? "One project has closed or is in the pipeline." : `${word} projects have closed or are in the pipeline.`,
-    foldPartial: (n: number, word: string) => (n === 1 ? "I couldn't run every check on one of them." : `I couldn't run every check on ${word} of them.`),
+    // The closed and pipeline projects in the fold, each counted: "One has closed, and one is in the pipeline." alone:
+    // whether the sentence opens the fold ("Two projects have closed."). The words come capitalised as they lead.
+    foldEnded: (alone: boolean, closed: number, closedWord: string, pipeline: number, pipelineWord: string) => {
+      const who = (n: number, word: string) => (alone ? (n === 1 ? "One project" : `${word} projects`) : word);
+      const parts: string[] = [];
+      if (closed > 0) parts.push(`${who(closed, closedWord)} ${closed === 1 ? "has" : "have"} closed`);
+      if (pipeline > 0) parts.push(`${parts.length ? pipelineWord : who(pipeline, pipelineWord)} ${pipeline === 1 ? "is" : "are"} in the pipeline`);
+      return `${parts.join(", and ")}.`;
+    },
+    foldPartial: (n: number, word: string) =>
+      n === 1 ? "I couldn't run every check on one of the projects with no signals." : `I couldn't run every check on ${word} of the projects with no signals.`,
     show: (n: number) => (n === 1 ? "Show it" : "Show them"),
     hide: (n: number) => (n === 1 ? "Hide it" : "Hide them"),
     add: "Add to mission brief",
@@ -1439,10 +1450,20 @@ export const copy = {
     show: (checks: string) => `Show the ${checks} checks`,
     hide: "Hide the checks",
     tableTitle: "Each check, what sets it off, and what happened next",
-    cols: { check: "Check", trigger: "What sets it off", strong: "Strong signal", record: "Later extended their closing date", recordDef: "of the projects that had it" },
+    cols: {
+      check: "Check",
+      trigger: "What sets it off",
+      strong: "Strong signal",
+      record: "Later extended their closing date",
+      recordDef: "of the projects that had it",
+      // The same head over a block's value on a phone.
+      recordBlock: "Later extended their closing date, of the projects that had it",
+    },
     cell: (k: string, n: string) => `${k} of ${n}`,
     few: "Too few projects to read as a rate.",
     notReplayed: "Not replayed yet",
+    // A check no project had on any replay date: no count to show.
+    never: "I haven't seen this signal in my replay yet.",
     yes: "Yes",
     no: "No",
     strongFrom: (n: string) => `From ${n} activities`,

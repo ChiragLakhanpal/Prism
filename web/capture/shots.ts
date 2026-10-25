@@ -674,9 +674,9 @@ const projectWithFollow = (name: string, follow: Answer, rest: Partial<Shot> = {
 const FOLLOWING_SHOTS: Shot[] = [
   following("loading", null, { pending: ["/api/following"] }),
   following("populated", "following-p156634.json"),
-  following("fold-open", "following-p156634.json", { full: true, act: click("[data-following-view]:visible button[aria-expanded=false] >> nth=0") }),
+  following("fold-open", "following-p156634.json", { full: true, act: click("[data-following-view]:visible [data-fold]") }),
   following("states", "following-made-up-states.json"),
-  following("many-quiet", "following-made-up-many-quiet.json", { full: true, act: click("[data-following-view]:visible button[aria-expanded=false] >> nth=0") }),
+  following("many-quiet", "following-made-up-many-quiet.json", { full: true, act: click("[data-following-view]:visible [data-fold]") }),
   following("all-quiet", "following-made-up-all-quiet.json"),
   following("one", "following-made-up-one.json"),
   following("track-record", "following-made-up-track-record.json", { full: true, act: click("[data-track-record] button[aria-expanded]") }),
@@ -687,7 +687,8 @@ const FOLLOWING_SHOTS: Shot[] = [
   following("not-staff", null, { api: { "/api/me": { recorded: "me-not-staff.json" }, "/api/following": { status: 403, recorded: "following-not-staff.json" } } }),
   following("preview-piu", null, {}, "/projects/following?view=piu"),
   following("preview-public", null, {}, "/projects/following?view=public"),
-  following("status-term", "following-p156634.json", { widths: WIDE, act: click("[data-following-view]:visible thead [data-term], [data-list-definitions] [data-term] >> nth=0") }),
+  // The visible Status term: the table's header from 1,200 px, the definitions above the list below it.
+  following("status-term", "following-p156634.json", { widths: WIDE, act: click("[data-term]:visible >> nth=0") }),
   following("ratio-num", "following-p156634.json", { widths: WIDE, act: click("[data-following-view]:visible [data-signal=above_estimate] [data-num]") }),
   following("hover-add", "following-p156634.json", { widths: WIDE, act: hover("[data-following-view]:visible [data-add-brief]") }),
   following("focus-add", "following-p156634.json", { act: focus("[data-following-view]:visible [data-add-brief]") }),
@@ -696,7 +697,14 @@ const FOLLOWING_SHOTS: Shot[] = [
   following("all-projects", null, { api: { "/api/projects": { recorded: "projects.json" } } }, "/projects"),
   projectWithFollow("project-not-following", { recorded: "follow-off.json" }),
   projectWithFollow("project-following", { recorded: "follow-on.json" }),
-  projectWithFollow("project-saving", { recorded: "follow-off.json" }, { pending: ["/api/projects/P156634/follow"], act: click("[data-follow] button") }),
+  // Only the PUT is held, so the control first reads that you don't follow and then shows Saving.
+  projectWithFollow("project-saving", { recorded: "follow-off.json" }, {
+    act: async (page) => {
+      await page.route("**/api/projects/P156634/follow", (route) => (route.request().method() === "PUT" ? undefined : route.fallback()));
+      await page.locator("[data-follow] button").first().click();
+      await page.waitForTimeout(200);
+    },
+  }),
   projectWithFollow("project-loading", { recorded: "follow-off.json" }, { pending: ["/api/projects/P156634/follow"] }),
   projectWithFollow("project-hover-follow", { recorded: "follow-off.json" }, { widths: WIDE, act: hover("[data-follow] button") }),
   following("brief-writing", "following-p156634.json", {

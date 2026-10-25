@@ -77,9 +77,10 @@ export function FollowingPage({ search }: { search: string }) {
     if (data) for (const event of data.evidence) remember(event);
   }, [data]);
 
-  const header = (count: number | null, tabs = true) => (
+  // A viewer who cannot follow (a preview, or not World Bank staff) gets All projects' purpose, not Following's.
+  const header = (count: number | null, tabs = true, purpose: string = copy.pages.following.purpose) => (
     <div className="col-span-12">
-      <PageHeader title={copy.pages.following.title} purpose={copy.pages.following.purpose} />
+      <PageHeader title={copy.pages.following.title} purpose={purpose} />
       {tabs && <ProjectsTabs following count={count} />}
     </div>
   );
@@ -87,7 +88,7 @@ export function FollowingPage({ search }: { search: string }) {
   if (view !== "staff") {
     return (
       <div className="layout-grid" data-following-page="preview">
-        {header(null, false)}
+        {header(null, false, copy.pages.projects.purpose)}
         <EightColumns className="col-span-12 mt-8">
           <EmptyState
             title={view === "piu" ? words.previewPiuTitle : words.previewPublicTitle}
@@ -100,7 +101,7 @@ export function FollowingPage({ search }: { search: string }) {
   if (load.status === "error" && load.error?.status === 403 && load.error.body.code === "not_staff") {
     return (
       <div className="layout-grid" data-following-page="not-staff">
-        {header(null, false)}
+        {header(null, false, copy.pages.projects.purpose)}
         <EightColumns className="col-span-12 mt-8">
           <EmptyState title={words.notStaffTitle} body={words.notStaffBody} link={{ href: "/projects", text: words.notStaffLink }} />
         </EightColumns>
@@ -204,7 +205,10 @@ export function FollowingBody({ data }: { data: Following }) {
         <p className="mt-2 max-w-[72ch] text-caption text-ink-muted">{madeBy}</p>
         {counts.partly > 0 && (
           <p data-coverage-line className="mt-6 max-w-[72ch] text-small text-ink">
-            <Fill template={words.coverage} slots={{ k: <Num count={counts.fully} />, n: <Num count={counts.checked} />, m: <Num count={counts.partly} /> }} />{" "}
+            {/* Numerals beside "of" (the 37 brief, section 9); when no project had every check, a sentence that says so. */}
+            {counts.fully === 0 ? words.coverageNone : (
+              <Fill template={words.coverage} slots={{ k: <Num value={counts.fully} />, n: <Num value={counts.checked} />, m: <Num count={counts.partly} /> }} />
+            )}{" "}
             <TextLink href={dataReadinessHref(SIGNAL_SOURCES, "project_signals")}>{words.coverageLink}</TextLink>
           </p>
         )}
@@ -309,13 +313,19 @@ function HeaderCell({ label, def, className, defId }: { label: ReactNode; def: s
 // "Status", which opens the full rules, the strong checks and the track record's status sentence.
 function StatusTerm({ thresholds, track }: { thresholds: Thresholds; track: Following["track_record"] }) {
   const look = formatCount(thresholds.look_min);
-  const strong = thresholds.strong.map((key) => copy.signals.check[key].name);
-  const names = strong.map((name, index) => (index === 0 ? name : copy.signals.checkInSentence(name)));
-  const joinedNames = names.length <= 1 ? names.join("") : `${names.slice(0, -1).join(words.partsJoin)}${words.partsTwo}${names.at(-1)}`;
+  const inSentence = (keys: string[]) => keys.map((key, index) => (index === 0 ? copy.signals.check[key].name : copy.signals.checkInSentence(copy.signals.check[key].name)));
+  const strong = thresholds.strong;
+  const joinedNames = joinAnd(inSentence(strong));
+  // With no strong check, the checks that turn strong from a count of activities, and that count when they share one.
+  const counted = Object.entries(thresholds.strong_from) as [string, number][];
+  const shared = new Set(counted.map(([, n]) => n)).size === 1 ? counted[0]?.[1] : undefined;
+  const strongNone = shared !== undefined
+    ? words.statusDefinition.strongNone(joinAnd(inSentence(counted.map(([key]) => key))), formatCount(shared))
+    : words.statusDefinition.strongNoneMixed;
   return (
     <DefinitionWindow label={words.statusDefinition.title} title={words.statusDefinition.title} triggerClassName="inline-flex min-h-6 items-center">
       <p>{words.statusDefinition.body(look, formatCount(CHECK_ORDER.length))}</p>
-      <p className="mt-2">{strong.length ? words.statusDefinition.strong(joinedNames) : words.statusDefinition.strongNone}</p>
+      <p className="mt-2">{strong.length ? words.statusDefinition.strong(joinedNames) : strongNone}</p>
       <p className="mt-2">{track ? <StatusLead track={track} /> : copy.track.none}</p>
       <p className="mt-2">
         <TextLink href={`#${TRACK_ID}`}>{words.statusDefinition.link}</TextLink>
@@ -482,18 +492,24 @@ function ListRow(props: RowProps) {
   );
 }
 
+// The fold's sentence names what it holds, each kind counted: the quiet projects, then the closed ones and those in
+// the pipeline, which it knows apart.
 function Fold({ counts, open, onToggle, controls, sentenceId }: { counts: Following["counts"]; open: boolean; onToggle: () => void; controls: string; sentenceId: string }) {
   const quiet = counts.no_signals;
-  const ended = counts.ended;
-  const sentence = quiet > 0 ? words.fold(quiet, formatCount(quiet, { capital: true })) : words.foldOnlyClosed(ended, formatCount(ended, { capital: true }));
+  const closed = counts.ended - counts.pipeline;
+  const pipeline = counts.pipeline;
+  const ended = closed + pipeline > 0 &&
+    words.foldEnded(quiet === 0, closed, formatCount(closed, { capital: true }), pipeline, formatCount(pipeline, { capital: closed === 0 }));
+  // The button sits under the sentence, flush on the text's edge.
   return (
-    <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-      <p id={sentenceId} className="text-small text-ink-muted">
-        {sentence}
-        {quiet > 0 && ended > 0 && <> {words.foldClosed(ended, formatCount(ended, { capital: true }))}</>}
+    <div className="flex flex-col items-start gap-1">
+      <p id={sentenceId} className="text-small text-ink-muted" data-fold-sentence>
+        {quiet > 0 && words.fold(quiet, formatCount(quiet, { capital: true }))}
+        {quiet > 0 && ended && " "}
+        {ended}
         {counts.partly_folded > 0 && <> {words.foldPartial(counts.partly_folded, formatCount(counts.partly_folded))}</>}
       </p>
-      <Button variant="ghost" onPage aria-expanded={open} aria-controls={controls} aria-describedby={sentenceId} onClick={onToggle}>
+      <Button variant="ghost" flush onPage aria-expanded={open} aria-controls={controls} aria-describedby={sentenceId} onClick={onToggle} data-fold>
         {open ? words.hide(counts.folded) : words.show(counts.folded)}
       </Button>
     </div>
@@ -504,9 +520,10 @@ function Fold({ counts, open, onToggle, controls, sentenceId }: { counts: Follow
 
 function countNum(counts: TrackCounts, track: NonNullable<Following["track_record"]>, which: "n" | "k") {
   const value = counts[which] ?? 0;
+  // Numerals beside "of", in sentences and cells alike (the 37 brief, section 9).
   return (
     <Num
-      count={value}
+      value={value}
       check={{
         tooltip: copy.track.num(formatNumber(counts.n ?? 0), formatNumber(counts.k ?? 0), formatCount(track.window_months), formatDate(track.ran_on)),
       }}
@@ -540,15 +557,22 @@ function trigger(key: string, thresholds: Thresholds): string {
     .replace("{pct}", String(thresholds.disbursement_max_percent));
 }
 
+// "A, B and C", as the finding joins its parts.
+export function joinAnd(items: string[]): string {
+  return items.length <= 1 ? items.join("") : `${items.slice(0, -1).join(words.partsJoin)}${words.partsTwo}${items.at(-1)}`;
+}
+
 function TrackRecordSection({ data }: { data: Following }) {
   const [open, setOpen] = useState(false);
-  const tableId = useId();
+  const checksId = useId();
   const track = data.track_record;
   const checks = formatCount(CHECK_ORDER.length);
   const thresholds = data.thresholds;
   const cell = (counts: TrackCounts | undefined) =>
     !track || !counts ? (
       <span className="text-ink-muted">{copy.track.notReplayed}</span>
+    ) : !counts.n ? (
+      <span className="text-ink-muted">{copy.track.never}</span>
     ) : (
       <>
         <span className="whitespace-nowrap">
@@ -562,8 +586,12 @@ function TrackRecordSection({ data }: { data: Following }) {
     if (thresholds.strong.includes(key as never)) return copy.track.yes;
     return from ? copy.track.strongFrom(formatCount(from)) : copy.track.no;
   };
+  const rows = [
+    ...CHECK_ORDER.map((key) => ({ key, name: copy.signals.check[key].name, trigger: trigger(key, thresholds), strong: strongText(key), counts: track?.checks[key], baseline: false })),
+    { key: "no_signals", name: copy.track.baseline.name, trigger: copy.track.baseline.trigger, strong: "", counts: track?.status.no_signals, baseline: true },
+  ];
   return (
-    <section aria-labelledby={TRACK_ID} className="mt-12 max-w-[72ch] @xl/page:max-w-none" data-track-record={track ? "stored" : "none"}>
+    <section aria-labelledby={TRACK_ID} className="mt-12" data-track-record={track ? "stored" : "none"}>
       <h2 id={TRACK_ID} tabIndex={-1} className="text-title text-ink-heading focus:outline-none">
         {copy.track.heading}
       </h2>
@@ -579,7 +607,7 @@ function TrackRecordSection({ data }: { data: Following }) {
             <p className="mt-2 text-body text-ink">{copy.track.why}</p>
             <p className="mt-2 text-caption text-ink-muted">
               <Fill template={copy.track.scope} slots={{
-                dates: track.dates.map((date) => formatDate(date)).join(words.partsJoin),
+                dates: joinAnd(track.dates.map((date) => formatDate(date))),
                 window: formatCount(track.window_months),
               }} />
             </p>
@@ -594,45 +622,74 @@ function TrackRecordSection({ data }: { data: Following }) {
         )}
       </div>
       <div className="mt-4">
-        <Button variant="ghost" onPage aria-expanded={open} aria-controls={tableId} onClick={() => setOpen(!open)}>
+        <Button variant="ghost" flush onPage aria-expanded={open} aria-controls={checksId} onClick={() => setOpen(!open)}>
           {open ? copy.track.hide : copy.track.show(checks)}
         </Button>
       </div>
-      {/* A region you can scroll from the keyboard when the table is wider than a phone. */}
-      <div id={tableId} hidden={!open} role="region" aria-label={copy.track.tableTitle} tabIndex={0} className="mt-2 overflow-x-auto rounded-md border border-line bg-surface">
-        <table className="w-full border-collapse text-left text-small">
-          <caption className="sr-only">{copy.track.tableTitle}</caption>
-          <thead className="bg-surface-2">
-            <tr>
-              <th scope="col" className="px-4 py-3 align-bottom text-small font-bold text-ink-heading">{copy.track.cols.check}</th>
-              <th scope="col" className="px-4 py-3 align-bottom text-small font-bold text-ink-heading">{copy.track.cols.trigger}</th>
-              <th scope="col" className="px-4 py-3 align-bottom text-small font-bold text-ink-heading">{copy.track.cols.strong}</th>
-              <th scope="col" className="px-4 py-3 text-right align-bottom">
-                <span className="block text-small font-bold text-ink-heading">{copy.track.cols.record}</span>
-                <span className="sr-only">{words.headerJoin}</span>
-                <span className="block text-caption font-normal text-ink-muted">{copy.track.cols.recordDef}</span>
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {CHECK_ORDER.map((key) => (
-              <tr key={key} className="border-t border-line align-top" data-track-check={key}>
-                <th scope="row" className="px-4 py-3 font-semibold text-ink">{copy.signals.check[key].name}</th>
-                <td className="px-4 py-3 text-ink">{trigger(key, thresholds)}</td>
-                <td className="px-4 py-3 text-ink">{strongText(key)}</td>
-                <td className="px-4 py-3 text-right tabular-nums">{cell(track?.checks[key])}</td>
+      <div id={checksId} hidden={!open} className="mt-2">
+        {/* From a page area of 1,024 px, a table; a region you can scroll from the keyboard if it is ever wider than
+            its frame, positioned so the header's hidden ": " stays inside it. */}
+        <div role="region" aria-label={copy.track.tableTitle} tabIndex={0} className="relative hidden overflow-x-auto rounded-md border border-line bg-surface @lg/page:block" data-track-view="table">
+          <table className="w-full border-collapse text-left text-small">
+            <caption className="sr-only">{copy.track.tableTitle}</caption>
+            <thead className="bg-surface-2">
+              <tr>
+                <th scope="col" className="px-4 py-3 align-bottom text-small font-bold text-ink-heading">{copy.track.cols.check}</th>
+                <th scope="col" className="px-4 py-3 align-bottom text-small font-bold text-ink-heading">{copy.track.cols.trigger}</th>
+                <th scope="col" className="px-4 py-3 align-bottom text-small font-bold text-ink-heading">{copy.track.cols.strong}</th>
+                <th scope="col" className="w-[16rem] px-4 py-3 text-right align-bottom">
+                  <span className="block text-small font-bold text-ink-heading">{copy.track.cols.record}</span>
+                  <span className="sr-only">{words.headerJoin}</span>
+                  <span className="block text-caption font-normal text-ink-muted">{copy.track.cols.recordDef}</span>
+                </th>
               </tr>
-            ))}
-          </tbody>
-          <tfoot>
-            <tr className="border-t-2 border-line align-top">
-              <th scope="row" className="px-4 py-3 font-semibold text-ink">{copy.track.baseline.name}</th>
-              <td className="px-4 py-3 text-ink">{copy.track.baseline.trigger}</td>
-              <td className="px-4 py-3" />
-              <td className="px-4 py-3 text-right tabular-nums">{cell(track?.status.no_signals)}</td>
-            </tr>
-          </tfoot>
-        </table>
+            </thead>
+            <tbody>
+              {rows.filter((row) => !row.baseline).map((row) => (
+                <tr key={row.key} className="border-t border-line align-top" data-track-check={row.key}>
+                  <th scope="row" className="px-4 py-3 font-semibold text-ink">{row.name}</th>
+                  <td className="px-4 py-3 text-ink">{row.trigger}</td>
+                  <td className="px-4 py-3 text-ink">{row.strong}</td>
+                  <td className="px-4 py-3 text-right tabular-nums">{cell(row.counts)}</td>
+                </tr>
+              ))}
+            </tbody>
+            <tfoot>
+              {rows.filter((row) => row.baseline).map((row) => (
+                <tr key={row.key} className="border-t-2 border-line align-top">
+                  <th scope="row" className="px-4 py-3 font-semibold text-ink">{row.name}</th>
+                  <td className="px-4 py-3 text-ink">{row.trigger}</td>
+                  <td className="px-4 py-3" />
+                  <td className="px-4 py-3 text-right tabular-nums">{cell(row.counts)}</td>
+                </tr>
+              ))}
+            </tfoot>
+          </table>
+        </div>
+        {/* Below that, each check is a block: its name, then each column's head above its value (the 37 brief, 5.1). */}
+        <ul aria-label={copy.track.tableTitle} className="@lg/page:hidden" data-track-view="blocks">
+          {rows.map((row) => (
+            <li key={row.key} className={cx("py-3", row.baseline ? "border-t-2 border-line" : "border-t border-line")} data-track-block={row.key}>
+              <h3 className="text-small font-semibold text-ink-heading">{row.name}</h3>
+              <dl className="mt-1 flex flex-col gap-2 text-small">
+                <div>
+                  <dt className="text-caption text-ink-muted">{copy.track.cols.trigger}</dt>
+                  <dd className="text-ink">{row.trigger}</dd>
+                </div>
+                {!row.baseline && (
+                  <div>
+                    <dt className="text-caption text-ink-muted">{copy.track.cols.strong}</dt>
+                    <dd className="text-ink">{row.strong}</dd>
+                  </div>
+                )}
+                <div>
+                  <dt className="text-caption text-ink-muted">{copy.track.cols.recordBlock}</dt>
+                  <dd className="text-ink tabular-nums">{cell(row.counts)}</dd>
+                </div>
+              </dl>
+            </li>
+          ))}
+        </ul>
       </div>
     </section>
   );

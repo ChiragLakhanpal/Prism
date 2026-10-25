@@ -75,7 +75,7 @@ test("P156634's row needs a look with the four signals of the Following wirefram
   await expect(row.getByRole("button", { name: "Add to mission brief, Water and Sanitation Development Project" })).toBeVisible();
   await expect(page.locator("main [data-button=primary]")).toHaveCount(0);
   // The closed project folds away with a count, and opens in place.
-  await expect(table.getByText("One project has closed or is in the pipeline.")).toBeVisible();
+  await expect(table.getByText("One project has closed.")).toBeVisible();
   await expect(table.locator("[data-project-row=P130164]")).toBeHidden();
   await table.getByRole("button", { name: "Show it" }).click();
   await expect(table.locator("[data-project-row=P130164]")).toContainText("Closed");
@@ -117,6 +117,15 @@ test("below a 1,200 px page area each row is a block, with the Status and Next d
     for (const [index, line] of LINES.entries()) await expect(lines.nth(index)).toContainText(line);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   }
+  // On a phone the seven checks are blocks, not a table that scrolls sideways, and the page never widens.
+  for (const width of [390, 320]) {
+    await openFollowing(page, { width, file: "following-made-up-track-record.json" });
+    await page.getByRole("button", { name: "Show the seven checks" }).click();
+    await expect(page.locator("[data-track-view=blocks]")).toBeVisible();
+    await expect(page.locator("[data-track-view=table]")).toBeHidden();
+    await expect(page.locator("[data-track-block=above_estimate]")).toContainText("Later extended their closing date");
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), `at ${width} px`).toBe(true);
+  }
 });
 
 test("Following has no WCAG 2.2 AA violations at 1440, 1024 and 390 px, with its made-up states and the fold open", async ({ page }) => {
@@ -125,7 +134,12 @@ test("Following has no WCAG 2.2 AA violations at 1440, 1024 and 390 px, with its
     await view(page).getByRole("button", { name: /Show them|Show it/ }).click();
     await page.getByRole("button", { name: "Show the seven checks" }).click();
     expect(await axe(page), `at ${width} px`).toEqual([]);
+    // The ghost buttons sit flush on the text's edge, as Button's flush rule sets.
+    await expect(view(page).getByRole("button", { name: /Hide them|Hide it/ })).toHaveClass(/-ml-2/);
+    await expect(page.getByRole("button", { name: "Hide the checks" })).toHaveClass(/-ml-2/);
   }
+  await expect(page.locator("[data-following-view=list] [data-fold-sentence]")).toHaveText(
+    "One project has no signals. One has closed, and one is in the pipeline. I couldn't run every check on one of the projects with no signals.");
   await expect(page.locator("[data-following-view=list] [data-badge=not-checked]")).toHaveText("Not checked");
   await expect(page.locator("[data-following-view=list] [data-partial]")).toContainText("I couldn't run two of the seven checks, because I haven't read an ISR for it.");
   await expect(page.locator("[data-coverage-line]")).toBeVisible();
@@ -138,21 +152,27 @@ test("the track record states the stored counts, says when they are too few to r
   const track = page.locator("[data-track-record=stored]");
 
   await expect(track.locator("[data-track-status]")).toHaveText(
-    "When I replayed these checks on past dates, nine of the 14 projects that needed a look later extended their closing date. " +
-      "So did 11 of the 26 worth watching, and seven of the 38 with no signals. Only 14 projects needed a look when I replayed the checks, " +
+    "When I replayed these checks on past dates, 9 of the 14 projects that needed a look later extended their closing date. " +
+      "So did 11 of the 26 worth watching, and 7 of the 38 with no signals. Only 14 projects needed a look when I replayed the checks, " +
       "too few to say how much the status usually means.",
   );
   await expect(track).toContainText("These counts say what happened next, not why.");
+  await expect(track).toContainText("June 30, 2023, June 30, 2024 and June 30, 2025");
   await track.getByRole("button", { name: "Show the seven checks" }).click();
-  await expect(track.locator("[data-track-check=above_estimate]")).toContainText("four of nine");
+  await expect(track.locator("[data-track-check=above_estimate]")).toContainText("4 of 9");
   await expect(track.locator("[data-track-check=above_estimate]")).toContainText("Too few projects to read as a rate.");
-  await expect(track.locator("tfoot")).toContainText("seven of 38");
+  // A check the replay never saw fire says so, and writes no count.
+  await expect(track.locator("[data-track-check=disbursement]")).toContainText("I haven't seen this signal in my replay yet.");
+  await expect(track.locator("[data-track-check=disbursement]")).not.toContainText("0 of 0");
+  await expect(track.locator("tfoot")).toContainText("7 of 38");
 });
 
 test("Following refuses a viewer without the World Bank staff role, and a preview shows no list", async ({ page }) => {
   await openFollowing(page, { answers: { "/api/me": { body: await recorded("me-not-staff.json") }, "/api/following": { status: 403, body: await recorded("following-not-staff.json") } } });
   await expect(page.getByRole("heading", { level: 2, name: "I show Following only to World Bank staff." })).toBeVisible();
   await expect(page.getByRole("navigation", { name: "Projects pages" })).toHaveCount(0);
+  // A viewer who cannot follow is not told to follow: the purpose is All projects'.
+  await expect(page.locator("main")).not.toContainText("Follow the projects you work on");
 
   await openFollowing(page, { path: `${FOLLOWING}?view=public` });
   await expect(page.getByRole("heading", { level: 2, name: "The public view has no Following list." })).toBeVisible();
@@ -165,6 +185,8 @@ test("as of a past date, the page says the date its checks ran as of, and the sh
 
   await expect(page.getByText("I ran these seven checks as they would have run on June 30, 2024")).toBeVisible();
   await expect(page.getByText("so it shows today's data")).toHaveCount(0);
+  await expect(page.locator("[data-coverage-line]")).toContainText(
+    "I couldn't run every check on any project I checked. Each row says which records I lacked.");
 });
 
 test("a row's partial line names the plan window the thresholds file sets, never one the page types", async ({ page }) => {
@@ -274,6 +296,12 @@ test("on a phone, each block of the mission brief keeps its labels clear of thei
     expect(overlaps, `at ${width} px`).toEqual([]);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), `at ${width} px`).toBe(true);
   }
+});
+
+test("when every project you follow is quiet, the finding counts them in words", async ({ page }) => {
+  await openFollowing(page, { file: "following-made-up-all-quiet.json" });
+
+  await expect(page.getByRole("heading", { level: 2, name: "You follow three projects, and none has a signal." })).toBeVisible();
 });
 
 test("a part the writer refused says so, and never says I removed sentences", async ({ page }) => {
