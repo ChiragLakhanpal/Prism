@@ -205,7 +205,8 @@ def summary(tool: Tool, bound: Mapping[str, Any], result: Mapping[str, Any]) -> 
     the tool and the sources it read."""
     return {"evidence_id": summary_id(tool, bound, result["as_of"]), "public_from": result["as_of"],
             "source": {"tool": tool.name, "sources": list(tool.sources)},
-            **{field: result[field] for field in tool.result.summary_fields}}
+            # A field the tool left out is the contract check's to name, so a broken tool raises ToolContractError.
+            **{field: result.get(field) for field in tool.result.summary_fields}}
 
 
 # ── Seam 2's contract ────────────────────────────────────────────────────

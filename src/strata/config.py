@@ -1243,12 +1243,16 @@ class DraftKind:
 class DraftKinds:
     kinds: dict[str, DraftKind]
     holds: dict[str, Hold]
+    # Whether the draft page shows disagreement cards, so a warning card holds export ([disagreements]).
+    cards_on_drafts: bool = False
 
 
 def load_draft_kinds(path: Path = CONFIG_DIR / "drafts.toml") -> DraftKinds:
     """The draft-kind registry, with every hold a kind names defined below it."""
     data = _read(path)
-    _Entry(path, "the file", data).only({"kinds", "holds"})
+    _Entry(path, "the file", data).only({"kinds", "holds", "disagreements"})
+    cards = _Entry(path, "disagreements", data.get("disagreements", {"cards_on_drafts": False}))
+    cards.only({"cards_on_drafts"})
     holds = {}
     for key, table in (data.get("holds") or {}).items():
         entry = _Entry(path, f"holds.{key}", table)
@@ -1282,7 +1286,115 @@ def load_draft_kinds(path: Path = CONFIG_DIR / "drafts.toml") -> DraftKinds:
                                entry.text("files"), entry.boolean("staff_only") if "staff_only" in table else False)
     if not kinds:
         raise ConfigError(f"{path.name} defines no draft kind. Add a [kinds.<key>] table.")
-    return DraftKinds(kinds, holds)
+    return DraftKinds(kinds, holds, cards.boolean("cards_on_drafts"))
+
+
+# ── The PPSD template registry ───────────────────────────────────────────
+
+PPSD_FILLERS = ("strata", "people")
+PPSD_CONTROLS = ("text", "rating", "score", "stage")
+PPSD_HOLDS = ("owners", "ratings")
+
+
+@dataclass(frozen=True)
+class PpsdColumn:
+    """One column of the PPSD risk table, as its template heads it, and who fills it."""
+
+    key: str
+    header: str
+    value: str  # its entry in tests/ground_truth/values.toml
+    filled_by: str  # strata or people
+    letter: str | None = None
+    control: str | None = None  # for a column people fill
+    hold: str | None = None  # the export hold it counts toward
+    max_length: int | None = None
+
+
+@dataclass(frozen=True)
+class PpsdForm:
+    key: str
+    name: str
+    document: str
+    pdf_page: int
+    columns: tuple[PpsdColumn, ...]
+
+    def column(self, key: str) -> PpsdColumn | None:
+        return next((column for column in self.columns if column.key == key), None)
+
+
+@dataclass(frozen=True)
+class PpsdRating:
+    value: int
+    label: str
+    short: str
+
+
+@dataclass(frozen=True)
+class PpsdScore:
+    definition: str
+    minimum: int
+    maximum: int
+
+
+@dataclass(frozen=True)
+class PpsdTemplates:
+    """The Short Form and Long Form risk tables, the guidance's ratings and stages, and the default form."""
+
+    path: Path
+    default_form: str
+    forms: dict[str, PpsdForm]
+    ratings: tuple[PpsdRating, ...]
+    score: PpsdScore
+    stages: tuple[str, ...]
+
+    def people_column(self, key: str) -> PpsdColumn | None:
+        """A column only a person fills, from whichever form has it."""
+        return next((column for form in self.forms.values() for column in form.columns
+                     if column.key == key and column.filled_by == "people"), None)
+
+
+def load_ppsd_templates(path: Path = CONFIG_DIR / "ppsd_templates.toml") -> PpsdTemplates:
+    """The PPSD template registry (config/ppsd_templates.toml)."""
+    data = _read(path)
+    _Entry(path, "the file", data).only({"default_form", "forms", "ratings", "score", "stages"})
+    forms = {}
+    for key, table in (data.get("forms") or {}).items():
+        entry = _Entry(path, f"forms.{key}", table)
+        entry.only({"name", "document", "pdf_page", "columns"})
+        columns = []
+        for column in _tables(path, table, "columns"):
+            column.where = f"forms.{key}.{column.where}"
+            column.only({"key", "header", "value", "letter", "filled_by", "control", "hold", "max_length"})
+            filled = column.text("filled_by")
+            if filled not in PPSD_FILLERS:
+                column._fail("filled_by", f"must be one of {', '.join(PPSD_FILLERS)}")
+            control, hold = column.text("control", filled == "people"), column.text("hold", False)
+            if filled == "people" and control not in PPSD_CONTROLS:
+                column._fail("control", f"must be one of {', '.join(PPSD_CONTROLS)}")
+            if filled == "strata" and (control or hold):
+                column._fail("control", "is only for a column people fill")
+            if hold is not None and hold not in PPSD_HOLDS:
+                column._fail("hold", f"must be one of {', '.join(PPSD_HOLDS)}")
+            columns.append(PpsdColumn(column.text("key"), column.text("header"), column.text("value"), filled,
+                                      column.text("letter", False), control, hold, column.integer("max_length", False)))
+        if not columns:
+            entry._fail("columns", "must list the template's columns")
+        forms[key] = PpsdForm(key, entry.text("name"), entry.text("document"), entry.integer("pdf_page"), tuple(columns))
+    default = _Entry(path, "the file", data).text("default_form")
+    if default not in forms:
+        raise ConfigError(f"In {path.name}, default_form names {default}, which [forms] does not define.")
+    ratings = _Entry(path, "ratings", data.get("ratings"))
+    ratings.only({"document", "pdf_page", "levels"})
+    levels = tuple(PpsdRating(level["value"], level["label"], level["short"]) for level in ratings.table.get("levels", []))
+    if not levels:
+        ratings._fail("levels", "must list the guidance's ratings")
+    score = _Entry(path, "score", data.get("score"))
+    score.only({"definition", "minimum", "maximum"})
+    stages = _Entry(path, "stages", data.get("stages"))
+    stages.only({"document", "pdf_page", "names"})
+    return PpsdTemplates(path, default, forms, levels,
+                         PpsdScore(score.text("definition"), score.integer("minimum"), score.integer("maximum")),
+                         stages.texts("names"))
 
 
 # ── The roles file ───────────────────────────────────────────────────────

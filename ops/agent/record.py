@@ -94,9 +94,16 @@ def main(argv=None) -> int:
         elif args.writers:
             cases = load_cases(WRITER_CASES)
             kinds = load_draft_kinds().kinds
-            specs = {case.recording: load_agent(kinds[case.request["kind"]].agent) for case in cases.values()}
-            spec = next(iter(specs.values()))  # one writer kind so far: review notes
-            done = record.record_writers(cases, lambda: foundry_agent(env, spec), warehouse_engine_for(env), viewer)
+            # Each kind's cases are recorded by that kind's own writer (ticket 36 adds the PPSD rows and Project
+            # Paper summary writers beside review notes and the mission brief).
+            by_kind: dict[str, dict] = {}
+            for key, case in cases.items():
+                by_kind.setdefault(case.request["kind"], {})[key] = case
+            done = []
+            for kind, group in by_kind.items():
+                spec = load_agent(kinds[kind].agent)
+                done += record.record_writers(group, lambda spec=spec: foundry_agent(env, spec),
+                                              warehouse_engine_for(env), viewer)
         else:
             spec = load_agent("orchestrator")
             done = record.record_all(load_cases(), lambda: foundry_agent(env, spec), warehouse_engine_for(env), viewer)

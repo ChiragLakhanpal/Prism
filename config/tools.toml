@@ -66,7 +66,8 @@ planned completion date that has passed. \
 A signed amount is compared with its estimate, and the result says how late the contract was signed, measured \
 from the first published planned date. A package still pending close to the project's closing date is marked. \
 Weak records get data notes. It returns one row per activity in STEP's columns, with its marks (needs_a_look, \
-watch, data_note) and the values behind each reason. When World Bank staff saved one of the agency's versions \
+watch, data_note) and the values behind each reason. How many activities the plan lists and how many carry each \
+mark come back in the result's summary, which you cite for them. When World Bank staff saved one of the agency's versions \
 as the baseline, the plan agreed at negotiations, the result names it, and each reason that states a delay also \
 gives the delay from the baseline's planned date; the marks still come from the first published planned date. \
 It reads only the plan's own record. It cannot see the \
@@ -119,6 +120,9 @@ reasons = ["completion_passed_no_contract", "pending_near_closing", "pending_on_
            "no_planned_date", "no_estimate"]
 abstentions = ["unknown_project", "no_plan_from_agency", "no_plan_as_of", "version_not_found", "version_not_public",
                "no_activities"]
+# The plan's counts (how many activities, how many need a look, are worth watching or carry a data note) are
+# figures a Project Paper summary states (ticket 36), so they come back as one citable record, the summary.
+summary_fields = ["counts"]
 
 # project_signals (ticket 37): the fixed signals on a project that World Bank staff follow. The Following page
 # and the mission brief writer read it, and ticket 41's Home reads the same result.
@@ -210,6 +214,65 @@ fields = ["project", "isr", "parts", "unmatched_agencies", "totals"]
 reasons = ["no_plans", "no_isr", "no_awards", "no_loans", "closed", "no_closing_date"]
 abstentions = ["unknown_project"]
 summary_fields = ["totals"]
+
+# agency_track_record (ticket 36): how an implementing agency's past packages went against its plans, which the
+# Project Paper summary writer states in counts.
+[tools.agency_track_record]
+description = """Says how one implementing agency's past packages went against its plans. It reads one version \
+of the agency's Procurement Plan for a project, the latest unless you name one by its date, and for each \
+activity compares the date its first published plan gave for signing the contract with the date the plan shows \
+it signed. It counts the packages with both dates (n), how many were signed by the date first planned, how many \
+were signed more than {agency_track_record.late_days} days after it, and how many are not signed although their \
+date has passed. It gives the middle delay in days only from {agency_track_record.min_packages_for_middle} \
+counted packages; with fewer it is null, and you give counts only. Signed means what the plan shows \
+(signed_from); a package the plan shows unsigned while the awards dataset holds a signed contract comes back in \
+differs_from_awards with that contract, so you say which source you counted and name the other. Each row is one \
+activity, cited by its plan row's evidence id. The counts come back in the result's summary, which you cite for \
+them. It never rates the agency or its procurement risk. It cannot see the prior-review queue, complaints, \
+contract amendments or contract management reports."""
+adapter = "strata.tools.agency_track_record:agency_track_record"
+benchmark = "agency-track-record-nwwda-2026-10-09"
+sources = ["documents", "projects", "awards"]
+
+[[tools.agency_track_record.parameters]]
+name = "project_id"
+type = "string"
+required = true
+description = "The project ID, P followed by six digits, such as P156634."
+
+[[tools.agency_track_record.parameters]]
+name = "implementing_agency"
+type = "string"
+required = true
+description = """The implementing agency, as its plan's Executing Agency(ies) line names it, such as Northern Water \
+Works Development Agency, or its agency_id from an earlier result."""
+
+[[tools.agency_track_record.parameters]]
+name = "plan_date"
+type = "date"
+required = false
+key = true
+description = "The plan version whose activities to count, by its date. Leave it out for the agency's latest version."
+
+[[tools.agency_track_record.parameters]]
+name = "as_of"
+type = "date"
+required = false
+description = "Use only plan versions and contracts public on or before this date. Leave it out for today."
+
+[tools.agency_track_record.result]
+row = """One activity in the agency's plan: its STEP reference, the date its first published plan gave for signing, \
+the date the plan shows it signed, its delay, whether it counts as signed by that date, signed late, open past its \
+date or not due yet, and any signing the awards dataset holds for it."""
+row_fields = ["evidence_id", "public_from", "source", "step_reference", "description", "section", "method",
+              "process_status", "first_planned_on", "first_planned_plan_date", "first_listing_confirmed", "signed_on",
+              "delay_days", "state", "awards_signed_on", "awards_evidence_id"]
+source_fields = ["document_type", "project_id", "implementing_agency", "plan_date", "document_id", "pdf_page"]
+fields = ["agency", "plan", "signed_from", "differs_from_awards", "from_date", "to_date", "counts"]
+reasons = ["not_signed", "no_planned_date"]
+abstentions = ["unknown_project", "no_plan_from_agency", "no_plan_as_of", "version_not_found", "version_not_public",
+               "no_activities"]
+summary_fields = ["counts"]
 
 [tools.search_passages]
 description = """Searches the numbered passages of World Bank project documents (PADs, ISRs, ICRs, \

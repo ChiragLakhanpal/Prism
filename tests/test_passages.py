@@ -110,7 +110,9 @@ def test_the_fixture_run_reads_every_recorded_report_of_the_slice_and_routes_the
     documents = rows(db, REPORTS)
     read = [d for d in documents if d["text_paged"]]
     dated = {(d["project_id"], d["document_type"], d["document_date"]) for d in read}
-    recorded = sorted((ROOT / "data" / "fixture" / "recorded" / "documents").glob("*/*.pages.txt"))
+    # Projects' documents, in a folder per project: the PPSD templates and guidance (documents/guidance, ticket
+    # 36) belong to no project, and the run never reads them.
+    recorded = sorted((ROOT / "data" / "fixture" / "recorded" / "documents").glob("P*/*.pages.txt"))
     reports = [path for path in recorded if not path.name.startswith("procurement-plan")]
 
     assert len(documents) == len(reports) == 39

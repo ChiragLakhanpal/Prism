@@ -710,11 +710,18 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
             log.exception("I could not read %s's choice on disagreement %s.", viewer.user_id, disagreement_id)
             return {"choice": None}
 
+    def planned_package_view(saved) -> dict:
+        """A planned package as its workspace shows it, for suggested PPSD rows (ticket 36)."""
+        from strata.packages.workflow import package_view
+
+        return package_view(saved, package_form or load_package_form(), package_thresholds or thresholds)
+
     draft_routes.add_routes(app, engine_for=engine_for, store=drafts,
                             access=access, writers=writers or (lambda kind: None),
                             kinds=kinds or load_draft_kinds(), today=today, now=now, new_draft_id=new_draft_id,
                             new_run_id=new_run_id, runs=runs, trace_ids=trace_ids, reference=request_reference,
-                            heartbeat_seconds=heartbeat_seconds, six_checks=six_checks)
+                            heartbeat_seconds=heartbeat_seconds, six_checks=six_checks, packages=packages,
+                            planned_view=planned_package_view)
 
     # Following and the follow buttons (ticket 37).
     following_routes.add_routes(app, engine_for=engine_for, store=follows, access=access, drafts=drafts, today=today,

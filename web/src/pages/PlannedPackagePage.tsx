@@ -29,6 +29,8 @@ import { Rebidding } from "../components/RebiddingBlock";
 import { plannedRebiddingPath } from "../lib/rebidding";
 import { RisksSection } from "../components/RisksSection";
 import { CheckCriteria } from "../components/CheckCriteria";
+import { ExistingPpsdNotice } from "../components/ExistingDraftNotice";
+import { PpsdAction, type RiskSelection } from "../components/PpsdAction";
 import { StepsSection } from "../components/StepsSection";
 import { POPOVER } from "../components/Popover";
 import { SkeletonLine } from "../components/Skeleton";
@@ -55,7 +57,8 @@ import {
   type PlannedPage,
   type Planning,
 } from "../lib/packages";
-import { navigate } from "../lib/router";
+import { staffRole } from "../lib/following";
+import { address, navigate } from "../lib/router";
 import { useStore } from "../lib/store";
 import { setPageTitle } from "../lib/title";
 import { useScrollPadding } from "../lib/useScrollPadding";
@@ -167,41 +170,50 @@ export function SavedStamp({ saving, preview, onRetry }: { saving: Saving; previ
 }
 
 // The header: the title as the h1, then the reference line, which carries the saved stamp after the reference
-// (brief 36 moved the stamp there from the header's right). It sticks from a page area of 768 px; below that it
-// scrolls with the page and the stamp takes a line of its own.
+// (brief 36 moved the stamp there from the header's right, where "Suggest {n} PPSD risk rows" now sits from a page
+// area of 768 px). It sticks from a page area of 768 px; below that it scrolls with the page and the stamp takes a
+// line of its own.
 function Header({
   title,
   stamp,
   headerRef,
   headingRef,
   loading = false,
+  action,
 }: {
   title: ReactNode;
   stamp: ReactNode;
   headerRef?: RefObject<HTMLDivElement | null>;
   headingRef?: RefObject<HTMLHeadingElement | null>;
   loading?: boolean;
+  // Ticket 36: "Suggest {n} PPSD risk rows" and its caption, at the header's right from 768 px.
+  action?: ReactNode;
 }) {
   return (
     <div ref={headerRef} data-package-header className="border-b border-line bg-page py-4 @md/page:sticky @md/page:top-0 @md/page:z-10">
-      <h1 ref={headingRef} tabIndex={-1} className="text-h2 text-pretty wrap-anywhere text-ink-heading focus:outline-none @md/page:text-h1">
-        {title}
-      </h1>
-      {loading ? (
-        <SkeletonLine className="mt-1 text-small" width="w-40" />
-      ) : (
-        <div className="mt-1 flex flex-col gap-x-2 @md/page:flex-row @md/page:flex-wrap @md/page:items-baseline" data-reference-line>
-          <p className="text-small text-ink-muted">{words.referenceNone}</p>
-          {stamp && (
-            <>
-              <span aria-hidden="true" className="hidden text-caption text-ink-muted @md/page:inline">
-                {copy.evidence.meta.dot}
-              </span>
-              {stamp}
-            </>
+      <div className="flex items-start justify-between gap-x-6">
+        <div className="min-w-0 flex-1">
+          <h1 ref={headingRef} tabIndex={-1} className="text-h2 text-pretty wrap-anywhere text-ink-heading focus:outline-none @md/page:text-h1">
+            {title}
+          </h1>
+          {loading ? (
+            <SkeletonLine className="mt-1 text-small" width="w-40" />
+          ) : (
+            <div className="mt-1 flex flex-col gap-x-2 @md/page:flex-row @md/page:flex-wrap @md/page:items-baseline" data-reference-line>
+              <p className="text-small text-ink-muted">{words.referenceNone}</p>
+              {stamp && (
+                <>
+                  <span aria-hidden="true" className="hidden text-caption text-ink-muted @md/page:inline">
+                    {copy.evidence.meta.dot}
+                  </span>
+                  {stamp}
+                </>
+              )}
+            </div>
           )}
         </div>
-      )}
+        {action}
+      </div>
     </div>
   );
 }
@@ -477,6 +489,17 @@ function Workspace({ initial, preview, focusHeading }: { initial: PlannedPage; p
   const plan = typeof valueOf(pkg, "plan_months") === "number" ? (valueOf(pkg, "plan_months") as number) : null;
   const title = titleOf(pkg, form);
   useScrollPadding(header, true, { gap: 16 });
+  // Section 3's selection, for "Suggest {n} PPSD risk rows" (ticket 36). Suggested PPSD rows are a World Bank staff
+  // draft (config/drafts.toml, staff_only), so a viewer without the role gets no action. The server reads the
+  // criteria and the selection from this saved package, so the action sends only its id.
+  const [selection, setSelection] = useState<RiskSelection | null>(null);
+  const staff = useStore(staffRole) !== false;
+  const asOf = new URLSearchParams(useStore(address).search).has("asof");
+  const ppsdPackage = { id: pkg.package_id, title: String(valueOf(pkg, "description") ?? title), step_reference: null };
+  const ppsdAction = (inline: boolean) =>
+    staff ? <PpsdAction pkg={ppsdPackage} selection={selection} preview={preview} asOf={asOf} inline={inline} /> : undefined;
+  // While the action is live it is the screen's one solid button, so section 1's "Show the past range" turns secondary.
+  const ppsdLive = staff && !preview && !asOf && selection !== null && selection.chosen > 0 && !selection.saveFailed;
 
   useEffect(() => setPageTitle(words.documentTitle(title)), [title]);
   // Arriving from the reading page, whose h1 had focus: this page's h1 takes it, so focus stays where it was.
@@ -764,6 +787,7 @@ function Workspace({ initial, preview, focusHeading }: { initial: PlannedPage; p
         preview={preview}
         onPlan={(months) => commit({ field: "plan_months", action: "set", value: months, plan_before_range: true }, { keepEditor: true })}
         onWithout={() => setShowWithout(true)}
+        showRangeVariant={ppsdLive ? "secondary" : "primary"}
       />
     );
   }
@@ -781,11 +805,14 @@ function Workspace({ initial, preview, focusHeading }: { initial: PlannedPage; p
     <DocumentColumn>
       <div data-planned-package="ready">
         <Breadcrumb trail={crumbs(title)} held />
+        {/* Ticket 36's notices about suggested PPSD rows on this package sit above the h1, as on a STEP row's page. */}
+        <ExistingPpsdNotice packageKey={pkg.package_id} />
         <div className="mt-4">
           <Header
             headerRef={header}
             headingRef={heading}
             title={title}
+            action={ppsdAction(false)}
             stamp={
               <SavedStamp
                 saving={saving}
@@ -830,7 +857,8 @@ function Workspace({ initial, preview, focusHeading }: { initial: PlannedPage; p
           <StepsSection packageKey={pkg.package_id} kind="planned" rerunKey={`${queryKey(pkg)}|${pkg.missing.join(",")}`} />
         </div>
         {/* Section 3, procurement risks and what helped (ticket 30): it reruns with section 1's criteria, and its
-            selection saves with the package under the saved stamp. */}
+            selection saves with the package under the saved stamp and tells the page what is selected, for "Suggest
+            {n} PPSD risk rows" (ticket 36), which it draws under its last risk below 768 px. */}
         <div className="mt-6 @lg/page:mt-8">
           <RisksSection
             apiHref={`/api/planned-packages/${pkg.package_id}`}
@@ -843,6 +871,8 @@ function Workspace({ initial, preview, focusHeading }: { initial: PlannedPage; p
               retryRisks.current = state === "failed" ? retry : null;
               setSaving(state === "saved" ? { status: "saved", at: new Date().toISOString() } : { status: state });
             }}
+            onSelection={setSelection}
+            action={ppsdAction(true)}
           />
         </div>
         {/* Section 5, "Check your criteria" (ticket 31), on this package's comparables: a change of criteria

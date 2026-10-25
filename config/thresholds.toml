@@ -304,8 +304,48 @@ source = "Strata's starting value from the blueprint, not yet checked against th
 [market_approach.international_from_usd.KE]
 Works = 15_000_000
 
-# The PPSD guidance's Table I thresholds, which decide when the Long Form applies (ticket 36).
+# The PPSD guidance's Table I thresholds, which decide when the Long Form applies (ticket 36). Source: Table I,
+# "Thresholds for Use of the Long-Form PPSD Template as a Function of Procurement Risk", PPSD Long Form Detailed
+# User Guidance, third edition, March 2025 (documents.worldbank.org report 203913), PDF page 18, recorded in
+# data/fixture/recorded/documents/guidance/ppsd-long-form-guidance-2025-03-31 and quoted in
+# tests/ground_truth/values.toml (ppsd-table-i-*). The table gives US$ millions; these are US dollars.
+# tests/test_ppsd_templates.py checks every amount against the quotes.
+#
+# The threshold depends on the procurement risk rating the Borrower and the World Bank agree, which Strata
+# cannot see. So the suggested PPSD rows offer the Long Form once a package's cost estimate reaches the threshold
+# of offer_long_form_at, the lowest one, and the caption names that threshold. Short Form stays the default.
+# The whole package's cost estimate is compared, never a lot's (src/strata/drafts/ppsd_rows.py, table_i).
 [ppsd_table_i]
+risk_levels = ["Low", "Moderate", "Substantial", "High"]
+offer_long_form_at = "High"
+
+# Which of Table I's rows a STEP procurement category reads.
+[ppsd_table_i.row]
+Works = "works"
+Goods = "goods"
+"Non-consulting Services" = "goods"
+"Consultant Services" = "consultants"
+
+# Works.
+[ppsd_table_i.from_usd.works]
+Low = 200_000_000
+Moderate = 115_000_000
+Substantial = 75_000_000
+High = 50_000_000
+
+# Goods, IT and non-consulting services.
+[ppsd_table_i.from_usd.goods]
+Low = 125_000_000
+Moderate = 75_000_000
+Substantial = 50_000_000
+High = 30_000_000
+
+# Consultant services.
+[ppsd_table_i.from_usd.consultants]
+Low = 40_000_000
+Moderate = 30_000_000
+Substantial = 20_000_000
+High = 15_000_000
 
 # When a data readiness measure counts as Partial or Gap (ticket 16; the 16 design brief, section 4).
 # data_readiness_for (src/strata/tools/data_readiness_for.py) reads them, and the dashboard's Data
@@ -520,6 +560,20 @@ summary_poll_minutes = 10
 # hindsight test ("its top five risks per package") and the 30 design brief, section 5.1 (the Pareto
 # principle: at most five risks).
 max_rows = 5
+
+# The implementing agency's track record (ticket 36): agency_track_record (src/strata/tools/agency_track_record.py)
+# counts how the activities of one of the agency's plans went against the date their first published plan gave for
+# signing, and the Project Paper summary states those counts. Both values come back in the tool's counts, so no
+# screen or writer writes them itself.
+[agency_track_record]
+# A package signed more than this many days after its first published planned date counts as signed late. 0 is
+# check_plan's own rule, which marks a signing late when its days_late is above zero ([plan_check] has no key for
+# it); a starting value for the owner to confirm.
+late_days = 0
+# Below this many counted packages, the track record gives no middle delay, only counts. Source: the spec ("Below
+# 20 comparables, subgroups included, no tool returns a range or a percentage") and DESIGN.md section 7, rules 6
+# and 15; the 36 design brief, section 11 ("middle_delay_days (null under 20)").
+min_packages_for_middle = 20
 
 # The retrieval loop (ticket 32; docs/PLAN.md sections 10 and 11, "Feedback"): the labeled set, the
 # judging tool, passage reports from the evidence drawer and how they become labels. strata.knowledge.retrieval

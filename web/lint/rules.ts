@@ -18,6 +18,10 @@ export const FIXED_TERMS = [
   "These notes are not a World Bank review, clearance or no-objection.",
   // The mission brief's Word origin paragraph (ticket 37; DESIGN.md section 8, Exported files).
   "This brief is not a World Bank review, clearance or no-objection.",
+  // Ticket 36, DESIGN.md section 8, Exported files: the last sentence of the Word origin paragraph of suggested PPSD
+  // rows, and of the Project Paper summary.
+  "These are suggested rows for the borrower's PPSD and are not a World Bank review, clearance or no-objection.",
+  "This summary is not a World Bank review, clearance or no-objection.",
   // DESIGN.md section 7, rule 8: the one fixed term where "the Bank" stays.
   "the Bank's no-objection",
 ];

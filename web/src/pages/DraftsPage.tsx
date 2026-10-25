@@ -55,12 +55,26 @@ export function DraftRow({ row, linkRef }: { row: Row; linkRef?: (element: HTMLA
       <TextLink ref={linkRef} href={draftHref(row.draft_id)} className="text-body font-semibold">
         {row.kind === "mission_brief"
           ? kind.rowTitle(subject.project_name, "")
-          : kind.rowTitle(subject.implementing_agency, short(subject.plan_date))}
+          : row.kind === "ppsd_rows"
+            ? kind.rowTitle(subject.package_title ?? "", "")
+            : kind.rowTitle(subject.implementing_agency, short(subject.plan_date))}
       </TextLink>
       <p className="mt-1 text-small text-ink-muted">
         {row.kind === "mission_brief" ? (
           // The title already names the project (the 37 brief, section 9.8): "P156634, Kenya. Drafted by you on ...".
           <Fill template={subject.country ? words.projectCountry : words.projectOnly} slots={{ pid: <ProjectId pid={subject.project_id} />, country: subject.country ?? "" }} />
+        ) : row.kind === "ppsd_rows" ? (
+          // Suggested PPSD rows (ticket 36): the package's project, or a package from a sentence, then its rows.
+          <>
+            {subject.project_id ? (
+              <Fill template={words.project} slots={{ name: subject.project_name, pid: <ProjectId pid={subject.project_id} /> }} />
+            ) : (
+              words.packageNoProject
+            )}{" "}
+            {row.state !== "discarded" && row.progress && <>{kind.rowNotes(row.progress.rows, formatCount(row.progress.rows, { capital: true }))} </>}
+          </>
+        ) : row.kind === "project_paper" ? (
+          <Fill template={words.project} slots={{ name: subject.project_name, pid: <ProjectId pid={subject.project_id} /> }} />
         ) : (
           <>
             <Fill template={words.project} slots={{ name: subject.project_name, pid: <ProjectId pid={subject.project_id} /> }} />{" "}
@@ -71,6 +85,14 @@ export function DraftRow({ row, linkRef }: { row: Row; linkRef?: (element: HTMLA
       </p>
       {row.opened && (
         <p className="mt-1 text-small text-ink" data-numbers>
+          {/* Suggested PPSD rows say first how many owners are set, and in the Long Form how many rows are rated, from
+              the copy file's one owner count (ticket 36; tickets 35's Drafts tab and 41's Home read it). */}
+          {row.progress && (
+            <>
+              {copy.ppsd.progressCount(whole(row.progress.owners_set), whole(row.progress.total))}{" "}
+              {row.progress.form === "long" && <>{copy.ppsd.progressRated(whole(row.progress.rated), whole(row.progress.total))} </>}
+            </>
+          )}
           {words.opened(whole(row.opened.count), whole(row.opened.of))}
         </p>
       )}

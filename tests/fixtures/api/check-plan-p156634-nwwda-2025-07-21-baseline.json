@@ -302,5 +302,27 @@
     "signal": 2,
     "marked": 3,
     "unmarked": 3
+  },
+  "summary": {
+    "evidence_id": "strata.tools.check_plan:P156634/northern-water-works-development-agency@2026-10-23?plan_date=2025-07-21",
+    "public_from": "2026-10-23",
+    "source": {
+      "tool": "check_plan",
+      "sources": [
+        "documents",
+        "projects"
+      ]
+    },
+    "counts": {
+      "activities": 6,
+      "checked": 6,
+      "not_fully_checked": 0,
+      "needs_a_look": 0,
+      "watch": 2,
+      "data_note": 1,
+      "signal": 2,
+      "marked": 3,
+      "unmarked": 3
+    }
   }
 }

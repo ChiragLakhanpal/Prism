@@ -194,6 +194,9 @@ def marked(result, question) -> dict[str, list[str]]:
     # Ticket 21: the activities whose reasons give a delay from the saved baseline as well.
     found["baseline_delays"] = sorted(row["activity_reference_no"] for row in result["rows"]
                                       if any("baseline" in reason for mark in row["marks"] for reason in mark["reasons"]))
+    # Ticket 36: the plan's counts come back as a citable summary, which a Project Paper summary cites.
+    found["activities"] = [result["summary"]["counts"]["activities"]]
+    found["counts_cited_as"] = [result["summary"]["evidence_id"]]
     return found
 
 
@@ -364,7 +367,21 @@ def rebidding_answer(result, question) -> dict[str, list]:
             "cited_as": [summary["evidence_id"]]}
 
 
+def track_answer(result, question) -> dict[str, list]:
+    """agency_track_record's answer: its counts from the summary, the packages in each state, which source it
+    counted as signed and the packages the awards dataset shows signed while the plan does not (ticket 36)."""
+    counts = result["summary"]["counts"]
+    return {"counts": [counts["n"], counts["signed_by_plan"], counts["signed_late"], counts["open_past_date"]],
+            "middle_delay_days": [counts["middle_delay_days"]],
+            "signed_late": sorted(row["step_reference"] for row in result["rows"] if row["state"] == "signed_late"),
+            "open_past_date": sorted(row["step_reference"] for row in result["rows"] if row["state"] == "open_past_date"),
+            "signed_from": [result["signed_from"]],
+            "differs_from_awards": [entry["step_reference"] for entry in result["differs_from_awards"]],
+            "cited_as": [result["summary"]["evidence_id"]]}
+
+
 ANSWERS = {"check_plan": marked, "search_passages": in_top_three, "data_readiness_for": readiness_answer,
+           "agency_track_record": track_answer,
            "find_comparables": past_range, "get_disagreements": disagreement_answer,
            "get_lessons": lessons_answer, "estimate_time": step_dates_answer, "compare_cost_estimates": cost_answer,
            "rejected_bids": rejected_answer, "compare_criteria": criteria_answer, "project_signals": signals_answer,
@@ -381,7 +398,8 @@ def answered(result, question) -> dict[str, list[str]]:
 
 def expected(question) -> dict[str, list[str]]:
     if question["tool"] in ("data_readiness_for", "get_disagreements", "get_lessons", "compare_cost_estimates",
-                            "rejected_bids", "compare_criteria", "project_signals", "project_records", "rebidding_risk"):
+                            "rejected_bids", "compare_criteria", "project_signals", "project_records", "rebidding_risk",
+                            "agency_track_record"):
         return question["expected"]
     return {mark: sorted(refs) for mark, refs in question["expected"].items()}
 

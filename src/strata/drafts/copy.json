@@ -80,6 +80,32 @@
         "notRated": "Not rated",
         "total": "Total",
         "moved": "Closing date moved"
+      },
+      "ppsd_rows": {
+        "heading": "Suggested risk rows for the borrower's PPSD",
+        "line": "{package_title}. {reference}.",
+        "noReference": "No STEP reference yet",
+        "project": "{project_name} ({project_id}).",
+        "form": "{form_name}.",
+        "origin": "Drafted with Strata on {created} and checked by {checker} on {checked}. {author} set the {set_what}. Strata is an independent demo built on World Bank open data. These are suggested rows for the borrower's PPSD and are not a World Bank review, clearance or no-objection.",
+        "setOwners": "risk owners",
+        "setOwnersRatings": "risk owners and ratings",
+        "footnote": {
+          "count": "Seen in {k} of {m} comparable completion reports.",
+          "page": ", page {page}",
+          "join": "; ",
+          "end": "."
+        }
+      },
+      "project_paper": {
+        "heading": "Procurement summary for the Project Paper",
+        "line": "{project_name} ({project_id}). {agency}, Procurement Plan of {date}.",
+        "origin": "Drafted with Strata on {created} and checked by {checker} on {checked}. Strata is an independent demo built on World Bank open data. This summary is not a World Bank review, clearance or no-objection.",
+        "parts": {
+          "plan": "The Procurement Plan",
+          "record": "The implementing agency's track record",
+          "ppsd": "Procurement risks in the PPSD"
+        }
       }
     },
     "pack": {
@@ -115,17 +141,83 @@
       "no": "No",
       "moment": "{date}, {time}",
       "citedJoin": ", ",
-      "dataCaveat": "The World Bank does not guarantee the accuracy of the data."
+      "dataCaveat": "The World Bank does not guarantee the accuracy of the data.",
+      "fieldsTitle": "Fields you set",
+      "fieldsColumns": [
+        "Row",
+        "Field",
+        "Value",
+        "Set by",
+        "Set on (UTC)"
+      ],
+      "fieldsRemoved": "Removed",
+      "fieldsForm": "Risk table form"
     }
   },
   "holds": {
     "review_notes": {
       "preview": "This is a preview, so you can't mark drafts as checked or export them.",
+      "owners": {
+        "one": "set one more risk owner",
+        "many": "set {count} more risk owners"
+      },
+      "ratings": {
+        "one": "fill in the ratings for one more row",
+        "many": "fill in the ratings for {count} more rows"
+      },
+      "disagreements": {
+        "one": "choose which report to keep in one disagreement",
+        "many": "choose which report to keep in {count} disagreements"
+      },
       "notChecked": "Mark the notes as checked before you export them."
     },
     "mission_brief": {
       "preview": "This is a preview, so you can't mark drafts as checked or export them.",
+      "owners": {
+        "one": "set one more risk owner",
+        "many": "set {count} more risk owners"
+      },
+      "ratings": {
+        "one": "fill in the ratings for one more row",
+        "many": "fill in the ratings for {count} more rows"
+      },
+      "disagreements": {
+        "one": "choose which report to keep in one disagreement",
+        "many": "choose which report to keep in {count} disagreements"
+      },
       "notChecked": "Mark the brief as checked before you export it."
+    },
+    "ppsd_rows": {
+      "preview": "This is a preview, so you can't mark drafts as checked or export them.",
+      "owners": {
+        "one": "set one more risk owner",
+        "many": "set {count} more risk owners"
+      },
+      "ratings": {
+        "one": "fill in the ratings for one more row",
+        "many": "fill in the ratings for {count} more rows"
+      },
+      "disagreements": {
+        "one": "choose which report to keep in one disagreement",
+        "many": "choose which report to keep in {count} disagreements"
+      },
+      "notChecked": "Mark the rows as checked before you export them."
+    },
+    "project_paper": {
+      "preview": "This is a preview, so you can't mark drafts as checked or export them.",
+      "owners": {
+        "one": "set one more risk owner",
+        "many": "set {count} more risk owners"
+      },
+      "ratings": {
+        "one": "fill in the ratings for one more row",
+        "many": "fill in the ratings for {count} more rows"
+      },
+      "disagreements": {
+        "one": "choose which report to keep in one disagreement",
+        "many": "choose which report to keep in {count} disagreements"
+      },
+      "notChecked": "Mark the summary as checked before you export it."
     }
   },
   "removedReasons": {
@@ -139,6 +231,18 @@
       "id_not_returned": {
         "item": "It cited a source from another part of the brief.",
         "joined": "it cited a source from another part of the brief"
+      }
+    },
+    "ppsd_rows": {
+      "id_not_returned": {
+        "item": "It cited a source other than this risk's records.",
+        "joined": "it cited a source other than this risk's records"
+      }
+    },
+    "project_paper": {
+      "id_not_returned": {
+        "item": "It cited a source from another part of the summary.",
+        "joined": "it cited a source from another part of the summary"
       }
     }
   },
@@ -160,6 +264,16 @@
     "plans": "Procurement Plan of {date}, from the World Bank documents API."
   },
   "toolSource": "Strata's totals of this project's records, as of {date}.",
+  "passageSource": "{doc}, {pid}, {date}, {place}, page {page}.",
+  "passageParagraph": "paragraph {para}",
+  "passageSection": "section {section}",
+  "countsSource": "Strata's count of comparable completion reports, as of {date}.",
+  "lessonSource": "Strata's lesson library, version {version}, decided on {date}.",
+  "pill": {
+    "pill": "{doc} {pcode} {locator}",
+    "pillNoProject": "{doc} {locator}",
+    "pillParagraph": "¶{para}"
+  },
   "checkLine": {
     "checked": "Checked:",
     "judged": "Judged by a model:",
@@ -200,7 +314,10 @@
       "writer_review_notes": "whether these notes are what you would tell the borrower",
       "project_records": "whether the project's published records are complete",
       "project_signals": "whether the project's published records are complete",
-      "writer_mission_brief": "whether this brief covers what your mission needs"
+      "writer_mission_brief": "whether this brief covers what your mission needs",
+      "writer_ppsd_rows": "whether these rows are what the borrower should put in the PPSD",
+      "agency_track_record": "whether the agency's past packages are like the ones in this plan",
+      "writer_project_paper": "whether this summary is what you would write in the Project Paper"
     }
   },
   "removed": {

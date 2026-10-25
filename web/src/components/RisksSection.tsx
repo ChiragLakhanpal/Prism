@@ -93,6 +93,8 @@ export type RisksViewProps = {
   handlers?: Handlers;
   headingRef?: Ref<HTMLHeadingElement>;
   announce?: string;
+  // Ticket 36: "Suggest {n} PPSD risk rows" below 768 px, under the last risk and before the check line.
+  action?: ReactNode;
 };
 
 const noop = () => undefined;
@@ -114,6 +116,7 @@ export function RisksView({
   handlers = NO_HANDLERS,
   headingRef,
   announce = "",
+  action,
 }: RisksViewProps) {
   const headingId = useId();
   const result = state.status === "ready" ? state.result : null;
@@ -149,6 +152,7 @@ export function RisksView({
             missingList={missingList}
             opened={opened}
             handlers={handlers}
+            action={action}
           />
         )}
         <p role="status" className="sr-only" data-risks-live>
@@ -173,6 +177,7 @@ function Ready({
   missingList,
   opened,
   handlers,
+  action,
 }: {
   result: RisksResult;
   packageKey: string;
@@ -185,6 +190,7 @@ function Ready({
   missingList?: string;
   opened: Opened;
   handlers: Handlers;
+  action?: ReactNode;
 }) {
   const findingId = useId();
   const countId = useId();
@@ -239,6 +245,7 @@ function Ready({
         packageKey={packageKey}
       />
       <RiskList rows={rows} m={m} findingId={findingId} selected={selected} onToggle={onToggle} preview={preview} opened={opened} handlers={handlers} packageKey={packageKey} />
+      {action && <div className="mt-4 @md/page:hidden">{action}</div>}
       <Checks result={result} />
       <Notes result={result} ppar={ppar} />
     </>
@@ -684,6 +691,8 @@ export function RisksSection({
   preview = false,
   missingList,
   onSaveState,
+  onSelection,
+  action,
 }: {
   // The package's API address, such as /api/packages/KE-NWWDA-541055-CW-RFB or /api/planned-packages/pkg-....
   apiHref: string;
@@ -696,6 +705,11 @@ export function RisksSection({
   missingList?: string;
   // A package from a sentence: the page's saved stamp shows each save, and "Try again" after a failed one.
   onSaveState?: (state: "saving" | "saved" | "failed", retry: () => void) => void;
+  // Ticket 36: what the section shows now, for the workspace's "Suggest {n} PPSD risk rows": how many risks, how many
+  // of them you selected, and whether the last save failed; null while it loads, fails or has no rows.
+  onSelection?: (selection: { rows: number; chosen: number; saveFailed: boolean } | null) => void;
+  // The action itself, which the section draws under its last risk below 768 px.
+  action?: ReactNode;
 }) {
   const here = useStore(address);
   const from = useStore(origin);
@@ -768,6 +782,14 @@ export function RisksSection({
   useEffect(() => {
     if (state.status === "ready") rememberRisks(packageKey, state.result);
   }, [state, packageKey]);
+
+  // The selection on screen, for the PPSD action (ticket 36): only the selected risks the table still shows count.
+  const result = state.status === "ready" && !updating ? state.result : null;
+  const shownRows = result && !result.empty_reason ? result.rows : [];
+  const chosen = shownRows.filter((row) => selected.includes(row.risk_key)).length;
+  useEffect(() => {
+    onSelection?.(shownRows.length > 0 ? { rows: shownRows.length, chosen, saveFailed } : null);
+  }, [shownRows.length, chosen, saveFailed]);
   useEffect(() => () => forgetRisks(), []);
 
   // If a rerun removed the element that had focus, focus moves to the section's heading.
@@ -834,6 +856,7 @@ export function RisksSection({
         handlers={handlers}
         headingRef={heading}
         announce={announce}
+        action={action}
       />
     </div>
   );
