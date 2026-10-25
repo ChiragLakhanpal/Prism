@@ -61,8 +61,8 @@ def no_pages(source, engine):
     return ()
 
 
-# The tasks that have their work so far (tickets 07 and 20); ticket 43 gives the rest theirs.
-WORKING = {"fetch_by_watermark", "bronze_to_gold", "detect_disagreements", "measure_data_readiness"}
+# The tasks that have their work so far (tickets 07, 20 and 26); ticket 43 gives the rest theirs.
+WORKING = {"fetch_by_watermark", "bronze_to_gold", "detect_disagreements", "score", "measure_data_readiness"}
 
 
 def with_a_plan_read(engine, project_id="P156634"):

@@ -241,6 +241,30 @@ class TimeEstimateModel:
                            "feature_names": list(self.feature_names), "training_packages": self.training_packages,
                            "calibration_packages": self.calibration_packages}, sort_keys=True)
 
+    @classmethod
+    def from_state(cls, state_json: str, booster_json: str, learner: str = "portable") -> TimeEstimateModel:
+        """A registered model as strata.gold.time_estimate_model keeps it (ticket 26). The portable learner
+        scores with no XGBoost, as the app does (strata.estimates.portable); learner="xgboost" loads the same
+        JSON into XGBoost, which the nightly score task uses for every package at once."""
+        from strata.estimates.portable import PortableLearner
+
+        state = json.loads(state_json)
+        names = tuple(state["feature_names"])
+        if learner == "xgboost":
+            import xgboost
+
+            fitted = XGBoostAFT({}, names, tuple("c" if name in state["vocabularies"] else "q" for name in names))
+            fitted.booster = xgboost.Booster()
+            fitted.booster.load_model(bytearray(booster_json.encode()))
+        else:
+            fitted = PortableLearner(booster_json)
+        return cls(fitted, state["vocabularies"], state["offsets"], dt.date.fromisoformat(state["training_through"]),
+                   state["feature_ranges"], state["training_packages"], state["calibration_packages"], 0, names)
+
+    def learned(self, feature: str, value) -> bool:
+        """Whether the model learned from a package with this value of a categorical feature."""
+        return value is not None and str(value) in self.vocabularies.get(feature, [])
+
     def outside(self, features: dict[str, Any]) -> dict | None:
         for name, bounds in self.feature_ranges.items():
             value = features.get(name)

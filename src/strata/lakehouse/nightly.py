@@ -4,14 +4,15 @@ The bundle (bundle/nightly.yml) is the one place that names the tasks and their 
 Databricks, each task runs nightly_task.py, which calls main() here with the task's name and the
 job run's id. Each task does its work and records its run in strata.ops.pipeline_runs.
 
-Five tasks have their work (tickets 07, 17, 20 and 29): fetch_by_watermark fetches each source in
+Six tasks have their work (tickets 07, 17, 20, 26 and 29): fetch_by_watermark fetches each source in
 config/sources.toml that it fetches page by page into bronze, for every country or for the slice's
 countries as each entry says; bronze_to_gold builds silver and gold from bronze; propose_lessons has
 the batch model propose lessons from the evaluation reports the passage reader holds, and those whose
 quotes pass the check wait in the review queue (strata.knowledge.lessons.propose);
 detect_disagreements rebuilds the assertions and the disagreements between them
-(strata.knowledge.assertions); and measure_data_readiness writes the data readiness measures and
-each table's size to strata.ops. The rest do nothing yet, so each records zero rows changed; ticket
+(strata.knowledge.assertions); score scores every package's time estimate and its what-ifs with the
+champion model (strata.estimates.scoring); and measure_data_readiness writes the data readiness
+measures and each table's size to strata.ops. The rest do nothing yet, so each records zero rows changed; ticket
 43 gives them their work, and adds the plan reader (strata.lakehouse.plans), which fetches the
 documents source itself, and the passage reader, whose passages propose_lessons reads.
 
@@ -147,6 +148,16 @@ def _propose_lessons(run: Run) -> int:
     return changed
 
 
+def _score(run: Run) -> int:
+    """The time estimate of every package Strata knows, and of every what-if combination, scored with the
+    champion model into strata.gold.time_estimate_score (ticket 26; strata.estimates.scoring). A run on the
+    recorded fixture has no workspace registry, so it runs ticket 25's backtest first and scores with the
+    champion that trains; a live run scores with the champion the live backtest registered, or with none."""
+    from strata.estimates import scoring
+
+    return scoring.run(run.engine, run.run_id, run.clock(), train_here=run.fetch is not fetch_live)
+
+
 def _measure_data_readiness(run: Run) -> int:
     """The data readiness measures of every source, how often supplier auto-merge is right on the labeled
     pairs (ticket 19), the room each table takes, and the Data readiness page built from them for the
@@ -168,7 +179,7 @@ TASKS: dict[str, Callable[[Run], int]] = {
     "relink": _nothing_yet,
     "propose_lessons": _propose_lessons,
     "detect_disagreements": _detect_disagreements,
-    "score": _nothing_yet,
+    "score": _score,
     "measure_data_readiness": _measure_data_readiness,
     "refresh_drafts": _nothing_yet,
 }

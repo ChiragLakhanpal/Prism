@@ -117,3 +117,31 @@ aft_loss_distribution = "normal"
 aft_loss_distribution_scale = 1.0
 seed = 7
 nthread = 1
+
+# The what-if levers (ticket 26; docs/PLAN.md section 7): the parts of a procurement approach that the package
+# workspace's "Compare with" can change, in its order, and section 4's approaches are made of. Review type is
+# never a lever: it is computed from the whole package's estimated amount, so no lever can move a package under
+# a review threshold. strata.config.load_what_if() reads this table.
+#
+# feature   the time estimate's feature the lever sets (src/strata/estimates/time_estimate.py, CATEGORICAL), or
+#           empty text when the model reads no such feature. The model reads no number of lots: no record gives
+#           a package's planned lots, and a package's contracts come after the time being estimated. So a lots
+#           comparison counts and lights the comparable packages that went with it, and gives no time estimate.
+# values    the values the nightly score task scores for every package, in STEP's words (Market Approach, and
+#           Prequalification (Y/N) as Y or N). A comparable's own value comes from its records.
+# Source: the spec's "Estimates" (market approach, prequalification and lotting); a starting list for the
+# owner to confirm. Limited approaches are left out: a package under them has no specific procurement notice,
+# so its procurement cycle time cannot be measured.
+[what_if]
+levers = ["market_approach", "lots", "prequalification"]
+
+[what_if.market_approach]
+feature = "market_approach"
+values = ["Open - National", "Open - International"]
+
+[what_if.lots]
+feature = ""
+
+[what_if.prequalification]
+feature = "prequalification"
+values = ["N", "Y"]
