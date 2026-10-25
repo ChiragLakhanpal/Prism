@@ -37,6 +37,7 @@ Some things to know before the first deploy:
 - The target has no development mode on purpose. Development mode would put a prefix on the schema names, and Strata's SQL names them `strata.bronze` and so on.
 - The grants in `catalog.yml` replace any other grants on Strata's own catalog, schemas and volume. They never touch fairshare's.
 - SELECT on `strata.ops` reaches every future table in that schema. A table that holds uploads (CLAUDE.md rule 8) needs a row filter on the uploader's team, or a schema without this grant.
+- Who sent each passage report (`strata.ops.candidate_labels`, `viewer_id` and `viewer_email`) and who asked each question (`strata.ops.answer_citations`, `viewer_id`) are masked: readers read NULL there. `src/strata/lakehouse/masks.py` lists those columns, and the app's deploy, `ops/app/deploy_app.py`, puts the mask `strata.ops.mask_viewer` on each, because only it knows the app's service principal. Only that principal and you, who run the deploy, read the values. A bundle deploy leaves the masks in place.
 
 ## The nightly window
 

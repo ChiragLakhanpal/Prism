@@ -5,12 +5,13 @@
 -- the same report_id; nothing changes or leaves. Ranking changes only when a passage reviewer accepts the
 -- report's group, or at scale when the weekly run makes a silver label (strata.ops.label_decisions). The
 -- app writes these rows as its own service principal, with the viewer the Databricks App forwarded
--- (src/strata/knowledge/retrieval/reports.py).
+-- (src/strata/knowledge/retrieval/reports.py), and reads them back as itself: viewer_id and viewer_email are
+-- masked, so every other reader reads NULL there (src/strata/lakehouse/masks.py; ticket 64).
 --
 -- report_id      the report's id; a withdrawal repeats it
 -- event          sent or withdrawn
--- viewer_id      who sent it: the user id the Databricks App forwarded
--- viewer_email   their email, so the roles file can name their role and their projects
+-- viewer_id      who sent it: the user id the Databricks App forwarded (masked)
+-- viewer_email   their email, so the roles file can name their role and their projects (masked)
 -- viewer_role    the role a review page names them by: staff, piu or public (never their name)
 -- evidence_id    the passage, as an evidence id (strata.gold.passage:<passage_id>)
 -- passage_id     the passage's id

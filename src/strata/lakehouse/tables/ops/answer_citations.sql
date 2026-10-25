@@ -2,10 +2,11 @@
 -- written when an answer stream ends, beside its run in strata.ops.agent_runs. A passage report reads it to
 -- check the passage came back in that answer and to take the question and the sentence from the run, never
 -- from the browser. The retrieval loop reads it to count the answers that cite a different paragraph after
--- a reviewer ranked a reported passage lower (strata.knowledge.retrieval.reports).
+-- a reviewer ranked a reported passage lower (strata.knowledge.retrieval.reports). viewer_id is masked, so only
+-- the app and the catalog's owner read who asked (src/strata/lakehouse/masks.py; ticket 64).
 --
 -- run_id          the answer (strata.ops.agent_runs)
--- viewer_id       who asked: the user id the Databricks App forwarded
+-- viewer_id       who asked: the user id the Databricks App forwarded (masked)
 -- question        what they asked
 -- query_kind      the kind of question (config/retrieval.toml) of the search that found the source, for a passage
 --                 search_passages found; otherwise the kind of the person's question
