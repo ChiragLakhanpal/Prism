@@ -1831,3 +1831,45 @@ Record here whether `{{job.repair_count}}` would add anything the start times do
 The merger parked this step on October 25, 2026, after merge commit 60cf29b, while the warehouse's daily limit held. It needs the Databricks keys in `.env`. From this merge on, each task of `strata nightly` reads its keys from the secret scope `strata` through `keys_from_scope`. So `bronze_to_gold` (the uncertain middle of supplier matching) and `parse_and_embed` reach Azure OpenAI only when the scope holds `AZURE_OPENAI_ENDPOINT` and `AZURE_OPENAI_API_KEY`. The App deploy (`ops/app/deploy_app.py`, ticket 26's step 5) saves both keys there when `.env` has them. Claude cannot write secrets in auto mode, so this is your step: rerun the App deploy or the wizard (`bash ops/wizard/strata-setup.sh`), or save a missing key with the Databricks CLI's put-secret command for the scope `strata`. Do this before step 1's job run if you can; otherwise the next night picks the keys up.
 
 It worked if the scope `strata` lists both keys in the workspace's secret listing. Then, after the next nightly run, ticket 19's step 5 checks that `strata.ops.supplier_pairs.model` is filled, and the count of `person` pairs with `no_model` in ticket 19's earlier step falls.
+
+## Ticket 33, step 1 of 3: make the metric views Genie reads, then deploy the Genie space twice (criterion 1, live)
+
+The merger parked this step on October 25, 2026, after merge commit bcc767e. All ten keys were set, but the Free Edition SQL warehouse had reached its free daily limit at 10:33 UTC that morning, and the header above holds workspace steps back during a merge. Run it only once the warehouse answers again. It needs the Databricks keys in `.env`. Ticket 33 defines Strata's Genie space in code: `config/genie.toml`, its trusted SQL in `src/strata/genie/trusted/`, and its benchmark questions, the five `ask_genie` questions in `evals/benchmark.yaml`. The space reads two metric views, `strata.gold.contract_metrics` and `strata.gold.package_metrics` (`src/strata/lakehouse/metric_views/gold/`), which the bundle deploy now creates on the SQL warehouse after the tables. Tickets 22, 34, 37, 23, 36, 26 and 43 run the same deploy command, and one deploy from bcc767e or later serves every block that names it. The space deploy never changes a space with another title, such as the wizard's throwaway space for day-one test 5. When the space's ID differs from the one `GENIE_SPACE_ID` names, it adds `GENIE_SPACE_ID='<id>'` as the env file's last line and leaves every other line as it was.
+
+Run this from the main checkout:
+
+    uv run --script ops/bundle/deploy.py --env-file .env --fairshare-catalog workspace
+    uv run python ops/genie/deploy_space.py --env-file .env
+    uv run python ops/genie/deploy_space.py --env-file .env
+
+It worked if the bundle deploy exits 0 and prints "The metric views Genie reads exist now: strata.gold.contract_metrics, strata.gold.package_metrics." Then the first space deploy exits 0 and says it made or updated the space, and the second exits 0 and prints "The space <id> already matches the repo. No change." That is the deploy half of criterion 1. Step 3's full gate proves the other half, the pass rate stored in `strata.ops.evaluation_result`.
+
+## Ticket 33, step 2 of 3: sync the agent and redeploy the App, then ask_genie as a viewer on a cold warehouse (criterion 2, live)
+
+The merger parked this step on October 25, 2026, after merge commit bcc767e, while the warehouse's daily limit held. Run it after step 1. It needs the Foundry keys and the Databricks keys in `.env`. Ticket 33 adds the tool `ask_genie` to `config/tools.toml`. The agent's tool list is generated from that file, so the orchestrator agent in Foundry cannot call `ask_genie` until the sync runs. The App package now carries `pyyaml` (`ops/app/requirements.txt`), because `ask_genie` reads the metric views' YAML. The sync is ticket 13's command and the deploy is ticket 06's; one sync and one deploy from bcc767e or later serve every block that names them.
+
+Run this from the main checkout:
+
+    uv run --script ops/agent/sync.py --env-file .env
+    uv run --script ops/agent/sync.py --env-file .env --check
+    uv run --script ops/app/deploy_app.py --env-file .env
+
+It worked if the first sync's diff shows `### ask_genie` and ends "I made version N of strata-orchestrator, which matches the repo.", the `--check` run exits 0, and the deploy exits 0 with the last line `Strata is running at https://...`.
+
+Then leave the SQL warehouse idle for more than 10 minutes, so Free Edition stops it. Signed in to the App as a viewer, ask one of the Genie questions in `evals/benchmark.yaml`, such as "How many contracts did Kenya sign in the contract awards since fiscal 2020, and how many of them carry a STEP reference?" It worked if the answer comes back within 90 + 150 seconds (the `[genie]` waits in `config/thresholds.toml`: up to 90 seconds for the warehouse to start, then up to 150 for Genie), and its sentences cite rows with `strata.genie:` evidence ids. That is criterion 2.
+
+## Ticket 33, step 3 of 3: the full gate on the workspace, with Foundry evaluations (criteria 1, 5 and 6, live)
+
+The merger parked this step on October 25, 2026, after merge commit bcc767e, while the warehouse's daily limit held. Run it after steps 1 and 2. It needs DATABRICKS_HOST, DATABRICKS_TOKEN, DATABRICKS_WAREHOUSE_ID, GENIE_SPACE_ID, FOUNDRY_PROJECT_ENDPOINT, FOUNDRY_TENANT_ID, AZURE_OPENAI_ENDPOINT and AZURE_OPENAI_API_KEY in `.env`, and `az` signed in for the agent. A browser opens for a Microsoft Entra sign-in to FOUNDRY_TENANT_ID: the project key gets 403 from the evaluations API, and the tenant blocks device-code sign-in. The command runs the offline gate first, so start it when no other gate is running on this computer.
+
+Run this from the main checkout, and finish the Entra sign-in when the browser opens:
+
+    uv run --with azure-identity python ops/evals/full_gate.py --env-file .env
+
+It worked if it runs all six stages (the benchmark file's check, the offline gate, the Genie benchmark, every benchmark question through `/api/ask`, Foundry evaluations, and the results), writes every result under one run id, and exits 0, or 1 naming each gap. In the transcript, each of the five `ask_genie` questions and each of the six `search_passages` questions should keep a sentence, and both `estimate_time` questions should pass when answered right. `get-lessons-cost-estimates` passes only once the live library has decided the rebidding lesson by the day of the run. Until then the gate names it as a documents miss, though the answer is not at fault (review round 6, follow-up 1). That is criterion 5.
+
+Then, in the SQL editor, with the run id the command printed:
+
+    SELECT * FROM strata.ops.evaluation_result WHERE run_id = :run_id
+
+It worked if the rows include the `genie_benchmark` pass rate (questions, passed, share, target, gap and met; criterion 1's other half), and, for each of `groundedness`, `relevance`, `task_adherence` and `tool_use`, the columns `scored`, `met`, `share`, `mean_score` and `foundry_run` (criterion 6). This run also checks the task_adherence and tool_use evaluators' names and data mappings, which fairshare never ran.
