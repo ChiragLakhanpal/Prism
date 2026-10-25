@@ -257,6 +257,10 @@ It worked if the answer is HTTP 200 and its body equals `tests/fixtures/api/chec
 
 **Third run on October 25, 2026 (orchestrator):** started at 03:27 UTC. P130164's plan reader finished at 03:29 UTC with 0 pages to parse (`plans-P130164-20261025T032703552021`). P156634's plan reader then spent until 09:56 UTC, six and a half hours, fetching again the nine versions bronze does not hold (the five oversized texts and four more), where the second run had spent 38 minutes on the same fetches, so the host was answering slowly. At 09:56 UTC it stopped in pypdf: one of those PDFs has a font whose encoding pypdf cannot decode, `extract_text` raised `UnicodeDecodeError: 'utf-16-be' codec can't decode byte 0x14 in position 0: truncated data`, and `LiveDocuments.pages` in `src/strata/reader/documents.py` let it through. No page was parsed and no passage written. Fix: `LiveDocuments.pages` now reads a page whose text pypdf cannot decode as empty, like a scanned page, so the page router sends it to Route B, and raises `NotFetched` for a file pypdf cannot open at all (`tests/test_plans.py`). The fourth run is recorded below.
 
+**Fourth run on October 25, 2026 (orchestrator):** started at 10:05 UTC and stopped at 10:22 UTC with exit 2, "The run stopped: The warehouse did not run the statement. Its state was FAILED: Failed on SQL Endpoint 882107b449dd59cd due to compute cluster maintenance": the SQL warehouse itself was under maintenance, not the host. Nothing parsed. A fifth run began at 10:23 UTC and is recorded below.
+
+**Fifth run on October 25, 2026 (orchestrator):** started at 10:23 UTC and stopped by hand at 10:35 UTC, in the plan reader's fetch, because the SQL warehouse had reached Free Edition's free daily limit: at 10:33 UTC `databricks warehouses start` answered "Sorry, cannot run the resource because you have hit your free daily limit. Please come back again tomorrow.", the Serverless Starter Warehouse showed STOPPED, and the statements API answered nothing. The run would have fetched for hours and failed at its first write. Every warehouse step waits for the limit to reset. Decision for the user: Free Edition's daily compute limit caps how much catch-up runs in a day; today it went on three documents attempts, the scheduled nightly run, two deploys, two backtests and the SQL checks.
+
 The merger parked this step on October 23, 2026, after merge commit e0721da. It needs the Databricks keys, `AI_SEARCH_ENDPOINT`, `AZURE_OPENAI_ENDPOINT` and `AZURE_OPENAI_API_KEY` in `.env`. Run it after ticket 04's step 1, because the deploy makes the passage tables, and after ticket 04's step 2, because the nightly job fills `strata.gold.project`.
 
 Run this from the main checkout:
@@ -680,6 +684,8 @@ It worked if it shows no `notice_url`, and the gold sync MERGE in step 2 succeed
 
 **Second run on October 25, 2026 (orchestrator):** the same run as ticket 11's step 1, recorded there: it stopped at 03:25 UTC, again in P156634's plan reader, when the host answered 403 once more. The passage reader has still not started. A third run began at 03:26 UTC.
 
+**Fourth run on October 25, 2026 (orchestrator):** 10:05 to 10:22 UTC, exit 2: "The run stopped: The warehouse did not run the statement. Its state was FAILED: Failed on SQL Endpoint 882107b449dd59cd due to compute cluster maintenance", in the plan reader's fetch. A fifth run began at 10:23 UTC.
+
 **Third run on October 25, 2026 (orchestrator):** stopped at 09:56 UTC in pypdf on a plan PDF with a broken font encoding, after six and a half hours of fetching; recorded under ticket 11's step 1. The passage reader has still not started.
 
 **First run on October 25, 2026 (orchestrator):** the same run as ticket 11's step 1, recorded there. It stopped at 01:50 UTC, in P156634's plan reader, when documents.worldbank.org began answering 403 to every request from this computer. The passage reader did not start, so the stress shelf, `strata.ops.documents_read` and the slice measures have no row yet. Recorded again below when the host answers and the run finishes.
@@ -1042,6 +1048,12 @@ It worked if the check exits 0 and prints "DuckDB and the SQL warehouse returned
 
 **Deploy on October 25, 2026 (orchestrator):** the deploy recorded under ticket 21's step 1 listed `strata.ops.evaluation_result` as new and changed no existing table. The backtest for 2025 started at 10:09 UTC and is recorded below when it finishes.
 
+**First run on October 25, 2026 (orchestrator):** exit 2 at 10:06 UTC: "The backtest stopped before it finished: RestException: NOT_FOUND: Parent directory does not exist: /Shared/strata." MLflow makes the experiment but not its folder, and this workspace had no `/Shared/strata`. Fix in d39f1fc: `MlflowTracker` makes the folder first, through the workspace client's `mkdirs`, and both backtest scripts pass it (`tests/test_tracking.py`).
+
+**Second run on October 25, 2026 (orchestrator):** 10:17 to 10:20 UTC. The experiment `/Shared/strata/time_estimate` (3069387630686205) was made, the run `time_estimate_backtest 2025` logged (MLflow run ac32115b01cd44dca042bc073f9c23c2) and a `time_estimate model` run beside it. `strata.ops.evaluation_result` holds run `time_estimate_backtest-20261025T101702Z-f5a49d56` with four rows for 2025: `abstention`, `training_packages` 8, `calibration_packages` 2 and `min_calibration_packages` 20. So on the warehouse's data the 2025 backtest had 8 packages to train on and 2 to calibrate on, under the minimum of 20, no model was trained, and nothing was registered: "Registered strata.gold.time_estimate version 1 as champion." was not printed, and `get_model_version_by_alias` has no champion to return. The script then stopped with `NameError: name 'engine' is not defined` in its printing step, a slip from d39f1fc's edit, fixed in the commit that carries this note; the run's rows and MLflow runs are complete. Decision for the user: the training set joins `strata.gold.package` to its first notice, and the warehouse holds notices from 2024 to 2026 only (the search API's 100,000 offset cap, ticket 04's step 2 decision) and plan rows for P156634 and P130164 alone, so the live time estimate has almost no packages with both a first notice and an outcome. Until more notices or more plans are read, the time estimate abstains, as its model card says it should. Step 2 is run next for the record of every year.
+
+**Third run on October 25, 2026 (orchestrator):** 10:32 UTC, exit 2, "The backtest stopped before it finished: BadRequest: The request could not be processed by the warehouse.": the warehouse had reached its free daily limit (ticket 11's step 1, fifth run). The rerun with the fixed script, and step 2, wait for the limit to reset.
+
 The merger parked this step on October 24, 2026, after merge commit e7c6e38. All ten keys were set, but the header above holds workspace steps back while the user runs the backlog. It needs the Databricks keys in `.env`. This merge adds the table `strata.ops.evaluation_result`, so first deploy from e7c6e38 or later with ticket 04's command, `uv run --script ops/bundle/deploy.py --env-file .env`, which must list `strata.ops.evaluation_result` as new and change no existing table. Run this step after that deploy and after a nightly run has filled gold and silver (ticket 04's step 2, `uv run --script ops/bundle/check.py job-run --env-file .env`). The merge already ran the builder's local step: `scripts/install` exited 0 and `uv run --frozen python -c 'import xgboost'` exited 0 (xgboost 3.4.1).
 
 Run this from the main checkout:
@@ -1257,3 +1269,68 @@ It worked if it exits 0 and prints a line for each test year 2021 to 2025, each 
     WHERE scorer = 'step_dates_backtest' AND measure LIKE '%.n'
 
 must return rows for each test year 2021 to 2025, one `<family>.<step>.n` measure for each step of each family, each with a non-null `mlflow_run_id`, and each of those ids must be a run in the experiment `/Shared/strata/time_estimate` (`config/models.toml`, `experiment`) with the same id the script printed for that year.
+
+## Ticket 32, step 1 of 6: deploy the retrieval loop's tables and the weekly retrieval job
+
+The merger parked this step on October 25, 2026, after merge commit 5909913. All ten keys were set, but the header above holds workspace steps back while the user runs the backlog. It needs the Databricks keys in `.env`. It is ticket 04's deploy command, and one deploy from 5909913 or later serves every block that needs these tables. This workspace's earlier deploys passed `--fairshare-catalog workspace`, so this one does too.
+
+Run this from the main checkout, twice:
+
+    uv run --script ops/bundle/deploy.py --env-file .env --fairshare-catalog workspace
+
+It worked if both runs exit 0. The first run lists these eleven tables as new and changes no existing table: `strata.ops.answer_citations`, `strata.ops.candidate_labels`, `strata.ops.label_decisions`, `strata.ops.retrieval_agreement`, `strata.ops.retrieval_feedback_viewers`, `strata.ops.retrieval_feedback_weekly`, `strata.ops.retrieval_grades`, `strata.ops.retrieval_label_builds`, `strata.ops.retrieval_labels`, `strata.ops.retrieval_pool` and `strata.ops.retrieval_queries`. The job "strata retrieval weekly" (`bundle/retrieval.yml`, Mondays at 06:30 New York time) is on the workspace's Jobs page. The second run prints "No changes."
+
+## Ticket 32, step 2 of 6: redeploy the App, which writes the retrieval loop's rows as itself
+
+The merger parked this step on October 25, 2026, after merge commit 5909913. All ten keys were set, but the header above holds workspace steps back while the user runs the backlog. Run it after step 1, so the tables exist to grant. It needs the Databricks keys in `.env`. It is ticket 06's deploy command, and one deploy from 5909913 or later serves every block that names it. From this merge on, the deploy grants the App's service principal SELECT and MODIFY on `strata.ops.retrieval_queries`, `candidate_labels`, `label_decisions`, `answer_citations` and `retrieval_grades` (`ops/app/deploy_app.py`, `RETRIEVAL_TABLES`).
+
+Run this from the main checkout:
+
+    uv run --script ops/app/deploy_app.py --env-file .env
+
+It worked if the deploy exits 0 and its last line is `Strata is running at https://...`, and `SHOW GRANTS ON TABLE strata.ops.retrieval_queries` on the SQL warehouse lists the App's service principal with SELECT and MODIFY. The same query on the other four tables shows the same two grants.
+
+## Ticket 32, step 3 of 6: run the weekly retrieval job once by hand
+
+The merger parked this step on October 25, 2026, after merge commit 5909913. Run it after step 1, and after the documents run has filled `strata.gold.passage` on the warehouse (ticket 11's `uv run --script ops/documents/run_live.py --env-file .env`). It needs the Databricks keys in `.env`. Its first scheduled run is the next Monday at 06:30 New York time. Start it by hand instead with "Run now" on the Jobs page, or from the repo root:
+
+    databricks bundle run retrieval_weekly
+
+It worked if the run succeeds and this query on the SQL warehouse gives a row for each query set (criterion 1, workspace half):
+
+    SELECT query_set, queries, labels, documents FROM strata.ops.retrieval_label_builds ORDER BY built_at DESC
+
+The two silver sets read 12 queries, 13 labels and 1 document for `icr_review_citations`, and 2, 7 and 2 for `pad_lessons`, if the workspace holds the fixture's documents, or more if the documents run read more. `notice_queries` and `feedback` read 0 until step 4 and later reviews add to them.
+
+## Ticket 32, step 4 of 6: load the queries written from award notices, with their pools
+
+The merger parked this step on October 25, 2026, after merge commit 5909913. Run it after steps 1 to 3, and after the documents run has synced the AI Search index (ticket 11's step that runs `ops/documents/run_live.py`). It needs `DATABRICKS_HOST`, `DATABRICKS_WAREHOUSE_ID`, `DATABRICKS_TOKEN`, `AZURE_OPENAI_ENDPOINT` and `AZURE_OPENAI_API_KEY` in `.env`. It runs as a person's token, because the weekly job's own identity has no AI Search token.
+
+Run this from the main checkout:
+
+    uv run --script ops/retrieval/evaluate_live.py --env-file .env --load-queries
+
+It worked if it prints how many queries it loaded (3, from `evals/retrieval_queries.toml`), and `strata.ops.retrieval_queries` and `strata.ops.retrieval_pool` hold their rows. Then, once `config/roles.toml` maps `strata-query-judges` to real people and the App is deployed again with them (step 2's command), a query judge's first grade on one of these queries answers 200 on the App, not 403 permission.
+
+## Ticket 32, step 5 of 6: measure retrieval live
+
+The merger parked this step on October 25, 2026, after merge commit 5909913. Run it after step 4. It needs the keys of step 4. It ranks with AI Search's hybrid query and its reranker, logs each query set's run to the MLflow experiment `/Shared/strata/retrieval` (the tracker makes the folder first, as d39f1fc added), and appends its rows to `strata.ops.evaluation_result`, which ticket 25's deploy added.
+
+Run this from the main checkout:
+
+    uv run --script ops/retrieval/evaluate_live.py --env-file .env
+
+It worked if it exits 0 and prints precision at 10, recall at 20 and nDCG at 10 for each query set, with the run id, and this query returns the three measures for each query set (criterion 2, workspace half):
+
+    SELECT segment, measure, value FROM strata.ops.evaluation_result
+    WHERE scorer = 'retrieval_evaluation' AND run_id = '<the printed run id>'
+
+## Ticket 32, step 6 of 6: the tuning gate blocks a worse setup live
+
+The merger parked this step on October 25, 2026, after merge commit 5909913. Run it after step 5. It needs the keys of step 4.
+
+Run this from the main checkout:
+
+    uv run --script ops/retrieval/evaluate_live.py --env-file .env --gate --no-rerank
+
+It worked if it prints "Held-out set: lost. Hindsight set: not compared. The gate blocks the candidate." and exits 1 (criterion 3, live half). If the labeled set has no held-out query yet, it prints "Held-out set: not compared" and also exits 1, which means step 3 or step 4 has not filled the set.

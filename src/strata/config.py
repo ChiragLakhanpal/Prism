@@ -766,19 +766,88 @@ def load_rejoin_split_words(path: Path = CONFIG_DIR / "models.toml") -> bool:
 
 
 @dataclass(frozen=True)
+class SearchSetup:
+    """One search setup (ticket 32): how the two rankings are fused, whether the reranker runs, and whether
+    keyword search reads each passage's header. The model file's [search.setup] is production's; the tuning
+    gate compares a candidate with it."""
+
+    keyword_weight: float = 1.0
+    vector_weight: float = 1.0
+    rerank: bool = True
+    rerank_depth: int = 20
+    header_in_words: bool = True
+
+
+@dataclass(frozen=True)
 class SearchSettings:
-    """How search_passages ranks on the workspace: the AI Search index and the reranker it runs."""
+    """How search_passages ranks on the workspace: the AI Search index and the reranker it runs, and the
+    search setup production uses."""
 
     index: str  # the Delta Sync index over strata.gold.passage, by its three-part name
     reranker: str  # the model AI Search reranks the best hits with
     rerank_columns: tuple[str, ...]  # the columns of each passage the reranker reads
+    setup: SearchSetup = SearchSetup()
+
+
+def _weight(entry: _Entry, key: str) -> float:
+    value = entry.table.get(key)
+    if not isinstance(value, int | float) or isinstance(value, bool) or value < 0:
+        entry._fail(key, "must be a number, zero or more")
+    return float(value)
 
 
 def load_search(path: Path = CONFIG_DIR / "models.toml") -> SearchSettings:
-    """The AI Search index and the reranker search_passages uses on the workspace."""
+    """The AI Search index and the reranker search_passages uses on the workspace, and the search setup."""
     entry = _Entry(path, "search", _read(path).get("search"))
-    entry.only({"index", "reranker", "rerank_columns"})
-    return SearchSettings(entry.text("index"), entry.text("reranker"), entry.texts("rerank_columns"))
+    entry.only({"index", "reranker", "rerank_columns", "setup"})
+    setup = SearchSetup()
+    if "setup" in entry.table:
+        table = _Entry(path, "search.setup", entry.table["setup"])
+        table.only({"keyword_weight", "vector_weight", "rerank", "rerank_depth", "header_in_words"})
+        depth = table.integer("rerank_depth")
+        if depth < 1:
+            table._fail("rerank_depth", "must be 1 or more")
+        setup = SearchSetup(_weight(table, "keyword_weight"), _weight(table, "vector_weight"), table.boolean("rerank"),
+                            depth, table.boolean("header_in_words"))
+        if setup.keyword_weight == 0 and setup.vector_weight == 0:
+            table._fail("keyword_weight", "or vector_weight must be more than zero, or nothing ranks")
+    return SearchSettings(entry.text("index"), entry.text("reranker"), entry.texts("rerank_columns"), setup)
+
+
+# ── The retrieval loop's lists (ticket 32) ───────────────────────────────
+
+@dataclass(frozen=True)
+class QueryKind:
+    """One kind of question, which a passage report and a ranking-lower decision are about. words are the
+    stemmed words (strata.knowledge.embed.terms) whose presence in a question picks it."""
+
+    key: str
+    words: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class RetrievalLists:
+    query_kinds: tuple[QueryKind, ...]  # in the file's order, which breaks a tie; the last has no words
+    fallback: str  # the kind a question with none of the words gets
+
+
+def load_retrieval(path: Path = CONFIG_DIR / "retrieval.toml") -> RetrievalLists:
+    """config/retrieval.toml: the kinds of question passage reports are grouped by, each with its words, and
+    the fallback kind."""
+    data = _read(path)
+    _Entry(path, "the file", data).only({"query_kinds", "fallback"})
+    kinds = []
+    for key, table in (data.get("query_kinds") or {}).items():
+        entry = _Entry(path, f"query_kinds.{key}", table)
+        entry.only({"words"})
+        kinds.append(QueryKind(key, entry.texts("words")))
+    fallback = data.get("fallback")
+    if not isinstance(fallback, str) or fallback not in {kind.key for kind in kinds}:
+        raise ConfigError(f"In {path.name}, fallback must name one of the query_kinds: "
+                          f"{', '.join(kind.key for kind in kinds)}.")
+    if not kinds:
+        raise ConfigError(f"In {path.name}, list at least one kind of question under [query_kinds].")
+    return RetrievalLists(tuple(kinds), fallback)
 
 
 @dataclass(frozen=True)
@@ -1207,7 +1276,9 @@ def load_draft_kinds(path: Path = CONFIG_DIR / "drafts.toml") -> DraftKinds:
 # ── The roles file ───────────────────────────────────────────────────────
 
 # The reviewer pages a group's members may open, and what they may do there. Later tickets add theirs.
-ROLE_PAGES = ("lesson_review",)
+# Ticket 32 adds Lessons > Passage reports (passage_reports), where passage reviewers decide on reports, and
+# Lessons > Judging (judging), where query judges grade the labeled set; each page is its own act.
+ROLE_PAGES = ("lesson_review", "passage_reports", "judging")
 ROLE_ACTS = ("recommend", "decide", "cross_check")
 
 
@@ -1320,7 +1391,9 @@ def load_roles(path: Path = CONFIG_DIR / "roles.toml") -> Roles:
                 entry._fail("groups", f"names the group {key}, which [groups] does not define. It defines "
                                       f"{', '.join(groups) or 'none'}")
         regions = entry.texts("regions")
-        if not regions:
+        # A lesson reviewer reviews the lessons of their regions. A query judge or a passage reviewer works on
+        # every region's passages, so needs none.
+        if not regions and any("lesson_review" in groups[key].pages for key in named):
             entry._fail("regions", "must name at least one region, as strata.gold.project.region writes it")
         projects = entry.texts("projects")
         for project in projects:

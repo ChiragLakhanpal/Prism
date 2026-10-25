@@ -11,6 +11,12 @@
 # - Wanjiru Kamau reviews lessons for Eastern and Southern Africa, the other region, which receives
 #   South Asia's cross-checks. She works on P156634.
 # Anyone else, such as ana.example@worldbank.org in the other tests, is not a lesson reviewer.
+#
+# The retrieval loop (the 32 design brief, section 13):
+# - Daniel Okafor, the search owner, and Priya Nair are the two passage reviewers. Priya also sends a
+#   passage report in the tests, so she may not decide that group (own_report) and Daniel decides it.
+# - Mei Tanaka and Tomas Rivera are the two query judges. Neither reviews lessons, so neither names a region.
+# - Leela Iyer works on P130164, so a passage report she sends on its ICR is about her own project.
 
 [groups.accredited_procurement_specialist]
 workspace_group = "strata-accredited-procurement-specialists"
@@ -23,6 +29,18 @@ workspace_group = "strata-lead-procurement-specialists"
 role = "lead procurement specialist"
 pages = ["lesson_review"]
 acts = ["recommend", "decide", "cross_check"]
+
+[groups.passage_reviewer]
+workspace_group = "strata-passage-reviewers"
+role = "passage reviewer"
+pages = ["passage_reports"]
+acts = []
+
+[groups.query_judge]
+workspace_group = "strata-query-judges"
+role = "query judge"
+pages = ["judging"]
+acts = []
 
 [[people]]
 email = "asha.raman@worldbank.example"
@@ -48,7 +66,7 @@ projects = []
 [[people]]
 email = "priya.nair@worldbank.example"
 name = "Priya Nair"
-groups = ["lead_procurement_specialist"]
+groups = ["lead_procurement_specialist", "passage_reviewer"]
 regions = ["South Asia"]
 projects = []
 
@@ -58,3 +76,24 @@ name = "Wanjiru Kamau"
 groups = ["lead_procurement_specialist"]
 regions = ["Eastern and Southern Africa"]
 projects = ["P156634"]
+
+[[people]]
+email = "daniel.okafor@worldbank.example"
+name = "Daniel Okafor"
+groups = ["passage_reviewer"]
+regions = []
+projects = []
+
+[[people]]
+email = "mei.tanaka@worldbank.example"
+name = "Mei Tanaka"
+groups = ["query_judge"]
+regions = []
+projects = []
+
+[[people]]
+email = "tomas.rivera@worldbank.example"
+name = "Tomas Rivera"
+groups = ["query_judge"]
+regions = []
+projects = []

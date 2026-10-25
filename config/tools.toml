@@ -298,7 +298,7 @@ row_fields = ["evidence_id", "public_from", "source", "passage_id", "document_id
 source_fields = ["document_type", "project_id", "project_name", "document_id", "document_date", "report_number",
                  "version", "section_path", "paragraph", "paragraph_numbered", "pdf_page", "pdf_pages", "pdf_url",
                  "doc_key", "notice_id", "notice_url"]
-fields = ["query", "filters", "search"]
+fields = ["query", "filters", "search", "ranked_lower"]
 reasons = ["prompt_shields_hit", "not_screened", "ranked_below_limit"]
 abstentions = ["no_match", "unknown_document_type", "unknown_sector"]
 

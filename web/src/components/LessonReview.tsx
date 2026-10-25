@@ -266,8 +266,10 @@ export function HistoryList({ events, lists, headingId }: { events: HistoryEvent
 
 // ── The outcome panel ────────────────────────────────────────────────────
 
-export const OutcomePanel = forwardRef<HTMLDivElement, { state: State; lead: ReactNode; body: ReactNode; links?: { href: string; text: ReactNode }[] }>(
-  function OutcomePanel({ state, lead, body, links = [] }, ref) {
+// children: more lines under the body, such as a report's reason and "Withdraw the report" in the evidence drawer
+// (ticket 32), which keep the panel's left edge.
+export const OutcomePanel = forwardRef<HTMLDivElement, { state: State; lead: ReactNode; body: ReactNode; links?: { href: string; text: ReactNode }[]; children?: ReactNode }>(
+  function OutcomePanel({ state, lead, body, links = [], children }, ref) {
     const look = STATES[state];
     const id = useId();
     return (
@@ -285,6 +287,7 @@ export const OutcomePanel = forwardRef<HTMLDivElement, { state: State; lead: Rea
             {lead}
           </p>
           <p className={cx("mt-1 text-body", look.text)}>{body}</p>
+          {children}
           {links.length > 0 && (
             <p className="mt-3 flex flex-wrap gap-x-6 gap-y-2 text-body">
               {links.map((link) => (

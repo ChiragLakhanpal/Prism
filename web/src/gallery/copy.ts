@@ -141,6 +141,18 @@ export const galleryCopy = {
       purpose:
         "Section 3 of the package workspace: source pills, checkboxes and the risk table in each of its states, and the evidence drawer's views of a row. Each sample is an answer the server wrote, recorded in tests/fixtures/api, or one with a value changed.",
     },
+    // Ticket 32's gallery page. Each sample is an answer the server wrote on the fixture, recorded in
+    // tests/fixtures/api by tests/record_retrieval_api.py, or one with a value changed.
+    retrieval: {
+      title: "Passage feedback",
+      purpose:
+        "The evidence drawer's feedback row in each of its states, and the toggle buttons and key hints it and the judging page use. Each sample is an answer the server wrote, recorded in tests/fixtures/api.",
+    },
+    judging: {
+      title: "Passage reports and judging",
+      purpose:
+        "Lessons > Passage reports and Lessons > Judging: the queue rows, a report, the decision form and a decided record, the segmented filter, the progress meter, the passage map and the grade bar. Each sample is an answer the server wrote, recorded in tests/fixtures/api. The pages themselves are captured from the production build.",
+    },
     steps: {
       title: "Planned date for each step",
       purpose:
@@ -156,6 +168,71 @@ export const galleryCopy = {
       purpose:
         "Strata uses these lucide icons at 16 px. Each one is hidden from screen readers when a word beside it says the same thing.",
     },
+  },
+
+  retrievalSections: {
+    feedbackRow: "The feedback row in the evidence drawer",
+    feedbackLater: "The feedback row when you open the passage again",
+    toggles: "Toggle buttons and key hints",
+    queue: "Passage reports: the queue",
+    report: "One passage's reports and the decision",
+    decided: "A decided record and reopening it",
+    judgingList: "Judging: the queries",
+    judging: "Judging one query: the meter, the passage map and the grade bar",
+  },
+  retrievalStates: {
+    idle: "Idle, opened from an answer",
+    chosen: "Wrong passage chosen, with the reason field open",
+    switched: "Switched to Not useful, with the text kept",
+    counter: "With the counter showing",
+    sending: "Sending",
+    failed: "Failed to send",
+    sentWithReason: "Sent, with a reason",
+    sentWithout: "Sent, with no reason",
+    withdrawFailed: "Withdrawing failed",
+    preview: "Disabled in a preview",
+    waiting: "Waiting for a reviewer",
+    rankedLower: "Ranked lower by a reviewer",
+    byAgreement: "Ranked lower by agreement",
+    kept: "A reviewer kept its ranking",
+    ghostToggles: "Ghost toggle buttons: unpressed, pressed and disabled",
+    secondaryToggles: "Secondary toggle buttons with key hints: unpressed and pressed",
+    queueBoth: "Waiting for you, with the sender's own project",
+    queueOwn: "Waiting for another reviewer, because you sent one of the reports",
+    queueAudit: "Scale mode, with an audit sample",
+    queueEmpty: "Nothing reported yet",
+    queueLoading: "Loading",
+    reportWaiting: "Needs your review",
+    reportNoReason: "The form with its error, before a reason",
+    reportOwn: "Barred, because you sent one of the reports",
+    reportAudit: "An audit sample",
+    reportSaved: "Saved, ranked lower",
+    reportStale: "Stale: another reviewer decided first",
+    reportDecided: "A decided record",
+    reportReopen: "Reopening a decided record",
+    reportReopenFailed: "Reopening that failed, with its reason kept",
+    reportLoading: "Loading",
+    judgingList: "Queries, with your agreement",
+    judgingStart: "Not started, with the agreement left out",
+    judgingBoth: "Finished by both",
+    judgingLoading: "Loading",
+    judgingBusy: "Another filter's queries on their way, with this list kept",
+    segmented: "The segmented filter",
+    meterEmpty: "Progress meter: none, some and all graded",
+    map: "The passage map, open",
+    gradeReady: "The grade bar, ready",
+    gradePressed: "The grade bar on a passage you graded",
+    gradeLocked: "The grade bar once both judges finished",
+    desk: "A passage to grade",
+    deskFailed: "A grade that failed to save",
+    deskFinished: "Finished by you: the grade bar stays for changes",
+    deskLocked: "Finished by both, where you differed",
+    deskLockedWhileOpen: "Locked while open: the other judge finished first",
+    deskLoading: "Loading, with the grade bar held",
+    // The reason a stale decision did not send, as the reviewer wrote it.
+    staleReason: "It answers the question.",
+    // The reason typed for a reopening that failed, still in the field.
+    reopenReason: "A newer report covers these contracts, so this paragraph fits again.",
   },
 
   // Ticket 24's gallery page: the check line in each of its forms, the six checks under the verifier's

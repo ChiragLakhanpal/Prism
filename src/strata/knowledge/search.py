@@ -28,7 +28,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Protocol
 
-from strata.config import SearchSettings, load_search
+from strata.config import SearchSettings, SearchSetup, load_search
 from strata.knowledge.embed import Embedder, HashedWords, offline, terms
 
 SOURCE_TABLE = "strata.gold.passage"
@@ -97,7 +97,8 @@ WHERE public_from <= :as_of
 """
 BM25_K1, BM25_B = 1.2, 0.75
 FUSION_K = 60  # reciprocal rank fusion's constant, as AI Search's hybrid query uses
-RERANK_DEPTH = 20  # how many of the fused best the rerank reorders
+# The fusion's weights, whether the rerank runs, how many it reorders and whether keyword search reads each
+# passage's header are the search setup's (config/models.toml, [search.setup]).
 MIN_SIMILARITY = 0.2  # the stand-in's vectors share a few hashed slots by chance, so a match needs more
 
 
@@ -108,14 +109,20 @@ def filter_params(filters: Filters) -> dict:
 
 
 class FixtureSearch:
-    """Hybrid search over the fixture database's passages and their recorded vectors."""
+    """Hybrid search over the fixture database's passages and their recorded vectors, by a search setup:
+    production's from the model file unless the tuning gate gives it another (ticket 32)."""
 
     name = "fixture search"
 
-    def __init__(self, engine, embedders: dict[str, Callable[[], Embedder]] | None = None):
+    def __init__(self, engine, embedders: dict[str, Callable[[], Embedder]] | None = None,
+                 setup: SearchSetup | None = None):
         self.engine = engine
         # The models that can embed a query here, with no network: only the offline stand-in.
         self.embedders = embedders if embedders is not None else {HashedWords.name: offline}
+        self.setup = setup or load_search().setup
+        # The passages within each set of filters, read once for this searcher: the replay harness asks many
+        # queries with the same filters (ticket 32).
+        self._held: dict[tuple, tuple[list[dict], list[list[str]], object]] = {}
 
     def _query_vector(self, query: str, models: set[str]) -> list[float] | None:
         """The query's vector from the model that made the passages' vectors, when it runs here. When it
@@ -124,25 +131,42 @@ class FixtureSearch:
             return None
         return self.embedders[next(iter(models))]().embed([query])[0]
 
+    def _candidates(self, filters: Filters) -> tuple[list[dict], list[list[str]], object]:
+        """The passages within the filters, the words keyword search reads in each, and their vectors."""
+        key = (tuple(sorted(filter_params(filters).items())), self.setup.header_in_words)
+        if key not in self._held:
+            import numpy  # the fixture search runs only here, never in the app, whose requirements leave numpy out
+
+            result = self.engine.run(CANDIDATES, filter_params(filters))
+            candidates = [dict(zip(result.columns, row)) for row in result.rows]
+            words = [terms(f"{c['header']} {c['text']}" if self.setup.header_in_words else c["text"]) for c in candidates]
+            vectors = numpy.asarray([list(c["embedding"]) for c in candidates], dtype=float) if candidates else None
+            self._held[key] = (candidates, words, vectors)
+        return self._held[key]
+
     def search(self, query: str, filters: Filters, k: int) -> Hits:
-        result = self.engine.run(CANDIDATES, filter_params(filters))
-        candidates = [dict(zip(result.columns, row)) for row in result.rows]
+        candidates, words, vectors = self._candidates(filters)
         if not candidates:
             return Hits(0, [], "No passage is within the filters.")
+        setup = self.setup
         wanted = list(dict.fromkeys(terms(query)))
-        keyword = _bm25(wanted, [terms(f"{c['header']} {c['text']}") for c in candidates])
+        keyword = _bm25(wanted, words)
         vector = self._query_vector(query, {c["embedding_model"] for c in candidates})
-        similarity = [_cosine(vector, c["embedding"]) if vector else 0.0 for c in candidates]
+        similarity = _cosines(vector, vectors) if vector else [0.0] * len(candidates)
         matched = [i for i in range(len(candidates)) if keyword[i] > 0 or similarity[i] >= MIN_SIMILARITY]
-        fused = _fuse(matched, keyword, similarity)
-        top = sorted(matched, key=lambda i: -fused[i])[:RERANK_DEPTH]
-        covered = {i: len(set(wanted) & set(terms(f"{candidates[i]['header']} {candidates[i]['text']}")))
-                   for i in top}
-        ranked = sorted(top, key=lambda i: (-covered[i], -fused[i], candidates[i]["passage_id"]))
-        ranked += sorted((i for i in matched if i not in covered), key=lambda i: (-fused[i], candidates[i]["passage_id"]))
-        method = ("BM25 on the words and the cosine of the vectors, fused by reciprocal rank, then the best "
-                  f"{RERANK_DEPTH} reranked by how many of the query's words each holds."
-                  if vector else "BM25 on the words, then the best reranked by how many of the query's words each holds.")
+        fused = _fuse(matched, keyword, similarity, setup.keyword_weight, setup.vector_weight)
+        if setup.rerank:
+            top = sorted(matched, key=lambda i: -fused[i])[:setup.rerank_depth]
+            covered = {i: len(set(wanted) & set(words[i])) for i in top}
+            ranked = sorted(top, key=lambda i: (-covered[i], -fused[i], candidates[i]["passage_id"]))
+            ranked += sorted((i for i in matched if i not in covered), key=lambda i: (-fused[i], candidates[i]["passage_id"]))
+            method = ("BM25 on the words and the cosine of the vectors, fused by reciprocal rank, then the best "
+                      f"{setup.rerank_depth} reranked by how many of the query's words each holds." if vector else
+                      "BM25 on the words, then the best reranked by how many of the query's words each holds.")
+        else:
+            ranked = sorted(matched, key=lambda i: (-fused[i], candidates[i]["passage_id"]))
+            method = ("BM25 on the words and the cosine of the vectors, fused by reciprocal rank, with no rerank."
+                      if vector else "BM25 on the words, with no rerank.")
         return Hits(len(matched), [Hit(candidates[i]["passage_id"], round(fused[i], 6)) for i in ranked[:k]], method)
 
 
@@ -163,18 +187,24 @@ def _bm25(wanted: list[str], documents: list[list[str]]) -> list[float]:
     return scores
 
 
-def _cosine(a: list[float], b) -> float:
-    dot = sum(x * y for x, y in zip(a, b, strict=True))
-    size = math.sqrt(sum(x * x for x in a)) * math.sqrt(sum(y * y for y in b))
-    return dot / size if size else 0.0
+def _cosines(a: list[float], vectors) -> list[float]:
+    """The cosine of the query's vector with each passage's, as one matrix product."""
+    import numpy
+
+    query = numpy.asarray(a, dtype=float)
+    sizes = numpy.linalg.norm(vectors, axis=1) * numpy.linalg.norm(query)
+    dots = vectors @ query
+    return numpy.divide(dots, sizes, out=numpy.zeros(len(dots)), where=sizes > 0).tolist()
 
 
-def _fuse(matched: list[int], keyword: list[float], similarity: list[float]) -> dict[int, float]:
+def _fuse(matched: list[int], keyword: list[float], similarity: list[float], keyword_weight: float = 1.0,
+          vector_weight: float = 1.0) -> dict[int, float]:
+    """Reciprocal rank fusion of the two rankings, each counted by its weight in the search setup."""
     fused = dict.fromkeys(matched, 0.0)
-    for scores in (keyword, similarity):
+    for scores, weight in ((keyword, keyword_weight), (similarity, vector_weight)):
         ranked = sorted((i for i in matched if scores[i] > 0), key=lambda i: -scores[i])
         for rank, i in enumerate(ranked, 1):
-            fused[i] += 1 / (FUSION_K + rank)
+            fused[i] += weight / (FUSION_K + rank)
     return fused
 
 
@@ -189,27 +219,33 @@ class AiSearch:
 
     name = "AI Search"
 
-    def __init__(self, transport: Transport, embedder: Embedder, settings: SearchSettings | None = None):
+    def __init__(self, transport: Transport, embedder: Embedder, settings: SearchSettings | None = None,
+                 setup: SearchSetup | None = None):
         self.transport, self.embedder, self.settings = transport, embedder, settings or load_search()
+        # AI Search fuses its hybrid query with weights of its own, so only the setup's rerank applies here.
+        self.setup = setup or self.settings.setup
 
     def search(self, query: str, filters: Filters, k: int) -> Hits:
         [vector] = self.embedder.embed([query])
-        answer = self.transport("POST", f"/api/2.0/vector-search/indexes/{self.settings.index}/query", {
+        body = {
             "columns": ["passage_id"],
             "query_text": query,
             "query_vector": vector,
             "query_type": "HYBRID",
             "num_results": k,
             "filters_json": json.dumps(index_filters(filters)),
-            "reranker": {"model": self.settings.reranker,
-                         "parameters": {"columns_to_rerank": list(self.settings.rerank_columns)}},
-        })
+        }
+        if self.setup.rerank:
+            body["reranker"] = {"model": self.settings.reranker,
+                                "parameters": {"columns_to_rerank": list(self.settings.rerank_columns)}}
+        answer = self.transport("POST", f"/api/2.0/vector-search/indexes/{self.settings.index}/query", body)
         columns = [column["name"] for column in (answer.get("manifest") or {}).get("columns", [])]
         rows = (answer.get("result") or {}).get("data_array") or []
         at, score = columns.index("passage_id"), columns.index("score") if "score" in columns else len(columns) - 1
         hits = [Hit(str(row[at]), float(row[score])) for row in rows]
         method = (f"AI Search's hybrid query, words and vector, with its reranker over the "
-                  f"{' and the '.join(self.settings.rerank_columns)}")
+                  f"{' and the '.join(self.settings.rerank_columns)}" if self.setup.rerank else
+                  "AI Search's hybrid query, words and vector, with no rerank")
         if len(hits) >= k:
             return Hits(len(hits), hits, f"{method}. AI Search returned its best {len(hits)}, so more passages "
                                          "may match.", complete=False)
@@ -283,11 +319,12 @@ class AiSearchIndex:
 
 # ── Which searcher a call uses ───────────────────────────────────────────
 
-def searcher_for(call, environ: dict | None = None) -> Searcher:
+def searcher_for(call, environ: dict | None = None, setup: SearchSetup | None = None) -> Searcher:
     """The fixture search on DuckDB; on the workspace, AI Search with the viewer's own token and the
-    query embedded by the deployment config/models.toml names."""
+    query embedded by the deployment config/models.toml names. setup is production's unless the tuning gate
+    gives a candidate (ticket 32)."""
     if getattr(call.engine, "name", "") == "duckdb":
-        return FixtureSearch(call.engine)
+        return FixtureSearch(call.engine, setup=setup)
     import os
 
     from strata.config import load_models
@@ -298,7 +335,8 @@ def searcher_for(call, environ: dict | None = None) -> Searcher:
     model = load_models()["embed"]
     embedder = AzureOpenAIEmbeddings(env["AZURE_OPENAI_ENDPOINT"], env["AZURE_OPENAI_API_KEY"], model.deployment,
                                      model.dimensions)
-    return AiSearch(not_found_as_lookup(http_transport(env["DATABRICKS_HOST"], call.viewer.token)), embedder)
+    return AiSearch(not_found_as_lookup(http_transport(env["DATABRICKS_HOST"], call.viewer.token)), embedder,
+                    setup=setup)
 
 
 def not_found_as_lookup(transport: Transport) -> Transport:

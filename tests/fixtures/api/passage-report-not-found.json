@@ -1,0 +1,9 @@
+{
+  "status": 404,
+  "body": {
+    "code": "unknown_group",
+    "values": {
+      "group_id": "grp-000000000000"
+    }
+  }
+}

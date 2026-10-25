@@ -70,8 +70,9 @@ def main(argv=None) -> int:
     started = time.monotonic()
     try:
         workspace = LiveWorkspace(env)
+        engine = workspace.engine()
         tracker = MlflowTracker(settings.experiment, mkdirs=workspace.w.workspace.mkdirs)  # /Shared/strata first
-        run = backtest.run(workspace.engine(), tracker, outcomes_through=args.outcomes_through,
+        run = backtest.run(engine, tracker, outcomes_through=args.outcomes_through,
                            years=tuple(args.years) if args.years else None)
     except EngineError as error:
         print(f"The warehouse could not run a statement: {error}")
