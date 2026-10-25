@@ -42,10 +42,12 @@ const table = (iso: string) => formatDate(iso, { style: "table" });
 const CELL = "px-3 py-3 align-top";
 
 // A date in a cell or a link, kept on one line so it reads as one unit (DESIGN.md section 3).
-function Day({ iso }: { iso: string }) {
+// A date in the table form kept on one line: as a Num, or as plain text inside a link, where a Num's own
+// button can't sit.
+function Day({ iso, text = false }: { iso: string; text?: boolean }) {
   return (
     <span data-day className="whitespace-nowrap">
-      <Num date={iso} style="table" />
+      {text ? table(iso) : <Num date={iso} style="table" />}
     </span>
   );
 }
@@ -107,7 +109,7 @@ function NameCell({ document, pid }: { document: ListedDocument; pid: string }) 
           <Fill template={words.reissueNote} slots={{ date: <Num date={reissue.document_date} /> }} />{" "}
           {reissue.doc_key && (
             <TextLink href={`/projects/${pid}/documents/${reissue.doc_key}`}>
-              <Fill template={words.reissueLink} slots={{ date: <span data-day className="whitespace-nowrap">{table(reissue.document_date)}</span> }} />
+              <Fill template={words.reissueLink} slots={{ date: <Day iso={reissue.document_date} text /> }} />
             </TextLink>
           )}
         </span>

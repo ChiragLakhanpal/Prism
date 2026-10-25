@@ -11,14 +11,27 @@ export function viewOf(search: string): View {
 // The page's as-of date and view, passed on to each read it makes, so every answer holds only what was
 // public by that date (ADR 0002) and what that view may see (the 21 review, round 2; ticket 40 builds the
 // switch between them).
+// Only a preview's view ("piu" or "public") leaves the page; the staff view is the server's default.
 export function readParams(search: string): Record<string, string> {
-  const asked = new URLSearchParams(search);
   const kept: Record<string, string> = {};
-  for (const key of ["asof", "view"]) {
-    const value = asked.get(key);
-    if (value) kept[key] = value;
-  }
+  const asOf = new URLSearchParams(search).get("asof");
+  if (asOf) kept.asof = asOf;
+  const view = viewOf(search);
+  if (view !== "staff") kept.view = view;
   return kept;
+}
+
+// The address's own values of these keys, as a query string for a link that keeps them ("?view=piu&asof=..."),
+// or "" when it has none, such as a project's tab links keeping ?view=, ?asof= and ?lang=.
+export function keptQuery(search: string, keys: string[]): string {
+  const params = new URLSearchParams(search);
+  const kept = new URLSearchParams();
+  for (const key of keys) {
+    const value = params.get(key);
+    if (value) kept.set(key, value);
+  }
+  const rest = kept.toString();
+  return rest ? `?${rest}` : "";
 }
 
 // An API path with the page's as-of date and view added to its query.

@@ -21,6 +21,7 @@ import { BaselinePanel } from "../components/BaselinePanel";
 import { ChangeTables, changedRows } from "../components/ChangeTables";
 import { Num } from "../components/Num";
 import { checkPill, PlanCheck, PlanCheckHeader, PlanCheckSkeleton, planSubtitle, type CheckedPlan } from "../components/PlanCheck";
+import { ProjectIdText } from "../components/ProjectId";
 import { Skeleton, SkeletonLine, SkeletonText } from "../components/Skeleton";
 import { copy } from "../copy";
 import { ApiError, getJson, type CheckPlanResult, type PlanChanges } from "../lib/api";
@@ -179,14 +180,7 @@ function ChangeLine({ changes }: { changes: PlanChanges }) {
 }
 
 export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyId: string; version?: string }) {
-  const viewParams = new URLSearchParams(useStore(address).search);
-  const viewAsked = viewParams.get("view");
-  const asOfAsked = viewParams.get("asof");
-  const pathParams = new URLSearchParams();
-  if (asOfAsked) pathParams.set("asof", asOfAsked);
-  if (viewAsked === "piu" || viewAsked === "public") pathParams.set("view", viewAsked);
-  const query = pathParams.toString();
-  const path = `/api/projects/${encodeURIComponent(pid)}/procurement/${encodeURIComponent(agencyId)}${version ? `/${version}` : ""}${query ? `?${query}` : ""}`;
+  const path = withReadParams(`/api/projects/${encodeURIComponent(pid)}/procurement/${encodeURIComponent(agencyId)}${version ? `/${version}` : ""}`, useStore(address).search);
   const [load, retry] = useLoad<CheckPlanResult>(path);
   // The check read again after a baseline was saved or removed, shown in place of the first one.
   const [fresh, setFresh] = useState<{ path: string; result: CheckPlanResult } | null>(null);
@@ -263,7 +257,7 @@ export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyI
   const procurementHref = `/projects/${pid}/procurement`;
   const projectCrumb = (name: ReactNode): Crumb => ({ text: name, href: `/projects/${pid}` });
   // An ID from the address in Roboto Mono 500 (DESIGN.md section 5, Page header).
-  const idText = <span className="font-mono font-medium">{pid}</span>;
+  const idText = <ProjectIdText pid={pid} />;
   const named = (name: string) => <Fill template={copy.breadcrumb.project} slots={{ name, pid: idText }} />;
   const unnamed = <Fill template={copy.breadcrumb.projectId} slots={{ pid: idText }} />;
   const trail = (project: ReactNode, last: ReactNode): Crumb[] => [

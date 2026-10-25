@@ -18,6 +18,7 @@ import { EightColumns } from "../components/EightColumns";
 import { Fill } from "../components/Fill";
 import { LoadError } from "../components/LoadError";
 import { AgencyLine, ProjectHeaderLine } from "../components/ProjectHeader";
+import { ProjectIdText } from "../components/ProjectId";
 import { Skeleton, SkeletonLine, SkeletonText } from "../components/Skeleton";
 import { Tabs } from "../components/Tabs";
 import { TextLink } from "../components/TextLink";
@@ -27,6 +28,7 @@ import { useLoad } from "../lib/load";
 import { address, navigate } from "../lib/router";
 import { useStore } from "../lib/store";
 import { setPageTitle } from "../lib/title";
+import { keptQuery, withReadParams } from "../lib/view";
 import { BUILT_TABS, TAB_PATH, type ProjectTab } from "../routes";
 import { DocumentsTab } from "./project/DocumentsTab";
 import { ProcurementTab } from "./project/ProcurementTab";
@@ -34,26 +36,15 @@ import { SummaryTab } from "./project/SummaryTab";
 
 const words = copy.projectPage;
 
-// The view and as-of date the address asks for, passed on to the project's reads, since the baseline is
-// hidden in the public view and shown without its saver in the implementing agency view.
-export function readParams(search: string, keys: string[] = ["view", "asof"]): string {
-  const params = new URLSearchParams(search);
-  const kept = new URLSearchParams();
-  for (const key of keys) {
-    const value = params.get(key);
-    if (value) kept.set(key, value);
-  }
-  const rest = kept.toString();
-  return rest ? `?${rest}` : "";
-}
-
 export function ProjectPage({ pid, tab }: { pid: string; tab: ProjectTab }) {
   const here = useStore(address);
-  const [load, retry] = useLoad<Page>(`/api/projects/${encodeURIComponent(pid)}${readParams(here.search)}`);
+  // The view and as-of date the address asks for go on to the project's read, since the baseline is hidden in
+  // the public view and shown without its saver in the implementing agency view.
+  const [load, retry] = useLoad<Page>(withReadParams(`/api/projects/${encodeURIComponent(pid)}`, here.search));
   const title = useRef<HTMLHeadingElement>(null);
   const tabRow = useRef<HTMLDivElement>(null);
   const [showing, setShowing] = useState("");
-  const idText = <span className="font-mono font-medium">{pid}</span>;
+  const idText = <ProjectIdText pid={pid} />;
 
   useEffect(() => {
     if (load.status === "ready" && load.afterRetry) title.current?.focus();
@@ -121,7 +112,7 @@ export function ProjectPage({ pid, tab }: { pid: string; tab: ProjectTab }) {
   );
 
   const base = `/projects/${pid}`;
-  const keep = readParams(here.search, ["view", "asof", "lang"]);
+  const keep = keptQuery(here.search, ["view", "asof", "lang"]);
   const tabs = BUILT_TABS.map((key) => ({ key, label: words.tab[key], href: `${base}${TAB_PATH[key]}${keep}`, current: key === tab }));
   // A tab opened from the row: the address changes in place and focus stays on the tab. The page scrolls
   // only when the tab row was above the window, and then brings it to the top.

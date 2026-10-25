@@ -39,6 +39,12 @@ export function ProjectId({ pid, className, current: shown }: {
   );
 }
 
+// A P-code as plain Roboto Mono 500, where it is not a link: inside a link already, such as a crumb that
+// links to its project, or on a page that has no project to link to (DESIGN.md section 5, ProjectId).
+export function ProjectIdText({ pid }: { pid: string }) {
+  return <span className="font-mono font-medium">{pid}</span>;
+}
+
 // An ID Strata writes, such as a scope: a P-code as a ProjectId link, anything else, such as a STEP
 // reference, in Roboto Mono as it stands.
 export function IdText({ id }: { id: string }) {

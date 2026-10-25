@@ -26,7 +26,7 @@ import { Fill } from "../components/Fill";
 import { LoadError } from "../components/LoadError";
 import { Num } from "../components/Num";
 import { MethodText } from "../components/PlanCheck";
-import { linkProjectIds, ProjectId } from "../components/ProjectId";
+import { linkProjectIds, ProjectId, ProjectIdText } from "../components/ProjectId";
 import { Skeleton, SkeletonLine, SkeletonText } from "../components/Skeleton";
 import { TextLink } from "../components/TextLink";
 import { copy } from "../copy";
@@ -447,7 +447,7 @@ export function SourcePage({ pid, doc, search }: { pid: string; doc: string; sea
   }, [answer]);
 
   const projectsCrumb = { text: copy.breadcrumb.projects, href: "/projects" };
-  const idText = <span className="font-mono font-medium">{pid}</span>;
+  const idText = <ProjectIdText pid={pid} />;
   const projectCrumb = {
     // The crumb is the link to the project, so its ID is plain mono inside it, never a link inside a link.
     text: answer?.project.display_name ? <Fill template={copy.breadcrumb.project} slots={{ name: answer.project.display_name, pid: idText }} /> : <Fill template={copy.breadcrumb.projectId} slots={{ pid: idText }} />,
@@ -499,7 +499,7 @@ export function SourcePage({ pid, doc, search }: { pid: string; doc: string; sea
     const notFound = load.error?.status === 404 && load.error.body.code === "unknown_project";
     body = notFound ? (
       <>
-        {h1(<Fill template={copy.projectPage.notFoundTitle} slots={{ pid: <span className="font-mono font-medium">{pid}</span> }} />)}
+        {h1(<Fill template={copy.projectPage.notFoundTitle} slots={{ pid: <ProjectIdText pid={pid} /> }} />)}
         <p className="mt-2 max-w-prose text-body text-ink-muted">{copy.projectPage.notFoundBody}</p>
       </>
     ) : (
