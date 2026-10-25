@@ -241,6 +241,12 @@ def test_the_app_s_own_principal_may_write_usage_events_agent_runs_opened_source
         f"GRANT SELECT, MODIFY ON TABLE strata.ops.lesson_versions TO `{PRINCIPAL}`",
         f"GRANT SELECT, MODIFY ON TABLE strata.ops.lesson_sources TO `{PRINCIPAL}`",
         f"GRANT SELECT, MODIFY ON TABLE strata.ops.lesson_review_notes TO `{PRINCIPAL}`",
+        # Ticket 32's retrieval loop: passage reports, the decisions on them, each answer's sources and the
+        # query judges' grades. No one may write them outside the app.
+        f"GRANT SELECT, MODIFY ON TABLE strata.ops.candidate_labels TO `{PRINCIPAL}`",
+        f"GRANT SELECT, MODIFY ON TABLE strata.ops.label_decisions TO `{PRINCIPAL}`",
+        f"GRANT SELECT, MODIFY ON TABLE strata.ops.answer_citations TO `{PRINCIPAL}`",
+        f"GRANT SELECT, MODIFY ON TABLE strata.ops.retrieval_grades TO `{PRINCIPAL}`",
     ]
 
 

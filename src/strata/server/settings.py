@@ -65,6 +65,8 @@ from strata.server import engines, tracing
 from strata.server.access import Access, NoGroups, WorkspaceGroups
 from strata.agent import judge as answer_judge
 from strata.server.app import create_app
+from strata.knowledge.retrieval.judging import Judging
+from strata.knowledge.retrieval.reports import CitationLog, PassageReports
 from strata.server.evidence import OpenedLog
 from strata.server.suppliers import SupplierLog
 from strata.server.usage import UsageLog
@@ -174,6 +176,8 @@ def app_from_env(environ: Mapping[str, str] | None = None) -> FastAPI:
                       access=Access(load_roles(), WorkspaceGroups(host) if host else NoGroups()),
                       supplier_log=SupplierLog(the_app) if the_app else None,
                       lessons=LessonReview(load_roles()), lesson_record=the_app,
+                      passage_reports=PassageReports(load_roles()), judging=Judging(load_roles()),
+                      feedback_record=the_app, citations=CitationLog(the_app) if the_app else None,
                       lesson_writer=agent_runner.lesson_writer_from_environment(environ),
                       tracer_provider=tracing.from_env(environ), judge=answer_judge.from_environment(environ),
                       web_dist=web if (web / "index.html").is_file() else None)

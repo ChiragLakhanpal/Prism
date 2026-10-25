@@ -1,0 +1,30 @@
+# The weekly retrieval run (ticket 32; docs/PLAN.md section 11: the retrieval loop labels weekly and tunes
+# search at most monthly).
+#
+# Each Monday it runs src/strata/knowledge/retrieval/retrieval_task.py on serverless compute, which loads the new
+# queries written from award notices (evals/retrieval_queries.toml) with their pools, applies the rules for
+# scale to the week's passage reports when config/thresholds.toml says retrieval.mode = "scale", builds the
+# labeled set again, and writes the loop's measures to strata.ops (strata.knowledge.retrieval.weekly). It runs at
+# 06:30 in Washington, after the nightly job's window and before review hours, and takes seconds.
+
+resources:
+  jobs:
+    retrieval_weekly:
+      name: strata retrieval weekly
+      description: Each week, builds the retrieval labeled set and measures the retrieval loop.
+      schedule:
+        quartz_cron_expression: "0 30 6 ? * MON"
+        timezone_id: America/New_York
+        pause_status: ${var.nightly_pause_status}
+      max_concurrent_runs: 1
+      timeout_seconds: 1800
+      environments:
+        - environment_key: default
+          spec:
+            environment_version: "2"
+      tasks:
+        - task_key: retrieval_weekly
+          environment_key: default
+          spark_python_task:
+            python_file: ../src/strata/knowledge/retrieval/retrieval_task.py
+            parameters: [--src, "${workspace.file_path}/src"]

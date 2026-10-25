@@ -132,6 +132,87 @@ def test_ranking_changes_only_once_a_passage_reviewer_accepts_the_label(loop):
     assert other["ranked_lower"] == {"query_kind": "results", "evidence_ids": []}
 
 
+def test_reports_on_one_passage_and_kind_of_question_are_one_group_that_its_own_reporter_cannot_decide(loop):
+    """Ana's "Wrong passage" with a reason and Priya's "Not useful" with none, on paragraph 54 for the same question,
+    are one group. Priya is a passage reviewer, but she sent one of the reports, so Daniel decides."""
+    loop.report(ANA, loop.ask(ANA), reason="Not why these were advertised again.")
+    loop.report(PRIYA, loop.ask(PRIYA), kind="not_useful")
+
+    [mine] = loop.request("GET", "/api/passage-reports", DANIEL).json()["groups"]["you"]
+    assert (mine["kind_label"], mine["report_count"], mine["query_kind"], mine["para"], mine["page"]) == (
+        "both", 2, "rebidding_and_prices", "54", 23)
+    hers = loop.request("GET", "/api/passage-reports", PRIYA).json()["groups"]
+    assert (hers["you"], hers["others"][0]["reason_code"]) == ([], "own_report")
+    refused = loop.decide(PRIYA, mine["group_id"])
+    assert (refused.status_code, refused.json()["code"]) == (403, "own_report")
+    # Reporters are named by role, and the reviewer's own report as "you".
+    detail = loop.request("GET", f"/api/passage-reports/{mine['group_id']}", PRIYA).json()
+    assert [(report["role"], report["kind"], report["reason"]) for report in detail["reports"]] == [
+        ("staff", "wrong_passage", "Not why these were advertised again."), ("you", "not_useful", None)]
+    assert "ana" not in str(detail["reports"]).lower()
+    assert loop.request("GET", "/api/passage-reports", ANA).json()["code"] == "not_a_passage_reviewer"
+
+
+def test_a_decision_needs_a_reason_and_the_state_the_reviewer_saw(loop):
+    loop.report(ANA, loop.ask(ANA))
+    [row] = loop.request("GET", "/api/passage-reports", DANIEL).json()["groups"]["you"]
+
+    assert loop.decide(DANIEL, row["group_id"], reason="  ").json()["code"] == "no_reason"
+    assert loop.decide(PRIYA, row["group_id"], outcome="keep", reason="It answers the question.").status_code == 200
+    stale = loop.decide(DANIEL, row["group_id"], state=row["state"])
+    assert (stale.status_code, stale.json()["code"], stale.json()["values"]["name"]) == (409, "stale", "Priya Nair")
+    assert [act["act"] for act in loop.rows("SELECT act FROM strata.ops.label_decisions")] == ["declined"]
+
+
+def test_the_reporter_sees_the_decision_and_a_reopened_record_gives_back_the_earlier_ranking(loop):
+    run = loop.ask(ANA)
+    loop.report(ANA, run, reason="Too general.")
+    before = [found["passage_id"] for found in search(loop)["rows"]]
+    [row] = loop.request("GET", "/api/passage-reports", DANIEL).json()["groups"]["you"]
+    loop.decide(DANIEL, row["group_id"], reason="It is about estimates in general, not these contracts.")
+
+    mine = loop.request("GET", "/api/feedback", ANA, params={"evidence_id": PARAGRAPH_54, "run_id": run}).json()["my_report"]
+    assert (mine["status"], mine["reviewer_reason"]) == ("ranked_lower", "It is about estimates in general, not these contracts.")
+    record = loop.request("GET", f"/api/passage-reports/{row['group_id']}", DANIEL).json()
+    assert (record["stage"], record["outcome"]["outcome"], record["outcome"]["reviewer_name"]) == (
+        "decided", "ranked_lower", "Daniel Okafor")
+    decided = loop.request("GET", "/api/passage-reports", DANIEL).json()["decided"]["rows"]
+    assert [(found["outcome"], found["report_count"]) for found in decided] == [("ranked_lower", 1)]
+    # A report a reviewer decided can no longer be withdrawn.
+    assert loop.request("POST", f"/api/feedback/{mine['report_id']}/withdraw", ANA).json()["code"] == "decided"
+
+    assert loop.request("POST", f"/api/passage-reports/{row['group_id']}/reopen", DANIEL, {"reason": ""}).json()[
+        "code"] == "no_reason"
+    reopened = loop.request("POST", f"/api/passage-reports/{row['group_id']}/reopen", PRIYA,
+                            {"reason": "The question was about these contracts after all."})
+    assert reopened.json()["item"]["stage"] == "waiting"
+    assert [found["passage_id"] for found in search(loop)["rows"]] == before
+    assert [act["act"] for act in loop.rows("SELECT act FROM strata.ops.label_decisions ORDER BY decided_at")] == [
+        "accepted", "reopened"]
+
+
+def test_a_label_from_live_feedback_never_reaches_an_evaluation_set(loop):
+    """Daniel accepts Ana's report, and the weekly run puts the label in the labeled set's feedback set, where it
+    can train. Building an evaluation set from it fails."""
+    from strata.estimates import retrieval
+    from strata.knowledge.retrieval import labels
+    from strata.knowledge.retrieval.labels import LiveFeedbackError
+
+    loop.report(ANA, loop.ask(ANA))
+    [row] = loop.request("GET", "/api/passage-reports", DANIEL).json()["groups"]["you"]
+    loop.decide(DANIEL, row["group_id"])
+    loop.weekly()
+
+    held = labels.latest(loop.database.cursor())
+    feedback = [label for label in held if label.query_set == "feedback"]
+    assert [(label.passage_id, label.origin, label.grade) for label in feedback] == [
+        ("31525018/v1/54", "feedback_reviewed", 0)]
+    with pytest.raises(LiveFeedbackError):
+        retrieval.evaluation_queries(feedback)
+    # The evaluation sets themselves hold no label from feedback.
+    assert retrieval.evaluation_queries(label for label in held if label.query_set != "feedback")
+
+
 def test_a_passage_ranked_lower_still_appears_first_when_it_is_the_only_one_found(loop):
     run = loop.ask(ANA)
     loop.report(ANA, run)

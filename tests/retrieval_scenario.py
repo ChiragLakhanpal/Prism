@@ -21,15 +21,18 @@ import httpx
 from strata.agent.loop import answer_runner
 from strata.agent.scripted import ScriptedAgent, ScriptedJudge, load_cases
 from strata.config import load_roles, load_thresholds
+from strata.knowledge.lessons.review import LessonReview
 from strata.knowledge.retrieval.judging import Judging
 from strata.knowledge.retrieval.reports import CitationLog, PassageReports
 from strata.lakehouse.engine import DuckDBEngine, PermissionDenied
 from strata.server.app import create_app
+from strata.server.evidence import OpenedLog
 
 ROOT = Path(__file__).resolve().parents[1]
 ROLES = load_roles(ROOT / "tests" / "fixtures" / "roles.toml")
 CASE = "p130164-rebidding"
 PARAGRAPH_54 = "strata.gold.passage:31525018/v1/54"
+PARAGRAPH_55 = "strata.gold.passage:31525018/v1/55"
 TODAY = dt.date(2026, 10, 23)
 
 
@@ -96,8 +99,10 @@ class Loop:
 
         self.app = create_app(runner=answer_runner(lambda turn: ScriptedAgent(case), engine_for, today=lambda: TODAY),
                               engine_for=engine_for, judge=ScriptedJudge(case), new_run_id=new_run_id,
+                              lessons=LessonReview(ROLES, now=self.now),
                               passage_reports=self.reports, judging=self.judging, feedback_record=self.the_app,
-                              citations=CitationLog(self.the_app), today=lambda: TODAY, now=self.now)
+                              citations=CitationLog(self.the_app), opened=OpenedLog(self.the_app, now=self.now),
+                              today=lambda: TODAY, now=self.now)
 
     def now(self) -> dt.datetime:
         self.at += dt.timedelta(seconds=1)
@@ -131,6 +136,16 @@ class Loop:
                evidence_id: str = PARAGRAPH_54, view: str = "staff") -> httpx.Response:
         return self.request("POST", "/api/feedback", who, {"evidence_id": evidence_id, "run_id": run_id, "sentence_id": None,
                                                            "kind": kind, "reason": reason, "view": view})
+
+    def decide(self, who: dict, group_id: str, outcome: str = "rank_lower", reason: str | None = "Read it; it fits.",
+               state: str | None = None) -> httpx.Response:
+        if state is None:
+            state = self.request("GET", f"/api/passage-reports/{group_id}", who).json()["state"]
+        return self.request("POST", f"/api/passage-reports/{group_id}/decide", who,
+                            {"expected_state": state, "outcome": outcome, "reason": reason})
+
+    def opened(self, who: dict, evidence_id: str, run_id: str | None = None) -> httpx.Response:
+        return self.request("POST", "/api/evidence/opened", who, {"evidence_id": evidence_id, "run_id": run_id})
 
     def rows(self, sql: str) -> list[dict]:
         result = self.database.cursor().run(sql, {})

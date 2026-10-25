@@ -36,8 +36,9 @@ It needs npm, which builds the web app. It does these things, in order:
    draft_files, SELECT on strata.ops.supplier_pairs, SELECT and MODIFY on
    strata.ops.supplier_review_decisions and strata.ops.supplier_pair_labels, and SELECT and MODIFY on
    ticket 29's lesson_review_acts, lesson_review_items, lesson_versions, lesson_sources and
-   lesson_review_notes. Viewers read as themselves, through the bundle's grants, and no reviewer group
-   may write the lesson review record outside the app.
+   lesson_review_notes, and ticket 32's candidate_labels, label_decisions, answer_citations and
+   retrieval_grades. Viewers read as themselves, through the bundle's grants, and no reviewer group
+   may write the lesson review record or the retrieval loop's record outside the app.
 7. It prints the app's address.
 
 Run it again after every bundle deploy. The grants in bundle/catalog.yml replace any other
@@ -149,6 +150,9 @@ def resources(env: dict, scope: str, app_state: str | None = None) -> list[dict]
 # Ticket 29's lesson review record, which the app writes as itself with the reviewer named in each row.
 LESSON_REVIEW_TABLES = ("lesson_review_acts", "lesson_review_items", "lesson_versions", "lesson_sources",
                         "lesson_review_notes")
+# Ticket 32's retrieval loop: passage reports (candidate labels), the passage reviewers' decisions, the sources
+# each answer cited and the query judges' grades, which the app writes as itself with the person in each row.
+RETRIEVAL_TABLES = ("candidate_labels", "label_decisions", "answer_citations", "retrieval_grades")
 
 
 def grants(principal: str) -> list[str]:
@@ -165,7 +169,8 @@ def grants(principal: str) -> list[str]:
             f"GRANT SELECT ON TABLE strata.ops.supplier_pairs TO `{principal}`",
             f"GRANT SELECT, MODIFY ON TABLE strata.ops.supplier_review_decisions TO `{principal}`",
             f"GRANT SELECT, MODIFY ON TABLE strata.ops.supplier_pair_labels TO `{principal}`",
-            *[f"GRANT SELECT, MODIFY ON TABLE strata.ops.{table} TO `{principal}`" for table in LESSON_REVIEW_TABLES]]
+            *[f"GRANT SELECT, MODIFY ON TABLE strata.ops.{table} TO `{principal}`" for table in LESSON_REVIEW_TABLES],
+            *[f"GRANT SELECT, MODIFY ON TABLE strata.ops.{table} TO `{principal}`" for table in RETRIEVAL_TABLES]]
 
 
 def deploy(workspace, env: dict, build_web: Callable[[], tuple[int, str]] = build_web, dist: Path = DIST) -> int:
