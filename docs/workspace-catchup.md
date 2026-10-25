@@ -1184,3 +1184,39 @@ Run this from the main checkout:
 It worked if the deploy exits 0 and its last line is `Strata is running at https://...`. Then sign in to the App in a browser, scope it to P130164, and ask "How did the status reports rate P130164's progress towards its development objective in 2016?"
 
 It worked if DevTools' Network tab shows the `/api/ask` stream's checks event carrying a `judge` object, and the ICR paragraph 78 card appears under ISR 7's sentence with both sides: ISR 7 (August 26, 2016, "Satisfactory") and ICR paragraph 78 (October 10, 2019), marked "Two reports disagree".
+
+## Ticket 31, step 1 of 3: re-record the criteria reader from the live model
+
+The merger parked this step on October 25, 2026, after merge commit 27cf144. All ten keys were set, but the header above holds workspace steps back while the user runs the backlog. It needs `FOUNDRY_PROJECT_ENDPOINT`, `DATABRICKS_HOST`, `DATABRICKS_WAREHOUSE_ID` and `DATABRICKS_TOKEN` in `.env`, and `az` signed in. Section 5, "Check your criteria", sends pasted qualification criteria to a new Foundry agent, `strata-criteria-reader` (`config/agents.toml`, `[agents.criteria_reader]`). Its six answers in `tests/fixtures/agent/recorded/criteria-*.json` were written by hand and say `"recorded": false`.
+
+Run this from the main checkout, in this order:
+
+    uv run --script ops/agent/sync.py --env-file .env --agent criteria_reader
+    uv run --script ops/agent/sync.py --env-file .env --agent criteria_reader --check
+    uv run --script ops/agent/record.py --env-file .env --criteria
+    uv run --frozen python tests/record_criteria_api.py
+    .githooks/pre-commit
+
+It worked if the sync ends "I made version N of strata-criteria-reader, which matches the repo." (or says the agent already matches the repo) and its `--check` run exits 0; every file in `tests/fixtures/agent/recorded/criteria-*.json`, including the new `criteria-swapped-reading.json`, says `"recorded": true`; and the gate passes, which includes `tests/test_check_criteria.py`. Also check the new files by eye: `criteria-live-tender.json` still refuses with the key `live_tenders`, and every item in `criteria-similar-experience.json` has a `reading` (verify note O1 in `.notes/31-verify-r3.md`).
+
+## Ticket 31, step 2 of 3: re-record check 4's judge on section 5's readings
+
+The merger parked this step on October 25, 2026, after merge commit 27cf144. All ten keys were set, but the header above holds workspace steps back while the user runs the backlog. Run it after step 1, since the judge is asked about the recorded readings. It needs the keys of step 1 and `AZURE_OPENAI_ENDPOINT` and `AZURE_OPENAI_API_KEY`. From this merge on, the judge run also replays every case in `tests/fixtures/agent/criteria.toml` through section 5's comparison. Ticket 24's step 1 runs the same command, and one run from 27cf144 or later serves both blocks.
+
+Run this from the main checkout:
+
+    uv run --script ops/agent/record.py --judge --env-file .env
+    uv run --frozen python tests/record_criteria_api.py
+    .githooks/pre-commit
+
+It worked if `tests/fixtures/agent/judged/criteria-similar-experience.json`, `criteria-partial-refusal.json` and `criteria-swapped-reading.json` say `"recorded": true`, the swapped reading is still judged not to follow (if the live judge lets it through, replace that case's reading in `tests/fixtures/agent/criteria.toml` with one the judge rejects and run steps 1 and 2 again), and the gate passes after `tests/record_criteria_api.py` re-records.
+
+## Ticket 31, step 3 of 3: section 5 on the deployed App keeps pasted text private
+
+The merger parked this step on October 25, 2026, after merge commit 27cf144, from the verifier's live follow-ups. All ten keys were set, but the header above holds workspace steps back while the user runs the backlog. It needs the Databricks keys, the four Foundry keys, and `AZURE_OPENAI_ENDPOINT` and `AZURE_OPENAI_API_KEY` in `.env`. Run it after steps 1 and 2. It is ticket 06's deploy command, and one deploy from 27cf144 or later serves every block that names it.
+
+Run this from the main checkout:
+
+    uv run --script ops/app/deploy_app.py --env-file .env
+
+It worked if the deploy exits 0 and its last line is `Strata is running at https://...`. Then sign in to the App as one viewer, open `/packages/KE-CWSB-224323-CS-QCBS`, open section 5, and paste "at least two contracts of similar works of US$10 million each". It worked if the comparison shows its counts under "Asked for it" and "Asked for the same or less", with "Judged by a model" on the check line, the pasted text is in Lakebase's `strata.app.criteria_checks` with that viewer as its owner, and a second viewer's `GET /api/packages/KE-CWSB-224323-CS-QCBS/criteria` shows no comparison and none of the first viewer's words (CLAUDE.md rule 8).
