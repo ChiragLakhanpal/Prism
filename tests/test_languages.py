@@ -245,7 +245,9 @@ def drafting_app(fixture_db, tmp_path, case):
 def identity(app, headers, address=""):
     from test_drafts import call
 
-    return call(app, "GET", f"/api/me{address}", headers).json()["language"]
+    language = call(app, "GET", f"/api/me{address}", headers).json()["language"]
+    assert [choice["code"] for choice in language.pop("choices")] == ["en", "fr", "es", "pt"]
+    return language
 
 
 def settings_app(tmp_path, groups=None, roles=None):

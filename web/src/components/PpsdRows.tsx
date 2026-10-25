@@ -10,6 +10,9 @@
 // One layout is in the page at a time, chosen from the document column's width, so each chip has one id the bar's
 // hold line can link to. Each of Strata's sentences has one citation marker, which may carry several sources and
 // becomes one Word footnote; the Sources list shows each footnote's Word text.
+import { useContext } from "react";
+import { Lang } from "./Lang";
+import { WrittenIn } from "./DraftNotes";
 import { Fragment, useId, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { copy } from "../copy";
 import type { EvidenceEvent, SentenceEvent } from "../lib/answer";
@@ -84,11 +87,12 @@ function CellSentences({
   opened: ReadonlySet<string>;
   open: OpenSource;
 }) {
+  const writtenIn = useContext(WrittenIn);
   if (!note || note.sentences.length === 0) {
     return <p className="text-small text-ink-muted" data-cell-abstain>{kind.abstain}</p>;
   }
   return (
-    <p className="max-w-[65ch] text-small text-ink" data-cell-text>
+    <Lang as="p" code={writtenIn} className="max-w-[65ch] text-small text-ink" data-cell-text>
       {note.sentences.map((sentence: SentenceEvent, index) => {
         const footnote = footnotes.find((one) => one.row_key === row.row_key && one.cell === note.cell && one.position === index);
         const ids = footnote?.evidence_ids ?? sentence.evidence_ids;
@@ -117,7 +121,7 @@ function CellSentences({
           </Fragment>
         );
       })}
-    </p>
+    </Lang>
   );
 }
 

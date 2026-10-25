@@ -25,11 +25,14 @@ import {
   type StepEvent,
 } from "../lib/answer";
 import { evidenceHref, loadVisited, openEvidence } from "../lib/evidence";
+import { ENGLISH, langOf, languageName, workingLanguage } from "../lib/lang";
+import { useStore } from "../lib/store";
 import { formatCount, formatDate, formatNumber } from "../lib/format";
 import { highlightsFor, lessonOf, passageFields, placeOf, recordKind, recordReference } from "../lib/sources";
 import { Answer, type AnswerState } from "./Answer";
 import { Button } from "./Button";
 import { CitationMarker } from "./CitationMarker";
+import { Lang } from "./Lang";
 import { notCheckedFor, type Removed } from "./Checks";
 import { DisagreementCard, SideSaid, type CardSide } from "./DisagreementCard";
 import { changesLine, ruleSentence, sideFull, sideInSentence, sideMeta, sideOpen, sideShort, subjectOf, whatChanges, type SideData } from "../lib/disagreement";
@@ -325,8 +328,9 @@ export function AnswerSentences({
   // between them (the 24 brief, section 4.4).
   const blocks: ReactNode[] = [];
   let paragraph: ReactNode[] = [];
+  // "In short" is in the language the writer wrote it in (ticket 42); a quote keeps its source's.
   const close = (key: string) => {
-    if (paragraph.length) blocks.push(<p key={key} className="max-w-prose">{paragraph}</p>);
+    if (paragraph.length) blocks.push(<Lang key={key} code={run.lang} as="p" className="max-w-prose">{paragraph}</Lang>);
     paragraph = [];
   };
   run.sentences.forEach((sentence) => {
@@ -337,7 +341,8 @@ export function AnswerSentences({
         {paragraph.length > 0 && " "}
         <span data-sentence-text={sentence.index} className={active ? "bg-tint [box-decoration-break:clone]" : undefined}>
           {sentenceText(sentence, run.evidence, (id) => open(id, sentence.index, null))}
-          {sentence.evidence_ids.map((id) => markerFor(id, sentence.index, active))}
+          {/* A marker is the copy file's words, read in English inside an answer in another language. */}
+          <Lang code={ENGLISH}>{sentence.evidence_ids.map((id) => markerFor(id, sentence.index, active))}</Lang>
         </span>
       </Fragment>,
     );
@@ -572,13 +577,16 @@ function stateOf(run: Run, opened: Opened, visited: ReadonlySet<string>, stillWo
 
 // "Asked within P130164, as of October 1, 2026." It names no view: until ticket 40 the server
 // applies no view's rules, so a preview would be a claim about something that did not happen.
-function AskedLine({ run }: { run: Run }) {
+function AskedLine({ run, current }: { run: Run; current: string }) {
   const { scope, asOf } = run.asked;
   const words = copy.answer;
+  // The answer's language, when it is not English or not your choice now (the 42 brief, section 5.4).
+  const named = run.lang !== ENGLISH || run.lang !== current;
   return (
     <p data-asked className="mt-1 text-caption text-ink-muted">
       {scope ? <Fill template={words.askedWithin} slots={{ id: mono(scope) }} /> : words.askedAcross}
       {asOf && words.askedAsOf(formatDate(asOf))}
+      {named && words.askedLanguage(languageName(run.lang))}
       {words.askedEnd}
     </p>
   );
@@ -597,6 +605,7 @@ export function AnswerPanel({
   remember?: boolean;
 }) {
   const [stillWorking, setStillWorking] = useState(false);
+  const current = useStore(workingLanguage)?.code ?? ENGLISH;
   useEffect(() => {
     if (run.phase !== "streaming") {
       setStillWorking(false);
@@ -627,8 +636,19 @@ export function AnswerPanel({
             button beside them sets no gap. */}
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
-            <h2 className="text-title wrap-break-word text-ink-heading">{linkProjectIds(run.asked.question)}</h2>
-            <AskedLine run={run} />
+            <h2 lang={langOf(run.questionLang)} className="text-title wrap-break-word text-ink-heading">
+              {linkProjectIds(run.asked.question)}
+            </h2>
+            <AskedLine run={run} current={current} />
+            {/* Ask the same question in your choice now, when the answer was written in another (the 42 brief, 5.4).
+                Hidden for a refusal, an empty answer and an error, which come back in the copy file's English. */}
+            {run.phase === "done" && run.sentences.length > 0 && run.lang !== current && (
+              <div className="mt-2">
+                <Button variant="ghost" onClick={() => ask({ ...run.asked, lang: current })}>
+                  {copy.answer.askAgain(languageName(current))}
+                </Button>
+              </div>
+            )}
           </div>
           {/* "Close the answer" in words from a page area of 768 px; below it, a 44 px icon with the same name. */}
           <div className="-mt-2 -mr-2 hidden shrink-0 @md/page:block">

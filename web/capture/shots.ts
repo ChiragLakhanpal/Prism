@@ -1718,6 +1718,21 @@ const PPSD_SHOTS: Shot[] = [
   draftShot("paper--no-record", { recorded: "drafts-pp-made-up-no-record.json" }, { widths: PPSD_WIDTHS }, "/drafts/draft-0002"),
 ];
 
+// Other languages (ticket 42), at 1440 px only until the design pass: an answer and its drawer written in French, the
+// French completion report's source view, the language choice in the view popover, and review notes in French.
+const FRENCH = "Why were procurement processes delayed in P127203?";
+const LANGUAGE_SHOTS: Shot[] = [
+  answerShot("languages--answer-in-french", "ask-p127203-fr.sse", { widths: [1440], act: askInBox(FRENCH),
+    api: { "/api/me": { recorded: "me-lang-fr.json" } } }, "/projects/P130164?lang=fr"),
+  answerShot("languages--drawer-french-passage", "ask-p127203-fr.sse", { widths: [1440], full: false,
+    act: then(askInBox(FRENCH), click(marker)), api: { "/api/me": { recorded: "me-lang-fr.json" } } }, "/projects/P130164?lang=fr"),
+  app("languages--source-view-french", "/projects/P127203/documents/icr-2021-07-29?page=13&para=1", {}, { widths: [1440],
+    api: { ...app("x", "/").api, "/api/projects/P127203/documents/icr-2021-07-29": { recorded: "source-icr-p127203-fr-13.json" } } }),
+  app("languages--choice-in-popover", "/", {}, { widths: [1440], full: false, act: click("[data-view-pill]") }),
+  app("languages--review-notes-in-french", "/drafts/draft-0005", {}, { widths: [1440], api: { ...app("x", "/").api,
+    "/api/drafts/draft-0005": { recorded: "drafts-review-notes-fr.json" }, "/api/drafts/existing": { body: '{"draft":null}' } } }),
+];
+
 export const SHOTS: Shot[] = [
   { name: "index", path: "/gallery" },
   ...pages,
@@ -1873,4 +1888,5 @@ export const SHOTS: Shot[] = [
   ...TIMELINE_SHOTS,
   ...TRAIL_SHOTS,
   ...PPSD_SHOTS,
+  ...LANGUAGE_SHOTS,
 ];

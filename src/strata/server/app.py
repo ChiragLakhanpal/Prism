@@ -934,6 +934,14 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
     def health() -> dict:
         return {"status": "ok"}
 
+    def language_choices() -> list[dict]:
+        """The working languages the view popover offers, each with its own name from config/languages.toml: the
+        screens name each language in English from the copy file and show its own name beside it."""
+        from strata.config import load_languages
+
+        return [{"code": entry.code, "endonym": entry.endonym, "direction": entry.direction}
+                for entry in load_languages().working]
+
     def saved_language(viewer: Viewer) -> tuple[str | None, bool]:
         """The viewer's saved language of answers and drafts, and whether it could be read."""
         if settings is None or not viewer.user_id:
@@ -953,7 +961,7 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
         language = working_language(lang, saved, access.team_language(viewer) if viewer.user_id else None)
         return {"email": viewer.email, "name": viewer.name, "signed_in": viewer.signed_in,
                 "has_token": viewer.token is not None, "staff": access.is_staff(viewer),
-                "language": {**language.as_dict(), "saved_readable": readable}}
+                "language": {**language.as_dict(), "saved_readable": readable, "choices": language_choices()}}
 
     @app.put("/api/me/working-language")
     def choose_language(body: LanguageRequest, viewer: Viewer = Depends(current_viewer)):

@@ -94,9 +94,9 @@ def answers(folder: Path) -> dict[str, str]:
         found = {}
         transport = httpx.ASGITransport(app=app)
         async with httpx.AsyncClient(transport=transport, base_url="http://strata.test") as client:
-            async def write(case: str, key: str) -> str:
+            async def write(case: str, key: str, **extra) -> str:
                 writing[0] = case
-                answer = await client.post("/api/drafts", headers=ANA, json={**NWWDA, "idempotency_key": key})
+                answer = await client.post("/api/drafts", headers=ANA, json={**NWWDA, "idempotency_key": key, **extra})
                 return answer.text
 
             async def get(path: str, headers=ANA, **params) -> str:
@@ -149,6 +149,15 @@ def answers(folder: Path) -> dict[str, str]:
             found["drafts-list.json"] = await get("/api/drafts")
             found["drafts-list-teammate.json"] = await get("/api/drafts", BEN)
             found["drafts-list-empty.json"] = await get("/api/drafts", CY)
+            # Ticket 42: review notes asked for in French, and the identity route's answer for a link that asks for
+            # French and for one that asks for a language I can't write in.
+            later(10)
+            written = await write("review-notes-nwwda-2026-10-09-fr", "key-7", lang="fr")
+            french = next(json.loads(line[len("data: "):])["draft_id"] for line in written.splitlines()
+                          if line.startswith("data: ") and '"draft_id"' in line)
+            found["drafts-review-notes-fr.json"] = await get(f"/api/drafts/{french}")
+            found["me-lang-fr.json"] = await get("/api/me", ANA, lang="fr")
+            found["me-lang-unknown.json"] = await get("/api/me", ANA, lang="xx")
         return found
 
     return asyncio.run(story())

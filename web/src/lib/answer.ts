@@ -179,6 +179,9 @@ export type Run = {
   runId: string | null;
   // When the last event arrived, for "I'm still working on this step."
   lastEventAt: number;
+  // The language the writer wrote the answer in, and the question's when the server was sure of it (ticket 42).
+  lang: string;
+  questionLang: string | null;
 };
 
 export const answer = createStore<Run | null>(null);
@@ -227,6 +230,8 @@ export function withEvent(run: Run, type: string, data: any): Run {
       return { ...run, error: String(data.code ?? "internal") };
     case "done":
       return { ...run, runId: data.run_id ?? null, phase: run.error ? "failed" : "done" };
+    case "language":
+      return { ...run, lang: String(data.lang ?? run.lang), questionLang: data.question_lang ?? null };
     default:
       return run;
   }
@@ -265,6 +270,8 @@ export function newRun(serialNumber: number, asked: Asked): Run {
     error: null,
     runId: null,
     lastEventAt: Date.now(),
+    lang: asked.lang ?? "en",
+    questionLang: null,
   };
 }
 

@@ -109,6 +109,13 @@ export const NON_COPY_PROPS = new Set([
   "status",
   "role",
   "lang",
+  // A text's language and direction (ticket 42): BCP 47 codes and "rtl", never words a person reads. Lang's code
+  // prop is the same language code, and translate="no" keeps a person's own browser translation off IDs and codes.
+  "dir",
+  "translate",
+  "code",
+  // The element a component renders as, such as Lang's "p" or "blockquote" (ticket 42).
+  "as",
   "target",
   "rel",
   "side",
