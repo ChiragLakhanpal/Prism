@@ -5,7 +5,7 @@
 #   always = true   the step runs even when only Markdown files are staged
 #   git_env = true  the step sees the commit's git variables (the secret scan needs the commit's index)
 #   show = true     the step's output is printed when it passes, not only when it fails
-#   lane = "web"    the step runs in this lane, side by side with the other lanes
+#   lane = "web-1"  the step runs in this lane, side by side with the other lanes
 #
 # Lanes. A step with no lane runs alone. It starts after every step above it has finished,
 # and every step below it waits for it. Steps with lanes that sit next to each other in this
@@ -48,20 +48,28 @@ lane = "python"
 
 [[step]]
 # These tests may read the fixture database, so they run in its lane, after the build. They take
-# about 50 seconds in one process, so four pytest-xdist workers share them, in about 23 seconds.
-# Four gave a lower total gate time than six over three runs each. When the lane gets slow again,
-# run `uv run --frozen pytest --durations=15 tests ops/bundle/tests` to find the slowest tests,
-# since one slow test sets a floor that no number of workers can lower. Then try more workers and
-# keep the number that gives the lower total gate time over three runs, because the lanes share
+# about 220 processor-seconds, so eight pytest-xdist workers share them, in about 30 seconds when
+# nothing else runs and about 55 in the gate beside the browsers. --dist worksteal lets a worker that
+# runs out of tests take some from a busy one; xdist's default hands each worker a run of neighbouring
+# tests at the start, so slow tests that sit together in one file land on one or two workers. On
+# October 25, 2026, with other sessions' tests holding the load average near 30, six, eight, ten and
+# twelve workers gave about the same total gate time (80, 85 and 111 seconds on six; 75, 82, 71 and
+# 74 on eight; 70 and 70 on ten; 73 and 70 on twelve), so the lane keeps eight. When the lane gets
+# slow again, run `uv run --frozen pytest --durations=15 tests ops/bundle/tests` to find the slowest
+# tests, since one slow test sets a floor that no number of workers can lower. Then try more workers
+# and keep the number that gives the lower total gate time over three runs, because the lanes share
 # the processors. Each test must be safe beside the others: README's gate section says how.
 name = "Run the Python tests under tests/ and ops/bundle/tests/, which may read the fixture database"
-run = ["uv", "run", "--frozen", "pytest", "--numprocesses", "4", "tests", "ops/bundle/tests"]
+run = ["uv", "run", "--frozen", "pytest", "--numprocesses", "8", "--dist", "worksteal", "tests", "ops/bundle/tests"]
 lane = "python"
 
-# The wizard tests take about 50 seconds in one process, so six pytest-xdist workers share them.
+# The wizard tests take about 60 seconds in one process, so six pytest-xdist workers share them.
+# Most of that time is in 16 tests that run the whole wizard, and they sit together at the top of
+# the file, so --dist worksteal spreads them out: about 13 seconds when nothing else runs, against
+# 25 seconds with xdist's default.
 [[step]]
 name = "Run the Python tests for the wizard and the day-one probes"
-run = ["uv", "run", "--frozen", "pytest", "--numprocesses", "6", "ops/wizard/tests", "ops/dayone/tests"]
+run = ["uv", "run", "--frozen", "pytest", "--numprocesses", "6", "--dist", "worksteal", "ops/wizard/tests", "ops/dayone/tests"]
 lane = "ops"
 
 # The app's deploy and what it uploads (ticket 06). They read no fixture database and take a few
@@ -83,17 +91,47 @@ name = "Lint the SQL: every table in three parts, every value a bound parameter"
 run = ["uv", "run", "--frozen", "python", "gates/sql_lint.py"]
 lane = "sql"
 
+# The Playwright tests run in two lanes, web-1 and web-2, and --shard gives each lane half of them,
+# so the two halves run side by side. Each lane builds the app and the gallery into a folder of its
+# own, which STRATA_WEB_OUT names and web/out-dirs.ts reads, and its Playwright run serves that
+# folder, so neither lane serves files that the other lane is rebuilding. Each run starts workers
+# for a third of the processors, five on a 16-processor computer, so the browsers leave a third of
+# the processors to the other lanes; with half each, they starved the fixture build, and the gate
+# was no faster. The tests cost about half of the gate's processor time. Each half takes about 35
+# seconds alone and 53 to 68 beside the other lanes. Most of that time goes to opening a fresh page
+# for each test, loading the app into it, and the axe scans. So every spec scans through
+# web/tests/axe.ts, which costs about half of axe's default run, the gallery opens each page once
+# for all the checks of one width, and the tests ask vite preview for plain files instead of gzipped ones
+# (web/playwright.config.ts). When a lane gets slow again, run the step's npm command with
+# `-- --reporter=json` and add up each spec file's durations, then look for tests that load the same
+# page in the same state at the same width, and check that view once. A third lane needs a third
+# folder, the shards renamed to 1/3, 2/3 and 3/3, and the checks in tests/test_gate.py still passing.
 [[step]]
-name = "Build the web app: type check and bundle"
-run = ["npm", "--prefix", "web", "run", "--silent", "build"]
-lane = "web"
+name = "Build the web app into web/dist-1: type check and bundle"
+run = ["env", "STRATA_WEB_OUT=dist-1", "npm", "--prefix", "web", "run", "--silent", "build"]
+lane = "web-1"
 
 [[step]]
-name = "Build the design gallery, which the Playwright tests open and production leaves out"
-run = ["npm", "--prefix", "web", "run", "--silent", "build:gallery"]
-lane = "web"
+name = "Build the design gallery into web/dist-1-gallery, which the Playwright tests open and production leaves out"
+run = ["env", "STRATA_WEB_OUT=dist-1", "npm", "--prefix", "web", "run", "--silent", "build:gallery"]
+lane = "web-1"
 
 [[step]]
-name = "Run the Playwright tests against the built web app, the gallery and Vite's dev server"
-run = ["npm", "--prefix", "web", "run", "--silent", "test"]
-lane = "web"
+name = "Run the first half of the Playwright tests against web/dist-1 and its gallery"
+run = ["env", "STRATA_WEB_OUT=dist-1", "npm", "--prefix", "web", "run", "--silent", "test", "--", "--shard=1/2", "--workers=33%"]
+lane = "web-1"
+
+[[step]]
+name = "Build the web app into web/dist-2: type check and bundle"
+run = ["env", "STRATA_WEB_OUT=dist-2", "npm", "--prefix", "web", "run", "--silent", "build"]
+lane = "web-2"
+
+[[step]]
+name = "Build the design gallery into web/dist-2-gallery"
+run = ["env", "STRATA_WEB_OUT=dist-2", "npm", "--prefix", "web", "run", "--silent", "build:gallery"]
+lane = "web-2"
+
+[[step]]
+name = "Run the second half of the Playwright tests against web/dist-2 and its gallery"
+run = ["env", "STRATA_WEB_OUT=dist-2", "npm", "--prefix", "web", "run", "--silent", "test", "--", "--shard=2/2", "--workers=33%"]
+lane = "web-2"

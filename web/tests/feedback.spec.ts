@@ -3,12 +3,11 @@
 // became of it. The answer is the showcase stream (tests/fixtures/api/ask-p130164-rebidding.sse), whose evidence
 // events carry the server's feedback block, and the report answers are the server's (tests/record_retrieval_api.py).
 // The words are the ticket's and the 32 design brief's, copied here so the test checks the copy file.
-import AxeBuilder from "@axe-core/playwright";
+import { scan } from "./axe";
 import type { Page } from "@playwright/test";
 import { askFromTheBox, drawer, ICR_54, landed, marker } from "./answer-page";
 import { expect, mockApi, recorded, test } from "./mocked";
 
-const WCAG_22_AA = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 const REASON = "It is about estimates in general, not why these contracts were advertised again.";
 
 async function openAnswer(page: Page, width = 1440, { preview = false, mine = "feedback-mine-waiting.json", sent = "feedback-sent.json", limit = 0 } = {}) {
@@ -55,7 +54,7 @@ async function settle(page: Page) {
 
 async function axe(page: Page) {
   await settle(page);
-  const results = await new AxeBuilder({ page }).include("[data-evidence-drawer]").withTags(WCAG_22_AA).analyze();
+  const results = await scan(page, "[data-evidence-drawer]");
   return results.violations.map((v) => `${v.id}: ${v.nodes.map((node) => node.target.join(" ")).join(", ")}`);
 }
 

@@ -2,11 +2,10 @@
 // server on the fixture in tests/fixtures/api (tests/record_following_api.py), which tests/test_following.py checks
 // the server against. The states the fixture cannot reach are the following-made-up-*.json answers, made up from
 // the real one and saying so; they are used for layout and states only, never as findings.
-import AxeBuilder from "@axe-core/playwright";
+import { scan } from "./axe";
 import type { Page } from "@playwright/test";
 import { expect, recorded, test } from "./mocked";
 
-const WCAG_22_AA = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 const FOLLOWING = "/projects/following";
 // The ticket's four lines, word for word (criterion 1).
 const LINES = [
@@ -50,7 +49,7 @@ async function openFollowing(page: Page, { file = "following-p156634.json", widt
 }
 
 async function axe(page: Page) {
-  const results = await new AxeBuilder({ page }).withTags(WCAG_22_AA).analyze();
+  const results = await scan(page);
   return results.violations.map((v) => `${v.id}: ${v.nodes.map((node) => node.target.join(" ")).join(", ")}`);
 }
 

@@ -3,17 +3,16 @@
 // source, the check line is neutral, Num never turns a small count into a percentage, and the
 // open states (Menu, view popover, tooltip, DefinitionWindow) pass axe and close on Escape.
 import { readFile } from "node:fs/promises";
-import AxeBuilder from "@axe-core/playwright";
+import { scan } from "./axe";
 import type { Locator, Page } from "@playwright/test";
 import { expect, test } from "./mocked";
 
-const WCAG_22_AA = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 
 async function axe(page: Page) {
   await page.waitForFunction(() =>
     document.getAnimations().every((a) => a.playState !== "running" || a.effect?.getTiming().iterations === Infinity),
   );
-  const results = await new AxeBuilder({ page }).withTags(WCAG_22_AA).analyze();
+  const results = await scan(page);
   return results.violations.map((v) => `${v.id}: ${v.nodes.map((node) => node.target.join(" ")).join(", ")}`);
 }
 
