@@ -1,0 +1,1483 @@
+Source: https://documents.worldbank.org/curated/en/099015005072256172/pdf/P1613290827c6b00b0840d07b54b5ec0a80.pdf
+License: The World Bank: Documents & Reports (documents.worldbank.org). License: CC BY 4.0.
+Recorded: 2026-10-25
+About: The textual part of the Procurement Plan template in French, Plan de passation de marchés (Partie Textuelle), with its blanks unfilled, as published under P161329 on May 6, 2022 (Documents API id 33812168), before that plan's STEP tables (ticket 42).
+Pages: 9, one after each form feed, read from the PDF's text layer
+
+PLAN DE PASSATION DE MARCHÉS (Partie Textuelle)
+Information sur le Projet : [Nom du pays] [Nom du Projet] [No 
+d’identification du projet]
+Agence d’exécution du Projet : [Insérer le nom officiel de l’Agence]
+Date du plan de passation des marchés : [Insérer la date]
+Période couverte par ce plan de passation des marchés : [Insérer 
+date de début, date de fin]
+Préambule
+Conformément au paragraphe 5.9 du “Règlement de Passation des Marchés 
+pour les Emprunteurs sollicitant le Financement de Projets d’Investissement 
+(FPI)” (Juillet 2016) (“Règlement de Passation des Marchés”) l’Emprunteur 
+utilise les outils électroniques de planification et de suivi de la passation des 
+marchés (STEP) pour préparer, valider et actualiser ses plans de passation des 
+marchés et effectuer toutes les transactions liées à la passation des marchés 
+du projet. 
+Cette partie textuelle ainsi que les tableaux du plan de passation des marchés 
+dans STEP constituent le plan de passation des marchés du projet. Les 
+conditions suivantes s'appliquent à toutes les activités de passation de 
+marchés du plan de passation de marchés. Les autres éléments du plan de 
+passation des marchés tels que requis au paragraphe 4.4 du Règlement de 
+passation des marchés sont énoncés dans STEP. 
+Les Dossiers types d’appel d’offres publiés par la Banque devront être 
+utilisés pour tous les contrats soumis à la concurrence internationale ainsi que 
+pour tous les autres contrats spécifiés dans les tableaux du plan de passation 
+des marchés inclus dans STEP.
+Procédures nationales de passation des marchés : En accord avec le 
+paragraphe 5.3 du Règlement de passation des marchés, au cas où la 
+procédure de passation des marché est retenue (telle que spécifiée dans les 
+tableaux du plan de passation des marchés inclus dans STEP), les procédures 
+de passation de marchés du pays considéré peuvent être appliquées. 
+Si l’Emprunteur utilise ses propres procédures d’appel d’offres national 
+ouvert telles qu’énoncées dans le code des marchés publics [Insérer la 
+référence exacte de la législation nationale], ces arrangements sont 
+ Public Disclosure Authorized
+Public Disclosure Authorized
+Public Disclosure Authorized
+Public Disclosure Authorized
+soumis aux dispositions du paragraphe 5.4 du Règlement de passation 
+des marchés et aux conditions suivantes : 
+Indiquer la liste des conditions qui s’applique de manière à assurer la cohérence 
+avec le paragraphe 5.4 du Règlement de passation des marchés. Si aucune 
+condition s’applique, supprimer la mention « et aux conditions suivantes ». 
+Lorsque l’Emprunteur utilise d’autres procédures que l’appel d’offres national 
+ouvert, ces procédures devront être en accord avec les dispositions du 
+paragraphe 5.5 du Règlement de passation des marchés.
+Crédit-bail tel que spécifié au paragraphe 5.10 du Règlement de Passation 
+des marchés : Le crédit-bail peut être utilisé pour les contrats indiqués dans 
+le Plan de passation des marchés. Sinon indiquer « Sans objet »
+Achat de biens d’occasion tel que spécifié au paragraphe 5.11 du 
+Règlement de Passation des Marchés est autorisé pour les contrats indiqués 
+dans le Plan de passation des marchés. Sinon indiquer « Sans objet »
+Préférence nationale telle que spécifiée au paragraphe 5.51 du Règlement 
+de Passation des Marchés (Fournitures et Travaux). 
+Fournitures : [ne s’applique pas/s’applique pour les contrats 
+indiqués dans les tableaux du Plan de passation des marchés] 
+Travaux [ne s’applique pas/s’applique pour les contrats indiqués 
+dans les tableaux du Plan de passation des marchés] 
+L’Assistance directe à la mise en œuvre (sigle HEIS en anglais) tel que 
+précisée aux paragraphes 3.10 et 3.11 du Règlement de Passation des 
+marchés s’applique. [Inclure cette mention seulement si la Banque a 
+formellement acceptée de fournir cette assistance directe à l’Emprunteur. 
+Sinon, supprimer cette phrase.]
+Autres informations pertinentes sur la passation des marchés
+Indiquer toutes autres informations pertinentes telles que la participation des 
+communautés au développement (CDD), un besoin urgent d’assistance ou se 
+heurte à des problèmes de capacités, etc.Page 1
+PROCUREMENT
+PLAN Western and Central Africa : West Africa Unique Identification for Regional Integration and Inclusion (WURI) Program
+General Information
+Country: Western and Central Africa Bank’s Approval Date of the Original Procurement Plan: 2019-07-22
+Revised Plan Date(s): (comma delineated, leave blank if none)2022-05-06
+Project ID: P161329 GPN Date:
+Project Name: West Africa Unique Identification for Regional Integration and Inclusion (WURI) Program
+Loan / Credit No: IDA / 62400, IDA / D3260, IDA / D3210
+Executing Agency(ies):PROJET WURI - GUINEE
+WORKS
+Activity Reference No. /
+Description Loan / Credit No. Component Review Type Method Market Approach Procurement Process Prequalification(Y/N) High SEA/SH Risk Procurement Document Type EstimatedAmount (US$) Actual Amount (US$) Process Status Draft Pre-qualificationDocuments Prequalification Evaluation Report  Draft Bidding Document / Justification Specific ProcurementNotice / Invitation Bidding Documents as Issued Proposal Submission /Opening / Minutes Bid Evaluation Reportand Recommendationfor Award Signed Contract Contract Completion
+Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual Planned
+GOODS
+Activity Reference No. /
+Description Loan / Credit No. Component Review Type Method Market Approach Procurement Process Prequalification(Y/N) Estimated Amount (US$) Actual Amount(US$) Process Status Draft Pre-qualificationDocuments Prequalification Evaluation Report  Draft Bidding Document / Justification Specific ProcurementNotice / Invitation Bidding Documents as Issued Proposal Submission /Opening / Minutes Bid Evaluation Reportand Recommendationfor Award Signed Contract Contract Completion
+Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual
+ GN-WURI - GUINEE-117278-
+GO-RFQ / Assurance véhicule IDA / 62400
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori Demande de prix Open - National Single Stage - One Envelope 8,000.00 8,348.28 Signé 2019-07-22 2019-09-14 2019-09-23 2019-10-15
+ GN-WURI - GUINEE-117277-
+GO-RFQ / Nettoyage des loca
+ux
+IDA / 62400
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori Demande de prix Open - National Single Stage - One Envelope 7,000.00 1,576.27 Signé 2019-08-09 2019-10-02 2019-12-27 2019-11-01
+ GN-WURI - GUINEE-121997-
+GO-RFQ / Gardiennage des lo
+caux
+IDA / 62400
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori Demande de prix Open - National Single Stage - One Envelope 5,000.00 1,307.65 Signé 2019-08-09 2019-10-02 2019-12-30 2019-11-01
+ GN-WURI - GUINEE-117275-
+GO-RFQ / Entretien matériels
+de froid
+IDA / 62400
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori Demande de prix Open - National Single Stage - One Envelope 6,000.00 839.63 Signé 2019-07-29 2019-09-21 2021-05-31 2019-10-21
+ GN-WURI - GUINEE-117274-
+GO-RFQ / Entretien matériels
+informatiques
+IDA / 62400
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori Demande de prix Open - National Single Stage - One Envelope 6,000.00 789.99 Signé 2019-07-29 2019-09-21 2019-12-17 2019-10-21
+ GN-WURI - GUINEE-122010-
+GO-RFQ / Acquérir les matéri
+els de bureau pour l’équipe t
+echnique
+IDA / 62400
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori Demande de prix Open - National Single Stage - One Envelope 35,000.00 31,580.08 Achevé 2019-07-22 2019-09-21 2019-11-06 2020-03-19 2020-07-08
+ GN-WURI - GUINEE-122023-
+GO-DIR / Acquérir et installer
+un logiciel de gestion financi
+ère
+IDA / 62400
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori Passation de marché de gré à gré Direct 40,000.00 49,242.13 Signé 2019-07-22 2019-07-25 2019-07-27 2019-09-11 2019-08-22 2019-10-14 2019-08-25
+ GN-WURI - GUINEE-122020-
+GO-RFQ / Acquérir le matérie
+l informatique pour l’Equipe t
+echnique
+IDA / 62400
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori Demande de prix Open - National Single Stage - One Envelope 39,000.00 41,572.08 Achevé 2019-07-22 2019-09-21 2019-11-04 2019-10-21 2019-12-09
+ GN-WURI - GUINEE-117270-
+GO-RFQ / Achat de climatiseu
+rs
+IDA / 62400
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori Demande de prix Open - National Single Stage - One Envelope 20,000.00 11,932.29 Signé 2019-07-26 2019-09-18 2020-12-21 2019-12-17
+ GN-WURI - GUINEE-117271-
+GO-RFQ / Fournitures et cons
+ommables de bureau
+IDA / 62400
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori Demande de prix Open - National Single Stage - One Envelope 8,000.00 924.54 Signé 2019-07-22 2019-09-14 2019-10-15 2019-10-14
+ GN-WURI - GUINEE-117272-
+GO-RFQ / Entretien et répara
+tion du matériel roulant
+IDA / 62400
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori Demande de prix Open - National Single Stage - One Envelope 7,000.00 2,495.03 Signé 2019-08-15 2019-10-08 2019-10-14 2019-11-07
+ GN-WURI - GUINEE-117263-
+GO-RFQ / Acquérir le matérie
+l roulant pour l'enrôlement
+IDA / 62400
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori Demande de prix Open - National Single Stage - One Envelope 100,000.00 104,010.73 Achevé 2019-09-14 2019-11-09 2019-10-04 2019-12-24 2019-11-26
+ GN-WURI - GUINEE-141346-
+GO-RFQ / Achat de tablettes
+avec le logiciel CTO pour l’en
+quête de base
+IDA / 62400
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori Demande de prix Open - National Single Stage - One Envelope 70,000.00 57,634.02 Achevé 2019-12-02 2020-02-10 2020-01-10 2020-08-08 2020-02-10
+ GN-WURI - GUINEE-171805-
+GO-RFQ / Acquisition de mobi
+liers pour l’interopérabilité d
+u système pilote avec les sys
+tèmes biométriques fonction
+nels.
+IDA / D3260
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori Demande de prix Open - National Single Stage - One Envelope 60,000.00 49,399.62 Achevé 2020-08-11 2020-10-07 2020-12-21 2020-10-28 2021-07-13
+ GN-WURI - GUINEE-117268-
+GO-RFQ / Acquisition des gro
+upes électrogènes pour les e
+nrolements dans les sites pil
+otes.
+IDA / D3260
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori Demande de prix Open - National Single Stage - One Envelope 60,000.00 43,782.24 Achevé 2019-08-22 2019-10-15 2020-11-27 2019-11-14 2021-07-05
+ GN-WURI - GUINEE-171812-
+GO-RFQ / Achat de Logiciels (
+Jira Plans, Github, MS Office
+365 Visio Premium) et Équipe
+ments Accessoires en faveur
+de l'Equipe technique du Pro
+gramme WURI.
+IDA / 62400
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori Demande de prix Open - National Single Stage - One Envelope 10,000.00 25,676.89 Achevé 2020-05-13 2020-07-01 2020-06-29 2020-07-31 2021-02-05
+ GN-WURI - GUINEE-171842-
+GO-DIR / Contrat avec le four
+nisseur MANTRA pour la four
+niture de matériels biométriq
+ues (Capteurs biométriques e
+t lecteurs biométriques pour
+empreintes digitales, capteur
+s biométriques IRIS...) pour l’i
+mplémentation du système d
+'identification pilote.
+IDA / 62400
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori Passation de marché de gré à gré Direct 23,015.00 27,353.00 Achevé 2020-05-11 2020-05-03 2020-05-16 2020-05-22 2020-06-14 2020-06-23 2020-08-13 2021-06-02Page 2
+ GN-WURI - GUINEE-171848-
+GO-DIR / Contrat avec le four
+nisseur SYNCBYTE pour la fo
+urniture de matériels biométr
+iques (Capteurs biométriques
+et lecteurs biométriques pour
+empreintes digitales, capteur
+s biométriques IRIS, ...) pour l
+’implémentation du système
+d'identification pilote.
+IDA / 62400
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori Passation de marché de gré à gré Direct 23,631.00 28,775.00 Achevé 2020-05-18 2020-05-03 2020-05-23 2020-05-22 2020-06-21 2020-06-23 2020-08-20 2021-05-26
+ GN-WURI - GUINEE-171850-
+GO-DIR / Contrat avec le four
+nisseur TECH5 pour la fournit
+ure de matériels biométrique
+s (Système d'identification bi
+ométrique automatisée trimo
+dale, BIO SDK (Client de trait
+ement) Windows et Linux...)
+pour l’implémentation du sys
+tème d'identification pilote.
+IDA / 62400
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori Passation de marché de gré à gré Direct 22,640.00 14,210.00 Achevé 2020-05-25 2020-05-03 2020-05-30 2020-05-22 2020-06-28 2020-06-23 2020-08-27 2021-05-31
+ GN-WURI - GUINEE-171853-
+GO-DIR / Contrat avec le four
+nisseur IDENTY pour la fourni
+ture de matériels biométriqu
+es (BIO SDK (Client d'enrôle
+ment) Windows) pour l’implé
+mentation du système d'iden
+tification pilote.
+IDA / 62400
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori Passation de marché de gré à gré Direct 14,150.00 7,815.50 Achevé 2020-05-29 2020-05-03 2020-06-03 2020-05-22 2020-07-02 2020-06-23 2020-08-31 2021-05-21
+ GN-WURI - GUINEE-171901-
+GO-RFQ / Acquisition de table
+ttes pour le secrétariat techn
+ique et les points focaux.
+IDA / 62400 Component 3: Facilitating access to services through IDs A posteriori Demande de prix Open - National Single Stage - One Envelope 70,000.00 59,006.34 Achevé 2020-06-10 2020-08-12 2020-07-06 2020-10-11 2021-01-11
+ GN-WURI - GUINEE-171808-
+GO-RFQ / Acquisition d' équip
+ements électroniques de vidé
+o surveillance et d'accès séc
+urisé en faveur de l'UGP et é
+quipe technique.
+IDA / 62400
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori Demande de prix Open - National Single Stage - One Envelope 50,000.00 43,913.57 Achevé 2020-05-30 2020-07-26 2020-12-07 2020-08-25 2020-12-24
+ GN-WURI - GUINEE-181289-
+GO-RFB / Acquisition locale d
+e kits d’enrôlements pour l’i
+mplémentation du système d
+'identification pilote
+IDA / D3260 Component 3: Facilitating access to services through IDs A posteriori Appel d'offres Open - National Single Stage - One Envelope 350,000.00 370,572.81 Achevé 2020-07-01 2020-07-03 2020-07-06 2020-07-27 2020-07-28 2020-08-11 2020-08-14 2020-09-09 2020-10-12 2021-03-08 2021-01-25
+ GN-WURI - GUINEE-171897-
+GO-RFB / Acquisition de deux
+(02) Pick-up tout terrain et d
+eux stations wagon pour la c
+ampagne d'enrôlements et l'
+AMOA.
+IDA / D3260
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori Appel d'offres Open - National Single Stage - One Envelope 240,000.00 173,450.70 Achevé 2020-07-20 2020-09-23 2020-07-25 2020-09-05 2020-10-28 2020-09-26 2020-10-30 2020-10-24 2021-01-15 2021-01-22 2021-05-28
+ GN-WURI - GUINEE-189375-
+GO-RFQ / Achat de vingt huit
+ordinateurs pour l'étude d'im
+pact du projet WURI
+IDA / D3260
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori Demande de prix Limited Single Stage - One Envelope 43,000.00 43,682.84 Achevé 2020-09-02 2020-11-04 2020-10-08 2020-11-25 2020-11-07 2020-12-23
+ GN-WURI - GUINEE-189549-
+GO-RFQ / Elaboration de pros
+pectus d'information sur l'enr
+olement et la delivrance de d
+ocument d'identité
+IDA / D3260
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori Demande de prix Limited Single Stage - One Envelope 10,000.00 8,141.90 Achevé 2020-09-30 2020-10-30 2020-11-25 2020-12-11 2020-12-25 2021-04-27
+ GN-WURI - GUINEE-189551-
+GO-RFQ / Acquisition de mas
+que et kits de lavage des mai
+ns
+IDA / D3260
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori Demande de prix Limited Single Stage - One Envelope 50,000.00 49,517.36 Achevé 2020-09-26 2020-11-16 2020-11-21 2020-12-04 2021-05-20 2020-12-23
+ GN-WURI - GUINEE-189554-
+GO-RFQ / Acquisition de mat
+eriels et et équipement de co
+mmunication
+IDA / D3260
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori Demande de prix Limited Single Stage - One Envelope 50,000.00 41,856.02 Achevé 2020-09-15 2020-11-02 2020-11-10 2020-11-24 2020-12-10 2021-07-01
+ GN-WURI - GUINEE-188237-
+NC-RFQ / Confection de gadg
+et de communication(teeshirt
+,casquette..) pour la campag
+ne en phase pilote d'enrolle
+ment
+IDA / D3260 Component 3: Facilitating access to services through IDs A posteriori Demande de prix Limited Single Stage - One Envelope 70,000.00 84,422.38 Signé 2020-09-16 2021-07-16 2020-11-11 2021-08-06 2020-12-11 2021-08-27
+ GN-WURI - GUINEE-202256-
+GO-RFQ / Achat de dix (10) o
+rdinateurs pour le nouveau p
+ersonnel du Projet
+IDA / D3260
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori Demande de prix Limited Single Stage - One Envelope 35,000.00 35,905.28 Achevé 2020-11-14 2020-11-09 2021-01-09 2020-11-30 2021-02-08 2020-12-30
+ GN-WURI - GUINEE-229065-
+GO-RFQ / Divers matériels di
+dactiques et infrastructure (li
+cence, serveur, logiciel) et su
+pport de formation
+IDA / 62400
+Component 1: Strengthening
+the legal and institutional en
+abling environment
+A posteriori Demande de prix Limited Single Stage - One Envelope 40,000.00 0.00 En attente d'exécution 2021-05-08 2021-06-28 2021-07-28
+ GN-WURI - GUINEE-229133-
+GO-RFQ / Achat de mobiliers
+et amenagement du local éq
+uipe echnique
+IDA / 62400
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori Demande de prix Limited Single Stage - One Envelope 25,000.00 21,802.79 Achevé 2021-05-08 2021-05-11 2021-06-14 2021-06-07 2021-07-14 2021-07-13
+ GN-WURI - GUINEE-229139-
+GO-RFQ / Confection de gadg
+et de communication(teshirt
+casquettes…….) pour les ca
+mpagnes en phase de consol
+idation 2021
+IDA / D3260
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori Demande de prix Limited Single Stage - One Envelope 70,000.00 69,436.86 Achevé 2021-08-02 2020-10-26 2021-09-27 2020-12-02 2021-11-26 2021-05-26
+ GN-WURI - GUINEE-229150-
+GO-RFB / Acquisition des mat
+ériels et équipements inform
+atiques pour l’opérationnalis
+ation du nom de domaine cc
+TLD .gn et Acquisition d'équi
+pements informatiques et au
+diovisuels pour l'observatoire
+de la sécurité urbaine sur la z
+one spéciale du grand-Conak
+ry
+IDA / D3260 Component 3: Facilitating access to services through IDs A posteriori Appel d'offres Open - National Single Stage - One Envelope 200,000.00 0.00 En attente d'exécution 2021-07-12 2021-07-17 2021-08-28 2021-09-20 2021-10-25 2021-12-24
+ GN-WURI - GUINEE-229153-
+GO-RFQ / Fourniture des équi
+pements au compte du servi
+ce des Fonds de Développem
+ent Social et de la Solidarité
+pour le ciblage
+IDA / D3260 Component 3: Facilitating access to services through IDs A posteriori Demande de prix Limited Single Stage - One Envelope 99,000.00 78,675.93 Signé 2021-05-15 2021-07-16 2021-07-05 2021-08-06 2021-08-04
+ GN-WURI - GUINEE-229155-
+GO-RFQ / Acquisition de mas
+ques et de kits de lavage des
+mains  et autre moyen de pr
+evvention pour 2021
+IDA / D3260 Component 3: Facilitating access to services through IDs A posteriori Demande de prix Limited Single Stage - One Envelope 98,000.00 70,892.10 Achevé 2021-06-19 2021-07-16 2021-08-09 2021-08-06 2021-09-08 2021-08-25Page 3
+ GN-WURI - GUINEE-171810-
+GO-RFB / Acquisition de supp
+orts de communication et de
+visibilité.
+IDA / D3260 Component 3: Facilitating access to services through IDs A posteriori Appel d'offres Open - National Single Stage - One Envelope 220,000.00 0.00 Annulé 2020-07-15 2020-07-20 2020-08-31 2020-09-30 2020-11-04 2020-11-25
+ GN-WURI - GUINEE-117273-
+GO-RFQ / Entretien groupe él
+ectrogène
+IDA / 62400
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori Demande de prix Open - National Single Stage - One Envelope 3,000.00 0.00 Annulé 2019-08-22 2019-10-15 2019-11-14
+ GN-WURI - GUINEE-171900-
+GO-RFQ / Acquisition de 100
+kits d'enrôlement biométriqu
+e des étudiants, encadreurs
+et personnel d'appui des cen
+tres de recherche du Ministèr
+e de l'Enseignement Supérie
+ur et de la Recherche Scientif
+ique.
+IDA / 62400 Component 3: Facilitating access to services through IDs A posteriori Demande de prix Open - National Single Stage - One Envelope 82,000.00 0.00 Annulé 2020-06-13 2020-08-22 2020-10-21
+ GN-WURI - GUINEE-171899-
+GO-RFB / Acquisition d’équip
+ements et  de supports de pr
+oduction des cartes biométri
+ques. Production Carte biom
+étrique pour 75000 étudiants
+(Logiciel+Matériels).
+IDA / D3260
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori Appel d'offres Open - National Single Stage - One Envelope 240,000.00 0.00 Annulé 2020-08-03 2020-08-08 2020-09-19 2020-10-10 2020-11-07 2021-01-06
+ GN-WURI - GUINEE-229148-
+GO-RFQ / Reproduction de pr
+ospectus d'information sur le
+mécanisme de réception et d
+e règlement des plaintes
+IDA / 62400
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori Demande de prix Limited Single Stage - One Envelope 10,000.00 0.00 Annulé 2021-11-01 2021-12-13 2022-01-12
+ GN-WURI - GUINEE-229057-
+GO-RFQ / Repographie de la l
+oi portant sur l'identification
+numerique et les textes d'ap
+plications
+IDA / 62400
+Component 1: Strengthening
+the legal and institutional en
+abling environment
+A posteriori Demande de prix Limited Single Stage - One Envelope 20,000.00 0.00 Annulé 2021-08-21 2021-10-18 2021-11-15
+ GN-WURI - GUINEE-171807-
+GO-RFQ / Acquisition et distri
+bution d’équipements et de s
+upports de production de doc
+uments d’identité.
+IDA / D3260
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori Demande de prix Open - National Single Stage - One Envelope 95,000.00 0.00 Annulé 2020-06-01 2020-07-28 2020-08-27
+ GN-WURI - GUINEE-171898-
+GO-RFB / Achat d'un logiciel
+pour la dématérialisation du
+paiement des bourses d’étud
+es et d’entretien des étudian
+ts : cible 75 573 étudiants.
+IDA / D3260
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori Appel d'offres Open - National Single Stage - One Envelope 122,000.00 0.00 Annulé 2020-07-28 2020-08-02 2020-09-13 2020-10-04 2020-11-08 2021-01-07
+ GN-WURI - GUINEE-229146-
+GO-RFQ / Elaboration de pros
+pectus d'information sur l'enr
+ollement et la délivrence de
+documents d'identité 2021
+IDA / 62400
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori Demande de prix Limited Single Stage - One Envelope 30,000.00 0.00 Annulé 2021-10-03 2021-11-16 2022-01-15
+ GN-WURI - GUINEE-117280-
+GO-RFQ / Acquérir des kits, s
+upports et outils pour l'enrôle
+ment des populations dans le
+s localités pilotes et pour l'int
+eropérabilité avec le système
+pilote.
+IDA / 62400 Component 3: Facilitating access to services through IDs A posteriori Demande de prix Open - National Single Stage - One Envelope 99,000.00 0.00 Annulé 2020-06-22 2020-08-22 2020-10-21
+ GN-WURI - GUINEE-117267-
+GO-RFQ / Acquérir de matéri
+els pour aménager un centre
+de données pilote.
+IDA / 62400
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori Demande de prix Open - National Single Stage - One Envelope 50,000.00 0.00 Annulé 2019-10-21 2019-12-14 2020-01-13
+ GN-WURI - GUINEE-293345-
+GO-RFB / Acquisition d'équip
+ements et matériels pour la
+Mise en place de l'autorité de
+certification
+IDA / 62400
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori Appel d'offres Open - National Single Stage - One Envelope 150,000.00 0.00 En attente d'exécution 2022-09-12 2022-09-19 2022-10-31 2022-11-30 2023-01-04 2023-04-04
+ GN-WURI - GUINEE-293355-
+GO-RFQ / Acquisition de mobi
+liers de bureau et aménagem
+ent du nouveau local de l'Equ
+ipe Technique
+IDA / D3260
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori Demande de prix Limited Single Stage - One Envelope 50,000.00 0.00 En attente d'exécution 2022-06-20 2022-08-08 2022-09-22
+ GN-WURI - GUINEE-293357-
+GO-RFQ / Acquisition de mas
+ques et de kits de lavage des
+mains et autre moyen de pré
+vention pour 2022
+IDA / 62400 Component 3: Facilitating access to services through IDs A posteriori Demande de prix Limited Single Stage - One Envelope 80,000.00 0.00 En attente d'exécution 2022-06-06 2022-07-25 2022-09-08
+ GN-WURI - GUINEE-293714-
+GO-RFB / Recrutement d'un i
+ntégrateur en charge de la fo
+urniture des kits d'enregistre
+ment, licence de déduplicatio
+n, Helpdesk, GED, GRM, etc
+IDA / 62400
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A priori Appel d'offres Open - International Single Stage - One Envelope 20,000,000.00 0.00 En attente d'exécution 2022-05-16 2022-05-23 2022-07-22 2022-08-23 2022-10-04 2024-05-26
+NON CONSULTING SERVICES
+Activity Reference No. /
+Description Loan / Credit No. Component Review Type Method Market Approach Procurement Process Prequalification(Y/N) Estimated Amount (US$) Actual Amount(US$) Process Status Draft Pre-qualificationDocuments Prequalification Evaluation Report  Draft Bidding Document / Justification Specific ProcurementNotice / Invitation Bidding Documents as Issued Proposal Submission /Opening / Minutes Bid Evaluation Reportand Recommendationfor Award Signed Contract Contract Completion
+Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual
+ GN-WURI - GUINEE-117279-
+GO-RFQ / choisir un prestatai
+re pour la Couverture sanitair
+e du personnel
+IDA / 62400
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori Demande de prix Open - National Single Stage - One Envelope 40,000.00 89,842.91 Signé 2019-07-22 2019-09-21 2019-10-18 2020-03-19
+ GN-WURI - GUINEE-117281-
+GO-RFQ / Choisir un prestatai
+re pour l' assurance matériel
+s de bureau
+IDA / 62400
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori Demande de prix Open - National Single Stage - One Envelope 5,000.00 8,346.98 Signé 2019-08-08 2019-10-04 2019-12-17 2020-04-01
+ GN-WURI - GUINEE-117269-
+GO-RFQ / Choisir un prestatai
+re pour la mise  en place du r
+éseau intranet avec ses servi
+ces connexes
+IDA / 62400
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori Demande de prix Open - National Single Stage - One Envelope 20,000.00 19,903.00 Achevé 2019-08-11 2019-10-11 2020-02-03 2020-04-08 2021-04-19
+ GN-WURI - GUINEE-122032-
+NC-RFQ / Choisir un prestatai
+re pour la fourniture d’accès i
+nternet
+IDA / 62400
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori Demande de prix Open - National Single Stage - One Envelope 5,000.00 10,991.33 Signé 2019-07-22 2019-09-21 2020-06-24 2019-09-24
+ GN-WURI - GUINEE-171902-
+NC-RFQ / Recrutement d'une
+société de gardiennage pour
+la sécurité de la campagne .
+IDA / 62400 Component 3: Facilitating access to services through IDs A posteriori Demande de prix Open - National Single Stage - One Envelope 7,000.00 1,321.73 Signé 2020-08-01 2020-10-03 2019-12-30 2021-01-01Page 4
+ GN-WURI - GUINEE-171903-
+NC-RFQ / Recrutement d’un p
+restataire pour la maintenan
+ce (Mise à jour du logiciel et
+des données Gupol MESRS).
+IDA / 62400
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori Demande de prix Open - National Single Stage - One Envelope 12,000.00 0.00 En attente d'exécution 2020-08-01 2020-10-03 2021-04-01
+ GN-WURI - GUINEE-171811-
+GO-RFQ / Recrutement d'un
+prestataire pour la Mise en pl
+ace d'un reseau intranet et in
+terphone du local équipe tec
+hnique.
+IDA / 62400 Component 3: Facilitating access to services through IDs A posteriori Demande de prix Open - National Single Stage - One Envelope 40,000.00 40,592.37 Signé 2020-05-20 2020-07-16 2021-02-22 2020-11-13
+ GN-WURI - GUINEE-171904-
+NC-RFQ / Recrutement d'un p
+restataire de distribution des
+cartes biométriques des étud
+iants.
+IDA / 62400
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori Demande de prix Open - National Single Stage - One Envelope 13,400.00 0.00 Annulé 2020-08-15 2020-10-17 2021-01-15
+ GN-WURI - GUINEE-171806-
+GO-RFQ / Mise en place de ré
+seau intranet (nouveaux bur
+eaux)
+IDA / 62400
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori Demande de prix Open - National Single Stage - One Envelope 40,000.00 0.00 En attente d'exécution 2022-06-11 2022-08-01 2022-09-15
+ GN-WURI - GUINEE-293721-
+NC-RFQ / Conception et prod
+uction d'un film institutionnel
+sur le WURI Guinée
+IDA / D3260 Component 3: Facilitating access to services through IDs A posteriori Demande de prix Limited Single Stage - One Envelope 12,000.00 0.00 En attente d'exécution 2022-05-20 2022-07-15 2022-08-29
+ GN-WURI - GUINEE-293722-
+NC-RFQ / Composition de la c
+hanson officielle de WURI Gui
+née et la réalisation du clip vi
+déo par une maison de produ
+ction spécialisée
+IDA / D3260 Component 3: Facilitating access to services through IDs A posteriori Demande de prix Limited Single Stage - One Envelope 30,000.00 0.00 En attente d'exécution 2022-05-20 2022-07-15 2022-08-29
+CONSULTING FIRMS
+Activity Reference No. /
+Description Loan / Credit No. Component Review Type  Method Market Approach Contract Type Estimated Amount (US$) Actual Amount(US$) Process Status Terms of Reference Expression of InterestNotice Short List and Draft Request for Proposals Request for Proposalsas Issued Opening of TechnicalProposals / Minutes  Evaluation of Technical Proposal Combined EvaluationReport and Draft Negotiated Contract Signed Contract Contract Completion
+Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual
+ GN-WURI - GUINEE-117224-
+CS-CQS / Recrutement d'un c
+abinet pour l'enquête de bas
+e
+IDA / 62400
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori
+Sélection fondée s
+ur les qualification
+s des consultants
+Open - Internationa
+l 300,000.00 0.00 Annulé 2019-08-02 2019-07-29 2019-08-23 2019-10-06 2019-11-05 2019-12-10 2020-01-24
+ GN-WURI - GUINEE-117237-
+CS-CQS / Recrutement d'un c
+abinet pour l'audit externe
+IDA / 62400
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori
+Sélection fondée s
+ur la qualité et le
+coût
+Open - National 30,000.00 12,500.00 Signé 2019-08-25 2019-07-25 2019-09-15 2019-10-29 2019-10-21 2019-11-26 2020-04-10 2019-12-26 2020-04-10 2020-01-30 2020-04-29 2020-03-05 2020-08-17 2021-03-05
+ GN-WURI - GUINEE-117192-
+CS-INDV / Recrutement d'un
+cabinet pour l' audit des syst
+èmes biométriques  fonction
+nels en Guinée
+IDA / 62400
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori
+Sélection fondée s
+ur les qualification
+s des consultants
+Open - Internationa
+l 125,000.00 246,654.97 Signé 2019-08-22 2020-03-17 2019-09-12 2019-10-26 2021-02-08 2019-11-25 2021-04-26 2019-12-30 2021-05-17 2020-06-27
+ GN-WURI - GUINEE-171780-
+CS-CQS / Recrutement d'un c
+abinet  pour la supervision d
+u système d’identification pil
+ote.
+IDA / 62400
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori
+Sélection fondée s
+ur les qualification
+s des consultants
+Open - Internationa
+l 100,000.00 0.00 En cours d'examen 2020-06-17 2020-10-30 2020-07-08 2020-08-06 2020-08-21 2020-09-25 2020-11-09
+ GN-WURI - GUINEE-171896-
+CS-CQS / Recrutement d'un c
+abinet pour  l’enrôlement da
+ns les localités pilotes.
+IDA / 62400
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori
+Sélection fondée s
+ur les qualification
+s des consultants
+Open - Internationa
+l 300,000.00 0.00 En cours d'examen 2020-06-18 2020-10-30 2020-07-09 2020-08-07 2020-08-22 2020-09-26 2020-12-25
+ GN-WURI - GUINEE-171795-
+CS-CQS / Recrutement d'une
+agence de communication po
+ur la mise en œuvre de la tra
+tegie de sensibilisation et de
+communication.
+IDA / 62400 Component 3: Facilitating access to services through IDs A posteriori Sélection fondée sur les qualifications des consultants Open - National 50,000.00 219,065.81 Signé 2020-06-30 2020-06-10 2020-07-21 2020-08-19 2020-09-25 2020-09-18 2021-01-11 2020-10-23 2021-01-25 2021-10-23
+ GN-WURI - GUINEE-117208-
+CS-CQS / Recrutement d'une
+ONG pour l'organisation des
+campagnes de sensibilisation
+/communication dans les loc
+alités pilotes d'identification
+nationale unique
+IDA / D3260
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori
+Sélection fondée s
+ur les qualification
+s des consultants
+Open - National 200,000.00 165,008.73 Signé 2020-06-02 2020-06-11 2020-06-23 2020-08-06 2020-09-30 2020-09-05 2021-02-24 2020-10-10 2021-03-02 2021-01-08
+ GN-WURI - GUINEE-171895-
+CS-QCBS / Recrutement d'un
+e Assistance à la Maitrise d'O
+uvrage.
+IDA / 62400
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A priori
+Sélection fondée s
+ur la qualité et le
+coût
+Open - Internationa
+l 1,500,000.00 0.00 En cours d'exécution 2020-06-30 2020-11-24 2020-07-21 2021-04-19 2020-08-19 2022-04-07 2020-09-28 2020-10-19 2020-11-17 2020-12-31 2021-12-31
+ GN-WURI - GUINEE-189005-
+CS-CQS / Recrutement d'une
+Assistance à la Maitrise d'Ou
+vragepour le court termes
+IDA / D3260
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori
+Sélection fondée s
+ur les qualification
+s des consultants
+Open - Internationa
+l 295,000.00 297,083.00 Signé 2020-10-05 2020-10-09 2020-10-26 2020-12-09 2021-04-27 2021-01-08 2021-07-29 2021-02-12 2021-08-09 2021-11-09
+ GN-WURI - GUINEE-229163-
+CS-QCBS / Etude institutionn
+elle pour la mise en place (i)
+de l’Autorité de mise en œuv
+re et de gestion du système
+d’identification et (ii) d'une A
+gence nationale pour la prote
+ction des données
+IDA / D3260
+Component 1: Strengthening
+the legal and institutional en
+abling environment
+A posteriori
+Sélection fondée s
+ur la qualité et le
+coût
+Open - Internationa
+l 300,000.00 0.00 En cours d'exécution 2021-06-14 2021-05-16 2021-07-05 2021-08-18 2021-09-15 2021-10-15 2021-11-19 2021-12-24 2022-12-24
+ GN-WURI - GUINEE-229251-
+CS-LCS / Recrutement d'un c
+abinet pour l'audit externe p
+our l'exercice 2021-2022
+IDA / 62400
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori Sélection au moindre coût Open - National 25,000.00 0.00 En cours d'examen 2021-06-14 2021-08-09 2021-07-05 2021-08-18 2021-09-15 2021-10-15 2021-11-19 2021-12-24 2023-12-24
+ GN-WURI - GUINEE-117217-
+CS-INDV / Recrutement d'un
+cabinet pour l'étude de mise
+en place d'un centre de donn
+ées sécurisé et de son backu
+p
+IDA / 62400
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori
+Sélection fondée s
+ur les qualification
+s des consultants
+Open - Internationa
+l 150,000.00 0.00 Annulé 2020-08-09 2020-08-30 2020-10-13 2020-11-02 2020-12-07 2021-06-05
+ GN-WURI - GUINEE-117223-
+CS-CQS / Recrutement d'un c
+onsultant ONG/ Cabinet  pour
+la divulgation du plan  d'éval
+uation sociale et de sauvegar
+de
+IDA / D3260
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori
+Sélection fondée s
+ur les qualification
+s des consultants
+Open - National 200,000.00 0.00 Annulé 2020-06-26 2020-06-10 2020-07-17 2020-08-30 2020-09-29 2020-11-03 2021-02-01Page 5
+ GN-WURI - GUINEE-229474-
+CS-CQS / Enquête sur le com
+portement attitude et percep
+tion (CAP) des bénéficiaires p
+our l'intégration de la dimens
+ion sociale dans la phase pilo
+te
+IDA / D3260
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori
+Sélection fondée s
+ur les qualification
+s des consultants
+Open - National 150,000.00 0.00 Annulé 2021-06-21 2021-07-12 2021-08-25 2021-09-24 2021-10-29 2022-04-27
+ GN-WURI - GUINEE-229169-
+CS-CQS / Etude portant sur la
+mise en place d'une autorité
+de certification pour le systè
+me UNIR
+IDA / D3260
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori
+Sélection fondée s
+ur les qualification
+s des consultants
+Open - National 150,000.00 0.00 Annulé 2021-05-31 2021-06-21 2021-08-11 2021-09-01 2021-10-01 2021-11-15
+ GN-WURI - GUINEE-171893-
+CS-CQS / Recrutement d’un c
+abinet pour l'étude du cadre
+organisationnel, financier, ins
+titutionnel de l’Autorité en ch
+arge du système d’identificat
+ion.
+IDA / D3260
+Component 1: Strengthening
+the legal and institutional en
+abling environment
+A posteriori
+Sélection fondée s
+ur les qualification
+s des consultants
+Open - Internationa
+l 150,000.00 0.00 Annulé 2020-05-22 2020-06-12 2020-07-11 2020-07-26 2020-08-24 2020-10-23
+ GN-WURI - GUINEE-229233-
+CS-CQS / Sélection d'une Age
+nce de communication pour l
+a conception des supports de
+communication et l'assistanc
+e à la coordination et à la su
+pervision de la mise en œuvr
+e de la campagne de sensibil
+isation
+IDA / D3260
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori
+Sélection fondée s
+ur les qualification
+s des consultants
+Open - National 150,000.00 0.00 Annulé 2021-09-27 2021-10-18 2021-11-22 2021-12-06 2021-12-27 2022-02-25
+ GN-WURI - GUINEE-115922-
+CS-CQS / Recrutement d'un c
+abinet pour  la revue du cadr
+e juridique, règlementaire et
+techniques des réseaux et sy
+stèmes d’information.
+IDA / D3260
+Component 1: Strengthening
+the legal and institutional en
+abling environment
+A posteriori
+Sélection fondée s
+ur les qualification
+s des consultants
+Open - Internationa
+l 150,000.00 0.00 Annulé 2020-07-21 2020-08-11 2020-09-15 2020-10-15 2020-11-19 2021-01-18
+ GN-WURI - GUINEE-229242-
+CS-QCBS / Recrutement d'un
+consultant intégrateur du sys
+tème
+IDA / D3260
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A priori
+Sélection fondée s
+ur la qualité et le
+coût
+Open - Internationa
+l 3,000,000.00 0.00 Annulé 2021-06-21 2021-07-12 2021-08-25 2021-09-22 2021-10-22 2021-11-26 2021-12-31 2024-06-30
+ GN-WURI - GUINEE-229167-
+CS-CQS / Inventaire complet
+et évaluation des pratiques e
+t systèmes d'enregistrement
+d'état civil physiques et digit
+al existants
+IDA / D3260
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori
+Sélection fondée s
+ur les qualification
+s des consultants
+Open - National 130,000.00 0.00 Annulé 2021-06-04 2021-06-25 2021-08-16 2021-08-30 2021-09-28 2021-12-27
+ GN-WURI - GUINEE-171762-
+CS-CQS / Recrutement d’un c
+abinet pour l'étude du cadre
+organisationnel, financier, ins
+titutionnel de l’Agence Natio
+nale en charge de la protecti
+on des données.
+IDA / D3260
+Component 1: Strengthening
+the legal and institutional en
+abling environment
+A posteriori
+Sélection fondée s
+ur les qualification
+s des consultants
+Open - Internationa
+l 150,000.00 0.00 Annulé 2020-08-10 2020-08-31 2020-09-29 2020-10-14 2020-11-12 2021-01-11
+ GN-WURI - GUINEE-229161-
+CS-CQS / Assistance techniqu
+e à la formation des acteurs
+de la mise en œuvre du systè
+me
+IDA / D3260
+Component 1: Strengthening
+the legal and institutional en
+abling environment
+A posteriori
+Sélection fondée s
+ur les qualification
+s des consultants
+Open - National 50,000.00 0.00 Annulé 2021-07-19 2021-08-02 2021-09-06 2021-09-20 2021-10-25 2021-12-09
+ GN-WURI - GUINEE-171748-
+CS-CQS / Recrutement d’un c
+abinet pour l'élaboration de l
+a stratégie nationale d’identif
+ication et l'actualisation de la
+stratégie des NTIC.
+IDA / D3260
+Component 1: Strengthening
+the legal and institutional en
+abling environment
+A posteriori
+Sélection fondée s
+ur les qualification
+s des consultants
+Open - Internationa
+l 150,000.00 0.00 Annulé 2021-06-01 2021-06-22 2021-08-17 2021-08-31 2021-09-23 2021-11-22
+ GN-WURI - GUINEE-229227-
+CS-CDS / Audit technique co
+mplet de GUILAB
+IDA / D3260
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori
+Sélection fondée s
+ur les qualification
+s des consultants
+Open - National 130,000.00 0.00 Annulé 2021-06-30 2021-07-21 2021-09-03 2021-10-03 2021-11-07 2022-01-06
+ GN-WURI - GUINEE-229223-
+CS-INDV / Etude des centres
+des données en Guinée
+IDA / D3260
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori
+Sélection fondée s
+ur les qualification
+s des consultants
+Open - National 150,000.00 0.00 Annulé 2021-05-31 2021-06-21 2021-08-04 2021-09-03 2021-10-08 2022-01-06
+ GN-WURI - GUINEE-117216-
+CS-INDV / Recrutement d'un
+cabinet pour l'élaboration de
+s protocoles d'échange et d'i
+nteropérabilité entre le systè
+me UNIR et les systèmes fon
+ctionnels existants,
+IDA / D3260
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori
+Sélection fondée s
+ur les qualification
+s des consultants
+Open - Internationa
+l 150,000.00 0.00 Annulé 2020-07-01 2020-07-22 2020-09-04 2020-10-04 2020-11-08 2020-12-23
+ GN-WURI - GUINEE-171809-
+GO-RFQ / Recrutement d'un c
+abinet pour la  communicatio
+n et la  visibilité du program
+me.
+IDA / D3260 Component 3: Facilitating access to services through IDs A posteriori Sélection fondée sur les qualifications des consultants Open - National 95,000.00 0.00 Annulé 2020-06-21 2020-07-12 2020-08-25 2020-09-24 2020-10-29 2021-04-27
+ GN-WURI - GUINEE-293496-
+CS-CQS / Recrutement d'une
+firme de conseil juridique po
+ur soutenir le renforcement d
+u cadre juridique de l'identifi
+cation en Guinée
+IDA / 62400
+Component 1: Strengthening
+the legal and institutional en
+abling environment
+A posteriori
+Sélection fondée s
+ur les qualification
+s des consultants
+Open - National 70,000.00 0.00 En attente d'exécution 2022-06-20 2022-07-11 2022-08-15 2022-09-05 2022-10-10 2022-11-24
+ GN-WURI - GUINEE-293499-
+CS-QCBS / Recrutement d’un
+prestataire de service d’enre
+gistrement biométrique pour
+la plateforme nationale d’ide
+ntification
+IDA / 62400
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A priori
+Sélection fondée s
+ur la qualité et le
+coût
+Open - Internationa
+l 5,000,000.00 0.00 En attente d'exécution 2022-06-13 2022-07-04 2022-08-15 2022-09-29 2022-10-20 2022-11-24 2022-12-29 2023-06-27
+INDIVIDUAL CONSULTANTS
+Activity Reference No. /
+Description Loan / Credit No. Component Review Type  Method Market Approach Contract Type Estimated Amount (US$) Actual Amount(US$) Process Status Terms of Reference Invitation to Identified/Selected Consultant Draft Negotiated Contract Signed Contract Contract Completion
+Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual
+ GN-WURI - GUINEE-122071-
+CS-INDV / Recrutement d'un
+développeur en chef
+IDA / 62400
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori Individuel Open 12,000.00 60,000.00 Signé 2019-07-30 2019-07-29 2019-09-24 2020-01-07 2019-10-15 2020-01-13 2019-11-19 2020-02-28 2020-11-18
+ GN-WURI - GUINEE-122072-
+CS-INDV / Recrutement d'un I
+ngénieur de réseau/sécurité i
+nfrastructure
+IDA / 62400
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori Individuel Open 12,000.00 42,000.00 Signé 2019-07-29 2019-07-29 2019-09-23 2020-01-07 2019-10-14 2020-01-10 2019-11-18 2020-01-28 2020-05-16
+ GN-WURI - GUINEE-122075-
+CS-INDV / Recrutement d'un I
+ngenieur analyste fonctionel
+et test
+IDA / 62400
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori Individuel Open 12,000.00 56,400.00 Signé 2019-07-30 2019-07-29 2019-09-24 2020-01-07 2019-10-15 2020-01-10 2019-11-19 2020-02-28 2020-05-17Page 6
+ GN-WURI - GUINEE-122076-
+CS-INDV / Recrutement d'un I
+ngénieur developpeur interfa
+ce (ergonome)
+IDA / 62400
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori Individuel Open 12,000.00 56,400.00 Signé 2019-07-30 2019-07-29 2019-09-24 2019-12-23 2019-10-15 2019-12-23 2019-11-19 2020-02-28 2020-11-18
+ GN-WURI - GUINEE-122077-
+CS-INDV / Recrutement d'un I
+ngenieur developpeur
+IDA / 62400
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori Individuel Open 12,000.00 52,800.00 Signé 2019-08-05 2019-07-29 2019-09-30 2019-12-23 2019-10-21 2019-12-23 2019-11-25 2020-01-28 2020-05-23
+ GN-WURI - GUINEE-117233-
+CS-INDV / Recrutement d' un
+auditeur interne
+IDA / 62400
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori Individuel Open 9,500.00 2,200.00 Signé 2019-08-15 2019-08-23 2019-10-03 2020-02-26 2019-10-24 2020-03-06 2019-11-28 2020-04-14 2020-11-27
+ GN-WURI - GUINEE-117163-
+CS-INDV / Recrutement d'un
+consultant pour la Revue de l
+'environnement juridique, ré
+glementaire et institutionnel
+de l'identification numérique
+et de la protection des donné
+es
+IDA / 62400
+Component 1: Strengthening
+the legal and institutional en
+abling environment
+A posteriori Individuel Open 51,600.00 44,660.00 Signé 2019-07-30 2019-08-23 2019-09-24 2020-02-24 2019-10-09 2020-03-19 2019-11-03 2020-03-23 2020-01-02
+ GN-WURI - GUINEE-117252-
+CS-INDV / Recrutement d'un
+consultant pour l'élaboration
+de la stratégie de sensibilisat
+ion et de communication
+IDA / 62400 Component 3: Facilitating access to services through IDs A posteriori Individuel Open 51,600.00 39,331.00 Signé 2019-08-30 2019-10-18 2019-10-25 2020-03-11 2019-11-15 2020-03-19 2019-12-20 2020-03-20 2019-12-26
+ GN-WURI - GUINEE-117229-
+CS-INDV / Recrutement du ch
+argé du traitement des récla
+mations
+IDA / 62400
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori Individuel Open 4,400.00 2,200.00 Signé 2019-08-20 2020-02-25 2019-10-08 2021-03-22 2019-10-29 2021-04-15 2019-12-03 2021-04-20 2020-12-02
+ GN-WURI - GUINEE-117221-
+CS-INDV / Recrutement d'un
+consultant pour  l'élaboration
+du mécanisme de gestion de
+s plaintes et réclamations
+IDA / 62400
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori Individuel Open 39,000.00 35,017.00 Signé 2019-07-30 2019-10-18 2019-09-17 2020-02-10 2019-10-08 2020-03-20 2019-11-12 2020-03-20 2019-12-12
+ GN-WURI - GUINEE-122091-
+CS-INDV / Recrutement du ch
+argé des opérations
+IDA / 62400
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori Individuel Open 13,200.00 0.00 Annulé 2019-08-05 2019-08-23 2019-09-30 2019-10-21 2019-11-25 2020-05-23
+ GN-WURI - GUINEE-141721-
+CS-INDV / Recrutement d'un
+chargé de développement so
+ciale
+IDA / 62400 Component 3: Facilitating access to services through IDs A posteriori Individuel Open 26,400.00 33,600.00 Signé 2019-11-20 2019-11-20 2019-12-23 2020-08-24 2020-01-06 2020-09-11 2020-02-10 2020-09-10 2020-08-08
+ GN-WURI - GUINEE-171787-
+CS-CDS / Convention avec G
+UILAB  pour l'hebergement  d
+es serveurs du système d'ide
+ntification.
+IDA / 62400
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori
+Sélection de cons
+ultants par entent
+e directe
+Direct 50,000.00 0.00 En cours d'exécution 2020-07-13 2021-04-16 2020-07-23 2020-09-26 2021-09-26
+ GN-WURI - GUINEE-171788-
+CS-INDV / Recrutement d'un
+Assistant en Passation des m
+archés.
+IDA / 62400
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori Individuel Open 11,700.00 18,000.00 Signé 2020-05-22 2020-06-10 2020-06-25 2020-09-23 2020-07-16 2020-09-23 2020-08-20 2020-10-08 2021-08-20
+ GN-WURI - GUINEE-171789-
+CS-INDV / Recrutement d'un
+(e) Assistant (e) administratif
+(ve)
+IDA / 62400
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori Individuel Open 7,200.00 14,400.00 Signé 2020-05-22 2020-06-10 2020-06-25 2020-10-26 2020-07-16 2020-10-28 2020-08-20 2020-10-28 2021-08-20
+ GN-WURI - GUINEE-171791-
+CS-INDV / Recrutement d'un
+Secrétaire pour l’équipe tech
+nique du Projet
+IDA / 62400
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori Individuel Open 4,900.00 9,000.00 Signé 2020-06-08 2020-06-10 2020-07-12 2020-08-28 2020-08-02 2020-09-15 2020-09-06 2020-09-14 2021-09-06
+ GN-WURI - GUINEE-171792-
+CS-INDV / Recrutement d'un
+planton pour le Projet.
+IDA / 62400
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori Individuel Open 3,000.00 500.00 Signé 2020-06-08 2020-06-10 2020-07-12 2020-08-28 2020-08-02 2020-09-14 2020-09-06 2020-09-14 2021-09-06
+ GN-WURI - GUINEE-171892-
+CS-CDS / Recrutement d'un i
+ngénieur des opérations pour
+l'équipe technique du Progra
+mme WURI.
+IDA / 62400
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori Individuel Open 36,000.00 2,600.00 Signé 2020-06-21 2020-06-11 2020-07-26 2020-08-24 2020-08-16 2020-09-15 2020-09-14 2020-09-17 2021-09-09
+ GN-WURI - GUINEE-177974-
+CS-CDS / Recrutement de Mr
+AYINDO Itchi pour actualisati
+on du PPSD et du PTBA 2020
+du programme WURI
+IDA / 62400 Component 3: Facilitating access to services through IDs A posteriori Sélection de consultants par entente directe Direct 20,000.00 22,164.81 Signé 2020-06-14 2020-06-10 2020-06-24 2020-06-29 2020-07-14 2020-06-30 2020-08-13
+ GN-WURI - GUINEE-177990-
+CS-CDS / Recrutement de l'In
+stitut national de la statistiqu
+e par entente directe pour fai
+re l'évaluation d'impact du pr
+ogramme
+IDA / 62400
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A priori
+Sélection de cons
+ultants par entent
+e directe
+Direct 1,000,000.00 0.00 En cours d'examen 2020-06-14 2020-07-21 2020-06-24 2020-08-12 2020-08-07 2021-02-03
+ GN-WURI - GUINEE-181287-
+CS-INDV / Recrutement d'un
+directeur des opérations du p
+rogramme  WURI
+IDA / D3260
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori Individuel Open 17,500.00 2,900.00 Signé 2020-07-13 2020-07-23 2020-08-31 2020-01-08 2020-09-21 2021-03-04 2020-10-26 2021-03-04 2021-10-26
+ GN-WURI - GUINEE-223772-
+CS-INDV / Recrutement d'un
+Spécialiste en Suivi et Evalua
+tion du Programme WURI
+IDA / D3210 Component 3: Facilitating access to services through IDs A posteriori Individuel Open 30,000.00 30,000.00 Signé 2021-03-16 2021-05-16 2021-05-04 2022-04-01 2021-05-25 2022-04-05 2021-06-29 2022-04-05 2024-06-13
+ GN-WURI - GUINEE-234911-
+CS-INDV / RECRUTEMENT D’U
+N (01) EXPERT JURISTE SENI
+OR EN DROIT PUBLIC POUR L’
+ASSISTANCE AU COMITÉ D’E
+XPERTS JURISTES DANS LE C
+ADRE DE L’ÉLABORATION ET
+DE LA VALIDATION DU PROJE
+T DE LOI SUR LE SYSTÈME D’I
+DENTIFICATION DE BASE EN
+GUINEE (LOI fID)
+IDA / 62400
+Component 1: Strengthening
+the legal and institutional en
+abling environment
+A posteriori Individuel Open 20,000.00 15,986.00 Signé 2021-06-01 2021-06-01 2021-07-11 2021-07-16 2021-08-01 2021-08-03 2021-09-05 2021-08-03 2021-11-04
+ GN-WURI - GUINEE-234914-
+CS-INDV / RECRUTEMENT D’U
+N (01) EXPERT JURISTE SENI
+OR PRINCIPAL POUR L’ASSIST
+ANCE AU COMITÉ D’EXPERTS
+JURISTES DANS LE CADRE DE
+L’ÉLABORATION ET DE LA VA
+LIDATION DU PROJET DE LOI
+SUR LE SYSTÈME D’IDENTIFIC
+ATION DE BASE EN GUINEE (
+LOI fID)
+IDA / 62400
+Component 1: Strengthening
+the legal and institutional en
+abling environment
+A posteriori Individuel Open 20,000.00 19,285.00 Signé 2021-06-01 2021-06-01 2021-07-11 2021-07-16 2021-08-01 2021-08-02 2021-09-05 2021-08-02 2021-11-04Page 7
+ GN-WURI - GUINEE-234916-
+CS-INDV / RECRUTEMENT D’U
+N (01) EXPERT JURISTE SENI
+OR DES TELECOMS POUR L’A
+SSISTANCE AU COMITÉ D’EXP
+ERTS JURISTES DANS LE CAD
+RE DE L’ÉLABORATION ET DE
+LA VALIDATION DU PROJET D
+E LOI SUR LE SYSTÈME D’IDE
+NTIFICATION DE BASE EN GUI
+NEE (LOI fID)
+IDA / 62400
+Component 1: Strengthening
+the legal and institutional en
+abling environment
+A posteriori Individuel Open 20,000.00 15,986.00 Signé 2021-05-31 2021-06-01 2021-07-10 2021-07-16 2021-07-31 2021-08-02 2021-09-04 2021-08-02 2021-11-03
+ GN-WURI - GUINEE-288737-
+CS-CDS / RECRUTEMENT D’U
+N CONSULTANT (CABINET) P
+OUR L’AUDIT FINANCIER ET C
+OMPTABLE DU PROJET WURI
+POUR L'EXERCICE 2021
+IDA / 62400
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori
+Sélection de cons
+ultants par entent
+e directe
+Direct 12,000.00 0.00 En cours d'exécution 2022-04-20 2022-04-06 2022-04-29 2022-05-25 2022-07-09
+ GN-WURI - GUINEE-288742-
+CS-INDV / RECRUTEMENT D’U
+N SPÉCIALISTE EN MECANISM
+E DE GESTION DES PLAINTES
+IDA / 62400
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori Individuel Limited 25,000.00 0.00 En cours d'exécution 2022-04-15 2022-04-06 2022-04-20 2022-05-11 2022-06-08 2022-08-08
+ GN-WURI - GUINEE-188225-
+CS-INDV / Recutements de 4
+chauffeurs pour l'enrolement
+et l'AMOA
+IDA / D3260 Component 3: Facilitating access to services through IDs A posteriori Individuel Limited 14,000.00 0.00 Annulé 2020-08-31 2020-10-09 2020-09-05 2020-09-26 2020-10-31 2021-10-26
+ GN-WURI - GUINEE-122069-
+CS-INDV / Recrutement d'un
+chef de projet
+IDA / 62400
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori Individuel Open 13,200.00 0.00 Annulé 2019-07-30 2019-07-29 2019-09-24 2019-10-15 2019-11-19 2020-11-18
+ GN-WURI - GUINEE-171814-
+CS-INDV / Recrutement de de
+ux (2) ingénieurs tests du Pro
+gramme WURI
+IDA / 62400
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori Individuel Open 59,500.00 0.00 Annulé 2020-05-29 2021-10-20 2020-07-02 2020-07-23 2020-08-27 2021-08-27
+ GN-WURI - GUINEE-229172-
+CS-INDV / Etude d'identificati
+on des exigences et protocol
+es en vigueur dans les pays
+membres de la CEDEAO pour
+la libre circulation des person
+nes
+IDA / D3260
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori Individuel Open 50,000.00 0.00 Annulé 2021-09-30 2021-11-16 2021-12-07 2021-12-28 2022-01-27
+ GN-WURI - GUINEE-189557-
+GO-RFQ / Mise en place d'un
+systeme d'information des O
+PA
+IDA / D3260
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori Individuel Open 20,000.00 0.00 Annulé 2020-09-28 2020-11-16 2020-12-07 2021-01-11 2021-02-10
+ GN-WURI - GUINEE-117215-
+CS-CDS / Mise en place du pa
+rtenariat avec l'équipe MOSIP
+pour l'implémentation du sys
+tème d'identification UNIR
+IDA / 62400
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori
+Sélection de cons
+ultants par entent
+e directe
+Direct 100,000.00 0.00 Annulé 2021-05-31 2021-06-14 2021-07-26 2022-07-26
+ GN-WURI - GUINEE-171766-
+CS-INDV / Etude portant sur l
+a viabilité financière des syst
+èmes d'identification et d'ém
+ission de titres d'identité (éla
+boration d'un plan d'affaire p
+our le financement durable
+IDA / 62400
+Component 1: Strengthening
+the legal and institutional en
+abling environment
+A posteriori Individuel Open 150,000.00 0.00 Annulé 2020-08-17 2020-09-20 2020-10-05 2020-11-03 2020-12-18
+ GN-WURI - GUINEE-171905-
+CS-INDV / Recrutement d’un
+consultant pour élaborer la st
+ratégie nationale de sécurisa
+tion et traçabilité des diplôm
+es.
+IDA / 62400
+Component 1: Strengthening
+the legal and institutional en
+abling environment
+A posteriori Individuel Open 60,000.00 0.00 Annulé 2020-10-26 2020-12-05 2020-12-26 2021-01-30 2021-04-30
+ GN-WURI - GUINEE-171779-
+CS-INDV / Elaboration du Ma
+nuel de Procédures administr
+atives et techniques à l'usag
+e des utilisateurs
+IDA / 62400
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori Individuel Open 50,000.00 0.00 Annulé 2021-05-31 2021-07-12 2021-07-26 2021-08-16 2021-09-30
+ GN-WURI - GUINEE-171770-
+CS-INDV / Recrutement d’un
+consultant pour l’élaboration
+de la loi portantant sur l'iden
+tification numerique et les te
+xtes d'applications.
+IDA / 62400
+Component 1: Strengthening
+the legal and institutional en
+abling environment
+A posteriori Individuel Open 60,000.00 0.00 Annulé 2020-08-17 2020-09-06 2020-09-07 2020-09-29 2020-11-13
+ GN-WURI - GUINEE-229235-
+CS-INDV / Consultant pour l'a
+ssistance à la gestion et au r
+èglement des plaintes et récl
+amations
+IDA / D3260
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori Individuel Open 60,000.00 0.00 Annulé 2021-06-10 2021-07-20 2021-08-03 2021-08-31 2021-10-30
+ GN-WURI - GUINEE-229471-
+CS-INDV / Mécanisme d’élabo
+ration et de validation du Pro
+jet de la Loi flD et ses textes
+d’application
+IDA / D3260
+Component 1: Strengthening
+the legal and institutional en
+abling environment
+A posteriori Individuel Open 50,000.00 0.00 Annulé 2021-07-12 2021-08-15 2021-09-05 2021-10-10 2022-01-08
+ GN-WURI - GUINEE-293736-
+CS-INDV / Recrutement d'un
+Consultant pour l'élaboration
+et reprographie d'un (1) Guid
+e d'Utilisation et de Protectio
+n du Numérique en Guinée
+IDA / 62400
+Component 2: Establishing r
+obust and inclusive foundati
+onal ID systems
+A posteriori Individuel Open 60,000.00 0.00 En attente d'exécution 2022-06-20 2022-08-08 2022-08-29 2022-10-03 2022-11-17

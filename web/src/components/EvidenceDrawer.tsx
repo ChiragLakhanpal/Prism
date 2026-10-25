@@ -7,6 +7,8 @@
 // was opened from and a switcher for that sentence's other sources; the paragraph with the matching
 // words highlighted under its meta line; and a link to the page in the World Bank's PDF. A source the
 // stream sent opens at once; one opened from a link is read from GET /api/evidence.
+import { Lang } from "./Lang";
+import { ENGLISH, workingLanguage } from "../lib/lang";
 import { Fragment, useEffect, useId, useLayoutEffect, useRef, useState, type KeyboardEvent, type ReactNode, type RefObject } from "react";
 import { ChevronLeft, X } from "lucide-react";
 import { copy } from "../copy";
@@ -223,7 +225,7 @@ function RowCells({ fields, ranges }: { fields: ReturnType<typeof passageFields>
           <th scope="col">{copy.evidence.rowValue}</th>
         </tr>
       </thead>
-      <tbody lang={fields.lang ?? undefined}>
+      <Lang as="tbody" code={fields.lang}>
         {fields.cells.map(([label, value], index) => (
           <tr key={index} className="border-t border-line first:border-t-0 align-top">
             <th scope="row" className="w-2/5 py-2 pr-3 text-left font-semibold text-ink">
@@ -234,7 +236,7 @@ function RowCells({ fields, ranges }: { fields: ReturnType<typeof passageFields>
             </td>
           </tr>
         ))}
-      </tbody>
+      </Lang>
     </table>
   );
 }
@@ -256,6 +258,7 @@ function PassageView({ evidence, sentence, fromAnswer, given = null }: { evidenc
   const shared = why ? why.mentions.map((mention) => [mention.start, mention.end] as [number, number]) : [];
   const quoted = highlightsFor(evidence, sentence);
   const ranges = given ?? (quoted.length > 0 || fromAnswer ? quoted : shared);
+  const working = useStore(workingLanguage)?.code ?? ENGLISH;
   const pdf = fields.pdfUrl && fields.page ? pdfPageHref(fields.pdfUrl, fields.page) : null;
   // Ticket 21: "Open at page N" opens the in-app source view at the page, in the same tab, with the
   // paragraph highlighted, or the passage when it has no paragraph number. The PDF link lives there.
@@ -293,12 +296,23 @@ function PassageView({ evidence, sentence, fromAnswer, given = null }: { evidenc
         {row ? (
           <RowCells fields={fields} ranges={ranges} />
         ) : (
-          <p data-passage data-kind={fields.kind} lang={fields.lang ?? undefined} className="max-w-prose p-4 text-body text-ink">
+          <Lang as="p" code={fields.lang} data-passage data-kind={fields.kind} className="max-w-prose p-4 text-body text-ink">
             {notice ? withoutMarkers(highlighted(fields.text, ranges, true)) : highlighted(fields.text, ranges, true)}
-          </p>
+          </Lang>
         )}
       </div>
-      {note && <p className="text-caption text-ink-muted">{note}</p>}
+      {note && (
+        <p className="text-caption text-ink-muted">
+          {note}
+          {/* A passage in another language than yours: I never translate a source (the 42 brief, section 5.7). */}
+          {fields.lang && fields.lang !== working && (
+            <>
+              {" "}
+              {copy.evidence.ownLanguage}
+            </>
+          )}
+        </p>
+      )}
       {why && <WhyThisSource why={why} />}
       {notice && fields.noticeUrl ? (
         <p>
@@ -730,14 +744,15 @@ export function EvidenceDrawerView({
           {claim && (
             <div data-claim>
               <p className="text-caption text-ink-muted">{copy.evidence.fromAnswer}</p>
-              <p className="mt-1 border-l-2 border-line-strong pl-3 text-small text-ink">
+              {/* The claim is in the answer's language, and its source number in the copy file's English (ticket 42). */}
+              <Lang as="p" code={run?.lang ?? null} className="mt-1 border-l-2 border-line-strong pl-3 text-small text-ink">
                 {claim.text}
                 {numbering.get(id) && (
-                  <span className="ml-1 inline-flex align-[1px]">
+                  <Lang code="en" className="ml-1 inline-flex align-[1px]">
                     <SourceNumber n={numbering.get(id)!} />
-                  </span>
+                  </Lang>
                 )}
-              </p>
+              </Lang>
             </div>
           )}
           {/* A timeline's event mark: "From the timeline" and the event, above the passage that dates it (ticket 23). */}

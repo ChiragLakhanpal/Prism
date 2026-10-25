@@ -219,10 +219,12 @@ test("the view popover says who is signed in and which view this is", async ({ p
 
   await page.getByRole("button", { name: "View: World Bank staff" }).click();
 
-  await expect(page.getByRole("dialog", { name: "Your view" })).toHaveText(
+  // The lines about who is viewing come first; the language of answers and drafts follows them (ticket 42).
+  await expect(page.getByRole("dialog", { name: "Your view" }).locator("[data-view-popover]")).toHaveText(
     "Signed in as ana.example@worldbank.orgYou are seeing the World Bank staff view." +
       "Previews of what an implementing agency officer or the public sees are not ready yet.",
   );
+  await expect(page.getByRole("dialog", { name: "Your view" }).getByRole("group")).toHaveAccessibleName("Language of answers and drafts");
 });
 
 test("Tab in the view popover closes it and moves on to the box; Shift+Tab closes it and returns to the pill", async ({ page }) => {
@@ -233,6 +235,9 @@ test("Tab in the view popover closes it and moves on to the box; Shift+Tab close
 
   await pill.click();
   await expect(page.getByRole("dialog", { name: "Your view" })).toBeVisible();
+  // The language group is the popover's one tab stop (ticket 42); the next Tab leaves the popover.
+  await page.keyboard.press("Tab");
+  await expect(page.getByRole("radio", { name: /^English/ })).toBeFocused();
   await page.keyboard.press("Tab");
 
   await expect(page.locator("[data-box-band]").getByRole("combobox")).toBeFocused();

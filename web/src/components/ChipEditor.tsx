@@ -53,7 +53,7 @@ function optionsFor(field: FormField, form: PackageForm, typed: string): Option[
     .filter((option) => !text || option.label.toLowerCase().includes(text) || option.value.toLowerCase().includes(text))
     .map((option) => ({ value: option.value, label: option.label, send: option.value }));
   // An old method name lists the method it is now, sent as typed, so the server also sets its market approach.
-  const old = field.aliases ? form.aliases[typed.trim().replace(/\s+/g, " ").toUpperCase()] : undefined;
+  const old = field.aliases ? form.aliases[typed.trim().replace(/\s+/g, " ").replace(/[\u2018\u2019]/g, "'").toUpperCase()] : undefined;
   if (old) {
     const now = field.options.find((option) => option.value === old.method);
     if (now) return [{ value: now.value, label: now.label, caption: words.oldName(typed.trim()), send: typed.trim() }, ...listed.filter((one) => one.value !== now.value)];

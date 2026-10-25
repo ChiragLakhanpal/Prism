@@ -67,7 +67,9 @@ JOB = "nightly"  # the job's key under resources.jobs in the bundle
 RUN_LOGS = ("strata.ops.pipeline_runs", "strata.ops.quality_checks", "strata.ops.data_readiness",
             "strata.ops.table_sizes", "strata.ops.readiness_snapshot", "strata.ops.parse_runs",
             "strata.ops.documents_read", "strata.ops.stress_shelf", "strata.ops.rebidding_labels",
-            "strata.ops.supplier_match_quality", "strata.ops.evaluation_result", "strata.gold.time_estimate_score")
+            "strata.ops.supplier_match_quality", "strata.ops.evaluation_result", "strata.gold.time_estimate_score",
+            # Each document run's sample of passages checked against the language detector (ticket 42).
+            "strata.ops.passage_language_checks")
 
 # Where a source's pages come from: the live API on the workspace, the recorded fixture here.
 Fetch = Callable[[Source, Engine], Iterable[pages.Page]]

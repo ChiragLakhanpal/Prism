@@ -360,7 +360,7 @@ const queryKey = (pkg: PlannedPackage) => (pkg.comparables_query ? JSON.stringif
 // An old method name such as ICB, only for a field that takes them: typed as a description, it is just words.
 function aliasOf(form: PackageForm, change: Change) {
   if (change.action !== "set" || !form.fields.find((one) => one.key === change.field)?.aliases) return undefined;
-  return form.aliases[String(change.value ?? "").trim().replace(/\s+/g, " ").toUpperCase()];
+  return form.aliases[String(change.value ?? "").trim().replace(/\s+/g, " ").replace(/[\u2018\u2019]/g, "'").toUpperCase()];
 }
 
 function applied(pkg: PlannedPackage, form: PackageForm, change: Change): PlannedPackage {

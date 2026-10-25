@@ -29,6 +29,8 @@ import decimal
 import re
 from dataclasses import dataclass
 
+from strata.config import MethodName, load_method_names
+
 # ── Text and amounts ─────────────────────────────────────────────────────
 
 # How a source writes an empty field in words: the awards since FY2020 write the word null for a
@@ -251,27 +253,62 @@ class Method:
     market_approach: str | None  # what the old name says about the market approach, in STEP's words
 
 
-# Old names (before the July 2016 Procurement Regulations), by code and by name, and what each is now.
-OLD_METHODS = {
-    "ICB": Method("Request for Bids", "Open - International"),
-    "INTERNATIONAL COMPETITIVE BIDDING": Method("Request for Bids", "Open - International"),
-    "NCB": Method("Request for Bids", "Open - National"),
-    "NATIONAL COMPETITIVE BIDDING": Method("Request for Bids", "Open - National"),
-    "LIB": Method("Request for Bids", "Limited - International"),
-    "LIMITED INTERNATIONAL BIDDING": Method("Request for Bids", "Limited - International"),
-    "SHOPPING": Method("Request for Quotations", None),
-    "NATIONAL SHOPPING": Method("Request for Quotations", "Limited - National"),
-    "INTERNATIONAL SHOPPING": Method("Request for Quotations", "Limited - International"),
-    "DC": Method("Direct Selection", "Direct"),
-    "DIRECT CONTRACTING": Method("Direct Selection", "Direct"),
-}
+# Every name a source writes for a method other than the current one, by code and by name, and what each is now:
+# the names before the July 2016 Procurement Regulations, the French plan template's and STEP's French names
+# (config/method_names.toml, ticket 42). Matching ignores case, runs of spaces and curly apostrophes.
+METHOD_NAMES = load_method_names()
+
+
+def method_key(text) -> str:
+    """A method name as the registry matches it: upper case, apostrophes straight, each run of spaces one."""
+    return re.sub(r"\s+", " ", str(text).replace("\u2019", "'").replace("\u2018", "'")).strip().upper()
+
+
+def _other_names() -> dict[str, MethodName]:
+    return {method_key(entry.written): entry for entry in METHOD_NAMES.names}
+
+
+def old_methods() -> dict[str, Method]:
+    """Every other name, by its key, with the current method it stands for: the package form's method chip takes
+    them too (src/strata/packages/form.py)."""
+    return {key: Method(entry.method, entry.market_approach) for key, entry in _other_names().items()}
+
+
+OLD_METHODS = old_methods()
 
 
 def method(code=None, name=None) -> Method | None:
-    """The current method for a code or name as a source writes it. A current name passes through."""
+    """The current method for a code or name as a source writes it. A current name, or one the registry does not
+    list, passes through as written: the awards and notices keep their own words beside it."""
+    names = _other_names()
     for key in (code, name):
-        if key and re.sub(r"\s+", " ", str(key)).strip().upper() in OLD_METHODS:
-            return OLD_METHODS[re.sub(r"\s+", " ", str(key)).strip().upper()]
+        if key and method_key(key) in names:
+            found = names[method_key(key)]
+            return Method(found.method, found.market_approach)
     if name and str(name).strip():
         return Method(re.sub(r"\s+", " ", str(name)).strip(), None)
     return None
+
+
+@dataclass(frozen=True)
+class MethodReading:
+    """A plan's Method cell, read: the current name, the plan's own words and their language, and whether the
+    words were mapped (True), already the current name (False), or a name the registry does not list (None),
+    which keeps the plan's words and gets a Data note."""
+
+    name: str
+    original: str
+    language: str | None
+    mapped: bool | None
+
+
+def read_method(text: str) -> MethodReading:
+    """A plan's Method cell as the current Procurement Regulations' name, beside the words the plan used."""
+    written = re.sub(r"\s+", " ", str(text)).strip()
+    current = {re.sub(r"\s+", "", name).lower(): name for name in METHOD_NAMES.current}
+    if re.sub(r"\s+", "", written).lower() in current:  # a PDF cell drops the space where it wraps
+        return MethodReading(current[re.sub(r"\s+", "", written).lower()], written, "en", False)
+    found = _other_names().get(method_key(written))
+    if found is not None:
+        return MethodReading(found.method, written, found.language, True)
+    return MethodReading(written, written, None, None)

@@ -14,6 +14,7 @@
 // with none asked, a corrected address, a page not read, a page with no text, front matter, a document not
 // read, not found, ambiguous, not public by the as-of date, a service that didn't answer, and an account
 // that can't read Strata's tables.
+import { Lang } from "../components/Lang";
 import { useEffect, useId, useLayoutEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Alert } from "../components/Alert";
@@ -208,9 +209,9 @@ export function Passages({ answer, blockRef }: { answer: SourcePageAnswer; block
         section = passage.section_path ?? section;
         const id = passage.numbered ? `para-${passage.paragraph}` : `passage-${passage.passage_id}`;
         const text = (
-          <p id={id} lang={passage.language ?? undefined} className="text-body wrap-anywhere text-ink" data-passage-id={passage.passage_id}>
+          <Lang as="p" code={passage.language} className="text-body wrap-anywhere text-ink" data-passage-id={passage.passage_id} id={id}>
             {linkProjectIds(drawable(passage.text))}
-          </p>
+          </Lang>
         );
         const marked = highlight?.passage_id === passage.passage_id;
         return (

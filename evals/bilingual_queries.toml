@@ -1,0 +1,268 @@
+# The bilingual query set, for retrieval across languages (ticket 42; spec story 49): English queries whose answers
+# are in a French completion report, and French queries whose answers are in an English one. The weekly retrieval
+# run builds it into the labeled set (strata.ops.retrieval_labels) as two evaluation sets of its own, and the
+# retrieval evaluation (src/strata/estimates/retrieval.py) stores each set's recall at 20, precision at 10 and nDCG
+# at 10 in strata.ops.evaluation_result under the set's name, as it does for the other evaluation sets.
+#
+# bilingual_en_fr   English queries over the French ICR of Haiti's Rebuilding Energy Infrastructure and Access
+#                   Project (P127203, ICR4990, documents API id 33407968), the stress shelf's report in another
+#                   language (config/slice.toml)
+# bilingual_fr_en   French queries over the English ICR of the India Rajasthan Road Sector Modernization Project
+#                   (P130164, documents API id 31525018), the reverse
+#
+# The builder wrote these queries on October 25, 2026, reading each labeled paragraph in its own language, as a
+# specialist planning similar work would ask. The labels are a builder's, not two query judges': two people who
+# read both languages should check them before the set's numbers go in the proposal (a parked decision).
+#
+# Offline, the fixture search reads hashed words, not meanings, so an English query rarely shares words with a
+# French paragraph, and its recall at 20 shows only that the harness computes and stores the number: it is never a
+# finding. The finding comes from text-embedding-3-large on AI Search: ops/retrieval/evaluate_live.py --env-file
+# .env stores it.
+#
+# [[query]]
+#   id          a short id of its own, which never changes
+#   set         bilingual_en_fr or bilingual_fr_en
+#   text        the query, in English for bilingual_en_fr and in French for bilingual_fr_en
+#   project_id  the project the query is about, which its search keeps to
+#   date        the query's date: the day after its report became public, the first day a search can find it
+#   relevant    the passages that answer it, by passage id, each with its grade: 2 answers it, 1 partly
+
+[[query]]
+id = "enfr-procurement-delays"
+set = "bilingual_en_fr"
+text = "What delayed the launch of project activities, the bidding documents and the procurement processes?"
+project_id = "P127203"
+date = 2021-09-14
+relevant = { "33407968/v1/60" = 2, "33407968/v1/84" = 1, "33407968/v1/83" = 1 }
+
+[[query]]
+id = "enfr-restructurings-closing-date"
+set = "bilingual_en_fr"
+text = "How many times was the project restructured, and how far was its closing date extended?"
+project_id = "P127203"
+date = 2021-09-14
+relevant = { "33407968/v1/59" = 2, "33407968/v1/27" = 1, "33407968/v1/28" = 1, "33407968/v1/23" = 1 }
+
+[[query]]
+id = "enfr-grant-cancellations"
+set = "bilingual_en_fr"
+text = "How much of the IDA grant was canceled when the project was restructured?"
+project_id = "P127203"
+date = 2021-09-14
+relevant = { "33407968/v1/30" = 2, "33407968/v1/28" = 2 }
+
+[[query]]
+id = "enfr-procurement-ratings"
+set = "bilingual_en_fr"
+text = "Were there procurement compliance issues, and how was procurement rated during implementation?"
+project_id = "P127203"
+date = 2021-09-14
+relevant = { "33407968/v1/102" = 2 }
+
+[[query]]
+id = "enfr-economic-return"
+set = "bilingual_en_fr"
+text = "What was the economic net present value and economic internal rate of return at completion?"
+project_id = "P127203"
+date = 2021-09-14
+relevant = { "33407968/v1/56" = 2, "33407968/v1/annex4.10" = 1 }
+
+[[query]]
+id = "enfr-financial-return"
+set = "bilingual_en_fr"
+text = "What was the financial internal rate of return of the project?"
+project_id = "P127203"
+date = 2021-09-14
+relevant = { "33407968/v1/58" = 2 }
+
+[[query]]
+id = "enfr-political-instability"
+set = "bilingual_en_fr"
+text = "How did political instability and insecurity in Haiti slow down implementation?"
+project_id = "P127203"
+date = 2021-09-14
+relevant = { "33407968/v1/77" = 2, "33407968/v1/78" = 1, "33407968/v1/114" = 1 }
+
+[[query]]
+id = "enfr-lessons-fragile-settings"
+set = "bilingual_en_fr"
+text = "What lessons did the completion report draw about sector reform in fragile and conflict-affected settings?"
+project_id = "P127203"
+date = 2021-09-14
+relevant = { "33407968/v1/115" = 2, "33407968/v1/116" = 2, "33407968/v1/117" = 1, "33407968/v1/119" = 1 }
+
+[[query]]
+id = "enfr-hurricane-matthew"
+set = "bilingual_en_fr"
+text = "How did Hurricane Matthew affect the project, and was the emergency component triggered?"
+project_id = "P127203"
+date = 2021-09-14
+relevant = { "33407968/v1/86" = 2, "33407968/v1/51" = 2 }
+
+[[query]]
+id = "enfr-covid"
+set = "bilingual_en_fr"
+text = "What effect did the COVID-19 pandemic have on the project before closing?"
+project_id = "P127203"
+date = 2021-09-14
+relevant = { "33407968/v1/87" = 2, "33407968/v1/53" = 2 }
+
+[[query]]
+id = "enfr-direct-beneficiaries"
+set = "bilingual_en_fr"
+text = "How many direct beneficiaries did the project reach against its target?"
+project_id = "P127203"
+date = 2021-09-14
+relevant = { "33407968/v1/48" = 2, "33407968/v1/50" = 1, "33407968/v1/s58" = 1 }
+
+[[query]]
+id = "enfr-drouet-hydropower"
+set = "bilingual_en_fr"
+text = "Why was the rehabilitation of the Drouet micro hydropower plant delayed?"
+project_id = "P127203"
+date = 2021-09-14
+relevant = { "33407968/v1/84" = 2, "33407968/v1/27" = 1, "33407968/v1/100" = 1 }
+
+[[query]]
+id = "enfr-results-framework"
+set = "bilingual_en_fr"
+text = "What were the weaknesses of the project's results framework and its key indicators?"
+project_id = "P127203"
+date = 2021-09-14
+relevant = { "33407968/v1/76" = 2, "33407968/v1/88" = 2, "33407968/v1/92" = 1, "33407968/v1/121" = 1 }
+
+[[query]]
+id = "enfr-safeguards-supervision"
+set = "bilingual_en_fr"
+text = "Who supervised environmental and social safeguards, and what delays did that cause?"
+project_id = "P127203"
+date = 2021-09-14
+relevant = { "33407968/v1/97" = 2, "33407968/v1/96" = 1, "33407968/v1/95" = 1 }
+
+[[query]]
+id = "enfr-gender-based-violence"
+set = "bilingual_en_fr"
+text = "Was a case of gender-based violence reported in connection with a subproject?"
+project_id = "P127203"
+date = 2021-09-14
+relevant = { "33407968/v1/98" = 2, "33407968/v1/99" = 1 }
+
+[[query]]
+id = "enfr-revenue-collection"
+set = "bilingual_en_fr"
+text = "Did the project improve the utility EDH's revenue collection, and did the gains last?"
+project_id = "P127203"
+date = 2021-09-14
+relevant = { "33407968/v1/46" = 2, "33407968/v1/44" = 1, "33407968/v1/47" = 1 }
+
+[[query]]
+id = "enfr-bank-supervision"
+set = "bilingual_en_fr"
+text = "How many supervision missions did the World Bank team carry out, and how was the quality of supervision rated?"
+project_id = "P127203"
+date = 2021-09-14
+relevant = { "33407968/v1/106" = 2, "33407968/v1/109" = 2, "33407968/v1/107" = 1, "33407968/v1/108" = 1 }
+
+[[query]]
+id = "enfr-risk-mitigation"
+set = "bilingual_en_fr"
+text = "Were the risk mitigation measures adequate for the implementation problems the project faced?"
+project_id = "P127203"
+date = 2021-09-14
+relevant = { "33407968/v1/81" = 2, "33407968/v1/75" = 2 }
+
+[[query]]
+id = "enfr-maintenance-solar-lighting"
+set = "bilingual_en_fr"
+text = "Is the maintenance of the solar street lighting financed by the project at risk after closing?"
+project_id = "P127203"
+date = 2021-09-14
+relevant = { "33407968/v1/113" = 2, "33407968/v1/112" = 1 }
+
+[[query]]
+id = "enfr-renewable-energy"
+set = "bilingual_en_fr"
+text = "What solar and renewable energy investments did the project finance, such as a solar plant with battery storage?"
+project_id = "P127203"
+date = 2021-09-14
+relevant = { "33407968/v1/71" = 2, "33407968/v1/66" = 1, "33407968/v1/120" = 1 }
+
+[[query]]
+id = "enfr-development-objective"
+set = "bilingual_en_fr"
+text = "What was the project development objective, and did it change?"
+project_id = "P127203"
+date = 2021-09-14
+relevant = { "33407968/v1/15" = 2, "33407968/v1/21" = 1 }
+
+[[query]]
+id = "enfr-electricity-access"
+set = "bilingual_en_fr"
+text = "What share of Haiti's population had access to electricity, and for how many hours a day?"
+project_id = "P127203"
+date = 2021-09-14
+relevant = { "33407968/v1/7" = 2 }
+
+[[query]]
+id = "enfr-outcome-rating"
+set = "bilingual_en_fr"
+text = "What overall outcome rating did the completion report give the project?"
+project_id = "P127203"
+date = 2021-09-14
+relevant = { "33407968/v1/62" = 2, "33407968/v1/52" = 1 }
+
+[[query]]
+id = "enfr-private-financing"
+set = "bilingual_en_fr"
+text = "Did the project mobilize private sector financing?"
+project_id = "P127203"
+date = 2021-09-14
+relevant = { "33407968/v1/65" = 2 }
+
+[[query]]
+id = "enfr-financial-management"
+set = "bilingual_en_fr"
+text = "Were financial management or audit problems reported during implementation?"
+project_id = "P127203"
+date = 2021-09-14
+relevant = { "33407968/v1/101" = 2 }
+
+[[query]]
+id = "fren-rebidding"
+set = "bilingual_fr_en"
+text = "Pourquoi tant de marchés de travaux ont-ils dû être relancés ?"
+project_id = "P130164"
+date = 2019-11-03
+relevant = { "31525018/v1/54" = 2 }
+
+[[query]]
+id = "fren-forest-clearances"
+set = "bilingual_fr_en"
+text = "Les autorisations forestières devaient-elles être obtenues avant l'attribution des marchés de travaux ?"
+project_id = "P130164"
+date = 2019-11-03
+relevant = { "31525018/v1/55" = 2, "31525018/v1/56" = 1 }
+
+[[query]]
+id = "fren-procurement-training"
+set = "bilingual_fr_en"
+text = "Les agents de passation des marchés des districts ont-ils été formés, et cela a-t-il accéléré l'exécution ?"
+project_id = "P130164"
+date = 2019-11-03
+relevant = { "31525018/v1/53" = 2 }
+
+[[query]]
+id = "fren-procurement-manual"
+set = "bilingual_fr_en"
+text = "Un manuel de passation des marchés et de gestion des contrats a-t-il été préparé pour le projet ?"
+project_id = "P130164"
+date = 2019-11-03
+relevant = { "31525018/v1/72" = 2 }
+
+[[query]]
+id = "fren-mid-term-review"
+set = "bilingual_fr_en"
+text = "Pourquoi les composantes 2 et 3 ont-elles été poursuivies sans en modifier la portée après la revue à mi-parcours ?"
+project_id = "P130164"
+date = 2019-11-03
+relevant = { "31525018/v1/78" = 2 }

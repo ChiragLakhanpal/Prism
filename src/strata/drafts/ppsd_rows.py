@@ -37,6 +37,7 @@ from dataclasses import dataclass
 from decimal import Decimal
 
 from strata.config import Thresholds, load_ppsd_templates, load_thresholds
+from strata.drafts.files import written_runs
 from strata.dbx import Viewer
 from strata.lakehouse.engine import Engine
 
@@ -407,7 +408,7 @@ def word(document, draft: dict, words: dict, say) -> None:
                 runs = []
                 for position, sentence in enumerate(note.get("sentences") or ()):
                     entry = numbered[(row["row_key"], column["key"], position)]
-                    runs += [sentence["text"], document.footnote(entry["text"]), " "]
+                    runs += [*written_runs(sentence, draft), document.footnote(entry["text"]), " "]
                 cells.append([runs[:-1]] if runs else [[]])
             else:
                 cells.append([[values.get((row["row_key"], column["key"])) or ""]])

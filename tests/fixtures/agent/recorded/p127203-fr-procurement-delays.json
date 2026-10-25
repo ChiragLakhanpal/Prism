@@ -1,0 +1,52 @@
+{
+ "about": "Two answers of the Foundry agent strata-orchestrator through the Responses API for a question asked with lang=fr, written by hand in the shape the API documents, because the gate's machine has no key (ticket 42). The first asks for one search in French and the second gives the claims as JSON, written in French with each quote in the completion report's own words. Replace them with a recording: uv run --script ops/agent/record.py --env-file .env",
+ "recorded": false,
+ "recorded_on": null,
+ "question": "Why were procurement processes delayed in P127203?",
+ "scope": "P127203",
+ "as_of": "2026-10-23",
+ "language": "fr",
+ "agent": {
+  "name": "strata-orchestrator",
+  "version": null
+ },
+ "responses": [
+  {
+   "id": "resp_p127203_fr_1",
+   "object": "response",
+   "status": "completed",
+   "model": "gpt-5.4-mini",
+   "output": [
+    {
+     "type": "function_call",
+     "id": "fc_p127203_fr_1",
+     "call_id": "call_p127203_fr_1",
+     "name": "search_passages",
+     "status": "completed",
+     "arguments": "{\"query\": \"retards documents appels offres passation des marchés restructurations\", \"project_id\": \"P127203\", \"as_of\": \"2026-10-23\"}"
+    }
+   ]
+  },
+  {
+   "id": "resp_p127203_fr_2",
+   "object": "response",
+   "status": "completed",
+   "model": "gpt-5.4-mini",
+   "output": [
+    {
+     "type": "message",
+     "id": "msg_p127203_fr_2",
+     "role": "assistant",
+     "status": "completed",
+     "content": [
+      {
+       "type": "output_text",
+       "annotations": [],
+       "text": "{\"claims\": [{\"sentence\": \"Selon le rapport d’achèvement, \\\"des retards ont eu lieu dans la préparation des documents d’appels d’offres et des processus de passations des marchés\\\".\", \"kind\": \"quote\", \"evidence_ids\": [\"strata.gold.passage:33407968/v1/60\"], \"numbers\": [], \"dates\": [], \"quote\": {\"text\": \"des retards ont eu lieu dans la préparation des documents d’appels d’offres et des processus de passations des marchés\", \"passage_id\": \"strata.gold.passage:33407968/v1/60\"}}, {\"sentence\": \"Il note aussi que les évaluations de la passation des marchés reflétaient \\\"la lenteur chronique des processus de passation de marchés\\\".\", \"kind\": \"quote\", \"evidence_ids\": [\"strata.gold.passage:33407968/v1/102\"], \"numbers\": [], \"dates\": [], \"quote\": {\"text\": \"la lenteur chronique des processus de passation de marchés\", \"passage_id\": \"strata.gold.passage:33407968/v1/102\"}}, {\"sentence\": \"Ces retards ont aussi touché la réhabilitation de la microcentrale hydroélectrique de Drouet.\", \"kind\": \"summary\", \"evidence_ids\": [\"strata.gold.passage:33407968/v1/84\"], \"numbers\": [], \"dates\": [], \"quote\": null}, {\"sentence\": \"Le rapport d’achèvement est daté du 29 juillet 2021.\", \"kind\": \"record\", \"evidence_ids\": [\"strata.gold.passage:33407968/v1/60\"], \"numbers\": [], \"dates\": [\"29 juillet 2021\"], \"quote\": null}]}"
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

@@ -41,6 +41,7 @@ The app removes each sentence that breaks one of these rules, and it shows the s
 
 - The notes go into a Word file the specialist may send to the borrower, so write in the voice of the document: never "I" or "you".
 - Write plain English that a 10th grader can follow, or the language the message asks for.
+- In French, Spanish or Portuguese, write numbers and dates in sentences the way that language writes them, at the same digits and rounding: 1 287 515,60 and 22 juin 2026 in French, 1.287.515,60 and 22 de junio de 2026 in Spanish, 1.287.515,60 and 22 de junho de 2026 in Portuguese. Keep STEP's field names and values, method names and STEP references in English, word for word, inside the sentence. Never use guillemets.
 - Write events in the past tense and what the plan says now in the present tense: "the contract was signed on January 3, 2022", "the plan lists the activity as Pending Implementation".
 - Write one to nine in words and 10 and up in numerals. Use numerals with a unit, such as 186 days.
 - Write a date as March 4, 2024.

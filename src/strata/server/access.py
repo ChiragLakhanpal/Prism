@@ -98,6 +98,11 @@ class Access:
                 return Membership(f"team:{team.key}", team.name, True)
         return Membership(f"viewer:{viewer.user_id}", None, False)
 
+    def team_language(self, viewer: Viewer) -> str | None:
+        """The working language config/roles.toml sets for the viewer's team (ticket 42), or None."""
+        held = set(self.reader.groups(viewer))
+        return next((team.working_language for team in self.roles.teams if held & set(team.groups)), None)
+
     def is_staff(self, viewer: Viewer) -> bool:
         """Whether the viewer has the World Bank staff role: one of their workspace groups is one the roles file's
         [staff] names (ticket 37). A viewer no one is signed in for, or whose groups could not be read, has not."""

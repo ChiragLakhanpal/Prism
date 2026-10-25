@@ -12,6 +12,9 @@ set's size in strata.ops.retrieval_label_builds:
   project. The heading in the table of contents, with its dot leaders, is not the section.
 - notice_queries: the queries written from award notices, labeled by both query judges once they have both
   finished (strata.knowledge.retrieval.judging).
+- bilingual_en_fr and bilingual_fr_en: English queries whose answers are in a French completion report, and French
+  queries whose answers are in an English one (evals/bilingual_queries.toml; ticket 42), so retrieval across
+  languages is measured like any other set.
 - feedback: the passages passage reviewers ranked lower from passage reports, or that people agreed on at
   scale (strata.knowledge.retrieval.reports). Only these train anything, and evaluation_set() refuses them,
   so an evaluation set never takes live feedback.
@@ -25,17 +28,22 @@ from __future__ import annotations
 
 import datetime as dt
 import re
+import tomllib
 import uuid
 from collections.abc import Iterable
 from dataclasses import dataclass, field
 from functools import cache
 from importlib import resources
+from pathlib import Path
 
 from strata.lakehouse.engine import Engine
 
-EVALUATION_SETS = ("icr_review_citations", "pad_lessons", "notice_queries")
+# The bilingual query set (ticket 42): English queries over a French report and French queries over an English one.
+BILINGUAL_SETS = ("bilingual_en_fr", "bilingual_fr_en")
+EVALUATION_SETS = ("icr_review_citations", "pad_lessons", "notice_queries", *BILINGUAL_SETS)
 FEEDBACK_SET = "feedback"
-EVALUATION_ORIGINS = frozenset({"icr_review_citation", "pad_lessons", "judged"})
+EVALUATION_ORIGINS = frozenset({"icr_review_citation", "pad_lessons", "judged", "bilingual_labeled"})
+BILINGUAL_FILE = Path(__file__).resolve().parents[4] / "evals" / "bilingual_queries.toml"
 FEEDBACK_ORIGINS = frozenset({"feedback_reviewed", "feedback_agreement"})
 REVIEW_TYPE = "Implementation Completion Report Review"
 ICR_TYPE = "Implementation Completion and Results Report"
@@ -208,6 +216,28 @@ def pad_lessons(engine: Engine) -> tuple[list[Label], int]:
     return labels, len(pads)
 
 
+# ── The bilingual query set (ticket 42) ──────────────────────────────────
+
+def bilingual(engine: Engine, path: Path = BILINGUAL_FILE) -> dict[str, tuple[list[Label], int]]:
+    """The bilingual query set's labels, by query set, each with how many documents its labels come from. A labeled
+    passage the documents do not hold before its query's date is left out, as the other silver labels are."""
+    queries = tomllib.loads(path.read_text())["query"]
+    sets: dict[str, tuple[list[Label], set]] = {name: ([], set()) for name in BILINGUAL_SETS}
+    for query in queries:
+        if query["set"] not in sets:
+            raise ValueError(f"{path.name}: query {query['id']} names the set {query['set']}, which is not one of "
+                             f"{', '.join(BILINGUAL_SETS)}.")
+        found = {row["passage_id"]: row["document_id"] for row in rows(
+            engine, "passages_before", ids=",".join(query["relevant"]), before=query["date"])}
+        found_labels, documents = sets[query["set"]]
+        for passage_id, grade in query["relevant"].items():
+            if passage_id in found:
+                found_labels.append(Label(query["set"], query["id"], query["text"], query["date"], query["project_id"],
+                                          passage_id, int(grade), "bilingual_labeled"))
+                documents.add(found[passage_id])
+    return {name: (found_labels, len(documents)) for name, (found_labels, documents) in sets.items()}
+
+
 # ── Evaluation sets ──────────────────────────────────────────────────────
 
 def evaluation_set(labels: Iterable[Label]) -> list[Query]:
@@ -245,7 +275,8 @@ def build(engine: Engine, writer: Engine, built_at: dt.datetime, extra: dict[str
     build_id = f"labels-{built_at.astimezone(dt.UTC):%Y%m%dT%H%M%S}-{uuid.uuid4().hex[:8]}"
     citations, reviews = icr_review_citations(engine)
     lessons, pads = pad_lessons(engine)
-    sets = {"icr_review_citations": (citations, reviews), "pad_lessons": (lessons, pads), **(extra or {})}
+    sets = {"icr_review_citations": (citations, reviews), "pad_lessons": (lessons, pads), **bilingual(engine),
+            **(extra or {})}
     day = built_at.astimezone(dt.UTC).date()
     sizes, label_rows, build_rows = {}, [], []
     for name, (labels, documents) in sets.items():
@@ -253,7 +284,8 @@ def build(engine: Engine, writer: Engine, built_at: dt.datetime, extra: dict[str
         sizes[name] = (queries, len(labels), documents)
         build_rows.append((build_id, name, queries, len(labels), documents, built_at, day))
         for label in labels:
-            public = label.query_date if label.origin in {"icr_review_citation", "pad_lessons"} else max(label.query_date, day)
+            public = label.query_date if label.origin in {"icr_review_citation", "pad_lessons", "bilingual_labeled"} \
+                else max(label.query_date, day)
             label_rows.append((build_id, name, label.query_id, label.query_text, label.query_date, label.project_id,
                                label.passage_id, label.grade, label.origin, label.weight, built_at, public))
     writer.insert_rows(LABELS_TABLE, LABEL_COLUMNS, label_rows)

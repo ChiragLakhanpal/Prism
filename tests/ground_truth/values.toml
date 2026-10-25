@@ -3258,3 +3258,51 @@ project = ""
 date = 2025-03-31
 section = "PPSD Section 3: Procurement Risk Analysis"
 pdf_page = 42
+
+# Cameroon's Flood Emergency Project (P143940): its Procurement Plan of October 10, 2018, in French (ticket 42).
+# Its STEP tables write each method by STEP's French name, and its list of abbreviations gives the French plan
+# template's old method codes and names (config/method_names.toml).
+
+[[value]]
+id = "plan-cm-50083-method"
+says = "CM-PULCI-50083-CW-RFB's Method column reads Appel d'offres, STEP's French name for Request for Bids."
+value = "Appel d'offres"
+quote = "CM-PULCI-50083-CW-RFB / Travaux de construction de 30 forages dans les villages touchés par le projet IDA / 52760 A posteriori Appel d'offres Open - National"
+document = "documents/P143940/procurement-plan-2018-10-10"
+document_type = "Procurement Plan"
+project = "P143940"
+date = 2018-10-10
+pdf_page = 12
+
+[[value]]
+id = "plan-cm-67752-method"
+says = "CM-PULCI-67752-CW-RFQ's Method column reads Demande de prix, STEP's French name for Request for Quotations."
+value = "Demande de prix"
+quote = "CM-PULCI-67752-CW-RFQ / Travaux de Génie Civil pour la connexion en fibre optique du PULCI IDA / 52760 A posteriori Demande de prix"
+document = "documents/P143940/procurement-plan-2018-10-10"
+document_type = "Procurement Plan"
+project = "P143940"
+date = 2018-10-10
+pdf_page = 12
+
+[[value]]
+id = "plan-cm-template-aoi"
+says = "The plan's list of abbreviations gives AOI as Appel d'Offres International, the French plan template's name for International Competitive Bidding."
+value = "AOI : Appel d’Offres International"
+quote = "AOI : Appel d’Offres International"
+document = "documents/P143940/procurement-plan-2018-10-10"
+document_type = "Procurement Plan"
+project = "P143940"
+date = 2018-10-10
+pdf_page = 11
+
+[[value]]
+id = "plan-template-fr-title"
+says = "The textual part of the Procurement Plan template in French is titled Plan de passation de marchés (Partie Textuelle)."
+value = "PLAN DE PASSATION DE MARCHÉS (Partie Textuelle)"
+quote = "PLAN DE PASSATION DE MARCHÉS (Partie Textuelle) Information sur le Projet : [Nom du pays] [Nom du Projet]"
+document = "documents/guidance/procurement-plan-template-fr-2022-05-06"
+document_type = "Procurement Plan"
+project = "P161329"
+date = 2022-05-06
+pdf_page = 1

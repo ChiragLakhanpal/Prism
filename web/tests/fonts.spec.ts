@@ -29,6 +29,9 @@ test("Open Sans and Roboto Mono load from the app's own files, and nothing else 
       ['400 16px "Open Sans"', '700 16px "Open Sans"', '400 16px "Roboto Mono"'].every((font) => document.fonts.check(font)),
     ),
   ).toBe(true);
+  // French, Spanish and Portuguese passages and answers draw in Open Sans too (ticket 42): its latin-ext files hold œ.
+  await page.evaluate(() => document.fonts.load('400 16px "Open Sans"', "œ « ñ ã ç"));
+  expect(await page.evaluate(() => document.fonts.check('16px "Open Sans"', "œ « ñ ã ç"))).toBe(true);
   expect(outsideRequests).toEqual([]);
 });
 

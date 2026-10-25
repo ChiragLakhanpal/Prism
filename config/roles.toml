@@ -11,6 +11,10 @@
 #   name     the team's name
 #   groups   the workspace groups whose members are on the team. The server reads a viewer's groups
 #            with their own token. A viewer in the groups of two teams is on the first one in this file.
+#   working_language
+#            optional: the language its members get answers and drafts in until they choose one in the
+#            view popover, as config/languages.toml codes it (fr, es or pt). Left out, it is English
+#            (ticket 42). A link's ?lang= and a person's own choice come first.
 #
 # A viewer in none of these groups is on a team of their own. A draft keeps the team its author was on
 # when it was saved. An author always sees their own drafts. A teammate sees the drafts saved while the
