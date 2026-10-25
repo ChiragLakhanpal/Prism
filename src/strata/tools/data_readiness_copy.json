@@ -75,6 +75,7 @@
     "rejected_bids": "the count of rejected bids",
     "compare_cost_estimates": "the comparison of cost estimates",
     "package_risks": "the risks and what helped",
+    "estimate_time": "the planned dates for each step",
     "ask": "the answer",
     "unknown": "the coverage line you opened"
   },

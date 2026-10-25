@@ -27,6 +27,7 @@ import { Num } from "../components/Num";
 import { PastRange, type PastRangeState } from "../components/PastRange";
 import { RisksSection } from "../components/RisksSection";
 import { CheckCriteria } from "../components/CheckCriteria";
+import { StepsSection } from "../components/StepsSection";
 import { POPOVER } from "../components/Popover";
 import { SkeletonLine } from "../components/Skeleton";
 import { Steps, type Step } from "../components/Steps";
@@ -814,6 +815,11 @@ function Workspace({ initial, preview, focusHeading }: { initial: PlannedPage; p
             more={more}
             quiet
           />
+        </div>
+        {/* Section 2, the planned date for each STEP step (ticket 27): it reruns when a criterion changes, since the
+            method family and the comparables follow the criteria. */}
+        <div className="mt-6 @lg/page:mt-8">
+          <StepsSection packageKey={pkg.package_id} kind="planned" rerunKey={`${queryKey(pkg)}|${pkg.missing.join(",")}`} />
         </div>
         {/* Section 3, procurement risks and what helped (ticket 30): it reruns with section 1's criteria, and its
             selection saves with the package under the saved stamp. */}

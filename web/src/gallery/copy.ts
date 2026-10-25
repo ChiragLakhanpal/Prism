@@ -136,6 +136,11 @@ export const galleryCopy = {
       purpose:
         "Section 3 of the package workspace: source pills, checkboxes and the risk table in each of its states, and the evidence drawer's views of a row. Each sample is an answer the server wrote, recorded in tests/fixtures/api, or one with a value changed.",
     },
+    steps: {
+      title: "Planned date for each step",
+      purpose:
+        "Section 2 of the package workspace: the collapsed section, the segmented control and the step table in each of their states, for each method family, and the evidence drawer's two lists. Each sample is an answer the server wrote on the fixture or the hand-made set, recorded in tests/fixtures/api, or one with a value changed.",
+    },
     "check-criteria": {
       title: "Check your criteria",
       purpose:
@@ -407,6 +412,43 @@ export const galleryCopy = {
     notRestated: "The IEG line, when IEG's review did not restate the lesson",
     reports: "The reports behind a row's count",
     allReports: "Every report counted",
+  },
+  // The steps page's sections (ticket 27).
+  stepSections: {
+    segmented: "The segmented control",
+    collapsed: "Collapsed, with the steps dated",
+    collapsedPartial: "Collapsed, when every step lacks comparables, as on the fixture",
+    collapsedAbstain: "Collapsed, under 20 comparable packages in all",
+    collapsedNoFamily: "Collapsed, with no category or method yet",
+    collapsedNotListed: "Collapsed, with a method outside the three families",
+    loading: "Loading",
+    loadingOpen: "Open while loading",
+    error: "Error",
+    cautious: "Open, a package from a STEP row, cautious dates (the default)",
+    middle: "Open, the middle dates",
+    moved: "Open, a step a later plan moved",
+    fixture: "Open, every step abstains, as on the fixture: no choice of dates",
+    actuals: "Open, with steps STEP records actual dates for",
+    track: "Open, with the track record line from a stored backtest",
+    preview: "Open, an implementing agency preview",
+    saveFailed: "Open, the choice could not be saved",
+    undated: "Open, a package from a sentence before its start date",
+    invalid: "Open, a start date that is empty",
+    committing: "Open, dating the steps from a start date",
+    dated: "Open, a package from a sentence, dated from its start date",
+    needsEarlier: "Open, steps after one with no comparables",
+    abstain: "Open, under 20 comparable packages in all",
+    firms: "The steps STEP uses for consulting firms",
+    individuals: "The steps STEP uses for individual consultants",
+    stepList: "The drawer: one step's comparable packages",
+    stepListAbstains: "The drawer: a step that abstains",
+    longestList: "The drawer: which stage ran longest",
+  },
+  stepStates: {
+    // A method outside the three families, for the state no package in the fixture reaches.
+    otherMethod: "Framework Agreement",
+    middleChosen: "Middle chosen",
+    cautiousChosen: "Cautious chosen",
   },
   riskStates: {
     // A third risk from the closed list (config/lessons.toml), for the three-way tie the fixture never reaches.

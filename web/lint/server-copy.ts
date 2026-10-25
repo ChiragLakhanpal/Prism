@@ -8,6 +8,8 @@
 //   (ticket 35).
 // - src/strata/knowledge/lessons/copy.json: the review queue's sentences (copy.lessons.server), whose count
 //   words and forms the lesson review chooses on the server (ticket 29).
+// - src/strata/estimates/steps.json: the step-label registry (web/src/steps.ts), whose families, family rule and
+//   STEP step names estimate_time reads to date each step (ticket 27).
 //
 // The lint lane fails when a JSON file is out of date (web/lint/run.ts), and this command writes them
 // again:
@@ -17,12 +19,14 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { copy } from "../src/copy.ts";
+import { stepFamilies } from "../src/steps.ts";
 
 const at = (path: string) => fileURLToPath(new URL(`../../${path}`, import.meta.url));
 
 export const SERVER_COPY_FILE = at("src/strata/tools/data_readiness_copy.json");
 export const DRAFTS_COPY_FILE = at("src/strata/drafts/copy.json");
 export const LESSONS_COPY_FILE = at("src/strata/knowledge/lessons/copy.json");
+export const STEPS_COPY_FILE = at("src/strata/estimates/steps.json");
 
 const json = (words: unknown) => `${JSON.stringify(words, null, 2)}\n`;
 
@@ -57,11 +61,16 @@ export function lessonsCopy(): string {
   return json(copy.lessons.server);
 }
 
+export function stepsCopy(): string {
+  return json({ families: stepFamilies });
+}
+
 // Each JSON file, and the words it must hold.
 export const SERVER_COPIES: { file: string; words: () => string; from: string }[] = [
   { file: SERVER_COPY_FILE, words: serverCopy, from: "copy.dataReadiness.server" },
   { file: DRAFTS_COPY_FILE, words: draftsCopy, from: "copy.draft.files" },
   { file: LESSONS_COPY_FILE, words: lessonsCopy, from: "copy.lessons.server" },
+  { file: STEPS_COPY_FILE, words: stepsCopy, from: "web/src/steps.ts" },
 ];
 
 function isCurrent(file: string, words: () => string): boolean {
