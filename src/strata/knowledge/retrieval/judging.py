@@ -139,11 +139,16 @@ class Desk:
         return sorted(self.queries.values(), key=lambda query: query.n)
 
 
+def new_id(prefix: str) -> str:
+    return f"{prefix}-{uuid.uuid4().hex[:12]}"
+
+
 @dataclass
 class Judging:
     roles: Roles
     now: Callable[[], dt.datetime] = _now
     thresholds: Thresholds | None = None
+    new_id: Callable[[str], str] = new_id  # a grade's id, from its prefix
 
     def __post_init__(self):
         self.thresholds = self.thresholds or load_thresholds()
@@ -313,7 +318,7 @@ class Judging:
             raise Refused(409, "locked")
         at = self.now()
         writer.insert_rows("strata.ops.retrieval_grades", GRADE_COLUMNS, [(
-            f"grd-{uuid.uuid4().hex[:12]}", query.query_id, passage, person.email, person.name, grade, at,
+            self.new_id("grd"), query.query_id, passage, person.email, person.name, grade, at,
             at.astimezone(dt.UTC).date())])
         query.grades.setdefault(person.email.lower(), {})[passage] = grade
         return {"saved": True, "graded": sum(1 for p in query.pool if p in query.grades[person.email.lower()]),

@@ -1,0 +1,14 @@
+{
+  "my_report": {
+    "report_id": "rep-0001",
+    "kind": "wrong_passage",
+    "reason": "It is about estimates in general, not why these contracts were advertised again.",
+    "status": "ranked_lower",
+    "reported_on": "2026-10-23T09:00:02Z",
+    "decided_on": "2026-10-23T11:40:18Z",
+    "reviewer_reason": "The paragraph is about estimates in general. Questions about these contracts need paragraph 55.",
+    "agreeing_count": null,
+    "query_kind": "rebidding_and_prices"
+  },
+  "mode": "pilot"
+}

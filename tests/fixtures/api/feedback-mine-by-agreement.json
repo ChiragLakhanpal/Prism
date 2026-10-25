@@ -1,0 +1,14 @@
+{
+  "my_report": {
+    "report_id": "rep-0002",
+    "kind": "wrong_passage",
+    "reason": null,
+    "status": "ranked_lower_by_agreement",
+    "reported_on": "2026-10-23T09:00:02Z",
+    "decided_on": "2026-10-26T09:00:08Z",
+    "reviewer_reason": null,
+    "agreeing_count": 3,
+    "query_kind": "rebidding_and_prices"
+  },
+  "mode": "scale"
+}

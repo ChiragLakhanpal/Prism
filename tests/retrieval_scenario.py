@@ -74,6 +74,7 @@ class Loop:
     """A writable copy of the fixture database and an app over it, with a clock the test moves."""
 
     def __init__(self, fixture_db: Path, folder: Path, mode: str = "pilot"):
+        folder.mkdir(parents=True, exist_ok=True)
         self.path = folder / "retrieval.duckdb"
         shutil.copy(fixture_db, self.path)
         self.database = DuckDBEngine.open(self.path)
@@ -85,8 +86,10 @@ class Loop:
             values = {**thresholds.values, "retrieval": {**thresholds.values["retrieval"], "mode": mode}}
             thresholds = type(thresholds)(thresholds.path, values)
         self.thresholds = thresholds
-        self.reports = PassageReports(ROLES, now=self.now, thresholds=thresholds)
-        self.judging = Judging(ROLES, now=self.now, thresholds=thresholds)
+        # Ids counted in order, so the recorded answers are the same on every run.
+        self.ids: dict[str, int] = {}
+        self.reports = PassageReports(ROLES, now=self.now, thresholds=thresholds, new_id=self.new_id)
+        self.judging = Judging(ROLES, now=self.now, thresholds=thresholds, new_id=self.new_id)
         case = load_cases()[CASE]
 
         @contextmanager
@@ -103,6 +106,10 @@ class Loop:
                               passage_reports=self.reports, judging=self.judging, feedback_record=self.the_app,
                               citations=CitationLog(self.the_app), opened=OpenedLog(self.the_app, now=self.now),
                               today=lambda: TODAY, now=self.now)
+
+    def new_id(self, prefix: str) -> str:
+        self.ids[prefix] = self.ids.get(prefix, 0) + 1
+        return f"{prefix}-{self.ids[prefix]:04d}"
 
     def now(self) -> dt.datetime:
         self.at += dt.timedelta(seconds=1)
@@ -154,4 +161,5 @@ class Loop:
     def weekly(self) -> dict:
         from strata.knowledge.retrieval import weekly
 
-        return weekly.run(self.database.cursor(), now=self.now, thresholds=self.thresholds, roles=ROLES)
+        return weekly.run(self.database.cursor(), now=self.now, thresholds=self.thresholds, roles=ROLES,
+                          new_id=self.new_id)

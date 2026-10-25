@@ -1,0 +1,96 @@
+{
+  "item": {
+    "group_id": "grp-e80319312005",
+    "stage": "waiting",
+    "kind_label": "wrong_passage",
+    "query_kind": "rebidding_and_prices",
+    "state": "dec-0003",
+    "mode": "pilot",
+    "passage": {
+      "passage_id": "31525018/v1/55",
+      "evidence_id": "strata.gold.passage:31525018/v1/55",
+      "project_name": "Rajasthan Road Sector Modernization Project",
+      "pid": "P130164",
+      "doc_type": "Implementation Completion and Results Report",
+      "doc_date": "2019-10-10",
+      "para": "55",
+      "paragraph_numbered": true,
+      "section": "III.B",
+      "page": 23,
+      "pages": 66,
+      "row": {
+        "evidence_id": "strata.gold.passage:31525018/v1/55",
+        "public_from": "2019-11-02",
+        "source": {
+          "document_type": "Implementation Completion and Results Report",
+          "project_id": "P130164",
+          "project_name": "Rajasthan Road Sector Modernization Project",
+          "document_id": "31525018",
+          "document_date": "2019-10-10",
+          "report_number": "ICR4803",
+          "version": 1,
+          "section_path": "III.B",
+          "paragraph": "55",
+          "paragraph_numbered": true,
+          "pdf_page": 23,
+          "pdf_pages": 66,
+          "pdf_url": "http://documents.worldbank.org/curated/en/258481572631321132/pdf/India-Rajasthan-Road-Sector-Modernization-Project.pdf",
+          "doc_key": "icr-2019-10-10",
+          "notice_id": null,
+          "notice_url": null
+        },
+        "passage_id": "31525018/v1/55",
+        "document_id": "31525018",
+        "document_type": "Implementation Completion and Results Report",
+        "project_id": "P130164",
+        "version": 1,
+        "section_path": "III.B",
+        "paragraph": "55",
+        "paragraph_numbered": true,
+        "part": 1,
+        "parts": 1,
+        "pdf_page": 23,
+        "last_pdf_page": 23,
+        "printed_page": "19 of 62",
+        "language": "en",
+        "parse_route": "A",
+        "kind": "paragraph",
+        "route": "published_text",
+        "scanned": false,
+        "table_title": null,
+        "table_row": null,
+        "cells": null,
+        "notice_id": null,
+        "header": "ICR, P130164, India, roads, III.B, ¶55, p.23",
+        "text": "55. To avoid cost and time overruns and contract administration issues, forest and other administrative clearances should have been in place prior to awarding contracts. Some of the road works were dropped due to land and/or forest clearance issues (cf. below)."
+      }
+    },
+    "report_count": 1,
+    "first_on": "2026-10-23T09:40:04Z",
+    "own_project": false,
+    "audit": null,
+    "reports": [
+      {
+        "report_id": "rep-0003",
+        "role": "staff",
+        "is_you": false,
+        "kind": "wrong_passage",
+        "reported_on": "2026-10-23T09:40:04Z",
+        "question": "Why were works contracts in P130164 advertised again?",
+        "sentence": "It also says \"forest and other administrative clearances should have been in place prior to awarding contracts\".",
+        "reason": null,
+        "run_id": "run-0003",
+        "own_project": false
+      }
+    ],
+    "can": {
+      "decide": true,
+      "reopen": false,
+      "reason_code": null
+    },
+    "outcome": null,
+    "limits": {
+      "reason_max_chars": 500
+    }
+  }
+}

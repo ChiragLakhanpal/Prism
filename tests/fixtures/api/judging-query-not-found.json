@@ -1,0 +1,9 @@
+{
+  "status": 404,
+  "body": {
+    "code": "unknown_query",
+    "values": {
+      "query_id": "nq-nothing"
+    }
+  }
+}

@@ -30,16 +30,18 @@ def _now() -> dt.datetime:
 
 
 def run(engine: Engine, now: Callable[[], dt.datetime] = _now, thresholds: Thresholds | None = None,
-        roles: Roles | None = None) -> dict:
-    """One weekly run over engine. Returns what it did, for its log line and the tests."""
+        roles: Roles | None = None, new_id: Callable[[str], str] | None = None) -> dict:
+    """One weekly run over engine. Returns what it did, for its log line and the tests. new_id gives the ids of the
+    decisions it writes; a test passes one that counts, so its recordings stay the same."""
     from strata.knowledge.retrieval import labels
     from strata.knowledge.retrieval.judging import Judging
     from strata.knowledge.retrieval.reports import PassageReports
 
     thresholds = thresholds or load_thresholds()
     roles = roles or load_roles()
-    judging = Judging(roles, now=now, thresholds=thresholds)
-    reports = PassageReports(roles, now=now, thresholds=thresholds)
+    ids = {"new_id": new_id} if new_id else {}
+    judging = Judging(roles, now=now, thresholds=thresholds, **ids)
+    reports = PassageReports(roles, now=now, thresholds=thresholds, **ids)
     loaded = judging.load(engine, engine)
     triaged = reports.triage(engine, engine)
     sizes = labels.build(engine, engine, now(), {"notice_queries": judging.labels(engine),

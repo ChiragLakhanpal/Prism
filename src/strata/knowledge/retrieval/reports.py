@@ -276,12 +276,17 @@ def share_cap(batch: int, share: float) -> int:
 
 # ── The reads and acts ───────────────────────────────────────────────────
 
+def new_id(prefix: str) -> str:
+    return f"{prefix}-{uuid.uuid4().hex[:12]}"
+
+
 @dataclass
 class PassageReports:
     roles: Roles
     now: Callable[[], dt.datetime] = _now
     thresholds: Thresholds | None = None
     lists: RetrievalLists | None = None
+    new_id: Callable[[str], str] = new_id  # a report's or decision's id, from its prefix
 
     def __post_init__(self):
         self.thresholds = self.thresholds or load_thresholds()
@@ -386,7 +391,7 @@ class PassageReports:
         if held is not None:
             raise Refused(409, "already_sent", {"my_report": self.my_report(ledger, held)})
         at = self.now()
-        report = Report(f"rep-{uuid.uuid4().hex[:12]}", viewer.user_id or viewer.email, viewer.email, STAFF,
+        report = Report(self.new_id("rep"), viewer.user_id or viewer.email, viewer.email, STAFF,
                         evidence_id, passage, citation["project_id"], run_id, int(citation["sentence_index"]),
                         citation["sentence"], citation["question"], citation["query_kind"], body["kind"],
                         reason or None, as_date(citation["as_of"]), self.own_project(viewer, citation["project_id"]), at)
@@ -457,9 +462,10 @@ class PassageReports:
         reports = ledger.waiting(group) or (group.reports if audit else [])
         can = self.can(ledger, group, viewer)
         agreement = audit
+        passage = {key: value for key, value in self._passage(engine, group.passage_id).items() if key != "row"}
         return {"group_id": group.group_id, "kind_label": self.kind_label(reports, audit is not None),
                 "group": "you" if can["decide"] else "others", "audit": audit is not None,
-                **self._passage(engine, group.passage_id), "query_kind": group.query_kind,
+                **passage, "query_kind": group.query_kind,
                 "report_count": len(reports), "first_on": _iso(min(report.reported_at for report in reports)) if reports else None,
                 "own_project": any(report.own_project for report in reports),
                 "decided_on": _iso(agreement.decided_at) if agreement else None,
@@ -545,7 +551,7 @@ class PassageReports:
                    report_ids: list[str], expected: str | None, agreeing: int | None = None,
                    weight: float | None = None, at: dt.datetime | None = None) -> Act:
         at = at or self.now()
-        found = Act(f"dec-{uuid.uuid4().hex[:12]}", group.group_id, group.passage_id, group.query_kind, act, reason,
+        found = Act(self.new_id("dec"), group.group_id, group.passage_id, group.query_kind, act, reason,
                     person.email if person else None, person.name if person else None, report_ids, agreeing, weight, at)
         writer.insert_rows(DECISIONS_TABLE, DECISION_COLUMNS, [(
             found.decision_id, found.group_id, found.passage_id, found.query_kind, found.act, found.reason,

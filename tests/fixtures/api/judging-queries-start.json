@@ -1,0 +1,71 @@
+{
+  "total": 3,
+  "mine_done": 0,
+  "other_done": 0,
+  "agreement": {
+    "agree": 0,
+    "pairs": 0,
+    "both_done": 0,
+    "kappa": null,
+    "withheld": true,
+    "min_pairs": 20
+  },
+  "show": "to_judge",
+  "counts": {
+    "to_judge": 3,
+    "finished_by_you": 0,
+    "finished_by_both": 0
+  },
+  "next_query": "nq-rural-works-delays",
+  "page": 1,
+  "pages": 1,
+  "from": 1,
+  "to": 3,
+  "queries": [
+    {
+      "query_id": "nq-rural-works-delays",
+      "n": 1,
+      "query_text": "What held up the award of rural road works contracts, and how did the project respond?",
+      "notice_id": "OP00044090",
+      "notice_ref": "IN-RRSMP-7431-CW-RFB",
+      "notice_date": "2017-07-19",
+      "query_date": "2017-07-19",
+      "pool": 40,
+      "graded": 0,
+      "my_state": "not_started",
+      "other_state": "not_started",
+      "agree": null,
+      "locked": false
+    },
+    {
+      "query_id": "nq-water-works-readiness",
+      "n": 2,
+      "query_text": "Were the designs and bidding documents for water supply rehabilitation works ready before the project started?",
+      "notice_id": "OP00077752",
+      "notice_ref": "KE-MOWASCO-16769-CW-RFB",
+      "notice_date": "2019-09-20",
+      "query_date": "2019-09-20",
+      "pool": 25,
+      "graded": 0,
+      "my_state": "not_started",
+      "other_state": "not_started",
+      "agree": null,
+      "locked": false
+    },
+    {
+      "query_id": "nq-sanitation-equipment",
+      "n": 3,
+      "query_text": "How did the implementing agencies plan the purchase of sanitation equipment such as vacuum exhausters?",
+      "notice_id": "OP00086370",
+      "notice_ref": "KE-MOWASCO-16765-GO-RFB",
+      "notice_date": "2020-03-25",
+      "query_date": "2020-03-25",
+      "pool": 40,
+      "graded": 0,
+      "my_state": "not_started",
+      "other_state": "not_started",
+      "agree": null,
+      "locked": false
+    }
+  ]
+}
