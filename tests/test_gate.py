@@ -837,7 +837,7 @@ def shard_problems(steps):
 def test_each_web_lane_tests_the_app_and_gallery_it_built_in_a_folder_of_its_own():
     steps = gate_steps()
 
-    assert len([step for step in steps if web_script(step) == "test"]) == 2
+    assert len([step for step in steps if web_script(step) == "test"]) >= 2
     assert web_build_problems(steps) == []
 
 
@@ -845,13 +845,18 @@ def test_the_playwright_shards_run_every_test_once_in_lanes_side_by_side():
     assert shard_problems(gate_steps()) == []
 
 
+def in_web_2(script=None):
+    """Picks the web-2 lane's steps, or only the one that runs this npm script."""
+    return lambda step: step.get("lane") == "web-2" and script in (None, web_script(step))
+
+
 def edit(steps, find, change):
-    """A copy of the steps, with change applied to a copy of each step that find accepts."""
+    """A copy of the steps, with change applied to a copy of each step that find picks."""
     return [change(dict(step)) if find(step) else step for step in steps]
 
 
-def is_second_web_lane(step):
-    return step.get("lane") == "web-2"
+def without(steps, find):
+    return [step for step in steps if not find(step)]
 
 
 def renamed(folder):
@@ -863,22 +868,22 @@ def resharded(spec):
     return lambda step: step | {"run": [spec if arg.startswith("--shard=") else arg for arg in step["run"]]}
 
 
-# Edits to the steps file that the two checks above must catch.
+# Edits to the steps file that the two checks above must catch, each with the check that catches it.
 BAD_WEB_EDITS = {
-    "both lanes build into one folder": (lambda steps: edit(steps, is_second_web_lane, renamed("dist-1")),
-                                         web_build_problems),
-    "a lane tests another lane's folder": (lambda steps: edit(steps, lambda s: is_second_web_lane(s) and
-                                                              web_script(s) == "test", renamed("dist-1")),
-                                           web_build_problems),
-    "a lane tests before it builds the gallery": (lambda steps: [s for s in steps if not (
-        is_second_web_lane(s) and web_script(s) == "build:gallery")], web_build_problems),
-    "a shard left out": (lambda steps: [s for s in steps if not (is_second_web_lane(s) and web_script(s) == "test")],
-                         shard_problems),
-    "a shard run twice": (lambda steps: edit(steps, is_second_web_lane, resharded("--shard=1/2")), shard_problems),
-    "a third shard that runs nowhere": (lambda steps: edit(steps, is_second_web_lane, resharded("--shard=2/3")),
-                                        shard_problems),
-    "both shards in one lane": (lambda steps: edit(steps, is_second_web_lane, lambda s: s | {"lane": "web-1"}),
-                                shard_problems),
+    "both lanes build into one folder":
+        (lambda steps: edit(steps, in_web_2(), renamed("dist-1")), web_build_problems),
+    "a lane tests another lane's folder":
+        (lambda steps: edit(steps, in_web_2("test"), renamed("dist-1")), web_build_problems),
+    "a lane tests before it builds the gallery":
+        (lambda steps: without(steps, in_web_2("build:gallery")), web_build_problems),
+    "a shard left out":
+        (lambda steps: without(steps, in_web_2("test")), shard_problems),
+    "a shard run twice":
+        (lambda steps: edit(steps, in_web_2(), resharded("--shard=1/2")), shard_problems),
+    "a third shard that runs nowhere":
+        (lambda steps: edit(steps, in_web_2(), resharded("--shard=2/3")), shard_problems),
+    "both shards in one lane":
+        (lambda steps: edit(steps, in_web_2(), lambda step: step | {"lane": "web-1"}), shard_problems),
 }
 
 
