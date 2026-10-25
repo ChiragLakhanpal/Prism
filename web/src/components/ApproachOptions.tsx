@@ -105,11 +105,13 @@ function OptionsTable({ comparables, estimate }: { comparables: ComparablesResul
   const options = estimate.options!;
   const [first] = options.approaches;
   const columns = words.columns;
+  // "The most common approach" only when no approach is ruled out: the tool doesn't count each ruled-out one.
+  const title = options.ruled_out > 0 ? words.titleAllowed : words.title;
   return (
     <div className="@container/options flex flex-col gap-3" data-approach-table>
       <table className="w-full border-collapse text-small @max-[30rem]/options:hidden">
         <caption className="pb-2 text-left text-title text-ink-heading">
-          <Fill template={words.title} slots={{ k1: <Num count={first.k} capital />, n: <Num value={options.n} options={{ compact: false }} />, option1: approachName(first, true) }} />
+          <Fill template={title} slots={{ k1: <Num count={first.k} capital />, n: <Num value={options.n} options={{ compact: false }} />, option1: approachName(first, true) }} />
           <span className="mt-1 block text-caption font-normal text-ink-muted">{words.count(formatCount(options.approaches.length))}</span>
         </caption>
         <thead className="bg-surface-2 text-left text-caption text-ink-muted">
@@ -156,7 +158,7 @@ function OptionsTable({ comparables, estimate }: { comparables: ComparablesResul
       {/* Below a 480 px frame: one card per approach. */}
       <div className="hidden flex-col gap-3 @max-[30rem]/options:flex">
         <p className="text-title text-ink-heading">
-          <Fill template={words.title} slots={{ k1: <Num count={first.k} capital />, n: <Num value={options.n} options={{ compact: false }} />, option1: approachName(first, true) }} />
+          <Fill template={title} slots={{ k1: <Num count={first.k} capital />, n: <Num value={options.n} options={{ compact: false }} />, option1: approachName(first, true) }} />
         </p>
         <p className="text-caption text-ink-muted">{words.count(formatCount(options.approaches.length))}</p>
         <ul className="flex flex-col gap-3">
@@ -253,8 +255,11 @@ export function ApproachOptions({ state }: { state: ApproachOptionsState }) {
     const { estimate, comparables } = state;
     const n = estimate.comparables.n;
     const options = estimate.options;
-    if (estimate.abstention?.reason === "too_few_comparables" || !options) {
+    if (estimate.abstention?.reason === "too_few_comparables") {
       summary = n === 1 ? words.abstainOne : <Fill template={words.abstain} slots={{ n: <Num count={n} /> }} />;
+    } else if (!options) {
+      // No time estimate for another reason (no_model, asof_before_training): the count is not why.
+      summary = words.noEstimate;
     } else if (options.approaches.length === 0) {
       // No approach to list: none recorded a whole one, or the thresholds rule out every one recorded.
       summary =

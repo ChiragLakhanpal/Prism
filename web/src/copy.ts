@@ -3246,6 +3246,9 @@ export const copy = {
     show: "Show the options",
     hide: "Hide the options",
     title: "{k1} of the {n} comparable packages went with {option1}, the most common approach.",
+    // When the thresholds rule out approaches some comparable packages went with, the tool doesn't count each of
+    // those, so the caption claims only the most common approach of those the thresholds allow.
+    titleAllowed: "{k1} of the {n} comparable packages went with {option1}, the most common approach the thresholds allow for this package.",
     count: (count: string) => `Showing ${count} approaches, the most common first.`,
     unrecorded: (rest: number) =>
       rest === 1
@@ -3280,6 +3283,9 @@ export const copy = {
     },
     abstain: "I'm not listing approach options: only {n} comparable packages.",
     abstainOne: "I'm not listing approach options: only one comparable package.",
+    // Lane 2 has no time estimate for another reason (no model scored yet, or an as-of date before the end of its
+    // training data), so section 4 gives that reason and no count.
+    noEstimate: "I'm not listing approach options, because I have no time estimate for this package.",
     waiting: "I'll list the options after you add your plan in section 1, or choose to see the past range without it.",
     empty: "I can't compare approaches for this package, because I have no comparable packages I can measure.",
     error: "I couldn't load the approach options.",

@@ -272,6 +272,10 @@ test("section 4 opens on demand to at most three approaches, each counted out of
   await expect(rows.nth(0)).toContainText("As described above");
   await expect(rows.nth(1)).toContainText(`12 of ${n}`);
   await expect(rows.nth(1)).toContainText("No time estimate: only 12 went with it");
+  // With no approach ruled out, the table's caption may call the first approach the most common of all.
+  await expect(options.locator("[data-approach-table] caption")).toContainText(
+    `25 of the ${n} comparable packages went with open national, 1 lot, post-qualification, the most common approach.`,
+  );
   // n is lane 1's total: the same comparable packages find_comparables returned.
   const lane1 = (await json("comparables-ke-nwwda-229129.json")).counts.comparables;
   expect(n).toBe(lane1);
@@ -331,6 +335,12 @@ test("with approaches to list, section 4 names those the thresholds allow and co
     `Comparable packages went with three approaches the thresholds allow for this package. The most common was open national, 1 lot, post-qualification, with 25 of ${n}.`,
   );
   await options.getByRole("button", { name: "Show the options" }).click();
+  // The tool doesn't count each ruled-out approach, so the caption claims only the most common one the thresholds allow.
+  const caption = options.locator("[data-approach-table] caption");
+  await expect(caption).toContainText(
+    `25 of the ${n} comparable packages went with open national, 1 lot, post-qualification, the most common approach the thresholds allow for this package.`,
+  );
+  await expect(caption).not.toContainText("the most common approach.");
   await expect(options).toContainText(`Two of the ${n} comparable packages went with approaches the thresholds rule out for this package, so I left those approaches out.`);
   await expect(options).toContainText(`Three of the ${n} comparable packages don't record their market approach, lots and qualification`);
 });
@@ -350,6 +360,26 @@ test("with fewer than 20 comparable packages lane 2 says so in the first person,
   await expect(page.getByRole("group", { name: "Dates I draft for this package" })).toHaveCount(0);
   await expect(page.locator("[data-approach-options]")).toContainText(`I'm not listing approach options: only ${count === 7 ? "seven" : count} comparable packages.`);
 });
+
+// Lane 2 has no time estimate for a reason other than too few comparable packages: an as-of date before the end of
+// the model's training data, as recorded, or no model scored yet, which every package answers until the live
+// backtest keeps a champion. Section 4 then gives that reason, never the count, which is well above 20.
+for (const [when, abstention] of [
+  ["for an as-of date before the model's training data", null],
+  ["before any model is scored", { reason: "no_model" }],
+] as const) {
+  test(`with no time estimate ${when}, section 4 says it has no time estimate and never that it has too few comparable packages`, async ({ page }) => {
+    const body = await json("estimate-ke-nwwda-229129-before-training.json");
+    expect(body.abstention.reason).toBe("asof_before_training");
+    expect(body.comparables.n).toBeGreaterThanOrEqual(body.thresholds.min_comparables);
+    if (abstention) body.abstention = abstention;
+    await openWorkspace(page, { estimate: { body: JSON.stringify(body) } });
+    const options = page.locator("[data-approach-options]");
+    await expect(options).toContainText("I'm not listing approach options, because I have no time estimate for this package.");
+    await expect(options).not.toContainText(`only ${body.comparables.n}`);
+    await expect(options).not.toContainText("comparable packages.");
+  });
+}
 
 test("at 1440 px axe finds no WCAG 2.2 AA violations while comparing, with section 4 and the table twin open", async ({ page }) => {
   const { answer } = await derivedEstimate((body, rows) => {
