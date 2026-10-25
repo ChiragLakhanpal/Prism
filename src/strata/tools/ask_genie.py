@@ -65,7 +65,7 @@ class Unavailable(Exception):
 def genie_for(call: Call, space: genie_space.Space, environ=None) -> GenieClient:
     waits = Waits.from_thresholds(call.thresholds)
     if getattr(call.engine, "name", "") == "duckdb":
-        return GenieClient(genie_fixture.FixtureGenie(call.engine, space.benchmarks), genie_fixture.SPACE,
+        return GenieClient(genie_fixture.FixtureGenie(call.engine, _fixture_benchmarks()), genie_fixture.SPACE,
                            genie_fixture.WAREHOUSE, waits)
     env = os.environ if environ is None else environ
     transport, warehouse = getattr(call.engine, "transport", None), getattr(call.engine, "warehouse_id", None)
@@ -95,21 +95,36 @@ def _abstain(question: str, through: dt.date | None, reason: str, **detail) -> d
 
 @functools.lru_cache(maxsize=1)
 def _space() -> tuple[genie_space.Space, tuple[str, ...]]:
-    """The space and the tables behind it, read once per process: config/genie.toml, the metric views and the
-    benchmark file do not change while the app runs."""
-    space = genie_space.load()
+    """The space and the tables behind it, read once per process: config/genie.toml and the metric views do not
+    change while the app runs. It reads no benchmark question: the App holds src/strata and config but not evals/
+    or tests/ (ops/app/deploy_app.py, package()), and asking the live space needs none of them."""
+    space = genie_space.load(questions=[])
     return space, tuple(read_tables(space))
+
+
+@functools.lru_cache(maxsize=1)
+def _fixture_benchmarks() -> tuple[genie_space.Benchmark, ...]:
+    """The benchmark's Genie questions with their ground-truth SQL, which only the fixture's stand-in for Genie
+    answers from. They are read from the repo, on DuckDB only."""
+    return genie_space.benchmarks()
 
 
 def ask_genie(call: Call, question: str) -> dict:
     space, tables = _space()
+    # The warehouse starts first: a statement on a stopped one would wait for the engine's own timeout, not the
+    # [genie] warehouse_start_seconds that ticket 48 reads.
+    try:
+        client = genie_for(call, space)
+        client.warm_warehouse()
+    except Unavailable as error:
+        return _abstain(question, None, "genie_unavailable", detail=str(error))
+    except GenieError as error:
+        return _abstain(question, None, "genie_unavailable", code=error.code)
     through = records_through(call.engine, list(tables))
     if through is not None and call.as_of < through:
         return _abstain(question, through, "as_of_before_records", records_through=through.isoformat())
     try:
-        answer = genie_for(call, space).ask(question)
-    except Unavailable as error:
-        return _abstain(question, through, "genie_unavailable", detail=str(error))
+        answer = client.ask(question)
     except GenieError as error:
         reason = "not_answered" if error.code == "genie_failed" else "genie_unavailable"
         return _abstain(question, through, reason, code=error.code)

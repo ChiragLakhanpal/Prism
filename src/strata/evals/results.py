@@ -9,7 +9,8 @@ Every row of one full gate run shares its run id, one measure per row, as the re
 - genie_benchmark: each Genie question, and the pass rate as kind all, with its target and gap.
 - foundry_evaluation: each evaluator (segment_kind evaluator): answers scored, met (Foundry's threshold), share,
   mean_score from 1 to 5, target, gap, met_target, and the Foundry run (the 45 brief, tiles 12 and 14). The model
-  column names the judge's deployment.
+  column names the judge's deployment. An evaluator Foundry scored for no answer has only scored, 0, and the
+  Foundry run.
 - full_gate: each stage (segment_kind stage) and whether it passed or ran.
 
 Targets are config/thresholds.toml's [benchmark] targets and genie_target, and [foundry_evaluation] targets, each
@@ -147,6 +148,13 @@ def rows(run_id: str, ran_at: dt.datetime, found: list[Tally], answers: list[Sco
         if tally.scorer == FOUNDRY:
             written.append(_row(run_id, ran_at, FOUNDRY, "evaluator", tally.segment, "foundry_run",
                                 text=f"{evaluation.eval_id}/{evaluation.run_id}", model=model))
+    # An evaluator Foundry scored for no answer has no tally, and the full gate fails naming it. Its rows say it
+    # ran and scored nothing, so the dashboard shows it instead of leaving it out.
+    for score in evaluation.scores if evaluation is not None else ():
+        if not score.scored:
+            written += [_row(run_id, ran_at, FOUNDRY, "evaluator", score.key, "scored", 0, model=evaluation.deployment),
+                        _row(run_id, ran_at, FOUNDRY, "evaluator", score.key, "foundry_run",
+                             text=f"{evaluation.eval_id}/{evaluation.run_id}", model=evaluation.deployment)]
     return written
 
 

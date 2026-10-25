@@ -104,6 +104,22 @@ def test_genie_s_rows_must_match_at_the_same_rounding_never_roughly(engine, rows
     assert right.passed  # the same rows in another order and with a trailing zero are the same answer
 
 
+def test_genie_s_columns_may_come_in_another_order_but_every_value_must_still_match(engine):
+    """Genie names and orders its columns its own way; the rows must hold the same values at the same rounding."""
+    from decimal import Decimal
+
+    [item] = [item for item in genie_space.load().benchmarks if item.id == "genie-joint-venture-1624689"]
+    swapped = (("supplier_contract_amount_usd", "DECIMAL"), ("supplier_id", "STRING"))
+
+    [right] = genie_benchmark.run(Genie([[Decimal("697972.33"), "503708"], [Decimal("697972.33"), "503711"]],
+                                        swapped), engine, [item])
+    [wrong] = genie_benchmark.run(Genie([[Decimal("697972.33"), "503708"], [Decimal("697972.30"), "503711"]],
+                                        swapped), engine, [item])
+
+    assert right.passed, right.problems
+    assert not wrong.passed
+
+
 # ── Foundry evaluations ──────────────────────────────────────────────────
 
 def answer_of(question: dict, sentences: list[dict], evidence: list[dict], calls: list[dict]) -> Asked:
@@ -139,8 +155,8 @@ class FakeFoundry:
     """Foundry's evaluations API in memory, in the shape its documentation gives. Each criterion scores every item
     4, and passes it unless the evaluator is one of the failing ones."""
 
-    def __init__(self, failing=()):
-        self.failing, self.evals, self.runs, self.polls = set(failing), {}, {}, 0
+    def __init__(self, failing=(), unscored=()):
+        self.failing, self.unscored, self.evals, self.runs, self.polls = set(failing), set(unscored), {}, {}, 0
 
     def create_eval(self, body):
         self.evals["eval-1"] = body
@@ -159,7 +175,8 @@ class FakeFoundry:
         criteria = [criterion["name"] for criterion in self.evals[eval_id]["testing_criteria"]]
         return [{"id": f"item-{n}", "results": [{"name": name, "type": "azure_ai_evaluator", "score": 2 if
                                                  name in self.failing else 4, "passed": name not in self.failing}
-                                                for name in criteria]} for n, _ in enumerate(items)]
+                                                for name in criteria if name not in self.unscored]}
+                for n, _ in enumerate(items)]
 
 
 def test_foundry_scores_each_evaluator_from_a_custom_dataset_with_the_judge_s_deployment():
@@ -379,3 +396,41 @@ def test_a_live_stage_that_cannot_run_fails_the_gate_naming_it_and_the_rest_is_s
                              "within 1800 seconds."]
     assert measures(stored(store, "full_gate"), "stage", "foundry_evaluation") == {"ran": 0.0}
     assert measures(stored(store, "benchmark"), "kind", "all")["questions"] == len(benchmark.load())
+
+
+def test_an_answer_stage_that_stops_fails_the_gate_naming_it_and_the_genie_results_are_still_stored(engine, store):
+    def stopped(questions):
+        raise TimeoutError("The answer stage timed out after 600 seconds.")
+
+    report = full_gate.run(benchmark.load(), stages(engine, answers=stopped), store, now=lambda: RAN_AT,
+                           say=lambda line: None)
+
+    assert report.exit_code == 1
+    assert report.missed[0] == ("The benchmark through the answer contract could not run: The answer stage timed "
+                                "out after 600 seconds.")
+    assert measures(stored(store, "full_gate"), "stage", "answer_benchmark") == {"ran": 0.0}
+    assert measures(stored(store, "genie_benchmark"), "kind", "all")["passed"] == 5.0
+
+
+def test_an_evaluator_foundry_scored_for_no_answer_fails_the_gate_and_is_stored_as_scoring_none(engine, store):
+    """config/evaluations.toml says tool use's built-in name and mapping have not been run yet. When Foundry
+    scores no answer with it, the gate says so instead of passing without its score."""
+    report = full_gate.run(benchmark.load(), stages(engine, foundry=FakeFoundry(unscored=["tool_use"])), store,
+                           now=lambda: RAN_AT, say=lambda line: None)
+
+    assert report.exit_code == 1
+    assert report.missed == ["Tool use scored no answers in Foundry run eval-1/run-1."]
+    tool_use = measures(stored(store, "foundry_evaluation"), "evaluator", "tool_use")
+    assert tool_use == {"scored": 0.0, "foundry_run": "eval-1/run-1"}
+    assert measures(stored(store, "foundry_evaluation"), "evaluator", "groundedness")["met_target"] == 1.0
+
+
+def test_with_no_genie_space_the_gate_fails_naming_the_missing_space_id(engine, store):
+    no_space = stages(engine)
+    no_space.genie = None
+
+    report = full_gate.run(benchmark.load(), no_space, store, now=lambda: RAN_AT, say=lambda line: None)
+
+    assert (report.exit_code, report.missed) == (1, [full_gate.NO_GENIE_SPACE])
+    assert full_gate.NO_GENIE_SPACE == "The Genie benchmark did not run: the env file has no GENIE_SPACE_ID."
+    assert measures(stored(store, "full_gate"), "stage", "genie_benchmark") == {"ran": 0.0}

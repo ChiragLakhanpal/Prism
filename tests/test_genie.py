@@ -396,6 +396,26 @@ def test_a_space_whose_title_is_not_strata_s_is_never_changed_and_strata_gets_it
     assert (again.action, again.space_id) == ("unchanged", deployed.space_id)
 
 
+def test_an_env_file_that_names_a_deleted_space_gets_strata_a_new_one_through_the_rest_api():
+    """Genie answers 404 for a space that was deleted, which the workspace transport raises as EngineError."""
+    deleted, sent = "0123456789abcdef0123456789abcdef", []
+
+    def workspace(method, path, body=None):
+        sent.append((method, path))
+        if path.startswith(f"/api/2.0/genie/spaces/{deleted}"):
+            raise EngineError(f"The workspace answered 404 to {method} {path}: RESOURCE_DOES_NOT_EXIST")
+        if (method, path) == ("GET", "/api/2.0/genie/spaces"):
+            return {"spaces": [{"space_id": TAXI, "title": "Taxi trips"}]}
+        if (method, path) == ("POST", "/api/2.0/genie/spaces"):
+            return {"space_id": "fedcba9876543210fedcba9876543210", **body}
+        raise AssertionError(f"Strata's deploy sent {method} {path}")
+
+    deployed = genie_space.deploy(genie_space.RestSpaces(workspace), genie_space.load(), WAREHOUSE, deleted)
+
+    assert (deployed.action, deployed.space_id) == ("created", "fedcba9876543210fedcba9876543210")
+    assert [method for method, _ in sent] == ["GET", "GET", "POST"]
+
+
 def test_the_new_space_id_is_appended_to_the_env_file_and_nothing_else_in_it_changes(tmp_path):
     env = tmp_path / "env-file"
     env.write_text(f"DATABRICKS_HOST='https://example.cloud.databricks.com'\nGENIE_SPACE_ID='{TAXI}'")
@@ -490,6 +510,10 @@ class ViewerEngine:
         self.transport, self.warehouse_id, self.fixture = transport, WAREHOUSE, fixture
 
     def run(self, sql, params=None):
+        # A statement on a stopped warehouse waits for the engine's own timeout, not [genie]
+        # warehouse_start_seconds, so ask_genie must start the warehouse before it runs any.
+        if self.transport.warehouse_state() != "RUNNING":
+            raise EngineError("The SQL warehouse is stopped: the statement waited for the engine's timeout.")
         return self.fixture.run(sql, params)
 
 
@@ -510,6 +534,40 @@ def test_on_the_workspace_ask_genie_asks_as_the_viewer_through_the_viewer_s_own_
     assert [row["values"]["contracts"] for row in result["rows"]] == [69, 41, 13]
     assert result["rows"][1]["values"]["country"] is None
     assert clock() <= THRESHOLDS.value("genie.warehouse_start_seconds") + THRESHOLDS.value("genie.answer_seconds")
+
+
+@pytest.fixture
+def fresh_space():
+    """ask_genie reads its space once per process; these tests read it again with parts of the repo missing."""
+    from strata.tools import ask_genie as adapter
+
+    adapter._space.cache_clear()
+    yield
+    adapter._space.cache_clear()
+
+
+def test_in_the_deployed_app_ask_genie_reads_no_benchmark_file_or_ground_truth(engine, monkeypatch, fresh_space):
+    """The App holds src/strata, config and web/dist (ops/app/deploy_app.py, package()), not evals/ or tests/.
+    Only the fixture's stand-in for Genie answers from the benchmark's ground-truth SQL."""
+    from strata.evals import benchmark
+    from strata.lakehouse import ground_truth
+
+    def not_in_the_app(*args, **kwargs):
+        raise FileNotFoundError("The App does not hold evals/benchmark.yaml or tests/ground_truth/.")
+
+    monkeypatch.setattr(benchmark, "load", not_in_the_app)
+    monkeypatch.setattr(ground_truth, "read", not_in_the_app)
+    clock = Clock()
+    monkeypatch.setenv("GENIE_SPACE_ID", SPACE)
+    monkeypatch.setattr(genie_client.time, "sleep", clock.sleep)
+    monkeypatch.setattr(genie_client.time, "monotonic", clock)
+
+    result = registry.call("ask_genie", {"question": "How many contracts were signed each fiscal year?"},
+                           registry.Context(engine=ViewerEngine(FakeWorkspace(clock), engine), viewer=ANA,
+                                            as_of=dt.date(2026, 10, 23)))
+
+    assert result["abstention"] is None
+    assert [row["values"]["contracts"] for row in result["rows"]] == [69, 41, 13]
 
 
 def test_with_no_genie_space_named_ask_genie_says_genie_is_unavailable(engine, monkeypatch):

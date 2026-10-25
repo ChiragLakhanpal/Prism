@@ -169,3 +169,56 @@ def test_a_genie_question_passes_when_genie_s_rows_equal_its_ground_truth_on_the
     assert right.passed, right.problems
     assert asked.reference == {"rows": [["503708", "697972.33"], ["503711", "697972.33"]]}
     assert not wrong.passed and wrong.problems[0].startswith("No call of ask_genie gave the expected answer.")
+
+
+def test_a_step_reference_the_tool_does_not_know_fails_the_question_without_stopping_the_run(engine_for):
+    """A live model may mistype a STEP reference. find_comparables and estimate_time then answer unknown_package with
+    no counts and no step dates, and the question fails, naming why, while the run goes on."""
+    nope = "KE-NOPE-000000-CW-RFB"
+    comparables, estimate = question("find-comparables-ke-nwwda-541055"), question("estimate-time-ke-nwwda-541055")
+
+    results = ask(engine_for, [comparables, estimate], {
+        comparables["id"]: StandIn("find_comparables", {**comparables["arguments"], "step_reference": nope}),
+        estimate["id"]: StandIn("estimate_time", {**estimate["arguments"], "step_reference": nope})})
+
+    assert [(scored.id, scored.passed) for _, scored in results] == [(comparables["id"], False),
+                                                                      (estimate["id"], False)]
+    for _, scored in results:
+        assert any(problem.startswith("No call of ") for problem in scored.problems), scored.problems
+
+
+def test_a_question_whose_own_arguments_the_tool_refuses_fails_and_the_next_question_is_still_asked(engine_for):
+    plan = question("check-plan-nwwda-2026-10-09")
+    typo = {**plan, "id": "check-plan-with-a-typo", "arguments": {**plan["arguments"], "plan_dated": "2026-10-09"}}
+
+    results = ask(engine_for, [typo, plan], {typo["id"]: StandIn("check_plan", plan["arguments"]),
+                                             plan["id"]: StandIn("check_plan", plan["arguments"])})
+
+    [(_, broken), (_, fine)] = results
+    assert (broken.id, broken.passed) == ("check-plan-with-a-typo", False)
+    assert broken.problems[0].startswith("I could not work out the expected answer with the question's own "
+                                         "arguments: "), broken.problems
+    assert (fine.id, fine.passed) == (plan["id"], True)
+
+
+def test_a_tool_result_the_reader_cannot_read_fails_the_question_and_names_the_error():
+    from strata.evals import scoring
+
+    plan = question("check-plan-nwwda-2026-10-09")
+    sentence = ("sentence", {"text": "A kept sentence.", "evidence_ids": ["strata.gold.package:X"]})
+    odd = {"tool": "check_plan", "arguments": plan["arguments"], "result": {"rows": [{"activity_reference_no": "X"}]}}
+
+    scored = scoring.score(scoring.Asked(plan, [sentence], "", [odd], {"unmarked": []}))
+
+    assert not scored.passed
+    assert "the agent's calls gave [{'error': \"KeyError: 'marks'\"}]" in scored.problems[0]
+
+
+def test_a_genie_answer_with_its_columns_in_another_order_is_the_same_answer():
+    from strata.evals import answers
+
+    genie = question("genie-joint-venture-1624689")
+    swapped = {"rows": [{"values": {"supplier_contract_amount_usd": "697972.33", "supplier_id": supplier}}
+                        for supplier in ("503711", "503708")]}
+
+    assert answers.answered(swapped, genie) == answers.expected(genie)

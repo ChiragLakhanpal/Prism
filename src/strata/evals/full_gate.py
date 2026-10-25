@@ -32,6 +32,7 @@ from strata.lakehouse.engine import Engine
 
 OFFLINE_FAILED = ("The offline gate failed, so I ran nothing live. Run .githooks/pre-commit and fix what it "
                   "reports.")
+NO_GENIE_SPACE = "The Genie benchmark did not run: the env file has no GENIE_SPACE_ID."
 
 
 @dataclass
@@ -87,9 +88,11 @@ def run(questions: list[dict], stages: Stages, store: Engine | None, thresholds:
     say("2. The Genie benchmark.")
     genie = attempt("The Genie benchmark", stages.genie) if stages.genie else None
     if stages.genie is None:
-        say("   No Genie space was given, so I asked Genie nothing.")
+        failed.append(NO_GENIE_SPACE)
+        say(f"   {NO_GENIE_SPACE} The space deploy, ops/genie/deploy_space.py, adds it.")
     say("3. The benchmark through the answer contract.")
-    asked = stages.answers(questions)
+    answered = attempt("The benchmark through the answer contract", lambda: stages.answers(questions))
+    asked = answered or []
     say("4. Foundry evaluations.")
     items = foundry_evaluation.dataset([answer for answer, _ in asked])
     if stages.foundry and items:
@@ -97,10 +100,15 @@ def run(questions: list[dict], stages: Stages, store: Engine | None, thresholds:
     else:
         evaluation = None
         say("   Foundry evaluated nothing: no Foundry project was given, or no answer kept a sentence.")
+    for score in evaluation.scores if evaluation is not None else ():
+        if not score.scored:  # a built-in name or data mapping Foundry did not take scores nothing
+            failed.append(f"{score.label} scored no answers in Foundry run {evaluation.eval_id}/{evaluation.run_id}.")
+            say(f"   {failed[-1]}")
     scored = [score for _, score in asked]
     found = results.tallies(scored, genie, evaluation, limits)
     stages_run = {"offline_gate": ("passed", True), "genie_benchmark": ("ran", genie is not None),
-                  "answer_benchmark": ("ran", True), "foundry_evaluation": ("ran", evaluation is not None)}
+                  "answer_benchmark": ("ran", answered is not None),
+                  "foundry_evaluation": ("ran", evaluation is not None)}
     written = results.rows(run_id, ran_at, found, scored, genie, evaluation, stages_run)
     if store is not None:
         results.write(store, written)

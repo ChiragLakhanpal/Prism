@@ -42,8 +42,10 @@ def canonical(value) -> str:
 
 
 def same_rows(rows) -> list[list[str]]:
-    """Rows as canonical text, in a fixed order, so two queries that order their rows differently agree."""
-    return sorted([canonical(cell) for cell in row] for row in rows)
+    """Rows as canonical text in a fixed order, each row's cells sorted too, so two queries that order their rows
+    or their columns differently agree. Genie names and orders its columns its own way, so a row is compared by
+    its values alone. A row with a column the ground truth lacks, such as an added country name, still differs."""
+    return sorted(sorted(canonical(cell) for cell in row) for row in rows)
 
 
 def ground_truth_rows(question, root: Path = ROOT) -> list[list[str]]:
@@ -120,9 +122,10 @@ def past_range(result, question) -> dict[str, list]:
     with the plan's. A package with no plan row (ticket 15) has no plan, so its question asks nothing of one.
     A question about the quantile dots (ticket 15) asks only how many there are and which packages the last
     one stands for. With too few comparables for a range (ticket 33), it gives the abstention's reason and how
-    many comparables there were instead."""
+    many comparables there were instead; for a STEP reference it does not know, counts is null, so none."""
     if result["abstention"] is not None and result["summary"]["past_range"] is None:
-        return {"abstention": [result["abstention"]["reason"]], "comparables": [result["counts"]["comparables"]]}
+        return {"abstention": [result["abstention"]["reason"]],
+                "comparables": [(result["counts"] or {}).get("comparables", 0)]}
     if "last_dot" in question["expected"]:
         dots = result["quantile_dots"] or []
         return {"quantile_dots": [len(dots)], "last_dot": sorted(dots[-1]["step_references"]) if dots else [],
@@ -169,8 +172,11 @@ def disagreement_answer(result, question) -> dict[str, list]:
 def step_dates_answer(result, question) -> dict[str, list]:
     """estimate_time's planned dates for each step (ticket 27), from the summary record the agent cites them by:
     the method family, the basis, the comparables counted, the steps that got a cautious date, how many steps the
-    tool counts as undated, and one named comparable's delay at the signed contract."""
+    tool counts as undated, and one named comparable's delay at the signed contract. For a STEP reference the tool
+    does not know there are no step dates, so it found none of them."""
     steps = result["summary"]["step_dates"]
+    if steps is None:
+        return {key: None for key in question["expected"]}
     signed = next(entry for entry in steps["steps"] if entry["step_key"] == "contract_signed")
     named = {reference for reference, _ in question["expected"].get("signed_delay", [])}
     return {"family": [steps["family"]], "basis": [steps["basis"]], "comparables": [steps["coverage"]["total"]],
@@ -239,7 +245,8 @@ def rebidding_answer(result, question) -> dict[str, list]:
 
 def genie_answer(result, question) -> dict[str, list]:
     """ask_genie's answer: the rows of the query Genie wrote, by value and in a fixed order, which its ground-truth
-    SQL's rows must equal (ticket 33). Column names are left out: Genie names its columns its own way."""
+    SQL's rows must equal (ticket 33). Column names and their order are left out: Genie names and orders its
+    columns its own way."""
     return {"rows": same_rows(list(row["values"].values()) for row in result["rows"])}
 
 

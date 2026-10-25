@@ -31,7 +31,7 @@ from typing import Any, Protocol
 
 from strata.config import GenieConfig, load_genie
 from strata.lakehouse import ground_truth
-from strata.lakehouse.engine import Transport
+from strata.lakehouse.engine import EngineError, Transport
 
 ROOT = Path(__file__).resolve().parents[3]
 TRUSTED = Path(__file__).resolve().parent / "trusted"
@@ -207,7 +207,14 @@ class RestSpaces:
                 return found
 
     def get_space(self, space_id: str) -> dict:
-        return self.transport("GET", f"{GENIE}/{space_id}?include_serialized_space=true", None)
+        """The space with its serialized form. LookupError when Genie holds no such space, such as one deleted
+        since the env file named it."""
+        try:
+            return self.transport("GET", f"{GENIE}/{space_id}?include_serialized_space=true", None)
+        except EngineError as error:
+            if " 404 " in str(error):
+                raise LookupError(space_id) from error
+            raise
 
     def create_space(self, body: dict) -> dict:
         return self.transport("POST", GENIE, body)

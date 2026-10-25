@@ -65,8 +65,12 @@ def run(questions: list[dict], agent_for: Callable[[Turn], Agent], engine_for: E
         text = asyncio.run(ask(question))
         events = stream_events(text)
         run_id = next((data.get("run_id") for kind, data in events if kind == "done"), None)
-        with engine_for(viewer) as engine:
-            reference = answers.reference(question, engine, viewer)
-        asked = scoring.Asked(question, events, text, calls.pop(run_id, []), reference)
+        reference, problem = None, None
+        try:
+            with engine_for(viewer) as engine:
+                reference = answers.reference(question, engine, viewer)
+        except Exception as error:  # a question written wrong, or a tool or query that failed for it alone
+            problem = f"{type(error).__name__}: {error}"
+        asked = scoring.Asked(question, events, text, calls.pop(run_id, []), reference, problem)
         results.append((asked, scoring.score(asked, restricted)))
     return results

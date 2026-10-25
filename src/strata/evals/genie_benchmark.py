@@ -6,8 +6,9 @@ fixture offline, the SQL warehouse in the full gate. A question passes only when
 same rounding (strata.evals.answers.same_rows), in any order. That is stricter than fairshare's runner, whose
 matches() passed a row that shared half its numbers within 0.6 and so let a percentage multiplied by 100 through
 (fairshare's docs/limits.md, October 14, as ticket 33's notes give it): CLAUDE.md rule 1 needs every number to
-match. Column names are not compared, because Genie names its columns its own way, which is also why Genie's own
-evaluation run fails answers whose numbers agree.
+match. Column names and their order are not compared, because Genie names and orders its columns its own way,
+which is also why Genie's own evaluation run fails answers whose numbers agree. A column the ground truth lacks
+still makes the rows differ, so each benchmark question asks for exactly the columns its ground truth returns.
 
 The share of questions that passed is the Genie benchmark's pass rate, which the full gate stores in
 strata.ops.evaluation_result.

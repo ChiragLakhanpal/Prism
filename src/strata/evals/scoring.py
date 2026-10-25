@@ -37,6 +37,7 @@ class Asked:
     text: str
     calls: list[dict] = field(default_factory=list)  # {"tool", "arguments", "result"}
     reference: dict | None = None
+    reference_error: str | None = None  # why the reference could not be worked out, when it could not
 
 
 @dataclass(frozen=True)
@@ -75,6 +76,15 @@ def returned(result: dict) -> set[str]:
     return found
 
 
+def reading(result: dict, question: dict) -> dict:
+    """One call's answer in the question's shape, or the error that stopped the reading, so a result the reader
+    did not expect fails the question and names why instead of stopping the run."""
+    try:
+        return answers.answered(result, question)
+    except (KeyError, TypeError, IndexError, StopIteration) as error:
+        return {"error": f"{type(error).__name__}: {error}"}
+
+
 def score(asked: Asked, restricted: Iterable[str] = ()) -> Scored:
     question = asked.question
     qid, kind = question["id"], question["kind"]
@@ -95,8 +105,11 @@ def score(asked: Asked, restricted: Iterable[str] = ()) -> Scored:
     calls = [call for call in asked.calls if call["tool"] == tool] if tool else []
     if tool and not calls:
         problems.append(f"It never called {tool}, the tool the question is for.")
+    elif tool and asked.reference_error:
+        problems.append("I could not work out the expected answer with the question's own arguments: "
+                        f"{asked.reference_error}")
     elif tool:
-        readings = [answers.answered(call["result"], question) for call in calls]
+        readings = [reading(call["result"], question) for call in calls]
         if asked.reference not in readings:
             problems.append(f"No call of {tool} gave the expected answer. With the question's own arguments it gives "
                             f"{asked.reference}; the agent's calls gave {readings}.")
