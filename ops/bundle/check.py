@@ -79,24 +79,38 @@ def job_run(workspace, run_id: str | None) -> int:
             return 1
     rows = workspace.engine().run(RUNS, {"run_id": run_id}).as_text()
     expected = [task.key for task in nightly.job_tasks()]
-    found = [task for task, _, _ in rows]
     for number, (task, status, started) in enumerate(rows, 1):
         print(f"  {number:>2}. {task}: {status}, started {started}")
+    # Databricks tries a task again when it fails, and each try writes its own row. A task counts by its
+    # last try, in the order of the last tries; the failed tries before it are reported, not held against it.
+    last = {}
+    tries = {}
+    for task, status, _ in rows:
+        tries.setdefault(task, []).append(status)
+        last[task] = status
+    found = list(last)
     problems = [f"{task} has no row." for task in expected if task not in found]
-    problems += [f"{task} has {found.count(task)} rows." for task in expected if found.count(task) > 1]
+    problems += [f"{task} has {len(tries[task])} rows, and its try before the last one succeeded."
+                 for task in found if len(tries[task]) > 1 and "succeeded" in tries[task][:-1]]
     problems += [f"{task} is not a task of the job." for task in found if task not in expected]
     if not problems:
         for number, (task, wanted) in enumerate(zip(found, expected, strict=True), 1):
             if task != wanted:
                 problems.append(f"Row {number} is {task}, where the bundle's order has {wanted}.")
                 break
-    problems += [f"{task} ended {status}." for task, status, _ in rows if status != "succeeded"]
+    problems += [f"{task} ended {status}." for task, status in last.items() if status != "succeeded"]
+    retried = [f"{task} was tried {len(tries[task])} times; the first {len(tries[task]) - 1} failed and the last succeeded."
+               for task in found if len(tries[task]) > 1 and last[task] == "succeeded"
+               and set(tries[task][:-1]) == {"failed"}]
     if problems:
         print(f"Run {run_id} did not record the tasks as the bundle declares them:")
         for line in problems:
             print(f"  {line}")
         return 1
-    print(f"Run {run_id} wrote one row per task to strata.ops.pipeline_runs, in the bundle's order.")
+    for line in retried:
+        print(f"  {line}")
+    print(f"Run {run_id} wrote one row per task to strata.ops.pipeline_runs, in the bundle's order"
+          + (", counting each task by its last try." if retried else "."))
     return 0
 
 

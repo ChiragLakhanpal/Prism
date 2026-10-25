@@ -12,19 +12,29 @@ commit holds. Steps run with the network switched off for uv, npm and Playwright
 run without git's hook variables, so a test that builds its own repo cannot touch the commit
 in progress.
 
+One gate runs at a time on this computer. Before it starts its clock, the gate holds a lock on
+a file in the temporary folder, or on the file that STRATA_GATE_LOCK names. A second gate waits
+for that lock, up to lock_wait_seconds in gates/steps.toml, and then gives up.
+
 This file uses only the standard library, so it runs before anything is installed.
 """
 
+import fcntl
 import os
 import signal
 import subprocess
 import sys
+import tempfile
 import threading
 import time
 import tomllib
 from pathlib import Path
 
 STEPS_FILE = Path("gates/steps.toml")
+# The lock that lets one gate run at a time on this computer. It lives outside the repo, because
+# each worktree is its own copy of the repo. The gate's own tests name their own file instead.
+LOCK_FILE = Path(tempfile.gettempdir()) / "strata-gate.lock"
+LOCK_VARIABLE = "STRATA_GATE_LOCK"
 MARKDOWN = (".md", ".markdown")
 STEP_KEYS = {"name", "run", "always", "git_env", "show", "lane"}
 OFFLINE = {
@@ -49,7 +59,39 @@ def load_steps(path=STEPS_FILE):
         if "lane" in step and not (isinstance(step["lane"], str) and step["lane"].strip()):
             raise SystemExit(f"The lane of the step \"{step['name']}\" in {path} must be a name in quotes, "
                              "such as lane = \"python\".")
-    return float(config.get("limit_seconds", 120)), steps
+    return float(config.get("limit_seconds", 120)), float(config.get("lock_wait_seconds", 1200)), steps
+
+
+def lock_path():
+    return Path(os.environ.get(LOCK_VARIABLE) or LOCK_FILE)
+
+
+def hold_lock(path, wait_limit, limit):
+    """Wait until this gate holds the lock, and return the open file that holds it.
+
+    The system lets go of the lock when the gate's process ends, however it ends. Return None
+    when another gate still holds the lock after wait_limit seconds.
+    """
+    handle = open(path, "a")  # "a" makes the file when it is missing and never empties it.
+    started = time.monotonic()
+    waiting = False
+    while True:
+        try:
+            fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            if not waiting:
+                print("Another gate is running on this computer, so this gate waits for it to finish. "
+                      f"It waits up to {wait_limit:g} seconds for the lock {path}.", flush=True)
+                waiting = True
+            if time.monotonic() - started >= wait_limit:
+                handle.close()
+                return None
+            time.sleep(POLL_SECONDS)
+            continue
+        if waiting:
+            print(f"This gate waited {seconds(time.monotonic() - started)} for the other gate. "
+                  f"Its {limit:g}-second limit starts now.", flush=True)
+        return handle
 
 
 def stages(steps):
@@ -240,7 +282,13 @@ def listed(names):
 
 
 def main():
-    limit, steps = load_steps()
+    limit, lock_wait, steps = load_steps()
+    path = lock_path()
+    lock = hold_lock(path, lock_wait, limit)  # Held until this process ends. The limit starts once it is held.
+    if lock is None:
+        print(f"The gate gave up after {lock_wait:g} seconds, the wait limit in {STEPS_FILE}, because another gate "
+              f"on this computer still holds the lock {path}.")
+        return 1
     run = Run(limit)
     files = staged_files()
     if only_markdown(files):
