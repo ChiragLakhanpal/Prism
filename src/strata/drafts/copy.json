@@ -148,6 +148,7 @@
     "loan_history": "World Bank monthly loan history, reported {date}.",
     "ieg_ratings": "Independent Evaluation Group (IEG) ratings data, {date}.",
     "award_notices": "World Bank procurement notices, award notice published {date}.",
+    "notices": "World Bank procurement notices, notice published {date}.",
     "projects_api_ratings": "World Bank projects API, ratings from the ISR of {date}.",
     "isr_ratings": "The overall ratings table of the ISR of {date}, as I read it.",
     "plan_baseline": "Strata's baseline, saved by World Bank staff on {date}.",

@@ -59,6 +59,9 @@
 - GET /api/packages/{step_reference}/risks and GET /api/planned-packages/{package_id}/risks run the risk-table
   builder for the workspace's section 3, procurement risks and what helped, and PUT .../risk-selection keeps the
   risks a viewer selected for the PPSD (ticket 30; src/strata/server/risks.py).
+- GET /api/packages/{step_reference}/rebidding and GET /api/rebidding run rebidding_risk through the tool
+  registry for section 1's "Advertised again" block, for a STEP row and for a package planned from a sentence,
+  with find_comparables' criteria as query parameters, ?asof= and ?view=, as the viewer (ticket 28).
 - GET /api/suppliers/review is the review list for supplier name matching (ticket 19): each candidate
   pair that waits for a person, with both names, countries and contracts, read as the viewer. POST
   /api/suppliers/review records a person's decision on one, merge or no merge with a reason, and the
@@ -680,6 +683,27 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
         if isinstance(criteria, JSONResponse):
             return criteria
         return run_tool("find_comparables", {**criteria, "step_reference": step_reference}, viewer, view, asof)
+
+    @app.get("/api/packages/{step_reference}/rebidding")
+    def rebidding(step_reference: str, request: Request, asof: dt.date | None = None, view: str = "staff",
+                  viewer: Viewer = Depends(current_viewer)):
+        # Section 1's "Advertised again" block (ticket 28): rebidding_risk with section 1's own criteria.
+        criteria = package_routes.comparables_criteria(request)
+        if isinstance(criteria, JSONResponse):
+            return criteria
+        return run_tool("rebidding_risk", {**criteria, "step_reference": step_reference}, viewer, view, asof)
+
+    @app.get("/api/rebidding")
+    def planned_rebidding(request: Request, asof: dt.date | None = None, view: str = "staff",
+                          viewer: Viewer = Depends(current_viewer)):
+        # The same for a package planned from a sentence, with its criteria as /api/comparables takes them.
+        criteria = package_routes.comparables_criteria(request)
+        if isinstance(criteria, JSONResponse):
+            return criteria
+        if "step_reference" in criteria:
+            return JSONResponse({"code": "bad_request", "detail": "This route is for a package with no STEP reference."},
+                                status_code=422)
+        return run_tool("rebidding_risk", criteria, viewer, view, asof)
 
     def write_about_a_pair(viewer: Viewer, write: Callable[[SupplierLog, str], None]):
         """A decision or a label on a candidate pair, recorded with the viewer's user id, or why it was not."""

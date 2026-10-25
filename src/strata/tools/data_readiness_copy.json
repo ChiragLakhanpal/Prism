@@ -73,6 +73,7 @@
     "get_lessons": "the quote check on proposed lessons",
     "compare_criteria": "the comparison of qualification criteria",
     "rejected_bids": "the count of rejected bids",
+    "rebidding_risk": "the count of packages advertised again",
     "compare_cost_estimates": "the comparison of cost estimates",
     "package_risks": "the risks and what helped",
     "estimate_time": "the planned dates for each step",

@@ -372,6 +372,8 @@ export const copy = {
     // the answer, info otherwise.
     twoReportsDisagree: "Two reports disagree",
     sourcesDiffer: "Sources differ",
+    // An estimate the blueprint labels experimental (ticket 28), always followed at once by why.
+    experimental: "Experimental",
   },
 
   // The citation marker's accessible name, such as "Source 1: Implementation Completion and
@@ -798,6 +800,8 @@ export const copy = {
       // An award notice a rejected bid in section 5 cites (ticket 31).
       "strata.gold.notice": "Award notice",
     } as Record<string, string>,
+    // A notice a package advertised again cites (ticket 28), by its type: an award notice or any other notice.
+    noticeRecordKinds: { award: "Award notice", other: "Notice" },
     recordKindOther: "Record",
     // The records a project's Summary cites (ticket 21), by the table their evidence id names. The
     // project ID or loan number follows in Roboto Mono.
@@ -818,6 +822,8 @@ export const copy = {
       ieg_ratings: "Independent Evaluation Group (IEG) ratings data, {date}.",
       // An award notice a rejected bid in section 5 cites (ticket 31).
       award_notices: "World Bank procurement notices, award notice published {date}.",
+      // A notice a package advertised again cites (ticket 28).
+      notices: "World Bank procurement notices, notice published {date}.",
       projects_api_ratings: "World Bank projects API, ratings from the ISR of {date}.",
       isr_ratings: "The overall ratings table of the ISR of {date}, as I read it.",
       plan_baseline: "Strata's baseline, saved by World Bank staff on {date}.",
@@ -889,6 +895,14 @@ export const copy = {
       activity_reference_no: "Activity",
       planned_completion_on: "Planned completion",
       days_after_closing: "Days after closing",
+      // A notice and a plan row a package advertised again cites (ticket 28): the sentence that gives a reason,
+      // and STEP's own field names for the plan row.
+      notice_says: "The notice says",
+      description: "Description",
+      method: "Method",
+      market_approach: "Market Approach",
+      review_type: "Review Type",
+      process_status: "Process Status",
     } as Record<string, string>,
     // A lesson in Strata's library, which an answer or the lesson review writer cites by version: the
     // drawer's eyebrow, its source line and the marker's name ("Source 2: Lesson, version 1, Put forest and
@@ -3355,6 +3369,109 @@ export const copy = {
     },
   },
 
+  // Section 1's "Advertised again" block (ticket 28; the 28 brief, section 7), at the end of section 1's card.
+  // Every {name} is a value rebidding_risk returned, which Num writes. "N of M" counts stay in numerals; a lone
+  // count from one to nine is spelled out. Evidence is in the past tense; my model's estimate in the present.
+  // It never says "risk", "re-bid" or "re-tender", and never that an agency or a bidder failed.
+  rebid: {
+    heading: "Advertised again",
+    why: "No field in the records says a package was advertised again, so I worked this out from notices and plan rows, and I may have missed or miscounted some.",
+    count: "{n} of the {m} comparable packages were advertised again.",
+    countOne: "One of the {m} comparable packages was advertised again.",
+    countAll: "All {m} comparable packages were advertised again.",
+    countNone: "I found no sign that any of the {m} comparable packages were advertised again.",
+    // The model's natural frequency, by the band the tool returned (never a percentage).
+    model: "My model estimates that about {k} in 10 packages like this one are advertised again.",
+    modelBelow1: "My model estimates that fewer than 1 in 10 packages like this one are advertised again.",
+    modelAbove9: "My model estimates that more than 9 in 10 packages like this one are advertised again.",
+    track: "Track record: in tests on {n} packages from {year} that it had not seen, my model matched what happened better than {baseline}.",
+    // Each baseline the backtest compares against, by its code.
+    baselines: { comparables_rate: "the rate among their comparable packages" } as Record<string, string>,
+    // Why the model is held back, by the tool's not_shown_reason.
+    off: {
+      too_few: "I'm not giving an estimate: I give one only from {min} or more comparable packages.",
+      not_better: "I'm not giving an estimate: in tests on {n} packages from {year} that my model had not seen, it did no better than {baseline}.",
+      no_results: "I'm not giving an estimate: my model has no test results yet.",
+      not_scored: "I'm not giving an estimate: my model scores the packages in Procurement Plans each night, and it has no score for this one yet.",
+    } as Record<string, string>,
+    compareNote: "The comparison above doesn't change this count. It is for this package's own criteria.",
+    denominator: "I counted {m} packages here and {total} in the past range, because {reason}.",
+    denominatorReasons: {
+      canceled_included: "the past range leaves out canceled packages, and a canceled package counts here",
+    } as Record<string, string>,
+    listShow: "Show the {n} packages and their reasons",
+    listShowOne: "Show the package and its reason",
+    listHide: "Hide the packages",
+    listHideOne: "Hide the package",
+    more: "Show {count} more",
+    moreOne: "Show one more",
+    groupCount: "{c} of {n}",
+    groupName: (label: string, c: string, n: string) => `${label}, ${c} of the ${n} packages`,
+    // Each group's heading, by the tool's reason code (config/tools.toml, rebidding_risk's reasons). A code with
+    // no heading here takes other's.
+    reasons: {
+      all_bids_rejected: "All bids were rejected",
+      process_canceled: "The process was canceled",
+      again_no_reason: "Advertised again, with no reason given",
+      no_award: "No award followed the notice",
+      canceled_row: "Canceled in the Procurement Plan",
+      other: "Another reason was given",
+    } as Record<string, string>,
+    // A row's second line when no notice gave a reason in words, by its row_kind; again is trail.notice.again.
+    noAward: "Its notice was published on {notice}, and no award followed in the records through {through}.",
+    canceledRow: 'The Procurement Plan of {plan} gave its Process Status as "{status}".',
+    quoted: (text: string) => `"${text}"`,
+    // A row's third line: one sentence per record, in the order of its markers.
+    sources: {
+      notice: "Notice {id}, published {date}.",
+      award_notice: "Award notice {id}, published {date}.",
+      plan_row: "Procurement Plan, {agency}, version of {date}.",
+    } as Record<string, string>,
+    inLanguage: {
+      notice: (language: string) => `In ${language}, as the notice gives it.`,
+      award_notice: (language: string) => `In ${language}, as the award notice gives it.`,
+    } as Record<string, (language: string) => string>,
+    // A marker's source, in its accessible name (brief 22's record form): "Source 3: Notice OP00083890, February 4, 2020".
+    markers: {
+      notice: (id: string, date: string) => `Notice ${id}, ${date}`,
+      award_notice: (id: string, date: string) => `Award notice ${id}, ${date}`,
+      plan_row: (ref: string, date: string) => `Procurement Plan row ${ref}, ${date}`,
+    } as Record<string, (reference: string, date: string) => string>,
+    // The drawer's tab for each record of a row with two or more (the 28 brief, section 8.3).
+    tabs: {
+      notice: (id: string) => `Notice ${id}`,
+      award_notice: (id: string) => `Award notice ${id}`,
+      plan_row: (ref: string) => `Procurement Plan row ${ref}`,
+    } as Record<string, (reference: string) => string>,
+    openRecords: (ref: string) => `Open the records for ${ref}`,
+    noneNext: "If a notice is missing from the records, I can't see that its package was advertised again.",
+    noneLink: "See how complete the notices are",
+    source: "{sources}. Records run through {through}.",
+    sourceAsOf: "{sources}. Records as of {asOf}.",
+    error: "I couldn't load the count of packages advertised again.",
+    errorCode: "If it fails again, quote this code: {code}.",
+    tryAgain: "Try again",
+    // What each number counts, in its tooltip (the 28 brief, section 7.5).
+    tips: {
+      n: "Packages I counted as advertised again. Select to see each one and its reason.",
+      m: "The comparable packages in the past range above. Select to see the ones advertised again.",
+      mOther: "The comparable packages I counted for this. Select to see the ones advertised again.",
+      k: "From my rebidding model, scored on {date} and rounded to the nearest 1 in 10.",
+      track: "From my model's saved test results of {date}.",
+      min: "The smallest number of comparable packages I give an estimate from.",
+    },
+    // The evidence drawer opened from a row: the row's line as the claim, and its records as tabs.
+    fromPage: "From this page",
+    switcher: "Sources for this sentence",
+  },
+
+  // Brief 22's contract trail words that other screens share; the activity page (ticket 22) reads them too.
+  trail: {
+    notice: {
+      again: "The activity was advertised again on {date}.",
+    },
+  },
+
   // Section 5 of the package workspace, "Check your criteria" (ticket 31; the 31 brief, section 6). Every
   // {name} is a value a tool, the workflow or the verifier returned, which Num writes. Every sentence says
   // "qualification criteria" for the bidding document's requirements, so it is never read as the criteria that
@@ -4302,6 +4419,8 @@ export const copy = {
         // Section 5 of the package workspace (ticket 31; the 31 brief, section 9).
         compare_criteria: "the comparison of qualification criteria",
         rejected_bids: "the count of rejected bids",
+        // Section 1's "Advertised again" block (ticket 28; the 28 brief, section 7.4).
+        rebidding_risk: "the count of packages advertised again",
         compare_cost_estimates: "the comparison of cost estimates",
         // The package workspace's section 3 (ticket 30) links with its own key, since its coverage line is not
         // the quote check's.

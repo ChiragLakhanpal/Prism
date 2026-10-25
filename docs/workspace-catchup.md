@@ -1334,3 +1334,78 @@ Run this from the main checkout:
     uv run --script ops/retrieval/evaluate_live.py --env-file .env --gate --no-rerank
 
 It worked if it prints "Held-out set: lost. Hindsight set: not compared. The gate blocks the candidate." and exits 1 (criterion 3, live half). If the labeled set has no held-out query yet, it prints "Held-out set: not compared" and also exits 1, which means step 3 or step 4 has not filled the set.
+
+## Ticket 28, step 1 of 6: deploy the two rebidding tables, then check the label counts after a nightly run
+
+The merger parked this step on October 25, 2026, after merge commit 6044bd4. All ten keys were set, but the Free Edition SQL warehouse reached its free daily limit at 10:33 UTC on October 25, and the header above holds workspace steps back during a merge. It needs the Databricks keys in `.env`. It is ticket 04's deploy command, and one deploy from 6044bd4 or later serves every block that needs these tables. This workspace's earlier deploys passed `--fairshare-catalog workspace`, so this one does too.
+
+Run this from the main checkout:
+
+    uv run --script ops/bundle/deploy.py --env-file .env --fairshare-catalog workspace
+
+It worked if it exits 0, lists `strata.ops.rebidding_labels` and `strata.ops.rebidding_scores` as new, changes no existing table, and `SHOW TABLES IN strata.ops` lists both. Then start the nightly job by hand (or wait for its scheduled run):
+
+    uv run --script ops/bundle/check.py job-run --env-file .env
+
+It worked if the check exits 0 and this query, with that job run's id, returns four rows, `no_award`, `same_reference`, `canceled_row` and `any`, which match `tests/ground_truth/rebidding_label_counts.sql` run on the warehouse with `as_of` set to that day (criterion 1, workspace half):
+
+    SELECT source, count, denominator, as_of FROM strata.ops.rebidding_labels WHERE run_id = '<job run id>'
+
+## Ticket 28, step 2 of 6: backtest the rebidding models for 2025 alone on the workspace
+
+The merger parked this step on October 25, 2026, after merge commit 6044bd4. The warehouse limit and the header above held it back. It needs the Databricks keys in `.env`. Run it after step 1, which adds `strata.ops.rebidding_scores`, and after ticket 25's deploy, which added `strata.ops.evaluation_result`. Each package it tests calls rebidding_risk once on the warehouse, so time this one year before step 3. Ticket 25's live run found few packages on the warehouse with both a first notice and an outcome, so this run may also train no model.
+
+Run this from the main checkout:
+
+    uv run --script ops/estimates/rebidding_backtest_live.py --env-file .env --years 2025
+
+It worked if it exits 0 and prints a 2025 line with the packages tested and the Brier score and calibration error for gbm, logistic and the baseline, with its MLflow run id. Then it prints "The better calibrated model is ... Registered strata.gold.rebidding_risk version N as champion." and "Run ... is in strata.ops.evaluation_result." If the warehouse had too few decided packages, it prints "No champion was trained, so none was registered. The model card says why." instead. Either way the model card states the results, whether or not the model beat its baseline. Note how long it took before step 3.
+
+## Ticket 28, step 3 of 6: backtest the rebidding models for 2021 to 2025 on the workspace
+
+The merger parked this step on October 25, 2026, after merge commit 6044bd4. It needs the Databricks keys in `.env`. Run it after step 2, and only if step 2's year took a reasonable time.
+
+Run this from the main checkout:
+
+    uv run --script ops/estimates/rebidding_backtest_live.py --env-file .env
+
+It worked if it exits 0 and prints one line for each test year 2021 to 2025, each with its own MLflow run id, and this query returns, for each test year, `gbm_brier`, `gbm_calibration_error`, `logistic_brier`, `logistic_calibration_error`, `baseline_brier` and `baseline_calibration_error`, each with an MLflow run id (criterion 2, workspace half):
+
+    SELECT segment, measure, value, mlflow_run_id FROM strata.ops.evaluation_result
+    WHERE scorer = 'rebidding_backtest' AND segment_kind = 'test_year'
+
+Then `strata.gold.rebidding_risk` in Unity Catalog has a version under the champion alias, and that version's run holds `model_card.md`. The script registers a model as champion only when no version holds that alias yet. So if step 2 registered a champion, this run registers its model as challenger and prints "as challenger". Whether to move the champion alias to this run's version, which was tested on every year, is a decision for the user.
+
+## Ticket 28, step 4 of 6: score the planned packages with the champion, and see the estimate on the deployed App
+
+The merger parked this step on October 25, 2026, after merge commit 6044bd4. Run it after step 3 has registered a champion. It needs the Databricks keys in `.env`. The nightly job's `score` task scores every planned activity with the champion, so run the job by hand (step 1's `job-run` command) or wait for its scheduled run. The route below is new in 6044bd4, so the deployed App must run 6044bd4 or later. If it is older, redeploy it first with `uv run --script ops/app/deploy_app.py --env-file .env` (one deploy from 6044bd4 or later serves every block that names it).
+
+It worked if this query returns one row per planned activity, all with the champion's version:
+
+    SELECT version, learner, count(*) FROM strata.ops.rebidding_scores
+    WHERE run_id = '<job run id>' GROUP BY version, learner
+
+and `GET /api/packages/KE-NWWDA-541055-CW-RFB/rebidding` on the deployed App returns `model.shown` true with "about k in 10" only when the stored `beat_baseline` is 1 and there are 20 or more comparable packages. Otherwise it returns `not_better` with the track record, or another `not_shown_reason` (criterion 4, workspace half).
+
+## Ticket 28, step 5 of 6: sync the agent, since rebidding_risk is a new tool
+
+**Ran on October 25, 2026 (orchestrator).** From 23df355. The sync printed "Foundry's agent strata-orchestrator differed from the repo:", a diff with `### rebidding_risk` added to the tools, and "I made version 2 of strata-orchestrator, which matches the repo." The `--check` run exited 0: "Foundry's agent strata-orchestrator, version 2, matches the repo: there is no difference in its model, instructions, tools, description or guardrail (strata-guardrail)." Passed. Step 6 waits for the SQL warehouse, because the agent's tools run their queries there.
+
+The merger parked this step on October 25, 2026, after merge commit 6044bd4. It needs the four Foundry keys in `.env`. Ticket 28 added rebidding_risk to `config/tools.toml`, and the agent's tool list is generated from that file, so the orchestrator agent in Foundry is out of date until this runs. Ticket 13's sync runs the same command, and one sync from 6044bd4 or later serves every block that names it.
+
+Run this from the main checkout:
+
+    uv run --script ops/agent/sync.py --env-file .env
+    uv run --script ops/agent/sync.py --env-file .env --check
+
+It worked if the first run ends "I made version N of strata-orchestrator, which matches the repo." and the `--check` run exits 0 (it exits 1 when it still finds a difference, and 2 when it could not run).
+
+## Ticket 28, step 6 of 6: the must-refuse set through the live agent, with rebidding_risk among its tools
+
+The merger parked this step on October 25, 2026, after merge commit 6044bd4. The verify notes (`.notes/28-verify.md`) parked it: the scripted must-refuse set passed in the gate, and the live run needs Foundry. Run it after step 5, so the live agent has the new tool. It needs the keys of ticket 24's step 3. Before the live agent answers questions about rebidding, the verify notes' findings F1 and F2 should be fixed: the verifier removes a true quoted reason, and it can pass a made-up "about k in 10". Both are listed for a follow-up ticket.
+
+Run this from the main checkout:
+
+    uv run --script ops/agent/refuse_live.py --env-file .env
+
+It worked if it prints one line per question of kind `refusals` in `evals/benchmark.yaml` (11 at 6044bd4) and exits 0, with no refusal problem on any line and no restricted value in any stream.

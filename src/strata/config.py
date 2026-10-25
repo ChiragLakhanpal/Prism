@@ -723,7 +723,8 @@ class Model:
 def load_models(path: Path = CONFIG_DIR / "models.toml") -> dict[str, Model]:
     """The deployment each role uses, in the order of ROLES."""
     data = _read(path)
-    _Entry(path, "the file", data).only({"roles", "layout", "search", "supplier_matching", "time_estimate", "judge"})
+    _Entry(path, "the file", data).only({"roles", "layout", "search", "supplier_matching", "time_estimate", "rebidding",
+                                         "judge"})
     roles = data.get("roles", {})
     missing = [role for role in ROLES if role not in roles]
     unknown = sorted(set(roles) - set(ROLES))
@@ -1713,6 +1714,70 @@ def load_criteria_items(path: Path = CONFIG_DIR / "criteria_items.toml") -> Crit
     if not cues:
         requirements._fail("cues", "must list the words that mark a sentence as setting a requirement")
     return CriteriaItems(tuple(items), cues)
+
+
+# ── Rebidding risk (ticket 28) ───────────────────────────────────────────
+
+@dataclass(frozen=True)
+class RebiddingReason:
+    """A reason a notice gives in words for advertising a package again, with the patterns that find its sentence."""
+
+    code: str
+    patterns: tuple[re.Pattern, ...]
+
+
+def load_rebidding_reasons(path: Path = CONFIG_DIR / "rebidding_reasons.toml") -> tuple[RebiddingReason, ...]:
+    """The reasons a notice gives in words, in the registry's order."""
+    data = _read(path)
+    _Entry(path, "the file", data).only({"reason"})
+    reasons: list[RebiddingReason] = []
+    for entry in _tables(path, data, "reason"):
+        entry.only({"code", "patterns"})
+        code = entry.text("code")
+        if not re.fullmatch(r"[a-z][a-z0-9_]*", code) or code in {seen.code for seen in reasons}:
+            entry._fail("code", "must be lower case letters, digits and _, and listed once")
+        try:
+            patterns = tuple(re.compile(pattern, re.IGNORECASE) for pattern in entry.texts("patterns"))
+        except re.error as error:
+            entry._fail("patterns", f"must be regular expressions ({error})")
+        if not patterns:
+            entry._fail("patterns", "must list at least one pattern")
+        reasons.append(RebiddingReason(code, patterns))
+    return tuple(reasons)
+
+
+@dataclass(frozen=True)
+class RebiddingSettings:
+    """The rebidding models (ticket 28): the model file's [rebidding] table."""
+
+    learners: tuple[str, ...]  # the two models compared, by their names in strata.estimates.rebidding_model
+    registered_model: str  # catalog.schema.model in Unity Catalog
+    experiment: str  # the MLflow experiment
+    test_years: tuple[int, ...]  # the rolling backtests, each tested on one calendar year
+    calibration_every: int  # every this-many-th training package calibrates the gradient boosting
+    learner_settings: dict  # each learner's own settings, from [rebidding.<learner>]
+
+
+def load_rebidding(path: Path = CONFIG_DIR / "models.toml") -> RebiddingSettings:
+    """The model file's [rebidding] table, with each learner's settings."""
+    entry = _Entry(path, "rebidding", _read(path).get("rebidding"))
+    learners = entry.texts("learners")
+    entry.only({"learners", "registered_model", "experiment", "test_years", "calibration_every", *learners})
+    if len(learners) < 2:
+        entry._fail("learners", "must name the two models the backtests compare")
+    registered = entry.text("registered_model")
+    if registered.count(".") != 2:
+        entry._fail("registered_model", "must be a three-part Unity Catalog name, such as strata.gold.rebidding_risk")
+    years = entry.table.get("test_years")
+    if not isinstance(years, list) or not years or not all(isinstance(y, int) and not isinstance(y, bool) for y in years):
+        entry._fail("test_years", "must be a list of years, such as [2021, 2022]")
+    every = entry.integer("calibration_every")
+    if every < 2:
+        entry._fail("calibration_every", "must be 2 or more, so the model learns from some packages")
+    settings = {}
+    for learner in learners:
+        settings[learner] = dict(_Entry(path, f"rebidding.{learner}", entry.table.get(learner, {})).table)
+    return RebiddingSettings(learners, registered, entry.text("experiment"), tuple(sorted(years)), every, settings)
 
 
 # ── The editions of the procurement rules ────────────────────────────────

@@ -19,6 +19,7 @@ import { LoadError } from "../components/LoadError";
 import { MonoWords } from "../components/MonoWords";
 import { FactsSkeleton, mono, PackageFactsList, PackageHeader } from "../components/PackageFacts";
 import { PastRange, type PastRangeState } from "../components/PastRange";
+import { Rebidding } from "../components/RebiddingBlock";
 import { RisksSection } from "../components/RisksSection";
 import { CheckCriteria } from "../components/CheckCriteria";
 import { SkeletonLine, SkeletonText } from "../components/Skeleton";
@@ -28,6 +29,7 @@ import { copy } from "../copy";
 import type { ComparablesResult, PackageResult } from "../lib/api";
 import { useLoad } from "../lib/load";
 import { useOpenComparable } from "../lib/packages";
+import { rebiddingPath } from "../lib/rebidding";
 import { useScrollPadding } from "../lib/useScrollPadding";
 import { address } from "../lib/router";
 import { useStore } from "../lib/store";
@@ -140,7 +142,12 @@ export function PackagePage({ stepRef }: { stepRef: string }) {
           <PackageFactsList pkg={facts} />
         </div>
         <div className="mt-8">
-          <PastRange state={sectionState} headingRef={sectionHeading} open={opening} />
+          <PastRange
+            state={sectionState}
+            headingRef={sectionHeading}
+            open={opening}
+            after={<Rebidding path={rebiddingPath(base)} section={section.status === "ready" ? section.data : null} />}
+          />
         </div>
         {/* Section 2, the planned date for each STEP step (ticket 27), collapsed until opened. */}
         <div className="mt-6 @lg/page:mt-8">

@@ -1,0 +1,403 @@
+{
+  "mock": "A mock, written by hand for the screen tests and the design gallery (tests/record_rebidding_api.py names it). Its packages, notices and numbers are made up and are not in any record.",
+  "tool": "rebidding_risk",
+  "as_of": "2026-10-22",
+  "view": "staff",
+  "rows": [
+    {
+      "evidence_id": "strata.silver.notices:OP90000006",
+      "public_from": "2025-11-04",
+      "source": {
+        "project_id": "P900009",
+        "notice_id": "OP90000106",
+        "plan_document_id": null
+      },
+      "step_reference": "KE-SAMPLE-310006-CW-RFB",
+      "project_id": "P900009",
+      "country_name": "Kenya",
+      "reason_code": "all_bids_rejected",
+      "row_kind": "quote",
+      "quote": {
+        "text": "All bids were found non-responsive, so the bidding was canceled.",
+        "lang": "en",
+        "notice_id": "OP90000006"
+      },
+      "dates": {
+        "notice_date": null,
+        "bids_due": null,
+        "again_on": null,
+        "plan_date": null
+      },
+      "process_status": null,
+      "evidence": [
+        {
+          "evidence_id": "strata.silver.notices:OP90000006",
+          "public_from": "2025-11-04",
+          "record_kind": "award_notice",
+          "reference": "OP90000006",
+          "date": "2025-11-04",
+          "agency": null
+        }
+      ],
+      "label_sources": [
+        "no_award"
+      ],
+      "rank": 1
+    },
+    {
+      "evidence_id": "strata.silver.notices:OP90000005",
+      "public_from": "2025-06-17",
+      "source": {
+        "project_id": "P900009",
+        "notice_id": "OP90000105",
+        "plan_document_id": null
+      },
+      "step_reference": "KE-SAMPLE-310005-CW-RFB",
+      "project_id": "P900009",
+      "country_name": "Kenya",
+      "reason_code": "all_bids_rejected",
+      "row_kind": "quote",
+      "quote": {
+        "text": "The Employer rejected all bids.",
+        "lang": "en",
+        "notice_id": "OP90000005"
+      },
+      "dates": {
+        "notice_date": null,
+        "bids_due": null,
+        "again_on": null,
+        "plan_date": null
+      },
+      "process_status": null,
+      "evidence": [
+        {
+          "evidence_id": "strata.silver.notices:OP90000005",
+          "public_from": "2025-06-17",
+          "record_kind": "award_notice",
+          "reference": "OP90000005",
+          "date": "2025-06-17",
+          "agency": null
+        }
+      ],
+      "label_sources": [
+        "no_award"
+      ],
+      "rank": 2
+    },
+    {
+      "evidence_id": "strata.silver.notices:OP90000004",
+      "public_from": "2024-09-30",
+      "source": {
+        "project_id": "P900009",
+        "notice_id": "OP90000104",
+        "plan_document_id": null
+      },
+      "step_reference": "SN-SAMPLE-310004-CW-RFB",
+      "project_id": "P900009",
+      "country_name": "Senegal",
+      "reason_code": "all_bids_rejected",
+      "row_kind": "quote",
+      "quote": {
+        "text": "Toutes les offres ont été rejetées.",
+        "lang": "fr",
+        "notice_id": "OP90000004"
+      },
+      "dates": {
+        "notice_date": null,
+        "bids_due": null,
+        "again_on": null,
+        "plan_date": null
+      },
+      "process_status": null,
+      "evidence": [
+        {
+          "evidence_id": "strata.silver.notices:OP90000004",
+          "public_from": "2024-09-30",
+          "record_kind": "award_notice",
+          "reference": "OP90000004",
+          "date": "2024-09-30",
+          "agency": null
+        }
+      ],
+      "label_sources": [
+        "no_award"
+      ],
+      "rank": 3
+    },
+    {
+      "evidence_id": "strata.silver.notices:OP90000003",
+      "public_from": "2024-02-12",
+      "source": {
+        "project_id": "P900009",
+        "notice_id": "OP90000103",
+        "plan_document_id": null
+      },
+      "step_reference": "KE-SAMPLE-310003-CW-RFB",
+      "project_id": "P900009",
+      "country_name": "Kenya",
+      "reason_code": "all_bids_rejected",
+      "row_kind": "quote",
+      "quote": {
+        "text": "No bid was substantially responsive.",
+        "lang": "en",
+        "notice_id": "OP90000003"
+      },
+      "dates": {
+        "notice_date": null,
+        "bids_due": null,
+        "again_on": null,
+        "plan_date": null
+      },
+      "process_status": null,
+      "evidence": [
+        {
+          "evidence_id": "strata.silver.notices:OP90000003",
+          "public_from": "2024-02-12",
+          "record_kind": "award_notice",
+          "reference": "OP90000003",
+          "date": "2024-02-12",
+          "agency": null
+        }
+      ],
+      "label_sources": [
+        "no_award"
+      ],
+      "rank": 4
+    },
+    {
+      "evidence_id": "strata.silver.notices:OP90000002",
+      "public_from": "2023-07-21",
+      "source": {
+        "project_id": "P900009",
+        "notice_id": "OP90000102",
+        "plan_document_id": null
+      },
+      "step_reference": "KE-SAMPLE-310002-CW-RFB",
+      "project_id": "P900009",
+      "country_name": "Kenya",
+      "reason_code": "all_bids_rejected",
+      "row_kind": "quote",
+      "quote": {
+        "text": "All bids were rejected.",
+        "lang": "en",
+        "notice_id": "OP90000002"
+      },
+      "dates": {
+        "notice_date": null,
+        "bids_due": null,
+        "again_on": null,
+        "plan_date": null
+      },
+      "process_status": null,
+      "evidence": [
+        {
+          "evidence_id": "strata.silver.notices:OP90000002",
+          "public_from": "2023-07-21",
+          "record_kind": "award_notice",
+          "reference": "OP90000002",
+          "date": "2023-07-21",
+          "agency": null
+        }
+      ],
+      "label_sources": [
+        "no_award"
+      ],
+      "rank": 5
+    },
+    {
+      "evidence_id": "strata.silver.notices:OP90000001",
+      "public_from": "2022-10-05",
+      "source": {
+        "project_id": "P900009",
+        "notice_id": "OP90000101",
+        "plan_document_id": null
+      },
+      "step_reference": "KE-SAMPLE-310001-CW-RFB",
+      "project_id": "P900009",
+      "country_name": "Kenya",
+      "reason_code": "all_bids_rejected",
+      "row_kind": "quote",
+      "quote": {
+        "text": "All the bids have been rejected.",
+        "lang": "en",
+        "notice_id": "OP90000001"
+      },
+      "dates": {
+        "notice_date": null,
+        "bids_due": null,
+        "again_on": null,
+        "plan_date": null
+      },
+      "process_status": null,
+      "evidence": [
+        {
+          "evidence_id": "strata.silver.notices:OP90000001",
+          "public_from": "2022-10-05",
+          "record_kind": "award_notice",
+          "reference": "OP90000001",
+          "date": "2022-10-05",
+          "agency": null
+        }
+      ],
+      "label_sources": [
+        "no_award"
+      ],
+      "rank": 6
+    },
+    {
+      "evidence_id": "strata.silver.notices:OP90000011",
+      "public_from": "2023-06-15",
+      "source": {
+        "project_id": "P900009",
+        "notice_id": "OP90000011",
+        "plan_document_id": null
+      },
+      "step_reference": "KE-SAMPLE-320001-CW-RFB",
+      "project_id": "P900009",
+      "country_name": "Kenya",
+      "reason_code": "again_no_reason",
+      "row_kind": "again",
+      "quote": null,
+      "dates": {
+        "notice_date": "2023-03-01",
+        "bids_due": null,
+        "again_on": "2023-06-15",
+        "plan_date": null
+      },
+      "process_status": null,
+      "evidence": [
+        {
+          "evidence_id": "strata.silver.notices:OP90000011",
+          "public_from": "2023-03-01",
+          "record_kind": "notice",
+          "reference": "OP90000011",
+          "date": "2023-03-01",
+          "agency": null
+        },
+        {
+          "evidence_id": "strata.silver.notices:OP90000012",
+          "public_from": "2023-06-15",
+          "record_kind": "notice",
+          "reference": "OP90000012",
+          "date": "2023-06-15",
+          "agency": null
+        }
+      ],
+      "label_sources": [
+        "same_reference"
+      ],
+      "rank": 7
+    },
+    {
+      "evidence_id": "strata.silver.plan_rows:90000001/KE-SAMPLE-330001-CW-RFB",
+      "public_from": "2025-01-20",
+      "source": {
+        "project_id": "P900009",
+        "notice_id": "OP90000301",
+        "plan_document_id": "90000001"
+      },
+      "step_reference": "KE-SAMPLE-330001-CW-RFB",
+      "project_id": "P900009",
+      "country_name": "Kenya",
+      "reason_code": "canceled_row",
+      "row_kind": "canceled_row",
+      "quote": null,
+      "dates": {
+        "notice_date": "2023-05-02",
+        "bids_due": "2023-06-01",
+        "again_on": null,
+        "plan_date": "2025-01-20"
+      },
+      "process_status": "Canceled",
+      "evidence": [
+        {
+          "evidence_id": "strata.silver.plan_rows:90000001/KE-SAMPLE-330001-CW-RFB",
+          "public_from": "2025-01-20",
+          "record_kind": "plan_row",
+          "reference": "KE-SAMPLE-330001-CW-RFB",
+          "date": "2025-01-20",
+          "agency": "Sample Water Agency"
+        }
+      ],
+      "label_sources": [
+        "canceled_row"
+      ],
+      "rank": 8
+    }
+  ],
+  "coverage": {
+    "matched": 43,
+    "used": 43,
+    "not_used": []
+  },
+  "abstention": null,
+  "package": null,
+  "criteria": null,
+  "m": 43,
+  "n": 8,
+  "past_range_total": 43,
+  "denominator_reason": null,
+  "groups": [
+    {
+      "reason_code": "all_bids_rejected",
+      "count": 6,
+      "step_references": [
+        "KE-SAMPLE-310006-CW-RFB",
+        "KE-SAMPLE-310005-CW-RFB",
+        "SN-SAMPLE-310004-CW-RFB",
+        "KE-SAMPLE-310003-CW-RFB",
+        "KE-SAMPLE-310002-CW-RFB",
+        "KE-SAMPLE-310001-CW-RFB"
+      ]
+    },
+    {
+      "reason_code": "again_no_reason",
+      "count": 1,
+      "step_references": [
+        "KE-SAMPLE-320001-CW-RFB"
+      ]
+    },
+    {
+      "reason_code": "canceled_row",
+      "count": 1,
+      "step_references": [
+        "KE-SAMPLE-330001-CW-RFB"
+      ]
+    }
+  ],
+  "model": {
+    "shown": true,
+    "in10": 3,
+    "band": "about",
+    "not_shown_reason": null,
+    "min_comparables": 20,
+    "learner": "gbm",
+    "track_record": {
+      "n_test": 61,
+      "test_year": 2025,
+      "beat_baseline": true,
+      "baseline_code": "comparables_rate",
+      "run_date": "2026-10-20"
+    },
+    "score_date": "2026-10-22"
+  },
+  "sources": [
+    {
+      "key": "notices",
+      "dataset_name": "Procurement Notices"
+    },
+    {
+      "key": "awards",
+      "dataset_name": "Contract Awards in Investment Project Financing (Since FY 2020)"
+    },
+    {
+      "key": "documents",
+      "dataset_name": "Documents & Reports: Documents API"
+    }
+  ],
+  "notice_source_keys": [
+    "notices"
+  ],
+  "records_through": "2026-10-13",
+  "rows_per_group": 5
+}

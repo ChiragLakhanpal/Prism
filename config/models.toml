@@ -145,3 +145,37 @@ aft_loss_distribution = "normal"
 aft_loss_distribution_scale = 1.0
 seed = 7
 nthread = 1
+
+# The rebidding models (ticket 28; docs/PLAN.md section 7): the chance that a package like this one is
+# advertised again, from the labels in strata.estimates.rebidding. Calibrated gradient boosting is compared with
+# logistic regression in rolling backtests, and the better calibrated becomes the champion; both stay labeled
+# experimental. src/strata/estimates/rebidding_backtest.py reads this table with strata.config.load_rebidding().
+#
+# learners            the two models, by their names in LEARNERS in src/strata/estimates/rebidding_model.py
+# registered_model    the champion's name in Unity Catalog, where the champion and challenger aliases live
+# experiment          the MLflow experiment the backtests and the model card are logged to
+# test_years          the rolling backtests: each year's models learn from packages advertised before January 1
+#                     whose outcome was known then, and are tested on the packages advertised in that year
+# calibration_every   every this-many-th training package, in the order they were advertised, calibrates the
+#                     gradient boosting (Platt scaling), and the booster learns from the others
+# Source: the spec's "Estimates" ("calibrated gradient boosting compared against logistic regression, labeled
+# experimental"); each value is a starting value for the owner to confirm.
+[rebidding]
+learners = ["gbm", "logistic"]
+registered_model = "strata.gold.rebidding_risk"
+experiment = "/Shared/strata/rebidding_risk"
+test_years = [2021, 2022, 2023, 2024, 2025]
+calibration_every = 4
+
+# Gradient boosting: XGBoost's binary logistic booster. seed and nthread = 1 make a fit repeat exactly.
+[rebidding.gbm]
+max_depth = 2
+eta = 0.1
+num_boost_round = 100
+min_child_weight = 1
+seed = 7
+nthread = 1
+
+# Logistic regression with an L2 penalty on every weight but the intercept, fitted by Newton's method.
+[rebidding.logistic]
+l2 = 1.0

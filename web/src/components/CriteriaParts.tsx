@@ -21,6 +21,7 @@ import { highlighted } from "./Document";
 import { Fill, Joined } from "./Fill";
 import { Num } from "./Num";
 import { ProjectId } from "./ProjectId";
+import { ReasonGroup } from "./ReasonsList";
 import { Source } from "./Source";
 import { TextLink } from "./TextLink";
 
@@ -424,40 +425,18 @@ function Group({ rejected, groupKey, numbers, yours, perGroup }: {
 }) {
   const group = rejected.groups.find((one) => one.item_key === groupKey)!;
   const rows = rowsOf(rejected, groupKey);
-  const [all, setAll] = useState(false);
-  const list = useRef<HTMLUListElement>(null);
-  // "Show more" goes, and focus moves to the first row it showed (the 31 brief, section 7.3).
-  useEffect(() => {
-    if (all) list.current?.children[perGroup]?.querySelector<HTMLElement>("button")?.focus();
-  }, [all, perGroup]);
-  const headingId = `rejected-${groupKey}`;
-  const more = rows.length - perGroup;
   return (
     <div className="@container/reasons" data-rejected-group={groupKey}>
-      <h4
-        id={headingId}
-        tabIndex={-1}
-        className="flex flex-col text-small font-bold text-ink-heading focus:outline-none @[30rem]/reasons:flex-row @[30rem]/reasons:items-baseline @[30rem]/reasons:justify-between @[30rem]/reasons:gap-4"
-      >
-        <span aria-hidden="true">{group.label}</span>
-        <span aria-hidden="true" className="font-semibold text-ink tabular-nums">
-          <Fill template={words.rejected.groupCount} slots={{ c: String(group.count), n: String(rejected.counts.m) }} />
-        </span>
-        <span className="sr-only">{words.rejected.groupName(group.label, String(group.count), String(rejected.counts.m))}</span>
-      </h4>
-      {yours && <p className="mt-1 text-caption text-ink-muted">{words.rejected.yours}</p>}
-      <ul ref={list} aria-labelledby={headingId} className="mt-2 flex flex-col gap-4 pl-2 @md/page:pl-4">
-        {rows.slice(0, all ? rows.length : perGroup).map((row) => (
-          <RejectedRowView key={row.evidence_id} row={row} n={numbers.get(row.evidence_id) ?? 0} />
-        ))}
-      </ul>
-      {!all && more > 0 && (
-        <div className="mt-2 pl-2 @md/page:pl-4">
-          <Button variant="ghost" flush onClick={() => setAll(true)}>
-            {more === 1 ? words.rejected.showOneMore : <Fill template={words.rejected.showMore} slots={{ count: formatCount(more) }} />}
-          </Button>
-        </div>
-      )}
+      <ReasonGroup
+        headingId={`rejected-${groupKey}`}
+        label={group.label}
+        count={<Fill template={words.rejected.groupCount} slots={{ c: String(group.count), n: String(rejected.counts.m) }} />}
+        name={words.rejected.groupName(group.label, String(group.count), String(rejected.counts.m))}
+        note={yours ? <p className="mt-1 text-caption text-ink-muted">{words.rejected.yours}</p> : undefined}
+        perGroup={perGroup}
+        rows={rows.map((row) => <RejectedRowView key={row.evidence_id} row={row} n={numbers.get(row.evidence_id) ?? 0} />)}
+        moreLabel={(more) => (more === 1 ? words.rejected.showOneMore : <Fill template={words.rejected.showMore} slots={{ count: formatCount(more) }} />)}
+      />
     </div>
   );
 }

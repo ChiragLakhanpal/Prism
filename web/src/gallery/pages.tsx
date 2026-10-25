@@ -91,6 +91,7 @@ import { lessonsPage } from "./lessons";
 import { judgingPage, retrievalPage } from "./retrieval";
 import { packagesPage } from "./packages";
 import { risksPage } from "./risks";
+import { rebiddingPage } from "./rebidding";
 import { criteriaPage } from "./criteria";
 import { stepsPage } from "./steps";
 
@@ -445,6 +446,7 @@ const BADGES: [string, BadgeKind[]][] = [
   [t.signals, ["needs-a-look", "watch", "no-signals"]],
   [t.readiness, ["partial", "gap"]],
   [t.planChecks, ["data-note"]],
+  [t.estimates, ["experimental"]],
 ];
 
 const ICONS: Record<string, LucideIcon> = {
@@ -1383,6 +1385,7 @@ export const PAGES: GalleryPage[] = [
   },
   packagesPage(),
   stepsPage(),
+  rebiddingPage(),
   risksPage(),
   criteriaPage(),
   {

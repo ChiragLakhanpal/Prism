@@ -397,6 +397,33 @@ questions:
       run most packages first, with other reasons last whatever its count (27 packages, mostly "Non Responsive"),
       as a Pareto list keeps its catch-all last (the 31 design review, F17).
 
+  # Ticket 28: rebidding risk, labeled experimental. The same comparables as find_comparables, the canceled ones
+  # put back.
+  - id: rebidding-risk-ke-nwwda-541055
+    kind: estimates
+    tool: rebidding_risk
+    question: >-
+      As of October 22, 2026, how many comparable packages of KE-NWWDA-541055-CW-RFB were advertised again, and
+      what reasons did the records give?
+    arguments:
+      step_reference: KE-NWWDA-541055-CW-RFB
+      as_of: "2026-10-22"
+    expected:
+      n_of_m: [3, 52]
+      past_range_total: [49]
+      advertised_again: [KE-KIMAWASCO-149448-CW-RFB, KE-KIMAWASCO-157517-CW-RFB, KE-KIMAWASCO-377450-CW-RFB]
+      quoted: [[KE-KIMAWASCO-149448-CW-RFB, OP00083890, "The Request for Bids has been cancelled."]]
+      group_order: [canceled_row, process_canceled]
+      model_not_shown: [no_results]
+      cited_as: ["strata.tools.rebidding_risk:KE-NWWDA-541055-CW-RFB@2026-10-22"]
+    ground_truth: tests/ground_truth/rebidding_ke_works_rfb.sql
+    source: >-
+      tests/ground_truth/values.toml's [rebidding] entry, counted by hand from the recorded notices, awards and
+      plans: of the 52 comparables, only the three canceled ones were advertised again (no award followed their
+      notices, and the Kilifi agency's plan of March 19, 2025 marks them Canceled). No award notice gives a reason;
+      the only reason in words is inside Invitation for Bids OP00083890, word for word with its British spelling.
+      The fixture holds no rebidding backtest, so the model is not shown, and the counts stand alone.
+
   # The fixture's works comparables publish no qualification criteria in their notices, so this question asks
   # about a consultant services package, whose comparables' Requests for Expression of Interest state their
   # short-listing criteria.
