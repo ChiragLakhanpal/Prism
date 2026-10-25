@@ -35,6 +35,7 @@ from importlib import resources
 from strata.agent.verifier import find_quote  # ticket 13's word-for-word quote match, defined once
 from strata.config import SIDES, Ladder, Thresholds, load_ladder, load_sources, load_thresholds
 from strata.knowledge.batch import Answer, BatchModel, BatchPending, RecordedBatch, Request
+from strata.lakehouse import rewrites
 from strata.lakehouse.engine import Engine
 from strata.reader.passages import TABLE_SUMMARY
 
@@ -631,20 +632,37 @@ class RunReport:
     rejected: int
     disagreements: int
     pending: int = 0  # reports whose answers wait on a batch still running, which a later run waits for
+    changed: int = 0  # assertions and disagreements the run added or removed
+
+
+REJECTION_STAMPS = tuple(REJECTION_COLUMNS.index(column) for column in ("run_id", "rejected_at", "public_from"))
+WRITTEN = (("strata.gold.assertion", ASSERTION_COLUMNS, ()), ("strata.gold.disagreement", DISAGREEMENT_COLUMNS, ()),
+           ("strata.ops.assertion_rejections", REJECTION_COLUMNS, REJECTION_STAMPS))
 
 
 def write(engine: Engine, projects: list[str], assertions: list[Assertion], rejections: list[Rejection],
           disagreements: list[Disagreement]) -> int:
     """Rebuild strata.gold.assertion, strata.gold.disagreement and strata.ops.assertion_rejections for the run's
-    projects. Returns how many rows it wrote."""
+    projects, when what the run found differs from what they hold (leaving out a rejection's run and time,
+    strata.lakehouse.rewrites), so a night with nothing new changes no row. Returns the assertions and
+    disagreements it added or removed."""
+    where = "array_contains(split(:projects, ','), project_id)"
+    joined = ",".join(projects)
+    new = {"strata.gold.assertion": [astuple(row) for row in assertions],
+           "strata.gold.disagreement": [astuple(row) for row in disagreements],
+           "strata.ops.assertion_rejections": [astuple(row) for row in rejections]}
+    differs = {table: rewrites.differing(
+        rewrites.comparable(rewrites.held(engine, table, columns, where, {"projects": joined}), stamps),
+        rewrites.comparable(new[table], stamps)) for table, columns, stamps in WRITTEN}
+    if not any(differs.values()):
+        return 0
     for project_id in projects:
         for table in ("strata.gold.assertion", "strata.gold.disagreement", "strata.ops.assertion_rejections"):
             engine.run(f"DELETE FROM {table} WHERE project_id = :project_id",  # sql-lint: names only
                        {"project_id": project_id})
-    return (engine.insert_rows("strata.ops.assertion_rejections", REJECTION_COLUMNS, [astuple(row) for row in rejections])
-            + engine.insert_rows("strata.gold.assertion", ASSERTION_COLUMNS, [astuple(row) for row in assertions])
-            + engine.insert_rows("strata.gold.disagreement", DISAGREEMENT_COLUMNS,
-                                 [astuple(row) for row in disagreements]))
+    for table, columns, _ in WRITTEN:
+        engine.insert_rows(table, columns, new[table])
+    return differs["strata.gold.assertion"] + differs["strata.gold.disagreement"]
 
 
 def run(engine: Engine, projects: list[str], *, model: BatchModel, ladder: Ladder | None = None,
@@ -665,8 +683,8 @@ def run(engine: Engine, projects: list[str], *, model: BatchModel, ladder: Ladde
         rejected += less
         pending += waiting
     found = detect(made, ladder, thresholds)
-    write(engine, projects, made, rejected, found)
-    return RunReport(len(made), len(rejected), len(found), pending)
+    changed = write(engine, projects, made, rejected, found)
+    return RunReport(len(made), len(rejected), len(found), pending, changed)
 
 
 def redetect(engine: Engine, projects: list[str], ladder: Ladder, thresholds: Thresholds | None = None) -> int:

@@ -95,6 +95,68 @@ class RecordedDocuments:
 
 # ── Live ─────────────────────────────────────────────────────────────────
 
+class HostRefused(Exception):
+    """A World Bank host refused a request outright (HTTP 403, or 429 after fetch_url's retries). On October 25,
+    2026 documents.worldbank.org answered 403 to every request from one computer after some hundreds of PDFs, so
+    a reader stops at the first refusal instead of asking for every other document, and the next run goes on
+    from where it stopped. It is not a NotFetched: a reader skips a document it could not fetch, but never this."""
+
+    def __init__(self, url: str, status: int):
+        super().__init__(f"{url} answered HTTP {status}, so I stopped asking the host.")
+        self.url, self.status = url, status
+
+
+REFUSED = (403, 429)
+
+
+class PoliteFetch:
+    """fetch(url) for the World Bank's document host, as the nightly job asks it (ticket 43).
+
+    It waits pause seconds after the previous request before the next (config/sources.toml, the documents
+    source's pause_seconds), keeps each answer in the cache folder, by its address's hash, so a document
+    is fetched once and never again (on the workspace, the bronze files volume, which serverless compute
+    reads as a folder), and raises HostRefused when the host answers 403 or 429."""
+
+    def __init__(self, fetch, pause: float, cache=None, sleep=None, clock=None):
+        import time
+        from pathlib import Path
+
+        self.fetch, self.pause = fetch, pause
+        self.cache = Path(cache) if cache else None
+        self.sleep, self.clock = sleep or time.sleep, clock or time.monotonic
+        self.last: float | None = None
+        self.asked = 0  # requests that reached the host, for the tests and the run's report
+
+    def _cached(self, url: str):
+        import hashlib
+
+        return self.cache / hashlib.sha256(url.encode("utf-8")).hexdigest() if self.cache else None
+
+    def __call__(self, url: str) -> bytes:
+        import urllib.error
+
+        kept = self._cached(url)
+        if kept is not None and kept.is_file():
+            return kept.read_bytes()
+        if self.last is not None:
+            waited = self.clock() - self.last
+            if waited < self.pause:
+                self.sleep(self.pause - waited)
+        self.asked += 1
+        try:
+            body = self.fetch(url)
+        except urllib.error.HTTPError as error:
+            if error.code in REFUSED:
+                raise HostRefused(url, error.code) from error
+            raise
+        finally:
+            self.last = self.clock()
+        if kept is not None:
+            kept.parent.mkdir(parents=True, exist_ok=True)
+            kept.write_bytes(body)
+        return body
+
+
 class LiveDocuments:
     """The World Bank's hosts. Reading a PDF's pages needs pypdf, which the recording command uses too."""
 
@@ -107,6 +169,8 @@ class LiveDocuments:
     def _get(self, url: str) -> bytes:
         try:
             return self.fetch(https(url))
+        except HostRefused:
+            raise  # the host refused: the run stops, rather than skipping this document and asking for the next
         except Exception as error:  # noqa: BLE001 - any failure means the source did not give it
             raise NotFetched(f"I could not fetch {url}: {error}") from error
 

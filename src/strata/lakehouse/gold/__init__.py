@@ -1,9 +1,11 @@
 """Gold: the knowledge model's tables (ADR 0004), each built by one plain SQL query.
 
 Each file in this folder, <table>.sql, holds one Databricks SQL query over silver (and over gold
-tables built before it) that returns exactly the columns of strata.gold.<table>, and a
-`-- key:` line that names the columns identifying a row. sync() makes the table equal the query
-with one MERGE: it adds new rows, updates the rest and removes rows the query no longer returns.
+tables built before it) that returns exactly the columns of strata.gold.<table>, in the table's
+order, and a `-- key:` line that names the columns identifying a row. sync() makes the table equal
+the query with one MERGE: it adds new rows, updates changed ones and removes rows the query no
+longer returns. It counts those first, comparing whole rows column by column in order, and runs the
+MERGE only when there are any, so a night that changed nothing counts no rows and rewrites none.
 The same text runs on DuckDB in the gate, through the transpile step, and on Databricks.
 
 A query that returns no rows while its table holds some stops the run, so a broken bronze or
@@ -31,8 +33,16 @@ def _query(table: str) -> tuple[str, tuple[str, ...]]:
     return query, tuple(column.strip() for column in keys[0].split(","))
 
 
+def key(table: str) -> tuple[str, ...] | None:
+    """The columns that identify a row of strata.gold.<table>, from its query's "-- key:" line, or None when
+    no query in this folder builds it."""
+    if not (resources.files("strata.lakehouse.gold") / f"{table}.sql").is_file():
+        return None
+    return _query(table)[1]
+
+
 def sync(engine: Engine, table: str) -> int:
-    """Make strata.gold.<table> equal its query. Returns the rows the MERGE touched."""
+    """Make strata.gold.<table> equal its query. Returns the rows it added, changed or removed."""
     query, keys = _query(table)
     target = f"strata.gold.{table}"
     found = engine.run(f"SELECT count(*) AS n FROM ({query}) AS q").rows[0][0]  # sql-lint: names only
@@ -46,10 +56,19 @@ def sync(engine: Engine, table: str) -> int:
                           "with such a source puts two rows in the table or fails, so I stopped. Make the query "
                           "give each key one row.")
     match = " AND ".join(f"target.{key} = source.{key}" for key in keys)
-    result = engine.run(  # sql-lint: names only
-        f"MERGE INTO {target} AS target USING ({query}) AS source ON {match} "
-        "WHEN MATCHED THEN UPDATE SET * WHEN NOT MATCHED THEN INSERT * WHEN NOT MATCHED BY SOURCE THEN DELETE")
-    return int(result.rows[0][0]) if result.rows else 0
+    # Count what the MERGE would change first, and run it only when something changes: a MERGE updates every row
+    # it matches, so its own count is the whole table on a night that changed nothing (ticket 07's review, P3).
+    added_or_changed = engine.run(  # sql-lint: names only
+        f"SELECT count(*) AS n FROM (SELECT * FROM ({query}) AS q EXCEPT SELECT * FROM {target}) AS c").rows[0][0]
+    removed = engine.run(  # sql-lint: names only
+        f"SELECT count(*) AS n FROM {target} AS target "
+        f"WHERE NOT EXISTS (SELECT 1 FROM ({query}) AS source WHERE {match})").rows[0][0]
+    changed = int(added_or_changed) + int(removed)
+    if changed:
+        engine.run(  # sql-lint: names only
+            f"MERGE INTO {target} AS target USING ({query}) AS source ON {match} "
+            "WHEN MATCHED THEN UPDATE SET * WHEN NOT MATCHED THEN INSERT * WHEN NOT MATCHED BY SOURCE THEN DELETE")
+    return changed
 
 
 def duplicate_keys(engine: Engine, query: str, keys: tuple[str, ...]) -> int:
@@ -62,5 +81,5 @@ def duplicate_keys(engine: Engine, query: str, keys: tuple[str, ...]) -> int:
 
 
 def build(engine: Engine) -> int:
-    """Sync every gold table, in ORDER. Returns the rows the MERGEs touched."""
+    """Sync every gold table, in ORDER. Returns the rows they added, changed or removed."""
     return sum(sync(engine, table) for table in ORDER)

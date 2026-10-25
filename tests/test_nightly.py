@@ -61,9 +61,11 @@ def no_pages(source, engine):
     return ()
 
 
-# The tasks that have their work so far (tickets 07, 20, 22 and 28); ticket 43 gives the rest theirs. score counts
-# the rebidding labels on every run, and scores packages only with a champion from the live MLflow.
-WORKING = {"fetch_by_watermark", "bronze_to_gold", "relink", "detect_disagreements", "score", "measure_data_readiness"}
+# The tasks that change rows on a first run over the recorded fixture: every task but two. sync_index finds
+# strata.gold.passage already equal to the passages, because the passage reader syncs it before it measures, and
+# refresh_drafts finds no draft to mark (tests/test_refresh_drafts.py marks some). score counts the rebidding
+# labels on every run, and scores packages only with a champion from the live MLflow.
+WORKING = set(PLAN_ORDER) - {"sync_index", "refresh_drafts"}
 
 
 def with_a_plan_read(engine, project_id="P156634"):
@@ -106,7 +108,7 @@ def test_the_disagreements_task_reads_the_records_assertions_and_asks_the_live_m
     monkeypatch.setattr("strata.knowledge.batch.from_environment", lambda: asked.append("live"))
     monkeypatch.setattr("strata.knowledge.batch.HeldAnswers", Replays)
     with_a_plan_read(engine)
-    nightly.run_locally(engine)
+    nightly.run_locally(engine, readers_for=nightly.no_documents)  # the records' assertions need no document
 
     assert asked == [] and replayed == []
     held = engine.run("SELECT count(*) FROM strata.gold.assertion WHERE form = :form",

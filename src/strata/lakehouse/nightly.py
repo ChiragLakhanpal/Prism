@@ -2,27 +2,41 @@
 
 The bundle (bundle/nightly.yml) is the one place that names the tasks and their order. On
 Databricks, each task runs nightly_task.py, which calls main() here with the task's name and the
-job run's id. Each task does its work and records its run in strata.ops.pipeline_runs.
+job run's id. Each task does its work, runs its quality checks (strata.lakehouse.quality) and records
+its run in strata.ops.pipeline_runs.
 
-Seven tasks have their work (tickets 07, 17, 20, 22, 28 and 29): fetch_by_watermark fetches each source in
-config/sources.toml that it fetches page by page into bronze, for every country or for the slice's
-countries as each entry says; bronze_to_gold builds silver and gold from bronze; relink rebuilds the
-edge table and scores each contract against its project's report paragraphs (strata.knowledge.links,
-which ticket 43 keeps calling here); propose_lessons has
-the batch model propose lessons from the evaluation reports the passage reader holds, and those whose
-quotes pass the check wait in the review queue (strata.knowledge.lessons.propose);
-detect_disagreements rebuilds the assertions and the disagreements between them
-(strata.knowledge.assertions); score counts the rebidding labels from each source and, on the
-workspace, scores every planned activity with the rebidding champion (strata.estimates.rebidding);
-and measure_data_readiness writes the data readiness measures and each table's size to strata.ops.
-The rest do nothing yet, so each records zero rows changed; ticket
-43 gives them their work, and adds the plan reader (strata.lakehouse.plans), which fetches the
-documents source itself, and the passage reader, whose passages propose_lessons reads.
+Every task has its work (tickets 07, 17, 19, 20, 22, 28, 29 and 43), in docs/PLAN.md section 11's order:
 
-The fetch is the one step that differs between the workspace and this computer. On Databricks,
-main() fetches from the live APIs. run_locally() reads the same job from the bundle and calls
-main() for each task in order, with the parameters the bundle gives, and fetches the recorded
-fixture instead. The gate builds the fixture database this way (gates/build_fixture.py).
+1. fetch_by_watermark fetches each source in config/sources.toml that it fetches page by page into bronze,
+   for every country or for the slice's countries as each entry says, from its watermark on.
+2. bronze_to_gold builds silver and gold from bronze, with the suppliers resolved (ticket 19).
+3. parse_and_embed runs the plan reader and the passage reader over only the documents bronze does not
+   hold yet, and embeds only passages whose text changed (strata.lakehouse.readers).
+4. sync_index syncs strata.gold.passage and, on the workspace, the AI Search index.
+5. relink rebuilds the edge table and scores each contract against its project's report paragraphs
+   (strata.knowledge.links).
+6. propose_lessons has the batch model propose lessons from the evaluation reports the passage reader
+   holds; a document is sent once, and those whose quotes pass the check wait in the review queue
+   (strata.knowledge.lessons.propose).
+7. detect_disagreements rebuilds the assertions and the disagreements between them (strata.knowledge.assertions).
+8. score counts the rebidding labels from each source and, on the workspace, scores every planned activity
+   with the rebidding champion (strata.estimates.rebidding).
+9. measure_data_readiness writes the data readiness measures and each table's size to strata.ops.
+10. refresh_drafts marks each open draft row that cites a lesson at a version a lead has since changed or
+    retired (strata.knowledge.lessons.notices). It never changes a draft.
+
+Where pages and documents come from is the one thing that differs between the workspace and this
+computer. On Databricks, main() fetches from the live APIs and the World Bank's document host.
+run_locally() reads the same job from the bundle and calls main() for each task in order, with the
+parameters the bundle gives, over the recorded fixture instead. The gate builds the fixture database
+this way (gates/build_fixture.py), and repair_locally() reruns a run that stopped, as a Databricks
+repair run does.
+
+A rerun changes nothing that the first run already wrote: bronze keeps a page or a document once, by
+its hash or id; silver reads a page only once all its tables hold it; gold and the edge table are
+made equal to their queries with one MERGE; the readers parse and embed only what is new; and a
+document is sent to the batch model once. What a run adds every time is its own record, under its own
+run id (RUN_LOGS), and a fresh try of a request or a page that failed before.
 
 Run the whole job on an empty DuckDB database and print its rows:
 
@@ -39,11 +53,19 @@ from dataclasses import dataclass
 from importlib import resources
 
 from strata.config import Source, load_sources
-from strata.lakehouse import bronze, gold, pages, readiness, silver, storage
+from strata.lakehouse import bronze, gold, pages, quality, readers, readiness, silver, storage
 from strata.lakehouse.engine import Engine
 from strata.lakehouse.schedule import Window, daily_start
 
 JOB = "nightly"  # the job's key under resources.jobs in the bundle
+
+# The tables in which every run adds rows of its own, under its own run id, whether anything changed or not: the
+# record of what each run did and measured. Every other table a rerun leaves as it was. bronze.lesson_batches and
+# ops.parse_failures also keep each try of a request or a page that failed before, which a later night tries again.
+RUN_LOGS = ("strata.ops.pipeline_runs", "strata.ops.quality_checks", "strata.ops.data_readiness",
+            "strata.ops.table_sizes", "strata.ops.readiness_snapshot", "strata.ops.parse_runs",
+            "strata.ops.documents_read", "strata.ops.stress_shelf", "strata.ops.rebidding_labels",
+            "strata.ops.supplier_match_quality")
 
 # Where a source's pages come from: the live API on the workspace, the recorded fixture here.
 Fetch = Callable[[Source, Engine], Iterable[pages.Page]]
@@ -63,20 +85,36 @@ def _now() -> dt.datetime:
     return dt.datetime.now(dt.UTC)
 
 
+# The document readers a run uses (strata.lakehouse.readers), given the engine, or None for no document reader.
+ReadersFor = Callable[[Engine], "readers.Readers | None"]
+
+
+def no_documents(engine: Engine) -> None:
+    """No document reader: parse_and_embed reads nothing. The fixture build reads the documents itself, before
+    and after the job, so its measures keep the runs they always had (gates/build_fixture.py)."""
+    return None
+
+
 @dataclass(frozen=True)
 class Run:
-    """What a task works with: the engine, the job run's id, where pages come from, and the clock
-    its measures are taken by (the fixture build fixes it, so the fixture's measures never move)."""
+    """What a task works with: the engine, the job run's id, where pages come from, the clock its
+    measures are taken by (the fixture build fixes it, so the fixture's measures never move), and
+    where documents come from. By default the documents follow the pages: the live readers when pages
+    come from the live APIs, the recorded fixture's when they come from the recorded fixture, and none
+    for any other source of pages, such as a test's, unless readers_for names some."""
 
     engine: Engine
     run_id: str
     fetch: Fetch
     clock: Callable[[], dt.datetime] = _now
+    readers_for: ReadersFor | None = None
 
-
-def _nothing_yet(run: Run) -> int:
-    """A task that has no work yet. It changes no rows."""
-    return 0
+    def document_readers(self) -> readers.Readers | None:
+        if self.readers_for is not None:
+            return self.readers_for(self.engine)
+        if self.fetch is fetch_live:
+            return readers.live(self.engine)
+        return readers.recorded() if self.fetch is fetch_recorded else None
 
 
 def _paged() -> list[Source]:
@@ -112,6 +150,19 @@ def _bronze_to_gold(run: Run) -> int:
     return added + gold.build(run.engine)
 
 
+def _parse_and_embed(run: Run) -> int:
+    """The plan reader and the passage reader, over only the documents bronze does not hold and the pages and
+    passages they have not read (strata.lakehouse.readers). A refusal from the document host ends the reading
+    for the night with a data readiness note, and the task still finishes."""
+    found = run.document_readers()
+    return 0 if found is None else readers.read(run.engine, found, run.run_id, run.clock)
+
+
+def _sync_index(run: Run) -> int:
+    """strata.gold.passage made equal to the passages and, on the workspace, the AI Search index synced from it."""
+    return readers.sync_index(run.engine, run.document_readers())
+
+
 def _relink(run: Run) -> int:
     """The edge table rebuilt: every keyed link between strata, and each contract scored against the paragraphs
     of its own project's reports, keeping the pairs that reach links.threshold as "appeared together" links
@@ -133,7 +184,7 @@ def _detect_disagreements(run: Run) -> int:
     model = (batch.from_environment() or batch.HeldAnswers()) if run.fetch is fetch_live else batch.RecordedBatch()
     projects = assertions.default_projects(run.engine)
     report = assertions.run(run.engine, projects, model=model, run_id=run.run_id, clock=run.clock)
-    return report.assertions + report.rejected + report.disagreements
+    return report.changed
 
 
 def _propose_lessons(run: Run) -> int:
@@ -194,18 +245,26 @@ def _measure_data_readiness(run: Run) -> int:
     return measured + snapshot.write(run.engine, run.run_id, run.clock)
 
 
+def _refresh_drafts(run: Run) -> int:
+    """A version notice for each open draft row that cites a lesson at a version a lead has since changed or
+    retired (strata.knowledge.lessons.notices). It marks drafts and never changes one (the 39 brief, section 9)."""
+    from strata.knowledge.lessons import notices
+
+    return notices.mark(run.engine, run.run_id, run.clock)
+
+
 # Each task's work, by the task key the bundle uses. Each returns the number of rows it changed.
 TASKS: dict[str, Callable[[Run], int]] = {
     "fetch_by_watermark": _fetch_by_watermark,
     "bronze_to_gold": _bronze_to_gold,
-    "parse_and_embed": _nothing_yet,
-    "sync_index": _nothing_yet,
+    "parse_and_embed": _parse_and_embed,
+    "sync_index": _sync_index,
     "relink": _relink,
     "propose_lessons": _propose_lessons,
     "detect_disagreements": _detect_disagreements,
     "score": _score,
     "measure_data_readiness": _measure_data_readiness,
-    "refresh_drafts": _nothing_yet,
+    "refresh_drafts": _refresh_drafts,
 }
 
 
@@ -214,14 +273,32 @@ def _record_sql() -> str:
     return (resources.files("strata.lakehouse") / "sql" / "record_pipeline_run.sql").read_text()
 
 
+FIRST_STARTED = "SELECT min(started_at) AS started FROM strata.ops.pipeline_runs WHERE run_id = :run_id"
+
+
+def night_of(engine: Engine, run_id: str, started: dt.datetime) -> dt.date:
+    """The night a run belongs to: the day, in the job's time zone, its first task started. A rerun of a task on
+    a later day keeps the night of the run it finishes."""
+    from zoneinfo import ZoneInfo
+
+    first = engine.run(FIRST_STARTED, {"run_id": run_id}).rows[0][0]
+    if first is not None and not isinstance(first, dt.datetime):
+        first = dt.datetime.fromisoformat(str(first).replace("Z", "+00:00").replace(" ", "T"))
+    when = min(started, first.replace(tzinfo=first.tzinfo or dt.UTC)) if first else started
+    return when.astimezone(ZoneInfo(window().timezone)).date()
+
+
 def run_task(engine: Engine, task_key: str, run_id: str, fetch: Fetch,
-             clock: Callable[[], dt.datetime] = _now) -> None:
-    """Do one task's work and record it. A task that fails is recorded as failed, then raises again."""
+             clock: Callable[[], dt.datetime] = _now, readers_for: ReadersFor | None = None) -> None:
+    """Do one task's work, run its quality checks (strata.lakehouse.quality) and record it. A task that fails is
+    recorded as failed, with no checks, then raises again."""
     work = TASKS[task_key]
     started = clock()
     status, changed = "failed", 0
     try:
-        changed = work(Run(engine, run_id, fetch, clock))
+        changed = work(Run(engine, run_id, fetch, clock, readers_for))
+        quality.record(engine, quality.check(engine, task_key), run_id, night_of(engine, run_id, started), task_key,
+                       clock())
         status = "succeeded"
     finally:
         finished = clock()
@@ -231,10 +308,11 @@ def run_task(engine: Engine, task_key: str, run_id: str, fetch: Fetch,
         })
 
 
-def main(argv: list[str], engine: Engine, fetch: Fetch = fetch_live, clock: Callable[[], dt.datetime] = _now) -> int:
-    """The entry point each task of the job calls: --task NAME --run-id ID --src FOLDER. Pages come
-    from the live APIs, as on Databricks, unless fetch says otherwise; run_locally() passes the
-    recorded fixture."""
+def main(argv: list[str], engine: Engine, fetch: Fetch = fetch_live, clock: Callable[[], dt.datetime] = _now,
+         readers_for: ReadersFor | None = None) -> int:
+    """The entry point each task of the job calls: --task NAME --run-id ID --src FOLDER. Pages and
+    documents come from the live APIs, as on Databricks, unless fetch and readers_for say otherwise;
+    run_locally() passes the recorded fixture."""
     parser = argparse.ArgumentParser(prog="nightly_task.py")
     parser.add_argument("--task", required=True)
     parser.add_argument("--run-id", required=True)
@@ -243,7 +321,7 @@ def main(argv: list[str], engine: Engine, fetch: Fetch = fetch_live, clock: Call
     if args.task not in TASKS:
         raise SystemExit(f"The nightly job has no task called {args.task}. "
                          f"Its tasks are: {', '.join(TASKS)}.")
-    run_task(engine, args.task, args.run_id, fetch, clock)
+    run_task(engine, args.task, args.run_id, fetch, clock, readers_for)
     return 0
 
 
@@ -290,16 +368,37 @@ def window(bundle=None) -> Window:
                   job["schedule"]["timezone_id"], int(job["timeout_seconds"]) // 60)
 
 
+def _argv(task: Task, run_id: str) -> list[str]:
+    return [part.replace("{{job.run_id}}", run_id).replace("{{task.name}}", task.key) for part in task.parameters]
+
+
 def run_locally(engine: Engine, bundle=None, run_id: str | None = None, fetch: Fetch = fetch_recorded,
-                clock: Callable[[], dt.datetime] = _now) -> str:
+                clock: Callable[[], dt.datetime] = _now, readers_for: ReadersFor | None = None) -> str:
     """Run every task of the job in order on engine, with the parameters the bundle gives and pages
-    from the recorded fixture, each timed by clock. Returns the run id."""
+    and documents from the recorded fixture, each timed by clock. A task that fails stops the run, as
+    on Databricks, where every later task depends on it. Returns the run id."""
     run_id = run_id or f"local-{_now():%Y%m%dT%H%M%S%f}"
     for task in job_tasks(bundle):
-        argv = [part.replace("{{job.run_id}}", run_id).replace("{{task.name}}", task.key)
-                for part in task.parameters]
-        main(argv, engine, fetch, clock)
+        main(_argv(task, run_id), engine, fetch, clock, readers_for)
     return run_id
+
+
+LAST_TRIES = """
+SELECT task_key, status FROM strata.ops.pipeline_runs WHERE run_id = :run_id ORDER BY started_at, finished_at
+"""
+
+
+def repair_locally(engine: Engine, run_id: str, bundle=None, fetch: Fetch = fetch_recorded,
+                   clock: Callable[[], dt.datetime] = _now, readers_for: ReadersFor | None = None) -> list[str]:
+    """Rerun a run that stopped, as a Databricks repair run does: under the same run id, every task from the
+    first one whose last try did not succeed, in order. Each try keeps its own row in strata.ops.pipeline_runs.
+    Returns the tasks it ran."""
+    last = dict(engine.run(LAST_TRIES, {"run_id": run_id}).rows)
+    tasks = job_tasks(bundle)
+    first = next((n for n, task in enumerate(tasks) if last.get(task.key) != "succeeded"), len(tasks))
+    for task in tasks[first:]:
+        main(_argv(task, run_id), engine, fetch, clock, readers_for)
+    return [task.key for task in tasks[first:]]
 
 
 def _print_local_run() -> int:

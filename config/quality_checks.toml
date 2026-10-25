@@ -1,0 +1,137 @@
+# The nightly job's quality checks: which tables each task checks when it finishes (ticket 43; the 45 brief,
+# section 6, "Nightly runs and quality checks").
+#
+# This is the one place to add or change a check (CLAUDE.md rule 9). strata.config.load_quality_checks() reads
+# it, and strata.lakehouse.quality runs the checks after each task of the job and keeps every result in
+# strata.ops.quality_checks, passed or failed, for the dashboard's Governance page. A failed check never stops
+# the job. tests/test_quality_checks.py checks that every task of the job checks at least one table and that
+# every table named here is in the catalog.
+#
+# Each [[tables]] entry is one table a task writes:
+#
+#   task      the task's key in bundle/nightly.yml
+#   table     the table, in three parts
+#   key       optional: the columns that tell one row from another. The job counts the rows that miss each of
+#             them (missing_key) and the rows that repeat a key (duplicates). A gold table built by a query in
+#             src/strata/lakehouse/gold/ takes the key its query's "-- key:" line names, so leave key out for
+#             it. A table that keeps every version of a record, as silver keeps every page, has no key.
+#   contacts  optional: true for a table of notices, whose notice_text and bid_description the job searches for
+#             an email address or a labelled phone number that ingestion missed (contacts_left)
+#
+# Every table also gets a row count check against the range in config/thresholds.toml [quality_checks] and a
+# missing Disclosed date check (missing_public_from, ADR 0002).
+
+[[tables]]
+task = "fetch_by_watermark"
+table = "strata.bronze.api_pages"
+key = ["source", "page_hash"]
+
+[[tables]]
+task = "bronze_to_gold"
+table = "strata.silver.notices"
+contacts = true
+
+[[tables]]
+task = "bronze_to_gold"
+table = "strata.gold.country"
+
+[[tables]]
+task = "bronze_to_gold"
+table = "strata.gold.project"
+
+[[tables]]
+task = "bronze_to_gold"
+table = "strata.gold.project_loan"
+
+[[tables]]
+task = "bronze_to_gold"
+table = "strata.gold.notice"
+
+[[tables]]
+task = "bronze_to_gold"
+table = "strata.gold.contract"
+
+[[tables]]
+task = "bronze_to_gold"
+table = "strata.gold.supplier"
+
+[[tables]]
+task = "bronze_to_gold"
+table = "strata.gold.contract_supplier"
+
+[[tables]]
+task = "bronze_to_gold"
+table = "strata.gold.package"
+
+[[tables]]
+task = "parse_and_embed"
+table = "strata.bronze.document_texts"
+key = ["document_id", "content_hash"]
+
+[[tables]]
+task = "parse_and_embed"
+table = "strata.bronze.layout_pages"
+key = ["document_id", "pdf_page", "page_hash"]
+
+[[tables]]
+task = "parse_and_embed"
+table = "strata.silver.plan_versions"
+key = ["document_id"]
+
+[[tables]]
+task = "parse_and_embed"
+table = "strata.silver.documents"
+key = ["document_id"]
+
+[[tables]]
+task = "parse_and_embed"
+table = "strata.silver.passages"
+key = ["passage_id"]
+
+[[tables]]
+task = "parse_and_embed"
+table = "strata.silver.passage_embeddings"
+key = ["text_hash", "model"]
+
+[[tables]]
+task = "sync_index"
+table = "strata.gold.passage"
+
+[[tables]]
+task = "relink"
+table = "strata.gold.edge"
+
+[[tables]]
+task = "propose_lessons"
+table = "strata.silver.lesson_proposals"
+key = ["proposal_id"]
+
+[[tables]]
+task = "propose_lessons"
+table = "strata.ops.lesson_review_items"
+key = ["item_id"]
+
+[[tables]]
+task = "detect_disagreements"
+table = "strata.gold.assertion"
+key = ["assertion_id"]
+
+[[tables]]
+task = "detect_disagreements"
+table = "strata.gold.disagreement"
+key = ["disagreement_id"]
+
+[[tables]]
+task = "score"
+table = "strata.ops.rebidding_labels"
+key = ["run_id", "source"]
+
+[[tables]]
+task = "measure_data_readiness"
+table = "strata.ops.data_readiness"
+key = ["run_id", "source", "subject", "measure"]
+
+[[tables]]
+task = "refresh_drafts"
+table = "strata.ops.lesson_version_notices"
+key = ["draft_id", "row_key", "lesson_id", "cited_version", "current_version"]
