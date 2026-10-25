@@ -267,7 +267,7 @@ test("below a 768 px page area no label prints over its value, for a dated packa
     await page.setViewportSize({ width, height: 900 });
     await expect(section(page).locator("[data-step-list]")).toBeVisible();
     expect(await labelsOverValues(page), `at ${width} px`).toEqual([]);
-    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), `at ${width} px`).toBe(true);
+    await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), { message: `at ${width} px` }).toBe(true);
   }
 
   // A made-up later plan re-dates the signed contract, as no recorded plan does: its "Moved to" line is the longest value.
@@ -327,5 +327,6 @@ test("axe finds no WCAG 2.2 AA violations collapsed and open, and at 390 px the 
   );
   expect(await axe(page)).toEqual([]);
   await page.setViewportSize({ width: 320, height: 900 });
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  // Section 1's chart measures its new width a frame after the resize, so wait for the page to settle.
+  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 });

@@ -287,14 +287,15 @@ def disagreement_answer(result, question) -> dict[str, list]:
 
 def step_dates_answer(result, question) -> dict[str, list]:
     """estimate_time's planned dates for each step (ticket 27), from the summary record the agent cites them by:
-    the method family, the basis, the comparables counted, the steps that got a cautious date, and one named
-    comparable's delay at the signed contract."""
+    the method family, the basis, the comparables counted, the steps that got a cautious date, how many steps the
+    tool counts as undated, and one named comparable's delay at the signed contract."""
     steps = result["summary"]["step_dates"]
     signed = next(entry for entry in steps["steps"] if entry["step_key"] == "contract_signed")
     named = {reference for reference, _ in question["expected"]["signed_delay"]}
     return {"family": [steps["family"]], "basis": [steps["basis"]], "comparables": [steps["coverage"]["total"]],
             "dated_steps": [entry["step_key"] for entry in steps["steps"]
                             if entry["cautious"] and entry["cautious"]["planned_date"]],
+            "undated_steps": [steps["undated_n"]],
             "signed_delay": [[entry["step_reference"], entry["days"]] for entry in signed["comparables"]
                              if entry["step_reference"] in named],
             "cited_as": [result["summary"]["evidence_id"]]}

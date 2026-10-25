@@ -146,6 +146,7 @@ questions:
       basis: [delay]
       comparables: [49]
       dated_steps: []
+      undated_steps: [6]
       signed_delay: [[KE-NWWDA-229129-CW-RFB, 186]]
       cited_as: ["strata.tools.estimate_time:KE-NWWDA-541055-CW-RFB@2026-10-22"]
     ground_truth: tests/ground_truth/delay_from_first_published_planned_date.sql
@@ -154,7 +155,8 @@ questions:
       comparables). KE-NWWDA-229129-CW-RFB, one of them, was first listed in the plan of April 21, 2021 with its
       signed contract planned for July 1, 2021, and signed January 3, 2022, 186 days later (values.toml,
       plan-229129-first-planned-signing, plan-229129-signed and plan-229129-days-late). No step of the demo
-      package has 20 comparable packages whose plans recorded it, so each abstains in its own row.
+      package has 20 comparable packages whose plans recorded it, so each abstains in its own row, and the tool
+      counts all six of the goods family's steps as undated (undated_n), which the screen's summary reads.
 
   - id: search-passages-icr-rebidding
     kind: documents
