@@ -2728,7 +2728,7 @@ export const copy = {
         running: "Finding lessons on cost estimates and specifications",
         done: "Found lessons on cost estimates and specifications",
       },
-      checks: { running: "Checking the numbers and quotes", done: "Checked the numbers and quotes" },
+      checks: { running: "Checking each sentence against its sources", done: "Checked each sentence against its sources" },
       read: { running: "Reading your qualification criteria", done: "Read your qualification criteria" },
       find: {
         running: "Finding comparable notices that published their criteria",
@@ -2741,6 +2741,9 @@ export const copy = {
     quotesInSources: { one: "{part} of {whole} quote is in its source", many: "{part} of {whole} quotes are in their sources" },
     notCheckedItems: "whether I found every item in your qualification criteria",
     removedInPlace: "I removed this sentence. The reason is in the box above.",
+    // A quote from an award notice that is not in it: the notice is a record, with no pages (removed.reasons'
+    // quote_not_on_page in this section's words).
+    quoteNotInSource: { item: "The quote is not in the record it cites.", joined: "the quote is not in the record it cited" },
     // Why a run could not finish, by its code (src/strata/criteria/workflow.py, COMPARE_ERRORS).
     // unsaved: the request never reached the server, so the text was not saved either.
     errors: {

@@ -61,3 +61,15 @@ evaluation committee decided correctly."""
 scope = "KE-CWSB-224323-CS-QCBS"
 as_of = 2026-10-22
 recording = "criteria-review-decisions"
+
+[[cases]]
+id = "criteria-swapped-reading"
+says = """The ticket's input, read back with its two numbers swapped: "10 contracts of similar works, each worth at least \
+US$2 million". Both numbers are in your words, so checks 1 to 3 pass the reading; check 4's judge says it does not \
+follow, and the reading is removed while the item's counts stay."""
+question = """1. Similar experience: at least two contracts of similar works of US$10 million each.
+2. Average annual turnover: US$25 million over the last three years.
+3. The bid must be signed by a person with a power of attorney."""
+scope = "KE-CWSB-224323-CS-QCBS"
+as_of = 2026-10-22
+recording = "criteria-swapped-reading"

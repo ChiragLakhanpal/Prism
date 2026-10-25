@@ -15,6 +15,7 @@ import similar from "../../../tests/fixtures/api/criteria-compare-similar-experi
 import liveTender from "../../../tests/fixtures/api/criteria-compare-live-tender.sse?raw";
 import partial from "../../../tests/fixtures/api/criteria-compare-partial-refusal.sse?raw";
 import noneFound from "../../../tests/fixtures/api/criteria-compare-none-found.sse?raw";
+import swapped from "../../../tests/fixtures/api/criteria-compare-swapped-reading.sse?raw";
 import { useId, type ReactNode } from "react";
 import { CheckCriteriaView, type CompareState, type RunState, type SummaryState, type ViewProps } from "../components/CheckCriteria";
 import { CostEstimate } from "../components/CostLane";
@@ -55,6 +56,7 @@ const SIMILAR = eventOf<Comparison>(similar, "comparison");
 const LIVE = eventOf<Comparison>(liveTender, "comparison");
 const PARTIAL = eventOf<Comparison>(partial, "comparison");
 const NONE = eventOf<Comparison>(noneFound, "comparison");
+const SWAPPED = eventOf<Comparison>(swapped, "comparison");
 const PASTED =
   "1. Similar experience: at least two contracts of similar works of US$10 million each.\n" +
   "2. Average annual turnover: US$25 million over the last three years.\n" +
@@ -164,7 +166,18 @@ const RUN_REMOVED: PackageRun = {
   ...WORKS_RUN,
   rejected: { ...WORKS_RUN.rejected, rows: WORKS_RUN.rejected.rows.map((row) => (row === firstReason ? { ...row, removed: true } : row)) },
   removed: [{ index: 0, sentence: `"${firstReason.reason.quote}"`, reason: "quote_not_on_page", reasons: [], about: firstReason.evidence_id }],
-  checks: { ...WORKS_RUN.checks, sentences: { ...WORKS_RUN.checks.sentences, kept: WORKS_RUN.checks.sentences.kept - 1, removed: 1 } },
+  checks: {
+    ...WORKS_RUN.checks,
+    sentences: { ...WORKS_RUN.checks.sentences, kept: WORKS_RUN.checks.sentences.kept - 1, removed: 1 },
+    quotes: { ...WORKS_RUN.checks.quotes, found: WORKS_RUN.checks.quotes.found - 1 },
+    ...(WORKS_RUN.checks.shown && {
+      shown: {
+        ...WORKS_RUN.checks.shown,
+        quotes: { total: WORKS_RUN.checks.shown.quotes.total - 1, found: WORKS_RUN.checks.shown.quotes.found - 1 },
+        proven: WORKS_RUN.checks.shown.proven - 1,
+      },
+    }),
+  },
 };
 // A made-up comparison whose second item is one the works package's comparables had bids rejected over.
 const YOURS: Comparison = {
@@ -241,8 +254,10 @@ export function criteriaPage(): GalleryPage {
             <Sample label={cs.refusalLive} props={view({ ...open, run: ranRun(CONSULTANT_RUN), comparison: compared(LIVE) })} />
             <Sample label={cs.refusalPartial} props={view({ ...open, run: ranRun(CONSULTANT_RUN), comparison: compared(PARTIAL) })} />
             <Sample label={cs.noneFound} props={view({ ...open, run: ranRun(CONSULTANT_RUN), comparison: compared(NONE) })} />
-            <Sample label={cs.compareError} props={view({ ...open, run: ranRun(CONSULTANT_RUN),
+            <Sample label={cs.compareError} props={view({ ...open, run: ranRun(CONSULTANT_RUN), text: PASTED,
               comparison: { status: "error", code: "agent_unavailable", requestId: "4bf92f3577b34da6a3ce929d0e0e4736", previous: null } })} />
+            <Sample label={cs.readingRemoved} props={view({ ...open, run: ranRun(CONSULTANT_RUN), comparison: compared(SWAPPED), text: PASTED,
+              checks: SWAPPED.section_checks ?? SWAPPED.checks })} />
             <Sample label={cs.stale} props={view({ ...open, run: ranRun(CONSULTANT_RUN), comparison: compared(SIMILAR, true) })} />
           </div>
         ),

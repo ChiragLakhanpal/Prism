@@ -958,6 +958,8 @@ const CRITERIA_SHOTS: Shot[] = [
   criteriaShot("works-320", { widths: [320], full: true, act: openCheck }, undefined, PACKAGE),
   criteriaShot("review-decisions-refused", { full: true, act: compareCriteria }, "criteria-compare-review-decisions.sse"),
   criteriaShot("focus-intro-count", { act: then(openCheck, focus("#check-criteria [data-criteria-intro] [data-num]")) }),
+  // A reading check 4's judge said does not follow: removed in its place, its reason in the box above.
+  criteriaShot("reading-removed", { full: true, act: compareCriteria }, "criteria-compare-swapped-reading.sse"),
 ];
 
 const PACKAGE_SHOTS: Shot[] = [

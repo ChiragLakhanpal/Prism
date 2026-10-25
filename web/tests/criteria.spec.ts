@@ -123,6 +123,14 @@ test("pasted criteria asking for similar experience of two contracts of US$10 mi
   await expect(row).toContainText(`"${similar.your_excerpt.text}"`);
   await expect(row).toContainText(similar.reading);
   await expect(section(page).locator("table [data-item=turnover]")).toContainText(copy.criteria.items.noneToCompare);
+  // Everything passed ticket 24's six checks: the line says how many readings a model judged, and no longer that
+  // nobody checked whether each sentence follows from its sources.
+  const judged = String(result.section_checks.shown.judged);
+  const line = section(page).locator("[data-section-checks] [data-check-line]");
+  await expect(line.locator("[data-check-part=judged]")).toContainText(
+    copy.checkLine.judgedSentences.many.replace("{part}", judged).replace("{whole}", judged),
+  );
+  await expect(line).not.toContainText(copy.checkLine.notCheckedClauses.sentences);
   // The part's h3 is its only heading: the table's title sentence under it is body text, not a second title.
   const part = section(page).locator("[data-criteria-part=items]");
   const sizes = await part.evaluate((element) => {
@@ -149,6 +157,27 @@ test("pasted criteria asking for similar experience of two contracts of US$10 mi
   const logged = asked.filter((request) => request.url().endsWith("/api/evidence/opened") && request.method() === "POST");
   expect(logged.length).toBeGreaterThan(0);
   for (const request of logged) expect(request.postData()).not.toContain("Similar experience:");
+});
+
+test("a reading the judge said does not follow from your words is removed in its place, with its comparison", async ({ page }) => {
+  const result = events(await recorded("criteria-compare-swapped-reading.sse")).find((event) => event.type === "comparison")!.data;
+  const similar = result.items.find((item: any) => item.item_key === "similar_experience");
+  await open(page, CONSULTANT, { compare: "criteria-compare-swapped-reading.sse" });
+  await openSection(page);
+  await section(page).getByLabel(copy.criteria.field.label).fill(PASTED);
+  await section(page).getByRole("button", { name: copy.criteria.compare }).click();
+
+  // A comparison rests on how I read your words, so it goes with the reading; the reason is in the box above.
+  const row = section(page).locator("table [data-item=similar_experience]");
+  await expect(row).toContainText(copy.criteria.removedInPlace);
+  await expect(row).toContainText(copy.criteria.items.removed);
+  await expect(row).not.toContainText(similar.reading);
+  await expect(row.locator("[data-same-or-less]")).toHaveCount(0);
+  // The box reports the reading as Strata wrote it, "I" kept a capital, with the judge's reason.
+  await expect(section(page).locator("[data-section-checks]")).toContainText(
+    `It said ${similar.reading.replace(/\.$/, "")}, and ${copy.removed.reasons.not_supported.joined}.`,
+  );
+  await expect(section(page).locator("table [data-item=turnover]")).not.toContainText(copy.criteria.removedInPlace);
 });
 
 test("a request to judge a live tender's bids is refused in the first person from the copy file", async ({ page }) => {

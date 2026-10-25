@@ -24,6 +24,9 @@ export function heldOnPage(id: string): boolean {
 }
 
 export type Counts = { total: number; matched: number };
+// The six checks' counts over the section (ticket 24's, as src/strata/criteria/workflow.py combines them):
+// numbers, dates and quotes over everything written; shown over what is on screen, with how many sentences a
+// model judged and how many needed none. A run saved before the six checks reached section 5 lacks shown.
 export type Checks = {
   checks_run: number[];
   sentences: { written: number; kept: number; removed: number };
@@ -32,6 +35,8 @@ export type Checks = {
   quotes: { total: number; found: number };
   sources: { total: number; returned: number };
   quotes_without_pages: number;
+  shown?: { numbers: Counts; dates: Counts; quotes: { total: number; found: number }; judged: number; proven: number };
+  judge?: { unjudged: number };
 };
 export type RemovedEntry = {
   index: number;

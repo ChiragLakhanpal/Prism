@@ -116,12 +116,12 @@
     "min_comparables": 20
   },
   "comparison": {
-    "check_id": "chk-000000000008",
+    "check_id": "chk-000000000009",
     "status": "ready",
     "pasted_text": "1. Similar experience: at least two contracts of similar works of US$10 million each.\n2. Average annual turnover: US$25 million over the last three years.\n3. The bid must be signed by a person with a power of attorney.",
     "result": {
-      "check_id": "chk-000000000008",
-      "compared_at": "2026-10-28T14:00:13+00:00",
+      "check_id": "chk-000000000009",
+      "compared_at": "2026-10-28T14:00:15+00:00",
       "signature": "702d4b65766e082b",
       "records_through": "2026-10-13",
       "as_of": "2026-10-28",
@@ -393,7 +393,10 @@
         "checks_run": [
           1,
           2,
-          3
+          3,
+          4,
+          5,
+          6
         ],
         "sentences": {
           "written": 2,
@@ -416,8 +419,53 @@
           "total": 2,
           "returned": 2
         },
+        "checked": {
+          "total": 4,
+          "matched": 4
+        },
+        "shown": {
+          "numbers": {
+            "total": 4,
+            "matched": 4
+          },
+          "dates": {
+            "total": 0,
+            "matched": 0
+          },
+          "quotes": {
+            "total": 0,
+            "found": 0
+          },
+          "judged": 2,
+          "proven": 0
+        },
+        "judge": {
+          "called": true,
+          "responded": true,
+          "judged": 2,
+          "followed": 2,
+          "unjudged": 0,
+          "proven": 0
+        },
+        "advice": {
+          "total": 0,
+          "cited": 0
+        },
+        "disagreements": {
+          "disputed": 0,
+          "shown": 0,
+          "attached": 0,
+          "unasked": 0,
+          "warned": 0
+        },
+        "cited_tools": [
+          "criteria_reader"
+        ],
         "tools": [
           "criteria_reader"
+        ],
+        "cited_only": [
+          "get_lessons"
         ],
         "quotes_without_pages": 0
       },
@@ -425,7 +473,7 @@
     },
     "text_compared": true,
     "stale": false,
-    "compared_at": "2026-10-28T14:00:14+00:00"
+    "compared_at": "2026-10-28T14:00:16+00:00"
   },
   "package_run": {
     "check_id": "chk-000000000002",
@@ -613,7 +661,10 @@
       "checks_run": [
         1,
         2,
-        3
+        3,
+        4,
+        5,
+        6
       ],
       "sentences": {
         "written": 1,
@@ -636,9 +687,54 @@
         "total": 2,
         "returned": 2
       },
+      "checked": {
+        "total": 2,
+        "matched": 2
+      },
+      "shown": {
+        "numbers": {
+          "total": 2,
+          "matched": 2
+        },
+        "dates": {
+          "total": 0,
+          "matched": 0
+        },
+        "quotes": {
+          "total": 1,
+          "found": 1
+        },
+        "judged": 0,
+        "proven": 1
+      },
+      "judge": {
+        "called": false,
+        "responded": null,
+        "judged": 0,
+        "followed": 0,
+        "unjudged": 0,
+        "proven": 1
+      },
+      "advice": {
+        "total": 0,
+        "cited": 0
+      },
+      "disagreements": {
+        "disputed": 0,
+        "shown": 0,
+        "attached": 0,
+        "unasked": 0,
+        "warned": 0
+      },
+      "cited_tools": [
+        "get_lessons"
+      ],
       "tools": [
         "get_lessons",
         "rejected_bids"
+      ],
+      "cited_only": [
+        "get_lessons"
       ],
       "quotes_without_pages": 0
     },
@@ -648,7 +744,10 @@
     "checks_run": [
       1,
       2,
-      3
+      3,
+      4,
+      5,
+      6
     ],
     "sentences": {
       "written": 3,
@@ -671,7 +770,26 @@
       "total": 4,
       "returned": 4
     },
-    "quotes_without_pages": 0
+    "quotes_without_pages": 0,
+    "shown": {
+      "numbers": {
+        "total": 6,
+        "matched": 6
+      },
+      "dates": {
+        "total": 0,
+        "matched": 0
+      },
+      "quotes": {
+        "total": 1,
+        "found": 1
+      },
+      "judged": 2,
+      "proven": 1
+    },
+    "judge": {
+      "unjudged": 0
+    }
   },
   "public_sources": [
     "notices",

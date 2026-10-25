@@ -629,7 +629,7 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
     criteria_routes.add_routes(app, engine_for=engine_for, store=criteria, reader_for=criteria_reader or (lambda: None),
                                planned=planned_criteria_package, thresholds=thresholds, today=today, now=now,
                                new_check_id=new_check_id, reference=request_reference,
-                               heartbeat_seconds=heartbeat_seconds)
+                               heartbeat_seconds=heartbeat_seconds, six_checks=six_checks)
 
     @app.get("/api/packages/{step_reference}")
     def open_package(step_reference: str, asof: dt.date | None = None, viewer: Viewer = Depends(current_viewer)):

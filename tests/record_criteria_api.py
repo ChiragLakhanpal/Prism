@@ -8,11 +8,13 @@ fixture database first, then run:
 
 One story makes them all, as of October 28, 2026, on a copy of the fixture database in which two people added the
 rebidding lesson (ICR P130164 paragraph 54) to the library on October 27 (tests/lesson_scenario.py), with the
-scripted criteria reader's cases (tests/fixtures/agent/criteria.toml), a fixed clock and fixed ids. Ana opens
+scripted criteria reader's cases (tests/fixtures/agent/criteria.toml) and check 4's recorded judge answers for
+them (tests/fixtures/agent/judged), a fixed clock and fixed ids. Ana opens
 KE-NWWDA-541055-CW-RFB, whose works comparables published no qualification criteria, and its package-level run;
 then the consultant services package KE-CWSB-224323-CS-QCBS, whose comparables did, its run, and five comparisons
-of pasted text: the ticket's similar experience, a live tender's bids, a partial refusal, text with no criteria
-and a question about a review decision. Her saved comparison then shows in the collapsed summary, and nobody else's does. Last, she plans
+of pasted text: the ticket's similar experience, a live tender's bids, a partial refusal, text with no criteria,
+a question about a review decision, and the ticket's text read back with its numbers swapped, which check 4's judge
+removes. Her saved comparison then shows in the collapsed summary, and nobody else's does. Last, she plans
 "rural roads, Kenya, about US$15 million" and opens its section.
 """
 
@@ -32,7 +34,7 @@ sys.path.insert(0, str(ROOT / "tests"))
 
 import lesson_scenario as scenario  # noqa: E402
 from strata import appstate  # noqa: E402
-from strata.agent.scripted import CRITERIA_CASES, PACKAGE_CASES, ScriptedAgent, load_cases  # noqa: E402
+from strata.agent.scripted import CRITERIA_CASES, PACKAGE_CASES, ScriptedAgent, ScriptedJudge, load_cases  # noqa: E402
 from strata.criteria.store import CriteriaStore  # noqa: E402
 from strata.lakehouse.engine import DuckDBEngine  # noqa: E402
 from strata.packages.store import PackageStore  # noqa: E402
@@ -50,7 +52,8 @@ COMPARISONS = {"criteria-compare-similar-experience.sse": "criteria-similar-expe
                "criteria-compare-live-tender.sse": "criteria-live-tender",
                "criteria-compare-partial-refusal.sse": "criteria-partial-refusal",
                "criteria-compare-none-found.sse": "criteria-none-found",
-               "criteria-compare-review-decisions.sse": "criteria-review-decisions"}
+               "criteria-compare-review-decisions.sse": "criteria-review-decisions",
+               "criteria-compare-swapped-reading.sse": "criteria-swapped-reading"}
 
 
 def answers(folder: Path) -> dict[str, str]:
@@ -73,6 +76,14 @@ def answers(folder: Path) -> dict[str, str]:
     def state():
         return DuckDBEngine.open(state_db)
 
+    class CaseJudge:
+        """Check 4's judge for the reader's case in play: its recorded answers (tests/fixtures/agent/judged)."""
+
+        name = "scripted judge"
+
+        def judge(self, questions):
+            return ScriptedJudge(criteria_cases[case[0]]).judge(questions)
+
     def now() -> dt.datetime:
         at[0] += dt.timedelta(seconds=1)
         return at[0]
@@ -82,7 +93,7 @@ def answers(folder: Path) -> dict[str, str]:
                      package_reader=lambda: ScriptedAgent(package_cases["package-rural-roads-kenya"]),
                      today=lambda: TODAY, now=now, new_check_id=lambda: next(checks),
                      new_package_id=lambda: "pkg-000000000001", new_save_id=lambda: "save-0001",
-                     new_run_id=lambda: "run-0001")
+                     new_run_id=lambda: "run-0001", judge=CaseJudge())
 
     def pretty(response) -> str:
         return json.dumps(response.json(), indent=2, ensure_ascii=False) + "\n"

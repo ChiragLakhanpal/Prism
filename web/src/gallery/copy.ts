@@ -522,6 +522,7 @@ export const galleryCopy = {
     refusalPartial: "A partial refusal, then the table",
     noneFound: "No qualification criteria in the text",
     compareError: "The comparison failed",
+    readingRemoved: "A reading the judge said does not follow from your words: removed with its comparison, the reason in the box",
     stale: "The comparable packages changed after the comparison",
     cost: "The cost estimate",
     costAbstain: "Under 20 packages: the first-person abstention and the table open",

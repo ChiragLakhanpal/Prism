@@ -125,6 +125,25 @@ def test_the_recording_command_re_records_the_judge_for_each_case_whose_answer_a
     assert '+ "recorded": true,' in text.splitlines()
 
 
+def test_the_recording_command_re_records_the_judge_for_each_criteria_case_whose_readings_ask_it(copied, fixture_db):
+    """Ticket 31: each criteria reader case is replayed through section 5's comparison and its six checks, and the
+    live judge's answer about the readings is kept. A case the reader refuses in full, or that sets no item, asks
+    the judge nothing and keeps no file."""
+    @contextmanager
+    def engine_for(viewer):
+        with DuckDBEngine.open(fixture_db, read_only=True) as engine:
+            yield engine
+
+    report = record.record_judged({}, live_judge(), engine_for, today=dt.date(2026, 10, 24),
+                                  criteria=load_cases(copied / "criteria.toml"))
+
+    assert {done.recording for done in report} == {"criteria-similar-experience", "criteria-partial-refusal",
+                                                   "criteria-swapped-reading"}
+    swapped = json.loads((copied / "judged" / "criteria-swapped-reading.json").read_text())
+    assert (swapped["recorded"], swapped["asked"][0]) == (
+        True, "I read this as 10 contracts of similar works, each worth at least US$2 million.")
+
+
 class LiveWriter:
     """Writes the recorded notes, except that the first note's first sentence is worded anew, and checks it
     was handed the plan's rows with a signal as data."""

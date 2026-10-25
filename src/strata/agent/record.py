@@ -18,7 +18,9 @@ record_judged() re-records the judge of the verifier's check 4 (ticket 24): it r
 through the answer stream, and every writer case through its draft workflow's six checks, with the scripted
 agent and its plants, and keeps the live judge's answer for each case that asks it, in
 tests/fixtures/agent/judged/<case id>.json. Run it after record_all(), since the
-sentences the judge is asked about come from the agent's recordings.
+sentences the judge is asked about come from the agent's recordings. Given the criteria reader's cases (ticket
+31), it also replays each through section 5's comparison and its six checks, where the judge is asked about the
+readings.
 """
 
 from __future__ import annotations
@@ -242,19 +244,52 @@ def _ask_through_the_draft(case: Case, engine_for: EngineFor, judge) -> None:
     asyncio.run(drain())
 
 
-def record_judged(cases: dict[str, Case], judge, engine_for: EngineFor, today: dt.date | None = None) -> list[Recorded]:
+def _ask_through_the_criteria(case: Case, engine_for: EngineFor, judge) -> None:
+    """A criteria reader's case through section 5's comparison and its six checks, with the scripted reader, on the
+    case's package as of its date. Its app state is a throwaway file, so nothing is kept."""
+    import tempfile
+
+    import httpx
+
+    from strata import appstate
+    from strata.agent.scripted import ScriptedAgent
+    from strata.criteria.store import CriteriaStore
+    from strata.lakehouse.engine import DuckDBEngine
+    from strata.server.app import create_app
+
+    with tempfile.TemporaryDirectory() as folder:
+        state = Path(folder) / "state.duckdb"
+        with DuckDBEngine.open(state) as engine:
+            appstate.build(engine)
+        app = create_app(engine_for=engine_for, criteria=CriteriaStore(lambda: DuckDBEngine.open(state)),
+                         criteria_reader=lambda: ScriptedAgent(case), today=lambda: case.as_of, judge=judge)
+
+        async def ask():
+            transport = httpx.ASGITransport(app=app)
+            async with httpx.AsyncClient(transport=transport, base_url="http://strata.test") as client:
+                await client.post(f"/api/packages/{case.scope}/criteria/compare",
+                                  headers={"X-Forwarded-User": "record@strata"}, json={"text": case.question})
+
+        asyncio.run(ask())
+
+
+def record_judged(cases: dict[str, Case], judge, engine_for: EngineFor, today: dt.date | None = None,
+                  criteria: dict[str, Case] | None = None) -> list[Recorded]:
     """Re-record the judge's answer for every case whose answer or draft asks it, and write it over its file. A
     writer case (one with a request) runs through its draft workflow's six checks, an answer case through the
-    answer stream."""
+    answer stream, and a criteria reader's case (criteria) through section 5's comparison."""
     from strata.agent.scripted import NO_RESPONSE
 
     today = today or dt.datetime.now(dt.UTC).date()
     done = []
-    for case in cases.values():
+    asking = [(case, _ask_through_the_draft if case.request is not None else _ask_through_the_stream)
+              for case in cases.values()]
+    asking += [(case, _ask_through_the_criteria) for case in (criteria or {}).values()]
+    for case, ask in asking:
         if case.judge == NO_RESPONSE:
             continue
         keeper = JudgeKeeper(judge)
-        (_ask_through_the_draft if case.request is not None else _ask_through_the_stream)(case, engine_for, keeper)
+        ask(case, engine_for, keeper)
         if keeper.asked is None:
             continue
         path = case.folder.parent / "judged" / f"{case.id}.json"

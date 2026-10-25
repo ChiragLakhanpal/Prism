@@ -15,6 +15,9 @@ sentence, under /api/planned-packages/{package_id}/criteria:
 The pasted text arrives only in a request body, never in an address, and is kept with its owner (CLAUDE.md rule 8):
 only the person who pasted it reads it back. A preview can read the section but compares nothing: 403 preview. A
 planned package is read only by the person who made it, as its other routes do; anyone else gets 404.
+
+Both runs pass ticket 24's six checks (strata.agent.answer_check.SixChecks, the app's one instance), asked as the
+viewer, in the request's view and as of its date.
 """
 
 from __future__ import annotations
@@ -30,6 +33,7 @@ from fastapi import Depends, FastAPI, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel, Field
 
+from strata.agent.answer_check import SixChecks
 from strata.config import Thresholds
 from strata.criteria import workflow
 from strata.criteria.store import CriteriaStore
@@ -73,7 +77,8 @@ def new_check_id() -> str:
 def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: CriteriaStore | None,
                reader_for: Callable[[], object | None], planned: Callable[[Viewer, str], workflow.Package | None],
                thresholds: Thresholds, today: Callable[[], dt.date], now: Callable[[], dt.datetime],
-               new_check_id: Callable[[], str], reference: Callable[[], str], heartbeat_seconds: float) -> None:
+               new_check_id: Callable[[], str], reference: Callable[[], str], heartbeat_seconds: float,
+               six_checks: SixChecks) -> None:
     max_chars = int(thresholds.value("criteria.max_chars"))
 
     def current_viewer(request: Request) -> Viewer:
@@ -86,6 +91,9 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: CriteriaSto
         context = registry.Context(engine, viewer, view, as_of)
         return (lambda name, arguments: registry.call(name, arguments, context),
                 lambda passage_id: search_passages.read_passage(engine, passage_id, as_of))
+
+    def checking(viewer: Viewer, body: RunRequest | CompareRequest) -> workflow.Checking:
+        return workflow.Checking(six_checks, viewer, body.view, as_of_for(body.asof))
 
     def step_package(step_reference: str) -> workflow.Package:
         return workflow.Package(f"step:{step_reference}", step_reference, {"step_reference": step_reference})
@@ -135,7 +143,8 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: CriteriaSto
         if engine_for is None:
             return refused(503, "no_data_service")
         events = lambda call_tool, read_passage: workflow.package_run(  # noqa: E731
-            call_tool, read_passage, package, store, viewer.user_id, thresholds, now, new_check_id)
+            call_tool, read_passage, package, store, viewer.user_id, thresholds, now, new_check_id,
+            checking(viewer, body))
         return StreamingResponse(stream(viewer, package, body.view, body.asof, events, ("data_service", "internal")),
                                  media_type="text/event-stream", headers=STREAM_HEADERS)
 
@@ -152,7 +161,8 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: CriteriaSto
         if engine_for is None or store is None:
             return refused(503, "no_data_service")
         events = lambda call_tool, _read: workflow.compare(  # noqa: E731
-            call_tool, reader_for, package, text, store, viewer.user_id, thresholds, now, new_check_id)
+            call_tool, reader_for, package, text, store, viewer.user_id, thresholds, now, new_check_id,
+            checking(viewer, body))
         return StreamingResponse(stream(viewer, package, body.view, body.asof, events, workflow.COMPARE_ERRORS),
                                  media_type="text/event-stream", headers=STREAM_HEADERS)
 

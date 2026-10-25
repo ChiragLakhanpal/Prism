@@ -164,10 +164,14 @@ function summaryKey(summary: CriteriaSummary): string {
   return summary.signature;
 }
 
+// An award notice is a record with no pages, so a quote not found in it is "not in the record it cites".
+const RECORD = "strata.gold.notice:";
+
 function toRemoved(entries: RemovedEntry[]): Removed[] {
   const reasons = copy.removed.reasons as Record<string, { item: string; joined: string }>;
   return entries.map((entry) => {
-    const reason = reasons[entry.reason] ?? copy.removed.unknownReason;
+    const onRecord = entry.reason === "quote_not_on_page" && entry.about.startsWith(RECORD);
+    const reason = onRecord ? words.quoteNotInSource : (reasons[entry.reason] ?? copy.removed.unknownReason);
     return { sentence: entry.sentence, reason: reason.item, reasonJoined: reason.joined };
   });
 }
@@ -175,12 +179,15 @@ function toRemoved(entries: RemovedEntry[]): Removed[] {
 function SectionChecks({ checks, removed, compared }: { checks: Checks | null; removed: RemovedEntry[]; compared: boolean }) {
   if (!checks) return null;
   const noPages = checks.quotes_without_pages > 0;
+  // The line counts what is on screen, as the answer panel's does (ticket 24), with check 4's judged part.
+  const shown = checks.shown ?? checks;
   return (
     <div className="mt-6 flex flex-col gap-2" data-section-checks>
       <CheckLine
-        numbers={checks.numbers}
-        dates={checks.dates}
-        quotes={checks.quotes}
+        numbers={shown.numbers}
+        dates={shown.dates}
+        quotes={shown.quotes}
+        judged={checks.shown ? { judged: checks.shown.judged, proven: checks.shown.proven } : undefined}
         quoteWords={noPages ? words.quotesInSources : undefined}
         notChecked={[...(checks.checks_run.includes(4) ? [] : (["sentences"] as const)), "find_comparables"]}
         notCheckedText={compared ? [words.notCheckedItems] : []}

@@ -8,7 +8,7 @@ event: step
 data: {"id": "read", "kind": "read", "status": "done", "count": 0}
 
 event: comparison
-data: {"check_id": "chk-000000000007", "compared_at": "2026-10-28T14:00:11+00:00", "signature": "702d4b65766e082b", "records_through": "2026-10-13", "as_of": "2026-10-28", "refusal": {"key": "review_decisions", "partial": false}, "content_filtered": false, "items": [], "item_count": 0, "unplaced": [], "fx_count": 0, "coverage": null, "sources": [], "checks": null, "removed": [], "section_checks": {"checks_run": [1, 2, 3], "sentences": {"written": 1, "kept": 1, "removed": 0}, "numbers": {"total": 2, "matched": 2}, "dates": {"total": 0, "matched": 0}, "quotes": {"total": 1, "found": 1}, "sources": {"total": 2, "returned": 2}, "quotes_without_pages": 0}}
+data: {"check_id": "chk-000000000007", "compared_at": "2026-10-28T14:00:11+00:00", "signature": "702d4b65766e082b", "records_through": "2026-10-13", "as_of": "2026-10-28", "refusal": {"key": "review_decisions", "partial": false}, "content_filtered": false, "items": [], "item_count": 0, "unplaced": [], "fx_count": 0, "coverage": null, "sources": [], "checks": null, "removed": [], "section_checks": {"checks_run": [1, 2, 3, 4, 5, 6], "sentences": {"written": 1, "kept": 1, "removed": 0}, "numbers": {"total": 2, "matched": 2}, "dates": {"total": 0, "matched": 0}, "quotes": {"total": 1, "found": 1}, "sources": {"total": 2, "returned": 2}, "quotes_without_pages": 0, "shown": {"numbers": {"total": 2, "matched": 2}, "dates": {"total": 0, "matched": 0}, "quotes": {"total": 1, "found": 1}, "judged": 0, "proven": 1}, "judge": {"unjudged": 0}}}
 
 event: done
 data: {}

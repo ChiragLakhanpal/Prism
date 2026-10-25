@@ -20,7 +20,7 @@ import httpx
 import pytest
 
 from strata import appstate
-from strata.agent.scripted import CRITERIA_CASES, ScriptedAgent, load_cases
+from strata.agent.scripted import CRITERIA_CASES, ScriptedAgent, ScriptedJudge, load_cases
 from strata.criteria.store import CriteriaStore
 from strata.dbx import Viewer
 from strata.lakehouse.engine import DuckDBEngine
@@ -72,7 +72,10 @@ def state_db(tmp_path):
     return path
 
 
-def app_on(database, state_db, case="criteria-similar-experience", today=TODAY):
+SCRIPTED = object()  # app_on's judge: the case's recorded judge answers
+
+
+def app_on(database, state_db, case="criteria-similar-experience", today=TODAY, judge=SCRIPTED):
     @contextmanager
     def reading(_viewer):
         with DuckDBEngine.open(database, read_only=True) as engine:
@@ -82,7 +85,8 @@ def app_on(database, state_db, case="criteria-similar-experience", today=TODAY):
     clock = iter(dt.datetime(2026, 10, 22, 14, minute, tzinfo=dt.UTC) for minute in range(60))
     return create_app(engine_for=reading, criteria=CriteriaStore(lambda: DuckDBEngine.open(state_db)),
                       criteria_reader=lambda: ScriptedAgent(CASES[case]), today=lambda: today, now=lambda: next(clock),
-                      new_check_id=lambda: f"chk-{next(numbers):012d}")
+                      new_check_id=lambda: f"chk-{next(numbers):012d}",
+                      judge=ScriptedJudge(CASES[case]) if judge is SCRIPTED else judge)
 
 
 @pytest.fixture
@@ -181,6 +185,49 @@ def test_each_reading_passes_the_checks_against_your_own_words(app):
     assert checks["tools"] == ["criteria_reader"]
     assert checks["numbers"]["matched"] == checks["numbers"]["total"] == 4  # two and 10; 25 and three
     assert result["removed"] == []
+
+
+def test_both_runs_pass_all_six_checks_and_the_judge_is_asked_only_about_the_readings(app):
+    """Ticket 24's six checks run on everything section 5 shows (strata.agent.answer_check.SixChecks). A quote found
+    word for word is proven by check 3, so check 4 asks the judge only about each "I read this as ..." reading."""
+    run = the("package_run", events(call(app, "POST", f"/api/packages/{WORKS}/criteria/run", ANA, json={}).text))
+    comparison = the("comparison", compare(app)[1])
+
+    assert run["checks"]["checks_run"] == comparison["checks"]["checks_run"] == [1, 2, 3, 4, 5, 6]
+    assert run["checks"]["judge"]["called"] is False
+    assert run["checks"]["shown"]["proven"] == run["checks"]["sentences"]["kept"] > 0
+    assert comparison["checks"]["judge"] | {"called": True} == {"called": True, "responded": True, "judged": 2,
+                                                                "followed": 2, "unjudged": 0, "proven": 0}
+    assert comparison["section_checks"]["checks_run"] == [1, 2, 3, 4, 5, 6]
+
+
+def test_a_reading_the_judge_says_does_not_follow_from_your_words_is_removed_with_its_reason(fixture_db, state_db):
+    """The reader read "two contracts of US$10 million" back as "10 contracts of US$2 million": both numbers are in
+    your words, so only check 4 can catch it."""
+    right = the("comparison", compare(app_on(fixture_db, state_db))[1])
+    swapped = the("comparison", compare(app_on(fixture_db, state_db, "criteria-swapped-reading"),
+                                        "criteria-swapped-reading")[1])
+
+    [removed] = swapped["removed"]
+    assert (removed["about"], removed["reason"]) == ("similar_experience", "not_supported")
+    assert [item["reading_removed"] for item in swapped["items"]] == [True, False]
+    assert swapped["checks"]["sentences"] == {"written": 2, "kept": 1, "removed": 1}
+    # The removed sentence is the reading alone: the tool's counts are unchanged, and the screen leaves them out
+    # with the reading, since they rest on it.
+    assert [item["same_or_less"] for item in swapped["items"]] == [item["same_or_less"] for item in right["items"]]
+
+
+def test_with_no_judge_connected_every_reading_is_removed_and_the_quotes_still_show(fixture_db, state_db):
+    app = app_on(fixture_db, state_db, judge=None)
+
+    result = the("comparison", compare(app)[1])
+    run = the("package_run", events(call(app, "POST", f"/api/packages/{WORKS}/criteria/run", ANA, json={}).text))
+
+    assert [(entry["about"], entry["reason"]) for entry in result["removed"]] == [
+        ("similar_experience", "judge_unavailable"), ("turnover", "judge_unavailable")]
+    assert all(item["reading_removed"] for item in result["items"]) and result["checks"]["judge"]["unjudged"] == 2
+    # Check 3 proves every quote word for word, so the package run needs no judge.
+    assert run["removed"] == [] and run["checks"]["judge"]["called"] is False
 
 
 def test_the_steps_are_announced_in_order_and_the_text_is_saved_first(app):

@@ -169,12 +169,12 @@ export type Removed = {
 };
 
 // "It said bids were usually opened within 45 days": the sentence without its final period,
-// with its first letter lowercased unless the first word is a name or a code (IDA, P130164)
-// or appears capitalized elsewhere in the answer.
+// with its first letter lowercased unless the first word is a name or a code (IDA, P130164), "I" (section
+// 5's "I read this as ..."), or appears capitalized elsewhere in the answer.
 export function asReported(sentence: string, names: string[] = []): string {
   const text = sentence.replace(/[.\s]+$/, "");
   const first = text.split(/\s/)[0] ?? "";
-  const keep = /\d|.[A-Z]/.test(first) || names.includes(first.replace(/\W+$/, ""));
+  const keep = /\d|.[A-Z]|^I($|['\u2019])/.test(first) || names.includes(first.replace(/\W+$/, ""));
   return keep ? text : text.charAt(0).toLowerCase() + text.slice(1);
 }
 

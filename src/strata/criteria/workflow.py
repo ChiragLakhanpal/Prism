@@ -17,8 +17,11 @@ runs through the tool registry as the viewer (call_tool), and every step is anno
   when the comparison starts, treated like an upload (strata.criteria.store). A request to judge a live tender's
   bids or a review decision comes back from the reader as a refusal key, and the app writes the words.
 
-The verifier runs checks 1 to 3 here (strata.agent.verifier.check). Ticket 24 brings checks 4 to 6 to every
-answer; until it lands, checks_run says which checks ran, and the check line says so.
+Both runs pass ticket 24's six checks through the app's SixChecks (strata.agent.answer_check), as the answer
+stream and the draft runtime do: checks 1 to 3 and 5 at once, then check 6 (get_disagreements about each project
+the kept sentences cite) and check 4 (the judge, asked about every sentence checks 1 to 3 did not prove). A quote
+found word for word is proven by check 3, so in practice the judge is asked only about the readings. Like the draft
+runtime, the section keeps its own steps and takes only the verdict.
 """
 
 from __future__ import annotations
@@ -31,11 +34,13 @@ import logging
 from collections.abc import AsyncIterator, Callable
 from dataclasses import dataclass, field
 
+from strata.agent.answer_check import Asker, SixChecks
 from strata.agent.claims import Claim, ClaimsError, Quote
 from strata.agent.loop import AgentError, output_text
-from strata.agent.verifier import Verdict, answer_events, check, find_quote, mentions
+from strata.agent.verifier import Verdict, answer_events, find_quote, mentions
 from strata.config import CriteriaItems, Thresholds, load_criteria_items
 from strata.criteria.store import COMPARISON, PACKAGE_RUN, CriteriaStore
+from strata.dbx import Viewer
 from strata.harness.facts import Facts
 from strata.harness.turn import Event
 
@@ -70,6 +75,19 @@ class Package:
     query: dict | None
     estimate_usd: float | None = None
     description: str | None = None
+
+
+@dataclass(frozen=True)
+class Checking:
+    """The six checks for one request: the app's SixChecks, and whom check 6 asks as, in which view, as of when."""
+
+    six: SixChecks
+    viewer: Viewer
+    view: str
+    as_of: dt.date
+
+    def asker(self, run_id: str) -> Asker:
+        return Asker(self.viewer, self.view, self.as_of, run_id)
 
 
 def step(name: str, status: str, **details) -> Event:
@@ -114,14 +132,21 @@ def state_of(found: dict) -> str:
 
 
 def combine(*counts: dict | None) -> dict | None:
-    """The check line's counts over the whole section: each run's verifier counts, added."""
+    """The check line's counts over the whole section: each run's verifier counts, added. Only the checks that ran
+    on every run count as run, and the counts over what is on screen (shown) only when every run has them."""
     given = [entry for entry in counts if entry]
     if not given:
         return None
-    total = {"checks_run": sorted({check for entry in given for check in entry["checks_run"]})}
+    total = {"checks_run": sorted(set.intersection(*(set(entry["checks_run"]) for entry in given)))}
     for key in ("sentences", "numbers", "dates", "quotes", "sources"):
         total[key] = {name: sum(entry[key][name] for entry in given) for name in given[0][key]}
     total["quotes_without_pages"] = sum(entry.get("quotes_without_pages", 0) for entry in given)
+    if all("shown" in entry for entry in given):
+        shown = [entry["shown"] for entry in given]
+        total["shown"] = {key: ({name: sum(part[key][name] for part in shown) for name in value}
+                                if isinstance(value, dict) else sum(part[key] for part in shown))
+                          for key, value in shown[0].items()}
+        total["judge"] = {"unjudged": sum(entry["judge"]["unjudged"] for entry in given)}
     return total
 
 
@@ -227,26 +252,33 @@ def _lesson_claims(groups: list[dict], read_passage: Callable[[str], dict | None
     return claims
 
 
-def verdict_of(claims: list[tuple[Claim, str]], facts: Facts, tools: list[str]) -> tuple[dict, list[dict], set[str]]:
-    """The verifier's counts over the claims, the removed sentences with their reasons, and the evidence ids of the
-    rows whose sentence it removed. A quote from a record, such as an award notice's reason, has no page: the check
-    line says such quotes are in their sources."""
-    checked = [check(index, claim, facts) for index, (claim, _) in enumerate(claims)]
-    verdict = Verdict(tuple(checked))
+async def verdict_of(claims: list[tuple[Claim, str]], facts: Facts, tools: list[str], checking: Checking,
+                     run_id: str) -> tuple[dict, list[dict], set[str]]:
+    """The six checks on the claims: the verifier's counts, the removed sentences with their reasons, and the
+    evidence ids (or item keys) whose sentence it removed. A quote from a record, such as an award notice's reason,
+    has no page: the check line says such quotes are in their sources."""
+    answer = checking.six.check([claim for claim, _ in claims], facts)
+    verdict = None
+    async for item in checking.six.finish(answer, facts, checking.asker(run_id)):
+        if isinstance(item, Verdict):
+            verdict = item
     counts, removed = None, []
-    for event in answer_events(verdict, facts, tools):
+    for event in answer_events(verdict, facts, tools, checking.six.cited_only):
         if event.type == "checks":
             counts = dict(event.data)
         elif event.type == "removed":
             removed.append({**event.data, "about": claims[event.data["index"]][1]})
-    counts["quotes_without_pages"] = sum(1 for sentence in checked if sentence.quoted and sentence.claim.quote is None)
+    counts["quotes_without_pages"] = sum(1 for sentence in verdict.sentences
+                                         if sentence.quoted and sentence.claim.quote is None)
     return counts, removed, {entry["about"] for entry in removed}
 
 
 async def package_run(call_tool: ToolCall, read_passage: Callable[[str], dict | None], package: Package,
                       store: CriteriaStore | None, owner_id: str, thresholds: Thresholds,
-                      now: Callable[[], dt.datetime], new_check_id: Callable[[], str]) -> AsyncIterator[Event]:
+                      now: Callable[[], dt.datetime], new_check_id: Callable[[], str],
+                      checking: Checking) -> AsyncIterator[Event]:
     items, per = load_criteria_items(), limits(thresholds)
+    check_id = new_check_id()
     yield step("notices", "running")
     found, refs = await asyncio.to_thread(comparables_of, call_tool, package)
     joined = ",".join(refs)
@@ -277,7 +309,7 @@ async def package_run(call_tool: ToolCall, read_passage: Callable[[str], dict | 
     yield step("checks", "running")
     facts = Facts()
     claims = _reason_claims(rejected, facts) + await asyncio.to_thread(_lesson_claims, groups, read_passage, facts)
-    counts, removed, removed_ids = verdict_of(claims, facts, ["rejected_bids", "get_lessons"])
+    counts, removed, removed_ids = await verdict_of(claims, facts, ["rejected_bids", "get_lessons"], checking, check_id)
     yield step("checks", "done")
 
     signed = signature(refs, found.get("records_through"))
@@ -285,7 +317,7 @@ async def package_run(call_tool: ToolCall, read_passage: Callable[[str], dict | 
     reject_state = ("no_comparables" if not refs else "no_award_notices" if not rejected["summary"]["counts"]["m"]
                     else "none_rejected" if not rejected["summary"]["counts"]["n"] else "ok")
     result = {
-        "check_id": new_check_id(), "signature": signed, "records_through": found.get("records_through"),
+        "check_id": check_id, "signature": signed, "records_through": found.get("records_through"),
         "as_of": found["as_of"], "labels": names,
         "rejected": {"state": reject_state, "counts": rejected["summary"]["counts"],
                      "groups": [{**group, **names[group["item_key"]]} for group in rejected["summary"]["groups"]],
@@ -448,7 +480,7 @@ def shortened(excerpt: str, most: int) -> dict:
 
 async def compare(call_tool: ToolCall, reader_for: Callable[[], object | None], package: Package, text: str,
                   store: CriteriaStore, owner_id: str, thresholds: Thresholds, now: Callable[[], dt.datetime],
-                  new_check_id: Callable[[], str]) -> AsyncIterator[Event]:
+                  new_check_id: Callable[[], str], checking: Checking) -> AsyncIterator[Event]:
     """One comparison of the person's qualification criteria, as events. A step that cannot run raises
     CompareError with its code, after the text was saved."""
     items, per = load_criteria_items(), limits(thresholds)
@@ -461,7 +493,7 @@ async def compare(call_tool: ToolCall, reader_for: Callable[[], object | None], 
     yield Event("saved", {"check_id": check_id})
     try:
         async for event in _compare_saved(call_tool, reader_for, package, text, store, owner_id, thresholds, now,
-                                          check_id, started, items, per):
+                                          check_id, started, items, per, checking):
             yield event
     except Exception:
         # The text is saved, so the run is marked failed: its row never stays "running", and the summary shows
@@ -476,7 +508,8 @@ async def compare(call_tool: ToolCall, reader_for: Callable[[], object | None], 
 
 async def _compare_saved(call_tool: ToolCall, reader_for: Callable[[], object | None], package: Package, text: str,
                          store: CriteriaStore, owner_id: str, thresholds: Thresholds, now: Callable[[], dt.datetime],
-                         check_id: str, started: dt.datetime, items: CriteriaItems, per: dict) -> AsyncIterator[Event]:
+                         check_id: str, started: dt.datetime, items: CriteriaItems, per: dict,
+                         checking: Checking) -> AsyncIterator[Event]:
     """The comparison once its text is saved: read, find, compare and check, then keep the result."""
     yield step("read", "running")
     agent = reader_for()
@@ -552,7 +585,8 @@ async def _compare_saved(call_tool: ToolCall, reader_for: Callable[[], object | 
         facts.record(evidence, {"excerpt": item["excerpt"], "numbers": sorted(str(n) for n in _numbers_in(item["excerpt"]))},
                      tool=READER)
         claims.append((Claim(item["reading"], "summary", (evidence,)), item["item_key"]))
-    counts, removed, removed_keys = verdict_of(claims, facts, [READER]) if claims else (None, [], set())
+    counts, removed, removed_keys = await verdict_of(claims, facts, [READER], checking, check_id) if claims else \
+        (None, [], set())
     for entry in shown:
         entry["reading_removed"] = entry["item_key"] in removed_keys
     yield step("checks", "done")
