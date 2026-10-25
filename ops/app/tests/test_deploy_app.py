@@ -118,7 +118,7 @@ def test_the_app_gets_the_warehouse_the_connection_string_and_each_viewer_s_sql_
         {"name": "app-state", "database": {"instance_name": "strata-state", "database_name": "databricks_postgres",
                                            "permission": "CAN_CONNECT_AND_CREATE"}},
     ]
-    assert scopes == ["sql"]
+    assert scopes == ["sql", "dashboards.genie"]
     assert workspace.databases == ["strata-state"]
 
 
@@ -352,3 +352,14 @@ def test_the_command_s_help_says_how_to_run_it_and_to_run_it_again_after_a_bundl
     assert stopped.value.code == 0
     assert "uv run --script ops/app/deploy_app.py --env-file .env" in out
     assert "Run it again after every bundle deploy" in out
+
+
+def test_with_a_genie_space_the_app_asks_it_as_each_viewer():
+    """Ticket 33: ask_genie reads GENIE_SPACE_ID, and the viewer's token needs the dashboards.genie scope."""
+    import yaml
+
+    started = yaml.safe_load(deploy_app.app_yaml(True, True, "01f0aaaabbbbccccddddeeeeffff0000"))
+
+    assert {"name": "GENIE_SPACE_ID", "value": "01f0aaaabbbbccccddddeeeeffff0000"} in started["env"]
+    assert deploy_app.app_yaml(True, True) == (deploy_app.HERE / "app.yaml").read_bytes()
+    assert "dashboards.genie" in deploy_app.SCOPES

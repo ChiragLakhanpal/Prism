@@ -27,6 +27,7 @@ import datetime as dt
 import hashlib
 import json
 import re
+from collections import Counter
 from collections.abc import Callable
 from dataclasses import astuple, dataclass, fields
 from decimal import Decimal
@@ -35,6 +36,7 @@ from importlib import resources
 from strata.agent.verifier import find_quote  # ticket 13's word-for-word quote match, defined once
 from strata.config import SIDES, Ladder, Thresholds, load_ladder, load_sources, load_thresholds
 from strata.knowledge.batch import Answer, BatchModel, BatchPending, RecordedBatch, Request
+from strata.lakehouse import rewrites
 from strata.lakehouse.engine import Engine
 from strata.reader.passages import TABLE_SUMMARY
 
@@ -70,6 +72,52 @@ def _date(value) -> dt.date | None:
 
 def _int(value) -> int | None:
     return None if value is None or value == "" else int(value)
+
+
+# A run with more projects than this reads every project and keeps the ones it needs; a run with fewer, such as
+# one project's, names them in the query.
+NAMED_MAX = 200
+PROJECT_DATES = """
+SELECT project_id, approval_date, closing_date FROM strata.gold.project
+WHERE (:every_project OR array_contains(split(:projects, ','), project_id))
+"""
+
+
+class ProjectRows:
+    """Each family of rows the run's assertions come from, read with one query for all the run's projects and kept
+    by project (ticket 43): the ISRs' ratings, the records of each package's signing, the IEG ratings, the projects'
+    dates, the ISRs' key dates and the reports. On October 24, 2026 the run read each project with about seven
+    queries of its own, which for the workspace's 15,933 projects was about eleven hours against the nightly job's
+    150-minute stop; this way the queries are the same few whatever the number of projects."""
+
+    def __init__(self, engine: Engine, projects: list[str], ladder: Ladder, contracts: tuple[str, ...] | None = None):
+        self.projects = list(dict.fromkeys(projects))
+        wanted = set(self.projects)
+        every = len(wanted) > NAMED_MAX
+        scope = {"every_project": every, "projects": "" if every else ",".join(self.projects) or "-"}
+
+        def kept(sql: str, **params) -> dict[str, list[dict]]:
+            found: dict[str, list[dict]] = {}
+            for row in _rows(engine, sql, **scope, **params):
+                if row["project_id"] in wanted:
+                    found.setdefault(row["project_id"], []).append(row)
+            return found
+
+        types = [kind for tier in REPORT_TIERS if tier in ladder.tiers for kind in ladder.tiers[tier].document_types]
+        self.isr = kept(_sql("isr_ratings.sql"))
+        self.records = kept(_sql("records.sql"), contract_sources=",".join(contracts or contract_sources()),
+                            award_notice=AWARD_NOTICE, contract_record=CONTRACT_RECORD,
+                            award_notice_form=AWARD_NOTICE_FORM, notices_source="notices", plan_row=PLAN_ROW,
+                            documents_source="documents", plan_type=PLAN_TYPE, signed_step=SIGNED_STEP)
+        self.ieg = kept(_sql("ieg_ratings.sql"))
+        self.dates = kept(PROJECT_DATES)
+        self.key_dates = kept(_sql("key_dates.sql"), document_type=ISR, label="Review Date")
+        self.reports = kept(_sql("reports.sql"), document_types=",".join(types))
+
+
+def _of(engine: Engine, rows: ProjectRows | None, project_id: str, ladder: Ladder) -> ProjectRows:
+    """The rows of the run, or, for one project on its own, that project's."""
+    return rows if rows is not None and project_id in rows.projects else ProjectRows(engine, [project_id], ladder)
 
 
 @dataclass(frozen=True)
@@ -117,11 +165,12 @@ def assertion_id(evidence_id: str, subject_id: str, attribute: str) -> str:
 
 # ── The ISRs' ratings ────────────────────────────────────────────────────
 
-def isr_assertions(engine: Engine, project_id: str, ladder: Ladder) -> list[Assertion]:
+def isr_assertions(engine: Engine, project_id: str, ladder: Ladder, rows: ProjectRows | None = None
+                   ) -> list[Assertion]:
     """Each ISR's rating of each attribute the ladder knows, for the period since the ISR before it. The
     first ISR's period starts on the day the Board approved the project."""
     found: dict[tuple[str, str], dict] = {}
-    for row in _rows(engine, _sql("isr_ratings.sql"), project_id=project_id):
+    for row in _of(engine, rows, project_id, ladder).isr.get(project_id, []):
         found.setdefault((row["rating_name"], str(row["document_id"])), row)  # the first passage that prints it
     made = []
     by_name: dict[str, list[dict]] = {}
@@ -184,16 +233,13 @@ def _record_key(row: dict) -> str:
     return str(row["document_id"])
 
 
-def record_assertions(engine: Engine, project_id: str, ladder: Ladder, contracts: tuple[str, ...] | None = None
+def record_assertions(engine: Engine, project_id: str, ladder: Ladder, rows: ProjectRows | None = None
                       ) -> list[Assertion]:
     """Each record's signing date and signed amount for each of the project's packages, about the signing,
     which each record dates for itself. A plan whose Actual Amount reads 0 gives no amount: the borrower has
     not filled it in, and a missing amount is never a difference."""
     made = []
-    for row in _rows(engine, _sql("records.sql"), project_id=project_id, contract_sources=",".join(contracts or contract_sources()),
-                     award_notice=AWARD_NOTICE, contract_record=CONTRACT_RECORD, award_notice_form=AWARD_NOTICE_FORM,
-                     notices_source="notices", plan_row=PLAN_ROW, documents_source="documents", plan_type=PLAN_TYPE,
-                     signed_step=SIGNED_STEP):
+    for row in _of(engine, rows, project_id, ladder).records.get(project_id, []):
         signed = _date(row["signed_on"])
         amount = None if row["amount_usd"] in (None, "") else Decimal(str(row["amount_usd"]))
         values = {"signed_on": signed.isoformat()}
@@ -219,7 +265,8 @@ IEG_READER = "strata.gold.ieg_rating"
 IEG_COLUMNS = ("outcome", "bank_performance", "quality_at_entry", "quality_of_supervision", "me_quality")
 
 
-def ieg_assertions(engine: Engine, project_id: str, ladder: Ladder, dates: Periods) -> list[Assertion]:
+def ieg_assertions(engine: Engine, project_id: str, ladder: Ladder, dates: Periods, rows: ProjectRows | None = None
+                   ) -> list[Assertion]:
     """Each rating the IEG ratings dataset gives the project, for the whole project, under each attribute the
     ladder names by the dataset's field name. The dataset repeats IEG's own evaluations, so its rows are in
     the ieg tier, and each is made on the day it became public, as the dataset gives no date."""
@@ -227,7 +274,7 @@ def ieg_assertions(engine: Engine, project_id: str, ladder: Ladder, dates: Perio
         return []
     start, end = dates.whole_project
     made = []
-    for row in _rows(engine, _sql("ieg_ratings.sql"), project_id=project_id):
+    for row in _of(engine, rows, project_id, ladder).ieg.get(project_id, []):
         key = f"{project_id}/{row['evaluation_type']}/{row['evaluation_fy']}"
         evidence = f"{IEG_READER}:{key}"
         public = _date(row["public_from"])
@@ -309,10 +356,9 @@ class Report:
         return CUSTOM_ID.format(document_id=self.document_id, version=self.version or 1)
 
 
-def reports(engine: Engine, project_id: str, ladder: Ladder) -> list[Report]:
-    types = [kind for tier in REPORT_TIERS if tier in ladder.tiers for kind in ladder.tiers[tier].document_types]
+def reports(engine: Engine, project_id: str, ladder: Ladder, rows: ProjectRows | None = None) -> list[Report]:
     found = []
-    for row in _rows(engine, _sql("reports.sql"), project_id=project_id, document_types=",".join(types)):
+    for row in _of(engine, rows, project_id, ladder).reports.get(project_id, []):
         passages = {passage["passage_id"]: passage for passage in _rows(
             engine, _sql("report_passages.sql"), document_id=str(row["document_id"]), table_summary=TABLE_SUMMARY)}
         if passages:
@@ -352,16 +398,16 @@ class Periods:
 
 
 APPRAISAL_TYPES = ("Project Appraisal Document",)
-PROJECT_DATES = "SELECT approval_date, closing_date FROM strata.gold.project WHERE project_id = :project_id"
 
 
-def periods(engine: Engine, project_id: str) -> Periods:
-    project = _rows(engine, PROJECT_DATES, project_id=project_id)
+def periods(engine: Engine, project_id: str, rows: ProjectRows | None = None, ladder: Ladder | None = None) -> Periods:
+    held = _of(engine, rows, project_id, ladder or load_ladder())
+    project = held.dates.get(project_id, [])
     approved, closing = (_date(project[0]["approval_date"]), _date(project[0]["closing_date"])) if project else (None,
                                                                                                                  None)
     moments = {}
     for period, label in KEY_DATE_LABELS.items():
-        for row in _rows(engine, _sql("key_dates.sql"), project_id=project_id, document_type=ISR, label="Review Date"):
+        for row in held.key_dates.get(project_id, []):
             found = label.search(row["text"] or "")
             if found:
                 moments[period] = dt.datetime.strptime(found.group(1), "%d-%b-%Y").date()
@@ -483,11 +529,12 @@ def read_answer(report: Report, answer: Answer, ladder: Ladder, dates: Periods, 
 
 
 def text_assertions(engine: Engine, project_id: str, ladder: Ladder, model: BatchModel, run_id: str,
-                    clock: Callable[[], dt.datetime], dates: Periods) -> tuple[list[Assertion], list[Rejection], int]:
+                    clock: Callable[[], dt.datetime], dates: Periods, rows: ProjectRows | None = None
+                    ) -> tuple[list[Assertion], list[Rejection], int]:
     """The assertions the batch model read from the project's reports, each kept only when its quote is word
     for word in the passage it cites, on the page it cites, the ones rejected, and how many reports wait on a
     batch still running."""
-    found = reports(engine, project_id, ladder)
+    found = reports(engine, project_id, ladder, rows)
     if not found:
         return [], [], 0
     asked = [(report, request(report, ladder)) for report in found]
@@ -631,20 +678,43 @@ class RunReport:
     rejected: int
     disagreements: int
     pending: int = 0  # reports whose answers wait on a batch still running, which a later run waits for
+    changed: int = 0  # assertions and disagreements the run added or removed
+
+
+REJECTION_STAMPS = tuple(REJECTION_COLUMNS.index(column) for column in ("run_id", "rejected_at", "public_from"))
+WRITTEN = (("strata.gold.assertion", ASSERTION_COLUMNS, ()), ("strata.gold.disagreement", DISAGREEMENT_COLUMNS, ()),
+           ("strata.ops.assertion_rejections", REJECTION_COLUMNS, REJECTION_STAMPS))
 
 
 def write(engine: Engine, projects: list[str], assertions: list[Assertion], rejections: list[Rejection],
           disagreements: list[Disagreement]) -> int:
     """Rebuild strata.gold.assertion, strata.gold.disagreement and strata.ops.assertion_rejections for the run's
-    projects. Returns how many rows it wrote."""
-    for project_id in projects:
-        for table in ("strata.gold.assertion", "strata.gold.disagreement", "strata.ops.assertion_rejections"):
-            engine.run(f"DELETE FROM {table} WHERE project_id = :project_id",  # sql-lint: names only
-                       {"project_id": project_id})
-    return (engine.insert_rows("strata.ops.assertion_rejections", REJECTION_COLUMNS, [astuple(row) for row in rejections])
-            + engine.insert_rows("strata.gold.assertion", ASSERTION_COLUMNS, [astuple(row) for row in assertions])
-            + engine.insert_rows("strata.gold.disagreement", DISAGREEMENT_COLUMNS,
-                                 [astuple(row) for row in disagreements]))
+    projects whose rows differ from what the tables hold (leaving out a rejection's run and time,
+    strata.lakehouse.rewrites), so a night with nothing new changes no row. It sends one DELETE a table for all
+    those projects together, not one a project: for the workspace's 15,933 projects, three a project would be
+    hours of statements (ticket 43, review B2). Returns the assertions and disagreements it added or removed."""
+    where = "array_contains(split(:projects, ','), project_id)"
+    new = {"strata.gold.assertion": [astuple(row) for row in assertions],
+           "strata.gold.disagreement": [astuple(row) for row in disagreements],
+           "strata.ops.assertion_rejections": [astuple(row) for row in rejections]}
+    differing, counted = set(), {}
+    for table, columns, stamps in WRITTEN:
+        at = columns.index("project_id")
+        before = rewrites.by_key(rewrites.held(engine, table, columns, where, {"projects": ",".join(projects)}),
+                                 at, stamps)
+        after = rewrites.by_key(new[table], at, stamps)
+        changes = {project: rewrites.differing(before.get(project, Counter()), after.get(project, Counter()))
+                   for project in set(before) | set(after)}
+        differing |= {project for project, count in changes.items() if count}
+        counted[table] = sum(changes.values())
+    if not differing:
+        return 0
+    chosen = ",".join(sorted(differing))
+    for table, columns, _ in WRITTEN:
+        engine.run(f"DELETE FROM {table} WHERE {where}", {"projects": chosen})  # sql-lint: names only, from WRITTEN
+        at = columns.index("project_id")
+        engine.insert_rows(table, columns, [row for row in new[table] if row[at] in differing])
+    return counted["strata.gold.assertion"] + counted["strata.gold.disagreement"]
 
 
 def run(engine: Engine, projects: list[str], *, model: BatchModel, ladder: Ladder | None = None,
@@ -655,18 +725,18 @@ def run(engine: Engine, projects: list[str], *, model: BatchModel, ladder: Ladde
     read from text come from the answers bronze holds."""
     ladder = ladder or load_ladder()
     made, rejected, pending = [], [], 0
-    contracts = contract_sources()
+    rows = ProjectRows(engine, projects, ladder)  # each family read once for every project of the run
     for project_id in projects:
-        dates = periods(engine, project_id)
-        made += isr_assertions(engine, project_id, ladder) + record_assertions(engine, project_id, ladder, contracts)
-        made += ieg_assertions(engine, project_id, ladder, dates)
-        more, less, waiting = text_assertions(engine, project_id, ladder, model, run_id, clock, dates)
+        dates = periods(engine, project_id, rows, ladder)
+        made += isr_assertions(engine, project_id, ladder, rows) + record_assertions(engine, project_id, ladder, rows)
+        made += ieg_assertions(engine, project_id, ladder, dates, rows)
+        more, less, waiting = text_assertions(engine, project_id, ladder, model, run_id, clock, dates, rows)
         made += more
         rejected += less
         pending += waiting
     found = detect(made, ladder, thresholds)
-    write(engine, projects, made, rejected, found)
-    return RunReport(len(made), len(rejected), len(found), pending)
+    changed = write(engine, projects, made, rejected, found)
+    return RunReport(len(made), len(rejected), len(found), pending, changed)
 
 
 def redetect(engine: Engine, projects: list[str], ladder: Ladder, thresholds: Thresholds | None = None) -> int:
@@ -701,9 +771,8 @@ def from_row(row: dict) -> Assertion:
 
 
 def default_projects(engine: Engine) -> list[str]:
-    """The projects whose documents the passage reader read, and those with a Procurement Plan read. A project
-    known only from a contract, a notice or an IEG rating is left out: the run reads each project with its own
-    queries, and the workspace holds about 16,000 such projects (sql/assertions/projects.sql has the numbers)."""
+    """The projects whose documents the passage reader read, and those with records: a contract, a notice, a
+    Procurement Plan or an IEG rating. The run reads them all with one query a family (ProjectRows)."""
     return [row["project_id"] for row in _rows(engine, _sql("projects.sql")) if row["project_id"]]
 
 

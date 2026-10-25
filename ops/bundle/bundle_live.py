@@ -34,6 +34,17 @@ def _text(value) -> str:
     return str(getattr(value, "value", value))
 
 
+def bundle_vars(env: dict) -> list[str]:
+    """The bundle variables the deploy fills from the env file, as the CLI's --var arguments: the SQL warehouse for
+    the dashboard's queries, and the AI Search endpoint whose index the nightly job syncs, which is the name the
+    wizard gives it (ops/dayone/dayone.toml) when the env file has none."""
+    import dayone
+
+    search = (env.get("AI_SEARCH_ENDPOINT") or "").strip() or dayone.config_value(dayone.load_config(),
+                                                                                   "names.ai_search_endpoint")
+    return ["--var", f"warehouse_id={env['DATABRICKS_WAREHOUSE_ID']}", "--var", f"ai_search_endpoint={search}"]
+
+
 def cli_env(env: dict, environ: dict) -> dict:
     """The Databricks CLI's environment: the shell's, without its DATABRICKS_* keys, plus one way to sign in.
 
@@ -155,13 +166,12 @@ class LiveWorkspace:
     # ── The bundle ──
 
     def deploy_bundle(self) -> tuple[int, str]:
-        """Run `databricks bundle deploy` from the checkout's root with the env file's credentials, and its
-        SQL warehouse for the dashboard's queries."""
+        """Run `databricks bundle deploy` from the checkout's root with the env file's credentials and the bundle
+        variables it fills (bundle_vars)."""
         cli = shutil.which("databricks")
         if cli is None:
             return 1, "The Databricks CLI is not on the path. Install version 0.287.0 or later."
-        done = subprocess.run([cli, "bundle", "deploy", "--target", TARGET,
-                               "--var", f"warehouse_id={self.env['DATABRICKS_WAREHOUSE_ID']}"], cwd=REPO,
+        done = subprocess.run([cli, "bundle", "deploy", "--target", TARGET, *bundle_vars(self.env)], cwd=REPO,
                               env=cli_env(self.env, dict(os.environ)),
                               capture_output=True, text=True, timeout=1800)
         return done.returncode, (done.stdout + done.stderr).strip()

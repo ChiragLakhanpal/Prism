@@ -280,6 +280,10 @@ class Source:
     # The form of assertion each of its rows gives the evidence ladder, such as contract_record for a dataset of
     # signed contracts (ticket 20, src/strata/knowledge/assertions.py).
     assertion_form: str | None = None
+    # For a source a reader fetches document by document: the seconds it waits between two requests to the
+    # source's host (ticket 43). The documents host refused every request from one computer on October 25, 2026,
+    # after some hundreds of PDFs asked for as fast as they came.
+    pause_seconds: float | None = None
     ignore_keys: tuple[str, ...] = ()
     limitations: tuple[str, ...] = ()
     indicators: tuple[str, ...] = ()
@@ -301,7 +305,7 @@ class Source:
 SOURCE_REQUIRED = ("dataset_name", "endpoint", "watermark_field", "cadence", "license", "silver_transform")
 SOURCE_PAGING = ("api", "records", "page_size", "fixture_dataset", "scope")  # all of them or none
 SOURCE_OPTIONAL = ("dataset_id", "resource_id", "stratum", "country_filter", "record_url", "max_offset",
-                   "assertion_form")
+                   "assertion_form", "pause_seconds")
 SOURCE_LISTS = ("ignore_keys", "limitations", "indicators")
 SOURCE_ATTRIBUTION = ("data_source", "catalog_url", "name_checked")  # all of them or none
 SOURCE_PAGE = ("readiness", "known_gaps", "declared", "fixes", "collections")  # arrays of tables
@@ -319,7 +323,12 @@ def load_sources(path: Path = CONFIG_DIR / "sources.toml",
         entry.only(set(SOURCE_REQUIRED + SOURCE_PAGING + SOURCE_OPTIONAL + SOURCE_LISTS + SOURCE_ATTRIBUTION
                        + SOURCE_PAGE))
         fields = {name: entry.text(name) for name in SOURCE_REQUIRED}
-        fields |= {name: entry.text(name, required=False) for name in SOURCE_OPTIONAL if name != "max_offset"}
+        fields |= {name: entry.text(name, required=False) for name in SOURCE_OPTIONAL
+                   if name not in ("max_offset", "pause_seconds")}
+        pause = table.get("pause_seconds")
+        if pause is not None and (isinstance(pause, bool) or not isinstance(pause, int | float) or pause < 0):
+            entry._fail("pause_seconds", "must be a number of seconds, 0 or more")
+        fields["pause_seconds"] = None if pause is None else float(pause)
         fields |= {name: entry.texts(name) for name in SOURCE_LISTS}
         if fields["cadence"] not in CADENCES:
             entry._fail("cadence", f"must be one of {', '.join(CADENCES)}")
@@ -2255,3 +2264,121 @@ def load_uploads(path: Path = CONFIG_DIR / "uploads.toml") -> Uploads:
         aliases[key] = _Entry(path, "aliases", {key: names}).texts(key)
     return Uploads(accept, limits.integer("max_size_bytes"), limits.integer("max_rows"), limits.text("format"),
                    tuple(columns), steps.text("planned"), steps.text("actual"), steps.text("one_row"), aliases)
+
+
+# ── The nightly job's quality checks ─────────────────────────────────────
+
+THREE_PART_TABLE = re.compile(r"strata\.(bronze|silver|gold|ops)\.[a-z][a-z0-9_]*")
+COLUMN_NAME = re.compile(r"[a-z][a-z0-9_]*")
+
+
+@dataclass(frozen=True)
+class QualityCheck:
+    """One table a task of the nightly job checks when it finishes (config/quality_checks.toml)."""
+
+    task: str  # the task's key in bundle/nightly.yml
+    table: str  # strata.<schema>.<table>
+    key: tuple[str, ...]  # the columns that tell one row from another; empty to take a gold query's key, or none
+    contacts: bool  # whether to search its notice text for contact details that ingestion missed
+
+
+def load_quality_checks(path: Path = CONFIG_DIR / "quality_checks.toml") -> tuple[QualityCheck, ...]:
+    """Every table the nightly job checks, in the file's order."""
+    data = _read(path)
+    _Entry(path, "the file", data).only({"tables"})
+    found: list[QualityCheck] = []
+    for entry in _tables(path, data, "tables"):
+        entry.only({"task", "table", "key", "contacts"})
+        task, table, key = entry.text("task"), entry.text("table"), entry.texts("key")
+        if not COLUMN_NAME.fullmatch(task):
+            entry._fail("task", "must be a task key such as bronze_to_gold")
+        if not THREE_PART_TABLE.fullmatch(table):
+            entry._fail("table", "must name a table in three parts, such as strata.gold.project")
+        if not all(COLUMN_NAME.fullmatch(column) for column in key):
+            entry._fail("key", "must list column names")
+        if (task, table) in {(check.task, check.table) for check in found}:
+            entry._fail("table", "is listed twice for the same task")
+        found.append(QualityCheck(task, table, key, entry.boolean("contacts") if "contacts" in entry.table else False))
+    return tuple(found)
+
+
+# ── The Genie space (ticket 33) ──────────────────────────────────────────
+
+GENIE_TABLE = re.compile(r"strata\.gold\.[a-z][a-z0-9_]*")
+
+
+@dataclass(frozen=True)
+class GenieTrusted:
+    """One trusted SQL example: a question and the file in src/strata/genie/trusted/ that answers it."""
+
+    question: str
+    sql: str
+
+
+@dataclass(frozen=True)
+class GenieConfig:
+    """The Genie space as config/genie.toml defines it."""
+
+    title: str
+    description: str
+    instruction: str
+    metric_views: tuple[str, ...]
+    tables: tuple[str, ...]
+    sample_questions: tuple[str, ...]
+    trusted: tuple[GenieTrusted, ...]
+
+
+def load_genie(path: Path = CONFIG_DIR / "genie.toml") -> GenieConfig:
+    """The Genie space: its title, description, one text instruction, what it reads and its trusted SQL."""
+    data = _read(path)
+    space = _Entry(path, "space", data.get("space"))
+    space.only({"title", "description", "instruction", "metric_views", "tables", "sample_questions"})
+    reads = space.texts("metric_views") + space.texts("tables")
+    wrong = [name for name in reads if not GENIE_TABLE.fullmatch(name)]
+    if wrong:
+        raise ConfigError(f"In {path.name}, the space reads {', '.join(wrong)}. Name each metric view and table in "
+                          "three parts, in strata.gold.")
+    trusted = []
+    for entry in _tables(path, data, "trusted"):
+        entry.only({"question", "sql"})
+        trusted.append(GenieTrusted(entry.text("question"), entry.text("sql")))
+    if not trusted:
+        raise ConfigError(f"In {path.name}, give the space at least one [[trusted]] question with its SQL.")
+    return GenieConfig(space.text("title"), space.text("description"), space.text("instruction"),
+                       space.texts("metric_views"), space.texts("tables"), space.texts("sample_questions"),
+                       tuple(trusted))
+
+
+# ── Foundry evaluations (ticket 33) ──────────────────────────────────────
+
+@dataclass(frozen=True)
+class Evaluator:
+    key: str
+    label: str
+    builtin: str
+    data_mapping: dict[str, str]
+
+
+@dataclass(frozen=True)
+class Evaluations:
+    api_version: str
+    judge_role: str
+    evaluators: tuple[Evaluator, ...]
+
+
+def load_evaluations(path: Path = CONFIG_DIR / "evaluations.toml") -> Evaluations:
+    """The Foundry evaluators the full gate runs, with the API version and the judge's model role."""
+    data = _read(path)
+    top = _Entry(path, "the file", {key: value for key, value in data.items() if key != "evaluators"})
+    top.only({"api_version", "judge_role"})
+    evaluators = []
+    for entry in _tables(path, data, "evaluators"):
+        entry.only({"key", "label", "builtin", "data_mapping"})
+        mapping = entry.table.get("data_mapping")
+        if not isinstance(mapping, dict) or not mapping or not all(
+                isinstance(value, str) and value.startswith("{{item.") for value in mapping.values()):
+            entry._fail("data_mapping", "must map each input to a field of an item, such as {{item.query}}")
+        evaluators.append(Evaluator(entry.text("key"), entry.text("label"), entry.text("builtin"), dict(mapping)))
+    if len({evaluator.key for evaluator in evaluators}) != len(evaluators) or not evaluators:
+        raise ConfigError(f"In {path.name}, give each evaluator a key of its own.")
+    return Evaluations(top.text("api_version"), top.text("judge_role"), tuple(evaluators))

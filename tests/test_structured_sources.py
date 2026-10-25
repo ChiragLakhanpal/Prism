@@ -595,7 +595,9 @@ def test_rows_held_equal_the_reported_totals_on_a_later_night():
                 return [pages.Page(source.key, json.loads((RECORDED / project).read_text())["source"],
                                    recorded(project), when)]
             if source.key == "notices":
-                return pages.live_pages(dataclasses.replace(source, page_size=4), search_api(day, notices),
+                # One series: the job asks for each slice country on its own, and one is enough here.
+                return pages.live_pages(dataclasses.replace(source, page_size=4, countries=source.countries[:1]),
+                                        search_api(day, notices),
                                         lambda country: bronze.newest_held(engine, source, country), clock=lambda: when)
             return []  # the other sources play no part here, and the job runs faster without them
         return pages_of

@@ -25,7 +25,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from strata.lakehouse import bundle as bundle_files
-from strata.lakehouse.engine import Engine
+from strata.lakehouse.engine import COLUMN_NAME, Engine
 
 CATALOG = "strata"
 TABLES = Path(__file__).resolve().parent / "tables"
@@ -93,6 +93,7 @@ class TableDefinition:
     schema: str
     table: str
     sql: str
+    sources: tuple[str, ...] = ()  # a metric view's gold tables: its source and its joins'
 
     @property
     def full_name(self) -> str:
@@ -169,3 +170,80 @@ def build(engine: Engine, folder: Path = TABLES, create_schemas: bool = True) ->
     for view in views:
         engine.run(view.sql)
     return [definition.full_name for definition in definitions + views]
+
+
+# ── Metric views, for Genie (ticket 33) ─────────────────────────────────
+
+METRIC_VIEWS = TABLES.with_name("metric_views")  # the folder beside tables/ that holds the metric views
+METRIC_VIEW_KEYS = ("version", "source", "dimensions", "measures")
+
+
+def _metric_view(path: Path, schema: str, view: str, tables: set[str]) -> TableDefinition:
+    import yaml
+
+    where = f"metric_views/{schema}/{path.name}"
+    text = path.read_text()
+    body = "\n".join(line for line in text.splitlines() if not line.lstrip().startswith("#")).strip()
+    if ";" in body:
+        raise CatalogError(f"{where} holds a semicolon. The SQL task cuts a file at every semicolon outside quotes, "
+                           "so a metric view's body holds none.")
+    try:
+        spec = yaml.safe_load(body)
+    except yaml.YAMLError as error:
+        raise CatalogError(f"{where} is not valid YAML: {error}") from error
+    missing = [key for key in METRIC_VIEW_KEYS if not (spec or {}).get(key)]
+    if missing:
+        raise CatalogError(f"{where} needs {', '.join(missing)}.")
+    dimensions = [entry["name"] for entry in spec["dimensions"]]
+    measures = [entry["name"] for entry in spec["measures"]]
+    for name in dimensions + measures + [join.get("name", "") for join in spec.get("joins") or []]:
+        if not COLUMN_NAME.fullmatch(name):
+            raise CatalogError(f"{where} names {name!r}. Write every name in snake_case.")
+    if len(set(dimensions + measures)) != len(dimensions + measures):
+        raise CatalogError(f"{where} gives two dimensions or measures one name.")
+    for join in spec.get("joins") or []:
+        if join["name"] in dimensions:
+            raise CatalogError(f"{where} has a join named {join['name']}, like one of its dimensions. Genie reads "
+                               "such a name as the dimension, so give the join another name.")
+    sources = (spec["source"], *[join["source"] for join in spec.get("joins") or []])
+    for source in sources:
+        if source not in tables:
+            raise CatalogError(f"{where} reads {source}, which is not a gold table defined in tables/gold. A metric "
+                               "view reads gold tables only.")
+    sql = (f"CREATE OR REPLACE VIEW {CATALOG}.{schema}.{view}\nWITH METRICS\nLANGUAGE YAML\n"  # sql-lint: names only
+           f"AS $$\n{body}\n$$")
+    return TableDefinition(path, schema, view, sql, sources)
+
+
+def metric_view_definitions(folder: Path = METRIC_VIEWS) -> list[TableDefinition]:
+    """Every metric view in folder, one YAML body per file at metric_views/gold/<view>.yaml, checked against the
+    rules fairshare's docs/limits.md gives (ticket 33's notes): no semicolon in the body, no join named like a
+    dimension, and a source that is a gold table. Databricks only: DuckDB has no metric views, so build() never runs
+    them and the gate checks these rules instead.
+
+    The gold tables are read from tables/gold's file names, not through table_definitions(), which reads the bundle:
+    ask_genie reads these definitions on every question, and the App holds src/strata but no databricks.yml or
+    bundle/ (ops/app/deploy_app.py, package())."""
+    gold = {f"{CATALOG}.gold.{path.stem}" for path in sorted((TABLES / "gold").glob("*.sql"))}
+    found = []
+    for path in sorted(Path(folder).glob("*/*.yaml")):
+        schema = path.parent.name
+        if schema != "gold":
+            raise CatalogError(f"{path.name} sits in metric_views/{schema}. Genie's metric views go in "
+                               "metric_views/gold.")
+        found.append(_metric_view(path, schema, path.stem, gold))
+    return found
+
+
+def build_metric_views(engine: Engine, folder: Path = METRIC_VIEWS) -> list[str]:
+    """Create or replace each metric view on the SQL warehouse, after build() has made the gold tables it reads."""
+    views = metric_view_definitions(folder)
+    for view in views:
+        engine.run(view.sql)
+    return [view.full_name for view in views]
+
+
+def metric_view_sources(folder: Path = METRIC_VIEWS) -> dict[str, tuple[str, ...]]:
+    """The gold tables each metric view reads, its source and its joins', by the view's full name, from the same
+    checked definitions the deploy creates, so every name in it is a gold table defined in tables/gold."""
+    return {view.full_name: view.sources for view in metric_view_definitions(folder)}

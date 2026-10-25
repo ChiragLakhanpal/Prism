@@ -1768,6 +1768,8 @@ Run this from the main checkout:
 
 It worked if the first run's diff shows the change in `### estimate_time` and ends "I made version N of strata-orchestrator, which matches the repo.", and the `--check` run exits 0.
 
+**Ran on October 25, 2026 (orchestrator), from a1e037d7.** Both passed. The first run found that `strata-orchestrator` version 4 differed from the repo in its instructions and its tools, with `estimate_time` in the diff, and made version 5, which matches the repo. The `--check` run exited 0: version 5 matches the repo with no difference in its model, instructions, tools, description or guardrail (strata-guardrail).
+
 ## Ticket 26, step 5 of 5: redeploy the App with lane 2, section 4 and the plan dates
 
 The merger parked this step on October 25, 2026, after merge commit a4ed00d. Run it after steps 1 to 3. It needs the Databricks keys in `.env`. It is ticket 06's deploy command, and one deploy from a4ed00d or later serves every block that names it, ticket 36's step 4 included. From this merge on, the App serves `GET /api/packages/<ref>/estimate`, `GET /api/planned-packages/<id>/estimate` and `PUT .../plan-dates` (`src/strata/server/estimates.py`).
@@ -1781,3 +1783,95 @@ It worked if the deploy exits 0 and its last line is `Strata is running at https
 1. With a champion from step 2, open a package inside the champion's training range, such as KE-NWWDA-229129-CW-RFB. It worked if lane 2 draws its navy bar with the white notch and the line to the 8-in-10 point, and section 4 lists up to three approaches with "N of M" counts, or gives a true reason for listing none.
 2. Choose the other plan date and reload. It worked if your choice stays checked, and `SELECT count(*) FROM strata.app.plan_date_choices` in Lakebase returns at least 1.
 3. Without a champion, the same page shows no bar in lane 2, and section 4 says "I'm not listing approach options, because I have no time estimate for this package."
+
+## Ticket 43, step 1 of 4: deploy the job's two new tables, then run the nightly job and check a scheduled run (criterion 2)
+
+The merger parked this step on October 25, 2026, after merge commit 60cf29b. All ten keys were set, but the Free Edition SQL warehouse had reached its free daily limit at 10:33 UTC that morning, and the header above holds workspace steps back during a merge. Run it only once the warehouse answers again. It needs the Databricks keys in `.env`. Ticket 43 makes every task of `strata nightly` do its work and adds two tables: `strata.ops.quality_checks` (`src/strata/lakehouse/tables/ops/quality_checks.sql`), which holds each task's quality checks for the Governance page, and `strata.ops.lesson_version_notices` (`lesson_version_notices.sql` beside it), the was-and-now marks on drafts that cite a changed lesson. `strata.ops.pipeline_runs` keeps its columns. The bundle gains the variables `secret_scope` (`strata`) and `ai_search_endpoint`, which the deploy fills from `.env`. Tickets 22, 34, 37, 23, 36 and 26 run the same deploy command, and one deploy from 60cf29b or later serves every block that names it. This workspace's earlier deploys passed `--fairshare-catalog workspace`, so this one does too. Ticket 26's step 3 runs the same job-run command, and one run from 60cf29b or later serves both. The job's `bronze_to_gold` and `parse_and_embed` tasks ask Azure OpenAI only once step 4 below is done.
+
+Run this from the main checkout:
+
+    uv run --script ops/bundle/deploy.py --env-file .env --fairshare-catalog workspace
+    uv run --script ops/bundle/deploy.py --env-file .env --fairshare-catalog workspace
+    uv run --script ops/bundle/check.py job-run --env-file .env
+
+It worked if the first deploy exits 0, lists `strata.ops.quality_checks` and `strata.ops.lesson_version_notices` as new, each with its `public_from` column, and changes no existing table, and the second prints "No changes." Then the job run exits 0 and prints each of the ten tasks with "took N minutes, N rows changed, N quality checks passed and N failed", and "finished inside the job's window of 150 minutes". On the first night after `strata.gold.passage_index` is made, `sync_index` succeeds and sends no sync request; on the next night it sends one.
+
+Then, after the next scheduled run (03:00 America/New_York), take its run id from the job's page and run:
+
+    uv run --script ops/bundle/check.py job-run --env-file .env --run-id <scheduled-run-id>
+
+It worked if it exits 0 with the same ten task lines and "finished inside the job's window of 150 minutes". That is criterion 2.
+
+## Ticket 43, step 2 of 4: check that Strata's and fairshare's nightly windows never meet (criterion 5, window half)
+
+The merger parked this step on October 25, 2026, after merge commit 60cf29b, while the warehouse's daily limit held. Run it after step 1, so Strata's job has a recent run to measure. It needs the Databricks keys in `.env`. Offline, the verifier found no overlap on any of 366 days against fairshare's schedule measured on October 24, 2026 (06:00 America/Chicago, longest run 21 minutes), with a smallest gap of 1 hour 30 minutes.
+
+Run this from the main checkout:
+
+    uv run --script ops/bundle/check.py schedules --env-file .env --write
+
+It worked if it exits 0 and the `<!-- bundle:schedules -->` block in `bundle/README.md` records both schedules with a new "Measured:" date and says the strata and fairshare windows never meet. Commit that change to `bundle/README.md`.
+
+## Ticket 43, step 3 of 4: after a repair run, see whether {{job.repair_count}} tells tries apart
+
+The merger parked this step on October 25, 2026, after merge commit 60cf29b, while the warehouse's daily limit held. It has no command of its own. It waits for a night when a task fails and someone repairs the run in Databricks. It needs the Databricks keys in `.env`. A repair run keeps the run's id, so `strata.ops.pipeline_runs` holds a row for each try of a task, and `check.py job-run` already counts each task by its last try (ticket 04's step 2, sixth run).
+
+After a repair run of `strata nightly`, run this from the main checkout:
+
+    uv run --script ops/bundle/check.py job-run --env-file .env --run-id <repaired-run-id>
+
+It worked if it exits 0 and prints "<task> was tried N times; the first N-1 failed and the last succeeded." for the repaired task. Then, in the SQL editor, check whether the tries can be told apart by more than their times:
+
+    SELECT task_key, status, started_at, finished_at FROM strata.ops.pipeline_runs WHERE run_id = :run_id ORDER BY task_key, started_at
+
+Record here whether `{{job.repair_count}}` would add anything the start times do not already show.
+
+## Ticket 43, step 4 of 4: the secret scope `strata` holds the two Azure OpenAI keys for the nightly job
+
+The merger parked this step on October 25, 2026, after merge commit 60cf29b, while the warehouse's daily limit held. It needs the Databricks keys in `.env`. From this merge on, each task of `strata nightly` reads its keys from the secret scope `strata` through `keys_from_scope`. So `bronze_to_gold` (the uncertain middle of supplier matching) and `parse_and_embed` reach Azure OpenAI only when the scope holds `AZURE_OPENAI_ENDPOINT` and `AZURE_OPENAI_API_KEY`. The App deploy (`ops/app/deploy_app.py`, ticket 26's step 5) saves both keys there when `.env` has them. Claude cannot write secrets in auto mode, so this is your step: rerun the App deploy or the wizard (`bash ops/wizard/strata-setup.sh`), or save a missing key with the Databricks CLI's put-secret command for the scope `strata`. Do this before step 1's job run if you can; otherwise the next night picks the keys up.
+
+It worked if the scope `strata` lists both keys in the workspace's secret listing. Then, after the next nightly run, ticket 19's step 5 checks that `strata.ops.supplier_pairs.model` is filled, and the count of `person` pairs with `no_model` in ticket 19's earlier step falls.
+
+## Ticket 33, step 1 of 3: make the metric views Genie reads, then deploy the Genie space twice (criterion 1, live)
+
+The merger parked this step on October 25, 2026, after merge commit bcc767e. All ten keys were set, but the Free Edition SQL warehouse had reached its free daily limit at 10:33 UTC that morning, and the header above holds workspace steps back during a merge. Run it only once the warehouse answers again. It needs the Databricks keys in `.env`. Ticket 33 defines Strata's Genie space in code: `config/genie.toml`, its trusted SQL in `src/strata/genie/trusted/`, and its benchmark questions, the five `ask_genie` questions in `evals/benchmark.yaml`. The space reads two metric views, `strata.gold.contract_metrics` and `strata.gold.package_metrics` (`src/strata/lakehouse/metric_views/gold/`), which the bundle deploy now creates on the SQL warehouse after the tables. Tickets 22, 34, 37, 23, 36, 26 and 43 run the same deploy command, and one deploy from bcc767e or later serves every block that names it. The space deploy never changes a space with another title, such as the wizard's throwaway space for day-one test 5. When the space's ID differs from the one `GENIE_SPACE_ID` names, it adds `GENIE_SPACE_ID='<id>'` as the env file's last line and leaves every other line as it was.
+
+Run this from the main checkout:
+
+    uv run --script ops/bundle/deploy.py --env-file .env --fairshare-catalog workspace
+    uv run python ops/genie/deploy_space.py --env-file .env
+    uv run python ops/genie/deploy_space.py --env-file .env
+
+It worked if the bundle deploy exits 0 and prints "The metric views Genie reads exist now: strata.gold.contract_metrics, strata.gold.package_metrics." Then the first space deploy exits 0 and says it made or updated the space, and the second exits 0 and prints "The space <id> already matches the repo. No change." That is the deploy half of criterion 1. Step 3's full gate proves the other half, the pass rate stored in `strata.ops.evaluation_result`.
+
+## Ticket 33, step 2 of 3: sync the agent and redeploy the App, then ask_genie as a viewer on a cold warehouse (criterion 2, live)
+
+The merger parked this step on October 25, 2026, after merge commit bcc767e, while the warehouse's daily limit held. Run it after step 1. It needs the Foundry keys and the Databricks keys in `.env`. Ticket 33 adds the tool `ask_genie` to `config/tools.toml`. The agent's tool list is generated from that file, so the orchestrator agent in Foundry cannot call `ask_genie` until the sync runs. The App package now carries `pyyaml` (`ops/app/requirements.txt`), because `ask_genie` reads the metric views' YAML. The sync is ticket 13's command and the deploy is ticket 06's; one sync and one deploy from bcc767e or later serve every block that names them.
+
+Run this from the main checkout:
+
+    uv run --script ops/agent/sync.py --env-file .env
+    uv run --script ops/agent/sync.py --env-file .env --check
+    uv run --script ops/app/deploy_app.py --env-file .env
+
+It worked if the first sync's diff shows `### ask_genie` and ends "I made version N of strata-orchestrator, which matches the repo.", the `--check` run exits 0, and the deploy exits 0 with the last line `Strata is running at https://...`.
+
+Then leave the SQL warehouse idle for more than 10 minutes, so Free Edition stops it. Signed in to the App as a viewer, ask one of the Genie questions in `evals/benchmark.yaml`, such as "How many contracts did Kenya sign in the contract awards since fiscal 2020, and how many of them carry a STEP reference?" It worked if the answer comes back within 90 + 150 seconds (the `[genie]` waits in `config/thresholds.toml`: up to 90 seconds for the warehouse to start, then up to 150 for Genie), and its sentences cite rows with `strata.genie:` evidence ids. That is criterion 2.
+
+**Ran in part on October 25, 2026 (orchestrator), from 3b8c15aa.** The sync half ran before step 1, since it needs only Foundry: the first run found that `strata-orchestrator` version 5 differed from the repo in its instructions and its tools, with `ask_genie` in the diff, and made version 6, which matches the repo; the `--check` run exited 0 with no difference in its model, instructions, tools, description or guardrail (strata-guardrail). The App deploy and the ask_genie check as a viewer wait for the warehouse and for step 1.
+
+## Ticket 33, step 3 of 3: the full gate on the workspace, with Foundry evaluations (criteria 1, 5 and 6, live)
+
+The merger parked this step on October 25, 2026, after merge commit bcc767e, while the warehouse's daily limit held. Run it after steps 1 and 2. It needs DATABRICKS_HOST, DATABRICKS_TOKEN, DATABRICKS_WAREHOUSE_ID, GENIE_SPACE_ID, FOUNDRY_PROJECT_ENDPOINT, FOUNDRY_TENANT_ID, AZURE_OPENAI_ENDPOINT and AZURE_OPENAI_API_KEY in `.env`, and `az` signed in for the agent. A browser opens for a Microsoft Entra sign-in to FOUNDRY_TENANT_ID: the project key gets 403 from the evaluations API, and the tenant blocks device-code sign-in. The command runs the offline gate first, so start it when no other gate is running on this computer.
+
+Run this from the main checkout, and finish the Entra sign-in when the browser opens:
+
+    uv run --with azure-identity python ops/evals/full_gate.py --env-file .env
+
+It worked if it runs all six stages (the benchmark file's check, the offline gate, the Genie benchmark, every benchmark question through `/api/ask`, Foundry evaluations, and the results), writes every result under one run id, and exits 0, or 1 naming each gap. In the transcript, each of the five `ask_genie` questions and each of the six `search_passages` questions should keep a sentence, and both `estimate_time` questions should pass when answered right. `get-lessons-cost-estimates` passes only once the live library has decided the rebidding lesson by the day of the run. Until then the gate names it as a documents miss, though the answer is not at fault (review round 6, follow-up 1). That is criterion 5.
+
+Then, in the SQL editor, with the run id the command printed:
+
+    SELECT * FROM strata.ops.evaluation_result WHERE run_id = :run_id
+
+It worked if the rows include the `genie_benchmark` pass rate (questions, passed, share, target, gap and met; criterion 1's other half), and, for each of `groundedness`, `relevance`, `task_adherence` and `tool_use`, the columns `scored`, `met`, `share`, `mean_score` and `foundry_run` (criterion 6). This run also checks the task_adherence and tool_use evaluators' names and data mappings, which fairshare never ran.

@@ -108,6 +108,39 @@ def test_the_first_deploy_creates_the_catalog_its_schemas_the_volume_the_tables_
             "one schema, one table and no volumes.") in out
 
 
+class Warehouse:
+    """The fake workspace's DuckDB as the SQL warehouse: it runs every statement but the metric views, which only
+    Databricks has, and keeps those."""
+
+    name = "databricks"
+
+    def __init__(self, duckdb):
+        self.duckdb, self.metric_views = duckdb, []
+
+    def run(self, sql, params=None):
+        if "WITH METRICS" in sql:
+            self.metric_views.append(sql.split("\n")[0])
+            return self.duckdb.run("SELECT 1")
+        return self.duckdb.run(sql, params)
+
+    def insert_rows(self, *args, **kwargs):
+        return self.duckdb.insert_rows(*args, **kwargs)
+
+
+def test_the_deploy_creates_the_metric_views_genie_reads_after_the_tables(capsys):
+    workspace = FakeWorkspace()
+    warehouse = Warehouse(workspace.duckdb)
+    workspace.engine = lambda: warehouse
+
+    code, out = deploy_into(workspace, capsys)
+
+    assert code == 0
+    assert warehouse.metric_views == ["CREATE OR REPLACE VIEW strata.gold.contract_metrics",
+                                      "CREATE OR REPLACE VIEW strata.gold.package_metrics"]
+    assert ("The metric views Genie reads exist now: strata.gold.contract_metrics, strata.gold.package_metrics."
+            in out)
+
+
 def test_a_second_deploy_reports_no_changes(capsys):
     workspace = FakeWorkspace()
     deploy_into(workspace, capsys)
@@ -176,6 +209,26 @@ def test_the_cli_gets_the_service_principal_when_the_env_file_has_no_token():
     assert bundle_live.cli_env(env, SHELL) == {"PATH": "/usr/bin", "DATABRICKS_HOST": HOST,
                                                "DATABRICKS_AUTH_TYPE": "oauth-m2m", "DATABRICKS_CLIENT_ID": "sp-client",
                                                "DATABRICKS_CLIENT_SECRET": "not-a-real-secret"}
+
+
+def test_the_deploy_passes_every_bundle_variable_the_job_s_tasks_name_that_has_no_default():
+    """The nightly job's sync_index task syncs the AI Search index the env file names, which is no secret and so
+    travels as a bundle variable, as the SQL warehouse does (review B4). Without the env file's value, the deploy
+    passes the name the wizard gives it (ops/dayone/dayone.toml, names.ai_search_endpoint)."""
+    import re
+
+    env = {"DATABRICKS_WAREHOUSE_ID": "wh-1", "AI_SEARCH_ENDPOINT": "my-search"}
+    passed = dict(part.split("=", 1) for part in bundle_live.bundle_vars(env)[1::2])
+    variables = bundle.load().data["variables"]
+    named = {name for task in nightly.job_tasks() for part in task.parameters
+             for name in re.findall(r"\$\{var\.(\w+)\}", part)}
+
+    assert bundle_live.bundle_vars(env)[::2] == ["--var"] * len(passed)
+    assert passed == {"warehouse_id": "wh-1", "ai_search_endpoint": "my-search"}
+    assert "ai_search_endpoint" in named
+    assert {name for name in named if "default" not in variables[name]} <= set(passed)
+    assert dict(part.split("=", 1) for part in bundle_live.bundle_vars({"DATABRICKS_WAREHOUSE_ID": "wh-1"})[1::2])[
+        "ai_search_endpoint"] == "strata-search"
 
 
 @pytest.mark.parametrize("name", ["deploy.py", "check.py"])

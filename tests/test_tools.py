@@ -17,17 +17,17 @@ import tomllib
 from pathlib import Path
 
 import pytest
-import yaml
 
 from strata import config
 from strata.config import ConfigError
 from strata.dbx import Viewer
+from strata.evals import benchmark
 from strata.lakehouse.engine import DuckDBEngine
 from strata.tools import registry
 
 ROOT = Path(__file__).resolve().parents[1]
 TRUTH = tomllib.loads((ROOT / "tests" / "ground_truth" / "values.toml").read_text())
-BENCHMARK = yaml.safe_load((ROOT / "evals" / "benchmark.yaml").read_text())
+BENCHMARK = {"questions": benchmark.load()}
 NWWDA = "Northern Water Works Development Agency"
 ANA = Viewer(email="ana.example@worldbank.org", name="Ana Example", token="token-for-ana-only")
 WIREFRAME_MARKS = {"Needs a look": ["needs_a_look"], "Watch": ["watch"], "Data note": ["data_note"], "No signals": []}
@@ -185,237 +185,7 @@ def test_each_tool_that_answers_a_kind_of_question_names_it_and_the_readiness_ro
         assert readiness.ready_for_row in readiness.draws_on, name
 
 
-def marked(result, question) -> dict[str, list[str]]:
-    """check_plan's answer: the references under each mark, in the benchmark question's shape."""
-    found = {"unmarked": sorted(ref for ref, given in marks(result).items() if not given)}
-    for mark in ("needs_a_look", "watch", "data_note"):
-        found[mark] = sorted(ref for ref, given in marks(result).items() if mark in given)
-    found["with_a_signal"] = sorted(ref for ref, given in marks(result).items() if {"needs_a_look", "watch"} & set(given))
-    # Ticket 21: the activities whose reasons give a delay from the saved baseline as well.
-    found["baseline_delays"] = sorted(row["activity_reference_no"] for row in result["rows"]
-                                      if any("baseline" in reason for mark in row["marks"] for reason in mark["reasons"]))
-    # Ticket 36: the plan's counts come back as a citable summary, which a Project Paper summary cites.
-    found["activities"] = [result["summary"]["counts"]["activities"]]
-    found["counts_cited_as"] = [result["summary"]["evidence_id"]]
-    # Ticket 38: the rows that came from an upload, by their place in its file.
-    found["upload_positions"] = sorted(row["position"] for row in result["rows"] if row["position"] is not None)
-    return found
-
-
-def in_top_three(result, question) -> dict[str, list[str]]:
-    """search_passages' answer: which of the expected passages are among its first three, which matched passages
-    it left out because Prompt Shields found an attack or never screened them, and which a passage reviewer
-    ranked lower for the query's kind of question (ticket 32)."""
-    top = {row["evidence_id"] for row in result["rows"][:3]}
-    left_out = [evidence for entry in result["coverage"]["not_used"]
-                if entry["reason"] in ("prompt_shields_hit", "not_screened") for evidence in entry["evidence_ids"]]
-    found = {"top_three_include": sorted(set(question["expected"]["top_three_include"]) & top),
-             "left_out": sorted(left_out)}
-    if "ranked_lower" in question["expected"]:
-        found["ranked_lower"] = sorted(result["ranked_lower"]["evidence_ids"])
-    return found
-
-
-def readiness_answer(result, question) -> dict[str, list]:
-    """data_readiness_for's answer, in the keys its question expects: the awards row's STEP-reference
-    measure and the known gaps shown, or the stress shelf's P130164 risk annex outcome."""
-    found = {}
-    awards = [row for row in result["sources"] if row["id"] == "awards"]
-    if awards:
-        linked = result["rows"][awards[0]["cells"]["linked"]["row"]]
-        found["linked_step_reference"] = [linked["count"], linked["denominator"]]
-    found["known_gaps"] = [row["id"] for row in result["sources"] if row["type"] == "gap"]
-    annex = [entry for entry in result["stress_shelf"] if entry["kind"] == "scan_annex"]
-    if annex and annex[0]["outcome_row"] is not None:
-        outcome = result["rows"][annex[0]["outcome_row"]]
-        found["rated_risks_recovered"] = [outcome["count"], outcome["denominator"]]
-    return {key: found.get(key) for key in question["expected"]}
-
-
-def lessons_answer(result, question) -> dict[str, list]:
-    """get_lessons' answer: the first lesson, the evidence ids it rests on and IEG's part in them, and the
-    editions of the rules the lessons' projects followed; with packages, from the summary record, the completion
-    reports counted and each risk factor they raised with how many raised it (ticket 30)."""
-    rows = result["rows"]
-    found = {"first": [rows[0]["statement"]] if rows else [],
-             "first_evidence": [source["evidence_id"] for source in rows[0]["evidence"]] if rows else [],
-             "first_ieg_status": [rows[0]["ieg_status"]] if rows else [],
-             "editions": sorted({row["edition"]["key"] for row in rows if row["edition"]})}
-    reports = result["summary"]["reports"]
-    if reports is not None:
-        found |= {"reports_read": [reports["read"]],
-                  "raised": [[factor["key"], factor["k"]] for factor in reports["risk_factors"]]}
-    return found
-
-
-def past_range(result, question) -> dict[str, list]:
-    """find_comparables' answer: the quartiles and 8-in-10 point in months, read from the summary record
-    the agent cites them by, the packages still open, the canceled ones it left out, the packages
-    signed within the plan's months, and the numbers each "in 10" phrase states, with the words that go
-    with the plan's. A package with no plan row (ticket 15) has no plan, so its question asks nothing of one.
-    A question about the quantile dots (ticket 15) asks only how many there are and which packages the last
-    one stands for."""
-    if "last_dot" in question["expected"]:
-        dots = result["quantile_dots"] or []
-        return {"quantile_dots": [len(dots)], "last_dot": sorted(dots[-1]["step_references"]) if dots else [],
-                "last_dot_still_open": [dots[-1]["still_open"]] if dots else []}
-    found = {
-        "past_range_months": [result["summary"]["past_range"][name] for name in ("q25", "q50", "q75", "q80")],
-        "cited_as": [result["summary"]["evidence_id"]],
-        "still_open": sorted(row["step_reference"] for row in result["rows"] if row["still_open"]),
-        "canceled_left_out": sorted(evidence.split(":", 1)[1] for entry in result["coverage"]["not_used"]
-                                    if entry["reason"] == "canceled" for evidence in entry["evidence_ids"]),
-        "eight_in_ten": result["summary"]["frequencies"]["q80"],
-    }
-    if result["plan"] is not None:
-        plan_months = result["plan"]["months"]
-        found |= {
-            "signed_within_plan": sorted(row["step_reference"] for row in result["rows"]
-                                         if not row["still_open"] and row["months"] <= plan_months),
-            "plan_in_ten": result["summary"]["frequencies"]["plan"]["states"],
-            "plan_in_ten_words": [result["summary"]["frequencies"]["plan"]["words"]],
-        }
-    return found
-
-
-def disagreement_answer(result, question) -> dict[str, list]:
-    """get_disagreements' answer: each disagreement's two sides by evidence id in the order written, the side
-    it leans on, the ladder's rule, the sides that carry their passage's words for a quote, the passages whose
-    words the coverage line says it kept from the agent because Prompt Shields found an attack or never screened
-    them (ticket 64), and, from the summary record the agent cites them by, the runs of the trajectory, each as
-    [rating, first ISR, last ISR], and the count of assertions the run left out."""
-    evidence = {side["assertion_id"]: side["evidence_id"] for row in result["rows"] for side in row["sides"]}
-    left_out = [evidence for entry in result["coverage"]["not_used"]
-                if entry["reason"] in ("prompt_shields_hit", "not_screened") for evidence in entry["evidence_ids"]]
-    return {"disagreements": [[side["evidence_id"] for side in row["sides"]] for row in result["rows"]],
-            "leans_on": [evidence[row["lean_assertion_id"]] for row in result["rows"]],
-            "rules": [row["rule_id"] for row in result["rows"]],
-            "quotable_sides": [side["evidence_id"] for row in result["rows"] for side in row["sides"] if side["text"]],
-            "left_out": sorted(left_out),
-            "cited_as": [result["summary"]["evidence_id"]],
-            "trajectory_runs": [[run["value"], run["first_sequence"], run["last_sequence"]]
-                                for trajectory in result["summary"]["trajectories"] for run in trajectory["runs"]],
-            "rejected": [result["summary"]["rejected"]["count"]]}
-
-
-def estimate_time_answer(result, question) -> dict[str, list]:
-    """estimate_time's answer, from the summary record the agent cites it by. The time estimate (ticket 26): why it
-    gives no time estimate, and for which feature; how many comparable packages it counted; and why there is no
-    track record, if there is none. The planned dates for each step (ticket 27): the method family, the basis, the
-    steps that got a cautious date, how many steps the tool counts as undated, and one named comparable's delay at
-    the signed contract. Section 4's counts: the comparable packages whose records give their whole approach, those
-    of them the thresholds rule out for this package, and those whose records don't give it."""
-    abstention = result["abstention"] or {}
-    track = result["summary"]["track_record"] or {}
-    options = result["summary"]["options"] or {}
-    steps = result["summary"]["step_dates"]
-    signed = next(entry for entry in steps["steps"] if entry["step_key"] == "contract_signed")
-    named = {reference for reference, _ in question["expected"]["signed_delay"]}
-    return {"abstention": [abstention.get("reason")], "feature": [abstention.get("feature")],
-            "comparables": [result["summary"]["comparables"]["n"]], "cited_as": [result["summary"]["evidence_id"]],
-            "track_record": [(track.get("abstention") or {}).get("reason")],
-            "family": [steps["family"]], "basis": [steps["basis"]], "step_comparables": [steps["coverage"]["total"]],
-            "dated_steps": [entry["step_key"] for entry in steps["steps"]
-                            if entry["cautious"] and entry["cautious"]["planned_date"]],
-            "undated_steps": [steps["undated_n"]],
-            "signed_delay": [[entry["step_reference"], entry["days"]] for entry in signed["comparables"]
-                             if entry["step_reference"] in named],
-            "approach_counts": [[options.get("recorded"), options.get("ruled_out"), options.get("unrecorded")]],
-            # Ticket 38: the date the signed contract's step is dated from, the plan's as first published here, or an
-            # upload's own date for an upload's row.
-            "dated_from": [signed["plan_first_date"]]}
-
-
-def cost_answer(result, question) -> dict[str, list]:
-    """compare_cost_estimates' answer: the packages signed above and below their own cost estimates, its
-    abstention, and the package's own cost estimate (ticket 31)."""
-    return {"signed_above": sorted(row["step_reference"] for row in result["rows"] if row["diff_pct"] > 0),
-            "signed_below": sorted(row["step_reference"] for row in result["rows"] if row["diff_pct"] < 0),
-            "abstention": [result["abstention"]["reason"]] if result["abstention"] else [],
-            "own_estimate": [result["package"]["estimated_amount_usd"]]}
-
-
-def rejected_answer(result, question) -> dict[str, list]:
-    """rejected_bids' answer: n of m from the summary, the packages in two of its groups, and the groups' order
-    (ticket 31)."""
-    def packages(key: str) -> list[str]:
-        return sorted({row["step_reference"] for row in result["rows"] if row["item_key"] == key})
-    counts = result["summary"]["counts"]
-    return {"n_of_m": [counts["n"], counts["m"]], "bid_security": packages("bid_security"),
-            "key_staff": packages("key_staff"),
-            "group_order": [group["item_key"] for group in result["summary"]["groups"]]}
-
-
-def criteria_answer(result, question) -> dict[str, list]:
-    """compare_criteria's answer: n of the total whose criteria are public, one item's stated, compared and same or
-    less, and the comparables still open, which it never compares (ticket 31)."""
-    counts = result["summary"]["counts"]
-    items = {item["item_key"]: item for item in result["summary"]["items"]}
-    found = {"public": [counts["n"], counts["total"]],
-             "still_open": sorted(evidence.split(":", 1)[1] for entry in result["coverage"]["not_used"]
-                                  if entry["reason"] == "still_open" for evidence in entry["evidence_ids"])}
-    for key in items:
-        found[key] = [items[key]["stated"], items[key]["compared"], items[key]["same_or_less"]]
-    return found
-
-
-def signals_answer(result, question) -> dict[str, list]:
-    """project_signals' answer: the status, and what each check that fired fired on: the activities by STEP
-    reference, or the months the loan history first showed a new closing date (ticket 37)."""
-    found = {"status": [result["status"]]}
-    for row in result["rows"]:
-        found[row["check"]] = sorted(item.get("activity_reference_no") or item.get("reported_on") for item in row["items"])
-    return found
-
-
-def rebidding_answer(result, question) -> dict[str, list]:
-    """rebidding_risk's answer: n of m and the past range's total from the summary, the packages advertised again,
-    each reason quoted with its notice, the groups' order and why the model is not shown (ticket 28)."""
-    summary = result["summary"]
-    return {"n_of_m": [summary["n"], summary["m"]], "past_range_total": [summary["past_range_total"]],
-            "advertised_again": sorted(row["step_reference"] for row in result["rows"]),
-            "quoted": [[row["step_reference"], row["quote"]["notice_id"], row["quote"]["text"]]
-                       for row in result["rows"] if row["quote"]],
-            "group_order": [group["reason_code"] for group in summary["groups"]],
-            "model_not_shown": [summary["model"]["not_shown_reason"]] if not summary["model"]["shown"] else [],
-            "cited_as": [summary["evidence_id"]]}
-
-
-def track_answer(result, question) -> dict[str, list]:
-    """agency_track_record's answer: its counts from the summary, the packages in each state, which source it
-    counted as signed and the packages the awards dataset shows signed while the plan does not (ticket 36)."""
-    counts = result["summary"]["counts"]
-    return {"counts": [counts["n"], counts["signed_by_plan"], counts["signed_late"], counts["open_past_date"]],
-            "middle_delay_days": [counts["middle_delay_days"]],
-            "signed_late": sorted(row["step_reference"] for row in result["rows"] if row["state"] == "signed_late"),
-            "open_past_date": sorted(row["step_reference"] for row in result["rows"] if row["state"] == "open_past_date"),
-            "signed_from": [result["signed_from"]],
-            "differs_from_awards": [entry["step_reference"] for entry in result["differs_from_awards"]],
-            "cited_as": [result["summary"]["evidence_id"]]}
-
-
-ANSWERS = {"check_plan": marked, "search_passages": in_top_three, "data_readiness_for": readiness_answer,
-           "agency_track_record": track_answer,
-           "find_comparables": past_range, "get_disagreements": disagreement_answer,
-           "get_lessons": lessons_answer, "estimate_time": estimate_time_answer, "compare_cost_estimates": cost_answer,
-           "rejected_bids": rejected_answer, "compare_criteria": criteria_answer, "project_signals": signals_answer,
-           "rebidding_risk": rebidding_answer,
-           "project_records": lambda result, question: {
-               part: sorted(row["reference"] for row in result["rows"] if row["part"] == part)
-               for part in question["expected"]}}
-
-
-def answered(result, question) -> dict[str, list[str]]:
-    """The tool's answer, in its benchmark question's shape."""
-    return ANSWERS[question["tool"]](result, question)
-
-
-def expected(question) -> dict[str, list[str]]:
-    if question["tool"] in ("data_readiness_for", "get_disagreements", "get_lessons", "estimate_time",
-                            "compare_cost_estimates", "rejected_bids", "compare_criteria", "project_signals",
-                            "project_records", "rebidding_risk", "agency_track_record"):
-        return question["expected"]
-    return {mark: sorted(refs) for mark, refs in question["expected"].items()}
+from strata.evals.answers import ANSWERS, answered, expected  # noqa: E402,F401
 
 
 def tool_questions():
@@ -444,22 +214,22 @@ def engine_for(question, engine, library):
 
 
 def arguments_of(question, engine, library) -> dict:
-    """The question's arguments. A check-your-criteria tool's question (ticket 31) names the find_comparables call
-    its comparables come from, and their STEP references become its comparables argument."""
-    arguments = dict(question["arguments"])
-    if "comparables_of" in question:
-        found = registry.call("find_comparables", question["comparables_of"],
-                              registry.Context(engine=engine_for(question, engine, library), viewer=ANA))
-        arguments["comparables"] = ",".join(row["step_reference"] for row in found["rows"])
-    return arguments
+    """The question's arguments (strata.evals.answers.arguments_of), on the engine the question needs."""
+    from strata.evals.answers import arguments_of as question_arguments
+
+    return question_arguments(question, engine_for(question, engine, library), ANA)
 
 
 def test_each_tool_answers_its_benchmark_question_on_the_fixture_as_expected(engine, library):
+    from strata.evals.scoring import returned
+
     for question in tool_questions():
         result = registry.call(question["tool"], arguments_of(question, engine, library),
                                registry.Context(engine=engine_for(question, engine, library), viewer=ANA))
 
         assert answered(result, question) == expected(question)
+        # Each evidence id the answer must cite is one the tool returned, so the full gate can ask for it.
+        assert set(question.get("cites") or ()) <= returned(result), question["id"]
 
 
 def test_without_an_as_of_date_each_tool_answers_as_of_today(engine, library, monkeypatch):

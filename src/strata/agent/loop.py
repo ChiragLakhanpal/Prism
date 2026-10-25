@@ -136,9 +136,12 @@ def keep_result(facts: Facts, name: str, result: Mapping, tools: dict[str, Tool]
 
 def answer_runner(agent_for: Callable[[Turn], Agent], engine_for: EngineFor, tools: dict[str, Tool] | None = None,
                   thresholds: Thresholds | None = None,
-                  today: Callable[[], dt.date] = registry.today) -> Runner:
+                  today: Callable[[], dt.date] = registry.today,
+                  on_result: Callable[[Turn, str, dict, dict], None] | None = None) -> Runner:
     """The runner for /api/ask: agent_for gives each turn its own agent, and engine_for opens the
-    viewer's engine for each tool call."""
+    viewer's engine for each tool call. on_result, when given, gets each tool call's whole result with the turn,
+    the tool's name and its arguments: the full gate's benchmark reads the answer each tool gave this way
+    (strata.evals.answer_benchmark). The app passes none."""
     limits = thresholds or load_thresholds()
     rounds = int(limits.value("agent.tool_rounds"))
     tools_held = tools if tools is not None else load_tools()
@@ -170,6 +173,8 @@ def answer_runner(agent_for: Callable[[Turn], Agent], engine_for: EngineFor, too
         # The turn keeps what the agent got: the same rows, and an abstention with no date after the as-of date, so
         # the judge reads a summary that cites nothing against what the agent read (src/strata/agent/verifier.py).
         keep_result(turn.facts, name, shown, tools_held)
+        if on_result is not None:
+            on_result(turn, name, arguments, result)
         note.update(rows=len(result["rows"]), abstention=(result["abstention"] or {}).get("reason"))
         return shown, note
 

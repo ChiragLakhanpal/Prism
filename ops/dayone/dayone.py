@@ -311,7 +311,7 @@ def left_in_workspace(config: dict) -> list[str]:
         f"`{last_part(names['search_table'])}` and the index `{last_part(names['search_index'])}`.\n"
         f"- The AI Search endpoint `{names['ai_search_endpoint']}`, which Strata keeps for its own index.\n"
         "- One-time job runs whose names start with `strata-dayone`, in the workspace's job run history.\n"
-        f"- A conversation in the Genie space you chose in the wizard, which asks \"{config['genie']['question']}\"\n"
+        f"- A conversation in the Genie space that GENIE_SPACE_ID names, which asks \"{config['genie']['question']}\"\n"
         f"- Read access for the app `{names['app']}` to the secret scope `{names['secret_scope']}`. The app reads "
         "only `APPLICATIONINSIGHTS_CONNECTION_STRING`, but Databricks grants access to the whole scope, which also "
         "holds `AZURE_OPENAI_API_KEY`.\n",

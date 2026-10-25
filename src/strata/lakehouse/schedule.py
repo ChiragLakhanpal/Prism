@@ -36,6 +36,16 @@ class Window:
         return start, start + dt.timedelta(minutes=self.minutes)
 
 
+def as_utc(value) -> dt.datetime | None:
+    """A moment as either engine gives it, with its zone: DuckDB gives a datetime, the SQL warehouse text such as
+    2026-10-24T07:30:00.000Z. A moment with no zone is in UTC, as Strata's tables keep it. None stays None."""
+    if value is None:
+        return None
+    if not isinstance(value, dt.datetime):
+        value = dt.datetime.fromisoformat(str(value).replace("Z", "+00:00").replace(" ", "T"))
+    return value if value.tzinfo else value.replace(tzinfo=dt.UTC)
+
+
 def daily_start(quartz: str) -> dt.time:
     """The start time of a Quartz cron expression that runs once a day, such as "0 0 4 * * ?"."""
     match = DAILY.match(quartz)
