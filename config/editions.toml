@@ -16,6 +16,13 @@
 #   short    the edition as a label names it, starting with a capital: "Rules followed: {short}". The
 #            copy lint checks it too.
 #   phrases  the words a PAD uses for it, each found word for word
+#   effective_from
+#            optional: the day the edition took effect, such as 2026-11-01. The estimates loop's monthly watch
+#            (ticket 44; src/strata/estimates/watch.py) reads it: in the month it falls in, every current lesson
+#            tagged with another edition, or with none, gets a re-check (ticket 29's being re-checked state), the
+#            time estimate's champion is marked as being re-checked, and a retrain is raised. Give it to a new
+#            edition when it is issued. The two Guidelines below took effect before Strata existed, so they give
+#            none, and no watch re-checks lessons for them.
 #
 # Only editions a recorded document names are listed: the source for each is the PAD that names it.
 # The Procurement Regulations' editions join when a recorded PAD names one (a parked decision), and

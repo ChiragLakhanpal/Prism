@@ -223,15 +223,18 @@ def _score(run: Run) -> int:
 
     Then how many packages each rebidding label source names, in strata.ops.rebidding_labels, and, on a run that
     fetches from the live APIs, the rebidding champion's chance for every activity a Procurement Plan lists, in
-    strata.ops.rebidding_scores (ticket 28), and the signals' track record (ticket 37). The what-if grid's own
-    screen waits for ticket 44."""
-    from strata.estimates import rebidding, scoring
+    strata.ops.rebidding_scores (ticket 28), and the signals' track record (ticket 37).
+
+    Then the estimates loop (ticket 44): the monthly watch of each whole month not watched yet, which marks plan rows
+    dated near a date Strata offered, measures plan accuracy and rolling coverage and raises the retrains they call
+    for (strata.estimates.watch)."""
+    from strata.estimates import rebidding, scoring, watch
 
     changed = scoring.run(run.engine, run.run_id, run.clock(), train_here=run.fetch is not fetch_live)
     changed += rebidding.record_label_counts(run.engine, run.run_id, run.clock)
     if run.fetch is fetch_live:
         changed += _score_packages(run) + _replay_signals(run)
-    return changed
+    return changed + watch.run(run.engine, run.run_id, run.clock())
 
 
 def _tracker(experiment: str):

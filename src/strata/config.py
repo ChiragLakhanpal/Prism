@@ -493,6 +493,14 @@ class Country:
 
 
 @dataclass(frozen=True)
+class Onboarded:
+    """A country using Strata, from the first day its World Bank staff used it (ticket 44)."""
+
+    iso2: str
+    since: dt.date
+
+
+@dataclass(frozen=True)
 class Showcase:
     project_id: str
     name: str
@@ -545,6 +553,11 @@ class Slice:
     stress_shelf: tuple[ShelfItem, ...]
     planned_projects: int | None = None  # docs/PLAN.md section 3's planning figure, never shown as a finding
     notice_types: tuple[str, ...] = ()  # the notice types whose scope and qualification text become passages
+    onboarded: tuple[Onboarded, ...] = ()  # the countries using Strata and since when (ticket 44)
+
+    def using_strata(self, iso2: str | None, on: dt.date) -> bool:
+        """Whether a country was using Strata on a day: it is onboarded, from its since date on."""
+        return any(country.iso2 == iso2 and country.since <= on for country in self.onboarded)
 
     @property
     def fiscal_years(self) -> range:
@@ -598,7 +611,7 @@ def load_slice(path: Path = CONFIG_DIR / "slice.toml") -> Slice:
     data = _read(path)
     top = _Entry(path, "the file", data)
     top.only({"first_fiscal_year", "last_fiscal_year", "sectors", "countries", "showcase", "demo_plan",
-              "stress_shelf", "planned_projects", "notice_types"})
+              "stress_shelf", "planned_projects", "notice_types", "onboarded"})
 
     countries = []
     for entry in _tables(path, data, "countries"):
@@ -629,6 +642,16 @@ def load_slice(path: Path = CONFIG_DIR / "slice.toml") -> Slice:
     plan = _Entry(path, "demo_plan", data.get("demo_plan"))
     plan.only({"project_id", "project_name", "implementing_agency", "agency_short_name", "plan_date"})
 
+    onboarded = []
+    for entry in _tables(path, data, "onboarded"):
+        entry.only({"iso2", "since"})
+        country = Onboarded(entry.text("iso2"), entry.date("since"))
+        if country.iso2 not in {known.iso2 for known in countries}:
+            entry._fail("iso2", f"names {country.iso2}, which is not one of the [[countries]] above")
+        if country.iso2 in {seen.iso2 for seen in onboarded}:
+            entry._fail("iso2", f"repeats {country.iso2}. List each country once, with the day it started")
+        onboarded.append(country)
+
     shelf = [_shelf_item(entry) for entry in _tables(path, data, "stress_shelf")]
     keys = [item.key for item in shelf]
     if len(set(keys)) != len(keys):
@@ -645,6 +668,7 @@ def load_slice(path: Path = CONFIG_DIR / "slice.toml") -> Slice:
         stress_shelf=tuple(shelf),
         planned_projects=top.integer("planned_projects", required=False),
         notice_types=top.texts("notice_types"),
+        onboarded=tuple(onboarded),
     )
 
 
@@ -1945,6 +1969,9 @@ class Edition:
     name: str  # as a sentence names it: "Its projects followed {name}."
     phrases: tuple[str, ...]
     short: str = ""  # as a label names it, with a capital: "Procurement Guidelines, January 2011"
+    # The day it took effect, when the file gives one. In the month it falls in, the estimates loop marks the lessons
+    # and models of other editions as being re-checked and raises a retrain (ticket 44).
+    effective_from: dt.date | None = None
 
 
 _STRAIGHT = str.maketrans({"‘": "'", "’": "'", "“": '"', "”": '"'})
@@ -1975,8 +2002,9 @@ def load_editions(path: Path = CONFIG_DIR / "editions.toml") -> Editions:
     _Entry(path, "the file", data).only({"editions"})
     editions: list[Edition] = []
     for entry in _tables(path, data, "editions"):
-        entry.only({"key", "name", "short", "phrases"})
-        edition = Edition(entry.text("key"), entry.text("name"), entry.texts("phrases"), entry.text("short"))
+        entry.only({"key", "name", "short", "phrases", "effective_from"})
+        edition = Edition(entry.text("key"), entry.text("name"), entry.texts("phrases"), entry.text("short"),
+                          entry.date("effective_from") if "effective_from" in entry.table else None)
         if not edition.phrases:
             entry._fail("phrases", "must list at least one phrase a PAD uses for the edition")
         if edition.key in {seen.key for seen in editions}:

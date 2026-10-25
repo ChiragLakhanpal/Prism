@@ -49,6 +49,18 @@ name = "Pakistan"
 iso2 = "PK"
 iso3 = "PAK"
 
+# The countries using Strata, each from the first day its World Bank staff used it (ticket 44; docs/PLAN.md
+# section 11, "Loops through the world", and the rollout: World Bank staff in two countries first). The estimates
+# loop reports plan accuracy and duration for plan rows published once their country was using Strata, against
+# those from countries not yet using it (src/strata/estimates/watch.py). Onboarding a country is one entry:
+#
+# [[onboarded]]
+# iso2 = "KE"          one of the countries above
+# since = 2026-11-02   the first day its staff used Strata
+#
+# No country is listed yet: which two countries come first, and from when, is the owner's call (a parked
+# decision, ticket 44). Until then every plan row counts as from a country not yet using Strata.
+
 # The closed project whose disagreement (ISR 7 against ICR paragraph 78) and rebidding lesson
 # (ICR paragraph 54) the demo shows.
 [showcase]
