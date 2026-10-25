@@ -86,6 +86,11 @@ def _money(value) -> Decimal | None:
     return None if value is None or value == "" else Decimal(str(value))
 
 
+def _total(loans: list[dict], *columns: str) -> Decimal:
+    """The columns' amounts summed over the loans and credits, a missing amount counting as none."""
+    return sum((_money(row[column]) or Decimal(0) for row in loans for column in columns), Decimal(0))
+
+
 def millions(usd: Decimal | None) -> str | None:
     """US dollars as the Summary writes them, in millions to one decimal: 121630912.89 is 121.6."""
     return None if usd is None else f"{(usd / MILLION).quantize(TENTH, ROUND_HALF_UP):,}"
@@ -289,7 +294,7 @@ def summary(engine: Engine, project_id: str, as_of: dt.date) -> dict | None:
                             ("canceled", "cancelled_usd")):
             each = [{"loan_number": row["loan_number"], "value": millions(_money(row[column]) or Decimal(0))}
                     for row in loans]
-            total = sum((_money(row[column]) or Decimal(0) for row in loans), Decimal(0))
+            total = _total(loans, column)
             first_source = sources.cite(events[0], kind="loans", date=_iso(snapshot), loans=len(loans))
             for event in events[1:]:
                 sources.cite(event, kind="loans", date=_iso(snapshot))
@@ -343,7 +348,10 @@ def summary(engine: Engine, project_id: str, as_of: dt.date) -> dict | None:
     totals = {fact["key"]: fact["value"] for fact in money}
     # Whether any was canceled, decided here from the amounts, since "1,234.5" is not a number the browser
     # can read (the 21 review, round 2, item 2).
-    canceled = sum((_money(row["cancelled_usd"]) or Decimal(0) for row in loans), Decimal(0))
+    canceled = _total(loans, "cancelled_usd")
+    # Whether the loans data reports more disbursed and canceled than committed, as when a credit committed in
+    # another currency is reported in US$ at a later rate (the 21 critique, round 3); the browser never sums.
+    exceed = bool(loans) and _total(loans, "disbursed_usd", "cancelled_usd") > _total(loans, "original_principal_usd")
     return {
         "as_of": as_of.isoformat(),
         "project": {"project_id": project_id, "project_name": record["project_name"],
@@ -351,7 +359,7 @@ def summary(engine: Engine, project_id: str, as_of: dt.date) -> dict | None:
         "lead": {"kind": LEADS.get(status) or ("closed" if closing and closing <= as_of else "active"),
                  "closing_date": _iso(closing), "moves": len(history_rows) if history else None,
                  "commitment": totals.get("commitment"), "disbursed": totals.get("disbursed"),
-                 "canceled": totals.get("canceled"), "any_canceled": canceled > 0,
+                 "canceled": totals.get("canceled"), "any_canceled": canceled > 0, "amounts_exceed_commitment": exceed,
                  "disbursed_as_of": disbursed_as_of},
         "dates": dates,
         "history": {"known": bool(history), "rows": history_rows, "source": history_source},

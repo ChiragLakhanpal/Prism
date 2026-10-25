@@ -192,9 +192,11 @@ test("P156634's Summary gives every value a marker and lists its agencies and se
   await open(page, "/projects/P156634", 1440, await p156634());
   const summary = page.locator("[data-summary=ready]");
   await expect(summary).toBeVisible();
-  // ISR 19's ratings sit in a numbered section, and still cite the passage that prints them.
+  // ISR 19's ratings sit in a numbered section, and still cite the passage that prints them. An amount
+  // summed over P156634's two credits cites each one (the 21 critique, round 3).
   for (const fact of await summary.locator("[data-fact]").all()) {
-    await expect(fact.locator("[data-fact-source] [data-citation]")).toHaveCount(1);
+    const key = await fact.getAttribute("data-fact");
+    await expect(fact.locator("[data-fact-source] [data-citation]"), key!).toHaveCount(["commitment", "disbursed", "canceled"].includes(key!) ? 2 : 1);
   }
   await expect(summary.locator("[data-fact=pdo] [data-fact-source]")).toHaveText(/^ISR 19, Jun 30, 2026\u2060\[\d+\]$/);
   for (const key of ["agencies", "sectors"]) {
@@ -204,6 +206,26 @@ test("P156634's Summary gives every value a marker and lists its agencies and se
     expect(gaps.length, key).toBeGreaterThan(1);
     for (const gap of gaps) expect(gap, key).toBe(4);
   }
+});
+
+test("an amount summed over two credits has a marker for each, and the Money table says when the amounts exceed the commitment", async ({ page }) => {
+  await open(page, "/projects/P156634", 1440, await p156634());
+  const summary = page.locator("[data-summary=ready]");
+  const commitment = summary.locator("[data-fact=commitment] [data-fact-source]");
+  await expect(commitment.locator("[data-citation]")).toHaveCount(2);
+  await expect(commitment.locator("[data-citation]").nth(1)).toHaveAccessibleName(/World Bank loans and credits data for IDA60300, as of September 30, 2026/);
+  await commitment.locator("[data-citation]").nth(1).click();
+  await expect(page.getByRole("dialog").getByRole("heading", { name: /IDA60300/ })).toBeVisible();
+  await page.keyboard.press("Escape");
+  // The route says the loans data reports more disbursed and canceled than committed; the page never sums.
+  await expect(summary.locator("[data-money-note]")).toHaveText(
+    "The loans and credits data reports more disbursed and canceled than committed for this project. I show each amount as it reports it.",
+  );
+
+  await page.unrouteAll({ behavior: "ignoreErrors" });
+  await open(page, "/projects/P130164");
+  await expect(page.locator("[data-summary=ready] [data-fact=commitment] [data-citation]")).toHaveCount(1);
+  await expect(page.locator("[data-summary=ready] [data-money-note]")).toHaveCount(0);
 });
 
 test("the Summary's record marker shows the value it cites, and the lead says how much was canceled however large", async ({ page }) => {

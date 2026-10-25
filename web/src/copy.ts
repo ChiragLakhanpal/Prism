@@ -1035,6 +1035,8 @@ export const copy = {
     markerSource: {
       projects_api: "World Bank projects API, record of {date}",
       loans: "World Bank loans and credits data, as of {date}",
+      // One marker for each loan or credit an amount sums.
+      loan: "World Bank loans and credits data for {loan}, as of {date}",
       loan_history: "World Bank monthly loan history, reported {date}",
       isr: "Implementation Status and Results Report {sequence}, {date}",
       isrUnnumbered: "Implementation Status and Results Report of {date}",
@@ -1042,6 +1044,12 @@ export const copy = {
       icr: "Implementation Completion and Results Report, {date}",
       ieg_ratings: "Independent Evaluation Group ratings, {date}",
     } as Record<string, string>,
+    // Under the Money table, when the loans data reports more disbursed and canceled than committed.
+    money: {
+      exceeds:
+        "The loans and credits data reports more disbursed and canceled than committed for this project. I show each " +
+        "amount as it reports it.",
+    },
     // The commitment's tooltip: each loan or credit, then the total the route summed.
     loanLine: "{loan}: US${amount} million",
     loanTotal: "Total: US${amount} million",

@@ -14,6 +14,7 @@
     "disbursed": "121.6",
     "canceled": "30.7",
     "any_canceled": true,
+    "amounts_exceed_commitment": false,
     "disbursed_as_of": "2026-09-30"
   },
   "dates": [

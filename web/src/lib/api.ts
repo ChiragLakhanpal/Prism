@@ -186,6 +186,8 @@ export type Summary = {
     canceled: string | null;
     // Whether any amount was canceled, which the route decides, since "1,234.5" does not read as a number.
     any_canceled: boolean;
+    // Whether the loans data reports more disbursed and canceled than committed, which the route decides.
+    amounts_exceed_commitment: boolean;
     disbursed_as_of: string | null;
   };
   dates: Fact[];

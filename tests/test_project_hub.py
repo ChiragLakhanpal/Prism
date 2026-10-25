@@ -211,7 +211,7 @@ def test_p130164_s_summary_gives_every_value_with_its_source_in_one_small_answer
     # 121,630,912.89 and 30,696,577.26.
     assert [found[key]["value"] for key in ("commitment", "disbursed", "canceled")] == ["160.0", "121.6", "30.7"]
     assert summary["lead"] == {"kind": "closed", "closing_date": "2018-12-31", "moves": 0, "commitment": "160.0",
-                               "disbursed": "121.6", "canceled": "30.7", "any_canceled": True,
+                               "disbursed": "121.6", "canceled": "30.7", "any_canceled": True, "amounts_exceed_commitment": False,
                                "disbursed_as_of": "2026-09-30"}
     assert found["pdo"]["value"] == ground_truth("isr-13-rating")
     assert found["pdo"]["source"]["evidence_id"] == "strata.gold.passage:30730274/v1/s3"
@@ -341,6 +341,18 @@ def test_the_lead_says_whether_any_amount_was_canceled_however_large(fixture_db,
 
     assert (lead["canceled"], lead["any_canceled"]) == ("1,234.5", True)
     assert get(app_on(fixture_db), "/api/projects/P156634/summary?asof=2026-10-23").json()["lead"]["any_canceled"] is True
+
+
+def test_the_route_says_when_the_loans_data_reports_more_disbursed_and_canceled_than_committed(hub):
+    # The 21 critique, round 3: P156634's credit IDA60300, committed in euros, reports 275912875.34 US$ disbursed
+    # against 263000000 committed (data/fixture/recorded/api/credits/P156634-P130164.json), so the project's
+    # amounts add up to more than its commitment, which the page says under the Money table. P130164's one
+    # credit does not (160000000 committed, 121630912.89 disbursed and 30696577.26 canceled).
+    over = get(hub, "/api/projects/P156634/summary?asof=2026-10-23").json()["lead"]
+    under = get(hub, "/api/projects/P130164/summary?asof=2026-10-23").json()["lead"]
+
+    assert over["amounts_exceed_commitment"] is True
+    assert under["amounts_exceed_commitment"] is False
 
 
 def test_the_server_sends_the_built_app_compressed_so_the_summary_keeps_its_cold_3g_budget(tmp_path):

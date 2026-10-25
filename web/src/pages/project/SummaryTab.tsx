@@ -54,7 +54,8 @@ function numberSources(summary: Summary): Map<string, number> {
   summary.dates.forEach((fact) => cite(fact.source));
   summary.history.rows.forEach((row) => cite(row.source));
   if (summary.history.source) cite(summary.history.source);
-  summary.money.forEach((fact) => cite(fact.source));
+  // An amount summed over several loans or credits cites each one, in the order the route lists them.
+  summary.money.forEach((fact) => (fact.loan_ids && fact.loan_ids.length > 1 ? fact.loan_ids.forEach((id) => cite({ ...fact.source, evidence_id: id })) : cite(fact.source)));
   summary.ratings.forEach((fact) => cite(fact.source));
   summary.who.forEach((fact) => cite(fact.source));
   return numbers;
@@ -72,26 +73,45 @@ function sourceWords(source: FactSource): { cell: string; name: string } {
   };
 }
 
-function SourceCell({ source, numbers, events }: { source: FactSource; numbers: Map<string, number>; events: Record<string, EvidenceEvent> }) {
+// A source cell: its words, then one marker for each record it cites. An amount summed over several loans
+// or credits cites each one, so a reader can open the credit that holds most of it too (the 21 critique,
+// round 3), and each marker's name says which credit it opens.
+function SourceCell({ source, numbers, events, loans = [] }: { source: FactSource; numbers: Map<string, number>; events: Record<string, EvidenceEvent>; loans?: { id: string; loan: string }[] }) {
   const { cell, name } = sourceWords(source);
-  const id = source.evidence_id;
-  const n = id ? numbers.get(id) : undefined;
-  const event = id ? events[id] : undefined;
+  const cited =
+    loans.length > 1
+      ? loans.map(({ id, loan }) => ({ id, name: fill(words.markerSource.loan, { loan, date: source.date ? formatDate(source.date) : "" }) }))
+      : source.evidence_id
+        ? [{ id: source.evidence_id, name }]
+        : [];
   return (
     <span>
       {cell}
-      {id && n !== undefined && (
-        <CitationMarker
-          n={n}
-          source={name}
-          href={evidenceHref(id)}
-          evidenceId={id}
-          preview={event ? <EvidenceCard evidence={event} n={n} sentence={null} /> : undefined}
-          onOpen={(marker) => openEvidence(id, { serial: null, sentence: null, marker, runId: null })}
-        />
-      )}
+      {cited.map(({ id, name: markerName }) => {
+        const n = numbers.get(id);
+        const event = events[id];
+        return (
+          n !== undefined && (
+            <CitationMarker
+              key={id}
+              n={n}
+              source={markerName}
+              href={evidenceHref(id)}
+              evidenceId={id}
+              preview={event ? <EvidenceCard evidence={event} n={n} sentence={null} /> : undefined}
+              onOpen={(marker) => openEvidence(id, { serial: null, sentence: null, marker, runId: null })}
+            />
+          )
+        );
+      })}
     </span>
   );
+}
+
+// The loans and credits an amount sums, each with the record that cites it, in the route's order.
+function citedLoans(fact: Fact): { id: string; loan: string }[] {
+  const ids = fact.loan_ids ?? [];
+  return (fact.loans ?? []).flatMap((loan, index) => (ids[index] ? [{ id: ids[index], loan: loan.loan_number }] : []));
 }
 
 // A money value: the route's amount, and when the project has several loans or credits, a tooltip that
@@ -177,7 +197,7 @@ function factRows(facts: Fact[], numbers: Map<string, number>, events: Record<st
     label: LABELS[fact.key] ?? fact.key,
     value: value(fact),
     note: note?.(fact),
-    source: <SourceCell source={fact.source} numbers={numbers} events={events} />,
+    source: <SourceCell source={fact.source} numbers={numbers} events={events} loans={citedLoans(fact)} />,
   }));
 }
 
@@ -327,15 +347,23 @@ export function SummaryFacts({ summary }: { summary: Summary }) {
           <History summary={data} numbers={numbers} events={events} />
         </div>
         {data.money.length > 0 && (
-          <FactTable
-            title={words.group.money}
-            caption={words.caption.money(name)}
-            labelHeader={head("label")}
-            valueHeader={head("money")}
-            sourceHeader={head("source")}
-            numeric
-            rows={factRows(data.money, numbers, events, (fact) => <Money fact={fact} />)}
-          />
+          <div>
+            <FactTable
+              title={words.group.money}
+              caption={words.caption.money(name)}
+              labelHeader={head("label")}
+              valueHeader={head("money")}
+              sourceHeader={head("source")}
+              numeric
+              rows={factRows(data.money, numbers, events, (fact) => <Money fact={fact} />)}
+            />
+            {/* The route says when the loans data reports more disbursed and canceled than committed. */}
+            {data.lead.amounts_exceed_commitment && (
+              <p className="mt-2 max-w-prose text-caption text-ink-muted" data-money-note>
+                {words.money.exceeds}
+              </p>
+            )}
+          </div>
         )}
         {data.ratings.length > 0 ? (
           <FactTable
