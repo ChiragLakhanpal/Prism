@@ -1,0 +1,21 @@
+# 55: The gate back under a minute, so the two-minute cap stops being a risk
+
+**What to build:** The offline gate takes 90 to 106 seconds by hand on build/strata today (October 24, 2026), alone under ticket 54's lock, against the two-minute cap that CLAUDE.md rule 6 and `gates/steps.toml`'s `limit_seconds` enforce. Three lanes are each near a minute and share the same 16 processors: the python lane (the fixture build, then 865 tests on four pytest-xdist workers, about 59 seconds), the ops lane (144 wizard and probe tests on six workers, about 53 seconds) and the web lane (type check, bundle, gallery build, then about 600 Playwright tests, about 60 to 90 seconds). Every P2 ticket adds tests, and ticket 43's job checks are still to come. Bring the whole gate under 60 seconds by hand, alone, and keep every test. Measure first with `uv run --frozen pytest --durations=15` on each Python folder and with Playwright's reporter on the specs, and report what sets each lane's time. Then change what the numbers justify, in this order of preference: split the Playwright run into two lanes that each build the app and the gallery into their own output folders (an environment variable names the folder; the builds take about two seconds) and run one half of the specs with `--shard`; give the python lane more workers if its slowest test is not the floor; move a slow test's setup to a shared fixture; and mark any test that must run alone with an xdist group. Do not remove or weaken a test, do not raise `limit_seconds`, and do not change what the gate checks.
+
+Read first: `gates/steps.toml` and its comment on lanes; `gates/offline.py` (the lanes and the lock from ticket 54); `web/playwright.config.ts` and `web/playwright.capture.config.ts` (free ports, output folders); `tests/test_gate.py` (the steps-file checks, `FIXTURE_READERS`, the worker check); README's gate section; `docs/agents/areas/ops.md`; ticket 50's and 51's done comments and the comment the orchestrator left on ticket 43 about the gate's time.
+
+**Blocked by:** None (can start immediately)
+
+**Status:** in-progress
+**Area:** ops
+**Phase:** P2
+**Design review:** no
+
+- [ ] By hand on this branch with build/strata merged in, with no other gate running, the gate passes three times in a row in under 60 seconds each, and the report gives each lane's time before and after.
+- [ ] The Playwright specs run in two lanes (or one lane if the measurements show one lane under 40 seconds without splitting), each lane builds into its own output folder, no spec is skipped, and the sum of the specs each lane runs equals the full list (`npx playwright test --list` counts match); the gate's own tests in `tests/test_gate.py` cover the new steps and still pass.
+- [ ] Ten runs in a row of the python lane's test step collect the same test IDs as a bare `pytest --co`, none dropped and none repeated, if its worker count changed.
+- [ ] `gates/steps.toml`'s comments, README's gate section and `docs/agents/areas/ops.md` give the new lanes, worker counts and what to do when a lane gets slow again; `pyproject.toml` and `uv.lock` are unchanged unless a measurement needs a plugin, and then the report says why.
+
+## Comments
+
+- October 24, 2026, orchestrator: opened after the gate reached 106 seconds by hand on build/strata with ticket 24 merged. Ticket 43 was asked to do this inside the nightly job's ticket, but 43 waits on 22, and the cap is close now; this ticket takes that part out of 43, which keeps its job checks. Dispatched to an implementer in its own worktree on branch strata/55-gate-under-a-minute; a side run builds, reviews and verifies it, and the next restart of the wave merges it first.
