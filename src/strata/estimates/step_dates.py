@@ -40,13 +40,16 @@ from __future__ import annotations
 
 import datetime as dt
 import json
+import statistics
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from fractions import Fraction
 from functools import cache
 from importlib import resources
 
-from strata.config import Thresholds
+from strata.config import Thresholds, load_thresholds, load_time_estimate
+from strata.estimates import harness
+from strata.estimates.harness import Replay, Score, Scored, Window
 from strata.estimates.past_range import Observation, as_date, quantile, survival, whole
 
 DELAY, DURATION = "delay", "duration"
@@ -358,3 +361,138 @@ def track_record(engine, as_of: dt.date, settings: Settings) -> dict | None:
         return None
     return {choice: {"year": year, "total": total, "inside": scores.get(f"steps_inside_{choice}", 0),
                      "run_id": scores["run_id"], "catch_in10": 10 - settings.in10(choice)} for choice in CHOICES}
+
+
+# ── The per-step backtests, through the replay harness ───────────────────
+#
+# What a test year stores in strata.ops.evaluation_result, one measure per row, under the segment test_year:
+#
+# - For each step of each family, as "<family>.<step>.<measure>": n, the steps first planned in the year that the
+#   backtest dated and whose outcome is known (reached by the outcomes date, or still open then and already past
+#   its cautious date); inside_cautious and inside_middle, those that came on or before each date; abstained,
+#   those it gave no date; undecided, those still open short of their cautious date, which are left out;
+#   coverage_cautious, inside_cautious / n to three decimals; and error_cautious_days, error_middle_days and
+#   error_plan_days, the median distance in days from each reached step's actual date to each date and to the
+#   plan's first published date.
+# - The same over every step: steps_total, steps_inside_cautious, steps_inside_middle, steps_abstained,
+#   steps_undecided and the three errors, and beat_plan, 1 when the middle date's typical error was smaller than
+#   the plan's own.
+#
+# Each year is one replay, so each row carries the year's MLflow run id. Every number is a count or a median the
+# backtest worked out; nothing is typed in.
+
+# The plan table a STEP row sits in, and the procurement category the registry's family rule reads.
+CATEGORIES = {"WORKS": "Works", "GOODS": "Goods", "NON CONSULTING SERVICES": "Non-consulting Services",
+              "CONSULTING FIRMS": "Consultant Services", "INDIVIDUAL CONSULTANTS": "Consultant Services"}
+MEASURES = ("n", "inside_cautious", "inside_middle", "abstained", "undecided")
+
+
+def _median(values: list[int]) -> float | int:
+    found = statistics.median(values)
+    return int(found) if float(found).is_integer() else float(found)
+
+
+def _measures(prefix: str, counts: dict, errors: list[tuple[int, int, int]]) -> list[Score]:
+    scores = [Score(f"{prefix}{measure}", counts[measure]) for measure in MEASURES]
+    if counts["n"]:
+        scores.append(Score(f"{prefix}coverage_cautious", round(counts["inside_cautious"] / counts["n"], 3)))
+    if errors:
+        scores += [Score(f"{prefix}error_{name}_days", _median([error[k] for error in errors]))
+                   for k, name in enumerate(("cautious", "middle", "plan"))]
+    return scores
+
+
+class StepDatesBacktest:
+    """The harness's scorer for one test year of the planned dates, on the delay basis: the plan is the baseline."""
+
+    name = SCORER
+    model = "strata.estimates.step_dates"
+
+    def __init__(self, settings: Settings):
+        self.settings = settings
+
+    def score(self, replay: Replay) -> Scored:
+        cutoff, through = replay.window.cutoff, replay.window.outcomes_through
+        pending: dict[str, dict] = {}
+        for row in replay.inputs.rows(sql("pending.sql"), year_from=cutoff, year_to=dt.date(cutoff.year + 1, 1, 1)):
+            entry = pending.setdefault(row["activity_reference_no"], {"section": row["section"], "method": row["method"],
+                                                                      "steps": {}})
+            entry["steps"].setdefault(row["step"], as_date(row["first_planned_on"]))
+        outcomes = activities(replay.outcomes.rows, sorted(pending))
+        counts = {f"{family}.{step['key']}": dict.fromkeys(MEASURES, 0)
+                  for family, entry in families().items() for step in entry["steps"]}
+        errors: dict[str, list[tuple[int, int, int]]] = {key: [] for key in counts}
+        for reference in sorted(pending):
+            entry = pending[reference]
+            family_key, _ = family_for(CATEGORIES.get(entry["section"]), entry["method"])
+            if family_key is None:
+                continue
+            family = families()[family_key]
+            found = replay.inputs.call("find_comparables", step_reference=reference)
+            comparables = activities(replay.inputs.rows, [row["step_reference"] for row in found["rows"]])
+            fits = fit(comparables, family, DELAY, cutoff, self.settings)
+            names = [step["step_name"] for step in family["steps"]]
+            for k, step in enumerate(family["steps"]):
+                first = entry["steps"].get(step["step_name"])
+                if first is None:
+                    continue
+                key, fitted = f"{family_key}.{step['key']}", fits[k]
+                if fitted.points is None:
+                    counts[key]["abstained"] += 1
+                    continue
+                _outcome(counts[key], errors[key], fitted, outcomes.get(reference), names, k, first, through)
+        scores = [score for key in counts for score in _measures(f"{key}.", counts[key], errors[key])]
+        total = {measure: sum(found[measure] for found in counts.values()) for measure in MEASURES}
+        every = [error for found in errors.values() for error in found]
+        scores += [Score(f"steps_{'total' if name == 'n' else name}", total[name]) for name in MEASURES]
+        if every:
+            typical = [_median([error[k] for error in every]) for k in range(3)]
+            scores += [Score(f"error_{name}_days", value) for name, value in zip(("cautious", "middle", "plan"), typical)]
+            scores.append(Score("beat_plan", int(typical[1] < typical[2])))
+        return Scored(scores, {"middle_share": float(self.settings.shares["middle"]),
+                               "cautious_share": float(self.settings.shares["cautious"]),
+                               "min_comparables": self.settings.min_comparables})
+
+
+def _outcome(counts: dict, errors: list, fitted: StepFit, outcome: Activity | None, names: list[str], k: int,
+             first: dt.date, through: dt.date) -> None:
+    """Score one dated step against what its plans showed by the outcomes date."""
+    cautious, middle = fitted.points["cautious"]["days"], fitted.points["middle"]["days"]
+    row = outcome.steps.get(names[k]) if outcome else None
+    if row is not None and row.actual_on is not None and row.delay_days is not None:
+        delay = row.delay_days
+        counts["n"] += 1
+        counts["inside_cautious"] += delay <= cautious
+        counts["inside_middle"] += delay <= middle
+        errors.append((abs(delay - cautious), abs(delay - middle), abs(delay)))
+        return
+    recorded_later = outcome is not None and any(
+        outcome.steps.get(later) and outcome.steps[later].actual_on for later in names[k + 1:])
+    canceled = outcome is not None and outcome.process_status == CANCELED
+    if not recorded_later and not canceled and (through - first).days > cautious:
+        counts["n"] += 1  # still open past its cautious date: a known miss of both dates
+    else:
+        counts["undecided"] += 1
+
+
+def backtest(engine, tracker, *, years: tuple[int, ...] | None = None, outcomes_through: dt.date | None = None,
+             store=None, thresholds: Thresholds | None = None, ran_at: dt.datetime | None = None) -> str:
+    """Backtest each test year in config/models.toml (2021 to 2025), store every score and return the run's id."""
+    thresholds = thresholds or load_thresholds()
+    ran_at = ran_at or dt.datetime.now(dt.UTC)
+    through = outcomes_through or ran_at.date()
+    run_id = harness.new_run_id(SCORER, ran_at)
+    scorer = StepDatesBacktest(Settings.read(thresholds))
+    for year in years or load_time_estimate().test_years:
+        harness.replay(engine, scorer, Window(dt.date(year, 1, 1), through, TEST_YEAR, str(year)), tracker, run_id,
+                       ran_at, store or engine, thresholds)
+    return run_id
+
+
+def stored_years(engine, run_id: str | None = None) -> dict[int, dict]:
+    """Each test year's stored scores, from one run or the latest, keyed by year."""
+    run_id = run_id or harness.latest_run(engine, SCORER)
+    if run_id is None:
+        return {}
+    return {int(segment): record for (kind, segment), record in harness.segments(harness.run_rows(engine, run_id)).items()
+            if kind == TEST_YEAR}
