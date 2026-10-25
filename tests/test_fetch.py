@@ -287,17 +287,36 @@ def test_the_notices_fetch_stops_at_the_first_page_older_than_what_bronze_holds(
     api = FakeAPI("procnotices", rows, "total")
     held = dt.date.fromisoformat(rows[150]["submission_date"][:10])  # bronze holds notices up to the 151st newest
 
-    fetched = list(pages.live_pages(source("notices", page_size=100), api, newest_held=lambda country: held))
+    kenya = source("notices", page_size=100, countries=source("notices").countries[:1])
+    fetched = list(pages.live_pages(kenya, api, newest_held=lambda country: held))
 
     assert len(fetched) == 2  # the second page reaches back past it, so the 399 notices take two pages, not four
-    assert "project_ctry_name" not in api.asked[0] and "srt=submission_date&order=desc" in api.asked[0]
+    assert "srt=submission_date&order=desc" in api.asked[0]
+
+
+def test_the_notices_fetch_asks_for_each_slice_country_on_its_own_with_its_own_watermark():
+    """Ticket 43: the search API pages through at most 100,000 notices for one request and reported 424,135 in all
+    on October 24, 2026, so the job asks for each slice country's notices on its own; Kenya had 7,238 on October 25,
+    2026, under the cap. Each country keeps its own watermark, so a country added to the slice is fetched in full."""
+    rows = recorded("api/notices/P156634.json")["procnotices"]
+    api = FakeAPI("procnotices", rows, "total")
+    asked = []
+
+    fetched = list(pages.live_pages(source("notices", page_size=500), api,
+                                    newest_held=lambda country: asked.append(country)))
+
+    codes = [country.iso2 for country in config.load_slice().countries]
+    assert asked == codes == ["KE", "BD", "VN", "PK"]
+    assert [parse_qs(urlparse(url).query)["project_ctry_code"] for url in api.asked] == [[code] for code in codes]
+    assert [page.country_code for page in fetched] == codes
 
 
 def test_the_notices_fetch_stops_at_the_offset_the_search_api_refuses_to_page_past():
     rows = recorded("api/notices/P156634.json")["procnotices"]  # 399 notices, more than a max_offset of 200
     api = FakeAPI("procnotices", rows, "total")
 
-    fetched = list(pages.live_pages(source("notices", page_size=100, max_offset=200), api))
+    one_country = source("notices").countries[:1]
+    fetched = list(pages.live_pages(source("notices", page_size=100, max_offset=200, countries=one_country), api))
 
     assert [len(page.body["procnotices"]) for page in fetched] == [100, 100]
     assert [parse_qs(urlparse(url).query)["os"] for url in api.asked] == [["0"], ["100"]]
@@ -429,9 +448,9 @@ def test_a_country_added_to_the_slice_is_fetched_in_full_though_bronze_holds_new
     assert {page.country_code for page in uganda} == {"UG"}
 
 
-def test_a_source_fetched_for_every_country_keeps_one_watermark(monkeypatch):
-    """With no country filter, the newest notice bronze holds from the last fetch is the watermark,
-    so a second fetch stops at the first page older than it."""
+def test_a_series_of_pages_keeps_one_watermark(monkeypatch):
+    """For one series of pages, here one country's notices, the newest notice bronze holds from the last fetch is
+    the watermark, so a second fetch stops at the first page older than it."""
     rows = sorted(recorded("api/notices/P156634.json")["procnotices"], key=lambda row: row["submission_date"],
                   reverse=True)
     api = FakeAPI("procnotices", rows, "total")
@@ -441,9 +460,10 @@ def test_a_source_fetched_for_every_country_keeps_one_watermark(monkeypatch):
         from strata.lakehouse import catalog
 
         catalog.build(engine)
-        nightly.run_task(engine, "fetch_by_watermark", "first", notices_only(source("notices", page_size=100)))
+        kenya = source("notices", page_size=100, countries=source("notices").countries[:1])
+        nightly.run_task(engine, "fetch_by_watermark", "first", notices_only(kenya))
         api.asked.clear()
-        again = list(nightly.fetch_live(source("notices", page_size=100), engine))
+        again = list(nightly.fetch_live(kenya, engine))
 
     assert len(again) == 1  # the newest page already reaches back to the newest notice held
 
@@ -456,7 +476,7 @@ def test_a_fetch_that_failed_partway_sets_no_watermark_so_the_next_run_fetches_w
                   reverse=True)
     api = FakeAPI("procnotices", rows, "total")
     monkeypatch.setattr("strata.fixture.record.fetch_url", lambda url: api(url).encode())
-    notices = source("notices", page_size=100)
+    notices = source("notices", page_size=100, countries=source("notices").countries[:1])
 
     with DuckDBEngine.open() as engine:
         from strata.lakehouse import catalog

@@ -178,16 +178,18 @@ def test_the_nightly_job_fetches_every_structured_source_page_by_page_and_the_pl
     assert not sources["documents"].paged
 
 
-def test_structured_sources_cover_every_country_and_the_monthly_history_covers_the_slice():
-    """PLAN.md section 3: structured data for every country; the monthly loan history for the slice only."""
+def test_structured_sources_cover_every_country_and_the_monthly_history_and_notices_cover_the_slice():
+    """PLAN.md section 3: structured data for every country; the monthly loan history for the slice only. The
+    notices follow the slice too since ticket 43: the search API pages through at most 100,000 notices for one
+    request, so the job asks for each slice country on its own."""
     sources = config.load_sources()
     slice_countries = config.load_slice().countries
-    histories = {"ida_credit_history", "ibrd_loan_history"}
+    by_country = {"ida_credit_history", "ibrd_loan_history", "notices"}
 
     for key, source in sources.items():
         if not source.paged:
             continue
-        if key in histories:
+        if key in by_country:
             assert source.countries == slice_countries, key
         else:
             assert source.countries == (), key  # one request series with no country filter
@@ -373,7 +375,8 @@ def test_a_country_added_to_the_slice_joins_the_monthly_history_fetch(tmp_path):
     sources = config.load_sources(slice_path=slice_file)
 
     assert [country.iso2 for country in sources["ida_credit_history"].countries][-1] == "NP"
-    assert sources["notices"].countries == ()
+    assert [country.iso2 for country in sources["notices"].countries][-1] == "NP"
+    assert sources["awards"].countries == ()
 
 
 def test_a_source_fetched_for_the_slice_countries_needs_its_country_filter(tmp_path):

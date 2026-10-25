@@ -2493,7 +2493,13 @@
       "label": "Procurement notices",
       "stratum": "What",
       "scope": {
-        "kind": "every_country"
+        "kind": "countries",
+        "names": [
+          "Kenya",
+          "Bangladesh",
+          "Vietnam",
+          "Pakistan"
+        ]
       },
       "covers": null,
       "cells": {

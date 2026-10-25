@@ -360,11 +360,15 @@ dataset_name = "Procurement Notices"
 endpoint = "https://search.worldbank.org/api/v2/procnotices?format=json"
 api = "search"
 records = "procnotices"
-scope = "every country"
-page_size = 500
 # The search API refuses an offset above 100,000 ("Value must be between 0 and 100000. Parameter
-# name: $skip"), and on October 24, 2026 it reported 424,135 notices. One fetch reaches the newest
-# 100,000; the nightly watermark then adds what is newer each night.
+# name: $skip"), and on October 24, 2026 it reported 424,135 notices, so one fetch for every country
+# reached only the newest 100,000. The job asks for each slice country's notices on its own instead
+# (ticket 43): Kenya had 7,238 on October 25, 2026, each country fits under the cap, and the readiness
+# measures count every notice each request reported. max_offset stays as the guard for a country that
+# ever passes it. Notices of countries outside the slice are left out.
+scope = "slice countries"
+country_filter = "project_ctry_code={iso2}"
+page_size = 500
 max_offset = 100000
 watermark_field = "submission_date"
 fixture_dataset = "notices"
@@ -375,7 +379,7 @@ stratum = "What"
 # Each notice's own page on the World Bank's site, which the evidence drawer's "Open this notice on the
 # World Bank's site" opens (ticket 18). {id} is the notice's id, such as OP00118817.
 record_url = "https://projects.worldbank.org/en/projects-operations/procurement-detail/{id}"
-limitations = ["Notices give amounts in local currency.", "Contact names, addresses, emails, phone numbers and web addresses are removed when a page is fetched.", "I fetch only the newest notices each night, so a notice the source withdraws later still counts in my total.", "The search API pages through at most the newest 100,000 notices, so older notices are out of reach until a later fetch reaches them."]
+limitations = ["Notices give amounts in local currency.", "Contact names, addresses, emails, phone numbers and web addresses are removed when a page is fetched.", "I fetch only the newest notices each night, so a notice the source withdraws later still counts in my total.", "I fetch the notices of the slice's countries only, each country on its own, because the search API pages through at most 100,000 notices for one request."]
 
 data_source = "Systematic Tracking of Exchanges in Procurement (STEP)"
 catalog_url = "https://projects.worldbank.org/en/projects-operations/procurement"
