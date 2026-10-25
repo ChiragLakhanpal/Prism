@@ -492,6 +492,7 @@ class Attached:
     row: Mapping  # get_disagreements' row, with both sides
     changes_answer: bool  # a kept sentence states one side, so keeping the other side would change it
     by_verifier: bool  # the agent's draft left the other side out
+    changes: tuple[int, ...] = ()  # the kept sentences that state one side only, which keeping the other would change
 
 
 @dataclass(frozen=True)
@@ -887,8 +888,8 @@ class AnswerCheck:
             sides = set(_sides(row))
             cited = {evidence for sentence in kept for evidence in sentence.claim.evidence_ids}
             both = sides <= cited or row["evidence_id"] in cited
-            changes = any(len(sides & set(sentence.claim.evidence_ids)) == 1 for sentence in resting)
-            attached.append(Attached(resting[0].index, row, changes, not both))
+            changed = tuple(sentence.index for sentence in resting if len(sides & set(sentence.claim.evidence_ids)) == 1)
+            attached.append(Attached(resting[0].index, row, bool(changed), not both, changed))
         attached.sort(key=lambda found: found.after)  # stable, so a sentence's cards keep their date order
         tools = [self.facts.tool(evidence) for sentence in kept for evidence in sentence.claim.evidence_ids]
         return Verdict(sentences, ALL_CHECKS, tuple(attached), self.judge_called, self.judge_responded, self.advice,
@@ -919,18 +920,26 @@ def _side(side: Mapping, leaned: str | None) -> dict:
             "paragraph_numbered": side.get("paragraph_numbered"), "evidence_tier": side.get("evidence_tier"),
             "made_at": side.get("made_at"), "field_name": side.get("field_name"), "value": side.get("value"),
             "value_form": side.get("value_form"), "quote": side.get("quote"),
+            "months_after_event": side.get("months_after_event"), "doc_key": side.get("doc_key"),
             "leaned": side.get("assertion_id") == leaned}
 
 
 def disagreement_event(found: Attached) -> Event:
     """A disagreement check 6 shows under the sentence it concerns, with both sides in the order they were
     written, the side Strata leans on, the evidence ladder's rule and what you would treat as true if you kept
-    the other side. The screen writes every sentence of it from these values and the copy file."""
+    the other side. The screen writes every sentence of it from these values and the copy file.
+
+    One shape carries what both cards read (tickets 23 and 24): after, the sentence the card follows;
+    changes_answer, whether keeping the other side would change a sentence (the warning state); and
+    changes_sentence_ids, which sentences those are, so the card can say how many. disagreement_id is the id
+    keeping a side posts to (POST /api/disagreements/ID/choices), with each side's assertion_id."""
     row = found.row
     leaned = row.get("lean_assertion_id")
     return Event("disagreement", {
-        "id": row["evidence_id"], "after": found.after, "changes_answer": found.changes_answer,
+        "id": row["evidence_id"], "disagreement_id": row.get("disagreement_id"), "after": found.after,
+        "changes_answer": found.changes_answer, "changes_sentence_ids": list(found.changes),
         "attached_by_verifier": found.by_verifier, "attribute": row.get("attribute"), "rule_id": row.get("rule_id"),
+        "period_event": (row.get("period") or {}).get("event"),
         "sides": [_side(side, leaned) for side in row.get("sides") or ()],
         "if_you_keep": _plain(row.get("if_you_keep"))})
 

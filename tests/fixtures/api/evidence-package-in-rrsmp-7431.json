@@ -1,0 +1,40 @@
+{
+  "id": "strata.gold.package:IN-RRSMP-7431-CW-RFB",
+  "kind": "record",
+  "tool": null,
+  "stratum": "What",
+  "short_name": null,
+  "row": {
+    "evidence_id": "strata.gold.package:IN-RRSMP-7431-CW-RFB",
+    "public_from": "2017-07-19",
+    "reference": "IN-RRSMP-7431-CW-RFB",
+    "fields": [
+      {
+        "key": "contract_signed_on",
+        "value": "2017-06-15",
+        "kind": "date"
+      },
+      {
+        "key": "award_notice_id",
+        "value": "OP00044090",
+        "kind": "text"
+      },
+      {
+        "key": "procurement_method",
+        "value": "Request for Bids",
+        "kind": "text"
+      },
+      {
+        "key": "procurement_category",
+        "value": "Works",
+        "kind": "text"
+      }
+    ],
+    "source": {
+      "source_key": "award_notices",
+      "project_id": "P130164",
+      "document_date": "2017-06-15"
+    }
+  },
+  "highlights": []
+}

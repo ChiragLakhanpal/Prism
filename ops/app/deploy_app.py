@@ -32,8 +32,8 @@ It needs npm, which builds the web app. It does these things, in order:
 6. It grants the app's own service principal what the server needs to write usage events, agent
    runs, opened sources, drafts, decisions and labels on supplier pairs, and the lesson review record,
    and nothing more: USE CATALOG on strata, USE SCHEMA on strata.ops, SELECT and MODIFY on
-   strata.ops.usage_events, agent_runs, evidence_opened, drafts, draft_states, draft_exports and
-   draft_files, SELECT on strata.ops.supplier_pairs, SELECT and MODIFY on
+   strata.ops.usage_events, agent_runs, evidence_opened, drafts, draft_states, draft_exports,
+   draft_files and ticket 23's disagreement_choices, SELECT on strata.ops.supplier_pairs, SELECT and MODIFY on
    strata.ops.supplier_review_decisions and strata.ops.supplier_pair_labels, and SELECT and MODIFY on
    ticket 29's lesson_review_acts, lesson_review_items, lesson_versions, lesson_sources and
    lesson_review_notes, and ticket 32's candidate_labels, label_decisions, answer_citations,
@@ -164,7 +164,7 @@ def grants(principal: str) -> list[str]:
     if not PRINCIPAL.fullmatch(principal):
         raise ValueError(f"{principal!r} is not a service principal's application id.")
     tables = ("usage_events", "agent_runs", "evidence_opened", "drafts", "draft_states", "draft_exports",
-              "draft_files")
+              "draft_files", "disagreement_choices")
     return [f"GRANT USE CATALOG ON CATALOG strata TO `{principal}`",
             f"GRANT USE SCHEMA ON SCHEMA strata.ops TO `{principal}`",
             *[f"GRANT SELECT, MODIFY ON TABLE strata.ops.{table} TO `{principal}`" for table in tables],

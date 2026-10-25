@@ -23,7 +23,7 @@ from pathlib import Path
 
 from strata.agent.verifier import labels
 from strata.lakehouse.engine import Engine
-from strata.server import baseline, summary
+from strata.server import baseline, summary, timeline
 from strata.tools import find_comparables, rejected_bids, search_passages
 
 log = logging.getLogger("strata.server.evidence")
@@ -42,9 +42,11 @@ def _passage(engine: Engine, key: str, as_of: dt.date) -> dict | None:
 
 
 def _comparable(engine: Engine, key: str, as_of: dt.date) -> dict | None:
-    """A comparable package from the range chart (ticket 15): its months, its notice and its contract award."""
+    """A comparable package from the range chart (ticket 15): its months, its notice and its contract award. A
+    package the range chart does not read, such as one signed only in its award notice, opens as the record of its
+    signing, as a contract mark on a project's timeline opens it (ticket 23)."""
     row = find_comparables.read_comparable(engine, key, as_of)
-    return None if row is None else {"kind": "package", "row": row}
+    return {"kind": "package", "row": row} if row is not None else timeline.read_signing(engine, key, as_of)
 
 
 # The reader for each kind of evidence id, by the table its id names before the colon: a passage, a
@@ -57,6 +59,9 @@ READERS: dict[str, Callable[[Engine, str, dt.date], dict | None]] = {
     "strata.gold.notice": rejected_bids.read_award_notice,
     **summary.RECORD_READERS,
     baseline.TABLE: baseline.read_record,
+    # The timeline's marks (ticket 23): a report's document view (doc:), a band's ratings (ratings:), a year's
+    # contracts (contracts:) and a disagreement's two sides (disagreement:).
+    **timeline.READERS,
 }
 
 
@@ -69,8 +74,10 @@ def read(engine: Engine, evidence_id: str, as_of: dt.date) -> dict | None:
     found = reader(engine, key, as_of)
     if found is None:
         return None
-    return {"id": evidence_id, "kind": found["kind"], "tool": None, **labels(found["row"]), "row": found["row"],
-            "highlights": []}
+    # A reader may name the stratum itself, as the timeline's views do, since their rows are no passage.
+    named = {key: found[key] for key in ("stratum", "short_name") if key in found}
+    return {"id": evidence_id, "kind": found["kind"], "tool": None, **labels(found["row"]), **named,
+            "row": found["row"], "highlights": []}
 
 
 def _close(engine) -> None:

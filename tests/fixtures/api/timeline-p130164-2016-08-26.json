@@ -1,0 +1,317 @@
+{
+  "project": {
+    "project_id": "P130164",
+    "project_name": "Rajasthan Road Sector Modernization Project",
+    "display_name": "Rajasthan Road Sector Modernization",
+    "status": "Closed"
+  },
+  "as_of": "2016-08-26",
+  "asked_as_of": "2016-08-26",
+  "view": "staff",
+  "items": [
+    {
+      "id": "doc:18381488",
+      "kind": "report",
+      "type": "pad",
+      "lane": "why",
+      "date": "2013-10-01",
+      "public_from": "2013-11-06",
+      "evidence_id": "doc:18381488",
+      "document_id": "18381488",
+      "document_type": "Project Appraisal Document",
+      "report_number": "81594",
+      "version": 1,
+      "doc_key": "pad-2013-10-01",
+      "sequence": null,
+      "rating": null,
+      "replaced_by": null,
+      "reissued": false
+    },
+    {
+      "id": "ratings:P130164:pdo_progress:1-7",
+      "kind": "band",
+      "lane": "how",
+      "date": "2014-02-22",
+      "end": "2016-08-26",
+      "public_from": "2016-08-26",
+      "evidence_id": "ratings:P130164:pdo_progress:1-7",
+      "rating": "Satisfactory",
+      "first": 1,
+      "last": 7,
+      "count": 7
+    },
+    {
+      "id": "event:mid_term_review",
+      "kind": "event",
+      "type": "mid_term_review",
+      "lane": "how",
+      "date": "2016-05-16",
+      "public_from": "2016-08-26",
+      "evidence_id": "strata.gold.passage:26733307/v1/s1",
+      "source": {
+        "type": "isr",
+        "sequence": 7,
+        "date": "2016-08-26"
+      }
+    },
+    {
+      "id": "doc:26733307",
+      "kind": "report",
+      "type": "isr",
+      "lane": "how",
+      "date": "2016-08-26",
+      "public_from": "2016-08-26",
+      "evidence_id": "doc:26733307",
+      "document_id": "26733307",
+      "document_type": "Implementation Status and Results Report",
+      "report_number": "ISR24046",
+      "version": 1,
+      "doc_key": "isr-2016-08-26",
+      "sequence": 7,
+      "rating": "Satisfactory",
+      "replaced_by": null,
+      "reissued": false
+    }
+  ],
+  "table": [
+    {
+      "id": "doc:18381488",
+      "kind": "report",
+      "type": "pad",
+      "lane": "why",
+      "date": "2013-10-01",
+      "public_from": "2013-11-06",
+      "evidence_id": "doc:18381488",
+      "document_id": "18381488",
+      "document_type": "Project Appraisal Document",
+      "report_number": "81594",
+      "version": 1,
+      "doc_key": "pad-2013-10-01",
+      "sequence": null,
+      "rating": null,
+      "replaced_by": null,
+      "reissued": false
+    },
+    {
+      "id": "ratings:P130164:pdo_progress:1-7",
+      "kind": "band",
+      "lane": "how",
+      "date": "2014-02-22",
+      "end": "2016-08-26",
+      "public_from": "2016-08-26",
+      "evidence_id": "ratings:P130164:pdo_progress:1-7",
+      "rating": "Satisfactory",
+      "first": 1,
+      "last": 7,
+      "count": 7
+    },
+    {
+      "id": "event:mid_term_review",
+      "kind": "event",
+      "type": "mid_term_review",
+      "lane": "how",
+      "date": "2016-05-16",
+      "public_from": "2016-08-26",
+      "evidence_id": "strata.gold.passage:26733307/v1/s1",
+      "source": {
+        "type": "isr",
+        "sequence": 7,
+        "date": "2016-08-26"
+      }
+    },
+    {
+      "id": "doc:26733307",
+      "kind": "report",
+      "type": "isr",
+      "lane": "how",
+      "date": "2016-08-26",
+      "public_from": "2016-08-26",
+      "evidence_id": "doc:26733307",
+      "document_id": "26733307",
+      "document_type": "Implementation Status and Results Report",
+      "report_number": "ISR24046",
+      "version": 1,
+      "doc_key": "isr-2016-08-26",
+      "sequence": 7,
+      "rating": "Satisfactory",
+      "replaced_by": null,
+      "reissued": false
+    }
+  ],
+  "ratings": {
+    "attribute": "pdo_progress",
+    "field_name": "Progress towards achievement of PDO",
+    "bands": [
+      {
+        "id": "ratings:P130164:pdo_progress:1-7",
+        "kind": "band",
+        "lane": "how",
+        "date": "2014-02-22",
+        "end": "2016-08-26",
+        "public_from": "2016-08-26",
+        "evidence_id": "ratings:P130164:pdo_progress:1-7",
+        "rating": "Satisfactory",
+        "first": 1,
+        "last": 7,
+        "count": 7
+      }
+    ],
+    "points": [
+      {
+        "sequence": 1,
+        "date": "2014-02-22",
+        "rating": "Satisfactory",
+        "document_id": "19095337",
+        "evidence_id": "doc:19095337"
+      },
+      {
+        "sequence": 2,
+        "date": "2014-07-30",
+        "rating": "Satisfactory",
+        "document_id": "19901331",
+        "evidence_id": "doc:19901331"
+      },
+      {
+        "sequence": 3,
+        "date": "2015-01-23",
+        "rating": "Satisfactory",
+        "document_id": "23868309",
+        "evidence_id": "doc:23868309"
+      },
+      {
+        "sequence": 4,
+        "date": "2015-06-04",
+        "rating": "Satisfactory",
+        "document_id": "24589049",
+        "evidence_id": "doc:24589049"
+      },
+      {
+        "sequence": 5,
+        "date": "2015-11-20",
+        "rating": "Satisfactory",
+        "document_id": "25481343",
+        "evidence_id": "doc:25481343"
+      },
+      {
+        "sequence": 6,
+        "date": "2016-01-21",
+        "rating": "Satisfactory",
+        "document_id": "25814564",
+        "evidence_id": "doc:25814564"
+      },
+      {
+        "sequence": 7,
+        "date": "2016-08-26",
+        "rating": "Satisfactory",
+        "document_id": "26733307",
+        "evidence_id": "doc:26733307"
+      }
+    ],
+    "first_rating": "Satisfactory",
+    "last_rating": "Satisfactory",
+    "direction": "same",
+    "isr_count": 7
+  },
+  "disagreements": {
+    "status": "ok",
+    "count": 0
+  },
+  "rejected": {
+    "count": 0
+  },
+  "counts": {
+    "why": 1,
+    "how": 2,
+    "what": 0
+  },
+  "finding": [
+    {
+      "text": "ISR ratings of progress were "
+    },
+    {
+      "text": "Satisfactory"
+    },
+    {
+      "text": " at the first ISR and at the last"
+    },
+    {
+      "text": ", and I found no reports that disagree."
+    }
+  ],
+  "alt": [
+    {
+      "text": "Timeline of "
+    },
+    {
+      "text": "P130164"
+    },
+    {
+      "text": " from "
+    },
+    {
+      "year": 2013
+    },
+    {
+      "text": " to "
+    },
+    {
+      "year": 2016
+    },
+    {
+      "text": " in three lanes: "
+    },
+    {
+      "number": 1
+    },
+    {
+      "text": " evaluation"
+    },
+    {
+      "text": ", "
+    },
+    {
+      "number": 2
+    },
+    {
+      "text": " operations items"
+    },
+    {
+      "text": " and "
+    },
+    {
+      "text": "no records"
+    },
+    {
+      "text": "."
+    },
+    {
+      "text": " "
+    },
+    {
+      "text": "ISR ratings of progress stayed "
+    },
+    {
+      "text": "Satisfactory"
+    },
+    {
+      "text": " over "
+    },
+    {
+      "number": 7
+    },
+    {
+      "text": " ISRs."
+    },
+    {
+      "text": " "
+    },
+    {
+      "text": "No reports disagree."
+    }
+  ],
+  "sources": [
+    "documents",
+    "notices",
+    "awards"
+  ]
+}

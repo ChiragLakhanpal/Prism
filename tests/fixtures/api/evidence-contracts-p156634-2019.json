@@ -1,0 +1,117 @@
+{
+  "id": "contracts:P156634:2019",
+  "kind": "contracts",
+  "tool": null,
+  "stratum": "What",
+  "short_name": null,
+  "row": {
+    "evidence_id": "contracts:P156634:2019",
+    "public_from": "2021-11-16",
+    "project_id": "P156634",
+    "year": 2019,
+    "count": 16,
+    "rows": [
+      {
+        "step_reference": "KE-WAJWASCO-80831-GO-RFQ",
+        "signed_on": "2019-06-18",
+        "signed_amount_usd": null,
+        "evidence_id": "strata.gold.package:KE-WAJWASCO-80831-GO-RFQ"
+      },
+      {
+        "step_reference": "KE-CWSB-67355-CS-QCBS",
+        "signed_on": "2019-06-20",
+        "signed_amount_usd": null,
+        "evidence_id": "strata.gold.package:KE-CWSB-67355-CS-QCBS"
+      },
+      {
+        "step_reference": "KE-WAJWASCO-24562-GO-RFB-2",
+        "signed_on": "2019-07-05",
+        "signed_amount_usd": "6747.54",
+        "evidence_id": "strata.gold.package:KE-WAJWASCO-24562-GO-RFB-2"
+      },
+      {
+        "step_reference": "KE-MOWASCO-16769-CW-RFB",
+        "signed_on": "2019-09-03",
+        "signed_amount_usd": "8742427.33",
+        "evidence_id": "strata.gold.package:KE-MOWASCO-16769-CW-RFB"
+      },
+      {
+        "step_reference": "KE-MOWASCO-16771-CW-RFB",
+        "signed_on": "2019-09-09",
+        "signed_amount_usd": "3114490.90",
+        "evidence_id": "strata.gold.package:KE-MOWASCO-16771-CW-RFB"
+      },
+      {
+        "step_reference": "KE-TAVEVO-82746-GO-RFB",
+        "signed_on": "2019-10-24",
+        "signed_amount_usd": "222222.13",
+        "evidence_id": "strata.gold.package:KE-TAVEVO-82746-GO-RFB"
+      },
+      {
+        "step_reference": "KE-TAVEVO-82752-GO-RFB",
+        "signed_on": "2019-10-24",
+        "signed_amount_usd": "321838.94",
+        "evidence_id": "strata.gold.package:KE-TAVEVO-82752-GO-RFB"
+      },
+      {
+        "step_reference": "KE-MAWASCO-38020-GO-RFB",
+        "signed_on": "2019-10-28",
+        "signed_amount_usd": "189248.89",
+        "evidence_id": "strata.gold.package:KE-MAWASCO-38020-GO-RFB"
+      },
+      {
+        "step_reference": "KE-MAWASCO-69894-GO-RFB",
+        "signed_on": "2019-10-28",
+        "signed_amount_usd": "162162.16",
+        "evidence_id": "strata.gold.package:KE-MAWASCO-69894-GO-RFB"
+      },
+      {
+        "step_reference": "KE-MAWASCO-70004-GO-RFB",
+        "signed_on": "2019-10-28",
+        "signed_amount_usd": "553504.35",
+        "evidence_id": "strata.gold.package:KE-MAWASCO-70004-GO-RFB"
+      },
+      {
+        "step_reference": "KE-MAWASCO-30081-GO-RFQ",
+        "signed_on": "2019-10-29",
+        "signed_amount_usd": "54323.32",
+        "evidence_id": "strata.gold.package:KE-MAWASCO-30081-GO-RFQ"
+      },
+      {
+        "step_reference": "KE-MAWASCO-30116-GO-RFQ",
+        "signed_on": "2019-10-29",
+        "signed_amount_usd": "15004.84",
+        "evidence_id": "strata.gold.package:KE-MAWASCO-30116-GO-RFQ"
+      },
+      {
+        "step_reference": "KE-MOWASCO-16772-CW-RFB",
+        "signed_on": "2019-12-09",
+        "signed_amount_usd": "4496488.23",
+        "evidence_id": "strata.gold.package:KE-MOWASCO-16772-CW-RFB"
+      },
+      {
+        "step_reference": "KE-KIMAWASCO-74931-GO-RFB",
+        "signed_on": "2019-12-23",
+        "signed_amount_usd": "172222.15",
+        "evidence_id": "strata.gold.package:KE-KIMAWASCO-74931-GO-RFB"
+      },
+      {
+        "step_reference": "KE-KIMAWASCO-74939-GO-RFQ",
+        "signed_on": "2019-12-23",
+        "signed_amount_usd": "89827.55",
+        "evidence_id": "strata.gold.package:KE-KIMAWASCO-74939-GO-RFQ"
+      },
+      {
+        "step_reference": "KE-KIMAWASCO-76105-GO-RFB",
+        "signed_on": "2019-12-23",
+        "signed_amount_usd": "515948.06",
+        "evidence_id": "strata.gold.package:KE-KIMAWASCO-76105-GO-RFB"
+      }
+    ],
+    "source": {
+      "source_key": "awards",
+      "project_id": "P156634"
+    }
+  },
+  "highlights": []
+}

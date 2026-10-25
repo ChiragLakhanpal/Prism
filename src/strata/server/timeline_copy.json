@@ -1,0 +1,59 @@
+{
+  "finding": {
+    "disagreeRatings": "{lead}, and {ratings}.",
+    "ratingsOnly": "{ratings}, and I found no reports that disagree.",
+    "disagreeOnly": "{lead}. I have no ISR ratings for this project.",
+    "neither": "I found no reports that disagree, and I have no ISR ratings for this project.",
+    "hiddenRatings": "{ratings}.",
+    "hiddenNone": "I have no ISR ratings for this project.",
+    "failed": "I couldn't read this project's ISR ratings or check its reports for disagreements just now.",
+    "leadOne": "Two reports disagree",
+    "leadSeveral": "{count} pairs of reports disagree",
+    "fell": "ISR ratings of progress fell from {first} to {last}",
+    "rose": "ISR ratings of progress rose from {first} to {last}",
+    "same": "ISR ratings of progress were {rating} at the first ISR and at the last"
+  },
+  "alt": {
+    "populated": "Timeline of {pid} from {first} to {last} in three lanes: {why}, {how} and {what}.",
+    "empty": "Timeline of {pid}, with no dated reports or records yet.",
+    "evaluations": {
+      "none": "no evaluations",
+      "one": "{n} evaluation",
+      "many": "{n} evaluations"
+    },
+    "operations": {
+      "none": "no operations items",
+      "one": "{n} operations item",
+      "many": "{n} operations items"
+    },
+    "records": {
+      "none": "no records",
+      "one": "{n} record",
+      "many": "{n} records"
+    },
+    "ratings": "ISR ratings of progress went from {first} to {last} over {count} ISRs.",
+    "ratingsSame": "ISR ratings of progress stayed {rating} over {count} ISRs.",
+    "noRatings": "I have no ISR ratings for this project.",
+    "line": "A dashed line joins {side1} and {side2}, which disagree.",
+    "noLines": "No reports disagree."
+  },
+  "short": {
+    "pad": "the PAD",
+    "isr": "ISR {sequence}",
+    "icr": "the ICR",
+    "icr_review": "the ICR Review",
+    "ppar": "the PPAR",
+    "other": "the report"
+  },
+  "numberWords": [
+    "one",
+    "two",
+    "three",
+    "four",
+    "five",
+    "six",
+    "seven",
+    "eight",
+    "nine"
+  ]
+}

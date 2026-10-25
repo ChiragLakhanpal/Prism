@@ -4724,6 +4724,263 @@ export const copy = {
     errorOne: "I couldn't load this query because the data service didn't answer.",
   },
 
+  // A project's Timeline tab (ticket 23; the 23 brief, section 7): What, How and Why in three lanes on one time
+  // axis. {slots} are filled from GET /api/projects/{pid}/timeline; the page computes no number.
+  timeline: {
+    title: "Timeline",
+    purpose:
+      "This timeline puts the project's evaluations, operations documents and records on one time axis, so you can see " +
+      "what was known when. Select a mark to open its source.",
+    // The chart's subtitle, with each shape drawn before its word ({report}, {event} and {record} are the glyphs,
+    // hidden from screen readers, so the words carry the meaning).
+    subtitle: "Each mark is a {report} report, an {event} event or a {record} record. A dashed line joins two reports that disagree.",
+    subtitleList: "Each item is a report, an event or a record, in date order.",
+    lane: { why: "Why · evaluations", how: "How · operations", what: "What · records" } as Record<string, string>,
+    // The lane's word inside an item's name and the table's Stratum column.
+    laneWord: { why: "Why", how: "How", what: "What" } as Record<string, string>,
+    // An item's stratum on its own line in the list below 768 px.
+    laneItem: { why: "Why · evaluation", how: "How · operations", what: "What · record" } as Record<string, string>,
+    // The Note line under the chart: one sentence for each abbreviation that appears, then the bands and the codes.
+    noteLead: "Note:",
+    abbrev: {
+      pad: "PAD is the Project Appraisal Document.",
+      isr: "An ISR is an Implementation Status and Results Report.",
+      icr: "ICR is the Implementation Completion and Results Report.",
+      icr_review: "The Independent Evaluation Group (IEG) writes the ICR Review.",
+      ppar: "PPAR is IEG's Project Performance Assessment Report.",
+    } as Record<string, string>,
+    bands: "The grey bands show each ISR's rating of progress towards the project development objective (PDO). Darker means a lower rating.",
+    // Each rating's code, which a narrow band shows, and the sentence that spells it out in the Note line.
+    codes: {
+      "Highly Satisfactory": "HS",
+      Satisfactory: "S",
+      "Moderately Satisfactory": "MS",
+      "Moderately Unsatisfactory": "MU",
+      Unsatisfactory: "U",
+      "Highly Unsatisfactory": "HU",
+    } as Record<string, string>,
+    codeNote: (code: string, rating: string) => `${code} is ${rating}.`,
+    // "Source: World Bank documents and reports API, procurement notices and contract awards, through October 23, 2026."
+    source: "{sources}, through {date}.",
+    sourceNames: {
+      documents: "World Bank documents and reports API",
+      notices: "procurement notices",
+      awards: "contract awards",
+    } as Record<string, string>,
+    show: "Show the table",
+    hide: "Hide the table",
+    caption: (name: string) => `Everything on the timeline of ${name}, in date order.`,
+    count: (n: string) => `Showing all ${n} items.`,
+    columns: { date: "Date", stratum: "Stratum", item: "Item", rating: "Rating", note: "Note" },
+    stratumCaption: "What: records. How: operations. Why: evaluations.",
+    // A mark's label on the chart.
+    label: {
+      pad: "PAD",
+      isr: "ISR {sequence}",
+      icr: "ICR",
+      icr_review: "ICR Review",
+      ppar: "PPAR",
+      other: "Report",
+      mid_term_review: "Mid-term review",
+      restructuring: "Restructuring",
+      contract: "{reference} signed",
+    } as Record<string, string>,
+    replaced: "{label}, replaced",
+    reissued: "{label}, re-issued",
+    contracts: (n: string) => `${n} contracts`,
+    // An item's full name, in the table and the list: abbreviations spelled out.
+    full: {
+      pad: "Project Appraisal Document (PAD)",
+      isr: "ISR {sequence}",
+      icr: "Implementation Completion and Results Report (ICR)",
+      icr_review: "ICR Review",
+      ppar: "Project Performance Assessment Report (PPAR)",
+      other: "Report",
+    } as Record<string, string>,
+    // A band's label, the first form that fits: the rating with its ISRs, the rating, the code with its ISRs, the code.
+    band: {
+      full: "{rating}, ISRs {first}–{last}",
+      fullOne: "{rating}, ISR {first}",
+      rating: "{rating}",
+      code: "{code}, ISRs {first}–{last}",
+      codeOne: "{code}, ISR {first}",
+    },
+    bandItem: "ISRs {first}–{last}",
+    bandItemOne: "ISR {first}",
+    bandLine: "ISRs {first}–{last} rated progress {rating}",
+    bandLineOne: "ISR {first} rated progress {rating}",
+    range: "{start} to {end}",
+    tableRange: "{start} – {end}",
+    // The disagreement line's label. The ticket fixes the numeral.
+    chip: "2 reports disagree",
+    // A tooltip's third line.
+    tip: {
+      disagrees: "Disagrees with {other}.",
+      replacedBy: "Replaced by the re-issue of {date}.",
+      isr: "{date}. Progress towards achievement of PDO.",
+      from: "From {source}.",
+      contract: "Contract signed.",
+      group: "Select to list them.",
+      band: "{start} to {end}. Progress towards achievement of PDO.",
+      leans: "Strata leans on {lean}.",
+    },
+    // Each item's accessible name. "to" stands in for the en dash, so a screen reader does not say "dash".
+    name: {
+      report: "{type}, {date}. {lane} lane. Item {i} of {n}.",
+      reportReplaced: "{type}, {date}, replaced by its re-issue of {replaced}. {lane} lane. Item {i} of {n}.",
+      reportDisagrees: "{type}, {date}. Disagrees with {other}. {lane} lane. Item {i} of {n}.",
+      isr: "ISR {sequence}, {date}, rated progress {rating}. How lane. Item {i} of {n}.",
+      isrDisagrees: "ISR {sequence}, {date}, rated progress {rating}. Disagrees with {other}. How lane. Item {i} of {n}.",
+      event: "{label}, {date}. How lane. Item {i} of {n}.",
+      record: "Contract {reference} signed, {date}. What lane. Item {i} of {n}.",
+      group: "{count} contracts signed in {year}. What lane. Item {i} of {n}.",
+      band: "ISRs {first} to {last} rated progress {rating}, from {start} to {end}. How lane. Item {i} of {n}.",
+      bandOne: "ISR {first} rated progress {rating}, from {start} to {end}. How lane. Item {i} of {n}.",
+      disagreement: "2 reports disagree: {side1}, {date1}, and {side2}, {date2}. Strata leans on {lean}. Item {i} of {n}.",
+    },
+    group: (n: string, pid: string) => `${n} items on the timeline of ${pid}`,
+    help: "Use the arrow keys to move between items. Left and Right go in date order. Up and Down move between lanes. Press Enter to open an item's source.",
+    asOf: "As of {date}",
+    // The table's Note column.
+    note: {
+      disagrees: "Disagrees with {other}.",
+      replaced: "Replaced by the re-issue of {date}.",
+      trajectory: "A trajectory: each ISR rated its own period.",
+      leans: "Strata leans on {lean}.",
+    },
+    // A report's short name in a sentence: "the ICR", "ISR 7". The server's copy (server.short) is the same.
+    short: {
+      pad: "the PAD",
+      isr: "ISR {sequence}",
+      icr: "the ICR",
+      icr_review: "the ICR Review",
+      ppar: "the PPAR",
+      other: "the report",
+    } as Record<string, string>,
+    sides: "{side1} and {side2}",
+    laneEmpty: {
+      why: "I have no evaluations for this project yet.",
+      how: "I have no ISRs or other operations documents for this project yet.",
+      what: "I have no contract records for this project.",
+    } as Record<string, string>,
+    noRatings: "I have no ISR ratings for this project.",
+    emptyTitle: "I don't have dated reports or records for this project yet.",
+    emptyBody:
+      "I add a project's reports and records to its timeline once I have read them. Data readiness shows which sources and years I have read.",
+    emptyLink: "Data readiness",
+    // get_disagreements' count of the ratings and dates it left out (the abstention state).
+    abstention: (n: number) =>
+      n === 1
+        ? "I left out {n} rating or date that I read from this project's documents, because I couldn't find its words on the cited page."
+        : "I left out {n} ratings or dates that I read from this project's documents, because I couldn't find their words on the cited pages.",
+    abstentionCheck: "Counted by the disagreement check for this project.",
+    failed:
+      "I couldn't check this project's reports for disagreements just now, so the chart shows no dashed lines. The marks are complete.",
+    hidden: "I don't show disagreements on active projects in this view, so a project still under way isn't prejudged.",
+    loading: "Loading the timeline.",
+    stillLoading: "Still loading the timeline.",
+    error: "I couldn't load this project's timeline because the data service didn't answer.",
+    permission: "Your account can't read Strata's tables, so I can't show this project's timeline.",
+    // The evidence drawer's views a timeline mark opens (the 23 brief, sections 6 and 7.4).
+    drawer: {
+      fromTimeline: "From the timeline",
+      fromTimelineItem: "{label}, {date}.",
+      close: "Close the source",
+      disagreement: {
+        eyebrow: "{strata} · disagreement",
+        heading: "{side1} and {side2}",
+        switcher: "Reports in this disagreement",
+        both: "Both reports",
+        // A side's tab: "ICR ¶78", with the paragraph spelled out for a screen reader.
+        tabPara: "{side} ¶{para}",
+        tabParaSpoken: "{side} paragraph {para}",
+        unknown: "I have no disagreement with this ID. The link may be incomplete.",
+        notAsOf: "These two reports were not both public on {date}, so they did not disagree then.",
+        close: "Close the reports",
+      },
+      // The strata of the two sides, joined: "How and Why".
+      strataJoin: "{first} and {second}",
+      claimLine: "{side1} and {side2} disagree about this.",
+      showBoth: "Show both reports",
+      ratings: {
+        eyebrow: "How · operations",
+        heading: "ISRs {first}–{last}, rated {rating}",
+        headingOne: "ISR {first}, rated {rating}",
+        trajectory:
+          "Ratings that change from one ISR to the next describe different periods. I show them as a trajectory, not a disagreement.",
+        caption: "ISR ratings of progress towards achievement of PDO",
+        count: (n: string) => `Showing all ${n} ISRs.`,
+        columns: { isr: "ISR", date: "Date", rating: "Progress towards achievement of PDO" },
+        isr: "ISR {sequence}",
+        source: "World Bank documents and reports API, the ISRs of {pid}.",
+        close: "Close the ratings",
+      },
+      contracts: {
+        eyebrow: "What · record",
+        heading: "Contracts signed in {year}",
+        count: (n: string) => `Showing all ${n} contracts.`,
+        columns: { contract: "Contract (STEP reference)", signed: "Signed", amount: "Signed amount (US$)" },
+        notInRecord: "Not in the record",
+        source: "World Bank contract awards and procurement notices, {pid}.",
+        close: "Close the contracts",
+      },
+      doc: {
+        heading: "{label}, {date}",
+        labels: { type: "Document type", number: "Report number", date: "Document date", disclosed: "Disclosed", pages: "Pages" },
+        ratings: "Ratings in this report",
+        ratingsCols: { rating: "Rating", value: "Value", where: "Where" },
+        wherePara: "Paragraph {para}, page {page}",
+        whereSection: "Section {section}, page {page}",
+        wherePage: "PDF page {page}",
+        inDisagreement: "{this} and {other} disagree about {subject}.",
+        replaced: "IEG re-issued this review under the same number on {date}. I use the re-issue in current answers.",
+        openReissue: "Open the re-issue",
+        open: "Open the document",
+        source: "World Bank documents and reports API, {type}, {pid}, {date}.",
+        close: "Close the document",
+      },
+    },
+    // The words the server writes into the chart's title and alt text (src/strata/server/timeline.py), which
+    // `node web/lint/server-copy.ts --write` copies into src/strata/server/timeline_copy.json. The lint lane
+    // fails when that file is out of date, so the words have one home. No model writes these sentences.
+    server: {
+      finding: {
+        disagreeRatings: "{lead}, and {ratings}.",
+        ratingsOnly: "{ratings}, and I found no reports that disagree.",
+        disagreeOnly: "{lead}. I have no ISR ratings for this project.",
+        neither: "I found no reports that disagree, and I have no ISR ratings for this project.",
+        hiddenRatings: "{ratings}.",
+        hiddenNone: "I have no ISR ratings for this project.",
+        failed: "I couldn't read this project's ISR ratings or check its reports for disagreements just now.",
+        leadOne: "Two reports disagree",
+        leadSeveral: "{count} pairs of reports disagree",
+        fell: "ISR ratings of progress fell from {first} to {last}",
+        rose: "ISR ratings of progress rose from {first} to {last}",
+        same: "ISR ratings of progress were {rating} at the first ISR and at the last",
+      },
+      alt: {
+        populated: "Timeline of {pid} from {first} to {last} in three lanes: {why}, {how} and {what}.",
+        empty: "Timeline of {pid}, with no dated reports or records yet.",
+        evaluations: { none: "no evaluations", one: "{n} evaluation", many: "{n} evaluations" },
+        operations: { none: "no operations items", one: "{n} operations item", many: "{n} operations items" },
+        records: { none: "no records", one: "{n} record", many: "{n} records" },
+        ratings: "ISR ratings of progress went from {first} to {last} over {count} ISRs.",
+        ratingsSame: "ISR ratings of progress stayed {rating} over {count} ISRs.",
+        noRatings: "I have no ISR ratings for this project.",
+        line: "A dashed line joins {side1} and {side2}, which disagree.",
+        noLines: "No reports disagree.",
+      },
+      short: {
+        pad: "the PAD",
+        isr: "ISR {sequence}",
+        icr: "the ICR",
+        icr_review: "the ICR Review",
+        ppar: "the PPAR",
+        other: "the report",
+      },
+    },
+  },
+
   // Words for numbers (DESIGN.md section 7, rules 6, 11, 12 and 15). web/src/lib/format.ts
   // decides which one a number gets.
   num: {

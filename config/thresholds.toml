@@ -305,6 +305,13 @@ interval_z = 1.959964
 # percent is a value for the owner to confirm, and 0 compares amounts exactly.
 amount_tolerance_share = 0.001
 
+# A project's timeline (ticket 23; src/strata/server/timeline.py). Above this many signed contracts, the What lane
+# draws one mark per calendar year that signed two or more, labelled with its count, so a project with many
+# contracts keeps a lane you can read; the table under the chart still lists every contract. Source: the 23
+# design brief, section 4.10, which suggests 12; a value for the owner to confirm.
+[timeline]
+what_lane_group_above = 12
+
 # The verifier's check 4 (ticket 24; src/strata/agent/judge.py and verifier.py). The judge reads at most
 # judge_source_chars characters of each source a sentence cites, a passage's header and words or a record's
 # fields, and the call gives up after judge_timeout_seconds, when every sentence it had to judge is removed.

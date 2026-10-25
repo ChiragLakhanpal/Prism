@@ -1,0 +1,79 @@
+{
+  "id": "ratings:P130164:pdo_progress:1-9",
+  "kind": "ratings",
+  "tool": null,
+  "stratum": "How",
+  "short_name": null,
+  "row": {
+    "evidence_id": "ratings:P130164:pdo_progress:1-9",
+    "public_from": "2017-05-23",
+    "project_id": "P130164",
+    "attribute": "pdo_progress",
+    "field_name": "Progress towards achievement of PDO",
+    "rating": "Satisfactory",
+    "first": 1,
+    "last": 9,
+    "count": 9,
+    "rows": [
+      {
+        "sequence": 1,
+        "date": "2014-02-22",
+        "rating": "Satisfactory",
+        "evidence_id": "doc:19095337"
+      },
+      {
+        "sequence": 2,
+        "date": "2014-07-30",
+        "rating": "Satisfactory",
+        "evidence_id": "doc:19901331"
+      },
+      {
+        "sequence": 3,
+        "date": "2015-01-23",
+        "rating": "Satisfactory",
+        "evidence_id": "doc:23868309"
+      },
+      {
+        "sequence": 4,
+        "date": "2015-06-04",
+        "rating": "Satisfactory",
+        "evidence_id": "doc:24589049"
+      },
+      {
+        "sequence": 5,
+        "date": "2015-11-20",
+        "rating": "Satisfactory",
+        "evidence_id": "doc:25481343"
+      },
+      {
+        "sequence": 6,
+        "date": "2016-01-21",
+        "rating": "Satisfactory",
+        "evidence_id": "doc:25814564"
+      },
+      {
+        "sequence": 7,
+        "date": "2016-08-26",
+        "rating": "Satisfactory",
+        "evidence_id": "doc:26733307"
+      },
+      {
+        "sequence": 8,
+        "date": "2017-03-05",
+        "rating": "Satisfactory",
+        "evidence_id": "doc:27243340"
+      },
+      {
+        "sequence": 9,
+        "date": "2017-05-23",
+        "rating": "Satisfactory",
+        "evidence_id": "doc:27490469"
+      }
+    ],
+    "source": {
+      "source_key": "documents",
+      "project_id": "P130164"
+    }
+  },
+  "highlights": []
+}
