@@ -67,8 +67,12 @@ def tier(since: Iterable[dict]) -> str | None:
 
 
 def citations(content: dict) -> Iterator[tuple[str, str, int]]:
-    """Each (row key, lesson id, version) a draft's rows cite, once each, in the draft's order."""
+    """Each (row key, lesson id, version) a draft's rows cite, once each, in the draft's order. A row is a note,
+    except in a draft of suggested PPSD rows (ticket 36), whose notes are the cells of a PPSD row: a cell's
+    citation belongs to its row, where the draft page shows the notice (the 39 brief, section 2.4)."""
     seen = set()
+    row_of = {note_key: row["row_key"] for row in (content.get("ppsd") or {}).get("rows") or []
+              for note_key in (row.get("cells") or {}).values()}
 
     def walk(value) -> Iterator[str]:
         if isinstance(value, str):
@@ -83,7 +87,8 @@ def citations(content: dict) -> Iterator[tuple[str, str, int]]:
     for note in content.get("notes") or []:
         for text in walk(note):
             found = CITATION.match(text)
-            key = (str(note.get("key")), found["lesson_id"], int(found["version"])) if found else None
+            row_key = row_of.get(note.get("key"), str(note.get("key")))
+            key = (row_key, found["lesson_id"], int(found["version"])) if found else None
             if key and key not in seen:
                 seen.add(key)
                 yield key

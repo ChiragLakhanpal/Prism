@@ -93,6 +93,28 @@ def test_a_draft_row_citing_a_lesson_whose_wording_changed_is_marked_and_the_dra
     assert drafts_as_saved(engine) == before
 
 
+def test_a_suggested_ppsd_row_whose_lesson_changed_is_marked_on_its_row(engine):
+    """Ticket 36's suggested PPSD rows cite a lesson version in each row's mitigation cell, and the draft page shows
+    a notice under the row (brief 39, section 2.4), so the notice names the PPSD row, not the cell."""
+    cells = {"risk_description": "cost_estimates/risk_description", "mitigation": "cost_estimates/mitigation"}
+    content = {"subject": {}, "evidence": {}, "checks": None, "removed": [], "disagreements": [], "notes": [
+        {"key": cells["risk_description"], "state": "written",
+         "sentences": [{"text": "Cost estimates ran short.", "evidence_ids": ["strata.tools.find_comparables:1"]}]},
+        {"key": cells["mitigation"], "state": "written",
+         "sentences": [{"text": "Plan for rebidding.", "evidence_ids": [CITED, "31525018/v1/54"]}]},
+    ], "ppsd": {"form": "short", "selected": 1, "rows": [
+        {"row_key": "cost_estimates", "risk_key": "cost_estimates", "cells": cells,
+         "lesson": {"id": LESSON, "evidence_id": CITED, "version": 1, "decided_on": "2026-10-21"}}]}}
+    DraftStore(lambda: Unclosed(engine)).create(NewDraft(
+        "draft-ppsd", "ppsd_rows", "team:nwwda", "user-1", "An author", None, "P156634", "40132287", content,
+        dt.datetime(2026, 10, 21, 14, tzinfo=dt.UTC)))
+    version(engine, 1, "Plan for rebidding.", "added")
+    version(engine, 2, "Plan for rebidding in remote areas.", "wording")
+
+    assert [(n["draft_id"], n["row_key"], n["tier"]) for n in refresh(engine)] == [
+        ("draft-ppsd", "cost_estimates", "narrowed")]
+
+
 def test_a_lesson_that_only_gained_a_quote_marks_no_draft(engine):
     """Brief 39, 4.1: an added quote is "strengthened", which goes to the digest and never to the draft."""
     version(engine, 1, "Plan for rebidding in works contracts.", "added")
