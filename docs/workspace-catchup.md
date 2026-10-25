@@ -1139,3 +1139,48 @@ Run this from the main checkout:
 It worked if the deploy exits 0, its step 3 prints "The Lakebase instance strata-state is running, so the app keeps app state there.", and its last line is `Strata is running at https://...`. Then sign in to the App in a browser and open `<App url>/packages/KE-NWWDA-541055-CW-RFB`.
 
 It worked if section 3, "Procurement risks and what helped", loads under the eyebrow "Planning · PPSD section 3", and DevTools' Network tab shows `GET /api/packages/KE-NWWDA-541055-CW-RFB/risks` answering 200. Until decided lessons and a comparable project with an ICR exist on the workspace, the section may show its empty state (no completion report, or no decided lessons), and that still passes this step. Once a row shows, tick its checkbox, wait for the save, and reload: the row must still be ticked. The first save makes `strata.app.risk_selections` in the App's Lakebase database, with one row for you, that package and that risk, and `selected` true. Unticking sets `selected` to false and deletes nothing (criterion 6, live half).
+
+## Ticket 24, step 1 of 4: re-record check 4's judge from the live model
+
+The merger parked this step on October 24, 2026, after merge commit c7d226a. All ten keys were set, but the header above holds workspace steps back while the user runs the backlog. It needs `FOUNDRY_PROJECT_ENDPOINT`, `DATABRICKS_HOST`, `DATABRICKS_WAREHOUSE_ID`, `DATABRICKS_TOKEN`, `AZURE_OPENAI_ENDPOINT` and `AZURE_OPENAI_API_KEY` in `.env`, and `az` signed in. Run it after ticket 13's step 4, because the judge is asked about the recorded answers. Every file in `tests/fixtures/agent/judged/` is hand-written today and reads `"recorded": false`, including the two that ticket 24's round 3 added, `p156634-plan-not-yet-public.json` and `p156634-uncited-blame.json`.
+
+Run this from the main checkout, then review the diff and run the gate:
+
+    uv run --script ops/agent/record.py --judge --env-file .env
+    git diff tests/fixtures/agent/judged
+    .githooks/pre-commit
+
+It worked if the recording exits 0, every `tests/fixtures/agent/judged/*.json` reads `"recorded": true`, and the gate still passes, so every case keeps its removals (criterion 1, live half). In `p156634-uncited-blame.json`, the live judge must keep the abstention sentence and remove "The agency was late in publishing its plan." If it passes, commit the recordings on a branch. If a case loses a removal its test expects, the live judge answers differently from the hand-written file, so tell the orchestrator before you change a test.
+
+## Ticket 24, step 2 of 4: sync the agent, since its instructions changed
+
+The merger parked this step on October 24, 2026, after merge commit c7d226a. It needs the four Foundry keys in `.env`. Ticket 24 added the refusal list ("What you turn down") and the rule that every sentence cites a source to `src/strata/agent/orchestrator.md`, so the orchestrator agent in Foundry is out of date until this runs. Ticket 13's and ticket 30's syncs run the same command. One sync from c7d226a or later serves every block that names it, and a sync from an earlier commit does not serve this one.
+
+Run this from the main checkout:
+
+    uv run --script ops/agent/sync.py --env-file .env
+    uv run --script ops/agent/sync.py --env-file .env --check
+
+It worked if the first run ends "I made version N of strata-orchestrator, which matches the repo." and the `--check` run exits 0 (it exits 1 when it still finds a difference, and 2 when it could not run).
+
+## Ticket 24, step 3 of 4: the must-refuse set through the live agent
+
+The merger parked this step on October 24, 2026, after merge commit c7d226a. Run it after step 2, so the live agent has the refusal list. It needs `FOUNDRY_PROJECT_ENDPOINT`, `DATABRICKS_HOST`, `DATABRICKS_WAREHOUSE_ID` and `DATABRICKS_TOKEN` in `.env`, and `az` signed in. With `AZURE_OPENAI_ENDPOINT` and `AZURE_OPENAI_API_KEY` set too, it also runs the judge. It asks each of the ten questions of kind `refusals` in `evals/benchmark.yaml` through the same route and stream the App runs.
+
+Run this from the main checkout:
+
+    uv run --script ops/agent/refuse_live.py --env-file .env
+
+It worked if it prints ten lines, one per question, and exits 0, with no refusal problem on any line and no restricted value (a notice's contact name, email or phone number, or an individual consultant's supplier id) in any stream (criterion 4, live half). It exits 1 when a refusal does not hold, and 2 when it could not run.
+
+## Ticket 24, step 4 of 4: the judge and the ISR 7 disagreement on the deployed App
+
+The merger parked this step on October 24, 2026, after merge commit c7d226a. It needs the Databricks keys, the four Foundry keys, and `AZURE_OPENAI_ENDPOINT` and `AZURE_OPENAI_API_KEY` in `.env`. Run it after step 2, and after ticket 20's steps, so ISR 7 and ICR paragraph 78 are on the workspace. It is ticket 06's deploy command, and one deploy from c7d226a or later serves every block that names it. From this merge on, the deploy gives the App the judge's two keys. Without them, the App removes every sentence that needs the judge.
+
+Run this from the main checkout:
+
+    uv run --script ops/app/deploy_app.py --env-file .env
+
+It worked if the deploy exits 0 and its last line is `Strata is running at https://...`. Then sign in to the App in a browser, scope it to P130164, and ask "How did the status reports rate P130164's progress towards its development objective in 2016?"
+
+It worked if DevTools' Network tab shows the `/api/ask` stream's checks event carrying a `judge` object, and the ICR paragraph 78 card appears under ISR 7's sentence with both sides: ISR 7 (August 26, 2016, "Satisfactory") and ICR paragraph 78 (October 10, 2019), marked "Two reports disagree".
