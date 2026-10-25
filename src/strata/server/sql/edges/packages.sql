@@ -1,7 +1,8 @@
 -- A project's Connections tab (ticket 22): each package the project plans (its plans edges public on the as-of
--- date, ADR 0002), with what its node shows and what the tab orders it by: its description and Process Status in
--- the newest plan version public then, its Estimated Amount, its first planned date as first published, and its
--- contracts public then (how many, the first signing date and their amount in US dollars).
+-- date, ADR 0002), with what its node shows and what the tab orders it by: its description as its notice gives it
+-- (STEP typed it; the plan reader can split a word inside a plan's cell), or else as the newest plan version public
+-- then gives it, its Process Status in that version, its Estimated Amount, its first planned date as first
+-- published, and its contracts public then (how many, the first signing date and their amount in US dollars).
 WITH refs AS (
   SELECT replace(to_id, 'strata.gold.package:', '') AS step_reference, min(public_from) AS public_from
   FROM strata.gold.edge
@@ -54,7 +55,7 @@ noticed AS (
 )
 SELECT
   refs.step_reference,
-  coalesce(latest.description, signed.description, noticed.description) AS description,
+  coalesce(noticed.description, latest.description, signed.description) AS description,
   latest.process_status,
   latest.estimated_amount_usd,
   planned.first_planned_on,

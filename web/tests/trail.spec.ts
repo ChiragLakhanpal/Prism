@@ -68,7 +68,7 @@ test("KE-NWWDA-229129-CW-RFB's trail shows its plan row, notice, bids and contra
   // The paragraphs come grouped by report: the PAD's first three of its six, then each ISR's.
   await expect(page.locator("[data-report]")).toHaveCount(13);
   await expect(page.locator("[data-report]").first().getByRole("heading", { level: 3 })).toHaveText("Project Appraisal Document, Apr 5, 2017");
-  await expect(page.locator("[data-report]").first()).toContainText("six paragraphs");
+  await expect(page.locator("[data-report]").first()).toContainText("Six paragraphs");
   await expect(page.locator("[data-paragraph-card] [data-source]")).toHaveCount(18);
 
   const models: { method: string; path: string }[] = JSON.parse(await recorded("model-routes.json")).routes;
@@ -304,6 +304,8 @@ test("the showcase's paragraphs are grouped by report, so the ICR's group shows,
   await expect(icr.locator("[data-paragraph-card]")).toHaveCount(3);
   // The PAD numbers its annexes' paragraphs again, so two of its cards name their sections.
   await expect(reports.first().locator("[data-paragraph-card] h4").first()).toHaveText(/^Paragraph \d+$/);
+  // A passage with no paragraph number is titled by its section's name, as the ISR names it.
+  await expect(reports.nth(1).locator("[data-paragraph-card] h4")).toHaveText("Overall Ratings");
   const more = icr.getByRole("button", { name: "Show all 29 paragraphs from the Implementation Completion and Results Report of Oct 10, 2019" });
   await more.click();
   await expect(icr.locator("[data-paragraph-card]")).toHaveCount(29);

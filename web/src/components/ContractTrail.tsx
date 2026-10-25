@@ -23,6 +23,7 @@ import {
   currencyName,
   joinWords,
   noticePrice,
+  sectionName,
   stepLabel,
   topicWords,
   type AwardRecord,
@@ -547,11 +548,8 @@ function cardTitle(record: ParagraphRecord): ReactNode {
       <Fill template={t.cardTitle} slots={{ para: record.paragraph }} />
     );
   }
-  return record.title_page ? (
-    <Fill template={t.cardTitleSectionPage} slots={{ section: record.section_path, page: String(record.title_page) }} />
-  ) : (
-    <Fill template={t.cardTitleSection} slots={{ section: record.section_path }} />
-  );
+  const section = sectionName(record.section_path);
+  return record.title_page ? <Fill template={t.cardTitleSectionPage} slots={{ section, page: String(record.title_page) }} /> : section;
 }
 
 function ParagraphCard({ record, n, many, focusRef }: { record: ParagraphRecord; n: number; many: boolean; focusRef?: (element: HTMLElement | null) => void }) {

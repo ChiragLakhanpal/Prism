@@ -9,7 +9,7 @@
   "packages": [
     {
       "step_reference": "KE-MAWASCO-69995-CS-QCBS",
-      "description": "Consultancy Services (Design Review, Implementation of ESIA/RAP and Construction Supervision for the Works) for both Water and Sanitation Works in Malindi, Watamu & Gongoni",
+      "description": "Consultancy services (Design review, implementation of ESIA/RAP and construction Supervision for the works) for both water and sanitation works in Malindi, Watamu & Gongoni",
       "process_status": null,
       "contracts": 1,
       "first_signed_on": "2020-01-15",
@@ -29,7 +29,7 @@
     },
     {
       "step_reference": "KE-GAWASCO-54775-CW-RFB",
-      "description": "Construction of GAWASCO office block in Garissa Town & Admin/Laboratory in Dadaab Town",
+      "description": "Construction of office block and laboratory",
       "process_status": null,
       "contracts": 1,
       "first_signed_on": "2020-07-21",
@@ -61,7 +61,7 @@
     },
     {
       "step_reference": "KE-GAWASCO-67422-CS-QCBS",
-      "description": "CONSULTANCY SERVICES FOR DESIGN REVIEW & SUPERVISION OF IMMEDIATE WATER AND SANITATION WORKS; AND PREPARATION OF DETAILED DESIGNS, BIDDING DOCUMENTS AND ENVIRONMENTAL AND SOCIAL SAFEGUARDS INSTRUMENTS",
+      "description": "Consultancy Services for supervision of immediate works, Feasibility study, preparation of detailed design for medium term and long term for water & sanitation works.",
       "process_status": null,
       "contracts": 1,
       "first_signed_on": "2021-02-15",
@@ -75,7 +75,7 @@
     },
     {
       "step_reference": "KE-MOWI-47509-CW-RFB",
-      "description": "Program for improvement of water services in Mombasa county, North Mainland Nyali Phase 1",
+      "description": "PROGRAM FOR THE IMPROVEMENT OF WATER SERVICES IN MOMBASA COUNTY MOMBASA NORTH MAINLAND - PHASE 1",
       "process_status": null,
       "contracts": 1,
       "first_signed_on": "2021-03-23",
@@ -110,7 +110,7 @@
     },
     {
       "step_reference": "KE-KIMAWASCO-142995-CW-RFB",
-      "description": "Water Works distributio n for Kilifi Town",
+      "description": "Water Works distribution for Kilifi Town",
       "process_status": "Signed",
       "contracts": 1,
       "first_signed_on": "2021-03-30",
@@ -151,7 +151,7 @@
     },
     {
       "step_reference": "KE-NWWDA-229129-CW-RFB",
-      "description": "Drilling of 4 Number Explor atory Boreholes In Wajir Cou nty",
+      "description": "Drilling of 4 Number Exploratory Boreholes In Wajir County",
       "process_status": "Signed",
       "contracts": 1,
       "first_signed_on": "2022-01-03",
@@ -195,7 +195,7 @@
     },
     {
       "step_reference": "KE-KIMAWASCO-416959-CW-RFB",
-      "description": "Construction of Sludge treatment facilities in Kilifi an d Mtwapa towns",
+      "description": "Construction of Sludge treatment facilities in Kilifi and Mtwapa towns",
       "process_status": "Signed",
       "contracts": 1,
       "first_signed_on": "2024-11-08",
@@ -233,7 +233,7 @@
     },
     {
       "step_reference": "KE-GAWASCO-436012-CW-RFB",
-      "description": "Construction of office block in Garissa and a laboratory/administration building in Dadaab.",
+      "description": "CONSTRUCTION OF OFFICE BLOCK IN GARISSA AND A LABORATORY/ADMINISTRATION BUILDING IN DADAAB",
       "process_status": null,
       "contracts": 1,
       "first_signed_on": "2024-11-18",
@@ -283,7 +283,7 @@
     },
     {
       "step_reference": "KE-KIMAWASCO-459000-CW-DIR",
-      "description": "Construction of 12Nr Ab lution Blocks in Kilifi, Mtwapa and Mariakani Towns",
+      "description": "Construction of 12Nr Ablution Blocks in Kilifi, Mtwapa and Mariakani Towns",
       "process_status": "Signed",
       "contracts": 1,
       "first_signed_on": "2024-11-22",
@@ -321,7 +321,7 @@
     },
     {
       "step_reference": "KE-WAJWASCO-456993-CW-RFB",
-      "description": "Construction of 1No.Feacal Sludge Treatment Plant in Wajir Town.",
+      "description": "Construction of Faecal Sludge Treatment Plant for Wajir Town",
       "process_status": null,
       "contracts": 1,
       "first_signed_on": "2025-01-24",
@@ -350,7 +350,7 @@
     },
     {
       "step_reference": "KE-NWWDA-541055-CW-RFB",
-      "description": "Equipping of Exploratory Bo reholes Project-Lot 1- Sarma n - Tarbaj Water Supply",
+      "description": "Equipping of Exploratory Boreholes Project-Lot 1- Sarman - Tarbaj Water Supply",
       "process_status": "Pending Implementation",
       "contracts": 1,
       "first_signed_on": "2026-06-22",

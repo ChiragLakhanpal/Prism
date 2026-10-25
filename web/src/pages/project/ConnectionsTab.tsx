@@ -32,7 +32,7 @@ import { formatCount, formatDate } from "../../lib/format";
 import { useLoad } from "../../lib/load";
 import { address } from "../../lib/router";
 import { useStore } from "../../lib/store";
-import type { Chip, DocumentNode, Neighbourhood, PackageNode } from "../../lib/trail";
+import { sectionName, type Chip, type DocumentNode, type Neighbourhood, type PackageNode } from "../../lib/trail";
 import { withReadParams } from "../../lib/view";
 import { dataReadinessHref, fill } from "../../routes";
 
@@ -65,9 +65,6 @@ function docShort(node: DocumentNode): string {
 
 type Place = { paragraph: string; paragraph_numbered: boolean; section_path: string; label_extra?: Chip["label_extra"] };
 
-// A section's name, or a bare section number written as one: "Results", or "Section 4.1".
-const SECTION_NUMBER = /^[0-9IVX]+(\.[0-9A-Za-z]+)*$/;
-const sectionName = (section: string) => (SECTION_NUMBER.test(section) ? fill(words.chipSectionNumber, { section }) : section);
 
 // What a chip shows: "¶54"; "Annex 2.A ¶27" when the document uses the number twice; a section's name, with its
 // page when the document uses the name twice ("Results, page 3").
@@ -527,7 +524,7 @@ export function ConnectionsTab({ pid }: { pid: string }) {
                 </Button>
               </span>
             </div>
-            {data.lines_hint && !list && <p className="mt-2 hidden text-caption text-ink-muted @md/page:block">{words.linesHint}</p>}
+            {data.lines_hint && !list && <p className="mt-1 hidden text-caption text-ink-muted @md/page:block">{words.linesHint}</p>}
             <div className="mt-4">
               <NeighbourhoodDiagram data={data} list={list} />
             </div>

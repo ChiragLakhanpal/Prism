@@ -293,6 +293,12 @@ export function topicWords(topics: Topic[]): string[] {
   });
 }
 
+// A section as a title or a chip names it: its own name ("Results"), or a bare number as "Section 4.1".
+const SECTION_NUMBER = /^[0-9IVX]+(\.[0-9A-Za-z]+)*$/;
+export function sectionName(section: string): string {
+  return SECTION_NUMBER.test(section) ? copy.trail.sectionNumber.replace("{section}", section) : section;
+}
+
 export function countWord(count: number): string {
   return formatCount(count);
 }

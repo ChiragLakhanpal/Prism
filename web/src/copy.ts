@@ -4568,6 +4568,8 @@ export const copy = {
   // The contract trail's words; the rebidding block (ticket 28) shares trail.notice.again.
   trail: {
     label: "Contract trail for {stepRef}",
+    // A bare section number as a card's title or a chip writes it; a named section is its own name.
+    sectionNumber: "Section {section}",
     legend:
       "A solid line joins records that share a key, such as the STEP reference. A dashed line joins the contract to report paragraphs that appeared together with it.",
     plan: {
@@ -4656,13 +4658,13 @@ export const copy = {
         "I link a contract to a paragraph in the same project's reports when they are close in time and share a sector, words or names. A link means only that they appeared together.",
       // Each report is a group under its name and date, and each card names its paragraph within it.
       reportTitle: "{doc}, {date}",
-      reportCount: (n: number, count: string) => (n === 1 ? "One paragraph" : `${count} paragraphs`),
+      // The count starts its line, so a count word starts with a capital: "Two paragraphs", "29 paragraphs".
+      reportCount: (n: number, count: string) => (n === 1 ? "One paragraph" : `${count.charAt(0).toUpperCase()}${count.slice(1)} paragraphs`),
       showAll: (count: string) => `Show all ${count} paragraphs`,
       fromReport: " from the {doc} of {date}",
       cardTitle: "Paragraph {para}",
       cardTitleIn: "{section}, paragraph {para}",
-      cardTitleSection: "Section {section}",
-      cardTitleSectionPage: "Section {section}, page {page}",
+      cardTitleSectionPage: "{section}, page {page}",
       topics: "Both concern {topics}.",
       topicsWith: "With contract {ref}, both concern {topics}.",
       less: "Show fewer paragraphs",
@@ -4738,7 +4740,6 @@ export const copy = {
     // A paragraph number the document uses again in an annex, and a section name it uses twice.
     chipIn: "{section} ¶{para}",
     chipPage: "{label}, page {page}",
-    chipSectionNumber: "Section {section}",
     chipName: (doc: string, place: string, ref: string) => `${doc} ${place}, appeared together with ${ref}`,
     placeParagraph: (para: string, section: string | null) => (section ? `${section} paragraph ${para}` : `paragraph ${para}`),
     placeSection: (section: string) => `section ${section}`,
