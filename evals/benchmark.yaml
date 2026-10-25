@@ -239,10 +239,12 @@ questions:
     kind: documents
     tool: get_lessons
     question: >-
-      What lessons does Strata's library hold on works cost estimates and rebidding, and did IEG's
-      review of the completion report say the same?
+      What lessons does Strata's library hold on works cost estimates and rebidding, did IEG's
+      review of the completion report say the same, and how many completion reports of projects with
+      a works package under Request for Bids like IN-RRSMP-7431-CW-RFB raised each risk?
     arguments:
       query: works contract estimates market rates rebidding
+      packages: IN-RRSMP-7431-CW-RFB
       as_of: "2026-10-28"
     # The library holds lessons only after two people decide them, so the offline gate asks this
     # question once tests/lesson_scenario.py has had reviewers from tests/fixtures/roles.toml add the
@@ -253,8 +255,14 @@ questions:
       first_evidence: [strata.gold.passage:31525018/v1/54, strata.gold.passage:34056616/v2/10.b]
       first_ieg_status: [restated]
       editions: [guidelines_2011]
+      # From the summary record (ticket 30): the counted completion reports, and each risk factor
+      # they raised with how many of them raised it.
+      reports_read: [1]
+      raised: [[cost_estimates, 1], [permits_before_award, 1]]
     source: >-
       ICR P130164 paragraph 54, on PDF page 23, "108 of 328 cases had to go through rebidding"
       (tests/ground_truth/values.toml, icr-para-54), which the ICR Review restates in section 10.b on
       PDF page 13 (icr-review-2023-restates-para-54). P130164's PAD names the January 2011 Guidelines
-      (pad-procurement-guidelines).
+      (pad-procurement-guidelines). IN-RRSMP-7431-CW-RFB is P130164's (award-7431-reference), whose
+      one completion report, the ICR, raised the rebidding lesson (icr-para-54) and the permits lesson
+      (icr-para-55).

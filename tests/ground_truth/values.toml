@@ -215,6 +215,16 @@ quote = "2019-11-02T07:01:08Z"
 record = "api/documents/P130164.json"
 at = "documents.D31525018.disclosure_date"
 
+# The day the World Bank approved P130164, the date the hindsight test freezes Strata at (ticket 30's second
+# acceptance criterion; ticket 34).
+[[value]]
+id = "approval-p130164"
+says = "The World Bank approved P130164 on October 29, 2013."
+value = 2013-10-29
+quote = "2013-10-29T00:00:00Z"
+record = "api/projects/P130164.json"
+at = "projects.P130164.boardapprovaldate"
+
 [[value]]
 id = "mid-term-review"
 says = "The mid-term review took place on May 16, 2016."

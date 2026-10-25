@@ -126,6 +126,11 @@ export const galleryCopy = {
       purpose:
         "A planned package's parts: the criterion chips in each state, the What I understood card, each kind of chip editor, the saved stamp, the plan prompt, a comparable package's records and the Packages tab's list. Each sample is a package the server saved, recorded in tests/fixtures/api.",
     },
+    risks: {
+      title: "Procurement risks and what helped",
+      purpose:
+        "Section 3 of the package workspace: source pills, checkboxes and the risk table in each of its states, and the evidence drawer's views of a row. Each sample is an answer the server wrote, recorded in tests/fixtures/api, or one with a value changed.",
+    },
     icons: {
       title: "Icons",
       purpose:
@@ -305,6 +310,49 @@ export const galleryCopy = {
     pagination: "Pagination",
     skeletons: "Loading: each page's skeleton, sized to what it holds",
     lessonSource: "A library lesson in the evidence drawer, as a likely repeat or an answer cites it",
+  },
+  // The risks page's sections and states (ticket 30).
+  riskSections: {
+    pills: "Source pills",
+    checkboxes: "Checkboxes",
+    table: "The risk table, with nothing selected",
+    oneSelected: "One risk selected",
+    allSelected: "Every risk selected",
+    oneMost: "One risk came up most often",
+    manyTied: "Three or more risks tied",
+    preview: "An implementing agency preview, read-only",
+    dropped: "A selected risk no longer in the table",
+    saveFailed: "A save failed, on a package from a STEP row",
+    removed: "A row removed by the checks",
+    allRemoved: "Every row removed",
+    missing: "A package that lacks a criterion",
+    noComparables: "No comparable packages, on a package from a sentence",
+    noComparablesStep: "No comparable packages, on a package from a STEP row",
+    noReports: "No completion reports",
+    noLessons: "No lesson fits",
+    asOf: "As of a date",
+    loading: "Loading",
+    error: "Error",
+    claim: "The drawer's claim, when IEG's review restates the lesson",
+    awaiting: "The IEG line, when IEG has not reviewed the project yet",
+    notRestated: "The IEG line, when IEG's review did not restate the lesson",
+    reports: "The reports behind a row's count",
+    allReports: "Every report counted",
+  },
+  riskStates: {
+    // A third risk from the closed list (config/lessons.toml), for the three-way tie the fixture never reaches.
+    thirdRisk: "Slow bid evaluation or award",
+    // The criteria a package from a sentence still lacks, as the workspace names them.
+    missingList: "the category and the country",
+    pill: "A source pill",
+    pillLater: "A later pill from the same project",
+    pillActive: "Its source open in the drawer",
+    pillVisited: "Opened before",
+    unchecked: "Unchecked",
+    checked: "Checked",
+    readOnly: "Read-only, unchecked",
+    readOnlyChecked: "Read-only, checked",
+    labelled: "With its label, as the list shows it",
   },
   lessonStates: {
     chipDefault: "A source chip",

@@ -263,7 +263,10 @@ procurement rules its project followed, and ieg_status: ieg_lesson when IEG wrot
 review restated an ICR's lesson, not_restated when IEG's review is out and did not restate it, and awaiting \
 when IEG has not reviewed the project yet. Lessons are ranked by fit to your query, then by the strength of \
 their evidence, never by how often they were used; fit is the share of your query's words the lesson holds. \
-Cite a lesson by its evidence id and its version, and quote only its quotes, word for word."""
+Cite a lesson by its evidence id and its version, and quote only its quotes, word for word. Each quote is \
+a passage with its own evidence id. Given comparable packages, it also counts the completion reports of \
+their projects and how many of them raised each risk factor; those counts are in the result's summary, \
+which you cite for them."""
 adapter = "strata.tools.get_lessons:get_lessons"
 benchmark = "get-lessons-cost-estimates"
 sources = ["documents", "projects"]
@@ -298,6 +301,15 @@ required = false
 description = "How many lessons to return, from 1 to {lesson_review.get_lessons_max_results}. Leave it out for all of them, up to that many."
 
 [[tools.get_lessons.parameters]]
+name = "packages"
+type = "string"
+required = false
+description = """Comparable packages, by STEP reference separated by commas, such as find_comparables matched \
+for a package. With them, the result's reports count the completion reports (ICRs) of their projects that \
+Strata read, say why the other projects have none, and count how many of those reports raised each risk \
+factor, with the paragraph that raised it. Leave it out to count nothing."""
+
+[[tools.get_lessons.parameters]]
 name = "as_of"
 type = "date"
 required = false
@@ -310,9 +322,15 @@ quote it rests on, with its fit to the query and its rank."""
 row_fields = ["evidence_id", "public_from", "source", "lesson_id", "version", "statement", "risk_factors", "stage",
               "kind", "edition", "ieg_status", "review_date", "evidence", "project", "decided_on", "fit", "rank"]
 source_fields = ["table", "lesson_id", "version", "decided_on", "project_id", "project_name"]
-fields = ["query", "filters", "ranking"]
+fields = ["query", "filters", "ranking", "reports"]
 reasons = ["retired", "filtered_out", "ranked_below_limit"]
 abstentions = ["no_lessons", "unknown_risk_factor", "unknown_stage"]
+# The counts of completion reports behind ticket 30's risk table (projects, read, each risk factor's k) are
+# derived figures, so they come back as one citable record too (spec, "a derived figure the agent needs is
+# returned as a column"). Each quote a lesson rests on is a passage with its own evidence id, so a sentence
+# can cite the paragraph its lesson came from.
+summary_fields = ["reports"]
+nested_rows = ["evidence"]
 
 [tools.find_comparables]
 description = """Finds the comparable packages for one package in a Procurement Plan, or for a package someone \

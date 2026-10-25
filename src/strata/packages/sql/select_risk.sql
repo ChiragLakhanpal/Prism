@@ -1,0 +1,20 @@
+-- A viewer selected or unselected one risk for a package's PPSD (ticket 30): its row in
+-- strata.app.risk_selections is made the first time and changed every time after. Nothing is deleted.
+MERGE INTO strata.app.risk_selections AS t
+USING (
+  SELECT
+    :viewer_id AS viewer_id,
+    :package_kind AS package_kind,
+    :package_key AS package_key,
+    :risk_key AS risk_key,
+    CAST(:selected AS BOOLEAN) AS selected,
+    CAST(:saved_at AS TIMESTAMP) AS saved_at
+) AS s
+ON t.viewer_id = s.viewer_id AND t.package_kind = s.package_kind AND t.package_key = s.package_key
+  AND t.risk_key = s.risk_key
+WHEN MATCHED THEN UPDATE SET
+  selected = s.selected,
+  saved_at = s.saved_at
+WHEN NOT MATCHED THEN INSERT
+  (viewer_id, package_kind, package_key, risk_key, selected, saved_at, public_from)
+  VALUES (s.viewer_id, s.package_kind, s.package_key, s.risk_key, s.selected, s.saved_at, CAST(s.saved_at AS DATE))

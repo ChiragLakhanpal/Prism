@@ -24,6 +24,13 @@ async function serve(page: Page, answers: Record<string, Answer>) {
     "POST /api/evidence/opened": { body: '{"recorded":true}' },
     "/api/comparables?category=Works&country=KE&method=Request+for+Bids": { body: await recorded("comparables-planned-works-rfb-ke.json") },
     "/api/comparables?category=Works&country=KE&method=Request+for+Quotations": { body: await recorded("comparables-planned-works-rfq-ke.json") },
+    // Section 3, procurement risks and what helped (ticket 30): Kenya's comparables reach no completion report, and
+    // a package that lacks a criterion has none to look for.
+    "/api/planned-packages/pkg-000000000001/risks": { body: await recorded("risks-planned-rural-roads.json") },
+    "/api/planned-packages/pkg-000000000002/risks": {
+      body: JSON.stringify({ ...JSON.parse(await recorded("risks-planned-rural-roads.json")), empty_reason: "missing_criteria", p: null, m: null }),
+    },
+    "/api/planned-packages/pkg-000000000003/risks": { body: await recorded("risks-planned-rural-roads.json") },
   };
   const all = { ...base, ...answers };
   await page.route("**/api/**", async (route) => {

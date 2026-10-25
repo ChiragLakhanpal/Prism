@@ -19,6 +19,7 @@ import { LoadError } from "../components/LoadError";
 import { MonoWords } from "../components/MonoWords";
 import { FactsSkeleton, mono, PackageFactsList, PackageHeader } from "../components/PackageFacts";
 import { PastRange, type PastRangeState } from "../components/PastRange";
+import { RisksSection } from "../components/RisksSection";
 import { SkeletonLine, SkeletonText } from "../components/Skeleton";
 import { TextLink } from "../components/TextLink";
 import { copy } from "../copy";
@@ -134,6 +135,10 @@ export function PackagePage({ stepRef }: { stepRef: string }) {
         </div>
         <div className="mt-8">
           <PastRange state={sectionState} headingRef={sectionHeading} open={opening} />
+        </div>
+        {/* Section 3, procurement risks and what helped (ticket 30), with section 1's default criteria. */}
+        <div className="mt-6 @lg/page:mt-8">
+          <RisksSection apiHref={base} packageKey={facts.step_reference} kind="step" />
         </div>
       </>
     );

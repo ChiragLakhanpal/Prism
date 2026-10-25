@@ -24,7 +24,8 @@ export type BadgeKind =
   | "not-restated"
   | "may-repeat"
   | "rechecking"
-  | "overdue";
+  | "overdue"
+  | "ieg-restates";
 
 const lessons = copy.lessons.badges;
 
@@ -42,6 +43,8 @@ const KINDS: Record<BadgeKind, { state: State; Icon: LucideIcon; dashed: boolean
   "may-repeat": { state: "info", Icon: Info, dashed: false, text: lessons.mayRepeat },
   rechecking: { state: "info", Icon: Info, dashed: false, text: lessons.rechecking },
   overdue: { state: "warning", Icon: TriangleAlert, dashed: false, text: lessons.overdue },
+  // The evidence drawer's IEG line on a risk's lesson (ticket 30): an info badge, as Watch is.
+  "ieg-restates": { state: "info", Icon: Info, dashed: false, text: copy.packageRisks.drawer.iegRestates },
 };
 
 export function StatusBadge({ kind, className, describedBy }: { kind: BadgeKind; className?: string; describedBy?: string }) {
