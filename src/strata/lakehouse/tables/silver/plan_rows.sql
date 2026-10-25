@@ -21,6 +21,13 @@
 -- estimated_amount_usd        Estimated Amount (US$)
 -- actual_amount_usd           Actual Amount (US$)
 -- process_status              Process Status, such as Pending Implementation or Signed
+-- method_original             the Method cell as the plan writes it, such as STEP's French "Appel d'offres"
+--                             (ticket 42); empty when the cell is
+-- method_original_lang        the language of those words (config/method_names.toml), or empty for a name the
+--                             registry does not list
+-- method_mapped               true when the plan's words are an old or a French name stored as the current name
+--                             in method; false when they are the current name; empty for a name the registry
+--                             does not list, which method keeps as written and plan_data_notes notes
 -- pdf_page                    the PDF page the row is on
 -- parser                      the layout parser that read the page
 -- public_from                 the version's public date (ADR 0002)
@@ -43,6 +50,9 @@ CREATE TABLE IF NOT EXISTS strata.silver.plan_rows (
   estimated_amount_usd DECIMAL(18, 2),
   actual_amount_usd DECIMAL(18, 2),
   process_status STRING,
+  method_original STRING,
+  method_original_lang STRING,
+  method_mapped BOOLEAN,
   pdf_page INT NOT NULL,
   parser STRING NOT NULL,
   public_from DATE NOT NULL

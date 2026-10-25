@@ -2259,3 +2259,51 @@ def load_languages(path: Path = CONFIG_DIR / "languages.toml") -> Languages:
     if not any(language.code == ENGLISH and language.working for language in found):
         raise ConfigError(f"In {path.name}, English (en) must be listed as a working language.")
     return Languages(tuple(found))
+
+
+# ── The method-name registry (ticket 42) ─────────────────────────────────
+
+@dataclass(frozen=True)
+class MethodName:
+    """One name or code a source writes for a method, and the current Procurement Regulations' name it stands for."""
+
+    written: str
+    language: str
+    method: str
+    market_approach: str | None = None
+    source: str | None = None  # a recorded file under data/fixture/recorded, without .txt for a document
+    pdf_page: int | None = None
+    checked: bool = True  # read from a recorded source; false until a person checks it against one
+
+
+@dataclass(frozen=True)
+class MethodNames:
+    current: tuple[str, ...]
+    names: tuple[MethodName, ...]
+
+
+def load_method_names(path: Path = CONFIG_DIR / "method_names.toml") -> MethodNames:
+    """The current method names, then every other name, in the file's order. Each other name stands for a current
+    one, and names a recorded source or says it was not checked against one."""
+    data = _read(path)
+    _Entry(path, "the file", data).only({"current", "name"})
+    current = _Entry(path, "the file", data).texts("current")
+    if not current:
+        raise ConfigError(f"In {path.name}, current must list STEP's method names.")
+    known = {entry.code for entry in load_languages().languages}
+    names: list[MethodName] = []
+    for entry in _tables(path, data, "name"):
+        entry.only({"written", "language", "method", "market_approach", "source", "pdf_page", "checked"})
+        method = entry.text("method")
+        if method not in current:
+            entry._fail("method", f"names {method!r}, which is not one of current")
+        language = entry.text("language")
+        if language not in known:
+            entry._fail("language", f"names {language!r}, which config/languages.toml does not list")
+        checked = entry.table.get("checked", True)
+        source = entry.text("source", required=False)
+        if checked is not False and source is None:
+            entry._fail("source", "is missing. Name the recorded file that writes it, or set checked = false")
+        names.append(MethodName(entry.text("written"), language, method, entry.text("market_approach", required=False),
+                                source, entry.integer("pdf_page", required=False), checked is not False))
+    return MethodNames(current, tuple(names))
