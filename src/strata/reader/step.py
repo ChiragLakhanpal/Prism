@@ -9,7 +9,9 @@ for the sections, columns, steps and fixed values, and reads plans two ways:
   executing_agency(text) the Executing Agency(ies) line. The published text scrambles the tables,
   but each reference still sits at the start of its row, followed by " / " and the description.
 - From the tables (Route B): plan_rows(pages) reads the layout parser's tables into one PlanRow per
-  activity, with its Step dates. The method comes from the Method column, never from the reference.
+  activity, with its Step dates. The method comes from the Method column, never from the reference. A
+  method a plan writes by an old or a French name, such as STEP's French "Appel d'offres", is stored as
+  the current name, with the plan's words beside it (strata.lakehouse.clean.read_method; ticket 42).
 
 Fixed values (a review type, a method, a market approach, a procurement process, a contract type
 or a process status) are matched to STEP's words without their spaces, because a PDF cell drops
@@ -23,6 +25,8 @@ import re
 from dataclasses import dataclass, field
 from decimal import Decimal, InvalidOperation
 
+from strata.config import load_method_names
+from strata.lakehouse import clean
 from strata.reader.layout import Table
 
 # An Activity Reference No., such as KE-NWWDA-541055-CW-RFB or NWWDA-WSDP-03-2019-2020.
@@ -76,11 +80,7 @@ STEP_ALIASES = {"Teams of Reference": "Terms of Reference"}
 # STEP's fixed values, word for word, for the columns that take one.
 VALUES = {
     "review_type": ("Prior", "Post"),
-    "method": (
-        "Request for Bids", "Request for Quotations", "Request for Proposals", "Direct Selection",
-        "Quality And Cost-Based Selection", "Quality Based Selection", "Fixed Budget Selection",
-        "Least Cost Selection", "Consultant Qualification Selection", "Individual Consultant Selection",
-    ),
+    "method": load_method_names().current,  # the method-name registry's current names (config/method_names.toml)
     "market_approach": (
         "Open - International", "Open - National", "Limited - International", "Limited - National",
         "Direct - International", "Direct - National", "Open", "Limited", "Direct",
@@ -201,6 +201,8 @@ def _amount(text: str) -> Decimal | None:
 def _value(key: str, text: str):
     if key in AMOUNTS:
         return _amount(text)
+    if key == "method":
+        return clean.read_method(text).name if text.strip() else None
     if key in VALUES:
         return _known(text, VALUES[key]) if text.strip() else None
     return tidy(text) or None
@@ -263,6 +265,12 @@ def _read_table(table: Table, pdf_page: int, reading: Reading) -> None:
         for index, key in keys.items():
             if key != "activity":
                 row.fields[key] = _value(key, cells[index])
+            if key == "method" and cells[index].strip():
+                # The plan's own words beside the current name (ticket 42): an old or a French name maps to the
+                # current Procurement Regulations' name, and one the registry does not list stays as written.
+                read = clean.read_method(cells[index])
+                row.fields |= {"method_original": read.original, "method_original_lang": read.language,
+                               "method_mapped": read.mapped}
         for order, (step, planned, actual) in enumerate(steps, 1):
             row.steps.append(StepDates(step, order,
                                        _date(cells[planned]) if planned is not None else None,

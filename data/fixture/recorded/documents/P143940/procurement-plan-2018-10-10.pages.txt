@@ -1,0 +1,860 @@
+Source: https://documents.worldbank.org/curated/en/320861539160830195/pdf/Cameroon-AFRICA-P143940-Flood-Emergency-Project-Procurement-Plan.pdf
+License: The World Bank: Documents & Reports (documents.worldbank.org). License: CC BY 4.0.
+Recorded: 2026-10-25
+About: The Procurement Plan of October 10, 2018 for Cameroon's Flood Emergency Project (P143940), in French: its first pages follow the French plan template with the old method names (AOI, AON, SFQC), and its STEP tables write each method by STEP's French name, such as Appel d'offres (ticket 42). Documents API id 30486069.
+Pages: 14, one after each form feed, read from the PDF's text layer
+
+Page 1 of 11
+I.GENERAL
+II.I.1INFORMATIONS sur le Projet
+Emprunteur : République du Cameroun
+Ministère Responsable:  Ministère de l’Economie, de la Planification et l’Aménagement   du Territoire (MINEPAT) 
+Nom du Projet : Projet d’Urgence de lutte contre les  Inondations (PULCI)
+Identification : P143940
+Crédit  IDA N° :  52 76 – CM
+Agence d’Exécution du Projet : SEMRY
+I.2 Date d’approbation par la Banque du Plan de Passation des Marchés : ((1) 9 octobre 2014 ; (2)- Juin 2016 ; (3) 13 
+octobre 2017
+I.3 Date de publication de l’Avis Général de Passation des Marchés: 17/12/2013
+CAMEROUN –PROJET D’URGENCE DE LUTTE CONTRE LES INONDATIONS
+PLAN DE PASSATION DES MARCHES SIMPLIFIE– 05 FEVRIER 2018
+ Public Disclosure Authorized
+Public Disclosure Authorized
+Public Disclosure Authorized
+Public Disclosure Authorized
+Page 2 of 11
+I.4 Période couverte par le Plan de Passation des Marchés : 2017-2019
+I.5 Evaluation du risque par P-RAMS (Procurement Risk Assessment and Management System): ElevéPage 3 of 11
+II. TRAVAUX, FOURNITURES ET SERVICES AUTRES QUE LES SERVICES DE CONSULTANTS
+II.1 Dispositions relatives aux seuils de revue préalable : Seuils requis pour les décisions de marchés soumis à la revue 
+préalable de la Banque, tel que prévu dans l’annexe 1 des "Directives de Passation des Marchés de fournitures, de travaux et de 
+services (autres que les services de consultants) par les Emprunteurs de la Banque mondiale dans le cadre des prêts de la BIRD et des 
+crédits de l’AID.
+Seuils de revue a priori
+Catégories de marchés/Méthode de passation des 
+marchés
+Montants estimatifs des 
+contrats  en millions de 
+dollars américains
+Observations
+Travaux, Contrats clé en main et Contrats de Fourniture et 
+Montage d’Installations
+>= 5
+Fournitures, Système d’information, et Services autres que 
+les services de consultants
+>= 1.5
+Travaux, Contrats clé en main et 
+Contrats de Fourniture et Montage 
+d’Installations
+>= 5
+Contrats à passer 
+par entente directe Fournitures, Système d’information, 
+et Services autres que les services de 
+consultants
+>=  1.5
+Les justifications de l’entente directe 
+devront être jointes et approuvées avec  
+le PPM
+II.2 Pré qualification : Aucune n’a été pour l’instant identifiée. Toutefois, en cas de pré-qualification, les soumissionnaires seront 
+pré-qualifiées en accord avec les dispositions des paragraphes 2.9 et 2.10 des directives.
+II.3 Seuils pour les méthodes de passation des marchés : Les seuils de passation des marchés se présentent comme suit au 
+vu des conditions du marché :Page 4 of 11
+TRAVAUX (US$ équivalent)
+FOURNITURES ET SERVICES AUTRE QUE LES SERVICES DE 
+CONSULTANTS (US$ équivalent)
+AOI AON CF AOI AON CF
+≥10.000.000 <10.000.000 < 200:000 ≥ 1.000.000 < 1.000.000 < 100.000
+II.4 Dispositions spéciales sur les marchés : Concernant les acquisitions de véhicules et de carburant, en fonction 
+des circonstances et des besoins spécifiques du pays, le seuil pour la consultation de fournisseurs pourrait être porté à la 
+contre-valeur d’USD 500,000 (en prenant soin de consulter tous les principaux concessionnaires de marque ou distributeurs de 
+produits pétroliers).Page 5 of 11
+II.5 Liste des marchés avec les méthodes de passation et les dates de mise en œuvre
+Travaux 
+1 2 3 4 5 6 7 8 9 10
+Ref
+. 
+No.
+Description
+Source de 
+finance
+ment
+Cout estimé 
+($)
+Méthode 
+de 
+passation 
+marché
+Pré-
+qualificati
+on 
+(oui/non)
+Préférence 
+Nationale
+Revue 
+Banque 
+(Priori/ 
+Post)
+Date 
+prévue 
+ouverture
+Observati
+ons/ Date 
+de fin 
+des 
+prestatio
+ns
+COMPOSANTE A-REHABILITATION DES PRINCIPAUX OUVRAGES HYDRAULIQUES POUR LA PROTECTION CONTRE LES 
+INONDATIONS ET LA PRODUCTION RIZICOLE
+1
+Travaux de construction 
+de 30 forages dans les 
+villages touchés par le 
+projet
+IDA 300 000 AON N/A N/A POST 21/11/2017
+15/05/20
+18
+COMPOSANTE B- GESTION DES RISQUES DE CATASTROPHES ET DES SITUATIONS D’URGENCE
+B-1 Renforcement de la gestion des données hydrométéorologiques
+B.2  Renforcement  de la Gestion des situations  d’Urgence
+COMPOSANTE C-APPUI INSTITUTIONNEL
+C-1 Appui institutionnel
+C-2 Appui à la mise en œuvre du projet
+2
+Réaliser les travaux de 
+finition des  
+aménagements extérieurs 
+des bureaux siège
+IDA 20 000
+CF
+N/A N/A POST 20/07/2017
+30/10/20
+17Page 6 of 11
+Activité déjà identifiée, mais dont le mode de sélection a changé
+Activité inchangée par rapport au dernier PPM approuvé, seules les dates ont éventuellement été mises à jour
+Nouvelle activité
+Fournitures et Services autres que les services de consultants
+1 2 3 4 5 6 7 8 9 10
+Ref. 
+No.
+Description
+Source de 
+financeme
+nt
+Cout 
+estimé ($)
+Méthode 
+de 
+passation 
+marché
+Pré-
+qualification 
+(oui/
+non)
+Préféren
+ce 
+National
+e
+Revue 
+(Priori/ 
+Post)
+Date prévue 
+ouverture
+Observations/ Date 
+de fin des 
+prestations
+COMPOSANTE A-REHABILITATION DES PRINCIPAUX OUVRAGES HYDRAULIQUES POUR LA PROTECTION CONTRE LES INONDATIONS ET LA 
+PRODUCTION RIZICOLE
+A1 : Réhabilitation de la digue du Logone, 
+A2 : Réhabilitation du barrage de Maga et des ouvrages connexes, 
+A3 : Réhabilitation des périmètres irriguésPage 7 of 11
+COMPOSANTE B- GESTION DES RISQUES DE CATASTROPHES ET DES SITUATIONS D’URGENCE
+B-1 Renforcement de la gestion des données hydrométéorologiques
+B-2 Renforcement  de la gestion des situations  d’urgence
+1
+Acquérir et pré-positionner le 
+matériel de première intervention
+IDA 1 032 000 AOI N/A N/A POST 22/02/2018 22/05/2018
+COMPOSANTE C-APPUI INSTITUTIONNEL
+C1 : Appui institutionnelPage 8 of 11
+1 2 3 4 5 6 7 8 9 10
+Ref. 
+No.
+Description
+Source de 
+financeme
+nt
+Cout 
+estimé ($)
+Méthode 
+de 
+passatio
+n 
+marché
+Pré-
+qualification 
+(oui/
+non)
+Préféren
+ce 
+National
+e
+Revue 
+(Priori/ 
+Post)
+Date 
+prévue 
+ouverture
+Observations/ Date 
+de fin des 
+prestations
+C2 : Appui à la mise en œuvre du projet
+2
+Acquérir les biens et consommables 
+(informatiques) de bureau 
+IDA 64 000 CF N/A N/A POST 16/08/2017
+Sur commande, un  
+(01) an
+3
+Acquérir les kits d’EPI (PGES) par 
+semestre
+IDA 8 000 CF N/A N/A POST 12/10/2017 30/10/2017
+4
+Confectionner les dépliants, 
+affiches, oriflammes, tracts et 
+gadgets 
+IDA 12 000 CF N/A N/A POST 22/06/2017 31/12/2017
+5
+Acquérir les équipements 
+audiovisuels et de sonorisation
+IDA 16 000 CF N/A N/A POST 16/08/2017 05/09/2017
+6
+Acquérir les équipements d’accès 
+aux informations et d’échanges de 
+données
+IDA 2 000 CF N/A N/A POST 12/10/2017 30/10/2017
+Activité déjà identifiée, mais dont le mode de sélection a changé
+Activité inchangée par rapport au dernier PPM approuvé, seules les dates ont éventuellement été mises à jour
+Nouvelle activité
+Sélection des Consultants
+III.1 Dispositions relatives aux seuils de revue préalable des marchés : Page 9 of 11
+Décisions de sélection sujet à la revue préalable de la Banquet comme indiqué dans l’annexe 1 du Guide de Sélection et 
+d’Emploi des Consultants par les Emprunteurs de la Banque Mondiale dans le cadre des Prêts de la BIRD et des Crédits et 
+Dons de l’AID
+Seuils de revue a prioriMéthode de sélection/Catégories de 
+marchés 
+Montants estimatifs des 
+contrats  en millions de 
+dollars américains
+Observations
+Méthode compétitive/Firmes de consultants >= 0.5 
+Entente directe/firmes de consultants >= 0.5
+Entente directe/Consultants individuel >= 0.2
+Les justifications de l’entente directe devront être 
+jointes et approuvées avec le PPM
+Méthode Compétitive (Comparaison de CVs)/ 
+Consultants individuels 
+>= 0.2 
+III.2 Liste restreinte composée entièrement de firmes nationales :
+La liste restreinte de consultants pour les prestations d’études d’ingénierie, de contrôle et de surveillance estimées à moins de 
+300,000 US$ par contrat, et pour tout autre type de prestations, estimées à moins de 100 000 US$ par contrat, peut comporter 
+entièrement de consultants nationaux selon les dispositions du paragraphe 2.7 des Directives de Sélection et d’Emploi des 
+Consultants, et l’Emprunteur ne procède pas à une publication dans UNDB.
+III.3 Autre arrangement spécial de Sélection de consultants : 
+Le seuil pour l’utilisation de la méthode de sélection de consultant fondée sur les qualifications des consultants  est déterminé 
+au cas par cas en tenant compte de la nature et de la complexité de la mission ; cependant, ce seuil ne devrait pas dépasser la 
+contre-valeur de USD 300,000 sauf dans des cas exceptionnels prévus  au paragraphe  3.7  des directives pour la sélection et 
+l’emploi des consultants par les emprunteurs de la Banque Mondiale dans le cadre des Prêts de la BIRD et des Crédits et Dons 
+de l’AIDPage 10 of 11
+II.4 Liste des Consultations, avec les méthodes de sélection et le calendrier de mise œuvre
+1 2 2 4 5 6 7 8
+Ref. 
+No.
+Description
+Source de 
+financem
+ent
+Coût 
+estimé
+($) 
+Méthode 
+de 
+sélection
+Revue de la 
+Banque 
+(Priori/Post)
+Date 
+prévue de 
+l’ouvertur
+e
+Observations/ Date de fin 
+des prestations
+Composante A-Réhabilitation des Infrastructures Hydrauliques
+01
+Recruter un consultant en vue de la réalisation des 
+études sur les évacuateurs de crues du lac de maga y 
+compris les ouvrages de franchissement et de 
+régulations sur le petit Goromo
+IDA 380 000 ED POST
+20/03/201
+8
+20/08/2018
+02
+Recruter un consultant chargé de l’étude en vue de 
+l'élaboration d'un modèle hydraulique relatif à la 
+gestion efficace des ressources en eau du bassin 
+versant du Logone à TEKELE y compris la bathymétrie 
+du lac de maga et son envasement
+IDA 800 000 ED PRIORI
+20/02/201
+8
+30/07/2018
+03
+Recrutement des consultants individuels pour la 
+réalisation des études topographiques pour la 
+détermination du volume des remblais 
+compactes a mettre en place sur le tronçon 
+djafga – yagoua  digue du logone
+IDA 23 000 CI POST
+10/02/20
+18
+30/03/2018  REVUE 
+TECHNIQUE
+COMPOSANTE B- GESTION DES RISQUES DE CATASTROPHES ET DES SITUATIONS D’URGENCE
+B-1 Renforcement de la gestion des données hydrométéorologiques 
+B.2  Renforcement  de la gestion des situations  d’urgence
+COMPOSANTE C : APPUI INSTITUTIONNEL
+C1-Appui Institutionnel
+C-2 Appui à la mise en œuvre du projet
+04
+Audit comptable (Auditeur externe sur 2 ans)
+IDA 50,000 SFQC POST 10/08/2017
+31/12/2018  REVUE 
+TECHNIQUEPage 11 of 11
+05
+Recruter un ingénieur génie civil supplémentaire 
+IDA 36 000 ED POST
+28/07/201
+7
+31/12/2018  REVUE 
+TECHNIQUE
+III.5 Lexique des Sigles et Abréviations
+AOI : Appel d’Offres International
+QC : Sélection fondée sur les Qualifications des 
+Consultants
+AON : Appel d’Offres National SMC : Sélection au Moindre Coût
+CF : Consultation des Fournisseurs CI : Consultant Individuel
+CI : Consultant Individuel Post : Revue a posteriori
+SFQC : Sélection Fondée sur la Qualité et le 
+Coût Priori : Revue a priori
+SFQ : Sélection Fondée sur la Qualité PPM : Plan de Passation des Marchés
+LEGENDE :
+Activité déjà identifiée, mais dont le mode de sélection a changé
+Activité inchangée par rapport au dernier PPM approuvé, seules les dates ont éventuellement été mises à jour
+Nouvelle activitéPage 1
+PROCUREMENT
+PLAN
+Cameroon : Flood Emergency Project
+General Information
+Country: Cameroon Bank’s Approval Date of the Original Procurement Plan: 2018-02-23
+Revised Plan Date(s): (comma delineated, leave blank if none)2018-10-10
+Project ID: P143940 GPN Date:
+Project Name: Flood Emergency Project
+Loan / Credit No: IDA / 52760
+Executing Agency(ies):PROJET D'URGENCE DE LUTTE CONTRE LES INNONDATIONS
+WORKS
+Activity Reference No. /
+Description
+Loan / Credit
+No.
+Component Review Type Method
+Market
+Approach
+Procurement
+Process
+Prequalification
+(Y/N)
+Actual Amount
+(US$)
+Process
+Status
+Draft Pre-qualification
+Documents
+Prequalification
+Evaluation Report
+ Draft Bidding
+Document /
+Justification
+Specific Procurement
+Notice / Invitation
+Bidding Documents
+as Issued
+Proposal Submission /
+Opening / Minutes
+Bid Evaluation
+Report and
+Recommendation for
+Award
+Signed Contract Contract Completion
+Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual
+ CM-PULCI-50083-CW-RFB /
+Travaux de construction de
+30 forages dans les villages
+touchés par le projet
+ 
+IDA / 52760 A posteriori Appel d'offres Open - National
+ 
+Single Stage - One
+Envelope
+0.00
+En attente
+d'exécution
+2017-07-25 2017-07-30 2017-09-10 2017-10-10 2018-02-14 2018-08-13
+ CM-PULCI-50649-CW-RFB /
+Réaliser les travaux de
+finition des  aménagements
+extérieurs des bureaux siège
+ 
+IDA / 52760 A posteriori Appel d'offres Open - National
+ 
+Single Stage - One
+Envelope
+0.00
+En attente
+d'exécution
+2017-07-05 2017-07-10 2017-08-21 2017-09-20 2017-10-25 2018-04-23
+ CM-PULCI-67752-CW-RFQ /
+Travaux de Génie Civil pour
+la connexion en fibre optique
+du PULCI
+ 
+IDA / 52760 A posteriori Demande de prix Limited
+ 
+Single Stage - One
+Envelope
+0.00
+En cours
+d'exécution
+2018-06-25 2018-07-03 2018-07-17
+ CM-PULCI-69646-CW-RFQ /
+BUREAU DU LOCAL DE
+TRAVAIL DU CENTRE
+DEPARTEMENTAL DE
+GESTION DE CRISE -
+TRAVAUX DE REFECTION
+DU LOCAL
+ 
+IDA / 52760 A posteriori Demande de prix Limited
+ 
+Single Stage - One
+Envelope
+0.00 Annulé 2018-07-18 2018-09-12 2019-03-11
+GOODS
+Activity Reference No. /
+Description
+Loan / Credit
+No.
+Component Review Type Method
+Market
+Approach
+Procurement
+Process
+Prequalification
+(Y/N)
+Actual Amount
+(US$)
+Process
+Status
+Draft Pre-qualification
+Documents
+Prequalification
+Evaluation Report
+ Draft Bidding
+Document /
+Justification
+Specific Procurement
+Notice / Invitation
+Bidding Documents
+as Issued
+Proposal Submission /
+Opening / Minutes
+Bid Evaluation
+Report and
+Recommendation for
+Award
+Signed Contract Contract Completion
+Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual
+ CM-PULCI-50659-GO-RFQ /
+Acquérir les kits pour le
+travail des observateurs des
+stations hydrométriques et
+météorologiques
+ 
+IDA / 52760 A posteriori Demande de prix Limited
+ 
+Single Stage - One
+Envelope
+0.00
+En attente
+d'exécution
+2017-02-20 2017-04-17 2017-10-14
+ CM-PULCI-50662-GO-RFQ /
+Mobilier pour la salle des
+conférences de la SEMRY
+ 
+IDA / 52760 A posteriori Demande de prix Open - National
+ 
+Single Stage - One
+Envelope
+0.00
+En attente
+d'exécution
+2017-08-02 2017-09-27 2018-03-26
+ CM-PULCI-50663-GO-RFQ /
+Equipements topographiques
+(Traceur de plan)
+ 
+IDA / 52760 A posteriori Demande de prix Limited
+ 
+Single Stage - One
+Envelope
+0.00
+En attente
+d'exécution
+2017-04-25 2017-06-20 2017-12-17
+ CM-PULCI-40532-GO-RFQ /
+Biens et consommables
+(informatiques) de bureau
+ 
+IDA / 52760 A posteriori Demande de prix Limited
+ 
+Single Stage - One
+Envelope
+0.00
+En attente
+d'exécution
+2017-08-21 2017-10-16 2017-11-15Page 2
+ CM-PULCI-40534-GO-RFQ /
+kits d’EPI (PGES) par
+semestre
+ 
+IDA / 52760 A posteriori Demande de prix Open - National
+ 
+Single Stage - One
+Envelope
+0.00
+En cours
+d'exécution
+2017-10-17 2017-12-12 2018-01-11
+ CM-PULCI-50550-GO-RFQ /
+Confectionner les dépliants,
+affiches, oriflammes, tracts
+et gadgets
+ 
+IDA / 52760 A posteriori Demande de prix Limited
+ 
+Single Stage - One
+Envelope
+0.00
+En cours
+d'exécution
+2017-06-27 2017-08-22 2018-02-18
+ CM-PULCI-50202-GO-RFQ /
+Acquérir un Logiciels de
+gestion de données
+hydrométriques,
+météorologiques et former les
+utilisateurs, ainsi qu’un
+Logiciel d’information
+géographique (SIG), pour le
+compte du PULCI
+ 
+IDA / 52760 A posteriori Demande de prix Limited
+ 
+Single Stage - One
+Envelope
+0.00
+En attente
+d'exécution
+2017-07-06 2018-03-05 2018-04-09
+ CM-PULCI-50079-GO-RFB /
+Matériel de première
+intervention - acquisition et
+prepositionnemet
+ 
+IDA / 52760 A posteriori Appel d'offres
+Open -
+International
+ 
+Single Stage - One
+Envelope
+864,206.49
+En cours
+d'exécution
+2017-09-13 2017-09-18 2018-03-10 2018-04-09 2018-05-14 2018-11-10
+ CM-PULCI-69653-GO-RFQ /
+BUREAU DU LOCAL DE
+TRAVAIL DU CENTRE
+DEPARTEMENTAL DE
+GESTION DE CRISE -
+MOBILIER ET
+EQUIPEMENT DU LOCAL
+ 
+IDA / 52760 A posteriori Demande de prix Limited
+ 
+Single Stage - One
+Envelope
+0.00
+En cours
+d'exécution
+2018-07-18 2018-09-12 2019-03-11
+ CM-PULCI-75268-GO-RFQ /
+Equipement en mobiliers de
+bureau du local de travail
+du centre départemental de
+gestion de crise
+ 
+IDA / 52760 A posteriori Demande de prix Limited
+ 
+Single Stage - One
+Envelope
+0.00 Annulé 2018-08-29 2018-10-24 2019-04-22
+ CM-PULCI-75267-GO-DIR /
+Acquisition d'une imprimante
+et d'un scanner pour le
+SPM du PULCI
+ 
+IDA / 52760 A posteriori Demande de prix Limited
+ 
+Single Stage - One
+Envelope
+0.00
+En attente
+d'exécution
+2018-10-15 2018-12-10 2019-06-08
+NON CONSULTING SERVICES
+Activity Reference No. /
+Description
+Loan / Credit
+No.
+Component Review Type Method
+Market
+Approach
+Procurement
+Process
+Prequalification
+(Y/N)
+Actual Amount
+(US$)
+Process
+Status
+Draft Pre-qualification
+Documents
+Prequalification
+Evaluation Report
+ Draft Bidding
+Document /
+Justification
+Specific Procurement
+Notice / Invitation
+Bidding Documents
+as Issued
+Proposal Submission /
+Opening / Minutes
+Bid Evaluation
+Report and
+Recommendation for
+Award
+Signed Contract Contract Completion
+Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual
+ CM-PULCI-52410-NC-RFB /
+acquisition, installation des
+équipements
+hydrométéorologiques,
+de navigation ainsi que la
+formation à leur utilisation
+et service après-vente
+ 
+IDA / 52760 A posteriori Appel d'offres
+Open -
+International
+ 
+Single Stage - One
+Envelope
+0.00
+En cours
+d'exécution
+2018-03-30 2018-03-30 2018-03-30 2018-03-30 2018-05-04 2018-10-31
+ CM-PULCI-57376-NC-RFQ /
+Impression du plan de
+contingence
+ 
+IDA / 52760 A posteriori Demande de prix Open - National
+ 
+Single Stage - One
+Envelope
+0.00
+En attente
+d'exécution
+2018-05-15 2018-07-10 2019-01-06
+ CM-PULCI-67751-NC-RFQ /
+connexion en fibre optique
+de PULCI à Yagoua
+ 
+IDA / 52760 A posteriori Demande de prix Limited
+ 
+Single Stage - One
+Envelope
+0.00
+En cours
+d'exécution
+2018-06-25 2018-06-28 2018-07-12Page 3
+ CM-PULCI-75266-NC-DIR /
+FORMATION EN
+CONDUITE DEFENSIVE
+DES CHAUFFEURS DU
+PULCI
+ 
+IDA / 52760 A posteriori
+Passation de
+marché de gré à
+gré
+Direct
+ 
+0.00
+En attente
+d'exécution
+2018-08-24 2018-08-29 2018-10-03 2019-04-01
+CONSULTING FIRMS
+Activity Reference No. /
+Description
+Loan / Credit
+No.
+Component Review Type  Method
+Market
+Approach
+Contract Type Actual Amount
+(US$)
+Process Status Terms of Reference
+Expression of Interest
+Notice
+Short List and Draft
+Request for Proposals
+Request for Proposals
+as Issued
+Opening of Technical
+Proposals / Minutes
+ Evaluation of
+Technical Proposal
+Combined Evaluation
+Report and Draft
+Negotiated Contract
+Signed Contract Contract Completion
+Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual Planned Actual
+ CM-PULCI-50664-CS-QCBS
+/ Audit comptable (Auditeur
+externe sur 2 ans)
+ 
+IDA / 52760 A posteriori
+Sélection fondée
+sur la qualité et
+le coût
+Open - National
+ 
+0.00
+En cours
+d'exécution
+2017-08-18 2017-09-08 2017-10-22 2017-11-19 2017-12-19 2018-01-23 2018-02-27 2019-02-27
+ CM-PULCI-57365-CS-CQS /
+Etudes techniques pour la
+réalisation des travaux en
+vue du fonctionnement
+optimal de la station de
+pompage N°4
+ 
+IDA / 52760 A posteriori
+Sélection fondée
+sur les
+qualifications des
+consultants
+Open - National
+ 
+0.00
+En cours
+d'exécution
+2018-05-01 2018-05-22 2018-07-05 2018-08-04 2018-09-08 2018-11-07
+ CM-PULCI-57367-CS-CQS /
+Études techniques détaillées
+en vue de la mise en place
+d'un système
+d'approvisionnement en eau
+potable dans la zone
+d'intervention du projet
+ 
+IDA / 52760 A posteriori
+Sélection fondée
+sur les
+qualifications des
+consultants
+Open - National
+ 
+0.00
+En cours
+d'exécution
+2018-05-01 2018-05-22 2018-07-05 2018-08-04 2018-09-08 2018-10-23
+ CM-PULCI-50224-CS-CDS /
+Recrutement d'organisations
+locales pour la  vulgarisation
+du Plan de contingence
+ 
+IDA / 52760 A posteriori
+Sélection fondée
+sur les
+qualifications des
+consultants
+Open - National
+ 
+0.00
+En cours
+d'exécution
+2018-04-23 2018-05-07 2018-05-13 2018-05-23 2018-06-01 2018-11-28
+ CM-PULCI-57362-CS-CQS /
+Etudes techniques en vue de
+la construction d'une route
+en terre avec couche de
+roulement en latérite en
+pied de digue (60 km) entre
+Djafga - Pouss-Tékélé
+ 
+IDA / 52760 A posteriori
+Sélection fondée
+sur les
+qualifications des
+consultants
+Open - National
+ 
+0.00
+En cours
+d'exécution
+2018-04-27 2018-05-18 2018-07-01 2018-07-31 2018-09-04 2019-02-01
+ CM-PULCI-57364-CS-CQS /
+Études techniques pour la
+réalisation des travaux de
+construction de 03 ouvrages
+de franchissement, sur le
+Mayo Guerléo, sur le petit
+Goromo et entre le casier 10
+de la SP4 et le village
+Dama
+ 
+IDA / 52760 A posteriori
+Sélection fondée
+sur les
+qualifications des
+consultants
+Open - National
+ 
+0.00
+En cours
+d'exécution
+2018-04-25 2018-05-16 2018-06-29 2018-07-29 2018-09-02 2018-12-01
+INDIVIDUAL CONSULTANTS

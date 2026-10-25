@@ -5,5 +5,35 @@
  "has_token": true,
  "staff": false,
  "agency": null,
- "own_view": "staff"
+ "own_view": "staff",
+ "language": {
+  "code": "en",
+  "source": "default",
+  "saved": null,
+  "team": null,
+  "link": null,
+  "saved_readable": true,
+  "choices": [
+   {
+    "code": "en",
+    "endonym": "English",
+    "direction": "ltr"
+   },
+   {
+    "code": "fr",
+    "endonym": "Français",
+    "direction": "ltr"
+   },
+   {
+    "code": "es",
+    "endonym": "Español",
+    "direction": "ltr"
+   },
+   {
+    "code": "pt",
+    "endonym": "Português",
+    "direction": "ltr"
+   }
+  ]
+ }
 }

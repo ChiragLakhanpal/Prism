@@ -50,9 +50,16 @@ export function deleteJson<T>(path: string): Promise<T> {
 // GET /api/me: who the Databricks App says is viewing. The token never leaves the server.
 // staff says whether the viewer has the World Bank staff role (ticket 37): Following and Follow are theirs.
 export type Me = {
-  email: string | null; name: string | null; signed_in: boolean; has_token: boolean; staff?: boolean;
+  email: string | null;
+  name: string | null;
+  signed_in: boolean;
+  has_token: boolean;
+  staff?: boolean;
   // Ticket 38: the implementing agency whose team the viewer is on, and the view the server applies to them.
-  agency?: { name: string; agency_id: string } | null; own_view?: "staff" | "piu";
+  agency?: { name: string; agency_id: string } | null;
+  own_view?: "staff" | "piu";
+  // The language of answers and drafts in effect, and where it came from (ticket 42).
+  language?: import("./lang").WorkingLanguage;
 };
 
 // One page of a list the server searches and pages (ticket 21): the rows shown, and the range and

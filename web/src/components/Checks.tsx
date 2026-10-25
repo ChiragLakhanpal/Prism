@@ -76,7 +76,7 @@ export function CheckLine({
   quotes?: { found: number; total: number };
   // Check 4 on the sentences on screen: how many a model judged, all of which follow, since a sentence
   // that does not is removed, and how many needed no model. No part when none was judged.
-  judged?: { judged: number; proven: number };
+  judged?: { judged: number; proven: number; crossLanguage?: number };
   notChecked: NotChecked[];
   // The quotes' clause in other words, such as "quotes are in their sources" where some quotes come from a notice,
   // which has no pages (ticket 31; the 31 brief, section 6.4).
@@ -109,6 +109,17 @@ export function CheckLine({
               <>
                 {" "}
                 {(judged.proven === 1 ? words.provenOthers.one : words.provenOthers.many).replace("{count}", formatCount(judged.proven))}
+              </>
+            )}
+            {/* A model judged these across two languages, so the line says how many (the 42 brief, section 5.5). */}
+            {(judged.crossLanguage ?? 0) > 0 && (
+              <>
+                {" "}
+                {judged.judged === 1
+                  ? words.crossLanguage.one
+                  : judged.crossLanguage === judged.judged
+                    ? words.crossLanguage.all
+                    : words.crossLanguage.some(formatCount(judged.crossLanguage ?? 0))}
               </>
             )}
           </span>{" "}

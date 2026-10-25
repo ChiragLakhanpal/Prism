@@ -23,6 +23,7 @@ import { TopNav, type Viewer } from "./components/TopNav";
 import { copy } from "./copy";
 import { answer, ask, earlier, removedScopes } from "./lib/answer";
 import { getJson, type Me } from "./lib/api";
+import { languageName, workingLanguage, type WorkingLanguage } from "./lib/lang";
 import { draftScope } from "./lib/drafts";
 import { FOLLOWING_HREF, staffRole } from "./lib/following";
 import { officerAgency } from "./lib/uploads";
@@ -37,13 +38,15 @@ import { fill, isDay, matchRoute, type Match } from "./routes";
 
 const viewer = createStore<Viewer>({ status: "loading" });
 
-async function readViewer() {
+// The page's ?lang= goes with it, so the server says which language of answers and drafts is in effect (ticket 42).
+async function readViewer(lang: string | null = new URLSearchParams(window.location.search).get("lang")) {
   try {
-    const me = await getJson<Me>("/api/me");
+    const me = await getJson<Me>(lang ? `/api/me?lang=${encodeURIComponent(lang)}` : "/api/me");
     viewer.set(me.signed_in && me.email ? { status: "signed-in", email: me.email, agency: me.agency?.name ?? null }
       : me.signed_in ? { status: "error" } : { status: "signed-out" });
     staffRole.set(Boolean(me.staff));
     officerAgency.set(me.agency ?? null);
+    workingLanguage.set(me.language ?? null);
   } catch {
     viewer.set({ status: "error" });
     staffRole.set(false);
@@ -109,9 +112,12 @@ const AS_OF_PAGES: ReadonlySet<string> = new Set(["data", "following", "activity
 
 // The alert slot: errors first, then what the address asks for that I can't show yet. Ticket 40
 // replaces the view and as-of alerts with its preview and as-of banners in this same slot.
-function alerts(problem: Problem, search: string, asOfUse: AsOfUse, appliesView: boolean): { state: "error" | "info"; text: string }[] {
+function alerts(problem: Problem, search: string, asOfUse: AsOfUse, appliesView: boolean, language: WorkingLanguage | null): { state: "error" | "info"; text: string }[] {
   const params = new URLSearchParams(search);
   const found: { state: "error" | "info"; text: string }[] = [];
+  // A ?lang= no working language matches: I use the language in effect without the link, and never repeat the link's
+  // text (the 42 brief, section 5.2).
+  if (language?.link === "unknown" && params.get("lang") !== null) found.push({ state: "info", text: copy.language.alertUnknown(languageName(language.code)) });
   if (problem === "no_access") found.push({ state: "error", text: copy.alerts.noAccess });
   if (problem === "no_identity") found.push({ state: "error", text: copy.alerts.noIdentity });
   const view = params.get("view");
@@ -157,6 +163,15 @@ export function App() {
   const evidenceId = evidenceIn(here.search);
   const asOf = params.get("asof");
   const view = params.get("view");
+  const language = useStore(workingLanguage);
+  const lang = params.get("lang");
+  // The language of answers and drafts follows the address's ?lang= as it changes (ticket 42).
+  const firstLang = useRef(lang);
+  useEffect(() => {
+    if (firstLang.current === lang) return;
+    firstLang.current = lang;
+    void readViewer(lang);
+  }, [lang]);
   // The answer shows on the history entry it was asked on: the current one, or the last one finished there.
   const shown = run && run.asked.key === here.key ? run : (kept[here.key] ?? null);
 
@@ -241,14 +256,15 @@ export function App() {
       scope: chip,
       asOf: asOf && isDay(asOf) ? asOf : null,
       view: view === "piu" || view === "public" ? view : null,
-      lang: params.get("lang"),
+      // The language in effect: the link's, your saved choice, your team's or English, as the server said (ticket 42).
+      lang: workingLanguage.get()?.code ?? null,
       key: address.get().key,
     });
 
   // A page that applies the as-of date itself, such as the Data readiness page (data_readiness_for takes one),
   // Following or the activity page, gets no alert that says it shows today's data (pageUse).
   const use = pageUse(match);
-  const slot = alerts(problem, here.search, use.asOf, use.view);
+  const slot = alerts(problem, here.search, use.asOf, use.view, language);
   return (
     <Frame
       nav={

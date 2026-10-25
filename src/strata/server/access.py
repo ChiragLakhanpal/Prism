@@ -106,6 +106,10 @@ class Access:
         """The implementing agency whose team the viewer is on (ticket 38), or None: such a viewer is an implementing
         agency officer, who uploads their plans and drafts for their own agency."""
         return self.team(viewer).agency if viewer.user_id else None
+    def team_language(self, viewer: Viewer) -> str | None:
+        """The working language config/roles.toml sets for the viewer's team (ticket 42), or None."""
+        held = set(self.reader.groups(viewer))
+        return next((team.working_language for team in self.roles.teams if held & set(team.groups)), None)
 
     def is_staff(self, viewer: Viewer) -> bool:
         """Whether the viewer has the World Bank staff role: one of their workspace groups is one the roles file's

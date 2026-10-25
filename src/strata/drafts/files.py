@@ -133,6 +133,44 @@ class Footnote:
     number: int
 
 
+@dataclass(frozen=True)
+class Spoken:
+    """A run of text in a language other than the Normal style's English, which Word proofs in its locale (ticket 42):
+    a writer's sentence in French carries fr-FR, and the words it quotes carry their source's locale."""
+
+    text: str
+    locale: str
+
+
+def _locale(code: str | None) -> str:
+    """The Word proofing locale of a language (config/languages.toml), English's for a language Strata does not
+    write in or for a record, which STEP writes in English."""
+    from strata import languages
+
+    return languages.language(code).word_locale
+
+
+def written_runs(sentence: dict, draft: dict) -> list:
+    """A kept sentence as Word runs: the sentence in its draft's language, with each run of quoted words in the
+    language of the source it quotes (a passage's own language, or English for a record). A draft in English is one
+    plain run, as before."""
+    from strata.agent.verifier import quoted_spans
+
+    language = draft.get("lang") or "en"
+    text = sentence["text"]
+    if language == "en":
+        return [text]
+    quote = sentence.get("quote") or {}
+    row = ((draft.get("evidence") or {}).get(quote.get("evidence_id") or "") or {}).get("row") or {}
+    source = _locale(row.get("language") if quote else "en")
+    runs, at = [], 0
+    for start, end in quoted_spans(text):
+        runs += [Spoken(text[at:start], _locale(language)), Spoken(text[start:end], source)]
+        at = end
+    runs.append(Spoken(text[at:], _locale(language)))
+    return [run for run in runs if run.text]
+
+
 class Word:
     """A .docx file built from headings, paragraphs and tables, with footnotes numbered in order."""
 
@@ -154,6 +192,10 @@ class Word:
             if isinstance(run, Footnote):
                 out.append(f'<w:r><w:rPr><w:rStyle w:val="FootnoteReference"/></w:rPr>'
                            f'<w:footnoteReference w:id="{run.number}"/></w:r>')
+            elif isinstance(run, Spoken):
+                weight = "<w:b/>" if bold else ""
+                out.append(f'<w:r><w:rPr>{weight}<w:lang w:val="{run.locale}"/></w:rPr>'
+                           f'<w:t xml:space="preserve">{escape(run.text)}</w:t></w:r>')
             elif run:
                 weight = "<w:rPr><w:b/></w:rPr>" if bold else ""
                 out.append(f'<w:r>{weight}<w:t xml:space="preserve">{escape(run)}</w:t></w:r>')

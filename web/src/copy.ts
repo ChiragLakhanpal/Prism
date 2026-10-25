@@ -421,6 +421,7 @@ export const copy = {
       ask: "Ask this",
       askWithin: "Within {id}",
       askAcross: "Across all projects",
+      askLanguage: (language: string) => `, for an answer in ${language}`,
       lookingUp: "Looking up {id}",
       // The plan-a-package intent (the 15 brief, section 7.1). It is never the default for free text.
       plan: "Plan a package from this sentence",
@@ -498,6 +499,12 @@ export const copy = {
     judgedSentences: {
       one: "{part} of {whole} sentence follows from its sources",
       many: "{part} of {whole} sentences follow from their sources",
+    },
+    // Judged sentences that cite a source written in another language (ticket 42; the 42 brief, section 5.5).
+    crossLanguage: {
+      one: "It cites a source written in another language.",
+      all: "All of them cite a source written in another language.",
+      some: (count: string) => `${count.charAt(0).toUpperCase()}${count.slice(1)} of them cite a source written in another language.`,
     },
     // {count} is a word from one to nine, then numerals.
     provenOthers: {
@@ -814,6 +821,10 @@ export const copy = {
     askedWithin: "Asked within {id}",
     askedAcross: "Asked across all projects",
     askedAsOf: (date: string) => `, as of ${date}`,
+    // The language the answer was written in, when it is not English or differs from your choice now (ticket 42).
+    askedLanguage: (language: string) => `, for an answer in ${language}`,
+    // Asks the same question again in your current choice of language.
+    askAgain: (language: string) => `Ask again in ${language}`,
     // No view is named: until ticket 40 applies a view's rules on the server, every answer is the
     // World Bank staff view's. Ticket 40 adds ", in a preview of the {view} view" back.
     askedEnd: ".",
@@ -892,6 +903,20 @@ export const copy = {
   // Languages by their ISO 639-1 codes, by their English names (ticket 18; brief 42 reuses these keys).
   language: {
     name: { en: "English", fr: "French", es: "Spanish", pt: "Portuguese" } as Record<string, string>,
+    // The language of answers and drafts, in the view popover and at the foot of the Menu panel (ticket 42; the 42
+    // brief, section 5.1). The screens stay in English: these name the languages the writer writes in.
+    choice: {
+      legend: "Language of answers and drafts",
+      hint: "The screens stay in English. Quotes stay in the language their source was written in.",
+      changed: (language: string) =>
+        `From now on, I write answers and drafts in ${language}. Answers and drafts already written keep their language.`,
+      fromLink: (link: string, saved: string) => `This link asks for ${link}, so I'm using it here. Your saved choice is ${saved}.`,
+      fromTeam: (language: string) => `I started with ${language}, the working language set for your team.`,
+      saveFailed: "I couldn't save your choice for next time, so I kept it in this page's link instead.",
+      readFailed: (language: string) => `I couldn't read your saved choice, so I'm using ${language} for now.`,
+    },
+    // The page alert for a ?lang= value no working language matches (the 42 brief, section 5.2). It never repeats it.
+    alertUnknown: (language: string) => `I can't write answers and drafts in the language this link asks for, so I'm using ${language}.`,
   },
 
   // The evidence card and the evidence drawer (the 14 brief, sections 5.11 to 5.13). Each source's
@@ -1102,6 +1127,9 @@ export const copy = {
     noHighlightSection: "This sentence does not quote the section, so no words are highlighted.",
     noHighlightRow: "This sentence does not quote the row, so no words are highlighted.",
     whole: "The whole paragraph, word for word.",
+    // Follows the line under a passage not written in your language of answers and drafts (ticket 42). No source is
+    // ever translated.
+    ownLanguage: "I quote sources only in the language they were written in.",
     wholeSection: "The whole section, word for word.",
     // The passages ticket 18 adds (the 18 brief, section 7). The layout parser's text can differ from
     // the page, so these never say "word for word".
@@ -2645,6 +2673,11 @@ export const copy = {
   // Every count comes from the draft runtime or a tool; the browser counts nothing. Each kind of draft
   // (config/drafts.toml) has its words under kinds, by its key.
   draft: {
+    // A draft written in a language other than English, or other than your choice now, says so under its method
+    // sentence; it keeps the language it was written in (ticket 42).
+    language: (language: string) => `I wrote this draft in ${language}. Quotes stay in the language of their source.`,
+    // The writing page's line under its state, when the draft is written in a language other than English.
+    writingLanguage: (language: string) => `I'm writing it in ${language}.`,
     // The disagreement cards check 6 attached to a draft (ticket 36; the 36 brief, 4.8), above its Sources list.
     disagreements: {
       title: "Where two reports disagree",
@@ -5421,6 +5454,8 @@ export const copy = {
       attribution: { before: "The World Bank: ", after: (source: string, license: string) => `: ${source}. License: ${license}.` },
       documents: "Documents and rules",
       collection: (name: string, publisher: string, origin: string) => `${name}, published by ${publisher}, from ${origin}.`,
+      // The same line with the name as a slot, for a name in another language that keeps its lang (ticket 42).
+      collectionNamed: "{name}, published by {publisher}, from {origin}.",
       authorizes: {
         before: "The World Bank Group authorizes the use of this material subject to the terms and conditions on its website, ",
         link: "Legal",

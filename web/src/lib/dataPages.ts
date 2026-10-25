@@ -209,7 +209,7 @@ export async function readReadiness(search: string, signal?: AbortSignal): Promi
 
 export type Registry = {
   datasets: { key: string; dataset_name: string; data_source: string; catalog_url: string; name_checked: string; license: string }[];
-  collections: { name: string; publisher: string; origin: string }[];
+  collections: { name: string; publisher: string; origin: string; language?: string }[];
   readiness_rows: number;
   known_gaps: number;
   kinds: number;

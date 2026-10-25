@@ -8,5 +8,35 @@
     "name": "Northern Water Works Development Agency",
     "agency_id": "northern-water-works-development-agency"
   },
-  "own_view": "piu"
+  "own_view": "piu",
+  "language": {
+    "code": "en",
+    "source": "default",
+    "saved": null,
+    "team": null,
+    "link": null,
+    "saved_readable": true,
+    "choices": [
+      {
+        "code": "en",
+        "endonym": "English",
+        "direction": "ltr"
+      },
+      {
+        "code": "fr",
+        "endonym": "Français",
+        "direction": "ltr"
+      },
+      {
+        "code": "es",
+        "endonym": "Español",
+        "direction": "ltr"
+      },
+      {
+        "code": "pt",
+        "endonym": "Português",
+        "direction": "ltr"
+      }
+    ]
+  }
 }

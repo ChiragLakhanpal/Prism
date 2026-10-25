@@ -113,6 +113,13 @@ url = "https://search.worldbank.org/api/v3/wds?format=json&proid=P161305&rows=50
 about = "Every document the Documents API lists for the Horn of Africa Gateway Development Project (P161305), a Kenya transport project in the slice, whose Procurement Plan of September 24, 2026 is on the stress shelf (ticket 18)."
 
 [[source]]
+file = "api/documents/P143940.json"
+kind = "json"
+dataset = "document_list"
+url = "https://search.worldbank.org/api/v3/wds?format=json&proid=P143940&rows=500&os=0&fl=id,docty,docdt,disclosure_date,display_title,repnb,lang,txturl,pdfurl,guid&srt=docdt&order=desc"
+about = "Every document the Documents API lists for Cameroon's Flood Emergency Project (P143940), whose Procurement Plan of October 10, 2018 is in French and writes its methods by STEP's French names (ticket 42)."
+
+[[source]]
 file = "api/documents/P127203.json"
 kind = "json"
 dataset = "document_list"
@@ -683,12 +690,35 @@ about = "The Procurement Plan of September 24, 2026 for the Horn of Africa Gatew
 words = true
 
 [[source]]
+file = "documents/P143940/procurement-plan-2018-10-10"
+kind = "document"
+dataset = "documents"
+text_url = "https://documents.worldbank.org/curated/en/320861539160830195/text/Cameroon-AFRICA-P143940-Flood-Emergency-Project-Procurement-Plan.txt"
+pdf_url = "https://documents.worldbank.org/curated/en/320861539160830195/pdf/Cameroon-AFRICA-P143940-Flood-Emergency-Project-Procurement-Plan.pdf"
+about = "The Procurement Plan of October 10, 2018 for Cameroon's Flood Emergency Project (P143940), in French: its first pages follow the French plan template with the old method names (AOI, AON, SFQC), and its STEP tables write each method by STEP's French name, such as Appel d'offres (ticket 42). Documents API id 30486069."
+words = true
+
+[[source]]
 file = "documents/P127203/icr-fr-2021-07-29"
 kind = "document"
 dataset = "documents"
 text_url = "https://documents.worldbank.org/curated/en/310191631508626407/text/Haiti-Rebuilding-Energy-Infrastructure-and-Access-Project.txt"
 pdf_url = "https://documents.worldbank.org/curated/en/310191631508626407/pdf/Haiti-Rebuilding-Energy-Infrastructure-and-Access-Project.pdf"
 about = "The completion report for P127203 in French, July 29, 2021 (ICR4990): the stress shelf's report in another language. Documents API id 33407968."
+
+# The Procurement Plan template's textual part in French (ticket 42): "Plan de passation de marchés (Partie
+# Textuelle)", with its blanks ([Nom du pays], [Insérer la date]) unfilled, as Documents & Reports publishes it under
+# P161329 on May 6, 2022, before that plan's STEP tables. The World Bank's procurement framework page lists the
+# template in English only, so this is the French text the fixture records (a parked decision). The source
+# registry lists it among the document collections, in French (config/sources.toml).
+
+[[source]]
+file = "documents/guidance/procurement-plan-template-fr-2022-05-06"
+kind = "document"
+dataset = "documents"
+text_url = "https://documents.worldbank.org/curated/en/099015005072256172/text/P1613290827c6b00b0840d07b54b5ec0a80.txt"
+pdf_url = "https://documents.worldbank.org/curated/en/099015005072256172/pdf/P1613290827c6b00b0840d07b54b5ec0a80.pdf"
+about = "The textual part of the Procurement Plan template in French, Plan de passation de marchés (Partie Textuelle), with its blanks unfilled, as published under P161329 on May 6, 2022 (Documents API id 33812168), before that plan's STEP tables (ticket 42)."
 
 # The PPSD templates and guidance (ticket 36). The template registry (config/ppsd_templates.toml)
 # copies each risk table's column names from the two templates, and config/thresholds.toml's

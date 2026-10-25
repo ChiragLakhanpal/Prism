@@ -18,6 +18,10 @@
 #            Everything the team makes is Official Use Only and seen by no other team. No agency team is
 #            named here until the owner names its workspace group (a parked decision, ticket 38);
 #            tests/fixtures/roles.toml names two for the offline tests.
+#   working_language
+#            optional: the language its members get answers and drafts in until they choose one in the
+#            view popover, as config/languages.toml codes it (fr, es or pt). Left out, it is English
+#            (ticket 42). A link's ?lang= and a person's own choice come first.
 #
 # A viewer in none of these groups is on a team of their own. A draft keeps the team its author was on
 # when it was saved. An author always sees their own drafts. A teammate sees the drafts saved while the

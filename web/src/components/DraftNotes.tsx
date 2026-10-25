@@ -6,7 +6,7 @@
 //
 // NoteSentences draws one note's sentences with their citation markers, which open the evidence drawer at
 // the plan row each cites. Numbers the verifier matched explain themselves, as in an answer.
-import { Fragment, type ReactNode } from "react";
+import { createContext, Fragment, useContext, type ReactNode } from "react";
 import type { DraftNote } from "../lib/drafts";
 import type { EvidenceEvent, SentenceEvent } from "../lib/answer";
 import { evidenceHref, openEvidence } from "../lib/evidence";
@@ -14,6 +14,7 @@ import { cx } from "../lib/cx";
 import { DRAWER_ID, markerSource, sentenceText } from "./AnswerPanel";
 import { CitationMarker } from "./CitationMarker";
 import { EvidenceCard } from "./EvidenceCard";
+import { Lang } from "./Lang";
 import { StatusBadge } from "./StatusBadge";
 import { TextLink } from "./TextLink";
 
@@ -30,6 +31,10 @@ export type NoteRow = {
 
 // The open drawer's source, and the sentence whose marker opened it, for the active marker's look.
 export type OpenSource = { id: string | null; sentence: number | null };
+
+// The language the writer wrote a draft in (ticket 42), which the draft page provides: every writer sentence carries
+// it, and a citation marker inside it stays in the copy file's English.
+export const WrittenIn = createContext("en");
 
 export function NoteSentences({
   sentences,
@@ -51,15 +56,17 @@ export function NoteSentences({
 }) {
   const show = (id: string, sentence: number, marker: HTMLElement | null) =>
     openEvidence(id, { serial: null, sentence, marker, runId: null });
+  const writtenIn = useContext(WrittenIn);
   return (
-    <p className={cx("max-w-[72ch] text-ink", textSize === "body" ? "text-body" : "text-small")} data-note>
+    <Lang as="p" code={writtenIn} className={cx("max-w-[72ch] text-ink", textSize === "body" ? "text-body" : "text-small")} data-note>
       {sentences.map((sentence, index) => {
         const active = open.id !== null && open.sentence === sentence.index && sentence.evidence_ids.includes(open.id);
         return (
           <Fragment key={sentence.index}>
             {index > 0 && " "}
             <span data-sentence-text={sentence.index} className={active ? "bg-tint [box-decoration-break:clone]" : undefined}>
-              {sentenceText(sentence, evidence, (id) => show(id, sentence.index, null))}
+              {sentenceText(sentence, evidence, (id) => show(id, sentence.index, null), writtenIn)}
+              <Lang code="en">
               {sentence.evidence_ids.map((id) => {
                 const n = numbers.get(id)!;
                 return (
@@ -78,11 +85,12 @@ export function NoteSentences({
                   />
                 );
               })}
+              </Lang>
             </span>
           </Fragment>
         );
       })}
-    </p>
+    </Lang>
   );
 }
 

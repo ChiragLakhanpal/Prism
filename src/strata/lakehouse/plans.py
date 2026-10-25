@@ -439,7 +439,9 @@ def record_parse_run(engine: Engine, run_id: str, project_id: str, parsing: Pars
 # ── 5. Silver rows, steps, delays and data notes ─────────────────────────
 
 # silver.plan_rows's STEP columns after the reference and description, in STEP's order (step.COLUMNS).
-ROW_COLUMNS = tuple(key for key in step.COLUMNS.values() if key != "activity")
+# The STEP columns, then the plan's own words for its method (ticket 42).
+ROW_COLUMNS = (*(key for key in step.COLUMNS.values() if key != "activity"), "method_original", "method_original_lang",
+               "method_mapped")
 
 
 @dataclass(frozen=True)

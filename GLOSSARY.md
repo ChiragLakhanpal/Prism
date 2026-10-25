@@ -66,6 +66,10 @@ _Avoid_: Context
 How fit a source is to support answers, measured by its coverage, how much of it links to projects, how well it was read, and how fresh it is.
 _Avoid_: Readiness on its own (the World Bank uses it for projects and borrowers), data quality score
 
+**Working language**:
+The language a person asks Strata to write answers and drafts in: English, French, Spanish or Portuguese. The screens stay in English, and sources keep their own language, word for word.
+_Avoid_: Locale, interface language
+
 ### Procurement
 
 **Package**:

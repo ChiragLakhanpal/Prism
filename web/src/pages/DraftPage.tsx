@@ -15,7 +15,8 @@ import { Breadcrumb } from "../components/Breadcrumb";
 import { EmptyState } from "../components/Card";
 import { CheckLine, notCheckedFor, RemovedBox, type Removed } from "../components/Checks";
 import { BAR_BUTTONS, BAR_MAIN, Consequence, DiscardedNotice, DraftBar, ExportSuccess, STICKY } from "../components/DraftBar";
-import { DraftNotes, NoteSentences, type NoteRow } from "../components/DraftNotes";
+import { DraftNotes, NoteSentences, WrittenIn, type NoteRow } from "../components/DraftNotes";
+import { ENGLISH, languageName, workingLanguage } from "../lib/lang";
 import { citedInParts, MissionBriefParts } from "../components/MissionBriefParts";
 import { Fill } from "../components/Fill";
 import { LoadError } from "../components/LoadError";
@@ -292,6 +293,7 @@ function PreviewCard({ view, kind }: { view: "piu" | "public"; kind: KindWords }
 
 function Draft({ draftId, view }: { draftId: string; view: string | null }) {
   const [loaded, replace, reload, justWritten] = useDraft(draftId);
+  const current = useStore(workingLanguage)?.code ?? ENGLISH;
   const [busy, setBusy] = useState<Action | null>(null);
   const [failed, setFailed] = useState<Action | null>(null);
   const [status, setStatus] = useState("");
@@ -625,7 +627,9 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
     );
   }
 
+  const writtenIn = d.lang ?? ENGLISH;
   return (
+    <WrittenIn.Provider value={writtenIn}>
     <DocumentColumn>
       <div data-draft-page={d.state}>
         {conflict && (
@@ -670,6 +674,12 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
               />
             )}
           </p>
+          {/* The language the writer wrote it in, when it is not English or not your choice now (the 42 brief, 3.6). */}
+          {(writtenIn !== ENGLISH || writtenIn !== current) && (
+            <p className="mt-2 text-caption text-ink-muted" data-draft-language>
+              {copy.draft.language(languageName(writtenIn))}
+            </p>
+          )}
           {paper && (subject.agencies_with_plans ?? 0) > 1 && (
             <p className="mt-2 text-caption text-ink-muted" data-scope-caption>
               {copy.paper.scope(subject.project_id, formatCount(subject.agencies_with_plans ?? 0), subject.implementing_agency)}
@@ -781,6 +791,7 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
         </p>
       </div>
     </DocumentColumn>
+    </WrittenIn.Provider>
   );
 }
 

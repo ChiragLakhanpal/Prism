@@ -684,3 +684,7 @@ def test_the_nightly_jobs_environment_installs_the_pypdf_and_pyyaml_the_live_rea
         header = (ROOT / script).read_text().split("# ///")[1]
         for name in ("pypdf", "pyyaml"):
             assert re.search(rf'"({name}==[^"]+)"', header).group(1) in environment["spec"]["dependencies"]
+    # The document run checks passages' languages with py3langid (ticket 42), at pyproject.toml's pin.
+    documents = (ROOT / "ops/documents/run_live.py").read_text().split("# ///")[1]
+    pinned = re.search(r'"(py3langid==[^"]+)"', (ROOT / "pyproject.toml").read_text()).group(1)
+    assert pinned in documents and pinned in environment["spec"]["dependencies"]

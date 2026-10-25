@@ -9,6 +9,10 @@
 --
 -- actual_amount_zero: a row whose Process Status is Signed or Completed but whose Actual Amount
 -- (US$) reads 0.00, so the record does not say what the contract cost.
+--
+-- method_unknown: a row whose Method cell is a name the method-name registry does not list
+-- (config/method_names.toml; ticket 42), so method keeps the plan's words and Strata cannot match it to a
+-- method in the Procurement Regulations.
 INSERT INTO strata.silver.plan_data_notes (
   document_id, project_id, activity_reference_no, note, reference_method_code, reference_method,
   method, process_status, actual_amount_usd, public_from
@@ -37,3 +41,12 @@ FROM strata.silver.plan_rows AS r
 WHERE r.project_id = :project_id
   AND r.process_status IN ('Signed', 'Completed')
   AND r.actual_amount_usd = 0
+UNION ALL
+SELECT
+  r.document_id, r.project_id, r.activity_reference_no, 'method_unknown',
+  NULL, NULL, r.method, r.process_status, r.actual_amount_usd, r.public_from
+FROM strata.silver.plan_rows AS r
+WHERE r.project_id = :project_id
+  AND r.method IS NOT NULL
+  AND r.method_original IS NOT NULL
+  AND r.method_mapped IS NULL

@@ -82,7 +82,7 @@ class Keeper:
 def _record_one(case: Case, agent: Agent, engine_for: EngineFor, viewer: Viewer, today: dt.date) -> tuple[dict, dict | None]:
     keeper = Keeper(agent)
     turn = Turn(question=case.question, viewer=viewer, run_id=f"record-{case.recording}",
-                scope=Scope(chip=case.scope, as_of=case.as_of))
+                scope=Scope(chip=case.scope, as_of=case.as_of, language=case.language))
     run = answer_runner(lambda _: keeper, engine_for, today=lambda: today)
 
     async def drain():
@@ -95,8 +95,9 @@ def _record_one(case: Case, agent: Agent, engine_for: EngineFor, viewer: Viewer,
     claims = asyncio.run(drain())
     recording = {"about": ABOUT, "recorded": True, "recorded_on": today.isoformat(), "question": case.question,
                  "scope": case.scope, "as_of": case.as_of.isoformat(),
+                 **({"language": case.language} if case.language != "en" else {}),
                  "agent": {"name": keeper.name, "version": keeper.version}, "responses": keeper.responses}
-    return recording, verify(claims, turn.facts).counts() if claims is not None else None
+    return recording, verify(claims, turn.facts, case.language).counts() if claims is not None else None
 
 
 def _record_writer(case: Case, agent: Agent, engine_for: EngineFor, viewer: Viewer,
@@ -110,15 +111,16 @@ def _record_writer(case: Case, agent: Agent, engine_for: EngineFor, viewer: View
     with engine_for(viewer) as engine:
         facts = module.read(engine, viewer, case.request, today)
     keeper = Keeper(agent)
-    response = keeper.respond([{"role": "user", "content": json.dumps(module.message(facts), ensure_ascii=False,
-                                                                      default=str)}], None)
+    response = keeper.respond([{"role": "user", "content": json.dumps(module.message(facts, case.language),
+                                                                      ensure_ascii=False, default=str)}], None)
     from strata.agent.answer_check import SixChecks
 
     check, _, _ = runtime.note_check(module, facts, runtime.parse_notes(output_text(response), module.KEY),
-                                     SixChecks(None, None))
+                                     SixChecks(None, None), case.language)
     verdict = Verdict(tuple(sentence for _, sentence in sorted(check.sentences.items())))
     recording = {"about": ABOUT_WRITER, "recorded": True, "recorded_on": today.isoformat(), "question": case.question,
                  "scope": case.scope, "as_of": case.as_of.isoformat(),
+                 **({"language": case.language} if case.language != "en" else {}),
                  "agent": {"name": keeper.name, "version": keeper.version}, "responses": keeper.responses}
     return recording, verdict.counts()
 
@@ -215,7 +217,8 @@ def _ask_through_the_stream(case: Case, engine_for: EngineFor, judge) -> None:
         transport = httpx.ASGITransport(app=app)
         async with httpx.AsyncClient(transport=transport, base_url="http://strata.test") as client:
             await client.post("/api/ask", headers={"X-Forwarded-User": "record@strata"}, json={
-                "question": case.question, "scope": case.scope, "asof": case.as_of.isoformat()})
+                "question": case.question, "scope": case.scope, "asof": case.as_of.isoformat(),
+                **({"lang": case.language} if case.language != "en" else {})})
 
     asyncio.run(ask())
 

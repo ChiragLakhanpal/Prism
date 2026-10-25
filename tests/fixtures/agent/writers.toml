@@ -330,3 +330,15 @@ claims = [
   { sentence = "The Procurement Plan of October 9, 2026 lists nine activities.", kind = "record", evidence_ids = ["strata.tools.check_plan:P156634/northern-water-works-development-agency@2026-10-28?plan_date=2026-10-09", "strata.silver.plan_rows:40132287/KE-NWWDA-541055-CW-RFB"], numbers = ["nine"], dates = ["October 9, 2026"] },
   { sentence = "KE-NWWDA-541062-CW-RFQ has an Estimated Amount of 295,000.00.", kind = "record", evidence_ids = ["strata.silver.plan_rows:40132287/KE-NWWDA-541062-CW-RFQ"], numbers = ["295,000.00"], dates = [] },
 ]
+
+[[cases]]
+id = "review-notes-nwwda-2026-10-09-fr"
+says = """Asked for in French (lang=fr), the writer writes the same three notes in French, with the plan's numbers and \
+dates written the French way, STEP's names in English and the plan's description quoted in its own words, and every \
+sentence passes the checks (ticket 42)."""
+question = "Write review notes on the Northern Water Works Development Agency's Procurement Plan of October 9, 2026 for P156634."
+scope = "P156634"
+as_of = 2026-10-23
+recording = "review-notes-nwwda-2026-10-09-fr"
+language = "fr"
+request = { kind = "review_notes", project_id = "P156634", agency_id = "northern-water-works-development-agency", plan_date = "2026-10-09" }
