@@ -183,15 +183,17 @@ const refused = (body: unknown) => (body as { body: { values: { name: string; ti
 const LIST = judgingList as unknown as JudgingList;
 const QUERY = judgingQuery as unknown as JudgingQuery;
 const LOCKED = judgingLocked as unknown as JudgingQuery;
+// Every passage graded by you, while the other judge has not finished: the grade bar stays for changes.
+const ALL_GRADED = Object.fromEntries(QUERY.passages.map((passage) => [passage.passage_id, "partly" as const]));
 
 function SegmentedSample() {
   const [value, setValue] = useState<string>(LIST.show);
   return (
     <SegmentedControl
-      label={copy.judging.show}
+      legend={copy.judging.show}
       value={value}
       onChange={setValue}
-      choices={(["to_judge", "finished_by_you", "finished_by_both"] as const).map((key) => ({ key, label: copy.judging.filters[key].replace("{count}", String(LIST.counts[key])) }))}
+      options={(["to_judge", "finished_by_you", "finished_by_both"] as const).map((key) => ({ value: key, label: copy.judging.filters[key].replace("{count}", String(LIST.counts[key])) }))}
     />
   );
 }
@@ -335,6 +337,9 @@ export function judgingPage(): GalleryPage {
             </Labeled>
             <Labeled label={s.deskFailed}>
               <JudgingDesk sample query={QUERY} initial={{ failed: 3, at: 4 }} />
+            </Labeled>
+            <Labeled label={s.deskFinished}>
+              <JudgingDesk sample query={QUERY} initial={{ at: 1, grades: ALL_GRADED }} />
             </Labeled>
             <Labeled label={s.deskLocked}>
               <JudgingDesk sample query={LOCKED} initial={{ at: 1 }} />

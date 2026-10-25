@@ -22,10 +22,22 @@ export const POPOVER =
 export const DOTTED_UNDERLINE =
   "underline decoration-line-strong decoration-dotted decoration-1 underline-offset-3 hover:decoration-solid";
 
-const DELAY = 150;
+// How long hover waits before it opens a card, and before it closes one the pointer left.
+export const HOVER_DELAY = 150;
+const DELAY = HOVER_DELAY;
 export const RETURNING = "data-returning";
-const returning = (element: Element) => element.hasAttribute(RETURNING);
+export const returning = (element: Element) => element.hasAttribute(RETURNING);
 const open = new Set<() => void>();
+
+// Only one card that hover or focus opened is open at a time: claiming the place closes the others, each by its
+// own hide. A step label's definition window opened on hover takes part too (Term.tsx, openOnHover).
+export function claimHoverCard(hide: () => void) {
+  for (const other of open) if (other !== hide) other();
+  open.add(hide);
+}
+export function releaseHoverCard(hide: () => void) {
+  open.delete(hide);
+}
 
 export function Tooltip({
   trigger,
@@ -47,12 +59,11 @@ export function Tooltip({
   const hide = useCallback(() => {
     clearTimeout(timer.current);
     setShown(false);
-    open.delete(hide);
+    releaseHoverCard(hide);
   }, []);
   const show = useCallback(() => {
     clearTimeout(timer.current);
-    for (const other of open) if (other !== hide) other();
-    open.add(hide);
+    claimHoverCard(hide);
     setShown(true);
   }, [hide]);
   const after = (action: () => void) => {

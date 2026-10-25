@@ -123,8 +123,8 @@ test("Judging shows your progress, your agreement with Cohen's kappa, and the qu
   // Each query names the award notice it was written from, as a link to that notice's record in the drawer.
   await expect(page.locator("[data-notice-link]").first()).toHaveAttribute("href", /\?evidence=strata\.gold\.notice%3AOP\d+$/);
   await expect(page.locator("[data-agreement=shown]")).toContainText("Where you have both finished, your grades matched on 20 of 25 passages. Cohen's kappa: 0.71.");
-  await expect(page.getByRole("radiogroup", { name: "Show" }).getByRole("radio")).toHaveText(["To judge (2)", "Finished by you (1)", "Finished by both (1)"]);
-  await expect(page.getByRole("radio", { name: "To judge (2)" })).toHaveAttribute("aria-checked", "true");
+  await expect(page.getByRole("group", { name: "Show" }).locator("[data-segment]")).toHaveText(["To judge (2)", "Finished by you (1)", "Finished by both (1)"]);
+  await expect(page.getByRole("radio", { name: "To judge (2)" })).toBeChecked();
   await expect(page.locator("[data-next-query]")).toHaveAttribute("href", "/lessons/judging/nq-rural-works-delays");
   expect(await axe(page)).toEqual([]);
 });
@@ -302,6 +302,8 @@ test("on a query both judges finished, the two grades sit in the page, not in a 
   await page.goto("/lessons/judging/nq-water-works-readiness");
   await expect(page.locator("[data-grade-bar=locked]")).toBeVisible();
   expect(await page.locator("[data-grade-bar=locked]").evaluate((el) => getComputedStyle(el).position)).toBe("static");
+  // The keys grade nothing on a locked query, so the line that names them is gone.
+  await expect(page.getByText("While you are in this panel, the keys A, P and N choose a grade.")).toHaveCount(0);
   // "Judge the next query" is never under a stuck bar.
   await page.locator("[data-judging-finished=both]").getByRole("button", { name: /Show where you differed/ }).click();
   const next = page.locator("[data-judging-finished=both]").getByRole("link", { name: "Judge the next query" });

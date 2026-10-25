@@ -223,11 +223,11 @@ export function JudgingBody({ list, onShow, busy = false }: { list: JudgingList;
             <Agreement list={list} />
           </div>
           <div className="mt-6 @md/page:mt-8">
-            <SegmentedControl
-              label={w.show}
+            <SegmentedControl<Show>
+              legend={w.show}
               value={list.show}
-              onChange={(key) => (onShow ? onShow(key as Show) : navigate(listHref(key as Show), { quiet: true }))}
-              choices={SHOWS.map((key) => ({ key, label: fillText(w.filters[key], { count: list.counts[key] }) }))}
+              onChange={(key) => (onShow ? onShow(key) : navigate(listHref(key), { quiet: true }))}
+              options={SHOWS.map((key) => ({ value: key, label: fillText(w.filters[key], { count: list.counts[key] }) }))}
             />
           </div>
         </>
@@ -273,8 +273,8 @@ export function JudgingSkeleton() {
       <SkeletonLine className="mt-2 text-caption" width="w-[40%]" />
       <Skeleton className="mt-4 h-11 w-full @md/page:w-50" radius="rounded-pill" />
       <SkeletonText className="mt-6 text-small @md/page:mt-8" widths={["w-full", "w-1/2"]} />
-      <div className="mt-6 flex flex-col gap-1 @md/page:mt-8 @md/page:flex-row @md/page:items-center @md/page:gap-3" aria-hidden="true">
-        <span className="text-small font-bold text-ink-heading">{w.show}</span>
+      <div className="mt-6 @md/page:mt-8" aria-hidden="true">
+        <span className="block text-small text-ink-muted">{w.show}</span>
         <SegmentFrame />
       </div>
       <div className="mt-4">
@@ -299,15 +299,10 @@ export function JudgingSkeleton() {
   );
 }
 
-// The filter's frame while the list loads: three segments, with no counts yet.
+// The filter's frame while the list loads, under its legend: three touching segments, stacked at 44 px each below a
+// 768 px page area and one 32 px pill from it, with no counts yet.
 function SegmentFrame() {
-  return (
-    <span className="flex flex-col gap-2 @md/page:flex-row">
-      {SHOWS.map((key) => (
-        <Skeleton key={key} className="h-11 w-full @md/page:h-8 @md/page:w-36" radius="rounded-pill" />
-      ))}
-    </span>
-  );
+  return <Skeleton className="mt-2 h-33 w-full @md/page:h-8 @md/page:w-108" radius="rounded-lg @md/page:rounded-pill" />;
 }
 
 function NoAccess() {
@@ -680,7 +675,8 @@ export function JudgingDesk({ query: loaded, initial, sample = false }: {
               ))}
             </dl>
             <p className="text-caption text-ink-muted">{w.guidance}</p>
-            <p className="hidden text-caption text-ink-muted @md/page:block">{w.keysNote}</p>
+            {/* Locked, the keys grade nothing, so the line that names them goes. */}
+            {!query.locked && <p className="hidden text-caption text-ink-muted @md/page:block">{w.keysNote}</p>}
             <div className="flex justify-between gap-4 text-small">
               {at > 1 ? (
                 <TextLink href={queryHref(query.query_id, at - 1)} onClick={(event) => { event.preventDefault(); show(at - 1); }}>

@@ -41,6 +41,8 @@ import { ComparableDotList, ComparableRecords, dotRegion } from "./ComparableRec
 import { COMPARABLE, DOT, type DotEntry } from "../lib/packages";
 import { isRiskList, pageRows, REPORTS, rowOf } from "../lib/risks";
 import { AllReportsView, backToReports, RiskReportsView, RowClaim, RowSwitcher } from "./RiskDrawer";
+import { isStepList } from "../lib/steps";
+import { LongestView, StepComparablesView } from "./StepsDrawer";
 import { LoadingLabel, Skeleton, SkeletonLine, SkeletonText } from "./Skeleton";
 import { FeedbackRow, type RowStart } from "./FeedbackRow";
 import { showsRow } from "../lib/retrieval";
@@ -61,8 +63,9 @@ export function useEvidence(id: string, asOf: string | null): DrawerData {
   const held = all[id];
   useEffect(() => {
     // A quantile dot's list is no source on the server: the page that draws the dots holds it (ticket 15). So are
-    // section 5's lists and cost records (ticket 31), and the risks section's lists of completion reports (ticket 30).
-    if (held || id.startsWith(DOT) || heldOnPage(id) || isRiskList(id)) return;
+    // section 5's lists and cost records (ticket 31), the risks section's lists of completion reports (ticket 30),
+    // and section 2's steps' lists (ticket 27).
+    if (held || id.startsWith(DOT) || heldOnPage(id) || isRiskList(id) || isStepList(id)) return;
     const controller = new AbortController();
     setFetched({ id, data: { status: "loading" } });
     const query = `/api/evidence?id=${encodeURIComponent(id)}${asOf ? `&asof=${encodeURIComponent(asOf)}` : ""}`;
@@ -522,6 +525,7 @@ export function EvidenceDrawerView({
   // A notice opened from one of section 5's lists has a way back to that list too (ticket 31).
   const criteriaList = from?.list && heldOnPage(from.list.id) ? from.list : null;
   const riskList = isRiskList(id);
+  const stepList = isStepList(id);
   const backTo = (comparable || criteriaList || evidence?.kind === "passage") && from?.id === id && from.list ? from.list : null;
   const criteriaView = evidence && (evidence.kind === "criteria_public" || evidence.kind === "criteria_item" || evidence.kind === "package_cost");
   // The feedback row: a passage a search found, opened from the answer it belongs to (a marker, a number or a
@@ -599,9 +603,11 @@ export function EvidenceDrawerView({
                 ? copy.evidence.package.dot.close
                 : riskList
                   ? copy.packageRisks.drawer.close
-                  : comparable
-                    ? copy.evidence.package.close
-                    : copy.evidence.close}
+                  : stepList
+                    ? copy.stepDates.drawer.close
+                    : comparable
+                      ? copy.evidence.package.close
+                      : copy.evidence.close}
           </Button>
         </div>
         <div className="flex animate-drawer-in flex-col gap-4 px-6 pt-2 pb-6">
@@ -674,6 +680,12 @@ export function EvidenceDrawerView({
               <RiskReportsView evidence={evidence} focusEntry={from?.id === id ? (from.entry ?? null) : null} onOpen={onOpenReport} />
             )}
             {evidence?.kind === "risk-reports-all" && <AllReportsView evidence={evidence} />}
+            {evidence?.kind === "steps" && (
+              <StepComparablesView evidence={evidence} focusEntry={from?.id === id ? (from.entry ?? null) : null} onOpen={onOpenEntry} />
+            )}
+            {evidence?.kind === "steps-longest" && (
+              <LongestView evidence={evidence} focusEntry={from?.id === id ? (from.entry ?? null) : null} onOpen={onOpenEntry} />
+            )}
             {data.status === "loading" && comparable && (
               <div aria-hidden="true" className="flex flex-col gap-4">
                 <Skeleton className="h-48 w-full rounded-md" />
@@ -721,7 +733,7 @@ export function EvidenceDrawer({
 
   // Every source the drawer shows is marked visited and recorded for the viewer, once per opening.
   useEffect(() => {
-    if (id.startsWith(DOT) || isRiskList(id)) return;
+    if (id.startsWith(DOT) || isRiskList(id) || isStepList(id)) return;
     recordOpened(id, from?.runId ?? run?.runId ?? null);
     // The source is recorded when it changes, not when the answer does.
   }, [id]);
@@ -806,7 +818,15 @@ export function EvidenceDrawer({
       // From a quantile dot's list to one of its packages and back, in place: the dot stays the drawer's
       // opener, so closing gives focus back to it.
       onOpenEntry={(entry) => {
-        const count = data.status === "ready" ? Number(data.evidence.row.count) : 0;
+        // A dot's list counts its packages; a step's list and the ran-longest list count their entries (ticket 27).
+        const row = data.status === "ready" ? data.evidence.row : null;
+        const count = !row
+          ? 0
+          : data.status === "ready" && data.evidence.kind === "steps"
+            ? row.step.comparables.length
+            : data.status === "ready" && data.evidence.kind === "steps-longest"
+              ? row.longest.entries.length
+              : Number(row.count);
         openEvidence(
           entry.evidence_id,
           { serial: null, sentence: null, marker: from?.marker ?? null, runId: null, fallback: from?.fallback, list: { id, count } },

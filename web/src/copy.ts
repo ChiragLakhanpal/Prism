@@ -2689,6 +2689,198 @@ export const copy = {
     },
   },
 
+  // Section 2 of the package workspace, "Planned date for each step" (ticket 27; the 27 brief, section 7). The
+  // steps' labels, STEP's full names, their phrases and stages are in the step-label registry, web/src/steps.ts.
+  // Templates in braces are Fill templates whose numbers and dates are Num values from the tool.
+  stepDates: {
+    eyebrow: "Planning",
+    // Hidden from screen readers, so the heading reads "Planned date for each step".
+    number: "2 ·",
+    heading: "Planned date for each step",
+    // {first} and {last} are the family's first and last steps' phrases; the count is the registry's, in words.
+    summarySteps: (countWords: string) => `${countWords} steps, from {first} to {last}.`,
+    summaryLongest: "{stage} ran longest in {nm} comparable packages.",
+    summaryPartial: (abstainWords: string, countWords: string) =>
+      `I have too few comparable packages to date ${abstainWords} of the ${countWords}.`,
+    // When every step lacks them, as on the fixture, never "six of the six".
+    summaryPartialAll: (countWords: string) => `I have too few comparable packages to date any of the ${countWords}.`,
+    // When some steps have no date for another reason, as the contract's completion when too many comparable
+    // packages were still open: the tool counts every step it could not date, whatever the reason.
+    summaryUndated: (undatedWords: string, countWords: string) => `I can't date ${undatedWords} of the ${countWords} steps.`,
+    summaryUndatedAll: (countWords: string) => `I can't date any of the ${countWords} steps.`,
+    summaryAbstain: "I'm not giving planned dates, because I found only {n} comparable packages.",
+    summaryAbstainOne: "I'm not giving planned dates, because I found only one comparable package.",
+    summaryAbstainNone: "I'm not giving planned dates, because I found no comparable package.",
+    summaryNoFamily: "Add the category and method above, and I'll list the steps STEP uses for this kind of package.",
+    summaryNotListed: (method: string) => `I don't have STEP's steps for ${method} yet, so I can't date them.`,
+    show: "Show the steps",
+    hide: "Hide the steps",
+    error: "I couldn't load the planned dates for this package.",
+    errorCode: "If it fails again, quote this code: {code}.",
+    tryAgain: "Try again",
+    introDelay: (family: string) =>
+      `These are the steps STEP uses for ${family}. I dated each step by how far comparable packages ran past their planned dates. I measured from the dates as first published, because later plans can move them.`,
+    introDuration: (family: string) =>
+      `These are the steps STEP uses for ${family}. I dated each step from how long it took in comparable packages, using the dates in their published Procurement Plans.`,
+    // No step has a date or days in either choice, as on the fixture, so no choice of dates is offered. {min} is
+    // the tool's min_comparables.
+    introNoneDated: (family: string) =>
+      `These are the steps STEP uses for ${family}. I date a step only when {min} or more comparable packages recorded it.`,
+    // The summary above already says how few comparable packages there were, so the intro does not repeat it.
+    introAbstain: (family: string) =>
+      `I give a date only from {min} comparable packages or more, because a date from fewer can mislead. Here are the steps STEP uses for ${family}, with how many comparable packages recorded each.`,
+    start: {
+      label: (phrase: string) => `Date of ${phrase}`,
+      commit: "Date the steps",
+      hint: "I date every later step from this one.",
+      hintNoPlan: (phrase: string) => `The plan gives no date for ${phrase}. Add one, and I'll date every later step from it.`,
+      errorEmpty: (phrase: string) => `Choose a date for ${phrase}.`,
+      errorRange: (from: string, to: string) => `Choose a date from ${from} to ${to}.`,
+      preview: "Changes are off in a preview.",
+      dating: (date: string) => `Dating the steps from ${date}.`,
+      failed: "I couldn't date the steps from this date. Try again in a moment.",
+    },
+    choice: {
+      legend: "Date each step with",
+      middle: "Middle dates: half ran later",
+      cautious: (in10: string) => `Cautious dates: ${in10} in 10 ran later`,
+      preview: "In a preview I don't save this choice.",
+      saveFailed: "I couldn't save this choice. It still applies on this page.",
+      saveFailedSpoken: "I couldn't save this choice.",
+    },
+    // The table's title, the caption: {date} is the signed contract's date in the choice shown.
+    captionSigned: { cautious: "Cautious dates put the signed contract on {date}.", middle: "Middle dates put the signed contract on {date}." },
+    captionPartial: (datedWords: string, countWords: string) => `I dated ${datedWords} of the ${countWords} steps.`,
+    captionNone: "I couldn't date any of these steps.",
+    // A package from a sentence whose only date is the one you gave its first step.
+    captionNoneAfter: (phrase: string) => `I couldn't date any step after ${phrase}.`,
+    captionUndated: "How many days each step took in comparable packages.",
+    captionAbstain: (family: string) => `The steps STEP uses for ${family}.`,
+    count: (countWords: string) => `Showing all ${countWords} steps.`,
+    columns: {
+      step: "Step",
+      stepNote: "Short names. Choose one to see STEP's full name.",
+      plan: "In the plan, as first published",
+      planNote: "Plan of {date}",
+      planNoteNone: "The plan's own dates",
+      cautious: "Planned date, cautious",
+      cautiousNote: (in10: string) => `My suggestion. ${in10} in 10 comparable packages ran later.`,
+      middle: "Planned date, middle",
+      middleNote: "My suggestion. Half of comparable packages ran later.",
+      comparables: "Comparable packages",
+      comparablesNote: "That recorded this step",
+    },
+    longest: "Ran longest in {nm}",
+    inStep: (name: string) => `In STEP: ${name}`,
+    termBody: (name: string) => `STEP calls this step "${name}".`,
+    planMoved: "Moved to {date} in the plan of {plan}",
+    planNone: "Not in the plan",
+    // The day captions under a planned date. {days} is a Num. "plan's date" is joined by a no-break space, so a
+    // narrow column never leaves "date" alone on its last line.
+    days: {
+      after: "{days} days after {previous}",
+      afterOne: "{days} day after {previous}",
+      afterPlan: "{days} days after the plan's\u00a0date",
+      afterPlanOne: "{days} day after the plan's\u00a0date",
+      onPlan: "On the plan's\u00a0date",
+      beforePlan: "{days} days before the plan's\u00a0date",
+      beforePlanOne: "{days} day before the plan's\u00a0date",
+    },
+    yours: "Your date",
+    undated: "Not dated yet",
+    undatedStart: "Add its date above.",
+    abstain: "Only {n} comparable packages recorded this step, too few for me to date it.",
+    abstainOne: "Only one comparable package recorded this step, too few for me to date it.",
+    abstainNone: "No comparable package recorded this step, so I can't date it.",
+    // {reached} of {n} comparable packages had reached the step by {date}, the records' date; the rest were still
+    // open, too many to place the date.
+    notReached: "Only {reached} of {n} comparable packages had reached this step by {date}, so I can't date it yet.",
+    notReachedOne: "Only one of {n} comparable packages had reached this step by {date}, so I can't date it yet.",
+    notReachedNone: "None of the {n} comparable packages had reached this step by {date}, so I can't date it yet.",
+    notInPlan: "The plan gives this step no date to count from, so I can't date it.",
+    needsEarlier: (phrase: string) => `I can't date this step without a date for ${phrase}.`,
+    comparablesNone: "None",
+    comparablesStart: "None used",
+    countName: (n: string, label: string) => `${n} comparable packages for ${label}`,
+    // The notes under the table.
+    trackLabel: "Track record:",
+    track: {
+      cautious: "of {total} steps in packages from {year} that I had not seen, {inside} came on or before my cautious date. A well-sized cautious date catches about {catch} in 10.",
+      middle: "of {total} steps in packages from {year} that I had not seen, {inside} came on or before my middle date. A well-sized middle date catches about half.",
+    },
+    actuals: (count: string) => `STEP records actual dates for ${count} of these steps. I suggest planned dates only and leave actual dates to STEP.`,
+    actualsOne: "STEP records an actual date for one of these steps. I suggest planned dates only and leave actual dates to STEP.",
+    coverage: "Based on {used} of {total} comparable packages; {missing} had no dates for these steps in their published plans.",
+    coverageAll: "Based on all {total} comparable packages.",
+    coverageLink: "Data readiness for these sources",
+    sourceLine: "{names}. Records run through {date}.",
+    sourceLineAsOf: "{names}. Records as of {date}.",
+    // The section's live region (the 27 brief, section 8.5).
+    loading: "Loading the planned dates.",
+    showing: { cautious: "Showing cautious dates.", middle: "Showing middle dates." },
+    // How many in 10 comparable packages ran later than a date, as the tool counted them. Five in 10 reads "about
+    // half", as the choice and the column header say it.
+    aboutIn10: "about {in10} in 10",
+    aboutHalf: "about half",
+    // What hover or focus on a number says, and what selecting it opens (the 27 brief, section 7.7). {about} is
+    // aboutIn10 or aboutHalf.
+    tips: {
+      dateDelay:
+        "For {longer} of {n} comparable packages, {about}, {step} came more than {days} days after the date first planned for it. I added {days} days to the plan's date. Select to see the {n} packages.",
+      dateBefore:
+        "For {longer} of {n} comparable packages, {about}, {step} came less than {days} days ahead of the date first planned for it. I counted {days} days back from the plan's date. Select to see the {n} packages.",
+      dateDuration:
+        "For {longer} of {n} comparable packages, {about}, {step} came more than {days} days after {previous}. I added {days} days to the date of {previous}. Select to see the {n} packages.",
+      dateUndated:
+        "For {longer} of {n} comparable packages, {about}, {step} came more than {days} days after {previous}. Add the date of {first} above, and I'll date this step. Select to see the {n} packages.",
+      // The days of a step that needs an earlier step's date.
+      daysNeedsEarlier:
+        "For {longer} of {n} comparable packages, {about}, {step} came more than {days} days after {previous}. I have no date for {previous} to count from. Select to see the {n} packages.",
+      count: (phrase: string) => `Comparable packages whose published plans recorded ${phrase}. Select to see them.`,
+      longest: "Of the {m} comparable packages whose plans recorded every step up to the signed contract, {stage} ran longest in {n}. Select to see them.",
+      track:
+        "From the backtest for {year}: I dated the steps that plans published before {year} had planned for {year}, using only records public before {year}. Run {run}.",
+      trackNoRun:
+        "From the backtest for {year}: I dated the steps that plans published before {year} had planned for {year}, using only records public before {year}.",
+      counted: "Counted from the records behind this section. Data readiness lists them by source.",
+    },
+    // The evidence drawer's two lists (the 27 brief, section 7.6).
+    drawer: {
+      title: (phrase: string) => `Comparable packages for ${phrase}`,
+      fullName: (name: string) => `In STEP: ${name}.`,
+      // {about_c} and {about_m} are aboutIn10 or aboutHalf.
+      findingDelay:
+        "For {longer_c} of {n} packages, {about_c}, {step} came more than {days_c} days after the date first planned for it. For {longer_m} of {n}, {about_m}, it came more than {days_m} days after.",
+      findingDuration:
+        "For {longer_c} of {n} packages, {about_c}, {step} came more than {days_c} days after {previous}. For {longer_m} of {n}, {about_m}, it came more than {days_m} days after.",
+      findingAbstain: "Only {n} comparable packages recorded {step}, too few for me to date it. Here are all {n}.",
+      findingAbstainOne: "Only one comparable package recorded {step}, too few for me to date it. Here it is.",
+      findingCounts: "{n} comparable packages recorded {step}. Here are all {n}.",
+      note: "Shortest first. Still-open packages had not recorded this step by {date}.",
+      // On the delay basis each entry is days against its own first planned date, early ones first.
+      noteDelay: "Earliest first. Still-open packages had not recorded this step by {date}.",
+      entryDays: "{days} days",
+      entryDay: "{days} day",
+      // A comparable that reached the step after, on or before the date first planned for it (the delay basis).
+      entryLate: "{days} days late",
+      entryLateOne: "{days} day late",
+      entryOnPlan: "On the planned date",
+      entryBefore: "{days} days early",
+      entryBeforeOne: "{days} day early",
+      entryOpen: "Still open after {days} days",
+      // A still-open comparable whose first planned date for the step came after the records' date.
+      entryNotDue: "Not due yet",
+      // Heard before an entry's reference and days, so its name holds its words on screen (WCAG 2.5.3).
+      entryOpens: "Open the records for",
+      longestTitle: "Which stage ran longest",
+      longestFinding:
+        "{stage} ran longest in {n} of {m} comparable packages. I counted the stages up to the signed contract, because the contract's completion measures its work, not its procurement.",
+      longestNote: "Grouped by stage, the most common first, then by days, longest first.",
+      longestEntry: "{stage}, {days} days",
+      close: "Close the list",
+    },
+  },
+
   // Section 5 of the package workspace, "Check your criteria" (ticket 31; the 31 brief, section 6). Every
   // {name} is a value a tool, the workflow or the verifier returned, which Num writes. Every sentence says
   // "qualification criteria" for the bidding document's requirements, so it is never read as the criteria that
@@ -3640,6 +3832,8 @@ export const copy = {
         // The package workspace's section 3 (ticket 30) links with its own key, since its coverage line is not
         // the quote check's.
         package_risks: "the risks and what helped",
+        // The package workspace's section 2 (ticket 27).
+        estimate_time: "the planned dates for each step",
         ask: "the answer",
         unknown: "the coverage line you opened",
       },

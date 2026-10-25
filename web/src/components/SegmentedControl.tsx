@@ -1,98 +1,81 @@
-// Segmented control, choice kind (DESIGN.md section 5; briefs 26 and 27, built by ticket 32 for Judging's filter):
-// a radiogroup with a visible label and two to four touching segments in one pill with a 1 px line-strong border and
-// dividers, 32 px tall on one row from a 768 px page area, and stacked below it, 44 px each. Every segment is small
-// text at 600 with a 16 px icon slot; the selected one takes the tint fill, an inset 2 px primary ring and a lucide
-// check (brief 27's look, so no control but the page's primary button is solid navy), and nothing changes size. One
-// tab stop: Left, Right, Up and Down move the selection, which follows focus and is applied 500 ms after the last
-// move, so stepping through the choices does not reload the list each time; a click applies at once.
-import { useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
+// Segmented control (DESIGN.md section 5; the 27 brief, section 4.3): two to four touching pill segments for one
+// choice, such as section 2's "Date each step with". A fieldset with a visible legend and native radios, so the
+// keyboard gets one tab stop and the arrow keys move and select, as the WAI-ARIA radio group does.
+//
+// Each segment: small text, 4 px by 16 px padding, at least 32 px tall (44 px below a 768 px page area, where the
+// segments stack full width), a 1px line-strong border and a surface fill; the outer corners are radius-pill. The
+// selected one has the tint fill, an inset 2px primary ring, so its size never changes, and a 16 px check in primary
+// before its text: the check is the shape that carries the state, since tint against surface alone is 1.06:1.
+// Hover gives an unselected segment tint-hover; focus draws the 2px focus outline with 2px offset on the focused
+// segment, which rises above its neighbours. It is never disabled: in a preview it still works.
+//
+// kind is "choice" here. Ticket 26 adds the toggle kind ("Compare with": buttons with aria-pressed, at most one
+// pressed) to this same component, with this look.
+import { useId, type ReactNode } from "react";
 import { Check } from "lucide-react";
 import { cx } from "../lib/cx";
 
-export type Choice = { key: string; label: ReactNode };
+export type Segment<T extends string> = { value: T; label: ReactNode };
 
-const SETTLE_MS = 500;
-
-export function SegmentedControl({ label, choices, value, onChange }: {
-  label: ReactNode;
-  choices: Choice[];
-  value: string;
-  onChange: (key: string) => void;
+export function SegmentedControl<T extends string>({
+  legend,
+  options,
+  value,
+  onChange,
+  describedBy,
+  kind = "choice",
+}: {
+  legend: ReactNode;
+  options: Segment<T>[];
+  value: T;
+  onChange: (value: T) => void;
+  // Captions under the control that say more about the choice, such as that a preview does not save it.
+  describedBy?: string;
+  kind?: "choice";
 }) {
-  const labelId = useId();
-  const [shown, setShown] = useState(value);
-  const refs = useRef<(HTMLButtonElement | null)[]>([]);
-  const timer = useRef<number | null>(null);
-  useEffect(() => setShown(value), [value]);
-  useEffect(() => () => {
-    if (timer.current !== null) window.clearTimeout(timer.current);
-  }, []);
-
-  const apply = (key: string, wait: boolean) => {
-    setShown(key);
-    if (timer.current !== null) window.clearTimeout(timer.current);
-    if (!wait) {
-      if (key !== value) onChange(key);
-      return;
-    }
-    timer.current = window.setTimeout(() => key !== value && onChange(key), SETTLE_MS);
-  };
-
-  const onKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
-    const at = choices.findIndex((choice) => choice.key === shown);
-    const step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[event.key];
-    if (step === undefined) return;
-    event.preventDefault();
-    const next = (at + step + choices.length) % choices.length;
-    refs.current[next]?.focus();
-    apply(choices[next].key, true);
-  };
-
+  const name = useId();
   return (
-    <div className="flex flex-col gap-1 @md/page:flex-row @md/page:items-center @md/page:gap-3" data-segmented>
-      <span id={labelId} className="text-small font-bold text-ink-heading">
-        {label}
-      </span>
-      <div
-        role="radiogroup"
-        aria-labelledby={labelId}
-        className="flex flex-col rounded-lg border border-line-strong bg-surface @md/page:inline-flex @md/page:flex-row @md/page:self-start @md/page:rounded-pill"
-      >
-        {choices.map((choice, index) => {
-          const selected = choice.key === shown;
+    <fieldset aria-describedby={describedBy} data-segmented={kind} className="min-w-0">
+      <legend className="text-small text-ink-muted">{legend}</legend>
+      <div className="mt-2 flex flex-col @md/page:inline-flex @md/page:flex-row">
+        {options.map((option, index) => {
+          const selected = option.value === value;
           const first = index === 0;
-          const last = index === choices.length - 1;
+          const last = index === options.length - 1;
           return (
-            <button
-              key={choice.key}
-              ref={(element) => {
-                refs.current[index] = element;
-              }}
-              type="button"
-              role="radio"
-              aria-checked={selected}
-              tabIndex={selected ? 0 : -1}
-              onClick={() => apply(choice.key, false)}
-              onKeyDown={onKeyDown}
-              data-segment={choice.key}
+            <label
+              key={option.value}
+              data-segment={option.value}
+              data-selected={selected || undefined}
               className={cx(
-                "relative inline-flex min-h-11 items-center gap-2 px-3 text-left text-small font-semibold text-ink focus-visible:z-10 @md/page:min-h-8",
-                "transition-paint duration-150 motion-reduce:transition-none",
-                // The dividers: a line above each stacked segment but the first, and before each one on a row.
-                !first && "border-t border-line-strong @md/page:border-t-0 @md/page:border-l",
+                "relative flex min-h-11 cursor-pointer items-center gap-2 border border-line-strong px-4 py-1 text-small text-ink",
+                "@md/page:min-h-8",
+                // The segments touch: each after the first drops the border it would share with its neighbour.
+                !first && "border-t-0 @md/page:border-t @md/page:border-l-0",
                 first && "rounded-t-lg @md/page:rounded-l-pill @md/page:rounded-tr-none",
                 last && "rounded-b-lg @md/page:rounded-r-pill @md/page:rounded-bl-none",
-                selected ? "bg-tint shadow-[inset_0_0_0_2px_var(--color-primary)]" : "bg-surface hover:bg-tint-hover",
+                selected ? "z-1 bg-tint shadow-[inset_0_0_0_2px_var(--color-primary)]" : "bg-surface hover:bg-tint-hover",
+                "has-[input:focus-visible]:z-2 has-[input:focus-visible]:outline-2 has-[input:focus-visible]:outline-offset-2",
+                "has-[input:focus-visible]:outline-focus has-[input:focus-visible]:outline-solid",
               )}
             >
-              <span aria-hidden="true" className="inline-flex size-4 shrink-0 items-center justify-center">
+              <input
+                type="radio"
+                name={name}
+                value={option.value}
+                checked={selected}
+                onChange={() => onChange(option.value)}
+                className="peer sr-only"
+              />
+              {/* Both states hold the icon's 16 px, so selecting moves nothing. */}
+              <span aria-hidden="true" className="flex size-4 shrink-0 items-center justify-center">
                 {selected && <Check className="size-4 text-primary" />}
               </span>
-              {choice.label}
-            </button>
+              <span className="min-w-0">{option.label}</span>
+            </label>
           );
         })}
       </div>
-    </div>
+    </fieldset>
   );
 }

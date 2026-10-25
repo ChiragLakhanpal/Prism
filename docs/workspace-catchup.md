@@ -253,6 +253,8 @@ It worked if the answer is HTTP 200 and its body equals `tests/fixtures/api/chec
 
 **Second run on October 25, 2026 (orchestrator):** started at 02:05 UTC, a minute after the host answered a probe with 302 again (it had answered 403 at 01:53 and 302 at 02:03, so the block lasted under 15 minutes). The plan reader spent until 02:43 UTC fetching P156634's plan texts again, then parsed 87 more pages of 24 versions, until the host answered 403 at 03:25 UTC for document 27677290's PDF (Plan-Archive-2.pdf). The script printed "The run stopped before it finished: I could not fetch https://documents.worldbank.org/curated/en/313111498489351105/pdf/Plan-Archive-2.pdf: HTTP Error 403: Forbidden. The pages it parsed are kept, and the next run goes on from there." and exited 2, as a688a81 intended. A probe at 03:26 UTC got 302 again, so each block is a short burst after about 80 minutes of fetching. P156634 now has 689 of its 695 Route B pages in `strata.bronze.layout_pages`; the 6 left are in four versions from June 2017 (27677290, 27677163, 27677200, 27669055). 212 pages were tried today, under the cap of 500. The passage reader has still not started. A third run began at 03:26 UTC and is recorded below.
 
+**Third run on October 25, 2026 (orchestrator):** started at 03:27 UTC. P130164's plan reader finished at 03:29 UTC with 0 pages to parse (`plans-P130164-20261025T032703552021`). P156634's plan reader then spent until 09:56 UTC, six and a half hours, fetching again the nine versions bronze does not hold (the five oversized texts and four more), where the second run had spent 38 minutes on the same fetches, so the host was answering slowly. At 09:56 UTC it stopped in pypdf: one of those PDFs has a font whose encoding pypdf cannot decode, `extract_text` raised `UnicodeDecodeError: 'utf-16-be' codec can't decode byte 0x14 in position 0: truncated data`, and `LiveDocuments.pages` in `src/strata/reader/documents.py` let it through. No page was parsed and no passage written. Fix: `LiveDocuments.pages` now reads a page whose text pypdf cannot decode as empty, like a scanned page, so the page router sends it to Route B, and raises `NotFetched` for a file pypdf cannot open at all (`tests/test_plans.py`). The fourth run is recorded below.
+
 The merger parked this step on October 23, 2026, after merge commit e0721da. It needs the Databricks keys, `AI_SEARCH_ENDPOINT`, `AZURE_OPENAI_ENDPOINT` and `AZURE_OPENAI_API_KEY` in `.env`. Run it after ticket 04's step 1, because the deploy makes the passage tables, and after ticket 04's step 2, because the nightly job fills `strata.gold.project`.
 
 Run this from the main checkout:
@@ -674,6 +676,8 @@ It worked if it shows no `notice_url`, and the gold sync MERGE in step 2 succeed
 
 **Second run on October 25, 2026 (orchestrator):** the same run as ticket 11's step 1, recorded there: it stopped at 03:25 UTC, again in P156634's plan reader, when the host answered 403 once more. The passage reader has still not started. A third run began at 03:26 UTC.
 
+**Third run on October 25, 2026 (orchestrator):** stopped at 09:56 UTC in pypdf on a plan PDF with a broken font encoding, after six and a half hours of fetching; recorded under ticket 11's step 1. The passage reader has still not started.
+
 **First run on October 25, 2026 (orchestrator):** the same run as ticket 11's step 1, recorded there. It stopped at 01:50 UTC, in P156634's plan reader, when documents.worldbank.org began answering 403 to every request from this computer. The passage reader did not start, so the stress shelf, `strata.ops.documents_read` and the slice measures have no row yet. Recorded again below when the host answers and the run finishes.
 
 The merger parked this step on October 24, 2026, after merge commit a8d605c. It needs `DATABRICKS_HOST`, `DATABRICKS_WAREHOUSE_ID`, a token or a service principal, `AI_SEARCH_ENDPOINT`, `AZURE_OPENAI_ENDPOINT` and `AZURE_OPENAI_API_KEY` in `.env`. At 08:24 on October 24, `.env` held the host, the warehouse and the AI Search endpoint, but no Databricks token and no Azure OpenAI keys, and day-one test 7 had just failed. It is the same command as ticket 11's step 1.
@@ -1032,6 +1036,8 @@ It worked if the check exits 0 and prints "DuckDB and the SQL warehouse returned
 
 ## Ticket 25, step 1 of 2: backtest 2025 alone on the workspace and register the champion
 
+**Deploy on October 25, 2026 (orchestrator):** the deploy recorded under ticket 21's step 1 listed `strata.ops.evaluation_result` as new and changed no existing table. The backtest for 2025 started at 10:09 UTC and is recorded below when it finishes.
+
 The merger parked this step on October 24, 2026, after merge commit e7c6e38. All ten keys were set, but the header above holds workspace steps back while the user runs the backlog. It needs the Databricks keys in `.env`. This merge adds the table `strata.ops.evaluation_result`, so first deploy from e7c6e38 or later with ticket 04's command, `uv run --script ops/bundle/deploy.py --env-file .env`, which must list `strata.ops.evaluation_result` as new and change no existing table. Run this step after that deploy and after a nightly run has filled gold and silver (ticket 04's step 2, `uv run --script ops/bundle/check.py job-run --env-file .env`). The merge already ran the builder's local step: `scripts/install` exited 0 and `uv run --frozen python -c 'import xgboost'` exited 0 (xgboost 3.4.1).
 
 Run this from the main checkout:
@@ -1057,6 +1063,8 @@ It worked if it exits 0 and prints five test-year lines, 2021 to 2025, each with
 must return rows for 2021 to 2025, and each `mlflow_run_id` must be a run in the experiment `/Shared/strata/time_estimate`. Criterion 3, workspace half: the `model_card.md` this run logged has a line for each test year, and each year outside 75 to 85 percent gives its gap and a cause sentence (or "The stored results do not show the cause."). This run registers version 2 as challenger, because version 1 from step 1 already holds champion, and the champion's card lists only 2025. Moving champion to version 2 is the user's call; ticket 25's merge comment names it.
 
 ## Ticket 21, step 1 of 4: deploy the baseline tables and the Summary's two silver tables
+
+**Ran on October 25, 2026 (orchestrator).** `ops/bundle/deploy.py --fairshare-catalog workspace` from 106c7da, twice. The first run exited 0 and listed five new tables and no changed one: `strata.ops.plan_baseline_steps`, `strata.ops.plan_baselines`, `strata.silver.project_environment`, `strata.silver.project_sectors`, and ticket 25's `strata.ops.evaluation_result`. The second printed "No changes." The column query returned the four rows (ops.plan_baseline_steps, ops.plan_baselines, silver.project_environment, silver.project_sectors). Passed. `SELECT count(*) FROM strata.silver.project_sectors WHERE project_id = 'P130164'` returned 0 at 10:08 UTC, before any nightly run since the deploy; it is checked again after the next run.
 
 The merger parked this step on October 24, 2026, after merge commit d596000. All ten keys were set, but the header above holds workspace steps back while the user runs the backlog. It needs the Databricks keys in `.env`. It is ticket 04's deploy command, and one deploy from d596000 or later also serves ticket 25's step 1, which needs a deploy from e7c6e38 or later.
 
@@ -1220,3 +1228,28 @@ Run this from the main checkout:
     uv run --script ops/app/deploy_app.py --env-file .env
 
 It worked if the deploy exits 0 and its last line is `Strata is running at https://...`. Then sign in to the App as one viewer, open `/packages/KE-CWSB-224323-CS-QCBS`, open section 5, and paste "at least two contracts of similar works of US$10 million each". It worked if the comparison shows its counts under "Asked for it" and "Asked for the same or less", with "Judged by a model" on the check line, the pasted text is in Lakebase's `strata.app.criteria_checks` with that viewer as its owner, and a second viewer's `GET /api/packages/KE-CWSB-224323-CS-QCBS/criteria` shows no comparison and none of the first viewer's words (CLAUDE.md rule 8).
+
+## Ticket 27, step 1 of 2: backtest the planned date for each step for 2025 alone on the workspace
+
+The merger parked this step on October 25, 2026, after merge commit abadca3. All ten keys were set, but the header above holds workspace steps back while the user runs the backlog. It needs the Databricks keys in `.env`. Run it after the live plan run has filled `strata.silver.plan_step_delays` on the warehouse: ticket 08's step 1 (`uv run --script ops/plans/run_live.py --env-file .env`) and ticket 18's run of the slice. It writes to `strata.ops.evaluation_result`, which ticket 25's deploy adds, so run it after that deploy too. Ticket 27 is criterion 1's live half: the offline half passed in `.notes/27-verify-r2.md`.
+
+Run this from the main checkout:
+
+    uv run --script ops/estimates/step_backtest_live.py --env-file .env --years 2025
+
+It worked if it exits 0 and prints the 2025 line with its counts and an MLflow run id, then one line for each step the year scored. Note how long it took before step 2: each step first planned in 2025 calls find_comparables once on the warehouse.
+
+## Ticket 27, step 2 of 2: backtest the planned date for each step for 2021 to 2025 on the workspace
+
+The merger parked this step on October 25, 2026, after merge commit abadca3. It needs the Databricks keys in `.env`. Run it after step 1, and only if step 1's year took a reasonable time.
+
+Run this from the main checkout:
+
+    uv run --script ops/estimates/step_backtest_live.py --env-file .env
+
+It worked if it exits 0 and prints a line for each test year 2021 to 2025, each with its counts and its own MLflow run id (criterion 1). Then this query:
+
+    SELECT segment, measure, value, mlflow_run_id FROM strata.ops.evaluation_result
+    WHERE scorer = 'step_dates_backtest' AND measure LIKE '%.n'
+
+must return rows for each test year 2021 to 2025, one `<family>.<step>.n` measure for each step of each family, each with a non-null `mlflow_run_id`, and each of those ids must be a run in the experiment `/Shared/strata/time_estimate` (`config/models.toml`, `experiment`) with the same id the script printed for that year.
