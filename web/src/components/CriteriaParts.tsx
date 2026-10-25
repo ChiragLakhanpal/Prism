@@ -11,11 +11,13 @@ import { cx } from "../lib/cx";
 import { evidenceHref, evidenceIn, openEvidence, visited } from "../lib/evidence";
 import { itemListId, type ComparedItem, type Comparison, type LessonEntry, type LessonGroup, type Rejected, type RejectedRow } from "../lib/criteria";
 import { formatCount, formatDate } from "../lib/format";
+import { excerpt } from "../lib/sources";
 import { address } from "../lib/router";
 import { useStore } from "../lib/store";
 import { Button } from "./Button";
 import { CitationMarker } from "./CitationMarker";
-import { Fill } from "./Fill";
+import { highlighted } from "./Document";
+import { Fill, Joined } from "./Fill";
 import { Num } from "./Num";
 import { ProjectId } from "./ProjectId";
 import { Source } from "./Source";
@@ -34,6 +36,17 @@ export function useOpenId(): string | null {
 export function openFrom(id: string, element: HTMLElement) {
   const part = element.closest("[data-criteria-part]")?.querySelector<HTMLElement>("h3") ?? null;
   openEvidence(id, { serial: null, sentence: null, marker: element, runId: null, fallback: part });
+}
+
+// A part's source line (the 31 brief, 6.5, 6.7 and 6.8): its sources by their dataset names, then the day the
+// records run through, the same in every part, or on an as-of page the date the records were read as of.
+export function partSource({ sources, through, asOf, template, templateAsOf, slots = {} }: {
+  sources: { dataset_name: string }[]; through: string | null; asOf: string | null; template: string; templateAsOf: string;
+  slots?: Record<string, ReactNode>;
+}): ReactNode {
+  const names = <Joined items={sources.map((source) => source.dataset_name)} />;
+  if (asOf) return <Fill template={templateAsOf} slots={{ sources: names, asOf: <Num date={asOf} />, ...slots }} />;
+  return <Fill template={template} slots={{ sources: names, through: through ? <Num date={through} /> : "", ...slots }} />;
 }
 
 function Mono({ text }: { text: string }) {
@@ -149,7 +162,8 @@ export function CriteriaTable({ comparison }: { comparison: Comparison }) {
     ) : (
       <Fill template={words.items.caption} slots={{ count: formatCount(items.length), n: <Num value={total} /> }} />
     );
-  const count = items.length === 1 ? words.items.countOne : <Fill template={words.items.count} slots={{ count: formatCount(items.length) }} />;
+  const count =
+    items.length === 1 ? words.items.countOne : items.length === 2 ? words.items.countBoth : <Fill template={words.items.count} slots={{ count: formatCount(items.length) }} />;
   const open = useOpenId();
   const isOpen = (item: ComparedItem) => open === itemListId(comparison.check_id, item.item_key);
   return (
@@ -158,7 +172,7 @@ export function CriteriaTable({ comparison }: { comparison: Comparison }) {
       <div className="hidden @md/page:block">
         <table className="w-full table-fixed border-collapse text-left">
           <caption className="text-left">
-            <span className="block text-title text-ink-heading">{caption}</span>
+            <span className="block text-body font-semibold text-ink">{caption}</span>
             <span className="mt-1 mb-3 block text-caption text-ink-muted">{count}</span>
           </caption>
           <colgroup>
@@ -223,13 +237,13 @@ export function CriteriaTable({ comparison }: { comparison: Comparison }) {
       </div>
       {/* A list below a 768 px page area. */}
       <div className="@md/page:hidden">
-        <p id={captionId} className="text-title text-ink-heading">{caption}</p>
+        <p id={captionId} className="text-body font-semibold text-ink">{caption}</p>
         <p className="mt-1 text-caption text-ink-muted">{count}</p>
         <ol aria-labelledby={captionId} className="mt-3 flex flex-col">
           {items.map((item) => {
             const cells = cellsOf(item, comparison);
             return (
-              <li key={item.item_key} data-item={item.item_key} className={cx("border-t border-line py-4", isOpen(item) && "bg-tint")}>
+              <li key={item.item_key} data-item={item.item_key} className={cx("-mx-2 border-t border-line px-2 py-4", isOpen(item) && "bg-tint")}>
                 <h4 className="text-small font-semibold text-ink-heading">{item.label}</h4>
                 <p className="mt-1">
                   <Excerpt item={item} />
@@ -260,7 +274,7 @@ export function CriteriaTable({ comparison }: { comparison: Comparison }) {
 
 // The notes under the table, in the brief's order: the parts not compared, how items are put in order, the
 // coverage line and the source line. No currency note: no notice's amount was converted (fx_count is 0).
-export function CriteriaNotes({ comparison, readinessHref }: { comparison: Comparison; readinessHref: string }) {
+export function CriteriaNotes({ comparison, readinessHref, asOf = null }: { comparison: Comparison; readinessHref: string; asOf?: string | null }) {
   const [shown, setShown] = useState(false);
   const listId = useId();
   const firstPart = useRef<HTMLLIElement>(null);
@@ -296,30 +310,33 @@ export function CriteriaNotes({ comparison, readinessHref }: { comparison: Compa
             <Fill template={words.items.coverageAll} slots={{ total: <Num value={coverage.total} /> }} />
           ) : (
             <>
-              <Fill
-                template={words.items.coverage}
-                slots={{ n: <Num value={coverage.n} />, total: <Num value={coverage.total} />, missing: <Num count={coverage.missing} capital={false} /> }}
-              />
+              <Fill template={words.items.coverage} slots={{ n: <Num value={coverage.n} />, total: <Num value={coverage.total} /> }} />
+              {coverage.missing > 0 && (
+                <>
+                  {" "}
+                  <Fill template={words.items.coverageMissing} slots={{ missing: <Num count={coverage.missing} capital /> }} />
+                </>
+              )}
               {coverage.open > 0 && (
                 <>
-                  {copy.cost.coverageAnd}
+                  {" "}
                   <Fill template={words.items.coverageOpen} slots={{ open: <Num count={coverage.open} /> }} />
                 </>
               )}
-              {copy.coverage.end}
             </>
           )}{" "}
           <TextLink href={readinessHref}>{words.items.coverageLink}</TextLink>
         </p>
       )}
       <Source>
-        <Fill
-          template={words.items.source}
-          slots={{
-            through: comparison.records_through ? <Num date={comparison.records_through} /> : "",
-            compared: <Num date={comparison.compared_at.slice(0, 10)} />,
-          }}
-        />
+        {partSource({
+          sources: comparison.sources,
+          through: comparison.records_through,
+          asOf: asOf ? comparison.as_of : null,
+          template: words.items.source,
+          templateAsOf: words.items.sourceAsOf,
+          slots: { compared: <Num date={comparison.compared_at.slice(0, 10)} /> },
+        })}
       </Source>
     </div>
   );
@@ -358,7 +375,7 @@ function RejectedRowView({ row, n }: { row: RejectedRow; n: number }) {
           type="button"
           aria-label={words.rejected.openRecords(row.step_reference)}
           onClick={(event) => openFrom(`strata.gold.package:${row.step_reference}`, event.currentTarget)}
-          className="relative -my-1 py-1 text-left font-mono text-small text-primary hover:underline"
+          className="relative -my-1 py-1 text-left font-mono text-small text-primary underline hover:text-link-hover"
           data-step-ref
         >
           <Mono text={row.step_reference} />
@@ -383,7 +400,10 @@ function RejectedRowView({ row, n }: { row: RejectedRow; n: number }) {
         </p>
       )}
       <p className="text-caption text-ink-muted">
-        <Fill template={words.rejected.notice} slots={{ id: <Mono text={row.notice_id} />, date: row.notice_date ? <Num date={row.notice_date} style="table" /> : "" }} />
+        <Fill
+          template={words.rejected.notice}
+          slots={{ id: <Mono text={row.notice_id} />, date: row.notice_date ? <span className="whitespace-nowrap"><Num date={row.notice_date} style="table" /></span> : "" }}
+        />
       </p>
       {row.bids > 1 && (
         <p className="text-caption text-ink-muted">
@@ -440,8 +460,10 @@ function Group({ rejected, groupKey, numbers, yours, perGroup }: {
   );
 }
 
-export function RejectedBids({ rejected, numbers, yourItems, perGroup, readinessHref }: {
+export function RejectedBids({ rejected, numbers, yourItems, perGroup, readinessHref, asOf = null }: {
   rejected: Rejected; numbers: Map<string, number>; yourItems: Set<string>; perGroup: number; readinessHref: string;
+  // The page's as-of date, when it has one: the source line then says the records were read as of it.
+  asOf?: string | null;
 }) {
   const { m, n, total } = rejected.counts;
   const focusFirstGroup = () => {
@@ -495,9 +517,10 @@ export function RejectedBids({ rejected, numbers, yourItems, perGroup, readiness
           </div>
         </>
       )}
-      {rejected.records_through && (
+      {(rejected.records_through || asOf) && (
         <Source className="mt-2">
-          <Fill template={words.rejected.source} slots={{ through: <Num date={rejected.records_through} /> }} />
+          {partSource({ sources: rejected.sources, through: rejected.records_through, asOf, template: words.rejected.source,
+            templateAsOf: words.rejected.sourceAsOf })}
         </Source>
       )}
     </div>
@@ -522,11 +545,17 @@ function LessonCardView({ lesson, n, firstIcr, firstIeg }: { lesson: LessonEntry
   const source = lesson.locator === "section"
     ? lessonWords.markerSection(lesson.document_type, date, lesson.para ?? "")
     : lessonWords.markerParagraph(lesson.document_type, date, lesson.para ?? "");
+  // The paragraph around the lesson's words, with them highlighted (DESIGN.md section 5, Evidence card); the
+  // quote alone when the paragraph could not be read.
+  const shown = lesson.excerpt && lesson.excerpt.range ? excerpt(lesson.excerpt.text, lesson.excerpt.range as [number, number]) : null;
   return (
-    <article aria-labelledby={titleId} className="rounded-md border border-line bg-surface p-4 @md/page:p-6" data-lesson-card={lesson.lesson_id}>
-      <p className="text-label text-ink-muted uppercase">{lessonWords.eyebrow}</p>
-      <h4 id={titleId} className="mt-1 text-title text-ink-heading">
+    <article aria-labelledby={titleId} className="relative rounded-md border border-line bg-surface p-4 @md/page:p-6" data-lesson-card={lesson.lesson_id}>
+      <p className="pr-8 text-label text-ink-muted uppercase">{lessonWords.eyebrow}</p>
+      <h4 id={titleId} className="mt-1 pr-8 text-title text-ink-heading">
         {lesson.statement}
+      </h4>
+      {/* The citation number sits top right, after the title in the DOM, so the card's name is its title alone. */}
+      <span className="absolute top-4 right-4 @md/page:top-6 @md/page:right-6" data-lesson-marker>
         <CitationMarker
           n={n}
           source={source}
@@ -537,13 +566,21 @@ function LessonCardView({ lesson, n, firstIcr, firstIeg }: { lesson: LessonEntry
           evidenceId={lesson.passage_evidence_id}
           onOpen={(marker) => openFrom(lesson.passage_evidence_id, marker)}
         />
-      </h4>
+      </span>
       {lesson.removed ? (
         <p className="mt-2">
           <RemovedLine text={words.removedInPlace} />
         </p>
+      ) : shown ? (
+        <p className="mt-2 text-small text-ink" lang={lesson.excerpt?.lang} data-lesson-excerpt>
+          {copy.evidence.quoteOpen}
+          {shown.cutBefore && copy.evidence.cut}
+          {highlighted(shown.text, shown.range ? [shown.range] : [])}
+          {shown.cutAfter && copy.evidence.cut}
+          {copy.evidence.quoteClose}
+        </p>
       ) : (
-        <p className="mt-2 text-small text-ink">{lessonWords.quoted(lesson.quote)}</p>
+        <p className="mt-2 text-small text-ink" lang={lesson.excerpt?.lang}>{lessonWords.quoted(lesson.quote)}</p>
       )}
       <p className="mt-2 text-caption text-ink-muted" data-source>
         <span className="font-bold">{lessonWords.sourceLead}</span>{" "}

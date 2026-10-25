@@ -40,7 +40,6 @@ from strata.harness.facts import Facts
 from strata.harness.turn import Event
 
 log = logging.getLogger("strata.criteria")
-FACTORS = ("cost_estimates", "designs_and_specifications")
 # The refusal keys the reader may give (ticket 24's src/strata/agent/refusals.py names every key; these two are
 # the ones this section's text can call for, the 31 brief, section 5.5).
 REFUSALS = ("live_tenders", "review_decisions")
@@ -48,6 +47,9 @@ REFUSALS = ("live_tenders", "review_decisions")
 COMPARE_ERRORS = ("no_reader", "agent_unavailable", "content_filter", "agent_output", "store", "data_service",
                   "internal")
 PASSAGES = "strata.gold.passage"
+# The criteria reader (config/agents.toml): each "I read this as ..." is checked against the facts recorded under
+# its name, and the check line names it as the tool those facts came from.
+READER = "criteria_reader"
 ToolCall = Callable[[str, dict], dict]
 
 
@@ -79,6 +81,7 @@ def limits(thresholds: Thresholds) -> dict:
     return {"max_chars": int(value("criteria.max_chars")), "counter_left": int(value("criteria.counter_left")),
             "rows_per_group": int(value("criteria.rows_per_group")),
             "lessons_per_group": int(value("criteria.lessons_per_group")),
+            "lesson_factors": [str(factor) for factor in value("criteria.lesson_factors")],
             "min_comparables": int(value("past_range.min_comparables"))}
 
 
@@ -145,10 +148,16 @@ def summary(call_tool: ToolCall, package: Package, store: CriteriaStore | None, 
              "state": "ok" if counts["n"] else "none_public"}
     comparison, run = _saved(store, owner_id, package, COMPARISON), _saved(store, owner_id, package, PACKAGE_RUN)
     if comparison is not None:
+        # A comparison that failed after its text was saved has no table: the last one that finished shows,
+        # under the newest text, and text_compared says the two differ.
+        finished = comparison if comparison.result is not None else \
+            store.latest(owner_id, package.key, COMPARISON, finished=True)
         view["comparison"] = {"check_id": comparison.check_id, "status": comparison.status,
-                              "pasted_text": comparison.pasted_text, "result": comparison.result,
-                              "stale": comparison.comparables_signature != signed,
-                              "compared_at": comparison.created_at.isoformat()}
+                              "pasted_text": comparison.pasted_text,
+                              "result": finished.result if finished else None,
+                              "text_compared": finished is comparison,
+                              "stale": finished is not None and finished.comparables_signature != signed,
+                              "compared_at": (finished or comparison).created_at.isoformat()}
     if run is not None and run.comparables_signature == signed and run.status == "ready":
         view["package_run"] = run.result
     view["section_checks"] = combine((view["package_run"] or {}).get("checks"),
@@ -165,12 +174,13 @@ def public_entries(criteria: dict) -> list[dict]:
 
 # ── The package-level run ────────────────────────────────────────────────
 
-def lesson_groups(call_tool: ToolCall, package: Package, per_group: int) -> list[dict]:
-    """Lessons on cost estimates, then on specifications, each group in get_lessons' order (fit, then evidence,
-    never use), at most per_group each; a lesson tagged with both shows once, under the first."""
+def lesson_groups(call_tool: ToolCall, package: Package, per_group: int, factors: list[str]) -> list[dict]:
+    """Lessons on each risk factor in turn (criteria.lesson_factors: cost estimates, then specifications), each
+    group in get_lessons' order (fit, then evidence, never use), at most per_group each; a lesson tagged with both
+    shows once, under the first."""
     groups, shown = [], set()
     query = " ".join(word for word in (package.description or "", "cost estimates specifications") if word)
-    for factor in FACTORS:
+    for factor in factors:
         found = call_tool("get_lessons", {"risk_factor": factor, "query": query})
         lessons = []
         for row in found["rows"]:
@@ -204,8 +214,14 @@ def _lesson_claims(groups: list[dict], read_passage: Callable[[str], dict | None
         for lesson in group["lessons"]:
             facts.record(lesson["evidence_id"], lesson.pop("row"), tool="get_lessons")
             passage = read_passage(lesson["passage_id"])
+            lesson["excerpt"] = None
             if passage is not None:
                 facts.record(lesson["passage_evidence_id"], passage, tool="get_lessons")
+                # The card quotes the paragraph around the lesson's words, with them highlighted (DESIGN.md
+                # section 5, Evidence card), in the paragraph's language.
+                found = find_quote(lesson["quote"], passage["text"] or "")
+                lesson["excerpt"] = {"text": passage["text"], "range": list(found) if found else None,
+                                     "lang": passage["language"] or "en"}
             claims.append((Claim(f'"{lesson["quote"]}"', "quote", (lesson["evidence_id"], lesson["passage_evidence_id"]),
                                  quote=Quote(lesson["quote"], lesson["passage_evidence_id"])), lesson["evidence_id"]))
     return claims
@@ -236,8 +252,11 @@ async def package_run(call_tool: ToolCall, read_passage: Callable[[str], dict | 
     joined = ",".join(refs)
     yield step("notices", "done", count=len(refs))
 
+    # With no comparable packages there is nothing to count or compare: each part says so (the screen starts no
+    # run then, but a direct request still gets an answer).
     yield step("reasons", "running")
-    rejected = await asyncio.to_thread(call_tool, "rejected_bids", {"comparables": joined})
+    rejected = await asyncio.to_thread(call_tool, "rejected_bids", {"comparables": joined}) if refs else \
+        _no_rejected(found)
     yield step("reasons", "done", count=rejected["summary"]["counts"]["n"])
 
     yield step("cost", "running")
@@ -246,11 +265,13 @@ async def package_run(call_tool: ToolCall, read_passage: Callable[[str], dict | 
         asked["step_reference"] = package.step_reference
     elif package.estimate_usd is not None:
         asked["estimate_usd"] = package.estimate_usd
-    cost = await asyncio.to_thread(call_tool, "compare_cost_estimates", asked)
+    cost = await asyncio.to_thread(call_tool, "compare_cost_estimates", asked) if refs else \
+        _no_cost(found, per["min_comparables"])
     yield step("cost", "done", count=cost["summary"]["counts"]["m"])
 
     yield step("lessons", "running")
-    groups = await asyncio.to_thread(lesson_groups, call_tool, package, per["lessons_per_group"])
+    groups = await asyncio.to_thread(lesson_groups, call_tool, package, per["lessons_per_group"], per["lesson_factors"]) \
+        if refs else []
     yield step("lessons", "done", count=sum(len(group["lessons"]) for group in groups))
 
     yield step("checks", "running")
@@ -286,10 +307,26 @@ async def package_run(call_tool: ToolCall, read_passage: Callable[[str], dict | 
                                     records_through=_day(found.get("records_through")))
         except Exception:  # a run the store could not keep still shows; it runs again the next time
             log.exception("I could not keep the package-level run of %s.", package.key)
-    comparison = _saved(store, owner_id, package, COMPARISON) if store is not None and owner_id else None
+    comparison = await asyncio.to_thread(_saved, store, owner_id, package, COMPARISON)
     other = comparison.result.get("checks") if comparison is not None and comparison.result and \
         comparison.comparables_signature == signed else None
     yield Event("package_run", {**result, "section_checks": combine(counts, other)})
+
+
+def _no_rejected(found: dict) -> dict:
+    """rejected_bids' answer when there are no comparable packages to read award notices of."""
+    return {"rows": [], "summary": {"counts": {"total": 0, "m": 0, "n": 0}, "groups": []}, "sources": [],
+            "records_through": found.get("records_through")}
+
+
+def _no_cost(found: dict, min_comparables: int) -> dict:
+    """compare_cost_estimates' answer when there are no comparable packages to compare with."""
+    counts = {"total": 0, "m": 0, "open": 0, "no_estimate": 0, "no_usd": 0, "above": 0, "below": 0, "at": 0}
+    return {"rows": [], "coverage": {"matched": 0, "used": 0, "not_used": []}, "summary": {"counts": counts},
+            "package": {"step_reference": None, "estimated_amount_usd": None, "evidence_id": None, "given": False},
+            "counts": counts, "band": None, "quartiles": None, "quantile_dots": None, "min_comparables": min_comparables,
+            "sources": [], "records_through": found.get("records_through"), "abstention": {"reason": "no_comparables"},
+            "as_of": found.get("as_of")}
 
 
 def _day(value) -> dt.date | None:
@@ -343,10 +380,15 @@ def read_answer(answer_text: str, text: str, items: CriteriaItems) -> Reading:
         if not excerpt or find_quote(excerpt, text) is None:
             log.info("The criteria reader's words for %s are not in the text; I left the item out.", key)
             continue
+        given = entry.get("parts") or {}
+        if not isinstance(given, dict):
+            log.info("The criteria reader gave %s's parts as %s, not by name; I left the item out.", key,
+                     type(given).__name__)
+            continue
         seen.add(key)
         stated = _numbers_in(excerpt)
         parts = {}
-        for part, value in (entry.get("parts") or {}).items():
+        for part, value in given.items():
             if part not in items.item(key).parts or value is None:
                 continue
             number = value.get("value") if isinstance(value, dict) else value
@@ -354,13 +396,29 @@ def read_answer(answer_text: str, text: str, items: CriteriaItems) -> Reading:
             if written is None:
                 log.info("The criteria reader gave %s's %s a number its words do not state; I left it out.", key, part)
                 continue
-            parts[part] = ({"value": str(number), "currency": str(value.get("currency") or "USD").upper()}
-                           if part == "amount" else int(number))
+            if part == "amount":
+                parts[part] = {"value": str(number), "currency": str(value.get("currency") or "USD").upper()
+                               if isinstance(value, dict) else "USD"}
+            elif _whole(number) is None:
+                log.info("The criteria reader gave %s's %s as %r, not a whole number; I left it out.", key, part, number)
+            else:
+                parts[part] = _whole(number)
         kept.append({"item_key": key, "excerpt": excerpt, "reading": str(entry.get("reading") or "").strip() or None,
                      "parts": parts})
     unplaced = [str(part).strip() for part in answer.get("unplaced") or []
                 if str(part).strip() and find_quote(str(part).strip(), text) is not None]
     return Reading(refusal, kept, unplaced)
+
+
+def _whole(number) -> int | None:
+    """A count as a whole number, or None when it has a fraction ("2.5 contracts" sets no count)."""
+    from decimal import Decimal, InvalidOperation
+
+    try:
+        value = Decimal(str(number))
+    except (InvalidOperation, TypeError):
+        return None
+    return int(value) if value == value.to_integral_value() else None
 
 
 def _written(number, stated: set):
@@ -401,7 +459,25 @@ async def compare(call_tool: ToolCall, reader_for: Callable[[], object | None], 
     except Exception as error:
         raise CompareError("store") from error
     yield Event("saved", {"check_id": check_id})
+    try:
+        async for event in _compare_saved(call_tool, reader_for, package, text, store, owner_id, thresholds, now,
+                                          check_id, started, items, per):
+            yield event
+    except Exception:
+        # The text is saved, so the run is marked failed: its row never stays "running", and the summary shows
+        # the last comparison that finished under the newest text.
+        try:
+            await asyncio.to_thread(store.save, check_id, owner_id, package.key, COMPARISON, "failed", now(),
+                                    pasted_text=text)
+        except Exception:
+            log.exception("I could not mark check %s as failed.", check_id)
+        raise
 
+
+async def _compare_saved(call_tool: ToolCall, reader_for: Callable[[], object | None], package: Package, text: str,
+                         store: CriteriaStore, owner_id: str, thresholds: Thresholds, now: Callable[[], dt.datetime],
+                         check_id: str, started: dt.datetime, items: CriteriaItems, per: dict) -> AsyncIterator[Event]:
+    """The comparison once its text is saved: read, find, compare and check, then keep the result."""
     yield step("read", "running")
     agent = reader_for()
     if agent is None:
@@ -421,12 +497,14 @@ async def compare(call_tool: ToolCall, reader_for: Callable[[], object | None], 
     signed = signature(refs, found.get("records_through"))
     base = {"check_id": check_id, "compared_at": started.isoformat(), "signature": signed,
             "records_through": found.get("records_through"), "as_of": found["as_of"], "refusal": reading.refusal,
-            "content_filtered": False, "items": [], "unplaced": reading.unplaced, "fx_count": 0, "coverage": None,
+            "content_filtered": False, "items": [], "item_count": 0, "unplaced": reading.unplaced, "fx_count": 0,
+            "coverage": None,
             "sources": [], "checks": None, "removed": []}
     if reading.refusal and not reading.refusal["partial"]:
         result = {**base, "unplaced": []}
         await _keep(store, check_id, owner_id, package, "refused", now(), text, result, signed, found)
-        yield Event("comparison", {**result, "section_checks": _with_run(store, owner_id, package, None, signed)})
+        run = await asyncio.to_thread(_with_run, store, owner_id, package, None, signed)
+        yield Event("comparison", {**result, "section_checks": run})
         return
 
     yield step("find", "running")
@@ -472,19 +550,20 @@ async def compare(call_tool: ToolCall, reader_for: Callable[[], object | None], 
             continue
         evidence = f"paste:{check_id}/{item['item_key']}"
         facts.record(evidence, {"excerpt": item["excerpt"], "numbers": sorted(str(n) for n in _numbers_in(item["excerpt"]))},
-                     tool="criteria_reader")
+                     tool=READER)
         claims.append((Claim(item["reading"], "summary", (evidence,)), item["item_key"]))
-    counts, removed, removed_keys = verdict_of(claims, facts, ["compare_criteria"]) if claims else (None, [], set())
+    counts, removed, removed_keys = verdict_of(claims, facts, [READER]) if claims else (None, [], set())
     for entry in shown:
         entry["reading_removed"] = entry["item_key"] in removed_keys
     yield step("checks", "done")
 
     criteria_counts = criteria["summary"]["counts"] if criteria else {"n": 0, "total": 0, "open": 0, "missing": 0}
-    result = {**base, "items": shown,
+    result = {**base, "items": shown, "item_count": len(shown),
               "coverage": {key: criteria_counts.get(key, 0) for key in ("n", "total", "open", "missing")},
               "sources": criteria["sources"] if criteria else [], "checks": counts, "removed": removed}
     await _keep(store, check_id, owner_id, package, "ready", now(), text, result, signed, found)
-    yield Event("comparison", {**result, "section_checks": _with_run(store, owner_id, package, counts, signed)})
+    run = await asyncio.to_thread(_with_run, store, owner_id, package, counts, signed)
+    yield Event("comparison", {**result, "section_checks": run})
 
 
 def _with_run(store: CriteriaStore, owner_id: str, package: Package, counts: dict | None, signed: str) -> dict | None:

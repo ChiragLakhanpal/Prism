@@ -27,47 +27,19 @@ the item in other terms, and fx_count stays 0. Rows come newest notice first, th
 
 from __future__ import annotations
 
-import datetime as dt
 import json
 import re
 from decimal import Decimal, InvalidOperation
-from importlib import resources
 
-from strata.config import CriteriaItems, load_criteria_items, load_sources, load_tools
+from strata.config import CriteriaItems, load_criteria_items
 from strata.criteria import reading
+from strata.tools import common
+from strata.tools.common import iso as _iso
 from strata.tools.registry import Call, ToolError
 
 TOOL = "compare_criteria"
 PASSAGES = "strata.gold.passage"
 REASONS = ("still_open", "no_notice", "no_public_criteria")
-
-
-def _sql(name: str) -> str:
-    return (resources.files("strata.tools") / "sql" / TOOL / f"{name}.sql").read_text()
-
-
-def _rows(call: Call, name: str, **params) -> list[dict]:
-    result = call.engine.run(_sql(name), {"as_of": call.as_of, **params})
-    return [dict(zip(result.columns, row, strict=True)) for row in result.rows]
-
-
-def _iso(value) -> str | None:
-    if value is None or value == "":
-        return None
-    return value.isoformat()[:10] if isinstance(value, dt.date) else str(value)[:10]
-
-
-def _flag(value) -> bool:
-    return value if isinstance(value, bool) else str(value).lower() == "true"
-
-
-def _references(text: str) -> list[str]:
-    return list(dict.fromkeys(part.strip() for part in text.split(",") if part.strip()))
-
-
-def _sources() -> list[dict]:
-    registry = load_sources()
-    return [{"key": key, "dataset_name": registry[key].dataset_name} for key in load_tools()[TOOL].sources]
 
 
 def _place(passage_id: str) -> tuple[int, int, str]:
@@ -134,18 +106,19 @@ def compared_requirement(requirements: list[dict], item: dict) -> dict | None:
 
 
 def compare_criteria(call: Call, comparables: str, items: str | None = None) -> dict:
-    refs = _references(comparables)
+    refs = common.references(comparables)
     registry = load_criteria_items()
     mine = your_items(items, registry)
-    packages = _rows(call, "packages", refs=",".join(refs)) if refs else []
+    packages = common.rows(call, TOOL, "packages", refs=",".join(refs)) if refs else []
     by_ref = {row["step_reference"]: row for row in packages}
+    signed = common.signed(call, refs)
 
     left_out = {reason: [] for reason in REASONS}
     readable = []
     for ref in refs:
         package = by_ref.get(ref)
         evidence = f"strata.gold.package:{ref}"
-        if package is None or not _flag(package["signed"]):
+        if package is None or not signed.get(ref):
             left_out["still_open"].append(evidence)
         elif not package["notice_id"]:
             left_out["no_notice"].append(evidence)
@@ -153,7 +126,7 @@ def compare_criteria(call: Call, comparables: str, items: str | None = None) -> 
             readable.append(package)
     notices = ",".join(package["notice_id"] for package in readable)
     passages: dict[str, list[dict]] = {}
-    for passage in (_rows(call, "passages", notices=notices) if readable else []):
+    for passage in (common.rows(call, TOOL, "passages", notices=notices) if readable else []):
         passages.setdefault(passage["notice_id"], []).append(passage)
 
     rows = []
@@ -210,8 +183,8 @@ def compare_criteria(call: Call, comparables: str, items: str | None = None) -> 
     coverage = {"matched": len(refs), "used": len(rows), "not_used": not_used}
     counts = {"n": len(rows), "total": len(refs), "open": len(left_out["still_open"]),
               "missing": len(left_out["no_public_criteria"]) + len(left_out["no_notice"]), "fx_count": 0}
-    found = {"rows": rows, "coverage": coverage, "items": summary_items, "counts": counts, "sources": _sources(),
-             "records_through": max((row["notice_date"] for row in rows if row["notice_date"]), default=None)}
+    found = {"rows": rows, "coverage": coverage, "items": summary_items, "counts": counts,
+             "sources": common.sources(TOOL), "records_through": common.records_through(call)}
     if not refs:
         return {**found, "abstention": {"reason": "no_comparables"}}
     if not rows:

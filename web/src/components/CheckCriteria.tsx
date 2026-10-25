@@ -15,7 +15,7 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode, type Ref } from "react";
 import { CircleX } from "lucide-react";
 import { copy } from "../copy";
-import { dataReadinessHref } from "../routes";
+import { DATA_HREF, dataReadinessHref } from "../routes";
 import type { Checks, Comparison, CriteriaSummary, PackageRun, RemovedEntry } from "../lib/criteria";
 import { publicListId, rememberCosts, rememberItems, rememberPublic } from "../lib/criteria";
 import { formatCount, formatNumber } from "../lib/format";
@@ -41,6 +41,12 @@ const words = copy.criteria;
 export const SECTION_ID = "check-criteria";
 const RUN_STEPS = ["notices", "reasons", "cost", "lessons", "checks"];
 const COMPARE_STEPS = ["read", "find", "compare", "checks"];
+// A comparison's failure codes the page gives itself: the request failed after the save (internal), or before it,
+// so the text was not kept (unsaved). Each has its words under copy.criteria.errors.
+const INTERNAL = "internal";
+const UNSAVED = "unsaved";
+// The id of How Strata works' "What I don't do" heading, which the refusal links to (ticket 24 gives it).
+const WHAT_I_DONT_DO = "what-i-dont-do";
 
 export type StepState = { key: string; state: "running" | "done" };
 export type RunState =
@@ -77,6 +83,9 @@ export type ViewProps = {
   headingRef?: Ref<HTMLHeadingElement>;
   // The section's id: #check-criteria on a page; the design gallery gives each sample its own.
   sectionId?: string;
+  // The page's as-of date (?asof=), when it has one: each part's source line then says the records were read as
+  // of it (the 31 brief, 5.7).
+  asOf?: string | null;
 };
 
 function stepsOf(keys: string[], steps: StepState[]): Step[] {
@@ -112,12 +121,7 @@ function ErrorBlock({ message, code, onRetry }: { message: ReactNode; code?: str
 
 function Summary({ summary, compared }: { summary: CriteriaSummary; compared: Comparison | null }) {
   const n = summary.public_criteria_count;
-  const nNum = (
-    <Num
-      value={n}
-      check={{ tooltip: words.nTooltip, onOpen: (element) => openFrom(publicListId(summaryKey(summary)), element) }}
-    />
-  );
+  const nNum = <PublicCount summary={summary} />;
   if (summary.state === "no_comparables" || summary.state === "not_measurable") return <p>{words.summaryNoComparables}</p>;
   if (summary.state === "none_public") {
     return (
@@ -126,14 +130,14 @@ function Summary({ summary, compared }: { summary: CriteriaSummary; compared: Co
       </p>
     );
   }
-  if (compared && compared.items.length > 0) {
+  if (compared && compared.item_count > 0) {
     const date = <Num date={compared.compared_at.slice(0, 10)} />;
     return (
       <p>
-        {compared.items.length === 1 ? (
+        {compared.item_count === 1 ? (
           <Fill template={words.summaryComparedOne} slots={{ date, n: nNum }} />
         ) : (
-          <Fill template={words.summaryCompared} slots={{ date, count: formatCount(compared.items.length), n: nNum }} />
+          <Fill template={words.summaryCompared} slots={{ date, count: formatCount(compared.item_count), n: nNum }} />
         )}{" "}
         {words.summaryAlso}
       </p>
@@ -143,6 +147,17 @@ function Summary({ summary, compared }: { summary: CriteriaSummary; compared: Co
     <p data-summary-text>
       {n === 1 ? words.summaryOne : <Fill template={words.summary} slots={{ n: nNum }} />} {words.summaryAlso}
     </p>
+  );
+}
+
+// How many comparable packages published their criteria: a tab stop that opens their list in the drawer (view A),
+// in the summary and in the intro alike (the 31 brief, 7.1).
+function PublicCount({ summary }: { summary: CriteriaSummary }) {
+  return (
+    <Num
+      value={summary.public_criteria_count}
+      check={{ tooltip: words.nTooltip, onOpen: (element) => openFrom(publicListId(summaryKey(summary)), element) }}
+    />
   );
 }
 
@@ -185,7 +200,8 @@ function Refusal({ refusal }: { refusal: NonNullable<Comparison["refusal"]> }) {
         {lead} {refusal.partial ? words.refusal.partial : words.refusal.instead}
       </p>
       <p className="text-caption text-ink-muted">
-        <Fill template={words.refusal.note} slots={{ link: <TextLink href="/data/how-strata-works#what-i-dont-do">{words.refusal.link}</TextLink> }} />
+        {/* The anchor is ticket 24's "What I don't do" heading on How Strata works. */}
+        <Fill template={words.refusal.note} slots={{ link: <TextLink href={`${DATA_HREF.dataHow}#${WHAT_I_DONT_DO}`}>{words.refusal.link}</TextLink> }} />
       </p>
     </div>
   );
@@ -194,7 +210,7 @@ function Refusal({ refusal }: { refusal: NonNullable<Comparison["refusal"]> }) {
 function TableSkeleton() {
   return (
     <div aria-hidden="true" className="flex flex-col gap-3" data-criteria-skeleton>
-      <SkeletonLine className="text-title" width="w-4/5" />
+      <SkeletonLine className="text-body" width="w-4/5" />
       <SkeletonLine className="text-caption" width="w-1/3" />
       <Skeleton className="h-12 w-full" />
       {[0, 1, 2, 3].map((row) => (
@@ -204,17 +220,29 @@ function TableSkeleton() {
   );
 }
 
-function PartSkeleton({ lines }: { lines: number }) {
+// Rejected bids while the run reads them (the 31 brief, 6.7): the count line, the intro, then three rows of three
+// lines each, the size of what lands.
+function RejectedSkeleton() {
   return (
-    <div aria-hidden="true" className="flex flex-col gap-3">
-      {Array.from({ length: lines }, (_, index) => (
-        <SkeletonLine key={index} className="text-body" width={index % 2 ? "w-3/5" : "w-11/12"} />
-      ))}
+    <div aria-hidden="true" className="flex flex-col gap-2" data-rejected-skeleton>
+      <SkeletonLine className="text-body" width="w-3/5" />
+      <SkeletonLine className="text-caption" width="w-11/12" />
+      <div className="mt-2 flex flex-col gap-4 pl-2 @md/page:pl-4">
+        {[0, 1, 2].map((row) => (
+          <div key={row} className="flex flex-col gap-1">
+            <SkeletonLine className="text-small" width="w-2/5" />
+            <SkeletonLine className="text-small" width="w-3/5" />
+            <SkeletonLine className="text-caption" width="w-1/3" />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
 
-function PartOne({ comparison, readinessHref, steps }: { comparison: CompareState; readinessHref: string; steps: ReactNode }) {
+function PartOne({ comparison, readinessHref, steps, onRetry, asOf }: {
+  comparison: CompareState; readinessHref: string; steps: ReactNode; onRetry: () => void; asOf: string | null;
+}) {
   const shown = comparison.status === "ready" ? comparison.result : comparison.status === "running" || comparison.status === "error" ? comparison.previous : null;
   if (comparison.status === "idle") return null;
   return (
@@ -225,8 +253,13 @@ function PartOne({ comparison, readinessHref, steps }: { comparison: CompareStat
           <Alert state="info">{words.items.staleComparables}</Alert>
         </div>
       )}
-      {comparison.status === "error" && (
-        <ErrorBlock message={comparison.code === "content_filter" ? words.errors.content_filter : words.items.error} code={comparison.requestId} />
+      {/* A failed save is said once, under the field. A content filter is no failure of Strata's: a plain
+          sentence (brief 14's pattern). Any other code has its own sentence and "Try again". */}
+      {comparison.status === "error" && comparison.code === "content_filter" && (
+        <p className="max-w-prose text-body text-ink" data-content-filter>{words.errors.content_filter}</p>
+      )}
+      {comparison.status === "error" && comparison.code !== "content_filter" && comparison.code !== "store" && (
+        <ErrorBlock message={words.errors[comparison.code] ?? words.items.error} code={comparison.requestId} onRetry={onRetry} />
       )}
       {comparison.status === "running" && !shown && <TableSkeleton />}
       {shown && shown.refusal && <Refusal refusal={shown.refusal} />}
@@ -236,7 +269,7 @@ function PartOne({ comparison, readinessHref, steps }: { comparison: CompareStat
       {shown && (!shown.refusal || shown.refusal.partial) && shown.items.length > 0 && (
         <div className={cx("mt-3", comparison.status === "running" && "opacity-100")} aria-busy={comparison.status === "running" || undefined}>
           <CriteriaTable comparison={shown} />
-          <CriteriaNotes comparison={shown} readinessHref={readinessHref} />
+          <CriteriaNotes comparison={shown} readinessHref={readinessHref} asOf={asOf} />
         </div>
       )}
     </Part>
@@ -272,7 +305,7 @@ function PasteField({ summary, text, onText, onCompare, fieldError, edited, comp
         )}
         data-criteria-text
       />
-      <p id={hintId} className="mt-2 text-caption text-ink-muted">{words.field.hint}</p>
+      <p id={hintId} className="mt-2 max-w-prose text-caption text-pretty text-ink-muted">{words.field.hint}</p>
       {near && (
         <p id={countId} className="text-caption text-ink-muted tabular-nums" data-char-count>
           <Fill template={words.field.count} slots={{ used: n(text.length), max: n(max) }} />
@@ -327,12 +360,12 @@ export function CheckCriteriaView(props: ViewProps) {
     <div className="mt-6">
       {state === "ok" ? (
         <p className="max-w-prose text-body text-ink" data-criteria-intro>
-          {data.public_criteria_count === 1 ? words.introOne : <Fill template={words.intro} slots={{ n: <Num value={data.public_criteria_count} /> }} />}
+          {data.public_criteria_count === 1 ? words.introOne : <Fill template={words.intro} slots={{ n: <PublicCount summary={data} /> }} />}
         </p>
       ) : (
         <div className="flex flex-col gap-2">
           <p className="max-w-prose text-body text-ink" data-criteria-intro>
-            <Fill template={words.introNonePublic} slots={{ total: <Num value={data.comparables_total} /> }} />
+            {words.introNonePublic}
           </p>
           <p className="text-caption">
             <TextLink href={readiness("compare_criteria", publicKeys)}>{words.introNonePublicLink}</TextLink>
@@ -347,19 +380,24 @@ export function CheckCriteriaView(props: ViewProps) {
       <SectionChecks checks={props.checks} removed={removed} compared={Boolean(compared && compared.items.length)} />
       {runSteps}
       <PartOne comparison={comparison} readinessHref={readiness("compare_criteria", compared?.sources.map((source) => source.key) ?? publicKeys)}
-        steps={compareSteps} />
+        steps={compareSteps} onRetry={props.onCompare} asOf={props.asOf ?? null} />
       <Part heading={words.rejected.heading} busy={run.status === "running"} partKey="rejected">
-        {run.status === "running" && <PartSkeleton lines={4} />}
+        {run.status === "running" && <RejectedSkeleton />}
         {run.status === "error" && <ErrorBlock message={words.rejected.error} code={run.requestId} onRetry={props.onRetryRun} />}
         {result && (
           <RejectedBids rejected={result.rejected} numbers={numbers} yourItems={yours} perGroup={data.limits.rows_per_group}
-            readinessHref={readiness("rejected_bids", result.rejected.sources.map((source) => source.key))} />
+            readinessHref={readiness("rejected_bids", result.rejected.sources.map((source) => source.key))}
+            asOf={props.asOf ? result.as_of : null} />
         )}
       </Part>
       <Part heading={copy.cost.heading} busy={run.status === "running"} partKey="cost">
-        {run.status === "running" && <Skeleton className="h-[16rem] w-full" />}
+        {/* The lane's reserved height: intro, title, subtitle, row B, the lane and the axis (the 31 brief, 6.8). */}
+        {run.status === "running" && <Skeleton className="h-[19.5rem] w-full" />}
         {run.status === "error" && <ErrorBlock message={copy.cost.error} code={run.requestId} onRetry={props.onRetryRun} />}
-        {result && <CostEstimate cost={result.cost} readinessHref={readiness("compare_cost_estimates", result.cost.sources.map((source) => source.key))} />}
+        {result && (
+          <CostEstimate cost={result.cost} readinessHref={readiness("compare_cost_estimates", result.cost.sources.map((source) => source.key))}
+            asOf={props.asOf ?? null} />
+        )}
       </Part>
       <Part heading={copy.criteriaLessons.heading} busy={run.status === "running"} partKey="lessons">
         {run.status === "running" && (
@@ -463,7 +501,9 @@ export function CheckCriteria({ base, version, preview }: {
     }
     if (saved?.pasted_text && !text) {
       setText(saved.pasted_text);
-      setComparedText(saved.pasted_text);
+      // When the newest comparison failed after its save, the table is from earlier text: the field says the
+      // text changed since the comparison.
+      setComparedText(saved.text_compared === false ? "" : saved.pasted_text);
     }
     setChecks(data.section_checks);
     // The text is the person's own; a new summary never replaces what they typed.
@@ -523,10 +563,14 @@ export function CheckCriteria({ base, version, preview }: {
     const previous = comparison.status === "ready" ? comparison.result : comparison.status === "idle" ? null : comparison.previous;
     setComparison({ status: "running", steps: [], previous });
     setAnnounce(words.status.running);
+    let saved = false;
     try {
       for await (const event of streamEvents(`${base}/criteria/compare`, { text: trimmed, view, asof: asOf }, { signal: controller.signal })) {
         const payload = event.data as Record<string, any>;
-        if (event.type === "saved") setComparedText(text);
+        if (event.type === "saved") {
+          saved = true;
+          setComparedText(text);
+        }
         if (event.type === "step") {
           setComparison((current) => {
             const steps = current.status === "running" ? current.steps.filter((step) => step.key !== payload.id) : [];
@@ -546,13 +590,17 @@ export function CheckCriteria({ base, version, preview }: {
           );
         } else if (event.type === "error") {
           if (payload.code === "store") setSaveFailed(true);
-          setComparison({ status: "error", code: String(payload.code), requestId: payload.request_id, previous });
-          setAnnounce(payload.code === "store" ? words.errors.store : words.items.error);
+          // A failure before the save means the text was not kept: the words never say it was.
+          const failure = payload.code === "store" || saved ? String(payload.code) : UNSAVED;
+          setComparison({ status: "error", code: failure, requestId: payload.request_id, previous });
+          setAnnounce(words.errors[failure] ?? words.items.error);
         }
       }
     } catch (error) {
       if (controller.signal.aborted) return;
-      setComparison({ status: "error", code: "internal", requestId: parseRequestId(error), previous });
+      const failure = saved ? INTERNAL : UNSAVED;
+      setComparison({ status: "error", code: failure, requestId: parseRequestId(error), previous });
+      setAnnounce(words.errors[failure]);
     }
   }, [data, preview, comparison, text, base, view, asOf]);
 
@@ -583,6 +631,7 @@ export function CheckCriteria({ base, version, preview }: {
       checks={checks}
       announce={announce}
       headingRef={heading}
+      asOf={asOf}
     />
   );
 }

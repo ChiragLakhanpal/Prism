@@ -12,8 +12,9 @@ notice itself, opened in the evidence drawer, shows the record as published.
   it (bids), and the item it concerned (config/criteria_items.toml; a reason no item names falls under other).
   Its evidence id names the notice and the reason's place among the notice's reasons:
   strata.gold.notice:OP00125282/reason/1.
-- groups count the packages under each item, most packages first, then the registry's order. A package can sit
-  in more than one group.
+- groups count the packages under each item, most packages first, then the registry's order, with other
+  reasons last whatever its count, as a Pareto list keeps its catch-all last. A package can sit in more than one
+  group.
 
 Rows come newest award notice first, then STEP reference, then the order the notice lists its reasons.
 """
@@ -21,33 +22,19 @@ Rows come newest award notice first, then STEP reference, then the order the not
 from __future__ import annotations
 
 import datetime as dt
-from importlib import resources
 
-from strata.config import load_criteria_items, load_sources, load_tools
+from strata.config import load_criteria_items
 from strata.criteria.reading import reason_item, rejection_reasons
+from strata.lakehouse.passages import LANGUAGES
+from strata.tools import common
+from strata.tools.common import iso as _iso
 from strata.tools.registry import Call
 
 TOOL = "rejected_bids"
-LANGUAGES = {"english": "en", "french": "fr", "spanish": "es", "portuguese": "pt"}
-
-
-def _sql(name: str) -> str:
-    return (resources.files("strata.tools") / "sql" / TOOL / f"{name}.sql").read_text()
-
-
-def _iso(value) -> str | None:
-    if value is None or value == "":
-        return None
-    return value.isoformat()[:10] if isinstance(value, dt.date) else str(value)[:10]
-
-
-def _references(text: str) -> list[str]:
-    return list(dict.fromkeys(part.strip() for part in text.split(",") if part.strip()))
-
-
-def _sources() -> list[dict]:
-    registry = load_sources()
-    return [{"key": key, "dataset_name": registry[key].dataset_name} for key in load_tools()[TOOL].sources]
+OTHER = "other"
+# A notice's language by its name, as the notice passages read it (strata.lakehouse.passages.LANGUAGES, the one
+# list): a reason in a language the list does not name, or with none, is taken as English, as notices are.
+LANGUAGE_CODES = {name.lower(): code for name, code in LANGUAGES.items()}
 
 
 def reason_evidence_id(notice_id: str, place: int) -> str:
@@ -69,7 +56,7 @@ def read_award_notice(engine, key: str, as_of: dt.date) -> dict | None:
     the as-of date, or the notice gives no such reason."""
     notice_id, _, rest = key.partition("/")
     place = int(rest.split("/")[-1]) if rest.startswith("reason/") and rest.split("/")[-1].isdigit() else None
-    result = engine.run(_sql("award_notice"), {"notice_id": notice_id, "as_of": as_of})
+    result = engine.run(common.sql(TOOL, "award_notice"), {"notice_id": notice_id, "as_of": as_of})
     if not result.rows:
         return None
     notice = dict(zip(result.columns, result.rows[0], strict=True))
@@ -87,20 +74,19 @@ def read_award_notice(engine, key: str, as_of: dt.date) -> dict | None:
     return {"kind": "record", "row": {
         "reference": notice_id, "notice_id": notice_id, "fields": fields, "public_from": _iso(notice["public_from"]),
         "source": {"source_key": "award_notices", "document_type": "Contract Award", "project_id": notice["project_id"],
-                   "date": _iso(notice["notice_date"])}}}
+                   "document_date": _iso(notice["notice_date"])}}}
 
 
 def rejected_bids(call: Call, comparables: str) -> dict:
-    refs = _references(comparables)
+    refs = common.references(comparables)
     items = load_criteria_items()
-    result = call.engine.run(_sql("award_notices"), {"refs": ",".join(refs), "as_of": call.as_of}) if refs else None
-    notices = [dict(zip(result.columns, row, strict=True)) for row in result.rows] if result else []
+    notices = common.rows(call, TOOL, "award_notices", refs=",".join(refs)) if refs else []
 
     rows, with_notice, with_rejection = [], set(), set()
     groups: dict[str, set[str]] = {}
     for notice in notices:
         with_notice.add(notice["step_reference"])
-        language = LANGUAGES.get(str(notice["notice_language"] or "").strip().lower(), "en")
+        language = LANGUAGE_CODES.get(str(notice["notice_language"] or "").strip().lower(), "en")
         for place, (reason, bids) in enumerate(notice_reasons(notice["notice_text"] or ""), 1):
             key = reason_item(reason, items)
             with_rejection.add(notice["step_reference"])
@@ -124,13 +110,13 @@ def rejected_bids(call: Call, comparables: str) -> dict:
     order = [item.key for item in items.items]
     group_rows = sorted(({"item_key": key, "count": len(packages),
                           "rows": sum(1 for row in rows if row["item_key"] == key)} for key, packages in groups.items()),
-                        key=lambda group: (-group["count"], order.index(group["item_key"])))
+                        key=lambda group: (group["item_key"] == OTHER, -group["count"], order.index(group["item_key"])))
     missing = [f"strata.gold.package:{ref}" for ref in refs if ref not in with_notice]
     coverage = {"matched": len(refs), "used": len(with_notice),
                 "not_used": [{"reason": "no_award_notice", "count": len(missing), "evidence_ids": missing}] if missing else []}
     counts = {"total": len(refs), "m": len(with_notice), "n": len(with_rejection)}
-    found = {"rows": rows, "coverage": coverage, "counts": counts, "groups": group_rows, "sources": _sources(),
-             "records_through": max((_iso(notice["notice_date"]) for notice in notices), default=None)}
+    found = {"rows": rows, "coverage": coverage, "counts": counts, "groups": group_rows,
+             "sources": common.sources(TOOL), "records_through": common.records_through(call)}
     if not refs:
         return {**found, "abstention": {"reason": "no_comparables"}}
     if not with_notice:

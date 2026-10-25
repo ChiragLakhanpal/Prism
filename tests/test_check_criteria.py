@@ -168,6 +168,8 @@ def test_an_item_no_comparable_notice_set_and_a_part_that_sets_no_item_are_shown
     turnover = next(item for item in result["items"] if item["item_key"] == "turnover")
     assert (turnover["stated"], turnover["notices"]) == (0, [])
     assert result["unplaced"] == ["The bid must be signed by a person with a power of attorney."]
+    # The text sets two items, similar experience and turnover; the server counts them, never the browser.
+    assert result["item_count"] == 2
 
 
 def test_each_reading_passes_the_checks_against_your_own_words(app):
@@ -175,6 +177,8 @@ def test_each_reading_passes_the_checks_against_your_own_words(app):
 
     checks = result["checks"]
     assert checks["sentences"] == {"written": 2, "kept": 2, "removed": 0}
+    # The readings are checked against facts recorded under the reader's name, and the check line names it.
+    assert checks["tools"] == ["criteria_reader"]
     assert checks["numbers"]["matched"] == checks["numbers"]["total"] == 4  # two and 10; 25 and three
     assert result["removed"] == []
 
@@ -235,6 +239,15 @@ def test_a_partial_refusal_compares_the_criteria_and_leaves_out_the_rest(fixture
     assert [item["item_key"] for item in result["items"]] == ["similar_experience"]
 
 
+def test_a_request_to_judge_a_review_decision_is_refused_in_full_and_nothing_is_compared(fixture_db, state_db):
+    app = app_on(fixture_db, state_db, "criteria-review-decisions")
+
+    result = the("comparison", compare(app, "criteria-review-decisions")[1])
+
+    assert result["refusal"] == {"key": "review_decisions", "partial": False}
+    assert (result["items"], result["item_count"], result["unplaced"]) == ([], 0, [])
+
+
 def test_text_that_sets_no_qualification_criteria_finds_no_item(fixture_db, state_db):
     app = app_on(fixture_db, state_db, "criteria-none-found")
 
@@ -267,7 +280,50 @@ def test_with_no_reader_connected_the_comparison_says_so_and_the_text_stays_save
 
     assert the("error", sent)["code"] == "no_reader"
     saved = call(bare, "GET", f"/api/packages/{CONSULTANT}/criteria", ANA).json()["comparison"]
-    assert saved["status"] == "running" and saved["pasted_text"] == CASES["criteria-similar-experience"].question
+    assert saved["status"] == "failed" and saved["pasted_text"] == CASES["criteria-similar-experience"].question
+    assert saved["result"] is None
+
+
+def test_a_comparison_that_fails_after_the_save_is_marked_failed_and_the_last_good_table_stays(fixture_db, state_db):
+    """The newest text comes back in the field, and the table is the last comparison that finished."""
+    first = the("comparison", compare(app_on(fixture_db, state_db))[1])
+
+    @contextmanager
+    def reading(_viewer):
+        with DuckDBEngine.open(fixture_db, read_only=True) as engine:
+            yield engine
+
+    bare = create_app(engine_for=reading, criteria=CriteriaStore(lambda: DuckDBEngine.open(state_db)),
+                      today=lambda: TODAY, new_check_id=lambda: "chk-000000000099",
+                      now=lambda: dt.datetime(2026, 10, 22, 15, 0, tzinfo=dt.UTC))
+    edited = "Similar experience: at least three contracts of similar works of US$10 million each."
+    response = call(bare, "POST", f"/api/packages/{CONSULTANT}/criteria/compare", ANA, json={"text": edited})
+
+    assert the("error", events(response.text))["code"] == "no_reader"
+    saved = call(bare, "GET", f"/api/packages/{CONSULTANT}/criteria", ANA).json()["comparison"]
+    assert (saved["check_id"], saved["status"], saved["pasted_text"]) == ("chk-000000000099", "failed", edited)
+    assert saved["result"]["check_id"] == first["check_id"] and saved["result"]["items"] == first["items"]
+    assert saved["text_compared"] is False
+    with DuckDBEngine.open(state_db, read_only=True) as engine:
+        statuses = [status for (status,) in engine.run(
+            "SELECT status FROM strata.app.criteria_checks WHERE check_id = :id ORDER BY created_at", {"id": "chk-000000000099"}).rows]
+    assert statuses == ["running", "failed"]
+
+
+def test_a_reader_answer_in_a_shape_it_should_not_have_drops_that_part_and_never_crashes():
+    """A live model may give parts as a list, or a count with a fraction; the app keeps only what it can check."""
+    from strata.config import load_criteria_items
+    from strata.criteria.workflow import read_answer
+
+    text = "Similar experience: at least 2.5 contracts of similar works. Key staff: a site engineer with 10 years."
+    answer = json.dumps({"refusal": None, "unplaced": [], "items": [
+        {"item_key": "similar_experience", "excerpt": "at least 2.5 contracts of similar works", "parts": {"contracts": 2.5}},
+        {"item_key": "key_staff", "excerpt": "a site engineer with 10 years", "parts": [10]},
+    ]})
+
+    reading = read_answer(answer, text, load_criteria_items())
+
+    assert [(item["item_key"], item["parts"]) for item in reading.items] == [("similar_experience", {})]
 
 
 # ── The package-level run ────────────────────────────────────────────────
@@ -316,6 +372,9 @@ def test_the_package_run_finds_the_lessons_on_cost_estimates_with_icr_p130164_pa
                                                                       paragraph["pdf_page"])
     assert lesson["document_date"] == paragraph["date"].isoformat()
     assert paragraph["value"] in lesson["quote"] and lesson["ieg_status"] == "restated" and not lesson["removed"]
+    # The card quotes its paragraph with the lesson's words highlighted, in the paragraph's language.
+    start, end = lesson["excerpt"]["range"]
+    assert lesson["excerpt"]["text"][start:end] == lesson["quote"] and lesson["excerpt"]["lang"] == "en"
 
 
 def test_a_rejected_bid_opens_its_award_notice_with_the_reason_highlighted_and_no_bidder_named(fixture_db, state_db):
@@ -333,6 +392,8 @@ def test_a_rejected_bid_opens_its_award_notice_with_the_reason_highlighted_and_n
     assert fields["reason_for_rejection"] == {"key": "reason_for_rejection", "value": "Bid Security not Provided",
                                               "kind": "text", "highlight": True}
     assert fields["bid_reference"]["value"] == "KE-MOWI-47509-CW-RFB"
+    # The drawer's source line reads a record's date from document_date, as for every other record.
+    assert record["row"]["source"]["document_date"] == fields["published"]["value"] is not None
     with DuckDBEngine.open(fixture_db, read_only=True) as engine:
         names = [name for (name,) in engine.run("SELECT name FROM strata.silver.notice_bidders WHERE notice_id = :id "
                                                 "AND name IS NOT NULL", {"id": "OP00125282"}).rows]
@@ -380,3 +441,24 @@ def test_a_planned_package_s_section_reads_its_own_comparables_and_cost_estimate
     assert run["cost"]["package"] == {"step_reference": None, "estimated_amount_usd": "15000000.00", "evidence_id": None,
                                       "given": True}
     assert (stranger.status_code, stranger.json()["code"]) == (404, "unknown_package")
+
+
+def test_a_package_run_with_no_comparable_packages_says_so_in_each_part_instead_of_failing(app):
+    """The screen starts no run then, but a direct request still gets an answer, never an internal error."""
+    sent = events(call(app, "POST", "/api/packages/NOPE-123/criteria/run", ANA, json={}).text)
+
+    assert [kind for kind, _ in sent if kind == "error"] == []
+    run = the("package_run", sent)
+    assert run["rejected"]["state"] == "no_comparables" and run["rejected"]["rows"] == []
+    assert run["cost"]["abstention"] == {"reason": "no_comparables"} and run["cost"]["rows"] == []
+    assert run["lessons"] == {"state": "none", "groups": []}
+
+
+def test_the_lesson_groups_are_risk_factors_from_the_closed_list_in_the_thresholds_file():
+    """criteria.lesson_factors names the groups (CLAUDE.md rule 9); each must be one of ticket 29's risk factors."""
+    from strata.config import load_lesson_lists, load_thresholds
+
+    factors = load_thresholds().value("criteria.lesson_factors")
+
+    assert factors == ["cost_estimates", "designs_and_specifications"]
+    assert all(load_lesson_lists().risk_factor(factor) is not None for factor in factors)

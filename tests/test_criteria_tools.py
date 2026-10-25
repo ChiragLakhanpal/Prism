@@ -202,8 +202,10 @@ def test_the_rejected_bids_never_name_a_bidder(engine, comparables, rejected):
                             "notice_date", "item_key", "reason", "bids", "rank"} for row in rejected["rows"])
 
 
-def test_reasons_are_grouped_by_the_item_they_concerned_with_the_group_covering_most_packages_first(engine, comparables,
-                                                                                                 rejected):
+def test_reasons_are_grouped_by_the_item_they_concerned_most_packages_first_and_other_reasons_last(engine, comparables,
+                                                                                                rejected):
+    """A Pareto list keeps its catch-all last, whatever its count, so a group that names a cause leads (design-lead,
+    31 design review F17)."""
     groups = rejected["summary"]["groups"]
     bid_security = scalar(engine, """
         SELECT count(DISTINCT g.step_reference)
@@ -214,7 +216,10 @@ def test_reasons_are_grouped_by_the_item_they_concerned_with_the_group_covering_
 
     by_key = {group["item_key"]: group for group in groups}
     assert by_key["bid_security"]["count"] == bid_security
-    assert [group["count"] for group in groups] == sorted((group["count"] for group in groups), reverse=True)
+    named = [group for group in groups if group["item_key"] != "other"]
+    assert groups[-1]["item_key"] == "other" and len(named) == len(groups) - 1
+    assert by_key["other"]["count"] > named[0]["count"]
+    assert [group["count"] for group in named] == sorted((group["count"] for group in named), reverse=True)
     assert all(row["item_key"] in by_key for row in rejected["rows"])
     # A short code such as "Non Responsive" names no item, so it falls under other reasons.
     assert any(row["reason"]["quote"] == "Non Responsive" and row["item_key"] == "other" for row in rejected["rows"])
@@ -326,3 +331,20 @@ def test_an_item_the_registry_does_not_hold_is_refused(engine, consultant_compar
     with pytest.raises(registry.ToolError):
         call(engine, "compare_criteria", comparables=",".join(consultant_comparables),
              items=json.dumps([{"item_key": "price", "parts": {}}]))
+
+
+# ── One records date for the whole section ───────────────────────────────
+
+def test_every_tool_of_the_section_states_the_day_the_records_run_through_as_find_comparables_does(
+        engine, comparables, consultant_comparables):
+    """A source line's "Records run through {date}" is one measure (CLAUDE.md rule 4), defined by find_comparables:
+    the newest notice or contract award public by the as-of date. It is never the newest award notice among the
+    comparable packages, which would make one section give two dates for the same records."""
+    for package, refs in ((PACKAGE, comparables), (CONSULTANT, consultant_comparables)):
+        through = call(engine, "find_comparables", step_reference=package)["records_through"]
+        joined = ",".join(refs)
+
+        assert through
+        assert call(engine, "rejected_bids", comparables=joined)["records_through"] == through
+        assert call(engine, "compare_criteria", comparables=joined)["records_through"] == through
+        assert call(engine, "compare_cost_estimates", comparables=joined)["records_through"] == through

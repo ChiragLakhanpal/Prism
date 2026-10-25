@@ -7,6 +7,8 @@ import worksSummary from "../../../tests/fixtures/api/criteria-summary-ke-nwwda-
 import consultantSummary from "../../../tests/fixtures/api/criteria-summary-ke-cwsb-224323.json";
 import comparedSummary from "../../../tests/fixtures/api/criteria-summary-ke-cwsb-224323-compared.json";
 import awardNotice from "../../../tests/fixtures/api/evidence-award-notice-op00125282.json";
+import noticePassage from "../../../tests/fixtures/api/evidence-passage-op00077276-s3.json";
+import lessonParagraph from "../../../tests/fixtures/api/evidence-icr-p130164-54.json";
 import worksRun from "../../../tests/fixtures/api/criteria-run-ke-nwwda-541055.sse?raw";
 import consultantRun from "../../../tests/fixtures/api/criteria-run-ke-cwsb-224323.sse?raw";
 import similar from "../../../tests/fixtures/api/criteria-compare-similar-experience.sse?raw";
@@ -18,7 +20,17 @@ import { CheckCriteriaView, type CompareState, type RunState, type SummaryState,
 import { CostEstimate } from "../components/CostLane";
 import { EvidenceDrawerView } from "../components/EvidenceDrawer";
 import type { EvidenceEvent } from "../lib/answer";
-import { costRecordEvent, itemListEvent, publicListEvent, type Comparison, type Cost, type CriteriaSummary, type PackageRun } from "../lib/criteria";
+import type { Origin } from "../lib/evidence";
+import {
+  costRecordEvent,
+  itemListEvent,
+  itemListId,
+  publicListEvent,
+  type Comparison,
+  type Cost,
+  type CriteriaSummary,
+  type PackageRun,
+} from "../lib/criteria";
 import { dataReadinessHref } from "../routes";
 import { galleryCopy } from "./copy";
 import type { GalleryPage } from "./pages";
@@ -113,18 +125,54 @@ function Sample({ label, props }: { label: string; props: ViewProps }) {
   );
 }
 
-function Drawer({ label, evidence }: { label: string; evidence: EvidenceEvent }) {
+function Drawer({ label, evidence, from = null }: { label: string; evidence: EvidenceEvent; from?: Origin | null }) {
+  const id = useId();
   return (
     <Labeled label={label}>
       <div className="max-w-[36rem] border border-line">
-        <EvidenceDrawerView id={evidence.id} data={{ status: "ready", evidence }} run={null} from={null} narrow={false} preview={false}
-          dialogId={`gallery-${evidence.kind}`} sample onClose={nothing} onChoose={nothing} />
+        <EvidenceDrawerView id={evidence.id} data={{ status: "ready", evidence }} run={null} from={from} narrow={false} preview={false}
+          dialogId={`gallery-${id}`} sample onClose={nothing} onChoose={nothing} onBack={nothing} />
       </div>
     </Labeled>
   );
 }
 
 const similarItem = SIMILAR.items.find((item) => item.item_key === "similar_experience")!;
+// View C opened from view B: the notice names the list it came from, so the drawer offers the way back.
+const FROM_ITEM_LIST: Origin = {
+  id: (noticePassage as unknown as EvidenceEvent).id, serial: null, sentence: null, marker: null, runId: null, top: null,
+  list: { id: itemListId(SIMILAR.check_id, similarItem.item_key), count: similarItem.notices.length },
+};
+
+// The parts' other states, each the works package's recorded run with one value changed.
+const firstReason = WORKS_RUN.rejected.rows.find((row) => row.item_key === WORKS_RUN.rejected.groups[0].item_key)!;
+const firstLesson = WORKS_RUN.lessons.groups[0]?.lessons[0];
+const RUN_NO_LESSONS: PackageRun = { ...WORKS_RUN, lessons: { state: "none", groups: [] } };
+const RUN_AWAITING: PackageRun = {
+  ...WORKS_RUN,
+  lessons: { state: "ok", groups: WORKS_RUN.lessons.groups.map((group) => ({ ...group, lessons: group.lessons.map((lesson) => ({ ...lesson, ieg_status: "awaiting" })) })) },
+};
+const RUN_NO_NOTICES: PackageRun = {
+  ...WORKS_RUN,
+  rejected: { ...WORKS_RUN.rejected, state: "no_award_notices", counts: { ...WORKS_RUN.rejected.counts, m: 0, n: 0 }, groups: [], rows: [] },
+};
+const RUN_FRENCH: PackageRun = {
+  ...WORKS_RUN,
+  rejected: { ...WORKS_RUN.rejected, rows: WORKS_RUN.rejected.rows.map((row) => (row === firstReason ? { ...row, reason: { ...row.reason, lang: "fr" } } : row)) },
+};
+const RUN_REMOVED: PackageRun = {
+  ...WORKS_RUN,
+  rejected: { ...WORKS_RUN.rejected, rows: WORKS_RUN.rejected.rows.map((row) => (row === firstReason ? { ...row, removed: true } : row)) },
+  removed: [{ index: 0, sentence: `"${firstReason.reason.quote}"`, reason: "quote_not_on_page", reasons: [], about: firstReason.evidence_id }],
+  checks: { ...WORKS_RUN.checks, sentences: { ...WORKS_RUN.checks.sentences, kept: WORKS_RUN.checks.sentences.kept - 1, removed: 1 } },
+};
+// A made-up comparison whose second item is one the works package's comparables had bids rejected over.
+const YOURS: Comparison = {
+  ...SIMILAR,
+  items: SIMILAR.items.map((item) => (item.item_key === "similar_experience" ? item : { ...item, item_key: "key_staff", label: "Key staff", phrase: "key staff",
+    rejected_packages: WORKS_RUN.rejected.groups.find((group) => group.item_key === "key_staff")?.count ?? 0 })),
+};
+const NO_ESTIMATE: Cost = { ...WORKS_RUN.cost, package: { ...WORKS_RUN.cost.package, estimated_amount_usd: null } };
 const PUBLIC_LIST = publicListEvent(CONSULTANT.signature, CONSULTANT.public);
 const ITEM_LIST = itemListEvent(SIMILAR, similarItem);
 const COST_RECORDS = costRecordEvent(WORKS_RUN.cost.rows[0]);
@@ -197,6 +245,21 @@ export function criteriaPage(): GalleryPage {
         ),
       },
       {
+        id: "parts",
+        title: cs.parts,
+        body: (
+          <div className="flex flex-col gap-8">
+            <Sample label={cs.runError} props={view({ ...open, summary: ready(WORKS), run: { status: "error", code: "data_service", requestId: "4bf92f3577b34da6a3ce929d0e0e4736" }, onRetryRun: nothing })} />
+            <Sample label={cs.lessonsNone} props={view({ ...open, summary: ready(WORKS), run: ranRun(RUN_NO_LESSONS) })} />
+            {firstLesson && <Sample label={cs.lessonAwaiting} props={view({ ...open, summary: ready(WORKS), run: ranRun(RUN_AWAITING) })} />}
+            <Sample label={cs.rejectedNoNotices} props={view({ ...open, summary: ready(WORKS), run: ranRun(RUN_NO_NOTICES) })} />
+            <Sample label={cs.rejectedYours} props={view({ ...open, run: ranRun(WORKS_RUN), comparison: compared(YOURS), text: PASTED })} />
+            <Sample label={cs.rejectedLanguage} props={view({ ...open, summary: ready(WORKS), run: ranRun(RUN_FRENCH) })} />
+            <Sample label={cs.removedRow} props={view({ ...open, summary: ready(WORKS), run: ranRun(RUN_REMOVED), checks: RUN_REMOVED.checks })} />
+          </div>
+        ),
+      },
+      {
         id: "cost",
         title: cs.cost,
         body: (
@@ -216,6 +279,11 @@ export function criteriaPage(): GalleryPage {
                 <CostEstimate cost={CONSULTANT_RUN.cost} readinessHref={dataReadinessHref([], "compare_cost_estimates")} />
               </Column>
             </Labeled>
+            <Labeled label={cs.costNoEstimate}>
+              <Column>
+                <CostEstimate cost={NO_ESTIMATE} readinessHref={dataReadinessHref([], "compare_cost_estimates")} />
+              </Column>
+            </Labeled>
           </div>
         ),
       },
@@ -226,8 +294,10 @@ export function criteriaPage(): GalleryPage {
           <div className="flex flex-col gap-8">
             <Drawer label={cs.drawerPublic} evidence={PUBLIC_LIST} />
             <Drawer label={cs.drawerItem} evidence={ITEM_LIST} />
+            <Drawer label={cs.drawerNotice} evidence={noticePassage as unknown as EvidenceEvent} from={FROM_ITEM_LIST} />
             <Drawer label={cs.drawerCost} evidence={COST_RECORDS} />
             <Drawer label={cs.drawerAward} evidence={awardNotice as unknown as EvidenceEvent} />
+            <Drawer label={cs.drawerLesson} evidence={lessonParagraph as unknown as EvidenceEvent} />
           </div>
         ),
       },

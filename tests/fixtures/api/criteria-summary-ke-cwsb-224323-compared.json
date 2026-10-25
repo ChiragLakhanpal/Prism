@@ -109,15 +109,19 @@
     "counter_left": 2000,
     "rows_per_group": 5,
     "lessons_per_group": 3,
+    "lesson_factors": [
+      "cost_estimates",
+      "designs_and_specifications"
+    ],
     "min_comparables": 20
   },
   "comparison": {
-    "check_id": "chk-000000000007",
+    "check_id": "chk-000000000008",
     "status": "ready",
     "pasted_text": "1. Similar experience: at least two contracts of similar works of US$10 million each.\n2. Average annual turnover: US$25 million over the last three years.\n3. The bid must be signed by a person with a power of attorney.",
     "result": {
-      "check_id": "chk-000000000007",
-      "compared_at": "2026-10-28T14:00:11+00:00",
+      "check_id": "chk-000000000008",
+      "compared_at": "2026-10-28T14:00:13+00:00",
       "signature": "702d4b65766e082b",
       "records_through": "2026-10-13",
       "as_of": "2026-10-28",
@@ -364,6 +368,7 @@
           "reading_removed": false
         }
       ],
+      "item_count": 2,
       "unplaced": [
         "The bid must be signed by a person with a power of attorney."
       ],
@@ -412,14 +417,15 @@
           "returned": 2
         },
         "tools": [
-          "compare_criteria"
+          "criteria_reader"
         ],
         "quotes_without_pages": 0
       },
       "removed": []
     },
+    "text_compared": true,
     "stale": false,
-    "compared_at": "2026-10-28T14:00:12+00:00"
+    "compared_at": "2026-10-28T14:00:14+00:00"
   },
   "package_run": {
     "check_id": "chk-000000000002",
@@ -487,7 +493,7 @@
           "dataset_name": "Procurement Notices"
         }
       ],
-      "records_through": "2022-08-23"
+      "records_through": "2026-10-13"
     },
     "cost": {
       "rows": [],
@@ -589,6 +595,14 @@
               "para": "54",
               "locator": "paragraph",
               "page": 23,
+              "excerpt": {
+                "text": "54. Another lesson to be highlighted is that the works contract estimates should have been based on the market rate to avoid instances of rebidding: 108 of 328 cases had to go through rebidding.",
+                "range": [
+                  149,
+                  194
+                ],
+                "lang": "en"
+              },
               "removed": false
             }
           ]

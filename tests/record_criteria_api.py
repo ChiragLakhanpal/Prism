@@ -10,9 +10,9 @@ One story makes them all, as of October 28, 2026, on a copy of the fixture datab
 rebidding lesson (ICR P130164 paragraph 54) to the library on October 27 (tests/lesson_scenario.py), with the
 scripted criteria reader's cases (tests/fixtures/agent/criteria.toml), a fixed clock and fixed ids. Ana opens
 KE-NWWDA-541055-CW-RFB, whose works comparables published no qualification criteria, and its package-level run;
-then the consultant services package KE-CWSB-224323-CS-QCBS, whose comparables did, its run, and four comparisons
-of pasted text: the ticket's similar experience, a live tender's bids, a partial refusal and text with no
-criteria. Her saved comparison then shows in the collapsed summary, and nobody else's does. Last, she plans
+then the consultant services package KE-CWSB-224323-CS-QCBS, whose comparables did, its run, and five comparisons
+of pasted text: the ticket's similar experience, a live tender's bids, a partial refusal, text with no criteria
+and a question about a review decision. Her saved comparison then shows in the collapsed summary, and nobody else's does. Last, she plans
 "rural roads, Kenya, about US$15 million" and opens its section.
 """
 
@@ -49,7 +49,8 @@ WORKS, CONSULTANT = "KE-NWWDA-541055-CW-RFB", "KE-CWSB-224323-CS-QCBS"
 COMPARISONS = {"criteria-compare-similar-experience.sse": "criteria-similar-experience",
                "criteria-compare-live-tender.sse": "criteria-live-tender",
                "criteria-compare-partial-refusal.sse": "criteria-partial-refusal",
-               "criteria-compare-none-found.sse": "criteria-none-found"}
+               "criteria-compare-none-found.sse": "criteria-none-found",
+               "criteria-compare-review-decisions.sse": "criteria-review-decisions"}
 
 
 def answers(folder: Path) -> dict[str, str]:

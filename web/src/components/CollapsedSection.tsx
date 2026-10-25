@@ -59,7 +59,8 @@ export function CollapsedSection({
       aria-expanded={open}
       aria-controls={bodyId}
       onClick={onToggle}
-      className="shrink-0"
+      // The 44 px button and the 30 px heading share a middle line, not a top edge (the 31 design review, F8).
+      className="shrink-0 @md/page:-mt-2"
       data-section-toggle
     >
       {open ? hideLabel : showLabel}

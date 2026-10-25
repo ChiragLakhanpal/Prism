@@ -313,11 +313,14 @@ questions:
                      KE-KWAWASCO-203535-CW-RFB, KE-MAWASCO-236797-CW-RFB, KE-MAWASCO-236802-CW-RFB,
                      KE-MOWI-47509-CW-RFB, KE-WAJWASCO-456993-CW-RFB]
       key_staff: [KE-KIMAWASCO-141042-CW-RFB, KE-KIMAWASCO-142995-CW-RFB, KE-KIMAWASCO-158691-CW-RFB]
+      group_order: [bid_security, key_staff, other]
     source: >-
       The Contract Award notices recorded in data/fixture/recorded/api/notices/P156634.json for the 49
       comparables: 40 of them have one, and 28 of those list a rejected bidder with a Reason for Rejection.
       "Bid Security not Provided" appears in the award notices of the eight packages above, and
-      "Unavailability of key experts" in those of the three (OP00125855, OP00124759 and OP00125851).
+      "Unavailability of key experts" in those of the three (OP00125855, OP00124759 and OP00125851). The groups
+      run most packages first, with other reasons last whatever its count (27 packages, mostly "Non Responsive"),
+      as a Pareto list keeps its catch-all last (the 31 design review, F17).
 
   # The fixture's works comparables publish no qualification criteria in their notices, so this question asks
   # about a consultant services package, whose comparables' Requests for Expression of Interest state their

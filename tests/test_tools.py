@@ -295,12 +295,14 @@ def cost_answer(result, question) -> dict[str, list]:
 
 
 def rejected_answer(result, question) -> dict[str, list]:
-    """rejected_bids' answer: n of m from the summary, and the packages in two of its groups (ticket 31)."""
+    """rejected_bids' answer: n of m from the summary, the packages in two of its groups, and the groups' order
+    (ticket 31)."""
     def packages(key: str) -> list[str]:
         return sorted({row["step_reference"] for row in result["rows"] if row["item_key"] == key})
     counts = result["summary"]["counts"]
     return {"n_of_m": [counts["n"], counts["m"]], "bid_security": packages("bid_security"),
-            "key_staff": packages("key_staff")}
+            "key_staff": packages("key_staff"),
+            "group_order": [group["item_key"] for group in result["summary"]["groups"]]}
 
 
 def criteria_answer(result, question) -> dict[str, list]:

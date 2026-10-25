@@ -94,7 +94,8 @@ export function Button({
       {...rest}
       type={type}
       data-button={variant}
-      aria-disabled={inactive || undefined}
+      // A caller's own aria-disabled, such as "Compare the criteria" while a comparison runs, is kept.
+      aria-disabled={inactive || rest["aria-disabled"] || undefined}
       aria-busy={loading || undefined}
       data-disabled={disabled || undefined}
       data-held={held || undefined}

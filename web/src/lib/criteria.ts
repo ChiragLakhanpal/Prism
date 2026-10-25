@@ -40,7 +40,14 @@ export type RemovedEntry = {
   reasons: { check: number; code: string; text: string | null }[];
   about: string;
 };
-export type Limits = { max_chars: number; counter_left: number; rows_per_group: number; lessons_per_group: number; min_comparables: number };
+export type Limits = {
+  max_chars: number;
+  counter_left: number;
+  rows_per_group: number;
+  lessons_per_group: number;
+  lesson_factors: string[];
+  min_comparables: number;
+};
 export type PublicEntry = { step_reference: string; notice_id: string; notice_date: string | null; country_name: string | null; passage_id: string };
 
 export type RejectedRow = {
@@ -112,6 +119,9 @@ export type LessonEntry = {
   para: string | null;
   locator: "paragraph" | "section";
   page: number | null;
+  // The paragraph the quote is in, the quote's place in it and the paragraph's language, for the card's excerpt;
+  // null when the paragraph could not be read.
+  excerpt: { text: string; range: number[] | null; lang: string } | null;
   removed: boolean;
 };
 export type LessonGroup = { factor: string; lessons: LessonEntry[] };
@@ -168,6 +178,8 @@ export type Comparison = {
   refusal: Refusal | null;
   content_filtered: boolean;
   items: ComparedItem[];
+  // How many items the reader found and the app compared: the server counts them, never the browser.
+  item_count: number;
   unplaced: string[];
   fx_count: number;
   coverage: { n: number; total: number; open: number; missing: number } | null;
@@ -181,6 +193,9 @@ export type SavedComparison = {
   status: string;
   pasted_text: string | null;
   result: Comparison | null;
+  // False when the newest comparison failed after its text was saved: the table is the last one that finished,
+  // from earlier text.
+  text_compared: boolean;
   stale: boolean;
   compared_at: string;
 };

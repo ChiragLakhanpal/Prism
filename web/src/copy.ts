@@ -2480,8 +2480,8 @@ export const copy = {
       "Paste the qualification criteria from the bidding document. I break them into items, such as similar experience and average annual turnover, and compare each item with the {n} comparable packages whose criteria are public. The rejected bids, the cost estimate and the lessons below don't need your text.",
     introOne:
       "Paste the qualification criteria from the bidding document. I break them into items, such as similar experience and average annual turnover, and compare each item with the one comparable package whose criteria are public. The rejected bids, the cost estimate and the lessons below don't need your text.",
-    introNonePublic:
-      "I can't compare qualification criteria for this package yet, because none of its {total} comparable packages published theirs. The rejected bids, the cost estimate and the lessons below come from the same comparable packages.",
+    // The summary above already says none are public, so the open section does not say it again.
+    introNonePublic: "The rejected bids, the cost estimate and the lessons below come from the same comparable packages.",
     introNonePublicLink: "See how complete the notices are",
     field: {
       label: "Your qualification criteria",
@@ -2522,6 +2522,7 @@ export const copy = {
     notCheckedItems: "whether I found every item in your qualification criteria",
     removedInPlace: "I removed this sentence. The reason is in the box above.",
     // Why a run could not finish, by its code (src/strata/criteria/workflow.py, COMPARE_ERRORS).
+    // unsaved: the request never reached the server, so the text was not saved either.
     errors: {
       no_reader: "I can't read qualification criteria right now, because no model is connected. Your text is saved.",
       agent_unavailable: "I couldn't compare your qualification criteria just now. Your text is saved.",
@@ -2530,6 +2531,7 @@ export const copy = {
       store: "I couldn't save your text. It is still in the box.",
       data_service: "I couldn't compare your qualification criteria just now. Your text is saved.",
       internal: "I couldn't compare your qualification criteria just now. Your text is saved.",
+      unsaved: "I couldn't compare your qualification criteria just now. Your text is still in the box.",
     } as Record<string, string>,
     // Part 1: your criteria, item by item.
     items: {
@@ -2537,6 +2539,7 @@ export const copy = {
       caption: "I compared {count} items in your qualification criteria with the {n} comparable packages whose criteria are public.",
       captionOne: "I compared one item in your qualification criteria with the {n} comparable packages whose criteria are public.",
       count: "Showing all {count} items.",
+      countBoth: "Showing both items.",
       countOne: "Showing the one item.",
       columns: {
         item: "Item",
@@ -2544,9 +2547,9 @@ export const copy = {
         words: "Your words",
         wordsDefinition: "From your text, and how I read them",
         asked: "Asked for it",
-        askedDefinition: "Comparable notices that set this item, of the {n} whose criteria are public",
+        askedDefinition: "Of the {n} comparable notices whose criteria are public",
         sameOrLess: "Asked for the same or less",
-        sameOrLessDefinition: "Of the notices I could put in order with yours",
+        sameOrLessDefinition: "Of the notices I could compare with yours",
       },
       rejected: "{r} comparable packages had bids rejected over this",
       rejectedOne: "One comparable package had bids rejected over this",
@@ -2568,12 +2571,17 @@ export const copy = {
       showIt: "Show it",
       hideIt: "Hide it",
       order:
-        "I put a notice's requirement in order with yours only when all of its parts point the same way. A notice that asked for more contracts but a smaller amount for each, for example, set it in other terms.",
-      coverage: "Based on {n} of {total} comparable packages; {missing} had no qualification criteria in their published notices",
-      coverageOpen: "{open} were still open, and I don't compare a tender that is still open",
+        "I count a notice as asking for more or less than you only when every part of its requirement is higher, or every part is lower. A notice that asked for more contracts but a smaller amount for each, for example, set it in other terms.",
+      // The coverage line: one idea a sentence, each count a Num with a capital where it starts the sentence.
+      coverage: "Based on {n} of {total} comparable packages.",
+      coverageMissing: "{missing} published no qualification criteria in a notice.",
+      coverageOpen: "I left out {open} that were still open, because I don't compare a tender that is still open.",
       coverageAll: "Based on all {total} comparable packages.",
       coverageLink: "Data readiness for these sources",
-      source: "Records run through {through}. Compared on {compared}.",
+      // {sources} is each source's dataset name from the tool, joined as a list; {through} is the day the
+      // records run through, the same in every part, and {asOf} the page's as-of date (the 31 brief, 6.5).
+      source: "{sources}. Records run through {through}. Compared on {compared}.",
+      sourceAsOf: "{sources}. Records as of {asOf}. Compared on {compared}.",
       noneFound:
         "I found no qualification criteria in your text. Paste the part of the bidding document that sets them, such as the experience, turnover, equipment and key staff that bidders need.",
       error: "I couldn't compare your qualification criteria just now. Your text is saved.",
@@ -2603,8 +2611,8 @@ export const copy = {
       countAll: "All {m} comparable packages had bids rejected.",
       countNone: "None of the {m} comparable packages had bids rejected.",
       denominator:
-        "I counted the {m} comparable packages with an award notice in the records, out of {total} comparable packages. Award notices are where rejected bids are listed.",
-      intro: "Each reason is quoted from its award notice. I grouped the reasons by what they concerned, so a package can appear in more than one group.",
+        "I counted the {m} comparable packages with an award notice in the records, out of {total} comparable packages. Award notices list the rejected bids.",
+      intro: "I quoted each reason from its award notice. I grouped the reasons by what they concerned, so a package can appear in more than one group.",
       groupCount: "{c} of {n}",
       groupName: (label: string, c: string, n: string) => `${label}, ${c} of the ${n} packages`,
       yours: "Your criteria set this item.",
@@ -2616,7 +2624,8 @@ export const copy = {
       noneNext: "If an award notice is missing from the records, I can't see its rejected bids.",
       noneLink: "See how complete the award notices are",
       noNotices: "I found no award notices for the comparable packages, so I can't count rejected bids.",
-      source: "Records run through {through}.",
+      source: "{sources}. Records run through {through}.",
+      sourceAsOf: "{sources}. Records as of {asOf}.",
       error: "I couldn't load the rejected bids just now.",
       openRecords: (ref: string) => `Open the records for ${ref}`,
       countTooltip: "Comparable packages with an award notice in the records. Select to see the ones with rejected bids.",
@@ -2681,6 +2690,8 @@ export const copy = {
     none:
       "I can't compare the cost estimate, because none of the comparable packages had both a cost estimate in its Procurement Plan and a signed contract.",
     coverage: "Based on {m} of {total} comparable packages; {gaps}.",
+    // With no package to compare, "Based on 0 of ..." says nothing the sentence above has not: only the reasons.
+    coverageNone: "Of the {total} comparable packages, {gaps}.",
     coverageOpen: "{open} had no signed contract yet",
     coverageNoEstimate: "{none} had no cost estimate in their Procurement Plan",
     coverageNoUsd: "{usd} were signed only in a local currency",
@@ -2688,7 +2699,8 @@ export const copy = {
     coverageComma: ", ",
     coverageAll: "Based on all {total} comparable packages.",
     coverageLink: "Data readiness for these sources",
-    source: "Records run through {through}.",
+    source: "{sources}. Records run through {through}.",
+    sourceAsOf: "{sources}. Records as of {asOf}.",
     showTable: "Show the table",
     hideTable: "Hide the table",
     tableCount: "Showing all {m} packages.",
@@ -2705,7 +2717,8 @@ export const copy = {
     },
     openRecords: (ref: string) => `Open the records for ${ref}`,
     // A dot's tooltip and accessible name.
-    tooltipLine: "Signed for {signed} against a cost estimate of {estimate}. {country}.",
+    tooltipLine: "Signed for {signed} against a cost estimate of {estimate}, in {country}.",
+    tooltipLineNoCountry: "Signed for {signed} against a cost estimate of {estimate}.",
     tooltipOpen: "Press Enter or click to open its records.",
     tooltipOpenTouch: "Open its records",
     dotName: (ref: string, diff: string) => `${ref}, signed ${diff} its cost estimate`,
@@ -2749,7 +2762,7 @@ export const copy = {
     markerSection: (type: string, date: string, section: string) => `${type}, ${date}, section ${section}`,
     status: {
       restated: "Lesson version {v}. IEG's ICR Review restated it.",
-      restatedSpelled: "Lesson version {v}. The Independent Evaluation Group (IEG)'s ICR Review restated it.",
+      restatedSpelled: "Lesson version {v}. The Independent Evaluation Group (IEG) restated it in its ICR Review.",
       awaiting: "Lesson version {v}. Awaiting IEG review.",
       awaitingSpelled: "Lesson version {v}. Awaiting review by the Independent Evaluation Group (IEG).",
       ieg_lesson: "Lesson version {v}. IEG's lesson.",

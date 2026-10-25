@@ -84,12 +84,14 @@ class CriteriaStore:
                 json.dumps(result, ensure_ascii=False, default=str) if result is not None else None, signature,
                 records_through, at, at.date())])
 
-    def latest(self, owner_id: str, package_key: str, kind: str) -> Run | None:
-        """The owner's newest run of this kind on this package, or None. Nobody else's row is ever read."""
+    def latest(self, owner_id: str, package_key: str, kind: str, finished: bool = False) -> Run | None:
+        """The owner's newest run of this kind on this package, or with finished the newest that ended with a
+        result, or None. Nobody else's row is ever read."""
         if not owner_id:
             return None
         with self._open() as engine:
-            result = engine.run(_sql("latest"), {"owner_id": owner_id, "package_key": package_key, "kind": kind})
+            result = engine.run(_sql("latest_result" if finished else "latest"),
+                                {"owner_id": owner_id, "package_key": package_key, "kind": kind})
         if not result.rows:
             return None
         row = dict(zip(result.columns, result.rows[0], strict=True))

@@ -20,7 +20,7 @@ import { chartType, swarm } from "./RangeChart";
 import { Source } from "./Source";
 import { Table } from "./Table";
 import { TextLink } from "./TextLink";
-import { openFrom, useOpenId } from "./CriteriaParts";
+import { openFrom, partSource, useOpenId } from "./CriteriaParts";
 
 const words = copy.cost;
 // Row B holds the line's label and the counts beside it: 32 px, or 48 when the counts stack because one side
@@ -107,6 +107,12 @@ function Lane({ cost, onOpen, title, width }: {
   const textWidth = (text: string) => text.length * type.s * 0.56;
   const ticks: number[] = [];
   for (let tick = axis.min; tick <= axis.max + 1e-9; tick += axis.step) ticks.push(tick);
+  // When two labels would touch, such as six on a 182 px plot at 320 px, every second tick keeps its label;
+  // every tick keeps its gridline. Zero is always labelled.
+  const widest = Math.max(...ticks.map((tick) => textWidth(formatSignedPercent(tick))));
+  const thin = ticks.length > 1 && (width - 2 * EDGE) / (ticks.length - 1) < widest + 12;
+  const zeroAt = ticks.findIndex((tick) => Math.abs(tick) < 1e-9);
+  const labelled = (index: number) => !thin || (index - (zeroAt >= 0 ? zeroAt : 0)) % 2 === 0;
   const clampText = (centreX: number, text: string, size: number) => {
     const half = (text.length * size * 0.56) / 2;
     return Math.min(Math.max(centreX, PAD + half), Math.max(PAD + half, width - PAD - half));
@@ -178,17 +184,22 @@ function Lane({ cost, onOpen, title, width }: {
           )}
           {/* The axis: its ticks and labels with a true minus sign. */}
           <line x1={EDGE} x2={width - EDGE} y1={height - AXIS} y2={height - AXIS} strokeWidth={1} className="stroke-line-strong" />
-          {ticks.map((tick) => (
+          {ticks.map((tick, index) => (
             <g key={tick}>
               <line x1={x(tick)} x2={x(tick)} y1={laneTop} y2={height - AXIS} strokeDasharray="2 3" strokeWidth={1} className="stroke-chart-grey200" />
-              <text x={x(tick)} y={height - AXIS + 18} textAnchor="middle" fontSize={type.s} className="fill-chart-text">
-                {formatSignedPercent(tick)}
-              </text>
+              {labelled(index) && (
+                <text x={x(tick)} y={height - AXIS + 18} textAnchor="middle" fontSize={type.s} className="fill-chart-text" data-axis-label>
+                  {formatSignedPercent(tick)}
+                </text>
+              )}
             </g>
           ))}
-          {/* The zero line, with a 1 px surface halo on each side, from row B to the axis. */}
-          <line x1={zero} x2={zero} y1={14} y2={height - AXIS} strokeWidth={4} className="stroke-surface" />
-          <line x1={zero} x2={zero} y1={14} y2={height - AXIS} strokeWidth={2} className="stroke-chart-grey500" data-zero-line />
+          {/* The zero line, with a 1 px surface halo on each side. It starts under row B when the counts stack
+              there, and stops at the lane when row C holds the middle half's label, so no label is crossed;
+              the axis's 0% tick still marks zero below. */}
+          <line x1={zero} x2={zero} y1={stacked ? rowB : 14} y2={ranged ? laneTop + lane : height - AXIS} strokeWidth={4} className="stroke-surface" />
+          <line x1={zero} x2={zero} y1={stacked ? rowB : 14} y2={ranged ? laneTop + lane : height - AXIS} strokeWidth={2}
+            className="stroke-chart-grey500" data-zero-line />
           {/* Row B: the line's label, then the counts on each side; a side with no package is left out. */}
           <text x={clampText(zero, words.line, type.s)} y={11} textAnchor="middle" fontSize={type.s} fontWeight={600} className="fill-chart-text" style={HALO}>
             {words.line}
@@ -267,8 +278,11 @@ function Lane({ cost, onOpen, title, width }: {
           className="absolute z-10 w-max max-w-[240px] rounded-sm border-[0.5px] border-chart-grey200 bg-surface px-3 py-2 shadow-popover"
           style={{
             left: Math.min(Math.max(0, x(tip.diff_pct) - 120), Math.max(0, width - 240)),
-            top: Math.max(0, centre + offsets[shown!] - r - 8),
-            transform: "translateY(-100%)",
+            // Below 400 px of chart width it opens under the dot, so it never covers the subtitle or the line's
+            // label above the lane.
+            ...(narrow
+              ? { top: centre + offsets[shown!] + r + 8 }
+              : { top: Math.max(0, centre + offsets[shown!] - r - 8), transform: "translateY(-100%)" }),
             fontSize: type.s,
           }}
         >
@@ -279,7 +293,7 @@ function Lane({ cost, onOpen, title, width }: {
             {formatSignedPercent(tip.diff_pct)}
           </p>
           <p className="text-chart-text-subtle">
-            {words.tooltipLine
+            {(tip.country_name ? words.tooltipLine : words.tooltipLineNoCountry)
               .replace("{signed}", usd(tip.signed_amount_usd))
               .replace("{estimate}", usd(tip.estimated_amount_usd))
               .replace("{country}", tip.country_name ?? "")}
@@ -291,10 +305,13 @@ function Lane({ cost, onOpen, title, width }: {
   );
 }
 
-function CostTable({ cost, open: openId, onOpen }: { cost: Cost; open: string | null; onOpen: (row: CostRow, element: HTMLElement) => void }) {
+function CostTable({ cost, open: openId, onOpen, titleId }: {
+  cost: Cost; open: string | null; onOpen: (row: CostRow, element: HTMLElement) => void; titleId: string;
+}) {
+  // A STEP reference such as KE-KIMAWASCO-141042-CW-RFB stays on one line at 1440 px (the 31 design review, F13).
   const columns = [
-    { key: "package", header: words.columns.package, width: "w-[28%]" },
-    { key: "country", header: words.columns.country, short: true, width: "w-[16%]" },
+    { key: "package", header: words.columns.package, width: "w-[36%]" },
+    { key: "country", header: words.columns.country, short: true, width: "w-[10%]" },
     {
       key: "estimated",
       header: (
@@ -351,9 +368,13 @@ function CostTable({ cost, open: openId, onOpen }: { cost: Cost; open: string | 
   }));
   const selected = openId?.startsWith("package-cost:") ? openId.slice("package-cost:".length) : null;
   return (
+    // The chart's title just above names the table twin, so the twin repeats no title of its own (the 31
+    // critique, round 1): its count line takes focus when a count in the title opens it.
     <Table
       title={<CostTitle cost={cost} />}
-      count={{ noun: "", total: cost.rows.length, text: cost.rows.length === 1 ? words.tableCountOne : words.tableCount.replace("{m}", formatNumber(cost.rows.length, { compact: false })) }}
+      labelledBy={titleId}
+      countLead
+      count={{ noun: "", total: cost.counts.m, text: cost.counts.m === 1 ? words.tableCountOne : words.tableCount.replace("{m}", formatNumber(cost.counts.m, { compact: false })) }}
       columns={columns}
       state={{ status: "ready", rows }}
       rowHeader="package"
@@ -377,9 +398,11 @@ function Coverage({ cost, readinessHref }: { cost: Cost; readinessHref: string }
     </span>
   ));
   return (
-    <p className="text-caption text-ink-muted" data-coverage-line>
+    <p className="max-w-prose text-caption text-pretty text-ink-muted" data-coverage-line>
       {gaps.length === 0 ? (
         <Fill template={words.coverageAll} slots={{ total: <Num value={total} /> }} />
+      ) : m === 0 ? (
+        <Fill template={words.coverageNone} slots={{ total: <Num value={total} />, gaps: <>{joined}</> }} />
       ) : (
         <Fill template={words.coverage} slots={{ m: <Num value={m} />, total: <Num value={total} />, gaps: <>{joined}</> }} />
       )}{" "}
@@ -388,10 +411,15 @@ function Coverage({ cost, readinessHref }: { cost: Cost; readinessHref: string }
   );
 }
 
-export function CostEstimate({ cost, readinessHref }: { cost: Cost; readinessHref: string }) {
+export function CostEstimate({ cost, readinessHref, asOf = null }: {
+  cost: Cost; readinessHref: string;
+  // The page's as-of date, when it has one: the source line then says the records were read as of it.
+  asOf?: string | null;
+}) {
   const abstain = cost.abstention?.reason === "too_few_comparables";
   const [table, setTable] = useState(abstain);
   const captionRef = useRef<HTMLDivElement>(null);
+  const titleId = useId();
   const root = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(0);
   useLayoutEffect(() => {
@@ -406,7 +434,7 @@ export function CostEstimate({ cost, readinessHref }: { cost: Cost; readinessHre
   // A count in the title opens the table twin and moves focus to its caption (the 31 brief, section 6.10).
   const showTable = () => {
     setTable(true);
-    requestAnimationFrame(() => captionRef.current?.querySelector<HTMLElement>("[data-table-title], h4, [tabindex]")?.focus());
+    requestAnimationFrame(() => captionRef.current?.querySelector<HTMLElement>("[data-page-lead]")?.focus());
   };
   const open = useOpenId();
   const onOpen = (row: CostRow, element: HTMLElement) => openFrom(costRecordId(row.step_reference), element);
@@ -435,12 +463,12 @@ export function CostEstimate({ cost, readinessHref }: { cost: Cost; readinessHre
   return (
     <div ref={root} className="flex flex-col gap-2" data-cost={abstain ? "abstain" : "ranged"}>
       {intro}
-      <p className="mt-2 font-bold text-chart-text" style={{ fontSize: type.l }} data-cost-title>
+      <p id={titleId} className="mt-2 font-bold text-chart-text" style={{ fontSize: type.l }} data-cost-title>
         <CostTitle cost={cost} onCount={showTable} />
       </p>
       {abstain && (
-        <p className="text-body text-ink" data-cost-abstain>
-          {cost.rows.length === 1 ? words.abstainOne : <Fill template={words.abstain} slots={{ m: <Num value={cost.rows.length} /> }} />}
+        <p className="max-w-prose text-body text-pretty text-ink" data-cost-abstain>
+          {cost.counts.m === 1 ? words.abstainOne : <Fill template={words.abstain} slots={{ m: <Num value={cost.counts.m} /> }} />}
         </p>
       )}
       <p className="text-chart-text-subtle" style={{ fontSize: type.m }}>{words.subtitle}</p>
@@ -464,9 +492,10 @@ export function CostEstimate({ cost, readinessHref }: { cost: Cost; readinessHre
         </p>
       )}
       <Coverage cost={cost} readinessHref={readinessHref} />
-      {cost.records_through && (
+      {(cost.records_through || asOf) && (
         <Source>
-          <Fill template={words.source} slots={{ through: <Num date={cost.records_through} /> }} />
+          {partSource({ sources: cost.sources, through: cost.records_through, asOf: asOf ? cost.as_of : null, template: words.source,
+            templateAsOf: words.sourceAsOf })}
         </Source>
       )}
       <div>
@@ -476,7 +505,7 @@ export function CostEstimate({ cost, readinessHref }: { cost: Cost; readinessHre
       </div>
       {table && (
         <div ref={captionRef} className="mt-2" data-cost-table>
-          <CostTable cost={cost} open={open} onOpen={onOpen} />
+          <CostTable cost={cost} open={open} onOpen={onOpen} titleId={titleId} />
         </div>
       )}
     </div>

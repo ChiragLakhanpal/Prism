@@ -358,6 +358,9 @@ excerpt_max_chars = 200
 # At most this many lessons in each group, "Cost estimates" and "Specifications", in get_lessons' order.
 # Source: the 31 design brief, section 4.6 (criteria.lessons_per_group), well under DESIGN.md's eight cards.
 lessons_per_group = 3
+# The risk factors whose lessons the section shows, one group each in this order, from ticket 29's closed list
+# (config/lessons.toml). Source: the 31 design brief, section 4.6 ("Cost estimates" and "Specifications").
+lesson_factors = ["cost_estimates", "designs_and_specifications"]
 # Each group of rejected bids shows this many rows before "Show {n} more". Source: the 31 design brief, section
 # 6.7, the same default as brief 28's reasons list (rebidding.rows_per_group, not yet in this file).
 rows_per_group = 5

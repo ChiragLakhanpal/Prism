@@ -10,6 +10,10 @@
     "counter_left": 2000,
     "rows_per_group": 5,
     "lessons_per_group": 3,
+    "lesson_factors": [
+      "cost_estimates",
+      "designs_and_specifications"
+    ],
     "min_comparables": 20
   },
   "comparison": null,

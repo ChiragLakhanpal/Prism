@@ -25,7 +25,11 @@ function events(text: string): { type: string; data: any }[] {
     .map((lines) => ({ type: lines[0].slice("event: ".length), data: JSON.parse(lines[1].slice("data: ".length)) }));
 }
 
-async function open(page: Page, ref: string, options: { width?: number; compare?: string; summary?: string; run?: string; hash?: boolean } = {}) {
+async function open(
+  page: Page,
+  ref: string,
+  options: { width?: number; compare?: string; summary?: string; run?: string; hash?: boolean; asof?: string } = {},
+) {
   const { width = 1440 } = options;
   await page.setViewportSize({ width, height: 900 });
   const slug = ref === WORKS ? "ke-nwwda-541055" : "ke-cwsb-224323";
@@ -39,7 +43,11 @@ async function open(page: Page, ref: string, options: { width?: number; compare?
     [`${api}/criteria/run`]: { body: await recorded(options.run ?? `criteria-run-${slug}.sse`) },
     "/api/evidence/opened": { body: '{"opened":[],"recorded":true}' },
   };
-  if (options.compare) answers[`${api}/criteria/compare`] = { body: await recorded(options.compare) };
+  // A comparison whose save failed: the server's error event, with nothing saved before it.
+  const storeFailed = 'event: error\ndata: {"code": "store", "request_id": "4bf92f3577b34da6a3ce929d0e0e4736"}\n\nevent: done\ndata: {}\n\n';
+  if (options.compare) {
+    answers[`${api}/criteria/compare`] = { body: options.compare === "criteria-compare-store-failed.sse" ? storeFailed : await recorded(options.compare) };
+  }
   const asked: Request[] = [];
   await page.route("**/api/**", async (route) => {
     const request = route.request();
@@ -50,7 +58,7 @@ async function open(page: Page, ref: string, options: { width?: number; compare?
       ? route.fulfill({ status: 200, contentType: "application/json", body: answer.body })
       : route.fulfill({ status: 404, json: { detail: "Not Found" } });
   });
-  await page.goto(`/packages/${encodeURIComponent(ref)}${options.hash ? "#check-criteria" : ""}`);
+  await page.goto(`/packages/${encodeURIComponent(ref)}${options.asof ? `?asof=${options.asof}` : ""}${options.hash ? "#check-criteria" : ""}`);
   return asked;
 
   function evidence(id: string): Promise<Answer> | undefined {
@@ -94,6 +102,9 @@ test("when no comparable package published its criteria, the summary says so and
   await expect(section(page).locator("[data-section-summary]")).toHaveText(
     `${copy.criteria.summaryNonePublic.replace("{total}", "49")} ${copy.criteria.summaryAlsoNonePublic}`,
   );
+  // Opened, the body does not say it a second time.
+  await openSection(page);
+  await expect(section(page).locator("[data-criteria-intro]")).toHaveText(copy.criteria.introNonePublic);
 });
 
 test("pasted criteria asking for similar experience of two contracts of US$10 million are compared, each count from the tool", async ({ page }) => {
@@ -112,6 +123,14 @@ test("pasted criteria asking for similar experience of two contracts of US$10 mi
   await expect(row).toContainText(`"${similar.your_excerpt.text}"`);
   await expect(row).toContainText(similar.reading);
   await expect(section(page).locator("table [data-item=turnover]")).toContainText(copy.criteria.items.noneToCompare);
+  // The part's h3 is its only heading: the table's title sentence under it is body text, not a second title.
+  const part = section(page).locator("[data-criteria-part=items]");
+  const sizes = await part.evaluate((element) => {
+    const size = (node: Element | null) => (node ? parseFloat(getComputedStyle(node).fontSize) : 0);
+    return { heading: size(element.querySelector("h3")), title: size(element.querySelector("caption span")) };
+  });
+  expect(sizes.title).toBeLessThan(sizes.heading);
+  await expect(part.locator("caption")).toContainText(copy.criteria.items.countBoth);
   // The text never goes in an address, and the comparison's request carries it only in its body.
   expect(page.url()).not.toContain("similar");
   const compare = asked.find((request) => request.url().endsWith("/criteria/compare"))!;
@@ -152,6 +171,8 @@ test("rejected bids read N of M comparable packages, each reason quoted from its
 
   const part = section(page).locator("[data-criteria-part=rejected]");
   await expect(part.locator("[data-rejected-count]")).toHaveText(`${n} of ${m} comparable packages had bids rejected.`);
+  // A group that names a cause leads; other reasons come last whatever their count.
+  await expect(part.locator("[data-rejected-group]").last()).toHaveAttribute("data-rejected-group", "other");
   const first = run.rejected.rows.find((row: any) => row.item_key === run.rejected.groups[0].item_key);
   const shown = part.locator(`[data-rejected-row="${first.evidence_id}"]`);
   await expect(shown).toContainText(`"${first.reason.quote}"`);
@@ -170,12 +191,38 @@ test("rejected bids read N of M comparable packages, each reason quoted from its
 
   // A reason's marker opens its award notice, with the reason highlighted and no bidder named.
   const security = part.locator("[data-rejected-group=bid_security]");
-  await security.getByRole("button", { name: /^Show / }).click();
+  if (big.item_key !== "bid_security") await security.getByRole("button", { name: /^Show / }).click();
   const mowi = security.locator('[data-rejected-row="strata.gold.notice:OP00125282/reason/1"]');
   await mowi.locator("[data-citation]").click();
   const drawer = page.getByRole("dialog");
   await expect(drawer.getByRole("heading", { level: 2 })).toHaveText("Award notice OP00125282");
   await expect(drawer.locator("mark")).toContainText("Bid Security not Provided");
+  // The record ends with its source line, which gives the day the award notice was published.
+  await expect(drawer.locator("[data-source]").last()).toContainText(/award notice published \w+ \d+/);
+});
+
+test("each part's source line names its sources, and every part gives the one records date", async ({ page }) => {
+  const run = events(await recorded("criteria-run-ke-nwwda-541055.sse")).find((event) => event.type === "package_run")!.data;
+  await open(page, WORKS);
+  await openSection(page);
+
+  const lines = section(page).locator("[data-criteria-part] [data-source]").filter({ hasText: "Records run through" });
+  const rejected = section(page).locator("[data-criteria-part=rejected] [data-source]");
+  const cost = section(page).locator("[data-criteria-part=cost] [data-source]");
+  for (const source of run.rejected.sources) await expect(rejected).toContainText(source.dataset_name);
+  for (const source of run.cost.sources) await expect(cost).toContainText(source.dataset_name);
+  const dates = (await lines.allInnerTexts()).map((text) => /Records run through ([^.]+)\./.exec(text)?.[1]);
+  expect(dates.length).toBe(2);
+  expect(new Set(dates).size).toBe(1);
+  expect(run.rejected.records_through).toBe(run.records_through);
+});
+
+test("as of a past date, each part's source line says the records were read as of it", async ({ page }) => {
+  await open(page, WORKS, { asof: "2026-10-28" });
+  await openSection(page);
+
+  await expect(section(page).locator("[data-criteria-part=rejected] [data-source]")).toContainText("Records as of");
+  await expect(section(page).locator("[data-criteria-part=cost] [data-source]")).toContainText("Records as of");
 });
 
 test("below 20 comparables the cost estimate abstains in the first person and lists every package", async ({ page }) => {
@@ -210,6 +257,21 @@ test("lessons on cost estimates appear with their citations, including ICR P1301
   await expect(card.locator("[data-source]")).toContainText("Implementation Completion and Results Report (ICR), P130164, October 10, 2019, paragraph 54, page 23.");
   await expect(card.locator("[data-citation]")).toHaveAccessibleName(/Source \d+: Implementation Completion and Results Report, October 10, 2019, paragraph 54/);
   await expect(card.locator("[data-lesson-status]")).toContainText("restated it");
+  // The card quotes its paragraph with the lesson's words highlighted, and its marker sits outside the title.
+  await expect(card.locator("[data-lesson-excerpt] mark")).toContainText("108 of 328 cases had to go through rebidding");
+  await expect(card.getByRole("heading", { level: 4 }).locator("[data-citation]")).toHaveCount(0);
+  await expect(card).toHaveAccessibleName(await card.getByRole("heading", { level: 4 }).innerText());
+});
+
+test("a failed save is said once, under the field, and any other failure offers Try again", async ({ page }) => {
+  await open(page, CONSULTANT, { compare: "criteria-compare-store-failed.sse" });
+  await openSection(page);
+  await section(page).getByLabel(copy.criteria.field.label).fill(PASTED);
+  await section(page).getByRole("button", { name: copy.criteria.compare }).click();
+
+  await expect(section(page).locator("[data-save-failed]")).toHaveText(copy.criteria.errors.store);
+  await expect(section(page).locator("[data-criteria-part=items] [data-part-error]")).toHaveCount(0);
+  await expect(section(page)).not.toContainText("Your text is saved");
 });
 
 for (const width of [1440, 1024, 390]) {

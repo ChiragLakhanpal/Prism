@@ -51,3 +51,13 @@ question = "Deliver the pipes to the Kisumu store by March 31, and send the invo
 scope = "KE-CWSB-224323-CS-QCBS"
 as_of = 2026-10-22
 recording = "criteria-none-found"
+
+[[cases]]
+id = "criteria-review-decisions"
+says = """Text that asks only whether a bid evaluation was decided rightly: the reader refuses it in full with \
+review_decisions, and the section compares nothing."""
+question = """Was the bid evaluation report right to reject the lowest bid on our last package? Tell us whether the \
+evaluation committee decided correctly."""
+scope = "KE-CWSB-224323-CS-QCBS"
+as_of = 2026-10-22
+recording = "criteria-review-decisions"

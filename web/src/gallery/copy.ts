@@ -468,6 +468,18 @@ export const galleryCopy = {
     drawerItem: "B. The notices behind one item",
     drawerCost: "E. A comparable package's cost records",
     drawerAward: "D. An award notice, with the reason highlighted",
+    drawerNotice: "C. A notice's text, opened from the notices behind one item, with the way back",
+    drawerLesson: "F. A lesson's paragraph",
+    parts: "The parts' other states",
+    runError: "The package-level run failed: each part says so, with Try again",
+    lessonsNone: "No lessons fit this package yet",
+    lessonAwaiting: "A lesson awaiting IEG review",
+    rejectedNoNotices: "No award notices for the comparable packages",
+    rejectedYours:
+      "A made-up sample: an item your criteria set, whose row links to its rejected bids, and the group that says so",
+    rejectedLanguage: "A reason in French, with its language named",
+    removedRow: "A reason the verifier removed, with the removed box",
+    costNoEstimate: "The plan row gives no cost estimate for this package",
     sampleNoun: "sample",
   },
 

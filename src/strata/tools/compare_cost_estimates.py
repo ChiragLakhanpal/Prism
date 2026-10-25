@@ -30,23 +30,13 @@ from __future__ import annotations
 import datetime as dt
 import statistics
 from decimal import ROUND_HALF_UP, Decimal
-from importlib import resources
 
-from strata.config import load_sources, load_tools
+from strata.tools import common
 from strata.tools.registry import Call
 
 TOOL = "compare_cost_estimates"
 CENTS = Decimal("0.01")
 REASONS = ("still_open", "no_estimate", "no_usd_amount")
-
-
-def _sql(name: str) -> str:
-    return (resources.files("strata.tools") / "sql" / TOOL / f"{name}.sql").read_text()
-
-
-def _rows(call: Call, name: str, **params) -> list[dict]:
-    result = call.engine.run(_sql(name), {"as_of": call.as_of, **params})
-    return [dict(zip(result.columns, row, strict=True)) for row in result.rows]
 
 
 def _date(value) -> dt.date | None:
@@ -62,15 +52,6 @@ def _iso(value) -> str | None:
 
 def _money(value) -> Decimal | None:
     return None if value is None or value == "" else Decimal(str(value)).quantize(CENTS)
-
-
-def _flag(value) -> bool:
-    return value if isinstance(value, bool) else str(value).lower() == "true"
-
-
-def references(text: str) -> list[str]:
-    """The STEP references a call names, in order, each once."""
-    return list(dict.fromkeys(part.strip() for part in text.split(",") if part.strip()))
 
 
 def percent(value: Decimal) -> float | int:
@@ -107,11 +88,6 @@ def _quantile_dots(rows: list[dict], count: int) -> list[dict]:
     return dots
 
 
-def _sources() -> list[dict]:
-    registry = load_sources()
-    return [{"key": key, "dataset_name": registry[key].dataset_name} for key in load_tools()[TOOL].sources]
-
-
 def _own_estimate(call: Call, step_reference: str | None, estimate_usd: float | None) -> dict:
     """The package's own cost estimate: its plan row's Estimated Amount (US$), as the page's header gives it, or
     the amount the call gives for a package that has no plan row."""
@@ -129,20 +105,21 @@ def _own_estimate(call: Call, step_reference: str | None, estimate_usd: float | 
 
 def compare_cost_estimates(call: Call, comparables: str, step_reference: str | None = None,
                            estimate_usd: float | None = None) -> dict:
-    refs = references(comparables)
+    refs = common.references(comparables)
     limit = int(call.thresholds.value("past_range.min_comparables"))
     joined = ",".join(refs)
-    packages = {row["step_reference"]: row for row in _rows(call, "packages", refs=joined)} if refs else {}
-    estimates = {row["step_reference"]: row for row in _rows(call, "estimates", refs=joined)} if refs else {}
+    packages = {row["step_reference"]: row for row in common.rows(call, TOOL, "packages", refs=joined)} if refs else {}
+    estimates = {row["step_reference"]: row for row in common.rows(call, TOOL, "estimates", refs=joined)} if refs else {}
+    was_signed = common.signed(call, refs)
     contracts: dict[str, list[dict]] = {}
-    for row in (_rows(call, "contracts", refs=joined) if refs else []):
+    for row in (common.rows(call, TOOL, "contracts", refs=joined) if refs else []):
         contracts.setdefault(row["step_reference"], []).append(row)
 
     rows, left_out = [], {reason: [] for reason in REASONS}
     for ref in refs:
         package = packages.get(ref)
         evidence = f"strata.gold.package:{ref}"
-        signed = package is not None and (_flag(package["signed_in_awards"]) or _flag(package["signed_in_award_notice"]))
+        signed = package is not None and was_signed.get(ref, False)
         estimate = estimates.get(ref)
         mine = contracts.get(ref, [])
         if not signed:
@@ -190,10 +167,9 @@ def compare_cost_estimates(call: Call, comparables: str, step_reference: str | N
               "at": sum(1 for row in rows if row["diff_pct"] == 0)}
     amounts = [Decimal(row["estimated_amount_usd"]) for row in rows]
     band = {"low_usd": str(min(amounts)), "high_usd": str(max(amounts))} if amounts else None
-    through = call.engine.run(_sql_records_through(), {"as_of": call.as_of}).rows
     found = {"rows": rows, "coverage": coverage, "package": _own_estimate(call, step_reference, estimate_usd),
              "counts": counts, "band": band, "quartiles": None, "quantile_dots": None, "min_comparables": limit,
-             "sources": _sources(), "records_through": _iso(through[0][0]) if through else None}
+             "sources": common.sources(TOOL), "records_through": common.records_through(call)}
     if not refs:
         return {**found, "abstention": {"reason": "no_comparables"}}
     if not rows:
@@ -204,8 +180,3 @@ def compare_cost_estimates(call: Call, comparables: str, step_reference: str | N
     dots = _quantile_dots(rows, int(call.thresholds.value("past_range.quantile_dots"))) if len(rows) > dots_above else None
     return {**found, "quartiles": _quartiles([row["diff_pct"] for row in rows]), "quantile_dots": dots,
             "abstention": None}
-
-
-def _sql_records_through() -> str:
-    # The same day the comparables' source lines give ("Records run through ..."), from find_comparables' query.
-    return (resources.files("strata.tools") / "sql" / "find_comparables" / "records_through.sql").read_text()
