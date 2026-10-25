@@ -74,6 +74,14 @@ def first_listing(document_id, public_from, reference, planned_days):
                                      ("Signed Contract", 2, planned_notice + planned_days * DAY))]
 
 
+# Kenya's CPIA and WGI scores for 2017, as published on September 25, 2018: every package has them.
+GOVERNANCE_2017 = {"GOV_WGI_GE.EST": -0.5, "IQ.CPA.IRAI.XQ": 3.2}
+
+
+def governance(code, year, value, published):
+    return {"country_code": "KE", "indicator_id": code, "year": year, "value": value, "public_from": published}
+
+
 def package(reference, notice_on, signed_on, method="Request for Bids", status="Pending Implementation"):
     """A package's gold rows: its notice, its contract when it has one, and its package row."""
     notice = {"notice_id": f"N-{reference}", "notice_type": "Invitation for Bids", "notice_date": notice_on,
@@ -103,6 +111,8 @@ def hand_made(tmp_path) -> DuckDBEngine:
                                              "country_code": "KE", "region": "Eastern and Southern Africa",
                                              "public_from": dt.date(2018, 1, 1)}])
     insert(engine, "strata.silver.plan_versions", [plan_version(FIRST_VERSION, first), plan_version(SECOND_VERSION, second)])
+    insert(engine, "strata.gold.governance_score", [governance(code, 2017, value, dt.date(2018, 9, 25))
+                                                     for code, value in GOVERNANCE_2017.items()])
     notices, contracts, packages, rows, listings = [], [], [], [], []
     everything = ([(reference, notice, signed, "Request for Bids") for reference, notice, signed in training_packages()]
                   + [(reference, notice, signed, "Request for Bids") for reference, notice, signed in packages_advertised_in_2021()]
@@ -157,6 +167,8 @@ def test_the_backtest_for_2021_stores_the_known_scores_of_the_hand_made_set(ran_
     assert (year["misses_early"], year["misses_late"]) == (0, KNOWN["n"] - KNOWN["m"])
     assert year["middle_total"] == year["eight_in_ten_total"] == KNOWN["n"]
     assert year["training_through"] == KNOWN["cutoff"].isoformat()
+    # The estimate's typical error (2.2 months) did not beat the past range's (2.0): the year records the loss.
+    assert year["beat_past_range"] == 0
 
 
 # ── Leakage ──────────────────────────────────────────────────────────────
@@ -174,9 +186,8 @@ def publish_after_the_cutoff(engine):
                  prequalification="Y") for reference in references])
     insert(engine, "strata.silver.plan_step_delays",
            [step for reference in references for step in first_listing(LATER_VERSION, later, reference, planned_days=400)])
-    insert(engine, "strata.gold.governance_score", [
-        {"country_code": "KE", "indicator_id": code, "year": 2020, "value": value, "public_from": dt.date(2021, 1, 2)}
-        for code, value in (("GOV_WGI_GE.EST", -0.4), ("IQ.CPA.IRAI.XQ", 3.4))])
+    insert(engine, "strata.gold.governance_score", [governance(code, 2020, value, dt.date(2021, 1, 2))
+                                                     for code, value in (("GOV_WGI_GE.EST", -0.4), ("IQ.CPA.IRAI.XQ", 3.4))])
     insert(engine, "strata.gold.notice", [{
         "notice_id": "N-KE-T80-again", "notice_type": "Invitation for Bids", "notice_date": dt.date(2021, 1, 20),
         "project_id": PROJECT, "country_code": "KE", "step_reference": training_packages()[-1][0],
@@ -194,6 +205,11 @@ def test_rows_made_public_after_the_cutoff_change_none_of_the_scores(tmp_path):
     # The model learned from the plan as it stood before the cutoff: one size and one planned duration.
     assert year["feature_ranges"] == harness.as_json({"estimated_amount_usd": [1000000.0, 1000000.0],
                                                       "planned_days": [120, 120]})
+    # Each package keeps the governance scores published before the cutoff, not the 2020 ones published after.
+    reader = harness.Reader(engine, KNOWN["cutoff"], backtest.load_thresholds())
+    packages = backtest.packages_as_of(reader, backtest.load_time_estimate())
+    assert {(item.features["governance:GOV_WGI_GE.EST"], item.features["governance:IQ.CPA.IRAI.XQ"])
+            for item in packages.values()} == {tuple(GOVERNANCE_2017.values())}
 
 
 class ReadsEveryContract:

@@ -1657,7 +1657,8 @@ signed_within_plan = ["KE-WAJWASCO-356671-CW-RFB", "KE-WAJWASCO-372776-CW-RFB"]
 #   below as WORKS, Request for Bids, Open - National, Post review, no prequalification, estimated
 #   US$1,000,000.00, so every package has the same features and the model gives each the same middle.
 #   The first version is every package's first listing, with its notice planned 120 days before its
-#   signed contract. Each package has an agency code of its own, so none has an agency history.
+#   signed contract. Each package has an agency code of its own, so none has an agency history, and
+#   all share Kenya's 2017 CPIA and WGI scores, published September 25, 2018.
 # - 80 training packages, i = 1 to 80: notice on January 2, 2019 plus 9 * (i - 1) days, signed
 #   30 + (7 * i * i mod 251) days later. As of the cutoff, January 1, 2021, 17 are still open.
 #   One more package, advertised March 2, 2020 and never signed, is Canceled in the second version,

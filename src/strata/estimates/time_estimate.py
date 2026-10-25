@@ -146,7 +146,7 @@ class _Governance:
         key = (country, indicator, max(changes))
         if key not in self.cache:
             score = governance.score_as_of(self.reader.engine, country, indicator, key[2])
-            self.cache[key] = None if score is None else float(score["value"])
+            self.cache[key] = None if score is None else float(self.reader.checked([score])[0]["value"])
         return self.cache[key]
 
 

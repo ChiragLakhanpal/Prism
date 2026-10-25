@@ -76,8 +76,8 @@ class Score:
 
 @dataclass
 class Scored:
-    """What a scorer returns for one window: its scores, the parameters and model to log, and the model
-    itself for the caller, such as a backtest year's model."""
+    """What a scorer returns for one window: its scores, the parameters to log with them, and the model
+    it trained, if any, which the harness logs too."""
 
     scores: list[Score]
     params: dict[str, Any] = field(default_factory=dict)

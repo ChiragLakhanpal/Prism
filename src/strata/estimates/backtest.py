@@ -26,7 +26,8 @@ section 6.6):
 - error_estimate_months, error_past_range_months and error_plan_months: the median distance from each
   package's outcome to the estimate's middle, the past range's middle (find_comparables as of the
   cutoff) and the plan's planned duration in its first listing, over the same error_packages: those
-  signed with all three. Half of the packages were closer than each.
+  signed with all three. Half of the packages were closer than each. beat_past_range is 1 when the
+  estimate's typical error was smaller than the past range's, its baseline, and 0 when it was not.
 - middle_ran_longer and eight_in_ten_ran_longer, each with its total (n) and in10, for the plan-date
   choice; misses_early (always 0, as the 8-in-10 point is an upper point) and misses_late.
 
@@ -159,8 +160,10 @@ def _test_scores(model, unseen: list[Package], outcomes: dict, replay: Replay, t
         scores += [Score("width_80_months", _months(statistics.median(point["q80"] for point in given))),
                    Score("width_50_months", _months(statistics.median(point["q75"] - point["q25"] for point in given)))]
     if errors:
-        scores += [Score(f"error_{name}_months", _months(statistics.median(error[k] for error in errors)))
-                   for k, name in enumerate(("estimate", "past_range", "plan"))]
+        typical = [_months(statistics.median(error[k] for error in errors)) for k in range(3)]
+        scores += [Score(f"error_{name}_months", value) for name, value in zip(("estimate", "past_range", "plan"), typical)]
+        # Whether the model beat its baseline, the past range, on the same packages (the 28 design brief).
+        scores.append(Score("beat_past_range", int(typical[0] < typical[1])))
     return scores
 
 
