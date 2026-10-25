@@ -629,6 +629,36 @@ test("the Procurement tab says what changed in each agency's latest plan and lin
   await expect(heading).toBeFocused();
 });
 
+// On the server the comparison often answers before the check (62 ms against 67 ms in the 21 critique, round 3),
+// so the check here answers 300 ms after it: the heading is drawn only when the check lands.
+async function checkLate(page: Page) {
+  const body = await recorded("check-plan-p156634-nwwda-2026-10-09.json");
+  await page.route((url) => url.pathname === `/api${NWWDA}/2026-10-09`, async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    await route.fulfill({ status: 200, contentType: "application/json", body });
+  });
+}
+
+test("See what changed lands on the change list when the comparison answers before the check, and so does a link straight to #changes", async ({ page }) => {
+  const heading = page.getByRole("heading", { level: 2, name: "What changed since the plan of March 5, 2026" });
+  for (const width of [1440, 390]) {
+    await page.unrouteAll({ behavior: "ignoreErrors" });
+    await open(page, "/projects/P156634/procurement", width, await p156634());
+    await checkLate(page);
+    await page.locator("[data-agency=northern-water-works-development-agency] [data-changes-sentence]").getByRole("link", { name: "See what changed" }).click();
+    await expect(heading).toBeFocused();
+    expect(await heading.evaluate((el) => Math.round(el.getBoundingClientRect().top)), `the heading is in view at ${width} px`).toBeLessThan(450);
+  }
+
+  await page.unrouteAll({ behavior: "ignoreErrors" });
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await mockApi(page, { ...(await hubApi()), ...(await p156634()) });
+  await checkLate(page);
+  await page.goto(`${NWWDA}/2026-10-09#changes`);
+  await expect(heading).toBeFocused();
+  expect(await heading.evaluate((el) => Math.round(el.getBoundingClientRect().top))).toBeLessThan(450);
+});
+
 test("an agency's version list shows the five newest and the baseline, and folds the rest behind Show all", async ({ page }) => {
   const body = JSON.parse(await recorded("project-p156634-baseline.json"));
   const nwwda = body.agencies[0];

@@ -178,17 +178,28 @@ export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyI
   const { changes } = planChanges;
   const listed = changes !== null && changes.state === "compared" && changed(changes.counts);
 
-  // "#changes" in the address, from "See what changed": the change list's heading takes focus once it is drawn.
+  // "#changes" in the address, from "See what changed" or a link straight to it: the change list's heading takes
+  // focus once it is drawn. The heading needs both the comparison and the check, and either may answer first,
+  // so this runs again when each lands. It moves on the next frame, after the route change has focused the h1
+  // (the 21 critique, round 3).
+  const drawn = listed && checked !== null;
   useEffect(() => {
+    let frame = 0;
     const follow = () => {
-      if (window.location.hash !== "#changes" || !changesHeading.current) return;
-      changesHeading.current.scrollIntoView({ block: "start" });
-      changesHeading.current.focus({ preventScroll: true });
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        if (window.location.hash !== "#changes" || !changesHeading.current) return;
+        changesHeading.current.scrollIntoView({ block: "start" });
+        changesHeading.current.focus({ preventScroll: true });
+      });
     };
-    follow();
+    if (drawn) follow();
     window.addEventListener("hashchange", follow);
-    return () => window.removeEventListener("hashchange", follow);
-  }, [listed]);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("hashchange", follow);
+    };
+  }, [drawn]);
 
   // The visually hidden status announces steps: checking, then how many activities were checked.
   // Any other end has its own alert or heading, so the status then says nothing.
