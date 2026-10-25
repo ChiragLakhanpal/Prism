@@ -67,9 +67,9 @@ class SixChecks:
         self.cited_only = [name for name, tool in self.tools.items() if tool.result.not_checked_when == "cited"]
         self.source_chars = int(self.thresholds.value("verifier.judge_source_chars"))
 
-    def check(self, claims: Iterable[Claim], facts: Facts) -> AnswerCheck:
-        """Checks 1 to 3 and 5 on an answer's claims, against one turn's evidence."""
-        return AnswerCheck(claims, facts, self.backs_advice, source_chars=self.source_chars)
+    def check(self, claims: Iterable[Claim], facts: Facts, language: str = "en") -> AnswerCheck:
+        """Checks 1 to 3 and 5 on an answer's claims, written in language, against one turn's evidence."""
+        return AnswerCheck(claims, facts, self.backs_advice, source_chars=self.source_chars, language=language)
 
     def checked(self, sentences: Iterable[Checked], facts: Facts) -> AnswerCheck:
         """Check 5 on sentences checks 1 to 3 already saw, each against its own evidence, as a draft's notes are."""

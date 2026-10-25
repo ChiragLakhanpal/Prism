@@ -114,7 +114,7 @@ from pathlib import Path
 from typing import Annotated, Literal
 
 from fastapi import BackgroundTasks, Depends, FastAPI, Query, Request
-from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
+from fastapi.responses import FileResponse, JSONResponse, Response, StreamingResponse
 from starlette.middleware.gzip import GZipMiddleware
 from opentelemetry import trace
 from pydantic import BaseModel, Field, StringConstraints
@@ -124,9 +124,10 @@ from strata.agent.answer_check import Asker, SixChecks
 from strata.agent.judge import Judge
 from strata.agent.runs import RunLog, run_row
 from strata.agent.verifier import Verdict, answer_events
-from strata.config import DraftKinds, load_draft_kinds, load_roles, load_thresholds, load_tools
+from strata.config import ENGLISH, DraftKinds, load_draft_kinds, load_roles, load_thresholds, load_tools
 from strata.dbx import Viewer, viewer_from_headers
 from strata.drafts.store import DraftStore
+from strata.knowledge import language
 from strata.knowledge.lessons.page import LessonsPage
 from strata.knowledge.lessons.review import LessonReview, Refused
 from strata.knowledge.lessons.visits import LessonVisits, Visit
@@ -151,6 +152,7 @@ from strata.server import risks as risk_routes
 from strata.server import estimates as estimate_routes
 from strata.server import following as following_routes
 from strata.server.following import FollowStore
+from strata.server.viewer_settings import SettingsStore, working_language
 from strata.estimates import signals_track
 from strata.server.access import Access, NoGroups, is_author
 from strata.server.choices import REASON_LIMIT, ChoiceLog
@@ -166,7 +168,7 @@ log = logging.getLogger("strata.server")
 KEEP_ALIVE = ": keep-alive\n\n"
 STREAM_HEADERS = {"Cache-Control": "no-cache", "X-Accel-Buffering": "no"}
 # Only the verifier writes these, from the claims a runner hands over.
-ANSWER_EVENTS = {"refusal", "sentence", "evidence", "disagreement", "checks", "removed", "done"}
+ANSWER_EVENTS = {"refusal", "sentence", "evidence", "disagreement", "checks", "removed", "done", "language"}
 # The platform's check that the app is up. It is not a viewer's request, so it is not counted.
 UNCOUNTED = {"/api/health"}
 # The reader's latest counts from the weekly retrieval run, for the Lessons page's "Your reports" (ticket 39).
@@ -200,6 +202,12 @@ class AskRequest(BaseModel):
     asof: dt.date | None = None
     view: Literal["staff", "piu", "public"] = "staff"
     lang: Literal["en", "fr", "es", "pt"] = "en"
+
+
+class LanguageRequest(BaseModel):
+    """The language of answers and drafts a viewer chose in the view popover (ticket 42)."""
+
+    code: str = Field(min_length=1, max_length=16)
 
 
 class OpenedRequest(BaseModel):
@@ -294,7 +302,8 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                passage_reports: PassageReports | None = None, judging: Judging | None = None,
                feedback_record: Callable[[], Engine] | None = None,
                citations: CitationLog | None = None, choices: ChoiceLog | None = None,
-               follows: FollowStore | None = None, visits: LessonVisits | None = None) -> FastAPI:
+               follows: FollowStore | None = None, settings: SettingsStore | None = None,
+               visits: LessonVisits | None = None) -> FastAPI:
     """The app.
 
     engine_for makes the engine for each request's viewer; without it, the environment names one.
@@ -1004,12 +1013,54 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
     def health() -> dict:
         return {"status": "ok"}
 
+    def language_choices() -> list[dict]:
+        """The working languages the view popover offers, each with its own name from config/languages.toml: the
+        screens name each language in English from the copy file and show its own name beside it."""
+        from strata.config import load_languages
+
+        return [{"code": entry.code, "endonym": entry.endonym, "direction": entry.direction}
+                for entry in load_languages().working]
+
+    def saved_language(viewer: Viewer) -> tuple[str | None, bool]:
+        """The viewer's saved language of answers and drafts, and whether it could be read."""
+        if settings is None or not viewer.user_id:
+            return None, True
+        try:
+            return settings.saved_language(viewer.user_id), True
+        except EngineError:
+            log.exception("I could not read the saved language of %s.", viewer.email or viewer.user_id)
+            return None, False
+
     @app.get("/api/me")
-    def me(viewer: Viewer = Depends(current_viewer)) -> dict:
+    def me(lang: str | None = None, viewer: Viewer = Depends(current_viewer)) -> dict:
         # Whether the viewer has the World Bank staff role (ticket 37): the navy bar's Projects tab then opens
-        # Following, and the project page offers Follow.
+        # Following, and the project page offers Follow. The language of answers and drafts in effect, and where it
+        # came from (ticket 42): the page's ?lang=, which the app passes on, the saved choice, the team's, English.
+        saved, readable = saved_language(viewer)
+        language = working_language(lang, saved, access.team_language(viewer) if viewer.user_id else None)
         return {"email": viewer.email, "name": viewer.name, "signed_in": viewer.signed_in,
-                "has_token": viewer.token is not None, "staff": access.is_staff(viewer)}
+                "has_token": viewer.token is not None, "staff": access.is_staff(viewer),
+                "language": {**language.as_dict(), "saved_readable": readable, "choices": language_choices()}}
+
+    @app.put("/api/me/working-language")
+    def choose_language(body: LanguageRequest, viewer: Viewer = Depends(current_viewer)):
+        """Save the language of answers and drafts the viewer chose (ticket 42): a new row in
+        strata.ops.viewer_settings, written as the app's own service principal."""
+        from strata import languages
+
+        code = languages.from_link(body.code)
+        if code is None or code != body.code:
+            return refused(400, "unknown_language")
+        if not viewer.user_id:
+            return refused(401, "not_signed_in")
+        if settings is None:
+            return refused(503, "no_data_service")
+        try:
+            settings.save_language(viewer.user_id, code, now())
+        except EngineError:
+            log.exception("I could not save the language %s chose.", viewer.email or viewer.user_id)
+            return refused(503, "data_service")
+        return Response(status_code=204)
 
     @app.get("/api/me/warehouse")
     async def me_on_the_warehouse(viewer: Viewer = Depends(current_viewer)):
@@ -1074,7 +1125,8 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
         yield Event("step", {"id": "check", "kind": "check", "status": "running"})
         verdict = None
         asker = Asker(turn.viewer, turn.scope.view, as_of_of(turn), turn.run_id)
-        async for item in six_checks.finish(six_checks.check(claims, turn.facts), turn.facts, asker):
+        async for item in six_checks.finish(six_checks.check(claims, turn.facts, turn.scope.language), turn.facts,
+                                            asker):
             if isinstance(item, Verdict):
                 verdict = item
             else:
@@ -1084,6 +1136,12 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
 
     async def run_events(turn: Turn, outcome: dict) -> AsyncIterator[str]:
         verdict, error_code = None, None
+        # Which language the answer is written in, and which the question was asked in when the detector is sure
+        # (ticket 42), before anything else, so the panel can say so while the answer streams. An answer asked for in
+        # English to a question in English says nothing.
+        question_lang = await asyncio.to_thread(language.detect, turn.question, thresholds)
+        if turn.scope.language != ENGLISH or question_lang not in (None, ENGLISH):
+            yield frame(Event("language", {"lang": turn.scope.language, "question_lang": question_lang}))
         try:
             async for item in with_heartbeats(runner(turn), heartbeat_seconds):
                 if item is HEARTBEAT:

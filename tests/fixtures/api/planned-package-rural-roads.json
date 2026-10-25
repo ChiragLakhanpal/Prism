@@ -463,6 +463,110 @@
       "DIRECT CONTRACTING": {
         "method": "Direct Selection",
         "market_approach": "Direct"
+      },
+      "APPEL D'OFFRES": {
+        "method": "Request for Bids",
+        "market_approach": null
+      },
+      "DEMANDE DE PRIX": {
+        "method": "Request for Quotations",
+        "market_approach": null
+      },
+      "PASSATION DE MARCHÉ DE GRÉ À GRÉ": {
+        "method": "Direct Selection",
+        "market_approach": "Direct"
+      },
+      "AOI": {
+        "method": "Request for Bids",
+        "market_approach": "Open - International"
+      },
+      "APPEL D'OFFRES INTERNATIONAL": {
+        "method": "Request for Bids",
+        "market_approach": "Open - International"
+      },
+      "AON": {
+        "method": "Request for Bids",
+        "market_approach": "Open - National"
+      },
+      "APPEL D'OFFRES NATIONAL": {
+        "method": "Request for Bids",
+        "market_approach": "Open - National"
+      },
+      "CF": {
+        "method": "Request for Quotations",
+        "market_approach": null
+      },
+      "CONSULTATION DES FOURNISSEURS": {
+        "method": "Request for Quotations",
+        "market_approach": null
+      },
+      "SFQC": {
+        "method": "Quality And Cost-Based Selection",
+        "market_approach": null
+      },
+      "SFQ": {
+        "method": "Quality Based Selection",
+        "market_approach": null
+      },
+      "SÉLECTION FONDÉE SUR LA QUALITÉ": {
+        "method": "Quality Based Selection",
+        "market_approach": null
+      },
+      "QC": {
+        "method": "Consultant Qualification Selection",
+        "market_approach": null
+      },
+      "SMC": {
+        "method": "Least Cost Selection",
+        "market_approach": null
+      },
+      "SÉLECTION AU MOINDRE COÛT": {
+        "method": "Least Cost Selection",
+        "market_approach": null
+      },
+      "CONSULTANT INDIVIDUEL": {
+        "method": "Individual Consultant Selection",
+        "market_approach": null
+      },
+      "LICITACIÓN PÚBLICA INTERNACIONAL": {
+        "method": "Request for Bids",
+        "market_approach": "Open - International"
+      },
+      "LICITACIÓN PÚBLICA NACIONAL": {
+        "method": "Request for Bids",
+        "market_approach": "Open - National"
+      },
+      "COMPARACIÓN DE PRECIOS": {
+        "method": "Request for Quotations",
+        "market_approach": null
+      },
+      "CONTRATACIÓN DIRECTA": {
+        "method": "Direct Selection",
+        "market_approach": "Direct"
+      },
+      "SELECCIÓN BASADA EN LA CALIDAD Y EL COSTO": {
+        "method": "Quality And Cost-Based Selection",
+        "market_approach": null
+      },
+      "LICITAÇÃO PÚBLICA INTERNACIONAL": {
+        "method": "Request for Bids",
+        "market_approach": "Open - International"
+      },
+      "LICITAÇÃO PÚBLICA NACIONAL": {
+        "method": "Request for Bids",
+        "market_approach": "Open - National"
+      },
+      "COMPARAÇÃO DE PREÇOS": {
+        "method": "Request for Quotations",
+        "market_approach": null
+      },
+      "CONTRATAÇÃO DIRETA": {
+        "method": "Direct Selection",
+        "market_approach": "Direct"
+      },
+      "SELEÇÃO BASEADA NA QUALIDADE E CUSTO": {
+        "method": "Quality And Cost-Based Selection",
+        "market_approach": null
       }
     },
     "max_months": 60.0,

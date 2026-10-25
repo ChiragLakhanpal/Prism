@@ -14,6 +14,7 @@ import { Fill } from "./Fill";
 import { fillText } from "./LessonParts";
 import { Num } from "./Num";
 import { ProjectId } from "./ProjectId";
+import { Lang } from "./Lang";
 import { DocumentSource, Source } from "./Source";
 import { stepListTitle } from "./StepsDrawer";
 
@@ -199,23 +200,23 @@ export function EvidenceCard({ evidence, n, sentence, visited = false }: { evide
       </div>
       <p className="mt-1 text-title text-ink-heading">{sourceTitle(evidence)}</p>
       {fields && shown && fields.kind === "notice_text" && (
-        <p data-excerpt lang={fields.lang ?? undefined} className="mt-2 text-small text-ink">
+        <Lang as="p" code={fields.lang} data-excerpt className="mt-2 text-small text-ink">
           {copy.evidence.quoteOpen}
           {shown.cutBefore && copy.evidence.cut}
           {withoutMarkers(highlighted(shown.text, shown.range ? [shown.range] : []))}
           {shown.cutAfter && copy.evidence.cut}
           {copy.evidence.quoteClose}
-        </p>
+        </Lang>
       )}
       {fields && shown && fields.kind !== "notice_text" && (
         <>
-          <p data-excerpt lang={fields.lang ?? undefined} className="mt-2 text-small text-ink">
+          <Lang as="p" code={fields.lang} data-excerpt className="mt-2 text-small text-ink">
             {copy.evidence.quoteOpen}
             {shown.cutBefore && copy.evidence.cut}
             {highlighted(shown.text, shown.range ? [shown.range] : [])}
             {shown.cutAfter && copy.evidence.cut}
             {copy.evidence.quoteClose}
-          </p>
+          </Lang>
           <DocumentSource
             className="mt-2"
             docType={fields.docType}

@@ -19,6 +19,7 @@ import { ChevronDown, CircleX, Menu as MenuIcon, X } from "lucide-react";
 import { copy } from "../copy";
 import { cx } from "../lib/cx";
 import { isBoxShortcut } from "./BoxBand";
+import { LanguageChoice } from "./LanguageChoice";
 import { POPOVER } from "./Popover";
 import { Skeleton } from "./Skeleton";
 import { SkipLink } from "./SkipLink";
@@ -130,8 +131,16 @@ function ViewSwitch({
           }}
           onKeyDown={(event) => {
             // Tab closes the popover and moves on to the box, the next control after the pill;
-            // Shift+Tab closes it and goes back to the pill (the 06 brief's keyboard table).
+            // Shift+Tab closes it and goes back to the pill (the 06 brief's keyboard table). From the
+            // popover's lines, Tab first reaches the language group, one tab stop on its chosen language
+            // (ticket 42; the 42 brief, section 7.1).
             if (event.key !== "Tab") return;
+            const chosen = event.currentTarget.querySelector<HTMLInputElement>("[data-language-choice] input:checked");
+            if (!event.shiftKey && chosen && document.activeElement === body.current) {
+              event.preventDefault();
+              chosen.focus();
+              return;
+            }
             event.preventDefault();
             after.current = event.shiftKey ? pill.current : document.querySelector<HTMLElement>("[data-box-band] input");
             setOpen(false);
@@ -154,6 +163,9 @@ function ViewSwitch({
           {/* Focus lands here so the three lines are read; it is not a control, so no ring. */}
           <div ref={body} tabIndex={-1} data-view-popover className="outline-none">
             <ViewLines viewer={viewer} />
+          </div>
+          <div className="mt-4 border-t border-line pt-4">
+            <LanguageChoice />
           </div>
         </RadixPopover.Content>
       </RadixPopover.Portal>
@@ -352,6 +364,10 @@ export function TopNav({
         </nav>
         <div className="layout mt-2 border-t border-line pt-4 pb-2">
           <ViewLines viewer={viewer} />
+          {/* Below 1024 px the language of answers and drafts sits at the foot of the Menu panel (ticket 42). */}
+          <div className="mt-4 border-t border-line pt-4">
+            <LanguageChoice />
+          </div>
         </div>
       </div>
     </div>

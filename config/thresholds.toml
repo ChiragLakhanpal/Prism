@@ -63,6 +63,18 @@ max_results = 20
 # Source: none yet; a starting value for the owner to confirm.
 search_depth = 2
 
+# Passages and questions in other languages (ticket 42; config/languages.toml). Each passage carries the language
+# its document's record gives it; the passage reader checks a sample of them against a language detector that
+# reads only the words (src/strata/knowledge/language.py), with sample_size passages shared equally between the
+# languages the passages are written in, each at least min_sample_chars characters long so the detector has words
+# enough to read. A question, or an upload's descriptions taken together, gets a lang attribute on screen only when
+# the detector is at least min_confidence sure of its language. Source: the ticket's criterion ("a check of 50
+# sampled passages") for sample_size; min_sample_chars and min_confidence are starting values for the owner to confirm.
+[lang]
+sample_size = 50
+min_sample_chars = 200
+min_confidence = 0.9
+
 # The answer loop (src/strata/agent/loop.py). The agent gets at most this many rounds of tool results
 # for one question; a tool call it asks for after that is not run, and it answers from what it has.
 # Source: the spec's "The agent and the answer contract" ("this repeats for at most three rounds").
@@ -751,3 +763,52 @@ stale_after_hours = 36
 # The workspace runs at most this many job tasks at once (docs/PLAN.md section 2, "Shared workspace limits":
 # five concurrent job tasks, shared with fairshare). tests/test_nightly.py checks the job's tasks against it.
 max_concurrent_tasks = 5
+
+# The benchmark file and the full gate (ticket 33; docs/PLAN.md section 10). src/strata/evals reads these.
+[benchmark]
+# evals/benchmark.yaml holds at least this many questions of each kind other than refusals (sql, documents and
+# estimates); the must-refuse set holds one question per refusal key instead. Source: ticket 33's acceptance
+# criteria ("at least ten questions of each other kind").
+min_questions_per_kind = 10
+# The full gate's targets: the share of each kind's questions that must pass, through the answer contract with the
+# live agent. "all" counts every question of every kind. A run under a target fails and names the gap, as P2's exit
+# criterion asks ("Benchmark targets are met, or each gap is written down"). Source: none in PLAN.md, the spec or
+# the blueprint; starting values for the owner to confirm. A refusal that does not hold is never acceptable, so
+# must_refuse is every question.
+targets = { sql = 0.9, documents = 0.8, estimates = 0.8, must_refuse = 1.0, all = 0.85 }
+# The share of the Genie space's benchmark questions whose rows must equal their ground truth. Source: none; a
+# starting value for the owner to confirm.
+genie_target = 0.8
+
+# Genie (ticket 33): the client that asks the Genie space's conversation API as the viewer (src/strata/genie/client.py)
+# and the ask_genie tool. Free Edition stops the SQL warehouse after 10 idle minutes, and Genie then waits in
+# PENDING_WAREHOUSE far longer than a direct start, which takes about 8 seconds, so the client starts the warehouse
+# first. Ticket 48's demo-ready check, "the first Genie call answers within a stated threshold", reads the same two
+# waits. Source: fairshare's Genie client, which waited up to 90 seconds for the warehouse and 150 for Genie
+# (ticket 33's notes; fairshare's docs/limits.md, which this build could not open). Starting values for the owner
+# to confirm.
+[genie]
+# The longest the client waits for a stopped warehouse to reach RUNNING before it gives up.
+warehouse_start_seconds = 90
+# The longest the client waits for Genie's answer once it has asked, through every status before COMPLETED.
+answer_seconds = 150
+# How often the client looks again at the warehouse's state or the message's status.
+poll_seconds = 2
+# Genie answers too many questions in a minute with 429. The client waits this long the first time, twice as long
+# each time after, never longer than backoff_max_seconds at once, all inside answer_seconds.
+backoff_first_seconds = 2
+backoff_max_seconds = 30
+# ask_genie gives the agent at most this many rows; its coverage line counts the rest. Source: search_passages'
+# limit of 20 is for passages an answer reads one by one; a table of counts by year or country rarely passes 100.
+# A starting value for the owner to confirm.
+max_rows = 100
+
+# Foundry evaluations (ticket 33; config/evaluations.toml). src/strata/evals/foundry_evaluation.py reads these.
+[foundry_evaluation]
+# The share of scored answers that must meet Foundry's own pass threshold, per evaluator. Source: none; starting
+# values for the owner to confirm.
+targets = { groundedness = 0.8, relevance = 0.8, task_adherence = 0.8, tool_use = 0.8 }
+# How often the run's status is read, and how long the full gate waits for Foundry to finish scoring. Source: none;
+# fairshare's evaluation runs on 40 answers took minutes, not hours. Starting values for the owner to confirm.
+poll_seconds = 10
+wait_seconds = 1800

@@ -150,6 +150,15 @@ test("new lessons show their evidence badge: Restated by IEG for the ICR's lesso
   await expect(page.locator(`#new-lesson-${REBIDDING}`)).toContainText("Request for Bids (RFB)");
 });
 
+test("a new lesson resting on an ICR whose ICR Review is not out yet shows Awaiting IEG review", async ({ page }) => {
+  // The fixture holds no such lesson (every recorded ICR's project has its ICR Review), so this answer is the
+  // recorded one with one card's ieg_status set as the server sets it then (brief 29, section 4.4).
+  const answer = JSON.parse(await recorded("lessons-page.json"));
+  answer.new_lessons.cards[1].ieg_status = "awaiting";
+  await openLessons(page, "lessons-page.json", { "/api/lessons/page": { body: JSON.stringify(answer) } });
+  await expect(page.locator("[data-new] [data-badge=awaiting]")).toHaveText("Awaiting IEG review");
+});
+
 // ── Your reports ─────────────────────────────────────────────────────────
 
 test("your reports read the retrieval loop's counts, with words for one to nine", async ({ page }) => {

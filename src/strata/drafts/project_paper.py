@@ -24,6 +24,7 @@ import datetime as dt
 from dataclasses import dataclass
 from importlib import resources
 
+from strata.drafts.files import written_runs
 from strata.dbx import Viewer
 from strata.lakehouse.engine import Engine
 from strata.tools import registry
@@ -211,8 +212,8 @@ def word(document, draft: dict, words: dict, say) -> None:
         document.subheading(layout["parts"][note["key"]])
         runs = []
         for sentence in note["sentences"]:
-            runs += [sentence["text"], *[document.footnote(_footnote(draft, evidence, say))
-                                         for evidence in sentence["evidence_ids"]], " "]
+            runs += [*written_runs(sentence, draft), *[document.footnote(_footnote(draft, evidence, say))
+                                                       for evidence in sentence["evidence_ids"]], " "]
         document.paragraph(*runs[:-1])
     document.paragraph(words["notVisible"])
 

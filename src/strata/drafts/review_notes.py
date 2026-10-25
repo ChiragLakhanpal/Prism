@@ -24,6 +24,7 @@ import datetime as dt
 from dataclasses import dataclass
 
 from strata.dbx import Viewer
+from strata.drafts.files import written_runs
 from strata.lakehouse.engine import Engine
 from strata.tools import registry
 
@@ -117,9 +118,10 @@ def word(document, draft: dict, words: dict, say) -> None:
     rows = []
     for note in draft["notes"]:
         activity = [[note["activity_reference_no"]], [note["description"] or ""]]
+        # Each sentence in its draft's language, and the words it quotes in their source's (ticket 42).
         cell = [run for sentence in note["sentences"]
-                for run in ([sentence["text"]] + [document.footnote(say.footnote(draft, evidence))
-                                                  for evidence in sentence["evidence_ids"]] + [" "])]
+                for run in (written_runs(sentence, draft) + [document.footnote(say.footnote(draft, evidence))
+                                                             for evidence in sentence["evidence_ids"]] + [" "])]
         rows.append([activity, [cell[:-1]] if cell else [[]]])
     document.table(layout["columns"], rows, widths=(3000, 6026))
     document.paragraph(words["notVisible"])

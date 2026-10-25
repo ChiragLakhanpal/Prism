@@ -1,0 +1,1326 @@
+{
+ "source": "https://search.worldbank.org/api/v3/wds?format=json&proid=P143940&rows=500&os=0&fl=id,docty,docdt,disclosure_date,display_title,repnb,lang,txturl,pdfurl,guid&srt=docdt&order=desc",
+ "license": "The World Bank: Documents & Reports: Documents API (search.worldbank.org/api/v3/wds). License: CC BY 4.0.",
+ "recorded": "2026-10-25",
+ "about": "Every document the Documents API lists for Cameroon's Flood Emergency Project (P143940), whose Procurement Plan of October 10, 2018 is in French and writes its methods by STEP's French names (ticket 42).",
+ "response": {
+  "rows": 500,
+  "os": 0,
+  "page": 1,
+  "total": 81,
+  "documents": {
+   "D33233168": {
+    "id": "33233168",
+    "docty": "Implementation Completion Report Review",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b088782a8e_1_0"
+    },
+    "repnb": "ICRR0022594",
+    "docdt": "2021-06-29T04:00:00Z",
+    "display_title": "Cameroon - Flood Emergency Project",
+    "disclosure_date": "2021-06-29T19:12:57Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/371911624993978741/pdf/Cameroon-Flood-Emergency-Project.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/371911624993978741/text/Cameroon-Flood-Emergency-Project.txt",
+    "guid": "371911624993978741",
+    "url": "http://documents.worldbank.org/curated/en/371911624993978741"
+   },
+   "D32967047": {
+    "id": "32967047",
+    "docty": "Implementation Completion and Results Report",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b0884683f1_1_0"
+    },
+    "repnb": "ICR5291",
+    "docdt": "2021-03-24T04:00:00Z",
+    "abstracts": {
+     "cdata!": "Ratings for the Flood Emergency Project for Cameroon were as follows: outcome and Bank performance was satisfactory and monitoring and evaluation (M and E) quality was substantial. Some lessons learned included: in regions with cultural and geographical diversity, project implementation can take advantage of the use of inclusive participatory mechanisms. Sustainability needs to be constructed and adapted during the implementation in a systematic manner. Timely implementation of sensitive social activities needs a high level of engagement and innovation. The financial, technical, and institutional capacity of fragile and conflict-affected countries needs to be carefully assessed before assuming that activities along the critical path of implementation will be financed with local fiscal resources, even if there is technical capacity. Develop an alternative methodology for monitoring projects due to the challenges of on-site visits."
+    },
+    "display_title": "Cameroon - Flood Emergency Project",
+    "disclosure_date": "2021-04-01T17:13:13Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/345961617297254437/pdf/Cameroon-Flood-Emergency-Project.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/345961617297254437/text/Cameroon-Flood-Emergency-Project.txt",
+    "guid": "345961617297254437",
+    "url": "http://documents.worldbank.org/curated/en/345961617297254437"
+   },
+   "D32798749": {
+    "id": "32798749",
+    "docty": "Auditing Document",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b088255c35_1_0"
+    },
+    "repnb": "SCA0009164",
+    "docdt": "2021-02-02T05:00:00Z",
+    "display_title": "Rapport definitif audit des comptes PULCI cloture 2020 V2.pdf",
+    "disclosure_date": "2020-01-31T08:58:38Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/357171612256321488/pdf/Rapport-definitif-audit-des-comptes-PULCI-cloture-2020-V2-pdf.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/357171612256321488/text/Rapport-definitif-audit-des-comptes-PULCI-cloture-2020-V2-pdf.txt",
+    "guid": "357171612256321488",
+    "url": "http://documents.worldbank.org/curated/en/357171612256321488"
+   },
+   "D32185098": {
+    "id": "32185098",
+    "docty": "Auditing Document",
+    "lang": "French",
+    "entityids": {
+     "entityid": "090224b087af97c5_1_0"
+    },
+    "repnb": "AUD0029754",
+    "docdt": "2020-06-28T04:00:00Z",
+    "display_title": "Rapport définitif d'audit des comptes PULCI 2019",
+    "disclosure_date": "2020-06-29T20:47:40Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/279381593359321744/pdf/Rapport-définitif-daudit-des-comptes-PULCI-2019.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/279381593359321744/text/Rapport-définitif-daudit-des-comptes-PULCI-2019.txt",
+    "guid": "279381593359321744",
+    "url": "http://documents.worldbank.org/curated/en/279381593359321744"
+   },
+   "D32176337": {
+    "id": "32176337",
+    "docty": "Implementation Status and Results Report",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b087ae034f_1_0"
+    },
+    "repnb": "ISR41851",
+    "docdt": "2020-06-25T04:00:00Z",
+    "display_title": "Disclosable Version of the ISR - Flood Emergency Project - P143940 - Sequence No : 14",
+    "disclosure_date": "2020-06-25T19:07:04Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/856161593112030225/pdf/Disclosable-Version-of-the-ISR-Flood-Emergency-Project-P143940-Sequence-No-14.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/856161593112030225/text/Disclosable-Version-of-the-ISR-Flood-Emergency-Project-P143940-Sequence-No-14.txt",
+    "guid": "856161593112030225",
+    "url": "http://documents.worldbank.org/curated/en/856161593112030225"
+   },
+   "D32009839": {
+    "id": "32009839",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b0878ce957_1_0"
+    },
+    "repnb": "STEP33186",
+    "docdt": "2020-05-05T04:00:00Z",
+    "display_title": "Cameroon - AFRICA- P143940- Flood Emergency Project - Procurement Plan",
+    "disclosure_date": "2020-05-05T10:46:23Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/686001588675590739/pdf/Cameroon-AFRICA-P143940-Flood-Emergency-Project-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/686001588675590739/text/Cameroon-AFRICA-P143940-Flood-Emergency-Project-Procurement-Plan.txt",
+    "guid": "686001588675590739",
+    "url": "http://documents.worldbank.org/curated/en/686001588675590739"
+   },
+   "D31979670": {
+    "id": "31979670",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b08786f775_1_0"
+    },
+    "repnb": "STEP32795",
+    "docdt": "2020-04-24T04:00:00Z",
+    "display_title": "Cameroon - AFRICA- P143940- Flood Emergency Project - Procurement Plan",
+    "disclosure_date": "2020-04-24T09:20:39Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/914621587720043042/pdf/Cameroon-AFRICA-P143940-Flood-Emergency-Project-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/914621587720043042/text/Cameroon-AFRICA-P143940-Flood-Emergency-Project-Procurement-Plan.txt",
+    "guid": "914621587720043042",
+    "url": "http://documents.worldbank.org/curated/en/914621587720043042"
+   },
+   "D31924865": {
+    "id": "31924865",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b0877aec0b_1_0"
+    },
+    "repnb": "STEP32021",
+    "docdt": "2020-04-02T04:00:00Z",
+    "display_title": "Cameroon - AFRICA- P143940- Flood Emergency Project - Procurement Plan",
+    "disclosure_date": "2020-04-02T17:12:14Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/323581585847541706/pdf/Cameroon-AFRICA-P143940-Flood-Emergency-Project-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/323581585847541706/text/Cameroon-AFRICA-P143940-Flood-Emergency-Project-Procurement-Plan.txt",
+    "guid": "323581585847541706",
+    "url": "http://documents.worldbank.org/curated/en/323581585847541706"
+   },
+   "D31877066": {
+    "id": "31877066",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b08771d77b_1_0"
+    },
+    "repnb": "STEP31339",
+    "docdt": "2020-03-18T04:00:00Z",
+    "display_title": "Cameroon - AFRICA- P143940- Flood Emergency Project - Procurement Plan",
+    "disclosure_date": "2020-03-18T10:11:06Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/251901584526267161/pdf/Cameroon-AFRICA-P143940-Flood-Emergency-Project-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/251901584526267161/text/Cameroon-AFRICA-P143940-Flood-Emergency-Project-Procurement-Plan.txt",
+    "guid": "251901584526267161",
+    "url": "http://documents.worldbank.org/curated/en/251901584526267161"
+   },
+   "D31858566": {
+    "id": "31858566",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b0876e62e9_1_0"
+    },
+    "repnb": "STEP31046",
+    "docdt": "2020-03-11T04:00:00Z",
+    "display_title": "Cameroon - AFRICA- P143940- Flood Emergency Project - Procurement Plan",
+    "disclosure_date": "2020-03-11T11:48:22Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/333751583927309360/pdf/Cameroon-AFRICA-P143940-Flood-Emergency-Project-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/333751583927309360/text/Cameroon-AFRICA-P143940-Flood-Emergency-Project-Procurement-Plan.txt",
+    "guid": "333751583927309360",
+    "url": "http://documents.worldbank.org/curated/en/333751583927309360"
+   },
+   "D31815596": {
+    "id": "31815596",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b08766bd72_1_0"
+    },
+    "repnb": "STEP30409",
+    "docdt": "2020-02-26T05:00:00Z",
+    "display_title": "Cameroon - AFRICA- P143940- Flood Emergency Project - Procurement Plan",
+    "disclosure_date": "2020-02-26T14:55:15Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/392171582728920084/pdf/Cameroon-AFRICA-P143940-Flood-Emergency-Project-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/392171582728920084/text/Cameroon-AFRICA-P143940-Flood-Emergency-Project-Procurement-Plan.txt",
+    "guid": "392171582728920084",
+    "url": "http://documents.worldbank.org/curated/en/392171582728920084"
+   },
+   "D31780597": {
+    "id": "31780597",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b0875ec807_1_0"
+    },
+    "repnb": "STEP29889",
+    "docdt": "2020-02-13T05:00:00Z",
+    "display_title": "Cameroon - AFRICA- P143940- Flood Emergency Project - Procurement Plan",
+    "disclosure_date": "2020-02-13T10:14:11Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/868511581588860748/pdf/Cameroon-AFRICA-P143940-Flood-Emergency-Project-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/868511581588860748/text/Cameroon-AFRICA-P143940-Flood-Emergency-Project-Procurement-Plan.txt",
+    "guid": "868511581588860748",
+    "url": "http://documents.worldbank.org/curated/en/868511581588860748"
+   },
+   "D31727990": {
+    "id": "31727990",
+    "docty": "Implementation Status and Results Report",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b0875426af_1_0"
+    },
+    "repnb": "ISR39994",
+    "docdt": "2020-01-24T05:00:00Z",
+    "display_title": "Disclosable Version of the ISR - Flood Emergency Project - P143940 - Sequence No : 13",
+    "disclosure_date": "2020-01-24T22:11:23Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/600901579903884387/pdf/Disclosable-Version-of-the-ISR-Flood-Emergency-Project-P143940-Sequence-No-13.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/600901579903884387/text/Disclosable-Version-of-the-ISR-Flood-Emergency-Project-P143940-Sequence-No-13.txt",
+    "guid": "600901579903884387",
+    "url": "http://documents.worldbank.org/curated/en/600901579903884387"
+   },
+   "D31708641": {
+    "id": "31708641",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b0875030a6_1_0"
+    },
+    "repnb": "STEP28859",
+    "docdt": "2020-01-17T05:00:00Z",
+    "display_title": "Cameroon - AFRICA- P143940- Flood Emergency Project - Procurement Plan",
+    "disclosure_date": "2020-01-17T12:23:36Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/976391579263822997/pdf/Cameroon-AFRICA-P143940-Flood-Emergency-Project-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/976391579263822997/text/Cameroon-AFRICA-P143940-Flood-Emergency-Project-Procurement-Plan.txt",
+    "guid": "976391579263822997",
+    "url": "http://documents.worldbank.org/curated/en/976391579263822997"
+   },
+   "D31606656": {
+    "id": "31606656",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b08739f972_1_0"
+    },
+    "repnb": "STEP27416",
+    "docdt": "2019-12-03T05:00:00Z",
+    "display_title": "Cameroon - AFRICA- P143940- Flood Emergency Project - Procurement Plan",
+    "disclosure_date": "2019-12-03T17:11:28Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/745061575393098627/pdf/Cameroon-AFRICA-P143940-Flood-Emergency-Project-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/745061575393098627/text/Cameroon-AFRICA-P143940-Flood-Emergency-Project-Procurement-Plan.txt",
+    "guid": "745061575393098627",
+    "url": "http://documents.worldbank.org/curated/en/745061575393098627"
+   },
+   "D31597956": {
+    "id": "31597956",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b087383725_1_0"
+    },
+    "repnb": "STEP27269",
+    "docdt": "2019-11-29T05:00:00Z",
+    "display_title": "Cameroon - AFRICA- P143940- Flood Emergency Project - Procurement Plan",
+    "disclosure_date": "2019-11-29T14:37:36Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/252341575038257942/pdf/Cameroon-AFRICA-P143940-Flood-Emergency-Project-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/252341575038257942/text/Cameroon-AFRICA-P143940-Flood-Emergency-Project-Procurement-Plan.txt",
+    "guid": "252341575038257942",
+    "url": "http://documents.worldbank.org/curated/en/252341575038257942"
+   },
+   "D31581269": {
+    "id": "31581269",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b087352ff1_1_0"
+    },
+    "repnb": "STEP27071",
+    "docdt": "2019-11-25T05:00:00Z",
+    "display_title": "Cameroon - AFRICA- P143940- Flood Emergency Project - Procurement Plan",
+    "disclosure_date": "2019-11-25T09:35:22Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/934921574674526742/pdf/Cameroon-AFRICA-P143940-Flood-Emergency-Project-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/934921574674526742/text/Cameroon-AFRICA-P143940-Flood-Emergency-Project-Procurement-Plan.txt",
+    "guid": "934921574674526742",
+    "url": "http://documents.worldbank.org/curated/en/934921574674526742"
+   },
+   "D31508511": {
+    "id": "31508511",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b08724b0a9_1_0"
+    },
+    "repnb": "STEP26029",
+    "docdt": "2019-10-25T04:00:00Z",
+    "display_title": "Cameroon - AFRICA- P143940- Flood Emergency Project - Procurement Plan",
+    "disclosure_date": "2019-10-25T16:44:12Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/995641572021856125/pdf/Cameroon-AFRICA-P143940-Flood-Emergency-Project-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/995641572021856125/text/Cameroon-AFRICA-P143940-Flood-Emergency-Project-Procurement-Plan.txt",
+    "guid": "995641572021856125",
+    "url": "http://documents.worldbank.org/curated/en/995641572021856125"
+   },
+   "D31489868": {
+    "id": "31489868",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b08720aa84_1_0"
+    },
+    "repnb": "STEP25738",
+    "docdt": "2019-10-18T04:00:00Z",
+    "display_title": "Cameroon - AFRICA- P143940- Flood Emergency Project - Procurement Plan",
+    "disclosure_date": "2019-10-18T16:29:22Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/803661571416165455/pdf/Cameroon-AFRICA-P143940-Flood-Emergency-Project-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/803661571416165455/text/Cameroon-AFRICA-P143940-Flood-Emergency-Project-Procurement-Plan.txt",
+    "guid": "803661571416165455",
+    "url": "http://documents.worldbank.org/curated/en/803661571416165455"
+   },
+   "D31414758": {
+    "id": "31414758",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b0870f6963_1_0"
+    },
+    "repnb": "STEP24583",
+    "docdt": "2019-09-18T04:00:00Z",
+    "display_title": "Cameroon - AFRICA- P143940- Flood Emergency Project - Procurement Plan",
+    "disclosure_date": "2019-09-18T09:39:59Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/559161568799600997/pdf/Cameroon-AFRICA-P143940-Flood-Emergency-Project-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/559161568799600997/text/Cameroon-AFRICA-P143940-Flood-Emergency-Project-Procurement-Plan.txt",
+    "guid": "559161568799600997",
+    "url": "http://documents.worldbank.org/curated/en/559161568799600997"
+   },
+   "D31411139": {
+    "id": "31411139",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b0870e9fad_1_0"
+    },
+    "repnb": "STEP24520",
+    "docdt": "2019-09-17T04:00:00Z",
+    "display_title": "Cameroon - AFRICA- P143940- Flood Emergency Project - Procurement Plan",
+    "disclosure_date": "2019-09-17T08:33:27Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/585001568709208359/pdf/Cameroon-AFRICA-P143940-Flood-Emergency-Project-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/585001568709208359/text/Cameroon-AFRICA-P143940-Flood-Emergency-Project-Procurement-Plan.txt",
+    "guid": "585001568709208359",
+    "url": "http://documents.worldbank.org/curated/en/585001568709208359"
+   },
+   "D31405167": {
+    "id": "31405167",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b0870d06ae_1_0"
+    },
+    "repnb": "STEP24425",
+    "docdt": "2019-09-13T04:00:00Z",
+    "display_title": "Cameroon - AFRICA- P143940- Flood Emergency Project - Procurement Plan",
+    "disclosure_date": "2019-09-13T10:57:34Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/610941568372258767/pdf/Cameroon-AFRICA-P143940-Flood-Emergency-Project-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/610941568372258767/text/Cameroon-AFRICA-P143940-Flood-Emergency-Project-Procurement-Plan.txt",
+    "guid": "610941568372258767",
+    "url": "http://documents.worldbank.org/curated/en/610941568372258767"
+   },
+   "D31293834": {
+    "id": "31293834",
+    "docty": "Implementation Status and Results Report",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b086f4b0b8_1_0"
+    },
+    "repnb": "ISR38045",
+    "docdt": "2019-07-30T04:00:00Z",
+    "display_title": "Disclosable Version of the ISR - Flood Emergency Project - P143940 - Sequence No : 12",
+    "disclosure_date": "2019-07-30T21:36:24Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/943861564522585450/pdf/Disclosable-Version-of-the-ISR-Flood-Emergency-Project-P143940-Sequence-No-12.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/943861564522585450/text/Disclosable-Version-of-the-ISR-Flood-Emergency-Project-P143940-Sequence-No-12.txt",
+    "guid": "943861564522585450",
+    "url": "http://documents.worldbank.org/curated/en/943861564522585450"
+   },
+   "D31128905": {
+    "id": "31128905",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b086d4e809_1_0"
+    },
+    "repnb": "STEP21342",
+    "docdt": "2019-06-04T04:00:00Z",
+    "display_title": "Cameroon - AFRICA- P143940- Flood Emergency Project - Procurement Plan",
+    "disclosure_date": "2019-06-04T11:06:57Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/578401559646431346/pdf/Cameroon-AFRICA-P143940-Flood-Emergency-Project-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/578401559646431346/text/Cameroon-AFRICA-P143940-Flood-Emergency-Project-Procurement-Plan.txt",
+    "guid": "578401559646431346",
+    "url": "http://documents.worldbank.org/curated/en/578401559646431346"
+   },
+   "D31097052": {
+    "id": "31097052",
+    "docty": "Project Paper",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b086ce42aa_1_0"
+    },
+    "repnb": "RES36028",
+    "docdt": "2019-05-22T04:00:00Z",
+    "abstracts": {
+     "cdata!": "The objective of the Flood Emergency Project is to rehabilitate key hydraulic infrastructure and improve disaster-preparedness in target areas in the Far North Region of Cameroon. A first restructuring was concluded on June 22, 2017 and extended the credit closing date by 23 months from June 30, 2017 to May 31, 2019, primarily to address challenging resettlement issues that had caused considerable implementation delays, and also to reallocate funds among categories of expenditures.  A second restructuring was concluded on June 26, 2018 to consider the decision taken by the Ministry of Finance (MINFI) to no longer exempt projects from gasoil tax payments, and hence to enable the financing of fuel taxes from IDA funds for the PULCI works. The project will be close to seven years at the time of the proposed closing date."
+    },
+    "display_title": "Disclosable Restructuring Paper - Flood Emergency Project - P143940",
+    "disclosure_date": "2019-05-22T17:54:33Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/267471558547674335/pdf/Disclosable-Restructuring-Paper-Flood-Emergency-Project-P143940.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/267471558547674335/text/Disclosable-Restructuring-Paper-Flood-Emergency-Project-P143940.txt",
+    "guid": "267471558547674335",
+    "url": "http://documents.worldbank.org/curated/en/267471558547674335"
+   },
+   "D31103267": {
+    "id": "31103267",
+    "docty": "Auditing Document",
+    "lang": "French",
+    "entityids": {
+     "entityid": "090224b086cf89bc_1_0"
+    },
+    "repnb": "AUD0020945",
+    "docdt": "2019-05-19T04:00:00Z",
+    "display_title": "Rapport définitif d'audit des comptes PULCI 2018 bis",
+    "disclosure_date": "2019-05-25T20:01:53Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/392801558710164192/pdf/Rapport-définitif-daudit-des-comptes-PULCI-2018-bis.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/392801558710164192/text/Rapport-définitif-daudit-des-comptes-PULCI-2018-bis.txt",
+    "guid": "392801558710164192",
+    "url": "http://documents.worldbank.org/curated/en/392801558710164192"
+   },
+   "D31052090": {
+    "id": "31052090",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b086c5fca7_1_0"
+    },
+    "repnb": "STEP20472",
+    "docdt": "2019-05-08T04:00:00Z",
+    "display_title": "Cameroon - AFRICA- P143940- Flood Emergency Project - Procurement Plan",
+    "disclosure_date": "2019-05-08T10:04:01Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/994461557309842361/pdf/Cameroon-AFRICA-P143940-Flood-Emergency-Project-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/994461557309842361/text/Cameroon-AFRICA-P143940-Flood-Emergency-Project-Procurement-Plan.txt",
+    "guid": "994461557309842361",
+    "url": "http://documents.worldbank.org/curated/en/994461557309842361"
+   },
+   "D30875083": {
+    "id": "30875083",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b086a0f481_1_0"
+    },
+    "repnb": "STEP18068",
+    "docdt": "2019-03-04T05:00:00Z",
+    "display_title": "Cameroon - AFRICA- P143940- Flood Emergency Project - Procurement Plan",
+    "disclosure_date": "2019-03-04T10:41:39Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/880301551696105228/pdf/Cameroon-AFRICA-P143940-Flood-Emergency-Project-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/880301551696105228/text/Cameroon-AFRICA-P143940-Flood-Emergency-Project-Procurement-Plan.txt",
+    "guid": "880301551696105228",
+    "url": "http://documents.worldbank.org/curated/en/880301551696105228"
+   },
+   "D30864537": {
+    "id": "30864537",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b0869e8f3f_1_0"
+    },
+    "repnb": "STEP17922",
+    "docdt": "2019-02-27T05:00:00Z",
+    "display_title": "Cameroon - AFRICA- P143940- Flood Emergency Project - Procurement Plan",
+    "disclosure_date": "2019-02-27T16:04:30Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/414941551283481145/pdf/Cameroon-AFRICA-P143940-Flood-Emergency-Project-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/414941551283481145/text/Cameroon-AFRICA-P143940-Flood-Emergency-Project-Procurement-Plan.txt",
+    "guid": "414941551283481145",
+    "url": "http://documents.worldbank.org/curated/en/414941551283481145"
+   },
+   "D30823377": {
+    "id": "30823377",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b08694d6d8_1_0"
+    },
+    "repnb": "STEP17201",
+    "docdt": "2019-02-11T05:00:00Z",
+    "display_title": "Cameroon - AFRICA- P143940- Flood Emergency Project - Procurement Plan",
+    "disclosure_date": "2019-02-11T12:29:39Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/534911549888181109/pdf/Cameroon-AFRICA-P143940-Flood-Emergency-Project-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/534911549888181109/text/Cameroon-AFRICA-P143940-Flood-Emergency-Project-Procurement-Plan.txt",
+    "guid": "534911549888181109",
+    "url": "http://documents.worldbank.org/curated/en/534911549888181109"
+   },
+   "D30768370": {
+    "id": "30768370",
+    "docty": "Implementation Status and Results Report",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b08688fad3_1_0"
+    },
+    "repnb": "ISR35172",
+    "docdt": "2019-01-17T05:00:00Z",
+    "display_title": "Disclosable Version of the ISR - Flood Emergency Project - P143940 - Sequence No : 11",
+    "disclosure_date": "2019-01-17T21:41:08Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/575651547761269197/pdf/Disclosable-Version-of-the-ISR-Flood-Emergency-Project-P143940-Sequence-No-11.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/575651547761269197/text/Disclosable-Version-of-the-ISR-Flood-Emergency-Project-P143940-Sequence-No-11.txt",
+    "guid": "575651547761269197",
+    "url": "http://documents.worldbank.org/curated/en/575651547761269197"
+   },
+   "D30738890": {
+    "id": "30738890",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b086829103_1_0"
+    },
+    "repnb": "STEP15964",
+    "docdt": "2019-01-04T05:00:00Z",
+    "display_title": "Cameroon - AFRICA- P143940- Flood Emergency Project - Procurement Plan",
+    "disclosure_date": "2019-01-04T16:15:39Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/313581546618547667/pdf/Cameroon-AFRICA-P143940-Flood-Emergency-Project-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/313581546618547667/text/Cameroon-AFRICA-P143940-Flood-Emergency-Project-Procurement-Plan.txt",
+    "guid": "313581546618547667",
+    "url": "http://documents.worldbank.org/curated/en/313581546618547667"
+   },
+   "D30661382": {
+    "id": "30661382",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b08668024b_1_0"
+    },
+    "repnb": "STEP15085",
+    "docdt": "2018-12-04T05:00:00Z",
+    "display_title": "Cameroon - AFRICA- P143940- Flood Emergency Project - Procurement Plan",
+    "disclosure_date": "2018-12-04T10:15:07Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/717871543918512454/pdf/Cameroon-AFRICA-P143940-Flood-Emergency-Project-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/717871543918512454/text/Cameroon-AFRICA-P143940-Flood-Emergency-Project-Procurement-Plan.txt",
+    "guid": "717871543918512454",
+    "url": "http://documents.worldbank.org/curated/en/717871543918512454"
+   },
+   "D30617639": {
+    "id": "30617639",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b0865d2068_1_0"
+    },
+    "repnb": "STEP14560",
+    "docdt": "2018-11-15T05:00:00Z",
+    "display_title": "Cameroon - AFRICA- P143940- Flood Emergency Project - Procurement Plan",
+    "disclosure_date": "2018-11-15T16:16:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/497131542298561433/pdf/Cameroon-AFRICA-P143940-Flood-Emergency-Project-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/497131542298561433/text/Cameroon-AFRICA-P143940-Flood-Emergency-Project-Procurement-Plan.txt",
+    "guid": "497131542298561433",
+    "url": "http://documents.worldbank.org/curated/en/497131542298561433"
+   },
+   "D30592156": {
+    "id": "30592156",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b08657a4ae_1_0"
+    },
+    "repnb": "STEP14258",
+    "docdt": "2018-11-06T05:00:00Z",
+    "display_title": "Cameroon - AFRICA- P143940- Flood Emergency Project - Procurement Plan",
+    "disclosure_date": "2018-11-06T19:52:48Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/291041541533970609/pdf/Cameroon-AFRICA-P143940-Flood-Emergency-Project-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/291041541533970609/text/Cameroon-AFRICA-P143940-Flood-Emergency-Project-Procurement-Plan.txt",
+    "guid": "291041541533970609",
+    "url": "http://documents.worldbank.org/curated/en/291041541533970609"
+   },
+   "D30486069": {
+    "id": "30486069",
+    "docty": "Procurement Plan",
+    "lang": "French",
+    "entityids": {
+     "entityid": "090224b08641e642_1_0"
+    },
+    "repnb": "STEP13434",
+    "docdt": "2018-10-10T04:00:00Z",
+    "display_title": "Cameroon - AFRICA- P143940- Flood Emergency Project - Procurement Plan",
+    "disclosure_date": "2018-10-10T08:40:28Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/320861539160830195/pdf/Cameroon-AFRICA-P143940-Flood-Emergency-Project-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/320861539160830195/text/Cameroon-AFRICA-P143940-Flood-Emergency-Project-Procurement-Plan.txt",
+    "guid": "320861539160830195",
+    "url": "http://documents.worldbank.org/curated/en/320861539160830195"
+   },
+   "D30436512": {
+    "id": "30436512",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b08615be7f_1_0"
+    },
+    "docdt": "2018-09-20T04:00:00Z",
+    "display_title": "Cameroon - AFRICA- P143940- Flood Emergency Project - Procurement Plan",
+    "disclosure_date": "2018-09-20T12:24:07Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/893481579907344773/pdf/Cameroon-AFRICA-P143940-Flood-Emergency-Project-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/893481579907344773/text/Cameroon-AFRICA-P143940-Flood-Emergency-Project-Procurement-Plan.txt",
+    "guid": "893481579907344773",
+    "url": "http://documents.worldbank.org/curated/en/893481579907344773"
+   },
+   "D30376419": {
+    "id": "30376419",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b085feb783_1_0"
+    },
+    "docdt": "2018-08-28T04:00:00Z",
+    "display_title": "Cameroon - AFRICA- P143940- Flood Emergency Project - Procurement Plan",
+    "disclosure_date": "2018-08-28T11:12:50Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/530441579748130167/pdf/Cameroon-AFRICA-P143940-Flood-Emergency-Project-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/530441579748130167/text/Cameroon-AFRICA-P143940-Flood-Emergency-Project-Procurement-Plan.txt",
+    "guid": "530441579748130167",
+    "url": "http://documents.worldbank.org/curated/en/530441579748130167"
+   },
+   "D30363633": {
+    "id": "30363633",
+    "docty": "Auditing Document",
+    "lang": "French",
+    "entityids": {
+     "entityid": "090224b085fb47e2_1_0"
+    },
+    "repnb": "AUD0016349",
+    "docdt": "2018-08-19T04:00:00Z",
+    "display_title": "PULCI-Rapport sur les etats financiers au 31 decembre 2015",
+    "disclosure_date": "2018-08-23T14:22:47Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/510421534929849789/pdf/PULCI-Rapport-sur-les-etats-financiers-au-31-decembre-2015.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/510421534929849789/text/PULCI-Rapport-sur-les-etats-financiers-au-31-decembre-2015.txt",
+    "guid": "510421534929849789",
+    "url": "http://documents.worldbank.org/curated/en/510421534929849789"
+   },
+   "D30322178": {
+    "id": "30322178",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b085e46e8e_1_0"
+    },
+    "repnb": "STEP11511",
+    "docdt": "2018-08-02T04:00:00Z",
+    "display_title": "Cameroon/AFRICA- P143940- Flood Emergency Project - Procurement Plan",
+    "disclosure_date": "2018-08-02T16:44:05Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/752371533228249217/pdf/Plan-Archive-11.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/752371533228249217/text/Plan-Archive-11.txt",
+    "guid": "752371533228249217",
+    "url": "http://documents.worldbank.org/curated/en/752371533228249217"
+   },
+   "D30316555": {
+    "id": "30316555",
+    "docty": "Auditing Document",
+    "lang": "French",
+    "entityids": {
+     "entityid": "090224b085e31c96_1_0"
+    },
+    "repnb": "AUD0015302",
+    "docdt": "2018-07-30T04:00:00Z",
+    "display_title": "Rapport définitif d'audit des comptes PULCI 2017",
+    "disclosure_date": "2018-08-02T08:32:02Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/206691533094357044/pdf/Rapport-d-finitif-daudit-des-comptes-PULCI-2017.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/206691533094357044/text/Rapport-d-finitif-daudit-des-comptes-PULCI-2017.txt",
+    "guid": "206691533094357044",
+    "url": "http://documents.worldbank.org/curated/en/206691533094357044"
+   },
+   "D30269913": {
+    "id": "30269913",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b085db1da5_1_0"
+    },
+    "repnb": "STEP11095",
+    "docdt": "2018-07-18T04:00:00Z",
+    "display_title": "Cameroon/AFRICA- P143940- Flood Emergency Project - Procurement Plan",
+    "disclosure_date": "2018-07-18T15:14:17Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/916601531926869176/pdf/Plan-Archive-10.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/916601531926869176/text/Plan-Archive-10.txt",
+    "guid": "916601531926869176",
+    "url": "http://documents.worldbank.org/curated/en/916601531926869176"
+   },
+   "D30209376": {
+    "id": "30209376",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b085cceafe_1_0"
+    },
+    "repnb": "STEP10637",
+    "docdt": "2018-06-27T04:00:00Z",
+    "display_title": "Cameroon/AFRICA- P143940- Flood Emergency Project - Procurement Plan",
+    "disclosure_date": "2018-06-27T16:56:07Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/735601530118573004/pdf/Plan-Archive-9.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/735601530118573004/text/Plan-Archive-9.txt",
+    "guid": "735601530118573004",
+    "url": "http://documents.worldbank.org/curated/en/735601530118573004"
+   },
+   "D30203896": {
+    "id": "30203896",
+    "docty": "Project Paper",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b085ca3084_1_0"
+    },
+    "repnb": "RES31494",
+    "docdt": "2018-06-26T04:00:00Z",
+    "abstracts": {
+     "cdata!": "The development objective of Community Resilience to Climate and Disaster Risk in Solomon Islands Project is to increase the resilience of selected rural communities to the impacts of natural hazards and climate change. This restructuring requires the following of changes: (i) amend the results framework; (ii) change the name and update the description of component A; and iii) change the procurement procedures and arrangements of community-led investment projects under component C.2."
+    },
+    "display_title": "Disclosable Restructuring Paper - Flood Emergency Project - P143940",
+    "disclosure_date": "2018-06-26T11:54:36Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/143321530014077553/pdf/Disclosable-Restructuring-Paper-Flood-Emergency-Project-P143940.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/143321530014077553/text/Disclosable-Restructuring-Paper-Flood-Emergency-Project-P143940.txt",
+    "guid": "143321530014077553",
+    "url": "http://documents.worldbank.org/curated/en/143321530014077553"
+   },
+   "D30336158": {
+    "id": "30336158",
+    "docty": "Agreement",
+    "lang": "English",
+    "entityids": {
+     "entityid": "HQBOCS"
+    },
+    "docdt": "2018-06-26T04:00:00Z",
+    "display_title": "Official Documents- Amendment to the Financing Agreement for Credit 5276-CM",
+    "disclosure_date": "2018-08-08T19:44:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/773531533755747478/pdf/ITK425962-201807081514.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/773531533755747478/text/ITK425962-201807081514.txt",
+    "guid": "773531533755747478",
+    "url": "http://documents.worldbank.org/curated/en/773531533755747478"
+   },
+   "D30182694": {
+    "id": "30182694",
+    "docty": "Implementation Status and Results Report",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b085c4abf4_1_0"
+    },
+    "repnb": "ISR32309",
+    "docdt": "2018-06-21T04:00:00Z",
+    "display_title": "Disclosable Version of the ISR - Flood Emergency Project - P143940 - Sequence No : 10",
+    "disclosure_date": "2018-06-22T02:39:12Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/786411529548754889/pdf/Disclosable-Version-of-the-ISR-Flood-Emergency-Project-P143940-Sequence-No-10.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/786411529548754889/text/Disclosable-Version-of-the-ISR-Flood-Emergency-Project-P143940-Sequence-No-10.txt",
+    "guid": "786411529548754889",
+    "url": "http://documents.worldbank.org/curated/en/786411529548754889"
+   },
+   "D29976029": {
+    "id": "29976029",
+    "docty": "Disbursement Letter",
+    "lang": "English",
+    "entityids": {
+     "entityid": "HQBOCS"
+    },
+    "docdt": "2018-06-04T04:00:00Z",
+    "display_title": "Official Documents- Amendment to the Disbursement Letter for Credit 5276-CM",
+    "disclosure_date": "2018-06-11T13:51:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/861471528723402450/pdf/ITK532331-201805110921.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/861471528723402450/text/ITK532331-201805110921.txt",
+    "guid": "861471528723402450",
+    "url": "http://documents.worldbank.org/curated/en/861471528723402450"
+   },
+   "D29839325": {
+    "id": "29839325",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b08594786c_1_0"
+    },
+    "repnb": "STEP8972",
+    "docdt": "2018-04-25T04:00:00Z",
+    "display_title": "Cameroon/AFRICA- P143940- Flood Emergency Project - Procurement Plan",
+    "disclosure_date": "2018-04-25T21:43:16Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/852551524692600514/pdf/Cameroon-AFRICA-P143940-Flood-Emergency-Project-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/852551524692600514/text/Cameroon-AFRICA-P143940-Flood-Emergency-Project-Procurement-Plan.txt",
+    "guid": "852551524692600514",
+    "url": "http://documents.worldbank.org/curated/en/852551524692600514"
+   },
+   "D29787244": {
+    "id": "29787244",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b0858865b3_1_0"
+    },
+    "repnb": "STEP8474",
+    "docdt": "2018-04-06T04:00:00Z",
+    "display_title": "Cameroon/AFRICA- P143940- Flood Emergency Project - Procurement Plan",
+    "disclosure_date": "2018-04-06T13:56:42Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/324021523023003226/pdf/Cameroon-AFRICA-P143940-Flood-Emergency-Project-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/324021523023003226/text/Cameroon-AFRICA-P143940-Flood-Emergency-Project-Procurement-Plan.txt",
+    "guid": "324021523023003226",
+    "url": "http://documents.worldbank.org/curated/en/324021523023003226"
+   },
+   "D29786520": {
+    "id": "29786520",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b0858837c5_1_0"
+    },
+    "repnb": "STEP8467",
+    "docdt": "2018-04-06T04:00:00Z",
+    "display_title": "Cameroon/AFRICA- P143940- Flood Emergency Project - Procurement Plan",
+    "disclosure_date": "2018-04-06T08:45:13Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/886331523004315610/pdf/Cameroon-AFRICA-P143940-Flood-Emergency-Project-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/886331523004315610/text/Cameroon-AFRICA-P143940-Flood-Emergency-Project-Procurement-Plan.txt",
+    "guid": "886331523004315610",
+    "url": "http://documents.worldbank.org/curated/en/886331523004315610"
+   },
+   "D29787857": {
+    "id": "29787857",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b08588892c_1_0"
+    },
+    "repnb": "STEP8480",
+    "docdt": "2018-04-06T04:00:00Z",
+    "display_title": "Cameroon/AFRICA- P143940- Flood Emergency Project - Procurement Plan",
+    "disclosure_date": "2018-04-06T17:37:54Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/158321523036277198/pdf/Cameroon-AFRICA-P143940-Flood-Emergency-Project-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/158321523036277198/text/Cameroon-AFRICA-P143940-Flood-Emergency-Project-Procurement-Plan.txt",
+    "guid": "158321523036277198",
+    "url": "http://documents.worldbank.org/curated/en/158321523036277198"
+   },
+   "D29783367": {
+    "id": "29783367",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b0858780a0_1_0"
+    },
+    "repnb": "STEP8430",
+    "docdt": "2018-04-05T04:00:00Z",
+    "display_title": "Cameroon/AFRICA- P143940- Flood Emergency Project - Procurement Plan",
+    "disclosure_date": "2018-04-05T11:35:17Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/210481522928121981/pdf/Cameroon-AFRICA-P143940-Flood-Emergency-Project-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/210481522928121981/text/Cameroon-AFRICA-P143940-Flood-Emergency-Project-Procurement-Plan.txt",
+    "guid": "210481522928121981",
+    "url": "http://documents.worldbank.org/curated/en/210481522928121981"
+   },
+   "D29784045": {
+    "id": "29784045",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b08587a1e3_1_0"
+    },
+    "repnb": "STEP8439",
+    "docdt": "2018-04-05T04:00:00Z",
+    "display_title": "Cameroon/AFRICA- P143940- Flood Emergency Project - Procurement Plan",
+    "disclosure_date": "2018-04-05T14:25:21Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/809191522938323421/pdf/Plan-Archive-4.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/809191522938323421/text/Plan-Archive-4.txt",
+    "guid": "809191522938323421",
+    "url": "http://documents.worldbank.org/curated/en/809191522938323421"
+   },
+   "D29655895": {
+    "id": "29655895",
+    "docty": "Procurement Plan",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b0856d3489_1_0"
+    },
+    "repnb": "STEP7291",
+    "docdt": "2018-02-23T05:00:00Z",
+    "display_title": "Cameroon/AFRICA- P143940- Flood Emergency Project - Procurement Plan",
+    "disclosure_date": "2018-02-23T09:04:36Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/539861519376677929/pdf/Cameroon-AFRICA-P143940-Flood-Emergency-Project-Procurement-Plan.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/539861519376677929/text/Cameroon-AFRICA-P143940-Flood-Emergency-Project-Procurement-Plan.txt",
+    "guid": "539861519376677929",
+    "url": "http://documents.worldbank.org/curated/en/539861519376677929"
+   },
+   "D29322022": {
+    "id": "29322022",
+    "docty": "Implementation Status and Results Report",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b0854ca2f0_1_0"
+    },
+    "repnb": "ISR30581",
+    "docdt": "2017-12-30T05:00:00Z",
+    "display_title": "Disclosable Version of the ISR - Flood Emergency Project - P143940 - Sequence No : 09",
+    "disclosure_date": "2017-12-30T18:15:29Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/671481514657730651/pdf/Disclosable-Version-of-the-ISR-Flood-Emergency-Project-P143940-Sequence-No-09.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/671481514657730651/text/Disclosable-Version-of-the-ISR-Flood-Emergency-Project-P143940-Sequence-No-09.txt",
+    "guid": "671481514657730651",
+    "url": "http://documents.worldbank.org/curated/en/671481514657730651"
+   },
+   "D27866936": {
+    "id": "27866936",
+    "docty": "Auditing Document",
+    "lang": "French",
+    "entityids": {
+     "entityid": "090224b084e4b0e8_1_0"
+    },
+    "repnb": "AUD0009065",
+    "docdt": "2017-07-31T04:00:00Z",
+    "display_title": "Rapport_Audit_PNM_DEF_2016 : Rapports dopinion PULCI 2016",
+    "disclosure_date": "2017-08-01T21:17:18Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/496121501517883412/pdf/Rapports-dopinion-PULCI-2016.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/496121501517883412/text/Rapports-dopinion-PULCI-2016.txt",
+    "guid": "496121501517883412",
+    "url": "http://documents.worldbank.org/curated/en/496121501517883412"
+   },
+   "D27867191": {
+    "id": "27867191",
+    "docty": "Auditing Document",
+    "lang": "French",
+    "entityids": {
+     "entityid": "090224b084e4b866_1_0"
+    },
+    "repnb": "AUD0009079",
+    "docdt": "2017-07-30T04:00:00Z",
+    "display_title": "RAPPORTS ETATS FINANCIERS PIDMA AU   31 DECEMBRE 2016 : Rapports dopinion PULCI 2016",
+    "disclosure_date": "2017-08-01T21:44:27Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/439951501519493347/pdf/Rapports-dopinion-PULCI-2016.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/439951501519493347/text/Rapports-dopinion-PULCI-2016.txt",
+    "guid": "439951501519493347",
+    "url": "http://documents.worldbank.org/curated/en/439951501519493347"
+   },
+   "D27516153": {
+    "id": "27516153",
+    "docty": "Implementation Status and Results Report",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b084bf30f3_1_0"
+    },
+    "repnb": "ISR27886",
+    "docdt": "2017-05-28T04:00:00Z",
+    "display_title": "Cameroon - Flood Emergency Project : P143940 - Implementation Status Results Report : Sequence 08",
+    "disclosure_date": "2017-05-29T02:10:37Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/788431496023840656/pdf/ISR-Disclosable-P143940-05-28-2017-1496023825839.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/788431496023840656/text/ISR-Disclosable-P143940-05-28-2017-1496023825839.txt",
+    "guid": "788431496023840656",
+    "url": "http://documents.worldbank.org/curated/en/788431496023840656"
+   },
+   "D27516164": {
+    "id": "27516164",
+    "docty": "Aide Memoire",
+    "lang": "French",
+    "entityids": {
+     "entityid": "090224b084bf350d_1_0"
+    },
+    "repnb": "115372",
+    "docdt": "2017-01-26T05:00:00Z",
+    "display_title": "Cameroon - Flood Emergency Project : implementation support mission - January 16 to 26, 2017 : Cameroun - Projet d’Urgence de Lutte Contre les Inondations (PULCI) : mission d’appui à la mise en oeuvre  - du 16 au 26 Janvier 2017",
+    "disclosure_date": "2017-05-31T09:13:35Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/306721496023850587/pdf/ITM00267-P143940-05-28-2017-1496023849048.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/306721496023850587/text/ITM00267-P143940-05-28-2017-1496023849048.txt",
+    "guid": "306721496023850587",
+    "url": "http://documents.worldbank.org/curated/en/306721496023850587"
+   },
+   "D26913988": {
+    "id": "26913988",
+    "docty": "Implementation Status and Results Report",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b0846b4c5a_1_0"
+    },
+    "repnb": "ISR25618",
+    "docdt": "2016-11-04T04:00:00Z",
+    "display_title": "Cameroon - Cameroon Flood Emergency Project : P143940 - Implementation Status Results Report : Sequence 07",
+    "disclosure_date": "2016-11-04T17:10:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/991731479715911461/pdf/1478279400673-0000A8056-ISR-Disclosable-P143940-11-04-2016-1478279388742.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/991731479715911461/text/1478279400673-0000A8056-ISR-Disclosable-P143940-11-04-2016-1478279388742.txt",
+    "guid": "991731479715911461",
+    "url": "http://documents.worldbank.org/curated/en/991731479715911461"
+   },
+   "D26330389": {
+    "id": "26330389",
+    "docty": "Implementation Status and Results Report",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b0842e4b73_1_0"
+    },
+    "repnb": "ISR23261",
+    "docdt": "2016-04-29T04:00:00Z",
+    "display_title": "Cameroon - Cameroon Flood Emergency Project : P143940 - Implementation Status Results Report : Sequence 06",
+    "disclosure_date": "2016-04-29T21:05:42Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/670481468238500685/pdf/ISR-Disclosable-P143940-04-29-2016-1461963933613.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/670481468238500685/text/ISR-Disclosable-P143940-04-29-2016-1461963933613.txt",
+    "guid": "670481468238500685",
+    "url": "http://documents.worldbank.org/curated/en/670481468238500685"
+   },
+   "D25869939": {
+    "id": "25869939",
+    "docty": "Procurement Plan",
+    "lang": "French",
+    "entityids": {
+     "entityid": "090224b084143644_1_0"
+    },
+    "repnb": "103116",
+    "docdt": "2016-02-02T05:00:00Z",
+    "display_title": "Cameroon - Flood Emergency Project : procurement plan : Cameroun - Projet d’Urgence de lutte contre les  Inondations : plan de passation",
+    "disclosure_date": "2016-02-04T05:46:04Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/617671468190442715/pdf/103116-PROP-P143940-Box394855B-PUBLIC-FRENCH-PPM-2016-actualisé-02-fevrier-2016.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/617671468190442715/text/103116-PROP-P143940-Box394855B-PUBLIC-FRENCH-PPM-2016-actualisé-02-fevrier-2016.txt",
+    "guid": "617671468190442715",
+    "url": "http://documents.worldbank.org/curated/en/617671468190442715"
+   },
+   "D25728883": {
+    "id": "25728883",
+    "docty": "Implementation Status and Results Report",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b084000523_1_0"
+    },
+    "repnb": "ISR22192",
+    "docdt": "2015-12-30T05:00:00Z",
+    "display_title": "Cameroon - Cameroon Flood Emergency Project : P143940 - Implementation Status Results Report : Sequence 05",
+    "disclosure_date": "2015-12-30T23:59:59Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/714971468010861976/pdf/Cameroon-Cameroon-Flood-Emergency-Project-P143940-Implementation-Status-Results-Report-Sequence-05.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/714971468010861976/text/Cameroon-Cameroon-Flood-Emergency-Project-P143940-Implementation-Status-Results-Report-Sequence-05.txt",
+    "guid": "714971468010861976",
+    "url": "http://documents.worldbank.org/curated/en/714971468010861976"
+   },
+   "D24839474": {
+    "id": "24839474",
+    "docty": "Auditing Document",
+    "lang": "French",
+    "entityids": {
+     "entityid": "090224b083035079_1_0"
+    },
+    "repnb": "AUD0000923",
+    "docdt": "2015-07-26T04:00:00Z",
+    "display_title": "Cameroon - Flood Emergency Project : audited financial statement - year ending December 31, 2014",
+    "disclosure_date": "2017-01-28T10:35:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/352121484739372117/pdf/Cameroon-Flood-Emergency-Project-audited-financial-statement-year-ending-December-31-2014.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/352121484739372117/text/Cameroon-Flood-Emergency-Project-audited-financial-statement-year-ending-December-31-2014.txt",
+    "guid": "352121484739372117",
+    "url": "http://documents.worldbank.org/curated/en/352121484739372117"
+   },
+   "D24643681": {
+    "id": "24643681",
+    "docty": "Implementation Status and Results Report",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b082f38a64_1_0"
+    },
+    "repnb": "ISR19515",
+    "docdt": "2015-06-16T04:00:00Z",
+    "display_title": "Cameroon - Cameroon Flood Emergency Project : P143940 - Implementation Status Results Report : Sequence 04",
+    "disclosure_date": "2015-06-16T17:51:10Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/410051468007178466/pdf/ISR-Disclosable-P143940-06-16-2015-1434477061483.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/410051468007178466/text/ISR-Disclosable-P143940-06-16-2015-1434477061483.txt",
+    "guid": "410051468007178466",
+    "url": "http://documents.worldbank.org/curated/en/410051468007178466"
+   },
+   "D23947276": {
+    "id": "23947276",
+    "docty": "Resettlement Plan",
+    "lang": "French",
+    "entityids": {
+     "entityid": "000333037_20150203002235"
+    },
+    "repnb": "RP1739",
+    "docdt": "2015-01-29T05:00:00Z",
+    "abstracts": {
+     "cdata!": "The objectives of the Food Emergency Project of Cameroon are to finance activities (i) of rehabilitation of hydraulic pieces of work (the sea-wall/ the Maga dam; the sea-wall of Logone between Yagoua and Pouss on 70 km and the perimeter of SEMRY I and II); (ii) the management of risks and catastrophes by elaboration and practice of a multi-risk contingence plan and (iii) and of institutional support for a better management of water resources in the area. Moreover, objectives and principles that the Food Emergency Project of Cameroon presents consists on one hand the minimizing of the projects effects on the local population enabled by compensations and the adequate reinstallations, and on the other hand to enable these to ameliorate their living rate through an approach of the main socio-economic development plan axes which have been developed in the environmental and social management plan (ESMP), which accompany the RAP. The project may have potential negative social impacts, mainly related to the potential involuntary resettlement of people from high risk flood zones."
+    },
+    "display_title": "Cameroon - Food Emergency Project : resettlement plan : Plan d'action de reinstallation",
+    "disclosure_date": "2015-01-29T05:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/314271468223167806/pdf/RP17390FRENCH000Box385429B00PUBLIC0.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/314271468223167806/text/RP17390FRENCH000Box385429B00PUBLIC0.txt",
+    "guid": "314271468223167806",
+    "url": "http://documents.worldbank.org/curated/en/314271468223167806"
+   },
+   "D20430066": {
+    "id": "20430066",
+    "docty": "Implementation Status and Results Report",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b0828922b9_1_0"
+    },
+    "repnb": "ISR16914",
+    "docdt": "2014-11-25T05:00:00Z",
+    "display_title": "Cameroon - Cameroon Flood Emergency Project : P143940 - Implementation Status Results Report : Sequence 03",
+    "disclosure_date": "2014-11-25T22:26:55Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/829731468223785619/pdf/ISR-Disclosable-P143940-11-25-2014-1416954406454.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/829731468223785619/text/ISR-Disclosable-P143940-11-25-2014-1416954406454.txt",
+    "guid": "829731468223785619",
+    "url": "http://documents.worldbank.org/curated/en/829731468223785619"
+   },
+   "D23939660": {
+    "id": "23939660",
+    "docty": "Environmental Assessment",
+    "lang": "French",
+    "entityids": {
+     "entityid": "000442464_20150202102350"
+    },
+    "repnb": "E4737",
+    "docdt": "2014-11-01T04:00:00Z",
+    "abstracts": {
+     "cdata!": "The objective of the Emergency Control Project against Flooding (PULCI) of Cameroon is for the rehabilitation of hydraulic structures affected, damaged and destroyed by the floods, including Logone dike 70 km long, the dam of Maga and related infrastructures of water supply. The present pesticides management plan aims to 1) identify and promote the use of pesticides which by their nature, storage, and use cause less harm to human health, natural enemies of pathogenic organisms of crops and agricultural products, and 2) strengthen the capacity of rice producers for the acceptable use in the environmental point of view of these products. The rehabilitation of the infrastructure would improve poor agricultural practices upstream and downstream. The rehabilitation could also have negative impacts on public health, such as: (i) an increase in the incidences of malaria and bilharzias owing to an increase in the water surface (irrigation areas rehabilitated); (ii) pesticide poisoning owing to the unsafe application and management of pesticides and herbicides by untrained personnel; and (iii) loss of livelihoods owing to land acquisition limitation."
+    },
+    "display_title": "Cameroon - Flood Emergency Project : environmental assessment (Vol. 1 of 2) : Etude d'impact environnemental et social (EIES) du projet d'urgence de lutte contre les inondations (PULCI) dans la region de lextremenord du Cameroun",
+    "disclosure_date": "2015-01-29T05:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/765901468226186355/pdf/E47370V10FRENC00Box385429B00PUBLIC0.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/765901468226186355/text/E47370V10FRENC00Box385429B00PUBLIC0.txt",
+    "guid": "765901468226186355",
+    "url": "http://documents.worldbank.org/curated/en/765901468226186355"
+   },
+   "D23939836": {
+    "id": "23939836",
+    "docty": "Environmental Assessment",
+    "lang": "French",
+    "entityids": {
+     "entityid": "000442464_20150202103738"
+    },
+    "repnb": "E4737",
+    "docdt": "2014-10-01T04:00:00Z",
+    "abstracts": {
+     "cdata!": "The objective of the Emergency Control Project against Flooding (PULCI) of Cameroon is for the rehabilitation of hydraulic structures affected, damaged and destroyed by the floods, including Logone dike 70 km long, the dam of Maga and related infrastructures of water supply. The present pesticides management plan aims to 1) identify and promote the use of pesticides which by their nature, storage, and use cause less harm to human health, natural enemies of pathogenic organisms of crops and agricultural products, and 2) strengthen the capacity of rice producers for the acceptable use in the environmental point of view of these products. The rehabilitation of the infrastructure would improve poor agricultural practices upstream and downstream. The rehabilitation could also have negative impacts on public health, such as: (i) an increase in the incidences of malaria and bilharzias owing to an increase in the water surface (irrigation areas rehabilitated); (ii) pesticide poisoning owing to the unsafe application and management of pesticides and herbicides by untrained personnel; and (iii) loss of livelihoods owing to land acquisition limitation."
+    },
+    "display_title": "Cameroon - Flood Emergency Project : environmental assessment (Vol. 2 of 2) : Plan de gestion des pesticides",
+    "disclosure_date": "2015-01-29T05:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/125161468223167503/pdf/E47370V20FRENC00Box385429B00PUBLIC0.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/125161468223167503/text/E47370V20FRENC00Box385429B00PUBLIC0.txt",
+    "guid": "125161468223167503",
+    "url": "http://documents.worldbank.org/curated/en/125161468223167503"
+   },
+   "D19673716": {
+    "id": "19673716",
+    "docty": "Implementation Status and Results Report",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b0824f8d00_1_0"
+    },
+    "repnb": "ISR14912",
+    "docdt": "2014-06-14T04:00:00Z",
+    "display_title": "Cameroon - Cameroon Flood Emergency Project : P143940 - Implementation Status Results Report : Sequence 02",
+    "disclosure_date": "2014-06-14T16:17:57Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/293601468223785309/pdf/ISR-Disclosable-P143940-06-14-2014-1402762671340.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/293601468223785309/text/ISR-Disclosable-P143940-06-14-2014-1402762671340.txt",
+    "guid": "293601468223785309",
+    "url": "http://documents.worldbank.org/curated/en/293601468223785309"
+   },
+   "D18518877": {
+    "id": "18518877",
+    "docty": "Disbursement Letter",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b08208291f_1_0"
+    },
+    "docdt": "2013-09-17T04:00:00Z",
+    "display_title": "Official Documents- Disbursement Letter for Credit 5276-CM (Closing Package)",
+    "disclosure_date": "2013-11-15T21:14:41Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/404721468231306417/pdf/RAD1177961105.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/404721468231306417/text/RAD1177961105.txt",
+    "guid": "404721468231306417",
+    "url": "http://documents.worldbank.org/curated/en/404721468231306417"
+   },
+   "D18518884": {
+    "id": "18518884",
+    "docty": "Project Agreement",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b08208291c_1_0"
+    },
+    "docdt": "2013-09-09T04:00:00Z",
+    "display_title": "Official Documents- Project Agreement for Credit 5276-CM (Closing Package)",
+    "disclosure_date": "2013-11-15T21:10:01Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/901461468017959142/pdf/RAD1636369443.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/901461468017959142/text/RAD1636369443.txt",
+    "guid": "901461468017959142",
+    "url": "http://documents.worldbank.org/curated/en/901461468017959142"
+   },
+   "D18518915": {
+    "id": "18518915",
+    "docty": "Financing Agreement",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b08208258a_1_0"
+    },
+    "docdt": "2013-09-09T04:00:00Z",
+    "display_title": "Official Documents- Financing Agreement for Credit 5276-CM (Closing Package)",
+    "disclosure_date": "2013-11-15T21:08:02Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/418741468012663502/pdf/RAD1461548850.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/418741468012663502/text/RAD1461548850.txt",
+    "guid": "418741468012663502",
+    "url": "http://documents.worldbank.org/curated/en/418741468012663502"
+   },
+   "D18518856": {
+    "id": "18518856",
+    "docty": "Side Letter",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b082082922_1_0"
+    },
+    "docdt": "2013-09-09T04:00:00Z",
+    "display_title": "Official Documents- Supplemental Letter Ref. Financial Data for Credit 5276-CM (Closing Package)",
+    "disclosure_date": "2013-11-15T21:15:59Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/318841468223784112/pdf/RAD15078280.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/318841468223784112/text/RAD15078280.txt",
+    "guid": "318841468223784112",
+    "url": "http://documents.worldbank.org/curated/en/318841468223784112"
+   },
+   "D18180003": {
+    "id": "18180003",
+    "docty": "Implementation Status and Results Report",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b081e6ae21_1_0"
+    },
+    "repnb": "ISR11716",
+    "docdt": "2013-09-01T04:00:00Z",
+    "display_title": "Cameroon - Cameroon Flood Emergency Project : P143940 - Implementation Status Results Report : Sequence 01",
+    "disclosure_date": "2013-09-01T22:10:49Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/643231468016137544/pdf/ISR-Disclosable-P143940-09-01-2013-1378073440964.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/643231468016137544/text/ISR-Disclosable-P143940-09-01-2013-1378073440964.txt",
+    "guid": "643231468016137544",
+    "url": "http://documents.worldbank.org/curated/en/643231468016137544"
+   },
+   "D17965735": {
+    "id": "17965735",
+    "docty": "Board Summary",
+    "lang": "English",
+    "entityids": {
+     "entityid": "000356161_20130704115015"
+    },
+    "repnb": "79270",
+    "docdt": "2013-06-11T04:00:00Z",
+    "abstracts": {
+     "cdata!": "The Executive Directors approved the credit to the Republic of Cameroon for the Flood Emergency Project in the amount of SDR71.6 million (US$108 million equivalent) on the terms and conditions set out in the President's Memorandum. Directors supported the emergency response to rehabilitate the flood-affected hydraulic infrastructure and achieve sustainable water management, flood protection and food security in the far North Region of Cameroon. Directors were encouraged that the project provides critical capacity building in financial management, disaster management and risk reduction, and improved governance. They underscored the need for prevention of potential adverse environmental and social impacts and reducing disparities between the North and the rest of the country. Directors requested close monitoring of the operation and maintenance of the hydraulic infrastructure, including cost recovery from water users, being mindful of the poorest and most vulnerable, to ensure that infrastructure is maintained beyond the lifetime of the project."
+    },
+    "display_title": "Cameroon - Flood Emergency Project : summary of discussion",
+    "disclosure_date": "2013-07-09T04:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/862011468012070466/pdf/792700SD0IDA0S00Box0377341B00OUO090.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/862011468012070466/text/792700SD0IDA0S00Box0377341B00OUO090.txt",
+    "guid": "862011468012070466",
+    "url": "http://documents.worldbank.org/curated/en/862011468012070466"
+   },
+   "D17802337": {
+    "id": "17802337",
+    "docty": "Project Paper",
+    "lang": "English",
+    "entityids": {
+     "entityid": "000442464_20130605094319"
+    },
+    "repnb": "76456",
+    "docdt": "2013-05-28T04:00:00Z",
+    "abstracts": {
+     "cdata!": "The development objective of the Flood Emergency Project for Cameroon is to rehabilitate key hydraulic infrastructure and improve disaster-preparedness in target areas in the far North region of Cameroon. The credit for the project will finance the costs associated with rehabilitation of key hydraulic infrastructure for flood protection and rice production in the far North region of Cameroon. The project will support the government in rehabilitating flood affected, damaged and deteriorated hydraulic infrastructure, notably 70km of the Logone river embankment, Maga dam and related water conveyance or irrigation infrastructure at both locations. The project will furthermore assure that emergency and disaster preparedness measures are put in place and that the population is well informed about disaster preparedness and emergency management procedures."
+    },
+    "display_title": "Cameroon - Flood Emergency Project",
+    "disclosure_date": "2013-06-19T04:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/449341468232165276/pdf/764560PJPR0P14010Box377322B00OUO090.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/449341468232165276/text/764560PJPR0P14010Box377322B00OUO090.txt",
+    "guid": "449341468232165276",
+    "url": "http://documents.worldbank.org/curated/en/449341468232165276"
+   },
+   "D18519017": {
+    "id": "18519017",
+    "docty": "Statutory Committee Report",
+    "lang": "English",
+    "entityids": {
+     "entityid": "090224b0820829d9_1_0"
+    },
+    "docdt": "2013-05-24T04:00:00Z",
+    "display_title": "Official Documents- Recommendation of Statutory Committee for Credit 5276-CM (Closing Package)",
+    "disclosure_date": "2013-11-15T21:19:41Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/892441468231306699/pdf/Official-Documents-Recommendation-of-Statutory-Committee-for-Credit-5276-CM-Closing-Package.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/892441468231306699/text/Official-Documents-Recommendation-of-Statutory-Committee-for-Credit-5276-CM-Closing-Package.txt",
+    "guid": "892441468231306699",
+    "url": "http://documents.worldbank.org/curated/en/892441468231306699"
+   },
+   "D18190958": {
+    "id": "18190958",
+    "docty": "Project Information Document",
+    "lang": "English",
+    "entityids": {
+     "entityid": "000442464_20130904113905"
+    },
+    "repnb": "69320",
+    "docdt": "2013-04-25T04:00:00Z",
+    "display_title": "Africa - Cameroon Flood Emergency Project",
+    "disclosure_date": "2013-09-04T04:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/228351468229462567/pdf/693200PID0Came0Box379821B00PUBLIC0.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/228351468229462567/text/693200PID0Came0Box379821B00PUBLIC0.txt",
+    "guid": "228351468229462567",
+    "url": "http://documents.worldbank.org/curated/en/228351468229462567"
+   },
+   "D17427510": {
+    "id": "17427510",
+    "docty": "Project Information Document",
+    "lang": "English",
+    "entityids": {
+     "entityid": "000001843_20130312111012"
+    },
+    "repnb": "AB7270",
+    "docdt": "2013-03-08T05:00:00Z",
+    "display_title": "Cameroon - Flood Emergency Project",
+    "disclosure_date": "2013-03-14T04:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/148641468227697988/pdf/Cameroon0Flood0cy0PID0March0802013.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/148641468227697988/text/Cameroon0Flood0cy0PID0March0802013.txt",
+    "guid": "148641468227697988",
+    "url": "http://documents.worldbank.org/curated/en/148641468227697988"
+   },
+   "D17694391": {
+    "id": "17694391",
+    "docty": "Integrated Safeguards Data Sheet",
+    "lang": "English",
+    "entityids": {
+     "entityid": "000445729_20130510111121"
+    },
+    "repnb": "AC6875",
+    "docdt": "2007-05-13T04:00:00Z",
+    "display_title": "Cameroon - Flood Emergency Project",
+    "disclosure_date": "2013-05-10T04:00:00Z",
+    "pdfurl": "http://documents.worldbank.org/curated/en/442481468015045021/pdf/AC68750ISDS0P10ency0ISDS0May0802013.pdf",
+    "txturl": "http://documents.worldbank.org/curated/en/442481468015045021/text/AC68750ISDS0P10ency0ISDS0May0802013.txt",
+    "guid": "442481468015045021",
+    "url": "http://documents.worldbank.org/curated/en/442481468015045021"
+   },
+   "facets": {}
+  }
+ }
+}

@@ -108,6 +108,39 @@ def test_the_first_deploy_creates_the_catalog_its_schemas_the_volume_the_tables_
             "one schema, one table and no volumes.") in out
 
 
+class Warehouse:
+    """The fake workspace's DuckDB as the SQL warehouse: it runs every statement but the metric views, which only
+    Databricks has, and keeps those."""
+
+    name = "databricks"
+
+    def __init__(self, duckdb):
+        self.duckdb, self.metric_views = duckdb, []
+
+    def run(self, sql, params=None):
+        if "WITH METRICS" in sql:
+            self.metric_views.append(sql.split("\n")[0])
+            return self.duckdb.run("SELECT 1")
+        return self.duckdb.run(sql, params)
+
+    def insert_rows(self, *args, **kwargs):
+        return self.duckdb.insert_rows(*args, **kwargs)
+
+
+def test_the_deploy_creates_the_metric_views_genie_reads_after_the_tables(capsys):
+    workspace = FakeWorkspace()
+    warehouse = Warehouse(workspace.duckdb)
+    workspace.engine = lambda: warehouse
+
+    code, out = deploy_into(workspace, capsys)
+
+    assert code == 0
+    assert warehouse.metric_views == ["CREATE OR REPLACE VIEW strata.gold.contract_metrics",
+                                      "CREATE OR REPLACE VIEW strata.gold.package_metrics"]
+    assert ("The metric views Genie reads exist now: strata.gold.contract_metrics, strata.gold.package_metrics."
+            in out)
+
+
 def test_a_second_deploy_reports_no_changes(capsys):
     workspace = FakeWorkspace()
     deploy_into(workspace, capsys)

@@ -1,0 +1,183 @@
+# The language registry (ticket 42; CLAUDE.md rule 9): every language a source can be written in, and for
+# the four working languages, everything Strata needs to write answers and drafts in them and to check
+# what it wrote. strata.config.load_languages() reads it, and strata.languages holds the one number and
+# date reader and writer that the verifier, the server and the drafts all use (CLAUDE.md rule 4).
+#
+# The screens stay in English: the copy file (web/src/copy.ts) is never translated. Only the writer's
+# sentences follow the working language; sources keep their own words.
+#
+# [[language]]
+#   code           the ISO 639-1 code a passage carries in strata.silver.passages.language, and the lang
+#                  attribute the screens set
+#   api_name       the Documents API's lang field for it, word for word ("French")
+#   endonym        the language's own name, which the language choice shows beside the English name
+#   direction      ltr, or rtl for a script written right to left (the screens add dir="rtl")
+#   working        true for a working language: Strata writes answers and drafts in it. The others are
+#                  languages a source can be written in.
+#
+# A working language other than English also has:
+#   word_locale    the proofing language its runs carry in a Word file (w:lang)
+#   number_locale  the CLDR locale its numbers and dates follow
+#   decimal, group the decimal mark and the digit grouping mark of that locale; group_also lists the other
+#                  marks a writer may use for grouping, which the verifier reads the same way
+#   months         the months, January first, as the locale writes them in a long date
+#   date_joiner    the word between the day, the month and the year in a long date ("de" in "29 de julio
+#                  de 2021"), or "" when there is none
+#   number_words   the numbers a writer may write as words, each with its value. The words for one are left
+#                  out, because they are also the language's indefinite article ("un", "una", "um").
+#   scale_words    the words that multiply what comes before them ("cent", "mille"), each with its value
+#   times_words    number words that multiply a smaller number written just before them, as "vingts" does in
+#                  "quatre-vingts" (80); alone, each is the number number_words gives it
+#   joiners        the words that join number words into one number ("et" in "vingt et un")
+#   joined_ones    the words for one, which count only after a joiner inside a number ("vingt et une", "treinta y
+#                  uno", "vinte e um"); alone they are the article
+#   never_write    the language's words for DESIGN.md section 7 rule 19 and GLOSSARY.md's Avoid terms.
+#                  The writer's instructions forbid them, and the tests check the scripted answers and
+#                  drafts against them.
+#   terms          GLOSSARY.md's terms as a writer in the language uses them. STEP's field names and values,
+#                  method names and STEP references stay in English, word for word, and are not listed.
+#   reviewed_by, reviewed_on
+#                  who checked never_write and terms, being a person who writes the language, and when.
+#                  Empty until someone has: a builder drafted these lists, and no demo in the language should
+#                  run before a person who writes it has reviewed them.
+
+[[language]]
+code = "en"
+api_name = "English"
+endonym = "English"
+direction = "ltr"
+working = true
+word_locale = "en-US"
+number_locale = "en"
+decimal = "."
+group = ","
+months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October",
+          "November", "December"]
+date_joiner = ""
+
+[[language]]
+code = "fr"
+api_name = "French"
+endonym = "Français"
+direction = "ltr"
+working = true
+word_locale = "fr-FR"
+number_locale = "fr"
+decimal = ","
+group = " "
+group_also = [" ", " "]
+months = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre",
+          "novembre", "décembre"]
+date_joiner = ""
+joiners = ["et"]
+number_words = { "zéro" = 0, "deux" = 2, "trois" = 3, "quatre" = 4, "cinq" = 5, "six" = 6, "sept" = 7, "huit" = 8, "neuf" = 9, "dix" = 10, "onze" = 11, "douze" = 12, "treize" = 13, "quatorze" = 14, "quinze" = 15, "seize" = 16, "vingt" = 20, "vingts" = 20, "trente" = 30, "quarante" = 40, "cinquante" = 50, "soixante" = 60 }
+scale_words = { "cent" = 100, "cents" = 100, "mille" = 1000, "million" = 1000000, "millions" = 1000000 }
+times_words = { "vingt" = 20, "vingts" = 20 }
+joined_ones = { "un" = 1, "une" = 1 }
+never_write = ["approuver", "approuve", "approuvé", "approuvée", "approbation", "avis de non-objection", "non-objection", "valider", "validé", "entériner", "à risque", "projet à problèmes", "drapeau rouge", "signaler", "fractionnement", "glissement"]
+terms = { "past range" = "fourchette passée", "time estimate" = "estimation de durée", "delay" = "retard", "rebidding" = "relance de l'appel d'offres", "disagreement" = "désaccord", "Procurement Plan" = "Plan de passation des marchés" }
+reviewed_by = ""
+reviewed_on = ""
+
+[[language]]
+code = "es"
+api_name = "Spanish"
+endonym = "Español"
+direction = "ltr"
+working = true
+word_locale = "es-ES"
+number_locale = "es"
+decimal = ","
+group = "."
+group_also = [" ", " "]
+months = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre",
+          "noviembre", "diciembre"]
+date_joiner = "de"
+joiners = ["y"]
+number_words = { "cero" = 0, "dos" = 2, "tres" = 3, "cuatro" = 4, "cinco" = 5, "seis" = 6, "siete" = 7, "ocho" = 8, "nueve" = 9, "diez" = 10, "once" = 11, "doce" = 12, "trece" = 13, "catorce" = 14, "quince" = 15, "dieciséis" = 16, "diecisiete" = 17, "dieciocho" = 18, "diecinueve" = 19, "veinte" = 20, "veintiuno" = 21, "veintiuna" = 21, "veintidós" = 22, "veintitrés" = 23, "veinticuatro" = 24, "veinticinco" = 25, "veintiséis" = 26, "veintisiete" = 27, "veintiocho" = 28, "veintinueve" = 29, "treinta" = 30, "cuarenta" = 40, "cincuenta" = 50, "sesenta" = 60, "setenta" = 70, "ochenta" = 80, "noventa" = 90 }
+scale_words = { "cien" = 100, "ciento" = 100, "mil" = 1000, "millón" = 1000000, "millones" = 1000000 }
+joined_ones = { "un" = 1, "uno" = 1, "una" = 1 }
+never_write = ["aprobar", "aprobó", "aprobado", "aprobación", "no objeción", "validar", "validado", "respaldar", "en riesgo", "proyecto problemático", "bandera roja", "fraccionamiento", "desviación"]
+terms = { "past range" = "rango pasado", "time estimate" = "estimación de plazo", "delay" = "retraso", "rebidding" = "nueva licitación", "disagreement" = "desacuerdo", "Procurement Plan" = "Plan de Adquisiciones" }
+reviewed_by = ""
+reviewed_on = ""
+
+[[language]]
+code = "pt"
+api_name = "Portuguese"
+endonym = "Português"
+direction = "ltr"
+working = true
+word_locale = "pt-PT"
+number_locale = "pt"
+decimal = ","
+group = "."
+group_also = [" ", " "]
+months = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro",
+          "novembro", "dezembro"]
+date_joiner = "de"
+joiners = ["e"]
+number_words = { "zero" = 0, "dois" = 2, "duas" = 2, "três" = 3, "quatro" = 4, "cinco" = 5, "seis" = 6, "sete" = 7, "oito" = 8, "nove" = 9, "dez" = 10, "onze" = 11, "doze" = 12, "treze" = 13, "catorze" = 14, "quinze" = 15, "dezesseis" = 16, "dezassete" = 17, "dezessete" = 17, "dezoito" = 18, "dezenove" = 19, "dezanove" = 19, "vinte" = 20, "trinta" = 30, "quarenta" = 40, "cinquenta" = 50, "sessenta" = 60, "setenta" = 70, "oitenta" = 80, "noventa" = 90 }
+scale_words = { "cem" = 100, "cento" = 100, "mil" = 1000, "milhão" = 1000000, "milhões" = 1000000 }
+joined_ones = { "um" = 1, "uma" = 1 }
+never_write = ["aprovar", "aprovou", "aprovado", "aprovação", "não objeção", "validar", "validado", "endossar", "em risco", "projeto problemático", "bandeira vermelha", "fracionamento", "desvio"]
+terms = { "past range" = "intervalo passado", "time estimate" = "estimativa de prazo", "delay" = "atraso", "rebidding" = "nova licitação", "disagreement" = "desacordo", "Procurement Plan" = "Plano de Aquisições" }
+reviewed_by = ""
+reviewed_on = ""
+
+# Languages a source can be written in, which Strata reads and quotes but does not write.
+[[language]]
+code = "ar"
+api_name = "Arabic"
+endonym = "العربية"
+direction = "rtl"
+working = false
+
+[[language]]
+code = "ru"
+api_name = "Russian"
+endonym = "Русский"
+direction = "ltr"
+working = false
+
+[[language]]
+code = "zh"
+api_name = "Chinese"
+endonym = "中文"
+direction = "ltr"
+working = false
+
+[[language]]
+code = "hi"
+api_name = "Hindi"
+endonym = "हिन्दी"
+direction = "ltr"
+working = false
+
+[[language]]
+code = "bn"
+api_name = "Bengali"
+endonym = "বাংলা"
+direction = "ltr"
+working = false
+
+[[language]]
+code = "vi"
+api_name = "Vietnamese"
+endonym = "Tiếng Việt"
+direction = "ltr"
+working = false
+
+[[language]]
+code = "ur"
+api_name = "Urdu"
+endonym = "اردو"
+direction = "rtl"
+working = false
+
+[[language]]
+code = "sw"
+api_name = "Swahili"
+endonym = "Kiswahili"
+direction = "ltr"
+working = false

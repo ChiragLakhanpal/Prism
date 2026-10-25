@@ -24,6 +24,7 @@ from __future__ import annotations
 import datetime as dt
 from dataclasses import dataclass
 
+from strata.drafts.files import written_runs
 from strata.dbx import Viewer
 from strata.lakehouse.engine import Engine
 from strata.server.viewer_sql import data_through
@@ -221,8 +222,8 @@ def word(document, draft: dict, words: dict, say) -> None:
         if not note["sentences"] and note.get("reason"):
             document.paragraph(_none(part, note["reason"], about, layout, say))
         for sentence in note["sentences"]:
-            document.paragraph(sentence["text"], *[document.footnote(say.footnote(draft, evidence))
-                                                   for evidence in sentence["evidence_ids"]])
+            document.paragraph(*written_runs(sentence, draft), *[document.footnote(say.footnote(draft, evidence))
+                                                                 for evidence in sentence["evidence_ids"]])
         table = _table(part, note, layout, say)
         if table:
             header, body, widths = table

@@ -6,7 +6,7 @@ Read first: docs/PLAN.md sections 11, 12 (Known traps) and 16; docs/agents/areas
 
 **Blocked by:** 33 (Genie, the benchmark, Foundry evaluations and the full gate); 37 (Following, project signals and the mission brief)
 
-**Status:** ready-for-agent
+**Status:** in-progress
 **Area:** ops
 **Phase:** P4
 **Design review:** no
@@ -17,3 +17,7 @@ Read first: docs/PLAN.md sections 11, 12 (Known traps) and 16; docs/agents/areas
 - [ ] The P156634 recheck prints each signal's current state and any change since the fixture, such as a package signed since October 9, 2026.
 - [ ] The fresh-workspace dry run lists every resource it would create, from code alone, with no manual step.
 - [ ] Two runs in a row both succeed and leave nothing different, and the README documents the command and its output.
+
+## Comments
+
+- October 23, 2026, orchestrator: dispatched to an implementer in its own worktree on branch strata/48-demo-ready-command, as soon as ticket 33 landed. Credentials are still missing, so every live step is parked in docs/workspace-catchup.md; the offline side is built against the fixtures.

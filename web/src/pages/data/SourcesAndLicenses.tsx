@@ -2,6 +2,8 @@
 // World Bank's format, the document collections, the terms of use, the sentence on Strata's own
 // changes and the data caveat, word for word from DESIGN.md section 8. It reads only the source
 // registry (GET /api/data/sources), so it renders while the warehouse is down.
+import { Fill } from "../../components/Fill";
+import { Lang } from "../../components/Lang";
 import { useEffect } from "react";
 import { Alert } from "../../components/Alert";
 import { Button } from "../../components/Button";
@@ -86,7 +88,17 @@ export function SourcesAndLicenses() {
           {/* Set like the datasets above, so the two lists of sources read as one kind of list. */}
           <ul className="mt-3 flex flex-col gap-3 text-body">
             {state.registry.collections.map((collection) => (
-              <li key={collection.name}>{words.collection(collection.name, collection.publisher, collection.origin)}</li>
+              <li key={collection.name}>
+                {collection.language ? (
+                  // A name in another language, such as the French plan template's, keeps its lang (ticket 42).
+                  <Fill
+                    template={words.collectionNamed}
+                    slots={{ name: <Lang code={collection.language}>{collection.name}</Lang>, publisher: collection.publisher, origin: collection.origin }}
+                  />
+                ) : (
+                  words.collection(collection.name, collection.publisher, collection.origin)
+                )}
+              </li>
             ))}
           </ul>
           <p className="mt-3 text-body">

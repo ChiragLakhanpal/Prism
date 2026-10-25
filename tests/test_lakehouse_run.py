@@ -205,6 +205,20 @@ def rejected_bid_reason(gold, value):
     assert found and all(row == (None, value["value"]) for row in found)
 
 
+def rejection_reason(gold, value):
+    """A notice's Reason for Rejection, word for word, on a rejected bid in silver.notice_bids, which rejected_bids
+    groups packages by (ticket 31; the benchmark cites it, ticket 33)."""
+    found = gold.run("SELECT count(*) FROM strata.silver.notice_bids WHERE notice_id = :notice AND reason = :reason",
+                     {"notice": value["notice"], "reason": value["value"]}).rows
+    assert found[0][0] >= 1
+
+
+def notice_requirement(gold, value):
+    """A notice's requirement, word for word, in the plain notice text that compare_criteria reads (ticket 31)."""
+    notice = one(gold, "SELECT notice_text FROM strata.silver.notices WHERE notice_id = :notice", notice=value["notice"])
+    assert value["value"] in notice["notice_text"]
+
+
 CHECKS = {
     "award-supplier-written-null": no_supplier_written_null,
     "notice-losai-no-id": awarded_bidder_without_an_id,
@@ -253,6 +267,11 @@ CHECKS = {
     "closing-date-p156634": project_closing,
     "individual-consultant": individual_consultant,
     "isr-procurement-p156634": isr_rating,
+    # The notices the benchmark's documents questions cite (ticket 33).
+    "rejection-key-experts-OP00125851": rejection_reason,
+    "rejection-key-experts-OP00125855": rejection_reason,
+    "rejection-key-experts-OP00124759": rejection_reason,
+    "criteria-OP00118816": notice_requirement,
 }
 
 

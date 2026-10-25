@@ -13,6 +13,7 @@ import { Alert } from "./Alert";
 import { Button } from "./Button";
 import { LoadingLabel, SkeletonLine, SkeletonText } from "./Skeleton";
 import { DocumentSource } from "./Source";
+import { Lang } from "./Lang";
 import { TextLink } from "./TextLink";
 
 // Matched words: the highlight fill, with the start and end said aloud, because most screen
@@ -20,9 +21,14 @@ import { TextLink } from "./TextLink";
 export function Highlight({ children, settle = false }: { children: ReactNode; settle?: boolean }) {
   return (
     <mark className={cx("bg-highlight text-ink [box-decoration-break:clone]", settle && "animate-settle")}>
-      <span className="sr-only">{copy.document.highlightStarts} </span>
+      <Lang code="en" className="sr-only">
+        {copy.document.highlightStarts}{" "}
+      </Lang>
       {children}
-      <span className="sr-only"> {copy.document.highlightEnds}</span>
+      <Lang code="en" className="sr-only">
+        {" "}
+        {copy.document.highlightEnds}
+      </Lang>
     </mark>
   );
 }
@@ -109,9 +115,9 @@ export function Document({ state }: { state: DocumentState }) {
   const page = String(passage.page);
   return (
     <article data-document="ready" className="max-w-prose">
-      <blockquote lang={passage.lang} className="border-l-2 border-line-strong pl-4 text-body text-ink">
+      <Lang code={passage.lang} as="blockquote" className="border-l-2 border-line-strong pl-4 text-body text-ink">
         <p>{highlighted(passage.text, passage.highlights)}</p>
-      </blockquote>
+      </Lang>
       <DocumentSource
         className="mt-3"
         docType={passage.docType}

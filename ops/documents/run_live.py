@@ -1,7 +1,7 @@
 # /// script
 # requires-python = ">=3.12,<3.14"
 # dependencies = ["databricks-sdk==0.156.0", "pyyaml==6.0.3", "duckdb==2.0.0", "sqlglot==30.24.0", "pytz==2026.5",
-#                 "pypdf==6.21.2"]
+#                 "pypdf==6.21.2", "py3langid==0.3.0"]
 # ///
 """Read the document slice into numbered passages on the shared workspace, with Route B, and sync
 their AI Search index: tickets 11 and 18's live run.

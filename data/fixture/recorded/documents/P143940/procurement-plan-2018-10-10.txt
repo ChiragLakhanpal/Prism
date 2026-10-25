@@ -1,0 +1,744 @@
+Source: https://documents.worldbank.org/curated/en/320861539160830195/text/Cameroon-AFRICA-P143940-Flood-Emergency-Project-Procurement-Plan.txt
+License: The World Bank: Documents & Reports (documents.worldbank.org). License: CC BY 4.0.
+Recorded: 2026-10-25
+About: The Procurement Plan of October 10, 2018 for Cameroon's Flood Emergency Project (P143940), in French: its first pages follow the French plan template with the old method names (AOI, AON, SFQC), and its STEP tables write each method by STEP's French name, such as Appel d'offres (ticket 42). Documents API id 30486069.
+
+                         CAMEROUN –PROJET D’URGENCE DE LUTTE CONTRE LES INONDATIONS
+
+                                 PLAN DE PASSATION DES MARCHES SIMPLIFIE– 05 FEVRIER 2018
+
+
+
+
+I.    GENERAL
+
+
+
+
+II.   I.1 INFORMATIONS sur le Projet
+
+
+              Emprunteur :             République du Cameroun
+
+
+              Ministère Responsable:           Ministère de l’Economie, de la Planification et l’Aménagement du Territoire (MINEPAT)
+
+
+              Nom du Projet :          Projet d’Urgence de lutte contre les Inondations (PULCI)
+
+
+              Identification :         P143940
+
+
+              Crédit IDA N° :          52 76 – CM
+
+
+              Agence d’Exécution du Projet :         SEMRY
+
+
+
+I.2       Date d’approbation par la Banque du Plan de Passation des Marchés : ((1) 9 octobre 2014 ; (2)- Juin 2016 ; (3) 13
+octobre 2017
+
+
+I.3       Date de publication de l’Avis Général de Passation des Marchés: 17/12/2013
+
+
+
+                                                                  Page 1 of 11
+I.4   Période couverte par le Plan de Passation des Marchés : 2017-2019
+
+
+I.5   Evaluation du risque par P-RAMS (Procurement Risk Assessment and Management System): Elevé
+
+
+
+
+                                                      Page 2 of 11
+               II.        TRAVAUX, FOURNITURES ET SERVICES AUTRES QUE LES SERVICES DE CONSULTANTS
+
+
+II.1   Dispositions relatives aux seuils de revue préalable : Seuils requis pour les décisions de marchés soumis à la revue
+préalable de la Banque, tel que prévu dans l’annexe 1 des "Directives de Passation des Marchés de fournitures, de travaux et de
+services (autres que les services de consultants) par les Emprunteurs de la Banque mondiale dans le cadre des prêts de la BIRD et des
+crédits de l’AID.
+
+
+                                                                 Seuils de revue a priori
+
+  Catégories de marchés/Méthode de passation des                Montants estimatifs des                    Observations
+                          marchés                                contrats en millions de
+                                                                    dollars américains
+
+Travaux, Contrats clé en main et Contrats de Fourniture et
+                                                                              >= 5
+Montage d’Installations
+
+Fournitures, Système d’information, et Services autres que
+                                                                              >= 1.5
+les services de consultants
+
+                      Travaux, Contrats clé en main et
+                      Contrats de Fourniture et Montage                       >= 5
+
+Contrats à passer     d’Installations                                                           Les justifications de l’entente directe
+par entente directe   Fournitures, Système d’information,                                      devront être jointes et approuvées avec
+
+                      et Services autres que les services de                  >= 1.5                            le PPM
+
+                      consultants
+
+
+II.2   Pré qualification : Aucune n’a été pour l’instant identifiée. Toutefois, en cas de pré-qualification, les soumissionnaires seront
+pré-qualifiées en accord avec les dispositions des paragraphes 2.9 et 2.10 des directives.
+
+
+II.3   Seuils pour les méthodes de passation des marchés : Les seuils de passation des marchés se présentent comme suit au
+vu des conditions du marché :
+
+
+
+
+                                                               Page 3 of 11
+                                                                         FOURNITURES ET SERVICES AUTRE QUE LES SERVICES DE
+                        TRAVAUX (US$ équivalent)
+                                                                                    CONSULTANTS (US$ équivalent)
+
+          AOI                    AON                  CF                      AOI                 AON                 CF
+
+       ≥10.000.000            <10.000.000          < 200:000             ≥ 1.000.000          < 1.000.000          < 100.000
+
+
+
+
+II.4        Dispositions spéciales sur les marchés : Concernant les acquisitions de véhicules et de carburant, en fonction
+
+des circonstances et des besoins spécifiques du pays, le seuil pour la consultation de fournisseurs pourrait être porté à la
+contre-valeur d’USD 500,000 (en prenant soin de consulter tous les principaux concessionnaires de marque ou distributeurs de
+produits pétroliers).
+
+
+
+
+                                                               Page 4 of 11
+II.5     Liste des marchés avec les méthodes de passation et les dates de mise en œuvre
+
+
+Travaux
+
+
+ 1                    2             3             4           5                6             7           8           9           10
+
+                                                                                                                              Observati
+                                                           Méthode            Pré-                    Revue                   ons/ Date
+Ref                              Source de                                                                         Date
+                                             Cout estimé      de           qualificati   Préférence   Banque                   de fin
+ .              Description       finance                                                                         prévue
+                                                 ($)       passation           on        Nationale    (Priori/                  des
+No.                                ment                                                                          ouverture
+                                                            marché         (oui/non)                  Post)                   prestatio
+                                                                                                                                 ns
+
+      COMPOSANTE A-REHABILITATION DES PRINCIPAUX OUVRAGES HYDRAULIQUES POUR LA PROTECTION CONTRE LES
+                                            INONDATIONS ET LA PRODUCTION RIZICOLE
+
+       Travaux de construction
+       de 30 forages dans les                                                                                                 15/05/20
+ 1                                 IDA         300 000       AON              N/A           N/A        POST      21/11/2017
+       villages touchés par le                                                                                                   18
+       projet
+
+COMPOSANTE B- GESTION DES RISQUES DE CATASTROPHES ET DES SITUATIONS D’URGENCE
+
+B-1 Renforcement de la gestion des données hydrométéorologiques
+
+B.2 Renforcement de la Gestion des situations d’Urgence
+
+COMPOSANTE C-APPUI INSTITUTIONNEL
+
+C-1 Appui institutionnel
+
+C-2 Appui à la mise en œuvre du projet
+
+       Réaliser les travaux de
+       finition des                                           CF                                                              30/10/20
+ 2                                 IDA         20 000                         N/A           N/A        POST      20/07/2017
+       aménagements extérieurs                                                                                                   17
+       des bureaux siège
+
+                                                            Page 5 of 11
+ Activité déjà identifiée, mais dont le mode de sélection a changé
+ Activité inchangée par rapport au dernier PPM approuvé, seules les dates ont éventuellement été mises à jour
+ Nouvelle activité
+
+
+
+
+ Fournitures et Services autres que les services de consultants
+
+
+
+ 1                   2                        3        4             5               6             7          8           9                10
+
+                                                                Méthode             Pré-        Préféren
+                                       Source de                                                           Revue                    Observations/ Date
+Ref.                                                 Cout          de           qualification     ce                  Date prévue
+                Description            financeme                                                           (Priori/                     de fin des
+No.                                                estimé ($)   passation           (oui/       National               ouverture
+                                              nt                                                           Post)                       prestations
+                                                                 marché             non)           e
+
+
+COMPOSANTE A-REHABILITATION DES PRINCIPAUX OUVRAGES HYDRAULIQUES POUR LA PROTECTION CONTRE LES INONDATIONS ET LA
+PRODUCTION RIZICOLE
+
+A1 : Réhabilitation de la digue du Logone,
+
+A2 : Réhabilitation du barrage de Maga et des ouvrages connexes,
+
+A3 : Réhabilitation des périmètres irrigués
+
+
+
+                                                                 Page 6 of 11
+COMPOSANTE B- GESTION DES RISQUES DE CATASTROPHES ET DES SITUATIONS D’URGENCE
+
+B-1 Renforcement de la gestion des données hydrométéorologiques
+
+
+
+B-2 Renforcement de la gestion des situations d’urgence
+
+     Acquérir et pré-positionner le
+ 1                                       IDA   1 032 000    AOI           N/A   N/A   POST   22/02/2018   22/05/2018
+     matériel de première intervention
+
+COMPOSANTE C-APPUI INSTITUTIONNEL
+
+C1 : Appui institutionnel
+
+
+
+
+                                                           Page 7 of 11
+ 1                       2                      3           4           5             6            7          8           9               10
+
+                                                                     Méthode
+                                                                                     Pré-       Préféren
+                                            Source de                  de                                  Revue        Date       Observations/ Date
+Ref.                                                       Cout                 qualification     ce
+       Description                          financeme                passatio                              (Priori/    prévue          de fin des
+No.                                                     estimé ($)                   (oui/      National
+                                               nt                       n                                  Post)      ouverture       prestations
+                                                                                     non)          e
+                                                                     marché
+
+C2 : Appui à la mise en œuvre du projet
+
+       Acquérir les biens et consommables                                                                                          Sur commande, un
+ 2                                             IDA       64 000        CF            N/A          N/A      POST       16/08/2017
+       (informatiques) de bureau                                                                                                        (01) an
+
+       Acquérir les kits d’EPI (PGES) par
+ 3                                             IDA        8 000        CF            N/A          N/A      POST       12/10/2017      30/10/2017
+       semestre
+
+       Confectionner les dépliants,
+ 4     affiches, oriflammes, tracts et         IDA       12 000        CF            N/A          N/A      POST       22/06/2017      31/12/2017
+       gadgets
+
+       Acquérir les équipements
+ 5                                             IDA       16 000        CF            N/A          N/A      POST       16/08/2017      05/09/2017
+       audiovisuels et de sonorisation
+
+       Acquérir les équipements d’accès
+ 6     aux informations et d’échanges de       IDA        2 000        CF            N/A          N/A      POST       12/10/2017      30/10/2017
+       données
+
+
+
+ Activité déjà identifiée, mais dont le mode de sélection a changé
+ Activité inchangée par rapport au dernier PPM approuvé, seules les dates ont éventuellement été mises à jour
+ Nouvelle activité
+
+
+
+
+           Sélection des Consultants
+
+
+ III.1    Dispositions relatives aux seuils de revue préalable des marchés :
+
+
+
+
+                                                                      Page 8 of 11
+      Décisions de sélection sujet à la revue préalable de la Banquet comme indiqué dans l’annexe 1 du Guide de Sélection et
+      d’Emploi des Consultants par les Emprunteurs de la Banque Mondiale dans le cadre des Prêts de la BIRD et des Crédits et
+      Dons de l’AID
+
+
+Méthode de sélection/Catégories de                 Seuils de revue a priori                           Observations
+marchés
+
+                                                   Montants estimatifs des
+                                                   contrats en millions de
+                                                      dollars américains
+
+Méthode compétitive/Firmes de consultants                    >= 0.5
+
+Entente directe/firmes de consultants                        >= 0.5                 Les justifications de l’entente directe devront être
+                                                                                            jointes et approuvées avec le PPM
+Entente directe/Consultants individuel                       >= 0.2
+
+Méthode Compétitive (Comparaison de CVs)/
+                                                             >= 0.2
+Consultants individuels
+
+
+III.2 Liste restreinte composée entièrement de firmes nationales :
+
+
+       La liste restreinte de consultants pour les prestations d’études d’ingénierie, de contrôle et de surveillance estimées à moins de
+       300,000 US$ par contrat, et pour tout autre type de prestations, estimées à moins de 100 000 US$ par contrat, peut comporter
+       entièrement de consultants nationaux selon les dispositions du paragraphe 2.7 des Directives de Sélection et d’Emploi des
+       Consultants, et l’Emprunteur ne procède pas à une publication dans UNDB.
+
+
+III.3 Autre arrangement spécial de Sélection de consultants :
+
+       Le seuil pour l’utilisation de la méthode de sélection de consultant fondée sur les qualifications des consultants est déterminé
+       au cas par cas en tenant compte de la nature et de la complexité de la mission ; cependant, ce seuil ne devrait pas dépasser la
+       contre-valeur de USD 300,000 sauf dans des cas exceptionnels prévus au paragraphe 3.7 des directives pour la sélection et
+       l’emploi des consultants par les emprunteurs de la Banque Mondiale dans le cadre des Prêts de la BIRD et des Crédits et Dons
+       de l’AID
+
+
+                                                              Page 9 of 11
+II.4    Liste des Consultations, avec les méthodes de sélection et le calendrier de mise œuvre
+
+
+ 1                                2                                    2             4             5             6              7                   8
+
+                                                                                                                               Date
+                                                                    Source de      Coût         Méthode     Revue de la
+Ref.                                                                                                                        prévue de    Observations/ Date de fin
+                            Description                             financem      estimé           de         Banque
+No.                                                                                                                         l’ouvertur       des prestations
+                                                                       ent          ($)         sélection   (Priori/Post)
+                                                                                                                                e
+
+Composante A-Réhabilitation des Infrastructures Hydrauliques
+
+       Recruter un consultant en vue de la réalisation des
+       études sur les évacuateurs de crues du lac de maga y                                                                 20/03/201
+ 01                                                                   IDA        380 000           ED          POST                             20/08/2018
+       compris   les   ouvrages   de     franchissement   et   de                                                               8
+       régulations sur le petit Goromo
+
+       Recruter un consultant chargé de l’étude en vue de
+       l'élaboration d'un modèle hydraulique relatif à la
+                                                                                                                            20/02/201
+ 02    gestion efficace des ressources en eau du bassin               IDA        800 000           ED         PRIORI                            30/07/2018
+                                                                                                                                8
+       versant du Logone à TEKELE y compris la bathymétrie
+       du lac de maga et son envasement
+
+       Recrutement des consultants individuels pour la
+        réalisation des études topographiques pour la
+                                                                                                                            10/02/20        30/03/2018 REVUE
+ 03          détermination du volume des remblais                     IDA         23 000           CI          POST
+                                                                                                                               18              TECHNIQUE
+          compactes a mettre en place sur le tronçon
+       djafga – yagoua digue du logone
+
+COMPOSANTE B- GESTION DES RISQUES DE CATASTROPHES ET DES SITUATIONS D’URGENCE
+
+B-1 Renforcement de la gestion des données hydrométéorologiques
+
+B.2 Renforcement de la gestion des situations d’urgence
+
+COMPOSANTE C : APPUI INSTITUTIONNEL
+
+C1-Appui Institutionnel
+
+C-2 Appui à la mise en œuvre du projet
+
+       Audit comptable (Auditeur externe sur 2 ans)                                                                                          31/12/2018 REVUE
+ 04                                                                    IDA        50,000          SFQC         POST         10/08/2017
+                                                                                                                                                TECHNIQUE
+
+
+                                                                                Page 10 of 11
+        Recruter un ingénieur génie civil supplémentaire                                                      28/07/201   31/12/2018 REVUE
+ 05                                                            IDA       36 000         ED       POST
+                                                                                                                 7           TECHNIQUE
+
+
+
+
+III.5    Lexique des Sigles et Abréviations
+
+
+                                                           QC : Sélection fondée sur les Qualifications des
+ AOI : Appel d’Offres International                        Consultants
+
+ AON : Appel d’Offres National                             SMC : Sélection au Moindre Coût
+
+ CF : Consultation des Fournisseurs                        CI : Consultant Individuel
+
+ CI : Consultant Individuel                                Post : Revue a posteriori
+
+ SFQC : Sélection Fondée sur la Qualité et le
+ Coût                                                      Priori : Revue a priori
+
+ SFQ : Sélection Fondée sur la Qualité                     PPM : Plan de Passation des Marchés
+
+
+LEGENDE :
+
+
+Activité déjà identifiée, mais dont le mode de sélection a changé
+Activité inchangée par rapport au dernier PPM approuvé, seules les dates ont éventuellement été mises à jour
+Nouvelle activité
+
+
+
+
+                                                                      Page 11 of 11
+PROCUREMENT
+                                Cameroon : Flood Emergency Project
+PLAN
+General Information
+Country:                        Cameroon                      Bank’s Approval Date of the Original Procurement Plan:                   2018-02-23
+                                                                                                                         2018-10-10
+                                                              Revised Plan Date(s): (comma delineated, leave blank if none)
+Project ID:                     P143940                       GPN Date:
+Project Name:                   Flood Emergency Project
+Loan / Credit No:               IDA / 52760
+Executing Agency(ies): PROJET D'URGENCE DE LUTTE CONTRE LES INNONDATIONS
+
+
+
+WORKS
+                                                                                                                                                                                                                                                                                                                                   Bid Evaluation
+Activity Reference No. /                                                                                                                                                                                                                   Draft Bidding
+                                Loan / Credit                                                        Market         Procurement        Prequalification Actual Amount       Process     Draft Pre-qualification     Prequalification                         Specific Procurement   Bidding Documents   Proposal Submission /        Report and
+        Description                               Component     Review Type        Method                                                                                                                                                   Document /                                                                                                  Signed Contract     Contract Completion
+                                      No.                                                           Approach           Process             (Y/N)           (US$)             Status          Documents             Evaluation Report                          Notice / Invitation       as Issued        Opening / Minutes      Recommendation for
+                                                                                                                                                                                                                                           Justification
+                                                                                                                                                                                                                                                                                                                                        Award
+                                                                                                                                                                                         Planned      Actual       Planned    Actual   Planned      Actual   Planned      Actual    Planned    Actual    Planned     Actual     Planned      Actual   Planned      Actual   Planned      Actual
+
+
+ CM-PULCI-50083-CW-RFB /
+Travaux de construction de                                                                                        Single Stage - One                                      En attente
+                                IDA / 52760                   A posteriori    Appel d'offres    Open - National                                                    0.00                                                                2017-07-25            2017-07-30                                 2017-09-10              2017-10-10            2018-02-14            2018-08-13
+30 forages dans les villages                                                                                      Envelope                                                d'exécution
+touchés par le projet
+
+
+
+
+ CM-PULCI-50649-CW-RFB /
+Réaliser les travaux de                                                                                           Single Stage - One                                      En attente
+                                IDA / 52760                   A posteriori    Appel d'offres    Open - National                                                    0.00                                                                2017-07-05            2017-07-10                                 2017-08-21              2017-09-20            2017-10-25            2018-04-23
+finition des   aménagements                                                                                       Envelope                                                d'exécution
+extérieurs des bureaux siège
+
+
+
+
+ CM-PULCI-67752-CW-RFQ /
+Travaux de Génie Civil pour                                                                                       Single Stage - One                                      En cours
+                                IDA / 52760                   A posteriori    Demande de prix   Limited                                                            0.00                                                                                      2018-06-25                                                                               2018-07-03            2018-07-17
+la connexion en fibre optique                                                                                     Envelope                                                d'exécution
+du PULCI
+
+
+
+
+ CM-PULCI-69646-CW-RFQ /
+BUREAU DU LOCAL DE
+TRAVAIL DU CENTRE
+                                                                                                                  Single Stage - One
+DEPARTEMENTAL DE                IDA / 52760                   A posteriori    Demande de prix   Limited                                                            0.00   Annulé                                                                             2018-07-18                                                                               2018-09-12            2019-03-11
+                                                                                                                  Envelope
+GESTION DE CRISE -
+TRAVAUX DE REFECTION
+DU LOCAL
+
+
+
+
+GOODS
+                                                                                                                                                                                                                                                                                                                                   Bid Evaluation
+Activity Reference No. /                                                                                                                                                                                                                   Draft Bidding
+                                Loan / Credit                                                        Market         Procurement        Prequalification Actual Amount       Process     Draft Pre-qualification     Prequalification                         Specific Procurement   Bidding Documents   Proposal Submission /        Report and
+        Description                               Component     Review Type        Method                                                                                                                                                   Document /                                                                                                  Signed Contract     Contract Completion
+                                      No.                                                           Approach           Process             (Y/N)           (US$)             Status          Documents             Evaluation Report                          Notice / Invitation       as Issued        Opening / Minutes      Recommendation for
+                                                                                                                                                                                                                                           Justification
+                                                                                                                                                                                                                                                                                                                                        Award
+                                                                                                                                                                                         Planned      Actual       Planned    Actual   Planned      Actual   Planned      Actual    Planned    Actual    Planned     Actual     Planned      Actual   Planned      Actual   Planned      Actual
+
+
+ CM-PULCI-50659-GO-RFQ /
+Acquérir les kits pour le
+                                                                                                                  Single Stage - One                                      En attente
+travail des observateurs des    IDA / 52760                   A posteriori    Demande de prix   Limited                                                            0.00                                                                                      2017-02-20                                                                               2017-04-17            2017-10-14
+                                                                                                                  Envelope                                                d'exécution
+stations hydrométriques et
+météorologiques
+
+
+
+
+ CM-PULCI-50662-GO-RFQ /
+                                                                                                                  Single Stage - One                                      En attente
+Mobilier pour la salle des      IDA / 52760                   A posteriori    Demande de prix   Open - National                                                    0.00                                                                                      2017-08-02                                                                               2017-09-27            2018-03-26
+                                                                                                                  Envelope                                                d'exécution
+conférences de la SEMRY
+
+
+
+
+ CM-PULCI-50663-GO-RFQ /
+                                                                                                                  Single Stage - One                                      En attente
+Equipements topographiques      IDA / 52760                   A posteriori    Demande de prix   Limited                                                            0.00                                                                                      2017-04-25                                                                               2017-06-20            2017-12-17
+                                                                                                                  Envelope                                                d'exécution
+(Traceur de plan)
+
+
+
+
+ CM-PULCI-40532-GO-RFQ /
+                                                                                                                  Single Stage - One                                      En attente
+Biens et consommables           IDA / 52760                   A posteriori    Demande de prix   Limited                                                            0.00                                                                                      2017-08-21                                                                               2017-10-16            2017-11-15
+                                                                                                                  Envelope                                                d'exécution
+(informatiques) de bureau
+
+
+
+
+                                                                                                                                                                                                          Page 1
+ CM-PULCI-40534-GO-RFQ /
+                                                                                                                Single Stage - One                                      En cours
+kits d’EPI (PGES) par           IDA / 52760                 A posteriori    Demande de prix   Open - National                                                    0.00                                                                                      2017-10-17                                                                               2017-12-12            2018-01-11
+                                                                                                                Envelope                                                d'exécution
+semestre
+
+
+
+
+ CM-PULCI-50550-GO-RFQ /
+Confectionner les dépliants,                                                                                    Single Stage - One                                      En cours
+                                IDA / 52760                 A posteriori    Demande de prix   Limited                                                            0.00                                                                                      2017-06-27                                                                               2017-08-22            2018-02-18
+affiches, oriflammes, tracts                                                                                    Envelope                                                d'exécution
+et gadgets
+
+
+
+
+ CM-PULCI-50202-GO-RFQ /
+Acquérir un Logiciels de
+gestion de données
+hydrométriques,
+                                                                                                                Single Stage - One                                      En attente
+météorologiques et former les IDA / 52760                   A posteriori    Demande de prix   Limited                                                            0.00                                                                                      2017-07-06                                                                               2018-03-05            2018-04-09
+                                                                                                                Envelope                                                d'exécution
+utilisateurs, ainsi qu’un
+Logiciel d’information
+géographique (SIG), pour le
+compte du PULCI
+
+
+
+
+ CM-PULCI-50079-GO-RFB /
+Matériel de première                                                                          Open -            Single Stage - One                                      En cours
+                                IDA / 52760                 A posteriori    Appel d'offres                                                                864,206.49                                                                 2017-09-13            2017-09-18                                 2018-03-10              2018-04-09            2018-05-14            2018-11-10
+intervention - acquisition et                                                                 International     Envelope                                                d'exécution
+prepositionnemet
+
+
+
+
+ CM-PULCI-69653-GO-RFQ /
+BUREAU DU LOCAL DE
+TRAVAIL DU CENTRE
+                                                                                                                Single Stage - One                                      En cours
+DEPARTEMENTAL DE                IDA / 52760                 A posteriori    Demande de prix   Limited                                                            0.00                                                                                      2018-07-18                                                                               2018-09-12            2019-03-11
+                                                                                                                Envelope                                                d'exécution
+GESTION DE CRISE -
+MOBILIER ET
+EQUIPEMENT DU LOCAL
+
+
+
+
+ CM-PULCI-75268-GO-RFQ /
+Equipement en mobiliers de
+                                                                                                                Single Stage - One
+bureau du local de travail      IDA / 52760                 A posteriori    Demande de prix   Limited                                                            0.00   Annulé                                                                             2018-08-29                                                                               2018-10-24            2019-04-22
+                                                                                                                Envelope
+du centre départemental de
+gestion de crise
+
+
+
+
+ CM-PULCI-75267-GO-DIR /
+Acquisition d'une imprimante                                                                                    Single Stage - One                                      En attente
+                                IDA / 52760                 A posteriori    Demande de prix   Limited                                                            0.00                                                                                      2018-10-15                                                                               2018-12-10            2019-06-08
+et d'un scanner pour le                                                                                         Envelope                                                d'exécution
+SPM du PULCI
+
+
+
+
+NON CONSULTING SERVICES
+                                                                                                                                                                                                                                                                                                                                 Bid Evaluation
+Activity Reference No. /                                                                                                                                                                                                                 Draft Bidding
+                                Loan / Credit                                                      Market         Procurement        Prequalification Actual Amount       Process     Draft Pre-qualification     Prequalification                         Specific Procurement   Bidding Documents   Proposal Submission /        Report and
+        Description                             Component     Review Type        Method                                                                                                                                                   Document /                                                                                                  Signed Contract     Contract Completion
+                                      No.                                                         Approach           Process             (Y/N)           (US$)             Status          Documents             Evaluation Report                          Notice / Invitation       as Issued        Opening / Minutes      Recommendation for
+                                                                                                                                                                                                                                         Justification
+                                                                                                                                                                                                                                                                                                                                      Award
+                                                                                                                                                                                       Planned      Actual       Planned    Actual   Planned      Actual   Planned      Actual    Planned    Actual    Planned     Actual     Planned      Actual   Planned      Actual   Planned      Actual
+
+
+ CM-PULCI-52410-NC-RFB /
+acquisition, installation des
+équipements
+                                                                                              Open -            Single Stage - One                                      En cours
+hydrométéorologiques,           IDA / 52760                 A posteriori    Appel d'offres                                                                       0.00                                                                2018-03-30            2018-03-30                                 2018-03-30              2018-03-30            2018-05-04            2018-10-31
+                                                                                              International     Envelope                                                d'exécution
+de navigation ainsi que la
+formation à leur utilisation
+et service après-vente
+
+
+
+
+ CM-PULCI-57376-NC-RFQ /
+                                                                                                                Single Stage - One                                      En attente
+Impression du plan de           IDA / 52760                 A posteriori    Demande de prix   Open - National                                                    0.00                                                                                      2018-05-15                                                                               2018-07-10            2019-01-06
+                                                                                                                Envelope                                                d'exécution
+contingence
+
+
+
+
+ CM-PULCI-67751-NC-RFQ /
+                                                                                                                Single Stage - One                                      En cours
+connexion en fibre optique      IDA / 52760                 A posteriori    Demande de prix   Limited                                                            0.00                                                                                      2018-06-25                                                                               2018-06-28            2018-07-12
+                                                                                                                Envelope                                                d'exécution
+de PULCI à Yagoua
+
+
+
+
+                                                                                                                                                                                                        Page 2
+ CM-PULCI-75266-NC-DIR /
+FORMATION EN                                                                  Passation de
+                                                                                                                                                                             En attente
+CONDUITE DEFENSIVE                IDA / 52760                 A posteriori    marché de gré à      Direct                                                             0.00                                                               2018-08-24             2018-08-29                                                                                  2018-10-03                2019-04-01
+                                                                                                                                                                             d'exécution
+DES CHAUFFEURS DU                                                             gré
+PULCI
+
+
+
+
+CONSULTING FIRMS
+Activity Reference No. /                                                                                                                                                                                                                                                                                                 Combined Evaluation
+                                  Loan / Credit                                                         Market       Contract Type   Actual Amount                                                  Expression of Interest Short List and Draft Request for Proposals Opening of Technical             Evaluation of
+        Description                               Component     Review Type         Method                                                              Process Status         Terms of Reference                                                                                                                         Report and Draft       Signed Contract         Contract Completion
+                                        No.                                                            Approach                          (US$)                                                              Notice          Request for Proposals         as Issued          Proposals / Minutes    Technical Proposal
+                                                                                                                                                                                                                                                                                                                         Negotiated Contract
+                                                                                                                                                                               Planned     Actual    Planned       Actual    Planned      Actual      Planned    Actual      Planned      Actual   Planned      Actual   Planned      Actual   Planned       Actual      Planned       Actual
+
+
+ CM-PULCI-50664-CS-QCBS                                                       Sélection fondée
+                                                                                                                                                        En cours
+/ Audit comptable (Auditeur       IDA / 52760                 A posteriori    sur la qualité et    Open - National                               0.00                         2017-08-18            2017-09-08              2017-10-22                                       2017-11-19            2017-12-19            2018-01-23            2018-02-27                2019-02-27
+                                                                                                                                                        d'exécution
+externe sur 2 ans)                                                            le coût
+
+
+
+
+ CM-PULCI-57365-CS-CQS /
+Etudes techniques pour la                                                     Sélection fondée
+réalisation des travaux en                                                    sur les                                                                   En cours
+                                  IDA / 52760                 A posteriori                         Open - National                               0.00                         2018-05-01            2018-05-22              2018-07-05                                                                                   2018-08-04            2018-09-08                2018-11-07
+vue du fonctionnement                                                         qualifications des                                                        d'exécution
+optimal de la station de                                                      consultants
+pompage N°4
+
+
+
+
+ CM-PULCI-57367-CS-CQS /
+Études techniques détaillées
+                                                                              Sélection fondée
+en vue de la mise en place
+                                                                              sur les                                                                   En cours
+d'un système                      IDA / 52760                 A posteriori                         Open - National                               0.00                         2018-05-01            2018-05-22              2018-07-05                                                                                   2018-08-04            2018-09-08                2018-10-23
+                                                                              qualifications des                                                        d'exécution
+d'approvisionnement en eau
+                                                                              consultants
+potable dans la zone
+d'intervention du projet
+
+
+
+
+ CM-PULCI-50224-CS-CDS /                                                      Sélection fondée
+Recrutement d'organisations                                                   sur les                                                                   En cours
+                                  IDA / 52760                 A posteriori                         Open - National                               0.00                         2018-04-23            2018-05-07              2018-05-13                                                                                   2018-05-23            2018-06-01                2018-11-28
+locales pour la   vulgarisation                                               qualifications des                                                        d'exécution
+du Plan de contingence                                                        consultants
+
+
+
+
+ CM-PULCI-57362-CS-CQS /
+Etudes techniques en vue de
+                                                                              Sélection fondée
+la construction d'une route
+                                                                              sur les                                                                   En cours
+en terre avec couche de           IDA / 52760                 A posteriori                         Open - National                               0.00                         2018-04-27            2018-05-18              2018-07-01                                                                                   2018-07-31            2018-09-04                2019-02-01
+                                                                              qualifications des                                                        d'exécution
+roulement en latérite en
+                                                                              consultants
+pied de digue (60 km) entre
+Djafga - Pouss-Tékélé
+
+
+
+
+ CM-PULCI-57364-CS-CQS /
+Études techniques pour la
+réalisation des travaux de
+                                                                              Sélection fondée
+construction de 03 ouvrages
+                                                                              sur les                                                                   En cours
+de franchissement, sur le         IDA / 52760                 A posteriori                         Open - National                               0.00                         2018-04-25            2018-05-16              2018-06-29                                                                                   2018-07-29            2018-09-02                2018-12-01
+                                                                              qualifications des                                                        d'exécution
+Mayo Guerléo, sur le petit
+                                                                              consultants
+Goromo et entre le casier 10
+de la SP4 et le village
+Dama
+
+
+
+
+INDIVIDUAL CONSULTANTS
+
+
+
+
+                                                                                                                                                                                                          Page 3
+

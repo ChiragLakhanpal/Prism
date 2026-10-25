@@ -80,6 +80,7 @@
     "project_signals": "the signals on projects you follow",
     "contract_trail": "the contract trail",
     "connections": "the Connections tab",
+    "ask_genie": "the records Genie looked up",
     "ask": "the answer",
     "unknown": "the coverage line you opened"
   },

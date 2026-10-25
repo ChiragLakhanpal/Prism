@@ -16,6 +16,7 @@ import { hrefFor, intentKey, intentsFor, lookUp, type Found, type Intent, type L
 import { boxMode, startPlanning } from "../lib/packages";
 import { address, navigate } from "../lib/router";
 import { useStore } from "../lib/store";
+import { currentLanguage, ENGLISH, languageName, workingLanguage } from "../lib/lang";
 import { OneBox, type BoxOption } from "./BoxBand";
 import { Fill } from "./Fill";
 import { RETURNING } from "./Popover";
@@ -124,7 +125,13 @@ function boxListOf(value: string, chip: string | null, lookups: Record<string, L
     key: "ask",
     icon: MessageSquareText,
     label: copy.box.option.ask,
-    line: chip ? <Fill template={copy.box.option.askWithin} slots={{ id: mono(chip) }} /> : copy.box.option.askAcross,
+    line: (
+      <>
+        {chip ? <Fill template={copy.box.option.askWithin} slots={{ id: mono(chip) }} /> : copy.box.option.askAcross}
+        {/* The language of the answer, before you press Enter, when it is not English (the 42 brief, section 5.3). */}
+        {currentLanguage() !== ENGLISH && copy.box.option.askLanguage(languageName(currentLanguage()))}
+      </>
+    ),
   };
   const choices: Choice[] = [];
   const options: BoxOption[] = [];
@@ -159,6 +166,8 @@ export function IntentBox({
   const asked = useRef(new Map<string, Promise<Lookup>>());
   const input = useRef<HTMLInputElement>(null);
   const removed = useStore(removedScopes);
+  // The "Ask this" line names the language of answers when it is not English, so it follows a new choice (ticket 42).
+  useStore(workingLanguage);
   const asked_mode = useStore(boxMode);
   const mode = asked_mode?.mode ?? null;
 

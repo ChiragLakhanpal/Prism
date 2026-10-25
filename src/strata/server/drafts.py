@@ -625,7 +625,8 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: DraftStore 
             finally:
                 if runs is not None and noted:
                     turn = Turn(question=noted[1], viewer=viewer, run_id=run_id,
-                                scope=Scope(chip=saved.project_id, as_of=today(), language="en"), trace=trace_ids())
+                                scope=Scope(chip=saved.project_id, as_of=today(), language=saved.content.get("lang") or "en"),
+                                trace=trace_ids())
                     turn.notes.agent, turn.notes.agent_version, turn.notes.as_of = noted[2], noted[3], today()
                     row = run_row(turn, noted[0], error_code or (None if rewrite else "no_answer"), started,
                                   dt.datetime.now(dt.UTC))

@@ -54,6 +54,7 @@ The app removes each sentence that breaks one of these rules, and it shows the t
 
 - The brief goes into a Word file, so write in the voice of the document: never "I" or "you".
 - Write plain English that a 10th grader can follow, or the language the message asks for.
+- In French, Spanish or Portuguese, write numbers and dates in sentences the way that language writes them, at the same digits and rounding: 1 287 515,60 and 22 juin 2026 in French, 1.287.515,60 and 22 de junio de 2026 in Spanish, 1.287.515,60 and 22 de junho de 2026 in Portuguese. Keep STEP's field names and values, method names and STEP references in English, word for word, inside the sentence. Never use guillemets.
 - Write events in the past tense and what a record says now in the present tense.
 - Write one to nine in words and 10 and up in numerals. Use numerals with a unit, such as 9 days.
 - Write a date as March 4, 2024, and a month as November 2025.

@@ -1,0 +1,42 @@
+event: step
+data: {"id": "tool-1", "kind": "tool", "tool": "search_passages", "project_id": "P127203", "status": "running"}
+
+event: step
+data: {"id": "tool-1", "kind": "tool", "tool": "search_passages", "project_id": "P127203", "status": "done", "count": 10, "abstention": null, "error": null}
+
+event: step
+data: {"id": "write", "kind": "write", "status": "running"}
+
+event: step
+data: {"id": "write", "kind": "write", "status": "done", "count": 3}
+
+event: step
+data: {"id": "check", "kind": "check", "status": "running"}
+
+event: step
+data: {"id": "check-judge", "kind": "judge", "count": 1, "status": "running"}
+
+event: step
+data: {"id": "check-judge", "kind": "judge", "count": 1, "status": "done"}
+
+event: step
+data: {"id": "check", "kind": "check", "status": "done", "removed": 0}
+
+event: sentence
+data: {"index": 0, "text": "The completion report ties the late bidding documents and procurement processes to gaps in the project's design.", "kind": "summary", "evidence_ids": ["strata.gold.passage:33407968/v1/60"], "numbers": [], "dates": [], "quote": null}
+
+event: sentence
+data: {"index": 1, "text": "In its own words, \"des retards ont eu lieu dans la préparation des documents d’appels d’offres et des processus de passations des marchés\".", "kind": "quote", "evidence_ids": ["strata.gold.passage:33407968/v1/60"], "numbers": [], "dates": [], "quote": {"text": "des retards ont eu lieu dans la préparation des documents d’appels d’offres et des processus de passations des marchés", "evidence_id": "strata.gold.passage:33407968/v1/60"}}
+
+event: sentence
+data: {"index": 2, "text": "The completion report is dated July 29, 2021.", "kind": "record", "evidence_ids": ["strata.gold.passage:33407968/v1/60"], "numbers": [], "dates": [{"text": "July 29, 2021", "evidence_id": "strata.gold.passage:33407968/v1/60"}], "quote": null}
+
+event: evidence
+data: {"id": "strata.gold.passage:33407968/v1/60", "kind": "passage", "tool": "search_passages", "stratum": "Why", "short_name": "ICR", "row": {"evidence_id": "strata.gold.passage:33407968/v1/60", "public_from": "2021-09-13", "source": {"document_type": "Implementation Completion and Results Report", "project_id": "P127203", "project_name": "Rebuilding Energy Infrastructure and Access", "document_id": "33407968", "document_date": "2021-07-29", "report_number": "ICR4990", "version": 1, "section_path": "II.C", "paragraph": "60", "paragraph_numbered": true, "pdf_page": 39, "pdf_pages": 87, "pdf_url": "http://documents.worldbank.org/curated/en/310191631508626407/pdf/Haiti-Rebuilding-Energy-Infrastructure-and-Access-Project.pdf", "doc_key": "icr-2021-07-29", "notice_id": null, "notice_url": null}, "passage_id": "33407968/v1/60", "document_id": "33407968", "document_type": "Implementation Completion and Results Report", "project_id": "P127203", "version": 1, "section_path": "II.C", "paragraph": "60", "paragraph_numbered": true, "part": 1, "parts": 1, "pdf_page": 39, "last_pdf_page": 39, "printed_page": "32 sur 80", "language": "fr", "parse_route": "A", "kind": "paragraph", "route": "published_text", "scanned": false, "table_title": null, "table_row": null, "cells": null, "notice_id": null, "header": "ICR, P127203, Haiti, II.C, ¶60, p.39", "text": "60. Plusieurs facteurs ont retardé le lancement des activités du projet. En raison de lacunes dans la conception au moment de l’approbation, des retards ont eu lieu dans la préparation des documents d’appels d’offres et des processus de passations des marchés, en particulier pour la réhabilitation des infrastructures. La conception initiale du projet subordonnait le lancement d’importantes activités concernant les infrastructure au respect d’une condition de retrait dans l’Accord de financement concernant la structure de gestion d’EDH. Ceci n’ayant pas eu lieu, et ayant dû être abandonné dans le cadre de la restructuration de janvier 2018, le démarrage de plusieurs travaux importants de génie civil et d’acquisitions de biens ont été sévèrement retardés et, dans certains cas, notamment celui de l’usine Drouet, n’ont pas été achevés dans le cadre du projet voire ont été abandonnés.", "rank": 1, "score": 0.032522}, "highlights": [{"sentence": 1, "start": 141, "end": 259}], "feedback": {"allowed": true, "why_not": null, "run_id": "run-0001", "mode": "pilot", "my_report": null, "limits": {"reason_max_chars": 500}}}
+
+event: checks
+data: {"checks_run": [1, 2, 3, 4, 5, 6], "sentences": {"written": 3, "kept": 3, "removed": 0}, "numbers": {"total": 0, "matched": 0}, "dates": {"total": 1, "matched": 1}, "quotes": {"total": 1, "found": 1}, "sources": {"total": 1, "returned": 1}, "checked": {"total": 1, "matched": 1}, "shown": {"numbers": {"total": 0, "matched": 0}, "dates": {"total": 1, "matched": 1}, "quotes": {"total": 1, "found": 1}, "judged": 1, "proven": 2, "cross_language": 1}, "judge": {"called": true, "responded": true, "judged": 1, "followed": 1, "unjudged": 0, "proven": 2}, "advice": {"total": 0, "cited": 0}, "disagreements": {"disputed": 0, "shown": 0, "attached": 0, "unasked": 0, "warned": 0}, "cited_tools": ["search_passages"], "tools": ["search_passages"], "cited_only": ["get_lessons"]}
+
+event: done
+data: {"run_id": "run-0001", "trace_ids": {"application_insights": "4bf92f3577b34da6a3ce929d0e0e4736", "mlflow": "tr-0af7651916cd43dd8448eb211c80319c"}}
+

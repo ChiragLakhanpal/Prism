@@ -169,7 +169,7 @@ def test_the_recording_command_re_records_each_writer_case_from_the_rows_its_wor
     the workspace, the live writer answers, and the diff shows what changed."""
     # The review notes writer's cases; the mission brief writer's (ticket 37) answer from a recording of their own.
     cases = {key: case for key, case in load_cases(copied / "writers.toml").items()
-             if case.request["kind"] == "review_notes"}
+             if case.recording == "review-notes-nwwda-2026-10-09"}
     recording = json.loads((copied / "recorded" / "review-notes-nwwda-2026-10-09.json").read_text())
     writer = LiveWriter(recording)
 

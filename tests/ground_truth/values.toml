@@ -2953,6 +2953,48 @@ quote = "2017-07-25T14:17:07Z"
 record = "api/documents/P156634.json"
 at = "documents.D27348420.disclosure_date"
 
+# The three comparables of KE-NWWDA-541055-CW-RFB whose award notices rejected a bid over key staff, which
+# the benchmark's rejected_bids question cites (ticket 33). Each notice writes the reason after "Reason for
+# Rejection".
+[[value]]
+id = "rejection-key-experts-OP00125851"
+says = "Award notice OP00125851 for KE-KIMAWASCO-141042-CW-RFB rejected a bid for Unavailability of key experts."
+value = "Unavailability of key experts"
+notice = "OP00125851"
+quote = "Reason for Rejection<br/>Unavailability of key experts"
+record = "api/notices/P156634.json"
+at = "procnotices[id=OP00125851].notice_text"
+
+[[value]]
+id = "rejection-key-experts-OP00125855"
+says = "Award notice OP00125855 for KE-KIMAWASCO-158691-CW-RFB rejected a bid for Unavailability of key experts."
+value = "Unavailability of key experts"
+notice = "OP00125855"
+quote = "Reason for Rejection<br/>Unavailability of key experts"
+record = "api/notices/P156634.json"
+at = "procnotices[id=OP00125855].notice_text"
+
+[[value]]
+id = "rejection-key-experts-OP00124759"
+says = "Award notice OP00124759 for KE-KIMAWASCO-142995-CW-RFB rejected a bid for Unavailability of key experts."
+value = "Unavailability of key experts"
+notice = "OP00124759"
+quote = "Reason for Rejection<br/>Unavailability of key experts"
+record = "api/notices/P156634.json"
+at = "procnotices[id=OP00124759].notice_text"
+
+# A comparable of KE-CWSB-224323-CS-QCBS whose short-listing criteria ask for two projects of similar nature with
+# no amount, the same or less than two contracts of US$10 million, which the benchmark's compare_criteria
+# question cites (ticket 33).
+[[value]]
+id = "criteria-OP00118816"
+says = "The Request for Expression of Interest OP00118816 for KE-KWAWASCO-105286-CS-QCBS asks for at least two projects of similar nature."
+value = "two (2) projects of similar nature"
+notice = "OP00118816"
+quote = "at least two (2) projects of similar nature"
+record = "api/notices/P156634.json"
+at = "procnotices[id=OP00118816].notice_text"
+
 # The PPSD templates and guidance (ticket 36). The template registry (config/ppsd_templates.toml) copies
 # each risk table's column names, the ratings and the stages from these, and config/thresholds.toml's
 # [ppsd_table_i] copies Table I; tests/test_ppsd_templates.py checks both against these entries. The
@@ -3216,3 +3258,51 @@ project = ""
 date = 2025-03-31
 section = "PPSD Section 3: Procurement Risk Analysis"
 pdf_page = 42
+
+# Cameroon's Flood Emergency Project (P143940): its Procurement Plan of October 10, 2018, in French (ticket 42).
+# Its STEP tables write each method by STEP's French name, and its list of abbreviations gives the French plan
+# template's old method codes and names (config/method_names.toml).
+
+[[value]]
+id = "plan-cm-50083-method"
+says = "CM-PULCI-50083-CW-RFB's Method column reads Appel d'offres, STEP's French name for Request for Bids."
+value = "Appel d'offres"
+quote = "CM-PULCI-50083-CW-RFB / Travaux de construction de 30 forages dans les villages touchés par le projet IDA / 52760 A posteriori Appel d'offres Open - National"
+document = "documents/P143940/procurement-plan-2018-10-10"
+document_type = "Procurement Plan"
+project = "P143940"
+date = 2018-10-10
+pdf_page = 12
+
+[[value]]
+id = "plan-cm-67752-method"
+says = "CM-PULCI-67752-CW-RFQ's Method column reads Demande de prix, STEP's French name for Request for Quotations."
+value = "Demande de prix"
+quote = "CM-PULCI-67752-CW-RFQ / Travaux de Génie Civil pour la connexion en fibre optique du PULCI IDA / 52760 A posteriori Demande de prix"
+document = "documents/P143940/procurement-plan-2018-10-10"
+document_type = "Procurement Plan"
+project = "P143940"
+date = 2018-10-10
+pdf_page = 12
+
+[[value]]
+id = "plan-cm-template-aoi"
+says = "The plan's list of abbreviations gives AOI as Appel d'Offres International, the French plan template's name for International Competitive Bidding."
+value = "AOI : Appel d’Offres International"
+quote = "AOI : Appel d’Offres International"
+document = "documents/P143940/procurement-plan-2018-10-10"
+document_type = "Procurement Plan"
+project = "P143940"
+date = 2018-10-10
+pdf_page = 11
+
+[[value]]
+id = "plan-template-fr-title"
+says = "The textual part of the Procurement Plan template in French is titled Plan de passation de marchés (Partie Textuelle)."
+value = "PLAN DE PASSATION DE MARCHÉS (Partie Textuelle)"
+quote = "PLAN DE PASSATION DE MARCHÉS (Partie Textuelle) Information sur le Projet : [Nom du pays] [Nom du Projet]"
+document = "documents/guidance/procurement-plan-template-fr-2022-05-06"
+document_type = "Procurement Plan"
+project = "P161329"
+date = 2022-05-06
+pdf_page = 1

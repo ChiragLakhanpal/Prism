@@ -33,7 +33,7 @@ type Checks = {
   numbers?: { matched: number; total: number };
   dates?: { matched: number; total: number };
   quotes?: { found: number; total: number };
-  judged?: { judged: number; proven: number };
+  judged?: { judged: number; proven: number; crossLanguage?: number };
   notChecked: NotChecked[];
   removed: Removed[];
   names?: string[];

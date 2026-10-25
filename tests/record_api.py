@@ -105,6 +105,8 @@ HUB = {
     # A page with a table the reader read into rows (the PAD's risk table), and a Procurement Plan's page of
     # STEP rows, each wider than a phone's column (the 21 design review, round 3, B1).
     "source-pad-p130164-65.json": f"{SOURCE}/pad-2013-10-01?page=65&{DAY}",
+    # The source view of the completion report in French, at its first numbered paragraph (ticket 42).
+    "source-icr-p127203-fr-13.json": f"/api/projects/P127203/documents/icr-2021-07-29?page=13&para=1&{DAY}",
     "source-plan-p161305-3.json": f"/api/projects/P161305/documents/procurement-plan-kenya-national-highways-authority-2026-09-24?page=3&{DAY}",
     # The drawer's record view of an ISR rating as the passage reader read it, which a Summary cites when no
     # passage prints the rating (the gallery's sample; the 21 review, round 3, item 4).
