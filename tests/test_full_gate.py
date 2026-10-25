@@ -120,6 +120,33 @@ def test_genie_s_columns_may_come_in_another_order_but_every_value_must_still_ma
     assert not wrong.passed
 
 
+class Refused:
+    """A Genie whose workspace refused the question, as a 403 or a 500 from Genie's API comes back."""
+
+    def ask(self, question):
+        from strata.lakehouse.engine import EngineError
+
+        raise EngineError("The workspace answered 403 to POST /api/2.0/genie/spaces/space-1/start-conversation.")
+
+
+def test_a_genie_question_whose_ground_truth_or_genie_call_fails_fails_alone(engine):
+    """One question's ground-truth SQL that does not run, or a workspace error from Genie, fails that question and
+    names why. The other questions are still asked and scored."""
+    import dataclasses
+
+    good = next(item for item in genie_space.load().benchmarks if item.id == "genie-joint-venture-1624689")
+    broken = dataclasses.replace(good, id="genie-with-broken-sql",
+                                 case=dataclasses.replace(good.case, sql="SELECT * FROM strata.gold.no_such_table"))
+
+    by_truth = genie_benchmark.run(fixture_genie(engine), engine, [broken, good])
+    by_genie = genie_benchmark.run(Refused(), engine, [good])
+
+    assert [(item.id, item.passed) for item in by_truth] == [("genie-with-broken-sql", False), (good.id, True)]
+    assert by_truth[0].problems[0].startswith("Its ground-truth SQL did not run on this engine: "), by_truth[0]
+    assert [(item.id, item.passed) for item in by_genie] == [(good.id, False)]
+    assert by_genie[0].problems[0].startswith("Genie gave no answer (engine_error): The workspace answered 403")
+
+
 # ── Foundry evaluations ──────────────────────────────────────────────────
 
 def answer_of(question: dict, sentences: list[dict], evidence: list[dict], calls: list[dict]) -> Asked:

@@ -59,6 +59,12 @@ class EvaluationRun:
     scores: list[EvaluatorScore] = field(default_factory=list)
 
 
+def unscored(evaluation: EvaluationRun | None) -> list[EvaluatorScore]:
+    """The evaluators Foundry scored for no answer, as when it did not take a built-in name or data mapping. The
+    full gate fails naming each one, and its rows say it ran and scored nothing."""
+    return [score for score in (evaluation.scores if evaluation is not None else ()) if not score.scored]
+
+
 class EvaluationError(RuntimeError):
     """Foundry did not finish the evaluation run."""
 

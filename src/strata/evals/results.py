@@ -26,7 +26,7 @@ from decimal import ROUND_HALF_UP, Decimal
 
 from strata.config import Thresholds
 from strata.estimates import harness
-from strata.evals.foundry_evaluation import EvaluationRun
+from strata.evals.foundry_evaluation import EvaluationRun, unscored
 from strata.evals.scoring import Scored
 from strata.lakehouse.engine import Engine
 
@@ -150,11 +150,10 @@ def rows(run_id: str, ran_at: dt.datetime, found: list[Tally], answers: list[Sco
                                 text=f"{evaluation.eval_id}/{evaluation.run_id}", model=model))
     # An evaluator Foundry scored for no answer has no tally, and the full gate fails naming it. Its rows say it
     # ran and scored nothing, so the dashboard shows it instead of leaving it out.
-    for score in evaluation.scores if evaluation is not None else ():
-        if not score.scored:
-            written += [_row(run_id, ran_at, FOUNDRY, "evaluator", score.key, "scored", 0, model=evaluation.deployment),
-                        _row(run_id, ran_at, FOUNDRY, "evaluator", score.key, "foundry_run",
-                             text=f"{evaluation.eval_id}/{evaluation.run_id}", model=evaluation.deployment)]
+    for score in unscored(evaluation):
+        written += [_row(run_id, ran_at, FOUNDRY, "evaluator", score.key, "scored", 0, model=evaluation.deployment),
+                    _row(run_id, ran_at, FOUNDRY, "evaluator", score.key, "foundry_run",
+                         text=f"{evaluation.eval_id}/{evaluation.run_id}", model=evaluation.deployment)]
     return written
 
 

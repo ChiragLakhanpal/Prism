@@ -100,10 +100,9 @@ def run(questions: list[dict], stages: Stages, store: Engine | None, thresholds:
     else:
         evaluation = None
         say("   Foundry evaluated nothing: no Foundry project was given, or no answer kept a sentence.")
-    for score in evaluation.scores if evaluation is not None else ():
-        if not score.scored:  # a built-in name or data mapping Foundry did not take scores nothing
-            failed.append(f"{score.label} scored no answers in Foundry run {evaluation.eval_id}/{evaluation.run_id}.")
-            say(f"   {failed[-1]}")
+    for score in foundry_evaluation.unscored(evaluation):
+        failed.append(f"{score.label} scored no answers in Foundry run {evaluation.eval_id}/{evaluation.run_id}.")
+        say(f"   {failed[-1]}")
     scored = [score for _, score in asked]
     found = results.tallies(scored, genie, evaluation, limits)
     stages_run = {"offline_gate": ("passed", True), "genie_benchmark": ("ran", genie is not None),

@@ -267,12 +267,12 @@ def answered(result, question) -> dict[str, list[str]]:
 
 
 def expected(question) -> dict[str, list[str]]:
+    """The answer a tool question expects: for ask_genie the rows its ground-truth SQL expects, and for any other
+    tool its expected answer as the benchmark file writes it. Each reader gives its answer in that same form, so a
+    list whose order does not matter is written sorted in the file and sorted by its reader."""
     if question["tool"] == "ask_genie":
         return {"rows": ground_truth_rows(question)}
-    if question["tool"] in ("data_readiness_for", "get_disagreements", "get_lessons", "compare_cost_estimates",
-                            "rejected_bids", "compare_criteria", "project_signals", "project_records", "rebidding_risk"):
-        return question["expected"]
-    return {mark: sorted(refs) for mark, refs in question["expected"].items()}
+    return question["expected"]
 
 
 def arguments_of(question, engine, viewer) -> dict:

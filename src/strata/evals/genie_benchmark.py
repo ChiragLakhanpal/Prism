@@ -19,19 +19,26 @@ from __future__ import annotations
 from strata.evals.answers import same_rows
 from strata.evals.scoring import Scored
 from strata.genie.client import GenieError
-from strata.lakehouse.engine import Engine
+from strata.lakehouse.engine import Engine, EngineError
 
 KIND = "genie"
 
 
 def run(client, engine: Engine, benchmarks) -> list[Scored]:
+    """Each question scored on its own: a ground truth that does not run here, or a workspace error from Genie,
+    fails that question and names why, and the rest are still asked."""
     scored = []
     for item in benchmarks:
-        truth = same_rows(engine.run(item.case.sql, item.case.params).rows)
+        try:
+            truth = same_rows(engine.run(item.case.sql, item.case.params).rows)
+        except EngineError as error:
+            scored.append(Scored(item.id, KIND, False, (f"Its ground-truth SQL did not run on this engine: {error}",)))
+            continue
         try:
             answer = client.ask(item.question)
-        except GenieError as error:
-            scored.append(Scored(item.id, KIND, False, (f"Genie gave no answer ({error.code}): {error}",)))
+        except (GenieError, EngineError) as error:
+            code = getattr(error, "code", "engine_error")
+            scored.append(Scored(item.id, KIND, False, (f"Genie gave no answer ({code}): {error}",)))
             continue
         if answer.sql is None:
             scored.append(Scored(item.id, KIND, False, (f"Genie wrote no query. It said: {answer.text}",)))

@@ -72,5 +72,10 @@ def run(questions: list[dict], agent_for: Callable[[Turn], Agent], engine_for: E
         except Exception as error:  # a question written wrong, or a tool or query that failed for it alone
             problem = f"{type(error).__name__}: {error}"
         asked = scoring.Asked(question, events, text, calls.pop(run_id, []), reference, problem)
-        results.append((asked, scoring.score(asked, restricted)))
+        try:
+            scored = scoring.score(asked, restricted)
+        except Exception as error:  # a question or a tool result scoring cannot read fails alone
+            scored = scoring.Scored(question["id"], question["kind"], False,
+                                    (f"I could not score it: {type(error).__name__}: {error}",))
+        results.append((asked, scored))
     return results

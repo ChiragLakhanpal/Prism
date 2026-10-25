@@ -201,6 +201,21 @@ def test_a_question_whose_own_arguments_the_tool_refuses_fails_and_the_next_ques
     assert (fine.id, fine.passed) == (plan["id"], True)
 
 
+def test_a_question_that_cannot_be_scored_fails_and_the_next_question_is_still_asked(engine_for):
+    """A must-refuse question written with no refusal key cannot be scored. It fails, naming why, and the answers
+    already asked and the questions after it are kept."""
+    refuse = question("refuse-supplier-scores")
+    unscorable = {**refuse, "id": "refuse-with-no-key", "expected": {}}
+
+    results = ask(engine_for, [unscorable, refuse], {unscorable["id"]: StandIn(refuse="supplier_scores"),
+                                                     refuse["id"]: StandIn(refuse="supplier_scores")})
+
+    [(_, broken), (_, fine)] = results
+    assert (broken.id, broken.passed) == ("refuse-with-no-key", False)
+    assert broken.problems == ("I could not score it: KeyError: 'refusal'",)
+    assert (fine.id, fine.passed) == (refuse["id"], True)
+
+
 def test_a_tool_result_the_reader_cannot_read_fails_the_question_and_names_the_error():
     from strata.evals import scoring
 
