@@ -407,6 +407,145 @@ export type PackageFacts = {
 // GET /api/packages/{stepRef}: the package workspace's header.
 export type PackageResult = { as_of: string; package: PackageFacts };
 
+// ── The time estimate (ticket 26) ──
+// GET /api/packages/{stepRef}/estimate and GET /api/planned-packages/{id}/estimate: estimate_time's result
+// (config/tools.toml, [tools.estimate_time]) and the viewer's saved plan-date choice. Every figure is the tool's;
+// a comparison, a plan-date choice and section 4 render from this one answer, with no request.
+export type EstimatePoints = { q25: number; q50: number; q75: number; q80: number };
+export type EstimateAbstention =
+  | { reason: "too_few_comparables"; count: number; min_comparables: number }
+  | { reason: "outside_training"; feature: string; value: number; low: number; high: number }
+  | { reason: "asof_before_training"; as_of: string }
+  | { reason: "no_model" }
+  | { reason: "unknown_package" | "no_public_notice" | "no_comparables" | "none_measurable"; [key: string]: unknown };
+// Why a comparison, an approach or a combination has no time estimate.
+export type CellAbstention =
+  | { reason: "too_few_in_subgroup"; k: number; n: number; min_subgroup: number }
+  | { reason: "not_in_model"; lever: string }
+  | { reason: "outside_training" | "value_not_learned"; [key: string]: unknown };
+export type Lever = "market_approach" | "lots" | "prequalification";
+export type Comparison = {
+  lever: Lever;
+  value: string | number;
+  own: string | number;
+  k: number;
+  rest: number;
+  n: number;
+  matching_ids: string[];
+  // Comparable packages whose records give no value for the lever, counted among the others.
+  unrecorded_ids: string[];
+  estimate: (EstimatePoints & { days: EstimatePoints }) | null;
+  abstention: CellAbstention | null;
+};
+export type Approach = {
+  market_approach: string;
+  lots: number;
+  prequalification: string;
+  k: number;
+  // The comparable packages that went with it, which its count opens in the evidence drawer.
+  matching_ids: string[];
+  is_as_described: boolean;
+  estimate: (EstimatePoints & { days: EstimatePoints }) | null;
+  abstention: CellAbstention | null;
+};
+export type TrackRecord =
+  | {
+      year: number;
+      n: number;
+      m: number;
+      expected: number;
+      misses: number;
+      misses_early: number | null;
+      misses_late: number | null;
+      ran_on: string | null;
+      mlflow_run_id: string | null;
+      abstention: null;
+    }
+  | { year: number; abstention: { reason: "too_few_unseen_packages"; n: number; min_unseen_packages: number } }
+  // The viewer can't read strata.ops, so the backtest results may exist unread.
+  | { year: null; abstention: { reason: "not_readable" } };
+export type TestYear = {
+  year: number;
+  n: number | null;
+  m: number | null;
+  expected: number | null;
+  error_estimate_months: number | null;
+  error_past_range_months: number | null;
+  error_plan_months: number | null;
+  mlflow_run_id: string | null;
+  abstention: string | null;
+};
+export type PlanDatePoint = { months: number; ran_longer: number | null; total: number | null; in10: number | null };
+export type PlanDateChoice = "middle" | "eight_in_ten";
+export type EstimateResult = {
+  tool: "estimate_time";
+  as_of: string;
+  view: string;
+  rows: {
+    evidence_id: string;
+    as_described: boolean;
+    market_approach: string | null;
+    prequalification: string | null;
+    review_type: string | null;
+    q25: number | null;
+    q50: number | null;
+    q75: number | null;
+    q80: number | null;
+    abstention: string | null;
+  }[];
+  abstention: EstimateAbstention | null;
+  package: {
+    step_reference: string | null;
+    described: {
+      market_approach: string | null;
+      prequalification: string | null;
+      lots: number | null;
+      review_type: string | null;
+      estimated_amount_usd: number | null;
+      category: string | null;
+      method: string | null;
+      country_code: string | null;
+    } | null;
+  };
+  comparables: { n: number; signed: number; still_open: number };
+  estimate:
+    | (EstimatePoints & {
+        days: EstimatePoints;
+        model: string;
+        model_version: number;
+        model_alias: string;
+        training_through: string;
+        scored_on: string;
+        scored: "batch" | "request";
+      })
+    | null;
+  difference: {
+    middle_diff_months: number;
+    direction: "later" | "earlier" | "same";
+    reasons: { code: "size_larger" | "size_smaller"; k: number; n: number }[];
+  } | null;
+  track_record: TrackRecord | null;
+  test_years: TestYear[];
+  plan_dates: { middle: PlanDatePoint; eight_in_ten: PlanDatePoint; default: PlanDateChoice } | null;
+  comparisons: Comparison[];
+  // Section 4's counts, each the tool's: those whose records give the whole approach, those of them the thresholds
+  // rule out for this package, and those whose records don't give it.
+  options: {
+    approaches: Approach[];
+    count: number;
+    recorded: number;
+    ruled_out: number;
+    unrecorded: number;
+    n: number;
+    review_type: string | null;
+  } | null;
+  axis_max_months: number | null;
+  thresholds: { min_comparables: number; min_subgroup: number; min_unseen_packages: number };
+  sources: { key: string; dataset_name: string }[];
+  records_through: string | null;
+  plan_date_choice: PlanDateChoice | null;
+};
+
 // One comparable package (config/tools.toml, [tools.find_comparables.result]).
 export type Comparable = {
   evidence_id: string;

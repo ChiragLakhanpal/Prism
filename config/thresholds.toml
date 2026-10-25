@@ -35,6 +35,13 @@ page_match_shared_words = 0.5
 # cover the whole document slice: docs/PLAN.md section 3 plans 128 projects, and a project rarely has
 # more than 40 such reports. A value for the owner to confirm.
 passage_documents = 5000
+# The minutes the nightly job's parse_and_embed task may spend reading from the World Bank's document host each
+# night, from its first request (strata.lakehouse.readers.document_host). At 3 seconds a request
+# (config/sources.toml, the documents source's pause_seconds) the first nights' backlog would outlast the job's
+# 150 minutes and cancel every task after it, so the readers stop here, write a data readiness note and go on
+# the next night. Source: the ticket 43 review (B3), which named 90 minutes as an example; 60 leaves the rest of
+# the chain the time it took on the live runs. A value for the owner to confirm.
+document_host_minutes = 60
 
 # Structured data for every country stays under 0.5 GB (docs/PLAN.md section 3, "Scope"): every
 # table but the documents' text, layout, passages and vectors, as strata.ops.table_sizes records
@@ -196,6 +203,16 @@ coverage_high = 0.85
 # review, round 2 (a quarter: enough still-open packages to pull a range sized on the rest short); a
 # starting value for the owner to confirm.
 cause_still_open_share = 0.25
+# The sentence under the chart on why the two lanes differ (ticket 26; strata.tools.estimate_time). The time
+# estimate's middle and the past range's middle are "about the same" when they are less than this many months
+# apart. Source: the 26 design brief, section 7.3 ("My estimate and the past range have about the same middle");
+# half a month is one step of the plan line, a starting value for the owner to confirm.
+same_middle_months = 0.5
+# The package's size is named as why the lanes differ only when the model's own middle, with the package's
+# estimated amount set to its comparable packages' middle signed amount, moves at least this share of the gap
+# between the two middles. Source: the 26 design brief, section 6.6 ("A reason without counts is not
+# returned"); "mainly because" needs at least half, a starting value for the owner to confirm.
+reason_min_share = 0.5
 
 # What-ifs (tickets 25 and 26): a range for the comparables that went with one option, such as
 # prequalification or 3 lots.
@@ -203,6 +220,9 @@ cause_still_open_share = 0.25
 # Below this many comparables that went with an option, that option gets no range. Source: the spec
 # ("subgroups included") and the 26 design brief, section 6.4, which names the key.
 min_subgroup = 20
+# Section 4 lists at most this many procurement approaches, the most common first. Source: the 26 design
+# brief, section 6.4 (at most three, against choice overload), and ticket 26's acceptance criteria.
+max_approaches = 3
 
 # Signals on followed projects (ticket 37): project_signals (src/strata/tools/project_signals.py) runs
 # seven fixed checks on a project's public records and returns the values it used, and the Following page
@@ -268,6 +288,12 @@ disbursement_months = 12
 track_record_dates = [2023-06-30, 2024-06-30, 2025-06-30]
 track_record_window_months = 12
 track_record_min = 20
+# The nightly job's score task replays the checks again once the stored track record is this many days old
+# (strata.lakehouse.nightly). The replay reads Strata as it was on the dates above, so its counts change only when
+# a record newly fetched turns out public before one of them, and the replay calls the warehouse for every
+# project with a loan history, which is too long to repeat every night inside the job's 150 minutes. Source: the
+# ticket 43 review (B6); a starting value for the owner to confirm.
+track_record_every_days = 7
 
 # The review thresholds that compute review type (ticket 15). The package workspace computes a planned
 # package's Review Type from its category and its whole estimated amount, never per lot, so dividing a
@@ -702,3 +728,28 @@ mcnemar_alpha = 0.05
 # awards dataset for FY2001 to 2016 (docs/PLAN.md section 3). past_range.period_from starts in 2019, which would
 # leave no comparable for most approval dates. Source: docs/PLAN.md section 3.
 notices_from = 2000-07-01
+
+# The nightly job's quality checks (ticket 43; config/quality_checks.toml names the tables each task checks, and
+# strata.lakehouse.quality runs them). Each checked table's row count must fall inside a range: the one
+# row_counts gives it, or else row_count_min to row_count_max. Source: the fixture database the gate builds
+# (the smallest counts: a table the job fills is never empty there) and the workspace's sixth nightly run of
+# October 24, 2026 (docs/workspace-catchup.md, ticket 04 step 2: bronze_to_gold wrote 2,259,404 rows and gold
+# held 99,557 notices), with room for the whole pilot slice (docs/PLAN.md section 3). Starting values for the
+# owner to confirm once a few nights have run.
+[quality_checks]
+# A table with no range of its own may be empty, as the drafts' notices are before anyone writes a draft, and
+# stays under ten million rows, twenty times the largest table the sixth run wrote.
+row_count_min = 0
+row_count_max = 10_000_000
+# The tables the job fills every night, which must never be empty, and the ones that may pass ten million rows.
+row_counts = { "strata.bronze.api_pages" = [1, 200_000], "strata.gold.country" = [1, 1_000], "strata.gold.project" = [1, 200_000], "strata.gold.notice" = [1, 5_000_000], "strata.gold.contract" = [1, 5_000_000], "strata.gold.package" = [1, 5_000_000], "strata.gold.edge" = [1, 50_000_000], "strata.ops.data_readiness" = [1, 50_000_000] }
+
+# How long after the nightly checks last finished the freshness stamp and the stale alerts call Strata's data
+# stale (ticket 43; briefs 06, 37 and 41). The job runs once a day, so a stamp older than a day and a half means
+# a night was missed. Source: bundle/nightly.yml's daily schedule, with half a day's room for a late or rerun
+# night; a starting value for the owner to confirm.
+[nightly]
+stale_after_hours = 36
+# The workspace runs at most this many job tasks at once (docs/PLAN.md section 2, "Shared workspace limits":
+# five concurrent job tasks, shared with fairshare). tests/test_nightly.py checks the job's tasks against it.
+max_concurrent_tasks = 5

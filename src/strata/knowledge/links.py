@@ -41,7 +41,7 @@ from importlib import resources
 
 from strata.config import Thresholds, load_thresholds
 from strata.knowledge.embed import WORD, stem
-from strata.lakehouse import gold
+from strata.lakehouse import gold, rewrites
 from strata.lakehouse.engine import Engine
 
 # What a link can say, the one list. appeared_together is the only scored kind.
@@ -283,7 +283,13 @@ def relink(engine: Engine, run_id: str, clock: Callable[[], dt.datetime], limits
              link.contract.sector_name, link.contract.category, json.dumps(link.matched_terms),
              json.dumps(link.mentions), today, max(link.contract.public_from, link.paragraph.public_from))
             for link in scored_links(engine, limits)]
-    engine.run(_sql("forget_run.sql"), {"run_id": run_id})
-    added = engine.insert_rows("strata.silver.contract_passage_links", LINK_COLUMNS, rows)
-    engine.run(_sql("keep_run.sql"), {"run_id": run_id})
-    return added + gold.sync(engine, "edge")
+    # The links are written again only when they changed, leaving out the run's id and day (strata.lakehouse.rewrites),
+    # so a night with nothing new changes no row and counts none.
+    stamps = (LINK_COLUMNS.index("run_id"), LINK_COLUMNS.index("scored_on"))
+    before = rewrites.comparable(rewrites.held(engine, "strata.silver.contract_passage_links", LINK_COLUMNS), stamps)
+    changed = rewrites.differing(before, rewrites.comparable(rows, stamps))
+    if changed:
+        engine.run(_sql("forget_run.sql"), {"run_id": run_id})
+        engine.insert_rows("strata.silver.contract_passage_links", LINK_COLUMNS, rows)
+        engine.run(_sql("keep_run.sql"), {"run_id": run_id})
+    return changed + gold.sync(engine, "edge")

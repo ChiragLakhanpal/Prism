@@ -20,15 +20,18 @@ import { Fill } from "../components/Fill";
 import { LoadError } from "../components/LoadError";
 import { MonoWords } from "../components/MonoWords";
 import { FactsSkeleton, mono, PackageFactsList, PackageHeader } from "../components/PackageFacts";
+import { ApproachOptions, approachState } from "../components/ApproachOptions";
 import { PastRange, type PastRangeState } from "../components/PastRange";
 import { Rebidding } from "../components/RebiddingBlock";
+import type { EstimateState } from "../components/TimeEstimate";
 import { RisksSection } from "../components/RisksSection";
 import { CheckCriteria } from "../components/CheckCriteria";
 import { SkeletonLine, SkeletonText } from "../components/Skeleton";
 import { StepsSection } from "../components/StepsSection";
 import { TextLink } from "../components/TextLink";
 import { copy } from "../copy";
-import type { ComparablesResult, PackageResult } from "../lib/api";
+import type { ComparablesResult, EstimateResult, PackageResult } from "../lib/api";
+import { usePlanDateChoice } from "../lib/estimates";
 import { useLoad } from "../lib/load";
 import { useOpenComparable } from "../lib/packages";
 import { rebiddingPath } from "../lib/rebidding";
@@ -44,13 +47,26 @@ export function PackagePage({ stepRef }: { stepRef: string }) {
   const base = `/api/packages/${encodeURIComponent(stepRef)}`;
   const [load, retry] = useLoad<PackageResult>(base);
   const [section, retrySection] = useLoad<ComparablesResult>(`${base}/comparables`);
+  // Ticket 26: estimate_time beside find_comparables, so lane 1 can draw before lane 2 arrives.
+  const [estimateLoad, retryEstimate] = useLoad<EstimateResult>(`${base}/estimate`);
+  const estimate: EstimateState =
+    estimateLoad.status === "loading"
+      ? { status: "loading" }
+      : estimateLoad.status === "error"
+        ? { status: "error", error: estimateLoad.error, onRetry: retryEstimate, retrying: estimateLoad.retrying }
+        : { status: "ready", result: estimateLoad.data };
+  const here = useStore(address);
+  const planDate = usePlanDateChoice(
+    `${base}/plan-dates`,
+    estimateLoad.status === "ready" ? estimateLoad.data.plan_date_choice : null,
+    viewOf(here.search) !== "staff",
+  );
   const header = useRef<HTMLDivElement>(null);
   const sectionHeading = useRef<HTMLHeadingElement>(null);
   const pkg = load.status === "ready" ? load.data.package : null;
   useScrollPadding(header, Boolean(pkg), { gap: 16 });
   // A dot or a row of section 1 opens its comparable package in the evidence drawer (ticket 15).
   const opening = useOpenComparable();
-  const here = useStore(address);
   // Section 3's selection, for "Suggest {n} PPSD risk rows" (ticket 36).
   const [selection, setSelection] = useState<RiskSelection | null>(null);
   const preview = viewOf(here.search) !== "staff";
@@ -96,7 +112,7 @@ export function PackagePage({ stepRef }: { stepRef: string }) {
           <FactsSkeleton />
         </div>
         <div className="mt-8">
-          <PastRange state={{ status: "loading" }} />
+          <PastRange state={{ status: "loading" }} estimate={{ status: "loading" }} />
         </div>
       </>
     );
@@ -162,7 +178,11 @@ export function PackagePage({ stepRef }: { stepRef: string }) {
             state={sectionState}
             headingRef={sectionHeading}
             open={opening}
-            after={<Rebidding path={rebiddingPath(base)} section={section.status === "ready" ? section.data : null} />}
+            estimate={estimate}
+            planDate={planDate}
+            after={(comparing) => (
+              <Rebidding path={rebiddingPath(base)} section={section.status === "ready" ? section.data : null} comparing={comparing} />
+            )}
           />
         </div>
         {/* Section 2, the planned date for each STEP step (ticket 27), collapsed until opened. */}
@@ -180,7 +200,18 @@ export function PackagePage({ stepRef }: { stepRef: string }) {
             action={staff ? <PpsdAction pkg={ppsdPackage} selection={selection} preview={preview} asOf={asOf} inline /> : undefined}
           />
         </div>
-        {/* Section 5, "Check your criteria" (ticket 31): sections 2 and 4 take their places as their tickets land. */}
+        {/* Section 4, procurement approach options (ticket 26), from the same time estimate. */}
+        <div className="mt-6 @lg/page:mt-8">
+          <ApproachOptions
+            state={approachState(
+              section.status === "ready" ? { status: "ready", result: section.data } : { status: section.status },
+              estimate,
+              false,
+              retrySection,
+            )}
+          />
+        </div>
+        {/* Section 5, "Check your criteria" (ticket 31). */}
         <div className="mt-6 @lg/page:mt-8">
           <CheckCriteria base={base} preview={viewOf(here.search) !== "staff"} />
         </div>

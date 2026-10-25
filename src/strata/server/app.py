@@ -147,6 +147,7 @@ from strata.server import criteria as criteria_routes
 from strata.criteria.store import CriteriaStore
 from strata.criteria.workflow import Package as CriteriaPackage
 from strata.server import risks as risk_routes
+from strata.server import estimates as estimate_routes
 from strata.server import following as following_routes
 from strata.server.following import FollowStore
 from strata.server.viewer_settings import SettingsStore, working_language
@@ -770,6 +771,9 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                                planned=planned_criteria_package, thresholds=thresholds, today=today, now=now,
                                new_check_id=new_check_id, reference=request_reference,
                                heartbeat_seconds=heartbeat_seconds, six_checks=six_checks)
+    estimate_routes.add_routes(app, engine_for=engine_for, store=packages, form=package_form or load_package_form(),
+                               thresholds=package_thresholds or thresholds, today=today, now=now,
+                               reference=request_reference)
 
     @app.get("/api/packages/{step_reference}")
     def open_package(step_reference: str, asof: dt.date | None = None, viewer: Viewer = Depends(current_viewer)):

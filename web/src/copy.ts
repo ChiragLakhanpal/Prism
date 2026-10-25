@@ -3415,6 +3415,295 @@ export const copy = {
     },
   },
 
+  // Lane 2 of section 1, the time estimate, with its track record and the plan-date choice (ticket 26; the 26
+  // brief, section 7). Every number is estimate_time's, written by web/src/lib/format.ts; the screen counts
+  // nothing. Strings with {slots} are filled with Num elements. "Time estimate" is never shortened to
+  // "estimate" (GLOSSARY.md), and a what-if says "went with".
+  timeEstimate: {
+    lane: "Time estimate for this package",
+    // The same label where the full one would not fit in the chart, as at 320 px with a reader's text spacing.
+    laneShort: "Time estimate",
+    keyDescribed: "As described",
+    keyWith: (option: string) => `With ${option}`,
+    // Row E's labels, as lane 1's row C writes its own.
+    middle: (e25: string, e75: string, e50: string) => `Middle half ${e25} to ${e75}, middle ${e50}`,
+    in10: (e80: string) => `8 in 10 within ${e80}`,
+    summary: "For this package, I estimate {e25} to {e75} months for the middle half and {e80} months for 8 in 10.",
+    why: {
+      later: "My time estimate's middle is {diff} months later than the past range's, mainly because {reason1}.",
+      earlier: "My time estimate's middle is {diff} months earlier than the past range's, mainly because {reason1}.",
+      laterTwo: "My time estimate's middle is {diff} months later than the past range's, mainly because {reason1}, and also because {reason2}.",
+      earlierTwo:
+        "My time estimate's middle is {diff} months earlier than the past range's, mainly because {reason1}, and also because {reason2}.",
+      // With no reason the model's own numbers show, the sentence gives the difference alone.
+      laterOnly: "My time estimate's middle is {diff} months later than the past range's.",
+      earlierOnly: "My time estimate's middle is {diff} months earlier than the past range's.",
+      same: "My time estimate and the past range have about the same middle.",
+    },
+    // One template per reason code estimate_time can return (config/tools.toml); a new code needs its words here.
+    reasons: {
+      size_larger: "this package is larger than {k} of the {n} comparable packages",
+      size_smaller: "this package is smaller than {k} of the {n} comparable packages",
+    },
+    explain: {
+      estimate: (date: string) =>
+        `My time estimate for this package, from the model scored on ${date}. Select to see how it did on packages it had not seen.`,
+      diff: "The difference between my time estimate's middle and the past range's middle, worked out by the tool.",
+      size_larger: (n: string) =>
+        `Comparable packages whose signed contracts add up to less than this package's estimated amount, out of all ${n}. Select to see them.`,
+      size_smaller: (n: string) =>
+        `Comparable packages whose signed contracts add up to more than this package's estimated amount, out of all ${n}. Select to see them.`,
+      track: (year: string) => `From my backtest for ${year}. Select to see every test year.`,
+      planDate: (n: string, year: string, k: string) =>
+        `In my backtest of ${n} packages from ${year} that I had not seen, ${k} ran longer than this point of their own time estimate.`,
+    },
+    track: {
+      label: "Track record:",
+      sentence: "of {n} packages from {year} that I had not seen, {m} finished inside my 8-in-10 range, where a well-sized range catches about {expected}.",
+      misses: "Of the {misses} that finished outside it, {late} ran late.",
+      unavailable: "I have fewer than {min} packages from {year} that I had not seen, so I can't give a track record yet.",
+      none: "I have no backtest results yet, so I can't give a track record.",
+      notReadable: "I couldn't read my backtest results, so I can't give a track record.",
+      show: "Show each test year",
+      hide: "Hide the test years",
+    },
+    testYears: {
+      caption: "How my 8-in-10 range did on packages I had not seen, by test year.",
+      noun: "test years",
+      nounOne: "test year",
+      count: (count: string, first: string, last: string) => `Showing ${count} test years, ${first} to ${last}.`,
+      countOne: (year: string) => `Showing 1 test year, ${year}.`,
+      columns: {
+        year: "Test year",
+        n: "Packages I had not seen",
+        m: "Inside my 8-in-10 range",
+        expected: "A well-sized range catches about",
+        mine: "My typical error (months)",
+        past: "Past range's typical error (months)",
+        plans: "Plans' typical error (months)",
+        note: "Half of the packages were closer than this.",
+      },
+      notMeasured: "Not measured",
+      noModel: "No model that year",
+      source: "my backtests, run {date}. Each year's model learned only from packages before that year.",
+      sourceUndated: "my backtests. Each year's model learned only from packages before that year.",
+      cardInside: "{m} of {n} packages I had not seen finished inside my 8-in-10 range. A well-sized range catches about {expected}.",
+      cardErrors: "Typical error: mine {a} months, the past range's {b}, the plans' {c}.",
+      cardNone: "I had no package from this year that I had not seen.",
+    },
+    planDates: {
+      label: "Dates I draft for this package",
+      middleHalf: "{months} months: about half ran longer",
+      middle: "{months} months: about {in10} in 10 ran longer",
+      eight: "{months} months: about {in10} in 10 ran longer",
+      // Under 50 packages in the backtest, the count comes first (DESIGN.md section 7, rule 15).
+      counted: "{months} months: {k} of {n}, about {in10} in 10, ran longer",
+      countedHalf: "{months} months: {k} of {n}, about half, ran longer",
+      noTrackMiddle: "{months} months: the middle of my time estimate",
+      noTrackEight: "{months} months: my 8-in-10 point",
+      caption: "I use the date you choose when I draft planned dates for this package. The later date is the cautious one, and I start with it.",
+      preview: "Changes are off in a preview.",
+      failed: "I couldn't save this choice. It still applies on this page.",
+      announce: (months: string) => `I'll use ${months} months for the dates I draft.`,
+    },
+    // Lane 2's messages, which are HTML over the lane, so they wrap.
+    abstain: {
+      few: "I'm not giving a time estimate: only {n} comparable packages.",
+      fewOne: "I'm not giving a time estimate: only one comparable package.",
+      fewSummary: "I give a time estimate only from {min} or more comparable packages, the same rule as the past range.",
+      // outside_training, by the feature and its side of what the model learned from.
+      outside: {
+        estimated_amount_usd: {
+          high: "I'm not giving a time estimate: this package is larger than any package my model learned from.",
+          low: "I'm not giving a time estimate: this package is smaller than any package my model learned from.",
+        },
+        planned_days: {
+          high: "I'm not giving a time estimate: this package's plan allows longer than any plan my model learned from.",
+          low: "I'm not giving a time estimate: this package's plan allows less time than any plan my model learned from.",
+        },
+      },
+      outsideOther: "I'm not giving a time estimate: this package is outside what my model learned from.",
+      outsideSummary: "The past range above still shows every comparable package.",
+      beforeTraining: "I'm not giving a time estimate as of {date}, because my model learned from packages signed after that date.",
+      noModel: "I'm not giving a time estimate yet: no model has been scored.",
+      error: "I couldn't load my time estimate.",
+      tryAgain: "Try again",
+      code: "If it fails again, quote this code: {code}.",
+    },
+    // Section 1's table twin: the time estimate's four points.
+    table: {
+      caption: "My time estimate for this package, in months from notice to signed contract.",
+      points: { q25: "Middle half starts", q50: "Middle", q75: "Middle half ends", q80: "8 in 10 within" },
+      point: "Point",
+      described: "As described (months)",
+      with: (option: string) => `With ${option} (months)`,
+    },
+    // The chart's text alternative, with the past range's sentences before these.
+    alt: {
+      lanes: (axisMax: string) => `Two lanes on one month axis from 0 to ${axisMax} months.`,
+      described: (e25: string, e75: string, e50: string, e80: string) =>
+        `Time estimate for this package: middle half ${e25} to ${e75} months, middle ${e50}, 8 in 10 within ${e80}.`,
+      comparing: (option: string, k: string, total: string, w25: string, w75: string, w50: string, w80: string) =>
+        `Compared with ${option}: ${k} of ${total} comparable packages went with it, drawn larger in blue. Time estimate with ${option}: middle half ${w25} to ${w75} months, middle ${w50}, 8 in 10 within ${w80}.`,
+      comparingFew: (option: string, k: string, total: string) =>
+        `Compared with ${option}: ${k} of ${total} went with it, drawn larger in blue. Too few to give a time estimate with ${option}.`,
+      comparingNone: (option: string, k: string, total: string) =>
+        `Compared with ${option}: ${k} of ${total} went with it, drawn larger in blue. No time estimate with ${option}.`,
+      ghost: (b25: string, b75: string, b50: string, b80: string) =>
+        `A dashed outline shows the time estimate as described: middle half ${b25} to ${b75} months, middle ${b50}, 8 in 10 within ${b80}.`,
+      abstainFew: "I'm not giving a time estimate for so few.",
+    },
+    source: "Time estimates from my model scored on {date}.",
+  },
+
+  // "Compare with" (ticket 26; the 26 brief, sections 6.2 and 7.4): one comparison at a time, by the levers the
+  // tool offers. Option words come from the lever and its value, in STEP's words where STEP has them.
+  whatIf: {
+    label: "Compare with",
+    description: "Choose one approach to see how comparable packages that went with it compare. Choose it again to stop comparing.",
+    segment: (option: string) => `Show how comparable packages that went with ${option} compare.`,
+    none: "I have no other approach to compare for this package.",
+    // A segment's label, and the option's words inside a sentence ("with open national").
+    label_market_approach: {
+      "Open - National": "Open national",
+      "Open - International": "Open international",
+      "Limited - National": "Limited national",
+      "Limited - International": "Limited international",
+    } as Record<string, string>,
+    inSentence_market_approach: {
+      "Open - National": "open national",
+      "Open - International": "open international",
+      "Limited - National": "limited national",
+      "Limited - International": "limited international",
+    } as Record<string, string>,
+    lots: (count: number) => (count === 1 ? "1 lot" : `${count} lots`),
+    label_prequalification: { Y: "Prequalification", N: "Post-qualification" } as Record<string, string>,
+    inSentence_prequalification: { Y: "prequalification", N: "post-qualification" } as Record<string, string>,
+    lever: { market_approach: "market approach", lots: "lots", prequalification: "qualification" },
+    summary:
+      "{k} of the {n} comparable packages went with {option}. With {option}, I estimate {w25} to {w75} months for the middle half and {w80} months for 8 in 10, against {b25} to {b75} and {b80} months as described.",
+    abstain:
+      "Only {k} of the {n} comparable packages went with {option}, so I'm not giving a time estimate for it. Their dots are the larger blue ones above.",
+    abstainOne:
+      "Only one of the {n} comparable packages went with {option}, so I'm not giving a time estimate for it. Its dot is the larger blue one above.",
+    notInModel:
+      "{k} of the {n} comparable packages went with {option}. My model doesn't read the number of lots, so I'm not giving a time estimate for it. Their dots are the larger blue ones above.",
+    notLearned:
+      "{k} of the {n} comparable packages went with {option}. My model never learned from a package that went with {option}, so I'm not giving a time estimate for it. Their dots are the larger blue ones above.",
+    lotsReview: "Review type stays {reviewType}, because I compute it from the whole package's estimated amount.",
+    // Row E's line while comparing, when there is no time estimate for the option.
+    short: {
+      too_few_in_subgroup: (k: string, option: string) => `Only ${k} went with ${option}, too few for a time estimate.`,
+      not_in_model: "My model doesn't read lots, so no time estimate.",
+      value_not_learned: "My model never learned from this, so no time estimate.",
+      outside_training: "Outside what my model learned from, so no time estimate.",
+    },
+    key: {
+      match: (k: string, option: string) => `${k} went with ${option}`,
+      others: (rest: string) => `${rest} others`,
+      open: "still open",
+    },
+    // Each dot's name while comparing, after its own.
+    dot: {
+      went: (option: string) => `Went with ${option}.`,
+      not: (option: string) => `Did not go with ${option}.`,
+      unknown: (lever: string) => `No record of ${lever}.`,
+    },
+    explainCount: (option: string, n: string) => `Comparable packages that went with ${option}, out of all ${n}. Select to see them.`,
+    announce: {
+      pressed: (option: string, k: string, n: string, w25: string, w75: string, b25: string, b75: string) =>
+        `Comparing with ${option}. ${k} of ${n} comparable packages went with it. Middle half ${w25} to ${w75} months, against ${b25} to ${b75} as described.`,
+      pressedNone: (option: string, k: string, n: string) =>
+        `Comparing with ${option}. ${k} of ${n} comparable packages went with it, and I'm not giving a time estimate for it.`,
+      released: (b25: string, b75: string) => `Stopped comparing. Middle half ${b25} to ${b75} months.`,
+      criteria: (option: string) => `I stopped comparing with ${option} because the criteria changed.`,
+    },
+    table: {
+      column: (option: string) => `Went with ${option}`,
+      yes: "Yes",
+      no: "No",
+      unknown: "Not recorded",
+    },
+    // The evidence drawer's list of the packages a "{k} of {n}" count names (the 26 brief, section 7.8).
+    drawer: {
+      region: (option: string) => `Comparable packages that went with ${option}`,
+      title: (k: string) => `${k} comparable packages`,
+      titleOne: "One comparable package",
+      sentence: (k: string, n: string, option: string) => `These ${k} of the ${n} comparable packages went with ${option}.`,
+      sentenceOne: (n: string, option: string) => `This one of the ${n} comparable packages went with ${option}.`,
+    },
+  },
+
+  // Section 4 of the package workspace, "Procurement approach options" (ticket 26; the 26 brief, section 7.7). PPSD
+  // is spelled out in section 3's instruction sentence, which comes first on the page.
+  approachOptions: {
+    eyebrow: "Planning, PPSD section 6",
+    number: "4 ·",
+    heading: "Procurement approach options",
+    summary: "Comparable packages went with {count} approaches. The most common was {option1}, with {k1} of {n}.",
+    summaryAllowed:
+      "Comparable packages went with {count} approaches the thresholds allow for this package. The most common was {option1}, with {k1} of {n}.",
+    summaryOne: "All {n} comparable packages went with {option1}, so I have no other approach to compare.",
+    summaryOneRecorded:
+      "{k1} of the {n} comparable packages went with {option1}. The rest don't record their whole approach, so I have no other approach to compare.",
+    summaryOneRuledOut: (ruled: number) =>
+      ruled === 1
+        ? "{k1} of the {n} comparable packages went with {option1}. {ruled} went with an approach the thresholds rule out for this package, so I have no other approach to compare."
+        : "{k1} of the {n} comparable packages went with {option1}. {ruled} went with approaches the thresholds rule out for this package, so I have no other approach to compare.",
+    summaryNone: "None of the {n} comparable packages records its market approach, lots and qualification, so I can't list approach options.",
+    summaryRuledOut: (ruled: number) =>
+      ruled === 1
+        ? "The one comparable package that records its market approach, lots and qualification went with an approach the thresholds rule out for this package, so I can't list approach options."
+        : "The {ruled} comparable packages that record their market approach, lots and qualification went with approaches the thresholds rule out for this package, so I can't list approach options.",
+    show: "Show the options",
+    hide: "Hide the options",
+    title: "{k1} of the {n} comparable packages went with {option1}, the most common approach.",
+    // When the thresholds rule out approaches some comparable packages went with, the tool doesn't count each of
+    // those, so the caption claims only the most common approach of those the thresholds allow.
+    titleAllowed: "{k1} of the {n} comparable packages went with {option1}, the most common approach the thresholds allow for this package.",
+    count: (count: string) => `Showing ${count} approaches, the most common first.`,
+    unrecorded: (rest: number) =>
+      rest === 1
+        ? "{rest} of the {n} comparable packages doesn't record its market approach, lots and qualification, so I can't say which approach it went with."
+        : "{rest} of the {n} comparable packages don't record their market approach, lots and qualification, so I can't say which approach they went with.",
+    ruledOut: (ruled: number) =>
+      ruled === 1
+        ? "{ruled} of the {n} comparable packages went with an approach the thresholds rule out for this package, so I left that approach out."
+        : "{ruled} of the {n} comparable packages went with approaches the thresholds rule out for this package, so I left those approaches out.",
+    columns: {
+      approach: "Approach",
+      wentWith: "Went with it",
+      wentWithNote: "Comparable packages",
+      middle: "Middle half (months)",
+      middleNote: "My time estimate for this package",
+      in10: "8 in 10 within (months)",
+    },
+    approach: (market: string, lots: string, qualification: string) => `${market}, ${lots}, ${qualification}`,
+    asDescribed: "As described above",
+    kOfN: "{k} of {n}",
+    cell: {
+      too_few_in_subgroup: "No time estimate: only {k} went with it",
+      not_in_model: "No time estimate: my model doesn't read lots",
+      value_not_learned: "No time estimate: my model never learned from this approach",
+      outside_training: "No time estimate: this package is outside what my model learned from",
+    },
+    note: "Review type stays {reviewType} for every approach, because I compute it from the whole package's estimated amount. The counts show what comparable packages went with. Other differences between those packages can explain their times.",
+    source: "{sources}. Records run through {date}.",
+    card: {
+      wentWith: "{k} of {n} comparable packages went with it.",
+      estimate: "My time estimate: {w25} to {w75} months for the middle half, {w80} months for 8 in 10.",
+    },
+    abstain: "I'm not listing approach options: only {n} comparable packages.",
+    abstainOne: "I'm not listing approach options: only one comparable package.",
+    // Lane 2 has no time estimate for another reason (no model scored yet, or an as-of date before the end of its
+    // training data), so section 4 gives that reason and no count.
+    noEstimate: "I'm not listing approach options, because I have no time estimate for this package.",
+    waiting: "I'll list the options after you add your plan in section 1, or choose to see the past range without it.",
+    empty: "I can't compare approaches for this package, because I have no comparable packages I can measure.",
+    error: "I couldn't load the approach options.",
+    tryAgain: "Try again",
+  },
+
   // A package planned from a sentence (the 15 brief): the workspace at /packages/new and /packages/:id, its
   // "What I understood" card, its chip editors, its saved stamp and its section 1 additions. The words of each
   // field (its label, its add label and its options) are in the package form schema, config/package_form.toml,

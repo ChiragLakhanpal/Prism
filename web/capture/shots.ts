@@ -1097,6 +1097,8 @@ function packageShot(name: string, answer: Answer | null, rest: Partial<Shot> = 
   answers[`${api}/risks`] = { recorded: "risks-ke-nwwda-541055.json" };
   // Section 2 (ticket 27): on the fixture every step abstains.
   answers[`${api}/steps`] = { recorded: "steps-ke-nwwda-541055.json" };
+  // Lane 2 (ticket 26): the demo package lies outside what the fixture's model learned from, so lane 2 says so.
+  if (path === PACKAGE) answers[`${api}/estimate`] = { recorded: "estimate-ke-nwwda-541055.json" };
   // Section 5, "Check your criteria" (ticket 31), collapsed under section 1, as the server answered on the fixture.
   if (path === PACKAGE) {
     answers[`${api}/criteria`] = { recorded: "criteria-summary-ke-nwwda-541055.json" };
@@ -1280,7 +1282,40 @@ const REBID_SHOTS: Shot[] = [
   rebidShot("320", REBID_SHOWN, { widths: [320], act: openReasons }),
 ];
 
+// Lane 2 drawn in full (ticket 26): KE-NWWDA-229129-CW-RFB, estimated at US$300,000, lies inside what the fixture's
+// model learned from (tests/record_estimate_api.py). The fixture offers no comparison and no track record, so the
+// comparing shot adds one comparison to the recorded answer, over the first 22 of its comparable packages.
+const SIGNED_PACKAGE = "/packages/KE-NWWDA-229129-CW-RFB";
+const comparingEstimate = (() => {
+  const rows = JSON.parse(readFileSync(new URL("comparables-ke-nwwda-229129.json", RECORDED), "utf8")).rows as { step_reference: string }[];
+  return derived("estimate-ke-nwwda-229129.json", (body) => {
+    const e = body.estimate;
+    const n = body.comparables.n;
+    const matching = rows.slice(0, 22).map((row) => row.step_reference);
+    const shifted = { q25: e.q25 + 1, q50: e.q50 + 1, q75: e.q75 + 1, q80: e.q80 + 1 };
+    body.comparisons = [{ lever: "prequalification", value: "Y", own: "N", k: 22, rest: n - 22, n, matching_ids: matching, unrecorded_ids: [], estimate: { ...shifted, days: null }, abstention: null }];
+    body.axis_max_months = shifted.q80;
+  });
+})();
+function timeEstimateShot(name: string, estimate: Answer, rest: Partial<Shot> = {}): Shot {
+  const api = `/api${SIGNED_PACKAGE}`;
+  return app(`package--${name}`, SIGNED_PACKAGE, {}, {
+    widths: [1440],
+    ...rest,
+    api: {
+      ...app(name, SIGNED_PACKAGE).api,
+      [api]: { recorded: "package-ke-nwwda-229129.json" },
+      [`${api}/comparables`]: { recorded: "comparables-ke-nwwda-229129.json" },
+      [`${api}/risks`]: { recorded: "risks-ke-nwwda-229129.json" },
+      [`${api}/estimate`]: estimate,
+    },
+    pending: [`${api}/steps`, `${api}/criteria`, `${api}/rebidding`],
+  });
+}
+
 const PACKAGE_SHOTS: Shot[] = [
+  timeEstimateShot("time-estimate", { recorded: "estimate-ke-nwwda-229129.json" }),
+  timeEstimateShot("time-estimate-comparing", { body: comparingEstimate }, { full: true, act: click("[data-segmented=toggle] button >> nth=0") }),
   packageShot("package", comparables(COMPARABLES)),
   packageShot("package--loading", null, {}, null),
   packageShot("package--section-loading", null),

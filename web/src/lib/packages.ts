@@ -258,10 +258,52 @@ export function rememberDots(result: ComparablesResult) {
 }
 
 // The drawer open at a dot's list these comparables have no dots for, as from a link: close it, since no
-// list will come.
+// list will come. A "went with" list waits for its time estimate instead.
 export function forgetDotList() {
   const id = evidenceIn(address.get().search);
-  if (id?.startsWith(DOT) && !known.get()[id]) closeEvidence();
+  if (id?.startsWith(DOT) && !id.startsWith(WENT_WITH) && !known.get()[id]) closeEvidence();
+}
+
+// The packages a "{k} of {n} went with" count names (ticket 26; the 26 brief, section 4.5): the drawer's list view,
+// held by the page under the dots' prefix, so the drawer asks the server for nothing and gives focus back to the
+// count. Each package opens its records from the list, with "Back to the {k} packages" above them.
+export const WENT_WITH = `${DOT}with-`;
+
+// What a list is of: the packages a comparison's count names, or (section 4) an approach's.
+export type WentWith = { key: string; k: number; n: number; matching_ids: string[] };
+
+export function wentWithList(result: ComparablesResult, comparison: WentWith, option: string): EvidenceEvent {
+  const rows = new Map(result.rows.map((row) => [row.step_reference, row]));
+  const entries: DotEntry[] = comparison.matching_ids.flatMap((reference) => {
+    const row = rows.get(reference);
+    return row ? [{ step_reference: reference, evidence_id: row.evidence_id, months: row.months, still_open: row.still_open }] : [];
+  });
+  const months = entries.map((entry) => entry.months);
+  return {
+    id: `${WENT_WITH}${comparison.key}`,
+    kind: "dot",
+    tool: "estimate_time",
+    stratum: "What",
+    short_name: null,
+    row: {
+      k: comparison.k,
+      count: entries.length,
+      total: comparison.n,
+      went_with: option,
+      still_open: entries.filter((entry) => entry.still_open).length,
+      low_months: months.length ? Math.min(...months) : 0,
+      high_months: months.length ? Math.max(...months) : 0,
+      step_references: comparison.matching_ids,
+      entries,
+    },
+    highlights: [],
+  };
+}
+
+export function openWentWith(result: ComparablesResult, comparison: WentWith, option: string, element: HTMLElement) {
+  const list = wentWithList(result, comparison, option);
+  remember(list);
+  openEvidence(list.id, { serial: null, sentence: null, marker: element, runId: null, fallback: headingOf(element) });
 }
 
 // A dot or a table row opens its comparable package's records in the evidence drawer, through the address's

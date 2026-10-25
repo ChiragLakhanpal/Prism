@@ -95,6 +95,104 @@ class RecordedDocuments:
 
 # ── Live ─────────────────────────────────────────────────────────────────
 
+class StopReading(Exception):
+    """A reason the readers stop for the night: the run keeps what it read, and the next run goes on from where it
+    stopped. It is not a NotFetched: a reader skips a document it could not fetch, but never this. measure names
+    the data readiness note the nightly job writes for it (strata.lakehouse.readers.note_stop)."""
+
+    measure = "document_reading_stopped"
+    url = ""
+
+
+class HostRefused(StopReading):
+    """A World Bank host refused a request outright (HTTP 403, or 429 after fetch_url's retries). On October 25,
+    2026 documents.worldbank.org answered 403 to every request from one computer after some hundreds of PDFs, so
+    a reader stops at the first refusal instead of asking for every other document."""
+
+    measure = "document_host_refused"
+
+    def __init__(self, url: str, status: int):
+        super().__init__(f"{url} answered HTTP {status}, so I stopped asking the host.")
+        self.url, self.status = url, status
+
+
+class BudgetSpent(StopReading):
+    """The night's time for the document host is spent (config/thresholds.toml, ingestion.document_host_minutes),
+    so the readers stop and the job's later tasks still run inside its window."""
+
+    measure = "document_host_budget_spent"
+
+    def __init__(self, url: str, seconds: float):
+        self.url, self.seconds = url, seconds
+        self.minutes = round(seconds / 60)
+        super().__init__(f"I spent the night's {self.minutes} minute{'' if self.minutes == 1 else 's'} for the "
+                         f"document host, so I did not ask for {url}.")
+
+
+REFUSED = (403, 429)
+
+
+class PoliteFetch:
+    """fetch(url) for the World Bank's document host, as the nightly job asks it (ticket 43).
+
+    It waits pause seconds after the previous request before the next (config/sources.toml, the documents
+    source's pause_seconds), keeps each answer whose address keep(url) accepts in the cache folder, by its
+    address's hash, so a document is fetched once and never again (on the workspace, the bronze files volume,
+    which serverless compute reads as a folder), and raises HostRefused when the host answers 403 or 429. A
+    project's document list is not kept: its address is the same every night, and a kept list would hide every
+    document disclosed after the first (strata.lakehouse.readers.document_host)."""
+
+    def __init__(self, fetch, pause: float, cache=None, sleep=None, clock=None, keep=None,
+                 budget: float | None = None):
+        import time
+        from pathlib import Path
+
+        self.fetch, self.pause, self.budget = fetch, pause, budget
+        self.cache = Path(cache) if cache else None
+        self.keep = keep or (lambda url: True)
+        self.sleep, self.clock = sleep or time.sleep, clock or time.monotonic
+        self.began = self.clock()  # the budget, in seconds, counts from here: the start of the night's reading
+        self.last: float | None = None
+        self.asked = 0  # requests that reached the host, for the tests and the run's report
+
+    def _within_budget(self, url: str) -> None:
+        if self.budget is not None and self.clock() - self.began >= self.budget:
+            raise BudgetSpent(url, self.budget)
+
+    def _cached(self, url: str):
+        import hashlib
+
+        if self.cache is None or not self.keep(url):
+            return None
+        return self.cache / hashlib.sha256(url.encode("utf-8")).hexdigest()
+
+    def __call__(self, url: str) -> bytes:
+        import urllib.error
+
+        self._within_budget(url)  # once the night's time is spent, the readers get nothing more, kept or not
+        kept = self._cached(url)
+        if kept is not None and kept.is_file():
+            return kept.read_bytes()
+        if self.last is not None:
+            waited = self.clock() - self.last
+            if waited < self.pause:
+                self.sleep(self.pause - waited)
+                self._within_budget(url)
+        self.asked += 1
+        try:
+            body = self.fetch(url)
+        except urllib.error.HTTPError as error:
+            if error.code in REFUSED:
+                raise HostRefused(url, error.code) from error
+            raise
+        finally:
+            self.last = self.clock()
+        if kept is not None:
+            kept.parent.mkdir(parents=True, exist_ok=True)
+            kept.write_bytes(body)
+        return body
+
+
 class LiveDocuments:
     """The World Bank's hosts. Reading a PDF's pages needs pypdf, which the recording command uses too."""
 
@@ -107,6 +205,8 @@ class LiveDocuments:
     def _get(self, url: str) -> bytes:
         try:
             return self.fetch(https(url))
+        except StopReading:
+            raise  # the host refused, or the night's time is spent: the run stops instead of asking for the next
         except Exception as error:  # noqa: BLE001 - any failure means the source did not give it
             raise NotFetched(f"I could not fetch {url}: {error}") from error
 

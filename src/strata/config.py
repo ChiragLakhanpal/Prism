@@ -284,6 +284,10 @@ class Source:
     # The form of assertion each of its rows gives the evidence ladder, such as contract_record for a dataset of
     # signed contracts (ticket 20, src/strata/knowledge/assertions.py).
     assertion_form: str | None = None
+    # For a source a reader fetches document by document: the seconds it waits between two requests to the
+    # source's host (ticket 43). The documents host refused every request from one computer on October 25, 2026,
+    # after some hundreds of PDFs asked for as fast as they came.
+    pause_seconds: float | None = None
     ignore_keys: tuple[str, ...] = ()
     limitations: tuple[str, ...] = ()
     indicators: tuple[str, ...] = ()
@@ -305,7 +309,7 @@ class Source:
 SOURCE_REQUIRED = ("dataset_name", "endpoint", "watermark_field", "cadence", "license", "silver_transform")
 SOURCE_PAGING = ("api", "records", "page_size", "fixture_dataset", "scope")  # all of them or none
 SOURCE_OPTIONAL = ("dataset_id", "resource_id", "stratum", "country_filter", "record_url", "max_offset",
-                   "assertion_form")
+                   "assertion_form", "pause_seconds")
 SOURCE_LISTS = ("ignore_keys", "limitations", "indicators")
 SOURCE_ATTRIBUTION = ("data_source", "catalog_url", "name_checked")  # all of them or none
 SOURCE_PAGE = ("readiness", "known_gaps", "declared", "fixes", "collections")  # arrays of tables
@@ -323,7 +327,12 @@ def load_sources(path: Path = CONFIG_DIR / "sources.toml",
         entry.only(set(SOURCE_REQUIRED + SOURCE_PAGING + SOURCE_OPTIONAL + SOURCE_LISTS + SOURCE_ATTRIBUTION
                        + SOURCE_PAGE))
         fields = {name: entry.text(name) for name in SOURCE_REQUIRED}
-        fields |= {name: entry.text(name, required=False) for name in SOURCE_OPTIONAL if name != "max_offset"}
+        fields |= {name: entry.text(name, required=False) for name in SOURCE_OPTIONAL
+                   if name not in ("max_offset", "pause_seconds")}
+        pause = table.get("pause_seconds")
+        if pause is not None and (isinstance(pause, bool) or not isinstance(pause, int | float) or pause < 0):
+            entry._fail("pause_seconds", "must be a number of seconds, 0 or more")
+        fields["pause_seconds"] = None if pause is None else float(pause)
         fields |= {name: entry.texts(name) for name in SOURCE_LISTS}
         if fields["cadence"] not in CADENCES:
             entry._fail("cadence", f"must be one of {', '.join(CADENCES)}")
@@ -733,8 +742,8 @@ class Model:
 def load_models(path: Path = CONFIG_DIR / "models.toml") -> dict[str, Model]:
     """The deployment each role uses, in the order of ROLES."""
     data = _read(path)
-    _Entry(path, "the file", data).only({"roles", "layout", "search", "supplier_matching", "time_estimate", "rebidding",
-                                         "judge"})
+    _Entry(path, "the file", data).only({"roles", "layout", "search", "supplier_matching", "time_estimate", "what_if",
+                                         "rebidding", "judge"})
     roles = data.get("roles", {})
     missing = [role for role in ROLES if role not in roles]
     unknown = sorted(set(roles) - set(ROLES))
@@ -894,6 +903,40 @@ def load_time_estimate(path: Path = CONFIG_DIR / "models.toml") -> TimeEstimateS
     _Entry(path, f"time_estimate.{learner}", settings)
     return TimeEstimateSettings(learner, registered, entry.text("experiment"), tuple(sorted(years)), every,
                                 entry.texts("governance_indicators"), entry.texts("range_checked"), dict(settings))
+
+
+@dataclass(frozen=True)
+class Lever:
+    """One what-if lever (ticket 26): a part of a procurement approach that "Compare with" can change."""
+
+    key: str  # market_approach, lots or prequalification: which record gives a comparable's value
+    feature: str | None  # the model's feature it sets, or None when the model reads no such feature
+    values: tuple[str, ...]  # the values the score task scores, in STEP's words; empty for a lever not scored
+
+
+# The levers whose comparables' values Strata can read from the records (strata.tools.estimate_time).
+LEVERS = ("market_approach", "lots", "prequalification")
+
+
+def load_what_if(path: Path = CONFIG_DIR / "models.toml") -> tuple[Lever, ...]:
+    """The model file's [what_if] table: the levers in "Compare with"'s order."""
+    entry = _Entry(path, "what_if", _read(path).get("what_if"))
+    order = entry.texts("levers")
+    entry.only({"levers", *order})
+    found = []
+    for key in order:
+        if key not in LEVERS:
+            entry._fail("levers", f"names {key}, which no record gives: use {', '.join(LEVERS)}")
+        lever = _Entry(path, f"what_if.{key}", entry.table.get(key))
+        lever.only({"feature", "values"})
+        feature = lever.table.get("feature", "")
+        if not isinstance(feature, str):
+            lever._fail("feature", "must be the model's feature name, or empty text for none")
+        values = lever.texts("values")
+        if feature and not values:
+            lever._fail("values", "must list the values the score task scores")
+        found.append(Lever(key, feature or None, values))
+    return tuple(found)
 
 
 @dataclass(frozen=True)
@@ -2319,3 +2362,39 @@ def load_method_names(path: Path = CONFIG_DIR / "method_names.toml") -> MethodNa
         names.append(MethodName(entry.text("written"), language, method, entry.text("market_approach", required=False),
                                 source, entry.integer("pdf_page", required=False), checked is not False))
     return MethodNames(current, tuple(names))
+
+
+# ── The nightly job's quality checks ─────────────────────────────────────
+
+THREE_PART_TABLE = re.compile(r"strata\.(bronze|silver|gold|ops)\.[a-z][a-z0-9_]*")
+COLUMN_NAME = re.compile(r"[a-z][a-z0-9_]*")
+
+
+@dataclass(frozen=True)
+class QualityCheck:
+    """One table a task of the nightly job checks when it finishes (config/quality_checks.toml)."""
+
+    task: str  # the task's key in bundle/nightly.yml
+    table: str  # strata.<schema>.<table>
+    key: tuple[str, ...]  # the columns that tell one row from another; empty to take a gold query's key, or none
+    contacts: bool  # whether to search its notice text for contact details that ingestion missed
+
+
+def load_quality_checks(path: Path = CONFIG_DIR / "quality_checks.toml") -> tuple[QualityCheck, ...]:
+    """Every table the nightly job checks, in the file's order."""
+    data = _read(path)
+    _Entry(path, "the file", data).only({"tables"})
+    found: list[QualityCheck] = []
+    for entry in _tables(path, data, "tables"):
+        entry.only({"task", "table", "key", "contacts"})
+        task, table, key = entry.text("task"), entry.text("table"), entry.texts("key")
+        if not COLUMN_NAME.fullmatch(task):
+            entry._fail("task", "must be a task key such as bronze_to_gold")
+        if not THREE_PART_TABLE.fullmatch(table):
+            entry._fail("table", "must name a table in three parts, such as strata.gold.project")
+        if not all(COLUMN_NAME.fullmatch(column) for column in key):
+            entry._fail("key", "must list column names")
+        if (task, table) in {(check.task, check.table) for check in found}:
+            entry._fail("table", "is listed twice for the same task")
+        found.append(QualityCheck(task, table, key, entry.boolean("contacts") if "contacts" in entry.table else False))
+    return tuple(found)

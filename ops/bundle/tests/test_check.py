@@ -82,6 +82,37 @@ def test_a_run_that_records_every_task_in_plan_order_passes(capsys):
     assert "10. refresh_drafts" in out
 
 
+def test_the_check_shows_each_task_s_duration_rows_changed_and_quality_checks(capsys):
+    """Ticket 43: strata.ops records each task's duration, rows changed and quality checks passed and failed."""
+    code, out = checked(["job-run"], FakeWorkspace(), capsys)
+
+    assert code == 0
+    line = next(line for line in out.splitlines() if line.strip().startswith("2. bronze_to_gold"))
+    assert re.search(r"took \d+\.\d minutes, \d+ rows changed, \d+ quality checks passed and \d+ failed$", line)
+    assert re.search(r"Its tasks recorded (\d+) quality checks in strata.ops.quality_checks: \d+ passed and \d+ "
+                     r"failed, and it finished inside the job's window of 150 minutes.", out)
+
+
+def test_a_task_that_recorded_no_quality_checks_fails(capsys, monkeypatch):
+    monkeypatch.setattr("strata.lakehouse.quality.check", lambda engine, task_key: [])
+
+    code, out = checked(["job-run"], FakeWorkspace(), capsys)
+
+    assert code == 1
+    assert "refresh_drafts recorded no quality checks in strata.ops.quality_checks." in out
+
+
+def test_a_run_longer_than_the_window_fails(capsys, monkeypatch):
+    from strata.lakehouse.schedule import Window
+
+    monkeypatch.setattr(check.nightly, "window", lambda bundle=None: Window("Strata's nightly job", None, "UTC", -1))
+
+    code, out = checked(["job-run"], FakeWorkspace(), capsys)
+
+    assert code == 1
+    assert "longer than the job's window of -1 minutes" in out
+
+
 def test_a_run_whose_rows_come_out_of_order_fails_and_names_the_first_difference(capsys):
     order = [task.key for task in nightly.job_tasks()]
     order[1], order[2] = order[2], order[1]
@@ -147,7 +178,7 @@ def deployed_warehouse():
     engine = DuckDBEngine.open()
     catalog.build(engine)
     plans.run_on_fixture(engine)
-    nightly.run_locally(engine)
+    nightly.run_locally(engine, readers_for=nightly.no_documents)  # the readers run around it, as in the build
     passages.run_on_fixture(engine)
     assertions.run_on_fixture(engine)
     return engine

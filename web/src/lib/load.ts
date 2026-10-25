@@ -15,16 +15,19 @@ export const SLOW_AFTER_MS = 2000;
 export const refusedAs = (load: Load<unknown>, code: string): boolean =>
   load.status === "error" && (load.error?.body as { code?: string } | undefined)?.code === code;
 
-export function useLoad<T>(path: string): [Load<T>, () => void] {
+// key reads the same path again when it changes, such as a planned package's time estimate after a save changes
+// what describes the package (ticket 26). null reads nothing, as for a page that cannot ask yet.
+export function useLoad<T>(path: string | null, key = ""): [Load<T>, () => void] {
   const [attempt, setAttempt] = useState(0);
   const [load, setLoad] = useState<Load<T>>({ status: "loading", slow: false });
 
   useEffect(() => {
     setAttempt(0);
     setLoad({ status: "loading", slow: false });
-  }, [path]);
+  }, [path, key]);
 
   useEffect(() => {
+    if (path === null) return;
     const controller = new AbortController();
     const slow = setTimeout(
       () => setLoad((current) => (current.status === "loading" ? { status: "loading", slow: true } : current)),
@@ -41,7 +44,7 @@ export function useLoad<T>(path: string): [Load<T>, () => void] {
       controller.abort();
       clearTimeout(slow);
     };
-  }, [path, attempt]);
+  }, [path, key, attempt]);
 
   const retry = useCallback(() => {
     setLoad((current) => (current.status === "error" ? { ...current, retrying: true } : current));

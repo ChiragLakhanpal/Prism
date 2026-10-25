@@ -45,6 +45,7 @@ from strata.config import ConfigError, SupplierMatching, Thresholds, load_suppli
 from strata.knowledge.suppliers.judge import Judge, JudgeError, Judgement, Question, Side
 from strata.knowledge.suppliers.matching import Pair, Record, candidate_pairs
 from strata.knowledge.suppliers.names import joint_venture_members
+from strata.lakehouse import rewrites
 from strata.lakehouse.engine import Engine
 
 RESOLVED_SOURCES = ("notices", "awards_fy2001_2016")  # the sources whose rows may lack a STEP supplier ID
@@ -452,7 +453,9 @@ def _resolution_row(run_id: str, item: Resolved) -> tuple:
 def run(engine: Engine, run_id: str, judge: Judge | None,
         clock: Callable[[], dt.datetime] = lambda: dt.datetime.now(dt.UTC),
         thresholds: Thresholds | None = None, model: SupplierMatching | None = None) -> int:
-    """Resolve every supplier row and write this run's pairs and resolution. Returns the rows written."""
+    """Resolve every supplier row and write this run's pairs and resolution, when they differ from the ones held
+    (leaving out the run's id and time, strata.lakehouse.rewrites). A rerun of the same run first removes what its
+    earlier try wrote, so a repaired night never holds its pairs twice. Returns the rows added or removed."""
     rows, routing, model = read_rows(engine), Routing.from_thresholds(thresholds or load_thresholds()), \
         model or load_supplier_matching()
     decisions, past = read_decisions(engine), read_past_judgements(engine)
@@ -463,10 +466,21 @@ def run(engine: Engine, run_id: str, judge: Judge | None,
                     judge.name, error)
         resolution = resolve(rows, routing, model, None, decisions, past)
     matched_at = clock()
-    written = engine.insert_rows("strata.ops.supplier_pairs", PAIR_COLUMNS,
-                                 [_pair_row(run_id, matched_at, pair) for pair in resolution.pairs])
-    written += engine.insert_rows("strata.silver.supplier_resolution", RESOLUTION_COLUMNS,
-                                  [_resolution_row(run_id, item) for item in resolution.rows])
+    pairs = [_pair_row(run_id, matched_at, pair) for pair in resolution.pairs]
+    resolved = [_resolution_row(run_id, item) for item in resolution.rows]
+    pair_stamps = tuple(PAIR_COLUMNS.index(column) for column in ("run_id", "matched_at", "public_from"))
+    changed = rewrites.differing(
+        rewrites.comparable(rewrites.held(engine, "strata.ops.supplier_pairs", PAIR_COLUMNS), pair_stamps),
+        rewrites.comparable(pairs, pair_stamps))
+    changed += rewrites.differing(
+        rewrites.comparable(rewrites.held(engine, "strata.silver.supplier_resolution", RESOLUTION_COLUMNS), (0,)),
+        rewrites.comparable(resolved, (0,)))
+    if not changed:
+        return 0
+    engine.run("DELETE FROM strata.ops.supplier_pairs WHERE run_id = :run_id", {"run_id": run_id})
+    engine.run("DELETE FROM strata.silver.supplier_resolution WHERE run_id = :run_id", {"run_id": run_id})
+    engine.insert_rows("strata.ops.supplier_pairs", PAIR_COLUMNS, pairs)
+    engine.insert_rows("strata.silver.supplier_resolution", RESOLUTION_COLUMNS, resolved)
     engine.run("DELETE FROM strata.ops.supplier_pairs WHERE run_id <> :run_id", {"run_id": run_id})
     engine.run("DELETE FROM strata.silver.supplier_resolution WHERE run_id <> :run_id", {"run_id": run_id})
-    return written
+    return changed

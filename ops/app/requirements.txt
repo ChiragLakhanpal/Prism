@@ -9,6 +9,10 @@ fpdf2==2.8.9
 defusedxml==0.7.1
 fonttools==4.67.0
 pillow==13.0.0
+# The language detector that reads which language a question was asked in (ticket 42; src/strata/knowledge/
+# language.py), with the one package it installs. Its model ships inside its wheel.
+py3langid==0.3.0
+numpy==2.5.4
 # What those three install, pinned at their uv.lock versions too, so the App runs the versions
 # the gate tested (uv export --frozen --no-dev --no-hashes --no-emit-project lists them).
 annotated-doc==0.0.5

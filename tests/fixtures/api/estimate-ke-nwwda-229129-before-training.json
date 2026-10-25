@@ -1,0 +1,850 @@
+{
+  "tool": "estimate_time",
+  "as_of": "2026-10-22",
+  "view": "staff",
+  "rows": [],
+  "coverage": {
+    "matched": 0,
+    "used": 0,
+    "not_used": []
+  },
+  "package": {
+    "step_reference": "KE-NWWDA-229129-CW-RFB",
+    "described": null
+  },
+  "comparables": {
+    "n": 48,
+    "signed": 44,
+    "still_open": 4
+  },
+  "estimate": null,
+  "difference": null,
+  "track_record": null,
+  "test_years": [],
+  "plan_dates": null,
+  "comparisons": [],
+  "options": null,
+  "axis_max_months": null,
+  "thresholds": {
+    "min_comparables": 20,
+    "min_subgroup": 20,
+    "min_unseen_packages": 20
+  },
+  "step_dates": {
+    "min_comparables": 20,
+    "middle_in10": 5,
+    "cautious_in10": 2,
+    "start_range": {
+      "from": "2025-10-22",
+      "to": "2031-10-22"
+    },
+    "method": "Request for Bids",
+    "dateable_n": 6,
+    "dated_n": {
+      "middle": 0,
+      "cautious": 0
+    },
+    "undated_n": 6,
+    "few_n": 6,
+    "none_dated": true,
+    "family": "goods",
+    "family_reason": null,
+    "basis": "delay",
+    "needs_start_date": false,
+    "start_date": null,
+    "steps": [
+      {
+        "step_key": "bid_invitation",
+        "is_anchor": false,
+        "comparables_n": 6,
+        "reached_n": 6,
+        "comparables": [
+          {
+            "step_reference": "KE-KIMAWASCO-158691-CW-RFB",
+            "evidence_id": "strata.gold.package:KE-KIMAWASCO-158691-CW-RFB",
+            "days": 9,
+            "still_open": false
+          },
+          {
+            "step_reference": "KE-KIMAWASCO-416959-CW-RFB",
+            "evidence_id": "strata.gold.package:KE-KIMAWASCO-416959-CW-RFB",
+            "days": 25,
+            "still_open": false
+          },
+          {
+            "step_reference": "KE-KIMAWASCO-142995-CW-RFB",
+            "evidence_id": "strata.gold.package:KE-KIMAWASCO-142995-CW-RFB",
+            "days": 51,
+            "still_open": false
+          },
+          {
+            "step_reference": "KE-CWSB-233052-CW-RFB",
+            "evidence_id": "strata.gold.package:KE-CWSB-233052-CW-RFB",
+            "days": 69,
+            "still_open": false
+          },
+          {
+            "step_reference": "KE-CWSB-232660-CW-RFB",
+            "evidence_id": "strata.gold.package:KE-CWSB-232660-CW-RFB",
+            "days": 84,
+            "still_open": false
+          },
+          {
+            "step_reference": "KE-KIMAWASCO-141042-CW-RFB",
+            "evidence_id": "strata.gold.package:KE-KIMAWASCO-141042-CW-RFB",
+            "days": 234,
+            "still_open": false
+          }
+        ],
+        "plan_first_date": "2021-04-28",
+        "plan_first_version_date": "2021-04-21",
+        "plan_latest_date": "2021-04-28",
+        "plan_latest_version_date": "2026-10-09",
+        "abstain_reason": "few_comparables",
+        "middle": {
+          "planned_date": null,
+          "days": null,
+          "days_relation": null,
+          "longer": null,
+          "in10": null
+        },
+        "cautious": {
+          "planned_date": null,
+          "days": null,
+          "days_relation": null,
+          "longer": null,
+          "in10": null
+        }
+      },
+      {
+        "step_key": "bidding_document_issued",
+        "is_anchor": false,
+        "comparables_n": 0,
+        "reached_n": 0,
+        "comparables": [],
+        "plan_first_date": null,
+        "plan_first_version_date": null,
+        "plan_latest_date": null,
+        "plan_latest_version_date": null,
+        "abstain_reason": "few_comparables",
+        "middle": {
+          "planned_date": null,
+          "days": null,
+          "days_relation": null,
+          "longer": null,
+          "in10": null
+        },
+        "cautious": {
+          "planned_date": null,
+          "days": null,
+          "days_relation": null,
+          "longer": null,
+          "in10": null
+        }
+      },
+      {
+        "step_key": "bid_opening",
+        "is_anchor": false,
+        "comparables_n": 6,
+        "reached_n": 6,
+        "comparables": [
+          {
+            "step_reference": "KE-KIMAWASCO-158691-CW-RFB",
+            "evidence_id": "strata.gold.package:KE-KIMAWASCO-158691-CW-RFB",
+            "days": 7,
+            "still_open": false
+          },
+          {
+            "step_reference": "KE-KIMAWASCO-416959-CW-RFB",
+            "evidence_id": "strata.gold.package:KE-KIMAWASCO-416959-CW-RFB",
+            "days": 26,
+            "still_open": false
+          },
+          {
+            "step_reference": "KE-KIMAWASCO-142995-CW-RFB",
+            "evidence_id": "strata.gold.package:KE-KIMAWASCO-142995-CW-RFB",
+            "days": 46,
+            "still_open": false
+          },
+          {
+            "step_reference": "KE-CWSB-233052-CW-RFB",
+            "evidence_id": "strata.gold.package:KE-CWSB-233052-CW-RFB",
+            "days": 64,
+            "still_open": false
+          },
+          {
+            "step_reference": "KE-CWSB-232660-CW-RFB",
+            "evidence_id": "strata.gold.package:KE-CWSB-232660-CW-RFB",
+            "days": 88,
+            "still_open": false
+          },
+          {
+            "step_reference": "KE-KIMAWASCO-141042-CW-RFB",
+            "evidence_id": "strata.gold.package:KE-KIMAWASCO-141042-CW-RFB",
+            "days": 227,
+            "still_open": false
+          }
+        ],
+        "plan_first_date": "2021-05-19",
+        "plan_first_version_date": "2021-04-21",
+        "plan_latest_date": "2021-05-19",
+        "plan_latest_version_date": "2026-10-09",
+        "abstain_reason": "few_comparables",
+        "middle": {
+          "planned_date": null,
+          "days": null,
+          "days_relation": null,
+          "longer": null,
+          "in10": null
+        },
+        "cautious": {
+          "planned_date": null,
+          "days": null,
+          "days_relation": null,
+          "longer": null,
+          "in10": null
+        }
+      },
+      {
+        "step_key": "bid_evaluation_report",
+        "is_anchor": false,
+        "comparables_n": 6,
+        "reached_n": 6,
+        "comparables": [
+          {
+            "step_reference": "KE-KIMAWASCO-158691-CW-RFB",
+            "evidence_id": "strata.gold.package:KE-KIMAWASCO-158691-CW-RFB",
+            "days": 10,
+            "still_open": false
+          },
+          {
+            "step_reference": "KE-KIMAWASCO-416959-CW-RFB",
+            "evidence_id": "strata.gold.package:KE-KIMAWASCO-416959-CW-RFB",
+            "days": 23,
+            "still_open": false
+          },
+          {
+            "step_reference": "KE-KIMAWASCO-142995-CW-RFB",
+            "evidence_id": "strata.gold.package:KE-KIMAWASCO-142995-CW-RFB",
+            "days": 47,
+            "still_open": false
+          },
+          {
+            "step_reference": "KE-CWSB-233052-CW-RFB",
+            "evidence_id": "strata.gold.package:KE-CWSB-233052-CW-RFB",
+            "days": 90,
+            "still_open": false
+          },
+          {
+            "step_reference": "KE-CWSB-232660-CW-RFB",
+            "evidence_id": "strata.gold.package:KE-CWSB-232660-CW-RFB",
+            "days": 204,
+            "still_open": false
+          },
+          {
+            "step_reference": "KE-KIMAWASCO-141042-CW-RFB",
+            "evidence_id": "strata.gold.package:KE-KIMAWASCO-141042-CW-RFB",
+            "days": 386,
+            "still_open": false
+          }
+        ],
+        "plan_first_date": "2021-05-26",
+        "plan_first_version_date": "2021-04-21",
+        "plan_latest_date": "2021-05-26",
+        "plan_latest_version_date": "2026-10-09",
+        "abstain_reason": "few_comparables",
+        "middle": {
+          "planned_date": null,
+          "days": null,
+          "days_relation": null,
+          "longer": null,
+          "in10": null
+        },
+        "cautious": {
+          "planned_date": null,
+          "days": null,
+          "days_relation": null,
+          "longer": null,
+          "in10": null
+        }
+      },
+      {
+        "step_key": "contract_signed",
+        "is_anchor": false,
+        "comparables_n": 6,
+        "reached_n": 6,
+        "comparables": [
+          {
+            "step_reference": "KE-CWSB-233052-CW-RFB",
+            "evidence_id": "strata.gold.package:KE-CWSB-233052-CW-RFB",
+            "days": 92,
+            "still_open": false
+          },
+          {
+            "step_reference": "KE-KIMAWASCO-416959-CW-RFB",
+            "evidence_id": "strata.gold.package:KE-KIMAWASCO-416959-CW-RFB",
+            "days": 163,
+            "still_open": false
+          },
+          {
+            "step_reference": "KE-CWSB-232660-CW-RFB",
+            "evidence_id": "strata.gold.package:KE-CWSB-232660-CW-RFB",
+            "days": 217,
+            "still_open": false
+          },
+          {
+            "step_reference": "KE-KIMAWASCO-158691-CW-RFB",
+            "evidence_id": "strata.gold.package:KE-KIMAWASCO-158691-CW-RFB",
+            "days": 354,
+            "still_open": false
+          },
+          {
+            "step_reference": "KE-KIMAWASCO-142995-CW-RFB",
+            "evidence_id": "strata.gold.package:KE-KIMAWASCO-142995-CW-RFB",
+            "days": 414,
+            "still_open": false
+          },
+          {
+            "step_reference": "KE-KIMAWASCO-141042-CW-RFB",
+            "evidence_id": "strata.gold.package:KE-KIMAWASCO-141042-CW-RFB",
+            "days": 417,
+            "still_open": false
+          }
+        ],
+        "plan_first_date": "2021-07-01",
+        "plan_first_version_date": "2021-04-21",
+        "plan_latest_date": "2021-07-01",
+        "plan_latest_version_date": "2026-10-09",
+        "abstain_reason": "few_comparables",
+        "middle": {
+          "planned_date": null,
+          "days": null,
+          "days_relation": null,
+          "longer": null,
+          "in10": null
+        },
+        "cautious": {
+          "planned_date": null,
+          "days": null,
+          "days_relation": null,
+          "longer": null,
+          "in10": null
+        }
+      },
+      {
+        "step_key": "contract_completed",
+        "is_anchor": false,
+        "comparables_n": 6,
+        "reached_n": 0,
+        "comparables": [
+          {
+            "step_reference": "KE-KIMAWASCO-416959-CW-RFB",
+            "evidence_id": "strata.gold.package:KE-KIMAWASCO-416959-CW-RFB",
+            "days": 603,
+            "still_open": true
+          },
+          {
+            "step_reference": "KE-CWSB-232660-CW-RFB",
+            "evidence_id": "strata.gold.package:KE-CWSB-232660-CW-RFB",
+            "days": 1505,
+            "still_open": true
+          },
+          {
+            "step_reference": "KE-CWSB-233052-CW-RFB",
+            "evidence_id": "strata.gold.package:KE-CWSB-233052-CW-RFB",
+            "days": 1527,
+            "still_open": true
+          },
+          {
+            "step_reference": "KE-KIMAWASCO-141042-CW-RFB",
+            "evidence_id": "strata.gold.package:KE-KIMAWASCO-141042-CW-RFB",
+            "days": 1891,
+            "still_open": true
+          },
+          {
+            "step_reference": "KE-KIMAWASCO-142995-CW-RFB",
+            "evidence_id": "strata.gold.package:KE-KIMAWASCO-142995-CW-RFB",
+            "days": 1898,
+            "still_open": true
+          },
+          {
+            "step_reference": "KE-KIMAWASCO-158691-CW-RFB",
+            "evidence_id": "strata.gold.package:KE-KIMAWASCO-158691-CW-RFB",
+            "days": 2009,
+            "still_open": true
+          }
+        ],
+        "plan_first_date": "2021-10-15",
+        "plan_first_version_date": "2021-04-21",
+        "plan_latest_date": "2021-10-15",
+        "plan_latest_version_date": "2026-10-09",
+        "abstain_reason": "few_comparables",
+        "middle": {
+          "planned_date": null,
+          "days": null,
+          "days_relation": null,
+          "longer": null,
+          "in10": null
+        },
+        "cautious": {
+          "planned_date": null,
+          "days": null,
+          "days_relation": null,
+          "longer": null,
+          "in10": null
+        }
+      }
+    ],
+    "longest": null,
+    "abstain_all": null,
+    "actual_steps_count": 4,
+    "track_record": null,
+    "coverage": {
+      "total": 48,
+      "used": 6,
+      "missing": 42,
+      "reason": "no_plan_dates",
+      "sources": [
+        "notices",
+        "awards",
+        "documents",
+        "projects"
+      ]
+    }
+  },
+  "sources": [
+    {
+      "key": "notices",
+      "dataset_name": "Procurement Notices"
+    },
+    {
+      "key": "awards",
+      "dataset_name": "Contract Awards in Investment Project Financing (Since FY 2020)"
+    },
+    {
+      "key": "documents",
+      "dataset_name": "Documents & Reports: Documents API"
+    },
+    {
+      "key": "projects",
+      "dataset_name": "World Bank Projects & Operations"
+    }
+  ],
+  "records_through": "2026-10-13",
+  "abstention": {
+    "reason": "asof_before_training",
+    "as_of": "2026-10-22"
+  },
+  "summary": {
+    "evidence_id": "strata.tools.estimate_time:KE-NWWDA-229129-CW-RFB@2026-10-22",
+    "public_from": "2026-10-22",
+    "source": {
+      "tool": "estimate_time",
+      "sources": [
+        "notices",
+        "awards",
+        "documents",
+        "projects"
+      ]
+    },
+    "estimate": null,
+    "difference": null,
+    "track_record": null,
+    "plan_dates": null,
+    "comparisons": [],
+    "options": null,
+    "comparables": {
+      "n": 48,
+      "signed": 44,
+      "still_open": 4
+    },
+    "coverage": {
+      "matched": 0,
+      "used": 0,
+      "not_used": []
+    },
+    "step_dates": {
+      "min_comparables": 20,
+      "middle_in10": 5,
+      "cautious_in10": 2,
+      "start_range": {
+        "from": "2025-10-22",
+        "to": "2031-10-22"
+      },
+      "method": "Request for Bids",
+      "dateable_n": 6,
+      "dated_n": {
+        "middle": 0,
+        "cautious": 0
+      },
+      "undated_n": 6,
+      "few_n": 6,
+      "none_dated": true,
+      "family": "goods",
+      "family_reason": null,
+      "basis": "delay",
+      "needs_start_date": false,
+      "start_date": null,
+      "steps": [
+        {
+          "step_key": "bid_invitation",
+          "is_anchor": false,
+          "comparables_n": 6,
+          "reached_n": 6,
+          "comparables": [
+            {
+              "step_reference": "KE-KIMAWASCO-158691-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-KIMAWASCO-158691-CW-RFB",
+              "days": 9,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-KIMAWASCO-416959-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-KIMAWASCO-416959-CW-RFB",
+              "days": 25,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-KIMAWASCO-142995-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-KIMAWASCO-142995-CW-RFB",
+              "days": 51,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-CWSB-233052-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-CWSB-233052-CW-RFB",
+              "days": 69,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-CWSB-232660-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-CWSB-232660-CW-RFB",
+              "days": 84,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-KIMAWASCO-141042-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-KIMAWASCO-141042-CW-RFB",
+              "days": 234,
+              "still_open": false
+            }
+          ],
+          "plan_first_date": "2021-04-28",
+          "plan_first_version_date": "2021-04-21",
+          "plan_latest_date": "2021-04-28",
+          "plan_latest_version_date": "2026-10-09",
+          "abstain_reason": "few_comparables",
+          "middle": {
+            "planned_date": null,
+            "days": null,
+            "days_relation": null,
+            "longer": null,
+            "in10": null
+          },
+          "cautious": {
+            "planned_date": null,
+            "days": null,
+            "days_relation": null,
+            "longer": null,
+            "in10": null
+          }
+        },
+        {
+          "step_key": "bidding_document_issued",
+          "is_anchor": false,
+          "comparables_n": 0,
+          "reached_n": 0,
+          "comparables": [],
+          "plan_first_date": null,
+          "plan_first_version_date": null,
+          "plan_latest_date": null,
+          "plan_latest_version_date": null,
+          "abstain_reason": "few_comparables",
+          "middle": {
+            "planned_date": null,
+            "days": null,
+            "days_relation": null,
+            "longer": null,
+            "in10": null
+          },
+          "cautious": {
+            "planned_date": null,
+            "days": null,
+            "days_relation": null,
+            "longer": null,
+            "in10": null
+          }
+        },
+        {
+          "step_key": "bid_opening",
+          "is_anchor": false,
+          "comparables_n": 6,
+          "reached_n": 6,
+          "comparables": [
+            {
+              "step_reference": "KE-KIMAWASCO-158691-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-KIMAWASCO-158691-CW-RFB",
+              "days": 7,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-KIMAWASCO-416959-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-KIMAWASCO-416959-CW-RFB",
+              "days": 26,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-KIMAWASCO-142995-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-KIMAWASCO-142995-CW-RFB",
+              "days": 46,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-CWSB-233052-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-CWSB-233052-CW-RFB",
+              "days": 64,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-CWSB-232660-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-CWSB-232660-CW-RFB",
+              "days": 88,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-KIMAWASCO-141042-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-KIMAWASCO-141042-CW-RFB",
+              "days": 227,
+              "still_open": false
+            }
+          ],
+          "plan_first_date": "2021-05-19",
+          "plan_first_version_date": "2021-04-21",
+          "plan_latest_date": "2021-05-19",
+          "plan_latest_version_date": "2026-10-09",
+          "abstain_reason": "few_comparables",
+          "middle": {
+            "planned_date": null,
+            "days": null,
+            "days_relation": null,
+            "longer": null,
+            "in10": null
+          },
+          "cautious": {
+            "planned_date": null,
+            "days": null,
+            "days_relation": null,
+            "longer": null,
+            "in10": null
+          }
+        },
+        {
+          "step_key": "bid_evaluation_report",
+          "is_anchor": false,
+          "comparables_n": 6,
+          "reached_n": 6,
+          "comparables": [
+            {
+              "step_reference": "KE-KIMAWASCO-158691-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-KIMAWASCO-158691-CW-RFB",
+              "days": 10,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-KIMAWASCO-416959-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-KIMAWASCO-416959-CW-RFB",
+              "days": 23,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-KIMAWASCO-142995-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-KIMAWASCO-142995-CW-RFB",
+              "days": 47,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-CWSB-233052-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-CWSB-233052-CW-RFB",
+              "days": 90,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-CWSB-232660-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-CWSB-232660-CW-RFB",
+              "days": 204,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-KIMAWASCO-141042-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-KIMAWASCO-141042-CW-RFB",
+              "days": 386,
+              "still_open": false
+            }
+          ],
+          "plan_first_date": "2021-05-26",
+          "plan_first_version_date": "2021-04-21",
+          "plan_latest_date": "2021-05-26",
+          "plan_latest_version_date": "2026-10-09",
+          "abstain_reason": "few_comparables",
+          "middle": {
+            "planned_date": null,
+            "days": null,
+            "days_relation": null,
+            "longer": null,
+            "in10": null
+          },
+          "cautious": {
+            "planned_date": null,
+            "days": null,
+            "days_relation": null,
+            "longer": null,
+            "in10": null
+          }
+        },
+        {
+          "step_key": "contract_signed",
+          "is_anchor": false,
+          "comparables_n": 6,
+          "reached_n": 6,
+          "comparables": [
+            {
+              "step_reference": "KE-CWSB-233052-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-CWSB-233052-CW-RFB",
+              "days": 92,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-KIMAWASCO-416959-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-KIMAWASCO-416959-CW-RFB",
+              "days": 163,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-CWSB-232660-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-CWSB-232660-CW-RFB",
+              "days": 217,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-KIMAWASCO-158691-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-KIMAWASCO-158691-CW-RFB",
+              "days": 354,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-KIMAWASCO-142995-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-KIMAWASCO-142995-CW-RFB",
+              "days": 414,
+              "still_open": false
+            },
+            {
+              "step_reference": "KE-KIMAWASCO-141042-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-KIMAWASCO-141042-CW-RFB",
+              "days": 417,
+              "still_open": false
+            }
+          ],
+          "plan_first_date": "2021-07-01",
+          "plan_first_version_date": "2021-04-21",
+          "plan_latest_date": "2021-07-01",
+          "plan_latest_version_date": "2026-10-09",
+          "abstain_reason": "few_comparables",
+          "middle": {
+            "planned_date": null,
+            "days": null,
+            "days_relation": null,
+            "longer": null,
+            "in10": null
+          },
+          "cautious": {
+            "planned_date": null,
+            "days": null,
+            "days_relation": null,
+            "longer": null,
+            "in10": null
+          }
+        },
+        {
+          "step_key": "contract_completed",
+          "is_anchor": false,
+          "comparables_n": 6,
+          "reached_n": 0,
+          "comparables": [
+            {
+              "step_reference": "KE-KIMAWASCO-416959-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-KIMAWASCO-416959-CW-RFB",
+              "days": 603,
+              "still_open": true
+            },
+            {
+              "step_reference": "KE-CWSB-232660-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-CWSB-232660-CW-RFB",
+              "days": 1505,
+              "still_open": true
+            },
+            {
+              "step_reference": "KE-CWSB-233052-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-CWSB-233052-CW-RFB",
+              "days": 1527,
+              "still_open": true
+            },
+            {
+              "step_reference": "KE-KIMAWASCO-141042-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-KIMAWASCO-141042-CW-RFB",
+              "days": 1891,
+              "still_open": true
+            },
+            {
+              "step_reference": "KE-KIMAWASCO-142995-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-KIMAWASCO-142995-CW-RFB",
+              "days": 1898,
+              "still_open": true
+            },
+            {
+              "step_reference": "KE-KIMAWASCO-158691-CW-RFB",
+              "evidence_id": "strata.gold.package:KE-KIMAWASCO-158691-CW-RFB",
+              "days": 2009,
+              "still_open": true
+            }
+          ],
+          "plan_first_date": "2021-10-15",
+          "plan_first_version_date": "2021-04-21",
+          "plan_latest_date": "2021-10-15",
+          "plan_latest_version_date": "2026-10-09",
+          "abstain_reason": "few_comparables",
+          "middle": {
+            "planned_date": null,
+            "days": null,
+            "days_relation": null,
+            "longer": null,
+            "in10": null
+          },
+          "cautious": {
+            "planned_date": null,
+            "days": null,
+            "days_relation": null,
+            "longer": null,
+            "in10": null
+          }
+        }
+      ],
+      "longest": null,
+      "abstain_all": null,
+      "actual_steps_count": 4,
+      "track_record": null,
+      "coverage": {
+        "total": 48,
+        "used": 6,
+        "missing": 42,
+        "reason": "no_plan_dates",
+        "sources": [
+          "notices",
+          "awards",
+          "documents",
+          "projects"
+        ]
+      }
+    }
+  },
+  "plan_date_choice": null
+}

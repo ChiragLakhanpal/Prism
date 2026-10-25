@@ -1,10 +1,13 @@
--- One row for each task of each run of the nightly job (docs/PLAN.md section 11). A task writes
--- its row when it finishes. Ticket 43 adds the quality checks for the Governance page.
+-- One row for each try of each task of each run of the nightly job (docs/PLAN.md section 11). A task
+-- writes its row when it finishes. A Databricks repair run keeps the run's id, so a task tried again has
+-- a row for each try, and its last try is its outcome. Each task's quality checks are in
+-- strata.ops.quality_checks (ticket 43).
 --
 -- run_id        the job run's id, or local-... for a run on this computer
 -- task_key      the task, as bundle/nightly.yml names it
 -- status        succeeded, or failed
--- rows_changed  rows the task added, changed or removed; 0 for a task that does nothing yet
+-- rows_changed  rows the task added, changed or removed; 0 on a night that changed nothing, except the
+--               rows a task adds to the run logs (strata.lakehouse.nightly.RUN_LOGS)
 -- started_at    when the task started, in UTC
 -- finished_at   when the task finished, in UTC
 -- public_from   the day the task finished, in UTC: the day this row became known (ADR 0002)

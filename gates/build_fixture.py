@@ -14,8 +14,8 @@ It builds four things, with no network:
   rows. The plan reader (src/strata/lakehouse/plans.py) runs over the recorded plans with the offline
   document source and layout parser, and fills
   bronze, silver.plan_versions, plan_listings, plan_rows, plan_steps, plan_step_delays and
-  plan_data_notes, and the ops tables, as ops/plans/run_live.py runs it on the workspace. Ticket 43
-  adds it to the nightly job.
+  plan_data_notes, and the ops tables, as the nightly job's parse_and_embed task runs it on the
+  workspace (strata.lakehouse.readers).
 - The Data readiness page as data_readiness_for builds it, in strata.ops.readiness_snapshot, written
   once the plan reader, the nightly job and the passage reader have all measured, as the dashboard
   reads it (strata.dashboard.snapshot).
@@ -52,7 +52,7 @@ from strata.fixture import recorded as fmt
 from strata.knowledge import assertions, links
 from strata.knowledge.lessons import propose
 from strata.knowledge.retrieval import weekly
-from strata.lakehouse import catalog, nightly, pages, passages, plans
+from strata.lakehouse import catalog, nightly, pages, passages, plans, readers
 from strata.lakehouse.catalog import CatalogError
 from strata.lakehouse.engine import DuckDBEngine, EngineError
 from strata.reader.documents import NotFetched
@@ -62,9 +62,9 @@ RUN_ID = "fixture"  # the run id the nightly job's pipeline runs and data readin
 FIXTURE_DB = ROOT / "data" / "out" / "fixture.duckdb"
 DEMO = load_slice().demo_plan.project_id  # the project whose Procurement Plans the fixture holds
 # The projects whose Procurement Plans the plan reader reads in the fixture: the demo plan's, then the
-# stress shelf's plan's (ticket 18). The other projects' plans are not recorded.
-PLAN_PROJECTS = tuple(dict.fromkeys([DEMO, *(item.project_id for item in load_slice().stress_shelf
-                                            if item.kind == "large_plan" and item.project_id)]))
+# stress shelf's plan's (ticket 18). The other projects' plans are not recorded. The nightly job's
+# parse_and_embed reads the same ones over the recorded fixture (strata.lakehouse.readers).
+PLAN_PROJECTS = readers.fixture_plan_projects()
 # The fixture's runs read pages recorded on October 23, 2026, and take their measures that morning,
 # at 05:00 in Washington, when the nightly job starts. Every run of the build takes them at the same
 # times, so a page or a test pinned to that day reads the same measures whatever day the gate runs.
@@ -131,8 +131,11 @@ def build(out=FIXTURE_DB, manifest=None, tables=catalog.TABLES, plans_for=PLAN_P
             for project_id in ((plans_for,) if isinstance(plans_for, str) else plans_for or ()):
                 plans.run_on_fixture(engine, project_id, manifest=manifest, clock=clock)
             if tables == catalog.TABLES:  # the lakehouse run needs the real table definitions
+                # The job's own parse_and_embed reads no documents here: the plan reader ran above, so gold's
+                # packages hold the plan rows from the first sync, and the passage reader runs below, as before.
                 nightly.run_locally(engine, run_id=RUN_ID,
-                                    fetch=lambda source, _engine: pages.recorded_pages(source, manifest), clock=clock)
+                                    fetch=lambda source, _engine: pages.recorded_pages(source, manifest), clock=clock,
+                                    readers_for=nightly.no_documents)
                 passages.run_on_fixture(engine, manifest=manifest, run_id=RUN_ID, clock=clock)
                 # The nightly job's propose_lessons task again, now that the passages are read (ticket 29):
                 # the batch model's recorded answers, the quote check and the review queue.

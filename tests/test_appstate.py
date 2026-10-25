@@ -111,6 +111,22 @@ def test_a_risk_selection_reaches_lakebase_as_a_merge_with_its_values_bound():
     assert (params["risk_key"], params["selected"]) == ("cost_estimates", False)
 
 
+def test_a_plan_date_choice_reaches_lakebase_as_a_merge_with_its_values_bound():
+    """Ticket 26 keeps one row per viewer and package, changed by a MERGE, so a new choice deletes nothing."""
+    from strata.packages.store import PackageStore
+
+    connection = FakeConnection()
+    store = PackageStore(lambda: LakebaseEngine(connection))
+    store._built = True
+    store.choose_plan_date("4021@1984", "step_reference", "KE-NWWDA-229129-CW-RFB", "middle",
+                           dt.datetime(2026, 10, 28, 9, tzinfo=dt.UTC))
+
+    [(sql, params)] = connection.statements
+    assert sql.startswith("MERGE INTO app.plan_date_choices AS t USING (SELECT %(viewer_id)s AS viewer_id")
+    assert "DELETE" not in sql
+    assert (params["package_key"], params["choice"]) == ("KE-NWWDA-229129-CW-RFB", "middle")
+
+
 def test_insert_rows_takes_only_plain_names():
     with pytest.raises(EngineError):
         LakebaseEngine(FakeConnection()).insert_rows("strata.app.planned_packages; DROP", ("package_id",), [("x",)])

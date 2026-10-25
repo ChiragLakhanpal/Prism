@@ -11,6 +11,7 @@ import shutil
 from pathlib import Path
 
 import pytest
+import yaml
 
 from strata import config
 from strata.lakehouse import bundle, catalog, nightly, schedule
@@ -61,9 +62,12 @@ def no_pages(source, engine):
     return ()
 
 
-# The tasks that have their work so far (tickets 07, 20, 22 and 28); ticket 43 gives the rest theirs. score counts
-# the rebidding labels on every run, and scores packages only with a champion from the live MLflow.
-WORKING = {"fetch_by_watermark", "bronze_to_gold", "relink", "detect_disagreements", "score", "measure_data_readiness"}
+# The tasks that change rows on a first run over the recorded fixture: every task but two. sync_index finds
+# strata.gold.passage already equal to the passages, because the passage reader syncs it before it measures, and
+# refresh_drafts finds no draft to mark (tests/test_refresh_drafts.py marks some). score scores every package's time
+# estimate and counts the rebidding labels on every run, and scores rebidding only with a champion from the live
+# MLflow.
+WORKING = set(PLAN_ORDER) - {"sync_index", "refresh_drafts"}
 
 
 def with_a_plan_read(engine, project_id="P156634"):
@@ -106,7 +110,7 @@ def test_the_disagreements_task_reads_the_records_assertions_and_asks_the_live_m
     monkeypatch.setattr("strata.knowledge.batch.from_environment", lambda: asked.append("live"))
     monkeypatch.setattr("strata.knowledge.batch.HeldAnswers", Replays)
     with_a_plan_read(engine)
-    nightly.run_locally(engine)
+    nightly.run_locally(engine, readers_for=nightly.no_documents)  # the records' assertions need no document
 
     assert asked == [] and replayed == []
     held = engine.run("SELECT count(*) FROM strata.gold.assertion WHERE form = :form",
@@ -126,6 +130,19 @@ def test_two_runs_keep_their_rows_apart(engine):
 
     assert first != second
     assert len(runs(engine, first)) == len(runs(engine, second)) == len(PLAN_ORDER)
+
+
+def test_the_data_go_stale_a_day_and_a_half_after_the_last_night_that_finished(engine):
+    """Briefs 06, 37 and 41: the freshness stamp and the stale alerts read when the job last finished its last task,
+    after every quality check, against config/thresholds.toml's nightly.stale_after_hours (36)."""
+    finished = dt.datetime(2026, 10, 24, 7, 30, tzinfo=dt.UTC)
+
+    assert nightly.freshness(engine, finished) == nightly.Freshness(None, True)
+
+    nightly.main(["--task", "refresh_drafts", "--run-id", "1", "--src", "src"], engine, no_pages, lambda: finished)
+
+    assert nightly.freshness(engine, finished + dt.timedelta(hours=36)) == nightly.Freshness(finished, False)
+    assert nightly.freshness(engine, finished + dt.timedelta(hours=37)).stale
 
 
 def test_a_task_run_as_the_job_runs_it_fetches_from_the_live_apis(engine, monkeypatch):
@@ -173,6 +190,132 @@ def test_the_jobs_entry_script_does_without_a_file_location():
 
     assert "__file__" not in script.replace('"__file__"', "")
     assert all("--src" in task.parameters for task in nightly.job_tasks())
+
+
+def test_each_task_reads_its_keys_from_the_job_s_secret_scope_and_never_from_its_parameters():
+    """A job reads its Azure OpenAI key from the secret scope (ops/dayone/dayone.toml), never from the env file or
+    the job's parameters. A key the task's environment already holds stays as it is, and one the scope lacks is
+    left out."""
+    held = {"AZURE_OPENAI_ENDPOINT": "https://wb-strata.openai.azure.com/openai/v1",
+            "AZURE_OPENAI_API_KEY": "not-a-real-key", "FOUNDRY_TENANT_ID": "from-the-scope"}
+
+    def get(scope, key):
+        if scope != "strata" or key not in held:
+            raise LookupError(f"Secret does not exist with scope: {scope} and key: {key}")
+        return held[key]
+
+    environment = {"FOUNDRY_TENANT_ID": "already-set"}
+    found = nightly.keys_from_scope(get, "strata", environment)
+
+    assert found == ["AZURE_OPENAI_ENDPOINT", "AZURE_OPENAI_API_KEY"]
+    assert environment == {**held, "FOUNDRY_TENANT_ID": "already-set"}
+    for task in nightly.job_tasks():
+        assert task.parameters[task.parameters.index("--secret-scope") + 1] == "${var.secret_scope}"
+    assert bundle.load().data["variables"]["secret_scope"]["default"] == "strata"
+
+
+def test_sync_index_on_the_workspace_syncs_the_ai_search_index_the_bundle_names(engine, monkeypatch):
+    """The AI Search endpoint is no secret, so the job passes it as a parameter from the bundle variable the deploy
+    fills (review B4), and sync_index asks that index to sync from strata.gold.passage."""
+    from strata.lakehouse import readers
+
+    synced = []
+    monkeypatch.setattr(readers, "_index", lambda endpoint: lambda engine: synced.append(endpoint))
+    nightly.main(["--task", "sync_index", "--run-id", "1", "--src", "src", "--secret-scope", "strata",
+                  "--search-endpoint", "strata-search"], engine)
+
+    assert synced == ["strata-search"]
+    for task in nightly.job_tasks():
+        assert task.parameters[task.parameters.index("--search-endpoint") + 1] == "${var.ai_search_endpoint}"
+    assert "AI_SEARCH_ENDPOINT" not in nightly.SCOPE_KEYS
+
+
+@pytest.mark.parametrize("held, posted", [
+    (False, ["/api/2.0/vector-search/indexes"]),
+    (True, ["/api/2.0/vector-search/indexes/strata.gold.passage_index/sync"]),
+])
+def test_sync_index_makes_a_missing_index_without_asking_it_to_sync_and_syncs_one_it_finds(held, posted):
+    """A new TRIGGERED Delta Sync index runs its first sync as it is made, and the workspace refuses a sync
+    request while the index is still being made. So the job asks only an index it found to sync, as
+    ops/documents/run_live.py does, and the first live night does not stop at sync_index (review r2 B1)."""
+    from strata.lakehouse import readers
+
+    requests, statements = [], []
+
+    def workspace(method, path, body=None):
+        requests.append((method, path))
+        if method == "GET" and not held:
+            raise LookupError("Vector search index strata.gold.passage_index does not exist")
+        return {}
+
+    class Engine:
+        def run(self, sql):
+            statements.append(sql)
+
+    readers._index("strata-search", transport=workspace)(Engine())
+
+    assert [path for method, path in requests if method == "POST"] == posted
+    assert statements == ["ALTER TABLE strata.gold.passage SET TBLPROPERTIES (delta.enableChangeDataFeed = true)"]
+
+
+def test_a_live_score_task_replays_the_signals_for_their_track_record_and_an_offline_one_does_not(engine, monkeypatch):
+    """Ticket 37 left the signals' track record to the score task (strata.estimates.signals_track). Its replay
+    dates are fixed past dates, so a second live night within signals.track_record_every_days keeps the stored
+    record instead of replaying it again inside the job's window (review B6)."""
+    from strata.estimates import signals_track, tracking
+
+    experiments = []
+
+    class Tracker(tracking.OfflineTracker):
+        def __init__(self, experiment, mkdirs=None):
+            super().__init__()
+            experiments.append(experiment)
+
+    monkeypatch.setattr(tracking, "MlflowTracker", Tracker)
+    night = dt.datetime(2026, 10, 24, 7, tzinfo=dt.UTC)
+
+    nightly.main(["--task", "score", "--run-id", "offline", "--src", "src"], engine, no_pages, lambda: night)
+    assert signals_track.stored(engine) is None and experiments == []
+
+    nightly.main(["--task", "score", "--run-id", "1", "--src", "src"], engine, clock=lambda: night)
+    first = signals_track.stored(engine)
+    assert first is not None and first["ran_on"] == "2026-10-24"
+    assert config.load_time_estimate().experiment in experiments
+    assert runs(engine, "1")[0][2] > 0  # the replay's rows count as rows changed
+
+    days = config.load_thresholds().value("signals.track_record_every_days")
+    nightly.main(["--task", "score", "--run-id", "2", "--src", "src"], engine,
+                 clock=lambda: night + dt.timedelta(days=days - 1))
+    assert signals_track.stored(engine)["run_id"] == first["run_id"]
+
+    nightly.main(["--task", "score", "--run-id", "3", "--src", "src"], engine,
+                 clock=lambda: night + dt.timedelta(days=days))
+    assert signals_track.stored(engine)["run_id"] != first["run_id"]
+
+
+# ── Concurrency ──────────────────────────────────────────────────────────
+
+def test_the_job_never_runs_more_tasks_at_once_than_the_workspace_allows():
+    """docs/PLAN.md section 2: the shared workspace runs five job tasks at once, for Strata and fairshare together.
+    The tasks form one chain and the job allows one run at a time, so it never runs more than one."""
+    allowed = config.load_thresholds().value("nightly.max_concurrent_tasks")
+
+    assert (nightly.most_at_once(), allowed) == (1, 5)
+    assert bundle.load().resources("jobs")[nightly.JOB]["max_concurrent_runs"] == 1
+
+
+def test_a_job_whose_tasks_fan_out_past_the_limit_is_caught(tmp_path):
+    """Six tasks that each wait only on the fetch could all run at once, one more than the workspace allows."""
+    shutil.copy(ROOT / "databricks.yml", tmp_path)
+    shutil.copytree(ROOT / "bundle", tmp_path / "bundle")
+    job_file = tmp_path / "bundle" / "nightly.yml"
+    declared = yaml.safe_load(job_file.read_text())
+    for task in declared["resources"]["jobs"]["nightly"]["tasks"]:
+        if task["task_key"] in ("sync_index", "relink", "propose_lessons", "detect_disagreements", "score"):
+            task["depends_on"] = [{"task_key": "bronze_to_gold"}]
+    job_file.write_text(yaml.safe_dump(declared))
+
+    assert nightly.most_at_once(bundle.load(tmp_path)) == 6
 
 
 # ── The window ───────────────────────────────────────────────────────────

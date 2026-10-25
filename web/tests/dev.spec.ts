@@ -48,6 +48,8 @@ test("in the development build, a saved package opened by its address shows sect
     "/api/planned-packages/pkg-000000000001/criteria": { body: await recorded("criteria-summary-planned-rural-roads.json") },
     // Ticket 36: the page asks whether your team has suggested PPSD rows open on this package.
     "/api/drafts/existing": { body: '{"draft":null}' },
+    // Section 1's time estimate (ticket 26) is read with the page, so lane 2 is ready once the plan is added.
+    "/api/planned-packages/pkg-000000000001/estimate": { body: await recorded("estimate-planned-rural-roads.json") },
   });
 
   await page.goto("/packages/pkg-000000000001");
