@@ -8,6 +8,7 @@ never from the code.
 """
 
 import datetime as dt
+import json
 import re
 import shutil
 import tomllib
@@ -199,6 +200,50 @@ def test_each_side_is_a_citable_record_and_a_side_read_from_a_passage_carries_it
                                                                          'nested_rows = ["both_sides"]'))
     with pytest.raises(config.ConfigError, match="both_sides, which row_fields does not list"):
         config.load_tools(path)
+
+
+def without_words(result) -> dict:
+    """The result with each side's words and the shield's marks taken out: everything else the tool returned."""
+    hidden = ("text", "quote", "text_left_out")
+    rows = [{**row, "sides": [{key: value for key, value in side.items() if key not in hidden} for side in row["sides"]]}
+            for row in result["rows"]]
+    coverage = {**result["coverage"], "not_used": [entry for entry in result["coverage"]["not_used"]
+                                                   if entry["reason"] not in ("prompt_shields_hit", "not_screened")]}
+    return {**result, "rows": rows, "coverage": coverage}
+
+
+def test_a_side_whose_passage_prompt_shields_flagged_or_never_screened_comes_without_its_words(fixture_db, tmp_path):
+    """Ticket 64 (ticket 20's verify V1): a side hands the agent its passage's words, so it follows search_passages'
+    rule. On a copy of the fixture, Prompt Shields is made to have found an attack in ISR 7's passage and to have
+    never screened paragraph 78's. Neither passage's words reach the agent through the tool: each side keeps its
+    values, dates and evidence id, gives no text and no quote, and names why, and the coverage line counts each
+    passage under search_passages' reason. Nothing else the tool returned changes."""
+    copy = tmp_path / "fixture.duckdb"
+    shutil.copy(fixture_db, copy)
+    flagged, unscreened = "26733307/v1/s4", "31525018/v1/78"
+
+    with DuckDBEngine.open(copy) as engine:
+        before = get_disagreements(engine, subject_id="P130164", as_of="2026-10-23")
+        words = dict(engine.run("SELECT passage_id, text FROM strata.gold.passage WHERE passage_id IN (:a, :b)",
+                                {"a": flagged, "b": unscreened}).rows)
+        engine.run("UPDATE strata.gold.passage SET attack_detected = true WHERE passage_id = :id", {"id": flagged})
+        engine.run("UPDATE strata.gold.passage SET attack_detected = NULL WHERE passage_id = :id", {"id": unscreened})
+        after = get_disagreements(engine, subject_id="P130164", as_of="2026-10-23")
+
+    [row] = about(after, "pdo_progress")
+    isr_7, paragraph = row["sides"]
+    assert (isr_7["text"], isr_7["quote"], isr_7["text_left_out"]) == (None, None, "prompt_shields_hit")
+    assert (paragraph["text"], paragraph["quote"], paragraph["text_left_out"]) == (None, None, "not_screened")
+    sent = json.dumps(after)
+    assert words[flagged] not in sent and words[unscreened] not in sent
+    assert TRUTH["icr-para-78"]["quote"] not in " ".join(sent.split())
+    assert after["coverage"]["not_used"] == [
+        {"reason": "prompt_shields_hit", "count": 1, "evidence_ids": [f"strata.gold.passage:{flagged}"]},
+        {"reason": "not_screened", "count": 1, "evidence_ids": [f"strata.gold.passage:{unscreened}"]}]
+    # The other sides keep their words, and every value, date, count and id is what the tool returned before.
+    assert all(side["text"] and side["text_left_out"] is None for row in about(after, "efficiency") for side in row["sides"])
+    assert all(side["text_left_out"] is None for row in before["rows"] for side in row["sides"])
+    assert without_words(after) == without_words(before)
 
 
 # ── Ties between records ─────────────────────────────────────────────────

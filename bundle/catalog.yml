@@ -40,7 +40,11 @@ resources:
       catalog_name: ${resources.catalogs.strata.name}
       comment: Data readiness measures, pipeline runs, agent runs, drafts, feedback, evaluation results and cost.
       # SELECT here reaches every future table in strata.ops. A table that holds uploads (CLAUDE.md
-      # rule 8) needs a row filter on the uploader's team, or a schema without this grant.
+      # rule 8) needs a row filter on the uploader's team, or a schema without this grant. A column
+      # that says who sent a passage report or asked a question carries a column mask instead, so
+      # readers read NULL there: src/strata/lakehouse/masks.py lists those columns, and
+      # ops/app/deploy_app.py puts the masks on, because only it knows the app's principal (ticket 64).
+      # Add a new such column to that list, not a narrower grant here.
       grants:
         - principal: ${var.readers}
           privileges: [USE_SCHEMA, SELECT]

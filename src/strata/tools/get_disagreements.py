@@ -28,6 +28,12 @@ The registry returns the trajectories and the rejected count as one more citable
 A report re-issued under the same number replaces its earlier version from the day the re-issue became
 public: a disagreement with a replaced side is left out of current answers, and the coverage line counts it.
 
+A side hands the agent its passage's words, so it follows search_passages' rule (strata.knowledge.shields.held_back;
+ticket 64): when Prompt Shields found a prompt attack in the passage as it was read in, or never screened it, the
+side keeps its values, dates and evidence id but gives no text and no quote, text_left_out names the reason, and the
+coverage line counts each such passage once under that reason, as search_passages does. The disagreement itself
+stays, so every number the tool returns is the same.
+
 The call's view (staff, piu or public) is returned with the result but not yet applied: until ticket 40
 applies each view's rules, every view gets the World Bank staff result.
 """
@@ -38,6 +44,7 @@ import datetime as dt
 from importlib import resources
 
 from strata.config import load_ladder
+from strata.knowledge import shields
 from strata.knowledge.assertions import (CONTRACT_SIGNING, PASSAGES, REPORT_PERIOD, WHOLE_PROJECT, Assertion, from_row,
                                         overlap, typed)
 from strata.tools.registry import Call
@@ -74,6 +81,17 @@ def _boolean(value) -> bool | None:
     return None if value is None else value if isinstance(value, bool) else str(value).lower() == "true"
 
 
+def _passage(row: dict) -> dict:
+    """What a side gives of the passage it rests on: its paragraph, printed page, document key and text, and, when
+    Prompt Shields found an attack in it or never screened it, the reason in place of its text. A record rests on
+    no passage, so all of these are empty."""
+    found = {key: row[key] for key in PASSAGE_FIELDS}
+    found["text_left_out"] = shields.held_back(row["attack_detected"]) if row["text"] is not None else None
+    if found["text_left_out"]:
+        found["text"] = None
+    return found
+
+
 def _side(assertion: Assertion, moment: dt.date | None, passage: dict) -> dict:
     return {
         "assertion_id": assertion.assertion_id,
@@ -95,13 +113,16 @@ def _side(assertion: Assertion, moment: dt.date | None, passage: dict) -> dict:
         "paragraph_numbered": _boolean(passage.get("paragraph_numbered")),
         "printed_page": passage.get("printed_page"),
         "doc_key": passage.get("doc_key"),
-        # The passage's text, which a claim quotes from; empty for a record, which backs its own values.
+        # The passage's text, which a claim quotes from; empty for a record, which backs its own values, and for a
+        # passage in which Prompt Shields found an attack or that it never screened: text_left_out says which.
         "text": passage.get("text"),
+        "text_left_out": passage.get("text_left_out"),
         "field_name": assertion.field_name,
         "value": assertion.value,
         "value_form": assertion.value_form,
         "judgment": assertion.judgment,
-        "quote": assertion.quote,
+        # The quote is words of the passage, so it is kept from the agent with the passage's text.
+        "quote": None if passage.get("text_left_out") else assertion.quote,
         "period_start": _iso(assertion.period_start),
         "period_end": _iso(assertion.period_end),
         "made_at": _iso(assertion.made_at),
@@ -193,7 +214,7 @@ def get_disagreements(call: Call, subject_id: str, attribute: str | None = None)
     held = _rows(call, "assertions.sql", as_of=call.as_of, passages=f"{PASSAGES}:", **common)
     assertions = [from_row(row) for row in held]
     by_id = {assertion.assertion_id: assertion for assertion in assertions}
-    passages = {row["assertion_id"]: {key: row[key] for key in PASSAGE_FIELDS} for row in held}
+    passages = {row["assertion_id"]: _passage(row) for row in held}
     current = [assertion for assertion in assertions if _current(assertion, call.as_of)
                and (attribute is None or assertion.attribute == attribute)]
     reasons = [{"reason": row["reason"], "count": int(row["rejected"])}
@@ -207,6 +228,12 @@ def get_disagreements(call: Call, subject_id: str, attribute: str | None = None)
             for row in found if row not in replaced]
     not_used = [{"reason": "replaced_by_later_version", "count": len(replaced),
                  "evidence_ids": [f"{TABLE}:{row['disagreement_id']}" for row in replaced]}] if replaced else []
+    left_out: dict[str, list[str]] = {}
+    for side in (side for row in rows for side in row["sides"] if side["text_left_out"]):
+        ids = left_out.setdefault(side["text_left_out"], [])
+        if side["evidence_id"] not in ids:
+            ids.append(side["evidence_id"])
+    not_used += shields.coverage_entries(left_out)
     abstention = None if current or rows else {"reason": "no_assertions", "subject_id": subject_id}
     return {"rows": rows, "coverage": {"matched": len(found), "used": len(rows), "not_used": not_used},
             "abstention": abstention, "subject": subject, "trajectories": [] if abstention else trajectories(current),

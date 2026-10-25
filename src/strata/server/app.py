@@ -869,12 +869,23 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                     close()
         return read_for(what, viewer, run)
 
+    def reports_me(viewer: Viewer) -> dict:
+        """Passage reports' part of the Lessons frame. Only the app's own identity reads who sent each report
+        (strata.lakehouse.masks), so a passage reviewer's count of reports waiting for them is read as the app."""
+        record = feedback_record() if feedback_record is not None and passage_reports.reviewer(viewer) else None
+        try:
+            return passage_reports.me(viewer, record)
+        finally:
+            close = getattr(record, "close", None)
+            if callable(close):
+                close()
+
     @app.get("/api/lessons/me")
     def lessons_me(viewer: Viewer = Depends(current_viewer)):
         def read(engine: Engine) -> dict:
             # Each Lessons page the viewer may open, with its count, so the frame decides its sub-tabs before
             # any content renders (the 32 brief, section 2.3): Passage reports and Judging join brief 29's tabs.
-            found = {**lessons.me(engine, viewer), **passage_reports.me(engine, viewer), **judging.me(engine, viewer)}
+            found = {**lessons.me(engine, viewer), **reports_me(viewer), **judging.me(engine, viewer)}
             found["tabs"] = [*found["tabs"], *(["reports"] if found["can_review_reports"] else []),
                              *(["judging"] if found["is_judge"] else [])]
             return found

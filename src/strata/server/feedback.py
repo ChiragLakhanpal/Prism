@@ -24,9 +24,11 @@ Lessons > Judging, for query judges (403 not_a_judge):
   pool in the judge's own order, never a rank, score or setup. PUT .../passages/{passage_id} takes {grade},
   refused for a query that is not the judge's (not_assigned) or whose grades are locked (locked).
 
-Every read is the viewer's, with their own token; every write is made by the app's own service principal (record),
-with the viewer recorded in the row, so no one needs write access to the loop's tables outside the app. Without
-the app's own identity, nothing is recorded (503 not_recorded).
+Every write is made by the app's own service principal (record), with the viewer recorded in the row, so no one
+needs write access to the loop's tables outside the app. Who sent each passage report and who asked each question
+are masked for every reader (strata.lakehouse.masks; ticket 64), so the passage report routes read the reports and
+decisions as the app's own service principal too, and the passages and everything else with the viewer's own token.
+Without the app's own identity, nothing is recorded and no passage report is read (503 not_recorded).
 """
 
 from __future__ import annotations
@@ -107,8 +109,10 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, record: Callable[[
             return refused(401, "no_identity")
         return on_data(what, viewer, work)
 
-    def write(what: str, viewer: Viewer, work: Callable[[Engine, Engine], object]):
-        """A write: read as the viewer and written as the app's own service principal, with the viewer in the row."""
+    def recorded(what: str, viewer: Viewer, work: Callable[[Engine, Engine], object]):
+        """The loop's record: the viewer's engine for what the viewer may read, such as the passages, and the app's own
+        service principal's for the rows it writes, with the viewer in the row, and for the passage reports it reads
+        back, which only it may read in full."""
         if not viewer.signed_in:
             return refused(401, "no_identity")
         if record is None:
@@ -132,39 +136,41 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, record: Callable[[
     def send_report(body: FeedbackRequest, viewer: Viewer = Depends(current_viewer)):
         if body.view != "staff":
             return refused(403, "preview")
-        return write(f"a passage report on {body.evidence_id}", viewer,
-                     lambda engine, writer: reports.send(engine, viewer, body.model_dump(), body.view, writer))
+        return recorded(f"a passage report on {body.evidence_id}", viewer,
+                        lambda _engine, writer: reports.send(viewer, body.model_dump(), body.view, writer))
 
     @app.get("/api/feedback")
     def my_report(evidence_id: str = Query(min_length=1, max_length=512), run_id: str = Query(min_length=1, max_length=128),
                   viewer: Viewer = Depends(current_viewer)):
-        return read(f"the viewer's report on {evidence_id}", viewer,
-                    lambda engine: reports.mine(engine, viewer, evidence_id, run_id))
+        return recorded(f"the viewer's report on {evidence_id}", viewer,
+                        lambda _engine, the_app: reports.mine(viewer, evidence_id, run_id, the_app))
 
     @app.post("/api/feedback/{report_id}/withdraw")
     def withdraw_report(report_id: str, viewer: Viewer = Depends(current_viewer)):
-        return write(f"withdrawing {report_id}", viewer,
-                     lambda engine, writer: reports.withdraw(engine, viewer, report_id, writer))
+        return recorded(f"withdrawing {report_id}", viewer,
+                        lambda _engine, writer: reports.withdraw(viewer, report_id, writer))
 
     # ── Lessons > Passage reports ────────────────────────────────────────
 
     @app.get("/api/passage-reports")
     def passage_reports(page: int = Query(1, ge=1, le=10_000), viewer: Viewer = Depends(current_viewer)):
-        return read("the passage reports", viewer, lambda engine: reports.queue(engine, viewer, page))
+        return recorded("the passage reports", viewer,
+                        lambda engine, the_app: reports.queue(engine, viewer, the_app, page))
 
     @app.get("/api/passage-reports/{group_id}")
     def passage_report(group_id: str, viewer: Viewer = Depends(current_viewer)):
-        return read(f"passage report {group_id}", viewer, lambda engine: reports.item(engine, viewer, group_id))
+        return recorded(f"passage report {group_id}", viewer,
+                        lambda engine, the_app: reports.item(engine, viewer, group_id, the_app))
 
     @app.post("/api/passage-reports/{group_id}/decide")
     def decide_reports(group_id: str, body: DecideRequest, viewer: Viewer = Depends(current_viewer)):
-        return write(f"a decision on {group_id}", viewer,
-                     lambda engine, writer: reports.decide(engine, viewer, group_id, body.model_dump(), writer))
+        return recorded(f"a decision on {group_id}", viewer,
+                        lambda engine, writer: reports.decide(engine, viewer, group_id, body.model_dump(), writer))
 
     @app.post("/api/passage-reports/{group_id}/reopen")
     def reopen_reports(group_id: str, body: ReopenRequest, viewer: Viewer = Depends(current_viewer)):
-        return write(f"reopening {group_id}", viewer,
-                     lambda engine, writer: reports.reopen(engine, viewer, group_id, body.reason or "", writer))
+        return recorded(f"reopening {group_id}", viewer,
+                        lambda engine, writer: reports.reopen(engine, viewer, group_id, body.reason or "", writer))
 
     # ── Lessons > Judging ────────────────────────────────────────────────
 
@@ -179,5 +185,5 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, record: Callable[[
 
     @app.put("/api/judging/queries/{query_id}/passages/{passage_id:path}")
     def grade_passage(query_id: str, passage_id: str, body: GradeRequest, viewer: Viewer = Depends(current_viewer)):
-        return write(f"a grade on {query_id}", viewer,
-                     lambda engine, writer: judging.grade(engine, viewer, query_id, passage_id, body.grade, writer))
+        return recorded(f"a grade on {query_id}", viewer,
+                        lambda engine, writer: judging.grade(engine, viewer, query_id, passage_id, body.grade, writer))
