@@ -26,17 +26,22 @@
   "more": [
     {
       "kind": "isrs",
-      "count": 12
+      "count": 12,
+      "unread": 12
     },
     {
       "kind": "plans",
-      "count": 5
+      "count": 5,
+      "unread": 5
     },
     {
       "kind": "documents",
-      "count": 24
+      "count": 24,
+      "unread": 24
     }
   ],
+  "lines": [],
+  "lines_hint": false,
   "finding": {
     "contracts": 0,
     "paragraphs": 0,
@@ -45,8 +50,8 @@
     "paragraph_items": [],
     "document_items": []
   },
-  "shown": 2,
-  "total": 43,
+  "shown": 1,
+  "total": 42,
   "threshold": "0.50",
   "coverage": {
     "read": 1,

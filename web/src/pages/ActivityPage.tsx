@@ -17,7 +17,7 @@ import { useEffect, useRef, type ReactNode } from "react";
 import { Breadcrumb } from "../components/Breadcrumb";
 import { EmptyState } from "../components/Card";
 import { ContractTrail } from "../components/ContractTrail";
-import { Fill } from "../components/Fill";
+import { Fill, Joined } from "../components/Fill";
 import { LoadError } from "../components/LoadError";
 import { Num } from "../components/Num";
 import { ProjectId, ProjectIdText } from "../components/ProjectId";
@@ -31,6 +31,7 @@ import { setPageTitle } from "../lib/title";
 import { amountText, type LeadPart, type Trail } from "../lib/trail";
 import { withReadParams } from "../lib/view";
 import { fill } from "../routes";
+import { DocumentColumn } from "./DraftPage";
 
 const words = copy.activity;
 
@@ -58,9 +59,10 @@ function leadPart(part: LeadPart, trail: Trail): ReactNode {
   if (part.kind === "signed") {
     const kind = part.record_noun === "award notice" ? words.recordKind.award_notice : words.recordKind.signed;
     const tooltip = words.fromRecord(kind, part.reference);
+    // A contract whose record gives no amount says only when it was signed.
     return (
       <Fill
-        template={words.leadSigned}
+        template={part.amount ? words.leadSigned : words.leadSignedNoAmount}
         slots={{
           signed_date: <Num date={part.date} check={{ tooltip, onOpen: open(part.evidence_id) }} />,
           amount: part.amount ? <Num written={amountText(part.amount, part.currency)} check={{ tooltip, onOpen: open(part.evidence_id) }} /> : "",
@@ -101,20 +103,18 @@ function Lead({ trail }: { trail: Trail }) {
           </>
         )}
       </p>
-      {(lead.bids || lead.paragraphs !== null) && (
+      {(lead.bids.length > 0 || lead.paragraphs !== null) && (
         <p className="mt-2 text-body text-ink">
-          {lead.bids && (
-            <Fill
-              template={words.leadBids(lead.bids.count === 1, lead.bids.proposals)}
-              slots={{
-                count: <Num count={lead.bids.count} check={{ tooltip: words.fromAwardNotice(lead.bids.notice_id), onOpen: open(lead.bids.evidence_id) }} />,
-              }}
-            />
-          )}
-          {lead.bids && lead.paragraphs !== null && " "}
+          {lead.bids.length > 0 && <LeadBids trail={trail} />}
+          {lead.bids.length > 0 && lead.paragraphs !== null && " "}
           {lead.paragraphs !== null &&
             (lead.paragraphs > 0 ? (
-              <Fill template={words.leadParagraphs(lead.paragraphs === 1)} slots={{ count: <Num count={lead.paragraphs} check={{ tooltip: words.fromParagraphs }} /> }} />
+              <Fill
+                template={words.leadParagraphs(lead.paragraphs === 1, lead.many_contracts)}
+                slots={{ count: <Num count={lead.paragraphs} check={{ tooltip: words.fromParagraphs }} /> }}
+              />
+            ) : lead.many_contracts ? (
+              words.leadNoParagraphsMany
             ) : (
               words.leadNoParagraphs
             ))}
@@ -123,6 +123,18 @@ function Lead({ trail }: { trail: Trail }) {
       <p className="mt-4 text-caption text-ink-muted">{copy.trail.legend}</p>
     </div>
   );
+}
+
+// The bids each award notice listed: "The award notice listed 11 bids.", or with two notices, "The award notices
+// listed five and four bids." Each count opens its notice.
+function LeadBids({ trail }: { trail: Trail }) {
+  const listed = trail.lead.bids;
+  const proposals = listed[0].proposals;
+  const count = (bids: (typeof listed)[number]) => (
+    <Num count={bids.count} check={{ tooltip: words.fromAwardNotice(bids.notice_id), onOpen: open(bids.evidence_id) }} />
+  );
+  if (listed.length === 1) return <Fill template={words.leadBids(listed[0].count === 1, proposals)} slots={{ count: count(listed[0]) }} />;
+  return <Fill template={words.leadBidsMany(proposals)} slots={{ counts: <Joined items={listed.map(count)} /> }} />;
 }
 
 function Pairs({ trail }: { trail: Trail }) {
@@ -145,9 +157,9 @@ function Pairs({ trail }: { trail: Trail }) {
 // The labelled pairs while the activity loads, above the page's purpose, as the loaded page has them.
 function PairsSkeleton() {
   return (
-    <div aria-hidden="true" className="mt-2 flex gap-6">
-      <SkeletonText widths={["w-24", "w-48"]} />
-      <SkeletonText widths={["w-32", "w-56"]} />
+    <div aria-hidden="true" className="mt-2 flex flex-wrap gap-x-6 gap-y-1">
+      <SkeletonText className="max-w-full" widths={["w-24 max-w-full", "w-48 max-w-full"]} />
+      <SkeletonText className="max-w-full" widths={["w-32 max-w-full", "w-56 max-w-full"]} />
     </div>
   );
 }
@@ -204,9 +216,10 @@ export function ActivityPage({ pid, stepRef }: { pid: string; stepRef: string })
   ];
   const heading = data?.activity.description ? data.activity.description : fill(words.titleFallback, { stepRef });
 
+  // The column keeps its place and width when the drawer opens from 1200 px (DESIGN.md section 4, Document column).
   return (
-    <div className="layout-grid" data-activity-page={notFound ? "not-found" : load.status}>
-      <div className="col-span-12 @xl/page:col-span-7">
+    <DocumentColumn>
+      <div data-activity-page={notFound ? "not-found" : load.status}>
         <Breadcrumb trail={trail} />
         <h1 ref={title} tabIndex={-1} className="mt-4 text-h1 wrap-break-word text-ink-heading focus:outline-none">
           {notFound || load.status !== "ready" ? (
@@ -247,6 +260,6 @@ export function ActivityPage({ pid, stepRef }: { pid: string; stepRef: string })
         </p>
         {load.status === "loading" && load.slow && <p className="mt-2 text-caption text-ink-muted">{words.stillLoading}</p>}
       </div>
-    </div>
+    </DocumentColumn>
   );
 }

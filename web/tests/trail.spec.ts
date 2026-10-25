@@ -42,8 +42,10 @@ test("KE-NWWDA-229129-CW-RFB's trail shows its plan row, notice, bids and contra
     "This activity was estimated at US$300,000 in the plan, advertised on September 17, 2021 and signed on January 3, 2022, for US$1,245,092.76.",
   );
   await expect(page.locator("[data-lead] p").nth(1)).toHaveText(
-    "The award notice listed 11 bids. In the project's reports, 23 paragraphs appeared together with the contract.",
+    "The award notice listed 11 bids. In the project's reports, 21 paragraphs appeared together with the contract.",
   );
+  // The notice names the activity as STEP typed it, since the newer plans split words in its cell.
+  await expect(page.locator("main h1")).toHaveText("Drilling of 4 Number Exploratory Boreholes In Wajir County");
   const trail = page.getByRole("list", { name: `Contract trail for ${KENYA}` });
   await expect(trail.locator(":scope > li")).toHaveCount(5);
   await expect(trail.getByRole("heading", { level: 2 })).toHaveText([
@@ -52,17 +54,22 @@ test("KE-NWWDA-229129-CW-RFB's trail shows its plan row, notice, bids and contra
   await expect(stage(page, "plan")).toContainText("Estimated Amount (US$)300,000.00");
   await expect(stage(page, "notice")).toContainText("Published Sep 17, 2021");
   await expect(stage(page, "notice").locator("[data-source]")).toContainText("Procurement notice OP00146683, published Sep 17, 2021.");
-  // The bids, in the award notice's order, with their prices as it writes them and their results.
+  // The bids, in the award notice's order, with their prices in STEP's form with their cents, and their results.
   const rows = stage(page, "bids").locator("tbody tr");
   await expect(rows).toHaveCount(11);
-  await expect(rows.first().locator("th, td")).toHaveText(["OSB AFRICA LIMITED", "61503269.60", "61503269.60", "Awarded"]);
-  await expect(rows.nth(3).locator("th, td")).toHaveText(["HYDRO WATER WELL (K) LIMITED", "69346168.80", "Not in the notice", "Not awarded"]);
-  await expect(rows.nth(10).locator("th, td")).toHaveText(["BITAT LIMITED", "54770811.00", "54770811.00", 'Rejected. The award notice gives the reason "Non Responsive".']);
+  await expect(stage(page, "bids")).toContainText("Showing all 11 bids");
+  await expect(rows.first().locator("th, td")).toHaveText(["OSB AFRICA LIMITED", "61,503,269.60", "61,503,269.60", "Awarded"]);
+  await expect(rows.nth(3).locator("th, td")).toHaveText(["HYDRO WATER WELL (K) LIMITED", "69,346,168.80", "Not in the notice", "Not awarded"]);
+  await expect(rows.nth(10).locator("th, td")).toHaveText(["BITAT LIMITED", "54,770,811.00", "54,770,811.00", 'Rejected. The award notice gives the reason "Non Responsive".']);
   await expect(stage(page, "bids")).toContainText("Award notice published Feb 2, 2022");
   await expect(stage(page, "contract")).toContainText("Signed Jan 3, 2022");
   await expect(stage(page, "contract")).toContainText("Signed amount (US$)1,245,092.76");
   for (const name of ["plan", "notice", "bids", "contract"]) await expect(stage(page, name).locator("[data-source]").first()).toBeVisible();
-  await expect(page.locator("[data-paragraph-card] [data-source]")).toHaveCount(10);
+  // The paragraphs come grouped by report: the PAD's first three of its six, then each ISR's.
+  await expect(page.locator("[data-report]")).toHaveCount(13);
+  await expect(page.locator("[data-report]").first().getByRole("heading", { level: 3 })).toHaveText("Project Appraisal Document, Apr 5, 2017");
+  await expect(page.locator("[data-report]").first()).toContainText("six paragraphs");
+  await expect(page.locator("[data-paragraph-card] [data-source]")).toHaveCount(18);
 
   const models: { method: string; path: string }[] = JSON.parse(await recorded("model-routes.json")).routes;
   const called = requests.map((request) => ({ method: request.method(), path: new URL(request.url()).pathname }));
@@ -76,7 +83,8 @@ test("the trail shows no supplier score, rank or profile: bids keep the notice's
   const bids = stage(page, "bids");
   await expect(bids.locator("tbody tr")).toHaveCount(11);
 
-  await expect(bids.locator("thead th")).toHaveText(["Bidder", "Bid price at opening (KES)", "Evaluated bid price (KES)", "Result"]);
+  // The price columns carry the award notice's own names.
+  await expect(bids.locator("thead th")).toHaveText(["Bidder", "Bid Price at Opening (KES)", "Evaluated Bid Price (KES)", "Result"]);
   await expect(bids.getByRole("button")).toHaveCount(0);
   await expect(bids.locator("tbody th a, [data-stage=contract] dd a")).toHaveCount(0);
   await expect(page.locator("main")).not.toContainText(/score|rank|profile/i);
@@ -110,7 +118,8 @@ test("the showcase trail states its two missing stages, takes its contract from 
     "This paragraph appeared together with award notice IN-RRSMP-7431-CW-RFB, signed June 15, 2017. Both concern works contracts and roads, in a project that has closed. The ICR is dated October 10, 2019, 28 months after the signing.",
   );
   await expect(why).toContainText("A link means only that they appeared together.");
-  await expect(why.getByRole("link", { name: `Open the activity ${SHOWCASE}` })).toHaveAttribute("href", SHOWCASE_PATH);
+  // On the activity page it names, the block does not link to the page you are on.
+  await expect(why.getByRole("link", { name: `Open the activity ${SHOWCASE}` })).toHaveCount(0);
   await expect(page.getByRole("dialog").locator("[data-passage] mark, [data-passage] [data-highlight]").first()).toContainText("works contract");
   const score = why.getByRole("button", { name: "How I scored this link" });
   await expect(why.locator("[data-why-score]")).toBeHidden();
@@ -123,6 +132,9 @@ test("the showcase trail states its two missing stages, takes its contract from 
 
 test("as of the day before the contract was signed, the trail holds no contract and no links", async ({ page }) => {
   await open(page, `${KENYA_PATH}?asof=2022-01-02`);
+  // The page is all as of the date, so no alert says it shows today's data (the 22 critique, States).
+  await expect(page.locator("[data-contract-trail], [data-trail]").first()).toBeVisible();
+  await expect(page.getByText(/as of January 2, 2022 yet/)).toHaveCount(0);
   await expect(stage(page, "contract")).toContainText("No contract for this activity was public as of January 2, 2022.");
   await expect(stage(page, "paragraphs")).toContainText("I link paragraphs to signed contracts. As of January 2, 2022, this activity had none.");
   await expect(page.locator("[data-paragraph-card]")).toHaveCount(0);
@@ -176,16 +188,29 @@ test("Connections draws at most 20 nodes, counts the rest by kind, and joins pac
   await expect(tabs).toHaveText(["Summary", "Procurement", "Documents", "Connections"]);
   await expect(tabs.last()).toHaveAttribute("aria-current", "page");
 
-  await expect(page.locator("#connections-finding")).toHaveText("In this project, one contract appeared together with 53 paragraphs from 11 of its reports.");
-  await expect(page.locator("[data-connections]")).toContainText("Showing 20 of 65 packages and documents");
+  // The finding counts every linked contract, those with no STEP reference too, and each paragraph once.
+  await expect(page.locator("#connections-finding")).toHaveText("In this project, seven contracts appeared together with 89 paragraphs from 12 of its reports.");
+  await expect(page.locator("[data-connections]")).toContainText("Showing 19 of 64 packages and documents");
   const nodes = page.locator("[data-node]");
   expect(await nodes.count()).toBeLessThanOrEqual(20);
-  await expect(page.locator("[data-diagram]").getByRole("link", { name: "and 15 more Procurement Plans" })).toHaveAttribute("href", "/projects/P130164/documents");
-  await expect(page.locator("[data-diagram]").getByRole("link", { name: "and 30 more documents" })).toBeVisible();
-  // One dashed line for each link the tool returned between a shown package and a shown chip, and two solid lines.
-  const edges = JSON.parse(await recorded("connections-p130164.json")).edges.length;
-  await expect(page.locator("[data-diagram] > svg path[stroke-dasharray]")).toHaveCount(edges);
+  await expect(page.locator("[data-diagram]").getByRole("link", { name: "and 15 more Procurement Plans I haven't read" })).toHaveAttribute("href", "/projects/P130164/documents");
+  await expect(page.locator("[data-diagram]").getByRole("link", { name: "and 30 more documents I haven't read" })).toBeVisible();
+  // One dashed curve for each package and document that appeared together, and two solid lines.
+  const lines = JSON.parse(await recorded("connections-p130164.json")).lines.length;
+  await expect(page.locator("[data-diagram] > svg path[stroke-dasharray]")).toHaveCount(lines);
   await expect(page.locator("[data-diagram] > svg path:not([stroke-dasharray])")).toHaveCount(2);
+  await expect(page.getByText("Hover over or focus a package to see its links.")).toHaveCount(0);
+  // Each curve ends at a document card's left edge, so no part of a line runs under a card.
+  const ends = await page.locator("[data-diagram] > svg path[stroke-dasharray]").evaluateAll((paths) =>
+    paths.map((path) => (path.getAttribute("d") ?? "").trim().split(/[\s,]+/).slice(-2).map(Number)),
+  );
+  const cards = await page.locator("[data-node=document]").evaluateAll((items) => {
+    const frame = document.querySelector("[data-diagram]")!.getBoundingClientRect();
+    return items.map((item) => item.getBoundingClientRect().left - frame.left);
+  });
+  for (const [x] of ends) expect(cards.some((left) => Math.abs(left - x) < 1)).toBe(true);
+  // The rest of a document's paragraphs open in its source view.
+  await expect(page.locator("[data-node=document] [data-more-chips]").first()).toHaveAttribute("href", /^\/projects\/P130164\/documents\//);
   expect(await axe(page)).toEqual([]);
   expect(unrecorded).toEqual([]);
 });
@@ -224,21 +249,36 @@ test("below 768 px Connections is a list, and from 768 px a toggle shows the lis
   await page.setViewportSize({ width: 1440, height: 900 });
   const toggle = page.getByRole("button", { name: "Show as a list" });
   await toggle.click();
-  await expect(page.getByRole("button", { name: "Show as a diagram" })).toHaveAttribute("aria-pressed", "true");
+  // The label says what a press does, so the button is not also a pressed toggle.
+  await expect(page.getByRole("button", { name: "Show as a diagram" })).not.toHaveAttribute("aria-pressed");
   await expect(page.getByRole("status").filter({ hasText: "Showing the list." })).toHaveCount(1);
   await expect(page.locator("[data-diagram=list]")).toBeVisible();
 });
 
 test("Connections caps a large project at 20 nodes and counts its packages, and shows its no-links, empty and error states", async ({ page }) => {
   await open(page, "/projects/P156634/connections", 1024);
-  await expect(page.locator("[data-connections]")).toContainText("Showing 20 of 628 packages and documents");
+  await expect(page.locator("[data-connections]")).toContainText("Showing 19 of 627 packages and documents");
   await expect(page.getByRole("link", { name: "and 265 more packages" })).toHaveAttribute("href", "/projects/P156634/procurement");
   expect(await page.locator("[data-node]").count()).toBeLessThanOrEqual(20);
+  // Past 12 curves, only the first linked package's are drawn at rest, and a caption says how to see the rest.
+  const atRest = JSON.parse(await recorded("connections-p156634.json")).lines.filter((line: { at_rest: boolean }) => line.at_rest).length;
+  await expect(page.locator("[data-diagram] > svg path[stroke-dasharray]")).toHaveCount(atRest);
+  await expect(page.getByText("Hover over or focus a package to see its links.")).toBeVisible();
+  await page.locator("[data-package=KE-NWWDA-229129-CW-RFB] a[data-node-link]").hover();
+  expect(await page.locator("[data-diagram] > svg path.stroke-primary").count()).toBeGreaterThan(0);
+  // A paragraph read in parts is one chip, and no two chips on one document have the same name.
+  for (const card of await page.locator("[data-node=document]").all()) {
+    const names = await card.locator("[data-chip] .clip-visually").allTextContents();
+    expect(new Set(names).size).toBe(names.length);
+  }
   expect(await axe(page)).toEqual([]);
 
   await page.goto("/projects/P127203/connections");
   await expect(page.locator("#connections-finding")).toHaveText("In this project, no contract appeared together with a paragraph from its reports.");
   await expect(page.locator("[data-connections]")).toContainText("I keep a link only when its score reaches 0.50.");
+  // The empty column says why it is empty, and the rows say the documents they count are unread, not hidden.
+  await expect(page.locator("[data-diagram]")).toContainText("I haven't read a Procurement Plan for P127203 yet.");
+  await expect(page.getByRole("link", { name: "and 12 more ISRs I haven't read" })).toBeVisible();
 
   const empty = JSON.parse(await recorded("connections-p130164.json"));
   Object.assign(empty, { packages: [], documents: [], edges: [], more: [] });
@@ -250,4 +290,70 @@ test("Connections caps a large project at 20 nodes and counts its packages, and 
   await page.goto("/projects/P130164/connections");
   await expect(page.getByRole("alert")).toHaveText("I couldn't load this project's connections. The data service didn't answer.");
   expect(await axe(page)).toEqual([]);
+});
+
+// ── Round 2 ──────────────────────────────────────────────────────────────
+
+test("the showcase's paragraphs are grouped by report, so the ICR's group shows, and Show all opens the rest", async ({ page }) => {
+  await open(page, SHOWCASE_PATH);
+  const reports = page.locator("[data-report]");
+  await expect(reports).toHaveCount(11);
+  const icr = reports.last();
+  await expect(icr.getByRole("heading", { level: 3 })).toHaveText("Implementation Completion and Results Report, Oct 10, 2019");
+  await expect(icr).toContainText("29 paragraphs");
+  await expect(icr.locator("[data-paragraph-card]")).toHaveCount(3);
+  // The PAD numbers its annexes' paragraphs again, so two of its cards name their sections.
+  await expect(reports.first().locator("[data-paragraph-card] h4").first()).toHaveText(/^Paragraph \d+$/);
+  const more = icr.getByRole("button", { name: "Show all 29 paragraphs from the Implementation Completion and Results Report of Oct 10, 2019" });
+  await more.click();
+  await expect(icr.locator("[data-paragraph-card]")).toHaveCount(29);
+  await expect(icr.locator("[data-paragraph-card] a").nth(3)).toBeFocused();
+  await expect(icr.locator(`[data-paragraph-card="31525018/v1/54"]`)).toBeVisible();
+  await expect(icr.getByRole("button", { name: /^Show fewer paragraphs from the Implementation Completion/ })).toHaveAttribute("aria-expanded", "true");
+  expect(await axe(page)).toEqual([]);
+});
+
+test("with two award notices and two contracts, the lead counts each notice's bids and one card holds both", async ({ page }) => {
+  await open(page, "/projects/P156634/packages/KE-KIMAWASCO-372408-GO-RFQ");
+  await expect(page.locator("[data-lead] p").nth(1)).toHaveText(
+    "The award notices listed five and four bids. In the project's reports, one paragraph appeared together with its contracts.",
+  );
+  await expect(stage(page, "bids").locator("[data-stage-card]")).toHaveCount(1);
+  await expect(stage(page, "bids").getByRole("heading", { level: 3 })).toHaveText(["Award notice OP00266922", "Award notice OP00266923"]);
+  await expect(stage(page, "bids")).toContainText("Showing all five bids");
+  // A Limited market approach invites firms directly, so its notice is never listed as missing.
+  await expect(stage(page, "notice")).toContainText("This activity had no public notice. Its Market Approach,");
+  expect(await axe(page)).toEqual([]);
+});
+
+test("a Limited market approach never lists the notice as missing, in the trail or the lead", async ({ page }) => {
+  await open(page, "/projects/P156634/packages/KE-NWWDA-503455-CW-RFQ");
+  await expect(stage(page, "notice")).toContainText("This activity had no public notice. Its Market Approach, Limited - National, invites firms directly.");
+  await expect(page.locator("[data-lead]")).not.toContainText("no notice");
+  await expect(stage(page, "bids")).toContainText("Showing the one bid");
+});
+
+test("a consultant award notice keeps a rejected firm's reason when its price is blank, and leaves its scores out", async ({ page }) => {
+  await open(page, "/projects/P156634/packages/KE-CWSB-102977-CS-QCBS");
+  const bids = stage(page, "bids");
+  await expect(bids.getByRole("heading", { level: 2 })).toHaveText("Proposals");
+  await expect(bids.locator("thead th").nth(2)).toHaveText("Final Evaluation Price (KES)");
+  const rejected = bids.locator("tbody tr").filter({ hasText: "NICHOLAS O'DWYER" });
+  await expect(rejected.locator("td").nth(1)).toHaveText("Not in the notice");
+  await expect(rejected.locator("td").nth(2)).toHaveText('Rejected. The award notice gives the reason "Non Responsive".');
+  await expect(bids).toContainText("The award notice also lists evaluation scores. I don't show scores or ranks for suppliers.");
+  await expect(page.locator("main")).not.toContainText("Reason for Rejection");
+});
+
+test("the Connections tab's alert says only its links are as of the date, and the activity page has none", async ({ page }) => {
+  await open(page, "/projects/P130164/connections?asof=2017-06-14");
+  await expect(page.getByText("The connections below are as of June 14, 2017. The project's header above them shows today's data.")).toBeVisible();
+  await expect(page.locator("[data-diagram] > svg path[stroke-dasharray]")).toHaveCount(0);
+  // The project node is one link, with its P-code and name inside it.
+  await expect(page.locator("[data-node=project] a")).toHaveCount(1);
+
+  await page.goto(`${KENYA_PATH}?asof=2022-01-02&view=public`);
+  await expect(page.locator("[data-activity-page=ready]")).toBeVisible();
+  await expect(page.getByText(/I can't show the public preview yet/)).toHaveCount(0);
+  await expect(page.getByText(/I can't show this page as of/)).toHaveCount(0);
 });

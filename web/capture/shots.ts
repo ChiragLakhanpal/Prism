@@ -375,6 +375,11 @@ const TRAIL_API: Shot["api"] = {
   [`/api${SHOWCASE_ACTIVITY}`]: { recorded: "activity-in-rrsmp-7431.json" },
   "/api/projects/P156634/packages/KE-MAWASCO-501974-CS-INDV": { recorded: "activity-ke-mawasco-501974-indv.json" },
   "/api/projects/P156634/packages/KE-NWWDA-000000-CW-RFB": { status: 404, recorded: "activity-unknown.json" },
+  "/api/projects/P156634/packages/KE-KIMAWASCO-372408-GO-RFQ": { recorded: "activity-ke-kimawasco-372408.json" },
+  "/api/projects/P156634/packages/KE-NWWDA-503455-CW-RFQ": { recorded: "activity-ke-nwwda-503455.json" },
+  "/api/projects/P156634/packages/KE-WASREB-235524-CS-QCBS": { recorded: "activity-ke-wasreb-235524.json" },
+  "/api/projects/P156634/packages/KE-CWSB-102977-CS-QCBS": { recorded: "activity-ke-cwsb-102977.json" },
+  "/api/projects/P130164/connections?asof=2017-06-14": { recorded: "connections-p130164-2017-06-14.json" },
   "/api/projects/P130164/connections": { recorded: "connections-p130164.json" },
   "/api/projects/P156634/connections": { recorded: "connections-p156634.json" },
   "/api/projects/P127203/connections": { recorded: "connections-p127203.json" },
@@ -405,6 +410,14 @@ const TRAIL_SHOTS: Shot[] = [
   trailShot("activity--focus-pill", KENYA_ACTIVITY, { widths: [1440, 390], act: focus("[data-stage=bids] [data-citation]") }),
   trailShot("activity--focus-crumb", KENYA_ACTIVITY, { widths: [1440, 390], act: focus("[data-breadcrumb] a:visible") }),
   trailShot("activity--320", KENYA_ACTIVITY, { widths: [320] }),
+  // Round 2: two award notices and two contracts in one card each; the missing notice of a Limited market approach;
+  // a consultant award notice with scores left out; one with a rejected firm whose price is blank; the showcase's
+  // ICR group opened; and the plan row in the drawer, where no field is highlighted.
+  trailShot("activity--several-notices", "/projects/P156634/packages/KE-KIMAWASCO-372408-GO-RFQ"),
+  trailShot("activity--approach-no-notice", "/projects/P156634/packages/KE-NWWDA-503455-CW-RFQ"),
+  trailShot("activity--proposals-no-scores", "/projects/P156634/packages/KE-WASREB-235524-CS-QCBS"),
+  trailShot("activity--rejected-no-price", "/projects/P156634/packages/KE-CWSB-102977-CS-QCBS"),
+  trailShot("activity--report-opened", SHOWCASE_ACTIVITY, { widths: [1440, 390], act: click("[data-report]:last-child button[aria-expanded]") }),
   trailShot("connections--loading", "/projects/P130164/connections", { pending: ["/api/projects/P130164/connections"] }),
   trailShot("connections--populated", "/projects/P130164/connections"),
   trailShot("connections--over-the-cap", "/projects/P156634/connections"),
@@ -414,15 +427,17 @@ const TRAIL_SHOTS: Shot[] = [
   }),
   trailShot("connections--error", "/projects/P130164/connections", {}, { "/api/projects/P130164/connections": { status: 503, body: SERVICE_DOWN } }),
   trailShot("connections--permission", "/projects/P130164/connections", {}, { "/api/projects/P130164/connections": { status: 403, body: '{"code":"permission"}' } }),
-  trailShot("connections--list", "/projects/P130164/connections", { widths: [1440], act: click("[data-connections] button[aria-pressed]"), full: true }),
+  trailShot("connections--list", "/projects/P130164/connections", { widths: [1440], act: click("[data-list-toggle]"), full: true }),
   trailShot("connections--hover-package", "/projects/P130164/connections", { widths: [1440], act: hover("[data-package] a[data-node-link]") }),
   trailShot("connections--focus-package", "/projects/P130164/connections", { widths: [1440, 390], act: focus("[data-package] a[data-node-link]") }),
   trailShot("connections--hover-chip", "/projects/P130164/connections", { widths: [1440], act: hover("[data-node=document] [data-chip]") }),
-  trailShot("connections--focus-toggle", "/projects/P130164/connections", { widths: [1440], act: focus("[data-connections] button[aria-pressed]") }),
+  trailShot("connections--focus-toggle", "/projects/P130164/connections", { widths: [1440], act: focus("[data-list-toggle]") }),
   trailShot("connections--drawer", `/projects/P130164/connections?evidence=${TRAIL_ICR_54}`, { widths: [1440, 1024], full: false, act: async (page) => {
     await page.locator("[data-why]").waitFor();
   } }),
   trailShot("connections--320", "/projects/P130164/connections", { widths: [320] }),
+  trailShot("connections--as-of", "/projects/P130164/connections?asof=2017-06-14"),
+  trailShot("connections--hover-over-the-cap", "/projects/P156634/connections", { widths: [1440], act: hover("[data-package=KE-NWWDA-229129-CW-RFB] a[data-node-link]") }),
 ];
 
 const PROJECT_SHOTS: Shot[] = [

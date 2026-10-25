@@ -30,7 +30,8 @@
     ],
     "no_estimate": false,
     "missing": "contract",
-    "bids": null,
+    "bids": [],
+    "many_contracts": false,
     "paragraphs": null
   },
   "stages": [
@@ -197,6 +198,7 @@
       "found": false,
       "joined_on": "together",
       "records": [],
+      "groups": [],
       "threshold": "0.50",
       "reason": "after_asof"
     }

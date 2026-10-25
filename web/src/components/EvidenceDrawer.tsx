@@ -59,6 +59,9 @@ export type DrawerData =
   | { status: "missing" }
   | { status: "failed"; onRetry: () => void };
 
+// The passages' table, before the colon of a passage's evidence id.
+const PASSAGE_TABLE = "strata.gold.passage:";
+
 // The source an evidence id names: from the stream if it sent it, or else from the server.
 export function useEvidence(id: string, asOf: string | null): DrawerData {
   const all = useStore(known);
@@ -67,6 +70,22 @@ export function useEvidence(id: string, asOf: string | null): DrawerData {
   const held = all[id];
   // On an activity page, a passage's "Why this source" names the page's own activity (ticket 22).
   const stepRef = routeStepRef(useStore(address).pathname);
+  // A passage an answer or a page sent with it carries no "Why this source" (undefined): ask the server for it
+  // once, with the route's activity, and add it to the passage the page sent (the 22 review, item 3).
+  const [why, setWhy] = useState<{ id: string; why: EvidenceEvent["why"] } | null>(null);
+  const asksWhy = Boolean(held && held.kind === "passage" && held.why === undefined && id.startsWith(PASSAGE_TABLE));
+  useEffect(() => {
+    if (!asksWhy) return;
+    const controller = new AbortController();
+    const query =
+      `/api/evidence?id=${encodeURIComponent(id)}${asOf ? `&asof=${encodeURIComponent(asOf)}` : ""}` +
+      (stepRef ? `&step_ref=${encodeURIComponent(stepRef)}` : "");
+    getJson<EvidenceEvent>(query, { signal: controller.signal }).then(
+      (found) => setWhy({ id, why: found.why ?? null }),
+      () => undefined, // the passage still shows; only its "Why this source" is left out
+    );
+    return () => controller.abort();
+  }, [id, asksWhy, asOf, stepRef]);
   useEffect(() => {
     // A quantile dot's list is no source on the server: the page that draws the dots holds it (ticket 15). So are
     // section 5's lists and cost records (ticket 31), the risks section's lists of completion reports (ticket 30),
@@ -87,7 +106,7 @@ export function useEvidence(id: string, asOf: string | null): DrawerData {
     );
     return () => controller.abort();
   }, [id, held, asOf, attempt, stepRef]);
-  if (held) return { status: "ready", evidence: held };
+  if (held) return { status: "ready", evidence: asksWhy && why?.id === id ? { ...held, why: why.why } : held };
   return fetched?.id === id ? fetched.data : { status: "loading" };
 }
 
@@ -300,6 +319,7 @@ function PassageView({ evidence, sentence, fromAnswer, given = null }: { evidenc
 // edge in STEP's form with its cents (DESIGN.md section 6), then the source line.
 function RecordView({ evidence }: { evidence: EvidenceEvent }) {
   const row = evidence.row;
+  const here = useStore(address).pathname;
   const columns = copy.checkPlan.columns;
   const given = (value: unknown) => value !== null && value !== undefined && value !== "";
   const fields: { label: string; value: ReactNode; wide?: boolean; numeric?: boolean; ledger?: boolean }[] = [];
@@ -352,8 +372,9 @@ function RecordView({ evidence }: { evidence: EvidenceEvent }) {
         )}
       </dl>}
       <RecordSourceLine evidence={evidence} />
-      {/* A notice, award notice, contract or plan row whose activity Strata holds opens its trail (ticket 22). */}
-      {typeof row.activity_href === "string" && (
+      {/* A notice, award notice, contract or plan row whose activity Strata holds opens its trail (ticket 22), unless
+          the drawer is open on that trail already. */}
+      {typeof row.activity_href === "string" && row.activity_href !== here && (
         <p>
           <TextLink href={row.activity_href} className="inline-flex min-h-6 items-center text-small" data-record-activity>
             {copy.evidence.openActivity}

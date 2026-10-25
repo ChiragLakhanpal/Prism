@@ -6,7 +6,7 @@
     "project_id": "P156634",
     "project_name": "Water and Sanitation Development Project",
     "display_name": "Water and Sanitation Development",
-    "description": "Hiring of Waste water Sanitation Engineer",
+    "description": "Hiring of Waste Water Sanitation Engineer",
     "method": "Individual Consultant Selection",
     "consultants": true,
     "implementing_agency": null,
@@ -27,7 +27,8 @@
     ],
     "no_estimate": false,
     "missing": "notice",
-    "bids": null,
+    "bids": [],
+    "many_contracts": false,
     "paragraphs": 1
   },
   "stages": [
@@ -77,7 +78,8 @@
             "name": null,
             "country": "Kenya",
             "is_individual_consultant": true,
-            "is_joint_venture": false
+            "is_joint_venture": false,
+            "members": []
           },
           "source": {
             "source_key": "awards",
@@ -105,7 +107,10 @@
           "public_from": "2019-10-02",
           "passage_id": "31451672/v1/s4",
           "contract_evidence_id": "strata.gold.contract:1862687",
+          "document_id": "31451672",
           "document_type": "Implementation Status and Results Report",
+          "title_section": null,
+          "title_page": null,
           "document_date": "2019-10-02",
           "paragraph": "s4",
           "paragraph_numbered": false,
@@ -139,6 +144,17 @@
             "pdf_page": 1
           },
           "contract_reference": "1862687"
+        }
+      ],
+      "groups": [
+        {
+          "document_id": "31451672",
+          "document_type": "Implementation Status and Results Report",
+          "short_name": "ISR",
+          "stratum": "How",
+          "document_date": "2019-10-02",
+          "count": 1,
+          "shown": 1
         }
       ],
       "threshold": "0.50"

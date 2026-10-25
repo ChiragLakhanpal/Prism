@@ -29,6 +29,7 @@ import {
   type Bid,
   type ContractRecord,
   type NoticeRecord,
+  type ParagraphGroup,
   type ParagraphRecord,
   type PlanRecord,
   type Stage,
@@ -48,7 +49,6 @@ import { TextLink } from "./TextLink";
 const words = copy.trail;
 const table = (iso: string | null) => (iso ? formatDate(iso, { style: "table" }) : "");
 const sentence = (iso: string | null) => (iso ? formatDate(iso) : "");
-const PARAGRAPHS_SHOWN = 10;
 
 // The pills' numbers, in page order: each record, then each paragraph card.
 export function pillNumbers(trail: Trail): Map<string, number> {
@@ -73,19 +73,34 @@ function Pill({ id, n, kind, reference, date }: { id: string; n: number; kind: s
   );
 }
 
-// A stage on the rail: its marker, the segment to the next stage, and its card or cards.
-function StageItem({ found, joinKey, children }: { found: boolean; joinKey?: "key" | "together"; children: ReactNode }) {
+// A stage on the rail: its marker, the segment to the next stage, and its card or cards. A marker sits on the first
+// line of its stage's title: inside a card, below its padding; on the paragraphs stage, whose h2 has no card, at the
+// h2's half line (design review F20). The segment ends at the next stage's marker.
+function StageItem({ found, flat, nextFlat, joinKey, children }: { found: boolean; flat: boolean; nextFlat: boolean; joinKey?: "key" | "together"; children: ReactNode }) {
   return (
     <li data-stage-found={found} className="relative grid grid-cols-[1rem_minmax(0,1fr)] gap-x-3 @md/page:grid-cols-[1.5rem_minmax(0,1fr)] @md/page:gap-x-4">
       <span aria-hidden="true" className="relative">
         {found ? (
-          <span className="absolute top-5 left-0.5 block size-3 rounded-pill bg-line-strong ring-2 ring-page @md/page:top-7 @md/page:left-1 @md/page:size-4" />
+          <span
+            data-marker
+            className={cx(
+              "absolute left-0.5 block size-3 rounded-pill bg-line-strong ring-2 ring-page @md/page:left-1 @md/page:size-4",
+              flat ? "top-1" : "top-5 @md/page:top-7",
+            )}
+          />
         ) : (
           <CircleDashed className="absolute top-5 left-0.5 size-3 text-line-strong @md/page:top-5 @md/page:left-1 @md/page:size-4" />
         )}
       </span>
       {joinKey && (
-        <span aria-hidden="true" data-join={joinKey} className="trail-rail top-10 -bottom-9 left-[7px] @md/page:top-12 @md/page:-bottom-13 @md/page:left-[11px]" />
+        <span
+          aria-hidden="true"
+          data-join={joinKey}
+          className={cx(
+            "trail-rail top-10 left-[7px] @md/page:top-12 @md/page:left-[11px]",
+            nextFlat ? "-bottom-5 @md/page:-bottom-7" : "-bottom-9 @md/page:-bottom-13",
+          )}
+        />
       )}
       <div className="min-w-0">{children}</div>
     </li>
@@ -127,9 +142,10 @@ function Fields({ fields }: { fields: { label: string; value: ReactNode; numeric
   return (
     <dl className="grid grid-cols-1 gap-x-4 gap-y-3 @md/page:grid-cols-[repeat(auto-fit,minmax(10rem,1fr))]">
       {fields.map((field) => (
-        <div key={field.label} className={cx("min-w-0", field.wide && "col-span-full", field.numeric && "@md/page:text-right")}>
+        <div key={field.label} className={cx("min-w-0", field.wide && "col-span-full")}>
+          {/* An amount's label keeps the grid's left edge; only its value sits right, in tabular numerals. */}
           <dt className="text-caption text-ink-muted">{field.label}</dt>
-          <dd className={cx("text-small wrap-break-word text-ink", field.numeric && "tabular-nums")}>
+          <dd className={cx("text-small wrap-break-word text-ink", field.numeric && "tabular-nums @md/page:text-right")}>
             {field.value ?? <span className="text-ink-muted">{words.blank}</span>}
           </dd>
         </div>
@@ -159,6 +175,7 @@ function PlanStage({ record, n, pid, stepRef }: { record: PlanRecord; n: number;
   const planHref = `/projects/${pid}/procurement/${record.agency_id}/${record.plan_date}#${encodeURIComponent(stepRef)}`;
   return (
     <StageCard
+      active={evidenceIn(search) === record.evidence_id}
       title={words.plan.title}
       date={<Fill template={words.plan.date} slots={{ date: table(record.plan_date) }} />}
       pill={<Pill id={record.evidence_id} n={n} kind={words.pillKind.plan} reference={stepRef} date={table(record.plan_date)} />}
@@ -239,7 +256,8 @@ function PlanStage({ record, n, pid, stepRef }: { record: PlanRecord; n: number;
 // ── 2. Notice ────────────────────────────────────────────────────────────
 
 function NoticeBody({ record }: { record: NoticeRecord }) {
-  const fields = record.fields.map((field) => ({
+  // The card's header gives the date it was published, so the field is not repeated (design review F25).
+  const fields = record.fields.filter((field) => field.key !== "published").map((field) => ({
     label: words.notice.field[field.key] ?? field.key,
     value: field.kind === "date" ? table(field.value) : field.value,
     wide: field.key === "bid_description" || field.key === "procurement_method",
@@ -266,9 +284,12 @@ function NoticeBody({ record }: { record: NoticeRecord }) {
 
 function NoticeStage({ records, numbers }: { records: NoticeRecord[]; numbers: Map<string, number> }) {
   const [first] = records;
+  const open = evidenceIn(useStore(address).search);
+  const active = records.some((record) => record.evidence_id === open);
   if (records.length === 1) {
     return (
       <StageCard
+        active={active}
         title={words.notice.title}
         date={<Fill template={words.notice.date} slots={{ date: table(first.notice_date) }} />}
         pill={<Pill id={first.evidence_id} n={numbers.get(first.evidence_id)!} kind={words.pillKind.notice} reference={first.notice_id} date={table(first.notice_date)} />}
@@ -278,7 +299,7 @@ function NoticeStage({ records, numbers }: { records: NoticeRecord[]; numbers: M
     );
   }
   return (
-    <StageCard title={words.notice.titleMany}>
+    <StageCard active={active} title={words.notice.titleMany}>
       {records.map((record, index) => (
         <div key={record.evidence_id} className={cx(index > 0 && "border-t border-line pt-4")}>
           <div className="mb-3 flex flex-wrap items-baseline justify-between gap-x-3">
@@ -297,16 +318,18 @@ function NoticeStage({ records, numbers }: { records: NoticeRecord[]; numbers: M
 
 // ── 3. Bids ──────────────────────────────────────────────────────────────
 
+// A bidder as the notice names it. A name the fetch took out as a person's contact detail reads as removed, not as
+// missing, since the notice did name it.
 function bidder(bid: Bid): ReactNode {
   if (bid.is_individual_consultant) return words.bids.individual;
   if (bid.is_joint_venture) return <Fill template={words.bids.jvUnnamed} slots={{ members: joinWords(bid.members, copy.activity.join) }} />;
-  return bid.name ?? words.bids.notInNotice;
+  return bid.name ?? <span className="text-ink-muted">{copy.evidence.contactRemoved}</span>;
 }
 
 function result(bid: Bid): ReactNode {
   if (bid.outcome === "awarded") return <span className="font-semibold">{words.bids.awarded}</span>;
   if (bid.outcome === "not_awarded") return words.bids.notAwarded;
-  if (bid.outcome === "rejected") return bid.reason ? <Fill template={words.bids.rejected} slots={{ reason: bid.reason }} /> : words.bids.notAwarded;
+  if (bid.outcome === "rejected") return bid.reason ? <Fill template={words.bids.rejected} slots={{ reason: bid.reason }} /> : words.bids.rejectedNoReason;
   return words.bids.noResult;
 }
 
@@ -314,15 +337,16 @@ const price = (value: string | null) => noticePrice(value) ?? <span className="t
 
 function BidsTable({ record }: { record: AwardRecord }) {
   const currency = record.currency ?? "";
+  // The price columns carry the notice's own names, such as "Read Out Price" (DESIGN.md section 7, rule 17).
   const heads = {
     bidder: record.proposals ? words.bids.col.consultant : words.bids.col.bidder,
-    opening: words.bids.colCurrency(words.bids.col.opening, currency),
-    evaluated: words.bids.colCurrency(words.bids.col.evaluated, currency),
+    opening: words.bids.colCurrency(record.labels.price_at_opening ?? words.bids.col.opening, currency),
+    evaluated: words.bids.colCurrency(record.labels.evaluated_price ?? words.bids.col.evaluated, currency),
     result: words.bids.col.result,
   };
   return (
     <div data-bids={record.notice_id}>
-      <p className="text-caption text-ink-muted">{words.bids.count(record.bids.length, record.proposals)}</p>
+      <p className="text-caption text-ink-muted">{words.bids.count(record.bid_count, formatCount(record.bid_count), record.proposals)}</p>
       <table className="mt-2 hidden w-full table-fixed text-small @md/page:table">
         <caption className="clip-visually">
           <Fill template={words.bids.caption} slots={{ id: record.notice_id }} />
@@ -350,7 +374,8 @@ function BidsTable({ record }: { record: AwardRecord }) {
         {record.bids.map((bid) => (
           <li key={bid.bid} data-bid-card={bid.bid} className="rounded-md border border-line p-3">
             <p className="text-small font-semibold text-ink-heading">{bidder(bid)}</p>
-            <dl className="mt-2 grid grid-cols-1 gap-y-2 text-small">
+            {/* The two prices side by side on 120 px columns, as Tables asks for a card with two numbers. */}
+            <dl className="mt-2 grid grid-cols-[repeat(auto-fit,minmax(7.5rem,1fr))] gap-x-4 gap-y-2 text-small">
               <div>
                 <dt className="text-caption text-ink-muted">{heads.opening}</dt>
                 <dd className="tabular-nums wrap-anywhere">{price(bid.price_at_opening)}</dd>
@@ -359,7 +384,7 @@ function BidsTable({ record }: { record: AwardRecord }) {
                 <dt className="text-caption text-ink-muted">{heads.evaluated}</dt>
                 <dd className="tabular-nums wrap-anywhere">{price(bid.evaluated_price)}</dd>
               </div>
-              <div>
+              <div className="col-span-full">
                 <dt className="text-caption text-ink-muted">{heads.result}</dt>
                 <dd>{result(bid)}</dd>
               </div>
@@ -377,38 +402,70 @@ function BidsTable({ record }: { record: AwardRecord }) {
   );
 }
 
-function BidsStage({ records, numbers }: { records: AwardRecord[]; numbers: Map<string, number> }) {
+function AwardBody({ record }: { record: AwardRecord }) {
   return (
-    <>
-      {records.map((record) => (
-        <StageCard
-          key={record.evidence_id}
-          title={record.proposals ? words.bids.titleProposals : words.bids.title}
-          date={<Fill template={words.bids.date} slots={{ date: table(record.notice_date) }} />}
-          pill={<Pill id={record.evidence_id} n={numbers.get(record.evidence_id)!} kind={words.pillKind.award_notice} reference={record.notice_id} date={table(record.notice_date)} />}
-        >
-          {record.bids.length > 0 && <BidsTable record={record} />}
-          {record.url && (
-            <p>
-              <ExternalLink href={record.url}>{words.bids.open}</ExternalLink>
+    <div className="flex flex-col gap-4">
+      {record.bids.length > 0 && <BidsTable record={record} />}
+      {record.url && (
+        <p>
+          <ExternalLink href={record.url}>{words.bids.open}</ExternalLink>
+        </p>
+      )}
+      <Source>
+        <Fill template={words.bids.source} slots={{ id: mono(record.notice_id), date: table(record.notice_date), dataset: datasetLine(record.source) }} />
+      </Source>
+    </div>
+  );
+}
+
+// The bids of each award notice. Two or more notices, one for each of an activity's contracts, share one card, each
+// under its own h3, as several notices do (design review F10).
+function BidsStage({ records, numbers }: { records: AwardRecord[]; numbers: Map<string, number> }) {
+  const open = evidenceIn(useStore(address).search);
+  const [first] = records;
+  const title = first.proposals ? words.bids.titleProposals : words.bids.title;
+  const pill = (record: AwardRecord) => (
+    <Pill id={record.evidence_id} n={numbers.get(record.evidence_id)!} kind={words.pillKind.award_notice} reference={record.notice_id} date={table(record.notice_date)} />
+  );
+  if (records.length === 1) {
+    return (
+      <StageCard active={open === first.evidence_id} title={title} date={<Fill template={words.bids.date} slots={{ date: table(first.notice_date) }} />} pill={pill(first)}>
+        <AwardBody record={first} />
+      </StageCard>
+    );
+  }
+  return (
+    <StageCard active={records.some((record) => record.evidence_id === open)} title={title}>
+      {records.map((record, index) => (
+        <div key={record.evidence_id} data-award={record.notice_id} className={cx(index > 0 && "border-t border-line pt-4")}>
+          <div className="mb-3 flex flex-wrap items-baseline justify-between gap-x-3">
+            <h3 className="text-small font-bold text-ink-heading">
+              <Fill template={words.bids.noticeHeading} slots={{ id: mono(record.notice_id) }} />
+            </h3>
+            <p className="flex items-baseline gap-3 text-small text-ink-muted tabular-nums">
+              <Fill template={words.bids.date} slots={{ date: table(record.notice_date) }} />
+              {pill(record)}
             </p>
-          )}
-          <Source>
-            <Fill template={words.bids.source} slots={{ id: mono(record.notice_id), date: table(record.notice_date), dataset: datasetLine(record.source) }} />
-          </Source>
-        </StageCard>
+          </div>
+          <AwardBody record={record} />
+        </div>
       ))}
-    </>
+    </StageCard>
   );
 }
 
 // ── 4. Contract ──────────────────────────────────────────────────────────
 
+// A contract's supplier, as the bids table writes a bidder: a joint venture names its members the same way.
 function supplierText(record: ContractRecord): ReactNode {
   const supplier = record.supplier;
   if (supplier.is_individual_consultant) return words.bids.individual;
   if (!supplier.name) return null;
-  return supplier.is_joint_venture ? <Fill template={words.contract.jointVenture} slots={{ members: supplier.name }} /> : supplier.name;
+  return supplier.is_joint_venture && supplier.members.length > 1 ? (
+    <Fill template={words.bids.jvUnnamed} slots={{ members: joinWords(supplier.members, copy.activity.join) }} />
+  ) : (
+    supplier.name
+  );
 }
 
 function ContractBody({ record }: { record: ContractRecord }) {
@@ -447,8 +504,10 @@ function ContractBody({ record }: { record: ContractRecord }) {
 }
 
 function ContractStage({ records, numbers }: { records: ContractRecord[]; numbers: Map<string, number> }) {
+  const open = evidenceIn(useStore(address).search);
   return (
     <StageCard
+      active={records.some((record) => record.evidence_id === open)}
       title={records.length > 1 ? words.contract.titleMany : words.contract.title}
       date={records.length === 1 ? <Fill template={words.contract.date} slots={{ date: table(records[0].signed_on) }} /> : undefined}
       pill={
@@ -477,12 +536,26 @@ function ContractStage({ records, numbers }: { records: ContractRecord[]; number
 
 // ── 5. Paragraphs that appeared together ─────────────────────────────────
 
-function paragraphPlace(record: ParagraphRecord): { kind: "paragraph" | "section"; text: string } {
-  return record.paragraph_numbered ? { kind: "paragraph", text: record.paragraph } : { kind: "section", text: record.section_path };
+// A card's title names its paragraph; the report is its group's heading. Two cards of one report that would share a
+// title say what tells them apart: "Annex 2.A, paragraph 27", or a section's page.
+function cardTitle(record: ParagraphRecord): ReactNode {
+  const t = words.together;
+  if (record.paragraph_numbered) {
+    return record.title_section ? (
+      <Fill template={t.cardTitleIn} slots={{ section: record.title_section, para: record.paragraph }} />
+    ) : (
+      <Fill template={t.cardTitle} slots={{ para: record.paragraph }} />
+    );
+  }
+  return record.title_page ? (
+    <Fill template={t.cardTitleSectionPage} slots={{ section: record.section_path, page: String(record.title_page) }} />
+  ) : (
+    <Fill template={t.cardTitleSection} slots={{ section: record.section_path }} />
+  );
 }
 
 function ParagraphCard({ record, n, many, focusRef }: { record: ParagraphRecord; n: number; many: boolean; focusRef?: (element: HTMLElement | null) => void }) {
-  const place = paragraphPlace(record);
+  const numbered = record.paragraph_numbered;
   const doc = record.document_type;
   const date = sentence(record.document_date);
   const shown = excerpt(record.text, record.highlights[0] ?? null);
@@ -492,12 +565,10 @@ function ParagraphCard({ record, n, many, focusRef }: { record: ParagraphRecord;
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-label text-ink-muted uppercase">{copy.evidence.eyebrow[record.stratum]}</p>
-          <h3 className="mt-1 text-title text-ink-heading">
-            <Fill template={place.kind === "paragraph" ? words.together.cardTitle : words.together.cardTitleSection} slots={{ doc, para: place.text, section: place.text }} />
-          </h3>
+          <h4 className="mt-1 text-title text-ink-heading">{cardTitle(record)}</h4>
         </div>
         <span ref={focusRef}>
-          <Pill id={record.evidence_id} n={n} kind={record.short_name ?? doc} reference={place.kind === "paragraph" ? words.paraShort(place.text) : place.text} date={date} />
+          <Pill id={record.evidence_id} n={n} kind={record.short_name ?? doc} reference={numbered ? words.paraShort(record.paragraph) : record.section_path} date={date} />
         </span>
       </div>
       <p className="text-small text-ink" lang={record.language && record.language !== "en" ? record.language : undefined}>
@@ -518,53 +589,83 @@ function ParagraphCard({ record, n, many, focusRef }: { record: ParagraphRecord;
       )}
       <Source>
         <Fill
-          template={place.kind === "paragraph" ? words.together.source : words.together.sourceSection}
-          slots={{ doc, date, para: place.text, section: place.text, page: String(record.pdf_page ?? "") }}
+          template={numbered ? words.together.source : words.together.sourceSection}
+          slots={{ doc, date, para: record.paragraph, section: record.section_path, page: String(record.pdf_page ?? "") }}
         />
       </Source>
     </article>
   );
 }
 
-function ParagraphsStage({ found, numbers, many }: { found: Extract<Stage, { stage: "paragraphs" }>; numbers: Map<string, number>; many: boolean }) {
+// One report's paragraphs: its name and date as an h3, how many of its paragraphs appeared together, the first few
+// in document order, and a button for the rest, which moves focus to the first new card's pill.
+function ReportGroup({ group, records, numbers, many }: { group: ParagraphGroup; records: ParagraphRecord[]; numbers: Map<string, number>; many: boolean }) {
   const [all, setAll] = useState(false);
-  const firstNew = useRef<HTMLElement | null>(null);
   const [moved, setMoved] = useState(false);
+  const firstNew = useRef<HTMLElement | null>(null);
   useEffect(() => {
     if (moved && all) firstNew.current?.querySelector("a")?.focus();
   }, [moved, all]);
-  const shown = all ? found.records : found.records.slice(0, PARAGRAPHS_SHOWN);
-  const rest = found.records.length - PARAGRAPHS_SHOWN;
+  const id = `report-${group.document_id}`;
+  const date = table(group.document_date);
+  const shown = all ? records : records.slice(0, group.shown);
   return (
-    <section data-paragraphs aria-labelledby="trail-together">
-      <h2 id="trail-together" className="text-title text-ink-heading">{words.together.title}</h2>
-      <p className="mt-2 max-w-prose text-body text-ink">{words.together.intro}</p>
-      <ul className="mt-4 flex flex-col gap-4">
+    <li data-report={group.document_id} aria-labelledby={id}>
+      <h3 id={id} className="text-small font-bold text-ink-heading">
+        <Fill template={words.together.reportTitle} slots={{ doc: group.document_type, date }} />
+      </h3>
+      <p className="text-caption text-ink-muted">{words.together.reportCount(group.count, formatCount(group.count))}</p>
+      <ul className="mt-3 flex flex-col gap-4">
         {shown.map((record, index) => (
           <li key={record.evidence_id}>
             <ParagraphCard
               record={record}
               n={numbers.get(record.evidence_id)!}
               many={many}
-              focusRef={index === PARAGRAPHS_SHOWN ? (element) => (firstNew.current = element) : undefined}
+              focusRef={index === group.shown ? (element) => (firstNew.current = element) : undefined}
             />
           </li>
         ))}
       </ul>
-      {rest > 0 && (
+      {group.count > group.shown && (
         <Button
           variant="ghost"
           flush
-          className="mt-4"
+          className="mt-3"
           aria-expanded={all}
           onClick={() => {
             setAll((open) => !open);
             setMoved(!all);
           }}
         >
-          {all ? words.together.less : words.together.more(rest, formatCount(rest))}
+          {all ? words.together.less : words.together.showAll(formatCount(group.count))}
+          <span className="clip-visually">
+            <Fill template={words.together.fromReport} slots={{ doc: group.document_type, date }} />
+          </span>
         </Button>
       )}
+    </li>
+  );
+}
+
+// The paragraphs, grouped by report, oldest report first, so every report is on the page with its first few
+// paragraphs and none is pushed out of view by a report with many links (the 22 critique, Hierarchy).
+function ParagraphsStage({ found, numbers, many }: { found: Extract<Stage, { stage: "paragraphs" }>; numbers: Map<string, number>; many: boolean }) {
+  return (
+    <section data-paragraphs aria-labelledby="trail-together">
+      <h2 id="trail-together" className="text-title text-ink-heading">{words.together.title}</h2>
+      <p className="mt-2 max-w-prose text-body text-ink">{words.together.intro}</p>
+      <ul className="mt-4 flex flex-col gap-6">
+        {found.groups.map((group) => (
+          <ReportGroup
+            key={group.document_id}
+            group={group}
+            records={found.records.filter((record) => record.document_id === group.document_id)}
+            numbers={numbers}
+            many={many}
+          />
+        ))}
+      </ul>
     </section>
   );
 }
@@ -651,6 +752,7 @@ export function ContractTrail({ trail }: { trail: Trail }) {
     <ol aria-label={label} data-trail className="flex flex-col gap-4 @md/page:gap-6">
       {stages.map((found, index) => {
         const joinKey = stages[index + 1]?.joined_on;
+        const isFlat = (stage: Stage | undefined) => Boolean(stage && stage.stage === "paragraphs" && stage.found && stage.records.length > 0);
         let content: ReactNode;
         if (!found.found || found.records.length === 0) content = <Missing found={found} trail={trail} />;
         else if (found.stage === "plan") content = <PlanStage record={found.records[0]} n={numbers.get(found.records[0].evidence_id)!} pid={pid} stepRef={stepRef} />;
@@ -659,7 +761,7 @@ export function ContractTrail({ trail }: { trail: Trail }) {
         else if (found.stage === "contract") content = <ContractStage records={found.records} numbers={numbers} />;
         else content = <ParagraphsStage found={found} numbers={numbers} many={many} />;
         return (
-          <StageItem key={found.stage} found={found.found && found.records.length > 0} joinKey={joinKey}>
+          <StageItem key={found.stage} found={found.found && found.records.length > 0} flat={isFlat(found)} nextFlat={isFlat(stages[index + 1])} joinKey={joinKey}>
             <div data-stage={found.stage}>{content}</div>
           </StageItem>
         );

@@ -260,6 +260,8 @@ export const copy = {
     // The page's reads take no date yet, but /api/ask does, so the alert says which part uses it.
     // Ticket 40 replaces it with its as-of banner.
     asOf: (date: string) => `I can't show this page as of ${date} yet, so it shows today's data. Questions you ask from the box, and sources opened from a link, use ${date}.`,
+    // A project's Connections tab draws its links as of the date, under a project header that shows today's.
+    asOfPart: (date: string) => `The connections below are as of ${date}. The project's header above them shows today's data.`,
     asOfUnreadable: "I can't read the date in this link, so you are seeing today's data.",
   },
 
@@ -1272,7 +1274,7 @@ export const copy = {
     purpose:
       "Every activity in each implementing agency's latest Procurement Plan, with its reference from " +
       STEP_SPELLED +
-      ". Open a reference to see its row in the plan check.",
+      ". Open a reference to follow its activity from the plan to the signed contract.",
     searchLabel: "Search packages",
     searchHint: "Type part of a STEP reference or a description.",
     noun: "packages",
@@ -4536,6 +4538,7 @@ export const copy = {
     leadEstimated: "estimated at {estimate} in the plan",
     leadAdvertised: "advertised on {notice_date}",
     leadSigned: "signed on {signed_date}, for {amount}",
+    leadSignedNoAmount: "signed on {signed_date}",
     leadSignedMany: "signed as {count} contracts between {first_signed_date} and {last_signed_date}",
     join: { pair: " and ", list: ", ", last: " and " },
     noEstimate: "The plan gives no Estimated Amount.",
@@ -4543,11 +4546,12 @@ export const copy = {
     leadMissing: "I have no {missing} for it in the records through {data_through}.",
     leadBids: (one: boolean, proposals: boolean) =>
       `The award notice listed {count} ${proposals ? (one ? "proposal" : "proposals") : one ? "bid" : "bids"}.`,
-    leadParagraphs: (one: boolean) =>
-      one
-        ? "In the project's reports, {count} paragraph appeared together with the contract."
-        : "In the project's reports, {count} paragraphs appeared together with the contract.",
+    // Two or more award notices: "The award notices listed five and four bids."
+    leadBidsMany: (proposals: boolean) => `The award notices listed {counts} ${proposals ? "proposals" : "bids"}.`,
+    leadParagraphs: (one: boolean, many: boolean) =>
+      `In the project's reports, {count} ${one ? "paragraph" : "paragraphs"} appeared together with ${many ? "its contracts" : "the contract"}.`,
     leadNoParagraphs: "No paragraph from the project's reports appeared together with the contract.",
+    leadNoParagraphsMany: "No paragraph from the project's reports appeared together with its contracts.",
     // The tooltips on the lead's numbers: where each came from.
     fromRecord: (kind: string, reference: string) => `From the ${kind} ${reference}.`,
     fromAwardNotice: (id: string) => `From award notice ${id}.`,
@@ -4612,10 +4616,15 @@ export const copy = {
       caption: "Bids listed in award notice {id}, in the order the notice lists them",
       col: { bidder: "Bidder", consultant: "Consultant", opening: "Bid price at opening", evaluated: "Evaluated bid price", result: "Result" },
       colCurrency: (label: string, currency: string) => `${label} (${currency})`,
-      count: (n: number, proposals: boolean) => `Showing all ${n} ${proposals ? (n === 1 ? "proposal" : "proposals") : n === 1 ? "bid" : "bids"}`,
+      // Counts under ten in words (DESIGN.md section 7, rule 12): "Showing all three bids", "Showing the one bid".
+      count: (n: number, count: string, proposals: boolean) =>
+        n === 1 ? `Showing the one ${proposals ? "proposal" : "bid"}` : `Showing all ${count} ${proposals ? "proposals" : "bids"}`,
       awarded: "Awarded",
       notAwarded: "Not awarded",
       rejected: "Rejected. The award notice gives the reason \"{reason}\".",
+      rejectedNoReason: "Rejected.",
+      // Above each award notice's bids when an activity has two or more.
+      noticeHeading: "Award notice {id}",
       noResult: "The award notice gives no result.",
       notInNotice: "Not in the notice",
       individual: "Individual consultant",
@@ -4637,7 +4646,6 @@ export const copy = {
         contract_description: "Contract Description",
         contract_reference: "Contract Reference",
       },
-      jointVenture: "A joint venture: {members}",
       fromNotice: "The World Bank's contract awards data skip fiscal 2017 to 2019. This contract comes from its award notice, in {currency}.",
       source: "Contract award {reference}, signed {date}. {dataset}",
       sourceNotice: "Award notice {id}, published {date}. {dataset}",
@@ -4646,11 +4654,17 @@ export const copy = {
       title: "Paragraphs that appeared together with the contract",
       intro:
         "I link a contract to a paragraph in the same project's reports when they are close in time and share a sector, words or names. A link means only that they appeared together.",
-      cardTitle: "{doc}, paragraph {para}",
-      cardTitleSection: "{doc}, section {section}",
+      // Each report is a group under its name and date, and each card names its paragraph within it.
+      reportTitle: "{doc}, {date}",
+      reportCount: (n: number, count: string) => (n === 1 ? "One paragraph" : `${count} paragraphs`),
+      showAll: (count: string) => `Show all ${count} paragraphs`,
+      fromReport: " from the {doc} of {date}",
+      cardTitle: "Paragraph {para}",
+      cardTitleIn: "{section}, paragraph {para}",
+      cardTitleSection: "Section {section}",
+      cardTitleSectionPage: "Section {section}, page {page}",
       topics: "Both concern {topics}.",
       topicsWith: "With contract {ref}, both concern {topics}.",
-      more: (n: number, count: string) => (n === 1 ? "Show one more paragraph" : `Show ${count} more paragraphs`),
       less: "Show fewer paragraphs",
       source: "{doc}, {date}, paragraph {para}, page {page}.",
       sourceSection: "{doc}, {date}, section {section}, page {page}.",
@@ -4701,30 +4715,42 @@ export const copy = {
     legend:
       "Solid lines join the project to the packages in its plans and the documents about it. Dashed lines join a package to report paragraphs that appeared together with one of its contracts. A dashed line means only that they appeared together.",
     legendNone: "Solid lines join the project to the packages in its plans and the documents about it.",
+    // The list draws no lines, so its legend says what its items mean.
+    legendList:
+      "Each package lists the report paragraphs that appeared together with one of its contracts. This means only that they appeared together.",
+    linesHint: "Hover over or focus a package to see its links.",
+    noPackages: "I haven't read a Procurement Plan for {pid} yet.",
+    noPackagesLink: "Procurement Plans for {pid}",
     count: "Showing {shown} of {total} packages and documents",
     toList: "Show as a list",
     toDiagram: "Show as a diagram",
     showingList: "Showing the list.",
     showingDiagram: "Showing the diagram.",
     col: { packages: "Packages it plans", documents: "Documents about it" },
-    projectName: (name: string, pid: string) => `${name}, ${pid}. Open the project summary.`,
+    // After the project node's P-code and name, which its link shows.
+    projectOpen: ". Open the project summary.",
     pkgSigned: "Signed {date}",
     pkgSignedMany: (count: string) => `${count} contracts, first signed {date}`,
     pkgName: (ref: string, description: string, status: string) => `${ref}, ${description}. ${status}.`,
     pkgLinks: (items: string) => `Appeared together with ${items}.`,
     together: "Appeared together with",
     chip: "¶{para}",
-    chipSection: "{section}",
+    // A paragraph number the document uses again in an annex, and a section name it uses twice.
+    chipIn: "{section} ¶{para}",
+    chipPage: "{label}, page {page}",
+    chipSectionNumber: "Section {section}",
     chipName: (doc: string, place: string, ref: string) => `${doc} ${place}, appeared together with ${ref}`,
-    placeParagraph: (para: string) => `paragraph ${para}`,
+    placeParagraph: (para: string, section: string | null) => (section ? `${section} paragraph ${para}` : `paragraph ${para}`),
     placeSection: (section: string) => `section ${section}`,
+    placePage: (place: string, page: string) => `${place}, page ${page}`,
     chipNameMany: (doc: string, place: string, count: string) => `${doc} ${place}, appeared together with ${count} packages`,
-    chipWithDoc: "{doc} ¶{para}",
-    chipWithDocSection: "{doc}, {section}",
+    chipWithDoc: "{doc} {label}",
+    chipWithDocSection: "{doc}, {label}",
     chipOpened: (name: string) => `${name}, opened`,
     docCaption: "{type}, {date}",
     planShort: "Procurement Plan",
     moreChips: (n: number, count: string) => (n === 1 ? "and one more paragraph" : `and ${count} more paragraphs`),
+    moreChipsIn: (doc: string) => ` in the ${doc}`,
     docName: (short: string, type: string, date: string) => (short === type ? `${type}, ${date}. Open the document.` : `${short}, ${type}, ${date}. Open the document.`),
     docShort: { isr: (n: string) => `ISR ${n}` },
     more: {
@@ -4733,6 +4759,9 @@ export const copy = {
       plans: (n: number, count: string) => (n === 1 ? "and one more Procurement Plan" : `and ${count} more Procurement Plans`),
       documents: (n: number, count: string) => (n === 1 ? "and one more document" : `and ${count} more documents`),
     } as Record<string, (n: number, count: string) => string>,
+    // After a row whose documents I haven't read, all or some of them.
+    moreAllUnread: " I haven't read",
+    moreSomeUnread: (n: number, count: string) => (n === 1 ? ", one of them not read yet" : `, ${count} of them not read yet`),
     noneDetail: "I keep a link only when its score reaches {threshold}.",
     coverage: "I have read {read} of the project's {total} documents.",
     source:
@@ -4746,7 +4775,6 @@ export const copy = {
     emptyTitle: "I have no packages or documents for {pid} yet.",
     emptyBody: "Once I load this project's Procurement Plans and documents, this tab shows how they connect.",
     emptyLink: "Data readiness",
-    diagramLabel: "One-hop neighbourhood of {pid}",
   },
   why: {
     title: "Why this source",
@@ -4763,8 +4791,11 @@ export const copy = {
     only: "A link means only that they appeared together.",
     open: "Open the activity",
     openFor: (ref: string) => ` ${ref}`,
+    // Each other package once, though a package can hold several contracts.
     others: (n: number) =>
-      n === 1 ? "It also appeared together with one other contract in this project." : "It also appeared together with {count} other contracts in this project.",
+      n === 1
+        ? "It also appeared together with contracts of one other package in this project."
+        : "It also appeared together with contracts of {count} other packages in this project.",
     othersItem: "{ref}, signed {date}",
     othersMore: (n: number) => (n === 1 ? "and one more in Connections" : "and {count} more in Connections"),
     scoreShow: "How I scored this link",

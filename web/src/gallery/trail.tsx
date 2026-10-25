@@ -6,7 +6,10 @@ import kenya from "../../../tests/fixtures/api/activity-ke-nwwda-229129.json";
 import beforeSigning from "../../../tests/fixtures/api/activity-ke-nwwda-229129-before-signing.json";
 import showcase from "../../../tests/fixtures/api/activity-in-rrsmp-7431.json";
 import individual from "../../../tests/fixtures/api/activity-ke-mawasco-501974-indv.json";
+import several from "../../../tests/fixtures/api/activity-ke-kimawasco-372408.json";
+import proposals from "../../../tests/fixtures/api/activity-ke-cwsb-102977.json";
 import p130164 from "../../../tests/fixtures/api/connections-p130164.json";
+import p156634 from "../../../tests/fixtures/api/connections-p156634.json";
 import p127203 from "../../../tests/fixtures/api/connections-p127203.json";
 import whyOne from "../../../tests/fixtures/api/evidence-icr-p130164-54-why.json";
 import whyOthers from "../../../tests/fixtures/api/evidence-isr-p156634-s4-why.json";
@@ -45,9 +48,12 @@ export function trailPage(): GalleryPage {
       { id: "trail-showcase", title: t.trailShowcase, body: trail(showcase) },
       { id: "trail-as-of", title: t.trailAsOf, body: trail(beforeSigning) },
       { id: "trail-individual", title: t.trailIndividual, body: trail(individual) },
+      { id: "trail-several", title: t.trailSeveral, body: trail(several) },
+      { id: "trail-proposals", title: t.trailProposals, body: trail(proposals) },
       { id: "neighbourhood", title: t.neighbourhood, body: <NeighbourhoodDiagram data={p130164 as unknown as Neighbourhood} list={false} /> },
       { id: "neighbourhood-list", title: t.neighbourhoodList, body: <NeighbourhoodDiagram data={p130164 as unknown as Neighbourhood} list /> },
       { id: "neighbourhood-none", title: t.neighbourhoodNone, body: <NeighbourhoodDiagram data={p127203 as unknown as Neighbourhood} list={false} /> },
+      { id: "neighbourhood-cap", title: t.neighbourhoodCap, body: <NeighbourhoodDiagram data={p156634 as unknown as Neighbourhood} list={false} /> },
       { id: "why-one", title: t.whyOne, body: <Drawer><WhyThisSource why={(whyOne as unknown as { why: Why }).why} /></Drawer> },
       { id: "why-others", title: t.whyOthers, body: <Drawer><WhyThisSource why={(whyOthers as unknown as { why: Why }).why} /></Drawer> },
     ],

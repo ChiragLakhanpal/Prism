@@ -27,12 +27,15 @@
     ],
     "no_estimate": false,
     "missing": "notice",
-    "bids": {
-      "count": 3,
-      "notice_id": "OP00044090",
-      "evidence_id": "strata.gold.notice:OP00044090",
-      "proposals": false
-    },
+    "bids": [
+      {
+        "count": 3,
+        "notice_id": "OP00044090",
+        "evidence_id": "strata.gold.notice:OP00044090",
+        "proposals": false
+      }
+    ],
+    "many_contracts": false,
     "paragraphs": 53
   },
   "stages": [
@@ -108,6 +111,7 @@
               "reason": null
             }
           ],
+          "bid_count": 3,
           "url": "https://projects.worldbank.org/en/projects-operations/procurement-detail/OP00044090",
           "source": {
             "source_key": "award_notices",
@@ -145,7 +149,8 @@
             "name": "AMIT CONSTRUCTION",
             "country": "India",
             "is_individual_consultant": false,
-            "is_joint_venture": false
+            "is_joint_venture": false,
+            "members": []
           },
           "source": {
             "source_key": "notices",
@@ -173,7 +178,10 @@
           "public_from": "2013-11-06",
           "passage_id": "18381488/v1/23",
           "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_id": "18381488",
           "document_type": "Project Appraisal Document",
+          "title_section": null,
+          "title_page": null,
           "document_date": "2013-10-01",
           "paragraph": "23",
           "paragraph_numbered": true,
@@ -215,7 +223,10 @@
           "public_from": "2013-11-06",
           "passage_id": "18381488/v1/27",
           "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_id": "18381488",
           "document_type": "Project Appraisal Document",
+          "title_section": "III.B",
+          "title_page": null,
           "document_date": "2013-10-01",
           "paragraph": "27",
           "paragraph_numbered": true,
@@ -257,7 +268,10 @@
           "public_from": "2013-11-06",
           "passage_id": "18381488/v1/46",
           "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_id": "18381488",
           "document_type": "Project Appraisal Document",
+          "title_section": null,
+          "title_page": null,
           "document_date": "2013-10-01",
           "paragraph": "46",
           "paragraph_numbered": true,
@@ -299,7 +313,10 @@
           "public_from": "2013-11-06",
           "passage_id": "18381488/v1/70",
           "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_id": "18381488",
           "document_type": "Project Appraisal Document",
+          "title_section": null,
+          "title_page": null,
           "document_date": "2013-10-01",
           "paragraph": "70",
           "paragraph_numbered": true,
@@ -341,7 +358,10 @@
           "public_from": "2013-11-06",
           "passage_id": "18381488/v1/annex2.2",
           "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_id": "18381488",
           "document_type": "Project Appraisal Document",
+          "title_section": null,
+          "title_page": null,
           "document_date": "2013-10-01",
           "paragraph": "2",
           "paragraph_numbered": true,
@@ -383,7 +403,10 @@
           "public_from": "2013-11-06",
           "passage_id": "18381488/v1/annex2.7",
           "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_id": "18381488",
           "document_type": "Project Appraisal Document",
+          "title_section": null,
+          "title_page": null,
           "document_date": "2013-10-01",
           "paragraph": "7",
           "paragraph_numbered": true,
@@ -425,7 +448,10 @@
           "public_from": "2013-11-06",
           "passage_id": "18381488/v1/annex3.27",
           "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_id": "18381488",
           "document_type": "Project Appraisal Document",
+          "title_section": "Annex 3.B",
+          "title_page": null,
           "document_date": "2013-10-01",
           "paragraph": "27",
           "paragraph_numbered": true,
@@ -463,53 +489,14 @@
         {
           "stratum": "Why",
           "short_name": "PAD",
-          "evidence_id": "strata.gold.passage:18381488/v1/annex3.63/1",
-          "public_from": "2013-11-06",
-          "passage_id": "18381488/v1/annex3.63/1",
-          "contract_evidence_id": "strata.gold.contract:OP00044090",
-          "document_type": "Project Appraisal Document",
-          "document_date": "2013-10-01",
-          "paragraph": "63",
-          "paragraph_numbered": true,
-          "section_path": "Annex 3.B",
-          "pdf_page": 59,
-          "printed_page": "47",
-          "doc_key": "pad-2013-10-01",
-          "language": "en",
-          "text": "63. Environmental Issues. The rural road works and road safety interventions on selected road corridors are likely to create some adverse environmental impacts, particularly during the construction stage. While the adverse impacts are likely to be fairly limited in the local context, the exact nature and magnitude of impacts will vary in accordance to the location and type of engineering intervention. Deficiencies in planning and design of sub-projects can lead to insufficient arrangements to conserve natural drainage pattern leading to impairment to or worsening of the local/regional drainage. On the whole, the typical key likely impacts from the operation include: i) felling of some limited number of roadside trees; (ii) adverse impacts on water resources, including from silt flow during execution of works; (iii) soil erosion; (iv) construction phase impacts, including those related to camp site operation, dust generation, and pollution from plants, machinery, and vehicles and disposal of debris/other construction wastes; (v) appropriate management of materials (such as aggregates, sand, water, earth); (vi) safety concerns during construction works and due to increased traffic speeds during operation for both road-users and road-side residents and; (vii) the potential for poorly planned or managed development induced by the improved roads. In view of the project's potential impacts on the environment, the Bank's OP 4.01 on Environmental Assessment and OP 4.11 on Physical Cultural Resources have been triggered, and the project is designated as Category B. 63. Diversion of some forest land may also be required for widening/spot improvement in case of sub-projects involving safety interventions. More so, as part of Component B (Road Sector Modernization and Performance Enhancement), various sector level initiatives would be supported under the project. These include improving policy framework, strengthening of existing road sector policies and strategies, modernization of engineering practices and business procedures and creating asset management system to prepare prioritized plans for both construction and maintenance of state roads. While no civil works will be financed under the project on roads passing through designated protected areas, the larger institutional development plan for the road sector in Rajasthan would need to address the issues of biodiversity management in the interest of road user safety, environmental sustainability and tourism related reasons. Appropriate strategies and mechanisms will have to be built into the institutional systems to ensure that the over-all network planning/development and road selection/construction takes into account such factors.",
-          "highlights": [
-            [
-              2181,
-              2192
-            ]
-          ],
-          "topics": [
-            {
-              "kind": "category",
-              "code": "Works"
-            },
-            {
-              "kind": "sector",
-              "code": "TI",
-              "name": "Rural and Inter-Urban Roads"
-            }
-          ],
-          "source": {
-            "document_type": "Project Appraisal Document",
-            "project_id": "P130164",
-            "document_date": "2013-10-01",
-            "pdf_page": 59
-          },
-          "contract_reference": "OP00044090"
-        },
-        {
-          "stratum": "Why",
-          "short_name": "PAD",
           "evidence_id": "strata.gold.passage:18381488/v1/s25",
           "public_from": "2013-11-06",
           "passage_id": "18381488/v1/s25",
           "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_id": "18381488",
           "document_type": "Project Appraisal Document",
+          "title_section": null,
+          "title_page": null,
           "document_date": "2013-10-01",
           "paragraph": "s25",
           "paragraph_numbered": false,
@@ -547,11 +534,59 @@
         {
           "stratum": "Why",
           "short_name": "PAD",
+          "evidence_id": "strata.gold.passage:18381488/v1/annex3.63/1",
+          "public_from": "2013-11-06",
+          "passage_id": "18381488/v1/annex3.63/1",
+          "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_id": "18381488",
+          "document_type": "Project Appraisal Document",
+          "title_section": null,
+          "title_page": null,
+          "document_date": "2013-10-01",
+          "paragraph": "63",
+          "paragraph_numbered": true,
+          "section_path": "Annex 3.B",
+          "pdf_page": 59,
+          "printed_page": "47",
+          "doc_key": "pad-2013-10-01",
+          "language": "en",
+          "text": "63. Environmental Issues. The rural road works and road safety interventions on selected road corridors are likely to create some adverse environmental impacts, particularly during the construction stage. While the adverse impacts are likely to be fairly limited in the local context, the exact nature and magnitude of impacts will vary in accordance to the location and type of engineering intervention. Deficiencies in planning and design of sub-projects can lead to insufficient arrangements to conserve natural drainage pattern leading to impairment to or worsening of the local/regional drainage. On the whole, the typical key likely impacts from the operation include: i) felling of some limited number of roadside trees; (ii) adverse impacts on water resources, including from silt flow during execution of works; (iii) soil erosion; (iv) construction phase impacts, including those related to camp site operation, dust generation, and pollution from plants, machinery, and vehicles and disposal of debris/other construction wastes; (v) appropriate management of materials (such as aggregates, sand, water, earth); (vi) safety concerns during construction works and due to increased traffic speeds during operation for both road-users and road-side residents and; (vii) the potential for poorly planned or managed development induced by the improved roads. In view of the project's potential impacts on the environment, the Bank's OP 4.01 on Environmental Assessment and OP 4.11 on Physical Cultural Resources have been triggered, and the project is designated as Category B. 63. Diversion of some forest land may also be required for widening/spot improvement in case of sub-projects involving safety interventions. More so, as part of Component B (Road Sector Modernization and Performance Enhancement), various sector level initiatives would be supported under the project. These include improving policy framework, strengthening of existing road sector policies and strategies, modernization of engineering practices and business procedures and creating asset management system to prepare prioritized plans for both construction and maintenance of state roads. While no civil works will be financed under the project on roads passing through designated protected areas, the larger institutional development plan for the road sector in Rajasthan would need to address the issues of biodiversity management in the interest of road user safety, environmental sustainability and tourism related reasons. Appropriate strategies and mechanisms will have to be built into the institutional systems to ensure that the over-all network planning/development and road selection/construction takes into account such factors.",
+          "highlights": [
+            [
+              2181,
+              2192
+            ]
+          ],
+          "topics": [
+            {
+              "kind": "category",
+              "code": "Works"
+            },
+            {
+              "kind": "sector",
+              "code": "TI",
+              "name": "Rural and Inter-Urban Roads"
+            }
+          ],
+          "source": {
+            "document_type": "Project Appraisal Document",
+            "project_id": "P130164",
+            "document_date": "2013-10-01",
+            "pdf_page": 59
+          },
+          "contract_reference": "OP00044090"
+        },
+        {
+          "stratum": "Why",
+          "short_name": "PAD",
           "evidence_id": "strata.gold.passage:18381488/v1/s34",
           "public_from": "2013-11-06",
           "passage_id": "18381488/v1/s34",
           "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_id": "18381488",
           "document_type": "Project Appraisal Document",
+          "title_section": null,
+          "title_page": null,
           "document_date": "2013-10-01",
           "paragraph": "s34",
           "paragraph_numbered": false,
@@ -593,7 +628,10 @@
           "public_from": "2013-11-06",
           "passage_id": "18381488/v1/s39/2",
           "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_id": "18381488",
           "document_type": "Project Appraisal Document",
+          "title_section": null,
+          "title_page": null,
           "document_date": "2013-10-01",
           "paragraph": "s39",
           "paragraph_numbered": false,
@@ -635,7 +673,10 @@
           "public_from": "2013-11-06",
           "passage_id": "18381488/v1/s62/1",
           "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_id": "18381488",
           "document_type": "Project Appraisal Document",
+          "title_section": null,
+          "title_page": null,
           "document_date": "2013-10-01",
           "paragraph": "s62",
           "paragraph_numbered": false,
@@ -677,7 +718,10 @@
           "public_from": "2014-07-30",
           "passage_id": "19901331/v1/s3",
           "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_id": "19901331",
           "document_type": "Implementation Status and Results Report",
+          "title_section": null,
+          "title_page": null,
           "document_date": "2014-07-30",
           "paragraph": "s3",
           "paragraph_numbered": false,
@@ -719,7 +763,10 @@
           "public_from": "2015-01-23",
           "passage_id": "23868309/v1/s5",
           "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_id": "23868309",
           "document_type": "Implementation Status and Results Report",
+          "title_section": null,
+          "title_page": null,
           "document_date": "2015-01-23",
           "paragraph": "s5",
           "paragraph_numbered": false,
@@ -761,7 +808,10 @@
           "public_from": "2015-06-04",
           "passage_id": "24589049/v1/s5",
           "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_id": "24589049",
           "document_type": "Implementation Status and Results Report",
+          "title_section": null,
+          "title_page": null,
           "document_date": "2015-06-04",
           "paragraph": "s5",
           "paragraph_numbered": false,
@@ -803,7 +853,10 @@
           "public_from": "2016-01-21",
           "passage_id": "25814564/v1/s5",
           "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_id": "25814564",
           "document_type": "Implementation Status and Results Report",
+          "title_section": null,
+          "title_page": null,
           "document_date": "2016-01-21",
           "paragraph": "s5",
           "paragraph_numbered": false,
@@ -845,7 +898,10 @@
           "public_from": "2017-03-06",
           "passage_id": "27243340/v1/s5",
           "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_id": "27243340",
           "document_type": "Implementation Status and Results Report",
+          "title_section": null,
+          "title_page": null,
           "document_date": "2017-03-05",
           "paragraph": "s5",
           "paragraph_numbered": false,
@@ -887,7 +943,10 @@
           "public_from": "2017-05-23",
           "passage_id": "27490469/v1/s5",
           "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_id": "27490469",
           "document_type": "Implementation Status and Results Report",
+          "title_section": null,
+          "title_page": null,
           "document_date": "2017-05-23",
           "paragraph": "s5",
           "paragraph_numbered": false,
@@ -929,7 +988,10 @@
           "public_from": "2017-05-23",
           "passage_id": "27490469/v1/s8/1",
           "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_id": "27490469",
           "document_type": "Implementation Status and Results Report",
+          "title_section": null,
+          "title_page": null,
           "document_date": "2017-05-23",
           "paragraph": "s8",
           "paragraph_numbered": false,
@@ -962,7 +1024,10 @@
           "public_from": "2017-07-26",
           "passage_id": "27853466/v1/s5",
           "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_id": "27853466",
           "document_type": "Implementation Status and Results Report",
+          "title_section": null,
+          "title_page": null,
           "document_date": "2017-07-26",
           "paragraph": "s5",
           "paragraph_numbered": false,
@@ -1004,7 +1069,10 @@
           "public_from": "2017-07-26",
           "passage_id": "27853466/v1/s8/1",
           "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_id": "27853466",
           "document_type": "Implementation Status and Results Report",
+          "title_section": null,
+          "title_page": null,
           "document_date": "2017-07-26",
           "paragraph": "s8",
           "paragraph_numbered": false,
@@ -1037,7 +1105,10 @@
           "public_from": "2018-04-10",
           "passage_id": "29794672/v1/s5",
           "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_id": "29794672",
           "document_type": "Implementation Status and Results Report",
+          "title_section": null,
+          "title_page": null,
           "document_date": "2018-04-10",
           "paragraph": "s5",
           "paragraph_numbered": false,
@@ -1079,7 +1150,10 @@
           "public_from": "2018-12-28",
           "passage_id": "30730274/v1/s4",
           "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_id": "30730274",
           "document_type": "Implementation Status and Results Report",
+          "title_section": null,
+          "title_page": null,
           "document_date": "2018-12-28",
           "paragraph": "s4",
           "paragraph_numbered": false,
@@ -1121,7 +1195,10 @@
           "public_from": "2018-12-28",
           "passage_id": "30730274/v1/s6/1",
           "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_id": "30730274",
           "document_type": "Implementation Status and Results Report",
+          "title_section": null,
+          "title_page": null,
           "document_date": "2018-12-28",
           "paragraph": "s6",
           "paragraph_numbered": false,
@@ -1163,7 +1240,10 @@
           "public_from": "2019-11-02",
           "passage_id": "31525018/v1/11",
           "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_id": "31525018",
           "document_type": "Implementation Completion and Results Report",
+          "title_section": null,
+          "title_page": null,
           "document_date": "2019-10-10",
           "paragraph": "11",
           "paragraph_numbered": true,
@@ -1201,11 +1281,59 @@
         {
           "stratum": "Why",
           "short_name": "ICR",
+          "evidence_id": "strata.gold.passage:31525018/v1/s7",
+          "public_from": "2019-11-02",
+          "passage_id": "31525018/v1/s7",
+          "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_id": "31525018",
+          "document_type": "Implementation Completion and Results Report",
+          "title_section": null,
+          "title_page": null,
+          "document_date": "2019-10-10",
+          "paragraph": "s7",
+          "paragraph_numbered": false,
+          "section_path": "I.A",
+          "pdf_page": 13,
+          "printed_page": "9 of 62",
+          "doc_key": "icr-2019-10-10",
+          "language": "en",
+          "text": "Table 1. Project Cost Table at Approval (US$, millions) Costs Including % Bank Component Bank Financing GOR Financing Contingency Financing A - Rural Connectivity Improvement 197 138.00 70 59.00 (a) Civil Works (2,500 km) 195 136.60 70 58.40 (b) Project Management and Audit Services 2 1.40 70 0.60 B - Road Sector Modernization 11 7.75 70 3.25 C - Road Safety Management 15 10.55 70 4.45 Incremental Operating Costs 1 0.70 70 0.30 Subtotal Project Cost 224 157.00 70 67.00 Refinancing preparation advance 3 3.00 n.a. 0.00 Total Project Cost 227 160.00 70 67.00",
+          "highlights": [
+            [
+              199,
+              210
+            ]
+          ],
+          "topics": [
+            {
+              "kind": "category",
+              "code": "Works"
+            },
+            {
+              "kind": "sector",
+              "code": "TI",
+              "name": "Rural and Inter-Urban Roads"
+            }
+          ],
+          "source": {
+            "document_type": "Implementation Completion and Results Report",
+            "project_id": "P130164",
+            "document_date": "2019-10-10",
+            "pdf_page": 13
+          },
+          "contract_reference": "OP00044090"
+        },
+        {
+          "stratum": "Why",
+          "short_name": "ICR",
           "evidence_id": "strata.gold.passage:31525018/v1/15",
           "public_from": "2019-11-02",
           "passage_id": "31525018/v1/15",
           "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_id": "31525018",
           "document_type": "Implementation Completion and Results Report",
+          "title_section": null,
+          "title_page": null,
           "document_date": "2019-10-10",
           "paragraph": "15",
           "paragraph_numbered": true,
@@ -1247,7 +1375,10 @@
           "public_from": "2019-11-02",
           "passage_id": "31525018/v1/17",
           "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_id": "31525018",
           "document_type": "Implementation Completion and Results Report",
+          "title_section": null,
+          "title_page": null,
           "document_date": "2019-10-10",
           "paragraph": "17",
           "paragraph_numbered": true,
@@ -1289,7 +1420,10 @@
           "public_from": "2019-11-02",
           "passage_id": "31525018/v1/18",
           "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_id": "31525018",
           "document_type": "Implementation Completion and Results Report",
+          "title_section": null,
+          "title_page": null,
           "document_date": "2019-10-10",
           "paragraph": "18",
           "paragraph_numbered": true,
@@ -1331,7 +1465,10 @@
           "public_from": "2019-11-02",
           "passage_id": "31525018/v1/26",
           "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_id": "31525018",
           "document_type": "Implementation Completion and Results Report",
+          "title_section": null,
+          "title_page": null,
           "document_date": "2019-10-10",
           "paragraph": "26",
           "paragraph_numbered": true,
@@ -1373,7 +1510,10 @@
           "public_from": "2019-11-02",
           "passage_id": "31525018/v1/27",
           "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_id": "31525018",
           "document_type": "Implementation Completion and Results Report",
+          "title_section": null,
+          "title_page": null,
           "document_date": "2019-10-10",
           "paragraph": "27",
           "paragraph_numbered": true,
@@ -1415,7 +1555,10 @@
           "public_from": "2019-11-02",
           "passage_id": "31525018/v1/28",
           "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_id": "31525018",
           "document_type": "Implementation Completion and Results Report",
+          "title_section": null,
+          "title_page": null,
           "document_date": "2019-10-10",
           "paragraph": "28",
           "paragraph_numbered": true,
@@ -1457,7 +1600,10 @@
           "public_from": "2019-11-02",
           "passage_id": "31525018/v1/32",
           "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_id": "31525018",
           "document_type": "Implementation Completion and Results Report",
+          "title_section": null,
+          "title_page": null,
           "document_date": "2019-10-10",
           "paragraph": "32",
           "paragraph_numbered": true,
@@ -1499,7 +1645,10 @@
           "public_from": "2019-11-02",
           "passage_id": "31525018/v1/33",
           "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_id": "31525018",
           "document_type": "Implementation Completion and Results Report",
+          "title_section": null,
+          "title_page": null,
           "document_date": "2019-10-10",
           "paragraph": "33",
           "paragraph_numbered": true,
@@ -1541,7 +1690,10 @@
           "public_from": "2019-11-02",
           "passage_id": "31525018/v1/43",
           "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_id": "31525018",
           "document_type": "Implementation Completion and Results Report",
+          "title_section": null,
+          "title_page": null,
           "document_date": "2019-10-10",
           "paragraph": "43",
           "paragraph_numbered": true,
@@ -1583,7 +1735,10 @@
           "public_from": "2019-11-02",
           "passage_id": "31525018/v1/45",
           "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_id": "31525018",
           "document_type": "Implementation Completion and Results Report",
+          "title_section": null,
+          "title_page": null,
           "document_date": "2019-10-10",
           "paragraph": "45",
           "paragraph_numbered": true,
@@ -1625,7 +1780,10 @@
           "public_from": "2019-11-02",
           "passage_id": "31525018/v1/54",
           "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_id": "31525018",
           "document_type": "Implementation Completion and Results Report",
+          "title_section": null,
+          "title_page": null,
           "document_date": "2019-10-10",
           "paragraph": "54",
           "paragraph_numbered": true,
@@ -1667,7 +1825,10 @@
           "public_from": "2019-11-02",
           "passage_id": "31525018/v1/56",
           "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_id": "31525018",
           "document_type": "Implementation Completion and Results Report",
+          "title_section": null,
+          "title_page": null,
           "document_date": "2019-10-10",
           "paragraph": "56",
           "paragraph_numbered": true,
@@ -1709,7 +1870,10 @@
           "public_from": "2019-11-02",
           "passage_id": "31525018/v1/58",
           "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_id": "31525018",
           "document_type": "Implementation Completion and Results Report",
+          "title_section": null,
+          "title_page": null,
           "document_date": "2019-10-10",
           "paragraph": "58",
           "paragraph_numbered": true,
@@ -1751,7 +1915,10 @@
           "public_from": "2019-11-02",
           "passage_id": "31525018/v1/74",
           "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_id": "31525018",
           "document_type": "Implementation Completion and Results Report",
+          "title_section": null,
+          "title_page": null,
           "document_date": "2019-10-10",
           "paragraph": "74",
           "paragraph_numbered": true,
@@ -1793,7 +1960,10 @@
           "public_from": "2019-11-02",
           "passage_id": "31525018/v1/77",
           "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_id": "31525018",
           "document_type": "Implementation Completion and Results Report",
+          "title_section": null,
+          "title_page": null,
           "document_date": "2019-10-10",
           "paragraph": "77",
           "paragraph_numbered": true,
@@ -1831,11 +2001,59 @@
         {
           "stratum": "Why",
           "short_name": "ICR",
+          "evidence_id": "strata.gold.passage:31525018/v1/s42",
+          "public_from": "2019-11-02",
+          "passage_id": "31525018/v1/s42",
+          "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_id": "31525018",
+          "document_type": "Implementation Completion and Results Report",
+          "title_section": null,
+          "title_page": null,
+          "document_date": "2019-10-10",
+          "paragraph": "s42",
+          "paragraph_numbered": false,
+          "section_path": "Annex 1.I",
+          "pdf_page": 35,
+          "printed_page": "31 of 62",
+          "doc_key": "icr-2019-10-10",
+          "language": "en",
+          "text": "Objective/Outcome 2 - To enhance road safety 1. A reduction in annual average fatality count of road users on Outcome Indicators model road safety corridors 1. Model road safety corridor(s) developed Intermediate Results Indicators 2. Average star rating achieved on model road safety corridor(s) 3. Road safety policy and action plan approved and implemented 1. Model road safety civil works implemented on selected corridors (state level major road) Key Outputs by Component 2. Star rating of 3 achieved on selected corridors (linked to the achievement of the Objective/Outcome 2) 3. Road Safety Policy and action plan approved and implemented",
+          "highlights": [
+            [
+              381,
+              392
+            ]
+          ],
+          "topics": [
+            {
+              "kind": "category",
+              "code": "Works"
+            },
+            {
+              "kind": "sector",
+              "code": "TI",
+              "name": "Rural and Inter-Urban Roads"
+            }
+          ],
+          "source": {
+            "document_type": "Implementation Completion and Results Report",
+            "project_id": "P130164",
+            "document_date": "2019-10-10",
+            "pdf_page": 35
+          },
+          "contract_reference": "OP00044090"
+        },
+        {
+          "stratum": "Why",
+          "short_name": "ICR",
           "evidence_id": "strata.gold.passage:31525018/v1/annex4.1",
           "public_from": "2019-11-02",
           "passage_id": "31525018/v1/annex4.1",
           "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_id": "31525018",
           "document_type": "Implementation Completion and Results Report",
+          "title_section": "Annex 4",
+          "title_page": null,
           "document_date": "2019-10-10",
           "paragraph": "1",
           "paragraph_numbered": true,
@@ -1877,7 +2095,10 @@
           "public_from": "2019-11-02",
           "passage_id": "31525018/v1/annex4.3",
           "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_id": "31525018",
           "document_type": "Implementation Completion and Results Report",
+          "title_section": null,
+          "title_page": null,
           "document_date": "2019-10-10",
           "paragraph": "3",
           "paragraph_numbered": true,
@@ -1919,7 +2140,10 @@
           "public_from": "2019-11-02",
           "passage_id": "31525018/v1/annex4.9",
           "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_id": "31525018",
           "document_type": "Implementation Completion and Results Report",
+          "title_section": null,
+          "title_page": null,
           "document_date": "2019-10-10",
           "paragraph": "9",
           "paragraph_numbered": true,
@@ -1957,221 +2181,14 @@
         {
           "stratum": "Why",
           "short_name": "ICR",
-          "evidence_id": "strata.gold.passage:31525018/v1/annex8.1",
-          "public_from": "2019-11-02",
-          "passage_id": "31525018/v1/annex8.1",
-          "contract_evidence_id": "strata.gold.contract:OP00044090",
-          "document_type": "Implementation Completion and Results Report",
-          "document_date": "2019-10-10",
-          "paragraph": "1",
-          "paragraph_numbered": true,
-          "section_path": "Annex 8",
-          "pdf_page": 54,
-          "printed_page": "50 of 62",
-          "doc_key": "icr-2019-10-10",
-          "language": "en",
-          "text": "1. The World Bank (“the Bank”) has been extensively involved in the Indian transport sector over the past 70 years. By the end of 2018, it had closed 62 projects (loans and credits) totalling $11.1 billion to the sector, or about 15 percent of the Bank portfolios of loans and credits closed this far in the country. Roads and highways accounted for 63% (active and closed projects combined) of the total investments in the transport sector. The Bank has successfully implemented and closed 29 road projects including National Highways, State Highways and rural roads in India worth US$ 8.77 billion and has an active portfolio of 11 projects (one NH, 7 SHs and 3 rural roads) worth US$3.2 billion across nine states of India including two centrally funded projects of national highways and rural roads where civil works are also being implemented in additional nine states. In addition, four projects worth US$989 million in the state of Meghalaya, Himachal Pradesh, Tamil Nadu and including one National Highways project are under preparation and scheduled to be delivered in the current fiscal year i.e. FY20.",
-          "highlights": [
-            [
-              809,
-              820
-            ]
-          ],
-          "topics": [
-            {
-              "kind": "category",
-              "code": "Works"
-            },
-            {
-              "kind": "sector",
-              "code": "TI",
-              "name": "Rural and Inter-Urban Roads"
-            }
-          ],
-          "source": {
-            "document_type": "Implementation Completion and Results Report",
-            "project_id": "P130164",
-            "document_date": "2019-10-10",
-            "pdf_page": 54
-          },
-          "contract_reference": "OP00044090"
-        },
-        {
-          "stratum": "Why",
-          "short_name": "ICR",
-          "evidence_id": "strata.gold.passage:31525018/v1/annex8.5",
-          "public_from": "2019-11-02",
-          "passage_id": "31525018/v1/annex8.5",
-          "contract_evidence_id": "strata.gold.contract:OP00044090",
-          "document_type": "Implementation Completion and Results Report",
-          "document_date": "2019-10-10",
-          "paragraph": "5",
-          "paragraph_numbered": true,
-          "section_path": "Annex 8",
-          "pdf_page": 55,
-          "printed_page": "51 of 62",
-          "doc_key": "icr-2019-10-10",
-          "language": "en",
-          "text": "5. All three projects were designed as investment project finance (IPF) operations with institutional strengthening components complementing primarily infrastructure projects. The civil works focused on the investment and maintenance requirements of the state’s core road network. The investment support 7Independent Evaluation Group: A Decade of Action in Transport - An Evaluation of World Bank Assistance to the Transport Sector: 1995-2005, IEG (2007), The World Bank. was combined with strengthening institutional capacity of the road departments at the state level through introduction of sound strategic and regulatory framework, organisational reforms, modernisation of business and engineering practices and human resource development through training of staff, contractors and consultants. The engagement also provided support to reduce maintenance backlog by funding periodic maintenance in the state of Andhra Pradesh and Karnataka with introduction of modern maintenance equipment replacing manual operations and piloting alternative contracting methods based on performance. Further, the investment components were also designed to aid institutional strengthening: the Karnataka and Andhra Pradesh projects included important pilots/demonstrations for private sector participation for infrastructure development and innovations in contractual arrangements to increase operational efficiency and the implementation capacity of state institutions.",
-          "highlights": [
-            [
-              180,
-              191
-            ]
-          ],
-          "topics": [
-            {
-              "kind": "category",
-              "code": "Works"
-            },
-            {
-              "kind": "sector",
-              "code": "TI",
-              "name": "Rural and Inter-Urban Roads"
-            }
-          ],
-          "source": {
-            "document_type": "Implementation Completion and Results Report",
-            "project_id": "P130164",
-            "document_date": "2019-10-10",
-            "pdf_page": 55
-          },
-          "contract_reference": "OP00044090"
-        },
-        {
-          "stratum": "Why",
-          "short_name": "ICR",
-          "evidence_id": "strata.gold.passage:31525018/v1/annex8.6",
-          "public_from": "2019-11-02",
-          "passage_id": "31525018/v1/annex8.6",
-          "contract_evidence_id": "strata.gold.contract:OP00044090",
-          "document_type": "Implementation Completion and Results Report",
-          "document_date": "2019-10-10",
-          "paragraph": "6",
-          "paragraph_numbered": true,
-          "section_path": "Annex 8",
-          "pdf_page": 56,
-          "printed_page": "52 of 62",
-          "doc_key": "icr-2019-10-10",
-          "language": "en",
-          "text": "6. Focusing on Institutional Strengthening through Road Sector Modernisation. In case of Rajasthan, though the civil works were mainly on rural roads, however, the road sector modernisation agenda including road safety was designed to focus on transformation of the entire Public Works Department into a modern road agency by adopting best practices and strengthen institutional effectiveness. The key elements of this road sector modernization approach were like the Institutional Development Action Plan prepared in KSHIP II and APTRSP. Project Interventions:",
-          "highlights": [
-            [
-              111,
-              122
-            ]
-          ],
-          "topics": [
-            {
-              "kind": "category",
-              "code": "Works"
-            },
-            {
-              "kind": "sector",
-              "code": "TI",
-              "name": "Rural and Inter-Urban Roads"
-            }
-          ],
-          "source": {
-            "document_type": "Implementation Completion and Results Report",
-            "project_id": "P130164",
-            "document_date": "2019-10-10",
-            "pdf_page": 56
-          },
-          "contract_reference": "OP00044090"
-        },
-        {
-          "stratum": "Why",
-          "short_name": "ICR",
-          "evidence_id": "strata.gold.passage:31525018/v1/annex8.7",
-          "public_from": "2019-11-02",
-          "passage_id": "31525018/v1/annex8.7",
-          "contract_evidence_id": "strata.gold.contract:OP00044090",
-          "document_type": "Implementation Completion and Results Report",
-          "document_date": "2019-10-10",
-          "paragraph": "7",
-          "paragraph_numbered": true,
-          "section_path": "Annex 8",
-          "pdf_page": 56,
-          "printed_page": "52 of 62",
-          "doc_key": "icr-2019-10-10",
-          "language": "en",
-          "text": "7. The civil works in all three projects focused on improving the quality of core road network through upgradation, widening and maintenance of priority roads in Andhra Pradesh, Telangana as well as in Karnataka whereas in Rajasthan, the works were focusing on providing all-weather road connectivity to the rural population of the state. In Andhra Pradesh & Telangana, the focus was to improve riding quality and capacity of the network by reducing the maintenance backlog through adoption of long-term output and performance-based maintenance contracts on a significant part of the core road network and pilot transactions to increase states capacity to engage private sector to finance, develop and manage two road concessions on public-private partnership (PPP) basis. In Karnataka, project activities mainly focused towards highway financing modernization and strengthen the capacity of the government to attract private sector financing through adoption of PPP– Design, Build, Finance, Operate, Maintain and Transfer (DBFOMT) contracts and commercial financing through domestic financial institutions. In addition, the project interventions were focusing on enhancing the institutional effectiveness in all states through structured institutional strengthening and development action plans in Andhra Pradesh, Telangana and Karnataka and road sector modernisation plan in Rajasthan. The road safety demonstration corridor approach was adopted in all four states. A snapshot of project interventions in provided in the table one below and a detailed comparison of the design and interventions is at Appendix-1.",
-          "highlights": [
-            [
-              7,
-              18
-            ]
-          ],
-          "topics": [
-            {
-              "kind": "category",
-              "code": "Works"
-            },
-            {
-              "kind": "sector",
-              "code": "TI",
-              "name": "Rural and Inter-Urban Roads"
-            }
-          ],
-          "source": {
-            "document_type": "Implementation Completion and Results Report",
-            "project_id": "P130164",
-            "document_date": "2019-10-10",
-            "pdf_page": 56
-          },
-          "contract_reference": "OP00044090"
-        },
-        {
-          "stratum": "Why",
-          "short_name": "ICR",
-          "evidence_id": "strata.gold.passage:31525018/v1/s42",
-          "public_from": "2019-11-02",
-          "passage_id": "31525018/v1/s42",
-          "contract_evidence_id": "strata.gold.contract:OP00044090",
-          "document_type": "Implementation Completion and Results Report",
-          "document_date": "2019-10-10",
-          "paragraph": "s42",
-          "paragraph_numbered": false,
-          "section_path": "Annex 1.I",
-          "pdf_page": 35,
-          "printed_page": "31 of 62",
-          "doc_key": "icr-2019-10-10",
-          "language": "en",
-          "text": "Objective/Outcome 2 - To enhance road safety 1. A reduction in annual average fatality count of road users on Outcome Indicators model road safety corridors 1. Model road safety corridor(s) developed Intermediate Results Indicators 2. Average star rating achieved on model road safety corridor(s) 3. Road safety policy and action plan approved and implemented 1. Model road safety civil works implemented on selected corridors (state level major road) Key Outputs by Component 2. Star rating of 3 achieved on selected corridors (linked to the achievement of the Objective/Outcome 2) 3. Road Safety Policy and action plan approved and implemented",
-          "highlights": [
-            [
-              381,
-              392
-            ]
-          ],
-          "topics": [
-            {
-              "kind": "category",
-              "code": "Works"
-            },
-            {
-              "kind": "sector",
-              "code": "TI",
-              "name": "Rural and Inter-Urban Roads"
-            }
-          ],
-          "source": {
-            "document_type": "Implementation Completion and Results Report",
-            "project_id": "P130164",
-            "document_date": "2019-10-10",
-            "pdf_page": 35
-          },
-          "contract_reference": "OP00044090"
-        },
-        {
-          "stratum": "Why",
-          "short_name": "ICR",
           "evidence_id": "strata.gold.passage:31525018/v1/s51/1",
           "public_from": "2019-11-02",
           "passage_id": "31525018/v1/s51/1",
           "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_id": "31525018",
           "document_type": "Implementation Completion and Results Report",
+          "title_section": null,
+          "title_page": null,
           "document_date": "2019-10-10",
           "paragraph": "s51",
           "paragraph_numbered": false,
@@ -2213,7 +2230,10 @@
           "public_from": "2019-11-02",
           "passage_id": "31525018/v1/s61",
           "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_id": "31525018",
           "document_type": "Implementation Completion and Results Report",
+          "title_section": null,
+          "title_page": null,
           "document_date": "2019-10-10",
           "paragraph": "s61",
           "paragraph_numbered": false,
@@ -2251,11 +2271,194 @@
         {
           "stratum": "Why",
           "short_name": "ICR",
+          "evidence_id": "strata.gold.passage:31525018/v1/annex8.1",
+          "public_from": "2019-11-02",
+          "passage_id": "31525018/v1/annex8.1",
+          "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_id": "31525018",
+          "document_type": "Implementation Completion and Results Report",
+          "title_section": "Annex 8",
+          "title_page": null,
+          "document_date": "2019-10-10",
+          "paragraph": "1",
+          "paragraph_numbered": true,
+          "section_path": "Annex 8",
+          "pdf_page": 54,
+          "printed_page": "50 of 62",
+          "doc_key": "icr-2019-10-10",
+          "language": "en",
+          "text": "1. The World Bank (“the Bank”) has been extensively involved in the Indian transport sector over the past 70 years. By the end of 2018, it had closed 62 projects (loans and credits) totalling $11.1 billion to the sector, or about 15 percent of the Bank portfolios of loans and credits closed this far in the country. Roads and highways accounted for 63% (active and closed projects combined) of the total investments in the transport sector. The Bank has successfully implemented and closed 29 road projects including National Highways, State Highways and rural roads in India worth US$ 8.77 billion and has an active portfolio of 11 projects (one NH, 7 SHs and 3 rural roads) worth US$3.2 billion across nine states of India including two centrally funded projects of national highways and rural roads where civil works are also being implemented in additional nine states. In addition, four projects worth US$989 million in the state of Meghalaya, Himachal Pradesh, Tamil Nadu and including one National Highways project are under preparation and scheduled to be delivered in the current fiscal year i.e. FY20.",
+          "highlights": [
+            [
+              809,
+              820
+            ]
+          ],
+          "topics": [
+            {
+              "kind": "category",
+              "code": "Works"
+            },
+            {
+              "kind": "sector",
+              "code": "TI",
+              "name": "Rural and Inter-Urban Roads"
+            }
+          ],
+          "source": {
+            "document_type": "Implementation Completion and Results Report",
+            "project_id": "P130164",
+            "document_date": "2019-10-10",
+            "pdf_page": 54
+          },
+          "contract_reference": "OP00044090"
+        },
+        {
+          "stratum": "Why",
+          "short_name": "ICR",
+          "evidence_id": "strata.gold.passage:31525018/v1/annex8.5",
+          "public_from": "2019-11-02",
+          "passage_id": "31525018/v1/annex8.5",
+          "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_id": "31525018",
+          "document_type": "Implementation Completion and Results Report",
+          "title_section": null,
+          "title_page": null,
+          "document_date": "2019-10-10",
+          "paragraph": "5",
+          "paragraph_numbered": true,
+          "section_path": "Annex 8",
+          "pdf_page": 55,
+          "printed_page": "51 of 62",
+          "doc_key": "icr-2019-10-10",
+          "language": "en",
+          "text": "5. All three projects were designed as investment project finance (IPF) operations with institutional strengthening components complementing primarily infrastructure projects. The civil works focused on the investment and maintenance requirements of the state’s core road network. The investment support 7Independent Evaluation Group: A Decade of Action in Transport - An Evaluation of World Bank Assistance to the Transport Sector: 1995-2005, IEG (2007), The World Bank. was combined with strengthening institutional capacity of the road departments at the state level through introduction of sound strategic and regulatory framework, organisational reforms, modernisation of business and engineering practices and human resource development through training of staff, contractors and consultants. The engagement also provided support to reduce maintenance backlog by funding periodic maintenance in the state of Andhra Pradesh and Karnataka with introduction of modern maintenance equipment replacing manual operations and piloting alternative contracting methods based on performance. Further, the investment components were also designed to aid institutional strengthening: the Karnataka and Andhra Pradesh projects included important pilots/demonstrations for private sector participation for infrastructure development and innovations in contractual arrangements to increase operational efficiency and the implementation capacity of state institutions.",
+          "highlights": [
+            [
+              180,
+              191
+            ]
+          ],
+          "topics": [
+            {
+              "kind": "category",
+              "code": "Works"
+            },
+            {
+              "kind": "sector",
+              "code": "TI",
+              "name": "Rural and Inter-Urban Roads"
+            }
+          ],
+          "source": {
+            "document_type": "Implementation Completion and Results Report",
+            "project_id": "P130164",
+            "document_date": "2019-10-10",
+            "pdf_page": 55
+          },
+          "contract_reference": "OP00044090"
+        },
+        {
+          "stratum": "Why",
+          "short_name": "ICR",
+          "evidence_id": "strata.gold.passage:31525018/v1/annex8.6",
+          "public_from": "2019-11-02",
+          "passage_id": "31525018/v1/annex8.6",
+          "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_id": "31525018",
+          "document_type": "Implementation Completion and Results Report",
+          "title_section": null,
+          "title_page": null,
+          "document_date": "2019-10-10",
+          "paragraph": "6",
+          "paragraph_numbered": true,
+          "section_path": "Annex 8",
+          "pdf_page": 56,
+          "printed_page": "52 of 62",
+          "doc_key": "icr-2019-10-10",
+          "language": "en",
+          "text": "6. Focusing on Institutional Strengthening through Road Sector Modernisation. In case of Rajasthan, though the civil works were mainly on rural roads, however, the road sector modernisation agenda including road safety was designed to focus on transformation of the entire Public Works Department into a modern road agency by adopting best practices and strengthen institutional effectiveness. The key elements of this road sector modernization approach were like the Institutional Development Action Plan prepared in KSHIP II and APTRSP. Project Interventions:",
+          "highlights": [
+            [
+              111,
+              122
+            ]
+          ],
+          "topics": [
+            {
+              "kind": "category",
+              "code": "Works"
+            },
+            {
+              "kind": "sector",
+              "code": "TI",
+              "name": "Rural and Inter-Urban Roads"
+            }
+          ],
+          "source": {
+            "document_type": "Implementation Completion and Results Report",
+            "project_id": "P130164",
+            "document_date": "2019-10-10",
+            "pdf_page": 56
+          },
+          "contract_reference": "OP00044090"
+        },
+        {
+          "stratum": "Why",
+          "short_name": "ICR",
+          "evidence_id": "strata.gold.passage:31525018/v1/annex8.7",
+          "public_from": "2019-11-02",
+          "passage_id": "31525018/v1/annex8.7",
+          "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_id": "31525018",
+          "document_type": "Implementation Completion and Results Report",
+          "title_section": null,
+          "title_page": null,
+          "document_date": "2019-10-10",
+          "paragraph": "7",
+          "paragraph_numbered": true,
+          "section_path": "Annex 8",
+          "pdf_page": 56,
+          "printed_page": "52 of 62",
+          "doc_key": "icr-2019-10-10",
+          "language": "en",
+          "text": "7. The civil works in all three projects focused on improving the quality of core road network through upgradation, widening and maintenance of priority roads in Andhra Pradesh, Telangana as well as in Karnataka whereas in Rajasthan, the works were focusing on providing all-weather road connectivity to the rural population of the state. In Andhra Pradesh & Telangana, the focus was to improve riding quality and capacity of the network by reducing the maintenance backlog through adoption of long-term output and performance-based maintenance contracts on a significant part of the core road network and pilot transactions to increase states capacity to engage private sector to finance, develop and manage two road concessions on public-private partnership (PPP) basis. In Karnataka, project activities mainly focused towards highway financing modernization and strengthen the capacity of the government to attract private sector financing through adoption of PPP– Design, Build, Finance, Operate, Maintain and Transfer (DBFOMT) contracts and commercial financing through domestic financial institutions. In addition, the project interventions were focusing on enhancing the institutional effectiveness in all states through structured institutional strengthening and development action plans in Andhra Pradesh, Telangana and Karnataka and road sector modernisation plan in Rajasthan. The road safety demonstration corridor approach was adopted in all four states. A snapshot of project interventions in provided in the table one below and a detailed comparison of the design and interventions is at Appendix-1.",
+          "highlights": [
+            [
+              7,
+              18
+            ]
+          ],
+          "topics": [
+            {
+              "kind": "category",
+              "code": "Works"
+            },
+            {
+              "kind": "sector",
+              "code": "TI",
+              "name": "Rural and Inter-Urban Roads"
+            }
+          ],
+          "source": {
+            "document_type": "Implementation Completion and Results Report",
+            "project_id": "P130164",
+            "document_date": "2019-10-10",
+            "pdf_page": 56
+          },
+          "contract_reference": "OP00044090"
+        },
+        {
+          "stratum": "Why",
+          "short_name": "ICR",
           "evidence_id": "strata.gold.passage:31525018/v1/s64",
           "public_from": "2019-11-02",
           "passage_id": "31525018/v1/s64",
           "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_id": "31525018",
           "document_type": "Implementation Completion and Results Report",
+          "title_section": null,
+          "title_page": 56,
           "document_date": "2019-10-10",
           "paragraph": "s64",
           "paragraph_numbered": false,
@@ -2297,7 +2500,10 @@
           "public_from": "2019-11-02",
           "passage_id": "31525018/v1/s69/1",
           "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_id": "31525018",
           "document_type": "Implementation Completion and Results Report",
+          "title_section": null,
+          "title_page": 64,
           "document_date": "2019-10-10",
           "paragraph": "s69",
           "paragraph_numbered": false,
@@ -2331,48 +2537,107 @@
             "pdf_page": 64
           },
           "contract_reference": "OP00044090"
+        }
+      ],
+      "groups": [
+        {
+          "document_id": "18381488",
+          "document_type": "Project Appraisal Document",
+          "short_name": "PAD",
+          "stratum": "Why",
+          "document_date": "2013-10-01",
+          "count": 12,
+          "shown": 3
         },
         {
-          "stratum": "Why",
-          "short_name": "ICR",
-          "evidence_id": "strata.gold.passage:31525018/v1/s7",
-          "public_from": "2019-11-02",
-          "passage_id": "31525018/v1/s7",
-          "contract_evidence_id": "strata.gold.contract:OP00044090",
+          "document_id": "19901331",
+          "document_type": "Implementation Status and Results Report",
+          "short_name": "ISR",
+          "stratum": "How",
+          "document_date": "2014-07-30",
+          "count": 1,
+          "shown": 1
+        },
+        {
+          "document_id": "23868309",
+          "document_type": "Implementation Status and Results Report",
+          "short_name": "ISR",
+          "stratum": "How",
+          "document_date": "2015-01-23",
+          "count": 1,
+          "shown": 1
+        },
+        {
+          "document_id": "24589049",
+          "document_type": "Implementation Status and Results Report",
+          "short_name": "ISR",
+          "stratum": "How",
+          "document_date": "2015-06-04",
+          "count": 1,
+          "shown": 1
+        },
+        {
+          "document_id": "25814564",
+          "document_type": "Implementation Status and Results Report",
+          "short_name": "ISR",
+          "stratum": "How",
+          "document_date": "2016-01-21",
+          "count": 1,
+          "shown": 1
+        },
+        {
+          "document_id": "27243340",
+          "document_type": "Implementation Status and Results Report",
+          "short_name": "ISR",
+          "stratum": "How",
+          "document_date": "2017-03-05",
+          "count": 1,
+          "shown": 1
+        },
+        {
+          "document_id": "27490469",
+          "document_type": "Implementation Status and Results Report",
+          "short_name": "ISR",
+          "stratum": "How",
+          "document_date": "2017-05-23",
+          "count": 2,
+          "shown": 2
+        },
+        {
+          "document_id": "27853466",
+          "document_type": "Implementation Status and Results Report",
+          "short_name": "ISR",
+          "stratum": "How",
+          "document_date": "2017-07-26",
+          "count": 2,
+          "shown": 2
+        },
+        {
+          "document_id": "29794672",
+          "document_type": "Implementation Status and Results Report",
+          "short_name": "ISR",
+          "stratum": "How",
+          "document_date": "2018-04-10",
+          "count": 1,
+          "shown": 1
+        },
+        {
+          "document_id": "30730274",
+          "document_type": "Implementation Status and Results Report",
+          "short_name": "ISR",
+          "stratum": "How",
+          "document_date": "2018-12-28",
+          "count": 2,
+          "shown": 2
+        },
+        {
+          "document_id": "31525018",
           "document_type": "Implementation Completion and Results Report",
+          "short_name": "ICR",
+          "stratum": "Why",
           "document_date": "2019-10-10",
-          "paragraph": "s7",
-          "paragraph_numbered": false,
-          "section_path": "I.A",
-          "pdf_page": 13,
-          "printed_page": "9 of 62",
-          "doc_key": "icr-2019-10-10",
-          "language": "en",
-          "text": "Table 1. Project Cost Table at Approval (US$, millions) Costs Including % Bank Component Bank Financing GOR Financing Contingency Financing A - Rural Connectivity Improvement 197 138.00 70 59.00 (a) Civil Works (2,500 km) 195 136.60 70 58.40 (b) Project Management and Audit Services 2 1.40 70 0.60 B - Road Sector Modernization 11 7.75 70 3.25 C - Road Safety Management 15 10.55 70 4.45 Incremental Operating Costs 1 0.70 70 0.30 Subtotal Project Cost 224 157.00 70 67.00 Refinancing preparation advance 3 3.00 n.a. 0.00 Total Project Cost 227 160.00 70 67.00",
-          "highlights": [
-            [
-              199,
-              210
-            ]
-          ],
-          "topics": [
-            {
-              "kind": "category",
-              "code": "Works"
-            },
-            {
-              "kind": "sector",
-              "code": "TI",
-              "name": "Rural and Inter-Urban Roads"
-            }
-          ],
-          "source": {
-            "document_type": "Implementation Completion and Results Report",
-            "project_id": "P130164",
-            "document_date": "2019-10-10",
-            "pdf_page": 13
-          },
-          "contract_reference": "OP00044090"
+          "count": 29,
+          "shown": 3
         }
       ],
       "threshold": "0.50"

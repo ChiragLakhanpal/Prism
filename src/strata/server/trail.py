@@ -28,6 +28,7 @@ from __future__ import annotations
 
 import datetime as dt
 import json
+import re
 from decimal import Decimal
 from functools import cache
 from pathlib import Path
@@ -43,9 +44,6 @@ from strata.tools.find_comparables import read_package
 SQL = Path(__file__).resolve().parent / "sql" / "trail"
 AWARD = "Contract Award"
 CONSULTANTS = "Consultant Services"
-# Methods and market approaches that invite firms directly, so no public notice is missing (the 22 brief, 2.7).
-METHODS_WITHOUT_NOTICE = ("Direct Selection", "Direct Contracting")
-DIRECT_APPROACH = "Direct"
 INDIVIDUAL = "Individual Consultant Selection"
 OUTCOMES = {"awarded": "awarded", "evaluated": "not_awarded", "rejected": "rejected"}
 # Where each kind of record comes from in the source registry, for its source line's dataset (config/sources.toml).
@@ -112,6 +110,12 @@ def activity_links(project_id: str | None, reference: str | None) -> dict:
             "activity_href": activity_href(project_id, reference)}
 
 
+def paragraph_key(passage_id: str) -> str:
+    """The paragraph a passage belongs to: a long paragraph is read as parts that share its number, such as
+    27348420/v1/annex3.62/1 and /2, so its key leaves the part off (27348420/v1/annex3.62)."""
+    return "/".join(passage_id.split("/")[:3])
+
+
 def _field(key: str, value, kind: str = "text") -> dict | None:
     return None if value is None or value == "" else {"key": key, "value": value, "kind": kind}
 
@@ -174,11 +178,14 @@ def _notice_stage(notices: list[dict], method: str | None, approach: str | None)
             seen[row["notice_type"]] = seen.get(row["notice_type"], 0) + 1
             records.append(_notice_record(row, seen[row["notice_type"]] > 1))
         return {"stage": "notice", "found": True, "reason": None, "joined_on": "key", "records": records}
+    # A Method or a Market Approach that invites firms directly has no public notice, so none is missing (the 22
+    # brief, 2.7). The thresholds file's one list says which, for the past range too.
+    limits = load_thresholds()
     if any(row["notice_type"] != AWARD for row in notices):
         reason = "after_asof"
-    elif method in METHODS_WITHOUT_NOTICE:
+    elif method in limits.value("past_range.no_notice_methods"):
         reason = "method_no_notice"
-    elif approach and approach.startswith(DIRECT_APPROACH):
+    elif approach and any(approach.startswith(word) for word in limits.value("past_range.no_notice_market_approaches")):
         reason = "approach_no_notice"
     else:
         reason = "none_found"
@@ -224,7 +231,7 @@ def _bids_stage(engine: Engine, notices: list[dict], method: str | None, consult
             "labels": {"price_at_opening": first.get("price_at_opening_label"),
                        "evaluated_price": first.get("evaluated_price_label")},
             "lists_scores": any(_true(row["notice_lists_scores"]) for row in listed),
-            "proposals": consultants, "bids": bids, "url": notice_url(notice["notice_id"]),
+            "proposals": consultants, "bids": bids, "bid_count": len(bids), "url": notice_url(notice["notice_id"]),
             "source": {**dataset("award_notices"), "document_type": AWARD, "project_id": notice["project_id"],
                        "document_date": _iso(notice["notice_date"])},
         })
@@ -232,9 +239,14 @@ def _bids_stage(engine: Engine, notices: list[dict], method: str | None, consult
 
 
 def _supplier(row: dict) -> dict:
+    """A contract's supplier as plain text: never named for an individual consultant, and a joint venture with its
+    members in the order its name gives them ("A / B"), as the bids table lists a joint venture's members."""
     individual = row["supplier_kind"] == "individual consultant"
-    return {"name": None if individual else row["supplier_name"], "country": row["supplier_country"],
-            "is_individual_consultant": individual, "is_joint_venture": row["supplier_kind"] == "joint venture"}
+    venture = row["supplier_kind"] == "joint venture"
+    name = None if individual else row["supplier_name"]
+    members = [member.strip() for member in name.split(" / ") if member.strip()] if venture and name else []
+    return {"name": name, "country": row["supplier_country"], "is_individual_consultant": individual,
+            "is_joint_venture": venture, "members": members}
 
 
 def _contract_record(row: dict) -> dict:
@@ -297,7 +309,8 @@ def passage_card(row: dict) -> dict:
     return {
         **document_labels(row["document_type"]),
         "evidence_id": row["evidence_id"], "public_from": _iso(row["public_from"]), "passage_id": row["passage_id"],
-        "contract_evidence_id": row["contract_evidence_id"], "document_type": row["document_type"],
+        "contract_evidence_id": row["contract_evidence_id"], "document_id": row["document_id"],
+        "document_type": row["document_type"], "title_section": None, "title_page": None,
         "document_date": _iso(row["document_date"]), "paragraph": row["paragraph"],
         "paragraph_numbered": _true(row["paragraph_numbered"]), "section_path": row["section_path"],
         "pdf_page": row["pdf_page"], "printed_page": row["printed_page"], "doc_key": row["doc_key"],
@@ -309,28 +322,65 @@ def passage_card(row: dict) -> dict:
     }
 
 
+def _in_document_order(card: dict) -> tuple:
+    """A card's place in its report: its page, then its paragraph id read with its numbers as numbers."""
+    parts = re.split(r"(\d+)", card["passage_id"])
+    return (card["pdf_page"] or 0, [int(part) if part.isdigit() else part for part in parts])
+
+
+def _tell_titles_apart(cards: list[dict]) -> None:
+    """Cards of one report that would share a title say what tells them apart: a paragraph number used again in an
+    annex names its section ("Annex 2.A, paragraph 27"), and a section name used twice names its page."""
+    titles: dict[tuple, list[dict]] = {}
+    for card in cards:
+        titles.setdefault((card["paragraph_numbered"], card["paragraph"] if card["paragraph_numbered"]
+                           else card["section_path"]), []).append(card)
+    for alike in (group for group in titles.values() if len(group) > 1):
+        sections = {card["section_path"] for card in alike}
+        for card in alike:
+            if card["paragraph_numbered"] and len(sections) == len(alike):
+                card["title_section"] = card["section_path"]
+            else:
+                card["title_page"] = card["pdf_page"]
+
+
 def _paragraph_stage(engine: Engine, contract_stage: dict, contracts: list[dict], project_id: str,
                      as_of: dt.date) -> dict:
-    threshold = f"{Decimal(str(load_thresholds().value('links.threshold'))):.2f}"
+    limits = load_thresholds()
+    threshold = f"{Decimal(str(limits.value('links.threshold'))):.2f}"
     if not contract_stage["found"]:
-        return {"stage": "paragraphs", "found": False, "joined_on": "together", "records": [], "threshold": threshold,
-                "reason": "after_asof" if contracts else "no_contract"}
+        return {"stage": "paragraphs", "found": False, "joined_on": "together", "records": [], "groups": [],
+                "threshold": threshold, "reason": "after_asof" if contracts else "no_contract"}
     ids = [record["evidence_id"] for record in contract_stage["records"]]
     references = {record["evidence_id"]: record["contract_reference"] for record in contract_stage["records"]}
+    # One card a paragraph: a paragraph read as parts shows its strongest part, as the edge to it scored.
     cards: dict[str, dict] = {}
     for row in _rows(engine, "paragraphs", contracts=",".join(ids), as_of=as_of):
-        card = cards.get(row["evidence_id"])
+        key = paragraph_key(row["passage_id"])
+        card = cards.get(key)
         if card is None or Decimal(str(row["score"])) > Decimal(card["score"]):
-            cards[row["evidence_id"]] = {**passage_card(row), "score": str(row["score"]),
-                                         "contract_reference": references.get(row["contract_evidence_id"])}
-    records = sorted(cards.values(), key=lambda card: (card["document_date"] or "", card["passage_id"]))
-    for card in records:
+            cards[key] = {**passage_card(row), "score": str(row["score"]),
+                          "contract_reference": references.get(row["contract_evidence_id"])}
+    if not cards:
+        return {"stage": "paragraphs", "found": False, "joined_on": "together", "records": [], "groups": [],
+                "threshold": threshold, "reason": "no_links", "coverage": _coverage(engine, project_id, as_of)}
+    # Grouped by report, oldest first, each in document order: the order says what was known when and ranks nothing.
+    by_report: dict[str, list[dict]] = {}
+    for card in sorted(cards.values(), key=lambda card: (card["document_date"] or "", card["document_id"])):
         card.pop("score")
-    if not records:
-        return {"stage": "paragraphs", "found": False, "joined_on": "together", "records": [], "threshold": threshold,
-                "reason": "no_links", "coverage": _coverage(engine, project_id, as_of)}
+        by_report.setdefault(card["document_id"], []).append(card)
+    shown = int(limits.value("contract_trail.paragraphs_per_report"))
+    records, groups = [], []
+    for document_id, mine in by_report.items():
+        mine.sort(key=_in_document_order)
+        _tell_titles_apart(mine)
+        records += mine
+        first = mine[0]
+        groups.append({"document_id": document_id, "document_type": first["document_type"],
+                       "short_name": first["short_name"], "stratum": first["stratum"],
+                       "document_date": first["document_date"], "count": len(mine), "shown": min(len(mine), shown)})
     return {"stage": "paragraphs", "found": True, "reason": None, "joined_on": "together", "records": records,
-            "threshold": threshold}
+            "groups": groups, "threshold": threshold}
 
 
 def _lead(stages: dict[str, dict]) -> dict:
@@ -355,12 +405,17 @@ def _lead(stages: dict[str, dict]) -> dict:
     no_notice = not notice["found"] and notice["reason"] in ("none_found", "after_asof")
     missing = ("notice_and_contract" if no_notice and not contract["found"] else "notice" if no_notice
                else "contract" if not contract["found"] else None)
-    first_award = next((record for record in bids["records"] if record["bids"]), None)
+    # Each award notice's bids, in date order, so the lead counts every notice's, not only the first's.
+    listed = [{"count": award["bid_count"], "notice_id": award["notice_id"], "evidence_id": award["evidence_id"],
+               "proposals": award["proposals"]} for award in bids["records"] if award["bids"]]
     return {"parts": parts, "no_estimate": bool(record) and not record["estimated_amount_usd"], "missing": missing,
-            "bids": {"count": len(first_award["bids"]), "notice_id": first_award["notice_id"],
-                     "evidence_id": first_award["evidence_id"], "proposals": first_award["proposals"]}
-            if first_award else None,
+            "bids": listed, "many_contracts": len(contract["records"]) > 1,
             "paragraphs": len(stages["paragraphs"]["records"]) if contract["found"] else None}
+
+
+def _first(rows: list[dict], column: str):
+    """The first value a column holds in these rows, or None."""
+    return next((row[column] for row in rows if row[column]), None)
 
 
 def activity_trail(engine: Engine, project_id: str, reference: str, as_of: dt.date) -> dict | None:
@@ -374,19 +429,24 @@ def activity_trail(engine: Engine, project_id: str, reference: str, as_of: dt.da
     plan, package = _plan_stage(engine, reference, as_of)
     notices = _rows(engine, "notices", reference=reference, as_of=as_of)
     contracts = _rows(engine, "contracts", reference=reference, as_of=as_of)
-    method = (package or {}).get("method") or next((row["procurement_method"] for row in contracts if row["procurement_method"]),
-                                                    None) or next((row["procurement_method"] for row in notices), None)
-    approach = (package or {}).get("market_approach") or next((row["market_approach"] for row in notices if row["market_approach"]), None)
-    category = (package or {}).get("category") or next((row["procurement_category"] for row in contracts), None) \
-        or next((row["procurement_category"] for row in notices), None)
+    # The header and the reasons read only the records public on the as-of date (ADR 0002).
+    public_contracts = [row for row in contracts if _true(row["public_then"])]
+    public_notices = [row for row in notices if _true(row["public_then"])]
+    method = (package or {}).get("method") or _first(public_contracts, "procurement_method") \
+        or _first(public_notices, "procurement_method")
+    approach = (package or {}).get("market_approach") or _first(public_notices, "market_approach")
+    category = (package or {}).get("category") or _first(public_contracts, "procurement_category") \
+        or _first(public_notices, "procurement_category")
     consultants = category == CONSULTANTS or "-CS-" in reference.upper()
     contract_stage = _contract_stage(contracts)
     stages = {"plan": plan, "notice": _notice_stage(notices, method, approach),
               "bids": _bids_stage(engine, notices, method, consultants, reference), "contract": contract_stage}
     stages["paragraphs"] = _paragraph_stage(engine, contract_stage, contracts, owner, as_of)
-    description = (package or {}).get("description") or next((row["contract_description"] for row in contracts
-                                                              if row["contract_description"]), None) \
-        or next((row["bid_description"] for row in notices if row["bid_description"]), None)
+    # The activity is named as STEP typed it in its notice when one was public, since the plan reader can split a
+    # word inside a plan's cell ("Explor atory"); then as its plan or its contract names it.
+    description = _first([row for row in public_notices if row["notice_type"] != AWARD], "bid_description") \
+        or _first(public_notices, "bid_description") or (package or {}).get("description") \
+        or _first(public_contracts, "contract_description")
     through = data_through(engine)
     return {
         "as_of": as_of.isoformat(),

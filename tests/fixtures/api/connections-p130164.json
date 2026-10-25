@@ -111,9 +111,12 @@
           "paragraph": "23",
           "paragraph_numbered": true,
           "section_path": "III.A",
+          "pdf_page": 20,
+          "label_extra": null,
           "packages": [
             "IN-RRSMP-7431-CW-RFB"
-          ]
+          ],
+          "package_count": 1
         },
         {
           "evidence_id": "strata.gold.passage:18381488/v1/annex2.2",
@@ -121,9 +124,12 @@
           "paragraph": "2",
           "paragraph_numbered": true,
           "section_path": "Annex 2",
+          "pdf_page": 37,
+          "label_extra": null,
           "packages": [
             "IN-RRSMP-7431-CW-RFB"
-          ]
+          ],
+          "package_count": 1
         },
         {
           "evidence_id": "strata.gold.passage:18381488/v1/46",
@@ -131,9 +137,12 @@
           "paragraph": "46",
           "paragraph_numbered": true,
           "section_path": "IV.C",
+          "pdf_page": 25,
+          "label_extra": null,
           "packages": [
             "IN-RRSMP-7431-CW-RFB"
-          ]
+          ],
+          "package_count": 1
         }
       ],
       "more_chips": 9
@@ -168,9 +177,12 @@
           "paragraph": "s3",
           "paragraph_numbered": false,
           "section_path": "Overall Ratings",
+          "pdf_page": 1,
+          "label_extra": null,
           "packages": [
             "IN-RRSMP-7431-CW-RFB"
-          ]
+          ],
+          "package_count": 1
         }
       ],
       "more_chips": 0
@@ -192,9 +204,12 @@
           "paragraph": "s5",
           "paragraph_numbered": false,
           "section_path": "Implementation Status and Key Decisions",
+          "pdf_page": 2,
+          "label_extra": null,
           "packages": [
             "IN-RRSMP-7431-CW-RFB"
-          ]
+          ],
+          "package_count": 1
         }
       ],
       "more_chips": 0
@@ -216,9 +231,12 @@
           "paragraph": "s5",
           "paragraph_numbered": false,
           "section_path": "Implementation Status and Key Decisions",
+          "pdf_page": 2,
+          "label_extra": null,
           "packages": [
             "IN-RRSMP-7431-CW-RFB"
-          ]
+          ],
+          "package_count": 1
         }
       ],
       "more_chips": 0
@@ -253,9 +271,12 @@
           "paragraph": "s5",
           "paragraph_numbered": false,
           "section_path": "Implementation Status and Key Decisions",
+          "pdf_page": 2,
+          "label_extra": null,
           "packages": [
             "IN-RRSMP-7431-CW-RFB"
-          ]
+          ],
+          "package_count": 1
         }
       ],
       "more_chips": 0
@@ -290,9 +311,12 @@
           "paragraph": "s5",
           "paragraph_numbered": false,
           "section_path": "Implementation Status and Key Decisions",
+          "pdf_page": 2,
+          "label_extra": null,
           "packages": [
             "IN-RRSMP-7431-CW-RFB"
-          ]
+          ],
+          "package_count": 1
         }
       ],
       "more_chips": 0
@@ -314,9 +338,12 @@
           "paragraph": "s5",
           "paragraph_numbered": false,
           "section_path": "Implementation Status and Key Decisions",
+          "pdf_page": 2,
+          "label_extra": null,
           "packages": [
             "IN-RRSMP-7431-CW-RFB"
-          ]
+          ],
+          "package_count": 1
         },
         {
           "evidence_id": "strata.gold.passage:27490469/v1/s8/1",
@@ -324,9 +351,12 @@
           "paragraph": "s8",
           "paragraph_numbered": false,
           "section_path": "Intermediate Results Indicators",
+          "pdf_page": 4,
+          "label_extra": null,
           "packages": [
             "IN-RRSMP-7431-CW-RFB"
-          ]
+          ],
+          "package_count": 1
         }
       ],
       "more_chips": 0
@@ -348,9 +378,12 @@
           "paragraph": "s5",
           "paragraph_numbered": false,
           "section_path": "Implementation Status and Key Decisions",
+          "pdf_page": 2,
+          "label_extra": null,
           "packages": [
             "IN-RRSMP-7431-CW-RFB"
-          ]
+          ],
+          "package_count": 1
         },
         {
           "evidence_id": "strata.gold.passage:27853466/v1/s8/1",
@@ -358,9 +391,12 @@
           "paragraph": "s8",
           "paragraph_numbered": false,
           "section_path": "Intermediate Results Indicators",
+          "pdf_page": 4,
+          "label_extra": null,
           "packages": [
             "IN-RRSMP-7431-CW-RFB"
-          ]
+          ],
+          "package_count": 1
         }
       ],
       "more_chips": 0
@@ -395,9 +431,12 @@
           "paragraph": "s5",
           "paragraph_numbered": false,
           "section_path": "Implementation Status and Key Decisions",
+          "pdf_page": 2,
+          "label_extra": null,
           "packages": [
             "IN-RRSMP-7431-CW-RFB"
-          ]
+          ],
+          "package_count": 1
         }
       ],
       "more_chips": 0
@@ -419,9 +458,12 @@
           "paragraph": "s4",
           "paragraph_numbered": false,
           "section_path": "Implementation Status and Key Decisions",
+          "pdf_page": 1,
+          "label_extra": null,
           "packages": [
             "IN-RRSMP-7431-CW-RFB"
-          ]
+          ],
+          "package_count": 1
         },
         {
           "evidence_id": "strata.gold.passage:30730274/v1/s6/1",
@@ -429,9 +471,12 @@
           "paragraph": "s6",
           "paragraph_numbered": false,
           "section_path": "Results",
+          "pdf_page": 2,
+          "label_extra": null,
           "packages": [
             "IN-RRSMP-7431-CW-RFB"
-          ]
+          ],
+          "package_count": 1
         }
       ],
       "more_chips": 0
@@ -453,9 +498,12 @@
           "paragraph": "27",
           "paragraph_numbered": true,
           "section_path": "II",
+          "pdf_page": 16,
+          "label_extra": null,
           "packages": [
             "IN-RRSMP-7431-CW-RFB"
-          ]
+          ],
+          "package_count": 1
         },
         {
           "evidence_id": "strata.gold.passage:31525018/v1/s69/1",
@@ -463,9 +511,12 @@
           "paragraph": "s69",
           "paragraph_numbered": false,
           "section_path": "Annex 8",
+          "pdf_page": 64,
+          "label_extra": null,
           "packages": [
             "IN-RRSMP-7431-CW-RFB"
-          ]
+          ],
+          "package_count": 1
         },
         {
           "evidence_id": "strata.gold.passage:31525018/v1/18",
@@ -473,9 +524,12 @@
           "paragraph": "18",
           "paragraph_numbered": true,
           "section_path": "I.B",
+          "pdf_page": 14,
+          "label_extra": null,
           "packages": [
             "IN-RRSMP-7431-CW-RFB"
-          ]
+          ],
+          "package_count": 1
         }
       ],
       "more_chips": 26
@@ -571,21 +625,178 @@
   "more": [
     {
       "kind": "plans",
-      "count": 15
+      "count": 15,
+      "unread": 15
     },
     {
       "kind": "documents",
-      "count": 30
+      "count": 30,
+      "unread": 30
     }
   ],
+  "lines": [
+    {
+      "step_reference": "IN-RRSMP-7431-CW-RFB",
+      "document_id": "18381488",
+      "evidence_id": "strata.gold.passage:18381488/v1/23",
+      "at_rest": true
+    },
+    {
+      "step_reference": "IN-RRSMP-7431-CW-RFB",
+      "document_id": "19901331",
+      "evidence_id": "strata.gold.passage:19901331/v1/s3",
+      "at_rest": true
+    },
+    {
+      "step_reference": "IN-RRSMP-7431-CW-RFB",
+      "document_id": "23868309",
+      "evidence_id": "strata.gold.passage:23868309/v1/s5",
+      "at_rest": true
+    },
+    {
+      "step_reference": "IN-RRSMP-7431-CW-RFB",
+      "document_id": "24589049",
+      "evidence_id": "strata.gold.passage:24589049/v1/s5",
+      "at_rest": true
+    },
+    {
+      "step_reference": "IN-RRSMP-7431-CW-RFB",
+      "document_id": "25814564",
+      "evidence_id": "strata.gold.passage:25814564/v1/s5",
+      "at_rest": true
+    },
+    {
+      "step_reference": "IN-RRSMP-7431-CW-RFB",
+      "document_id": "27243340",
+      "evidence_id": "strata.gold.passage:27243340/v1/s5",
+      "at_rest": true
+    },
+    {
+      "step_reference": "IN-RRSMP-7431-CW-RFB",
+      "document_id": "27490469",
+      "evidence_id": "strata.gold.passage:27490469/v1/s5",
+      "at_rest": true
+    },
+    {
+      "step_reference": "IN-RRSMP-7431-CW-RFB",
+      "document_id": "27853466",
+      "evidence_id": "strata.gold.passage:27853466/v1/s5",
+      "at_rest": true
+    },
+    {
+      "step_reference": "IN-RRSMP-7431-CW-RFB",
+      "document_id": "29794672",
+      "evidence_id": "strata.gold.passage:29794672/v1/s5",
+      "at_rest": true
+    },
+    {
+      "step_reference": "IN-RRSMP-7431-CW-RFB",
+      "document_id": "30730274",
+      "evidence_id": "strata.gold.passage:30730274/v1/s4",
+      "at_rest": true
+    },
+    {
+      "step_reference": "IN-RRSMP-7431-CW-RFB",
+      "document_id": "31525018",
+      "evidence_id": "strata.gold.passage:31525018/v1/27",
+      "at_rest": true
+    }
+  ],
+  "lines_hint": false,
   "finding": {
-    "contracts": 1,
-    "paragraphs": 53,
-    "documents": 11,
+    "contracts": 7,
+    "paragraphs": 89,
+    "documents": 12,
     "contract_items": [
-      "IN-RRSMP-7431-CW-RFB"
+      "1536431",
+      "1516228",
+      "1529534",
+      "1536936",
+      "OP00044090",
+      "1535708",
+      "1508157"
     ],
     "paragraph_items": [
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2013-10-01",
+        "paragraph": "9",
+        "paragraph_numbered": true,
+        "section_path": "Annex 2"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2013-10-01",
+        "paragraph": "27",
+        "paragraph_numbered": true,
+        "section_path": "Annex 3.B"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2013-10-01",
+        "paragraph": "46",
+        "paragraph_numbered": true,
+        "section_path": "IV.C"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2013-10-01",
+        "paragraph": "s68",
+        "paragraph_numbered": false,
+        "section_path": "Annex 8.III"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2013-10-01",
+        "paragraph": "23",
+        "paragraph_numbered": true,
+        "section_path": "III.A"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2013-10-01",
+        "paragraph": "2",
+        "paragraph_numbered": true,
+        "section_path": "Annex 2"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2016-01-21",
+        "paragraph": "s8",
+        "paragraph_numbered": false,
+        "section_path": "Intermediate Results Indicators"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2013-10-01",
+        "paragraph": "70",
+        "paragraph_numbered": true,
+        "section_path": "VI.F"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2013-10-01",
+        "paragraph": "63",
+        "paragraph_numbered": true,
+        "section_path": "Annex 3.B"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2013-10-01",
+        "paragraph": "1",
+        "paragraph_numbered": true,
+        "section_path": "Annex 7"
+      },
       {
         "document_type": "Implementation Status and Results Report",
         "short_name": "ISR",
@@ -595,12 +806,204 @@
         "section_path": "Implementation Status and Key Decisions"
       },
       {
+        "document_type": "Implementation Completion and Results Report",
+        "short_name": "ICR",
+        "document_date": "2019-10-10",
+        "paragraph": "32",
+        "paragraph_numbered": true,
+        "section_path": "II"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2013-10-01",
+        "paragraph": "62",
+        "paragraph_numbered": true,
+        "section_path": "VI.D"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2013-10-01",
+        "paragraph": "s15",
+        "paragraph_numbered": false,
+        "section_path": "Annex 2"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2013-10-01",
+        "paragraph": "8",
+        "paragraph_numbered": true,
+        "section_path": "Annex 2"
+      },
+      {
         "document_type": "Implementation Status and Results Report",
         "short_name": "ISR",
         "document_date": "2017-03-05",
         "paragraph": "s5",
         "paragraph_numbered": false,
         "section_path": "Implementation Status and Key Decisions"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2013-10-01",
+        "paragraph": "27",
+        "paragraph_numbered": true,
+        "section_path": "III.B"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2013-10-01",
+        "paragraph": "37",
+        "paragraph_numbered": true,
+        "section_path": "IV.A"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2013-10-01",
+        "paragraph": "73",
+        "paragraph_numbered": true,
+        "section_path": "VI.F"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2013-10-01",
+        "paragraph": "7",
+        "paragraph_numbered": true,
+        "section_path": "Annex 2"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2013-10-01",
+        "paragraph": "3",
+        "paragraph_numbered": true,
+        "section_path": "Annex 3.A"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2013-10-01",
+        "paragraph": "68",
+        "paragraph_numbered": true,
+        "section_path": "Annex 3.B"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2013-10-01",
+        "paragraph": "20",
+        "paragraph_numbered": true,
+        "section_path": "Annex 7"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2017-03-05",
+        "paragraph": "s8",
+        "paragraph_numbered": false,
+        "section_path": "Intermediate Results Indicators"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2013-10-01",
+        "paragraph": "21",
+        "paragraph_numbered": true,
+        "section_path": "Annex 3.B"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2013-10-01",
+        "paragraph": "41",
+        "paragraph_numbered": true,
+        "section_path": "Annex 3.B"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2013-10-01",
+        "paragraph": "s27",
+        "paragraph_numbered": false,
+        "section_path": "Annex 3.B"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2017-05-23",
+        "paragraph": "s8",
+        "paragraph_numbered": false,
+        "section_path": "Intermediate Results Indicators"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2013-10-01",
+        "paragraph": "s58",
+        "paragraph_numbered": false,
+        "section_path": "Annex 8"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2013-10-01",
+        "paragraph": "60",
+        "paragraph_numbered": true,
+        "section_path": "VI.D"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2013-10-01",
+        "paragraph": "34",
+        "paragraph_numbered": true,
+        "section_path": "Annex 3.B"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2013-10-01",
+        "paragraph": "12",
+        "paragraph_numbered": true,
+        "section_path": "Annex 7"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2013-10-01",
+        "paragraph": "s25",
+        "paragraph_numbered": false,
+        "section_path": "Annex 3.B"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2013-10-01",
+        "paragraph": "s34",
+        "paragraph_numbered": false,
+        "section_path": "Annex 6.A"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2013-10-01",
+        "paragraph": "s62",
+        "paragraph_numbered": false,
+        "section_path": "Annex 8.II"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2017-07-26",
+        "paragraph": "s8",
+        "paragraph_numbered": false,
+        "section_path": "Intermediate Results Indicators"
       },
       {
         "document_type": "Implementation Status and Results Report",
@@ -619,6 +1022,14 @@
         "section_path": "II"
       },
       {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2013-10-01",
+        "paragraph": "8",
+        "paragraph_numbered": true,
+        "section_path": "I.B"
+      },
+      {
         "document_type": "Implementation Status and Results Report",
         "short_name": "ISR",
         "document_date": "2018-04-10",
@@ -633,6 +1044,62 @@
         "paragraph": "s4",
         "paragraph_numbered": false,
         "section_path": "Implementation Status and Key Decisions"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2013-10-01",
+        "paragraph": "52",
+        "paragraph_numbered": true,
+        "section_path": "Annex 3.B"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2013-10-01",
+        "paragraph": "s39",
+        "paragraph_numbered": false,
+        "section_path": "Annex 6.C"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2013-10-01",
+        "paragraph": "25",
+        "paragraph_numbered": true,
+        "section_path": "Annex 3.B"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2013-10-01",
+        "paragraph": "s26",
+        "paragraph_numbered": false,
+        "section_path": "Annex 3.B"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2015-01-23",
+        "paragraph": "s5",
+        "paragraph_numbered": false,
+        "section_path": "Implementation Status and Key Decisions"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2013-10-01",
+        "paragraph": "10",
+        "paragraph_numbered": true,
+        "section_path": "I.B"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2014-07-30",
+        "paragraph": "s3",
+        "paragraph_numbered": false,
+        "section_path": "Overall Ratings"
       },
       {
         "document_type": "Implementation Status and Results Report",
@@ -685,18 +1152,34 @@
       {
         "document_type": "Implementation Status and Results Report",
         "short_name": "ISR",
-        "document_date": "2015-01-23",
-        "paragraph": "s5",
-        "paragraph_numbered": false,
-        "section_path": "Implementation Status and Key Decisions"
-      },
-      {
-        "document_type": "Implementation Status and Results Report",
-        "short_name": "ISR",
         "document_date": "2018-12-28",
         "paragraph": "s6",
         "paragraph_numbered": false,
         "section_path": "Results"
+      },
+      {
+        "document_type": "Implementation Completion and Results Report",
+        "short_name": "ICR",
+        "document_date": "2019-10-10",
+        "paragraph": "5",
+        "paragraph_numbered": true,
+        "section_path": "I.A"
+      },
+      {
+        "document_type": "Implementation Completion and Results Report",
+        "short_name": "ICR",
+        "document_date": "2019-10-10",
+        "paragraph": "6",
+        "paragraph_numbered": true,
+        "section_path": "Annex 8"
+      },
+      {
+        "document_type": "Implementation Completion Report Review",
+        "short_name": "ICR Review",
+        "document_date": "2023-05-04",
+        "paragraph": "4",
+        "paragraph_numbered": true,
+        "section_path": "4"
       },
       {
         "document_type": "Implementation Completion and Results Report",
@@ -771,20 +1254,12 @@
         "section_path": "I.A"
       },
       {
-        "document_type": "Project Appraisal Document",
-        "short_name": "PAD",
-        "document_date": "2013-10-01",
-        "paragraph": "23",
+        "document_type": "Implementation Completion Report Review",
+        "short_name": "ICR Review",
+        "document_date": "2023-05-04",
+        "paragraph": "2.d",
         "paragraph_numbered": true,
-        "section_path": "III.A"
-      },
-      {
-        "document_type": "Project Appraisal Document",
-        "short_name": "PAD",
-        "document_date": "2013-10-01",
-        "paragraph": "2",
-        "paragraph_numbered": true,
-        "section_path": "Annex 2"
+        "section_path": "2"
       },
       {
         "document_type": "Implementation Completion and Results Report",
@@ -823,14 +1298,6 @@
         "short_name": "ICR",
         "document_date": "2019-10-10",
         "paragraph": "28",
-        "paragraph_numbered": true,
-        "section_path": "II"
-      },
-      {
-        "document_type": "Implementation Completion and Results Report",
-        "short_name": "ICR",
-        "document_date": "2019-10-10",
-        "paragraph": "32",
         "paragraph_numbered": true,
         "section_path": "II"
       },
@@ -878,14 +1345,6 @@
         "document_type": "Implementation Completion and Results Report",
         "short_name": "ICR",
         "document_date": "2019-10-10",
-        "paragraph": "6",
-        "paragraph_numbered": true,
-        "section_path": "Annex 8"
-      },
-      {
-        "document_type": "Implementation Completion and Results Report",
-        "short_name": "ICR",
-        "document_date": "2019-10-10",
         "paragraph": "s42",
         "paragraph_numbered": false,
         "section_path": "Annex 1.I"
@@ -899,12 +1358,20 @@
         "section_path": "Annex 5"
       },
       {
-        "document_type": "Implementation Status and Results Report",
-        "short_name": "ISR",
-        "document_date": "2014-07-30",
-        "paragraph": "s3",
-        "paragraph_numbered": false,
-        "section_path": "Overall Ratings"
+        "document_type": "Implementation Completion Report Review",
+        "short_name": "ICR Review",
+        "document_date": "2023-05-04",
+        "paragraph": "5",
+        "paragraph_numbered": true,
+        "section_path": "5"
+      },
+      {
+        "document_type": "Implementation Completion Report Review",
+        "short_name": "ICR Review",
+        "document_date": "2023-05-04",
+        "paragraph": "10.a",
+        "paragraph_numbered": true,
+        "section_path": "10"
       },
       {
         "document_type": "Implementation Completion and Results Report",
@@ -918,104 +1385,71 @@
         "document_type": "Project Appraisal Document",
         "short_name": "PAD",
         "document_date": "2013-10-01",
-        "paragraph": "46",
+        "paragraph": "5",
         "paragraph_numbered": true,
-        "section_path": "IV.C"
-      },
-      {
-        "document_type": "Project Appraisal Document",
-        "short_name": "PAD",
-        "document_date": "2013-10-01",
-        "paragraph": "70",
-        "paragraph_numbered": true,
-        "section_path": "VI.F"
-      },
-      {
-        "document_type": "Project Appraisal Document",
-        "short_name": "PAD",
-        "document_date": "2013-10-01",
-        "paragraph": "63",
-        "paragraph_numbered": true,
-        "section_path": "Annex 3.B"
-      },
-      {
-        "document_type": "Project Appraisal Document",
-        "short_name": "PAD",
-        "document_date": "2013-10-01",
-        "paragraph": "s25",
-        "paragraph_numbered": false,
-        "section_path": "Annex 3.B"
-      },
-      {
-        "document_type": "Project Appraisal Document",
-        "short_name": "PAD",
-        "document_date": "2013-10-01",
-        "paragraph": "27",
-        "paragraph_numbered": true,
-        "section_path": "III.B"
-      },
-      {
-        "document_type": "Project Appraisal Document",
-        "short_name": "PAD",
-        "document_date": "2013-10-01",
-        "paragraph": "7",
-        "paragraph_numbered": true,
-        "section_path": "Annex 2"
-      },
-      {
-        "document_type": "Project Appraisal Document",
-        "short_name": "PAD",
-        "document_date": "2013-10-01",
-        "paragraph": "27",
-        "paragraph_numbered": true,
-        "section_path": "Annex 3.B"
-      },
-      {
-        "document_type": "Project Appraisal Document",
-        "short_name": "PAD",
-        "document_date": "2013-10-01",
-        "paragraph": "s34",
-        "paragraph_numbered": false,
         "section_path": "Annex 6.A"
       },
       {
         "document_type": "Project Appraisal Document",
         "short_name": "PAD",
         "document_date": "2013-10-01",
-        "paragraph": "s39",
-        "paragraph_numbered": false,
-        "section_path": "Annex 6.C"
+        "paragraph": "6",
+        "paragraph_numbered": true,
+        "section_path": "Annex 8.II.B"
       },
       {
         "document_type": "Project Appraisal Document",
         "short_name": "PAD",
         "document_date": "2013-10-01",
-        "paragraph": "s62",
-        "paragraph_numbered": false,
-        "section_path": "Annex 8.II"
+        "paragraph": "24",
+        "paragraph_numbered": true,
+        "section_path": "III.A"
       },
       {
-        "document_type": "Implementation Status and Results Report",
-        "short_name": "ISR",
-        "document_date": "2017-05-23",
-        "paragraph": "s8",
-        "paragraph_numbered": false,
-        "section_path": "Intermediate Results Indicators"
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2013-10-01",
+        "paragraph": "6",
+        "paragraph_numbered": true,
+        "section_path": "Annex 2"
       },
       {
-        "document_type": "Implementation Status and Results Report",
-        "short_name": "ISR",
-        "document_date": "2017-07-26",
-        "paragraph": "s8",
-        "paragraph_numbered": false,
-        "section_path": "Intermediate Results Indicators"
+        "document_type": "Implementation Completion Report Review",
+        "short_name": "ICR Review",
+        "document_date": "2023-05-04",
+        "paragraph": "3",
+        "paragraph_numbered": true,
+        "section_path": "3"
+      },
+      {
+        "document_type": "Implementation Completion Report Review",
+        "short_name": "ICR Review",
+        "document_date": "2023-05-04",
+        "paragraph": "7",
+        "paragraph_numbered": true,
+        "section_path": "7"
       }
     ],
     "document_items": [
       {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2013-10-01"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2016-01-21"
+      },
+      {
         "document_type": "Implementation Status and Results Report",
         "short_name": "ISR",
         "document_date": "2017-05-23"
+      },
+      {
+        "document_type": "Implementation Completion and Results Report",
+        "short_name": "ICR",
+        "document_date": "2019-10-10"
       },
       {
         "document_type": "Implementation Status and Results Report",
@@ -1026,11 +1460,6 @@
         "document_type": "Implementation Status and Results Report",
         "short_name": "ISR",
         "document_date": "2017-07-26"
-      },
-      {
-        "document_type": "Implementation Completion and Results Report",
-        "short_name": "ICR",
-        "document_date": "2019-10-10"
       },
       {
         "document_type": "Implementation Status and Results Report",
@@ -1045,32 +1474,27 @@
       {
         "document_type": "Implementation Status and Results Report",
         "short_name": "ISR",
-        "document_date": "2015-06-04"
-      },
-      {
-        "document_type": "Implementation Status and Results Report",
-        "short_name": "ISR",
-        "document_date": "2016-01-21"
-      },
-      {
-        "document_type": "Implementation Status and Results Report",
-        "short_name": "ISR",
         "document_date": "2015-01-23"
-      },
-      {
-        "document_type": "Project Appraisal Document",
-        "short_name": "PAD",
-        "document_date": "2013-10-01"
       },
       {
         "document_type": "Implementation Status and Results Report",
         "short_name": "ISR",
         "document_date": "2014-07-30"
+      },
+      {
+        "document_type": "Implementation Status and Results Report",
+        "short_name": "ISR",
+        "document_date": "2015-06-04"
+      },
+      {
+        "document_type": "Implementation Completion Report Review",
+        "short_name": "ICR Review",
+        "document_date": "2023-05-04"
       }
     ]
   },
-  "shown": 20,
-  "total": 65,
+  "shown": 19,
+  "total": 64,
   "threshold": "0.50",
   "coverage": {
     "read": 16,

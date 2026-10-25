@@ -88,13 +88,19 @@ function returnFocus() {
 }
 
 const VIEW_ALERTS: Record<string, string> = { piu: copy.alerts.viewPiu, public: copy.alerts.viewPublic };
-// The pages that apply the implementing agency and public previews themselves: the draft pages (ticket 35)
-// and the Packages tab with its planned packages (ticket 15).
-const VIEW_PAGES: ReadonlySet<string> = new Set(["drafts", "draft", "draftNew", "packages", "packageNew", "plannedPackage"]);
+// The pages that apply the implementing agency and public previews themselves: the draft pages (ticket 35),
+// the Packages tab with its planned packages (ticket 15), and the activity page, which hides "See the past
+// range" in the public view and is the same in every other (ticket 22).
+const VIEW_PAGES: ReadonlySet<string> = new Set(["drafts", "draft", "draftNew", "packages", "packageNew", "plannedPackage", "activity"]);
+
+// How a page treats the address's ?asof=: it applies the date itself (the Data readiness page, whose reads
+// take one, and the activity page, whose trail is all as of the date); only its own part does (a project's
+// Connections tab, whose links are as of the date under a header that shows today's); or not yet.
+type AsOfUse = "page" | "part" | "none";
 
 // The alert slot: errors first, then what the address asks for that I can't show yet. Ticket 40
 // replaces the view and as-of alerts with its preview and as-of banners in this same slot.
-function alerts(problem: Problem, search: string, appliesAsOf: boolean, page: string): { state: "error" | "info"; text: string }[] {
+function alerts(problem: Problem, search: string, asOfUse: AsOfUse, appliesView: boolean): { state: "error" | "info"; text: string }[] {
   const params = new URLSearchParams(search);
   const found: { state: "error" | "info"; text: string }[] = [];
   if (problem === "no_access") found.push({ state: "error", text: copy.alerts.noAccess });
@@ -102,13 +108,22 @@ function alerts(problem: Problem, search: string, appliesAsOf: boolean, page: st
   const view = params.get("view");
   // These pages show what each preview holds, so the alert that says the page shows the staff view would be
   // untrue there.
-  const appliesView = (view === "piu" || view === "public") && VIEW_PAGES.has(page);
-  if (view !== null && view !== "staff" && !appliesView) found.push({ state: "info", text: VIEW_ALERTS[view] ?? copy.alerts.viewUnknown });
+  const shown = (view === "piu" || view === "public") && appliesView;
+  if (view !== null && view !== "staff" && !shown) found.push({ state: "info", text: VIEW_ALERTS[view] ?? copy.alerts.viewUnknown });
   const asOf = params.get("asof");
-  if (asOf !== null && !appliesAsOf) {
-    found.push({ state: "info", text: isDay(asOf) ? copy.alerts.asOf(formatDate(asOf)) : copy.alerts.asOfUnreadable });
+  if (asOf !== null && asOfUse !== "page") {
+    const text = !isDay(asOf) ? copy.alerts.asOfUnreadable : asOfUse === "part" ? copy.alerts.asOfPart(formatDate(asOf)) : copy.alerts.asOf(formatDate(asOf));
+    found.push({ state: "info", text });
   }
   return found;
+}
+
+// What the page at this address does with ?asof= and ?view= (see AsOfUse and VIEW_PAGES).
+function pageUse(match: { key: string; values: Record<string, string> }): { asOf: AsOfUse; view: boolean } {
+  const connections = match.key === "project" && match.values.tab === "connections";
+  const asOf: AsOfUse = match.key === "data" || match.key === "activity" ? "page" : connections ? "part" : "none";
+  // Every node and link on the Connections tab is public data, so each preview sees the staff view's tab.
+  return { asOf, view: VIEW_PAGES.has(match.key) || connections };
 }
 
 export function App() {
@@ -215,9 +230,10 @@ export function App() {
       key: address.get().key,
     });
 
-  // The Data readiness page applies an as-of date itself (data_readiness_for takes one), so the
-  // alert that says the page shows today's data does not show there.
-  const slot = alerts(problem, here.search, match.key === "data", match.key);
+  // A page that applies the as-of date itself, such as the Data readiness page (data_readiness_for takes one)
+  // or the activity page, gets no alert that says it shows today's data (pageUse).
+  const use = pageUse(match);
+  const slot = alerts(problem, here.search, use.asOf, use.view);
   return (
     <Frame
       nav={

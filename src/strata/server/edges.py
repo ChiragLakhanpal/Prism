@@ -25,7 +25,7 @@ from pathlib import Path
 from strata.config import Thresholds, load_thresholds
 from strata.lakehouse.engine import Engine
 from strata.server import documents
-from strata.server.trail import activity_href, document_labels, topics
+from strata.server.trail import activity_href, document_labels, paragraph_key, topics
 from strata.server.viewer_sql import data_through
 
 SQL = Path(__file__).resolve().parent / "sql" / "edges"
@@ -88,7 +88,12 @@ def why(engine: Engine, passage: dict, step_ref: str | None, as_of: dt.date, lim
     terms = json.loads(chosen["matched_terms"] or "[]")
     matched = {"project": chosen["project_id"], "sector": chosen["sector_name"], "time": chosen["months_apart"],
                "text": terms, "mentions": [mention["text"] for mention in mentions]}
-    others = [_named(row) for row in links if row is not chosen]
+    # Each other package once, strongest first: a package can hold several contracts that share its reference.
+    by_package: dict[str, dict] = {}
+    for named in (_named(row) for row in links):
+        if named["reference"] != _named(chosen)["reference"]:
+            by_package.setdefault(named["reference"], named)
+    others = list(by_package.values())
     listed = int(limits.value("connections.other_contracts_listed"))
     return {
         **_named(chosen),
@@ -143,6 +148,39 @@ def _ladder(entries: list[dict]) -> list[str]:
     return chosen + [entry["document_id"] for entry in agencies.values()]
 
 
+def _lines(links: list[dict], packages: list[dict], documents: dict[str, dict], limits: Thresholds) -> list[dict]:
+    """One dashed curve for each shown package and shown document that appeared together, in the packages' order.
+    Each ends level with the first chip on the document that the package shares, or at the card when none of its
+    chips is shown. Past connections.lines_at_rest curves, only the first linked package's are drawn at rest."""
+    order = [node["step_reference"] for node in packages]
+    pairs: dict[tuple[str, str], dict] = {}
+    for row in links:
+        pair = (row["step_reference"], row["document_id"])
+        if row["step_reference"] in order and row["document_id"] in documents and pair not in pairs:
+            chip = next((chip for chip in documents[row["document_id"]]["chips"] if row["step_reference"] in chip["packages"]), None)
+            pairs[pair] = {"step_reference": pair[0], "document_id": pair[1],
+                           "evidence_id": chip["evidence_id"] if chip else None}
+    lines = sorted(pairs.values(), key=lambda line: (order.index(line["step_reference"]), line["document_id"]))
+    first = lines[0]["step_reference"] if lines else None
+    many = len(lines) > int(limits.value("connections.lines_at_rest"))
+    for line in lines:
+        line["at_rest"] = not many or line["step_reference"] == first
+    return lines
+
+
+def _tell_apart(chips: list[dict]) -> None:
+    """Chips on one document that would read alike say what tells them apart: a paragraph number used again in an
+    annex names its section ("Annex 2.A"), and a section name used twice names its page."""
+    labels: dict[str, list[dict]] = {}
+    for chip in chips:
+        labels.setdefault(chip["paragraph"] if chip["paragraph_numbered"] else chip["section_path"], []).append(chip)
+    for alike in (group for group in labels.values() if len(group) > 1):
+        sections = {chip["section_path"] for chip in alike}
+        for chip in alike:
+            numbered = chip["paragraph_numbered"] and len(sections) == len(alike)
+            chip["label_extra"] = {"section": chip["section_path"]} if numbered else {"page": chip["pdf_page"]}
+
+
 def neighbourhood(engine: Engine, project_id: str, as_of: dt.date, limits: Thresholds | None = None) -> dict | None:
     """A project's one-hop neighbourhood as of the page's date, or None for a project Strata has no record of."""
     limits = limits or load_thresholds()
@@ -184,7 +222,8 @@ def neighbourhood(engine: Engine, project_id: str, as_of: dt.date, limits: Thres
     shown_packages.sort(key=lambda node: (node["date"] or "9999", node["step_reference"]))
     shown_documents.sort(key=lambda node: (node["document_date"] or "9999", node["document_id"]))
 
-    # The chips: each document's linked paragraphs, strongest first, at most chips_per_document of them.
+    # The chips: each document's linked paragraphs, strongest first, at most chips_per_document of them. A paragraph
+    # read as several parts is one chip, opening its strongest part.
     per_document = int(limits.value("connections.chips_per_document"))
     by_document = {node["document_id"]: node for node in shown_documents}
     shown_refs = {node["step_reference"] for node in shown_packages}
@@ -193,50 +232,66 @@ def neighbourhood(engine: Engine, project_id: str, as_of: dt.date, limits: Thres
         if row["step_reference"] not in shown_refs or row["document_id"] not in by_document:
             continue
         node = by_document[row["document_id"]]
-        chip = chips.get(row["evidence_id"])
+        key = paragraph_key(row["passage_id"])
+        chip = chips.get(key)
         if chip is None:
             if len(node["chips"]) >= per_document:
                 continue
             chip = {"evidence_id": row["evidence_id"], "passage_id": row["passage_id"], "paragraph": row["paragraph"],
                     "paragraph_numbered": bool(row["paragraph_numbered"]), "section_path": row["section_path"],
-                    "packages": []}
-            chips[row["evidence_id"]] = chip
+                    "pdf_page": row["pdf_page"], "label_extra": None, "packages": []}
+            chips[key] = chip
             node["chips"].append(chip)
         if row["step_reference"] not in chip["packages"]:
             chip["packages"].append(row["step_reference"])
-            edges.append({"step_reference": row["step_reference"], "evidence_id": row["evidence_id"]})
+            edges.append({"step_reference": row["step_reference"], "evidence_id": chip["evidence_id"]})
     for node in shown_documents:
-        node["more_chips"] = len({row["evidence_id"] for row in links if row["document_id"] == node["document_id"]
-                                  and row["step_reference"] in shown_refs}) - len(node["chips"])
+        node["more_chips"] = len({paragraph_key(row["passage_id"]) for row in links
+                                  if row["document_id"] == node["document_id"] and row["step_reference"] in shown_refs}) \
+            - len(node["chips"])
+        _tell_apart(node["chips"])
+        for chip in node["chips"]:
+            chip["package_count"] = len(chip["packages"])
     for node in shown_packages:
         node["linked"] = [{"evidence_id": edge["evidence_id"]} for edge in edges if edge["step_reference"] == node["step_reference"]]
+    lines = _lines(links, shown_packages, by_document, limits)
 
     # The rest, counted by kind, and the finding's counts with what they counted.
     hidden_packages = len(packages) - len(shown_packages)
     shown_ids = {node["document_id"] for node in shown_documents}
     hidden = [entry for entry in entries if entry["document_id"] not in shown_ids]
-    more = [{"kind": "packages", "count": hidden_packages}] if hidden_packages else []
+    more = [{"kind": "packages", "count": hidden_packages, "unread": 0}] if hidden_packages else []
+    # A document I haven't read has no page in the app, so it is never a node; each row says how many of the
+    # documents it counts are unread, so a row under a column with free slots does not read as the cap at work.
     for kind, test in (("isrs", lambda entry: entry["type"] == "isr"), ("plans", lambda entry: entry["type"] == PLANS),
                        ("documents", lambda entry: entry["type"] not in ("isr", PLANS))):
-        count = sum(1 for entry in hidden if test(entry))
-        if count:
-            more.append({"kind": kind, "count": count})
+        mine = [entry for entry in hidden if test(entry)]
+        if mine:
+            more.append({"kind": kind, "count": len(mine), "unread": sum(1 for entry in mine if not entry["doc_key"])})
     all_links = _rows(engine, "links", project_id=pid, as_of=as_of)
-    contracts = sorted({row["step_reference"] for row in all_links})
-    paragraphs = list(dict.fromkeys(row["evidence_id"] for row in all_links))
+    # The finding counts contracts by their own ids: a package can hold several, and a contract can have no STEP
+    # reference. Each is named by its own reference, or by its award notice's id when it came from one.
+    contracts = list(dict.fromkeys(row["contract_id"] for row in all_links))
+    named = {row["contract_id"]: row["wb_contract_number"] or row["award_notice_id"] or row["contract_id"]
+             for row in all_links}
+    # A paragraph read as parts counts once, as its chip shows it once; its strongest part names it.
+    paragraphs = list(dict.fromkeys(paragraph_key(row["passage_id"]) for row in all_links))
     documents_linked = list(dict.fromkeys(row["document_id"] for row in all_links))
-    about = {row["evidence_id"]: row for row in all_links}
+    about: dict[str, dict] = {}
+    for row in all_links:
+        about.setdefault(paragraph_key(row["passage_id"]), row)
     through = data_through(engine)
     scored = max((row["scored_on"] for row in all_links if row["scored_on"]), default=None)
-    total = 1 + len(packages) + len(entries)
+    total = len(packages) + len(entries)
     return {
         "as_of": as_of.isoformat(),
         "data_through": min(through, as_of).isoformat() if through else None,
         "scored_date": _iso(scored),
         "project": {"project_id": pid, "display_name": tab["project"]["display_name"]},
         "packages": shown_packages, "documents": shown_documents, "edges": edges, "more": more,
+        "lines": lines, "lines_hint": not all(line["at_rest"] for line in lines),
         "finding": {"contracts": len(contracts), "paragraphs": len(paragraphs), "documents": len(documents_linked),
-                    "contract_items": contracts,
+                    "contract_items": [named[key] for key in contracts],
                     "paragraph_items": [{"document_type": about[key]["document_type"],
                                          "short_name": document_labels(about[key]["document_type"])["short_name"],
                                          "document_date": _iso(about[key]["document_date"]),
@@ -247,7 +302,8 @@ def neighbourhood(engine: Engine, project_id: str, as_of: dt.date, limits: Thres
                                              "short_name": document_labels(row["document_type"])["short_name"],
                                              "document_date": _iso(row["document_date"])}
                                             for row in all_links if row["document_id"] == key) for key in documents_linked]},
-        "shown": 1 + len(shown_packages) + len(shown_documents), "total": total,
+        # The count line counts packages and documents; the cap, connections.max_nodes, holds the project too.
+        "shown": len(shown_packages) + len(shown_documents), "total": total,
         "threshold": _points(limits.value("links.threshold")),
         "coverage": {"read": sum(1 for entry in entries if entry["read"]), "total": len(entries), "source_key": "documents"},
     }

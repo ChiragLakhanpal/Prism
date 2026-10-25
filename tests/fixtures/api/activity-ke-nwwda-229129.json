@@ -6,7 +6,7 @@
     "project_id": "P156634",
     "project_name": "Water and Sanitation Development Project",
     "display_name": "Water and Sanitation Development",
-    "description": "Drilling of 4 Number Explor atory Boreholes In Wajir Cou nty",
+    "description": "Drilling of 4 Number Exploratory Boreholes In Wajir County",
     "method": "Request for Bids",
     "consultants": false,
     "implementing_agency": "Northern Water Works Development Agency",
@@ -39,13 +39,16 @@
     ],
     "no_estimate": false,
     "missing": null,
-    "bids": {
-      "count": 11,
-      "notice_id": "OP00164589",
-      "evidence_id": "strata.gold.notice:OP00164589",
-      "proposals": false
-    },
-    "paragraphs": 23
+    "bids": [
+      {
+        "count": 11,
+        "notice_id": "OP00164589",
+        "evidence_id": "strata.gold.notice:OP00164589",
+        "proposals": false
+      }
+    ],
+    "many_contracts": false,
+    "paragraphs": 21
   },
   "stages": [
     {
@@ -344,6 +347,7 @@
               "reason": "Non Responsive"
             }
           ],
+          "bid_count": 11,
           "url": "https://projects.worldbank.org/en/projects-operations/procurement-detail/OP00164589",
           "source": {
             "source_key": "award_notices",
@@ -381,7 +385,8 @@
             "name": "OSB AFRICA LIMITED",
             "country": "Kenya",
             "is_individual_consultant": false,
-            "is_joint_venture": false
+            "is_joint_venture": false,
+            "members": []
           },
           "source": {
             "source_key": "awards",
@@ -409,7 +414,10 @@
           "public_from": "2017-07-25",
           "passage_id": "27348420/v1/67",
           "contract_evidence_id": "strata.gold.contract:1686165",
+          "document_id": "27348420",
           "document_type": "Project Appraisal Document",
+          "title_section": null,
+          "title_page": null,
           "document_date": "2017-04-05",
           "paragraph": "67",
           "paragraph_numbered": true,
@@ -451,7 +459,10 @@
           "public_from": "2017-07-25",
           "passage_id": "27348420/v1/annex2.15",
           "contract_evidence_id": "strata.gold.contract:1686165",
+          "document_id": "27348420",
           "document_type": "Project Appraisal Document",
+          "title_section": null,
+          "title_page": null,
           "document_date": "2017-04-05",
           "paragraph": "15",
           "paragraph_numbered": true,
@@ -493,7 +504,10 @@
           "public_from": "2017-07-25",
           "passage_id": "27348420/v1/annex2.18",
           "contract_evidence_id": "strata.gold.contract:1686165",
+          "document_id": "27348420",
           "document_type": "Project Appraisal Document",
+          "title_section": null,
+          "title_page": null,
           "document_date": "2017-04-05",
           "paragraph": "18",
           "paragraph_numbered": true,
@@ -531,11 +545,59 @@
         {
           "stratum": "Why",
           "short_name": "PAD",
+          "evidence_id": "strata.gold.passage:27348420/v1/s24/1",
+          "public_from": "2017-07-25",
+          "passage_id": "27348420/v1/s24/1",
+          "contract_evidence_id": "strata.gold.contract:1686165",
+          "document_id": "27348420",
+          "document_type": "Project Appraisal Document",
+          "title_section": null,
+          "title_page": null,
+          "document_date": "2017-04-05",
+          "paragraph": "s24",
+          "paragraph_numbered": false,
+          "section_path": "Annex 2.A",
+          "pdf_page": 52,
+          "printed_page": "41",
+          "doc_key": "pad-2017-04-05",
+          "language": "en",
+          "text": "Table 2.1: Proposed Water and Sanitation Activities under Component 2 Wajir Town Short-term Interventions Medium and Long-term Interventions Water supply  Treatment or chlorination of water  Development of additional water sources (to from existing boreholes be determined by the masterplan  Rehabilitation of existing boreholes and recommendation) equipping them with solar panels  Water treatment, transmission, storage, and  Provision of water bowsers, plastic distribution infrastructure development tanks, and collapsible tanks  Provision of mobile water treatment units  Provision of water meters and leak detection equipment to Wajir WSP to help in reduction of NRW Sanitation  Pilot different on-site sanitation  Establishment of a proper system for septic solutions such as EcoSan toilets and sludge management (containment, collection others to be identified under the and transportation, treatment, reuse, and ongoing sanitation study to assess their disposal) acceptability for residents  Construction and operation of septic sludge  Support for the Wajir cholera taskforce treatment facilities to implement the cholera control  Development of a sewerage system and strategy including: wastewater treatment plant for Wajir town o Regular water quality surveillance central business district o Monitoring of environmental  Construction of shared sanitation facilities in health activities public areas, for example at health posts, o Strengthening of county schools, orphanages, and markets coordination structures  Technical support for initiation of CLTS and o Continuous community hygiene follow-up activities at the village and education household levels  Provision of trucks, protective  Technical support for design and equipment, and training to bucket implementation of behavior change latrines waste collectors communication campaigns  Provision of exhausters for septic sludge collection  Provision of bicycles, motorbikes, and other vehicles for use by public health officers for sanitation initiatives  Training of county public health officers and community resource persons on sanitation approaches, including CLTS and sanitation marketing TA and  Training of county water department  Technical support to Wajir County to capacity and the WSP staff develop relevant water and sanitation strengthening  Provision of a budget for operations services policies and regulations until solar panels are installed at  Technical support to Wajir WSP for boreholes which will substantially improvement of their operations (NRW reduce the operation costs reduction, billing and revenue collection,  Conducting a tariff study and the like) based on the utility turnaround  Consultancy for a utility turnaround program program Dadaab Town and Host Communities Short-term Interventions Medium and Long-term Interventions Water supply  Treatment or chlorination of water  Drilling and equipping of new boreholes from existing boreholes with solar panels/hybrid systems  Rehabilitation of existing boreholes and  Establishing a water quality control program equipping them with solar panels and introduce water treatment (chlorination)  Provision of",
+          "highlights": [
+            [
+              70,
+              75
+            ]
+          ],
+          "topics": [
+            {
+              "kind": "sector",
+              "code": "WC",
+              "name": "Water Supply"
+            },
+            {
+              "kind": "place",
+              "text": "Wajir"
+            }
+          ],
+          "source": {
+            "document_type": "Project Appraisal Document",
+            "project_id": "P156634",
+            "document_date": "2017-04-05",
+            "pdf_page": 52
+          },
+          "contract_reference": "1686165"
+        },
+        {
+          "stratum": "Why",
+          "short_name": "PAD",
           "evidence_id": "strata.gold.passage:27348420/v1/annex3.62/1",
           "public_from": "2017-07-25",
           "passage_id": "27348420/v1/annex3.62/1",
           "contract_evidence_id": "strata.gold.contract:1686165",
+          "document_id": "27348420",
           "document_type": "Project Appraisal Document",
+          "title_section": null,
+          "title_page": null,
           "document_date": "2017-04-05",
           "paragraph": "62",
           "paragraph_numbered": true,
@@ -581,61 +643,14 @@
         {
           "stratum": "Why",
           "short_name": "PAD",
-          "evidence_id": "strata.gold.passage:27348420/v1/annex3.62/4",
-          "public_from": "2017-07-25",
-          "passage_id": "27348420/v1/annex3.62/4",
-          "contract_evidence_id": "strata.gold.contract:1686165",
-          "document_type": "Project Appraisal Document",
-          "document_date": "2017-04-05",
-          "paragraph": "62",
-          "paragraph_numbered": true,
-          "section_path": "Annex 3.C",
-          "pdf_page": 86,
-          "printed_page": "75",
-          "doc_key": "pad-2017-04-05",
-          "language": "en",
-          "text": "Nonetheless, before commencement of any civil works relating to the transmission water main, the client will arrange for one or more dam specialists to (a) inspect and evaluate the safety status of the dam under construction (Mwache Dam); (b) review and evaluate the owner’s O&M procedures; and (c) provide a written report of findings and recommendations for any remedial work or safety-related measures necessary to upgrade the dam under construction (Mwache Dam) to an acceptable standard of safety. Projects on This policy is triggered because parts of the project will be implemented in the area of the International Merti aquifer, which extends from Kenya into Somalia. Waterways On December 12, 2016, the Government of Kenya delivered a notification letter regarding the (OP/BP 7.50) project to the Government of Somalia through the Embassy of Somalia in Nairobi. Because of an error in the notification letter, the Government of Kenya sent a revised letter to the Embassy of Somalia and to Somalia’s Ministry of Water Resources on February 17 with a response date of March 6, 2017. No response has been received. The combined abstraction from the Merti aquifer is currently at 21,000 cubic meters per day. When the proposed water supply investments in Wajir town and Dadaab host communities are implemented there would be an increase in water abstraction of approximately 4,000 cubic meters per day, representing a 19 percent increment. Planned investments and aquifer abstraction decisions will be informed by recommendations of several ongoing technical studies, including the Merti aquifer assessment and management plan and a specific environmental and social impact assessment (ESIA) for the proposed activities. The studies will be made public and consultations will be conducted to get feedback from all stakeholders. The Regional Vice President cleared a memo summarizing the results of Riparian Notification under OP 7.50 on March 17, 2017.",
-          "highlights": [
-            [
-              40,
-              51
-            ],
-            [
-              1260,
-              1265
-            ]
-          ],
-          "topics": [
-            {
-              "kind": "category",
-              "code": "Works"
-            },
-            {
-              "kind": "sector",
-              "code": "WC",
-              "name": "Water Supply"
-            },
-            {
-              "kind": "place",
-              "text": "Wajir"
-            }
-          ],
-          "source": {
-            "document_type": "Project Appraisal Document",
-            "project_id": "P156634",
-            "document_date": "2017-04-05",
-            "pdf_page": 86
-          },
-          "contract_reference": "1686165"
-        },
-        {
-          "stratum": "Why",
-          "short_name": "PAD",
           "evidence_id": "strata.gold.passage:27348420/v1/annex5.25",
           "public_from": "2017-07-25",
           "passage_id": "27348420/v1/annex5.25",
           "contract_evidence_id": "strata.gold.contract:1686165",
+          "document_id": "27348420",
           "document_type": "Project Appraisal Document",
+          "title_section": null,
+          "title_page": null,
           "document_date": "2017-04-05",
           "paragraph": "25",
           "paragraph_numbered": true,
@@ -671,55 +686,16 @@
           "contract_reference": "1686165"
         },
         {
-          "stratum": "Why",
-          "short_name": "PAD",
-          "evidence_id": "strata.gold.passage:27348420/v1/s24/1",
-          "public_from": "2017-07-25",
-          "passage_id": "27348420/v1/s24/1",
-          "contract_evidence_id": "strata.gold.contract:1686165",
-          "document_type": "Project Appraisal Document",
-          "document_date": "2017-04-05",
-          "paragraph": "s24",
-          "paragraph_numbered": false,
-          "section_path": "Annex 2.A",
-          "pdf_page": 52,
-          "printed_page": "41",
-          "doc_key": "pad-2017-04-05",
-          "language": "en",
-          "text": "Table 2.1: Proposed Water and Sanitation Activities under Component 2 Wajir Town Short-term Interventions Medium and Long-term Interventions Water supply  Treatment or chlorination of water  Development of additional water sources (to from existing boreholes be determined by the masterplan  Rehabilitation of existing boreholes and recommendation) equipping them with solar panels  Water treatment, transmission, storage, and  Provision of water bowsers, plastic distribution infrastructure development tanks, and collapsible tanks  Provision of mobile water treatment units  Provision of water meters and leak detection equipment to Wajir WSP to help in reduction of NRW Sanitation  Pilot different on-site sanitation  Establishment of a proper system for septic solutions such as EcoSan toilets and sludge management (containment, collection others to be identified under the and transportation, treatment, reuse, and ongoing sanitation study to assess their disposal) acceptability for residents  Construction and operation of septic sludge  Support for the Wajir cholera taskforce treatment facilities to implement the cholera control  Development of a sewerage system and strategy including: wastewater treatment plant for Wajir town o Regular water quality surveillance central business district o Monitoring of environmental  Construction of shared sanitation facilities in health activities public areas, for example at health posts, o Strengthening of county schools, orphanages, and markets coordination structures  Technical support for initiation of CLTS and o Continuous community hygiene follow-up activities at the village and education household levels  Provision of trucks, protective  Technical support for design and equipment, and training to bucket implementation of behavior change latrines waste collectors communication campaigns  Provision of exhausters for septic sludge collection  Provision of bicycles, motorbikes, and other vehicles for use by public health officers for sanitation initiatives  Training of county public health officers and community resource persons on sanitation approaches, including CLTS and sanitation marketing TA and  Training of county water department  Technical support to Wajir County to capacity and the WSP staff develop relevant water and sanitation strengthening  Provision of a budget for operations services policies and regulations until solar panels are installed at  Technical support to Wajir WSP for boreholes which will substantially improvement of their operations (NRW reduce the operation costs reduction, billing and revenue collection,  Conducting a tariff study and the like) based on the utility turnaround  Consultancy for a utility turnaround program program Dadaab Town and Host Communities Short-term Interventions Medium and Long-term Interventions Water supply  Treatment or chlorination of water  Drilling and equipping of new boreholes from existing boreholes with solar panels/hybrid systems  Rehabilitation of existing boreholes and  Establishing a water quality control program equipping them with solar panels and introduce water treatment (chlorination)  Provision of",
-          "highlights": [
-            [
-              70,
-              75
-            ]
-          ],
-          "topics": [
-            {
-              "kind": "sector",
-              "code": "WC",
-              "name": "Water Supply"
-            },
-            {
-              "kind": "place",
-              "text": "Wajir"
-            }
-          ],
-          "source": {
-            "document_type": "Project Appraisal Document",
-            "project_id": "P156634",
-            "document_date": "2017-04-05",
-            "pdf_page": 52
-          },
-          "contract_reference": "1686165"
-        },
-        {
           "stratum": "How",
           "short_name": "ISR",
           "evidence_id": "strata.gold.passage:31128142/v1/s4",
           "public_from": "2019-06-05",
           "passage_id": "31128142/v1/s4",
           "contract_evidence_id": "strata.gold.contract:1686165",
+          "document_id": "31128142",
           "document_type": "Implementation Status and Results Report",
+          "title_section": null,
+          "title_page": null,
           "document_date": "2019-06-04",
           "paragraph": "s4",
           "paragraph_numbered": false,
@@ -769,7 +745,10 @@
           "public_from": "2019-10-02",
           "passage_id": "31451672/v1/s4",
           "contract_evidence_id": "strata.gold.contract:1686165",
+          "document_id": "31451672",
           "document_type": "Implementation Status and Results Report",
+          "title_section": null,
+          "title_page": null,
           "document_date": "2019-10-02",
           "paragraph": "s4",
           "paragraph_numbered": false,
@@ -811,7 +790,10 @@
           "public_from": "2020-04-01",
           "passage_id": "31920934/v1/s4",
           "contract_evidence_id": "strata.gold.contract:1686165",
+          "document_id": "31920934",
           "document_type": "Implementation Status and Results Report",
+          "title_section": null,
+          "title_page": null,
           "document_date": "2020-04-01",
           "paragraph": "s4",
           "paragraph_numbered": false,
@@ -853,7 +835,10 @@
           "public_from": "2020-09-28",
           "passage_id": "32442111/v1/s4",
           "contract_evidence_id": "strata.gold.contract:1686165",
+          "document_id": "32442111",
           "document_type": "Implementation Status and Results Report",
+          "title_section": null,
+          "title_page": null,
           "document_date": "2020-09-28",
           "paragraph": "s4",
           "paragraph_numbered": false,
@@ -895,7 +880,10 @@
           "public_from": "2020-12-17",
           "passage_id": "32682225/v1/s4",
           "contract_evidence_id": "strata.gold.contract:1686165",
+          "document_id": "32682225",
           "document_type": "Implementation Status and Results Report",
+          "title_section": null,
+          "title_page": null,
           "document_date": "2020-12-17",
           "paragraph": "s4",
           "paragraph_numbered": false,
@@ -937,7 +925,10 @@
           "public_from": "2021-06-16",
           "passage_id": "33182526/v1/s4",
           "contract_evidence_id": "strata.gold.contract:1686165",
+          "document_id": "33182526",
           "document_type": "Implementation Status and Results Report",
+          "title_section": null,
+          "title_page": null,
           "document_date": "2021-06-16",
           "paragraph": "s4",
           "paragraph_numbered": false,
@@ -979,7 +970,10 @@
           "public_from": "2023-08-10",
           "passage_id": "34133893/v1/s4",
           "contract_evidence_id": "strata.gold.contract:1686165",
+          "document_id": "34133893",
           "document_type": "Implementation Status and Results Report",
+          "title_section": null,
+          "title_page": null,
           "document_date": "2023-08-11",
           "paragraph": "s4",
           "paragraph_numbered": false,
@@ -1021,7 +1015,10 @@
           "public_from": "2024-03-08",
           "passage_id": "34277278/v1/s4",
           "contract_evidence_id": "strata.gold.contract:1686165",
+          "document_id": "34277278",
           "document_type": "Implementation Status and Results Report",
+          "title_section": null,
+          "title_page": null,
           "document_date": "2024-03-08",
           "paragraph": "s4",
           "paragraph_numbered": false,
@@ -1063,7 +1060,10 @@
           "public_from": "2025-02-18",
           "passage_id": "34457596/v1/s4",
           "contract_evidence_id": "strata.gold.contract:1686165",
+          "document_id": "34457596",
           "document_type": "Implementation Status and Results Report",
+          "title_section": null,
+          "title_page": null,
           "document_date": "2025-02-18",
           "paragraph": "s4",
           "paragraph_numbered": false,
@@ -1113,7 +1113,10 @@
           "public_from": "2025-02-18",
           "passage_id": "34457596/v1/s7/2",
           "contract_evidence_id": "strata.gold.contract:1686165",
+          "document_id": "34457596",
           "document_type": "Implementation Status and Results Report",
+          "title_section": null,
+          "title_page": null,
           "document_date": "2025-02-18",
           "paragraph": "s7",
           "paragraph_numbered": false,
@@ -1151,53 +1154,14 @@
         {
           "stratum": "How",
           "short_name": "ISR",
-          "evidence_id": "strata.gold.passage:34457596/v1/s7/3",
-          "public_from": "2025-02-18",
-          "passage_id": "34457596/v1/s7/3",
-          "contract_evidence_id": "strata.gold.contract:1686165",
-          "document_type": "Implementation Status and Results Report",
-          "document_date": "2025-02-18",
-          "paragraph": "s7",
-          "paragraph_numbered": false,
-          "section_path": "6.2",
-          "pdf_page": 7,
-          "printed_page": "7 of 10",
-          "doc_key": "isr-2025-02-18",
-          "language": "en",
-          "text": "(Number) achieving targets People provided with access 0.00 Jul/2016 3,750.00 31-May-2024 11,850.00 30-Jan-2025 13,650.00 Aug/2024 to improved shared Comments on Most facilities in Wajir complete and in use, those in Garissa to be completed by August sanitation facilities achieving targets 2025 (Number) Component 3: National performance-based financing (US$82.5 of which IDA-SUF US$75 million). Baseline Actual (Previous) Actual (Current) Closing Period Indicator Name Value Month/Year Value Date Value Date Value Month/Year No Apr/2017 Yes 31-May-2024 Yes 30-Jan-2025 Yes Aug/2024 Comments on The GoK adopted the National Water and Sanitation Investment Plan (NAWASIP) which Guidelines for results-based achieving targets promotes results-based financing. The first ever results-based project in the sector, K-WASH financing adopted (Yes/No) which is co-financed by the Government and IDA was approved in December 2023. Complaints handling system 0.00 Apr/2017 0.00 31-May-2024 2.00 30-Jan-2025 2.00 Aug/2024 (Maji Voice) established in Comments on WSPs supported under the achieving targets project. (Number) 0.00 Jun/2020 0.00 31-May-2024 51.00 30-Jan-2025 51.00 Aug/2024 Average performance score Comments on This applies only to CLSG 1. CLSG-2 is still ongoing. An assessment will be undertaken after for WSPs receiving the CLSG achieving targets CLSG-2, by August 2025 (Percentage)",
-          "highlights": [
-            [
-              181,
-              186
-            ]
-          ],
-          "topics": [
-            {
-              "kind": "sector",
-              "code": "WC",
-              "name": "Water Supply"
-            },
-            {
-              "kind": "place",
-              "text": "Wajir"
-            }
-          ],
-          "source": {
-            "document_type": "Implementation Status and Results Report",
-            "project_id": "P156634",
-            "document_date": "2025-02-18",
-            "pdf_page": 7
-          },
-          "contract_reference": "1686165"
-        },
-        {
-          "stratum": "How",
-          "short_name": "ISR",
           "evidence_id": "strata.gold.passage:40038432/v1/s4",
           "public_from": "2025-08-18",
           "passage_id": "40038432/v1/s4",
           "contract_evidence_id": "strata.gold.contract:1686165",
+          "document_id": "40038432",
           "document_type": "Implementation Status and Results Report",
+          "title_section": null,
+          "title_page": null,
           "document_date": "2025-08-18",
           "paragraph": "s4",
           "paragraph_numbered": false,
@@ -1247,7 +1211,10 @@
           "public_from": "2025-08-18",
           "passage_id": "40038432/v1/s7/2",
           "contract_evidence_id": "strata.gold.contract:1686165",
+          "document_id": "40038432",
           "document_type": "Implementation Status and Results Report",
+          "title_section": null,
+          "title_page": null,
           "document_date": "2025-08-18",
           "paragraph": "s7",
           "paragraph_numbered": false,
@@ -1289,7 +1256,10 @@
           "public_from": "2026-03-12",
           "passage_id": "40091292/v1/s4",
           "contract_evidence_id": "strata.gold.contract:1686165",
+          "document_id": "40091292",
           "document_type": "Implementation Status and Results Report",
+          "title_section": null,
+          "title_page": null,
           "document_date": "2026-03-12",
           "paragraph": "s4",
           "paragraph_numbered": false,
@@ -1339,7 +1309,10 @@
           "public_from": "2026-03-12",
           "passage_id": "40091292/v1/s7/1",
           "contract_evidence_id": "strata.gold.contract:1686165",
+          "document_id": "40091292",
           "document_type": "Implementation Status and Results Report",
+          "title_section": null,
+          "title_page": null,
           "document_date": "2026-03-12",
           "paragraph": "s7",
           "paragraph_numbered": false,
@@ -1381,7 +1354,10 @@
           "public_from": "2026-06-30",
           "passage_id": "40114539/v1/s4",
           "contract_evidence_id": "strata.gold.contract:1686165",
+          "document_id": "40114539",
           "document_type": "Implementation Status and Results Report",
+          "title_section": null,
+          "title_page": null,
           "document_date": "2026-06-30",
           "paragraph": "s4",
           "paragraph_numbered": false,
@@ -1415,6 +1391,125 @@
             "pdf_page": 2
           },
           "contract_reference": "1686165"
+        }
+      ],
+      "groups": [
+        {
+          "document_id": "27348420",
+          "document_type": "Project Appraisal Document",
+          "short_name": "PAD",
+          "stratum": "Why",
+          "document_date": "2017-04-05",
+          "count": 6,
+          "shown": 3
+        },
+        {
+          "document_id": "31128142",
+          "document_type": "Implementation Status and Results Report",
+          "short_name": "ISR",
+          "stratum": "How",
+          "document_date": "2019-06-04",
+          "count": 1,
+          "shown": 1
+        },
+        {
+          "document_id": "31451672",
+          "document_type": "Implementation Status and Results Report",
+          "short_name": "ISR",
+          "stratum": "How",
+          "document_date": "2019-10-02",
+          "count": 1,
+          "shown": 1
+        },
+        {
+          "document_id": "31920934",
+          "document_type": "Implementation Status and Results Report",
+          "short_name": "ISR",
+          "stratum": "How",
+          "document_date": "2020-04-01",
+          "count": 1,
+          "shown": 1
+        },
+        {
+          "document_id": "32442111",
+          "document_type": "Implementation Status and Results Report",
+          "short_name": "ISR",
+          "stratum": "How",
+          "document_date": "2020-09-28",
+          "count": 1,
+          "shown": 1
+        },
+        {
+          "document_id": "32682225",
+          "document_type": "Implementation Status and Results Report",
+          "short_name": "ISR",
+          "stratum": "How",
+          "document_date": "2020-12-17",
+          "count": 1,
+          "shown": 1
+        },
+        {
+          "document_id": "33182526",
+          "document_type": "Implementation Status and Results Report",
+          "short_name": "ISR",
+          "stratum": "How",
+          "document_date": "2021-06-16",
+          "count": 1,
+          "shown": 1
+        },
+        {
+          "document_id": "34133893",
+          "document_type": "Implementation Status and Results Report",
+          "short_name": "ISR",
+          "stratum": "How",
+          "document_date": "2023-08-11",
+          "count": 1,
+          "shown": 1
+        },
+        {
+          "document_id": "34277278",
+          "document_type": "Implementation Status and Results Report",
+          "short_name": "ISR",
+          "stratum": "How",
+          "document_date": "2024-03-08",
+          "count": 1,
+          "shown": 1
+        },
+        {
+          "document_id": "34457596",
+          "document_type": "Implementation Status and Results Report",
+          "short_name": "ISR",
+          "stratum": "How",
+          "document_date": "2025-02-18",
+          "count": 2,
+          "shown": 2
+        },
+        {
+          "document_id": "40038432",
+          "document_type": "Implementation Status and Results Report",
+          "short_name": "ISR",
+          "stratum": "How",
+          "document_date": "2025-08-18",
+          "count": 2,
+          "shown": 2
+        },
+        {
+          "document_id": "40091292",
+          "document_type": "Implementation Status and Results Report",
+          "short_name": "ISR",
+          "stratum": "How",
+          "document_date": "2026-03-12",
+          "count": 2,
+          "shown": 2
+        },
+        {
+          "document_id": "40114539",
+          "document_type": "Implementation Status and Results Report",
+          "short_name": "ISR",
+          "stratum": "How",
+          "document_date": "2026-06-30",
+          "count": 1,
+          "shown": 1
         }
       ],
       "threshold": "0.50"

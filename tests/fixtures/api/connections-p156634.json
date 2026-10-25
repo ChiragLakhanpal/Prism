@@ -20,6 +20,9 @@
           "evidence_id": "strata.gold.passage:31451672/v1/s4"
         },
         {
+          "evidence_id": "strata.gold.passage:27348420/v1/annex3.62/1"
+        },
+        {
           "evidence_id": "strata.gold.passage:34277278/v1/s6/2"
         }
       ]
@@ -40,9 +43,6 @@
           "evidence_id": "strata.gold.passage:27348420/v1/annex3.62/1"
         },
         {
-          "evidence_id": "strata.gold.passage:27348420/v1/annex3.62/4"
-        },
-        {
           "evidence_id": "strata.gold.passage:34457596/v1/s4"
         },
         {
@@ -50,6 +50,9 @@
         },
         {
           "evidence_id": "strata.gold.passage:40038432/v1/s4"
+        },
+        {
+          "evidence_id": "strata.gold.passage:27348420/v1/33"
         },
         {
           "evidence_id": "strata.gold.passage:31451672/v1/s4"
@@ -136,9 +139,6 @@
           "evidence_id": "strata.gold.passage:34457596/v1/s7/2"
         },
         {
-          "evidence_id": "strata.gold.passage:27348420/v1/annex3.62/4"
-        },
-        {
           "evidence_id": "strata.gold.passage:40114539/v1/s4"
         },
         {
@@ -174,9 +174,6 @@
           "evidence_id": "strata.gold.passage:27348420/v1/annex3.62/1"
         },
         {
-          "evidence_id": "strata.gold.passage:27348420/v1/annex3.62/4"
-        },
-        {
           "evidence_id": "strata.gold.passage:34457596/v1/s7/2"
         },
         {
@@ -193,9 +190,6 @@
         },
         {
           "evidence_id": "strata.gold.passage:40114539/v1/s4"
-        },
-        {
-          "evidence_id": "strata.gold.passage:34457596/v1/s7/3"
         }
       ]
     },
@@ -265,16 +259,13 @@
           "evidence_id": "strata.gold.passage:34457596/v1/s7/2"
         },
         {
-          "evidence_id": "strata.gold.passage:34457596/v1/s7/3"
-        },
-        {
           "evidence_id": "strata.gold.passage:40038432/v1/s7/2"
         },
         {
           "evidence_id": "strata.gold.passage:40114539/v1/s4"
         },
         {
-          "evidence_id": "strata.gold.passage:34277278/v1/s6/3"
+          "evidence_id": "strata.gold.passage:34277278/v1/s6/2"
         },
         {
           "evidence_id": "strata.gold.passage:40091292/v1/s7/1"
@@ -284,6 +275,9 @@
         },
         {
           "evidence_id": "strata.gold.passage:40114539/v1/s7/3"
+        },
+        {
+          "evidence_id": "strata.gold.passage:27348420/v1/33"
         }
       ]
     },
@@ -385,9 +379,6 @@
           "evidence_id": "strata.gold.passage:27348420/v1/annex3.62/1"
         },
         {
-          "evidence_id": "strata.gold.passage:27348420/v1/annex3.62/4"
-        },
-        {
           "evidence_id": "strata.gold.passage:40038432/v1/s7/2"
         },
         {
@@ -395,9 +386,6 @@
         },
         {
           "evidence_id": "strata.gold.passage:34457596/v1/s7/2"
-        },
-        {
-          "evidence_id": "strata.gold.passage:34457596/v1/s7/3"
         },
         {
           "evidence_id": "strata.gold.passage:34277278/v1/s4"
@@ -423,6 +411,8 @@
           "paragraph": "62",
           "paragraph_numbered": true,
           "section_path": "Annex 3.C",
+          "pdf_page": 83,
+          "label_extra": null,
           "packages": [
             "KE-KIMAWASCO-142995-CW-RFB",
             "KE-KIMAWASCO-416959-CW-RFB",
@@ -432,21 +422,10 @@
             "KE-KIMAWASCO-459000-CW-DIR",
             "KE-NWWDA-229129-CW-RFB",
             "KE-NWWDA-541055-CW-RFB",
+            "KE-MAWASCO-69995-CS-QCBS",
             "KE-WAJWASCO-456993-CW-RFB"
-          ]
-        },
-        {
-          "evidence_id": "strata.gold.passage:27348420/v1/annex3.62/4",
-          "passage_id": "27348420/v1/annex3.62/4",
-          "paragraph": "62",
-          "paragraph_numbered": true,
-          "section_path": "Annex 3.C",
-          "packages": [
-            "KE-GAWASCO-54775-CW-RFB",
-            "KE-NWWDA-541055-CW-RFB",
-            "KE-NWWDA-229129-CW-RFB",
-            "KE-KIMAWASCO-142995-CW-RFB"
-          ]
+          ],
+          "package_count": 10
         },
         {
           "evidence_id": "strata.gold.passage:27348420/v1/82",
@@ -454,12 +433,29 @@
           "paragraph": "82",
           "paragraph_numbered": true,
           "section_path": "VI.E",
+          "pdf_page": 34,
+          "label_extra": null,
           "packages": [
             "KE-MOWI-47509-CW-RFB"
-          ]
+          ],
+          "package_count": 1
+        },
+        {
+          "evidence_id": "strata.gold.passage:27348420/v1/33",
+          "passage_id": "27348420/v1/33",
+          "paragraph": "33",
+          "paragraph_numbered": true,
+          "section_path": "III.A",
+          "pdf_page": 21,
+          "label_extra": null,
+          "packages": [
+            "KE-GAWASCO-54775-CW-RFB",
+            "KE-GAWASCO-436012-CW-RFB"
+          ],
+          "package_count": 2
         }
       ],
-      "more_chips": 65
+      "more_chips": 56
     },
     {
       "document_id": "31128142",
@@ -478,6 +474,8 @@
           "paragraph": "s4",
           "paragraph_numbered": false,
           "section_path": "Implementation Status and Key Decisions",
+          "pdf_page": 1,
+          "label_extra": null,
           "packages": [
             "KE-KIMAWASCO-142995-CW-RFB",
             "KE-MOWI-47509-CW-RFB",
@@ -487,7 +485,8 @@
             "KE-GAWASCO-436012-CW-RFB",
             "KE-KIMAWASCO-416959-CW-RFB",
             "KE-KIMAWASCO-459000-CW-DIR"
-          ]
+          ],
+          "package_count": 8
         }
       ],
       "more_chips": 0
@@ -509,6 +508,8 @@
           "paragraph": "s4",
           "paragraph_numbered": false,
           "section_path": "Implementation Status and Key Decisions",
+          "pdf_page": 1,
+          "label_extra": null,
           "packages": [
             "KE-MAWASCO-69995-CS-QCBS",
             "KE-GAWASCO-67422-CS-QCBS",
@@ -516,7 +517,8 @@
             "KE-MOWI-47509-CW-RFB",
             "KE-GAWASCO-54775-CW-RFB",
             "KE-NWWDA-229129-CW-RFB"
-          ]
+          ],
+          "package_count": 6
         }
       ],
       "more_chips": 0
@@ -538,22 +540,16 @@
           "paragraph": "s6",
           "paragraph_numbered": false,
           "section_path": "Results",
+          "pdf_page": 4,
+          "label_extra": null,
           "packages": [
             "KE-KIMAWASCO-416959-CW-RFB",
             "KE-KIMAWASCO-459000-CW-DIR",
             "KE-KIMAWASCO-142995-CW-RFB",
+            "KE-GAWASCO-436012-CW-RFB",
             "KE-MAWASCO-69995-CS-QCBS"
-          ]
-        },
-        {
-          "evidence_id": "strata.gold.passage:34277278/v1/s6/3",
-          "passage_id": "34277278/v1/s6/3",
-          "paragraph": "s6",
-          "paragraph_numbered": false,
-          "section_path": "Results",
-          "packages": [
-            "KE-GAWASCO-436012-CW-RFB"
-          ]
+          ],
+          "package_count": 5
         },
         {
           "evidence_id": "strata.gold.passage:34277278/v1/s4",
@@ -561,6 +557,8 @@
           "paragraph": "s4",
           "paragraph_numbered": false,
           "section_path": "Implementation Status and Key Decisions",
+          "pdf_page": 2,
+          "label_extra": null,
           "packages": [
             "KE-GAWASCO-436012-CW-RFB",
             "KE-KIMAWASCO-416959-CW-RFB",
@@ -570,7 +568,8 @@
             "KE-NWWDA-229129-CW-RFB",
             "KE-KIMAWASCO-142995-CW-RFB",
             "KE-MOWI-47509-CW-RFB"
-          ]
+          ],
+          "package_count": 8
         }
       ],
       "more_chips": 0
@@ -592,6 +591,8 @@
           "paragraph": "s4",
           "paragraph_numbered": false,
           "section_path": "4.1",
+          "pdf_page": 2,
+          "label_extra": null,
           "packages": [
             "KE-KIMAWASCO-416959-CW-RFB",
             "KE-KIMAWASCO-459000-CW-DIR",
@@ -602,7 +603,8 @@
             "KE-GAWASCO-54775-CW-RFB",
             "KE-WAJWASCO-456993-CW-RFB",
             "KE-MOWI-47509-CW-RFB"
-          ]
+          ],
+          "package_count": 9
         },
         {
           "evidence_id": "strata.gold.passage:34457596/v1/s7/2",
@@ -610,6 +612,8 @@
           "paragraph": "s7",
           "paragraph_numbered": false,
           "section_path": "6.2",
+          "pdf_page": 6,
+          "label_extra": null,
           "packages": [
             "KE-KIMAWASCO-416959-CW-RFB",
             "KE-GAWASCO-436012-CW-RFB",
@@ -618,19 +622,8 @@
             "KE-KIMAWASCO-142995-CW-RFB",
             "KE-NWWDA-229129-CW-RFB",
             "KE-WAJWASCO-456993-CW-RFB"
-          ]
-        },
-        {
-          "evidence_id": "strata.gold.passage:34457596/v1/s7/3",
-          "passage_id": "34457596/v1/s7/3",
-          "paragraph": "s7",
-          "paragraph_numbered": false,
-          "section_path": "6.2",
-          "packages": [
-            "KE-GAWASCO-436012-CW-RFB",
-            "KE-NWWDA-541055-CW-RFB",
-            "KE-NWWDA-229129-CW-RFB"
-          ]
+          ],
+          "package_count": 7
         }
       ],
       "more_chips": 0
@@ -652,6 +645,8 @@
           "paragraph": "s4",
           "paragraph_numbered": false,
           "section_path": "4.1",
+          "pdf_page": 2,
+          "label_extra": null,
           "packages": [
             "KE-NWWDA-541055-CW-RFB",
             "KE-GAWASCO-436012-CW-RFB",
@@ -662,7 +657,8 @@
             "KE-KIMAWASCO-416959-CW-RFB",
             "KE-KIMAWASCO-459000-CW-DIR",
             "KE-KIMAWASCO-142995-CW-RFB"
-          ]
+          ],
+          "package_count": 9
         },
         {
           "evidence_id": "strata.gold.passage:40038432/v1/s7/2",
@@ -670,11 +666,14 @@
           "paragraph": "s7",
           "paragraph_numbered": false,
           "section_path": "6.2",
+          "pdf_page": 6,
+          "label_extra": null,
           "packages": [
             "KE-NWWDA-541055-CW-RFB",
             "KE-GAWASCO-436012-CW-RFB",
             "KE-NWWDA-229129-CW-RFB"
-          ]
+          ],
+          "package_count": 3
         }
       ],
       "more_chips": 0
@@ -696,6 +695,8 @@
           "paragraph": "s4",
           "paragraph_numbered": false,
           "section_path": "4.1",
+          "pdf_page": 2,
+          "label_extra": null,
           "packages": [
             "KE-NWWDA-541055-CW-RFB",
             "KE-KIMAWASCO-459000-CW-DIR",
@@ -706,7 +707,8 @@
             "KE-GAWASCO-54775-CW-RFB",
             "KE-MOWI-47509-CW-RFB",
             "KE-WAJWASCO-456993-CW-RFB"
-          ]
+          ],
+          "package_count": 9
         },
         {
           "evidence_id": "strata.gold.passage:40091292/v1/s7/1",
@@ -714,11 +716,14 @@
           "paragraph": "s7",
           "paragraph_numbered": false,
           "section_path": "6.2",
+          "pdf_page": 5,
+          "label_extra": null,
           "packages": [
             "KE-NWWDA-541055-CW-RFB",
             "KE-GAWASCO-436012-CW-RFB",
             "KE-NWWDA-229129-CW-RFB"
-          ]
+          ],
+          "package_count": 3
         }
       ],
       "more_chips": 0
@@ -740,6 +745,8 @@
           "paragraph": "s4",
           "paragraph_numbered": false,
           "section_path": "4.1",
+          "pdf_page": 2,
+          "label_extra": null,
           "packages": [
             "KE-NWWDA-541055-CW-RFB",
             "KE-KIMAWASCO-416959-CW-RFB",
@@ -747,7 +754,8 @@
             "KE-GAWASCO-436012-CW-RFB",
             "KE-KIMAWASCO-142995-CW-RFB",
             "KE-NWWDA-229129-CW-RFB"
-          ]
+          ],
+          "package_count": 6
         },
         {
           "evidence_id": "strata.gold.passage:40114539/v1/s7/3",
@@ -755,10 +763,13 @@
           "paragraph": "s7",
           "paragraph_numbered": false,
           "section_path": "6.2",
+          "pdf_page": 7,
+          "label_extra": null,
           "packages": [
             "KE-NWWDA-541055-CW-RFB",
             "KE-GAWASCO-436012-CW-RFB"
-          ]
+          ],
+          "package_count": 2
         }
       ],
       "more_chips": 0
@@ -840,10 +851,6 @@
     {
       "step_reference": "KE-GAWASCO-54775-CW-RFB",
       "evidence_id": "strata.gold.passage:27348420/v1/annex3.62/1"
-    },
-    {
-      "step_reference": "KE-GAWASCO-54775-CW-RFB",
-      "evidence_id": "strata.gold.passage:27348420/v1/annex3.62/4"
     },
     {
       "step_reference": "KE-NWWDA-229129-CW-RFB",
@@ -942,10 +949,6 @@
       "evidence_id": "strata.gold.passage:27348420/v1/annex3.62/1"
     },
     {
-      "step_reference": "KE-NWWDA-541055-CW-RFB",
-      "evidence_id": "strata.gold.passage:27348420/v1/annex3.62/4"
-    },
-    {
       "step_reference": "KE-MOWI-47509-CW-RFB",
       "evidence_id": "strata.gold.passage:40091292/v1/s4"
     },
@@ -970,10 +973,6 @@
       "evidence_id": "strata.gold.passage:40114539/v1/s4"
     },
     {
-      "step_reference": "KE-NWWDA-229129-CW-RFB",
-      "evidence_id": "strata.gold.passage:27348420/v1/annex3.62/4"
-    },
-    {
       "step_reference": "KE-NWWDA-541055-CW-RFB",
       "evidence_id": "strata.gold.passage:34457596/v1/s7/2"
     },
@@ -984,10 +983,6 @@
     {
       "step_reference": "KE-KIMAWASCO-459000-CW-DIR",
       "evidence_id": "strata.gold.passage:31128142/v1/s4"
-    },
-    {
-      "step_reference": "KE-GAWASCO-436012-CW-RFB",
-      "evidence_id": "strata.gold.passage:34457596/v1/s7/3"
     },
     {
       "step_reference": "KE-GAWASCO-436012-CW-RFB",
@@ -1015,15 +1010,11 @@
     },
     {
       "step_reference": "KE-GAWASCO-436012-CW-RFB",
-      "evidence_id": "strata.gold.passage:34277278/v1/s6/3"
+      "evidence_id": "strata.gold.passage:34277278/v1/s6/2"
     },
     {
       "step_reference": "KE-MOWI-47509-CW-RFB",
       "evidence_id": "strata.gold.passage:31451672/v1/s4"
-    },
-    {
-      "step_reference": "KE-NWWDA-541055-CW-RFB",
-      "evidence_id": "strata.gold.passage:34457596/v1/s7/3"
     },
     {
       "step_reference": "KE-WAJWASCO-456993-CW-RFB",
@@ -1032,6 +1023,10 @@
     {
       "step_reference": "KE-GAWASCO-436012-CW-RFB",
       "evidence_id": "strata.gold.passage:40091292/v1/s7/1"
+    },
+    {
+      "step_reference": "KE-GAWASCO-54775-CW-RFB",
+      "evidence_id": "strata.gold.passage:27348420/v1/33"
     },
     {
       "step_reference": "KE-GAWASCO-436012-CW-RFB",
@@ -1078,6 +1073,10 @@
       "evidence_id": "strata.gold.passage:34277278/v1/s4"
     },
     {
+      "step_reference": "KE-MAWASCO-69995-CS-QCBS",
+      "evidence_id": "strata.gold.passage:27348420/v1/annex3.62/1"
+    },
+    {
       "step_reference": "KE-NWWDA-541055-CW-RFB",
       "evidence_id": "strata.gold.passage:34277278/v1/s4"
     },
@@ -1086,16 +1085,16 @@
       "evidence_id": "strata.gold.passage:27348420/v1/annex3.62/1"
     },
     {
-      "step_reference": "KE-KIMAWASCO-142995-CW-RFB",
-      "evidence_id": "strata.gold.passage:27348420/v1/annex3.62/4"
-    },
-    {
       "step_reference": "KE-NWWDA-229129-CW-RFB",
       "evidence_id": "strata.gold.passage:31451672/v1/s4"
     },
     {
       "step_reference": "KE-NWWDA-229129-CW-RFB",
       "evidence_id": "strata.gold.passage:34277278/v1/s4"
+    },
+    {
+      "step_reference": "KE-GAWASCO-436012-CW-RFB",
+      "evidence_id": "strata.gold.passage:27348420/v1/33"
     },
     {
       "step_reference": "KE-KIMAWASCO-142995-CW-RFB",
@@ -1126,10 +1125,6 @@
       "evidence_id": "strata.gold.passage:34277278/v1/s4"
     },
     {
-      "step_reference": "KE-NWWDA-229129-CW-RFB",
-      "evidence_id": "strata.gold.passage:34457596/v1/s7/3"
-    },
-    {
       "step_reference": "KE-WAJWASCO-456993-CW-RFB",
       "evidence_id": "strata.gold.passage:34457596/v1/s7/2"
     }
@@ -1137,170 +1132,592 @@
   "more": [
     {
       "kind": "packages",
-      "count": 265
+      "count": 265,
+      "unread": 0
     },
     {
       "kind": "isrs",
-      "count": 12
+      "count": 12,
+      "unread": 0
     },
     {
       "kind": "plans",
-      "count": 240
+      "count": 240,
+      "unread": 229
     },
     {
       "kind": "documents",
-      "count": 91
+      "count": 91,
+      "unread": 90
     }
   ],
+  "lines": [
+    {
+      "step_reference": "KE-MAWASCO-69995-CS-QCBS",
+      "document_id": "27348420",
+      "evidence_id": "strata.gold.passage:27348420/v1/annex3.62/1",
+      "at_rest": true
+    },
+    {
+      "step_reference": "KE-MAWASCO-69995-CS-QCBS",
+      "document_id": "31451672",
+      "evidence_id": "strata.gold.passage:31451672/v1/s4",
+      "at_rest": true
+    },
+    {
+      "step_reference": "KE-MAWASCO-69995-CS-QCBS",
+      "document_id": "34277278",
+      "evidence_id": "strata.gold.passage:34277278/v1/s6/2",
+      "at_rest": true
+    },
+    {
+      "step_reference": "KE-GAWASCO-54775-CW-RFB",
+      "document_id": "27348420",
+      "evidence_id": "strata.gold.passage:27348420/v1/annex3.62/1",
+      "at_rest": false
+    },
+    {
+      "step_reference": "KE-GAWASCO-54775-CW-RFB",
+      "document_id": "31128142",
+      "evidence_id": "strata.gold.passage:31128142/v1/s4",
+      "at_rest": false
+    },
+    {
+      "step_reference": "KE-GAWASCO-54775-CW-RFB",
+      "document_id": "31451672",
+      "evidence_id": "strata.gold.passage:31451672/v1/s4",
+      "at_rest": false
+    },
+    {
+      "step_reference": "KE-GAWASCO-54775-CW-RFB",
+      "document_id": "34457596",
+      "evidence_id": "strata.gold.passage:34457596/v1/s4",
+      "at_rest": false
+    },
+    {
+      "step_reference": "KE-GAWASCO-54775-CW-RFB",
+      "document_id": "40038432",
+      "evidence_id": "strata.gold.passage:40038432/v1/s4",
+      "at_rest": false
+    },
+    {
+      "step_reference": "KE-GAWASCO-54775-CW-RFB",
+      "document_id": "40091292",
+      "evidence_id": "strata.gold.passage:40091292/v1/s4",
+      "at_rest": false
+    },
+    {
+      "step_reference": "KE-GAWASCO-67422-CS-QCBS",
+      "document_id": "27348420",
+      "evidence_id": null,
+      "at_rest": false
+    },
+    {
+      "step_reference": "KE-GAWASCO-67422-CS-QCBS",
+      "document_id": "31451672",
+      "evidence_id": "strata.gold.passage:31451672/v1/s4",
+      "at_rest": false
+    },
+    {
+      "step_reference": "KE-MOWI-47509-CW-RFB",
+      "document_id": "27348420",
+      "evidence_id": "strata.gold.passage:27348420/v1/annex3.62/1",
+      "at_rest": false
+    },
+    {
+      "step_reference": "KE-MOWI-47509-CW-RFB",
+      "document_id": "31128142",
+      "evidence_id": "strata.gold.passage:31128142/v1/s4",
+      "at_rest": false
+    },
+    {
+      "step_reference": "KE-MOWI-47509-CW-RFB",
+      "document_id": "31451672",
+      "evidence_id": "strata.gold.passage:31451672/v1/s4",
+      "at_rest": false
+    },
+    {
+      "step_reference": "KE-MOWI-47509-CW-RFB",
+      "document_id": "34277278",
+      "evidence_id": "strata.gold.passage:34277278/v1/s4",
+      "at_rest": false
+    },
+    {
+      "step_reference": "KE-MOWI-47509-CW-RFB",
+      "document_id": "34457596",
+      "evidence_id": "strata.gold.passage:34457596/v1/s4",
+      "at_rest": false
+    },
+    {
+      "step_reference": "KE-MOWI-47509-CW-RFB",
+      "document_id": "40038432",
+      "evidence_id": "strata.gold.passage:40038432/v1/s4",
+      "at_rest": false
+    },
+    {
+      "step_reference": "KE-MOWI-47509-CW-RFB",
+      "document_id": "40091292",
+      "evidence_id": "strata.gold.passage:40091292/v1/s4",
+      "at_rest": false
+    },
+    {
+      "step_reference": "KE-KIMAWASCO-142995-CW-RFB",
+      "document_id": "27348420",
+      "evidence_id": "strata.gold.passage:27348420/v1/annex3.62/1",
+      "at_rest": false
+    },
+    {
+      "step_reference": "KE-KIMAWASCO-142995-CW-RFB",
+      "document_id": "31128142",
+      "evidence_id": "strata.gold.passage:31128142/v1/s4",
+      "at_rest": false
+    },
+    {
+      "step_reference": "KE-KIMAWASCO-142995-CW-RFB",
+      "document_id": "31451672",
+      "evidence_id": "strata.gold.passage:31451672/v1/s4",
+      "at_rest": false
+    },
+    {
+      "step_reference": "KE-KIMAWASCO-142995-CW-RFB",
+      "document_id": "34277278",
+      "evidence_id": "strata.gold.passage:34277278/v1/s6/2",
+      "at_rest": false
+    },
+    {
+      "step_reference": "KE-KIMAWASCO-142995-CW-RFB",
+      "document_id": "34457596",
+      "evidence_id": "strata.gold.passage:34457596/v1/s4",
+      "at_rest": false
+    },
+    {
+      "step_reference": "KE-KIMAWASCO-142995-CW-RFB",
+      "document_id": "40038432",
+      "evidence_id": "strata.gold.passage:40038432/v1/s4",
+      "at_rest": false
+    },
+    {
+      "step_reference": "KE-KIMAWASCO-142995-CW-RFB",
+      "document_id": "40091292",
+      "evidence_id": "strata.gold.passage:40091292/v1/s4",
+      "at_rest": false
+    },
+    {
+      "step_reference": "KE-KIMAWASCO-142995-CW-RFB",
+      "document_id": "40114539",
+      "evidence_id": "strata.gold.passage:40114539/v1/s4",
+      "at_rest": false
+    },
+    {
+      "step_reference": "KE-NWWDA-229129-CW-RFB",
+      "document_id": "27348420",
+      "evidence_id": "strata.gold.passage:27348420/v1/annex3.62/1",
+      "at_rest": false
+    },
+    {
+      "step_reference": "KE-NWWDA-229129-CW-RFB",
+      "document_id": "31128142",
+      "evidence_id": "strata.gold.passage:31128142/v1/s4",
+      "at_rest": false
+    },
+    {
+      "step_reference": "KE-NWWDA-229129-CW-RFB",
+      "document_id": "31451672",
+      "evidence_id": "strata.gold.passage:31451672/v1/s4",
+      "at_rest": false
+    },
+    {
+      "step_reference": "KE-NWWDA-229129-CW-RFB",
+      "document_id": "34277278",
+      "evidence_id": "strata.gold.passage:34277278/v1/s4",
+      "at_rest": false
+    },
+    {
+      "step_reference": "KE-NWWDA-229129-CW-RFB",
+      "document_id": "34457596",
+      "evidence_id": "strata.gold.passage:34457596/v1/s4",
+      "at_rest": false
+    },
+    {
+      "step_reference": "KE-NWWDA-229129-CW-RFB",
+      "document_id": "40038432",
+      "evidence_id": "strata.gold.passage:40038432/v1/s4",
+      "at_rest": false
+    },
+    {
+      "step_reference": "KE-NWWDA-229129-CW-RFB",
+      "document_id": "40091292",
+      "evidence_id": "strata.gold.passage:40091292/v1/s4",
+      "at_rest": false
+    },
+    {
+      "step_reference": "KE-NWWDA-229129-CW-RFB",
+      "document_id": "40114539",
+      "evidence_id": "strata.gold.passage:40114539/v1/s4",
+      "at_rest": false
+    },
+    {
+      "step_reference": "KE-KIMAWASCO-416959-CW-RFB",
+      "document_id": "27348420",
+      "evidence_id": "strata.gold.passage:27348420/v1/annex3.62/1",
+      "at_rest": false
+    },
+    {
+      "step_reference": "KE-KIMAWASCO-416959-CW-RFB",
+      "document_id": "31128142",
+      "evidence_id": "strata.gold.passage:31128142/v1/s4",
+      "at_rest": false
+    },
+    {
+      "step_reference": "KE-KIMAWASCO-416959-CW-RFB",
+      "document_id": "34277278",
+      "evidence_id": "strata.gold.passage:34277278/v1/s6/2",
+      "at_rest": false
+    },
+    {
+      "step_reference": "KE-KIMAWASCO-416959-CW-RFB",
+      "document_id": "34457596",
+      "evidence_id": "strata.gold.passage:34457596/v1/s4",
+      "at_rest": false
+    },
+    {
+      "step_reference": "KE-KIMAWASCO-416959-CW-RFB",
+      "document_id": "40038432",
+      "evidence_id": "strata.gold.passage:40038432/v1/s4",
+      "at_rest": false
+    },
+    {
+      "step_reference": "KE-KIMAWASCO-416959-CW-RFB",
+      "document_id": "40091292",
+      "evidence_id": "strata.gold.passage:40091292/v1/s4",
+      "at_rest": false
+    },
+    {
+      "step_reference": "KE-KIMAWASCO-416959-CW-RFB",
+      "document_id": "40114539",
+      "evidence_id": "strata.gold.passage:40114539/v1/s4",
+      "at_rest": false
+    },
+    {
+      "step_reference": "KE-GAWASCO-436012-CW-RFB",
+      "document_id": "27348420",
+      "evidence_id": "strata.gold.passage:27348420/v1/annex3.62/1",
+      "at_rest": false
+    },
+    {
+      "step_reference": "KE-GAWASCO-436012-CW-RFB",
+      "document_id": "31128142",
+      "evidence_id": "strata.gold.passage:31128142/v1/s4",
+      "at_rest": false
+    },
+    {
+      "step_reference": "KE-GAWASCO-436012-CW-RFB",
+      "document_id": "34277278",
+      "evidence_id": "strata.gold.passage:34277278/v1/s6/2",
+      "at_rest": false
+    },
+    {
+      "step_reference": "KE-GAWASCO-436012-CW-RFB",
+      "document_id": "34457596",
+      "evidence_id": "strata.gold.passage:34457596/v1/s4",
+      "at_rest": false
+    },
+    {
+      "step_reference": "KE-GAWASCO-436012-CW-RFB",
+      "document_id": "40038432",
+      "evidence_id": "strata.gold.passage:40038432/v1/s4",
+      "at_rest": false
+    },
+    {
+      "step_reference": "KE-GAWASCO-436012-CW-RFB",
+      "document_id": "40091292",
+      "evidence_id": "strata.gold.passage:40091292/v1/s4",
+      "at_rest": false
+    },
+    {
+      "step_reference": "KE-GAWASCO-436012-CW-RFB",
+      "document_id": "40114539",
+      "evidence_id": "strata.gold.passage:40114539/v1/s4",
+      "at_rest": false
+    },
+    {
+      "step_reference": "KE-KIMAWASCO-459000-CW-DIR",
+      "document_id": "27348420",
+      "evidence_id": "strata.gold.passage:27348420/v1/annex3.62/1",
+      "at_rest": false
+    },
+    {
+      "step_reference": "KE-KIMAWASCO-459000-CW-DIR",
+      "document_id": "31128142",
+      "evidence_id": "strata.gold.passage:31128142/v1/s4",
+      "at_rest": false
+    },
+    {
+      "step_reference": "KE-KIMAWASCO-459000-CW-DIR",
+      "document_id": "34277278",
+      "evidence_id": "strata.gold.passage:34277278/v1/s6/2",
+      "at_rest": false
+    },
+    {
+      "step_reference": "KE-KIMAWASCO-459000-CW-DIR",
+      "document_id": "34457596",
+      "evidence_id": "strata.gold.passage:34457596/v1/s4",
+      "at_rest": false
+    },
+    {
+      "step_reference": "KE-KIMAWASCO-459000-CW-DIR",
+      "document_id": "40038432",
+      "evidence_id": "strata.gold.passage:40038432/v1/s4",
+      "at_rest": false
+    },
+    {
+      "step_reference": "KE-KIMAWASCO-459000-CW-DIR",
+      "document_id": "40091292",
+      "evidence_id": "strata.gold.passage:40091292/v1/s4",
+      "at_rest": false
+    },
+    {
+      "step_reference": "KE-KIMAWASCO-459000-CW-DIR",
+      "document_id": "40114539",
+      "evidence_id": "strata.gold.passage:40114539/v1/s4",
+      "at_rest": false
+    },
+    {
+      "step_reference": "KE-WAJWASCO-456993-CW-RFB",
+      "document_id": "27348420",
+      "evidence_id": "strata.gold.passage:27348420/v1/annex3.62/1",
+      "at_rest": false
+    },
+    {
+      "step_reference": "KE-WAJWASCO-456993-CW-RFB",
+      "document_id": "34277278",
+      "evidence_id": "strata.gold.passage:34277278/v1/s4",
+      "at_rest": false
+    },
+    {
+      "step_reference": "KE-WAJWASCO-456993-CW-RFB",
+      "document_id": "34457596",
+      "evidence_id": "strata.gold.passage:34457596/v1/s4",
+      "at_rest": false
+    },
+    {
+      "step_reference": "KE-WAJWASCO-456993-CW-RFB",
+      "document_id": "40038432",
+      "evidence_id": "strata.gold.passage:40038432/v1/s4",
+      "at_rest": false
+    },
+    {
+      "step_reference": "KE-WAJWASCO-456993-CW-RFB",
+      "document_id": "40091292",
+      "evidence_id": "strata.gold.passage:40091292/v1/s4",
+      "at_rest": false
+    },
+    {
+      "step_reference": "KE-NWWDA-541055-CW-RFB",
+      "document_id": "27348420",
+      "evidence_id": "strata.gold.passage:27348420/v1/annex3.62/1",
+      "at_rest": false
+    },
+    {
+      "step_reference": "KE-NWWDA-541055-CW-RFB",
+      "document_id": "31128142",
+      "evidence_id": "strata.gold.passage:31128142/v1/s4",
+      "at_rest": false
+    },
+    {
+      "step_reference": "KE-NWWDA-541055-CW-RFB",
+      "document_id": "34277278",
+      "evidence_id": "strata.gold.passage:34277278/v1/s4",
+      "at_rest": false
+    },
+    {
+      "step_reference": "KE-NWWDA-541055-CW-RFB",
+      "document_id": "34457596",
+      "evidence_id": "strata.gold.passage:34457596/v1/s4",
+      "at_rest": false
+    },
+    {
+      "step_reference": "KE-NWWDA-541055-CW-RFB",
+      "document_id": "40038432",
+      "evidence_id": "strata.gold.passage:40038432/v1/s4",
+      "at_rest": false
+    },
+    {
+      "step_reference": "KE-NWWDA-541055-CW-RFB",
+      "document_id": "40091292",
+      "evidence_id": "strata.gold.passage:40091292/v1/s4",
+      "at_rest": false
+    },
+    {
+      "step_reference": "KE-NWWDA-541055-CW-RFB",
+      "document_id": "40114539",
+      "evidence_id": "strata.gold.passage:40114539/v1/s4",
+      "at_rest": false
+    }
+  ],
+  "lines_hint": true,
   "finding": {
-    "contracts": 144,
-    "paragraphs": 116,
+    "contracts": 157,
+    "paragraphs": 94,
     "documents": 16,
     "contract_items": [
-      "KE-CWSB-102977-CS-QCBS",
-      "KE-CWSB-150896-CW-RFB",
-      "KE-CWSB-224323-CS-QCBS",
-      "KE-CWSB-232660-CW-RFB",
-      "KE-CWSB-233052-CW-RFB",
-      "KE-CWSB-506334-CW-DIR",
-      "KE-CWSB-565568-GO-RFQ",
-      "KE-CWSB-567630-CW-DIR",
-      "KE-CWSB-67355-CS-QCBS",
-      "KE-CWSB-87234-CS-QCBS",
-      "KE-GAWASCO-154426-CS-QCBS",
-      "KE-GAWASCO-266383-CW-RFB",
-      "KE-GAWASCO-436012-CW-RFB",
-      "KE-GAWASCO-461024-GO-RFQ",
-      "KE-GAWASCO-461026-GO-RFQ",
-      "KE-GAWASCO-461477-GO-RFQ",
-      "KE-GAWASCO-461493-GO-RFQ",
-      "KE-GAWASCO-502993-GO-RFQ",
-      "KE-GAWASCO-505407-GO-RFQ",
-      "KE-GAWASCO-54759-CW-RFB",
-      "KE-GAWASCO-54761-CW-RFB",
-      "KE-GAWASCO-54763-CW-RFB",
-      "KE-GAWASCO-54775-CW-RFB",
-      "KE-GAWASCO-67422-CS-QCBS",
-      "KE-GAWASCO-67425-CS-QCBS",
-      "KE-GAWASCO-67428-CS-QCBS",
-      "KE-GAWASCO-67429-CS-QCBS",
-      "KE-KIMAWASCO-141042-CW-RFB",
-      "KE-KIMAWASCO-142995-CW-RFB",
-      "KE-KIMAWASCO-158691-CW-RFB",
-      "KE-KIMAWASCO-372126-GO-RFQ",
-      "KE-KIMAWASCO-372128-GO-RFQ",
-      "KE-KIMAWASCO-372408-GO-RFQ",
-      "KE-KIMAWASCO-372410-GO-RFQ",
-      "KE-KIMAWASCO-416959-CW-RFB",
-      "KE-KIMAWASCO-459000-CW-DIR",
-      "KE-KIMAWASCO-481608-GO-RFB",
-      "KE-KIMAWASCO-74960-CS-QCBS",
-      "KE-KWAWASCO-105286-CS-QCBS",
-      "KE-KWAWASCO-161466-CS-CDS",
-      "KE-KWAWASCO-201675-CW-RFB",
-      "KE-KWAWASCO-203531-CW-RFB",
-      "KE-KWAWASCO-203535-CW-RFB",
-      "KE-KWAWASCO-203571-CW-RFB",
-      "KE-KWAWASCO-206973-CW-RFB",
-      "KE-KWAWASCO-358910-GO-RFQ",
-      "KE-KWAWASCO-382643-GO-RFQ",
-      "KE-KWAWASCO-382951-GO-RFQ",
-      "KE-KWAWASCO-384019-GO-RFQ",
-      "KE-KWAWASCO-74622-CS-LCS",
-      "KE-MAWASCO-149056-CW-RFB",
-      "KE-MAWASCO-156444-CW-RFB",
-      "KE-MAWASCO-178688-CW-RFB",
-      "KE-MAWASCO-236797-CW-RFB",
-      "KE-MAWASCO-236802-CW-RFB",
-      "KE-MAWASCO-374466-GO-RFQ",
-      "KE-MAWASCO-374469-GO-RFQ",
-      "KE-MAWASCO-374471-GO-RFQ",
-      "KE-MAWASCO-374475-GO-RFQ",
-      "KE-MAWASCO-466270-GO-RFQ",
-      "KE-MAWASCO-501962-CS-INDV",
-      "KE-MAWASCO-501974-CS-INDV",
-      "KE-MAWASCO-69899-CW-RFB",
-      "KE-MAWASCO-69995-CS-QCBS",
-      "KE-MOWASCO-113723-CW-RFB",
-      "KE-MOWASCO-136307-CS-INDV",
-      "KE-MOWASCO-16769-CW-RFB",
-      "KE-MOWASCO-16771-CW-RFB",
-      "KE-MOWASCO-16772-CW-RFB",
-      "KE-MOWASCO-228804-CW-RFB",
-      "KE-MOWASCO-307349-GO-RFB",
-      "KE-MOWASCO-307378-GO-RFB",
-      "KE-MOWASCO-307384-GO-RFB",
-      "KE-MOWASCO-307387-GO-RFQ",
-      "KE-MOWASCO-318293-GO-RFB",
-      "KE-MOWASCO-318332-GO-RFQ",
-      "KE-MOWASCO-79877-CS-QCBS",
-      "KE-MOWI-200359-CS-QCBS",
-      "KE-MOWI-228006-CS-INDV",
-      "KE-MOWI-246482-CS-QCBS",
-      "KE-MOWI-249824-CS-INDV",
-      "KE-MOWI-253591-CS-CDS",
-      "KE-MOWI-30792-CS-QCBS",
-      "KE-MOWI-47509-CW-RFB",
-      "KE-MOWI-476113-GO-RFQ",
-      "KE-NWWDA-207796-CS-INDV",
-      "KE-NWWDA-229129-CW-RFB",
-      "KE-NWWDA-541055-CW-RFB",
-      "KE-NWWDA-541062-CW-RFQ",
-      "KE-TAVEVO-104736-CS-QCBS",
-      "KE-TAVEVO-151304-CW-RFB",
-      "KE-TAVEVO-151330-CW-RFB",
-      "KE-TAVEVO-170154-CW-RFB",
-      "KE-TAVEVO-175703-CW-RFB",
-      "KE-TAVEVO-338455-CW-RFB",
-      "KE-TAVEVO-370761-GO-RFB",
-      "KE-TAVEVO-408447-GO-RFQ",
-      "KE-TAVEVO-409883-GO-RFQ",
-      "KE-TAVEVO-449427-CW-RFB",
-      "KE-TAVEVO-451075-CW-RFB",
-      "KE-TAVEVO-462185-GO-RFQ",
-      "KE-TAVEVO-466579-GO-RFB",
-      "KE-TAVEVO-472192-GO-RFQ",
-      "KE-TAVEVO-482974-GO-RFQ",
-      "KE-TAVEVO-506028-GO-RFQ",
-      "KE-TAVEVO-528767-CW-DIR",
-      "KE-THIWASCO-18892-CS-QCBS",
-      "KE-WAJWASCO-154020-CS-QCBS",
-      "KE-WAJWASCO-168515-GO-RFB",
-      "KE-WAJWASCO-179682-CS-QCBS",
-      "KE-WAJWASCO-205491-CW-RFB",
-      "KE-WAJWASCO-220077-CW-RFB",
-      "KE-WAJWASCO-226565-CW-RFB",
-      "KE-WAJWASCO-228215-GO-RFQ",
-      "KE-WAJWASCO-24562-GO-RFB-2",
-      "KE-WAJWASCO-26664-CW-RFB",
-      "KE-WAJWASCO-356661-GO-RFQ",
-      "KE-WAJWASCO-356671-CW-RFB",
-      "KE-WAJWASCO-372776-CW-RFB",
-      "KE-WAJWASCO-373196-GO-RFQ",
-      "KE-WAJWASCO-373202-GO-RFQ",
-      "KE-WAJWASCO-373886-GO-RFB",
-      "KE-WAJWASCO-380641-GO-RFQ",
-      "KE-WAJWASCO-380648-GO-RFQ",
-      "KE-WAJWASCO-380658-CW-RFQ",
-      "KE-WAJWASCO-418543-GO-RFQ",
-      "KE-WAJWASCO-456993-CW-RFB",
-      "KE-WAJWASCO-503126-CW-RFQ",
-      "KE-WAJWASCO-80857-NC-RFB",
-      "KE-WAJWASCO-80986-CS-QCBS",
-      "KE-WAJWASCO-86091-CS-QCBS",
-      "KE-WAJWASCO-89504-CS-QCBS",
-      "KE-WASREB-134249-CS-QCBS",
-      "KE-WASREB-236373-CS-QCBS",
-      "KE-WASREB-250787-CS-INDV",
-      "KE-WASREB-37529-CS-QCBS",
-      "KE-WSTF-207239-CS-CDS",
-      "KE-WSTF-207294-CS-INDV",
-      "KE-WSTF-207303-CS-INDV",
-      "KE-WSTF-324279-CS-INDV",
-      "KE-WSTF-381008-CS-INDV-FIN MGT CONS",
-      "KE-WSTF-430295-GO-RFB-ELDOWAS",
-      "KE-WSTF-430943-GO-RFB-NCWSC01",
-      "KE-WSTF-430946-GO-RFB-NCWSC02"
+      "1815280",
+      "1815602",
+      "1809442",
+      "1903781",
+      "1618181",
+      "1652775",
+      "1621523",
+      "OP00071741",
+      "1686165",
+      "1903145",
+      "1645770",
+      "1599991",
+      "OP00059544",
+      "1645780",
+      "1674954",
+      "1650371",
+      "1591456",
+      "1628003",
+      "1901323",
+      "1646035",
+      "1817945",
+      "1768930",
+      "1622281",
+      "1627660",
+      "1615775",
+      "1588815",
+      "1821548",
+      "1666400",
+      "1646192",
+      "1647639",
+      "1655783",
+      "1677139",
+      "1673597",
+      "1691287",
+      "1862183",
+      "1902413",
+      "OP00074816",
+      "1687124",
+      "1688210",
+      "1636744",
+      "1588770",
+      "1663579",
+      "1869293",
+      "1671779",
+      "1657064",
+      "1862013",
+      "1668379",
+      "1650904",
+      "1666402",
+      "1861138",
+      "1680004",
+      "1612028",
+      "1620056",
+      "1635004",
+      "1668349",
+      "1861427",
+      "1637670",
+      "1819318",
+      "1625868",
+      "1621205",
+      "1621199",
+      "1668539",
+      "1624689",
+      "1675351",
+      "1645631",
+      "1622208",
+      "1670085",
+      "1733208",
+      "1850833",
+      "1893650",
+      "1613386",
+      "1870051",
+      "1658197",
+      "1657755",
+      "1846797",
+      "1676946",
+      "1852399",
+      "1668347",
+      "1668540",
+      "1654318",
+      "1613478",
+      "1674418",
+      "1903551",
+      "1647421",
+      "1670515",
+      "1668521",
+      "1695885",
+      "1853775",
+      "1774052",
+      "1659465",
+      "OP00054114",
+      "1867635",
+      "1836962",
+      "1835086",
+      "1861434",
+      "1663748",
+      "1663541",
+      "1754918",
+      "1658079",
+      "1822564",
+      "1670533",
+      "1819321",
+      "1654319",
+      "1683769",
+      "1709520",
+      "1809884",
+      "1658075",
+      "1822563",
+      "1846908",
+      "1819315",
+      "1816336",
+      "1838833",
+      "1774635",
+      "1774417",
+      "1678445",
+      "1688545",
+      "1767315",
+      "1767318",
+      "1776400",
+      "1765775",
+      "1818481",
+      "1790757",
+      "1790758",
+      "1705319",
+      "1862454",
+      "1815284",
+      "1818149",
+      "1785132",
+      "1775760",
+      "1846607",
+      "1774418",
+      "1779518",
+      "1779517",
+      "1765796",
+      "1861840",
+      "1753834",
+      "1755108",
+      "1755093",
+      "1754702",
+      "1754723",
+      "1754746",
+      "1822282",
+      "1777441",
+      "1777451",
+      "1790826",
+      "1729599",
+      "1729821",
+      "1733466",
+      "1709354",
+      "1790827",
+      "1740766",
+      "1727919",
+      "1862303",
+      "1862687",
+      "1722538",
+      "1729597",
+      "1613582"
     ],
     "paragraph_items": [
       {
@@ -1347,9 +1764,9 @@
         "document_type": "Project Appraisal Document",
         "short_name": "PAD",
         "document_date": "2017-04-05",
-        "paragraph": "62",
+        "paragraph": "82",
         "paragraph_numbered": true,
-        "section_path": "Annex 3.C"
+        "section_path": "VI.E"
       },
       {
         "document_type": "Implementation Status and Results Report",
@@ -1408,22 +1825,6 @@
         "section_path": "Results"
       },
       {
-        "document_type": "Project Appraisal Document",
-        "short_name": "PAD",
-        "document_date": "2017-04-05",
-        "paragraph": "82",
-        "paragraph_numbered": true,
-        "section_path": "VI.E"
-      },
-      {
-        "document_type": "Project Appraisal Document",
-        "short_name": "PAD",
-        "document_date": "2017-04-05",
-        "paragraph": "62",
-        "paragraph_numbered": true,
-        "section_path": "Annex 3.C"
-      },
-      {
         "document_type": "Implementation Status and Results Report",
         "short_name": "ISR",
         "document_date": "2026-03-12",
@@ -1472,20 +1873,12 @@
         "section_path": "6.2"
       },
       {
-        "document_type": "Implementation Status and Results Report",
-        "short_name": "ISR",
-        "document_date": "2020-04-01",
-        "paragraph": "s4",
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2017-04-05",
+        "paragraph": "s34",
         "paragraph_numbered": false,
-        "section_path": "Implementation Status and Key Decisions"
-      },
-      {
-        "document_type": "Project Paper",
-        "short_name": "Project Paper",
-        "document_date": "2021-05-24",
-        "paragraph": "s12",
-        "paragraph_numbered": false,
-        "section_path": "IV"
+        "section_path": "Annex 2.A"
       },
       {
         "document_type": "Project Appraisal Document",
@@ -1506,18 +1899,10 @@
       {
         "document_type": "Implementation Status and Results Report",
         "short_name": "ISR",
-        "document_date": "2024-08-19",
-        "paragraph": "s6",
+        "document_date": "2020-04-01",
+        "paragraph": "s4",
         "paragraph_numbered": false,
-        "section_path": "6.2"
-      },
-      {
-        "document_type": "Implementation Status and Results Report",
-        "short_name": "ISR",
-        "document_date": "2025-02-18",
-        "paragraph": "s7",
-        "paragraph_numbered": false,
-        "section_path": "6.2"
+        "section_path": "Implementation Status and Key Decisions"
       },
       {
         "document_type": "Implementation Status and Results Report",
@@ -1528,12 +1913,12 @@
         "section_path": "Implementation Status and Key Decisions"
       },
       {
-        "document_type": "Implementation Status and Results Report",
-        "short_name": "ISR",
-        "document_date": "2024-03-08",
-        "paragraph": "s6",
-        "paragraph_numbered": false,
-        "section_path": "Results"
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2017-04-05",
+        "paragraph": "60",
+        "paragraph_numbered": true,
+        "section_path": "Annex 3.C"
       },
       {
         "document_type": "Project Appraisal Document",
@@ -1542,14 +1927,6 @@
         "paragraph": "s61",
         "paragraph_numbered": false,
         "section_path": "Annex 3.C"
-      },
-      {
-        "document_type": "Implementation Status and Results Report",
-        "short_name": "ISR",
-        "document_date": "2022-08-09",
-        "paragraph": "s6",
-        "paragraph_numbered": false,
-        "section_path": "Results"
       },
       {
         "document_type": "Project Appraisal Document",
@@ -1579,6 +1956,14 @@
         "document_type": "Project Appraisal Document",
         "short_name": "PAD",
         "document_date": "2017-04-05",
+        "paragraph": "12",
+        "paragraph_numbered": true,
+        "section_path": "I.B"
+      },
+      {
+        "document_type": "Project Appraisal Document",
+        "short_name": "PAD",
+        "document_date": "2017-04-05",
         "paragraph": "33",
         "paragraph_numbered": true,
         "section_path": "III.A"
@@ -1603,22 +1988,6 @@
         "document_type": "Project Appraisal Document",
         "short_name": "PAD",
         "document_date": "2017-04-05",
-        "paragraph": "s34",
-        "paragraph_numbered": false,
-        "section_path": "Annex 2.A"
-      },
-      {
-        "document_type": "Project Appraisal Document",
-        "short_name": "PAD",
-        "document_date": "2017-04-05",
-        "paragraph": "60",
-        "paragraph_numbered": true,
-        "section_path": "Annex 3.C"
-      },
-      {
-        "document_type": "Project Appraisal Document",
-        "short_name": "PAD",
-        "document_date": "2017-04-05",
         "paragraph": "s24",
         "paragraph_numbered": false,
         "section_path": "Annex 2.A"
@@ -1627,33 +1996,9 @@
         "document_type": "Project Appraisal Document",
         "short_name": "PAD",
         "document_date": "2017-04-05",
-        "paragraph": "12",
-        "paragraph_numbered": true,
-        "section_path": "I.B"
-      },
-      {
-        "document_type": "Project Appraisal Document",
-        "short_name": "PAD",
-        "document_date": "2017-04-05",
         "paragraph": "13",
         "paragraph_numbered": true,
         "section_path": "I.B"
-      },
-      {
-        "document_type": "Project Appraisal Document",
-        "short_name": "PAD",
-        "document_date": "2017-04-05",
-        "paragraph": "62",
-        "paragraph_numbered": true,
-        "section_path": "Annex 3.C"
-      },
-      {
-        "document_type": "Implementation Status and Results Report",
-        "short_name": "ISR",
-        "document_date": "2024-08-19",
-        "paragraph": "s6",
-        "paragraph_numbered": false,
-        "section_path": "6.2"
       },
       {
         "document_type": "Project Appraisal Document",
@@ -1707,14 +2052,6 @@
         "document_type": "Project Appraisal Document",
         "short_name": "PAD",
         "document_date": "2017-04-05",
-        "paragraph": "s61",
-        "paragraph_numbered": false,
-        "section_path": "Annex 3.C"
-      },
-      {
-        "document_type": "Project Appraisal Document",
-        "short_name": "PAD",
-        "document_date": "2017-04-05",
         "paragraph": "s64",
         "paragraph_numbered": false,
         "section_path": "Annex 3.C"
@@ -1734,22 +2071,6 @@
         "paragraph": "27",
         "paragraph_numbered": true,
         "section_path": "Annex 2.A"
-      },
-      {
-        "document_type": "Project Appraisal Document",
-        "short_name": "PAD",
-        "document_date": "2017-04-05",
-        "paragraph": "s24",
-        "paragraph_numbered": false,
-        "section_path": "Annex 2.A"
-      },
-      {
-        "document_type": "Implementation Status and Results Report",
-        "short_name": "ISR",
-        "document_date": "2025-02-18",
-        "paragraph": "s7",
-        "paragraph_numbered": false,
-        "section_path": "6.2"
       },
       {
         "document_type": "Project Appraisal Document",
@@ -1899,22 +2220,6 @@
         "document_type": "Project Appraisal Document",
         "short_name": "PAD",
         "document_date": "2017-04-05",
-        "paragraph": "s82",
-        "paragraph_numbered": false,
-        "section_path": "Annex 5"
-      },
-      {
-        "document_type": "Implementation Status and Results Report",
-        "short_name": "ISR",
-        "document_date": "2026-06-30",
-        "paragraph": "s7",
-        "paragraph_numbered": false,
-        "section_path": "6.2"
-      },
-      {
-        "document_type": "Project Appraisal Document",
-        "short_name": "PAD",
-        "document_date": "2017-04-05",
         "paragraph": "65",
         "paragraph_numbered": true,
         "section_path": "VI.A"
@@ -2008,14 +2313,6 @@
         "section_path": "6.1"
       },
       {
-        "document_type": "Implementation Status and Results Report",
-        "short_name": "ISR",
-        "document_date": "2026-03-12",
-        "paragraph": "s7",
-        "paragraph_numbered": false,
-        "section_path": "6.2"
-      },
-      {
         "document_type": "Project Appraisal Document",
         "short_name": "PAD",
         "document_date": "2017-04-05",
@@ -2059,24 +2356,8 @@
         "document_type": "Project Appraisal Document",
         "short_name": "PAD",
         "document_date": "2017-04-05",
-        "paragraph": "s5",
-        "paragraph_numbered": false,
-        "section_path": "Annex 1"
-      },
-      {
-        "document_type": "Project Appraisal Document",
-        "short_name": "PAD",
-        "document_date": "2017-04-05",
         "paragraph": "14",
         "paragraph_numbered": true,
-        "section_path": "Annex 5"
-      },
-      {
-        "document_type": "Project Appraisal Document",
-        "short_name": "PAD",
-        "document_date": "2017-04-05",
-        "paragraph": "s83",
-        "paragraph_numbered": false,
         "section_path": "Annex 5"
       },
       {
@@ -2122,26 +2403,10 @@
       {
         "document_type": "Implementation Status and Results Report",
         "short_name": "ISR",
-        "document_date": "2023-08-11",
-        "paragraph": "s6",
-        "paragraph_numbered": false,
-        "section_path": "Results"
-      },
-      {
-        "document_type": "Implementation Status and Results Report",
-        "short_name": "ISR",
         "document_date": "2026-06-30",
         "paragraph": "s6",
         "paragraph_numbered": false,
         "section_path": "6.1"
-      },
-      {
-        "document_type": "Implementation Status and Results Report",
-        "short_name": "ISR",
-        "document_date": "2025-08-18",
-        "paragraph": "s7",
-        "paragraph_numbered": false,
-        "section_path": "6.2"
       },
       {
         "document_type": "Implementation Status and Results Report",
@@ -2187,22 +2452,6 @@
         "document_type": "Project Appraisal Document",
         "short_name": "PAD",
         "document_date": "2017-04-05",
-        "paragraph": "s81",
-        "paragraph_numbered": false,
-        "section_path": "Annex 5"
-      },
-      {
-        "document_type": "Project Appraisal Document",
-        "short_name": "PAD",
-        "document_date": "2017-04-05",
-        "paragraph": "s81",
-        "paragraph_numbered": false,
-        "section_path": "Annex 5"
-      },
-      {
-        "document_type": "Project Appraisal Document",
-        "short_name": "PAD",
-        "document_date": "2017-04-05",
         "paragraph": "s86",
         "paragraph_numbered": false,
         "section_path": "Annex 5"
@@ -2219,14 +2468,6 @@
         "document_type": "Implementation Status and Results Report",
         "short_name": "ISR",
         "document_date": "2020-12-17",
-        "paragraph": "s6",
-        "paragraph_numbered": false,
-        "section_path": "Results"
-      },
-      {
-        "document_type": "Implementation Status and Results Report",
-        "short_name": "ISR",
-        "document_date": "2024-03-08",
         "paragraph": "s6",
         "paragraph_numbered": false,
         "section_path": "Results"
@@ -2315,8 +2556,8 @@
       }
     ]
   },
-  "shown": 20,
-  "total": 628,
+  "shown": 19,
+  "total": 627,
   "threshold": "0.50",
   "coverage": {
     "read": 32,

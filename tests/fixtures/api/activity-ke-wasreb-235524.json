@@ -1,0 +1,240 @@
+{
+  "as_of": "2026-10-23",
+  "data_through": "2026-10-23",
+  "activity": {
+    "step_reference": "KE-WASREB-235524-CS-QCBS",
+    "project_id": "P156634",
+    "project_name": "Water and Sanitation Development Project",
+    "display_name": "Water and Sanitation Development",
+    "description": "Consultancy services for upgrade of Majidata",
+    "method": "Quality And Cost-Based Selection",
+    "consultants": true,
+    "implementing_agency": null,
+    "href": "/projects/P156634/packages/KE-WASREB-235524-CS-QCBS"
+  },
+  "moved": false,
+  "lead": {
+    "parts": [
+      {
+        "kind": "advertised",
+        "date": "2021-07-22",
+        "evidence_id": "strata.gold.notice:OP00139034",
+        "reference": "OP00139034"
+      },
+      {
+        "kind": "signed",
+        "date": "2022-08-03",
+        "amount": "484064.40",
+        "currency": "USD",
+        "evidence_id": "strata.gold.contract:1709357",
+        "reference": "1709357",
+        "record_noun": "contract"
+      }
+    ],
+    "no_estimate": false,
+    "missing": null,
+    "bids": [
+      {
+        "count": 3,
+        "notice_id": "OP00192301",
+        "evidence_id": "strata.gold.notice:OP00192301",
+        "proposals": true
+      }
+    ],
+    "many_contracts": false,
+    "paragraphs": 0
+  },
+  "stages": [
+    {
+      "stage": "plan",
+      "found": false,
+      "joined_on": "key",
+      "reason": "not_read",
+      "records": []
+    },
+    {
+      "stage": "notice",
+      "found": true,
+      "reason": null,
+      "joined_on": "key",
+      "records": [
+        {
+          "evidence_id": "strata.gold.notice:OP00139034",
+          "public_from": "2021-07-22",
+          "notice_id": "OP00139034",
+          "notice_type": "Request for Expression of Interest",
+          "notice_date": "2021-07-22",
+          "readvertised": false,
+          "url": "https://projects.worldbank.org/en/projects-operations/procurement-detail/OP00139034",
+          "fields": [
+            {
+              "key": "notice_type",
+              "value": "Request for Expression of Interest",
+              "kind": "text"
+            },
+            {
+              "key": "published",
+              "value": "2021-07-22",
+              "kind": "date"
+            },
+            {
+              "key": "procurement_method",
+              "value": "Quality And Cost-Based Selection",
+              "kind": "text"
+            },
+            {
+              "key": "submission_deadline",
+              "value": "2021-08-18",
+              "kind": "date"
+            },
+            {
+              "key": "bid_description",
+              "value": "Consultancy services for upgrade of Majidata",
+              "kind": "text"
+            }
+          ],
+          "source": {
+            "source_key": "notices",
+            "dataset_name": "Procurement Notices",
+            "license": "CC BY 4.0",
+            "data_source": "Systematic Tracking of Exchanges in Procurement (STEP)",
+            "record_url": "https://projects.worldbank.org/en/projects-operations/procurement-detail/{id}",
+            "document_type": "Request for Expression of Interest",
+            "project_id": "P156634",
+            "document_date": "2021-07-22"
+          }
+        }
+      ]
+    },
+    {
+      "stage": "bids",
+      "found": true,
+      "reason": null,
+      "joined_on": "key",
+      "records": [
+        {
+          "evidence_id": "strata.gold.notice:OP00192301",
+          "public_from": "2022-08-23",
+          "notice_id": "OP00192301",
+          "notice_date": "2022-08-23",
+          "currency": "KES",
+          "labels": {
+            "price_at_opening": null,
+            "evaluated_price": "Final Evaluation Price"
+          },
+          "lists_scores": true,
+          "proposals": true,
+          "bids": [
+            {
+              "bid": 1,
+              "outcome": "awarded",
+              "name": null,
+              "is_individual_consultant": false,
+              "is_joint_venture": true,
+              "members": [
+                "GEOSPATIAL RESEARCH INTERNATIONAL (GRI)",
+                "AFRICAN SYSTEMS LLC"
+              ],
+              "country": "Kenya",
+              "price_at_opening": null,
+              "evaluated_price": "57942500.00",
+              "reason": null
+            },
+            {
+              "bid": 2,
+              "outcome": "not_awarded",
+              "name": "RAMANI GEOSYSTEMS LTD",
+              "is_individual_consultant": false,
+              "is_joint_venture": false,
+              "members": [],
+              "country": "Kenya",
+              "price_at_opening": null,
+              "evaluated_price": "66600580.00",
+              "reason": null
+            },
+            {
+              "bid": 3,
+              "outcome": "not_awarded",
+              "name": "OAKAR SERVICES LTD",
+              "is_individual_consultant": false,
+              "is_joint_venture": false,
+              "members": [],
+              "country": "Kenya",
+              "price_at_opening": null,
+              "evaluated_price": "17274400.00",
+              "reason": null
+            }
+          ],
+          "bid_count": 3,
+          "url": "https://projects.worldbank.org/en/projects-operations/procurement-detail/OP00192301",
+          "source": {
+            "source_key": "award_notices",
+            "dataset_name": "Procurement Notices",
+            "license": "CC BY 4.0",
+            "data_source": "Systematic Tracking of Exchanges in Procurement (STEP)",
+            "record_url": "https://projects.worldbank.org/en/projects-operations/procurement-detail/{id}",
+            "document_type": "Contract Award",
+            "project_id": "P156634",
+            "document_date": "2022-08-23"
+          }
+        }
+      ]
+    },
+    {
+      "stage": "contract",
+      "found": true,
+      "reason": null,
+      "joined_on": "key",
+      "records": [
+        {
+          "evidence_id": "strata.gold.contract:1709357",
+          "public_from": "2022-08-03",
+          "contract_id": "1709357",
+          "contract_reference": "1709357",
+          "step_reference": "KE-WASREB-235524-CS-QCBS",
+          "signed_on": "2022-08-03",
+          "amount": "484064.40",
+          "currency": "USD",
+          "from_notice": false,
+          "record_noun": "contract",
+          "award_notice_id": null,
+          "description": "Development and upgrade of Majidata and network mapping.",
+          "supplier": {
+            "name": "AFRICAN SYSTEMS LLC / GEOSPATIAL RESEARCH INTERNATIONAL (GRI)",
+            "country": "Kenya",
+            "is_individual_consultant": false,
+            "is_joint_venture": true,
+            "members": [
+              "AFRICAN SYSTEMS LLC",
+              "GEOSPATIAL RESEARCH INTERNATIONAL (GRI)"
+            ]
+          },
+          "source": {
+            "source_key": "awards",
+            "dataset_name": "Contract Awards in Investment Project Financing (Since FY 2020)",
+            "license": "CC BY 4.0",
+            "data_source": "Systematic Tracking of Exchanges in Procurement (STEP)",
+            "record_url": null,
+            "document_type": "Contract award",
+            "project_id": "P156634",
+            "document_date": "2022-08-03"
+          }
+        }
+      ]
+    },
+    {
+      "stage": "paragraphs",
+      "found": false,
+      "joined_on": "together",
+      "records": [],
+      "groups": [],
+      "threshold": "0.50",
+      "reason": "no_links",
+      "coverage": {
+        "read": 32,
+        "total": 351,
+        "source_key": "documents"
+      }
+    }
+  ]
+}

@@ -49,6 +49,20 @@ def test_an_award_notice_lists_every_bid_in_its_order_with_its_prices_and_reason
     assert {b["currency"] for b in found} == {truth["currency"]}
 
 
+def test_an_empty_price_before_the_reason_for_rejection_keeps_the_reason(fixture):
+    # A rejected firm's Final Evaluation Price can be empty, so its heading is followed straight by "Reason for
+    # Rejection" (values.toml award-notice-102977-rejected; design review F1).
+    case = VALUES["award-notice-102977-rejected"]
+
+    found = rows(fixture, "SELECT name, evaluated_price, reason FROM strata.silver.notice_bids "
+                          "WHERE notice_id = :notice_id AND section = 'rejected' ORDER BY bid, member",
+                 notice_id=case["notice"])
+
+    named = next(bid for bid in found if bid["name"] == case["bidder"])
+    assert (named["evaluated_price"], named["reason"]) == (None, case["value"])
+    assert all(bid["reason"] == case["value"] and bid["evaluated_price"] != "Reason for Rejection" for bid in found)
+
+
 def test_a_joint_venture_is_one_bid_whose_members_share_its_prices(fixture):
     venture = TRUTH["awkward"]["joint_venture"]  # award notice OP00125855 lists both members, then one price
 
@@ -79,6 +93,25 @@ def test_an_individual_consultant_in_an_award_notice_is_never_named_in_its_bids(
                  notice_id=case["notice"])
 
     assert found == [{"name": None, "individual_consultant": True}]
+
+
+# ── The scorer's words ───────────────────────────────────────────────────
+
+def test_the_scorer_reads_its_words_from_the_thresholds_file():
+    # Which words name a kind of place, which words carry no meaning, and how a paragraph writes each procurement
+    # category are extension points, so they live in config/thresholds.toml's [links] (CLAUDE.md rule 9; the 22
+    # review, item 13). Without "District" among the place kinds, "in Bundi District" names "Bundi District".
+    from dataclasses import replace
+
+    from strata.config import load_thresholds
+    from strata.knowledge.links import Weights, places
+
+    weights = Weights.read(load_thresholds())
+    fewer = replace(weights, place_kinds=frozenset(weights.place_kinds - {"District"}))
+
+    assert places("Construction and Maintenance of Civil works in Bundi District", weights) == ["Bundi"]
+    assert places("Construction and Maintenance of Civil works in Bundi District", fewer) == ["Bundi District"]
+    assert "the" in weights.stop_words and "Works" in dict(weights.category_words)
 
 
 # ── The edge table ───────────────────────────────────────────────────────

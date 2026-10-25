@@ -53,6 +53,7 @@ export type AwardRecord = {
   lists_scores: boolean;
   proposals: boolean;
   bids: Bid[];
+  bid_count: number;
   url: string | null;
   source: SourceFields;
 };
@@ -68,7 +69,7 @@ export type ContractRecord = {
   record_noun: string;
   award_notice_id: string | null;
   description: string | null;
-  supplier: { name: string | null; country: string | null; is_individual_consultant: boolean; is_joint_venture: boolean };
+  supplier: { name: string | null; country: string | null; is_individual_consultant: boolean; is_joint_venture: boolean; members: string[] };
   source: SourceFields;
 };
 export type Topic = { kind: "category" | "sector" | "place" | "name"; code?: string; name?: string; text?: string };
@@ -80,17 +81,31 @@ export type ParagraphRecord = {
   short_name: string | null;
   contract_evidence_id: string;
   contract_reference: string | null;
+  document_id: string;
   document_type: string;
   document_date: string;
   paragraph: string;
   paragraph_numbered: boolean;
   section_path: string;
+  // What tells two cards of one report apart when they would share a title: a section, or a page.
+  title_section: string | null;
+  title_page: number | null;
   pdf_page: number | null;
   doc_key: string | null;
   language: string | null;
   text: string;
   highlights: [number, number][];
   topics: Topic[];
+};
+
+export type ParagraphGroup = {
+  document_id: string;
+  document_type: string;
+  short_name: string | null;
+  stratum: "Why" | "How" | "What";
+  document_date: string;
+  count: number;
+  shown: number;
 };
 
 type StageBase = { found: boolean; reason: string | null; joined_on?: "key" | "together" };
@@ -102,6 +117,8 @@ export type Stage =
   | (StageBase & {
       stage: "paragraphs";
       records: ParagraphRecord[];
+      // The reports the paragraphs come from, oldest first, each with how many it holds and how many show at first.
+      groups: ParagraphGroup[];
       threshold: string;
       coverage?: { read: number; total: number; source_key: string } | null;
     });
@@ -131,7 +148,9 @@ export type Trail = {
     parts: LeadPart[];
     no_estimate: boolean;
     missing: "notice" | "contract" | "notice_and_contract" | null;
-    bids: { count: number; notice_id: string; evidence_id: string; proposals: boolean } | null;
+    // Each award notice's bids, in date order.
+    bids: { count: number; notice_id: string; evidence_id: string; proposals: boolean }[];
+    many_contracts: boolean;
     paragraphs: number | null;
   };
   stages: Stage[];
@@ -143,7 +162,11 @@ export type Chip = {
   paragraph: string;
   paragraph_numbered: boolean;
   section_path: string;
+  pdf_page: number | null;
+  // What tells two chips of one document apart when they would read alike: a section, or a page.
+  label_extra: { section?: string; page?: number } | null;
   packages: string[];
+  package_count: number;
 };
 export type DocumentNode = {
   document_id: string;
@@ -176,7 +199,10 @@ export type Neighbourhood = {
   packages: PackageNode[];
   documents: DocumentNode[];
   edges: { step_reference: string; evidence_id: string }[];
-  more: { kind: string; count: number }[];
+  // One dashed curve per package and document that appeared together, ending level with the first chip they share.
+  lines: { step_reference: string; document_id: string; evidence_id: string | null; at_rest: boolean }[];
+  lines_hint: boolean;
+  more: { kind: string; count: number; unread: number }[];
   finding: {
     contracts: number;
     paragraphs: number;
@@ -227,9 +253,14 @@ export function amountCell(amount: string): string {
   return formatNumber(Number(amount), { decimals: 2, compact: false });
 }
 
-// A price as the award notice writes it, kept as text: "61503269.60" or "69,826,127.64".
+// A price as the award notice gives it, in STEP's form with its cents (DESIGN.md section 6): "61503269.60" is
+// written "61,503,269.60", as "69,826,127.64" already is. The value never changes; text that is not a plain
+// number stays as the notice writes it.
 export function noticePrice(price: string | null): string | null {
-  return price && price.trim() ? price.trim() : null;
+  const text = price?.trim();
+  if (!text) return null;
+  const plain = text.replace(/,/g, "");
+  return /^\d+(\.\d+)?$/.test(plain) && /^(\d{1,3}(,\d{3})*|\d+)(\.\d+)?$/.test(text) ? amountCell(plain) : text;
 }
 
 export function currencyName(code: string | null): string {

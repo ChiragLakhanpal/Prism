@@ -166,6 +166,9 @@ def read_bids(text: str | None) -> tuple[list[Bid], bool]:
         if expect is not None:  # the line after a price heading holds its value
             key, label = expect
             expect = None
+            if line in PRICES:  # an empty price: the next heading follows at once, and the price stays blank
+                expect = (PRICES[line], line)
+                continue
             if current is not None:
                 if key == "reason":
                     current.reason = line or None

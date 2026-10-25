@@ -13,6 +13,8 @@ import { ChevronDown, ChevronUp } from "lucide-react";
 import { copy } from "../copy";
 import type { EvidenceEvent } from "../lib/answer";
 import { formatCount, formatDate } from "../lib/format";
+import { address } from "../lib/router";
+import { useStore } from "../lib/store";
 import { joinWords, topicWords, type Why } from "../lib/trail";
 import { matchRoute } from "../routes";
 import { Button } from "./Button";
@@ -30,7 +32,7 @@ export function routeStepRef(pathname: string): string | null {
 }
 
 // The block comes with the passage in the drawer's own read (GET /api/evidence), so it renders with it. A passage an
-// answer's stream or a page sent with it carries no block yet (undefined), and shows none.
+// answer's stream or a page sent with it carries no block (undefined) until the drawer asks for it (useEvidence).
 export function useWhy(evidence: EvidenceEvent): Why | null {
   return evidence.why ?? null;
 }
@@ -70,6 +72,8 @@ export function WhyThisSource({ why }: { why: Why }) {
   const state = words.projectState[why.project_state];
   const time = timeSentence(why);
   const ref = why.reference;
+  // On the activity page it names, "Open the activity" would lead to the page you are on (design review F18).
+  const here = useStore(address).pathname === why.activity_href;
   return (
     <section data-why aria-labelledby={headingId} className="flex flex-col gap-2">
       <h3 id={headingId} className="text-small font-bold text-ink-heading">
@@ -88,7 +92,7 @@ export function WhyThisSource({ why }: { why: Why }) {
         {time && <> {time}</>}
       </p>
       <p className="text-caption text-ink-muted">{words.only}</p>
-      {why.activity_href && (
+      {why.activity_href && !here && (
         <p>
           <TextLink href={why.activity_href} className="inline-flex min-h-6 items-center text-small" data-why-activity>
             {words.open}

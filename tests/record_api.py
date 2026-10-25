@@ -128,11 +128,19 @@ HUB = {
     "activity-ke-mawasco-501974-indv.json": f"/api/projects/P156634/packages/KE-MAWASCO-501974-CS-INDV?{DAY}",
     "activity-ke-nwwda-229129-before-signing.json": "/api/projects/P156634/packages/KE-NWWDA-229129-CW-RFB?asof=2022-01-02",
     "activity-ke-nwwda-229129-moved.json": f"/api/projects/P130164/packages/KE-NWWDA-229129-CW-RFB?{DAY}",
+    # Two award notices and two contracts; a Limited market approach with no notice to miss; and two consultant
+    # selections whose award notices list scores, one with a rejected firm whose price is blank (round 2).
+    "activity-ke-kimawasco-372408.json": f"/api/projects/P156634/packages/KE-KIMAWASCO-372408-GO-RFQ?{DAY}",
+    "activity-ke-nwwda-503455.json": f"/api/projects/P156634/packages/KE-NWWDA-503455-CW-RFQ?{DAY}",
+    "activity-ke-wasreb-235524.json": f"/api/projects/P156634/packages/KE-WASREB-235524-CS-QCBS?{DAY}",
+    "activity-ke-cwsb-102977.json": f"/api/projects/P156634/packages/KE-CWSB-102977-CS-QCBS?{DAY}",
     # The Connections tab (ticket 22): the showcase, a project with more than the cap, one with no links, and the
     # showcase before its contracts' links were public.
     "connections-p130164.json": f"/api/projects/P130164/connections?{DAY}",
     "connections-p156634.json": f"/api/projects/P156634/connections?{DAY}",
     "connections-p127203.json": f"/api/projects/P127203/connections?{DAY}",
+    # The showcase as of the day before its contract was signed: no links were public then.
+    "connections-p130164-2017-06-14.json": "/api/projects/P130164/connections?asof=2017-06-14",
     # "Why this source" for the ticket's showcase link, on the activity page and from a link with no activity, and
     # the drawer's views of the trail's records.
     "evidence-icr-p130164-54-why.json": f"/api/evidence?id=strata.gold.passage:31525018/v1/54&step_ref=IN-RRSMP-7431-CW-RFB&{DAY}",
