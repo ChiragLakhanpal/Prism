@@ -1,0 +1,28 @@
+{
+ "about": "The judge's answer for this case's sentences, through Azure OpenAI's chat completions, written by hand in the shape the API documents, because the gate's machine has no key. The judge is config/models.toml's draft role. Replace it with a recording: uv run --script ops/agent/record.py --judge --env-file .env",
+ "recorded": false,
+ "recorded_on": null,
+ "case": "p156634-uncited-blame",
+ "judge": {
+  "deployment": "gpt-5.4"
+ },
+ "asked": [
+  "That version of the plan was not yet public on the date you chose, so I did not check it.",
+  "The agency was late in publishing its plan."
+ ],
+ "response": {
+  "id": "chatcmpl-p156634-uncited-blame",
+  "object": "chat.completion",
+  "model": "gpt-5.4",
+  "choices": [
+   {
+    "index": 0,
+    "finish_reason": "stop",
+    "message": {
+     "role": "assistant",
+     "content": "{\"judgements\": [{\"index\": 0, \"follows\": true, \"reason\": \"check_plan abstained because the plan version was not yet public on the as-of date, which is all the sentence says.\"}, {\"index\": 1, \"follows\": false, \"reason\": \"The abstention says only that the version was not yet public on the as-of date; it says nothing about the agency being late.\"}]}"
+    }
+   }
+  ]
+ }
+}

@@ -1,0 +1,28 @@
+{
+ "about": "The judge's answer for this case's sentences, through Azure OpenAI's chat completions, written by hand in the shape the API documents, because the gate's machine has no key. The judge is config/models.toml's draft role. Replace it with a recording: uv run --script ops/agent/record.py --judge --env-file .env",
+ "recorded": false,
+ "recorded_on": null,
+ "case": "p130164-number-only-quote",
+ "judge": {
+  "deployment": "gpt-5.4"
+ },
+ "asked": [
+  "Only \"108\" works contracts were signed in all.",
+  "The works contracts were advertised for the third time."
+ ],
+ "response": {
+  "id": "chatcmpl-p130164-number-only-quote",
+  "object": "chat.completion",
+  "model": "gpt-5.4",
+  "choices": [
+   {
+    "index": 0,
+    "finish_reason": "stop",
+    "message": {
+     "role": "assistant",
+     "content": "{\"judgements\": [{\"index\": 3, \"follows\": false, \"reason\": \"Paragraph 54 says 108 of 328 cases went through rebidding, not that 108 contracts were signed in all.\"}, {\"index\": 4, \"follows\": false, \"reason\": \"Paragraph 54 does not say how many times any contract was advertised.\"}]}"
+    }
+   }
+  ]
+ }
+}

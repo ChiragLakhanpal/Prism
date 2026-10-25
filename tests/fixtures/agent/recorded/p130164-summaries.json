@@ -1,0 +1,51 @@
+{
+ "about": "The Foundry agent strata-orchestrator's answers through the Responses API, written by hand in the shape the API documents, because the gate's machine has no key. The first asks for one search and the second gives two summary sentences, which only the judge can check. Replace them with a recording: uv run --script ops/agent/record.py --env-file .env",
+ "recorded": false,
+ "recorded_on": null,
+ "question": "In a few words, what went wrong with the works contracts in P130164?",
+ "scope": "P130164",
+ "as_of": "2026-10-23",
+ "agent": {
+  "name": "strata-orchestrator",
+  "version": null
+ },
+ "responses": [
+  {
+   "id": "resp_p130164_summaries_1",
+   "object": "response",
+   "status": "completed",
+   "model": "gpt-5.4-mini",
+   "output": [
+    {
+     "type": "function_call",
+     "id": "fc_p130164_summaries_1_1",
+     "call_id": "call_p130164_summaries_1_1",
+     "name": "search_passages",
+     "status": "completed",
+     "arguments": "{\"query\": \"works contracts advertised again rebidding\", \"project_id\": \"P130164\", \"as_of\": \"2026-10-23\"}"
+    }
+   ]
+  },
+  {
+   "id": "resp_p130164_summaries_2",
+   "object": "response",
+   "status": "completed",
+   "model": "gpt-5.4-mini",
+   "output": [
+    {
+     "type": "message",
+     "id": "msg_p130164_summaries_2",
+     "role": "assistant",
+     "status": "completed",
+     "content": [
+      {
+       "type": "output_text",
+       "annotations": [],
+       "text": "{\"claims\": [{\"sentence\": \"The completion report said the works estimates were too low for the market.\", \"kind\": \"summary\", \"evidence_ids\": [\"strata.gold.passage:31525018/v1/54\"], \"numbers\": [], \"dates\": [], \"quote\": null}, {\"sentence\": \"It also said the clearances for the works should have come before the contracts were awarded.\", \"kind\": \"summary\", \"evidence_ids\": [\"strata.gold.passage:31525018/v1/55\"], \"numbers\": [], \"dates\": [], \"quote\": null}]}"
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

@@ -6,7 +6,7 @@ Read first: docs/PLAN.md sections 6, 10 and 12 (Known traps); ADRs 0001 and 0003
 
 **Blocked by:** 17 (Every structured source, for every country, kept as published); 24 (All six checks in the verifier, and the must-refuse set)
 
-**Status:** ready-for-agent
+**Status:** in-progress
 **Area:** agent
 **Phase:** P2
 **Design review:** no
@@ -18,3 +18,7 @@ Read first: docs/PLAN.md sections 6, 10 and 12 (Known traps); ADRs 0001 and 0003
 - [ ] The full gate command runs end to end, writes results with run ids, and fails naming the gap when a target is missed.
 - [ ] Foundry evaluation scores for groundedness, relevance, task adherence and tool use are stored per run.
 - [ ] A question added to the benchmark file runs in the next full gate with no other change.
+
+## Comments
+
+- October 23, 2026, orchestrator: dispatched to an implementer in its own worktree on branch strata/33-genie-benchmark-evaluations-full-gate, as soon as ticket 24 landed. Credentials are still missing, so every live step is parked in docs/workspace-catchup.md; the offline side is built against the fixtures.

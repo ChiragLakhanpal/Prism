@@ -370,7 +370,10 @@
     "checks_run": [
       1,
       2,
-      3
+      3,
+      4,
+      5,
+      6
     ],
     "sentences": {
       "written": 6,
@@ -393,11 +396,54 @@
       "total": 3,
       "returned": 3
     },
+    "checked": {
+      "total": 13,
+      "matched": 13
+    },
+    "shown": {
+      "numbers": {
+        "total": 6,
+        "matched": 6
+      },
+      "dates": {
+        "total": 7,
+        "matched": 7
+      },
+      "quotes": {
+        "total": 0,
+        "found": 0
+      },
+      "judged": 0,
+      "proven": 6
+    },
+    "judge": {
+      "called": false,
+      "responded": null,
+      "judged": 0,
+      "followed": 0,
+      "unjudged": 0,
+      "proven": 6
+    },
+    "advice": {
+      "total": 0,
+      "cited": 0
+    },
+    "disagreements": {
+      "disputed": 0,
+      "shown": 0,
+      "attached": 0,
+      "unasked": 0,
+      "warned": 0
+    },
+    "cited_tools": [
+      "check_plan"
+    ],
     "tools": [
       "check_plan"
-    ]
+    ],
+    "cited_only": []
   },
-  "checks_count": 3,
+  "checks_count": 6,
   "removed": [],
   "sources": [
     {

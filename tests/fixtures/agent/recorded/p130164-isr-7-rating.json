@@ -1,0 +1,51 @@
+{
+ "about": "The Foundry agent strata-orchestrator's answers through the Responses API, written by hand in the shape the API documents, because the gate's machine has no key. The first searches P130164's status reports, and the second quotes ISR 7's rating of progress towards the PDO without asking get_disagreements, so its draft leaves out the ICR paragraph that disagrees. Replace them with a recording: uv run --script ops/agent/record.py --env-file .env",
+ "recorded": false,
+ "recorded_on": null,
+ "question": "How did the status reports rate P130164's progress towards its development objective in 2016?",
+ "scope": "P130164",
+ "as_of": "2026-10-23",
+ "agent": {
+  "name": "strata-orchestrator",
+  "version": null
+ },
+ "responses": [
+  {
+   "id": "resp_p130164_isr_7_rating_1",
+   "object": "response",
+   "status": "completed",
+   "model": "gpt-5.4-mini",
+   "output": [
+    {
+     "type": "function_call",
+     "id": "fc_p130164_isr_7_rating_1_1",
+     "call_id": "call_p130164_isr_7_rating_1_1",
+     "name": "search_passages",
+     "status": "completed",
+     "arguments": "{\"query\": \"progress towards achievement of PDO rating August 2016\", \"project_id\": \"P130164\", \"document_type\": \"ISR\", \"as_of\": \"2026-10-23\"}"
+    }
+   ]
+  },
+  {
+   "id": "resp_p130164_isr_7_rating_2",
+   "object": "response",
+   "status": "completed",
+   "model": "gpt-5.4-mini",
+   "output": [
+    {
+     "type": "message",
+     "id": "msg_p130164_isr_7_rating_2",
+     "role": "assistant",
+     "status": "completed",
+     "content": [
+      {
+       "type": "output_text",
+       "annotations": [],
+       "text": "{\"claims\": [{\"sentence\": \"The status report of August 26, 2016 rated progress towards the project development objective (PDO) \\\"Satisfactory\\\".\", \"kind\": \"quote\", \"evidence_ids\": [\"strata.gold.passage:26733307/v1/s4\"], \"numbers\": [], \"dates\": [\"August 26, 2016\"], \"quote\": {\"text\": \"Satisfactory\", \"passage_id\": \"strata.gold.passage:26733307/v1/s4\"}}]}"
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

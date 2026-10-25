@@ -462,3 +462,11 @@ def test_the_lesson_groups_are_risk_factors_from_the_closed_list_in_the_threshol
 
     assert factors == ["cost_estimates", "designs_and_specifications"]
     assert all(load_lesson_lists().risk_factor(factor) is not None for factor in factors)
+
+
+def test_the_refusal_keys_this_section_can_give_are_ticket_24_s():
+    """The reader may refuse only with keys from the one list of refusals (src/strata/agent/refusals.py)."""
+    from strata.agent.refusals import REFUSALS as EVERY_KEY
+    from strata.criteria.workflow import REFUSALS
+
+    assert set(REFUSALS) == {"live_tenders", "review_decisions"} and set(REFUSALS) <= set(EVERY_KEY)

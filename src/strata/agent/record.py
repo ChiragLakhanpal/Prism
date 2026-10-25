@@ -13,11 +13,18 @@ that change on every call, such as its usage and creation time, stay out, so the
 changed in the agent's answers.
 
 ops/agent/record.py runs it with the Foundry agent and the SQL warehouse, as the env file's token.
+
+record_judged() re-records the judge of the verifier's check 4 (ticket 24): it replays every scripted case
+through the answer stream, and every writer case through its draft workflow's six checks, with the scripted
+agent and its plants, and keeps the live judge's answer for each case that asks it, in
+tests/fixtures/agent/judged/<case id>.json. Run it after record_all(), since the
+sentences the judge is asked about come from the agent's recordings.
 """
 
 from __future__ import annotations
 
 import asyncio
+import copy
 import datetime as dt
 import difflib
 import json
@@ -27,7 +34,7 @@ from pathlib import Path
 
 from strata.agent.loop import Agent, answer_runner, output_text
 from strata.agent.scripted import Case
-from strata.agent.verifier import verify
+from strata.agent.verifier import Verdict, verify
 from strata.dbx import Viewer
 from strata.harness.turn import Scope, Turn
 from strata.server.engines import EngineFor
@@ -103,7 +110,11 @@ def _record_writer(case: Case, agent: Agent, engine_for: EngineFor, viewer: View
     keeper = Keeper(agent)
     response = keeper.respond([{"role": "user", "content": json.dumps(module.message(facts), ensure_ascii=False,
                                                                       default=str)}], None)
-    _, verdict = runtime.compose(module, facts, runtime.parse_notes(output_text(response), module.KEY))
+    from strata.agent.answer_check import SixChecks
+
+    check, _, _ = runtime.note_check(module, facts, runtime.parse_notes(output_text(response), module.KEY),
+                                     SixChecks(None, None))
+    verdict = Verdict(tuple(sentence for _, sentence in sorted(check.sentences.items())))
     recording = {"about": ABOUT_WRITER, "recorded": True, "recorded_on": today.isoformat(), "question": case.question,
                  "scope": case.scope, "as_of": case.as_of.isoformat(),
                  "agent": {"name": keeper.name, "version": keeper.version}, "responses": keeper.responses}
@@ -160,6 +171,102 @@ def record_writers(cases: dict[str, Case], agent_for: Callable[[], Agent], engin
                    today: dt.date | None = None) -> list[Recorded]:
     """Re-record every recording the draft writers' cases name, once each, and write it over its file."""
     return record_all(cases, agent_for, engine_for, viewer, today, record_one=_record_writer)
+
+
+ABOUT_JUDGE = ("The judge's answer for this case's sentences through Azure OpenAI's chat completions, recorded by "
+               "ops/agent/record.py --judge from config/models.toml's draft role. ScriptedJudge replays it in the "
+               "offline gate.")
+
+
+class JudgeKeeper:
+    """The live judge, with the questions it was asked and the answer it gave kept. It keeps them by wrapping a copy
+    of the judge's transport, so the judge the app runs keeps no viewer's sentences."""
+
+    def __init__(self, judge):
+        self.name = judge.name
+        self.asked, self.response = None, None
+        self.judge_ = copy.copy(judge)
+        post = judge.post
+
+        def keep(url, headers, body):
+            self.response = post(url, headers, body)
+            return self.response
+
+        self.judge_.post = keep
+
+    def judge(self, questions):
+        judged = self.judge_.judge(questions)
+        self.asked = list(questions)
+        return judged
+
+
+def _ask_through_the_stream(case: Case, engine_for: EngineFor, judge) -> None:
+    from strata.agent.scripted import ScriptedAgent
+    from strata.server.app import create_app
+
+    import httpx
+
+    app = create_app(runner=answer_runner(lambda turn: ScriptedAgent(case), engine_for, today=lambda: case.as_of),
+                     engine_for=engine_for, judge=judge)
+
+    async def ask():
+        transport = httpx.ASGITransport(app=app)
+        async with httpx.AsyncClient(transport=transport, base_url="http://strata.test") as client:
+            await client.post("/api/ask", headers={"X-Forwarded-User": "record@strata"}, json={
+                "question": case.question, "scope": case.scope, "asof": case.as_of.isoformat()})
+
+    asyncio.run(ask())
+
+
+def _ask_through_the_draft(case: Case, engine_for: EngineFor, judge) -> None:
+    """A writer case's notes through its draft workflow's six checks, as the draft runtime runs them, with the
+    scripted writer and its plants: nothing is saved."""
+    from strata.agent.answer_check import Asker, SixChecks
+    from strata.agent.scripted import ScriptedAgent
+    from strata.config import load_draft_kinds
+    from strata.drafts import runtime
+
+    viewer = Viewer(user_id="record@strata", name="record@strata")
+    module = runtime.writer_module(load_draft_kinds().kinds[case.request["kind"]])
+    with engine_for(viewer) as engine:
+        facts = module.read(engine, viewer, case.request, case.as_of)
+    response = ScriptedAgent(case).respond([{"role": "user", "content": json.dumps(
+        module.message(facts), ensure_ascii=False, default=str)}], None)
+    six = SixChecks(engine_for, judge)
+    check, seen, _ = runtime.note_check(module, facts, runtime.parse_notes(output_text(response), module.KEY), six)
+
+    async def drain():
+        async for _ in six.finish(check, seen, Asker(viewer, "staff", case.as_of, f"record-{case.id}")):
+            pass
+
+    asyncio.run(drain())
+
+
+def record_judged(cases: dict[str, Case], judge, engine_for: EngineFor, today: dt.date | None = None) -> list[Recorded]:
+    """Re-record the judge's answer for every case whose answer or draft asks it, and write it over its file. A
+    writer case (one with a request) runs through its draft workflow's six checks, an answer case through the
+    answer stream."""
+    from strata.agent.scripted import NO_RESPONSE
+
+    today = today or dt.datetime.now(dt.UTC).date()
+    done = []
+    for case in cases.values():
+        if case.judge == NO_RESPONSE:
+            continue
+        keeper = JudgeKeeper(judge)
+        (_ask_through_the_draft if case.request is not None else _ask_through_the_stream)(case, engine_for, keeper)
+        if keeper.asked is None:
+            continue
+        path = case.folder.parent / "judged" / f"{case.id}.json"
+        path.parent.mkdir(exist_ok=True)
+        before = path.read_text() if path.exists() else ""
+        after = json.dumps({"about": ABOUT_JUDGE, "recorded": True, "recorded_on": today.isoformat(), "case": case.id,
+                            "judge": {"deployment": judge.name},
+                            "asked": [question.sentence for question in keeper.asked],
+                            "response": keeper.response}, indent=1, ensure_ascii=False) + "\n"
+        path.write_text(after)
+        done.append(Recorded(case.id, path, (case.id,), before, after, None))
+    return done
 
 
 def record_all(cases: dict[str, Case], agent_for: Callable[[], Agent], engine_for: EngineFor, viewer: Viewer,

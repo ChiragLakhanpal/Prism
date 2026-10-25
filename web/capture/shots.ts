@@ -1190,6 +1190,55 @@ const PLANNED_SHOTS: Shot[] = [
   tabShot("packages-tab--320", { recorded: "planned-packages-list.json" }, { widths: [320] }),
 ];
 
+
+// Ticket 24: the six checks and the refusals, as the 24 brief's section 12 lists them, each answer the stream
+// its scripted case gives (tests/fixtures/agent/cases.toml). Every state is taken at 1440, 1024 and 390 px. A
+// question about another project or package than P130164 is asked from the home page, with no scope chip, so the
+// panel never reads "Asked within P130164." over it.
+const steps = "[data-answer-panel] [aria-expanded][aria-controls]:not([data-citation])";
+const cardMarker = "[data-answer-panel] [data-disagreement] [data-citation='2']";
+// Each answer is asked with its scripted case's own question, from the gallery's copy of them.
+const { questions: CASE_QUESTIONS, refusalQuestions: REFUSED } = galleryCopy.sixChecks;
+const PAST_RANGE = CASE_QUESTIONS.pastRange;
+const SUMMARIES = CASE_QUESTIONS.summaries;
+const ISR_7 = CASE_QUESTIONS.isr7;
+const BOTH_SIDES = CASE_QUESTIONS.bothSides;
+const PARTIAL = REFUSED.partial;
+const CHECK_SHOTS: Shot[] = [
+  answerShot("checks--ticket-form", "ask-ke-nwwda-541055-past-range.sse", { act: askInBox(PAST_RANGE) }, "/"),
+  answerShot("checks--judged", "ask-ke-nwwda-541055-advice.sse", { act: askInBox(PAST_RANGE) }, "/"),
+  answerShot("checks--every-sentence-judged", "ask-p130164-summaries.sse", { act: askInBox(SUMMARIES) }),
+  answerShot("checks--six-checks-judged", "ask-ke-nwwda-541055-advice.sse", { act: then(askInBox(PAST_RANGE), click(steps)) }, "/"),
+  answerShot("checks--six-checks-not-judged", "ask-ke-nwwda-541055-past-range.sse", { act: then(askInBox(PAST_RANGE), click(steps)) }, "/"),
+  answerShot("checks--six-checks-attached", "ask-p130164-isr-7-rating.sse", { act: then(askInBox(ISR_7), click(steps)) }),
+  answerShot("checks--removed-check-4", "ask-p130164-unsupported.sse", { act: askInBox() }),
+  answerShot("checks--removed-check-5", "ask-p130164-advice-without-lesson.sse", { act: askInBox() }),
+  answerShot("checks--removed-check-6", "ask-p130164-disagreements-unavailable.sse", { act: askInBox() }),
+  answerShot("checks--removed-several", "ask-p130164-several-removed.sse", { act: askInBox() }),
+  answerShot("checks--judge-silent", "ask-p130164-judge-no-response.sse", { act: askInBox() }),
+  answerShot("checks--judge-silent-nothing-kept", "ask-p130164-judge-no-response-none-kept.sse", { act: askInBox(SUMMARIES) }),
+  answerShot("checks--focus-try-again", "ask-p130164-judge-no-response.sse", { full: false, act: then(askInBox(), focus("[data-removed-box] [data-button]")) }),
+  answerShot("checks--disagreement-warning", "ask-p130164-isr-7-rating.sse", { act: askInBox(ISR_7) }),
+  answerShot("checks--disagreement-info", "ask-p130164-both-sides.sse", { act: askInBox(BOTH_SIDES) }),
+  answerShot("checks--disagreement-focus-marker", "ask-p130164-isr-7-rating.sse", { full: false, act: then(askInBox(ISR_7), focus(cardMarker)) }),
+  answerShot("checks--disagreement-hover-marker", "ask-p130164-isr-7-rating.sse", { full: false, widths: WIDE, act: then(askInBox(ISR_7), hover(cardMarker)) }),
+  answerShot("checks--disagreement-drawer", "ask-p130164-isr-7-rating.sse", { full: false, widths: [1440], act: then(askInBox(ISR_7), click(cardMarker)) }),
+  answerShot("checks--320", "ask-p130164-isr-7-rating.sse", { widths: [320], act: askInBox(ISR_7) }),
+  answerShot("refusal--supplier-scores", "ask-refuses-supplier-scores.sse", { act: askInBox(REFUSED.supplier_scores) }, "/"),
+  answerShot("refusal--fraud-and-redactions", "ask-refuses-fraud-and-redactions.sse", { act: askInBox(REFUSED.fraud_and_redactions) }),
+  answerShot("refusal--live-tenders", "ask-refuses-live-tenders.sse", { act: askInBox(REFUSED.live_tenders) }, "/"),
+  answerShot("refusal--review-decisions", "ask-refuses-review-decisions.sse", { act: askInBox(REFUSED.review_decisions) }, "/"),
+  answerShot("refusal--estimates-for-decisions", "ask-refuses-estimates-for-decisions.sse", { act: askInBox(REFUSED.estimates_for_decisions) }, "/"),
+  answerShot("refusal--dividing-packages", "ask-refuses-dividing-packages.sse", { act: askInBox(REFUSED.dividing_packages) }, "/"),
+  answerShot("refusal--rule-breach-findings", "ask-refuses-rule-breach-findings.sse", { act: askInBox(REFUSED.rule_breach_findings) }, "/"),
+  answerShot("refusal--personal-details", "ask-refuses-personal-details.sse", { act: askInBox(REFUSED.personal_details) }, "/"),
+  answerShot("refusal--wrong-edition", "ask-refuses-wrong-edition.sse", { act: askInBox(REFUSED.wrong_edition) }),
+  answerShot("refusal--private-uploads", "ask-refuses-private-uploads.sse", { act: askInBox(REFUSED.private_uploads) }, "/"),
+  answerShot("refusal--partial", "ask-refuses-part-supplier-scores.sse", { act: askInBox(PARTIAL) }),
+  answerShot("refusal--focus-link", "ask-refuses-supplier-scores.sse", { full: false, act: then(askInBox(REFUSED.supplier_scores), focus("[data-answer-panel] [data-answer=refused] a")) }, "/"),
+  answerShot("refusal--how-strata-works", "ask-refuses-supplier-scores.sse", { full: false, act: then(askInBox(REFUSED.supplier_scores), click("[data-answer-panel] [data-answer=refused] a")) }, "/"),
+];
+
 const pages: Shot[] = Object.keys(galleryCopy.pages).map((slug) => ({ name: slug, path: `/gallery/${slug}` }));
 
 export const SHOTS: Shot[] = [
@@ -1333,6 +1382,7 @@ export const SHOTS: Shot[] = [
   ...PROJECT_SHOTS,
   ...HUB_SHOTS,
   ...ANSWER_SHOTS,
+  ...CHECK_SHOTS,
   ...DRAFT_SHOTS,
   ...LESSON_SHOTS,
   ...PACKAGE_SHOTS,

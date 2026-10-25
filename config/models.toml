@@ -26,6 +26,12 @@ deployment = "text-embedding-3-large"
 purpose = "Embeddings for the passage index."
 dimensions = 1024
 
+# The judge of the verifier's check 4 (ticket 24): the role whose deployment decides, in one call per answer or
+# draft, whether each sentence that checks 1 to 3 did not prove follows from its sources. The draft role's
+# purpose line names it. No role is added for it. strata.config.load_judge_role() reads it.
+[judge]
+role = "draft"
+
 # The layout parser that reads table pages on the workspace (Route B, docs/PLAN.md section 5), such
 # as the STEP tables of a Procurement Plan. Day-one test 3 (docs/day-one-results.md) decides it:
 # ai_parse_document on the SQL warehouse when the test passes, Content Understanding's

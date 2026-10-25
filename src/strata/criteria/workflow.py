@@ -40,8 +40,8 @@ from strata.harness.facts import Facts
 from strata.harness.turn import Event
 
 log = logging.getLogger("strata.criteria")
-# The refusal keys the reader may give (ticket 24's src/strata/agent/refusals.py names every key; these two are
-# the ones this section's text can call for, the 31 brief, section 5.5).
+# The refusal keys the reader may give: the two of src/strata/agent/refusals.py's keys (ticket 24) that this
+# section's text can call for (the 31 brief, section 5.5).
 REFUSALS = ("live_tenders", "review_decisions")
 # Why a comparison could not run. web/src/copy.ts has one sentence for each, under criteria.errors.
 COMPARE_ERRORS = ("no_reader", "agent_unavailable", "content_filter", "agent_output", "store", "data_service",

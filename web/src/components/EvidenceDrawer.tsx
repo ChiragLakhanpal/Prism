@@ -476,6 +476,18 @@ export function EvidenceDrawerView({
     from && run && from.id === id && from.serial === run.serial && from.sentence !== null
       ? run.sentences.find((sentence) => sentence.index === from.sentence && sentence.evidence_ids.includes(id))
       : undefined;
+  // A side of a disagreement shown under a sentence, opened from the card's marker (ticket 24): the sentence does
+  // not cite it, so no claim block shows, but the drawer highlights the words the side quotes, as the stream marks
+  // them for the sentence the card follows.
+  const cardSentence =
+    !claim &&
+    from &&
+    run &&
+    from.id === id &&
+    from.serial === run.serial &&
+    run.disagreements.some((found) => found.after === from.sentence && found.sides.some((side) => side.evidence_id === id))
+      ? from.sentence
+      : null;
   const numbering = run ? citationNumbers(run) : new Map<string, number>();
   const evidence = data.status === "ready" ? data.evidence : null;
   // A source opened from a risk's row, or from the address while the row shows (ticket 30): the drawer restores
@@ -619,7 +631,7 @@ export function EvidenceDrawerView({
             {evidence?.kind === "passage" && (
               <PassageView
                 evidence={evidence}
-                sentence={claim ? claim.index : null}
+                sentence={claim ? claim.index : cardSentence}
                 fromAnswer={Boolean(claim)}
                 given={!claim && from?.id === id && from.highlight ? [from.highlight] : null}
               />

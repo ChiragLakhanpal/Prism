@@ -15,7 +15,7 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode, type Ref } from "react";
 import { CircleX } from "lucide-react";
 import { copy } from "../copy";
-import { DATA_HREF, dataReadinessHref } from "../routes";
+import { WHAT_I_DONT_DO, dataReadinessHref } from "../routes";
 import type { Checks, Comparison, CriteriaSummary, PackageRun, RemovedEntry } from "../lib/criteria";
 import { publicListId, rememberCosts, rememberItems, rememberPublic } from "../lib/criteria";
 import { formatCount, formatNumber } from "../lib/format";
@@ -45,8 +45,6 @@ const COMPARE_STEPS = ["read", "find", "compare", "checks"];
 // so the text was not kept (unsaved). Each has its words under copy.criteria.errors.
 const INTERNAL = "internal";
 const UNSAVED = "unsaved";
-// The id of How Strata works' "What I don't do" heading, which the refusal links to (ticket 24 gives it).
-const WHAT_I_DONT_DO = "what-i-dont-do";
 
 export type StepState = { key: string; state: "running" | "done" };
 export type RunState =
@@ -184,8 +182,8 @@ function SectionChecks({ checks, removed, compared }: { checks: Checks | null; r
         dates={checks.dates}
         quotes={checks.quotes}
         quoteWords={noPages ? words.quotesInSources : undefined}
-        notChecked={checks.checks_run.includes(4) ? [] : ["sentences"]}
-        notCheckedText={[words.notCheckedComparables, ...(compared ? [words.notCheckedItems] : [])]}
+        notChecked={[...(checks.checks_run.includes(4) ? [] : (["sentences"] as const)), "find_comparables"]}
+        notCheckedText={compared ? [words.notCheckedItems] : []}
       />
       {removed.length > 0 && <RemovedBox removed={toRemoved(removed)} />}
     </div>
@@ -200,8 +198,8 @@ function Refusal({ refusal }: { refusal: NonNullable<Comparison["refusal"]> }) {
         {lead} {refusal.partial ? words.refusal.partial : words.refusal.instead}
       </p>
       <p className="text-caption text-ink-muted">
-        {/* The anchor is ticket 24's "What I don't do" heading on How Strata works. */}
-        <Fill template={words.refusal.note} slots={{ link: <TextLink href={`${DATA_HREF.dataHow}#${WHAT_I_DONT_DO}`}>{words.refusal.link}</TextLink> }} />
+        {/* Ticket 24's note and its "What I don't do" heading on How Strata works, as the answer panel links them. */}
+        <Fill template={copy.answer.refusalNote} slots={{ link: <TextLink href={WHAT_I_DONT_DO.href}>{copy.answer.refusalLink}</TextLink> }} />
       </p>
     </div>
   );

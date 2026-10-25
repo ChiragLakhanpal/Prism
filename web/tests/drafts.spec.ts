@@ -303,10 +303,10 @@ test("the draft's notes cite their plan rows, and the bar says what exporting do
   await expect(page.locator("[data-lede]")).toHaveText("I drafted a note on each of the three activities that need a look or are worth watching.");
   await expect(notes(page).locator("[data-activity-ref]")).toHaveText(MARKED);
   await expect(page.locator("[data-count-line]")).toHaveText("Showing all 3 activities with a signal");
-  // The check line names what this draft's checks did not cover. Until ticket 24 adds the fourth check,
-  // it also says whether each sentence follows from its sources was not checked.
+  // The check line names what this draft's checks did not cover. A draft passes all six checks (ticket 24),
+  // so whether each sentence follows from its sources is no longer a gap.
   await expect(page.locator("[data-check-line]")).toContainText(
-    "Not checked: whether each sentence follows from its sources, whether the plan's published records are complete, or whether these notes are what you would tell the borrower.",
+    "Not checked: whether the plan's published records are complete, or whether these notes are what you would tell the borrower.",
   );
   // The evidence pack writes the same check line, word for word (the server wrote it on the fixture).
   expect(await page.locator("[data-check-line]").evaluate((element) => (element as HTMLElement).innerText.replace(/\s+/g, " ").trim())).toBe(

@@ -1,0 +1,28 @@
+{
+ "about": "The judge's answer for this case's sentences, through Azure OpenAI's chat completions, written by hand in the shape the API documents, because the gate's machine has no key. The judge is config/models.toml's draft role. Replace it with a recording: uv run --script ops/agent/record.py --judge --env-file .env",
+ "recorded": false,
+ "recorded_on": null,
+ "case": "review-notes-checks-4-and-5",
+ "judge": {
+  "deployment": "gpt-5.4"
+ },
+ "asked": [
+  "The agency has stopped working on this activity.",
+  "The plan records no signed contract for this activity."
+ ],
+ "response": {
+  "id": "chatcmpl-review-notes-checks-4-and-5",
+  "object": "chat.completion",
+  "model": "gpt-5.4",
+  "choices": [
+   {
+    "index": 0,
+    "finish_reason": "stop",
+    "message": {
+     "role": "assistant",
+     "content": "{\"judgements\": [{\"index\": 5, \"follows\": false, \"reason\": \"The plan row lists the activity as Pending Implementation; it does not say that work on it stopped.\"}, {\"index\": 6, \"follows\": true, \"reason\": \"The plan row gives no signing date and an Actual Amount of 0.00.\"}]}"
+    }
+   }
+  ]
+ }
+}

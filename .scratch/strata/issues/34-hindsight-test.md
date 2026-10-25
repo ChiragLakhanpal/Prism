@@ -6,7 +6,7 @@ Read first: docs/PLAN.md sections 10 and 11; ADR 0002; GLOSSARY.md (Hindsight te
 
 **Blocked by:** 25 (The replay harness and the survival model's backtests); 30 (Procurement risks and what helped, on the package workspace)
 
-**Status:** ready-for-agent
+**Status:** in-progress
 **Area:** ml
 **Phase:** P2
 **Design review:** no
@@ -18,3 +18,7 @@ Read first: docs/PLAN.md sections 10 and 11; ADR 0002; GLOSSARY.md (Hindsight te
 - [ ] Projects used as extraction examples and projects exposed to Strata are excluded and listed.
 - [ ] One release-gate command runs the test and records its results with run ids; if fewer than 49 projects have a usable ICR, N is reported as found.
 - [ ] Hindsight recall (coverage times shown-when-covered) is stored for the dashboard.
+
+## Comments
+
+- October 23, 2026, orchestrator: dispatched to an implementer in its own worktree on branch strata/34-hindsight-test, as soon as ticket 30 landed. Credentials are still missing, so every live step is parked in docs/workspace-catchup.md; the offline side is built against the fixtures.

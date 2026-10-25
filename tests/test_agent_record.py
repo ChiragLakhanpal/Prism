@@ -81,6 +81,50 @@ def test_the_recording_command_re_records_every_case_and_shows_the_change_as_a_d
         assert ScriptedAgent(case).responses
 
 
+def live_judge():
+    """Stands in for check 4's live judge: the draft role's deployment on Azure OpenAI, whose transport says every
+    sentence follows. Only the recording command keeps its answers; the judge itself keeps none."""
+    from strata.agent.judge import AzureOpenAIJudge
+
+    def post(url, headers, body):
+        asked = json.loads(body["messages"][-1]["content"])["sentences"]
+        content = {"judgements": [{"index": item["index"], "follows": True, "reason": "It follows."} for item in asked]}
+        return {"id": "chatcmpl-live", "object": "chat.completion", "model": body["model"],
+                "choices": [{"index": 0, "message": {"role": "assistant", "content": json.dumps(content)}}]}
+
+    return AzureOpenAIJudge("https://judge.example.invalid", "not-a-real-key", "gpt-5.4", post=post)
+
+
+def test_the_recording_command_re_records_the_judge_for_each_case_whose_answer_asks_it(copied, fixture_db):
+    """Ticket 24: with --judge, every scripted case is replayed through the answer stream, and every writer case
+    through its draft workflow's six checks, and the live judge's answer is kept for each case that asks it. A
+    case whose judge does not respond, or that never asks it, keeps no file."""
+    @contextmanager
+    def engine_for(viewer):
+        with DuckDBEngine.open(fixture_db, read_only=True) as engine:
+            yield engine
+
+    cases = load_cases(copied / "cases.toml") | load_cases(copied / "writers.toml")
+    judge = live_judge()
+    report = record.record_judged(cases, judge, engine_for, today=dt.date(2026, 10, 24))
+
+    judged = {done.recording for done in report}
+    assert {"p130164-unsupported-summary", "p130164-summaries", "ke-nwwda-541055-advice",
+            "review-notes-checks-4-and-5"} <= judged
+    assert {"p130164-rebidding", "p130164-judge-no-response", "refuses-supplier-scores",
+            "review-notes-nwwda-2026-10-09"}.isdisjoint(judged)
+    unsupported = json.loads((copied / "judged" / "p130164-unsupported-summary.json").read_text())
+    assert (unsupported["recorded"], unsupported["judge"], unsupported["asked"]) == (
+        True, {"deployment": "gpt-5.4"}, ["The completion report blamed the contractors for the rebidding."])
+    note = json.loads((copied / "judged" / "review-notes-checks-4-and-5.json").read_text())
+    assert note["asked"] == ["The agency has stopped working on this activity.",
+                             "The plan records no signed contract for this activity."]
+    assert note["response"]["id"] == "chatcmpl-live"
+    assert not hasattr(judge, "answers")  # the live judge keeps no viewer's sentences
+    text = record.report_text(report, copied.parent)
+    assert '+ "recorded": true,' in text.splitlines()
+
+
 class LiveWriter:
     """Writes the recorded notes, except that the first note's first sentence is worded anew, and checks it
     was handed the plan's rows with a signal as data."""

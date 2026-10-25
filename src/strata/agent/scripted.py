@@ -9,6 +9,13 @@ ScriptedAgent answers each request with the next response, as the live agent wou
 the loop talks to it the way the Responses API needs: each request continues the previous response and
 answers every tool call that response asked for. A recording made for another question is refused, so a
 changed case is re-recorded rather than replayed against the wrong answers.
+
+ScriptedJudge stands in for the judge of the verifier's check 4 (src/strata/agent/judge.py) in the same way:
+it answers from the case's recorded judge answer (tests/fixtures/agent/judged/<case id>.json), made for the
+sentences the case's answer sends it, plants included. It counts its calls, so a test can say the judge was
+asked once, or not at all. A case with judge = "no_response" stands for a judge that did not respond, and
+one with disagreements = "unavailable" for a data service that fails when the verifier's check 6 asks
+get_disagreements, after the agent's own tools ran (app_engine_for).
 """
 
 from __future__ import annotations
@@ -20,6 +27,7 @@ import tomllib
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from strata.agent.judge import JudgeError, Judgement, Question, judgements
 from strata.agent.loop import function_calls, output_text
 from strata.harness.turn import TraceIds
 
@@ -33,6 +41,10 @@ PACKAGE_CASES = FIXTURES / "packages.toml"
 # The criteria reader's cases (ticket 31): qualification criteria it reads into the item registry's items.
 CRITERIA_CASES = FIXTURES / "criteria.toml"
 RECORDINGS = FIXTURES / "recorded"
+# The judge's recorded answers for the scripted cases, one file per case that asks the judge (ticket 24).
+JUDGED = FIXTURES / "judged"
+NO_RESPONSE = "no_response"
+UNAVAILABLE = "unavailable"
 
 
 class ScriptError(AssertionError):
@@ -54,6 +66,10 @@ class Case:
     request: dict | None = None
     plant_notes: tuple[dict, ...] = ()
     folder: Path = field(default=RECORDINGS, compare=False)
+    # What the judge of check 4 does: answers from its recording (None), or does not respond (no_response).
+    judge: str | None = None
+    # Whether check 6 can ask get_disagreements (None), or the data service fails then (unavailable).
+    disagreements: str | None = None
 
     @property
     def path(self) -> Path:
@@ -97,7 +113,8 @@ def load_cases(path: Path = CASES, recordings: Path | None = None) -> dict[str, 
         recording=case["recording"],
         plant_rounds=tuple(tuple(planted["calls"]) for planted in case.get("plant_rounds", [])),
         plant_claims=tuple(case.get("plant_claims", [])), request=case.get("request"),
-        plant_notes=tuple(case.get("plant_notes", [])), folder=folder) for case in cases}
+        plant_notes=tuple(case.get("plant_notes", [])), folder=folder, judge=case.get("judge"),
+        disagreements=case.get("disagreements")) for case in cases}
 
 
 class ScriptedAgent:
@@ -132,6 +149,49 @@ class ScriptedAgent:
         return copy.deepcopy(self.responses[turn])
 
 
+class ScriptedJudge:
+    """Answers check 4's questions from the case's recorded judge answer, and counts its calls."""
+
+    name = "scripted judge"
+
+    def __init__(self, case: Case, folder: Path = JUDGED):
+        self.case, self.path = case, folder / f"{case.id}.json"
+        self.calls: list[list[Question]] = []
+
+    def recorded(self) -> dict | None:
+        return json.loads(self.path.read_text()) if self.path.exists() else None
+
+    def judge(self, questions: list[Question]) -> list[Judgement]:
+        self.calls.append(list(questions))
+        if self.case.judge == NO_RESPONSE:
+            raise JudgeError(f"Case {self.case.id} stands for a judge that did not respond.")
+        recording = self.recorded()
+        asked = [question.sentence for question in questions]
+        if recording is None or recording["asked"] != asked:
+            raise ScriptError(f"Case {self.case.id} asked the judge about {asked}, and its recorded judge answer "
+                              f"{self.path.name} answers {None if recording is None else recording['asked']}. "
+                              f"Re-record it: uv run --script ops/agent/record.py --judge --env-file .env")
+        return judgements(recording["response"], questions)
+
+
+def app_engine_for(case: Case, engine_for):
+    """The engine the app's verifier asks get_disagreements with: the runner's, or for a case with disagreements =
+    "unavailable", one whose data service fails."""
+    if case.disagreements != UNAVAILABLE:
+        return engine_for
+
+    from contextlib import contextmanager
+
+    from strata.lakehouse.engine import EngineError
+
+    @contextmanager
+    def down(viewer):
+        raise EngineError(f"Case {case.id} stands for a data service that fails when check 6 asks.")
+        yield
+
+    return down
+
+
 # ── The recorded streams ─────────────────────────────────────────────────
 
 # The run and trace ids the recorded streams in tests/fixtures/api carry, so they never change.
@@ -139,6 +199,40 @@ RECORDED_RUN_ID = "run-0001"
 RECORDED_TRACES = TraceIds(application_insights="4bf92f3577b34da6a3ce929d0e0e4736",
                            mlflow="tr-0af7651916cd43dd8448eb211c80319c")
 FIXTURE_DB = ROOT / "data" / "out" / "fixture.duckdb"
+API = ROOT / "tests" / "fixtures" / "api"
+
+
+def _refusal_streams() -> dict[str, str]:
+    from strata.agent.refusals import REFUSALS
+
+    return {f"refuses-{key.replace('_', '-')}": f"ask-refuses-{key.replace('_', '-')}.sse" for key in REFUSALS}
+
+
+# Each scripted case whose answer stream the screen tests serve, with its file in tests/fixtures/api.
+# tests/test_answer_stream.py checks each file against the server byte for byte.
+RECORDED_STREAMS = {
+    "p130164-rebidding": "ask-p130164-rebidding.sse",
+    "p130164-number-with-no-record": "ask-p130164-removed-number.sse",
+    "p130164-nothing-found": "ask-p130164-nothing-found.sse",
+    "p130164-before-the-icr": "ask-p130164-before-the-icr.sse",
+    "p130164-isr-section": "ask-p130164-isr-section.sse",
+    "p130164-number-from-a-table-summary": "ask-p130164-table-summary.sse",
+    "p130164-rating-from-a-table-row": "ask-p130164-table-row.sse",
+    # Ticket 24: the six checks and the refusals.
+    "ke-nwwda-541055-past-range": "ask-ke-nwwda-541055-past-range.sse",
+    "ke-nwwda-541055-advice": "ask-ke-nwwda-541055-advice.sse",
+    "p130164-summaries": "ask-p130164-summaries.sse",
+    "p130164-unsupported-summary": "ask-p130164-unsupported.sse",
+    "p130164-advice-without-lesson": "ask-p130164-advice-without-lesson.sse",
+    "p130164-several-removed": "ask-p130164-several-removed.sse",
+    "p130164-disagreements-unavailable": "ask-p130164-disagreements-unavailable.sse",
+    "p130164-isr-7-rating": "ask-p130164-isr-7-rating.sse",
+    "p130164-both-sides": "ask-p130164-both-sides.sse",
+    "p130164-judge-no-response": "ask-p130164-judge-no-response.sse",
+    "p130164-summaries-judge-no-response": "ask-p130164-judge-no-response-none-kept.sse",
+    "refuses-part-supplier-scores": "ask-refuses-part-supplier-scores.sse",
+    **_refusal_streams(),
+}
 
 
 def stream_text(case: Case, database: Path = FIXTURE_DB) -> str:
@@ -158,7 +252,9 @@ def stream_text(case: Case, database: Path = FIXTURE_DB) -> str:
             yield engine
 
     app = create_app(runner=answer_runner(lambda turn: ScriptedAgent(case), engine_for, today=lambda: case.as_of),
-                     new_run_id=lambda: RECORDED_RUN_ID, trace_ids=lambda: RECORDED_TRACES)
+                     engine_for=app_engine_for(case, engine_for), judge=ScriptedJudge(case),
+                     new_run_id=lambda: RECORDED_RUN_ID,
+                     trace_ids=lambda: RECORDED_TRACES)
 
     async def ask():
         transport = httpx.ASGITransport(app=app)
@@ -205,6 +301,8 @@ def main(argv: list[str] | None = None) -> int:
     or, with --error and a code, the stream of a run that could not answer:
 
         uv run --frozen python -m strata.agent.scripted --error agent_unavailable > tests/fixtures/api/ask-agent-unavailable.sse
+
+    or, with --all, write every stream in RECORDED_STREAMS over its file.
     """
     import argparse
     import sys
@@ -215,7 +313,13 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("case", nargs="?", choices=sorted(load_cases()))
     parser.add_argument("--error", choices=ERROR_CODES, help="print the stream of a run that ends with this error")
     parser.add_argument("--database", type=Path, default=FIXTURE_DB, help="the fixture database (gates/build_fixture.py)")
+    parser.add_argument("--all", action="store_true", help="write every recorded stream the screen tests serve")
     args = parser.parse_args(argv)
+    if args.all:
+        cases = load_cases()
+        for case_id, name in RECORDED_STREAMS.items():
+            (API / name).write_text(stream_text(cases[case_id], args.database))
+        return 0
     if (args.case is None) == (args.error is None):
         parser.error("name a case or an --error code, not both")
     sys.stdout.write(failed_stream_text(args.error) if args.error else stream_text(load_cases()[args.case], args.database))

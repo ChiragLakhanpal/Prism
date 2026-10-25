@@ -6,7 +6,7 @@ Read first: docs/PLAN.md section 6 (Formats); the blueprint's Draft wireframe, P
 
 **Blocked by:** 30 (Procurement risks and what helped, on the package workspace); 35 (Drafts: the runtime, the draft bar and review notes on a plan)
 
-**Status:** ready-for-agent
+**Status:** in-progress
 **Area:** agent
 **Phase:** P2
 **Design review:** yes
@@ -18,3 +18,7 @@ Read first: docs/PLAN.md section 6 (Formats); the blueprint's Draft wireframe, P
 - [ ] The exported Word file's table has the template's column headers, and its footnotes match the draft's.
 - [ ] The Project Paper summary for P156634 cites the plan check's counts and the agency's track record with numbers from tools, and passes the six checks.
 - [ ] Both drafts follow the Draft wireframe and DESIGN.md sections 5 (Draft bar) and 7 (no rule 19 words; "suggested rows for the borrower's PPSD"); states are captured at 1440, 1024 and 390 px; axe finds no WCAG 2.2 AA violations.
+
+## Comments
+
+- October 23, 2026, orchestrator: dispatched to an implementer in its own worktree on branch strata/36-ppsd-rows-and-project-paper-summary, as soon as ticket 30 landed. Credentials are still missing, so every live step is parked in docs/workspace-catchup.md; the offline side is built against the fixtures.

@@ -6,7 +6,7 @@ Read first: docs/PLAN.md section 6 (The verifier, Refusals); the blueprint's "Ho
 
 **Blocked by:** 13 (One cited answer through the Foundry agent and the verifier); 20 (Assertions, disagreements and the evidence ladder)
 
-**Status:** in-progress
+**Status:** done
 **Area:** agent
 **Phase:** P2
 **Design review:** yes
@@ -22,3 +22,28 @@ Read first: docs/PLAN.md section 6 (The verifier, Refusals); the blueprint's "Ho
 ## Comments
 
 - October 23, 2026, orchestrator: dispatched to an implementer in its own worktree on branch strata/24-six-checks-and-refusals, as soon as ticket 20 landed. Credentials are still missing, so every live step is parked in docs/workspace-catchup.md; the offline side is built against the fixtures.
+- October 24, 2026, merger: merged `strata/24-six-checks-and-refusals` at e7a8b24 into `build/strata` as merge commit c7d226a (parents dcea710 and e7a8b24). Round 3's review (approve, nothing blocks), design review (pass with polish), critique (does not block) and verification (pass, with the live halves of criteria 1 and 4 parked) all passed it. The worktree that built it was `.claude/worktrees/wf_42b152e2-74d-18`; I removed it after this commit and kept the branch.
+  - **The merge.** The history scan of the branch's 14 commits found no keys, so it merged with history. The branch changes no package file, `gates/steps.toml` or `tests/test_gate.py`, and `scripts/install` exited 0. The gate passed in 93.3 seconds before the merge commit, and by hand on `build/strata` in 105.7 seconds at 22:20 Pacific time.
+  - **Conflicts.** build/strata had moved to dcea710 (ticket 30) since the branch last merged it, and nine files conflicted. I kept both sides in each:
+    - `src/strata/agent/loop.py` keeps ticket 30's name `keep_result` with ticket 24's abstention line, and the answer loop keeps the result as the agent got it (`for_agent`), so the judge never reads a date after the as-of date. `src/strata/agent/answer_check.py` now imports `keep_result`. This keeps round 2's F1 fix as the verification asked.
+    - `src/strata/harness/facts.py` keeps both `items` (ticket 30) and `returned_by` (ticket 24).
+    - `config/tools.toml`: get_lessons keeps `summary_fields` and `nested_rows` (ticket 30) and `backs_advice` and `not_checked_when` (ticket 24).
+    - `evals/benchmark.yaml` keeps ticket 30's source text and ticket 24's ten must-refuse questions: 20 questions, 10 of them must-refuse.
+    - `src/strata/drafts/copy.json` and `web/src/copy.ts` gain ask_genie's "Not checked" clause. `StatusBadge.tsx` keeps "ieg-restates" and the two disagreement badges.
+    - `DESIGN.md` section 5: Disagreement card and Refusal from ticket 24, Evidence drawer from ticket 30, and the Check line, Removed box and Status badge rows hold both tickets' additions.
+    - `web/src/components/Checks.tsx`: `RemovedBox` keeps ticket 30's `lead` and `item` props and ticket 24's `retry`. When a caller passes `item` (the risks section), each item is its plain text, as ticket 30 built it; otherwise each sentence sits in its own quote element in ink, as ticket 24 built it. `RemovedLead`'s `all` now takes the count and its text, so the risks section's lead also says "I removed both risks." for two, never "all two".
+  - **Evidence from verification** (`.notes/24-verify-r3.md`). The verifier's gate passed in 92.0 seconds in the worktree. `tests/test_six_checks.py` and `tests/test_refusals.py`: 38 passed in 7.09 seconds; `web/tests/checks.spec.ts`: 14 passed in 11.2 seconds on one worker, with axe at three widths.
+    - Criterion 1: "The completion report blamed the contractors for the rebidding." is removed with `not_supported` after one judge call; `p130164-rebidding` makes no call (3 sentences proven). A sentence that cites nothing is removed by check 2, or, when a tool abstained this turn, judged once against that abstention alone.
+    - Criterion 2: "Base your works estimates on market rates before you advertise." is removed with check 5's reason, and the judge never sees it.
+    - Criterion 3: ISR 7's sentence streams with ICR paragraph 78 attached by the verifier, both sides present (ISR 7, August 26, 2016, PDF page 1; ICR paragraph 78, October 10, 2019, PDF page 27).
+    - Criterion 4: ten full refusals and one partial refusal, each from the copy file; no restricted value in any of the 201 files in `tests/fixtures/api/`.
+    - Criterion 5: all ten refusal keys are must-refuse questions in `evals/benchmark.yaml`.
+    - Criterion 6: the check line reads exactly "Checked: 5 of 5 numbers match records; 2 of 2 quotes are on their pages. Not checked: whether these are the right comparables." in the neutral state.
+    - Criterion 7: 66 probe cases at 1440, 1024 and 390 px, with 0 axe violations and no sideways scroll; `web/capture/shots.ts` captures the states.
+  - **Workspace results.** All ten keys were set, but the header of `docs/workspace-catchup.md` holds workspace steps back during a merge while the user runs the backlog, so I ran nothing and parked the builder's four steps there as ticket 24's steps 1 to 4: re-record the judge live (`ops/agent/record.py --judge`), sync the agent and run `--check` (its instructions changed), run the must-refuse set through the live agent (`ops/agent/refuse_live.py`), and redeploy the App and ask the ISR 7 question.
+  - **Decisions parked for the user** (from the builder, the review and the verification):
+    1. A summary that cites nothing may stand only when a tool abstained this turn, and only after the judge finds it says no more than the abstention. Kept as built. The other choice is to have the app write abstentions from the copy file, as it writes refusals, which avoids the judge call.
+    2. "Proven by checks 1 to 3" keeps its meaning: a record or quote sentence whose numbers, dates and quotes all matched skips the judge, even when its other words add a cause. Kept as built, with the wording fix below. The other choice is to send every record sentence to the judge, which makes one larger judge call on most answers.
+    3. When check 6 cannot ask get_disagreements, every sentence citing that project is removed, shown with the error alert and "Try again". Kept as built, as the safe reading of rule 1.
+    4. A disagreement that check 6 attaches to a draft note reaches no screen yet. The review chose a follow-up that shows the answer's card on the draft page and in the evidence pack, rather than removing such a note sentence.
+  - **Follow-ups, all polish.** The review lists nine items (`.notes/24-review-r3.md`), the design review four new and one carried (`.notes/24-design-r3.md`) and the critique its own list (`.notes/24-critique-r3.md`). Fix first, before a demo: the check line and the steps say a proven sentence's "everything they stated matched a record or a page"; write "every number, date and quote in them matched a record or a page" (design F1). Others worth a ticket: an answer whose only sentences cite nothing describes sources it does not cite (review 2, critique 1); a partial refusal with nothing checked loses its refusal (review 1); ticket 30's risk table (`src/strata/packages/risks.py`) and the lesson writer still run checks 1 to 3 only and should run all six through `SixChecks`.

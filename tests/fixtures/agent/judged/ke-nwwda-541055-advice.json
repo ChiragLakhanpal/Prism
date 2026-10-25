@@ -1,0 +1,27 @@
+{
+ "about": "The judge's answer for this case's sentences, through Azure OpenAI's chat completions, written by hand in the shape the API documents, because the gate's machine has no key. The judge is config/models.toml's draft role. Replace it with a recording: uv run --script ops/agent/record.py --judge --env-file .env",
+ "recorded": false,
+ "recorded_on": null,
+ "case": "ke-nwwda-541055-advice",
+ "judge": {
+  "deployment": "gpt-5.4"
+ },
+ "asked": [
+  "Plan for longer than the 1.5 months the plan allows."
+ ],
+ "response": {
+  "id": "chatcmpl-ke-nwwda-541055-advice",
+  "object": "chat.completion",
+  "model": "gpt-5.4",
+  "choices": [
+   {
+    "index": 0,
+    "finish_reason": "stop",
+    "message": {
+     "role": "assistant",
+     "content": "{\"judgements\": [{\"index\": 3, \"follows\": true, \"reason\": \"The past range shows the middle half of comparable packages took 3.3 to 7.9 months, and the plan allows 1.5 months.\"}]}"
+    }
+   }
+  ]
+ }
+}
