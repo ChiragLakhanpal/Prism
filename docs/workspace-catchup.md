@@ -1116,3 +1116,26 @@ The merger parked this step on October 24, 2026, after merge commit d596000. It 
 In Chrome, signed in to the App, with no throttling, open `<App url>/api/projects?q=ind` three times and read each request's time in DevTools' Network tab.
 
 It worked if each answer took under 1 s and counts the projects whose name, ID or country holds "ind", India's among them. If any took 1 s or more, tell the orchestrator, who files a ticket to move the search into a SQL filter in `src/strata/server/sql/projects/`.
+
+## Ticket 30, step 1 of 2: sync the agent, since get_lessons changed
+
+The merger parked this step on October 24, 2026, after merge commit 7da272f. All ten keys were set, but the header above holds workspace steps back while the user runs the backlog. It needs the four Foundry keys in `.env`. Ticket 30 changed get_lessons' description and parameters in `config/tools.toml` (it now counts the completion reports behind each risk factor), and the agent's tool list is generated from that file, so the orchestrator agent in Foundry is out of date until this runs. Ticket 13's sync runs the same command, and one sync from 7da272f or later serves every block that names it.
+
+Run this from the main checkout:
+
+    uv run --script ops/agent/sync.py --env-file .env
+    uv run --script ops/agent/sync.py --env-file .env --check
+
+It worked if the first run ends "I made version N of strata-orchestrator, which matches the repo." and the `--check` run exits 0 (it exits 1 when it still finds a difference, and 2 when it could not run).
+
+## Ticket 30, step 2 of 2: section 3, procurement risks and what helped, on the deployed App
+
+The merger parked this step on October 24, 2026, after merge commit 7da272f. It needs the Databricks keys in `.env`. Run it after step 1, and after ticket 15's step 3, which starts the Lakebase instance. It is ticket 06's deploy command, and one deploy from 7da272f or later serves every block that names it. This merge adds the routes `GET /api/packages/{step_reference}/risks` and `PUT /api/packages/{step_reference}/risk-selection`, the same two under `/api/planned-packages/{package_id}/`, and the Lakebase table `strata.app.risk_selections`, which the App makes the first time a viewer selects a risk.
+
+Run this from the main checkout:
+
+    uv run --script ops/app/deploy_app.py --env-file .env
+
+It worked if the deploy exits 0, its step 3 prints "The Lakebase instance strata-state is running, so the app keeps app state there.", and its last line is `Strata is running at https://...`. Then sign in to the App in a browser and open `<App url>/packages/KE-NWWDA-541055-CW-RFB`.
+
+It worked if section 3, "Procurement risks and what helped", loads under the eyebrow "Planning · PPSD section 3", and DevTools' Network tab shows `GET /api/packages/KE-NWWDA-541055-CW-RFB/risks` answering 200. Until decided lessons and a comparable project with an ICR exist on the workspace, the section may show its empty state (no completion report, or no decided lessons), and that still passes this step. Once a row shows, tick its checkbox, wait for the save, and reload: the row must still be ticked. The first save makes `strata.app.risk_selections` in the App's Lakebase database, with one row for you, that package and that risk, and `selected` true. Unticking sets `selected` to false and deletes nothing (criterion 6, live half).
