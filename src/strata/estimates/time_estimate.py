@@ -219,6 +219,8 @@ class TimeEstimateModel:
     calibration_packages: int
     calibration_still_open: int
     feature_names: tuple[str, ...] = field(default=())
+    listed_packages: int = 0  # training packages a Procurement Plan listed by their feature date
+    governance_packages: int = 0  # training packages with a governance score public by their feature date
 
     def columns(self, features: dict[str, Any]) -> list[float]:
         row = []
@@ -303,7 +305,10 @@ def fit(training: list[Package], settings: TimeEstimateSettings, thresholds: Thr
     learner = LEARNERS[settings.learner](settings.learner_settings, names,
                                          tuple("c" if name in vocabularies else "q" for name in names))
     model = TimeEstimateModel(learner, vocabularies, {}, training_through, _ranges(ordered, settings.range_checked),
-                              len(ordered), len(calibration), sum(1 for item in calibration if not item.signed), names)
+                              len(ordered), len(calibration), sum(1 for item in calibration if not item.signed), names,
+                              sum(1 for item in ordered if item.listed),
+                              sum(1 for item in ordered if any(item.features.get(f"governance:{code}") is not None
+                                                               for code in settings.governance_indicators)))
     lower = [float(max(item.days, 1)) for item in proper]
     learner.fit([model.columns(item.features) for item in proper], lower,
                 [low if item.signed else math.inf for low, item in zip(lower, proper)])

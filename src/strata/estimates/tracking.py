@@ -6,8 +6,8 @@ they have:
 
 - start_run(name, params) opens a run and returns its id; log_metrics, log_text, log_model and end_run
   fill it.
-- register(run_id, name, card) registers the run's model under a three-part Unity Catalog name with its
-  model card, and returns the new version; set_alias and alias_version move and read an alias such as
+- register(run_id, name, card) registers the run's model under a three-part Unity Catalog name, with a
+  description that points to its model card and gives the track record, and returns the new version; set_alias and alias_version move and read an alias such as
   champion.
 
 OfflineTracker keeps everything in memory with run ids such as offline-run-0001, so a test can read
@@ -130,10 +130,13 @@ class MlflowTracker:
         self.client.set_terminated(run_id)
 
     def register(self, run_id: str, name: str, card: str) -> int:
-        self.client.log_text(run_id, card, MODEL_CARD)
+        """The run's model as a new version. The card itself is the run's model_card.md, which the
+        backtest logged; Unity Catalog's descriptions point to it, whatever its length."""
         version = self.mlflow.register_model(self._models[run_id], name)
-        self.client.update_registered_model(name, description=card)
-        self.client.update_model_version(name, version.version, description=card)
+        pointer = (f"Strata's time estimate. The model card is {MODEL_CARD} in MLflow run {run_id}. "
+                   + next((line for line in card.splitlines() if line.startswith("Of ") or line.startswith("Strata has")), ""))
+        self.client.update_registered_model(name, description=pointer)
+        self.client.update_model_version(name, version.version, description=pointer)
         return int(version.version)
 
     def set_alias(self, name: str, alias: str, version: int) -> None:

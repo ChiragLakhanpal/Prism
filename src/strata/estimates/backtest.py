@@ -11,7 +11,8 @@ holds that alias yet, else as challenger, which must win its backtest before it 
 What a test year stores in strata.ops.evaluation_result, one measure per row (the 26 design brief,
 section 6.6):
 
-- training_packages, calibration_packages, calibration_still_open, training_through and
+- training_packages, calibration_packages, calibration_still_open, listed_packages (those a plan
+  listed), governance_packages (those with a governance score public by then), training_through and
   feature_ranges, for the model the year learned; or abstention, a code, when it could not size ranges.
 - ranges_given and abstained: the test packages that got a range, and those that got an abstention
   instead (fewer than time_estimate.min_comparables comparables, outside the training range).
@@ -73,6 +74,7 @@ def window(year: int, outcomes_through: dt.date) -> Window:
 def _model_scores(model) -> list[Score]:
     return [Score("training_packages", model.training_packages), Score("calibration_packages", model.calibration_packages),
             Score("calibration_still_open", model.calibration_still_open),
+            Score("listed_packages", model.listed_packages), Score("governance_packages", model.governance_packages),
             Score("training_through", text=model.training_through.isoformat()),
             Score("feature_ranges", text=harness.as_json(model.feature_ranges))]
 
@@ -191,7 +193,7 @@ def run(engine, tracker, *, years: tuple[int, ...] | None = None, outcomes_throu
     run_id = harness.new_run_id(SCORER, ran_at)
     scorer = TimeEstimateBacktest(settings)
     scored = {year: harness.replay(engine, scorer, window(year, through), tracker, run_id, ran_at, store, thresholds)
-              for year in years or settings.test_years}
+              for year in (settings.test_years if years is None else years)}
     try:
         champion, no_model = train(engine, through, settings, thresholds), None
     except NoModel as no:
@@ -225,19 +227,11 @@ def stored_years(engine, run_id: str | None = None) -> dict[int, dict]:
 
 
 def track_record(engine, thresholds: Thresholds | None = None) -> dict | None:
-    """The latest test year's track record from the latest run, or an abstention when that year had
-    fewer than time_estimate.min_unseen_packages packages the model had not seen. None before any run."""
-    thresholds = thresholds or load_thresholds()
-    years = stored_years(engine)
-    if not years:
-        return None
-    year = max(years)
-    record = years[year]
-    fewest = int(thresholds.value("time_estimate.min_unseen_packages"))
-    if record.get("n", 0) < fewest:
-        return {"year": year, "abstention": {"reason": "too_few_unseen_packages", "n": record.get("n", 0),
-                                             "min_unseen_packages": fewest}}
-    return {"year": year, "n": record["n"], "m": record["m"], "expected": record["expected"],
-            "misses_early": record["misses_early"], "misses_late": record["misses_late"],
-            "ran_on": record["ran_at"].date() if isinstance(record["ran_at"], dt.datetime) else record["ran_at"],
-            "mlflow_run_id": record["mlflow_run_id"], "abstention": None}
+    """The latest test year's track record from the latest run (model_card.track_record): what the
+    estimate_time tool and the model card read. None before any run."""
+    return model_card.track_record(stored_years(engine), thresholds or load_thresholds())
+
+
+def track_record_sentence(engine, thresholds: Thresholds | None = None) -> str:
+    """The model card's track-record sentence, filled from the latest stored run."""
+    return model_card.sentence(track_record(engine, thresholds))
