@@ -1,0 +1,33 @@
+event: saved
+data: {"check_id": "chk-000000000006"}
+
+event: step
+data: {"id": "read", "kind": "read", "status": "running"}
+
+event: step
+data: {"id": "read", "kind": "read", "status": "done", "count": 0}
+
+event: step
+data: {"id": "find", "kind": "find", "status": "running"}
+
+event: step
+data: {"id": "find", "kind": "find", "status": "done", "count": 14}
+
+event: step
+data: {"id": "compare", "kind": "compare", "status": "running"}
+
+event: step
+data: {"id": "compare", "kind": "compare", "status": "done", "count": 0}
+
+event: step
+data: {"id": "checks", "kind": "checks", "status": "running"}
+
+event: step
+data: {"id": "checks", "kind": "checks", "status": "done"}
+
+event: comparison
+data: {"check_id": "chk-000000000006", "compared_at": "2026-10-28T14:00:09+00:00", "signature": "702d4b65766e082b", "records_through": "2026-10-13", "as_of": "2026-10-28", "refusal": null, "content_filtered": false, "items": [], "unplaced": [], "fx_count": 0, "coverage": {"n": 14, "total": 17, "open": 2, "missing": 1}, "sources": [{"key": "notices", "dataset_name": "Procurement Notices"}, {"key": "awards", "dataset_name": "Contract Awards in Investment Project Financing (Since FY 2020)"}], "checks": null, "removed": [], "section_checks": {"checks_run": [1, 2, 3], "sentences": {"written": 1, "kept": 1, "removed": 0}, "numbers": {"total": 2, "matched": 2}, "dates": {"total": 0, "matched": 0}, "quotes": {"total": 1, "found": 1}, "sources": {"total": 2, "returned": 2}, "quotes_without_pages": 0}}
+
+event: done
+data: {}
+

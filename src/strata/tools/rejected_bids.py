@@ -87,7 +87,7 @@ def rejected_bids(call: Call, comparables: str) -> dict:
                 "notice_id": notice["notice_id"],
                 "notice_date": _iso(notice["notice_date"]),
                 "item_key": key,
-                "reason": {"text": reason, "lang": language},
+                "reason": {"quote": reason, "lang": language},
                 "bids": bids,
                 "rank": None,
             })

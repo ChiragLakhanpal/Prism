@@ -38,6 +38,9 @@ ABOUT = ("The Foundry agent's answers through the Responses API, recorded by ops
 ABOUT_READER = ("The Foundry package reader's answer through the Responses API, recorded by ops/agent/record.py "
                 "--packages from the live reader, given the sentence and the package form's fields as the "
                 "plan-a-package workflow sends them. The scripted reader replays it in the offline gate.")
+ABOUT_CRITERIA = ("The Foundry criteria reader's answer through the Responses API, recorded by ops/agent/record.py "
+                  "--criteria from the live reader, given the pasted text and the item registry's items as the "
+                  "check-your-criteria workflow sends them. The scripted reader replays it in the offline gate.")
 ABOUT_WRITER = ("The Foundry writer's answer through the Responses API, recorded by ops/agent/record.py --writers "
                 "from the live writer, given the facts its workflow read on the workspace. The scripted writer "
                 "replays it in the offline gate.")
@@ -122,6 +125,29 @@ def _record_package(case: Case, agent: Agent, engine_for: EngineFor, viewer: Vie
                  "scope": case.scope, "as_of": case.as_of.isoformat(),
                  "agent": {"name": keeper.name, "version": keeper.version}, "responses": keeper.responses}
     return recording, None
+
+
+def _record_criteria(case: Case, agent: Agent, engine_for: EngineFor, viewer: Viewer,
+                     today: dt.date) -> tuple[dict, dict | None]:
+    """A criteria reader's case (tests/fixtures/agent/criteria.toml): the live reader is sent the case's pasted text
+    with the item registry's items, as the check-your-criteria workflow sends it (ticket 31). The workflow checks
+    and verifies its readings when it replays them, so no verifier counts go with the recording."""
+    from strata.config import load_criteria_items
+    from strata.criteria import workflow
+
+    keeper = Keeper(agent)
+    keeper.respond([{"role": "user", "content": json.dumps(workflow.message(case.question, load_criteria_items()),
+                                                           ensure_ascii=False)}], None)
+    recording = {"about": ABOUT_CRITERIA, "recorded": True, "recorded_on": today.isoformat(), "question": case.question,
+                 "scope": case.scope, "as_of": case.as_of.isoformat(),
+                 "agent": {"name": keeper.name, "version": keeper.version}, "responses": keeper.responses}
+    return recording, None
+
+
+def record_criteria(cases: dict[str, Case], agent_for: Callable[[], Agent], engine_for: EngineFor, viewer: Viewer,
+                    today: dt.date | None = None) -> list[Recorded]:
+    """Re-record every recording the criteria reader's cases name, once each, and write it over its file."""
+    return record_all(cases, agent_for, engine_for, viewer, today, record_one=_record_criteria)
 
 
 def record_packages(cases: dict[str, Case], agent_for: Callable[[], Agent], engine_for: EngineFor, viewer: Viewer,

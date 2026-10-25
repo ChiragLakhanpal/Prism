@@ -25,6 +25,10 @@ With --packages it re-records the package reader's cases in tests/fixtures/agent
 (ticket 15): the Foundry package reader (after ops/agent/sync.py --agent package_reader) reads each sentence
 with the package form's fields, as the plan-a-package workflow sends it.
 
+With --criteria it re-records the criteria reader's cases in tests/fixtures/agent/criteria.toml instead
+(ticket 31): the Foundry criteria reader (after ops/agent/sync.py --agent criteria_reader) reads each pasted
+text with the item registry's items, as the check-your-criteria workflow sends it.
+
 It needs FOUNDRY_PROJECT_ENDPOINT, DATABRICKS_HOST, DATABRICKS_WAREHOUSE_ID and DATABRICKS_TOKEN in the env
 file, and the az command line signed in.
 """
@@ -41,7 +45,7 @@ from live import REPO, LiveSetupError, foundry_agent, load_env, warehouse_engine
 
 from strata.agent import record  # noqa: E402
 from strata.agent.loop import AgentError  # noqa: E402
-from strata.agent.scripted import PACKAGE_CASES, WRITER_CASES, load_cases  # noqa: E402
+from strata.agent.scripted import CRITERIA_CASES, PACKAGE_CASES, WRITER_CASES, load_cases  # noqa: E402
 from strata.config import load_agent, load_draft_kinds  # noqa: E402
 from strata.dbx import Viewer  # noqa: E402
 from strata.lakehouse.engine import EngineError  # noqa: E402
@@ -56,11 +60,17 @@ def main(argv=None) -> int:
                         help="re-record the draft writers' cases in tests/fixtures/agent/writers.toml instead")
     parser.add_argument("--packages", action="store_true",
                         help="re-record the package reader's cases in tests/fixtures/agent/packages.toml instead")
+    parser.add_argument("--criteria", action="store_true",
+                        help="re-record the criteria reader's cases in tests/fixtures/agent/criteria.toml instead")
     args = parser.parse_args(argv)
     try:
         env = load_env(args.env_file, NEEDS)
         viewer = Viewer(name="the env file's token", token=env["DATABRICKS_TOKEN"])
-        if args.packages:
+        if args.criteria:
+            spec = load_agent("criteria_reader")
+            done = record.record_criteria(load_cases(CRITERIA_CASES), lambda: foundry_agent(env, spec),
+                                          warehouse_engine_for(env), viewer)
+        elif args.packages:
             spec = load_agent("package_reader")
             done = record.record_packages(load_cases(PACKAGE_CASES), lambda: foundry_agent(env, spec),
                                           warehouse_engine_for(env), viewer)

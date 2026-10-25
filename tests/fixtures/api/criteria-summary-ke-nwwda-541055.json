@@ -1,0 +1,22 @@
+{
+  "state": "none_public",
+  "comparables_total": 49,
+  "public_criteria_count": 0,
+  "public": [],
+  "signature": "7f15c5a1ed8d0ad3",
+  "records_through": "2026-10-13",
+  "limits": {
+    "max_chars": 20000,
+    "counter_left": 2000,
+    "rows_per_group": 5,
+    "lessons_per_group": 3,
+    "min_comparables": 20
+  },
+  "comparison": null,
+  "package_run": null,
+  "section_checks": null,
+  "public_sources": [
+    "notices",
+    "awards"
+  ]
+}

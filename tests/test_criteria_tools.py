@@ -181,7 +181,7 @@ def test_each_reason_is_quoted_word_for_word_from_its_award_notice_with_its_noti
     assert rejected["rows"]
     for row in rejected["rows"]:
         assert row["notice_id"] in texts
-        assert f"Reason for Rejection\n{row['reason']['text']}" in texts[row["notice_id"]]
+        assert f"Reason for Rejection\n{row['reason']['quote']}" in texts[row["notice_id"]]
         assert row["evidence_id"].startswith(f"strata.gold.notice:{row['notice_id']}/")
         assert row["reason"]["lang"] == "en"
 
@@ -217,7 +217,7 @@ def test_reasons_are_grouped_by_the_item_they_concerned_with_the_group_covering_
     assert [group["count"] for group in groups] == sorted((group["count"] for group in groups), reverse=True)
     assert all(row["item_key"] in by_key for row in rejected["rows"])
     # A short code such as "Non Responsive" names no item, so it falls under other reasons.
-    assert any(row["reason"]["text"] == "Non Responsive" and row["item_key"] == "other" for row in rejected["rows"])
+    assert any(row["reason"]["quote"] == "Non Responsive" and row["item_key"] == "other" for row in rejected["rows"])
 
 
 # ── compare_criteria ─────────────────────────────────────────────────────

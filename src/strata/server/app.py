@@ -50,6 +50,10 @@
   sentence, list a viewer's packages and the plans they checked, and open or change one package, and GET
   /api/comparables runs find_comparables for a package with no STEP row (ticket 15; src/strata/server/
   packages.py). Each plan check a signed-in viewer opens is recorded for their Packages tab.
+- GET .../criteria, POST .../criteria/run and POST .../criteria/compare under /api/packages/{step_reference}
+  and /api/planned-packages/{package_id} are section 5 of the package workspace, "Check your criteria"
+  (ticket 31; src/strata/server/criteria.py): the collapsed summary, the package-level run and the comparison
+  of a person's pasted qualification criteria, whose text only they read back.
 - GET /api/suppliers/review is the review list for supplier name matching (ticket 19): each candidate
   pair that waits for a person, with both names, countries and contracts, read as the viewer. POST
   /api/suppliers/review records a person's decision on one, merge or no merge with a reason, and the
@@ -116,6 +120,9 @@ from strata.server import drafts as draft_routes
 from strata.server import (baseline, changes, documents, engines, evidence, lookup, projects, summary, suppliers,
                            tracing)
 from strata.server import packages as package_routes
+from strata.server import criteria as criteria_routes
+from strata.criteria.store import CriteriaStore
+from strata.criteria.workflow import Package as CriteriaPackage
 from strata.server.access import Access, NoGroups
 from strata.server.evidence import OpenedLog
 from strata.server.suppliers import SupplierLog
@@ -232,7 +239,9 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                package_form: PackageForm | None = None, new_package_id: Callable[[], str] = package_routes.new_package_id,
                new_save_id: Callable[[], str] = package_routes.new_save_id, lessons: LessonReview | None = None,
                lesson_writer: Callable[[], object | None] = lambda: None,
-               lesson_record: Callable[[], Engine] | None = None) -> FastAPI:
+               lesson_record: Callable[[], Engine] | None = None, criteria: CriteriaStore | None = None,
+               criteria_reader: Callable[[], object | None] | None = None,
+               new_check_id: Callable[[], str] = criteria_routes.new_check_id) -> FastAPI:
     """The app.
 
     engine_for makes the engine for each request's viewer; without it, the environment names one.
@@ -264,6 +273,11 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
     connected; package_thresholds and package_form stand in for config/thresholds.toml and
     config/package_form.toml, so a test can change a threshold or a field; new_package_id and new_save_id are
     the ids packages and their saves get.
+
+    criteria keeps the runs of "Check your criteria", section 5 of the package workspace (src/strata/criteria/
+    store.py), with each person's pasted text readable only by them, written as the app's own service principal;
+    without it, comparing criteria says there is no data service and no run is kept. criteria_reader gives the
+    criteria reader agent, or None when none is connected; new_check_id the ids its runs get (ticket 31).
     """
     engine_for = engine_for or engines.from_environment()
     runner = runner or no_agent
@@ -578,6 +592,27 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                               today=today, now=now, new_package_id=new_package_id, new_save_id=new_save_id,
                               new_run_id=new_run_id, runs=runs, trace_ids=trace_ids, reference=request_reference,
                               heartbeat_seconds=heartbeat_seconds)
+
+    def planned_criteria_package(viewer: Viewer, package_id: str) -> CriteriaPackage | None:
+        """A planned package as section 5 reads it, for the person who made it only: its comparables' criteria,
+        its cost estimate and its description (ticket 31)."""
+        if packages is None:
+            return None
+        saved = packages.get(package_id)
+        if saved is None or saved.author_id != viewer.user_id:
+            return None
+        from strata.packages.workflow import package_view
+
+        shown = package_view(saved, package_form or load_package_form(), package_thresholds or thresholds)
+        values = {entry["key"]: entry["value"] for entry in shown["fields"]}
+        amount = values.get("estimated_amount_usd")
+        return CriteriaPackage(f"planned:{package_id}", None, shown["comparables_query"],
+                               float(amount) if isinstance(amount, int | float) else None, values.get("description"))
+
+    criteria_routes.add_routes(app, engine_for=engine_for, store=criteria, reader_for=criteria_reader or (lambda: None),
+                               planned=planned_criteria_package, thresholds=thresholds, today=today, now=now,
+                               new_check_id=new_check_id, reference=request_reference,
+                               heartbeat_seconds=heartbeat_seconds)
 
     @app.get("/api/packages/{step_reference}")
     def open_package(step_reference: str, asof: dt.date | None = None, viewer: Viewer = Depends(current_viewer)):
