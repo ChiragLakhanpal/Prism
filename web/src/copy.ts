@@ -73,7 +73,8 @@ const REFUSALS = {
   private_uploads: {
     lead:
       "I don't show a borrower's uploaded Procurement Plan or Project Procurement Strategy for Development (PPSD) to anyone outside the team that uploaded it.",
-    instead: "If the upload belongs to your team, you can open it from Drafts.",
+    // Ticket 38: uploads are plan checks, which Packages lists (the 38 brief, 5.11); the lead and why stay word for word.
+    instead: "If the upload belongs to your team, you can open it from Packages.",
     why: "An upload is a private draft. Only the team that uploaded it can open it.",
   },
 };

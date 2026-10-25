@@ -125,3 +125,258 @@ def test_an_officer_uploads_the_fixture_plan_and_gets_its_check_with_the_publish
     assert {row["evidence_id"] for row in result["rows"]} == {f"upload-row:upl-000000000001:{n}" for n in range(1, 10)}
     assert {row["public_from"] for row in result["rows"]} == {"2026-10-22"}
     assert result["upload"]["reading"]["activities"] == 9
+
+
+def marker_file(description: str, method: str = "Request for Bids", *, header: str | None = None) -> bytes:
+    """A one-row-header upload of one new activity, with no reference yet, as the STEP rows CSV lays it out."""
+    head = header or ("Activity Reference No.,Description,Review Type,Method,Market Approach,Estimated Amount (US$),"
+                      "Specific Procurement Notice / Invitation (Planned),Signed Contract (Planned),"
+                      "Contract Completion (Planned)")
+    return (f"{head}\r\n,{description},Post,{method},Open - National,\"450,000.00\",2026-11-02,2027-02-01,"
+            "2027-08-01\r\n").encode()
+
+
+# ── Nothing of it reaches anyone else ────────────────────────────────────
+
+def test_a_teammate_opens_the_upload_and_another_team_or_staff_get_the_answer_for_one_that_does_not_exist(make):
+    app = make()
+    upload_id = upload(app).json()["upload_id"]
+
+    mine = call(app, "GET", f"/api/uploads/{upload_id}", BARAKA)
+    assert mine.status_code == 200 and mine.json()["counts"]["activities"] == 9
+    assert mine.json()["upload"]["uploader"] == {"name": "Amina Example", "you": False}
+    missing = call(app, "GET", "/api/uploads/upl-999999999999", CHEGE)
+    for outsider in (CHEGE, DANA):
+        found = call(app, "GET", f"/api/uploads/{upload_id}", outsider)
+        assert (found.status_code, found.json()) == (404, missing.json()) == (404, {"code": "unknown_upload",
+                                                                                  "error": "unknown_upload"})
+        assert call(app, "GET", "/api/uploads", outsider).json()["uploads"] == []
+        assert call(app, "GET", f"/api/uploads/{upload_id}/rows/1", outsider).status_code == 404
+        evidence = call(app, "GET", "/api/evidence", outsider, params={"id": f"upload-row:{upload_id}:1"})
+        assert (evidence.status_code, evidence.json()) == (404, {"code": "unknown_evidence"})
+    assert [row["upload_id"] for row in call(app, "GET", "/api/uploads", BARAKA).json()["uploads"]] == [upload_id]
+    assert call(app, "GET", "/api/evidence", BARAKA, params={"id": f"upload-row:{upload_id}:1"}).status_code == 200
+    # A preview never shows any team's upload, the previewing person's own team's included.
+    assert call(app, "GET", f"/api/uploads/{upload_id}", AMINA, params={"view": "piu"}).status_code == 404
+    assert call(app, "GET", "/api/uploads", AMINA, params={"view": "piu"}).json()["uploads"] == []
+
+
+def test_the_tools_read_an_upload_only_through_the_team_rule(make, fixture_db, state_db):
+    """check_plan called by name through the registry: with the server's reader for team B, or with none, as the
+    agent calls it, the upload is an unknown upload with no rows."""
+    from strata.dbx import Viewer, viewer_from_headers
+    from strata.server.uploads import reader
+    from strata.tools import registry
+
+    app = make()
+    upload_id = upload(app).json()["upload_id"]
+    store, access = UploadStore(lambda: DuckDBEngine.open(state_db)), Access(roles(), StaticGroups(GROUPS))
+    arguments = {"project_id": "P156634", "implementing_agency": NWWDA, "upload_id": upload_id}
+    with DuckDBEngine.open(fixture_db, read_only=True) as engine:
+        for given in (reader(store, access, viewer_from_headers(CHEGE)), reader(store, access, viewer_from_headers(DANA)),
+                      None):
+            result = registry.call("check_plan", arguments,
+                                   registry.Context(engine, Viewer(user_id="5033@1984"), as_of=TODAY, uploads=given))
+            assert result["abstention"] == {"reason": "unknown_upload"} and result["rows"] == []
+            assert result["project"] is None
+        mine = registry.call("check_plan", arguments, registry.Context(
+            engine, viewer_from_headers(BARAKA), as_of=TODAY, uploads=reader(store, access, viewer_from_headers(BARAKA))))
+    assert len(mine["rows"]) == 9
+
+
+def test_a_question_about_the_upload_from_another_team_is_refused_and_returns_nothing_of_it(make, fixture_db, state_db):
+    """The must-refuse case at seam 3, asked by an officer on team B after team A kept its upload: the scripted agent
+    answers with the private_uploads refusal, and neither the stream nor anything a tool gave the agent holds the
+    upload's id, its file or any of its Descriptions."""
+    from strata.agent.loop import answer_runner
+    from strata.agent.scripted import ScriptedAgent, ScriptedJudge, app_engine_for, load_cases
+    from strata.harness.sse import events
+
+    kept = upload(make(), name="nwwda-draft-plan.csv").json()
+    case = load_cases()["refuses-private-uploads"]
+    agents = []
+
+    @contextmanager
+    def engine_for(viewer):
+        with DuckDBEngine.open(fixture_db, read_only=True) as engine:
+            yield engine
+
+    def agent_for(turn):
+        agents.append(ScriptedAgent(case))
+        return agents[-1]
+
+    app = create_app(runner=answer_runner(agent_for, engine_for, today=lambda: TODAY),
+                     engine_for=app_engine_for(case, engine_for), judge=ScriptedJudge(case), new_run_id=lambda: "run-1",
+                     uploads=UploadStore(lambda: DuckDBEngine.open(state_db)), access=Access(roles(), StaticGroups(GROUPS)))
+    answer = call(app, "POST", "/api/ask", CHEGE, json={"question": case.question, "scope": case.scope,
+                                                        "asof": case.as_of.isoformat()})
+    parsed = events(answer.text)
+
+    assert [data for kind, data in parsed if kind == "refusal"] == [{"key": "private_uploads", "partial": False}]
+    assert [data for kind, data in parsed if kind == "sentence"] == []
+    seen = answer.text + json.dumps(agents[0].received, ensure_ascii=False)
+    private = [kept["upload_id"], "nwwda-draft-plan.csv"] + [row["description"] for row in kept["rows"]]
+    assert [value for value in private if value in seen] == []
+
+
+def test_no_upload_text_ever_reaches_the_shared_search_index(fixture_db, tmp_path):
+    """The upload is kept in the same catalog as the search index's source table, strata.gold.passage. The search
+    over that catalog finds none of it, the only table that holds its words is strata.ops.upload_rows, and no code
+    that builds the passages or the index reads an upload's activities."""
+    import shutil
+
+    from strata.dbx import Viewer
+    from strata.knowledge.search import SOURCE_TABLE
+    from strata.tools import registry
+
+    shared = tmp_path / "catalog.duckdb"
+    shutil.copy(fixture_db, shared)
+    marker = "Rehabilitation of the Zebrafinch Hill pumping station"
+
+    @contextmanager
+    def reading(viewer):
+        with DuckDBEngine.open(shared, read_only=True) as engine:
+            yield engine
+
+    app = create_app(engine_for=reading, uploads=UploadStore(lambda: DuckDBEngine.open(shared)),
+                     access=Access(roles(), StaticGroups(GROUPS)), today=lambda: TODAY,
+                     now=lambda: dt.datetime(2026, 10, 22, 9, 30, tzinfo=dt.UTC))
+    assert upload(app, data=marker_file(marker), name="zebrafinch.csv").status_code == 200
+
+    with DuckDBEngine.open(shared, read_only=True) as engine:
+        holding = []
+        tables = engine.run("SELECT table_schema, table_name FROM system.information_schema.tables "
+                            "WHERE table_catalog = 'strata' AND table_type = 'BASE TABLE'")
+        for schema, table in tables.rows:
+            columns = engine.run("SELECT column_name FROM system.information_schema.columns WHERE table_catalog = "
+                                 "'strata' AND table_schema = :schema AND table_name = :table AND data_type = 'VARCHAR'",
+                                 {"schema": schema, "table": table})
+            for (column,) in columns.rows:
+                hits = engine.run(f"SELECT count(*) FROM strata.`{schema}`.`{table}` "  # sql-lint: names only
+                                  f"WHERE `{column}` LIKE :marker", {"marker": "%Zebrafinch%"})
+                if hits.rows[0][0]:
+                    holding.append(f"strata.{schema}.{table}")
+        found = registry.call("search_passages", {"query": marker},
+                              registry.Context(engine, Viewer(user_id="5033@1984"), as_of=TODAY))
+        assert [row for row in found["rows"] if "Zebrafinch" in json.dumps(row)] == []
+    assert sorted(set(holding)) == ["strata.ops.upload_rows"] and SOURCE_TABLE not in holding
+    readers = [path.relative_to(ROOT).as_posix() for path in (ROOT / "src" / "strata").rglob("*")
+               if path.suffix in (".py", ".sql") and "upload_rows" in path.read_text()]
+    assert sorted(readers) == ["src/strata/lakehouse/masks.py", "src/strata/lakehouse/tables/ops/upload_rows.sql",
+                               "src/strata/lakehouse/tables/ops/uploads.sql",
+                               "src/strata/uploads/sql/remove_rows.sql", "src/strata/uploads/sql/rows.sql",
+                               "src/strata/uploads/store.py"]
+
+
+# ── Only an officer uploads, and a reading that fails keeps nothing ──────
+
+def kept_rows(state_db) -> tuple[int, int]:
+    with DuckDBEngine.open(state_db, read_only=True) as engine:
+        return (engine.run("SELECT count(*) FROM strata.ops.uploads").rows[0][0],
+                engine.run("SELECT count(*) FROM strata.ops.upload_rows").rows[0][0])
+
+
+def test_only_an_officer_of_the_projects_agency_uploads_and_a_preview_uploads_nothing(make, state_db):
+    app = make()
+
+    assert upload(app, DANA).json()["code"] == "not_agency_team"
+    assert upload(app, CHEGE, project="P130164").json()["code"] == "unknown_project"
+    held = upload(app, AMINA, view="piu")
+    assert (held.status_code, held.json()["code"], held.json()["copy_key"]) == (403, "preview", "upload.hold.preview")
+    assert kept_rows(state_db) == (0, 0)
+    form = call(app, "GET", "/api/uploads/form", DANA).json()
+    assert (form["officer"], form["agency"]) == (False, None)
+    form = call(app, "GET", "/api/uploads/form", AMINA).json()
+    assert form["agency"] == {"name": NWWDA, "agency_id": "northern-water-works-development-agency"}
+    assert [project["project_id"] for project in form["projects"]] == ["P156634"]
+    assert form["projects"][0]["latest_plan"]["plan_date"] == "2026-10-09"
+    assert form["columns"]["needed"] == ["Activity Reference No. / Description", "Method"]
+
+
+@pytest.mark.parametrize("name, data, code, details", [
+    ("plan.pdf", b"%PDF-1.7", "type", {"extension": ".pdf"}),
+    ("plan.csv", b"", "empty", {}),
+    ("plan.xlsx", b"not a zip at all", "unreadable", {}),
+    ("plan.csv", b"Title,Notes\r\nSomething,else\r\n", "no_table", {}),
+    ("plan.csv", b"Activity Reference No. / Description,Review Type\r\n / New works,Post\r\n", "missing_columns",
+     {"missing": ["Method"]}),
+    ("plan.csv", b"Activity Reference No. / Description,Method\r\n", "no_rows", {}),
+])
+def test_a_file_that_cannot_be_read_says_why_and_keeps_nothing(make, state_db, name, data, code, details):
+    answer = upload(make(), data=data, name=name)
+
+    assert answer.status_code == 422
+    assert {key: answer.json()[key] for key in ("code", "kept", *details)} == {"code": code, "kept": False, **details}
+    assert kept_rows(state_db) == (0, 0)
+
+
+def test_a_save_that_fails_part_way_leaves_nothing_a_reader_can_find(make, state_db):
+    from strata.lakehouse.engine import EngineError
+
+    class Failing:
+        """The app's engine, refusing the upload's own row after its activities were written."""
+
+        def __init__(self):
+            self.engine = DuckDBEngine.open(state_db)
+
+        def insert_rows(self, table, columns, rows):
+            if table == "strata.ops.uploads":
+                raise EngineError("the warehouse dropped the connection")
+            return self.engine.insert_rows(table, columns, rows)
+
+        def run(self, sql, params=None):
+            return self.engine.run(sql, params)
+
+        def close(self):
+            self.engine.close()
+
+    answer = upload(make(store=UploadStore(Failing)))
+
+    assert (answer.status_code, answer.json()["code"], answer.json()["kept"]) == (503, "service", False)
+    assert kept_rows(state_db) == (0, 0)
+
+
+def test_an_excel_file_with_one_header_row_is_read_like_the_csv(make):
+    """An .xlsx upload with each step column as "{step} (Planned)", read by the same registry, with an unreadable date
+    noted on its row and a column Strata does not use listed."""
+    header = ["Activity Reference No.", "Description", "Method", "Market Approach", "Estimated Amount (US$)",
+              "Signed Contract (Planned)", "Contract Completion (Planned)", "Remarks"]
+    rows = [header, ["KE-NWWDA-541055-CW-RFB", "Equipping of boreholes, lot 1", "Request for Bids", "Open - National",
+                     1230000, 46136, "soon"]]
+    answer = upload(make(), data=xlsx(rows), name="plan.xlsx")
+
+    assert answer.status_code == 200, answer.text
+    [row] = answer.json()["rows"]
+    assert (row["activity_reference_no"], row["estimated_amount_usd"], row["listed"]) == (
+        "KE-NWWDA-541055-CW-RFB", "1230000.00", True)
+    notes = [reason for mark in row["marks"] for reason in mark["reasons"] if reason["code"] == "unread_date"]
+    assert notes == [{"code": "unread_date", "mark": "data_note", "column": "Contract Completion (Planned)",
+                      "value": "soon", "evidence_ids": [row["evidence_id"]]}]
+    assert answer.json()["upload"]["reading"]["unused"] == ["Remarks"]
+
+
+def xlsx(rows: list[list]) -> bytes:
+    """A one-sheet Excel file, as the standard library can write one: strings inline, numbers as numbers."""
+    import io
+    import zipfile
+    from xml.sax.saxutils import escape
+
+    def cell(column: int, value) -> str:
+        if isinstance(value, int | float):
+            return f'<c r="{chr(65 + column)}1" t="n"><v>{value}</v></c>'
+        return f'<c r="{chr(65 + column)}1" t="inlineStr"><is><t>{escape(str(value))}</t></is></c>'
+
+    sheet = "".join(f'<row r="{n}">{"".join(cell(i, value) for i, value in enumerate(row))}</row>'
+                    for n, row in enumerate(rows, 1))
+    main = "http://schemas.openxmlformats.org/spreadsheetml/2006/main"
+    rels = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
+    out = io.BytesIO()
+    with zipfile.ZipFile(out, "w") as book:
+        book.writestr("[Content_Types].xml", '<?xml version="1.0"?><Types xmlns="http://schemas.openxmlformats.org/'
+                      'package/2006/content-types"/>')
+        book.writestr("xl/workbook.xml", f'<workbook xmlns="{main}" xmlns:r="{rels}"><sheets>'
+                      '<sheet name="WORKS" sheetId="1" r:id="rId1"/></sheets></workbook>')
+        book.writestr("xl/_rels/workbook.xml.rels", '<Relationships xmlns="http://schemas.openxmlformats.org/package/'
+                      '2006/relationships"><Relationship Id="rId1" Target="worksheets/sheet1.xml"/></Relationships>')
+        book.writestr("xl/worksheets/sheet1.xml", f'<worksheet xmlns="{main}"><sheetData>{sheet}</sheetData></worksheet>')
+    return out.getvalue()
