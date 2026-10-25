@@ -3,7 +3,7 @@
 // and its purpose, shows the empty state that says what will appear there, and sits in the frame
 // with the footer. Unknown addresses show a not-found page in the same frame. The words are the
 // 06 design brief's, copied here so the test checks the copy file against an independent source.
-import AxeBuilder from "@axe-core/playwright";
+import { scan } from "./axe";
 import type { Page } from "@playwright/test";
 import { footerSentence } from "./design-md";
 import { expect, mockApi, mockShell, recorded, test } from "./mocked";
@@ -238,7 +238,7 @@ for (const route of [...ROUTES, ...NOT_FOUND]) {
     await expect(page.getByRole("main")).toBeFocused();
 
     const check = async () =>
-      (await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"]).analyze()).violations.map(
+      (await scan(page)).violations.map(
         (v) => `${v.id}: ${v.nodes.map((node) => node.target.join(" ")).join(", ")}`,
       );
     expect(await check(), "1440 px").toEqual([]);

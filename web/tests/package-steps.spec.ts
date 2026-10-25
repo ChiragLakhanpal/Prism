@@ -7,14 +7,13 @@
 // from STEP", the full STEP name from STEP's export (both copied in tests/test_step_registry.py), the counts and dates
 // from tests/ground_truth/values.toml's [step_dates] (25 comparables, ran longest in 15 of 25, the cautious signing
 // on August 1, 2021 and the middle one on July 11, 2021), and the sentences from the 27 brief.
-import AxeBuilder from "@axe-core/playwright";
+import { scan } from "./axe";
 import type { Locator, Page, Request } from "@playwright/test";
 import { expect, recorded, test } from "./mocked";
 
 const REF = "KE-HAND-900000-CW-RFB";
 const API = `/api/packages/${REF}`;
 const PLANNED = "/api/planned-packages/pkg-000000000001";
-const WCAG_22_AA = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 const GOODS = ["Bid invitation (SPN)", "Bidding document issued", "Bid opening", "Bid evaluation report", "Contract signed", "Contract completed"];
 
 type Answer = { status?: number; body: string };
@@ -62,7 +61,7 @@ const text = async (locator: Locator) => (await locator.innerText()).replace(/\s
 
 async function axe(page: Page) {
   await page.waitForFunction(() => document.getAnimations().every((animation) => animation.playState !== "running"));
-  const results = await new AxeBuilder({ page }).include("section#planned-dates").withTags(WCAG_22_AA).analyze();
+  const results = await scan(page, "section#planned-dates");
   return results.violations.map((v) => `${v.id}: ${v.nodes.map((node) => node.target.join(" ")).join(", ")}`);
 }
 

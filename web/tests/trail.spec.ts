@@ -4,12 +4,11 @@
 // (plan-229129-estimated, notice-229129-invitation, award-229129-signed, award-229129-amount,
 // award-notice-229129-published, [award_notice_bids], award-7431-signed, icr-date and icr-months-after-7431),
 // copied here so the screens are checked against an independent source.
-import AxeBuilder from "@axe-core/playwright";
 import type { Page, Request } from "@playwright/test";
+import { scan } from "./axe";
 import { expect, mockApi, recorded, test } from "./mocked";
 import { ICR_54, KENYA, SHOWCASE, trailApi } from "./trail-api";
 
-const WCAG_22_AA = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 type Answer = { status?: number; body: string };
 const KENYA_PATH = `/projects/P156634/packages/${KENYA}`;
 const SHOWCASE_PATH = `/projects/P130164/packages/${SHOWCASE}`;
@@ -24,7 +23,7 @@ async function open(page: Page, path: string, width = 1440, extra: Record<string
 }
 
 async function axe(page: Page) {
-  const results = await new AxeBuilder({ page }).withTags(WCAG_22_AA).analyze();
+  const results = await scan(page);
   return results.violations.map((v) => `${v.id}: ${v.nodes.map((node) => node.target.join(" ")).join(", ")}`);
 }
 

@@ -1,11 +1,10 @@
 // Lessons > Passage reports and Lessons > Judging (ticket 32) at seam 4, against the answers the server wrote on the
 // fixture (tests/record_retrieval_api.py), which tests/test_retrieval_recordings.py checks the server still gives.
 // The words are the ticket's and the 32 design brief's, copied here so the test checks the copy file.
-import AxeBuilder from "@axe-core/playwright";
+import { scan } from "./axe";
 import type { Page } from "@playwright/test";
 import { expect, recorded, recordingFor, test } from "./mocked";
 
-const WCAG_22_AA = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 type Answer = { status?: number; body: string };
 
 async function file(name: string): Promise<Answer> {
@@ -35,7 +34,7 @@ async function serve(page: Page, answers: Record<string, Answer>, width = 1440) 
 
 async function axe(page: Page) {
   await page.waitForFunction(() => document.getAnimations().every((a) => a.playState !== "running" || a.effect?.getTiming().iterations === Infinity));
-  const results = await new AxeBuilder({ page }).withTags(WCAG_22_AA).analyze();
+  const results = await scan(page);
   return results.violations.map((v) => `${v.id}: ${v.nodes.map((node) => node.target.join(" ")).join(", ")}`);
 }
 
