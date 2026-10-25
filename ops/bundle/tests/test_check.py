@@ -5,6 +5,7 @@ Fakes stand in for the workspace. Their job runs the real tasks on DuckDB, and t
 DuckDB, so the checks read real rows. docs/workspace-catchup.md runs each check for real.
 """
 
+import contextlib
 import functools
 import re
 import shutil
@@ -25,11 +26,15 @@ from strata.lakehouse.engine import DuckDBEngine, Result  # noqa: E402
 FIXTURE_DB = Path(__file__).resolve().parents[3] / "data" / "out" / "fixture.duckdb"
 
 
+def refused(source, engine):
+    raise RuntimeError("HTTP Error 417: Expectation Failed")
+
+
 class FakeWorkspace:
-    def __init__(self, order=None, state="SUCCESS", jobs=None, warehouse=None):
+    def __init__(self, order=None, state="SUCCESS", jobs=None, warehouse=None, failed_first=()):
         self.duckdb = DuckDBEngine.open()
         catalog.build(self.duckdb)
-        self.order, self.state = order, state
+        self.order, self.state, self.failed_first = order, state, failed_first
         self.jobs = jobs or {}
         self.warehouse = warehouse
 
@@ -39,6 +44,9 @@ class FakeWorkspace:
     def run_job(self, name):
         run_id = "880001"
         for key in self.order or [task.key for task in nightly.job_tasks()]:
+            if key in self.failed_first:  # Databricks tries a failed task again; each try writes a row
+                with contextlib.suppress(RuntimeError):
+                    nightly.run_task(self.duckdb, key, run_id, fetch=refused)
             nightly.run_task(self.duckdb, key, run_id, fetch=lambda source, engine: ())  # no pages to fetch
         return run_id, self.state, "https://dbc-1.cloud.databricks.com/jobs/1/runs/880001"
 
@@ -82,6 +90,24 @@ def test_a_run_whose_rows_come_out_of_order_fails_and_names_the_first_difference
 
     assert code == 1
     assert "Row 2 is parse_and_embed, where the bundle's order has bronze_to_gold." in out
+
+
+def test_a_task_databricks_tried_again_counts_by_its_last_try(capsys):
+    """Run 626310583145231 on October 24, 2026: fetch_by_watermark failed on HTTP 417 from a World Bank host,
+    Databricks tried it again, and the second try succeeded. Each try writes a row to pipeline_runs."""
+    code, out = checked(["job-run"], FakeWorkspace(failed_first=("fetch_by_watermark",)), capsys)
+
+    assert code == 0
+    assert "fetch_by_watermark was tried 2 times; the first 1 failed and the last succeeded." in out
+    assert "in the bundle's order, counting each task by its last try." in out
+
+
+def test_a_task_whose_last_try_failed_still_fails_the_run(capsys):
+    code, out = checked(["job-run"], FakeWorkspace(order=["fetch_by_watermark"] * 2 + [task.key for task in nightly.job_tasks()][1:],
+                                                 failed_first=()), capsys)
+
+    assert code == 1
+    assert "fetch_by_watermark has 2 rows, and its try before the last one succeeded." in out
 
 
 def test_a_run_that_skipped_a_task_fails(capsys):
