@@ -574,30 +574,6 @@ def fresh_space():
     adapter._space.cache_clear()
 
 
-def test_in_the_deployed_app_ask_genie_reads_no_benchmark_file_or_ground_truth(engine, monkeypatch, fresh_space):
-    """The App holds src/strata, config and web/dist (ops/app/deploy_app.py, package()), not evals/ or tests/.
-    Only the fixture's stand-in for Genie answers from the benchmark's ground-truth SQL."""
-    from strata.evals import benchmark
-    from strata.lakehouse import ground_truth
-
-    def not_in_the_app(*args, **kwargs):
-        raise FileNotFoundError("The App does not hold evals/benchmark.yaml or tests/ground_truth/.")
-
-    monkeypatch.setattr(benchmark, "load", not_in_the_app)
-    monkeypatch.setattr(ground_truth, "read", not_in_the_app)
-    clock = Clock()
-    monkeypatch.setenv("GENIE_SPACE_ID", SPACE)
-    monkeypatch.setattr(genie_client.time, "sleep", clock.sleep)
-    monkeypatch.setattr(genie_client.time, "monotonic", clock)
-
-    result = registry.call("ask_genie", {"question": "How many contracts were signed each fiscal year?"},
-                           registry.Context(engine=ViewerEngine(FakeWorkspace(clock), engine), viewer=ANA,
-                                            as_of=dt.date(2026, 10, 23)))
-
-    assert result["abstention"] is None
-    assert [row["values"]["contracts"] for row in result["rows"]] == [69, 41, 13]
-
-
 def test_with_no_genie_space_named_ask_genie_says_genie_is_unavailable(engine, monkeypatch):
     monkeypatch.delenv("GENIE_SPACE_ID", raising=False)
 

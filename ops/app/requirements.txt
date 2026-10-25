@@ -9,6 +9,8 @@ fpdf2==2.8.9
 defusedxml==0.7.1
 fonttools==4.67.0
 pillow==13.0.0
+# ask_genie reads the metric views' YAML bodies to name the gold tables behind its space (ticket 33).
+pyyaml==6.0.3
 # What those three install, pinned at their uv.lock versions too, so the App runs the versions
 # the gate tested (uv export --frozen --no-dev --no-hashes --no-emit-project lists them).
 annotated-doc==0.0.5

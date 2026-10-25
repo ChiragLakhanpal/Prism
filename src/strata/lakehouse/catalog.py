@@ -219,8 +219,12 @@ def metric_view_definitions(folder: Path = METRIC_VIEWS) -> list[TableDefinition
     """Every metric view in folder, one YAML body per file at metric_views/gold/<view>.yaml, checked against the
     rules fairshare's docs/limits.md gives (ticket 33's notes): no semicolon in the body, no join named like a
     dimension, and a source that is a gold table. Databricks only: DuckDB has no metric views, so build() never runs
-    them and the gate checks these rules instead."""
-    gold = {definition.full_name for definition in table_definitions() if definition.schema == "gold"}
+    them and the gate checks these rules instead.
+
+    The gold tables are read from tables/gold's file names, not through table_definitions(), which reads the bundle:
+    ask_genie reads these definitions on every question, and the App holds src/strata but no databricks.yml or
+    bundle/ (ops/app/deploy_app.py, package())."""
+    gold = {f"{CATALOG}.gold.{path.stem}" for path in sorted((TABLES / "gold").glob("*.sql"))}
     found = []
     for path in sorted(Path(folder).glob("*/*.yaml")):
         schema = path.parent.name

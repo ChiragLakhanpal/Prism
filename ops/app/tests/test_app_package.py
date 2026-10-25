@@ -158,3 +158,38 @@ def test_the_uploaded_folder_starts_with_app_yaml_s_settings_and_serves_the_web_
     assert page == (200, "<!doctype html><title>Strata</title>")
     # No viewer was forwarded, so the stamp says so instead of reading anything.
     assert stamp == (401, '{"code":"no_identity"}')
+
+
+ASK_GENIE_SPACE = """
+import sys
+sys.path.insert(0, sys.argv[3])
+""" + BLOCKER.split("import strata.server.__main__")[0] + """
+import strata
+from strata.tools import ask_genie
+space, tables = ask_genie._space()
+print(strata.__file__)
+print(" ".join(tables))
+"""
+
+
+def test_in_the_uploaded_folder_ask_genie_reads_its_space_and_the_tables_behind_it(tmp_path):
+    # The App holds only what package() uploads: no databricks.yml, no bundle/, no evals/ and no tests/
+    # (ticket 33, round 3). ask_genie reads its space and the gold tables behind its metric views on every
+    # question, so it must find them in that folder, with only the lean requirements' packages.
+    dist = tmp_path / "dist"
+    dist.mkdir()
+    (dist / "index.html").write_text("<!doctype html><title>Strata</title>")
+    folder = tmp_path / "strata-app"
+    for name, content in deploy_app.package(dist).items():
+        (folder / name).parent.mkdir(parents=True, exist_ok=True)
+        (folder / name).write_bytes(content)
+    allowed = closure(requirements(), locked())
+
+    done = subprocess.run([sys.executable, "-c", ASK_GENIE_SPACE, json.dumps(sorted(allowed)), str(dist),
+                           str(folder / "src")], cwd=folder, capture_output=True, text=True, timeout=60)
+
+    assert done.returncode == 0, done.stderr[-2000:]
+    where, tables = done.stdout.strip().splitlines()
+    assert Path(where).is_relative_to(folder)
+    assert tables.split() == ["strata.gold.contract", "strata.gold.contract_supplier", "strata.gold.country",
+                              "strata.gold.package"]
