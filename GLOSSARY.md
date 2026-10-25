@@ -144,6 +144,18 @@ _Avoid_: Appeal, revision request, undo
 A sample of each quarter's lesson decisions, read by reviewers in another region, who agree or disagree. A disagreement starts a re-check where the lesson was decided.
 _Avoid_: Audit, second review, spot check (in user-facing copy)
 
+**Passage report**:
+A person's mark that a passage was the wrong one, or not useful, for the question they asked, sent from the evidence drawer with an optional reason. It changes nothing in how Strata ranks passages until a passage reviewer decides.
+_Avoid_: Flag, feedback flag
+
+**Passage reviewer**:
+A person the roles file names to decide whether a passage people reported is ranked lower for a kind of question. A passage reviewer never decides on a report they sent.
+_Avoid_: Moderator, approver
+
+**Query judge**:
+One of two people who grade, each on their own, the passages pooled for a query in the labeled set Strata measures search on.
+_Avoid_: Rater, annotator (in user-facing copy)
+
 **Edition (of the procurement rules)**:
 The version of the World Bank's procurement rules a project followed, such as the January 2011 Guidelines or a numbered edition of the Procurement Regulations, read from its appraisal document.
 _Avoid_: Policy version, ruleset

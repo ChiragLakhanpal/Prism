@@ -167,6 +167,10 @@
   }
 }
 
+/* A device that can hover (DESIGN.md section 5, Key hint; the 32 brief, section 3.2): key hints show from 768 px
+   only there, since a phone or a tablet with no keyboard has no use for them. */
+@custom-variant can-hover (@media (hover: hover));
+
 /* A control inside a sticky part shifts its scroll margin by the part's scroll padding, so the Tab key does
    not scroll the page to bring it out of that padding (DESIGN.md section 10). The pages set --sticky-top
    and --sticky-bottom on html only while their header or bar sticks. */

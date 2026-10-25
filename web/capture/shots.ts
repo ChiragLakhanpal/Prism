@@ -1166,6 +1166,53 @@ const CHECK_SHOTS: Shot[] = [
 
 const pages: Shot[] = Object.keys(galleryCopy.pages).map((slug) => ({ name: slug, path: `/gallery/${slug}` }));
 
+// Ticket 32: the evidence drawer's feedback row, opened from the showcase answer's first marker, in the states the 32
+// brief's section 12 lists, and Lessons > Passage reports and Lessons > Judging. The answers are the server's own,
+// recorded on the fixture by tests/record_retrieval_api.py. The other states are in the gallery (/gallery/retrieval
+// and /gallery/judging), from the same answers.
+const FEEDBACK_API: Shot["api"] = {
+  "/api/feedback": { recorded: "feedback-sent.json" },
+};
+const openRow = then(askInBox(QUESTION), click(marker), async (page) => {
+  await page.locator("[data-feedback-row]").scrollIntoViewIfNeeded();
+  await page.waitForTimeout(250);
+});
+const rowShot = (name: string, act: (page: Page) => Promise<void>, rest: Partial<Shot> = {}) =>
+  answerShot(`feedback--${name}`, "ask-p130164-rebidding.sse", { full: false, ...rest, act, api: { ...FEEDBACK_API, ...rest.api } });
+const retrievalShot = (name: string, path: string, me: string, answers: Shot["api"], rest: Partial<Shot> = {}) =>
+  app(`retrieval--${name}`, path, {}, { full: true, ...rest, api: { ...app(name, path).api, "/api/lessons/me": { recorded: me }, ...answers } });
+const GROUP = "/lessons/reports/grp-6fa04e510789";
+const QUERY_PATH = "/lessons/judging/nq-rural-works-delays";
+const RETRIEVAL_SHOTS: Shot[] = [
+  rowShot("idle", openRow),
+  rowShot("chosen", then(openRow, click("[data-feedback-row] [data-report-kind=wrong_passage]"))),
+  rowShot("typed", then(openRow, click("[data-feedback-row] [data-report-kind=not_useful]"), type("[data-feedback-row] textarea", "It is about estimates in general."))),
+  rowShot("sent", then(openRow, click("[data-feedback-row] [data-report-kind=wrong_passage]"), type("[data-feedback-row] textarea", "It is about estimates in general."), click("[data-send-report]"))),
+  rowShot("hover-kind", then(openRow, hover("[data-feedback-row] [data-report-kind=wrong_passage]")), { widths: WIDE }),
+  rowShot("focus-kind", then(openRow, focus("[data-feedback-row] [data-report-kind=not_useful]"))),
+  rowShot("preview", openRow, { path: "/projects/P130164?view=piu" }),
+  retrievalShot("frame-reviewer", "/lessons/reports", "retrieval-me-passage-reviewer.json", { "/api/passage-reports": { recorded: "passage-reports-empty.json" } }),
+  retrievalShot("frame-judge", "/lessons/judging", "retrieval-me-judge.json", { "/api/judging/queries": { recorded: "judging-queries-start.json" } }),
+  retrievalShot("reports", "/lessons/reports", "retrieval-me-both.json", { "/api/passage-reports": { recorded: "passage-reports-own-report.json" } }),
+  retrievalShot("reports-decided", "/lessons/reports", "retrieval-me-passage-reviewer.json", { "/api/passage-reports": { recorded: "passage-reports-decided.json" } }),
+  retrievalShot("reports-audit", "/lessons/reports", "retrieval-me-passage-reviewer.json", { "/api/passage-reports": { recorded: "passage-reports-audit.json" } }),
+  retrievalShot("reports-loading", "/lessons/reports", "retrieval-me-passage-reviewer.json", {}, { pending: ["/api/passage-reports"] }),
+  retrievalShot("reports-no-access", "/lessons/reports", "lessons-me-viewer.json", { "/api/passage-reports": refusal("passage-reports-no-access.json") }),
+  retrievalShot("report", GROUP, "retrieval-me-passage-reviewer.json", { "/api/passage-reports/grp-6fa04e510789": { recorded: "passage-report.json" } }),
+  retrievalShot("report-decided", GROUP, "retrieval-me-passage-reviewer.json", { [`/api/passage-reports/grp-6fa04e510789`]: { recorded: "passage-report-decided.json" } }),
+  retrievalShot("report-audit", GROUP, "retrieval-me-passage-reviewer.json", { [`/api/passage-reports/grp-6fa04e510789`]: { recorded: "passage-report-audit.json" } }),
+  retrievalShot("report-not-found", "/lessons/reports/grp-000000000000", "retrieval-me-passage-reviewer.json", { "/api/passage-reports/grp-000000000000": refusal("passage-report-not-found.json") }),
+  retrievalShot("judging", "/lessons/judging", "retrieval-me-judge.json", { "/api/judging/queries": { recorded: "judging-queries.json" } }),
+  retrievalShot("judging-both", "/lessons/judging?show=finished_by_both", "retrieval-me-judge.json", { "/api/judging/queries": { recorded: "judging-queries-both.json" } }),
+  retrievalShot("judging-no-access", "/lessons/judging", "lessons-me-viewer.json", { "/api/judging/queries": refusal("judging-no-access.json") }),
+  retrievalShot("query", QUERY_PATH, "retrieval-me-judge.json", { "/api/judging/queries/nq-rural-works-delays": { recorded: "judging-query.json" } }, { full: false }),
+  retrievalShot("query-progress", QUERY_PATH, "retrieval-me-judge.json", { "/api/judging/queries/nq-rural-works-delays": { recorded: "judging-query-progress.json" } }, { full: false, act: click("[data-passage-map] button") }),
+  retrievalShot("query-locked", "/lessons/judging/nq-water-works-readiness", "retrieval-me-judge.json", { "/api/judging/queries/nq-water-works-readiness": { recorded: "judging-query-locked.json" } }),
+  retrievalShot("query-not-found", "/lessons/judging/nq-nothing", "retrieval-me-judge.json", { "/api/judging/queries/nq-nothing": refusal("judging-query-not-found.json") }),
+  retrievalShot("query-focus-grade", QUERY_PATH, "retrieval-me-judge.json", { "/api/judging/queries/nq-rural-works-delays": { recorded: "judging-query.json" } }, { full: false, act: focus("[data-grade-bar] [data-grade=partly]") }),
+  retrievalShot("query-320", QUERY_PATH, "retrieval-me-judge.json", { "/api/judging/queries/nq-rural-works-delays": { recorded: "judging-query.json" } }, { widths: [320] }),
+];
+
 export const SHOTS: Shot[] = [
   { name: "index", path: "/gallery" },
   ...pages,
@@ -1313,4 +1360,5 @@ export const SHOTS: Shot[] = [
   ...PACKAGE_SHOTS,
   ...PLANNED_SHOTS,
   ...RISK_SHOTS,
+  ...RETRIEVAL_SHOTS,
 ];

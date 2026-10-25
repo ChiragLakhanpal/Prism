@@ -124,6 +124,16 @@ export const NON_COPY_PROPS = new Set([
   "d",
   // NoteSentences' type size: "small" in a draft, "body" in a lesson review's summary (ticket 29).
   "textSize",
+  // The feedback row (ticket 32): the report kind a sample has chosen ("wrong_passage" or "not_useful"), why a
+  // withdrawal failed ("failed" or "decided"), the server's reason code for no row ("preview"), and the loop's
+  // mode ("pilot" or "scale"). Each is a code the copy file turns into words.
+  "chosen",
+  "withdrawFailed",
+  "why_not",
+  "mode",
+  // The grade bar's two grades once a query is locked (ticket 32): grade codes such as "partly".
+  "mine",
+  "theirs",
 ]);
 
 // A prop or key that ends in one of these holds an address, an id or a class, such as pdfHref,

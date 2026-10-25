@@ -87,6 +87,7 @@ import { galleryCopy } from "./copy";
 import { draftsPage } from "./drafts";
 import { hubPage } from "./hub";
 import { lessonsPage } from "./lessons";
+import { judgingPage, retrievalPage } from "./retrieval";
 import { packagesPage } from "./packages";
 import { risksPage } from "./risks";
 
@@ -1315,6 +1316,8 @@ export const PAGES: GalleryPage[] = [
   draftsPage(planSample),
   hubPage(),
   lessonsPage(),
+  retrievalPage(),
+  judgingPage(),
   {
     // Ticket 12's package workspace (web/src/components/PackageFacts.tsx, PastRange.tsx and
     // RangeChart.tsx). The page's own states, with the real comparables, are captured from the
