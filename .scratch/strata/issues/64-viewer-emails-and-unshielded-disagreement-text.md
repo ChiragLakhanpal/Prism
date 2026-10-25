@@ -1,0 +1,20 @@
+# 64: Two safety fixes the reviews deferred: viewer emails readable in strata.ops, and disagreement text that skips Prompt Shields
+
+**What to build:** Two findings that reviewers deferred as follow-ups touch private data (CLAUDE.md rule 8) and the agent's safety, so they land before the polish tickets. First, `strata.ops.candidate_labels` stores `viewer_email` and `viewer_id` for every reported passage, and `strata.ops.answer_citations` stores `viewer_id` for who asked each question, while `bundle/catalog.yml` (lines 38 to 47) grants USE_SCHEMA and SELECT on the whole `ops` schema to the readers group. So every reader can see who reported what and who asked what, which the table's own comment says a review page must never show. Make those columns unreadable to readers and keep them for the app's service principal: a column mask or a row filter on the two tables, or a view without the columns that the review pages read instead. The deploy that applies it is a workspace step and stays parked while the warehouse's daily limit holds. Second, `get_disagreements` (`src/strata/tools/sql/get_disagreements/assertions.sql`) returns `p.text` for every passage behind a disagreement side with no Prompt Shields check, while `search_passages` (`src/strata/tools/search_passages.py` lines 170 to 200) leaves out a passage that Prompt Shields flagged when it was read in and marks passages the shield never screened. Give the disagreement sides the same rule: a flagged passage's text is replaced by the same short note `search_passages` uses and counted in the coverage line, never-screened passages are marked the same way, and nothing else about the tool's numbers changes. Ticket 20's review asked for this before the live agent cites a side.
+
+Read first: `bundle/catalog.yml`; `src/strata/lakehouse/tables/ops/candidate_labels.sql` and `answer_citations.sql`; the review pages that read them (ticket 29's review queue and ticket 32's judging desk, in `src/strata/server/` and `web/src/`); `src/strata/tools/search_passages.py` (the shields rule and its coverage line); `src/strata/tools/get_disagreements.py` and its `sql/` folder; `tests/test_tools.py` and the tests for both tools; `.notes/32-review.md`, `.notes/32-review-r2.md` and `.notes/32-review-r3.md` (where the grant finding was deferred); `.notes/20-review.md` (the shield finding); `docs/workspace-catchup.md`'s header; `evals/benchmark.yaml` if it exists (rule 4).
+
+**Blocked by:** None (can start immediately)
+
+**Status:** ready-for-agent
+**Area:** data
+**Phase:** P2
+**Design review:** no
+
+- [ ] A test that reads `candidate_labels` and `answer_citations` the way a reader does (the fixture's stand-in for the readers group, or the view the pages now read) gets no `viewer_email` and no `viewer_id`, while the review queue and the judging desk still show each reporter's role and the app's own writes still land; the bundle change passes `databricks bundle validate` or the ops tests offline, and its deploy is parked in `docs/workspace-catchup.md` under this ticket's heading with the SQL that proves a reader sees no email.
+- [ ] `get_disagreements` returns no text for a passage Prompt Shields flagged: the text is the same note `search_passages` uses, the coverage line counts it, never-screened passages are marked the same way, and a test with a flagged fixture passage proves the text never reaches the agent through this tool; every number the tool returned before is unchanged, and the ground-truth SQL for the tool still passes.
+- [ ] If the tool's contract changes, its benchmark question changes in the same commit (rule 4); the done comment names the `docs/STATUS.md` line on the shield so the PM can close it.
+
+## Comments
+
+- October 25, 2026, orchestrator: opened from two deferred review findings (ticket 32's reviewer on the ops grant, deferred three rounds; ticket 20's reviewer on the disagreement text), which the polish pass of October 25 flagged as more than polish. Dispatched at the next restart of the wave.
