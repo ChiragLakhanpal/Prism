@@ -130,26 +130,35 @@ def _write_to_volume(path: str, data: bytes) -> None:
     Path(path).write_bytes(data)
 
 
-def _index(endpoint: str) -> Callable[[Engine], None]:
-    def sync(engine: Engine) -> None:
-        from databricks.sdk import WorkspaceClient  # on the workspace's serverless compute, signed in as the job
+def _workspace_transport():
+    """The workspace's REST API as the job's own sign-in on serverless compute, with a missing index raised as
+    LookupError."""
+    from databricks.sdk import WorkspaceClient
 
+    client = WorkspaceClient()
+
+    def transport(method: str, path: str, body: dict | None = None) -> dict:
+        try:
+            return client.api_client.do(method, path, body=body) or {}
+        except Exception as error:  # the SDK's NotFound, read as a missing index
+            if "does not exist" in str(error).lower() or "not found" in str(error).lower():
+                raise LookupError(str(error)) from error
+            raise
+
+    return transport
+
+
+def _index(endpoint: str, transport=None) -> Callable[[Engine], None]:
+    """sync_index's call to the AI Search index. A missing index is made, and a new TRIGGERED Delta Sync index
+    runs its first sync as it is made, so only an index that was already there is asked to sync: the workspace
+    refuses a sync request while an index is still being made (ops/documents/run_live.py does the same)."""
+    def sync(engine: Engine) -> None:
         from strata.config import load_models
         from strata.knowledge.search import AiSearchIndex
 
-        client = WorkspaceClient()
-
-        def transport(method: str, path: str, body: dict | None = None) -> dict:
-            try:
-                return client.api_client.do(method, path, body=body) or {}
-            except Exception as error:  # the SDK's NotFound, read as a missing index
-                if "does not exist" in str(error).lower() or "not found" in str(error).lower():
-                    raise LookupError(str(error)) from error
-                raise
-
-        index = AiSearchIndex(transport, endpoint, load_models()["embed"].dimensions)
-        index.ensure(lambda sql: engine.run(sql))
-        index.sync()
+        index = AiSearchIndex(transport or _workspace_transport(), endpoint, load_models()["embed"].dimensions)
+        if not index.ensure(lambda sql: engine.run(sql)):
+            index.sync()
 
     return sync
 

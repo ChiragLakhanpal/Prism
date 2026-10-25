@@ -230,6 +230,34 @@ def test_sync_index_on_the_workspace_syncs_the_ai_search_index_the_bundle_names(
     assert "AI_SEARCH_ENDPOINT" not in nightly.SCOPE_KEYS
 
 
+@pytest.mark.parametrize("held, posted", [
+    (False, ["/api/2.0/vector-search/indexes"]),
+    (True, ["/api/2.0/vector-search/indexes/strata.gold.passage_index/sync"]),
+])
+def test_sync_index_makes_a_missing_index_without_asking_it_to_sync_and_syncs_one_it_finds(held, posted):
+    """A new TRIGGERED Delta Sync index runs its first sync as it is made, and the workspace refuses a sync
+    request while the index is still being made. So the job asks only an index it found to sync, as
+    ops/documents/run_live.py does, and the first live night does not stop at sync_index (review r2 B1)."""
+    from strata.lakehouse import readers
+
+    requests, statements = [], []
+
+    def workspace(method, path, body=None):
+        requests.append((method, path))
+        if method == "GET" and not held:
+            raise LookupError("Vector search index strata.gold.passage_index does not exist")
+        return {}
+
+    class Engine:
+        def run(self, sql):
+            statements.append(sql)
+
+    readers._index("strata-search", transport=workspace)(Engine())
+
+    assert [path for method, path in requests if method == "POST"] == posted
+    assert statements == ["ALTER TABLE strata.gold.passage SET TBLPROPERTIES (delta.enableChangeDataFeed = true)"]
+
+
 def test_a_live_score_task_replays_the_signals_for_their_track_record_and_an_offline_one_does_not(engine, monkeypatch):
     """Ticket 37 left the signals' track record to the score task (strata.estimates.signals_track). Its replay
     dates are fixed past dates, so a second live night within signals.track_record_every_days keeps the stored
