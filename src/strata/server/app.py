@@ -120,6 +120,7 @@ from strata.server import (baseline, changes, documents, engines, evidence, look
                            tracing)
 from strata.server import packages as package_routes
 from strata.server import risks as risk_routes
+from strata.server import estimates as estimate_routes
 from strata.server.access import Access, NoGroups
 from strata.server.evidence import OpenedLog
 from strata.server.suppliers import SupplierLog
@@ -585,6 +586,9 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
     risk_routes.add_routes(app, engine_for=engine_for, store=packages, form=package_form or load_package_form(),
                            thresholds=package_thresholds or thresholds, today=today, now=now,
                            reference=request_reference)
+    estimate_routes.add_routes(app, engine_for=engine_for, store=packages, form=package_form or load_package_form(),
+                               thresholds=package_thresholds or thresholds, today=today, now=now,
+                               reference=request_reference)
 
     @app.get("/api/packages/{step_reference}")
     def open_package(step_reference: str, asof: dt.date | None = None, viewer: Viewer = Depends(current_viewer)):

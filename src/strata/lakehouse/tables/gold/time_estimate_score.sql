@@ -23,6 +23,8 @@
 -- abstention             why the row gives no range: outside_training (a feature outside what the model
 --                        learned from) or value_not_learned (a lever's value the model never saw); else empty
 -- abstention_detail      the feature and its value, as JSON, for outside_training and value_not_learned
+-- features_json          the package's features as described, as JSON, on the as-described row only:
+--                        estimate_time asks the same model how much the package's size moved its middle
 -- model, model_version, model_alias, training_through   the champion it was scored with
 -- scored_at              when the run scored it, in UTC
 -- public_from            the day it was scored (ADR 0002)
@@ -45,6 +47,7 @@ CREATE TABLE IF NOT EXISTS strata.gold.time_estimate_score (
   q80_months DOUBLE,
   abstention STRING,
   abstention_detail STRING,
+  features_json STRING,
   model STRING NOT NULL,
   model_version INT NOT NULL,
   model_alias STRING NOT NULL,

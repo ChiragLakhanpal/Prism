@@ -65,5 +65,16 @@ def market_approach(thresholds: Thresholds, values: dict) -> Computed | None:
 RULES = {"review": review, "market_approach": market_approach}
 
 
+def allows(thresholds: Thresholds, values: dict, lever: str, value) -> bool:
+    """Whether the thresholds file allows a what-if value for a package (ticket 26): a package the market approach
+    rule sends to international bidding is never compared with a national approach, since that would contradict
+    its own computed chip. The file holds no rule for lots or qualification, so it allows every value of those.
+    It reads market_approach() above, so the rule is written once."""
+    if lever != "market_approach" or value is None:
+        return True
+    computed = market_approach(thresholds, values)
+    return not (computed is not None and computed.value == INTERNATIONAL and value == NATIONAL)
+
+
 def compute(rule: str, thresholds: Thresholds, values: dict) -> Computed | None:
     return RULES[rule](thresholds, values)

@@ -162,6 +162,21 @@ class PackageStore:
                               package_key=package_key)
         return [row["risk_key"] for row in rows]
 
+    def choose_plan_date(self, viewer_id: str, package_kind: str, package_key: str, choice: str,
+                         at: dt.datetime) -> None:
+        """Keep the plan date a viewer chose for the dates Strata drafts for a package (ticket 26): one row, made or
+        changed with a MERGE."""
+        with self._open() as engine:
+            engine.run(_sql("choose_plan_date"), {"viewer_id": viewer_id, "package_kind": package_kind,
+                                                  "package_key": package_key, "choice": choice, "saved_at": at})
+
+    def plan_date_choice(self, viewer_id: str, package_kind: str, package_key: str) -> str | None:
+        """The plan date a viewer chose for a package, middle or eight_in_ten, or None when they have not chosen."""
+        with self._open() as engine:
+            rows = self._rows(engine, "plan_date_choice", viewer_id=viewer_id, package_kind=package_kind,
+                              package_key=package_key)
+        return rows[0]["choice"] if rows else None
+
     def plan_checks(self, viewer_id: str) -> list[PlanCheck]:
         with self._open() as engine:
             rows = self._rows(engine, "plan_checks", viewer_id=viewer_id)

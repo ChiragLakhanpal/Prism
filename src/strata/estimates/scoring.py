@@ -34,16 +34,20 @@ from strata.estimates.time_estimate import Package, packages_as_of
 TABLE = "strata.gold.time_estimate_score"
 COLUMNS = ("step_reference", "run_id", "as_described", "market_approach", "prequalification", "review_type",
            "estimated_amount_usd", "feature_date", "q25_days", "q50_days", "q75_days", "q80_days", "q25_months",
-           "q50_months", "q75_months", "q80_months", "abstention", "abstention_detail", "model", "model_version",
-           "model_alias", "training_through", "scored_at", "public_from")
+           "q50_months", "q75_months", "q80_months", "abstention", "abstention_detail", "features_json", "model",
+           "model_version", "model_alias", "training_through", "scored_at", "public_from")
 POINTS = ("q25", "q50", "q75", "q80")
 
 
-def combinations(levers: tuple[Lever, ...]) -> list[dict[str, str]]:
-    """Every combination of the scored levers' values, as {feature: value}, in the levers' order."""
+def combinations(levers: tuple[Lever, ...], described: dict) -> list[dict[str, str | None]]:
+    """Every combination of the scored levers' values, as {feature: value}, in the levers' order: each lever
+    takes the package's own value and each value it scores, so a comparison that changes one lever keeps the
+    others as described. The package as described is left out: it has its own row."""
     scored = [lever for lever in levers if lever.feature]
-    return [dict(zip((lever.feature for lever in scored), values))
-            for values in itertools.product(*(lever.values for lever in scored))]
+    choices = [list(dict.fromkeys([described.get(lever.feature), *lever.values])) for lever in scored]
+    own = tuple(described.get(lever.feature) for lever in scored)
+    return [dict(zip((lever.feature for lever in scored), values)) for values in itertools.product(*choices)
+            if values != own]
 
 
 def cell(model, features: dict, described: dict) -> dict:
@@ -58,21 +62,29 @@ def cell(model, features: dict, described: dict) -> dict:
     return {"abstention": None, "detail": None}
 
 
+def grid(model, described: dict, levers: tuple[Lever, ...]) -> list[dict]:
+    """One package's rows: as described, then each combination, each with its abstention or none. The days
+    come from with_days, so many packages' rows are scored at once."""
+    found = [{"as_described": True, "features": described, **cell(model, described, described)}]
+    for combination in combinations(levers, described):
+        features = {**described, **combination}
+        found.append({"as_described": False, "features": features, **cell(model, features, described)})
+    return found
+
+
+def with_days(model, rows: list[dict]) -> list[dict]:
+    """The rows, each the model can score given its points in days, all scored in one call."""
+    ready = [row for row in rows if row["abstention"] is None]
+    for row, days in zip(ready, model.days([row["features"] for row in ready]) if ready else []):
+        row["days"] = days
+    return rows
+
+
 def scored(model, packages: list[Package], levers: tuple[Lever, ...]) -> list[dict]:
     """Each package as described and in each combination, with its points in days where the model can
     score it. The model scores every such row at once."""
-    found = []
-    for package in packages:
-        described = package.features
-        found.append({"package": package, "as_described": True, "features": described, **cell(model, described, described)})
-        for combination in combinations(levers):
-            features = {**described, **combination}
-            found.append({"package": package, "as_described": False, "features": features,
-                          **cell(model, features, described)})
-    ready = [row for row in found if row["abstention"] is None]
-    for row, days in zip(ready, model.days([row["features"] for row in ready]) if ready else []):
-        row["days"] = days
-    return found
+    return with_days(model, [{"package": package, **row} for package in packages
+                             for row in grid(model, package.features, levers)])
 
 
 def _row(item: dict, run_id: str, kept: portable.Kept, scored_at: dt.datetime) -> tuple:
@@ -87,6 +99,9 @@ def _row(item: dict, run_id: str, kept: portable.Kept, scored_at: dt.datetime) -
         **{f"{name}_months": None if days is None else float(months(days[name])) for name in POINTS},
         "abstention": item["abstention"],
         "abstention_detail": None if item["detail"] is None else json.dumps(item["detail"], sort_keys=True),
+        # The features as described, so estimate_time can ask the same model how much the package's size moved
+        # its middle, with no second read of every package (the reason the lanes differ).
+        "features_json": json.dumps(features, sort_keys=True) if item["as_described"] else None,
         "model": kept.name, "model_version": kept.version, "model_alias": kept.alias,
         "training_through": kept.model.training_through, "scored_at": scored_at, "public_from": scored_at.date()}
     return tuple(values[column] for column in COLUMNS)

@@ -170,6 +170,16 @@ coverage_high = 0.85
 # review, round 2 (a quarter: enough still-open packages to pull a range sized on the rest short); a
 # starting value for the owner to confirm.
 cause_still_open_share = 0.25
+# The sentence under the chart on why the two lanes differ (ticket 26; strata.tools.estimate_time). The time
+# estimate's middle and the past range's middle are "about the same" when they are less than this many months
+# apart. Source: the 26 design brief, section 7.3 ("My estimate and the past range have about the same middle");
+# half a month is one step of the plan line, a starting value for the owner to confirm.
+same_middle_months = 0.5
+# The package's size is named as why the lanes differ only when the model's own middle, with the package's
+# estimated amount set to its comparable packages' middle signed amount, moves at least this share of the gap
+# between the two middles. Source: the 26 design brief, section 6.6 ("A reason without counts is not
+# returned"); "mainly because" needs at least half, a starting value for the owner to confirm.
+reason_min_share = 0.5
 
 # What-ifs (tickets 25 and 26): a range for the comparables that went with one option, such as
 # prequalification or 3 lots.

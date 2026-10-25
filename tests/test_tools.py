@@ -285,9 +285,19 @@ def disagreement_answer(result, question) -> dict[str, list]:
             "rejected": [result["summary"]["rejected"]["count"]]}
 
 
+def time_estimate_answer(result, question) -> dict[str, list]:
+    """estimate_time's answer (ticket 26): why it gives no time estimate, and for which feature; how many
+    comparable packages it counted; the summary's evidence id; and why there is no track record, if there is none."""
+    abstention = result["abstention"] or {}
+    track = result["summary"]["track_record"] or {}
+    return {"abstention": [abstention.get("reason")], "feature": [abstention.get("feature")],
+            "comparables": [result["summary"]["comparables"]["n"]], "cited_as": [result["summary"]["evidence_id"]],
+            "track_record": [(track.get("abstention") or {}).get("reason")]}
+
+
 ANSWERS = {"check_plan": marked, "search_passages": in_top_three, "data_readiness_for": readiness_answer,
            "find_comparables": past_range, "get_disagreements": disagreement_answer,
-           "get_lessons": lessons_answer}
+           "get_lessons": lessons_answer, "estimate_time": time_estimate_answer}
 
 
 def answered(result, question) -> dict[str, list[str]]:
@@ -296,7 +306,7 @@ def answered(result, question) -> dict[str, list[str]]:
 
 
 def expected(question) -> dict[str, list[str]]:
-    if question["tool"] in ("data_readiness_for", "get_disagreements", "get_lessons"):
+    if question["tool"] in ("data_readiness_for", "get_disagreements", "get_lessons", "estimate_time"):
         return question["expected"]
     return {mark: sorted(refs) for mark, refs in question["expected"].items()}
 

@@ -1,0 +1,210 @@
+{
+  "tool": "estimate_time",
+  "as_of": "2026-10-23",
+  "view": "staff",
+  "rows": [],
+  "coverage": {
+    "matched": 0,
+    "used": 0,
+    "not_used": []
+  },
+  "package": {
+    "step_reference": "KE-NWWDA-541055-CW-RFB",
+    "described": {
+      "market_approach": "Open - National",
+      "prequalification": "N",
+      "lots": null,
+      "review_type": "Post",
+      "estimated_amount_usd": 1230000.0,
+      "category": "Works",
+      "method": "Request for Bids",
+      "country_code": "KE"
+    }
+  },
+  "comparables": {
+    "n": 49,
+    "signed": 45,
+    "still_open": 4
+  },
+  "estimate": null,
+  "difference": null,
+  "track_record": {
+    "year": 2025,
+    "abstention": {
+      "reason": "too_few_unseen_packages",
+      "n": 0,
+      "min_unseen_packages": 20
+    }
+  },
+  "test_years": [
+    {
+      "year": 2021,
+      "n": 0,
+      "m": 0,
+      "expected": 0,
+      "error_estimate_months": null,
+      "error_past_range_months": null,
+      "error_plan_months": null,
+      "mlflow_run_id": "offline-run-0001",
+      "abstention": null
+    },
+    {
+      "year": 2022,
+      "n": 0,
+      "m": 0,
+      "expected": 0,
+      "error_estimate_months": null,
+      "error_past_range_months": null,
+      "error_plan_months": null,
+      "mlflow_run_id": "offline-run-0002",
+      "abstention": null
+    },
+    {
+      "year": 2023,
+      "n": 0,
+      "m": 0,
+      "expected": 0,
+      "error_estimate_months": null,
+      "error_past_range_months": null,
+      "error_plan_months": null,
+      "mlflow_run_id": "offline-run-0003",
+      "abstention": null
+    },
+    {
+      "year": 2024,
+      "n": 0,
+      "m": 0,
+      "expected": 0,
+      "error_estimate_months": null,
+      "error_past_range_months": null,
+      "error_plan_months": null,
+      "mlflow_run_id": "offline-run-0004",
+      "abstention": null
+    },
+    {
+      "year": 2025,
+      "n": 0,
+      "m": 0,
+      "expected": 0,
+      "error_estimate_months": null,
+      "error_past_range_months": null,
+      "error_plan_months": null,
+      "mlflow_run_id": "offline-run-0005",
+      "abstention": null
+    }
+  ],
+  "plan_dates": null,
+  "comparisons": [],
+  "options": {
+    "approaches": [
+      {
+        "market_approach": "Open - National",
+        "lots": 1,
+        "prequalification": "N",
+        "k": 3,
+        "is_as_described": false,
+        "estimate": null,
+        "abstention": {
+          "reason": "too_few_in_subgroup",
+          "k": 3,
+          "n": 49,
+          "min_subgroup": 20
+        }
+      }
+    ],
+    "count": 1,
+    "recorded": 3,
+    "n": 49,
+    "review_type": "Post"
+  },
+  "axis_max_months": null,
+  "thresholds": {
+    "min_comparables": 20,
+    "min_subgroup": 20,
+    "min_unseen_packages": 20
+  },
+  "sources": [
+    {
+      "key": "notices",
+      "dataset_name": "Procurement Notices"
+    },
+    {
+      "key": "awards",
+      "dataset_name": "Contract Awards in Investment Project Financing (Since FY 2020)"
+    },
+    {
+      "key": "documents",
+      "dataset_name": "Documents & Reports: Documents API"
+    },
+    {
+      "key": "projects",
+      "dataset_name": "World Bank Projects & Operations"
+    }
+  ],
+  "records_through": "2026-10-13",
+  "abstention": {
+    "reason": "outside_training",
+    "feature": "estimated_amount_usd",
+    "high": 300000.0,
+    "low": 275743.49,
+    "value": 1230000.0
+  },
+  "summary": {
+    "evidence_id": "strata.tools.estimate_time:KE-NWWDA-541055-CW-RFB@2026-10-23",
+    "public_from": "2026-10-23",
+    "source": {
+      "tool": "estimate_time",
+      "sources": [
+        "notices",
+        "awards",
+        "documents",
+        "projects"
+      ]
+    },
+    "estimate": null,
+    "difference": null,
+    "track_record": {
+      "year": 2025,
+      "abstention": {
+        "reason": "too_few_unseen_packages",
+        "n": 0,
+        "min_unseen_packages": 20
+      }
+    },
+    "plan_dates": null,
+    "comparisons": [],
+    "options": {
+      "approaches": [
+        {
+          "market_approach": "Open - National",
+          "lots": 1,
+          "prequalification": "N",
+          "k": 3,
+          "is_as_described": false,
+          "estimate": null,
+          "abstention": {
+            "reason": "too_few_in_subgroup",
+            "k": 3,
+            "n": 49,
+            "min_subgroup": 20
+          }
+        }
+      ],
+      "count": 1,
+      "recorded": 3,
+      "n": 49,
+      "review_type": "Post"
+    },
+    "comparables": {
+      "n": 49,
+      "signed": 45,
+      "still_open": 4
+    },
+    "coverage": {
+      "matched": 0,
+      "used": 0,
+      "not_used": []
+    }
+  },
+  "plan_date_choice": null
+}

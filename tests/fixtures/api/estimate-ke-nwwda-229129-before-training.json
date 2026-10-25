@@ -1,0 +1,87 @@
+{
+  "tool": "estimate_time",
+  "as_of": "2026-10-22",
+  "view": "staff",
+  "rows": [],
+  "coverage": {
+    "matched": 0,
+    "used": 0,
+    "not_used": []
+  },
+  "package": {
+    "step_reference": "KE-NWWDA-229129-CW-RFB",
+    "described": null
+  },
+  "comparables": {
+    "n": 48,
+    "signed": 44,
+    "still_open": 4
+  },
+  "estimate": null,
+  "difference": null,
+  "track_record": null,
+  "test_years": [],
+  "plan_dates": null,
+  "comparisons": [],
+  "options": null,
+  "axis_max_months": null,
+  "thresholds": {
+    "min_comparables": 20,
+    "min_subgroup": 20,
+    "min_unseen_packages": 20
+  },
+  "sources": [
+    {
+      "key": "notices",
+      "dataset_name": "Procurement Notices"
+    },
+    {
+      "key": "awards",
+      "dataset_name": "Contract Awards in Investment Project Financing (Since FY 2020)"
+    },
+    {
+      "key": "documents",
+      "dataset_name": "Documents & Reports: Documents API"
+    },
+    {
+      "key": "projects",
+      "dataset_name": "World Bank Projects & Operations"
+    }
+  ],
+  "records_through": "2026-10-13",
+  "abstention": {
+    "reason": "asof_before_training",
+    "as_of": "2026-10-22",
+    "training_through": "2026-10-23"
+  },
+  "summary": {
+    "evidence_id": "strata.tools.estimate_time:KE-NWWDA-229129-CW-RFB@2026-10-22",
+    "public_from": "2026-10-22",
+    "source": {
+      "tool": "estimate_time",
+      "sources": [
+        "notices",
+        "awards",
+        "documents",
+        "projects"
+      ]
+    },
+    "estimate": null,
+    "difference": null,
+    "track_record": null,
+    "plan_dates": null,
+    "comparisons": [],
+    "options": null,
+    "comparables": {
+      "n": 48,
+      "signed": 44,
+      "still_open": 4
+    },
+    "coverage": {
+      "matched": 0,
+      "used": 0,
+      "not_used": []
+    }
+  },
+  "plan_date_choice": null
+}

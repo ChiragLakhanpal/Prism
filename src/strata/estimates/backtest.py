@@ -235,9 +235,9 @@ def run(engine, tracker, *, years: tuple[int, ...] | None = None, outcomes_throu
 
 # ── Reading the stored results ───────────────────────────────────────────
 
-def stored_years(engine, run_id: str | None = None) -> dict[int, dict]:
-    """Each test year's stored scores, from one run or the latest, keyed by year."""
-    run_id = run_id or harness.latest_run(engine, SCORER)
+def stored_years(engine, run_id: str | None = None, as_of: dt.date | None = None) -> dict[int, dict]:
+    """Each test year's stored scores, from one run or the latest (public on as_of, when given), by year."""
+    run_id = run_id or harness.latest_run(engine, SCORER, as_of)
     if run_id is None:
         return {}
     return {int(segment): record for (kind, segment), record in harness.segments(harness.run_rows(engine, run_id)).items()

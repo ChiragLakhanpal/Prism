@@ -1,0 +1,180 @@
+{
+  "tool": "estimate_time",
+  "as_of": "2026-10-23",
+  "view": "staff",
+  "rows": [],
+  "coverage": {
+    "matched": 0,
+    "used": 0,
+    "not_used": []
+  },
+  "package": {
+    "step_reference": null,
+    "described": {
+      "market_approach": "Open - International",
+      "prequalification": "N",
+      "lots": 2,
+      "review_type": "Prior",
+      "estimated_amount_usd": 15000000.0,
+      "category": "Works",
+      "method": "Request for Bids",
+      "country_code": "KE"
+    }
+  },
+  "comparables": {
+    "n": 49,
+    "signed": 45,
+    "still_open": 4
+  },
+  "estimate": null,
+  "difference": null,
+  "track_record": {
+    "year": 2025,
+    "abstention": {
+      "reason": "too_few_unseen_packages",
+      "n": 0,
+      "min_unseen_packages": 20
+    }
+  },
+  "test_years": [
+    {
+      "year": 2021,
+      "n": 0,
+      "m": 0,
+      "expected": 0,
+      "error_estimate_months": null,
+      "error_past_range_months": null,
+      "error_plan_months": null,
+      "mlflow_run_id": "offline-run-0001",
+      "abstention": null
+    },
+    {
+      "year": 2022,
+      "n": 0,
+      "m": 0,
+      "expected": 0,
+      "error_estimate_months": null,
+      "error_past_range_months": null,
+      "error_plan_months": null,
+      "mlflow_run_id": "offline-run-0002",
+      "abstention": null
+    },
+    {
+      "year": 2023,
+      "n": 0,
+      "m": 0,
+      "expected": 0,
+      "error_estimate_months": null,
+      "error_past_range_months": null,
+      "error_plan_months": null,
+      "mlflow_run_id": "offline-run-0003",
+      "abstention": null
+    },
+    {
+      "year": 2024,
+      "n": 0,
+      "m": 0,
+      "expected": 0,
+      "error_estimate_months": null,
+      "error_past_range_months": null,
+      "error_plan_months": null,
+      "mlflow_run_id": "offline-run-0004",
+      "abstention": null
+    },
+    {
+      "year": 2025,
+      "n": 0,
+      "m": 0,
+      "expected": 0,
+      "error_estimate_months": null,
+      "error_past_range_months": null,
+      "error_plan_months": null,
+      "mlflow_run_id": "offline-run-0005",
+      "abstention": null
+    }
+  ],
+  "plan_dates": null,
+  "comparisons": [],
+  "options": {
+    "approaches": [],
+    "count": 0,
+    "recorded": 3,
+    "n": 49,
+    "review_type": "Prior"
+  },
+  "axis_max_months": null,
+  "thresholds": {
+    "min_comparables": 20,
+    "min_subgroup": 20,
+    "min_unseen_packages": 20
+  },
+  "sources": [
+    {
+      "key": "notices",
+      "dataset_name": "Procurement Notices"
+    },
+    {
+      "key": "awards",
+      "dataset_name": "Contract Awards in Investment Project Financing (Since FY 2020)"
+    },
+    {
+      "key": "documents",
+      "dataset_name": "Documents & Reports: Documents API"
+    },
+    {
+      "key": "projects",
+      "dataset_name": "World Bank Projects & Operations"
+    }
+  ],
+  "records_through": "2026-10-13",
+  "abstention": {
+    "reason": "outside_training",
+    "feature": "estimated_amount_usd",
+    "value": 15000000.0,
+    "low": 275743.49,
+    "high": 300000.0
+  },
+  "summary": {
+    "evidence_id": "strata.tools.estimate_time:@2026-10-23?method=Request%20for%20Bids&category=Works&country=KE&described_amount_usd=15000000.0&described_market_approach=Open%20-%20International&described_review_type=Prior&described_prequalification=No&described_lots=2",
+    "public_from": "2026-10-23",
+    "source": {
+      "tool": "estimate_time",
+      "sources": [
+        "notices",
+        "awards",
+        "documents",
+        "projects"
+      ]
+    },
+    "estimate": null,
+    "difference": null,
+    "track_record": {
+      "year": 2025,
+      "abstention": {
+        "reason": "too_few_unseen_packages",
+        "n": 0,
+        "min_unseen_packages": 20
+      }
+    },
+    "plan_dates": null,
+    "comparisons": [],
+    "options": {
+      "approaches": [],
+      "count": 0,
+      "recorded": 3,
+      "n": 49,
+      "review_type": "Prior"
+    },
+    "comparables": {
+      "n": 49,
+      "signed": 45,
+      "still_open": 4
+    },
+    "coverage": {
+      "matched": 0,
+      "used": 0,
+      "not_used": []
+    }
+  },
+  "plan_date_choice": null
+}
