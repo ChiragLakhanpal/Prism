@@ -202,6 +202,8 @@ test("below 768 px the chart is a list in date order, and as of August 26, 2016 
   await expect(items(page)).toHaveCount(4);
   await expect(item(page, "doc:26733307")).toHaveAccessibleName(/^ISR 7, August 26, 2016/);
   await expect(chart(page).locator("[data-as-of]")).toContainText("Aug 26, 2016");
+  // The tab applies the date itself, so no alert says it shows today's data.
+  await expect(page.locator("main [data-alert]")).toHaveCount(0);
   await expect(chart(page).locator("[data-disagreement-line]")).toHaveCount(0);
 });
 

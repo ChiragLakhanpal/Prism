@@ -215,9 +215,11 @@ export function App() {
       key: address.get().key,
     });
 
-  // The Data readiness page applies an as-of date itself (data_readiness_for takes one), so the
-  // alert that says the page shows today's data does not show there.
-  const slot = alerts(problem, here.search, match.key === "data", match.key);
+  // The Data readiness page applies an as-of date itself (data_readiness_for takes one), and so does a
+  // project's Timeline tab, which ends its axis at the date (ticket 23), so the alert that says the page
+  // shows today's data does not show there.
+  const timelineTab = match.key === "project" && match.values.tab === "timeline";
+  const slot = alerts(problem, here.search, match.key === "data" || timelineTab, match.key);
   return (
     <Frame
       nav={

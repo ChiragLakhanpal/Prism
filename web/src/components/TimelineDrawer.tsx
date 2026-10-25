@@ -365,6 +365,7 @@ export function TimelineView({ evidence, renderSide }: { evidence: EvidenceEvent
   return null;
 }
 
-export function UnknownDisagreement() {
-  return <Alert state="neutral">{words.disagreement.unknown}</Alert>;
+// A disagreement id the server has no disagreement for: unknown, or, as of a date, two reports not both public yet.
+export function UnknownDisagreement({ asOf }: { asOf: string | null }) {
+  return <Alert state="neutral">{asOf ? words.disagreement.notAsOf.replace("{date}", formatDate(asOf)) : words.disagreement.unknown}</Alert>;
 }

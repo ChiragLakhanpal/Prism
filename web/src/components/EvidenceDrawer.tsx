@@ -711,7 +711,7 @@ export function EvidenceDrawerView({
             )}
             {data.status === "missing" &&
               (id.startsWith("disagreement:") ? (
-                <UnknownDisagreement />
+                <UnknownDisagreement asOf={asOf} />
               ) : (
                 <Alert state="neutral">{asOf ? copy.document.missingAsOf(formatDate(asOf)) : copy.document.missing}</Alert>
               ))}
