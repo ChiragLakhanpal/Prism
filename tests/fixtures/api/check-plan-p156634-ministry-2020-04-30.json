@@ -333,5 +333,27 @@
     "signal": 4,
     "marked": 4,
     "unmarked": 3
+  },
+  "summary": {
+    "evidence_id": "strata.tools.check_plan:P156634/ministry-of-water-and-irrigation@2026-10-23?plan_date=2020-04-30",
+    "public_from": "2026-10-23",
+    "source": {
+      "tool": "check_plan",
+      "sources": [
+        "documents",
+        "projects"
+      ]
+    },
+    "counts": {
+      "activities": 7,
+      "checked": 7,
+      "not_fully_checked": 0,
+      "needs_a_look": 2,
+      "watch": 2,
+      "data_note": 0,
+      "signal": 4,
+      "marked": 4,
+      "unmarked": 3
+    }
   }
 }

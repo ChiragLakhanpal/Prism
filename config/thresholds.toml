@@ -541,6 +541,20 @@ summary_poll_minutes = 10
 # principle: at most five risks).
 max_rows = 5
 
+# The implementing agency's track record (ticket 36): agency_track_record (src/strata/tools/agency_track_record.py)
+# counts how the activities of one of the agency's plans went against the date their first published plan gave for
+# signing, and the Project Paper summary states those counts. Both values come back in the tool's counts, so no
+# screen or writer writes them itself.
+[agency_track_record]
+# A package signed more than this many days after its first published planned date counts as signed late. 0 is
+# check_plan's own rule, which marks a signing late when its days_late is above zero ([plan_check] has no key for
+# it); a starting value for the owner to confirm.
+late_days = 0
+# Below this many counted packages, the track record gives no middle delay, only counts. Source: the spec ("Below
+# 20 comparables, subgroups included, no tool returns a range or a percentage") and DESIGN.md section 7, rules 6
+# and 15; the 36 design brief, section 11 ("middle_delay_days (null under 20)").
+min_packages_for_middle = 20
+
 # The retrieval loop (ticket 32; docs/PLAN.md sections 10 and 11, "Feedback"): the labeled set, the
 # judging tool, passage reports from the evidence drawer and how they become labels. strata.knowledge.retrieval
 # and strata.estimates.retrieval read them, and the routes return the ones a screen states.
