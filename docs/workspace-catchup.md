@@ -1677,6 +1677,8 @@ Run this from the main checkout, one line at a time:
 
 It worked if each first run ends "I made version N of strata-ppsd-rows-writer, which matches the repo." (and the same for `strata-project-paper-writer`), and each `--check` run exits 0.
 
+**Ran on October 25, 2026 (orchestrator), from 84168db.** All four passed. The syncs made version 1 of `strata-ppsd-rows-writer` and version 1 of `strata-project-paper-writer`, each ending "which matches the repo.", and both `--check` runs exited 0 with no difference in model, instructions, tools, description or guardrail (strata-guardrail).
+
 ## Ticket 36, step 2 of 4: record the two writers and the judge live
 
 The merger parked this step on October 25, 2026, after merge commit a044715, for the same reason as step 1. Run it after step 1. It needs the four Foundry keys and `AZURE_OPENAI_ENDPOINT` and `AZURE_OPENAI_API_KEY` in `.env`. The writers' answers in `tests/fixtures/agent/recorded/` (`ppsd-rows-ke-nwwda-541055.json`, `project-paper-p156634.json` and `project-paper-p156634-no-ppsd.json`) and the judge's answers in `tests/fixtures/agent/judged/` (five `ppsd-rows-*.json` files and two `project-paper-*.json` files) were written by hand and say `"recorded": false`. `--writers` re-records every writer case in `tests/fixtures/agent/writers.toml`, so one run from a044715 or later serves every block that names it.
