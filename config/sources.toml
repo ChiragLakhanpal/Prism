@@ -80,7 +80,9 @@
 #                     counted_in the table it counts. projects_counted_in is the table the projects
 #                     measure counts, so each number's window names its table.
 #   [[sources.<key>.collections]]
-#                     for the documents source: each collection's name, publisher and origin
+#                     for the documents source: each collection's name, publisher and origin, and language,
+#                     the ISO 639-1 code of a name not written in English (config/languages.toml), which the
+#                     page sets as the name's lang attribute (ticket 42)
 #
 # The nightly job fetches a source page by page when its entry names these keys. A source that its
 # own reader fetches, such as documents (the plan reader), names none of them.
@@ -595,6 +597,14 @@ sentence = "Read the older plan versions named in each project's document list, 
 name = "Procurement Plans"
 publisher = "the borrower's implementing agency"
 origin = "the World Bank's Documents & Reports"
+
+# The Procurement Plan template's textual part in French (ticket 42), recorded in the fixture as
+# documents/guidance/procurement-plan-template-fr-2022-05-06. Its title stays in French, as the template writes it.
+[[sources.documents.collections]]
+name = "Plan de passation de marchés (Partie Textuelle)"
+publisher = "the World Bank, as the Procurement Plan template in French"
+origin = "the World Bank's Documents & Reports"
+language = "fr"
 
 [[sources.documents.collections]]
 name = "Project Appraisal Documents (PADs)"

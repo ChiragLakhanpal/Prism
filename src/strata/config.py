@@ -25,6 +25,10 @@ request lands in one file (CLAUDE.md rule 9). This module reads them:
 - load_editions()    config/editions.toml, the editions of the procurement rules a project followed
 - load_package_form() config/package_form.toml, the package form schema: the groups and fields a
                      package planned from a sentence has, each one a chip (ticket 15)
+- load_languages()   config/languages.toml, the language registry: each language a source can be
+                     written in, and how Strata writes and checks the four working languages (ticket 42)
+- load_method_names() config/method_names.toml, the method-name registry: the current Procurement
+                     Regulations' names and every other name a source writes for one (ticket 42)
 
 Each function checks the file's shape and raises ConfigError with a sentence that names the
 file, the entry and the fix. It uses only the standard library, so the nightly job can call it.
@@ -241,6 +245,8 @@ class Collection:
     name: str
     publisher: str
     origin: str
+    # The language its name is written in, when it is not English (ticket 42): the page sets it as the name's lang.
+    language: str | None = None
 
 
 @dataclass(frozen=True)
@@ -448,8 +454,12 @@ def _page(path: Path, key: str, entry: _Entry, table: dict, stratum: str | None)
     collections = []
     for collection in _tables(path, table, "collections"):
         collection.where = f"sources.{key}.{collection.where}"
-        collection.only({"name", "publisher", "origin"})
-        collections.append(Collection(collection.text("name"), collection.text("publisher"), collection.text("origin")))
+        collection.only({"name", "publisher", "origin", "language"})
+        language = collection.text("language", required=False)
+        if language is not None and language not in {entry.code for entry in load_languages().languages}:
+            collection._fail("language", f"names {language!r}, which config/languages.toml does not list")
+        collections.append(Collection(collection.text("name"), collection.text("publisher"), collection.text("origin"),
+                                      language))
     fields["collections"] = tuple(collections)
     return fields
 
@@ -1509,6 +1519,8 @@ class Team:
     key: str
     name: str
     groups: tuple[str, ...]
+    # The language its members get answers and drafts in when they have chosen none (ticket 42), or None for English.
+    working_language: str | None = None
 
 
 @dataclass(frozen=True)
@@ -1551,10 +1563,14 @@ def load_roles(path: Path = CONFIG_DIR / "roles.toml") -> Roles:
     teams = []
     for key, table in (data.get("teams") or {}).items():
         entry = _Entry(path, f"teams.{key}", table)
-        entry.only({"name", "groups"})
+        entry.only({"name", "groups", "working_language"})
         if not entry.texts("groups"):
             entry._fail("groups", "must name at least one workspace group")
-        teams.append(Team(key, entry.text("name"), entry.texts("groups")))
+        working = entry.text("working_language", required=False)
+        if working is not None and working not in {language.code for language in load_languages().working}:
+            entry._fail("working_language", f"names {working!r}, which is not a working language in "
+                                            "config/languages.toml")
+        teams.append(Team(key, entry.text("name"), entry.texts("groups"), working))
     groups = {}
     for key, table in (data.get("groups") or {}).items():
         entry = _Entry(path, f"groups.{key}", table)
@@ -2237,6 +2253,168 @@ def load_package_form(path: Path = CONFIG_DIR / "package_form.toml") -> PackageF
             optional=bool(table.get("optional", False)), asked=bool(table.get("asked", table["source"] != "computed")),
             unit=table.get("unit"), unit_one=table.get("unit_one"), aliases=bool(table.get("aliases", False))))
     return PackageForm(tuple(groups), tuple(fields))
+
+
+# ── The language registry (ticket 42) ────────────────────────────────────
+
+DIRECTIONS = ("ltr", "rtl")
+_LANGUAGE_KEYS = {"code", "api_name", "endonym", "direction", "working"}
+_WRITING_KEYS = {"word_locale", "number_locale", "decimal", "group", "group_also", "months", "date_joiner", "joiners",
+                 "number_words", "scale_words", "times_words", "joined_ones", "never_write", "terms", "reviewed_by", "reviewed_on"}
+ENGLISH = "en"
+
+
+@dataclass(frozen=True)
+class Language:
+    """One language a source can be written in, and for a working language, how Strata writes and checks it."""
+
+    code: str  # ISO 639-1, as passages carry it and the screens' lang attribute takes it
+    api_name: str  # the Documents API's lang field, word for word
+    endonym: str
+    direction: str  # ltr or rtl
+    working: bool  # Strata writes answers and drafts in it
+    word_locale: str | None = None
+    number_locale: str | None = None
+    decimal: str = "."
+    group: str = ","
+    group_also: tuple[str, ...] = ()
+    months: tuple[str, ...] = ()
+    date_joiner: str = ""
+    joiners: tuple[str, ...] = ()
+    number_words: tuple[tuple[str, int], ...] = ()
+    scale_words: tuple[tuple[str, int], ...] = ()
+    times_words: tuple[tuple[str, int], ...] = ()  # multiply a smaller number just before them: "quatre-vingts"
+    joined_ones: tuple[tuple[str, int], ...] = ()  # the words for one, a number only after a joiner: "vingt et une"
+    never_write: tuple[str, ...] = ()
+    terms: tuple[tuple[str, str], ...] = ()
+    reviewed_by: str = ""
+    reviewed_on: str = ""
+
+
+@dataclass(frozen=True)
+class Languages:
+    languages: tuple[Language, ...]
+
+    def get(self, code: str | None) -> Language | None:
+        return next((language for language in self.languages if language.code == code), None)
+
+    @property
+    def working(self) -> tuple[Language, ...]:
+        return tuple(language for language in self.languages if language.working)
+
+    def code_for_api_name(self, name: str | None) -> str | None:
+        """The code for a Documents API lang field, such as "French", or None when the registry has no such language."""
+        return next((language.code for language in self.languages if language.api_name == name), None)
+
+
+def _word_values(entry: _Entry, key: str) -> tuple[tuple[str, int], ...]:
+    table = entry.table.get(key, {})
+    if not isinstance(table, dict) or not all(isinstance(word, str) and isinstance(value, int)
+                                              and not isinstance(value, bool) for word, value in table.items()):
+        entry._fail(key, "must be a table of words, each with a whole number")
+    return tuple(table.items())
+
+
+def _marks(entry: _Entry, key: str, one: bool) -> str | tuple[str, ...]:
+    """A number mark, or a list of them: one character each, a space included, so not read with _Entry.text."""
+    value = entry.table.get(key, None if one else [])
+    marks = [value] if one else value
+    if not isinstance(marks, list) or not all(isinstance(mark, str) and len(mark) == 1 for mark in marks):
+        entry._fail(key, "must be one character" if one else "must be a list of single characters")
+    return value if one else tuple(value)
+
+
+def load_languages(path: Path = CONFIG_DIR / "languages.toml") -> Languages:
+    """Every language, in the file's order. A working language other than English must say how it writes numbers
+    and dates, so the verifier can read them."""
+    data = _read(path)
+    _Entry(path, "the file", data).only({"language"})
+    found: list[Language] = []
+    for entry in _tables(path, data, "language"):
+        entry.only(_LANGUAGE_KEYS | _WRITING_KEYS)
+        code = entry.text("code")
+        if not re.fullmatch(r"[a-z]{2}", code):
+            entry._fail("code", f"must be a two-letter ISO 639-1 code in lower case, not {code!r}")
+        if code in {language.code for language in found}:
+            entry._fail("code", f"repeats {code!r}. List each language once")
+        direction = entry.text("direction")
+        if direction not in DIRECTIONS:
+            entry._fail("direction", f"must be one of {', '.join(DIRECTIONS)}")
+        working = entry.boolean("working")
+        fields = {}
+        if working:
+            months = entry.texts("months")
+            if len(months) != 12:
+                entry._fail("months", "must list the 12 months, January first")
+            terms = entry.table.get("terms", {})
+            if not isinstance(terms, dict) or not all(isinstance(value, str) for value in terms.values()):
+                entry._fail("terms", "must be a table of GLOSSARY.md terms, each with its words in the language")
+            fields = {"word_locale": entry.text("word_locale"), "number_locale": entry.text("number_locale"),
+                      "decimal": _marks(entry, "decimal", True), "group": _marks(entry, "group", True),
+                      "group_also": _marks(entry, "group_also", False), "months": months,
+                      "date_joiner": entry.table.get("date_joiner", ""), "joiners": entry.texts("joiners"),
+                      "number_words": _word_values(entry, "number_words"),
+                      "scale_words": _word_values(entry, "scale_words"),
+                      "times_words": _word_values(entry, "times_words"),
+                      "joined_ones": _word_values(entry, "joined_ones"), "never_write": entry.texts("never_write"),
+                      "terms": tuple(terms.items()), "reviewed_by": entry.table.get("reviewed_by", ""),
+                      "reviewed_on": str(entry.table.get("reviewed_on", ""))}
+            if fields["decimal"] == fields["group"]:
+                entry._fail("group", "must differ from decimal")
+        elif set(entry.table) & _WRITING_KEYS:
+            entry._fail("working", "is false, so the language takes none of a working language's keys")
+        found.append(Language(code, entry.text("api_name"), entry.text("endonym"), direction, working, **fields))
+    if not any(language.code == ENGLISH and language.working for language in found):
+        raise ConfigError(f"In {path.name}, English (en) must be listed as a working language.")
+    return Languages(tuple(found))
+
+
+# ── The method-name registry (ticket 42) ─────────────────────────────────
+
+@dataclass(frozen=True)
+class MethodName:
+    """One name or code a source writes for a method, and the current Procurement Regulations' name it stands for."""
+
+    written: str
+    language: str
+    method: str
+    market_approach: str | None = None
+    source: str | None = None  # a recorded file under data/fixture/recorded, without .txt for a document
+    pdf_page: int | None = None
+    checked: bool = True  # read from a recorded source; false until a person checks it against one
+
+
+@dataclass(frozen=True)
+class MethodNames:
+    current: tuple[str, ...]
+    names: tuple[MethodName, ...]
+
+
+def load_method_names(path: Path = CONFIG_DIR / "method_names.toml") -> MethodNames:
+    """The current method names, then every other name, in the file's order. Each other name stands for a current
+    one, and names a recorded source or says it was not checked against one."""
+    data = _read(path)
+    _Entry(path, "the file", data).only({"current", "name"})
+    current = _Entry(path, "the file", data).texts("current")
+    if not current:
+        raise ConfigError(f"In {path.name}, current must list STEP's method names.")
+    known = {entry.code for entry in load_languages().languages}
+    names: list[MethodName] = []
+    for entry in _tables(path, data, "name"):
+        entry.only({"written", "language", "method", "market_approach", "source", "pdf_page", "checked"})
+        method = entry.text("method")
+        if method not in current:
+            entry._fail("method", f"names {method!r}, which is not one of current")
+        language = entry.text("language")
+        if language not in known:
+            entry._fail("language", f"names {language!r}, which config/languages.toml does not list")
+        checked = entry.table.get("checked", True)
+        source = entry.text("source", required=False)
+        if checked is not False and source is None:
+            entry._fail("source", "is missing. Name the recorded file that writes it, or set checked = false")
+        names.append(MethodName(entry.text("written"), language, method, entry.text("market_approach", required=False),
+                                source, entry.integer("pdf_page", required=False), checked is not False))
+    return MethodNames(current, tuple(names))
 
 
 # ── The nightly job's quality checks ─────────────────────────────────────

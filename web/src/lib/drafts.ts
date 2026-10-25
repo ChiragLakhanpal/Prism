@@ -1,6 +1,7 @@
 // Drafts in the browser (ticket 35): the shapes the draft routes answer with (src/strata/server/drafts.py),
 // the acts a draft's author takes, the writing stream, and what one page hands the next. Every count a
 // draft screen states comes from the server; nothing here counts sources, notes or citations.
+import { currentLanguage } from "./lang";
 import type { ChecksEvent, DisagreementEvent, EvidenceEvent, RemovedEvent, SentenceEvent } from "./answer";
 import { ApiError, postJson, putJson } from "./api";
 import type { Activity, CheckPlanResult } from "./api";
@@ -158,6 +159,8 @@ export type Draft = {
   written: { notes: number; sentences: number; rows?: number };
   notes: DraftNote[];
   evidence: Record<string, EvidenceEvent>;
+  // The language the writer wrote it in, when it is not English (ticket 42).
+  lang?: string;
   checks: ChecksEvent;
   // How many checks the verifier ran on this draft.
   checks_count: number;
@@ -310,6 +313,8 @@ export type Writing = {
     package?: string;
     criteria?: Record<string, string | number>;
     idempotency_key: string;
+    // The language of answers and drafts in effect when the person asked (ticket 42), fixed for the draft.
+    lang?: string;
   };
   // The plan check the client held when the person asked, for the activity cells that show at once; none for a
   // mission brief, which shows its project and its five part headings instead.
@@ -379,6 +384,7 @@ export function startWriting(request: Writing["request"], plan: CheckPlanResult 
   if (current && current.request.idempotency_key === request.idempotency_key && current.phase === "writing") return;
   stopping?.abort();
   stopping = new AbortController();
+  request = { ...request, lang: request.lang ?? currentLanguage() };
   writing.set({ request, plan, rows, project, ...extra, phase: "writing", steps: [], draftId: null, removed: [], checks: null,
     error: null, reference: null, lastEventAt: Date.now() });
   void run(request, stopping.signal);

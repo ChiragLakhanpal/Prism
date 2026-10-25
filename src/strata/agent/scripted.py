@@ -70,6 +70,8 @@ class Case:
     judge: str | None = None
     # Whether check 6 can ask get_disagreements (None), or the data service fails then (unavailable).
     disagreements: str | None = None
+    # The language the answer is asked for, as ?lang= gives it (ticket 42).
+    language: str = "en"
 
     @property
     def path(self) -> Path:
@@ -114,7 +116,7 @@ def load_cases(path: Path = CASES, recordings: Path | None = None) -> dict[str, 
         plant_rounds=tuple(tuple(planted["calls"]) for planted in case.get("plant_rounds", [])),
         plant_claims=tuple(case.get("plant_claims", [])), request=case.get("request"),
         plant_notes=tuple(case.get("plant_notes", [])), folder=folder, judge=case.get("judge"),
-        disagreements=case.get("disagreements")) for case in cases}
+        disagreements=case.get("disagreements"), language=case.get("language", "en")) for case in cases}
 
 
 class ScriptedAgent:
@@ -122,8 +124,8 @@ class ScriptedAgent:
 
     def __init__(self, case: Case):
         recording = case.recorded()
-        asked = (recording["question"], recording["scope"], recording["as_of"])
-        if asked != (case.question, case.scope, case.as_of.isoformat()):
+        asked = (recording["question"], recording["scope"], recording["as_of"], recording.get("language", "en"))
+        if asked != (case.question, case.scope, case.as_of.isoformat(), case.language):
             raise ScriptError(f"The recording {case.recording} answers {asked}, not case {case.id}'s question. "
                               f"Re-record it: uv run --script ops/agent/record.py --env-file .env")
         self.name = recording["agent"]["name"]
@@ -231,6 +233,9 @@ RECORDED_STREAMS = {
     "p130164-judge-no-response": "ask-p130164-judge-no-response.sse",
     "p130164-summaries-judge-no-response": "ask-p130164-judge-no-response-none-kept.sse",
     "refuses-part-supplier-scores": "ask-refuses-part-supplier-scores.sse",
+    # Ticket 42: an answer asked for in French.
+    "p127203-fr-procurement-delays": "ask-p127203-fr.sse",
+    "p127203-en-procurement-delays": "ask-p127203-en-cites-french.sse",
     **_refusal_streams(),
 }
 
@@ -260,7 +265,8 @@ def stream_text(case: Case, database: Path = FIXTURE_DB) -> str:
         transport = httpx.ASGITransport(app=app)
         async with httpx.AsyncClient(transport=transport, base_url="http://strata.test") as client:
             response = await client.post("/api/ask", headers={"X-Forwarded-User": "4021@1984"}, json={
-                "question": case.question, "scope": case.scope, "asof": case.as_of.isoformat()})
+                "question": case.question, "scope": case.scope, "asof": case.as_of.isoformat(),
+                **({"lang": case.language} if case.language != "en" else {})})
             return response.text
 
     return asyncio.run(ask())

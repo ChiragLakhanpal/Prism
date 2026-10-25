@@ -25,11 +25,14 @@ import {
   type StepEvent,
 } from "../lib/answer";
 import { evidenceHref, loadVisited, openEvidence } from "../lib/evidence";
+import { ENGLISH, langOf, languageName, workingLanguage } from "../lib/lang";
+import { useStore } from "../lib/store";
 import { formatCount, formatDate, formatNumber } from "../lib/format";
 import { highlightsFor, lessonOf, passageFields, placeOf, recordKind, recordReference } from "../lib/sources";
 import { Answer, type AnswerState } from "./Answer";
 import { Button } from "./Button";
 import { CitationMarker } from "./CitationMarker";
+import { Lang } from "./Lang";
 import { notCheckedFor, type Removed } from "./Checks";
 import { DisagreementCard, SideSaid, type CardSide } from "./DisagreementCard";
 import { changesLine, ruleSentence, sideFull, sideInSentence, sideMeta, sideOpen, sideShort, subjectOf, whatChanges, type SideData } from "../lib/disagreement";
@@ -232,7 +235,30 @@ function numTooltip(evidence: EvidenceEvent | undefined, date: { sentence: numbe
 // A sentence's text with each number and date the verifier matched drawn by Num: a dotted underline,
 // a tooltip naming the source, and a click that opens it. Numbers are not tab stops; the markers carry
 // the keyboard to the same sources.
-export function sentenceText(sentence: SentenceEvent, evidence: Record<string, EvidenceEvent>, open: (id: string) => void): ReactNode[] {
+export function sentenceText(
+  sentence: SentenceEvent,
+  evidence: Record<string, EvidenceEvent>,
+  open: (id: string) => void,
+  // The language the sentence is written in: the words it quotes from a source in another language keep that source's
+  // lang (ticket 42; the 42 brief, section 6.5).
+  around: string = ENGLISH,
+): ReactNode[] {
+  const quoteLang = sentence.quote ? (evidence[sentence.quote.evidence_id]?.row?.language as string | undefined) : undefined;
+  const quoteStart = sentence.quote && quoteLang && quoteLang !== around ? sentence.text.indexOf(sentence.quote.text) : -1;
+  const quoteEnd = quoteStart < 0 ? -1 : quoteStart + sentence.quote!.text.length;
+  // Plain text from start to end of the sentence, with the part inside the quote marked as the source's language.
+  const plain = (start: number, end: number): ReactNode[] => {
+    if (quoteStart < 0 || end <= quoteStart || start >= quoteEnd) return [sentence.text.slice(start, end)];
+    const from = Math.max(start, quoteStart);
+    const to = Math.min(end, quoteEnd);
+    return [
+      sentence.text.slice(start, from),
+      <Lang key={`quote-${from}`} code={quoteLang}>
+        {sentence.text.slice(from, to)}
+      </Lang>,
+      sentence.text.slice(to, end),
+    ].filter((piece) => piece !== "");
+  };
   const found: { start: number; end: number; text: string; id: string; date: boolean }[] = [];
   // Numbers and dates each come in the order the sentence writes them, but a date may come before
   // the numbers, so each list keeps its own place in the text.
@@ -257,7 +283,7 @@ export function sentenceText(sentence: SentenceEvent, evidence: Record<string, E
     // A currency sign right before the number stays on its line ("US$" never ends a line apart from its amount).
     const before = sentence.text.slice(at, mention.start);
     const sign = /(US\$|\$|€|£)$/.exec(before)?.[0] ?? "";
-    parts.push(before.slice(0, before.length - sign.length));
+    parts.push(...plain(at, mention.start - sign.length));
     const tooltip = numTooltip(evidence[mention.id], mention.date ? { sentence: sentence.index, text: mention.text } : null);
     const num = (
       <Num
@@ -284,7 +310,7 @@ export function sentenceText(sentence: SentenceEvent, evidence: Record<string, E
     at = mention.end + stop.length;
   }
   // The sentence's last characters stay with its marker (CitationMarker's word joiner).
-  parts.push(sentence.text.slice(at));
+  parts.push(...plain(at, sentence.text.length));
   return parts;
 }
 
@@ -325,8 +351,9 @@ export function AnswerSentences({
   // between them (the 24 brief, section 4.4).
   const blocks: ReactNode[] = [];
   let paragraph: ReactNode[] = [];
+  // "In short" is in the language the writer wrote it in (ticket 42); a quote keeps its source's.
   const close = (key: string) => {
-    if (paragraph.length) blocks.push(<p key={key} className="max-w-prose">{paragraph}</p>);
+    if (paragraph.length) blocks.push(<Lang key={key} code={run.lang} as="p" className="max-w-prose">{paragraph}</Lang>);
     paragraph = [];
   };
   run.sentences.forEach((sentence) => {
@@ -336,8 +363,9 @@ export function AnswerSentences({
       <Fragment key={sentence.index}>
         {paragraph.length > 0 && " "}
         <span data-sentence-text={sentence.index} className={active ? "bg-tint [box-decoration-break:clone]" : undefined}>
-          {sentenceText(sentence, run.evidence, (id) => open(id, sentence.index, null))}
-          {sentence.evidence_ids.map((id) => markerFor(id, sentence.index, active))}
+          {sentenceText(sentence, run.evidence, (id) => open(id, sentence.index, null), run.lang)}
+          {/* A marker is the copy file's words, read in English inside an answer in another language. */}
+          <Lang code={ENGLISH}>{sentence.evidence_ids.map((id) => markerFor(id, sentence.index, active))}</Lang>
         </span>
       </Fragment>,
     );
@@ -561,7 +589,9 @@ function stateOf(run: Run, opened: Opened, visited: ReadonlySet<string>, stillWo
       numbers: shown.numbers,
       dates: shown.dates,
       quotes: shown.quotes,
-      judged: checks.shown ? { judged: checks.shown.judged, proven: checks.shown.proven } : undefined,
+      judged: checks.shown
+        ? { judged: checks.shown.judged, proven: checks.shown.proven, crossLanguage: checks.shown.cross_language }
+        : undefined,
       notChecked: notCheckedFor(checks),
       removed: removedItems(run),
       names: names(run),
@@ -572,13 +602,16 @@ function stateOf(run: Run, opened: Opened, visited: ReadonlySet<string>, stillWo
 
 // "Asked within P130164, as of October 1, 2026." It names no view: until ticket 40 the server
 // applies no view's rules, so a preview would be a claim about something that did not happen.
-function AskedLine({ run }: { run: Run }) {
+function AskedLine({ run, current }: { run: Run; current: string }) {
   const { scope, asOf } = run.asked;
   const words = copy.answer;
+  // The answer's language, when it is not English or not your choice now (the 42 brief, section 5.4).
+  const named = run.lang !== ENGLISH || run.lang !== current;
   return (
     <p data-asked className="mt-1 text-caption text-ink-muted">
       {scope ? <Fill template={words.askedWithin} slots={{ id: mono(scope) }} /> : words.askedAcross}
       {asOf && words.askedAsOf(formatDate(asOf))}
+      {named && words.askedLanguage(languageName(run.lang))}
       {words.askedEnd}
     </p>
   );
@@ -597,6 +630,7 @@ export function AnswerPanel({
   remember?: boolean;
 }) {
   const [stillWorking, setStillWorking] = useState(false);
+  const current = useStore(workingLanguage)?.code ?? ENGLISH;
   useEffect(() => {
     if (run.phase !== "streaming") {
       setStillWorking(false);
@@ -627,8 +661,19 @@ export function AnswerPanel({
             button beside them sets no gap. */}
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
-            <h2 className="text-title wrap-break-word text-ink-heading">{linkProjectIds(run.asked.question)}</h2>
-            <AskedLine run={run} />
+            <h2 lang={langOf(run.questionLang)} className="text-title wrap-break-word text-ink-heading">
+              {linkProjectIds(run.asked.question)}
+            </h2>
+            <AskedLine run={run} current={current} />
+            {/* Ask the same question in your choice now, when the answer was written in another (the 42 brief, 5.4).
+                Hidden for a refusal, an empty answer and an error, which come back in the copy file's English. */}
+            {run.phase === "done" && run.sentences.length > 0 && run.lang !== current && (
+              <div className="mt-2">
+                <Button variant="ghost" onClick={() => ask({ ...run.asked, lang: current })}>
+                  {copy.answer.askAgain(languageName(current))}
+                </Button>
+              </div>
+            )}
           </div>
           {/* "Close the answer" in words from a page area of 768 px; below it, a 44 px icon with the same name. */}
           <div className="-mt-2 -mr-2 hidden shrink-0 @md/page:block">

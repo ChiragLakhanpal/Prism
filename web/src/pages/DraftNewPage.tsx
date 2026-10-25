@@ -7,6 +7,7 @@
 //
 // "Stop writing" cancels the stream and goes back to the plan check, which says nothing was saved. A
 // reload, or an address with no writing behind it, says I'm not writing a draft right now.
+import { ENGLISH, languageName } from "../lib/lang";
 import { useEffect, useId, useRef, useState } from "react";
 import { Alert } from "../components/Alert";
 import { Button } from "../components/Button";
@@ -213,6 +214,12 @@ function WritingKindPage({ current, backHref }: { current: Writing; backHref: st
                 <Button variant="ghost" flush onPage onClick={stop} data-stop-writing>
                   {words.writing.stop}
                 </Button>
+                {/* The language I write it in, when it is not English (the 42 brief, section 5.9). */}
+                {current.request.lang && current.request.lang !== ENGLISH && (
+                  <p className="basis-full text-caption text-ink-muted" data-writing-language>
+                    {copy.draft.writingLanguage(languageName(current.request.lang))}
+                  </p>
+                )}
               </div>
             )
           }
@@ -384,6 +391,12 @@ function WritingPage({ current, planHref }: { current: Writing; planHref: string
                 <Button variant="ghost" flush onPage onClick={stop} data-stop-writing>
                   {words.writing.stop}
                 </Button>
+                {/* The language I write it in, when it is not English (the 42 brief, section 5.9). */}
+                {current.request.lang && current.request.lang !== ENGLISH && (
+                  <p className="basis-full text-caption text-ink-muted" data-writing-language>
+                    {copy.draft.writingLanguage(languageName(current.request.lang))}
+                  </p>
+                )}
               </div>
             )
           }
@@ -556,6 +569,12 @@ function WritingBriefPage({ current }: { current: Writing }) {
                 <Button variant="ghost" flush onPage onClick={stop} data-stop-writing>
                   {words.writing.stop}
                 </Button>
+                {/* The language I write it in, when it is not English (the 42 brief, section 5.9). */}
+                {current.request.lang && current.request.lang !== ENGLISH && (
+                  <p className="basis-full text-caption text-ink-muted" data-writing-language>
+                    {copy.draft.writingLanguage(languageName(current.request.lang))}
+                  </p>
+                )}
               </div>
             )
           }

@@ -6,6 +6,7 @@
 // One question at a time: a new question replaces the run and stops the one before. The run belongs to
 // the history entry it was asked on (web/src/lib/router.ts), so Back to that page shows it again and a
 // full reload drops it.
+import { whenKnown } from "./lang";
 import { closeDrawerOf, remember } from "./evidence";
 import type { Feedback } from "./retrieval";
 import { StreamError, streamEvents } from "./sse";
@@ -90,6 +91,8 @@ export type ChecksEvent = {
     quotes: { total: number; found: number };
     judged: number;
     proven: number;
+    // The judged sentences that cite a source in another language than theirs, when any do (ticket 42).
+    cross_language?: number;
   };
   // Numbers and dates together, over every sentence written, for check 1's item in the steps.
   checked?: { total: number; matched: number };
@@ -179,6 +182,9 @@ export type Run = {
   runId: string | null;
   // When the last event arrived, for "I'm still working on this step."
   lastEventAt: number;
+  // The language the writer wrote the answer in, and the question's when the server was sure of it (ticket 42).
+  lang: string;
+  questionLang: string | null;
 };
 
 export const answer = createStore<Run | null>(null);
@@ -227,6 +233,8 @@ export function withEvent(run: Run, type: string, data: any): Run {
       return { ...run, error: String(data.code ?? "internal") };
     case "done":
       return { ...run, runId: data.run_id ?? null, phase: run.error ? "failed" : "done" };
+    case "language":
+      return { ...run, lang: String(data.lang ?? run.lang), questionLang: data.question_lang ?? null };
     default:
       return run;
   }
@@ -265,6 +273,8 @@ export function newRun(serialNumber: number, asked: Asked): Run {
     error: null,
     runId: null,
     lastEventAt: Date.now(),
+    lang: asked.lang ?? "en",
+    questionLang: null,
   };
 }
 
@@ -274,7 +284,9 @@ function apply(id: number, type: string, data: any) {
 }
 
 async function stream(id: number, asked: Asked, signal: AbortSignal) {
-  const payload = { question: asked.question, scope: asked.scope, asof: asked.asOf, view: asked.view ?? "staff", lang: asked.lang ?? "en" };
+  // A question asked before the server said which language is in effect waits for it (ticket 42).
+  const lang = asked.lang ?? (await whenKnown());
+  const payload = { question: asked.question, scope: asked.scope, asof: asked.asOf, view: asked.view ?? "staff", lang };
   try {
     for await (const event of streamEvents("/api/ask", payload, { signal })) {
       apply(id, event.type, event.data);

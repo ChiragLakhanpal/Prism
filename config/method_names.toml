@@ -1,0 +1,300 @@
+# The method-name registry (ticket 42; CLAUDE.md rules 4 and 9): the current Procurement Regulations' method
+# names, as STEP writes them, and every other name a source writes for one. strata.config.load_method_names()
+# reads it, and strata.lakehouse.clean holds the one mapping that the silver transforms (awards and notices),
+# the plan reader (src/strata/reader/step.py) and the package form (src/strata/packages/form.py) all use.
+#
+# A source may write a method by a name from before the July 2016 Procurement Regulations (International
+# Competitive Bidding, ICB), by the French plan template's names and codes (Appel d'Offres International, AOI),
+# or by STEP's own French names (Appel d'offres). Strata accepts each one on input, stores the current name
+# beside the words the source used, and writes the current name back. A name the registry does not list is
+# kept as written and gets a Data note, never a guess.
+#
+# The copy file never holds these names: GLOSSARY.md lists the old ones as Avoid terms, so they reach a screen
+# only as a source's words, echoed at run time.
+#
+# current      STEP's method names, word for word (src/strata/reader/step.py reads them as the Method column's
+#              values)
+#
+# [[name]]     one other name or code a source writes for a method
+#   written         the name or code as the source writes it. Matching ignores case, runs of spaces and whether
+#                   an apostrophe is curly or straight.
+#   language        the ISO 639-1 code of the language it is written in (config/languages.toml)
+#   method          the current name it stands for, one of current
+#   market_approach what the name also says about the market approach, in STEP's words, when it says anything
+#   source, pdf_page
+#                   where a recorded source writes it: a file under data/fixture/recorded and, for a document, its
+#                   PDF page, which tests/ground_truth/values.toml quotes. An entry with no source was not read
+#                   from a recorded source: checked = false says so, and a person who writes the language should
+#                   check it against a plan before a demo relies on it.
+
+current = [
+  "Request for Bids", "Request for Quotations", "Request for Proposals", "Direct Selection",
+  "Quality And Cost-Based Selection", "Quality Based Selection", "Fixed Budget Selection",
+  "Least Cost Selection", "Consultant Qualification Selection", "Individual Consultant Selection",
+]
+
+# The names before the July 2016 Procurement Regulations, as the awards of FY2001 to FY2016 and older notices
+# write them (data/fixture/README.md: P124109's and P130164's awards, notice OP00034393).
+[[name]]
+written = "ICB"
+language = "en"
+method = "Request for Bids"
+market_approach = "Open - International"
+source = "api/notices/kenya-icb-2015.json"
+
+[[name]]
+written = "International Competitive Bidding"
+language = "en"
+method = "Request for Bids"
+market_approach = "Open - International"
+source = "api/awards/P124109-fy2001-2016.json"
+
+[[name]]
+written = "NCB"
+language = "en"
+method = "Request for Bids"
+market_approach = "Open - National"
+checked = false
+
+[[name]]
+written = "National Competitive Bidding"
+language = "en"
+method = "Request for Bids"
+market_approach = "Open - National"
+source = "api/awards/P130164-fy2001-2016.json"
+
+[[name]]
+written = "LIB"
+language = "en"
+method = "Request for Bids"
+market_approach = "Limited - International"
+checked = false
+
+[[name]]
+written = "Limited International Bidding"
+language = "en"
+method = "Request for Bids"
+market_approach = "Limited - International"
+source = "api/awards/P124109-fy2001-2016.json"
+
+[[name]]
+written = "Shopping"
+language = "en"
+method = "Request for Quotations"
+source = "api/awards/P124109-fy2001-2016.json"
+
+[[name]]
+written = "National Shopping"
+language = "en"
+method = "Request for Quotations"
+market_approach = "Limited - National"
+checked = false
+
+[[name]]
+written = "International Shopping"
+language = "en"
+method = "Request for Quotations"
+market_approach = "Limited - International"
+checked = false
+
+[[name]]
+written = "DC"
+language = "en"
+method = "Direct Selection"
+market_approach = "Direct"
+checked = false
+
+[[name]]
+written = "Direct Contracting"
+language = "en"
+method = "Direct Selection"
+market_approach = "Direct"
+checked = false
+
+# STEP's French names, as the STEP tables of Cameroon's Procurement Plan of October 10, 2018 write them.
+[[name]]
+written = "Appel d'offres"
+language = "fr"
+method = "Request for Bids"
+source = "documents/P143940/procurement-plan-2018-10-10"
+pdf_page = 12
+
+[[name]]
+written = "Demande de prix"
+language = "fr"
+method = "Request for Quotations"
+source = "documents/P143940/procurement-plan-2018-10-10"
+pdf_page = 12
+
+[[name]]
+written = "Passation de marché de gré à gré"
+language = "fr"
+method = "Direct Selection"
+market_approach = "Direct"
+source = "documents/P143940/procurement-plan-2018-10-10"
+pdf_page = 14
+
+# The French plan template's codes and names, as the same plan's list of abbreviations gives them (Lexique des
+# Sigles et Abréviations, PDF page 11).
+[[name]]
+written = "AOI"
+language = "fr"
+method = "Request for Bids"
+market_approach = "Open - International"
+source = "documents/P143940/procurement-plan-2018-10-10"
+pdf_page = 11
+
+[[name]]
+written = "Appel d'Offres International"
+language = "fr"
+method = "Request for Bids"
+market_approach = "Open - International"
+source = "documents/P143940/procurement-plan-2018-10-10"
+pdf_page = 11
+
+[[name]]
+written = "AON"
+language = "fr"
+method = "Request for Bids"
+market_approach = "Open - National"
+source = "documents/P143940/procurement-plan-2018-10-10"
+pdf_page = 11
+
+[[name]]
+written = "Appel d'Offres National"
+language = "fr"
+method = "Request for Bids"
+market_approach = "Open - National"
+source = "documents/P143940/procurement-plan-2018-10-10"
+pdf_page = 11
+
+[[name]]
+written = "CF"
+language = "fr"
+method = "Request for Quotations"
+source = "documents/P143940/procurement-plan-2018-10-10"
+pdf_page = 11
+
+[[name]]
+written = "Consultation des Fournisseurs"
+language = "fr"
+method = "Request for Quotations"
+source = "documents/P143940/procurement-plan-2018-10-10"
+pdf_page = 11
+
+[[name]]
+written = "SFQC"
+language = "fr"
+method = "Quality And Cost-Based Selection"
+source = "documents/P143940/procurement-plan-2018-10-10"
+pdf_page = 11
+
+[[name]]
+written = "SFQ"
+language = "fr"
+method = "Quality Based Selection"
+source = "documents/P143940/procurement-plan-2018-10-10"
+pdf_page = 11
+
+[[name]]
+written = "Sélection Fondée sur la Qualité"
+language = "fr"
+method = "Quality Based Selection"
+source = "documents/P143940/procurement-plan-2018-10-10"
+pdf_page = 11
+
+[[name]]
+written = "QC"
+language = "fr"
+method = "Consultant Qualification Selection"
+source = "documents/P143940/procurement-plan-2018-10-10"
+pdf_page = 11
+
+[[name]]
+written = "SMC"
+language = "fr"
+method = "Least Cost Selection"
+source = "documents/P143940/procurement-plan-2018-10-10"
+pdf_page = 11
+
+[[name]]
+written = "Sélection au Moindre Coût"
+language = "fr"
+method = "Least Cost Selection"
+source = "documents/P143940/procurement-plan-2018-10-10"
+pdf_page = 11
+
+[[name]]
+written = "Consultant Individuel"
+language = "fr"
+method = "Individual Consultant Selection"
+source = "documents/P143940/procurement-plan-2018-10-10"
+pdf_page = 11
+
+# Spanish and Portuguese names. The fixture records no plan in either language yet, so none of these was read from
+# a recorded source (a parked decision): a person who writes the language checks them against a plan.
+[[name]]
+written = "Licitación Pública Internacional"
+language = "es"
+method = "Request for Bids"
+market_approach = "Open - International"
+checked = false
+
+[[name]]
+written = "Licitación Pública Nacional"
+language = "es"
+method = "Request for Bids"
+market_approach = "Open - National"
+checked = false
+
+[[name]]
+written = "Comparación de Precios"
+language = "es"
+method = "Request for Quotations"
+checked = false
+
+[[name]]
+written = "Contratación Directa"
+language = "es"
+method = "Direct Selection"
+market_approach = "Direct"
+checked = false
+
+[[name]]
+written = "Selección Basada en la Calidad y el Costo"
+language = "es"
+method = "Quality And Cost-Based Selection"
+checked = false
+
+[[name]]
+written = "Licitação Pública Internacional"
+language = "pt"
+method = "Request for Bids"
+market_approach = "Open - International"
+checked = false
+
+[[name]]
+written = "Licitação Pública Nacional"
+language = "pt"
+method = "Request for Bids"
+market_approach = "Open - National"
+checked = false
+
+[[name]]
+written = "Comparação de Preços"
+language = "pt"
+method = "Request for Quotations"
+checked = false
+
+[[name]]
+written = "Contratação Direta"
+language = "pt"
+method = "Direct Selection"
+market_approach = "Direct"
+checked = false
+
+[[name]]
+written = "Seleção Baseada na Qualidade e Custo"
+language = "pt"
+method = "Quality And Cost-Based Selection"
+checked = false

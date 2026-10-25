@@ -68,6 +68,9 @@ RUN_LOGS = ("strata.ops.pipeline_runs", "strata.ops.quality_checks", "strata.ops
             "strata.ops.table_sizes", "strata.ops.readiness_snapshot", "strata.ops.parse_runs",
             "strata.ops.documents_read", "strata.ops.stress_shelf", "strata.ops.rebidding_labels",
             "strata.ops.supplier_match_quality", "strata.ops.evaluation_result", "strata.gold.time_estimate_score",
+            # Each document run's sample of passages checked against the language detector (ticket 42).
+            "strata.ops.passage_language_checks",
+            # The challenger's and the hazard model's nightly scores in shadow (ticket 44).
             "strata.ops.time_estimate_shadow", "strata.ops.hazard_scores")
 
 # Where a source's pages come from: the live API on the workspace, the recorded fixture here.

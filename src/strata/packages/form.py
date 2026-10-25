@@ -51,9 +51,9 @@ def _number(raw) -> float:
 
 
 def old_method(text: str) -> clean.Method | None:
-    """What an old method name, such as ICB or Shopping, is now, or None for any other text."""
-    key = " ".join(str(text).split()).upper()
-    return clean.OLD_METHODS.get(key)
+    """What an old or French method name, such as ICB, Shopping or Appel d'offres, is now, or None for any other
+    text (config/method_names.toml)."""
+    return clean.OLD_METHODS.get(clean.method_key(text))
 
 
 def value(field: Field, raw, country_codes: dict[str, str], max_months: float):

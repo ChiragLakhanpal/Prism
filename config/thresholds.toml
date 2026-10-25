@@ -63,6 +63,18 @@ max_results = 20
 # Source: none yet; a starting value for the owner to confirm.
 search_depth = 2
 
+# Passages and questions in other languages (ticket 42; config/languages.toml). Each passage carries the language
+# its document's record gives it; the passage reader checks a sample of them against a language detector that
+# reads only the words (src/strata/knowledge/language.py), with sample_size passages shared equally between the
+# languages the passages are written in, each at least min_sample_chars characters long so the detector has words
+# enough to read. A question, or an upload's descriptions taken together, gets a lang attribute on screen only when
+# the detector is at least min_confidence sure of its language. Source: the ticket's criterion ("a check of 50
+# sampled passages") for sample_size; min_sample_chars and min_confidence are starting values for the owner to confirm.
+[lang]
+sample_size = 50
+min_sample_chars = 200
+min_confidence = 0.9
+
 # The answer loop (src/strata/agent/loop.py). The agent gets at most this many rounds of tool results
 # for one question; a tool call it asks for after that is not run, and it answers from what it has.
 # Source: the spec's "The agent and the answer contract" ("this repeats for at most three rounds").

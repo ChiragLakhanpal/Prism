@@ -836,7 +836,8 @@ def registry_page() -> dict:
                       "catalog_url": source.attribution.catalog_url,
                       "name_checked": source.attribution.name_checked.isoformat(), "license": source.license}
                      for key, source in sources.items() if source.attribution],
-        "collections": [{"name": found.name, "publisher": found.publisher, "origin": found.origin}
+        "collections": [{"name": found.name, "publisher": found.publisher, "origin": found.origin,
+                         **({"language": found.language} if found.language else {})}
                         for source in sources.values() for found in source.collections],
         "readiness_rows": sum(len(source.readiness) for source in sources.values()),
         "kinds": sum(1 for tool in load_tools().values() if tool.readiness),

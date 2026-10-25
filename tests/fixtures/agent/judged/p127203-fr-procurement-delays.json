@@ -1,0 +1,27 @@
+{
+ "about": "The judge's answer for this case's sentences, through Azure OpenAI's chat completions, written by hand in the shape the API documents, because the gate's machine has no key (ticket 42). The judge reads the French sentence against the French paragraph it cites. Replace it with a recording: uv run --script ops/agent/record.py --judge --env-file .env",
+ "recorded": false,
+ "recorded_on": null,
+ "case": "p127203-fr-procurement-delays",
+ "judge": {
+  "deployment": "gpt-5.4"
+ },
+ "asked": [
+  "Ces retards ont aussi touché la réhabilitation de la microcentrale hydroélectrique de Drouet."
+ ],
+ "response": {
+  "id": "chatcmpl-p127203-fr",
+  "object": "chat.completion",
+  "model": "gpt-5.4",
+  "choices": [
+   {
+    "index": 0,
+    "finish_reason": "stop",
+    "message": {
+     "role": "assistant",
+     "content": "{\"judgements\": [{\"index\": 2, \"follows\": true, \"reason\": \"Paragraph 84 says the design work and the bidding documents for the Drouet micro hydropower plant were not started on time, so its rehabilitation was delayed.\"}]}"
+    }
+   }
+  ]
+ }
+}
