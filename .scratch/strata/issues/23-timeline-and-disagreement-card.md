@@ -6,7 +6,7 @@ Read first: DESIGN.md sections 5 (Disagreement card), 6 and 10; the blueprint's 
 
 **Blocked by:** 14 (Ask from the one box: the answer panel and the evidence drawer); 20 (Assertions, disagreements and the evidence ladder); 21 (The project page as the hub)
 
-**Status:** ready-for-agent
+**Status:** in-progress
 **Area:** app
 **Phase:** P2
 **Design review:** yes
@@ -18,3 +18,7 @@ Read first: DESIGN.md sections 5 (Disagreement card), 6 and 10; the blueprint's 
 - [ ] Keeping the ISR asks for a reason and stores it with the viewer and the answer or draft in strata.ops.
 - [ ] The ISR series shows as rating bands, never as a disagreement.
 - [ ] The chart has role img with a name, one tab stop, arrow keys between marks, "Show the table", a time axis with no title and about five ticks (DESIGN.md sections 6 and 10); states are captured at 1440, 1024 and 390 px; axe finds no WCAG 2.2 AA violations.
+
+## Comments
+
+- October 23, 2026, orchestrator: dispatched to an implementer in its own worktree on branch strata/23-timeline-and-disagreement-card, as soon as ticket 21 landed. Credentials are still missing, so every live step is parked in docs/workspace-catchup.md; the offline side is built against the fixtures.

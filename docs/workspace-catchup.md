@@ -1049,3 +1049,64 @@ It worked if it exits 0 and prints five test-year lines, 2021 to 2025, each with
       AND measure IN ('coverage', 'width_80_months', 'error_past_range_months', 'error_plan_months')
 
 must return rows for 2021 to 2025, and each `mlflow_run_id` must be a run in the experiment `/Shared/strata/time_estimate`. Criterion 3, workspace half: the `model_card.md` this run logged has a line for each test year, and each year outside 75 to 85 percent gives its gap and a cause sentence (or "The stored results do not show the cause."). This run registers version 2 as challenger, because version 1 from step 1 already holds champion, and the champion's card lists only 2025. Moving champion to version 2 is the user's call; ticket 25's merge comment names it.
+
+## Ticket 21, step 1 of 4: deploy the baseline tables and the Summary's two silver tables
+
+The merger parked this step on October 24, 2026, after merge commit d596000. All ten keys were set, but the header above holds workspace steps back while the user runs the backlog. It needs the Databricks keys in `.env`. It is ticket 04's deploy command, and one deploy from d596000 or later also serves ticket 25's step 1, which needs a deploy from e7c6e38 or later.
+
+Run this from the main checkout, twice:
+
+    uv run --script ops/bundle/deploy.py --env-file .env
+
+It worked if both runs exit 0. The first run lists these four tables as new and changes no existing table: `strata.ops.plan_baselines` and `strata.ops.plan_baseline_steps` (the baseline), and `strata.silver.project_sectors` and `strata.silver.project_environment` (the Summary's sectors and its environmental category or ESF risk). The second run prints "No changes." Then run this in the workspace's SQL editor:
+
+    SELECT table_schema, table_name FROM strata.information_schema.columns
+    WHERE column_name = 'public_from'
+      AND table_name IN ('plan_baselines', 'plan_baseline_steps', 'project_sectors', 'project_environment')
+
+It must return four rows (ADR 0002). The builder named `ops/bundle/check.py same-rows` as the proof, but that command compares ground-truth queries and lists no tables, so this query takes its place. After the next nightly run (ticket 04's `uv run --script ops/bundle/check.py job-run --env-file .env`), `SELECT count(*) FROM strata.silver.project_sectors WHERE project_id = 'P130164'` must return more than 0, because the bronze_to_gold task's projects transform fills both silver tables. If it returns 0, tell the orchestrator before anyone shows the Summary on the App.
+
+## Ticket 21, step 2 of 4: a staff viewer saves a baseline on the deployed App
+
+The merger parked this step on October 24, 2026, after merge commit d596000. It needs the Databricks keys in `.env`. Run it after step 1, and after ticket 09's step 1 has turned on user authorization, because the App writes the baseline with the viewer's own token (`src/strata/server/baseline.py`; criterion 7, live half). Viewers already read `strata.ops` through the bundle's `USE_SCHEMA, SELECT` grant to `account users`. Saving also needs MODIFY on the two tables, and no file grants it yet (ticket 21's done comment names this), so run this once in the workspace's SQL editor, as a user who owns the `strata` catalog:
+
+    GRANT MODIFY ON TABLE strata.ops.plan_baselines TO `account users`;
+    GRANT MODIFY ON TABLE strata.ops.plan_baseline_steps TO `account users`;
+    SHOW GRANTS ON TABLE strata.ops.plan_baselines;
+
+It worked if `SHOW GRANTS` lists MODIFY for `account users`. Run `SHOW GRANTS` again after any later bundle deploy. Then deploy the App from d596000 or later, so it serves ticket 21's routes. Ticket 06's step 1 and ticket 15's step 3 run the same command, and one deploy from d596000 or later serves them all:
+
+    uv run --script ops/app/deploy_app.py --env-file .env
+
+It worked if the deploy exits 0 and its last line is `Strata is running at https://...`. Then sign in to the App in a browser as a World Bank staff viewer:
+
+1. Open `<App url>/projects/P156634/procurement/northern-water-works-development-agency/2025-07-21` to check NWWDA's plan of July 21, 2025.
+2. Choose "Save as the baseline".
+3. Open `<App url>/projects/P156634/procurement/northern-water-works-development-agency/2026-10-09`.
+
+It worked if the panel says "I saved the plan of July 21, 2025 as the baseline. The reasons below now also give delay against it."; the October 9, 2026 check names the plan of July 21, 2025 as the baseline and gives a late activity's delay both ways, each labeled ("... days after its first published planned date" and "That was ... days after its baseline date of ..."); and this query returns one row, with `plan_date` 2025-07-21 and your own user id in `saved_by`:
+
+    SELECT project_id, agency_id, plan_date, saved_by, saved_at FROM strata.ops.plan_baselines
+    WHERE project_id = 'P156634' AND agency_id = 'northern-water-works-development-agency'
+
+If the save answers 403 with the code `permission`, the grant above did not reach your account.
+
+## Ticket 21, step 3 of 4: the Summary's Fast 3G budget through the Databricks Apps proxy
+
+The merger parked this step on October 24, 2026, after merge commit d596000. It needs the App deployed from d596000 or later (step 2). It is a measurement in your own browser, so it has no command (criterion 9, live half). On the local server the verifier measured 3.50 s cold, 0.80 s from another tab and a 10,087-byte Summary; the proxy adds its own time.
+
+In Chrome, signed in to the App:
+
+1. Open DevTools, then its Network tab. Set throttling to "Fast 3G" and tick "Disable cache".
+2. Open `<App url>/projects/P130164` and note the time until the Summary's facts show. That is the cold load.
+3. Untick "Disable cache", keep "Fast 3G", and open the same address in a new tab. Note the time again. That is the load from another tab.
+
+It worked if the Summary showed in 5 s or less cold and in 2 s or less from another tab, and the Network tab shows `GET /api/projects/P130164/summary` once, with at most 15 KB transferred, and no request to `POST /api/ask`. If a budget is missed, note both times and tell the orchestrator. The budgets are brief 21's decision 11.
+
+## Ticket 21, step 4 of 4: time All projects' search on the workspace
+
+The merger parked this step on October 24, 2026, after merge commit d596000. It needs the App deployed from d596000 or later (step 2). All projects filters the project list in Python on each search (`src/strata/server/projects.py`), and the fixture holds only 93 projects, so how fast it is on the workspace's full list is not known yet (review round 3, item 9).
+
+In Chrome, signed in to the App, with no throttling, open `<App url>/api/projects?q=ind` three times and read each request's time in DevTools' Network tab.
+
+It worked if each answer took under 1 s and counts the projects whose name, ID or country holds "ind", India's among them. If any took 1 s or more, tell the orchestrator, who files a ticket to move the search into a SQL filter in `src/strata/server/sql/projects/`.
