@@ -1,0 +1,46 @@
+# The retrieval loop's lists (ticket 32; docs/PLAN.md section 11, "Feedback"). strata.config.load_retrieval()
+# reads it.
+#
+# The kinds of question. A passage report is about one passage for one kind of question, and a passage
+# reviewer's "Rank it lower" changes only questions of that kind, so one person's report never moves a
+# passage for every question. Strata picks a question's kind by its words: the kind whose words the question
+# holds most often, the first in this file on a tie, and the fallback when it holds none. This is the loop's
+# own classification. It is not the tool registry's "kind of question" on the Data readiness page, which
+# names what each tool answers.
+#
+# [query_kinds.<key>]
+#   words  the words that pick the kind, as keyword search reads them: lower case, with a plural's s and an
+#          -ing ending taken off (strata.knowledge.embed.terms), so "rebidding" is written rebid and
+#          "delays" delay
+#
+# Each key has its phrase in web/src/copy.ts (copy.retrieval.queryKinds), which a test checks, so the
+# Passage reports page can say "For questions about rebidding and bid prices". Adding a kind is one entry
+# here and one phrase there. Source: the procurement topics the showcase's ICR Review and the demo plan's
+# reports raise; a starting list for the search owner to confirm.
+
+fallback = "other"
+
+[query_kinds.rebidding_and_prices]
+words = ["rebid", "retender", "retendered", "readvertised", "advertised", "again", "bid", "bidder", "price",
+         "estimate", "estimated", "market", "rate", "cost", "overrun", "quotation"]
+
+[query_kinds.delays]
+words = ["delay", "delayed", "late", "slow", "schedule", "extension", "extended", "timeline", "time", "month"]
+
+[query_kinds.clearances_and_land]
+words = ["clearance", "forest", "land", "acquisition", "resettlement", "safeguard", "environmental", "permit",
+         "right", "way"]
+
+[query_kinds.contract_management]
+words = ["contract", "contractor", "variation", "supervision", "quality", "termination", "terminated", "claim",
+         "dispute", "award", "awarded"]
+
+[query_kinds.capacity]
+words = ["capacity", "staff", "training", "coordination", "department", "agency", "unit", "consultant"]
+
+[query_kinds.results]
+words = ["rating", "rated", "outcome", "result", "indicator", "satisfactory", "efficiency", "achieved",
+         "target", "objective"]
+
+[query_kinds.other]
+words = []
