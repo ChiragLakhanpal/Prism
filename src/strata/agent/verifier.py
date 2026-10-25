@@ -914,6 +914,20 @@ def _supported(pairs) -> list[dict]:
     return [{"text": mention.text, "evidence_id": found} for mention, found in pairs]
 
 
+def sentence_of(text: str | None, quote: str | None) -> str | None:
+    """The whole sentence of a passage that holds a side's quote, without the paragraph's own number, so the card
+    shows what the report said in full: the ICR's paragraph 78 says more than the words the reader quoted. None when
+    the passage has no such sentence. The answer's card (disagreement_event) and the timeline's drawer (ticket 23)
+    both show it."""
+    if not text or not quote:
+        return None
+    wanted = " ".join(quote.split())
+    for sentence in re.split(r"(?<=[.!?])\s+(?=[A-Z])", " ".join(text.split())):
+        if wanted in sentence:
+            return re.sub(r"^\d+\.\s+", "", sentence)
+    return None
+
+
 # The kind of report each documents API type is (config/project_page.toml's groups), read once.
 DOCUMENT_GROUPS = load_project_page().document_groups
 
@@ -928,6 +942,7 @@ def _side(side: Mapping, leaned: str | None) -> dict:
             "made_at": side.get("made_at"), "field_name": side.get("field_name"), "value": side.get("value"),
             "value_form": side.get("value_form"), "quote": side.get("quote"),
             "months_after_event": side.get("months_after_event"), "doc_key": side.get("doc_key"),
+            "sentence": sentence_of(side.get("text"), side.get("quote")),
             "leaned": side.get("assertion_id") == leaned}
 
 

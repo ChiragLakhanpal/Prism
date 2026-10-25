@@ -367,6 +367,8 @@ def test_the_stream_names_the_sentences_a_disagreement_changes_so_the_card_takes
     # The event carries what keeping a side needs: the disagreement's own id and each side's assertion id.
     assert changes["disagreement_id"] == changes["id"].removeprefix("strata.gold.disagreement:")
     assert all(side["assertion_id"] for side in changes["sides"])
+    # The answer's card shows the whole sentence of paragraph 78 that holds the ICR's quote, as the drawer's does.
+    assert changes["sides"][1]["sentence"] == TRUTH["icr-para-78"]["quote"]
 
 
 # ── Keeping the other report ─────────────────────────────────────────────

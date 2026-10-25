@@ -41,6 +41,7 @@ from functools import cache
 from importlib import resources
 from pathlib import Path
 
+from strata.agent.verifier import sentence_of
 from strata.config import load_ladder, load_project_page, load_thresholds
 from strata.dbx import Viewer
 from strata.knowledge.assertions import KEY_DATE_LABELS, MID_TERM_REVIEW, PASSAGES
@@ -521,19 +522,6 @@ def read_contracts(engine: Engine, key: str, as_of: dt.date) -> dict | None:
                   "signed_amount_usd": _amount(row["signed_amount_usd"]),
                   "evidence_id": f"strata.gold.package:{row['step_reference']}"} for row in signed],
         "source": {"source_key": "awards", "project_id": pid}}}
-
-
-def sentence_of(text: str | None, quote: str | None) -> str | None:
-    """The whole sentence of a passage that holds a side's quote, without the paragraph's own number, so the card
-    shows what the report said in full: the ICR's paragraph 78 says more than the words the reader quoted. None when
-    the passage has no such sentence."""
-    if not text or not quote:
-        return None
-    wanted = " ".join(quote.split())
-    for sentence in re.split(r"(?<=[.!?])\s+(?=[A-Z])", " ".join(text.split())):
-        if wanted in sentence:
-            return re.sub(r"^\d+\.\s+", "", sentence)
-    return None
 
 
 def disagreement_row(row: dict) -> dict:

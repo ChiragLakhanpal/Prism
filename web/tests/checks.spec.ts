@@ -155,7 +155,10 @@ test("ICR paragraph 78 shows under ISR 7's sentence with both sides, though the 
   await expect(sides.nth(1)).toContainText("Implementation Completion and Results Report (ICR), paragraph 78");
   await expect(sides.nth(1)).toContainText("October 10, 2019. Written after the project closed.");
   await expect(sides.nth(1)).toContainText("Strata leans on this");
-  await expect(sides.nth(1)).toContainText('"it was clearly identified at the MTR that the achievement of part of the PDO was compromised"');
+  // The whole sentence of paragraph 78 that holds the quote (values.toml, icr-para-78), as the drawer's card shows it.
+  await expect(sides.nth(1)).toContainText(
+    '"Indeed, it was clearly identified at the MTR that the achievement of part of the PDO was compromised by the major delays in implementing activities under Components 2 and 3 and lack of endorsement from relevant stakeholders."',
+  );
   await expect(sides.nth(0)).toHaveAttribute("data-side", "other");
   // Equal weight: the same border and fill on both sides.
   const looks = await sides.evaluateAll((all) => all.map((side) => [getComputedStyle(side).borderColor, getComputedStyle(side).backgroundColor]));
