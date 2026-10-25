@@ -305,6 +305,7 @@ export const copy = {
       sentences: "whether each sentence follows from its sources",
       find_comparables: "whether these are the right comparables",
       search_passages: "whether I found every passage that matters",
+      get_lessons: "whether these lessons apply here",
       check_plan: "whether the plan's published records are complete",
       writer_review_notes: "whether these notes are what you would tell the borrower",
     },
@@ -1688,6 +1689,160 @@ export const copy = {
     },
   },
 
+  // Section 3 of the package workspace, procurement risks and what helped (ticket 30; the 30 brief, section 6).
+  // Every number in it is a count the risk-table builder returned (src/strata/packages/risks.py); the page
+  // never counts, ranks or picks the most common risk. Risk names are the closed list's labels
+  // (config/lessons.toml), in straight double quotes inside a sentence.
+  packageRisks: {
+    // The ticket's exact words; uppercase through CSS.
+    eyebrow: "Planning · PPSD section 3",
+    // Hidden from screen readers, so the heading reads "Procurement risks and what helped".
+    number: "3 ·",
+    heading: "Procurement risks and what helped",
+    intro:
+      "These risks came up again and again in the completion reports of projects with comparable packages. Each one has a lesson on what helped and the reports that say so.",
+    // Where PPSD is spelled out on this screen (DESIGN.md section 7, rule 10).
+    instruction:
+      "Select the risks that belong in section 3 of the borrower's Project Procurement Strategy for Development (PPSD). I save your choice with this package.",
+    // The finding, the table's title: Fill templates whose {k} and {m} are Num values.
+    finding: '"{risk}" came up most often, in {k} of the {m} completion reports for projects with comparable packages.',
+    findingTwo: '"{a}" and "{b}" came up most often, each in {k} of the {m} completion reports for projects with comparable packages.',
+    findingMany: "{tied} of these risks came up most often, each in {k} of the {m} completion reports for projects with comparable packages.",
+    countOne: "Showing one risk.",
+    count: (shown: string) => `Showing ${shown} risks, in the order I ranked them.`,
+    // The person's own count, so plain text, not a finding.
+    selected: (selected: string, shown: string) => `You selected ${selected} of the ${shown} risks for the PPSD.`,
+    selectedNone: "You haven't selected a risk for the PPSD yet.",
+    dropped: (risk: string) => `You selected "${risk}" before, but it is no longer in the table, so I don't count it.`,
+    droppedMany: (count: string, risks: string) =>
+      `You selected ${count} risks before that are no longer in the table, so I don't count them: ${risks}.`,
+    // A risk's name in a list of names inside a sentence.
+    quoted: (risk: string) => `"${risk}"`,
+    saveFailed: "I couldn't save your selection. It still applies on this page.",
+    saveFailedSpoken: "I couldn't save your selection.",
+    tryAgain: "Try again",
+    preview: "Changes are off in a preview.",
+    columns: {
+      select: "Select for the PPSD",
+      risk: "Risk",
+      often: "How often",
+      oftenNote: "In completion reports for projects with comparable packages",
+      helped: "What helped",
+      helpedNote: "A lesson from the library, at its current version",
+      sources: "Sources",
+      sourcesNote: "The reports that say so. Select one to read its paragraph beside this page.",
+    },
+    // The How often cell: "{k} of {m}" in Num, then this on the next line.
+    reports: "completion reports",
+    helpedLabel: "What helped",
+    sourcesLabel: "Sources",
+    checkbox: (risk: string) => `Select ${risk} for the PPSD`,
+    countName: (k: string, m: string, risk: string) => `${k} of ${m} completion reports, for ${risk}`,
+    // A source pill's visible name: one formatter for every pill (web/src/lib/risks.ts, pillText), which the
+    // PPSD draft's footnotes reuse (the 36 brief). A later pill from the same project drops the P-code.
+    pill: "{doc} {pcode} {locator}",
+    pillNoProject: "{doc} {locator}",
+    pillParagraph: "¶{para}",
+    pillParagraphSpoken: "paragraph {para}",
+    // The pill's accessible name: its visible words, ¶ heard as "paragraph" (WCAG 2.5.3), then this.
+    pillNameAfter: (docType: string, date: string, opened: boolean) => `, ${docType}, ${date}${opened ? ", opened" : ""}`,
+    pillsLabel: "Sources",
+    numTips: {
+      k: (k: string) => `Completion reports for projects with comparable packages that raised this risk. Select to see the ${k}.`,
+      tie: (k: string) => `Each of these risks came up in ${k} completion reports. Select a row's count to see its reports.`,
+      m: (m: string) => `Completion reports of projects with comparable packages that I read. Select to see all ${m}.`,
+      counted: "Counted from the records behind this section. Data readiness lists them by source.",
+    },
+    removed: {
+      none: "I removed no risks.",
+      one: "I removed one risk.",
+      several: (count: string) => `I removed ${count} risks.`,
+      all: (count: string) => `I removed all ${count} risks.`,
+      allOne: "I removed the one risk I found.",
+      // What a removed row said, as the removed box reports it.
+      saidCount: (risk: string, k: string, m: string) => `"${risk}" came up in ${k} of ${m} completion reports`,
+      saidHelped: (risk: string, lesson: string) => `what helped with "${risk}" was "${lesson}"`,
+      // Each removed row after the first, under "The others:".
+      item: (said: string, reason: string) => `It said ${said}. ${reason}`,
+      // The 24 brief's reasons, word for word, except a source not retrieved, which names the package.
+      reasons: {
+        id_not_returned: {
+          item: "It cited a source I did not retrieve for this package.",
+          joined: "it cited a source I did not retrieve for this package",
+        },
+      } as Record<string, { item: string; joined: string }>,
+    },
+    noteLabel: "Note:",
+    // The ranking sentence says what the builder's ranking does (src/strata/packages/risks.py, rank); the two
+    // change together (CLAUDE.md rule 4).
+    note: (most: string) =>
+      `I counted the completion reports of projects that had comparable packages, found with the criteria in section 1. I ranked the risks by how closely their lessons match this package and how strong their evidence is, never by how often people used a lesson. I show at most ${most}.`,
+    abbr: "ICR is the Implementation Completion and Results Report. An ICR Review is the Independent Evaluation Group's (IEG's) review of it.",
+    abbrPpar: "PPAR is IEG's Project Performance Assessment Report.",
+    // The coverage line: Fill templates whose numbers are Num values. A reason follows "; " and the first
+    // sentence, and a second reason follows ", and ".
+    coverage: {
+      some: "Based on the completion reports of {m} of the {p} projects with comparable packages",
+      all: "Based on the completion reports of all {p} projects with comparable packages.",
+      allOne: "Based on the completion report of the one project with comparable packages.",
+      join: "; ",
+      and: ", and ",
+      end: ".",
+      reasons: {
+        no_report: { one: "{n} has no completion report yet", many: "{n} have no completion report yet" },
+        not_read: { one: "{n} had a completion report I couldn't read", many: "{n} had a completion report I couldn't read" },
+      } as Record<string, { one: string; many: string }>,
+      link: "Data readiness for these sources",
+    },
+    sourceLine: "{names} and Strata's lesson library. Records run through {date}.",
+    sourceLineAsOf: "{names} and Strata's lesson library. Records as of {date}.",
+    empty: {
+      missing: "Add {list} above, and I'll look for the risks that came up for comparable packages.",
+      noComparables: "I found no comparable packages, so I have no completion reports to look in.",
+      noComparablesPlanned: "Change a criterion above to compare with more packages.",
+      noComparablesStep: "Data readiness shows which records I hold for this region and period.",
+      noComparablesLink: "Open Data readiness",
+      noReports: "None of the {p} projects with comparable packages has a completion report I could read.",
+      noReportsOne: "The one project with comparable packages has no completion report I could read.",
+      noReportsBody: "A project gets a completion report only after it closes.",
+      noReportsLink: "See which completion reports I have read",
+      noLessons: "I found {m} completion reports for projects with comparable packages, but no lesson in the library fits this package yet.",
+      noLessonsOne: "I found one completion report for a project with comparable packages, but no lesson in the library fits this package yet.",
+      noLessonsBody: "A lesson enters the library only after two people decide on it. When they add one that fits, it appears here.",
+      allRemoved: "I don't have risks I can support with a source.",
+      allRemovedBody: (written: string) => `I found ${written} risks, and each one failed a check.`,
+      allRemovedBodyOne: "I found one risk, and it failed a check.",
+    },
+    loading: "Loading the risks for this package.",
+    error: "I couldn't load the risks for this package.",
+    errorCode: "If it fails again, quote this code: {code}.",
+    // The evidence drawer's views of a row (the 30 brief, section 6.7).
+    drawer: {
+      fromPage: "From this page",
+      helped: "What helped: {lesson}",
+      version: "Lesson version {version}, decided on {date}.",
+      iegRestates: "IEG's review restates this lesson",
+      iegWrote: 'IEG wrote in its {doc}: "{quote}"',
+      awaiting: "This lesson rests on the completion report alone. IEG has not reviewed this project's completion report yet.",
+      notRestated: "This lesson rests on the completion report alone. IEG's ICR Review did not restate it.",
+      switcher: "Sources for this risk",
+      tab: "{doc} {locator}",
+      reportsEyebrow: "Why · evaluation",
+      reportsTitle: "Completion reports that raised this risk",
+      reportsFinding: '{k} of the {m} completion reports for projects with comparable packages raised "{risk}".',
+      reportsNote: "Newest first.",
+      reportEntry: "{doc}, {date}, paragraph {para}",
+      allTitle: "Completion reports I counted",
+      allSentence: (m: string) => `I counted the completion reports of ${m} projects with comparable packages.`,
+      allSentenceOne: "I counted the completion report of one project with comparable packages.",
+      allEntry: "{doc}, {date}",
+      back: (count: string) => `Back to the ${count} reports`,
+      backOne: "Back to the report",
+      close: "Close the list",
+      region: "{title}, for {risk}",
+    },
+  },
+
   // The Packages tab (the 15 brief, section 7.9).
   packagesTab: {
     purpose: "The packages you are planning and the plans you checked. Check a published plan, or plan a new package from one sentence.",
@@ -2290,6 +2445,9 @@ export const copy = {
         check_plan: "the plan check",
         search_passages: "the document search",
         get_lessons: "the quote check on proposed lessons",
+        // The package workspace's section 3 (ticket 30) links with its own key, since its coverage line is not
+        // the quote check's.
+        package_risks: "the risks and what helped",
         ask: "the answer",
         unknown: "the coverage line you opened",
       },

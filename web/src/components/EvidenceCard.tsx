@@ -35,6 +35,9 @@ export function sourceTitle(evidence: EvidenceEvent) {
   }
   // A quantile dot's packages are headed by how many there are (ticket 15).
   if (evidence.kind === "dot") return dotTitle(evidence);
+  // The risks section's lists of completion reports (ticket 30).
+  if (evidence.kind === "risk-reports") return copy.packageRisks.drawer.reportsTitle;
+  if (evidence.kind === "risk-reports-all") return copy.packageRisks.drawer.allTitle;
   const lesson = lessonOf(evidence);
   if (lesson) return <span data-lesson-title>{lesson.statement}</span>;
   if (evidence.kind === "record") {
@@ -103,6 +106,7 @@ export function eyebrow(evidence: EvidenceEvent): string {
   if (lessonOf(evidence)) return copy.evidence.lessonEyebrow;
   // A quantile dot's list of packages is no record, so it names only its stratum.
   if (evidence.kind === "dot") return copy.evidence.package.dot.eyebrow;
+  if (evidence.kind === "risk-reports" || evidence.kind === "risk-reports-all") return copy.packageRisks.drawer.reportsEyebrow;
   const stratum = evidence.kind === "record" || evidence.kind === "package" ? "What" : (evidence.stratum ?? "Why");
   return copy.evidence.eyebrow[stratum];
 }

@@ -36,6 +36,8 @@ async function openPackage(
   };
   if (options.pkg !== null) answers[api] = options.pkg ?? { body: await recorded(pkgFile) };
   if (options.comparables !== null) answers[`${api}/comparables`] = options.comparables ?? { body: await recorded(comparablesFile) };
+  // Section 3, procurement risks and what helped (ticket 30): the fixture's Kenya comparables reach no completion report.
+  answers[`${api}/risks`] = { body: await recorded("risks-ke-nwwda-541055.json") };
   if (options.evidence) {
     answers["/api/evidence"] = { body: await recorded("evidence-icr-p130164-54.json") };
     answers["/api/evidence/opened"] = { body: '{"opened":[],"recorded":true}' };

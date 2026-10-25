@@ -38,6 +38,15 @@ export function postJson<T>(path: string, body: unknown, init: { signal?: AbortS
   });
 }
 
+export function putJson<T>(path: string, body: unknown, init: { signal?: AbortSignal } = {}): Promise<T> {
+  return call<T>(path, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+    signal: init.signal,
+  });
+}
+
 // GET /api/me: who the Databricks App says is viewing. The token never leaves the server.
 export type Me = { email: string | null; name: string | null; signed_in: boolean; has_token: boolean };
 

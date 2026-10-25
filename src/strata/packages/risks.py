@@ -77,7 +77,7 @@ def _source(evidence: Mapping, project_name: str | None) -> dict:
             "doc_type": evidence["document_type"], "doc_short": evidence["doc_short"], "pcode": evidence["project_id"],
             "project_name": project_name, "date": evidence["document_date"], "para": evidence["paragraph"],
             "locator": {"kind": evidence["locator"], "text": evidence["paragraph"]}, "page": evidence["page"],
-            "public_from": evidence["public_from"]}
+            "quote": evidence["quote"], "public_from": evidence["public_from"]}
 
 
 def _ieg_quote(lesson: Mapping) -> dict | None:

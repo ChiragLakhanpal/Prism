@@ -83,6 +83,7 @@ import { galleryCopy } from "./copy";
 import { draftsPage } from "./drafts";
 import { lessonsPage } from "./lessons";
 import { packagesPage } from "./packages";
+import { risksPage } from "./risks";
 
 // ── The package workspace's samples (ticket 12) ──────────────────────────
 // Made-up comparables in find_comparables' shape, built from the gallery copy's months so that every
@@ -1362,6 +1363,7 @@ export const PAGES: GalleryPage[] = [
     ],
   },
   packagesPage(),
+  risksPage(),
   {
     slug: "icons",
     sections: [

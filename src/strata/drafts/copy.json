@@ -88,6 +88,7 @@
       "sentences": "whether each sentence follows from its sources",
       "find_comparables": "whether these are the right comparables",
       "search_passages": "whether I found every passage that matters",
+      "get_lessons": "whether these lessons apply here",
       "check_plan": "whether the plan's published records are complete",
       "writer_review_notes": "whether these notes are what you would tell the borrower"
     }

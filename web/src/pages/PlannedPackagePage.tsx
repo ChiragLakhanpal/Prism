@@ -25,6 +25,7 @@ import { CardTop, ChipGroups, ChipSkeletons, ComputedNote, CriterionChip, Refusa
 import { Fill } from "../components/Fill";
 import { Num } from "../components/Num";
 import { PastRange, type PastRangeState } from "../components/PastRange";
+import { RisksSection } from "../components/RisksSection";
 import { POPOVER } from "../components/Popover";
 import { SkeletonLine } from "../components/Skeleton";
 import { Steps, type Step } from "../components/Steps";
@@ -449,6 +450,8 @@ function Workspace({ initial, preview, focusHeading }: { initial: PlannedPage; p
   const [pkg, setPkg] = useState(initial.package);
   const [saving, setSaving] = useState<Saving>({ status: "saved", at: initial.package.saved_at });
   const [failedChange, setFailedChange] = useState<Change | null>(null);
+  // The risks section's last failed save, which the saved stamp's "Try again" sends again (ticket 30).
+  const retryRisks = useRef<(() => void) | null>(null);
   const [openKey, setOpenKey] = useState<string | null>(null);
   const [announce, setAnnounce] = useState("");
   const [section, setSection] = useState<Section>(initial.package.comparables_query ? { status: "loading" } : { status: "none" });
@@ -733,6 +736,10 @@ function Workspace({ initial, preview, focusHeading }: { initial: PlannedPage; p
     };
   else state = { status: "loading" };
 
+  // What the package still lacks, as section 1 and section 3 name it: "the category and the country".
+  const missingParts = missing.map((one) => one.add_label.replace(new RegExp(`^${words.section.missingStart} `), ""));
+  const missingList =
+    missingParts.length > 1 ? `${missingParts.slice(0, -1).join(copy.list.comma)}${copy.list.and}${missingParts[missingParts.length - 1]}` : missingParts[0];
   let body: ReactNode = undefined;
   if (missing.length > 0) {
     const [first, ...rest] = missing.map((one) => one.add_label);
@@ -775,7 +782,13 @@ function Workspace({ initial, preview, focusHeading }: { initial: PlannedPage; p
             headerRef={header}
             headingRef={heading}
             title={title}
-            stamp={<SavedStamp saving={saving} preview={preview} onRetry={failedChange ? () => send(failedChange) : undefined} />}
+            stamp={
+              <SavedStamp
+                saving={saving}
+                preview={preview}
+                onRetry={failedChange ? () => send(failedChange) : retryRisks.current ? () => retryRisks.current?.() : undefined}
+              />
+            }
           />
         </div>
         <p className="mt-4 max-w-prose text-body text-ink-muted">{words.purpose}</p>
@@ -799,6 +812,22 @@ function Workspace({ initial, preview, focusHeading }: { initial: PlannedPage; p
             lead={lead}
             more={more}
             quiet
+          />
+        </div>
+        {/* Section 3, procurement risks and what helped (ticket 30): it reruns with section 1's criteria, and its
+            selection saves with the package under the saved stamp. */}
+        <div className="mt-6 @lg/page:mt-8">
+          <RisksSection
+            apiHref={`/api/planned-packages/${pkg.package_id}`}
+            packageKey={pkg.package_id}
+            kind="planned"
+            rerunKey={`${queryKey(pkg)}|${pkg.missing.join(",")}`}
+            preview={preview}
+            missingList={missingList}
+            onSaveState={(state, retry) => {
+              retryRisks.current = state === "failed" ? retry : null;
+              setSaving(state === "saved" ? { status: "saved", at: new Date().toISOString() } : { status: state });
+            }}
           />
         </div>
         <p role="status" className="sr-only" data-workspace-live>

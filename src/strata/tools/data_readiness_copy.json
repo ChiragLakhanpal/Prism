@@ -71,6 +71,7 @@
     "check_plan": "the plan check",
     "search_passages": "the document search",
     "get_lessons": "the quote check on proposed lessons",
+    "package_risks": "the risks and what helped",
     "ask": "the answer",
     "unknown": "the coverage line you opened"
   },
