@@ -191,6 +191,14 @@ def _table(part: str, note: dict, layout: dict, say) -> tuple[list[str], list[li
     return columns, body, (2600, 2400, 2000, 2026)
 
 
+def _none(part: str, reason: str, about: dict, layout: dict, say) -> str:
+    """Why a part has no records, by the reason project_records gave (the 37 brief, section 7.4, item 4)."""
+    if part == "ratings" and reason == "no_isr":
+        return layout["ratingsNone"]
+    date = about.get("isr_date") if reason == "no_awards" else about.get("closing_date")
+    return say(layout["none"][reason], date=say.date(date) if date else "")
+
+
 def word(document, draft: dict, words: dict, say) -> None:
     """The Word file (the 37 brief, section 7.4), in Word's built-in styles. Text in it speaks in the document's
     voice; an abstaining part keeps its heading and its line, so the reader sees what is missing."""
@@ -205,7 +213,7 @@ def word(document, draft: dict, words: dict, say) -> None:
         part = note["key"]
         document.subheading(layout["parts"][part])
         if not note["sentences"] and note.get("reason"):
-            document.paragraph(layout["none"][part])
+            document.paragraph(_none(part, note["reason"], about, layout, say))
         for sentence in note["sentences"]:
             document.paragraph(sentence["text"], *[document.footnote(say.footnote(draft, evidence))
                                                    for evidence in sentence["evidence_ids"]])

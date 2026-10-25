@@ -3,7 +3,8 @@
 // h3 with its cited sentences first and a table of the records they rest on second. Every value in a table is
 // project_records' own (the draft keeps the records), so the browser counts and sums nothing; a total row is the
 // tool's. A part with no records says why in one first-person sentence; a part whose sentences were all removed
-// keeps its table. Ratings and awards run oldest first, and awards fold after 10 rows on screen.
+// keeps its table, and so does a part the writer refused, which says so in its refusal's words. Ratings and awards
+// run oldest first, and awards fold after 10 rows on screen.
 //
 // Inside the document column a table becomes a list of blocks below 640 px (40rem): each row's key as an h4, the
 // other cells as a definition list. Both are in the page, and the container query shows one.
@@ -19,6 +20,7 @@ import { IdText } from "./ProjectId";
 import { NoteSentences, type OpenSource } from "./DraftNotes";
 
 const words = copy.mission;
+const kindWords = copy.draft.kinds.mission_brief;
 const AWARDS_SHOWN = 10;
 
 type Cell = { text: ReactNode; numeric?: boolean };
@@ -207,11 +209,12 @@ function TableView({ title, data, folded }: { title: ReactNode; data: Table; fol
         {[...rows, ...(data.foot ? [{ key: "total", cells: data.foot }] : [])].map((row) => (
           <li key={row.key} className="border-t border-line py-3">
             <h4 className="text-small font-bold text-ink-heading">{row.cells[0].text}</h4>
-            <dl className="mt-1 grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-1 text-small">
+            {/* Two equal columns, so a long value (a supplier's name) can never squeeze its label to nothing. */}
+            <dl className="mt-1 grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-x-4 gap-y-1 text-small">
               {row.cells.slice(1).map((cell, index) => (
                 <div key={index} className="contents">
-                  <dt className="text-caption text-ink-muted">{data.head[index + 1]}</dt>
-                  <dd className={cx("text-ink", cell.numeric && "text-right tabular-nums")}>{cell.text}</dd>
+                  <dt className="min-w-0 text-caption text-ink-muted [overflow-wrap:anywhere]">{data.head[index + 1]}</dt>
+                  <dd className={cx("min-w-0 text-ink [overflow-wrap:anywhere]", cell.numeric && "text-right tabular-nums")}>{cell.text}</dd>
                 </div>
               ))}
             </dl>
@@ -272,6 +275,11 @@ export function MissionBriefParts({ notes, evidence, numbers, opened, open, subj
             <div className="mt-2">
               {note.sentences.length > 0 ? (
                 <NoteSentences sentences={note.sentences} evidence={evidence} numbers={numbers} opened={opened} open={open} textSize="body" />
+              ) : note.state === "refused" ? (
+                // The writer declined the part, so I removed nothing: say so, in the words its refusal code has.
+                <p className="max-w-[72ch] text-body text-ink" data-refused>
+                  {kindWords.refused[note.refusal ?? ""] ?? kindWords.refusedOther}
+                </p>
               ) : said ? (
                 <p className="max-w-[72ch] text-body text-ink">{said}</p>
               ) : (

@@ -2563,13 +2563,17 @@ export const copy = {
             disbursement: ["Loan or credit", "Commitment", "Disbursed", "Undisbursed", "Canceled"],
             closing: ["Activity or change", "Implementing agency, or closing date before", "Planned completion, or closing date after", "Days after closing, or first reported"],
           },
+          // Why a part has no records, by the reason project_records gave, as the draft page says it.
           none: {
-            plans: "No Procurement Plan was read for this project.",
-            awards: "No contract was signed after the last ISR, or no ISR was read.",
-            ratings: "No ISR was read for this project.",
-            disbursement: "No loan record is held for this project.",
-            closing: "The project has closed, so there is no closing check.",
+            no_plans: "No Procurement Plan was read for this project.",
+            no_isr: "No ISR was read for this project, so there is no date to count the contracts from.",
+            no_awards: "No contract was signed after the ISR dated {date}.",
+            no_loans: "No loan record is held for this project.",
+            closed: "The project closed on {date}, so there is no closing check.",
+            no_closing_date: "No closing date is recorded for this project, so there is no closing check.",
           },
+          // The ratings part's line when no ISR was read.
+          ratingsNone: "No ISR was read for this project.",
           planVersion: "Plan of {date}",
           noPlan: "No plan read",
           individual: "Individual consultant",

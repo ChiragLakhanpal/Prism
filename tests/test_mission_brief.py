@@ -106,7 +106,8 @@ def test_the_following_row_names_the_open_brief_its_author_started(story):
     assert row["mission_brief"]["draft_id"] == "draft-0001"
 
 
-def test_a_part_whose_sentences_all_fail_keeps_its_table_and_no_sentence(fixture_db, tmp_path):
+def written_by(case: str, fixture_db, tmp_path) -> dict:
+    """The draft the scripted writer's case writes on P156634 through the routes, as Ana, on October 23, 2026."""
     state_db = tmp_path / "state.duckdb"
     with DuckDBEngine.open(state_db) as engine:
         catalog.build(engine)
@@ -118,7 +119,7 @@ def test_a_part_whose_sentences_all_fail_keeps_its_table_and_no_sentence(fixture
 
     ana = {"X-Forwarded-Email": "ana.example@worldbank.org", "X-Forwarded-User": "4021@1984",
            "X-Forwarded-Access-Token": "token-for-ana-only"}
-    written = load_cases(WRITER_CASES)["mission-brief-a-part-removed"]
+    written = load_cases(WRITER_CASES)[case]
     app = create_app(engine_for=reading, drafts=DraftStore(lambda: DuckDBEngine.open(state_db)),
                      writers=lambda kind: ScriptedAgent(written), access=Access(load_roles(), StaticGroups({})),
                      today=lambda: dt.date(2026, 10, 23), new_draft_id=lambda: "draft-0001")
@@ -127,9 +128,47 @@ def test_a_part_whose_sentences_all_fail_keeps_its_table_and_no_sentence(fixture
         async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://strata.test") as client:
             await client.post("/api/drafts", headers=ana, json={"kind": "mission_brief", "project_id": "P156634"})
             return (await client.get("/api/drafts/draft-0001", headers=ana)).json()
-    draft = asyncio.run(go())
+    return asyncio.run(go())
+
+
+def test_a_part_whose_sentences_all_fail_keeps_its_table_and_no_sentence(fixture_db, tmp_path):
+    draft = written_by("mission-brief-a-part-removed", fixture_db, tmp_path)
     disbursement = next(note for note in draft["notes"] if note["key"] == "disbursement")
 
     assert disbursement["state"] == "abstained" and disbursement["sentences"] == []
     assert sorted(row["reference"] for row in disbursement["table"]) == ["IDA60290", "IDA60300"]
     assert {item["reason"] for item in draft["removed"]} == {"number_not_in_records", "id_not_returned"}
+
+
+def test_a_part_the_writer_refused_is_saved_as_refused_with_its_table_and_nothing_removed(fixture_db, tmp_path):
+    draft = written_by("mission-brief-a-refused-part", fixture_db, tmp_path)
+    disbursement = next(note for note in draft["notes"] if note["key"] == "disbursement")
+
+    assert (disbursement["state"], disbursement["refusal"], disbursement["sentences"]) == ("refused", "out_of_scope", [])
+    assert sorted(row["reference"] for row in disbursement["table"]) == ["IDA60290", "IDA60300"]
+    assert draft["removed"] == []
+
+
+def word_text(draft: dict) -> str:
+    from strata.drafts import mission_brief
+    from strata.drafts.files import Say, Word, words
+
+    document = Word(dt.datetime(2026, 10, 23, 15, tzinfo=dt.UTC))
+    mission_brief.word(document, draft, words(), Say())
+    return "".join(document.body)
+
+
+def test_the_word_file_says_why_a_part_has_no_records_by_the_reason_the_tool_gave(story):
+    """An active project with no closing date, no contract since its ISR, and no ISR for its ratings: each part's
+    line says what is missing, never that the project has closed (the 37 brief, section 7.4, item 4)."""
+    draft = read(story, "drafts-mission-brief-exported.json")
+    reasons = {"awards": "no_awards", "ratings": "no_isr", "closing": "no_closing_date"}
+    for note in draft["notes"]:
+        if note["key"] in reasons:
+            note.update(sentences=[], table=[], reason=reasons[note["key"]])
+    text = word_text(draft)
+
+    assert "has closed" not in text
+    assert "No closing date is recorded for this project, so there is no closing check." in text
+    assert "No contract was signed after the ISR dated June 30, 2026." in text
+    assert "No ISR was read for this project." in text

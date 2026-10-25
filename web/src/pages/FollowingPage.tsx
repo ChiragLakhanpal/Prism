@@ -366,10 +366,11 @@ function ProjectCell({ entry }: { entry: FollowedProject }) {
   );
 }
 
-function SignalsCell({ entry, numbers, events, seen }: RowProps) {
+function SignalsCell({ entry, numbers, events, seen, data }: RowProps) {
   const checks = formatCount(CHECK_ORDER.length);
   const reasons = missingReasons(entry);
-  const reasonText = reasons.map((reason) => (words.missing[reason] ?? reason).replace("{months}", formatCount(12)));
+  // The plan window is the thresholds file's [signals].plan_months, as the route sent it.
+  const reasonText = reasons.map((reason) => (words.missing[reason] ?? reason).replace("{months}", formatCount(data.thresholds.plan_months)));
   const joined = reasonText.join(words.missingJoin);
   const partial = entry.counts.not_ran > 0 && entry.status !== "not_checked" && reasons.length > 0 && (
     <p className="mt-2 max-w-[72ch] text-caption text-ink-muted" data-partial>

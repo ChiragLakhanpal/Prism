@@ -170,3 +170,17 @@ claims = [
   { sentence = "By September 30, 2026, IDA60300 had disbursed US$280,000,000.00.", kind = "record", evidence_ids = ["strata.gold.loan:P156634/IDA60300"], numbers = ["280,000,000.00"], dates = ["September 30, 2026"] },
   { sentence = "KE-CWSB-567630-CW-DIR was signed at US$2,432,125.50.", kind = "record", evidence_ids = ["strata.gold.contract:1901323"], numbers = ["2,432,125.50"], dates = [] },
 ]
+
+[[cases]]
+id = "mission-brief-a-refused-part"
+says = """The writer refuses the disbursement part as out of scope. The part keeps its table, the draft says the writer \
+refused it, and no sentence is removed."""
+question = "Write a mission brief for Water and Sanitation Development Project (P156634)."
+scope = "P156634"
+as_of = 2026-10-23
+recording = "mission-brief-p156634"
+request = { kind = "mission_brief", project_id = "P156634" }
+
+[[cases.plant_notes]]
+part = "disbursement"
+refusal = "out_of_scope"

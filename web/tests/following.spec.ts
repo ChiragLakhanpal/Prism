@@ -142,6 +142,25 @@ test("Following refuses a viewer without the World Bank staff role, and a previe
 
   await openFollowing(page, { path: `${FOLLOWING}?view=public` });
   await expect(page.getByRole("heading", { level: 2, name: "The public view has no Following list." })).toBeVisible();
+  // The page shows what the preview holds, so the shell never says it shows the staff view.
+  await expect(page.getByText("I can't show the public preview yet")).toHaveCount(0);
+});
+
+test("as of a past date, the page says the date its checks ran as of, and the shell never says it shows today's data", async ({ page }) => {
+  await openFollowing(page, { file: "following-asof-2024-06-30.json", path: `${FOLLOWING}?asof=2024-06-30` });
+
+  await expect(page.getByText("I ran these seven checks as they would have run on June 30, 2024")).toBeVisible();
+  await expect(page.getByText("so it shows today's data")).toHaveCount(0);
+});
+
+test("a row's partial line names the plan window the thresholds file sets, never one the page types", async ({ page }) => {
+  // Made up from the recorded as-of answer: the thresholds file set to a six-month plan window.
+  const answer = JSON.parse(await recorded("following-asof-2024-06-30.json"));
+  answer.thresholds.plan_months = 6;
+  await openFollowing(page, { path: `${FOLLOWING}?asof=2024-06-30`, answers: { "/api/following": { body: JSON.stringify(answer) } } });
+
+  await expect(view(page).locator("[data-project-row=P156634] [data-partial]")).toContainText(
+    "no implementing agency has published a Procurement Plan for it in the last six months");
 });
 
 test("the Projects tab opens Following for World Bank staff, and All projects shows the sub-tabs", async ({ page }) => {
@@ -195,4 +214,50 @@ test("Add to mission brief writes the five parts, then becomes the draft in plac
   await expect(page.locator("[data-check-line]")).toContainText(
     "Not checked: whether the project's published records are complete, or whether this brief covers what your mission needs.");
   expect(await axe(page)).toEqual([]);
+});
+
+async function openBrief(page: Page, width: number, draft?: object) {
+  await page.setViewportSize({ width, height: 900 });
+  await serve(page, { "GET /api/drafts/draft-0001": { body: draft ? JSON.stringify(draft) : await recorded("drafts-mission-brief-draft.json") } });
+  await page.goto("/drafts/draft-0001");
+  await expect(page.locator("[data-brief-parts=draft]")).toBeVisible();
+}
+
+test("on a phone, each block of the mission brief keeps its labels clear of their values", async ({ page }) => {
+  for (const width of [390, 320]) {
+    await openBrief(page, width);
+    const overlaps = await page.locator("[data-brief-view=blocks]:visible").evaluateAll((lists) =>
+      lists.flatMap((list) =>
+        [...list.querySelectorAll("dt")].flatMap((term) => {
+          const value = term.nextElementSibling as HTMLElement;
+          const range = document.createRange();
+          range.selectNodeContents(term);
+          const text = [...range.getClientRects()];
+          const valueRange = document.createRange();
+          valueRange.selectNodeContents(value);
+          const valueText = [...valueRange.getClientRects()];
+          const right = Math.max(...text.map((rect) => rect.right));
+          const left = Math.min(...valueText.map((rect) => rect.left));
+          const wide = term.getBoundingClientRect().width > 0;
+          return wide && (valueText.length === 0 || right <= left + 0.5) ? [] : [`${term.textContent} at ${right} past ${left}`];
+        }),
+      ),
+    );
+    expect(overlaps, `at ${width} px`).toEqual([]);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), `at ${width} px`).toBe(true);
+  }
+});
+
+test("a part the writer refused says so, and never says I removed sentences", async ({ page }) => {
+  // Made up from the recorded draft: the writer refused the disbursement part (tests/fixtures/agent/writers.toml,
+  // mission-brief-a-refused-part, which tests/test_mission_brief.py runs through the server).
+  const draft = JSON.parse(await recorded("drafts-mission-brief-draft.json"));
+  const part = draft.notes.find((note: { key: string }) => note.key === "disbursement");
+  Object.assign(part, { state: "refused", refusal: "out_of_scope", sentences: [] });
+  await openBrief(page, 1440, draft);
+  const disbursement = page.locator("[data-brief-part=disbursement]");
+
+  await expect(disbursement).toContainText("I didn't write this part, because it would need more than the project's records show.");
+  await expect(disbursement).not.toContainText("I removed every sentence");
+  await expect(disbursement.locator("[data-brief-view=table] tbody tr")).toHaveCount(2);
 });
