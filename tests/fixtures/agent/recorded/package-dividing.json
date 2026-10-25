@@ -1,33 +1,55 @@
 {
- "about": "One answer of the Foundry agent strata-package-reader, written by hand in the Responses API's shape: a sentence that asks for lots so the package stays under a review threshold, which the reader marks and does not guess lots for. Replace it with a recording: uv run --script ops/agent/record.py --env-file .env --packages",
- "recorded": false,
- "recorded_on": null,
+ "about": "The Foundry package reader's answer through the Responses API, recorded by ops/agent/record.py --packages from the live reader, given the sentence and the package form's fields as the plan-a-package workflow sends them. The scripted reader replays it in the offline gate.",
+ "recorded": true,
+ "recorded_on": "2026-10-25",
  "question": "rural roads, Kenya, about US$15 million, in lots small enough to stay under prior review",
  "scope": null,
  "as_of": "2026-10-23",
  "agent": {
   "name": "strata-package-reader",
-  "version": null
+  "version": "2"
  },
  "responses": [
   {
-   "id": "resp_package_dividing_1",
+   "id": "resp_028d21950290138f006add6369ee188193bcfc2a12bf9bbdb0",
    "object": "response",
    "status": "completed",
    "model": "gpt-5.4",
+   "agent": {
+    "type": "agent_id",
+    "name": "strata-package-reader",
+    "version": "2"
+   },
+   "incomplete_details": null,
    "output": [
     {
      "type": "message",
-     "id": "msg_package_dividing_1",
+     "id": "msg_028d21950290138f006add636a7224819384d2852a95fe7a6c",
+     "created_by": {
+      "agent": {
+       "type": "agent_id",
+       "name": "strata-package-reader",
+       "version": "2"
+      },
+      "response_id": "resp_028d21950290138f006add6369ee188193bcfc2a12bf9bbdb0"
+     },
+     "agent_reference": {
+      "type": "agent_reference",
+      "name": "strata-package-reader",
+      "version": "2"
+     },
+     "response_id": "resp_028d21950290138f006add6369ee188193bcfc2a12bf9bbdb0",
+     "phase": "final_answer",
      "role": "assistant",
-     "status": "completed",
      "content": [
       {
        "type": "output_text",
+       "text": "{\"package\":true,\"dividing\":true,\"fields\":{\"category\":{\"value\":\"Works\",\"stated\":true},\"description\":{\"value\":\"Rural roads\",\"stated\":true},\"estimated_amount_usd\":{\"value\":15000000,\"stated\":true,\"approximate\":true},\"country\":{\"value\":\"KE\",\"stated\":true}}}",
        "annotations": [],
-       "text": "{\"package\": true, \"dividing\": true, \"fields\": {\"category\": {\"value\": \"Works\", \"stated\": true}, \"description\": {\"value\": \"Rural roads\", \"stated\": true}, \"estimated_amount_usd\": {\"value\": 15000000, \"stated\": true, \"approximate\": true}, \"country\": {\"value\": \"KE\", \"stated\": true}}}"
+       "logprobs": []
       }
-     ]
+     ],
+     "status": "completed"
     }
    ]
   }
