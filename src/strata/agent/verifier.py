@@ -70,9 +70,10 @@ from dataclasses import dataclass
 from decimal import Decimal
 from typing import Any
 
+from strata import languages
 from strata.agent.claims import Claim
 from strata.agent.judge import Judgement, Question, Source
-from strata.config import load_project_page
+from strata.config import ENGLISH, load_project_page
 from strata.harness.facts import Facts
 from strata.harness.turn import Event
 from strata.reader.passages import NOTICE_TEXT, TABLE_SUMMARY
@@ -243,9 +244,28 @@ def _number_words(text: str) -> list[tuple[int, int, Decimal | str]]:
     return found
 
 
-def mentions(text: str) -> list[Mention]:
-    """The numbers and dates a text states, each with its place in the text. A four-digit number that
-    could be a year is read as a year."""
+def _dates(language: str):
+    """The date forms of a language: English's, or the registry's long forms for French, Spanish or Portuguese,
+    with the ISO form every language may use."""
+    if language == ENGLISH:
+        return DATES
+    iso = DATES[2]
+    return (*((pattern, lambda m, read=read: When(*read(m))) for pattern, read in languages.dates(language)), iso)
+
+
+def _digits(language: str) -> re.Pattern:
+    return DIGITS if language == ENGLISH else languages.digits(language)
+
+
+def _number(written: str, language: str) -> Decimal:
+    return Decimal(written.replace(",", "")) if language == ENGLISH else languages.parse_number(written, language)
+
+
+def mentions(text: str, language: str = ENGLISH) -> list[Mention]:
+    """The numbers and dates a text states, each with its place in the text, read in the text's language
+    (config/languages.toml): "1 287 515,60" is one number in French and "22 juin 2026" one date. A four-digit
+    number that could be a year is read as a year."""
+    language = languages.language(language).code
     found: list[Mention] = []
     ids: list[tuple[int, int]] = []
 
@@ -253,7 +273,7 @@ def mentions(text: str) -> list[Mention]:
         return all(end <= other.start or start >= other.end for other in found) and all(
             end <= id_start or start >= id_end for id_start, id_end in ids)
 
-    for pattern, build in DATES:
+    for pattern, build in _dates(language):
         for match in pattern.finditer(text):
             if not free(*match.span()):
                 continue
@@ -268,26 +288,27 @@ def mentions(text: str) -> list[Mention]:
             year = int(match[1]) if len(match[1]) == 4 else 2000 + int(match[1])
             found.append(Mention("number", match.group(0), Decimal(year), *match.span()))
     ids += [match.span() for match in ID.finditer(text) if free(*match.span())]
-    for start, end, value in _number_words(text):
+    words = _number_words(text) if language == ENGLISH else languages.number_words(text, language)
+    for start, end, value in words:
         if free(start, end):
             found.append(Mention("number", text[start:end], value, start, end))
-    for match in DIGITS.finditer(text):
+    for match in _digits(language).finditer(text):
         if not free(*match.span()):
             continue
         written = match.group(0)
         if written.isdigit() and len(written) == 4 and int(written) in YEARS:
             found.append(Mention("date", written, When(int(written)), *match.span()))
         else:
-            found.append(Mention("number", written, Decimal(written.replace(",", "")), *match.span()))
+            found.append(Mention("number", written, _number(written, language), *match.span()))
     return sorted(found, key=lambda mention: mention.start)
 
 
-def _declared(claim: Claim, stated: list[Mention]) -> list[Mention]:
+def _declared(claim: Claim, stated: list[Mention], language: str = ENGLISH) -> list[Mention]:
     """The numbers and dates the claim lists but the sentence does not show: they are checked too, each as
     what its text reads as, whichever list it came in."""
     extra = []
     for text in claim.numbers + claim.dates:
-        for mention in mentions(text):
+        for mention in mentions(text, language):
             if not any(mention.value == other.value for other in stated + extra):
                 extra.append(Mention(mention.kind, mention.text, mention.value))
     return extra
@@ -432,16 +453,17 @@ def quoted_spans(sentence: str) -> list[tuple[int, int]]:
     return [match.span(match.lastindex) for match in QUOTED.finditer(sentence)]
 
 
-def find_quote(quote: str, text: str) -> tuple[int, int] | None:
+def find_quote(quote: str, text: str, language: str = ENGLISH) -> tuple[int, int] | None:
     """Where the quote is in the text, word for word but for whitespace and line-end hyphenation. It must
     start and end where the text's words or numbers do, so "10" is not in "108 of 328", "ding" is not in
     "rebidding", "US$177" is not in "US$177.6" and "334 km" is not in "2,334 km". A number is read as
-    mentions() reads one, so "45" is in "45-day" and "10" in "10-15"."""
+    mentions() reads one, so "45" is in "45-day" and "10" in "10-15", in the language of the text searched: "3" is not
+    a quote from the French "3,5"."""
     wanted, _ = _normalized(quote)
     if not wanted:
         return None
     held, where = _normalized(text)
-    numbers = [match.span() for match in DIGITS.finditer(held)]
+    numbers = [match.span() for match in _digits(languages.language(language).code).finditer(held)]
     start = held.find(wanted)
     while start >= 0:
         end = start + len(wanted)
@@ -576,9 +598,15 @@ def _summary(row: Mapping | None) -> bool:
     return _is_passage(row) and row.get("kind") == TABLE_SUMMARY
 
 
-def _holds_number(text: str, mention: Mention) -> bool:
-    """Whether a passage's text writes the number the sentence states."""
-    return any(isinstance(found.value, Decimal) and found.value == mention.value for found in mentions(text))
+def _holds_number(row: Mapping, mention: Mention) -> bool:
+    """Whether a passage's text writes the number the sentence states, read in the passage's own language."""
+    return any(isinstance(found.value, Decimal) and found.value == mention.value
+               for found in mentions(row["text"], _language_of(row)))
+
+
+def _language_of(row: Mapping | None) -> str:
+    """The language a passage is written in, as the passage record gives it; English for a record or an unknown one."""
+    return str((row or {}).get("language") or ENGLISH)
 
 
 def _values(row: Mapping | None) -> tuple[list, set]:
@@ -620,7 +648,9 @@ def _in_a_value(mention: Mention, sentence: str, texts: list[str]) -> bool:
     return any(re.search(rf"\b{re.escape(_name_words(phrase))}\b", value) for phrase in phrases for value in values)
 
 
-def check(index: int, claim: Claim, facts: Facts) -> Checked:
+def check(index: int, claim: Claim, facts: Facts, language: str = ENGLISH) -> Checked:
+    """Checks 1 to 3 on one claim, whose sentence is written in language (config/languages.toml): its numbers and
+    dates are read in that language, and each quote is found in its passage's own words and language."""
     reasons: list[Reason] = []
     # Check 2: every cited id came back this turn.
     returned = [evidence for evidence in claim.evidence_ids if facts.came_back(evidence)]
@@ -636,14 +666,15 @@ def check(index: int, claim: Claim, facts: Facts) -> Checked:
     if quote is not None:
         passage = facts.get(quote.evidence_id)
         if _is_passage(passage):
-            span = find_quote(quote.text, passage["text"])
+            span = find_quote(quote.text, passage["text"], _language_of(passage))
             backs = span is not None and not _summary(passage)
         if span is None and facts.came_back(quote.evidence_id):
             reasons.append(Reason(3, NOT_ON_PAGE, quote.evidence_id))
     spans = []  # each run of quoted words: where it is in the sentence, and the evidence id that holds it
     for start, end in quoted_spans(claim.sentence):
         words = claim.sentence[start:end]
-        source = quote.evidence_id if quote is not None and span is not None and find_quote(words, quote.text) \
+        source = quote.evidence_id if quote is not None and span is not None and find_quote(
+            words, quote.text, _language_of(facts.get(quote.evidence_id))) \
             else next((evidence for evidence, row in records if any(find_quote(words, text) for text in _texts(row))),
                       None)
         spans.append((start, end, source))
@@ -658,9 +689,10 @@ def check(index: int, claim: Claim, facts: Facts) -> Checked:
     # cited row's text or a cited passage that is not a table summary holds.
     rows = [(evidence, _values(facts.get(evidence))) for evidence in returned]
     texts = [text for _, row in records for text in _texts(row)]
-    stated = [mention for mention in mentions(claim.sentence) if not _in_a_value(mention, claim.sentence, texts)]
+    stated = [mention for mention in mentions(claim.sentence, language)
+              if not _in_a_value(mention, claim.sentence, texts)]
     checked: dict[str, list] = {"number": [], "date": []}
-    for mention in stated + _declared(claim, stated):
+    for mention in stated + _declared(claim, stated, language):
         unit = unit_of(claim.sentence, mention)
         found = next((evidence for evidence, (numbers, days) in rows if _supports(mention, numbers, days, unit)),
                      None)
@@ -674,7 +706,7 @@ def check(index: int, claim: Claim, facts: Facts) -> Checked:
         # summary holds says so, since the summary is Strata's words, not the table's rows.
         if found is None and not (inside is None and explained):
             only_summary = mention.kind == "number" and any(
-                _summary(facts.get(evidence)) and _holds_number(facts.get(evidence)["text"], mention)
+                _summary(facts.get(evidence)) and _holds_number(facts.get(evidence), mention)
                 for evidence in returned)
             reasons.append(Reason(1, ONLY_IN_SUMMARY if only_summary else NUMBER if mention.kind == "number" else DATE,
                                   mention.text))
@@ -688,9 +720,9 @@ def check(index: int, claim: Claim, facts: Facts) -> Checked:
                    quoted=quoted, quote_found=on_page, quoted_words=words)
 
 
-def verify(claims: Iterable[Claim], facts: Facts) -> Verdict:
-    """Checks 1 to 3 on each claim, in the order the agent wrote them."""
-    return Verdict(tuple(check(index, claim, facts) for index, claim in enumerate(claims)))
+def verify(claims: Iterable[Claim], facts: Facts, language: str = ENGLISH) -> Verdict:
+    """Checks 1 to 3 on each claim, in the order the agent wrote them, in the language the answer was written in."""
+    return Verdict(tuple(check(index, claim, facts, language) for index, claim in enumerate(claims)))
 
 
 # ── Checks 4 to 6, on an answer ──────────────────────────────────────────
@@ -785,11 +817,11 @@ class AnswerCheck:
     then check 4, once the judge has answered the questions(). verdict() gives the result."""
 
     def __init__(self, claims: Iterable[Claim], facts: Facts, backs_advice: Iterable[str], *, source_chars: int,
-                 checked: Iterable[Checked] | None = None):
+                 checked: Iterable[Checked] | None = None, language: str = ENGLISH):
         self.facts, self.source_chars = facts, source_chars
         # What the agent's tools could not answer, as checks 1 to 3 saw it: check 6's own question adds nothing here.
         self.abstentions = facts.abstentions()
-        sentences = verify(claims, facts).sentences if checked is None else tuple(checked)
+        sentences = verify(claims, facts, language).sentences if checked is None else tuple(checked)
         self.sentences = {sentence.index: sentence for sentence in sentences}
         # Every disagreement get_disagreements returned, by id: those the agent asked for, and those check 6 asks.
         self.disagreements: dict[str, Mapping] = {

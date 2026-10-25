@@ -996,7 +996,8 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
         yield Event("step", {"id": "check", "kind": "check", "status": "running"})
         verdict = None
         asker = Asker(turn.viewer, turn.scope.view, as_of_of(turn), turn.run_id)
-        async for item in six_checks.finish(six_checks.check(claims, turn.facts), turn.facts, asker):
+        async for item in six_checks.finish(six_checks.check(claims, turn.facts, turn.scope.language), turn.facts,
+                                            asker):
             if isinstance(item, Verdict):
                 verdict = item
             else:

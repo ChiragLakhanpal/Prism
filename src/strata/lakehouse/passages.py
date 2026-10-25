@@ -29,7 +29,9 @@ with the showcase, the demo plan and the stress shelf's projects named first), a
 6. Embeds each passage text, header first, that the model has not embedded, into
    silver.passage_embeddings, and syncs strata.gold.passage, the AI Search index's source table. Only
    a passage whose header or text changed is embedded again.
-7. Writes its data readiness measures to strata.ops.data_readiness: for each project, documents and
+7. Checks a sample of the passages' languages against a language detector that reads only their words
+   (src/strata/knowledge/language.py; ticket 42), into strata.ops.passage_language_checks.
+8. Writes its data readiness measures to strata.ops.data_readiness: for each project, documents and
    pages per route and the pages each route read well, the pages whose paragraph numbering was found,
    the passages linked to a project, embedded and screened, Prompt Shields' hits, the documents with
    contact details taken out, and freshness; for the slice, the projects its criteria selected, with
@@ -54,7 +56,8 @@ from collections import Counter
 from collections.abc import Callable
 from dataclasses import astuple, dataclass, fields
 
-from strata.config import Slice, Thresholds, load_slice, load_sources, load_thresholds
+from strata.config import Slice, Thresholds, load_languages, load_slice, load_sources, load_thresholds
+from strata.knowledge import language
 from strata.knowledge.embed import Embedder
 from strata.knowledge.sectors import main_sector
 from strata.knowledge.shields import Shield
@@ -68,9 +71,9 @@ from strata.reader.layout import LayoutParser
 from strata.reader.templates import TEMPLATES, template
 
 SOURCE = "documents"  # the source registry's key for the documents API
-LANGUAGES = {"English": "en", "French": "fr", "Spanish": "es", "Portuguese": "pt", "Arabic": "ar", "Russian": "ru",
-             "Chinese": "zh", "Hindi": "hi", "Bengali": "bn", "Vietnamese": "vi", "Urdu": "ur", "Swahili": "sw"}
-UNDETERMINED = "und"  # ISO 639's code for a language the list does not name
+# The Documents API's lang field, "French", to its ISO 639-1 code, from the language registry (config/languages.toml).
+LANGUAGES = {entry.api_name: entry.code for entry in load_languages().languages}
+UNDETERMINED = "und"  # ISO 639's code for a language the registry does not list
 
 
 def _now() -> dt.datetime:
@@ -736,7 +739,7 @@ class Report:
 def run(engine: Engine, documents: Documents, projects: list[str] | None = None, *, shield: Shield,
         embedder: Embedder, layout: LayoutParser | None = None, thresholds: Thresholds | None = None,
         endpoint: str | None = None, clock: Callable[[], dt.datetime] = _now, run_id: str | None = None,
-        chosen: Slice | None = None) -> Report:
+        chosen: Slice | None = None, detector: language.Detector | None = None) -> Report:
     """Read the slice's documents into passages. See the module's docstring for the steps. Without a
     layout parser, the pages the router sends to Route B wait for a run that has one."""
     limits = thresholds or load_thresholds()
@@ -761,6 +764,7 @@ def run(engine: Engine, documents: Documents, projects: list[str] | None = None,
     gold.sync(engine, "passage")
     when = clock()
     measure(engine, run_id, found, picked.with_contacts, shield.name, when, selection, chosen)
+    language.check(engine, run_id, when, limits, detector)
     documents_read(engine, run_id, found, when)
     shelf = stress_shelf.record(engine, run_id, chosen, limits, layout.name if layout else None, when,
                                 selection.selected)

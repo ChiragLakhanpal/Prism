@@ -113,7 +113,8 @@ def parse_notes(text: str, key: str) -> dict[str, dict]:
     return notes
 
 
-def note_check(module, facts, written: dict[str, dict], six_checks: SixChecks) -> tuple[AnswerCheck, Facts, list[str]]:
+def note_check(module, facts, written: dict[str, dict], six_checks: SixChecks,
+               language: str = "en") -> tuple[AnswerCheck, Facts, list[str]]:
     """Checks 1 to 3 on what the writer wrote, each note against its own item's row, then check 5, ready for
     checks 6 and 4 (SixChecks.finish); with every row the check returned, and the item each sentence belongs to.
 
@@ -131,7 +132,7 @@ def note_check(module, facts, written: dict[str, dict], six_checks: SixChecks) -
         for evidence_id in item.get("evidence_ids") or [item["evidence_id"]]:
             own.record(evidence_id, seen.get(evidence_id), tool=seen.tool(evidence_id))
         for claim in (written.get(item["key"]) or {}).get("claims") or []:
-            checked.append(check(len(checked), claim, own))
+            checked.append(check(len(checked), claim, own, language))
             owners.append(item["key"])
     return six_checks.checked(checked, seen), seen, owners
 
@@ -238,7 +239,7 @@ async def write(writing: Writing, engine_for: EngineFor, agent_for: Callable[[st
     yield step("write", "done", **wrote)
 
     yield step("check", "running")
-    check_notes, seen, owners = note_check(module, facts, written, six_checks)
+    check_notes, seen, owners = note_check(module, facts, written, six_checks, writing.language)
     verdict = None
     async for item in six_checks.finish(check_notes, seen, Asker(writing.viewer, STAFF, today, writing.run_id)):
         if isinstance(item, Verdict):
