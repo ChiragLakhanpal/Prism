@@ -318,10 +318,23 @@ def criteria_answer(result, question) -> dict[str, list]:
     return found
 
 
+def rebidding_answer(result, question) -> dict[str, list]:
+    """rebidding_risk's answer: n of m and the past range's total from the summary, the packages advertised again,
+    each reason quoted with its notice, the groups' order and why the model is not shown (ticket 28)."""
+    summary = result["summary"]
+    return {"n_of_m": [summary["n"], summary["m"]], "past_range_total": [summary["past_range_total"]],
+            "advertised_again": sorted(row["step_reference"] for row in result["rows"]),
+            "quoted": [[row["step_reference"], row["quote"]["notice_id"], row["quote"]["text"]]
+                       for row in result["rows"] if row["quote"]],
+            "group_order": [group["reason_code"] for group in summary["groups"]],
+            "model_not_shown": [summary["model"]["not_shown_reason"]] if not summary["model"]["shown"] else [],
+            "cited_as": [summary["evidence_id"]]}
+
+
 ANSWERS = {"check_plan": marked, "search_passages": in_top_three, "data_readiness_for": readiness_answer,
            "find_comparables": past_range, "get_disagreements": disagreement_answer,
            "get_lessons": lessons_answer, "compare_cost_estimates": cost_answer, "rejected_bids": rejected_answer,
-           "compare_criteria": criteria_answer}
+           "compare_criteria": criteria_answer, "rebidding_risk": rebidding_answer}
 
 
 def answered(result, question) -> dict[str, list[str]]:
@@ -331,7 +344,7 @@ def answered(result, question) -> dict[str, list[str]]:
 
 def expected(question) -> dict[str, list[str]]:
     if question["tool"] in ("data_readiness_for", "get_disagreements", "get_lessons", "compare_cost_estimates",
-                            "rejected_bids", "compare_criteria"):
+                            "rejected_bids", "compare_criteria", "rebidding_risk"):
         return question["expected"]
     return {mark: sorted(refs) for mark, refs in question["expected"].items()}
 

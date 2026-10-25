@@ -82,6 +82,13 @@ class OfflineTracker:
     def alias_version(self, name: str, alias: str) -> int | None:
         return self.aliases.get((name, alias))
 
+    def model_text(self, name: str, alias: str, path: str) -> str | None:
+        """A text the run of the version an alias holds logged, such as model_state.json, or None."""
+        version = self.alias_version(name, alias)
+        if version is None:
+            return None
+        return self.runs[self.models[name][version - 1].run_id].texts.get(path)
+
 
 class MlflowTracker:
     """MLflow on the workspace: runs in an experiment, models registered in Unity Catalog.
@@ -117,9 +124,19 @@ class MlflowTracker:
 
     def log_model(self, run_id: str, model) -> None:
         """The XGBoost booster with its signature, which Unity Catalog requires, and the rest of the
-        model (its calibration, vocabularies and training range) as model_state.json beside it."""
+        model (its calibration, vocabularies and training range) as model_state.json beside it. A rebidding
+        model (ticket 28) is logged as a Python function model over its model_state.json, which its backtest
+        logged first, since it may be a logistic regression with no booster."""
         from mlflow.models import infer_signature
 
+        if hasattr(model, "pyfunc_inputs"):
+            example = model.pyfunc_inputs()
+            with self.mlflow.start_run(run_id=run_id):
+                info = self.mlflow.pyfunc.log_model(name="model", python_model=_rebidding_pyfunc(model.state_json()),
+                                                    signature=infer_signature(example, model.chances(example.to_dict("records"))),
+                                                    input_example=example)
+            self._models[run_id] = info.model_uri
+            return
         example = model.example_inputs()
         signature = infer_signature(example, model.learner.predict(example))
         with self.mlflow.start_run(run_id=run_id):
@@ -136,7 +153,8 @@ class MlflowTracker:
         backtest logged; Unity Catalog's descriptions point to it, whatever its length, and give the
         track-record sentence."""
         version = self.mlflow.register_model(self._models[run_id], name)
-        pointer = f"Strata's time estimate. The model card is {MODEL_CARD} in MLflow run {run_id}. {summary}"
+        what = "rebidding model (experimental)" if name.endswith("rebidding_risk") else "time estimate"
+        pointer = f"Strata's {what}. The model card is {MODEL_CARD} in MLflow run {run_id}. {summary}"
         self.client.update_registered_model(name, description=pointer)
         self.client.update_model_version(name, version.version, description=pointer)
         return int(version.version)
@@ -151,3 +169,29 @@ class MlflowTracker:
             return int(self.client.get_model_version_by_alias(name, alias).version)
         except MlflowException:  # no such model, or no version holds the alias
             return None
+
+    def model_text(self, name: str, alias: str, path: str) -> str | None:
+        """A text the run of the version an alias holds logged, such as model_state.json, or None."""
+        from mlflow.exceptions import MlflowException
+
+        try:
+            run_id = self.client.get_model_version_by_alias(name, alias).run_id
+            return self.mlflow.artifacts.load_text(f"runs:/{run_id}/{path}")
+        except MlflowException:
+            return None
+
+
+def _rebidding_pyfunc(state: str):
+    """A Python function model that gives a rebidding model's chances from its model_state.json (ticket 28)."""
+    import mlflow.pyfunc
+
+    class RebiddingChance(mlflow.pyfunc.PythonModel):
+        def __init__(self, text: str):
+            self.text = text
+
+        def predict(self, context, model_input, params=None):
+            from strata.estimates.rebidding_model import RebiddingModel
+
+            return RebiddingModel.from_state(self.text).chances(model_input.to_dict("records"))
+
+    return RebiddingChance(state)

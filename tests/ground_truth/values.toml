@@ -1803,6 +1803,51 @@ plan_days = 45
 plan_months = 1.5
 signed_within_plan = ["KE-WAJWASCO-356671-CW-RFB", "KE-WAJWASCO-372776-CW-RFB"]
 
+# Which of these comparables were advertised again (ticket 28), counted by hand from the recorded files.
+#
+# No field in the records says a package was advertised again, so three sources say it: a notice that no
+# award followed long after its bids were due, a second notice of the same kind under the same STEP
+# reference, and a Procurement Plan row whose Process Status is Canceled. The count runs over all 52
+# comparables above, the three canceled included, since a canceled package is the plainest case; the past
+# range leaves the three out (past_total), so the two counts differ by them.
+#
+# - Canceled and with no award (3). The three canceled packages above have no award row and no award notice
+#   (the comparables test checks both), their bids were due in 2020, 2021 and 2023, and the March 19, 2025
+#   plan of the Kilifi agency (document 40001676, public that day) marks each one Canceled (their
+#   canceled_in, pdf_page and quote). These three are the advertised_again list.
+# - Still open (4). Their bids were due from October 13 to November 10, 2026, days before the as-of date,
+#   so no award was due yet, and no plan row marks them Canceled.
+# - The same STEP reference advertised twice (0). No comparable has two Invitation for Bids notices in the
+#   recorded notices (same_reference_notices). The canceled works were advertised again under new
+#   references, KE-KIMAWASCO-158691-CW-RFB and KE-KIMAWASCO-416959-CW-RFB, which only their titles link.
+# - Reasons. No Contract Award notice of a comparable gives a reason for advertising again. The one
+#   reason in words is inside Invitation for Bids OP00083890 itself, for KE-KIMAWASCO-149448-CW-RFB: quote,
+#   word for word with its British spelling. In the notice text it follows "2020." with no space.
+#
+# With review type Prior (the comparables' narrower criteria, narrower_count 7), none is canceled, so none
+# was advertised again (narrower_advertised_again).
+[rebidding]
+step_reference = "KE-NWWDA-541055-CW-RFB"
+as_of = 2026-10-22
+m = 52
+n = 3
+past_total = 49
+advertised_again = ["KE-KIMAWASCO-149448-CW-RFB", "KE-KIMAWASCO-157517-CW-RFB", "KE-KIMAWASCO-377450-CW-RFB"]
+canceled_in = "documents/P156634/procurement-plan-2025-03-19"
+canceled_in_document_id = "40001676"
+canceled_plan_date = 2025-03-19
+# Each canceled package's bids were due on its Invitation for Bids' submission deadline. On December 31, 2024,
+# before the March 19, 2025 plan was public, only the first two had waited 548 days (rebidding.no_award_after_days)
+# with no award, so only they were advertised again as of that day.
+bids_due = { "KE-KIMAWASCO-149448-CW-RFB" = 2020-03-06, "KE-KIMAWASCO-157517-CW-RFB" = 2021-05-10, "KE-KIMAWASCO-377450-CW-RFB" = 2023-10-06 }
+before_the_plan = 2024-12-31
+advertised_again_before_the_plan = ["KE-KIMAWASCO-149448-CW-RFB", "KE-KIMAWASCO-157517-CW-RFB"]
+same_reference_notices = 0
+quote_reference = "KE-KIMAWASCO-149448-CW-RFB"
+quote_notice = "OP00083890"
+quote = "The Request for Bids has been cancelled."
+narrower_advertised_again = 0
+
 # The replay harness's known answer (ticket 25): the time estimate's backtest for the test year 2021
 # on a small hand-made set, not on recorded data, so these are statistical literals, not quotes.
 # tests/test_replay_harness.py builds the set in a DuckDB file of its own, with these rules:
@@ -1881,6 +1926,61 @@ middle_ran_longer = 17
 middle_in10 = 7
 eight_in_ten_ran_longer = 9
 eight_in_ten_in10 = 4
+
+# The rebidding models' known answer (ticket 28): their backtest for the test year 2021 on a small hand-made set,
+# not on recorded data, so these are statistical literals, not quotes. The fixture has three packages advertised
+# again among 52 comparables, too few for any backtest to show calibration. tests/test_rebidding_backtest.py
+# builds the set in a DuckDB file of its own, with these rules:
+#
+# - One Kenya project (P900002) and one implementing agency's plan versions: 900000101 (dated and public July 1,
+#   2019) and 900000102 (December 15, 2020) list every package below as WORKS, Request for Bids, Open - National,
+#   no prequalification, estimated US$1,000,000.00, with Review Type Prior or Post as given. 900000103 (March 1,
+#   2022) lists the packages of 2021 again. Review type is the only feature that differs between packages.
+# - 84 training packages, i = 1 to 84: notice on July 2, 2019 plus 5 * (i - 1) days, bids due 30 days later, and
+#   Prior review when i is a multiple of 3 (28 packages), else Post (56). 22 were advertised again: unsigned, and
+#   Canceled in the version of December 15, 2020 (Prior: i = 3, 6, 9, 12, 15, 18, 21, 27, 30, 33, 36, 39 and 60;
+#   Post: i = 1, 2, 4, 5, 7, 10, 11, 28 and 52). The other 62 were signed 60 days after their notice, all before
+#   the cutoff, January 1, 2021.
+# - Every fourth training package in notice order (i = 4, 8, ... 84; rebidding.calibration_every = 4 in
+#   config/models.toml) calibrates the gradient boosting: 7 Prior, 3 of them advertised again, and 14 Post, 3 of
+#   them. The booster learns from the other 63 (Prior 10 of 21, Post 6 of 42), so it ranks Prior above Post, and
+#   Platt scaling on the two calibration groups gives each group its share: 3/7 for Prior and 3/14 for Post.
+# - 24 packages of 2021, j = 1 to 24: notice on January 11, 2021 plus 14 * (j - 1) days, Prior when j is a multiple
+#   of 3 (8), else Post (16). Seven were advertised again (Prior: j = 3, 6, 9, 12 and 15; Post: j = 1 and 2),
+#   Canceled in the version of March 1, 2022; the rest were signed 60 days after their notice. One more, advertised
+#   December 1, 2021, was neither signed nor canceled by June 30, 2022, the outcomes date, and its bids were due
+#   fewer than 548 days before then, so it is undecided and left out.
+# - Each package's baseline is the share advertised again among its comparable packages on the cutoff: the 84
+#   training packages, 22 of them, 11/42.
+#
+# Logistic regression's chances were computed once with scikit-learn 1.7.2 (LogisticRegression(C=1.0), since
+# rebidding.logistic.l2 = 1.0, with Review Type one-hot encoded and the intercept unpenalized): 0.44056 for Prior
+# and 0.17258 for Post. The Brier scores are scikit-learn's brier_score_loss over the 24 packages. The calibration
+# error is the expected calibration error over ten equal bins from 0 to 1 (rebidding.calibration_bins), worked
+# out with numpy from the same chances. Values are rounded to four decimals, half up. Logistic regression has the
+# lower calibration error, so it is the champion; both models beat the baseline's Brier score.
+#
+# The champion is then trained on every package decided by the outcomes date, the 84 and the 24 (108, 29 of them
+# advertised again), and scores each planned package. scikit-learn's LogisticRegression(C=1.0) on those gives
+# 0.47852 for Prior and 0.16352 for Post: about 5 in 10 and 2 in 10, rounded half up.
+[rebidding_backtest]
+cutoff = 2021-01-01
+outcomes_through = 2022-06-30
+training_packages = 84
+training_advertised_again = 22
+test_packages = 24
+test_advertised_again = 7
+undecided_left_out = 1
+gbm_brier = 0.1692
+gbm_calibration_error = 0.125
+logistic_brier = 0.1639
+logistic_calibration_error = 0.0932
+baseline_brier = 0.2075
+baseline_calibration_error = 0.0298
+champion = "logistic"
+champion_training_packages = 108
+champion_in10_prior = 5
+champion_in10_post = 2
 
 # Awkward cases the lakehouse must handle on purpose. The signed plan row with an Actual
 # Amount of 0.00 (plan-503455-actual-zero) and the reference whose method differs from the

@@ -1,0 +1,120 @@
+"""rebidding_risk at seam 2: how many comparable packages were advertised again, and why, called by name
+through the tool registry on the fixture database.
+
+The expected counts come from tests/ground_truth/values.toml's [rebidding] entry, counted by hand from the
+recorded notices, awards and plans (tests/test_ground_truth_values.py checks each against the recorded
+files), never the way the tool counts. On the fixture only the three canceled comparables were advertised
+again, no award notice gives a reason, and the one reason in words is in an Invitation for Bids.
+"""
+
+import datetime as dt
+import tomllib
+from pathlib import Path
+
+import pytest
+
+from strata.dbx import Viewer
+from strata.lakehouse import ground_truth
+from strata.lakehouse.engine import DuckDBEngine
+from strata.tools import registry
+
+ROOT = Path(__file__).resolve().parents[1]
+TRUTH = tomllib.loads((ROOT / "tests" / "ground_truth" / "values.toml").read_text())
+REBIDDING = TRUTH["rebidding"]
+REF = REBIDDING["step_reference"]
+ANA = Viewer(email="ana.example@worldbank.org", name="Ana Example", token="token-for-ana-only")
+
+
+@pytest.fixture(scope="module")
+def engine(fixture_db):
+    with DuckDBEngine.open(fixture_db, read_only=True) as engine:
+        yield engine
+
+
+def rebidding(engine, **arguments):
+    arguments.setdefault("as_of", REBIDDING["as_of"].isoformat())
+    return registry.call("rebidding_risk", arguments, registry.Context(engine=engine, viewer=ANA))
+
+
+def test_on_the_fixture_three_of_the_52_comparables_were_advertised_again_as_the_direct_count_says(engine):
+    result = rebidding(engine, step_reference=REF)
+
+    assert (result["n"], result["m"]) == (REBIDDING["n"], REBIDDING["m"])
+    assert sorted(row["step_reference"] for row in result["rows"]) == REBIDDING["advertised_again"]
+    assert result["summary"]["n"] == REBIDDING["n"] and result["summary"]["m"] == REBIDDING["m"]
+
+
+def test_the_nightly_run_records_how_many_packages_each_label_source_names_in_strata_ops(engine):
+    """The fixture's nightly run counted them on October 23, 2026: the same counts as the ground-truth SQL, which
+    counts straight from the notices, contracts and plan rows."""
+    case = ground_truth.read(ROOT / "tests" / "ground_truth" / "rebidding_label_counts.sql")
+    direct = engine.run(case.sql, case.params)
+    held = engine.run("SELECT source, count, denominator, as_of FROM strata.ops.rebidding_labels "
+                      "WHERE run_id = :run_id ORDER BY source", {"run_id": "fixture"})
+
+    assert [row[:3] for row in held.rows] == [tuple(row) for row in direct.rows]
+    assert {row[0] for row in held.rows} == {"no_award", "same_reference", "canceled_row", "any"}
+    assert {row[3] for row in held.rows} == {dt.date.fromisoformat(case.params["as_of"])}
+
+
+def test_the_one_reason_in_words_is_quoted_word_for_word_with_its_notice(engine):
+    """No award notice gives a reason on the fixture: the reason is the canceled package's own Invitation for
+    Bids, so here a notice, not an award notice, gives the quote."""
+    rows = {row["step_reference"]: row for row in rebidding(engine, step_reference=REF)["rows"]}
+
+    quoted = rows[REBIDDING["quote_reference"]]
+    assert quoted["row_kind"] == "quote" and quoted["reason_code"] == "process_canceled"
+    assert quoted["quote"] == {"text": REBIDDING["quote"], "lang": "en", "notice_id": REBIDDING["quote_notice"]}
+    assert [(item["record_kind"], item["reference"]) for item in quoted["evidence"]] == [("notice", REBIDDING["quote_notice"])]
+    assert quoted["evidence_id"] == quoted["evidence"][0]["evidence_id"]
+
+
+def test_the_other_two_cite_their_canceled_plan_row_with_its_process_status_word_for_word(engine):
+    rows = {row["step_reference"]: row for row in rebidding(engine, step_reference=REF)["rows"]}
+
+    for reference in set(REBIDDING["advertised_again"]) - {REBIDDING["quote_reference"]}:
+        row = rows[reference]
+        assert (row["row_kind"], row["reason_code"], row["process_status"]) == ("canceled_row", "canceled_row", "Canceled")
+        [plan_row] = row["evidence"]
+        assert plan_row["record_kind"] == "plan_row" and plan_row["date"] == REBIDDING["canceled_plan_date"].isoformat()
+        assert row["source"]["plan_document_id"] == REBIDDING["canceled_in_document_id"]
+        assert set(row["label_sources"]) == {"no_award", "canceled_row"}
+
+
+def test_the_groups_put_the_most_packages_first_and_rows_follow_them(engine):
+    result = rebidding(engine, step_reference=REF)
+
+    assert [(group["reason_code"], group["count"]) for group in result["groups"]] == [("canceled_row", 2), ("process_canceled", 1)]
+    assert [row["step_reference"] for row in result["rows"]] == [ref for group in result["groups"] for ref in group["step_references"]]
+    assert [row["rank"] for row in result["rows"]] == [1, 2, 3]
+
+
+def test_it_counts_the_canceled_comparables_the_past_range_leaves_out_and_says_so(engine):
+    result = rebidding(engine, step_reference=REF)
+
+    assert result["past_range_total"] == REBIDDING["past_total"]
+    assert result["denominator_reason"] == "canceled_included"
+    assert result["coverage"]["used"] == REBIDDING["m"]
+    assert "canceled" not in {entry["reason"] for entry in result["coverage"]["not_used"]}
+
+
+def test_with_review_type_prior_none_was_advertised_again_and_there_are_too_few_for_a_model(engine):
+    result = rebidding(engine, step_reference=REF, review_type=TRUTH["comparables"]["narrower_review_type"])
+
+    assert (result["n"], result["m"]) == (REBIDDING["narrower_advertised_again"], TRUTH["comparables"]["narrower_count"])
+    assert result["rows"] == [] and result["groups"] == [] and result["abstention"] is None
+    assert result["model"]["shown"] is False and result["model"]["not_shown_reason"] == "too_few"
+    assert result["model"]["in10"] is None
+
+
+def test_a_plan_row_marked_canceled_after_the_as_of_date_does_not_count(engine):
+    """As of December 31, 2024 the March 19, 2025 plan was not public: two packages had waited long enough with no
+    award, and the third had not. KE-NWWDA-541055-CW-RFB was in no plan yet, so the call gives the comparables'
+    default criteria itself, as for a package planned from a sentence."""
+    criteria = TRUTH["comparables"]
+    result = rebidding(engine, method="Request for Bids", category="Works", country="KE",
+                       notice_from=criteria["first_notice_from"].isoformat(), as_of=REBIDDING["before_the_plan"].isoformat())
+
+    assert sorted(row["step_reference"] for row in result["rows"]) == REBIDDING["advertised_again_before_the_plan"]
+    assert all(row["process_status"] is None and "canceled_row" not in row["label_sources"] for row in result["rows"])
+    assert {row["reason_code"] for row in result["rows"]} <= {"no_award", "process_canceled"}
