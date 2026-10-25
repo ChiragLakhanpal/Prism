@@ -906,9 +906,14 @@ const PASTED =
 function criteriaShot(name: string, rest: Partial<Shot> = {}, compare = "criteria-compare-similar-experience.sse", path = CONSULTANT): Shot {
   const api = `/api${path}`;
   const slug = path === CONSULTANT ? "ke-cwsb-224323" : "ke-nwwda-541055";
+  // Section 3 (ticket 30) sits above section 5: the works package's risks as recorded; the consultant package has
+  // no recorded risks, so its section 3 stays loading rather than showing an error the server never gave.
+  const risks = path === CONSULTANT ? [`${api}/risks`] : [];
   return app(`criteria--${name}`, path, {}, {
     ...rest,
+    pending: [...risks, ...(rest.pending ?? [])],
     api: {
+      ...(path === CONSULTANT ? {} : { [`${api}/risks`]: { recorded: "risks-ke-nwwda-541055.json" } }),
       ...app(name, path).api,
       [api]: { recorded: `package-${slug}.json` },
       [`${api}/comparables`]: { recorded: `comparables-${slug}.json` },
@@ -950,6 +955,9 @@ const CRITERIA_SHOTS: Shot[] = [
   criteriaShot("drawer-award-notice", { act: then(openCheck, click("[data-rejected-row] [data-citation] >> nth=0")) }, undefined, PACKAGE),
   criteriaShot("focus-marker", { act: then(openCheck, focus("[data-lesson-card] [data-citation]")) }, undefined, PACKAGE),
   criteriaShot("320", { widths: [320], full: true, act: compareCriteria }),
+  criteriaShot("works-320", { widths: [320], full: true, act: openCheck }, undefined, PACKAGE),
+  criteriaShot("review-decisions-refused", { full: true, act: compareCriteria }, "criteria-compare-review-decisions.sse"),
+  criteriaShot("focus-intro-count", { act: then(openCheck, focus("#check-criteria [data-criteria-intro] [data-num]")) }),
 ];
 
 const PACKAGE_SHOTS: Shot[] = [

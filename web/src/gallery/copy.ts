@@ -477,6 +477,7 @@ export const galleryCopy = {
     rejectedNoNotices: "No award notices for the comparable packages",
     rejectedYours:
       "A made-up sample: an item your criteria set, whose row links to its rejected bids, and the group that says so",
+    yoursExcerpt: "a site engineer with ten years of experience on similar works",
     rejectedLanguage: "A reason in French, with its language named",
     removedRow: "A reason the verifier removed, with the removed box",
     costNoEstimate: "The plan row gives no cost estimate for this package",

@@ -169,8 +169,11 @@ const RUN_REMOVED: PackageRun = {
 // A made-up comparison whose second item is one the works package's comparables had bids rejected over.
 const YOURS: Comparison = {
   ...SIMILAR,
-  items: SIMILAR.items.map((item) => (item.item_key === "similar_experience" ? item : { ...item, item_key: "key_staff", label: "Key staff", phrase: "key staff",
-    rejected_packages: WORKS_RUN.rejected.groups.find((group) => group.item_key === "key_staff")?.count ?? 0 })),
+  items: SIMILAR.items.map((item) => (item.item_key === "similar_experience" ? item : {
+    ...item, item_key: "key_staff", label: "Key staff", phrase: "key staff", reading: null,
+    your_excerpt: { text: cs.yoursExcerpt, shortened: false },
+    rejected_packages: WORKS_RUN.rejected.groups.find((group) => group.item_key === "key_staff")?.count ?? 0,
+  })),
 };
 const NO_ESTIMATE: Cost = { ...WORKS_RUN.cost, package: { ...WORKS_RUN.cost.package, estimated_amount_usd: null } };
 const PUBLIC_LIST = publicListEvent(CONSULTANT.signature, CONSULTANT.public);
