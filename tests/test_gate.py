@@ -717,7 +717,7 @@ def test_the_python_tests_that_read_the_fixture_database_run_on_pytest_xdist_wor
 
 
 # Edits to the steps file that the two checks above must catch: each adds a second pytest step,
-# in the web lane, that runs tests a step in another lane already runs and that may read the
+# in a new lane named web, that runs tests a step in another lane already runs and that may read the
 # fixture database while the python lane is still building it.
 SECOND_PYTEST_STEPS = {
     "every folder in testpaths": [],
@@ -769,7 +769,7 @@ def test_the_group_check_finds_a_group_mark_in_a_test_file(tmp_path, monkeypatch
 
 
 # The web lanes. Each builds the app and the gallery into a folder of its own under web/, which
-# STRATA_WEB_DIST names (web/out-dirs.ts; web/dist when it is unset), and runs its share of the
+# STRATA_WEB_OUT names (web/out-dirs.ts; web/dist when it is unset), and runs its share of the
 # Playwright tests against that build, so no lane serves files that another lane is rebuilding.
 
 def web_script(step):
@@ -782,7 +782,7 @@ def web_script(step):
 
 def web_folder(step):
     """The folder under web/ that a web step builds into or serves."""
-    named = [arg.split("=", 1)[1] for arg in step["run"] if arg.startswith("STRATA_WEB_DIST=")]
+    named = [arg.split("=", 1)[1] for arg in step["run"] if arg.startswith("STRATA_WEB_OUT=")]
     return named[0] if named else "dist"
 
 
@@ -860,7 +860,7 @@ def without(steps, find):
 
 
 def renamed(folder):
-    return lambda step: step | {"run": [f"STRATA_WEB_DIST={folder}" if arg.startswith("STRATA_WEB_DIST=") else arg
+    return lambda step: step | {"run": [f"STRATA_WEB_OUT={folder}" if arg.startswith("STRATA_WEB_OUT=") else arg
                                         for arg in step["run"]]}
 
 

@@ -5,7 +5,7 @@
 // The design gallery (web/src/gallery) is built only in development and in the "gallery"
 // mode (npm run build:gallery, into dist-gallery). Every other build, whatever its mode,
 // leaves it out, and web/tests/build.spec.ts checks that on the build output. Both builds go
-// to the folders web/out-dirs.ts names, which STRATA_WEB_DIST can change.
+// to the folders web/out-dirs.ts names, which STRATA_WEB_OUT can change.
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { defineConfig } from "vite";

@@ -4,7 +4,7 @@
 // from npm run build:gallery) on a second free port; the production build has no gallery.
 // tests/dev.spec.ts runs against Vite's dev server on a third free port, as scripts/dev serves the
 // app, because React's StrictMode runs every effect twice there and only there (ticket 14).
-// When STRATA_WEB_DIST names another build folder, the tests serve that folder and its gallery
+// When STRATA_WEB_OUT names another build folder, the tests serve that folder and its gallery
 // instead (web/out-dirs.ts). The gate's two web lanes each build into their own folder and run
 // half of the tests with --shard, side by side.
 import { defineConfig, devices } from "@playwright/test";

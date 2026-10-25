@@ -90,7 +90,7 @@ lane = "sql"
 
 # The Playwright tests run in two lanes, web-1 and web-2, and --shard gives each lane half of them,
 # so the two halves run side by side. Each lane builds the app and the gallery into a folder of its
-# own, which STRATA_WEB_DIST names and web/out-dirs.ts reads, and its Playwright run serves that
+# own, which STRATA_WEB_OUT names and web/out-dirs.ts reads, and its Playwright run serves that
 # folder, so neither lane serves files that the other lane is rebuilding. The 701 tests take about
 # 60 seconds in one run on half the processors when nothing else runs, each half about 31 seconds
 # alone, and both halves side by side about 54 seconds, because they share the processors. Most of
@@ -103,30 +103,30 @@ lane = "sql"
 # tests/test_gate.py still passing.
 [[step]]
 name = "Build the web app into web/dist-1: type check and bundle"
-run = ["env", "STRATA_WEB_DIST=dist-1", "npm", "--prefix", "web", "run", "--silent", "build"]
+run = ["env", "STRATA_WEB_OUT=dist-1", "npm", "--prefix", "web", "run", "--silent", "build"]
 lane = "web-1"
 
 [[step]]
 name = "Build the design gallery into web/dist-1-gallery, which the Playwright tests open and production leaves out"
-run = ["env", "STRATA_WEB_DIST=dist-1", "npm", "--prefix", "web", "run", "--silent", "build:gallery"]
+run = ["env", "STRATA_WEB_OUT=dist-1", "npm", "--prefix", "web", "run", "--silent", "build:gallery"]
 lane = "web-1"
 
 [[step]]
-name = "Run the first half of the Playwright tests against web/dist-1, its gallery and Vite's dev server"
-run = ["env", "STRATA_WEB_DIST=dist-1", "npm", "--prefix", "web", "run", "--silent", "test", "--", "--shard=1/2", "--workers=33%"]
+name = "Run the first half of the Playwright tests against web/dist-1 and its gallery"
+run = ["env", "STRATA_WEB_OUT=dist-1", "npm", "--prefix", "web", "run", "--silent", "test", "--", "--shard=1/2", "--workers=33%"]
 lane = "web-1"
 
 [[step]]
 name = "Build the web app into web/dist-2: type check and bundle"
-run = ["env", "STRATA_WEB_DIST=dist-2", "npm", "--prefix", "web", "run", "--silent", "build"]
+run = ["env", "STRATA_WEB_OUT=dist-2", "npm", "--prefix", "web", "run", "--silent", "build"]
 lane = "web-2"
 
 [[step]]
 name = "Build the design gallery into web/dist-2-gallery"
-run = ["env", "STRATA_WEB_DIST=dist-2", "npm", "--prefix", "web", "run", "--silent", "build:gallery"]
+run = ["env", "STRATA_WEB_OUT=dist-2", "npm", "--prefix", "web", "run", "--silent", "build:gallery"]
 lane = "web-2"
 
 [[step]]
-name = "Run the second half of the Playwright tests against web/dist-2, its gallery and Vite's dev server"
-run = ["env", "STRATA_WEB_DIST=dist-2", "npm", "--prefix", "web", "run", "--silent", "test", "--", "--shard=2/2", "--workers=33%"]
+name = "Run the second half of the Playwright tests against web/dist-2 and its gallery"
+run = ["env", "STRATA_WEB_OUT=dist-2", "npm", "--prefix", "web", "run", "--silent", "test", "--", "--shard=2/2", "--workers=33%"]
 lane = "web-2"
