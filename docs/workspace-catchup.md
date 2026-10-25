@@ -1622,7 +1622,7 @@ The merger parked this step on October 25, 2026, after merge commit f5b445f. The
 
 ## Ticket 64, step 1 of 3: redeploy the App, which masks who sent each passage report and who asked each question
 
-Ticket 64's builder parked this step on October 25, 2026, on the branch `strata/64-viewer-emails-and-unshielded-disagreement-text`. The Free Edition SQL warehouse reached its free daily limit on October 25, so run it only once the warehouse answers again, and after ticket 32's step 1, which makes `strata.ops.candidate_labels` and `strata.ops.answer_citations`. It needs the Databricks keys in `.env`. It is ticket 06's deploy command, and one deploy from this ticket's merge or later serves every block that names it. From this merge on, the deploy's step 7 makes the mask function `strata.ops.mask_viewer` and puts it on `candidate_labels.viewer_id`, `candidate_labels.viewer_email` and `answer_citations.viewer_id` (`src/strata/lakehouse/masks.py`). The mask gives the values only to the App's service principal and to you, the user who runs the deploy, whose identity also runs the weekly retrieval job. Every other reader reads NULL, though `bundle/catalog.yml` lets them read all of `strata.ops`.
+The merger parked this step on October 25, 2026, after merge commit 6c17261. All ten keys were set, but the Free Edition SQL warehouse had reached its free daily limit that morning, and the header above holds workspace steps back during a merge. Run it only once the warehouse answers again, and after ticket 32's step 1, which makes `strata.ops.candidate_labels` and `strata.ops.answer_citations`. It needs the Databricks keys in `.env`. It is ticket 06's deploy command, and one deploy from 6c17261 or later serves every block that names it. From this merge on, the deploy's step 7 makes the mask function `strata.ops.mask_viewer` and puts it on `candidate_labels.viewer_id`, `candidate_labels.viewer_email` and `answer_citations.viewer_id` (`src/strata/lakehouse/masks.py`). The mask gives the values only to the App's service principal and to you, the user who runs the deploy, whose identity also runs the weekly retrieval job. Every other reader reads NULL, though `bundle/catalog.yml` lets them read all of `strata.ops`.
 
 Run this from the main checkout:
 
@@ -1644,7 +1644,7 @@ Run as you, the same two queries count every report and every cited source that 
 
 ## Ticket 64, step 2 of 3: sync the agent, since get_disagreements' description changed
 
-Ticket 64's builder parked this step on October 25, 2026. It needs the four Foundry keys in `.env`. The description of `get_disagreements` in `config/tools.toml` now tells the agent that a side whose passage Prompt Shields flagged or never screened comes without its text and its quote. The agent's tool list is generated from that file, so the orchestrator agent in Foundry is out of date until this runs. Ticket 13's sync runs the same command, and one sync from this ticket's merge or later serves every block that names it.
+The merger parked this step on October 25, 2026, after merge commit 6c17261, while the warehouse's daily limit held. It needs the four Foundry keys in `.env`. The description of `get_disagreements` in `config/tools.toml` now tells the agent that a side whose passage Prompt Shields flagged or never screened comes without its text and its quote. The agent's tool list is generated from that file, so the orchestrator agent in Foundry is out of date until this runs. Ticket 13's sync runs the same command, and one sync from 6c17261 or later serves every block that names it.
 
 Run this from the main checkout:
 
@@ -1655,7 +1655,7 @@ It worked if the first run's diff shows the new sentence in `### get_disagreemen
 
 ## Ticket 64, step 3 of 3: the showcase disagreement's sides keep their words once Prompt Shields has screened them
 
-Ticket 64's builder parked this step on October 25, 2026. It has no command of its own. Run it after ticket 11's step 4 of 4, which stores a Prompt Shields result for every passage. Until then, `get_disagreements` on the warehouse gives every side that rests on a passage without its text, under `not_screened`, as `search_passages` leaves such passages out. In the SQL editor:
+The merger parked this step on October 25, 2026, after merge commit 6c17261, while the warehouse's daily limit held. It has no command of its own. Run it after ticket 11's step 4 of 4, which stores a Prompt Shields result for every passage. Until then, `get_disagreements` on the warehouse gives every side that rests on a passage without its text, under `not_screened`, as `search_passages` leaves such passages out. In the SQL editor:
 
     SELECT passage_id, attack_detected FROM strata.gold.passage
     WHERE passage_id IN ('26733307/v1/s4', '31525018/v1/78')
