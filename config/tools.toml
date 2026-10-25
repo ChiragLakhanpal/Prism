@@ -779,3 +779,111 @@ abstentions = ["no_comparables", "none_public"]
 summary_fields = ["items", "counts", "coverage"]
 # Each requirement is quoted from a notice passage, which the row carries whole, so a claim can cite and quote it.
 nested_rows = ["requirements"]
+
+[tools.rebidding_risk]
+description = """Says how many comparable packages were advertised again, and why, for one package in a \
+Procurement Plan or one someone is planning. It is experimental: no field in the records says a package was \
+advertised again, so three sources say it: a notice that no award followed {rebidding.no_award_after_days} days \
+after its bids were due, a later notice of the same type under the same STEP reference, and a Procurement Plan \
+row whose Process Status is Canceled. It takes find_comparables' criteria, with the same defaults, and counts over \
+the same comparable packages, with the canceled ones put back: m is how many it counted and n how many were \
+advertised again. When m differs from the past range's total, past_range_total and denominator_reason say why. \
+Each row is one package advertised again, under one reason: a reason a notice gives in words, quoted word for \
+word with the notice's id; a second notice under its STEP reference; a canceled plan row with its Process Status; \
+or no award. Each row cites the records that say so. A package still open counts among those with no sign of \
+being advertised again. Its model gives a natural frequency, about k in 10 packages like this one, only from \
+{past_range.min_comparables} comparables and a champion model that beat its baseline in its backtest; otherwise \
+model.not_shown_reason says why and you give only the counts. Quote a reason only word for word. The counts, the \
+groups and the model also come back in the result's summary, which you cite for them. Never write that an agency \
+or a bidder failed."""
+adapter = "strata.tools.rebidding_risk:rebidding_risk"
+benchmark = "rebidding-risk-ke-nwwda-541055"
+sources = ["notices", "awards", "documents"]
+
+[[tools.rebidding_risk.parameters]]
+name = "step_reference"
+type = "string"
+required = false
+key = true
+description = """The package's STEP activity reference, as its Procurement Plan writes it, such as \
+KE-NWWDA-541055-CW-RFB. Leave it out for a package that is not in a plan yet, and give its criteria yourself."""
+
+[[tools.rebidding_risk.parameters]]
+name = "method"
+type = "string"
+required = false
+description = "As in find_comparables: only packages with this selection method. Leave it out for the package's own Method, or write any."
+
+[[tools.rebidding_risk.parameters]]
+name = "category"
+type = "string"
+required = false
+description = "As in find_comparables: only packages in this procurement category. Leave it out for the package's own, or write any."
+
+[[tools.rebidding_risk.parameters]]
+name = "market_approach"
+type = "string"
+required = false
+description = "As in find_comparables: only packages with this Market Approach, in STEP's words. Leave it out to leave it open."
+
+[[tools.rebidding_risk.parameters]]
+name = "review_type"
+type = "string"
+required = false
+description = "As in find_comparables: only packages with this Review Type, Prior or Post. Leave it out to leave it open."
+
+[[tools.rebidding_risk.parameters]]
+name = "size_from_usd"
+type = "number"
+required = false
+description = "As in find_comparables: only packages whose signed contracts add up to at least this many US dollars."
+
+[[tools.rebidding_risk.parameters]]
+name = "size_to_usd"
+type = "number"
+required = false
+description = "As in find_comparables: only packages whose signed contracts add up to at most this many US dollars."
+
+[[tools.rebidding_risk.parameters]]
+name = "country"
+type = "string"
+required = false
+description = "As in find_comparables: only packages in this country, by its two-letter ISO code. Leave it out for the package's own, or write any."
+
+[[tools.rebidding_risk.parameters]]
+name = "notice_from"
+type = "date"
+required = false
+description = "Only packages whose specific procurement notice is dated on or after this date. Leave it out for {past_range.period_from}."
+
+[[tools.rebidding_risk.parameters]]
+name = "notice_to"
+type = "date"
+required = false
+description = "Only packages whose specific procurement notice is dated on or before this date. Leave it out for the plan's date."
+
+[[tools.rebidding_risk.parameters]]
+name = "as_of"
+type = "date"
+required = false
+description = """Use only notices, contracts, plan versions, backtests and scores public on or before this date. A \
+plan row marked Canceled after it does not count. Leave it out for today."""
+
+[tools.rebidding_risk.result]
+row = """One comparable package advertised again: the reason it is grouped under, the reason word for word when a \
+notice gives one, its dates and Process Status, and the records that say it was advertised again."""
+row_fields = ["evidence_id", "public_from", "source", "step_reference", "project_id", "country_name", "reason_code",
+              "row_kind", "quote", "dates", "process_status", "evidence", "label_sources", "rank"]
+source_fields = ["project_id", "notice_id", "plan_document_id"]
+# rows_per_group is the thresholds file's rebidding.rows_per_group: how many rows a group shows before "Show more".
+fields = ["package", "criteria", "m", "n", "past_range_total", "denominator_reason", "groups", "model", "sources",
+          "notice_source_keys", "records_through", "rows_per_group"]
+# The coverage line's codes are find_comparables' own, less canceled, which this tool counts. Each row's
+# reason_code is one of the last six, and each has its group heading in web/src/copy.ts (rebid.reason).
+reasons = ["no_step_reference", "no_notice", "signed_before_notice", "no_review_type", "no_market_approach",
+           "no_amount", "all_bids_rejected", "process_canceled", "again_no_reason", "canceled_row", "no_award",
+           "other"]
+abstentions = ["unknown_package", "no_public_notice", "no_comparables", "none_measurable"]
+summary_fields = ["m", "n", "past_range_total", "groups", "model", "coverage"]
+# Each record a row rests on is cited and dated like a row, so a claim can cite it.
+nested_rows = ["evidence"]

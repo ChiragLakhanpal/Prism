@@ -1070,6 +1070,62 @@ const CRITERIA_SHOTS: Shot[] = [
   }, undefined, PACKAGE),
 ];
 
+// Ticket 28: section 1's "Advertised again" block on the demo package. The fixture's answers are the server's
+// (tests/record_rebidding_api.py): three of the 52 comparable packages, and with review type Prior, none of 7. The
+// model shown and the model that did no better are mocks (rebidding-mock-*.json), labeled as such. The other states
+// are in the gallery (/gallery/rebidding).
+function rebidShot(name: string, rebidding: Answer | null, rest: Partial<Shot> = {}, comparables = "comparables-ke-nwwda-541055.json"): Shot {
+  const answers: Record<string, Answer> = {
+    ...app(name, RISKS_PATH).api,
+    [RISKS_API]: { recorded: "package-ke-nwwda-541055.json" },
+    [`${RISKS_API}/comparables`]: { recorded: comparables },
+    [`${RISKS_API}/risks`]: { recorded: "risks-ke-nwwda-541055.json" },
+    [`${RISKS_API}/criteria`]: { recorded: "criteria-summary-ke-nwwda-541055.json" },
+    "/api/evidence": { recorded: "evidence-notice-op00083890.json" },
+    "/api/evidence/opened": { body: '{"opened":[],"recorded":true}' },
+    ...rest.api,
+  };
+  if (rebidding) answers[`${RISKS_API}/rebidding`] = rebidding;
+  return app(`rebidding--${name}`, RISKS_PATH, {}, { full: true, ...rest, api: answers, pending: rebidding ? rest.pending : [`${RISKS_API}/rebidding`] });
+}
+const REBID: Answer = { recorded: "rebidding-ke-nwwda-541055.json" };
+const REBID_SHOWN: Answer = { recorded: "rebidding-mock-model-shown.json" };
+const toRebid = async (page: Page) => {
+  await page.locator("[data-rebidding]").scrollIntoViewIfNeeded();
+  await page.waitForTimeout(250);
+};
+const openReasons = click("[data-rebid-disclosure]");
+const REBID_SHOTS: Shot[] = [
+  rebidShot("fixture", REBID, { act: toRebid }),
+  rebidShot("fixture-open", REBID, { act: openReasons }),
+  rebidShot("under-20", { recorded: "rebidding-ke-nwwda-541055-prior.json" }, { act: toRebid }, "comparables-ke-nwwda-541055-prior.json"),
+  rebidShot("model-shown", REBID_SHOWN, { act: openReasons }),
+  rebidShot("not-better", { recorded: "rebidding-mock-not-better.json" }, { act: toRebid }),
+  rebidShot("loading", null, { act: toRebid }),
+  rebidShot("error", { status: 503, body: '{"code":"data_service","trace_id":"0af7651916cd43dd8448eb211c80319c"}' }, { act: toRebid }),
+  rebidShot("drawer-notice", REBID, { act: then(openReasons, click("[data-rebidding] [data-citation-id='strata.silver.notices:OP00083890']")) }),
+  rebidShot("drawer-plan-row", REBID, {
+    api: { "/api/evidence": { recorded: "evidence-plan-row-ke-kimawasco-157517.json" } },
+    act: then(openReasons, click("[data-rebidding] [data-citation] >> nth=0")),
+  }),
+  rebidShot("drawer-two-notices", REBID_SHOWN, {
+    api: { "/api/evidence": { recorded: "evidence-mock-notice-op90000011.json" } },
+    act: then(openReasons, click("[data-rebidding] [data-citation-id='strata.silver.notices:OP90000011']")),
+  }),
+  rebidShot("drawer-award-notice", REBID_SHOWN, {
+    api: { "/api/evidence": { recorded: "evidence-mock-award-notice-op90000006.json" } },
+    act: then(openReasons, click("[data-rebidding] [data-citation] >> nth=0")),
+  }),
+  rebidShot("show-more", REBID_SHOWN, { act: then(openReasons, click("[data-rebid-group=all_bids_rejected] [data-button=ghost]")) }),
+  rebidShot("hover-marker", REBID, { full: false, widths: WIDE, act: then(openReasons, hover("[data-rebidding] [data-citation]")) }),
+  rebidShot("focus-marker", REBID, { full: false, act: then(openReasons, focus("[data-rebidding] [data-citation]")) }),
+  rebidShot("focus-disclosure", REBID, { full: false, act: focus("[data-rebid-disclosure]") }),
+  rebidShot("focus-step-ref", REBID, { full: false, act: then(openReasons, focus("[data-rebidding] [data-step-ref]")) }),
+  rebidShot("hover-count", REBID, { full: false, widths: WIDE, act: hover("[data-rebid-count] button") }),
+  rebidShot("focus-count", REBID, { full: false, act: focus("[data-rebid-count] button") }),
+  rebidShot("320", REBID_SHOWN, { widths: [320], act: openReasons }),
+];
+
 const PACKAGE_SHOTS: Shot[] = [
   packageShot("package", comparables(COMPARABLES)),
   packageShot("package--loading", null, {}, null),
@@ -1550,5 +1606,6 @@ export const SHOTS: Shot[] = [
   ...STEP_SHOTS,
   ...RISK_SHOTS,
   ...RETRIEVAL_SHOTS,
+  ...REBID_SHOTS,
   ...CRITERIA_SHOTS,
 ];

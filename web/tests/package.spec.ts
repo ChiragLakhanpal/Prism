@@ -104,7 +104,7 @@ test("the workspace names the package, lists its facts in STEP's field names, an
 
   await expect(section(page).getByText("Planning", { exact: true })).toBeVisible();
   await expect(section(page).getByRole("heading", { level: 2 })).toHaveAccessibleName("How long it took");
-  await expect(section(page).getByRole("heading", { level: 3 })).toHaveText(FINDING);
+  await expect(section(page).getByRole("heading", { level: 3 }).first()).toHaveText(FINDING);
   await expect(page.getByRole("figure", { name: FINDING })).toBeVisible();
   await expect(section(page).locator("[data-summary]")).toHaveText(
     "The middle half of these packages took 3.3 to 7.9 months, and the middle one took 4.4. 8 in 10 were signed within 9.1 months. " +
@@ -128,7 +128,7 @@ test("the title states the plan's share in the words find_comparables returned w
   });
   await openPackage(page, { comparables: about });
   await ready(page);
-  await expect(section(page).getByRole("heading", { level: 3 })).toHaveText(
+  await expect(section(page).getByRole("heading", { level: 3 }).first()).toHaveText(
     "2 of 49 comparable packages, about 1 in 10, were signed within the plan's 1.5 months.",
   );
 });
@@ -836,7 +836,8 @@ test("below 20 comparables there is no range and no share: the copy file's sente
   await openPackage(page, { comparables: { body: await recorded("comparables-ke-nwwda-541055-prior.json") } });
   await ready(page);
 
-  await expect(section(page).getByRole("heading", { level: 3 })).toHaveText(
+  // The first h3: section 1's card ends with the "Advertised again" block's own h3 (ticket 28).
+  await expect(section(page).getByRole("heading", { level: 3 }).first()).toHaveText(
     "I'm not giving a range: only seven comparable packages. Here are all seven.",
   );
   await expect(page.locator("[data-chart-drawing] [data-dot]")).toHaveCount(7);
@@ -858,7 +859,7 @@ test("when packages matched but none could be measured, the reasons say how many
   await openPackage(page, { comparables: { body: await recorded("comparables-ke-nwwda-541055-non-consulting.json") } });
   await ready(page);
 
-  await expect(section(page).getByRole("heading", { level: 3 })).toHaveText(
+  await expect(section(page).getByRole("heading", { level: 3 }).first()).toHaveText(
     "Six past packages matched this one, but I can't measure how long any of them took.",
   );
   await expect(section(page).locator("[data-coverage-line]")).toContainText(
@@ -1463,7 +1464,7 @@ test("a plan row with no planned dates has no plan line until you type months", 
   await openPackage(page, { comparables: await derived("comparables-ke-nwwda-541055.json", noPlan) });
   await ready(page);
 
-  await expect(section(page).getByRole("heading", { level: 3 })).toHaveText(
+  await expect(section(page).getByRole("heading", { level: 3 }).first()).toHaveText(
     "The middle half of the 49 comparable packages took 3.3 to 7.9 months from notice to signature.",
   );
   // The title already gives the middle half, so the summary starts with the middle one.
