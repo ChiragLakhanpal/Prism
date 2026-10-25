@@ -606,20 +606,30 @@ test("axe finds no WCAG 2.2 AA violations on Summary, Documents and the source v
   }
 });
 
-test("a source page's table, or a plan's STEP rows, wider than a phone's column scrolls in a frame a keyboard can reach, and axe passes at 390 and 320 px", async ({ page }) => {
-  for (const [path, caption] of [
-    ["/projects/P130164/documents/pad-2013-10-01?page=65", "Annex 4 - Operational Risk Assessment Framework (ORAF), a table on page 65, as I read it into rows."],
-    [`/projects/P161305/documents/${KENHA_PLAN}?page=3`, "The activities on page 3, as I read them from the plan's table."],
+test("a source page's table, or a plan's STEP rows, is a table in a frame a keyboard can reach from 768 px and one card per row below, and axe passes at each width", async ({ page }) => {
+  // The 21 design review, round 3: B1 (the frame takes focus) and F2 (cards below 768 px, as every table
+  // in Strata becomes, so nothing scrolls sideways on a phone).
+  for (const [path, caption, rows] of [
+    ["/projects/P130164/documents/pad-2013-10-01?page=65", "Annex 4 - Operational Risk Assessment Framework (ORAF), a table on page 65, as I read it into rows.", 2],
+    [`/projects/P161305/documents/${KENHA_PLAN}?page=3`, "The activities on page 3, as I read them from the plan's table.", 13],
   ] as const) {
     await page.unrouteAll({ behavior: "ignoreErrors" });
-    await open(page, path, 390);
+    await open(page, path, 1440);
     await expect(page.locator("[data-source-page=read]")).toBeVisible();
+    // The frame is a region named by the table's caption, and takes focus, so Safari's Tab reaches it too.
+    const frame = main(page).getByRole("region", { name: caption });
+    await expect(frame).toHaveAttribute("tabindex", "0");
+    expect(await axe(page), `${path} at 1440 px`).toEqual([]);
     for (const width of [390, 320]) {
       await page.setViewportSize({ width, height: 900 });
-      // The frame is a region named by the table's caption, and takes focus, so Safari's Tab reaches it too.
-      const frame = main(page).getByRole("region", { name: caption });
-      await expect(frame).toHaveAttribute("tabindex", "0");
-      expect(await frame.evaluate((el) => el.scrollWidth > el.clientWidth), `${path} at ${width} px scrolls inside its frame`).toBe(true);
+      await expect(frame).toBeHidden();
+      const cards = main(page).getByRole("list", { name: caption }).getByRole("listitem");
+      await expect(cards).toHaveCount(rows);
+      // Each column's head sits above its value, every value from the card's one left edge.
+      const lefts = await cards.first().evaluate((card) =>
+        [...card.querySelectorAll("dt, dd")].map((field) => Math.round(field.getBoundingClientRect().left - card.getBoundingClientRect().left)),
+      );
+      expect(new Set(lefts).size, `${path} at ${width} px`).toBe(1);
       expect(await axe(page), `${path} at ${width} px`).toEqual([]);
       expect(await page.evaluate(() => document.documentElement.scrollWidth), `${path} at ${width} px`).toBeLessThanOrEqual(width);
     }

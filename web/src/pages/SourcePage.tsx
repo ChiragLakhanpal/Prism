@@ -256,40 +256,59 @@ function RowsTable({
   highlight: string | null;
   blockRef: React.Ref<HTMLDivElement>;
 }) {
-  const captionId = useId();
   const heads: string[] = [];
   for (const row of rows) for (const [head] of row.cells) if (!heads.includes(head)) heads.push(head);
   const marked = rows.some((row) => row.passage_id === highlight);
+  const cell = (row: (typeof rows)[number], head: string) => drawable(row.cells.find(([name]) => name === head)?.[1] ?? "");
   const body = (
-    <ScrollFrame captionId={captionId}>
-      <table className="w-full border-collapse text-small">
-        <caption id={captionId} className="px-3 py-2 text-left text-caption text-ink-muted">
-          {title ? fill(words.tableTitled, { title, page: String(page) }) : fill(words.table, { page: String(page) })}
-        </caption>
-        <thead className="bg-surface-2">
-          <tr>
-            {heads.map((head) => (
-              <th key={head} scope="col" className="min-w-[8ch] px-3 py-2 text-left align-bottom font-semibold wrap-break-word text-ink-heading">
-                {head}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row) => (
-            <tr key={row.passage_id} id={`passage-${row.passage_id}`} className={cx("border-t border-line align-top", row.passage_id === highlight && "bg-highlight")}>
+    <TableOrCards
+      caption={title ? fill(words.tableTitled, { title, page: String(page) }) : fill(words.table, { page: String(page) })}
+      table={(captionId, caption) => (
+        <table className="w-full border-collapse text-small">
+          <caption id={captionId} className="px-3 py-2 text-left text-caption text-ink-muted">
+            {caption}
+          </caption>
+          <thead className="bg-surface-2">
+            <tr>
               {heads.map((head) => (
-                // Each column keeps room for a short word, and words break only when one is longer than its
-                // column, so "Stakeholder" never splits into "Stak / ehol / der" (the 21 design review, F18).
-                <td key={head} className="min-w-[8ch] px-3 py-2 wrap-break-word text-ink">
-                  {drawable(row.cells.find(([name]) => name === head)?.[1] ?? "")}
-                </td>
+                <th key={head} scope="col" className="min-w-[8ch] px-3 py-2 text-left align-bottom font-semibold wrap-break-word text-ink-heading">
+                  {head}
+                </th>
               ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </ScrollFrame>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr key={row.passage_id} id={`passage-${row.passage_id}`} className={cx("border-t border-line align-top", row.passage_id === highlight && "bg-highlight")}>
+                {heads.map((head) => (
+                  // Each column keeps room for a short word, and words break only when one is longer than its
+                  // column, so "Stakeholder" never splits into "Stak / ehol / der" (the 21 design review, F18).
+                  <td key={head} className="min-w-[8ch] px-3 py-2 wrap-break-word text-ink">
+                    {cell(row, head)}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+      cards={rows.map((row) => (
+        <li
+          key={row.passage_id}
+          data-passage-id={row.passage_id}
+          className={cx("rounded-md border border-line p-4", row.passage_id === highlight ? "border-l-4 border-l-primary bg-highlight" : "bg-surface")}
+        >
+          <dl className="flex flex-col gap-2">
+            {heads.map((head) => (
+              <div key={head}>
+                <dt className="text-caption text-ink-muted">{head}</dt>
+                <dd className="text-small wrap-break-word text-ink">{cell(row, head)}</dd>
+              </div>
+            ))}
+          </dl>
+        </li>
+      ))}
+    />
   );
   return marked ? (
     <Highlighted blockRef={blockRef} caption={words.openedPassage}>
@@ -300,52 +319,91 @@ function RowsTable({
   );
 }
 
-// The frame round a table on the page. In a column narrower than the table (below 768 px) it scrolls
-// sideways, so it is a region named by the table's caption that takes focus, as Table's frame does, and a
-// keyboard can scroll it in every browser (the 21 design review, round 3, B1).
-function ScrollFrame({ captionId, children }: { captionId: string; children: ReactNode }) {
+// A table on the page from a page area of 768 px, and one card per row below it, as every table in Strata
+// becomes (DESIGN.md section 5, Tables; the 21 design review, round 3, F2): each card lists the column heads
+// in caption over their values, from one left edge, so nothing scrolls sideways on a phone. The table's frame
+// is a region named by its caption that takes focus, as Table's is, so a keyboard can scroll a table wider
+// than its column in every browser (round 3, B1).
+function TableOrCards({ caption, table, cards }: { caption: string; table: (captionId: string, caption: string) => ReactNode; cards: ReactNode }) {
+  const tableCaption = useId();
+  const cardsCaption = useId();
   return (
-    <div tabIndex={0} role="region" aria-labelledby={captionId} className="overflow-x-auto rounded-md border border-line bg-surface">
-      {children}
-    </div>
+    <>
+      <div tabIndex={0} role="region" aria-labelledby={tableCaption} data-table-view="table" className="hidden overflow-x-auto rounded-md border border-line bg-surface @md/page:block">
+        {table(tableCaption, caption)}
+      </div>
+      <div data-table-view="cards" className="@md/page:hidden">
+        <p id={cardsCaption} className="text-caption text-ink-muted">
+          {caption}
+        </p>
+        <ul aria-labelledby={cardsCaption} className="mt-2 flex flex-col gap-3">
+          {cards}
+        </ul>
+      </div>
+    </>
   );
 }
 
-// A Procurement Plan's page: the STEP rows the layout parser read from its table.
+// A Procurement Plan's page: the STEP rows the layout parser read from its table. A card's heading is its
+// STEP reference.
 function PlanRows({ answer }: { answer: SourcePageAnswer }) {
-  const captionId = useId();
   const columns = copy.checkPlan.columns;
+  const rows = answer.plan_rows ?? [];
   const amount = (text: string | null) => (text ? formatNumber(Number(text), { decimals: 2, compact: false }) : copy.notInPlan);
+  const method = (row: (typeof rows)[number]) => (row.method ? <MethodText method={row.method} approach={row.market_approach} /> : copy.notInPlan);
   return (
-    <ScrollFrame captionId={captionId}>
-      <table className="w-full border-collapse text-small">
-        <caption id={captionId} className="px-3 py-2 text-left text-caption text-ink-muted">
-          {fill(words.planRows, { page: String(answer.page ?? 1) })}
-        </caption>
-        <thead className="bg-surface-2">
-          <tr>
-            {[columns.activity, columns.method, columns.estimated, columns.status].map((head, index) => (
-              <th key={index} scope="col" className={cx("px-3 py-2 align-bottom font-semibold text-ink-heading", index === 2 ? "text-right" : "text-left")}>
-                {head}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {(answer.plan_rows ?? []).map((row) => (
-            <tr key={row.activity_reference_no} className="border-t border-line align-top">
-              <th scope="row" className="px-3 py-2 text-left font-normal">
-                <span className="block font-mono font-medium wrap-anywhere text-ink">{row.activity_reference_no}</span>
-                {row.description && <span className="mt-1 block text-ink">{row.description}</span>}
-              </th>
-              <td className="px-3 py-2">{row.method ? <MethodText method={row.method} approach={row.market_approach} /> : copy.notInPlan}</td>
-              <td className="px-3 py-2 text-right tabular-nums">{amount(row.estimated_amount_usd)}</td>
-              <td className="px-3 py-2">{row.process_status ?? copy.notInPlan}</td>
+    <TableOrCards
+      caption={fill(words.planRows, { page: String(answer.page ?? 1) })}
+      table={(captionId, caption) => (
+        <table className="w-full border-collapse text-small">
+          <caption id={captionId} className="px-3 py-2 text-left text-caption text-ink-muted">
+            {caption}
+          </caption>
+          <thead className="bg-surface-2">
+            <tr>
+              {[columns.activity, columns.method, columns.estimated, columns.status].map((head, index) => (
+                <th key={index} scope="col" className={cx("px-3 py-2 align-bottom font-semibold text-ink-heading", index === 2 ? "text-right" : "text-left")}>
+                  {head}
+                </th>
+              ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </ScrollFrame>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr key={row.activity_reference_no} className="border-t border-line align-top">
+                <th scope="row" className="px-3 py-2 text-left font-normal">
+                  <span className="block font-mono font-medium wrap-anywhere text-ink">{row.activity_reference_no}</span>
+                  {row.description && <span className="mt-1 block text-ink">{row.description}</span>}
+                </th>
+                <td className="px-3 py-2">{method(row)}</td>
+                <td className="px-3 py-2 text-right tabular-nums">{amount(row.estimated_amount_usd)}</td>
+                <td className="px-3 py-2">{row.process_status ?? copy.notInPlan}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+      cards={rows.map((row) => (
+        <li key={row.activity_reference_no} className="rounded-md border border-line bg-surface p-4">
+          <h2 className="font-mono text-small font-semibold wrap-anywhere text-ink-heading">{row.activity_reference_no}</h2>
+          {row.description && <p className="mt-1 text-small text-ink">{row.description}</p>}
+          <dl className="mt-2 flex flex-col gap-2">
+            <div>
+              <dt className="text-caption text-ink-muted">{columns.method}</dt>
+              <dd className="text-small text-ink">{method(row)}</dd>
+            </div>
+            <div>
+              <dt className="text-caption text-ink-muted">{columns.estimated}</dt>
+              <dd className="text-small text-ink tabular-nums">{amount(row.estimated_amount_usd)}</dd>
+            </div>
+            <div>
+              <dt className="text-caption text-ink-muted">{columns.status}</dt>
+              <dd className="text-small text-ink">{row.process_status ?? copy.notInPlan}</dd>
+            </div>
+          </dl>
+        </li>
+      ))}
+    />
   );
 }
 
