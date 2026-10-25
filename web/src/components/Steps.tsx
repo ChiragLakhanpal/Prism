@@ -12,7 +12,9 @@ import { cx } from "../lib/cx";
 
 // A line may set an ID in mono, so it is a node; the answer panel's own status line says the words.
 // items: what a done step did, one sentence or two each, in a nested list under it, such as the
-// verifier's six checks (the 24 brief, section 4.2). No icons and no check marks: the tense says it.
+// verifier's six checks (the 24 brief, section 4.2); or, while a step runs, the steps it takes inside
+// it, such as asking the model that judges sentences, indented under it in ink-muted with no spinner of
+// their own. No icons and no check marks: the tense says it.
 export type Step = { key: string; running: ReactNode; done: ReactNode; state: "running" | "done" | "todo"; items?: ReactNode[] };
 
 export function Steps({
@@ -58,8 +60,8 @@ export function Steps({
               {step.state === "running" && stillWorking && (
                 <span className="block text-caption text-ink-muted">{copy.steps.stillWorking}</span>
               )}
-              {step.state === "done" && step.items && step.items.length > 0 && (
-                <ul data-step-items className="mt-1 flex list-none flex-col gap-1 pl-6">
+              {step.state !== "todo" && step.items && step.items.length > 0 && (
+                <ul data-step-items className="mt-1 flex list-none flex-col gap-1 pl-6 text-ink-muted">
                   {step.items.map((item, index) => (
                     <li key={index}>{item}</li>
                   ))}

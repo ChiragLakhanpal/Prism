@@ -42,6 +42,11 @@
 #   nested_rows    the row fields that hold records of their own, each with its own evidence_id and
 #                  public_from, such as each side of a disagreement. The answer loop keeps each one as a
 #                  citable record beside its row, so a claim can cite or quote it.
+#   backs_advice   true when its rows are lessons or comparable packages, so a sentence of kind advice
+#                  may rest on them (the verifier's check 5, ticket 24).
+#   not_checked_when   when the check line's "Not checked" clause for this tool applies (web/src/copy.ts,
+#                  checkLine.notCheckedClauses): "ran" (the default), or "cited" when it applies only once a
+#                  sentence on screen cites the tool's evidence, as a lesson cited is not a lesson that fits.
 #
 # [tools.<name>.readiness], for a tool that answers a kind of question people ask. The Data
 # readiness page lists each such kind under "What you can ask" (ticket 16):
@@ -312,6 +317,8 @@ reasons = ["retired", "filtered_out", "ranked_below_limit"]
 abstentions = ["no_lessons", "unknown_risk_factor", "unknown_stage"]
 # Its rows are lessons, so advice may rest on them (the verifier's check 5, ticket 24).
 backs_advice = true
+# "Not checked: whether these lessons apply here" only once a sentence on screen cites a lesson (the 24 brief).
+not_checked_when = "cited"
 
 [tools.find_comparables]
 description = """Finds the comparable packages for one package in a Procurement Plan, or for a package someone \

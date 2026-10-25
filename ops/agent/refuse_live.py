@@ -15,7 +15,8 @@ runs, with the Foundry agent, its tools on the SQL warehouse as the env file's t
 judge (config/models.toml's draft role) when the env file names Azure OpenAI. For each it checks what the
 offline gate checks of the scripted cases (strata.agent.refusals.refusal_problems): the refusal carries the
 question's key and is not partial, no sentence is shown about the request, and the stream holds no email
-address and none of the recorded notices' contact details. It prints one line per question and exits 0 when
+address and none of the values the offline gate scans for (strata.agent.refusals.restricted_values: the recorded
+notices' contact names, emails and phone numbers, and individual consultants' supplier ids). It prints one line per question and exits 0 when
 every refusal holds, 1 when one does not, and 2 when it could not run. It needs FOUNDRY_PROJECT_ENDPOINT,
 DATABRICKS_HOST, DATABRICKS_WAREHOUSE_ID and DATABRICKS_TOKEN in the env file, and az signed in.
 """
@@ -24,7 +25,6 @@ from __future__ import annotations
 
 import argparse
 import asyncio
-import json
 import sys
 from pathlib import Path
 
@@ -35,31 +35,12 @@ from live import REPO, LiveSetupError, foundry_agent, load_env, warehouse_engine
 
 from strata.agent import judge  # noqa: E402
 from strata.agent.loop import answer_runner  # noqa: E402
-from strata.agent.refusals import refusal_problems  # noqa: E402
+from strata.agent.refusals import refusal_problems, restricted_values  # noqa: E402
+from strata.harness.sse import events  # noqa: E402
 from strata.config import load_agent  # noqa: E402
 from strata.lakehouse.engine import EngineError  # noqa: E402
 
 NEEDS = ("FOUNDRY_PROJECT_ENDPOINT", "DATABRICKS_HOST", "DATABRICKS_WAREHOUSE_ID", "DATABRICKS_TOKEN")
-
-
-def recorded_contacts() -> set[str]:
-    """The contact details the recorded notices hold, which ingestion strips and no answer may show."""
-    values = set()
-    for path in (REPO / "data" / "fixture" / "recorded" / "api" / "notices").glob("*.json"):
-        for notice in json.loads(path.read_text())["response"].get("procnotices", []):
-            values |= {(notice.get(field) or "").strip() for field in ("contact_email", "contact_phone_no")}
-    return {value for value in values if len(value) >= 5}
-
-
-def events(text: str) -> list[tuple[str, dict]]:
-    parsed = []
-    for block in text.strip().split("\n\n"):
-        lines = [line for line in block.splitlines() if not line.startswith(":")]
-        kind = next((line[7:] for line in lines if line.startswith("event: ")), None)
-        data = next((json.loads(line[6:]) for line in lines if line.startswith("data: ")), None)
-        if kind and data is not None:
-            parsed.append((kind, data))
-    return parsed
 
 
 def main(argv=None) -> int:
@@ -81,7 +62,7 @@ def main(argv=None) -> int:
                      judge=judge.from_environment(env))
     questions = [question for question in yaml.safe_load((REPO / "evals" / "benchmark.yaml").read_text())["questions"]
                  if question["kind"] == "refusals"]
-    contacts = recorded_contacts()
+    restricted = restricted_values(REPO / "data" / "fixture" / "recorded" / "api")
 
     async def ask(question: dict) -> str:
         transport = httpx.ASGITransport(app=app)
@@ -97,7 +78,7 @@ def main(argv=None) -> int:
         except EngineError as error:
             print(f"I could not ask the live agent: {error}")
             return 2
-        problems = refusal_problems(question["expected"]["refusal"], events(text), text, contacts)
+        problems = refusal_problems(question["expected"]["refusal"], events(text), text, restricted)
         failed += bool(problems)
         print(("Does not hold. " if problems else "Holds. ") + f"{question['id']}: " + (" ".join(problems) or
               f"refused with {question['expected']['refusal']}."))

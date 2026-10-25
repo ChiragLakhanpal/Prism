@@ -8,7 +8,7 @@ event: refusal
 data: {"key": "estimates_for_decisions", "partial": false}
 
 event: checks
-data: {"checks_run": [1, 2, 3, 4, 5, 6], "sentences": {"written": 0, "kept": 0, "removed": 0}, "numbers": {"total": 0, "matched": 0}, "dates": {"total": 0, "matched": 0}, "quotes": {"total": 0, "found": 0}, "sources": {"total": 0, "returned": 0}, "shown": {"numbers": {"total": 0, "matched": 0}, "dates": {"total": 0, "matched": 0}, "quotes": {"total": 0, "found": 0}, "judged": 0, "proven": 0}, "judge": {"called": false, "responded": null, "judged": 0, "followed": 0, "unjudged": 0, "proven": 0}, "advice": {"total": 0, "cited": 0}, "disagreements": {"disputed": 0, "shown": 0, "attached": 0}, "lessons_cited": false, "cited_tools": [], "tools": []}
+data: {"checks_run": [], "sentences": {"written": 0, "kept": 0, "removed": 0}, "numbers": {"total": 0, "matched": 0}, "dates": {"total": 0, "matched": 0}, "quotes": {"total": 0, "found": 0}, "sources": {"total": 0, "returned": 0}, "tools": []}
 
 event: done
 data: {"run_id": "run-0001", "trace_ids": {"application_insights": "4bf92f3577b34da6a3ce929d0e0e4736", "mlflow": "tr-0af7651916cd43dd8448eb211c80319c"}}

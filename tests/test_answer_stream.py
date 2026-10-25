@@ -909,7 +909,7 @@ def copy_reasons():
     removed = re.search(r"\n  removed: \{(.*?)\n  \},", text, re.S).group(1)
     reasons = re.search(r"reasons: \{(.*?)\n    \}", removed, re.S).group(1)
     return {code: {"item": item, "joined": joined} for code, item, joined in re.findall(
-        r'(\w+): \{\s*item: "([^"]*)",\s*joined: "([^"]*)",?\s*\}', reasons)}
+        r'(\w+): \{\s*item: "([^"]*)",\s*joined: "([^"]*)",?[^}]*\}', reasons)}
 
 
 def test_a_claim_whose_number_rests_only_on_a_table_summary_passage_is_removed_with_its_own_reason(ask_case):

@@ -296,6 +296,10 @@
       "total": 3,
       "returned": 3
     },
+    "checked": {
+      "total": 11,
+      "matched": 9
+    },
     "shown": {
       "numbers": {
         "total": 5,
@@ -327,21 +331,23 @@
     "disagreements": {
       "disputed": 0,
       "shown": 0,
-      "attached": 0
+      "attached": 0,
+      "warned": 0
     },
-    "lessons_cited": false,
     "cited_tools": [
       "check_plan"
     ],
     "tools": [
       "check_plan"
-    ]
+    ],
+    "cited_only": []
   },
   "checks_count": 6,
   "removed": [
     {
       "index": 4,
       "sentence": "The plan lists this activity at an Estimated Amount of 300,000.00.",
+      "kind": "record",
       "reason": "number_not_in_records",
       "reasons": [
         {
@@ -355,6 +361,7 @@
     {
       "index": 5,
       "sentence": "Its planned completion of June 30, 2027 has passed.",
+      "kind": "record",
       "reason": "date_not_in_records",
       "reasons": [
         {

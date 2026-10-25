@@ -296,6 +296,10 @@
       "total": 2,
       "returned": 2
     },
+    "checked": {
+      "total": 9,
+      "matched": 9
+    },
     "shown": {
       "numbers": {
         "total": 5,
@@ -327,15 +331,16 @@
     "disagreements": {
       "disputed": 0,
       "shown": 0,
-      "attached": 0
+      "attached": 0,
+      "warned": 0
     },
-    "lessons_cited": false,
     "cited_tools": [
       "check_plan"
     ],
     "tools": [
       "check_plan"
-    ]
+    ],
+    "cited_only": []
   },
   "checks_count": 6,
   "removed": [],

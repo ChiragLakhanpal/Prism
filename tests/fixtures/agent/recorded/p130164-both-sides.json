@@ -41,7 +41,7 @@
       {
        "type": "output_text",
        "annotations": [],
-       "text": "{\"claims\": [{\"sentence\": \"The completion report later said \\\"it was clearly identified at the MTR that the achievement of part of the PDO was compromised\\\", where an earlier status report had rated progress well.\", \"kind\": \"quote\", \"evidence_ids\": [\"strata.gold.passage:31525018/v1/78\", \"strata.gold.passage:26733307/v1/s4\"], \"numbers\": [], \"dates\": [], \"quote\": {\"text\": \"it was clearly identified at the MTR that the achievement of part of the PDO was compromised\", \"passage_id\": \"strata.gold.passage:31525018/v1/78\"}}]}"
+       "text": "{\"claims\": [{\"sentence\": \"Where an earlier status report had rated progress towards the project development objective (PDO) well, the completion report later said \\\"it was clearly identified at the MTR that the achievement of part of the PDO was compromised\\\".\", \"kind\": \"quote\", \"evidence_ids\": [\"strata.gold.passage:31525018/v1/78\", \"strata.gold.passage:26733307/v1/s4\"], \"numbers\": [], \"dates\": [], \"quote\": {\"text\": \"it was clearly identified at the MTR that the achievement of part of the PDO was compromised\", \"passage_id\": \"strata.gold.passage:31525018/v1/78\"}}]}"
       }
      ]
     }

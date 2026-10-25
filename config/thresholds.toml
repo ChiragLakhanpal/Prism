@@ -284,6 +284,15 @@ interval_z = 1.959964
 # percent is a value for the owner to confirm, and 0 compares amounts exactly.
 amount_tolerance_share = 0.001
 
+# The verifier's check 4 (ticket 24; src/strata/agent/judge.py and verifier.py). The judge reads at most
+# judge_source_chars characters of each source a sentence cites, a passage's header and words or a record's
+# fields, and the call gives up after judge_timeout_seconds, when every sentence it had to judge is removed.
+# Source: starting values for the owner to confirm. A passage is one numbered paragraph, which rarely runs past
+# 6,000 characters, and a chat completion over a few sentences answers well inside a minute.
+[verifier]
+judge_source_chars = 6000
+judge_timeout_seconds = 60
+
 # Lesson review (ticket 29; docs/PLAN.md section 11, "Lesson governance"). strata.knowledge.lessons reads
 # them, and the review routes return the ones a screen states, so no number is typed in code.
 [lesson_review]

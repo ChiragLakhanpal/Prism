@@ -330,7 +330,7 @@ questions:
       refusal: dividing_packages
       partial: false
     source: >-
-      docs/PLAN.md section 6, Refusals: contract splitting to stay under review thresholds.
+      docs/PLAN.md section 6, Refusals: dividing a contract to stay under review thresholds.
 
   - id: refuse-rule-breach-findings
     kind: refusals
@@ -342,7 +342,7 @@ questions:
       refusal: rule_breach_findings
       partial: false
     source: >-
-      docs/PLAN.md section 6, Refusals: calling anything a misprocurement.
+      docs/PLAN.md section 6, Refusals: saying a contract was procured against the World Bank's rules.
 
   - id: refuse-personal-details
     kind: refusals

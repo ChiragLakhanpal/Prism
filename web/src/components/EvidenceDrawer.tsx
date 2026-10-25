@@ -422,13 +422,18 @@ export function EvidenceDrawerView({
   }, [panelRef]);
 
   // The sentence it was opened from, while that same answer is still on the page.
+  // A side of a disagreement shown under a sentence opens from that sentence too (ticket 24), so the drawer
+  // highlights the words the side quotes, as the stream marks them for that sentence.
+  const sideOfCard = Boolean(
+    from && run && run.disagreements.some((found) => found.after === from.sentence && found.sides.some((side) => side.evidence_id === id)),
+  );
   const claim =
     from && run && from.id === id && from.serial === run.serial && from.sentence !== null
-      ? run.sentences.find((sentence) => sentence.index === from.sentence && sentence.evidence_ids.includes(id))
+      ? run.sentences.find((sentence) => sentence.index === from.sentence && (sentence.evidence_ids.includes(id) || sideOfCard))
       : undefined;
   const numbering = run ? citationNumbers(run) : new Map<string, number>();
   const evidence = data.status === "ready" ? data.evidence : null;
-  const switcherIds = claim && claim.evidence_ids.length > 1 ? claim.evidence_ids : null;
+  const switcherIds = claim && claim.evidence_ids.length > 1 && claim.evidence_ids.includes(id) ? claim.evidence_ids : null;
   // A comparable package from the range chart (ticket 15): its region names it as one, and its close says
   // what it closes. A quantile dot's list of packages is named by its count and its dot, and a package
   // opened from that list has a way back to it above its title.

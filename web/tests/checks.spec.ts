@@ -82,11 +82,23 @@ test("the removed box lists every removed sentence with its reason, the first in
   }
 });
 
+test("advice removed by check 5 is quoted whole in the lead, since an order does not read as reported speech", async ({ page }) => {
+  await answered(page, "ask-p130164-advice-without-lesson.sse");
+
+  await expect(panel(page).locator("[data-removed-box]")).toHaveText(
+    'I removed one sentence. It said "Base your works estimates on market rates before you advertise." It gave advice without citing a lesson or a comparable package.',
+  );
+});
+
 test("when the judging model did not respond, its sentences are removed and Try again asks the question again", async ({ page }) => {
   const seen = await answered(page, "ask-p130164-judge-no-response.sse");
 
   const box = panel(page).locator("[data-removed-box]");
-  await expect(box.locator("[data-unjudged]")).toHaveText("The model that judges sentences did not respond, so I couldn't check one of them.");
+  // The lead says why, once: every removed sentence has the same cause, so no second sentence repeats it.
+  await expect(box.locator("p").first()).toHaveText(
+    "I removed one sentence. It said the completion report blamed the contractors for the rebidding, and I couldn't check it, because the model that judges sentences did not respond.",
+  );
+  await expect(box.locator("[data-unjudged]")).toHaveCount(0);
   await expect(panel(page).locator("[data-sentence-text]")).toHaveCount(3);
   await box.getByRole("button", { name: "Try again" }).click();
   await expect.poll(() => seen.asked.length).toBe(2);
@@ -99,8 +111,24 @@ test("when the judging model did not respond and nothing survived, an error says
     "I couldn't check my answer, because the model that judges sentences did not respond. Your question is still in the box.",
   );
   await expect(panel(page).getByRole("button", { name: "Try again" })).toBeVisible();
-  await expect(panel(page).locator("[data-removed-box] [data-removed-lead]")).toHaveText("I removed all two sentences.");
+  await expect(panel(page).locator("[data-removed-box] [data-removed-lead]")).toHaveText("I removed both sentences.");
+  // The alert names the cause, so each sentence under it says only that I couldn't check it.
+  for (const item of await panel(page).locator("[data-removed-box] li").allTextContents()) expect(item).toMatch(/" I couldn't check it\.$/);
   await expect(panel(page).locator("[data-check-line]")).toHaveCount(0);
+  // Above the alert, the verifier's done line alone: its six checks stay out of the way.
+  await expect(panel(page).locator("[data-step-items]")).toHaveCount(0);
+});
+
+test("when check 6 could not ask which reports disagree and nothing survived, an error says so and offers Try again", async ({ page }) => {
+  const seen = await answered(page, "ask-p130164-disagreements-unavailable.sse");
+
+  await expect(panel(page).getByRole("alert")).toContainText(
+    "I couldn't check my answer, because I couldn't find out whether other reports disagree with its sources. Your question is still in the box.",
+  );
+  await expect(panel(page).locator("[data-in-short]")).toHaveCount(0);
+  await expect(panel(page).locator("[data-removed-box] [data-removed-lead]")).toHaveText("I removed all three sentences.");
+  await panel(page).getByRole("button", { name: "Try again" }).click();
+  await expect.poll(() => seen.asked.length).toBe(2);
 });
 
 test("ICR paragraph 78 shows under ISR 7's sentence with both sides, though the agent left it out", async ({ page }) => {
@@ -121,7 +149,9 @@ test("ICR paragraph 78 shows under ISR 7's sentence with both sides, though the 
   // The sentence's own source keeps number 1, and the other side gets the next.
   await expect(card.locator("[data-citation]")).toHaveText(["[1]", "[2]"]);
   await expect(card).toContainText("For a judgment of how a project went, I lean on the later, more independent report, here ICR paragraph 78.");
-  await expect(card).toContainText("If you keep ISR 7 instead, I treat Progress towards achievement of PDO as Satisfactory.");
+  await expect(card).toContainText('If you keep ISR 7 instead, I treat "Progress towards achievement of PDO" as Satisfactory.');
+  // The abbreviation is spelled out the first time "In short" uses it.
+  await expect(panel(page).locator("[data-in-short]")).toContainText("project development objective (PDO)");
   // The card follows the sentence it concerns, in the order of the page.
   const sentence = await panel(page).locator("[data-sentence-text='0']").boundingBox();
   expect((await card.boundingBox())!.y).toBeGreaterThan(sentence!.y);
@@ -129,6 +159,10 @@ test("ICR paragraph 78 shows under ISR 7's sentence with both sides, though the 
   const second = card.locator("[data-citation='2']");
   await second.click();
   await expect(page.getByRole("dialog")).toContainText("paragraph 78");
+  // The drawer highlights the words the side quotes, though no sentence quoted them.
+  await expect(page.getByRole("dialog").locator("[data-passage] mark")).toContainText(
+    "it was clearly identified at the MTR that the achievement of part of the PDO was compromised",
+  );
   await page.keyboard.press("Escape");
   await expect(second).toBeFocused();
 });
@@ -164,7 +198,16 @@ test("a refusal is a first-person answer from the copy file, with a link to What
   const heading = page.getByRole("heading", { level: 2, name: "What I don't do" });
   await expect(heading).toBeFocused();
   await expect(page.locator("[data-dont-do] dt")).toHaveCount(10);
+  // The heading lands with room above it, not flush against the window's top.
+  expect((await heading.boundingBox())!.y).toBeGreaterThanOrEqual(16);
   await expect(page.locator("[data-dont-do] dt").first()).toHaveText("I don't score or rank suppliers.");
+});
+
+test("a full refusal's steps say I turned the request down", async ({ page }) => {
+  await answered(page, "ask-refuses-supplier-scores.sse");
+
+  await panel(page).getByRole("button", { name: /^Show the .* steps? I took$/ }).click();
+  await expect(panel(page).locator("[data-steps]")).toContainText("I turned the request down.");
 });
 
 test("a partial refusal opens In short, says the rest was answered, and the checked answer follows", async ({ page }) => {

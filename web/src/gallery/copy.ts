@@ -165,6 +165,7 @@ export const galleryCopy = {
       sixAll: "Judged, with advice",
       sixAttached: "A disagreement attached",
       sixNone: "No model needed",
+      judging: "While it asks the model, its step inside the verifier's",
     },
     questions: {
       pastRange: "How long did packages like KE-NWWDA-541055-CW-RFB take from notice to signed contract?",

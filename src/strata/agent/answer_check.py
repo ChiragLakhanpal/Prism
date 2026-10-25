@@ -63,14 +63,17 @@ class SixChecks:
         self.thresholds = thresholds or load_thresholds()
         # The tools whose rows back advice (config/tools.toml, backs_advice): check 5's lessons and comparables.
         self.backs_advice = [name for name, tool in self.tools.items() if tool.result.backs_advice]
+        # The tools whose "Not checked" clause applies only once a sentence on screen cites them.
+        self.cited_only = [name for name, tool in self.tools.items() if tool.result.not_checked_when == "cited"]
+        self.source_chars = int(self.thresholds.value("verifier.judge_source_chars"))
 
     def check(self, claims: Iterable[Claim], facts: Facts) -> AnswerCheck:
         """Checks 1 to 3 and 5 on an answer's claims, against one turn's evidence."""
-        return AnswerCheck(claims, facts, self.backs_advice)
+        return AnswerCheck(claims, facts, self.backs_advice, source_chars=self.source_chars)
 
     def checked(self, sentences: Iterable[Checked], facts: Facts) -> AnswerCheck:
         """Check 5 on sentences checks 1 to 3 already saw, each against its own evidence, as a draft's notes are."""
-        return AnswerCheck.from_checked(sentences, facts, self.backs_advice)
+        return AnswerCheck.from_checked(sentences, facts, self.backs_advice, source_chars=self.source_chars)
 
     async def finish(self, check: AnswerCheck, facts: Facts, asker: Asker) -> AsyncIterator[Event | Verdict]:
         """Checks 6 and 4 on what checks 1 to 3 and 5 left standing, then the verdict."""

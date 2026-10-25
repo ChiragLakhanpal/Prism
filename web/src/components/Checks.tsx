@@ -32,25 +32,24 @@ function ratio(forms: { one: string; many: string }, part: number, whole: number
   return (whole === 1 ? forms.one : forms.many).replace("{part}", n(part)).replace("{whole}", n(whole));
 }
 
-// The tools whose clause applies only when a sentence on screen cites their evidence: a lesson cited
-// is not a lesson that fits, which check 5 cannot tell (the 24 brief, section 5.2).
-const CITED_CLAUSES: NotChecked[] = ["get_lessons"];
-
 // What the line says was not checked, from the verifier's checks event: whether each sentence follows
-// from its sources where the fourth check did not run (a draft's notes), then a clause for each tool
-// that ran and has one, then a draft kind's own clauses (config/drafts.toml).
-// src/strata/drafts/files.py writes the evidence pack's line by the same rule. With none, the line
-// gives the fallback.
+// from its sources where the fourth check did not run (an answer saved before ticket 24), then a clause
+// for each tool that ran and has one, then a draft kind's own clauses (config/drafts.toml). A tool the
+// event lists under cited_only (config/tools.toml, not_checked_when = "cited") has its clause only once a
+// sentence on screen cites it: a lesson cited is not a lesson that fits, which check 5 cannot tell (the
+// 24 brief, section 5.2). src/strata/drafts/files.py writes the evidence pack's line by the same rule.
+// With none, the line gives the fallback.
 export function notCheckedFor(
-  checks: { checks_run: number[]; tools: string[]; cited_tools?: string[] },
+  checks: { checks_run: number[]; tools: string[]; cited_tools?: string[]; cited_only?: string[] },
   own: string[] = [],
 ): NotChecked[] {
   const clauses = copy.checkLine.notCheckedClauses;
   const keys = Object.keys(clauses) as NotChecked[];
   const cited = checks.cited_tools ?? [];
+  const citedOnly = checks.cited_only ?? [];
   return [
     ...(checks.checks_run.includes(4) ? [] : (["sentences"] as NotChecked[])),
-    ...keys.filter((key) => (CITED_CLAUSES.includes(key) ? cited.includes(key) : checks.tools.includes(key))),
+    ...keys.filter((key) => (citedOnly.includes(key) ? cited.includes(key) : checks.tools.includes(key))),
     ...own.filter((key): key is NotChecked => key in clauses),
   ];
 }
@@ -155,6 +154,9 @@ export type Removed = {
   // supports that number"), from the copy file's verifier reasons.
   reason: string;
   reasonJoined: string;
+  // It gave advice: the lead quotes it whole, with the list item's reason, rather than report it, since
+  // advice is often an order that does not read as reported speech.
+  quoted?: boolean;
 };
 
 // "It said bids were usually opened within 45 days": the sentence without its final period,
@@ -171,18 +173,17 @@ export function RemovedBox({
   removed,
   all = false,
   names,
-  unjudged = 0,
-  onRetry,
+  retry,
 }: {
   removed: Removed[];
   // Every sentence the agent wrote failed a check.
   all?: boolean;
   // Words that stay capitalized when a sentence is reported, from the answer and its passages.
   names?: string[];
-  // How many sentences the model that judges sentences could not check, because it did not respond;
-  // with onRetry, a sentence says so after the lead and "Try again" asks the question again.
-  unjudged?: number;
-  onRetry?: () => void;
+  // A service a check needs did not answer (the judge, or get_disagreements), so "Try again" follows the
+  // lead and asks the question again, after a note on how many it could not check when other sentences
+  // were removed for other reasons (the 24 brief, section 5.4).
+  retry?: { onRetry: () => void; note?: string };
 }) {
   const words = copy.removed;
   const othersId = useId();
@@ -193,7 +194,7 @@ export function RemovedBox({
       : all
         ? count === 1
           ? words.allOne
-          : words.all(numText({ count }))
+          : words.all(count, numText({ count }))
         : count === 1
           ? words.one
           : words.several(numText({ count }));
@@ -207,17 +208,21 @@ export function RemovedBox({
           {first && !all && (
             <>
               {" "}
-              {(count === 1 ? words.itSaid : words.firstSaid)(asReported(first.sentence, names), first.reasonJoined)}
+              {first.quoted
+                ? (count === 1 ? words.itSaidQuoted : words.firstSaidQuoted)(first.sentence, first.reason)
+                : (count === 1 ? words.itSaid : words.firstSaid)(asReported(first.sentence, names), first.reasonJoined)}
             </>
           )}
         </p>
-        {unjudged > 0 && onRetry && (
+        {retry && (
           <>
-            <p data-unjudged className="mt-2">
-              {words.unjudged(unjudged, formatCount(unjudged))}
-            </p>
+            {retry.note && (
+              <p data-unjudged className="mt-2">
+                {retry.note}
+              </p>
+            )}
             <div className="mt-2">
-              <Button variant="secondary" onClick={onRetry}>
+              <Button variant="secondary" onClick={retry.onRetry}>
                 {copy.answer.tryAgain}
               </Button>
             </div>

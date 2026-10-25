@@ -41,7 +41,7 @@
       {
        "type": "output_text",
        "annotations": [],
-       "text": "{\"claims\": [{\"sentence\": \"The status report of August 26, 2016 rated progress towards the PDO \\\"Satisfactory\\\".\", \"kind\": \"quote\", \"evidence_ids\": [\"strata.gold.passage:26733307/v1/s4\"], \"numbers\": [], \"dates\": [\"August 26, 2016\"], \"quote\": {\"text\": \"Satisfactory\", \"passage_id\": \"strata.gold.passage:26733307/v1/s4\"}}]}"
+       "text": "{\"claims\": [{\"sentence\": \"The status report of August 26, 2016 rated progress towards the project development objective (PDO) \\\"Satisfactory\\\".\", \"kind\": \"quote\", \"evidence_ids\": [\"strata.gold.passage:26733307/v1/s4\"], \"numbers\": [], \"dates\": [\"August 26, 2016\"], \"quote\": {\"text\": \"Satisfactory\", \"passage_id\": \"strata.gold.passage:26733307/v1/s4\"}}]}"
       }
      ]
     }

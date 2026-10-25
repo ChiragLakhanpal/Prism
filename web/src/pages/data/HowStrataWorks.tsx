@@ -23,7 +23,7 @@ export function HowStrataWorks() {
         {words.next.after}
       </p>
       <section aria-labelledby={WHAT_I_DONT_DO.id} className="mt-4">
-        <h2 id={WHAT_I_DONT_DO.id} tabIndex={-1} className="text-h2 text-ink-heading outline-none">
+        <h2 id={WHAT_I_DONT_DO.id} tabIndex={-1} className="scroll-mt-6 text-h2 text-ink-heading outline-none">
           {words.dontDo.heading}
         </h2>
         <p className="mt-2 text-body">{words.dontDo.intro}</p>

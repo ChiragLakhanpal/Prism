@@ -59,11 +59,12 @@ function toolLines(step: StepEvent): { running: string; done: string } {
   return { running: words.running(scope), done: words.done(count, formatCount(count), scope) };
 }
 
-function stepLines(step: StepEvent, checks: ChecksEvent | null): { running: string; done: string } {
+function stepLines(step: StepEvent, checks: ChecksEvent | null, refused = false): { running: string; done: string } {
   if (step.kind === "tool") return toolLines(step);
   if (step.kind === "write") {
     const count = step.count ?? 0;
-    return { running: copy.steps.write.running, done: copy.steps.write.done(count, formatCount(count)) };
+    // A full refusal wrote no sentence because it turned the request down, and its step says so.
+    return { running: copy.steps.write.running, done: refused ? copy.steps.write.refused : copy.steps.write.done(count, formatCount(count)) };
   }
   const words = copy.steps.check;
   // The verifier's own steps are said while they run and fold into its done line.
@@ -97,7 +98,7 @@ export function sixChecks(checks: ChecksEvent): string[] {
         ? six.disputedAdded(disputed, formatCount(disputed, { capital: true }))
         : six.disputedBoth(disputed, formatCount(disputed, { capital: true }));
   return [
-    six.numbers(checks.numbers.matched + checks.dates.matched, checks.numbers.total + checks.dates.total),
+    six.numbers(checks.checked?.matched ?? 0, checks.checked?.total ?? 0),
     six.sources(checks.sources.returned, checks.sources.total),
     six.quotes(checks.quotes.found, checks.quotes.total),
     fourth.join(" "),
@@ -114,11 +115,17 @@ function withMonoId(text: string, id: string | null | undefined): ReactNode {
 
 export function stepsOf(run: Run): Step[] {
   const started = run.steps.length > 0 || run.phase !== "streaming";
+  const refused = Boolean(run.refusal && !run.refusal.partial);
   const steps: Step[] = [{ key: "read", ...copy.steps.read, state: started ? "done" : "running" }];
   for (const step of run.steps) {
-    const inside = step.kind === "judge" || step.kind === "disagreement";
-    if (inside && step.status === "done") continue;
-    const lines = stepLines(step, run.checks);
+    const lines = stepLines(step, run.checks, refused);
+    // The verifier's own steps, asking the judge and getting the other side of a disagreement, sit inside its
+    // step while they run, with no spinner of their own, and fold into its done line (the 24 brief, 4.2).
+    if (step.kind === "judge" || step.kind === "disagreement") {
+      const verifier = steps.find((one) => one.key === "check");
+      if (step.status === "running" && verifier?.state === "running") verifier.items = [...(verifier.items ?? []), lines.running];
+      continue;
+    }
     const items = step.kind === "check" && step.status === "done" && run.checks?.judge ? sixChecks(run.checks) : undefined;
     steps.push({ key: step.id, running: withMonoId(lines.running, step.project_id), done: withMonoId(lines.done, step.project_id), state: step.status, items });
   }
@@ -136,15 +143,18 @@ function announcements(run: Run): string[] {
   if (answered) {
     const removed = run.checks?.sentences.removed ?? 0;
     const kept = run.checks?.sentences.kept ?? 0;
-    const unjudged = run.checks?.judge?.responded === false ? run.checks.judge.unjudged : 0;
+    const { judge: unjudged, unasked } = outages(run);
     // Only a warning is announced: an info note changes nothing in the answer (the 24 brief, section 5.8).
-    const warned = new Set(run.disagreements.filter((found) => found.changes_answer).map((found) => found.after)).size;
+    // The verifier counts the sentences a warning follows.
+    const warned = run.checks?.disagreements?.warned ?? 0;
     said.push(
       run.refusal && !run.refusal.partial
         ? copy.answer.ready
         : unjudged > 0 && kept > 0
           ? copy.answer.readyUnjudged(unjudged, formatCount(unjudged))
-          : warned > 0
+          : unasked > 0 && kept > 0
+            ? copy.answer.readyUnasked(unasked, formatCount(unasked))
+            : warned > 0
             ? copy.answer.readyDisagree(warned, formatCount(warned))
             : removed > 0 && kept > 0
               ? copy.answer.readyRemoved(removed, formatCount(removed))
@@ -386,14 +396,25 @@ function AnswerDisagreement({
 // ── The panel ──────────────────────────────────────────────────────────
 
 // A removed sentence's reason: its first reason code that has a sentence in the copy file, or else a
-// line that makes no claim about why.
-function removedItems(run: Run): Removed[] {
-  const reasons = copy.removed.reasons as Record<string, { item: string; joined: string }>;
+// line that makes no claim about why. Under an error alert that already names the cause, a reason with
+// a short form uses it ("I couldn't check it."). Advice is quoted in the lead.
+function removedItems(run: Run, underAlert = false): Removed[] {
+  const reasons = copy.removed.reasons as Record<string, { item: string; joined: string; underAlert?: string }>;
   return run.removed.map((item) => {
     const code = [item.reason, ...item.reasons.map((reason) => reason.code)].find((one) => one in reasons);
     const reason = code ? reasons[code] : copy.removed.unknownReason;
-    return { sentence: item.sentence, reason: reason.item, reasonJoined: reason.joined };
+    const said = underAlert && "underAlert" in reason && reason.underAlert ? reason.underAlert : reason.item;
+    return { sentence: item.sentence, reason: said, reasonJoined: reason.joined, quoted: item.kind === "advice" };
   });
+}
+
+// The removed sentences a service did not let me check, by its reason code: the model that judges
+// sentences did not respond (judge), or I couldn't ask which reports disagree (unasked); and the rest.
+export const OUTAGE_REASONS = { judge: "judge_unavailable", unasked: "disagreements_unavailable" } as const;
+function outages(run: Run): { judge: number; unasked: number; other: number } {
+  const judge = run.removed.filter((item) => item.reason === OUTAGE_REASONS.judge).length;
+  const unasked = run.removed.filter((item) => item.reason === OUTAGE_REASONS.unasked).length;
+  return { judge, unasked, other: run.removed.length - judge - unasked };
 }
 
 // Words that stay capitalized when a removed sentence is reported: those written with a capital in the
@@ -464,27 +485,53 @@ function stateOf(run: Run, opened: Opened, visited: ReadonlySet<string>, stillWo
       ) : undefined,
     };
   }
-  const unjudged = checks.judge?.responded === false ? checks.judge.unjudged : 0;
-  if (checks.sentences.kept === 0 && unjudged > 0) {
-    // Nothing survived because the model that judges sentences did not respond: an error, not an empty
-    // answer, with every sentence I wrote listed under it (the 24 brief, section 5.5).
+  const outage = outages(run);
+  const partial =
+    refusal && run.refusal?.partial ? (
+      <>
+        <p>
+          {refusal.lead} {copy.answer.refusalPartial}
+        </p>
+        <p className="mt-2 text-caption text-ink-muted">{refusalNote()}</p>
+      </>
+    ) : undefined;
+  if (checks.sentences.kept === 0 && outage.judge + outage.unasked > 0) {
+    // Nothing survived because a service a check needs did not answer: an error, not an empty answer, with
+    // every sentence I wrote listed under it (the 24 brief, section 5.5). Above the alert sits only the
+    // verifier's done line; its six checks stay in the disclosure of an answer that has one.
+    const words = copy.answer;
+    const cause = outage.judge && outage.unasked ? words.bothFailed : outage.judge ? words.judgeFailed : words.disagreementsFailed;
     return {
       status: "error",
-      steps: done,
+      steps: done.map((step) => ({ ...step, items: undefined })),
       runId: run.runId ?? undefined,
       message: (
         <>
-          {copy.answer.judgeFailed} {copy.answer.stillInBox}
+          {cause} {words.stillInBox}
         </>
       ),
       onRetry: askAgain,
-      removed: removedItems(run),
+      removed: removedItems(run, true),
     };
   }
   if (checks.sentences.kept === 0) {
     const written = checks.sentences.written;
-    return { status: "unsupported", steps: done, runId, message: copy.answer.nothingSurvived(written, formatCount(written)), removed: removedItems(run) };
+    return {
+      status: "unsupported",
+      steps: done,
+      runId,
+      message: copy.answer.nothingSurvived(written, formatCount(written)),
+      removed: removedItems(run),
+      refusal: partial,
+    };
   }
+  // "Try again" when a service did not let me check some sentences, with a note on how many when other
+  // sentences were removed for other reasons, since then the lead does not say why.
+  const notes = [
+    outage.judge > 0 && copy.removed.unjudged(outage.judge, formatCount(outage.judge)),
+    outage.unasked > 0 && copy.removed.unasked(outage.unasked, formatCount(outage.unasked)),
+  ].filter((note): note is string => Boolean(note));
+  const mixed = new Set(run.removed.map((item) => item.reason)).size > 1;
   // The check line counts the sentences on screen; an answer from before ticket 24 has only the counts
   // over everything written.
   const shown = checks.shown ?? checks;
@@ -492,15 +539,8 @@ function stateOf(run: Run, opened: Opened, visited: ReadonlySet<string>, stillWo
     status: "ready",
     steps: done,
     runId,
-    refusal:
-      refusal && run.refusal?.partial ? (
-        <>
-          <p>
-            {refusal.lead} {copy.answer.refusalPartial}
-          </p>
-          <p className="mt-2 text-caption text-ink-muted">{refusalNote()}</p>
-        </>
-      ) : undefined,
+    refusal: partial,
+    wide: run.disagreements.length > 0,
     sentences: <AnswerSentences run={run} opened={opened} visited={visited} />,
     checks: {
       numbers: shown.numbers,
@@ -510,8 +550,7 @@ function stateOf(run: Run, opened: Opened, visited: ReadonlySet<string>, stillWo
       notChecked: notCheckedFor(checks),
       removed: removedItems(run),
       names: names(run),
-      unjudged,
-      onRetry: unjudged > 0 ? askAgain : undefined,
+      retry: notes.length ? { onRetry: askAgain, note: mixed ? notes.join(" ") : undefined } : undefined,
     },
   };
 }

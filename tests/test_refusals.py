@@ -21,7 +21,7 @@ import pytest
 import yaml
 from scripted_answers import ask
 
-from strata.agent.refusals import REFUSALS, refusal_problems
+from strata.agent.refusals import INDIVIDUAL_CONSULTANT, REFUSALS, refusal_problems, restricted_values
 from strata.agent.scripted import load_cases
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -29,32 +29,7 @@ RECORDED = ROOT / "data" / "fixture" / "recorded" / "api"
 COPY = (ROOT / "web" / "src" / "copy.ts").read_text()
 CASES = sorted(case_id for case_id in load_cases() if case_id.startswith("refuses-"))
 FULL = [case_id for case_id in CASES if not case_id.startswith("refuses-part-")]
-# A contact name that is only a job title names no one, so it may appear in a report's text.
-TITLE_WORDS = {"chief", "executive", "officer", "engineer", "manager", "director", "coordinator", "secretary",
-               "head", "procurement", "project", "accounting", "finance", "the", "of", "and"}
-
-
-def restricted() -> set[str]:
-    """Every value no response may hold: notices' contact details, and individual consultants' supplier ids."""
-    values = set()
-    for path in (RECORDED / "notices").glob("*.json"):
-        for notice in json.loads(path.read_text())["response"].get("procnotices", []):
-            for field in ("contact_name", "contact_email", "contact_phone_no"):
-                value = (notice.get(field) or "").strip()
-                words = set(re.findall(r"[a-z]+", value.lower()))
-                if len(value) >= 5 and not (field == "contact_name" and words <= TITLE_WORDS):
-                    values.add(value)
-    for path in (RECORDED / "awards").glob("*.json"):
-        response = json.loads(path.read_text())["response"]
-        for award in response.get("data", []) if isinstance(response, dict) else []:
-            if award.get("supplier") == "INDIVIDUAL CONSULTANT" and award.get("supplier_id"):
-                values.add(str(award["supplier_id"]))
-            elif "Individual Consultant" in str(award.get("procurement_method") or ""):
-                values.add(str(award.get("supplier")))
-    return values
-
-
-RESTRICTED = restricted()
+RESTRICTED = restricted_values(RECORDED)
 
 
 def refusal_copy() -> dict[str, dict[str, str]]:
@@ -67,6 +42,8 @@ def refusal_copy() -> dict[str, dict[str, str]]:
 def test_the_scan_has_contact_details_and_individual_consultants_to_look_for():
     assert len(RESTRICTED) > 100
     assert any("@" in value for value in RESTRICTED)
+    # The awards' label for an individual consultant names no one, so a screen may show it.
+    assert INDIVIDUAL_CONSULTANT not in RESTRICTED
 
 
 def test_each_refusal_key_has_a_scripted_case_and_a_partial_refusal_has_one_too():
@@ -81,6 +58,8 @@ def test_each_refusal_is_a_first_person_refusal_from_the_copy_file_with_no_restr
     key = case_id.removeprefix("refuses-").replace("-", "_")
     assert asked.of("refusal") == [{"key": key, "partial": False}]
     assert asked.of("sentence") == [] and asked.of("removed") == []
+    # Nothing was checked, so the checks event says no check ran.
+    assert [checks["checks_run"] for checks in asked.of("checks")] == [[]]
     sentences = refusal_copy()[key]
     assert sentences["lead"].startswith("I don't ") and re.search(r"\b(I|you)\b", sentences["instead"])
     # Nothing the person got, and nothing the tools gave the agent, holds a contact detail or names one.
@@ -140,3 +119,36 @@ def test_every_refusal_key_is_a_must_refuse_question_in_the_benchmark_file():
     # Each is also a scripted case, asked word for word, so the offline gate answers it.
     asked = {case.question for case in load_cases().values()}
     assert [question["id"] for question in refusals if question["question"] not in asked] == []
+
+
+def test_a_partial_refusal_with_nothing_else_answered_is_not_an_answer_the_app_can_show():
+    """A partial refusal turns down part of a question and answers the rest; with no claims it is a full refusal
+    in the wrong shape, so the run ends with the error for an answer I couldn't check."""
+    import asyncio
+
+    import httpx
+
+    from strata.agent.loop import answer_runner
+    from strata.server.app import create_app
+    from scripted_answers import ANA, events
+
+    class HalfRefuses:
+        name, version = "strata-orchestrator", None
+
+        def respond(self, items, previous_response_id):
+            answer = {"claims": [], "refusal": {"key": "supplier_scores", "partial": True}}
+            return {"id": "resp_1", "output": [{"type": "message", "role": "assistant", "content": [
+                {"type": "output_text", "text": json.dumps(answer)}]}]}
+
+    def no_engine(viewer):
+        raise AssertionError("This run calls no tool.")
+
+    app = create_app(runner=answer_runner(lambda turn: HalfRefuses(), no_engine), new_run_id=lambda: "run-0009")
+
+    async def go():
+        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://strata.test") as client:
+            return await client.post("/api/ask", headers=ANA, json={"question": "Rank the suppliers of P130164."})
+
+    parsed = events(asyncio.run(go()).text)
+    assert [kind for kind, _ in parsed if kind in ("refusal", "sentence")] == []
+    assert parsed[-2:] == [("error", {"code": "agent_output"}), ("done", {"run_id": "run-0009"})]

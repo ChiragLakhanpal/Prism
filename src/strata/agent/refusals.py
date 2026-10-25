@@ -18,12 +18,15 @@ decisions, evaluation reports and complaints in two, because the two need differ
 there are ten keys. Adding one is a line here, its sentences in the copy file, its rule in the instructions and
 its benchmark question.
 
-refusal_problems() says what is wrong with an answer stream to a must-refuse question: the offline gate asks it
-of each scripted case (tests/test_refusals.py), and ops/agent/refuse_live.py of the live agent.
+refusal_problems() says what is wrong with an answer stream to a must-refuse question, and restricted_values() what
+it must never hold: the offline gate asks both of each scripted case (tests/test_refusals.py), and
+ops/agent/refuse_live.py of the live agent.
 """
 
+import json
 import re
 from collections.abc import Iterable, Mapping
+from pathlib import Path
 
 REFUSALS = (
     "supplier_scores",
@@ -40,6 +43,36 @@ REFUSALS = (
 
 
 EMAIL = re.compile(r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+")
+# A contact name that is only a job title names no one, so it may appear in a report's text.
+TITLE_WORDS = {"chief", "executive", "officer", "engineer", "manager", "director", "coordinator", "secretary",
+               "head", "procurement", "project", "accounting", "finance", "the", "of", "and"}
+# How the awards write a supplier that is an individual consultant: a label, not a name.
+INDIVIDUAL_CONSULTANT = "INDIVIDUAL CONSULTANT"
+
+
+def restricted_values(recorded: Path) -> set[str]:
+    """Every value no response may hold, read from the recorded API files (data/fixture/recorded/api), not from
+    Strata's code: every notice's contact name, email and phone number, and each individual consultant's supplier
+    id or name. The offline gate (tests/test_refusals.py) and the live check (ops/agent/refuse_live.py) scan for
+    the same values."""
+    values = set()
+    for path in (recorded / "notices").glob("*.json"):
+        for notice in json.loads(path.read_text())["response"].get("procnotices", []):
+            for field in ("contact_name", "contact_email", "contact_phone_no"):
+                value = (notice.get(field) or "").strip()
+                words = set(re.findall(r"[a-z]+", value.lower()))
+                if len(value) >= 5 and not (field == "contact_name" and words <= TITLE_WORDS):
+                    values.add(value)
+    for path in (recorded / "awards").glob("*.json"):
+        response = json.loads(path.read_text())["response"]
+        for award in response.get("data", []) if isinstance(response, dict) else []:
+            supplier = str(award.get("supplier") or "")
+            if supplier == INDIVIDUAL_CONSULTANT:
+                if award.get("supplier_id"):
+                    values.add(str(award["supplier_id"]))
+            elif "Individual Consultant" in str(award.get("procurement_method") or "") and supplier:
+                values.add(supplier)
+    return values
 
 
 def refusal_problems(expected: str, events: list[tuple[str, Mapping]], text: str,

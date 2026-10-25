@@ -164,12 +164,13 @@ export function App() {
   // section of the page, such as How Strata works' #what-i-dont-do from the link under a refusal
   // (ticket 24), scrolls to that section and focuses its heading instead, on arrival or on load.
   const route = routeOf(here);
-  const section_ = () => {
+  // The section of the page the address names, by the heading that takes focus.
+  const namedSection = () => {
     const id = decodeURIComponent(window.location.hash.slice(1));
     return id ? document.querySelector<HTMLElement>(`main [id="${CSS.escape(id)}"][tabindex="-1"]`) : null;
   };
   useEffect(() => {
-    const named = section_();
+    const named = namedSection();
     named?.scrollIntoView();
     named?.focus({ preventScroll: true });
   }, []);
@@ -183,7 +184,7 @@ export function App() {
     if (!moved || here.moves === 0 || here.quiet) return;
     removedScopes.set(new Set());
     retryStamp();
-    const named = section_();
+    const named = namedSection();
     if (named) {
       named.scrollIntoView();
       named.focus({ preventScroll: true });

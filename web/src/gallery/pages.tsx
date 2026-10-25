@@ -1400,7 +1400,7 @@ function sixChecksSections(): GalleryPage["sections"] {
   const words = galleryCopy.sixChecks;
   const titles = words.sections;
   const label = words.labels;
-  const panels = (Object.keys(CHECK_RUNS) as (keyof typeof CHECK_RUNS)[]).filter((key) => key !== "partial");
+  const panels = (Object.keys(CHECK_RUNS) as (keyof typeof CHECK_RUNS)[]).filter((key) => key !== "partial" && key !== "judging");
   return [
     {
       id: "check-line",
@@ -1447,6 +1447,9 @@ function sixChecksSections(): GalleryPage["sections"] {
           </Labeled>
           <Labeled label={label.sixNone}>
             <Steps steps={stepsOf(CHECK_RUNS.pastRange)} />
+          </Labeled>
+          <Labeled label={label.judging}>
+            <Steps steps={stepsOf(CHECK_RUNS.judging)} announce={false} />
           </Labeled>
         </div>
       ),

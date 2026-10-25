@@ -81,6 +81,11 @@ function played(stream: string, question: Asked, upTo?: number): Run {
 
 const showcase = asked(sample.showcaseQuestion, "P130164");
 
+// The number of a stream's events up to and including the first that matches, for a run still streaming there.
+function through(stream: string, matches: (event: { type: string; data: any }) => boolean): number {
+  return events(stream).findIndex(matches) + 1;
+}
+
 export const RUNS = {
   // Two steps done (the search and reading the question), writing in progress, checking to do.
   streaming: played(removedNumber, showcase, 3),
@@ -104,6 +109,12 @@ export const CHECK_RUNS = {
   pastRange: played(pastRange, asked(checked.pastRange, "KE-NWWDA-541055-CW-RFB")),
   advice: played(pastRangeAdvice, asked(checked.pastRange, "KE-NWWDA-541055-CW-RFB")),
   summaries: played(summaries, asked(checked.summaries, "P130164")),
+  // While the verifier asks the model that judges sentences: its step running, with the judge's inside it.
+  judging: played(
+    summaries,
+    asked(checked.summaries, "P130164"),
+    through(summaries, (event) => event.type === "step" && event.data.kind === "judge" && event.data.status === "running"),
+  ),
   unsupported: played(unsupportedSummary, showcase),
   adviceWithout: played(adviceWithout, showcase),
   several: played(severalRemoved, showcase),

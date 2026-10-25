@@ -723,7 +723,7 @@ class Model:
 def load_models(path: Path = CONFIG_DIR / "models.toml") -> dict[str, Model]:
     """The deployment each role uses, in the order of ROLES."""
     data = _read(path)
-    _Entry(path, "the file", data).only({"roles", "layout", "search", "supplier_matching", "time_estimate"})
+    _Entry(path, "the file", data).only({"roles", "layout", "search", "supplier_matching", "time_estimate", "judge"})
     roles = data.get("roles", {})
     missing = [role for role in ROLES if role not in roles]
     unknown = sorted(set(roles) - set(ROLES))
@@ -739,6 +739,16 @@ def load_models(path: Path = CONFIG_DIR / "models.toml") -> dict[str, Model]:
         models[role] = Model(role, entry.text("deployment"), entry.text("purpose"),
                              entry.integer("dimensions", required=(role == "embed")))
     return models
+
+
+def load_judge_role(path: Path = CONFIG_DIR / "models.toml") -> str:
+    """The role whose deployment judges whether each sentence follows from its sources (the verifier's check 4)."""
+    entry = _Entry(path, "judge", _read(path).get("judge"))
+    entry.only({"role"})
+    role = entry.text("role")
+    if role not in ROLES:
+        entry._fail("role", f"must be one of the model file's roles: {', '.join(ROLES)}")
+    return role
 
 
 def load_layout_parser(path: Path = CONFIG_DIR / "models.toml") -> str:
@@ -889,6 +899,7 @@ def load_thresholds(path: Path = CONFIG_DIR / "thresholds.toml") -> Thresholds:
 # ── The tool registry ────────────────────────────────────────────────────
 
 PARAMETER_TYPES = ("string", "date", "integer", "number", "boolean")
+NOT_CHECKED_WHEN = ("ran", "cited")  # when a tool's "Not checked" clause applies (config/tools.toml)
 ROW_CONTRACT = ("evidence_id", "public_from", "source")  # spec, seam 2: every row carries these
 ADAPTER = re.compile(r"[a-z_][a-z0-9_.]*:[a-z_][a-z0-9_]*")
 TOOL_NAME = re.compile(r"[a-z][a-z0-9_]*")
@@ -921,6 +932,9 @@ class ToolResult:
     # Its rows are lessons or comparable packages, so a sentence of kind advice may rest on them (the
     # verifier's check 5: no advice without a lesson or a comparable among its evidence).
     backs_advice: bool = False
+    # When the check line's "Not checked" clause for the tool applies: "ran", or "cited" once a sentence on screen
+    # cites its evidence (ticket 24).
+    not_checked_when: str = "ran"
 
 
 @dataclass(frozen=True)
@@ -1019,11 +1033,14 @@ def _tool_result(path: Path, name: str, table: dict) -> ToolResult:
                           f"with row, row_fields, source_fields and fields.")
     entry = _Entry(path, f"tools.{name}.result", table["result"])
     entry.only({"row", "row_fields", "source_fields", "fields", "reasons", "abstentions", "abstentions_with_rows",
-                "summary_fields", "nested_rows", "backs_advice"})
+                "summary_fields", "nested_rows", "backs_advice", "not_checked_when"})
+    not_checked_when = entry.table.get("not_checked_when", "ran")
+    if not_checked_when not in NOT_CHECKED_WHEN:
+        entry._fail("not_checked_when", f"must be one of {', '.join(NOT_CHECKED_WHEN)}")
     result = ToolResult(entry.text("row"), entry.texts("row_fields"), entry.texts("source_fields"),
                         entry.texts("fields"), entry.texts("reasons"), entry.texts("abstentions"),
                         entry.texts("abstentions_with_rows"), entry.texts("summary_fields"), entry.texts("nested_rows"),
-                        bool(entry.table.get("backs_advice", False)))
+                        bool(entry.table.get("backs_advice", False)), not_checked_when)
     # A summary carries the tool's own fields, and the coverage line's counts, which every result has.
     strays = [field for field in result.summary_fields if field not in (*result.fields, "coverage")]
     if strays:

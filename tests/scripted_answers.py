@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import asyncio
 import datetime as dt
-import json
 from contextlib import contextmanager
 from dataclasses import dataclass
 
@@ -16,6 +15,7 @@ import httpx
 
 from strata.agent.loop import answer_runner
 from strata.agent.scripted import Case, ScriptedAgent, ScriptedJudge, app_engine_for, load_cases
+from strata.harness.sse import events
 from strata.lakehouse.engine import DuckDBEngine
 from strata.server.app import create_app
 
@@ -34,21 +34,6 @@ class Asked:
 
     def of(self, kind: str) -> list[dict]:
         return [data for found, data in self.parsed if found == kind]
-
-
-def events(body: str) -> list[tuple[str, dict]]:
-    """The stream's (type, data) pairs, in order, without its keep-alive comments."""
-    parsed = []
-    for block in body.strip().split("\n\n"):
-        kind, data = "message", None
-        for line in block.splitlines():
-            if line.startswith("event: "):
-                kind = line[len("event: "):]
-            elif line.startswith("data: "):
-                data = json.loads(line[len("data: "):])
-        if data is not None:
-            parsed.append((kind, data))
-    return parsed
 
 
 def ask(fixture_db, case_id: str, today: dt.date = TODAY, **app_options) -> Asked:

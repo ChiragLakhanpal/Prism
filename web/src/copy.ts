@@ -56,7 +56,7 @@ const REFUSALS = {
   rule_breach_findings: {
     lead: "I don't say whether a contract was procured against the World Bank's rules, because only the World Bank makes that formal finding.",
     instead: "I can show the contract's records and any published report that mentions it.",
-    why: "It is a formal finding, and the World Bank makes it through its own process.",
+    why: "That finding needs evidence that the public records don't hold, and the World Bank reaches it through its own process.",
   },
   personal_details: {
     lead: "I don't show the names of individual consultants or the contact details in notices.",
@@ -410,9 +410,14 @@ export const copy = {
     one: "I removed one sentence.",
     several: (count: string) => `I removed ${count} sentences.`,
     allOne: "I removed the one sentence I wrote.",
-    all: (count: string) => `I removed all ${count} sentences.`,
+    // Two is "both", never "all two".
+    all: (count: number, countText: string) => (count === 2 ? "I removed both sentences." : `I removed all ${countText} sentences.`),
     itSaid: (sentence: string, reason: string) => `It said ${sentence}, and ${reason}.`,
     firstSaid: (sentence: string, reason: string) => `The first said ${sentence}, and ${reason}.`,
+    // A removed sentence that gave advice is quoted whole, with its reason as a list item gives it: advice is
+    // often an order, which does not read as reported speech ("It said base your estimates...").
+    itSaidQuoted: (sentence: string, reason: string) => `It said "${sentence.replace(/"([^"]*)"/g, "'$1'")}" ${reason}`,
+    firstSaidQuoted: (sentence: string, reason: string) => `The first said "${sentence.replace(/"([^"]*)"/g, "'$1'")}" ${reason}`,
     others: "The others:",
     other: "The other:",
     // The sentence's own double quotes turn single inside the outer pair, so the marks never pile up.
@@ -421,12 +426,17 @@ export const copy = {
     quoted: (sentence: string) => `"${sentence.replace(/"([^"]*)"/g, "'$1'")}"`,
     // A reason code with no sentence below: it makes no claim about why.
     unknownReason: { item: "It failed a check.", joined: "it failed a check" },
-    // After the lead, when the model that judges sentences did not respond and some sentences survived
-    // (the 24 brief, section 5.4). Then "Try again".
+    // After the lead, when a service a check needs did not answer and some sentences survived (the 24 brief,
+    // section 5.4), then "Try again". Said only when other sentences were removed for other reasons: when
+    // every removed sentence has the same cause, the lead already says it.
     unjudged: (count: number, countText: string) =>
       count === 1
         ? "The model that judges sentences did not respond, so I couldn't check one of them."
         : `The model that judges sentences did not respond, so I couldn't check ${countText} of them.`,
+    unasked: (count: number, countText: string) =>
+      count === 1
+        ? "I couldn't find out whether other reports disagree, so I couldn't check one of them."
+        : `I couldn't find out whether other reports disagree, so I couldn't check ${countText} of them.`,
     // Each reason the verifier gives, keyed by its code (REASONS in src/strata/agent/verifier.py):
     // as a list item, and as the clause that follows "It said ..., and". A test fails when a code
     // lacks either.
@@ -465,10 +475,12 @@ export const copy = {
         item: "The sources it cites do not say this.",
         joined: "the sources it cited do not say that",
       },
-      // Check 4, when the model that judges sentences did not respond: never shown unchecked.
+      // Check 4, when the model that judges sentences did not respond: never shown unchecked. underAlert is
+      // the item under the error alert that already names the cause (the 24 brief, section 5.5).
       judge_unavailable: {
-        item: "I couldn't check that its sources say this, because the model that judges sentences did not respond.",
-        joined: "I couldn't check that its sources said that, because the model that judges sentences did not respond",
+        item: "I couldn't check it, because the model that judges sentences did not respond.",
+        joined: "I couldn't check it, because the model that judges sentences did not respond",
+        underAlert: "I couldn't check it.",
       },
       // Check 5: advice with no lesson and no comparable among its sources.
       advice_without_lesson_or_comparable: {
@@ -480,6 +492,7 @@ export const copy = {
       disagreements_unavailable: {
         item: "I couldn't check whether another report disagrees with its sources.",
         joined: "I couldn't check whether another report disagrees with its sources",
+        underAlert: "I couldn't check it.",
       },
     },
   },
@@ -531,6 +544,8 @@ export const copy = {
       running: "I'm writing the answer.",
       done: (count: number, countText: string) =>
         count === 0 ? "I wrote no sentences." : `I wrote ${countText} ${count === 1 ? "sentence" : "sentences"}.`,
+      // A full refusal's write step: it wrote no sentence because it turned the request down (ticket 24).
+      refused: "I turned the request down.",
       // A step still to come, listed in ink-muted so the block keeps its height (02's round 7 critique).
       todo: "To do: write the answer.",
     },
@@ -613,12 +628,20 @@ export const copy = {
       count === 1
         ? "The answer is ready. I removed one sentence, because the model that judges it did not respond."
         : `The answer is ready. I removed ${countText} sentences, because the model that judges them did not respond.`,
+    readyUnasked: (count: number, countText: string) =>
+      count === 1
+        ? "The answer is ready. I removed one sentence, because I couldn't find out whether another report disagrees with it."
+        : `The answer is ready. I removed ${countText} sentences, because I couldn't find out whether other reports disagree with them.`,
     readyDisagree: (count: number, countText: string) =>
       count === 1
         ? "The answer is ready. Two reports disagree about one sentence, and I show both."
         : `The answer is ready. Two reports disagree about ${countText} sentences, and I show both sides of each.`,
-    // Every sentence needed the model that judges sentences, and it did not respond (section 5.5).
+    // Nothing survived because a service a check needs did not answer: an error, not an empty answer (section
+    // 5.5). The model that judges sentences did not respond, check 6 could not ask which reports disagree, or both.
     judgeFailed: "I couldn't check my answer, because the model that judges sentences did not respond.",
+    disagreementsFailed: "I couldn't check my answer, because I couldn't find out whether other reports disagree with its sources.",
+    bothFailed:
+      "I couldn't check my answer, because the model that judges sentences did not respond and I couldn't find out whether other reports disagree with its sources.",
     tryAgain: "Try again",
     // The answer panel's header (the 14 brief, section 5.3). {id} shows in Roboto Mono.
     panel: "Answer",
@@ -915,7 +938,8 @@ export const copy = {
     // What a side said: a rating's field name as the report names it, then its value.
     rated: (field: string, value: string) => `${field}: ${value}`,
     // What you would treat as true if you kept the other side, from get_disagreements' if_you_keep.
-    whatChanges: (other: string, field: string, value: string) => `If you keep ${other} instead, I treat ${field} as ${value}.`,
+    // The field name is quoted, as the report names it, so you can see where it ends.
+    whatChanges: (other: string, field: string, value: string) => `If you keep ${other} instead, I treat "${field}" as ${value}.`,
     // The group's accessible name: "Two reports disagree: ISR 7 and ICR paragraph 78".
     groupName: (badge: string, first: string, second: string) => `${badge}: ${first} and ${second}`,
     // When a side's source was written, by its evidence tier (config/evidence_ladder.toml, [tiers]).

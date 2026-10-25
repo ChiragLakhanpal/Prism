@@ -8,8 +8,8 @@ in one sentence. A sentence the judge says does not follow is removed (not_suppo
 respond, or answers in a shape it was not asked for, the verifier removes every sentence it had to judge
 (judge_unavailable): a sentence is never shown unchecked (CLAUDE.md rule 1).
 
-- AzureOpenAIJudge, live: the deployment of config/models.toml's draft role, whose purpose line names it the
-  judge, on Azure OpenAI's chat completions, asked for one JSON object. The rules are in the instructions and
+- AzureOpenAIJudge, live: the deployment of the role config/models.toml's [judge] names (the draft role, whose
+  purpose line names it the judge), on Azure OpenAI's chat completions, asked for one JSON object. The rules are in the instructions and
   the sentences and sources are data in the message, so Prompt Shields does not read the rules as an attack.
 - Offline, the scripted cases' recorded judge answers stand in for it (src/strata/agent/scripted.py,
   ScriptedJudge), in the same response shape, read by the same judgements() below. ops/agent/record.py
@@ -28,9 +28,6 @@ from dataclasses import dataclass
 from typing import Protocol
 
 from strata.knowledge.http import post_json
-
-ROLE = "draft"  # config/models.toml's role whose deployment judges sentences
-
 
 @dataclass(frozen=True)
 class Source:
@@ -99,8 +96,8 @@ def judgements(answer: Mapping, questions: list[Question]) -> list[Judgement]:
 Transport = Callable[[str, dict, dict], dict]  # (url, headers, body) -> the parsed JSON answer
 
 
-def http_post(url: str, headers: dict, body: dict) -> dict:
-    return post_json(url, headers, body, timeout=60, error=JudgeError, service="Azure OpenAI")
+def http_post(url: str, headers: dict, body: dict, timeout: float) -> dict:
+    return post_json(url, headers, body, timeout=timeout, error=JudgeError, service="Azure OpenAI")
 
 
 def request_body(deployment: str, questions: list[Question]) -> dict:
@@ -112,22 +109,33 @@ def request_body(deployment: str, questions: list[Question]) -> dict:
 class AzureOpenAIJudge:
     """The draft role's deployment on Azure OpenAI, asked about every sentence in one call."""
 
-    def __init__(self, endpoint: str, key: str, deployment: str, post: Transport = http_post):
+    def __init__(self, endpoint: str, key: str, deployment: str, post: Transport | None = None,
+                 timeout: float | None = None):
+        """timeout is config/thresholds.toml's verifier.judge_timeout_seconds unless a test gives one."""
+        from strata.config import load_thresholds
+
         self.url = f"{endpoint.rstrip('/')}/chat/completions"
         self.headers = {"api-key": key}
+        seconds = timeout if timeout is not None else load_thresholds().value("verifier.judge_timeout_seconds")
         # It keeps no answer: the app's one judge serves every viewer, and the recording command keeps what it
         # needs by wrapping the transport (src/strata/agent/record.py, JudgeKeeper).
-        self.name, self.post = deployment, post
+        self.name = deployment
+        self.post = post or (lambda url, headers, body: http_post(url, headers, body, seconds))
 
     def judge(self, questions: list[Question]) -> list[Judgement]:
-        return judgements(self.post(self.url, self.headers, request_body(self.name, questions)), questions)
+        try:
+            answer = self.post(self.url, self.headers, request_body(self.name, questions))
+        except (TimeoutError, OSError, ValueError) as error:  # a read that timed out, or a body that is not JSON
+            raise JudgeError(f"Azure OpenAI gave no answer I can read: {error}") from error
+        return judgements(answer, questions)
 
 
 def from_environment(environ: Mapping[str, str] = os.environ) -> AzureOpenAIJudge | None:
-    """The live judge, with the deployment of the role the model file names, or None without its keys."""
-    from strata.config import load_models
+    """The live judge, with the deployment of the role the model file names as the judge (config/models.toml,
+    [judge]), or None without its keys."""
+    from strata.config import load_judge_role, load_models
 
     endpoint, key = environ.get("AZURE_OPENAI_ENDPOINT", "").strip(), environ.get("AZURE_OPENAI_API_KEY", "").strip()
     if not (endpoint and key):
         return None
-    return AzureOpenAIJudge(endpoint, key, load_models()[ROLE].deployment)
+    return AzureOpenAIJudge(endpoint, key, load_models()[load_judge_role()].deployment)

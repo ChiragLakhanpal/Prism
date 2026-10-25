@@ -289,7 +289,8 @@ def _declared(claim: Claim, stated: list[Mention]) -> list[Mention]:
 
 # ── Values in a row ──────────────────────────────────────────────────────
 
-NOT_VALUES = {"text", "header", "rank", "score"}  # a passage's words, and the search's own ranking
+NOT_VALUES = {"text", "header", "rank", "score", "public_from"}  # a passage's words, the search's own ranking, and
+# the day a record became public in Strata (ADR 0002), which says when a source could be read, not what it says
 ISO_DAY = re.compile(r"^(\d{4})-(\d{2})-(\d{2})(?:[T ].*)?$")
 PLAIN_NUMBER = re.compile(r"^-?\d+(?:\.\d+)?$")
 
@@ -496,7 +497,6 @@ class Verdict:
     judge_called: bool = False
     judge_responded: bool | None = None  # None when the judge was not called
     advice: tuple[int, int] = (0, 0)  # sentences that gave advice, and those that cited a lesson or comparable
-    lessons_cited: bool = False  # a kept sentence cites a lesson
     cited_tools: tuple[str, ...] = ()  # the tools whose evidence the kept sentences cite
 
     @property
@@ -527,6 +527,9 @@ class Verdict:
         }
         if 4 not in self.checks_run:
             return counts
+        # Check 1's item in the steps counts numbers and dates together, so the screen adds nothing itself.
+        counts["checked"] = {"total": len(numbers) + len(dates),
+                             "matched": sum(found is not None for found in numbers + dates)}
         kept = self.kept
         shown_numbers = [found for sentence in kept for _, found in sentence.numbers]
         shown_dates = [found for sentence in kept for _, found in sentence.dates]
@@ -548,8 +551,10 @@ class Verdict:
                           "proven": sum(sentence.proven for sentence in self.sentences)},
                 "advice": {"total": self.advice[0], "cited": self.advice[1]},
                 "disagreements": {"disputed": len(disputed), "shown": len(self.attached),
-                                  "attached": sum(found.by_verifier for found in self.attached)},
-                "lessons_cited": self.lessons_cited, "cited_tools": list(self.cited_tools)}
+                                  "attached": sum(found.by_verifier for found in self.attached),
+                                  # the sentences a warning card follows, which the screen announces
+                                  "warned": len({found.after for found in self.attached if found.changes_answer})},
+                "cited_tools": list(self.cited_tools)}
 
 
 def _is_passage(row: Mapping | None) -> bool:
@@ -680,7 +685,6 @@ def verify(claims: Iterable[Claim], facts: Facts) -> Verdict:
 
 PROJECT = re.compile(r"^P\d{6}$")
 DISAGREEMENTS_TOOL = "get_disagreements"
-SOURCE_TEXT_LIMIT = 6000  # characters of one source the judge reads
 
 
 def proven(sentence: Checked) -> bool:
@@ -697,10 +701,40 @@ def _sides(row: Mapping) -> list[str]:
     return [side["evidence_id"] for side in row.get("sides") or ()]
 
 
+def _states(sentence: Checked, side: Mapping) -> bool:
+    """Whether a sentence states a side's assertion, not only another value from the same passage or record: it
+    cites the side's evidence, and it states the side's date or amount, writes its rating or judgment, or quotes
+    words of the side's quote. So a sentence quoting ISR 7's overall risk rating does not rest on a disagreement
+    about its rating of progress towards the PDO, though both cite the same section."""
+    claim = sentence.claim
+    if side.get("evidence_id") not in claim.evidence_ids:
+        return False
+    value, form = side.get("value"), side.get("value_form")
+    if value is not None and form == "date":
+        day = ISO_DAY.match(str(value))
+        if day and any(isinstance(mention.value, When) and mention.value.covers(
+                dt.date(int(day[1]), int(day[2]), int(day[3]))) for mention, _ in sentence.dates):
+            return True
+    elif value is not None and form == "amount":
+        try:
+            amount = Decimal(str(value))
+        except decimal.InvalidOperation:
+            amount = None
+        if amount is not None and any(mention.value == amount for mention, _ in sentence.numbers):
+            return True
+    elif value and re.search(rf"(?<![\w-]){re.escape(str(value))}(?![\w-])", claim.sentence, re.I):
+        return True
+    quote = side.get("quote")
+    said = [claim.quote.text] if claim.quote is not None else []
+    said += [claim.sentence[start:end] for start, end in quoted_spans(claim.sentence)]
+    return bool(quote) and any(find_quote(words, quote) or find_quote(quote, words) for words in said)
+
+
 def _rests_on(sentence: Checked, row: Mapping) -> bool:
-    """A sentence rests on a disagreement when it cites one of its sides, or the disagreement itself."""
-    cited = set(sentence.claim.evidence_ids)
-    return bool(cited & set(_sides(row))) or row.get("evidence_id") in cited
+    """A sentence rests on a disagreement when it states one of its sides' assertions, or cites the disagreement
+    itself."""
+    return any(_states(sentence, side) for side in row.get("sides") or ()) or \
+        row.get("evidence_id") in sentence.claim.evidence_ids
 
 
 def _project(row: Mapping | None) -> str | None:
@@ -712,7 +746,9 @@ def _project(row: Mapping | None) -> str | None:
     return None
 
 
-def _source_text(row: Mapping | None) -> str:
+def _source_text(row: Mapping | None, limit: int) -> str:
+    """What the judge reads of one source, at most limit characters (config/thresholds.toml,
+    verifier.judge_source_chars)."""
     if _is_passage(row):
         text = f"{row.get('header') or ''}\n{row['text']}".strip()
     else:
@@ -720,7 +756,7 @@ def _source_text(row: Mapping | None) -> str:
 
         text = json.dumps(_plain({key: value for key, value in (row or {}).items() if key != "also"}),
                           ensure_ascii=False)
-    return text[:SOURCE_TEXT_LIMIT]
+    return text[:limit]
 
 
 class AnswerCheck:
@@ -728,9 +764,9 @@ class AnswerCheck:
     check 6, once the stream has asked get_disagreements about the projects() the standing sentences cite;
     then check 4, once the judge has answered the questions(). verdict() gives the result."""
 
-    def __init__(self, claims: Iterable[Claim], facts: Facts, backs_advice: Iterable[str],
+    def __init__(self, claims: Iterable[Claim], facts: Facts, backs_advice: Iterable[str], *, source_chars: int,
                  checked: Iterable[Checked] | None = None):
-        self.facts = facts
+        self.facts, self.source_chars = facts, source_chars
         sentences = verify(claims, facts).sentences if checked is None else tuple(checked)
         self.sentences = {sentence.index: sentence for sentence in sentences}
         # Every disagreement get_disagreements returned, by id: those the agent asked for, and those check 6 asks.
@@ -748,10 +784,11 @@ class AnswerCheck:
                 self._fail(sentence.index, Reason(5, ADVICE_UNBACKED))
 
     @classmethod
-    def from_checked(cls, checked: Iterable[Checked], facts: Facts, backs_advice: Iterable[str]) -> AnswerCheck:
+    def from_checked(cls, checked: Iterable[Checked], facts: Facts, backs_advice: Iterable[str], *,
+                     source_chars: int) -> AnswerCheck:
         """The six checks on sentences that checks 1 to 3 already saw, each against its own evidence, as a draft's
         notes are (src/strata/drafts/runtime.py): facts holds every row any of them may cite."""
-        return cls((), facts, backs_advice, checked=checked)
+        return cls((), facts, backs_advice, source_chars=source_chars, checked=checked)
 
     def _fail(self, index: int, reason: Reason) -> None:
         sentence = self.sentences[index]
@@ -792,7 +829,7 @@ class AnswerCheck:
                 self.sentences[sentence.index] = dataclasses.replace(sentence, proven=True)
             elif sentence.claim.evidence_ids:
                 asked.append(Question(sentence.index, sentence.claim.sentence, tuple(
-                    Source(evidence, _source_text(self.facts.get(evidence)))
+                    Source(evidence, _source_text(self.facts.get(evidence), self.source_chars))
                     for evidence in sentence.claim.evidence_ids)))
         return asked
 
@@ -825,7 +862,6 @@ class AnswerCheck:
         attached.sort(key=lambda found: found.after)  # stable, so a sentence's cards keep their date order
         tools = [self.facts.tool(evidence) for sentence in kept for evidence in sentence.claim.evidence_ids]
         return Verdict(sentences, ALL_CHECKS, tuple(attached), self.judge_called, self.judge_responded, self.advice,
-                       lessons_cited="get_lessons" in tools,
                        cited_tools=tuple(sorted({tool for tool in tools if tool})))
 
 
@@ -869,10 +905,11 @@ def disagreement_event(found: Attached) -> Event:
         "if_you_keep": _plain(row.get("if_you_keep"))})
 
 
-def answer_events(verdict: Verdict, facts: Facts, tools: Iterable[str] = ()) -> list[Event]:
+def answer_events(verdict: Verdict, facts: Facts, tools: Iterable[str] = (), cited_only: Iterable[str] = ()) -> list[Event]:
     """The answer contract's events, in the spec's order: the kept sentences with their evidence ids,
     the evidence they cite, the disagreements check 6 shows, the check counts, then each removed sentence
-    with its reasons."""
+    with its reasons. tools are the tools that ran, and cited_only those whose "Not checked" clause applies only
+    once a sentence on screen cites them (config/tools.toml, not_checked_when), for the check line."""
     events = []
     cited: dict[str, list[dict]] = {}
     for sentence in verdict.kept:
@@ -890,19 +927,32 @@ def answer_events(verdict: Verdict, facts: Facts, tools: Iterable[str] = ()) -> 
                 highlights.append({"sentence": sentence.index, "start": sentence.quote_span[0],
                                    "end": sentence.quote_span[1]})
     for found in verdict.attached:  # each side of a disagreement opens like any source
-        for evidence in _sides(found.row):
-            if facts.came_back(evidence):
-                cited.setdefault(evidence, [])
+        for side in found.row.get("sides") or ():
+            evidence = side["evidence_id"]
+            if not facts.came_back(evidence):
+                continue
+            highlights = cited.setdefault(evidence, [])
+            # The side's quote, highlighted for the marker under the sentence the card follows, so its evidence
+            # card and the drawer open on the words the card shows, whether or not a sentence quoted them.
+            row = facts.get(evidence)
+            span = find_quote(side["quote"], row["text"]) if side.get("quote") and _is_passage(row) else None
+            mark = None if span is None else {"sentence": found.after, "start": span[0], "end": span[1]}
+            if mark is not None and mark not in highlights:
+                highlights.append(mark)
     for evidence, highlights in cited.items():
         row = facts.get(evidence)
         events.append(Event("evidence", {"id": evidence, "kind": "passage" if _is_passage(row) else "record",
                                          "tool": facts.tool(evidence), **labels(row), "row": _plain(row),
                                          "highlights": highlights}))
     events += [disagreement_event(found) for found in verdict.attached]
-    events.append(Event("checks", {**verdict.counts(), "tools": sorted(set(tools))}))
+    checks = {**verdict.counts(), "tools": sorted(set(tools))}
+    if 4 in verdict.checks_run:
+        checks["cited_only"] = sorted(set(cited_only))
+    events.append(Event("checks", checks))
     for sentence in verdict.removed:
         events.append(Event("removed", {
-            "index": sentence.index, "sentence": sentence.claim.sentence, "reason": sentence.reasons[0].code,
+            "index": sentence.index, "sentence": sentence.claim.sentence, "kind": sentence.claim.kind,
+            "reason": sentence.reasons[0].code,
             "reasons": [{"check": reason.check, "code": reason.code, "text": reason.text}
                         for reason in sentence.reasons]}))
     return events

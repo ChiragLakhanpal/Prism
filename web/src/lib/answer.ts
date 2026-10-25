@@ -61,13 +61,24 @@ export type ChecksEvent = {
     judged: number;
     proven: number;
   };
+  // Numbers and dates together, over every sentence written, for check 1's item in the steps.
+  checked?: { total: number; matched: number };
   judge?: { called: boolean; responded: boolean | null; judged: number; followed: number; unjudged: number; proven: number };
   advice?: { total: number; cited: number };
-  disagreements?: { disputed: number; shown: number; attached: number };
-  lessons_cited?: boolean;
+  // warned: the sentences a warning card follows, which the status line announces.
+  disagreements?: { disputed: number; shown: number; attached: number; warned: number };
+  // The tools whose evidence the kept sentences cite, and those whose "Not checked" clause needs that.
   cited_tools?: string[];
+  cited_only?: string[];
 };
-export type RemovedEvent = { index: number; sentence: string; reason: string; reasons: { check: number; code: string; text: string | null }[] };
+// kind is the claim's kind (record, quote, summary, advice), sent since ticket 24's round 2.
+export type RemovedEvent = {
+  index: number;
+  sentence: string;
+  kind?: string;
+  reason: string;
+  reasons: { check: number; code: string; text: string | null }[];
+};
 // A request on the refusal list (ticket 24): its key in the copy file's refusals, and whether the rest of the
 // question was answered.
 export type RefusalEvent = { key: string; partial: boolean };

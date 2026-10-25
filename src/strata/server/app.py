@@ -104,7 +104,7 @@ from strata.agent import traces
 from strata.agent.answer_check import Asker, SixChecks
 from strata.agent.judge import Judge
 from strata.agent.runs import RunLog, run_row
-from strata.agent.verifier import ALL_CHECKS, Verdict, answer_events
+from strata.agent.verifier import Verdict, answer_events
 from strata.config import DraftKinds, load_draft_kinds, load_roles, load_thresholds, load_tools
 from strata.dbx import Viewer, viewer_from_headers
 from strata.drafts.store import DraftStore
@@ -675,7 +675,7 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                     if refusal is not None:
                         yield frame(Event("refusal", {"key": refusal.key, "partial": refusal.partial}))
                     if refusal is not None and not refusal.partial:
-                        verdict = Verdict((), ALL_CHECKS)
+                        verdict = Verdict((), ())  # nothing was written, so no check ran
                     else:
                         async for event in verified(item.data["claims"], turn):
                             if isinstance(event, Verdict):
@@ -683,7 +683,7 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                             else:
                                 yield frame(event)
                     ran = [call["tool"] for call in turn.notes.tool_calls if call.get("ran")]
-                    for event in answer_events(verdict, turn.facts, ran):
+                    for event in answer_events(verdict, turn.facts, ran, six_checks.cited_only):
                         yield frame(event)
                 elif item.type in ANSWER_EVENTS:
                     raise RuntimeError(f"A runner sent a {item.type} event, which only the verifier writes.")

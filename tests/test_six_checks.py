@@ -21,7 +21,7 @@ COPY = (Path(__file__).resolve().parents[1] / "web" / "src" / "copy.ts").read_te
 
 def copy_reason(code):
     """A removal reason's two forms from the copy file (web/src/copy.ts, removed.reasons)."""
-    found = re.search(rf'\n      {code}: \{{\s*item: "([^"]*)",\s*joined: "([^"]*)",?\s*\}}', COPY)
+    found = re.search(rf'\n      {code}: \{{\s*item: "([^"]*)",\s*joined: "([^"]*)",?[^}}]*\}}', COPY)
     return {"item": found.group(1), "joined": found.group(2)}
 
 
@@ -80,6 +80,26 @@ def test_when_the_judge_does_not_respond_the_sentences_it_had_to_judge_are_remov
     assert (judge["called"], judge["responded"], judge["judged"], judge["unjudged"]) == (True, False, 1, 1)
 
 
+def test_a_judge_that_times_out_or_answers_with_no_json_counts_as_one_that_did_not_respond(fixture_db):
+    """The live judge on Azure OpenAI: a read that times out, or a body that is not JSON, removes the sentences it
+    had to judge, as a judge that did not respond does, and never ends the answer with an error."""
+    from strata.agent.judge import AzureOpenAIJudge
+
+    def times_out(url, headers, body):
+        raise TimeoutError("The read timed out.")
+
+    def not_json(url, headers, body):
+        raise ValueError("Expecting value: line 1 column 1 (char 0)")
+
+    for post in (times_out, not_json):
+        judge = AzureOpenAIJudge("https://judge.example.invalid", "not-a-real-key", "gpt-5.4", post=post)
+        asked = ask(fixture_db, "p130164-unsupported-summary", judge=judge)
+
+        assert [(item["sentence"], item["reason"]) for item in asked.of("removed")] == [
+            ("The completion report blamed the contractors for the rebidding.", "judge_unavailable")]
+        assert [kind for kind, _ in asked.parsed if kind == "error"] == []
+
+
 def test_when_the_judge_does_not_respond_and_every_sentence_needed_it_nothing_is_shown_unchecked(fixture_db):
     asked = ask(fixture_db, "p130164-summaries-judge-no-response")
 
@@ -99,7 +119,11 @@ def test_an_answer_that_checks_1_to_3_prove_after_find_comparables_counts_what_t
     checks = asked.of("checks")[0]
     assert checks["shown"] == {"numbers": {"total": 5, "matched": 5}, "dates": {"total": 0, "matched": 0},
                                "quotes": {"total": 2, "found": 2}, "judged": 0, "proven": 3}
-    assert checks["tools"] == ["find_comparables"] and checks["lessons_cited"] is False
+    # Check 1's item in the steps counts numbers and dates together; the verifier adds them, not the browser.
+    assert checks["checked"] == {"total": 5, "matched": 5}
+    assert checks["tools"] == ["find_comparables"]
+    # The tools whose "Not checked" clause applies only once a sentence cites them (config/tools.toml).
+    assert checks["cited_only"] == ["get_lessons"] and "get_lessons" not in checks["cited_tools"]
 
 
 def test_when_check_6_cannot_ask_which_reports_disagree_every_sentence_citing_the_project_is_removed(fixture_db):
@@ -118,6 +142,9 @@ def test_sentences_that_fail_different_checks_are_each_removed_with_the_reason_o
 
     assert [item["reason"] for item in asked.of("removed")] == [
         "number_not_in_records", "advice_without_lesson_or_comparable", "not_supported"]
+    # Each removed sentence says what kind it was, so the removed box can quote advice, which is often an
+    # order, rather than report it ("It said base your...").
+    assert [item["kind"] for item in asked.of("removed")] == ["record", "advice", "summary"]
     assert [len(call) for call in asked.judge.calls] == [1]
 
 
@@ -167,12 +194,29 @@ def test_a_claim_resting_on_isr_7_s_rating_streams_with_the_icr_paragraph_78_dis
     sources = {evidence["id"]: evidence for evidence in asked.of("evidence")}
     assert sources[paragraph_78]["row"]["pdf_page"] == TRUTH["icr-para-78"]["pdf_page"]
     assert TRUTH["icr-para-78"]["value"] in sources[paragraph_78]["row"]["text"]
-    assert asked.of("checks")[0]["disagreements"] == {"disputed": 1, "shown": 1, "attached": 1}
+    # The side's quote is highlighted in its paragraph, for the marker under this sentence, though no sentence
+    # quoted it, so its evidence card and the drawer open on the words the card shows.
+    [highlight] = sources[paragraph_78]["highlights"]
+    assert highlight["sentence"] == sentence["index"]
+    assert sources[paragraph_78]["row"]["text"][highlight["start"]:highlight["end"]] == TRUTH["icr-para-78"]["value"]
+    # warned: the sentences a warning card follows, which the screen announces; the verifier counts them.
+    assert asked.of("checks")[0]["disagreements"] == {"disputed": 1, "shown": 1, "attached": 1, "warned": 1}
     fetched = [step for step in asked.of("step") if step["kind"] == "disagreement"]
     assert [step["status"] for step in fetched] == ["running", "done"]
     # The events come in the answer contract's order.
     kinds = [kind for kind, _ in asked.parsed]
     assert kinds.index("evidence") < kinds.index("disagreement") < kinds.index("checks")
+
+
+def test_a_sentence_citing_the_same_section_about_a_rating_no_report_disputes_gets_no_card(fixture_db):
+    """Check 6 matches on the assertion, not the passage: ISR 7's section also rates the overall risk, which no
+    report disagrees about, so a sentence quoting that rating does not rest on the disagreement."""
+    asked = ask(fixture_db, "p130164-isr-7-and-risk-rating")
+
+    first, second = asked.of("sentence")
+    assert second["text"] == 'The same report rated the overall risk "Moderate".'
+    assert [card["after"] for card in asked.of("disagreement")] == [first["index"]]
+    assert asked.of("checks")[0]["disagreements"]["disputed"] == 1
 
 
 def test_a_draft_that_showed_both_sides_gets_the_same_card_as_an_info_note_when_it_changes_nothing(fixture_db):
@@ -182,6 +226,20 @@ def test_a_draft_that_showed_both_sides_gets_the_same_card_as_an_info_note_when_
     assert (card["after"], card["attached_by_verifier"], card["changes_answer"]) == (0, False, False)
     assert [side["evidence_id"] for side in card["sides"]] == [
         "strata.gold.passage:26733307/v1/s4", "strata.gold.passage:31525018/v1/78"]
-    assert asked.of("checks")[0]["disagreements"] == {"disputed": 1, "shown": 1, "attached": 0}
+    assert asked.of("checks")[0]["disagreements"] == {"disputed": 1, "shown": 1, "attached": 0, "warned": 0}
     # The agent asked get_disagreements itself, so check 6 had nothing to fetch.
     assert [step for step in asked.of("step") if step["kind"] == "disagreement"] == []
+
+
+def test_the_gallery_and_the_capture_ask_each_scripted_case_s_own_question():
+    """web/src/gallery/copy.ts repeats the scripted cases' questions for the gallery's panels and the capture,
+    since a screen cannot import cases.toml; each must stay word for word a case's question."""
+    from strata.agent.scripted import load_cases
+
+    gallery = (Path(__file__).resolve().parents[1] / "web" / "src" / "gallery" / "copy.ts").read_text()
+    block = gallery.split("  sixChecks: {", 1)[1].split("\n  },\n", 1)[0]
+    lists = re.findall(r"\n    (?:questions|refusalQuestions): \{(.*?)\n    \}", block, re.S)
+    written = [text for found in lists for text in re.findall(r'"((?:[^"\\]|\\.)*)"', found)]
+    asked = {case.question for case in load_cases().values()}
+    assert len(written) >= 15
+    assert [question for question in written if question not in asked] == []

@@ -16,7 +16,8 @@ passage, and a quote's passage always counts among the claim's evidence ids.
 The orchestrator may also turn a request down (ticket 24). Its object then holds a refusal, {"key": ...,
 "partial": ...}, whose key is one of REFUSALS (src/strata/agent/refusals.py): the app writes the refusal's
 words from the copy file, never the model. A full refusal has no claims; a partial one turns down part of
-the question and answers the rest with claims, as usual. parse_answer() reads the claims and the refusal.
+the question and answers the rest with claims, as usual, so one with no claims is refused. parse_answer() reads
+the claims and the refusal.
 """
 
 from __future__ import annotations
@@ -132,6 +133,8 @@ def parse_answer(text: str) -> Answer:
         raise ClaimsError("The refusal's partial must be true or false.")
     if claims and not partial:
         raise ClaimsError("A refusal with claims must be partial: true.")
+    if partial and not claims:  # it turned the whole request down, in the wrong shape
+        raise ClaimsError("A partial refusal must answer the rest of the question with claims.")
     return Answer(claims, Refusal(refusal["key"], partial))
 
 

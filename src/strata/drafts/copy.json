@@ -139,8 +139,9 @@
         "joined": "the sources it cited do not say that"
       },
       "judge_unavailable": {
-        "item": "I couldn't check that its sources say this, because the model that judges sentences did not respond.",
-        "joined": "I couldn't check that its sources said that, because the model that judges sentences did not respond"
+        "item": "I couldn't check it, because the model that judges sentences did not respond.",
+        "joined": "I couldn't check it, because the model that judges sentences did not respond",
+        "underAlert": "I couldn't check it."
       },
       "advice_without_lesson_or_comparable": {
         "item": "It gave advice without citing a lesson or a comparable package.",
@@ -148,7 +149,8 @@
       },
       "disagreements_unavailable": {
         "item": "I couldn't check whether another report disagrees with its sources.",
-        "joined": "I couldn't check whether another report disagrees with its sources"
+        "joined": "I couldn't check whether another report disagrees with its sources",
+        "underAlert": "I couldn't check it."
       }
     },
     "unknownReason": {
