@@ -288,9 +288,32 @@ def cost_answer(result, question) -> dict[str, list]:
             "own_estimate": [result["package"]["estimated_amount_usd"]]}
 
 
+def rejected_answer(result, question) -> dict[str, list]:
+    """rejected_bids' answer: n of m from the summary, and the packages in two of its groups (ticket 31)."""
+    def packages(key: str) -> list[str]:
+        return sorted({row["step_reference"] for row in result["rows"] if row["item_key"] == key})
+    counts = result["summary"]["counts"]
+    return {"n_of_m": [counts["n"], counts["m"]], "bid_security": packages("bid_security"),
+            "key_staff": packages("key_staff")}
+
+
+def criteria_answer(result, question) -> dict[str, list]:
+    """compare_criteria's answer: n of the total whose criteria are public, one item's stated, compared and same or
+    less, and the comparables still open, which it never compares (ticket 31)."""
+    counts = result["summary"]["counts"]
+    items = {item["item_key"]: item for item in result["summary"]["items"]}
+    found = {"public": [counts["n"], counts["total"]],
+             "still_open": sorted(evidence.split(":", 1)[1] for entry in result["coverage"]["not_used"]
+                                  if entry["reason"] == "still_open" for evidence in entry["evidence_ids"])}
+    for key in items:
+        found[key] = [items[key]["stated"], items[key]["compared"], items[key]["same_or_less"]]
+    return found
+
+
 ANSWERS = {"check_plan": marked, "search_passages": in_top_three, "data_readiness_for": readiness_answer,
            "find_comparables": past_range, "get_disagreements": disagreement_answer,
-           "get_lessons": lessons_answer, "compare_cost_estimates": cost_answer}
+           "get_lessons": lessons_answer, "compare_cost_estimates": cost_answer, "rejected_bids": rejected_answer,
+           "compare_criteria": criteria_answer}
 
 
 def answered(result, question) -> dict[str, list[str]]:

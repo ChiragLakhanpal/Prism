@@ -287,3 +287,54 @@ questions:
       US$10,000,000.00 in the plans of July 31, 2026 and later and signed at US$19,041,934.18 (contract
       1691287). The other five were signed below their plan rows' amounts. Seven packages have both, under
       20, so there is no range. The package's own cost estimate is plan-541055-estimated.
+
+  - id: rejected-bids-ke-nwwda-541055
+    kind: documents
+    tool: rejected_bids
+    question: >-
+      As of October 22, 2026, how many comparable packages of KE-NWWDA-541055-CW-RFB had bids rejected,
+      and which were rejected over bid security or key staff?
+    comparables_of:
+      step_reference: KE-NWWDA-541055-CW-RFB
+      as_of: "2026-10-22"
+    arguments:
+      as_of: "2026-10-22"
+    expected:
+      n_of_m: [28, 40]
+      bid_security: [KE-CWSB-233052-CW-RFB, KE-GAWASCO-54759-CW-RFB, KE-KIMAWASCO-158691-CW-RFB,
+                     KE-KWAWASCO-203535-CW-RFB, KE-MAWASCO-236797-CW-RFB, KE-MAWASCO-236802-CW-RFB,
+                     KE-MOWI-47509-CW-RFB, KE-WAJWASCO-456993-CW-RFB]
+      key_staff: [KE-KIMAWASCO-141042-CW-RFB, KE-KIMAWASCO-142995-CW-RFB, KE-KIMAWASCO-158691-CW-RFB]
+    source: >-
+      The Contract Award notices recorded in data/fixture/recorded/api/notices/P156634.json for the 49
+      comparables: 40 of them have one, and 28 of those list a rejected bidder with a Reason for Rejection.
+      "Bid Security not Provided" appears in the award notices of the eight packages above, and
+      "Unavailability of key experts" in those of the three (OP00125855, OP00124759 and OP00125851).
+
+  # The fixture's works comparables publish no qualification criteria in their notices, so this question asks
+  # about a consultant services package, whose comparables' Requests for Expression of Interest state their
+  # short-listing criteria.
+  - id: compare-criteria-ke-cwsb-224323
+    kind: documents
+    tool: compare_criteria
+    question: >-
+      As of October 22, 2026, my qualification criteria ask for similar experience of two contracts of
+      US$10 million. How many comparable packages of KE-CWSB-224323-CS-QCBS whose criteria are public asked for
+      the same or less?
+    comparables_of:
+      step_reference: KE-CWSB-224323-CS-QCBS
+      as_of: "2026-10-22"
+    arguments:
+      items: '[{"item_key": "similar_experience", "parts": {"contracts": 2, "amount": {"value": "10000000", "currency": "USD"}}}]'
+      as_of: "2026-10-22"
+    expected:
+      public: [14, 17]
+      similar_experience: [13, 13, 13]
+      still_open: [KE-GAWASCO-202394-CS-QCBS, KE-WASREB-229126-CS-QCBS]
+    source: >-
+      The specific procurement notices of the 17 comparables, recorded in
+      data/fixture/recorded/api/notices/P156634.json. The 15 signed comparables' notices hold their short-listing
+      criteria; 14 set at least one requirement, and 13 of them ask for "at least one (1) similar assignment" or
+      "at least two (2) similar assignments" (or projects of similar nature) with no amount, so each asked for the
+      same or less. The two still open are never compared. similar_experience gives stated, compared and
+      same_or_less.
