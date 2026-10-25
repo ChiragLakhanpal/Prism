@@ -14,13 +14,13 @@
 // A busy button shows its busy label within 100 ms and keeps its width, and the bar is aria-busy until
 // the server answers. The state changes only when the server confirms it. A status line announces each
 // change, and a failure shows as a line between the rows.
-import { forwardRef, useEffect, useId, useRef, type ReactNode, type Ref } from "react";
+import { forwardRef, Fragment, useEffect, useId, useRef, type ReactNode, type Ref } from "react";
 import { Check, CircleX, Info } from "lucide-react";
 import { copy } from "../copy";
 import { cx } from "../lib/cx";
 import type { Action, Draft } from "../lib/drafts";
 import { fileHref } from "../lib/drafts";
-import { formatNumber } from "../lib/format";
+import { formatCount, formatNumber } from "../lib/format";
 import { Alert } from "./Alert";
 import { Button } from "./Button";
 import { Fill } from "./Fill";
@@ -72,8 +72,15 @@ const STICKY_FRAME = "bar-sticks:border-t bar-sticks:border-line bar-sticks:py-3
 
 export type BarProps = {
   draft: Draft;
-  // The kind's words: the lead sentences, the hold line and the teammate's line.
-  words: { barLead: string; barLeadTeammate: (author: string) => string; holdNotChecked: string; readOnly: (author: string) => string };
+  // The kind's words: the lead sentences, the hold line and its clauses, and the teammate's line.
+  words: {
+    barLead: string;
+    barLeadTeammate: (author: string) => string;
+    holdNotChecked: string;
+    holdClause: string;
+    holdCompose: string;
+    readOnly: (author: string) => string;
+  };
   opened: number;
   // The act the server is answering, if any; the act that failed, if any.
   busy: Action | null;
@@ -89,16 +96,49 @@ export type BarProps = {
   className?: string;
 };
 
-// Each hold's sentence by the copy key its registry entry names (config/drafts.toml, [holds.<key>].copy):
-// the kind's own sentence for notChecked, and the shared ones for every other hold.
-export function holdLines(words: BarProps["words"]): Record<string, string> {
-  return { ...copy.draft.bar.hold, notChecked: words.holdNotChecked };
+// The hold line (the 36 brief, section 4.5): every hold left, in the kind's registry order, as one sentence. One hold
+// left that is "not checked yet" is the kind's own sentence; a preview is its own sentence; otherwise "Before you
+// export them, {clauses}.", two clauses joined by "and", three or more by commas with ", and" before the last. Each
+// clause except "mark ... as checked" links to the first unfinished item of its kind: the link moves focus there and
+// scrolls it clear of the sticky header and bar.
+export function HoldLine({ draft, words }: { draft: Draft; words: BarProps["words"] }): ReactNode {
+  const holds = draft.holds;
+  if (holds.length === 0) return null;
+  const bar = copy.draft.bar;
+  const preview = holds.find((hold) => hold.key === "preview");
+  if (preview) return bar.hold.preview as string;
+  if (holds.length === 1 && holds[0].key === "notChecked") return words.holdNotChecked;
+  const clauses: ReactNode[] = holds.map((hold) => {
+    if (hold.key === "notChecked") return words.holdClause;
+    const forms = bar.hold[hold.copy];
+    const text = typeof forms === "string" ? forms : (
+      <Fill template={hold.left === 1 ? forms.one : forms.many} slots={{ count: formatCount(hold.left) }} />
+    );
+    if (!hold.first_anchor) return text;
+    return (
+      <TextLink key={hold.key} href={`#${hold.first_anchor}`} onClick={(event) => focusAnchor(event, hold.first_anchor!)} data-hold-link={hold.key}>
+        {text}
+      </TextLink>
+    );
+  });
+  const joined: ReactNode[] = [];
+  clauses.forEach((clause, index) => {
+    if (index > 0) {
+      const last = index === clauses.length - 1;
+      joined.push(clauses.length === 2 ? bar.holdJoin : last ? bar.holdLastComma : bar.holdComma);
+    }
+    joined.push(<Fragment key={index}>{clause}</Fragment>);
+  });
+  return <Fill template={words.holdCompose} slots={{ clauses: <>{joined}</> }} />;
 }
 
-function holdLine(draft: Draft, words: BarProps["words"]): string | null {
-  const lines = holdLines(words);
-  const said = draft.holds.map((hold) => lines[hold.copy]).filter(Boolean);
-  return said.length ? said.join(" ") : null;
+// A hold line's link: focus the first unfinished item and bring it out from under the sticky header and bar.
+function focusAnchor(event: React.MouseEvent<HTMLAnchorElement>, anchor: string) {
+  const target = document.getElementById(anchor);
+  if (!target) return;
+  event.preventDefault();
+  target.focus({ preventScroll: true });
+  target.scrollIntoView({ block: "center" });
 }
 
 export const DraftBar = forwardRef(function DraftBar(
@@ -108,9 +148,10 @@ export const DraftBar = forwardRef(function DraftBar(
   const bar = copy.draft.bar;
   const author = draft.author.name ?? "";
   const mine = draft.author.you;
-  const hold = mine ? holdLine(draft, words) : null;
+  const hold = mine ? HoldLine({ draft, words }) : null;
   const checked = draft.state === "checked";
-  // The solid button: Export to Word once checked with no hold left, else Mark as checked.
+  // The solid button: Export to Word once checked with no hold left, else Mark as checked. Once checked, Export to
+  // Word takes the primary position at once, held until the last hold lifts (the 36 brief, section 4.5).
   const exportPrimary = checked && draft.holds.length === 0;
   const held = draft.holds.length > 0 || !draft.may_act;
   const holdId = useId();
@@ -185,7 +226,7 @@ export const DraftBar = forwardRef(function DraftBar(
           <div className={BAR_MAIN}>
             <Button
               ref={exportRef}
-              variant={exportPrimary ? "primary" : "secondary"}
+              variant={checked ? "primary" : "secondary"}
               held={held}
               aria-describedby={held ? describedBy : undefined}
               loading={busy === "export"}

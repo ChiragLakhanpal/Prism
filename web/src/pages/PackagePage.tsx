@@ -11,8 +11,10 @@
 // on this page is the page area's, not the window's, since the evidence drawer narrows it (DESIGN.md
 // section 4): its breakpoints are container queries on the page column (@md/page:). Later tickets
 // add sections below section 1 in the PPSD's order; ticket 31 adds section 5, "Check your criteria".
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Breadcrumb, type Crumb } from "../components/Breadcrumb";
+import { ExistingPpsdNotice } from "../components/ExistingDraftNotice";
+import { PpsdAction, type RiskSelection } from "../components/PpsdAction";
 import { EightColumns } from "../components/EightColumns";
 import { Fill } from "../components/Fill";
 import { LoadError } from "../components/LoadError";
@@ -33,6 +35,7 @@ import { rebiddingPath } from "../lib/rebidding";
 import { useScrollPadding } from "../lib/useScrollPadding";
 import { address } from "../lib/router";
 import { useStore } from "../lib/store";
+import { staffRole } from "../lib/following";
 import { viewOf } from "../lib/view";
 
 const words = copy.packagePage;
@@ -48,6 +51,13 @@ export function PackagePage({ stepRef }: { stepRef: string }) {
   // A dot or a row of section 1 opens its comparable package in the evidence drawer (ticket 15).
   const opening = useOpenComparable();
   const here = useStore(address);
+  // Section 3's selection, for "Suggest {n} PPSD risk rows" (ticket 36).
+  const [selection, setSelection] = useState<RiskSelection | null>(null);
+  const preview = viewOf(here.search) !== "staff";
+  // Suggested PPSD rows are a World Bank staff draft (config/drafts.toml, staff_only): a viewer without the role gets
+  // no action, and ticket 38's agency variant gives the implementing agency its own.
+  const staff = useStore(staffRole) !== false;
+  const asOf = new URLSearchParams(here.search).has("asof");
 
   // After a "Try again" that works, the section's heading takes focus, so focus is not lost.
   useEffect(() => {
@@ -122,6 +132,7 @@ export function PackagePage({ stepRef }: { stepRef: string }) {
     );
   } else {
     const facts = load.data.package;
+    const ppsdPackage = { id: facts.step_reference, title: facts.description ?? facts.step_reference, step_reference: facts.step_reference };
     const name = facts.project_name ? (
       <Fill template={copy.breadcrumb.project} slots={{ name: facts.project_name, pid: mono(facts.project_id) }} />
     ) : (
@@ -136,7 +147,12 @@ export function PackagePage({ stepRef }: { stepRef: string }) {
           : { status: "ready", result: section.data };
     body = (
       <>
-        <PackageHeader headerRef={header} title={facts.description ?? mono(facts.step_reference)} reference={mono(facts.step_reference)} />
+        <PackageHeader
+          headerRef={header}
+          title={facts.description ?? mono(facts.step_reference)}
+          reference={mono(facts.step_reference)}
+          action={staff ? <PpsdAction pkg={ppsdPackage} selection={selection} preview={preview} asOf={asOf} /> : undefined}
+        />
         <p className="mt-4 max-w-prose text-body text-ink-muted">{copy.pages.package.purpose}</p>
         <div className="mt-4">
           <PackageFactsList pkg={facts} />
@@ -153,9 +169,16 @@ export function PackagePage({ stepRef }: { stepRef: string }) {
         <div className="mt-6 @lg/page:mt-8">
           <StepsSection packageKey={facts.step_reference} kind="step" />
         </div>
-        {/* Section 3, procurement risks and what helped (ticket 30), with section 1's default criteria. */}
+        {/* Section 3, procurement risks and what helped (ticket 30), with section 1's default criteria; it tells the
+            page what is selected, for "Suggest {n} PPSD risk rows" (ticket 36). */}
         <div className="mt-6 @lg/page:mt-8">
-          <RisksSection apiHref={base} packageKey={facts.step_reference} kind="step" />
+          <RisksSection
+            apiHref={base}
+            packageKey={facts.step_reference}
+            kind="step"
+            onSelection={setSelection}
+            action={staff ? <PpsdAction pkg={ppsdPackage} selection={selection} preview={preview} asOf={asOf} inline /> : undefined}
+          />
         </div>
         {/* Section 5, "Check your criteria" (ticket 31): sections 2 and 4 take their places as their tickets land. */}
         <div className="mt-6 @lg/page:mt-8">
@@ -172,6 +195,9 @@ export function PackagePage({ stepRef }: { stepRef: string }) {
         <div className={load.status === "loading" ? "min-h-[2lh] text-caption @md/page:min-h-0" : undefined}>
           <Breadcrumb trail={crumbs} />
         </div>
+        {/* Ticket 36's notices about suggested PPSD rows sit above the h1, outside the body, so the body's children
+            keep their places when the package arrives and the page does not shift. */}
+        {load.status === "ready" && <ExistingPpsdNotice packageKey={load.data.package.step_reference} />}
         <div className="mt-4">{body}</div>
         {load.status === "loading" && (
           <p role="status" className="sr-only">

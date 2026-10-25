@@ -525,5 +525,7 @@
     "agent": "strata-review-notes-writer",
     "version": null,
     "run_id": "run-0001"
-  }
+  },
+  "disagreements": [],
+  "choices": []
 }

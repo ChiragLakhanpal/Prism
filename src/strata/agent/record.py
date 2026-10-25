@@ -231,7 +231,12 @@ def _ask_through_the_draft(case: Case, engine_for: EngineFor, judge) -> None:
     viewer = Viewer(user_id="record@strata", name="record@strata")
     module = runtime.writer_module(load_draft_kinds().kinds[case.request["kind"]])
     with engine_for(viewer) as engine:
-        facts = module.read(engine, viewer, case.request, case.as_of)
+        try:
+            facts = module.read(engine, viewer, case.request, case.as_of)
+        except module.NotWritable:
+            # Nothing to draft from where this runs, such as suggested PPSD rows (ticket 36) on tables whose lessons
+            # no one has decided yet: the case asks the judge nothing, and keeps its file.
+            return
     response = ScriptedAgent(case).respond([{"role": "user", "content": json.dumps(
         module.message(facts), ensure_ascii=False, default=str)}], None)
     six = SixChecks(engine_for, judge)

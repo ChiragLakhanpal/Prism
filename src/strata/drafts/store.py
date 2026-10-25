@@ -7,6 +7,10 @@ export with the evidence pack's snapshot, and the files each export made. Nothin
 the draft and its step, so it is written only while the state the person saw is still the latest, and
 two acts at the same moment cannot both write the next step (CLAUDE.md rule 5).
 
+Ticket 36 adds two more: each value a person set on a field only people fill (a suggested PPSD row's risk owner and
+ratings, and the form the draft uses), and each report a draft's author kept on a disagreement card. Each save is a
+new row; views in src/strata/lakehouse/views/ops/ give the latest value of each, so nothing is overwritten.
+
 The store holds no access rule. The draft routes (src/strata/server/drafts.py) ask the one access rule
 (src/strata/server/access.py) before they show or change anything. Values arrive typed from DuckDB and
 as text from the SQL warehouse, so each is read once here.
@@ -32,6 +36,7 @@ STATE_COLUMNS = ("draft_id", "step", "state", "from_state", "actor_id", "actor_n
 EXPORT_COLUMNS = ("draft_id", "export_id", "exported_at", "actor_id", "actor_name", "footnotes", "sources", "opened",
                   "snapshot", "public_from")
 FILE_COLUMNS = ("draft_id", "export_id", "name", "media_type", "size_bytes", "content", "public_from")
+FIELD_COLUMNS = ("draft_id", "save_no", "row_key", "field", "value", "set_by_id", "set_by_name", "set_at", "public_from")
 
 
 @cache
@@ -76,8 +81,30 @@ class Export:
 
 
 @dataclass(frozen=True)
+class FieldValue:
+    """The latest value a person set on one field of a draft (ticket 36); None when they removed it."""
+
+    value: str | None
+    set_by_id: str
+    set_by_name: str | None
+    set_at: dt.datetime
+
+
+@dataclass(frozen=True)
+class Choice:
+    """The report a draft's author kept on one disagreement card (ticket 36): lean or other, with the reason keeping
+    the other needs. Ticket 23's card records it in strata.ops.disagreement_choices with the draft's id."""
+
+    kept: str
+    reason: str | None
+    set_by_name: str | None
+    set_at: dt.datetime
+
+
+@dataclass(frozen=True)
 class Saved:
-    """A draft as it is kept: its row, its history, newest last, and its latest export."""
+    """A draft as it is kept: its row, its history, newest last, its latest export, the latest value of each field
+    a person set (by row key and field; the form is ("", "form")) and the latest choice on each disagreement."""
 
     draft_id: str
     kind: str
@@ -90,6 +117,8 @@ class Saved:
     created_at: dt.datetime
     states: tuple[State, ...] = ()
     export: Export | None = None
+    fields: dict = field(default_factory=dict)
+    choices: dict = field(default_factory=dict)
 
     @property
     def state(self) -> State:
@@ -193,10 +222,23 @@ class DraftStore:
             exports[row["draft_id"]] = Export(
                 row["export_id"], moment(row["exported_at"]), row["actor_id"], row["actor_name"], int(row["footnotes"]),
                 int(row["sources"]), int(row["opened"]), json.loads(row["snapshot"]), files)
+        fields: dict[str, dict] = {}
+        for row in self._rows(engine, "fields", ids=ids):
+            fields.setdefault(row["draft_id"], {})[(row["row_key"], row["field"])] = FieldValue(
+                row["value"], row["set_by_id"], row["set_by_name"], moment(row["set_at"]))
+        authors = {row["draft_id"]: (row["author_id"], row["author_name"]) for row in rows}
+        choices: dict[str, dict] = {}
+        for row in self._rows(engine, "choices", ids=ids):
+            author_id, author_name = authors.get(row["draft_id"], (None, None))
+            if row["viewer"] != author_id:
+                continue  # only the draft's author chooses for it
+            kept = "lean" if row["kept_assertion_id"] == row["leaned_assertion_id"] else "other"
+            choices.setdefault(row["draft_id"], {})[row["disagreement_id"]] = Choice(
+                kept, row["reason"] or None, author_name, moment(row["made_at"]))
         return [Saved(row["draft_id"], row["kind"], row["team_key"], row["author_id"], row["author_name"],
                       row["project_id"], row["subject"], json.loads(row["content"]), moment(row["created_at"]),
                       tuple(sorted(states.get(row["draft_id"], []), key=lambda step: step.step)),
-                      exports.get(row["draft_id"]))
+                      exports.get(row["draft_id"]), fields.get(row["draft_id"], {}), choices.get(row["draft_id"], {}))
                 for row in rows if states.get(row["draft_id"])]
 
     def get(self, draft_id: str) -> Saved | None:
@@ -242,6 +284,21 @@ class DraftStore:
             engine.insert_rows("strata.ops.draft_files", FILE_COLUMNS, [(
                 draft_id, export.export_id, name, media_type, len(content), base64.b64encode(content).decode("ascii"),
                 export.exported_at.date()) for name, media_type, content in export.files])
+
+    def set_field(self, draft_id: str, row_key: str, name: str, value: str | None, actor_id: str,
+                  actor_name: str | None, at: dt.datetime) -> None:
+        """Keep one value a person set on a draft's field, or its removal (value None), as a new row (ticket 36).
+        Nothing is updated or deleted; the latest row is the field's value now."""
+        with self._open() as engine:
+            saves = int(self._rows(engine, "field_saves", draft_id=draft_id)[0]["saves"])
+            engine.insert_rows("strata.ops.draft_fields", FIELD_COLUMNS, [(
+                draft_id, saves + 1, row_key, name, value, actor_id, actor_name, at, at.date())])
+
+    def field_history(self, draft_id: str) -> list[dict]:
+        """Every save of a draft's fields, oldest first, for the evidence pack's "Fields you set" table."""
+        with self._open() as engine:
+            return [{**row, "set_at": moment(row["set_at"])} for row in self._rows(engine, "field_history",
+                                                                                    draft_id=draft_id)]
 
     def file(self, draft_id: str, export_id: str, name: str) -> tuple[str, bytes] | None:
         with self._open() as engine:

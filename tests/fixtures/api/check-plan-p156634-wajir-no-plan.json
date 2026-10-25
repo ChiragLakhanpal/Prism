@@ -54,5 +54,17 @@
         "latest_plan_date": "2026-10-09"
       }
     ]
+  },
+  "summary": {
+    "evidence_id": "strata.tools.check_plan:P156634/wajir-water-and-sewerage-company@2026-10-22",
+    "public_from": "2026-10-22",
+    "source": {
+      "tool": "check_plan",
+      "sources": [
+        "documents",
+        "projects"
+      ]
+    },
+    "counts": null
   }
 }

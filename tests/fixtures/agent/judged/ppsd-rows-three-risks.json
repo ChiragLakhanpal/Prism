@@ -1,0 +1,32 @@
+{
+ "about": "The judge's answer for this case's sentences, through Azure OpenAI's chat completions, written by hand in the shape the API documents, because the gate's machine has no key. The judge is config/models.toml's draft role. Replace it with a recording: uv run --script ops/agent/record.py --judge --env-file .env",
+ "recorded": false,
+ "recorded_on": null,
+ "case": "ppsd-rows-three-risks",
+ "judge": {
+  "deployment": "gpt-5.4"
+ },
+ "asked": [
+  "Cost estimates set below market rates can force rebidding of works contracts.",
+  "Base the works cost estimates on market rates before the contracts go to bid.",
+  "Land, forest and other permits that are not in place before award can hold up the works.",
+  "Put forest and other permits in place before the contracts are awarded.",
+  "Contracts can be held up when permits are not in place before award.",
+  "Have the permits in hand before the contracts are signed."
+ ],
+ "response": {
+  "id": "chatcmpl-ppsd-rows-three-risks",
+  "object": "chat.completion",
+  "model": "gpt-5.4",
+  "choices": [
+   {
+    "index": 0,
+    "finish_reason": "stop",
+    "message": {
+     "role": "assistant",
+     "content": "{\"judgements\": [{\"index\": 0, \"follows\": true, \"reason\": \"The cited counts record shows the one completion report read raised cost estimates below market rates.\"}, {\"index\": 1, \"follows\": true, \"reason\": \"The lesson says to base works estimates on market rates to avoid rebidding, and both passages say so.\"}, {\"index\": 2, \"follows\": true, \"reason\": \"The cited counts record shows the completion report raised permits not in place before award.\"}, {\"index\": 3, \"follows\": true, \"reason\": \"The lesson and the ICR Review's section 12 say to put permits in place before awarding contracts.\"}, {\"index\": 4, \"follows\": true, \"reason\": \"The cited counts record shows the completion report raised permits not in place before award.\"}, {\"index\": 5, \"follows\": true, \"reason\": \"The lesson and the ICR Review's section 12 say to put permits in place before awarding contracts.\"}]}"
+    }
+   }
+  ]
+ }
+}

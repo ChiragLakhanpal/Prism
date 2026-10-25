@@ -1,0 +1,13 @@
+{
+  "recorded": true,
+  "choice": {
+    "choice_id": "choice-0001",
+    "kept_assertion_id": "strata.gold.passage:31525018/v1/78#P130164/pdo_progress",
+    "leaned_assertion_id": "strata.gold.passage:31525018/v1/78#P130164/pdo_progress",
+    "reason": null,
+    "run_id": null,
+    "draft_id": "draft-0090",
+    "made_at": "2026-10-28T09:14:00+00:00",
+    "kept_other": false
+  }
+}

@@ -1,0 +1,35 @@
+{
+ "about": "One answer of the Foundry agent strata-project-paper-writer through the Responses API, written by hand in the shape the API documents, because the gate's machine has no key. It writes the procurement summary for the Project Paper from the Northern Water Works Development Agency's plan of October 9, 2026, as of October 28, 2026, citing check_plan's and agency_track_record's summaries and rows, and the records the checked PPSD rows cite. Replace it with a recording: uv run --script ops/agent/record.py --env-file .env --writers",
+ "recorded": false,
+ "recorded_on": null,
+ "question": "Write the procurement summary for the Project Paper from the Northern Water Works Development Agency's Procurement Plan of 2026-10-09 for P156634.",
+ "scope": "P156634",
+ "as_of": "2026-10-28",
+ "agent": {
+  "name": "strata-project-paper-writer",
+  "version": null
+ },
+ "responses": [
+  {
+   "id": "resp_project_paper_p156634_1",
+   "object": "response",
+   "status": "completed",
+   "model": "gpt-5.4",
+   "output": [
+    {
+     "type": "message",
+     "id": "msg_project_paper_p156634_1",
+     "role": "assistant",
+     "status": "completed",
+     "content": [
+      {
+       "type": "output_text",
+       "annotations": [],
+       "text": "{\"notes\": [{\"part\": \"plan\", \"claims\": [{\"sentence\": \"The Procurement Plan of October 9, 2026 lists nine activities.\", \"kind\": \"record\", \"evidence_ids\": [\"strata.tools.check_plan:P156634/northern-water-works-development-agency@2026-10-28?plan_date=2026-10-09\", \"strata.silver.plan_rows:40132287/KE-NWWDA-541055-CW-RFB\"], \"numbers\": [\"nine\"], \"dates\": [\"October 9, 2026\"], \"quote\": null}, {\"sentence\": \"Its fixed checks found one activity that needs a look and two that are worth watching.\", \"kind\": \"record\", \"evidence_ids\": [\"strata.tools.check_plan:P156634/northern-water-works-development-agency@2026-10-28?plan_date=2026-10-09\"], \"numbers\": [\"one\", \"two\"], \"dates\": [], \"quote\": null}]}, {\"part\": \"record\", \"claims\": [{\"sentence\": \"0 of 7 of the agency's past packages with a signing date in a published plan were signed by the date in the plan as first published.\", \"kind\": \"record\", \"evidence_ids\": [\"strata.tools.agency_track_record:P156634/northern-water-works-development-agency/2026-10-09@2026-10-28\"], \"numbers\": [\"0\", \"7\"], \"dates\": [], \"quote\": null}, {\"sentence\": \"The plan shows KE-NWWDA-541055-CW-RFB and KE-NWWDA-541062-CW-RFQ unsigned, while the awards dataset shows them signed on June 22, 2026 and May 11, 2026.\", \"kind\": \"record\", \"evidence_ids\": [\"strata.silver.plan_rows:40132287/KE-NWWDA-541055-CW-RFB\", \"strata.silver.plan_rows:40132287/KE-NWWDA-541062-CW-RFQ\"], \"numbers\": [], \"dates\": [\"June 22, 2026\", \"May 11, 2026\"], \"quote\": null}]}, {\"part\": \"ppsd\", \"claims\": [{\"sentence\": \"The PPSD's suggested rows name cost estimates set below market rates as a risk, mitigated by basing the works cost estimates on market rates.\", \"kind\": \"advice\", \"evidence_ids\": [\"strata.ops.lesson_versions:lesson-e903b07ad1/v1\", \"strata.gold.passage:31525018/v1/54\", \"strata.gold.passage:34056616/v2/10.b\"], \"numbers\": [], \"dates\": [], \"quote\": null}]}]}"
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

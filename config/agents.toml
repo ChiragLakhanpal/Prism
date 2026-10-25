@@ -62,6 +62,29 @@ guardrail = "strata"
 description = "Writes a task team leader's mission brief in five parts, citing the project records its tools returned."
 tools = []
 
+# The suggest-PPSD-rows workflow's writer (ticket 36): a Risk Description and a Description of mitigation for each
+# risk a World Bank specialist selected on the package workspace, from the risk-table builder's counts and lessons
+# that the app hands it. It never writes an owner, a rating, a reference or an actual date. The draft runtime runs
+# the verifier on what it writes before any draft is saved.
+[agents.ppsd_rows_writer]
+name = "strata-ppsd-rows-writer"
+role = "draft"
+instructions = "ppsd_rows_writer.md"
+guardrail = "strata"
+description = "Writes suggested risk rows for a borrower's PPSD, citing the counts and lessons the risk table returned."
+tools = []
+
+# The Project Paper summary's writer (ticket 36): the procurement summary for the Project Paper in three parts, from
+# the plan check, the implementing agency's track record and the PPSD rows the team checked, which the app hands it.
+# It never rates the agency's procurement risk. The draft runtime runs the verifier before any draft is saved.
+[agents.project_paper_writer]
+name = "strata-project-paper-writer"
+role = "draft"
+instructions = "project_paper_writer.md"
+guardrail = "strata"
+description = "Writes the procurement summary for a Project Paper, citing the plan check, the agency's track record and checked PPSD rows."
+tools = []
+
 # The plan-a-package workflow's reader (ticket 15): one structured call that reads a person's sentence, such
 # as "rural roads, Kenya, about US$15 million", into the fields of the package form schema
 # (config/package_form.toml) that the app hands it. It writes no sentence a person reads, so no verifier

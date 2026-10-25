@@ -414,7 +414,9 @@
   "holds": [
     {
       "key": "notChecked",
-      "copy": "notChecked"
+      "copy": "notChecked",
+      "left": 1,
+      "first_anchor": null
     }
   ],
   "may_act": true,
@@ -423,5 +425,7 @@
     "agent": "strata-review-notes-writer",
     "version": null,
     "run_id": "run-0002"
-  }
+  },
+  "disagreements": [],
+  "choices": []
 }
