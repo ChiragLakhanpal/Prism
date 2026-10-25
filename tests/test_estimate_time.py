@@ -124,20 +124,52 @@ def test_estimate_time_returns_the_ranges_the_score_task_stored_for_the_package_
         assert row["evidence_id"].startswith("strata.gold.time_estimate_score:")
 
 
-def test_every_what_if_lookup_answers_within_100_ms(engine):
-    """The chart answers a comparison from the grid estimate_time returns at once; the grid comes from stored
-    rows, and each lookup of one stored combination answers within 100 ms (the spec's performance budget)."""
-    from strata.tools.estimate_time import what_if
+class Timed:
+    """The fixture engine, timing each statement a tool runs on it."""
 
-    import time
+    def __init__(self, engine):
+        self.engine, self.took = engine, []
 
-    cells = estimate(engine)["rows"]
-    for row in cells:
+    def run(self, sql, params=None):
+        import time
+
         started = time.perf_counter()
-        found = what_if(engine, SIGNED_2022, row["market_approach"], row["prequalification"], SCORED_ON)
-        took = time.perf_counter() - started
-        assert took < 0.1, f"the lookup of {row['market_approach']}, {row['prequalification']} took {took * 1000:.0f} ms"
-        assert [found[f"{name}_months"] for name in POINTS] == [row[name] for name in POINTS]
+        result = self.engine.run(sql, params)
+        self.took.append((sql, time.perf_counter() - started))
+        return result
+
+    def __getattr__(self, name):
+        return getattr(self.engine, name)
+
+
+def test_the_stored_what_if_grid_is_read_within_100_ms(engine):
+    """The chart answers every comparison from the grid estimate_time returns at once, so the one lookup a what-if
+    needs is the tool's read of the package's stored combinations, which answers within 100 ms (the spec's
+    performance budget). Timed as the tool makes it, through the registry."""
+    timed = Timed(engine)
+
+    result = registry.call("estimate_time", {"step_reference": SIGNED_2022, "as_of": SCORED_ON},
+                           registry.Context(engine=timed, viewer=ANA))
+
+    lookups = [took for sql, took in timed.took if "FROM strata.gold.time_estimate_score" in sql]
+    assert len(lookups) == 1 and len(result["rows"]) == len(scores(engine, SIGNED_2022)) > 1
+    assert lookups[0] < 0.1, f"the stored grid took {lookups[0] * 1000:.0f} ms"
+
+
+def test_a_request_reads_the_champions_trees_from_the_warehouse_only_when_it_has_not_parsed_them(engine):
+    """Every estimate made on a request asks which champion is public that day; only the first one for a version
+    reads its trees, which hold the whole model."""
+    from strata.config import load_time_estimate
+    from strata.estimates import portable
+
+    name = load_time_estimate().registered_model
+    first = portable.latest(engine, name, SCORED_ON)
+    timed = Timed(engine)
+
+    again = portable.latest(timed, name, SCORED_ON)
+
+    assert again.version == first.version and again.model is first.model
+    assert len(timed.took) == 1 and "booster_json" not in timed.took[0][0]
 
 
 def test_it_counts_the_same_comparable_packages_as_find_comparables_for_the_same_criteria(engine):
@@ -150,10 +182,10 @@ def test_it_counts_the_same_comparable_packages_as_find_comparables_for_the_same
 
 
 def test_as_of_a_day_before_the_models_training_data_ended_it_gives_no_estimate(engine):
+    """It names only the as-of date: the model whose training data ended later was not public that day."""
     result = estimate(engine, as_of=SCORED_ON - dt.timedelta(days=1))
 
-    assert result["abstention"] == {"reason": "asof_before_training", "as_of": "2026-10-22",
-                                    "training_through": SCORED_ON.isoformat()}
+    assert result["abstention"] == {"reason": "asof_before_training", "as_of": "2026-10-22"}
     assert result["rows"] == [] and result["estimate"] is None
 
 
@@ -308,6 +340,38 @@ def test_section_4_rules_out_nothing_for_a_package_the_thresholds_leave_free(eng
     assert [(approach["market_approach"], approach["k"]) for approach in options["approaches"]] == [("Open - National", 3)]
 
 
+def list_under(engine, references: list[str], market_approach: str) -> None:
+    """A plan version public on October 1, 2026 that lists these packages under one market approach."""
+    day = dt.date(2026, 10, 1)
+    engine.insert_rows("strata.silver.plan_versions",
+                       ("document_id", "project_id", "implementing_agency", "plan_date", "disclosed_on",
+                        "series_order", "is_latest", "pdf_pages", "route_b_pages", "text_url", "pdf_url",
+                        "public_from"),
+                       [("990000001", "P156634", "Test agency", day, day, 99, True, 1, 1, "t", "p", day)])
+    engine.insert_rows("strata.silver.plan_rows",
+                       ("document_id", "project_id", "section", "activity_reference_no", "market_approach",
+                        "pdf_page", "parser", "public_from"),
+                       [("990000001", "P156634", "WORKS", reference, market_approach, 1, "test", day)
+                        for reference in references])
+
+
+def test_a_comparison_offers_only_a_value_the_nightly_batch_scores(fixture_db, tmp_path):
+    """Limited - National is not among config/models.toml's [what_if] market approach values, so the batch never
+    scores it. Even when 21 comparable packages went with it, it is not offered, since the screen could only say
+    that the model never learned from it, which may be untrue."""
+    import shutil
+
+    target = tmp_path / "fixture.duckdb"
+    shutil.copy(fixture_db, target)
+    with DuckDBEngine.open(target) as engine:
+        found = registry.call("find_comparables", {"step_reference": SIGNED_2022, "as_of": SCORED_ON},
+                              registry.Context(engine=engine, viewer=ANA))
+        list_under(engine, sorted(row["step_reference"] for row in found["rows"])[:21], "Limited - National")
+        result = estimate(engine)
+
+    assert [comparison for comparison in result["comparisons"] if comparison["lever"] == "market_approach"] == []
+
+
 @pytest.fixture
 def went_international(fixture_db, tmp_path):
     """A copy of the fixture where a plan version public on October 1, 2026 lists 21 of KE-NWWDA-229129-CW-RFB's
@@ -321,17 +385,7 @@ def went_international(fixture_db, tmp_path):
         found = registry.call("find_comparables", {"step_reference": SIGNED_2022, "as_of": SCORED_ON},
                               registry.Context(engine=engine, viewer=ANA))
         chosen = sorted(row["step_reference"] for row in found["rows"] if not row["still_open"])[:21]
-        day = dt.date(2026, 10, 1)
-        engine.insert_rows("strata.silver.plan_versions",
-                           ("document_id", "project_id", "implementing_agency", "plan_date", "disclosed_on",
-                            "series_order", "is_latest", "pdf_pages", "route_b_pages", "text_url", "pdf_url",
-                            "public_from"),
-                           [("990000001", "P156634", "Test agency", day, day, 99, True, 1, 1, "t", "p", day)])
-        engine.insert_rows("strata.silver.plan_rows",
-                           ("document_id", "project_id", "section", "activity_reference_no", "market_approach",
-                            "pdf_page", "parser", "public_from"),
-                           [("990000001", "P156634", "WORKS", reference, "Open - International", 1, "test", day)
-                            for reference in chosen])
+        list_under(engine, chosen, "Open - International")
         later = dt.datetime(2026, 10, 23, 12, 0, tzinfo=dt.UTC)
         international = "market_approach = 'Open - International' AND prequalification IS NULL"
         points = {"q25": (200, 6.6), "q50": (300, 9.9), "q75": (400, 13.1), "q80": (450, 14.8)}
@@ -401,9 +455,9 @@ def test_the_track_record_and_the_plan_dates_ran_longer_counts_come_from_the_lat
         later = estimate(engine, as_of=dt.date(2026, 10, 30))
         before = estimate(engine, as_of=dt.date(2026, 10, 29))
 
-    assert {key: later["track_record"][key] for key in ("year", "n", "m", "expected", "misses_early", "misses_late",
-                                                        "mlflow_run_id", "abstention")} == {
-        "year": 2025, "n": 40, "m": 31, "expected": 32, "misses_early": 0, "misses_late": 9,
+    assert {key: later["track_record"][key] for key in ("year", "n", "m", "expected", "misses", "misses_early",
+                                                        "misses_late", "mlflow_run_id", "abstention")} == {
+        "year": 2025, "n": 40, "m": 31, "expected": 32, "misses": 9, "misses_early": 0, "misses_late": 9,
         "mlflow_run_id": "mlflow-later", "abstention": None}
     assert later["plan_dates"]["middle"] == {"months": later["estimate"]["q50"], "ran_longer": 21, "total": 40, "in10": 5}
     assert later["plan_dates"]["eight_in_ten"] == {"months": later["estimate"]["q80"], "ran_longer": 9, "total": 40,
@@ -411,6 +465,33 @@ def test_the_track_record_and_the_plan_dates_ran_longer_counts_come_from_the_lat
     assert [year["year"] for year in later["test_years"]] == [2025]
     assert later["test_years"][0]["error_past_range_months"] == 2.6
     assert before["track_record"]["abstention"]["reason"] == "too_few_unseen_packages"
+
+
+class NoOpsGrant:
+    """The fixture as a viewer sees it who cannot read strata.ops: every statement on it fails as the warehouse
+    would refuse it."""
+
+    def __init__(self, engine):
+        self.engine = engine
+
+    def run(self, sql, params=None):
+        from strata.lakehouse.engine import EngineError
+
+        if "strata.ops." in sql:
+            raise EngineError("PERMISSION_DENIED: User does not have SELECT on schema strata.ops.")
+        return self.engine.run(sql, params)
+
+    def __getattr__(self, name):
+        return getattr(self.engine, name)
+
+
+def test_a_viewer_who_cannot_read_strata_ops_still_gets_the_time_estimate_and_the_step_dates(engine):
+    result = registry.call("estimate_time", {"step_reference": SIGNED_2022, "as_of": SCORED_ON},
+                           registry.Context(engine=NoOpsGrant(engine), viewer=ANA))
+
+    assert result["abstention"] is None and result["estimate"] is not None
+    assert result["track_record"] is None and result["test_years"] == []
+    assert result["step_dates"] is not None
 
 
 # ── Why the lanes differ ─────────────────────────────────────────────────

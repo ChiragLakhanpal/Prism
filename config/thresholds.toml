@@ -201,6 +201,9 @@ reason_min_share = 0.5
 # Below this many comparables that went with an option, that option gets no range. Source: the spec
 # ("subgroups included") and the 26 design brief, section 6.4, which names the key.
 min_subgroup = 20
+# Section 4 lists at most this many procurement approaches, the most common first. Source: the 26 design
+# brief, section 6.4 (at most three, against choice overload), and ticket 26's acceptance criteria.
+max_approaches = 3
 
 # Signals on followed projects (ticket 37): project_signals (src/strata/tools/project_signals.py) runs
 # seven fixed checks on a project's public records and returns the values it used, and the Following page

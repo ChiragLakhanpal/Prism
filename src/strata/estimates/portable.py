@@ -100,11 +100,21 @@ TABLE = "strata.gold.time_estimate_model"
 COLUMNS = ("model", "version", "alias", "training_through", "booster_json", "state_json", "mlflow_run_id",
            "registered_at", "public_from")
 
+# Which version is the newest public one: asked on every request, so it leaves out the trees.
 LATEST = """
-SELECT model, version, alias, training_through, booster_json, state_json, mlflow_run_id, registered_at, public_from
+SELECT model, version, alias, training_through, mlflow_run_id, registered_at, public_from
 FROM strata.gold.time_estimate_model
 WHERE model = :model AND alias = :alias AND public_from <= :as_of
 ORDER BY registered_at DESC, version DESC
+LIMIT 1
+"""
+
+# That version's trees and state, which hold the whole model: read only when it has not been parsed yet.
+TREES = """
+SELECT booster_json, state_json
+FROM strata.gold.time_estimate_model
+WHERE model = :model AND version = :version AND alias = :alias AND public_from <= :as_of
+ORDER BY registered_at DESC
 LIMIT 1
 """
 
@@ -138,7 +148,9 @@ def latest(engine, name: str, as_of, alias: str = "champion", learner: str = "po
     key = (name, int(row["version"]), str(row["registered_at"]), learner)
     model = _MODELS.get(key)
     if model is None:
-        model = TimeEstimateModel.from_state(row["state_json"], row["booster_json"], learner)
+        trees = engine.run(TREES, {"model": name, "version": int(row["version"]), "alias": alias, "as_of": as_of})
+        kept = dict(zip(trees.columns, trees.rows[0]))
+        model = TimeEstimateModel.from_state(kept["state_json"], kept["booster_json"], learner)
         if len(_MODELS) > 2:  # the newest versions are kept: an older one is read again if asked for
             _MODELS.clear()
         _MODELS[key] = model

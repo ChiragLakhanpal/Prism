@@ -433,8 +433,7 @@
   "records_through": "2026-10-13",
   "abstention": {
     "reason": "asof_before_training",
-    "as_of": "2026-10-22",
-    "training_through": "2026-10-23"
+    "as_of": "2026-10-22"
   },
   "summary": {
     "evidence_id": "strata.tools.estimate_time:KE-NWWDA-229129-CW-RFB@2026-10-22",

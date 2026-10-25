@@ -22,13 +22,15 @@ record, the plan-date choice and section 4 need, so no comparison and no choice 
 - The track record, the test years and the plan dates' "ran longer" counts come from the latest backtest run
   public on the as-of date (strata.ops.evaluation_result, ticket 25).
 - The comparisons, by config/models.toml's [what_if] levers in order: for each lever whose value the package
-  as described records, the value most comparable packages went with other than its own (rule 1), offered
+  as described records, the value most comparable packages went with other than its own, among the values the
+  batch scores for a lever the model reads (rule 1), offered
   only when at least one went with it (rule 2) and the thresholds file allows it (rule 3,
   strata.packages.compute.allows). Review type is never a lever (rule 4). Its estimate is the stored
   combination's, or why there is none: fewer than what_if.min_subgroup went with it, or the model reads no
   such feature (lots, not_in_model).
 - Section 4's approaches: the combinations of market approach, lots and qualification that comparable packages
-  whose records give all three went with, most first, up to three, leaving out what the thresholds rule out.
+  whose records give all three went with, most first, up to what_if.max_approaches, leaving out what the
+  thresholds rule out.
 
 - The planned date for each STEP step (ticket 27, section 2 of the workspace) comes back in step_dates, from the
   same comparable packages: strata.estimates.step_dates picks the package's method family from the step-label
@@ -66,7 +68,6 @@ log = logging.getLogger("strata.tools.estimate_time")
 POINTS = tuple(QUARTERS)  # q25, q50, q75, q80
 # find_comparables' abstentions for a package with nothing to compare, which this tool gives too.
 FROM_COMPARABLES = ("unknown_package", "no_public_notice", "no_comparables", "none_measurable")
-SECTION_4_LIMIT = 3  # the 26 design brief, section 6.4: at most three approaches (choice overload)
 
 
 def _sql(name: str) -> str:
@@ -90,15 +91,6 @@ def _iso(value) -> str | None:
 
 def _months(days: int) -> float:
     return float(months(days))
-
-
-def what_if(engine, step_reference: str, market_approach: str | None, prequalification: str | None,
-            as_of: dt.date) -> dict | None:
-    """One stored combination of a package, from the latest scoring run public on as_of: the lookup a
-    comparison makes, which answers within 100 ms (tests/test_estimate_time.py)."""
-    found = _rows(engine, "cell.sql", step_reference=step_reference, market_approach=market_approach,
-                  prequalification=prequalification, as_of=as_of)
-    return found[0] if found else None
 
 
 # ── The package as described ─────────────────────────────────────────────
@@ -233,7 +225,10 @@ def _comparisons(levers: tuple[Lever, ...], described: dict, went: dict[str, dic
         if own is None:  # nothing to compare a value with: the package as described records none
             continue
         counts = Counter(record[lever.key] for record in went.values() if record[lever.key] is not None)
-        others = sorted(((count, str(value), value) for value, count in counts.items() if value != own),
+        # A lever the model reads offers only a value the nightly batch scores ([what_if] values), so no
+        # comparison says the model never learned from a value it was simply never asked about.
+        others = sorted(((count, str(value), value) for value, count in counts.items()
+                         if value != own and (lever.feature is None or value in lever.values)),
                         key=lambda item: (-item[0], item[1]))
         if not others:
             continue
@@ -268,7 +263,7 @@ def _options(described: dict, went: dict[str, dict], cells: dict[tuple, dict], t
     ranked = sorted(counts.items(), key=lambda item: (-item[1], str(item[0])))
     own = (described["market_approach"], described["lots"], described["prequalification"])
     approaches = []
-    for (approach, lots, qualification), k in ranked[:SECTION_4_LIMIT]:
+    for (approach, lots, qualification), k in ranked[:int(thresholds.value("what_if.max_approaches"))]:
         if k < fewest:
             estimate, abstention = None, {"reason": "too_few_in_subgroup", "k": k, "n": n, "min_subgroup": fewest}
         elif described["lots"] is None or lots != described["lots"]:
@@ -327,12 +322,18 @@ def _size_reason(direction: str, gap: Decimal, described: dict, went: dict[str, 
 
 # ── The track record and the plan dates ──────────────────────────────────
 
-def _backtests(engine, as_of: dt.date, thresholds) -> tuple[dict | None, list[dict], dict | None]:
-    years = backtest.stored_years(engine, as_of=as_of)
+def _backtests(engine, as_of: dt.date, thresholds, viewer) -> tuple[dict | None, list[dict], dict | None]:
+    try:
+        years = backtest.stored_years(engine, as_of=as_of)
+    except EngineError:  # a viewer who cannot read strata.ops still gets the estimate, with no track record
+        log.warning("I could not read the time estimate's backtests for %s.", viewer.name, exc_info=True)
+        return None, [], None
     record = model_card.track_record(years, thresholds)
     track = None
     if record is not None:
         track = {key: (_iso(value) if key == "ran_on" else value) for key, value in record.items()}
+        if record["abstention"] is None:  # the misses clause's count, so the screen works out none
+            track["misses"] = record["n"] - record["m"]
     test_years = []
     for year, stored in sorted(years.items()):
         test_years.append({"year": year, "n": stored.get("n"), "m": stored.get("m"), "expected": stored.get("expected"),
@@ -418,7 +419,7 @@ def estimate_time(call: Call, step_reference: str | None = None, method: str | N
     n = len(comparables)
     counts = found["counts"]
     fewest = int(thresholds.value("time_estimate.min_comparables"))
-    track, test_years, latest_year = _backtests(call.engine, call.as_of, thresholds)
+    track, test_years, latest_year = _backtests(call.engine, call.as_of, thresholds, call.viewer)
     result = {"rows": [], "coverage": {"matched": 0, "used": 0, "not_used": []},
               "package": {"step_reference": step_reference, "described": None},
               "comparables": {"n": n, "signed": counts["signed"] if counts else 0,
@@ -438,16 +439,14 @@ def estimate_time(call: Call, step_reference: str | None = None, method: str | N
     kept = portable.latest(call.engine, settings.registered_model, call.as_of)
     stored = _rows(call.engine, "scores.sql", step_reference=step_reference, as_of=call.as_of) if step_reference else []
     if kept is None and not stored:
-        later = portable.latest(call.engine, settings.registered_model, dt.date.max)
-        if later is None:
+        # A model registered later says only that one exists: its training date was not public on the as-of date.
+        if portable.latest(call.engine, settings.registered_model, dt.date.max) is None:
             return {**result, "abstention": {"reason": "no_model"}}
-        return {**result, "abstention": {"reason": "asof_before_training", "as_of": call.as_of.isoformat(),
-                                         "training_through": later.model.training_through.isoformat()}}
+        return {**result, "abstention": {"reason": "asof_before_training", "as_of": call.as_of.isoformat()}}
     described_row = next((row for row in stored if row["as_described"]), None)
     training_through = described_row["training_through"] if described_row else kept.model.training_through
     if call.as_of < (training_through if isinstance(training_through, dt.date) else dt.date.fromisoformat(str(training_through))):
-        return {**result, "abstention": {"reason": "asof_before_training", "as_of": call.as_of.isoformat(),
-                                         "training_through": _iso(training_through)}}
+        return {**result, "abstention": {"reason": "asof_before_training", "as_of": call.as_of.isoformat()}}
 
     described = _described(found, described_row, used, given)
     if stored:

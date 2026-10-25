@@ -568,7 +568,7 @@ unseen packages ran longer than that point of their own estimate. It gives the w
 approach, lots and qualification: for each, how many comparable packages went with another value, their STEP \
 references, and the time estimate with that value, or why there is none, such as fewer than \
 {what_if.min_subgroup} that went with it. Review type is never changed, since it is computed from the whole \
-package's estimated amount. It gives up to three procurement approaches comparable packages went with, how many \
+package's estimated amount. It gives up to {what_if.max_approaches} procurement approaches comparable packages went with, how many \
 went with each, and the time estimate with each. It leaves out an approach the thresholds rule out for this \
 package, and counts the comparable packages that went with one, apart from those whose records don't give their \
 market approach, lots and qualification. Say that comparable packages went with an approach, never \

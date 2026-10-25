@@ -111,13 +111,19 @@ test("the copy lint refuses caused, split and splitting in the time estimate's w
 });
 
 test("every block the what-if wording rule names is in the copy file, and the what-ifs say went with", async () => {
-  const { scopedRanges } = await import("../lint/source.ts");
+  const { copyStrings, scopedRanges } = await import("../lint/source.ts");
   const { WHAT_IF_SCOPES } = await import("../lint/rules.ts");
   const file = fileURLToPath(new URL("../src/copy.ts", import.meta.url));
-  expect(scopedRanges(readFileSync(file, "utf8"), file, WHAT_IF_SCOPES)).toHaveLength(WHAT_IF_SCOPES.length);
-  const { copy } = await import("../src/copy.ts");
-  const words = JSON.stringify([copy.timeEstimate, copy.approachOptions]) + JSON.stringify(copy.whatIf);
+  const source = readFileSync(file, "utf8");
+  const ranges = scopedRanges(source, file, WHAT_IF_SCOPES);
+  expect(ranges).toHaveLength(WHAT_IF_SCOPES.length);
+  // Every string in those blocks as the lint reads it, the ones inside count functions included.
+  const words = copyStrings(source, file)
+    .filter((found) => ranges.some(([start, end]) => found.offset >= start && found.offset < end))
+    .map((found) => found.text)
+    .join("\n");
   expect(words).toContain("went with");
+  expect(words).toContain("{rest} of the {n} comparable packages don't record");
   expect(words).not.toMatch(/\b(?:caused|split|splitting)\b/i);
 });
 

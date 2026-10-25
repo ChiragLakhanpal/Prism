@@ -91,7 +91,7 @@ function addOptions(body: Json, rows: string[]) {
 
 // A track record from a test year with 120 packages the model had not seen, and the plan dates' counts from it.
 function addTrackRecord(body: Json) {
-  body.track_record = { year: 2025, n: 120, m: 95, expected: 96, ran_on: "2026-10-23", misses_early: null, misses_late: null, abstention: null };
+  body.track_record = { year: 2025, n: 120, m: 95, expected: 96, ran_on: "2026-10-23", misses: 25, misses_early: null, misses_late: null, abstention: null };
   body.plan_dates = {
     middle: { months: body.estimate.q50, ran_longer: 61, total: 120, in10: 5 },
     eight_in_ten: { months: body.estimate.q80, ran_longer: 25, total: 120, in10: 2 },

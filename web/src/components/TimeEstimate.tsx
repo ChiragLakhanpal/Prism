@@ -53,17 +53,21 @@ const pointsOf = (points: EstimatePoints): EstimatePoints => ({ q25: points.q25,
 export const estimated = (state: EstimateState | undefined) =>
   state?.status === "ready" && state.result.abstention === null && state.result.estimate ? state.result : null;
 
+// The sentence for a package outside what the model learned from, the same in lane 2 and in the chart's text
+// alternative: which feature, and whether the package lies above or below what the model saw.
+function outsideSentence(abstention: { feature: string; value: number; high: number }): string {
+  const side = abstention.value > abstention.high ? "high" : "low";
+  const sentences = words.abstain.outside[abstention.feature as keyof typeof words.abstain.outside];
+  return sentences ? sentences[side] : words.abstain.outsideOther;
+}
+
 // Lane 2's message for an abstention, in the first person (the 26 brief, sections 7.5 and 7.6).
 export function abstentionMessage(result: EstimateResult): ReactNode {
   const abstention = result.abstention!;
   if (abstention.reason === "too_few_comparables") {
     return abstention.count === 1 ? words.abstain.fewOne : <Fill template={words.abstain.few} slots={{ n: <Num count={abstention.count} /> }} />;
   }
-  if (abstention.reason === "outside_training") {
-    const side = abstention.value > abstention.high ? "high" : "low";
-    const sentences = words.abstain.outside[abstention.feature as keyof typeof words.abstain.outside];
-    return sentences ? sentences[side] : words.abstain.outsideOther;
-  }
+  if (abstention.reason === "outside_training") return outsideSentence(abstention);
   if (abstention.reason === "asof_before_training") {
     return <Fill template={words.abstain.beforeTraining} slots={{ date: <Num date={abstention.as_of} /> }} />;
   }
@@ -110,11 +114,7 @@ export function lane2For(state: EstimateState, comparison: Comparison | null): L
 function abstentionText(result: EstimateResult): string {
   const abstention = result.abstention!;
   if (abstention.reason === "asof_before_training") return words.abstain.beforeTraining.replace("{date}", formatDate(abstention.as_of));
-  if (abstention.reason === "outside_training") {
-    const side = abstention.value > abstention.high ? "high" : "low";
-    const sentences = words.abstain.outside[abstention.feature as keyof typeof words.abstain.outside];
-    return sentences ? sentences[side] : words.abstain.outsideOther;
-  }
+  if (abstention.reason === "outside_training") return outsideSentence(abstention);
   return words.abstain.noModel;
 }
 
@@ -305,7 +305,7 @@ function TrackRecordLine({ result, onTestYears }: { result: EstimateResult; onTe
       {early > 0 && track.misses_late !== null && (
         <>
           {" "}
-          <Fill template={t.misses} slots={{ misses: count(track.n - track.m), late: count(track.misses_late) }} />
+          <Fill template={t.misses} slots={{ misses: count(track.misses), late: count(track.misses_late) }} />
         </>
       )}
     </>

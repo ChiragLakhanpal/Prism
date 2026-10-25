@@ -407,7 +407,7 @@ export type EstimatePoints = { q25: number; q50: number; q75: number; q80: numbe
 export type EstimateAbstention =
   | { reason: "too_few_comparables"; count: number; min_comparables: number }
   | { reason: "outside_training"; feature: string; value: number; low: number; high: number }
-  | { reason: "asof_before_training"; as_of: string; training_through: string }
+  | { reason: "asof_before_training"; as_of: string }
   | { reason: "no_model" }
   | { reason: "unknown_package" | "no_public_notice" | "no_comparables" | "none_measurable"; [key: string]: unknown };
 // Why a comparison, an approach or a combination has no time estimate.
@@ -446,6 +446,7 @@ export type TrackRecord =
       n: number;
       m: number;
       expected: number;
+      misses: number;
       misses_early: number | null;
       misses_late: number | null;
       ran_on: string | null;
