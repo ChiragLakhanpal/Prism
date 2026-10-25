@@ -26,10 +26,16 @@ With --packages it re-records the package reader's cases in tests/fixtures/agent
 (ticket 15): the Foundry package reader (after ops/agent/sync.py --agent package_reader) reads each sentence
 with the package form's fields, as the plan-a-package workflow sends it.
 
+With --criteria it re-records the criteria reader's cases in tests/fixtures/agent/criteria.toml instead
+(ticket 31): the Foundry criteria reader (after ops/agent/sync.py --agent criteria_reader) reads each pasted
+text with the item registry's items, as the check-your-criteria workflow sends it.
+
 With --judge it re-records the judge of the verifier's check 4 instead (ticket 24): it replays every scripted
 case in tests/fixtures/agent/cases.toml through the answer stream, and every writer case in writers.toml through
 its draft workflow's six checks, with the tools on the SQL warehouse, and keeps the answer of config/models.toml's
-draft role for each case that asks the judge, in tests/fixtures/agent/judged. Run it after the plain run, since the judge is asked about the recorded answers.
+draft role for each case that asks the judge, in tests/fixtures/agent/judged. It replays each criteria reader case in
+criteria.toml through section 5's comparison too, where the judge is asked about the readings (ticket 31). Run it
+after the plain run and the --criteria run, since the judge is asked about the recorded answers.
 It also needs AZURE_OPENAI_ENDPOINT and AZURE_OPENAI_API_KEY.
 
 It needs FOUNDRY_PROJECT_ENDPOINT, DATABRICKS_HOST, DATABRICKS_WAREHOUSE_ID and DATABRICKS_TOKEN in the env
@@ -48,7 +54,7 @@ from live import REPO, LiveSetupError, foundry_agent, load_env, warehouse_engine
 
 from strata.agent import judge, record  # noqa: E402
 from strata.agent.loop import AgentError  # noqa: E402
-from strata.agent.scripted import PACKAGE_CASES, WRITER_CASES, load_cases  # noqa: E402
+from strata.agent.scripted import CRITERIA_CASES, PACKAGE_CASES, WRITER_CASES, load_cases  # noqa: E402
 from strata.config import load_agent, load_draft_kinds  # noqa: E402
 from strata.dbx import Viewer  # noqa: E402
 from strata.lakehouse.engine import EngineError  # noqa: E402
@@ -64,15 +70,23 @@ def main(argv=None) -> int:
                         help="re-record the draft writers' cases in tests/fixtures/agent/writers.toml instead")
     parser.add_argument("--packages", action="store_true",
                         help="re-record the package reader's cases in tests/fixtures/agent/packages.toml instead")
+    parser.add_argument("--criteria", action="store_true",
+                        help="re-record the criteria reader's cases in tests/fixtures/agent/criteria.toml instead")
     parser.add_argument("--judge", action="store_true",
-                        help="re-record check 4's judge for the cases in tests/fixtures/agent/cases.toml instead")
+                        help="re-record check 4's judge for the cases in tests/fixtures/agent/cases.toml, "
+                             "writers.toml and criteria.toml instead")
     args = parser.parse_args(argv)
     try:
         env = load_env(args.env_file, NEEDS + (JUDGE_NEEDS if args.judge else ()))
         viewer = Viewer(name="the env file's token", token=env["DATABRICKS_TOKEN"])
-        if args.judge:
+        if args.criteria:
+            spec = load_agent("criteria_reader")
+            done = record.record_criteria(load_cases(CRITERIA_CASES), lambda: foundry_agent(env, spec),
+                                          warehouse_engine_for(env), viewer)
+        elif args.judge:
             live_judge = judge.from_environment(env)
-            done = record.record_judged(load_cases() | load_cases(WRITER_CASES), live_judge, warehouse_engine_for(env))
+            done = record.record_judged(load_cases() | load_cases(WRITER_CASES), live_judge, warehouse_engine_for(env),
+                                        criteria=load_cases(CRITERIA_CASES))
         elif args.packages:
             spec = load_agent("package_reader")
             done = record.record_packages(load_cases(PACKAGE_CASES), lambda: foundry_agent(env, spec),

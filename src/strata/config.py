@@ -1643,6 +1643,68 @@ def load_lesson_lists(path: Path = CONFIG_DIR / "lessons.toml") -> LessonLists:
     return LessonLists(**lists, example_projects=examples)
 
 
+# ── The item registry of "Check your criteria" (ticket 31) ───────────────
+
+CRITERIA_PARTS = ("contracts", "amount", "window_years", "years")
+
+
+@dataclass(frozen=True)
+class CriteriaItem:
+    key: str
+    label: str
+    phrase: str
+    is_criterion: bool
+    synonyms: tuple[str, ...]
+    parts: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class CriteriaItems:
+    items: tuple[CriteriaItem, ...]
+    cues: tuple[str, ...]
+
+    def item(self, key: str) -> CriteriaItem:
+        for item in self.items:
+            if item.key == key:
+                return item
+        raise KeyError(key)
+
+    def has(self, key: str) -> bool:
+        return any(item.key == key for item in self.items)
+
+    @property
+    def criteria(self) -> tuple[CriteriaItem, ...]:
+        return tuple(item for item in self.items if item.is_criterion)
+
+
+def load_criteria_items(path: Path = CONFIG_DIR / "criteria_items.toml") -> CriteriaItems:
+    """The kinds of requirement section 5 compares, in the registry's order. The last is other, which has no
+    synonyms and holds every rejection reason no other item names."""
+    data = _read(path)
+    _Entry(path, "the file", data).only({"items", "requirements"})
+    items: list[CriteriaItem] = []
+    for entry in _tables(path, data, "items"):
+        entry.only({"key", "label", "phrase", "is_criterion", "synonyms", "parts"})
+        item = CriteriaItem(entry.text("key"), entry.text("label"), entry.text("phrase"), entry.boolean("is_criterion"),
+                            tuple(word.lower() for word in entry.texts("synonyms")), entry.texts("parts"))
+        if not re.fullmatch(r"[a-z][a-z0-9_]*", item.key):
+            entry._fail("key", "must be lower case letters, digits and _")
+        if item.key in {seen.key for seen in items}:
+            entry._fail("key", f"repeats {item.key!r}. Each key is listed once")
+        strays = [part for part in item.parts if part not in CRITERIA_PARTS]
+        if strays:
+            entry._fail("parts", f"names {', '.join(strays)}; the parts are {', '.join(CRITERIA_PARTS)}")
+        items.append(item)
+    if not items or items[-1].key != "other" or items[-1].synonyms or items[-1].is_criterion:
+        raise ConfigError(f"{path.name} must end with the item other, which has no synonyms and is no criterion.")
+    requirements = _Entry(path, "requirements", data.get("requirements", {}))
+    requirements.only({"cues"})
+    cues = tuple(word.lower() for word in requirements.texts("cues"))
+    if not cues:
+        requirements._fail("cues", "must list the words that mark a sentence as setting a requirement")
+    return CriteriaItems(tuple(items), cues)
+
+
 # ── The editions of the procurement rules ────────────────────────────────
 
 @dataclass(frozen=True)

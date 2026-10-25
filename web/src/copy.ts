@@ -783,6 +783,8 @@ export const copy = {
       "strata.gold.contract": "Contract",
       "strata.gold.package": "Package",
       "strata.ops.lesson_versions": "Lesson",
+      // An award notice a rejected bid in section 5 cites (ticket 31).
+      "strata.gold.notice": "Award notice",
     } as Record<string, string>,
     recordKindOther: "Record",
     // The records a project's Summary cites (ticket 21), by the table their evidence id names. The
@@ -802,6 +804,8 @@ export const copy = {
       loans: "World Bank loans and credits data, as of {date}.",
       loan_history: "World Bank monthly loan history, reported {date}.",
       ieg_ratings: "Independent Evaluation Group (IEG) ratings data, {date}.",
+      // An award notice a rejected bid in section 5 cites (ticket 31).
+      award_notices: "World Bank procurement notices, award notice published {date}.",
       projects_api_ratings: "World Bank projects API, ratings from the ISR of {date}.",
       isr_ratings: "The overall ratings table of the ISR of {date}, as I read it.",
       plan_baseline: "Strata's baseline, saved by World Bank staff on {date}.",
@@ -839,6 +843,14 @@ export const copy = {
       total_commitment_usd: "Total commitment (US$)",
       plan_date: "Plan date",
       saved_on: "Saved on",
+      // An award notice's fields, as the notice names them, for a rejected bid in section 5 (ticket 31). It
+      // never lists a bidder.
+      notice_type: "Notice type",
+      published: "Published",
+      bid_reference: "Bid/Contract Reference No",
+      project_id: "Project",
+      reason_for_rejection: "Reason for Rejection",
+      bids_rejected: "Bids rejected for this reason",
     } as Record<string, string>,
     // A lesson in Strata's library, which an answer or the lesson review writer cites by version: the
     // drawer's eyebrow, its source line and the marker's name ("Source 2: Lesson, version 1, Put forest and
@@ -2677,6 +2689,335 @@ export const copy = {
     },
   },
 
+  // Section 5 of the package workspace, "Check your criteria" (ticket 31; the 31 brief, section 6). Every
+  // {name} is a value a tool, the workflow or the verifier returned, which Num writes. Every sentence says
+  // "qualification criteria" for the bidding document's requirements, so it is never read as the criteria that
+  // chose the comparable packages, and "cost estimate" in full.
+  criteria: {
+    eyebrow: "Tender design",
+    number: "5 ·",
+    heading: "Check your criteria",
+    // The collapsed summary's first sentence holds the ticket's words: "optional. Paste your qualification
+    // criteria to compare them with N packages whose criteria are public."
+    summary: "This check is optional. Paste your qualification criteria to compare them with {n} packages whose criteria are public.",
+    summaryOne:
+      "This check is optional. Paste your qualification criteria to compare them with one package whose criteria are public.",
+    summaryCompared:
+      "This check is optional. On {date}, you compared {count} items in your qualification criteria with {n} packages whose criteria are public.",
+    summaryComparedOne:
+      "This check is optional. On {date}, you compared one item in your qualification criteria with {n} packages whose criteria are public.",
+    summaryNonePublic:
+      "This check is optional. None of the {total} comparable packages published their qualification criteria, so I can't compare yours yet.",
+    summaryAlso: "It also covers rejected bids, cost estimates and lessons from comparable packages.",
+    summaryAlsoNonePublic: "It still covers rejected bids, cost estimates and lessons from comparable packages.",
+    summaryNoComparables:
+      "This check is optional, and it needs comparable packages. I have none for this package yet, so there is nothing to compare your qualification criteria with.",
+    summaryError: "I couldn't count the comparable packages whose criteria are public.",
+    show: "Show the check",
+    hide: "Hide the check",
+    tryAgain: "Try again",
+    code: "If it fails again, quote this code: {code}",
+    loading: "Loading the check of your qualification criteria.",
+    nTooltip: "Comparable packages whose notices published their qualification criteria. Select to see them.",
+    intro:
+      "Paste the qualification criteria from the bidding document. I break them into items, such as similar experience and average annual turnover, and compare each item with the {n} comparable packages whose criteria are public. The rejected bids, the cost estimate and the lessons below don't need your text.",
+    introOne:
+      "Paste the qualification criteria from the bidding document. I break them into items, such as similar experience and average annual turnover, and compare each item with the one comparable package whose criteria are public. The rejected bids, the cost estimate and the lessons below don't need your text.",
+    // The summary above already says none are public, so the open section does not say it again.
+    introNonePublic: "The rejected bids, the cost estimate and the lessons below come from the same comparable packages.",
+    introNonePublicLink: "See how complete the notices are",
+    field: {
+      label: "Your qualification criteria",
+      hint: "Paste them as the bidding document writes them. When you compare them, I save the text with this package, and only you can see it.",
+      count: "{used} of {max} characters",
+    },
+    compare: "Compare the criteria",
+    status: {
+      running: "Comparing your qualification criteria.",
+      edited: "You changed the text after I compared it. Compare the criteria again to update the table below.",
+    },
+    error: {
+      empty: "Paste your qualification criteria first.",
+      tooLong: "Your text is longer than {max} characters. Paste only the qualification criteria.",
+    },
+    preview: "Changes are off in a preview.",
+    // The steps of each run (the 31 brief, section 6.3): the step in progress, then once it is done.
+    steps: {
+      notices: { running: "Finding the award notices of comparable packages", done: "Found the award notices of comparable packages" },
+      reasons: { running: "Reading why bids were rejected", done: "Read why bids were rejected" },
+      cost: { running: "Comparing signed amounts with cost estimates", done: "Compared signed amounts with cost estimates" },
+      lessons: {
+        running: "Finding lessons on cost estimates and specifications",
+        done: "Found lessons on cost estimates and specifications",
+      },
+      checks: { running: "Checking each sentence against its sources", done: "Checked each sentence against its sources" },
+      read: { running: "Reading your qualification criteria", done: "Read your qualification criteria" },
+      find: {
+        running: "Finding comparable notices that published their criteria",
+        done: "Found comparable notices that published their criteria",
+      },
+      compare: { running: "Comparing each item", done: "Compared each item" },
+    } as Record<string, { running: string; done: string }>,
+    // The check line over the whole section (the 31 brief, section 6.4). A quote from a notice or an award
+    // notice has no page, so the line then says the quotes are in their sources.
+    quotesInSources: { one: "{part} of {whole} quote is in its source", many: "{part} of {whole} quotes are in their sources" },
+    notCheckedItems: "whether I found every item in your qualification criteria",
+    removedInPlace: "I removed this sentence. The reason is in the box above.",
+    // A quote from an award notice that is not in it: the notice is a record, with no pages (removed.reasons'
+    // quote_not_on_page in this section's words).
+    quoteNotInSource: { item: "The quote is not in the record it cites.", joined: "the quote is not in the record it cited" },
+    // A reading of your words that check 4's judge said does not follow from them: its source is your text.
+    readingNotSupported: { item: "Your words do not say this.", joined: "your words do not say that" },
+    // Why a run could not finish, by its code (src/strata/criteria/workflow.py, COMPARE_ERRORS).
+    // unsaved: the request never reached the server, so the text was not saved either.
+    errors: {
+      no_reader: "I can't read qualification criteria right now, because no model is connected. Your text is saved.",
+      agent_unavailable: "I couldn't compare your qualification criteria just now. Your text is saved.",
+      content_filter: "I couldn't read your text, because a content filter stopped it. Try pasting only the qualification criteria, without the rest of the bidding document.",
+      agent_output: "I couldn't compare your qualification criteria just now. Your text is saved.",
+      store: "I couldn't save your text. It is still in the box.",
+      data_service: "I couldn't compare your qualification criteria just now. Your text is saved.",
+      internal: "I couldn't compare your qualification criteria just now. Your text is saved.",
+      unsaved: "I couldn't compare your qualification criteria just now. Your text is still in the box.",
+    } as Record<string, string>,
+    // Part 1: your criteria, item by item.
+    items: {
+      heading: "Your criteria, item by item",
+      caption: "I compared {count} items in your qualification criteria with the {n} comparable packages whose criteria are public.",
+      captionOne: "I compared one item in your qualification criteria with the {n} comparable packages whose criteria are public.",
+      count: "Showing all {count} items.",
+      countBoth: "Showing both items.",
+      countOne: "Showing the one item.",
+      columns: {
+        item: "Item",
+        itemDefinition: "The kinds of requirement I compare",
+        words: "Your words",
+        wordsDefinition: "From your text, and how I read them",
+        asked: "Asked for it",
+        askedDefinition: "Of the {n} whose criteria are public",
+        sameOrLess: "Asked for the same or less",
+        sameOrLessDefinition: "Of the notices I could compare with yours",
+      },
+      rejected: "{r} comparable packages had bids rejected over this",
+      rejectedOne: "One comparable package had bids rejected over this",
+      quoted: (words: string) => `"${words}"`,
+      shortened: ", shortened",
+      reading: "I read this as {reading}",
+      more: "{more} asked for more",
+      different: "{different} set it in other terms",
+      none: "None",
+      noneToCompare: "No notice to compare",
+      noneCompared: "None I could compare",
+      removed: "I removed this comparison. The reason is in the box above.",
+      staleComparables:
+        "The comparable packages changed after I compared your qualification criteria. Compare the criteria again to update this table.",
+      unplaced: "I didn't compare {k} parts of your text, because they set no item I compare.",
+      unplacedOne: "I didn't compare one part of your text, because it sets no item I compare.",
+      showThem: "Show them",
+      hideThem: "Hide them",
+      showIt: "Show it",
+      hideIt: "Hide it",
+      order:
+        "I count a notice as asking for less than you when none of its parts is higher than yours and at least one is lower or left out, and as asking for more the other way round. A notice that asked for more contracts but a smaller amount for each, for example, set it in other terms.",
+      // The coverage line: one idea a sentence, each count a Num with a capital where it starts the sentence.
+      coverage: "Based on {n} of {total} comparable packages.",
+      coverageMissing: "{missing} of them published no qualification criteria.",
+      coverageOpen: "I left out {open} that were still open, because I don't compare a tender that is still open.",
+      coverageAll: "Based on all {total} comparable packages.",
+      coverageLink: "Data readiness for these sources",
+      // {sources} is each source's dataset name from the tool, joined as a list; {through} is the day the
+      // records run through, the same in every part, and {asOf} the page's as-of date (the 31 brief, 6.5).
+      source: "{sources}. Records run through {through}. Compared on {compared}.",
+      sourceAsOf: "{sources}. Records as of {asOf}. Compared on {compared}.",
+      noneFound:
+        "I found no qualification criteria in your text. Paste the part of the bidding document that sets them, such as the experience, turnover, equipment and key staff that bidders need.",
+      error: "I couldn't compare your qualification criteria just now. Your text is saved.",
+      // Num hover text (the 31 brief, section 6.10).
+      statedTooltip: (phrase: string) => `Comparable notices that set ${phrase}. Select to see each one and what it asked for.`,
+      sameOrLessTooltip: (phrase: string) => `Notices that asked for the same as you or less on ${phrase}. Select to see them.`,
+      moreTooltip: (phrase: string) => `Notices that asked for more than you on ${phrase}. Select to see them.`,
+      differentTooltip: (phrase: string) =>
+        `Notices that set ${phrase} in a way I can't put in order with yours, such as more contracts of a smaller size. Select to see them.`,
+      // A count's accessible name: the visible count plus its meaning.
+      statedName: (count: string, phrase: string) => `${count} comparable notices set ${phrase}`,
+      sameOrLessName: (count: string, phrase: string) => `${count} notices asked for the same or less on ${phrase}`,
+    },
+    // Refusals inside the section (the 31 brief, section 6.6): the key's lead, then this section's own sentence.
+    refusal: {
+      instead:
+        "Paste only the qualification criteria from the bidding document, and I'll compare them with comparable packages whose criteria are public.",
+      partial: "I compared the qualification criteria in your text and left out the rest.",
+    },
+    // Part 2: rejected bids (brief 28's reasons list).
+    rejected: {
+      heading: "Rejected bids",
+      count: "{n} of {m} comparable packages had bids rejected.",
+      countOne: "One of the {m} comparable packages had bids rejected.",
+      countAll: "All {m} comparable packages had bids rejected.",
+      countNone: "None of the {m} comparable packages had bids rejected.",
+      denominator:
+        "I counted the {m} comparable packages with an award notice in the records, out of {total} in all. Award notices list the rejected bids.",
+      intro: "I quoted each reason from its award notice. I grouped the reasons by what they concerned, so a package can appear in more than one group.",
+      groupCount: "{c} of {n}",
+      groupName: (label: string, c: string, n: string) => `${label}, ${c} of the ${n} packages`,
+      yours: "Your criteria set this item.",
+      notice: "Award notice {id}, published {date}.",
+      sameNotice: "{b} bids were rejected over this in the same award notice.",
+      inLanguage: (language: string) => `In ${language}, as the award notice gives it.`,
+      showMore: "Show {count} more",
+      showOneMore: "Show one more",
+      noneNext: "If an award notice is missing from the records, I can't see its rejected bids.",
+      noneLink: "See how complete the award notices are",
+      noNotices: "I found no award notices for the comparable packages, so I can't count rejected bids.",
+      source: "{sources}. Records run through {through}.",
+      sourceAsOf: "{sources}. Records as of {asOf}.",
+      error: "I couldn't load the rejected bids just now.",
+      openRecords: (ref: string) => `Open the records for ${ref}`,
+      countTooltip: "Comparable packages with an award notice in the records. Select to see the ones with rejected bids.",
+      // A marker's source, in its accessible name (brief 28's record form): "Source 3: Award notice OP00125282, April 14, 2021".
+      markerSource: (id: string, date: string) => `Award notice ${id}, ${date}`,
+      markerSourceUndated: (id: string) => `Award notice ${id}`,
+    },
+    // The drawer's views of section 5's lists (the 31 brief, section 6.11 A and B).
+    drawer: {
+      eyebrow: "What · notice",
+      publicTitle: "{n} packages whose criteria are public",
+      publicTitleOne: "One package whose criteria are public",
+      publicSentence: "These comparable packages published their qualification criteria in their notices.",
+      notice: "Notice {id}, published {date}.",
+      itemTitle: "Comparable notices on {phrase}",
+      fromPage: "From this page",
+      claim: "{same} of {compared} comparable notices asked for the same as you or less on {phrase}.",
+      youAsked: "You asked for: {words}",
+      groups: { less: "Asked for less", same: "Asked for the same", more: "Asked for more", different: "Set in other terms" } as Record<string, string>,
+      groupCount: "{label} ({count})",
+      openNotice: "Open notice {id}",
+      notStated: "{count} of the {n} comparable packages whose criteria are public didn't set {phrase}.",
+      back: "Back to the {n} notices",
+      backOne: "Back to the notice",
+      backPackages: "Back to the {n} packages",
+      close: "Close the list",
+      region: (title: string) => title,
+    },
+    loadingRun: "Loading the rejected bids, the cost estimate and the lessons.",
+    runDone: "The rejected bids, the cost estimate and the lessons are ready.",
+    compareDone: (count: number, words: string) =>
+      count === 1 ? "I compared one item in your qualification criteria." : `I compared ${words} items in your qualification criteria.`,
+    noneFoundDone: "I found no qualification criteria in your text.",
+    runError: "I couldn't load the rejected bids, the cost estimate and the lessons just now.",
+  },
+
+  // Part 3 of section 5: the cost estimate (the 31 brief, section 6.8). A package's difference from its own cost
+  // estimate is a measurement of one package, not a share of a group, so it may be a percentage under 20 cases
+  // (DESIGN.md section 7, rule 11).
+  cost: {
+    heading: "The cost estimate",
+    intro:
+      "Your cost estimate is {estimate}. The comparable packages had cost estimates from {low} to {high}. Each dot below is one of them, placed by how far its signed amount was from its own cost estimate.",
+    introNoEstimate:
+      "The plan row gives no cost estimate for this package. The comparable packages had cost estimates from {low} to {high}. Each dot below is one of them, placed by how far its signed amount was from its own cost estimate.",
+    amount: (amount: string) => `US$${amount}`,
+    title: "{above} of {m} comparable packages were signed above their cost estimates.",
+    titleOne: "One of the {m} comparable packages was signed above its cost estimate.",
+    titleAll: "All {m} comparable packages were signed above their cost estimates.",
+    titleNone: "None of the {m} comparable packages were signed above their cost estimates.",
+    subtitle: "Signed amount against the package's own cost estimate, %",
+    line: "At the cost estimate",
+    below: "{below} signed below",
+    above: "{above} signed above",
+    middleLabel: "Middle half {q25} to {q75}, middle {q50}",
+    middle:
+      "The middle half of these {m} packages were signed between {q25} and {q75} their cost estimates. The middle package was signed {q50} its cost estimate.",
+    at: "{at} were signed at exactly their cost estimates.",
+    atOne: "One was signed at exactly its cost estimate.",
+    abstain: "I'm not giving a range: only {m} comparable packages had both a cost estimate and a signed contract. Here are all {m}.",
+    abstainOne: "I'm not giving a range: only one comparable package had both a cost estimate and a signed contract. Here it is.",
+    none:
+      "I can't compare the cost estimate, because none of the comparable packages had both a cost estimate in its Procurement Plan and a signed contract.",
+    coverage: "Based on {m} of {total} comparable packages; {gaps}.",
+    // With no package to compare, "Based on 0 of ..." says nothing the sentence above has not: only the reasons.
+    coverageNone: "Of the {total} comparable packages, {gaps}.",
+    coverageOpen: "{open} had no signed contract yet",
+    coverageNoEstimate: "{none} had no cost estimate in their Procurement Plan",
+    coverageNoUsd: "{usd} were signed only in a local currency",
+    coverageAnd: ", and ",
+    coverageComma: ", ",
+    coverageAll: "Based on all {total} comparable packages.",
+    coverageLink: "Data readiness for these sources",
+    source: "{sources}. Records run through {through}.",
+    sourceAsOf: "{sources}. Records as of {asOf}.",
+    showTable: "Show the table",
+    hideTable: "Hide the table",
+    tableCount: "Showing all {m} packages.",
+    tableCountOne: "Showing the one package.",
+    columns: {
+      package: "Package",
+      country: "Country",
+      estimated: "Estimated Amount (US$)",
+      estimatedDefinition: "In its Procurement Plan",
+      signed: "Signed amount (US$)",
+      signedDefinition: "All contracts the package signed",
+      diff: "Against the cost estimate (%)",
+      diffDefinition: "Above the cost estimate is positive",
+    },
+    openRecords: (ref: string) => `Open the records for ${ref}`,
+    // A dot's tooltip and accessible name.
+    tooltipLine: "Signed for {signed} against a cost estimate of {estimate}, in {country}.",
+    tooltipLineNoCountry: "Signed for {signed} against a cost estimate of {estimate}.",
+    tooltipOpen: "Press Enter or click to open its records.",
+    tooltipOpenTouch: "Open its records",
+    dotName: (ref: string, diff: string) => `${ref}, signed ${diff} its cost estimate`,
+    alt: "One dot for each of {m} comparable packages, placed by how far its signed amount was from its own cost estimate. {below} were signed below, {at} at, and {above} above their cost estimates.",
+    altMiddle: "The middle half ran from {q25} to {q75}, and the middle package was {q50}.",
+    countTooltip: "Comparable packages with both a cost estimate and a signed contract. Select to see the table.",
+    error: "I couldn't load the cost comparison just now.",
+    // The drawer's view of one comparable package's cost records (the 31 brief, section 6.11 E).
+    drawer: {
+      eyebrow: "How · operations",
+      title: "Cost records of {ref}",
+      finding: "Its contracts were signed for {signed}, {diff} its cost estimate of {estimate}.",
+      planRow: "Procurement Plan row {ref}",
+      planFrom: "Procurement Plan of {date}, PDF page {page}.",
+      estimated: "Estimated Amount (US$)",
+      contract: "Contract {id}",
+      signedOn: "Signed {date}",
+      amount: "Signed amount (US$)",
+      sum: "The signed amount above adds every contract this package signed.",
+      close: "Close the cost records",
+      region: (ref: string) => `Cost records for comparable package ${ref}`,
+    },
+  },
+
+  // Part 4 of section 5: lessons on cost estimates and specifications (the 31 brief, section 6.9).
+  criteriaLessons: {
+    heading: "Lessons on cost estimates and specifications",
+    intro:
+      "Lessons from completion reports that a lead procurement specialist added to the library. I rank them by how well they fit this package and how strong their evidence is, never by how often people open them.",
+    groups: { cost_estimates: "Cost estimates", designs_and_specifications: "Specifications" } as Record<string, string>,
+    eyebrow: "Why · evaluation",
+    quoted: (quote: string) => `"${quote}"`,
+    sourceLead: "Source:",
+    // The first ICR and IEG on the screen are spelled out (DESIGN.md section 7, rule 22).
+    icrSpelled: "Implementation Completion and Results Report (ICR)",
+    sourceLine: "{type}, {pid}, {date}, paragraph {para}, page {page}.",
+    sourceLineSection: "{type}, {pid}, {date}, section {para}, page {page}.",
+    // The marker's source, in its accessible name ("Source 5: Implementation Completion and Results Report,
+    // October 10, 2019, paragraph 54").
+    markerParagraph: (type: string, date: string, para: string) => `${type}, ${date}, paragraph ${para}`,
+    markerSection: (type: string, date: string, section: string) => `${type}, ${date}, section ${section}`,
+    status: {
+      restated: "Lesson version {v}. IEG's ICR Review restated it.",
+      restatedSpelled: "Lesson version {v}. The Independent Evaluation Group (IEG) restated it in its ICR Review.",
+      awaiting: "Lesson version {v}. Awaiting IEG review.",
+      awaitingSpelled: "Lesson version {v}. Awaiting review by the Independent Evaluation Group (IEG).",
+      ieg_lesson: "Lesson version {v}. IEG's lesson.",
+      not_restated: "Lesson version {v}. Rests on the ICR alone.",
+    } as Record<string, string>,
+    none: "I have no lessons on cost estimates or specifications that fit this package yet.",
+    noneLink: "See all lessons",
+    error: "I couldn't load the lessons just now.",
+  },
+
   // The Packages tab (the 15 brief, section 7.9).
   packagesTab: {
     purpose: "The packages you are planning and the plans you checked. Check a published plan, or plan a new package from one sentence.",
@@ -3292,6 +3633,10 @@ export const copy = {
         check_plan: "the plan check",
         search_passages: "the document search",
         get_lessons: "the quote check on proposed lessons",
+        // Section 5 of the package workspace (ticket 31; the 31 brief, section 9).
+        compare_criteria: "the comparison of qualification criteria",
+        rejected_bids: "the count of rejected bids",
+        compare_cost_estimates: "the comparison of cost estimates",
         // The package workspace's section 3 (ticket 30) links with its own key, since its coverage line is not
         // the quote check's.
         package_risks: "the risks and what helped",
@@ -4206,5 +4551,13 @@ export const copy = {
     // An amount in a sentence (rule 11): "12.5 million", "2 billion".
     million: (n: string) => `${n} million`,
     billion: (n: string) => `${n} billion`,
+    // A package's own difference from its cost estimate (ticket 31, rule 11): "+21.4%" with a true minus sign
+    // for below, and "21.4 percent above" in sentences and alt text.
+    signedPercent: (sign: string, n: string) => `${sign}${n}%`,
+    plus: "+",
+    minus: "−",
+    percentAbove: (n: string) => `${n} percent above`,
+    percentBelow: (n: string) => `${n} percent below`,
+    percentAtZero: "0 percent above",
   },
 } as const;

@@ -35,8 +35,10 @@ export type SentenceEvent = {
 export type EvidenceEvent = {
   id: string;
   // A quantile dot's packages (ticket 15) are no source: the page holds them, and the drawer lists them. So are
-  // the completion reports behind a risk's count and every report the risks section counted (ticket 30).
-  kind: "passage" | "record" | "package" | "dot" | "risk-reports" | "risk-reports-all";
+  // section 5's lists and cost records (ticket 31): the packages whose criteria are public, the notices behind one
+  // item, and a comparable package's cost records. And so are the completion reports behind a risk's count and
+  // every report the risks section counted (ticket 30).
+  kind: "passage" | "record" | "package" | "dot" | "criteria_public" | "criteria_item" | "package_cost" | "risk-reports" | "risk-reports-all";
   tool: string | null;
   stratum: "What" | "How" | "Why" | null;
   short_name: string | null;

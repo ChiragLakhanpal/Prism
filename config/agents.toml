@@ -75,6 +75,19 @@ guardrail = "strata"
 description = "Summarizes the evidence for a proposed lesson and names the current lessons it may repeat, for lesson reviewers."
 tools = []
 
+# The check-your-criteria workflow's reader (ticket 31): one structured call that reads the qualification criteria a
+# person pasted into the items of the item registry (config/criteria_items.toml) that the app hands it, with one
+# "I read this as ..." sentence each, or a refusal key when the text asks Strata to judge a live tender's bids or a
+# review decision. The app checks each excerpt is in the person's text, each number against the excerpt, and runs
+# the verifier on each reading before anyone sees it (src/strata/criteria/workflow.py).
+[agents.criteria_reader]
+name = "strata-criteria-reader"
+role = "draft"
+instructions = "criteria_reader.md"
+guardrail = "strata"
+description = "Reads pasted qualification criteria into the items Strata compares with comparable packages' notices."
+tools = []
+
 [guardrails.strata]
 name = "strata-guardrail"
 base_policy = "Microsoft.DefaultV2"

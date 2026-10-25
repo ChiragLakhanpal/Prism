@@ -289,9 +289,43 @@ def disagreement_answer(result, question) -> dict[str, list]:
             "rejected": [result["summary"]["rejected"]["count"]]}
 
 
+def cost_answer(result, question) -> dict[str, list]:
+    """compare_cost_estimates' answer: the packages signed above and below their own cost estimates, its
+    abstention, and the package's own cost estimate (ticket 31)."""
+    return {"signed_above": sorted(row["step_reference"] for row in result["rows"] if row["diff_pct"] > 0),
+            "signed_below": sorted(row["step_reference"] for row in result["rows"] if row["diff_pct"] < 0),
+            "abstention": [result["abstention"]["reason"]] if result["abstention"] else [],
+            "own_estimate": [result["package"]["estimated_amount_usd"]]}
+
+
+def rejected_answer(result, question) -> dict[str, list]:
+    """rejected_bids' answer: n of m from the summary, the packages in two of its groups, and the groups' order
+    (ticket 31)."""
+    def packages(key: str) -> list[str]:
+        return sorted({row["step_reference"] for row in result["rows"] if row["item_key"] == key})
+    counts = result["summary"]["counts"]
+    return {"n_of_m": [counts["n"], counts["m"]], "bid_security": packages("bid_security"),
+            "key_staff": packages("key_staff"),
+            "group_order": [group["item_key"] for group in result["summary"]["groups"]]}
+
+
+def criteria_answer(result, question) -> dict[str, list]:
+    """compare_criteria's answer: n of the total whose criteria are public, one item's stated, compared and same or
+    less, and the comparables still open, which it never compares (ticket 31)."""
+    counts = result["summary"]["counts"]
+    items = {item["item_key"]: item for item in result["summary"]["items"]}
+    found = {"public": [counts["n"], counts["total"]],
+             "still_open": sorted(evidence.split(":", 1)[1] for entry in result["coverage"]["not_used"]
+                                  if entry["reason"] == "still_open" for evidence in entry["evidence_ids"])}
+    for key in items:
+        found[key] = [items[key]["stated"], items[key]["compared"], items[key]["same_or_less"]]
+    return found
+
+
 ANSWERS = {"check_plan": marked, "search_passages": in_top_three, "data_readiness_for": readiness_answer,
            "find_comparables": past_range, "get_disagreements": disagreement_answer,
-           "get_lessons": lessons_answer}
+           "get_lessons": lessons_answer, "compare_cost_estimates": cost_answer, "rejected_bids": rejected_answer,
+           "compare_criteria": criteria_answer}
 
 
 def answered(result, question) -> dict[str, list[str]]:
@@ -300,7 +334,8 @@ def answered(result, question) -> dict[str, list[str]]:
 
 
 def expected(question) -> dict[str, list[str]]:
-    if question["tool"] in ("data_readiness_for", "get_disagreements", "get_lessons"):
+    if question["tool"] in ("data_readiness_for", "get_disagreements", "get_lessons", "compare_cost_estimates",
+                            "rejected_bids", "compare_criteria"):
         return question["expected"]
     return {mark: sorted(refs) for mark, refs in question["expected"].items()}
 
@@ -330,9 +365,20 @@ def engine_for(question, engine, library):
     return library if question.get("needs") == "decided_lessons" else engine
 
 
+def arguments_of(question, engine, library) -> dict:
+    """The question's arguments. A check-your-criteria tool's question (ticket 31) names the find_comparables call
+    its comparables come from, and their STEP references become its comparables argument."""
+    arguments = dict(question["arguments"])
+    if "comparables_of" in question:
+        found = registry.call("find_comparables", question["comparables_of"],
+                              registry.Context(engine=engine_for(question, engine, library), viewer=ANA))
+        arguments["comparables"] = ",".join(row["step_reference"] for row in found["rows"])
+    return arguments
+
+
 def test_each_tool_answers_its_benchmark_question_on_the_fixture_as_expected(engine, library):
     for question in tool_questions():
-        result = registry.call(question["tool"], question["arguments"],
+        result = registry.call(question["tool"], arguments_of(question, engine, library),
                                registry.Context(engine=engine_for(question, engine, library), viewer=ANA))
 
         assert answered(result, question) == expected(question)
@@ -343,7 +389,7 @@ def test_without_an_as_of_date_each_tool_answers_as_of_today(engine, library, mo
     for question in tool_questions():
         today = dt.date.fromisoformat(question["arguments"]["as_of"])
         monkeypatch.setattr(registry, "today", lambda: today)
-        arguments = {name: given for name, given in question["arguments"].items() if name != "as_of"}
+        arguments = {name: given for name, given in arguments_of(question, engine, library).items() if name != "as_of"}
 
         result = registry.call(question["tool"], arguments,
                                registry.Context(engine=engine_for(question, engine, library), viewer=ANA))
@@ -356,7 +402,7 @@ def test_without_an_as_of_date_each_tool_answers_as_of_today(engine, library, mo
 def test_each_tool_answers_under_each_view(engine, library, view):
     """Until ticket 40 applies each view's rules, every view gets the World Bank staff result."""
     for question in tool_questions():
-        result = registry.call(question["tool"], question["arguments"],
+        result = registry.call(question["tool"], arguments_of(question, engine, library),
                                registry.Context(engine=engine_for(question, engine, library), viewer=ANA, view=view))
 
         assert result["view"] == view

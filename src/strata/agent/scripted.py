@@ -38,6 +38,8 @@ CASES = FIXTURES / "cases.toml"
 WRITER_CASES = FIXTURES / "writers.toml"
 # The package reader's cases (ticket 15): sentences it reads into the package form's fields.
 PACKAGE_CASES = FIXTURES / "packages.toml"
+# The criteria reader's cases (ticket 31): qualification criteria it reads into the item registry's items.
+CRITERIA_CASES = FIXTURES / "criteria.toml"
 RECORDINGS = FIXTURES / "recorded"
 # The judge's recorded answers for the scripted cases, one file per case that asks the judge (ticket 24).
 JUDGED = FIXTURES / "judged"

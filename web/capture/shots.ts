@@ -844,6 +844,11 @@ function packageShot(name: string, answer: Answer | null, rest: Partial<Shot> = 
   if (answer) answers[`${api}/comparables`] = answer;
   // Section 3 (ticket 30): the fixture's Kenya comparables reach no completion report.
   answers[`${api}/risks`] = { recorded: "risks-ke-nwwda-541055.json" };
+  // Section 5, "Check your criteria" (ticket 31), collapsed under section 1, as the server answered on the fixture.
+  if (path === PACKAGE) {
+    answers[`${api}/criteria`] = { recorded: "criteria-summary-ke-nwwda-541055.json" };
+    answers[`${api}/criteria/run`] = { recorded: "criteria-run-ke-nwwda-541055.sse" };
+  }
   const pending = [...(pkg ? [] : [api]), ...(answer ? [] : [`${api}/comparables`]), ...(rest.pending ?? [])];
   return app(name, path, {}, { ...rest, api: answers, pending });
 }
@@ -887,6 +892,84 @@ const focusReset = async (page: Page) => {
   await page.locator("[data-plan-reset] button:visible").focus();
   await page.waitForTimeout(250);
 };
+
+// Ticket 31: section 5 of the package workspace, "Check your criteria", on a works package whose comparables
+// published no qualification criteria (KE-NWWDA-541055-CW-RFB) and on a consultant services package whose
+// comparables did (KE-CWSB-224323-CS-QCBS), each answered as the server answered on the fixture
+// (tests/record_criteria_api.py). The section's other states are on the gallery's check-criteria page.
+const CONSULTANT = "/packages/KE-CWSB-224323-CS-QCBS";
+const CONSULTANT_API = "/api/packages/KE-CWSB-224323-CS-QCBS";
+const PASTED =
+  "1. Similar experience: at least two contracts of similar works of US$10 million each.\n" +
+  "2. Average annual turnover: US$25 million over the last three years.\n" +
+  "3. The bid must be signed by a person with a power of attorney.";
+function criteriaShot(name: string, rest: Partial<Shot> = {}, compare = "criteria-compare-similar-experience.sse", path = CONSULTANT): Shot {
+  const api = `/api${path}`;
+  const slug = path === CONSULTANT ? "ke-cwsb-224323" : "ke-nwwda-541055";
+  // Section 3 (ticket 30) sits above section 5: the works package's risks as recorded; the consultant package has
+  // no recorded risks, so its section 3 stays loading rather than showing an error the server never gave.
+  const risks = path === CONSULTANT ? [`${api}/risks`] : [];
+  return app(`criteria--${name}`, path, {}, {
+    ...rest,
+    pending: [...risks, ...(rest.pending ?? [])],
+    api: {
+      ...(path === CONSULTANT ? {} : { [`${api}/risks`]: { recorded: "risks-ke-nwwda-541055.json" } }),
+      ...app(name, path).api,
+      [api]: { recorded: `package-${slug}.json` },
+      [`${api}/comparables`]: { recorded: `comparables-${slug}.json` },
+      [`${api}/criteria`]: { recorded: `criteria-summary-${slug}.json` },
+      [`${api}/criteria/run`]: { recorded: `criteria-run-${slug}.sse` },
+      [`${api}/criteria/compare`]: { recorded: compare },
+      "/api/evidence/opened": OPENED,
+      "/api/evidence": { recorded: "evidence-award-notice-op00125282.json" },
+      ...rest.api,
+    },
+  });
+}
+const openCheck = click("#check-criteria [data-section-toggle]");
+const compareCriteria = then(openCheck, async (page) => {
+  await page.locator("#check-criteria textarea").fill(PASTED);
+  await page.locator("#check-criteria [data-compare]").click();
+  await page.locator("#check-criteria :is([data-criteria-notes], [data-refusal], [data-none-found])").first().waitFor();
+});
+const CRITERIA_SHOTS: Shot[] = [
+  criteriaShot("collapsed"),
+  criteriaShot("collapsed-none-public", {}, undefined, PACKAGE),
+  criteriaShot("collapsed-loading", { pending: [`${CONSULTANT_API}/criteria`] }),
+  criteriaShot("works-open", { full: true, act: openCheck }, undefined, PACKAGE),
+  criteriaShot("open-before-comparing", { full: true, act: openCheck }),
+  criteriaShot("run-in-progress", { full: true, act: openCheck, pending: [`${CONSULTANT_API}/criteria/run`] }),
+  criteriaShot("compared", { full: true, act: compareCriteria }),
+  criteriaShot("live-tender-refused", { full: true, act: compareCriteria }, "criteria-compare-live-tender.sse"),
+  criteriaShot("partial-refusal", { full: true, act: compareCriteria }, "criteria-compare-partial-refusal.sse"),
+  criteriaShot("none-found", { full: true, act: compareCriteria }, "criteria-compare-none-found.sse"),
+  criteriaShot("empty-on-press", { act: then(openCheck, click("#check-criteria [data-compare]")) }),
+  criteriaShot("focus-toggle", { act: focus("#check-criteria [data-section-toggle]") }),
+  criteriaShot("focus-textarea", { act: then(openCheck, focus("#check-criteria textarea")) }),
+  criteriaShot("hover-count", { widths: WIDE, act: then(compareCriteria, hover("#check-criteria [data-same-or-less] [data-num]:visible")) }),
+  criteriaShot("drawer-item", { act: then(compareCriteria, click("#check-criteria [data-same-or-less] [data-num]:visible")) }),
+  criteriaShot("drawer-public", { act: then(openCheck, click("#check-criteria [data-summary-text] [data-num]")) }),
+  criteriaShot("hover-cost-dot", { widths: WIDE, act: then(openCheck, hover("[data-cost-dot] >> nth=0")) }, undefined, PACKAGE),
+  criteriaShot("focus-cost-dot", { act: then(openCheck, focus("[data-cost-dot] >> nth=0")) }, undefined, PACKAGE),
+  criteriaShot("drawer-cost", { act: then(openCheck, click("[data-cost-row]:visible >> nth=0")) }, undefined, PACKAGE),
+  criteriaShot("drawer-award-notice", { act: then(openCheck, click("[data-rejected-row] [data-citation] >> nth=0")) }, undefined, PACKAGE),
+  criteriaShot("focus-marker", { act: then(openCheck, focus("[data-lesson-card] [data-citation]")) }, undefined, PACKAGE),
+  criteriaShot("320", { widths: [320], full: true, act: compareCriteria }),
+  criteriaShot("works-320", { widths: [320], full: true, act: openCheck }, undefined, PACKAGE),
+  criteriaShot("review-decisions-refused", { full: true, act: compareCriteria }, "criteria-compare-review-decisions.sse"),
+  criteriaShot("focus-intro-count", { act: then(openCheck, focus("#check-criteria [data-criteria-intro] [data-num]")) }),
+  // A reading check 4's judge said does not follow: removed in its place, its reason in the box above.
+  criteriaShot("reading-removed", { full: true, act: compareCriteria }, "criteria-compare-swapped-reading.sse"),
+  // View C with the requirement highlighted, and view F with the lesson's words highlighted and its IEG line.
+  criteriaShot("drawer-notice", {
+    api: { "/api/evidence": { recorded: "evidence-passage-op00077276-s3.json" } },
+    act: then(compareCriteria, click("#check-criteria [data-same-or-less] [data-num]:visible"), click("[role=dialog] [data-entry='strata.gold.passage:OP00077276/v1/s3']")),
+  }),
+  criteriaShot("drawer-lesson", {
+    api: { "/api/evidence": { recorded: "evidence-icr-p130164-54.json" } },
+    act: then(openCheck, click("[data-lesson-card] [data-citation]")),
+  }, undefined, PACKAGE),
+];
 
 const PACKAGE_SHOTS: Shot[] = [
   packageShot("package", comparables(COMPARABLES)),
@@ -960,6 +1043,9 @@ const read = (name: string) => JSON.parse(readFileSync(new URL(name, RECORDED), 
 const changed = (name: string): Answer => ({ body: JSON.stringify({ ...read(PLANNED_FILE), package: read(name).package }) });
 const PLANNED_ANSWERS: Shot["api"] = {
   "/api/comparables": { recorded: "comparables-planned-works-rfb-ke.json" },
+  // Section 5 of the first planned package (ticket 31).
+  [`${PLANNED_API}/criteria`]: { recorded: "criteria-summary-planned-rural-roads.json" },
+  [`${PLANNED_API}/criteria/run`]: { recorded: "criteria-run-planned-rural-roads.sse" },
   "/api/evidence": { recorded: "evidence-package-ke-mowi-47509.json" },
   "/api/evidence/opened": OPENED,
   "/api/planned-packages": { recorded: "planned-packages-list.json" },
@@ -1361,4 +1447,5 @@ export const SHOTS: Shot[] = [
   ...PLANNED_SHOTS,
   ...RISK_SHOTS,
   ...RETRIEVAL_SHOTS,
+  ...CRITERIA_SHOTS,
 ];
