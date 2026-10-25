@@ -53,7 +53,9 @@ export function DraftRow({ row, linkRef }: { row: Row; linkRef?: (element: HTMLA
   return (
     <li className="border-t border-line p-4 first:border-t-0" data-draft-row={row.draft_id}>
       <TextLink ref={linkRef} href={draftHref(row.draft_id)} className="text-body font-semibold">
-        {kind.rowTitle(subject.implementing_agency, short(subject.plan_date))}
+        {row.kind === "mission_brief"
+          ? kind.rowTitle(subject.project_name, "")
+          : kind.rowTitle(subject.implementing_agency, short(subject.plan_date))}
       </TextLink>
       <p className="mt-1 text-small text-ink-muted">
         <Fill template={words.project} slots={{ name: subject.project_name, pid: <ProjectId pid={subject.project_id} /> }} />{" "}

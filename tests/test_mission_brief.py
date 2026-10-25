@@ -1,13 +1,14 @@
-"""The mission brief at seam 3: written, checked and exported through the draft routes (ticket 37, criterion 6).
+"""The mission brief and Following at seam 3, through the HTTP routes (ticket 37, criteria 1, 5 and 6).
 
-"Add to mission brief" on a Following row posts {"kind": "mission_brief", "project_id": ...} to /api/drafts. The
-write-the-mission-brief workflow reads project_records and check_plan as the viewer, its writer (the scripted
-writer, replaying tests/fixtures/agent/writers.toml) drafts the five parts, the verifier checks every sentence, and
-the draft is saved in strata.ops. It then moves from Draft to Checked by you to Exported on its author's actions, and
-the export makes a Word file with a heading for each part. Today is October 23, 2026, as in tests/test_drafts.py.
+One story runs once for this module (tests/record_following_api.py): Ana, World Bank staff on the Kenya water team,
+follows P156634 and P130164 and opens Following; then "Add to mission brief" posts {"kind": "mission_brief",
+"project_id": "P156634"} to /api/drafts. The write-the-mission-brief workflow reads project_records and check_plan
+as Ana, its writer (the scripted writer, replaying tests/fixtures/agent/writers.toml) drafts the five parts, the
+verifier checks every sentence, and the draft is saved in strata.ops; Ana marks it as checked and exports it. The
+screens' tests serve the story's answers, so they must stay word for word what the routes answer.
 
-Expected values come from independent sources: the two contracts since ISR 19 and their amounts, and the credits,
-from tests/ground_truth/values.toml.
+Expected values come from independent sources: the four signals from the ticket, the two contracts since ISR 19 and
+their amounts from tests/ground_truth/values.toml.
 """
 
 import asyncio
@@ -22,6 +23,7 @@ from pathlib import Path
 import httpx
 import pytest
 
+from record_following_api import answers
 from strata.agent.scripted import WRITER_CASES, ScriptedAgent, load_cases
 from strata.config import load_roles
 from strata.drafts.store import DraftStore
@@ -29,72 +31,47 @@ from strata.lakehouse import catalog
 from strata.lakehouse.engine import DuckDBEngine
 from strata.server.access import Access, StaticGroups
 from strata.server.app import create_app
-from strata.server.evidence import OpenedLog
-from strata.server.following import FollowStore
 
 ROOT = Path(__file__).resolve().parents[1]
+RECORDED = ROOT / "tests" / "fixtures" / "api"
 TRUTH = {entry["id"]: entry for entry in tomllib.loads((ROOT / "tests" / "ground_truth" / "values.toml").read_text())["value"]}
-TODAY = dt.date(2026, 10, 23)
-ANA = {"X-Forwarded-Email": "ana.example@worldbank.org", "X-Forwarded-Preferred-Username": "Ana Example",
-       "X-Forwarded-User": "4021@1984", "X-Forwarded-Access-Token": "token-for-ana-only"}
-GROUPS = {"4021@1984": ["users", "strata-team-kenya-water"]}
-BRIEF = {"kind": "mission_brief", "project_id": "P156634"}
 PARTS = ["plans", "awards", "ratings", "disbursement", "closing"]
 
 
-def call(app, method, path, headers=None, **options):
-    async def go():
-        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://strata.test") as client:
-            return await client.request(method, path, headers=headers or {}, **options)
-    return asyncio.run(go())
+@pytest.fixture(scope="module")
+def story(fixture_db, tmp_path_factory):
+    files: dict[str, bytes] = {}
+    found = answers(tmp_path_factory.mktemp("following-story"), fixture_db, files)
+    return found, files
 
 
-def events(text: str) -> list[tuple[str, dict]]:
-    found = []
-    for block in text.split("\n\n"):
-        lines = [line for line in block.splitlines() if line and not line.startswith(":")]
-        if lines:
-            found.append((lines[0].removeprefix("event: "), json.loads(lines[1].removeprefix("data: "))))
-    return found
+def read(story, name: str) -> dict:
+    return json.loads(story[0][name])
 
 
-@pytest.fixture
-def briefing(fixture_db, tmp_path):
-    state_db = tmp_path / "state.duckdb"
-    with DuckDBEngine.open(state_db) as engine:
-        catalog.build(engine)
-
-    @contextmanager
-    def reading(viewer):
-        with DuckDBEngine.open(fixture_db, read_only=True) as engine:
-            yield engine
-
-    def make(case="mission-brief-p156634"):
-        written = load_cases(WRITER_CASES)[case]
-        numbers = iter(range(1, 100))
-        clock = iter(dt.datetime(2026, 10, 23, 14, minute, tzinfo=dt.UTC) for minute in range(60))
-        state = lambda: DuckDBEngine.open(state_db)  # noqa: E731
-        return create_app(engine_for=reading, drafts=DraftStore(state), opened=OpenedLog(state),
-                          follows=FollowStore(state), writers=lambda kind: ScriptedAgent(written),
-                          access=Access(load_roles(), StaticGroups(GROUPS)), today=lambda: TODAY,
-                          now=lambda: next(clock), new_draft_id=lambda: f"draft-{next(numbers):04d}",
-                          new_run_id=lambda: "run-0001")
-    return make
+def test_the_screens_recorded_answers_are_what_the_routes_answer(story):
+    """The Following and mission brief screens' tests serve these files; the routes must still answer with them."""
+    for name, text in story[0].items():
+        assert text == (RECORDED / name).read_text(), f"{name} is out of date: uv run --frozen python tests/record_following_api.py"
 
 
-def write(app, key="key-1") -> tuple[list, str | None]:
-    sent = events(call(app, "POST", "/api/drafts", ANA, json={**BRIEF, "idempotency_key": key}).text)
-    made = [data["draft_id"] for kind, data in sent if kind == "draft"]
-    return sent, made[0] if made else None
+def test_followings_p156634_row_needs_a_look_with_its_four_signals_and_the_closed_project_folds(story):
+    following = read(story, "following-p156634.json")
+    first, second = following["projects"]
+
+    assert (first["project"]["project_id"], first["status"]) == ("P156634", "needs_a_look")
+    assert [row["check"] for row in first["rows"]] == ["completion_passed", "above_estimate", "late_direct", "closing_moves"]
+    assert (second["project"]["project_id"], second["status"]) == ("P130164", "closed")
+    assert following["counts"]["shown"] == 1 and following["counts"]["folded"] == 1
+    assert read(story, "following-asof-2024-06-30.json")["projects"][0]["status"] == "watch"
+    # Follows are kept per viewer: Ben, also staff, follows nothing, and Ana's follow was saved before it was listed.
+    assert read(story, "following-empty.json")["projects"] == []
+    assert (read(story, "follow-off.json"), read(story, "follow-on.json")) == ({"following": False}, {"following": True})
 
 
-def test_add_to_mission_brief_writes_five_parts_with_numbers_from_tools_and_citations(briefing):
-    app = briefing()
+def test_add_to_mission_brief_writes_five_parts_with_numbers_from_tools_and_citations(story):
+    draft = read(story, "drafts-mission-brief-draft.json")
 
-    sent, draft_id = write(app)
-    draft = call(app, "GET", f"/api/drafts/{draft_id}", ANA).json()
-
-    assert [kind for kind, _ in sent if kind == "step"][:1] == ["step"] and draft_id
     assert draft["kind"] == "mission_brief" and draft["state"] == "draft"
     assert [note["key"] for note in draft["notes"]] == PARTS
     assert all(note["state"] == "written" and note["sentences"] for note in draft["notes"])
@@ -102,49 +79,57 @@ def test_add_to_mission_brief_writes_five_parts_with_numbers_from_tools_and_cita
     awards = next(note for note in draft["notes"] if note["key"] == "awards")
     signed = [next(field["value"] for field in row["fields"] if field["key"] == "signed_on") for row in awards["table"]]
     assert signed == [TRUTH["award-567630-signed"]["value"].isoformat(), TRUTH["award-565568-signed"]["value"].isoformat()]
+    amounts = [next(field["value"] for field in row["fields"] if field["key"] == "signed_amount_usd") for row in awards["table"]]
+    assert amounts[0] == f'{TRUTH["award-567630-amount"]["value"]:.2f}'
     cited = {evidence for note in draft["notes"] for sentence in note["sentences"] for evidence in sentence["evidence_ids"]}
     assert cited <= set(draft["evidence"]) and "strata.gold.contract:1901323" in cited
     assert draft["checks"]["tools"] == ["project_records"]
 
 
-def test_a_part_whose_sentences_all_fail_keeps_its_table_and_no_sentence(briefing):
-    app = briefing("mission-brief-a-part-removed")
+def test_the_brief_moves_through_the_draft_states_and_exports_a_word_file_with_its_five_parts(story):
+    checked, exported = read(story, "drafts-mission-brief-checked.json"), read(story, "drafts-mission-brief-exported.json")
+    [(name, word)] = story[1].items()
+    document = zipfile.ZipFile(io.BytesIO(word)).read("word/document.xml").decode()
 
-    _, draft_id = write(app)
-    draft = call(app, "GET", f"/api/drafts/{draft_id}", ANA).json()
-    disbursement = next(note for note in draft["notes"] if note["key"] == "disbursement")
-
-    assert disbursement["state"] == "abstained" and disbursement["sentences"] == []
-    assert sorted(row["reference"] for row in disbursement["table"]) == ["IDA60290", "IDA60300"]
-    assert {item["reason"] for item in draft["removed"]} == {"number_not_in_records", "id_not_returned"}
-
-
-def test_the_brief_moves_through_the_draft_states_and_exports_a_word_file_with_its_five_parts(briefing):
-    app = briefing()
-    _, draft_id = write(app)
-
-    held = call(app, "POST", f"/api/drafts/{draft_id}/export", ANA, json={"expected_state": "draft"})
-    checked = call(app, "POST", f"/api/drafts/{draft_id}/check", ANA, json={"expected_state": "draft"}).json()
-    exported = call(app, "POST", f"/api/drafts/{draft_id}/export", ANA, json={"expected_state": "checked"}).json()
-    [word] = [file["name"] for file in exported["export"]["files"] if file["name"].endswith(".docx")]
-    content = call(app, "GET", f"/api/drafts/{draft_id}/files/{word}", ANA).content
-    document = zipfile.ZipFile(io.BytesIO(content)).read("word/document.xml").decode()
-
-    assert held.status_code == 409 and checked["state"] == "checked" and exported["state"] == "exported"
-    assert word == "mission-brief-P156634-2026-10-23.docx"
+    assert checked["state"] == "checked" and exported["state"] == "exported"
+    assert name == "mission-brief-P156634-2026-10-23.docx"
     assert "Mission brief for Water and Sanitation Development Project (P156634)" in document
-    for heading in ("Latest Procurement Plans", "Awards since the last ISR", "Rating history", "Disbursement",
-                    "Closing check"):
+    for heading in ("Latest Procurement Plans", "Awards since the last ISR", "Rating history", "Disbursement", "Closing check"):
         assert heading in document
     assert "This brief is not a World Bank review, clearance or no-objection." in document
     assert exported["export"]["footnotes"] == exported["citations"]
 
 
-def test_the_following_row_names_the_open_brief_its_author_started(briefing):
-    app = briefing()
-    call(app, "PUT", "/api/projects/P156634/follow", ANA)
-    _, draft_id = write(app)
+def test_the_following_row_names_the_open_brief_its_author_started(story):
+    [row, _] = read(story, "following-with-brief.json")["projects"]
 
-    [row] = call(app, "GET", "/api/following", ANA).json()["projects"]
+    assert row["mission_brief"]["draft_id"] == "draft-0001"
 
-    assert row["mission_brief"]["draft_id"] == draft_id
+
+def test_a_part_whose_sentences_all_fail_keeps_its_table_and_no_sentence(fixture_db, tmp_path):
+    state_db = tmp_path / "state.duckdb"
+    with DuckDBEngine.open(state_db) as engine:
+        catalog.build(engine)
+
+    @contextmanager
+    def reading(_viewer):
+        with DuckDBEngine.open(fixture_db, read_only=True) as engine:
+            yield engine
+
+    ana = {"X-Forwarded-Email": "ana.example@worldbank.org", "X-Forwarded-User": "4021@1984",
+           "X-Forwarded-Access-Token": "token-for-ana-only"}
+    written = load_cases(WRITER_CASES)["mission-brief-a-part-removed"]
+    app = create_app(engine_for=reading, drafts=DraftStore(lambda: DuckDBEngine.open(state_db)),
+                     writers=lambda kind: ScriptedAgent(written), access=Access(load_roles(), StaticGroups({})),
+                     today=lambda: dt.date(2026, 10, 23), new_draft_id=lambda: "draft-0001")
+
+    async def go():
+        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://strata.test") as client:
+            await client.post("/api/drafts", headers=ana, json={"kind": "mission_brief", "project_id": "P156634"})
+            return (await client.get("/api/drafts/draft-0001", headers=ana)).json()
+    draft = asyncio.run(go())
+    disbursement = next(note for note in draft["notes"] if note["key"] == "disbursement")
+
+    assert disbursement["state"] == "abstained" and disbursement["sentences"] == []
+    assert sorted(row["reference"] for row in disbursement["table"]) == ["IDA60290", "IDA60300"]
+    assert {item["reason"] for item in draft["removed"]} == {"number_not_in_records", "id_not_returned"}

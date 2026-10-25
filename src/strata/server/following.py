@@ -132,14 +132,16 @@ def _counts(entries: list[dict]) -> dict:
     statuses = [entry["status"] for entry in entries]
     partly = [entry for entry in entries if entry["status"] not in ("not_checked", "closed", "pipeline", "dropped")
               and entry["counts"]["ran"] < entry["counts"]["checks"]]
-    return {"total": len(entries), "needs_a_look": statuses.count("needs_a_look"), "watch": statuses.count("watch"),
+    checked = sum(1 for entry in entries if entry["status"] not in ("not_checked", "closed", "pipeline", "dropped"))
+    return {"total": len(entries), "checked": checked, "needs_a_look": statuses.count("needs_a_look"),
+            "watch": statuses.count("watch"),
             "not_checked": statuses.count("not_checked"), "no_signals": statuses.count("no_signals"),
             "closed": sum(1 for status in statuses if status in ("closed", "dropped")),
             "pipeline": statuses.count("pipeline"),
+            "ended": sum(1 for status in statuses if status in ("closed", "dropped", "pipeline")),
             "folded": sum(1 for status in statuses if status in FOLDED),
             "shown": sum(1 for status in statuses if status not in FOLDED),
-            "partly": len(partly), "fully": sum(1 for entry in entries if entry["status"] not in ("not_checked", "closed",
-                                                                                                    "pipeline", "dropped")) - len(partly),
+            "partly": len(partly), "fully": checked - len(partly),
             "partly_folded": sum(1 for entry in partly if entry["status"] in FOLDED)}
 
 
@@ -244,8 +246,9 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: FollowStore
                         continue
                     for event in _evidence(engine, result, as_of):
                         events.setdefault(event["id"], event)
+                    counts = {**result["counts"], "not_ran": result["counts"]["checks"] - result["counts"]["ran"]}
                     entries.append({"project": result["project"], "status": result["status"], "rows": result["rows"],
-                                    "checks": result["checks"], "counts": result["counts"],
+                                    "checks": result["checks"], "counts": counts,
                                     "coverage": result["coverage"], "following_since": since.isoformat() if since else None,
                                     "mission_brief": briefs.get(project_id)})
                 if thresholds is None:
@@ -256,7 +259,9 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: FollowStore
             sources = sorted({key for entry in entries for check in entry["checks"] if check["missing"]
                               for key in [check["missing"]]})
             return JSONResponse({"as_of": as_of.isoformat(), "checked_on": checked_on.isoformat(),
-                                 "past": as_of < checked_on, "data_through": _iso_day(through),
+                                 "past": as_of < checked_on,
+                                 # Never after the date the checks ran as of (ADR 0002).
+                                 "data_through": _iso_day(min(through, as_of) if through else None),
                                  "projects": entries, "counts": _counts(entries), "thresholds": thresholds,
                                  "missing": sources, "evidence": list(events.values()), "track_record": track},
                                 headers={"Cache-Control": "no-store"})

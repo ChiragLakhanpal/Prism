@@ -134,6 +134,12 @@ export const copy = {
         "Find a World Bank-financed project by its name, project ID or country. Open a project ID to see the " +
         "project's summary, Procurement Plans and documents.",
     },
+    // Following (ticket 37): the Projects tab's first sub-tab for World Bank staff, at /projects/following.
+    following: {
+      title: "Projects",
+      documentTitle: "Following, Projects",
+      purpose: "Follow the projects you work on, or find any World Bank-financed project by its name, project ID or country.",
+    },
     project: {
       title: "Project {pid}",
       purpose: "This page shows what I hold about one project. Each tab shows one part of it.",
@@ -335,6 +341,8 @@ export const copy = {
     needsALook: "Needs a look",
     watch: "Watch",
     noSignals: "No signals",
+    // Following (ticket 37): a project on which no check could run, an abstention in the first person.
+    notChecked: "Not checked",
     dataNote: "Data note",
     partial: "Partial",
     gap: "Gap",
@@ -1148,6 +1156,321 @@ export const copy = {
     emptyLink: "Data readiness",
     error: "I couldn't load the list of projects because the data service didn't answer.",
     permission: "Your account can't read Strata's tables, so I can't list the projects.",
+  },
+
+  // The Projects sub-tabs (ticket 37; the 37 brief, section 9.1), shown only to World Bank staff.
+  projectsTabs: {
+    label: "Projects pages",
+    following: (count: string | null) => (count === null ? "Following" : `Following (${count})`),
+    all: "All projects",
+    announce: (name: string) => `Showing ${name}.`,
+  },
+
+  // Following (ticket 37; the 37 brief, sections 3 to 5 and 9.2 to 9.9). {braces} are filled from the route.
+  following: {
+    heading: "Projects you follow",
+    finding: "You follow {total} projects. {parts}.",
+    // The finding's parts, in this order, leaving out zero counts; joined with commas and ", and".
+    parts: {
+      look: (n: number, word: string) => (n === 1 ? `${word} needs a look` : `${word} need a look`),
+      watch: (n: number, word: string) => (n === 1 ? `${word} is worth watching` : `${word} are worth watching`),
+      none: (n: number, word: string) => (n === 1 ? `${word} has no signals` : `${word} have no signals`),
+      closed: (n: number, word: string) => (n === 1 ? `${word} has closed` : `${word} have closed`),
+      pipeline: (n: number, word: string) => (n === 1 ? `${word} is in the pipeline` : `${word} are in the pipeline`),
+      notChecked: (_n: number, word: string) => `I couldn't check ${word}`,
+    },
+    partsJoin: ", ",
+    partsLast: ", and ",
+    partsTwo: " and ",
+    allQuiet: "You follow {total} projects, and none has a signal.",
+    one: {
+      needs_a_look: "You follow one project, and it needs a look.",
+      watch: "You follow one project, and it is worth watching.",
+      no_signals: "You follow one project, and it has no signals.",
+      not_checked: "You follow one project, and I couldn't check it.",
+      closed: "You follow one project, and it has closed.",
+      pipeline: "You follow one project, and it is in the pipeline.",
+      dropped: "You follow one project, and it has closed.",
+    } as Record<string, string>,
+    madeBy: "I ran these {checks} checks on {checked}, on public records through {through}. No model wrote this list.",
+    madeByUndated: "I ran these {checks} checks on {checked}, on public records. No model wrote this list.",
+    madeByAsOf: "I ran these {checks} checks as they would have run on {date}, on records public by then. No model wrote this list.",
+    coverage: "I ran every check on {k} of {n} projects. On the other {m}, I lacked some records, and each row says which.",
+    coverageLink: "See which records I hold",
+    countLine: (shown: number, total: number) => `Showing ${shown} of ${total} projects you follow`,
+    tableCaption: "Projects you follow, with their status, signals and next step",
+    cols: {
+      status: { label: "Status", def: (word: string) => `needs a look means ${word} signals or one strong one; a signal is a reason to look, not a finding` },
+      project: { label: "Project", def: "with its country, project ID and closing date" },
+      signals: { label: "Signals", def: "fixed checks on public records, one line each, strong signals first" },
+      next: { label: "Next", def: "the brief waits in Drafts for you to check; I send nothing", defAsOf: "I draft mission briefs only from today's records" },
+    },
+    // The label and its definition, joined by a visually hidden ": " in a header cell, and as one sentence above the list.
+    headerJoin: ": ",
+    defEnd: ".",
+    statusDefinition: {
+      title: "Status",
+      body: (look: string, checks: string) =>
+        `Needs a look: ${look} or more signals, or one strong signal. Watch: at least one signal but fewer than ${look}, and none of them strong. ` +
+        `No signals: none of the ${checks} checks found anything. Not checked: I couldn't run any check, because I don't hold the records. ` +
+        "A signal is a fixed check on public records that gives a reason to look, never a finding.",
+      strongNone: "No check is strong on its own: only many activities on one check make it strong.",
+      strong: (names: string) => `The strong signals are ${names}.`,
+      link: "How I check the projects you follow",
+    },
+    badge: { needs_a_look: "Needs a look", watch: "Watch", no_signals: "No signals", not_checked: "Not checked" } as Record<string, string>,
+    signalCount: (n: number) => (n === 1 ? "1 signal" : `${n} signals`),
+    strongTag: "Strong signal",
+    meta: {
+      closes: "{country}, {pid}. It closes on {date}.",
+      past_closing: "{country}, {pid}. Its closing date was {date}.",
+      closed: "{country}, {pid}. It closed on {date}.",
+      dropped: "{country}, {pid}. It closed on {date}.",
+      pipeline: "{country}, {pid}. It is in the pipeline.",
+      undated: "{country}, {pid}.",
+    } as Record<string, string>,
+    signalsLabel: (name: string) => `Signals for ${name}`,
+    partial: "I couldn't run {k} of the {n} checks, because {reasons}.",
+    missing: {
+      no_plans: "I haven't read its Procurement Plans",
+      no_recent_plans: "no implementing agency has published a Procurement Plan for it in the last {months} months",
+      no_loan_history: "I don't hold its loan history",
+      no_isr: "I haven't read an ISR for it",
+      no_loans: "I don't hold its disbursement records",
+    } as Record<string, string>,
+    missingJoin: " and ",
+    notCheckedSignals: "I couldn't run any of the {checks} checks, because I don't hold this project's plans, loan history, ISRs or disbursement records yet.",
+    notCheckedNext: "I need its records before I can draft a mission brief.",
+    noneSignals: "None of the {checks} checks found anything.",
+    noneSignalsPartial: "None of the {ran} checks I could run found anything.",
+    closedSignals: "The project closed on {date}, so I no longer run the checks on it.",
+    pipelineSignals: "The project is in the pipeline, so I don't run the checks on it yet.",
+    closedNext: "I draft mission briefs only for active projects.",
+    status: { closed: "Closed", dropped: "Closed", pipeline: "Pipeline" } as Record<string, string>,
+    fold: (n: number, word: string) => (n === 1 ? "One project has no signals." : `${word} projects have no signals.`),
+    foldClosed: (closed: number, word: string) =>
+      closed === 1 ? `${word} has closed or is in the pipeline.` : `${word} have closed or are in the pipeline.`,
+    foldOnlyClosed: (closed: number, word: string) =>
+      closed === 1 ? "One project has closed or is in the pipeline." : `${word} projects have closed or are in the pipeline.`,
+    foldPartial: (n: number, word: string) => (n === 1 ? "I couldn't run every check on one of them." : `I couldn't run every check on ${word} of them.`),
+    show: (n: number) => (n === 1 ? "Show it" : "Show them"),
+    hide: (n: number) => (n === 1 ? "Hide it" : "Hide them"),
+    add: "Add to mission brief",
+    // The button's name, with its row's project after the visible label (WCAG 2.5.3).
+    addLabel: (name: string) => `Add to mission brief, ${name}`,
+    existing: "You started one on {date}.",
+    existingLink: "Open the draft",
+    source: "Procurement Plans, contract awards, loan history, ISRs and disbursement records from World Bank APIs, through {date}.",
+    sourceUndated: "Procurement Plans, contract awards, loan history, ISRs and disbursement records from World Bank APIs.",
+    loading: "Loading the projects you follow.",
+    emptyTitle: "I have no projects to check for you yet.",
+    emptyBody: "Open a project and choose Follow this project. I check the projects you follow every night and list them here with their signals.",
+    emptyLink: "Go to All projects",
+    error: "I couldn't load the projects you follow because the data service didn't answer.",
+    permission: "Your account can't read Strata's tables, so I can't show the projects you follow. Ask your workspace admin for read access to the strata catalog.",
+    notStaffTitle: "I show Following only to World Bank staff.",
+    notStaffBody: "Your account is not in the World Bank staff group, so I can't show signals on projects. You can still find any project in All projects.",
+    notStaffLink: "Go to All projects",
+    previewPiuTitle: "I don't show Following in this preview, because it is for World Bank staff.",
+    previewPiuBody: "Leave the preview to see the projects you follow. Nothing about them changed.",
+    previewPublicTitle: "The public view has no Following list.",
+    previewPublicBody:
+      "I don't show signals on active projects in the public view, so a procurement still under way isn't prejudged. Leave the preview to see the projects you follow.",
+    stopped: "I stopped writing the mission brief and saved nothing.",
+  },
+
+  // Each signal's line (the 37 brief, section 9.3), filled with the tool's values. {ref} is a STEP reference in
+  // mono, and the numbers marked in the brief are Nums.
+  signals: {
+    line: {
+      completion_passed: {
+        one: "{ref} passed its planned completion ({date}) with no signed contract.",
+        many: "{n} activities passed their planned completion with no signed contract.",
+      },
+      above_estimate: {
+        one: "{ref} was signed at about {ratio} times its estimate.",
+        many: "{n} contracts were signed at {min} times their estimates or more, up to about {max} times.",
+      },
+      late_direct: {
+        one: "{ref}, a US${amount} million direct-selection {category} activity, first appears in the {date} plan.",
+        many: "{n} direct-selection activities, worth US${amount} million together, first appear late in the plans.",
+      },
+      closing_moves: {
+        one: "The closing date has moved once since {year}.",
+        many: "The closing date has moved {n} times since {year}.",
+      },
+      restructured: {
+        one: "The project was restructured on {date}.",
+        many: "The project was restructured {n} times since {year}, most recently on {date}.",
+      },
+      isr_lowered: {
+        pdo: "The ISR dated {date} rated progress towards the development objective {to}, down from {from}.",
+        implementation: "The ISR dated {date} rated overall implementation progress {to}, down from {from}.",
+      },
+      disbursement: {
+        one: "By {date}, {pct} percent of the money committed and not canceled was disbursed, with {months} months left before closing.",
+      },
+    },
+    // A plan's section, as the late direct selection line names its category.
+    category: {
+      WORKS: "works",
+      GOODS: "goods",
+      "NON CONSULTING SERVICES": "non-consulting services",
+      "CONSULTING FIRMS": "consulting services",
+      "INDIVIDUAL CONSULTANTS": "consulting services",
+    } as Record<string, string>,
+    categoryOther: "procurement",
+    // What a Num's popover says behind each derived number.
+    num: {
+      activities: "The activities, by STEP reference, with their planned completion:",
+      activity: (ref: string, date: string) => `${ref}, planned to finish on ${date}`,
+      ratio: (actual: string, estimate: string, exact: string) =>
+        `Signed amount: US$${actual}. Estimated Amount: US$${estimate}. Signed amount divided by estimate: ${exact}.`,
+      contracts: "The contracts, by STEP reference, with their ratio:",
+      contract: (ref: string, ratio: string) => `${ref}, ${ratio} times its estimate`,
+      amount: (exact: string) => `Estimated Amount (US$): ${exact}, as the plan writes it.`,
+      direct: "The activities, by STEP reference, with their amount and the plan that first lists them:",
+      directItem: (ref: string, amount: string, date: string) => `${ref}, US$${amount}, first listed on ${date}`,
+      moves: "Each move, by the month the loan history first showed it:",
+      move: (month: string, from: string, to: string) => `First recorded ${month}: from ${from} to ${to}.`,
+      restructurings: "Each restructuring the ISR lists, by its date:",
+      restructuring: (level: string, date: string) => `Level ${level}, ${date}`,
+      percent: (disbursed: string, available: string, exact: string) =>
+        `Disbursed: US$${disbursed} million. Committed and not canceled: US$${available} million. Disbursed divided by that: ${exact} percent.`,
+      months: (closing: string, asOf: string) => `From ${asOf} to the closing date, ${closing}, in whole months.`,
+    },
+    // The marker's name for each signal's source.
+    source: {
+      plans: "Procurement Plan of {date}",
+      loan_history: "World Bank monthly loan history, reported {date}",
+      isr: "The ISR of {date}",
+      loans: "World Bank loans and credits data, as of {date}",
+    } as Record<string, string>,
+    // Each check's name and what sets it off, filled from the thresholds file (the 37 brief, section 9.5).
+    check: {
+      completion_passed: {
+        name: "Planned completion passed",
+        trigger: "An activity estimated at US${amount} million or more passed its planned completion date, as first published, and no contract was signed.",
+      },
+      above_estimate: { name: "Signed far above its estimate", trigger: "A contract was signed at {ratio} times its Estimated Amount or more." },
+      late_direct: {
+        name: "Direct selection added late",
+        trigger: "A Direct Selection activity of US${amount} million or more first appears in a plan published {months} months or less before the closing date.",
+      },
+      closing_moves: { name: "Closing date moved", trigger: "The closing date moved {n} times or more." },
+      restructured: { name: "Restructured", trigger: "The project had a level {levels} restructuring in the last {months} months." },
+      isr_lowered: {
+        name: "ISR rating lowered",
+        trigger: "An ISR lowered the rating for progress towards the development objective or for overall implementation progress.",
+      },
+      disbursement: {
+        name: "Slow disbursement",
+        trigger: "Less than {pct} percent of the money committed and not canceled was disbursed, with {months} months or less left before closing.",
+      },
+    } as Record<string, { name: string; trigger: string }>,
+    // Each check's name inside a sentence, after the first word.
+    checkInSentence: (name: string) => name.charAt(0).toLowerCase() + name.slice(1),
+  },
+
+  // How I check the projects you follow, and the track record (the 37 brief, section 5 and 9.5).
+  track: {
+    heading: "How I check the projects you follow",
+    method:
+      "Every night I run {checks} fixed checks on public records: Procurement Plans, contract awards, the loan history, ISRs and " +
+      "disbursement records. I measure delay from the planned date as first published. I don't combine the checks into a score. " +
+      "Each signal is a reason to look, not a finding.",
+    statusLead:
+      "When I replayed these checks on past dates, {k_look} of the {n_look} projects that needed a look later extended their closing date. " +
+      "So did {k_watch} of the {n_watch} worth watching, and {k_none} of the {n_none} with no signals.",
+    why: "These counts say what happened next, not why.",
+    fewLook: "Only {n} projects needed a look when I replayed the checks, too few to say how much the status usually means.",
+    fewWatch: "Only {n} projects were worth watching when I replayed the checks, too few to say how much the status usually means.",
+    none: "I haven't replayed these checks on past dates yet, so I can't say how often projects with signals later extended their closing date.",
+    scope: "I replayed the checks as of {dates} on the projects I held then, and counted the projects that extended their closing date in the {window} months after each date.",
+    source: "my replay of these checks, run on {date}.",
+    num: (n: string, k: string, window: string, date: string) =>
+      `Projects that had this status on at least one replay date: ${n}. Of them, projects whose closing date moved later within ${window} months: ${k}. Replay run: ${date}.`,
+    show: (checks: string) => `Show the ${checks} checks`,
+    hide: "Hide the checks",
+    tableTitle: "Each check, what sets it off, and what happened next",
+    cols: { check: "Check", trigger: "What sets it off", strong: "Strong signal", record: "Later extended their closing date", recordDef: "of the projects that had it" },
+    cell: (k: string, n: string) => `${k} of ${n}`,
+    few: "Too few projects to read as a rate.",
+    notReplayed: "Not replayed yet",
+    yes: "Yes",
+    no: "No",
+    strongFrom: (n: string) => `From ${n} activities`,
+    baseline: { name: "No signals", trigger: "None of the checks found anything." },
+  },
+
+  // Follow and unfollow in the project header (the 37 brief, section 6 and 9.6).
+  projectFollow: {
+    label: "Follow",
+    button: "Follow this project",
+    state: "You follow this project.",
+    unfollow: "Unfollow",
+    busy: "Saving",
+    announceOn: (name: string) => `You follow ${name} now. It is in Following, under Projects.`,
+    announceOff: (name: string) => `You no longer follow ${name}.`,
+    failedOn: "I couldn't save that just now. You don't follow this project yet.",
+    failedOff: "I couldn't save that just now. You still follow this project.",
+  },
+
+  // The mission brief's page (the 37 brief, sections 7 and 9.7).
+  mission: {
+    parts: {
+      plans: "Latest Procurement Plans",
+      awards: "Awards since the last ISR",
+      ratings: "Rating history",
+      disbursement: "Disbursement",
+      closing: "Closing check",
+    } as Record<string, string>,
+    tables: {
+      plans: "The latest plan from each implementing agency",
+      awards: "Contracts signed after the ISR dated {date}",
+      ratings: "Ratings in each ISR I read",
+      disbursement: "Disbursement by loan or credit, as of {date}",
+      closing: "Activities planned to finish after the closing date",
+      history: "Closing date history",
+    } as Record<string, string>,
+    cols: {
+      plans: ["Implementing agency", "Latest plan", "Activities", "Need a look", "Worth watching"],
+      awards: ["Activity", "Signed", "Supplier", "Signed amount (US$)", "Estimated Amount (US$)"],
+      ratings: ["ISR", "Dated", "Progress towards achievement of PDO", "Overall implementation progress"],
+      disbursement: ["Loan or credit", "Commitment (US$, millions)", "Disbursed (US$, millions)", "Undisbursed (US$, millions)", "Canceled (US$, millions)"],
+      closing: ["Activity", "Implementing agency", "Planned completion", "Days after closing"],
+      history: ["First recorded", "Closing date before", "Closing date after"],
+    } as Record<string, string[]>,
+    pdo: "PDO is the project development objective.",
+    planVersion: "Plan of {date}",
+    noPlan: "No plan read",
+    individual: "Individual consultant",
+    isr: "ISR {n}",
+    notRated: "Not rated",
+    total: "Total",
+    moreAwards: (n: string) => `Show all ${n} contracts`,
+    lessAwards: "Show fewer contracts",
+    none: {
+      no_plans: "I haven't read a Procurement Plan for this project, so this part has no plans to show.",
+      no_isr: "I haven't read an ISR for this project, so I can't tell which contracts were signed after the last one.",
+      no_awards: "No contract was signed after the ISR dated {date}.",
+      no_loans: "I don't hold this project's loan records, so I can't show its disbursement.",
+      closed: "The project closed on {date}, so I have no closing check to make.",
+      no_closing_date: "I don't hold this project's closing date, so I have no closing check to make.",
+    } as Record<string, string>,
+    ratingsNone: "I haven't read an ISR for this project.",
+    noneAfter: "No activity in the latest plans is planned to finish after the closing date.",
+    allRemoved: "I removed every sentence I wrote for this part. They are in the removed box above, with the reason for each.",
+    citedIn: (count: number) => (count === 1 ? "Cited in {parts}." : "Cited in {parts}."),
+    source: "Records from World Bank APIs, as of {date}.",
+    writingParts: "The five parts I'm writing",
+    reloadBody: "If you reloaded this page while I was writing, I stopped and saved nothing. Start again from Following.",
+    backToFollowing: "Back to Following",
+    // The draft's lede and method (the 37 brief, section 9.7).
+    ledePartial: (written: string) => `I drafted ${written} of the five parts of the mission brief. Each other part says what I'm missing.`,
+    method:
+      "I wrote each part from public records through {date} and cited the record or paragraph behind every sentence. " +
+      "Open a source number to see it beside the brief.",
   },
 
   // List search (the 21 brief, section 10): a list that filters on the server as you type.
@@ -3963,6 +4286,8 @@ export const copy = {
         package_risks: "the risks and what helped",
         // The package workspace's section 2 (ticket 27).
         estimate_time: "the planned dates for each step",
+        // Following's coverage line (ticket 37).
+        project_signals: "the signals on projects you follow",
         ask: "the answer",
         unknown: "the coverage line you opened",
       },

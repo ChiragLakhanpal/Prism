@@ -103,6 +103,15 @@ export function RecordSourceLine({ evidence, className }: { evidence: EvidenceEv
       </Source>
     );
   }
+  // A tool's totals record, such as a mission brief's (ticket 37): "Strata's totals of the records above, as of ...".
+  const tool = (evidence.row.source ?? {}) as Record<string, unknown>;
+  if (typeof tool.tool === "string") {
+    return (
+      <Source className={className}>
+        <Fill template={words.toolSource} slots={{ date: evidence.row.public_from ? <Num date={String(evidence.row.public_from)} /> : "" }} />
+      </Source>
+    );
+  }
   const date = source.date ? <Num date={source.date} /> : null;
   const pid = <ProjectId pid={source.pcode} />;
   return (

@@ -24,6 +24,7 @@ import { copy } from "./copy";
 import { answer, ask, earlier, removedScopes } from "./lib/answer";
 import { getJson, type Me } from "./lib/api";
 import { draftScope } from "./lib/drafts";
+import { FOLLOWING_HREF, staffRole } from "./lib/following";
 import { drawerClosed, evidenceIn, origin, routeOf, visited } from "./lib/evidence";
 import { readStamp, retryStamp, stamp, type Problem } from "./lib/freshness";
 import { formatDate } from "./lib/format";
@@ -39,8 +40,10 @@ async function readViewer() {
   try {
     const me = await getJson<Me>("/api/me");
     viewer.set(me.signed_in && me.email ? { status: "signed-in", email: me.email } : me.signed_in ? { status: "error" } : { status: "signed-out" });
+    staffRole.set(Boolean(me.staff));
   } catch {
     viewer.set({ status: "error" });
+    staffRole.set(false);
   }
 }
 
@@ -114,6 +117,7 @@ function alerts(problem: Problem, search: string, appliesAsOf: boolean, page: st
 export function App() {
   const here = useStore(address);
   const who = useStore(viewer);
+  const staff = useStore(staffRole);
   const { freshness, problem } = useStore(stamp);
   const run = useStore(answer);
   const kept = useStore(earlier);
@@ -226,6 +230,8 @@ export function App() {
           current={match.section}
           home={match.key === "home"}
           viewer={who}
+          // World Bank staff open Following from the Projects tab (ticket 37); a preview, and everyone else, All projects.
+          projectsHref={staff && (view === null || view === "staff") ? FOLLOWING_HREF : undefined}
         />
       }
       band={<BoxBand box={<IntentBox scope={scope} scopeKind={kind} onAsk={onAsk} />} stamp={<FreshnessStamp freshness={freshness} />} />}

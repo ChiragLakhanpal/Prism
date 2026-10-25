@@ -2,7 +2,7 @@
 // its own icon shape and names itself in words, so nothing depends on color alone. Badges
 // mark exceptions; the icon is hidden from screen readers because the word carries the state.
 //
-// Signals: Needs a look, Watch, No signals. Data readiness: Partial, Gap. Plan checks: Data
+// Signals: Needs a look, Watch, No signals, and Not checked (ticket 37). Data readiness: Partial, Gap. Plan checks: Data
 // note. A dashed border marks the ones that mean something is missing from the record. Lessons (ticket
 // 29): the four evidence badges (Restated by IEG, IEG's lesson, Awaiting IEG review, Rests on the ICR
 // alone), May repeat a lesson, Being re-checked, and Overdue, amber because a late decision is stale work.
@@ -15,6 +15,7 @@ export type BadgeKind =
   | "needs-a-look"
   | "watch"
   | "no-signals"
+  | "not-checked"
   | "partial"
   | "gap"
   | "data-note"
@@ -35,6 +36,8 @@ const KINDS: Record<BadgeKind, { state: State; Icon: LucideIcon; dashed: boolean
   "needs-a-look": { state: "warning", Icon: TriangleAlert, dashed: false, text: copy.badge.needsALook },
   watch: { state: "info", Icon: Info, dashed: false, text: copy.badge.watch },
   "no-signals": { state: "neutral", Icon: Circle, dashed: false, text: copy.badge.noSignals },
+  // Following (ticket 37): no check could run, so the Gap look, not the No signals all-clear.
+  "not-checked": { state: "neutral", Icon: CircleDashed, dashed: true, text: copy.badge.notChecked },
   partial: { state: "warning", Icon: TriangleAlert, dashed: false, text: copy.badge.partial },
   gap: { state: "neutral", Icon: CircleDashed, dashed: true, text: copy.badge.gap },
   "data-note": { state: "neutral", Icon: CircleDashed, dashed: true, text: copy.badge.dataNote },

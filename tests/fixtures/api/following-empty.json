@@ -1,0 +1,49 @@
+{
+ "as_of": "2026-10-22",
+ "checked_on": "2026-10-22",
+ "past": false,
+ "data_through": "2026-10-22",
+ "projects": [],
+ "counts": {
+  "total": 0,
+  "checked": 0,
+  "needs_a_look": 0,
+  "watch": 0,
+  "not_checked": 0,
+  "no_signals": 0,
+  "closed": 0,
+  "pipeline": 0,
+  "ended": 0,
+  "folded": 0,
+  "shown": 0,
+  "partly": 0,
+  "fully": 0,
+  "partly_folded": 0
+ },
+ "thresholds": {
+  "look_min": 3,
+  "strong": [],
+  "strong_from": {
+   "completion_passed": 3,
+   "above_estimate": 3,
+   "late_direct": 3
+  },
+  "plan_months": 12,
+  "completion_passed_min_estimated_usd": "1000000.00",
+  "completion_passed_min_millions": "1.0",
+  "actual_to_estimate_ratio": "2.0",
+  "late_direct_min_usd": "1000000.00",
+  "late_direct_min_millions": "1.0",
+  "late_direct_months": 12,
+  "closing_moves_min": 2,
+  "restructured_levels": [
+   1
+  ],
+  "restructured_months": 12,
+  "disbursement_max_percent": 50,
+  "disbursement_months": 12
+ },
+ "missing": [],
+ "evidence": [],
+ "track_record": null
+}
