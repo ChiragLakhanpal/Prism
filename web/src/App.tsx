@@ -21,7 +21,7 @@ import { IntentBox } from "./components/IntentBox";
 import { RETURNING } from "./components/Popover";
 import { TopNav, type Viewer } from "./components/TopNav";
 import { copy } from "./copy";
-import { answer, ask, removedScopes } from "./lib/answer";
+import { answer, ask, earlier, removedScopes } from "./lib/answer";
 import { getJson, type Me } from "./lib/api";
 import { draftScope } from "./lib/drafts";
 import { drawerClosed, evidenceIn, origin, routeOf, visited } from "./lib/evidence";
@@ -51,7 +51,7 @@ function scopeOf(match: Match, draftProject: string | null): { scope: string | n
   if (match.key === "draft" || match.key === "draftNew") return { scope: draftProject, kind: "project" };
   if (match.key === "package") return { scope: match.values.id ?? null, kind: "package" };
   if (match.key === "activity") return { scope: match.values.stepRef ?? null, kind: "package" };
-  if (match.key === "project" || match.key === "checkPlan") return { scope: match.values.pid ?? null, kind: "project" };
+  if (match.key === "project" || match.key === "checkPlan" || match.key === "document") return { scope: match.values.pid ?? null, kind: "project" };
   return { scope: null, kind: "project" };
 }
 
@@ -116,6 +116,7 @@ export function App() {
   const who = useStore(viewer);
   const { freshness, problem } = useStore(stamp);
   const run = useStore(answer);
+  const kept = useStore(earlier);
   const seen = useStore(visited);
   const from = useStore(origin);
   const narrow = useNarrow();
@@ -126,8 +127,8 @@ export function App() {
   const evidenceId = evidenceIn(here.search);
   const asOf = params.get("asof");
   const view = params.get("view");
-  // The answer shows on the history entry it was asked on.
-  const shown = run && run.asked.key === here.key ? run : null;
+  // The answer shows on the history entry it was asked on: the current one, or the last one finished there.
+  const shown = run && run.asked.key === here.key ? run : (kept[here.key] ?? null);
 
   useEffect(() => {
     const stop = startRouter();
@@ -175,10 +176,15 @@ export function App() {
     named?.focus({ preventScroll: true });
   }, []);
   const lastRoute = useRef(route);
+  const lastPath = useRef(here.pathname);
   const section = useRef(match.section);
   useEffect(() => {
     const moved = lastRoute.current !== route;
     lastRoute.current = route;
+    // A move that keeps the page and changes only its query, such as Next page on All projects or in a
+    // document (ticket 21), focuses the page's own lead for that, so the new range is read.
+    const samePage = lastPath.current === here.pathname;
+    lastPath.current = here.pathname;
     const within = section.current !== undefined && section.current === match.section;
     section.current = match.section;
     if (!moved || here.moves === 0 || here.quiet) return;
@@ -191,8 +197,12 @@ export function App() {
       return;
     }
     window.scrollTo(0, 0);
+    // Back to a page with the evidence drawer open, such as from the source view the drawer's "Open at
+    // page" opened (ticket 21): the drawer's heading takes focus, where the person was.
+    const drawerHeading = evidenceIn(here.search) ? document.querySelector<HTMLElement>("[data-evidence-drawer] h2") : null;
+    const pageLead = samePage ? document.querySelector<HTMLElement>("main [data-page-lead]") : null;
     const lead = within ? document.querySelector<HTMLElement>("main [data-lead]") : null;
-    (lead ?? document.querySelector<HTMLElement>("main h1"))?.focus();
+    (drawerHeading ?? pageLead ?? lead ?? document.querySelector<HTMLElement>("main h1"))?.focus();
   }, [route, here.moves]);
 
   const onAsk = (question: string, chip: string | null) =>
@@ -266,7 +276,8 @@ export function App() {
         {/* Each page lays itself out on the same 12 columns: most keep to columns 1 to 8, and a
             table that needs the width, such as the plan check or the Data tab, spans all 12. */}
         <div className="col-span-12">
-          <RoutePage key={here.pathname} match={match} search={here.search} />
+          {/* A project's tabs share one page, so its header and tab row stay in place between them. */}
+          <RoutePage key={match.frame ?? here.pathname} match={match} search={here.search} />
         </div>
       </div>
     </Frame>

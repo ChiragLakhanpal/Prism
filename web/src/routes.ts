@@ -3,9 +3,11 @@
 // goes. Every page's words are in copy.pages under the same key. /present belongs to ticket 47;
 // until then it is not found, like any other unknown address.
 //
-// Ticket 10 adds a project's Procurement tab (/projects/:pid/procurement, which /projects/:pid shows
-// until ticket 21 adds Summary) and Check a plan (/projects/:pid/procurement/:agencyId/:version, or
-// with no version for the agency's latest plan; :version is the plan's ISO date). Ticket 12 builds the
+// Ticket 10 adds a project's Procurement tab and Check a plan (/projects/:pid/procurement/:agencyId/:version,
+// or with no version for the agency's latest plan; :version is the plan's ISO date). Ticket 21 makes the
+// project page the hub: /projects/:pid is its Summary (/projects/:pid/summary is rewritten to it), with
+// /projects/:pid/procurement and /projects/:pid/documents beside it, and the source view at
+// /projects/:pid/documents/:doc, where :doc is a document's key such as icr-2019-10-10. Ticket 12 builds the
 // package workspace at /packages/:id, where :id is the package's STEP reference. Ticket 35 adds the
 // Drafts tab's pages: /drafts, /drafts/new and /drafts/:draftId. Ticket 29 adds the Lessons tab's
 // Waiting for review (/lessons/review) and one item's review page (/lessons/review/:itemId).
@@ -24,6 +26,21 @@ export type Match = {
   linkHref?: string;
   // The address to show instead, such as /projects/P130164 for /projects/p130164.
   canonical?: string;
+  // The page a set of tabs shares, such as a project's Summary, Procurement and Documents: the app keeps
+  // that page in place when you move between its tabs, so its header and tab row stay where they are.
+  frame?: string;
+};
+
+// A project page's tabs, in the copy file's order (copy.projectPage.tab), and the ones built so far.
+// Ticket 23 adds "timeline" and ticket 22 "connections" here, and the tab row shows them.
+export type ProjectTab = "summary" | "procurement" | "timeline" | "documents" | "connections";
+export const BUILT_TABS: ProjectTab[] = ["summary", "procurement", "documents"];
+export const TAB_PATH: Record<ProjectTab, string> = {
+  summary: "",
+  procurement: "/procurement",
+  timeline: "/timeline",
+  documents: "/documents",
+  connections: "/connections",
 };
 
 const PROJECT_ID = /^[Pp]\d{6}$/;
@@ -109,15 +126,18 @@ export function matchRoute(pathname: string): Match {
   if (!PROJECT_ID.test(second)) return page("notAProject");
   const pid = second.toUpperCase();
   let match: Match;
-  if (parts.length === 2 || (third === "procurement" && parts.length === 3)) match = page("project", "projects", { pid });
-  else if (third === "procurement" && rest.length <= 1) {
+  const tab = parts.length === 2 ? "summary" : parts.length === 3 ? BUILT_TABS.find((key) => key === third) : undefined;
+  if (tab) {
+    match = { ...page("project", "projects", { pid, tab }), frame: `project:${pid}` };
+    if (tab === "summary" && parts.length === 3) match.canonical = `/projects/${pid}`;
+  } else if (third === "procurement" && rest.length <= 1) {
     const [version] = rest;
     if (version !== undefined && !isDay(version)) return page("notFound");
     match = page("checkPlan", "projects", { pid, agencyId: fourth, ...(version ? { version } : {}) });
   } else if (third === "packages" && fourth && rest.length === 0) match = page("activity", "projects", { pid, stepRef: fourth });
   else if (third === "documents" && fourth && rest.length === 0) match = page("document", "projects", { pid, doc: fourth });
   else return page("notFound");
-  if (pid !== second) match.canonical = ["", ...raw.slice(0, 1), pid, ...raw.slice(2)].join("/");
+  if (pid !== second && !match.canonical) match.canonical = ["", ...raw.slice(0, 1), pid, ...raw.slice(2)].join("/");
   return match;
 }
 

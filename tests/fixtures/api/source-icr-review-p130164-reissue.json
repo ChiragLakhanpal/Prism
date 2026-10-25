@@ -1,0 +1,71 @@
+{
+  "as_of": "2026-10-23",
+  "project": {
+    "project_id": "P130164",
+    "display_name": "Rajasthan Road Sector Modernization"
+  },
+  "asked": {
+    "page": 1,
+    "para": null,
+    "passage": null
+  },
+  "document": {
+    "document_id": "34056616",
+    "doc_key": "icr-review-2023-05-04",
+    "type": "icr_review",
+    "document_type": "Implementation Completion Report Review",
+    "document_date": "2023-05-04",
+    "disclosed_on": "2023-05-04",
+    "pdf_pages": 14,
+    "pdf_url": "http://documents.worldbank.org/curated/en/099050423040030393/pdf/P1301640b1a4d202008b910ba796c7180f1.pdf",
+    "language": "en",
+    "sequence": null,
+    "agency": null,
+    "replaces": {
+      "doc_key": "icr-review-2020-03-27",
+      "document_date": "2020-03-27"
+    },
+    "replaced_by": null
+  },
+  "canonical": null,
+  "state": "page",
+  "page": 1,
+  "correction": null,
+  "highlight": null,
+  "page_state": "read",
+  "passages": [
+    {
+      "passage_id": "34056616/v2/1",
+      "section_path": "1",
+      "paragraph": "1",
+      "numbered": true,
+      "part": 1,
+      "language": "en",
+      "text": "1. Project Data Project ID Project Name P130164 IN: Rajasthan Road Sector Modernization Country Practice Area(Lead) India Transport L/C/TF Number(s) Closing Date (Original) Total Project Cost (USD) IDA-53100 31-Dec-2018 121,630,912.86 Bank Approval Date Closing Date (Actual) 29-Oct-2013 31-Dec-2018 IBRD/IDA (USD) Grants (USD) Original Commitment 160,000,000.00 0.00 Revised Commitment 131,877,656.13 0.00 Actual 121,630,912.86 0.00 Prepared by Reviewed by ICR Review Coordinator Group Kavita Mathur Peter Nigel Freeman Ramachandra Jammi IEGSD (Unit 4)",
+      "from_page_before": false
+    },
+    {
+      "passage_id": "34056616/v2/2",
+      "section_path": "2",
+      "paragraph": "2",
+      "numbered": true,
+      "part": 1,
+      "language": "en",
+      "text": "2. Project Objectives and Components DEVOBJ_TBL",
+      "from_page_before": false
+    },
+    {
+      "passage_id": "34056616/v2/2.a",
+      "section_path": "2",
+      "paragraph": "2.a",
+      "numbered": true,
+      "part": 1,
+      "language": "en",
+      "text": "a. Objectives The Project Development Objectives (PDOs) were to “improve rural connectivity, enhance road safety and strengthen road sector management capacity of Rajasthan” (Financing Agreement page 5 and the Project Appraisal Document para 16). The PDOs remained unchanged.",
+      "from_page_before": false
+    }
+  ],
+  "tables": [],
+  "plan_rows": [],
+  "page_text": null
+}

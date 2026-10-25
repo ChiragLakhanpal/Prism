@@ -71,6 +71,14 @@ tool_rounds = 3
 [app]
 stamp_timeout_seconds = 30
 usage_flush_seconds = 10
+# Lists that page or fold (ticket 21). All projects and a project's Packages show page_size rows a
+# page, so each answer stays small on a slow link. A project's Procurement tab shows each agency's
+# versions_shown newest plan versions, plus the baseline, before "Show all", and its Documents tab
+# shows each type's documents_shown newest documents before "Show all". Source: the 21 design brief
+# (sections 4.1, 6.1 and 8.1); starting values for the owner to confirm.
+page_size = 20
+versions_shown = 5
+documents_shown = 5
 
 # App state (docs/PLAN.md section 18; docs/app-state.md). The Lakebase probe times a write and then
 # a read of one row, ten times, in strata.ops through the SQL warehouse and in a Lakebase database.

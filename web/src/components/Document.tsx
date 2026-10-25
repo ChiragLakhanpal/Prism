@@ -27,9 +27,18 @@ export function Highlight({ children, settle = false }: { children: ReactNode; s
   );
 }
 
+// A source's words as the screen draws them. A PDF's private-use characters (U+E000 to U+F8FF), such as
+// the Wingdings bullet an ISR's ratings table prints, have no glyph in Open Sans and would show as empty
+// boxes, so each becomes a bullet, one character for one, and highlight offsets keep their places. The
+// stored text keeps them, so the verifier's quote checks don't change (the 21 design review, round 3, F3).
+export function drawable(text: string): string {
+  return text.replace(/[\uE000-\uF8FF]/g, copy.document.privateGlyph);
+}
+
 // The paragraph with the given character ranges highlighted. In the evidence drawer the highlight
 // settles in once, after the drawer's content (settle).
-export function highlighted(text: string, ranges: [number, number][] = [], settle = false): ReactNode[] {
+export function highlighted(source: string, ranges: [number, number][] = [], settle = false): ReactNode[] {
+  const text = drawable(source);
   const parts: ReactNode[] = [];
   let at = 0;
   for (const [start, end] of [...ranges].sort((a, b) => a[0] - b[0])) {

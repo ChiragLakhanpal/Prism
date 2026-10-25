@@ -6,7 +6,7 @@ Read first: docs/PLAN.md section 5 (Links); ADR 0004; the blueprint's "Records a
 
 **Blocked by:** 19 (Suppliers resolved on STEP IDs first, names second); 21 (The project page as the hub)
 
-**Status:** ready-for-agent
+**Status:** in-progress
 **Area:** knowledge
 **Phase:** P2
 **Design review:** yes
@@ -19,3 +19,7 @@ Read first: docs/PLAN.md section 5 (Links); ADR 0004; the blueprint's "Records a
 - [ ] Connections draws at most 20 nodes and summarizes the rest as "and N more" by kind; every node is reachable by keyboard and opens its page or the drawer; below 768 px it is a list.
 - [ ] As of a date before a contract was signed, its edges are not returned.
 - [ ] Both screens follow DESIGN.md sections 5 and 10, are captured at 1440, 1024 and 390 px in loading, empty, error and populated states, and pass axe.
+
+## Comments
+
+- October 23, 2026, orchestrator: dispatched to an implementer in its own worktree on branch strata/22-edges-contract-trail-connections, as soon as ticket 21 landed. Credentials are still missing, so every live step is parked in docs/workspace-catchup.md; the offline side is built against the fixtures.

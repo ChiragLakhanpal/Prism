@@ -9,6 +9,9 @@
 // A row with no document to show spans one note across its last three cells, with no badge and no link.
 import type { ReactNode } from "react";
 import { ExternalLink, pdfPageHref } from "../../components/ExternalLink";
+import { ProjectId } from "../../components/ProjectId";
+import { TextLink } from "../../components/TextLink";
+import { sourcePageHref } from "../../lib/documents";
 import { Num } from "../../components/Num";
 import { MeasureNum } from "../../components/MeasureNum";
 import { ReadinessTable, type ReadinessColumn, type ReadinessRow } from "../../components/ReadinessTable";
@@ -92,14 +95,14 @@ function documentCell(entry: ShelfEntry, asOf: string): { header: ReactNode; cap
         rule && entry.state === "no_document" ? null : rule ? (
           words.chosenLater
         ) : entry.project_id ? (
-          <span className="font-mono">{entry.project_id}</span>
+          <ProjectId pid={entry.project_id} />
         ) : null,
     };
   }
   const project = (
     <Template
       text={words.project}
-      values={{ project: <span className="wrap-anywhere">{document.project_name ?? document.project_id}</span>, pid: <span className="font-mono">{document.project_id}</span> }}
+      values={{ project: <span className="wrap-anywhere">{document.project_name ?? document.project_id}</span>, pid: <ProjectId pid={document.project_id} /> }}
     />
   );
   const dated =
@@ -206,14 +209,25 @@ function outcomeCell(entry: ShelfEntry, measures: Measures, asOf: string): React
 
 function pageCell(entry: ShelfEntry): ReactNode {
   const document = entry.document;
-  if (!document?.pdf_url || entry.hard_page === null) return null;
+  if (!document || entry.hard_page === null) return null;
   const page = String(entry.hard_page);
   return (
     <Stack>
-      <ExternalLink href={pdfPageHref(document.pdf_url, entry.hard_page)} name={words.pageLinkMore(document.document_type, document.project_id)}>
+      <TextLink
+        href={sourcePageHref(document.project_id, document.document_id, entry.hard_page)}
+        aria-label={words.pageLinkName(page, document.document_type, document.project_id)}
+        className="text-small"
+      >
         <Template text={words.pageLink} values={{ page: <span className="tabular-nums">{page}</span> }} />
-      </ExternalLink>
+      </TextLink>
       <Qualifier>{fill(words.pageLines[entry.kind], entry)}</Qualifier>
+      {/* The page's picture is in the World Bank's PDF, which the source view does not show (the 21 design
+          review, round 2, F16); the line above sits between the two links, so their targets keep apart. */}
+      {document.pdf_url && (
+        <ExternalLink href={pdfPageHref(document.pdf_url, entry.hard_page)} name={words.pdfLinkName(document.document_type, document.project_id)}>
+          <Template text={words.pdfLink} values={{ page: <span className="tabular-nums">{page}</span> }} />
+        </ExternalLink>
+      )}
     </Stack>
   );
 }

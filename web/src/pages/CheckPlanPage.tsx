@@ -15,18 +15,26 @@ import { Button } from "../components/Button";
 import { EmptyState } from "../components/Card";
 import { TextLink } from "../components/TextLink";
 import { EightColumns } from "../components/EightColumns";
-import { Fill } from "../components/Fill";
+import { Fill, Unbroken } from "../components/Fill";
 import { LoadError } from "../components/LoadError";
+import { BaselinePanel } from "../components/BaselinePanel";
+import { ChangeTables, changedRows } from "../components/ChangeTables";
+import { Num } from "../components/Num";
 import { checkPill, PlanCheck, PlanCheckHeader, PlanCheckSkeleton, planSubtitle, type CheckedPlan } from "../components/PlanCheck";
+import { ProjectIdText } from "../components/ProjectId";
 import { Skeleton, SkeletonLine, SkeletonText } from "../components/Skeleton";
 import { copy } from "../copy";
-import { getJson, type CheckPlanResult } from "../lib/api";
+import { ApiError, getJson, type CheckPlanResult, type PlanChanges } from "../lib/api";
+import { changed, changeList } from "../lib/changes";
 import { draftHref, newKey, startWriting, stopped, writingHref, type Existing, type ExistingDraft } from "../lib/drafts";
 import { formatCount, formatDate, formatNumber } from "../lib/format";
 import { useLoad } from "../lib/load";
 import { address, navigate } from "../lib/router";
 import { useStore } from "../lib/store";
+import { setPageTitle } from "../lib/title";
+import { viewOf, withReadParams } from "../lib/view";
 import { useScrollPadding } from "../lib/useScrollPadding";
+import { fill } from "../routes";
 
 const words = copy.checkPlan;
 const short = (iso: string) => formatDate(iso, { style: "table" });
@@ -71,26 +79,163 @@ function useExistingDraft(pid: string, agencyId: string, version: string | undef
   return { settled: key === null || answered || late, draft };
 }
 
+// What changed in the version the check shows, since the agency's version before it (ticket 21). It is read
+// once the check is ready, since the latest-plan route learns the version's date from the check. A route
+// that has no such comparison answers 404, and the page then shows neither the change line nor the list.
+function usePlanChanges(pid: string, agencyId: string, planDate: string | null, search: string) {
+  const [answer, setAnswer] = useState<{ key: string; changes: PlanChanges | null; failed: boolean; error: ApiError | null } | null>(null);
+  const [attempt, setAttempt] = useState(0);
+  const key = planDate ? withReadParams(`/api/projects/${encodeURIComponent(pid)}/procurement/${encodeURIComponent(agencyId)}/${planDate}/changes`, search) : null;
+  useEffect(() => {
+    if (!key) return;
+    const controller = new AbortController();
+    getJson<PlanChanges>(key, { signal: controller.signal }).then(
+      (changes) => setAnswer({ key, changes, failed: false, error: null }),
+      (error: unknown) => {
+        if (controller.signal.aborted) return;
+        const apiError = error instanceof ApiError ? error : null;
+        setAnswer({ key, changes: null, failed: apiError?.status !== 404, error: apiError });
+      },
+    );
+    return () => controller.abort();
+  }, [key, attempt]);
+  const found = answer && answer.key === key ? answer : null;
+  return {
+    changes: found?.changes ?? null,
+    failed: found?.failed ?? false,
+    error: found?.error ?? null,
+    settled: found !== null,
+    attempt,
+    retry: () => setAttempt((n) => n + 1),
+  };
+}
+
+// The change line when only the comparison failed: it says so and links the section below, which holds
+// the alert and Try again.
+export function ChangeLineError() {
+  const line = words.changes;
+  return (
+    <p className="mt-2 text-body text-ink" data-change-line>
+      {line.error}{" "}
+      <TextLink href="#changes" className="whitespace-nowrap">
+        {line.errorLink}
+      </TextLink>
+    </p>
+  );
+}
+
+// The change section when only the comparison failed: the error takes the section body's place under its
+// heading (the 21 brief, section 5.4), with the request's reference when the server gave one.
+export function ChangesError({
+  headingRef,
+  error,
+  onRetry,
+  attempt,
+}: {
+  headingRef?: React.Ref<HTMLHeadingElement>;
+  error: ApiError | null;
+  onRetry: () => void;
+  attempt: number;
+}) {
+  return (
+    <section aria-labelledby="changes" data-changes="error">
+      <EightColumns prose>
+        <h2 ref={headingRef} id="changes" tabIndex={-1} className="scroll-mt-4 text-title text-ink-heading focus:outline-none">
+          {copy.changes.titleUnknown}
+        </h2>
+        <div className="mt-2">
+          <LoadError error={error} message={copy.changes.error} permission={copy.changes.error} onRetry={onRetry} retrying={false} attempt={attempt} />
+        </div>
+      </EightColumns>
+    </section>
+  );
+}
+
+// The change line under the method sentence, with its link to the change list below (#changes).
+function ChangeLine({ changes }: { changes: PlanChanges }) {
+  const line = words.changes;
+  const prev = changes.previous ? <Num date={changes.previous.plan_date} /> : null;
+  let text: ReactNode;
+  let link = false;
+  if (changes.state === "earliest") text = line.earliest;
+  else if (changes.state === "previous_not_read") text = <Fill template={line.prevUnread} slots={{ prev_date: prev }} />;
+  else if (!changed(changes.counts)) text = <Fill template={line.same} slots={{ prev_date: prev }} />;
+  else {
+    text = <Fill template={line.line} slots={{ prev_date: prev, change_list: <Unbroken text={changeList(changes.counts!)} /> }} />;
+    link = true;
+  }
+  return (
+    <p className="mt-2 text-body text-ink" data-change-line>
+      {text}
+      {link && (
+        <>
+          {" "}
+          <TextLink href="#changes" className="whitespace-nowrap">
+            {line.link}
+          </TextLink>
+        </>
+      )}
+    </p>
+  );
+}
+
 export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyId: string; version?: string }) {
-  const path = `/api/projects/${encodeURIComponent(pid)}/procurement/${encodeURIComponent(agencyId)}${version ? `/${version}` : ""}`;
+  const path = withReadParams(`/api/projects/${encodeURIComponent(pid)}/procurement/${encodeURIComponent(agencyId)}${version ? `/${version}` : ""}`, useStore(address).search);
   const [load, retry] = useLoad<CheckPlanResult>(path);
+  // The check read again after a baseline was saved or removed, shown in place of the first one.
+  const [fresh, setFresh] = useState<{ path: string; result: CheckPlanResult } | null>(null);
+  const changesHeading = useRef<HTMLHeadingElement>(null);
   const header = useRef<HTMLDivElement>(null);
   const finding = useRef<HTMLHeadingElement>(null);
   const slotId = useId();
-  const params = new URLSearchParams(useStore(address).search);
+  const search = useStore(address).search;
+  const params = new URLSearchParams(search);
   const preview = params.get("view") === "piu" || params.get("view") === "public";
   const asOf = params.get("asof");
   // The draft action's slot holds a button on today's check outside a preview.
   const slotShown = !preview && asOf === null;
 
-  const result = load.status === "ready" ? load.data : null;
+  const result = load.status === "ready" ? (fresh && fresh.path === path ? fresh.result : load.data) : null;
   const ready = result && !result.abstention && result.plan && result.project && result.counts ? (result as CheckedPlan) : null;
   // The populated page waits, at most LOOKUP_WAIT_MS after the check is ready, for the notice that names an
   // open draft.
   const lookup = useExistingDraft(pid, agencyId, version, !preview, ready?.plan.plan_date ?? null);
-  const waiting = ready !== null && !lookup.settled;
+  // What changed in this version is read from the start when the address names the version, and once the
+  // check names it otherwise. The populated page waits for it, so the change line arrives with the check.
+  const planChanges = usePlanChanges(pid, agencyId, version ?? ready?.plan.plan_date ?? null, search);
+  const waiting = ready !== null && (!lookup.settled || !planChanges.settled);
   const checked = waiting ? null : ready;
   useScrollPadding(header, Boolean(checked), { gap: 8 });
+  const { changes } = planChanges;
+  const listed = changes !== null && changes.state === "compared" && changed(changes.counts);
+
+  // "#changes" in the address, from "See what changed" or a link straight to it: the change list's heading takes
+  // focus once it is drawn. The heading needs both the comparison and the check, and either may answer first,
+  // so this runs again when each lands. It moves on the next frame, after the route change has focused the h1
+  // (the 21 critique, round 3).
+  const drawn = listed && checked !== null;
+  useEffect(() => {
+    let frame = 0;
+    const follow = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        if (window.location.hash !== "#changes" || !changesHeading.current) return;
+        changesHeading.current.scrollIntoView({ block: "start" });
+        changesHeading.current.focus({ preventScroll: true });
+      });
+    };
+    if (drawn) follow();
+    window.addEventListener("hashchange", follow);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("hashchange", follow);
+    };
+  }, [drawn]);
+
+  // The browser tab names the agency's plan once the check names it: "{agency}, plan of Oct 9, 2026".
+  useEffect(() => {
+    if (checked) setPageTitle(fill(copy.pages.checkPlan.windowTitle, { agency: checked.plan.implementing_agency, date: short(checked.plan.plan_date) }));
+  }, [checked]);
 
   // The visually hidden status announces steps: checking, then how many activities were checked.
   // Any other end has its own alert or heading, so the status then says nothing.
@@ -112,7 +257,7 @@ export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyI
   const procurementHref = `/projects/${pid}/procurement`;
   const projectCrumb = (name: ReactNode): Crumb => ({ text: name, href: `/projects/${pid}` });
   // An ID from the address in Roboto Mono 500 (DESIGN.md section 5, Page header).
-  const idText = <span className="font-mono font-medium">{pid}</span>;
+  const idText = <ProjectIdText pid={pid} />;
   const named = (name: string) => <Fill template={copy.breadcrumb.project} slots={{ name, pid: idText }} />;
   const unnamed = <Fill template={copy.breadcrumb.projectId} slots={{ pid: idText }} />;
   const trail = (project: ReactNode, last: ReactNode): Crumb[] => [
@@ -178,7 +323,7 @@ export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyI
           }
           sticky={false}
         />
-        <PlanCheckSkeleton slow={load.status === "loading" && load.slow} />
+        <PlanCheckSkeleton slow={load.status === "loading" && load.slow} baseline={viewOf(search)} />
         <p className="mt-6 max-w-[72ch] text-small text-ink-muted">{words.notVisible}</p>
       </>
     );
@@ -200,7 +345,7 @@ export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyI
       </>
     );
   } else if (checked) {
-    crumbs = trail(named(checked.project.project_name), copy.breadcrumb.plan(short(checked.plan.plan_date)));
+    crumbs = trail(named(checked.project.display_name ?? checked.project.project_name), copy.breadcrumb.plan(short(checked.plan.plan_date)));
     const slot = draftSlot(checked);
     body = (
       <>
@@ -212,7 +357,39 @@ export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyI
           action={slot.action}
           feedforward={slot.feedforward}
         />
-        <PlanCheck result={checked} findingRef={finding} />
+        <PlanCheck
+          result={checked}
+          findingRef={finding}
+          changed={changedRows(changes)}
+          afterMethod={
+            <>
+              {changes ? <ChangeLine changes={changes} /> : planChanges.failed && <ChangeLineError />}
+              <div className="mt-4">
+                <BaselinePanel
+                  pid={pid}
+                  agencyId={checked.plan.agency_id}
+                  agency={checked.plan.implementing_agency}
+                  planDate={checked.plan.plan_date}
+                  baseline={checked.baseline ?? null}
+                  view={viewOf(search)}
+                  readOnly={asOf !== null}
+                  refresh={async () => {
+                    const next = await getJson<CheckPlanResult>(path);
+                    setFresh({ path, result: next });
+                    return next;
+                  }}
+                />
+              </div>
+            </>
+          }
+          after={
+            listed ? (
+              <ChangeTables ref={changesHeading} changes={changes!} agency={checked.plan.implementing_agency} />
+            ) : planChanges.failed ? (
+              <ChangesError headingRef={changesHeading} error={planChanges.error} onRetry={planChanges.retry} attempt={planChanges.attempt} />
+            ) : undefined
+          }
+        />
       </>
     );
   } else {
@@ -220,7 +397,7 @@ export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyI
     const abstention = found.abstention;
     const agency = abstention?.agency_name ?? abstention?.implementing_agency ?? found.plan?.implementing_agency ?? null;
     const knownAgency = abstention?.reason === "no_plan_from_agency" ? (abstention.agency_name ?? null) : agency;
-    crumbs = trail(found.project ? named(found.project.project_name) : unnamed, versionCrumb ?? knownAgency ?? words.agencyUnknown);
+    crumbs = trail(found.project ? named(found.project.display_name ?? found.project.project_name) : unnamed, versionCrumb ?? knownAgency ?? words.agencyUnknown);
     const allPlans = { href: procurementHref, text: words.allPlans };
     let title: ReactNode = words.noPlanTitleUnnamed;
     let text: ReactNode = words.noPlanBody;

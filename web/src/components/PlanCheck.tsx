@@ -22,8 +22,10 @@ import { formatAmountText, formatCount, formatDate, formatNumber } from "../lib/
 import { Button } from "./Button";
 import { CheckPill } from "./CheckPill";
 import { EightColumns } from "./EightColumns";
-import { Fill, Joined } from "./Fill";
+import { Fill, Joined, Unbroken } from "./Fill";
+import type { View } from "../lib/view";
 import { Num } from "./Num";
+import { ProjectId } from "./ProjectId";
 import { Skeleton, SkeletonLine, SkeletonText } from "./Skeleton";
 import { Source } from "./Source";
 import { StatusBadge, type BadgeKind } from "./StatusBadge";
@@ -45,7 +47,6 @@ export type CheckedPlan = CheckPlanResult & {
 const whole = (value: number) => formatNumber(value, { compact: false });
 const amount = (text: string) => formatNumber(Number(text), { decimals: 2, compact: false });
 const day = (iso: string) => <Num date={iso} />;
-const mono = (text: ReactNode) => <span className="font-mono">{text}</span>;
 
 // A number's tooltip: what it is and the values it comes from, one per line.
 function Explain({ lines }: { lines: [ReactNode, ReactNode][] }) {
@@ -63,6 +64,56 @@ function Explain({ lines }: { lines: [ReactNode, ReactNode][] }) {
 
 function Days({ days, lines }: { days: number; lines: [ReactNode, ReactNode][] }) {
   return <Num value={days} options={{ compact: false }} check={{ tooltip: <Explain lines={lines} /> }} />;
+}
+
+// The delay from the baseline (ticket 21), the sentence that follows a reason's first sentence when a
+// baseline is saved for the agency's plans. Its days explain themselves, as the first delay's do.
+function BaselineSentence({ reason, result, kind }: { reason: Reason; result: CheckedPlan; kind: "signing" | "completion" }) {
+  const found = reason.baseline;
+  if (!found) return null;
+  const b = words.reason.baseline;
+  const e = words.explain;
+  const days = found.days ?? 0;
+  const planned = found.planned_on;
+  const lines = (to: [ReactNode, ReactNode]): [ReactNode, ReactNode][] => [
+    [<Fill template={kind === "signing" ? e.baselineSigning : e.baselineCompletion} slots={{ plan: day(found.plan_date) }} />, planned ? day(planned) : ""],
+    to,
+    [e.daysBetween, whole(days)],
+  ];
+  const daysNum = (to: [ReactNode, ReactNode]) => <Days days={days} lines={lines(to)} />;
+  let sentence: ReactNode = null;
+  switch (found.state) {
+    case "late":
+    case "early":
+      sentence = (
+        <Fill
+          template={b[found.state](days)}
+          slots={{ days: daysNum([e.signed, day(reason.signed_on!)]), date: planned ? day(planned) : "" }}
+        />
+      );
+      break;
+    case "on_date":
+      sentence = b.on_date;
+      break;
+    case "past":
+      sentence = <Fill template={b.past(days)} slots={{ date: planned ? day(planned) : "", days: daysNum([e.asOf, day(result.as_of)]), as_of: day(result.as_of) }} />;
+      break;
+    case "ahead":
+      sentence = <Fill template={b.ahead} slots={{ date: planned ? day(planned) : "" }} />;
+      break;
+    case "not_in_baseline":
+      sentence = b.not_in_baseline;
+      break;
+    case "no_date":
+      sentence = b.no_date;
+      break;
+  }
+  return (
+    <>
+      {" "}
+      <span data-baseline-delay={found.state}>{sentence}</span>
+    </>
+  );
 }
 
 // One reason's sentence from the copy file, filled with the tool's values for it.
@@ -87,6 +138,7 @@ function ReasonText({ reason, result }: { reason: Reason; result: CheckedPlan })
       return (
         <>
           <Fill template={r.completion_passed_no_contract} slots={{ date: day(reason.planned_completion_on!) }} />
+          <BaselineSentence reason={reason} result={result} kind="completion" />
           {reason.closing_date && (
             <>
               {" "}
@@ -138,6 +190,16 @@ function ReasonText({ reason, result }: { reason: Reason; result: CheckedPlan })
           ]}
         />
       );
+      // With a baseline, the first delay is named as from the first published planned date, and the
+      // delay from the baseline follows it (the 21 brief, section 5.3).
+      if (reason.baseline) {
+        return (
+          <>
+            <Fill template={r.signed_late_first(days)} slots={slots} />
+            <BaselineSentence reason={reason} result={result} kind="signing" />
+          </>
+        );
+      }
       return <Fill template={r.signed_late_over_estimate(days)} slots={slots} />;
     }
     case "method_differs_from_reference":
@@ -235,8 +297,12 @@ function Method({ result }: { result: CheckedPlan }) {
   const phrases = result.checks_run.map((check) => words.checks[check as keyof typeof words.checks]).filter(Boolean);
   const partly = result.counts.not_fully_checked;
   return (
-    <p className="text-body text-ink">
-      <Fill template={words.method} slots={{ checks: <Joined items={phrases} /> }} />
+    <p className="text-body text-ink" data-method>
+      {result.baseline ? (
+        <Fill template={words.methodBaseline} slots={{ checks: <Joined items={phrases} />, baseline_date: day(result.baseline.plan_date) }} />
+      ) : (
+        <Fill template={words.method} slots={{ checks: <Joined items={phrases} /> }} />
+      )}
       {!result.checks_run.includes("closing_date") && (
         <>
           {" "}
@@ -349,13 +415,25 @@ function PastRangeLink({ reference, inCard = false }: { reference: string; inCar
 
 // A row or card a link's hash names keeps the selected row's tint after focus moves on
 // (DESIGN.md: tint, Selected row).
-function TableRow({ row, result, fresh, named }: { row: Activity; result: CheckedPlan; fresh?: boolean; named?: boolean }) {
+// "Re-estimated in this version": the caption at the end of a changed row's Activity cell (ticket 21),
+// which ties the row to the change list under the plan check. It is text, never a badge.
+function ChangedLine({ change }: { change?: keyof typeof copy.changes.cell }) {
+  if (!change) return null;
+  return (
+    <span className="mt-1 block text-caption text-ink-muted" data-changed={change}>
+      <Unbroken text={copy.changes.cell[change]} />
+    </span>
+  );
+}
+
+function TableRow({ row, result, fresh, named, change }: { row: Activity; result: CheckedPlan; fresh?: boolean; named?: boolean; change?: keyof typeof copy.changes.cell }) {
   const ref = row.activity_reference_no;
   return (
     <tr id={ref} data-named={named || undefined} className={cx("border-t border-line align-top", named && "bg-tint", fresh && "animate-fade-in")}>
       <th scope="row" tabIndex={-1} data-activity={ref} className={cx(CELL, "text-left font-normal focus-visible:outline-offset-[-2px]")}>
         <span className="block font-mono font-medium wrap-anywhere text-ink">{ref}</span>
         {row.description && <span className="mt-1 block text-small text-ink">{row.description}</span>}
+        <ChangedLine change={change} />
         <PastRangeLink reference={ref} />
       </th>
       <td className={CELL}>{methodText(row)}</td>
@@ -385,7 +463,7 @@ function TableRow({ row, result, fresh, named }: { row: Activity; result: Checke
 // hairline and the four STEP fields. Method and Process status take the card's full width, since
 // STEP's values, such as "Pending Implementation", are wider than a 120 px column; Review and the
 // amount share a row.
-function ActivityCard({ row, result, fresh, named }: { row: Activity; result: CheckedPlan; fresh?: boolean; named?: boolean }) {
+function ActivityCard({ row, result, fresh, named, change }: { row: Activity; result: CheckedPlan; fresh?: boolean; named?: boolean; change?: keyof typeof copy.changes.cell }) {
   const ref = row.activity_reference_no;
   const field = (label: ReactNode, value: ReactNode, wide?: boolean) => (
     <div className={cx(CARD_FIELD, wide && "col-span-full")}>
@@ -405,6 +483,7 @@ function ActivityCard({ row, result, fresh, named }: { row: Activity; result: Ch
           </span>
         </h3>
         {row.description && <p className="mt-1 text-small text-ink">{row.description}</p>}
+        <ChangedLine change={change} />
         <div className="mt-2 flex flex-col gap-2">
           {row.marks.length > 0 ? (
             row.marks.map((mark) => <MarkReasons key={mark.mark} mark={mark} result={result} />)
@@ -521,11 +600,17 @@ export function checkPill(result: CheckedPlan): ReactNode {
   );
 }
 
-export function PlanCheck({ result, findingRef, defaultOpen = false }: {
+export function PlanCheck({ result, findingRef, defaultOpen = false, afterMethod, changed = {}, after }: {
   result: CheckedPlan;
   findingRef?: Ref<HTMLHeadingElement>;
   // The gallery shows the fold open; the page opens it from a link's hash.
   defaultOpen?: boolean;
+  // Ticket 21: the change line and the baseline panel, under the method sentence they qualify.
+  afterMethod?: ReactNode;
+  // Ticket 21: the rows this version changed since the one before, by STEP reference.
+  changed?: Record<string, keyof typeof copy.changes.cell>;
+  // Ticket 21: the change list, after what Strata cannot see.
+  after?: ReactNode;
 }) {
   const findingId = useId();
   const foldId = useId();
@@ -582,6 +667,7 @@ export function PlanCheck({ result, findingRef, defaultOpen = false }: {
         <div className="mt-2">
           <Method result={result} />
         </div>
+        {afterMethod}
       </EightColumns>
       {/* Below 1024 px the cards have no column heads, so the definition of the marks sits at the
           right end of the count line's row, or on a line of its own when the two don't fit. */}
@@ -613,7 +699,7 @@ export function PlanCheck({ result, findingRef, defaultOpen = false }: {
           </thead>
           <tbody>
             {ordered.map((row) => (
-              <TableRow key={row.activity_reference_no} row={row} result={result} named={named === row.activity_reference_no} />
+              <TableRow key={row.activity_reference_no} row={row} result={result} named={named === row.activity_reference_no} change={changed[row.activity_reference_no]} />
             ))}
             {unmarked > 0 && (
               <tr className="border-t border-line bg-page" data-fold>
@@ -628,7 +714,7 @@ export function PlanCheck({ result, findingRef, defaultOpen = false }: {
           </tbody>
           <tbody id={foldId} hidden={!open}>
             {unmarkedRows.map((row) => (
-              <TableRow key={row.activity_reference_no} row={row} result={result} fresh={opened} named={named === row.activity_reference_no} />
+              <TableRow key={row.activity_reference_no} row={row} result={result} fresh={opened} named={named === row.activity_reference_no} change={changed[row.activity_reference_no]} />
             ))}
           </tbody>
         </table>
@@ -637,7 +723,7 @@ export function PlanCheck({ result, findingRef, defaultOpen = false }: {
       <div data-view="cards" className={cx("mt-2", VIEW.cards)}>
         <ul aria-labelledby={findingId} className="flex flex-col gap-3">
           {ordered.map((row) => (
-            <ActivityCard key={row.activity_reference_no} row={row} result={result} named={named === row.activity_reference_no} />
+            <ActivityCard key={row.activity_reference_no} row={row} result={result} named={named === row.activity_reference_no} change={changed[row.activity_reference_no]} />
           ))}
           {unmarked > 0 && (
             <li className="rounded-md border border-line bg-page p-4" data-fold>
@@ -650,7 +736,7 @@ export function PlanCheck({ result, findingRef, defaultOpen = false }: {
         </ul>
         <ul id={foldCardsId} hidden={!open} aria-labelledby={findingId} className="mt-3 flex flex-col gap-3">
           {unmarkedRows.map((row) => (
-            <ActivityCard key={row.activity_reference_no} row={row} result={result} fresh={opened} named={named === row.activity_reference_no} />
+            <ActivityCard key={row.activity_reference_no} row={row} result={result} fresh={opened} named={named === row.activity_reference_no} change={changed[row.activity_reference_no]} />
           ))}
         </ul>
       </div>
@@ -661,6 +747,7 @@ export function PlanCheck({ result, findingRef, defaultOpen = false }: {
           {words.notVisible}
         </p>
       </EightColumns>
+      {after && <div className="mt-12">{after}</div>}
     </section>
   );
 }
@@ -674,7 +761,7 @@ function PlanSource({ result }: { result: CheckedPlan }) {
         template={s.plan}
         slots={{
           agency: plan.implementing_agency,
-          pid: mono(plan.project_id),
+          pid: <ProjectId pid={plan.project_id} />,
           date: day(plan.plan_date),
           disclosed: day(plan.disclosed_on ?? plan.public_from),
         }}
@@ -705,7 +792,12 @@ function PlanSource({ result }: { result: CheckedPlan }) {
 // While the check loads: the header's places, the finding and method lines, the real column heads
 // over five skeleton rows from 1024 px, and three skeleton cards below it. Nothing moves when the
 // rows arrive, and nothing shimmers.
-export function PlanCheckSkeleton({ slow }: { slow?: boolean }) {
+export function PlanCheckSkeleton({ slow, baseline }: {
+  slow?: boolean;
+  // The baseline panel's place under the method sentence (ticket 21): as tall as the panel with no baseline
+  // saved, its words held invisibly, so the rows stay put when the check arrives. None in the public view.
+  baseline?: View;
+}) {
   const rows = [0, 1, 2, 3, 4];
   return (
     <div aria-hidden="true" data-plan-skeleton>
@@ -720,6 +812,12 @@ export function PlanCheckSkeleton({ slow }: { slow?: boolean }) {
         {slow && <p className="mt-1 text-caption text-ink-muted">{words.stillChecking}</p>}
         <SkeletonText className="mt-2 text-body @md/page:hidden" widths={["w-full", "w-full", "w-full", "w-full", "w-2/5"]} />
         <SkeletonText className="mt-2 hidden text-body @md/page:flex" widths={["w-full", "w-full", "w-2/5"]} />
+        {baseline && baseline !== "public" && (
+          <div className="mt-4 rounded-md border border-line bg-surface p-4" data-baseline-skeleton>
+            <p className="invisible text-body">{baseline === "piu" ? copy.baseline.piuNone : copy.baseline.none}</p>
+            {baseline === "staff" && <span className="invisible mt-3 block h-11" />}
+          </div>
+        )}
       </EightColumns>
       {/* Below 1024 px the count line's row also holds the definition's 24 px trigger. */}
       <div className="mt-4 flex min-h-6 items-center @lg/page:block @lg/page:min-h-0">

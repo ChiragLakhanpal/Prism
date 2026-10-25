@@ -623,7 +623,8 @@ test("pressing Tab into and through the stuck bar does not scroll the page", asy
   await openDraft(page, { width: 1440, height: 900 });
   await page.locator("[data-sources] [data-citation]").last().focus();
   const before = await page.evaluate(() => window.scrollY);
-  for (let press = 0; press < 4; press += 1) await page.keyboard.press("Tab");
+  // Past the last source's line, whose project ID is a link (ticket 21), to the bar's first button.
+  for (let press = 0; press < 5; press += 1) await page.keyboard.press("Tab");
   await expect(bar(page).getByRole("button", { name: "Mark as checked" })).toBeFocused();
   expect(Math.abs((await page.evaluate(() => window.scrollY)) - before)).toBeLessThanOrEqual(2);
 });
@@ -860,7 +861,9 @@ test("the Drafts tab lists the team's drafts under To check, Checked and Exporte
   await expect(groups.getByRole("heading", { level: 2 })).toHaveText(["To check", "Checked", "Exported"]);
   const toCheck = page.locator("[data-draft-group=to_check]");
   await expect(toCheck).toContainText("One draft.");
-  await expect(toCheck.getByRole("link")).toHaveText("Review notes on the Northern Water Works Development Agency plan of Oct 9, 2026");
+  await expect(toCheck.getByRole("link", { name: /^Review notes/ })).toHaveText("Review notes on the Northern Water Works Development Agency plan of Oct 9, 2026");
+  // The project ID is a link to its project page (ticket 21's ProjectId rule).
+  await expect(toCheck.getByRole("link", { name: "P156634" })).toHaveAttribute("href", "/projects/P156634");
   await expect(toCheck).toContainText("Water and Sanitation Development Project (P156634). Two notes. Drafted by you on October 23, 2026.");
   await expect(toCheck).toContainText("You opened 0 of 2 sources.");
   await expect(page.locator("[data-draft-group=exported]")).toContainText("Three notes. Exported by you on October 23, 2026.");
@@ -868,7 +871,7 @@ test("the Drafts tab lists the team's drafts under To check, Checked and Exporte
   const fold = page.locator("[data-discarded-fold]");
   await expect(fold).toContainText("You discarded one draft.");
   await fold.getByRole("button", { name: "Show it" }).click();
-  await expect(fold.getByRole("link")).toHaveAttribute("href", "/drafts/draft-0004");
+  await expect(fold.getByRole("link", { name: /^Review notes/ })).toHaveAttribute("href", "/drafts/draft-0004");
   expect(await axe(page)).toEqual([]);
 });
 

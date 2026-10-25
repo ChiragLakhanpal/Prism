@@ -1,0 +1,52 @@
+{
+  "as_of": "2026-10-23",
+  "project": {
+    "project_id": "P130164",
+    "display_name": "Rajasthan Road Sector Modernization"
+  },
+  "asked": {
+    "page": 80,
+    "para": null,
+    "passage": null
+  },
+  "document": {
+    "document_id": "31525018",
+    "doc_key": "icr-2019-10-10",
+    "type": "icr",
+    "document_type": "Implementation Completion and Results Report",
+    "document_date": "2019-10-10",
+    "disclosed_on": "2019-11-02",
+    "pdf_pages": 66,
+    "pdf_url": "http://documents.worldbank.org/curated/en/258481572631321132/pdf/India-Rajasthan-Road-Sector-Modernization-Project.pdf",
+    "language": "en",
+    "sequence": null,
+    "agency": null,
+    "replaces": null,
+    "replaced_by": null
+  },
+  "canonical": null,
+  "state": "page",
+  "page": 66,
+  "correction": {
+    "kind": "page_range",
+    "para": null,
+    "page": 66
+  },
+  "highlight": null,
+  "page_state": "read",
+  "passages": [
+    {
+      "passage_id": "31525018/v1/s69/2",
+      "section_path": "Annex 8",
+      "paragraph": "s69",
+      "numbered": false,
+      "part": 2,
+      "language": "en",
+      "text": "Project Organisation, Business Code Code & its cyclical Preparation and Process Effectiveness • IT-ICT-MIS Strategy review and updating management practices (Business and • Financial Powers & FM including E&SM, Safety • Design & construction Engineering Practices, tools • IT-ICT-MIS Strategy standards Processes) • MIS • Financial Management • Cost-effective new • Staffing powers defined & Information System technologies for road • Dedicated HRM & HRD • ISO Certification for construction functions & capacity Environmental • PWD-wide procurement • PPP roles & capacity Management and contract • IT Based Project management manual Management System • Computerisation of PWD offices Performance and • GAAP • GAAP • E-procurement Accountability • Road User Satisfaction • Road User Satisfaction • Improved public (including Surveys Surveys disclosure & information Governance) • ISO Certification Quality • Quality Management sharing Management System -ISO Certification • Quality control- Laboratory/Equipment • E-procurement • E-billing &E-contract management Themes APTRSP KSHIP II RRSMP Asset Sustainability • Planning & Budgeting • Road Asset Maintenance • Asset Management (Road Asset based on Road Asset and Management System Management) Management System System integrated with • Prioritised Annual Plans RIS & GIS for construction & • Planning & Road Asset maintenance based on Management Centre RAMS • Asset Maintenance Plan • Area-wide maintenance contract system Human Resources • Training Needs • Training Needs • Training & Capacity Development Assessment Assessment Building (Training & Capacity • Multi-Year Staff Training • Multi-Year Staff Training Building) Program Program • New Staff Appraisal • New Staff Appraisal Policy & Process Policy & Process Implementation Implementation • Specific PPP Training • Separate Budget Head Program for Staff Training • High Impact Training Plan",
+      "from_page_before": true
+    }
+  ],
+  "tables": [],
+  "plan_rows": [],
+  "page_text": null
+}

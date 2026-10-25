@@ -25,7 +25,17 @@ export type TabLink = { key: string; label: ReactNode; href: string; current?: b
 // builds stop on it rather than hide a tab; production shows every tab it is given.
 export const MOST_TABS = 5;
 
-export function Tabs({ label, tabs }: { label: string; tabs: TabLink[] }) {
+export function Tabs({
+  label,
+  tabs,
+  onNavigate,
+}: {
+  label: string;
+  tabs: TabLink[];
+  // A tab row inside one page, such as a project's (ticket 21), opens a tab itself, so focus stays on the
+  // tab link instead of moving to the page's h1. A press with a modifier key still opens a new tab.
+  onNavigate?: (href: string) => void;
+}) {
   if (import.meta.env.DEV && tabs.length > MOST_TABS) {
     throw new Error(`Tabs got ${tabs.length} tabs, but DESIGN.md section 5 allows ${MOST_TABS} at most.`);
   }
@@ -77,6 +87,14 @@ export function Tabs({ label, tabs }: { label: string; tabs: TabLink[] }) {
             <a
               href={tab.href}
               aria-current={tab.current ? "page" : undefined}
+              onClick={
+                onNavigate &&
+                ((event) => {
+                  if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;
+                  event.preventDefault();
+                  onNavigate(tab.href);
+                })
+              }
               className={cx(
                 "relative flex h-11 items-center whitespace-nowrap text-body font-bold transition-paint duration-150",
                 "after:absolute after:inset-x-0 after:bottom-0 after:h-[3px] after:transition-paint after:duration-150",

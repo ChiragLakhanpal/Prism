@@ -6,7 +6,7 @@ Read first: docs/PLAN.md sections 7 (Project delay early warning) and 11; the bl
 
 **Blocked by:** 17 (Every structured source, for every country, kept as published); 21 (The project page as the hub); 35 (Drafts: the runtime, the draft bar and review notes on a plan)
 
-**Status:** ready-for-agent
+**Status:** in-progress
 **Area:** app
 **Phase:** P2
 **Design review:** yes
@@ -18,3 +18,7 @@ Read first: docs/PLAN.md sections 7 (Project delay early warning) and 11; the bl
 - [ ] Follows persist per viewer, and the Following route refuses viewers without the World Bank staff role.
 - [ ] "Add to mission brief" creates a mission brief draft with its five parts, numbers from tools and citations, that moves through the draft states and exports to Word.
 - [ ] The page follows the Following wireframe and DESIGN.md section 5 (status first, project as a link, P-code in mono, closing date, one action per row) and section 7 (Needs a look, Watch, No signals; never "at risk", "flag" or "watchlist"); states are captured at 1440, 1024 and 390 px; axe finds no WCAG 2.2 AA violations.
+
+## Comments
+
+- October 23, 2026, orchestrator: dispatched to an implementer in its own worktree on branch strata/37-following-signals-and-mission-brief, as soon as ticket 21 landed. Credentials are still missing, so every live step is parked in docs/workspace-catchup.md; the offline side is built against the fixtures.

@@ -15,8 +15,9 @@ export type Address = {
   moves: number;
   // The history entry's key: the same for a page and the drawer opened on it.
   key: string;
-  // A page that became another in place, such as a draft being written that is now saved (ticket 35):
-  // the address changed, but focus and the scroll stay where they are.
+  // A page that became another in place, such as a draft being written that is now saved (ticket 35), or
+  // a project's tab opened from its tab row (ticket 21): the address changed, but focus and the scroll
+  // stay where they are.
   quiet?: boolean;
 };
 
@@ -43,7 +44,7 @@ export function navigate(to: string, options: { replace?: boolean; samePage?: bo
     return;
   }
   window.history.pushState({ key: options.samePage ? currentKey() : newKey() }, "", to);
-  address.set(here(address.get().moves + 1));
+  address.set({ ...here(address.get().moves + 1), quiet: options.quiet });
 }
 
 const LOADS_AS_USUAL = /^\/(api|gallery)(\/|$)/;

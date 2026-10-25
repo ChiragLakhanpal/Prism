@@ -17,7 +17,8 @@ import type { LessonCard as Card, LessonEvidence } from "../lib/lessons";
 import { Alert } from "./Alert";
 import { Button } from "./Button";
 import { Fill } from "./Fill";
-import { EvidenceBadge, fillText, ProjectIdLink, SourceChip, Tag } from "./LessonParts";
+import { EvidenceBadge, fillText, SourceChip, Tag } from "./LessonParts";
+import { ProjectId } from "./ProjectId";
 import { Num } from "./Num";
 import { ReasonField } from "./DecisionForm";
 import { Source } from "./Source";
@@ -59,7 +60,7 @@ export function LessonSources({ evidence, className }: { evidence: LessonEvidenc
             template={source.locator.kind === "section" ? words.card.sourceSection : words.card.sourceParagraph}
             slots={{
               doc: source.doc_short,
-              pid: <ProjectIdLink pid={source.pid} />,
+              pid: <ProjectId pid={source.pid} />,
               date: source.date ? <Num date={source.date} /> : "",
               para: source.locator.text,
               section: source.locator.text,

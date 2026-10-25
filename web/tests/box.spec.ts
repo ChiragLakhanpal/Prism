@@ -17,6 +17,9 @@ async function open(page: Page, path = "/", extra: Record<string, { status?: num
     "/api/freshness": { body: await recorded("freshness.json") },
     "/api/projects/P130164": { body: await recorded("project-p130164.json") },
     "/api/projects/P156634": { body: await recorded("project-p156634.json") },
+    // Ticket 21: a project's address opens its Summary.
+    "/api/projects/P130164/summary": { body: await recorded("summary-p130164.json") },
+    "/api/projects/P156634/summary": { body: await recorded("summary-p156634.json") },
     "/api/lookup/loan": { body: await recorded("lookup-loan-ida-60290.json") },
     "/api/lookup/activity": { body: await recorded("lookup-activity-ke-nwwda-541055-cw-rfb.json") },
     [`/api${PLAN}`]: { body: await recorded("check-plan-p156634-nwwda-2026-10-09.json") },

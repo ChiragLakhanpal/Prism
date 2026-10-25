@@ -1,0 +1,49 @@
+{
+  "as_of": "2026-10-23",
+  "state": "compared",
+  "plan": {
+    "document_id": "31998332",
+    "plan_date": "2020-04-30",
+    "implementing_agency": "Ministry of Water and Irrigation",
+    "agency_id": "ministry-of-water-and-irrigation"
+  },
+  "previous": {
+    "document_id": "31541426",
+    "plan_date": "2019-11-08",
+    "implementing_agency": "Ministry of Water and Irrigation",
+    "agency_id": "ministry-of-water-and-irrigation"
+  },
+  "counts": {
+    "added": 1,
+    "dropped": 0,
+    "redated": 1,
+    "reestimated": 0
+  },
+  "added": [
+    {
+      "activity_reference_no": "MWSI-WSDP-04-2019-2020",
+      "description": "Procurement of 2No. Four wheel drive vehicles for project monitoring and management",
+      "method": "Request for Bids",
+      "market_approach": "Open",
+      "estimated_amount_usd": "160000.00",
+      "process_status": "Pending Implementation"
+    }
+  ],
+  "dropped": [],
+  "redated": [
+    {
+      "activity_reference_no": "MOWS-WSDP-01-2017-2018",
+      "description": "Financial Management, Procurement, Monitoring and Evaluation, Safeguards and Engineering Support Consultancy Services",
+      "steps": [
+        {
+          "step": "Expression of Interest Notice",
+          "was": "2018-06-11",
+          "now": null,
+          "days": null,
+          "direction": null
+        }
+      ]
+    }
+  ],
+  "reestimated": []
+}

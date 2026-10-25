@@ -1,25 +1,31 @@
-// All projects (the 10 brief, section 4), at /projects: every project Strata holds a record for, in
-// the order the route gives (active ones first, then by name). Each project ID links to its page.
-// The first 50 rows show; "Show 50 more" adds the next 50 and moves focus to the first new row's
-// link. Search arrives with ticket 21 and Following with ticket 37.
-import { useEffect, useState } from "react";
+// All projects (the 10 brief, section 4, and the 21 brief, section 8), at /projects?q=&page=: every
+// project Strata holds a record for, 20 a page, in the order the route gives (an exact project ID first,
+// then active projects, then by name). A List search filters them on the server as you type, by part of a
+// name, a project ID with or without its P, or a country; the route counts the matches and the page's
+// range, so the screen counts nothing. Each project ID is a ProjectId link to its page.
+//
+// States: loading, populated, searching (the rows stay, dimmed after 400 ms), no match (the empty-state
+// card in place of the table and the pages), no records at all, a service that didn't answer, and an
+// account that can't read Strata's tables.
+import { useEffect, useId, useRef, useState } from "react";
 import { EmptyState } from "../components/Card";
-import { Button } from "../components/Button";
 import { EightColumns } from "../components/EightColumns";
 import { Fill } from "../components/Fill";
+import { ListSearch } from "../components/ListSearch";
 import { LoadError } from "../components/LoadError";
 import { PageHeader } from "../components/PageHeader";
+import { Pagination } from "../components/Pagination";
+import { ProjectId } from "../components/ProjectId";
 import { Skeleton, SkeletonLine, SkeletonText } from "../components/Skeleton";
 import { Source } from "../components/Source";
-import { Table, type Column, type Row } from "../components/Table";
-import { TextLink } from "../components/TextLink";
+import { countText, Table, type Column, type Count, type Row } from "../components/Table";
 import { copy } from "../copy";
 import type { ProjectList } from "../lib/api";
-import { formatDate, formatNumber } from "../lib/format";
-import { useLoad } from "../lib/load";
+import { formatDate } from "../lib/format";
+import { usePagedList } from "../lib/paged";
 
 const words = copy.projectsPage;
-export const PAGE_SIZE = 50;
+const NAMES = { query: "q", page: "page" };
 
 const columns: Column[] = [
   { key: "project", header: words.columns.project, width: "w-3/5" },
@@ -43,25 +49,34 @@ const PROJECT_SKELETON = (
 );
 
 export function ProjectsPage() {
-  const [load, retry] = useLoad<ProjectList>("/api/projects");
-  const [shown, setShown] = useState(PAGE_SIZE);
-  const [moved, setMoved] = useState(false);
+  const list = usePagedList<ProjectList>("/api/projects", NAMES);
+  const { load, shown, query } = list;
+  const headingId = useId();
+  // The count line, said once each time a search settles, through a polite status.
+  const [said, setSaid] = useState("");
+  const settled = useRef<string | null>(null);
+  const count = (data: ProjectList): Count => ({ noun: words.noun, one: words.nounOne, total: data.total, from: data.first, to: data.last });
 
-  // After "Show 50 more", the first new row's link takes focus, in whichever view shows.
   useEffect(() => {
-    if (!moved) return;
-    const first = Array.from(document.querySelectorAll<HTMLElement>(`[data-row="${shown - PAGE_SIZE}"]`)).find(
-      (element) => element.getClientRects().length > 0,
-    );
-    first?.focus();
-  }, [shown, moved]);
+    if (load.status !== "ready") return;
+    const key = `${load.data.query}|${load.data.page}`;
+    if (settled.current !== null && settled.current !== key) setSaid(load.data.total === 0 ? words.noMatchTitle : countText(count(load.data)));
+    settled.current = key;
+  }, [load]);
 
   let body;
-  if (load.status === "loading") {
+  if (load.status === "error") {
+    body = (
+      <EightColumns>
+        <LoadError error={load.error} message={words.error} permission={words.permission} onRetry={list.retry} retrying={load.retrying} attempt={load.attempt} />
+      </EightColumns>
+    );
+  } else if (!shown) {
     body = (
       <>
         <Table
           title={words.tableTitle}
+          labelledBy={headingId}
           level={2}
           count={{ noun: words.noun, total: 0 }}
           columns={columns}
@@ -73,61 +88,50 @@ export function ProjectsPage() {
         </p>
       </>
     );
-  } else if (load.status === "error") {
-    body = (
-      <EightColumns>
-        <LoadError error={load.error} message={words.error} permission={words.permission} onRetry={retry} retrying={load.retrying} attempt={load.attempt} />
-      </EightColumns>
-    );
-  } else if (load.data.total === 0) {
+  } else if (shown.total === 0 && !shown.query) {
     body = (
       <EightColumns>
         <EmptyState title={words.emptyTitle} body={words.emptyBody} link={{ href: "/data", text: words.emptyLink }} />
       </EightColumns>
     );
+  } else if (shown.total === 0) {
+    body = (
+      <EightColumns>
+        <EmptyState level={3} title={words.noMatchTitle} body={words.noMatchBody} link={{ href: "/projects", text: words.noMatchLink }} />
+      </EightColumns>
+    );
   } else {
-    const { rows: all, total, records_through: through } = load.data;
-    const visible = all.slice(0, shown);
-    const rows: Row[] = visible.map((project, index) => ({
+    const rows: Row[] = shown.rows.map((project, index) => ({
       id: project.project_id,
       cells: {
         project: (
           <>
-            <TextLink href={`/projects/${project.project_id}`} data-row={index} className="-mt-1 block w-fit font-mono font-medium">
-              {project.project_id}
-            </TextLink>
-            <span className="block text-small text-ink">{project.project_name}</span>
+            <ProjectId pid={project.project_id} className="-mt-1 block w-fit" />
+            <span className="block text-small text-ink" data-row={index}>
+              {project.project_name}
+            </span>
           </>
         ),
         country: project.country ?? blank,
         status: project.status ?? blank,
       },
     }));
+    const through = shown.records_through;
     body = (
       <>
         <Table
           title={words.tableTitle}
+          labelledBy={headingId}
           level={2}
-          count={{ noun: words.noun, total, from: 1, to: visible.length }}
+          count={count(shown)}
+          countLead
+          busy={list.waiting && list.searching ? words.searching : undefined}
           columns={columns}
           rowHeader="project"
           state={{ status: "ready", rows }}
         />
-        {visible.length < all.length && (
-          <Button
-            className="mt-4"
-            variant="secondary"
-            onClick={() => {
-              setShown(shown + PAGE_SIZE);
-              setMoved(true);
-            }}
-          >
-            {words.more(formatNumber(PAGE_SIZE, { compact: false }))}
-          </Button>
-        )}
-        <Source className="mt-2">
-          {through ? <Fill template={words.source} slots={{ date: formatDate(through) }} /> : words.sourceUndated}
-        </Source>
+        <Pagination className="mt-4" label={words.pages} page={shown.page} pages={shown.pages} href={list.href} />
+        <Source className="mt-2">{through ? <Fill template={words.source} slots={{ date: formatDate(through) }} /> : words.sourceUndated}</Source>
       </>
     );
   }
@@ -137,9 +141,18 @@ export function ProjectsPage() {
       <div className="col-span-12 @md/page:col-span-8">
         <PageHeader title={copy.pages.projects.title} purpose={copy.pages.projects.purpose} />
       </div>
-      <div className="col-span-12 mt-6 @lg/page:mt-8" data-projects-page={load.status}>
-        {body}
-      </div>
+      <section aria-labelledby={headingId} className="col-span-12 mt-8 @lg/page:mt-8" data-projects-page={load.status}>
+        <h2 id={headingId} className="text-title text-ink-heading">
+          {words.tableTitle}
+        </h2>
+        <div className="layout-grid mt-3">
+          <ListSearch className="col-span-12 @md/page:col-span-6" label={words.search.label} hint={words.search.hint} value={query} onSearch={list.search} />
+        </div>
+        <div className="mt-4">{body}</div>
+        <p role="status" className="sr-only">
+          {said}
+        </p>
+      </section>
     </div>
   );
 }

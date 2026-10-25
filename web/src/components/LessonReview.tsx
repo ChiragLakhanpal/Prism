@@ -13,7 +13,8 @@ import { copy } from "../copy";
 import { cx } from "../lib/cx";
 import { itemHref, type Clock, type HistoryEvent, type Item, type QueueRow as Row } from "../lib/lessons";
 import { Fill } from "./Fill";
-import { EvidenceBadge, fillText, ProjectIdLink } from "./LessonParts";
+import { EvidenceBadge, fillText } from "./LessonParts";
+import { ProjectId } from "./ProjectId";
 import { Num } from "./Num";
 import { STATES, type State } from "./state";
 import { StatusBadge } from "./StatusBadge";
@@ -64,7 +65,7 @@ export function SourceSentence({ row }: { row: Row }) {
       template={template}
       slots={{
         name: row.project.name ?? source.project_name ?? "",
-        pid: <ProjectIdLink pid={row.project.pid} />,
+        pid: <ProjectId pid={row.project.pid} />,
         para: source.locator.text,
         section: source.locator.text,
         page: String(source.page),
@@ -78,7 +79,7 @@ export function SourceSentence({ row }: { row: Row }) {
 export function NextLines({ row }: { row: Row }) {
   const r = words.row;
   const lines: ReactNode[] = [];
-  const values = { name: row.project.name ?? "", pid: <ProjectIdLink pid={row.project.pid} />, region: row.can.values.region ?? row.can.values.decided_region ?? row.region };
+  const values = { name: row.project.name ?? "", pid: <ProjectId pid={row.project.pid} />, region: row.can.values.region ?? row.can.values.decided_region ?? row.region };
   if (row.origin && row.kind === "recheck") {
     const origin = row.origin;
     const date = <Num date={origin.on} />;
@@ -200,7 +201,7 @@ function eventSentence(event: HistoryEvent): ReactNode {
       return (
         <Fill
           template={h.proposed}
-          slots={{ doc: event.doc_short ?? "", name: event.project_name ?? "", pid: <ProjectIdLink pid={event.pid ?? ""} />, date: event.published_on ? <Num date={event.published_on} /> : "" }}
+          slots={{ doc: event.doc_short ?? "", name: event.project_name ?? "", pid: <ProjectId pid={event.pid ?? ""} />, date: event.published_on ? <Num date={event.published_on} /> : "" }}
         />
       );
     case "restatement":

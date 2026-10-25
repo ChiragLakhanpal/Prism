@@ -66,7 +66,10 @@ planned completion date that has passed. \
 A signed amount is compared with its estimate, and the result says how late the contract was signed, measured \
 from the first published planned date. A package still pending close to the project's closing date is marked. \
 Weak records get data notes. It returns one row per activity in STEP's columns, with its marks (needs_a_look, \
-watch, data_note) and the values behind each reason. It reads only the plan's own record. It cannot see the \
+watch, data_note) and the values behind each reason. When World Bank staff saved one of the agency's versions \
+as the baseline, the plan agreed at negotiations, the result names it, and each reason that states a delay also \
+gives the delay from the baseline's planned date; the marks still come from the first published planned date. \
+It reads only the plan's own record. It cannot see the \
 prior-review queue, complaints, contract amendments or contract management reports."""
 adapter = "strata.tools.check_plan:check_plan"
 benchmark = "check-plan-nwwda-2026-10-09"
@@ -110,7 +113,7 @@ row_fields = ["evidence_id", "public_from", "source", "activity_reference_no", "
               "planned_completion_on", "planned_completion_plan_date", "first_listing_confirmed",
               "actual_to_estimate", "marks"]
 source_fields = ["document_type", "project_id", "implementing_agency", "plan_date", "document_id", "pdf_page"]
-fields = ["plan", "project", "checks_run", "thresholds", "counts"]
+fields = ["plan", "project", "checks_run", "thresholds", "counts", "baseline"]
 reasons = ["completion_passed_no_contract", "pending_near_closing", "pending_on_closing_day", "pending_after_closing",
            "signed_late_over_estimate", "signed_over_estimate", "method_differs_from_reference", "actual_amount_zero",
            "no_planned_date", "no_estimate"]

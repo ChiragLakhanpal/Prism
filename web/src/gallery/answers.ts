@@ -39,6 +39,7 @@ import isrS4 from "../../../tests/fixtures/api/evidence-isr-p130164-s4.json";
 import frenchIcr from "../../../tests/fixtures/api/evidence-icr-p127203-fr.json";
 import noticeContacts from "../../../tests/fixtures/api/evidence-notice-op00118817.json";
 import noticeQualifications from "../../../tests/fixtures/api/evidence-notice-op00118817-qualifications.json";
+import isrRating from "../../../tests/fixtures/api/evidence-isr-rating-p156634-pdo.json";
 import riskRow from "../../../tests/fixtures/api/evidence-pad-p130164-risk-row.json";
 import riskSummary from "../../../tests/fixtures/api/evidence-pad-p130164-risk-summary.json";
 import scanned from "../../../tests/fixtures/api/evidence-pad-p130164-scanned.json";
@@ -200,6 +201,8 @@ export const PLAN_RECORD = planRecord(checkPlan.rows[0] as unknown as Record<str
 // cite a table: one quoting a row's rating, one whose number only the table's summary held.
 export const SCANNED = scanned as unknown as EvidenceEvent;
 export const RISK_ROW = riskRow as unknown as EvidenceEvent;
+// P156634's ISR 19 rating as the passage reader read it, the record a Summary cites when no passage prints it.
+export const ISR_RATING = isrRating as unknown as EvidenceEvent;
 export const RISK_SUMMARY = riskSummary as unknown as EvidenceEvent;
 export const NOTICE = noticeQualifications as unknown as EvidenceEvent;
 export const NOTICE_CONTACTS = noticeContacts as unknown as EvidenceEvent;

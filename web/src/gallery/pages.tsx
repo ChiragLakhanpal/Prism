@@ -33,6 +33,7 @@ import {
   ICR_54_ID,
   ISR_S4,
   ISR_S4_SENT,
+  ISR_RATING,
   LOOKUPS,
   NOTICE,
   NOTICE_CONTACTS,
@@ -84,6 +85,7 @@ import { HardestDocuments } from "../pages/data/HardestDocuments";
 import { HowStrataWorks } from "../pages/data/HowStrataWorks";
 import { galleryCopy } from "./copy";
 import { draftsPage } from "./drafts";
+import { hubPage } from "./hub";
 import { lessonsPage } from "./lessons";
 import { packagesPage } from "./packages";
 
@@ -1170,6 +1172,7 @@ export const PAGES: GalleryPage[] = [
       { id: "from-link", title: s.fromLink, body: <DrawerSample id={ICR_54_ID} data={{ status: "ready", evidence: ICR_54 }} /> },
       { id: "section", title: s.section, body: <DrawerSample id={ISR_S4.id} data={{ status: "ready", evidence: ISR_S4 }} /> },
       { id: "record", title: s.record, body: <DrawerSample id={PLAN_RECORD.id} data={{ status: "ready", evidence: PLAN_RECORD }} /> },
+      { id: "record-isr-rating", title: s.recordIsrRating, body: <DrawerSample id={ISR_RATING.id} data={{ status: "ready", evidence: ISR_RATING }} /> },
       { id: "loading", title: s.loading, body: <DrawerSample id={ICR_54_ID} data={{ status: "loading" }} /> },
       { id: "failed", title: s.error, body: <DrawerSample id={ICR_54_ID} data={{ status: "failed", onRetry: () => {} }} /> },
       { id: "unknown", title: s.unknown, body: <DrawerSample id={ICR_54_ID} data={{ status: "missing" }} /> },
@@ -1309,6 +1312,7 @@ export const PAGES: GalleryPage[] = [
     ],
   },
   draftsPage(planSample),
+  hubPage(),
   lessonsPage(),
   {
     // Ticket 12's package workspace (web/src/components/PackageFacts.tsx, PastRange.tsx and
