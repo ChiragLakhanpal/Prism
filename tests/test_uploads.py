@@ -357,6 +357,31 @@ def test_an_excel_file_with_one_header_row_is_read_like_the_csv(make):
     assert answer.json()["upload"]["reading"]["unused"] == ["Remarks"]
 
 
+TOO_LONG = "1" + "0" * 27  # 28 digits, as a pasted ID number would be: more than an amount's 28 places can hold
+EXCEL_HEADER = ["Activity Reference No.", "Description", "Method", "Estimated Amount (US$)", "Signed Contract (Planned)"]
+EXCEL_ROW = ["KE-NWWDA-541055-CW-RFB", "Equipping of boreholes, lot 1", "Request for Bids"]
+
+
+@pytest.mark.parametrize("name, data, code, column, value", [
+    ("plan.csv", marker_file("New works").replace(b'"450,000.00"', TOO_LONG.encode()), "unread_amount",
+     "Estimated Amount (US$)", TOO_LONG),
+    ("plan.xlsx", [EXCEL_HEADER, [*EXCEL_ROW, 1e30, 46136]], "unread_amount", "Estimated Amount (US$)",
+     "1000000000000000000000000000000"),
+    ("plan.xlsx", [EXCEL_HEADER, [*EXCEL_ROW, 450000, float("inf")]], "unread_date", "Signed Contract (Planned)",
+     "inf"),
+], ids=["csv amount of 28 digits", "excel amount of 1E+30", "excel date of infinity"])
+def test_a_value_too_large_to_read_becomes_a_data_note_on_its_row(make, state_db, name, data, code, column, value):
+    """A value that will not read is noted on its row and the upload is kept, never an error."""
+    answer = upload(make(), data=xlsx(data) if isinstance(data, list) else data, name=name)
+
+    assert answer.status_code == 200, answer.text
+    [row] = answer.json()["rows"]
+    notes = [reason for mark in row["marks"] for reason in mark["reasons"] if reason["code"] == code]
+    assert notes == [{"code": code, "mark": "data_note", "column": column, "value": value,
+                      "evidence_ids": [row["evidence_id"]]}]
+    assert kept_rows(state_db) == (1, 1)
+
+
 def xlsx(rows: list[list]) -> bytes:
     """A one-sheet Excel file, as the standard library can write one: strings inline, numbers as numbers."""
     import io

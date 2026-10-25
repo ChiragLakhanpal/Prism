@@ -39,6 +39,7 @@ ACTIVITY = "activity"
 EXCEL_EPOCH = dt.date(1899, 12, 30)  # day 0 of Excel's dates on Windows and Mac since 2011
 EXCEL_DAYS = range(20_000, 80_000)  # 1954 to 2119: a number in a date column outside these is not a date
 UNZIPPED_LIMIT = 100_000_000  # the most an Excel file may hold once unzipped
+LONGEST_NUMBER = 30  # an Excel number with more digits than this before or after the point is read as its text
 ONE_ROW_STEP = re.compile(r"^(?P<step>.+?)\s*[(\[:-]?\s*(?P<head>planned|actual)\s*[)\]]?$", re.I)
 MAIN = "{http://schemas.openxmlformats.org/spreadsheetml/2006/main}"
 RELS = "{http://schemas.openxmlformats.org/package/2006/relationships}"
@@ -138,8 +139,9 @@ def _xlsx_sheets(data: bytes) -> list[tuple[str | None, list[list]]]:
                             number = Decimal(value.text)
                         except InvalidOperation:
                             cells[index] = value.text
-                        else:
-                            cells[index] = number
+                        else:  # infinity, not-a-number and a number too long to write stay as the cell's text
+                            readable = number.is_finite() and abs(number.adjusted()) <= LONGEST_NUMBER
+                            cells[index] = number if readable else value.text
                 rows.append([cells.get(index) for index in range(max(cells) + 1)] if cells else [])
             sheets.append((sheet.get("name"), rows))
         return sheets
@@ -247,7 +249,10 @@ def _date(cell) -> tuple[dt.date | None, bool]:
     if cell is None or _text(cell) == "":
         return None, True
     if isinstance(cell, Decimal):
-        day = int(cell) if cell == cell.to_integral_value() else None
+        try:
+            day = int(cell) if cell == cell.to_integral_value() else None
+        except (InvalidOperation, ValueError, OverflowError):
+            return None, False
         if day is not None and day in EXCEL_DAYS:
             return EXCEL_EPOCH + dt.timedelta(days=day), True
         return None, False
@@ -261,10 +266,13 @@ def _value(key: str, cell) -> tuple[object, bool]:
     if not text:
         return None, True
     if key in AMOUNTS:
-        if isinstance(cell, Decimal):
-            return cell.quantize(Decimal("0.01")), True
-        found = _amount(text)
-        return (found.quantize(Decimal("0.01")), True) if found is not None else (None, False)
+        found = cell if isinstance(cell, Decimal) else _amount(text)
+        if found is None:
+            return None, False
+        try:  # an amount longer than a Decimal's 28 places, such as a pasted ID number, will not read
+            return found.quantize(Decimal("0.01")), True
+        except (InvalidOperation, ValueError, OverflowError):
+            return None, False
     if key in VALUES:
         return _known(text, VALUES[key]), True
     return text, True
