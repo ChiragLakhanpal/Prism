@@ -104,6 +104,11 @@ export const galleryCopy = {
       purpose:
         "Check a plan's parts: the trail above it, the check pill, and the plan check as a table from 1024 px and as activity cards below it. Activities with no signals fold behind a button.",
     },
+    following: {
+      title: "Following",
+      purpose:
+        "Following's parts: the status badges with Not checked, the signal lines, the list as a table from 1,200 px and as row blocks below it, the fold, the track record, the follow control and the mission brief's parts. The list and the brief are answers the server wrote; the rows the fixture cannot reach are made up and say so.",
+    },
     drafts: {
       title: "Drafts",
       purpose:
@@ -645,6 +650,24 @@ export const galleryCopy = {
     drawerDisagreement: "The drawer's disagreement view, on Both reports",
   },
   // The Drafts page's state labels (ticket 35).
+  // Ticket 37's samples on the Following page.
+  followingStates: {
+    badges: "Status badges and the Strong signal tag",
+    populated: "Following on the fixture: P156634 needs a look, and a closed project folds away",
+    states: "Made-up rows: a strong signal, Watch, Not checked, partly checked and pipeline",
+    manyQuiet: "Made-up rows: one project to look at and ten quiet ones folded",
+    allQuiet: "Made-up rows: every project quiet",
+    track: "A made-up stored track record, with counts too few to read as a rate",
+    loading: "Loading",
+    follow: "The follow control",
+    followOff: "Not following",
+    followSaving: "Saving",
+    followOn: "Following",
+    followFailed: "The save failed",
+    followLoading: "Loading",
+    followUnread: "Reading whether you follow it failed",
+    brief: "The mission brief's five parts, as the server wrote them on the fixture",
+  },
   draftStates: {
     stepDraft: "Draft is the current state",
     stepChecked: "Checked by you is the current state",

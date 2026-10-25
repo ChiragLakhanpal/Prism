@@ -31,7 +31,7 @@ The probe chose Lakebase (ADR 0005), so ticket 15, which writes the first app st
 - **Each person sees only their own rows.** Every read and write names the viewer it is for, bound per request, and the routes show a package only to the person who made it, as the drafts' routes do. The uploader's team rule (CLAUDE.md rule 8) will filter by team the same way when uploads arrive.
 - **The app makes its tables.** The first time the server needs app state, it runs the definitions, which leave a table that exists as it is. A deploy needs to give the app only its database.
 
-The drafts (ticket 35) were built before the probe ran, so they still live in `strata.ops`. Moving them to Lakebase is a follow-up.
+The drafts (ticket 35) were built before the probe ran, so they still live in `strata.ops`. Moving them to Lakebase is a follow-up. Ticket 37's follows sit beside them in `strata.ops.follows`, for the same reason: one row each time a World Bank staff viewer follows or unfollows a project, written as the app's own service principal, the latest row winning, and no row ever changed or removed.
 
 ## Result
 

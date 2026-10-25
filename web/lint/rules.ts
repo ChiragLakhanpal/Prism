@@ -16,6 +16,8 @@ export const FIXED_TERMS = [
   "Exporting sends nothing and is not a World Bank review, clearance or no-objection.",
   // DESIGN.md section 8, Exported files: the last sentence of the Word file's origin paragraph.
   "These notes are not a World Bank review, clearance or no-objection.",
+  // The mission brief's Word origin paragraph (ticket 37; DESIGN.md section 8, Exported files).
+  "This brief is not a World Bank review, clearance or no-objection.",
   // DESIGN.md section 7, rule 8: the one fixed term where "the Bank" stays.
   "the Bank's no-objection",
 ];

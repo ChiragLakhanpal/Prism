@@ -649,6 +649,82 @@ const failingAct: Shot["api"] = { "/api/drafts/draft-0001/check": { status: 503,
 const MARKER = "[data-draft-notes] [data-view]:visible [data-citation='1']";
 const LAST_MARKER = "[data-draft-notes] [data-view]:visible [data-citation='3']";
 
+// Ticket 37: Following, the follow control and the mission brief, with /api answered from the server's answers on
+// the fixture (tests/record_following_api.py). The states the fixture cannot reach are the following-made-up-*.json
+// answers, made up from the real one and saying so.
+const STAFF = { recorded: "me-staff.json" };
+const following = (name: string, file: string | null, rest: Partial<Shot> = {}, path = "/projects/following"): Shot =>
+  app(`following--${name}`, path, { me: STAFF }, {
+    ...rest,
+    api: { ...app(name, path, { me: STAFF }).api, ...(file ? { "/api/following": { recorded: file } } : {}), "/api/evidence/opened": { body: '{"recorded":true}' }, ...rest.api },
+  });
+const BRIEF_DRAFT = { "/api/drafts/draft-0001": { recorded: "drafts-mission-brief-draft.json" } };
+const projectWithFollow = (name: string, follow: Answer, rest: Partial<Shot> = {}): Shot =>
+  app(`following--${name}`, "/projects/P156634", { me: STAFF }, {
+    ...rest,
+    api: {
+      ...app(name, "/projects/P156634", { me: STAFF }).api,
+      "/api/projects/P156634": { recorded: "project-p156634.json" },
+      "/api/projects/P156634/summary": { recorded: "summary-p156634.json" },
+      "/api/projects/P156634/follow": follow,
+      ...rest.api,
+    },
+  });
+
+const FOLLOWING_SHOTS: Shot[] = [
+  following("loading", null, { pending: ["/api/following"] }),
+  following("populated", "following-p156634.json"),
+  following("fold-open", "following-p156634.json", { full: true, act: click("[data-following-view]:visible [data-fold]") }),
+  following("states", "following-made-up-states.json"),
+  following("many-quiet", "following-made-up-many-quiet.json", { full: true, act: click("[data-following-view]:visible [data-fold]") }),
+  following("all-quiet", "following-made-up-all-quiet.json"),
+  following("one", "following-made-up-one.json"),
+  following("track-record", "following-made-up-track-record.json", { full: true, act: click("[data-track-record] button[aria-expanded]") }),
+  following("asof", "following-asof-2024-06-30.json", {}, "/projects/following?asof=2024-06-30"),
+  following("empty", "following-empty.json"),
+  following("error", null, { api: { "/api/following": { status: 503, body: '{"code":"data_service","trace_id":"4bf92f3577b34da6a3ce929d0e0e4736"}' } } }),
+  following("permission", null, { api: { "/api/following": { status: 403, body: '{"code":"permission"}' } } }),
+  following("not-staff", null, { api: { "/api/me": { recorded: "me-not-staff.json" }, "/api/following": { status: 403, recorded: "following-not-staff.json" } } }),
+  following("preview-piu", null, {}, "/projects/following?view=piu"),
+  following("preview-public", null, {}, "/projects/following?view=public"),
+  // The visible Status term: the table's header from 1,200 px, the definitions above the list below it.
+  following("status-term", "following-p156634.json", { widths: WIDE, act: click("[data-term]:visible >> nth=0") }),
+  following("ratio-num", "following-p156634.json", { widths: WIDE, act: click("[data-following-view]:visible [data-signal=above_estimate] [data-num]") }),
+  following("hover-add", "following-p156634.json", { widths: WIDE, act: hover("[data-following-view]:visible [data-add-brief]") }),
+  following("focus-add", "following-p156634.json", { act: focus("[data-following-view]:visible [data-add-brief]") }),
+  following("focus-marker", "following-p156634.json", { act: focus("[data-following-view]:visible [data-citation]") }),
+  following("drawer", "following-p156634.json", { act: click("[data-following-view]:visible [data-signal=completion_passed] [data-citation]") }),
+  following("all-projects", null, { api: { "/api/projects": { recorded: "projects.json" } } }, "/projects"),
+  projectWithFollow("project-not-following", { recorded: "follow-off.json" }),
+  projectWithFollow("project-following", { recorded: "follow-on.json" }),
+  // Only the PUT is held, so the control first reads that you don't follow and then shows Saving.
+  projectWithFollow("project-saving", { recorded: "follow-off.json" }, {
+    act: async (page) => {
+      await page.route("**/api/projects/P156634/follow", (route) => (route.request().method() === "PUT" ? undefined : route.fallback()));
+      await page.locator("[data-follow] button").first().click();
+      await page.waitForTimeout(200);
+    },
+  }),
+  projectWithFollow("project-loading", { recorded: "follow-off.json" }, { pending: ["/api/projects/P156634/follow"] }),
+  projectWithFollow("project-hover-follow", { recorded: "follow-off.json" }, { widths: WIDE, act: hover("[data-follow] button") }),
+  following("brief-writing", "following-p156634.json", {
+    full: true,
+    pending: ["/api/drafts"],
+    api: BRIEF_DRAFT,
+    act: async (page) => {
+      await page.locator("[data-following-view]:visible [data-add-brief]").first().click();
+      await page.waitForTimeout(300);
+    },
+  }),
+  app("following--brief-draft", "/drafts/draft-0001", { me: STAFF }, { api: { ...app("b", "/").api, ...BRIEF_DRAFT, "/api/evidence/opened": { body: '{"recorded":true}' } } }),
+  app("following--brief-checked", "/drafts/draft-0001", { me: STAFF }, {
+    api: { ...app("b", "/").api, "/api/drafts/draft-0001": { recorded: "drafts-mission-brief-checked.json" }, "/api/evidence/opened": { body: '{"recorded":true}' } },
+  }),
+  app("following--brief-exported", "/drafts/draft-0001", { me: STAFF }, {
+    api: { ...app("b", "/").api, "/api/drafts/draft-0001": { recorded: "drafts-mission-brief-exported.json" }, "/api/evidence/opened": { body: '{"recorded":true}' } },
+  }),
+];
+
 const DRAFT_SHOTS: Shot[] = [
   planWithDraft("draft--plan-action", NO_EXISTING),
   planWithDraft("draft--plan-none", NO_EXISTING, {}, { body: noSignals }),
@@ -1671,6 +1747,7 @@ export const SHOTS: Shot[] = [
   ...ANSWER_SHOTS,
   ...CHECK_SHOTS,
   ...DRAFT_SHOTS,
+  ...FOLLOWING_SHOTS,
   ...LESSON_SHOTS,
   ...PACKAGE_SHOTS,
   ...PLANNED_SHOTS,

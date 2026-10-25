@@ -130,6 +130,9 @@ export function matchRoute(pathname: string): Match {
   if (first === "data" && parts.length === 2 && second === DATA_PAGES.dataHow) return page("dataHow", "data");
   if (first !== "projects") return page("notFound");
   if (parts.length === 1) return page("projects", "projects");
+  // Ticket 37: Following, before a project's address, so "following" is never read as a malformed project ID.
+  // PLAN.md section 8 does not list this route.
+  if (parts.length === 2 && second === "following") return page("following", "projects");
 
   if (!PROJECT_ID.test(second)) return page("notAProject");
   const pid = second.toUpperCase();

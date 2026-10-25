@@ -44,6 +44,49 @@ questions:
       (tests/ground_truth/values.toml, plan_row wireframe_mark), and the ninth activity the
       wireframe leaves out, with no mark (values.toml, plan.also_lists).
 
+  # Ticket 37: the fixed signals on a project World Bank staff follow, and the status they give it.
+  - id: project-signals-p156634
+    kind: sql
+    tool: project_signals
+    question: >-
+      As of October 22, 2026, does P156634 need a look, and which signals put it there?
+    arguments:
+      project_id: P156634
+      as_of: "2026-10-22"
+    expected:
+      status: [needs_a_look]
+      # One row per check that fired, and what each fired on.
+      completion_passed: [KE-NWWDA-541055-CW-RFB]
+      above_estimate: [KE-NWWDA-229129-CW-RFB]
+      late_direct: [KE-CWSB-567630-CW-DIR]
+      closing_moves: ["2022-11-30", "2024-04-30", "2025-11-30"]
+    ground_truth: tests/ground_truth/project_signals_p156634_late_direct_and_moves.sql
+    source: >-
+      The ticket's four lines from the blueprint's Following wireframe: KE-NWWDA-541055-CW-RFB's planned completion
+      of July 31, 2026 with no signed contract (tests/ground_truth/values.toml, plan-541055-planned-completion and
+      plan-541055-no-signed-contract); KE-NWWDA-229129-CW-RFB signed at US$1,245,092.76 against US$300,000.00
+      (plan-229129-actual); KE-CWSB-567630-CW-DIR, US$2,600,000.00, first listed on August 17, 2026
+      (plan-cwsb-567630-estimated and plan-cwsb-567630-first-listed); and the three months the loan history first
+      showed a new closing date (closing-p156634-move-1 to move-3).
+
+  # Ticket 37: what the mission brief writer drafts from.
+  - id: project-records-p156634
+    kind: sql
+    tool: project_records
+    question: >-
+      As of October 22, 2026, which contracts were signed on P156634 since its last ISR, and which loans and
+      credits does it have?
+    arguments:
+      project_id: P156634
+      as_of: "2026-10-22"
+    expected:
+      awards: [KE-CWSB-565568-GO-RFQ, KE-CWSB-567630-CW-DIR]
+      disbursement: [IDA60290, IDA60300]
+    ground_truth: tests/ground_truth/project_records_p156634_awards_and_loans.sql
+    source: >-
+      The awards dataset's contracts signed after ISR 19 of June 30, 2026 (tests/ground_truth/values.toml,
+      award-567630-signed and award-565568-signed), and the two credits the loan history records for P156634.
+
   - id: find-comparables-ke-nwwda-541055
     kind: estimates
     tool: find_comparables

@@ -16,6 +16,7 @@ import { DataPage } from "./pages/data/DataPage";
 import { DraftNewPage } from "./pages/DraftNewPage";
 import { DraftPage } from "./pages/DraftPage";
 import { DraftsPage } from "./pages/DraftsPage";
+import { FollowingPage } from "./pages/FollowingPage";
 import { LessonsPage, QueuePage } from "./pages/LessonsPages";
 import { ReviewPage } from "./pages/ReviewPage";
 import { JudgingPage, JudgingQueryPage } from "./pages/JudgingPages";
@@ -31,6 +32,7 @@ import type { Match, ProjectTab } from "./routes";
 export function RoutePage({ match, search = "" }: { match: Match; search?: string }) {
   const { pid, agencyId, version } = match.values;
   if (match.key === "projects") return <ProjectsPage />;
+  if (match.key === "following") return <FollowingPage search={search} />;
   if (match.key === "project") return <ProjectPage pid={pid} tab={match.values.tab as ProjectTab} />;
   if (match.key === "document") return <SourcePage pid={pid} doc={match.values.doc} search={search} />;
   if (match.key === "checkPlan") return <CheckPlanPage pid={pid} agencyId={agencyId} version={version} />;

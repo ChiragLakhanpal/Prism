@@ -53,6 +53,9 @@ export function draftsCopy(): string {
     source: copy.source,
     recordSource: copy.evidence.recordSource,
     recordSourceShort: copy.evidence.recordSourceShort,
+    // A record a mission brief cites names its source by its key, and its totals record by the tool (ticket 37).
+    summaryRecordSources: copy.evidence.summaryRecordSources,
+    toolSource: copy.evidence.toolSource,
     checkLine: copy.checkLine,
     removed: { reasons: copy.removed.reasons, unknownReason: copy.removed.unknownReason },
     notVisible: copy.checkPlan.notVisible,

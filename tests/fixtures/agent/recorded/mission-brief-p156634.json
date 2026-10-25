@@ -1,0 +1,35 @@
+{
+ "about": "One answer of the Foundry agent strata-mission-brief-writer through the Responses API, written by hand in the shape the API documents, because the gate's machine has no key. It writes the five parts of a mission brief for P156634 as of October 23, 2026, citing only the records project_records and check_plan returned and stating only values they hold. Replace it with a recording: uv run --script ops/agent/record.py --env-file .env --writers",
+ "recorded": false,
+ "recorded_on": null,
+ "question": "Write a mission brief for Water and Sanitation Development Project (P156634).",
+ "scope": "P156634",
+ "as_of": "2026-10-23",
+ "agent": {
+  "name": "strata-mission-brief-writer",
+  "version": null
+ },
+ "responses": [
+  {
+   "id": "resp_mission_brief_p156634_1",
+   "object": "response",
+   "status": "completed",
+   "model": "gpt-5.4",
+   "output": [
+    {
+     "type": "message",
+     "id": "msg_mission_brief_p156634_1",
+     "role": "assistant",
+     "status": "completed",
+     "content": [
+      {
+       "type": "output_text",
+       "annotations": [],
+       "text": "{\"notes\": [{\"part\": \"plans\", \"claims\": [{\"sentence\": \"The Northern Water Works Development Agency's latest Procurement Plan, of October 9, 2026, lists nine activities.\", \"kind\": \"record\", \"evidence_ids\": [\"strata.silver.plan_versions:40132287\"], \"numbers\": [\"nine\"], \"dates\": [\"October 9, 2026\"], \"quote\": null}, {\"sentence\": \"In it, KE-NWWDA-541055-CW-RFB passed its planned completion of July 31, 2026 with no signed contract.\", \"kind\": \"record\", \"evidence_ids\": [\"strata.silver.plan_rows:40132287/KE-NWWDA-541055-CW-RFB\"], \"numbers\": [], \"dates\": [\"July 31, 2026\"], \"quote\": null}, {\"sentence\": \"The Coast Water Services Board's latest plan, of August 17, 2026, lists eight activities.\", \"kind\": \"record\", \"evidence_ids\": [\"strata.silver.plan_versions:40122770\"], \"numbers\": [\"eight\"], \"dates\": [\"August 17, 2026\"], \"quote\": null}]}, {\"part\": \"awards\", \"claims\": [{\"sentence\": \"Two contracts were signed after the ISR dated June 30, 2026, for US$2.5 million together.\", \"kind\": \"record\", \"evidence_ids\": [\"strata.tools.project_records:P156634@2026-10-23\"], \"numbers\": [\"Two\", \"2.5\"], \"dates\": [\"June 30, 2026\"], \"quote\": null}, {\"sentence\": \"KE-CWSB-567630-CW-DIR was signed on August 28, 2026 at US$2.4 million, against an Estimated Amount of US$2.6 million.\", \"kind\": \"record\", \"evidence_ids\": [\"strata.gold.contract:1901323\"], \"numbers\": [\"2.4\", \"2.6\"], \"dates\": [\"August 28, 2026\"], \"quote\": null}]}, {\"part\": \"ratings\", \"claims\": [{\"sentence\": \"ISR 19, dated June 30, 2026, rated progress towards achievement of PDO Moderately Satisfactory, as ISR 18 did.\", \"kind\": \"record\", \"evidence_ids\": [\"strata.silver.isr_ratings:P156634/40114539/pdo\", \"strata.silver.isr_ratings:P156634/40091292/pdo\"], \"numbers\": [\"19\", \"18\"], \"dates\": [\"June 30, 2026\"], \"quote\": null}, {\"sentence\": \"ISR 19 rated overall implementation progress Moderately Satisfactory.\", \"kind\": \"record\", \"evidence_ids\": [\"strata.silver.isr_ratings:P156634/40114539/implementation\"], \"numbers\": [\"19\"], \"dates\": [], \"quote\": null}]}, {\"part\": \"disbursement\", \"claims\": [{\"sentence\": \"By September 30, 2026, IDA60300 had disbursed US$275.9 million, with US$183.98 left to disburse.\", \"kind\": \"record\", \"evidence_ids\": [\"strata.gold.loan:P156634/IDA60300\"], \"numbers\": [\"275.9\", \"183.98\"], \"dates\": [\"September 30, 2026\"], \"quote\": null}, {\"sentence\": \"IDA60290 had disbursed US$17.6 million, with US$68,157.99 left to disburse and US$19.4 million canceled.\", \"kind\": \"record\", \"evidence_ids\": [\"strata.gold.loan:P156634/IDA60290\"], \"numbers\": [\"17.6\", \"68,157.99\", \"19.4\"], \"dates\": [], \"quote\": null}]}, {\"part\": \"closing\", \"claims\": [{\"sentence\": \"The project closes on October 31, 2026, in 8 days.\", \"kind\": \"record\", \"evidence_ids\": [\"strata.tools.project_records:P156634@2026-10-23\"], \"numbers\": [\"8\"], \"dates\": [\"October 31, 2026\"], \"quote\": null}, {\"sentence\": \"The loan history shows the closing date moved three times, most recently in November 2025.\", \"kind\": \"record\", \"evidence_ids\": [\"strata.tools.project_records:P156634@2026-10-23\", \"strata.gold.project_closing_date:P156634/2025-11-30\"], \"numbers\": [\"three\"], \"dates\": [\"November 2025\"], \"quote\": null}]}]}"
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

@@ -530,7 +530,7 @@ def test_a_threshold_added_to_the_file_is_read(tmp_path):
 def test_review_notes_are_a_draft_kind_with_their_writer_columns_and_holds():
     # The 35 design brief, sections 1, 3.5 and 11: two columns, Activity and Review note, and two holds,
     # not yet checked and a preview, with the hold line for not yet checked named first.
-    [kind] = config.load_draft_kinds().kinds.values()
+    kind = config.load_draft_kinds().kinds["review_notes"]
 
     assert (kind.key, kind.agent, kind.export) == ("review_notes", "review_notes_writer", "word")
     assert kind.columns == ("activity", "note")
@@ -540,12 +540,13 @@ def test_review_notes_are_a_draft_kind_with_their_writer_columns_and_holds():
 
 def test_adding_a_draft_kind_is_one_entry(tmp_path):
     path = copy("drafts.toml", tmp_path, old="[holds.notChecked]", new=(
-        '[kinds.mission_brief]\nwriter = "strata.drafts.review_notes"\nagent = "review_notes_writer"\n'
-        'word = "strata.drafts.review_notes:word"\nexport = "word"\ncsv = []\ncolumns = ["part"]\n'
+        '[kinds.ppsd_rows]\nwriter = "strata.drafts.review_notes"\nagent = "review_notes_writer"\n'
+        'word = "strata.drafts.review_notes:word"\nexport = "word"\ncsv = []\ncolumns = ["risk"]\n'
         'holds = ["notChecked"]\nsources_list = true\nremoved_box = "always"\nnot_checked = []\n'
-        'files = "mission-brief-{project_id}"\n\n[holds.notChecked]'))
+        'files = "ppsd-rows-{project_id}"\n\n[holds.notChecked]'))
 
-    assert list(config.load_draft_kinds(path).kinds) == ["review_notes", "mission_brief"]
+    # Ticket 37 added the mission brief the same way.
+    assert list(config.load_draft_kinds(path).kinds) == ["review_notes", "mission_brief", "ppsd_rows"]
 
 
 def test_a_draft_kind_with_a_hold_the_registry_does_not_define_is_refused(tmp_path):

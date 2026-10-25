@@ -146,6 +146,9 @@ from strata.server import criteria as criteria_routes
 from strata.criteria.store import CriteriaStore
 from strata.criteria.workflow import Package as CriteriaPackage
 from strata.server import risks as risk_routes
+from strata.server import following as following_routes
+from strata.server.following import FollowStore
+from strata.estimates import signals_track
 from strata.server.access import Access, NoGroups
 from strata.server.choices import REASON_LIMIT, ChoiceLog
 from strata.server.evidence import OpenedLog
@@ -279,7 +282,8 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                new_check_id: Callable[[], str] = criteria_routes.new_check_id, judge: Judge | None = None,
                passage_reports: PassageReports | None = None, judging: Judging | None = None,
                feedback_record: Callable[[], Engine] | None = None,
-               citations: CitationLog | None = None, choices: ChoiceLog | None = None) -> FastAPI:
+               citations: CitationLog | None = None, choices: ChoiceLog | None = None,
+               follows: FollowStore | None = None) -> FastAPI:
     """The app.
 
     engine_for makes the engine for each request's viewer; without it, the environment names one.
@@ -335,6 +339,7 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
     engine_for = engine_for or engines.from_environment()
     runner = runner or no_agent
     lessons = lessons or LessonReview(load_roles())
+    access = access or Access(load_roles(), NoGroups())
     passage_reports = passage_reports or PassageReports(load_roles())
     judging = judging or Judging(load_roles())
     web = web_dist.resolve() if web_dist is not None else None
@@ -690,10 +695,14 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
             return {"choice": None}
 
     draft_routes.add_routes(app, engine_for=engine_for, store=drafts,
-                            access=access or Access(load_roles(), NoGroups()), writers=writers or (lambda kind: None),
+                            access=access, writers=writers or (lambda kind: None),
                             kinds=kinds or load_draft_kinds(), today=today, now=now, new_draft_id=new_draft_id,
                             new_run_id=new_run_id, runs=runs, trace_ids=trace_ids, reference=request_reference,
                             heartbeat_seconds=heartbeat_seconds, six_checks=six_checks)
+
+    # Following and the follow buttons (ticket 37).
+    following_routes.add_routes(app, engine_for=engine_for, store=follows, access=access, drafts=drafts, today=today,
+                                now=now, reference=request_reference, track_record=signals_track.stored)
 
     package_routes.add_routes(app, engine_for=engine_for, store=packages, reader_for=package_reader or (lambda: None),
                               form=package_form or load_package_form(), thresholds=package_thresholds or thresholds,
@@ -885,8 +894,10 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
 
     @app.get("/api/me")
     def me(viewer: Viewer = Depends(current_viewer)) -> dict:
+        # Whether the viewer has the World Bank staff role (ticket 37): the navy bar's Projects tab then opens
+        # Following, and the project page offers Follow.
         return {"email": viewer.email, "name": viewer.name, "signed_in": viewer.signed_in,
-                "has_token": viewer.token is not None}
+                "has_token": viewer.token is not None, "staff": access.is_staff(viewer)}
 
     @app.get("/api/me/warehouse")
     async def me_on_the_warehouse(viewer: Viewer = Depends(current_viewer)):

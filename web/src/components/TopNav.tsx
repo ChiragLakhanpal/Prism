@@ -161,10 +161,10 @@ function ViewSwitch({
   );
 }
 
-function BarTab({ section, current }: { section: (typeof SECTIONS)[number]; current: boolean }) {
+function BarTab({ section, current, href }: { section: (typeof SECTIONS)[number]; current: boolean; href?: string }) {
   return (
     <a
-      href={section.href}
+      href={href ?? section.href}
       aria-current={current ? "page" : undefined}
       data-nav-tab={section.key}
       className={cx(
@@ -182,15 +182,17 @@ function PanelRow({
   section,
   current,
   onNavigate,
+  href,
 }: {
   section: (typeof SECTIONS)[number];
   current: boolean;
+  href?: string;
   // A row opens its page and closes the panel.
   onNavigate: () => void;
 }) {
   return (
     <a
-      href={section.href}
+      href={href ?? section.href}
       aria-current={current ? "page" : undefined}
       onClick={onNavigate}
       data-nav-tab={section.key}
@@ -217,6 +219,7 @@ export function TopNav({
   homeHref = "/",
   menuOpen: menuOpenAtStart = false,
   viewOpen,
+  projectsHref,
 }: {
   // The logo, at least 24 px tall. The slot gives it clear space of half its height, and 24 px
   // before the wordmark, so the two never read as one co-branded name (DESIGN.md section 9). The app and
@@ -230,6 +233,8 @@ export function TopNav({
   // For the gallery: open the Menu panel or the view popover on the first render.
   menuOpen?: boolean;
   viewOpen?: boolean;
+  // Where the Projects tab goes: Following for World Bank staff (ticket 37), All projects for everyone else.
+  projectsHref?: string;
 }) {
   const [menuOpen, setMenuOpen] = useState(menuOpenAtStart);
   const menuButton = useRef<HTMLButtonElement>(null);
@@ -299,7 +304,7 @@ export function TopNav({
             <ul className="flex items-center">
               {SECTIONS.map((section) => (
                 <li key={section.key}>
-                  <BarTab section={section} current={section.key === current} />
+                  <BarTab section={section} current={section.key === current} href={section.key === "projects" ? projectsHref : undefined} />
                 </li>
               ))}
             </ul>
@@ -335,7 +340,12 @@ export function TopNav({
           <ul className="px-0.5">
             {SECTIONS.map((section) => (
               <li key={section.key}>
-                <PanelRow section={section} current={section.key === current} onNavigate={() => setMenuOpen(false)} />
+                <PanelRow
+                  section={section}
+                  current={section.key === current}
+                  href={section.key === "projects" ? projectsHref : undefined}
+                  onNavigate={() => setMenuOpen(false)}
+                />
               </li>
             ))}
           </ul>

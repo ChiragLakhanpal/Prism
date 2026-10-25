@@ -93,9 +93,9 @@ class Case:
             written = json.loads(output_text(answer))
             if self.plant_claims:
                 written["claims"] += [copy.deepcopy(claim) for claim in self.plant_claims]
-            for note in self.plant_notes:  # a planted note replaces the recorded note on its activity
-                written["notes"] = [kept for kept in written["notes"]
-                                    if kept.get("activity_reference_no") != note["activity_reference_no"]]
+            for note in self.plant_notes:  # a planted note replaces the recorded note on its activity, or its part
+                key = "activity_reference_no" if "activity_reference_no" in note else "part"
+                written["notes"] = [kept for kept in written["notes"] if kept.get(key) != note[key]]
                 written["notes"].append(copy.deepcopy(note))
             answer["output"] = [{"type": "message", "id": "msg_planted", "role": "assistant", "status": "completed",
                                  "content": [{"type": "output_text", "annotations": [],

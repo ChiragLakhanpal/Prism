@@ -326,10 +326,14 @@ function RecordView({ evidence }: { evidence: EvidenceEvent }) {
   // label on the left and the amount on the list's right edge, so a loan's three amounts line up and the
   // date after them starts its own line at the left (the 21 design review, round 2, F19).
   for (const field of (Array.isArray(row.fields) ? row.fields : []) as { key: string; value: string; kind: string; highlight?: boolean }[]) {
+    // A key is Strata's own name for a value, such as a rating's "pdo", which means nothing to a reader.
+    if (field.kind === "key") continue;
     const label = copy.evidence.summaryRecordFields[field.key] ?? field.key;
-    if (field.kind === "date") fields.push({ label, value: <Num date={field.value} /> });
+    // The field a line states, such as the date a plan signal fired on (ticket 37), is highlighted.
+    const marked = (value: ReactNode) => (field.highlight ? <Highlight>{value}</Highlight> : value);
+    if (field.kind === "date") fields.push({ label, value: marked(<Num date={field.value} />) });
     else if (field.kind === "usd") {
-      fields.push({ label, value: <Num value={Number(field.value)} options={{ decimals: 2, compact: false }} />, numeric: true, ledger: true });
+      fields.push({ label, value: marked(<Num value={Number(field.value)} options={{ decimals: 2, compact: false }} />), numeric: true, ledger: true });
     }
     // The field a sentence or a row quoted, such as an award notice's Reason for Rejection (ticket 31), is highlighted.
     else if (field.highlight) fields.push({ label, value: <Highlight>{String(field.value)}</Highlight>, wide: true });

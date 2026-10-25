@@ -85,6 +85,7 @@ import { HardestDocuments } from "../pages/data/HardestDocuments";
 import { HowStrataWorks } from "../pages/data/HowStrataWorks";
 import { galleryCopy } from "./copy";
 import { draftsPage } from "./drafts";
+import { followingPage } from "./following";
 import { hubPage } from "./hub";
 import { timelinePage } from "./timeline";
 import { lessonsPage } from "./lessons";
@@ -1319,6 +1320,7 @@ export const PAGES: GalleryPage[] = [
     ],
   },
   draftsPage(planSample),
+  followingPage(),
   hubPage(),
   timelinePage(),
   lessonsPage(),

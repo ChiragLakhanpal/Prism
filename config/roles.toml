@@ -54,6 +54,17 @@
 # lesson reviewer, query judge or passage reviewer, and their pages stay hidden. tests/fixtures/roles.toml
 # lists the made-up reviewers the offline tests use.
 
+# [staff], the World Bank staff role (ticket 37):
+#   groups   the workspace groups whose members are World Bank staff in Strata. Only they may open Following
+#            and follow projects; the server refuses everyone else (403 not_staff). A viewer whose groups
+#            could not be read is in none, so they see less, never more.
+#
+# Every workspace user defaults to the World Bank staff view (spec, "The app"), and every workspace user is in
+# the workspace's built-in users group, so that group is the starting value. Ticket 38 narrows it when the
+# implementing agency teams join the workspace (a parked decision, ticket 37).
+[staff]
+groups = ["users"]
+
 [teams.kenya-water]
 name = "Kenya water and sanitation"
 groups = ["strata-team-kenya-water"]
