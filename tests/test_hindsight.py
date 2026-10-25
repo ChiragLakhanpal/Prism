@@ -106,9 +106,11 @@ def test_frozen_at_approval_no_passage_lesson_or_record_public_later_reaches_the
     shown_later = json.loads(later["package_tables"])
     sources = {source["evidence_id"] for package in shown_later for row in package["rows"] for source in row["sources"]}
 
-    # The same items do reach the tables from a later cutoff, so the freeze is what kept them out.
-    assert dt.date.fromisoformat(later["inputs_through"]) > APPROVED
+    # The same items do reach the tables from a later cutoff, so the freeze is what kept them out: the ICR, public on
+    # November 2, 2019 (values.toml icr-disclosed), and the re-issued ICR Review.
     assert {ICR_54, ICR_55, ICR_REVIEW_10B} <= sources
+    assert VALUES["icr-disclosed"]["value"].isoformat() in {
+        source["public_from"] for package in shown_later for row in package["rows"] for source in row["sources"]}
     assert json.loads(later["shown_keys"]) == ["cost_estimates", "permits_before_award"]
     assert (later["blamed"], later["covered"], later["shown"]) == (2, 2, 2)
 
@@ -526,7 +528,7 @@ def test_on_the_fixture_the_release_gate_reports_the_projects_it_found_and_recor
     assert (stored["projects"], stored["candidates"], stored["expected_projects"]) == (0, 0, 49)
     assert decision["reason"] == "nothing_to_compare"
     assert hindsight.report_sentence(stored) in printed
-    assert "none of the 49 I expected" in printed
+    assert "None of the 49 I expected" in printed
     assert stored["run_id"] in printed and stored["mlflow_run_id"] in printed
 
 
@@ -551,3 +553,12 @@ def test_the_release_gate_runs_the_risk_table_builder_over_the_gate_set_and_says
     assert all(record["mlflow_run_id"] in printed for record in projects.values())
     assert json.loads(projects["P900001"]["package_tables"])[0]["empty_reason"] == "no_comparables"
     assert "P900010 (exposed to Strata)" in printed and "P900011 (not coded yet)" in printed
+
+
+def test_both_commands_stop_with_one_sentence_when_there_is_no_env_file(tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr("sys.path", list(__import__("sys").path))
+    missing = str(tmp_path / "missing.env")
+
+    assert command("release_gate").main(["--env-file", missing, "--release", "2026.11"]) == 2
+    assert command("code").main(["--env-file", missing, "status"]) == 2
+    assert capsys.readouterr().out.count("There is no env file") == 2

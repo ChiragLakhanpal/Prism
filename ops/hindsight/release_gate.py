@@ -52,11 +52,11 @@ def verdict(decision, alpha: float) -> str:
     if decision.reason == "promoted":
         return f"The release gate passed, and this run is the new champion.{against}"
     if decision.reason == "lost_to_champion":
-        return f"The release gate blocks this release: it lost the paired comparison, with p below {alpha}.{against}"
+        return f"The release gate blocks this release. It lost the paired comparison, with p below {alpha}.{against}"
     if decision.reason == "did_not_beat_checklist":
-        return (f"The release gate blocks this release: it caught {decision.caught} blamed risks, and the checklist "
+        return (f"The release gate blocks this release. It caught {decision.caught} blamed risks, and the checklist "
                 f"caught {decision.checklist_caught}.{against}")
-    return "The release gate could not judge this release: there are no blamed risks to compare yet."
+    return "The release gate could not judge this release, because there are no blamed risks to compare yet."
 
 
 def main(argv=None) -> int:

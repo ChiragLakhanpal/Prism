@@ -19,6 +19,20 @@ counting lessons from their 2026 decisions would leave the library empty at ever
 A project's blamed risks are the reconciled set the coding tool stored (strata.estimates.hindsight_coding):
 two coders' readings of the ICR, with the ICR Review settling where they differ. A blamed risk is caught when
 any main package's table showed it.
+
+Around the scorer:
+
+- gate_set() picks the projects: the pilot projects (config/slice.toml) with an ICR, leaving out and listing
+  extraction examples (config/lessons.toml) and projects exposed to Strata (sql/hindsight/exposed.sql), and
+  listing those still waiting for their ICR to be read, their coding or their first plan.
+- run() replays the gate set for a release and stores each project's scores and the release's totals in
+  strata.ops.evaluation_result and the tracker: blamed, covered at approval, shown, the checklist's catch, and
+  hindsight recall, coverage times shown-when-covered, with Wilson's interval. The checklist is each sector's
+  hindsight.checklist_size commonest blamed risks among the other gate-set projects (checklists()).
+- decide() is the release gate: a run must not lose McNemar's exact test to the champion on the same blamed
+  risks, and must catch more than the checklist, to become the champion.
+- report_sentence() writes the report in the first person from the stored totals alone.
+ops/hindsight/release_gate.py runs all of it as one command.
 """
 
 from __future__ import annotations
@@ -121,7 +135,7 @@ class HindsightScorer:
         engine = replay.inputs.engine
         packages = replay.outcomes.rows(_sql("first_plan"), project_id=case.project_id)[:settings.main_packages]
         shown: list[str] = []
-        details, read = [], [cutoff]
+        details, read = [], []  # the date each row and passage the frozen tables read became public
         for package in packages:
             table = self.builder(engine, HARNESS, as_of=cutoff, criteria=_criteria(package, settings.notices_from),
                                  words=package["description"], thresholds=replay.thresholds, decided_by=decided_by)
@@ -134,7 +148,8 @@ class HindsightScorer:
         covered = []
         for key in case.blamed:
             found = registry.call("get_lessons", {"risk_factor": key, "limit": 1}, context)
-            read += [as_date(row["public_from"]) for row in replay.inputs.checked(found["rows"])]
+            lessons = [*found["rows"], *(quote for row in found["rows"] for quote in row["evidence"])]
+            read += [as_date(row["public_from"]) for row in replay.inputs.checked(lessons)]
             if found["rows"]:
                 covered.append(key)
         caught = [key for key in case.blamed if key in shown]
@@ -147,7 +162,7 @@ class HindsightScorer:
                   Score("every_shown_key", text=json.dumps(shown)),
                   Score("checklist_keys", text=json.dumps(list(case.checklist))),
                   Score("package_tables", text=json.dumps(details)),
-                  Score("inputs_through", text=max(read).isoformat())]
+                  Score("inputs_through", text=max(read).isoformat() if read else None)]
         return Scored(scores, params={"project_id": case.project_id, "approval_date": cutoff.isoformat(),
                                       "main_packages": settings.main_packages, "max_rows": settings.max_rows})
 
@@ -449,12 +464,15 @@ def stored_decision(engine: Engine, run_id: str) -> dict | None:
 NOT_RUN = "The hindsight test hasn't run yet. It runs on every release."
 
 
-def _count(number, noun: str) -> str:
-    """A count with its noun, one to nine in words (DESIGN.md section 7, rule 12)."""
+def _word(number) -> str:
+    """One to nine in words, larger counts in numerals (DESIGN.md section 7, rule 12)."""
     from strata.estimates.model_card import WORDS
 
-    number = int(number)
-    return f"{WORDS.get(number, str(number))} {noun if number == 1 else noun + 's'}"
+    return WORDS.get(int(number), str(int(number)))
+
+
+def _plural(number, noun: str) -> str:
+    return noun if int(number) == 1 else f"{noun}s"
 
 
 def _percent(share: float) -> int:
@@ -474,17 +492,16 @@ def report_sentence(record: Mapping | None) -> str:
     when = f"{day:%B} {day.day}"
     found, expected = int(record["projects"]), int(record["expected_projects"])
     if found == 0:
-        return (f"In the hindsight test of {when}, I had no pilot project to check: none of the {expected} I expected "
+        return (f"In the hindsight test of {when}, I had no pilot project to check. None of the {expected} I expected "
                 "had a completion report I could use yet.")
-    blamed = int(record["blamed"])
+    blamed, per_package, checklist = int(record["blamed"]), record["risks_per_package"], record["checklist_size"]
     text = (f"In the hindsight test of {when}, I caught {int(record['shown'])} of {blamed} blamed risks across "
-            f"{_count(found, 'project')}, at {_count(record['risks_per_package'], 'risk')} per package. A checklist of "
-            f"the sector's {_count(record['checklist_size'], 'risk').replace(' risk', ' commonest risk')} caught "
+            f"{_word(found)} {_plural(found, 'project')}, at {_word(per_package)} {_plural(per_package, 'risk')} per "
+            f"package. A checklist of the sector's {_word(checklist)} commonest {_plural(checklist, 'risk')} caught "
             f"{int(record['checklist_caught'])}.")
     if blamed >= int(record["min_blamed_for_share"]) and record.get("interval_low") is not None:
         text += (f" The {_percent(record['interval_level'])} percent interval runs from "
                  f"{_percent(record['interval_low'])} to {_percent(record['interval_high'])} percent.")
     if found < expected:
-        text += (f" I expected {expected} pilot projects with a completion report and could use "
-                 f"{_count(found, 'project').rsplit(' ', 1)[0]}.")
+        text += f" I expected {expected} pilot projects with a completion report and could use {_word(found)}."
     return text
