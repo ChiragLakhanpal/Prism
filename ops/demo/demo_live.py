@@ -57,6 +57,18 @@ def row_counts_sql(tables: list[str]) -> str:
     return f"SELECT {columns}"  # sql-lint: names only, from the table definitions
 
 
+def ops_rows(engine, found: dict) -> dict:
+    """How many rows each strata.ops table holds, keyed ("rows", name), for the tables the listing found, so a run
+    that wrote a row shows up as a change. A table the repo defines and the listing lacks is keyed ("missing", name)
+    instead: the workspace is a bundle deploy behind, and one missing table would fail the whole count. The offline
+    tests run this on the fixture database, as the live listing runs it on the warehouse."""
+    defined = [definition.full_name for definition in catalog.table_definitions() if definition.schema == "ops"]
+    have = [name for name in defined if ("tables", name) in found]
+    counted = engine.run(row_counts_sql(have)).rows[0] if have else ()
+    return {**{("rows", name): count for name, count in zip(have, counted, strict=True)},
+            **{("missing", name): True for name in defined if ("tables", name) not in found}}
+
+
 class LiveDemo:
     def __init__(self, env: dict, env_path: Path):
         from strata.agent import judge
@@ -124,7 +136,7 @@ class LiveDemo:
 
     def snapshot(self) -> dict:
         """The app, Strata's catalog with its jobs and dashboard as the bundle deploy lists them, the Genie space,
-        and how many rows each table in strata.ops holds."""
+        and how many rows each table in strata.ops holds (ops_rows)."""
         from strata.lakehouse import bundle
 
         name = self.config["names"]["app"]
@@ -143,8 +155,5 @@ class LiveDemo:
         if space:
             answer = self.w.api_client.do("GET", f"/api/2.0/genie/spaces/{space}")
             found[("genie", space)] = {"title": answer.get("title"), "description": answer.get("description")}
-        tables = [definition.full_name for definition in catalog.table_definitions() if definition.schema == "ops"]
         with self.engine_for(self.viewer) as engine:
-            counted = engine.run(row_counts_sql(tables))
-        found |= {("rows", name): count for name, count in zip(tables, counted.rows[0], strict=True)}
-        return found
+            return found | ops_rows(engine, found)

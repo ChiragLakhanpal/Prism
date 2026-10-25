@@ -100,12 +100,28 @@ class Clock:
         self.now += seconds
 
 
+def live_adapter():
+    """ops/demo/demo_live.py, which the command's folder puts on the path."""
+    command()
+    import demo_live
+
+    return demo_live
+
+
+def ops_tables() -> list[str]:
+    from strata.lakehouse import catalog
+
+    return [definition.full_name for definition in catalog.table_definitions() if definition.schema == "ops"]
+
+
 class FakeWorkspace:
     """Strata's app, stopped or running, whose health route answers after a number of tries once it runs; the SQL
-    warehouse as the fixture database or a copy; the stand-in agent; and the examples' seed command."""
+    warehouse as the fixture database or a copy; the stand-in agent; the examples' seed command, which may write
+    rows; and a listing that holds the app, the strata.ops tables the workspace has, and their row counts, counted
+    by the live adapter's own code."""
 
     def __init__(self, live_db, running=False, source=None, health_after=1, healthy=True, agent=None, seeded=(0, ""),
-                 listing_error=None):
+                 listing_error=None, seed_writes=(), missing_tables=()):
         app = command().deploy_app
         self.apps = {"strata": {"description": app.DESCRIPTION, "running": running,
                                 "source": source or f"/Workspace/Users/ana.example@worldbank.org/{app.FOLDER}",
@@ -113,11 +129,13 @@ class FakeWorkspace:
         self.calls: list[tuple] = []
         self.health_after, self.healthy, self.tries = health_after, healthy, 0
         self.viewer = dataclasses.replace(ANA, token="not-a-real-key")
+        self.live_db = live_db
         self.engine_for = duckdb_file(live_db)
         self.judge = stand_in_agent.Agrees()
         self.agent = agent
         self.seeded = seeded
         self.listing_error = listing_error
+        self.seed_writes, self.missing_tables = seed_writes, set(missing_tables)
 
     def app(self, name):
         found = self.apps.get(name)
@@ -147,12 +165,19 @@ class FakeWorkspace:
 
     def seed(self):
         self.calls.append(("seed",))
+        if self.seed_writes:
+            with DuckDBEngine.open(self.live_db) as engine:
+                for statement in self.seed_writes:
+                    engine.run(statement)
         return self.seeded
 
     def snapshot(self):
         if self.listing_error:
             raise RuntimeError(self.listing_error)
-        return {("apps", name): dict(app) for name, app in self.apps.items()}
+        found = {("apps", name): dict(app) for name, app in self.apps.items()}
+        found |= {("tables", name): [] for name in ops_tables() if name not in self.missing_tables}
+        with self.engine_for(self.viewer) as engine:
+            return found | live_adapter().ops_rows(engine, found)
 
 
 def setup(fixture_db, **changed):
@@ -238,6 +263,28 @@ def test_when_day_one_test_6_chose_the_container_apps_copy_the_app_step_says_not
     assert "Container Apps copy" in outcome.summary
 
 
+def test_a_health_route_that_answers_another_status_is_said_in_words(fixture_db):
+    class Starting(FakeWorkspace):
+        def health(self, url):
+            return {"status": "starting"}
+
+    outcome, _ = app_step(Starting(fixture_db), fixture_db)
+
+    assert outcome.state == "failed"
+    assert outcome.summary.endswith("The last try said: it answered with the status starting.")
+
+
+# ── 2. Genie ─────────────────────────────────────────────────────────────
+
+def test_genie_s_abstention_is_said_as_a_sentence_with_its_reason_not_as_a_dict(fixture_db):
+    said = []
+    outcome = command().genie_step(FakeWorkspace(fixture_db), setup(fixture_db, today=dt.date(2020, 1, 1)), said.append)
+
+    assert outcome.state == "failed"
+    assert re.fullmatch(r"Genie gave no answer to the warm-up question \(as_of_before_records\): its records run "
+                        r"through \w+ \d+, \d{4}\.", outcome.summary), outcome.summary
+
+
 # ── Two runs in a row ────────────────────────────────────────────────────
 
 @pytest.fixture(scope="module")
@@ -296,6 +343,26 @@ def test_the_recheck_prints_each_signal_s_current_state_with_the_recorded_values
         assert f"{check}: ran and found nothing." in out
     assert f"It closes on {long_day(TRUTH['closing-date-p156634']['value'])}." in out
     assert "Nothing changed since the fixture was recorded." in out
+    assert "   The P156634 recheck: passed. Needs a look on the workspace, with no changes since the fixture." in out
+
+
+def test_every_check_project_signals_runs_is_named_as_web_src_copy_ts_names_it():
+    """The recheck names each check as the Following screen does (brief 37, section 9.5), and a check added to
+    project_signals fails here before it reaches a demo morning."""
+    from strata.tools import project_signals
+
+    copy = (ROOT / "web" / "src" / "copy.ts").read_text()
+    named = {key: re.search(rf'\b{key}: \{{\s*name: "([^"]+)"', copy).group(1) for key in project_signals.CHECKS}
+
+    assert command().CHECK_NAMES == named
+
+
+def test_a_check_the_command_has_no_name_for_is_named_by_its_key_and_does_not_stop_the_recheck():
+    signals = {"rows": [], "checks": [{"key": "new_check", "ran": True, "missing": None}], "project": {},
+               "status": "no_signals", "counts": {"signals": 0}}
+
+    assert command().check_states(signals) == ["new_check: ran and found nothing."]
+    assert command().changes({"signals": signals, "awards": {}}, {"signals": signals, "awards": {}}, "P156634") == []
 
 
 def test_the_output_uses_the_glossary_s_signal_words_and_none_it_avoids(two_runs, after_closing, failing_run):
@@ -339,11 +406,14 @@ def test_two_runs_in_a_row_both_succeed_and_the_second_leaves_nothing_different(
 
 @pytest.fixture(scope="module")
 def after_closing(tmp_path_factory, fixture_db):
-    """Demo day on November 6, 2026: the workspace lists P156634 as closed, Home's window is seven days, and the
-    seed command exists."""
+    """Demo day on November 6, 2026: the workspace lists P156634 as closed, Home's window is seven days, the seed
+    command exists and writes a follow for the panel, and the workspace is one bundle deploy behind the repo, so it
+    lacks strata.ops.viewer_settings."""
     folder = tmp_path_factory.mktemp("after-closing")
     live = copy_of(fixture_db, folder, "UPDATE strata.gold.project SET status = 'Closed' WHERE project_id = 'P156634'")
-    workspace = FakeWorkspace(live, running=True)
+    workspace = FakeWorkspace(live, running=True, missing_tables=("strata.ops.viewer_settings",), seed_writes=(
+        "INSERT INTO strata.ops.follows VALUES ('panel', 'P156634', true, TIMESTAMP '2026-11-06 08:00:00', "
+        "DATE '2026-11-06')",))
     code, out = run(workspace, write_env(folder), fixture_db, today=AFTER_CLOSING, seed_command=lambda: True,
                     thresholds=with_values(home={"window_days": 7}))
     return code, out, workspace
@@ -359,6 +429,27 @@ def test_a_closed_p156634_is_the_first_change_the_recheck_prints_and_never_a_fai
     assert f"In the fixture: Needs a look, with four signals. Its closing date was {closing}." in out
     assert (f"On the workspace: Not checked: the project is closed, and the checks run only on active projects. "
             f"It closed on {closing}.") in out
+    assert "   The P156634 recheck: passed. Not checked on the workspace, with " in out
+
+
+def test_a_row_the_run_wrote_to_strata_ops_is_listed_as_a_change(after_closing):
+    """The listing counts the rows of strata.ops before and after, so a step that wrote a row cannot pass as 'No
+    changes.'"""
+    code, out, _ = after_closing
+
+    assert code == 0, out
+    assert "6. What changed on the workspace.\n   The rows of strata.ops.follows changed.\n" in out
+
+
+def test_a_strata_ops_table_the_workspace_lacks_is_named_and_the_other_tables_are_still_counted(after_closing):
+    code, out, _ = after_closing
+
+    assert code == 0, out
+    assert ("The workspace lacks one table the repo defines in strata.ops, strata.ops.viewer_settings, so I counted "
+            "the rows of the others. Deploy the bundle to make it: uv run --script ops/bundle/deploy.py --env-file "
+            ".env") in out
+    assert out.count("The workspace lacks one table") == 1
+    assert "   The workspace listing: passed. One change, listed above." in out
 
 
 def test_home_s_seeds_run_and_the_october_9_plan_falls_outside_a_seven_day_window(after_closing):

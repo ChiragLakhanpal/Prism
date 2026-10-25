@@ -82,7 +82,9 @@ SEED_MODULE = fresh_workspace.SEED_MODULE  # ticket 41's seed command (the 41 br
 AWARDS_SQL = HERE / "sql" / "awards.sql"
 PASSED, FAILED, NOT_BUILT = "passed", "failed", "not built yet"
 
-# What the summary and the recheck call each thing, in GLOSSARY.md's and brief 37's words.
+# What the summary and the recheck call each thing, in GLOSSARY.md's and brief 37's words. CHECK_NAMES are the
+# names web/src/copy.ts gives the checks (signals.check), and a test holds them to that file and to
+# project_signals.CHECKS; a check this list lacks is named by its key (check_name).
 STATUS_WORDS = {"needs_a_look": "Needs a look", "watch": "Watch", "no_signals": "No signals",
                 "not_checked": "Not checked"}
 PROJECT_WORDS = {"active": "active", "closed": "closed", "pipeline": "in the pipeline", "dropped": "dropped"}
@@ -153,6 +155,20 @@ def seconds(value: float) -> str:
     return "1 second" if whole == 1 else f"{whole} seconds"
 
 
+def check_name(key: str) -> str:
+    return CHECK_NAMES.get(key, key)
+
+
+def abstained(abstention: dict) -> str:
+    """A tool's abstention as the end of a sentence: its reason code, then what it gave as detail."""
+    reason = abstention.get("reason") or "no reason"
+    if abstention.get("records_through"):
+        detail = f"its records run through {long_day(abstention['records_through'])}"
+    else:
+        detail = one_line(abstention.get("detail") or abstention.get("code") or "").rstrip(".")
+    return f"({reason}): {detail}" if detail else f"({reason})"
+
+
 def questions() -> dict[str, dict]:
     return {question["id"]: question for question in benchmark.load()}
 
@@ -188,7 +204,7 @@ def app_step(workspace, setup: Setup, say) -> Outcome:
             answer = workspace.health(app["url"])
             if answer.get("status") == "ok":
                 break
-            last = f"it answered {answer}"
+            last = f"it answered with the status {answer.get('status') or 'missing'}."
         except Exception as error:  # a container still starting answers 502, or the sign-in fails
             last = one_line(error)
         if setup.clock() - started >= timeout:
@@ -222,12 +238,12 @@ def genie_step(workspace, setup: Setup, say) -> Outcome:
 
         first, warmed = ask()
         if first["abstention"]:
-            return Outcome(step, FAILED, f"Genie gave no answer to the warm-up question: {first['abstention']}.")
+            return Outcome(step, FAILED, f"Genie gave no answer to the warm-up question {abstained(first['abstention'])}.")
         say(f"   I asked Genie \"{question}\" to start the warehouse and warm Genie. It answered after "
             f"{seconds(warmed)} with {dayone.count_words(len(first['rows']), 'row')}.")
         second, took = ask()
     if second["abstention"]:
-        return Outcome(step, FAILED, f"Genie gave no answer the second time: {second['abstention']}.")
+        return Outcome(step, FAILED, f"Genie gave no answer the second time {abstained(second['abstention'])}.")
     if took > limit:
         return Outcome(step, FAILED, f"The next Genie call took {seconds(took)}, longer than the "
                                      f"{limit:g}-second limit in config/thresholds.toml.")
@@ -345,13 +361,23 @@ def project_line(project: dict | None) -> str:
     return f"It is {PROJECT_WORDS.get(project.get('status'), 'listed with no status')}."
 
 
+def not_active(signals: dict) -> bool:
+    return (signals.get("abstention") or {}).get("reason") == "not_active"
+
+
+def status_word(signals: dict) -> str:
+    """The project's status in GLOSSARY.md's words: Not checked when the checks do not run on it."""
+    return "Not checked" if not_active(signals) else STATUS_WORDS.get(signals.get("status"), "Not checked")
+
+
 def state_line(signals: dict) -> str:
     project = signals.get("project") or {}
-    if (signals.get("abstention") or {}).get("reason") == "not_active":
+    if not_active(signals):
         word = PROJECT_WORDS.get(project.get("status"), "not active")
-        return f"Not checked: the project is {word}, and the checks run only on active projects. {project_line(project)}"
-    status = STATUS_WORDS.get(signals.get("status"), "Not checked")
-    return f"{status}, with {dayone.count_words(signals['counts']['signals'], 'signal')}. {project_line(project)}"
+        return (f"{status_word(signals)}: the project is {word}, and the checks run only on active projects. "
+                f"{project_line(project)}")
+    return (f"{status_word(signals)}, with {dayone.count_words(signals['counts']['signals'], 'signal')}. "
+            f"{project_line(project)}")
 
 
 def check_states(signals: dict) -> list[str]:
@@ -361,11 +387,11 @@ def check_states(signals: dict) -> list[str]:
         key = check["key"]
         if key in rows:
             strong = " A strong signal." if rows[key]["strong"] else ""
-            lines.append(f"{CHECK_NAMES[key]}: {signal_line(rows[key])}{strong}")
+            lines.append(f"{check_name(key)}: {signal_line(rows[key])}{strong}")
         elif check["ran"]:
-            lines.append(f"{CHECK_NAMES[key]}: ran and found nothing.")
+            lines.append(f"{check_name(key)}: ran and found nothing.")
         else:
-            lines.append(f"{CHECK_NAMES[key]}: could not run, because {MISSING_WORDS.get(check['missing'], check['missing'])}.")
+            lines.append(f"{check_name(key)}: could not run, because {MISSING_WORDS.get(check['missing'], check['missing'])}.")
     return lines
 
 
@@ -389,12 +415,12 @@ def changes(fixture: dict, live: dict, project_id: str) -> list[str]:
         if plans_before.get(agency) != dated:
             lines.append(f"The {agency}'s latest Procurement Plan is dated {long_day(dated)} on the workspace, and was "
                          f"{long_day(plans_before.get(agency)) if agency in plans_before else 'not there'} in the fixture.")
-    if (after.get("abstention") or {}).get("reason") != "not_active":
+    if not not_active(after):
         rows_before = {row["check"]: row for row in before["rows"]}
         rows_after = {row["check"]: row for row in after["rows"]}
         ran_before = {check["key"]: check for check in before["checks"]}
         for check in after["checks"]:
-            key, name = check["key"], CHECK_NAMES[check["key"]]
+            key, name = check["key"], check_name(check["key"])
             if key in rows_after and key not in rows_before:
                 lines.append(f"{name} fired on the workspace and not in the fixture: {signal_line(rows_after[key])}")
             elif key in rows_before and key not in rows_after:
@@ -461,8 +487,7 @@ def recheck_step(workspace, setup: Setup, say, kept: dict) -> Outcome:
             "decision 7):")
         for line in known:
             say(f"      {line}")
-    status = state_line(live["signals"]).split(":")[0].split(",")[0]
-    return Outcome(step, PASSED, f"{status} on the workspace, with {dayone.count_words(len(found), 'change')} since "
+    return Outcome(step, PASSED, f"{status_word(live['signals'])} on the workspace, with {dayone.count_words(len(found), 'change')} since "
                                  "the fixture.")
 
 
@@ -527,18 +552,27 @@ def app_changes(before: dict, after: dict) -> list[str]:
     return lines
 
 
-def listing(workspace, say) -> dict | None:
+def listing(workspace, say, first: bool = False) -> dict | None:
+    """The workspace as snapshot() lists it, less the strata.ops tables it lacks (keyed "missing"), which the first
+    listing names once with the deploy that makes them."""
     try:
-        return workspace.snapshot()
+        found = workspace.snapshot()
     except Exception as error:  # the warehouse or the API refused: the steps still run, and the summary says so
         say(f"   I could not list the workspace: {type(error).__name__}: {one_line(error)}")
         return None
+    missing = sorted(name for kind, name in found if kind == "missing")
+    if first:
+        say("I listed the workspace before I changed anything.")
+    if missing and first:
+        tables = dayone.count_words(len(missing), "table")
+        say(f"   The workspace lacks {tables} the repo defines in strata.ops, {listed(missing)}, so I counted the rows "
+            f"of the others. Deploy the bundle to make {'it' if len(missing) == 1 else 'them'}: uv run --script "
+            "ops/bundle/deploy.py --env-file .env")
+    return {key: value for key, value in found.items() if key[0] != "missing"}
 
 
 def ready(workspace, setup: Setup, say: Callable[[str], None] = print) -> int:
-    before = listing(workspace, say)
-    if before is not None:
-        say("I listed the workspace before I changed anything.")
+    before = listing(workspace, say, first=True)
     kept: dict = {}
     outcomes = []
     steps = [("the app", lambda: app_step(workspace, setup, say)),
