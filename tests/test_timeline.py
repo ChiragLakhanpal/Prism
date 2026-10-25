@@ -189,6 +189,17 @@ def test_as_of_august_26_2016_the_timeline_shows_only_what_was_public_then(serve
     assert text_of(body["alt"]).endswith(" It shows what was public on August 26, 2016.")
 
 
+def test_an_as_of_date_after_today_is_read_and_named_as_today(server):
+    # The route reads the data as of today, so the date it names is today's too, not the one asked for (code
+    # review, round 3, follow-up 3). Today is the server's clock, October 23, 2026.
+    from strata.server.timeline import text_of
+
+    body = get(server, "/api/projects/P130164/timeline?asof=2030-01-01").json()
+
+    assert (body["as_of"], body["asked_as_of"]) == ("2026-10-23", "2026-10-23")
+    assert text_of(body["alt"]).endswith(" It shows what was public on October 23, 2026.")
+
+
 def test_when_get_disagreements_fails_the_newest_isr_keeps_its_mark_and_no_sentence_says_strata_has_no_ratings(
         server, monkeypatch):
     from strata.server import timeline

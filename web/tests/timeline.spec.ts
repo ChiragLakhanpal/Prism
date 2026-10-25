@@ -12,6 +12,8 @@ import { hubApi } from "./hub-api";
 import { expect, mockApi, recorded, test } from "./mocked";
 
 const PDO = "disagreement:437378890475ef48";
+// The ICR and the ICR Review on efficiency: the ICR's side is a paragraph, so the card names it two ways.
+const EFFICIENCY = "disagreement:51ea6e6516c0ea63";
 const ICR_78 =
   "Indeed, it was clearly identified at the MTR that the achievement of part of the PDO was compromised by the major delays in implementing activities under Components 2 and 3 and lack of endorsement from relevant stakeholders.";
 
@@ -23,6 +25,7 @@ async function timelineApi() {
     "/api/projects/P130164/timeline?asof=2016-08-26": await file("timeline-p130164-2016-08-26.json"),
     "/api/projects/P130164/timeline?asof=2024-01-01": await file("timeline-p130164-2024-01-01.json"),
     [`/api/evidence?id=${PDO}`]: await file("evidence-disagreement-p130164-pdo.json"),
+    [`/api/evidence?id=${EFFICIENCY}`]: await file("evidence-disagreement-p130164-efficiency.json"),
     "/api/evidence?id=doc:26733307": await file("evidence-doc-p130164-isr-7.json"),
     "/api/evidence?id=doc:31525018": await file("evidence-doc-p130164-icr.json"),
     "/api/evidence?id=ratings:P130164:pdo_progress:1-9": await file("evidence-ratings-p130164-1-9.json"),
@@ -253,6 +256,15 @@ test("the chart is one tab stop with arrow keys between marks, and the dashed li
   await page.keyboard.press("Escape");
   await expect(dialog).toHaveCount(0);
   await expect(item(page, PDO)).toBeFocused();
+
+  // The second line's card names the ICR the same way in its rule, its what-changes line and its keep line, though
+  // the ICR's side is a paragraph (the 23 brief, section 7.5; critique, round 3, item 1).
+  await item(page, EFFICIENCY).click();
+  const second = dialog.locator("[data-disagreement]");
+  await expect(second).toContainText("here the ICR Review, and I keep the ICR as the record of the earlier view.");
+  await expect(second).toContainText('If you keep the ICR instead, I treat "efficiency rating" as');
+  await expect(second).toContainText("You can keep the ICR instead from an answer or draft that rests on these two reports.");
+  await expect(second).not.toContainText("keep ICR paragraph");
 });
 
 test("at 1024 px the chart redraws beside the drawer at 524 px and keeps every label; a band and a report open their views", async ({ page }) => {
@@ -298,6 +310,17 @@ test("below 768 px the chart is a list in date order, and as of August 26, 2016 
   expect(await axe(page)).toEqual([]);
   await page.setViewportSize({ width: 320, height: 800 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  // Today's list names no date of its own.
+  await expect(page.locator("[data-timeline-as-of]")).toHaveCount(0);
+
+  // As of a date, the list has no chart to carry the "As of" label, so it says its date in a line of its own, and
+  // the source line ends at that date too (code review, round 3, B1).
+  await page.setViewportSize({ width: 390, height: 800 });
+  await page.goto("/projects/P130164/timeline?asof=2016-08-26");
+  await expect(page.locator("[data-timeline=ready]")).toBeVisible();
+  await expect(page.locator("[data-timeline-as-of]")).toHaveText("This list shows what was public on August 26, 2016.");
+  await expect(page.locator("[data-timeline-card] [data-source]").first()).toContainText("as of August 26, 2016.");
+  await expect(list).toHaveCount(4);
 
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/projects/P130164/timeline?asof=2016-08-26");
@@ -305,9 +328,21 @@ test("below 768 px the chart is a list in date order, and as of August 26, 2016 
   await expect(items(page)).toHaveCount(4);
   await expect(item(page, "doc:26733307")).toHaveAccessibleName(/^ISR 7, August 26, 2016/);
   await expect(chart(page).locator("[data-as-of]")).toContainText("Aug 26, 2016");
+  // The chart carries its own label, so the list's line is not drawn.
+  await expect(page.locator("[data-timeline-as-of]")).toHaveCount(0);
+  await expect(page.locator("[data-timeline-card] [data-source]").first()).toContainText("as of August 26, 2016.");
   // The tab applies the date itself, so no alert says it shows today's data.
   await expect(page.locator("main [data-alert]")).toHaveCount(0);
   await expect(chart(page).locator("[data-disagreement-line]")).toHaveCount(0);
+});
+
+test("a link whose date I can't read shows today's timeline and says so, as other pages do", async ({ page }) => {
+  // The address's date is left off the read, so the tab draws today's timeline, and the shell's alert says why
+  // (code review, round 3, follow-up 4).
+  const { requests } = await open(page, "/projects/P130164/timeline?asof=last-tuesday");
+  await expect(page.locator("main [data-alert=info]")).toHaveText("I can't read the date in this link, so you are seeing today's data.");
+  await expect(items(page)).toHaveCount(14);
+  expect(requests.map((request) => request.url()).filter((url) => url.includes("/api/") && url.includes("asof="))).toEqual([]);
 });
 
 test("as of a date after the ICR Review's re-issue, no dashed line or chip covers the as-of date, beside the drawer too", async ({ page }) => {
@@ -326,7 +361,9 @@ test("as of a date after the ICR Review's re-issue, no dashed line or chip cover
   }
 });
 
-test("the skeleton title is sized to the title, so the chart does not move when the timeline arrives", async ({ page }) => {
+test("the skeleton title is sized to the title, so the chart does not move when the timeline arrives or runs slow", async ({ page }) => {
+  // The page's clock runs fast through the two seconds before "Still loading the timeline.".
+  await page.clock.install();
   for (const width of [1440, 1024, 390]) {
     let release = () => {};
     const held = new Promise<void>((resolve) => (release = resolve));
@@ -340,6 +377,11 @@ test("the skeleton title is sized to the title, so the chart does not move when 
     await expect(page.locator("[data-timeline=loading]")).toBeVisible();
     await page.evaluate(() => document.fonts.ready);
     const before = (await page.locator("[data-timeline-subtitle]").boundingBox())!.y;
+    // The slow line takes the place of the card's last caption bar, so neither the subtitle nor the chart moves
+    // (design review, round 3, F2).
+    await page.clock.fastForward(2000);
+    await expect(page.getByText("Still loading the timeline.")).toBeVisible();
+    expect(Math.abs((await page.locator("[data-timeline-subtitle]").boundingBox())!.y - before), `slow at ${width} px`).toBeLessThanOrEqual(1);
     release();
     await expect(page.locator("[data-timeline=ready]")).toBeVisible();
     const after = (await page.locator("[data-timeline-subtitle]").boundingBox())!.y;
@@ -472,7 +514,8 @@ test("when get_disagreements fails, the chart says it couldn't read the ratings,
 
   await expect(page.locator("[data-timeline-finding]")).toHaveText("I couldn't read this project's ISR ratings or check its reports for disagreements just now.");
   // The title says what failed; the alert says only what is missing until then, and fits the list as well as the chart.
-  await expect(page.locator("[data-timeline-card] [data-alert]")).toHaveText(/^Until I can read the ratings, the timeline shows no rating bands and no dashed lines\./);
+  // ISR 7 and ISR 12 leave the chart, so the alert says only the newest ISR shows (critique, round 3, item 2).
+  await expect(page.locator("[data-timeline-card] [data-alert]")).toHaveText(/^Until I can, the timeline shows no rating bands, no dashed lines and only the newest ISR\./);
   // No dashed line is drawn, so the legend does not describe one.
   await expect(page.locator("[data-timeline-subtitle]")).toHaveText("Each mark is a report, an event or a record.");
   await expect(chart(page).locator("[data-band-row]")).toHaveText("I couldn't read this project's ISR ratings just now.");
@@ -482,9 +525,12 @@ test("when get_disagreements fails, the chart says it couldn't read the ratings,
   await expect(chart(page).getByRole("link", { name: /^ISR 13, December 28, 2018\. How lane\./ })).toHaveCount(1);
   // Try again in the alert brings the chart back and takes you to it (the 23 brief, section 8.4).
   await page.route("**/api/projects/P130164/timeline", async (route) => route.fulfill({ contentType: "application/json", body: await recorded("timeline-p130164.json") }));
-  await page.locator("[data-timeline-card] [data-alert]").getByRole("button", { name: "Try again" }).click();
+  await page.locator("[data-timeline-card] [data-alert]").getByRole("button", { name: "Try again" }).focus();
+  await page.keyboard.press("Enter");
   await expect(chart(page).locator("[data-disagreement-line]")).toHaveCount(2);
   await expect(page.locator("[data-timeline-card]")).toBeFocused();
+  // The button you pressed is gone, so the card shows the focus outline (design review, round 3, F3).
+  expect(await page.locator("[data-timeline-card]").evaluate((card) => card.matches(":focus-visible") && getComputedStyle(card).outlineStyle)).toBe("solid");
 });
 
 test("the public preview of a project still under way hides its disagreements, and no alert says the page shows the staff view", async ({ page }) => {
@@ -493,7 +539,9 @@ test("the public preview of a project still under way hides its disagreements, a
     "/api/projects/P156634/timeline?view=public": { body: await recorded("timeline-p156634-public.json") },
   });
 
-  await expect(page.locator("[data-timeline-card]")).toContainText("I don't show disagreements on active projects in the public view");
+  await expect(page.locator("[data-timeline-card]")).toContainText(
+    "I don't show disagreements on active projects in the public view, so I don't prejudge a project still under way.",
+  );
   await expect(page.locator("[data-timeline-subtitle]")).toHaveText("Each mark is a report, an event or a record.");
   await expect(page.locator("main [data-alert]")).toHaveCount(0);
 });

@@ -16,7 +16,7 @@ import { evidenceHref, openEvidence } from "../lib/evidence";
 import { cx } from "../lib/cx";
 import { capitalize, shortName } from "../lib/timeline";
 import { formatDate } from "../lib/format";
-import { sideContext, sideMeta, sideOpen, sideShort, sideTitle, subjectOf, ruleSentence, whatChanges, type SideData } from "../lib/disagreement";
+import { sideContext, sideInSentence, sideMeta, sideOpen, sideShort, sideTitle, subjectOf, ruleSentence, whatChanges, type SideData } from "../lib/disagreement";
 import { Alert } from "./Alert";
 import { Button } from "./Button";
 import { DisagreementCard, SideSaid, type CardSide } from "./DisagreementCard";
@@ -287,7 +287,7 @@ export function cardFromRow(row: Record<string, any>, onOpenSide: (index: number
       subject: subjectOf(row.attribute, row.period?.event ?? null),
       rule: ruleSentence(row.rule_id, sides),
       whatChanges: whatChanges(sides, row.if_you_keep),
-      keep: lean && other && lean.assertion_id && other.assertion_id ? { other: sideShort(other), otherAssertionId: other.assertion_id, leanAssertionId: lean.assertion_id, target: null } : undefined,
+      keep: lean && other && lean.assertion_id && other.assertion_id ? { other: sideInSentence(other), otherAssertionId: other.assertion_id, leanAssertionId: lean.assertion_id, target: null } : undefined,
     },
   };
 }

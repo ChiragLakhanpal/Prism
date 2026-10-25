@@ -42,7 +42,7 @@ from importlib import resources
 from pathlib import Path
 
 from strata.agent.verifier import sentence_of
-from strata.config import KEY_DATE, load_ladder, load_project_page, load_thresholds
+from strata.config import KEY_DATE, ConfigError, TimelineSettings, load_ladder, load_project_page, load_thresholds
 from strata.dbx import Viewer
 from strata.knowledge.assertions import KEY_DATE_LABELS, PASSAGES
 from strata.lakehouse.engine import Engine
@@ -60,14 +60,24 @@ GROUPS = PAGE.document_groups
 # The one attribute the bands draw (the 23 brief, section 4.3): the ISRs' rating of progress towards the PDO.
 BANDED = "pdo_progress"
 BANDED_TIER = "isr"
-# The events the How lane draws (config/project_page.toml, [[timeline.events]]), each with the words a passage must
-# hold and the pattern that reads its date, with the date's format. key_date is the assertions reader's own pattern
-# (KEY_DATE_LABELS), so the moment a disagreement is about and the diamond on the chart are dated the same way.
-EVENTS: dict[str, list[tuple[str, re.Pattern, str]]] = {
-    event.kind: [(words, KEY_DATE_LABELS[event.kind] if event.pattern == KEY_DATE else re.compile(event.pattern),
-                  event.date_format) for words in event.words]
-    for event in PAGE.timeline.events
-}
+
+
+def events_of(settings: TimelineSettings) -> dict[str, list[tuple[str, re.Pattern, str]]]:
+    """The events the How lane draws (config/project_page.toml, [[timeline.events]]), each with the words a passage
+    must hold and the pattern that reads its date, with the date's format. key_date is the assertions reader's own
+    pattern (KEY_DATE_LABELS), so the moment a disagreement is about and the diamond on the chart are dated the same
+    way; a kind it has no pattern for is a ConfigError that names the setting."""
+    events = {}
+    for event in settings.events:
+        pattern = KEY_DATE_LABELS.get(event.kind) if event.pattern == KEY_DATE else re.compile(event.pattern)
+        if pattern is None:
+            raise ConfigError(f"config/project_page.toml: [[timeline.events]] {event.kind} uses key_date, but the "
+                              "assertions reader has no key-date pattern for it.")
+        events[event.kind] = [(words, pattern, event.date_format) for words in event.words]
+    return events
+
+
+EVENTS = events_of(PAGE.timeline)
 SIGNINGS = {"awards": "contract awards", "award_notice": "award notice", "notices": "notices", "usd": "USD",
             "contract_award": "Contract Award"}
 ACTIVE = "Active"  # the projects API's status of a project still under way

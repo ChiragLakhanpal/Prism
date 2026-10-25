@@ -116,7 +116,8 @@ function alerts(problem: Problem, search: string, asOfUse: AsOfUse, appliesView:
   const shown = (view === "piu" || view === "public") && appliesView;
   if (view !== null && view !== "staff" && !shown) found.push({ state: "info", text: VIEW_ALERTS[view] ?? copy.alerts.viewUnknown });
   const asOf = params.get("asof");
-  if (asOf !== null && asOfUse !== "page") {
+  // A page that applies the date itself still gets the alert when it can't read it, since it then shows today's data.
+  if (asOf !== null && (asOfUse !== "page" || !isDay(asOf))) {
     const text = !isDay(asOf) ? copy.alerts.asOfUnreadable : asOfUse === "part" ? copy.alerts.asOfPart(formatDate(asOf)) : copy.alerts.asOf(formatDate(asOf));
     found.push({ state: "info", text });
   }

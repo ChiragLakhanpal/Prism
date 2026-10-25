@@ -34,7 +34,7 @@ const card = words.card;
 const paragraphOf = (side: SideData) => (side.paragraph_numbered ? side.paragraph : null);
 const typeOf = (side: SideData) => side.type ?? (side.document_type ? "other" : "record");
 
-// "ISR 7", "ICR paragraph 78": the name the rule and the keep line use.
+// "ISR 7", "ICR paragraph 78": a side's name in the card's group name, the drawer's heading and its tabs.
 export function sideShort(side: SideData): string {
   const short = words.shortType[typeOf(side)] ?? words.shortType.other;
   return words.sourceShort(short, side.sequence, paragraphOf(side));
@@ -74,7 +74,8 @@ export function subjectOf(attribute: string | null, event: string | null): strin
 }
 
 // "the ICR", "ISR 7": a side's report as a sentence names it, as the timeline does, never its paragraph, since the
-// rule is about which report Strata leans on.
+// rule is about which report Strata leans on. The what-changes line, the keep line and the keep button use it too,
+// so the card names the other report one way (the 23 brief, section 7.5, {other_short}).
 export function sideInSentence(side: SideData): string {
   const short = copy.timeline.short;
   return (short[typeOf(side)] ?? short.other).replace("{sequence}", String(side.sequence ?? ""));
@@ -90,7 +91,7 @@ export function ruleSentence(ruleId: string | null, sides: SideData[]): string {
 export function whatChanges(sides: SideData[], ifYouKeep: { field_name: string | null; value: string | null } | null): string | undefined {
   const other = sides.find((side) => !side.leaned);
   if (!other || !ifYouKeep?.field_name || !ifYouKeep.value || !sides.some((side) => side.leaned)) return undefined;
-  return words.whatChanges(sideShort(other), ifYouKeep.field_name, ifYouKeep.value);
+  return words.whatChanges(sideInSentence(other), ifYouKeep.field_name, ifYouKeep.value);
 }
 
 // "Rated three months after the mid-term review of May 16, 2016.", when get_disagreements gives the months: a count

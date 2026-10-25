@@ -679,6 +679,20 @@ def test_the_project_page_registry_names_a_wrong_timeline_setting(tmp_path, stat
         load_project_page(path)
 
 
+def test_an_event_dated_by_key_date_needs_the_assertions_reader_s_pattern_for_its_kind(tmp_path):
+    # The assertions reader has a key-date pattern only for the mid-term review, so the restructuring cannot use
+    # key_date. The server names the setting rather than stopping on a bare KeyError (code review, round 3).
+    from strata.config import ConfigError, load_project_page
+    from strata.server.timeline import events_of
+
+    path = tmp_path / "project_page.toml"
+    path.write_text(TIMELINE_PAGE.replace("{state}", "info").replace("{pattern}", "key_date"))
+
+    with pytest.raises(ConfigError, match=r"\[\[timeline.events\]\] restructuring uses key_date, but the assertions "
+                                          r"reader has no key-date pattern for it"):
+        events_of(load_project_page(path).timeline)
+
+
 def test_the_project_page_registry_names_a_repeated_group(tmp_path):
     from strata.config import ConfigError, load_project_page
 

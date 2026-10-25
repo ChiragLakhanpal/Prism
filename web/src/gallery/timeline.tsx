@@ -124,10 +124,26 @@ export function timelinePage(): GalleryPage {
         ),
       },
       {
+        id: "list-as-of",
+        title: s.listAsOf,
+        // The list has no chart to carry the "As of" label, so it says its date in a line under the subtitle.
+        body: (
+          <div className="max-w-[24rem]">
+            <Card data={asOf as unknown as Timeline} wide={false} />
+          </div>
+        ),
+      },
+      {
         id: "loading",
         title: s.loading,
         // The card as the tab draws it while the timeline loads, its title placeholder sized to the finding.
         body: <TimelineLoading wide slow={false} />,
+      },
+      {
+        id: "loading-slow",
+        title: s.loadingSlow,
+        // After two seconds: "Still loading" in place of the card's last caption bar, so nothing above it moves.
+        body: <TimelineLoading wide slow />,
       },
       {
         id: "empty",

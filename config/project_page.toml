@@ -28,8 +28,11 @@
 #                            the event's key (its words are copy.timeline's in web/src/copy.ts), words the phrases
 #                            a passage that dates it must hold, pattern the pattern whose one group reads the date
 #                            (or key_date, the assertions reader's own pattern for this kind, so a disagreement's
-#                            moment and the diamond on the chart are dated the same way), and date_format how
-#                            that date is written, in Python's strptime codes.
+#                            moment and the diamond on the chart are dated the same way; the reader has one
+#                            only for mid_term_review, and the server will not start with key_date on another
+#                            kind), and date_format how that date is written, in Python's strptime codes. A new
+#                            kind also needs its label in copy.timeline.label (web/src/copy.ts), or the chart
+#                            shows its raw key.
 #
 # Source: the documents and projects APIs' records in data/fixture/recorded (docty, the ISRs' overall
 # ratings tables and the projects API's rating codes).

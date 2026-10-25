@@ -32,7 +32,7 @@ import { Button } from "./Button";
 import { CitationMarker } from "./CitationMarker";
 import { notCheckedFor, type Removed } from "./Checks";
 import { DisagreementCard, SideSaid, type CardSide } from "./DisagreementCard";
-import { changesLine, ruleSentence, sideFull, sideMeta, sideOpen, sideShort, subjectOf, whatChanges, type SideData } from "../lib/disagreement";
+import { changesLine, ruleSentence, sideFull, sideInSentence, sideMeta, sideOpen, sideShort, subjectOf, whatChanges, type SideData } from "../lib/disagreement";
 import { EvidenceCard } from "./EvidenceCard";
 import { Fill } from "./Fill";
 import { Num } from "./Num";
@@ -395,7 +395,7 @@ function AnswerDisagreement({
       keep={
         lean && other && lean.assertion_id && other.assertion_id && run.runId
           ? {
-              other: sideShort(other),
+              other: sideInSentence(other),
               otherAssertionId: other.assertion_id,
               leanAssertionId: lean.assertion_id,
               target: { disagreementId: id, runId: run.runId, draftId: null, preview: view === "piu" || view === "public" },

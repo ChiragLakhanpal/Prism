@@ -115,10 +115,12 @@ function Note({ data, codes, chart }: { data: Timeline; codes: string[]; chart: 
   );
 }
 
-// The source line's words, which Table wraps in its own Source line under the table twin.
+// The source line's words, which Table wraps in its own Source line under the table twin. As of a date they end at
+// that date, as the chart's label and the list's line do, not at the date the data were read through.
 function SourceWords({ data }: { data: Timeline }) {
   const names = data.sources.map((key) => words.sourceNames[key] ?? key);
-  return <Fill template={words.source} slots={{ sources: <Joined items={names} />, date: <Num date={data.data_through ?? data.as_of} /> }} />;
+  const date = data.asked_as_of ?? data.data_through ?? data.as_of;
+  return <Fill template={data.asked_as_of ? words.sourceAsOf : words.source} slots={{ sources: <Joined items={names} />, date: <Num date={date} /> }} />;
 }
 
 function SourceLine({ data }: { data: Timeline }) {
@@ -294,7 +296,7 @@ function ListItemText({ item, data, states }: { item: Item; data: Timeline; stat
   );
 }
 
-// The chart card's loading look: the title's two bars, then the 352 px box with the real lane labels and bars for
+// The chart card's loading look: the title's bars, then the 352 px box with the real lane labels and bars for
 // each row of marks, and two caption bars for the notes. Below 768 px, five list items.
 function TimelineSkeleton({ wide }: { wide: boolean }) {
   if (!wide) {
@@ -335,13 +337,14 @@ export function TimelineLoading({ wide, slow }: { wide: boolean; slow: boolean }
           ))}
         </p>
       </div>
-      {slow && <p className="mt-1 text-caption text-ink-muted">{words.stillLoading}</p>}
       <p data-timeline-subtitle className="mt-1 max-w-prose text-small text-chart-text-subtle">
         {wide ? <Fill template={words.subtitle} slots={{ report: <Glyph kind="report" />, event: <Glyph kind="event" />, record: <Glyph kind="record" /> }} /> : words.subtitleList}
       </p>
       <TimelineSkeleton wide={wide} />
       <SkeletonLine width="w-3/5" className="mt-4 text-caption" />
-      <SkeletonLine width="w-2/5" className="text-caption" />
+      {/* After two seconds the card's last caption bar becomes "Still loading", one caption line tall, so nothing
+          above it moves (design review, round 3, F2). */}
+      {slow ? <p className="text-caption text-ink-muted">{words.stillLoading}</p> : <SkeletonLine width="w-2/5" className="text-caption" />}
       <p role="status" className="sr-only">
         {words.loading}
       </p>
@@ -380,8 +383,9 @@ export function TimelineCard({
   const empty = (lane: Lane) => !data.items.some((item) => item.lane === lane);
   const lanesEmpty = Object.fromEntries(LANES.map((lane) => [lane, empty(lane)])) as Record<Lane, boolean>;
   return (
-    // tabIndex -1: Try again in the disagreements alert brings you back to the chart (the 23 brief, section 8.4).
-    <figure aria-labelledby={titleId} tabIndex={-1} data-timeline-card className="rounded-md border border-line bg-surface p-4 focus:outline-none @md/page:p-6">
+    // tabIndex -1: Try again in the disagreements alert brings you back to the chart (the 23 brief, section 8.4). The
+    // global focus outline shows when you got there by keyboard, since the button you pressed is gone.
+    <figure aria-labelledby={titleId} tabIndex={-1} data-timeline-card className="rounded-md border border-line bg-surface p-4 @md/page:p-6">
       <p id={titleId} data-timeline-finding className="text-pretty font-bold text-ink-heading" style={{ fontSize: titleSize(chart, width) }}>
         {/* The count's tooltip opens above it, so it never hides the finding's second line. */}
         <SegmentText segments={data.finding} check={chart ? { tooltip: words.findingCheck, onOpen: openTable, side: "top" } : undefined} />
@@ -397,6 +401,12 @@ export function TimelineCard({
           words.subtitleList
         )}
       </p>
+      {/* The list has no "As of" label, which the chart draws on its What lane, so it says its date here. */}
+      {!chart && data.asked_as_of && (
+        <p data-timeline-as-of className="mt-1 max-w-prose text-caption text-ink-muted">
+          <Fill template={words.asOfList} slots={{ date: <Num date={data.asked_as_of} /> }} />
+        </p>
+      )}
       {data.disagreements.status === "hidden" && <p className="mt-1 max-w-prose text-caption text-ink-muted">{words.hidden}</p>}
       {data.disagreements.status === "failed" && (
         <Alert
@@ -410,7 +420,7 @@ export function TimelineCard({
             )
           }
         >
-          {words.failed}
+          {data.items.some((item) => item.kind === "report" && item.type === "isr") ? words.failed : words.failedNoIsr}
         </Alert>
       )}
       <div ref={box} className="mt-4 min-w-0">

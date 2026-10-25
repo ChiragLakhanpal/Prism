@@ -5828,6 +5828,8 @@ export const copy = {
     codeNote: (code: string, rating: string) => `${code} is ${rating}.`,
     // "Source: World Bank documents and reports API, procurement notices and contract awards, through October 23, 2026."
     source: "{sources}, through {date}.",
+    // As of a date: the sources as they stood on that date, which the chart's label and the list's line name too.
+    sourceAsOf: "{sources}, as of {date}.",
     sourceNames: {
       documents: "World Bank documents and reports API",
       notices: "procurement notices",
@@ -5912,6 +5914,8 @@ export const copy = {
     group: (n: string, pid: string) => `${n} items on the timeline of ${pid}`,
     help: "Use the arrow keys to move between items. Left and Right go in date order. Up and Down move between lanes. Press Enter to open an item's source.",
     asOf: "As of {date}",
+    // Over the list below 768 px, where no chart draws the "As of" label.
+    asOfList: "This list shows what was public on {date}.",
     // The table's Note column.
     note: {
       disagrees: "Disagrees with {other}.",
@@ -5952,8 +5956,11 @@ export const copy = {
     // The title's count: where it came from, and that it opens the table.
     findingCheck: "Counted by the disagreement check for this project. Select it to show the table.",
     // Under the title, which already says what failed: what is missing until then, true of the chart and the list.
-    failed: "Until I can read the ratings, the timeline shows no rating bands and no dashed lines.",
-    hidden: "I don't show disagreements on active projects in the public view, so a project still under way isn't prejudged.",
+    // Without the check, no ISR is a side of a disagreement, so only the newest ISR keeps its own mark.
+    failed: "Until I can, the timeline shows no rating bands, no dashed lines and only the newest ISR.",
+    // The same for a project with no ISRs on its timeline.
+    failedNoIsr: "Until I can, the timeline shows no rating bands and no dashed lines.",
+    hidden: "I don't show disagreements on active projects in the public view, so I don't prejudge a project still under way.",
     loading: "Loading the timeline.",
     stillLoading: "Still loading the timeline.",
     error: "I couldn't load this project's timeline because the data service didn't answer.",
