@@ -720,8 +720,6 @@ export const copy = {
     askedLanguage: (language: string) => `, for an answer in ${language}`,
     // Asks the same question again in your current choice of language.
     askAgain: (language: string) => `Ask again in ${language}`,
-    // The writer's step, when it writes in a language other than English (the 42 brief, section 5.6).
-    writingIn: (language: string) => `I'm writing the answer in ${language}.`,
     // No view is named: until ticket 40 applies a view's rules on the server, every answer is the
     // World Bank staff view's. Ticket 40 adds ", in a preview of the {view} view" back.
     askedEnd: ".",
@@ -2433,8 +2431,7 @@ export const copy = {
     // A draft written in a language other than English, or other than your choice now, says so under its method
     // sentence; it keeps the language it was written in (ticket 42).
     language: (language: string) => `I wrote this draft in ${language}. Quotes stay in the language of their source.`,
-    // A draft action's second feedforward sentence, and the writing page's line, when the language is not English.
-    actionLanguage: (language: string) => `I write it in ${language}.`,
+    // The writing page's line under its state, when the draft is written in a language other than English.
     writingLanguage: (language: string) => `I'm writing it in ${language}.`,
     // The disagreement cards check 6 attached to a draft (ticket 36; the 36 brief, 4.8), above its Sources list.
     disagreements: {

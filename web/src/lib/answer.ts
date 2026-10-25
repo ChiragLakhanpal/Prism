@@ -6,6 +6,7 @@
 // One question at a time: a new question replaces the run and stops the one before. The run belongs to
 // the history entry it was asked on (web/src/lib/router.ts), so Back to that page shows it again and a
 // full reload drops it.
+import { whenKnown } from "./lang";
 import { closeDrawerOf, remember } from "./evidence";
 import type { Feedback } from "./retrieval";
 import { StreamError, streamEvents } from "./sse";
@@ -283,7 +284,9 @@ function apply(id: number, type: string, data: any) {
 }
 
 async function stream(id: number, asked: Asked, signal: AbortSignal) {
-  const payload = { question: asked.question, scope: asked.scope, asof: asked.asOf, view: asked.view ?? "staff", lang: asked.lang ?? "en" };
+  // A question asked before the server said which language is in effect waits for it (ticket 42).
+  const lang = asked.lang ?? (await whenKnown());
+  const payload = { question: asked.question, scope: asked.scope, asof: asked.asOf, view: asked.view ?? "staff", lang };
   try {
     for await (const event of streamEvents("/api/ask", payload, { signal })) {
       apply(id, event.type, event.data);

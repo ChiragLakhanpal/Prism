@@ -23,7 +23,7 @@ import { TopNav, type Viewer } from "./components/TopNav";
 import { copy } from "./copy";
 import { answer, ask, earlier, removedScopes } from "./lib/answer";
 import { getJson, type Me } from "./lib/api";
-import { currentLanguage, languageName, workingLanguage, type WorkingLanguage } from "./lib/lang";
+import { languageName, workingLanguage, type WorkingLanguage } from "./lib/lang";
 import { draftScope } from "./lib/drafts";
 import { FOLLOWING_HREF, staffRole } from "./lib/following";
 import { drawerClosed, evidenceIn, origin, routeOf, visited } from "./lib/evidence";
@@ -253,7 +253,7 @@ export function App() {
       asOf: asOf && isDay(asOf) ? asOf : null,
       view: view === "piu" || view === "public" ? view : null,
       // The language in effect: the link's, your saved choice, your team's or English, as the server said (ticket 42).
-      lang: currentLanguage(),
+      lang: workingLanguage.get()?.code ?? null,
       key: address.get().key,
     });
 

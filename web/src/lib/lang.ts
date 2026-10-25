@@ -32,6 +32,26 @@ export function currentLanguage(): string {
   return workingLanguage.get()?.code ?? ENGLISH;
 }
 
+// The code once the server has said which language is in effect: a question asked before /api/me answers waits for
+// it, so a link's ?lang= is never lost to a race. If the identity route does not answer soon, English.
+export function whenKnown(waitMs = 3000): Promise<string> {
+  const known = workingLanguage.get();
+  if (known) return Promise.resolve(known.code);
+  return new Promise((resolve) => {
+    const timer = setTimeout(() => {
+      stop();
+      resolve(ENGLISH);
+    }, waitMs);
+    const stop = workingLanguage.subscribe(() => {
+      const now = workingLanguage.get();
+      if (!now) return;
+      clearTimeout(timer);
+      stop();
+      resolve(now.code);
+    });
+  });
+}
+
 // A language's English name from the copy file ("French"), or its code for a language the copy file does not name.
 export function languageName(code: string | null | undefined): string {
   return (code && copy.language.name[code]) || code || copy.language.name[ENGLISH];

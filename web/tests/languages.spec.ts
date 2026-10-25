@@ -71,6 +71,17 @@ test("with lang=fr the answer is written in French, its markers read in English,
   expect(await axe(page, "[data-answer-panel]")).toEqual([]);
 });
 
+test("with French in effect, the box's Ask this line names the language of the answer before you press Enter", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await serve(page, { "/api/me": { body: await recorded("me-lang-fr.json") } });
+  await page.goto("/projects/P130164?lang=fr");
+  await expect(page.locator("main h1")).toBeVisible();
+  await page.keyboard.press("/");
+  await page.keyboard.type("Why were works contracts advertised again?");
+
+  await expect(page.getByRole("option", { name: /^Ask this/ })).toContainText("Within P130164, for an answer in French");
+});
+
 test("the drawer keeps the wireframe's blocks for a French passage, in French, with its highlight's spoken words in English", async ({ page }) => {
   await askInFrench(page);
   await marker(page, 1).click();
