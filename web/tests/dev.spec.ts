@@ -46,6 +46,8 @@ test("in the development build, a saved package opened by its address shows sect
     "/api/planned-packages/pkg-000000000001/steps": { body: await recorded("steps-planned-rural-roads.json") },
     // Section 5, "Check your criteria" (ticket 31), reads its collapsed summary with the page.
     "/api/planned-packages/pkg-000000000001/criteria": { body: await recorded("criteria-summary-planned-rural-roads.json") },
+    // Ticket 36: the page asks whether your team has suggested PPSD rows open on this package.
+    "/api/drafts/existing": { body: '{"draft":null}' },
   });
 
   await page.goto("/packages/pkg-000000000001");

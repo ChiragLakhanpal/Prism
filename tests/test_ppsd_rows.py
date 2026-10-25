@@ -158,6 +158,60 @@ def test_with_no_selected_risk_still_in_the_table_nothing_is_drafted(database, t
     assert ("error", {"code": "no_selected_risks"}) in sent
 
 
+PLANNED = "pkg-000000000036"
+# A package Ana planned from a sentence: the demo works package's Description, with India as its country, so that,
+# as on the STEP row, its comparables reach P130164's completion report.
+PLANNED_CRITERIA = {"values": {
+    "category": {"value": "Works", "provenance": "sentence"},
+    "description": {"value": "Equipping of Exploratory Bo reholes Project-Lot 1- Sarma n - Tarbaj Water Supply",
+                    "provenance": "sentence"},
+    "country": {"value": "IN", "provenance": "you"},
+    "method": {"value": "Request for Bids", "provenance": "sentence"}}}
+
+
+def test_a_package_planned_from_a_sentence_suggests_rows_from_its_saved_criteria_and_only_for_its_author(
+        story, monkeypatch):
+    """The package workspace opened from "Plan a package from a sentence" posts {"kind": "ppsd_rows", "package":
+    "pkg-..."} with no criteria: the route reads them, and the selection, from the author's saved package. A planned
+    package's comparables start at past_range.period_from, after P130164's notices, so the builder here also looks
+    from 2013, as section 1's country chip does for the STEP row."""
+    import datetime as dt
+
+    from strata.packages import risks
+    from strata.packages.store import PackageStore
+
+    build, given = risks.build, []
+
+    def from_2013(*args, criteria=None, **kwargs):
+        given.append((criteria, list(kwargs.get("selected") or ())))
+        return build(*args, criteria={**criteria, "notice_from": "2013-01-01"} if criteria else criteria, **kwargs)
+
+    monkeypatch.setattr(risks, "build", from_2013)
+    PackageStore(lambda: DuckDBEngine.open(story.state_db)).create(
+        PLANNED, "4021@1984", "Ana Example", "Equip the Tarbaj boreholes, in India", None, "save-0001", PLANNED_CRITERIA,
+        dt.datetime(2026, 10, 28, 8, tzinfo=dt.UTC))
+    selection = story.call("PUT", f"/api/planned-packages/{PLANNED}/risk-selection",
+                           json={"changes": {risk: True for risk in story_of.RISKS}})
+    assert selection.status_code == 200
+
+    sent, draft_id = story.write("ppsd-rows-ke-nwwda-541055", {"kind": "ppsd_rows", "package": PLANNED,
+                                                               "idempotency_key": "planned-1"})
+    assert draft_id, sent
+    draft = story.get(f"/api/drafts/{draft_id}").json()
+
+    assert given[-1] == ({"category": "Works", "country": "IN", "method": "Request for Bids"}, story_of.RISKS)
+    assert draft["subject"]["package_id"] == PLANNED and draft["subject"]["step_reference"] is None
+    assert draft["subject"]["package_title"] == PLANNED_CRITERIA["values"]["description"]["value"]
+    assert [row["risk_key"] for row in draft["ppsd"]["rows"]] == story_of.RISKS
+    assert draft["removed"] == []
+    assert story.get("/api/drafts/existing", kind="ppsd_rows", package=PLANNED).json()["draft"]["draft_id"] == draft_id
+
+    # Ben, on the same team, cannot draft from Ana's planned package, nor learn that it exists.
+    refused = story.call("POST", "/api/drafts", story_of.BEN,
+                         json={"kind": "ppsd_rows", "package": PLANNED, "idempotency_key": "planned-ben"})
+    assert (refused.status_code, refused.json()["code"]) == (404, "unknown_package")
+
+
 def test_a_row_with_one_failed_cell_stays_with_that_cell_empty(story):
     draft = suggested(story, "ppsd-rows-one-cell-fails")
     permits = next(note for note in draft["notes"] if note["key"] == "permits_before_award/mitigation")

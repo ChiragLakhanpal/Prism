@@ -122,6 +122,44 @@ test("with no risk selected the action is held with its reason, and below 768 px
   await expect(inline.getByRole("button")).toHaveAccessibleDescription("Select at least one risk above first.");
 });
 
+// A package from a sentence (tests/record_packages_api.py's pkg-000000000001), with section 3 serving the India rows
+// and one of them selected: the workspace that "Plan a package from a sentence" opens offers the same action.
+const PLANNED = "pkg-000000000001";
+const PLANNED_API = `/api/planned-packages/${PLANNED}`;
+
+test("a package planned from a sentence offers the same action, next to No STEP reference yet, and posts its id", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  const asked = await serve(page, {
+    "/api/me": { body: await recorded("me-staff.json") },
+    [PLANNED_API]: { body: await recorded("planned-package-rural-roads.json") },
+    "/api/comparables": { body: await recorded("comparables-planned-works-rfb-ke.json") },
+    [`${PLANNED_API}/risks`]: { body: await recorded("risks-ke-nwwda-541055-india-selected.json") },
+    [`${PLANNED_API}/risk-selection`]: { body: await recorded("risks-selection-saved.json") },
+    "POST /api/drafts": { body: await recorded("drafts-write-ppsd.sse"), delay: 300 },
+    [`GET /api${DRAFT}`]: { body: await recorded("drafts-ppsd-draft.json") },
+  });
+  await page.goto(`/packages/${PLANNED}`);
+  await expect(page.locator("section#risks [data-finding]").first()).toBeVisible();
+
+  const header = page.locator("[data-package-header]");
+  await expect(header).toContainText("No STEP reference yet");
+  const action = header.locator("[data-ppsd-action][data-placement=header]");
+  await expect(action.getByRole("button")).toHaveText("Suggest 1 PPSD risk row");
+  await expect(action.getByRole("button")).toHaveAttribute("data-button", "primary");
+  await expect(page.locator("[data-ppsd-action][data-placement=inline]")).toBeHidden();
+  // While the action is live it is the screen's one solid button, so "Show the past range" turns secondary.
+  await expect(page.locator("[data-plan-prompt]").getByRole("button", { name: "Show the past range" })).toHaveAttribute("data-button", "secondary");
+
+  await action.getByRole("button").click();
+  await expect(page).toHaveURL(new RegExp(`/drafts/new\\?kind=ppsd_rows&package=${PLANNED}$`));
+  await expect(page).toHaveURL(DRAFT);
+  const sent = asked.find((one) => one.call === "POST /api/drafts")!.body as Record<string, unknown>;
+  expect({ kind: sent.kind, package: sent.package }).toEqual({ kind: "ppsd_rows", package: PLANNED });
+  // The server reads the criteria from the saved package, and the selection from section 3's saves.
+  expect(sent).not.toHaveProperty("criteria");
+  expect(JSON.stringify(sent)).not.toContain("cost_estimates");
+});
+
 // ── The draft page ───────────────────────────────────────────────────────
 
 test("the Short Form shows exactly the template's three columns, with the counts and passages as footnotes, and no Long Form below Table I", async ({ page }) => {
