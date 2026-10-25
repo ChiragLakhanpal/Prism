@@ -191,6 +191,20 @@ def no_supplier_written_null(gold, value):
     assert contract["supplier_id"] is None and named == ((0,),)
 
 
+def notice_description(gold, value):
+    """A notice keeps its description word for word, as STEP typed it (ticket 22 names the activity by it)."""
+    notice = one(gold, "SELECT bid_description FROM strata.gold.notice WHERE notice_id = :notice",
+                 notice=value["at"].split("id=")[1].split("]")[0])
+    assert notice["bid_description"] == value["value"]
+
+
+def rejected_bid_reason(gold, value):
+    """A rejected bid keeps its Reason for Rejection word for word, even when the price before it is blank."""
+    found = gold.run("SELECT evaluated_price, reason FROM strata.silver.notice_bids WHERE notice_id = :notice "
+                     "AND name = :name", {"notice": value["notice"], "name": value["bidder"]}).rows
+    assert found and all(row == (None, value["value"]) for row in found)
+
+
 CHECKS = {
     "award-supplier-written-null": no_supplier_written_null,
     "notice-losai-no-id": awarded_bidder_without_an_id,
@@ -213,6 +227,13 @@ CHECKS = {
     "award-541055-signed": contract_signed,
     "award-541062-signed": contract_signed,
     "award-229129-signed": contract_signed,
+    # KE-NWWDA-229129-CW-RFB's contract trail (ticket 22).
+    "award-229129-amount": supplier_share,
+    "award-229129-supplier": contract_supplier_id,
+    "notice-229129-invitation": notice_date,
+    "award-notice-229129-published": notice_date,
+    "notice-229129-description": notice_description,
+    "award-notice-102977-rejected": rejected_bid_reason,
     "award-541055-amount": supplier_share,
     "award-notice-541055": notice_date,
     # The two contracts the mission brief's awards part lists since ISR 19 (ticket 37).

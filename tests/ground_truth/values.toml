@@ -1047,6 +1047,96 @@ quote = "03-Jan-2022"
 record = "api/awards/P156634.json"
 at = "data[wb_contract_number=1686165].contract_signing_date"
 
+# KE-NWWDA-229129-CW-RFB's contract trail (ticket 22): the contract's amount and supplier in the awards
+# dataset, its Invitation for Bids and its award notice. The bids the award notice lists are in
+# [award_notice_bids] below.
+[[value]]
+id = "award-229129-amount"
+says = "The contract awards dataset gives contract 1686165, KE-NWWDA-229129-CW-RFB, an amount of US$1,245,092.76."
+value = 1245092.76
+quote = "1245092.76"
+record = "api/awards/P156634.json"
+at = "data[wb_contract_number=1686165].supplier_contract_amount_usd"
+
+[[value]]
+id = "award-229129-supplier"
+says = "The contract awards dataset names contract 1686165's supplier by its STEP supplier ID, 626335."
+value = "626335"
+quote = "626335"
+contract = "1686165"
+record = "api/awards/P156634.json"
+at = "data[wb_contract_number=1686165].supplier_id"
+
+[[value]]
+id = "notice-229129-invitation"
+says = "Notice OP00146683, the Invitation for Bids for KE-NWWDA-229129-CW-RFB, was published on September 17, 2021."
+value = 2021-09-17
+quote = "17-Sep-2021"
+record = "api/notices/P156634.json"
+at = "procnotices[id=OP00146683].noticedate"
+
+[[value]]
+id = "notice-229129-description"
+says = "Notice OP00146683, the Invitation for Bids for KE-NWWDA-229129-CW-RFB, describes it as the drilling of four exploratory boreholes in Wajir County, word for word as the activity page names it."
+value = "Drilling of 4 Number Exploratory Boreholes In Wajir County"
+quote = "Drilling of 4 Number Exploratory Boreholes In Wajir County"
+record = "api/notices/P156634.json"
+at = "procnotices[id=OP00146683].bid_description"
+
+[[value]]
+id = "award-notice-102977-rejected"
+says = "Award notice OP00112374 for KE-CWSB-102977-CS-QCBS lists NICHOLAS O'DWYER under Rejected Firm(s) with an empty Final Evaluation Price, then the Reason for Rejection Non Responsive."
+value = "Non Responsive"
+quote = "Non Responsive"
+bidder = "NICHOLAS O'DWYER"
+notice = "OP00112374"
+record = "api/notices/P156634.json"
+at = "procnotices[id=OP00112374].notice_text"
+
+[[value]]
+id = "award-notice-229129-published"
+says = "Award notice OP00164589 for KE-NWWDA-229129-CW-RFB was published on February 2, 2022."
+value = 2022-02-02
+quote = "02-Feb-2022"
+record = "api/notices/P156634.json"
+at = "procnotices[id=OP00164589].noticedate"
+
+[[value]]
+id = "award-notice-7431-published"
+says = "Award notice OP00044090 for IN-RRSMP-7431-CW-RFB was published on July 19, 2017."
+value = 2017-07-19
+quote = "19-Jul-2017"
+record = "api/notices/P130164.json"
+at = "procnotices[id=OP00044090].noticedate"
+
+[[value]]
+id = "award-notice-7431-signed-price"
+says = "Award notice OP00044090 gives IN-RRSMP-7431-CW-RFB's signed contract price in Indian rupees: INR 69,826,127.64."
+value = "INR 69,826,127.64"
+quote = "Signed Contract price<br/>INR 69,826,127.64"
+record = "api/notices/P130164.json"
+at = "procnotices[id=OP00044090].notice_text"
+
+[[value]]
+id = "project-p130164-sector-roads"
+says = "The projects API puts 97 percent of P130164 in the sector TI, FY17 - Rural and Inter-Urban Roads, the sector the contract trail's links name as roads."
+value = "FY17 - Rural and Inter-Urban Roads"
+quote = "FY17 - Rural and Inter-Urban Roads"
+record = "api/projects/P130164.json"
+at = "projects.P130164.major_sectors.0.major_sector.sectors[sector_code=TI].sector_name"
+
+[[value]]
+id = "icr-months-after-7431"
+says = "The ICR, dated October 10, 2019, came 28 months after IN-RRSMP-7431-CW-RFB was signed on June 15, 2017: 847 days, at 30.4375 days a month (365.25 / 12), rounded to the nearest month."
+value = 28
+months_between = ["award-7431-signed", "icr-date"]
+quote = "October 10, 2019"
+document = "documents/P130164/icr-2019-10-10"
+document_type = "Implementation Completion and Results Report"
+project = "P130164"
+date = 2019-10-10
+pdf_page = 1
+
 # The evidence ladder's two record ties (ticket 20). Each package has one contract in the awards dataset
 # and one Contract Award notice that gives a signature date, so the sources are about one signing.
 # KE-NWWDA-199461-GO-RFB: the October 9, 2026 plan dates its signing ten days after the awards dataset and
@@ -2749,6 +2839,45 @@ record = "api/documents/P130164.json"
 at = "documents.D18381488.disclosure_date"
 value = "2013-11-06T05:00:00Z"
 fiscal_year = 2014
+
+# The bids two award notices list (ticket 22), each in the notice's own order and section, with the
+# bidder's name as written, its STEP supplier ID in brackets (empty when it writes none), its price at
+# opening and evaluated price without the currency (empty when the notice leaves the price blank), and
+# the reason for rejection word for word. tests/test_ground_truth_values.py checks that each bid's name,
+# prices and reason appear in the recorded notice's own HTML, in this order.
+[award_notice_bids.kenya]
+says = "Award notice OP00164589 for KE-NWWDA-229129-CW-RFB lists 11 bids in KES: one awarded, seven evaluated (two with no Evaluated Bid Price) and three rejected as Non Responsive."
+record = "api/notices/P156634.json"
+at = "procnotices[id=OP00164589].notice_text"
+notice = "OP00164589"
+reference = "KE-NWWDA-229129-CW-RFB"
+currency = "KES"
+bids = [
+  { name = "OSB AFRICA LIMITED", id = "626335", section = "awarded", opening = "61503269.60", evaluated = "61503269.60", reason = "" },
+  { name = "GARGAR CONSTRUCTION COMPANY LIMITED", id = "626356", section = "evaluated", opening = "58921156.00", evaluated = "58921156.00", reason = "" },
+  { name = "TEAMSOL LIMITED", id = "626344", section = "evaluated", opening = "67185994.00", evaluated = "67185994.00", reason = "" },
+  { name = "HYDRO WATER WELL (K) LIMITED", id = "626342", section = "evaluated", opening = "69346168.80", evaluated = "", reason = "" },
+  { name = "EXPORT -HYDRO PUMP AND SERVICES (AFRICA) LIMITED", id = "626353", section = "evaluated", opening = "64972583.91", evaluated = "", reason = "" },
+  { name = "YATICO SUPPLIES & CONSTRUCTION LIMITED", id = "626352", section = "evaluated", opening = "58699127.36", evaluated = "58699127.36", reason = "" },
+  { name = "WAASO CONSTRUCTION LIMITED", id = "626340", section = "evaluated", opening = "59747625.84", evaluated = "59747625.84", reason = "" },
+  { name = "BLOOMERG AFRICA LIMITED", id = "626361", section = "evaluated", opening = "55220415.00", evaluated = "55220415.00", reason = "" },
+  { name = "ALWAHAB ENTERPRISES LIMITED", id = "626339", section = "rejected", opening = "56417957.00", evaluated = "", reason = "Non Responsive" },
+  { name = "TEBO INVESTMENT COMPANY LIMITED", id = "626357", section = "rejected", opening = "56857530.00", evaluated = "56857530.00", reason = "Non Responsive" },
+  { name = "BITAT LIMITED", id = "626343", section = "rejected", opening = "54770811.00", evaluated = "54770811.00", reason = "Non Responsive" },
+]
+
+[award_notice_bids.showcase]
+says = "Award notice OP00044090 for IN-RRSMP-7431-CW-RFB lists three bids in INR, with no STEP supplier IDs: AMIT CONSTRUCTION awarded and two evaluated."
+record = "api/notices/P130164.json"
+at = "procnotices[id=OP00044090].notice_text"
+notice = "OP00044090"
+reference = "IN-RRSMP-7431-CW-RFB"
+currency = "INR"
+bids = [
+  { name = "AMIT CONSTRUCTION", id = "", section = "awarded", opening = "69,826,127.64", evaluated = "69,826,127.64", reason = "" },
+  { name = "BRAHM PRAKASH MODI", id = "", section = "evaluated", opening = "71,068,526.66", evaluated = "71,068,526.66", reason = "" },
+  { name = "SHIV SHAKTI ENTERPRISES", id = "", section = "evaluated", opening = "75,610,293.78", evaluated = "75,610,293.78", reason = "" },
+]
 
 # The retrieval loop's silver labels (ticket 32; the spec's "Evaluation"), read from the recorded documents
 # by the builder on October 24, 2026, apart from Strata's code, with the page of each in the recorded

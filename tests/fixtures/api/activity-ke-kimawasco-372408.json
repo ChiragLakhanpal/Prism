@@ -1,0 +1,442 @@
+{
+  "as_of": "2026-10-23",
+  "data_through": "2026-10-23",
+  "activity": {
+    "step_reference": "KE-KIMAWASCO-372408-GO-RFQ",
+    "project_id": "P156634",
+    "project_name": "Water and Sanitation Development Project",
+    "display_name": "Water and Sanitation Development",
+    "description": "Supply and Delivery of NRW and GIS Hardware Goods under Utility Turnaround Framework",
+    "method": "Request for Quotations",
+    "consultants": false,
+    "implementing_agency": "Kilifi - Mariakani Water and Sewerage Company Ltd",
+    "href": "/projects/P156634/packages/KE-KIMAWASCO-372408-GO-RFQ"
+  },
+  "moved": false,
+  "lead": {
+    "parts": [
+      {
+        "kind": "estimated",
+        "amount": "186693.00",
+        "currency": "USD",
+        "evidence_id": "strata.silver.plan_rows:40001676/KE-KIMAWASCO-372408-GO-RFQ"
+      },
+      {
+        "kind": "signed_many",
+        "count": 2,
+        "first_date": "2023-10-31",
+        "last_date": "2023-11-01",
+        "evidence_id": "strata.gold.contract:1774417"
+      }
+    ],
+    "no_estimate": false,
+    "missing": null,
+    "bids": [
+      {
+        "count": 5,
+        "notice_id": "OP00266922",
+        "evidence_id": "strata.gold.notice:OP00266922",
+        "proposals": false
+      },
+      {
+        "count": 4,
+        "notice_id": "OP00266923",
+        "evidence_id": "strata.gold.notice:OP00266923",
+        "proposals": false
+      }
+    ],
+    "many_contracts": true,
+    "paragraphs": 1
+  },
+  "stages": [
+    {
+      "stage": "plan",
+      "found": true,
+      "reason": null,
+      "joined_on": "key",
+      "records": [
+        {
+          "evidence_id": "strata.silver.plan_rows:40001676/KE-KIMAWASCO-372408-GO-RFQ",
+          "public_from": "2025-03-19",
+          "description": "Supply and Delivery of NRW and GIS Hardware Good s under Utility Turnaround Fr amework",
+          "method": "Request for Quotations",
+          "market_approach": "Limited",
+          "review_type": "Post",
+          "estimated_amount_usd": "186693.00",
+          "process_status": "Signed",
+          "fields": [
+            {
+              "key": "method",
+              "value": "Request for Quotations",
+              "kind": "text"
+            },
+            {
+              "key": "market_approach",
+              "value": "Limited",
+              "kind": "text"
+            },
+            {
+              "key": "review_type",
+              "value": "Post",
+              "kind": "text"
+            },
+            {
+              "key": "estimated_amount_usd",
+              "value": "186693.00",
+              "kind": "usd"
+            },
+            {
+              "key": "process_status",
+              "value": "Signed",
+              "kind": "text"
+            }
+          ],
+          "steps": [
+            {
+              "step": "Specific Procurement Notice / Invitation",
+              "first_planned_on": "2023-07-26",
+              "actual_on": "2023-10-05"
+            },
+            {
+              "step": "Signed Contract",
+              "first_planned_on": "2023-08-29",
+              "actual_on": "2023-11-01"
+            },
+            {
+              "step": "Contract Completion",
+              "first_planned_on": "2023-09-29",
+              "actual_on": null
+            }
+          ],
+          "first_plan_date": "2025-03-19",
+          "plan_date": "2025-03-19",
+          "agency_id": "kilifi-mariakani-water-and-sewerage-company-ltd",
+          "implementing_agency": "Kilifi - Mariakani Water and Sewerage Company Ltd",
+          "source": {
+            "document_type": "Procurement Plan",
+            "project_id": "P156634",
+            "implementing_agency": "Kilifi - Mariakani Water and Sewerage Company Ltd",
+            "plan_date": "2025-03-19",
+            "disclosed_on": "2025-03-19",
+            "document_id": "40001676",
+            "pdf_page": 4
+          }
+        }
+      ]
+    },
+    {
+      "stage": "notice",
+      "found": false,
+      "joined_on": "key",
+      "reason": "approach_no_notice",
+      "records": [],
+      "method": "Request for Quotations",
+      "market_approach": "Limited"
+    },
+    {
+      "stage": "bids",
+      "found": true,
+      "reason": null,
+      "joined_on": "key",
+      "records": [
+        {
+          "evidence_id": "strata.gold.notice:OP00266922",
+          "public_from": "2024-01-08",
+          "notice_id": "OP00266922",
+          "notice_date": "2024-01-08",
+          "currency": "KES",
+          "labels": {
+            "price_at_opening": "Bid Price at Opening",
+            "evaluated_price": "Evaluated Bid Price"
+          },
+          "lists_scores": false,
+          "proposals": false,
+          "bids": [
+            {
+              "bid": 1,
+              "outcome": "awarded",
+              "name": "DANCO CAPITAL",
+              "is_individual_consultant": false,
+              "is_joint_venture": false,
+              "members": [],
+              "country": "Kenya",
+              "price_at_opening": "16499837.00",
+              "evaluated_price": "16499837.00",
+              "reason": null
+            },
+            {
+              "bid": 2,
+              "outcome": "rejected",
+              "name": "KACAK ENTERPRISES",
+              "is_individual_consultant": false,
+              "is_joint_venture": false,
+              "members": [],
+              "country": "Kenya",
+              "price_at_opening": "21276018.20",
+              "evaluated_price": "21276018.20",
+              "reason": "Does not meet Eligibility Requirements"
+            },
+            {
+              "bid": 3,
+              "outcome": "rejected",
+              "name": "KODZASA COMPANY",
+              "is_individual_consultant": false,
+              "is_joint_venture": false,
+              "members": [],
+              "country": "Kenya",
+              "price_at_opening": "23531528.00",
+              "evaluated_price": "23531528.00",
+              "reason": "Does not meet Eligibility Requirements"
+            },
+            {
+              "bid": 4,
+              "outcome": "rejected",
+              "name": "LAKDIRA ENTERPRISE",
+              "is_individual_consultant": false,
+              "is_joint_venture": false,
+              "members": [],
+              "country": "Kenya",
+              "price_at_opening": "22766160.00",
+              "evaluated_price": "22766160.00",
+              "reason": "Proposal substantially higher than budget"
+            },
+            {
+              "bid": 5,
+              "outcome": "rejected",
+              "name": "REAL MNGOMA GENERAL SUPPLIES",
+              "is_individual_consultant": false,
+              "is_joint_venture": false,
+              "members": [],
+              "country": "Kenya",
+              "price_at_opening": "23702280.00",
+              "evaluated_price": "23702280.00",
+              "reason": "Does not meet Eligibility Requirements"
+            }
+          ],
+          "bid_count": 5,
+          "url": "https://projects.worldbank.org/en/projects-operations/procurement-detail/OP00266922",
+          "source": {
+            "source_key": "award_notices",
+            "dataset_name": "Procurement Notices",
+            "license": "CC BY 4.0",
+            "data_source": "Systematic Tracking of Exchanges in Procurement (STEP)",
+            "record_url": "https://projects.worldbank.org/en/projects-operations/procurement-detail/{id}",
+            "document_type": "Contract Award",
+            "project_id": "P156634",
+            "document_date": "2024-01-08"
+          }
+        },
+        {
+          "evidence_id": "strata.gold.notice:OP00266923",
+          "public_from": "2024-01-08",
+          "notice_id": "OP00266923",
+          "notice_date": "2024-01-08",
+          "currency": "KES",
+          "labels": {
+            "price_at_opening": "Bid Price at Opening",
+            "evaluated_price": "Evaluated Bid Price"
+          },
+          "lists_scores": false,
+          "proposals": false,
+          "bids": [
+            {
+              "bid": 1,
+              "outcome": "awarded",
+              "name": "KACAK ENTERPRISES",
+              "is_individual_consultant": false,
+              "is_joint_venture": false,
+              "members": [],
+              "country": "Kenya",
+              "price_at_opening": "11784440.00",
+              "evaluated_price": "11784440.00",
+              "reason": null
+            },
+            {
+              "bid": 2,
+              "outcome": "not_awarded",
+              "name": "LAKDIRA ENTERPRISE",
+              "is_individual_consultant": false,
+              "is_joint_venture": false,
+              "members": [],
+              "country": "Kenya",
+              "price_at_opening": "12954880.00",
+              "evaluated_price": "12954880.00",
+              "reason": null
+            },
+            {
+              "bid": 3,
+              "outcome": "rejected",
+              "name": "KODZASA COMPANY",
+              "is_individual_consultant": false,
+              "is_joint_venture": false,
+              "members": [],
+              "country": "Kenya",
+              "price_at_opening": "13179920.00",
+              "evaluated_price": "13179920.00",
+              "reason": "Does not meet Eligibility Requirements"
+            },
+            {
+              "bid": 4,
+              "outcome": "rejected",
+              "name": "REAL MNGOMA GENERAL SUPPLIES",
+              "is_individual_consultant": false,
+              "is_joint_venture": false,
+              "members": [],
+              "country": "Kenya",
+              "price_at_opening": "15233120.00",
+              "evaluated_price": "15233120.00",
+              "reason": "Does not meet Eligibility Requirements"
+            }
+          ],
+          "bid_count": 4,
+          "url": "https://projects.worldbank.org/en/projects-operations/procurement-detail/OP00266923",
+          "source": {
+            "source_key": "award_notices",
+            "dataset_name": "Procurement Notices",
+            "license": "CC BY 4.0",
+            "data_source": "Systematic Tracking of Exchanges in Procurement (STEP)",
+            "record_url": "https://projects.worldbank.org/en/projects-operations/procurement-detail/{id}",
+            "document_type": "Contract Award",
+            "project_id": "P156634",
+            "document_date": "2024-01-08"
+          }
+        }
+      ]
+    },
+    {
+      "stage": "contract",
+      "found": true,
+      "reason": null,
+      "joined_on": "key",
+      "records": [
+        {
+          "evidence_id": "strata.gold.contract:1774417",
+          "public_from": "2023-10-31",
+          "contract_id": "1774417",
+          "contract_reference": "1774417",
+          "step_reference": "KE-KIMAWASCO-372408-GO-RFQ",
+          "signed_on": "2023-10-31",
+          "amount": "78198.01",
+          "currency": "USD",
+          "from_notice": false,
+          "record_noun": "contract",
+          "award_notice_id": null,
+          "description": "Supply and Delivery of GIS Hardware Goods",
+          "supplier": {
+            "name": "KACAK ENTERPRISES",
+            "country": "Kenya",
+            "is_individual_consultant": false,
+            "is_joint_venture": false,
+            "members": []
+          },
+          "source": {
+            "source_key": "awards",
+            "dataset_name": "Contract Awards in Investment Project Financing (Since FY 2020)",
+            "license": "CC BY 4.0",
+            "data_source": "Systematic Tracking of Exchanges in Procurement (STEP)",
+            "record_url": null,
+            "document_type": "Contract award",
+            "project_id": "P156634",
+            "document_date": "2023-10-31"
+          }
+        },
+        {
+          "evidence_id": "strata.gold.contract:1774418",
+          "public_from": "2023-11-01",
+          "contract_id": "1774418",
+          "contract_reference": "1774418",
+          "step_reference": "KE-KIMAWASCO-372408-GO-RFQ",
+          "signed_on": "2023-11-01",
+          "amount": "109342.86",
+          "currency": "USD",
+          "from_notice": false,
+          "record_noun": "contract",
+          "award_notice_id": null,
+          "description": "Supply and Delivery of NRW Hardware",
+          "supplier": {
+            "name": "DANCO CAPITAL",
+            "country": "Kenya",
+            "is_individual_consultant": false,
+            "is_joint_venture": false,
+            "members": []
+          },
+          "source": {
+            "source_key": "awards",
+            "dataset_name": "Contract Awards in Investment Project Financing (Since FY 2020)",
+            "license": "CC BY 4.0",
+            "data_source": "Systematic Tracking of Exchanges in Procurement (STEP)",
+            "record_url": null,
+            "document_type": "Contract award",
+            "project_id": "P156634",
+            "document_date": "2023-11-01"
+          }
+        }
+      ]
+    },
+    {
+      "stage": "paragraphs",
+      "found": true,
+      "reason": null,
+      "joined_on": "together",
+      "records": [
+        {
+          "stratum": "How",
+          "short_name": "ISR",
+          "evidence_id": "strata.gold.passage:40091292/v1/s4",
+          "public_from": "2026-03-12",
+          "passage_id": "40091292/v1/s4",
+          "contract_evidence_id": "strata.gold.contract:1774417",
+          "document_id": "40091292",
+          "document_type": "Implementation Status and Results Report",
+          "title_section": null,
+          "title_page": null,
+          "document_date": "2026-03-12",
+          "paragraph": "s4",
+          "paragraph_numbered": false,
+          "section_path": "4.1",
+          "pdf_page": 2,
+          "printed_page": "2 of 10",
+          "doc_key": "isr-2026-03-12",
+          "language": "en",
+          "text": "The project has made significant progress in the completion of critical contracts needed to attain the project’s development objective. Overall physical progress of works contracts is at 85 percent, with 46 percent of works contracts and all goods contracts completed. Several of these completed works are already benefiting the intended beneficiaries including water distributions works in all seven WSPs in the Project, water kiosks in Garissa, ablution blocks in Ukunda, Kwale and Wajir towns, sewer connections in Mombasa and the Baricho bulk water supply scheme whose capacity has been expanded to serve Mombasa and Kilifi counties better and its resilience to flooding risks enhanced. The remaining works contracts are expected to be completed within the remaining project period. Grievances raised under the project are being closely monitored by both the Bank and the Ministry for their resolution ahead of the project closure.",
+          "highlights": [
+            [
+              242,
+              257
+            ]
+          ],
+          "topics": [
+            {
+              "kind": "category",
+              "code": "Goods"
+            },
+            {
+              "kind": "sector",
+              "code": "WC",
+              "name": "Water Supply"
+            }
+          ],
+          "source": {
+            "document_type": "Implementation Status and Results Report",
+            "project_id": "P156634",
+            "document_date": "2026-03-12",
+            "pdf_page": 2
+          },
+          "contract_reference": "1774417"
+        }
+      ],
+      "groups": [
+        {
+          "document_id": "40091292",
+          "document_type": "Implementation Status and Results Report",
+          "short_name": "ISR",
+          "stratum": "How",
+          "document_date": "2026-03-12",
+          "count": 1,
+          "shown": 1
+        }
+      ],
+      "threshold": "0.50"
+    }
+  ]
+}

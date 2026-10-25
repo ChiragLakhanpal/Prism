@@ -48,7 +48,11 @@
       "document_id": "40001676",
       "document_date": "2025-03-19",
       "pdf_page": 3
-    }
+    },
+    "record_kind": "activity",
+    "step_reference": "KE-KIMAWASCO-157517-CW-RFB",
+    "project_id": "P156634",
+    "activity_href": "/projects/P156634/packages/KE-KIMAWASCO-157517-CW-RFB"
   },
   "highlights": []
 }

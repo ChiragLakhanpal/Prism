@@ -78,6 +78,8 @@
     "package_risks": "the risks and what helped",
     "estimate_time": "the planned dates for each step",
     "project_signals": "the signals on projects you follow",
+    "contract_trail": "the contract trail",
+    "connections": "the Connections tab",
     "ask": "the answer",
     "unknown": "the coverage line you opened"
   },

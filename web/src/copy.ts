@@ -266,6 +266,8 @@ export const copy = {
     // The page's reads take no date yet, but /api/ask does, so the alert says which part uses it.
     // Ticket 40 replaces it with its as-of banner.
     asOf: (date: string) => `I can't show this page as of ${date} yet, so it shows today's data. Questions you ask from the box, and sources opened from a link, use ${date}.`,
+    // A project's Connections tab draws its links as of the date, under a project header that shows today's.
+    asOfPart: (date: string) => `The connections below are as of ${date}. The project's header above them shows today's data.`,
     asOfUnreadable: "I can't read the date in this link, so you are seeing today's data.",
   },
 
@@ -808,6 +810,12 @@ export const copy = {
     // A notice a package advertised again cites (ticket 28), by its type: an award notice or any other notice.
     noticeRecordKinds: { award: "Award notice", other: "Notice" },
     recordKindOther: "Record",
+    // What a record the contract trail opens is called, by the kind its row names (ticket 22), since one table
+    // holds every type of notice.
+    recordKindsByKey: { notice: "Notice", award_notice: "Award notice", contract: "Contract", activity: "Activity" } as Record<string, string>,
+    // "Open the activity" on a notice, award notice, contract or plan row whose activity Strata holds (ticket 22).
+    openActivity: "Open the activity",
+    openActivityFor: (ref: string) => ` ${ref}`,
     // The records a project's Summary cites (ticket 21), by the table their evidence id names. The
     // project ID or loan number follows in Roboto Mono.
     summaryRecordKinds: {
@@ -827,13 +835,15 @@ export const copy = {
       ieg_ratings: "Independent Evaluation Group (IEG) ratings data, {date}.",
       // An award notice a rejected bid in section 5 cites (ticket 31).
       award_notices: "World Bank procurement notices, award notice published {date}.",
-      // A notice a package advertised again cites (ticket 28).
+      // A notice and a contract the contract trail opens (ticket 22), and a notice a package advertised again
+      // cites (ticket 28).
       notices: "World Bank procurement notices, notice published {date}.",
+      awards: "World Bank contract awards data, since fiscal 2020, contract signed {date}.",
+      awards_fy2001_2016: "World Bank contract awards data, fiscal 2001 to 2016, contract signed {date}.",
       projects_api_ratings: "World Bank projects API, ratings from the ISR of {date}.",
       isr_ratings: "The overall ratings table of the ISR of {date}, as I read it.",
       plan_baseline: "Strata's baseline, saved by World Bank staff on {date}.",
-      // A mission brief's records (ticket 37).
-      awards: "World Bank contract awards data, contract signed {date}.",
+      // A mission brief's records (ticket 37). Its award records use awards above.
       plans: "Procurement Plan of {date}, from the World Bank documents API.",
     } as Record<string, string>,
     // The fields of a Summary record, by their key, as the projects API and the loans data name them.
@@ -882,9 +892,7 @@ export const copy = {
       needs_a_look: "Need a look",
       watch: "Worth watching",
       step_reference: "STEP reference",
-      contract_description: "Contract description",
       signed_on: "Signed",
-      supplier: "Supplier",
       individual_consultant: "Individual consultant",
       signed_amount_usd: "Signed amount (US$)",
       signed_amount: "Signed amount",
@@ -905,6 +913,18 @@ export const copy = {
       first_plan_date: "First listed in the plan of",
       signed_millions: "Signed amount (US$, millions)",
       estimated_millions: "Estimated Amount (US$, millions)",
+      // A notice and a contract the contract trail opens (ticket 22), under their sources' names. The mission
+      // brief's records (ticket 37) use supplier and contract_description too.
+      procurement_method: "Procurement Method",
+      submission_deadline: "Submission Deadline",
+      contract_signature_date: "Contract Signature Date",
+      signed_contract_price: "Signed Contract Price",
+      bid_description: "Description",
+      contract_reference: "Contract Reference",
+      signed: "Signed",
+      supplier: "Supplier",
+      supplier_country: "Supplier Country",
+      contract_description: "Contract Description",
       // A notice and a plan row a package advertised again cites (ticket 28): the sentence that gives a reason,
       // and STEP's own field names for the plan row.
       notice_says: "The notice says",
@@ -1645,7 +1665,7 @@ export const copy = {
     purpose:
       "Every activity in each implementing agency's latest Procurement Plan, with its reference from " +
       STEP_SPELLED +
-      ". Open a reference to see its row in the plan check.",
+      ". Open a reference to follow its activity from the plan to the signed contract.",
     searchLabel: "Search packages",
     searchHint: "Type part of a STEP reference or a description.",
     noun: "packages",
@@ -2249,6 +2269,9 @@ export const copy = {
     // reference, so a list of links tells the activities apart.
     pastRangeLink: "See the past range",
     pastRangeLabel: (ref: string) => `See the past range for ${ref}`,
+    // Ticket 22: each row's link to its activity page, the contract trail, before "See the past range".
+    openActivity: "Open the activity",
+    openActivityLabel: (ref: string) => `Open the activity ${ref}`,
   },
 
   // Drafts (the 35 brief): the writing page, a draft's page with its bar, its files and the Drafts tab.
@@ -3521,13 +3544,6 @@ export const copy = {
     switcher: "Sources for this sentence",
   },
 
-  // Brief 22's contract trail words that other screens share; the activity page (ticket 22) reads them too.
-  trail: {
-    notice: {
-      again: "The activity was advertised again on {date}.",
-    },
-  },
-
   // Section 5 of the package workspace, "Check your criteria" (ticket 31; the 31 brief, section 6). Every
   // {name} is a value a tool, the workflow or the verifier returned, which Num writes. Every sentence says
   // "qualification criteria" for the bidding document's requirements, so it is never read as the criteria that
@@ -4485,6 +4501,9 @@ export const copy = {
         estimate_time: "the planned dates for each step",
         // Following's coverage line (ticket 37).
         project_signals: "the signals on projects you follow",
+        // The activity page and a project's Connections tab (ticket 22).
+        contract_trail: "the contract trail",
+        connections: "the Connections tab",
         ask: "the answer",
         unknown: "the coverage line you opened",
       },
@@ -5030,6 +5049,323 @@ export const copy = {
         itsTheir: { one: "its", many: "their" },
       },
     },
+  },
+
+  // The activity page, its contract trail, a project's Connections tab and "Why this source" (ticket 22; the 22
+  // brief, sections 2.7, 3.5 and 4.2). A link between a contract and a paragraph is always "appeared together",
+  // never a cause: the copy lint bans causal words in these four blocks, "because" included (web/lint/rules.ts,
+  // CAUSAL_SCOPES), so an error is written as two sentences. {name} slots are values a tool returned.
+  activity: {
+    docTitle: (ref: string) => `Activity ${ref}`,
+    crumbProcurement: "Procurement",
+    titleFallback: "Activity {stepRef}",
+    label: { ref: "STEP reference", agency: "Implementing agency" },
+    purpose:
+      "This page traces one activity from its row in the Procurement Plan to its notice, bids and signed contract, and shows the report paragraphs that appeared together with the contract.",
+    // The lead joins the parts that exist, in this order, "A and B" or "A, B and C" with no serial comma.
+    lead: "This activity was {parts}.",
+    leadEstimated: "estimated at {estimate} in the plan",
+    leadAdvertised: "advertised on {notice_date}",
+    leadSigned: "signed on {signed_date}, for {amount}",
+    leadSignedNoAmount: "signed on {signed_date}",
+    leadSignedMany: "signed as {count} contracts between {first_signed_date} and {last_signed_date}",
+    join: { pair: " and ", list: ", ", last: " and " },
+    noEstimate: "The plan gives no Estimated Amount.",
+    missingNoun: { notice: "notice", contract: "signed contract", notice_and_contract: "notice or signed contract" } as Record<string, string>,
+    leadMissing: "I have no {missing} for it in the records through {data_through}.",
+    leadBids: (one: boolean, proposals: boolean) =>
+      `The award notice listed {count} ${proposals ? (one ? "proposal" : "proposals") : one ? "bid" : "bids"}.`,
+    // Two or more award notices: "The award notices listed five and four bids."
+    leadBidsMany: (proposals: boolean) => `The award notices listed {counts} ${proposals ? "proposals" : "bids"}.`,
+    leadParagraphs: (one: boolean, many: boolean) =>
+      `In the project's reports, {count} ${one ? "paragraph" : "paragraphs"} appeared together with ${many ? "its contracts" : "the contract"}.`,
+    leadNoParagraphs: "No paragraph from the project's reports appeared together with the contract.",
+    leadNoParagraphsMany: "No paragraph from the project's reports appeared together with its contracts.",
+    // The tooltips on the lead's numbers: where each came from.
+    fromRecord: (kind: string, reference: string) => `From the ${kind} ${reference}.`,
+    fromAwardNotice: (id: string) => `From award notice ${id}.`,
+    fromParagraphs: "From the links I scored between the contract and the project's reports.",
+    recordKind: { estimated: "Procurement Plan row", advertised: "notice", signed: "contract", award_notice: "award notice" } as Record<string, string>,
+    loading: "Loading this activity.",
+    stillLoading: "Still loading this activity.",
+    error: "I couldn't load this activity. The data service didn't answer.",
+    permission: "Your account can't read Strata's tables, so I can't show this activity.",
+    notFoundTitle: "I have no activity {stepRef} in {pid}.",
+    notFoundBody: "Check the STEP reference, or find the activity in the project's Procurement Plans.",
+    notFoundLink: "Procurement Plans for {pid}",
+  },
+  // The contract trail's words; the rebidding block (ticket 28) shares trail.notice.again.
+  trail: {
+    label: "Contract trail for {stepRef}",
+    // A bare section number as a card's title or a chip writes it; a named section is its own name.
+    sectionNumber: "Section {section}",
+    legend:
+      "A solid line joins records that share a key, such as the STEP reference. A dashed line joins the contract to report paragraphs that appeared together with it.",
+    plan: {
+      title: "In the Procurement Plan",
+      date: "Plan of {date}",
+      field: {
+        method: "Method",
+        market_approach: "Market Approach",
+        review_type: "Review Type",
+        estimated_amount_usd: "Estimated Amount (US$)",
+        process_status: "Process Status",
+      } as Record<string, string>,
+      datesTitle: "Dates in the plan",
+      datesCaption: "The STEP steps the plan dates for this activity",
+      col: { step: "Step", planned: "Planned, as first published", actual: "Actual" },
+      notInPlan: "Not in the plan",
+      noneRecorded: "None recorded",
+      // The step's full STEP name after its short label, for a screen reader (the hover shows it too).
+      stepHidden: (name: string) => `, in STEP ${name}`,
+      datesNote: "Planned dates are as first published, in the plan of {first_plan_date}. Later plans can move them.",
+      plannedLine: "Planned, as first published: {planned}. Actual: {actual}.",
+      showInPlan: "Show it in its plan",
+      pastRange: "See the past range",
+      forRef: (ref: string) => ` for ${ref}`,
+      source: "Procurement Plan, {agency}, version of {plan_date}, disclosed {disclosed}.",
+    },
+    notice: {
+      title: "Notice",
+      titleMany: "Notices",
+      date: "Published {date}",
+      field: {
+        notice_type: "Notice Type",
+        published: "Published",
+        procurement_method: "Procurement Method",
+        submission_deadline: "Submission Deadline",
+        bid_description: "Description",
+      } as Record<string, string>,
+      again: "The activity was advertised again on {date}.",
+      open: "Open the notice on worldbank.org",
+      source: "Procurement notice {id}, published {date}. {dataset}",
+    },
+    bids: {
+      title: "Bids",
+      titleProposals: "Proposals",
+      date: "Award notice published {date}",
+      caption: "Bids listed in award notice {id}, in the order the notice lists them",
+      col: { bidder: "Bidder", consultant: "Consultant", opening: "Bid price at opening", evaluated: "Evaluated bid price", result: "Result" },
+      colCurrency: (label: string, currency: string) => `${label} (${currency})`,
+      // Counts under ten in words (DESIGN.md section 7, rule 12): "Showing all three bids", "Showing the one bid".
+      count: (n: number, count: string, proposals: boolean) =>
+        n === 1 ? `Showing the one ${proposals ? "proposal" : "bid"}` : `Showing all ${count} ${proposals ? "proposals" : "bids"}`,
+      awarded: "Awarded",
+      notAwarded: "Not awarded",
+      rejected: "Rejected. The award notice gives the reason \"{reason}\".",
+      rejectedNoReason: "Rejected.",
+      // Above each award notice's bids when an activity has two or more.
+      noticeHeading: "Award notice {id}",
+      noResult: "The award notice gives no result.",
+      notInNotice: "Not in the notice",
+      individual: "Individual consultant",
+      jvUnnamed: "A joint venture of {members}",
+      currency: "Prices are in {currency}, as the award notice gives them.",
+      noScores: "The award notice also lists evaluation scores. I don't show scores or ranks for suppliers.",
+      open: "Open the award notice on worldbank.org",
+      source: "Award notice {id}, published {date}. {dataset}",
+    },
+    contract: {
+      title: "Contract",
+      titleMany: "Contracts",
+      date: "Signed {date}",
+      field: {
+        supplier: "Supplier",
+        supplier_country: "Supplier Country",
+        signedAmountUsd: "Signed amount (US$)",
+        signedAmount: (currency: string) => `Signed amount (${currency})`,
+        contract_description: "Contract Description",
+        contract_reference: "Contract Reference",
+      },
+      fromNotice: "The World Bank's contract awards data skip fiscal 2017 to 2019. This contract comes from its award notice, in {currency}.",
+      source: "Contract award {reference}, signed {date}. {dataset}",
+      sourceNotice: "Award notice {id}, published {date}. {dataset}",
+    },
+    together: {
+      title: "Paragraphs that appeared together with the contract",
+      intro:
+        "I link a contract to a paragraph in the same project's reports when they are close in time and share a sector, words or names. A link means only that they appeared together.",
+      // Each report is a group under its name and date, and each card names its paragraph within it.
+      reportTitle: "{doc}, {date}",
+      // The count starts its line, so a count word starts with a capital: "Two paragraphs", "29 paragraphs".
+      reportCount: (n: number, count: string) => (n === 1 ? "One paragraph" : `${count.charAt(0).toUpperCase()}${count.slice(1)} paragraphs`),
+      showAll: (count: string) => `Show all ${count} paragraphs`,
+      fromReport: " from the {doc} of {date}",
+      cardTitle: "Paragraph {para}",
+      cardTitleIn: "{section}, paragraph {para}",
+      cardTitleSectionPage: "{section}, page {page}",
+      topics: "Both concern {topics}.",
+      topicsWith: "With contract {ref}, both concern {topics}.",
+      less: "Show fewer paragraphs",
+      source: "{doc}, {date}, paragraph {para}, page {page}.",
+      sourceSection: "{doc}, {date}, section {section}, page {page}.",
+    },
+    // Each missing stage's sentence, by the reason code the trail gives (the 22 brief, section 2.7).
+    missing: {
+      not_read: "I haven't read a Procurement Plan that lists this activity. The {record_noun} names it by its STEP reference.",
+      notReadLink: "Procurement Plans for {pid}",
+      method_no_notice: "This activity had no public notice. Its Method, {method}, does not use one.",
+      approach_no_notice: "This activity had no public notice. Its Market Approach, {market_approach}, invites firms directly.",
+      notice_none_found: "I found no notice with this STEP reference in the records through {data_through}.",
+      noticeLink: "See how complete the notices are",
+      bids_none_found: "I found no award notice for this activity in the records through {data_through}. Award notices are where bids are listed.",
+      bidsLink: "See how complete the award notices are",
+      direct_selection: "This activity used Direct Selection, which invites a single firm. The award notice lists no other bids.",
+      individual_consultant: "This activity hired an individual consultant. I don't name individuals, and no bids were listed.",
+      contract_none_found: "I found no signed contract for this activity in the records through {data_through}.",
+      no_links: "No paragraph in this project's reports appeared together with the contract. I keep a link only when its score reaches {threshold}.",
+      no_contract: "I link paragraphs to signed contracts, and this activity has none yet.",
+      after_asof: "No {record_noun} for this activity was public as of {asof_date}.",
+      paragraphs_after_asof: "I link paragraphs to signed contracts. As of {asof_date}, this activity had none.",
+      recordNoun: { plan: "Procurement Plan", notice: "notice", bids: "award notice", contract: "contract" } as Record<string, string>,
+      coverage: "I have read {read} of the project's {total} documents.",
+    },
+    blank: "Not in the record",
+    pill: (n: number, kind: string, reference: string, date: string, opened: boolean) =>
+      `Source ${n}: ${kind} ${reference}, ${date}${opened ? ", opened" : ""}`,
+    pillKind: { plan: "Procurement Plan row", notice: "notice", award_notice: "award notice", contract: "contract" } as Record<string, string>,
+    // What a pill's name says after "Source {n}:": "award notice OP00164589, Feb 2, 2022".
+    pillSource: (kind: string, reference: string, date: string) => `${kind} ${reference}, ${date}`,
+    paraShort: (para: string) => `¶${para}`,
+    // How a currency's code reads in a sentence: "Prices are in Kenya shillings". An unknown code reads as itself.
+    currencyName: { KES: "Kenya shillings", INR: "Indian rupees", USD: "US dollars", EUR: "euros" } as Record<string, string>,
+    // An amount in a sentence: "US$1,245,092.76", or another currency's code, a space and the amount.
+    usd: (amount: string) => `US$${amount}`,
+    otherCurrency: (currency: string, amount: string) => `${currency} ${amount}`,
+  },
+  connections: {
+    finding: (contracts: number, paragraphs: number, documents: number) =>
+      `In this project, {contracts} ${contracts === 1 ? "contract" : "contracts"} appeared together with {paragraphs} ${
+        paragraphs === 1 ? "paragraph" : "paragraphs"
+      } from {documents} of its reports.`,
+    findingOneReport: (contracts: number, paragraphs: number) =>
+      `In this project, {contracts} ${contracts === 1 ? "contract" : "contracts"} appeared together with {paragraphs} ${
+        paragraphs === 1 ? "paragraph" : "paragraphs"
+      } from one of its reports.`,
+    findingNone: "In this project, no contract appeared together with a paragraph from its reports.",
+    legend:
+      "Solid lines join the project to the packages in its plans and the documents about it. Dashed lines join a package to report paragraphs that appeared together with one of its contracts. A dashed line means only that they appeared together.",
+    legendNone: "Solid lines join the project to the packages in its plans and the documents about it.",
+    // The list draws no lines, so its legend says what its items mean.
+    legendList:
+      "Each package lists the report paragraphs that appeared together with one of its contracts. This means only that they appeared together.",
+    linesHint: "Hover over or focus a package to see its links.",
+    noPackages: "I haven't read a Procurement Plan for {pid} yet.",
+    noPackagesLink: "Procurement Plans for {pid}",
+    count: "Showing {shown} of {total} packages and documents",
+    toList: "Show as a list",
+    toDiagram: "Show as a diagram",
+    showingList: "Showing the list.",
+    showingDiagram: "Showing the diagram.",
+    col: { packages: "Packages it plans", documents: "Documents about it" },
+    // After the project node's P-code and name, which its link shows.
+    projectOpen: ". Open the project summary.",
+    pkgSigned: "Signed {date}",
+    pkgSignedMany: (count: string) => `${count} contracts, first signed {date}`,
+    pkgName: (ref: string, description: string, status: string) => `${ref}, ${description}. ${status}.`,
+    pkgLinks: (items: string) => `Appeared together with ${items}.`,
+    together: "Appeared together with",
+    chip: "¶{para}",
+    // A paragraph number the document uses again in an annex, and a section name it uses twice.
+    chipIn: "{section} ¶{para}",
+    chipPage: "{label}, page {page}",
+    chipName: (doc: string, place: string, ref: string) => `${doc} ${place}, appeared together with ${ref}`,
+    placeParagraph: (para: string, section: string | null) => (section ? `${section} paragraph ${para}` : `paragraph ${para}`),
+    placeSection: (section: string) => `section ${section}`,
+    placePage: (place: string, page: string) => `${place}, page ${page}`,
+    chipNameMany: (doc: string, place: string, count: string) => `${doc} ${place}, appeared together with ${count} packages`,
+    chipWithDoc: "{doc} {label}",
+    chipWithDocSection: "{doc}, {label}",
+    chipOpened: (name: string) => `${name}, opened`,
+    docCaption: "{type}, {date}",
+    planShort: "Procurement Plan",
+    moreChips: (n: number, count: string) => (n === 1 ? "and one more paragraph" : `and ${count} more paragraphs`),
+    moreChipsIn: (doc: string) => ` in the ${doc}`,
+    docName: (short: string, type: string, date: string) => (short === type ? `${type}, ${date}. Open the document.` : `${short}, ${type}, ${date}. Open the document.`),
+    docShort: { isr: (n: string) => `ISR ${n}` },
+    more: {
+      packages: (n: number, count: string) => (n === 1 ? "and one more package" : `and ${count} more packages`),
+      isrs: (n: number, count: string) => (n === 1 ? "and one more ISR" : `and ${count} more ISRs`),
+      plans: (n: number, count: string) => (n === 1 ? "and one more Procurement Plan" : `and ${count} more Procurement Plans`),
+      documents: (n: number, count: string) => (n === 1 ? "and one more document" : `and ${count} more documents`),
+    } as Record<string, (n: number, count: string) => string>,
+    // After a row whose documents I haven't read, all or some of them.
+    moreAllUnread: " I haven't read",
+    moreSomeUnread: (n: number, count: string) => (n === 1 ? ", one of them not read yet" : `, ${count} of them not read yet`),
+    noneDetail: "I keep a link only when its score reaches {threshold}.",
+    coverage: "I have read {read} of the project's {total} documents.",
+    source:
+      "Procurement Plans, procurement notices and contract awards from the World Bank's APIs, and this project's documents, through {data_through}. The links are Strata's own, scored {scored_date}.",
+    sourceUnscored:
+      "Procurement Plans, procurement notices and contract awards from the World Bank's APIs, and this project's documents, through {data_through}.",
+    loading: "Loading this project's connections.",
+    stillLoading: "Still loading this project's connections.",
+    error: "I couldn't load this project's connections. The data service didn't answer.",
+    permission: "Your account can't read Strata's tables, so I can't show this project's connections.",
+    emptyTitle: "I have no packages or documents for {pid} yet.",
+    emptyBody: "Once I load this project's Procurement Plans and documents, this tab shows how they connect.",
+    emptyLink: "Data readiness",
+  },
+  why: {
+    title: "Why this source",
+    link: "This paragraph appeared together with {record_noun} {ref}, signed {signed_date}.",
+    recordNoun: { "award notice": "award notice", contract: "contract" } as Record<string, string>,
+    topics: "Both concern {topics}, in a project that {project_state}.",
+    sameProject: "Both come from {pid}, a project that {project_state}.",
+    projectState: { closed: "has closed", active: "is active" } as Record<string, string>,
+    timeAfter: "The {doc} is dated {doc_date}, {months} months after the signing.",
+    timeBefore: "The {doc} is dated {doc_date}, {months} months before the signing.",
+    timeSame: "The {doc} is dated {doc_date}, in the month of the signing.",
+    timeAfterOne: "The {doc} is dated {doc_date}, one month after the signing.",
+    timeBeforeOne: "The {doc} is dated {doc_date}, one month before the signing.",
+    only: "A link means only that they appeared together.",
+    open: "Open the activity",
+    openFor: (ref: string) => ` ${ref}`,
+    // Each other package once, though a package can hold several contracts.
+    others: (n: number) =>
+      n === 1
+        ? "It also appeared together with contracts of one other package in this project."
+        : "It also appeared together with contracts of {count} other packages in this project.",
+    othersItem: "{ref}, signed {date}",
+    othersMore: (n: number) => (n === 1 ? "and one more in Connections" : "and {count} more in Connections"),
+    scoreShow: "How I scored this link",
+    scoreHide: "Hide how I scored this link",
+    scoreCaption: "How I scored the link between this paragraph and {ref}",
+    col: { part: "Part", matched: "What matched", points: "Points" },
+    part: { project: "Project", sector: "Sector", time: "Time", text: "Wording", mentions: "Mentions" } as Record<string, string>,
+    matched: {
+      project: "Same project, {pid}",
+      sector: "{sector}",
+      time: "{months} months apart",
+      timeOne: "One month apart",
+      timeSame: "The same month",
+      timeNone: "No date to compare",
+      wording: "Close wording, such as \"{terms}\"",
+      wordingNone: "Close wording",
+      mentions: "{mentions}, as written in both",
+      mentionsNone: "No shared mention",
+    },
+    total: "Link score: {score}. I keep a link when it scores {threshold} or more.",
+    // The phrases "Both concern" uses, by the procurement category and by the World Bank's sector code (the 22
+    // brief, section 4.2). An unmapped sector reads as its name, in lower case.
+    category: {
+      Works: "works contracts",
+      Goods: "goods contracts",
+      "Consultant Services": "consulting services",
+      "Non-consulting Services": "non-consulting services",
+    } as Record<string, string>,
+    sector: {
+      TI: "roads",
+      TV: "urban transport",
+      TW: "ports and waterways",
+      TA: "aviation",
+      TF: "transport administration",
+      WC: "water supply",
+      WA: "sanitation",
+      WB: "waste management",
+      WF: "water administration",
+    } as Record<string, string>,
+    topicJoin: { pair: " and ", list: ", ", last: " and " },
   },
 
   // The evidence drawer's feedback row (ticket 32; the 32 brief, section 5.1): "Was this the right passage?"

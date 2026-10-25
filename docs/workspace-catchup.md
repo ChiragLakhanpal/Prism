@@ -1448,6 +1448,8 @@ Run this from the main checkout:
 
 It worked if the first run ends "I made version N of strata-mission-brief-writer, which matches the repo.", the third ends "I made version N of strata-orchestrator, which matches the repo.", and both `--check` runs exit 0 and print "Foundry's agent ..., version N, matches the repo: there is no difference in its model, instructions, tools, description or guardrail (strata-guardrail)." Exit 1 means `--check` found a difference, and exit 2 means it could not run.
 
+**Ran on October 25, 2026 (orchestrator), from c0a9db0.** All four passed. The first run made version 1 of `strata-mission-brief-writer`, and its `--check` printed that version 1 matches the repo with no difference in its model, instructions, tools, description or guardrail (strata-guardrail). The plain run found that `strata-orchestrator` version 2 differed in its instructions and its tools (the project_signals and project_records sections were missing) and made version 3, which matches the repo; the plain `--check` confirmed version 3 with no difference. Both checks exited 0. Note for the next catch-up: zsh does not split an unquoted variable into words, so pass the script's flags as separate arguments rather than through a loop variable, or argparse sees one unrecognized argument.
+
 ## Ticket 37, step 4 of 6: re-record the mission brief from the live writer
 
 The merger parked this step on October 25, 2026, after merge commit 568dbc0. Run it after steps 1 and 3, and after the nightly job has filled the plans, awards, ISR ratings and loan history on the warehouse, because the writer drafts from project_records' rows, read as you. It needs `FOUNDRY_PROJECT_ENDPOINT`, `DATABRICKS_HOST`, `DATABRICKS_WAREHOUSE_ID` and `DATABRICKS_TOKEN` in `.env`, and `az` signed in. It re-records every writer case in `tests/fixtures/agent/writers.toml`, so it also serves ticket 35's step 2 (criterion 6, live half).
@@ -1488,3 +1490,40 @@ The merger parked this step on October 25, 2026, after merge commit 568dbc0. Run
 Signed in to the App as a World Bank staff viewer, open `<App url>/projects/following` and choose "Add to mission brief" on P156634's row.
 
 It worked if the writing page shows its steps, then the draft opens with its five parts in order (plans, awards, ratings, disbursement, closing), each with its sentences, its table and its citation markers, and the check line removes no sentence for a number or date missing from the records. Every number in a sentence must match the record its marker opens. Choose "Mark as checked", then "Export to Word": the Word file must hold a Heading 2 for each part and one footnote per citation. The nightly job's score task does not run the signals replay yet; ticket 43 adds that, and its own block will say how to check it.
+
+## Ticket 22, step 1 of 2: deploy the edge tables, then relink builds strata.gold.edge at a nightly run
+
+The merger parked this step on October 25, 2026, after merge commit d8bdbb7. All ten keys were set, but the header above holds workspace steps back during a merge. It needs the Databricks keys in `.env`. Ticket 22 adds three tables: `strata.gold.edge` (every link between strata, `src/strata/lakehouse/tables/gold/edge.sql`), `strata.silver.contract_passage_links` and `strata.silver.notice_bids`. The nightly job's `relink` task rebuilds the edge table (`strata.knowledge.links`), so the tables must exist first. Ticket 37's step 1 runs the same deploy command, and one deploy from d8bdbb7 or later serves both. The relink has live inputs only once ticket 43 lands. It scores contracts against passages, so the warehouse must hold P130164's contracts and its ICR's passages (ticket 11's `ops/documents/run_live.py`) before the check below can find the showcase edge. The scorer's word lists moved into `config/thresholds.toml` [links] with the same values, so links already scored do not change.
+
+Run this from the main checkout:
+
+    uv run --script ops/bundle/deploy.py --env-file .env --fairshare-catalog workspace
+
+It worked if it exits 0, lists `strata.gold.edge`, `strata.silver.contract_passage_links` and `strata.silver.notice_bids` as new, and changes no existing table.
+
+Then wait for the next scheduled run of the nightly job (`bundle/nightly.yml`), or start one by hand and check it:
+
+    uv run --script ops/bundle/check.py job-run --env-file .env
+
+It worked if `relink` succeeded in that run, this query returns a count above 0:
+
+    SELECT count(*) FROM strata.gold.edge WHERE kind = 'appeared_together'
+
+and this one returns 0, because no link may be public before both of its ends are (ADR 0002):
+
+    SELECT count(*) FROM strata.gold.edge AS e
+    JOIN strata.gold.contract AS c ON e.from_id = concat('strata.gold.contract:', c.contract_id)
+    JOIN strata.gold.passage AS p ON e.to_id = concat('strata.gold.passage:', p.passage_id)
+    WHERE e.kind = 'appeared_together' AND (e.public_from < c.public_from OR e.public_from < p.public_from)
+
+On the fixture the first query returns 1,169 and the second returns 0. Once P130164's records are on the warehouse, `SELECT score, score_project, score_sector, score_time, score_text, score_mentions FROM strata.gold.edge WHERE from_id = 'strata.gold.contract:OP00044090' AND to_id = 'strata.gold.passage:31525018/v1/54'` should return one row: 0.53, made of 0.10, 0.10, 0.11, 0.02 and 0.20, as on the fixture.
+
+## Ticket 22, step 2 of 2: the four-hop recursive SQL on the SQL warehouse
+
+The merger parked this step on October 25, 2026, after merge commit d8bdbb7. It needs the Databricks keys in `.env`. Run it after step 1, once `strata.gold.edge` on the warehouse holds the path from AMIT CONSTRUCTION through contract OP00044090 and project P130164 to ICR paragraph 31525018/v1/54. Criterion 2 is already proved on DuckDB in the gate. This step checks that the warehouse runs the same `WITH RECURSIVE` query.
+
+First change line 17 of `tests/ground_truth/four_hop_supplier_to_completion_report.sql` from `-- engines: duckdb` to `-- engines: duckdb, databricks`, so `same-rows` picks it up. Then run this from the main checkout:
+
+    uv run --script ops/bundle/check.py same-rows --env-file .env
+
+It worked if it exits 0 and reports that DuckDB and the SQL warehouse returned the same one row for `four_hop_supplier_to_completion_report.sql`: AMIT CONSTRUCTION, OP00044090, P130164, 31525018, 31525018/v1/54, 4. Then commit the changed engines line on a branch and run the gate. If the warehouse rejects `WITH RECURSIVE`, change the line back to `-- engines: duckdb`, and write the warehouse's error message here and in the file's header comment.
