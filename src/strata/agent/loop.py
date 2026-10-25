@@ -13,7 +13,8 @@ answer_runner() makes the runner the server's /api/ask stream runs. For each que
    can check the answer against it. The results go back to the agent.
 3. This repeats for at most agent.tool_rounds rounds (config/thresholds.toml). A call the agent asks
    for after that is not run: the agent gets a result that says so, and must answer from what it has.
-4. The agent's claims go to the stream, which runs the verifier on them before anything is shown.
+4. The agent's claims go to the stream, which runs the verifier on them before anything is shown, with
+   the refusal key when the agent turned the request down (ticket 24).
 
 Each tool call is a step, announced as it starts and when it is done. A tool the agent called with
 arguments the registry refuses gets the refusal back, so the agent can try again in its next round. A
@@ -29,7 +30,7 @@ import logging
 from collections.abc import AsyncIterator, Callable, Mapping
 from typing import Any, Protocol
 
-from strata.agent.claims import ClaimsError, parse_claims
+from strata.agent.claims import ClaimsError, parse_answer
 from strata.config import Thresholds, Tool, load_thresholds, load_tools
 from strata.harness.facts import Facts
 from strata.harness.turn import Event, RunError, Runner, Turn
@@ -110,6 +111,19 @@ def keep_nested(facts: Facts, record: Mapping, tool: str | None) -> None:
                      tool=facts.tool(record["evidence_id"]))
 
 
+def remember(facts: Facts, name: str, result: Mapping, tools: dict[str, Tool]) -> None:
+    """Keep every row a tool returned in the turn's Facts, with its summary of derived figures when it has one
+    and the records inside its rows that the registry names (nested_rows, such as each side of a disagreement),
+    so the verifier can check the answer against them."""
+    nested = tools[name].result.nested_rows if name in tools else ()
+    for row in result["rows"]:
+        facts.record(row["evidence_id"], row, tool=name)
+        for record in (inner for field in nested for inner in row.get(field) or ()):
+            keep_nested(facts, record, name)
+    if result.get("summary"):  # the tool's derived figures, such as a past range, as one citable record
+        facts.record(result["summary"]["evidence_id"], result["summary"], tool=name)
+
+
 def answer_runner(agent_for: Callable[[Turn], Agent], engine_for: EngineFor, tools: dict[str, Tool] | None = None,
                   thresholds: Thresholds | None = None,
                   today: Callable[[], dt.date] = registry.today) -> Runner:
@@ -142,13 +156,7 @@ def answer_runner(agent_for: Callable[[Turn], Agent], engine_for: EngineFor, too
             return {"error": "permission"}, note
         except EngineError as error:  # the warehouse timed out or is down: not the agent's doing, nor a bug
             raise AgentError("data_service", str(error)) from error
-        nested = tools_held[name].result.nested_rows if name in tools_held else ()
-        for row in result["rows"]:
-            turn.facts.record(row["evidence_id"], row, tool=name)
-            for record in (inner for field in nested for inner in row.get(field) or ()):
-                keep_nested(turn.facts, record, name)
-        if result.get("summary"):  # the tool's derived figures, such as a past range, as one citable record
-            turn.facts.record(result["summary"]["evidence_id"], result["summary"], tool=name)
+        remember(turn.facts, name, result, tools_held)
         note.update(rows=len(result["rows"]), abstention=(result["abstention"] or {}).get("reason"))
         return for_agent(result, as_of), note
 
@@ -169,11 +177,11 @@ def answer_runner(agent_for: Callable[[Turn], Agent], engine_for: EngineFor, too
             if not calls:
                 yield Event("step", {"id": "write", "kind": "write", "status": "running"})
                 try:
-                    claims = parse_claims(output_text(response))
+                    answer = parse_answer(output_text(response))
                 except ClaimsError as error:
                     raise AgentError("agent_output", str(error)) from error
-                yield Event("step", {"id": "write", "kind": "write", "status": "done", "count": len(claims)})
-                yield Event("claims", {"claims": claims})
+                yield Event("step", {"id": "write", "kind": "write", "status": "done", "count": len(answer.claims)})
+                yield Event("claims", {"claims": answer.claims, "refusal": answer.refusal})
                 return
             if turn.notes.tool_rounds >= rounds:
                 refusals += 1

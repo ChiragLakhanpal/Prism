@@ -24,7 +24,9 @@ export type BadgeKind =
   | "not-restated"
   | "may-repeat"
   | "rechecking"
-  | "overdue";
+  | "overdue"
+  | "two-reports-disagree"
+  | "sources-differ";
 
 const lessons = copy.lessons.badges;
 
@@ -42,6 +44,9 @@ const KINDS: Record<BadgeKind, { state: State; Icon: LucideIcon; dashed: boolean
   "may-repeat": { state: "info", Icon: Info, dashed: false, text: lessons.mayRepeat },
   rechecking: { state: "info", Icon: Info, dashed: false, text: lessons.rechecking },
   overdue: { state: "warning", Icon: TriangleAlert, dashed: false, text: lessons.overdue },
+  // A disagreement card's (ticket 24): warning only when it changes the answer.
+  "two-reports-disagree": { state: "warning", Icon: TriangleAlert, dashed: false, text: copy.badge.twoReportsDisagree },
+  "sources-differ": { state: "info", Icon: Info, dashed: false, text: copy.badge.sourcesDiffer },
 };
 
 export function StatusBadge({ kind, className, describedBy }: { kind: BadgeKind; className?: string; describedBy?: string }) {

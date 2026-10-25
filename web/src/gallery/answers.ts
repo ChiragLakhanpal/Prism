@@ -10,6 +10,29 @@ import rebidding from "../../../tests/fixtures/api/ask-p130164-rebidding.sse?raw
 import removedNumber from "../../../tests/fixtures/api/ask-p130164-removed-number.sse?raw";
 import tableRow from "../../../tests/fixtures/api/ask-p130164-table-row.sse?raw";
 import tableSummary from "../../../tests/fixtures/api/ask-p130164-table-summary.sse?raw";
+// Ticket 24: the six checks and the refusals.
+import pastRange from "../../../tests/fixtures/api/ask-ke-nwwda-541055-past-range.sse?raw";
+import pastRangeAdvice from "../../../tests/fixtures/api/ask-ke-nwwda-541055-advice.sse?raw";
+import summaries from "../../../tests/fixtures/api/ask-p130164-summaries.sse?raw";
+import unsupportedSummary from "../../../tests/fixtures/api/ask-p130164-unsupported.sse?raw";
+import adviceWithout from "../../../tests/fixtures/api/ask-p130164-advice-without-lesson.sse?raw";
+import severalRemoved from "../../../tests/fixtures/api/ask-p130164-several-removed.sse?raw";
+import disagreementsUnavailable from "../../../tests/fixtures/api/ask-p130164-disagreements-unavailable.sse?raw";
+import isr7 from "../../../tests/fixtures/api/ask-p130164-isr-7-rating.sse?raw";
+import bothSides from "../../../tests/fixtures/api/ask-p130164-both-sides.sse?raw";
+import judgeSilent from "../../../tests/fixtures/api/ask-p130164-judge-no-response.sse?raw";
+import judgeSilentNoneKept from "../../../tests/fixtures/api/ask-p130164-judge-no-response-none-kept.sse?raw";
+import refusesPart from "../../../tests/fixtures/api/ask-refuses-part-supplier-scores.sse?raw";
+import refusesSupplierScores from "../../../tests/fixtures/api/ask-refuses-supplier-scores.sse?raw";
+import refusesFraudAndRedactions from "../../../tests/fixtures/api/ask-refuses-fraud-and-redactions.sse?raw";
+import refusesLiveTenders from "../../../tests/fixtures/api/ask-refuses-live-tenders.sse?raw";
+import refusesReviewDecisions from "../../../tests/fixtures/api/ask-refuses-review-decisions.sse?raw";
+import refusesEstimatesForDecisions from "../../../tests/fixtures/api/ask-refuses-estimates-for-decisions.sse?raw";
+import refusesDividingPackages from "../../../tests/fixtures/api/ask-refuses-dividing-packages.sse?raw";
+import refusesRuleBreachFindings from "../../../tests/fixtures/api/ask-refuses-rule-breach-findings.sse?raw";
+import refusesPersonalDetails from "../../../tests/fixtures/api/ask-refuses-personal-details.sse?raw";
+import refusesWrongEdition from "../../../tests/fixtures/api/ask-refuses-wrong-edition.sse?raw";
+import refusesPrivateUploads from "../../../tests/fixtures/api/ask-refuses-private-uploads.sse?raw";
 import checkPlan from "../../../tests/fixtures/api/check-plan-p156634-nwwda-2026-10-09.json";
 import icr54 from "../../../tests/fixtures/api/evidence-icr-p130164-54.json";
 import isrS4 from "../../../tests/fixtures/api/evidence-isr-p130164-s4.json";
@@ -71,6 +94,37 @@ export const RUNS = {
   dropped: { ...played(rebidding, showcase, 6), phase: "dropped" } as Run,
   asOf: played(removedNumber, asked(sample.showcaseQuestion, "P130164", { asOf: "2026-10-01" })),
   preview: played(removedNumber, asked(sample.showcaseQuestion, "P130164", { view: "public" })),
+};
+
+// Ticket 24's answers, each the stream its scripted case gives (tests/fixtures/agent/cases.toml), asked with
+// the case's own question.
+const checked = galleryCopy.sixChecks.questions;
+const refusalQuestions = galleryCopy.sixChecks.refusalQuestions;
+export const CHECK_RUNS = {
+  pastRange: played(pastRange, asked(checked.pastRange, "KE-NWWDA-541055-CW-RFB")),
+  advice: played(pastRangeAdvice, asked(checked.pastRange, "KE-NWWDA-541055-CW-RFB")),
+  summaries: played(summaries, asked(checked.summaries, "P130164")),
+  unsupported: played(unsupportedSummary, showcase),
+  adviceWithout: played(adviceWithout, showcase),
+  several: played(severalRemoved, showcase),
+  disagreementsUnavailable: played(disagreementsUnavailable, showcase),
+  isr7: played(isr7, asked(checked.isr7, "P130164")),
+  bothSides: played(bothSides, asked(checked.bothSides, "P130164")),
+  judgeSilent: played(judgeSilent, showcase),
+  judgeSilentNoneKept: played(judgeSilentNoneKept, asked(checked.summaries, "P130164")),
+  partial: played(refusesPart, asked(refusalQuestions.partial, "P130164")),
+};
+export const REFUSAL_RUNS = {
+    supplier_scores: played(refusesSupplierScores, asked(refusalQuestions.supplier_scores, null)),
+    fraud_and_redactions: played(refusesFraudAndRedactions, asked(refusalQuestions.fraud_and_redactions, null)),
+    live_tenders: played(refusesLiveTenders, asked(refusalQuestions.live_tenders, null)),
+    review_decisions: played(refusesReviewDecisions, asked(refusalQuestions.review_decisions, null)),
+    estimates_for_decisions: played(refusesEstimatesForDecisions, asked(refusalQuestions.estimates_for_decisions, null)),
+    dividing_packages: played(refusesDividingPackages, asked(refusalQuestions.dividing_packages, null)),
+    rule_breach_findings: played(refusesRuleBreachFindings, asked(refusalQuestions.rule_breach_findings, null)),
+    personal_details: played(refusesPersonalDetails, asked(refusalQuestions.personal_details, null)),
+    wrong_edition: played(refusesWrongEdition, asked(refusalQuestions.wrong_edition, null)),
+    private_uploads: played(refusesPrivateUploads, asked(refusalQuestions.private_uploads, null)),
 };
 
 // The showcase answer with its first sentence citing paragraphs 54 and 55, for the source switcher.

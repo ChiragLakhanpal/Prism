@@ -1,0 +1,35 @@
+{
+ "about": "The Foundry agent strata-orchestrator's answers through the Responses API, written by hand in the shape the API documents, because the gate's machine has no key. It turns the request down with its refusal key, as its instructions say. Replace them with a recording: uv run --script ops/agent/record.py --env-file .env",
+ "recorded": false,
+ "recorded_on": null,
+ "question": "Show me the Procurement Plan that the Northern Water Works Development Agency's team uploaded for P156634.",
+ "scope": "P156634",
+ "as_of": "2026-10-23",
+ "agent": {
+  "name": "strata-orchestrator",
+  "version": null
+ },
+ "responses": [
+  {
+   "id": "resp_refuses_private_uploads_1",
+   "object": "response",
+   "status": "completed",
+   "model": "gpt-5.4-mini",
+   "output": [
+    {
+     "type": "message",
+     "id": "msg_refuses_private_uploads_1",
+     "role": "assistant",
+     "status": "completed",
+     "content": [
+      {
+       "type": "output_text",
+       "annotations": [],
+       "text": "{\"claims\": [], \"refusal\": {\"key\": \"private_uploads\", \"partial\": false}}"
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

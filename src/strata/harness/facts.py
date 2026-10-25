@@ -30,5 +30,9 @@ class Facts:
     def get(self, evidence_id: str) -> Mapping[str, Any] | None:
         return self._rows.get(evidence_id)
 
+    def returned_by(self, tool: str) -> list[tuple[str, Mapping[str, Any]]]:
+        """Every row and passage this tool returned in this turn, by evidence id, in the order kept."""
+        return [(evidence_id, row) for evidence_id, row in self._rows.items() if self._tools.get(evidence_id) == tool]
+
     def __len__(self) -> int:
         return len(self._rows)

@@ -17,6 +17,67 @@ const LESSONS_PURPOSE =
   "Each lesson comes from a completion report or its review, quoted word for word with its page. A lead " +
   "procurement specialist decides which lessons enter the library.";
 
+// The requests I turn down every time (ticket 24; the 24 brief, section 5.6), keyed by the refusal keys in
+// src/strata/agent/refusals.py. The agent answers such a request with its key and never with words of its
+// own, and the answer panel writes lead (what I don't do), then instead (what I can do). How Strata works
+// lists each lead with its why ("What I don't do"). A test fails when a key lacks one of the three, or when
+// this list and the Python one differ.
+const REFUSALS = {
+  supplier_scores: {
+    lead: "I don't score or rank suppliers.",
+    instead: "I can list the contracts a supplier signed on World Bank-financed projects, each with its award notice.",
+    why: "The public records show which contracts a supplier signed. They don't show how well it did the work.",
+  },
+  fraud_and_redactions: {
+    lead: "I don't judge whether fraud or corruption took place, and I don't try to work out who a redacted report is about.",
+    instead: "I can show what the published reports say, word for word, with their pages.",
+    why: "Only the World Bank's integrity investigators make those findings, and a wrong guess about a person could harm them.",
+  },
+  live_tenders: {
+    lead: "I don't comment on a tender that is still open, and I don't say who is likely to win one.",
+    instead: "I can show how comparable packages went once their contracts were signed.",
+    why: "A comment from me could affect a process that is still running.",
+  },
+  review_decisions: {
+    lead: "I don't comment on prior-review decisions, bid evaluation reports or procurement complaints.",
+    instead: "I can show the package's published notices and contract awards, with their dates.",
+    why: "The borrower and the World Bank make those decisions under the Procurement Regulations.",
+  },
+  estimates_for_decisions: {
+    lead: "I don't give time estimates for deciding an award or a review.",
+    instead: "I can give a time estimate to help you plan the package's dates.",
+    why: "A time estimate comes from past packages. It says nothing about any one bidder or any one review.",
+  },
+  dividing_packages: {
+    lead: "I don't suggest dividing a package to stay under a review threshold.",
+    instead: "I can show the review type for the whole package and the threshold it comes from.",
+    why: "The review thresholds are there so that large packages get prior review. Dividing a package to get under them would undo that.",
+  },
+  rule_breach_findings: {
+    lead: "I don't say whether a contract was procured against the World Bank's rules, because only the World Bank makes that formal finding.",
+    instead: "I can show the contract's records and any published report that mentions it.",
+    why: "It is a formal finding, and the World Bank makes it through its own process.",
+  },
+  personal_details: {
+    lead: "I don't show the names of individual consultants or the contact details in notices.",
+    instead: "I can show the contract's reference, method, amount and dates, and the supplier's name when the supplier is a firm.",
+    why: "These details are about private people. I remove contact details from notices when I first read them.",
+  },
+  wrong_edition: {
+    lead: "I don't quote the Procurement Regulations from an edition that did not apply to the package.",
+    // The brief's "I have the {edition_name} in my sources" would be untrue: config/editions.toml holds no
+    // edition of the Regulations yet (ticket 29), so this says what I can do with the documents I hold.
+    instead: "I can quote the rules a project's appraisal document says it followed, word for word, with its page.",
+    why: "The rules differ between editions, so a quote from the wrong one could mislead you.",
+  },
+  private_uploads: {
+    lead:
+      "I don't show a borrower's uploaded Procurement Plan or Project Procurement Strategy for Development (PPSD) to anyone outside the team that uploaded it.",
+    instead: "If the upload belongs to your team, you can open it from Drafts.",
+    why: "An upload is a private draft. Only the team that uploaded it can open it.",
+  },
+};
+
 export const copy = {
   appName: "Strata",
   skipLink: "Skip to main content",
@@ -274,6 +335,10 @@ export const copy = {
     dataNote: "Data note",
     partial: "Partial",
     gap: "Gap",
+    // A disagreement card (ticket 24; DESIGN.md section 5): warning when keeping the other side would change
+    // the answer, info otherwise.
+    twoReportsDisagree: "Two reports disagree",
+    sourcesDiffer: "Sources differ",
   },
 
   // The citation marker's accessible name, such as "Source 1: Implementation Completion and
@@ -285,9 +350,23 @@ export const copy = {
   // The check line (DESIGN.md section 5): neutral, and it says what was not checked.
   // Its parts are templates, {part} of {whole}, one form for a whole of one and one for more, so the
   // server writes the same line into a draft's evidence pack (src/strata/drafts/copy.json).
+  // Three labeled parts, each on its own line (the 24 brief, section 4.1): what I matched against
+  // records and pages, what a model judged (check 4), and what nobody checked.
   checkLine: {
     checked: "Checked:",
+    judged: "Judged by a model:",
     notChecked: "Not checked:",
+    judgedSentences: {
+      one: "{part} of {whole} sentence follows from its sources",
+      many: "{part} of {whole} sentences follow from their sources",
+    },
+    // {count} is a word from one to nine, then numerals.
+    provenOthers: {
+      one: "The other one needed no model, because its numbers and quotes matched.",
+      many: "The other {count} needed no model, because their numbers and quotes matched.",
+    },
+    // When no clause below applies.
+    notCheckedFallback: "whether the sources themselves are right",
     numbers: { one: "{part} of {whole} number matches records", many: "{part} of {whole} numbers match records" },
     quotes: { one: "{part} of {whole} quote is on its page", many: "{part} of {whole} quotes are on their pages" },
     dates: { one: "{part} of {whole} date matches records", many: "{part} of {whole} dates match records" },
@@ -298,13 +377,17 @@ export const copy = {
     notCheckedComma: ", ",
     clauseJoin: "; ",
     end: ".",
-    // Keyed by what was not checked: "sentences" until ticket 24 adds the fourth check, then the
-    // tools that ran (config/tools.toml), so a new tool adds one line, then a draft kind's writer
-    // (config/drafts.toml's not_checked).
+    // Keyed by what was not checked: "sentences" where the fourth check did not run (a draft's notes;
+    // every answer runs it since ticket 24), then the tools (config/tools.toml), so a new tool adds one
+    // line, then a draft kind's writer (config/drafts.toml's not_checked). A tool's clause applies when
+    // it ran, except get_lessons's, which applies when a sentence on screen cites a lesson
+    // (CITED_CLAUSES in web/src/components/Checks.tsx).
     notCheckedClauses: {
       sentences: "whether each sentence follows from its sources",
       find_comparables: "whether these are the right comparables",
       search_passages: "whether I found every passage that matters",
+      get_lessons: "whether these lessons apply here",
+      ask_genie: "whether the records I looked up are the ones you meant",
       check_plan: "whether the plan's published records are complete",
       writer_review_notes: "whether these notes are what you would tell the borrower",
     },
@@ -334,8 +417,16 @@ export const copy = {
     other: "The other:",
     // The sentence's own double quotes turn single inside the outer pair, so the marks never pile up.
     item: (sentence: string, reason: string) => `"${sentence.replace(/"([^"]*)"/g, "'$1'")}" ${reason}`,
+    // The same sentence alone, for the removed box's list, which sets its reason beside it in another color.
+    quoted: (sentence: string) => `"${sentence.replace(/"([^"]*)"/g, "'$1'")}"`,
     // A reason code with no sentence below: it makes no claim about why.
     unknownReason: { item: "It failed a check.", joined: "it failed a check" },
+    // After the lead, when the model that judges sentences did not respond and some sentences survived
+    // (the 24 brief, section 5.4). Then "Try again".
+    unjudged: (count: number, countText: string) =>
+      count === 1
+        ? "The model that judges sentences did not respond, so I couldn't check one of them."
+        : `The model that judges sentences did not respond, so I couldn't check ${countText} of them.`,
     // Each reason the verifier gives, keyed by its code (REASONS in src/strata/agent/verifier.py):
     // as a list item, and as the clause that follows "It said ..., and". A test fails when a code
     // lacks either.
@@ -368,6 +459,27 @@ export const copy = {
       number_only_in_table_summary: {
         item: "This number came only from my summary of a table, not from the table's rows.",
         joined: "that number came only from my summary of a table, not from the table's rows",
+      },
+      // Ticket 24, the 24 brief's section 5.3: check 4, the judge said it does not follow from its sources.
+      not_supported: {
+        item: "The sources it cites do not say this.",
+        joined: "the sources it cited do not say that",
+      },
+      // Check 4, when the model that judges sentences did not respond: never shown unchecked.
+      judge_unavailable: {
+        item: "I couldn't check that its sources say this, because the model that judges sentences did not respond.",
+        joined: "I couldn't check that its sources said that, because the model that judges sentences did not respond",
+      },
+      // Check 5: advice with no lesson and no comparable among its sources.
+      advice_without_lesson_or_comparable: {
+        item: "It gave advice without citing a lesson or a comparable package.",
+        joined: "it gave advice without citing a lesson or a comparable package",
+      },
+      // Check 6, when I couldn't ask which reports disagree about its project. The brief's "I couldn't load
+      // the other side" would claim a disagreement I never saw, so this says what happened.
+      disagreements_unavailable: {
+        item: "I couldn't check whether another report disagrees with its sources.",
+        joined: "I couldn't check whether another report disagrees with its sources",
       },
     },
   },
@@ -422,14 +534,70 @@ export const copy = {
       // A step still to come, listed in ink-muted so the block keeps its height (02's round 7 critique).
       todo: "To do: write the answer.",
     },
+    // The verifier's step, with its six checks under it once it is done (the 24 brief, section 5.1). Its
+    // counts are over every sentence the agent wrote.
     check: {
-      running: "I'm checking each number and quote against the sources.",
-      done: "I checked each number and quote against the sources.",
-      doneCounted: (numbers: string, quotes: string, removed: string) => `I checked ${numbers} and ${quotes}, and removed ${removed}.`,
-      numbers: (count: number, countText: string) => (count === 1 ? "one number" : `${countText} numbers`),
-      quotes: (count: number, countText: string) => (count === 1 ? "one quote" : `${countText} quotes`),
-      removed: (count: number, countText: string) => (count === 0 ? "none" : count === 1 ? "one sentence" : `${countText} sentences`),
-      todo: "To do: check each number and quote against the sources.",
+      running: "I'm checking each sentence against its sources.",
+      done: "I checked each sentence against its sources.",
+      doneSix: (written: number, writtenText: string, removed: number, removedText: string) =>
+        `I ran six checks on the ${written === 1 ? "one sentence" : `${writtenText} sentences`} I wrote and removed ${
+          removed === 0 ? "none" : removed === 1 ? "one" : removedText
+        }.`,
+      todo: "To do: check each sentence against its sources.",
+      // The verifier's own steps inside it, each said once while it runs; they fold into its done line.
+      judge: (count: number, countText: string) =>
+        count === 1
+          ? "I'm asking a model whether one sentence follows from its sources."
+          : `I'm asking a model whether ${countText} sentences follow from their sources.`,
+      disagreement: "I'm getting the other side of a disagreement.",
+      // The six checks, in order. "N of M" pairs use numerals; a count alone is a word from one to nine.
+      six: {
+        numbers: (matched: number, total: number) =>
+          total === 0
+            ? "None of the sentences stated a number or a date."
+            : total === 1
+              ? `${matched} of 1 number or date matched a record or a quote.`
+              : `${matched} of ${total} numbers and dates matched a record or a quote.`,
+        sources: (returned: number, total: number) =>
+          total === 1
+            ? `${returned} of 1 source I cited came back for this question.`
+            : `${returned} of ${total} sources I cited came back for this question.`,
+        quotes: (found: number, total: number) =>
+          total === 0
+            ? "None of the sentences quoted a source."
+            : total === 1
+              ? `${found} of 1 quote was word for word on its page.`
+              : `${found} of ${total} quotes were word for word on their pages.`,
+        judged: (judged: number, judgedText: string, followed: number) =>
+          judged === 1
+            ? `A model judged one sentence, and ${followed} of 1 followed from its sources.`
+            : `A model judged ${judgedText} sentences, and ${followed} of ${judged} followed from their sources.`,
+        proven: (count: number, countText: string) =>
+          count === 1
+            ? "The other one needed no model, because its numbers and quotes matched."
+            : `The other ${countText} needed no model, because their numbers and quotes matched.`,
+        notJudged: "No sentence needed a model, because the numbers and quotes in each one matched.",
+        judgeSilent: (count: number, countText: string) =>
+          count === 1
+            ? "The model that judges sentences did not respond, so I removed the one sentence it had to judge."
+            : `The model that judges sentences did not respond, so I removed the ${countText} sentences it had to judge.`,
+        advice: (cited: number, total: number) =>
+          total === 0
+            ? "None of the sentences gave advice."
+            : total === 1
+              ? `${cited} of 1 sentence that gave advice cited a lesson or a comparable package.`
+              : `${cited} of ${total} sentences that gave advice cited a lesson or a comparable package.`,
+        // {Count} starts the sentence, so it is a capitalized word from one to nine.
+        disputedBoth: (count: number, countText: string) =>
+          count === 1
+            ? "One sentence rested on a report that another report disagrees with, and my draft showed both sides."
+            : `${countText} sentences rested on a report that another report disagrees with, and my draft showed both sides.`,
+        disputedAdded: (count: number, countText: string) =>
+          count === 1
+            ? "One sentence rested on a report that another report disagrees with. My draft left out the other side, so I added it."
+            : `${countText} sentences rested on a report that another report disagrees with. My draft left out the other side, so I added it.`,
+        disputedNone: "No sentence rested on a report that another report disagrees with.",
+      },
     },
   },
   answer: {
@@ -440,6 +608,17 @@ export const copy = {
       count === 1
         ? "The answer is ready. I removed one sentence that failed a check."
         : `The answer is ready. I removed ${countText} sentences that failed a check.`,
+    // Ticket 24's announcements (the 24 brief, sections 5.4 and 5.8).
+    readyUnjudged: (count: number, countText: string) =>
+      count === 1
+        ? "The answer is ready. I removed one sentence, because the model that judges it did not respond."
+        : `The answer is ready. I removed ${countText} sentences, because the model that judges them did not respond.`,
+    readyDisagree: (count: number, countText: string) =>
+      count === 1
+        ? "The answer is ready. Two reports disagree about one sentence, and I show both."
+        : `The answer is ready. Two reports disagree about ${countText} sentences, and I show both sides of each.`,
+    // Every sentence needed the model that judges sentences, and it did not respond (section 5.5).
+    judgeFailed: "I couldn't check my answer, because the model that judges sentences did not respond.",
     tryAgain: "Try again",
     // The answer panel's header (the 14 brief, section 5.3). {id} shows in Roboto Mono.
     panel: "Answer",
@@ -461,9 +640,12 @@ export const copy = {
     emptyLink: "Data readiness",
     askAcross: "Ask across all projects",
     // A refusal is an answer, not an error (section 5.8): a content filter's is errors.content_filter
-    // below, shown as plain text. Ticket 24 adds the refusal list's own lines.
+    // below, shown as plain text. The refusal list's own lines are refusals, below (ticket 24). The link
+    // goes to How Strata works' "What I don't do".
     refusalNote: "{link} lists what I don't do, and why.",
     refusalLink: "How Strata works",
+    // A partial refusal: after the refusal's lead, before the rest of the answer (the 24 brief, section 4.6).
+    refusalPartial: "I answered the rest of your question.",
     // The stream ended before its done event (section 5.9).
     dropped: "The connection dropped before the answer was ready.",
     stillInBox: "Your question is still in the box.",
@@ -482,6 +664,8 @@ export const copy = {
     // internal, when the stream never opened and so has no answer ID to share.
     internalNoId: "Something went wrong on my side, so I can't answer.",
   },
+
+  refusals: REFUSALS,
 
   // Term and DefinitionWindow.
   definition: {
@@ -717,6 +901,23 @@ export const copy = {
       tieSpecific: "The two sources rank the same, so I lean on the more specific one, {lean}.",
       tieRecent: "The two sources rank the same and are equally specific, so I lean on the more recent one, {lean}.",
     },
+    // The card in an answer (ticket 24; the 24 brief, section 4.4). Each side's meta line names its source
+    // in full, as the first place a reader may meet ISR or ICR on the screen does (DESIGN.md section 7,
+    // rule 10), then its date and when it was written, from written below. {source}, {date} and {written}.
+    meta: "{source}, {date}. {written}.",
+    // The source in full: "Implementation Status and Results Report (ISR) 7", "Implementation Completion
+    // and Results Report (ICR), paragraph 78". The short names fill {lean} and {other} in the rule.
+    sourceFull: (documentType: string, short: string | null, sequence: number | null, paragraph: string | null) =>
+      `${documentType}${short ? ` (${short})` : ""}${sequence ? ` ${sequence}` : ""}${paragraph ? `, paragraph ${paragraph}` : ""}`,
+    sourceShort: (short: string, sequence: number | null, paragraph: string | null) =>
+      `${short}${sequence ? ` ${sequence}` : ""}${paragraph ? ` paragraph ${paragraph}` : ""}`,
+    lean: "Strata leans on this",
+    // What a side said: a rating's field name as the report names it, then its value.
+    rated: (field: string, value: string) => `${field}: ${value}`,
+    // What you would treat as true if you kept the other side, from get_disagreements' if_you_keep.
+    whatChanges: (other: string, field: string, value: string) => `If you keep ${other} instead, I treat ${field} as ${value}.`,
+    // The group's accessible name: "Two reports disagree: ISR 7 and ICR paragraph 78".
+    groupName: (badge: string, first: string, second: string) => `${badge}: ${first} and ${second}`,
     // When a side's source was written, by its evidence tier (config/evidence_ladder.toml, [tiers]).
     written: {
       pad: "Written at appraisal",
@@ -1584,7 +1785,8 @@ export const copy = {
       thresholdTip: (entry: string, source: string) => `From ${entry} in Strata's thresholds file. ${source}.`,
       noRule: "I can compute review type and market approach once you add the category, the estimated amount and the country.",
     },
-    refusal: "I don't suggest dividing a package to stay under a review threshold, so I computed review type from the whole package.",
+    // Its first clause is the refusal's lead, so the two never drift apart (the 24 brief, section 5.6).
+    refusal: `${REFUSALS.dividing_packages.lead.replace(/\.$/, "")}, so I computed review type from the whole package.`,
     // Each reading step, in progress, done, and still to come (listed in ink-muted, as the answer's steps are).
     steps: {
       read: { running: "Reading your sentence", done: "I read your sentence.", todo: "To do: read your sentence." },
@@ -2195,6 +2397,13 @@ export const copy = {
         middle: " shows what each source covers, and ",
         sources: "Sources and licenses",
         after: " lists every dataset I use.",
+      },
+      // The section the link under every refusal goes to (ticket 24; the 24 brief, section 5.7). Each
+      // refusal's lead and why follow, from refusals above.
+      dontDo: {
+        heading: "What I don't do",
+        intro:
+          "I turn these requests down every time, and I say what I can do instead. Each one is also a question in my test set that I must turn down.",
       },
     },
     // The sentences the tool builds on the server: the headline, the gaps and what holds each kind

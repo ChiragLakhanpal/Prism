@@ -1,7 +1,9 @@
 // The answer panel (the 14 brief, section 4.7): the answer to the question asked from the one box,
 // in the page under the band, on columns 1 to 8 from 1024 px. It draws the stream's run
 // (web/src/lib/answer.ts) as ticket 02's Answer: steps while it works, then "In short" with citation
-// markers, the check line with the stream's counts, and the removed box, open.
+// markers, the check line with the stream's counts, and the removed box, open. Ticket 24 adds the six
+// checks under the verifier's step, the disagreement check 6 shows under its sentence, the reasons of
+// checks 4 to 6, and the refusals, whose words come from the copy file by the stream's key.
 //
 // Screen readers hear each step once, when it starts, and then "The answer is ready.", through one
 // status line that is on the page before any of it changes. Events can arrive faster than anyone can
@@ -16,6 +18,7 @@ import {
   removeScope,
   ask,
   type ChecksEvent,
+  type DisagreementEvent,
   type EvidenceEvent,
   type Run,
   type SentenceEvent,
@@ -28,12 +31,14 @@ import { Answer, type AnswerState } from "./Answer";
 import { Button } from "./Button";
 import { CitationMarker } from "./CitationMarker";
 import { notCheckedFor, type Removed } from "./Checks";
+import { DisagreementCard } from "./DisagreementCard";
 import { EvidenceCard } from "./EvidenceCard";
 import { Fill } from "./Fill";
 import { Num } from "./Num";
 import { RETURNING } from "./Popover";
 import type { Step } from "./Steps";
 import { TextLink } from "./TextLink";
+import { WHAT_I_DONT_DO } from "../routes";
 
 export const ANNOUNCE_GAP_MS = 500;
 const STILL_WORKING_MS = 30_000;
@@ -61,16 +66,44 @@ function stepLines(step: StepEvent, checks: ChecksEvent | null): { running: stri
     return { running: copy.steps.write.running, done: copy.steps.write.done(count, formatCount(count)) };
   }
   const words = copy.steps.check;
+  // The verifier's own steps are said while they run and fold into its done line.
+  if (step.kind === "judge") {
+    const count = step.count ?? 0;
+    return { running: words.judge(count, formatCount(count)), done: "" };
+  }
+  if (step.kind === "disagreement") return { running: words.disagreement, done: "" };
   if (!checks) return { running: words.running, done: words.done };
-  const removed = checks.sentences.removed;
-  return {
-    running: words.running,
-    done: words.doneCounted(
-      words.numbers(checks.numbers.total, formatCount(checks.numbers.total)),
-      words.quotes(checks.quotes.total, formatCount(checks.quotes.total)),
-      words.removed(removed, formatCount(removed)),
-    ),
-  };
+  const { written, removed } = checks.sentences;
+  return { running: words.running, done: words.doneSix(written, formatCount(written), removed, formatCount(removed)) };
+}
+
+// The six checks under the verifier's done line, each in the past tense, with its counts over every
+// sentence the agent wrote (the 24 brief, section 5.1).
+export function sixChecks(checks: ChecksEvent): string[] {
+  const six = copy.steps.check.six;
+  const judge = checks.judge;
+  const fourth = !judge
+    ? []
+    : judge.called && judge.responded === false
+      ? [six.judgeSilent(judge.unjudged, formatCount(judge.unjudged))]
+      : judge.called
+        ? [six.judged(judge.judged, formatCount(judge.judged), judge.followed), ...(judge.proven > 0 ? [six.proven(judge.proven, formatCount(judge.proven))] : [])]
+        : [six.notJudged];
+  const disputed = checks.disagreements?.disputed ?? 0;
+  const sixth =
+    disputed === 0
+      ? six.disputedNone
+      : (checks.disagreements?.attached ?? 0) > 0
+        ? six.disputedAdded(disputed, formatCount(disputed, { capital: true }))
+        : six.disputedBoth(disputed, formatCount(disputed, { capital: true }));
+  return [
+    six.numbers(checks.numbers.matched + checks.dates.matched, checks.numbers.total + checks.dates.total),
+    six.sources(checks.sources.returned, checks.sources.total),
+    six.quotes(checks.quotes.found, checks.quotes.total),
+    fourth.join(" "),
+    six.advice(checks.advice?.cited ?? 0, checks.advice?.total ?? 0),
+    sixth,
+  ].filter(Boolean);
 }
 
 // A step's line with its project ID in mono, as every ID Strata writes (DESIGN.md section 3).
@@ -83,8 +116,11 @@ export function stepsOf(run: Run): Step[] {
   const started = run.steps.length > 0 || run.phase !== "streaming";
   const steps: Step[] = [{ key: "read", ...copy.steps.read, state: started ? "done" : "running" }];
   for (const step of run.steps) {
+    const inside = step.kind === "judge" || step.kind === "disagreement";
+    if (inside && step.status === "done") continue;
     const lines = stepLines(step, run.checks);
-    steps.push({ key: step.id, running: withMonoId(lines.running, step.project_id), done: withMonoId(lines.done, step.project_id), state: step.status });
+    const items = step.kind === "check" && step.status === "done" && run.checks?.judge ? sixChecks(run.checks) : undefined;
+    steps.push({ key: step.id, running: withMonoId(lines.running, step.project_id), done: withMonoId(lines.done, step.project_id), state: step.status, items });
   }
   if (run.phase === "streaming") {
     if (!run.steps.some((step) => step.kind === "write")) steps.push({ key: "todo-write", running: "", done: copy.steps.write.todo, state: "todo" });
@@ -100,7 +136,20 @@ function announcements(run: Run): string[] {
   if (answered) {
     const removed = run.checks?.sentences.removed ?? 0;
     const kept = run.checks?.sentences.kept ?? 0;
-    said.push(removed > 0 && kept > 0 ? copy.answer.readyRemoved(removed, formatCount(removed)) : copy.answer.ready);
+    const unjudged = run.checks?.judge?.responded === false ? run.checks.judge.unjudged : 0;
+    // Only a warning is announced: an info note changes nothing in the answer (the 24 brief, section 5.8).
+    const warned = new Set(run.disagreements.filter((found) => found.changes_answer).map((found) => found.after)).size;
+    said.push(
+      run.refusal && !run.refusal.partial
+        ? copy.answer.ready
+        : unjudged > 0 && kept > 0
+          ? copy.answer.readyUnjudged(unjudged, formatCount(unjudged))
+          : warned > 0
+            ? copy.answer.readyDisagree(warned, formatCount(warned))
+            : removed > 0 && kept > 0
+              ? copy.answer.readyRemoved(removed, formatCount(removed))
+              : copy.answer.ready,
+    );
   }
   return said;
 }
@@ -218,6 +267,16 @@ export function sentenceText(sentence: SentenceEvent, evidence: Record<string, E
   return parts;
 }
 
+// A side of a disagreement, named in full ("Implementation Status and Results Report (ISR) 7") and short
+// ("ISR 7"), from its document type and the short name its evidence event carries.
+function sideNames(side: DisagreementEvent["sides"][number], evidence: EvidenceEvent | undefined) {
+  const short = evidence?.short_name ?? null;
+  const paragraph = side.paragraph_numbered ? side.paragraph : null;
+  const words = copy.disagreement;
+  const full = words.sourceFull(side.document_type ?? recordKind({ id: side.evidence_id } as EvidenceEvent), short, side.sequence, paragraph);
+  return { full, short: short ? words.sourceShort(short, side.sequence, paragraph) : full };
+}
+
 export function AnswerSentences({
   run,
   opened,
@@ -228,46 +287,99 @@ export function AnswerSentences({
   opened: Opened;
   visited: ReadonlySet<string>;
 }) {
-  const numbers = useMemo(() => citationNumbers(run), [run.sentences]);
+  const numbers = useMemo(() => citationNumbers(run), [run.sentences, run.disagreements]);
   const open = (id: string, sentence: number, marker: HTMLElement | null) =>
     openEvidence(id, { serial: run.serial, sentence, marker, runId: run.runId });
+  const markerFor = (id: string, sentence: number, active: boolean) => {
+    const n = numbers.get(id)!;
+    const evidence = run.evidence[id];
+    return (
+      <CitationMarker
+        key={id}
+        n={n}
+        evidenceId={id}
+        sentence={sentence}
+        source={markerSource(evidence, id)}
+        href={evidenceHref(id)}
+        drawerId={DRAWER_ID}
+        active={opened.id === id && active}
+        opened={visited.has(id)}
+        preview={evidence ? <EvidenceCard evidence={evidence} n={n} sentence={sentence} visited={visited.has(id)} /> : undefined}
+        onOpen={(marker) => open(id, sentence, marker)}
+      />
+    );
+  };
+  // "In short" breaks into a new paragraph after each sentence a disagreement concerns, with the card
+  // between them (the 24 brief, section 4.4).
+  const blocks: ReactNode[] = [];
+  let paragraph: ReactNode[] = [];
+  const close = (key: string) => {
+    if (paragraph.length) blocks.push(<p key={key} className="max-w-prose">{paragraph}</p>);
+    paragraph = [];
+  };
+  run.sentences.forEach((sentence) => {
+    // Its source is open in the drawer, opened from this sentence of this answer.
+    const active = opened.id !== null && opened.sentence === sentence.index && sentence.evidence_ids.includes(opened.id);
+    paragraph.push(
+      <Fragment key={sentence.index}>
+        {paragraph.length > 0 && " "}
+        <span data-sentence-text={sentence.index} className={active ? "bg-tint [box-decoration-break:clone]" : undefined}>
+          {sentenceText(sentence, run.evidence, (id) => open(id, sentence.index, null))}
+          {sentence.evidence_ids.map((id) => markerFor(id, sentence.index, active))}
+        </span>
+      </Fragment>,
+    );
+    const cards = run.disagreements.filter((found) => found.after === sentence.index);
+    if (cards.length === 0) return;
+    close(`sentence${sentence.index}`);
+    for (const found of cards) blocks.push(<AnswerDisagreement key={found.id} found={found} run={run} markerFor={markerFor} />);
+  });
+  close("end");
+  return <div className="flex flex-col gap-3">{blocks}</div>;
+}
+
+// A disagreement check 6 shows under its sentence: both sides, the rule and what changes if you keep
+// the other, every word from the copy file and the stream's values.
+function AnswerDisagreement({
+  found,
+  run,
+  markerFor,
+}: {
+  found: DisagreementEvent;
+  run: Run;
+  markerFor: (id: string, sentence: number, active: boolean) => ReactNode;
+}) {
+  const words = copy.disagreement;
+  const named = found.sides.map((side) => sideNames(side, run.evidence[side.evidence_id]));
+  const leaned = found.sides.findIndex((side) => side.leaned);
+  const other = leaned === 0 ? 1 : 0;
+  const rules = words.rule as Record<string, string>;
+  const rule = (rules[found.rule_id ?? ""] ?? "").replace("{lean}", named[leaned]?.short ?? "").replace("{other}", named[other]?.short ?? "");
+  const keep = found.if_you_keep;
+  const written = words.written as Record<string, string>;
+  const sides = found.sides.map((side, index) => ({
+    meta: words.meta
+      .replace("{source}", named[index].full)
+      .replace("{date}", side.made_at ? formatDate(side.made_at) : "")
+      .replace("{written}", written[side.evidence_tier ?? "record"] ?? written.record),
+    leaned: side.leaned,
+    said: (
+      <>
+        {side.quote ? copy.removed.quoted(side.quote) : words.rated(side.field_name ?? "", side.value ?? "")}
+        {markerFor(side.evidence_id, found.after, false)}
+      </>
+    ),
+  })) as [{ meta: string; leaned: boolean; said: ReactNode }, { meta: string; leaned: boolean; said: ReactNode }];
+  const badge = found.changes_answer ? copy.badge.twoReportsDisagree : copy.badge.sourcesDiffer;
   return (
-    <>
-      {run.sentences.map((sentence, index) => {
-        // Its source is open in the drawer, opened from this sentence of this answer.
-        const active = opened.id !== null && opened.sentence === sentence.index && sentence.evidence_ids.includes(opened.id);
-        return (
-          <Fragment key={sentence.index}>
-            {index > 0 && " "}
-            <span
-              data-sentence-text={sentence.index}
-              className={active ? "bg-tint [box-decoration-break:clone]" : undefined}
-            >
-              {sentenceText(sentence, run.evidence, (id) => open(id, sentence.index, null))}
-              {sentence.evidence_ids.map((id) => {
-                const n = numbers.get(id)!;
-                const evidence = run.evidence[id];
-                return (
-                  <CitationMarker
-                    key={id}
-                    n={n}
-                    evidenceId={id}
-                    sentence={sentence.index}
-                    source={markerSource(evidence, id)}
-                    href={evidenceHref(id)}
-                    drawerId={DRAWER_ID}
-                    active={opened.id === id && active}
-                    opened={visited.has(id)}
-                    preview={evidence ? <EvidenceCard evidence={evidence} n={n} sentence={sentence.index} visited={visited.has(id)} /> : undefined}
-                    onOpen={(marker) => open(id, sentence.index, marker)}
-                  />
-                );
-              })}
-            </span>
-          </Fragment>
-        );
-      })}
-    </>
+    <DisagreementCard
+      warning={found.changes_answer}
+      name={words.groupName(badge, named[0].short, named[1].short)}
+      leanTag={words.lean}
+      sides={sides}
+      rule={rule}
+      whatChanges={keep && keep.field_name && keep.value && leaned >= 0 ? words.whatChanges(named[other].short, keep.field_name, keep.value) : undefined}
+    />
   );
 }
 
@@ -293,19 +405,22 @@ function names(run: Run): string[] {
   return [...found];
 }
 
+// "How Strata works lists what I don't do, and why.", under every refusal.
+const refusalNote = () => (
+  <Fill template={copy.answer.refusalNote} slots={{ link: <TextLink href={WHAT_I_DONT_DO.href}>{copy.answer.refusalLink}</TextLink> }} />
+);
+
 function stateOf(run: Run, opened: Opened, visited: ReadonlySet<string>, stillWorking: boolean): AnswerState {
   const steps = stepsOf(run);
   const runId = run.runId ?? "";
   if (run.phase === "streaming") return { status: "streaming", steps, stillWorking, announce: false };
   const done = steps.filter((step) => step.state === "done");
   if (run.phase === "failed" && run.error === "content_filter") {
-    return {
-      status: "refused",
-      steps: done,
-      runId,
-      message: copy.answer.errors.content_filter,
-      note: <Fill template={copy.answer.refusalNote} slots={{ link: <TextLink href="/data">{copy.answer.refusalLink}</TextLink> }} />,
-    };
+    return { status: "refused", steps: done, runId, message: copy.answer.errors.content_filter, note: refusalNote() };
+  }
+  const refusal = run.refusal ? (copy.refusals as Record<string, { lead: string; instead: string }>)[run.refusal.key] : undefined;
+  if (run.phase === "done" && refusal && run.refusal && !run.refusal.partial) {
+    return { status: "refused", steps: done, runId, message: <>{refusal.lead} {refusal.instead}</>, note: refusalNote() };
   }
   if (run.phase !== "done" || !run.checks) {
     const errors = copy.answer.errors as Record<string, string>;
@@ -349,22 +464,54 @@ function stateOf(run: Run, opened: Opened, visited: ReadonlySet<string>, stillWo
       ) : undefined,
     };
   }
+  const unjudged = checks.judge?.responded === false ? checks.judge.unjudged : 0;
+  if (checks.sentences.kept === 0 && unjudged > 0) {
+    // Nothing survived because the model that judges sentences did not respond: an error, not an empty
+    // answer, with every sentence I wrote listed under it (the 24 brief, section 5.5).
+    return {
+      status: "error",
+      steps: done,
+      runId: run.runId ?? undefined,
+      message: (
+        <>
+          {copy.answer.judgeFailed} {copy.answer.stillInBox}
+        </>
+      ),
+      onRetry: askAgain,
+      removed: removedItems(run),
+    };
+  }
   if (checks.sentences.kept === 0) {
     const written = checks.sentences.written;
     return { status: "unsupported", steps: done, runId, message: copy.answer.nothingSurvived(written, formatCount(written)), removed: removedItems(run) };
   }
+  // The check line counts the sentences on screen; an answer from before ticket 24 has only the counts
+  // over everything written.
+  const shown = checks.shown ?? checks;
   return {
     status: "ready",
     steps: done,
     runId,
+    refusal:
+      refusal && run.refusal?.partial ? (
+        <>
+          <p>
+            {refusal.lead} {copy.answer.refusalPartial}
+          </p>
+          <p className="mt-2 text-caption text-ink-muted">{refusalNote()}</p>
+        </>
+      ) : undefined,
     sentences: <AnswerSentences run={run} opened={opened} visited={visited} />,
     checks: {
-      numbers: checks.numbers,
-      dates: checks.dates,
-      quotes: checks.quotes,
+      numbers: shown.numbers,
+      dates: shown.dates,
+      quotes: shown.quotes,
+      judged: checks.shown ? { judged: checks.shown.judged, proven: checks.shown.proven } : undefined,
       notChecked: notCheckedFor(checks),
       removed: removedItems(run),
       names: names(run),
+      unjudged,
+      onRetry: unjudged > 0 ? askAgain : undefined,
     },
   };
 }

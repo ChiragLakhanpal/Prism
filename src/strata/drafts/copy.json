@@ -66,7 +66,17 @@
   "recordSourceShort": "{doc}, {pid}, {date}.",
   "checkLine": {
     "checked": "Checked:",
+    "judged": "Judged by a model:",
     "notChecked": "Not checked:",
+    "judgedSentences": {
+      "one": "{part} of {whole} sentence follows from its sources",
+      "many": "{part} of {whole} sentences follow from their sources"
+    },
+    "provenOthers": {
+      "one": "The other one needed no model, because its numbers and quotes matched.",
+      "many": "The other {count} needed no model, because their numbers and quotes matched."
+    },
+    "notCheckedFallback": "whether the sources themselves are right",
     "numbers": {
       "one": "{part} of {whole} number matches records",
       "many": "{part} of {whole} numbers match records"
@@ -88,6 +98,8 @@
       "sentences": "whether each sentence follows from its sources",
       "find_comparables": "whether these are the right comparables",
       "search_passages": "whether I found every passage that matters",
+      "get_lessons": "whether these lessons apply here",
+      "ask_genie": "whether the records I looked up are the ones you meant",
       "check_plan": "whether the plan's published records are complete",
       "writer_review_notes": "whether these notes are what you would tell the borrower"
     }
@@ -121,6 +133,22 @@
       "number_only_in_table_summary": {
         "item": "This number came only from my summary of a table, not from the table's rows.",
         "joined": "that number came only from my summary of a table, not from the table's rows"
+      },
+      "not_supported": {
+        "item": "The sources it cites do not say this.",
+        "joined": "the sources it cited do not say that"
+      },
+      "judge_unavailable": {
+        "item": "I couldn't check that its sources say this, because the model that judges sentences did not respond.",
+        "joined": "I couldn't check that its sources said that, because the model that judges sentences did not respond"
+      },
+      "advice_without_lesson_or_comparable": {
+        "item": "It gave advice without citing a lesson or a comparable package.",
+        "joined": "it gave advice without citing a lesson or a comparable package"
+      },
+      "disagreements_unavailable": {
+        "item": "I couldn't check whether another report disagrees with its sources.",
+        "joined": "I couldn't check whether another report disagrees with its sources"
       }
     },
     "unknownReason": {

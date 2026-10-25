@@ -3,7 +3,9 @@
 //
 // Streaming: the steps, then skeleton bars sized to "In short" and the check line.
 // Ready: "In short", the verified sentences with their markers, the check line, the removed
-//   box, and the steps folded into a disclosure.
+//   box, and the steps folded into a disclosure. A partial refusal (ticket 24) opens "In short":
+//   what I don't do, then "I answered the rest of your question.", with its link, and the answer
+//   follows. A disagreement card can break "In short" under the sentence it concerns.
 // Abstained: a tool held back (fewer than 20 comparables, say). Its own first-person sentence
 //   stands in "In short", the check line and the removed box sit under it as in Ready, and
 //   the rows it returned follow them, so the proof stays beside the sentence it checks.
@@ -12,7 +14,8 @@
 // Empty: nothing in the records or documents answers the question, said in the first person.
 // Refused: a request on the refusal list, answered in plain text with no alert.
 // Error: the steps done so far, an error alert, "Try again" when trying again can help, and the
-//   answer's ID when the run has one.
+//   answer's ID when the run has one. When the model that judges sentences did not respond and
+//   no sentence survived, the removed box under the alert lists every sentence I wrote.
 import { useId, useState, type ClipboardEvent, type ReactNode } from "react";
 import { ChevronDown } from "lucide-react";
 import { copy } from "../copy";
@@ -29,21 +32,25 @@ type Checks = {
   numbers?: { matched: number; total: number };
   dates?: { matched: number; total: number };
   quotes?: { found: number; total: number };
+  judged?: { judged: number; proven: number };
   notChecked: NotChecked[];
   removed: Removed[];
   names?: string[];
+  // Sentences the model that judges sentences could not check, and "Try again" for them.
+  unjudged?: number;
+  onRetry?: () => void;
 };
 
 export type AnswerState =
   // announce is false in the answer panel, which announces steps in its own live region.
   | { status: "streaming"; steps: Step[]; stillWorking?: boolean; announce?: boolean }
-  | { status: "ready"; steps: Step[]; runId: string; sentences: ReactNode; checks: Checks }
+  | { status: "ready"; steps: Step[]; runId: string; sentences: ReactNode; checks: Checks; refusal?: ReactNode }
   | { status: "abstained"; steps: Step[]; runId: string; sentence: ReactNode; rows: ReactNode; checks: Checks }
   | { status: "unsupported"; steps: Step[]; runId: string; message: ReactNode; removed: Removed[] }
   | { status: "empty"; steps: Step[]; runId: string; message: ReactNode; action?: ReactNode }
   | { status: "refused"; steps: Step[]; runId: string; message: ReactNode; note?: ReactNode }
   // runId: the run's ID, shown under the alert so it can be shared; onRetry: no button without it.
-  | { status: "error"; steps: Step[]; message: ReactNode; onRetry?: () => void; runId?: string };
+  | { status: "error"; steps: Step[]; message: ReactNode; onRetry?: () => void; runId?: string; removed?: Removed[] };
 
 // A copied answer reads "...rebidding". [1]", without the word joiners that keep each marker on its
 // sentence's line (CitationMarker.tsx), so a pasted sentence matches the one the verifier checked.
@@ -54,11 +61,13 @@ function withoutWordJoiners(event: ClipboardEvent<HTMLDivElement>) {
   event.preventDefault();
 }
 
-function InShort({ children }: { children: ReactNode }) {
+// wide: the children are blocks that keep their own measure, so a disagreement card can take the
+// answer's full width while its paragraphs stay at about 65 characters a line.
+function InShort({ children, wide = false }: { children: ReactNode; wide?: boolean }) {
   return (
     <>
       <h3 className="text-label text-ink-muted uppercase">{copy.answer.inShort}</h3>
-      <div data-in-short onCopy={withoutWordJoiners} className="mt-2 max-w-prose text-body text-ink">
+      <div data-in-short onCopy={withoutWordJoiners} className={cx("mt-2 text-body text-ink", !wide && "max-w-prose")}>
         {children}
       </div>
     </>
@@ -100,8 +109,8 @@ export function StepsTaken({ steps: all, runId, idLabel = copy.steps.answerId }:
 function ChecksBlock({ checks }: { checks: Checks }) {
   return (
     <div className="mt-4 flex max-w-prose flex-col gap-2">
-      <CheckLine numbers={checks.numbers} dates={checks.dates} quotes={checks.quotes} notChecked={checks.notChecked} />
-      <RemovedBox removed={checks.removed} names={checks.names} />
+      <CheckLine numbers={checks.numbers} dates={checks.dates} quotes={checks.quotes} judged={checks.judged} notChecked={checks.notChecked} />
+      <RemovedBox removed={checks.removed} names={checks.names} unjudged={checks.unjudged} onRetry={checks.onRetry} />
     </div>
   );
 }
@@ -124,7 +133,10 @@ export function Answer({ state }: { state: AnswerState }) {
     case "ready":
       return (
         <div data-answer="ready">
-          <InShort>{state.sentences}</InShort>
+          <InShort wide>
+            {state.refusal && <div className="mb-4 max-w-prose">{state.refusal}</div>}
+            {state.sentences}
+          </InShort>
           <ChecksBlock checks={state.checks} />
           <StepsTaken steps={state.steps} runId={state.runId} />
         </div>
@@ -183,6 +195,11 @@ export function Answer({ state }: { state: AnswerState }) {
           >
             {state.message}
           </Alert>
+          {state.removed && state.removed.length > 0 && (
+            <div className="mt-4 max-w-prose">
+              <RemovedBox removed={state.removed} all />
+            </div>
+          )}
           {state.runId && (
             <p className="mt-2 text-caption text-ink-muted">
               {copy.steps.answerId} <span className="font-mono">{state.runId}</span>

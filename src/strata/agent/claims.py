@@ -12,6 +12,11 @@ The agent ends every run with one JSON object, {"claims": [...]}. Each claim has
 parse_claims() reads that object and refuses anything else with ClaimsError. A passage id may come
 bare (31525018/v1/54) or as its evidence id (strata.gold.passage:31525018/v1/54); both mean the same
 passage, and a quote's passage always counts among the claim's evidence ids.
+
+The orchestrator may also turn a request down (ticket 24). Its object then holds a refusal, {"key": ...,
+"partial": ...}, whose key is one of REFUSALS (src/strata/agent/refusals.py): the app writes the refusal's
+words from the copy file, never the model. A full refusal has no claims; a partial one turns down part of
+the question and answers the rest with claims, as usual. parse_answer() reads the claims and the refusal.
 """
 
 from __future__ import annotations
@@ -20,6 +25,7 @@ import json
 import re
 from dataclasses import dataclass
 
+from strata.agent.refusals import REFUSALS
 from strata.tools.search_passages import TABLE as PASSAGES
 
 KINDS = ("record", "quote", "advice", "summary")
@@ -82,8 +88,21 @@ def _claim(claim, number: int) -> Claim:
                  _texts(claim, "dates", where), quote)
 
 
-def parse_claims(text: str) -> list[Claim]:
-    """The claims in the agent's final answer, in the order it wrote them."""
+@dataclass(frozen=True)
+class Refusal:
+    """A request on the refusal list, turned down whole or in part."""
+
+    key: str
+    partial: bool = False
+
+
+@dataclass(frozen=True)
+class Answer:
+    claims: list[Claim]
+    refusal: Refusal | None = None
+
+
+def _answer_object(text: str) -> dict:
     fenced = FENCE.match(text or "")
     try:
         answer = json.loads(fenced.group(1) if fenced else text)
@@ -91,7 +110,29 @@ def parse_claims(text: str) -> list[Claim]:
         raise ClaimsError(f"The answer is not JSON: {error}.") from error
     if not isinstance(answer, dict) or not isinstance(answer.get("claims"), list):
         raise ClaimsError("The answer must be an object with a list of claims.")
-    return claims_from(answer["claims"])
+    return answer
+
+
+def parse_claims(text: str) -> list[Claim]:
+    """The claims in the agent's final answer, in the order it wrote them."""
+    return claims_from(_answer_object(text)["claims"])
+
+
+def parse_answer(text: str) -> Answer:
+    """The orchestrator's final answer: its claims, and its refusal when it turned the request down."""
+    answer = _answer_object(text)
+    claims = claims_from(answer["claims"])
+    refusal = answer.get("refusal")
+    if refusal is None:
+        return Answer(claims)
+    if not isinstance(refusal, dict) or refusal.get("key") not in REFUSALS:
+        raise ClaimsError(f"The refusal must be an object whose key is one of {', '.join(REFUSALS)}.")
+    partial = refusal.get("partial", False)
+    if not isinstance(partial, bool):
+        raise ClaimsError("The refusal's partial must be true or false.")
+    if claims and not partial:
+        raise ClaimsError("A refusal with claims must be partial: true.")
+    return Answer(claims, Refusal(refusal["key"], partial))
 
 
 def claims_from(items) -> list[Claim]:

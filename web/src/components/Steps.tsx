@@ -11,7 +11,9 @@ import { copy } from "../copy";
 import { cx } from "../lib/cx";
 
 // A line may set an ID in mono, so it is a node; the answer panel's own status line says the words.
-export type Step = { key: string; running: ReactNode; done: ReactNode; state: "running" | "done" | "todo" };
+// items: what a done step did, one sentence or two each, in a nested list under it, such as the
+// verifier's six checks (the 24 brief, section 4.2). No icons and no check marks: the tense says it.
+export type Step = { key: string; running: ReactNode; done: ReactNode; state: "running" | "done" | "todo"; items?: ReactNode[] };
 
 export function Steps({
   steps,
@@ -55,6 +57,13 @@ export function Steps({
               {step.state === "running" ? step.running : step.done}
               {step.state === "running" && stillWorking && (
                 <span className="block text-caption text-ink-muted">{copy.steps.stillWorking}</span>
+              )}
+              {step.state === "done" && step.items && step.items.length > 0 && (
+                <ul data-step-items className="mt-1 flex list-none flex-col gap-1 pl-6">
+                  {step.items.map((item, index) => (
+                    <li key={index}>{item}</li>
+                  ))}
+                </ul>
               )}
             </span>
           </li>

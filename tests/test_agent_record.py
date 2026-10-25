@@ -81,6 +81,46 @@ def test_the_recording_command_re_records_every_case_and_shows_the_change_as_a_d
         assert ScriptedAgent(case).responses
 
 
+class LiveJudge:
+    """Stands in for check 4's live judge: every sentence follows, and its answer is kept as the live one is."""
+
+    name = "gpt-5.4"
+
+    def __init__(self):
+        self.answers = []
+
+    def judge(self, questions):
+        from strata.agent.judge import judgements
+
+        content = {"judgements": [{"index": question.index, "follows": True, "reason": "It follows."}
+                                  for question in questions]}
+        self.answers.append({"id": "chatcmpl-live", "object": "chat.completion", "model": self.name,
+                             "choices": [{"index": 0, "message": {"role": "assistant", "content": json.dumps(content)}}]})
+        return judgements(self.answers[-1], questions)
+
+
+def test_the_recording_command_re_records_the_judge_for_each_case_whose_answer_asks_it(copied, fixture_db):
+    """Ticket 24: with --judge, every scripted case is replayed through the answer stream, and the live judge's
+    answer is kept for each case that asks it. A case whose judge does not respond, or that never asks it, keeps
+    no file."""
+    @contextmanager
+    def engine_for(viewer):
+        with DuckDBEngine.open(fixture_db, read_only=True) as engine:
+            yield engine
+
+    cases = load_cases(copied / "cases.toml")
+    report = record.record_judged(cases, LiveJudge(), engine_for, today=dt.date(2026, 10, 24))
+
+    judged = {done.recording for done in report}
+    assert {"p130164-unsupported-summary", "p130164-summaries", "ke-nwwda-541055-advice"} <= judged
+    assert {"p130164-rebidding", "p130164-judge-no-response", "refuses-supplier-scores"}.isdisjoint(judged)
+    unsupported = json.loads((copied / "judged" / "p130164-unsupported-summary.json").read_text())
+    assert (unsupported["recorded"], unsupported["judge"], unsupported["asked"]) == (
+        True, {"deployment": "gpt-5.4"}, ["The completion report blamed the contractors for the rebidding."])
+    text = record.report_text(report, copied.parent)
+    assert '+ "recorded": true,' in text.splitlines()
+
+
 class LiveWriter:
     """Writes the recorded notes, except that the first note's first sentence is worded anew, and checks it
     was handed the plan's rows with a signal as data."""

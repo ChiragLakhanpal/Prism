@@ -160,8 +160,19 @@ export function App() {
   // sources", focuses the new page's lead instead, as the title has not changed (the 16 brief).
   // A new page brings its scope chip back. Opening or closing the evidence drawer changes only
   // ?evidence=, which is not a route change (routeOf), so it leaves focus where the drawer put it;
-  // a change to any other part of the address, such as ?asof=, is one.
+  // a change to any other part of the address, such as ?asof=, is one. An address that names a
+  // section of the page, such as How Strata works' #what-i-dont-do from the link under a refusal
+  // (ticket 24), scrolls to that section and focuses its heading instead, on arrival or on load.
   const route = routeOf(here);
+  const section_ = () => {
+    const id = decodeURIComponent(window.location.hash.slice(1));
+    return id ? document.querySelector<HTMLElement>(`main [id="${CSS.escape(id)}"][tabindex="-1"]`) : null;
+  };
+  useEffect(() => {
+    const named = section_();
+    named?.scrollIntoView();
+    named?.focus({ preventScroll: true });
+  }, []);
   const lastRoute = useRef(route);
   const section = useRef(match.section);
   useEffect(() => {
@@ -171,10 +182,16 @@ export function App() {
     section.current = match.section;
     if (!moved || here.moves === 0 || here.quiet) return;
     removedScopes.set(new Set());
+    retryStamp();
+    const named = section_();
+    if (named) {
+      named.scrollIntoView();
+      named.focus({ preventScroll: true });
+      return;
+    }
     window.scrollTo(0, 0);
     const lead = within ? document.querySelector<HTMLElement>("main [data-lead]") : null;
     (lead ?? document.querySelector<HTMLElement>("main h1"))?.focus();
-    retryStamp();
   }, [route, here.moves]);
 
   const onAsk = (question: string, chip: string | null) =>

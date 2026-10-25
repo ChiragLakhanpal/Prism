@@ -310,6 +310,8 @@ source_fields = ["table", "lesson_id", "version", "decided_on", "project_id", "p
 fields = ["query", "filters", "ranking"]
 reasons = ["retired", "filtered_out", "ranked_below_limit"]
 abstentions = ["no_lessons", "unknown_risk_factor", "unknown_stage"]
+# Its rows are lessons, so advice may rest on them (the verifier's check 5, ticket 24).
+backs_advice = true
 
 [tools.find_comparables]
 description = """Finds the comparable packages for one package in a Procurement Plan, or for a package someone \
@@ -429,6 +431,8 @@ abstentions_with_rows = ["too_few_comparables"]
 # the coverage line are derived figures, so they come back as one citable record too (spec, "a derived
 # figure the agent needs is returned as a column").
 summary_fields = ["past_range", "plan", "frequencies", "counts", "coverage"]
+# Its rows and summary are comparable packages, so advice may rest on them (the verifier's check 5, ticket 24).
+backs_advice = true
 
 [tools.get_disagreements]
 description = """Says where two sources disagree about a project or a package, and which one Strata leans on. \

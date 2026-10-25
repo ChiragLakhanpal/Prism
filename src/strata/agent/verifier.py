@@ -5,6 +5,10 @@ The app ran every tool the agent asked for, so it holds every row and passage th
 
 1. Every number and date the sentence states matches a value in a row the sentence cites, at the same
    rounding, or sits inside the words it quotes from a cited passage that is not a table summary. A
+   number written with a unit (months, days, weeks or years, or a range ending in one, "3.3 to 7.9
+   months") never matches a value whose field names another unit, so "45 months" is not the plan's 45
+   days; and a number written with decimals never matches a whole number, so "8.0" is not the 8 of "8 in
+   10" (ticket 12's verify V1). A
    table's summary passage is Strata's own words about the table, so a number it alone holds, quoted
    or not, is removed with a reason of its own (number_only_in_table_summary): the table's rows back
    numbers, its summary never does.
@@ -25,16 +29,34 @@ The app ran every tool the agent asked for, so it holds every row and passage th
    not on the page, fail; so does a quote the sentence never shows in quote marks. Words quoted from a
    cited record's text value, such as a STEP description, are on that record.
 
-Checks 4 to 6 come with ticket 24. A sentence that fails is removed, with its reasons in this order:
-an id that did not come back first, since nothing else about that sentence can be checked, then a quote
-that is not on its page or not in the sentence, then numbers and dates. A number inside quoted words
-that are not on the page is counted as unmatched but gets no reason of its own, because the quote's
-reason already explains it.
+4. Each sentence follows from the sources it cites, judged in one batched call to the judge
+   (src/strata/agent/judge.py) and skipped where checks 1 to 3 already prove it. A record or quote sentence
+   is proven when it states at least one number, date or quote, every one of them matched, and every run
+   of quoted words holds a word, not only a number: 'Only "108" works contracts were signed' quotes a
+   number that backs any meaning, so it goes to the judge. Advice and summary sentences always go to the
+   judge, except a summary that cites nothing, which has nothing to be judged against. A sentence the judge
+   says does not follow is removed (not_supported). When the judge does not respond, every sentence it
+   had to judge is removed (judge_unavailable), so none is shown unchecked.
+5. A sentence of kind advice cites at least one lesson or comparable package: evidence from a tool whose
+   registry entry says its rows back advice (config/tools.toml, backs_advice).
+6. A sentence that rests on one side of a disagreement shows both sides. The stream asks get_disagreements
+   about each project the standing sentences cite, as the viewer, and the disagreements whose side a kept
+   sentence cites are attached to the first such sentence, with both sides, whether or not the agent's
+   draft showed the other one. Their rows and sides join the turn's evidence, so each side's marker opens.
+   When the stream cannot ask, every sentence citing that project's evidence is removed
+   (disagreements_unavailable), since it could not be checked.
+
+A sentence that fails is removed, with its reasons in this order: an id that did not come back first,
+since nothing else about that sentence can be checked, then a quote that is not on its page or not in the
+sentence, then numbers and dates, then checks 5, 6 and 4 in the order they run. Only sentences that pass
+checks 1 to 3, 5 and 6 go to the judge. A number inside quoted words that are not on the page is counted
+as unmatched but gets no reason of its own, because the quote's reason already explains it.
 Each reason has a code, and the copy file (web/src/copy.ts, removed.reasons) has its sentence.
 """
 
 from __future__ import annotations
 
+import dataclasses
 import datetime as dt
 import decimal
 import re
@@ -44,17 +66,22 @@ from decimal import Decimal
 from typing import Any
 
 from strata.agent.claims import Claim
+from strata.agent.judge import Judgement, Question, Source
 from strata.harness.facts import Facts
 from strata.harness.turn import Event
 from strata.reader.passages import NOTICE_TEXT, TABLE_SUMMARY
 from strata.reader.templates import template_for
 
-CHECKS_RUN = (1, 2, 3)
+CHECKS_RUN = (1, 2, 3)  # what verify() runs: a draft's notes get checks 1 to 3 (ticket 35)
+ALL_CHECKS = (1, 2, 3, 4, 5, 6)  # what an answer gets (ticket 24)
 # Reason codes. web/src/copy.ts holds one sentence for each, under removed.reasons.
 NUMBER, DATE, NOT_RETURNED, NO_SOURCE, NOT_ON_PAGE, NOT_IN_SENTENCE, ONLY_IN_SUMMARY = (
     "number_not_in_records", "date_not_in_records", "id_not_returned", "no_source", "quote_not_on_page",
     "quote_not_in_sentence", "number_only_in_table_summary")
-REASONS = (NUMBER, DATE, NOT_RETURNED, NO_SOURCE, NOT_ON_PAGE, NOT_IN_SENTENCE, ONLY_IN_SUMMARY)
+NOT_SUPPORTED, JUDGE_UNAVAILABLE, ADVICE_UNBACKED, DISAGREEMENTS_UNAVAILABLE = (
+    "not_supported", "judge_unavailable", "advice_without_lesson_or_comparable", "disagreements_unavailable")
+REASONS = (NUMBER, DATE, NOT_RETURNED, NO_SOURCE, NOT_ON_PAGE, NOT_IN_SENTENCE, ONLY_IN_SUMMARY, NOT_SUPPORTED,
+           JUDGE_UNAVAILABLE, ADVICE_UNBACKED, DISAGREEMENTS_UNAVAILABLE)
 MUST_CITE = ("record", "quote", "advice")
 
 MONTHS = ("January", "February", "March", "April", "May", "June", "July", "August", "September", "October",
@@ -267,6 +294,48 @@ ISO_DAY = re.compile(r"^(\d{4})-(\d{2})-(\d{2})(?:[T ].*)?$")
 PLAIN_NUMBER = re.compile(r"^-?\d+(?:\.\d+)?$")
 
 
+# The units a field name can give its values. A count is never a time, so "45 months" is not 45 signed packages.
+UNIT_STEMS = ("month", "day", "week", "year", "count")
+UNIT = r"(months?|days?|weeks?|years?)\b"
+UNIT_AFTER = re.compile(r"\s*-?\s*" + UNIT, re.I)
+RANGE_UNIT_AFTER = re.compile(r"\s*(?:-|\u2013|to|and)\s*" + DIGITS.pattern + r"\s*-?\s*" + UNIT, re.I)
+
+
+def unit_of(sentence: str, mention: Mention) -> str | None:
+    """The unit the sentence writes a number in, after it or after the range it starts: month, day, week or year."""
+    if mention.end is None or not isinstance(mention.value, Decimal):
+        return None
+    after = sentence[mention.end:]
+    found = UNIT_AFTER.match(after) or RANGE_UNIT_AFTER.match(after)
+    return found.group(found.lastindex).lower().rstrip("s") if found else None
+
+
+def _whole(value: Any) -> bool:
+    if isinstance(value, bool):
+        return False
+    if isinstance(value, int):
+        return True
+    if isinstance(value, Decimal):
+        return value.as_tuple().exponent >= 0
+    return isinstance(value, str) and value.strip().lstrip("-").isdigit()
+
+
+def row_numbers(row: Any, path: tuple[str, ...] = ()) -> list[tuple[Decimal, tuple[str, ...], bool]]:
+    """Each number a row holds as a value, with the field names on the way to it and whether it is whole."""
+    if isinstance(row, Mapping):
+        return [found for key, value in row.items() if key not in NOT_VALUES
+                for found in row_numbers(value, (*path, str(key)))]
+    if isinstance(row, list | tuple):
+        return [found for value in row for found in row_numbers(value, path)]
+    numbers, _ = row_values(row)
+    return [(number, path, _whole(row)) for number in numbers]
+
+
+def _unit_conflict(path: tuple[str, ...], unit: str) -> bool:
+    words = [word for name in path for word in re.split(r"[_\W\d]+", name.lower()) if word]
+    return any(word.startswith(stem) for word in words for stem in UNIT_STEMS if stem != unit)
+
+
 def row_values(row: Any, numbers: set | None = None, days: set | None = None) -> tuple[set, set]:
     """The numbers and dates a row holds as values, at any depth, leaving out a passage's text."""
     numbers = set() if numbers is None else numbers
@@ -297,11 +366,13 @@ def row_values(row: Any, numbers: set | None = None, days: set | None = None) ->
     return numbers, days
 
 
-def _supports(mention: Mention, numbers: set, days: set) -> bool:
+def _supports(mention: Mention, numbers: list, days: set, unit: str | None = None) -> bool:
     if mention.kind == "number":
-        return mention.value in numbers
+        decimals = isinstance(mention.value, Decimal) and "." in mention.text
+        return any(value == mention.value and not (unit and _unit_conflict(path, unit)) and not (decimals and whole)
+                   for value, path, whole in numbers)
     return any(mention.value.covers(day) for day in days) or (
-        mention.value.month is None and Decimal(mention.value.year) in numbers)
+        mention.value.month is None and any(value == Decimal(mention.value.year) for value, _, _ in numbers))
 
 
 # ── Quotes on their page ─────────────────────────────────────────────────
@@ -398,6 +469,9 @@ class Checked:
     quote_span: tuple[int, int] | None  # where the quote sits in its passage's text, when it was found
     quoted: bool = False  # the sentence quotes: it has quote marks, or a quote
     quote_found: bool = False  # and every quoted word is on the page it cites
+    quoted_words: bool = False  # and every run of quoted words holds a word, not only a number
+    judged: bool = False  # check 4 sent it to the judge
+    proven: bool = False  # checks 1 to 3 proved it, so check 4 did not need the judge
 
     @property
     def kept(self) -> bool:
@@ -405,8 +479,25 @@ class Checked:
 
 
 @dataclass(frozen=True)
+class Attached:
+    """A disagreement check 6 shows under the first kept sentence that rests on it."""
+
+    after: int  # the index of that sentence
+    row: Mapping  # get_disagreements' row, with both sides
+    changes_answer: bool  # a kept sentence states one side, so keeping the other side would change it
+    by_verifier: bool  # the agent's draft left the other side out
+
+
+@dataclass(frozen=True)
 class Verdict:
     sentences: tuple[Checked, ...]
+    checks_run: tuple[int, ...] = CHECKS_RUN
+    attached: tuple[Attached, ...] = ()
+    judge_called: bool = False
+    judge_responded: bool | None = None  # None when the judge was not called
+    advice: tuple[int, int] = (0, 0)  # sentences that gave advice, and those that cited a lesson or comparable
+    lessons_cited: bool = False  # a kept sentence cites a lesson
+    cited_tools: tuple[str, ...] = ()  # the tools whose evidence the kept sentences cite
 
     @property
     def kept(self) -> list[Checked]:
@@ -417,21 +508,48 @@ class Verdict:
         return [sentence for sentence in self.sentences if not sentence.kept]
 
     def counts(self) -> dict:
-        """The counts behind the check line, over everything the agent wrote, removed sentences included."""
+        """The counts behind the check line and the steps' six-check list. numbers, dates, quotes and sources
+        are over everything the agent wrote, removed sentences included, as the step log and the run log
+        give them; shown is over the sentences on screen, as the check line gives them (the 24 brief)."""
         numbers = [found for sentence in self.sentences for _, found in sentence.numbers]
         dates = [found for sentence in self.sentences for _, found in sentence.dates]
         quotes = [sentence for sentence in self.sentences if sentence.quoted]
         cited = {evidence: sentence for sentence in self.sentences for evidence in sentence.claim.evidence_ids}
         not_back = {reason.text for sentence in self.sentences for reason in sentence.reasons
                     if reason.code == NOT_RETURNED}
-        return {
-            "checks_run": list(CHECKS_RUN),
+        counts = {
+            "checks_run": list(self.checks_run),
             "sentences": {"written": len(self.sentences), "kept": len(self.kept), "removed": len(self.removed)},
             "numbers": {"total": len(numbers), "matched": sum(found is not None for found in numbers)},
             "dates": {"total": len(dates), "matched": sum(found is not None for found in dates)},
             "quotes": {"total": len(quotes), "found": sum(sentence.quote_found for sentence in quotes)},
             "sources": {"total": len(cited), "returned": len(set(cited) - not_back)},
         }
+        if 4 not in self.checks_run:
+            return counts
+        kept = self.kept
+        shown_numbers = [found for sentence in kept for _, found in sentence.numbers]
+        shown_dates = [found for sentence in kept for _, found in sentence.dates]
+        shown_quotes = [sentence for sentence in kept if sentence.quoted]
+        judged = [sentence for sentence in self.sentences if sentence.judged]
+        unjudged = [sentence for sentence in judged if any(reason.code == JUDGE_UNAVAILABLE
+                                                           for reason in sentence.reasons)]
+        disputed = {sentence.index for sentence in kept for found in self.attached
+                    if _rests_on(sentence, found.row)}
+        return {**counts,
+                "shown": {"numbers": {"total": len(shown_numbers), "matched": sum(f is not None for f in shown_numbers)},
+                          "dates": {"total": len(shown_dates), "matched": sum(f is not None for f in shown_dates)},
+                          "quotes": {"total": len(shown_quotes),
+                                     "found": sum(sentence.quote_found for sentence in shown_quotes)},
+                          "judged": sum(sentence.judged for sentence in kept),
+                          "proven": sum(sentence.proven for sentence in kept)},
+                "judge": {"called": self.judge_called, "responded": self.judge_responded, "judged": len(judged),
+                          "followed": sum(sentence.kept for sentence in judged), "unjudged": len(unjudged),
+                          "proven": sum(sentence.proven for sentence in self.sentences)},
+                "advice": {"total": self.advice[0], "cited": self.advice[1]},
+                "disagreements": {"disputed": len(disputed), "shown": len(self.attached),
+                                  "attached": sum(found.by_verifier for found in self.attached)},
+                "lessons_cited": self.lessons_cited, "cited_tools": list(self.cited_tools)}
 
 
 def _is_passage(row: Mapping | None) -> bool:
@@ -448,10 +566,11 @@ def _holds_number(text: str, mention: Mention) -> bool:
     return any(isinstance(found.value, Decimal) and found.value == mention.value for found in mentions(text))
 
 
-def _values(row: Mapping | None) -> tuple[set, set]:
-    """The numbers and dates a cited row backs. A passage backs its dates and no number."""
-    numbers, days = row_values(row)
-    return (set(), days) if _is_passage(row) else (numbers, days)
+def _values(row: Mapping | None) -> tuple[list, set]:
+    """The numbers and dates a cited row backs, each number with its field names. A passage backs its dates and
+    no number."""
+    _, days = row_values(row)
+    return ([], days) if _is_passage(row) else (row_numbers(row), days)
 
 
 def _texts(row: Any) -> list[str]:
@@ -525,7 +644,9 @@ def check(index: int, claim: Claim, facts: Facts) -> Checked:
     stated = [mention for mention in mentions(claim.sentence) if not _in_a_value(mention, claim.sentence, texts)]
     checked: dict[str, list] = {"number": [], "date": []}
     for mention in stated + _declared(claim, stated):
-        found = next((evidence for evidence, (numbers, days) in rows if _supports(mention, numbers, days)), None)
+        unit = unit_of(claim.sentence, mention)
+        found = next((evidence for evidence, (numbers, days) in rows if _supports(mention, numbers, days, unit)),
+                     None)
         inside = next((source for start, end, source in spans
                        if mention.start is not None and start <= mention.start and mention.end <= end), False)
         if found is None and inside and (inside != getattr(quote, "evidence_id", None) or backs):
@@ -544,13 +665,160 @@ def check(index: int, claim: Claim, facts: Facts) -> Checked:
     # A quote counts as on its page only when its page was checked: a quote whose passage did not come
     # back this turn was compared with nothing, so the check line may not count it.
     on_page = quoted and not quote_reasons and (quote is None or span is not None)
+    runs = [claim.sentence[start:end] for start, end, _ in spans] + ([quote.text] if quote is not None else [])
+    words = bool(runs) and all(re.search(r"[^\W\d_]", run) for run in runs)
     return Checked(index, claim, tuple(reasons), tuple(checked["number"]), tuple(checked["date"]), span,
-                   quoted=quoted, quote_found=on_page)
+                   quoted=quoted, quote_found=on_page, quoted_words=words)
 
 
 def verify(claims: Iterable[Claim], facts: Facts) -> Verdict:
     """Checks 1 to 3 on each claim, in the order the agent wrote them."""
     return Verdict(tuple(check(index, claim, facts) for index, claim in enumerate(claims)))
+
+
+# ── Checks 4 to 6, on an answer ──────────────────────────────────────────
+
+PROJECT = re.compile(r"^P\d{6}$")
+DISAGREEMENTS_TOOL = "get_disagreements"
+SOURCE_TEXT_LIMIT = 6000  # characters of one source the judge reads
+
+
+def proven(sentence: Checked) -> bool:
+    """Whether checks 1 to 3 prove a kept sentence, so check 4 needs no judge: a record or quote sentence that
+    states at least one number, date or quote, all of which matched, and whose quoted words are words."""
+    claim = sentence.claim
+    if claim.kind not in ("record", "quote") or not sentence.kept:
+        return False
+    stated = bool(sentence.numbers or sentence.dates or sentence.quoted)
+    return stated and (not sentence.quoted or (sentence.quote_found and sentence.quoted_words))
+
+
+def _sides(row: Mapping) -> list[str]:
+    return [side["evidence_id"] for side in row.get("sides") or ()]
+
+
+def _rests_on(sentence: Checked, row: Mapping) -> bool:
+    """A sentence rests on a disagreement when it cites one of its sides, or the disagreement itself."""
+    cited = set(sentence.claim.evidence_ids)
+    return bool(cited & set(_sides(row))) or row.get("evidence_id") in cited
+
+
+def _project(row: Mapping | None) -> str | None:
+    if row is None:
+        return None
+    for value in (row.get("project_id"), (row.get("source") or {}).get("project_id")):
+        if isinstance(value, str) and PROJECT.match(value):
+            return value
+    return None
+
+
+def _source_text(row: Mapping | None) -> str:
+    if _is_passage(row):
+        text = f"{row.get('header') or ''}\n{row['text']}".strip()
+    else:
+        import json
+
+        text = json.dumps(_plain({key: value for key, value in (row or {}).items() if key != "also"}),
+                          ensure_ascii=False)
+    return text[:SOURCE_TEXT_LIMIT]
+
+
+class AnswerCheck:
+    """The six checks on one answer, in the order the stream runs them: checks 1 to 3 and 5 at once; then
+    check 6, once the stream has asked get_disagreements about the projects() the standing sentences cite;
+    then check 4, once the judge has answered the questions(). verdict() gives the result."""
+
+    def __init__(self, claims: Iterable[Claim], facts: Facts, backs_advice: Iterable[str]):
+        self.facts = facts
+        self.sentences = {sentence.index: sentence for sentence in verify(claims, facts).sentences}
+        # Every disagreement get_disagreements returned, by id: those the agent asked for, and those check 6 asks.
+        self.disagreements: dict[str, Mapping] = {
+            evidence: row for evidence, row in facts.returned_by(DISAGREEMENTS_TOOL) if row.get("sides")}
+        self.fetched: set[str] = set()  # the ones only check 6's own question found
+        self.judge_called, self.judge_responded = False, None
+        backing = set(backs_advice)
+        advice = [sentence for sentence in self.sentences.values() if sentence.claim.kind == "advice"]
+        cited = [sentence for sentence in advice if any(
+            facts.came_back(evidence) and facts.tool(evidence) in backing for evidence in sentence.claim.evidence_ids)]
+        self.advice = (len(advice), len(cited))
+        for sentence in advice:
+            if sentence not in cited:
+                self._fail(sentence.index, Reason(5, ADVICE_UNBACKED))
+
+    def _fail(self, index: int, reason: Reason) -> None:
+        sentence = self.sentences[index]
+        self.sentences[index] = dataclasses.replace(sentence, reasons=(*sentence.reasons, reason))
+
+    def standing(self) -> list[Checked]:
+        return [sentence for sentence in self.sentences.values() if sentence.kept]
+
+    def projects(self) -> list[str]:
+        """The projects whose disagreements check 6 needs: those of the evidence the standing sentences cite."""
+        found = (_project(self.facts.get(evidence)) for sentence in self.standing()
+                 for evidence in sentence.claim.evidence_ids)
+        return list(dict.fromkeys(project for project in found if project))
+
+    def disagreements_for(self, project: str, rows: list[Mapping] | None) -> None:
+        """What get_disagreements returned about the project, or None when the stream could not ask: then every
+        standing sentence citing the project's evidence fails check 6."""
+        if rows is None:
+            for sentence in self.standing():
+                if any(_project(self.facts.get(evidence)) == project for evidence in sentence.claim.evidence_ids):
+                    self._fail(sentence.index, Reason(6, DISAGREEMENTS_UNAVAILABLE, project))
+            return
+        for row in rows:
+            if row["evidence_id"] not in self.disagreements:
+                self.fetched.add(row["evidence_id"])
+            self.disagreements[row["evidence_id"]] = row
+
+    def resting(self) -> list[Mapping]:
+        """The disagreements a standing sentence rests on, whose sides the answer's evidence must hold."""
+        return [row for row in self.disagreements.values()
+                if any(_rests_on(sentence, row) for sentence in self.standing())]
+
+    def questions(self) -> list[Question]:
+        """Check 4's questions: each standing sentence that checks 1 to 3 did not prove and that cites a source."""
+        asked = []
+        for sentence in self.standing():
+            if proven(sentence):
+                self.sentences[sentence.index] = dataclasses.replace(sentence, proven=True)
+            elif sentence.claim.evidence_ids:
+                asked.append(Question(sentence.index, sentence.claim.sentence, tuple(
+                    Source(evidence, _source_text(self.facts.get(evidence)))
+                    for evidence in sentence.claim.evidence_ids)))
+        return asked
+
+    def judged(self, questions: list[Question], judgements: list[Judgement] | None) -> None:
+        """The judge's answers to the questions, or None when it did not respond."""
+        self.judge_called, self.judge_responded = True, judgements is not None
+        said = {judgement.index: judgement for judgement in judgements or []}
+        for question in questions:
+            self.sentences[question.index] = dataclasses.replace(self.sentences[question.index], judged=True)
+            if judgements is None:
+                self._fail(question.index, Reason(4, JUDGE_UNAVAILABLE))
+            elif not said[question.index].follows:
+                self._fail(question.index, Reason(4, NOT_SUPPORTED, said[question.index].reason))
+
+    def verdict(self) -> Verdict:
+        sentences = tuple(self.sentences[index] for index in sorted(self.sentences))
+        kept = [sentence for sentence in sentences if sentence.kept]
+        attached = []
+        earliest = sorted(self.disagreements.values(), key=lambda row: min(
+            str(side.get("made_at") or "") for side in row.get("sides") or [{}]))
+        for row in earliest:
+            resting = [sentence for sentence in kept if _rests_on(sentence, row)]
+            if not resting:
+                continue
+            sides = set(_sides(row))
+            cited = {evidence for sentence in kept for evidence in sentence.claim.evidence_ids}
+            both = sides <= cited or row["evidence_id"] in cited
+            changes = any(len(sides & set(sentence.claim.evidence_ids)) == 1 for sentence in resting)
+            attached.append(Attached(resting[0].index, row, changes, not both))
+        attached.sort(key=lambda found: found.after)  # stable, so a sentence's cards keep their date order
+        tools = [self.facts.tool(evidence) for sentence in kept for evidence in sentence.claim.evidence_ids]
+        return Verdict(sentences, ALL_CHECKS, tuple(attached), self.judge_called, self.judge_responded, self.advice,
+                       lessons_cited="get_lessons" in tools,
+                       cited_tools=tuple(sorted({tool for tool in tools if tool})))
 
 
 # ── The answer's events ──────────────────────────────────────────────────
@@ -570,9 +838,33 @@ def _supported(pairs) -> list[dict]:
     return [{"text": mention.text, "evidence_id": found} for mention, found in pairs]
 
 
+def _side(side: Mapping, leaned: str | None) -> dict:
+    return {"evidence_id": side["evidence_id"], "assertion_id": side.get("assertion_id"),
+            "document_type": side.get("document_type"), "report_number": side.get("report_number"),
+            "sequence": side.get("sequence"), "paragraph": side.get("paragraph"),
+            "paragraph_numbered": side.get("paragraph_numbered"), "evidence_tier": side.get("evidence_tier"),
+            "made_at": side.get("made_at"), "field_name": side.get("field_name"), "value": side.get("value"),
+            "value_form": side.get("value_form"), "quote": side.get("quote"),
+            "leaned": side.get("assertion_id") == leaned}
+
+
+def disagreement_event(found: Attached) -> Event:
+    """A disagreement check 6 shows under the sentence it concerns, with both sides in the order they were
+    written, the side Strata leans on, the evidence ladder's rule and what you would treat as true if you kept
+    the other side. The screen writes every sentence of it from these values and the copy file."""
+    row = found.row
+    leaned = row.get("lean_assertion_id")
+    return Event("disagreement", {
+        "id": row["evidence_id"], "after": found.after, "changes_answer": found.changes_answer,
+        "attached_by_verifier": found.by_verifier, "attribute": row.get("attribute"), "rule_id": row.get("rule_id"),
+        "sides": [_side(side, leaned) for side in row.get("sides") or ()],
+        "if_you_keep": _plain(row.get("if_you_keep"))})
+
+
 def answer_events(verdict: Verdict, facts: Facts, tools: Iterable[str] = ()) -> list[Event]:
     """The answer contract's events, in the spec's order: the kept sentences with their evidence ids,
-    the evidence they cite, the check counts, then each removed sentence with its reasons."""
+    the evidence they cite, the disagreements check 6 shows, the check counts, then each removed sentence
+    with its reasons."""
     events = []
     cited: dict[str, list[dict]] = {}
     for sentence in verdict.kept:
@@ -589,11 +881,16 @@ def answer_events(verdict: Verdict, facts: Facts, tools: Iterable[str] = ()) -> 
             if claim.quote is not None and claim.quote.evidence_id == evidence and sentence.quote_span:
                 highlights.append({"sentence": sentence.index, "start": sentence.quote_span[0],
                                    "end": sentence.quote_span[1]})
+    for found in verdict.attached:  # each side of a disagreement opens like any source
+        for evidence in _sides(found.row):
+            if facts.came_back(evidence):
+                cited.setdefault(evidence, [])
     for evidence, highlights in cited.items():
         row = facts.get(evidence)
         events.append(Event("evidence", {"id": evidence, "kind": "passage" if _is_passage(row) else "record",
                                          "tool": facts.tool(evidence), **labels(row), "row": _plain(row),
                                          "highlights": highlights}))
+    events += [disagreement_event(found) for found in verdict.attached]
     events.append(Event("checks", {**verdict.counts(), "tools": sorted(set(tools))}))
     for sentence in verdict.removed:
         events.append(Event("removed", {
