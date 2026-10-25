@@ -2715,7 +2715,6 @@ export const copy = {
     columns: {
       step: "Step",
       stepNote: "Short names. Choose one to see STEP's full name.",
-      stepNoteNarrow: "Short names, with STEP's full name under each.",
       plan: "In the plan, as first published",
       planNote: "Plan of {date}",
       planNoteNone: "The plan's own dates",
@@ -2764,7 +2763,6 @@ export const copy = {
     coverage: "Based on {used} of {total} comparable packages; {missing} had no dates for these steps in their published plans.",
     coverageAll: "Based on all {total} comparable packages.",
     coverageLink: "Data readiness for these sources",
-    sourceLabel: "Source:",
     sourceLine: "{names}. Records run through {date}.",
     sourceLineAsOf: "{names}. Records as of {date}.",
     // The section's live region (the 27 brief, section 8.5).
@@ -2811,7 +2809,6 @@ export const copy = {
       longestNote: "Grouped by stage, the most common first, then by days, longest first.",
       longestEntry: "{stage}, {days} days",
       close: "Close the list",
-      region: "{title}",
     },
   },
 

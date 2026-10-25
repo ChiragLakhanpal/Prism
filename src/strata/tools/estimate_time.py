@@ -13,13 +13,16 @@ The call's view is returned with the result but not applied until ticket 40.
 from __future__ import annotations
 
 import datetime as dt
+import logging
 
 from strata.config import load_sources, load_tools
 from strata.estimates import step_dates as model
+from strata.lakehouse.engine import EngineError
 from strata.tools.find_comparables import find_comparables
 from strata.tools.registry import Call, ToolError
 
 TOOL = "estimate_time"
+log = logging.getLogger("strata.tools.estimate_time")
 
 
 def _sources() -> list[dict]:
@@ -56,11 +59,15 @@ def estimate_time(call: Call, step_reference: str | None = None, method: str | N
         return [dict(zip(result.columns, values)) for values in result.rows]
 
     comparables = [row["step_reference"] for row in found["rows"]]
+    try:
+        track = model.track_record(call.engine, call.as_of, settings)
+    except EngineError:  # a viewer who cannot read strata.ops still gets the dates, with no track record line
+        log.warning("I could not read the step backtests' track record for %s.", call.viewer.name, exc_info=True)
+        track = None
     dated = model.step_dates(rows, family_key=family, family_reason=reason, method=method_now,
                              package_reference=package["step_reference"] if package else None,
                              comparables=comparables, as_of=call.as_of, start_date=start_date, settings=settings,
-                             track=model.track_record(call.engine, call.as_of, settings),
-                             sources=[source["key"] for source in sources])
+                             track=track, sources=[source["key"] for source in sources])
     left_out = dated.pop("not_used", [])
     coverage = {"matched": len(comparables), "used": len(comparables) - len(left_out),
                 "not_used": [{"reason": model.NO_PLAN_DATES, "count": len(left_out),

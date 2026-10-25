@@ -146,7 +146,18 @@ const STEP_SHOTS: Shot[] = [
   stepShot("collapsed", DATED_STEPS, { act: toSteps }),
   stepShot("cautious", DATED_STEPS, { act: openSteps }),
   stepShot("middle", DATED_STEPS, { act: inOrder(openSteps, click(`${SECTION_2} [data-segment=middle]`)) }),
-  stepShot("fixture", { recorded: "steps-ke-nwwda-541055.json" }, { act: openSteps }),
+  // The demo package on the fixture, where every step abstains.
+  app("steps--fixture", "/packages/KE-NWWDA-541055-CW-RFB", {}, {
+    full: true,
+    act: openSteps,
+    api: {
+      ...app("steps--fixture", "/packages/KE-NWWDA-541055-CW-RFB").api,
+      "/api/packages/KE-NWWDA-541055-CW-RFB": { recorded: "package-ke-nwwda-541055.json" },
+      "/api/packages/KE-NWWDA-541055-CW-RFB/comparables": { recorded: "comparables-ke-nwwda-541055.json" },
+      "/api/packages/KE-NWWDA-541055-CW-RFB/risks": { recorded: "risks-ke-nwwda-541055.json" },
+      "/api/packages/KE-NWWDA-541055-CW-RFB/steps": { recorded: "steps-ke-nwwda-541055.json" },
+    },
+  }),
   stepShot("abstain", { recorded: "steps-ke-hand-900000-few.json" }, { act: openSteps }),
   stepShot("loading", null, { act: toSteps }),
   stepShot("error", { status: 503, body: '{"code":"data_service","trace_id":"0af7651916cd43dd8448eb211c80319c"}' }, { act: toSteps }),
