@@ -39,25 +39,25 @@ export function RowClaim({ row }: { row: RiskRow }) {
           </p>
         </div>
       </div>
-      <IegLine row={row} />
+      <IegLine status={lesson.ieg_status} quote={lesson.ieg_quote} />
     </div>
   );
 }
 
-function IegLine({ row }: { row: RiskRow }) {
-  const lesson = row.lesson;
-  if (lesson.ieg_status === "restated" && lesson.ieg_quote) {
+// A lesson's IEG line, from its ieg_status and IEG's restating words: here and in section 5's view F (ticket 31).
+export function IegLine({ status, quote }: { status: string; quote: RiskRow["lesson"]["ieg_quote"] }) {
+  if (status === "restated" && quote) {
     return (
       <div data-ieg-line="restated" className="flex flex-col items-start gap-1">
         <StatusBadge kind="ieg-restates" />
         <p className="text-caption text-ink-muted">
-          <Fill template={words.iegWrote} slots={{ doc: lesson.ieg_quote.doc_short, quote: <span lang={lesson.ieg_quote.lang ?? undefined}>{lesson.ieg_quote.text}</span> }} />
+          <Fill template={words.iegWrote} slots={{ doc: quote.doc_short, quote: <span lang={quote.lang ?? undefined}>{quote.text}</span> }} />
         </p>
       </div>
     );
   }
-  if (lesson.ieg_status === "awaiting") return <p data-ieg-line="awaiting" className="text-caption text-ink-muted">{words.awaiting}</p>;
-  if (lesson.ieg_status === "not_restated") return <p data-ieg-line="not_restated" className="text-caption text-ink-muted">{words.notRestated}</p>;
+  if (status === "awaiting") return <p data-ieg-line="awaiting" className="text-caption text-ink-muted">{words.awaiting}</p>;
+  if (status === "not_restated") return <p data-ieg-line="not_restated" className="text-caption text-ink-muted">{words.notRestated}</p>;
   return null;
 }
 

@@ -80,7 +80,7 @@ def _source(evidence: Mapping, project_name: str | None) -> dict:
             "quote": evidence["quote"], "public_from": evidence["public_from"]}
 
 
-def _ieg_quote(lesson: Mapping) -> dict | None:
+def ieg_quote(lesson: Mapping) -> dict | None:
     """IEG's words that restate the lesson, for the drawer's IEG line, when IEG's review restated it."""
     if lesson["ieg_status"] != "restated":
         return None
@@ -95,7 +95,7 @@ def _row(factor: dict, lesson: dict) -> dict:
             "lesson": {"id": lesson["lesson_id"], "evidence_id": lesson["evidence_id"], "version": lesson["version"],
                        "decided_on": lesson["decided_on"], "text": lesson["statement"], "fit": lesson["fit"],
                        "ieg_status": lesson["ieg_status"], "review_date": lesson["review_date"],
-                       "ieg_quote": _ieg_quote(lesson)},
+                       "ieg_quote": ieg_quote(lesson)},
             "sources": [_source(evidence, name if evidence["project_id"] == lesson["project"]["project_id"] else None)
                         for evidence in lesson["evidence"]],
             "reports": factor["reports"],

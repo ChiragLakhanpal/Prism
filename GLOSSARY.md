@@ -107,6 +107,14 @@ _Avoid_: Original plan (the first published version is a different thing)
 Inviting bids again after a procurement process was canceled or all bids were rejected.
 _Avoid_: Re-bid, re-tender
 
+**Qualification criteria**:
+The requirements a bidding document sets for bidders, such as similar experience, average annual turnover, equipment and key staff. Strata compares them item by item with comparable packages whose notices published theirs.
+_Avoid_: Criteria on its own (it means how comparable packages are chosen)
+
+**Cost estimate**:
+The amount a Procurement Plan gives a package before it goes to market, STEP's Estimated Amount (US$).
+_Avoid_: Estimate on its own (it reads as a time estimate)
+
 ### Analysis
 
 **Comparable**:

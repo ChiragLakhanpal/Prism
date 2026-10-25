@@ -99,15 +99,6 @@ function dayCaption(point: StepPoint, previous: StepEntry | null): ReactNode {
   }
 }
 
-// A Num's click handler that hands on the button it was clicked on, so the drawer can give focus back to it. React
-// passes the click to Num's onOpen as its first argument, as RisksSection's counts rely on.
-function opener(open: (element: HTMLElement) => void): () => void {
-  return ((event?: { currentTarget?: unknown }) => {
-    const element = event?.currentTarget;
-    if (element instanceof HTMLElement) open(element);
-  }) as () => void;
-}
-
 // ── The summary line ─────────────────────────────────────────────────────
 
 function Summary({ dates, packageKey, onOpen }: { dates: StepDates; packageKey: string; onOpen: Opener }) {
@@ -161,7 +152,7 @@ function Summary({ dates, packageKey, onOpen }: { dates: StepDates; packageKey: 
                   show="count"
                   check={{
                     tooltip: <Fill template={words.tips.longest} slots={{ m: number(longest.m), n: number(longest.n), stage: stage.toLowerCase() }} />,
-                    onOpen: opener((element) => onOpen(longestListId(packageKey), element)),
+                    onOpen: (element) => onOpen(longestListId(packageKey), element),
                   }}
                 />
               ),
@@ -354,7 +345,7 @@ function dateCheck(point: StepPoint, row: Row, family: StepFamily, onOpen: Opene
           : point.days_relation === "before_plan"
             ? words.tips.dateBefore
             : words.tips.dateDelay;
-  return { tooltip: <Fill template={tip} slots={slots} />, onOpen: opener((element) => onOpen(row.listId, element)) };
+  return { tooltip: <Fill template={tip} slots={slots} />, onOpen: (element) => onOpen(row.listId, element) };
 }
 
 // Why a step has no date, in its own row.
@@ -473,7 +464,7 @@ function Comparables({ row, onOpen }: { row: Row; onOpen: Opener }) {
       check={{
         tooltip: words.tips.count(entry.phrase),
         name: words.countName(String(n), entry.label),
-        onOpen: opener((element) => onOpen(row.listId, element)),
+        onOpen: (element) => onOpen(row.listId, element),
       }}
     />
   );
@@ -606,7 +597,7 @@ function LongestMark({ dates, family, packageKey, onOpen }: { dates: StepDates; 
               inCaption
               check={{
                 tooltip: <Fill template={words.tips.longest} slots={{ m: number(longest.m), n: number(longest.n), stage: stage.toLowerCase() }} />,
-                onOpen: opener((element) => onOpen(longestListId(packageKey), element)),
+                onOpen: (element) => onOpen(longestListId(packageKey), element),
               }}
             />
           ),
@@ -846,9 +837,10 @@ export function StepsView({
   const dates = result?.step_dates ?? null;
   const family = stepFamily(dates?.family);
   let summary: ReactNode = null;
+  let error: ReactNode = null;
   if (state.status === "error") {
     const code = state.error?.body?.trace_id;
-    summary = (
+    error = (
       <Alert
         state="error"
         live="alert"
@@ -878,9 +870,11 @@ export function StepsView({
   const controls = dates !== null && !dates.abstain_all && !dates.none_dated;
   const body =
     state.status === "loading" ? (
-      <StepsSkeleton kind={kind} />
+      <div className="mt-6">
+        <StepsSkeleton kind={kind} />
+      </div>
     ) : dates && family && result ? (
-      <>
+      <div className="mt-6">
         <p className="max-w-prose text-body text-ink" data-step-intro>
           {/* The summary above says how few comparable packages there were, so the intro starts at the rule. */}
           {dates.abstain_all ? (
@@ -926,7 +920,7 @@ export function StepsView({
           </div>
         </div>
         <Notes dates={dates} family={family} choice={choice} kind={kind} result={result} asOf={asOf} />
-      </>
+      </div>
     ) : null;
   return (
     <CollapsedSection
@@ -935,16 +929,17 @@ export function StepsView({
       number={words.number}
       heading={words.heading}
       summary={summary}
-      loading={state.status === "loading"}
-      // A retry that failed after you opened the section keeps the button, so you can close it again.
-      canOpen={state.status === "loading" || Boolean(family) || (state.status === "error" && open)}
+      error={error}
+      // A retry that failed after you opened the section keeps the button, so you can close it again; with no method
+      // family there is nothing to open.
+      state={state.status === "ready" ? (family ? "ready" : "empty") : state.status}
       open={open}
       onToggle={onToggle}
       showLabel={words.show}
       hideLabel={words.hide}
       busy={state.status === "loading" && open}
       headingRef={headingRef}
-      stateKey={state.status === "ready" ? (dates?.abstain_all ? "abstain" : family ? (dates?.basis ?? "ready") : (dates?.family_reason ?? "none")) : state.status}
+      sectionKey="steps"
       live={
         <p className="sr-only" role="status" aria-live="polite">
           {announce}

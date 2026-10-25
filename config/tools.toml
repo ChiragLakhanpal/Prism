@@ -628,3 +628,154 @@ summary_fields = ["trajectories", "rejected"]
 # Each side is the assertion as its source made it, under the evidence id of the passage or record it rests
 # on, with the passage's text when it rests on one, so a claim can cite it or quote from it.
 nested_rows = ["sides"]
+
+# The check-your-criteria tools (ticket 31): section 5 of the package workspace. Each takes the comparable
+# packages find_comparables returned, by STEP reference, so the reference class is defined once (in
+# find_comparables) and every count names it.
+
+[tools.compare_cost_estimates]
+description = """Compares the cost estimates of comparable packages with the amounts their contracts were \
+signed for. A package's cost estimate is the Estimated Amount (US$) of the first version of its Procurement \
+Plan that lists it with one, among the versions public on the as-of date: the cost estimate as first published, \
+as delay is measured from the first published planned date. Its signed amount adds every contract it signed \
+in the contract awards data, in US dollars, a joint venture's contract once. Each row is one comparable \
+package with both amounts, with how far its signed amount was from its own cost estimate, in percent, \
+positive above it, at one decimal up to 100 and none above. The result counts the packages signed above, \
+below and at their cost estimates, and the lowest and highest cost estimate among them. Below \
+{past_range.min_comparables} packages with both amounts it gives no quartiles and abstains, and still returns \
+every package. The coverage line says how many comparables had no signed contract yet, no cost estimate in a \
+Procurement Plan, or a signed amount only in a local currency. It also gives the package's own cost estimate: \
+its plan row's Estimated Amount (US$), or the amount you give for a package that has no plan row. The counts, \
+the band of cost estimates, the quartiles and the package's own cost estimate also come back in the result's \
+summary, which you cite for them."""
+adapter = "strata.tools.compare_cost_estimates:compare_cost_estimates"
+benchmark = "compare-cost-estimates-ke-nwwda-541055"
+sources = ["documents", "awards", "notices"]
+
+[[tools.compare_cost_estimates.parameters]]
+name = "comparables"
+type = "string"
+required = true
+description = """The STEP references of the comparable packages, separated by commas, as find_comparables \
+returned them."""
+
+[[tools.compare_cost_estimates.parameters]]
+name = "step_reference"
+type = "string"
+required = false
+key = true
+description = """The package's own STEP activity reference, such as KE-NWWDA-541055-CW-RFB, for its own cost \
+estimate. Leave it out for a package that is not in a plan yet."""
+
+[[tools.compare_cost_estimates.parameters]]
+name = "estimate_usd"
+type = "number"
+required = false
+description = "Your cost estimate in US dollars, for a package that is not in a plan yet. Leave it out otherwise."
+
+[[tools.compare_cost_estimates.parameters]]
+name = "as_of"
+type = "date"
+required = false
+description = """Use only plan versions and contracts public on or before this date. A package signed after it \
+counts as having no signed contract yet. Leave it out for today."""
+
+[tools.compare_cost_estimates.result]
+row = """One comparable package with a cost estimate and a signed contract: both amounts, its contracts, and how \
+far its signed amount was from its cost estimate, in percent."""
+row_fields = ["evidence_id", "public_from", "source", "step_reference", "project_id", "country_code", "country_name",
+              "description", "estimated_amount_usd", "signed_amount_usd", "diff_pct", "contracts", "rank"]
+source_fields = ["plan", "contract_ids"]
+fields = ["package", "counts", "band", "quartiles", "quantile_dots", "min_comparables", "sources", "records_through"]
+reasons = ["still_open", "no_estimate", "no_usd_amount"]
+abstentions = ["no_comparables", "none_with_both_amounts", "too_few_comparables"]
+abstentions_with_rows = ["too_few_comparables"]
+# The package's own cost estimate, the counts above, below and at, the band of cost estimates and the quartiles
+# are derived figures, so they come back as one citable record too.
+summary_fields = ["package", "counts", "band", "quartiles", "coverage"]
+
+[tools.rejected_bids]
+description = """Says how many comparable packages had bids rejected, and why, from their contract award \
+notices. It counts the comparables with an award notice published by the as-of date, since award notices are \
+where rejected bids are listed, and those whose award notice rejected at least one bid with a reason. Each row \
+is one Reason for Rejection in one award notice, word for word, with the notice's id and date, how many bids \
+that notice rejected for it, and the kind of requirement it concerned, such as bid security or key staff, or \
+other reasons. It never names a bidder. Quote a reason only word for word. The counts and the groups by kind \
+of requirement also come back in the result's summary, which you cite for them."""
+adapter = "strata.tools.rejected_bids:rejected_bids"
+benchmark = "rejected-bids-ke-nwwda-541055"
+sources = ["notices"]
+
+[[tools.rejected_bids.parameters]]
+name = "comparables"
+type = "string"
+required = true
+description = """The STEP references of the comparable packages, separated by commas, as find_comparables \
+returned them."""
+
+[[tools.rejected_bids.parameters]]
+name = "as_of"
+type = "date"
+required = false
+description = "Use only award notices published on or before this date. Leave it out for today."
+
+[tools.rejected_bids.result]
+row = """One reason one award notice gave for rejecting bids: its words, its language, the notice, how many bids \
+it rejected for it and the kind of requirement it concerned."""
+row_fields = ["evidence_id", "public_from", "source", "step_reference", "country_name", "notice_id", "notice_date",
+              "item_key", "reason", "bids", "rank"]
+source_fields = ["notice_id", "notice_type", "project_id"]
+fields = ["counts", "groups", "sources", "records_through"]
+reasons = ["no_award_notice"]
+abstentions = ["no_comparables", "no_award_notices"]
+summary_fields = ["counts", "groups", "coverage"]
+
+[tools.compare_criteria]
+description = """Compares a bidding document's qualification criteria, read into items such as similar \
+experience or average annual turnover, with the comparable packages whose notices published theirs. It reads \
+the scope and qualification text of each comparable's specific procurement notice, and never a package that \
+was not signed by the as-of date, since that tender may still be open. Each row is one comparable whose \
+notice set at least one requirement: the notice, each requirement word for word with the notice passage it \
+is in, and, for each of your items it set, whether it asked for less than you, the same, more, or set it in \
+other terms (such as more contracts of a smaller amount). Parts your items do not set are not compared. \
+Amounts in another currency are not converted. Without items it counts the comparables whose criteria are \
+public. The counts per item and the counts of packages also come back in the result's summary, which you \
+cite for them. Quote a requirement only word for word, from its passage."""
+adapter = "strata.tools.compare_criteria:compare_criteria"
+benchmark = "compare-criteria-ke-cwsb-224323"
+sources = ["notices", "awards"]
+
+[[tools.compare_criteria.parameters]]
+name = "comparables"
+type = "string"
+required = true
+description = """The STEP references of the comparable packages, separated by commas, as find_comparables \
+returned them."""
+
+[[tools.compare_criteria.parameters]]
+name = "items"
+type = "string"
+required = false
+description = """Your items, as a JSON list of objects. Each has item_key, a key of the item registry such as \
+similar_experience, and parts, an object with only the parts your text sets: contracts (a count), amount (an \
+object with value, in US dollars, and currency, USD), window_years (the years a contract must fall within) and \
+years (a minimum number of years). Leave it out to count the comparables whose criteria are public."""
+
+[[tools.compare_criteria.parameters]]
+name = "as_of"
+type = "date"
+required = false
+description = "Use only notices, passages and contracts public on or before this date. Leave it out for today."
+
+[tools.compare_criteria.result]
+row = """One comparable package whose notice published its qualification criteria: the notice, each requirement \
+it set with its passage, and how each compares with your items."""
+row_fields = ["evidence_id", "public_from", "source", "step_reference", "country_name", "notice_id", "notice_date",
+              "requirements", "relations", "rank"]
+source_fields = ["notice_id", "project_id"]
+fields = ["items", "counts", "sources", "records_through"]
+reasons = ["still_open", "no_notice", "no_public_criteria"]
+abstentions = ["no_comparables", "none_public"]
+summary_fields = ["items", "counts", "coverage"]
+# Each requirement is quoted from a notice passage, which the row carries whole, so a claim can cite and quote it.
+nested_rows = ["requirements"]

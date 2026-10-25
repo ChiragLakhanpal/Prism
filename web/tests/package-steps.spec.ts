@@ -56,7 +56,7 @@ async function openPackage(page: Page, { width = 1440, steps = "steps-ke-hand-90
 }
 
 const section = (page: Page) => page.locator("section#planned-dates");
-const disclosure = (page: Page) => section(page).locator("[data-disclosure]");
+const disclosure = (page: Page) => section(page).locator("[data-section-toggle]");
 const view = (page: Page) => section(page).locator("[data-step-table]:visible, [data-step-list]:visible").first();
 const text = async (locator: Locator) => (await locator.innerText()).replace(/\s+/g, " ").trim();
 

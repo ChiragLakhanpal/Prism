@@ -1,0 +1,28 @@
+{
+ "about": "The judge's answer for this case's readings, through Azure OpenAI's chat completions, written by hand in the shape the API documents, because the gate's machine has no key. The judge is config/models.toml's draft role. Replace it with a recording: uv run --script ops/agent/record.py --judge --env-file .env",
+ "recorded": false,
+ "recorded_on": null,
+ "case": "criteria-similar-experience",
+ "judge": {
+  "deployment": "gpt-5.4"
+ },
+ "asked": [
+  "I read this as two contracts of similar works, each worth at least US$10 million.",
+  "I read this as an average annual turnover of at least US$25 million over the last three years."
+ ],
+ "response": {
+  "id": "chatcmpl-criteria-similar-experience",
+  "object": "chat.completion",
+  "model": "gpt-5.4",
+  "choices": [
+   {
+    "index": 0,
+    "finish_reason": "stop",
+    "message": {
+     "role": "assistant",
+     "content": "{\"judgements\": [{\"index\": 0, \"follows\": true, \"reason\": \"Your words ask for at least two contracts of similar works of US$10 million each.\"}, {\"index\": 1, \"follows\": true, \"reason\": \"Your words set an average annual turnover of US$25 million over the last three years.\"}]}"
+    }
+   }
+  ]
+ }
+}

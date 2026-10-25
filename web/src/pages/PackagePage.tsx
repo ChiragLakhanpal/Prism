@@ -10,7 +10,7 @@
 // padding at its height plus 16 px, so a focused dot or link is never hidden under it. Every width
 // on this page is the page area's, not the window's, since the evidence drawer narrows it (DESIGN.md
 // section 4): its breakpoints are container queries on the page column (@md/page:). Later tickets
-// add sections below section 1 in the PPSD's order.
+// add sections below section 1 in the PPSD's order; ticket 31 adds section 5, "Check your criteria".
 import { useEffect, useRef, type ReactNode } from "react";
 import { Breadcrumb, type Crumb } from "../components/Breadcrumb";
 import { EightColumns } from "../components/EightColumns";
@@ -20,6 +20,7 @@ import { MonoWords } from "../components/MonoWords";
 import { FactsSkeleton, mono, PackageFactsList, PackageHeader } from "../components/PackageFacts";
 import { PastRange, type PastRangeState } from "../components/PastRange";
 import { RisksSection } from "../components/RisksSection";
+import { CheckCriteria } from "../components/CheckCriteria";
 import { SkeletonLine, SkeletonText } from "../components/Skeleton";
 import { StepsSection } from "../components/StepsSection";
 import { TextLink } from "../components/TextLink";
@@ -28,6 +29,9 @@ import type { ComparablesResult, PackageResult } from "../lib/api";
 import { useLoad } from "../lib/load";
 import { useOpenComparable } from "../lib/packages";
 import { useScrollPadding } from "../lib/useScrollPadding";
+import { address } from "../lib/router";
+import { useStore } from "../lib/store";
+import { viewOf } from "../lib/view";
 
 const words = copy.packagePage;
 
@@ -41,6 +45,7 @@ export function PackagePage({ stepRef }: { stepRef: string }) {
   useScrollPadding(header, Boolean(pkg), { gap: 16 });
   // A dot or a row of section 1 opens its comparable package in the evidence drawer (ticket 15).
   const opening = useOpenComparable();
+  const here = useStore(address);
 
   // After a "Try again" that works, the section's heading takes focus, so focus is not lost.
   useEffect(() => {
@@ -144,6 +149,10 @@ export function PackagePage({ stepRef }: { stepRef: string }) {
         {/* Section 3, procurement risks and what helped (ticket 30), with section 1's default criteria. */}
         <div className="mt-6 @lg/page:mt-8">
           <RisksSection apiHref={base} packageKey={facts.step_reference} kind="step" />
+        </div>
+        {/* Section 5, "Check your criteria" (ticket 31): sections 2 and 4 take their places as their tickets land. */}
+        <div className="mt-6 @lg/page:mt-8">
+          <CheckCriteria base={base} preview={viewOf(here.search) !== "staff"} />
         </div>
       </>
     );

@@ -80,7 +80,8 @@ export function axisFor(largest: number, width = Number.POSITIVE_INFINITY): { ma
 export const snap = (value: number, max: number) => Math.min(max, Math.max(0.5, Math.round(value * 2) / 2));
 
 // The vertical offsets that keep dots apart, in the order given, or null when the swarm is taller than the lane.
-function swarm(xs: number[], r: number, lane: number): number[] | null {
+// Section 5's cost lane places its dots the same way (ticket 31, CostLane.tsx).
+export function swarm(xs: number[], r: number, lane: number): number[] | null {
   const gap = 2 * r + 1;
   const limit = lane / 2 - r - 1;
   const placed: { x: number; y: number }[] = [];

@@ -89,6 +89,7 @@ import { hubPage } from "./hub";
 import { lessonsPage } from "./lessons";
 import { packagesPage } from "./packages";
 import { risksPage } from "./risks";
+import { criteriaPage } from "./criteria";
 import { stepsPage } from "./steps";
 
 // ── The package workspace's samples (ticket 12) ──────────────────────────
@@ -1378,6 +1379,7 @@ export const PAGES: GalleryPage[] = [
   packagesPage(),
   stepsPage(),
   risksPage(),
+  criteriaPage(),
   {
     slug: "icons",
     sections: [
