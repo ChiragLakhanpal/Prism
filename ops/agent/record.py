@@ -1,6 +1,7 @@
 # /// script
 # requires-python = ">=3.12,<3.14"
-# dependencies = ["duckdb==2.0.0", "sqlglot==30.24.0", "pytz==2026.5", "pyyaml==6.0.3"]
+# dependencies = ["duckdb==2.0.0", "sqlglot==30.24.0", "pytz==2026.5", "pyyaml==6.0.3", "fastapi==0.161.1",
+#                 "httpx==0.28.1", "opentelemetry-api==1.45.1"]
 # ///
 """Re-record every scripted case from the live Foundry agent, and print the change as a diff: ticket 13's
 recording command.
