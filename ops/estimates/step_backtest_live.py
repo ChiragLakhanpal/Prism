@@ -64,8 +64,9 @@ def main(argv=None) -> int:
     started = time.monotonic()
     try:
         workspace = LiveWorkspace(env)
+        engine = workspace.engine()
         tracker = MlflowTracker(load_time_estimate().experiment, mkdirs=workspace.w.workspace.mkdirs)
-        run_id = step_dates.backtest(workspace.engine(), tracker,
+        run_id = step_dates.backtest(engine, tracker,
                                      outcomes_through=args.outcomes_through,
                                      years=tuple(args.years) if args.years else None)
     except EngineError as error:
