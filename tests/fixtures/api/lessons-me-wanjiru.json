@@ -14,5 +14,9 @@
   ],
   "role": "lead procurement specialist",
   "waiting": 1,
-  "limit_days": 10
+  "limit_days": 10,
+  "can_review_reports": false,
+  "reports_waiting": null,
+  "is_judge": false,
+  "queries_left": null
 }

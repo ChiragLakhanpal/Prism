@@ -119,7 +119,10 @@ from strata.harness.turn import (ERROR_CODES, Event, RunError, Runner, Scope, Tr
 from strata.lakehouse.engine import Engine, EngineError, PermissionDenied
 from strata.config import PackageForm, load_package_form
 from strata.packages.store import PackageStore
+from strata.knowledge.retrieval.judging import Judging
+from strata.knowledge.retrieval.reports import CitationLog, PassageReports
 from strata.server import drafts as draft_routes
+from strata.server import feedback as feedback_routes
 from strata.server import (baseline, changes, documents, engines, evidence, lookup, projects, summary, suppliers,
                            tracing)
 from strata.server import packages as package_routes
@@ -240,7 +243,10 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                package_form: PackageForm | None = None, new_package_id: Callable[[], str] = package_routes.new_package_id,
                new_save_id: Callable[[], str] = package_routes.new_save_id, lessons: LessonReview | None = None,
                lesson_writer: Callable[[], object | None] = lambda: None,
-               lesson_record: Callable[[], Engine] | None = None, judge: Judge | None = None) -> FastAPI:
+               lesson_record: Callable[[], Engine] | None = None, judge: Judge | None = None,
+               passage_reports: PassageReports | None = None, judging: Judging | None = None,
+               feedback_record: Callable[[], Engine] | None = None,
+               citations: CitationLog | None = None) -> FastAPI:
     """The app.
 
     engine_for makes the engine for each request's viewer; without it, the environment names one.
@@ -270,6 +276,13 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
     a draft's facts are read as of, now the clock (also for when a baseline was saved) and new_draft_id
     the ids drafts get.
 
+    passage_reports and judging are the retrieval loop (ticket 32; src/strata/knowledge/retrieval): the evidence
+    drawer's passage reports, Lessons > Passage reports and Lessons > Judging, with the roles file; without them,
+    config/roles.toml. feedback_record opens the engine that writes their rows as the app's own service
+    principal; without it, nothing is recorded. citations keeps the sources each answer cited
+    (strata.ops.answer_citations), which a passage report reads its question and sentence from; without it, an
+    answer's sources are not kept and no passage in it can be reported.
+
     packages keeps planned packages and the plan checks each viewer opened (src/strata/packages/store.py),
     written as the app's own service principal; without it, planning a package says there is no data service
     and no plan check is recorded. package_reader gives the package reader agent, or None when none is
@@ -280,6 +293,8 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
     engine_for = engine_for or engines.from_environment()
     runner = runner or no_agent
     lessons = lessons or LessonReview(load_roles())
+    passage_reports = passage_reports or PassageReports(load_roles())
+    judging = judging or Judging(load_roles())
     web = web_dist.resolve() if web_dist is not None else None
 
     def web_file(path: str) -> Path | None:
@@ -595,6 +610,8 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
     risk_routes.add_routes(app, engine_for=engine_for, store=packages, form=package_form or load_package_form(),
                            thresholds=package_thresholds or thresholds, today=today, now=now,
                            reference=request_reference)
+    feedback_routes.add_routes(app, engine_for=engine_for, record=feedback_record, reports=passage_reports,
+                               judging=judging, reference=request_reference)
 
     @app.get("/api/packages/{step_reference}")
     def open_package(step_reference: str, asof: dt.date | None = None, viewer: Viewer = Depends(current_viewer)):
@@ -686,7 +703,14 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
 
     @app.get("/api/lessons/me")
     def lessons_me(viewer: Viewer = Depends(current_viewer)):
-        return lesson_read("the viewer's lesson tabs", viewer, lambda engine: lessons.me(engine, viewer))
+        def read(engine: Engine) -> dict:
+            # Each Lessons page the viewer may open, with its count, so the frame decides its sub-tabs before
+            # any content renders (the 32 brief, section 2.3): Passage reports and Judging join brief 29's tabs.
+            found = {**lessons.me(engine, viewer), **passage_reports.me(engine, viewer), **judging.me(engine, viewer)}
+            found["tabs"] = [*found["tabs"], *(["reports"] if found["can_review_reports"] else []),
+                             *(["judging"] if found["is_judge"] else [])]
+            return found
+        return lesson_read("the viewer's lesson tabs", viewer, read)
 
     @app.get("/api/lessons")
     def lesson_library(page: int = Query(1, ge=1, le=10_000), viewer: Viewer = Depends(current_viewer)):
@@ -754,6 +778,20 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                 writer = threading.Thread(target=runs.record, args=(row,), name=f"strata-run-{turn.run_id}")
                 writer.start()
                 await asyncio.to_thread(writer.join, 60)
+            if citations is not None and outcome["verdict"] is not None:  # the sources the answer cited (ticket 32)
+                cited = cited_rows(turn, outcome["verdict"], row["as_of"], row["finished_at"])
+                keeper = threading.Thread(target=citations.record, args=(cited,), name=f"strata-cited-{turn.run_id}")
+                keeper.start()
+                await asyncio.to_thread(keeper.join, 60)
+
+    def cited_rows(turn: Turn, verdict: Verdict, as_of: dt.date, at: dt.datetime) -> list[tuple]:
+        def project_of(evidence: str):
+            found = turn.facts.get(evidence) or {}
+            return found.get("project_id") or (found.get("source") or {}).get("project_id")
+        return passage_reports.citation_rows(
+            turn.run_id, turn.viewer.user_id, turn.question, as_of, turn.scope.view,
+            [(sentence.index, sentence.claim.sentence, list(sentence.claim.evidence_ids)) for sentence in verdict.kept],
+            turn.facts.tool, project_of, at)
 
     def as_of_of(turn: Turn) -> dt.date:
         return turn.notes.as_of or min(turn.scope.as_of or today(), today())
@@ -797,6 +835,9 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                                 yield frame(event)
                     ran = [call["tool"] for call in turn.notes.tool_calls if call.get("ran")]
                     for event in answer_events(verdict, turn.facts, ran, six_checks.cited_only):
+                        if event.type == "evidence":  # whether the drawer offers "Was this the right passage?"
+                            event = Event("evidence", {**event.data, "feedback": passage_reports.feedback(
+                                event.data, turn.run_id, turn.scope.view)})
                         yield frame(event)
                 elif item.type in ANSWER_EVENTS:
                     raise RuntimeError(f"A runner sent a {item.type} event, which only the verifier writes.")

@@ -33,11 +33,19 @@ def run(engine: Engine, now: Callable[[], dt.datetime] = _now, thresholds: Thres
         roles: Roles | None = None) -> dict:
     """One weekly run over engine. Returns what it did, for its log line and the tests."""
     from strata.knowledge.retrieval import labels
+    from strata.knowledge.retrieval.judging import Judging
+    from strata.knowledge.retrieval.reports import PassageReports
 
     thresholds = thresholds or load_thresholds()
     roles = roles or load_roles()
-    sizes = labels.build(engine, engine, now())
-    return {"labels": sizes}
+    judging = Judging(roles, now=now, thresholds=thresholds)
+    reports = PassageReports(roles, now=now, thresholds=thresholds)
+    loaded = judging.load(engine, engine)
+    triaged = reports.triage(engine, engine)
+    sizes = labels.build(engine, engine, now(), {"notice_queries": judging.labels(engine),
+                                                 "feedback": reports.labels(engine)})
+    measured = reports.measure(engine, engine)
+    return {"queries_loaded": loaded, "triage": triaged, "labels": sizes, "measures": measured}
 
 
 def main(argv: list[str], engine: Engine) -> int:

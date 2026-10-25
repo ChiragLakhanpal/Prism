@@ -1,0 +1,33 @@
+# The queries written from award notices, for the retrieval loop's judging tool (ticket 32; the spec's
+# "Evaluation": 150 queries written from award notices and judged by two people).
+#
+# The search owner writes each query as a procurement specialist would ask it, reading one Contract Award
+# notice (strata.gold.notice) and asking what a specialist planning a package like it would want the project
+# documents to say. The weekly retrieval run loads each query not yet loaded into strata.ops.retrieval_queries,
+# with its two query judges from the roles file, and pools the passages several search setups find for it
+# that were public before the notice's date (strata.knowledge.retrieval.judging). The judges grade the pool on
+# Lessons > Judging, and once both have finished a query, its grades join the labeled set.
+#
+# [[query]]
+#   id         a short id of its own, which never changes
+#   notice_id  the award notice it was written from
+#   text       the query, in plain words
+#
+# These three were written for the fixture by the builder on October 24, 2026, from the award notices the
+# fixture records, so the judging tool has queries to show offline. The other 147 wait for the search owner
+# and the slice's award notices (a parked decision).
+
+[[query]]
+id = "nq-rural-works-delays"
+notice_id = "OP00044090"
+text = "What held up the award of rural road works contracts, and how did the project respond?"
+
+[[query]]
+id = "nq-water-works-readiness"
+notice_id = "OP00077752"
+text = "Were the designs and bidding documents for water supply rehabilitation works ready before the project started?"
+
+[[query]]
+id = "nq-sanitation-equipment"
+notice_id = "OP00086370"
+text = "How did the implementing agencies plan the purchase of sanitation equipment such as vacuum exhausters?"
