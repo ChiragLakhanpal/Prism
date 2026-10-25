@@ -348,6 +348,8 @@ questions:
       # they raised with how many of them raised it.
       reports_read: [1]
       raised: [[cost_estimates, 1], [permits_before_award, 1]]
+    # The passages the first lesson rests on: an answer about it cites them.
+    cites: [strata.gold.passage:31525018/v1/54, strata.gold.passage:34056616/v2/10.b]
     source: >-
       ICR P130164 paragraph 54, on PDF page 23, "108 of 328 cases had to go through rebidding"
       (tests/ground_truth/values.toml, icr-para-54), which the ICR Review restates in section 10.b on
@@ -403,6 +405,10 @@ questions:
                      KE-MOWI-47509-CW-RFB, KE-WAJWASCO-456993-CW-RFB]
       key_staff: [KE-KIMAWASCO-141042-CW-RFB, KE-KIMAWASCO-142995-CW-RFB, KE-KIMAWASCO-158691-CW-RFB]
       group_order: [bid_security, key_staff, other]
+    # The reason rows of the three packages rejected over key staff, one per award notice: an answer that names
+    # them cites each one's notice (values.toml, rejection-key-experts-OP00125851, -OP00125855 and -OP00124759).
+    cites: [strata.gold.notice:OP00125851/reason/3, strata.gold.notice:OP00125855/reason/4,
+            strata.gold.notice:OP00124759/reason/4]
     source: >-
       The Contract Award notices recorded in data/fixture/recorded/api/notices/P156634.json for the 49
       comparables: 40 of them have one, and 28 of those list a rejected bidder with a Reason for Rejection.
@@ -696,6 +702,9 @@ questions:
       public: [14, 17]
       similar_experience: [13, 13, 13]
       still_open: [KE-GAWASCO-202394-CS-QCBS, KE-WASREB-229126-CS-QCBS]
+    # One counted comparable's requirement, in the notice text it was read from: KE-KWAWASCO-105286-CS-QCBS asked
+    # for two projects of similar nature with no amount, the same or less (values.toml, criteria-OP00118816).
+    cites: [strata.gold.passage:OP00118816/v1/s5]
     source: >-
       The specific procurement notices of the 17 comparables, recorded in
       data/fixture/recorded/api/notices/P156634.json. The 15 signed comparables' notices hold their short-listing

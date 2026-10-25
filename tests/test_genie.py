@@ -259,6 +259,9 @@ def test_a_metric_view_that_breaks_a_rule_is_refused_with_the_fix(tmp_path, old,
 
     with pytest.raises(CatalogError, match=says):
         catalog.metric_view_definitions(folder)
+    # ask_genie reads each view's tables from the same checked definitions, so it refuses the file too.
+    with pytest.raises(CatalogError, match=says):
+        catalog.metric_view_sources(folder)
 
 
 def test_the_deploy_step_creates_each_metric_view():
@@ -309,6 +312,31 @@ def test_the_space_reads_the_metric_views_with_its_trusted_sql_and_the_benchmark
         # Each answer is its ground-truth SQL with its parameters written in and its comment lines left out.
         assert "MEASURE(" not in answer and "--" not in answer
         assert not re.search(r"(?<![:\w]):[a-z_]+", re.sub(r"'[^']*'", "", answer))
+
+
+def literals(sql: str) -> set[str]:
+    return {value.replace("''", "'") for value in re.findall(r"'((?:[^']|'')*)'", sql)}
+
+
+def with_any_country(question: str) -> str:
+    text = question.lower()
+    for name in ("a country's", "kenya's", "india's", "a country", "kenya", "india"):
+        text = text.replace(name, "<country>")
+    return " ".join(text.split())
+
+
+def test_no_trusted_example_answers_one_of_the_benchmark_s_genie_questions():
+    """The Genie benchmark's pass rate measures the SQL Genie writes, not its recall of an example. So no trusted
+    question is a benchmark question with another country, and no trusted SQL filters only on values that one
+    benchmark question's ground truth filters on as well."""
+    space = genie_space.load()
+
+    for item in space.benchmarks:
+        truth = literals(genie_space.written_in(item.case))
+        for trusted in space.trusted:
+            assert with_any_country(trusted.question) != with_any_country(item.question), (trusted.question, item.id)
+            given = literals(trusted.sql)
+            assert not (given and given <= truth), f"{trusted.question!r} filters on {sorted(given)}, as {item.id} does"
 
 
 def test_every_id_comes_from_a_stable_key_and_every_list_is_sorted_by_id_or_identifier():

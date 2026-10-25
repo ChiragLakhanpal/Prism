@@ -93,6 +93,7 @@ class TableDefinition:
     schema: str
     table: str
     sql: str
+    sources: tuple[str, ...] = ()  # a metric view's gold tables: its source and its joins'
 
     @property
     def full_name(self) -> str:
@@ -204,13 +205,14 @@ def _metric_view(path: Path, schema: str, view: str, tables: set[str]) -> TableD
         if join["name"] in dimensions:
             raise CatalogError(f"{where} has a join named {join['name']}, like one of its dimensions. Genie reads "
                                "such a name as the dimension, so give the join another name.")
-    for source in [spec["source"], *[join["source"] for join in spec.get("joins") or []]]:
+    sources = (spec["source"], *[join["source"] for join in spec.get("joins") or []])
+    for source in sources:
         if source not in tables:
             raise CatalogError(f"{where} reads {source}, which is not a gold table defined in tables/gold. A metric "
                                "view reads gold tables only.")
     sql = (f"CREATE OR REPLACE VIEW {CATALOG}.{schema}.{view}\nWITH METRICS\nLANGUAGE YAML\n"  # sql-lint: names only
            f"AS $$\n{body}\n$$")
-    return TableDefinition(path, schema, view, sql)
+    return TableDefinition(path, schema, view, sql, sources)
 
 
 def metric_view_definitions(folder: Path = METRIC_VIEWS) -> list[TableDefinition]:
@@ -238,14 +240,6 @@ def build_metric_views(engine: Engine, folder: Path = METRIC_VIEWS) -> list[str]
 
 
 def metric_view_sources(folder: Path = METRIC_VIEWS) -> dict[str, tuple[str, ...]]:
-    """The gold tables each metric view reads, its source and its joins', by the view's full name. It reads the
-    files without checking them, which metric_view_definitions() does in the gate and the deploy."""
-    import yaml
-
-    loader = getattr(yaml, "CSafeLoader", yaml.SafeLoader)
-    found = {}
-    for path in sorted(Path(folder).glob("*/*.yaml")):
-        spec = yaml.load(path.read_text(), Loader=loader)
-        found[f"{CATALOG}.{path.parent.name}.{path.stem}"] = (
-            spec["source"], *[join["source"] for join in spec.get("joins") or []])
-    return found
+    """The gold tables each metric view reads, its source and its joins', by the view's full name, from the same
+    checked definitions the deploy creates, so every name in it is a gold table defined in tables/gold."""
+    return {view.full_name: view.sources for view in metric_view_definitions(folder)}

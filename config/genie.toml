@@ -27,12 +27,12 @@ metric_views = ["strata.gold.contract_metrics", "strata.gold.package_metrics"]
 tables = ["strata.gold.contract_supplier"]
 sample_questions = [
   "How many contracts were signed in each fiscal year, and for how much in US dollars?",
-  "How many works packages under Request for Bids in Kenya were signed, canceled or still open?",
+  "How many of Kenya's goods packages were signed, canceled or still open, by procurement method?",
 ]
 
 # Trusted SQL: a question and the SQL Genie should follow for it, in src/strata/genie/trusted/.
 [[trusted]]
-question = "How many contracts did a country sign in the contract awards since fiscal 2020, and how many of them carry a STEP reference?"
+question = "How many contracts did India sign in the contract awards for fiscal 2001 to 2016, and how many of them carry a STEP reference?"
 sql = "contracts_and_step_references.sql"
 
 [[trusted]]
@@ -40,7 +40,7 @@ question = "How many contracts were signed in each fiscal year, and for how much
 sql = "contracts_by_fiscal_year.sql"
 
 [[trusted]]
-question = "How many works packages under Request for Bids in Kenya were signed, canceled or still open?"
+question = "How many of Kenya's goods packages were signed, canceled or still open, by procurement method?"
 sql = "package_states.sql"
 
 [[trusted]]

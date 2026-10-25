@@ -221,11 +221,15 @@ def arguments_of(question, engine, library) -> dict:
 
 
 def test_each_tool_answers_its_benchmark_question_on_the_fixture_as_expected(engine, library):
+    from strata.evals.scoring import returned
+
     for question in tool_questions():
         result = registry.call(question["tool"], arguments_of(question, engine, library),
                                registry.Context(engine=engine_for(question, engine, library), viewer=ANA))
 
         assert answered(result, question) == expected(question)
+        # Each evidence id the answer must cite is one the tool returned, so the full gate can ask for it.
+        assert set(question.get("cites") or ()) <= returned(result), question["id"]
 
 
 def test_without_an_as_of_date_each_tool_answers_as_of_today(engine, library, monkeypatch):

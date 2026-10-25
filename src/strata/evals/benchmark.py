@@ -4,7 +4,7 @@ The file holds four kinds of question (docs/PLAN.md section 10):
 
 - sql: a structured question with ground-truth SQL, answered by a registry tool such as check_plan, or by
   ask_genie, whose ground-truth SQL is the expected answer itself;
-- documents: a question whose answer cites passages, with the citations it must carry (cites);
+- documents: a question whose answer cites passages or notices, with the citations it must carry (cites);
 - estimates: a question about a range or a count, with the range or the abstention it must give;
 - refusals: the must-refuse set, one question per refusal key in src/strata/agent/refusals.py.
 
@@ -70,6 +70,8 @@ def problems(questions: list[dict], tools: dict[str, Tool] | None = None, refusa
             found.append(f"{qid} asks the tool {question['tool']}, which config/tools.toml does not hold.")
         if question.get("ground_truth") and not (root / question["ground_truth"]).is_file():
             found.append(f"{qid} names the ground-truth SQL {question['ground_truth']}, which does not exist.")
+        if question.get("kind") == "documents" and not question.get("cites"):
+            found.append(f"{qid} is a documents question, so it needs cites: the evidence ids its answer must cite.")
         if question.get("tool") == "ask_genie" and not question.get("ground_truth"):
             found.append(f"{qid} asks Genie, so its expected answer is its ground-truth SQL, which it does not name.")
         if question.get("kind") == "refusals":

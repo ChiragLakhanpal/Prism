@@ -222,3 +222,26 @@ def test_a_genie_answer_with_its_columns_in_another_order_is_the_same_answer():
                         for supplier in ("503711", "503708")]}
 
     assert answers.answered(swapped, genie) == answers.expected(genie)
+
+
+def test_a_documents_question_with_no_expected_citations_is_named():
+    questions = benchmark.load() + [{"id": "uncited", "kind": "documents", "tool": "search_passages",
+                                     "question": "What did the report say?", "arguments": {}, "expected": {}}]
+
+    assert benchmark.problems(questions) == ["uncited is a documents question, so it needs cites: the evidence ids "
+                                             "its answer must cite."]
+
+
+def test_a_documents_answer_that_cites_its_notices_passes_through_the_route(engine_for):
+    """Each documents question's cites are ids its tool returns: a notice's reason row, or a requirement passage
+    inside a criteria row, which the verifier keeps as returned this turn."""
+    import stand_in_agent
+
+    items = [question("rejected-bids-ke-nwwda-541055"), question("compare-criteria-ke-cwsb-224323")]
+    with engine_for(answer_benchmark.GATE) as engine:
+        agents = {item["id"]: stand_in_agent.for_question(item, engine, answer_benchmark.GATE) for item in items}
+
+    results = ask(engine_for, items, agents)
+
+    assert [(scored.id, scored.passed, scored.problems) for _, scored in results] == [
+        (item["id"], True, ()) for item in items]
