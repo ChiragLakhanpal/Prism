@@ -1207,7 +1207,8 @@ export const copy = {
   // The Projects sub-tabs (ticket 37; the 37 brief, section 9.1), shown only to World Bank staff.
   projectsTabs: {
     label: "Projects pages",
-    following: (count: string | null) => (count === null ? "Following" : `Following (${count})`),
+    // No count, so the label is the same on both pages and never grows while the list loads.
+    following: "Following",
     all: "All projects",
     announce: (name: string) => `Showing ${name}.`,
   },
@@ -1480,6 +1481,9 @@ export const copy = {
     announceOn: (name: string) => `You follow ${name} now. It is in Following, under Projects.`,
     announceOff: (name: string) => `You no longer follow ${name}.`,
     failedOn: "I couldn't save that just now. You don't follow this project yet.",
+    // When reading whether you follow the project failed: the state is unknown, so no button claims one.
+    unread: "I couldn't check whether you follow this project just now.",
+    retry: "Try again",
     failedOff: "I couldn't save that just now. You still follow this project.",
   },
 
@@ -1528,7 +1532,7 @@ export const copy = {
     ratingsNone: "I haven't read an ISR for this project.",
     noneAfter: "No activity in the latest plans is planned to finish after the closing date.",
     allRemoved: "I removed every sentence I wrote for this part. They are in the removed box above, with the reason for each.",
-    citedIn: (count: number) => (count === 1 ? "Cited in {parts}." : "Cited in {parts}."),
+    citedIn: "Cited in {parts}.",
     source: "Records from World Bank APIs, as of {date}.",
     writingParts: "The five parts I'm writing",
     reloadBody: "If you reloaded this page while I was writing, I stopped and saved nothing. Start again from Following.",
@@ -2543,6 +2547,9 @@ export const copy = {
       exportedOther: (author: string, date: string) => `Exported by ${author} on ${date}.`,
       discardedYou: (date: string) => `Discarded by you on ${date}.`,
       project: "{name} ({pid}).",
+      // A mission brief's row names its project in its title, so line 2 gives the P-code and the country (ticket 37).
+      projectCountry: "{pid}, {country}.",
+      projectOnly: "{pid}.",
       opened: (opened: string, total: string) => `You opened ${opened} of ${total} sources.`,
       empty: {
         to_check: "No drafts are waiting to be checked.",

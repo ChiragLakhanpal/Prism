@@ -119,6 +119,11 @@
        "kind": "text"
       },
       {
+       "key": "agency_id",
+       "value": "northern-water-works-development-agency",
+       "kind": "key"
+      },
+      {
        "key": "plan_date",
        "value": "2026-10-09",
        "kind": "date"
@@ -156,6 +161,11 @@
        "key": "implementing_agency",
        "value": "Coast Water Services Board",
        "kind": "text"
+      },
+      {
+       "key": "agency_id",
+       "value": "coast-water-services-board",
+       "kind": "key"
       },
       {
        "key": "plan_date",
@@ -197,6 +207,11 @@
        "kind": "text"
       },
       {
+       "key": "agency_id",
+       "value": "kilifi-mariakani-water-and-sewerage-company-ltd",
+       "kind": "key"
+      },
+      {
        "key": "plan_date",
        "value": "2025-03-19",
        "kind": "date"
@@ -234,6 +249,11 @@
        "key": "implementing_agency",
        "value": "Ministry of Water and Irrigation",
        "kind": "text"
+      },
+      {
+       "key": "agency_id",
+       "value": "ministry-of-water-and-irrigation",
+       "kind": "key"
       },
       {
        "key": "plan_date",
@@ -2554,6 +2574,11 @@
       "kind": "text"
      },
      {
+      "key": "agency_id",
+      "value": "northern-water-works-development-agency",
+      "kind": "key"
+     },
+     {
       "key": "plan_date",
       "value": "2026-10-09",
       "kind": "date"
@@ -2655,6 +2680,11 @@
       "key": "implementing_agency",
       "value": "Coast Water Services Board",
       "kind": "text"
+     },
+     {
+      "key": "agency_id",
+      "value": "coast-water-services-board",
+      "kind": "key"
      },
      {
       "key": "plan_date",

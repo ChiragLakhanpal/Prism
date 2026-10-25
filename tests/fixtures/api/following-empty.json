@@ -30,10 +30,10 @@
   },
   "plan_months": 12,
   "completion_passed_min_estimated_usd": "1000000.00",
-  "completion_passed_min_millions": "1.0",
+  "completion_passed_min_millions": "1",
   "actual_to_estimate_ratio": "2.0",
   "late_direct_min_usd": "1000000.00",
-  "late_direct_min_millions": "1.0",
+  "late_direct_min_millions": "1",
   "late_direct_months": 12,
   "closing_moves_min": 2,
   "restructured_levels": [
@@ -43,6 +43,15 @@
   "disbursement_max_percent": 50,
   "disbursement_months": 12
  },
+ "checks": 7,
+ "sources": [
+  "documents",
+  "projects",
+  "ida_credit_history",
+  "ibrd_loan_history",
+  "ida_credits",
+  "ibrd_loans"
+ ],
  "missing": [],
  "evidence": [],
  "track_record": null

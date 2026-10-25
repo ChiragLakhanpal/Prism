@@ -167,3 +167,13 @@ def test_the_mission_brief_records_hold_the_two_contracts_signed_since_isr_19_an
 def test_raising_the_needs_a_look_count_above_four_turns_p156634_to_watch_with_no_code_change(engine):
     assert signals(engine, thresholds=with_signals(look_min=5))["status"] == "watch"
     assert signals(engine, thresholds=with_signals(look_min=5, strong=["closing_moves"]))["status"] == "needs_a_look"
+
+
+def test_the_disbursement_signal_gives_the_closing_date_its_months_are_counted_to(engine):
+    """Made-up thresholds that make P156634's disbursement check fire (US$293.5 million of US$293.6 million paid out
+    is under a 100 percent share), so the line's months Num can say what it counted to, from the tool's values."""
+    result = signals(engine, thresholds=with_signals(disbursement_max_share=1.0))
+
+    values = fired(result)["disbursement"]["values"]
+    assert values["closing_date"] == TRUTH["closing-p156634-move-3"]["value"].isoformat()
+    assert values["months_left"] == 0

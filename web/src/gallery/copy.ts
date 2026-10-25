@@ -630,6 +630,7 @@ export const galleryCopy = {
     followOn: "Following",
     followFailed: "The save failed",
     followLoading: "Loading",
+    followUnread: "Reading whether you follow it failed",
     brief: "The mission brief's five parts, as the server wrote them on the fixture",
   },
   draftStates: {

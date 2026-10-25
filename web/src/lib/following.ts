@@ -100,13 +100,17 @@ export type Following = {
   missing: string[];
   evidence: EvidenceEvent[];
   track_record: TrackRecord | null;
+  // How many checks project_signals runs, and the sources it reads (config/tools.toml), for the page's words and
+  // the coverage line's link to Data readiness.
+  checks: number;
+  sources: string[];
 };
 
+// The order the track record lists the checks in; how many checks run, and the sources they read, are the server's
+// (Following's checks and sources).
 export const CHECK_ORDER: SignalKey[] = ["completion_passed", "above_estimate", "late_direct", "closing_moves", "restructured", "isr_lowered", "disbursement"];
 export const FOLDED: ReadonlySet<Status> = new Set(["no_signals", "closed", "pipeline", "dropped"]);
 export const FOLLOWING_HREF = "/projects/following";
-// The sources the checks read, for the coverage line's link to Data readiness (config/tools.toml, project_signals).
-export const SIGNAL_SOURCES = ["documents", "projects", "ida_credit_history", "ibrd_loan_history", "ida_credits", "ibrd_loans"];
 
 // Whether the viewer has the World Bank staff role, from /api/me (App.tsx sets it once per page load): null
 // while it loads.

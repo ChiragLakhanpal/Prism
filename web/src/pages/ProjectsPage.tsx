@@ -147,7 +147,7 @@ export function ProjectsPage() {
           <PageHeader title={copy.pages.projects.title} purpose={staff ? copy.pages.following.purpose : copy.pages.projects.purpose} />
         </div>
         {/* World Bank staff get the Projects sub-tabs, Following and All projects (ticket 37). */}
-        {staff && <ProjectsTabs following={false} count={null} />}
+        {staff && <ProjectsTabs following={false} />}
       </div>
       <section aria-labelledby={headingId} className="col-span-12 mt-8 @lg/page:mt-8" data-projects-page={load.status}>
         {/* With the sub-tabs showing, the selected one already names the list, so its heading is for screen readers. */}

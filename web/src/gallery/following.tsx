@@ -79,6 +79,9 @@ export function followingPage(): GalleryPage {
             <Labeled label={t.followLoading}>
               <FollowControl pid={PID} name={null} sample={{ following: null }} />
             </Labeled>
+            <Labeled label={t.followUnread}>
+              <FollowControl pid={PID} name={null} sample={{ following: null, unread: true }} />
+            </Labeled>
           </div>
         ),
       },

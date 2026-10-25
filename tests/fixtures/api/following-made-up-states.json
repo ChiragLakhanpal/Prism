@@ -541,37 +541,6 @@
   },
   {
    "project": {
-    "evidence_id": "strata.gold.project:P130164",
-    "public_from": "2023-08-01",
-    "project_id": "P130164",
-    "project_name": "Rajasthan Road Sector Modernization Project",
-    "country": "India",
-    "status": "closed",
-    "status_as_written": "Closed",
-    "closing_date": "2018-12-31",
-    "closing_kind": "closed",
-    "days_to_close": -2852
-   },
-   "status": "closed",
-   "rows": [],
-   "checks": [],
-   "counts": {
-    "signals": 0,
-    "strong": 0,
-    "ran": 0,
-    "checks": 7,
-    "not_ran": 7
-   },
-   "coverage": {
-    "matched": 0,
-    "used": 0,
-    "not_used": []
-   },
-   "following_since": "2026-10-23T14:01:00+00:00",
-   "mission_brief": null
-  },
-  {
-   "project": {
     "evidence_id": "strata.gold.project:P900002",
     "public_from": "2024-04-24",
     "project_id": "P900002",
@@ -653,6 +622,37 @@
   },
   {
    "project": {
+    "evidence_id": "strata.gold.project:P130164",
+    "public_from": "2023-08-01",
+    "project_id": "P130164",
+    "project_name": "Rajasthan Road Sector Modernization Project",
+    "country": "India",
+    "status": "closed",
+    "status_as_written": "Closed",
+    "closing_date": "2018-12-31",
+    "closing_kind": "closed",
+    "days_to_close": -2852
+   },
+   "status": "closed",
+   "rows": [],
+   "checks": [],
+   "counts": {
+    "signals": 0,
+    "strong": 0,
+    "ran": 0,
+    "checks": 7,
+    "not_ran": 7
+   },
+   "coverage": {
+    "matched": 0,
+    "used": 0,
+    "not_used": []
+   },
+   "following_since": "2026-10-23T14:01:00+00:00",
+   "mission_brief": null
+  },
+  {
+   "project": {
     "evidence_id": "strata.gold.project:P900004",
     "public_from": "2024-04-24",
     "project_id": "P900004",
@@ -709,10 +709,10 @@
   },
   "plan_months": 12,
   "completion_passed_min_estimated_usd": "1000000.00",
-  "completion_passed_min_millions": "1.0",
+  "completion_passed_min_millions": "1",
   "actual_to_estimate_ratio": "2.0",
   "late_direct_min_usd": "1000000.00",
-  "late_direct_min_millions": "1.0",
+  "late_direct_min_millions": "1",
   "late_direct_months": 12,
   "closing_moves_min": 2,
   "restructured_levels": [
@@ -722,6 +722,15 @@
   "disbursement_max_percent": 50,
   "disbursement_months": 12
  },
+ "checks": 7,
+ "sources": [
+  "documents",
+  "projects",
+  "ida_credit_history",
+  "ibrd_loan_history",
+  "ida_credits",
+  "ibrd_loans"
+ ],
  "missing": [],
  "evidence": [
   {

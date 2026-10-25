@@ -18,6 +18,7 @@ import { Button } from "./Button";
 import { Fill } from "./Fill";
 import { IdText } from "./ProjectId";
 import { NoteSentences, type OpenSource } from "./DraftNotes";
+import { TextLink } from "./TextLink";
 
 const words = copy.mission;
 const kindWords = copy.draft.kinds.mission_brief;
@@ -40,7 +41,14 @@ function tableOf(note: DraftNote): Table | null {
       key: row.evidence_id,
       cells: [
         { text: field(row, "implementing_agency") },
-        { text: <Fill template={words.planVersion} slots={{ date: table(field(row, "plan_date")) }} /> },
+        {
+          // The version's plan check (the 37 brief, section 7.3).
+          text: (
+            <TextLink href={`/projects/${row.source.project_id}/procurement/${field(row, "agency_id")}/${field(row, "plan_date")}`}>
+              <Fill template={words.planVersion} slots={{ date: table(field(row, "plan_date")) }} />
+            </TextLink>
+          ),
+        },
         { text: formatNumber(field(row, "activities")), numeric: true },
         { text: formatNumber(field(row, "needs_a_look")), numeric: true },
         { text: formatNumber(field(row, "watch")), numeric: true },
@@ -306,7 +314,7 @@ export function MissionBriefParts({ notes, evidence, numbers, opened, open, subj
 export function citedInParts(keys: string[]): ReactNode {
   const names = keys.map((key) => words.parts[key] ?? key);
   const joined = names.length <= 1 ? names.join("") : names.slice(0, -1).join(copy.following.partsJoin) + copy.following.partsTwo + names.at(-1);
-  return words.citedIn(names.length).replace("{parts}", joined);
+  return words.citedIn.replace("{parts}", joined);
 }
 
 export const partCount = (count: number) => formatCount(count);

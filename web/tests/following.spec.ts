@@ -61,7 +61,7 @@ test("P156634's row needs a look with the four signals of the Following wirefram
   const row = table.locator("[data-project-row=P156634]");
 
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Projects");
-  await expect(page.getByRole("navigation", { name: "Projects pages" }).getByRole("link", { name: "Following (2)" })).toHaveAttribute("aria-current", "page");
+  await expect(page.getByRole("navigation", { name: "Projects pages" }).getByRole("link", { name: "Following" })).toHaveAttribute("aria-current", "page");
   await expect(page.getByRole("heading", { level: 2, name: "You follow two projects. One needs a look and one has closed." })).toBeVisible();
   await expect(row.locator("[data-badge=needs-a-look]")).toHaveText("Needs a look");
   await expect(row.locator("[data-signal-count]")).toHaveText("4 signals");
@@ -201,12 +201,36 @@ test("a row's partial line names the plan window the thresholds file sets, never
 
 test("the Projects tab opens Following for World Bank staff, and All projects shows the sub-tabs", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
-  await serve(page, { "/api/projects": { body: await recorded("projects.json") } });
+  await serve(page, { "/api/projects": { body: await recorded("projects.json") }, "/api/following": { body: await recorded("following-p156634.json") } });
   await page.goto("/projects");
   await expect(page.locator("[data-projects-page=ready]")).toBeVisible();
 
   await expect(page.locator("[data-nav-bar] [data-nav-tab=projects]")).toHaveAttribute("href", FOLLOWING);
   await expect(page.getByRole("navigation", { name: "Projects pages" }).getByRole("link", { name: "All projects" })).toHaveAttribute("aria-current", "page");
+
+  // Choosing a sub-tab keeps focus on it, and a polite status says which page opened (the 37 brief, section 11.2).
+  await page.getByRole("navigation", { name: "Projects pages" }).getByRole("link", { name: "Following" }).click();
+  const chosen = page.getByRole("navigation", { name: "Projects pages" }).getByRole("link", { name: "Following" });
+  await expect(chosen).toHaveAttribute("aria-current", "page");
+  await expect(chosen).toBeFocused();
+  await expect(page.locator("[data-subtab-status]")).toHaveText("Showing Following.");
+});
+
+test("when reading whether you follow a project fails, the control says so and offers Try again, not a state", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await serve(page, {
+    "/api/projects/P156634": { body: await recorded("project-p156634.json") },
+    "/api/projects/P156634/summary": { body: await recorded("summary-p156634.json") },
+    "GET /api/projects/P156634/follow": { status: 503, body: '{"code":"data_service"}' },
+  });
+  await page.goto("/projects/P156634");
+  const follow = page.locator("[data-follow]");
+
+  await expect(follow.locator("[data-follow-unread]")).toHaveText("I couldn't check whether you follow this project just now.");
+  await expect(follow.getByRole("button", { name: "Follow this project" })).toHaveCount(0);
+  await page.route("**/api/projects/P156634/follow", async (route) => route.fulfill({ contentType: "application/json", body: await recorded("follow-on.json") }));
+  await follow.getByRole("button", { name: "Try again" }).click();
+  await expect(follow.getByText("You follow this project.")).toBeVisible();
 });
 
 test("Follow this project waits for the server, then says you follow it and offers Unfollow", async ({ page }) => {
@@ -271,6 +295,9 @@ test("each source of the brief says which record it is, and the disbursement tab
   await expect(page.locator("[data-brief-part=disbursement]")).toContainText(
     "The loans and credits data reports more disbursed and canceled than committed for this project.");
   await expect(page.getByText("I wrote each part from public records through October 23, 2026")).toBeVisible();
+  // Each latest plan links to that version's plan check.
+  await expect(page.locator("[data-brief-part=plans] [data-brief-view=table]").getByRole("link", { name: "Plan of Oct 9, 2026" })).toHaveAttribute(
+    "href", "/projects/P156634/procurement/northern-water-works-development-agency/2026-10-09");
 });
 
 test("on a phone, each block of the mission brief keeps its labels clear of their values", async ({ page }) => {

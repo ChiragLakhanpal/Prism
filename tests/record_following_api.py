@@ -182,7 +182,7 @@ def made_up(real: dict) -> dict[str, dict]:
                  ("restructured", 6, 3), ("isr_lowered", 11, 5), ("disbursement", 0, 0))}}
     return {
         "following-made-up-states.json": answer(
-            [strong, watch, unchecked, p130164, partly, pipeline], "Made up from following-p156634.json: a strong signal, "
+            [strong, watch, unchecked, partly, p130164, pipeline], "Made up from following-p156634.json: a strong signal, "
             "a Watch row, a Not checked row, a partly checked quiet row and a pipeline row, for layout and states only."),
         "following-made-up-many-quiet.json": answer(
             [p156634, *quiet], "Made up from following-p156634.json: ten quiet projects, for the fold only."),

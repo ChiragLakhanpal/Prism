@@ -1226,6 +1226,8 @@ class DraftKind:
     removed_box: str
     not_checked: tuple[str, ...]
     files: str
+    # Only viewers with the World Bank staff role may start one (ticket 37's mission brief).
+    staff_only: bool = False
 
 
 @dataclass(frozen=True)
@@ -1249,7 +1251,7 @@ def load_draft_kinds(path: Path = CONFIG_DIR / "drafts.toml") -> DraftKinds:
     for key, table in (data.get("kinds") or {}).items():
         entry = _Entry(path, f"kinds.{key}", table)
         entry.only({"writer", "agent", "word", "export", "csv", "columns", "holds", "sources_list", "removed_box",
-                    "not_checked", "files"})
+                    "not_checked", "files", "staff_only"})
         if not MODULE.fullmatch(entry.text("writer")):
             entry._fail("writer", "must name a module, such as strata.drafts.review_notes")
         if not FUNCTION.fullmatch(entry.text("word")):
@@ -1268,7 +1270,7 @@ def load_draft_kinds(path: Path = CONFIG_DIR / "drafts.toml") -> DraftKinds:
         kinds[key] = DraftKind(key, entry.text("writer"), entry.text("agent"), entry.text("word"),
                                entry.text("export"), entry.texts("csv"), entry.texts("columns"), entry.texts("holds"),
                                entry.boolean("sources_list"), entry.text("removed_box"), entry.texts("not_checked"),
-                               entry.text("files"))
+                               entry.text("files"), entry.boolean("staff_only") if "staff_only" in table else False)
     if not kinds:
         raise ConfigError(f"{path.name} defines no draft kind. Add a [kinds.<key>] table.")
     return DraftKinds(kinds, holds)

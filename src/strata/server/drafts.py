@@ -136,6 +136,8 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: DraftStore 
             return refused(422, "unknown_kind")
         if body.view != STAFF:
             return refused(403, "preview", capability="draft", copy="preview")
+        if kinds.kinds[body.kind].staff_only and not access.is_staff(viewer):
+            return refused(403, "not_staff")
         if store is None or engine_for is None:
             return JSONResponse({"code": "no_data_service"}, status_code=503)
         key = body.idempotency_key

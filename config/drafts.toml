@@ -32,6 +32,8 @@
 #   not_checked    its own "Not checked" clauses, keys of copy.checkLine.notCheckedClauses, which follow
 #                  the clauses of the checks that did not run and of the tools its writer read
 #   files          the stem of its files' names, filled from the draft's subject
+#   staff_only     true when only viewers with the World Bank staff role (config/roles.toml [staff]) may start
+#                  one; others get 403 not_staff. Leave it out for false.
 #
 # [holds.<key>]
 #   test           the function that says whether the hold applies to a draft in a view, as module:function
@@ -67,6 +69,7 @@ sources_list = true
 removed_box = "always"
 not_checked = ["writer_mission_brief"]
 files = "mission-brief-{project_id}-{date}"
+staff_only = true
 
 [holds.notChecked]
 test = "strata.drafts.holds:not_checked"

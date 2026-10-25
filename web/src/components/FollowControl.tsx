@@ -5,7 +5,8 @@
 //
 // A press shows the busy label "Saving" in the button at its own width, and the state changes only when the server
 // confirms it. Focus then moves to the other state's button and a polite status says what changed. On failure the
-// state stays, focus stays on the button, and an error line appears under the row. World Bank staff only: the
+// state stays, focus stays on the button, and an error line appears under the row. When reading the state fails, the
+// row says so with "Try again" and offers neither button. World Bank staff only: the
 // project page leaves the row out for everyone else and in both previews.
 import { useEffect, useId, useRef, useState } from "react";
 import { Check, CircleX, Plus } from "lucide-react";
@@ -21,10 +22,12 @@ export function FollowControl({ pid, name, sample }: {
   name: string | null;
   // For the design gallery: whether you follow it (null while it loads), with no request, and whether it is saving
   // or the last change failed.
-  sample?: { following: boolean | null; busy?: boolean; failed?: boolean };
+  sample?: { following: boolean | null; busy?: boolean; failed?: boolean; unread?: boolean };
 }) {
-  const start = sample ? (sample.following === null ? "loading" : sample.following ? "on" : "off") : "loading";
-  const [state, setState] = useState<"loading" | "off" | "on">(start);
+  const start = sample ? (sample.unread ? "unread" : sample.following === null ? "loading" : sample.following ? "on" : "off") : "loading";
+  // unread: reading whether you follow it failed, so no button claims a state until it is read again.
+  const [state, setState] = useState<"loading" | "off" | "on" | "unread">(start);
+  const [attempt, setAttempt] = useState(0);
   const [busy, setBusy] = useState(sample?.busy ?? false);
   const [failed, setFailed] = useState<"on" | "off" | null>(sample?.failed ? (sample.following ? "off" : "on") : null);
   const [said, setSaid] = useState("");
@@ -39,10 +42,10 @@ export function FollowControl({ pid, name, sample }: {
     const controller = new AbortController();
     getJson<{ following: boolean }>(path, { signal: controller.signal }).then(
       (answer) => setState(answer.following ? "on" : "off"),
-      () => !controller.signal.aborted && setState("off"),
+      () => !controller.signal.aborted && setState("unread"),
     );
     return () => controller.abort();
-  }, [path]);
+  }, [path, attempt]);
 
   useEffect(() => {
     if (!focusNext.current) return;
@@ -70,6 +73,17 @@ export function FollowControl({ pid, name, sample }: {
     <div className="mt-4" data-follow={state}>
       <div role="group" aria-label={words.label} aria-busy={busy || undefined} className="flex min-h-11 flex-wrap items-center gap-x-3 gap-y-2">
         {state === "loading" && <Skeleton className="h-11 w-[184px]" radius="rounded-pill" />}
+        {state === "unread" && (
+          <>
+            <p role="alert" className="flex items-start gap-1 text-small text-error" data-follow-unread>
+              <CircleX aria-hidden="true" className="size-4 shrink-0 text-error-icon" />
+              {words.unread}
+            </p>
+            <Button variant="ghost" onPage onClick={() => { setState("loading"); setAttempt(attempt + 1); }}>
+              {words.retry}
+            </Button>
+          </>
+        )}
         {state === "off" && (
           <Button ref={follow} variant="secondary" icon={Plus} loading={busy} busyLabel={words.busy} onClick={() => change("on")}>
             {words.button}

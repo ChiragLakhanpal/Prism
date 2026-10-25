@@ -44,7 +44,6 @@ import {
   metaTemplate,
   missingReasons,
   shortDate,
-  SIGNAL_SOURCES,
   statusDef,
   type FollowedProject,
   type Following,
@@ -78,17 +77,17 @@ export function FollowingPage({ search }: { search: string }) {
   }, [data]);
 
   // A viewer who cannot follow (a preview, or not World Bank staff) gets All projects' purpose, not Following's.
-  const header = (count: number | null, tabs = true, purpose: string = copy.pages.following.purpose) => (
+  const header = (tabs = true, purpose: string = copy.pages.following.purpose) => (
     <div className="col-span-12">
       <PageHeader title={copy.pages.following.title} purpose={purpose} />
-      {tabs && <ProjectsTabs following count={count} />}
+      {tabs && <ProjectsTabs following />}
     </div>
   );
 
   if (view !== "staff") {
     return (
       <div className="layout-grid" data-following-page="preview">
-        {header(null, false, copy.pages.projects.purpose)}
+        {header(false, copy.pages.projects.purpose)}
         <EightColumns className="col-span-12 mt-8">
           <EmptyState
             title={view === "piu" ? words.previewPiuTitle : words.previewPublicTitle}
@@ -101,7 +100,7 @@ export function FollowingPage({ search }: { search: string }) {
   if (load.status === "error" && load.error?.status === 403 && load.error.body.code === "not_staff") {
     return (
       <div className="layout-grid" data-following-page="not-staff">
-        {header(null, false, copy.pages.projects.purpose)}
+        {header(false, copy.pages.projects.purpose)}
         <EightColumns className="col-span-12 mt-8">
           <EmptyState title={words.notStaffTitle} body={words.notStaffBody} link={{ href: "/projects", text: words.notStaffLink }} />
         </EightColumns>
@@ -111,7 +110,7 @@ export function FollowingPage({ search }: { search: string }) {
   if (load.status === "error") {
     return (
       <div className="layout-grid" data-following-page="error">
-        {header(null)}
+        {header()}
         <EightColumns className="col-span-12 mt-8">
           <h2 className="sr-only">{words.heading}</h2>
           <LoadError error={load.error} message={words.error} permission={words.permission} onRetry={retry} retrying={load.retrying} attempt={load.attempt} />
@@ -122,7 +121,7 @@ export function FollowingPage({ search }: { search: string }) {
   if (!data) {
     return (
       <div className="layout-grid" data-following-page="loading" aria-busy="true">
-        {header(null)}
+        {header()}
         <div className="col-span-12 mt-8">
           <p role="status" className="sr-only">
             {words.loading}
@@ -134,7 +133,7 @@ export function FollowingPage({ search }: { search: string }) {
   }
   return (
     <div className="layout-grid" data-following-page="ready">
-      {header(data.counts.total)}
+      {header()}
       {said && (
         <div className="col-span-12 mt-6 @md/page:col-span-8">
           <Alert state="info" live="status">
@@ -171,7 +170,7 @@ export function FollowingBody({ data }: { data: Following }) {
   const events = useStore(known);
   const shown = data.projects.filter((entry) => !FOLDED.has(entry.status));
   const folded = data.projects.filter((entry) => FOLDED.has(entry.status));
-  const checks = formatCount(CHECK_ORDER.length);
+  const checks = formatCount(data.checks);
   // Markers are numbered once per page, in the rows' order, counting the folded rows, so a number never changes
   // when the fold opens.
   const numbers = useMemo(() => {
@@ -209,13 +208,13 @@ export function FollowingBody({ data }: { data: Following }) {
             {counts.fully === 0 ? words.coverageNone : (
               <Fill template={words.coverage} slots={{ k: <Num value={counts.fully} />, n: <Num value={counts.checked} />, m: <Num count={counts.partly} /> }} />
             )}{" "}
-            <TextLink href={dataReadinessHref(SIGNAL_SOURCES, "project_signals")}>{words.coverageLink}</TextLink>
+            <TextLink href={dataReadinessHref(data.sources, "project_signals")}>{words.coverageLink}</TextLink>
           </p>
         )}
         {/* The two definitions that matter without columns move above the list (the 37 brief, section 3.3). */}
         <div className="mt-6 flex max-w-[72ch] flex-col gap-1 text-caption text-ink-muted @xl/page:hidden" data-list-definitions>
           <p>
-            <StatusTerm thresholds={data.thresholds} track={data.track_record} />
+            <StatusTerm thresholds={data.thresholds} track={data.track_record} checks={data.checks} />
             {words.headerJoin}
             {statusDef(data.thresholds)}
             {words.defEnd}
@@ -237,7 +236,7 @@ export function FollowingBody({ data }: { data: Following }) {
             <caption className="sr-only">{words.tableCaption}</caption>
             <thead className="bg-surface-2">
               <tr>
-                <HeaderCell className="w-[13rem]" label={<StatusTerm thresholds={data.thresholds} track={data.track_record} />} def={statusDef(data.thresholds)} />
+                <HeaderCell className="w-[13rem]" label={<StatusTerm thresholds={data.thresholds} track={data.track_record} checks={data.checks} />} def={statusDef(data.thresholds)} />
                 <HeaderCell className="w-[16rem]" label={words.cols.project.label} def={words.cols.project.def} />
                 <HeaderCell label={words.cols.signals.label} def={words.cols.signals.def} />
                 <HeaderCell className="w-[15rem]" label={words.cols.next.label} def={data.past ? words.cols.next.defAsOf : words.cols.next.def} defId={nextDefId} />
@@ -311,7 +310,7 @@ function HeaderCell({ label, def, className, defId }: { label: ReactNode; def: s
 }
 
 // "Status", which opens the full rules, the strong checks and the track record's status sentence.
-function StatusTerm({ thresholds, track }: { thresholds: Thresholds; track: Following["track_record"] }) {
+function StatusTerm({ thresholds, track, checks }: { thresholds: Thresholds; track: Following["track_record"]; checks: number }) {
   const look = formatCount(thresholds.look_min);
   const inSentence = (keys: string[]) => keys.map((key, index) => (index === 0 ? copy.signals.check[key].name : copy.signals.checkInSentence(copy.signals.check[key].name)));
   const strong = thresholds.strong;
@@ -324,7 +323,7 @@ function StatusTerm({ thresholds, track }: { thresholds: Thresholds; track: Foll
     : words.statusDefinition.strongNoneMixed;
   return (
     <DefinitionWindow label={words.statusDefinition.title} title={words.statusDefinition.title} triggerClassName="inline-flex min-h-6 items-center">
-      <p>{words.statusDefinition.body(look, formatCount(CHECK_ORDER.length))}</p>
+      <p>{words.statusDefinition.body(look, formatCount(checks))}</p>
       <p className="mt-2">{strong.length ? words.statusDefinition.strong(joinedNames) : strongNone}</p>
       <p className="mt-2">{track ? <StatusLead track={track} /> : copy.track.none}</p>
       <p className="mt-2">
@@ -378,7 +377,7 @@ function ProjectCell({ entry }: { entry: FollowedProject }) {
 }
 
 function SignalsCell({ entry, numbers, events, seen, data }: RowProps) {
-  const checks = formatCount(CHECK_ORDER.length);
+  const checks = formatCount(data.checks);
   const reasons = missingReasons(entry);
   // The plan window is the thresholds file's [signals].plan_months, as the route sent it.
   const reasonText = reasons.map((reason) => (words.missing[reason] ?? reason).replace("{months}", formatCount(data.thresholds.plan_months)));
@@ -416,7 +415,7 @@ function SignalsCell({ entry, numbers, events, seen, data }: RowProps) {
       <ul aria-label={words.signalsLabel(entry.project.project_name)} className="flex flex-col gap-2">
         {entry.rows.map((signal) => {
           const id = markerRecord(signal);
-          return <SignalLine key={signal.check} signal={signal} n={id ? numbers.get(id) : undefined} event={id ? events[id] : undefined} opened={id ? seen.has(id) : false} />;
+          return <SignalLine key={signal.check} signal={signal} asOf={data.as_of} n={id ? numbers.get(id) : undefined} event={id ? events[id] : undefined} opened={id ? seen.has(id) : false} />;
         })}
       </ul>
       {partial}
@@ -566,7 +565,7 @@ function TrackRecordSection({ data }: { data: Following }) {
   const [open, setOpen] = useState(false);
   const checksId = useId();
   const track = data.track_record;
-  const checks = formatCount(CHECK_ORDER.length);
+  const checks = formatCount(data.checks);
   const thresholds = data.thresholds;
   const cell = (counts: TrackCounts | undefined) =>
     !track || !counts ? (

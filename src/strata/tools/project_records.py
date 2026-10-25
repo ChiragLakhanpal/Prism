@@ -98,6 +98,8 @@ def _plans(call: Call, project: dict, record_agencies: list[str]) -> tuple[list[
         rows.append(_record(plan["evidence_id"], plan["public_from"], "plans", "plans", project["project_id"],
                             plan["plan_date"], plan["implementing_agency"],
                             [("implementing_agency", plan["implementing_agency"], "text"),
+                             # The agency's id in links, for the page's link to this version's plan check.
+                             ("agency_id", plan_check.agency_id(plan["implementing_agency"]), "key"),
                              ("plan_date", plan["plan_date"], "date"), ("activities", counts["activities"], "count"),
                              ("needs_a_look", counts["needs_a_look"], "count"), ("watch", counts["watch"], "count")]))
         for row in result["rows"]:

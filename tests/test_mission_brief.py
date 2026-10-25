@@ -143,7 +143,8 @@ def written_by(case: str, fixture_db, tmp_path) -> dict:
            "X-Forwarded-Access-Token": "token-for-ana-only"}
     written = load_cases(WRITER_CASES)[case]
     app = create_app(engine_for=reading, drafts=DraftStore(lambda: DuckDBEngine.open(state_db)),
-                     writers=lambda kind: ScriptedAgent(written), access=Access(load_roles(), StaticGroups({})),
+                     writers=lambda kind: ScriptedAgent(written),
+                     access=Access(load_roles(), StaticGroups({"4021@1984": ["users"]})),
                      today=lambda: dt.date(2026, 10, 23), new_draft_id=lambda: "draft-0001")
 
     async def go():

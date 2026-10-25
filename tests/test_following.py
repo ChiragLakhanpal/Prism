@@ -110,3 +110,22 @@ def test_a_plan_signals_record_shows_the_fields_that_set_off_its_check_highlight
     marked, _ = highlighted("strata.silver.plan_rows:40122770/KE-CWSB-567630-CW-DIR")
     assert marked == {"estimated_amount_usd": TRUTH["plan-cwsb-567630-estimated"].replace(",", ""),
                       "first_plan_date": TRUTH["plan-cwsb-567630-first-listed"].isoformat()}
+
+
+def test_following_says_how_many_checks_ran_and_which_sources_they_read_from_the_registries(app):
+    """The page names "the seven checks" and links to Data readiness for the checks' sources: both come from the
+    server, from project_signals' checks and config/tools.toml, so the browser keeps no copy of either."""
+    from strata.config import load_tools
+
+    answer = call(app, "GET", "/api/following", BEN).json()
+
+    assert answer["checks"] == 7
+    assert answer["sources"] == list(load_tools()["project_signals"].sources)
+    # The completion check's amount, as a sentence writes a whole million (DESIGN.md rule 11).
+    assert answer["thresholds"]["completion_passed_min_millions"] == "1"
+
+
+def test_a_viewer_without_the_world_bank_staff_role_cannot_start_a_mission_brief(app):
+    started = call(app, "POST", "/api/drafts", CY, json={"kind": "mission_brief", "project_id": "P156634"})
+
+    assert (started.status_code, started.json()["code"]) == (403, "not_staff")

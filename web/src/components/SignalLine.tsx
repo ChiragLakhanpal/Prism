@@ -41,8 +41,8 @@ function tooltip(lead: string, items: ReactNode[]): ReactNode {
   );
 }
 
-// The sentence of one signal, without its marker.
-function sentence(signal: Signal): ReactNode {
+// The sentence of one signal, without its marker. asOf: the date the checks ran as of, which months left count from.
+function sentence(signal: Signal, asOf: string): ReactNode {
   const items = signal.items;
   const first = items[0] ?? {};
   const many = signal.count > 1;
@@ -117,7 +117,7 @@ function sentence(signal: Signal): ReactNode {
         <Fill template={words.line.disbursement.one} slots={{
           date: day(values.as_of_date),
           pct: <Num written={String(values.percent)} check={{ tooltip: words.num.percent(values.disbursed_millions, values.available_millions, values.percent_exact) }} />,
-          months: <Num count={values.months_left} />,
+          months: <Num count={values.months_left} check={{ tooltip: words.num.months(day(values.closing_date), day(asOf)) }} />,
         }} />
       );
     }
@@ -130,11 +130,11 @@ export function signalSourceName(signal: Signal): string {
   return template.replace("{date}", signal.source.date ? formatDate(signal.source.date) : "");
 }
 
-export function SignalLine({ signal, n, event, opened }: { signal: Signal; n: number | undefined; event?: EvidenceEvent; opened: boolean }) {
+export function SignalLine({ signal, asOf, n, event, opened }: { signal: Signal; asOf: string; n: number | undefined; event?: EvidenceEvent; opened: boolean }) {
   const id = markerRecord(signal);
   return (
     <li data-signal={signal.check} className="max-w-[72ch] text-small text-ink">
-      {sentence(signal)}
+      {sentence(signal, asOf)}
       {id && n !== undefined && (
         <CitationMarker
           n={n}

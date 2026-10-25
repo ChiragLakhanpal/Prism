@@ -36,9 +36,9 @@ from strata.server import evidence as evidence_routes
 from strata.server.access import Access, is_author
 from strata.server.engines import EngineFor
 from strata.server.viewer_sql import data_through
-from strata.config import load_thresholds
+from strata.config import load_thresholds, load_tools
 from strata.tools import registry
-from strata.tools.project_signals import thresholds_used
+from strata.tools.project_signals import CHECKS, thresholds_used
 
 log = logging.getLogger("strata.server.following")
 SQL = Path(__file__).resolve().parent / "sql" / "following"
@@ -208,10 +208,9 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: FollowStore
             return refused(503, "data_service", trace_id=ref)
 
     def known(viewer: Viewer, project_id: str) -> bool:
+        """Whether Strata holds a record of the project, read as the viewer, without running the checks."""
         with engine_for(viewer) as engine:
-            result = registry.call("project_signals", {"project_id": project_id},
-                                   registry.Context(engine, viewer, STAFF, today()))
-        return result["project"] is not None
+            return bool(engine.run(_query("known"), {"project_id": project_id, "as_of": today()}).rows)
 
     @app.get("/api/projects/{project_id}/follow")
     def follow_state(project_id: str, view: str = STAFF, viewer: Viewer = Depends(current_viewer)):
@@ -292,6 +291,9 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: FollowStore
                                  # Never after the date the checks ran as of (ADR 0002).
                                  "data_through": _iso_day(min(through, as_of) if through else None),
                                  "projects": entries, "counts": _counts(entries), "thresholds": thresholds,
+                                 # How many checks run, and the sources they read, for the page's words and its
+                                 # Data readiness link: one definition each (CLAUDE.md rule 4).
+                                 "checks": len(CHECKS), "sources": list(load_tools()["project_signals"].sources),
                                  "missing": sources, "evidence": list(events.values()), "track_record": track},
                                 headers={"Cache-Control": "no-store"})
         return guarded("the projects the viewer follows", read)

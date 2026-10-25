@@ -119,6 +119,12 @@ def millions(usd: Decimal) -> str:
     return f"{(usd / MILLION).quantize(TENTH, ROUND_HALF_UP):,}"
 
 
+def threshold_millions(usd: Decimal) -> str:
+    """A threshold in US$ millions as a rule states it, with no needless decimal: 1000000 is 1, 2500000 is 2.5."""
+    written = millions(usd)
+    return written[:-2] if written.endswith(".0") else written
+
+
 @dataclass(frozen=True)
 class Limits:
     look_min: int
@@ -152,10 +158,10 @@ class Limits:
         return {"look_min": self.look_min, "strong": list(self.strong), "strong_from": dict(self.strong_from),
                 "plan_months": self.plan_months,
                 "completion_passed_min_estimated_usd": plan["completion_passed_min_estimated_usd"],
-                "completion_passed_min_millions": millions(Decimal(plan["completion_passed_min_estimated_usd"])),
+                "completion_passed_min_millions": threshold_millions(Decimal(plan["completion_passed_min_estimated_usd"])),
                 "actual_to_estimate_ratio": plan["actual_to_estimate_ratio"],
                 "late_direct_min_usd": str(self.late_direct_min_usd.quantize(CENT)),
-                "late_direct_min_millions": millions(self.late_direct_min_usd),
+                "late_direct_min_millions": threshold_millions(self.late_direct_min_usd),
                 "late_direct_months": self.late_direct_months, "closing_moves_min": self.closing_moves_min,
                 "restructured_levels": list(self.restructured_levels), "restructured_months": self.restructured_months,
                 "disbursement_max_percent": int((self.disbursement_max_share * 100).quantize(Decimal(1), ROUND_HALF_UP)),
@@ -431,7 +437,7 @@ def project_signals(call: Call, project_id: str) -> dict:
                 "percent_exact": str((share * 100).quantize(TENTH, ROUND_HALF_UP)),
                 "disbursed_usd": str(disbursed.quantize(CENT)), "disbursed_millions": millions(disbursed),
                 "available_usd": str(available.quantize(CENT)), "available_millions": millions(available),
-                "months_left": left, "as_of_date": _iso(snapshot)}
+                "months_left": left, "closing_date": project["closing_date"], "as_of_date": _iso(snapshot)}
             sources["disbursement"] = {"source_key": "loans", "project_id": project_id, "document_id": None,
                                        "date": _iso(snapshot)}
 
