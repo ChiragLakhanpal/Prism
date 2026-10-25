@@ -65,7 +65,17 @@ def no_pages(source, engine):
 WORKING = {"fetch_by_watermark", "bronze_to_gold", "detect_disagreements", "measure_data_readiness"}
 
 
+def with_a_plan_read(engine, project_id="P156634"):
+    """One Procurement Plan version of the project, as the plan reader leaves it. detect_disagreements rebuilds
+    the assertions of the projects with documents or a plan read, and a local run over the recorded pages
+    reads neither, so the row brings the project's contracts into the run."""
+    engine.run("INSERT INTO strata.silver.plan_versions VALUES (:document_id, :project_id, 'NWWDA', DATE '2026-10-09', "
+               "DATE '2026-10-09', 1, NULL, true, 12, 6, 'latest', 'text', 'pdf', DATE '2026-10-09')",
+               {"document_id": "40132287", "project_id": project_id})
+
+
 def test_a_run_of_the_job_writes_one_pipeline_run_row_per_task_in_plan_order(engine):
+    with_a_plan_read(engine)
     run_id = nightly.run_locally(engine)  # over the recorded fixture
 
     rows = runs(engine, run_id)
@@ -79,7 +89,7 @@ def test_a_run_of_the_job_writes_one_pipeline_run_row_per_task_in_plan_order(eng
 
 def test_the_disagreements_task_reads_the_records_assertions_and_asks_the_live_model_only_on_a_live_run(
         engine, monkeypatch):
-    """detect_disagreements rebuilds the assertions and disagreements of every project with records. A run
+    """detect_disagreements rebuilds the assertions and disagreements of every project with documents or a plan. A run
     that fetches from the live APIs asks the live batch model. When the job has no Azure OpenAI keys there is
     none, and the run replays the answers bronze holds from the batch role's deployment, so it keeps what the
     live model read. Any other run uses the recorded answers."""
@@ -94,6 +104,7 @@ def test_the_disagreements_task_reads_the_records_assertions_and_asks_the_live_m
 
     monkeypatch.setattr("strata.knowledge.batch.from_environment", lambda: asked.append("live"))
     monkeypatch.setattr("strata.knowledge.batch.HeldAnswers", Replays)
+    with_a_plan_read(engine)
     nightly.run_locally(engine)
 
     assert asked == [] and replayed == []
@@ -170,15 +181,22 @@ def days_of_a_year():
     return [start + dt.timedelta(days=n) for n in range(366)]
 
 
-def test_the_window_starts_at_five_in_the_morning_in_washington_and_lasts_two_and_a_half_hours():
+def test_the_window_starts_at_three_in_the_morning_in_washington_and_lasts_two_and_a_half_hours():
     window = nightly.window()
 
-    assert (window.start, window.timezone, window.minutes) == (dt.time(5, 0), WASHINGTON, 150)
+    assert (window.start, window.timezone, window.minutes) == (dt.time(3, 0), WASHINGTON, 150)
 
 
-@pytest.mark.parametrize("hour", [18, 19, 20, 21, 22, 23, 0])
+def test_the_window_misses_fairshare_s_job_at_six_in_chicago_even_if_it_ran_four_hours():
+    """fairshare's job runs at 06:00 in Chicago, 07:00 in Washington; its longest run took 21 minutes."""
+    fairshare = schedule.Window("fairshare nightly", dt.time(6, 0), "America/Chicago", 240)
+
+    assert schedule.overlapping_days(nightly.window(), fairshare, days_of_a_year()) == []
+
+
+@pytest.mark.parametrize("hour", [18, 19, 20, 21, 22])
 def test_the_window_misses_a_four_hour_job_that_starts_any_evening_hour_in_washington(hour):
-    """Midnight included: on the night the clocks go forward, four hours from midnight end at 05:00."""
+    """23:00 is left out: on the night the clocks go forward, four hours from 23:00 end at 04:00."""
     other = schedule.Window("an evening job", dt.time(hour, 0), WASHINGTON, 240)
 
     assert schedule.overlapping_days(nightly.window(), other, days_of_a_year()) == []
@@ -205,12 +223,12 @@ def test_a_job_that_runs_into_the_window_is_caught():
 def test_midnight_utc_moves_against_washington_time_and_the_check_follows_it():
     """Midnight UTC is 20:00 in Washington in summer and 19:00 in winter; check both sides of the change.
 
-    A nine-and-a-half-hour job from midnight UTC ends at 05:30 in summer, inside the window, and
-    at 04:30 in winter, before it.
+    A seven-and-a-half-hour job from midnight UTC ends at 03:30 in summer, inside the window, and
+    at 02:30 in winter, before it. A seven-hour job ends at 03:00 in summer, as the window opens.
     """
     days = [dt.date(2026, 10, 30), dt.date(2026, 11, 2)]
     seven = schedule.Window("a seven-hour job at midnight UTC", dt.time(0, 0), "UTC", 7 * 60)
-    longer = schedule.Window("a nine-and-a-half-hour job at midnight UTC", dt.time(0, 0), "UTC", 570)
+    longer = schedule.Window("a seven-and-a-half-hour job at midnight UTC", dt.time(0, 0), "UTC", 450)
 
     assert schedule.overlapping_days(nightly.window(), seven, days) == []
     assert schedule.overlapping_days(nightly.window(), longer, days) == [dt.date(2026, 10, 30)]

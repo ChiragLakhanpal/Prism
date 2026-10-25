@@ -701,8 +701,9 @@ def from_row(row: dict) -> Assertion:
 
 
 def default_projects(engine: Engine) -> list[str]:
-    """The projects whose documents the passage reader read, and those with records: a contract, a notice, a
-    Procurement Plan or an IEG rating."""
+    """The projects whose documents the passage reader read, and those with a Procurement Plan read. A project
+    known only from a contract, a notice or an IEG rating is left out: the run reads each project with its own
+    queries, and the workspace holds about 16,000 such projects (sql/assertions/projects.sql has the numbers)."""
     return [row["project_id"] for row in _rows(engine, _sql("projects.sql")) if row["project_id"]]
 
 

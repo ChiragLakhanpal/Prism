@@ -95,6 +95,10 @@ It worked if both runs exit 0. The first run lists the catalog, the four schemas
 
 **Two runs on October 24, 2026 (orchestrator), both failed.** Run 282381151628775 failed on every task before any work: splink 5.0.0 pulls in a pyarrow that serverless environment version 2 (numpy 1.23) cannot import, so `bundle/nightly.yml` now uses version 4. Run 344940414051390 then failed in `fetch_by_watermark` after 20 minutes, twice over: the notices search API answers 400 to an offset above 100,000 ("Value must be between 0 and 100000. Parameter name: $skip") and reports 424,135 notices. Bronze kept awards (296 pages), awards_fy2001_2016 (147), ieg_ratings (13), ida_credits (12), ibrd_loans (10), ida_credit_history (178), ibrd_loan_history (39) and notices (237). The source now names `max_offset = 100000` in `config/sources.toml`, where the fetch stops, with a limitation line for the readiness page. **Third run 556837544068999 (12:01 to 14:05):** `fetch_by_watermark` succeeded in 26 minutes, `bronze_to_gold` in 87, and the seven empty tasks passed, but `measure_data_readiness` failed twice: `storage.measure` reads `databricks.yml` and `bundle/*.yml` through `strata.lakehouse.bundle.load`, and the bundle synced only `src` and `config`. The sync paths now include `bundle` and `databricks.yml`. **Fourth run 855462503837945 (14:12 to 14:19):** the fetch succeeded in 8 minutes, then `bronze_to_gold` failed on the gold MERGE for notices (DELTA_MULTIPLE_SOURCE_ROW_MATCHING_TARGET_ROW_IN_MERGE): three country names carry two codes in `strata.gold.country` (Caribbean 6R and CB, Serbia RS and YF, World 1W and 99), and the notice and contract queries looked a country up by name, so 943 notices had two rows, which the third run had inserted into the empty table without complaint. The notice now takes its project's code first and a name gives one code at most; `gold.sync` refuses a source whose keys repeat. The 1,886 doubled rows were deleted from `strata.gold.notice` by hand (99,557 distinct notices stayed). The fifth run is recorded below when it finishes.
 
+**Fifth run on October 24, 2026 (orchestrator), 882867588506257, from 21:32 UTC:** `fetch_by_watermark` 9 minutes, `bronze_to_gold` 5 minutes with the gold fix (the notices MERGE took one row per country name), `parse_and_embed`, `sync_index`, `relink` and `propose_lessons` seconds each, all succeeded. `detect_disagreements` then ran 94 minutes without finishing and was cancelled by hand at 23:22 UTC, so `measure_data_readiness`, `score` and `refresh_drafts` were skipped. It was not stuck: the task rebuilds the assertions of every project with a document, a contract, a notice, a Procurement Plan or an IEG rating, with about seven warehouse queries per project (the project's dates, its key dates, its ISR ratings, its records, its IEG ratings and its reports), and the workspace holds 15,933 such projects (12,628 from the IEG ratings dataset, 8,228 with a contract, 2,071 with a notice, 1 with a plan, 0 with documents), where the fixture had 8. The query history showed the task's queries at about 0.4 seconds each, which is about eleven hours against the job's 150-minute stop.
+
+Fix: `src/strata/knowledge/sql/assertions/projects.sql` now lists only the projects whose documents the passage reader read or whose Procurement Plan was read, which are the projects whose ISR, text and plan assertions exist. Projects known only from a contract, a notice or an IEG rating are left out; `tests/test_assertions.py` checks the list on the fixture and `tests/test_nightly.py` seeds one plan version so a local run still has a project to rebuild. Decision for the user: the contract-against-notice signing disagreements of record-only projects are no longer found. Finding them again at this scale needs the per-project queries rewritten to run once for every project (set-based), with the Statement Execution API's 25 MiB inline result cap in mind; that is a follow-up for ticket 20 or 43. The sixth run is recorded below when it finishes.
+
 The merger parked this step on October 23, 2026, after merge commit 01a7286. Run it after step 1, because the deploy makes the job and `strata.ops.pipeline_runs`.
 
 Run this from the main checkout:
@@ -123,9 +127,19 @@ Run this from the main checkout:
 
 If the name of fairshare's job does not contain "fairshare", add `--fairshare-job <name>`. It worked if the command exits 0 and the `bundle:schedules` block in `bundle/README.md` records both jobs with "- Overlap: none" (criterion 3). Then commit `bundle/README.md` on `build/strata`. If the check finds that the two windows meet, change the hour in `bundle/nightly.yml` and run step 1 again.
 
+**Ran on October 24, 2026 (orchestrator):** the first run exited 1: fairshare's job runs daily at 06:00 America/Chicago (longest of 19 runs 21 minutes) and Strata's at 05:00 America/New_York with a 150-minute stop, so the two met on 366 of 366 days. The hour in `bundle/nightly.yml` moved to 03:00 (02:00 does not exist on the night the clocks go forward), the deploy was run again ("Updated jobs.nightly"), and the second run exited 0 with "Overlap: none. With these durations the two jobs share no minute on any day from October 24, 2026 to October 24, 2027, and the same holds if Strata's job runs to its limit." `bundle/README.md`'s window section, `bundle/nightly.yml`'s comment and `tests/test_nightly.py`'s window tests now say 03:00 to 05:30; the evening-hour test runs 18:00 to 22:00 (four hours from 23:00 end at 04:00 on the night the clocks go forward) and a new test checks fairshare's window itself. Passed.
+
 ## Ticket 08, step 1 of 2: read P156634's Procurement Plans on the warehouse
 
 **First run on October 24, 2026 (orchestrator):** it stopped with "Parameterized query's parameters are too large: the combined size of parameters is 4911047, exceeding the limit of 1048576 characters." The warehouse engine sent 100 layout pages in one INSERT. `WarehouseEngine.insert_rows` now also splits a chunk when its values pass 900,000 characters (`tests/test_engine.py`). The pages parsed before the stop stayed in bronze, and the second run is recorded below when it finishes.
+
+**Second run on October 24, 2026 (orchestrator):** it stopped with the same message, this time from a single Procurement Plan's text, not a chunk of pages: one version of P156634 has 4,910,702 characters of text, and the Statement Execution API takes a statement's parameters only up to 1,048,576 characters. `WarehouseEngine.insert_rows` now raises `RowTooLarge` for such a row, and `fetch_documents` in `src/strata/lakehouse/plans.py` skips the document, counts it in `Fetching.not_kept` and `Report.not_kept`, and the run prints "N plans were fetched but not kept ..." at the end (`tests/test_plans.py`). The skipped version counts as listed but not read, so `plan_versions_read` stops short of its denominator.
+
+**Third run on October 24, 2026 (orchestrator):** exit 0, from 18:24 to 22:29 UTC. It printed "Run plans-P156634-20261024T182429249392 read 231 plan versions of P156634 and parsed 500 of the 695 pages waiting for ai_parse_document, under a cap of 500 pages a day. 149 versions have STEP rows." and "It stopped at the cap, at page 6 of document 30374121.", so `pages_read_route_b` at 500 of 695 is allowed. The other measures: `plan_versions_read` 231 of 240, `pages_read_route_a` 672 of 672, `step_rows_with_reference` 1284 of 4555, `latest_activities_with_step_rows` 81 of 1214, `latest_activities_with_confirmed_first_listing_read` 126 of 1214. Five versions were fetched but not kept (33211875, 33218784, 33212519, 33217573 and 34106903, from 4.9 million to 90.7 million characters of text each), so `plan_versions_read` is 9 short: those 5 and 4 more that the run did not reach. On the warehouse `strata.ops.parse_runs` holds the run's row with `pages_parsed` 500, and `strata.ops.data_readiness` holds its measures. Real `ai_parse_document` output had the shape the tests expect. The reader also listed about 120 column names it did not know, most of them a STEP section heading joined to a column name ("WORKS Market Approach") or an OCR misspelling ("Prequalification (V/N)"); those are left for a follow-up. The second same-day run is recorded below when it finishes.
+
+**Fourth run, the same UTC day, on October 24, 2026 (orchestrator):** exit 0, from 22:30 to 23:18 UTC. It printed "Run plans-P156634-20261024T223020001503 read 231 plan versions of P156634 and parsed 0 of the 195 pages waiting for ai_parse_document, under a cap of 500 pages a day." and the same six measures as the third run; `strata.ops.parse_runs` holds its row with `pages_parsed` 0 and `pages_failed` 0 (criterion 5). Passed. Two things to carry: the 195 pages left wait for a later UTC day, and they share the 500-page cap with the document reader (ticket 18's step 3); and the five oversized versions were fetched again from the World Bank's host, about 190 million characters, because a version that is not kept has no bronze row to skip it by, so a run spends most of its time on them (follow-up).
+
+Decision for the user: the five oversized texts. Keeping them needs either the text split into parts across rows, a Delta write that does not go through statement parameters (a volume file plus COPY INTO), or a per-version character cap. `read_versions` also selects every text in one statement, and inline results are capped at 25 MiB, so a split alone does not settle it.
 
 The merger parked this step on October 23, 2026, after merge commit eba87ed. It needs the Databricks keys in `.env`. Run it after ticket 04's step 1, because the deploy makes the plan tables and the volume `strata.bronze.files`. Run it after ticket 03's step 2 too, because day-one test 3 decides the layout parser. If test 3 failed in `docs/day-one-results.md`, stop here: Strata has an adapter only for `ai_parse_document`, so a Content Understanding adapter must first join `PARSERS` in `src/strata/reader/layout.py`.
 
@@ -158,6 +172,8 @@ Run this query in the workspace's SQL editor, on the SQL warehouse:
 Since ticket 17 merged, the job asks for these three sources for every country at once, and such a page has no `country_code`, so the query no longer filters on Kenya. Kenya's records come in those pages.
 
 It worked if it returns three rows, `awards`, `notices` and `projects`, each with one page or more (criterion 8).
+
+**Ran on October 24, 2026 (orchestrator):** three rows: awards 296, notices 253, projects 283. Passed.
 
 ## Ticket 07, step 2 of 3: the link rate in strata.ops equals a direct count over gold
 
@@ -378,6 +394,8 @@ Run this in the workspace's SQL editor:
 
 It worked if it returns three rows: 2024-04-30 after 2022-10-31, reported 2022-11-30; 2025-10-31 after 2024-04-30, reported 2024-04-30; and 2026-10-31 after 2025-10-31, reported 2025-11-30 (criterion 4). These match the fixture's loan history for both credits, IDA60290 and IDA60300. If the history now reports a newer month with another closing date, a fourth row after 2025-11-30 is not a failure.
 
+**Ran on October 24, 2026 (orchestrator):** exactly the three rows: 2024-04-30 after 2022-10-31 reported 2022-11-30; 2025-10-31 after 2024-04-30 reported 2024-04-30; 2026-10-31 after 2025-10-31 reported 2025-11-30. Passed.
+
 ## Ticket 17, step 3 of 3: a second night adds no pages it should not, and every count still holds
 
 The merger parked this step on October 23, 2026, after merge commit f5c933d. Run it after step 1, on the next night or later.
@@ -493,6 +511,8 @@ Run this in the workspace's SQL editor:
 
 It worked if the newest row for each project carries kind `linked`. Rows written before this merge keep `read_well`, and that is not a failure: the page reads only the newest row for each source, subject and measure, by `measured_at`, so the new run corrects what it shows with no backfill.
 
+**Ran on October 24, 2026 (orchestrator):** the query returned one row, P156634, kind `linked`, count 1284, denominator 4555, measured at 2026-10-24T22:29:16Z, written by ticket 08's third run. Passed.
+
 ## Ticket 16, step 4 of 4: the dashboard's Data readiness page beside /data on the same date
 
 The merger parked this step on October 24, 2026, after merge commit 69e97c8. Run it after steps 1 to 3 and after the App is deployed from 69e97c8 or later with `uv run --script ops/app/deploy_app.py --env-file .env` (ticket 06's step 1).
@@ -560,6 +580,8 @@ Then run these in the workspace's SQL editor:
 
 It worked if the job run exits 0 with its line "Run <id> wrote one row per task to strata.ops.pipeline_runs, in the bundle's order." That shows serverless installed `splink==5.0.0` for `bronze_to_gold`. The first query must return rows for both `step_supplier_id` and `name`, and the second must return rows. Until ticket 43 passes `AZURE_OPENAI_ENDPOINT` and `AZURE_OPENAI_API_KEY` to `bronze_to_gold`, every pair in the uncertain middle reads route `person` with `no_model`. That is expected, and step 5 checks the model.
 
+**Ran on October 24, 2026 (orchestrator):** the job's third run (556837544068999) and fifth run (882867588506257) ran `bronze_to_gold` with `splink==5.0.0` on environment version 4 (ticket 04's step 2 has the story). `strata.silver.supplier_resolution` by `resolved_on`: step_supplier_id 69,912, name 49,182, individual_consultant 38,146, unmatched 71,216, no_name 15. `strata.ops.supplier_pairs` by route and reason: auto_merge 83,689, kept_apart 103,699, person with no_model 277,042, person with two_step_supplier_ids 33. The uncertain middle reads `person` with `no_model`, as expected until ticket 43. Passed. The ALTER TABLE lines were not needed (the catalog was first made today), and ticket 19's step 4 records the judge recording.
+
 If step 1 ran the ALTER TABLE lines, finish them now:
 
     ALTER TABLE strata.gold.contract_supplier ALTER COLUMN contract_id SET NOT NULL
@@ -622,6 +644,8 @@ Run this in the workspace's SQL editor:
     DESCRIBE strata.gold.passage
 
 It worked if it shows no `notice_url`, and the gold sync MERGE in step 2 succeeds. If it does list `notice_url`, stop and tell the orchestrator before step 2. CLAUDE.md rule 5 changes a table only through `CREATE OR REPLACE`, and the guard blocks a statement that removes a column, so taking it out needs its own reviewed step.
+
+**Ran on October 24, 2026 (orchestrator):** `DESCRIBE strata.gold.passage` lists 42 columns and no `notice_url`. The catalog was first created today, and every deploy came from 2cef566 or later, after a8d605c, so the five tables this merge added were made with their new columns. Passed.
 
 ## Ticket 18, step 2 of 5: read the document slice on the warehouse
 
@@ -796,6 +820,8 @@ The merger parked this step on October 24, 2026, after merge commit da1ab20. All
 
 Run it after these steps. Ticket 07's step 1 fills the contracts and notices. Ticket 17's step 1 fills the IEG ratings dataset. Ticket 18's step 2 reads the documents into passages and fills `strata.silver.isr_ratings`. Then deploy again from da1ab20 or later with ticket 04's command, `uv run --script ops/bundle/deploy.py --env-file .env`. The deploy on October 24 came before this merge, and this merge adds four tables: `strata.bronze.batch_answers`, `strata.gold.assertion`, `strata.gold.disagreement` and `strata.ops.assertion_rejections`. The deploy must list those four as new, and it changes no existing table.
 
+**Deploy part ran on October 24, 2026 (orchestrator):** ticket 29's step 1 deploy listed the four tables as new and changed no existing table. The `batch_live.py` run itself stays parked on decision 2 (gpt-5.4-nano is Global Standard, not Global Batch).
+
 The batch role's deployment is gpt-5.4-nano (`config/models.toml`, `[roles.batch]`). Day-one test 8 found it deployed as GlobalStandard, and Azure's Batch API takes only a Global Batch (or Data Zone Batch) deployment. Until decision 2 in `docs/STATUS.md` is answered, expect this step to stop with exit 2 and the error Azure gives. Do not change `config/models.toml` to get past it; tell the orchestrator.
 
 Run this from the main checkout:
@@ -849,6 +875,8 @@ Run this from the main checkout, twice:
 
 It worked if both runs exit 0. The first run lists these ten tables as new and changes no existing table: `strata.bronze.lesson_batches`; `strata.silver.lesson_proposals`, `strata.silver.lesson_evidence` and `strata.silver.lesson_restatements`; `strata.ops.lesson_versions`, `strata.ops.lesson_review_items`, `strata.ops.lesson_review_acts`, `strata.ops.lesson_sources`, `strata.ops.lesson_review_notes` and `strata.ops.lesson_uses`. It also lists the new job "strata lesson cross-check" (`bundle/lessons.yml`, at 06:00 New York time on the second day of January, April, July and October). The second run prints "No changes."
 
+**Ran on October 24, 2026 (orchestrator):** both runs exited 0, with `--fairshare-catalog workspace`. The first listed the ten lesson tables as new, and ticket 20's four (`strata.bronze.batch_answers`, `strata.gold.assertion`, `strata.gold.disagreement` and `strata.ops.assertion_rejections`), and changed no existing table. The job "strata lesson cross-check" (849400525894800) was not listed as new because the plain `databricks bundle deploy` runs of ticket 04's step 2 had already made it from 65293cd. The second run printed "No changes." Both printed "workspace's catalog lists the same before and after the deploy: two schemas, three tables and one volume." Passed.
+
 ## Ticket 29, step 2 of 5: the Foundry lesson review writer matches the repo
 
 The merger parked this step on October 24, 2026, after merge commit 65293cd. It needs the four Foundry keys that ticket 14's step 1 names.
@@ -858,6 +886,8 @@ Run this from the main checkout, twice:
     uv run --script ops/agent/sync.py --env-file .env --agent lesson_review_writer
 
 It worked if the first run creates or updates the Foundry agent `lesson_review_writer` from `config/agents.toml` and `lesson_review_writer.md`, and the second run reports no difference.
+
+**Ran on October 24, 2026 (orchestrator):** the first run printed the instructions diff and "I made version 1 of strata-lesson-review-writer, which matches the repo."; the second printed "Foundry's agent strata-lesson-review-writer, version 1, matches the repo: there is no difference in its model, instructions, tools, description or guardrail (strata-guardrail)." Both exited 0. Passed.
 
 ## Ticket 29, step 3 of 5: redeploy the App, which writes the lesson review record as itself
 
