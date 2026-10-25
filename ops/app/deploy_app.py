@@ -33,7 +33,7 @@ It needs npm, which builds the web app. It does these things, in order:
    runs, opened sources, drafts, decisions and labels on supplier pairs, and the lesson review record,
    and nothing more: USE CATALOG on strata, USE SCHEMA on strata.ops, SELECT and MODIFY on
    strata.ops.usage_events, agent_runs, evidence_opened, drafts, draft_states, draft_exports,
-   draft_files, follows, ticket 23's disagreement_choices and draft_fields, SELECT on its view
+   draft_files, follows, ticket 23's disagreement_choices and draft_fields, ticket 44's exposures, SELECT on its view
    draft_fields_latest, SELECT on strata.ops.supplier_pairs, SELECT and MODIFY on
    strata.ops.supplier_review_decisions and strata.ops.supplier_pair_labels, and SELECT and MODIFY on
    ticket 29's lesson_review_acts, lesson_review_items, lesson_versions, lesson_sources and
@@ -181,9 +181,9 @@ def grants(principal: str) -> list[str]:
     # follows (ticket 37): the projects each World Bank staff viewer follows, kept as the app. disagreement_choices
     # (ticket 23): the report each person kept on a disagreement, for an answer or a draft, which the drafts' hold
     # reads too (ticket 36). draft_fields (ticket 36): the values people set on a draft's fields, read through its
-    # latest-value view.
+    # latest-value view. exposures (ticket 44): each past range or time estimate the app showed in the staff view.
     tables = ("usage_events", "agent_runs", "evidence_opened", "drafts", "draft_states", "draft_exports",
-              "draft_files", "follows", "disagreement_choices", "draft_fields")
+              "draft_files", "follows", "disagreement_choices", "draft_fields", "exposures")
     return [f"GRANT USE CATALOG ON CATALOG strata TO `{principal}`",
             f"GRANT USE SCHEMA ON SCHEMA strata.ops TO `{principal}`",
             *[f"GRANT SELECT, MODIFY ON TABLE strata.ops.{table} TO `{principal}`" for table in tables],
