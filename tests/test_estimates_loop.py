@@ -60,12 +60,12 @@ def watched(fixture_db, tmp_path_factory):
     14 days after the planned signing date the plan then gave, and KE-NWWDA-229129-CW-RFB one 15 days after."""
     path = tmp_path_factory.mktemp("estimates-loop") / "fixture.duckdb"
     shutil.copy(fixture_db, path)
-    chosen = dataclasses.replace(load_slice(), onboarded=(Onboarded("KE", dt.date(2026, 1, 1)),))
+    kenya_onboarded = dataclasses.replace(load_slice(), onboarded=(Onboarded("KE", dt.date(2026, 1, 1)),))
     with DuckDBEngine.open(path) as engine:
         engine.insert_rows(exposures.TABLE, exposures.COLUMNS, [
             offered(DEMO, DEMO_PLAN["date"] - DAY, DEMO_PLANNED + WITHIN),
             offered(SIGNED_2022, FIRST_PLAN["date"] - DAY, SIGNED_2022_PLANNED + WITHIN + DAY)])
-        watch.measure(engine, WATCHED, "watch-1", RAN_AT, chosen=chosen)
+        watch.measure(engine, WATCHED, "watch-1", RAN_AT, the_slice=kenya_onboarded)
     return path
 
 
@@ -212,6 +212,47 @@ def test_a_retrain_is_due_each_quarter_and_after_a_raised_trigger(seeded):
         watch.decide(engine, SEP, "watch-sep", at(SEP))
         after_a_trigger = watch.retrain_due(engine, at(SEP).date())
     assert (in_march, in_april, after_the_retrain, after_a_trigger) == (None, "quarterly", None, "trigger")
+
+
+@pytest.mark.parametrize("cases, expected", [(20, (20, 20, 10.5, None)), (19, (19, 19, None, "too_few_cases"))])
+def test_plan_accuracy_is_the_median_days_between_planned_and_actual_signing_from_20_cases(seeded, cases, expected):
+    """Hand-made plan rows, in a country not yet using Strata and never offered a date. Against the June 1, 2026 its
+    plan gave, the packages signed 1 to 19 days early or late, in turn, and the twentieth 100 days late: the median of
+    the 20 is 10.5 days (the mean would be 14.5), and 19 are too few for one."""
+    from strata.tools.check_plan import SIGNING
+
+    published, planned = dt.date(2026, 1, 15), dt.date(2026, 6, 1)
+    references = [f"KE-M-{n}" for n in range(cases)]
+    with DuckDBEngine.open(seeded) as engine:
+        insert(engine, "strata.silver.plan_versions", [{
+            "document_id": "plan-m", "project_id": "P900044", "implementing_agency": None, "plan_date": published,
+            "disclosed_on": published, "series_order": 1, "previous_document_id": None, "is_latest": True,
+            "pdf_pages": 1, "route_b_pages": 0, "parse_reason": None, "text_url": "plan-m.txt", "pdf_url": "plan-m.pdf",
+            "public_from": published}])
+        insert(engine, "strata.silver.plan_steps", [{
+            "document_id": "plan-m", "project_id": "P900044", "activity_reference_no": reference, "step": SIGNING,
+            "step_order": 1, "planned_on": planned, "actual_on": None, "public_from": published}
+            for reference in references])
+        apart = [(n + 1) * (-1 if n % 2 else 1) for n in range(19)] + [100]
+        insert(engine, "strata.gold.package", [package(reference, dt.date(2026, 2, 1), planned + days * DAY)
+                                               for reference, days in zip(references, apart)])
+        watch.measure(engine, SEP, "watch-m", at(SEP))  # after the last of them signed, on September 9
+        [found] = rows(engine, "SELECT count, denominator, value, reason FROM strata.ops.estimates_watch "
+                               "WHERE measure = 'plan_accuracy' AND segment = 'other/not_yet'")
+    assert (found["count"], found["denominator"], found["value"], found["reason"]) == expected
+
+
+def test_a_promotion_is_no_retrain_so_the_quarter_counts_from_when_the_challenger_was_trained(seeded):
+    with DuckDBEngine.open(seeded) as engine:
+        # Version 2 was trained and registered on February 1, 2026, and promoted on May 1: the promotion keeps it
+        # again under the champion alias, which is no new training.
+        insert(engine, "strata.gold.time_estimate_model", [{
+            "model": MODEL, "version": 2, "alias": alias, "training_through": dt.date(2026, 2, 1),
+            "booster_json": "{}", "state_json": "{}", "mlflow_run_id": None,
+            "registered_at": dt.datetime.combine(day, dt.time(6), dt.UTC), "public_from": day}
+            for alias, day in (("challenger", dt.date(2026, 2, 1)), ("champion", dt.date(2026, 5, 1)))])
+        due = watch.retrain_due(engine, dt.date(2026, 5, 15))
+    assert due == "quarterly"
 
 
 def test_coverage_under_20_finished_packages_raises_nothing(seeded):

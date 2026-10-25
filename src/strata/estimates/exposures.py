@@ -42,6 +42,7 @@ from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass
 from importlib import resources
 
+from strata.estimates.past_range import as_date
 from strata.lakehouse.engine import Engine
 
 log = logging.getLogger("strata.estimates.exposures")
@@ -109,16 +110,6 @@ def stated(cited: Iterable[str], calls: Iterable[Mapping], fact: Callable[[str],
     return [(tool, reference, result) for (tool, reference), result in found.items()]
 
 
-def _date(value) -> dt.date | None:
-    if value is None or value == "":
-        return None
-    if isinstance(value, dt.datetime):
-        return value.date()
-    if isinstance(value, dt.date):
-        return value
-    return dt.date.fromisoformat(str(value)[:10])
-
-
 def package_facts(engine: Engine, step_reference: str, as_of: dt.date) -> dict:
     """The package's project and country from its newest public plan row, and the day its offered dates count from:
     its first specific procurement notice when public by as_of, else that plan row's planned notice date."""
@@ -126,8 +117,8 @@ def package_facts(engine: Engine, step_reference: str, as_of: dt.date) -> dict:
 
     package = read_package(engine, step_reference, as_of) or {}
     result = engine.run(_sql("first_notice"), {"step_reference": step_reference, "as_of": as_of})
-    notice = _date(result.rows[0][1]) if result.rows else None
-    planned = _date(package.get("planned_notice_on"))
+    notice = as_date(result.rows[0][1]) if result.rows else None
+    planned = as_date(package.get("planned_notice_on"))
     start, start_from = (notice, "first_notice") if notice else (planned, "planned_notice") if planned else (None, None)
     return {"project_id": package.get("project_id"), "country_code": package.get("country_code"),
             "start_date": start, "start_from": start_from}

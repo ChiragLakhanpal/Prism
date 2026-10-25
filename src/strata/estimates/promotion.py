@@ -40,6 +40,7 @@ from fractions import Fraction
 from importlib import resources
 
 from strata.config import Roles, Thresholds, load_roles, load_thresholds
+from strata.estimates.past_range import as_date
 from strata.lakehouse.engine import Engine
 
 log = logging.getLogger("strata.estimates.promotion")
@@ -63,16 +64,6 @@ def _sql(name: str) -> str:
 def _rows(engine: Engine, name: str, **params) -> list[dict]:
     result = engine.run(_sql(name), params)
     return [dict(zip(result.columns, row)) for row in result.rows]
-
-
-def _date(value) -> dt.date | None:
-    if value is None or value == "":
-        return None
-    if isinstance(value, dt.datetime):
-        return value.date()
-    if isinstance(value, dt.date):
-        return value
-    return dt.date.fromisoformat(str(value)[:10])
 
 
 class Refused(Exception):
@@ -126,14 +117,21 @@ def sign_off(engine: Engine, roles: Roles, email: str, model: str, version: int,
 
 
 def sign_off_check(engine: Engine, roles: Roles, model: str, version: int) -> dict:
-    """Who signed off in each role and still holds it. The lead is the first one who is not the model owner who
-    signed."""
+    """Who signed off in each role and still holds it: the first model owner who signed with a lead who is a
+    different person, oldest first. With no such pair, the first model owner and the first lead who is not them."""
     given = _rows(engine, "sign_offs", model=model, version=int(version))
-    owner = next((row["signed_by"] for row in given
-                  if row["role"] == "model_owner" and roles.signs_off_as(row["signed_by"], "model_owner")), None)
-    lead = next((row["signed_by"] for row in given if row["role"] == "lead" and row["signed_by"] != owner
-                 and roles.signs_off_as(row["signed_by"], "lead")), None)
-    return {"model_owner": owner, "lead": lead}
+
+    def signed(role: str) -> list[str]:
+        return list(dict.fromkeys(row["signed_by"] for row in given
+                                  if row["role"] == role and roles.signs_off_as(row["signed_by"], role)))
+
+    owners, leads = signed("model_owner"), signed("lead")
+    for owner in owners:
+        lead = next((person for person in leads if person != owner), None)
+        if lead is not None:
+            return {"model_owner": owner, "lead": lead}
+    owner = owners[0] if owners else None
+    return {"model_owner": owner, "lead": next((person for person in leads if person != owner), None)}
 
 
 # ── The backtest, each edition, and the shadow quarter ──────────────────
@@ -184,7 +182,7 @@ def shadow_check(engine: Engine, model: str, challenger: int, champion: int | No
                  settings: Settings) -> tuple[bool, dict]:
     from strata.tools.project_signals import months_after
 
-    started = _date(_rows(engine, "shadow_start", model=model, version=int(challenger))[0]["started_on"])
+    started = as_date(_rows(engine, "shadow_start", model=model, version=int(challenger))[0]["started_on"])
     if started is None or champion is None:
         return False, {"started_on": None, "packages": 0}
     long_enough = months_after(started, settings.shadow_months) <= today
@@ -192,7 +190,7 @@ def shadow_check(engine: Engine, model: str, challenger: int, champion: int | No
                   start=started, as_of=today)
     errors = {"challenger": [], "champion": []}
     for row in pairs:
-        days = (_date(row["contract_signed_on"]) - _date(row["first_notice_date"])).days
+        days = (as_date(row["contract_signed_on"]) - as_date(row["first_notice_date"])).days
         errors["challenger"].append(abs(days - int(row["challenger_q50_days"])))
         errors["champion"].append(abs(days - int(row["champion_q50_days"])))
     mine = float(statistics.median(errors["challenger"])) if pairs else None

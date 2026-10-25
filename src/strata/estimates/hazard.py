@@ -15,7 +15,7 @@ abstains (too_few_periods, one_outcome).
   with a loan history into strata.ops.hazard_scores.
 - compare() is the replay harness's model-backtest adapter for it (the spec's seam 5): on each of the signals' track
   record dates it freezes Strata at that date, runs project_signals and the model trained then on every project the
-  track record counts, lets the model flag as many projects as the signals did (Needs a look or Watch), and counts the
+  track record counts, lets the model pick as many projects as the signals did (Needs a look or Watch), and counts the
   projects each caught among those whose closing date then moved later. The model beats the signals only with at
   least track_record_min projects, more caught, and McNemar's exact test on the discordant projects below
   estimates_loop.hazard_beats_alpha. The counts go to strata.ops.evaluation_result (scorer hazard_vs_signals) and
@@ -46,7 +46,7 @@ SEGMENT_KIND, SEGMENT = "replay", "hazard"
 TABLE = "strata.ops.hazard_scores"
 COLUMNS = ("project_id", "run_id", "scored_on", "hazard", "abstention", "model", "features", "scored_at", "public_from")
 CAP_YEARS = 5.0
-FLAGGING = ("needs_a_look", "watch")  # the statuses that flag a project for a look
+LOOK_STATUSES = ("needs_a_look", "watch")  # the statuses that pick a project out for a look
 
 
 def _sql(name: str) -> str:
@@ -139,6 +139,8 @@ class HazardModel:
 
     def chance(self, values: dict) -> float:
         margin = sum(weight * value for weight, value in zip(self.weights, _vector(values)))
+        if margin < 0:  # the same sigmoid, written so a large margin either way never overflows
+            return math.exp(margin) / (1.0 + math.exp(margin))
         return 1.0 / (1.0 + math.exp(-margin))
 
 
@@ -220,29 +222,29 @@ class HazardVsSignals:
                 moved = any(day < as_date(row["reported_on"]) <= later
                             for row in replay.outcomes.rows(EXTENSIONS, project_id=pid))
                 chance = model.chance(values) if isinstance(model, HazardModel) else None
-                entries.append({"project": pid, "flagged": status in FLAGGING, "chance": chance, "extended": moved})
+                entries.append({"project": pid, "picked": status in LOOK_STATUSES, "chance": chance, "extended": moved})
             used.append(day.isoformat())
             if not isinstance(model, HazardModel):
                 without_model.append({"date": day.isoformat(), "reason": model})
-            budget = sum(entry["flagged"] for entry in entries)
+            budget = sum(entry["picked"] for entry in entries)
             ranked = sorted((entry for entry in entries if entry["chance"] is not None),
                             key=lambda entry: (-entry["chance"], entry["project"]))
             chosen = {entry["project"] for entry in ranked[:budget]}
             for entry in entries:
                 by_model = entry["project"] in chosen
                 totals["cohort"] += 1
-                totals["flagged"] += entry["flagged"]
+                totals["signals_picked"] += entry["picked"]
                 totals["extended"] += entry["extended"]
                 if entry["extended"]:
-                    totals["signals_caught"] += entry["flagged"]
+                    totals["signals_caught"] += entry["picked"]
                     totals["hazard_caught"] += by_model
-                    totals["signals_only"] += entry["flagged"] and not by_model
-                    totals["hazard_only"] += by_model and not entry["flagged"]
+                    totals["signals_only"] += entry["picked"] and not by_model
+                    totals["hazard_only"] += by_model and not entry["picked"]
         p_value = mcnemar(totals["signals_only"], totals["hazard_only"])
         beats = (totals["cohort"] >= self.settings.least and totals["hazard_caught"] > totals["signals_caught"]
                  and p_value < self.settings.alpha)
         scores = [Score(measure, totals[measure]) for measure in
-                  ("cohort", "flagged", "extended", "signals_caught", "hazard_caught", "signals_only", "hazard_only")]
+                  ("cohort", "signals_picked", "extended", "signals_caught", "hazard_caught", "signals_only", "hazard_only")]
         scores += [Score("mcnemar_p", round(p_value, 6)), Score("beats", int(beats)),
                    Score("window_months", self.settings.window_months), Score("min_projects", self.settings.least),
                    Score("dates", text=json.dumps(used)), Score("dates_without_model", text=json.dumps(without_model))]

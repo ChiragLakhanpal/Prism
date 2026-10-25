@@ -831,12 +831,14 @@ error_trail_share = 0.10
 # (Bonferroni), for any input in drift_inputs (columns of strata.gold.package). Source: none in PLAN.md; the 1
 # percent level and these three inputs are starting values for the model owner to confirm.
 drift_alpha = 0.01
+# A column not listed yet must also be added to INPUTS in src/strata/estimates/watch.py and to the SELECT in
+# src/strata/estimates/sql/loop/input_mix.sql, which read only the columns named there.
 drift_inputs = ["procurement_category", "procurement_method", "review_type"]
 # A challenger scores in shadow beside the champion for this many months before it may be promoted, and the time
 # estimate is retrained this often. Source: docs/PLAN.md section 11 ("retrained quarterly", "a quarter in shadow").
 shadow_quarter_months = 3
 retrain_every_months = 3
-# The hazard model beats the fixed signals only when, flagging as many projects as the signals did on each replay
+# The hazard model beats the fixed signals only when, picking as many projects as the signals did on each replay
 # date, it caught more later closing-date extensions and McNemar's exact test on the discordant projects gives a
 # p-value below this. It shares the signals' replay dates, follow-up window and track_record_min ([signals]).
 # Source: none; the usual 5 percent level, as hindsight.mcnemar_alpha, a starting value for the owner to confirm.

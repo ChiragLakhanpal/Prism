@@ -44,7 +44,7 @@ from fractions import Fraction
 from importlib import resources
 
 from strata.config import Edition, Editions, Slice, Thresholds, load_slice, load_thresholds
-from strata.estimates.past_range import months
+from strata.estimates.past_range import as_date, months
 from strata.lakehouse.engine import Engine
 
 WATCH_TABLE = "strata.ops.estimates_watch"
@@ -77,16 +77,6 @@ def _rows(engine: Engine, name: str, **params) -> list[dict]:
     return [dict(zip(result.columns, row)) for row in result.rows]
 
 
-def _date(value) -> dt.date | None:
-    if value is None or value == "":
-        return None
-    if isinstance(value, dt.datetime):
-        return value.date()
-    if isinstance(value, dt.date):
-        return value
-    return dt.date.fromisoformat(str(value)[:10])
-
-
 @dataclass(frozen=True)
 class Settings:
     """The watch's settings, from config/thresholds.toml's [estimates_loop]."""
@@ -116,7 +106,7 @@ class Settings:
 
 # ── Plan rows and the dates Strata offered ──────────────────────────────
 
-def marked_rows(engine: Engine, month: dt.date, settings: Settings, chosen: Slice) -> list[dict]:
+def marked_rows(engine: Engine, month: dt.date, settings: Settings, the_slice: Slice) -> list[dict]:
     """Every plan row public by month, each with the nearest date an earlier exposure of its package offered (or
     none), whether it is dated within the window of it, its country's onboarding and its days from plan."""
     from strata.tools.check_plan import SIGNING
@@ -126,12 +116,12 @@ def marked_rows(engine: Engine, month: dt.date, settings: Settings, chosen: Slic
         for column in ("offered_middle_on", "offered_eight_in_ten_on"):
             if exposure[column] is not None:
                 offers[exposure["step_reference"]].append({"exposure_id": exposure["exposure_id"],
-                                                           "exposed_on": _date(exposure["exposed_on"]),
-                                                           "offered_on": _date(exposure[column])})
+                                                           "exposed_on": as_date(exposure["exposed_on"]),
+                                                           "offered_on": as_date(exposure[column])})
     found = []
     for row in _rows(engine, "plan_rows", as_of=month, signed_step=SIGNING):
-        planned, published = _date(row["planned_signing_on"]), _date(row["published_on"])
-        signed, notice = _date(row["contract_signed_on"]), _date(row["first_notice_date"])
+        planned, published = as_date(row["planned_signing_on"]), as_date(row["published_on"])
+        signed, notice = as_date(row["contract_signed_on"]), as_date(row["first_notice_date"])
         earlier = [offer for offer in offers.get(row["step_reference"], []) if offer["exposed_on"] < published]
         nearest = min(earlier, key=lambda offer: (abs((planned - offer["offered_on"]).days), offer["exposed_on"],
                                                   offer["exposure_id"]), default=None)
@@ -139,7 +129,7 @@ def marked_rows(engine: Engine, month: dt.date, settings: Settings, chosen: Slic
         found.append({**row, "planned_signing_on": planned, "published_on": published, "contract_signed_on": signed,
                       "first_notice_date": notice, "offer": nearest, "days_from_offered": apart,
                       "anchored": apart is not None and apart <= settings.within_days,
-                      "using_strata": chosen.using_strata(row["country_code"], published),
+                      "using_strata": the_slice.using_strata(row["country_code"], published),
                       "days_from_plan": None if signed is None else abs((signed - planned).days),
                       "cycle_days": None if signed is None or notice is None or signed < notice
                       else (signed - notice).days})
@@ -179,10 +169,10 @@ def plan_measures(run_id: str, month: dt.date, marked: list[dict], settings: Set
                                          len(segment), settings, measured_at, {"unit": "months"}))
     after = [row for row in marked if row["offer"] is not None]
     start = month.replace(day=1)
-    for segment, chosen in (("all", after), ("published_in_month", [row for row in after
-                                                                   if start <= row["published_on"] <= month])):
-        found.append(_watch_row(run_id, month, "anchored_rows", segment, sum(row["anchored"] for row in chosen),
-                                len(chosen), None, None, None, measured_at))
+    for segment, counted in (("all", after), ("published_in_month", [row for row in after
+                                                                    if start <= row["published_on"] <= month])):
+        found.append(_watch_row(run_id, month, "anchored_rows", segment, sum(row["anchored"] for row in counted),
+                                len(counted), None, None, None, measured_at))
     return found
 
 
@@ -224,7 +214,7 @@ def finished_measures(engine: Engine, run_id: str, month: dt.date, settings: Set
     inside = 0
     errors: list[tuple[float, float]] = []
     for row in given:
-        notice, signed = _date(row["first_notice_date"]), _date(row["contract_signed_on"])
+        notice, signed = as_date(row["first_notice_date"]), as_date(row["contract_signed_on"])
         days = (signed - notice).days
         inside += days <= int(row["q80_days"])
         past = Reader(engine, notice, thresholds).call("find_comparables", step_reference=row["step_reference"])
@@ -304,10 +294,10 @@ def mix_measures(engine: Engine, run_id: str, month: dt.date, settings: Settings
         if held is None:
             found.append(_watch_row(run_id, month, "input_mix", name, None, None, None, None, "no_model", measured_at))
             continue
-        trained = _date(held["training_through"])
+        trained = as_date(held["training_through"])
         learned, recent = defaultdict(int), defaultdict(int)
         for row in packages:
-            notice, value = _date(row["first_notice_date"]), row[name]
+            notice, value = as_date(row["first_notice_date"]), row[name]
             if value is None:
                 continue
             if notice < trained:
@@ -329,12 +319,12 @@ def mix_measures(engine: Engine, run_id: str, month: dt.date, settings: Settings
 # ── The watch ────────────────────────────────────────────────────────────
 
 def measure(engine: Engine, month: dt.date, run_id: str, measured_at: dt.datetime, *,
-            thresholds: Thresholds | None = None, chosen: Slice | None = None) -> int:
+            thresholds: Thresholds | None = None, the_slice: Slice | None = None) -> int:
     """Measure one month, as of its last day, and append the rows. Returns how many it wrote."""
     thresholds = thresholds or load_thresholds()
     settings = Settings.read(thresholds)
-    chosen = chosen or load_slice()
-    marked = marked_rows(engine, month, settings, chosen)
+    the_slice = the_slice or load_slice()
+    marked = marked_rows(engine, month, settings, the_slice)
     marks = [_mark_row(run_id, month, row, measured_at) for row in marked if row["offer"] is not None]
     measures = (plan_measures(run_id, month, marked, settings, measured_at)
                 + finished_measures(engine, run_id, month, settings, thresholds, measured_at)
@@ -394,7 +384,7 @@ def triggered(series: dict[dt.date, dict[tuple[str, str], dict]], month: dt.date
 def _series(engine: Engine, month: dt.date) -> dict[dt.date, dict[tuple[str, str], dict]]:
     series: dict[dt.date, dict[tuple[str, str], dict]] = defaultdict(dict)
     for row in _rows(engine, "watched", month=month):
-        series[_date(row["month"])][(row["measure"], row["segment"])] = {**row, "month": _date(row["month"]).isoformat()}
+        series[as_date(row["month"])][(row["measure"], row["segment"])] = {**row, "month": as_date(row["month"]).isoformat()}
     return series
 
 
@@ -466,11 +456,11 @@ def decide(engine: Engine, month: dt.date, run_id: str, raised_at: dt.datetime, 
 
 
 def watch_month(engine: Engine, month: dt.date, run_id: str, at: dt.datetime, *,
-                thresholds: Thresholds | None = None, chosen: Slice | None = None,
+                thresholds: Thresholds | None = None, the_slice: Slice | None = None,
                 editions: Editions | None = None) -> int:
     """Measure one month and raise the retrains it calls for. Returns the rows written."""
     thresholds = thresholds or load_thresholds()
-    written = measure(engine, month, run_id, at, thresholds=thresholds, chosen=chosen)
+    written = measure(engine, month, run_id, at, thresholds=thresholds, the_slice=the_slice)
     return written + decide(engine, month, run_id, at, thresholds=thresholds, editions=editions)
 
 
@@ -482,7 +472,7 @@ def months_to_watch(engine: Engine, today: dt.date) -> list[dt.date]:
     """The months not watched yet, up to the last whole month before today: each month after the newest one
     watched, or only the last whole month when none was."""
     last = today.replace(day=1) - dt.timedelta(days=1)
-    held = _date(engine.run(LAST_WATCHED).rows[0][0])
+    held = as_date(engine.run(LAST_WATCHED).rows[0][0])
     found, month = [], last
     while (held is None and not found) or (held is not None and month > held):
         found.insert(0, month)
@@ -491,8 +481,9 @@ def months_to_watch(engine: Engine, today: dt.date) -> list[dt.date]:
 
 
 def retrain_due(engine: Engine, today: dt.date, thresholds: Thresholds | None = None) -> str | None:
-    """Why the time estimate should be retrained today, or None: quarterly, when no version was registered in the
-    last estimates_loop.retrain_every_months, or trigger, when the watch raised a retrain after the newest version."""
+    """Why the time estimate should be retrained today, or None: quarterly, when no version was trained in the last
+    estimates_loop.retrain_every_months, or trigger, when the watch raised a retrain after the newest version was
+    trained. A promotion trains nothing (sql/loop/last_retrain.sql)."""
     from strata.config import load_time_estimate
     from strata.tools.project_signals import months_after
 

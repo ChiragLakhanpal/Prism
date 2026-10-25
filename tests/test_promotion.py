@@ -178,7 +178,7 @@ def worse_backtest(engine):
 
 
 def too_short_in_shadow(engine):
-    pass  # decided two months after the shadow began, below
+    pass  # decided on September 1, below: all 20 packages signed by August 20, but the quarter from June 2 ends September 2
 
 
 def edition_outside(engine):
@@ -188,7 +188,7 @@ def edition_outside(engine):
 
 @pytest.mark.parametrize("change, decided, refusals", [
     (worse_backtest, DECIDED, ("no_backtest_win",)),
-    (too_short_in_shadow, dt.datetime(2026, 8, 15, 9, tzinfo=dt.UTC), ("no_shadow_win",)),
+    (too_short_in_shadow, dt.datetime(2026, 9, 1, 9, tzinfo=dt.UTC), ("no_shadow_win",)),
     (edition_outside, DECIDED, ("edition_coverage",)),
 ], ids=["lost the backtest", "under a quarter in shadow", "an edition outside the band"])
 def test_a_challenger_that_lacks_one_win_is_refused_and_the_champion_stays(ready, change, decided, refusals):
@@ -264,3 +264,18 @@ def test_a_challenger_needs_a_sign_off_from_the_model_owner_and_a_different_pers
     assert refused.value.code == "not_in_role"
     assert one_person.refusals == ("no_lead_sign_off",)
     assert tracker.alias_version(MODEL, "champion") == 1
+
+
+def test_a_person_who_signed_in_both_roles_is_the_lead_when_another_model_owner_signed(ready):
+    tracker = registry()
+    both = dataclasses.replace(roles(), people=(
+        Person(LEAD, "Lead Specialist", ("model_owner", "lead_procurement_specialist"), ("South Asia",), ()),
+        Person(OWNER, "Model Owner", ("model_owner",), (), ())))
+    with DuckDBEngine.open(ready) as engine:
+        promotion.sign_off(engine, both, LEAD, MODEL, 2, "model_owner", DECIDED - 2 * DAY)
+        promotion.sign_off(engine, both, LEAD, MODEL, 2, "lead", DECIDED - 2 * DAY)
+        promotion.sign_off(engine, both, OWNER, MODEL, 2, "model_owner", DECIDED - DAY)
+        decision = promotion.promote(engine, tracker, MODEL, 2, DECIDED, roles=both)
+
+    assert decision.evidence["sign_offs"] == {"model_owner": OWNER, "lead": LEAD}
+    assert (decision.promoted, decision.refusals) == (True, ())

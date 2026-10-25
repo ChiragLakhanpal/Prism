@@ -3,9 +3,9 @@ scores in shadow beside the fixed signals, nightly, and the replay harness compa
 a later closing-date extension within the signals' follow-up window (brief 37). No tool, route or copy key shows it.
 
 The hand-made set is 24 projects with loan histories, built so the answer is known: eight have moved their closing
-date twice and close in two years, so the closing date check flags them, and none extends again; eight have moved it
+date twice and close in two years, so the closing date check picks them out, and none extends again; eight have moved it
 once and close in six months, and all of them extend; eight close in over five years and never move it. A model of
-time to closing ranks the second eight first; the fixed signals flag the first eight.
+time to closing ranks the second eight first; the fixed signals pick the first eight.
 """
 
 import datetime as dt
@@ -21,7 +21,7 @@ from strata.lakehouse.engine import DuckDBEngine
 
 ROOT = Path(__file__).resolve().parents[1]
 REPLAYED = dt.date(2024, 6, 30)
-FLAGGED = [f"P9100{n:02d}" for n in range(8)]  # moved twice, close in two years, never extend again
+MOVED_TWICE = [f"P9100{n:02d}" for n in range(8)]  # moved twice, close in two years, never extend again
 EXTEND = [f"P9101{n:02d}" for n in range(8)]  # moved once, close in six months, extend
 QUIET = [f"P9102{n:02d}" for n in range(8)]  # close in over five years, never move
 
@@ -50,7 +50,7 @@ def hand_made(tmp_path_factory):
     path = tmp_path_factory.mktemp("hazard") / "hand-made.duckdb"
     start = dt.date(2015, 1, 31)
     rows, projects = [], []
-    for project in FLAGGED:
+    for project in MOVED_TWICE:
         rows += history(project, (start, dt.date(2019, 6, 30)), (dt.date(2018, 12, 31), dt.date(2021, 6, 30)),
                         (dt.date(2020, 12, 31), dt.date(2026, 6, 30)))
     for project in EXTEND:
@@ -58,7 +58,7 @@ def hand_made(tmp_path_factory):
                         (dt.date(2024, 10, 31), dt.date(2025, 12, 31)))
     for project in QUIET:
         rows += history(project, (start, dt.date(2029, 12, 31)))
-    for project in FLAGGED + EXTEND + QUIET:
+    for project in MOVED_TWICE + EXTEND + QUIET:
         projects.append({"project_id": project, "project_name": f"Hand-made project {project}", "country_code": "KE",
                          "status": "Active", "closing_date": dt.date(2029, 12, 31), "public_from": dt.date(2015, 1, 1)})
     with DuckDBEngine.open(path) as engine:
@@ -75,10 +75,10 @@ def test_the_replay_harness_compares_the_hazard_model_with_the_fixed_signals_on_
         hazard.compare(engine, OfflineTracker(), ran_at=dt.datetime(2026, 10, 24, 9, tzinfo=dt.UTC), dates=(REPLAYED,))
         record = hazard.stored(engine)
 
-    # The signals flagged the eight that moved twice, and none of them extended; the model, flagging as many, chose
+    # The signals picked the eight that moved twice, and none of them extended; the model, picking as many, chose
     # the eight that close in six months, and all eight extended. McNemar's exact test on the eight discordant
     # projects: 2 x (1/2)^8 = 0.0078125, stored to six decimals.
-    assert (record["cohort"], record["flagged"], record["extended"]) == (24, 8, 8)
+    assert (record["cohort"], record["signals_picked"], record["extended"]) == (24, 8, 8)
     assert (record["signals_caught"], record["hazard_caught"]) == (0, 8)
     assert (record["signals_only"], record["hazard_only"]) == (0, 8)
     assert record["mcnemar_p"] == pytest.approx(0.0078125, abs=1e-6)
@@ -95,9 +95,9 @@ def test_the_hazard_model_scores_every_open_project_in_shadow_with_a_model_train
         scores = {row[0]: row[1:] for row in engine.run(
             "SELECT project_id, hazard, abstention, model FROM strata.ops.hazard_scores").rows}
 
-    assert written == 24 and set(scores) == set(FLAGGED + EXTEND + QUIET)
+    assert written == 24 and set(scores) == set(MOVED_TWICE + EXTEND + QUIET)
     assert all(abstention is None and model == "hazard-2024-07-01" for _, abstention, model in scores.values())
-    assert min(scores[project][0] for project in EXTEND) > max(scores[project][0] for project in FLAGGED + QUIET)
+    assert min(scores[project][0] for project in EXTEND) > max(scores[project][0] for project in MOVED_TWICE + QUIET)
 
 
 def test_the_nightly_score_task_stores_the_hazard_scores_and_the_comparison_on_the_fixture(fixture_db, tmp_path):
@@ -133,3 +133,12 @@ def test_no_tool_route_or_copy_shows_the_hazard_model():
     assert not [name for name, tool in tools.items() if "hazard" in f"{name} {tool.description} {tool.adapter}".lower()]
     assert "hazard" not in copy
     assert "hazard_scores" not in server and "hazard" not in reads
+
+
+@pytest.mark.parametrize("margin, chance", [(-1000.0, 0.0), (1000.0, 1.0), (0.0, 0.5)])
+def test_a_chance_far_from_the_middle_is_close_to_none_or_all_and_never_overflows(margin, chance):
+    model = hazard.HazardModel((margin, 0.0, 0.0, 0.0), dt.date(2026, 1, 1), 40)
+
+    found = model.chance({"moves": 1, "years_to_close": 2.0, "years_since_move": 1.0})
+
+    assert found == pytest.approx(chance)
