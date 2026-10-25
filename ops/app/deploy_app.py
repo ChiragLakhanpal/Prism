@@ -40,7 +40,12 @@ It needs npm, which builds the web app. It does these things, in order:
    retrieval_grades and retrieval_queries. Viewers read as themselves, through the bundle's grants,
    and no reviewer group may write the lesson review record or the retrieval loop's record outside
    the app.
-7. It prints the app's address.
+7. It masks the columns that say who sent each passage report and who asked each question
+   (strata.lakehouse.masks; ticket 64): one mask function, strata.ops.mask_viewer, gives their values
+   only to the app's own service principal and to you, who own the catalog and whose identity runs
+   the weekly retrieval job. Every other reader reads NULL there, though the bundle lets them read
+   all of strata.ops.
+8. It prints the app's address.
 
 Run it again after every bundle deploy. The grants in bundle/catalog.yml replace any other
 grants on the strata catalog and its schemas (bundle/README.md), so a bundle deploy removes the
@@ -71,6 +76,8 @@ for folder in (REPO / "src", REPO / "ops" / "dayone", REPO / "ops" / "bundle", H
 import dayone  # noqa: E402
 from workspace_env import WorkspaceEnvError, load_workspace_env  # noqa: E402
 
+from strata.lakehouse.masks import MASK, MASKED  # noqa: E402
+
 DESCRIPTION = "Strata, procurement intelligence on World Bank open data"
 PROBE_DESCRIPTION = "Strata day-one probe app"  # ops/dayone/live.py's PROBE_APP_DESCRIPTION
 FOLDER = "strata-app"
@@ -85,6 +92,7 @@ FOUNDRY = {"FOUNDRY_PROJECT_ENDPOINT": "foundry-endpoint", "FOUNDRY_TENANT_ID": 
 # The judge of the verifier's check 4 (src/strata/agent/judge.py): its two Azure OpenAI keys, kept the same way.
 JUDGE = {"AZURE_OPENAI_ENDPOINT": "azure-openai-endpoint", "AZURE_OPENAI_API_KEY": "azure-openai-key"}
 PRINCIPAL = re.compile(r"[0-9a-fA-F-]{36}")
+USER = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")  # a user name, which Databricks keeps as an email
 # The app state database's resource (ADR 0005). The platform sets PGHOST, PGPORT, PGDATABASE, PGUSER and
 # PGSSLMODE from it, which src/strata/server/settings.py reads; the database is the instance's own.
 APP_STATE = "app-state"
@@ -175,6 +183,24 @@ def grants(principal: str) -> list[str]:
             *[f"GRANT SELECT, MODIFY ON TABLE strata.ops.{table} TO `{principal}`" for table in RETRIEVAL_TABLES]]
 
 
+def masks(principal: str, owner: str) -> list[str]:
+    """The column mask on each column of strata.ops that says who sent a passage report or asked a question
+    (strata.lakehouse.masks, MASKED; ticket 64). The readers group may read every table in strata.ops
+    (bundle/catalog.yml), so the mask gives each value only to the app's own service principal, which reads the
+    reports back to tell a viewer's own, and to the owner, the user who deploys, whose identity runs the weekly
+    retrieval job; everyone else reads NULL. A mask's SQL cannot take bound values, so both names are checked first,
+    as grants() checks the principal."""
+    if not PRINCIPAL.fullmatch(principal):
+        raise ValueError(f"{principal!r} is not a service principal's application id.")
+    if not (USER.fullmatch(owner) or PRINCIPAL.fullmatch(owner)):
+        raise ValueError(f"{owner!r} is not a user name or an application id I can write into a mask.")
+    function = (f"CREATE OR REPLACE FUNCTION {MASK}(value STRING) RETURNS STRING "
+                "COMMENT 'Who sent a passage report or asked a question: only the app and the owner read it.' "
+                f"RETURN CASE WHEN current_user() IN ('{principal}', '{owner}') THEN value END")
+    return [function, *[f"ALTER TABLE {table} ALTER COLUMN {column} SET MASK {MASK}"
+                        for table, columns in MASKED.items() for column in columns]]
+
+
 def deploy(workspace, env: dict, build_web: Callable[[], tuple[int, str]] = build_web, dist: Path = DIST) -> int:
     names = dayone.load_config()["names"]
     name = names["app"]
@@ -240,6 +266,10 @@ def deploy(workspace, env: dict, build_web: Callable[[], tuple[int, str]] = buil
 
     print("6. Letting the app's own service principal write usage events, agent runs, opened sources and drafts to strata.ops.")
     for statement in grants(app["principal"]):
+        workspace.run_sql(statement)
+
+    print("7. Masking who sent each passage report and who asked each question from everyone but the app and you.")
+    for statement in masks(app["principal"], workspace.me()):
         workspace.run_sql(statement)
 
     print(f"Strata is running at {url}")
