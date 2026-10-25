@@ -1663,3 +1663,56 @@ The merger parked this step on October 25, 2026, after merge commit 6c17261, whi
     WHERE passage_id IN ('26733307/v1/s4', '31525018/v1/78')
 
 It worked if it returns both passages with `attack_detected` false: ISR 7's side and paragraph 78's side then keep their words, and a claim can quote paragraph 78 (criterion 2, workspace half). A NULL means the passage was never screened, and true means Prompt Shields found an attack; either way the side comes without its words. Read that passage before the demo.
+
+## Ticket 36, step 1 of 4: sync the two new draft writers to Foundry
+
+The merger parked this step on October 25, 2026, after merge commit a044715. All ten keys were set, but the Free Edition SQL warehouse had reached its free daily limit that morning, and the header above holds workspace steps back during a merge. It needs the four Foundry keys in `.env`, not the warehouse. Ticket 36 adds two agents to `config/agents.toml`: `ppsd_rows_writer` (`strata-ppsd-rows-writer`) and `project_paper_writer` (`strata-project-paper-writer`). Neither exists in Foundry yet, so step 2's recordings and the deployed App cannot reach them until this runs.
+
+Run this from the main checkout, one line at a time:
+
+    uv run --script ops/agent/sync.py --env-file .env --agent ppsd_rows_writer
+    uv run --script ops/agent/sync.py --env-file .env --agent ppsd_rows_writer --check
+    uv run --script ops/agent/sync.py --env-file .env --agent project_paper_writer
+    uv run --script ops/agent/sync.py --env-file .env --agent project_paper_writer --check
+
+It worked if each first run ends "I made version N of strata-ppsd-rows-writer, which matches the repo." (and the same for `strata-project-paper-writer`), and each `--check` run exits 0.
+
+## Ticket 36, step 2 of 4: record the two writers and the judge live
+
+The merger parked this step on October 25, 2026, after merge commit a044715, for the same reason as step 1. Run it after step 1. It needs the four Foundry keys and `AZURE_OPENAI_ENDPOINT` and `AZURE_OPENAI_API_KEY` in `.env`. The writers' answers in `tests/fixtures/agent/recorded/` (`ppsd-rows-ke-nwwda-541055.json`, `project-paper-p156634.json` and `project-paper-p156634-no-ppsd.json`) and the judge's answers in `tests/fixtures/agent/judged/` (five `ppsd-rows-*.json` files and two `project-paper-*.json` files) were written by hand and say `"recorded": false`. `--writers` re-records every writer case in `tests/fixtures/agent/writers.toml`, so one run from a044715 or later serves every block that names it.
+
+Run this from the main checkout, in this order:
+
+    uv run --script ops/agent/record.py --env-file .env --writers
+    uv run --script ops/agent/record.py --judge --env-file .env
+    uv run --frozen python tests/record_ppsd_api.py
+    .githooks/pre-commit
+
+It worked if every one of those ten files now says `"recorded": true`, and the gate passes, with `tests/test_ppsd_rows.py` and `tests/test_project_paper.py` still passing all six checks on the live answers. If the verifier removes a live sentence, the test names its reason; tell the orchestrator before committing the recordings.
+
+## Ticket 36, step 3 of 4: deploy strata.ops.draft_fields and its view
+
+The merger parked this step on October 25, 2026, after merge commit a044715. All ten keys were set, but the warehouse had reached Free Edition's daily limit, and the header above holds workspace steps back during a merge. Run it only once the warehouse answers again. It needs the Databricks keys in `.env`. Ticket 36 adds one table, `strata.ops.draft_fields` (`src/strata/lakehouse/tables/ops/draft_fields.sql`), which holds each value a person sets on a draft's fields (risk owners, ratings, the form), and one view over it, `strata.ops.draft_fields_latest` (`src/strata/lakehouse/views/ops/draft_fields_latest.sql`). Tickets 22, 34, 37 and 23 run the same deploy command, and one deploy from a044715 or later serves every block that names it. This workspace's earlier deploys passed `--fairshare-catalog workspace`, so this one does too.
+
+Run this from the main checkout, twice:
+
+    uv run --script ops/bundle/deploy.py --env-file .env --fairshare-catalog workspace
+
+It worked if the first run exits 0, lists `strata.ops.draft_fields` as new with its `public_from` column, names the view `strata.ops.draft_fields_latest`, and changes no existing table, and the second run prints "No changes." Then this runs without error on the SQL warehouse:
+
+    SELECT * FROM strata.ops.draft_fields_latest LIMIT 1
+
+## Ticket 36, step 4 of 4: redeploy the App with the PPSD rows and the Project Paper summary
+
+The merger parked this step on October 25, 2026, after merge commit a044715. Run it after step 3, so the table and the view exist to grant, and after step 1, so the two writers exist in Foundry. It needs the Databricks keys in `.env`. It is ticket 06's deploy command, and one deploy from a044715 or later serves every block that names it. From this merge on, the deploy grants the App's service principal SELECT and MODIFY on `strata.ops.draft_fields` and SELECT on `strata.ops.draft_fields_latest` (`ops/app/deploy_app.py`, `grants`), and the App serves the two new draft kinds, `ppsd_rows` and `project_paper`, through `/api/drafts`.
+
+Run this from the main checkout:
+
+    uv run --script ops/app/deploy_app.py --env-file .env
+
+It worked if the deploy exits 0, its last line is `Strata is running at https://...`, and `SHOW GRANTS ON TABLE strata.ops.draft_fields` lists SELECT and MODIFY for the App's service principal. Then, signed in to the App as a staff viewer:
+
+1. Open KE-NWWDA-541055-CW-RFB's package page, select risks in section 3, and choose "Suggest {n} PPSD risk rows" in the header. It worked if the draft opens with the Short Form's three columns (Risk Description, Description of mitigation, Risk Owner), every row has its footnotes, and "Set the owner" sits in each empty owner cell.
+2. Set one owner and reload the page. It worked if the owner is still there, the count line says "1 of {n} risk owners set.", `SELECT count(*) FROM strata.ops.draft_fields` returns at least 1, and `DESCRIBE HISTORY strata.ops.draft_fields LIMIT 1` shows that the App's service principal wrote the row.
+3. Plan a package from a sentence and select risks in section 3. It worked if the same action appears next to "No STEP reference yet" and its draft saves.
+4. On Check a plan for P156634's NWWDA plan of October 9, 2026, choose "Draft a Project Paper summary". It worked if the draft says the plan lists nine activities, one that needs a look and two worth watching, and 0 of 7 signed by the date in the plan as first published, and the check line shows all six checks.
