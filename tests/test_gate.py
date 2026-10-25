@@ -892,5 +892,31 @@ def test_a_bad_edit_to_the_web_lanes_fails_its_check(bad, check):
     assert check(bad(gate_steps())) != []
 
 
+# The screen tests run axe only through web/tests/axe.ts, whose scans cost about half of axe's default
+# run and find the same violations (ticket 55). web/tests/axe.spec.ts compares the two, so it builds
+# axe's default run as well.
+AXE_RUNNERS = {"axe.ts", "axe.spec.ts"}
+BUILDS_A_SCAN = re.compile(r"\bnew\s+AxeBuilder\b")
+
+
+def own_axe_scans(web):
+    """The test and capture files under web, other than the helper and its spec, that build an axe scan
+    of their own."""
+    return sorted(path.relative_to(web).as_posix() for folder in ("tests", "capture") for path in (web / folder).rglob("*.ts")
+                  if path.name not in AXE_RUNNERS and BUILDS_A_SCAN.search(path.read_text()))
+
+
+def test_every_axe_scan_in_the_screen_tests_runs_through_the_one_helper():
+    assert own_axe_scans(ROOT / "web") == []
+
+
+def test_the_axe_check_finds_a_spec_that_builds_its_own_scan(tmp_path):
+    write(tmp_path, "tests/axe.ts", "export const scan = (page) => new AxeBuilder({ page }).analyze();\n")
+    write(tmp_path, "tests/page.spec.ts", "const results = await new AxeBuilder({ page }).analyze();\n")
+    write(tmp_path, "tests/other.spec.ts", "const results = await scan(page);\n")
+
+    assert own_axe_scans(tmp_path) == ["tests/page.spec.ts"]
+
+
 if __name__ == "__main__":
     sys.exit(pytest.main([__file__]))

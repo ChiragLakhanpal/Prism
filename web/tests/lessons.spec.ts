@@ -2,11 +2,10 @@
 // the answers the server wrote on the fixture (tests/record_lessons_api.py), which
 // tests/test_lesson_review_routes.py checks the server still gives. The words below are the ticket's, DESIGN.md's
 // and the 29 design brief's, copied here so the test checks the copy file against an independent source.
-import AxeBuilder from "@axe-core/playwright";
+import { scan } from "./axe";
 import type { Page } from "@playwright/test";
 import { expect, recorded, test } from "./mocked";
 
-const WCAG_22_AA = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 const REBIDDING = "new-e903b07ad1";
 const PERMITS = "new-64ec0401e3";
 const RECHECK = "recheck-09bf32ecc3";
@@ -54,7 +53,7 @@ async function viewer(page: Page, extra: Record<string, Answer> = {}) {
 
 async function axe(page: Page) {
   await page.waitForFunction(() => document.getAnimations().every((animation) => animation.playState !== "running"));
-  const results = await new AxeBuilder({ page }).withTags(WCAG_22_AA).analyze();
+  const results = await scan(page);
   return results.violations.map((v) => `${v.id}: ${v.nodes.map((node) => node.target.join(" ")).join(", ")}`);
 }
 

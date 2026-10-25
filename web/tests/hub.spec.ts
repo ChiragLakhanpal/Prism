@@ -5,14 +5,13 @@
 // tests/ground_truth/values.toml quotes them (project-p130164-*, pad-date, icr-date, icr-review-date,
 // icr-review-reissue-date, icr-para-54 and icr-pdf-pages), copied here so the screen is checked against an
 // independent source.
-import AxeBuilder from "@axe-core/playwright";
+import { scan } from "./axe";
 import type { Locator, Page, Request } from "@playwright/test";
 import { copy } from "../src/copy";
 import { askFromTheBox, landed, marker, panel } from "./answer-page";
 import { hubApi, KENHA_PLAN } from "./hub-api";
 import { expect, mockApi, recorded, test } from "./mocked";
 
-const WCAG_22_AA = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 type Answer = { status?: number; body: string };
 
 async function open(page: Page, path: string, width = 1440, extra: Record<string, Answer> = {}) {
@@ -24,7 +23,7 @@ async function open(page: Page, path: string, width = 1440, extra: Record<string
 }
 
 async function axe(page: Page) {
-  const results = await new AxeBuilder({ page }).withTags(WCAG_22_AA).analyze();
+  const results = await scan(page);
   return results.violations.map((v) => `${v.id}: ${v.nodes.map((node) => node.target.join(" ")).join(", ")}`);
 }
 

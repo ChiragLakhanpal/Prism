@@ -2,12 +2,11 @@
 // section 10): axe finds no WCAG 2.2 AA violations, every tab stop shows a 2 px focus outline
 // with a 2 px offset, targets are at least 24 by 24 px and buttons 44 px tall, motion stops
 // under reduced motion and runs 120 to 200 ms otherwise, and the page reflows at 320 px.
-import AxeBuilder from "@axe-core/playwright";
+import { scan } from "./axe";
 import type { Page } from "@playwright/test";
 import { expect, test } from "./mocked";
 import { galleryCopy } from "../src/gallery/copy";
 
-const WCAG_22_AA = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 const FOCUS = ["rgb(182, 73, 12)", "rgb(245, 146, 108)"];
 const SLUGS = ["", ...Object.keys(galleryCopy.pages)];
 
@@ -25,108 +24,114 @@ async function open(page: Page, path: string, width: number) {
 }
 
 async function violations(page: Page) {
-  const results = await new AxeBuilder({ page }).withTags(WCAG_22_AA).analyze();
+  const results = await scan(page);
   return results.violations.map(
     (v) => `${v.id}: ${v.nodes.map((node) => `${node.target.join(" ")} ${node.failureSummary ?? ""}`).join("; ")}`,
   );
 }
 
+// Each check reads the page as a fresh load at its width shows it.
+async function tabStops(page: Page) {
+  const seen = new Set<string>();
+  const problems: string[] = [];
+  for (let i = 0; i < 200; i += 1) {
+    await page.keyboard.press("Tab");
+    const focus = await page.evaluate(() => {
+      const el = document.activeElement as HTMLElement | null;
+      if (!el || el === document.body) return null;
+      const ring = (el.closest("[data-focus-ring]") as HTMLElement | null) ?? el;
+      const style = getComputedStyle(ring);
+      const path = `${el.tagName.toLowerCase()}:${el.textContent?.trim().slice(0, 30) ?? ""}:${Math.round(el.getBoundingClientRect().y + scrollY)}`;
+      return { path, width: style.outlineWidth, offset: style.outlineOffset, style: style.outlineStyle, color: style.outlineColor };
+    });
+    if (!focus || seen.has(focus.path)) break;
+    seen.add(focus.path);
+    if (focus.width !== "2px" || focus.offset !== "2px" || focus.style !== "solid" || !FOCUS.includes(focus.color)) {
+      problems.push(`${focus.path} ${focus.style} ${focus.width} offset ${focus.offset} ${focus.color}`);
+    }
+  }
+  return { stops: seen.size, problems };
+}
+
+function smallTargets(page: Page) {
+  return page.evaluate(() => {
+    const targets = Array.from(
+      document.querySelectorAll<HTMLElement>("a[href], button, input, [tabindex]:not([tabindex='-1']), summary"),
+    ).filter((el) => el.getClientRects().length > 0 && !el.classList.contains("sr-only"));
+    return targets.flatMap((el) => {
+      const rect = el.getBoundingClientRect();
+      // An ::after laid over the element (the citation marker's) pads its hit area.
+      const after = getComputedStyle(el, "::after");
+      const laid = after.position === "absolute" && after.content !== "none";
+      const pad = (value: string) => (laid ? Math.max(0, -parseFloat(value) || 0) : 0);
+      const width = rect.width + pad(after.left) + pad(after.right);
+      const height = rect.height + pad(after.top) + pad(after.bottom);
+      const isButton = el.hasAttribute("data-button");
+      // A number you can check sits inside a sentence, such as "186 days", so it is an inline
+      // target, which WCAG 2.5.8 exempts from the width; it still keeps a line 24 px tall (the
+      // 10 brief, section 5).
+      const inSentence = el.hasAttribute("data-num");
+      const ok = (inSentence || width >= 24) && height >= 24 && (!isButton || Math.round(rect.height) === 44);
+      const label = `${el.tagName.toLowerCase()} "${el.textContent?.trim().slice(0, 30)}"`;
+      return ok ? [] : [`${label} ${Math.round(width)}x${Math.round(height)}`];
+    });
+  });
+}
+
+function motion(page: Page) {
+  return page.evaluate(() =>
+    Array.from(document.querySelectorAll<HTMLElement>("*")).flatMap((el) => {
+      const style = getComputedStyle(el);
+      const transitions = style.transitionDuration.split(",").map((part) => parseFloat(part) * 1000);
+      const finite = style.animationIterationCount !== "infinite" && style.animationName !== "none";
+      const animation = finite ? style.animationDuration.split(",").map((part) => parseFloat(part) * 1000) : [];
+      // Spinners turn until loading ends, so only finite animations count.
+      return [...transitions, ...animation].filter((ms) => ms > 0);
+    }),
+  );
+}
+
+// Each page opens once for each width and state it is checked in, and every check of that view runs
+// on that load (ticket 55: a page took nine loads, now four). The checks that only read the page come
+// first, then axe, which may scroll, then the tab stops, which move the focus, so each check sees the
+// page as a fresh load shows it. Each check is soft, so one that fails still lets the others report.
 for (const slug of SLUGS) {
   const name = slug || "index";
 
-  test(`${name}: axe finds no WCAG 2.2 AA violations at 1440 and 390 px`, async ({ page }) => {
-    await open(page, slug, 1440);
-    expect(await violations(page)).toEqual([]);
-    await open(page, slug, 390);
-    expect(await violations(page)).toEqual([]);
-  });
-
-  // The navigation page is also checked at 390 px with the Menu panel open.
+  // The navigation page is also checked at 390 px with the Menu panel open, for targets and tab stops.
   const views: [string, number][] = [[slug, 1440], [slug, 390], ...(slug === "navigation" ? [["navigation?menu=open", 390] as [string, number]] : [])];
 
-  test(`${name}: every tab stop shows a 2 px focus outline with a 2 px offset`, async ({ page }) => {
+  test(`${name}: at 1440 and 390 px, targets are at least 24 by 24 px and buttons 44 px tall, axe finds no WCAG 2.2 AA violations, and every tab stop shows a 2 px focus outline with a 2 px offset; at 1440 px, motion runs 120 to 200 ms`, async ({ page }) => {
     for (const [path, width] of views) {
+      const view = `${path} at ${width}`;
       await open(page, path, width);
-      const seen = new Set<string>();
-      const problems: string[] = [];
-      for (let i = 0; i < 200; i += 1) {
-        await page.keyboard.press("Tab");
-        const focus = await page.evaluate(() => {
-          const el = document.activeElement as HTMLElement | null;
-          if (!el || el === document.body) return null;
-          const ring = (el.closest("[data-focus-ring]") as HTMLElement | null) ?? el;
-          const style = getComputedStyle(ring);
-          const path = `${el.tagName.toLowerCase()}:${el.textContent?.trim().slice(0, 30) ?? ""}:${Math.round(el.getBoundingClientRect().y + scrollY)}`;
-          return { path, width: style.outlineWidth, offset: style.outlineOffset, style: style.outlineStyle, color: style.outlineColor };
-        });
-        if (!focus || seen.has(focus.path)) break;
-        seen.add(focus.path);
-        if (focus.width !== "2px" || focus.offset !== "2px" || focus.style !== "solid" || !FOCUS.includes(focus.color)) {
-          problems.push(`${focus.path} ${focus.style} ${focus.width} offset ${focus.offset} ${focus.color}`);
-        }
+      expect.soft(await smallTargets(page), `targets, ${view}`).toEqual([]);
+      if (path === slug && width === 1440) {
+        expect.soft((await motion(page)).filter((ms) => ms < 120 || ms > 200), `motion, ${view}`).toEqual([]);
       }
-      expect(seen.size, `${path} at ${width}`).toBeGreaterThan(5);
-      expect(problems, `${path} at ${width}`).toEqual([]);
+      if (path === slug) {
+        expect.soft(await violations(page), `axe, ${view}`).toEqual([]);
+      }
+      const { stops, problems } = await tabStops(page);
+      expect.soft(stops, `tab stops, ${view}`).toBeGreaterThan(5);
+      expect.soft(problems, `tab stops, ${view}`).toEqual([]);
     }
   });
 
-  test(`${name}: targets are at least 24 by 24 px and buttons 44 px tall`, async ({ page }) => {
-    for (const [path, viewport] of views) {
-      await open(page, path, viewport);
-      const small = await page.evaluate(() => {
-        const targets = Array.from(
-          document.querySelectorAll<HTMLElement>("a[href], button, input, [tabindex]:not([tabindex='-1']), summary"),
-        ).filter((el) => el.getClientRects().length > 0 && !el.classList.contains("sr-only"));
-        return targets.flatMap((el) => {
-          const rect = el.getBoundingClientRect();
-          // An ::after laid over the element (the citation marker's) pads its hit area.
-          const after = getComputedStyle(el, "::after");
-          const laid = after.position === "absolute" && after.content !== "none";
-          const pad = (value: string) => (laid ? Math.max(0, -parseFloat(value) || 0) : 0);
-          const width = rect.width + pad(after.left) + pad(after.right);
-          const height = rect.height + pad(after.top) + pad(after.bottom);
-          const isButton = el.hasAttribute("data-button");
-          // A number you can check sits inside a sentence, such as "186 days", so it is an inline
-          // target, which WCAG 2.5.8 exempts from the width; it still keeps a line 24 px tall (the
-          // 10 brief, section 5).
-          const inSentence = el.hasAttribute("data-num");
-          const ok = (inSentence || width >= 24) && height >= 24 && (!isButton || Math.round(rect.height) === 44);
-          const label = `${el.tagName.toLowerCase()} "${el.textContent?.trim().slice(0, 30)}"`;
-          return ok ? [] : [`${label} ${Math.round(width)}x${Math.round(height)}`];
-        });
-      });
-      expect(small, `${path} at ${viewport}`).toEqual([]);
-    }
-  });
-
-  test(`${name}: the page reflows at 320 px with no horizontal scroll`, async ({ page }) => {
+  test(`${name}: the page reflows at 320 px with no horizontal scroll, and motion stops under reduced motion`, async ({ page }) => {
     await open(page, slug, 320);
-    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
-  });
-
-  test(`${name}: motion runs 120 to 200 ms, and stops under reduced motion`, async ({ page }) => {
-    const motion = () =>
-      page.evaluate(() =>
-        Array.from(document.querySelectorAll<HTMLElement>("*")).flatMap((el) => {
-          const style = getComputedStyle(el);
-          const transitions = style.transitionDuration.split(",").map((part) => parseFloat(part) * 1000);
-          const finite = style.animationIterationCount !== "infinite" && style.animationName !== "none";
-          const animation = finite ? style.animationDuration.split(",").map((part) => parseFloat(part) * 1000) : [];
-          // Spinners turn until loading ends, so only finite animations count.
-          return [...transitions, ...animation].filter((ms) => ms > 0);
-        }),
-      );
-
-    await open(page, slug, 1440);
-    expect((await motion()).filter((ms) => ms < 120 || ms > 200)).toEqual([]);
+    expect.soft(await page.evaluate(() => document.documentElement.scrollWidth), "reflow at 320").toBeLessThanOrEqual(320);
 
     await page.emulateMedia({ reducedMotion: "reduce" });
     await open(page, slug, 1440);
-    expect(await motion()).toEqual([]);
-    expect(
-      await page.evaluate(() =>
-        Array.from(document.querySelectorAll("*")).filter((el) => getComputedStyle(el).animationName !== "none").length,
-      ),
-    ).toBe(0);
+    expect.soft(await motion(page), "reduced motion at 1440").toEqual([]);
+    expect
+      .soft(
+        await page.evaluate(() =>
+          Array.from(document.querySelectorAll("*")).filter((el) => getComputedStyle(el).animationName !== "none").length,
+        ),
+        "animations under reduced motion at 1440",
+      )
+      .toBe(0);
   });
 }
