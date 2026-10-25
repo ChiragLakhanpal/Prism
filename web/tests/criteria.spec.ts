@@ -162,16 +162,20 @@ test("rejected bids read N of M comparable packages, each reason quoted from its
   await expect(group.locator("li")).toHaveCount(5);
   await group.getByRole("button", { name: /^Show / }).click();
   await expect(group.locator("li")).toHaveCount(big.rows);
+  // Focus moves to the first row it showed.
+  await expect(group.locator("li").nth(5).locator("[data-step-ref]")).toBeFocused();
   // No bidder is named anywhere in the list.
   const text = await part.innerText();
   for (const name of ["CHINA", "LIMITED", "Ltd"]) expect(text).not.toContain(name);
 
-  // A reason's marker opens its award notice, with the reason highlighted.
-  const mowi = part.locator('[data-rejected-row="strata.gold.notice:OP00125282/reason/1"]');
-  if (await mowi.count()) {
-    await mowi.locator("[data-citation]").click();
-    await expect(page.getByRole("dialog").locator("mark")).toContainText("Bid Security not Provided");
-  }
+  // A reason's marker opens its award notice, with the reason highlighted and no bidder named.
+  const security = part.locator("[data-rejected-group=bid_security]");
+  await security.getByRole("button", { name: /^Show / }).click();
+  const mowi = security.locator('[data-rejected-row="strata.gold.notice:OP00125282/reason/1"]');
+  await mowi.locator("[data-citation]").click();
+  const drawer = page.getByRole("dialog");
+  await expect(drawer.getByRole("heading", { level: 2 })).toHaveText("Award notice OP00125282");
+  await expect(drawer.locator("mark")).toContainText("Bid Security not Provided");
 });
 
 test("below 20 comparables the cost estimate abstains in the first person and lists every package", async ({ page }) => {
