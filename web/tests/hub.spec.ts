@@ -804,6 +804,11 @@ test("when only the comparison fails, the change line says so and links the sect
   // Try again sits 16 px under the alert, as on every other load error.
   const [alert, retry] = await Promise.all([section.getByRole("alert").boundingBox(), section.getByRole("button", { name: "Try again" }).boundingBox()]);
   expect(Math.round(retry!.y - (alert!.y + alert!.height))).toBe(16);
+  // As on the Summary's error, the reference to send the data team (the 21 critique, round 3, item 8).
+  await expect(section).toContainText("If it fails again, send the data team this reference: 0af7651916cd43dd8448eb211c80319c.");
+  // The crumb names the project as its tabs do, and the window names the agency's plan.
+  await expect(page.getByRole("navigation", { name: "Breadcrumb" })).toContainText("Water and Sanitation Development (P156634)");
+  await expect(page).toHaveTitle("Northern Water Works Development Agency, plan of Oct 9, 2026 | Strata");
 });
 
 test("the earliest version has no change list, and its change line says why", async ({ page }) => {

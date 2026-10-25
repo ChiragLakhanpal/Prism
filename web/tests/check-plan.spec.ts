@@ -85,7 +85,8 @@ test("the plan check finds every activity, states the finding, and folds the act
   await expect(table.locator("[data-badge=needs-a-look]:visible")).toHaveCount(1);
   await expect(table.locator("[data-badge=watch]:visible")).toHaveCount(2);
   await expect(table.locator("[data-badge=data-note]:visible")).toHaveCount(3);
-  await expect(page.getByRole("link", { name: "Water and Sanitation Development Project (P156634)" }).first()).toHaveAttribute(
+  // The crumb names the project as its page header does, by the server's rule (the 21 critique, round 3).
+  await expect(page.getByRole("link", { name: "Water and Sanitation Development (P156634)" }).first()).toHaveAttribute(
     "href",
     "/projects/P156634",
   );

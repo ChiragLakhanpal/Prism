@@ -418,17 +418,24 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
             return found if found is not None else JSONResponse({"code": "unknown_project"}, status_code=404)
         return read_for(f"{doc} of {project_id}", viewer, read)
 
+    def named(result):
+        """A plan check with the project's name as its page header gives it, by the server's rule, so Check a
+        plan's crumb reads as the project's tabs do (the 21 critique, round 3); the tool's own row is kept."""
+        if isinstance(result, dict) and result.get("project"):
+            result["project"]["display_name"] = projects.display_name(result["project"]["project_name"])
+        return result
+
     @app.get("/api/projects/{project_id}/procurement/{agency_id}")
     def check_latest_plan(project_id: str, agency_id: str, asof: dt.date | None = None, view: str = "staff",
                           viewer: Viewer = Depends(current_viewer)):
-        return run_tool("check_plan", {"project_id": project_id, "implementing_agency": agency_id},
-                        viewer, view, asof)
+        return named(run_tool("check_plan", {"project_id": project_id, "implementing_agency": agency_id},
+                              viewer, view, asof))
 
     @app.get("/api/projects/{project_id}/procurement/{agency_id}/{version}")
     def check_plan_version(project_id: str, agency_id: str, version: dt.date, asof: dt.date | None = None,
                            view: str = "staff", viewer: Viewer = Depends(current_viewer)):
-        return run_tool("check_plan", {"project_id": project_id, "implementing_agency": agency_id,
-                                       "plan_date": version}, viewer, view, asof)
+        return named(run_tool("check_plan", {"project_id": project_id, "implementing_agency": agency_id,
+                                             "plan_date": version}, viewer, view, asof))
 
     @app.get("/api/projects/{project_id}/procurement/{agency_id}/{version}/changes")
     def plan_changes(project_id: str, agency_id: str, version: dt.date, asof: dt.date | None = None,

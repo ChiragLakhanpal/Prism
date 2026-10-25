@@ -340,6 +340,8 @@ export type CheckPlanResult = {
   project: {
     project_id: string;
     project_name: string;
+    // The name as the project's page header gives it, by the server's rule (the route adds it to the tool's row).
+    display_name?: string | null;
     status: string | null;
     closing_date: string | null;
     record_date: string | null;

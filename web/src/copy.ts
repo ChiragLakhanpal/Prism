@@ -73,6 +73,8 @@ export const copy = {
     },
     checkPlan: {
       title: "Plan check, {pid}",
+      // Once the check names the plan: "Northern Water Works Development Agency, plan of Oct 9, 2026".
+      windowTitle: "{agency}, plan of {date}",
       purpose: "I check every activity in one implementing agency's Procurement Plan.",
     },
     activity: {

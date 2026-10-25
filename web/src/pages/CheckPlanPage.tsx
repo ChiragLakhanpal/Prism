@@ -30,8 +30,10 @@ import { formatCount, formatDate, formatNumber } from "../lib/format";
 import { useLoad } from "../lib/load";
 import { address, navigate } from "../lib/router";
 import { useStore } from "../lib/store";
+import { setPageTitle } from "../lib/title";
 import { viewOf, withReadParams } from "../lib/view";
 import { useScrollPadding } from "../lib/useScrollPadding";
+import { fill } from "../routes";
 
 const words = copy.checkPlan;
 const short = (iso: string) => formatDate(iso, { style: "table" });
@@ -80,23 +82,31 @@ function useExistingDraft(pid: string, agencyId: string, version: string | undef
 // once the check is ready, since the latest-plan route learns the version's date from the check. A route
 // that has no such comparison answers 404, and the page then shows neither the change line nor the list.
 function usePlanChanges(pid: string, agencyId: string, planDate: string | null, search: string) {
-  const [answer, setAnswer] = useState<{ key: string; changes: PlanChanges | null; failed: boolean } | null>(null);
+  const [answer, setAnswer] = useState<{ key: string; changes: PlanChanges | null; failed: boolean; error: ApiError | null } | null>(null);
   const [attempt, setAttempt] = useState(0);
   const key = planDate ? withReadParams(`/api/projects/${encodeURIComponent(pid)}/procurement/${encodeURIComponent(agencyId)}/${planDate}/changes`, search) : null;
   useEffect(() => {
     if (!key) return;
     const controller = new AbortController();
     getJson<PlanChanges>(key, { signal: controller.signal }).then(
-      (changes) => setAnswer({ key, changes, failed: false }),
+      (changes) => setAnswer({ key, changes, failed: false, error: null }),
       (error: unknown) => {
         if (controller.signal.aborted) return;
-        setAnswer({ key, changes: null, failed: !(error instanceof ApiError && error.status === 404) });
+        const apiError = error instanceof ApiError ? error : null;
+        setAnswer({ key, changes: null, failed: apiError?.status !== 404, error: apiError });
       },
     );
     return () => controller.abort();
   }, [key, attempt]);
   const found = answer && answer.key === key ? answer : null;
-  return { changes: found?.changes ?? null, failed: found?.failed ?? false, settled: found !== null, attempt, retry: () => setAttempt((n) => n + 1) };
+  return {
+    changes: found?.changes ?? null,
+    failed: found?.failed ?? false,
+    error: found?.error ?? null,
+    settled: found !== null,
+    attempt,
+    retry: () => setAttempt((n) => n + 1),
+  };
 }
 
 // The change line when only the comparison failed: it says so and links the section below, which holds
@@ -200,6 +210,11 @@ export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyI
       window.removeEventListener("hashchange", follow);
     };
   }, [drawn]);
+
+  // The browser tab names the agency's plan once the check names it: "{agency}, plan of Oct 9, 2026".
+  useEffect(() => {
+    if (checked) setPageTitle(fill(copy.pages.checkPlan.windowTitle, { agency: checked.plan.implementing_agency, date: short(checked.plan.plan_date) }));
+  }, [checked]);
 
   // The visually hidden status announces steps: checking, then how many activities were checked.
   // Any other end has its own alert or heading, so the status then says nothing.
@@ -309,7 +324,7 @@ export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyI
       </>
     );
   } else if (checked) {
-    crumbs = trail(named(checked.project.project_name), copy.breadcrumb.plan(short(checked.plan.plan_date)));
+    crumbs = trail(named(checked.project.display_name ?? checked.project.project_name), copy.breadcrumb.plan(short(checked.plan.plan_date)));
     const slot = draftSlot(checked);
     body = (
       <>
@@ -357,7 +372,7 @@ export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyI
                     {copy.changes.titleUnknown}
                   </h2>
                   <div className="mt-2">
-                    <LoadError error={null} message={copy.changes.error} permission={copy.changes.error} onRetry={planChanges.retry} retrying={false} attempt={planChanges.attempt} />
+                    <LoadError error={planChanges.error} message={copy.changes.error} permission={copy.changes.error} onRetry={planChanges.retry} retrying={false} attempt={planChanges.attempt} />
                   </div>
                 </EightColumns>
               </section>
@@ -371,7 +386,7 @@ export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyI
     const abstention = found.abstention;
     const agency = abstention?.agency_name ?? abstention?.implementing_agency ?? found.plan?.implementing_agency ?? null;
     const knownAgency = abstention?.reason === "no_plan_from_agency" ? (abstention.agency_name ?? null) : agency;
-    crumbs = trail(found.project ? named(found.project.project_name) : unnamed, versionCrumb ?? knownAgency ?? words.agencyUnknown);
+    crumbs = trail(found.project ? named(found.project.display_name ?? found.project.project_name) : unnamed, versionCrumb ?? knownAgency ?? words.agencyUnknown);
     const allPlans = { href: procurementHref, text: words.allPlans };
     let title: ReactNode = words.noPlanTitleUnnamed;
     let text: ReactNode = words.noPlanBody;
