@@ -32,7 +32,12 @@ export default defineConfig({
   forbidOnly: true,
   retries: 0,
   reporter: [["line"]],
-  use: { trace: "off" },
+  // vite preview gzips each file it sends to a browser that accepts gzip, which cost the server about
+  // 30 ms of processor time on each load of the app's 1 MB script, and the browser more to unzip it.
+  // So the tests ask for the files as they are (ticket 55). The bytes the app runs are the same. The one
+  // test that times how the app's own files travel, on Chrome's Fast 3G profile in tests/hub.spec.ts,
+  // takes them gzipped with the browser's own header, as a reader's browser does.
+  use: { trace: "off", extraHTTPHeaders: { "accept-encoding": "identity" } },
   projects: [
     { name: "app", testIgnore: [GALLERY_TESTS, DEV_TESTS], use: { ...devices["Desktop Chrome"], baseURL } },
     { name: "gallery", testMatch: GALLERY_TESTS, use: { ...devices["Desktop Chrome"], baseURL: galleryURL } },
