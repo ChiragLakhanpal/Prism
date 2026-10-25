@@ -120,6 +120,58 @@ reasons = ["completion_passed_no_contract", "pending_near_closing", "pending_on_
 abstentions = ["unknown_project", "no_plan_from_agency", "no_plan_as_of", "version_not_found", "version_not_public",
                "no_activities"]
 
+# project_signals (ticket 37): the fixed signals on a project that World Bank staff follow. The Following page
+# and the mission brief writer read it, and ticket 41's Home reads the same result.
+[tools.project_signals]
+description = """Runs Strata's seven fixed checks on one active project's public records and says which found \
+a reason to look. A signal is a reason to look, never a finding. The checks: an activity in an implementing \
+agency's latest Procurement Plan passed its planned completion with no signed contract; a contract was signed \
+at {plan_check.actual_to_estimate_ratio} times its estimate or more; a Direct Selection activity of \
+US${signals.late_direct_min_usd} or more first appears in a plan published {signals.late_direct_months} months \
+or less before the closing date, when the agency's previous plan does not list it; the loan history shows the \
+closing date moved {signals.closing_moves_min} times or more; the latest ISR lists a restructuring of a level \
+the result's thresholds name, dated in the last {signals.restructured_months} months; the latest ISR lowered \
+the rating for progress towards the development objective or for overall implementation progress; and less \
+than the share the result's thresholds name of the money committed and not canceled was disbursed, with \
+{signals.disbursement_months} months or less left before closing. The plan checks read each agency's latest \
+plan only when it is dated within {signals.plan_months} months of the as-of date. Each row is one check that \
+fired, with how many activities, contracts, moves or ratings it fired on, the values its sentence states and \
+the records it rests on, each with its own evidence id. The status is needs_a_look with \
+{signals.look_min} signals or one strong signal, watch with fewer, no_signals when the checks that ran found \
+nothing, and not_checked when none could run; the result says which checks could not run and why. Closed and \
+pipeline projects are not checked. It never combines the checks into a score. Cite a record a signal rests \
+on by its own evidence id. The status and the counts come back in the result's summary, which you cite for \
+them. It cannot see the prior-review queue, complaints, contract amendments or contract management reports."""
+adapter = "strata.tools.project_signals:project_signals"
+benchmark = "project-signals-p156634"
+sources = ["documents", "projects", "ida_credit_history", "ibrd_loan_history", "ida_credits", "ibrd_loans"]
+
+[[tools.project_signals.parameters]]
+name = "project_id"
+type = "string"
+required = true
+description = "The project ID, P followed by six digits, such as P156634."
+
+[[tools.project_signals.parameters]]
+name = "as_of"
+type = "date"
+required = false
+description = "Run the checks as they would have run on this date, on records public by then. Leave it out for today."
+
+[tools.project_signals.result]
+row = """One signal: the check that fired, whether it is strong, how many things it fired on, the values its \
+sentence states and the records it rests on."""
+row_fields = ["evidence_id", "public_from", "source", "check", "strong", "count", "values", "items"]
+source_fields = ["source_key", "project_id", "document_id", "date"]
+fields = ["project", "status", "checks", "counts", "thresholds", "plans"]
+reasons = ["no_plans", "no_recent_plans", "no_loan_history", "no_isr", "no_loans"]
+abstentions = ["unknown_project", "not_active", "no_records"]
+# The status and the counts are figures an answer may state ("it needs a look, with four signals").
+summary_fields = ["status", "counts"]
+# Each record a signal rests on (a plan row, a closing-date move, an ISR rating, a passage, a loan) is cited by
+# its own evidence id, so an answer or a draft can cite the record and state its values.
+nested_rows = ["items"]
+
 [tools.search_passages]
 description = """Searches the numbered passages of World Bank project documents (PADs, ISRs, ICRs, \
 ICR Reviews, Project Papers and PPARs) and the scope and qualification text of procurement notices, by \

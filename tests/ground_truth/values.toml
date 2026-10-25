@@ -1138,6 +1138,19 @@ first_lists = "KE-CWSB-567630-CW-DIR"
 not_in = "documents/P156634/procurement-plan-2026-07-31"
 
 [[value]]
+id = "plan-cwsb-567630-estimated"
+says = """The Coast Water Services Board's plan of August 17, 2026 estimates KE-CWSB-567630-CW-DIR at US$2,600,000.00 \
+(Estimated Amount), Pending Implementation: the US$2.6 million direct-selection works activity of P156634's late \
+direct selection signal (ticket 37). The award signed on August 28, 2026 at US$2,432,125.50 is a later record."""
+value = "2,600,000.00"
+quote = "2,600,000.00 0.00 Pending Implementation 2026-08-14"
+document = "documents/P156634/procurement-plan-2026-08-17"
+document_type = "Procurement Plan"
+project = "P156634"
+date = 2026-08-17
+pdf_page = 3
+
+[[value]]
 id = "plan-541055-first-listed"
 says = "The Northern Water Works Development Agency's plan of March 5, 2026 is the first to list KE-NWWDA-541055-CW-RFB."
 value = 2026-03-05

@@ -334,10 +334,19 @@ def criteria_answer(result, question) -> dict[str, list]:
     return found
 
 
+def signals_answer(result, question) -> dict[str, list]:
+    """project_signals' answer: the status, and what each check that fired fired on: the activities by STEP
+    reference, or the months the loan history first showed a new closing date (ticket 37)."""
+    found = {"status": [result["status"]]}
+    for row in result["rows"]:
+        found[row["check"]] = sorted(item.get("activity_reference_no") or item.get("reported_on") for item in row["items"])
+    return found
+
+
 ANSWERS = {"check_plan": marked, "search_passages": in_top_three, "data_readiness_for": readiness_answer,
            "find_comparables": past_range, "get_disagreements": disagreement_answer,
            "get_lessons": lessons_answer, "estimate_time": step_dates_answer, "compare_cost_estimates": cost_answer,
-           "rejected_bids": rejected_answer, "compare_criteria": criteria_answer}
+           "rejected_bids": rejected_answer, "compare_criteria": criteria_answer, "project_signals": signals_answer}
 
 
 def answered(result, question) -> dict[str, list[str]]:
@@ -347,7 +356,7 @@ def answered(result, question) -> dict[str, list[str]]:
 
 def expected(question) -> dict[str, list[str]]:
     if question["tool"] in ("data_readiness_for", "get_disagreements", "get_lessons", "compare_cost_estimates",
-                            "rejected_bids", "compare_criteria"):
+                            "rejected_bids", "compare_criteria", "project_signals"):
         return question["expected"]
     return {mark: sorted(refs) for mark, refs in question["expected"].items()}
 
