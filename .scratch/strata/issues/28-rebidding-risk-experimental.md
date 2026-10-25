@@ -6,7 +6,7 @@ Read first: docs/PLAN.md section 7; the blueprint's "What Strata estimates, and 
 
 **Blocked by:** 15 (Plan a package from a sentence); 25 (The replay harness and the survival model's backtests)
 
-**Status:** ready-for-agent
+**Status:** in-progress
 **Area:** ml
 **Phase:** P2
 **Design review:** yes
@@ -17,3 +17,7 @@ Read first: docs/PLAN.md section 7; the blueprint's "What Strata estimates, and 
 - [ ] The natural frequency appears only with at least 20 comparables and a model that beat the baseline; otherwise only counts appear.
 - [ ] The workspace line and its reasons follow the blueprint's "Shown as" wording, cite their notices through the evidence drawer, and carry an "Experimental" label with a one-sentence explanation from the copy file.
 - [ ] States (populated, under 20 comparables, no rebidding found) are captured at 1440, 1024 and 390 px, follow DESIGN.md sections 5 and 7, and pass axe.
+
+## Comments
+
+- October 23, 2026, orchestrator: dispatched to an implementer in its own worktree on branch strata/28-rebidding-risk-experimental, as soon as ticket 25 landed. Credentials are still missing, so every live step is parked in docs/workspace-catchup.md; the offline side is built against the fixtures.

@@ -6,7 +6,7 @@ Read first: docs/PLAN.md sections 10 and 11 (Feedback); the blueprint's Evidence
 
 **Blocked by:** 14 (Ask from the one box: the answer panel and the evidence drawer); 18 (The document slice, the page router's Route B and the stress shelf); 25 (The replay harness and the survival model's backtests)
 
-**Status:** ready-for-agent
+**Status:** in-progress
 **Area:** knowledge
 **Phase:** P2
 **Design review:** yes
@@ -20,3 +20,7 @@ Read first: docs/PLAN.md sections 10 and 11 (Feedback); the blueprint's Evidence
 - [ ] Building an evaluation set from a label that came from live feedback fails.
 - [ ] "Wrong passage" per 100 sources opened and the per-viewer fixed and re-cited counts are computed and stored.
 - [ ] The feedback row follows the Evidence drawer wireframe and DESIGN.md section 5 (ghost buttons) and section 10 (24px targets, focus); states are captured at 1440, 1024 and 390 px; axe finds no WCAG 2.2 AA violations.
+
+## Comments
+
+- October 23, 2026, orchestrator: dispatched to an implementer in its own worktree on branch strata/32-retrieval-loop, as soon as ticket 25 landed. Credentials are still missing, so every live step is parked in docs/workspace-catchup.md; the offline side is built against the fixtures.

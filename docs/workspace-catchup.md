@@ -1023,3 +1023,29 @@ Run this from the main checkout:
 Then ask the benchmark question `find-comparables-planned-ke-works-rfb` through `WarehouseEngine`, with the arguments `evals/benchmark.yaml` gives it.
 
 It worked if the check exits 0 and prints "DuckDB and the SQL warehouse returned the same ... rows, and they are the rows the file expects." for `past_range_coverage_ke_works_rfb.sql`, and the question's answer holds the same 49 comparables, with the quartiles 3.3, 4.4, 7.9 and 9.1 months, and the four still-open packages and three canceled packages left out that the benchmark lists. If the warehouse holds Kenya works packages that the fixture does not record, the rows differ. Tell the orchestrator before you change a file's expected rows.
+
+## Ticket 25, step 1 of 2: backtest 2025 alone on the workspace and register the champion
+
+The merger parked this step on October 24, 2026, after merge commit e7c6e38. All ten keys were set, but the header above holds workspace steps back while the user runs the backlog. It needs the Databricks keys in `.env`. This merge adds the table `strata.ops.evaluation_result`, so first deploy from e7c6e38 or later with ticket 04's command, `uv run --script ops/bundle/deploy.py --env-file .env`, which must list `strata.ops.evaluation_result` as new and change no existing table. Run this step after that deploy and after a nightly run has filled gold and silver (ticket 04's step 2, `uv run --script ops/bundle/check.py job-run --env-file .env`). The merge already ran the builder's local step: `scripts/install` exited 0 and `uv run --frozen python -c 'import xgboost'` exited 0 (xgboost 3.4.1).
+
+Run this from the main checkout:
+
+    uv run --script ops/estimates/backtest_live.py --env-file .env --years 2025
+
+It worked if it exits 0 and prints the 2025 line with an MLflow run id, "Registered strata.gold.time_estimate version 1 as champion.", the track-record sentence, the model card's coverage section, and "Run time_estimate_backtest-... is in strata.ops.evaluation_result. It took N seconds." Each package the year had not seen calls find_comparables once on the warehouse, so note N before step 2. Then (criterion 4, Unity Catalog half): `MlflowClient().get_model_version_by_alias("strata.gold.time_estimate", "champion")` returns a version, that version's run holds `model_card.md`, and its description gives the track-record sentence.
+
+## Ticket 25, step 2 of 2: backtest 2021 to 2025 on the workspace
+
+The merger parked this step on October 24, 2026, after merge commit e7c6e38. It needs the Databricks keys in `.env`. Run it after step 1, and only if step 1's year took a reasonable time.
+
+Run this from the main checkout:
+
+    uv run --script ops/estimates/backtest_live.py --env-file .env
+
+It worked if it exits 0 and prints five test-year lines, 2021 to 2025, each with its own MLflow run id, then the track-record sentence and the card's coverage section (criterion 2). Then this query:
+
+    SELECT segment, measure, value, mlflow_run_id FROM strata.ops.evaluation_result
+    WHERE scorer = 'time_estimate_backtest' AND segment_kind = 'test_year'
+      AND measure IN ('coverage', 'width_80_months', 'error_past_range_months', 'error_plan_months')
+
+must return rows for 2021 to 2025, and each `mlflow_run_id` must be a run in the experiment `/Shared/strata/time_estimate`. Criterion 3, workspace half: the `model_card.md` this run logged has a line for each test year, and each year outside 75 to 85 percent gives its gap and a cause sentence (or "The stored results do not show the cause."). This run registers version 2 as challenger, because version 1 from step 1 already holds champion, and the champion's card lists only 2025. Moving champion to version 2 is the user's call; ticket 25's merge comment names it.
