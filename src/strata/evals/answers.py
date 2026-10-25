@@ -278,9 +278,10 @@ ANSWERS = {"ask_genie": genie_answer, "check_plan": marked, "search_passages": i
 
 
 def answered(result, question) -> dict[str, list[str]]:
-    """The tool's answer, in its benchmark question's shape: only the keys the question expects."""
+    """The tool's answer, in its benchmark question's shape: only the keys the question expects. The keys are the
+    file's own (ask_genie's is rows, the same key expected() gives), so reading an answer opens no file."""
     found = ANSWERS[question["tool"]](result, question)
-    return {key: found.get(key) for key in expected(question)}
+    return {key: found.get(key) for key in question["expected"]}
 
 
 def expected(question) -> dict[str, list[str]]:

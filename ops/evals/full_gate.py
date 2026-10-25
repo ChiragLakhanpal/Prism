@@ -6,16 +6,16 @@ Run it from the main checkout, after the bundle deploy (ops/bundle/deploy.py), t
 
     uv run --with azure-identity python ops/evals/full_gate.py --env-file .env
 
-It needs DATABRICKS_HOST, DATABRICKS_TOKEN, DATABRICKS_WAREHOUSE_ID, FOUNDRY_PROJECT_ENDPOINT and
-FOUNDRY_TENANT_ID in the env file, GENIE_SPACE_ID for the Genie benchmark, and az signed in for the agent. In order
-(strata.evals.full_gate):
+It needs DATABRICKS_HOST, DATABRICKS_TOKEN, DATABRICKS_WAREHOUSE_ID, FOUNDRY_PROJECT_ENDPOINT, FOUNDRY_TENANT_ID,
+AZURE_OPENAI_ENDPOINT and AZURE_OPENAI_API_KEY in the env file, GENIE_SPACE_ID for the Genie benchmark, and az
+signed in for the agent. In order (strata.evals.full_gate):
 
 1. It checks the benchmark file, and stops naming what it lacks.
 2. It runs the offline gate, .githooks/pre-commit. When that fails, nothing live runs.
 3. The Genie benchmark: each Genie question through the space GENIE_SPACE_ID names, as the env file's token,
    against its ground-truth SQL on the SQL warehouse.
-4. Every question in evals/benchmark.yaml through /api/ask with the Foundry agent, its tools on the SQL warehouse
-   as the env file's token, and the verifier's judge when the env file names Azure OpenAI.
+4. Every question in evals/benchmark.yaml through /api/ask with the Foundry agent, its tools as a viewer that
+   carries the env file's token (the SQL warehouse, Genie and AI Search), and the verifier's judge.
 5. Foundry evaluations of those answers. A browser opens for a Microsoft Entra sign-in to FOUNDRY_TENANT_ID: the
    project key gets 403 from the evaluations API, and the tenant blocks device-code sign-in.
 6. It appends every result to strata.ops.evaluation_result under one run id, prints each tally against its target
@@ -26,6 +26,8 @@ FOUNDRY_TENANT_ID in the env file, GENIE_SPACE_ID for the Genie benchmark, and a
 from __future__ import annotations
 
 import argparse
+import dataclasses
+import os
 import subprocess
 import sys
 import threading
@@ -39,7 +41,10 @@ for folder in (REPO / "src", REPO / "ops" / "dayone"):
         sys.path.insert(0, str(folder))
 
 NEEDS = ("DATABRICKS_HOST", "DATABRICKS_TOKEN", "DATABRICKS_WAREHOUSE_ID", "FOUNDRY_PROJECT_ENDPOINT",
-         "FOUNDRY_TENANT_ID")
+         "FOUNDRY_TENANT_ID", "AZURE_OPENAI_ENDPOINT", "AZURE_OPENAI_API_KEY")
+# What the tools read from the process environment, as the App's app.yaml gives them: ask_genie the workspace and
+# its Genie space, search_passages the workspace and Azure OpenAI.
+TOOL_SETTINGS = ("DATABRICKS_HOST", "AZURE_OPENAI_ENDPOINT", "AZURE_OPENAI_API_KEY", "GENIE_SPACE_ID")
 FOUNDRY_SCOPE = "https://ai.azure.com/.default"
 
 
@@ -90,6 +95,9 @@ def stages_for(env: dict):
     warehouse = WarehouseEngine(env["DATABRICKS_WAREHOUSE_ID"], transport)
     engine_for, spec = warehouse_engine_for(env), load_agent("orchestrator")
     space_id = (env.get("GENIE_SPACE_ID") or "").strip()
+    # The env file's token as the viewer for this run only: the tools the agent calls and the reference answers
+    # sign their calls with it, and no module global holds it (CLAUDE.md rule 7).
+    viewer = dataclasses.replace(answer_benchmark.GATE, token=env["DATABRICKS_TOKEN"])
 
     def genie():
         client = GenieClient(transport, space_id, env["DATABRICKS_WAREHOUSE_ID"], Waits.from_thresholds(thresholds))
@@ -98,7 +106,8 @@ def stages_for(env: dict):
     def answers(questions):
         return answer_benchmark.run(questions, lambda turn: foundry_agent(env, spec), engine_for,
                                     judge=judge.from_environment(env),
-                                    restricted=restricted_values(REPO / "data" / "fixture" / "recorded" / "api"))
+                                    restricted=restricted_values(REPO / "data" / "fixture" / "recorded" / "api"),
+                                    viewer=viewer)
 
     def foundry(items):
         client = foundry_evaluation.FoundryEvaluations(env["FOUNDRY_PROJECT_ENDPOINT"], evaluations.api_version,
@@ -133,6 +142,9 @@ def main(argv: list[str] | None = None) -> int:
         return 2
     from strata.evals import benchmark, full_gate
 
+    # The tools read these from the environment, as the App's app.yaml gives them. update, not setdefault, so
+    # ask_genie asks the same space as the Genie benchmark stage.
+    os.environ.update({key: env[key] for key in TOOL_SETTINGS if env.get(key)})
     stages, store = stages_for(env)
     return full_gate.run(benchmark.load(), stages, store).exit_code
 

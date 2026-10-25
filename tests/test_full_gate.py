@@ -390,8 +390,55 @@ def test_the_command_needs_the_workspace_and_foundry_keys_from_the_env_file(tmp_
     env.write_text("DATABRICKS_HOST='https://example.cloud.databricks.com'\n")
 
     assert command.main(["--env-file", str(env)]) == 2
-    assert ("has no value for DATABRICKS_TOKEN, DATABRICKS_WAREHOUSE_ID, FOUNDRY_PROJECT_ENDPOINT, FOUNDRY_TENANT_ID"
-            in capsys.readouterr().out)
+    assert ("has no value for DATABRICKS_TOKEN, DATABRICKS_WAREHOUSE_ID, FOUNDRY_PROJECT_ENDPOINT, FOUNDRY_TENANT_ID, "
+            "AZURE_OPENAI_ENDPOINT, AZURE_OPENAI_API_KEY" in capsys.readouterr().out)
+
+
+# A complete env file, with fake values.
+COMPLETE_ENV = {"DATABRICKS_HOST": "https://example.cloud.databricks.com", "DATABRICKS_TOKEN": "not-a-real-key",
+                "DATABRICKS_WAREHOUSE_ID": "wh-1", "FOUNDRY_PROJECT_ENDPOINT": "https://example.services.ai.azure.com",
+                "FOUNDRY_TENANT_ID": "tenant", "AZURE_OPENAI_ENDPOINT": "https://example.openai.azure.com",
+                "AZURE_OPENAI_API_KEY": "not-a-real-key", "GENIE_SPACE_ID": "01f0aaaabbbbccccddddeeeeffff0000"}
+
+
+def test_the_command_gives_the_tools_their_settings_from_the_env_file(tmp_path, monkeypatch):
+    """ask_genie and search_passages read the workspace, the Genie space and Azure OpenAI from the process
+    environment, as the App's app.yaml gives them. The command loads them from the env file, so it puts them there
+    for the run, overwriting what was set, so ask_genie asks the same space as the Genie benchmark."""
+    import os
+
+    command = load_command()
+    for key in command.TOOL_SETTINGS:
+        monkeypatch.setenv(key, "set before the run")  # monkeypatch puts each one back after the test
+    env = tmp_path / "env-file"
+    env.write_text("".join(f"{key}='{value}'\n" for key, value in COMPLETE_ENV.items()))
+    seen = {}
+
+    def fake(given):
+        seen.update({key: os.environ[key] for key in command.TOOL_SETTINGS})
+        return full_gate.Stages(offline_gate=lambda: 1, answers=lambda questions: []), None
+
+    monkeypatch.setattr(command, "stages_for", fake)
+
+    assert command.main(["--env-file", str(env)]) == 1
+    assert seen == {"DATABRICKS_HOST": "https://example.cloud.databricks.com",
+                    "AZURE_OPENAI_ENDPOINT": "https://example.openai.azure.com",
+                    "AZURE_OPENAI_API_KEY": "not-a-real-key", "GENIE_SPACE_ID": "01f0aaaabbbbccccddddeeeeffff0000"}
+
+
+def test_the_command_asks_each_question_as_a_viewer_that_carries_the_env_file_s_token(monkeypatch):
+    command = load_command()
+    captured = {}
+
+    def capture(questions, agent_for, engine_for, judge=None, restricted=(), viewer=answer_benchmark.GATE):
+        captured["viewer"] = viewer
+        return []
+
+    monkeypatch.setattr(answer_benchmark, "run", capture)
+    command.stages_for(COMPLETE_ENV)[0].answers([])
+
+    assert captured["viewer"].token == "not-a-real-key"
+    assert (captured["viewer"].email, captured["viewer"].user_id) == ("full-gate@strata", "full-gate@strata")
 
 
 def test_the_command_asks_genie_only_when_the_env_file_names_a_space():

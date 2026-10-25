@@ -24,7 +24,8 @@ from strata.harness.sse import events as stream_events
 from strata.harness.turn import Turn
 from strata.server.engines import EngineFor
 
-# Who the full gate asks as: the env file's token on the workspace, so its grants decide what the tools read.
+# Who the full gate asks as. It holds no token: on the workspace, ops/evals/full_gate.py gives run() a copy that
+# carries the env file's token for that one run, so its grants decide what the tools read (CLAUDE.md rule 7).
 GATE = Viewer(email="full-gate@strata", name="Strata's full gate", user_id="full-gate@strata")
 
 
@@ -51,12 +52,16 @@ def run(questions: list[dict], agent_for: Callable[[Turn], Agent], engine_for: E
     app = create_app(runner=answer_runner(agent_for, engine_for, on_result=keep), engine_for=engine_for, judge=judge)
     restricted = set(restricted)
 
+    # The headers the App's proxy would forward. The token reaches the tools the agent calls, which sign their
+    # calls with it on the workspace (ask_genie, search_passages), as it reaches them for a viewer in the App.
+    headers = {"X-Forwarded-User": viewer.user_id or "full-gate", "X-Forwarded-Email": viewer.email or "",
+               **({"X-Forwarded-Access-Token": viewer.token} if viewer.token else {})}
+
     async def ask(question: dict) -> str:
         chip, as_of = scope_of(question)
         async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://strata.gate",
                                      timeout=600) as client:
-            response = await client.post("/api/ask", headers={"X-Forwarded-User": viewer.user_id or "full-gate",
-                                                              "X-Forwarded-Email": viewer.email or ""},
+            response = await client.post("/api/ask", headers=headers,
                                          json={"question": question["question"], "scope": chip, "asof": as_of})
             return response.text
 

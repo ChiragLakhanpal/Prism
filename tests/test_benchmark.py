@@ -239,6 +239,17 @@ def test_a_genie_answer_with_its_columns_in_another_order_is_the_same_answer():
     assert answers.answered(swapped, genie) == answers.expected(genie)
 
 
+def test_reading_a_genie_answer_needs_no_ground_truth_file():
+    """Scoring reads only the tool's result in the question's shape. The rows a Genie question expects come from its
+    ground-truth SQL in tests/, which the reference answer runs, but reading an answer opens no file."""
+    from strata.evals import answers
+
+    genie = {**question("genie-joint-venture-1624689"), "ground_truth": "tests/ground_truth/no-such-file.sql"}
+    found = {"rows": [{"values": {"supplier_id": "503708", "supplier_contract_amount_usd": "697972.33"}}]}
+
+    assert answers.answered(found, genie) == {"rows": [["503708", "697972.33"]]}
+
+
 def test_a_documents_question_with_no_expected_citations_is_named():
     questions = benchmark.load() + [{"id": "uncited", "kind": "documents", "tool": "search_passages",
                                      "question": "What did the report say?", "arguments": {}, "expected": {}}]
@@ -260,3 +271,27 @@ def test_a_documents_answer_that_cites_its_notices_passes_through_the_route(engi
 
     assert [(scored.id, scored.passed, scored.problems) for _, scored in results] == [
         (item["id"], True, ()) for item in items]
+
+
+def test_the_route_s_tools_and_the_reference_answer_run_as_the_gate_s_viewer_with_its_token(engine_for):
+    """On the workspace, ask_genie and search_passages sign their calls with the viewer's token. So the full gate's
+    viewer carries the env file's token to the tools the agent calls and to the reference answer alike."""
+    from contextlib import contextmanager
+
+    from strata.dbx import Viewer
+
+    plan = question("check-plan-nwwda-2026-10-09")
+    viewer = Viewer(email="full-gate@strata", user_id="full-gate@strata", token="not-a-real-key")
+    tokens = []
+
+    @contextmanager
+    def recording(asking):
+        tokens.append(asking.token)
+        with engine_for(asking) as engine:
+            yield engine
+
+    [(asked, scored)] = answer_benchmark.run([plan], lambda turn: StandIn("check_plan", plan["arguments"]),
+                                             recording, judge=Agrees(), viewer=viewer)
+
+    assert scored.passed, scored.problems
+    assert len(tokens) >= 2 and set(tokens) == {"not-a-real-key"}
