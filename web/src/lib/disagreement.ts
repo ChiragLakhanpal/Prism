@@ -86,16 +86,19 @@ export function whatChanges(sides: SideData[], ifYouKeep: { field_name: string |
   return words.whatChanges(sideShort(other), ifYouKeep.field_name, ifYouKeep.value);
 }
 
-// "Rated 3 months after the mid-term review of May 16, 2016.", when get_disagreements gives the months.
+// "Rated three months after the mid-term review of May 16, 2016.", when get_disagreements gives the months: a count
+// from one to nine in words (DESIGN.md section 7).
 export function sideContext(side: SideData, event: string | null, moment: string | null): string | null {
   if (event !== "mid_term_review" || side.months_after_event == null || !moment) return null;
   const months = side.months_after_event;
   const template = side.value_form === "rating" ? card.rated(months) : card.written(months);
-  return template.replace("{months}", String(months)).replace("{date}", formatDate(moment));
+  return template.replace("{months}", inWords(months)).replace("{date}", formatDate(moment));
 }
+
+const inWords = (count: number) => (count >= 1 && count <= 9 ? copy.num.words[count - 1] : String(count));
 
 // "That changes one sentence in this answer."
 export function changesLine(count: number, kind: "answer" | "draft"): string {
   const template = kind === "answer" ? card.changesAnswer(count) : card.changesDraft(count);
-  return template.replace("{n}", count >= 1 && count <= 9 ? copy.num.words[count - 1] : String(count));
+  return template.replace("{n}", inWords(count));
 }

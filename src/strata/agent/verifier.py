@@ -914,9 +914,13 @@ def _supported(pairs) -> list[dict]:
     return [{"text": mention.text, "evidence_id": found} for mention, found in pairs]
 
 
+# The kind of report each documents API type is (config/project_page.toml's groups), read once.
+DOCUMENT_GROUPS = load_project_page().document_groups
+
+
 def _side(side: Mapping, leaned: str | None) -> dict:
     document_type = side.get("document_type")
-    kind = load_project_page().document_groups.get(document_type, "other") if document_type else "record"
+    kind = DOCUMENT_GROUPS.get(document_type, "other") if document_type else "record"
     return {"evidence_id": side["evidence_id"], "assertion_id": side.get("assertion_id"), "type": kind,
             "document_type": document_type, "report_number": side.get("report_number"),
             "sequence": side.get("sequence"), "paragraph": side.get("paragraph"),

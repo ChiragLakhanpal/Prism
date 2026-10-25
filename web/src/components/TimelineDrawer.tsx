@@ -14,7 +14,7 @@ import type { EvidenceEvent } from "../lib/answer";
 import { sourcePageHref } from "../lib/documents";
 import { evidenceHref, openEvidence } from "../lib/evidence";
 import { cx } from "../lib/cx";
-import { shortName } from "../lib/timeline";
+import { capitalize, shortName } from "../lib/timeline";
 import { formatDate } from "../lib/format";
 import { sideContext, sideMeta, sideOpen, sideShort, sideTitle, subjectOf, ruleSentence, whatChanges, type SideData } from "../lib/disagreement";
 import { Alert } from "./Alert";
@@ -67,10 +67,12 @@ export function timelineTitle(evidence: EvidenceEvent): ReactNode {
   return words.disagreement.heading.replace("{side1}", sideShort(sides[0])).replace("{side2}", sideShort(sides[1]));
 }
 
-export function timelineClose(evidence: EvidenceEvent | null): string {
-  if (evidence?.kind === "ratings") return words.ratings.close;
-  if (evidence?.kind === "contracts") return words.contracts.close;
-  if (evidence?.kind === "disagreement") return words.disagreement.close;
+// The close button's name, by the view, or while the view loads by its id's prefix.
+export function timelineClose(evidence: EvidenceEvent | null, id: string): string {
+  const kind = evidence?.kind ?? { ratings: "ratings", contracts: "contracts", disagreement: "disagreement" }[id.split(":")[0]];
+  if (kind === "ratings") return words.ratings.close;
+  if (kind === "contracts") return words.contracts.close;
+  if (kind === "disagreement") return words.disagreement.close;
   return words.doc.close;
 }
 
@@ -127,10 +129,12 @@ function DocumentView({ evidence }: { evidence: EvidenceEvent }) {
           key={found.evidence_id}
           warning={false}
           disagreementId={found.evidence_id}
-          text={words.doc.inDisagreement
-            .replace("{this}", thisShort)
-            .replace("{other}", shortName(found.other))
-            .replace("{subject}", subjectOf(found.attribute, found.period_event).replace(/^./, (first) => first.toLowerCase()))}
+          text={capitalize(
+            words.doc.inDisagreement
+              .replace("{this}", thisShort)
+              .replace("{other}", shortName(found.other))
+              .replace("{subject}", subjectOf(found.attribute, found.period_event).replace(/^./, (first) => first.toLowerCase())),
+          )}
         />
       ))}
       <dl data-document-fields className="grid grid-cols-2 gap-x-4 gap-y-2 rounded-md border border-line p-4">
@@ -196,7 +200,7 @@ function RatingsView({ evidence }: { evidence: EvidenceEvent }) {
         title={words.ratings.caption}
         level={3}
         cardsBelow="fit"
-        count={{ noun: copy.timeline.itemsNoun, total: row.rows.length, text: words.ratings.count(String(row.rows.length)) }}
+        count={{ noun: copy.timeline.itemsNoun, total: row.count, text: words.ratings.count(String(row.count)) }}
         columns={columns}
         rowHeader="isr"
         state={{
@@ -230,10 +234,10 @@ function ContractsView({ evidence }: { evidence: EvidenceEvent }) {
   return (
     <div data-contracts-view className="flex flex-col gap-4">
       <Table
-        title={words.contracts.heading.replace("{year}", String(row.year))}
+        title={words.contracts.tableTitle.replace("{year}", String(row.year))}
         level={3}
         cardsBelow="fit"
-        count={{ noun: copy.timeline.itemsNoun, total: row.rows.length, text: words.contracts.count(String(row.rows.length)) }}
+        count={{ noun: copy.timeline.itemsNoun, total: row.count, text: words.contracts.count(String(row.count)) }}
         columns={columns}
         rowHeader="contract"
         state={{

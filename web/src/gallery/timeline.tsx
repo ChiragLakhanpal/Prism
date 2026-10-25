@@ -67,7 +67,19 @@ function Drawer({ evidence }: { evidence: EvidenceEvent }) {
 }
 
 // The showcase's card as a sample: on the timeline (no keep target), or under an answer whose sentence it changes.
-function CardSample({ answer = false, state = null, reason = "", preview = false }: { answer?: boolean; state?: KeepState | null; reason?: string; preview?: boolean }) {
+function CardSample({
+  answer = false,
+  state = null,
+  reason = "",
+  preview = false,
+  backFailed = false,
+}: {
+  answer?: boolean;
+  state?: KeepState | null;
+  reason?: string;
+  preview?: boolean;
+  backFailed?: boolean;
+}) {
   const { sides, props } = cardFromRow(PDO.row, nothing);
   const keep = props.keep && answer ? { ...props.keep, target: { disagreementId: PDO.row.disagreement_id, runId: "run-0001", draftId: null, preview } } : props.keep;
   return (
@@ -82,6 +94,7 @@ function CardSample({ answer = false, state = null, reason = "", preview = false
         keep={keep}
         initialKept={state}
         initialReason={reason}
+        initialBackFailed={backFailed}
         sample
       />
     </div>
@@ -141,6 +154,9 @@ export function timelinePage(): GalleryPage {
             </Labeled>
             <Labeled label={s.cardKept}>
               <CardSample answer state={{ phase: "kept", madeAt: "2026-10-23T15:00:00+00:00", reason: galleryCopy.timelineReason }} />
+            </Labeled>
+            <Labeled label={s.cardBackFailed}>
+              <CardSample answer state={{ phase: "kept", madeAt: "2026-10-23T15:00:00+00:00", reason: galleryCopy.timelineReason }} backFailed />
             </Labeled>
             <Labeled label={s.cardPreview}>
               <CardSample answer preview />

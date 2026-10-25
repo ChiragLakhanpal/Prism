@@ -1044,8 +1044,10 @@ export const copy = {
     rule: {
       // Brief 23's words, changed in ticket 20's review (round 2, P3): a tie is between two records as often
       // as two reports, the other side of an outcome judgment can itself be written after closing, and
-      // GLOSSARY.md avoids "fact" for an assertion.
-      outcome: "For a judgment of how a project went, I lean on the later, more independent report, here {lean}. I keep {other} beside it.",
+      // GLOSSARY.md avoids "fact" for an assertion. Ticket 23's design review made it one sentence that says why the
+      // other report stays: under this rule it is always the earlier one, the ICR as much as an ISR.
+      outcome:
+        "For a judgment of how a project went, I lean on the later, more independent report, here {lean}, and I keep {other} as the record of the earlier view.",
       moment: "For something that happened at one moment, I lean on the record made at that moment, here {lean}.",
       tieSpecific: "The two sources rank the same, so I lean on the more specific one, {lean}.",
       tieRecent: "The two sources rank the same and are equally specific, so I lean on the more recent one, {lean}.",
@@ -1136,6 +1138,8 @@ export const copy = {
         saving: "Saving",
         empty: "Write a reason, so the evidence pack says why you kept {other}.",
         failed: "I couldn't save your reason just now. Your text is still here.",
+        // Going back to Strata's choice did not save: the kept choice stands.
+        backFailed: "I couldn't save that just now, so you still keep {other}.",
         retry: "Try again",
         kept: "You kept {other} on {date}. Your reason: \"{reason}\"",
         undo: "Go back to Strata's choice",
@@ -4919,7 +4923,10 @@ export const copy = {
     title: "Timeline",
     purpose:
       "This timeline puts the project's evaluations, operations documents and records on one time axis, so you can see " +
-      "what was known when. Select a mark to open its source.",
+      "what was known when.",
+    // The purpose's second sentence, only while there are items to select: marks on the chart, items in the list.
+    purposeSelect: "Select a mark to open its source.",
+    purposeSelectList: "Select an item to open its source.",
     // The chart's subtitle, with each shape drawn before its word ({report}, {event} and {record} are the glyphs,
     // hidden from screen readers, so the words carry the meaning).
     subtitle: "Each mark is a {report} report, an {event} event or a {record} record. A dashed line joins two reports that disagree.",
@@ -5012,12 +5019,10 @@ export const copy = {
       contract: "Contract signed.",
       group: "Select to list them.",
       band: "{start} to {end}. Progress towards achievement of PDO.",
-      leans: "Strata leans on {lean}.",
+      leans: "I lean on {lean}.",
       written: "{written}.",
       writtenDisagrees: "{written}. Disagrees with {other}.",
     },
-    // Joins the names of several reports in a sentence.
-    join: ", ",
     // Each item's accessible name. "to" stands in for the en dash, so a screen reader does not say "dash".
     name: {
       report: "{type}, {date}. {lane} lane. Item {i} of {n}.",
@@ -5032,7 +5037,7 @@ export const copy = {
       group: "{count} contracts signed in {year}. What lane. Item {i} of {n}.",
       band: "ISRs {first} to {last} rated progress {rating}, from {start} to {end}. How lane. Item {i} of {n}.",
       bandOne: "ISR {first} rated progress {rating}, from {start} to {end}. How lane. Item {i} of {n}.",
-      disagreement: "2 reports disagree: {side1}, {date1}, and {side2}, {date2}. Strata leans on {lean}. Item {i} of {n}.",
+      disagreement: "2 reports disagree: {side1}, {date1}, and {side2}, {date2}. I lean on {lean}. Item {i} of {n}.",
     },
     group: (n: string, pid: string) => `${n} items on the timeline of ${pid}`,
     help: "Use the arrow keys to move between items. Left and Right go in date order. Up and Down move between lanes. Press Enter to open an item's source.",
@@ -5042,7 +5047,7 @@ export const copy = {
       disagrees: "Disagrees with {other}.",
       replaced: "Replaced by the re-issue of {date}.",
       trajectory: "A trajectory: each ISR rated its own period.",
-      leans: "Strata leans on {lean}.",
+      leans: "I lean on {lean}.",
     },
     // A report's short name in a sentence: "the ICR", "ISR 7". The server's copy (server.short) is the same.
     short: {
@@ -5113,6 +5118,8 @@ export const copy = {
       contracts: {
         eyebrow: "What · record",
         heading: "Contracts signed in {year}",
+        // The table under the heading, which says what each row is rather than repeating the heading.
+        tableTitle: "Each contract signed in {year}, in date order.",
         count: (n: string) => `Showing all ${n} contracts.`,
         columns: { contract: "Contract (STEP reference)", signed: "Signed", amount: "Signed amount (US$)" },
         notInRecord: "Not in the record",

@@ -162,7 +162,9 @@ test("ICR paragraph 78 shows under ISR 7's sentence with both sides, though the 
   expect(looks[0]).toEqual(looks[1]);
   // The sentence's own source keeps number 1, and the other side gets the next.
   await expect(card.locator("[data-citation]")).toHaveText(["[1]", "[2]"]);
-  await expect(card).toContainText("For a judgment of how a project went, I lean on the later, more independent report, here ICR paragraph 78.");
+  await expect(card).toContainText(
+    "For a judgment of how a project went, I lean on the later, more independent report, here ICR paragraph 78, and I keep ISR 7 as the record of the earlier view.",
+  );
   await expect(card).toContainText('If you keep ISR 7 instead, I treat "Progress towards achievement of PDO" as Satisfactory.');
   // The stream names the sentence keeping the other report would change (ticket 23).
   await expect(card).toContainText("That changes one sentence in this answer.");

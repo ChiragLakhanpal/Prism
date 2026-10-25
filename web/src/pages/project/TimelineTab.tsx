@@ -39,6 +39,8 @@ import {
   bandLine,
   capitalize,
   fullLabel,
+  joinNames,
+  othersOf,
   shortName,
   type Item,
   type Lane,
@@ -90,14 +92,14 @@ export function lineStates(data: Timeline, run: Run | null): Record<string, Line
   return states;
 }
 
-// The Note line: each abbreviation that appears, what the bands show and each code a band uses.
-function Note({ data }: { data: Timeline }) {
+// The Note line: each abbreviation that appears, what the bands show and each code a band shows.
+function Note({ data, codes }: { data: Timeline; codes: string[] }) {
   const types = new Set(data.items.flatMap((item) => (item.kind === "report" ? [item.type] : [])));
   if (data.items.some((item) => item.kind === "band")) types.add("isr");
   const abbreviations = (["pad", "isr", "icr", "icr_review", "ppar"] as const).filter((type) => types.has(type)).map((type) => words.abbrev[type]);
-  const ratings = [...new Set(data.items.flatMap((item) => (item.kind === "band" ? [item.rating] : [])))];
-  const codes = ratings.map((rating) => words.codeNote(words.codes[rating] ?? rating, rating));
-  const parts = [...abbreviations, ...(ratings.length ? [words.bands, ...codes] : [])];
+  const banded = data.items.some((item) => item.kind === "band");
+  const spelled = codes.map((rating) => words.codeNote(words.codes[rating] ?? rating, rating));
+  const parts = [...abbreviations, ...(banded ? [words.bands, ...spelled] : [])];
   if (!parts.length) return null;
   return (
     <p data-timeline-note className="max-w-prose text-caption text-chart-text-subtle">
@@ -106,11 +108,16 @@ function Note({ data }: { data: Timeline }) {
   );
 }
 
-function SourceLine({ data }: { data: Timeline }) {
+// The source line's words, which Table wraps in its own Source line under the table twin.
+function SourceWords({ data }: { data: Timeline }) {
   const names = data.sources.map((key) => words.sourceNames[key] ?? key);
+  return <Fill template={words.source} slots={{ sources: <Joined items={names} />, date: <Num date={data.data_through ?? data.as_of} /> }} />;
+}
+
+function SourceLine({ data }: { data: Timeline }) {
   return (
     <Source className="max-w-prose">
-      <Fill template={words.source} slots={{ sources: <Joined items={names} />, date: <Num date={data.data_through ?? data.as_of} /> }} />
+      <SourceWords data={data} />
     </Source>
   );
 }
@@ -118,7 +125,7 @@ function SourceLine({ data }: { data: Timeline }) {
 function Abstention({ count }: { count: number }) {
   return (
     <p data-timeline-abstention className="max-w-prose text-caption text-ink-muted">
-      <Fill template={words.abstention(count)} slots={{ n: <Num count={count} /> }} />
+      <Fill template={words.abstention(count)} slots={{ n: <Num count={count} inCaption check={{ tooltip: words.abstentionCheck }} /> }} />
     </p>
   );
 }
@@ -151,12 +158,7 @@ function TimelineTable({ data, id, onOpen }: { data: Timeline; id: string; onOpe
       return lean ? words.note.leans.replace("{lean}", shortName(lean)) : null;
     }
     if (item.kind === "report" && item.replaced_by) return words.note.replaced.replace("{date}", formatDate(item.replaced_by.date));
-    if (item.kind === "report" && item.disagrees_with?.length) {
-      const others = item.disagrees_with
-        .map((found) => data.items.find((one) => one.id === found))
-        .flatMap((found) => (found && found.kind === "disagreement" ? [shortName(found.sides.find((side) => side.item_id !== item.id)!)] : []));
-      return words.note.disagrees.replace("{other}", others.join(words.join));
-    }
+    if (item.kind === "report" && item.disagrees_with?.length) return words.note.disagrees.replace("{other}", joinNames(othersOf(item, data.items)));
     return null;
   };
   const rows: Row[] = items.map((item) => ({
@@ -196,7 +198,7 @@ function TimelineTable({ data, id, onOpen }: { data: Timeline; id: string; onOpe
         state={{ status: "ready", rows }}
         rowHeader="item"
         level={4}
-        source={<SourceLine data={data} />}
+        source={<SourceWords data={data} />}
       />
     </div>
   );
@@ -269,12 +271,7 @@ function ListItemText({ item, data, states }: { item: Item; data: Timeline; stat
       </>
     );
   }
-  const others =
-    item.kind === "report"
-      ? (item.disagrees_with ?? [])
-          .map((id) => data.items.find((one) => one.id === id))
-          .flatMap((found) => (found && found.kind === "disagreement" ? [shortName(found.sides.find((side) => side.item_id !== item.id)!)] : []))
-      : [];
+  const others = item.kind === "report" ? othersOf(item, data.items) : [];
   return (
     <>
       <span className="block text-caption text-ink-muted">
@@ -285,7 +282,7 @@ function ListItemText({ item, data, states }: { item: Item; data: Timeline; stat
       {item.kind === "report" && item.replaced_by && (
         <span className="block text-caption text-ink-muted">{words.tip.replacedBy.replace("{date}", formatDate(item.replaced_by.date))}</span>
       )}
-      {others.length > 0 && <span className="block text-caption text-ink-muted">{words.tip.disagrees.replace("{other}", others.join(words.join))}</span>}
+      {others.length > 0 && <span className="block text-caption text-ink-muted">{words.tip.disagrees.replace("{other}", joinNames(others))}</span>}
     </>
   );
 }
@@ -337,6 +334,7 @@ export function TimelineCard({
   const tableId = useId();
   const [box, width] = useWidth<HTMLDivElement>();
   const [table, setTable] = useState(false);
+  const [codes, setCodes] = useState<string[]>([]);
   const chart = wide && width >= CHART_MIN;
   const empty = (lane: Lane) => !data.items.some((item) => item.lane === lane);
   const lanesEmpty = Object.fromEntries(LANES.map((lane) => [lane, empty(lane)])) as Record<Lane, boolean>;
@@ -370,13 +368,13 @@ export function TimelineCard({
       )}
       <div ref={box} className="mt-4 min-w-0">
         {chart ? (
-          <EvidenceTrail data={data} width={width} openId={openId} lineStates={states} onOpen={onOpen} lanesEmpty={lanesEmpty} />
+          <EvidenceTrail data={data} width={width} openId={openId} lineStates={states} onOpen={onOpen} lanesEmpty={lanesEmpty} onCodes={setCodes} />
         ) : (
           <TimelineList data={data} openId={openId} states={states} onOpen={onOpen} />
         )}
       </div>
       <div className="mt-4 flex flex-col gap-2">
-        <Note data={data} />
+        <Note data={data} codes={chart ? codes : []} />
         {data.rejected && data.rejected.count > 0 && <Abstention count={data.rejected.count} />}
         <SourceLine data={data} />
       </div>
@@ -423,7 +421,7 @@ export function TimelineTab({ pid }: { pid: string }) {
         <SkeletonLine width="w-[70%]" className="text-h3" />
         <SkeletonLine width="w-[40%]" className="text-h3" />
         {load.slow && <p className="mt-1 text-caption text-ink-muted">{words.stillLoading}</p>}
-        <p className="mt-1 text-small text-chart-text-subtle">{wide ? <Fill template={words.subtitle} slots={{ report: <Glyph kind="report" />, event: <Glyph kind="event" />, record: <Glyph kind="record" /> }} /> : words.subtitleList}</p>
+        <p className="mt-1 max-w-prose text-small text-chart-text-subtle">{wide ? <Fill template={words.subtitle} slots={{ report: <Glyph kind="report" />, event: <Glyph kind="event" />, record: <Glyph kind="record" /> }} /> : words.subtitleList}</p>
         <TimelineSkeleton wide={wide} />
         <SkeletonLine width="w-3/5" className="mt-4 text-caption" />
         <SkeletonLine width="w-2/5" className="text-caption" />
@@ -439,12 +437,17 @@ export function TimelineTab({ pid }: { pid: string }) {
   } else {
     body = <TimelineCard data={load.data} wide={wide} openId={openId} states={lineStates(load.data, run)} onOpen={onOpen} onRetry={retry} />;
   }
+  // The purpose asks you to select a mark only where there is one to select.
+  const selectable = load.status === "loading" || (load.status === "ready" && load.data.items.length > 0);
   return (
     <section data-timeline={load.status} className="@container/timeline">
       <h2 ref={heading} tabIndex={-1} className="text-h2 text-ink-heading focus:outline-none">
         {words.title}
       </h2>
-      <p className="mt-2 max-w-prose text-body text-ink-muted">{words.purpose}</p>
+      <p data-timeline-purpose className="mt-2 max-w-prose text-body text-ink-muted">
+        {words.purpose}
+        {selectable && <> {wide ? words.purposeSelect : words.purposeSelectList}</>}
+      </p>
       <div className="mt-6">{body}</div>
     </section>
   );

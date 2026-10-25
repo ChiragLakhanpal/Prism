@@ -77,6 +77,7 @@ export function DisagreementCard({
   leanTag = copy.disagreement.lean,
   initialKept = null,
   initialReason = "",
+  initialBackFailed = false,
   sample = false,
 }: {
   warning: boolean;
@@ -95,6 +96,7 @@ export function DisagreementCard({
   // A design gallery sample's starting state of the keep action.
   initialKept?: KeepState | null;
   initialReason?: string;
+  initialBackFailed?: boolean;
   sample?: boolean;
 }) {
   const [kept, setKept] = useState<string | null>(initialKept?.phase === "kept" ? (keep?.otherAssertionId ?? null) : null);
@@ -152,7 +154,7 @@ export function DisagreementCard({
           {changes && <> {changes}</>}
         </p>
       )}
-      {keep && <KeepChoice keep={keep} onKept={setKept} initial={initialKept} initialReason={initialReason} sample={sample} />}
+      {keep && <KeepChoice keep={keep} onKept={setKept} initial={initialKept} initialReason={initialReason} initialBackFailed={initialBackFailed} sample={sample} />}
     </div>
   );
 }
@@ -193,12 +195,14 @@ function KeepChoice({
   onKept,
   initial,
   initialReason,
+  initialBackFailed,
   sample,
 }: {
   keep: Keep;
   onKept: (assertionId: string | null) => void;
   initial: KeepState | null;
   initialReason: string;
+  initialBackFailed: boolean;
   sample: boolean;
 }) {
   const target = keep.target;
@@ -206,6 +210,8 @@ function KeepChoice({
   const [state, setState] = useState<KeepState>(initial ?? { phase: "idle" });
   const [reason, setReason] = useState(() => drafts.get(key) ?? initialReason);
   const [said, setSaid] = useState("");
+  // Going back to Strata's choice failed: the kept choice stays, with a line that says so.
+  const [backFailed, setBackFailed] = useState(initialBackFailed);
   const button = useRef<HTMLButtonElement>(null);
   const field = useRef<HTMLTextAreaElement>(null);
   const keptLine = useRef<HTMLParagraphElement>(null);
@@ -265,14 +271,16 @@ function KeepChoice({
   };
 
   const goBack = async () => {
+    setBackFailed(false);
     try {
-      await save(keep.leanAssertionId, "");
+      const answer = await save(keep.leanAssertionId, "");
+      if (!answer.recorded) throw new ApiError(503, path);
       setState({ phase: "idle" });
       onKept(null);
       setSaid(words.keep.wentBack);
       requestAnimationFrame(() => button.current?.focus());
     } catch {
-      setState((now) => now);
+      setBackFailed(true);
     }
   };
 
@@ -289,9 +297,10 @@ function KeepChoice({
           <p ref={keptLine} tabIndex={-1} data-kept-line className="text-small text-ink-muted focus:outline-none">
             {words.keep.kept.replace("{other}", keep.other).replace("{date}", formatDate(state.madeAt.slice(0, 10))).replace("{reason}", state.reason)}
           </p>
-          <Button variant="ghost" className="mt-3" onClick={goBack}>
+          <Button variant="ghost" className="mt-3" flush onClick={goBack}>
             {words.keep.undo}
           </Button>
+          {backFailed && <p className="mt-1 text-caption text-error">{fill(words.keep.backFailed)}</p>}
         </>
       ) : (
         <>

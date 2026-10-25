@@ -25,12 +25,16 @@ import {
   PAD,
   ROWS,
   axisFor,
+  bandLabelFits,
   bandLabels,
+  capitalize,
   chartType,
   itemName,
+  joinNames,
   lineFor,
   markLabel,
   markY,
+  othersOf,
   placeLabels,
   scaleFor,
   shortName,
@@ -134,12 +138,8 @@ function ShapeOutline({ item, x, y }: { item: MarkItem; x: number; y: number }) 
 type Tip = { header: string; main: string; line: string; mono?: boolean };
 
 function tipFor(item: Item, items: Item[]): Tip {
-  const long = (iso: string) => formatDate(iso);
-  const other = (id: string) => {
-    const found = items.find((one) => one.id === id);
-    if (!found || found.kind !== "disagreement") return null;
-    return found;
-  };
+  // A date in a tooltip stays on one line: "May 4, 2023", never "May / 4, 2023".
+  const long = (iso: string) => formatDate(iso).replace(/ /g, "\u00a0");
   if (item.kind === "report") {
     if (item.type === "isr") {
       // An ISR whose rating get_disagreements did not give shows its date, as another report does.
@@ -149,11 +149,11 @@ function tipFor(item: Item, items: Item[]): Tip {
     const written = (copy.disagreement.written as Record<string, string>)[
       item.type === "icr_review" || item.type === "ppar" ? "ieg" : item.type === "pad" ? "pad" : item.type === "icr" ? "icr" : "isr"
     ];
-    const against = (item.disagrees_with ?? []).map(other).flatMap((found) => (found ? [found.sides.find((side) => side.item_id !== item.id)!] : []));
+    const against = othersOf(item, items);
     const line = item.replaced_by
       ? words.tip.replacedBy.replace("{date}", long(item.replaced_by.date))
       : against.length
-        ? words.tip.writtenDisagrees.replace("{written}", written).replace("{other}", against.map(shortName).join(copy.timeline.join))
+        ? words.tip.writtenDisagrees.replace("{written}", written).replace("{other}", joinNames(against))
         : words.tip.written.replace("{written}", written);
     return { header: item.document_type, main: long(item.date), line };
   }
@@ -173,7 +173,7 @@ function tipFor(item: Item, items: Item[]): Tip {
   const lean = item.sides.find((side) => side.leaned);
   return {
     header: words.chip,
-    main: words.sides.replace("{side1}", shortName(item.sides[0])).replace("{side2}", shortName(item.sides[1])),
+    main: capitalize(words.sides.replace("{side1}", shortName(item.sides[0])).replace("{side2}", shortName(item.sides[1]))),
     line: lean ? words.tip.leans.replace("{lean}", shortName(lean)) : "",
   };
 }
@@ -188,6 +188,7 @@ export function EvidenceTrail({
   lineStates = {},
   onOpen,
   lanesEmpty = {},
+  onCodes,
 }: {
   data: Timeline;
   width: number;
@@ -197,6 +198,8 @@ export function EvidenceTrail({
   lineStates?: Record<string, LineState>;
   onOpen: (item: Item, element: HTMLElement) => void;
   lanesEmpty?: Partial<Record<Lane, boolean>>;
+  // The ratings whose bands show their code, so the Note spells out only those, before the page paints.
+  onCodes?: (ratings: string[]) => void;
 }) {
   const altId = useId();
   const helpId = useId();
@@ -231,13 +234,15 @@ export function EvidenceTrail({
       lines.map((line) => line.chip),
       width,
       labelHeight,
+      lines.flatMap((line) => line.points),
     );
     const bands = items.filter((item): item is BandItem => item.kind === "band").map((band) => {
       const x0 = x(band.date);
       const x1 = Math.max(x(band.end), x0 + 8);
-      const room = x1 - x0 - 16;
-      const label = bandLabels(band).find((text) => measure(text, type.s) <= room) ?? null;
-      return { band, x0, x1, label };
+      const forms = bandLabels(band);
+      const form = forms.findIndex((text) => bandLabelFits(text, measure(text, type.s), x1 - x0));
+      // The last two forms name the rating by its code, which the Note spells out.
+      return { band, x0, x1, label: form >= 0 ? forms[form] : null, coded: form >= 2 };
     });
     const targets: Target[] = [];
     for (const item of items) {
@@ -257,6 +262,9 @@ export function EvidenceTrail({
     return { axis, x, lines, placed, bands, targets, marks, chipWidth };
     // fonts: measured again once the web fonts arrive.
   }, [items, asOf, width, type.s, showLines, fonts]);
+
+  const coded = [...new Set(layout.bands.filter((band) => band.coded).map((band) => band.band.rating))].join("|");
+  useLayoutEffect(() => onCodes?.(coded ? coded.split("|") : []), [coded]);
 
   const [active, setActive] = useState(0);
   const [focused, setFocused] = useState<number | null>(null);
@@ -384,6 +392,15 @@ export function EvidenceTrail({
             );
           })}
         </g>
+        {/* The as-of date's reference line, behind the lines and the marks, so a mark on that date stays whole. */}
+        {asOf && (
+          <g data-as-of>
+            <line x1={width - PAD} x2={width - PAD} y1={0} y2={AXIS_Y} className="stroke-chart-grey300" strokeWidth={3} />
+            <text x={width - PAD - 6} y={16} textAnchor="end" className="fill-chart-text-subtle font-semibold uppercase">
+              {words.asOf.replace("{date}", formatDate(asOf, { style: "table" }))}
+            </text>
+          </g>
+        )}
         {/* The disagreement lines, under the marks. */}
         {layout.lines.map((line) => (
           <path
@@ -404,17 +421,21 @@ export function EvidenceTrail({
           if (!placed || "dropped" in placed) return null;
           const replaced = item.kind === "report" && Boolean(item.replaced_by);
           return (
-            <text
-              key={item.id}
-              x={placed.x}
-              y={placed.y}
-              textAnchor={placed.anchor}
-              dominantBaseline="central"
-              data-mark-label={item.id}
-              className={cx("stroke-surface stroke-[3px] [paint-order:stroke]", replaced ? "fill-chart-text-subtle" : "fill-chart-text", item.kind === "record" && "font-mono")}
-            >
-              {placed.text}
-            </text>
+            <g key={item.id}>
+              {/* The label's surface knockout (DESIGN.md section 6): a line that must pass a label goes behind it. It
+                  stays inside the label's text row, so it never cuts the band row's edge below row B. */}
+              <rect x={placed.box.x0 - 2} y={placed.box.y0} width={placed.box.x1 - placed.box.x0 + 4} height={placed.box.y1 - placed.box.y0} className="fill-surface" data-label-knockout />
+              <text
+                x={placed.x}
+                y={placed.y}
+                textAnchor={placed.anchor}
+                dominantBaseline="central"
+                data-mark-label={item.id}
+                className={cx("stroke-surface stroke-[3px] [paint-order:stroke]", replaced ? "fill-chart-text-subtle" : "fill-chart-text", item.kind === "record" && "font-mono")}
+              >
+                {placed.text}
+              </text>
+            </g>
           );
         })}
         {/* The time axis: no title, ticks on whole years, no gridlines. */}
@@ -429,14 +450,6 @@ export function EvidenceTrail({
             </g>
           ))}
         </g>
-        {asOf && (
-          <g data-as-of>
-            <line x1={width - PAD} x2={width - PAD} y1={0} y2={AXIS_Y} className="stroke-chart-grey300" strokeWidth={3} />
-            <text x={width - PAD - 6} y={16} textAnchor="end" className="fill-chart-text-subtle font-semibold uppercase">
-              {words.asOf.replace("{date}", formatDate(asOf, { style: "table" }))}
-            </text>
-          </g>
-        )}
       </svg>
 
       <p id={helpId} className="sr-only">
@@ -484,10 +497,11 @@ export function EvidenceTrail({
                   ? cx(
                       "inline-flex items-center gap-1 rounded-pill border px-2 text-small font-semibold whitespace-nowrap",
                       state === "warning" ? "border-warning-icon text-warning" : "border-info-icon text-info",
+                      // Open in the drawer: the active list item's look, a tint with a 1px inset in the state colour.
                       isActive
                         ? state === "warning"
-                          ? "bg-warning-bg shadow-[inset_0_0_0_1px_var(--color-warning-icon)]"
-                          : "bg-info-bg shadow-[inset_0_0_0_1px_var(--color-info-icon)]"
+                          ? "bg-tint shadow-[inset_0_0_0_1px_var(--color-warning-icon)]"
+                          : "bg-tint shadow-[inset_0_0_0_1px_var(--color-info-icon)]"
                         : hovered === index
                           ? state === "warning"
                             ? "bg-warning-bg"

@@ -1411,8 +1411,10 @@ const KEPT_CHOICE = JSON.stringify({
 const TIMELINE_SHOTS: Shot[] = [
   timelineShot("project-timeline", TIMELINE),
   timelineShot("project-timeline--loading", TIMELINE, { pending: ["/api/projects/P130164/timeline"] }),
-  timelineShot("project-timeline--error", TIMELINE, {
-    api: { ...TIMELINE_API, "/api/projects/P130164/timeline": { status: 503, body: '{"code":"data_service","trace_id":"0af7651916cd43dd8448eb211c80319c"}' } },
+  // hubShot takes the answers as its last argument: an api in the shot's options would be replaced by them.
+  hubShot("project-timeline--error", TIMELINE, {}, {
+    ...TIMELINE_API,
+    "/api/projects/P130164/timeline": { status: 503, body: '{"code":"data_service","trace_id":"0af7651916cd43dd8448eb211c80319c"}' },
   }),
   timelineShot("project-timeline--drawer-disagreement", `${TIMELINE}?evidence=${PDO_DISAGREEMENT}`),
   timelineShot("project-timeline--drawer-side", `${TIMELINE}?evidence=${PDO_DISAGREEMENT}`, { act: click("[role=tab]:has-text('78')"), full: true }),
@@ -1420,6 +1422,8 @@ const TIMELINE_SHOTS: Shot[] = [
   timelineShot("project-timeline--drawer-band", `${TIMELINE}?evidence=ratings:P130164:pdo_progress:1-9`, { widths: WIDE }),
   timelineShot("project-timeline--table", TIMELINE, { widths: WIDE, act: click("[data-timeline-card] button[aria-controls]"), full: true }),
   timelineShot("project-timeline--as-of", `${TIMELINE}?asof=2016-08-26`),
+  // get_disagreements did not answer: the server's own recorded answer (tests/record_timeline_api.py, FAILED).
+  hubShot("project-timeline--disagreements-failed", TIMELINE, { widths: WIDE }, { ...TIMELINE_API, "/api/projects/P130164/timeline": { recorded: "timeline-p130164-failed.json" } }),
   timelineShot("project-timeline--public-active", "/projects/P156634/timeline?view=public", { widths: WIDE }),
   timelineShot("project-timeline--crowded", "/projects/P156634/timeline", { widths: WIDE }),
   timelineShot("project-timeline--hover-mark", TIMELINE, { widths: WIDE, act: hover(mark("doc:26733307")) }),

@@ -655,7 +655,7 @@ export function EvidenceDrawerView({
                     : comparable
                       ? copy.evidence.package.close
                       : timelineView || timelineId
-                        ? timelineClose(evidence)
+                        ? timelineClose(evidence, id)
                         : copy.evidence.close}
           </Button>
         </div>
