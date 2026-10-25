@@ -1882,6 +1882,74 @@ middle_in10 = 7
 eight_in_ten_ran_longer = 9
 eight_in_ten_in10 = 4
 
+# The planned date for each STEP step (ticket 27), on a small hand-made set, not on recorded data, so these are
+# literals worked out by hand, not quotes. tests/step_set.py builds the set in a DuckDB file of its own:
+#
+# - 25 comparable works packages under Request for Bids, i = 1 to 25, first listed in a plan of August 1, 2019 with
+#   the bid invitation planned on B = September 2, 2019 plus 7 * (i - 1) days, the bidding document 7 days after
+#   B, the bid opening 37, the bid evaluation report 60 and the signed contract 101 days after B. Their actual
+#   dates, in a plan of December 15, 2020: the bid invitation i - 5 days after its plan, then 7 days to the
+#   bidding document, 30 to the opening, 20 + 2i to the report and 41 to the signed contract. So the delay, the
+#   days from the first published planned date to the actual date, is i - 5 at each of the first three steps
+#   and 3i - 8 at the report and the signed contract. No package plans a completion date.
+# - The target, KE-HAND-900000-CW-RFB, first listed in the plan of December 15, 2020, plans March 1, March 8,
+#   April 7, April 30 and June 10, 2021 for those five steps and June 10, 2022 for its completion.
+#
+# No comparable is still open at any step, so the Kaplan-Meier quantile for a share p is the k-th smallest
+# delay, k = ceil(25p): the 13th for the middle date (half ran later) and the 20th for the cautious date (2 in 10
+# ran later). That is i = 13 and i = 20: 8 and 15 days at the first three steps, 31 and 52 at the report and the
+# signed contract. More than 15 days late at the first three steps (or 52 at the last two): i = 21 to 25, 5 of
+# 25, about 2 in 10. More than 8 (or 31): i = 14 to 25, 12 of 25, about 5 in 10 (4.8 rounded half up). The
+# planned dates are the target's plan dates plus those days, counted on a calendar. The completion step has no
+# comparable that planned it, so it abstains.
+#
+# Ran longest: each comparable's stages up to the signed contract last 7, 30, 20 + 2i and 41 days. The bid
+# evaluation stage (20 + 2i) is the longest when 2i > 21, i = 11 to 25: in 15 of the 25 packages, all of which
+# recorded every step up to the signed contract. For i = 1 to 10 the signing stage (41) is.
+#
+# The backtest for the test year 2021 (frozen on January 1, 2021, outcomes read as of June 30, 2022) scores the
+# target's five steps first planned in 2021. A plan of December 1, 2021 gives their actual dates: March 10,
+# March 30, April 20, May 20 and July 20, 2021, 9, 22, 13, 20 and 40 days after their plans. Each came on or
+# before its cautious date except the bidding document (22 > 15): 4 of 5. Only the report (20 <= 31) came on or
+# before its middle date: 1 of 5. The typical errors, the median distance in days from the actual date: to the
+# cautious date |9-15|, |22-15|, |13-15|, |20-52|, |40-52| = 6, 7, 2, 32, 12, median 7; to the middle date 1,
+# 14, 5, 11, 9, median 9; to the plan's first date 9, 22, 13, 20, 40, median 20.
+#
+# A package from a sentence (works, Request for Bids, Kenya) has no plan, so each step counts from the one before
+# it, by how long that stretch took in the comparables: 7 days to the bidding document, 30 to the opening, 20 + 2i
+# to the report and 41 to the signing. The middle and cautious stretches are the 13th and 20th smallest: 7 and 7,
+# 30 and 30, 46 and 60, 41 and 41. From a bid invitation on March 1, 2021, counted on a calendar, they give the
+# duration dates below. Every comparable is still open at its completion, so that step's curve never reaches half
+# and it gets no date.
+[step_dates]
+as_of = 2021-01-15
+target = "KE-HAND-900000-CW-RFB"
+comparables = 25
+middle_days = [8, 8, 8, 31, 31]
+cautious_days = [15, 15, 15, 52, 52]
+middle_dates = [2021-03-09, 2021-03-16, 2021-04-15, 2021-05-31, 2021-07-11]
+cautious_dates = [2021-03-16, 2021-03-23, 2021-04-22, 2021-06-21, 2021-08-01]
+middle_longer = 12
+middle_in10 = 5
+cautious_longer = 5
+cautious_in10 = 2
+longest_step = "bid_evaluation_report"
+longest_n = 15
+longest_m = 25
+backtest_cutoff = 2021-01-01
+backtest_outcomes_through = 2022-06-30
+backtest_total = 5
+backtest_inside_cautious = 4
+backtest_inside_middle = 1
+backtest_error_cautious_days = 7
+backtest_error_middle_days = 9
+backtest_error_plan_days = 20
+duration_start = 2021-03-01
+duration_middle_days = [7, 30, 46, 41]
+duration_cautious_days = [7, 30, 60, 41]
+duration_middle_dates = [2021-03-08, 2021-04-07, 2021-05-23, 2021-07-03]
+duration_cautious_dates = [2021-03-08, 2021-04-07, 2021-06-06, 2021-07-17]
+
 # Awkward cases the lakehouse must handle on purpose. The signed plan row with an Actual
 # Amount of 0.00 (plan-503455-actual-zero) and the reference whose method differs from the
 # Method column (plan-199461-method-column) are values above.

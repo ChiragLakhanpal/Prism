@@ -151,6 +151,19 @@ no_notice_market_approaches = ["Limited"]
 # DESIGN.md section 7, rules 6 and 15, and the 26 design brief, which names the key. It is the same
 # rule as past_range.min_comparables, kept as its own key so the two can be told apart.
 min_comparables = 20
+# The planned date for each STEP step (ticket 27; strata.estimates.step_dates) abstains below min_comparables too,
+# counting the comparable packages whose plans recorded the step. Its two choices are points of each step's
+# Kaplan-Meier curve of delay (or, with no plan dates, of the days since the step before): the middle date, by
+# which half of the comparables had reached the step ("half ran later"), and the cautious date, by which 8 in 10
+# had ("2 in 10 ran later"). Source: the 27 design brief, sections 6.3 and 7.2, and the blueprint ("The cautious
+# date by default"); the cautious share matches the time estimate's 8-in-10 point.
+step_middle_share = 0.5
+step_cautious_share = 0.8
+# A start date a person types for a package with no plan dates may lie this many days before or after the as-of
+# date, so a typing slip such as 2062 is caught. Source: the 27 design brief, section 7.2 ("The range comes from
+# the config file"); a year back and five ahead are starting values for the owner to confirm.
+step_start_days_before = 365
+step_start_days_after = 1826
 # A model sizes its ranges on at least this many packages it did not learn from (its calibration
 # packages). With fewer, that model gives no range, and its test year says so. Source: DESIGN.md
 # section 7, rules 6 and 15 (no range from fewer than 20 cases).

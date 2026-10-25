@@ -16,7 +16,8 @@
 // (config/lessons.toml), the editions' names (config/editions.toml) and the roles' names
 // (config/roles.toml), which the Lessons pages show (ticket 29). src/strata/tools/data_readiness_copy.json and
 // src/strata/drafts/copy.json are the server's copies of copy.dataReadiness.server and of a draft's
-// files' words, and the lint fails when either is out of date (web/lint/server-copy.ts writes them).
+// files' words, and the lint fails when either is out of date (web/lint/server-copy.ts writes them), as
+// src/strata/estimates/steps.json is of the step-label registry, web/src/steps.ts (ticket 27).
 import { readFileSync, readdirSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -27,7 +28,9 @@ import { definitions } from "../src/lib/definitions.ts";
 
 const WEB = fileURLToPath(new URL("..", import.meta.url));
 const REPO = resolve(WEB, "..");
-const COPY_FILES = [join(WEB, "src/copy.ts"), join(WEB, "src/gallery/copy.ts")];
+// The step-label registry holds words people read too (ticket 27): each step's label and phrase, each stage and
+// each family's name and abbreviation note, so it is checked like the copy file.
+const COPY_FILES = [join(WEB, "src/copy.ts"), join(WEB, "src/gallery/copy.ts"), join(WEB, "src/steps.ts")];
 
 function sourceFiles(dir: string): string[] {
   return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
@@ -104,10 +107,8 @@ function main(): number {
   }
   if (!custom) {
     for (const stale of staleServerCopies()) {
-      problems.push(
-        `${at(stale.file, 1)}: it is out of date with ${stale.from} in web/src/copy.ts. ` +
-          "Run node web/lint/server-copy.ts --write.",
-      );
+      const from = stale.from.includes("/") ? stale.from : `${stale.from} in web/src/copy.ts`;
+      problems.push(`${at(stale.file, 1)}: it is out of date with ${from}. Run node web/lint/server-copy.ts --write.`);
     }
   }
   for (const file of components) {
