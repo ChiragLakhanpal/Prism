@@ -35,7 +35,6 @@ import { useStore } from "../../lib/store";
 import {
   HEIGHT,
   LANES,
-  TIMELINE_SETTINGS,
   bandLine,
   capitalize,
   fullLabel,
@@ -94,7 +93,7 @@ export function lineStates(data: Timeline, run: Run | null): Record<string, Line
   for (const item of data.items) {
     if (item.kind !== "disagreement") continue;
     const found = run?.disagreements.find((one) => one.id.endsWith(`:${item.disagreement_id}`));
-    states[item.id] = found ? (found.changes_answer ? "warning" : "info") : TIMELINE_SETTINGS.disagreementLineState;
+    states[item.id] = found ? (found.changes_answer ? "warning" : "info") : data.disagreement_line_state;
   }
   return states;
 }

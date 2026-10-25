@@ -42,9 +42,9 @@ from importlib import resources
 from pathlib import Path
 
 from strata.agent.verifier import sentence_of
-from strata.config import load_ladder, load_project_page, load_thresholds
+from strata.config import KEY_DATE, load_ladder, load_project_page, load_thresholds
 from strata.dbx import Viewer
-from strata.knowledge.assertions import KEY_DATE_LABELS, MID_TERM_REVIEW, PASSAGES
+from strata.knowledge.assertions import KEY_DATE_LABELS, PASSAGES
 from strata.lakehouse.engine import Engine
 from strata.server.projects import display_name
 from strata.server.viewer_sql import data_through
@@ -55,18 +55,18 @@ DOC, RATINGS, CONTRACTS, DISAGREEMENT = "doc", "ratings", "contracts", "disagree
 LANES = ("why", "how", "what")
 # The lane of each kind of report Strata reads, by its group in config/project_page.toml.
 REPORT_LANES = {"pad": "why", "isr": "how", "icr": "why", "icr_review": "why", "ppar": "why"}
-GROUPS = load_project_page().document_groups
+PAGE = load_project_page()
+GROUPS = PAGE.document_groups
 # The one attribute the bands draw (the 23 brief, section 4.3): the ISRs' rating of progress towards the PDO.
 BANDED = "pdo_progress"
 BANDED_TIER = "isr"
-RESTRUCTURING = "restructuring"
-# The events the How lane draws, each with the words a passage must hold and the pattern that reads its date,
-# with the date's format. The mid-term review's pattern is the assertions reader's own (KEY_DATE_LABELS), so the
-# moment a disagreement is about and the diamond on the chart are dated the same way.
+# The events the How lane draws (config/project_page.toml, [[timeline.events]]), each with the words a passage must
+# hold and the pattern that reads its date, with the date's format. key_date is the assertions reader's own pattern
+# (KEY_DATE_LABELS), so the moment a disagreement is about and the diamond on the chart are dated the same way.
 EVENTS: dict[str, list[tuple[str, re.Pattern, str]]] = {
-    MID_TERM_REVIEW: [("mid-term review date", KEY_DATE_LABELS[MID_TERM_REVIEW], "%d-%b-%Y"),
-                      ("mid term review date", KEY_DATE_LABELS[MID_TERM_REVIEW], "%d-%b-%Y")],
-    RESTRUCTURING: [("restructured", re.compile(r"restructured(?: once)? on ([A-Z][a-z]+ \d{1,2}, \d{4})"), "%B %d, %Y")],
+    event.kind: [(words, KEY_DATE_LABELS[event.kind] if event.pattern == KEY_DATE else re.compile(event.pattern),
+                  event.date_format) for words in event.words]
+    for event in PAGE.timeline.events
 }
 SIGNINGS = {"awards": "contract awards", "award_notice": "award notice", "notices": "notices", "usd": "USD",
             "contract_award": "Contract Award"}
@@ -418,6 +418,8 @@ def timeline(engine: Engine, viewer: Viewer, project_id: str, as_of: dt.date, vi
         "as_of": as_of.isoformat(), "asked_as_of": _iso(asked), "view": view,
         "items": items, "table": table, "ratings": ratings,
         "disagreements": {"status": status, "count": len(disagreements)},
+        # The state a dashed line takes when no answer or draft open on the page depends on it (config).
+        "disagreement_line_state": PAGE.timeline.disagreement_line_state,
         "rejected": {"count": int((found.get("rejected") or {}).get("count") or 0)} if status != "failed" else None,
         "counts": {lane: sum(item["lane"] == lane for item in dated) for lane in LANES},
         "finding": finding(ratings, disagreements, status),

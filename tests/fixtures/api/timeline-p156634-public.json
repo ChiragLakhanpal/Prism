@@ -3968,6 +3968,7 @@
     "status": "hidden",
     "count": 0
   },
+  "disagreement_line_state": "info",
   "rejected": {
     "count": 0
   },

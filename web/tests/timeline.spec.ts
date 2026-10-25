@@ -176,6 +176,16 @@ test("P130164's timeline places each report, event and record at its date, names
   expect(unrecorded).toEqual([]);
 });
 
+test("config/project_page.toml's disagreement_line_state sets the dashed lines' state when no answer depends on them", async ({ page }) => {
+  // The server's answer with the setting switched to warning, as the ticket's text first had it.
+  const warning = (await recorded("timeline-p130164.json")).replace('"disagreement_line_state": "info"', '"disagreement_line_state": "warning"');
+  await open(page, "/projects/P130164/timeline", 1440, { "/api/projects/P130164/timeline": { body: warning } });
+  await expect(chart(page).locator("[data-disagreement-line=warning]")).toHaveCount(2);
+
+  await open(page);
+  await expect(chart(page).locator("[data-disagreement-line=info]")).toHaveCount(2);
+});
+
 test("the chart is one tab stop with arrow keys between marks, and the dashed line opens both reports in the drawer", async ({ page }) => {
   await open(page);
 

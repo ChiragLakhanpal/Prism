@@ -166,6 +166,8 @@ def test_the_finding_and_the_alt_text_are_written_from_the_tool_s_values(p130164
         "It shows what was public on October 23, 2026.")
     assert p130164["rejected"] == {"count": 1}
     assert p130164["disagreements"] == {"status": "ok", "count": 2}
+    # The dashed line's state when no open answer depends on it, from config/project_page.toml's [timeline].
+    assert p130164["disagreement_line_state"] == "info"
 
 
 def test_as_of_august_26_2016_the_timeline_shows_only_what_was_public_then(server):

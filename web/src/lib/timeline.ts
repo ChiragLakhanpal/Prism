@@ -65,6 +65,9 @@ export type Timeline = {
   table: Item[];
   ratings: { attribute: string; field_name: string; first_rating: string; last_rating: string; direction: string; isr_count: number } | null;
   disagreements: { status: "ok" | "hidden" | "failed"; count: number };
+  // The state a dashed line takes when no answer or draft open on the page depends on it: config/project_page.toml's
+  // [timeline] disagreement_line_state (the 23 brief, section 10), "info" unless it is switched back to "warning".
+  disagreement_line_state: "info" | "warning";
   rejected: { count: number } | null;
   counts: Record<Lane, number>;
   finding: Segment[];
@@ -75,10 +78,6 @@ export type Timeline = {
 
 export const LANES: Lane[] = ["why", "how", "what"];
 
-// The timeline's one setting (the 23 brief, section 10): the state a disagreement's dashed line takes when no answer
-// or draft open on the page depends on it. "info" keeps amber for a disagreement that changes your answer; "warning"
-// draws every line amber, as the ticket's text first had it.
-export const TIMELINE_SETTINGS: { disagreementLineState: "info" | "warning" } = { disagreementLineState: "info" };
 const words = copy.timeline;
 const fill = (template: string, values: Record<string, string | number | null | undefined>) =>
   template.replace(/\{(\w+)\}/g, (slot, name: string) => (values[name] === undefined || values[name] === null ? slot : String(values[name])));
