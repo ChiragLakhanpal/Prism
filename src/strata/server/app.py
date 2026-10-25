@@ -50,6 +50,9 @@
   sentence, list a viewer's packages and the plans they checked, and open or change one package, and GET
   /api/comparables runs find_comparables for a package with no STEP row (ticket 15; src/strata/server/
   packages.py). Each plan check a signed-in viewer opens is recorded for their Packages tab.
+- GET /api/packages/{step_reference}/risks and GET /api/planned-packages/{package_id}/risks run the risk-table
+  builder for the workspace's section 3, procurement risks and what helped, and PUT .../risk-selection keeps the
+  risks a viewer selected for the PPSD (ticket 30; src/strata/server/risks.py).
 - GET /api/suppliers/review is the review list for supplier name matching (ticket 19): each candidate
   pair that waits for a person, with both names, countries and contracts, read as the viewer. POST
   /api/suppliers/review records a person's decision on one, merge or no merge with a reason, and the
@@ -114,6 +117,7 @@ from strata.packages.store import PackageStore
 from strata.server import drafts as draft_routes
 from strata.server import engines, evidence, lookup, projects, suppliers, tracing
 from strata.server import packages as package_routes
+from strata.server import risks as risk_routes
 from strata.server.access import Access, NoGroups
 from strata.server.evidence import OpenedLog
 from strata.server.suppliers import SupplierLog
@@ -476,6 +480,9 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                               today=today, now=now, new_package_id=new_package_id, new_save_id=new_save_id,
                               new_run_id=new_run_id, runs=runs, trace_ids=trace_ids, reference=request_reference,
                               heartbeat_seconds=heartbeat_seconds)
+    risk_routes.add_routes(app, engine_for=engine_for, store=packages, form=package_form or load_package_form(),
+                           thresholds=package_thresholds or thresholds, today=today, now=now,
+                           reference=request_reference)
 
     @app.get("/api/packages/{step_reference}")
     def open_package(step_reference: str, asof: dt.date | None = None, viewer: Viewer = Depends(current_viewer)):
