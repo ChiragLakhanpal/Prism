@@ -1,0 +1,296 @@
+{
+ "as_of": "2024-06-30",
+ "checked_on": "2026-10-22",
+ "past": true,
+ "data_through": "2024-06-30",
+ "projects": [
+  {
+   "project": {
+    "evidence_id": "strata.gold.project:P156634",
+    "public_from": "2024-04-24",
+    "project_id": "P156634",
+    "project_name": "Water and Sanitation Development Project",
+    "country": "Kenya",
+    "status": "active",
+    "status_as_written": "Active",
+    "closing_date": "2026-10-31",
+    "closing_kind": "closes",
+    "days_to_close": 853
+   },
+   "status": "watch",
+   "rows": [
+    {
+     "evidence_id": "strata.tools.project_signals:P156634/closing_moves@2024-06-30",
+     "public_from": "2024-04-30",
+     "source": {
+      "source_key": "loan_history",
+      "project_id": "P156634",
+      "document_id": null,
+      "date": "2024-04-30",
+      "evidence_id": "strata.gold.project_closing_date:P156634/2024-04-30"
+     },
+     "check": "closing_moves",
+     "strong": false,
+     "count": 2,
+     "values": {
+      "since_year": 2022
+     },
+     "items": [
+      {
+       "evidence_id": "strata.gold.project_closing_date:P156634/2022-11-30",
+       "public_from": "2022-11-30",
+       "closing_date": "2024-04-30",
+       "previous_closing_date": "2022-10-31",
+       "reported_on": "2022-11-30"
+      },
+      {
+       "evidence_id": "strata.gold.project_closing_date:P156634/2024-04-30",
+       "public_from": "2024-04-30",
+       "closing_date": "2025-10-31",
+       "previous_closing_date": "2024-04-30",
+       "reported_on": "2024-04-30"
+      }
+     ]
+    }
+   ],
+   "checks": [
+    {
+     "key": "completion_passed",
+     "ran": false,
+     "missing": "no_recent_plans",
+     "fired": false,
+     "strong": false
+    },
+    {
+     "key": "above_estimate",
+     "ran": false,
+     "missing": "no_recent_plans",
+     "fired": false,
+     "strong": false
+    },
+    {
+     "key": "late_direct",
+     "ran": false,
+     "missing": "no_recent_plans",
+     "fired": false,
+     "strong": false
+    },
+    {
+     "key": "closing_moves",
+     "ran": true,
+     "missing": null,
+     "fired": true,
+     "strong": false
+    },
+    {
+     "key": "restructured",
+     "ran": true,
+     "missing": null,
+     "fired": false,
+     "strong": false
+    },
+    {
+     "key": "isr_lowered",
+     "ran": true,
+     "missing": null,
+     "fired": false,
+     "strong": false
+    },
+    {
+     "key": "disbursement",
+     "ran": false,
+     "missing": "no_loans",
+     "fired": false,
+     "strong": false
+    }
+   ],
+   "counts": {
+    "signals": 1,
+    "strong": 0,
+    "ran": 3,
+    "checks": 7,
+    "not_ran": 4
+   },
+   "coverage": {
+    "matched": 7,
+    "used": 3,
+    "not_used": [
+     {
+      "reason": "no_recent_plans",
+      "count": 3,
+      "checks": [
+       "completion_passed",
+       "above_estimate",
+       "late_direct"
+      ]
+     },
+     {
+      "reason": "no_loans",
+      "count": 1,
+      "checks": [
+       "disbursement"
+      ]
+     }
+    ]
+   },
+   "following_since": "2026-10-23T14:00:00+00:00",
+   "mission_brief": null
+  },
+  {
+   "project": {
+    "evidence_id": "strata.gold.project:P130164",
+    "public_from": "2023-08-01",
+    "project_id": "P130164",
+    "project_name": "Rajasthan Road Sector Modernization Project",
+    "country": "India",
+    "status": "closed",
+    "status_as_written": "Closed",
+    "closing_date": "2018-12-31",
+    "closing_kind": "closed",
+    "days_to_close": -2008
+   },
+   "status": "closed",
+   "rows": [],
+   "checks": [],
+   "counts": {
+    "signals": 0,
+    "strong": 0,
+    "ran": 0,
+    "checks": 7,
+    "not_ran": 7
+   },
+   "coverage": {
+    "matched": 0,
+    "used": 0,
+    "not_used": []
+   },
+   "following_since": "2026-10-23T14:01:00+00:00",
+   "mission_brief": null
+  }
+ ],
+ "counts": {
+  "total": 2,
+  "checked": 1,
+  "needs_a_look": 0,
+  "watch": 1,
+  "not_checked": 0,
+  "no_signals": 0,
+  "closed": 1,
+  "pipeline": 0,
+  "ended": 1,
+  "folded": 1,
+  "shown": 1,
+  "partly": 1,
+  "fully": 0,
+  "partly_folded": 0
+ },
+ "thresholds": {
+  "look_min": 3,
+  "strong": [],
+  "strong_from": {
+   "completion_passed": 3,
+   "above_estimate": 3,
+   "late_direct": 3
+  },
+  "plan_months": 12,
+  "completion_passed_min_estimated_usd": "1000000.00",
+  "completion_passed_min_millions": "1",
+  "actual_to_estimate_ratio": "2.0",
+  "late_direct_min_usd": "1000000.00",
+  "late_direct_min_millions": "1",
+  "late_direct_months": 12,
+  "closing_moves_min": 2,
+  "restructured_levels": [
+   1
+  ],
+  "restructured_months": 12,
+  "disbursement_max_percent": 50,
+  "disbursement_months": 12
+ },
+ "checks": 7,
+ "sources": [
+  "documents",
+  "projects",
+  "ida_credit_history",
+  "ibrd_loan_history",
+  "ida_credits",
+  "ibrd_loans"
+ ],
+ "missing": [
+  "no_loans",
+  "no_recent_plans"
+ ],
+ "evidence": [
+  {
+   "id": "strata.gold.project_closing_date:P156634/2022-11-30",
+   "kind": "record",
+   "tool": null,
+   "stratum": "What",
+   "short_name": null,
+   "row": {
+    "evidence_id": "strata.gold.project_closing_date:P156634/2022-11-30",
+    "public_from": "2022-11-30",
+    "reference": "P156634",
+    "source": {
+     "source_key": "loan_history",
+     "project_id": "P156634",
+     "document_date": "2022-11-30"
+    },
+    "fields": [
+     {
+      "key": "closing_date",
+      "value": "2024-04-30",
+      "kind": "date"
+     },
+     {
+      "key": "previous_closing_date",
+      "value": "2022-10-31",
+      "kind": "date"
+     },
+     {
+      "key": "reported_on",
+      "value": "2022-11-30",
+      "kind": "date"
+     }
+    ]
+   },
+   "highlights": []
+  },
+  {
+   "id": "strata.gold.project_closing_date:P156634/2024-04-30",
+   "kind": "record",
+   "tool": null,
+   "stratum": "What",
+   "short_name": null,
+   "row": {
+    "evidence_id": "strata.gold.project_closing_date:P156634/2024-04-30",
+    "public_from": "2024-04-30",
+    "reference": "P156634",
+    "source": {
+     "source_key": "loan_history",
+     "project_id": "P156634",
+     "document_date": "2024-04-30"
+    },
+    "fields": [
+     {
+      "key": "closing_date",
+      "value": "2025-10-31",
+      "kind": "date"
+     },
+     {
+      "key": "previous_closing_date",
+      "value": "2024-04-30",
+      "kind": "date"
+     },
+     {
+      "key": "reported_on",
+      "value": "2024-04-30",
+      "kind": "date"
+     }
+    ]
+   },
+   "highlights": []
+  }
+ ],
+ "track_record": null
+}

@@ -16,10 +16,11 @@ import { EmptyState } from "../components/Card";
 import { CheckLine, notCheckedFor, RemovedBox, type Removed } from "../components/Checks";
 import { BAR_BUTTONS, BAR_MAIN, Consequence, DiscardedNotice, DraftBar, ExportSuccess, STICKY } from "../components/DraftBar";
 import { DraftNotes, NoteSentences, type NoteRow } from "../components/DraftNotes";
+import { citedInParts, MissionBriefParts } from "../components/MissionBriefParts";
 import { Fill } from "../components/Fill";
 import { LoadError } from "../components/LoadError";
 import { Num } from "../components/Num";
-import { ProjectIdText } from "../components/ProjectId";
+import { ProjectId, ProjectIdText } from "../components/ProjectId";
 import { Skeleton, SkeletonLine, SkeletonText } from "../components/Skeleton";
 import { SourcesList } from "../components/SourcesList";
 import { DiscardedOn, StateStepper } from "../components/StateStepper";
@@ -132,7 +133,7 @@ function stepsOf(draft: Draft, kind: KindWords): Step[] {
   const checks = draft.checks;
   const done = (key: string, text: string): Step => ({ key, running: "", done: text, state: "done" });
   return [
-    done("read", steps.read.done(day(draft.subject.plan_date))),
+    done("read", steps.read.done(draft.kind === "mission_brief" ? "" : day(draft.subject.plan_date))),
     done("write", steps.write.done(draft.written.sentences, formatCount(draft.written.sentences), draft.written.notes, formatCount(draft.written.notes))),
     done("check", words.writing.checkDone(formatCount(draft.checks_count), checks.sentences.written, formatCount(checks.sentences.written),
       checks.sentences.removed, formatCount(checks.sentences.removed))),
@@ -290,7 +291,9 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
     if (!draft) return;
     for (const evidence of Object.values(draft.evidence)) remember(evidence);
     draftScope.set(draft.subject.project_id);
-    setPageTitle(copy.draft.kinds[draft.kind].pageTitle(draft.subject.implementing_agency, short(draft.subject.plan_date)));
+    setPageTitle(draft.kind === "mission_brief"
+      ? copy.draft.kinds.mission_brief.pageTitle(draft.subject.project_name, draft.subject.project_id)
+      : copy.draft.kinds[draft.kind].pageTitle(draft.subject.implementing_agency, short(draft.subject.plan_date)));
   }, [draft]);
   useEffect(() => () => draftScope.set(null), []);
 
@@ -459,8 +462,11 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
       </ul>
     </div>
   );
-  const lede =
-    written === signal ? (
+  // A mission brief (ticket 37): five parts, with the project's name, country and records' date.
+  const brief = d.kind === "mission_brief";
+  const lede = brief ? (
+    written === d.notes.length ? kind.lede(written) : copy.mission.ledePartial(formatCount(written))
+  ) : written === signal ? (
       <Fill template={kind.lede(signal)} slots={{ count: <Num count={signal} check={{ tooltip: counted }} /> }} />
     ) : (
       <Fill template={kind.ledePartial} slots={{ written: <Num count={written} check={{ tooltip: counted }} />, count: <Num count={signal} /> }} />
@@ -528,12 +534,14 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
             {words.conflict}
           </Alert>
         )}
-        <DraftCrumbs pid={subject.project_id} name={subject.project_name} last={kind.crumb(short(subject.plan_date))} />
+        <DraftCrumbs pid={subject.project_id} name={subject.project_name} last={brief ? kind.title : kind.crumb(short(subject.plan_date))} />
         <DraftHeader
           className="mt-4"
           headerRef={setHeader}
           title={kind.title}
-          subtitle={subtitleOf(kind, subject.implementing_agency, subject.plan_date)}
+          subtitle={brief ? (
+            <Fill template={kind.subtitle} slots={{ name: subject.project_name, pid: <ProjectId pid={subject.project_id} />, country: subject.country ?? "" }} />
+          ) : subtitleOf(kind, subject.implementing_agency, subject.plan_date)}
           state={
             d.state === "discarded" && d.discarded ? (
               <DiscardedOn date={day(d.discarded.at)} />
@@ -547,7 +555,11 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
             {lede}
           </h2>
           <p className="mt-2 text-body text-ink">
-            <Fill template={kind.method} slots={{ check: <TextLink href={planHref}>{kind.methodLink}</TextLink> }} />
+            {brief ? (
+              <Fill template={copy.mission.method} slots={{ date: formatDate(subject.data_through ?? subject.as_of ?? created) }} />
+            ) : (
+              <Fill template={kind.method} slots={{ check: <TextLink href={planHref}>{kind.methodLink}</TextLink> }} />
+            )}
           </p>
         </div>
         <div className="mt-4 flex max-w-prose flex-col gap-2">
@@ -563,17 +575,25 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
           {showRemoved && <RemovedBox removed={removed} />}
         </div>
         <StepsTaken steps={stepsOf(d, kind)} runId={d.draft_id} idLabel={words.idLabel} />
-        <p className="mt-6 text-caption text-ink-muted" data-count-line data-numbers>
-          {kind.countLine(signal, whole(signal))}
-        </p>
-        <div className="mt-2">
-          <DraftNotes
-            rows={rows}
-            columns={d.layout.columns.map((column) => (kind.columns as Record<string, string>)[column])}
-            caption={kind.tableCaption(subject.implementing_agency, day(subject.plan_date))}
-            cardsLabelId={ledeId}
-          />
-        </div>
+        {brief ? (
+          <div className="mt-8">
+            <MissionBriefParts notes={d.notes} evidence={d.evidence} numbers={numbers} opened={opened} open={open} subject={subject} />
+          </div>
+        ) : (
+          <>
+            <p className="mt-6 text-caption text-ink-muted" data-count-line data-numbers>
+              {kind.countLine(signal, whole(signal))}
+            </p>
+            <div className="mt-2">
+              <DraftNotes
+                rows={rows}
+                columns={d.layout.columns.map((column) => (kind.columns as Record<string, string>)[column])}
+                caption={kind.tableCaption(subject.implementing_agency, day(subject.plan_date))}
+                cardsLabelId={ledeId}
+              />
+            </div>
+          </>
+        )}
         {d.layout.sources_list && (
           <div className="mt-8">
             <SourcesList
@@ -584,6 +604,7 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
               total={d.opened.of}
               citations={d.citations}
               open={open}
+              citedIn={brief ? citedInParts : undefined}
             />
           </div>
         )}

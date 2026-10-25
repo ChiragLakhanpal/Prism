@@ -23,6 +23,7 @@ async function everyRecording(): Promise<Record<string, Answer>> {
     ...(await hubApi()),
     "/api/ask": await file("ask-p130164-removed-number.sse"),
     "/api/projects": await file("projects.json"),
+    "/api/following": await file("following-p156634.json"),
     "/api/projects?q=india": await file("projects-india.json"),
     "/api/projects/P156634": await file("project-p156634-baseline.json"),
     "/api/projects/P156634/summary": await file("summary-p156634.json"),
@@ -73,6 +74,8 @@ const ROUTES: [string, string][] = [
   [`/lessons/review/${LESSON_ITEM}`, `[data-review-page="${LESSON_ITEM}"]`],
   ["/projects", "[data-projects-page=ready]"],
   ["/projects?q=india", "[data-projects-page=ready]"],
+  // Ticket 37: Following, whose rows' meta lines set the P-code in plain mono beside the heading's link.
+  ["/projects/following", "[data-following-page=ready]"],
   ["/projects/P130164", "[data-summary=ready]"],
   ["/projects/P130164/procurement", "[data-procurement-tab=ready]"],
   ["/projects/P130164/documents", "[data-documents=ready]"],

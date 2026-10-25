@@ -3,6 +3,7 @@
 // citation marker, its source line, the notes that cite it, and whether you opened it. The words and the
 // marker's visited look carry that state together. The caption gives the server's counts: how many you
 // opened, and how many citations become footnotes in the Word file.
+import type { ReactNode } from "react";
 import { copy } from "../copy";
 import type { EvidenceEvent } from "../lib/answer";
 import type { DraftSource } from "../lib/drafts";
@@ -26,7 +27,10 @@ export function SourcesList({
   total,
   citations,
   open,
+  citedIn,
 }: {
+  // A kind whose sources are cited in parts, such as a mission brief's (ticket 37), names them its own way.
+  citedIn?: (keys: string[]) => ReactNode;
   sources: DraftSource[];
   evidence: Record<string, EvidenceEvent>;
   // The sources opened since the draft was saved, with this page's own opens added.
@@ -79,7 +83,7 @@ export function SourcesList({
                 )}
                 {evidence[id] && <RecordSourceLine evidence={evidence[id]} />}
                 <p className="mt-1 text-caption text-ink-muted">
-                  <Fill template={words.citedIn(source.cited_in.length)} slots={{ refs: <Joined items={refs} /> }} />
+                  {citedIn ? citedIn(source.cited_in) : <Fill template={words.citedIn(source.cited_in.length)} slots={{ refs: <Joined items={refs} /> }} />}
                 </p>
                 <p data-opened={seen} className={seen ? "text-caption text-ink-muted" : "text-caption text-ink"}>
                   {seen ? words.opened : words.notOpened}

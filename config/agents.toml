@@ -51,6 +51,17 @@ guardrail = "strata"
 description = "Writes one review note per marked activity in a borrower's Procurement Plan, citing the plan rows its check returned."
 tools = []
 
+# The write-the-mission-brief workflow's writer (ticket 37): one to three sentences for each of the mission
+# brief's five parts, from the records project_records returns that the app hands it. The draft runtime runs the
+# verifier on what it writes before any draft is saved.
+[agents.mission_brief_writer]
+name = "strata-mission-brief-writer"
+role = "draft"
+instructions = "mission_brief_writer.md"
+guardrail = "strata"
+description = "Writes a task team leader's mission brief in five parts, citing the project records its tools returned."
+tools = []
+
 # The plan-a-package workflow's reader (ticket 15): one structured call that reads a person's sentence, such
 # as "rural roads, Kenya, about US$15 million", into the fields of the package form schema
 # (config/package_form.toml) that the app hands it. It writes no sentence a person reads, so no verifier

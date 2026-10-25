@@ -59,7 +59,8 @@ def test_the_instructions_say_a_record_inside_a_row_is_cited_by_its_own_evidence
         "definition"]["instructions"]
     tools_section = instructions.split("## Your tools", 1)[1]
 
-    assert nested == ["get_lessons", "get_disagreements", "compare_criteria", "rebidding_risk"]
+    # project_signals (ticket 37) returns the records each signal rests on the same way.
+    assert nested == ["project_signals", "get_lessons", "get_disagreements", "compare_criteria", "rebidding_risk"]
     assert "Cite such a record by its evidence_id, and quote it only from its text." in tools_section
 
 

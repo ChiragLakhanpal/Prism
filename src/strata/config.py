@@ -1226,6 +1226,8 @@ class DraftKind:
     removed_box: str
     not_checked: tuple[str, ...]
     files: str
+    # Only viewers with the World Bank staff role may start one (ticket 37's mission brief).
+    staff_only: bool = False
 
 
 @dataclass(frozen=True)
@@ -1249,7 +1251,7 @@ def load_draft_kinds(path: Path = CONFIG_DIR / "drafts.toml") -> DraftKinds:
     for key, table in (data.get("kinds") or {}).items():
         entry = _Entry(path, f"kinds.{key}", table)
         entry.only({"writer", "agent", "word", "export", "csv", "columns", "holds", "sources_list", "removed_box",
-                    "not_checked", "files"})
+                    "not_checked", "files", "staff_only"})
         if not MODULE.fullmatch(entry.text("writer")):
             entry._fail("writer", "must name a module, such as strata.drafts.review_notes")
         if not FUNCTION.fullmatch(entry.text("word")):
@@ -1268,7 +1270,7 @@ def load_draft_kinds(path: Path = CONFIG_DIR / "drafts.toml") -> DraftKinds:
         kinds[key] = DraftKind(key, entry.text("writer"), entry.text("agent"), entry.text("word"),
                                entry.text("export"), entry.texts("csv"), entry.texts("columns"), entry.texts("holds"),
                                entry.boolean("sources_list"), entry.text("removed_box"), entry.texts("not_checked"),
-                               entry.text("files"))
+                               entry.text("files"), entry.boolean("staff_only") if "staff_only" in table else False)
     if not kinds:
         raise ConfigError(f"{path.name} defines no draft kind. Add a [kinds.<key>] table.")
     return DraftKinds(kinds, holds)
@@ -1334,6 +1336,9 @@ class Roles:
     teams: tuple[Team, ...]
     groups: dict[str, Group]
     people: tuple[Person, ...]
+    # The workspace groups whose members have the World Bank staff role (ticket 37): they may open Following and
+    # follow projects. A roles file with no [staff] section names no one.
+    staff: tuple[str, ...] = ()
 
     def person(self, email: str | None) -> Person | None:
         """The person with this email, ignoring case, or None for anyone the file does not list."""
@@ -1347,7 +1352,14 @@ def load_roles(path: Path = CONFIG_DIR / "roles.toml") -> Roles:
     """The roles file's teams, in the file's order, each with at least one workspace group, then its reviewer
     groups and the people in them."""
     data = _read(path)
-    _Entry(path, "the file", data).only({"teams", "groups", "people"})
+    _Entry(path, "the file", data).only({"teams", "groups", "people", "staff"})
+    staff: tuple[str, ...] = ()
+    if "staff" in data:
+        entry = _Entry(path, "staff", data["staff"])
+        entry.only({"groups"})
+        staff = entry.texts("groups")
+        if not staff:
+            entry._fail("groups", "must name at least one workspace group")
     teams = []
     for key, table in (data.get("teams") or {}).items():
         entry = _Entry(path, f"teams.{key}", table)
@@ -1391,7 +1403,7 @@ def load_roles(path: Path = CONFIG_DIR / "roles.toml") -> Roles:
             if not PROJECT_ID.fullmatch(project):
                 entry._fail("projects", f"must be a project ID, P followed by six digits, not {project!r}")
         people.append(Person(email, entry.text("name"), named, regions, projects))
-    return Roles(tuple(teams), groups, tuple(people))
+    return Roles(tuple(teams), groups, tuple(people), staff)
 
 
 # ── The evidence ladder ──────────────────────────────────────────────────

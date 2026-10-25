@@ -6,8 +6,8 @@
 //
 // The app keeps this page in place while you move between its tabs (Match.frame), so the header and the
 // tab row never redraw; a tab opened from the row keeps focus on its link and says "Showing Procurement."
-// through a polite status (the 21 brief, section 11.2). The header is not sticky: it holds no action until
-// ticket 37 adds Follow.
+// through a polite status (the 21 brief, section 11.2). The header is not sticky, even with ticket 37's
+// follow row: following is an occasional act, not the page's task (the 37 brief, section 6.1).
 //
 // States: loading (the h1 names the project for a screen reader, and bars stand in for the line and the
 // agency line, while the tab row is real), populated, a project Strata has no record of, a service that
@@ -28,7 +28,9 @@ import { useLoad } from "../lib/load";
 import { address, navigate } from "../lib/router";
 import { useStore } from "../lib/store";
 import { setPageTitle } from "../lib/title";
-import { keptQuery, withReadParams } from "../lib/view";
+import { keptQuery, viewOf, withReadParams } from "../lib/view";
+import { staffRole } from "../lib/following";
+import { FollowControl } from "../components/FollowControl";
 import { BUILT_TABS, TAB_PATH, type ProjectTab } from "../routes";
 import { DocumentsTab } from "./project/DocumentsTab";
 import { ProcurementTab } from "./project/ProcurementTab";
@@ -38,6 +40,7 @@ const words = copy.projectPage;
 
 export function ProjectPage({ pid, tab }: { pid: string; tab: ProjectTab }) {
   const here = useStore(address);
+  const staff = useStore(staffRole) === true;
   // The view and as-of date the address asks for go on to the project's read, since the baseline is hidden in
   // the public view and shown without its saver in the implementing agency view.
   const [load, retry] = useLoad<Page>(withReadParams(`/api/projects/${encodeURIComponent(pid)}`, here.search));
@@ -146,7 +149,11 @@ export function ProjectPage({ pid, tab }: { pid: string; tab: ProjectTab }) {
           )}
         </h1>
         {data ? (
-          <AgencyLine names={data.project.implementing_agencies} />
+          <>
+            <AgencyLine names={data.project.implementing_agencies} />
+            {/* Follow and unfollow, for World Bank staff and never in a preview (ticket 37). */}
+            {staff && viewOf(here.search) === "staff" && <FollowControl pid={pid} name={data.project.project_name} />}
+          </>
         ) : (
           // The agency line's two lines and the place of "Show all agencies", as a project with many agencies
           // has them, so the tabs below never move down when the project arrives; with fewer they move up.

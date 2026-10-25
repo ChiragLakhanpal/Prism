@@ -253,7 +253,10 @@ export function sentenceText(sentence: SentenceEvent, evidence: Record<string, E
   let at = 0;
   for (const mention of found) {
     if (mention.start < at) continue;
-    parts.push(sentence.text.slice(at, mention.start));
+    // A currency sign right before the number stays on its line ("US$" never ends a line apart from its amount).
+    const before = sentence.text.slice(at, mention.start);
+    const sign = /(US\$|\$|€|£)$/.exec(before)?.[0] ?? "";
+    parts.push(before.slice(0, before.length - sign.length));
     const tooltip = numTooltip(evidence[mention.id], mention.date ? { sentence: sentence.index, text: mention.text } : null);
     const num = (
       <Num
@@ -263,11 +266,13 @@ export function sentenceText(sentence: SentenceEvent, evidence: Record<string, E
       />
     );
     // A number is a button, which a line may break after; the punctuation that follows it stays on its
-    // line, so no line starts with a period or a comma (ticket 35's review notes showed it).
+    // line, so no line starts with a period or a comma (ticket 35's review notes showed it), and so does a
+    // currency sign before it (ticket 37's mission brief showed "US$" ending a line).
     const stop = /^[.,;:)\]]+/.exec(sentence.text.slice(mention.end))?.[0] ?? "";
     parts.push(
-      stop ? (
+      stop || sign ? (
         <span key={mention.start} className="whitespace-nowrap">
+          {sign}
           {num}
           {stop}
         </span>
