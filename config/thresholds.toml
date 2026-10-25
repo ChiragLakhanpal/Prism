@@ -601,3 +601,31 @@ rows_per_group = 5
 # its packages advertised again (expected calibration error). Source: the ten bins of the usual reliability
 # diagram (Guo and others, 2017, "On Calibration of Modern Neural Networks"); a starting value to confirm.
 calibration_bins = 10
+
+# The hindsight test (ticket 34; docs/PLAN.md section 10): Strata frozen at each pilot project's approval date,
+# its top risks per package against the risks the completion report later blamed. src/strata/estimates/hindsight.py
+# reads these with the replay harness. How many risks each package shows is package_risks.max_rows above, and the
+# coders' agreement is withheld below retrieval.min_pairs, the agreement floor ticket 32 set.
+[hindsight]
+# The main packages of each project's first Procurement Plan: this many, the largest by Estimated Amount (US$).
+# Source: the spec's hindsight test ("the first plan's main packages (the three largest by estimated amount)").
+main_packages = 3
+# The baseline: a checklist of this many risk factors, the sector's commonest among the risks the other gate-set
+# projects' completion reports blamed. Source: the spec ("a checklist of the sector's five commonest risks").
+checklist_size = 5
+# The interval around hindsight recall (Wilson's score interval). Source: the spec ("(95% interval)").
+interval_level = 0.95
+# The report gives the interval only from this many blamed risks. Source: DESIGN.md section 7, rule 15, and the
+# 45 design brief, section 7.3 (the interval sentence only when blamed is 20 or more).
+min_blamed_for_share = 20
+# The pilot projects with an ICR that the test expects. A run that finds fewer reports how many it found. Source:
+# docs/PLAN.md section 3 ("49 ICRs") and the spec's hindsight test ("the 49 slice projects with an ICR").
+expected_projects = 49
+# A challenger loses the paired comparison with the champion when it catches fewer of the same blamed risks and
+# McNemar's exact test gives a p-value below this. Source: none; the usual 5 percent level, a starting value for
+# the owner to confirm.
+mcnemar_alpha = 0.05
+# Each package's comparables, as of the approval date, start at this notice date: the first day of the contract
+# awards dataset for FY2001 to 2016 (docs/PLAN.md section 3). past_range.period_from starts in 2019, which would
+# leave no comparable for most approval dates. Source: docs/PLAN.md section 3.
+notices_from = 2000-07-01

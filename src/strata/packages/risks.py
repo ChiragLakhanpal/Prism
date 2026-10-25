@@ -126,20 +126,21 @@ def _removed(row: dict, checked) -> dict:
 
 def build(engine: Engine, viewer: Viewer, *, as_of, criteria: Mapping | None, words: str | None = None,
           view: str = "staff", selected: Iterable[str] = (), missing: Iterable[str] = (),
-          thresholds: Thresholds | None = None) -> RiskTable:
+          thresholds: Thresholds | None = None, decided_by=None) -> RiskTable:
     """The section for one package, as of a date, as the viewer: its rows, counts, checks and empty reason.
 
     criteria are find_comparables' arguments for the package (its step_reference, or a planned package's
     comparables_query), or None while the package lacks a criterion, which missing names. words are the
     package's own, such as its description, which a lesson's fit is measured against; without them, a package
     from a STEP row is measured against its plan row's Description. selected are the risk keys the viewer stored
-    for the package, shown and not."""
+    for the package, shown and not. decided_by is for the hindsight test's replays only (ticket 34): the library as
+    decided by that date, each lesson counted from the day its quotes became public (registry.Context.decided_by)."""
     limits = thresholds or load_thresholds()
     held = load_tools()
     lists = load_lesson_lists()
     max_rows = int(limits.value("package_risks.max_rows"))
     facts = Facts()
-    context = registry.Context(engine, viewer, view, as_of, limits)
+    context = registry.Context(engine, viewer, view, as_of, limits, decided_by)
     stored = list(dict.fromkeys(selected))
     registry_sources = list(dict.fromkeys(key for name in TOOLS for key in held[name].sources))
     names = load_sources()

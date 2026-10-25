@@ -6,6 +6,10 @@ so the tool reads the decided versions in strata.ops.lesson_versions and the evi
 
 - As of a date, each lesson is at the newest version decided on or before it, and its evidence is only
   what was public by then (ADR 0002). A lesson whose current version retired it is left out and counted.
+- The hindsight test's replays (ticket 34) set call.decided_by, the replay's own date. The library is then
+  the one decided by that date, and each lesson version counts from the day every quote it rests on was
+  public, not from its decision: Strata did not exist on a 2014 approval date, but the reports its lessons
+  come from did. A version whose quotes were not all public by the as-of date is not in that library yet.
 - Each lesson carries its evidence ids (the passages its quotes are in), the edition of the procurement
   rules its project followed (config/editions.toml, from the project's PAD), and ieg_status, one field for
   the four evidence badges (strata.knowledge.lessons.review.ieg_status).
@@ -109,7 +113,8 @@ def reports(call: Call, packages: str, lists) -> dict:
     by_document = {str(row["document_id"]): row for row in counted}
     raised: dict[str, dict[str, dict]] = {}
     if by_document:
-        for row in _rows(call, "raised.sql", documents=",".join(by_document), as_of=call.as_of, passed=PASSED):
+        for row in _rows(call, "raised.sql", documents=",".join(by_document), decided_by=decided_by(call),
+                         passed=PASSED):
             report = by_document[str(row["document_id"])]
             for key in json.loads(row["risk_factors"] or "[]"):
                 if lists.risk_factor(key) is None:
@@ -127,6 +132,28 @@ def reports(call: Call, packages: str, lists) -> dict:
             "risk_factors": factors}
 
 
+def decided_by(call: Call) -> dt.date:
+    """The date the library's decisions are read as of: the as-of date, or a hindsight replay's own date."""
+    return call.decided_by or call.as_of
+
+
+def _dated_by_evidence(versions: list[dict], evidence: list[dict], as_of: dt.date) -> dict[str, dict]:
+    """Each lesson at its newest version whose quotes were all public by the as-of date, for a hindsight replay
+    (ticket 34). A version rests on the quotes of every proposal added to the lesson at it or before it; it
+    counts from the day the last of them was public, which becomes its public_from. A lesson with no such
+    version was not in the library yet."""
+    sources: dict[str, list[tuple[int, str]]] = {}
+    for row in evidence:
+        if row["role"] == "source":
+            sources.setdefault(row["lesson_id"], []).append((_int(row["added_at_version"]), _iso(row["public_from"])))
+    current: dict[str, dict] = {}
+    for row in versions:  # oldest first, so a later version that counts replaces an earlier one
+        quotes = [public for added, public in sources.get(row["lesson_id"], []) if added <= _int(row["version"])]
+        if quotes and max(quotes) <= as_of.isoformat():
+            current[row["lesson_id"]] = {**row, "public_from": max(quotes)}
+    return current
+
+
 def get_lessons(call: Call, query: str | None = None, risk_factor: str | None = None, stage: str | None = None,
                 limit: int | None = None, packages: str | None = None) -> dict:
     """The current lessons that fit the query and the filters, as of call.as_of, best first; with packages, the
@@ -142,11 +169,18 @@ def get_lessons(call: Call, query: str | None = None, risk_factor: str | None = 
     if stage and lists.stage(stage) is None:
         return {**empty, "abstention": {"reason": "unknown_stage", "stage": stage}}
 
+    versions = _rows(call, "versions.sql", decided_by=decided_by(call))
+    evidence_rows = _rows(call, "evidence.sql", decided_by=decided_by(call),
+                          evidence_through=decided_by(call) if call.decided_by else call.as_of)
     current: dict[str, dict] = {}
-    for row in _rows(call, "versions.sql", as_of=call.as_of):
-        current[row["lesson_id"]] = row  # oldest first, so the last is current on the as-of date
+    if call.decided_by is None:
+        for row in versions:
+            current[row["lesson_id"]] = row  # oldest first, so the last is current on the as-of date
+    else:
+        current = _dated_by_evidence(versions, evidence_rows, call.as_of)
+        evidence_rows = [row for row in evidence_rows if _iso(row["public_from"]) <= call.as_of.isoformat()]
     evidence: dict[str, list[dict]] = {}
-    for row in _rows(call, "evidence.sql", as_of=call.as_of):
+    for row in evidence_rows:
         held = current.get(row["lesson_id"])
         if held is not None and _int(row["added_at_version"]) <= _int(held["version"]):
             found = evidence.setdefault(row["lesson_id"], [])

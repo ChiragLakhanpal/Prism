@@ -104,7 +104,7 @@ def test_the_lesson_lists_hold_the_two_kinds_and_closed_lists_of_risk_factors_an
     assert "Procurement planning" in [stage.label for stage in lists.stages]
     assert len(lists.risk_factors) >= 5
     assert lists.risk_factor("cost_estimates").key == "cost_estimates"
-    assert lists.example_projects == ()
+    assert lists.example_projects == ("P130164",)  # the extractor's sample is its ICR paragraph 54
 
 
 def test_a_risk_factor_listed_twice_is_refused(tmp_path):
