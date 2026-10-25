@@ -1231,7 +1231,7 @@ def load_agent(key: str, path: Path = CONFIG_DIR / "agents.toml") -> AgentSpec:
 # ── The draft-kind registry ──────────────────────────────────────────────
 
 REMOVED_BOXES = ("always", "when_removed")
-EXPORTS = ("word",)
+EXPORTS = ("word", "step_rows")
 FUNCTION = re.compile(r"[a-z_][a-z0-9_.]*:[a-z_][a-z0-9_]*")
 MODULE = re.compile(r"[a-z_][a-z0-9_]*(?:\.[a-z_][a-z0-9_]*)+")
 
@@ -1264,6 +1264,9 @@ class DraftKind:
     files: str
     # Only viewers with the World Bank staff role may start one (ticket 37's mission brief).
     staff_only: bool = False
+    # Only implementing agency officers may start one, for their own agency (ticket 38), and every draft of the kind
+    # is Official Use Only. Its words are the agency's (copy.draft.kinds.<kind>).
+    agency_only: bool = False
 
 
 @dataclass(frozen=True)
@@ -1291,15 +1294,20 @@ def load_draft_kinds(path: Path = CONFIG_DIR / "drafts.toml") -> DraftKinds:
     for key, table in (data.get("kinds") or {}).items():
         entry = _Entry(path, f"kinds.{key}", table)
         entry.only({"writer", "agent", "word", "export", "csv", "columns", "holds", "sources_list", "removed_box",
-                    "not_checked", "files", "staff_only"})
+                    "not_checked", "files", "staff_only", "agency_only"})
         if not MODULE.fullmatch(entry.text("writer")):
             entry._fail("writer", "must name a module, such as strata.drafts.review_notes")
-        if not FUNCTION.fullmatch(entry.text("word")):
-            entry._fail("word", "must name a function as module:function")
-        if not all(FUNCTION.fullmatch(name) for name in entry.texts("csv")):
-            entry._fail("csv", "must list functions as module:function")
         if entry.text("export") not in EXPORTS:
             entry._fail("export", f"must be one of {', '.join(EXPORTS)}")
+        # A kind exported to Word names the function that lays out its file; a kind whose file is STEP rows names
+        # the CSV writer under csv instead (ticket 38).
+        word = entry.text("word", required=entry.text("export") == "word") or ""
+        if word and not FUNCTION.fullmatch(word):
+            entry._fail("word", "must name a function as module:function")
+        if entry.text("export") == "step_rows" and not entry.texts("csv"):
+            entry._fail("csv", "must name the STEP rows writer for a kind exported as STEP rows")
+        if not all(FUNCTION.fullmatch(name) for name in entry.texts("csv")):
+            entry._fail("csv", "must list functions as module:function")
         unknown = [hold for hold in entry.texts("holds") if hold not in holds]
         if unknown:
             entry._fail("holds", f"names {', '.join(unknown)}, which [holds] does not define")
@@ -1307,10 +1315,13 @@ def load_draft_kinds(path: Path = CONFIG_DIR / "drafts.toml") -> DraftKinds:
             entry._fail("removed_box", f"must be one of {', '.join(REMOVED_BOXES)}")
         if not entry.texts("columns"):
             entry._fail("columns", "must name at least one column")
-        kinds[key] = DraftKind(key, entry.text("writer"), entry.text("agent"), entry.text("word"),
+        # A kind with no agent is worked out by its module alone, with no model call, and still checked by the
+        # verifier (ticket 38's planned dates).
+        kinds[key] = DraftKind(key, entry.text("writer"), entry.text("agent", required=False) or "", word,
                                entry.text("export"), entry.texts("csv"), entry.texts("columns"), entry.texts("holds"),
                                entry.boolean("sources_list"), entry.text("removed_box"), entry.texts("not_checked"),
-                               entry.text("files"), entry.boolean("staff_only") if "staff_only" in table else False)
+                               entry.text("files"), entry.boolean("staff_only") if "staff_only" in table else False,
+                               entry.boolean("agency_only") if "agency_only" in table else False)
     if not kinds:
         raise ConfigError(f"{path.name} defines no draft kind. Add a [kinds.<key>] table.")
     return DraftKinds(kinds, holds, cards.boolean("cards_on_drafts"))

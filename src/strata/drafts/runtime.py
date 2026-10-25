@@ -193,8 +193,12 @@ async def write(writing: Writing, engine_for: EngineFor, agent_for: Callable[[st
     """The writing of one draft, as events: the four steps, then the saved draft's id, or the removed
     sentences when none passed. A step that cannot run raises WriteError with its code. The check step runs all
     six checks (src/strata/agent/answer_check.py), as the viewer and as of today: its own steps inside it are not
-    sent, since the writing page lists four."""
+    sent, since the writing page lists four. A kind with no agent is worked out by its module (write_computed)."""
     module = writer_module(writing.kind)
+    if not writing.kind.agent:
+        async for event in write_computed(writing, module, engine_for, store, today, now, new_draft_id):
+            yield event
+        return
 
     def read():
         with engine_for(writing.viewer) as engine:
@@ -271,6 +275,53 @@ async def write(writing: Writing, engine_for: EngineFor, agent_for: Callable[[st
     yield Event("draft", {"draft_id": draft_id})
 
 
+async def write_computed(writing: Writing, module, engine_for: EngineFor, store: DraftStore, today: dt.date,
+                         now: Callable[[], dt.datetime], new_draft_id: Callable[[], str]) -> AsyncIterator[Event]:
+    """The writing of a kind no model writes, such as an implementing agency's planned dates (ticket 38), in five
+    steps: read the activities, find comparable packages, date each step, check every date and count against the
+    tool's answers (the verifier's checks 1 and 2, in module.compose), and save. Nothing is saved when no value could
+    be given at all (module.nothing_dated), and an event says so."""
+    def read():
+        with engine_for(writing.viewer) as engine:
+            return module.read(engine, writing.viewer, writing.request, today)
+
+    yield step("read", "running")
+    try:
+        facts = await asyncio.to_thread(read)
+    except module.NotWritable as error:
+        raise WriteError(error.code) from error
+    except PermissionDenied as error:
+        raise WriteError("permission") from error
+    except EngineError as error:
+        raise WriteError("data_service") from error
+    writing.question = module.question(facts)
+    yield step("read", "done", **module.read_done(facts))
+    yield step("check", "running")
+    content, verdict = module.compose(facts)
+    writing.verdict = verdict
+    counts = content["checks"]
+    yield step("check", "done", checks_run=counts["checks_run"], checks=len(counts["checks_run"]),
+               dates=counts["dates"], numbers=counts["numbers"], removed=counts["sentences"]["removed"],
+               dated=content["counts"]["dated"], steps=content["counts"]["steps"])
+    if module.nothing_dated(content):
+        yield Event("nothing_dated", {"counts": content["counts"], "min_comparables": content.get("min_comparables")})
+        return
+    yield step("save", "running")
+    draft_id = new_draft_id()
+    content |= {"kind": writing.kind.key, "written": {"activities": content["counts"]["activities"]},
+                "writer": {"agent": None, "version": None, "run_id": writing.run_id}}
+    record = NewDraft(draft_id, writing.kind.key, writing.team_key, writing.viewer.user_id, writing.viewer.name,
+                      writing.idempotency_key, content["subject"].get("project_id"), module.subject_key(facts),
+                      content, now())
+    try:
+        await asyncio.to_thread(store.create, record)
+    except EngineError as error:
+        raise WriteError("draft_store") from error
+    writing.draft_id = draft_id
+    yield step("save", "done")
+    yield Event("draft", {"draft_id": draft_id})
+
+
 # ── What the screens read ────────────────────────────────────────────────
 
 def written_notes(saved: Saved) -> int:
@@ -288,6 +339,10 @@ def sources(content: dict) -> list[dict]:
                 key = note["key"]
                 if key not in entry["cited_in"]:
                     entry["cited_in"].append(key)
+    # A draft of planned dates (ticket 38) rests on lists of comparable packages, one per dated step, not on sentences.
+    for listed in content.get("lists") or ():
+        found.setdefault(listed["evidence_id"], {"evidence_id": listed["evidence_id"], "number": len(found) + 1,
+                                                 "cited_in": [listed["activity"]]})
     return list(found.values())
 
 

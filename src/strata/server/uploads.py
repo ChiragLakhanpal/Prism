@@ -134,7 +134,8 @@ def reading_of(reading, file_name: str) -> dict:
 
 def row_dict(row) -> dict:
     return {"position": row.position, "reference": row.reference, "description": row.description,
-            "sheet": row.sheet, "section": row.section, "fields": row.fields, "steps": row.steps, "notes": row.notes}
+            "sheet": row.sheet, "section": row.section, "fields": row.fields, "steps": row.steps, "notes": row.notes,
+            "raw": row.raw}
 
 
 def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: UploadStore | None, access: Access,

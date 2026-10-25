@@ -1,5 +1,8 @@
 {
   "files": {
+    "stepRows": {
+      "title": "Planned dates for {agency}'s plan of {date}"
+    },
     "word": {
       "review_notes": {
         "heading": "Review notes on the {agency} plan of {date}",
@@ -110,6 +113,7 @@
     },
     "pack": {
       "title": "Evidence pack",
+      "officialUseOnly": "Official Use Only",
       "draftId": "Draft ID {id}",
       "drafted": "Drafted on {date} for {author}.",
       "checked": "Checked by {author} on {date}.",
@@ -203,6 +207,38 @@
       },
       "notChecked": "Mark the rows as checked before you export them."
     },
+    "ppsd_rows_agency": {
+      "preview": "This is a preview, so you can't mark drafts as checked or export them.",
+      "owners": {
+        "one": "set one more risk owner",
+        "many": "set {count} more risk owners"
+      },
+      "ratings": {
+        "one": "fill in the ratings for one more row",
+        "many": "fill in the ratings for {count} more rows"
+      },
+      "disagreements": {
+        "one": "choose which report to keep in one disagreement",
+        "many": "choose which report to keep in {count} disagreements"
+      },
+      "notChecked": "Mark the rows as checked before you export them."
+    },
+    "step_rows": {
+      "preview": "This is a preview, so you can't mark drafts as checked or export them.",
+      "owners": {
+        "one": "set one more risk owner",
+        "many": "set {count} more risk owners"
+      },
+      "ratings": {
+        "one": "fill in the ratings for one more row",
+        "many": "fill in the ratings for {count} more rows"
+      },
+      "disagreements": {
+        "one": "choose which report to keep in one disagreement",
+        "many": "choose which report to keep in {count} disagreements"
+      },
+      "notChecked": "Mark the dates as checked before you export them."
+    },
     "project_paper": {
       "preview": "This is a preview, so you can't mark drafts as checked or export them.",
       "owners": {
@@ -239,6 +275,13 @@
         "joined": "it cited a source other than this risk's records"
       }
     },
+    "ppsd_rows_agency": {
+      "id_not_returned": {
+        "item": "It cited a source other than this risk's records.",
+        "joined": "it cited a source other than this risk's records"
+      }
+    },
+    "step_rows": {},
     "project_paper": {
       "id_not_returned": {
         "item": "It cited a source from another part of the summary.",
@@ -317,7 +360,9 @@
       "writer_mission_brief": "whether this brief covers what your mission needs",
       "writer_ppsd_rows": "whether these rows are what the borrower should put in the PPSD",
       "agency_track_record": "whether the agency's past packages are like the ones in this plan",
-      "writer_project_paper": "whether this summary is what you would write in the Project Paper"
+      "writer_project_paper": "whether this summary is what you would write in the Project Paper",
+      "writer_step_rows": "whether these comparable packages fit your activities",
+      "upload_dates": "whether the dates in your plan are the ones you meant"
     }
   },
   "removed": {

@@ -80,7 +80,7 @@ def row_content(row: dict) -> str:
     fields = {key: (str(value) if value is not None and not isinstance(value, str) else value)
               for key, value in row["fields"].items()}
     return json.dumps({"sheet": row.get("sheet"), "section": row.get("section"), "fields": fields, "steps": steps,
-                       "notes": row.get("notes") or []}, ensure_ascii=False)
+                       "notes": row.get("notes") or [], "raw": row.get("raw") or {}}, ensure_ascii=False)
 
 
 class UploadStore:

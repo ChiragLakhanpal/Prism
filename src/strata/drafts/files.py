@@ -503,14 +503,25 @@ class Made:
 
 def names(kind: DraftKind, subject: dict) -> dict[str, str]:
     stem = _fill(kind.files, **subject)
-    return {"word": f"{stem}.docx", "pdf": f"{stem}-evidence-pack.pdf", "csv": f"{stem}-evidence-pack.csv"}
+    return {"word": f"{stem}.docx", "pdf": f"{stem}-evidence-pack.pdf", "csv": f"{stem}-evidence-pack.csv",
+            "step_rows": f"{stem}.csv"}
 
 
 def make(kind: DraftKind, draft: dict, exporter: str | None, exported_at: dt.datetime) -> Made:
-    """The Word file and the evidence pack's PDF and CSV for one export of a draft, as its author sees it."""
+    """The Word file and the evidence pack's PDF and CSV for one export of a draft, as its author sees it. A kind
+    exported as STEP rows (ticket 38) makes its STEP rows CSV in place of the Word file."""
     from strata.drafts.runtime import function
 
     say = Say()
+    if kind.export == "step_rows":
+        taken = snapshot(draft, say)
+        named = names(kind, draft["subject"])
+        heading = _fill(words()["files"]["stepRows"]["title"], agency=draft["subject"]["implementing_agency"],
+                        date=say.date(draft["subject"]["plan_date"]))
+        files = [(named["step_rows"], CSV, function(kind.csv[0])(draft)),
+                 (named["pdf"], PDF, pack_pdf(kind, draft, taken["sources"], heading, exporter, exported_at, say)),
+                 (named["csv"], CSV, pack_csv(taken["sources"]))]
+        return Made(files, 0, taken)
     document = Word(exported_at)
     function(kind.word)(document, draft, words(), say)  # the kind lays out its file, its heading first
     heading = document.title

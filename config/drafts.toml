@@ -20,10 +20,12 @@
 #                  the viewer (read), builds the writer agent's message (message), and turns what the
 #                  agent wrote and what the verifier kept into the draft to save (assemble). The draft
 #                  runtime calls the agent and runs the verifier between them, so no kind can skip it.
-#   agent          its writer agent in config/agents.toml
+#   agent          its writer agent in config/agents.toml. A kind with none is worked out by its module alone,
+#                  with no model call (compose), and the runtime still runs the verifier on it (ticket 38).
 #   word           the function that lays out its Word file, as module:function; its first heading is the
-#                  file's title, which the evidence pack repeats
-#   export         the export button: word, which reads "Export to Word"
+#                  file's title, which the evidence pack repeats. Only a kind exported to Word needs one.
+#   export         the export button: word, which reads "Export to Word", or step_rows, which reads "Export STEP
+#                  rows" and makes the STEP rows CSV the first function under csv writes (ticket 38)
 #   csv            more CSV files its export makes, as module:function (ticket 38 adds STEP rows)
 #   columns        the columns of its table on the page and in Word, in order
 #   holds          the holds that can keep it from export, in the order the bar names them ([holds])
@@ -34,6 +36,9 @@
 #   files          the stem of its files' names, filled from the draft's subject
 #   staff_only     true when only viewers with the World Bank staff role (config/roles.toml [staff]) may start
 #                  one; others get 403 not_staff. Leave it out for false.
+#   agency_only    true when only implementing agency officers (a team in config/roles.toml that names an agency)
+#                  may start one, for their own agency; others get 403 not_agency_team. Every draft of the kind is
+#                  Official Use Only. Leave it out for false (ticket 38).
 #
 # [holds.<key>]
 #   test           the function that says how many items the hold has left on a draft and where the first is,
@@ -108,6 +113,41 @@ removed_box = "always"
 not_checked = ["writer_project_paper"]
 files = "project-paper-summary-{project_id}-{agency_id}-{plan_date}"
 staff_only = true
+
+# Planned dates (ticket 38): a planned date for every STEP step of every activity in an implementing agency's upload, or
+# in its own agency's latest published plan, from the delay model. No model writes it (no agent): estimate_time dates
+# each step and the verifier checks every date and count before it is saved. It exports STEP rows, a CSV in STEP's own
+# columns (config/uploads.toml), instead of a Word file, and its sources are the lists of comparable packages behind each
+# dated step, which the page does not list (sources_list false). Only an implementing agency officer starts one, and
+# every one is Official Use Only.
+[kinds.step_rows]
+writer = "strata.drafts.step_rows"
+export = "step_rows"
+csv = ["strata.drafts.step_rows:step_rows_csv"]
+columns = ["activity", "signed", "dated"]
+holds = ["notChecked", "preview"]
+sources_list = false
+removed_box = "when_removed"
+not_checked = ["writer_step_rows", "upload_dates"]
+files = "step-rows-{project_id}-{agency_id}-{plan_date}"
+agency_only = true
+
+# Risk rows for an implementing agency's own PPSD (ticket 38): ticket 36's suggested PPSD rows, written by the agency's
+# own writer with the same Short Form and Long Form rules and footnotes, in the officer's words ("Draft {n} PPSD risk
+# rows", "Risk rows for your PPSD"). Only an officer starts one, and every one is Official Use Only.
+[kinds.ppsd_rows_agency]
+writer = "strata.drafts.ppsd_rows"
+agent = "ppsd_rows_agency_writer"
+word = "strata.drafts.ppsd_rows:word"
+export = "word"
+csv = []
+columns = ["risk_description", "mitigation", "risk_owner"]
+holds = ["notChecked", "owners", "ratings", "disagreements", "preview"]
+sources_list = true
+removed_box = "always"
+not_checked = ["writer_ppsd_rows"]
+files = "ppsd-rows-{package_slug}-{created_date}"
+agency_only = true
 
 [holds.notChecked]
 test = "strata.drafts.holds:not_checked"

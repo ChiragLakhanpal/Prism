@@ -79,6 +79,93 @@ const REFUSALS = {
   },
 };
 
+// Suggested risk rows for a PPSD (ticket 36), which World Bank staff draft for the borrower; ticket 38's agency
+// variant (copy.draft.kinds.ppsd_rows_agency) keeps every key and swaps the words that name who the rows are for.
+const PPSD_ROWS = {
+    title: "Suggested risk rows for the borrower's PPSD",
+    crumb: (_date: string) => "Suggested PPSD risk rows",
+    rowTitle: (title: string, _date: string) => `Suggested PPSD risk rows for ${title}`,
+    pageTitle: (title: string, _date: string) => `Suggested PPSD risk rows for ${title}`,
+    // Under the h1: "Rural roads. No STEP reference yet." {reference} is the STEP reference in Roboto Mono.
+    subtitle: "{title}. {reference}",
+    lede: (count: number) =>
+      count === 1 ? "I drafted a row for the one risk you selected." : "I drafted a row for each of the {count} risks you selected.",
+    ledePartial: "I drafted rows for {written} of the {count} risks you selected.",
+    // PPSD is spelled out here, once on the page (the 36 brief, section 5).
+    method:
+      "I wrote each Risk Description and Description of mitigation from {check} and their lessons, for the " +
+      "borrower's Project Procurement Strategy for Development (PPSD). Open a source number to see its evidence " +
+      "beside the row.",
+    methodLink: "the risks you selected",
+    countLine: (count: number, countText: string) => (count === 1 ? "Showing the one row" : `Showing all ${countText} rows`),
+    columns: {} as Record<string, string>,
+    tableCaption: (form: string, _date: string) =>
+      `Suggested risk rows for the borrower's PPSD, ${form}, one row per risk you selected`,
+    // A cell of Strata's that nothing passed the checks for; Word leaves it empty for the borrower.
+    abstain: "I couldn't write this cell so that it passed my checks. The sentences I removed are listed above.",
+    refused: {
+      out_of_scope: "I didn't write this cell, because it would need more than this risk's records show.",
+    } as Record<string, string>,
+    refusedOther: "I didn't write this cell.",
+    metaYou: (date: string) => `I drafted these rows for you on ${date}.`,
+    metaTeammate: (author: string, date: string) => `I drafted these rows for ${author} on ${date}.`,
+    barLead: "A working draft of suggested rows for the borrower's PPSD.",
+    barLeadTeammate: (author: string) => `A working draft of ${author}'s suggested rows for the borrower's PPSD.`,
+    holdNotChecked: "Mark the rows as checked before you export them.",
+    // The composed hold line's first clause, and its frame (section 4.5).
+    holdClause: "mark the rows as checked",
+    holdCompose: "Before you export them, {clauses}.",
+    readOnly: (author: string) => `Only ${author} can set owners, mark these rows as checked or export them.`,
+    markedChecked: "You marked these rows as checked.",
+    discarded: "You discarded these suggested rows, so your team no longer sees them in Drafts.",
+    removedReasons: {
+      id_not_returned: {
+        item: "It cited a source other than this risk's records.",
+        joined: "it cited a source other than this risk's records",
+      },
+    } as Record<string, { item: string; joined: string }>,
+    rowNotes: (count: number, countText: string) => (count === 1 ? "One row." : `${countText} rows.`),
+    steps: {
+      read: {
+        running: "I'm reading the risks you selected.",
+        // {count} is the selected risks' count as a word from one to nine, then numerals.
+        done: (count: string) =>
+          count === "one" ? "I read the one risk you selected and its lesson." : `I read the ${count} risks you selected and their lessons.`,
+      },
+      write: {
+        running: (_count: number, _countText: string) => "I'm writing a row for each risk.",
+        // notes are the rows written.
+        done: (_sentences: number, _sentencesText: string, rows: number, rowsText: string) =>
+          rows === 1 ? "I wrote one row." : `I wrote ${rowsText} rows.`,
+      },
+      save: { running: "I'm saving the draft.", done: "I saved the draft." },
+    },
+    ready: (count: number, countText: string) =>
+      count === 1 ? "The draft is ready. I wrote one row." : `The draft is ready. I wrote ${countText} rows.`,
+    writeErrors: {
+      no_agent: "I can't write PPSD rows yet, because the model that writes my drafts isn't connected. I saved nothing.",
+      agent_unavailable:
+        "I couldn't write the PPSD rows, because the model that writes my drafts did not respond. I saved nothing.",
+      content_filter: "I couldn't write the PPSD rows, because a content filter stopped the writer. I saved nothing.",
+      agent_output: "I wrote PPSD rows I couldn't check, so I saved nothing.",
+      data_service: "I couldn't read the package's risks, because the data service didn't answer. I saved nothing.",
+      draft_store: "I couldn't save the draft, because I can't write to my drafts tables right now. I saved nothing.",
+      no_package: "I couldn't find this package, so I wrote nothing and saved nothing.",
+      no_selected_risks: "None of the risks you selected is in the table now, so I wrote nothing and saved nothing.",
+      no_plan: "I couldn't find this package, so I wrote nothing and saved nothing.",
+      nothing_marked: "None of the risks you selected is in the table now, so I wrote nothing and saved nothing.",
+      permission:
+        "Your account can't read this package's records in Strata's tables, so I can't write PPSD rows. Ask your " +
+        "workspace admin for read access to the strata catalog.",
+      internal: "Something went wrong on my side, so I couldn't write the PPSD rows. I saved nothing.",
+      dropped: "The connection dropped before I finished the PPSD rows. I saved nothing.",
+    } as Record<string, string>,
+    nothingTitle: "I couldn't write a row that passed my checks, so I saved no draft.",
+    nothingBody: "The sentences I removed are below, with the reason for each.",
+    previewPiuTitle: "I don't show these suggested rows in this preview, because they are a World Bank staff draft.",
+    previewPiuBody: "Leave the preview to see them. Nothing about the draft changed.",
+};
+
 export const copy = {
   appName: "Strata",
   skipLink: "Skip to main content",
@@ -436,6 +523,9 @@ export const copy = {
       writer_ppsd_rows: "whether these rows are what the borrower should put in the PPSD",
       agency_track_record: "whether the agency's past packages are like the ones in this plan",
       writer_project_paper: "whether this summary is what you would write in the Project Paper",
+      // Ticket 38: an implementing agency's planned dates, then what an upload adds.
+      writer_step_rows: "whether these comparable packages fit your activities",
+      upload_dates: "whether the dates in your plan are the ones you meant",
     },
   },
 
@@ -2591,89 +2681,113 @@ export const copy = {
       // Suggested risk rows for the borrower's PPSD (ticket 36; the 36 brief, sections 5.2 to 5.5). Its keys match
       // review_notes' so the draft page, the bar and the Drafts tab read every kind the same way; copy.ppsd holds what
       // only this kind says. Ticket 38's agency variant swaps these words and keeps the column names.
-      ppsd_rows: {
-        title: "Suggested risk rows for the borrower's PPSD",
-        crumb: (_date: string) => "Suggested PPSD risk rows",
-        rowTitle: (title: string, _date: string) => `Suggested PPSD risk rows for ${title}`,
-        pageTitle: (title: string, _date: string) => `Suggested PPSD risk rows for ${title}`,
-        // Under the h1: "Rural roads. No STEP reference yet." {reference} is the STEP reference in Roboto Mono.
-        subtitle: "{title}. {reference}",
-        lede: (count: number) =>
-          count === 1 ? "I drafted a row for the one risk you selected." : "I drafted a row for each of the {count} risks you selected.",
-        ledePartial: "I drafted rows for {written} of the {count} risks you selected.",
-        // PPSD is spelled out here, once on the page (the 36 brief, section 5).
+      ppsd_rows: PPSD_ROWS,
+      // Risk rows for an implementing agency's own PPSD (ticket 38; the 38 brief, 5.8): ticket 36's rows, with the
+      // officer's words, since the officer drafts rows for their own PPSD and nothing is suggested to someone else.
+      ppsd_rows_agency: {
+        ...PPSD_ROWS,
+        title: "Risk rows for your PPSD",
+        crumb: (_date: string) => "Risk rows for your PPSD",
+        rowTitle: (title: string, _date: string) => `Risk rows for your PPSD, ${title}`,
+        pageTitle: (title: string, _date: string) => `Risk rows for your PPSD, ${title}`,
         method:
-          "I wrote each Risk Description and Description of mitigation from {check} and their lessons, for the " +
-          "borrower's Project Procurement Strategy for Development (PPSD). Open a source number to see its evidence " +
-          "beside the row.",
-        methodLink: "the risks you selected",
-        countLine: (count: number, countText: string) => (count === 1 ? "Showing the one row" : `Showing all ${countText} rows`),
-        columns: {} as Record<string, string>,
-        tableCaption: (form: string, _date: string) =>
-          `Suggested risk rows for the borrower's PPSD, ${form}, one row per risk you selected`,
-        // A cell of Strata's that nothing passed the checks for; Word leaves it empty for the borrower.
-        abstain: "I couldn't write this cell so that it passed my checks. The sentences I removed are listed above.",
-        refused: {
-          out_of_scope: "I didn't write this cell, because it would need more than this risk's records show.",
-        } as Record<string, string>,
-        refusedOther: "I didn't write this cell.",
-        metaYou: (date: string) => `I drafted these rows for you on ${date}.`,
-        metaTeammate: (author: string, date: string) => `I drafted these rows for ${author} on ${date}.`,
-        barLead: "A working draft of suggested rows for the borrower's PPSD.",
-        barLeadTeammate: (author: string) => `A working draft of ${author}'s suggested rows for the borrower's PPSD.`,
-        holdNotChecked: "Mark the rows as checked before you export them.",
-        // The composed hold line's first clause, and its frame (section 4.5).
-        holdClause: "mark the rows as checked",
+          "I wrote each Risk Description and Description of mitigation from {check} and their lessons, for your " +
+          "Project Procurement Strategy for Development (PPSD). Open a source number to see its evidence beside the row.",
+        tableCaption: (form: string, _date: string) => `Risk rows for your PPSD, ${form}, one row per risk you selected`,
+        barLead: "A working draft of risk rows for your Project Procurement Strategy for Development (PPSD).",
+        barLeadTeammate: (author: string) => `A working draft of ${author}'s risk rows for your team's PPSD.`,
+        discarded: "I discarded these risk rows, and your team no longer sees them in Drafts.",
+        previewPiuTitle: "I don't show this team's drafts in a preview.",
+        previewPiuBody: "In a preview I don't show an implementing agency's drafts, because they stay with the team that made them.",
+      },
+      // Planned dates for an implementing agency's plan (ticket 38; the 38 brief, 5.7). Its keys match review_notes'
+      // so the bar and the Drafts tab read it the same way; dates holds what only this kind says. Every count is the
+      // draft runtime's or estimate_time's.
+      step_rows: {
+        title: "Planned dates",
+        crumb: (date: string) => `Planned dates for your plan uploaded ${date}`,
+        rowTitle: (_title: string, date: string) => `Planned dates for your plan uploaded ${date}`,
+        pageTitle: (agency: string, date: string) => `Planned dates for ${agency}'s plan of ${date}`,
+        subtitle: "{agency}, your plan uploaded {date}",
+        lede: (count: number) => (count === 1 ? "I dated all {total} steps of your activity." : "I dated all {total} steps of your {count} activities."),
+        ledePartial: "I dated {written} of the {total} steps of your {count} activities.",
+        method:
+          "I started from the dates in your plan and added how far comparable packages ran past their planned dates at " +
+          "each step. Open a count of comparable packages to see them.",
+        methodLink: "the dates in your plan",
+        countLine: (count: number, countText: string) => (count === 1 ? "Showing the one activity" : `Showing all ${countText} activities`),
+        columns: { activity: "Activity", signed: "Contract signed", dated: "Steps dated" } as Record<string, string>,
+        tableCaption: (_form: string, _date: string) => "Your activities, in your file's order",
+        abstain: "I removed this date, because it didn't match my delay model's results.",
+        refused: {} as Record<string, string>,
+        refusedOther: "I didn't date this activity.",
+        metaYou: (date: string) => `I drafted these dates for you on ${date}.`,
+        metaTeammate: (author: string, date: string) => `I drafted these dates for ${author} on ${date}.`,
+        barLead: "A working draft of planned dates for your Procurement Plan.",
+        barLeadTeammate: (author: string) => `A working draft of ${author}'s planned dates for your team's Procurement Plan.`,
+        holdNotChecked: "Mark the dates as checked before you export them.",
+        holdClause: "mark the dates as checked",
         holdCompose: "Before you export them, {clauses}.",
-        readOnly: (author: string) => `Only ${author} can set owners, mark these rows as checked or export them.`,
-        markedChecked: "You marked these rows as checked.",
-        discarded: "You discarded these suggested rows, so your team no longer sees them in Drafts.",
-        removedReasons: {
-          id_not_returned: {
-            item: "It cited a source other than this risk's records.",
-            joined: "it cited a source other than this risk's records",
-          },
-        } as Record<string, { item: string; joined: string }>,
-        rowNotes: (count: number, countText: string) => (count === 1 ? "One row." : `${countText} rows.`),
+        readOnly: (author: string) => `Only ${author} can mark these dates as checked or export them.`,
+        markedChecked: "You marked these dates as checked. You can export them now.",
+        discarded: "I discarded these planned dates, and your team no longer sees them in Drafts.",
+        removedReasons: {} as Record<string, { item: string; joined: string }>,
+        rowNotes: (count: number, countText: string) => (count === 1 ? "One activity." : `${countText} activities.`),
         steps: {
           read: {
-            running: "I'm reading the risks you selected.",
-            // {count} is the selected risks' count as a word from one to nine, then numerals.
-            done: (count: string) =>
-              count === "one" ? "I read the one risk you selected and its lesson." : `I read the ${count} risks you selected and their lessons.`,
+            running: "I'm reading the activities in your plan and finding comparable packages for each one.",
+            done: (count: string) => (count === "one" ? "I read the one activity in your plan." : `I read the ${count} activities in your plan.`),
           },
           write: {
-            running: (_count: number, _countText: string) => "I'm writing a row for each risk.",
-            // notes are the rows written.
-            done: (_sentences: number, _sentencesText: string, rows: number, rowsText: string) =>
-              rows === 1 ? "I wrote one row." : `I wrote ${rowsText} rows.`,
+            running: (_count: number, _countText: string) => "I'm checking every date and count against my delay model's results.",
+            done: (_sentences: number, _sentencesText: string, dated: number, datedText: string) =>
+              dated === 1 ? "I dated one step and checked it." : `I dated ${datedText} steps and checked them.`,
           },
           save: { running: "I'm saving the draft.", done: "I saved the draft." },
         },
         ready: (count: number, countText: string) =>
-          count === 1 ? "The draft is ready. I wrote one row." : `The draft is ready. I wrote ${countText} rows.`,
+          count === 1 ? "The draft is ready. I dated one step." : `The draft is ready. I dated ${countText} steps.`,
         writeErrors: {
-          no_agent: "I can't write PPSD rows yet, because the model that writes my drafts isn't connected. I saved nothing.",
-          agent_unavailable:
-            "I couldn't write the PPSD rows, because the model that writes my drafts did not respond. I saved nothing.",
-          content_filter: "I couldn't write the PPSD rows, because a content filter stopped the writer. I saved nothing.",
-          agent_output: "I wrote PPSD rows I couldn't check, so I saved nothing.",
-          data_service: "I couldn't read the package's risks, because the data service didn't answer. I saved nothing.",
+          data_service: "I couldn't draft the planned dates, because my delay model didn't answer. I saved nothing.",
           draft_store: "I couldn't save the draft, because I can't write to my drafts tables right now. I saved nothing.",
-          no_package: "I couldn't find this package, so I wrote nothing and saved nothing.",
-          no_selected_risks: "None of the risks you selected is in the table now, so I wrote nothing and saved nothing.",
-          no_plan: "I couldn't find this package, so I wrote nothing and saved nothing.",
-          nothing_marked: "None of the risks you selected is in the table now, so I wrote nothing and saved nothing.",
+          no_plan: "I couldn't find this plan, so I dated nothing and saved nothing.",
           permission:
-            "Your account can't read this package's records in Strata's tables, so I can't write PPSD rows. Ask your " +
+            "Your account can't read the records I date from in Strata's tables, so I can't draft planned dates. Ask your " +
             "workspace admin for read access to the strata catalog.",
-          internal: "Something went wrong on my side, so I couldn't write the PPSD rows. I saved nothing.",
-          dropped: "The connection dropped before I finished the PPSD rows. I saved nothing.",
+          internal: "Something went wrong on my side, so I couldn't draft the planned dates. I saved nothing.",
+          dropped: "The connection dropped before I finished the planned dates. I saved nothing.",
         } as Record<string, string>,
-        nothingTitle: "I couldn't write a row that passed my checks, so I saved no draft.",
-        nothingBody: "The sentences I removed are below, with the reason for each.",
-        previewPiuTitle: "I don't show these suggested rows in this preview, because they are a World Bank staff draft.",
-        previewPiuBody: "Leave the preview to see them. Nothing about the draft changed.",
+        nothingTitle: "I couldn't date any step of your plan, so I saved no draft.",
+        nothingBody:
+          "Every step had fewer than {min} comparable packages that recorded it. Your plan's check still lists every activity.",
+        previewPiuTitle: "I don't show this team's drafts in a preview.",
+        previewPiuBody: "In a preview I don't show an implementing agency's drafts, because they stay with the team that made them.",
+        // What only this kind says (the 38 brief, 5.7), each count from the draft.
+        dates: {
+          fileNote: "The file I make has STEP's own columns. I fill in the planned dates and copy the other values from your plan, and I leave these empty for you and STEP:",
+          choiceLegend: "Date each step with",
+          choices: { middle: "Middle dates: half ran later", cautious: "Cautious dates: {in10} in 10 ran later" },
+          choiceLocked: { middle: "You checked the middle dates.", cautious: "You checked the cautious dates." },
+          noRef: "No reference yet. STEP assigns one.",
+          signedAbstain: (count: number) =>
+            count === 0
+              ? "I'm not dating it: no comparable packages recorded it."
+              : count === 1
+                ? "I'm not dating it: only one comparable package recorded it."
+                : "I'm not dating it: only {count} comparable packages recorded it.",
+          undated: "Not dated yet.",
+          notListed: "I don't have STEP's steps for {method} yet, so I can't date them.",
+          stepsDated: "{dated} of {total}",
+          opened: "You opened {opened} of {lists} lists.",
+          family: "These are the steps STEP uses for {family}.",
+          columns: { step: "Step", plan: "In your plan", planned: "Planned date", comparables: "Comparable packages" },
+          comparables: (count: number) => (count === 1 ? "one comparable package" : "{count} comparable packages"),
+          removed: "I removed this date, because it didn't match my delay model's results.",
+          stepAbstain: "Fewer than {min} comparable packages recorded this step, so I'm not dating it.",
+          notInPlan: "Your plan gives no date for this step, so I can't date it from your plan.",
+          exportButton: "Export STEP rows",
+          exportedTitle: (count: number) => (count === 1 ? "Exported. I made one STEP row and an evidence pack." : "Exported. I made {count} STEP rows and an evidence pack."),
+        },
       },
       // The procurement summary for the Project Paper (ticket 36; the 36 brief, section 5.8). copy.paper holds what
       // only this kind says.
@@ -2918,6 +3032,8 @@ export const copy = {
     // (node web/lint/server-copy.ts --write). Word's text speaks in the document's voice: no "I" or
     // "you". {braces} are filled from the draft.
     files: {
+      // The STEP rows file's title, which the evidence pack repeats (ticket 38).
+      stepRows: { title: "Planned dates for {agency}'s plan of {date}" },
       word: {
         review_notes: {
           heading: "Review notes on the {agency} plan of {date}",
@@ -3018,6 +3134,8 @@ export const copy = {
       },
       pack: {
         title: "Evidence pack",
+        // The first line of the evidence pack from an implementing agency team's draft (the 38 brief, 6.10).
+        officialUseOnly: "Official Use Only",
         draftId: "Draft ID {id}",
         drafted: "Drafted on {date} for {author}.",
         checked: "Checked by {author} on {date}.",

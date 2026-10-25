@@ -775,6 +775,15 @@ description = """For a package whose plan gives no planned dates: the date of it
 chose. Every later step is dated from it. Leave it out to get each step's days and no dates."""
 
 [[tools.estimate_time.parameters]]
+name = "upload_row"
+type = "string"
+required = false
+description = """Only the app's own pages pass this: one activity of an implementing agency's upload, as the \
+upload's id, a colon and the activity's place in the file, whose steps are dated from the upload's own dates (ticket 38). The tool reads an upload only \
+through the app's team rule, and answers unknown_upload, with nothing, for one of another team or one that does not \
+exist. Leave it out."""
+
+[[tools.estimate_time.parameters]]
 name = "as_of"
 type = "date"
 required = false
@@ -796,7 +805,7 @@ reasons = ["outside_training", "value_not_learned", "no_plan_dates"]
 # The closed list of why there is no time estimate (brief 40 adds view_public_active here). The first four come
 # from find_comparables for the same criteria.
 abstentions = ["unknown_package", "no_public_notice", "no_comparables", "none_measurable", "too_few_comparables",
-               "asof_before_training", "outside_training", "no_model"]
+               "asof_before_training", "outside_training", "no_model", "unknown_upload"]
 # The time estimate, the difference and its reasons, the track record, the plan dates, the comparisons and the
 # approaches are figures the agent may state, so they come back as one citable record too.
 # The planned dates for each step, their counts, ran longest and their track record (ticket 27) are too.

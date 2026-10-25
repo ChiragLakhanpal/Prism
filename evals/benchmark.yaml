@@ -240,6 +240,10 @@ questions:
       undated_steps: [6]
       signed_delay: [[KE-NWWDA-229129-CW-RFB, 186]]
       approach_counts: [[3, 0, 46]]
+      # Ticket 38: the signed contract's step is dated from the plan's date as first published, April 24, 2026
+      # (values.toml, plan-541055-planned-signing). An implementing agency's upload passes upload_row, which only
+      # the app's team rule reads, and its row's steps are dated from the upload's own dates instead.
+      dated_from: ["2026-04-24"]
     ground_truth: tests/ground_truth/past_range_coverage_ke_works_rfb.sql
     source: >-
       The demo package's estimated amount, US$1,230,000.00, is on PDF page 3 of the October 9, 2026 plan

@@ -49,6 +49,7 @@ import json
 import logging
 import statistics
 from collections import Counter
+from collections.abc import Mapping
 from decimal import Decimal
 from importlib import resources
 
@@ -60,7 +61,7 @@ from strata.estimates.past_range import QUARTERS, months, whole
 from strata.estimates.time_estimate import described_features, packages_as_of
 from strata.packages import compute
 from strata.lakehouse.engine import EngineError
-from strata.tools.find_comparables import find_comparables
+from strata.tools.find_comparables import find_comparables, read_package
 from strata.tools.registry import Call, ToolError
 
 TOOL = "estimate_time"
@@ -365,12 +366,13 @@ def _sources() -> list[dict]:
 
 
 def _step_dates(call: Call, found: dict, criteria: dict, start_date: dt.date | None, settings: steps.Settings,
-                sources: list[dict]) -> dict:
+                sources: list[dict], own: steps.Activity | None = None, method: str | None = None) -> dict:
     """Section 2's planned date for each step, as of call.as_of, from find_comparables' comparable packages. With
-    no STEP row, for a package someone is planning, the category and method come from the criteria."""
+    no STEP row, for a package someone is planning, the category and method come from the criteria. An upload's row
+    (ticket 38) gives its own dates as the baseline (own) and its own Method."""
     package = found["package"]
     category_now = package["category"] if package else criteria.get("category")
-    method_now = package["method"] if package else criteria.get("method")
+    method_now = method or (package["method"] if package else criteria.get("method"))
 
     def rows(sql: str, **params) -> list[dict]:
         result = call.engine.run(sql, {**params, "as_of": call.as_of})
@@ -385,10 +387,72 @@ def _step_dates(call: Call, found: dict, criteria: dict, start_date: dt.date | N
     dated = steps.step_dates(rows, category=category_now, method=method_now,
                              package_reference=package["step_reference"] if package else None,
                              comparables=comparables, as_of=call.as_of, start_date=start_date, settings=settings,
-                             track=track, sources=[source["key"] for source in sources])
+                             track=track, sources=[source["key"] for source in sources], own=own)
     # The comparable packages whose plans dated none of the family's steps: step_dates' own coverage counts them.
     dated.pop("not_used", None)
     return dated
+
+
+# ── An implementing agency's upload (ticket 38) ──────────────────────────
+
+def _upload_row(call: Call, upload_row: str) -> tuple[Mapping | None, Mapping | None]:
+    """The upload and its row that upload_row names ({upload_id}:{position}), as the viewer may read them through the
+    server's team rule, or (None, None)."""
+    upload_id, _, position = upload_row.rpartition(":")
+    upload = call.uploads(upload_id) if call.uploads is not None and position.isdigit() else None
+    row = next((row for row in upload["rows"] if int(row["position"]) == int(position)), None) if upload else None
+    return (upload, row) if row is not None else (None, None)
+
+
+def _upload_activity(upload: Mapping, row: Mapping) -> steps.Activity:
+    """An upload's row as the step dates read a package's own plan: its dates as the officer's file gives them are its
+    first published dates, since the upload is the plan they are checking (the 38 brief, 6.7: "In your plan")."""
+    uploaded_on = dt.date.fromisoformat(upload["uploaded_on"])
+    dated = {}
+    for name, dates in (row.get("steps") or {}).items():
+        planned, actual = (dt.date.fromisoformat(dates[key]) if dates.get(key) else None for key in ("planned", "actual"))
+        dated[name] = steps.StepRow(planned, actual, planned, uploaded_on if planned else None, None)
+    section = row.get("section")
+    if not section:
+        # A row whose file names no STEP table: the family whose methods alone hold its Method, when only one does, so
+        # its steps can still be chosen. Direct Selection sits in several families, so it needs its table.
+        method = (row.get("fields") or {}).get("method")
+        holding = [family for family in steps.families().values() if method in family["methods"]]
+        section = holding[0]["sections"][0] if len(holding) == 1 else None
+    return steps.Activity(row.get("reference") or f"row-{row['position']}", section,
+                          (row.get("fields") or {}).get("process_status"), uploaded_on, dated)
+
+
+def _upload_criteria(call: Call, upload: Mapping, row: Mapping) -> dict:
+    """find_comparables' criteria for an upload row whose reference no record holds: its Method, the category its
+    STEP table stands for in the step-label registry, and its project's country."""
+    fields = row.get("fields") or {}
+    category = None
+    for family in steps.families().values():
+        category = dict(zip(family["sections"], family["categories"])).get(row.get("section")) or category
+    country = _rows(call.engine, "project_country.sql", project_id=upload["project_id"])
+    return {"method": fields.get("method"), "category": category,
+            "country": country[0]["country_code"] if country else None}
+
+
+def _amount(value) -> float | None:
+    return None if value in (None, "") else float(value)
+
+
+def _thresholds(thresholds) -> dict:
+    return {"min_comparables": int(thresholds.value("time_estimate.min_comparables")),
+            "min_subgroup": int(thresholds.value("what_if.min_subgroup")),
+            "min_unseen_packages": int(thresholds.value("time_estimate.min_unseen_packages"))}
+
+
+def _unknown_upload(call: Call, thresholds) -> dict:
+    """The answer for an upload row the viewer may not read, or that does not exist: the same for both, with no
+    rows and nothing of the upload."""
+    return {"rows": [], "coverage": {"matched": 0, "used": 0, "not_used": []},
+            "package": {"step_reference": None, "described": None}, "comparables": {"n": 0, "signed": 0, "still_open": 0},
+            "estimate": None, "difference": None, "track_record": None, "test_years": [], "plan_dates": None,
+            "comparisons": [], "options": None, "axis_max_months": None, "thresholds": _thresholds(thresholds),
+            "step_dates": None, "sources": _sources(), "records_through": None, "abstention": {"reason": "unknown_upload"}}
 
 
 # ── The tool ─────────────────────────────────────────────────────────────
@@ -399,14 +463,34 @@ def estimate_time(call: Call, step_reference: str | None = None, method: str | N
                   notice_from: dt.date | None = None, notice_to: dt.date | None = None,
                   described_amount_usd: float | None = None, described_market_approach: str | None = None,
                   described_review_type: str | None = None, described_prequalification: str | None = None,
-                  described_lots: int | None = None, start_date: dt.date | None = None) -> dict:
+                  described_lots: int | None = None, start_date: dt.date | None = None,
+                  upload_row: str | None = None) -> dict:
     """The time estimate for one package as of call.as_of, with everything section 1's lane 2 and section 4 show,
-    and section 2's planned date for each step."""
+    and section 2's planned date for each step. An upload's row (ticket 38), which only the server's team rule
+    reads, is the package: its reference when a record holds it, otherwise its own values, with its own dates as
+    the baseline of its step dates."""
     thresholds, settings, levers = call.thresholds, load_time_estimate(), load_what_if()
     step_settings = steps.Settings.read(thresholds)
     window = step_settings.start_range(call.as_of)
     if start_date is not None and not window["from"] <= start_date.isoformat() <= window["to"]:
         raise ToolError(f"estimate_time takes a start_date from {window['from']} to {window['to']}, not {start_date}.")
+    own = own_method = None
+    if upload_row is not None:
+        upload, row = _upload_row(call, upload_row)
+        if row is None:
+            return _unknown_upload(call, thresholds)
+        own, fields = _upload_activity(upload, row), row.get("fields") or {}
+        own_method = fields.get("method")
+        known = row.get("reference") and read_package(call.engine, row["reference"], call.as_of)
+        if known:
+            step_reference = row["reference"]
+        else:
+            asked = _upload_criteria(call, upload, row)
+            method, category, country = method or asked["method"], category or asked["category"], country or asked["country"]
+            described_amount_usd = described_amount_usd or _amount(fields.get("estimated_amount_usd"))
+            described_market_approach = described_market_approach or fields.get("market_approach")
+            described_review_type = described_review_type or fields.get("review_type")
+            described_prequalification = described_prequalification or fields.get("prequalification")
     criteria = {"method": method, "category": category, "market_approach": market_approach, "review_type": review_type,
                 "size_from_usd": size_from_usd, "size_to_usd": size_to_usd, "country": country,
                 "notice_from": notice_from, "notice_to": notice_to}
@@ -416,7 +500,7 @@ def estimate_time(call: Call, step_reference: str | None = None, method: str | N
     used = found["criteria"] or {}
     sources = _sources()
     unknown = found["abstention"] is not None and found["abstention"]["reason"] == "unknown_package"
-    dated = None if unknown else _step_dates(call, found, used, start_date, step_settings, sources)
+    dated = None if unknown else _step_dates(call, found, used, start_date, step_settings, sources, own, own_method)
     comparables = found["rows"]
     n = len(comparables)
     counts = found["counts"]

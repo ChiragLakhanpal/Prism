@@ -740,7 +740,7 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                             kinds=kinds or load_draft_kinds(), today=today, now=now, new_draft_id=new_draft_id,
                             new_run_id=new_run_id, runs=runs, trace_ids=trace_ids, reference=request_reference,
                             heartbeat_seconds=heartbeat_seconds, six_checks=six_checks, packages=packages,
-                            planned_view=planned_package_view)
+                            planned_view=planned_package_view, uploads=uploads)
 
     # An implementing agency's private uploads of its plan (ticket 38), through the one access rule.
     upload_routes.add_routes(app, engine_for=engine_for, store=uploads, access=access, today=today, now=now,

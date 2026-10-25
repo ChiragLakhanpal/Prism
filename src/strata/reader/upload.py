@@ -65,6 +65,8 @@ class UploadRow:
     fields: dict = field(default_factory=dict)  # descriptive column key -> value
     steps: dict = field(default_factory=dict)  # step name -> {"planned": date or None, "actual": date or None}
     notes: list = field(default_factory=list)  # data notes: {"code", and "column" and "value", or "ref"}
+    # Each descriptive column's cell as the file writes it, which the STEP rows CSV copies unchanged.
+    raw: dict = field(default_factory=dict)
 
 
 @dataclass
@@ -288,6 +290,8 @@ def _row(cells: list, header: Header, position: int, sheet: str | None, section:
     reference = description = None
     fields: dict = {}
     notes: list = []
+    raw = {key: _text(cell(index)) for index, key in header.columns.items() if key not in (ACTIVITY, REFERENCE_HALF,
+                                                                                          DESCRIPTION)}
     for index, key in header.columns.items():
         if key == ACTIVITY:
             reference, description = _activity(_text(cell(index)))
@@ -310,7 +314,7 @@ def _row(cells: list, header: Header, position: int, sheet: str | None, section:
             notes.append({"code": "unread_date", "column": headers[index], "value": _text(cell(index))})
     if not fields.get("method"):
         notes.append({"code": "no_method"})
-    return UploadRow(position, sheet, section, reference, description, fields, steps, notes)
+    return UploadRow(position, sheet, section, reference, description, fields, steps, notes, raw)
 
 
 def read_upload(file_name: str, data: bytes, registry: Registry) -> Reading:

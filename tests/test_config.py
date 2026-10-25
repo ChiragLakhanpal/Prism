@@ -540,14 +540,15 @@ def test_review_notes_are_a_draft_kind_with_their_writer_columns_and_holds():
 
 def test_adding_a_draft_kind_is_one_entry(tmp_path):
     path = copy("drafts.toml", tmp_path, old="[holds.notChecked]", new=(
-        '[kinds.ppsd_rows_agency]\nwriter = "strata.drafts.ppsd_rows"\nagent = "ppsd_rows_writer"\n'
+        '[kinds.ppsd_rows_again]\nwriter = "strata.drafts.ppsd_rows"\nagent = "ppsd_rows_writer"\n'
         'word = "strata.drafts.ppsd_rows:word"\nexport = "word"\ncsv = []\ncolumns = ["risk_description"]\n'
         'holds = ["notChecked"]\nsources_list = true\nremoved_box = "always"\nnot_checked = []\n'
         'files = "ppsd-rows-{package_slug}"\n\n[holds.notChecked]'))
 
-    # Ticket 37 added the mission brief the same way, and ticket 36 suggested PPSD rows and the Project Paper summary.
+    # Ticket 37 added the mission brief the same way, ticket 36 suggested PPSD rows and the Project Paper summary, and
+    # ticket 38 planned dates and the implementing agency's own PPSD rows.
     assert list(config.load_draft_kinds(path).kinds) == ["review_notes", "mission_brief", "ppsd_rows", "project_paper",
-                                                         "ppsd_rows_agency"]
+                                                         "step_rows", "ppsd_rows_agency", "ppsd_rows_again"]
 
 
 def test_a_draft_kind_with_a_hold_the_registry_does_not_define_is_refused(tmp_path):

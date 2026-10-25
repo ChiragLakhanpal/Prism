@@ -320,7 +320,10 @@ def estimate_time_answer(result, question) -> dict[str, list]:
             "undated_steps": [steps["undated_n"]],
             "signed_delay": [[entry["step_reference"], entry["days"]] for entry in signed["comparables"]
                              if entry["step_reference"] in named],
-            "approach_counts": [[options.get("recorded"), options.get("ruled_out"), options.get("unrecorded")]]}
+            "approach_counts": [[options.get("recorded"), options.get("ruled_out"), options.get("unrecorded")]],
+            # Ticket 38: the date the signed contract's step is dated from, the plan's as first published here, or an
+            # upload's own date for an upload's row.
+            "dated_from": [signed["plan_first_date"]]}
 
 
 def cost_answer(result, question) -> dict[str, list]:
