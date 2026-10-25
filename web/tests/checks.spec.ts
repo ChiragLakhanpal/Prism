@@ -88,6 +88,10 @@ test("advice removed by check 5 is quoted whole in the lead, since an order does
   await expect(panel(page).locator("[data-removed-box]")).toHaveText(
     'I removed one sentence. It said "Base your works estimates on market rates before you advertise." It gave advice without citing a lesson or a comparable package.',
   );
+  // Set as the list sets a removed sentence: in its own quote element, in ink, apart from its reason.
+  const sentence = panel(page).locator("[data-removed-box] p").first().locator("q");
+  await expect(sentence).toHaveText('"Base your works estimates on market rates before you advertise."');
+  await expect(sentence).toHaveClass(/text-ink/);
 });
 
 test("when the judging model did not respond, its sentences are removed and Try again asks the question again", async ({ page }) => {
@@ -117,6 +121,12 @@ test("when the judging model did not respond and nothing survived, an error says
   await expect(panel(page).locator("[data-check-line]")).toHaveCount(0);
   // Above the alert, the verifier's done line alone: its six checks stay out of the way.
   await expect(panel(page).locator("[data-step-items]")).toHaveCount(0);
+  // The alert speaks, so the status line ends on the last step it said and never adds that the answer is ready.
+  const said = () => page.evaluate(() => (window as unknown as { said: string[] }).said);
+  await expect.poll(async () => (await said()).at(-1)).toBe("I'm asking a model whether two sentences follow from their sources.");
+  // One gap between status lines (ANNOUNCE_GAP_MS, 500 ms, in web/src/components/AnswerPanel.tsx) and a margin.
+  await page.waitForTimeout(700);
+  expect((await said()).filter((line) => line.startsWith("The answer is ready"))).toEqual([]);
 });
 
 test("when check 6 could not ask which reports disagree and nothing survived, an error says so and offers Try again", async ({ page }) => {

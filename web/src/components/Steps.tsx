@@ -61,7 +61,7 @@ export function Steps({
                 <span className="block text-caption text-ink-muted">{copy.steps.stillWorking}</span>
               )}
               {step.state !== "todo" && step.items && step.items.length > 0 && (
-                <ul data-step-items className="mt-1 flex list-none flex-col gap-1 pl-6 text-ink-muted">
+                <ul data-step-items className="mt-1 flex max-w-prose list-none flex-col gap-1 pl-6 text-ink-muted">
                   {step.items.map((item, index) => (
                     <li key={index}>{item}</li>
                   ))}

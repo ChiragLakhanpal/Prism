@@ -187,7 +187,7 @@ def test_when_check_6_cannot_ask_which_reports_disagree_every_sentence_citing_th
     assert [(item["reason"], item["reasons"][-1]["text"]) for item in asked.of("removed")] == [
         ("disagreements_unavailable", "P130164")] * 3
     assert copy_reason("disagreements_unavailable")["item"] == (
-        "I couldn't check whether another report disagrees with its sources.")
+        "I couldn't find out whether another report disagrees with its sources.")
     assert asked.judge.calls == []
 
 

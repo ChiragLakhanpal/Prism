@@ -208,9 +208,14 @@ export function RemovedBox({
           {first && !all && (
             <>
               {" "}
-              {first.quoted
-                ? (count === 1 ? words.itSaidQuoted : words.firstSaidQuoted)(first.sentence, first.reason)
-                : (count === 1 ? words.itSaid : words.firstSaid)(asReported(first.sentence, names), first.reasonJoined)}
+              {first.quoted ? (
+                <>
+                  {count === 1 ? words.itSaidQuoted : words.firstSaidQuoted}{" "}
+                  <q className="text-ink [quotes:none]">{words.quoted(first.sentence)}</q> {first.reason}
+                </>
+              ) : (
+                (count === 1 ? words.itSaid : words.firstSaid)(asReported(first.sentence, names), first.reasonJoined)
+              )}
             </>
           )}
         </p>

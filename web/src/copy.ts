@@ -380,11 +380,11 @@ export const copy = {
     notCheckedComma: ", ",
     clauseJoin: "; ",
     end: ".",
-    // Keyed by what was not checked: "sentences" where the fourth check did not run (a draft's notes;
-    // every answer runs it since ticket 24), then the tools (config/tools.toml), so a new tool adds one
-    // line, then a draft kind's writer (config/drafts.toml's not_checked). A tool's clause applies when
-    // it ran, except get_lessons's, which applies when a sentence on screen cites a lesson
-    // (CITED_CLAUSES in web/src/components/Checks.tsx).
+    // Keyed by what was not checked: "sentences" where the fourth check did not run (an answer or a draft
+    // saved before ticket 24, or a lesson review, which runs checks 1 to 3), then the tools
+    // (config/tools.toml), so a new tool adds one line, then a draft kind's writer (config/drafts.toml's
+    // not_checked). A tool's clause applies when it ran, except get_lessons's, which applies when a
+    // sentence on screen cites a lesson (config/tools.toml, not_checked_when = "cited").
     notCheckedClauses: {
       sentences: "whether each sentence follows from its sources",
       find_comparables: "whether these are the right comparables",
@@ -417,10 +417,11 @@ export const copy = {
     all: (count: number, countText: string) => (count === 2 ? "I removed both sentences." : `I removed all ${countText} sentences.`),
     itSaid: (sentence: string, reason: string) => `It said ${sentence}, and ${reason}.`,
     firstSaid: (sentence: string, reason: string) => `The first said ${sentence}, and ${reason}.`,
-    // A removed sentence that gave advice is quoted whole, with its reason as a list item gives it: advice is
-    // often an order, which does not read as reported speech ("It said base your estimates...").
-    itSaidQuoted: (sentence: string, reason: string) => `It said "${sentence.replace(/"([^"]*)"/g, "'$1'")}" ${reason}`,
-    firstSaidQuoted: (sentence: string, reason: string) => `The first said "${sentence.replace(/"([^"]*)"/g, "'$1'")}" ${reason}`,
+    // A removed sentence that gave advice is quoted whole after these words, in its own quote element as a list
+    // item sets it (removed.quoted), then its reason as a list item gives it: advice is often an order, which
+    // does not read as reported speech ("It said base your estimates...").
+    itSaidQuoted: "It said",
+    firstSaidQuoted: "The first said",
     others: "The others:",
     other: "The other:",
     // The sentence's own double quotes turn single inside the outer pair, so the marks never pile up.
@@ -493,8 +494,8 @@ export const copy = {
       // Check 6, when I couldn't ask which reports disagree about its project. The brief's "I couldn't load
       // the other side" would claim a disagreement I never saw, so this says what happened.
       disagreements_unavailable: {
-        item: "I couldn't check whether another report disagrees with its sources.",
-        joined: "I couldn't check whether another report disagrees with its sources",
+        item: "I couldn't find out whether another report disagrees with its sources.",
+        joined: "I couldn't find out whether another report disagrees with its sources",
         underAlert: "I couldn't check it.",
       },
     },
@@ -648,10 +649,17 @@ export const copy = {
         : `The answer is ready. Two reports disagree about ${countText} sentences, and I show both sides of each.`,
     // Nothing survived because a service a check needs did not answer: an error, not an empty answer (section
     // 5.5). The model that judges sentences did not respond, check 6 could not ask which reports disagree, or both.
-    judgeFailed: "I couldn't check my answer, because the model that judges sentences did not respond.",
-    disagreementsFailed: "I couldn't check my answer, because I couldn't find out whether other reports disagree with its sources.",
-    bothFailed:
-      "I couldn't check my answer, because the model that judges sentences did not respond and I couldn't find out whether other reports disagree with its sources.",
+    failed: {
+      judge: "I couldn't check my answer, because the model that judges sentences did not respond.",
+      disagreements: "I couldn't check my answer, because I couldn't find out whether other reports disagree with its sources.",
+      both: "I couldn't check my answer, because the model that judges sentences did not respond and I couldn't find out whether other reports disagree with its sources.",
+    },
+    // The same, when another sentence was checked and failed: the removed box gives each sentence its reason.
+    failedSome: {
+      judge: "I couldn't check all of my answer, because the model that judges sentences did not respond.",
+      disagreements: "I couldn't check all of my answer, because I couldn't find out whether other reports disagree with its sources.",
+      both: "I couldn't check all of my answer, because the model that judges sentences did not respond and I couldn't find out whether other reports disagree with its sources.",
+    },
     tryAgain: "Try again",
     // The answer panel's header (the 14 brief, section 5.3). {id} shows in Roboto Mono.
     panel: "Answer",

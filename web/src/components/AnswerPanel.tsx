@@ -149,6 +149,9 @@ function announcements(run: Run): string[] {
     // Only a warning is announced: an info note changes nothing in the answer (the 24 brief, section 5.8).
     // The verifier counts the sentences a warning follows.
     const warned = run.checks?.disagreements?.warned ?? 0;
+    // When nothing survived because a service did not answer, the error alert speaks (role="alert"), so the
+    // status line says nothing more: "The answer is ready." after it would say the opposite.
+    if (!run.refusal && kept === 0 && unjudged + unasked > 0) return said;
     said.push(
       run.refusal && !run.refusal.partial
         ? copy.answer.ready
@@ -501,15 +504,16 @@ function stateOf(run: Run, opened: Opened, visited: ReadonlySet<string>, stillWo
     // Nothing survived because a service a check needs did not answer: an error, not an empty answer, with
     // every sentence I wrote listed under it (the 24 brief, section 5.5). Above the alert sits only the
     // verifier's done line; its six checks stay in the disclosure of an answer that has one.
-    const words = copy.answer;
-    const cause = outage.judge && outage.unasked ? words.bothFailed : outage.judge ? words.judgeFailed : words.disagreementsFailed;
+    // When another sentence failed a check of its own, I checked some of the answer, so the alert says "all of".
+    const words = outage.other > 0 ? copy.answer.failedSome : copy.answer.failed;
+    const cause = outage.judge && outage.unasked ? words.both : outage.judge ? words.judge : words.disagreements;
     return {
       status: "error",
       steps: done.map((step) => ({ ...step, items: undefined })),
       runId: run.runId ?? undefined,
       message: (
         <>
-          {cause} {words.stillInBox}
+          {cause} {copy.answer.stillInBox}
         </>
       ),
       onRetry: askAgain,

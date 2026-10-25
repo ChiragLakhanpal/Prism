@@ -148,8 +148,8 @@
         "joined": "it gave advice without citing a lesson or a comparable package"
       },
       "disagreements_unavailable": {
-        "item": "I couldn't check whether another report disagrees with its sources.",
-        "joined": "I couldn't check whether another report disagrees with its sources",
+        "item": "I couldn't find out whether another report disagrees with its sources.",
+        "joined": "I couldn't find out whether another report disagrees with its sources",
         "underAlert": "I couldn't check it."
       }
     },
