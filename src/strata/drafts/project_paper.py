@@ -97,9 +97,22 @@ def _ppsd_rows(facts: Facts) -> list[tuple[dict, str]]:
 
 
 def cited_rows(facts: Facts) -> list[tuple[dict, str]]:
-    """Every record the writer may cite, with the tool that returned it."""
-    return [*((row, "check_plan") for row in facts.checked["rows"]), (facts.checked["summary"], "check_plan"),
-            *((row, "agency_track_record") for row in facts.track["rows"]),
+    """Every record the writer may cite, once each, with the tool that returned it.
+
+    agency_track_record returns the plan's rows under the evidence ids check_plan gives them, with its own fields
+    (the delay, the awards dataset's signing date) and without check_plan's (the marks, the Estimated Amount). The
+    runtime keeps one row per id, so the two tools' versions of a plan row are merged into one, check_plan's fields
+    first: a plan sentence and a track record sentence that cite the same row are each checked against every value
+    either tool returned for it. The two tools agree on every field they share."""
+    plan = {row["evidence_id"]: dict(row) for row in facts.checked["rows"]}
+    track_only = []
+    for row in facts.track["rows"]:
+        if row["evidence_id"] in plan:
+            for key, value in row.items():
+                plan[row["evidence_id"]].setdefault(key, value)
+        else:
+            track_only.append((row, "agency_track_record"))
+    return [*((row, "check_plan") for row in plan.values()), (facts.checked["summary"], "check_plan"), *track_only,
             (facts.track["summary"], "agency_track_record"), *_ppsd_rows(facts)]
 
 

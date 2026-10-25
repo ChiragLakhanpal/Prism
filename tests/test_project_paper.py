@@ -11,6 +11,7 @@ Expected values come from independent sources: the plan's counts from check_plan
 
 import io
 import re
+import tomllib
 import zipfile
 from pathlib import Path
 
@@ -22,6 +23,7 @@ from strata.lakehouse import ground_truth
 
 ROOT = Path(__file__).resolve().parents[1]
 TRACK = ground_truth.read(ROOT / "tests" / "ground_truth" / "agency_track_record_nwwda_2026_10_09.sql")
+VALUES = {value["id"]: value for value in tomllib.loads((ROOT / "tests" / "ground_truth" / "values.toml").read_text())["value"]}
 PLAN_QUESTION = next(question for question in yaml.safe_load((ROOT / "evals" / "benchmark.yaml").read_text())["questions"]
                      if question["id"] == "check-plan-nwwda-2026-10-09")
 
@@ -75,6 +77,23 @@ def test_the_summary_for_p156634_cites_the_plan_check_s_counts_and_the_track_rec
     assert "0 of 7" in stated and "%" not in stated and " in 10" not in stated
     for word in ("rate the agency", "weak", "capable", "risky"):
         assert word not in stated.lower()
+
+
+def test_a_plan_sentence_that_states_a_value_check_plan_returned_is_kept_and_cited_to_check_plan(story):
+    """agency_track_record returns the plan's rows under check_plan's evidence ids, without check_plan's fields. The
+    verifier checks a plan sentence against the row with both tools' fields, so a true Estimated Amount stays."""
+    with_checked_rows(story)
+    draft = summarized(story, "project-paper-a-plan-row-s-amount")
+    plan = next(note for note in draft["notes"] if note["key"] == "plan")
+    row = draft["evidence"]["strata.silver.plan_rows:40132287/KE-NWWDA-541062-CW-RFQ"]
+
+    assert draft["removed"] == []
+    assert [sentence["text"] for sentence in plan["sentences"]][1] == "KE-NWWDA-541062-CW-RFQ has an Estimated Amount of 295,000.00."
+    # values.toml's plan-541062-estimated: the plan of October 9, 2026, US$295,000.00.
+    assert float(row["row"]["estimated_amount_usd"]) == VALUES["plan-541062-estimated"]["value"]
+    assert row["tool"] == "check_plan"
+    # The track record's own fields stay on the same record, for the record part's sentences.
+    assert row["row"]["awards_signed_on"] == VALUES["award-541062-signed"]["value"].isoformat()
 
 
 def test_the_ppsd_part_draws_only_on_rows_the_team_checked_and_names_the_draft(story):
