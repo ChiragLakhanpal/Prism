@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import datetime as dt
 import decimal
+import functools
 import http.client
 import json
 import re
@@ -108,10 +109,15 @@ def check_names(table: str, columns: tuple[str, ...]) -> None:
 
 # ── DuckDB, for the offline gate ─────────────────────────────────────────
 
+@functools.lru_cache(maxsize=4096)
 def transpile(sql: str) -> str:
     """The one transpile step: a single Databricks SQL statement, rewritten for DuckDB.
 
     It fails on anything DuckDB cannot express, such as a column comment, instead of dropping it.
+    It keeps each rewrite it made, because the fixture build and the tests run the same statements
+    thousands of times and rewriting took most of the time a catalog build takes (ticket 55). The
+    values are bound parameters, never part of the text, so the same statement always has the same
+    text. A refusal is not kept: bad SQL is refused each time it runs.
     """
     import sqlglot
     from sqlglot.errors import ErrorLevel, ParseError, UnsupportedError

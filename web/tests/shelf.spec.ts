@@ -4,16 +4,15 @@
 // tests/test_answer_stream.py, so each number the page shows is checked against the row the server
 // returned. Fixed words come from the brief, copied here so the test checks the copy file against an
 // independent source.
-import AxeBuilder from "@axe-core/playwright";
+import { scan } from "./axe";
 import type { Page, Route } from "@playwright/test";
 import { askFromTheBox, drawer, landed, open as openAnswerPage, panel } from "./answer-page";
 import { expect, mockShell, recorded, test } from "./mocked";
 
-const WCAG_22_AA = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 async function violations(page: Page) {
   // The drawer fades in; contrast is checked once it has settled.
   await page.waitForFunction(() => document.getAnimations().every((a) => a.playState !== "running" || a.effect?.getTiming().iterations === Infinity));
-  const results = await new AxeBuilder({ page }).withTags(WCAG_22_AA).analyze();
+  const results = await scan(page);
   return results.violations.map((v) => `${v.id}: ${v.nodes.map((node) => node.target.join(" ")).join(", ")}`);
 }
 

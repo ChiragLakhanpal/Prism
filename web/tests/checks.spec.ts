@@ -2,12 +2,11 @@
 // streams the server writes for the scripted cases, recorded byte for byte in tests/fixtures/api and checked
 // against the server by tests/test_answer_stream.py, so every count on screen is the verifier's. The words
 // are the ticket's and the 24 design brief's; ISR 7 and ICR paragraph 78 are tests/ground_truth/values.toml's.
-import AxeBuilder from "@axe-core/playwright";
+import { scan } from "./axe";
 import type { Page } from "@playwright/test";
 import { askFromTheBox, landed, open, panel } from "./answer-page";
 import { expect, test } from "./mocked";
 
-const WCAG_22_AA = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 
 async function answered(page: Page, stream: string, width = 1440) {
   const seen = await open(page, { stream, width });
@@ -17,7 +16,7 @@ async function answered(page: Page, stream: string, width = 1440) {
 }
 
 async function axe(page: Page) {
-  const results = await new AxeBuilder({ page }).include("[data-answer-panel]").withTags(WCAG_22_AA).analyze();
+  const results = await scan(page, "[data-answer-panel]");
   return results.violations.map((v) => `${v.id}: ${v.nodes.map((node) => node.target.join(" ")).join("; ")}`);
 }
 

@@ -3,14 +3,13 @@
 // check the server against. The numbers below are tests/ground_truth/values.toml's [past_range],
 // computed once with lifelines and checked with statsmodels, and the words are the 12 brief's, copied
 // here so the test checks the screen against an independent source.
-import AxeBuilder from "@axe-core/playwright";
+import { scan } from "./axe";
 import type { Locator, Page } from "@playwright/test";
 import { expect, mockApi, recorded, test } from "./mocked";
 
 const REF = "KE-NWWDA-541055-CW-RFB";
 const PATH = `/packages/${REF}`;
 const API = `/api/packages/${REF}`;
-const WCAG_22_AA = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 // values.toml [past_range]: 49 comparables, 45 signed and four still open; the middle half 3.3 to
 // 7.9 months, the middle 4.4, 8 in 10 within 9.1; the plan's 1.5 months, and two signed within them.
 const FINDING = "2 of 49 comparable packages, fewer than 1 in 10, were signed within the plan's 1.5 months.";
@@ -73,7 +72,7 @@ async function signedWithin(months: number): Promise<number> {
 }
 
 async function axe(page: Page) {
-  const results = await new AxeBuilder({ page }).withTags(WCAG_22_AA).analyze();
+  const results = await scan(page);
   return results.violations.map((v) => `${v.id}: ${v.nodes.map((node) => node.target.join(" ")).join(", ")}`);
 }
 
@@ -105,7 +104,7 @@ test("the workspace names the package, lists its facts in STEP's field names, an
 
   await expect(section(page).getByText("Planning", { exact: true })).toBeVisible();
   await expect(section(page).getByRole("heading", { level: 2 })).toHaveAccessibleName("How long it took");
-  await expect(section(page).getByRole("heading", { level: 3 })).toHaveText(FINDING);
+  await expect(section(page).getByRole("heading", { level: 3 }).first()).toHaveText(FINDING);
   await expect(page.getByRole("figure", { name: FINDING })).toBeVisible();
   await expect(section(page).locator("[data-summary]")).toHaveText(
     "The middle half of these packages took 3.3 to 7.9 months, and the middle one took 4.4. 8 in 10 were signed within 9.1 months. " +
@@ -129,7 +128,7 @@ test("the title states the plan's share in the words find_comparables returned w
   });
   await openPackage(page, { comparables: about });
   await ready(page);
-  await expect(section(page).getByRole("heading", { level: 3 })).toHaveText(
+  await expect(section(page).getByRole("heading", { level: 3 }).first()).toHaveText(
     "2 of 49 comparable packages, about 1 in 10, were signed within the plan's 1.5 months.",
   );
 });
@@ -837,7 +836,8 @@ test("below 20 comparables there is no range and no share: the copy file's sente
   await openPackage(page, { comparables: { body: await recorded("comparables-ke-nwwda-541055-prior.json") } });
   await ready(page);
 
-  await expect(section(page).getByRole("heading", { level: 3 })).toHaveText(
+  // The first h3: section 1's card ends with the "Advertised again" block's own h3 (ticket 28).
+  await expect(section(page).getByRole("heading", { level: 3 }).first()).toHaveText(
     "I'm not giving a range: only seven comparable packages. Here are all seven.",
   );
   await expect(page.locator("[data-chart-drawing] [data-dot]")).toHaveCount(7);
@@ -859,7 +859,7 @@ test("when packages matched but none could be measured, the reasons say how many
   await openPackage(page, { comparables: { body: await recorded("comparables-ke-nwwda-541055-non-consulting.json") } });
   await ready(page);
 
-  await expect(section(page).getByRole("heading", { level: 3 })).toHaveText(
+  await expect(section(page).getByRole("heading", { level: 3 }).first()).toHaveText(
     "Six past packages matched this one, but I can't measure how long any of them took.",
   );
   await expect(section(page).locator("[data-coverage-line]")).toContainText(
@@ -1464,7 +1464,7 @@ test("a plan row with no planned dates has no plan line until you type months", 
   await openPackage(page, { comparables: await derived("comparables-ke-nwwda-541055.json", noPlan) });
   await ready(page);
 
-  await expect(section(page).getByRole("heading", { level: 3 })).toHaveText(
+  await expect(section(page).getByRole("heading", { level: 3 }).first()).toHaveText(
     "The middle half of the 49 comparable packages took 3.3 to 7.9 months from notice to signature.",
   );
   // The title already gives the middle half, so the summary starts with the middle one.

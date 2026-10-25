@@ -3,7 +3,7 @@
 // recorded in tests/fixtures/api by tests/record_api.py, so every number the page shows is checked
 // against the measure the server returned. Fixed words come from the brief and DESIGN.md section 8,
 // copied here so the test checks the copy file against an independent source.
-import AxeBuilder from "@axe-core/playwright";
+import { scan } from "./axe";
 import type { Page, Route } from "@playwright/test";
 import { readFile } from "node:fs/promises";
 import { dataReadinessHref } from "../src/routes";
@@ -44,9 +44,8 @@ const json = async (name: string) => JSON.parse(await recorded(name));
 const table = (page: Page, id: string) => page.locator(`[data-readiness-table=${id}] [data-table-view=table]`);
 const cell = (page: Page, key: string) => table(page, "sources").locator(`[data-cell="${key}"]`);
 
-const WCAG_22_AA = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 async function violations(page: Page) {
-  const results = await new AxeBuilder({ page }).withTags(WCAG_22_AA).analyze();
+  const results = await scan(page);
   return results.violations.map((v) => `${v.id}: ${v.nodes.map((node) => node.target.join(" ")).join(", ")}`);
 }
 

@@ -13,5 +13,5 @@
     "allowImportingTsExtensions": true,
     "types": ["node"]
   },
-  "include": ["src", "tests", "lint", "capture", "vite.config.ts", "playwright.config.ts", "playwright.capture.config.ts", "free-port.ts"]
+  "include": ["src", "tests", "lint", "capture", "vite.config.ts", "playwright.config.ts", "playwright.capture.config.ts", "free-port.ts", "out-dirs.ts"]
 }

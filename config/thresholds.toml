@@ -450,5 +450,25 @@ lessons_per_group = 3
 # (config/lessons.toml). Source: the 31 design brief, section 4.6 ("Cost estimates" and "Specifications").
 lesson_factors = ["cost_estimates", "designs_and_specifications"]
 # Each group of rejected bids shows this many rows before "Show {n} more". Source: the 31 design brief, section
-# 6.7, the same default as brief 28's reasons list (rebidding.rows_per_group, not yet in this file).
+# 6.7, the same default as brief 28's reasons list (rebidding.rows_per_group).
 rows_per_group = 5
+
+# Rebidding risk (ticket 28): how many comparable packages were advertised again, and the model's natural
+# frequency beside it. The floor of comparables below which the model gives no "about N in 10" is
+# past_range.min_comparables, the one floor every estimate uses, so it is not repeated here.
+[rebidding]
+# A package whose specific procurement notice had no award (no contract in the awards dataset and no Contract
+# Award notice with a signature date) this many days after its bids were due counts as not awarded, one of the
+# three sources that say a package was advertised again. Before then it may still be signed, so it is
+# undecided. Source: the fixture's packages advertised since July 1, 2019: the longest time from bids due to a
+# signed contract was 504 days (KE-MOWI-47509-CW-RFB, bids due November 5, 2019, signed March 23, 2021), so 548
+# days (18 months) leaves room above it. A starting value for the owner to confirm against the full slice.
+no_award_after_days = 548
+# The reasons list shows this many packages in each group before "Show {n} more". Source: the 28 design brief,
+# section 4.3 (rebidding.rows_per_group), the same default as the criteria section's rejected bids.
+rows_per_group = 5
+# A backtest's calibration error sorts each package's estimated chance into this many equal bins from 0 to 1,
+# and averages, weighted by the packages in each bin, the gap between the bin's mean estimate and the share of
+# its packages advertised again (expected calibration error). Source: the ten bins of the usual reliability
+# diagram (Guo and others, 2017, "On Calibration of Modern Neural Networks"); a starting value to confirm.
+calibration_bins = 10

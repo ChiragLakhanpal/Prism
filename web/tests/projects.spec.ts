@@ -2,11 +2,10 @@
 // project routes in tests/fixtures/api, which the server tests check the server against. The values
 // are the projects API's record for P156634 and P130164 and the documents API's list of P156634's
 // Procurement Plans; the words are the 10 design brief's.
-import AxeBuilder from "@axe-core/playwright";
+import { scan } from "./axe";
 import type { Page } from "@playwright/test";
 import { expect, mockApi, recorded, test } from "./mocked";
 
-const WCAG_22_AA = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 type Answer = { status?: number; body: string };
 
 async function open(page: Page, path: string, api: Record<string, Answer>, width = 1440) {
@@ -25,7 +24,7 @@ async function open(page: Page, path: string, api: Record<string, Answer>, width
 }
 
 async function axe(page: Page) {
-  const results = await new AxeBuilder({ page }).withTags(WCAG_22_AA).analyze();
+  const results = await scan(page);
   return results.violations.map((v) => `${v.id}: ${v.nodes.map((node) => node.target.join(" ")).join(", ")}`);
 }
 

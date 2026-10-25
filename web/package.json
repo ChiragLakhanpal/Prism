@@ -10,7 +10,7 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "test": "playwright test",
-    "build:gallery": "vite build --mode gallery --outDir dist-gallery --emptyOutDir",
+    "build:gallery": "vite build --mode gallery",
     "capture": "npm run build && npm run build:gallery && playwright test --config playwright.capture.config.ts"
   },
   "dependencies": {

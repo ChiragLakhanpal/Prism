@@ -5,13 +5,12 @@
 // award-7431-signed, award-7431-reference, restructuring, isr-12-date, isr-12-rating, icr-date, icr-review-date,
 // icr-review-reissue-date and icr-para-78), copied here so the screen is checked against an independent source.
 // Its axe runs take most of its time, as the 10 and 21 screen tests' do.
-import AxeBuilder from "@axe-core/playwright";
 import type { Page, Request } from "@playwright/test";
 import { askFromTheBox, landed, open as openAnswer, panel } from "./answer-page";
+import { scan } from "./axe";
 import { hubApi } from "./hub-api";
 import { expect, mockApi, recorded, test } from "./mocked";
 
-const WCAG_22_AA = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 const PDO = "disagreement:437378890475ef48";
 const ICR_78 =
   "Indeed, it was clearly identified at the MTR that the achievement of part of the PDO was compromised by the major delays in implementing activities under Components 2 and 3 and lack of endorsement from relevant stakeholders.";
@@ -42,8 +41,8 @@ async function open(page: Page, path = "/projects/P130164/timeline", width = 144
   return { requests, unrecorded };
 }
 
-async function axe(page: Page) {
-  const results = await new AxeBuilder({ page }).withTags(WCAG_22_AA).analyze();
+async function axe(page: Page, within?: string) {
+  const results = await scan(page, within);
   return results.violations.map((v) => `${v.id}: ${v.nodes.map((node) => node.target.join(" ")).join(", ")}`);
 }
 
@@ -258,5 +257,5 @@ test("keeping ISR 7 under an answer that rests on it asks for a reason and store
       run_id: "run-0001",
     },
   ]);
-  expect(await new AxeBuilder({ page }).include("[data-answer-panel]").withTags(WCAG_22_AA).analyze().then((r) => r.violations.length)).toBe(0);
+  expect(await axe(page, "[data-answer-panel]")).toEqual([]);
 });

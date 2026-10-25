@@ -4,7 +4,7 @@
 // are the ticket's, DESIGN.md's and the 35 design brief's, copied here so the test checks the copy file
 // against an independent source. The network is off: the shared fixture fails any test whose page asks
 // for anything outside its own origin, so these tests also prove that exporting reaches nothing outside.
-import AxeBuilder from "@axe-core/playwright";
+import { scan } from "./axe";
 import type { Page } from "@playwright/test";
 import { draftBarSentence } from "./design-md";
 import { expect, recorded, test } from "./mocked";
@@ -12,7 +12,6 @@ import { expect, recorded, test } from "./mocked";
 const PLAN = "/projects/P156634/procurement/northern-water-works-development-agency/2026-10-09";
 const DRAFT = "/drafts/draft-0001";
 const MARKED = ["KE-NWWDA-541055-CW-RFB", "KE-NWWDA-229129-CW-RFB", "KE-NWWDA-541062-CW-RFQ"];
-const WCAG_22_AA = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 const CONSEQUENCE = "Exporting sends nothing and is not a World Bank review, clearance or no-objection.";
 const WORD = "review-notes-P156634-northern-water-works-development-agency-2026-10-09.docx";
 
@@ -55,7 +54,7 @@ const notes = (page: Page) => page.locator("[data-draft-notes] [data-view]:visib
 
 async function axe(page: Page) {
   await page.waitForFunction(() => document.getAnimations().every((animation) => animation.playState !== "running"));
-  const results = await new AxeBuilder({ page }).withTags(WCAG_22_AA).analyze();
+  const results = await scan(page);
   return results.violations.map((v) => `${v.id}: ${v.nodes.map((node) => node.target.join(" ")).join(", ")}`);
 }
 
