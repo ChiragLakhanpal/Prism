@@ -1046,6 +1046,16 @@ export const copy = {
     sourceShort: (short: string, sequence: number | null, paragraph: string | null) =>
       `${short}${sequence ? ` ${sequence}` : ""}${paragraph ? ` paragraph ${paragraph}` : ""}`,
     lean: "Strata leans on this",
+    // A report's abbreviation by its kind (config/project_page.toml's document groups), for its short name.
+    shortType: {
+      pad: "PAD",
+      isr: "ISR",
+      icr: "ICR",
+      icr_review: "ICR Review",
+      ppar: "PPAR",
+      record: "Record",
+      other: "Report",
+    } as Record<string, string>,
     // What a side said: a rating's field name as the report names it, then its value.
     rated: (field: string, value: string) => `${field}: ${value}`,
     // What you would treat as true if you kept the other side, from get_disagreements' if_you_keep.
@@ -1060,6 +1070,65 @@ export const copy = {
       icr: "Written after the project closed",
       ieg: "Written by IEG after the project closed",
       record: "Recorded on this date",
+    },
+    // The card's full look and its keep action (ticket 23; the 23 brief, sections 5 and 7.5).
+    card: {
+      // What the two reports disagree about, by the evidence ladder's attribute, then the moment it is about.
+      subject: {
+        pdo_progress: "Progress towards the project development objective (PDO)",
+        implementation_progress: "Overall implementation progress",
+        overall_risk: "The overall risk rating",
+        outcome: "The project's outcome",
+        efficiency: "Efficiency",
+        bank_performance: "The World Bank's performance",
+        me_quality: "The quality of monitoring and evaluation",
+        signed_on: "The date the contract was signed",
+        signed_amount_usd: "The signed amount",
+      } as Record<string, string>,
+      subjectOther: "What the two reports rated",
+      subjectAt: {
+        mid_term_review: "{subject} at the mid-term review",
+        appraisal: "{subject} at appraisal",
+        whole_project: "{subject} over the whole project",
+      } as Record<string, string>,
+      meta: "{date}. {written}.",
+      // A side's title on the timeline and in the drawer: "ISR 7", "ICR, paragraph 78".
+      title: "{short}",
+      titlePara: "{short}, paragraph {para}",
+      // "Open ISR 7", "Open paragraph 78".
+      open: "Open {side}",
+      openPara: "paragraph {para}",
+      rated: (months: number) =>
+        months === 1 ? "Rated {months} month after the mid-term review of {date}." : "Rated {months} months after the mid-term review of {date}.",
+      written: (months: number) =>
+        months === 1 ? "Written {months} month after the mid-term review of {date}." : "Written {months} months after the mid-term review of {date}.",
+      sides: "The two reports, in the order they were written",
+      kept: "You kept this",
+      // Appended to what changes, from the stream's changes_sentence_ids.
+      changesAnswer: (count: number) =>
+        count === 0 ? "That changes nothing in this answer." : count === 1 ? "That changes {n} sentence in this answer." : "That changes {n} sentences in this answer.",
+      changesDraft: (count: number) =>
+        count === 0 ? "That changes nothing in this draft." : count === 1 ? "That changes {n} sentence in this draft." : "That changes {n} sentences in this draft.",
+      keep: {
+        line: "You can keep {other} instead, with a reason that goes into the evidence pack.",
+        lineNoTarget: "You can keep {other} instead from an answer or draft that rests on these two reports.",
+        button: "Keep {other} instead",
+        label: "Why do you keep {other}?",
+        helperAnswer: "I save your reason with your name and this answer, and it goes into the evidence pack. I don't change the answer.",
+        helperDraft: "I save your reason with your name and this draft, and it goes into the evidence pack. I don't change the draft.",
+        submit: "Keep {other}",
+        cancel: "Cancel",
+        saving: "Saving",
+        empty: "Write a reason, so the evidence pack says why you kept {other}.",
+        failed: "I couldn't save your reason just now. Your text is still here.",
+        retry: "Try again",
+        kept: "You kept {other} on {date}. Your reason: \"{reason}\"",
+        undo: "Go back to Strata's choice",
+        preview: "This is a preview, so I don't record choices here.",
+        saved: "Saved. You kept {other}, and your reason goes into the evidence pack.",
+        wentBack: "Saved. You went back to Strata's choice. Your earlier reason stays in the record.",
+      },
+      loadFailed: "I couldn't load these two reports.",
     },
     // One phrase per reason code on get_disagreements' coverage line (config/tools.toml,
     // [tools.get_disagreements.result] reasons), as find_comparables words its own.
@@ -4771,6 +4840,7 @@ export const copy = {
     hide: "Hide the table",
     caption: (name: string) => `Everything on the timeline of ${name}, in date order.`,
     count: (n: string) => `Showing all ${n} items.`,
+    itemsNoun: "items",
     columns: { date: "Date", stratum: "Stratum", item: "Item", rating: "Rating", note: "Note" },
     stratumCaption: "What: records. How: operations. Why: evaluations.",
     // A mark's label on the chart.
@@ -4823,7 +4893,11 @@ export const copy = {
       group: "Select to list them.",
       band: "{start} to {end}. Progress towards achievement of PDO.",
       leans: "Strata leans on {lean}.",
+      written: "{written}.",
+      writtenDisagrees: "{written}. Disagrees with {other}.",
     },
+    // Joins the names of several reports in a sentence.
+    join: ", ",
     // Each item's accessible name. "to" stands in for the en dash, so a screen reader does not say "dash".
     name: {
       report: "{type}, {date}. {lane} lane. Item {i} of {n}.",
@@ -4891,9 +4965,6 @@ export const copy = {
         heading: "{side1} and {side2}",
         switcher: "Reports in this disagreement",
         both: "Both reports",
-        // A side's tab: "ICR ¶78", with the paragraph spelled out for a screen reader.
-        tabPara: "{side} ¶{para}",
-        tabParaSpoken: "{side} paragraph {para}",
         unknown: "I have no disagreement with this ID. The link may be incomplete.",
         notAsOf: "These two reports were not both public on {date}, so they did not disagree then.",
         close: "Close the reports",

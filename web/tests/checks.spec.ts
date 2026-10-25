@@ -147,9 +147,14 @@ test("ICR paragraph 78 shows under ISR 7's sentence with both sides, though the 
   const card = panel(page).getByRole("group", { name: "Two reports disagree: ISR 7 and ICR paragraph 78" });
   await expect(card).toBeVisible();
   const sides = card.locator("[data-side]");
-  await expect(sides.nth(0)).toContainText("Implementation Status and Results Report (ISR) 7, August 26, 2016. Written during the project.");
-  await expect(sides.nth(0)).toContainText("Progress towards achievement of PDO: Satisfactory");
-  await expect(sides.nth(1)).toContainText("Implementation Completion and Results Report (ICR), paragraph 78, October 10, 2019.");
+  // Ticket 23's anatomy: each side's name, spelled out the first time the answer uses it, then its date and when
+  // it was written, then what it said under the report's own field name.
+  await expect(sides.nth(0)).toContainText("Implementation Status and Results Report (ISR) 7");
+  await expect(sides.nth(0)).toContainText("August 26, 2016. Written during the project.");
+  await expect(sides.nth(0)).toContainText("Progress towards achievement of PDO");
+  await expect(sides.nth(0)).toContainText("Satisfactory");
+  await expect(sides.nth(1)).toContainText("Implementation Completion and Results Report (ICR), paragraph 78");
+  await expect(sides.nth(1)).toContainText("October 10, 2019. Written after the project closed.");
   await expect(sides.nth(1)).toContainText("Strata leans on this");
   await expect(sides.nth(1)).toContainText('"it was clearly identified at the MTR that the achievement of part of the PDO was compromised"');
   await expect(sides.nth(0)).toHaveAttribute("data-side", "other");
@@ -160,6 +165,8 @@ test("ICR paragraph 78 shows under ISR 7's sentence with both sides, though the 
   await expect(card.locator("[data-citation]")).toHaveText(["[1]", "[2]"]);
   await expect(card).toContainText("For a judgment of how a project went, I lean on the later, more independent report, here ICR paragraph 78.");
   await expect(card).toContainText('If you keep ISR 7 instead, I treat "Progress towards achievement of PDO" as Satisfactory.');
+  // The stream names the sentence keeping the other report would change (ticket 23).
+  await expect(card).toContainText("That changes one sentence in this answer.");
   // The abbreviation is spelled out the first time "In short" uses it.
   await expect(panel(page).locator("[data-in-short]")).toContainText("project development objective (PDO)");
   // The card follows the sentence it concerns, in the order of the page.

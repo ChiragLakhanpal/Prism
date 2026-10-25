@@ -58,6 +58,7 @@
         "months_after_event": 3,
         "type": "isr",
         "document": "doc:26733307",
+        "sentence": null,
         "leaned": false
       },
       {
@@ -90,6 +91,7 @@
         "months_after_event": 40,
         "type": "icr",
         "document": "doc:31525018",
+        "sentence": "Indeed, it was clearly identified at the MTR that the achievement of part of the PDO was compromised by the major delays in implementing activities under Components 2 and 3 and lack of endorsement from relevant stakeholders.",
         "leaned": true
       }
     ],

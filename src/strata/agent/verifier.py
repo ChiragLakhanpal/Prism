@@ -72,6 +72,7 @@ from typing import Any
 
 from strata.agent.claims import Claim
 from strata.agent.judge import Judgement, Question, Source
+from strata.config import load_project_page
 from strata.harness.facts import Facts
 from strata.harness.turn import Event
 from strata.reader.passages import NOTICE_TEXT, TABLE_SUMMARY
@@ -914,8 +915,10 @@ def _supported(pairs) -> list[dict]:
 
 
 def _side(side: Mapping, leaned: str | None) -> dict:
-    return {"evidence_id": side["evidence_id"], "assertion_id": side.get("assertion_id"),
-            "document_type": side.get("document_type"), "report_number": side.get("report_number"),
+    document_type = side.get("document_type")
+    kind = load_project_page().document_groups.get(document_type, "other") if document_type else "record"
+    return {"evidence_id": side["evidence_id"], "assertion_id": side.get("assertion_id"), "type": kind,
+            "document_type": document_type, "report_number": side.get("report_number"),
             "sequence": side.get("sequence"), "paragraph": side.get("paragraph"),
             "paragraph_numbered": side.get("paragraph_numbered"), "evidence_tier": side.get("evidence_tier"),
             "made_at": side.get("made_at"), "field_name": side.get("field_name"), "value": side.get("value"),

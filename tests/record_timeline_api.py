@@ -9,7 +9,7 @@ database first, then run:
 Each answer comes from the fixture database as of October 23, 2026, the day its sources were recorded, or as of the
 date its address names:
 
-- timeline-p130164.json: the showcase's timeline, with both disagreements, the three rating bands and the contract
+- timeline-p130164.json: the showcase's timeline as the plain page asks for it, with no ?asof=, with both disagreements, the three rating bands and the contract
   signed only in its award notice; timeline-p130164-2016-08-26.json, the same as of the day ISR 7 was disclosed.
 - timeline-p156634.json: a project with a crowded What lane, whose contracts group by year; and
   timeline-p156634-public.json, its public view, which shows no disagreement on a project still under way.
@@ -19,6 +19,7 @@ date its address names:
 """
 
 import asyncio
+import datetime as dt
 import json
 import sys
 from contextlib import contextmanager
@@ -37,14 +38,15 @@ OUT = ROOT / "tests" / "fixtures" / "api"
 ANA = {"X-Forwarded-Email": "ana.example@worldbank.org", "X-Forwarded-Access-Token": "token-for-ana-only",
        "X-Forwarded-Preferred-Username": "Ana Example", "X-Forwarded-User": "4021@1984"}
 DAY = "asof=2026-10-23"
+TODAY = dt.date(2026, 10, 23)
 PDO = "437378890475ef48"  # ISR 7 and ICR paragraph 78 on progress towards the PDO at the mid-term review
 EFFICIENCY = "51ea6e6516c0ea63"  # ICR paragraph 44 and the re-issued ICR Review on efficiency
 
 TIMELINE = {
-    "timeline-p130164.json": f"/api/projects/P130164/timeline?{DAY}",
+    "timeline-p130164.json": "/api/projects/P130164/timeline",
     "timeline-p130164-2016-08-26.json": "/api/projects/P130164/timeline?asof=2016-08-26",
-    "timeline-p156634.json": f"/api/projects/P156634/timeline?{DAY}",
-    "timeline-p156634-public.json": f"/api/projects/P156634/timeline?{DAY}&view=public",
+    "timeline-p156634.json": "/api/projects/P156634/timeline",
+    "timeline-p156634-public.json": "/api/projects/P156634/timeline?view=public",
     "evidence-doc-p130164-isr-7.json": f"/api/evidence?id=doc:26733307&{DAY}",
     "evidence-doc-p130164-isr-12.json": f"/api/evidence?id=doc:29794672&{DAY}",
     "evidence-doc-p130164-icr.json": f"/api/evidence?id=doc:31525018&{DAY}",
@@ -72,7 +74,8 @@ def app_on(database: Path):
     def engine_for(viewer):
         with DuckDBEngine.open(database, read_only=True) as engine:
             yield engine
-    return create_app(engine_for=engine_for)
+    # A page with no ?asof= reads as of today: the day the fixture was recorded.
+    return create_app(engine_for=engine_for, today=lambda: TODAY)
 
 
 def answer(database: Path, path: str) -> dict:

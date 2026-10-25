@@ -46,6 +46,7 @@ from strata.dbx import Viewer
 from strata.knowledge.assertions import KEY_DATE_LABELS, MID_TERM_REVIEW, PASSAGES
 from strata.lakehouse.engine import Engine
 from strata.server.projects import display_name
+from strata.server.viewer_sql import data_through
 from strata.tools import registry
 
 SQL = Path(__file__).resolve().parent / "sql" / "timeline"
@@ -408,6 +409,8 @@ def timeline(engine: Engine, viewer: Viewer, project_id: str, as_of: dt.date, vi
         "finding": finding(ratings, disagreements, status),
         "alt": alt_text(pid, dated, ratings, disagreements, status),
         "sources": ["documents", "notices", "awards"],
+        # The data-freshness stamp's day, which the source line ends with ("through October 23, 2026").
+        "data_through": _iso(data_through(engine)),
     }
 
 
@@ -512,10 +515,24 @@ def read_contracts(engine: Engine, key: str, as_of: dt.date) -> dict | None:
         "source": {"source_key": "awards", "project_id": pid}}}
 
 
+def sentence_of(text: str | None, quote: str | None) -> str | None:
+    """The whole sentence of a passage that holds a side's quote, without the paragraph's own number, so the card
+    shows what the report said in full: the ICR's paragraph 78 says more than the words the reader quoted. None when
+    the passage has no such sentence."""
+    if not text or not quote:
+        return None
+    wanted = " ".join(quote.split())
+    for sentence in re.split(r"(?<=[.!?])\s+(?=[A-Z])", " ".join(text.split())):
+        if wanted in sentence:
+            return re.sub(r"^\d+\.\s+", "", sentence)
+    return None
+
+
 def disagreement_row(row: dict) -> dict:
     """A disagreement as the card draws it on the timeline and in the drawer: get_disagreements' row, each side with
-    its kind of report and the evidence id of its document view."""
+    its kind of report, the evidence id of its document view and the whole sentence that holds its quote."""
     sides = [{**side, "type": GROUPS.get(side["document_type"] or "", "other"), "document": f"{DOC}:{side['document_id']}",
+              "sentence": sentence_of(side.get("text"), side.get("quote")),
               "leaned": side["assertion_id"] == row["lean_assertion_id"]} for side in row["sides"]]
     return {"evidence_id": f"{DISAGREEMENT}:{row['disagreement_id']}", "public_from": row["public_from"],
             "disagreement_id": row["disagreement_id"], "project_id": row["project_id"], "attribute": row["attribute"],

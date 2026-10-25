@@ -483,7 +483,10 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
     def project_timeline(project_id: str, asof: dt.date | None = None, view: Literal["staff", "piu", "public"] = "staff",
                          viewer: Viewer = Depends(current_viewer)):
         def read(engine: Engine):
-            found = timeline.timeline(engine, viewer, project_id, as_of_for(asof), view, asof)
+            # The page's as-of date, never later than today, by the clock create_app was given (today), so a
+            # recording of the plain page holds still.
+            as_of = min(asof, today()) if asof else today()
+            found = timeline.timeline(engine, viewer, project_id, as_of, view, asof)
             return found if found is not None else JSONResponse({"code": "unknown_project"}, status_code=404)
         return read_for(f"the timeline of {project_id}", viewer, read)
 

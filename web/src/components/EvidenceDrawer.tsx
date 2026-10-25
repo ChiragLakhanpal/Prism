@@ -48,6 +48,8 @@ import { FeedbackRow, type RowStart } from "./FeedbackRow";
 import { showsRow } from "../lib/retrieval";
 import { criteriaLessonOf, heldOnPage, pageLessons, type LessonEntry } from "../lib/criteria";
 import { backLabel, criteriaClose, criteriaEyebrow, CriteriaDrawerBody, criteriaTitle, LessonClaim } from "./CriteriaDrawer";
+import { ClaimLine, isTimelineView, timelineClose, timelineEyebrow, timelineTitle, TimelineView, UnknownDisagreement } from "./TimelineDrawer";
+import { sideShort, type SideData } from "../lib/disagreement";
 
 export type DrawerData =
   | { status: "loading" }
@@ -278,6 +280,30 @@ function PassageView({ evidence, sentence, fromAnswer, given = null }: { evidenc
       )}
     </>
   );
+}
+
+// A side of a disagreement in the drawer's disagreement view (ticket 23): its passage or record, read as any source
+// opened from a link is, with no highlight, since no sentence opened it.
+function SidePassage({ id, asOf }: { id: string; asOf: string | null }) {
+  const data = useEvidence(id, asOf);
+  if (data.status === "loading") {
+    return (
+      <div aria-busy="true" className="rounded-md border border-line">
+        <Skeleton className="h-8 w-full rounded-b-none" />
+        <SkeletonText className="max-w-prose p-4 text-body" widths={["w-full", "w-full", "w-3/5"]} />
+      </div>
+    );
+  }
+  if (data.status === "missing") return <Alert state="neutral">{copy.document.missing}</Alert>;
+  if (data.status === "failed") {
+    return (
+      <Alert state="error" action={<Button variant="secondary" onClick={data.onRetry}>{copy.answer.tryAgain}</Button>}>
+        {copy.document.failed}
+      </Alert>
+    );
+  }
+  if (data.evidence.kind === "record") return <RecordView evidence={data.evidence} />;
+  return <PassageView evidence={data.evidence} sentence={null} fromAnswer={false} />;
 }
 
 // The What stratum's view: the fields of the record a tool returned, under STEP's own names, in a
@@ -533,6 +559,10 @@ export function EvidenceDrawerView({
   const fromItsAnswer = Boolean(claim) || (from?.id === id && Boolean(from.runId) && from.runId === evidence?.feedback?.run_id);
   const row = evidence?.kind === "passage" && showsRow(evidence.feedback) && (fromItsAnswer || feedbackStart !== undefined);
   const region = evidence?.kind === "dot" ? dotRegion(evidence) : comparableRef ? copy.evidence.package.region(comparableRef) : undefined;
+  // A project timeline's views (ticket 23), and a disagreement of the answer that opened the drawer from its sentence.
+  const timelineView = isTimelineView(evidence);
+  const timelineId = /^(doc|ratings|contracts|disagreement):/.test(id);
+  const claimDisagreement = claim && run ? (run.disagreements.find((found) => found.after === claim.index) ?? null) : null;
 
   return (
     <div
@@ -574,11 +604,15 @@ export function EvidenceDrawerView({
                       : copy.evidence.package.dot.back(formatCount(backTo.count))}
               </Button>
             )}
-            {evidence && <p className="text-label text-ink-muted uppercase">{criteriaView ? criteriaEyebrow(evidence) : eyebrow(evidence)}</p>}
+            {evidence && (
+              <p className="text-label text-ink-muted uppercase">
+                {criteriaView ? criteriaEyebrow(evidence) : timelineView ? timelineEyebrow(evidence) : eyebrow(evidence)}
+              </p>
+            )}
             {data.status === "loading" && <SkeletonLine className="text-label" width="w-1/3" />}
             <h2 ref={headingRef} id={headingId} tabIndex={-1} className="mt-1 text-title wrap-break-word text-ink-heading focus:outline-none">
               {evidence ? (
-                criteriaView ? criteriaTitle(evidence) : sourceTitle(evidence)
+                criteriaView ? criteriaTitle(evidence) : timelineView ? timelineTitle(evidence) : sourceTitle(evidence)
               ) : data.status === "loading" ? (
                 <LoadingLabel />
               ) : comparableRef ? (
@@ -607,7 +641,9 @@ export function EvidenceDrawerView({
                     ? copy.stepDates.drawer.close
                     : comparable
                       ? copy.evidence.package.close
-                      : copy.evidence.close}
+                      : timelineView || timelineId
+                        ? timelineClose(evidence)
+                        : copy.evidence.close}
           </Button>
         </div>
         <div className="flex animate-drawer-in flex-col gap-4 px-6 pt-2 pb-6">
@@ -623,6 +659,22 @@ export function EvidenceDrawerView({
                 )}
               </p>
             </div>
+          )}
+          {/* A timeline's event mark: "From the timeline" and the event, above the passage that dates it (ticket 23). */}
+          {!claim && from?.id === id && from.context && (
+            <div data-from-timeline>
+              <p className="text-caption text-ink-muted">{from.context.lead}</p>
+              <p className="mt-1 border-l-2 border-line-strong pl-3 text-small text-ink">{from.context.line}</p>
+            </div>
+          )}
+          {claim && claimDisagreement && (
+            <ClaimLine
+              warning={claimDisagreement.changes_answer}
+              disagreementId={`disagreement:${claimDisagreement.disagreement_id ?? claimDisagreement.id.split(":").pop()}`}
+              text={copy.timeline.drawer.claimLine
+                .replace("{side1}", sideShort(claimDisagreement.sides[0] as SideData))
+                .replace("{side2}", sideShort(claimDisagreement.sides[1] as SideData))}
+            />
           )}
           {riskRow && <RowClaim row={riskRow} />}
           {criteriaLesson && <LessonClaim lesson={criteriaLesson} />}
@@ -642,7 +694,12 @@ export function EvidenceDrawerView({
                 <SkeletonText className="max-w-prose p-4 text-body" widths={["w-full", "w-full", "w-full", "w-full", "w-full", "w-3/5"]} />
               </div>
             )}
-            {data.status === "missing" && <Alert state="neutral">{asOf ? copy.document.missingAsOf(formatDate(asOf)) : copy.document.missing}</Alert>}
+            {data.status === "missing" &&
+              (id.startsWith("disagreement:") ? (
+                <UnknownDisagreement />
+              ) : (
+                <Alert state="neutral">{asOf ? copy.document.missingAsOf(formatDate(asOf)) : copy.document.missing}</Alert>
+              ))}
             {data.status === "failed" && (
               <Alert
                 state="error"
@@ -665,6 +722,7 @@ export function EvidenceDrawerView({
               />
             )}
             {evidence?.kind === "record" && <RecordView evidence={evidence} />}
+            {evidence && timelineView && <TimelineView evidence={evidence} renderSide={(sideId) => <SidePassage id={sideId} asOf={asOf} />} />}
             {evidence?.kind === "package" && <ComparableRecords evidence={evidence} />}
             {evidence?.kind === "dot" && (
               <ComparableDotList evidence={evidence} focusEntry={from?.id === id ? (from.entry ?? null) : null} onOpen={onOpenEntry} />

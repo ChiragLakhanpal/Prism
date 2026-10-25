@@ -158,6 +158,13 @@ export const galleryCopy = {
       purpose:
         "Section 5 of the package workspace in each state: collapsed, open, the comparison of pasted qualification criteria, the rejected bids, the cost estimate and the lessons, and the drawer's views. Each sample is the server's answer on the fixture, recorded in tests/fixtures/api, except the cost lane with 20 packages or more, which no fixture package has.",
     },
+    // Ticket 23's gallery page. Each sample is an answer the server wrote on the fixture, recorded in
+    // tests/fixtures/api by tests/record_timeline_api.py, or one with a value changed.
+    timeline: {
+      title: "Project timeline and the disagreement card",
+      purpose:
+        "A project's Timeline tab in each of its states, the disagreement card with its keep action, the source tag, the reason field, and the evidence drawer's views a timeline mark opens. Hover or focus a mark to see its tooltip.",
+    },
     icons: {
       title: "Icons",
       purpose:
@@ -584,6 +591,33 @@ export const galleryCopy = {
     skeletonReview: "The review page",
     lessonDrawer: "The drawer, opened from the writer's sentence under a likely repeat",
     lessonCard: "The evidence card, on hover or focus of its marker",
+  },
+  // The timeline page's state labels (ticket 23).
+  timelineStates: {
+    chart: "The evidence trail: P130164 with both disagreements and its rating bands",
+    asOf: "As of August 26, 2016: no ICR yet, so no dashed line, and the reference line at the date",
+    crowded: "A crowded What lane: P156634's contracts grouped by year",
+    hidden: "The public view of a project still under way: no disagreements",
+    failed: "Disagreements that failed to load: the marks, with no dashed lines",
+    laneEmpty: "A lane with nothing in it, and no ISR ratings",
+    list: "Below 768 px: the list in date order",
+    loading: "Loading",
+    empty: "Empty: no dated reports or records yet",
+    cardTimeline: "The card on the timeline: the info variant, with no keep action",
+    cardWarning: "The card under an answer whose sentence it changes: warning, with the keep action",
+    cardOpen: "The keep form open",
+    cardEmpty: "The keep form with an empty reason",
+    cardSaving: "Saving",
+    cardFailed: "A save that failed: the text stays",
+    cardKept: "Kept by you, with the way back",
+    cardPreview: "In a preview: no keep action",
+    tags: "Source tags",
+    reason: "The keep form's reason field counting down from 400 characters",
+    drawerDocument: "The drawer's document view: ISR 7, a side of a disagreement",
+    drawerReplaced: "The document view of a replaced report: the first ICR Review",
+    drawerRatings: "The drawer's ratings list: a band's run of ISRs",
+    drawerContracts: "The drawer's contracts list: a year of P156634's contracts",
+    drawerDisagreement: "The drawer's disagreement view, on Both reports",
   },
   // The Drafts page's state labels (ticket 35).
   draftStates: {
@@ -1258,4 +1292,11 @@ export const galleryCopy = {
       ],
     },
   },
+  // A sample reason in the keep form (ticket 23).
+  timelineReason: "The supervision mission saw the works on site in August 2016, and the ISR rated what it saw.",
+  timelineLongReason:
+    "The supervision mission visited the road works in August 2016 and recorded steady progress on the corridors under Components 2 and 3. " +
+    "The ISR that followed rated progress against what the team saw on site. The completion report was written three years later, " +
+    "after the restructuring, and looks back on the mid-term review with what was known by then. For the panel I keep the record made at the time, " +
+    "and I note the later account beside it for context.",
 } as const;

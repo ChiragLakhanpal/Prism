@@ -55,7 +55,9 @@ def app_on(database, **more):
 
 @pytest.fixture(scope="module")
 def server(fixture_db):
-    return app_on(fixture_db)
+    import datetime as dt
+
+    return app_on(fixture_db, today=lambda: dt.date(2026, 10, 23))
 
 
 @pytest.fixture(scope="module")
@@ -246,6 +248,8 @@ def test_a_band_opens_its_run_of_isrs_and_a_disagreement_opens_both_sides(server
     assert [side["made_at"] for side in sides] == [truth("isr-7-date"), truth("icr-date")]
     assert sides[1]["leaned"] and not sides[0]["leaned"]
     assert sides[1]["quote"] in TRUTH["icr-para-78"]["quote"]
+    # The card shows the whole sentence of paragraph 78 that holds the quote, word for word.
+    assert sides[1]["sentence"] == TRUTH["icr-para-78"]["quote"]
     # Before the ICR was public, the two reports did not disagree.
     assert evidence(server, line["evidence_id"], "2016-08-26").status_code == 404
 

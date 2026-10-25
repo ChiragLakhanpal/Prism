@@ -6,7 +6,7 @@
     "status": "Active"
   },
   "as_of": "2026-10-23",
-  "asked_as_of": "2026-10-23",
+  "asked_as_of": null,
   "view": "public",
   "items": [
     {
@@ -4071,5 +4071,6 @@
     "documents",
     "notices",
     "awards"
-  ]
+  ],
+  "data_through": "2026-10-23"
 }

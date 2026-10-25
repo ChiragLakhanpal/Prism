@@ -49,9 +49,9 @@ test("P130164's header reads as the wireframe's one line with its implementing a
   expect(copy.projectPage.statusInline.Closed).toBe("closed");
 
   // The built tabs, in the copy file's order, which is the wireframe's: Summary, Procurement, Timeline,
-  // Documents, Connections. Timeline and Connections join when their tickets land.
+  // Documents, Connections. Connections joins when ticket 22 lands.
   expect(Object.keys(copy.projectPage.tab)).toEqual(["summary", "procurement", "timeline", "documents", "connections"]);
-  await expect(tabs(page)).toHaveText(["Summary", "Procurement", "Documents"]);
+  await expect(tabs(page)).toHaveText(["Summary", "Procurement", "Timeline", "Documents"]);
   await expect(tabs(page).first()).toHaveAttribute("aria-current", "page");
   await expect(page).toHaveTitle("Rajasthan Road Sector Modernization (P130164), Summary | Strata");
   // The current crumb names the project as the h1 does, with its ID in plain mono: the h1's P-code just
@@ -68,12 +68,12 @@ test("switching tabs keeps the header in place and focus on the tab, says which 
   const h1 = main(page).getByRole("heading", { level: 1 });
   await h1.evaluate((el) => el.setAttribute("data-same-element", ""));
 
-  await tabs(page).nth(2).focus();
+  await tabs(page).nth(3).focus();
   await page.keyboard.press("Enter");
 
   await expect(page).toHaveURL(/\/projects\/P130164\/documents$/);
-  await expect(tabs(page).nth(2)).toBeFocused();
-  await expect(tabs(page).nth(2)).toHaveAttribute("aria-current", "page");
+  await expect(tabs(page).nth(3)).toBeFocused();
+  await expect(tabs(page).nth(3)).toHaveAttribute("aria-current", "page");
   await expect(page.getByRole("status").filter({ hasText: "Showing Documents." })).toHaveCount(1);
   // The header did not redraw: it is the same element, and the project was read once.
   await expect(main(page).locator("h1[data-same-element]")).toHaveCount(1);

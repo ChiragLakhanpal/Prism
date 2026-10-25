@@ -86,6 +86,7 @@ import { HowStrataWorks } from "../pages/data/HowStrataWorks";
 import { galleryCopy } from "./copy";
 import { draftsPage } from "./drafts";
 import { hubPage } from "./hub";
+import { timelinePage } from "./timeline";
 import { lessonsPage } from "./lessons";
 import { judgingPage, retrievalPage } from "./retrieval";
 import { packagesPage } from "./packages";
@@ -1317,6 +1318,7 @@ export const PAGES: GalleryPage[] = [
   },
   draftsPage(planSample),
   hubPage(),
+  timelinePage(),
   lessonsPage(),
   retrievalPage(),
   judgingPage(),
