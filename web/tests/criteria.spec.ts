@@ -2,12 +2,11 @@
 // answers tests/record_criteria_api.py recorded from the server on the fixture, which tests/test_check_criteria.py
 // checks the server against. Counts are read from those recordings, the tools' own rows, so no number here is
 // worked out the way the screen works it out; the words are the 31 brief's and the ticket's.
-import AxeBuilder from "@axe-core/playwright";
+import { scan } from "./axe";
 import type { Page, Request } from "@playwright/test";
 import { copy } from "../src/copy";
 import { expect, recorded, test } from "./mocked";
 
-const WCAG_22_AA = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 const CONSULTANT = "KE-CWSB-224323-CS-QCBS";
 const WORKS = "KE-NWWDA-541055-CW-RFB";
 const PASTED =
@@ -73,7 +72,7 @@ const section = (page: Page) => page.locator("#check-criteria");
 const toggle = (page: Page) => section(page).getByRole("button", { name: copy.criteria.show });
 
 async function axe(page: Page) {
-  const results = await new AxeBuilder({ page }).include("#check-criteria").withTags(WCAG_22_AA).analyze();
+  const results = await scan(page, "#check-criteria");
   return results.violations.map((v) => `${v.id}: ${v.nodes.map((node) => node.target.join(" ")).join(", ")}`);
 }
 

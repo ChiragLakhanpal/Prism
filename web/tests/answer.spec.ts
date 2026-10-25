@@ -4,7 +4,7 @@
 // the ticket's and the 14 design brief's, and the source's details are the ICR of October 10, 2019
 // (tests/ground_truth/values.toml, icr-para-54), copied here so the test checks the screen against an
 // independent source.
-import AxeBuilder from "@axe-core/playwright";
+import { scan } from "./axe";
 import { readEvents } from "../src/lib/sse";
 import { askFromTheBox, box, drawer, ICR_54, landed, marker, open, panel, QUESTION } from "./answer-page";
 import type { Page } from "@playwright/test";
@@ -18,7 +18,6 @@ const REMOVED = "I removed one sentence. It said bids were usually opened within
 const CHECK_LINE =
   "Checked: 2 of 2 numbers match records; 1 of 1 date matches records; 2 of 2 quotes are on their pages. " +
   "Not checked: whether I found every passage that matters.";
-const WCAG_22_AA = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 
 test("Ask this streams the answer into the panel under the band: steps one at a time, then In short, the check line and the removed box", async ({ page }) => {
   const seen = await open(page);
@@ -735,13 +734,13 @@ for (const width of [1440, 390]) {
     await askFromTheBox(page);
     await landed(page);
     await page.waitForFunction(() => document.getAnimations().every((a) => a.playState !== "running" || a.effect?.getTiming().iterations === Infinity));
-    let results = await new AxeBuilder({ page }).withTags(WCAG_22_AA).analyze();
+    let results = await scan(page);
     expect(results.violations.map((v) => `${v.id}: ${v.nodes.map((node) => node.target.join(" ")).join(", ")}`)).toEqual([]);
 
     await marker(page, 1).click();
     await expect(drawer(page)).toBeVisible();
     await page.waitForFunction(() => document.getAnimations().every((a) => a.playState !== "running" || a.effect?.getTiming().iterations === Infinity));
-    results = await new AxeBuilder({ page }).withTags(WCAG_22_AA).analyze();
+    results = await scan(page);
     expect(results.violations.map((v) => `${v.id}: ${v.nodes.map((node) => node.target.join(" ")).join(", ")}`)).toEqual([]);
   });
 }

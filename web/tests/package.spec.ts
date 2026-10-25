@@ -3,14 +3,13 @@
 // check the server against. The numbers below are tests/ground_truth/values.toml's [past_range],
 // computed once with lifelines and checked with statsmodels, and the words are the 12 brief's, copied
 // here so the test checks the screen against an independent source.
-import AxeBuilder from "@axe-core/playwright";
+import { scan } from "./axe";
 import type { Locator, Page } from "@playwright/test";
 import { expect, mockApi, recorded, test } from "./mocked";
 
 const REF = "KE-NWWDA-541055-CW-RFB";
 const PATH = `/packages/${REF}`;
 const API = `/api/packages/${REF}`;
-const WCAG_22_AA = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 // values.toml [past_range]: 49 comparables, 45 signed and four still open; the middle half 3.3 to
 // 7.9 months, the middle 4.4, 8 in 10 within 9.1; the plan's 1.5 months, and two signed within them.
 const FINDING = "2 of 49 comparable packages, fewer than 1 in 10, were signed within the plan's 1.5 months.";
@@ -73,7 +72,7 @@ async function signedWithin(months: number): Promise<number> {
 }
 
 async function axe(page: Page) {
-  const results = await new AxeBuilder({ page }).withTags(WCAG_22_AA).analyze();
+  const results = await scan(page);
   return results.violations.map((v) => `${v.id}: ${v.nodes.map((node) => node.target.join(" ")).join(", ")}`);
 }
 

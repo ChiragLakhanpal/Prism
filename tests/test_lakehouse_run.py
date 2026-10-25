@@ -309,13 +309,21 @@ def test_no_email_address_or_phone_number_is_left_in_bronze_silver_or_gold(gold)
     # Plain booleans and places, so a failure never prints the contact details themselves.
     assert all(notice[field] in found for field in ("contact_name", "contact_email", "contact_phone_no"))
 
+    # The same text sits in many places (a page in bronze.api_pages and bronze.current_pages, a passage in
+    # silver and gold): 210,000 values hold 18,000 distinct texts. Each text is searched once and its
+    # findings are reported at every place that holds it (ticket 55).
+    searched = {}
     leaks = []
     for where, value in text_values(gold):
-        leaks += [(where, "an email or phone number")
-                  for _ in EMAIL.findall(value) + AT_SIGN.findall(value) + PHONE.findall(value)
-                  + LABELLED_PHONE.findall(value) + AFTER_REMOVED.findall(value) + SPACED_EMAIL.findall(value)]
-        leaks += [(where, "a recorded contact detail") for contact in found if contact in value
-                  and not (contact in JOB_TITLES and where.startswith(REPORT_TEXT))]
+        if value not in searched:
+            searched[value] = (
+                len(EMAIL.findall(value) + AT_SIGN.findall(value) + PHONE.findall(value)
+                    + LABELLED_PHONE.findall(value) + AFTER_REMOVED.findall(value) + SPACED_EMAIL.findall(value)),
+                [contact for contact in found if contact in value])
+        numbers, contacts_in_value = searched[value]
+        leaks += [(where, "an email or phone number")] * numbers
+        leaks += [(where, "a recorded contact detail") for contact in contacts_in_value
+                  if not (contact in JOB_TITLES and where.startswith(REPORT_TEXT))]
     assert leaks == []
 
 
