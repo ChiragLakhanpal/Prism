@@ -112,6 +112,24 @@ function Segments({ initial }: { initial: Choice }) {
   );
 }
 
+// The toggle kind (ticket 26's "Compare with"): at most one pressed, and pressing it again releases it.
+const LEVERS = ["prequalification", "lots"];
+function Toggles({ initial }: { initial: string | null }) {
+  const [pressed, setPressed] = useState<string | null>(initial);
+  return (
+    <SegmentedControl
+      kind="toggle"
+      legend={copy.whatIf.label}
+      pressed={pressed}
+      onPress={setPressed}
+      options={LEVERS.map((lever) => ({
+        value: lever,
+        label: lever === LEVERS[0] ? copy.whatIf.label_prequalification.Y : copy.whatIf.lots(3),
+      }))}
+    />
+  );
+}
+
 // The drawer's lists, as wide as the drawer beside the page.
 function DrawerPart({ children }: { children: ReactNode }) {
   return <div className="flex max-w-[37.5rem] flex-col gap-4 rounded-md border border-line p-6">{children}</div>;
@@ -132,6 +150,10 @@ export function stepsPage(): GalleryPage {
             <Segments initial={CAUTIOUS} />
             <p className="text-caption text-ink-muted">{st.middleChosen}</p>
             <Segments initial={MIDDLE} />
+            <p className="text-caption text-ink-muted">{st.toggleNone}</p>
+            <Toggles initial={null} />
+            <p className="text-caption text-ink-muted">{st.togglePressed}</p>
+            <Toggles initial={LEVERS[0]} />
           </div>
         ),
       },

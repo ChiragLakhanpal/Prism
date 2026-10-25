@@ -42,6 +42,14 @@ export const CAUSAL_SCOPES = [
   "dataReadiness.server.fromNouns.connections",
 ];
 
+// The time estimate's what-ifs and approach options (ticket 26; the 26 brief, section 7.4, and DESIGN.md section 7,
+// rule 19): comparable packages "went with" an approach, and the screen never says an approach caused a time or
+// speaks of splitting a package. These words are banned, whole and in any case, in the copy blocks WHAT_IF_SCOPES
+// names, and the block WHAT_IF_SAYS names must say "went with" at least once.
+export const WHAT_IF_WORDS = ["caused", "split", "splitting"];
+export const WHAT_IF_SCOPES = ["timeEstimate", "whatIf", "approachOptions"];
+export const WHAT_IF_SAYS = { scope: "whatIf", words: "went with" };
+
 // DESIGN.md section 7, rule 8: never the regional codes; spell the region out.
 export const REGION_CODES = ["AFR", "EAP", "ECA", "LAC", "MNA", "SAR"];
 

@@ -18,15 +18,18 @@ import { Fill } from "../components/Fill";
 import { LoadError } from "../components/LoadError";
 import { MonoWords } from "../components/MonoWords";
 import { FactsSkeleton, mono, PackageFactsList, PackageHeader } from "../components/PackageFacts";
+import { ApproachOptions, approachState } from "../components/ApproachOptions";
 import { PastRange, type PastRangeState } from "../components/PastRange";
 import { Rebidding } from "../components/RebiddingBlock";
+import type { EstimateState } from "../components/TimeEstimate";
 import { RisksSection } from "../components/RisksSection";
 import { CheckCriteria } from "../components/CheckCriteria";
 import { SkeletonLine, SkeletonText } from "../components/Skeleton";
 import { StepsSection } from "../components/StepsSection";
 import { TextLink } from "../components/TextLink";
 import { copy } from "../copy";
-import type { ComparablesResult, PackageResult } from "../lib/api";
+import type { ComparablesResult, EstimateResult, PackageResult } from "../lib/api";
+import { usePlanDateChoice } from "../lib/estimates";
 import { useLoad } from "../lib/load";
 import { useOpenComparable } from "../lib/packages";
 import { rebiddingPath } from "../lib/rebidding";
@@ -41,13 +44,26 @@ export function PackagePage({ stepRef }: { stepRef: string }) {
   const base = `/api/packages/${encodeURIComponent(stepRef)}`;
   const [load, retry] = useLoad<PackageResult>(base);
   const [section, retrySection] = useLoad<ComparablesResult>(`${base}/comparables`);
+  // Ticket 26: estimate_time beside find_comparables, so lane 1 can draw before lane 2 arrives.
+  const [estimateLoad, retryEstimate] = useLoad<EstimateResult>(`${base}/estimate`);
+  const estimate: EstimateState =
+    estimateLoad.status === "loading"
+      ? { status: "loading" }
+      : estimateLoad.status === "error"
+        ? { status: "error", error: estimateLoad.error, onRetry: retryEstimate, retrying: estimateLoad.retrying }
+        : { status: "ready", result: estimateLoad.data };
+  const here = useStore(address);
+  const planDate = usePlanDateChoice(
+    `${base}/plan-dates`,
+    estimateLoad.status === "ready" ? estimateLoad.data.plan_date_choice : null,
+    viewOf(here.search) !== "staff",
+  );
   const header = useRef<HTMLDivElement>(null);
   const sectionHeading = useRef<HTMLHeadingElement>(null);
   const pkg = load.status === "ready" ? load.data.package : null;
   useScrollPadding(header, Boolean(pkg), { gap: 16 });
   // A dot or a row of section 1 opens its comparable package in the evidence drawer (ticket 15).
   const opening = useOpenComparable();
-  const here = useStore(address);
 
   // After a "Try again" that works, the section's heading takes focus, so focus is not lost.
   useEffect(() => {
@@ -86,7 +102,7 @@ export function PackagePage({ stepRef }: { stepRef: string }) {
           <FactsSkeleton />
         </div>
         <div className="mt-8">
-          <PastRange state={{ status: "loading" }} />
+          <PastRange state={{ status: "loading" }} estimate={{ status: "loading" }} />
         </div>
       </>
     );
@@ -146,6 +162,8 @@ export function PackagePage({ stepRef }: { stepRef: string }) {
             state={sectionState}
             headingRef={sectionHeading}
             open={opening}
+            estimate={estimate}
+            planDate={planDate}
             after={<Rebidding path={rebiddingPath(base)} section={section.status === "ready" ? section.data : null} />}
           />
         </div>
@@ -157,7 +175,18 @@ export function PackagePage({ stepRef }: { stepRef: string }) {
         <div className="mt-6 @lg/page:mt-8">
           <RisksSection apiHref={base} packageKey={facts.step_reference} kind="step" />
         </div>
-        {/* Section 5, "Check your criteria" (ticket 31): sections 2 and 4 take their places as their tickets land. */}
+        {/* Section 4, procurement approach options (ticket 26), from the same time estimate. */}
+        <div className="mt-6 @lg/page:mt-8">
+          <ApproachOptions
+            state={approachState(
+              section.status === "ready" ? { status: "ready", result: section.data } : { status: section.status },
+              estimate,
+              false,
+              retrySection,
+            )}
+          />
+        </div>
+        {/* Section 5, "Check your criteria" (ticket 31). */}
         <div className="mt-6 @lg/page:mt-8">
           <CheckCriteria base={base} preview={viewOf(here.search) !== "staff"} />
         </div>

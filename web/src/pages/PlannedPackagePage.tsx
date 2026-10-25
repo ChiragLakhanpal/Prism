@@ -24,8 +24,10 @@ import { EditorBody, EditorSheet } from "../components/ChipEditor";
 import { CardTop, ChipGroups, ChipSkeletons, ComputedNote, CriterionChip, RefusalAlert, ruleSentence, valueText } from "../components/Criteria";
 import { Fill } from "../components/Fill";
 import { Num } from "../components/Num";
-import { PastRange, type PastRangeState } from "../components/PastRange";
+import { ApproachOptions, approachState } from "../components/ApproachOptions";
+import { PastRange, TWO_LANE_HEIGHT, type PastRangeState } from "../components/PastRange";
 import { Rebidding } from "../components/RebiddingBlock";
+import type { EstimateState } from "../components/TimeEstimate";
 import { plannedRebiddingPath } from "../lib/rebidding";
 import { RisksSection } from "../components/RisksSection";
 import { CheckCriteria } from "../components/CheckCriteria";
@@ -34,7 +36,9 @@ import { POPOVER } from "../components/Popover";
 import { SkeletonLine } from "../components/Skeleton";
 import { Steps, type Step } from "../components/Steps";
 import { copy } from "../copy";
-import { ApiError, getJson, type ComparablesResult } from "../lib/api";
+import { ApiError, getJson, type ComparablesResult, type EstimateResult } from "../lib/api";
+import { usePlanDateChoice } from "../lib/estimates";
+import { useLoad } from "../lib/load";
 import { cx } from "../lib/cx";
 import { formatCount, formatDate, formatYear } from "../lib/format";
 import {
@@ -67,8 +71,13 @@ const NARROW = "(width < 48rem)";
 const SKELETON_AFTER_MS = 400;
 // Dragging the plan line or holding an arrow key saves this long after the movement stops.
 const PLAN_SAVE_AFTER_MS = 500;
-// Section 1's plan prompt holds the chart's height, so the section does not jump when the chart replaces it.
-const CHART_HEIGHT = 240;
+// Section 1's plan prompt holds the chart's height, so the section does not jump when the chart replaces it: 392 px
+// with lane 2, the time estimate (ticket 26).
+const CHART_HEIGHT = TWO_LANE_HEIGHT;
+// What describes a package to estimate_time (ticket 26): its comparables' criteria and its own fields. A save that
+// changes one of these reads the time estimate again; a change of the plan alone does not.
+const DESCRIBED = ["estimated_amount_usd", "market_approach", "review_type", "prequalification", "lots"];
+const estimateKey = (pkg: PlannedPackage) => JSON.stringify([pkg.comparables_query, ...DESCRIBED.map((key) => valueOf(pkg, key))]);
 
 function useNarrowWindow(): boolean {
   const [narrow, setNarrow] = useState(() => window.matchMedia(NARROW).matches);
@@ -475,6 +484,21 @@ function Workspace({ initial, preview, focusHeading }: { initial: PlannedPage; p
   const planTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const editorHeading = useId();
   const plan = typeof valueOf(pkg, "plan_months") === "number" ? (valueOf(pkg, "plan_months") as number) : null;
+  // Ticket 26: estimate_time for the package as saved, read again when a save changes what describes it.
+  const [describedKey, setDescribedKey] = useState(() => estimateKey(initial.package));
+  const estimatePath = pkg.comparables_query ? `/api/planned-packages/${encodeURIComponent(pkg.package_id)}/estimate` : null;
+  const [estimateLoad, retryEstimate] = useLoad<EstimateResult>(estimatePath, describedKey);
+  const estimate: EstimateState =
+    estimateLoad.status === "loading"
+      ? { status: "loading" }
+      : estimateLoad.status === "error"
+        ? { status: "error", error: estimateLoad.error, onRetry: retryEstimate, retrying: estimateLoad.retrying }
+        : { status: "ready", result: estimateLoad.data };
+  const planDate = usePlanDateChoice(
+    `/api/planned-packages/${encodeURIComponent(pkg.package_id)}/plan-dates`,
+    estimateLoad.status === "ready" ? estimateLoad.data.plan_date_choice : null,
+    preview,
+  );
   const title = titleOf(pkg, form);
   useScrollPadding(header, true, { gap: 16 });
 
@@ -581,6 +605,7 @@ function Workspace({ initial, preview, focusHeading }: { initial: PlannedPage; p
       savePackage(lastSaved.current.package_id, change).then(
         ({ package: saved }) => {
           lastSaved.current = saved;
+          setDescribedKey(estimateKey(saved));
           waiting.current = waiting.current.filter((one) => one !== change);
           setPkg(waiting.current.reduce((shown, next) => applied(shown, form, next), saved));
           if (waiting.current.length > 0) return;
@@ -822,6 +847,8 @@ function Workspace({ initial, preview, focusHeading }: { initial: PlannedPage; p
                 section={section.status === "ready" && !skeleton ? section.result : null}
               />
             }
+            estimate={pkg.comparables_query ? estimate : undefined}
+            planDate={planDate}
           />
         </div>
         {/* Section 2, the planned date for each STEP step (ticket 27): it reruns when a criterion changes, since the
@@ -843,6 +870,21 @@ function Workspace({ initial, preview, focusHeading }: { initial: PlannedPage; p
               retryRisks.current = state === "failed" ? retry : null;
               setSaving(state === "saved" ? { status: "saved", at: new Date().toISOString() } : { status: state });
             }}
+          />
+        </div>
+        {/* Section 4, procurement approach options (ticket 26), from section 1's time estimate. */}
+        <div className="mt-6 @lg/page:mt-8">
+          <ApproachOptions
+            state={
+              section.status === "none" || missing.length > 0
+                ? { kind: "empty" }
+                : approachState(
+                    section.status === "ready" ? { status: "ready", result: section.result } : section.status === "error" ? { status: "error" } : { status: "loading" },
+                    estimate,
+                    prompting,
+                    () => fetchComparables(pkg),
+                  )
+            }
           />
         </div>
         {/* Section 5, "Check your criteria" (ticket 31), on this package's comparables: a change of criteria

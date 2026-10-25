@@ -20,6 +20,7 @@ import { useEffect, useId, useRef, useState, type ReactNode, type Ref } from "re
 import { CircleDashed, CircleX } from "lucide-react";
 import { copy } from "../copy";
 import { ApiError, getJson, putJson } from "../lib/api";
+import { sharePlanDateChoice, useSharedPlanDateChoice } from "../lib/estimates";
 import { cx } from "../lib/cx";
 import { evidenceIn, openEvidence, origin } from "../lib/evidence";
 import { formatCount, formatDate } from "../lib/format";
@@ -1058,9 +1059,18 @@ export function StepsSection({ packageKey, kind, rerunKey = "" }: { packageKey: 
     return dates && family ? captionText(dates, family, rowsOf(dates, family, packageKey), next) : "";
   };
 
+  // Section 1's "Dates I draft for this package" (ticket 26) sets the same stored choice: one made there shows here.
+  const shared = useSharedPlanDateChoice(`${api}/plan-dates`);
+  useEffect(() => {
+    if (shared === null) return;
+    chosen.current = true;
+    setChoice(fromStored(shared));
+  }, [shared]);
+
   const choose = (next: Choice) => {
     chosen.current = true;
     setChoice(next);
+    sharePlanDateChoice(`${api}/plan-dates`, stored(next));
     setAnnounce(state.status === "ready" ? `${words.showing[next]} ${captionFor(state.result, next)}` : words.showing[next]);
     if (preview) return;
     putJson(`${api}/plan-dates`, { choice: stored(next) }).then(

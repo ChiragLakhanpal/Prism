@@ -46,6 +46,8 @@ test("in the development build, a saved package opened by its address shows sect
     "/api/planned-packages/pkg-000000000001/steps": { body: await recorded("steps-planned-rural-roads.json") },
     // Section 5, "Check your criteria" (ticket 31), reads its collapsed summary with the page.
     "/api/planned-packages/pkg-000000000001/criteria": { body: await recorded("criteria-summary-planned-rural-roads.json") },
+    // Section 1's time estimate (ticket 26) is read with the page, so lane 2 is ready once the plan is added.
+    "/api/planned-packages/pkg-000000000001/estimate": { body: await recorded("estimate-planned-rural-roads.json") },
   });
 
   await page.goto("/packages/pkg-000000000001");

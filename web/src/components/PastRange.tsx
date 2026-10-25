@@ -20,8 +20,22 @@
 import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode, type Ref, type RefObject } from "react";
 import { CircleDashed } from "lucide-react";
 import { copy } from "../copy";
-import type { ApiError, Comparable, ComparablesResult } from "../lib/api";
-import { forgetDotList, rememberDots, type OpenComparable } from "../lib/packages";
+import type { ApiError, Comparable, ComparablesResult, Comparison } from "../lib/api";
+import { forgetDotList, openWentWith, rememberDots, type OpenComparable } from "../lib/packages";
+import {
+  CompareControl,
+  dotComparisonName,
+  estimated,
+  EstimateExtras,
+  EstimateSentences,
+  lane2Alt,
+  lane2For,
+  optionWords,
+  TimeEstimateTable,
+  wentWithCell,
+  type EstimateState,
+  type PlanDateProps,
+} from "./TimeEstimate";
 import { cx } from "../lib/cx";
 import { formatCount, formatDate, formatNumber } from "../lib/format";
 import { dataReadinessHref } from "../routes";
@@ -39,7 +53,9 @@ import { TextLink } from "./TextLink";
 
 const words = copy.pastRange;
 const PAGE = 20;
+// The chart's height: 240 px for lane 1 alone (ticket 12), and 392 px with lane 2, the time estimate (ticket 26).
 const CHART_HEIGHT = 240;
+export const TWO_LANE_HEIGHT = 392;
 
 const months1 = (value: number) => formatNumber(value, { decimals: 1, compact: false });
 const whole = (value: number) => formatNumber(value, { compact: false });
@@ -105,11 +121,17 @@ export function PastRange({
   more,
   quiet = false,
   after,
+  estimate,
+  planDate,
 }: {
   state: PastRangeState;
   headingRef?: Ref<HTMLHeadingElement>;
   open?: OpenComparable;
   planned?: PlannedMonths;
+  // Ticket 26: estimate_time's answer, which draws lane 2, "Compare with" in the heading row, the summary's lane 2
+  // sentences, the track record and the plan-date choice. Without it the section is ticket 12's lane 1 alone.
+  estimate?: EstimateState;
+  planDate?: PlanDateProps;
   // The section's body in place of the result, such as a planned package's plan prompt (ticket 15).
   body?: ReactNode;
   // A status line under the heading, such as "Finding comparable packages for your new criteria.", which
@@ -140,18 +162,82 @@ export function PastRange({
     if (result.quantile_dots) rememberDots(result);
     else forgetDotList();
   }, [canOpen, result]);
+
+  // The section's one polite live region, which says steps and results (the 12 brief), the comparisons too.
+  const [announce, setAnnounce] = useState("");
+  // One comparison at a time: the lever whose "Compare with" segment is pressed (the 26 brief, section 6.2).
+  const [pressed, setPressed] = useState<string | null>(null);
+  const estimateResult = estimate?.status === "ready" ? estimate.result : null;
+  const comparison = estimateResult?.comparisons.find((one) => one.lever === pressed) ?? null;
+  // A new answer comes from new criteria: the comparison it came from is gone, so it is released and said once.
+  const shownEstimate = useRef(estimateResult);
+  const shownComparison = useRef<Comparison | null>(null);
+  shownComparison.current = comparison;
+  useEffect(() => {
+    if (shownEstimate.current === estimateResult) return;
+    const was = shownComparison.current;
+    if (was) setAnnounce(copy.whatIf.announce.criteria(optionWords(was.lever, was.value).inSentence));
+    setPressed(null);
+    shownEstimate.current = estimateResult;
+  }, [estimateResult]);
+  const press = (lever: string | null) => {
+    setPressed(lever);
+    const described = estimated(estimate);
+    const chosen = estimateResult?.comparisons.find((one) => one.lever === lever) ?? null;
+    if (!described?.estimate) return;
+    const b = described.estimate;
+    const one = (value: number) => formatNumber(value, { decimals: 1, compact: false });
+    if (!chosen) {
+      setAnnounce(copy.whatIf.announce.released(one(b.q25), one(b.q75)));
+      return;
+    }
+    const option = optionWords(chosen.lever, chosen.value).inSentence;
+    const k = formatNumber(chosen.k, { compact: false });
+    const n = formatNumber(chosen.n, { compact: false });
+    setAnnounce(
+      chosen.estimate
+        ? copy.whatIf.announce.pressed(option, k, n, one(chosen.estimate.q25), one(chosen.estimate.q75), one(b.q25), one(b.q75))
+        : copy.whatIf.announce.pressedNone(option, k, n),
+    );
+  };
+  // A plan date chosen is said once its save lands (the 26 brief, section 9.6).
+  const savedCount = planDate?.saved ?? 0;
+  useEffect(() => {
+    const dates = estimateResult?.plan_dates;
+    if (!savedCount || !dates || !planDate) return;
+    const months = dates[planDate.chosen ?? dates.default].months;
+    setAnnounce(copy.timeEstimate.planDates.announce(formatNumber(months, { decimals: 1, compact: false })));
+  }, [savedCount]);
+  const populated = result !== null && !body && ["range", "dots", "abstention"].includes(kind(result));
+  let compareSlot: ReactNode = null;
+  if (populated && estimate?.status === "loading") {
+    compareSlot = <Skeleton className="h-8 w-60 rounded-pill" />;
+  } else if (populated && estimateResult && estimateResult.abstention === null && estimateResult.estimate) {
+    compareSlot = <CompareControl result={estimateResult} pressed={pressed} onPress={press} />;
+  }
+
   return (
     <section
       aria-labelledby={headingId}
       aria-busy={loading || busy || undefined}
       data-past-range={body ? "custom" : state.status === "ready" ? kind(state.result) : state.status}
+      data-lane2={estimate ? estimate.status : undefined}
       className="rounded-md border border-line bg-surface p-4 @md/page:p-6"
     >
       <p className="text-label text-ink-muted uppercase">{words.eyebrow}</p>
-      <h2 ref={headingRef} id={headingId} tabIndex={-1} className="mt-1 text-h2 text-ink-heading focus:outline-none">
-        <span aria-hidden="true">{words.number} </span>
-        {words.heading}
-      </h2>
+      {/* "Compare with" sits in the heading row, beside what it changes, and wraps under the heading when the row
+          is too narrow (the 26 brief, section 3.1). */}
+      <div className="mt-1 flex flex-wrap items-center justify-between gap-x-6 gap-y-3" data-heading-row>
+        <h2 ref={headingRef} id={headingId} tabIndex={-1} className="text-h2 text-ink-heading focus:outline-none">
+          <span aria-hidden="true">{words.number} </span>
+          {words.heading}
+        </h2>
+        {compareSlot && (
+          <div className="min-w-0 max-w-full" data-compare>
+            {compareSlot}
+          </div>
+        )}
+      </div>
       {status ? (
         <p className="mt-2 text-small text-ink-muted" data-section-status>
           {status}
@@ -160,7 +246,7 @@ export function PastRange({
         lead && (body || state.status === "ready") && <div className="mt-2">{lead}</div>
       )}
       {body}
-      {!body && state.status === "loading" && <PastRangeSkeleton />}
+      {!body && state.status === "loading" && <PastRangeSkeleton twoLanes={estimate !== undefined} />}
       {!body && state.status === "error" && (
         <div className="mt-4">
           <LoadError
@@ -173,11 +259,27 @@ export function PastRange({
           />
         </div>
       )}
-      {!body && result && <Ready result={result} open={open} planned={planned} more={more} />}
+      {!body && result && (
+        <Ready
+          result={result}
+          open={open}
+          planned={planned}
+          more={more}
+          estimate={estimate}
+          comparison={comparison}
+          planDate={planDate}
+          say={setAnnounce}
+        />
+      )}
       {!body && result && after}
       {loading && !quiet && (
         <p role="status" className="sr-only">
           {words.loading}
+        </p>
+      )}
+      {populated && (
+        <p role="status" className="sr-only" data-live>
+          {announce}
         </p>
       )}
     </section>
@@ -202,7 +304,17 @@ function kind(result: ComparablesResult): Kind {
   }
 }
 
-function Ready({ result, open, planned, more }: { result: ComparablesResult; open?: OpenComparable; planned?: PlannedMonths; more?: ReactNode }) {
+// What lane 2 and its parts need from the section: estimate_time's answer, the comparison pressed in the heading
+// row, the plan-date choice, and the section's live region.
+type Lane2Props = { estimate?: EstimateState; comparison: Comparison | null; planDate?: PlanDateProps; say: (text: string) => void };
+
+function Ready({
+  result,
+  open,
+  planned,
+  more,
+  ...lane2
+}: { result: ComparablesResult; open?: OpenComparable; planned?: PlannedMonths; more?: ReactNode } & Lane2Props) {
   const abstention = result.abstention;
   if (abstention?.reason === "no_public_notice") {
     return (
@@ -257,7 +369,7 @@ function Ready({ result, open, planned, more }: { result: ComparablesResult; ope
       </NoChart>
     );
   }
-  return <Populated result={result} open={open} planned={planned} more={more} />;
+  return <Populated result={result} open={open} planned={planned} more={more} {...lane2} />;
 }
 
 // A state with no chart: a first-person title beside the dashed circle of the neutral state.
@@ -407,7 +519,16 @@ function SourceLine({ result }: { result: ComparablesResult }) {
 
 // ── The populated states ─────────────────────────────────────────────────
 
-function Populated({ result, open: opening, planned, more }: { result: ComparablesResult; open?: OpenComparable; planned?: PlannedMonths; more?: ReactNode }) {
+function Populated({
+  result,
+  open: opening,
+  planned,
+  more,
+  estimate,
+  comparison,
+  planDate,
+  say: setAnnounce,
+}: { result: ComparablesResult; open?: OpenComparable; planned?: PlannedMonths; more?: ReactNode } & Lane2Props) {
   const abstained = result.abstention?.reason === "too_few_comparables";
   const rows = result.rows;
   const total = rows.length;
@@ -424,13 +545,16 @@ function Populated({ result, open: opening, planned, more }: { result: Comparabl
   const [text, setText] = useState(planRowMonths === null ? "" : months1(planRowMonths));
   const [invalid, setInvalid] = useState(false);
   const [axisValue, setAxisValue] = useState<number | null>(planRowMonths);
-  const [announce, setAnnounce] = useState("");
   const [tableOpen, setTableOpen] = useState(abstained);
   const [page, setPage] = useState(0);
   const [measure, width] = useWidth<HTMLDivElement>();
   const narrow = usePageNarrow(measure);
   const inputRef = useRef<HTMLInputElement>(null);
   const captionRef = useRef<HTMLSpanElement>(null);
+  // Ticket 26: the test years under the track record, and the table twin's time estimate table.
+  const [yearsOpen, setYearsOpen] = useState(false);
+  const yearsCaptionRef = useRef<HTMLSpanElement>(null);
+  const estimateCaptionRef = useRef<HTMLDivElement>(null);
   const axisTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const sayTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   useEffect(
@@ -461,7 +585,10 @@ function Populated({ result, open: opening, planned, more }: { result: Comparabl
   // edge instead of stretching the axis to its last follow-up.
   const placed = quantile ? quantile.filter((dot) => dot.reached).map((dot) => dot.months) : rows.map((row) => row.months);
   const range = abstained ? null : result.past_range;
-  const largest = Math.max(...placed, range?.q80 ?? 0, planRowMonths ?? 0, axisValue ?? 0, 0.5);
+  // Ticket 26: lane 2 shares the axis, which covers the largest 8-in-10 point across the time estimate's whole
+  // grid, so pressing a comparison never rescales it.
+  const described = estimated(estimate);
+  const largest = Math.max(...placed, range?.q80 ?? 0, planRowMonths ?? 0, axisValue ?? 0, described?.axis_max_months ?? 0, 0.5);
   const axis = axisFor(largest, width || Number.POSITIVE_INFINITY);
   const say = (months: number) => setAnnounce(words.chart.announce(whole(withinOf(months)), whole(total), months1(months)));
 
@@ -615,7 +742,7 @@ function Populated({ result, open: opening, planned, more }: { result: Comparabl
           line: dot.reached ? c.tipQuantileLine(whole(total)) : c.tipQuantileOpen,
         },
       }))
-    : rows.map((row, index) => markFor(row, index, total));
+    : rows.map((row, index) => markFor(row, index, total, comparison));
 
   const altParts = [
     quantile
@@ -632,6 +759,12 @@ function Populated({ result, open: opening, planned, more }: { result: Comparabl
         : `${c.altMiddle(months1(range.q25), months1(range.q75), months1(range.q50))} ${c.altNoIn10}`,
     );
   } else altParts.push(c.altNoUpper);
+  // Ticket 26: with lane 2 the alt text starts by naming both lanes, and lane 2's sentence follows lane 1's.
+  if (estimate) {
+    altParts.unshift(copy.timeEstimate.alt.lanes(whole(axis.max)));
+    const second = lane2Alt(estimate, comparison, total);
+    if (second) altParts.push(second);
+  }
   if (plan !== null && within !== null) altParts.push(c.altPlan(months1(plan), whole(within), whole(total)));
   if (counts.canceled > 0) {
     altParts.push((counts.canceled_as_still_open ? c.altCanceledCounted : c.altCanceledLeftOut)(counts.canceled, spelled(counts.canceled)));
@@ -672,9 +805,37 @@ function Populated({ result, open: opening, planned, more }: { result: Comparabl
     />
   );
 
+  // Ticket 26: the time estimate's figures open the test-year table, the difference opens the twin at the time
+  // estimate table, a reason's count opens it at the comparables, and a comparison's count opens the drawer's list.
+  const openYears = () => {
+    setYearsOpen(true);
+    requestAnimationFrame(() => yearsCaptionRef.current?.focus());
+  };
+  const openTwin = () => {
+    setTableOpen(true);
+    requestAnimationFrame(() => (estimateCaptionRef.current?.querySelector<HTMLElement>("[data-table-caption]") ?? captionRef.current)?.focus());
+  };
   const summaryBlock = (
     <p className="text-body text-ink" data-summary>
       {summary}
+      {estimate && (
+        <>
+          {" "}
+          <span data-summary-estimate>
+            <EstimateSentences
+              state={estimate}
+              comparison={comparison}
+              links={{
+                onTestYears: openYears,
+                onTwin: openTwin,
+                onWentWith: (shown, element) => {
+                  if (opening) openWentWith(result, { ...shown, key: shown.lever }, optionWords(shown.lever, shown.value).inSentence, element);
+                },
+              }}
+            />
+          </span>
+        </>
+      )}
     </p>
   );
 
@@ -735,11 +896,37 @@ function Populated({ result, open: opening, planned, more }: { result: Comparabl
             opened={opening?.opened ?? null}
             openHint={quantile ? c.openHintDots : c.openHint}
             openLabel={quantile ? c.openDots : c.openRecords}
+            lane2={estimate ? lane2For(estimate, comparison) : undefined}
+            lane2Label={copy.timeEstimate.lane}
+            lane2LabelShort={copy.timeEstimate.laneShort}
+            matching={comparison && !quantile ? new Set(comparison.matching_ids) : null}
+            compareKey={
+              comparison
+                ? {
+                    match: copy.whatIf.key.match(whole(comparison.k), optionWords(comparison.lever, comparison.value).inSentence),
+                    others: copy.whatIf.key.others(whole(comparison.rest)),
+                    open: open > 0 ? copy.whatIf.key.open : null,
+                  }
+                : null
+            }
           />
         )}
-        {width === 0 && <div style={{ height: CHART_HEIGHT }} />}
+        {width === 0 && <div style={{ height: estimate ? TWO_LANE_HEIGHT : CHART_HEIGHT }} />}
       </figure>
       {!narrow && <div className="mt-4">{summaryBlock}</div>}
+      {/* Ticket 26: the track record, its test years and the plan-date choice, about lane 2, after the chart. */}
+      {estimate && (
+        <div className="mt-4" style={{ fontSize: type.s }}>
+          <EstimateExtras
+            state={estimate}
+            planDate={planDate}
+            yearsOpen={yearsOpen}
+            onToggleYears={() => setYearsOpen((now) => !now)}
+            onOpenYears={openYears}
+            yearsCaptionRef={yearsCaptionRef}
+          />
+        </div>
+      )}
       <div className="mt-4 flex flex-col gap-2" style={{ fontSize: type.s }}>
         <Note result={result} />
         <Coverage result={result} check={EXPLAIN_COVERAGE} />
@@ -759,6 +946,11 @@ function Populated({ result, open: opening, planned, more }: { result: Comparabl
         </Button>
       </div>
       <div id={ids.table} hidden={!tableOpen} className="mt-2" data-comparables-table>
+        {tableOpen && described && (
+          <div ref={estimateCaptionRef} className="mb-6">
+            <TimeEstimateTable result={described} comparison={comparison} />
+          </div>
+        )}
         {tableOpen && (
           <ComparablesTable
             result={result}
@@ -767,27 +959,27 @@ function Populated({ result, open: opening, planned, more }: { result: Comparabl
             onPage={setPage}
             captionRef={captionRef}
             open={opening}
+            comparison={comparison}
           />
         )}
       </div>
-      <p role="status" className="sr-only" data-live>
-        {announce}
-      </p>
     </div>
   );
 }
 
-function markFor(row: Comparable, index: number, total: number): RangeMark {
+function markFor(row: Comparable, index: number, total: number, comparison: Comparison | null = null): RangeMark {
   const c = words.chart;
   const m = months1(row.months);
   const country = row.country_name ?? copy.notInRecord;
+  const own = row.still_open
+    ? c.dotOpen(row.step_reference, country, m, whole(index + 1), whole(total))
+    : c.dotSigned(row.step_reference, country, m, formatDate(row.signed_on!), whole(index + 1), whole(total));
   return {
     key: row.step_reference,
     months: row.months,
     hollow: row.still_open,
-    name: row.still_open
-      ? c.dotOpen(row.step_reference, country, m, whole(index + 1), whole(total))
-      : c.dotSigned(row.step_reference, country, m, formatDate(row.signed_on!), whole(index + 1), whole(total)),
+    // While comparing, its name also says whether it went with the option (the 26 brief, section 9.4).
+    name: comparison ? `${own} ${dotComparisonName(comparison, row.step_reference)}` : own,
     tip: {
       header: row.step_reference,
       mono: true,
@@ -904,6 +1096,7 @@ function ComparablesTable({
   onPage,
   captionRef,
   open,
+  comparison = null,
 }: {
   result: ComparablesResult;
   plan: number | null;
@@ -911,6 +1104,8 @@ function ComparablesTable({
   onPage: (page: number) => void;
   captionRef: Ref<HTMLSpanElement>;
   open?: OpenComparable;
+  // Ticket 26: while comparing, a column says whether each package went with the option.
+  comparison?: Comparison | null;
 }) {
   const t = words.table;
   const rows = result.rows;
@@ -942,6 +1137,7 @@ function ComparablesTable({
       width: "w-[9rem]",
     },
     ...(plan === null ? [] : [{ key: "within", header: t.columns.within(months1(plan)), short: true }]),
+    ...(comparison ? [{ key: "wentWith", header: copy.whatIf.table.column(optionWords(comparison.lever, comparison.value).inSentence), short: true }] : []),
   ];
   const tableRows: Row[] = shown.map((row) => ({
     id: row.step_reference,
@@ -967,6 +1163,7 @@ function ComparablesTable({
       signed: row.signed_on ? tableDate(row.signed_on) : t.stillOpen,
       months: months1(row.months),
       within: plan === null ? null : row.still_open ? (row.months <= plan ? t.notYet : t.no) : row.months <= plan ? t.yes : t.no,
+      wentWith: comparison ? wentWithCell(comparison, row.step_reference) : null,
     },
   }));
   return (
@@ -1007,7 +1204,7 @@ function ComparablesTable({
 // after the title, and the helper's place is at least the reset button's height; from 768 px the summary follows
 // the chart. Its type sizes are the chart's own (chartType), read from the section's width, as the
 // populated section reads them.
-function PastRangeSkeleton() {
+function PastRangeSkeleton({ twoLanes = false }: { twoLanes?: boolean }) {
   const [measure, width] = useWidth<HTMLDivElement>();
   const type = chartType(width || 800);
   const lines = (count: number, last = "w-3/5") => Array.from({ length: count }, (_, index) => (index === count - 1 ? last : "w-full"));
@@ -1027,10 +1224,18 @@ function PastRangeSkeleton() {
       {/* Below 768 px the helper's place holds the reset button too, so it is at least 44 px tall. */}
       <SkeletonText className="min-h-11 text-caption @md/page:hidden" widths={lines(2)} />
       <SkeletonLine className="hidden text-caption @md/page:flex" width="w-3/5" />
-      <div className="mt-4" style={{ height: CHART_HEIGHT }} data-chart-skeleton>
+      <div className="mt-4" style={{ height: twoLanes ? TWO_LANE_HEIGHT : CHART_HEIGHT }} data-chart-skeleton>
         <Skeleton className="h-full w-full rounded-md" />
       </div>
       <SkeletonText className="mt-4 hidden pb-2 text-body @md/page:flex" widths={lines(3, "w-2/5")} />
+      {/* Ticket 26: the track record and the plan-date choice keep 112 px, so nothing jumps when they land. */}
+      {twoLanes && (
+        <div className="mt-4 flex min-h-28 flex-col gap-2" style={{ fontSize: type.s }}>
+          <SkeletonLine width="w-full" />
+          <SkeletonLine width="w-3/5" />
+          <Skeleton className="h-8 w-full max-w-90 rounded-pill" />
+        </div>
+      )}
       <div className="mt-4 flex flex-col gap-2" style={{ fontSize: type.s }}>
         <SkeletonText className="@md/page:hidden" widths={lines(3)} />
         <SkeletonText className="hidden @md/page:flex" widths={lines(2)} />
