@@ -275,14 +275,18 @@ def past_range(result, question) -> dict[str, list]:
 
 def disagreement_answer(result, question) -> dict[str, list]:
     """get_disagreements' answer: each disagreement's two sides by evidence id in the order written, the side
-    it leans on, the ladder's rule, the sides that carry their passage's words for a quote, and, from the
-    summary record the agent cites them by, the runs of the trajectory, each as [rating, first ISR, last ISR],
-    and the count of assertions the run left out."""
+    it leans on, the ladder's rule, the sides that carry their passage's words for a quote, the passages whose
+    words the coverage line says it kept from the agent because Prompt Shields found an attack or never screened
+    them (ticket 64), and, from the summary record the agent cites them by, the runs of the trajectory, each as
+    [rating, first ISR, last ISR], and the count of assertions the run left out."""
     evidence = {side["assertion_id"]: side["evidence_id"] for row in result["rows"] for side in row["sides"]}
+    left_out = [evidence for entry in result["coverage"]["not_used"]
+                if entry["reason"] in ("prompt_shields_hit", "not_screened") for evidence in entry["evidence_ids"]]
     return {"disagreements": [[side["evidence_id"] for side in row["sides"]] for row in result["rows"]],
             "leans_on": [evidence[row["lean_assertion_id"]] for row in result["rows"]],
             "rules": [row["rule_id"] for row in result["rows"]],
             "quotable_sides": [side["evidence_id"] for row in result["rows"] for side in row["sides"] if side["text"]],
+            "left_out": sorted(left_out),
             "cited_as": [result["summary"]["evidence_id"]],
             "trajectory_runs": [[run["value"], run["first_sequence"], run["last_sequence"]]
                                 for trajectory in result["summary"]["trajectories"] for run in trajectory["runs"]],

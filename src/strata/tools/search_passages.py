@@ -9,7 +9,8 @@ returns is a row the app holds, with its evidence id, public date and source lin
 
 A passage in which Prompt Shields found a prompt attack when it was read in is left out, and the
 coverage line counts it with its evidence id. So is a passage with no stored result, which the
-shield never screened. The coverage line also says how many matched passages ranked below the limit. A document type or sector the slice does not know, or a query nothing
+shield never screened. The rule and its reason codes are strata.knowledge.shields.held_back's, which
+get_disagreements follows too. The coverage line also says how many matched passages ranked below the limit. A document type or sector the slice does not know, or a query nothing
 matches, is an abstention, whose reason the registry lists.
 
 The call's view (staff, piu or public) is returned with the result but not yet applied: until
@@ -23,6 +24,7 @@ import json
 from importlib import resources
 
 from strata.config import load_slice, load_sources
+from strata.knowledge import shields
 from strata.knowledge.retrieval.demotion import lowered, rank
 from strata.knowledge.retrieval.kinds import query_kind
 from strata.knowledge.search import Filters, searcher_for
@@ -174,15 +176,13 @@ def search_passages(call: Call, query: str, project_id: str | None = None, docum
     result = call.engine.run(_sql("passages.sql"), {"ids": ",".join(hit.passage_id for hit in hits.hits),
                                                     "as_of": call.as_of})
     held = {row["passage_id"]: row for row in (dict(zip(result.columns, row)) for row in result.rows)}
-    kept, left_out = [], {"prompt_shields_hit": [], "not_screened": []}
+    kept, left_out = [], {reason: [] for reason in shields.LEFT_OUT}
     for hit in hits.hits:
         found = held.get(hit.passage_id)
         if found is None:
             continue  # the index named a passage the viewer's table does not hold as of this date
-        if found["attack_detected"] is None or found["attack_detected"] == "":
-            left_out["not_screened"].append(f"{TABLE}:{hit.passage_id}")
-        elif _boolean(found["attack_detected"]):
-            left_out["prompt_shields_hit"].append(f"{TABLE}:{hit.passage_id}")
+        if reason := shields.held_back(found["attack_detected"]):
+            left_out[reason].append(f"{TABLE}:{hit.passage_id}")
         else:
             kept.append((found, hit.score))
     # A passage a passage reviewer ranked lower for this kind of question moves below the others, and stays:
@@ -191,7 +191,7 @@ def search_passages(call: Call, query: str, project_id: str | None = None, docum
     ranked_lower = lowered(call.engine, kind, call.as_of)
     kept = rank(kept, lambda pair: pair[0]["passage_id"], ranked_lower)
     rows = [_row(found, rank_, score) for rank_, (found, score) in enumerate(kept[:limit], 1)]
-    not_used = [{"reason": reason, "count": len(ids), "evidence_ids": ids} for reason, ids in left_out.items() if ids]
+    not_used = shields.coverage_entries(left_out)
     below = hits.matched - len(rows) - sum(len(ids) for ids in left_out.values())
     if below > 0:
         not_used.append({"reason": "ranked_below_limit", "count": below, "evidence_ids": []})
