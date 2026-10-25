@@ -113,16 +113,19 @@ class PoliteFetch:
     """fetch(url) for the World Bank's document host, as the nightly job asks it (ticket 43).
 
     It waits pause seconds after the previous request before the next (config/sources.toml, the documents
-    source's pause_seconds), keeps each answer in the cache folder, by its address's hash, so a document
-    is fetched once and never again (on the workspace, the bronze files volume, which serverless compute
-    reads as a folder), and raises HostRefused when the host answers 403 or 429."""
+    source's pause_seconds), keeps each answer whose address keep(url) accepts in the cache folder, by its
+    address's hash, so a document is fetched once and never again (on the workspace, the bronze files volume,
+    which serverless compute reads as a folder), and raises HostRefused when the host answers 403 or 429. A
+    project's document list is not kept: its address is the same every night, and a kept list would hide every
+    document disclosed after the first (strata.lakehouse.readers.document_host)."""
 
-    def __init__(self, fetch, pause: float, cache=None, sleep=None, clock=None):
+    def __init__(self, fetch, pause: float, cache=None, sleep=None, clock=None, keep=None):
         import time
         from pathlib import Path
 
         self.fetch, self.pause = fetch, pause
         self.cache = Path(cache) if cache else None
+        self.keep = keep or (lambda url: True)
         self.sleep, self.clock = sleep or time.sleep, clock or time.monotonic
         self.last: float | None = None
         self.asked = 0  # requests that reached the host, for the tests and the run's report
@@ -130,7 +133,9 @@ class PoliteFetch:
     def _cached(self, url: str):
         import hashlib
 
-        return self.cache / hashlib.sha256(url.encode("utf-8")).hexdigest() if self.cache else None
+        if self.cache is None or not self.keep(url):
+            return None
+        return self.cache / hashlib.sha256(url.encode("utf-8")).hexdigest()
 
     def __call__(self, url: str) -> bytes:
         import urllib.error

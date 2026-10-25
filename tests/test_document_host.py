@@ -14,7 +14,7 @@ import pytest
 from strata import config
 from strata.lakehouse import catalog, nightly, readers
 from strata.lakehouse.engine import DuckDBEngine
-from strata.reader.documents import HostRefused, PoliteFetch, RecordedDocuments
+from strata.reader.documents import HostRefused, PoliteFetch, RecordedDocuments, list_url
 
 NIGHT = dt.datetime(2026, 10, 24, 7, tzinfo=dt.UTC)
 
@@ -63,6 +63,22 @@ def test_the_live_fetch_waits_between_requests_and_asks_for_each_document_once(t
     assert clock.slept == [2.0]
     assert PoliteFetch(host, 3.0, cache=tmp_path / "fetched")("https://documents.worldbank.org/b.pdf").startswith(b"the")
     assert len(host.asked) == 2
+
+
+def test_the_job_asks_for_each_project_s_document_list_every_night_and_keeps_only_the_documents(tmp_path):
+    """The job's fetch keeps each document it fetched, but never a project's list: the list's address is the same
+    every night, and a kept list would hide every document disclosed after the first night (review B1)."""
+    host, clock = Host(), Clock()
+    fetch = readers.document_host(host, tmp_path / "fetched", sleep=clock.sleep, clock=clock)
+    listing = list_url(config.load_sources()["documents"].endpoint, "P156634")
+    pdf = "https://documents.worldbank.org/curated/en/099/a.pdf"
+
+    fetch(listing)
+    fetch(pdf)
+    fetch(listing)  # the next night
+    fetch(pdf)
+
+    assert host.asked == [listing, pdf, listing]
 
 
 def test_a_refusal_from_the_host_stops_the_fetch(tmp_path):

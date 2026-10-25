@@ -75,8 +75,20 @@ def recorded(manifest=None, documents: Documents | None = None) -> Readers:
                                                                            passages.default_projects(engine)))
 
 
-SCOPE_KEYS = ("AZURE_OPENAI_ENDPOINT", "AZURE_OPENAI_API_KEY", "AI_SEARCH_ENDPOINT")
 CACHE = "/Volumes/strata/bronze/files/fetched"  # the bundle's bronze files volume, a folder on serverless compute
+
+
+def document_host(fetch, cache, sleep=None, clock=None):
+    """fetch(url) for the World Bank's document host as the job asks it: the documents source's pause between
+    requests (config/sources.toml), each document kept in cache once fetched, and each project's document list,
+    the documents API's endpoint, asked for again every night, so a document disclosed since is found."""
+    from strata.reader.documents import PoliteFetch
+    from strata.reader.layout import https
+
+    source = load_sources()[SOURCE]
+    lists = https(source.endpoint)
+    return PoliteFetch(fetch, source.pause_seconds or 0.0, cache, sleep=sleep, clock=clock,
+                       keep=lambda url: not https(url).startswith(lists))
 
 
 def live(engine: Engine, environ: Mapping[str, str] | None = None) -> Readers:
@@ -86,12 +98,11 @@ def live(engine: Engine, environ: Mapping[str, str] | None = None) -> Readers:
     from strata.fixture.record import fetch_url
     from strata.knowledge.embed import AzureOpenAIEmbeddings
     from strata.knowledge.shields import PromptShields, content_safety_endpoint
-    from strata.reader.documents import LiveDocuments, PoliteFetch
+    from strata.reader.documents import LiveDocuments
     from strata.reader.layout import PARSERS
 
     env = os.environ if environ is None else environ
-    fetch = PoliteFetch(fetch_url, load_sources()[SOURCE].pause_seconds or 0.0,
-                        CACHE if os.path.isdir(os.path.dirname(CACHE)) else None)
+    fetch = document_host(fetch_url, CACHE if os.path.isdir(os.path.dirname(CACHE)) else None)
     layout = PARSERS[load_layout_parser()](engine, upload=_write_to_volume, fetch=fetch)
     endpoint, key = env.get("AZURE_OPENAI_ENDPOINT", "").strip(), env.get("AZURE_OPENAI_API_KEY", "").strip()
     shield = embedder = None
