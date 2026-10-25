@@ -1798,7 +1798,7 @@ It worked if the first deploy exits 0, lists `strata.ops.quality_checks` and `st
 
 Then, after the next scheduled run (03:00 America/New_York), take its run id from the job's page and run:
 
-    uv run --script ops/bundle/check.py job-run --env-file .env --run-id <the scheduled run's id>
+    uv run --script ops/bundle/check.py job-run --env-file .env --run-id <scheduled-run-id>
 
 It worked if it exits 0 with the same ten task lines and "finished inside the job's window of 150 minutes". That is criterion 2.
 
@@ -1818,7 +1818,7 @@ The merger parked this step on October 25, 2026, after merge commit 60cf29b, whi
 
 After a repair run of `strata nightly`, run this from the main checkout:
 
-    uv run --script ops/bundle/check.py job-run --env-file .env --run-id <the repaired run's id>
+    uv run --script ops/bundle/check.py job-run --env-file .env --run-id <repaired-run-id>
 
 It worked if it exits 0 and prints "<task> was tried N times; the first N-1 failed and the last succeeded." for the repaired task. Then, in the SQL editor, check whether the tries can be told apart by more than their times:
 
