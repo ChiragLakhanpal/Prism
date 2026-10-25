@@ -14,12 +14,18 @@ It reads strata.silver.notices.notice_text, the notice after the fetch removed c
 never the recorded files, which keep them on purpose (data/fixture/README.md). A name the fetch
 removed as a person's contact detail stays removed. read() takes the text and gives plain rows, and
 store() adds the rows of each notice page not read yet to strata.silver.notice_bidders.
+
+read_bids() reads every bid the notice lists, in its order: the awarded, evaluated and rejected ones,
+each with its prices as the notice writes them and its Reason for Rejection word for word (ticket 22).
+The members of a joint venture are listed one after another before their one price, so they share one
+bid. store_bids() adds them to strata.silver.notice_bids, which the contract trail shows. A notice that
+lists evaluation scores or ranks is marked, and the scores are never kept.
 """
 
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from importlib import resources
 
 from strata.lakehouse import clean
@@ -109,3 +115,105 @@ def store(engine: Engine) -> int:
                           bidder.name, bidder.step_supplier_id, bidder.country, bidder.individual_consultant,
                           notice["page_hash"], notice["fetched_at"], notice["public_from"]))
     return engine.insert_rows("strata.silver.notice_bidders", COLUMNS, added)
+
+
+# ── Every bid an award notice lists (ticket 22) ─────────────────────────
+
+SECTIONS = {"Awarded Bidder(s):": "awarded", "Awarded Firm(s):": "awarded", "Awarded Firm/Individual:": "awarded",
+            "Evaluated Bidder(s):": "evaluated", "Evaluated Firm(s):": "evaluated",
+            "Rejected Bidder(s):": "rejected", "Rejected Firm(s):": "rejected"}
+END = ("Beneficial Ownership Details",)
+# Each price heading, whose value is on the next line, by the field it fills.
+PRICES = {"Bid Price at Opening": "price_at_opening", "Read Out Price": "price_at_opening",
+          "Evaluated Bid Price": "evaluated_price", "Final Evaluation Price": "evaluated_price",
+          "Signed Contract price": "signed_price", "Signed Contract Price": "signed_price",
+          "Reason for Rejection": "reason"}
+SCORES = re.compile(r"^(Scores\b|Rank:|Combined:|Technical:|Financial:)", re.IGNORECASE)
+PRICE = re.compile(r"^(?P<currency>[A-Z]{3})\b\s*(?P<amount>.*)$")
+
+BID_COLUMNS = ("notice_id", "bid", "member", "project_id", "step_reference", "section", "name", "step_supplier_id",
+               "country", "individual_consultant", "currency", "price_at_opening", "evaluated_price", "signed_price",
+               "reason", "price_at_opening_label", "evaluated_price_label", "notice_lists_scores", "page_hash",
+               "fetched_at", "public_from")
+
+
+@dataclass
+class Bid:
+    bid: int
+    section: str
+    members: list[Bidder]
+    currency: str | None = None
+    price_at_opening: str | None = None
+    evaluated_price: str | None = None
+    signed_price: str | None = None
+    reason: str | None = None
+    labels: dict = field(default_factory=dict)
+
+
+def _price(value: str) -> tuple[str | None, str | None]:
+    """A price line as the notice writes it, split into its currency and its amount: "KES 61503269.60"."""
+    written = PRICE.match(value.strip())
+    if not written:
+        return None, value.strip() or None
+    return written["currency"], written["amount"].strip() or None
+
+
+def read_bids(text: str | None) -> tuple[list[Bid], bool]:
+    """Every bid a notice's plain text lists, in its order, and whether it lists evaluation scores or ranks."""
+    bids: list[Bid] = []
+    section, block, current, priced, expect, scores = None, [], None, False, None, False
+    for line in (line.strip() for line in (text or "").split("\n")):
+        if expect is not None:  # the line after a price heading holds its value
+            key, label = expect
+            expect = None
+            if current is not None:
+                if key == "reason":
+                    current.reason = line or None
+                else:
+                    currency, amount = _price(line)
+                    current.currency = current.currency or currency
+                    setattr(current, key, amount)
+                    current.labels[key] = label
+                priced = True
+            continue
+        if line in SECTIONS:
+            section, block, current, priced = SECTIONS[line], [], None, False
+        elif line.startswith(END):
+            section, current = None, None
+        elif section is None:
+            continue
+        elif line.startswith(COUNTRY):
+            name, block = _first_name_line(block), []
+            if name is None:
+                continue
+            member = _bidder(name, line[len(COUNTRY):], 1)
+            if current is not None and not priced:  # a joint venture's next member, before their one price
+                current.members.append(Bidder(len(current.members) + 1, member.name, member.step_supplier_id,
+                                              member.country, member.individual_consultant))
+            else:
+                current, priced = Bid(len(bids) + 1, section, [member]), False
+                bids.append(current)
+        elif line in PRICES:
+            expect = (PRICES[line], line)
+        elif SCORES.match(line):
+            scores = True
+        else:
+            block.append(line)
+    return bids, scores
+
+
+def store_bids(engine: Engine) -> int:
+    """Add every bid of each Contract Award notice page not read yet. Returns the rows added."""
+    result = engine.run(_sql("bid_notices_to_read.sql"))
+    added = []
+    for notice in (dict(zip(result.columns, row)) for row in result.rows):
+        bids, scores = read_bids(notice["notice_text"])
+        for bid in bids:
+            for member in bid.members:
+                added.append((notice["notice_id"], bid.bid, member.position, notice["project_id"],
+                              notice["step_reference"], bid.section, member.name, member.step_supplier_id,
+                              member.country, member.individual_consultant, bid.currency, bid.price_at_opening,
+                              bid.evaluated_price, bid.signed_price, bid.reason, bid.labels.get("price_at_opening"),
+                              bid.labels.get("evaluated_price"), scores, notice["page_hash"], notice["fetched_at"],
+                              notice["public_from"]))
+    return engine.insert_rows("strata.silver.notice_bids", BID_COLUMNS, added)

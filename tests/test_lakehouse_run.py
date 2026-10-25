@@ -213,6 +213,11 @@ CHECKS = {
     "award-541055-signed": contract_signed,
     "award-541062-signed": contract_signed,
     "award-229129-signed": contract_signed,
+    # KE-NWWDA-229129-CW-RFB's contract trail (ticket 22).
+    "award-229129-amount": supplier_share,
+    "award-229129-supplier": contract_supplier_id,
+    "notice-229129-invitation": notice_date,
+    "award-notice-229129-published": notice_date,
     "award-541055-amount": supplier_share,
     "award-notice-541055": notice_date,
     # The evidence ladder's two record ties (ticket 20).
