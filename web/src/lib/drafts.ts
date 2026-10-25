@@ -1,8 +1,8 @@
 // Drafts in the browser (ticket 35): the shapes the draft routes answer with (src/strata/server/drafts.py),
 // the acts a draft's author takes, the writing stream, and what one page hands the next. Every count a
 // draft screen states comes from the server; nothing here counts sources, notes or citations.
-import type { ChecksEvent, EvidenceEvent, RemovedEvent, SentenceEvent } from "./answer";
-import { ApiError, postJson } from "./api";
+import type { ChecksEvent, DisagreementEvent, EvidenceEvent, RemovedEvent, SentenceEvent } from "./answer";
+import { ApiError, postJson, putJson } from "./api";
 import type { Activity, CheckPlanResult } from "./api";
 import { streamEvents, StreamError } from "./sse";
 import { createStore } from "./store";
@@ -25,6 +25,15 @@ export type DraftNote = {
   table?: BriefRecord[];
   totals?: Record<string, any> | null;
   agencies_without_plans?: string[];
+  // A suggested PPSD row's cell (ticket 36): its key, the row it belongs to and which of Strata's two cells it is.
+  cell_key?: string;
+  row_key?: string;
+  cell?: "risk_description" | "mitigation";
+  // A Project Paper summary's part (ticket 36): the PPSD drafts it drew on, and the track record's counts.
+  drafts?: { draft_id: string; package_title: string | null; checked_by: string | null; checked_at: string | null; rows: number }[];
+  counts?: Record<string, number | null> | null;
+  packages?: { evidence_id: string; step_reference: string; first_planned_on: string | null; signed_on: string | null; state: string }[];
+  signed_from?: string;
 };
 
 // One record behind a mission brief's part (project_records): its fields by key, as the evidence drawer shows it.
@@ -62,12 +71,77 @@ export type DraftSubject = {
   isr_date?: string | null;
   isr_sequence?: number | null;
   closing_date?: string | null;
+  // Suggested PPSD rows' package (ticket 36): its title, its STEP reference or none yet, and a planned package's id.
+  package_title?: string;
+  step_reference?: string | null;
+  package_id?: string | null;
+  // The Project Paper summary's count of the project's implementing agencies with plans (ticket 36).
+  agencies_with_plans?: number | null;
 };
 
 export type DraftFile = { name: string; media_type: string; size: number };
 
 // The kinds of draft (config/drafts.toml); each has its words under copy.draft.kinds.<kind>.
-export type DraftKind = "review_notes" | "mission_brief";
+export type DraftKind = "review_notes" | "mission_brief" | "ppsd_rows" | "project_paper";
+
+// A hold that keeps a draft from export (config/drafts.toml): how many items it has left, and the anchor of the
+// first, which the bar's hold line links to (ticket 36).
+export type Hold = { key: string; copy: string; left: number; first_anchor: string | null };
+
+// Suggested PPSD rows (ticket 36): the template registry's columns for each form, the guidance's ratings and stages,
+// the Table I result, the rows, the values people set and the counts the progress line states. Every count is the
+// server's.
+export type PpsdColumn = {
+  key: string;
+  header: string;
+  letter: string | null;
+  filled_by: "strata" | "people";
+  control: "text" | "rating" | "score" | "stage" | null;
+  hold: "owners" | "ratings" | null;
+  max_length: number | null;
+};
+export type PpsdSource = {
+  evidence_id: string;
+  doc_short: string;
+  doc_type: string;
+  pcode: string;
+  locator: { kind: string; text: string };
+  page: number | null;
+  date: string | null;
+};
+export type PpsdRow = {
+  row_key: string;
+  risk_key: string;
+  risk_label: string;
+  k: number;
+  m: number;
+  counts_evidence_id: string;
+  lesson: { id: string; evidence_id: string; version: number; decided_on: string | null };
+  sources: PpsdSource[];
+  cells: { risk_description: string; mitigation: string };
+  removed?: boolean;
+};
+export type TableI = { applies: boolean; amount: string | null; threshold: string | null; currency: string; category: string | null; risk_level: string };
+export type PpsdView = {
+  form: "short" | "long";
+  forms: Record<"short" | "long", { name: string; columns: PpsdColumn[] }>;
+  ratings: { value: number; label: string; short: string }[];
+  score: { definition: string; minimum: number; maximum: number };
+  stages: string[];
+  table_i: TableI;
+  selected: number;
+  rows: PpsdRow[];
+  values: { row_key: string; field: string; value: string | null }[];
+  counts: { total: number; owners_set: number; rated: number };
+};
+// One footnote per marker (ticket 36): the sources the marker carries and the text Word gets, which the page shows
+// as its "In Word:" line.
+export type Footnote = { number: number; evidence_ids: string[]; text: string; row_key: string; cell: string; sentence: number; position: number };
+export type SummaryView = {
+  agencies_with_plans: number | null;
+  ppsd_rows: number;
+  parts: { part: string; reason: string | null; state: string | null }[];
+};
 
 export type Draft = {
   draft_id: string;
@@ -80,7 +154,8 @@ export type Draft = {
   discarded: Who | null;
   subject: DraftSubject;
   counts: { signal: number; written: number };
-  written: { notes: number; sentences: number };
+  // Suggested PPSD rows also keep how many rows the writer wrote (ticket 36): two cells each.
+  written: { notes: number; sentences: number; rows?: number };
   notes: DraftNote[];
   evidence: Record<string, EvidenceEvent>;
   checks: ChecksEvent;
@@ -91,7 +166,16 @@ export type Draft = {
   citations: number;
   opened: { count: number; of: number };
   layout: { columns: string[]; export: "word"; sources_list: boolean; removed_box: "always" | "when_removed"; not_checked: string[] };
-  holds: { key: string; copy: string }[];
+  holds: Hold[];
+  // Ticket 36: suggested PPSD rows' form, fields and footnotes, a summary's parts, and the disagreements check 6
+  // attached with the report kept on each.
+  ppsd?: PpsdView;
+  footnotes?: Footnote[];
+  summary?: SummaryView;
+  disagreements?: DisagreementEvent[];
+  choices?: { disagreement_id: string; kept: "lean" | "other"; reason: string | null; at: string | null; by: string | null }[];
+  // A state made up for layout only (tests/record_ppsd_api.py), never a finding.
+  made_up?: string;
   may_act: boolean;
   export: {
     export_id: string;
@@ -121,6 +205,8 @@ export type DraftRow = {
   checked: Who | null;
   exported: Who | null;
   opened: { count: number; of: number } | null;
+  // Suggested PPSD rows' progress (ticket 36): owners set and rows rated, from the server.
+  progress?: { total: number; owners_set: number; rated: number; form: "short" | "long"; rows: number };
 };
 
 export type DraftGroup = "to_check" | "checked" | "exported";
@@ -164,8 +250,28 @@ export function fileHref(draftId: string, name: string): string {
 
 // The draft page's address, and the writing page's for a plan version.
 export const draftHref = (draftId: string) => `/drafts/${encodeURIComponent(draftId)}`;
-export function writingHref(pid: string, agencyId: string, version: string): string {
-  return `/drafts/new?${new URLSearchParams({ kind: "review_notes", pid, agency: agencyId, version }).toString()}`;
+export function writingHref(pid: string, agencyId: string, version: string, kind: DraftKind = "review_notes"): string {
+  return `/drafts/new?${new URLSearchParams({ kind, pid, agency: agencyId, version }).toString()}`;
+}
+export const ppsdWritingHref = (packageId: string) => `/drafts/new?${new URLSearchParams({ kind: "ppsd_rows", package: packageId }).toString()}`;
+
+// A person's own value on a field only people fill (ticket 36): a risk owner, a rating, the score or the stage, or
+// its removal (null). The server answers with the draft as its page now shows it.
+export function setField(draft: Draft, rowKey: string, field: string, value: string | null, view: string | null): Promise<Draft> {
+  return putJson<Draft>(`/api/drafts/${encodeURIComponent(draft.draft_id)}/fields`, {
+    row_key: rowKey, field, value, view: view === "piu" || view === "public" ? view : "staff",
+  });
+}
+
+export function setForm(draft: Draft, form: "short" | "long", view: string | null): Promise<Draft> {
+  return putJson<Draft>(`/api/drafts/${encodeURIComponent(draft.draft_id)}/form`, {
+    form, view: view === "piu" || view === "public" ? view : "staff",
+  });
+}
+
+// The latest value a person set on one field of one row.
+export function valueOf(draft: Draft, rowKey: string, field: string): string | null {
+  return draft.ppsd?.values.find((entry) => entry.row_key === rowKey && entry.field === field)?.value ?? null;
 }
 
 // ── Writing ──────────────────────────────────────────────────────────────
@@ -174,6 +280,11 @@ export type WriteStep = {
   id: "read" | "write" | "check" | "save";
   status: "running" | "done";
   plan_date?: string;
+  // What suggested PPSD rows' and a Project Paper summary's read step read, and the rows the writer wrote (ticket 36).
+  selected?: number;
+  rows?: number;
+  packages?: number;
+  ppsd_rows?: number;
   // What a mission brief's read step read (ticket 37).
   plans?: number;
   awards?: number;
@@ -189,13 +300,27 @@ export type WriteStep = {
 
 // A draft being written: what Check a plan handed over, and the stream's events so far.
 export type Writing = {
-  // A mission brief (ticket 37) names only its project.
-  request: { kind: DraftKind; project_id: string; agency_id?: string; plan_date?: string; idempotency_key: string };
+  // A mission brief (ticket 37) names only its project; suggested PPSD rows (ticket 36) name their package, and its
+  // section 1 criteria for a package from a STEP row.
+  request: {
+    kind: DraftKind;
+    project_id?: string;
+    agency_id?: string;
+    plan_date?: string;
+    package?: string;
+    criteria?: Record<string, string | number>;
+    idempotency_key: string;
+  };
   // The plan check the client held when the person asked, for the activity cells that show at once; none for a
   // mission brief, which shows its project and its five part headings instead.
   plan: CheckPlanResult | null;
   rows: Activity[];
   project?: { project_id: string; project_name: string; country: string | null };
+  // Suggested PPSD rows' package as the workspace showed it, and how many risks were selected, for the header and
+  // the skeleton rows (ticket 36).
+  package?: { id: string; title: string; step_reference: string | null; selected: number };
+  // The Project Paper summary's plan, for its header (ticket 36).
+  summaryPlan?: { project_id: string; project_name: string; agency_id: string; implementing_agency: string; plan_date: string };
   phase: "writing" | "done" | "nothing" | "failed" | "dropped";
   steps: WriteStep[];
   draftId: string | null;
@@ -212,6 +337,9 @@ export const writing = createStore<Writing | null>(null);
 export const preloaded = createStore<Record<string, Draft>>({});
 // Check a plan's notice after "Stop writing", shown once.
 export const stopped = createStore<string | null>(null);
+// What the Project Paper summary's Stop writing adds to the plan check's address in that store, so the check's
+// notice names the summary (ticket 36).
+export const PROJECT_PAPER_STOPPED = "#project_paper";
 // The project a draft page is about, for the box's scope chip (App.tsx).
 export const draftScope = createStore<string | null>(null);
 
@@ -245,13 +373,30 @@ function withEvent(current: Writing, type: string, data: any): Writing {
 
 // Start writing: one request with one idempotency key, so a double click or React's StrictMode never
 // starts two writers. A writing already started for the same key is left alone.
-export function startWriting(request: Writing["request"], plan: CheckPlanResult | null, rows: Activity[], project?: Writing["project"]) {
+export function startWriting(request: Writing["request"], plan: CheckPlanResult | null, rows: Activity[], project?: Writing["project"],
+  extra: Pick<Writing, "package" | "summaryPlan"> = {}) {
   const current = writing.get();
   if (current && current.request.idempotency_key === request.idempotency_key && current.phase === "writing") return;
   stopping?.abort();
   stopping = new AbortController();
-  writing.set({ request, plan, rows, project, phase: "writing", steps: [], draftId: null, removed: [], checks: null, error: null, reference: null, lastEventAt: Date.now() });
+  writing.set({ request, plan, rows, project, ...extra, phase: "writing", steps: [], draftId: null, removed: [], checks: null,
+    error: null, reference: null, lastEventAt: Date.now() });
   void run(request, stopping.signal);
+}
+
+// "Suggest {n} PPSD risk rows" on the package workspace (ticket 36): start the writer for the package, and the
+// writing page's address. The server reads the risks selected in section 3 itself; the request never carries them.
+export function startPpsdRows(pkg: NonNullable<Writing["package"]>, criteria: Record<string, string | number> | null): string {
+  startWriting({ kind: "ppsd_rows", package: pkg.id, ...(criteria ? { criteria } : {}), idempotency_key: newKey() }, null, [],
+    undefined, { package: pkg });
+  return ppsdWritingHref(pkg.id);
+}
+
+// "Draft a Project Paper summary" at the end of Check a plan (ticket 36).
+export function startProjectPaper(plan: NonNullable<Writing["summaryPlan"]>): string {
+  startWriting({ kind: "project_paper", project_id: plan.project_id, agency_id: plan.agency_id, plan_date: plan.plan_date,
+    idempotency_key: newKey() }, null, [], undefined, { summaryPlan: plan });
+  return writingHref(plan.project_id, plan.agency_id, plan.plan_date, "project_paper");
 }
 
 // "Add to mission brief" on a Following row (ticket 37): start the writer for the project, and the writing page's

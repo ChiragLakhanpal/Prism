@@ -2994,3 +2994,267 @@ notice = "OP00118816"
 quote = "at least two (2) projects of similar nature"
 record = "api/notices/P156634.json"
 at = "procnotices[id=OP00118816].notice_text"
+
+# The PPSD templates and guidance (ticket 36). The template registry (config/ppsd_templates.toml) copies
+# each risk table's column names, the ratings and the stages from these, and config/thresholds.toml's
+# [ppsd_table_i] copies Table I; tests/test_ppsd_templates.py checks both against these entries. The
+# templates and the guidance belong to no project, so project is empty. The Long Form template's text
+# layer reads its header cells out of order (A and B sit above Likelihood Rating and Impact Rating), so
+# each Long Form quote is one cell.
+
+[[value]]
+id = "ppsd-short-risk-description"
+says = "The Short Form template's Procurement Risk Analysis table starts with the column Risk Description."
+value = "Risk Description"
+quote = "3. Procurement Risk Analysis Risk Description Description of mitigation Risk Owner"
+document = "documents/guidance/ppsd-short-form-template-2025-10-28"
+document_type = "Operational Procurement Guidance and Form"
+project = ""
+date = 2025-10-28
+section = "3"
+pdf_page = 3
+
+[[value]]
+id = "ppsd-short-mitigation"
+says = "The Short Form template's second risk column is Description of mitigation."
+value = "Description of mitigation"
+quote = "3. Procurement Risk Analysis Risk Description Description of mitigation Risk Owner"
+document = "documents/guidance/ppsd-short-form-template-2025-10-28"
+document_type = "Operational Procurement Guidance and Form"
+project = ""
+date = 2025-10-28
+section = "3"
+pdf_page = 3
+
+[[value]]
+id = "ppsd-short-risk-owner"
+says = "The Short Form template's third and last risk column is Risk Owner."
+value = "Risk Owner"
+quote = "3. Procurement Risk Analysis Risk Description Description of mitigation Risk Owner"
+document = "documents/guidance/ppsd-short-form-template-2025-10-28"
+document_type = "Operational Procurement Guidance and Form"
+project = ""
+date = 2025-10-28
+section = "3"
+pdf_page = 3
+
+[[value]]
+id = "ppsd-long-risk-description"
+says = "The Long Form template's Procurement Risk Analysis table starts with Risk Description."
+value = "Risk Description"
+quote = "Risk Description"
+document = "documents/guidance/ppsd-long-form-template-2025-10-28"
+document_type = "Operational Procurement Guidance and Form"
+project = ""
+date = 2025-10-28
+section = "3"
+pdf_page = 6
+
+[[value]]
+id = "ppsd-long-likelihood"
+says = "The Long Form's second column, headed A, is Likelihood Rating."
+value = "Likelihood Rating"
+quote = "Likelihood Rating"
+document = "documents/guidance/ppsd-long-form-template-2025-10-28"
+document_type = "Operational Procurement Guidance and Form"
+project = ""
+date = 2025-10-28
+section = "3"
+pdf_page = 6
+
+[[value]]
+id = "ppsd-long-impact"
+says = "The Long Form's third column, headed B, is Impact Rating."
+value = "Impact Rating"
+quote = "Impact Rating"
+document = "documents/guidance/ppsd-long-form-template-2025-10-28"
+document_type = "Operational Procurement Guidance and Form"
+project = ""
+date = 2025-10-28
+section = "3"
+pdf_page = 6
+
+[[value]]
+id = "ppsd-long-score"
+says = "The Long Form's fourth column is the Overall Risk Score, which the template defines as A times B."
+value = "Overall Risk Score (A*B)"
+quote = "Overall Risk Score (A*B)"
+document = "documents/guidance/ppsd-long-form-template-2025-10-28"
+document_type = "Operational Procurement Guidance and Form"
+project = ""
+date = 2025-10-28
+section = "3"
+pdf_page = 6
+
+[[value]]
+id = "ppsd-long-mitigation"
+says = "The Long Form's fifth column is the description of the proposed mitigation."
+value = "Description of proposed mitigation through the procurement process"
+quote = "Description of proposed mitigation through the procurement process"
+document = "documents/guidance/ppsd-long-form-template-2025-10-28"
+document_type = "Operational Procurement Guidance and Form"
+project = ""
+date = 2025-10-28
+section = "3"
+pdf_page = 6
+
+[[value]]
+id = "ppsd-long-risk-owner"
+says = "The Long Form's sixth column is Risk Owner."
+value = "Risk Owner"
+quote = "Risk Owner"
+document = "documents/guidance/ppsd-long-form-template-2025-10-28"
+document_type = "Operational Procurement Guidance and Form"
+project = ""
+date = 2025-10-28
+section = "3"
+pdf_page = 6
+
+[[value]]
+id = "ppsd-long-stage"
+says = "The Long Form's seventh and last column is Procurement Process Stage."
+value = "Procurement Process Stage"
+quote = "Procurement Process Stage"
+document = "documents/guidance/ppsd-long-form-template-2025-10-28"
+document_type = "Operational Procurement Guidance and Form"
+project = ""
+date = 2025-10-28
+section = "3"
+pdf_page = 6
+
+# Table I of the PPSD Long Form Detailed User Guidance: the estimated contract cost, in US$ millions, at or
+# above which the Long Form applies, by type of procurement and the procurement risk agreed between the
+# Borrower and the World Bank (Low, Moderate, Substantial, High).
+[[value]]
+id = "ppsd-table-i-risk-levels"
+says = "Table I's columns are the procurement risk ratings Low, Moderate, Substantial and High, in that order."
+value = "Procurement Risk Low Moderate Substantial High"
+quote = "Procurement Risk Low Moderate Substantial High"
+document = "documents/guidance/ppsd-long-form-guidance-2025-03-31"
+document_type = "Operational Procurement Guidance and Form"
+project = ""
+date = 2025-03-31
+section = "Selecting the Appropriate PPSD Template"
+pdf_page = 18
+
+[[value]]
+id = "ppsd-table-i-works"
+says = "Table I: works contracts take the Long Form from US$200, 115, 75 and 50 million at Low, Moderate, Substantial and High risk."
+value = "Works ≥ 200 ≥ 115 ≥ 75 ≥ 50"
+quote = "Works ≥ 200 ≥ 115 ≥ 75 ≥ 50"
+document = "documents/guidance/ppsd-long-form-guidance-2025-03-31"
+document_type = "Operational Procurement Guidance and Form"
+project = ""
+date = 2025-03-31
+section = "Selecting the Appropriate PPSD Template"
+pdf_page = 18
+
+[[value]]
+id = "ppsd-table-i-goods"
+says = "Table I: goods, IT and non-consulting services take the Long Form from US$125, 75, 50 and 30 million."
+value = "Goods IT and non-consulting services ≥ 125 ≥ 75 ≥ 50 ≥ 30"
+quote = "Goods IT and non-consulting services ≥ 125 ≥ 75 ≥ 50 ≥ 30"
+document = "documents/guidance/ppsd-long-form-guidance-2025-03-31"
+document_type = "Operational Procurement Guidance and Form"
+project = ""
+date = 2025-03-31
+section = "Selecting the Appropriate PPSD Template"
+pdf_page = 18
+
+[[value]]
+id = "ppsd-table-i-consultants"
+says = "Table I: consultant services take the Long Form from US$40, 30, 20 and 15 million."
+value = "Consultant services ≥ 40 ≥ 30 ≥ 20 ≥ 15"
+quote = "Consultant services ≥ 40 ≥ 30 ≥ 20 ≥ 15"
+document = "documents/guidance/ppsd-long-form-guidance-2025-03-31"
+document_type = "Operational Procurement Guidance and Form"
+project = ""
+date = 2025-03-31
+section = "Selecting the Appropriate PPSD Template"
+pdf_page = 18
+
+[[value]]
+id = "ppsd-ratings"
+says = "The guidance rates a risk's likelihood and impact from 1, Very Low, to 5, Very High."
+value = "5 = Very High (VH)"
+quote = "1 = Very Low (VL) 2 = Low (L) 3 = Medium (M) 4 = High (H) 5 = Very High (VH)"
+document = "documents/guidance/ppsd-long-form-guidance-2025-03-31"
+document_type = "Operational Procurement Guidance and Form"
+project = ""
+date = 2025-03-31
+section = "PPSD Section 3: Procurement Risk Analysis"
+pdf_page = 43
+
+# The six Procurement Process stages the guidance gives as the starting point for the risk table's stage
+# column, in its order.
+[[value]]
+id = "ppsd-stage-1"
+says = "The first Procurement Process stage is Market engagement."
+value = "Market engagement"
+quote = "1 . Market engagement"
+document = "documents/guidance/ppsd-long-form-guidance-2025-03-31"
+document_type = "Operational Procurement Guidance and Form"
+project = ""
+date = 2025-03-31
+section = "PPSD Section 3: Procurement Risk Analysis"
+pdf_page = 42
+
+[[value]]
+id = "ppsd-stage-2"
+says = "The second Procurement Process stage is Prequalification."
+value = "Prequalification"
+quote = "2 . Prequalification"
+document = "documents/guidance/ppsd-long-form-guidance-2025-03-31"
+document_type = "Operational Procurement Guidance and Form"
+project = ""
+date = 2025-03-31
+section = "PPSD Section 3: Procurement Risk Analysis"
+pdf_page = 42
+
+[[value]]
+id = "ppsd-stage-3"
+says = "The third Procurement Process stage is Specification."
+value = "Specification"
+quote = "3 . Specification"
+document = "documents/guidance/ppsd-long-form-guidance-2025-03-31"
+document_type = "Operational Procurement Guidance and Form"
+project = ""
+date = 2025-03-31
+section = "PPSD Section 3: Procurement Risk Analysis"
+pdf_page = 42
+
+[[value]]
+id = "ppsd-stage-4"
+says = "The fourth Procurement Process stage is Procurement Arrangements."
+value = "Procurement Arrangements"
+quote = "4 . Procurement Arrangements"
+document = "documents/guidance/ppsd-long-form-guidance-2025-03-31"
+document_type = "Operational Procurement Guidance and Form"
+project = ""
+date = 2025-03-31
+section = "PPSD Section 3: Procurement Risk Analysis"
+pdf_page = 42
+
+[[value]]
+id = "ppsd-stage-5"
+says = "The fifth Procurement Process stage is Evaluation."
+value = "Evaluation"
+quote = "5 . Evaluation"
+document = "documents/guidance/ppsd-long-form-guidance-2025-03-31"
+document_type = "Operational Procurement Guidance and Form"
+project = ""
+date = 2025-03-31
+section = "PPSD Section 3: Procurement Risk Analysis"
+pdf_page = 42
+
+[[value]]
+id = "ppsd-stage-6"
+says = "The sixth and last Procurement Process stage is Contract Management."
+value = "Contract Management"
+quote = "6 . Contract Management"
+document = "documents/guidance/ppsd-long-form-guidance-2025-03-31"
+document_type = "Operational Procurement Guidance and Form"
+project = ""
+date = 2025-03-31
+section = "PPSD Section 3: Procurement Risk Analysis"
+pdf_page = 42

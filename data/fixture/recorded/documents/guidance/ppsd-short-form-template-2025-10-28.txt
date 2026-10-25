@@ -1,0 +1,318 @@
+Source: https://documents.worldbank.org/curated/en/099008510282548554/text/IDU-7f9874dd-1915-4507-89a1-96ceb10cf046.txt
+License: The World Bank: Documents & Reports (documents.worldbank.org). License: CC BY 4.0.
+Recorded: 2026-10-25
+About: The PPSD Short-Form template of October 28, 2025 (report 206239), whose Procurement Risk Analysis table gives the Short Form's three columns. Documents API id 40065140.
+
+﻿PPSD Short-Form
+
+
+
+
+                            PPSD TEMPLATE
+                                      Short-Form
+DRAFTING NOTE: PPSD SHORT-FORM - Completion of this template should focus on describing the
+details of each of the higher value / higher risk contracts identified through the application of Supply
+Positioning as described in the PPSD Preparation and Project Cycle Section of the PPSD Guidance Note.
+All similar contracts, having similar approaches should be consolidated and described under one
+heading.
+For further information on completing this template refer to the Procurement Guidance PPSD Long-
+Form (2024 Edition)
+Please delete all yellow highlighted text once this document has been finalized.
+
+
+
+
+     Project Procurement Strategy for
+     Development (PPSD Short-Form)
+1. Project Overview
+
+ Country
+
+ Full Project Name
+
+ Total Finance ($)
+
+ Project Number
+
+ Summary of Project
+ Development
+ Objectives
+
+
+
+2. Overview of Country, Borrower and Marketplace
+DRAFTING NOTE: For each key contract detail a short one-line summary of the requirement including the cost
+estimate.
+
+
+1. Operational Context
+    a. Governance aspects
+
+
+    b. Economic aspects
+
+
+
+                                                Page 1 of 7
+                                                                                                      Official Use Only
+PPSD Short-Form
+
+
+
+
+    c. Sustainability aspects
+
+
+    d. Technological aspects
+
+
+KEY CONCLUSIONS
+
+
+
+
+2. Client Capability and PIU Assessment
+    a. Experience
+
+
+    b. Need for hands-on support
+
+
+    c. Contract management capacity and capability
+
+
+    d. Complaints management and dispute resolution systems
+
+
+KEY CONCLUSIONS
+
+
+
+
+3. Market Analysis
+     a. Market sector dynamics
+
+
+     b. Financial
+
+
+     c. Procurement trends
+
+
+KEY CONCLUSIONS
+
+
+
+
+                                   Page 2 of 7
+                                                              Official Use Only
+PPSD Short-Form
+
+
+
+
+3. Procurement Risk Analysis
+
+          Risk Description                   Description of mitigation        Risk Owner
+
+
+
+
+4. Procurement Objectives
+    1.
+    2.
+    3.
+    4.
+    5.
+
+
+5. Recommended Procurement Approach for the Project
+a. Contract and estimated cost
+
+
+b. Procurement Approach DRAFTING NOTE select from options and complete table below
+
+           Attribute                Selected Approach                    Justification
+
+ Specifications                    Conformance/Performance
+ User reference PPSD Procurement
+ Guidance page 47 and Annex B
+
+ Sustainability                    Yes/No
+ Requirements
+ User reference PPSD Procurement
+ Guidance page 48 and Annex B
+
+ Contract Type                     A. Traditional
+ User reference PPSD Procurement   B. Design and Build
+ Guidance page 49
+
+
+
+
+                                                Page 3 of 7
+                                                                                           Official Use Only
+PPSD Short-Form
+
+
+
+
+           Attribute                 Selected Approach            Justification
+                                   C. Design, Build, Operate,
+                                      Maintain
+                                   D. Design and Build –
+                                      Turnkey or Prime
+                                      Contractor
+                                   E. EPC and EPCM
+                                   F. Other please describe
+
+ Pricing and Costing               A. Lump Sum
+ Mechanism                         B. Performance based
+ User reference PPSD Procurement      contracts
+ Guidance page 50 and 53
+                                   C. Schedule of
+                                      Rates/Admeasurement
+                                   D. Time and Materials
+                                   E. Cost Plus
+
+ Supplier Relationship             Adversarial / Collaborative
+ User reference PPSD Procurement
+ Guidance page 54
+
+ Price Adjustments                 A. None, Fixed Price
+ User reference PPSD Procurement   B. Negotiated
+ Guidance page 55
+                                   C. Percentage
+
+ Form of Contract (Terms           State any special conditions
+ and Conditions)                   of contract
+ User reference PPSD Procurement
+ Guidance page 55
+
+ Selection Method                  A. Request for Proposals
+ User reference PPSD Procurement      (RFP)
+ Guidance page 56
+                                   B. Requests for Bids (RFB)
+                                   C. Requests for Quotations
+                                      (RFQ)
+                                   D. Direct Selection
+
+ Selection Arrangement             A. Competitive Dialogue
+ User reference PPSD Procurement   B. Public Private
+ Guidance page 65
+                                      Partnerships (PPP)
+                                   C. Commercial Practices
+                                   D. United Nations (UN)
+                                      Agencies
+                                   E. e-Reverse Auctions
+                                   F. Imports
+                                   G. Commodities
+                                   H. Community Driven
+                                      Development
+                                   I. Force Accounts
+                                   J. Framework Agreements
+                                   K. Cross Project
+                                      Opportunities
+
+
+
+                                                  Page 4 of 7
+                                                                                  Official Use Only
+PPSD Short-Form
+
+
+
+
+           Attribute                  Selected Approach                   Justification
+
+ Market Approach                    A. Type of Competition
+ User reference PPSD Procurement       1. Open
+ Guidance page 67
+                                       2. Limited
+                                       3. International
+                                       4. National
+                                       5. No Competition –
+                                          Direct Selection
+                                    B. Number of Envelopes /
+                                       Stages
+                                       1. Single Envelope
+                                       2. Two Envelopes
+                                       3. Single Stage
+                                       4. Multi Stage
+                                    C. BAFO (Yes/No)
+                                    D. Negotiations (Yes/No)
+
+ Qualification                      A. Pre-Qualification
+ User reference PPSD Procurement    B. Post-Qualification
+ Guidance page 70                   C. Initial Selection
+
+ Evaluation Selection               A. Quality Cost Based
+ Method                                Selection (QCBS)
+ User reference PPSD Procurement    B. Fixed Budget Based
+ Guidance page 74                      Selection (FBS)
+                                    C. Least Cost Based Selection
+                                       (LCS)
+                                    D. Quality Based Selection
+                                       (QBS)
+                                    E. Consultant’s Qualifications
+                                       Based Selection (CQS)
+                                    F. Direct Selection
+
+ Evaluation of Costs                A. Adjusted Bid Price
+ User reference PPSD Procurement    B. Life-Cycle Costs
+ Guidance pages 73 and 76
+
+ Domestic Preference                National/international
+ User reference PPSD Procurement
+ Guidance page 77
+
+ Rated Criteria                     List the type of criteria to be
+ User reference PPSD Procurement    used (mandatory/desired)
+ Guidance pages 4, 72, 77, 109,
+ Annex B, and Annex C
+
+
+
+
+6. Preferred Arrangement for Low Value Low Risk Activities
+
+          Activity                 Category         Estimated Cost    Procurement Arrangement
+
+
+
+
+                                                   Page 5 of 7
+                                                                                          Official Use Only
+PPSD Short-Form
+
+
+
+
+                  Page 6 of 7
+                                Official Use Only
+PPSD Short-Form
+
+
+
+
+7. Summary of PPSD to inform Bank’s preparation of the PAD
+
+              Contract   Cost & Risk      Bank Oversight      Procurement              Selection Methods             Evaluation Method
+     a. Contract Title   a. Estimated                         Approach &               a.   Pre/Post Qualification   a. Rated Criteria (VfM)
+     b. Description         Cost (US$)                        Competition              b.   SPD (RFP/RFB)            b. Lowest Evaluated Cost
+     c. Category         b. Risk Rating                                                c.   Competitive Dialogue
+                                                                  a.   National
+                                                                                       d.   Framework Agreements
+                                                                  b.   International
+                                                                                       e.   e-Reverse Auctions
+                                                                  c.   Open
+                                                                  a.   Limited         f.   QCBS/QBS etc.
+                                                                  b.   Direct          g.   Negotiation
+                                                                  c.   Sole Source     h.   BAFO
+
+
+
+
+                                                    Page 7 of 7
+                                                                                                                                           Official Use Only
+

@@ -1685,6 +1685,39 @@ const RETRIEVAL_SHOTS: Shot[] = [
   retrievalShot("query-320", QUERY_PATH, "retrieval-me-judge.json", { "/api/judging/queries/nq-rural-works-delays": { recorded: "judging-query.json" } }, { widths: [320] }),
 ];
 
+// Ticket 36: the package workspace's "Suggest {n} PPSD risk rows", suggested PPSD rows in the Short Form and the Long
+// Form, a warning disagreement card on a draft, Check a plan's "Drafts from this check" and the Project Paper summary,
+// with /api answered from the server's answers on the fixture (tests/record_ppsd_api.py). A *-made-up-* answer is a
+// state the fixture cannot reach. Function first (October 25, 2026): 1440 px only until the design pass.
+const PPSD_WIDTHS = [1440];
+const PPSD_SHOTS: Shot[] = [
+  {
+    ...packageShot("ppsd--package-action", comparables(COMPARABLES)),
+    widths: PPSD_WIDTHS,
+    api: {
+      ...packageShot("ppsd--package-action", comparables(COMPARABLES)).api,
+      [`/api${PACKAGE}/risks`]: { recorded: "risks-ke-nwwda-541055-india-selected.json" },
+      "/api/me": { recorded: "me-staff.json" },
+      "/api/drafts/existing": { body: '{"draft":null}' },
+    },
+  },
+  draftShot("ppsd--draft", { recorded: "drafts-ppsd-draft.json" }, { widths: PPSD_WIDTHS }),
+  draftShot("ppsd--some-owners", { recorded: "drafts-ppsd-some-owners.json" }, { widths: PPSD_WIDTHS }),
+  draftShot("ppsd--checked-owners-left", { recorded: "drafts-ppsd-checked-owners-left.json" }, { widths: PPSD_WIDTHS }),
+  draftShot("ppsd--exported", { recorded: "drafts-ppsd-exported.json" }, { widths: PPSD_WIDTHS }),
+  draftShot("ppsd--long-form", { recorded: "drafts-ppsd-made-up-long.json" }, { widths: PPSD_WIDTHS }),
+  draftShot("ppsd--one-cell", { recorded: "drafts-ppsd-one-cell.json" }, { widths: PPSD_WIDTHS }),
+  draftShot("ppsd--disagreement", { recorded: "drafts-ppsd-made-up-disagreement.json" }, { widths: PPSD_WIDTHS }, "/drafts/draft-0090"),
+  planWithDraft("ppsd--plan-panel", NO_EXISTING, {
+    widths: PPSD_WIDTHS,
+    full: true,
+    api: { "/api/me": { recorded: "me-staff.json" }, "/api/drafts/project-paper-inputs": { recorded: "drafts-pp-inputs.json" } },
+  }),
+  draftShot("paper--draft", { recorded: "drafts-pp-draft.json" }, { widths: PPSD_WIDTHS }, "/drafts/draft-0002"),
+  draftShot("paper--no-ppsd", { recorded: "drafts-pp-no-ppsd.json" }, { widths: PPSD_WIDTHS }, "/drafts/draft-0002"),
+  draftShot("paper--no-record", { recorded: "drafts-pp-made-up-no-record.json" }, { widths: PPSD_WIDTHS }, "/drafts/draft-0002"),
+];
+
 export const SHOTS: Shot[] = [
   { name: "index", path: "/gallery" },
   ...pages,
@@ -1839,4 +1872,5 @@ export const SHOTS: Shot[] = [
   ...CRITERIA_SHOTS,
   ...TIMELINE_SHOTS,
   ...TRAIL_SHOTS,
+  ...PPSD_SHOTS,
 ];

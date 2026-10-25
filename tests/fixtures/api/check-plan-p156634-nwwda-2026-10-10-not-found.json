@@ -34,5 +34,17 @@
     "implementing_agency": "Northern Water Works Development Agency",
     "agency_id": "northern-water-works-development-agency",
     "latest_plan_date": "2026-10-09"
+  },
+  "summary": {
+    "evidence_id": "strata.tools.check_plan:P156634/northern-water-works-development-agency@2026-10-22?plan_date=2026-10-10",
+    "public_from": "2026-10-22",
+    "source": {
+      "tool": "check_plan",
+      "sources": [
+        "documents",
+        "projects"
+      ]
+    },
+    "counts": null
   }
 }

@@ -20,16 +20,20 @@ import { citedInParts, MissionBriefParts } from "../components/MissionBriefParts
 import { Fill } from "../components/Fill";
 import { LoadError } from "../components/LoadError";
 import { Num } from "../components/Num";
-import { ProjectId, ProjectIdText } from "../components/ProjectId";
+import { PaperSheet } from "../components/PaperSheet";
+import { PpsdRows } from "../components/PpsdRows";
+import { PpsdSources } from "../components/PpsdSources";
+import { IdText, ProjectId, ProjectIdText } from "../components/ProjectId";
 import { Skeleton, SkeletonLine, SkeletonText } from "../components/Skeleton";
 import { SourcesList } from "../components/SourcesList";
 import { DiscardedOn, StateStepper } from "../components/StateStepper";
+import { DraftDisagreements } from "../components/DraftDisagreements";
 import type { Step } from "../components/Steps";
 import { TextLink } from "../components/TextLink";
 import { copy } from "../copy";
 import { ApiError, getJson } from "../lib/api";
 import { cx } from "../lib/cx";
-import { act, draftScope, fileHref, preloaded, refusalOf, storeFailed, type Action, type Draft } from "../lib/drafts";
+import { act, draftScope, fileHref, preloaded, refusalOf, setField, setForm, storeFailed, type Action, type Draft } from "../lib/drafts";
 import { evidenceIn, openedAt, origin, remember } from "../lib/evidence";
 import { download } from "../lib/export";
 import { formatCount, formatDate, formatNumber } from "../lib/format";
@@ -127,14 +131,17 @@ function removedItems(draft: Draft, kind: KindWords): Removed[] {
   });
 }
 
-// The writing's four steps, as the draft keeps them, past tense. The number of checks is the server's.
+// The writing's four steps, as the draft keeps them, past tense. The number of checks is the server's. Suggested PPSD
+// rows count the risks selected and the rows written, as the write step stored them (ticket 36).
 function stepsOf(draft: Draft, kind: KindWords): Step[] {
   const steps = kind.steps;
   const checks = draft.checks;
   const done = (key: string, text: string): Step => ({ key, running: "", done: text, state: "done" });
+  const read = draft.kind === "mission_brief" ? "" : draft.ppsd ? formatCount(draft.ppsd.selected) : day(draft.subject.plan_date);
+  const notes = draft.ppsd ? (draft.written.rows ?? draft.ppsd.counts.total) : draft.written.notes;
   return [
-    done("read", steps.read.done(draft.kind === "mission_brief" ? "" : day(draft.subject.plan_date))),
-    done("write", steps.write.done(draft.written.sentences, formatCount(draft.written.sentences), draft.written.notes, formatCount(draft.written.notes))),
+    done("read", steps.read.done(read)),
+    done("write", steps.write.done(draft.written.sentences, formatCount(draft.written.sentences), notes, formatCount(notes))),
     done("check", words.writing.checkDone(formatCount(draft.checks_count), checks.sentences.written, formatCount(checks.sentences.written),
       checks.sentences.removed, formatCount(checks.sentences.removed))),
     done("save", steps.save.done),
@@ -205,6 +212,25 @@ export function DraftCrumbs({ pid, name, last }: { pid: string; name: ReactNode;
 
 export function subtitleOf(kind: KindWords, agency: string, planDate: string): ReactNode {
   return <Fill template={kind.subtitle} slots={{ agency, date: <Num date={planDate} /> }} />;
+}
+
+// Suggested PPSD rows' breadcrumb and subtitle (ticket 36): the package, as the workspace names it, links back to it.
+export function packageHref(subject: { package_id?: string | null; step_reference?: string | null }): string {
+  return `/packages/${encodeURIComponent(subject.package_id ?? subject.step_reference ?? "")}`;
+}
+
+export function PackageCrumbs({ title, href, last }: { title: string; href: string; last: ReactNode }) {
+  const drafts = { text: copy.nav.tabs.drafts, href: "/drafts" };
+  return <Breadcrumb back={drafts} held trail={[drafts, { text: title, href }, { text: last }]} />;
+}
+
+export function ppsdSubtitle(title: string, reference: string | null | undefined): ReactNode {
+  return (
+    <Fill
+      template={copy.draft.kinds.ppsd_rows.subtitle}
+      slots={{ title, reference: reference ? <IdText id={reference} /> : copy.ppsd.noReference }}
+    />
+  );
 }
 
 // The page's width without a classic scroll bar, which 100vw counts, for app.css's document column, so the
@@ -289,11 +315,19 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
   // The draft's sources open in the drawer at once, from what the draft keeps, with no request.
   useEffect(() => {
     if (!draft) return;
-    for (const evidence of Object.values(draft.evidence)) remember(evidence);
-    draftScope.set(draft.subject.project_id);
+    for (const evidence of Object.values(draft.evidence)) {
+      // A passage a lesson rests on comes inside get_lessons' row, without its text (ticket 36), so the drawer asks
+      // the server for the whole passage rather than show that part.
+      const row = (evidence as { row?: Record<string, unknown> }).row;
+      if (draft.ppsd && row && row.passage_id && !row.text) continue;
+      remember(evidence);
+    }
+    draftScope.set(draft.subject.project_id ?? null);
     setPageTitle(draft.kind === "mission_brief"
       ? copy.draft.kinds.mission_brief.pageTitle(draft.subject.project_name, draft.subject.project_id)
-      : copy.draft.kinds[draft.kind].pageTitle(draft.subject.implementing_agency, short(draft.subject.plan_date)));
+      : draft.ppsd
+        ? copy.draft.kinds[draft.kind].pageTitle(draft.subject.package_title ?? "", "")
+        : copy.draft.kinds[draft.kind].pageTitle(draft.subject.implementing_agency, short(draft.subject.plan_date)));
   }, [draft]);
   useEffect(() => () => draftScope.set(null), []);
 
@@ -464,13 +498,62 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
   );
   // A mission brief (ticket 37): five parts, with the project's name, country and records' date.
   const brief = d.kind === "mission_brief";
-  const lede = brief ? (
+  // Suggested PPSD rows and the Project Paper summary (ticket 36), by what the kind's writer adds to the page, so a
+  // kind registered with the same writer (ticket 38's agency variant) gets the same page in its own words.
+  const ppsd = d.ppsd ?? null;
+  const paper = Boolean(d.summary);
+  const editable = d.author.you && view !== "piu" && view !== "public" && (d.state === "draft" || d.state === "checked");
+  const lede = ppsd ? (
+    ppsd.counts.total === ppsd.selected ? (
+      <Fill template={kind.lede(ppsd.selected)} slots={{ count: formatCount(ppsd.selected) }} />
+    ) : (
+      <Fill template={kind.ledePartial} slots={{ written: formatCount(ppsd.counts.total), count: formatCount(ppsd.selected) }} />
+    )
+  ) : paper ? (
+    <Fill template={kind.lede(d.summary?.ppsd_rows ?? 0)} slots={{ count: formatCount(d.summary?.ppsd_rows ?? 0) }} />
+  ) : brief ? (
     written === d.notes.length ? kind.lede(written) : copy.mission.ledePartial(formatCount(written))
   ) : written === signal ? (
       <Fill template={kind.lede(signal)} slots={{ count: <Num count={signal} check={{ tooltip: counted }} /> }} />
     ) : (
       <Fill template={kind.ledePartial} slots={{ written: <Num count={written} check={{ tooltip: counted }} />, count: <Num count={signal} /> }} />
     );
+
+  // A field a person sets (ticket 36): the value shows at once, the progress line and the bar follow from the
+  // server's answer, and the page's polite region says what happened.
+  const onSave = async (rowKey: string, field: string, value: string | null): Promise<boolean> => {
+    try {
+      const next = await setField(d, rowKey, field, value, view);
+      const counts = next.ppsd!.counts;
+      const total = whole(counts.total);
+      const risk = next.ppsd!.rows.find((row) => row.row_key === rowKey)?.risk_label ?? "";
+      const header = next.ppsd!.forms[next.ppsd!.form].columns.find((column) => column.key === field)?.header ?? field;
+      if (field === "risk_owner") {
+        const all = value !== null && counts.owners_set === counts.total;
+        setAnnounced(
+          all && next.state === "draft" ? copy.ppsd.allOwners(formatCount(counts.total))
+            : all && next.holds.length === 0 ? copy.ppsd.exportReady
+              : value === null ? copy.ppsd.ownerRemoved(whole(counts.owners_set), total) : copy.ppsd.ownerSet(whole(counts.owners_set), total),
+        );
+      } else {
+        setAnnounced(next.state === "checked" && next.holds.length === 0 ? copy.ppsd.exportReady : copy.ppsd.fieldSet(header, risk));
+      }
+      replace(next);
+      return true;
+    } catch {
+      setAnnounced(copy.fill.saveFailed);
+      return false;
+    }
+  };
+  const onForm = async (form: "short" | "long") => {
+    try {
+      const next = await setForm(d, form, view);
+      replace(next);
+      setAnnounced(form === "long" ? copy.ppsd.showingLong(whole(next.ppsd!.counts.rated), whole(next.ppsd!.counts.total)) : copy.ppsd.showingShort);
+    } catch {
+      setAnnounced(copy.ppsd.formFailed);
+    }
+  };
 
   const rows: NoteRow[] = d.notes.map((note) => ({
     key: note.activity_reference_no,
@@ -534,14 +617,18 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
             {words.conflict}
           </Alert>
         )}
-        <DraftCrumbs pid={subject.project_id} name={subject.project_name} last={brief ? kind.title : kind.crumb(short(subject.plan_date))} />
+        {ppsd ? (
+          <PackageCrumbs title={subject.package_title ?? ""} href={packageHref(subject)} last={kind.crumb("")} />
+        ) : (
+          <DraftCrumbs pid={subject.project_id} name={subject.project_name} last={brief ? kind.title : kind.crumb(short(subject.plan_date))} />
+        )}
         <DraftHeader
           className="mt-4"
           headerRef={setHeader}
           title={kind.title}
           subtitle={brief ? (
             <Fill template={kind.subtitle} slots={{ name: subject.project_name, pid: <ProjectId pid={subject.project_id} />, country: subject.country ?? "" }} />
-          ) : subtitleOf(kind, subject.implementing_agency, subject.plan_date)}
+          ) : ppsd ? ppsdSubtitle(subject.package_title ?? "", subject.step_reference) : subtitleOf(kind, subject.implementing_agency, subject.plan_date)}
           state={
             d.state === "discarded" && d.discarded ? (
               <DiscardedOn date={day(d.discarded.at)} />
@@ -557,10 +644,20 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
           <p className="mt-2 text-body text-ink">
             {brief ? (
               <Fill template={copy.mission.method} slots={{ date: formatDate(subject.data_through ?? subject.as_of ?? created) }} />
+            ) : paper ? (
+              kind.method
             ) : (
-              <Fill template={kind.method} slots={{ check: <TextLink href={planHref}>{kind.methodLink}</TextLink> }} />
+              <Fill
+                template={kind.method}
+                slots={{ check: <TextLink href={ppsd ? `${packageHref(subject)}#risks` : planHref}>{kind.methodLink}</TextLink> }}
+              />
             )}
           </p>
+          {paper && (subject.agencies_with_plans ?? 0) > 1 && (
+            <p className="mt-2 text-caption text-ink-muted" data-scope-caption>
+              {copy.paper.scope(subject.project_id, formatCount(subject.agencies_with_plans ?? 0), subject.implementing_agency)}
+            </p>
+          )}
         </div>
         <div className="mt-4 flex max-w-prose flex-col gap-2">
           {/* Counts over the notes' sentences on screen, and the model's part when one was judged (ticket 24), as
@@ -575,7 +672,15 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
           {showRemoved && <RemovedBox removed={removed} />}
         </div>
         <StepsTaken steps={stepsOf(d, kind)} runId={d.draft_id} idLabel={words.idLabel} />
-        {brief ? (
+        {ppsd ? (
+          <div className="mt-6">
+            <PpsdRows draft={d} editable={editable} opened={opened} open={open} ledeId={ledeId} onSave={onSave} onForm={onForm} />
+          </div>
+        ) : paper ? (
+          <div className="mt-6">
+            <PaperSheet draft={d} numbers={numbers} opened={opened} open={open} />
+          </div>
+        ) : brief ? (
           <div className="mt-8">
             <MissionBriefParts notes={d.notes} evidence={d.evidence} numbers={numbers} opened={opened} open={open} subject={subject} />
           </div>
@@ -594,7 +699,25 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
             </div>
           </>
         )}
-        {d.layout.sources_list && (
+        {/* The cards check 6 attached (ticket 36): a warning card holds export until its author keeps a report. */}
+        {(d.disagreements ?? []).length > 0 && (
+          <div className="mt-8">
+            <DraftDisagreements
+              draft={d}
+              choosing={editable}
+              preview={view === "piu" || view === "public"}
+              onChange={() => {
+                getJson<Draft>(`/api/drafts/${encodeURIComponent(d.draft_id)}`).then(replace, () => undefined);
+              }}
+            />
+          </div>
+        )}
+        {d.layout.sources_list && ppsd && (
+          <div className="mt-8">
+            <PpsdSources draft={d} opened={opened} openedCount={openedCount} open={open} />
+          </div>
+        )}
+        {d.layout.sources_list && !ppsd && (
           <div className="mt-8">
             <SourcesList
               sources={d.sources}

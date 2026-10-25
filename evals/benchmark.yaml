@@ -44,6 +44,10 @@ questions:
       # baseline, with KE-NWWDA-229129-CW-RFB's signing re-dated to August 1, 2021 in it, and checks that
       # the signing was then 155 days after its baseline date and still 186 after its first published one.
       baseline_delays: []
+      # The plan's counts come back as one citable record, the summary, which a Project Paper summary cites for
+      # them (ticket 36): the nine activities the plan lists, with the marks above.
+      activities: [9]
+      counts_cited_as: ["strata.tools.check_plan:P156634/Northern%20Water%20Works%20Development%20Agency@2026-10-22?plan_date=2026-10-09"]
     ground_truth: tests/ground_truth/check_plan_nwwda_2026_10_09.sql
     source: >-
       The marks the blueprint's Check a plan wireframe gives the plan's eight activities
@@ -92,6 +96,37 @@ questions:
     source: >-
       The awards dataset's contracts signed after ISR 19 of June 30, 2026 (tests/ground_truth/values.toml,
       award-567630-signed and award-565568-signed), and the two credits the loan history records for P156634.
+
+  # Ticket 36: the implementing agency's track record against its plans, which the Project Paper summary states in
+  # counts.
+  - id: agency-track-record-nwwda-2026-10-09
+    kind: sql
+    tool: agency_track_record
+    question: >-
+      As of October 22, 2026, how did the Northern Water Works Development Agency's packages in its Procurement Plan
+      of October 9, 2026 for P156634 go against the dates its plans first gave for signing?
+    arguments:
+      project_id: P156634
+      implementing_agency: Northern Water Works Development Agency
+      plan_date: "2026-10-09"
+      as_of: "2026-10-22"
+    expected:
+      # n, signed by the plan's date, signed late and open past their date, from the summary's counts.
+      counts: [7, 0, 7, 2]
+      middle_delay_days: [null]
+      signed_late: [KE-NWWDA-199461-GO-RFB, KE-NWWDA-199471-GO-RFQ, KE-NWWDA-207796-CS-INDV, KE-NWWDA-229129-CW-RFB,
+                    KE-NWWDA-503455-CW-RFQ, KE-NWWDA-541061-CW-RFQ, NWWDA-WSDP-03-2019-2020]
+      open_past_date: [KE-NWWDA-541055-CW-RFB, KE-NWWDA-541062-CW-RFQ]
+      # The plan shows these two unsigned; the awards dataset holds a signed contract for each.
+      signed_from: [plan]
+      differs_from_awards: [KE-NWWDA-541055-CW-RFB, KE-NWWDA-541062-CW-RFQ]
+      cited_as: ["strata.tools.agency_track_record:P156634/Northern%20Water%20Works%20Development%20Agency/2026-10-09@2026-10-22"]
+    ground_truth: tests/ground_truth/agency_track_record_nwwda_2026_10_09.sql
+    source: >-
+      The October 9, 2026 plan's rows (tests/ground_truth/values.toml, [[plan_row]] process_status and [plan]
+      also_lists): seven signed, each after its first published planned date (plan-229129-days-late for one), and two
+      Pending Implementation past their planned signing dates, which the awards dataset shows signed
+      (award-541055-signed, award-541062-signed).
 
   - id: find-comparables-ke-nwwda-541055
     kind: estimates

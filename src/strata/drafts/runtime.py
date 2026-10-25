@@ -31,6 +31,7 @@ from strata.agent.loop import AgentError, output_text
 from strata.agent.verifier import AnswerCheck, Verdict, answer_events, check
 from strata.config import DraftKind, DraftKinds
 from strata.dbx import Viewer
+from strata.drafts.holds import Draft as HoldDraft
 from strata.drafts.store import DraftStore, NewDraft, Saved, iso
 from strata.harness.facts import Facts
 from strata.harness.turn import Event
@@ -47,7 +48,9 @@ STAFF = "staff"
 WRITE_ERRORS = ("no_agent", "agent_unavailable", "content_filter", "agent_output", "data_service", "no_plan",
                 "nothing_marked", "permission", "draft_store", "internal",
                 # A mission brief (ticket 37): no such project, or one no longer active.
-                "no_project", "not_active")
+                "no_project", "not_active",
+                # Suggested PPSD rows (ticket 36): no such package, or no selected risk still in its table.
+                "no_package", "no_selected_risks")
 OPEN_STATES = ("draft", "checked")
 
 
@@ -230,6 +233,8 @@ async def write(writing: Writing, engine_for: EngineFor, agent_for: Callable[[st
         raise WriteError("agent_output") from error
     claimed = [key for key, note in written.items() if note.get("claims")]
     wrote = {"notes": len(claimed), "sentences": sum(len(written[key]["claims"]) for key in claimed)}
+    if hasattr(module, "written_rows"):  # suggested PPSD rows count rows, two cells each (ticket 36)
+        wrote["rows"] = module.written_rows(claimed)
     yield step("write", "done", **wrote)
 
     yield step("check", "running")
@@ -239,6 +244,8 @@ async def write(writing: Writing, engine_for: EngineFor, agent_for: Callable[[st
         if isinstance(item, Verdict):
             verdict = item
     content = compose(module, facts, written, verdict, seen, owners)
+    if hasattr(module, "finish"):  # a kind that groups its notes, such as suggested PPSD rows' cells into rows
+        content = module.finish(content, facts)
     writing.verdict = verdict
     counts = content["checks"]
     yield step("check", "done", checks_run=counts["checks_run"], checks=len(counts["checks_run"]),
@@ -289,11 +296,49 @@ def citations(content: dict) -> int:
     return sum(len(sentence["evidence_ids"]) for note in content["notes"] for sentence in note["sentences"])
 
 
+def writer_module_for(kind: str):
+    """The writer module of a kind by its key, or None for a kind the registry no longer lists."""
+    from strata.config import load_draft_kinds
+
+    found = load_draft_kinds().kinds.get(kind)
+    return writer_module(found) if found else None
+
+
+def kind_view(saved: Saved) -> dict:
+    """What a kind adds to its page, such as suggested PPSD rows' form, fields and footnotes (ticket 36): one marker
+    per sentence, which may carry several sources and becomes one footnote. Each footnote's text is built here, once,
+    and the page shows the same string as its "In Word:" line."""
+    module = writer_module_for(saved.kind)
+    if module is None or not hasattr(module, "view"):
+        return {}
+    from strata.drafts.files import words
+
+    fields = {key: value.value for key, value in saved.fields.items()}
+    shown = {module.VIEW_KEY: module.view(saved.content, fields, words())}
+    if hasattr(module, "footnotes"):
+        shown["footnotes"] = module.footnotes(saved.content, words())
+    return shown
+
+
+def hold_input(saved: Saved, kinds: DraftKinds, view: str) -> HoldDraft:
+    """The draft as the holds read it: its state now, the view, what it holds, its fields and its choices."""
+    return HoldDraft(saved.state.state, view, saved.kind, saved.content,
+                     {key: value.value for key, value in saved.fields.items()},
+                     {key: choice.kept for key, choice in saved.choices.items()}, kinds.cards_on_drafts)
+
+
 def holds(saved: Saved, kinds: DraftKinds, view: str) -> list[dict]:
-    """The holds that keep the draft from export now, in the order its kind names them."""
+    """The holds that keep the draft from export now, in the order its kind names them, each with how many items
+    it has left and the anchor of the first, for the bar's link to it (the 36 brief, section 4.5)."""
     kind = kinds.kinds[saved.kind]
-    return [{"key": key, "copy": kinds.holds[key].copy} for key in kind.holds
-            if function(kinds.holds[key].test)(saved.state.state, view)]
+    draft = hold_input(saved, kinds, view)
+    found = []
+    for key in kind.holds:
+        held = function(kinds.holds[key].test)(draft)
+        if held is not None and held.left > 0:
+            found.append({"key": key, "copy": kinds.holds[key].copy, "left": held.left,
+                          "first_anchor": held.first_anchor})
+    return found
 
 
 def _who(step, viewer: Viewer) -> dict | None:
@@ -309,6 +354,7 @@ def draft_view(saved: Saved, viewer: Viewer, view: str, kinds: DraftKinds, opene
                "last_opened_at": iso(opened.get(entry["evidence_id"]))} for entry in sources(saved.content)]
     state = saved.state
     export = saved.export
+    extra = kind_view(saved)
     return {
         "draft_id": saved.draft_id,
         "kind": saved.kind,
@@ -327,7 +373,8 @@ def draft_view(saved: Saved, viewer: Viewer, view: str, kinds: DraftKinds, opene
         "checks_count": len(saved.content["checks"]["checks_run"]),
         "removed": saved.content["removed"],
         "sources": listed,
-        "citations": citations(saved.content),
+        # One footnote per marker where a kind numbers its footnotes (ticket 36); else one per citation.
+        "citations": len(extra["footnotes"]) if "footnotes" in extra else citations(saved.content),
         "opened": {"count": sum(1 for entry in listed if entry["opened"]), "of": len(listed)},
         "layout": {"columns": list(kind.columns), "export": kind.export, "sources_list": kind.sources_list,
                    "removed_box": kind.removed_box, "not_checked": list(kind.not_checked)},
@@ -341,12 +388,20 @@ def draft_view(saved: Saved, viewer: Viewer, view: str, kinds: DraftKinds, opene
             "files": list(export.files),
             "files_available": bool(export.files)},
         "writer": saved.content.get("writer"),
+        # The disagreements check 6 attached, and the report kept on each (ticket 36).
+        "disagreements": saved.content.get("disagreements") or [],
+        "choices": [{"disagreement_id": key, "kept": choice.kept, "reason": choice.reason, "at": iso(choice.set_at),
+                     "by": choice.set_by_name} for key, choice in saved.choices.items()],
+        **extra,
     }
 
 
 def list_row(saved: Saved, viewer: Viewer, opened: dict[str, dt.datetime] | None) -> dict:
-    """A draft as the Drafts tab lists it. opened is given only for the viewer's own drafts to check."""
+    """A draft as the Drafts tab lists it. opened is given only for the viewer's own drafts to check. Suggested PPSD
+    rows add their progress: how many owners are set and, in the Long Form, how many rows are rated (ticket 36)."""
     listed = sources(saved.content)
+    shown = kind_view(saved)
+    progress = shown["ppsd"] if "ppsd" in shown else None
     return {
         "draft_id": saved.draft_id,
         "kind": saved.kind,
@@ -360,4 +415,6 @@ def list_row(saved: Saved, viewer: Viewer, opened: dict[str, dt.datetime] | None
         "exported": _who(saved.last("exported"), viewer),
         "opened": None if opened is None else {
             "count": sum(1 for entry in listed if entry["evidence_id"] in opened), "of": len(listed)},
+        **({"progress": {**progress["counts"], "form": progress["form"], "rows": len(progress["rows"])}}
+           if progress else {}),
     }

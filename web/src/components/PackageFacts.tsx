@@ -23,6 +23,7 @@ export function PackageHeader({
   headerRef,
   level = 1,
   sticky = true,
+  action,
 }: {
   title: ReactNode;
   // The STEP reference under the title, or null when the title is the reference itself.
@@ -31,14 +32,21 @@ export function PackageHeader({
   // The page's h1. The design gallery shows it one level down, under its own h1, and not sticky.
   level?: 1 | 2;
   sticky?: boolean;
+  // Ticket 36: "Suggest {n} PPSD risk rows" and its caption, at the header's right from 768 px.
+  action?: ReactNode;
 }) {
   const Heading = level === 1 ? "h1" : "h2";
   return (
     <div ref={headerRef} data-package-header className={sticky ? "border-b border-line bg-page py-4 @md/page:sticky @md/page:top-0 @md/page:z-10" : "border-b border-line bg-page py-4"}>
-      <Heading tabIndex={-1} className="text-h1 text-pretty wrap-anywhere text-ink-heading focus:outline-none">
-        {title}
-      </Heading>
-      {reference !== null && <p className="mt-1 text-small wrap-anywhere text-ink-muted">{reference}</p>}
+      <div className="flex items-start justify-between gap-x-6">
+        <div className="min-w-0 flex-1">
+          <Heading tabIndex={-1} className="text-h1 text-pretty wrap-anywhere text-ink-heading focus:outline-none">
+            {title}
+          </Heading>
+          {reference !== null && <p className="mt-1 text-small wrap-anywhere text-ink-muted">{reference}</p>}
+        </div>
+        {action}
+      </div>
     </div>
   );
 }

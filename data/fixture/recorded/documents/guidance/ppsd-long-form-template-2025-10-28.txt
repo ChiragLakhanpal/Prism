@@ -1,0 +1,600 @@
+Source: https://documents.worldbank.org/curated/en/099851210282541606/text/IDU-ae1c2f23-7b10-42c3-87d0-d9799e5e4f8b.txt
+License: The World Bank: Documents & Reports (documents.worldbank.org). License: CC BY 4.0.
+Recorded: 2026-10-25
+About: The PPSD Long-Form template of October 28, 2025 (report 206236), whose Procurement Risk Analysis table gives the Long Form's seven columns. Documents API id 40065124.
+
+﻿PPSD Long Form
+
+
+
+
+                              PPSD TEMPLATE
+                                         Long-Form
+NOTE TO USER: This template contains Drafting Notes to assist the user in completing the various
+sections. There are also links to specific parts of the Procurement Guidance PPSD Long-Form
+(2024 Edition) to provide more detailed information. Please delete all yellow highlighted text once this
+document has been finalized.
+
+
+
+
+     Project Procurement Strategy for
+     Development (PPSD Long-Form)
+Contents
+    1.   Project Overview
+    2.   Strategic Assessment of Operating Context and Borrower Capability
+    3.   Procurement Risk Analysis
+    4.   Stakeholder Analysis
+    5.   Procurement Objectives
+    6.   Procurement Approach Options and Recommendations
+    7.   Preferred Arrangement for Low-Value Low-Risk Activities
+    8.   Summary of PPSD to support the preparation of the PAD by the Bank
+
+
+1. Project Overview
+DRAFTING NOTE: Much of the information required can be drawn from the PCN.
+
+ Country
+
+ Full Project
+ Name
+
+ Total Finance
+ ($)
+
+ Project Number
+
+
+1. Project Description
+DRAFTING NOTE: For each contract and sub-contract, include a short description of what is required from suppliers
+including the cost estimate.
+
+
+
+
+2. Project Development Objectives (PDOs)
+
+
+                                                   Page 1 of 16
+                                                                                                             Official Use Only
+PPSD Long Form
+
+
+
+DRAFTING NOTE: Provide a description of the PDOs. These should be consistent with the PDOs identified in the
+Project Concept Note.
+
+
+
+
+3. Result Indicators
+DRAFTING NOTE: Include appropriate Result Indicators that are “SMART�? (i.e.: Specific, Measurable, Attributable,
+Relevant, and Time-bound). Link the Result Indicators to Project outcomes. Each PDO should be measured by one
+or more outcome indicator.
+
+
+
+
+4. Proposed Procurement Contract Summary
+DRAFTING NOTE: Provide a summary of the proposed contracts within the Project including a Supply Positioning
+model for each identified contract.
+
+
+
+
+5. Legal/Policy Requirements
+DRAFTING NOTE: Provide a statement of any legal or policy requirements that apply. Such as the application of
+Alternative Procurement Arrangements, use of Stated Owned Enterprises (e.g. for restricted contracts such as
+aerial mapping), and any policy requirements including sustainability requirements.
+
+
+
+
+2. Strategic Assessment of Operating Context and Borrower
+   Capability
+1. Operational Context
+DRAFTING NOTE: This section addresses four aspects. The assessment should provide analysis of each aspect,
+describe the considerations that impact the operational context and that may influence the procurement approach,
+the motivation of bidders to participate, and the success of any subsequent contracts.
+
+a. Governance aspects
+
+
+
+
+b. Economic aspects
+
+
+
+
+c. Sustainability aspects
+
+
+
+
+                                                  Page 2 of 16
+                                                                                                            Official Use Only
+PPSD Long Form
+
+
+
+d. Technological aspects
+
+
+
+
+CONCLUSIONS on Operational Context to be addressed through the procurement
+approach:
+
+
+
+
+2. Assessment of Borrower Capability and PIU
+DRAFTING NOTE: The objective of this assessment is to identify any known factors, both enablers and constraints,
+which may have an impact on both the delivery of the Project and the procurement approach being developed. It
+should also help identify any targeted early interventions such as training or enhanced support that the Borrower
+may benefit from, whether from the Bank, or other sources. This assessment is independent of the assessment
+that the Bank undertakes on the Borrower’s capability in the PAD. This subsection should address the following
+topics, as relevant to the Project:
+
+a. Experience implementing similar Projects and implementing World
+   Bank Projects
+
+
+
+
+b. Experience of use of Alternative Procurement Arrangements
+
+
+
+
+c. The need for hands-on support to undertake a fit for purpose procurement planning,
+    contractor/consultant selection, and contract award
+
+
+
+
+d. Contract management capacity and capability
+
+
+
+
+e. Complaints management and dispute resolution systems
+
+
+
+
+f. Procurement capacity (previous experience, availability of resources and track record) to
+    undertake successful fit for purpose procurement planning, procurement process, bid/proposal
+    evaluation, supplier selection and contract award
+
+
+
+                                                   Page 3 of 16
+                                                                                                             Official Use Only
+PPSD Long Form
+
+
+
+
+g. The reliance on, criticality of and use of professional advisors such as
+   consultants to augment Borrower capability
+
+
+
+
+h. Lessons learned from the implementation of other similar Projects
+
+
+
+CONCLUSIONS on Client Capability and PIU Assessment to be addressed:
+DRAFTING NOTE: At the end of the Borrower’s Capability Assessment, a Resourcing Plan should be created.
+
+
+
+
+3. Market Research and Analysis
+DRAFTING NOTE: Identify the specific contracts to be procured and include a market analysis of each of the target
+market segments. The level of analysis should be proportional in detail to the relative risk and value of the contract
+within the Project conducted through a Supply Positioning Model. For low-value, low-risk contracts it will generally
+be sufficient to detail the procurement approach in Section 7 without further supporting analysis.
+
+Research
+a. Supply Positioning Model - Identify the risk and value thresholds of the project.
+
+
+
+
+b. Segmentation of the market by geography (local, national, international),
+    specialization or differentiation.
+
+
+
+
+c. Market sector dynamics - Nature and extent of competition, levels of experience,
+    capability and innovation, external influences and factors, Supplier Preferencing.
+
+
+
+
+d. Market trends - Technology, new services, ownership structures and alliances, market
+    growth, new entrants.
+
+
+
+
+                                                     Page 4 of 16
+                                                                                                                  Official Use Only
+PPSD Long Form
+
+
+
+e. Financial - Sources of cost and value, cost stability, pricing strategies and mechanisms,
+    cost and financial benchmarks.
+
+
+
+
+f. Procurement trends - Procurement s of other entities procuring similar contracts,
+    typical contract terms, common issues that inhibit or contribute to achieving value for
+    money, typical responses and lessons learned.
+
+
+Analysis and Action
+DRAFTING NOTE: At the end of the Market Research stage, Borrowers should develop a range of Procurement
+Approach Options and a Market Engagement Plan.
+
+Conclusions on the Market Analysis to be addressed through the procurement approach.
+
+
+
+
+                                              Page 5 of 16
+                                                                                                   Official Use Only
+PPSD Long Form
+
+
+
+
+3. Procurement Risk Analysis
+DRAFTING NOTE: This subsection analyses and prioritizes the risks identified from Section 2 that relate to the Operational Context, Market Analysis and PIU Assessment that
+could be mitigated through the procurement approach.
+
+                                                       A              B
+                                                                                 Overall         Description of proposed
+                                                                                                                                     Risk            Procurement
+              Risk Description                     Likelihood       Impact      Risk Score       mitigation through the
+                                                                                                                                    Owner            Process Stage
+                                                     Rating         Rating          (A*B)         procurement process
+
+
+
+
+                                                                                Page 6 of 16
+                                                                                                                                                                       Official Use Only
+PPSD Long Form
+
+
+
+
+4. Stakeholder Analysis
+DRAFTING NOTE: Identify the main stakeholders who have an interest or impact on the Project and whether their interest is one of responsibility, accountability, to be consulted
+or informed. The identified Stakeholders will need to be engaged to understand what objectives they have from the procurement.
+
+
+                                                                   Stakeholder Management Plan
+
+          Stakeholder                        Interest                       Stakeholder Objectives
+                                      (Responsible, Accountable,                                                          Stakeholder Management Approach
+          (Name and Role)
+                                        Consulted, Informed)                from the Procurement
+
+
+
+
+                                                                                  Page 7 of 16
+                                                                                                                                                                            Official Use Only
+PPSD Long Form
+
+
+
+
+5. Procurement Objectives
+DRAFTING NOTE: Based upon the Strategic Analysis, Risk Assessment and Stakeholder Analysis, detail the key Procurement Objectives that if achieved will support the delivery
+of the Project’s Development Objectives and achieve value for money. The Procurement Objectives need to be SMART — Specific, Measurable, Achievable, Realistic and Time-
+bound. The procurement objectives should be tested with the identified Stakeholders to ensure agreement on the prioritized list of Procurement Objectives.
+
+
+ Priority
+                 Key Procurement Objectives that will support delivery of the Project’s Development Objectives and achieve value for money
+    #
+
+      1
+
+      2
+
+      3
+
+      4
+
+      5
+
+      6
+
+
+
+
+                                                                                Page 8 of 16
+                                                                                                                                                                        Official Use Only
+PPSD Long Form
+
+
+
+
+6. Procurement Approach Options and Recommendations
+DRAFTING NOTE: Please detail the options and the recommended procurement arrangement for the contracts detailed in the Project description and the justification for the
+recommended procurement arrangements based on the analysis above. This Section should be completed for each contract required. Sections A-D below were identified in
+previous sections of this PPSD Long Form. After the options analysis please detail your recommended procurement approach/arrangement.
+
+a. Contract description
+
+
+
+
+b. Contract category (i.e. Works, Goods, Consultancy Firms and Individuals, Non-consultancy services)
+
+
+
+
+c. Estimated cost
+
+
+
+
+                                                                              Page 9 of 16
+                                                                                                                                                                    Official Use Only
+PPSD Long Form
+
+
+
+d. Contract approach
+
+
+
+
+Summary of Procurement Approach Options and Recommendations
+          Attribute                   Selected approach                           Justification
+
+ 1. Requirements
+
+a. Specifications                 Conformance/Performance
+User reference PPSD Procurement
+Guidance page 47 and Annex B
+
+b. Additional                     Yes/No
+    Sustainability
+    Requirements
+User reference PPSD Procurement
+Guidance page 48 and Annex B
+
+ 2. Contract Strategy
+
+a. Contract Type                  A. Traditional
+User reference PPSD Procurement   B. Design and Build
+Guidance page 49
+                                  C. Design, Build, Operate,
+                                     Maintain
+                                  D. Design and Build – Turnkey
+                                     or Prime Contractor
+                                  E. EPC and EPCM
+                                  F. Other please describe
+
+
+
+
+                                                                  Page 10 of 16
+                                                                                                  Official Use Only
+PPSD Long Form
+
+
+
+
+          Attribute                   Selected approach                             Justification
+
+b. Pricing and Costing            A. Lump Sum
+    Mechanism                     B. Performance based
+User reference PPSD Procurement      contracts
+Guidance page 50
+                                  C. Schedule of
+                                     Rates/Admeasurement
+                                  D. Time and Materials
+                                  E. Cost Plus
+
+c. Selection of Cost and Required Allocation of Risk
+    Price Mechanism
+User reference PPSD Procurement
+Guidance page 53
+
+d. Supplier                       Adversarial / Collaborative
+    Relationship
+User reference PPSD Procurement
+Guidance page 54
+
+e. Price Adjustments              A. None, Fixed Price
+User reference PPSD Procurement   B. Negotiated
+Guidance page 55
+                                  C. Percentage
+
+f. Form of Contract               State any special conditions of
+    (Terms and Conditions)        contract
+User reference PPSD Procurement
+Guidance page 55
+
+ 3. Selection Method
+
+a. Selection Method               A. Request for Proposals (RFP)
+User reference PPSD Procurement   B. Requests for Bids (RFB)
+Guidance page 56
+
+
+
+
+                                                                    Page 11 of 16
+                                                                                                    Official Use Only
+PPSD Long Form
+
+
+
+
+          Attribute                   Selected approach                            Justification
+                                  C. Requests for Quotations
+                                     (RFQ)
+                                  D. Direct Selection
+
+b. Selection                      A. Competitive Dialogue
+    Arrangement                   B. Public Private Partnerships
+User reference PPSD Procurement      (PPP)
+Guidance page 65
+                                  C. Commercial Practices
+                                  D. United Nations (UN)
+                                     Agencies
+                                  E. e-Reverse Auctions
+                                  F. Imports
+                                  G. Commodities
+                                  H. Community Driven
+                                     Development
+                                  I. Force Accounts
+                                  J. Framework Agreements
+                                  K. Cross Project Opportunities
+
+c. Market Approach                A. Type of Competition
+User reference PPSD Procurement      1. Open
+Guidance page 67
+                                     2. Limited
+                                     3. International
+                                     4. National
+                                     5. No Competition – Direct
+                                        Selection
+                                  B. Number of Envelopes /
+                                     Stages
+
+
+
+                                                                   Page 12 of 16
+                                                                                                   Official Use Only
+PPSD Long Form
+
+
+
+
+          Attribute                   Selected approach                             Justification
+                                     1. Single Envelope
+                                     2. Two Envelopes
+                                     3. Single Stage
+                                     4. Multi Stage
+                                  C. BAFO (Yes/No)
+                                  D. Negotiations (Yes/No)
+
+d. Qualification                  A. Pre-Qualification
+User reference PPSD Procurement   B. Initial Selection
+Guidance page 70                  C. Post-Qualification
+
+ 4. Evaluation Methodology
+
+a. Evaluation Selection           A. Quality Cost Based Selection
+    Method                           (QCBS)
+User reference PPSD Procurement   B. Fixed Budget Based
+Guidance page 74                     Selection (FBS)
+                                  C. Least Cost Based Selection
+                                     (LCS)
+                                  D. Quality Based Selection
+                                     (QBS)
+                                  E. Consultant’s Qualifications
+                                     Based Selection (CQS)
+                                  F. Direct Selection
+
+b. Evaluation of Costs            A. Adjusted Bid Price
+User reference PPSD Procurement   B. Life-Cycle Costs
+Guidance pages 73 and 76
+
+c. Domestic Preference National/international
+User reference PPSD Procurement
+Guidance page 77
+
+
+
+
+                                                                    Page 13 of 16
+                                                                                                    Official Use Only
+PPSD Long Form
+
+
+
+
+          Attribute                    Selected approach                                                    Justification
+
+d. Rated Criteria                 List the type of criteria to be
+User reference PPSD Procurement   used (mandatory/desired)
+Guidance pages 4, 72, 77, 109,
+Annex B, and Annex C
+
+ 5. Contract Management
+
+a. Contract                       Outline the approach to be
+    Management                    used
+    Approach
+User reference PPSD Procurement
+Guidance pages 9, 14, 30, 78
+
+b. Key Performance                List the key measures of
+    Indicators Measures           success for contract
+    (KPIs)                        management:
+User reference PPSD Procurement
+Guidance page 80
+
+
+
+DRAFTING NOTE: The output of this section will be:
+1. Procurement Approach stating how the Borrower is going to approach the market, select the supplier, and finalize the contract
+2. Set of selection methods and market approaches
+3. Procurement Plan that summarises how each contract within the Project will be procured
+
+
+
+
+                                                                             Page 14 of 16
+                                                                                                                                   Official Use Only
+PPSD Long Form
+
+
+
+
+7. Preferred Arrangement for Low Value Low Risk Activities
+DRAFTING NOTE: Record the procurement approaches for contracts that were identified as part of the Supply Positioning analysis in Section 2 as not requiring a detailed
+assessment and justification for the selected procurement approach. User reference PPSD Procurement Guidance page 83
+
+
+             Contract                           Category                Estimated Cost                     Procurement Approach and Method
+
+
+
+
+                                                                             Page 15 of 16
+                                                                                                                                                                   Official Use Only
+PPSD Long Form
+
+
+
+
+8. Summary of PPSD to Support the Preparation of the PAD by
+   the Bank
+DRAFTING NOTE: Provide a short summary of the recommended procurement approach, and a synopsis of the
+justification for that approach which the Bank will use as part of preparing its PAD. User reference PPSD Procurement
+Guidance page 83
+
+
+
+
+                                                    Page 16 of 16
+                                                                                                                 Official Use Only
+

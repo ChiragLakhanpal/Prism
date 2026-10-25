@@ -1,0 +1,28 @@
+{
+ "about": "The judge's answer for this case's sentences, through Azure OpenAI's chat completions, written by hand in the shape the API documents, because the gate's machine has no key. The judge is config/models.toml's draft role. Replace it with a recording: uv run --script ops/agent/record.py --judge --env-file .env",
+ "recorded": false,
+ "recorded_on": null,
+ "case": "ppsd-rows-a-row-removed",
+ "judge": {
+  "deployment": "gpt-5.4"
+ },
+ "asked": [
+  "Cost estimates set below market rates can force rebidding of works contracts.",
+  "Base the works cost estimates on market rates before the contracts go to bid."
+ ],
+ "response": {
+  "id": "chatcmpl-ppsd-rows-a-row-removed",
+  "object": "chat.completion",
+  "model": "gpt-5.4",
+  "choices": [
+   {
+    "index": 0,
+    "finish_reason": "stop",
+    "message": {
+     "role": "assistant",
+     "content": "{\"judgements\": [{\"index\": 0, \"follows\": true, \"reason\": \"The cited counts record shows the one completion report read raised cost estimates below market rates.\"}, {\"index\": 1, \"follows\": true, \"reason\": \"The lesson says to base works estimates on market rates to avoid rebidding, and both passages say so.\"}]}"
+    }
+   }
+  ]
+ }
+}

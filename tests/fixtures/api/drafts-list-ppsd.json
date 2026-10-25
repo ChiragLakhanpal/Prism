@@ -1,0 +1,232 @@
+{
+  "groups": {
+    "to_check": [
+      {
+        "draft_id": "draft-0005",
+        "kind": "project_paper",
+        "state": "draft",
+        "subject": {
+          "project_id": "P156634",
+          "project_name": "Water and Sanitation Development Project",
+          "implementing_agency": "Northern Water Works Development Agency",
+          "agency_id": "northern-water-works-development-agency",
+          "plan_date": "2026-10-09",
+          "document_id": "40132287",
+          "disclosed_on": "2026-10-09",
+          "pdf_url": "https://documents.worldbank.org/curated/en/099100926083038869/pdf/P156634-ab2fe0d9-ef1e-43cc-bbf4-43068cef2cc8.pdf",
+          "as_of": "2026-10-28",
+          "signal": null,
+          "agencies_with_plans": 4
+        },
+        "notes": 2,
+        "author": {
+          "name": "Ana Example",
+          "you": true
+        },
+        "created_at": "2026-10-28T09:12:00Z",
+        "changed": {
+          "at": "2026-10-28T09:12:00Z",
+          "by": "Ana Example",
+          "you": true
+        },
+        "checked": null,
+        "exported": null,
+        "opened": {
+          "count": 0,
+          "of": 4
+        }
+      },
+      {
+        "draft_id": "draft-0004",
+        "kind": "ppsd_rows",
+        "state": "draft",
+        "subject": {
+          "package_id": null,
+          "step_reference": "KE-NWWDA-541055-CW-RFB",
+          "package_title": "Equipping of Exploratory Bo reholes Project-Lot 1- Sarma n - Tarbaj Water Supply",
+          "package_slug": "equipping-of-exploratory-bo-reholes-project-lot-1-sarma-n-ta",
+          "project_id": "P156634",
+          "project_name": "Water and Sanitation Development Project",
+          "category": "Works",
+          "estimated_amount_usd": "1230000.00",
+          "as_of": "2026-10-28",
+          "created_date": "2026-10-28",
+          "agency_id": null,
+          "implementing_agency": null,
+          "plan_date": null,
+          "signal": null
+        },
+        "notes": 2,
+        "author": {
+          "name": "Ana Example",
+          "you": true
+        },
+        "created_at": "2026-10-28T09:11:00Z",
+        "changed": {
+          "at": "2026-10-28T09:11:00Z",
+          "by": "Ana Example",
+          "you": true
+        },
+        "checked": null,
+        "exported": null,
+        "opened": {
+          "count": 0,
+          "of": 4
+        },
+        "progress": {
+          "total": 1,
+          "owners_set": 0,
+          "rated": 0,
+          "form": "short",
+          "rows": 1
+        }
+      },
+      {
+        "draft_id": "draft-0003",
+        "kind": "ppsd_rows",
+        "state": "draft",
+        "subject": {
+          "package_id": null,
+          "step_reference": "KE-NWWDA-541055-CW-RFB",
+          "package_title": "Equipping of Exploratory Bo reholes Project-Lot 1- Sarma n - Tarbaj Water Supply",
+          "package_slug": "equipping-of-exploratory-bo-reholes-project-lot-1-sarma-n-ta",
+          "project_id": "P156634",
+          "project_name": "Water and Sanitation Development Project",
+          "category": "Works",
+          "estimated_amount_usd": "1230000.00",
+          "as_of": "2026-10-28",
+          "created_date": "2026-10-28",
+          "agency_id": null,
+          "implementing_agency": null,
+          "plan_date": null,
+          "signal": null
+        },
+        "notes": 3,
+        "author": {
+          "name": "Ana Example",
+          "you": true
+        },
+        "created_at": "2026-10-28T09:10:00Z",
+        "changed": {
+          "at": "2026-10-28T09:10:00Z",
+          "by": "Ana Example",
+          "you": true
+        },
+        "checked": null,
+        "exported": null,
+        "opened": {
+          "count": 0,
+          "of": 4
+        },
+        "progress": {
+          "total": 2,
+          "owners_set": 0,
+          "rated": 0,
+          "form": "short",
+          "rows": 2
+        }
+      }
+    ],
+    "checked": [],
+    "exported": [
+      {
+        "draft_id": "draft-0002",
+        "kind": "project_paper",
+        "state": "exported",
+        "subject": {
+          "project_id": "P156634",
+          "project_name": "Water and Sanitation Development Project",
+          "implementing_agency": "Northern Water Works Development Agency",
+          "agency_id": "northern-water-works-development-agency",
+          "plan_date": "2026-10-09",
+          "document_id": "40132287",
+          "disclosed_on": "2026-10-09",
+          "pdf_url": "https://documents.worldbank.org/curated/en/099100926083038869/pdf/P156634-ab2fe0d9-ef1e-43cc-bbf4-43068cef2cc8.pdf",
+          "as_of": "2026-10-28",
+          "signal": null,
+          "agencies_with_plans": 4
+        },
+        "notes": 3,
+        "author": {
+          "name": "Ana Example",
+          "you": true
+        },
+        "created_at": "2026-10-28T09:07:00Z",
+        "changed": {
+          "at": "2026-10-28T09:09:00Z",
+          "by": "Ana Example",
+          "you": true
+        },
+        "checked": {
+          "at": "2026-10-28T09:08:00Z",
+          "by": "Ana Example",
+          "you": true
+        },
+        "exported": {
+          "at": "2026-10-28T09:09:00Z",
+          "by": "Ana Example",
+          "you": true
+        },
+        "opened": null
+      },
+      {
+        "draft_id": "draft-0001",
+        "kind": "ppsd_rows",
+        "state": "exported",
+        "subject": {
+          "package_id": null,
+          "step_reference": "KE-NWWDA-541055-CW-RFB",
+          "package_title": "Equipping of Exploratory Bo reholes Project-Lot 1- Sarma n - Tarbaj Water Supply",
+          "package_slug": "equipping-of-exploratory-bo-reholes-project-lot-1-sarma-n-ta",
+          "project_id": "P156634",
+          "project_name": "Water and Sanitation Development Project",
+          "category": "Works",
+          "estimated_amount_usd": "1230000.00",
+          "as_of": "2026-10-28",
+          "created_date": "2026-10-28",
+          "agency_id": null,
+          "implementing_agency": null,
+          "plan_date": null,
+          "signal": null
+        },
+        "notes": 4,
+        "author": {
+          "name": "Ana Example",
+          "you": true
+        },
+        "created_at": "2026-10-28T09:02:00Z",
+        "changed": {
+          "at": "2026-10-28T09:06:00Z",
+          "by": "Ana Example",
+          "you": true
+        },
+        "checked": {
+          "at": "2026-10-28T09:04:00Z",
+          "by": "Ana Example",
+          "you": true
+        },
+        "exported": {
+          "at": "2026-10-28T09:06:00Z",
+          "by": "Ana Example",
+          "you": true
+        },
+        "opened": null,
+        "progress": {
+          "total": 2,
+          "owners_set": 2,
+          "rated": 0,
+          "form": "short",
+          "rows": 2
+        }
+      }
+    ]
+  },
+  "counts": {
+    "to_check": 3,
+    "checked": 0,
+    "exported": 2
+  },
+  "discarded": [],
+  "discarded_count": 0,
+  "total": 5
+}

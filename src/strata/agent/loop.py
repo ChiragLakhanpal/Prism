@@ -83,7 +83,12 @@ def for_agent(value: Any, as_of: dt.date) -> Any:
         return item
 
     if isinstance(value, Mapping) and value.get("abstention"):
-        return {**value, "abstention": strip(value["abstention"])}
+        shown = {**value, "abstention": strip(value["abstention"])}
+        if "summary" in value and not value.get("rows"):
+            # A tool that abstained with no rows has no figure to cite, and its summary's id repeats the call's
+            # arguments, such as the date of a plan version not yet public (ticket 36, check_plan's summary).
+            shown["summary"] = None
+        return shown
     return value
 
 
