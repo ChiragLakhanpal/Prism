@@ -25,6 +25,8 @@ import { CardTop, ChipGroups, ChipSkeletons, ComputedNote, CriterionChip, Refusa
 import { Fill } from "../components/Fill";
 import { Num } from "../components/Num";
 import { PastRange, type PastRangeState } from "../components/PastRange";
+import { Rebidding } from "../components/RebiddingBlock";
+import { plannedRebiddingPath } from "../lib/rebidding";
 import { RisksSection } from "../components/RisksSection";
 import { CheckCriteria } from "../components/CheckCriteria";
 import { StepsSection } from "../components/StepsSection";
@@ -814,6 +816,12 @@ function Workspace({ initial, preview, focusHeading }: { initial: PlannedPage; p
             lead={lead}
             more={more}
             quiet
+            after={
+              <Rebidding
+                path={pkg.comparables_query && missing.length === 0 ? plannedRebiddingPath(pkg.comparables_query) : null}
+                section={section.status === "ready" && !skeleton ? section.result : null}
+              />
+            }
           />
         </div>
         {/* Section 2, the planned date for each STEP step (ticket 27): it reruns when a criterion changes, since the

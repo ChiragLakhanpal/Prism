@@ -142,7 +142,9 @@ HUB = {
     "evidence-award-notice-op00164589.json": f"/api/evidence?id=strata.gold.notice:OP00164589&{DAY}",
     "evidence-contract-1686165.json": f"/api/evidence?id=strata.gold.contract:1686165&{DAY}",
     "evidence-contract-op00044090.json": f"/api/evidence?id=strata.gold.contract:OP00044090&{DAY}",
-    "evidence-plan-row-ke-nwwda-229129.json": f"/api/evidence?id=strata.silver.plan_rows:40132287/KE-NWWDA-229129-CW-RFB&{DAY}",
+    # The plan row as the activity page opens it, with the page's STEP reference.
+    "evidence-plan-row-ke-nwwda-229129.json":
+        f"/api/evidence?id=strata.silver.plan_rows:40132287/KE-NWWDA-229129-CW-RFB&step_ref=KE-NWWDA-229129-CW-RFB&{DAY}",
 }
 # The baseline's answers, from a copy of the fixture in which Ana saved the plan of July 21, 2025 as the
 # baseline on October 23, 2026.

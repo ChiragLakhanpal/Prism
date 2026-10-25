@@ -1,0 +1,48 @@
+{
+  "mock": "A mock, written by hand for the screen tests and the design gallery (tests/record_rebidding_api.py names it). Its packages, notices and numbers are made up and are not in any record.",
+  "id": "strata.silver.notices:OP90000006",
+  "kind": "record",
+  "tool": null,
+  "stratum": "What",
+  "short_name": null,
+  "row": {
+    "reference": "OP90000006",
+    "notice_id": "OP90000006",
+    "fields": [
+      {
+        "key": "notice_type",
+        "value": "Contract Award",
+        "kind": "text"
+      },
+      {
+        "key": "published",
+        "value": "2025-11-04",
+        "kind": "date"
+      },
+      {
+        "key": "bid_reference",
+        "value": "KE-SAMPLE-310006-CW-RFB",
+        "kind": "text"
+      },
+      {
+        "key": "project_id",
+        "value": "P900009",
+        "kind": "text"
+      },
+      {
+        "key": "notice_says",
+        "value": "All bids were found non-responsive, so the bidding was canceled.",
+        "kind": "text",
+        "highlight": true
+      }
+    ],
+    "public_from": "2025-11-04",
+    "source": {
+      "source_key": "award_notices",
+      "document_type": "Contract Award",
+      "project_id": "P900009",
+      "document_date": "2025-11-04"
+    }
+  },
+  "highlights": []
+}

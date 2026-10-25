@@ -1,0 +1,37 @@
+# The reasons a notice gives in words for advertising a package again (ticket 28): the one place they are
+# defined (CLAUDE.md rule 9). strata.config.load_rebidding_reasons() reads it, and rebidding_risk quotes the
+# first sentence of a package's notices that one of a reason's patterns finds, word for word.
+#
+# Each [[reason]] has:
+#   code       the reason code rebidding_risk returns, also its key in web/src/copy.ts's rebid.reason map,
+#              which holds its group heading. Its place here is its place among groups with as many packages.
+#   patterns   regular expressions, each matched without regard to case against one sentence of a notice's
+#              text. A notice's text is split into its lines, and each line into sentences at a full stop,
+#              question mark or exclamation mark that a capital letter follows, with or without a space, since
+#              "...on 4th February,2020.The Request for Bids has been cancelled." is one line of OP00083890.
+#
+# Two kinds of sentence are left out on purpose, so the patterns never find them. An award notice lists a
+# Reason for Rejection for each rejected bidder, which is no reason for advertising again and would tie a
+# reason to a firm (rejected_bids reads those). And most notices carry boilerplate such as "Late bids will be
+# rejected" and "All bids must be accompanied by a Bid Security", which says nothing about this package.
+#
+# The other groups rebidding_risk returns come from a label, not a sentence: again_no_reason (a second notice
+# under the same STEP reference), canceled_row (a plan row's Process Status) and no_award (no award followed
+# the notice). Source of the patterns: the cancellation wording of the fixture's notices (OP00083890) and the
+# World Bank's standard wording for rejecting all bids ("all bids were rejected", "no bid was substantially
+# responsive"); starting values for the owner to extend from the full slice.
+
+[[reason]]
+code = "all_bids_rejected"
+patterns = [
+  '\ball (?:the )?(?:bids|tenders) (?:were|have been|had been) (?:rejected|found (?:to be )?non-?responsive)',
+  '\brejected all (?:the )?(?:bids|tenders)\b',
+  '\bno (?:bid|bidder|tender) was (?:found )?(?:to be )?substantially responsive',
+]
+
+[[reason]]
+code = "process_canceled"
+patterns = [
+  '\b(?:has|have|had) been cancell?ed\b',
+  '\b(?:was|were) cancell?ed\b',
+]

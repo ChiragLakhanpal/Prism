@@ -4,7 +4,7 @@ The bundle (bundle/nightly.yml) is the one place that names the tasks and their 
 Databricks, each task runs nightly_task.py, which calls main() here with the task's name and the
 job run's id. Each task does its work and records its run in strata.ops.pipeline_runs.
 
-Six tasks have their work (tickets 07, 17, 20, 22 and 29): fetch_by_watermark fetches each source in
+Seven tasks have their work (tickets 07, 17, 20, 22, 28 and 29): fetch_by_watermark fetches each source in
 config/sources.toml that it fetches page by page into bronze, for every country or for the slice's
 countries as each entry says; bronze_to_gold builds silver and gold from bronze; relink rebuilds the
 edge table and scores each contract against its project's report paragraphs (strata.knowledge.links,
@@ -12,8 +12,10 @@ which ticket 43 keeps calling here); propose_lessons has
 the batch model propose lessons from the evaluation reports the passage reader holds, and those whose
 quotes pass the check wait in the review queue (strata.knowledge.lessons.propose);
 detect_disagreements rebuilds the assertions and the disagreements between them
-(strata.knowledge.assertions); and measure_data_readiness writes the data readiness measures and
-each table's size to strata.ops. The rest do nothing yet, so each records zero rows changed; ticket
+(strata.knowledge.assertions); score counts the rebidding labels from each source and, on the
+workspace, scores every planned activity with the rebidding champion (strata.estimates.rebidding);
+and measure_data_readiness writes the data readiness measures and each table's size to strata.ops.
+The rest do nothing yet, so each records zero rows changed; ticket
 43 gives them their work, and adds the plan reader (strata.lakehouse.plans), which fetches the
 documents source itself, and the passage reader, whose passages propose_lessons reads.
 
@@ -158,6 +160,28 @@ def _propose_lessons(run: Run) -> int:
     return changed
 
 
+def _score(run: Run) -> int:
+    """How many packages each rebidding label source names, in strata.ops.rebidding_labels, and the rebidding
+    champion's chance for every activity a Procurement Plan lists, in strata.ops.rebidding_scores (ticket 28). Only a
+    run that fetches from the live APIs reads the champion from MLflow and Unity Catalog, and only once a backtest
+    has registered one; any other run scores nothing. Ticket 43 adds the time estimates, the what-if grid and the
+    signals."""
+    from strata.estimates import rebidding
+
+    changed = rebidding.record_label_counts(run.engine, run.run_id, run.clock)
+    if run.fetch is fetch_live:
+        from strata.config import load_rebidding
+        from strata.estimates import rebidding_backtest
+        from strata.estimates.tracking import MlflowTracker
+
+        try:
+            tracker = MlflowTracker(load_rebidding().experiment)
+        except Exception:  # MLflow missing or not signed in: the counts stand, and nothing is scored tonight
+            return changed
+        changed += rebidding_backtest.score_packages(run.engine, tracker, run.run_id, run.clock)
+    return changed
+
+
 def _measure_data_readiness(run: Run) -> int:
     """The data readiness measures of every source, how often supplier auto-merge is right on the labeled
     pairs (ticket 19), the room each table takes, and the Data readiness page built from them for the
@@ -179,7 +203,7 @@ TASKS: dict[str, Callable[[Run], int]] = {
     "relink": _relink,
     "propose_lessons": _propose_lessons,
     "detect_disagreements": _detect_disagreements,
-    "score": _nothing_yet,
+    "score": _score,
     "measure_data_readiness": _measure_data_readiness,
     "refresh_drafts": _nothing_yet,
 }

@@ -356,6 +356,56 @@ def test_the_narrower_criteria_leave_fewer_than_20_comparables():
     assert len(narrower) == CRITERIA["narrower_count"] < 20
 
 
+# ── Advertised again (ticket 28) ─────────────────────────────────────────
+
+REBIDDING = TRUTH["rebidding"]
+
+
+def test_the_comparables_advertised_again_are_the_three_canceled_ones():
+    """Of the 52 comparables, only the canceled have a label: no award followed their notices, and their agency's
+    latest plan marks them Canceled. The still-open four had bids due days before the as-of date."""
+    assert REBIDDING["advertised_again"] == sorted(c["reference"] for c in CANCELED)
+    assert (REBIDDING["n"], REBIDDING["m"]) == (len(CANCELED), len(COMPARABLES))
+    assert REBIDDING["past_total"] == len(SIGNED) + len(STILL_OPEN) == TRUTH["past_range"]["comparables"]
+    assert {c["canceled_in"] for c in CANCELED} == {REBIDDING["canceled_in"]}
+    listed = resolve("api/documents/P156634.json", f"documents.D{REBIDDING['canceled_in_document_id']}")
+    assert listed["docdt"][:10] == REBIDDING["canceled_plan_date"].isoformat() == REBIDDING["canceled_in"][-10:]
+    assert all(c["bids_due"] > REBIDDING["as_of"] - datetime.timedelta(days=30) for c in STILL_OPEN)
+
+
+def test_before_the_canceled_plan_only_the_packages_long_past_their_bids_due_date_had_no_award():
+    wait = datetime.timedelta(days=548)  # config/thresholds.toml, rebidding.no_award_after_days
+    for reference, due in REBIDDING["bids_due"].items():
+        notice = next(n for n in recorded_notices() if n["id"] == next(c["notice"] for c in CANCELED if c["reference"] == reference))
+        assert notice["submission_deadline_date"][:10] == due.isoformat()
+    waited = sorted(reference for reference, due in REBIDDING["bids_due"].items() if due + wait <= REBIDDING["before_the_plan"])
+    assert waited == REBIDDING["advertised_again_before_the_plan"]
+    assert REBIDDING["before_the_plan"] < REBIDDING["canceled_plan_date"]
+
+
+def test_no_comparable_has_two_invitations_for_bids_under_its_step_reference():
+    invitations = [reference_of(n, "bid_reference_no") for n in recorded_notices() if n["notice_type"] == "Invitation for Bids"]
+    twice = [c["reference"] for c in COMPARABLES if invitations.count(c["reference"]) > 1]
+    assert len(twice) == REBIDDING["same_reference_notices"]
+
+
+def test_the_one_reason_in_words_is_in_the_canceled_package_s_own_invitation_for_bids():
+    """No award notice of a comparable says why it was advertised again; OP00083890 says its Request for Bids was
+    cancelled, after "2020." with no space."""
+    notice = next(n for n in recorded_notices() if n["id"] == REBIDDING["quote_notice"])
+    assert notice["notice_type"] == "Invitation for Bids"
+    assert reference_of(notice, "bid_reference_no") == REBIDDING["quote_reference"] in REBIDDING["advertised_again"]
+    assert word_for_word(REBIDDING["quote"], notice["notice_text"])
+    assert f"2020.{REBIDDING['quote']}" in notice["notice_text"]
+    awards = [n for c in COMPARABLES for n in notices_for(c["reference"]) if n["notice_type"] == "Contract Award"]
+    assert awards and not [n["id"] for n in awards if re.search(r"cancell?ed|re-?advertis", n["notice_text"] or "", re.I)]
+
+
+def test_with_review_type_prior_no_comparable_was_advertised_again():
+    narrower = [c for c in COMPARABLES if c.get("review_type") == CRITERIA["narrower_review_type"]]
+    assert len([c for c in narrower if c["reference"] in REBIDDING["advertised_again"]]) == REBIDDING["narrower_advertised_again"]
+
+
 AWKWARD = TRUTH["awkward"]
 
 

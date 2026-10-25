@@ -1,0 +1,143 @@
+{
+  "mock": "A mock, written by hand for the screen tests and the design gallery (tests/record_rebidding_api.py names it). Its packages, notices and numbers are made up and are not in any record.",
+  "tool": "rebidding_risk",
+  "as_of": "2026-10-22",
+  "view": "staff",
+  "rows": [
+    {
+      "evidence_id": "strata.silver.notices:OP90000021",
+      "public_from": "2023-01-09",
+      "source": {
+        "project_id": "P900009",
+        "notice_id": "OP90000021",
+        "plan_document_id": null
+      },
+      "step_reference": "KE-SAMPLE-340001-CW-RFB",
+      "project_id": "P900009",
+      "country_name": "Kenya",
+      "reason_code": "no_award",
+      "row_kind": "no_award",
+      "quote": null,
+      "dates": {
+        "notice_date": "2023-01-09",
+        "bids_due": null,
+        "again_on": null,
+        "plan_date": null
+      },
+      "process_status": null,
+      "evidence": [
+        {
+          "evidence_id": "strata.silver.notices:OP90000021",
+          "public_from": "2023-01-09",
+          "record_kind": "notice",
+          "reference": "OP90000021",
+          "date": "2023-01-09",
+          "agency": null
+        }
+      ],
+      "label_sources": [
+        "no_award"
+      ],
+      "rank": 1
+    },
+    {
+      "evidence_id": "strata.silver.plan_rows:90000002/KE-SAMPLE-330002-CW-RFB",
+      "public_from": "2024-08-14",
+      "source": {
+        "project_id": "P900009",
+        "notice_id": "OP90000301",
+        "plan_document_id": "90000002"
+      },
+      "step_reference": "KE-SAMPLE-330002-CW-RFB",
+      "project_id": "P900009",
+      "country_name": "Kenya",
+      "reason_code": "canceled_row",
+      "row_kind": "canceled_row",
+      "quote": null,
+      "dates": {
+        "notice_date": "2023-05-02",
+        "bids_due": "2023-06-01",
+        "again_on": null,
+        "plan_date": "2024-08-14"
+      },
+      "process_status": "Canceled",
+      "evidence": [
+        {
+          "evidence_id": "strata.silver.plan_rows:90000002/KE-SAMPLE-330002-CW-RFB",
+          "public_from": "2024-08-14",
+          "record_kind": "plan_row",
+          "reference": "KE-SAMPLE-330002-CW-RFB",
+          "date": "2024-08-14",
+          "agency": "Sample Water Agency"
+        }
+      ],
+      "label_sources": [
+        "canceled_row"
+      ],
+      "rank": 2
+    }
+  ],
+  "coverage": {
+    "matched": 31,
+    "used": 31,
+    "not_used": []
+  },
+  "abstention": null,
+  "package": null,
+  "criteria": null,
+  "m": 31,
+  "n": 2,
+  "past_range_total": 31,
+  "denominator_reason": null,
+  "groups": [
+    {
+      "reason_code": "no_award",
+      "count": 1,
+      "step_references": [
+        "KE-SAMPLE-340001-CW-RFB"
+      ]
+    },
+    {
+      "reason_code": "canceled_row",
+      "count": 1,
+      "step_references": [
+        "KE-SAMPLE-330002-CW-RFB"
+      ]
+    }
+  ],
+  "model": {
+    "shown": false,
+    "in10": null,
+    "band": null,
+    "not_shown_reason": "not_better",
+    "min_comparables": 20,
+    "learner": "logistic",
+    "track_record": {
+      "n_test": 44,
+      "test_year": 2025,
+      "beat_baseline": false,
+      "baseline_code": "comparables_rate",
+      "run_date": "2026-10-20"
+    },
+    "score_date": null
+  },
+  "sources": [
+    {
+      "key": "notices",
+      "dataset_name": "Procurement Notices"
+    },
+    {
+      "key": "awards",
+      "dataset_name": "Contract Awards in Investment Project Financing (Since FY 2020)"
+    },
+    {
+      "key": "documents",
+      "dataset_name": "Documents & Reports: Documents API"
+    }
+  ],
+  "notice_source_keys": [
+    "notices"
+  ],
+  "records_through": "2026-10-13",
+  "rows_per_group": 5
+}

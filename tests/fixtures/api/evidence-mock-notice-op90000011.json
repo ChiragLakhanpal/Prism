@@ -1,0 +1,42 @@
+{
+  "mock": "A mock, written by hand for the screen tests and the design gallery (tests/record_rebidding_api.py names it). Its packages, notices and numbers are made up and are not in any record.",
+  "id": "strata.silver.notices:OP90000011",
+  "kind": "record",
+  "tool": null,
+  "stratum": "What",
+  "short_name": null,
+  "row": {
+    "reference": "OP90000011",
+    "notice_id": "OP90000011",
+    "fields": [
+      {
+        "key": "notice_type",
+        "value": "Invitation for Bids",
+        "kind": "text"
+      },
+      {
+        "key": "published",
+        "value": "2023-03-01",
+        "kind": "date"
+      },
+      {
+        "key": "bid_reference",
+        "value": "KE-SAMPLE-320001-CW-RFB",
+        "kind": "text"
+      },
+      {
+        "key": "project_id",
+        "value": "P900009",
+        "kind": "text"
+      }
+    ],
+    "public_from": "2023-03-01",
+    "source": {
+      "source_key": "notices",
+      "document_type": "Invitation for Bids",
+      "project_id": "P900009",
+      "document_date": "2023-03-01"
+    }
+  },
+  "highlights": []
+}

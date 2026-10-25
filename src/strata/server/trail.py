@@ -20,7 +20,8 @@ scored link to a paragraph. Bids keep the award notice's own order, prices as it
 Rejection word for word. Nothing scores, ranks or profiles a supplier: no supplier ID leaves this module, and an
 individual consultant is never named. The page counts nothing: the lead's counts and its parts are here.
 
-The record readers (READERS) open a notice, a contract and a plan row in the evidence drawer by their evidence ids.
+read_notice and read_contract open a notice and a contract in the evidence drawer by their evidence ids; a plan row
+opens through the rebidding block's reader with activity_links added (strata.server.evidence).
 """
 
 from __future__ import annotations
@@ -37,7 +38,6 @@ from strata.reader.templates import template_for
 from strata.server import documents
 from strata.server.projects import display_name
 from strata.server.viewer_sql import data_through
-from strata.tools.check_plan import agency_id
 from strata.tools.find_comparables import read_package
 
 SQL = Path(__file__).resolve().parent / "sql" / "trail"
@@ -104,6 +104,12 @@ def notice_url(notice_id: str) -> str | None:
 def activity_href(project_id: str | None, reference: str | None) -> str | None:
     """The activity page of a STEP reference, under its project (docs/PLAN.md section 8)."""
     return f"/projects/{project_id}/packages/{reference}" if project_id and reference else None
+
+
+def activity_links(project_id: str | None, reference: str | None) -> dict:
+    """What a record opened in the drawer needs for its "Open the activity" link."""
+    return {"record_kind": "activity", "step_reference": reference, "project_id": project_id,
+            "activity_href": activity_href(project_id, reference)}
 
 
 def _field(key: str, value, kind: str = "text") -> dict | None:
@@ -447,22 +453,3 @@ def read_contract(engine: Engine, key: str, as_of: dt.date) -> dict | None:
         "project_id": found[0]["project_id"], "activity_href": activity_href(found[0]["project_id"], record["step_reference"]),
         "source": {"source_key": source_key, "document_type": record["source"]["document_type"],
                    "project_id": found[0]["project_id"], "document_date": dated}}}
-
-
-def read_plan_row(engine: Engine, key: str, as_of: dt.date) -> dict | None:
-    """An activity's row in one plan version: strata.silver.plan_rows:{document_id}/{STEP reference}."""
-    document_id, _, reference = key.partition("/")
-    found = _rows(engine, "plan_row", document_id=document_id, reference=reference, as_of=as_of) if reference else []
-    if not found:
-        return None
-    row = found[0]
-    return {"kind": "record", "row": {
-        "reference": row["activity_reference_no"], "record_kind": "activity", "description": row["description"],
-        "method": row["method"], "market_approach": row["market_approach"], "review_type": row["review_type"],
-        "estimated_amount_usd": _money(row["estimated_amount_usd"]), "process_status": row["process_status"],
-        "public_from": _iso(row["public_from"]), "step_reference": row["activity_reference_no"],
-        "project_id": row["project_id"], "activity_href": activity_href(row["project_id"], row["activity_reference_no"]),
-        "agency_id": agency_id(row["implementing_agency"] or ""),
-        "source": {"document_type": "Procurement Plan", "project_id": row["project_id"],
-                   "implementing_agency": row["implementing_agency"], "plan_date": _iso(row["plan_date"]),
-                   "pdf_page": row["pdf_page"]}}}

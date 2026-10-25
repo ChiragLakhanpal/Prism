@@ -152,9 +152,14 @@ def test_the_plan_row_on_the_trail_opens_in_the_drawer(app):
     trail = get(app, f"/api/projects/P156634/packages/{KENYA}?{DAY}").json()
     evidence_id = stage(trail, "plan")["records"][0]["evidence_id"]
 
-    found = get(app, f"/api/evidence?id={evidence_id}&{DAY}").json()
+    found = get(app, f"/api/evidence?id={evidence_id}&step_ref={KENYA}&{DAY}").json()
 
-    assert found["row"]["estimated_amount_usd"] == f"{VALUES['plan-229129-estimated']['value']:.2f}"
+    fields = {field["key"]: field for field in found["row"]["fields"]}
+    assert float(fields["estimated_amount_usd"]["value"]) == VALUES["plan-229129-estimated"]["value"]
+    assert found["row"]["activity_href"] == f"/projects/P156634/packages/{KENYA}"
+    # Opened from the activity page, no field backs a claim, so none is highlighted (ticket 28 highlights the
+    # Process Status when a row says a package was canceled).
+    assert not any(field.get("highlight") for field in fields.values())
 
 
 def test_why_this_source_explains_the_showcase_link_from_its_score_components(app):
