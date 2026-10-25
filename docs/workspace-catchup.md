@@ -1579,3 +1579,43 @@ It worked if it prints the gate-set line, one line per replayed project with its
     SELECT segment_kind, segment, measure, value, value_text, mlflow_run_id FROM strata.ops.evaluation_result WHERE scorer = 'hindsight_test' AND run_id = '<run id>' ORDER BY segment_kind, segment, measure
 
 Before step 3, N is reported as 0 of 49 and the command exits 3 ("no blamed risks to compare yet"). After step 3 it exits 0 when the run passed and became the champion, or 1 when the gate blocks the release.
+
+## Ticket 23, step 1 of 3: deploy strata.ops.disagreement_choices
+
+The merger parked this step on October 25, 2026, after merge commit f5b445f. All ten keys were set, but the header above holds workspace steps back during a merge. It needs the Databricks keys in `.env`. Ticket 23 adds one table, `strata.ops.disagreement_choices` (`src/strata/lakehouse/tables/ops/disagreement_choices.sql`). It holds the side a viewer kept when two reports disagree, with the viewer, the reason, and the answer (`run_id`) or draft (`draft_id`) it was kept for. Tickets 22, 34 and 37 run the same deploy command, and one deploy from f5b445f or later serves every block that names it. This workspace's earlier deploys passed `--fairshare-catalog workspace`, so this one does too.
+
+Run this from the main checkout:
+
+    uv run --script ops/bundle/deploy.py --env-file .env --fairshare-catalog workspace
+
+It worked if it exits 0, `catalog.build` lists `strata.ops.disagreement_choices` as new with its `public_from` column, it changes no existing table, and this query runs without error on the SQL warehouse:
+
+    SELECT * FROM strata.ops.disagreement_choices LIMIT 1
+
+## Ticket 23, step 2 of 3: redeploy the App with the timeline and the keep-a-side routes
+
+The merger parked this step on October 25, 2026, after merge commit f5b445f. Run it after step 1, so the table exists to grant, and after ticket 20's steps, so ISR 7 and ICR paragraph 78 are on the workspace. It needs the Databricks keys in `.env`. It is ticket 06's deploy command, and one deploy from f5b445f or later serves every block that names it. From this merge on, the deploy grants the App's service principal SELECT and MODIFY on `strata.ops.disagreement_choices` (`ops/app/deploy_app.py`, `grants`), and the App serves `GET /api/projects/{id}/timeline` and `POST /api/disagreements/{id}/choices`.
+
+Run this from the main checkout:
+
+    uv run --script ops/app/deploy_app.py --env-file .env
+
+It worked if the deploy exits 0, its last line is `Strata is running at https://...`, and `SHOW GRANTS ON TABLE strata.ops.disagreement_choices` lists SELECT and MODIFY for the App's service principal. Then, signed in to the App as a staff viewer, `GET <App url>/api/projects/P130164/timeline` must answer 200 with two disagreement items (ISR 7 against ICR paragraph 78 on `pdo_progress`, and the ICR against the ICR Review on `efficiency`). A POST to `<App url>/api/disagreements/437378890475ef48/choices` with a reason and a run id (the body the card sends: `kept_assertion_id`, `reason`, `run_id`, `view`) must answer `recorded: true` and add one row to `strata.ops.disagreement_choices`.
+
+## Ticket 23, step 3 of 3: the timeline, the warning card and a kept side on the deployed App (criteria 4 and 5, live)
+
+The merger parked this step on October 25, 2026, after merge commit f5b445f. The verifier proved all three checks offline and parked their live halves. It needs the Databricks keys, the four Foundry keys, and `AZURE_OPENAI_ENDPOINT` and `AZURE_OPENAI_API_KEY` in `.env`. Run it after step 2 and after ticket 24's step 4.
+
+1. **The timeline route on the SQL warehouse.** Signed in as a staff viewer, save `<App url>/api/projects/P130164/timeline?asof=2026-10-23` as `timeline-live.json`, then run this from the main checkout:
+
+        python3 -c "import json,sys; a,b=(json.load(open(p)) for p in sys.argv[1:]); [d.pop('data_through',None) for d in (a,b)]; sys.exit(a!=b)" timeline-live.json tests/fixtures/api/timeline-p130164.json
+
+    It worked if it exits 0: the live answer equals the recording apart from `data_through`, which proves the route's SQL runs through `WarehouseEngine` and `transpile()`.
+
+2. **Criterion 4 with the live Foundry agent.** In the App, scoped to P130164, ask "How did the status reports rate P130164's progress towards its development objective in 2016?" It worked if DevTools' Network tab shows the `/api/ask` stream's `disagreement` event carrying `"changes_sentence_ids": [0]`, and the card under ISR 7's sentence shows the warning state, the badge "Two reports disagree" and "That changes one sentence in this answer." It must never show the error state.
+
+3. **Criterion 5, live half.** On that answer's card, choose "Keep ISR 7 instead", write a reason and save. It worked if the card says "You kept ISR 7 on ..." with your reason, and this query on the SQL warehouse shows one row with your user id and the answer's run id:
+
+        SELECT viewer, kept_assertion_id, reason, run_id FROM strata.ops.disagreement_choices ORDER BY made_at DESC LIMIT 1
+
+    `DESCRIBE HISTORY strata.ops.disagreement_choices LIMIT 1` must also show that the App's service principal wrote the row, not your own user.
