@@ -1,0 +1,50 @@
+{
+  "mode": "scale",
+  "audit_every": 10,
+  "silver_min": 3,
+  "lead": {
+    "you": 1,
+    "others": 0,
+    "oldest_on": "2026-10-23T09:00:01Z"
+  },
+  "groups": {
+    "you": [
+      {
+        "group_id": "grp-6fa04e510789",
+        "kind_label": "audit",
+        "group": "you",
+        "audit": true,
+        "passage_id": "31525018/v1/54",
+        "evidence_id": "strata.gold.passage:31525018/v1/54",
+        "project_name": "Rajasthan Road Sector Modernization Project",
+        "pid": "P130164",
+        "doc_type": "Implementation Completion and Results Report",
+        "doc_date": "2019-10-10",
+        "para": "54",
+        "paragraph_numbered": true,
+        "section": "III.B",
+        "page": 23,
+        "pages": 66,
+        "query_kind": "rebidding_and_prices",
+        "report_count": 3,
+        "first_on": "2026-10-23T09:00:01Z",
+        "own_project": false,
+        "decided_on": "2026-10-26T09:00:11Z",
+        "agreeing": 3,
+        "can": true,
+        "reason_code": null,
+        "state": "dec-0002"
+      }
+    ],
+    "others": []
+  },
+  "decided": {
+    "window_days": 90,
+    "total": 0,
+    "page": 1,
+    "pages": 1,
+    "from": 0,
+    "to": 0,
+    "rows": []
+  }
+}

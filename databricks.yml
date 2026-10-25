@@ -16,13 +16,15 @@ include:
 
 # The Python package, the config files and the bundle's own files go to the workspace. The job's
 # tasks import the package and read config/ from there, and the readiness task reads databricks.yml
-# and bundle/*.yml (strata.lakehouse.bundle.load) to know which schemas the catalog declares.
+# and bundle/*.yml (strata.lakehouse.bundle.load) to know which schemas the catalog declares. The weekly
+# retrieval run reads the queries written from award notices from evals/retrieval_queries.toml (ticket 32).
 sync:
   paths:
     - src
     - config
     - bundle
     - databricks.yml
+    - evals
 
 variables:
   readers:

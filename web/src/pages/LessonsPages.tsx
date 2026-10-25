@@ -23,7 +23,7 @@ import { Num } from "../components/Num";
 import { PageHeader } from "../components/PageHeader";
 import { Skeleton, SkeletonLine, SkeletonText } from "../components/Skeleton";
 import { Table, type Row as TableRow } from "../components/Table";
-import { Tabs } from "../components/Tabs";
+import { Tabs, type TabLink } from "../components/Tabs";
 import { TextLink } from "../components/TextLink";
 import { copy } from "../copy";
 import { getJson } from "../lib/api";
@@ -35,6 +35,7 @@ import { useLoad, type Load } from "../lib/load";
 import { createStore } from "../lib/store";
 import { setPageTitle } from "../lib/title";
 import { itemHref, LESSONS_HREF, pageHref, QUEUE_HREF, type Library, type Me, type Queue, type QueueRow as Row } from "../lib/lessons";
+import { JUDGING_HREF, REPORTS_HREF } from "../lib/retrieval";
 import { dataReadinessHref } from "../routes";
 import { DocumentColumn } from "./DraftPage";
 
@@ -55,7 +56,7 @@ export async function refreshLessonsMe() {
   }
 }
 
-function useMe(): MeState {
+export function useMe(): MeState {
   const me = useStore(lessonsMe);
   useEffect(() => {
     if (asked) return;
@@ -66,35 +67,42 @@ function useMe(): MeState {
 }
 
 // The tab the frame last showed, so switching tabs says which one shows (the 29 brief, section 5.1).
-let lastTab: "library" | "review" | null = null;
+export type LessonsTab = "library" | "review" | "reports" | "judging";
+let lastTab: LessonsTab | null = null;
+const SHOWING: Record<LessonsTab, string> = {
+  library: words.tabs.showingLibrary,
+  review: words.tabs.showingQueue,
+  reports: words.tabs.showingReports,
+  judging: words.tabs.showingJudging,
+};
 
-export function LessonsFrame({ tabKey: tab, me, children }: { tabKey: "library" | "review"; me: MeState; children: ReactNode }) {
+// The sub-tabs the viewer may open, in the roles table's order, each with its count. Ticket 32 changes brief 29's
+// rule: the row shows for anyone who can open at least one page besides Lessons, and each tab only for its role.
+function tabsFor(me: Me, tab: LessonsTab) {
+  // Plain text, so a link's name reads "Waiting for review (3)" with no gaps around the number.
+  const count = (value: number | null | undefined) => formatNumber(value ?? 0, { compact: false });
+  const found: TabLink[] = [{ key: "library", label: words.tabs.library, href: LESSONS_HREF, current: tab === "library" }];
+  if (me.tabs.includes("review")) found.push({ key: "review", label: fillText(words.tabs.queue, { waiting: count(me.waiting) }), href: QUEUE_HREF, current: tab === "review" });
+  if (me.tabs.includes("reports")) found.push({ key: "reports", label: fillText(words.tabs.reports, { waiting: count(me.reports_waiting) }), href: REPORTS_HREF, current: tab === "reports" });
+  if (me.tabs.includes("judging")) found.push({ key: "judging", label: fillText(words.tabs.judging, { left: count(me.queries_left) }), href: JUDGING_HREF, current: tab === "judging" });
+  return found;
+}
+
+export function LessonsFrame({ tabKey: tab, me, children }: { tabKey: LessonsTab; me: MeState; children: ReactNode }) {
   const [announced, setAnnounced] = useState("");
-  const reviewer = me.status === "ready" && me.me.tabs.includes("review");
+  const tabs = me.status === "ready" ? tabsFor(me.me, tab) : [];
+  const reviewer = tabs.length > 1;
   useEffect(() => {
-    if (lastTab && lastTab !== tab) setAnnounced(tab === "library" ? words.tabs.showingLibrary : words.tabs.showingQueue);
+    if (lastTab && lastTab !== tab) setAnnounced(SHOWING[tab]);
     lastTab = tab;
   }, [tab]);
-  const waiting = me.status === "ready" ? (me.me.waiting ?? 0) : 0;
   return (
     <DocumentColumn>
       <div data-lessons-frame={tab}>
         <PageHeader title={page.title} purpose={page.purpose} />
         {reviewer && (
           <div className="mt-6" data-lessons-tabs>
-            <Tabs
-              label={words.tabs.label}
-              tabs={[
-                { key: "library", label: words.tabs.library, href: LESSONS_HREF, current: tab === "library" },
-                {
-                  key: "review",
-                  // Plain text, so the link's name reads "Waiting for review (3)" with no gaps around the number.
-                  label: fillText(words.tabs.queue, { waiting: formatNumber(waiting, { compact: false }) }),
-                  href: QUEUE_HREF,
-                  current: tab === "review",
-                },
-              ]}
-            />
+            <Tabs label={words.tabs.label} tabs={tabs} />
           </div>
         )}
         <p role="status" className="clip-visually">

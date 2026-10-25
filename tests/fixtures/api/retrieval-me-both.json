@@ -1,0 +1,23 @@
+{
+  "signed_in": true,
+  "tabs": [
+    "library",
+    "review",
+    "reports"
+  ],
+  "acts": [
+    "recommend",
+    "decide",
+    "cross_check"
+  ],
+  "regions": [
+    "South Asia"
+  ],
+  "role": "lead procurement specialist",
+  "waiting": 3,
+  "limit_days": 10,
+  "can_review_reports": true,
+  "reports_waiting": 0,
+  "is_judge": false,
+  "queries_left": null
+}

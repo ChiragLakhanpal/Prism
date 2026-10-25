@@ -7,5 +7,9 @@
   "regions": [],
   "role": null,
   "waiting": null,
-  "limit_days": null
+  "limit_days": null,
+  "can_review_reports": false,
+  "reports_waiting": null,
+  "is_judge": false,
+  "queries_left": null
 }

@@ -365,6 +365,65 @@ summary_poll_minutes = 10
 # principle: at most five risks).
 max_rows = 5
 
+# The retrieval loop (ticket 32; docs/PLAN.md sections 10 and 11, "Feedback"): the labeled set, the
+# judging tool, passage reports from the evidence drawer and how they become labels. strata.knowledge.retrieval
+# and strata.estimates.retrieval read them, and the routes return the ones a screen states.
+[retrieval]
+# pilot: a passage reviewer decides every passage report. scale: a report group with enough agreeing
+# reports and no dissent is ranked lower without a person, as the rules below say. Source: docs/PLAN.md
+# section 11 ("In the pilot a person reviews every report"); the switch is the ticket's, off in the pilot.
+mode = "pilot"
+# At scale, at least this many different people must make the same report on a passage, for the same
+# kind of question, with nobody dissenting, before it becomes a silver label. Source: docs/PLAN.md
+# section 11 ("three agreeing users with no dissent make a silver label").
+silver_min_agreeing = 3
+# At scale, one in this many silver labels made without a person goes to a passage reviewer as an audit
+# sample, at least one in a batch that made any. Source: docs/PLAN.md section 11 ("with a 10% audit").
+audit_every = 10
+# At scale, no one person's reports may be more than this share of a weekly batch's reports that count
+# toward a silver label, and always at least one; their reports past it go to a person. Source:
+# docs/PLAN.md section 11 ("no user supplies more than 10% of a batch").
+max_user_share = 0.1
+# A person's prior reliability in the Dawid and Skene weighting, before any reviewer has decided on their
+# reports: as if they had agreed with prior_agreed of prior_reviews reviewer decisions. Source: none; a
+# starting value for the owner to confirm (an even prior of one in two).
+prior_agreed = 1
+prior_reviews = 2
+# Passage reports lists the decisions of the last this many days. Source: the 32 design brief, section 2.4,
+# as brief 29's decided table.
+decided_days = 90
+# A reporter's reason, a reviewer's reason and a reopening's reason are at most this many characters.
+# Source: the 32 design brief, section 4 (brief 23's Reason field, 500 characters).
+reason_max_chars = 500
+# Decisions on one page of the decided table, and queries on one page of Judging. Source: the 32 design
+# brief, sections 2.4 and 2.6 (brief 21's Pagination, 20 a page).
+page_size = 20
+# Judging shows Cohen's kappa only once both judges have graded at least this many passages on queries
+# they both finished. Source: the 32 design brief, section 4.4, after DESIGN.md section 7 rule 15 (no
+# statistic on fewer than 20 cases).
+min_pairs = 20
+# Each notice query's pool: the best this many passages of each search setup the pool draws on
+# (strata.knowledge.retrieval.judging.pool_setups()), public before the query's date. Source: the spec's
+# retrieval evaluation, so the pool holds every passage recall at 20 can count.
+pool_depth = 20
+# The measures the replay harness reports for retrieval (spec, seam 5): precision at precision_k, recall
+# at recall_k and nDCG at ndcg_k. Source: docs/PLAN.md section 10 ("recall at 20, precision at 10 and
+# nDCG at 10").
+precision_k = 10
+recall_k = 20
+ndcg_k = 10
+# One query in this many, by a stable hash of its id, is held out of tuning, and the tuning gate compares a
+# setup on those. Source: none; a starting value for the owner to confirm (a third of the labeled set).
+held_out_every = 3
+# The tuning gate blocks a setup that scores lower than the current one by more than this on any measure
+# of any held-out query set. Source: spec story 102 ("loses nothing on the held-out set"), so zero.
+tuning_tolerance = 0.0
+# The dashboard shows a week's "Wrong passage" reports per 100 sources opened only when at least this
+# many sources were opened that week, and a query set's measures only from this many queries. Source: the
+# 45 design brief, tiles 22, 28 and 29, after DESIGN.md section 7 rule 15.
+min_opened = 20
+min_queries = 20
+
 # Check your criteria (ticket 31): section 5 of the package workspace. The 20-comparable floor of the cost
 # estimate is past_range.min_comparables, the one floor every range uses.
 [criteria]

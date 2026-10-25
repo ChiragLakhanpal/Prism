@@ -27,7 +27,10 @@ export type BadgeKind =
   | "overdue"
   | "ieg-restates"
   | "two-reports-disagree"
-  | "sources-differ";
+  | "sources-differ"
+  | "own-project"
+  | "their-project"
+  | "audit-sample";
 
 const lessons = copy.lessons.badges;
 
@@ -50,6 +53,10 @@ const KINDS: Record<BadgeKind, { state: State; Icon: LucideIcon; dashed: boolean
   // A disagreement card's (ticket 24): warning only when it changes the answer.
   "two-reports-disagree": { state: "warning", Icon: TriangleAlert, dashed: false, text: copy.badge.twoReportsDisagree },
   "sources-differ": { state: "info", Icon: Info, dashed: false, text: copy.badge.sourcesDiffer },
+  // Passage reports (ticket 32): information for a reviewer, never a warning.
+  "own-project": { state: "info", Icon: Info, dashed: false, text: copy.passageReports.badgeOwnProject },
+  "their-project": { state: "info", Icon: Info, dashed: false, text: copy.passageReports.badgeTheirProject },
+  "audit-sample": { state: "info", Icon: Info, dashed: false, text: copy.passageReports.badgeAudit },
 };
 
 export function StatusBadge({ kind, className, describedBy }: { kind: BadgeKind; className?: string; describedBy?: string }) {

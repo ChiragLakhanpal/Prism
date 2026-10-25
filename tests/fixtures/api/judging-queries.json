@@ -1,0 +1,56 @@
+{
+  "total": 3,
+  "mine_done": 1,
+  "other_done": 1,
+  "agreement": {
+    "agree": 20,
+    "pairs": 25,
+    "both_done": 1,
+    "kappa": 0.71,
+    "withheld": false,
+    "min_pairs": 20
+  },
+  "show": "to_judge",
+  "counts": {
+    "to_judge": 2,
+    "finished_by_you": 1,
+    "finished_by_both": 1
+  },
+  "next_query": "nq-rural-works-delays",
+  "page": 1,
+  "pages": 1,
+  "from": 1,
+  "to": 2,
+  "queries": [
+    {
+      "query_id": "nq-rural-works-delays",
+      "n": 1,
+      "query_text": "What held up the award of rural road works contracts, and how did the project respond?",
+      "notice_id": "OP00044090",
+      "notice_ref": "IN-RRSMP-7431-CW-RFB",
+      "notice_date": "2017-07-19",
+      "query_date": "2017-07-19",
+      "pool": 40,
+      "graded": 4,
+      "my_state": "started",
+      "other_state": "not_started",
+      "agree": null,
+      "locked": false
+    },
+    {
+      "query_id": "nq-sanitation-equipment",
+      "n": 3,
+      "query_text": "How did the implementing agencies plan the purchase of sanitation equipment such as vacuum exhausters?",
+      "notice_id": "OP00086370",
+      "notice_ref": "KE-MOWASCO-16765-GO-RFB",
+      "notice_date": "2020-03-25",
+      "query_date": "2020-03-25",
+      "pool": 40,
+      "graded": 0,
+      "my_state": "not_started",
+      "other_state": "not_started",
+      "agree": null,
+      "locked": false
+    }
+  ]
+}

@@ -337,6 +337,26 @@ def test_the_run_s_application_insights_trace_is_the_request_s_own_trace(ask_cas
         assert list(engine.run("SELECT application_insights_trace_id FROM strata.ops.agent_runs").rows) == [(trace_id,)]
 
 
+
+def test_the_run_is_logged_even_when_listing_the_sources_it_cited_fails(ask_case, ops_db, caplog):
+    """Ticket 13 logs every run. The sources an answer cited (ticket 32) are written beside the run row, so a fault
+    while listing them is logged and leaves the run row to be written."""
+    from strata.knowledge.retrieval.reports import CitationLog, PassageReports
+    from strata.config import load_roles
+
+    class Faulty(PassageReports):
+        def citation_rows(self, *args, **kwargs):
+            raise TypeError("a fact's source is not a mapping")
+
+    written = []
+    ask_case("p130164-rebidding", runs=RunLog(lambda: DuckDBEngine.open(ops_db)), passage_reports=Faulty(load_roles()),
+             citations=CitationLog(lambda: written.append("opened")))
+
+    with DuckDBEngine.open(ops_db, read_only=True) as engine:
+        assert list(engine.run("SELECT run_id FROM strata.ops.agent_runs").rows) == [("run-0001",)]
+    assert written == []
+    assert "Run run-0001 could not list its cited sources." in caplog.text
+
 def test_every_run_is_logged_in_strata_ops_with_its_checks_and_trace(ask_case, ops_db):
     ask_case("p130164-number-with-no-record", trace_ids=lambda: TRACES,
              runs=RunLog(lambda: DuckDBEngine.open(ops_db)))
