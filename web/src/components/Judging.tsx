@@ -7,8 +7,10 @@
 //   a check; current: tint with an inset 1 px primary shadow. A chip never shows which grade you gave.
 // - GradeBar: the Draft bar's frame for judging. From a page area of 1024 px it sticks to the bottom of the window,
 //   on surface with a 1 px line on top, held to the column: the label and its note on the left, three equal-width
-//   secondary toggle buttons with key hints on the right. Below 1024 px it sits right under the passage, before the
-//   grade definitions, its buttons stacked full width (the 32 brief, section 2.9). An alert about the grades sits at
+//   secondary toggle buttons with key hints on the right. Once you finish, it stays for changes until both judges
+//   finish; locked, it shows the two grades and no longer sticks, so the finished panel's links are never under it.
+//   Below 1024 px it sits right under the passage, before the grade definitions, on the page with only its 1 px top
+//   line, its buttons stacked full width (the 32 brief, section 2.9). From 1024 px an alert about the grades sits at
 //   its top, so it sticks with it. The page's bottom scroll padding follows its height while it sticks (DESIGN.md section 10).
 import { useId, useLayoutEffect, useRef, type ReactNode } from "react";
 import { Check, ChevronDown } from "lucide-react";
@@ -127,12 +129,12 @@ export function GradeBar({ n, chosen, locked, onGrade, disabled = false, mine, t
       root.style.removeProperty("--sticky-bottom");
       root.style.scrollPaddingBottom = "";
     };
-  }, []);
+  }, [locked]);
   return (
     <div
       ref={bar}
       data-grade-bar={locked ? "locked" : "ready"}
-      className={cx("border-t border-line bg-surface py-4", !sample && "@lg/page:sticky @lg/page:bottom-0 @lg/page:z-10")}
+      className={cx("border-t border-line py-4", sample ? "bg-surface" : "@lg/page:bg-surface", !sample && !locked && "@lg/page:sticky @lg/page:bottom-0 @lg/page:z-10")}
     >
       {notice && <div className="mb-4">{notice}</div>}
       <div role="group" aria-labelledby={labelId} aria-describedby={locked ? undefined : noteId} className="flex flex-col gap-3 @lg/page:flex-row @lg/page:items-center @lg/page:justify-between">

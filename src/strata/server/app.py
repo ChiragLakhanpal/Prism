@@ -811,14 +811,20 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
             log.info("Run %s ended: %s.", turn.run_id, row["error_code"] or row["status"])
             # Each write in its own thread, so a dropped connection cannot stop it. The run row and the sources the
             # answer cited (ticket 32) are written side by side, so a report sent right after the answer finds them.
+            # The run row starts first, so a fault while listing the cited sources never keeps it from being written.
             writers = []
             if runs is not None:
                 writers.append(threading.Thread(target=runs.record, args=(row,), name=f"strata-run-{turn.run_id}"))
+                writers[-1].start()
             if citations is not None and outcome["verdict"] is not None:
-                cited = cited_rows(turn, outcome["verdict"], row["as_of"], row["finished_at"])
-                writers.append(threading.Thread(target=citations.record, args=(cited,), name=f"strata-cited-{turn.run_id}"))
-            for writer in writers:
-                writer.start()
+                try:
+                    cited = cited_rows(turn, outcome["verdict"], row["as_of"], row["finished_at"])
+                except Exception:  # a fact in a shape the list doesn't expect: the answer and its run row stand
+                    log.exception("Run %s could not list its cited sources.", turn.run_id)
+                else:
+                    writers.append(threading.Thread(target=citations.record, args=(cited,),
+                                                    name=f"strata-cited-{turn.run_id}"))
+                    writers[-1].start()
             for writer in writers:
                 await asyncio.to_thread(writer.join, 60)
 

@@ -223,7 +223,7 @@ test("when the other judge finishes while the query is open, the refused grade s
   await page.keyboard.press("a");
   const notice = page.locator("[data-locked-while-open]");
   await expect(notice).toBeFocused();
-  await expect(notice).toHaveText("The other judge finished this query while you had it open, so your grades for it are now locked.");
+  await expect(notice).toHaveText("The other judge finished this query while you had it open, so I locked your grades for it.");
   await expect(page.getByRole("button", { name: "Try again" })).toHaveCount(0);
 });
 
@@ -240,4 +240,143 @@ test("choosing another filter with the arrow keys keeps focus on the filter whil
   await expect(page).toHaveURL(/show=finished_by_both/);
   await expect(page.locator("[data-judging=ready] [aria-busy]")).toHaveCount(0);
   await expect(page.getByRole("radio", { name: "Finished by both (1)" })).toBeFocused();
+});
+
+// The focused heading clears the stuck header: its top is at or below the header's bottom (DESIGN.md section 10).
+async function clearsHeader(page: Page) {
+  const heading = page.locator("[data-judging-panel] h2");
+  await expect(heading).toBeFocused();
+  const header = (await page.locator("[data-judging-header]").boundingBox())!;
+  const top = (await heading.boundingBox())!.y;
+  expect(top).toBeGreaterThanOrEqual(Math.max(header.y + header.height, 0));
+  expect(top).toBeLessThan(900);
+}
+
+for (const width of [1440, 1024]) {
+  test(`at ${width} px the next passage's heading lands below the stuck header, after a grade by pointer or by key`, async ({ page }) => {
+    await serve(page, { "/api/judging/queries/nq-rural-works-delays": await file("judging-query.json") }, width);
+    const saved = await file("judging-grade-saved.json");
+    await page.route("**/api/judging/queries/nq-rural-works-delays/passages/**", (route) => route.fulfill({ contentType: "application/json", body: saved.body }));
+    await page.goto("/lessons/judging/nq-rural-works-delays");
+    const panel = page.locator("[data-judging-panel]");
+    await expect(panel.getByRole("heading", { level: 2 })).toHaveText("Passage 1 of 40");
+
+    await page.locator("[data-grade-bar]").getByRole("button", { name: /Not relevant/ }).click();
+    await expect(panel.getByRole("heading", { level: 2 })).toHaveText("Passage 2 of 40");
+    await clearsHeader(page);
+
+    await page.evaluate(() => window.scrollBy(0, 350));
+    await page.waitForTimeout(350);
+    await page.keyboard.press("p");
+    await expect(panel.getByRole("heading", { level: 2 })).toHaveText("Passage 3 of 40");
+    await clearsHeader(page);
+    // Stuck, the header keeps 12 px of the page above its caption.
+    await expect(page.locator("[data-judging-header]")).toHaveAttribute("data-stuck", "true");
+    expect((await page.locator("[data-judging-header] p").first().boundingBox())!.y).toBeGreaterThanOrEqual(12);
+  });
+}
+
+test("once you finish a query, the grade bar stays so you can change a grade until the other judge finishes", async ({ page }) => {
+  const query = JSON.parse((await file("judging-query.json")).body);
+  query.passages = query.passages.map((passage: { my_grade: string | null }, index: number) => ({ ...passage, my_grade: index === 0 ? null : "partly" }));
+  const sent = await serve(page, { "/api/judging/queries/nq-rural-works-delays": { body: JSON.stringify(query) } });
+  const saved = await file("judging-grade-saved.json");
+  await page.route("**/api/judging/queries/nq-rural-works-delays/passages/**", (route) => {
+    sent.push({ method: route.request().method(), path: new URL(route.request().url()).pathname, body: route.request().postDataJSON() });
+    return route.fulfill({ contentType: "application/json", body: saved.body });
+  });
+  await page.goto("/lessons/judging/nq-rural-works-delays");
+  await page.locator("[data-judging-panel]").click({ position: { x: 4, y: 4 } });
+  await page.keyboard.press("n");
+  await expect(page.locator("[data-judging-finished=mine] [data-outcome-panel]")).toBeFocused();
+
+  const bar = page.locator("[data-grade-bar=ready]");
+  await expect(bar.getByRole("button", { name: /Not relevant/ })).toHaveAttribute("aria-pressed", "true");
+  await bar.getByRole("button", { name: /Partly/ }).click();
+  await expect(bar.getByRole("button", { name: /Partly/ })).toHaveAttribute("aria-pressed", "true");
+  await expect.poll(() => sent.filter((call) => call.method === "PUT").map((call) => call.body)).toEqual([{ grade: "not_relevant" }, { grade: "partly" }]);
+});
+
+test("on a query both judges finished, the two grades sit in the page, not in a bar stuck to the window", async ({ page }) => {
+  await serve(page, { "/api/judging/queries/nq-water-works-readiness": await file("judging-query-locked.json") });
+  await page.goto("/lessons/judging/nq-water-works-readiness");
+  await expect(page.locator("[data-grade-bar=locked]")).toBeVisible();
+  expect(await page.locator("[data-grade-bar=locked]").evaluate((el) => getComputedStyle(el).position)).toBe("static");
+  // "Judge the next query" is never under a stuck bar.
+  await page.locator("[data-judging-finished=both]").getByRole("button", { name: /Show where you differed/ }).click();
+  const next = page.locator("[data-judging-finished=both]").getByRole("link", { name: "Judge the next query" });
+  await next.focus();
+  const box = (await next.boundingBox())!;
+  const bar = (await page.locator("[data-grade-bar=locked]").boundingBox())!;
+  expect(box.y + box.height <= bar.y || box.y >= bar.y + bar.height).toBe(true);
+});
+
+test("closing the award notice's record puts focus back on its link", async ({ page }) => {
+  await serve(page, {
+    "/api/judging/queries/nq-rural-works-delays": await file("judging-query.json"),
+    "/api/evidence": await file("evidence-award-notice-op00125282.json"),
+  });
+  await page.goto("/lessons/judging/nq-rural-works-delays");
+  const link = page.locator("[data-judging-header] [data-notice-link]");
+  await link.click();
+  await expect(page.locator("[data-evidence-drawer]")).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page.locator("[data-evidence-drawer]")).toHaveCount(0);
+  await expect(link).toBeFocused();
+});
+
+test("at 390 px a grade that fails to save says so in view, above the next passage", async ({ page }) => {
+  await serve(page, { "/api/judging/queries/nq-rural-works-delays": await file("judging-query.json") }, 390);
+  await page.route("**/api/judging/queries/nq-rural-works-delays/passages/**", (route) =>
+    route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify({ code: "data_service" }) }),
+  );
+  await page.goto("/lessons/judging/nq-rural-works-delays");
+  await page.locator("[data-judging-panel]").click({ position: { x: 4, y: 4 } });
+  await page.keyboard.press("a");
+  const alert = page.locator("[data-judging-panel]").getByRole("alert");
+  await expect(alert).toContainText("I couldn't save your grade for passage 1.");
+  const box = (await alert.boundingBox())!;
+  expect(box.y).toBeGreaterThanOrEqual(0);
+  expect(box.y + box.height).toBeLessThanOrEqual(900);
+  // Between the panel's heading and the passage.
+  expect(await page.locator("[data-judging-panel]").evaluate((panel) => {
+    const kids = [...panel.children];
+    const at = kids.findIndex((kid) => kid.querySelector("[role=alert]") || kid.getAttribute("role") === "alert");
+    return [kids[at - 1]?.tagName, at > 0];
+  })).toEqual(["H2", true]);
+});
+
+for (const width of [1024, 390]) {
+  test(`at ${width} px a query that isn't there keeps the footer below the fold`, async ({ page }) => {
+    await serve(page, { "/api/judging/queries/nq-nothing": await file("judging-query-not-found.json") }, width);
+    await page.goto("/lessons/judging/nq-nothing");
+    await expect(page.getByText("nq-nothing")).toBeVisible();
+    expect((await page.locator("footer").boundingBox())!.y).toBeGreaterThanOrEqual(900);
+  });
+}
+
+test("a judge with one query and no grades reads that one is waiting", async ({ page }) => {
+  const list = JSON.parse((await file("judging-queries.json")).body);
+  Object.assign(list, { total: 1, mine_done: 0, other_done: 0, queries: list.queries.slice(0, 1) });
+  list.agreement = { ...list.agreement, both_done: 0 };
+  await serve(page, { "/api/lessons/me": await file("retrieval-me-judge-after.json"), "/api/judging/queries": { body: JSON.stringify(list) } });
+  await page.goto("/lessons/judging");
+  await expect(page.locator("[data-judging-lead]")).toHaveText("You haven't judged any queries yet, and one is waiting for you.");
+});
+
+test("at 390 px a notice reference moves to the next line whole rather than breaking at a hyphen", async ({ page }) => {
+  await serve(page, { "/api/lessons/me": await file("retrieval-me-judge-after.json"), "/api/judging/queries": await file("judging-queries.json") }, 390);
+  await page.goto("/lessons/judging");
+  const links = page.locator("[data-notice-link]").filter({ visible: true });
+  await expect(links.first()).toBeVisible();
+  // The lines the reference's own text runs over: one, wherever the link starts.
+  const lines = await links.evaluateAll((all) =>
+    all.map((el) => {
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      return new Set([...range.getClientRects()].map((rect) => Math.round(rect.top))).size;
+    }),
+  );
+  expect(lines.length).toBeGreaterThan(0);
+  for (const count of lines) expect(count).toBe(1);
 });

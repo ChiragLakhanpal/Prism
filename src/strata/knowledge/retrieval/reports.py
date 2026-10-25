@@ -332,7 +332,7 @@ class PassageReports:
         elif view != STAFF:
             why_not = "preview"
         return {"allowed": why_not is None, "why_not": why_not, "run_id": run_id, "mode": self.mode,
-                "my_report": None}
+                "my_report": None, "limits": {"reason_max_chars": int(self.value("reason_max_chars"))}}
 
     def my_report(self, ledger: Ledger, report: Report | None) -> dict | None:
         if report is None:

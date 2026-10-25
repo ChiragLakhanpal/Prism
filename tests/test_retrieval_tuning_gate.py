@@ -54,3 +54,16 @@ def test_a_deliberately_worse_setup_is_blocked(fixture_db, store, worse):
     rows = {(row["segment"], row["measure"]): row["value"] for row in harness.run_rows(store, "gate-worse")
             if row["scorer"] == "retrieval_tuning_gate"}
     assert (rows[("held_out", "passed")], rows[("verdict", "ships")]) == (0, 0)
+
+
+def test_with_no_held_out_query_the_gate_compares_nothing_and_the_candidate_does_not_ship(fixture_db, store):
+    """No labels, so no query set has a held-out query: the gate says the held-out set was not compared, never that
+    it passed, and nothing ships on an empty comparison."""
+    with DuckDBEngine.open(fixture_db, read_only=True) as engine:
+        verdict = retrieval.gate(engine, load_search().setup, OfflineTracker(), "gate-empty", RAN_AT, store, labels=[])
+
+    assert (verdict.ships, verdict.held_out, verdict.comparisons) == (False, "not_compared", [])
+    rows = {(row["segment"], row["measure"]): (row["value"], row["value_text"])
+            for row in harness.run_rows(store, "gate-empty") if row["scorer"] == "retrieval_tuning_gate"}
+    assert rows[("held_out", "passed")] == (None, "not compared")
+    assert rows[("verdict", "ships")][0] == 0

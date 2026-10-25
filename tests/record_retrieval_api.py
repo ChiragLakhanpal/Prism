@@ -74,6 +74,8 @@ def answers(folder: Path) -> dict[str, str]:
         found["feedback-sent.json"] = text(pilot.report(ANA, ana, reason=(
             "It is about estimates in general, not why these contracts were advertised again.")))
         found["feedback-mine-waiting.json"] = get("/api/feedback", ANA, evidence_id=PARAGRAPH_54, run_id=ana)
+        # The same report sent again, as from another tab: refused, with the report already sent.
+        found["feedback-already-sent.json"] = text(pilot.report(ANA, ana, kind="not_useful"))
         found["feedback-preview.json"] = text(pilot.report(ANA, ana, kind="not_useful", view="piu"))
         pilot.later(minutes=20)
         pilot.report(LEELA, pilot.ask(LEELA), kind="not_useful")

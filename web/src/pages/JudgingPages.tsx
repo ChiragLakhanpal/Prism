@@ -37,6 +37,7 @@ import { navigate } from "../lib/router";
 import { JUDGING_HREF, queryHref, type Grade, type JudgingList, type JudgingQuery, type PooledPassage, type QuerySummary } from "../lib/retrieval";
 import { setPageTitle } from "../lib/title";
 import { usePageAtLeast } from "../lib/usePageAtLeast";
+import { useScrollPadding } from "../lib/useScrollPadding";
 import { DocumentColumn } from "./DraftPage";
 import { LessonsFrame, refreshLessonsMe, useMe } from "./LessonsPages";
 
@@ -68,9 +69,11 @@ function NoticeLink({ query }: { query: { notice_id: string; notice_ref: string 
       href={evidenceHref(id)}
       onClick={(event) => {
         event.preventDefault();
-        openEvidence(id, null);
+        // The link is the drawer's origin, so closing the record puts focus back on it (brief 14).
+        openEvidence(id, { serial: null, sentence: null, marker: event.currentTarget, runId: null });
       }}
-      className="font-mono wrap-anywhere"
+      // A STEP reference moves to the next line whole, and breaks inside only when it is wider than the line.
+      className="inline-block max-w-full font-mono wrap-anywhere"
       data-notice-link
     >
       {query.notice_ref ?? query.notice_id}
@@ -109,8 +112,9 @@ function Agreement({ list }: { list: JudgingList }) {
 function Progress({ query }: { query: QuerySummary }) {
   return (
     <span className="flex flex-col gap-0.5">
-      <span>{fillText(w.progressYou[query.my_state], { graded: query.graded, pool: query.pool })}</span>
-      <span className="text-ink-muted">{w.progressOther[query.other_state]}</span>
+      {/* Each state stays on one line. */}
+      <span className="whitespace-nowrap">{fillText(w.progressYou[query.my_state], { graded: query.graded, pool: query.pool })}</span>
+      <span className="whitespace-nowrap text-ink-muted">{w.progressOther[query.other_state]}</span>
     </span>
   );
 }
@@ -144,7 +148,7 @@ function emptyFor(list: JudgingList): ReactNode {
 }
 
 const COLUMNS = [
-  { key: "query", header: w.columns.query, width: "w-[46%]" },
+  { key: "query", header: w.columns.query, width: "w-[40%]" },
   {
     key: "pool",
     header: (
@@ -157,7 +161,7 @@ const COLUMNS = [
     numeric: true,
     width: "w-[12%]",
   },
-  { key: "progress", header: w.columns.progress, width: "w-[24%]" },
+  { key: "progress", header: w.columns.progress, width: "w-[28%]" },
   {
     key: "matched",
     header: (
@@ -168,7 +172,7 @@ const COLUMNS = [
     ),
     cardHeader: w.columns.matched,
     numeric: true,
-    width: "w-[18%]",
+    width: "w-[20%]",
   },
 ];
 
@@ -178,7 +182,11 @@ export function JudgingBody({ list, onShow, busy = false }: { list: JudgingList;
   const total = <Num value={list.total} options={{ compact: false }} />;
   const lead =
     list.mine_done === 0 ? (
-      <Fill template={w.leadNone} slots={{ total: <Num count={list.total} /> }} />
+      list.total === 1 ? (
+        w.leadNoneOne
+      ) : (
+        <Fill template={w.leadNone} slots={{ total: <Num count={list.total} /> }} />
+      )
     ) : list.mine_done >= list.total ? (
       <Fill template={w.leadAll} slots={{ total }} />
     ) : (
@@ -308,9 +316,17 @@ function NoAccess() {
 
 export function JudgingView({ load, retry, last = null }: { load: Load<JudgingList>; retry: () => void; last?: JudgingList | null }) {
   if (load.status === "loading") return last ? <JudgingBody list={last} busy /> : <JudgingSkeleton />;
+  // A short answer, such as an error, holds a screen's height as the skeleton did, so the footer stays below the fold.
   if (load.status === "error") {
-    if (refusedAs(load, "not_a_judge")) return <NoAccess />;
-    return <LoadError error={load.error} message={w.error} permission={w.permission} onRetry={retry} retrying={load.retrying} attempt={load.attempt} />;
+    return (
+      <div className="min-h-svh">
+        {refusedAs(load, "not_a_judge") ? (
+          <NoAccess />
+        ) : (
+          <LoadError error={load.error} message={w.error} permission={w.permission} onRetry={retry} retrying={load.retrying} attempt={load.attempt} />
+        )}
+      </div>
+    );
   }
   return <JudgingBody list={load.data} />;
 }
@@ -416,6 +432,7 @@ export function JudgingDesk({ query: loaded, initial, sample = false }: {
   const lastAdvance = useRef(Number.NEGATIVE_INFINITY);
   const desk = useRef<HTMLDivElement>(null);
   const top = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLDivElement>(null);
   const h1 = useRef<HTMLHeadingElement>(null);
   const panelHeading = useRef<HTMLHeadingElement>(null);
   const outcome = useRef<HTMLDivElement>(null);
@@ -453,6 +470,9 @@ export function JudgingDesk({ query: loaded, initial, sample = false }: {
     watch.observe(element);
     return () => watch.disconnect();
   }, [sample]);
+  // While the header sticks, the page's top scroll padding is its height plus 8 px, so a focused heading or control
+  // is never under it (DESIGN.md section 10). It follows the header's height, since a long query wraps.
+  useScrollPadding(headerRef, !sample, { gap: 8 });
 
   function show(n: number, focus = true) {
     setAt(n);
@@ -461,10 +481,13 @@ export function JudgingDesk({ query: loaded, initial, sample = false }: {
     requestAnimationFrame(() => {
       const heading = panelHeading.current;
       if (!heading) return;
+      heading.focus({ preventScroll: true });
       // Nothing sticks below a 1024 px page area, so the page scrolls, instantly, to put the next passage's heading
-      // at the top of the window. From it, the sticky header's scroll padding keeps the heading below the header.
-      if (!wide) heading.scrollIntoView({ block: "start", behavior: "instant" });
-      heading.focus({ preventScroll: !wide });
+      // at the top of the window. From it, the page scrolls only when the heading is under the stuck header or out
+      // of view, and the top scroll padding then puts it just below the header.
+      const { top: at } = heading.getBoundingClientRect();
+      const below = headerRef.current?.getBoundingClientRect().bottom ?? 0;
+      if (!wide || at < below || at > window.innerHeight) heading.scrollIntoView({ block: "start", behavior: "instant" });
     });
   }
 
@@ -534,11 +557,14 @@ export function JudgingDesk({ query: loaded, initial, sample = false }: {
     grade(choice);
   };
 
+  // From a 1024 px page area the header sticks with 12 px of the page above its caption; its negative top margin
+  // takes that room back from the gap above, so nothing moves when it sticks.
   const header = (
     <div
+      ref={headerRef}
       className={cx(
         "flex flex-col gap-1 bg-page",
-        !sample && "@lg/page:sticky @lg/page:top-0 @lg/page:z-10 @lg/page:border-b @lg/page:pb-3",
+        !sample && "@lg/page:sticky @lg/page:top-0 @lg/page:z-10 @lg/page:-mt-3 @lg/page:border-b @lg/page:pt-3 @lg/page:pb-3",
         !sample && (stuck ? "@lg/page:border-line" : "@lg/page:border-transparent"),
       )}
       data-judging-header
@@ -590,7 +616,10 @@ export function JudgingDesk({ query: loaded, initial, sample = false }: {
         {fillText(w.saveFailed, { i: failed })}
       </Alert>
     );
-    const gradeBar = passage && !(finished && !query.locked) && (
+    // Once you finish, the bar stays so you can change a grade until the other judge finishes (brief section 4.2).
+    // From a 1024 px page area a failed save sits at the top of the sticky bar; below it, right after the panel's
+    // heading, so it is in view after the page scrolls to the next passage.
+    const gradeBar = passage && (
       <GradeBar
         sample={sample}
         n={at}
@@ -599,7 +628,7 @@ export function JudgingDesk({ query: loaded, initial, sample = false }: {
         mine={passage.my_grade ?? grades[passage.passage_id] ?? null}
         theirs={passage.other_grade}
         onGrade={grade}
-        notice={failedAlert || undefined}
+        notice={(wide && failedAlert) || undefined}
       />
     );
     main = (
@@ -639,6 +668,7 @@ export function JudgingDesk({ query: loaded, initial, sample = false }: {
             <h2 id={panelId} ref={panelHeading} tabIndex={-1} className="text-title text-ink-heading focus:outline-none">
               {fillText(w.panel, { i: at, pool })}
             </h2>
+            {!wide && failedAlert}
             <PassageBlock evidence={evidenceOf(passage)} />
             {!wide && gradeBar}
             <dl className="mt-3 grid gap-x-4 gap-y-2 text-caption text-ink @md/page:grid-cols-[auto_1fr]">
@@ -663,8 +693,8 @@ export function JudgingDesk({ query: loaded, initial, sample = false }: {
                 </TextLink>
               ) : <span />}
             </div>
-            {/* Room above the sticky grade bar, so the last line never hides under it. */}
-            <div className="hidden h-24 @lg/page:block" aria-hidden="true" />
+            {/* Room above the sticky grade bar, so the last line never hides under it. A locked bar doesn't stick. */}
+            {!query.locked && <div className="hidden h-24 @lg/page:block" aria-hidden="true" />}
           </section>
         )}
         {wide && gradeBar && (
@@ -683,8 +713,9 @@ export function JudgingDesk({ query: loaded, initial, sample = false }: {
         trail={[{ text: copy.lessons.tabs.library, href: LESSONS_HREF }, { text: w.title, href: JUDGING_HREF }, { text: fillText(w.breadcrumb, { n: query.n }) }]}
         back={{ text: w.breadcrumbBack, href: JUDGING_HREF }}
       />
-      {/* Scrolls out of view as the header sticks, which then takes its line. */}
-      <div ref={top} aria-hidden="true" className="-mb-4 h-0" />
+      {/* Scrolls out of view as the header sticks, which then takes its line. It sits on the header's top edge,
+          12 px above where the flow puts it, since the header's negative margin moves the header up by that much. */}
+      <div ref={top} aria-hidden="true" className={cx("-mb-4 h-0", !sample && "@lg/page:relative @lg/page:-top-3")} />
       {header}
       {main}
       <p role="status" className="clip-visually">
@@ -743,12 +774,13 @@ export function JudgingQueryPage({ queryId, search }: { queryId: string; search:
     if (denied) setPageTitle(copy.pages.lessons.title);
   }, [denied]);
   let body: ReactNode;
+  // A short answer holds a screen's height as the skeleton did, so the footer stays below the fold.
   const empty = (title: ReactNode, text: string, link: { href: string; text: string }) => (
-    <>
+    <div className="min-h-svh">
       {trail}
       <h1 tabIndex={-1} className="clip-visually">{w.breadcrumbBack}</h1>
       <EmptyState className="mt-6" title={title} body={text} link={link} />
-    </>
+    </div>
   );
   if (load.status === "loading") body = <>{trail}<JudgingQuerySkeleton n={asked >= 1 ? asked : 1} /></>;
   else if (load.status === "error") {
@@ -756,23 +788,23 @@ export function JudgingQueryPage({ queryId, search }: { queryId: string; search:
     else if (refusedAs(load, "not_assigned")) body = empty(w.notAssignedTitle, w.notAssignedBody, { href: JUDGING_HREF, text: w.notAssignedLink });
     else if (denied) {
       body = (
-        <>
+        <div className="min-h-svh">
           <h1 tabIndex={-1} className="text-h1 text-ink-heading focus:outline-none">{copy.pages.lessons.title}</h1>
           <p className="mt-2 max-w-prose text-body text-pretty text-ink-muted">{copy.pages.lessons.purpose}</p>
           <div className="mt-8">
             <NoAccess />
           </div>
-        </>
+        </div>
       );
     } else
       body = (
-        <>
+        <div className="min-h-svh">
           {trail}
           <h1 tabIndex={-1} className="clip-visually">{w.breadcrumbBack}</h1>
           <div className="mt-6">
             <LoadError error={load.error} message={w.errorOne} permission={w.permission} onRetry={retry} retrying={load.retrying} attempt={load.attempt} />
           </div>
-        </>
+        </div>
       );
   } else {
     const at = asked >= 1 && asked <= load.data.passages.length ? asked : undefined;

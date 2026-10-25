@@ -174,11 +174,11 @@
 /* A control inside a sticky part shifts its scroll margin by the part's scroll padding, so the Tab key does
    not scroll the page to bring it out of that padding (DESIGN.md section 10). The pages set --sticky-top
    and --sticky-bottom on html only while their header or bar sticks. */
-:is([data-draft-bar], [data-discarded-notice]) :is(a, button) {
+:is([data-draft-bar], [data-discarded-notice], [data-grade-bar]) :is(a, button) {
   scroll-margin-top: var(--sticky-bottom, 0px);
   scroll-margin-bottom: calc(-1 * var(--sticky-bottom, 0px));
 }
-:is([data-draft-header], [data-plan-header]) :is(a, button) {
+:is([data-draft-header], [data-plan-header], [data-judging-header]) :is(a, button) {
   scroll-margin-top: calc(-1 * var(--sticky-top, 0px));
   scroll-margin-bottom: var(--sticky-top, 0px);
 }

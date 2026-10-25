@@ -32,7 +32,6 @@ import { ToggleButton } from "./ToggleButton";
 
 const words = copy.feedback;
 const KINDS: ReportKind[] = ["wrong_passage", "not_useful"];
-const REASON_MAX = 500;
 
 // What you typed, kept for the session when you cancel, by passage and answer.
 const typed = new Map<string, { kind: ReportKind; text: string }>();
@@ -219,7 +218,7 @@ export function FeedbackRow({
                     setText(value);
                     typed.set(key, { kind: chosen, text: value });
                   }}
-                  max={REASON_MAX}
+                  max={feedback.limits.reason_max_chars}
                   disabled={sending}
                 />
               </ReasonFieldNearest>

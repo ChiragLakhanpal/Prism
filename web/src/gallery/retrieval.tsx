@@ -42,7 +42,7 @@ const t = galleryCopy.retrievalSections;
 const s = galleryCopy.retrievalStates;
 const nothing = () => undefined;
 const REASON = (mineWaiting as { my_report: MyReport }).my_report.reason ?? "";
-const FEEDBACK: Feedback = { allowed: true, why_not: null, run_id: "run-0001", mode: "pilot", my_report: null };
+const FEEDBACK: Feedback = { allowed: true, why_not: null, run_id: "run-0001", mode: "pilot", my_report: null, limits: { reason_max_chars: 500 } };
 const PASSAGE = { ...(paragraph54 as unknown as EvidenceEvent), tool: "search_passages", feedback: FEEDBACK };
 const report = (body: unknown) => (body as { my_report: MyReport }).my_report;
 
@@ -275,7 +275,7 @@ export function judgingPage(): GalleryPage {
               <ReportGroupView sample group={group(reportDecided)} initial={{ reopenOpen: true }} />
             </Labeled>
             <Labeled label={s.reportReopenFailed}>
-              <ReportGroupView sample group={group(reportDecided)} initial={{ reopenFailed: true }} />
+              <ReportGroupView sample group={group(reportDecided)} initial={{ reopenFailed: true, reopenReason: s.reopenReason }} />
             </Labeled>
           </Column>
         ),

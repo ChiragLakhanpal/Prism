@@ -11,10 +11,12 @@ import { expect, mockApi, recorded, test } from "./mocked";
 const WCAG_22_AA = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 const REASON = "It is about estimates in general, not why these contracts were advertised again.";
 
-async function openAnswer(page: Page, width = 1440, { preview = false, mine = "feedback-mine-waiting.json" } = {}) {
+async function openAnswer(page: Page, width = 1440, { preview = false, mine = "feedback-mine-waiting.json", sent = "feedback-sent.json", limit = 0 } = {}) {
   const posted: unknown[] = [];
   let stream = await recorded("ask-p130164-rebidding.sse");
   if (preview) stream = stream.replaceAll('"allowed": true, "why_not": null', '"allowed": false, "why_not": "preview"');
+  // The server's reason limit (config/thresholds.toml, retrieval.reason_max_chars), changed to show the row reads it.
+  if (limit) stream = stream.replaceAll('"reason_max_chars": 500', `"reason_max_chars": ${limit}`);
   await page.setViewportSize({ width, height: 900 });
   await mockApi(page, {
     "/api/me": { body: await recorded("me.json") },
@@ -29,7 +31,10 @@ async function openAnswer(page: Page, width = 1440, { preview = false, mine = "f
   await page.route("**/api/feedback", async (route) => {
     if (route.request().method() !== "POST") return route.fallback();
     posted.push(route.request().postDataJSON());
-    return route.fulfill({ contentType: "application/json", body: await recorded("feedback-sent.json") });
+    const answer = JSON.parse(await recorded(sent));
+    return answer.status && answer.body
+      ? route.fulfill({ status: answer.status, contentType: "application/json", body: JSON.stringify(answer.body) })
+      : route.fulfill({ contentType: "application/json", body: JSON.stringify(answer) });
   });
   await page.goto(preview ? "/projects/P130164?view=piu" : "/projects/P130164");
   await expect(page.locator("main h1")).toBeVisible();
@@ -111,6 +116,23 @@ test("a choice opens an optional reason field, Escape closes it before the drawe
   await expect(panel.getByRole("button", { name: "Withdraw the report" })).toBeVisible();
   expect(posted).toEqual([{ evidence_id: ICR_54, run_id: "run-0001", sentence_id: expect.any(Number), kind: "wrong_passage", reason: REASON, view: "staff" }]);
   expect(await axe(page)).toEqual([]);
+});
+
+test("the reason field takes as many characters as the server allows", async ({ page }) => {
+  await openAnswer(page, 1440, { limit: 200 });
+  await kind(page, "Wrong passage").click();
+  await expect(row(page).getByRole("textbox")).toHaveAttribute("maxlength", "200");
+});
+
+test("a report already sent from another tab shows that report, not a failure", async ({ page }) => {
+  await openAnswer(page, 1440, { sent: "feedback-already-sent.json" });
+  await kind(page, "Not useful").click();
+  await row(page).getByRole("button", { name: "Send the report" }).click();
+
+  const panel = row(page).locator("[data-outcome-panel]");
+  await expect(panel).toBeVisible();
+  await expect(panel).toContainText("You marked this as the wrong passage.");
+  await expect(row(page).getByText("I couldn't send your report just now.")).toHaveCount(0);
 });
 
 test("reopening the passage for the same answer shows what a reviewer decided, with their reason", async ({ page }) => {

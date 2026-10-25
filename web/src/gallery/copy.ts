@@ -220,6 +220,8 @@ export const galleryCopy = {
     deskLoading: "Loading, with the grade bar held",
     // The reason a stale decision did not send, as the reviewer wrote it.
     staleReason: "It answers the question.",
+    // The reason typed for a reopening that failed, still in the field.
+    reopenReason: "A newer report covers these contracts, so this paragraph fits again.",
   },
 
   // Ticket 24's gallery page: the check line in each of its forms, the six checks under the verifier's

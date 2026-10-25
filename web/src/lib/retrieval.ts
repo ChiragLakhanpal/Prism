@@ -28,6 +28,8 @@ export type Feedback = {
   run_id: string | null;
   mode: "pilot" | "scale";
   my_report: MyReport | null;
+  // The server's limit on a reason (config/thresholds.toml, retrieval.reason_max_chars).
+  limits: { reason_max_chars: number };
 };
 
 // Whether the drawer draws the row: for a passage a search found, and disabled in a preview.

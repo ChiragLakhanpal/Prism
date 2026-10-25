@@ -128,6 +128,48 @@ def test_a_query_keeps_its_two_judges_once_one_grades_it_when_another_judge_join
     assert "ines.costa@worldbank.example" in desk.queries["nq-sanitation-equipment"].judges
 
 
+
+def granted_to_the_app(monkeypatch) -> set[str]:
+    """The strata.ops tables ops/app/deploy_app.py grants the app's own service principal MODIFY on."""
+    import importlib.util
+    import sys
+
+    from retrieval_scenario import ROOT
+
+    monkeypatch.setattr(sys, "path", list(sys.path))
+    spec = importlib.util.spec_from_file_location("deploy_app_grants", ROOT / "ops" / "app" / "deploy_app.py")
+    deploy_app = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(deploy_app)
+    found = set()
+    for grant in deploy_app.grants("6f1c2d3e-4b5a-4c6d-8e7f-90a1b2c3d4e5"):
+        if grant.startswith("GRANT SELECT, MODIFY ON TABLE "):
+            found.add(grant.split()[5])
+    return found
+
+
+def test_a_judges_first_grade_writes_only_tables_the_deploy_lets_the_app_write(loop, monkeypatch):
+    """On the workspace the app writes a grade as its own service principal, which can write only the tables
+    ops/app/deploy_app.py grants it (RETRIEVAL_TABLES). A query loaded before the roles file named judges takes its
+    pair from the roster, so its first grade writes that pair down too: both tables must be granted. DuckDB has no
+    grants, so this test is what catches the next table the app writes without one."""
+    from strata.lakehouse.engine import DuckDBEngine
+
+    written: list[str] = []
+    insert_rows = DuckDBEngine.insert_rows
+
+    def recording(self, table, columns, rows, *args, **kwargs):
+        written.append(table)
+        return insert_rows(self, table, columns, rows, *args, **kwargs)
+
+    passage = loop.request("GET", f"/api/judging/queries/{QUERY}", MEI).json()["passages"][0]["passage_id"]
+    monkeypatch.setattr(DuckDBEngine, "insert_rows", recording)
+    response = loop.request("PUT", f"/api/judging/queries/{QUERY}/passages/{passage}", MEI, {"grade": "partly"})
+
+    assert response.status_code == 200, response.text
+    assert set(written) == {"strata.ops.retrieval_queries", "strata.ops.retrieval_grades"}
+    assert set(written) <= granted_to_the_app(monkeypatch)
+
+
 class OnTheWorkspace:
     """The fixture copy's engine, named as the workspace's SparkEngine is, so a search there would need AI Search."""
 

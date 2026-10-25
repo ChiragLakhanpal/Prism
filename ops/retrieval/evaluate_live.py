@@ -120,7 +120,7 @@ def main(argv=None) -> int:
         return 2
     for loss in verdict.losses:
         print(f"Lost on {loss.query_set}, {loss.measure}: {loss.candidate:.4f} against {loss.current:.4f}.")
-    print(f"Held-out set: {verdict.held_out}. Hindsight set: {verdict.hindsight.replace('_', ' ')}. "
+    print(f"Held-out set: {verdict.held_out.replace('_', ' ')}. Hindsight set: {verdict.hindsight.replace('_', ' ')}. "
           f"{'The candidate may ship.' if verdict.ships else 'The gate blocks the candidate.'} Run {run_id}.")
     return 0 if verdict.ships else 1
 

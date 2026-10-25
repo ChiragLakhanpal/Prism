@@ -16,9 +16,10 @@ Once both judges finish a query, its labels join the labeled set (labels()): eac
 grades, so a passage counts as relevant only as far as both judges said so. The weekly run records each pair of
 judges' agreement as it was that day (measure(), strata.ops.retrieval_agreement).
 
-A query loaded before the roles file named two judges takes its pair from the roster in turn. The first grade on it
-writes that pair down (a new strata.ops.retrieval_queries row), so a judge joining or leaving later changes no pair
-that has grades, and no one loses a half-graded query.
+A query loaded before the roles file named two judges takes its pair from the roster in turn. The next load, or the
+first grade, writes that pair down (a new strata.ops.retrieval_queries row), so a judge joining or leaving later
+changes no pair that has grades, and no one loses a half-graded query. The app writes that row as itself, so
+ops/app/deploy_app.py grants it the table.
 """
 
 from __future__ import annotations

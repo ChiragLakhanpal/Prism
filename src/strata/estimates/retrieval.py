@@ -211,7 +211,7 @@ class Verdict:
     """What the tuning gate found: whether the candidate ships, and on which sets it lost."""
 
     ships: bool
-    held_out: str  # passed or lost
+    held_out: str  # passed, lost or not_compared (no query set had a held-out query)
     hindsight: str  # passed, lost or not_compared (until ticket 34 makes the hindsight set)
     comparisons: list[Comparison]
     losses: list[Comparison]
@@ -242,9 +242,10 @@ def gate(engine: Engine, candidate: SearchSetup, tracker, run_id: str, ran_at: d
                    for name, now, then in zip(names, measured.values(), scores["candidate"][query_set].values())]
     losses = [comparison for comparison in comparisons if comparison.lost(tolerance)]
     lost_hindsight = hindsight(engine, current, candidate) if hindsight else None
-    held = "lost" if losses else "passed"
+    # Nothing to compare is never a pass: with no held-out query the candidate does not ship.
+    held = "not_compared" if not comparisons else ("lost" if losses else "passed")
     behind = "not_compared" if lost_hindsight is None else ("lost" if lost_hindsight else "passed")
-    verdict = Verdict(not losses and behind != "lost", held, behind, comparisons, losses)
+    verdict = Verdict(held == "passed" and behind != "lost", held, behind, comparisons, losses)
     _record(store or engine, run_id, ran_at, today, candidate, current, verdict)
     return verdict
 
@@ -257,7 +258,8 @@ def _record(store: Engine, run_id: str, ran_at: dt.datetime, today: dt.date, can
     setups = json.dumps({"current": asdict(current), "candidate": asdict(candidate)}, sort_keys=True)
     losses = json.dumps([asdict(loss) for loss in verdict.losses], sort_keys=True)
     rows = [
-        ("held_out", Score("passed", 1 if verdict.held_out == "passed" else 0)),
+        ("held_out", Score("passed", None, "not compared") if verdict.held_out == "not_compared"
+         else Score("passed", 1 if verdict.held_out == "passed" else 0)),
         ("held_out", Score("losses", len(verdict.losses), losses)),
         ("hindsight", Score("passed", None, "not compared") if verdict.hindsight == "not_compared"
          else Score("passed", 1 if verdict.hindsight == "passed" else 0)),

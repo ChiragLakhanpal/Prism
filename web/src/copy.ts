@@ -4425,6 +4425,7 @@ export const copy = {
       "I use to measure search, and feedback from the evidence drawer never goes into it. Only query judges can open " +
       "this page.",
     leadNone: "You haven't judged any queries yet, and {total} are waiting for you.",
+    leadNoneOne: "You haven't judged any queries yet, and one is waiting for you.",
     leadSome: "You have judged {done} of {total} queries.",
     leadAll: "You have judged all {total} queries.",
     leadOther: "The other judge has finished {done} of {total}.",
@@ -4513,7 +4514,7 @@ export const copy = {
     passageName: "Passage {i}",
     lockedYours: "Your grade: {grade}.",
     lockedTheirs: "The other judge's grade: {grade}.",
-    lockedWhileOpen: "The other judge finished this query while you had it open, so your grades for it are now locked.",
+    lockedWhileOpen: "The other judge finished this query while you had it open, so I locked your grades for it.",
     afterLast: "You have judged all {total} queries.",
     backToJudging: "Back to Judging",
     emptyPoolTitle: "I found no passages for this query that were public before {date}.",

@@ -303,7 +303,7 @@ function roleSentence(report: SentReport): string {
 export function ReportItem({ report }: { report: SentReport }) {
   const you = report.is_you;
   return (
-    <li data-report-item={report.report_id} className="flex flex-col gap-1 border-t border-line py-4 first:border-t-0 first:pt-0">
+    <li data-report-item={report.report_id} className="flex flex-col gap-1 border-t border-line py-4">
       <p className="text-small font-semibold text-ink">
         <Fill template={w.reportFirst[report.kind]} slots={{ role: roleSentence(report), date: <Num date={report.reported_on} /> }} />
       </p>
@@ -435,16 +435,17 @@ function DecisionForm({ group, onSaved, onGaveWay, initial }: {
   );
 }
 
-function Record({ group, onReopened, initialOpen = false, initialFailed = false }: {
+function Record({ group, onReopened, initialOpen = false, initialFailed = false, initialReason = "" }: {
   group: ReportGroup;
   onReopened: (item: ReportGroup) => void;
   initialOpen?: boolean;
-  // A gallery sample: a reopening that failed and can be tried again.
+  // A gallery sample: a reopening that failed and can be tried again, with the reason that was typed.
   initialFailed?: boolean;
+  initialReason?: string;
 }) {
   const outcome = group.outcome!;
   const [open, setOpen] = useState(initialOpen);
-  const [reason, setReason] = useState("");
+  const [reason, setReason] = useState(initialReason);
   const [error, setError] = useState(false);
   const [saving, setSaving] = useState(false);
   // A reopening the server did not save: "failed" can be tried again, "lost" (no longer a passage reviewer) cannot.
@@ -523,7 +524,7 @@ function Record({ group, onReopened, initialOpen = false, initialFailed = false 
 
 export function ReportGroupView({ group: loaded, initial, sample = false }: {
   group: ReportGroup;
-  initial?: { saved?: Saved; gaveWay?: GaveWay; form?: Parameters<typeof DecisionForm>[0]["initial"]; reopenOpen?: boolean; reopened?: boolean; reopenFailed?: boolean };
+  initial?: { saved?: Saved; gaveWay?: GaveWay; form?: Parameters<typeof DecisionForm>[0]["initial"]; reopenOpen?: boolean; reopened?: boolean; reopenFailed?: boolean; reopenReason?: string };
   // A design gallery sample: its title is an h3, under the gallery page's own h1, and it names no browser tab.
   sample?: boolean;
 }) {
@@ -585,7 +586,7 @@ export function ReportGroupView({ group: loaded, initial, sample = false }: {
       </div>
     );
   } else if (group.stage === "decided" && group.outcome) {
-    action = <Record group={group} initialOpen={initial?.reopenOpen || initial?.reopenFailed} initialFailed={initial?.reopenFailed ?? false} onReopened={(item) => { setGroup(item); setReopened(true); void refreshLessonsMe(); }} />;
+    action = <Record group={group} initialOpen={initial?.reopenOpen || initial?.reopenFailed} initialFailed={initial?.reopenFailed ?? false} initialReason={initial?.reopenReason} onReopened={(item) => { setGroup(item); setReopened(true); void refreshLessonsMe(); }} />;
   } else if (group.can.decide) {
     action = (
       <DecisionForm

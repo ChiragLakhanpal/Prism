@@ -44,8 +44,9 @@ def test_the_answer_offers_the_feedback_row_only_for_a_passage_a_search_found(lo
     staff = evidence_of(loop.request("POST", "/api/ask", ANA, case_question).text)
     preview = evidence_of(loop.request("POST", "/api/ask", ANA, {**case_question, "view": "piu"}).text)
 
+    # The reason's limit comes from the thresholds file, so the drawer and the server share one definition.
     assert staff[PARAGRAPH_54]["feedback"] == {"allowed": True, "why_not": None, "run_id": "run-0001", "mode": "pilot",
-                                               "my_report": None}
+                                               "my_report": None, "limits": {"reason_max_chars": 500}}
     # A preview shows the row with both buttons disabled.
     assert (preview[PARAGRAPH_54]["feedback"]["allowed"], preview[PARAGRAPH_54]["feedback"]["why_not"]) == (False, "preview")
     for found in staff.values():
