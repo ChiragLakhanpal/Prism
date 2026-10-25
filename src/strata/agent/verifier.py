@@ -557,6 +557,9 @@ class Verdict:
                 "advice": {"total": self.advice[0], "cited": self.advice[1]},
                 "disagreements": {"disputed": len(disputed), "shown": len(self.attached),
                                   "attached": sum(found.by_verifier for found in self.attached),
+                                  # the sentences removed because check 6 could not ask, which the screen says
+                                  "unasked": sum(any(reason.code == DISAGREEMENTS_UNAVAILABLE for reason in sentence.reasons)
+                                                 for sentence in self.sentences),
                                   # the sentences a warning card follows, which the screen announces
                                   "warned": len({found.after for found in self.attached if found.changes_answer})},
                 "cited_tools": list(self.cited_tools)}
@@ -782,6 +785,8 @@ class AnswerCheck:
     def __init__(self, claims: Iterable[Claim], facts: Facts, backs_advice: Iterable[str], *, source_chars: int,
                  checked: Iterable[Checked] | None = None):
         self.facts, self.source_chars = facts, source_chars
+        # What the agent's tools could not answer, as checks 1 to 3 saw it: check 6's own question adds nothing here.
+        self.abstentions = facts.abstentions()
         sentences = verify(claims, facts).sentences if checked is None else tuple(checked)
         self.sentences = {sentence.index: sentence for sentence in sentences}
         # Every disagreement get_disagreements returned, by id: those the agent asked for, and those check 6 asks.
@@ -851,7 +856,7 @@ class AnswerCheck:
             else:
                 asked.append(Question(sentence.index, sentence.claim.sentence, tuple(
                     Source(f"{tool}:{ABSTENTION}", _abstention_text(tool, abstention, self.source_chars))
-                    for tool, abstention in self.facts.abstentions())))
+                    for tool, abstention in self.abstentions)))
         return asked
 
     def judged(self, questions: list[Question], judgements: list[Judgement] | None) -> None:
@@ -868,7 +873,6 @@ class AnswerCheck:
                 uncited = not self.sentences[question.index].claim.evidence_ids
                 self._fail(question.index, Reason(4, NO_SOURCE if uncited else NOT_SUPPORTED,
                                                   said[question.index].reason))
-
 
     def verdict(self) -> Verdict:
         sentences = tuple(self.sentences[index] for index in sorted(self.sentences))

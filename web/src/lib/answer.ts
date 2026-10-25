@@ -66,7 +66,8 @@ export type ChecksEvent = {
   judge?: { called: boolean; responded: boolean | null; judged: number; followed: number; unjudged: number; proven: number };
   advice?: { total: number; cited: number };
   // warned: the sentences a warning card follows, which the status line announces.
-  disagreements?: { disputed: number; shown: number; attached: number; warned: number };
+  // unasked: the sentences removed because I couldn't ask which reports disagree (absent before ticket 24's round 3).
+  disagreements?: { disputed: number; shown: number; attached: number; unasked?: number; warned: number };
   // The tools whose evidence the kept sentences cite, and those whose "Not checked" clause needs that.
   cited_tools?: string[];
   cited_only?: string[];

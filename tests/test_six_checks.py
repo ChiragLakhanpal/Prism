@@ -210,6 +210,8 @@ def test_when_check_6_cannot_ask_which_reports_disagree_every_sentence_citing_th
     assert copy_reason("disagreements_unavailable")["item"] == (
         "I couldn't find out whether another report disagrees with its sources.")
     assert asked.judge.calls == []
+    # The verifier counts the sentences it could not check, so the screen never counts removed events itself.
+    assert asked.of("checks")[0]["disagreements"]["unasked"] == 3
 
 
 def test_sentences_that_fail_different_checks_are_each_removed_with_the_reason_of_the_check_they_failed(fixture_db):
@@ -275,7 +277,8 @@ def test_a_claim_resting_on_isr_7_s_rating_streams_with_the_icr_paragraph_78_dis
     assert highlight["sentence"] == sentence["index"]
     assert sources[paragraph_78]["row"]["text"][highlight["start"]:highlight["end"]] == TRUTH["icr-para-78"]["value"]
     # warned: the sentences a warning card follows, which the screen announces; the verifier counts them.
-    assert asked.of("checks")[0]["disagreements"] == {"disputed": 1, "shown": 1, "attached": 1, "warned": 1}
+    assert asked.of("checks")[0]["disagreements"] == {"disputed": 1, "shown": 1, "attached": 1, "unasked": 0,
+                                                         "warned": 1}
     fetched = [step for step in asked.of("step") if step["kind"] == "disagreement"]
     assert [step["status"] for step in fetched] == ["running", "done"]
     # The events come in the answer contract's order.
@@ -301,7 +304,8 @@ def test_a_draft_that_showed_both_sides_gets_the_same_card_as_an_info_note_when_
     assert (card["after"], card["attached_by_verifier"], card["changes_answer"]) == (0, False, False)
     assert [side["evidence_id"] for side in card["sides"]] == [
         "strata.gold.passage:26733307/v1/s4", "strata.gold.passage:31525018/v1/78"]
-    assert asked.of("checks")[0]["disagreements"] == {"disputed": 1, "shown": 1, "attached": 0, "warned": 0}
+    assert asked.of("checks")[0]["disagreements"] == {"disputed": 1, "shown": 1, "attached": 0, "unasked": 0,
+                                                         "warned": 0}
     # The agent asked get_disagreements itself, so check 6 had nothing to fetch.
     assert [step for step in asked.of("step") if step["kind"] == "disagreement"] == []
 

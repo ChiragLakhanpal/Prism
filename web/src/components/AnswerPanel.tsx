@@ -413,13 +413,13 @@ function removedItems(run: Run, underAlert = false): Removed[] {
   });
 }
 
-// The removed sentences a service did not let me check, by its reason code: the model that judges
-// sentences did not respond (judge), or I couldn't ask which reports disagree (unasked); and the rest.
-export const OUTAGE_REASONS = { judge: "judge_unavailable", unasked: "disagreements_unavailable" } as const;
+// The removed sentences a service did not let me check, as the verifier counted them (CLAUDE.md rule 1): the
+// model that judges sentences did not respond (judge), or I couldn't ask which reports disagree (unasked); and
+// the rest.
 function outages(run: Run): { judge: number; unasked: number; other: number } {
-  const judge = run.removed.filter((item) => item.reason === OUTAGE_REASONS.judge).length;
-  const unasked = run.removed.filter((item) => item.reason === OUTAGE_REASONS.unasked).length;
-  return { judge, unasked, other: run.removed.length - judge - unasked };
+  const judge = run.checks?.judge?.unjudged ?? 0;
+  const unasked = run.checks?.disagreements?.unasked ?? 0;
+  return { judge, unasked, other: (run.checks?.sentences.removed ?? 0) - judge - unasked };
 }
 
 // Words that stay capitalized when a removed sentence is reported: those written with a capital in the
