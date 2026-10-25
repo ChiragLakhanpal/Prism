@@ -82,6 +82,9 @@ key = "did_not_work"
 label = "What didn't work"
 
 # The projects whose documents the extractor's instructions quote as examples. The hindsight test
-# (ticket 34) leaves them out, since the extractor has seen their answers. The instructions use none yet.
+# (ticket 34) leaves them out of its gate set and lists them, since the extractor has seen their answers.
+# The instructions' sample statement, "Base works estimates on market rates to avoid rebidding", is the
+# lesson of P130164's ICR paragraph 54, and their sample citation, "(ICR para 54)", is its ICR Review's.
+# P130164 is outside the pilot projects, so leaving it out changes no count today.
 [extraction]
-example_projects = []
+example_projects = ["P130164"]
