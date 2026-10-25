@@ -162,11 +162,27 @@ function PagesCell({ document, align = "end" }: { document: ListedDocument; alig
   );
 }
 
+// The PDF link's name: the document's name with its date in full, said once. A name that holds its date,
+// such as an unread plan's or an untyped document's, says it inside the sentence ("the document of November
+// 1, 2020"); any other name is followed by the date (the 21 design review, round 3, F4).
+function pdfLabel(document: ListedDocument): string {
+  const date = document.document_date ? formatDate(document.document_date) : "";
+  const inSentence = words.pdfOf;
+  let dated: string | null = null;
+  if (date) {
+    if (document.type === "project_paper") dated = fill(inSentence.project_paper, { date });
+    else if (document.type === "isr" && document.sequence === null) dated = fill(inSentence.isrUndated, { date });
+    else if (document.type === "procurement_plan")
+      dated = document.agency ? fill(inSentence.procurement_plan, { agency: document.agency, date }) : fill(inSentence.procurementPlanUnnamed, { date });
+    else if (document.type === "other" && !document.document_type) dated = fill(inSentence.untyped, { date });
+  }
+  return dated ? words.pdfName(dated, "") : words.pdfName(documentName(document), date);
+}
+
 function PdfCell({ document }: { document: ListedDocument }) {
   if (!document.pdf_url) return null;
-  const name = documentName(document);
   return (
-    <ExternalLink href={document.pdf_url.replace(/^http:\/\//, "https://")} label={words.pdfName(name, document.document_date ? formatDate(document.document_date) : "")}>
+    <ExternalLink href={document.pdf_url.replace(/^http:\/\//, "https://")} label={pdfLabel(document)}>
       {words.pdf}
     </ExternalLink>
   );

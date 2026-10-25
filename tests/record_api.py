@@ -106,6 +106,9 @@ HUB = {
     # STEP rows, each wider than a phone's column (the 21 design review, round 3, B1).
     "source-pad-p130164-65.json": f"{SOURCE}/pad-2013-10-01?page=65&{DAY}",
     "source-plan-p161305-3.json": f"/api/projects/P161305/documents/procurement-plan-kenya-national-highways-authority-2026-09-24?page=3&{DAY}",
+    # The drawer's record view of an ISR rating as the passage reader read it, which a Summary cites when no
+    # passage prints the rating (the gallery's sample; the 21 review, round 3, item 4).
+    "evidence-isr-rating-p156634-pdo.json": f"/api/evidence?id=strata.silver.isr_ratings:P156634/40114539/pdo&{DAY}",
     "changes-nwwda-2026-10-09.json": f"{NWWDA}/2026-10-09/changes?{DAY}",
     "changes-nwwda-2020-12-07.json": f"{NWWDA}/2020-12-07/changes?{DAY}",
     # The Ministry's plan of April 30, 2020 added one activity and re-dated another since November 8, 2019.

@@ -187,6 +187,7 @@ export const galleryCopy = {
     cardSection: "Evidence card, for a quote from an ISR section",
     cardRecord: "Evidence card, for a record",
     record: "A record",
+    recordIsrRating: "A record: an ISR rating as the passage reader read it, which a Summary cites when no passage prints it",
     unknown: "An ID no source has",
     unknownAsOf: "An ID no source has as of the address's date",
     drawerPreview: "In a preview",
@@ -278,6 +279,9 @@ export const galleryCopy = {
     documentList: "Document list, grouped by type, with a re-issued report",
     documentLoading: "Document list while it loads",
     sourcePage: "Source page: the page bar and the passages, with paragraph 54 highlighted",
+    pageBarLoading: "Page bar while the page loads: the page from the address, with no total",
+    documentUntyped: "Document list with a document whose type the documents API leaves blank, named by its date",
+    changesError: "Check a plan's change line and section when only the comparison fails",
   },
   // The Lessons page's sections and state labels (ticket 29).
   lessonSections: {

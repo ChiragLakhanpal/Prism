@@ -1134,7 +1134,16 @@ export const copy = {
     notReadNote: "\"Not read\" means I list the document but haven't read its pages. {link} shows which documents I read.",
     notReadLink: "Data readiness",
     pdf: "PDF",
-    pdfName: (name: string, date: string) => `Open the PDF of ${name}, ${date}, on the World Bank's site (opens in a new tab)`,
+    // The PDF link's name says the document's date once: after a name with none, or inside one that holds it.
+    pdfName: (name: string, date: string) =>
+      date ? `Open the PDF of ${name}, ${date}, on the World Bank's site (opens in a new tab)` : `Open the PDF of ${name}, on the World Bank's site (opens in a new tab)`,
+    pdfOf: {
+      project_paper: "the Project Paper of {date}",
+      isrUndated: "the ISR of {date}",
+      procurement_plan: "{agency}, plan of {date}",
+      procurementPlanUnnamed: "the Procurement Plan of {date}",
+      untyped: "the document of {date}",
+    },
     more: (count: string) => `Show all ${count}`,
     less: "Show fewer",
     source: "World Bank documents and reports API, documents listed for this project, through {date}.",

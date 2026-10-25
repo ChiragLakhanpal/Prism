@@ -405,7 +405,9 @@ test("Documents keeps each date and count on one line, starts Pages read at a ca
   await open(page, "/projects/P130164/documents", 1440, { "/api/projects/P130164/documents": { body: JSON.stringify(body) } });
   const list = page.locator("[data-documents=ready] [data-view=table]");
   await expect(list.locator("[data-document='32604339'] th")).toHaveText("Document of Nov 1, 2020");
-  await expect(list.locator("[data-document='32604339']").getByRole("link", { name: /^Open the PDF of Document of Nov 1, 2020, November 1, 2020,/ })).toHaveCount(1);
+  // A PDF link names its document's date once, in full (the 21 design review, round 3, F4).
+  await expect(list.locator("[data-document='32604339']").getByRole("link", { name: "Open the PDF of the document of November 1, 2020, on the World Bank's site (opens in a new tab)" })).toHaveCount(1);
+  await expect(list.locator("[data-document='30152361']").getByRole("link", { name: "Open the PDF of the Procurement Plan of June 20, 2018, on the World Bank's site (opens in a new tab)" })).toHaveCount(1);
 
   // One line box each, however narrow the column: an inline element has one client rect per line.
   const lines = (locator: import("@playwright/test").Locator) => locator.evaluate((element) => element.getClientRects().length);

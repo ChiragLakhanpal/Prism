@@ -1,0 +1,50 @@
+{
+  "id": "strata.silver.isr_ratings:P156634/40114539/pdo",
+  "kind": "record",
+  "tool": null,
+  "stratum": "What",
+  "short_name": null,
+  "row": {
+    "evidence_id": "strata.silver.isr_ratings:P156634/40114539/pdo",
+    "public_from": "2026-06-30",
+    "reference": "P156634",
+    "source": {
+      "source_key": "isr_ratings",
+      "project_id": "P156634",
+      "document_date": "2026-06-30"
+    },
+    "fields": [
+      {
+        "key": "rating_name",
+        "value": "Progress towards achievement of PDO",
+        "kind": "text"
+      },
+      {
+        "key": "current_rating",
+        "value": "Moderately Satisfactory",
+        "kind": "text"
+      },
+      {
+        "key": "previous_rating",
+        "value": "Moderately Satisfactory",
+        "kind": "text"
+      },
+      {
+        "key": "isr_date",
+        "value": "2026-06-30",
+        "kind": "date"
+      },
+      {
+        "key": "sequence",
+        "value": "19",
+        "kind": "text"
+      },
+      {
+        "key": "pdf_page",
+        "value": "2",
+        "kind": "text"
+      }
+    ]
+  },
+  "highlights": []
+}

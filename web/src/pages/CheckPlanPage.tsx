@@ -111,7 +111,7 @@ function usePlanChanges(pid: string, agencyId: string, planDate: string | null, 
 
 // The change line when only the comparison failed: it says so and links the section below, which holds
 // the alert and Try again.
-function ChangeLineError() {
+export function ChangeLineError() {
   const line = words.changes;
   return (
     <p className="mt-2 text-body text-ink" data-change-line>
@@ -120,6 +120,33 @@ function ChangeLineError() {
         {line.errorLink}
       </TextLink>
     </p>
+  );
+}
+
+// The change section when only the comparison failed: the error takes the section body's place under its
+// heading (the 21 brief, section 5.4), with the request's reference when the server gave one.
+export function ChangesError({
+  headingRef,
+  error,
+  onRetry,
+  attempt,
+}: {
+  headingRef?: React.Ref<HTMLHeadingElement>;
+  error: ApiError | null;
+  onRetry: () => void;
+  attempt: number;
+}) {
+  return (
+    <section aria-labelledby="changes" data-changes="error">
+      <EightColumns prose>
+        <h2 ref={headingRef} id="changes" tabIndex={-1} className="scroll-mt-4 text-title text-ink-heading focus:outline-none">
+          {copy.changes.titleUnknown}
+        </h2>
+        <div className="mt-2">
+          <LoadError error={error} message={copy.changes.error} permission={copy.changes.error} onRetry={onRetry} retrying={false} attempt={attempt} />
+        </div>
+      </EightColumns>
+    </section>
   );
 }
 
@@ -365,17 +392,7 @@ export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyI
             listed ? (
               <ChangeTables ref={changesHeading} changes={changes!} agency={checked.plan.implementing_agency} />
             ) : planChanges.failed ? (
-              // The error takes the section body's place under its heading (the 21 brief, section 5.4).
-              <section aria-labelledby="changes" data-changes="error">
-                <EightColumns prose>
-                  <h2 ref={changesHeading} id="changes" tabIndex={-1} className="scroll-mt-4 text-title text-ink-heading focus:outline-none">
-                    {copy.changes.titleUnknown}
-                  </h2>
-                  <div className="mt-2">
-                    <LoadError error={planChanges.error} message={copy.changes.error} permission={copy.changes.error} onRetry={planChanges.retry} retrying={false} attempt={planChanges.attempt} />
-                  </div>
-                </EightColumns>
-              </section>
+              <ChangesError headingRef={changesHeading} error={planChanges.error} onRetry={planChanges.retry} attempt={planChanges.attempt} />
             ) : undefined
           }
         />

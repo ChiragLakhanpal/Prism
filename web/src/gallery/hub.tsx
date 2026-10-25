@@ -18,9 +18,10 @@ import { Pagination } from "../components/Pagination";
 import { AgencyLine, ProjectHeaderLine } from "../components/ProjectHeader";
 import { ProjectId } from "../components/ProjectId";
 import { copy } from "../copy";
-import type { Baseline, CheckPlanResult, DocumentList, PlanChanges, ProjectPage, SourcePageAnswer, Summary } from "../lib/api";
+import { ApiError, type Baseline, type CheckPlanResult, type DocumentList, type PlanChanges, type ProjectPage, type SourcePageAnswer, type Summary } from "../lib/api";
 import { DocumentsList, DocumentsSkeleton } from "../pages/project/DocumentsTab";
 import { SummaryFacts, SummarySkeleton } from "../pages/project/SummaryTab";
+import { ChangeLineError, ChangesError } from "../pages/CheckPlanPage";
 import { PageBar, Passages } from "../pages/SourcePage";
 import { galleryCopy } from "./copy";
 import type { GalleryPage } from "./pages";
@@ -103,6 +104,21 @@ const panel = (baseline: Baseline | null, planDate: string, view: "staff" | "piu
 );
 
 const missingFact = SUMMARY.dates.map((fact) => (fact.key === "approval_date" ? { ...fact, value: null } : fact));
+
+// P130164's documents with its first other document's type left blank, as the documents API leaves P156634's
+// document 40098345: it is named by its date.
+const DOCUMENTS = documents as unknown as DocumentList;
+const UNTYPED: DocumentList = {
+  ...DOCUMENTS,
+  groups: DOCUMENTS.groups.map((group) =>
+    group.type === "other" ? { ...group, documents: group.documents.map((document, index) => (index === 0 ? { ...document, document_type: "" } : document)) } : group,
+  ),
+};
+// The comparison's answer when the data service didn't answer, with the request's reference.
+const CHANGES_DOWN = new ApiError(503, `/api/projects/${KENYA}/procurement/${PLAN.agency_id}/${PLAN.plan_date}/changes`, {
+  code: "data_service",
+  trace_id: "0af7651916cd43dd8448eb211c80319c",
+});
 
 export function hubPage(): GalleryPage {
   return {
@@ -199,7 +215,7 @@ export function hubPage(): GalleryPage {
         title: t.documentList,
         body: (
           <Column>
-            <DocumentsList data={documents as unknown as DocumentList} pid={ICR_PROJECT} />
+            <DocumentsList data={DOCUMENTS} pid={ICR_PROJECT} />
           </Column>
         ),
       },
@@ -213,6 +229,34 @@ export function hubPage(): GalleryPage {
         ),
       },
       { id: "source-page", title: t.sourcePage, body: <SourceSample /> },
+      {
+        id: "page-bar-loading",
+        title: t.pageBarLoading,
+        body: (
+          <Column>
+            <PageBar pid={ICR_PROJECT} doc={ICR_KEY} page={23} pages={null} full onMove={() => undefined} />
+          </Column>
+        ),
+      },
+      {
+        id: "document-untyped",
+        title: t.documentUntyped,
+        body: (
+          <Column>
+            <DocumentsList data={UNTYPED} pid={ICR_PROJECT} />
+          </Column>
+        ),
+      },
+      {
+        id: "changes-error",
+        title: t.changesError,
+        body: (
+          <div className="flex flex-col gap-6">
+            <ChangeLineError />
+            <ChangesError error={CHANGES_DOWN} onRetry={() => undefined} attempt={0} />
+          </div>
+        ),
+      },
     ],
   };
 }
