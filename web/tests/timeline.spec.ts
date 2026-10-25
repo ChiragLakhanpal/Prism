@@ -30,11 +30,11 @@ async function timelineApi() {
   };
 }
 
-async function open(page: Page, path = "/projects/P130164/timeline", width = 1440) {
+async function open(page: Page, path = "/projects/P130164/timeline", width = 1440, api: Record<string, { body: string }> = {}) {
   const requests: Request[] = [];
   page.on("request", (request) => requests.push(request));
   await page.setViewportSize({ width, height: 900 });
-  const unrecorded = await mockApi(page, await timelineApi());
+  const unrecorded = await mockApi(page, { ...(await timelineApi()), ...api });
   await page.goto(path);
   await expect(page.locator("[data-timeline=ready]")).toBeVisible();
   await page.evaluate(() => document.fonts.ready);
@@ -260,4 +260,29 @@ test("keeping ISR 7 under an answer that rests on it asks for a reason and store
     },
   ]);
   expect(await axe(page, "[data-answer-panel]")).toEqual([]);
+});
+
+test("when get_disagreements fails, the chart says it couldn't read the ratings, and the newest ISR keeps its mark", async ({ page }) => {
+  // The server's own answer with get_disagreements failing (tests/record_timeline_api.py, FAILED).
+  await open(page, "/projects/P130164/timeline", 1440, { "/api/projects/P130164/timeline": { body: await recorded("timeline-p130164-failed.json") } });
+
+  await expect(page.locator("[data-timeline-finding]")).toHaveText("I couldn't read this project's ISR ratings or check its reports for disagreements just now.");
+  await expect(page.locator("[data-timeline-card] [data-alert]")).toHaveText(
+    /^I couldn't read this project's ISR ratings or check its reports for disagreements just now, so the chart shows no rating bands and no dashed lines\./,
+  );
+  await expect(chart(page).locator("[data-band-row]")).toHaveText("I couldn't read this project's ISR ratings just now.");
+  await expect(chart(page).locator("svg[role=img]")).not.toHaveAccessibleName(/I have no ISR ratings/);
+  await expect(chart(page).locator("[data-disagreement-line]")).toHaveCount(0);
+  // ISR 13, December 28, 2018 (values.toml, isr-13-date): named without a rating it could not read.
+  await expect(chart(page).getByRole("link", { name: /^ISR 13, December 28, 2018\. How lane\./ })).toHaveCount(1);
+});
+
+test("the public preview of a project still under way hides its disagreements, and no alert says the page shows the staff view", async ({ page }) => {
+  await open(page, "/projects/P156634/timeline?view=public", 1440, {
+    "/api/projects/P156634": { body: await recorded("project-p156634.json") },
+    "/api/projects/P156634/timeline?view=public": { body: await recorded("timeline-p156634-public.json") },
+  });
+
+  await expect(page.locator("[data-timeline-card]")).toContainText("I don't show disagreements on active projects in this view");
+  await expect(page.locator("main [data-alert]")).toHaveCount(0);
 });

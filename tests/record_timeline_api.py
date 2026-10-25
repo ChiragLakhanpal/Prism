@@ -13,6 +13,8 @@ date its address names:
   signed only in its award notice; timeline-p130164-2016-08-26.json, the same as of the day ISR 7 was disclosed.
 - timeline-p156634.json: a project with a crowded What lane, whose contracts group by year; and
   timeline-p156634-public.json, its public view, which shows no disagreement on a project still under way.
+- timeline-p130164-failed.json: the showcase's timeline when get_disagreements does not answer (FAILED): the marks,
+  with no rating bands and no dashed lines, and the newest ISR as the How lane's one ISR mark.
 - evidence-*.json: what each kind of mark opens in the evidence drawer, from a link: a report's document view (ISR 7,
   the ICR, the replaced ICR Review and the PAD), a band's ratings, a disagreement's two sides with each side's
   passage, an event's passage, the contract's signing and a year of contracts.
@@ -68,6 +70,20 @@ TIMELINE = {
     "evidence-contracts-p156634-2019.json": f"/api/evidence?id=contracts:P156634:2019&{DAY}",
 }
 
+# The answers recorded while get_disagreements fails, as failing_get_disagreements makes it.
+FAILED = {
+    "timeline-p130164-failed.json": "/api/projects/P130164/timeline",
+}
+
+
+def failing_get_disagreements(call):
+    """The tool registry's call, except that get_disagreements raises, as when its tables cannot be read."""
+    def failing(name, arguments, context):
+        if name == "get_disagreements":
+            raise RuntimeError("get_disagreements did not answer")
+        return call(name, arguments, context)
+    return failing
+
 
 def app_on(database: Path):
     @contextmanager
@@ -88,10 +104,23 @@ def answer(database: Path, path: str) -> dict:
     return asyncio.run(go())
 
 
+def write(name: str, path: str) -> None:
+    (OUT / name).write_text(json.dumps(answer(FIXTURE_DB, path), indent=2, ensure_ascii=False) + "\n")
+    print(f"Wrote tests/fixtures/api/{name}.")
+
+
 def main() -> None:
     for name, path in TIMELINE.items():
-        (OUT / name).write_text(json.dumps(answer(FIXTURE_DB, path), indent=2, ensure_ascii=False) + "\n")
-        print(f"Wrote tests/fixtures/api/{name}.")
+        write(name, path)
+    from strata.server import timeline
+
+    call = timeline.registry.call
+    timeline.registry.call = failing_get_disagreements(call)
+    try:
+        for name, path in FAILED.items():
+            write(name, path)
+    finally:
+        timeline.registry.call = call
 
 
 if __name__ == "__main__":

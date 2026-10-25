@@ -1,0 +1,363 @@
+{
+  "project": {
+    "project_id": "P130164",
+    "project_name": "Rajasthan Road Sector Modernization Project",
+    "display_name": "Rajasthan Road Sector Modernization",
+    "status": "Closed"
+  },
+  "as_of": "2026-10-23",
+  "asked_as_of": null,
+  "view": "staff",
+  "items": [
+    {
+      "id": "doc:18381488",
+      "kind": "report",
+      "type": "pad",
+      "lane": "why",
+      "date": "2013-10-01",
+      "public_from": "2013-11-06",
+      "evidence_id": "doc:18381488",
+      "document_id": "18381488",
+      "document_type": "Project Appraisal Document",
+      "report_number": "81594",
+      "version": 1,
+      "doc_key": "pad-2013-10-01",
+      "sequence": null,
+      "rating": null,
+      "replaced_by": null,
+      "reissued": false
+    },
+    {
+      "id": "event:mid_term_review",
+      "kind": "event",
+      "type": "mid_term_review",
+      "lane": "how",
+      "date": "2016-05-16",
+      "public_from": "2016-08-26",
+      "evidence_id": "strata.gold.passage:26733307/v1/s1",
+      "source": {
+        "type": "isr",
+        "sequence": 7,
+        "date": "2016-08-26"
+      }
+    },
+    {
+      "id": "record:IN-RRSMP-7431-CW-RFB",
+      "kind": "record",
+      "type": "contract",
+      "lane": "what",
+      "date": "2017-06-15",
+      "public_from": "2017-07-19",
+      "evidence_id": "strata.gold.package:IN-RRSMP-7431-CW-RFB",
+      "step_reference": "IN-RRSMP-7431-CW-RFB",
+      "signed_in": "award notice",
+      "award_notice_id": "OP00044090",
+      "signed_amount_usd": null,
+      "project_id": "P130164"
+    },
+    {
+      "id": "event:restructuring",
+      "kind": "event",
+      "type": "restructuring",
+      "lane": "how",
+      "date": "2017-07-27",
+      "public_from": "2019-11-02",
+      "evidence_id": "strata.gold.passage:31525018/v1/11",
+      "source": {
+        "type": "icr",
+        "sequence": null,
+        "date": "2019-10-10"
+      }
+    },
+    {
+      "id": "doc:30730274",
+      "kind": "report",
+      "type": "isr",
+      "lane": "how",
+      "date": "2018-12-28",
+      "public_from": "2018-12-28",
+      "evidence_id": "doc:30730274",
+      "document_id": "30730274",
+      "document_type": "Implementation Status and Results Report",
+      "report_number": "ISR33718",
+      "version": 1,
+      "doc_key": "isr-2018-12-28",
+      "sequence": 13,
+      "rating": null,
+      "replaced_by": null,
+      "reissued": false
+    },
+    {
+      "id": "doc:31525018",
+      "kind": "report",
+      "type": "icr",
+      "lane": "why",
+      "date": "2019-10-10",
+      "public_from": "2019-11-02",
+      "evidence_id": "doc:31525018",
+      "document_id": "31525018",
+      "document_type": "Implementation Completion and Results Report",
+      "report_number": "ICR4803",
+      "version": 1,
+      "doc_key": "icr-2019-10-10",
+      "sequence": null,
+      "rating": null,
+      "replaced_by": null,
+      "reissued": false
+    },
+    {
+      "id": "doc:31906731",
+      "kind": "report",
+      "type": "icr_review",
+      "lane": "why",
+      "date": "2020-03-27",
+      "public_from": "2020-03-27",
+      "evidence_id": "doc:31906731",
+      "document_id": "31906731",
+      "document_type": "Implementation Completion Report Review",
+      "report_number": "ICRR0021929",
+      "version": 1,
+      "doc_key": "icr-review-2020-03-27",
+      "sequence": null,
+      "rating": null,
+      "replaced_by": {
+        "evidence_id": "doc:34056616",
+        "date": "2023-05-04"
+      },
+      "reissued": false
+    },
+    {
+      "id": "doc:34056616",
+      "kind": "report",
+      "type": "icr_review",
+      "lane": "why",
+      "date": "2023-05-04",
+      "public_from": "2023-05-04",
+      "evidence_id": "doc:34056616",
+      "document_id": "34056616",
+      "document_type": "Implementation Completion Report Review",
+      "report_number": "ICRR0021929",
+      "version": 2,
+      "doc_key": "icr-review-2023-05-04",
+      "sequence": null,
+      "rating": null,
+      "replaced_by": null,
+      "reissued": true
+    }
+  ],
+  "table": [
+    {
+      "id": "doc:18381488",
+      "kind": "report",
+      "type": "pad",
+      "lane": "why",
+      "date": "2013-10-01",
+      "public_from": "2013-11-06",
+      "evidence_id": "doc:18381488",
+      "document_id": "18381488",
+      "document_type": "Project Appraisal Document",
+      "report_number": "81594",
+      "version": 1,
+      "doc_key": "pad-2013-10-01",
+      "sequence": null,
+      "rating": null,
+      "replaced_by": null,
+      "reissued": false
+    },
+    {
+      "id": "event:mid_term_review",
+      "kind": "event",
+      "type": "mid_term_review",
+      "lane": "how",
+      "date": "2016-05-16",
+      "public_from": "2016-08-26",
+      "evidence_id": "strata.gold.passage:26733307/v1/s1",
+      "source": {
+        "type": "isr",
+        "sequence": 7,
+        "date": "2016-08-26"
+      }
+    },
+    {
+      "id": "record:IN-RRSMP-7431-CW-RFB",
+      "kind": "record",
+      "type": "contract",
+      "lane": "what",
+      "date": "2017-06-15",
+      "public_from": "2017-07-19",
+      "evidence_id": "strata.gold.package:IN-RRSMP-7431-CW-RFB",
+      "step_reference": "IN-RRSMP-7431-CW-RFB",
+      "signed_in": "award notice",
+      "award_notice_id": "OP00044090",
+      "signed_amount_usd": null,
+      "project_id": "P130164"
+    },
+    {
+      "id": "event:restructuring",
+      "kind": "event",
+      "type": "restructuring",
+      "lane": "how",
+      "date": "2017-07-27",
+      "public_from": "2019-11-02",
+      "evidence_id": "strata.gold.passage:31525018/v1/11",
+      "source": {
+        "type": "icr",
+        "sequence": null,
+        "date": "2019-10-10"
+      }
+    },
+    {
+      "id": "doc:30730274",
+      "kind": "report",
+      "type": "isr",
+      "lane": "how",
+      "date": "2018-12-28",
+      "public_from": "2018-12-28",
+      "evidence_id": "doc:30730274",
+      "document_id": "30730274",
+      "document_type": "Implementation Status and Results Report",
+      "report_number": "ISR33718",
+      "version": 1,
+      "doc_key": "isr-2018-12-28",
+      "sequence": 13,
+      "rating": null,
+      "replaced_by": null,
+      "reissued": false
+    },
+    {
+      "id": "doc:31525018",
+      "kind": "report",
+      "type": "icr",
+      "lane": "why",
+      "date": "2019-10-10",
+      "public_from": "2019-11-02",
+      "evidence_id": "doc:31525018",
+      "document_id": "31525018",
+      "document_type": "Implementation Completion and Results Report",
+      "report_number": "ICR4803",
+      "version": 1,
+      "doc_key": "icr-2019-10-10",
+      "sequence": null,
+      "rating": null,
+      "replaced_by": null,
+      "reissued": false
+    },
+    {
+      "id": "doc:31906731",
+      "kind": "report",
+      "type": "icr_review",
+      "lane": "why",
+      "date": "2020-03-27",
+      "public_from": "2020-03-27",
+      "evidence_id": "doc:31906731",
+      "document_id": "31906731",
+      "document_type": "Implementation Completion Report Review",
+      "report_number": "ICRR0021929",
+      "version": 1,
+      "doc_key": "icr-review-2020-03-27",
+      "sequence": null,
+      "rating": null,
+      "replaced_by": {
+        "evidence_id": "doc:34056616",
+        "date": "2023-05-04"
+      },
+      "reissued": false
+    },
+    {
+      "id": "doc:34056616",
+      "kind": "report",
+      "type": "icr_review",
+      "lane": "why",
+      "date": "2023-05-04",
+      "public_from": "2023-05-04",
+      "evidence_id": "doc:34056616",
+      "document_id": "34056616",
+      "document_type": "Implementation Completion Report Review",
+      "report_number": "ICRR0021929",
+      "version": 2,
+      "doc_key": "icr-review-2023-05-04",
+      "sequence": null,
+      "rating": null,
+      "replaced_by": null,
+      "reissued": true
+    }
+  ],
+  "ratings": null,
+  "disagreements": {
+    "status": "failed",
+    "count": 0
+  },
+  "rejected": null,
+  "counts": {
+    "why": 4,
+    "how": 3,
+    "what": 1
+  },
+  "finding": [
+    {
+      "text": "I couldn't read this project's ISR ratings or check its reports for disagreements just now."
+    }
+  ],
+  "alt": [
+    {
+      "text": "Timeline of "
+    },
+    {
+      "text": "P130164"
+    },
+    {
+      "text": " from "
+    },
+    {
+      "year": 2013
+    },
+    {
+      "text": " to "
+    },
+    {
+      "year": 2023
+    },
+    {
+      "text": " in three lanes: "
+    },
+    {
+      "number": 4
+    },
+    {
+      "text": " evaluations"
+    },
+    {
+      "text": ", "
+    },
+    {
+      "number": 3
+    },
+    {
+      "text": " operations items"
+    },
+    {
+      "text": " and "
+    },
+    {
+      "number": 1
+    },
+    {
+      "text": " record"
+    },
+    {
+      "text": "."
+    },
+    {
+      "text": " "
+    },
+    {
+      "text": "I couldn't read this project's ISR ratings just now."
+    }
+  ],
+  "sources": [
+    "documents",
+    "notices",
+    "awards"
+  ],
+  "data_through": "2026-10-23"
+}

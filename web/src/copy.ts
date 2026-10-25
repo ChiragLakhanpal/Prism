@@ -5024,6 +5024,8 @@ export const copy = {
       reportReplaced: "{type}, {date}, replaced by its re-issue of {replaced}. {lane} lane. Item {i} of {n}.",
       reportDisagrees: "{type}, {date}. Disagrees with {other}. {lane} lane. Item {i} of {n}.",
       isr: "ISR {sequence}, {date}, rated progress {rating}. How lane. Item {i} of {n}.",
+      // An ISR whose rating get_disagreements did not give.
+      isrNoRating: "ISR {sequence}, {date}. How lane. Item {i} of {n}.",
       isrDisagrees: "ISR {sequence}, {date}, rated progress {rating}. Disagrees with {other}. How lane. Item {i} of {n}.",
       event: "{label}, {date}. How lane. Item {i} of {n}.",
       record: "Contract {reference} signed, {date}. What lane. Item {i} of {n}.",
@@ -5058,6 +5060,8 @@ export const copy = {
       what: "I have no contract records for this project.",
     } as Record<string, string>,
     noRatings: "I have no ISR ratings for this project.",
+    // The band row's caption when get_disagreements did not answer, in place of noRatings.
+    ratingsFailed: "I couldn't read this project's ISR ratings just now.",
     emptyTitle: "I don't have dated reports or records for this project yet.",
     emptyBody:
       "I add a project's reports and records to its timeline once I have read them. Data readiness shows which sources and years I have read.",
@@ -5069,7 +5073,7 @@ export const copy = {
         : "I left out {n} ratings or dates that I read from this project's documents, because I couldn't find their words on the cited pages.",
     abstentionCheck: "Counted by the disagreement check for this project.",
     failed:
-      "I couldn't check this project's reports for disagreements just now, so the chart shows no dashed lines. The marks are complete.",
+      "I couldn't read this project's ISR ratings or check its reports for disagreements just now, so the chart shows no rating bands and no dashed lines.",
     hidden: "I don't show disagreements on active projects in this view, so a project still under way isn't prejudged.",
     loading: "Loading the timeline.",
     stillLoading: "Still loading the timeline.",
@@ -5158,6 +5162,8 @@ export const copy = {
         ratings: "ISR ratings of progress went from {first} to {last} over {count} ISRs.",
         ratingsSame: "ISR ratings of progress stayed {rating} over {count} ISRs.",
         noRatings: "I have no ISR ratings for this project.",
+        // When get_disagreements did not answer: Strata could not read the ratings, which is not having none.
+        ratingsFailed: "I couldn't read this project's ISR ratings just now.",
         line: "A dashed line joins {side1} and {side2}, which disagree.",
         noLines: "No reports disagree.",
       },

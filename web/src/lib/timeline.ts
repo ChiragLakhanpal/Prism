@@ -147,7 +147,7 @@ export function itemName(item: Item, index: number, total: number, items: Item[]
       .flatMap((found) => (found && found.kind === "disagreement" ? [found.sides.find((side) => side.item_id !== item.id)!] : []))
       .map((side) => shortName(side));
     if (item.type === "isr") {
-      const template = others.length ? words.name.isrDisagrees : words.name.isr;
+      const template = !item.rating ? words.name.isrNoRating : others.length ? words.name.isrDisagrees : words.name.isr;
       return fill(template, { sequence: item.sequence, date: long(item.date), rating: item.rating ?? "", other: others.join(words.join), ...at });
     }
     if (item.replaced_by) return fill(words.name.reportReplaced, { type: item.document_type, date: long(item.date), replaced: long(item.replaced_by.date), lane: lane(item.lane), ...at });

@@ -70,6 +70,7 @@ EVENTS: dict[str, list[tuple[str, re.Pattern, str]]] = {
 SIGNINGS = {"awards": "contract awards", "award_notice": "award notice", "notices": "notices", "usd": "USD",
             "contract_award": "Contract Award"}
 ACTIVE = "Active"  # the projects API's status of a project still under way
+LANGUAGE = "en"  # the version of a report in two languages that the timeline draws
 
 
 @cache
@@ -144,10 +145,11 @@ def _counted(n: int, forms: dict) -> list[dict]:
 
 # ── The marks ────────────────────────────────────────────────────────────
 
-def isr_marks(points: list[dict], sides: set[str], side_of: Callable[[str], str | None]) -> set[str]:
+def isr_marks(points: list[dict], isrs: list[dict], sides: set[str], side_of: Callable[[str], str | None]) -> set[str]:
     """Which ISRs get their own circle, by document id: each ISR that is one side of a disagreement on the chart,
     and each ISR whose rating of progress moved to the other side of the scale from the ISR before it. When no
-    ISR passes, the newest one does, so the series always has a report to open. The band row shows every ISR.
+    ISR passes, as when get_disagreements gives no ratings, the newest ISR Strata read does, so the How lane always
+    has a report to open. The band row shows every rated ISR.
 
     This is the 23 brief's rule ("an ISR gets a circle when Strata has read it"), narrowed because the fixture
     records all 13 of P130164's ISRs as documents: 13 circles would crowd the How lane and drop labels. A
@@ -156,8 +158,9 @@ def isr_marks(points: list[dict], sides: set[str], side_of: Callable[[str], str 
     for before, point in zip(points, points[1:]):
         if side_of(before["rating"]) and side_of(point["rating"]) and side_of(before["rating"]) != side_of(point["rating"]):
             marked.add(point["document_id"])
-    if not marked and points:
-        marked.add(points[-1]["document_id"])
+    newest = max(isrs, key=lambda item: (item["date"], item["document_id"]), default=None)
+    if not marked and newest is not None:
+        marked.add(newest["document_id"])
     return marked
 
 
@@ -329,7 +332,9 @@ def alt_text(project_id: str, dated: list[dict], ratings: dict | None, disagreem
         "why": _counted(counts["why"], alt["evaluations"]), "how": _counted(counts["how"], alt["operations"]),
         "what": _counted(counts["what"], alt["records"])})
     out.append({"text": " "})
-    if ratings is None:
+    if status == "failed":
+        out.extend(fill(alt["ratingsFailed"], {}))
+    elif ratings is None:
         out.extend(fill(alt["noRatings"], {}))
     elif ratings["direction"] == "same":
         out.extend(fill(alt["ratingsSame"], {"rating": ratings["first_rating"], "count": _count(ratings["isr_count"])}))
@@ -372,11 +377,13 @@ def timeline(engine: Engine, viewer: Viewer, project_id: str, as_of: dt.date, vi
                        and one["subject_kind"] == "project"), None)
     scale = list(ladder.scales[ladder.attribute(BANDED).scale].ratings)
     ratings = _bands(trajectory, pid, scale) if trajectory else None
-    sequences = {point["document_id"]: point["sequence"] for point in ratings["points"]} if ratings else {}
     rated = {point["document_id"]: point["rating"] for point in ratings["points"]} if ratings else {}
 
-    rows = [row for row in _rows(engine, "reports", project_id=pid, as_of=as_of)
+    rows = [row for row in _rows(engine, "reports", project_id=pid, as_of=as_of, language=LANGUAGE)
             if GROUPS.get(row["document_type"]) in REPORT_LANES]
+    # Each ISR's sequence number as its first page prints it, and as get_disagreements gives it when it answers.
+    sequences = {str(row["document_id"]): row["sequence"] for row in rows if row["sequence"] is not None}
+    sequences.update({point["document_id"]: point["sequence"] for point in ratings["points"]} if ratings else {})
     reports = {str(row["document_id"]): row for row in rows}
     versions = {(row["report_number"], row["version"] or 1): row for row in rows if row["report_number"]}
     every = {f"{DOC}:{document_id}": _report(row, versions, as_of, sequences, rated) for document_id, row in reports.items()}
@@ -384,7 +391,8 @@ def timeline(engine: Engine, viewer: Viewer, project_id: str, as_of: dt.date, vi
     shown_rows = [] if status != "ok" else found["rows"]
     disagreements = [one for row in shown_rows if (one := _disagreement(row, every)) is not None]
     sides = {side["item_id"].removeprefix(f"{DOC}:") for found_one in disagreements for side in found_one["sides"]}
-    marked = isr_marks(ratings["points"], sides, lambda rating: ladder.side(BANDED, rating)) if ratings else set()
+    isrs = [item for item in every.values() if item["type"] == "isr"]
+    marked = isr_marks(ratings["points"] if ratings else [], isrs, sides, lambda rating: ladder.side(BANDED, rating))
     report_items = [item for item in every.values() if item["type"] != "isr" or item["document_id"] in marked]
     events = [event for kind in EVENTS if (event := _event(engine, pid, as_of, kind, reports, sequences)) is not None]
     signings = [_record(row, pid) for row in _rows(engine, "signings", project_id=pid, as_of=as_of, **SIGNINGS)]
@@ -445,7 +453,7 @@ def read_document(engine: Engine, key: str, as_of: dt.date) -> dict | None:
                  for point in trajectory["points"]}
     later = None
     if _day(row["replaced_on"]) and _day(row["replaced_on"]) <= as_of:
-        later = next((other for other in _rows(engine, "reports", project_id=pid, as_of=as_of)
+        later = next((other for other in _rows(engine, "reports", project_id=pid, as_of=as_of, language=LANGUAGE)
                       if other["report_number"] == row["report_number"] and other["version"] == (row["version"] or 1) + 1),
                      None)
     ratings = [{"field_name": rating["field_name"], "value": rating["value"], "evidence_id": rating["evidence_id"],

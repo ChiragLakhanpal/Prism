@@ -34,6 +34,7 @@
     "ratings": "ISR ratings of progress went from {first} to {last} over {count} ISRs.",
     "ratingsSame": "ISR ratings of progress stayed {rating} over {count} ISRs.",
     "noRatings": "I have no ISR ratings for this project.",
+    "ratingsFailed": "I couldn't read this project's ISR ratings just now.",
     "line": "A dashed line joins {side1} and {side2}, which disagree.",
     "noLines": "No reports disagree."
   },

@@ -137,6 +137,13 @@ def test_the_arrow_keys_go_in_date_order_with_ties_why_how_what_and_marks_before
     assert p130164["table"] == p130164["items"]
 
 
+def test_an_isr_gets_its_own_mark_only_as_a_side_of_a_disagreement_or_where_its_rating_changed_side(p130164):
+    # ISR 7 is a side of the disagreement with the ICR; ISR 12 rated progress Moderately Unsatisfactory after ISR 11's
+    # Moderately Satisfactory. The other eleven ISRs show only in the band row (a decision parked for the owner).
+    assert [item["sequence"] for item in placed(p130164, kind="report", type="isr")] == [7, 12]
+    assert (truth("isr-11-rating"), truth("isr-12-rating")) == ("Moderately Satisfactory", "Moderately Unsatisfactory")
+
+
 def test_the_icr_review_re_issued_under_the_same_number_replaces_its_first_version(p130164):
     first, reissue = placed(p130164, kind="report", type="icr_review")
     assert first["report_number"] == reissue["report_number"] == truth("icr-review-number-2023")
@@ -172,6 +179,25 @@ def test_as_of_august_26_2016_the_timeline_shows_only_what_was_public_then(serve
     # The restructuring is dated only by the ICR, public in 2019.
     assert placed(body, kind="event", type="restructuring") == []
     assert [(band["first"], band["last"]) for band in placed(body, kind="band")] == [(1, 7)]
+
+
+def test_when_get_disagreements_fails_the_newest_isr_keeps_its_mark_and_no_sentence_says_strata_has_no_ratings(
+        server, monkeypatch):
+    from strata.server import timeline
+    from strata.server.timeline import text_of
+
+    monkeypatch.setattr(timeline.registry, "call", RECORDER.failing_get_disagreements(timeline.registry.call))
+    body = get(server, f"/api/projects/P130164/timeline?{DAY}").json()
+
+    assert body["disagreements"]["status"] == "failed"
+    assert placed(body, kind="band") == [] and placed(body, kind="disagreement") == []
+    # The ISRs Strata read still have a report to open: the newest, named by its own sequence number.
+    (isr,) = placed(body, kind="report", type="isr")
+    assert (isr["sequence"], isr["date"], isr["rating"]) == (13, truth("isr-13-date"), None)
+    # No sentence says Strata has no ratings: it could not read them.
+    alt = text_of(body["alt"])
+    assert "I have no ISR ratings" not in alt
+    assert "I couldn't read this project's ISR ratings just now." in alt
 
 
 def test_the_public_view_of_a_project_still_under_way_shows_no_disagreement(server):
@@ -285,12 +311,17 @@ def recorder():
 RECORDER = recorder()
 
 
-@pytest.mark.parametrize("name", sorted(RECORDER.TIMELINE))
-def test_each_timeline_recording_is_what_the_server_answers_on_the_fixture(server, name):
+@pytest.mark.parametrize("name", sorted(RECORDER.TIMELINE) + sorted(RECORDER.FAILED))
+def test_each_timeline_recording_is_what_the_server_answers_on_the_fixture(server, name, monkeypatch):
     import json
 
+    from strata.server import timeline
+
+    if name in RECORDER.FAILED:
+        monkeypatch.setattr(timeline.registry, "call", RECORDER.failing_get_disagreements(timeline.registry.call))
     recorded = json.loads((RECORDER.OUT / name).read_text())
-    assert get(server, RECORDER.TIMELINE[name]).json() == recorded, (
+    path = RECORDER.TIMELINE.get(name) or RECORDER.FAILED[name]
+    assert get(server, path).json() == recorded, (
         f"Check the change, then write the files again: uv run --frozen python tests/record_timeline_api.py ({name})")
 
 

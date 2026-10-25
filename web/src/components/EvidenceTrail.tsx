@@ -141,7 +141,11 @@ function tipFor(item: Item, items: Item[]): Tip {
     return found;
   };
   if (item.kind === "report") {
-    if (item.type === "isr") return { header: markLabel(item), main: item.rating ?? "", line: words.tip.isr.replace("{date}", long(item.date)) };
+    if (item.type === "isr") {
+      // An ISR whose rating get_disagreements did not give shows its date, as another report does.
+      if (!item.rating) return { header: markLabel(item), main: long(item.date), line: words.tip.written.replace("{written}", copy.disagreement.written.isr) };
+      return { header: markLabel(item), main: item.rating, line: words.tip.isr.replace("{date}", long(item.date)) };
+    }
     const written = (copy.disagreement.written as Record<string, string>)[
       item.type === "icr_review" || item.type === "ppar" ? "ieg" : item.type === "pad" ? "pad" : item.type === "icr" ? "icr" : "isr"
     ];
@@ -358,7 +362,8 @@ export function EvidenceTrail({
         <g data-band-row>
           {layout.bands.length === 0 && (
             <text x={PAD} y={ROWS.how.band! + 16} className="fill-chart-text-subtle">
-              {words.noRatings}
+              {/* When get_disagreements did not answer, Strata could not read the ratings: that is not having none. */}
+              {data.disagreements.status === "failed" ? words.ratingsFailed : words.noRatings}
             </text>
           )}
           {layout.bands.map(({ band, x0, x1, label }) => {

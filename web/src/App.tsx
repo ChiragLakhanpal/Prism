@@ -94,7 +94,7 @@ const VIEW_PAGES: ReadonlySet<string> = new Set(["drafts", "draft", "draftNew", 
 
 // The alert slot: errors first, then what the address asks for that I can't show yet. Ticket 40
 // replaces the view and as-of alerts with its preview and as-of banners in this same slot.
-function alerts(problem: Problem, search: string, appliesAsOf: boolean, page: string): { state: "error" | "info"; text: string }[] {
+function alerts(problem: Problem, search: string, appliesAsOf: boolean, page: string, appliesViewHere = false): { state: "error" | "info"; text: string }[] {
   const params = new URLSearchParams(search);
   const found: { state: "error" | "info"; text: string }[] = [];
   if (problem === "no_access") found.push({ state: "error", text: copy.alerts.noAccess });
@@ -102,7 +102,7 @@ function alerts(problem: Problem, search: string, appliesAsOf: boolean, page: st
   const view = params.get("view");
   // These pages show what each preview holds, so the alert that says the page shows the staff view would be
   // untrue there.
-  const appliesView = (view === "piu" || view === "public") && VIEW_PAGES.has(page);
+  const appliesView = (view === "piu" || view === "public") && (VIEW_PAGES.has(page) || appliesViewHere);
   if (view !== null && view !== "staff" && !appliesView) found.push({ state: "info", text: VIEW_ALERTS[view] ?? copy.alerts.viewUnknown });
   const asOf = params.get("asof");
   if (asOf !== null && !appliesAsOf) {
@@ -217,9 +217,11 @@ export function App() {
 
   // The Data readiness page applies an as-of date itself (data_readiness_for takes one), and so does a
   // project's Timeline tab, which ends its axis at the date (ticket 23), so the alert that says the page
-  // shows today's data does not show there.
+  // shows today's data does not show there. The Timeline tab applies the view too: its server hides the
+  // disagreements of a project still under way in the public preview, and the implementing agency's preview
+  // shows what World Bank staff see (the 23 brief, section 7.3), so no alert says the page shows the staff view.
   const timelineTab = match.key === "project" && match.values.tab === "timeline";
-  const slot = alerts(problem, here.search, match.key === "data" || timelineTab, match.key);
+  const slot = alerts(problem, here.search, match.key === "data" || timelineTab, match.key, timelineTab);
   return (
     <Frame
       nav={

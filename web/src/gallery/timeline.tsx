@@ -9,6 +9,7 @@ import reviewDoc from "../../../tests/fixtures/api/evidence-doc-p130164-icr-revi
 import isr7Doc from "../../../tests/fixtures/api/evidence-doc-p130164-isr-7.json";
 import ratings19 from "../../../tests/fixtures/api/evidence-ratings-p130164-1-9.json";
 import asOf from "../../../tests/fixtures/api/timeline-p130164-2016-08-26.json";
+import failed from "../../../tests/fixtures/api/timeline-p130164-failed.json";
 import p130164 from "../../../tests/fixtures/api/timeline-p130164.json";
 import p156634Public from "../../../tests/fixtures/api/timeline-p156634-public.json";
 import p156634 from "../../../tests/fixtures/api/timeline-p156634.json";
@@ -33,15 +34,9 @@ const PDO = pdoRow as unknown as EvidenceEvent;
 // The two reports' short names, from the recorded sides: "ISR 7" and "ICR paragraph 78".
 const [ISR_7, ICR_78] = (PDO.row.sides as SideData[]).map(sideShort);
 
-// The showcase as get_disagreements would leave it when it did not answer: the marks, with no dashed lines and no
-// bands.
-const FAILED: Timeline = {
-  ...SHOWCASE,
-  items: SHOWCASE.items.filter((item) => item.kind !== "disagreement" && item.kind !== "band"),
-  disagreements: { status: "failed", count: 0 },
-  rejected: null,
-  finding: [{ text: copy.timeline.server.finding.failed }],
-};
+// The showcase as the server answers when get_disagreements does not (tests/record_timeline_api.py, FAILED): no
+// dashed lines and no bands, and the newest ISR as the How lane's one ISR mark.
+const FAILED = failed as unknown as Timeline;
 // The showcase with no records and no ratings: the What lane's caption and the band row's.
 const SPARSE: Timeline = {
   ...SHOWCASE,
