@@ -23,6 +23,9 @@ ENV = {"DATABRICKS_HOST": "https://dbc-1.cloud.databricks.com", "DATABRICKS_TOKE
 FOUNDRY = {"FOUNDRY_PROJECT_ENDPOINT": "https://wb-strata.services.ai.azure.com/api/projects/Strata",
            "FOUNDRY_TENANT_ID": "tenant-0001", "FOUNDRY_CLIENT_ID": "client-0001",
            "FOUNDRY_CLIENT_SECRET": "not-a-real-key"}
+# The judge of the verifier's check 4 (src/strata/agent/judge.py), on Azure OpenAI.
+JUDGE = {"AZURE_OPENAI_ENDPOINT": "https://wb-strata.openai.azure.com/openai/deployments/gpt-5.4",
+         "AZURE_OPENAI_API_KEY": "not-a-real-key"}
 
 
 class FakeWorkspace:
@@ -85,7 +88,7 @@ def deploy(workspace, tmp_path, capsys, build=None, env=None):
 def test_one_command_uploads_the_app_with_its_lean_requirements_deploys_it_and_prints_its_address(tmp_path, capsys):
     workspace = FakeWorkspace()
 
-    code, out = deploy(workspace, tmp_path, capsys, env=ENV | FOUNDRY)
+    code, out = deploy(workspace, tmp_path, capsys, env=ENV | FOUNDRY | JUDGE)
 
     assert code == 0
     files = workspace.uploaded["files"]
@@ -153,6 +156,36 @@ def test_the_app_gets_the_foundry_agent_s_four_keys_as_secrets_when_the_env_file
     assert {entry["name"]: entry.get("valueFrom") for entry in started["env"] if entry["name"].startswith("FOUNDRY_")} == {
         "FOUNDRY_PROJECT_ENDPOINT": "foundry-endpoint", "FOUNDRY_TENANT_ID": "foundry-tenant",
         "FOUNDRY_CLIENT_ID": "foundry-client-id", "FOUNDRY_CLIENT_SECRET": "foundry-client-secret"}
+
+
+def test_the_app_gets_the_judge_s_two_keys_as_secrets_when_the_env_file_has_them(tmp_path, capsys):
+    """Without them, every sentence the verifier's check 4 must judge is removed (ticket 24's review)."""
+    workspace = FakeWorkspace()
+
+    code, out = deploy(workspace, tmp_path, capsys, env=ENV | FOUNDRY | JUDGE)
+
+    assert code == 0
+    assert {key: value for (_, key), value in workspace.secrets.items() if key in JUDGE} == JUDGE
+    [(_, _, resources, _)] = workspace.configured
+    assert resources[-2:] == [
+        {"name": name, "secret": {"scope": "strata", "key": key, "permission": "READ"}}
+        for name, key in (("azure-openai-endpoint", "AZURE_OPENAI_ENDPOINT"), ("azure-openai-key", "AZURE_OPENAI_API_KEY"))]
+    started = yaml.safe_load(workspace.uploaded["files"]["app.yaml"])
+    assert {entry["name"]: entry.get("valueFrom") for entry in started["env"] if entry["name"].startswith("AZURE_")} == {
+        "AZURE_OPENAI_ENDPOINT": "azure-openai-endpoint", "AZURE_OPENAI_API_KEY": "azure-openai-key"}
+    assert "the model that judges sentences" in out
+
+
+def test_without_the_judge_s_keys_the_app_deploys_with_no_judge_and_says_so(tmp_path, capsys):
+    workspace = FakeWorkspace()
+
+    code, out = deploy(workspace, tmp_path, capsys, env=ENV | FOUNDRY)
+
+    assert code == 0
+    assert [key for (_, key) in workspace.secrets if key in JUDGE] == []
+    started = yaml.safe_load(workspace.uploaded["files"]["app.yaml"])
+    assert [entry["name"] for entry in started["env"] if entry["name"].startswith("AZURE_")] == []
+    assert "AZURE_OPENAI_ENDPOINT" in out and "removes every sentence" in out
 
 
 def test_the_deploy_says_it_saved_the_foundry_keys_only_after_saving_them(tmp_path, capsys):
