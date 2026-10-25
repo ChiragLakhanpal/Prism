@@ -14,10 +14,13 @@ from __future__ import annotations
 import datetime as dt
 import io
 import json
+import logging
 from dataclasses import dataclass
 from typing import Protocol
 
 from strata.reader.layout import https
+
+log = logging.getLogger("strata.reader")
 
 LIST_FIELDS = "id,docty,docdt,disclosure_date,display_title,repnb,lang,txturl,pdfurl,guid"
 
@@ -114,7 +117,22 @@ class LiveDocuments:
         return Fetched(url, self._get(url).decode("utf-8", errors="replace").removeprefix("﻿"), self.clock())
 
     def pages(self, url: str) -> Fetched:
+        """Each page's text from the PDF's text layer. A PDF pypdf cannot open raises NotFetched, like a PDF
+        the host did not give. A page whose text pypdf cannot decode, as when a font's encoding is broken,
+        reads as empty, like a scanned page, so the page router sends it to Route B instead of the run
+        stopping on it."""
         from pypdf import PdfReader
 
         pdf = self._get(url)
-        return Fetched(url, [page.extract_text() or "" for page in PdfReader(io.BytesIO(pdf)).pages], self.clock())
+        try:
+            pages = list(PdfReader(io.BytesIO(pdf)).pages)
+        except Exception as error:  # noqa: BLE001 - pypdf raises its own errors and Python's for a broken file
+            raise NotFetched(f"I could not read the PDF at {url}: {error}") from error
+        texts = []
+        for number, page in enumerate(pages, 1):
+            try:
+                texts.append(page.extract_text() or "")
+            except Exception as error:  # noqa: BLE001 - a broken font raises UnicodeDecodeError, among others
+                log.info("Page %s of %s has text pypdf cannot decode (%s); it reads as empty.", number, url, error)
+                texts.append("")
+        return Fetched(url, texts, self.clock())

@@ -31,6 +31,7 @@ async function openPackage(page: Page, { width = 1440, risks = "risks-ke-nwwda-5
     [API]: { body: await recorded("package-ke-nwwda-541055.json") },
     [`${API}/comparables`]: { body: await recorded("comparables-ke-nwwda-541055.json") },
     [`${API}/risks`]: { body: await recorded(risks) },
+    [`${API}/steps`]: { body: await recorded("steps-ke-nwwda-541055.json") },
     [`${API}/risk-selection`]: save ?? { body: await recorded("risks-selection-saved.json") },
     "/api/evidence/opened": { body: '{"opened":[],"recorded":true}' },
   };

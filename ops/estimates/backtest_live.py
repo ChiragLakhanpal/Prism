@@ -69,8 +69,10 @@ def main(argv=None) -> int:
     settings = load_time_estimate()
     started = time.monotonic()
     try:
-        engine = LiveWorkspace(env).engine()
-        run = backtest.run(engine, MlflowTracker(settings.experiment), outcomes_through=args.outcomes_through,
+        workspace = LiveWorkspace(env)
+        engine = workspace.engine()
+        tracker = MlflowTracker(settings.experiment, mkdirs=workspace.w.workspace.mkdirs)  # /Shared/strata first
+        run = backtest.run(engine, tracker, outcomes_through=args.outcomes_through,
                            years=tuple(args.years) if args.years else None)
     except EngineError as error:
         print(f"The warehouse could not run a statement: {error}")

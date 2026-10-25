@@ -37,6 +37,8 @@ async function openPackage(
   if (options.comparables !== null) answers[`${api}/comparables`] = options.comparables ?? { body: await recorded(comparablesFile) };
   // Section 3, procurement risks and what helped (ticket 30): the fixture's Kenya comparables reach no completion report.
   answers[`${api}/risks`] = { body: await recorded("risks-ke-nwwda-541055.json") };
+  // Section 2, the planned date for each step (ticket 27): on the fixture every step abstains.
+  answers[`${api}/steps`] = { body: await recorded("steps-ke-nwwda-541055.json") };
   if (options.evidence) {
     answers["/api/evidence"] = { body: await recorded("evidence-icr-p130164-54.json") };
     answers["/api/evidence/opened"] = { body: '{"opened":[],"recorded":true}' };

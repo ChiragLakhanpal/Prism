@@ -48,13 +48,16 @@ lane = "python"
 
 [[step]]
 # These tests may read the fixture database, so they run in its lane, after the build. They take
-# about 190 seconds in one process, so eight pytest-xdist workers share them, in about 30 seconds
-# when nothing else runs. --dist worksteal lets a worker that runs out of tests take some from a
-# busy one; xdist's default hands each worker a run of neighbouring tests at the start, so slow
-# tests that sit together in one file land on one or two workers. When the lane gets slow again,
-# run `uv run --frozen pytest --durations=15 tests ops/bundle/tests` to find the slowest tests,
-# since one slow test sets a floor that no number of workers can lower. Then try more workers and
-# keep the number that gives the lower total gate time over three runs, because the lanes share
+# about 220 processor-seconds, so eight pytest-xdist workers share them, in about 30 seconds when
+# nothing else runs and about 55 in the gate beside the browsers. --dist worksteal lets a worker that
+# runs out of tests take some from a busy one; xdist's default hands each worker a run of neighbouring
+# tests at the start, so slow tests that sit together in one file land on one or two workers. On
+# October 25, 2026, with other sessions' tests holding the load average near 30, six, eight, ten and
+# twelve workers gave about the same total gate time (80, 85 and 111 seconds on six; 75, 82, 71 and
+# 74 on eight; 70 and 70 on ten; 73 and 70 on twelve), so the lane keeps eight. When the lane gets
+# slow again, run `uv run --frozen pytest --durations=15 tests ops/bundle/tests` to find the slowest
+# tests, since one slow test sets a floor that no number of workers can lower. Then try more workers
+# and keep the number that gives the lower total gate time over three runs, because the lanes share
 # the processors. Each test must be safe beside the others: README's gate section says how.
 name = "Run the Python tests under tests/ and ops/bundle/tests/, which may read the fixture database"
 run = ["uv", "run", "--frozen", "pytest", "--numprocesses", "8", "--dist", "worksteal", "tests", "ops/bundle/tests"]
@@ -91,16 +94,18 @@ lane = "sql"
 # The Playwright tests run in two lanes, web-1 and web-2, and --shard gives each lane half of them,
 # so the two halves run side by side. Each lane builds the app and the gallery into a folder of its
 # own, which STRATA_WEB_OUT names and web/out-dirs.ts reads, and its Playwright run serves that
-# folder, so neither lane serves files that the other lane is rebuilding. The 701 tests take about
-# 60 seconds in one run on half the processors when nothing else runs, each half about 31 seconds
-# alone, and both halves side by side about 54 seconds, because they share the processors. Most of
-# their time is in axe runs and in pages opened at several widths. Each run starts workers for a
-# third of the processors, five on a 16-processor computer, so the browsers leave a third of the
-# processors to the other lanes. With half each, they starved the fixture build, which then took 30
-# to 57 seconds instead of about 15, and the gate was no faster. When a lane gets slow again, run
-# the step's npm command with `-- --reporter=json` and add up each spec file's durations. A third
-# lane needs a third folder, the shards renamed to 1/3, 2/3 and 3/3, and the checks in
-# tests/test_gate.py still passing.
+# folder, so neither lane serves files that the other lane is rebuilding. Each run starts workers
+# for a third of the processors, five on a 16-processor computer, so the browsers leave a third of
+# the processors to the other lanes; with half each, they starved the fixture build, and the gate
+# was no faster. The tests cost about 420 processor-seconds in all. Each half takes about 35 seconds
+# alone and about 55 to 62 beside the other lanes. Most of that time goes to opening a fresh page for
+# each test, loading the app into it, and the axe scans. So every spec scans through web/tests/axe.ts,
+# which costs about half of axe's default run, the gallery opens each page once for all the checks
+# of one width, and the tests ask vite preview for plain files instead of gzipped ones
+# (web/playwright.config.ts). When a lane gets slow again, run the step's npm command with
+# `-- --reporter=json` and add up each spec file's durations, then look for tests that load the same
+# page in the same state at the same width, and check that view once. A third lane needs a third
+# folder, the shards renamed to 1/3, 2/3 and 3/3, and the checks in tests/test_gate.py still passing.
 [[step]]
 name = "Build the web app into web/dist-1: type check and bundle"
 run = ["env", "STRATA_WEB_OUT=dist-1", "npm", "--prefix", "web", "run", "--silent", "build"]

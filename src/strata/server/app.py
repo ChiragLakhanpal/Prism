@@ -123,6 +123,7 @@ from strata.harness.turn import (ERROR_CODES, Event, RunError, Runner, Scope, Tr
 from strata.lakehouse.engine import Engine, EngineError, PermissionDenied
 from strata.config import PackageForm, load_package_form
 from strata.packages.store import PackageStore
+from strata.server import steps as step_routes
 from strata.server import drafts as draft_routes
 from strata.server import (baseline, changes, documents, engines, evidence, lookup, projects, summary, suppliers,
                            tracing)
@@ -606,6 +607,10 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                               today=today, now=now, new_package_id=new_package_id, new_save_id=new_save_id,
                               new_run_id=new_run_id, runs=runs, trace_ids=trace_ids, reference=request_reference,
                               heartbeat_seconds=heartbeat_seconds)
+    # Section 2, the planned date for each STEP step (ticket 27).
+    step_routes.add_routes(app, engine_for=engine_for, store=packages, form=package_form or load_package_form(),
+                           thresholds=package_thresholds or thresholds, today=today, now=now,
+                           reference=request_reference)
     risk_routes.add_routes(app, engine_for=engine_for, store=packages, form=package_form or load_package_form(),
                            thresholds=package_thresholds or thresholds, today=today, now=now,
                            reference=request_reference)

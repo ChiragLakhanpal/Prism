@@ -285,6 +285,22 @@ def disagreement_answer(result, question) -> dict[str, list]:
             "rejected": [result["summary"]["rejected"]["count"]]}
 
 
+def step_dates_answer(result, question) -> dict[str, list]:
+    """estimate_time's planned dates for each step (ticket 27), from the summary record the agent cites them by:
+    the method family, the basis, the comparables counted, the steps that got a cautious date, how many steps the
+    tool counts as undated, and one named comparable's delay at the signed contract."""
+    steps = result["summary"]["step_dates"]
+    signed = next(entry for entry in steps["steps"] if entry["step_key"] == "contract_signed")
+    named = {reference for reference, _ in question["expected"]["signed_delay"]}
+    return {"family": [steps["family"]], "basis": [steps["basis"]], "comparables": [steps["coverage"]["total"]],
+            "dated_steps": [entry["step_key"] for entry in steps["steps"]
+                            if entry["cautious"] and entry["cautious"]["planned_date"]],
+            "undated_steps": [steps["undated_n"]],
+            "signed_delay": [[entry["step_reference"], entry["days"]] for entry in signed["comparables"]
+                             if entry["step_reference"] in named],
+            "cited_as": [result["summary"]["evidence_id"]]}
+
+
 def cost_answer(result, question) -> dict[str, list]:
     """compare_cost_estimates' answer: the packages signed above and below their own cost estimates, its
     abstention, and the package's own cost estimate (ticket 31)."""
@@ -320,8 +336,8 @@ def criteria_answer(result, question) -> dict[str, list]:
 
 ANSWERS = {"check_plan": marked, "search_passages": in_top_three, "data_readiness_for": readiness_answer,
            "find_comparables": past_range, "get_disagreements": disagreement_answer,
-           "get_lessons": lessons_answer, "compare_cost_estimates": cost_answer, "rejected_bids": rejected_answer,
-           "compare_criteria": criteria_answer}
+           "get_lessons": lessons_answer, "estimate_time": step_dates_answer, "compare_cost_estimates": cost_answer,
+           "rejected_bids": rejected_answer, "compare_criteria": criteria_answer}
 
 
 def answered(result, question) -> dict[str, list[str]]:
