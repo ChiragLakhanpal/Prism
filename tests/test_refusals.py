@@ -113,12 +113,26 @@ def test_the_orchestrator_s_instructions_name_every_refusal_key_and_no_other():
 
 def test_every_refusal_key_is_a_must_refuse_question_in_the_benchmark_file():
     questions = yaml.safe_load((ROOT / "evals" / "benchmark.yaml").read_text())["questions"]
-    refusals = [question for question in questions if question["kind"] == "refusals"]
+    # The answer stream's set: a question that names another path, such as section 5's criteria reader
+    # (path: check_your_criteria, ticket 31), is asked of that workflow, by its own scripted case.
+    refusals = [question for question in questions if question["kind"] == "refusals" and "path" not in question]
     assert sorted(question["expected"]["refusal"] for question in refusals) == sorted(REFUSALS)
     assert all(question["expected"]["must_refuse"] is True and question["question"] for question in refusals)
     # Each is also a scripted case, asked word for word, so the offline gate answers it.
     asked = {case.question for case in load_cases().values()}
     assert [question["id"] for question in refusals if question["question"] not in asked] == []
+
+
+def test_a_must_refuse_question_asked_of_another_workflow_gives_a_key_from_the_one_list_and_is_scripted_there():
+    from strata.agent.scripted import CRITERIA_CASES
+
+    questions = yaml.safe_load((ROOT / "evals" / "benchmark.yaml").read_text())["questions"]
+    elsewhere = [question for question in questions if question["kind"] == "refusals" and "path" in question]
+    asked = {"check_your_criteria": {case.question for case in load_cases(CRITERIA_CASES).values()}}
+
+    assert [question["path"] for question in elsewhere] == ["check_your_criteria"]
+    assert all(question["expected"]["refusal"] in REFUSALS for question in elsewhere)
+    assert [question["id"] for question in elsewhere if question["question"] not in asked[question["path"]]] == []
 
 
 def test_a_partial_refusal_with_nothing_else_answered_is_not_an_answer_the_app_can_show():

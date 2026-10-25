@@ -18,7 +18,9 @@ record_judged() re-records the judge of the verifier's check 4 (ticket 24): it r
 through the answer stream, and every writer case through its draft workflow's six checks, with the scripted
 agent and its plants, and keeps the live judge's answer for each case that asks it, in
 tests/fixtures/agent/judged/<case id>.json. Run it after record_all(), since the
-sentences the judge is asked about come from the agent's recordings.
+sentences the judge is asked about come from the agent's recordings. Given the criteria reader's cases (ticket
+31), it also replays each through section 5's comparison and its six checks, where the judge is asked about the
+readings.
 """
 
 from __future__ import annotations
@@ -45,6 +47,9 @@ ABOUT = ("The Foundry agent's answers through the Responses API, recorded by ops
 ABOUT_READER = ("The Foundry package reader's answer through the Responses API, recorded by ops/agent/record.py "
                 "--packages from the live reader, given the sentence and the package form's fields as the "
                 "plan-a-package workflow sends them. The scripted reader replays it in the offline gate.")
+ABOUT_CRITERIA = ("The Foundry criteria reader's answer through the Responses API, recorded by ops/agent/record.py "
+                  "--criteria from the live reader, given the pasted text and the item registry's items as the "
+                  "check-your-criteria workflow sends them. The scripted reader replays it in the offline gate.")
 ABOUT_WRITER = ("The Foundry writer's answer through the Responses API, recorded by ops/agent/record.py --writers "
                 "from the live writer, given the facts its workflow read on the workspace. The scripted writer "
                 "replays it in the offline gate.")
@@ -135,6 +140,29 @@ def _record_package(case: Case, agent: Agent, engine_for: EngineFor, viewer: Vie
     return recording, None
 
 
+def _record_criteria(case: Case, agent: Agent, engine_for: EngineFor, viewer: Viewer,
+                     today: dt.date) -> tuple[dict, dict | None]:
+    """A criteria reader's case (tests/fixtures/agent/criteria.toml): the live reader is sent the case's pasted text
+    with the item registry's items, as the check-your-criteria workflow sends it (ticket 31). The workflow checks
+    and verifies its readings when it replays them, so no verifier counts go with the recording."""
+    from strata.config import load_criteria_items
+    from strata.criteria import workflow
+
+    keeper = Keeper(agent)
+    keeper.respond([{"role": "user", "content": json.dumps(workflow.message(case.question, load_criteria_items()),
+                                                           ensure_ascii=False)}], None)
+    recording = {"about": ABOUT_CRITERIA, "recorded": True, "recorded_on": today.isoformat(), "question": case.question,
+                 "scope": case.scope, "as_of": case.as_of.isoformat(),
+                 "agent": {"name": keeper.name, "version": keeper.version}, "responses": keeper.responses}
+    return recording, None
+
+
+def record_criteria(cases: dict[str, Case], agent_for: Callable[[], Agent], engine_for: EngineFor, viewer: Viewer,
+                    today: dt.date | None = None) -> list[Recorded]:
+    """Re-record every recording the criteria reader's cases name, once each, and write it over its file."""
+    return record_all(cases, agent_for, engine_for, viewer, today, record_one=_record_criteria)
+
+
 def record_packages(cases: dict[str, Case], agent_for: Callable[[], Agent], engine_for: EngineFor, viewer: Viewer,
                     today: dt.date | None = None) -> list[Recorded]:
     """Re-record every recording the package reader's cases name, once each, and write it over its file."""
@@ -216,19 +244,52 @@ def _ask_through_the_draft(case: Case, engine_for: EngineFor, judge) -> None:
     asyncio.run(drain())
 
 
-def record_judged(cases: dict[str, Case], judge, engine_for: EngineFor, today: dt.date | None = None) -> list[Recorded]:
+def _ask_through_the_criteria(case: Case, engine_for: EngineFor, judge) -> None:
+    """A criteria reader's case through section 5's comparison and its six checks, with the scripted reader, on the
+    case's package as of its date. Its app state is a throwaway file, so nothing is kept."""
+    import tempfile
+
+    import httpx
+
+    from strata import appstate
+    from strata.agent.scripted import ScriptedAgent
+    from strata.criteria.store import CriteriaStore
+    from strata.lakehouse.engine import DuckDBEngine
+    from strata.server.app import create_app
+
+    with tempfile.TemporaryDirectory() as folder:
+        state = Path(folder) / "state.duckdb"
+        with DuckDBEngine.open(state) as engine:
+            appstate.build(engine)
+        app = create_app(engine_for=engine_for, criteria=CriteriaStore(lambda: DuckDBEngine.open(state)),
+                         criteria_reader=lambda: ScriptedAgent(case), today=lambda: case.as_of, judge=judge)
+
+        async def ask():
+            transport = httpx.ASGITransport(app=app)
+            async with httpx.AsyncClient(transport=transport, base_url="http://strata.test") as client:
+                await client.post(f"/api/packages/{case.scope}/criteria/compare",
+                                  headers={"X-Forwarded-User": "record@strata"}, json={"text": case.question})
+
+        asyncio.run(ask())
+
+
+def record_judged(cases: dict[str, Case], judge, engine_for: EngineFor, today: dt.date | None = None,
+                  criteria: dict[str, Case] | None = None) -> list[Recorded]:
     """Re-record the judge's answer for every case whose answer or draft asks it, and write it over its file. A
     writer case (one with a request) runs through its draft workflow's six checks, an answer case through the
-    answer stream."""
+    answer stream, and a criteria reader's case (criteria) through section 5's comparison."""
     from strata.agent.scripted import NO_RESPONSE
 
     today = today or dt.datetime.now(dt.UTC).date()
     done = []
-    for case in cases.values():
+    asking = [(case, _ask_through_the_draft if case.request is not None else _ask_through_the_stream)
+              for case in cases.values()]
+    asking += [(case, _ask_through_the_criteria) for case in (criteria or {}).values()]
+    for case, ask in asking:
         if case.judge == NO_RESPONSE:
             continue
         keeper = JudgeKeeper(judge)
-        (_ask_through_the_draft if case.request is not None else _ask_through_the_stream)(case, engine_for, keeper)
+        ask(case, engine_for, keeper)
         if keeper.asked is None:
             continue
         path = case.folder.parent / "judged" / f"{case.id}.json"

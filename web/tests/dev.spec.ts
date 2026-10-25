@@ -43,6 +43,8 @@ test("in the development build, a saved package opened by its address shows sect
     "/api/planned-packages/pkg-000000000001": { body: await recorded("planned-package-rural-roads.json") },
     "/api/comparables": { body: await recorded("comparables-planned-works-rfb-ke.json") },
     "/api/planned-packages/pkg-000000000001/risks": { body: await recorded("risks-planned-rural-roads.json") },
+    // Section 5, "Check your criteria" (ticket 31), reads its collapsed summary with the page.
+    "/api/planned-packages/pkg-000000000001/criteria": { body: await recorded("criteria-summary-planned-rural-roads.json") },
   });
 
   await page.goto("/packages/pkg-000000000001");

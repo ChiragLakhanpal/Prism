@@ -1,0 +1,35 @@
+{
+ "about": "One answer of the Foundry agent strata-criteria-reader, written by hand in the Responses API's shape: the ticket's input, similar experience of two contracts of US$10 million, with an average annual turnover the comparable notices never set and one rule that sets no item. Replace it with a recording: uv run --script ops/agent/record.py --env-file .env --criteria",
+ "recorded": false,
+ "recorded_on": null,
+ "question": "1. Similar experience: at least two contracts of similar works of US$10 million each.\n2. Average annual turnover: US$25 million over the last three years.\n3. The bid must be signed by a person with a power of attorney.",
+ "scope": "KE-CWSB-224323-CS-QCBS",
+ "as_of": "2026-10-22",
+ "agent": {
+  "name": "strata-criteria-reader",
+  "version": null
+ },
+ "responses": [
+  {
+   "id": "resp_criteria_similar_experience_1",
+   "object": "response",
+   "status": "completed",
+   "model": "gpt-5.4",
+   "output": [
+    {
+     "type": "message",
+     "id": "msg_criteria_similar_experience_1",
+     "role": "assistant",
+     "status": "completed",
+     "content": [
+      {
+       "type": "output_text",
+       "annotations": [],
+       "text": "{\"refusal\": null, \"items\": [{\"item_key\": \"similar_experience\", \"excerpt\": \"at least two contracts of similar works of US$10 million each\", \"reading\": \"I read this as two contracts of similar works, each worth at least US$10 million.\", \"parts\": {\"contracts\": 2, \"amount\": {\"value\": 10000000, \"currency\": \"USD\"}}}, {\"item_key\": \"turnover\", \"excerpt\": \"Average annual turnover: US$25 million over the last three years\", \"reading\": \"I read this as an average annual turnover of at least US$25 million over the last three years.\", \"parts\": {\"amount\": {\"value\": 25000000, \"currency\": \"USD\"}, \"window_years\": 3}}], \"unplaced\": [\"The bid must be signed by a person with a power of attorney.\"]}"
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

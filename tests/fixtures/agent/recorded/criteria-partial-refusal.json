@@ -1,0 +1,35 @@
+{
+ "about": "One answer of the Foundry agent strata-criteria-reader, written by hand in the Responses API's shape: qualification criteria with a question about a bid evaluation report. Replace it with a recording: uv run --script ops/agent/record.py --env-file .env --criteria",
+ "recorded": false,
+ "recorded_on": null,
+ "question": "Similar experience: at least two contracts of similar works of US$10 million each.\nWas the bid evaluation report right to reject the lowest bid on our last package?",
+ "scope": "KE-CWSB-224323-CS-QCBS",
+ "as_of": "2026-10-22",
+ "agent": {
+  "name": "strata-criteria-reader",
+  "version": null
+ },
+ "responses": [
+  {
+   "id": "resp_criteria_partial_refusal_1",
+   "object": "response",
+   "status": "completed",
+   "model": "gpt-5.4",
+   "output": [
+    {
+     "type": "message",
+     "id": "msg_criteria_partial_refusal_1",
+     "role": "assistant",
+     "status": "completed",
+     "content": [
+      {
+       "type": "output_text",
+       "annotations": [],
+       "text": "{\"refusal\": {\"key\": \"review_decisions\", \"partial\": true}, \"items\": [{\"item_key\": \"similar_experience\", \"excerpt\": \"at least two contracts of similar works of US$10 million each\", \"reading\": \"I read this as two contracts of similar works, each worth at least US$10 million.\", \"parts\": {\"contracts\": 2, \"amount\": {\"value\": 10000000, \"currency\": \"USD\"}}}], \"unplaced\": []}"
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,125 @@
+{
+  "state": "ok",
+  "comparables_total": 17,
+  "public_criteria_count": 14,
+  "public": [
+    {
+      "step_reference": "KE-MOWI-246482-CS-QCBS",
+      "notice_id": "OP00144545",
+      "notice_date": "2021-08-31",
+      "country_name": "Kenya",
+      "passage_id": "OP00144545/v1/s2/1"
+    },
+    {
+      "step_reference": "KE-WASREB-235524-CS-QCBS",
+      "notice_id": "OP00139034",
+      "notice_date": "2021-07-22",
+      "country_name": "Kenya",
+      "passage_id": "OP00139034/v1/s2/2"
+    },
+    {
+      "step_reference": "KE-KWAWASCO-105286-CS-QCBS",
+      "notice_id": "OP00118816",
+      "notice_date": "2021-02-26",
+      "country_name": "Kenya",
+      "passage_id": "OP00118816/v1/s5"
+    },
+    {
+      "step_reference": "KE-MOWI-200359-CS-QCBS",
+      "notice_id": "OP00118097",
+      "notice_date": "2021-02-23",
+      "country_name": "Kenya",
+      "passage_id": "OP00118097/v1/s2/2"
+    },
+    {
+      "step_reference": "KE-WAJWASCO-179682-CS-QCBS",
+      "notice_id": "OP00104404",
+      "notice_date": "2020-11-09",
+      "country_name": "Kenya",
+      "passage_id": "OP00104404/v1/s1/1"
+    },
+    {
+      "step_reference": "KE-KWAWASCO-161466-CS-CDS",
+      "notice_id": "OP00094782",
+      "notice_date": "2020-08-20",
+      "country_name": "Kenya",
+      "passage_id": "OP00094782/v1/s5"
+    },
+    {
+      "step_reference": "KE-GAWASCO-154426-CS-QCBS",
+      "notice_id": "OP00089216",
+      "notice_date": "2020-05-20",
+      "country_name": "Kenya",
+      "passage_id": "OP00089216/v1/s1/1"
+    },
+    {
+      "step_reference": "KE-GAWASCO-67429-CS-QCBS",
+      "notice_id": "OP00089137",
+      "notice_date": "2020-05-19",
+      "country_name": "Kenya",
+      "passage_id": "OP00089137/v1/s1/1"
+    },
+    {
+      "step_reference": "KE-GAWASCO-67428-CS-QCBS",
+      "notice_id": "OP00089036",
+      "notice_date": "2020-05-18",
+      "country_name": "Kenya",
+      "passage_id": "OP00089036/v1/s1/1"
+    },
+    {
+      "step_reference": "KE-WAJWASCO-80857-NC-RFB",
+      "notice_id": "OP00088588",
+      "notice_date": "2020-05-11",
+      "country_name": "Kenya",
+      "passage_id": "OP00088588/v1/s1/1"
+    },
+    {
+      "step_reference": "KE-GAWASCO-67425-CS-QCBS",
+      "notice_id": "OP00088350",
+      "notice_date": "2020-05-05",
+      "country_name": "Kenya",
+      "passage_id": "OP00088350/v1/s1/1"
+    },
+    {
+      "step_reference": "KE-WAJWASCO-154020-CS-QCBS",
+      "notice_id": "OP00085723",
+      "notice_date": "2020-03-11",
+      "country_name": "Kenya",
+      "passage_id": "OP00085723/v1/s1/1"
+    },
+    {
+      "step_reference": "KE-WASREB-134249-CS-QCBS",
+      "notice_id": "OP00084586",
+      "notice_date": "2020-02-17",
+      "country_name": "Kenya",
+      "passage_id": "OP00084586/v1/s3"
+    },
+    {
+      "step_reference": "KE-WAJWASCO-80986-CS-QCBS",
+      "notice_id": "OP00077276",
+      "notice_date": "2019-09-11",
+      "country_name": "Kenya",
+      "passage_id": "OP00077276/v1/s3"
+    }
+  ],
+  "signature": "702d4b65766e082b",
+  "records_through": "2026-10-13",
+  "limits": {
+    "max_chars": 20000,
+    "counter_left": 2000,
+    "rows_per_group": 5,
+    "lessons_per_group": 3,
+    "lesson_factors": [
+      "cost_estimates",
+      "designs_and_specifications"
+    ],
+    "min_comparables": 20
+  },
+  "comparison": null,
+  "package_run": null,
+  "section_checks": null,
+  "public_sources": [
+    "notices",
+    "awards"
+  ]
+}

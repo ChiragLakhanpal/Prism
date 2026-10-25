@@ -123,8 +123,8 @@ def test_the_app_state_tables_are_made_in_postgres_types_in_the_schema_app():
 
     statements = [sql for sql, _ in connection.statements]
     assert statements[0] == "CREATE SCHEMA IF NOT EXISTS app"
-    assert made == ["strata.app.plan_checks_opened", "strata.app.planned_package_saves", "strata.app.planned_packages",
-                    "strata.app.risk_selections"]
+    assert made == ["strata.app.criteria_checks", "strata.app.plan_checks_opened", "strata.app.planned_package_saves",
+                    "strata.app.planned_packages", "strata.app.risk_selections"]
     saves = next(sql for sql in statements if "app.planned_package_saves" in sql)
     assert saves.startswith("CREATE TABLE IF NOT EXISTS app.planned_package_saves")
     assert "saved_at TIMESTAMPTZ NOT NULL" in saves and "criteria TEXT NOT NULL" in saves
