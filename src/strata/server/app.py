@@ -498,7 +498,11 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
 
     @app.get("/api/evidence")
     def open_evidence(evidence_id: str = Query(alias="id", min_length=1, max_length=512), asof: dt.date | None = None,
-                      viewer: Viewer = Depends(current_viewer)):
+                      view: Literal["staff", "piu", "public"] = STAFF, viewer: Viewer = Depends(current_viewer)):
+        # The public view hides the baseline, and a preview only takes things away (the 21 review, round 3).
+        if view == "public" and evidence_id.startswith(f"{baseline.TABLE}:"):
+            return JSONResponse({"code": "unknown_evidence"}, status_code=404)
+
         def read(engine: Engine):
             found = evidence.read(engine, evidence_id, as_of_for(asof))
             return found if found is not None else JSONResponse({"code": "unknown_evidence"}, status_code=404)

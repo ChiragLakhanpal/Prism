@@ -1,6 +1,7 @@
 -- Saving a baseline: who saved which version, and when. One row per project and agency, so the row is
 -- merged: saving another version replaces it in one statement, and two people saving at once still leave
--- one row (the 21 review, round 2).
+-- one row (the 21 review, round 2). A save never replaces a later one, so when two overlap the row keeps
+-- the later save, whose steps the earlier one's clean-up never deletes (the 21 review, round 3).
 MERGE INTO strata.ops.plan_baselines AS t
 USING (
   SELECT
@@ -15,7 +16,7 @@ USING (
     CAST(:public_from AS DATE) AS public_from
 ) AS s
 ON t.project_id = s.project_id AND t.agency_id = s.agency_id
-WHEN MATCHED THEN UPDATE SET
+WHEN MATCHED AND t.saved_at <= s.saved_at THEN UPDATE SET
   implementing_agency = s.implementing_agency,
   document_id = s.document_id,
   plan_date = s.plan_date,

@@ -77,7 +77,8 @@ def _day(value) -> dt.date | None:
     return value if isinstance(value, dt.date) else dt.date.fromisoformat(str(value)[:10])
 
 
-def _iso(value) -> str | None:
+def iso_day(value) -> str | None:
+    """A date, a datetime or ISO text as the day it names, "2025-07-21", or None."""
     day = _day(value)
     return day.isoformat() if day else None
 
@@ -112,8 +113,8 @@ def record_event(evidence_id: str, public_from, source_key: str, project_id: str
     """A record's evidence event: its fields by key, with the kind each is written as, and its source."""
     return {
         "id": evidence_id, "kind": "record", "tool": None, "stratum": "What", "short_name": None,
-        "row": {"evidence_id": evidence_id, "public_from": _iso(public_from), "reference": reference,
-                "source": {"source_key": source_key, "project_id": project_id, "document_date": _iso(date)},
+        "row": {"evidence_id": evidence_id, "public_from": iso_day(public_from), "reference": reference,
+                "source": {"source_key": source_key, "project_id": project_id, "document_date": iso_day(date)},
                 "fields": [{"key": key, "value": value, "kind": kind} for key, value, kind in fields
                            if value is not None and value != ""]},
         "highlights": [],
@@ -134,8 +135,8 @@ def _project_record(row: dict, as_of: dt.date, environment: list[dict], sectors:
     pid = row["project_id"]
     values = [("project_name", row["project_name"], "text"), ("country", row["country"], "text")]
     if current:
-        values += [("status", row["status"], "text"), ("approval_date", _iso(row["approval_date"]), "date"),
-                   ("closing_date", _iso(row["closing_date"]), "date"), ("region", row["region"], "text"),
+        values += [("status", row["status"], "text"), ("approval_date", iso_day(row["approval_date"]), "date"),
+                   ("closing_date", iso_day(row["closing_date"]), "date"), ("region", row["region"], "text"),
                    ("implementing_agency", row["implementing_agency"], "text")]
         if environment:
             values += [("esf_risk", environment[0]["esf_risk"], "text"),
@@ -153,14 +154,14 @@ def _loan_record(project_id: str, row: dict) -> dict:
                    [("original_principal_usd", _cents(_money(row["original_principal_usd"])), "usd"),
                     ("disbursed_usd", _cents(_money(row["disbursed_usd"])), "usd"),
                     ("cancelled_usd", _cents(_money(row["cancelled_usd"])), "usd"),
-                    ("snapshot", _iso(row["as_of"]), "date")])
+                    ("snapshot", iso_day(row["as_of"]), "date")])
 
 
 def _history_record(project_id: str, row: dict) -> dict:
-    reported = _iso(row["reported_on"])
+    reported = iso_day(row["reported_on"])
     return record_event(f"{HISTORY_RECORD}:{project_id}/{reported}", row["public_from"], "loan_history", project_id, reported,
-                   project_id, [("closing_date", _iso(row["closing_date"]), "date"),
-                                ("previous_closing_date", _iso(row["previous_closing_date"]), "date"),
+                   project_id, [("closing_date", iso_day(row["closing_date"]), "date"),
+                                ("previous_closing_date", iso_day(row["previous_closing_date"]), "date"),
                                 ("reported_on", reported, "date")])
 
 
@@ -176,7 +177,7 @@ def _api_rating_record(project_id: str, row: dict) -> dict:
     return record_event(f"{API_RATING_RECORD}:{project_id}/{row['rating_code']}", row["public_from"], "projects_api_ratings",
                    project_id, row["isr_date"], project_id,
                    [("rating_name", row["rating_name"], "text"), ("value", row["value"], "text"),
-                    ("isr_date", _iso(row["isr_date"]), "date")])
+                    ("isr_date", iso_day(row["isr_date"]), "date")])
 
 
 def _isr_rating_record(project_id: str, row: dict) -> dict:
@@ -186,7 +187,7 @@ def _isr_rating_record(project_id: str, row: dict) -> dict:
     return record_event(f"{ISR_RATING_RECORD}:{key}", row["public_from"], "isr_ratings", project_id, row["isr_date"],
                    project_id,
                    [("rating_name", row["rating_name"], "text"), ("current_rating", row["current_rating"], "text"),
-                    ("previous_rating", row["previous_rating"], "text"), ("isr_date", _iso(row["isr_date"]), "date"),
+                    ("previous_rating", row["previous_rating"], "text"), ("isr_date", iso_day(row["isr_date"]), "date"),
                     ("sequence", None if row["sequence"] is None else str(row["sequence"]), "text"),
                     ("pdf_page", str(row["pdf_page"]), "text")])
 
@@ -212,7 +213,7 @@ def _project_reader(engine: Engine, key: str, as_of: dt.date) -> dict | None:
 RECORD_READERS = {
     PROJECT_RECORD: _project_reader,
     LOAN_RECORD: _read(_loan_record, "loans", lambda row, parts: len(parts) == 2 and row["loan_number"] == parts[1]),
-    HISTORY_RECORD: _read(_history_record, "history", lambda row, parts: len(parts) == 2 and _iso(row["reported_on"]) == parts[1]),
+    HISTORY_RECORD: _read(_history_record, "history", lambda row, parts: len(parts) == 2 and iso_day(row["reported_on"]) == parts[1]),
     IEG_RECORD: _read(_ieg_record, "ieg", lambda row, parts: len(parts) == 3 and (row["evaluation_type"], str(row["evaluation_fy"]))
                == (parts[1], parts[2])),
     API_RATING_RECORD: _read(_api_rating_record, "api_ratings", lambda row, parts: len(parts) == 2 and row["rating_code"] == parts[1]),
@@ -265,25 +266,25 @@ def summary(engine: Engine, project_id: str, as_of: dt.date) -> dict | None:
 
     # Dates, and the closing date history.
     closing = _day(record["closing_date"]) if current else (_day(history[-1]["closing_date"]) if history else None)
-    dates = [_fact("approval_date", _iso(record["approval_date"]) if current else None, record_source)]
+    dates = [_fact("approval_date", iso_day(record["approval_date"]) if current else None, record_source)]
     history_rows = []
     for row in history[1:]:
         event = _history_record(project_id, row)
-        history_rows.append({"first_recorded": _iso(row["reported_on"]), "before": _iso(row["previous_closing_date"]),
-                             "after": _iso(row["closing_date"]),
-                             "source": sources.cite(event, kind="loan_history", date=_iso(row["reported_on"]))})
+        history_rows.append({"first_recorded": iso_day(row["reported_on"]), "before": iso_day(row["previous_closing_date"]),
+                             "after": iso_day(row["closing_date"]),
+                             "source": sources.cite(event, kind="loan_history", date=iso_day(row["reported_on"]))})
     # The history as a whole, which says whether the closing date moved, cites the month it last changed,
     # or its first month when it never did.
     history_source = (sources.cite(_history_record(project_id, history[-1]), kind="loan_history",
-                                   date=_iso(history[-1]["reported_on"])) if history else None)
+                                   date=iso_day(history[-1]["reported_on"])) if history else None)
     if history and _day(history[0]["closing_date"]) != closing:
         first = history[0]
-        dates.append(_fact("original_closing_date", _iso(first["closing_date"]), sources.cite(
-            _history_record(project_id, first), kind="loan_history", date=_iso(first["reported_on"]))))
+        dates.append(_fact("original_closing_date", iso_day(first["closing_date"]), sources.cite(
+            _history_record(project_id, first), kind="loan_history", date=iso_day(first["reported_on"]))))
     closing_source = record_source if current else (history_rows[-1]["source"] if history_rows else (
-        sources.cite(_history_record(project_id, history[0]), kind="loan_history", date=_iso(history[0]["reported_on"]))
+        sources.cite(_history_record(project_id, history[0]), kind="loan_history", date=iso_day(history[0]["reported_on"]))
         if history else record_source))
-    dates.append(_fact("closing_date", _iso(closing), closing_source))
+    dates.append(_fact("closing_date", iso_day(closing), closing_source))
 
     # Money, summed over the loans and credits.
     money = []
@@ -295,12 +296,12 @@ def summary(engine: Engine, project_id: str, as_of: dt.date) -> dict | None:
             each = [{"loan_number": row["loan_number"], "value": millions(_money(row[column]) or Decimal(0))}
                     for row in loans]
             total = _total(loans, column)
-            first_source = sources.cite(events[0], kind="loans", date=_iso(snapshot), loans=len(loans))
+            first_source = sources.cite(events[0], kind="loans", date=iso_day(snapshot), loans=len(loans))
             for event in events[1:]:
-                sources.cite(event, kind="loans", date=_iso(snapshot))
+                sources.cite(event, kind="loans", date=iso_day(snapshot))
             money.append(_fact(key, millions(total), first_source, loans=each,
                                loan_ids=[event["id"] for event in events]))
-        disbursed_as_of = _iso(snapshot)
+        disbursed_as_of = iso_day(snapshot)
     else:
         disbursed_as_of = None
         if current and record["total_commitment_usd"] is not None:
@@ -316,19 +317,19 @@ def summary(engine: Engine, project_id: str, as_of: dt.date) -> dict | None:
         event = (evidence_routes.read(engine, f"strata.gold.passage:{row['passage_id']}", as_of)
                  if row["passage_id"] else _isr_rating_record(project_id, row))
         ratings.append(_fact(key, row["current_rating"], sources.cite(
-            event, kind="isr", date=_iso(row["isr_date"]), sequence=row["sequence"])))
+            event, kind="isr", date=iso_day(row["isr_date"]), sequence=row["sequence"])))
     ratings.sort(key=lambda fact: list(ISR_RATINGS.values()).index(fact["key"]))
     for row in api_ratings:
         if row["rating_code"] == PROCUREMENT:
             ratings.append(_fact("procurement", row["value"], sources.cite(
-                _api_rating_record(project_id, row), kind="projects_api_ratings", date=_iso(row["isr_date"]))))
+                _api_rating_record(project_id, row), kind="projects_api_ratings", date=iso_day(row["isr_date"]))))
     if icr:
         event = evidence_routes.read(engine, icr[0]["evidence_id"], as_of)
         ratings.append(_fact("icr_outcome", icr[0]["value"], sources.cite(
-            event, kind="icr", date=_iso(icr[0]["made_at"]))))
+            event, kind="icr", date=iso_day(icr[0]["made_at"]))))
     review = next((row for row in ieg if row["evaluation_type"] == ICR_REVIEW), None)
     if review:
-        source = sources.cite(_ieg_record(project_id, review), kind="ieg_ratings", date=_iso(review["public_from"]),
+        source = sources.cite(_ieg_record(project_id, review), kind="ieg_ratings", date=iso_day(review["public_from"]),
                               fiscal_year=review["evaluation_fy"])
         ratings += [_fact("ieg_outcome", review["outcome"], source),
                     _fact("ieg_bank_performance", review["bank_performance"], source)]
@@ -357,7 +358,7 @@ def summary(engine: Engine, project_id: str, as_of: dt.date) -> dict | None:
         "project": {"project_id": project_id, "project_name": record["project_name"],
                     "display_name": display_name(record["project_name"]), "status": status},
         "lead": {"kind": LEADS.get(status) or ("closed" if closing and closing <= as_of else "active"),
-                 "closing_date": _iso(closing), "moves": len(history_rows) if history else None,
+                 "closing_date": iso_day(closing), "moves": len(history_rows) if history else None,
                  "commitment": totals.get("commitment"), "disbursed": totals.get("disbursed"),
                  "canceled": totals.get("canceled"), "any_canceled": canceled > 0, "amounts_exceed_commitment": exceed,
                  "disbursed_as_of": disbursed_as_of},

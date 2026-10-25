@@ -24,7 +24,7 @@ from pathlib import Path
 
 from strata.dbx import Viewer
 from strata.lakehouse.engine import Engine
-from strata.server.summary import record_event
+from strata.server.summary import iso_day, record_event
 from strata.tools.check_plan import agency_id, read_baseline
 
 SQL = Path(__file__).resolve().parent / "sql" / "baseline"
@@ -84,6 +84,6 @@ def read_record(engine: Engine, key: str, as_of: dt.date) -> dict | None:
     event = record_event(f"{TABLE}:{key}", row["public_from"], "plan_baseline", project_id, row["public_from"],
                          row["implementing_agency"],
                          [("implementing_agency", row["implementing_agency"], "text"),
-                          ("plan_date", str(row["plan_date"])[:10], "date"),
-                          ("saved_on", str(row["public_from"])[:10], "date")])
+                          ("plan_date", iso_day(row["plan_date"]), "date"),
+                          ("saved_on", iso_day(row["public_from"]), "date")])
     return {"kind": "record", "row": event["row"]}

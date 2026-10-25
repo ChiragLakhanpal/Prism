@@ -328,6 +328,21 @@ def test_an_isr_rating_with_no_passage_that_prints_it_cites_the_rating_s_own_rec
     assert get(app, f"/api/evidence?id={evidence_id}&asof=2026-06-29").status_code == 404
 
 
+def test_an_isr_rating_cites_a_passage_on_its_page_only_when_the_passage_prints_its_value(fixture_db, tmp_path):
+    # The 21 review, round 3, item 1: a passage that names "Progress towards achievement of PDO" without
+    # printing "Moderately Satisfactory" is not where a reader can check the value, so the rating then cites
+    # its own row.
+    database = tmp_path / "fixture.duckdb"
+    shutil.copy(fixture_db, database)
+    with DuckDBEngine.open(database) as engine:
+        engine.run("UPDATE strata.gold.passage SET text = replace(text, :value, :other) WHERE passage_id = :passage",
+                   {"value": "Moderately Satisfactory", "other": "-", "passage": "40114539/v1/s3"})
+
+    found = facts(get(app_on(database), "/api/projects/P156634/summary?asof=2026-10-23").json())
+
+    assert found["pdo"]["source"]["evidence_id"] == "strata.silver.isr_ratings:P156634/40114539/pdo"
+
+
 def test_the_lead_says_whether_any_amount_was_canceled_however_large(fixture_db, tmp_path):
     # The 21 review, round 2, item 2: US$1,234.5 million is written with a thousands separator, which the
     # browser cannot read as a number, so the route says whether any was canceled.
@@ -778,6 +793,41 @@ def test_saving_again_keeps_one_row_for_the_agency_and_only_the_saved_version_s_
                                {"pid": "P156634"})
     assert [str(row[0]) for row in baselines.rows] == ["2025-07-21"]
     assert documents.rows == (("40031468",),)
+
+
+def test_a_save_that_lands_after_a_later_one_never_replaces_it(writable, tmp_path):
+    # The 21 review, round 3, item 2: two saves at once, where the earlier save's merge runs after the later
+    # one's. The row keeps the later save, whose steps the earlier one never deletes.
+    database = tmp_path / "fixture.duckdb"
+    clock = iter([SAVED_AT + dt.timedelta(minutes=1), SAVED_AT])
+
+    @contextmanager
+    def engine_for(_viewer):
+        with DuckDBEngine.open(database) as engine:
+            yield engine
+    app = create_app(engine_for=engine_for, now=lambda: next(clock))
+    assert call(app, "PUT", f"{NWWDA}/baseline", body={"plan_date": "2026-03-05"}).status_code == 200
+    late = call(app, "PUT", f"{NWWDA}/baseline", body={"plan_date": "2025-07-21"})
+
+    assert (late.status_code, late.json()["baseline"]["plan_date"]) == (200, "2026-03-05")
+    check = get(writable, f"{NWWDA}/2026-10-09?asof=2026-10-23").json()
+    assert check["baseline"]["plan_date"] == "2026-03-05"
+    with DuckDBEngine.open(database, read_only=True) as engine:
+        kept = engine.run("SELECT count(*) FROM strata.ops.plan_baseline_steps AS s JOIN strata.ops.plan_baselines AS b "
+                          "ON s.project_id = b.project_id AND s.agency_id = b.agency_id AND s.saved_at = b.saved_at "
+                          "WHERE b.project_id = :pid", {"pid": "P156634"})
+    assert kept.rows[0][0] > 0
+
+
+def test_the_baseline_s_record_does_not_open_in_the_public_view(writable):
+    # The 21 review, round 3, item 3: the public view hides the baseline, and a preview only takes away.
+    evidence_id = "strata.ops.plan_baselines:P156634/northern-water-works-development-agency"
+    call(writable, "PUT", f"{NWWDA}/baseline", body={"plan_date": "2025-07-21"})
+
+    assert get(writable, f"/api/evidence?id={evidence_id}&asof=2026-10-23&view=public").status_code == 404
+    assert get(writable, f"/api/evidence?id={evidence_id}&asof=2026-10-23&view=piu").status_code == 200
+    passage = get(writable, "/api/evidence?id=strata.gold.passage:31525018/v1/54&asof=2026-10-23&view=public")
+    assert passage.status_code == 200
 
 
 def test_only_a_signed_in_viewer_in_the_staff_view_can_save_a_read_version_as_the_baseline(writable):
