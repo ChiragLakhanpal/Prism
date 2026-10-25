@@ -7,8 +7,8 @@ request lands in one file (CLAUDE.md rule 9). This module reads them:
 - load_slice()       config/slice.toml, the slice file
 - load_sectors()     config/sectors.toml, the one sector taxonomy
 - load_models()      config/models.toml, the model file (load_layout_parser() reads its [layout] table,
-                     load_search() its [search] table, and load_supplier_matching() its
-                     [supplier_matching] table)
+                     load_search() its [search] table, load_supplier_matching() its
+                     [supplier_matching] table, and load_time_estimate() its [time_estimate] table)
 - load_thresholds()  config/thresholds.toml, the thresholds file
 - load_tools()       config/tools.toml, the tool registry (strata.tools.registry calls the tools)
 - load_agent()       config/agents.toml, the agent registry: one Foundry agent and its guardrail
@@ -723,7 +723,7 @@ class Model:
 def load_models(path: Path = CONFIG_DIR / "models.toml") -> dict[str, Model]:
     """The deployment each role uses, in the order of ROLES."""
     data = _read(path)
-    _Entry(path, "the file", data).only({"roles", "layout", "search", "supplier_matching"})
+    _Entry(path, "the file", data).only({"roles", "layout", "search", "supplier_matching", "time_estimate"})
     roles = data.get("roles", {})
     missing = [role for role in ROLES if role not in roles]
     unknown = sorted(set(roles) - set(ROLES))
@@ -769,6 +769,41 @@ def load_search(path: Path = CONFIG_DIR / "models.toml") -> SearchSettings:
     entry = _Entry(path, "search", _read(path).get("search"))
     entry.only({"index", "reranker", "rerank_columns"})
     return SearchSettings(entry.text("index"), entry.text("reranker"), entry.texts("rerank_columns"))
+
+
+@dataclass(frozen=True)
+class TimeEstimateSettings:
+    """The time estimate's model (ticket 25): the model file's [time_estimate] table."""
+
+    learner: str  # its name in LEARNERS in src/strata/estimates/time_estimate.py
+    registered_model: str  # catalog.schema.model in Unity Catalog
+    experiment: str  # the MLflow experiment
+    test_years: tuple[int, ...]  # the rolling backtests, each tested on one calendar year
+    calibration_every: int  # every this-many-th training package sizes the ranges
+    governance_indicators: tuple[str, ...]  # CPIA and WGI indicator codes
+    range_checked: tuple[str, ...]  # features a package must sit inside the training range of
+    learner_settings: dict  # the learner's own settings, such as XGBoost's, from [time_estimate.<learner>]
+
+
+def load_time_estimate(path: Path = CONFIG_DIR / "models.toml") -> TimeEstimateSettings:
+    """The model file's [time_estimate] table, with its learner's settings."""
+    entry = _Entry(path, "time_estimate", _read(path).get("time_estimate"))
+    learner = entry.text("learner")
+    entry.only({"learner", "registered_model", "experiment", "test_years", "calibration_every",
+                "governance_indicators", "range_checked", learner})
+    registered = entry.text("registered_model")
+    if registered.count(".") != 2:
+        entry._fail("registered_model", "must be a three-part Unity Catalog name, such as strata.gold.time_estimate")
+    years = entry.table.get("test_years")
+    if not isinstance(years, list) or not years or not all(isinstance(y, int) and not isinstance(y, bool) for y in years):
+        entry._fail("test_years", "must be a list of years, such as [2021, 2022]")
+    every = entry.integer("calibration_every")
+    if every < 2:
+        entry._fail("calibration_every", "must be 2 or more, so the model learns from some packages")
+    settings = entry.table.get(learner, {})
+    _Entry(path, f"time_estimate.{learner}", settings)
+    return TimeEstimateSettings(learner, registered, entry.text("experiment"), tuple(sorted(years)), every,
+                                entry.texts("governance_indicators"), entry.texts("range_checked"), dict(settings))
 
 
 @dataclass(frozen=True)
