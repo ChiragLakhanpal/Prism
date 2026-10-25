@@ -34,6 +34,9 @@ export type BoxOption = {
   icon: LucideIcon;
   label: ReactNode;
   line?: ReactNode;
+  // An option the view holds, listed so it stays discoverable, with its reason as its line (ticket 15's plan
+  // option in a preview). Choosing it does nothing.
+  disabled?: boolean;
 };
 
 // The scope chip inside the box, on a project or package page: "Within P130164" with a 24 px remove
@@ -90,7 +93,13 @@ export function OneBox({
   inputRef,
   shortcut = true,
   focusedHint,
+  modePlaceholder,
+  modeHelp,
 }: {
+  // A mode the Packages tab put the box in (ticket 15): its own placeholder, and a help line that describes
+  // the box and takes the hint's place.
+  modePlaceholder?: string;
+  modeHelp?: string;
   value: string;
   onChange: (value: string) => void;
   // What Enter will do, best first. The list shows while open is true and there are options.
@@ -141,9 +150,11 @@ export function OneBox({
   const showHint = (focused || focusedHint) && value.length === 0;
   const showList = open && value.trim().length > 0 && options.length > 0;
   const showNotes = open && value.trim().length > 0 && notes.length > 0;
-  const described = [showHint && hintId, scope && scopedId, showNotes && notesId].filter(Boolean).join(" ") || undefined;
+  const described =
+    [(showHint || modeHelp) && hintId, scope && scopedId, showNotes && notesId].filter(Boolean).join(" ") || undefined;
   const optionId = (index: number) => `${listId}-${index}`;
-  const placeholder = scope ? (scopeKind === "package" ? copy.box.placeholderPackage : copy.box.placeholderProject) : null;
+  const placeholder =
+    modePlaceholder ?? (scope ? (scopeKind === "package" ? copy.box.placeholderPackage : copy.box.placeholderProject) : null);
 
   return (
     <form
@@ -248,6 +259,12 @@ export function OneBox({
           </kbd>
         </div>
       </div>
+      {/* A mode's help line describes the box whether or not the list shows. */}
+      {modeHelp && !showHint && (
+        <span id={hintId} hidden>
+          {modeHelp}
+        </span>
+      )}
       {(showHint || showList || showNotes) && (
         <div
           data-box-popup
@@ -256,8 +273,8 @@ export function OneBox({
           onMouseDown={(event) => event.preventDefault()}
         >
           {showHint && (
-            <p id={hintId} className="px-4 py-2 text-caption text-ink-muted">
-              <Fill template={copy.box.hint} slots={{ pid: <span className="font-mono">{copy.box.hintId}</span> }} />
+            <p id={hintId} className="px-4 py-2 text-caption text-ink-muted" data-box-help={modeHelp ? "" : undefined}>
+              {modeHelp ?? <Fill template={copy.box.hint} slots={{ pid: <span className="font-mono">{copy.box.hintId}</span> }} />}
             </p>
           )}
           {showList && (
@@ -270,11 +287,13 @@ export function OneBox({
                     id={optionId(index)}
                     role="option"
                     aria-selected={selected}
+                    aria-disabled={option.disabled || undefined}
                     data-box-option={option.key}
-                    onClick={() => onChoose?.(index)}
+                    onClick={() => !option.disabled && onChoose?.(index)}
                     className={cx(
-                      "flex min-h-11 cursor-pointer items-center gap-3 px-4 py-2 text-body text-ink",
-                      selected ? "bg-tint shadow-[inset_3px_0_0_var(--color-primary)]" : "hover:bg-tint-hover",
+                      "flex min-h-11 items-center gap-3 px-4 py-2 text-body",
+                      option.disabled ? "cursor-default text-ink-muted" : "cursor-pointer text-ink",
+                      selected ? "bg-tint shadow-[inset_3px_0_0_var(--color-primary)]" : !option.disabled && "hover:bg-tint-hover",
                     )}
                   >
                     <option.icon aria-hidden="true" className="size-4 shrink-0 text-ink-muted" />
@@ -282,7 +301,7 @@ export function OneBox({
                       <span className="block wrap-anywhere">{option.label}</span>
                       {option.line && <span className="block text-caption wrap-anywhere text-ink-muted">{option.line}</span>}
                     </span>
-                    {selected && (
+                    {selected && !option.disabled && (
                       <kbd aria-hidden="true" className="shrink-0 rounded-sm border border-line-strong px-1 font-mono text-caption text-ink-muted">
                         {copy.box.enter}
                       </kbd>

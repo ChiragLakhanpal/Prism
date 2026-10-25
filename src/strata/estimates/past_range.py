@@ -16,6 +16,7 @@ rounding every month Strata states takes, so a dot, a quantile and the plan line
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 from decimal import ROUND_HALF_UP, Decimal
 from fractions import Fraction
@@ -71,3 +72,49 @@ def quantile_dots(observations: list[Observation], count: int) -> list[tuple[int
     (k - 1/2) / count. A dot the curve never reaches has no day."""
     curve = survival(observations)
     return [(k, quantile(curve, Fraction(2 * k - 1, 2 * count))) for k in range(1, count + 1)]
+
+
+def dot_packages(observations: list[Observation], count: int) -> list[list[int]]:
+    """The packages each of count quantile dots stands for, as indexes into observations, in their order.
+
+    Dot k stands for the k-th of count equal shares of the curve. Each signed package holds the share
+    its signing took off the curve: on a day s of the n packages at risk were signed, each of them holds
+    1/n of the share not yet signed before it. The packages still open after the last signing hold what
+    is left, equally. A package still open that left the risk set earlier holds nothing, since
+    Kaplan-Meier passed its share to the packages after it, so no dot stands for it. A package belongs to
+    the dot whose share holds the middle of its own. Packages on the same day are taken in the order
+    given, so the caller orders ties. A dot whose share holds no package's middle, because one package's
+    share spans all of it, stands for the package whose share holds the dot itself, which is the
+    package on whose day the dot sits."""
+    index_by_day: dict[int, list[int]] = {}
+    for index, observation in enumerate(observations):
+        index_by_day.setdefault(observation.days, []).append(index)
+    held: list[tuple[int, Fraction, Fraction]] = []  # (index, start, end) of each share, in curve order
+    start, left, at_risk = Fraction(0), Fraction(1), len(observations)
+    after: list[int] = []  # the packages still at risk after the last signing so far
+    for day in sorted(index_by_day):
+        on_day = index_by_day[day]
+        signed = [index for index in on_day if observations[index].signed]
+        if signed:
+            each = left / at_risk
+            for index in signed:
+                held.append((index, start, start + each))
+                start += each
+            left -= each * len(signed)
+            after = []
+        after += [index for index in on_day if not observations[index].signed]
+        at_risk -= len(on_day)
+    for index in after:
+        each = left / len(after)
+        held.append((index, start, start + each))
+        start += each
+
+    dots: list[list[int]] = [[] for _ in range(count)]
+    for index, begin, end in held:
+        middle = (begin + end) / 2
+        dots[min(max(math.ceil(middle * count), 1), count) - 1].append(index)
+    for k, members in enumerate(dots, start=1):
+        if not members:
+            at = Fraction(2 * k - 1, 2 * count)
+            members.extend(index for index, begin, end in held if begin < at <= end)
+    return dots

@@ -17,6 +17,9 @@ appinsights_resource = "wb-strata-insights"
 budget = "strata-monthly"
 # The probe app takes Strata's own app slot. The app shell ticket deploys the real app over it.
 app = "strata"
+# The Lakebase database instance that holds app state (ADR 0005), which ops/app/deploy_app.py makes or starts
+# and gives the app. The Lakebase probe uses an instance of its own, strata-state-probe, and stops it.
+app_state_instance = "strata-state"
 workspace_folder = "strata-dayone"  # under /Workspace/Users/<you>/
 # The probes keep their test files in a schema of their own, so nothing lands in workspace.default,
 # which fairshare may use. Strata's own catalog comes with ticket 04.

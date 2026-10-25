@@ -31,7 +31,8 @@ export type SentenceEvent = {
 };
 export type EvidenceEvent = {
   id: string;
-  kind: "passage" | "record";
+  // A quantile dot's packages (ticket 15) are no source: the page holds them, and the drawer lists them.
+  kind: "passage" | "record" | "package" | "dot";
   tool: string | null;
   stratum: "What" | "How" | "Why" | null;
   short_name: string | null;

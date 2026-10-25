@@ -72,7 +72,10 @@ function written(num: NumValue, text: string): ReactNode {
 // A date in a sentence ("October 31, 2026", at most 18 characters) never breaks across lines.
 const sentenceDate = (num: NumValue) => "date" in num && (num.style ?? "sentence") === "sentence";
 
-export function Num({ check, className, ...num }: NumValue & { check?: NumCheck; className?: string }) {
+// inCaption: a number you can check in caption text, whose line is shorter than the body's, takes 4 px above and
+// below instead of 2, so its target stays 24 px tall (DESIGN.md section 10), such as a threshold in the package
+// workspace's computed note (ticket 15).
+export function Num({ check, className, inCaption = false, ...num }: NumValue & { check?: NumCheck; className?: string; inCaption?: boolean }) {
   const text = numText(num as NumValue);
   const body = written(num as NumValue, text);
   if (!check) {
@@ -93,7 +96,8 @@ export function Num({ check, className, ...num }: NumValue & { check?: NumCheck;
           className={cx(
             // A button lays out as an inline block, so its padding would make its line taller than the
             // body's 24 px; the negative margin keeps the 28 px hit area inside the line's own height.
-            "inline cursor-pointer -my-0.5 py-0.5 text-left tabular-nums",
+            "inline cursor-pointer text-left tabular-nums",
+            inCaption ? "-my-1 py-1" : "-my-0.5 py-0.5",
             DOTTED_UNDERLINE,
             className,
           )}

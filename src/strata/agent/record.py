@@ -35,6 +35,9 @@ from strata.server.engines import EngineFor
 KEPT = ("id", "object", "status", "model", "agent", "incomplete_details", "output")
 ABOUT = ("The Foundry agent's answers through the Responses API, recorded by ops/agent/record.py from the live "
          "agent with the live tools. The scripted agent replays them in the offline gate.")
+ABOUT_READER = ("The Foundry package reader's answer through the Responses API, recorded by ops/agent/record.py "
+                "--packages from the live reader, given the sentence and the package form's fields as the "
+                "plan-a-package workflow sends them. The scripted reader replays it in the offline gate.")
 ABOUT_WRITER = ("The Foundry writer's answer through the Responses API, recorded by ops/agent/record.py --writers "
                 "from the live writer, given the facts its workflow read on the workspace. The scripted writer "
                 "replays it in the offline gate.")
@@ -102,6 +105,29 @@ def _record_writer(case: Case, agent: Agent, engine_for: EngineFor, viewer: View
                  "scope": case.scope, "as_of": case.as_of.isoformat(),
                  "agent": {"name": keeper.name, "version": keeper.version}, "responses": keeper.responses}
     return recording, verdict.counts()
+
+
+def _record_package(case: Case, agent: Agent, engine_for: EngineFor, viewer: Viewer,
+                    today: dt.date) -> tuple[dict, dict | None]:
+    """A package reader's case (tests/fixtures/agent/packages.toml): the live reader is sent the case's sentence
+    with the package form's fields, as the plan-a-package workflow sends it (ticket 15). It writes no sentence
+    a person reads, so no verifier counts go with it."""
+    from strata.packages import reader
+    from strata.config import load_package_form
+
+    keeper = Keeper(agent)
+    message = reader.message(case.question, load_package_form())
+    keeper.respond([{"role": "user", "content": json.dumps(message, ensure_ascii=False)}], None)
+    recording = {"about": ABOUT_READER, "recorded": True, "recorded_on": today.isoformat(), "question": case.question,
+                 "scope": case.scope, "as_of": case.as_of.isoformat(),
+                 "agent": {"name": keeper.name, "version": keeper.version}, "responses": keeper.responses}
+    return recording, None
+
+
+def record_packages(cases: dict[str, Case], agent_for: Callable[[], Agent], engine_for: EngineFor, viewer: Viewer,
+                    today: dt.date | None = None) -> list[Recorded]:
+    """Re-record every recording the package reader's cases name, once each, and write it over its file."""
+    return record_all(cases, agent_for, engine_for, viewer, today, record_one=_record_package)
 
 
 def record_writers(cases: dict[str, Case], agent_for: Callable[[], Agent], engine_for: EngineFor, viewer: Viewer,

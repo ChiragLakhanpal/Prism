@@ -23,6 +23,8 @@ request lands in one file (CLAUDE.md rule 9). This module reads them:
 - load_lesson_lists() config/lessons.toml, the lesson lists: the closed lists of risk factors, stages
                      and kinds, and the extractor's example projects (ticket 29)
 - load_editions()    config/editions.toml, the editions of the procurement rules a project followed
+- load_package_form() config/package_form.toml, the package form schema: the groups and fields a
+                     package planned from a sentence has, each one a chip (ticket 15)
 
 Each function checks the file's shape and raises ConfigError with a sentence that names the
 file, the entry and the fix. It uses only the standard library, so the nightly job can call it.
@@ -898,6 +900,9 @@ class ToolParameter:
     type: str
     required: bool
     description: str
+    # Whether it names the record a call is about, such as find_comparables' step_reference, so the summary's
+    # evidence id is keyed by it even when it is optional. A required parameter always does.
+    key: bool = False
 
 
 @dataclass(frozen=True)
@@ -988,9 +993,9 @@ def _tool_parameters(path: Path, name: str, table: dict) -> tuple[ToolParameter,
     parameters = []
     for entry in _tables(path, table, "parameters"):
         entry.where = f"tools.{name}.{entry.where}"
-        entry.only({"name", "type", "required", "description"})
+        entry.only({"name", "type", "required", "description", "key"})
         parameter = ToolParameter(entry.text("name"), entry.text("type"), entry.boolean("required"),
-                                  entry.text("description"))
+                                  entry.text("description"), bool(entry.table.get("key", False)))
         if parameter.type not in PARAMETER_TYPES:
             entry._fail("type", f"must be one of {', '.join(PARAMETER_TYPES)}")
         parameters.append(parameter)
@@ -1590,3 +1595,118 @@ def load_editions(path: Path = CONFIG_DIR / "editions.toml") -> Editions:
             entry._fail("key", f"repeats {edition.key!r}. Each edition is listed once")
         editions.append(edition)
     return Editions(tuple(editions))
+
+
+# ── The package form schema (ticket 15) ──────────────────────────────────
+
+PACKAGE_FORM_KINDS = ("choice", "text", "amount", "count", "country", "months")
+PACKAGE_FORM_SOURCES = ("typed", "computed", "guessed")
+PACKAGE_FORM_RULES = ("review", "market_approach")
+_PACKAGE_FIELD_KEYS = {"key", "group", "kind", "source", "label", "add_label", "step_field", "picks", "default",
+                       "options", "rule", "optional", "asked", "unit", "unit_one", "aliases"}
+
+
+@dataclass(frozen=True)
+class FormOption:
+    value: str
+    label: str
+
+
+@dataclass(frozen=True)
+class FormGroup:
+    key: str
+    label: str
+    name: str
+
+
+@dataclass(frozen=True)
+class FormField:
+    key: str
+    group: str
+    kind: str
+    source: str
+    label: str
+    add_label: str
+    step_field: str | None = None
+    picks: str | None = None
+    default: str | None = None
+    options: tuple[FormOption, ...] = ()
+    rule: str | None = None
+    optional: bool = False
+    asked: bool = True
+    unit: str | None = None
+    unit_one: str | None = None
+    aliases: bool = False
+
+    def as_dict(self) -> dict:
+        return {"key": self.key, "group": self.group, "kind": self.kind, "source": self.source, "label": self.label,
+                "add_label": self.add_label, "step_field": self.step_field, "picks": self.picks,
+                "default": self.default, "options": [{"value": o.value, "label": o.label} for o in self.options],
+                "rule": self.rule, "optional": self.optional, "unit": self.unit, "unit_one": self.unit_one,
+                "aliases": self.aliases}
+
+
+@dataclass(frozen=True)
+class PackageForm:
+    groups: tuple[FormGroup, ...]
+    fields: tuple[FormField, ...]
+
+    def field(self, key: str) -> FormField:
+        for field in self.fields:
+            if field.key == key:
+                return field
+        raise KeyError(key)
+
+    def has(self, key: str) -> bool:
+        return any(field.key == key for field in self.fields)
+
+
+def load_package_form(path: Path = CONFIG_DIR / "package_form.toml") -> PackageForm:
+    """The package form schema, checked: each field in a group the file defines, with a kind, a source and, for a
+    computed field, a rule the thresholds file has. Nothing else in Strata names a field, so adding an entry to
+    the file adds a chip and removing one removes it."""
+    data = _read(path)
+
+    def fail(where: str, need: str):
+        raise ConfigError(f"In {path.name}, {where} {need}.")
+
+    groups = []
+    for key, table in (data.get("groups") or {}).items():
+        if not isinstance(table, dict) or not table.get("label") or not table.get("name"):
+            fail(f"groups.{key}", "needs a label and a name")
+        groups.append(FormGroup(key, str(table["label"]), str(table["name"])))
+    if not groups:
+        fail("the file", "needs [groups]")
+    group_keys = {group.key for group in groups}
+    fields, seen = [], set()
+    for number, table in enumerate(data.get("fields") or [], 1):
+        where = f"field {number} ({table.get('key', 'no key')})"
+        unknown = set(table) - _PACKAGE_FIELD_KEYS
+        if unknown:
+            fail(where, f"has keys it does not take: {', '.join(sorted(unknown))}")
+        for name in ("key", "group", "kind", "source", "label", "add_label"):
+            if not isinstance(table.get(name), str) or not table[name].strip():
+                fail(where, f"needs {name}")
+        if table["key"] in seen:
+            fail(where, "repeats a key")
+        seen.add(table["key"])
+        if table["group"] not in group_keys:
+            fail(where, f"names the group {table['group']}, which [groups] does not define")
+        if table["kind"] not in PACKAGE_FORM_KINDS:
+            fail(where, f"has the kind {table['kind']}; the kinds are {', '.join(PACKAGE_FORM_KINDS)}")
+        if table["source"] not in PACKAGE_FORM_SOURCES:
+            fail(where, f"has the source {table['source']}; the sources are {', '.join(PACKAGE_FORM_SOURCES)}")
+        options = tuple(FormOption(str(o["value"]), str(o["label"])) for o in table.get("options") or [])
+        if table["kind"] == "choice" and not options:
+            fail(where, "is a choice with no options")
+        if table["source"] == "computed" and table.get("rule") not in PACKAGE_FORM_RULES:
+            fail(where, f"is computed, so it needs a rule: {', '.join(PACKAGE_FORM_RULES)}")
+        if table.get("default") is not None and options and table["default"] not in {o.value for o in options}:
+            fail(where, "has a default that is not one of its options")
+        fields.append(FormField(
+            key=table["key"], group=table["group"], kind=table["kind"], source=table["source"], label=table["label"],
+            add_label=table["add_label"], step_field=table.get("step_field"), picks=table.get("picks"),
+            default=table.get("default"), options=options, rule=table.get("rule"),
+            optional=bool(table.get("optional", False)), asked=bool(table.get("asked", table["source"] != "computed")),
+            unit=table.get("unit"), unit_one=table.get("unit_one"), aliases=bool(table.get("aliases", False))))
+    return PackageForm(tuple(groups), tuple(fields))

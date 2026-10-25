@@ -6,20 +6,37 @@ Read first: docs/PLAN.md sections 1 and 8; DESIGN.md sections 5, 7 and 10; the b
 
 **Blocked by:** 12 (Comparables and the past range, on the package workspace); 14 (Ask from the one box: the answer panel and the evidence drawer)
 
-**Status:** in-progress
+**Status:** done
 **Area:** app
 **Phase:** P1
 **Design review:** yes
 
-- [ ] With the recorded model output, the sentence yields the chips Works, Rural roads, About US$15 million and a guessed "2 lots?" under What; Kenya under Where; and RFB, Open international (computed), Single stage, one envelope, Post-qualification and Prior review (computed) under How, as the Package workspace wireframe shows.
-- [ ] The computed note reads from the thresholds file's values; changing the prior-review threshold in that file changes the review type chip with no code change.
-- [ ] Adding a temporary field to the package form schema adds a chip in its group with no other code change, and removing it removes the chip.
-- [ ] Typing "ICB" into the method chip stores Request for Bids with an open international market approach.
-- [ ] Changing a chip reruns find_comparables and redraws section 1; the box never creates a package unless the person chooses "Plan a package from this sentence".
-- [ ] A saved package reopens with the same chips, and the Packages tab lists it with the person's checked plans.
-- [ ] Opening a dot on the range chart, by click or by Enter on the focused mark, opens the evidence drawer at that comparable's records, and closing it returns focus to the mark.
-- [ ] Chips are at least 32px tall and editable by keyboard; computed and guessed chips say so in text, not only by style (DESIGN.md section 10); states are captured at 1440, 1024 and 390 px; axe finds no WCAG 2.2 AA violations.
+- [x] With the recorded model output, the sentence yields the chips Works, Rural roads, About US$15 million and a guessed "2 lots?" under What; Kenya under Where; and RFB, Open international (computed), Single stage, one envelope, Post-qualification and Prior review (computed) under How, as the Package workspace wireframe shows.
+- [x] The computed note reads from the thresholds file's values; changing the prior-review threshold in that file changes the review type chip with no code change.
+- [x] Adding a temporary field to the package form schema adds a chip in its group with no other code change, and removing it removes the chip.
+- [x] Typing "ICB" into the method chip stores Request for Bids with an open international market approach.
+- [x] Changing a chip reruns find_comparables and redraws section 1; the box never creates a package unless the person chooses "Plan a package from this sentence".
+- [x] A saved package reopens with the same chips, and the Packages tab lists it with the person's checked plans.
+- [x] Opening a dot on the range chart, by click or by Enter on the focused mark, opens the evidence drawer at that comparable's records, and closing it returns focus to the mark.
+- [x] Chips are at least 32px tall and editable by keyboard; computed and guessed chips say so in text, not only by style (DESIGN.md section 10); states are captured at 1440, 1024 and 390 px; axe finds no WCAG 2.2 AA violations.
 
 ## Comments
 
 - October 23, 2026, orchestrator: dispatched to an implementer in its own worktree on branch strata/15-plan-a-package-from-a-sentence, as soon as ticket 12 landed. Credentials are still missing, so every live step is parked in docs/workspace-catchup.md; the offline side is built against the fixtures.
+- October 24, 2026, merger: merged `strata/15-plan-a-package-from-a-sentence` at 9ebcfa0 into `build/strata` as merge commit d356ba7. Round 3's review approved it with no blocking findings, round 3's design review passed with polish, round 3's critique did not block, and round 3's verification passed all eight criteria, with the live halves of criteria 1 and 6 parked. The worktree that built it was `.claude/worktrees/wf_9e7b9f97-349-11`.
+  - **How I merged.** Before the merge, I scanned the branch's 19 commits from `build/strata` with `gates/secret_scan.py`, and it found no keys. So the branch landed as a merge with history: `git merge --no-ff --no-commit`, then `scripts/install`, then `git commit --no-edit`. Git merged README.md on its own, and both sides' lines are kept. The branch changes no package files and not `gates/steps.toml`. It was cut at 7d816c5, so this merge also brings ticket 54's gate lock to its files.
+  - **The gate.** Git ran it before the merge commit, and it passed in 79.4 seconds. By hand on `build/strata` after the commit, it passed again in 79.1 seconds, at 17:43 Pacific time. The python lane set the total, at 65.6 seconds.
+  - **Evidence from verification.** The verifier's gate passed by hand in 83.5 seconds. Ticket 15's own Python tests passed 64 of 64 in 6.4 seconds, the benchmark tests 3 of 3 with both new questions, and the two screen specs 43 of 43 in 7.7 seconds. On the worktree's own server, with no mocked routes:
+    - Criterion 1: the sentence gave Works, Rural roads, About US$15 million and "2 lots · guess" under What; Kenya under Where; and Request for Bids (RFB), "Open international · computed", Single stage, one envelope, Post-qualification and "Prior review · computed" under How.
+    - Criterion 2: with only the thresholds file changed to US$20 million, the chip read "Post review · computed", and the note quoted the new values.
+    - Criterion 3: a `site` field added to the schema showed "Add the site" under Where, and a schema without `lots` showed no lots chip.
+    - Criterion 4: "ICB", "icb" and "International Competitive Bidding" each stored Request for Bids with Open - International.
+    - Criterion 5: a method change called `/api/comparables` and redrew section 1, a description change did not, and Enter in the box made no package.
+    - Criterion 6: after four changes, a reload gave the same eleven chips, and the Packages tab listed the package and the NWWDA plan check of October 9, 2026.
+    - Criterion 7: the chart had 49 dots for the tool's 49 rows; a dot opened the drawer by click and by Enter, and closing it returned focus to the mark.
+    - Criterion 8: all 11 chips were 32 px tall at 1440, 1024 and 390 px, axe found 0 violations in 8 runs, and the capture made 214 shots of 76 states.
+    - Another viewer got 404 `unknown_package`, a preview got 403, and 15 bad changes each got 422 and changed nothing. Three numbers matched their raw records: 539 days for KE-MOWI-47509-CW-RFB, 106 days for KE-GAWASCO-54771-CW-RFB, and 23 days still open for KE-ICTA-571738-CW-RFB.
+  - **Workspace steps.** All ten keys are set, but the header of `docs/workspace-catchup.md` holds workspace steps back while the user runs the backlog, so I ran none. I parked four blocks there, "Ticket 15, step 1 of 4" to "step 4 of 4": sync the Foundry package reader twice; re-record the package reader's three cases from the live reader; deploy the App with the Lakebase instance `strata-state` and plan the sentence on it; and run find_comparables for a planned package on the SQL warehouse, which is the verifier's third parked item.
+  - **Unblocks.** Tickets 30 and 31, set to in-progress in this commit. Tickets 26 and 28 still wait on ticket 25.
+  - **Left for a later ticket.** Review R1 to R12, the design review's six follow-up items, the critique's polish and the verifier's V1 to V4, all in the round 3 notes. The ones that matter most: R1, a failed change disappears when a later change saves; the critique's top item, the drawer's "Why I compared it" lists criteria that find_comparables did not use for a planned package; V1, the planned package's header does not stay in view from 768 px; and V2, a new package's comparables are read twice, a one-line fix.
+  - **Decisions parked for the user.** 1. The threshold values and their source lines (works prior review at US$10 million for High risk, and Kenya's works market approach at US$15 million) wait for you to check them against the World Bank's tables and date them. 2. Still-open months count to the as-of date. 3. The plan-a-package workflow is plain Python, not Microsoft Agent Framework as the ticket says. 4. Packages live in Lakebase, not `strata.ops` as the ticket says, per ADR 0005, and the app reaches Lakebase as its own service principal and filters by viewer. 5. The package reader's recordings stay hand-written (`"recorded": false`) until the workspace step re-records them.

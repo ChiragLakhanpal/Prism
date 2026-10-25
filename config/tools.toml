@@ -13,7 +13,9 @@
 #   sources       the source registry's keys (config/sources.toml) whose rows it reads
 #
 # [[tools.<name>.parameters]], one table per parameter: name, type (string, date, integer, number
-# or boolean), required, and a description for the agent. Every tool takes an optional as_of
+# or boolean), required, and a description for the agent. key = true marks an optional parameter that
+# names the record a call is about, such as find_comparables' step_reference, so the summary's evidence
+# id is keyed by it as it is by a required one. Every tool takes an optional as_of
 # date (ADR 0002): it then uses only what was public on or before that date. The page's own as-of
 # date applies to every call too, and the earlier of the two wins.
 #
@@ -310,12 +312,13 @@ reasons = ["retired", "filtered_out", "ranked_below_limit"]
 abstentions = ["no_lessons", "unknown_risk_factor", "unknown_stage"]
 
 [tools.find_comparables]
-description = """Finds the comparable packages for one package in a Procurement Plan and returns their past \
-range: how long each took from its specific procurement notice to its signed contract. It reads notices and \
-contract awards from every project, joined on the STEP reference, and picks comparables by stated criteria: \
-method, category, market approach, review type, size band, region and period. Each criterion you leave out \
-defaults from the package's plan row: its Method, its category and its project's country, with notices from \
-{past_range.period_from} to the plan's date. Market approach, review type and size band stay open unless you \
+description = """Finds the comparable packages for one package in a Procurement Plan, or for a package someone \
+is planning that has no STEP row yet, and returns their past range: how long each took from its specific \
+procurement notice to its signed contract. It reads notices and contract awards from every project, joined on \
+the STEP reference, and picks comparables by stated criteria: method, category, market approach, review type, \
+size band, region and period. Each criterion you leave out defaults from the package's plan row: its Method, its \
+category and its project's country, with notices from {past_range.period_from} to the plan's date. With no \
+step_reference, a criterion you leave out stays open, and notices run to the as-of date. Market approach, review type and size band stay open unless you \
 give them, because a package still open has no review type or signed amount in any record. Write any to \
 leave a criterion open. It returns one row per comparable, shortest first, with its days and months and \
 whether it is still open, and a coverage line that says how many matching packages it could not use and why. \
@@ -323,7 +326,9 @@ Packages still open are kept as not signed yet (censored), so the range does not
 The past range is Kaplan-Meier: the months by which a quarter, half, three quarters and 8 in 10 of the \
 comparables were signed. Below {past_range.min_comparables} comparables it gives no range and no share and \
 abstains, and still returns every comparable. Above {past_range.quantile_dots_above} it also gives \
-{past_range.quantile_dots} quantile dots. The plan's own months, from its planned notice date to its planned \
+{past_range.quantile_dots} quantile dots, each an equal share of the curve, with the STEP references of the \
+comparables it stands for, how many there are, how many are still open, and their shortest and longest months. \
+The plan's own months, from its planned notice date to its planned \
 signing date, come back with how many comparables were signed within them. The past range, the count signed \
 within the plan's months, the numbers each "in 10" phrase states and the coverage counts also come back in the \
 result's summary, which you cite for them. In it, frequencies.q80 holds the numbers "8 in 10" states. \
@@ -336,8 +341,11 @@ sources = ["notices", "awards", "documents", "projects"]
 [[tools.find_comparables.parameters]]
 name = "step_reference"
 type = "string"
-required = true
-description = "The package's STEP activity reference, as its Procurement Plan writes it, such as KE-NWWDA-541055-CW-RFB."
+required = false
+key = true
+description = """The package's STEP activity reference, as its Procurement Plan writes it, such as \
+KE-NWWDA-541055-CW-RFB. Leave it out for a package that is not in a plan yet, and give its criteria \
+yourself."""
 
 [[tools.find_comparables.parameters]]
 name = "method"

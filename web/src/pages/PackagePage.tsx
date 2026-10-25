@@ -24,6 +24,7 @@ import { TextLink } from "../components/TextLink";
 import { copy } from "../copy";
 import type { ComparablesResult, PackageResult } from "../lib/api";
 import { useLoad } from "../lib/load";
+import { useOpenComparable } from "../lib/packages";
 import { useScrollPadding } from "../lib/useScrollPadding";
 
 const words = copy.packagePage;
@@ -36,6 +37,8 @@ export function PackagePage({ stepRef }: { stepRef: string }) {
   const sectionHeading = useRef<HTMLHeadingElement>(null);
   const pkg = load.status === "ready" ? load.data.package : null;
   useScrollPadding(header, Boolean(pkg), { gap: 16 });
+  // A dot or a row of section 1 opens its comparable package in the evidence drawer (ticket 15).
+  const opening = useOpenComparable();
 
   // After a "Try again" that works, the section's heading takes focus, so focus is not lost.
   useEffect(() => {
@@ -130,7 +133,7 @@ export function PackagePage({ stepRef }: { stepRef: string }) {
           <PackageFactsList pkg={facts} />
         </div>
         <div className="mt-8">
-          <PastRange state={sectionState} headingRef={sectionHeading} />
+          <PastRange state={sectionState} headingRef={sectionHeading} open={opening} />
         </div>
       </>
     );

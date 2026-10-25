@@ -28,6 +28,8 @@ FIXTURES = ROOT / "tests" / "fixtures" / "agent"
 CASES = FIXTURES / "cases.toml"
 # The draft writers' cases, such as the review notes writer's (ticket 35), in the same shape.
 WRITER_CASES = FIXTURES / "writers.toml"
+# The package reader's cases (ticket 15): sentences it reads into the package form's fields.
+PACKAGE_CASES = FIXTURES / "packages.toml"
 RECORDINGS = FIXTURES / "recorded"
 
 

@@ -325,8 +325,12 @@ test("an evidence card's marker opens the drawer at its source, and focus comes 
   await page.setViewportSize({ width: 1440, height: 900 });
   await reviewer(page, { [`/api/lessons/review/${REBIDDING}`]: await file("lessons-item-recommend.json") });
   await page.goto(`/lessons/review/${REBIDDING}`);
-  const column = await page.locator("[data-document-column]").boundingBox();
   const marker = page.locator("[data-lesson-evidence] [data-citation]").first();
+  // Measure the column once its item has drawn in the web fonts: under the whole gate's load the first box
+  // could be taken while the text was still in the fallback font, and the swap made the column 34 px taller.
+  await expect(marker).toBeVisible();
+  await page.evaluate(() => document.fonts.ready);
+  const column = await page.locator("[data-document-column]").boundingBox();
   await marker.click();
   const drawer = page.getByRole("dialog");
   await expect(drawer).toBeVisible();
