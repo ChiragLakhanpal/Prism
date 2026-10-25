@@ -55,6 +55,8 @@ def _signal(row: dict) -> str | None:
 
 
 def read(engine: Engine, viewer: Viewer, request: dict, today: dt.date) -> Facts:
+    if not request.get("agency_id") or not request.get("plan_date"):
+        raise NotWritable("no_plan")
     result = registry.call(TOOL, {"project_id": request["project_id"], "implementing_agency": request["agency_id"],
                                   "plan_date": request["plan_date"]}, registry.Context(engine, viewer, "staff", today))
     if result["abstention"] or result["plan"] is None:

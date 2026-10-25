@@ -45,7 +45,9 @@ STAFF = "staff"
 # permission is the viewer's own read of the facts refused; draft_store is the app's own account unable to
 # save the draft, which the viewer cannot fix.
 WRITE_ERRORS = ("no_agent", "agent_unavailable", "content_filter", "agent_output", "data_service", "no_plan",
-                "nothing_marked", "permission", "draft_store", "internal")
+                "nothing_marked", "permission", "draft_store", "internal",
+                # A mission brief (ticket 37): no such project, or one no longer active.
+                "no_project", "not_active")
 OPEN_STATES = ("draft", "checked")
 
 
@@ -116,12 +118,15 @@ def note_check(module, facts, written: dict[str, dict], six_checks: SixChecks) -
     alone: a sentence that cites another item's row is removed as a source the check did not return for this
     note (id_not_returned), even though the tool returned that row for another note."""
     seen = Facts()
-    for row in facts.rows:
-        seen.record(row["evidence_id"], row, tool=module.TOOL)
+    # A kind whose items cite several tools' rows, such as the mission brief's (ticket 37), names each row's tool.
+    cited = module.cited_rows(facts) if hasattr(module, "cited_rows") else [(row, module.TOOL) for row in facts.rows]
+    for row, tool in cited:
+        seen.record(row["evidence_id"], row, tool=tool)
     checked, owners = [], []
     for item in module.items(facts):
         own = Facts()
-        own.record(item["evidence_id"], seen.get(item["evidence_id"]), tool=module.TOOL)
+        for evidence_id in item.get("evidence_ids") or [item["evidence_id"]]:
+            own.record(evidence_id, seen.get(evidence_id), tool=seen.tool(evidence_id))
         for claim in (written.get(item["key"]) or {}).get("claims") or []:
             checked.append(check(len(checked), claim, own))
             owners.append(item["key"])
@@ -133,7 +138,7 @@ def compose(module, facts, written: dict[str, dict], verdict: Verdict, seen: Fac
     with its kept sentences, the evidence they cite, the verifier's counts, the removed sentences, and any
     disagreement check 6 shows under a note's sentence."""
     items = module.items(facts)
-    events = answer_events(verdict, seen, [module.TOOL])
+    events = answer_events(verdict, seen, list(getattr(module, "TOOLS", (module.TOOL,))))
     kept: dict[str, list[dict]] = {}
     evidence, checks, removed, disagreements = {}, None, [], []
     for event in events:
@@ -155,7 +160,7 @@ def compose(module, facts, written: dict[str, dict], verdict: Verdict, seen: Fac
         notes.append({"key": item["key"], module.KEY: item["key"], "evidence_id": item["evidence_id"],
                       "description": item["description"],
                       "mark": item["mark"], "state": state, "refusal": wrote.get("refusal"),
-                      "sentences": kept.get(item["key"], [])})
+                      "sentences": kept.get(item["key"], []), **item.get("extra", {})})
     return {"subject": module.subject(facts), "notes": notes, "evidence": evidence, "checks": checks,
             "removed": removed, "disagreements": disagreements}
 
@@ -202,7 +207,9 @@ async def write(writing: Writing, engine_for: EngineFor, agent_for: Callable[[st
     except EngineError as error:
         raise WriteError("data_service") from error
     writing.question = module.question(facts)
-    yield step("read", "done", plan_date=facts.result["plan"]["plan_date"])
+    # What the read step says it read: a plan's date for review notes, or the kind's own counts (ticket 37).
+    read_done = module.read_done(facts) if hasattr(module, "read_done") else {"plan_date": facts.result["plan"]["plan_date"]}
+    yield step("read", "done", **read_done)
 
     items = module.items(facts)
     yield step("write", "running", count=len(items))

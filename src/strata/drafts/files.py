@@ -81,6 +81,12 @@ class Say:
         row = draft["evidence"][evidence_id]["row"]
         source = row.get("source") or {}
         date = source.get("plan_date") or source.get("document_date")
+        # A record a project's Summary or a mission brief cites names its source by its key (ticket 37).
+        keyed = words()["summaryRecordSources"].get(source.get("source_key") or "")
+        if keyed and not source.get("implementing_agency"):
+            return f"{_fill(keyed, date=self.date(date) if date else '')} {source.get('project_id') or ''}".strip()
+        if isinstance(source, dict) and source.get("tool"):  # a tool's summary record: the tool and its sources
+            return _fill(words()["toolSource"], date=self.date(row["public_from"]))
         if source.get("implementing_agency") and source.get("pdf_page") and date:
             return _fill(words()["recordSource"], doc=source.get("document_type"), agency=source["implementing_agency"],
                          pid=source.get("project_id"), date=self.date(date), page=source["pdf_page"])
@@ -137,8 +143,16 @@ class Word:
         self.title = self.title or text
         self.body.append(self._paragraph([text], "Heading1"))
 
+    def subheading(self, text: str) -> None:
+        """A Heading 2, such as each part of a mission brief (ticket 37)."""
+        self.body.append(self._paragraph([text], "Heading2"))
+
     def paragraph(self, *runs) -> None:
         self.body.append(self._paragraph(list(runs)))
+
+    def bold(self, text: str) -> None:
+        """A bold Normal paragraph, such as a table's title."""
+        self.body.append(self._paragraph([text], bold=True))
 
     def table(self, header: list[str], rows: list[list[list[list]]], widths: tuple[int, ...]) -> None:
         """A Table Grid table: a header row repeated on each page, then rows of cells, each a list of
@@ -238,6 +252,10 @@ STYLES = (
     '<w:next w:val="Normal"/><w:uiPriority w:val="9"/><w:qFormat/><w:pPr><w:keepNext/><w:spacing w:before="240" '
     'w:after="120"/><w:outlineLvl w:val="0"/></w:pPr><w:rPr><w:b/><w:color w:val="000000"/><w:sz w:val="28"/>'
     '<w:szCs w:val="28"/></w:rPr></w:style>'
+    '<w:style w:type="paragraph" w:styleId="Heading2"><w:name w:val="heading 2"/><w:basedOn w:val="Normal"/>'
+    '<w:next w:val="Normal"/><w:uiPriority w:val="9"/><w:qFormat/><w:pPr><w:keepNext/><w:spacing w:before="240" '
+    'w:after="80"/><w:outlineLvl w:val="1"/></w:pPr><w:rPr><w:b/><w:color w:val="000000"/><w:sz w:val="24"/>'
+    '<w:szCs w:val="24"/></w:rPr></w:style>'
     '<w:style w:type="character" w:default="1" w:styleId="DefaultParagraphFont"><w:name w:val="Default Paragraph Font"/>'
     '<w:uiPriority w:val="1"/><w:semiHidden/></w:style>'
     '<w:style w:type="table" w:default="1" w:styleId="TableNormal"><w:name w:val="Normal Table"/><w:semiHidden/>'

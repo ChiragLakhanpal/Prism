@@ -346,7 +346,10 @@ def signals_answer(result, question) -> dict[str, list]:
 ANSWERS = {"check_plan": marked, "search_passages": in_top_three, "data_readiness_for": readiness_answer,
            "find_comparables": past_range, "get_disagreements": disagreement_answer,
            "get_lessons": lessons_answer, "estimate_time": step_dates_answer, "compare_cost_estimates": cost_answer,
-           "rejected_bids": rejected_answer, "compare_criteria": criteria_answer, "project_signals": signals_answer}
+           "rejected_bids": rejected_answer, "compare_criteria": criteria_answer, "project_signals": signals_answer,
+           "project_records": lambda result, question: {
+               part: sorted(row["reference"] for row in result["rows"] if row["part"] == part)
+               for part in question["expected"]}}
 
 
 def answered(result, question) -> dict[str, list[str]]:
@@ -356,7 +359,7 @@ def answered(result, question) -> dict[str, list[str]]:
 
 def expected(question) -> dict[str, list[str]]:
     if question["tool"] in ("data_readiness_for", "get_disagreements", "get_lessons", "compare_cost_estimates",
-                            "rejected_bids", "compare_criteria", "project_signals"):
+                            "rejected_bids", "compare_criteria", "project_signals", "project_records"):
         return question["expected"]
     return {mark: sorted(refs) for mark, refs in question["expected"].items()}
 

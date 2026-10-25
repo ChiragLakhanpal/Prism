@@ -9,6 +9,74 @@
           "Activity",
           "Review note"
         ]
+      },
+      "mission_brief": {
+        "heading": "Mission brief for {project_name} ({project_id})",
+        "line": "{country}. Public records through {date}.",
+        "origin": "Drafted with Strata on {created} and checked by {checker} on {checked}. Strata is an independent demo built on World Bank open data. This brief is not a World Bank review, clearance or no-objection.",
+        "parts": {
+          "plans": "Latest Procurement Plans",
+          "awards": "Awards since the last ISR",
+          "ratings": "Rating history",
+          "disbursement": "Disbursement",
+          "closing": "Closing check"
+        },
+        "tables": {
+          "plans": "The latest plan from each implementing agency",
+          "awards": "Contracts signed after the ISR dated {date}",
+          "ratings": "Ratings in each ISR read",
+          "disbursement": "Disbursement by loan or credit, in US$ millions",
+          "closing": "Activities planned to finish after the closing date, and the closing date history"
+        },
+        "columns": {
+          "plans": [
+            "Implementing agency",
+            "Latest plan",
+            "Activities",
+            "Need a look",
+            "Worth watching"
+          ],
+          "awards": [
+            "Activity",
+            "Signed",
+            "Supplier",
+            "Signed amount (US$)",
+            "Estimated Amount (US$)"
+          ],
+          "ratings": [
+            "ISR",
+            "Dated",
+            "Progress towards achievement of PDO",
+            "Overall implementation progress"
+          ],
+          "disbursement": [
+            "Loan or credit",
+            "Commitment",
+            "Disbursed",
+            "Undisbursed",
+            "Canceled"
+          ],
+          "closing": [
+            "Activity or change",
+            "Implementing agency, or closing date before",
+            "Planned completion, or closing date after",
+            "Days after closing, or first reported"
+          ]
+        },
+        "none": {
+          "plans": "No Procurement Plan was read for this project.",
+          "awards": "No contract was signed after the last ISR, or no ISR was read.",
+          "ratings": "No ISR was read for this project.",
+          "disbursement": "No loan record is held for this project.",
+          "closing": "The project has closed, so there is no closing check."
+        },
+        "planVersion": "Plan of {date}",
+        "noPlan": "No plan read",
+        "individual": "Individual consultant",
+        "isr": "ISR {sequence}",
+        "notRated": "Not rated",
+        "total": "Total",
+        "moved": "Closing date moved"
       }
     },
     "pack": {
@@ -51,6 +119,10 @@
     "review_notes": {
       "preview": "This is a preview, so you can't mark drafts as checked or export them.",
       "notChecked": "Mark the notes as checked before you export them."
+    },
+    "mission_brief": {
+      "preview": "This is a preview, so you can't mark drafts as checked or export them.",
+      "notChecked": "Mark the brief as checked before you export it."
     }
   },
   "removedReasons": {
@@ -59,11 +131,30 @@
         "item": "It cited a source other than this activity's row in my check of the plan.",
         "joined": "it cited a source other than this activity's row in my check of the plan"
       }
+    },
+    "mission_brief": {
+      "id_not_returned": {
+        "item": "It cited a source from another part of the brief.",
+        "joined": "it cited a source from another part of the brief"
+      }
     }
   },
   "source": "Source:",
   "recordSource": "{doc}, {agency}, {pid}, version of {date}, page {page}.",
   "recordSourceShort": "{doc}, {pid}, {date}.",
+  "summaryRecordSources": {
+    "projects_api": "World Bank projects API, record of {date}.",
+    "loans": "World Bank loans and credits data, as of {date}.",
+    "loan_history": "World Bank monthly loan history, reported {date}.",
+    "ieg_ratings": "Independent Evaluation Group (IEG) ratings data, {date}.",
+    "award_notices": "World Bank procurement notices, award notice published {date}.",
+    "projects_api_ratings": "World Bank projects API, ratings from the ISR of {date}.",
+    "isr_ratings": "The overall ratings table of the ISR of {date}, as I read it.",
+    "plan_baseline": "Strata's baseline, saved by World Bank staff on {date}.",
+    "awards": "World Bank contract awards data, contract signed {date}.",
+    "plans": "Procurement Plan of {date}, from the World Bank documents API."
+  },
+  "toolSource": "Strata's totals of the records above, as of {date}.",
   "checkLine": {
     "checked": "Checked:",
     "judged": "Judged by a model:",
@@ -101,7 +192,10 @@
       "get_lessons": "whether these lessons apply here",
       "ask_genie": "whether the records I looked up are the ones you meant",
       "check_plan": "whether the plan's published records are complete",
-      "writer_review_notes": "whether these notes are what you would tell the borrower"
+      "writer_review_notes": "whether these notes are what you would tell the borrower",
+      "project_records": "whether the project's published records are complete",
+      "project_signals": "whether the project's published records are complete",
+      "writer_mission_brief": "whether this brief covers what your mission needs"
     }
   },
   "removed": {

@@ -215,6 +215,10 @@ CHECKS = {
     "award-229129-signed": contract_signed,
     "award-541055-amount": supplier_share,
     "award-notice-541055": notice_date,
+    # The two contracts the mission brief's awards part lists since ISR 19 (ticket 37).
+    "award-567630-signed": contract_signed,
+    "award-565568-signed": contract_signed,
+    "award-567630-amount": supplier_share,
     # The evidence ladder's two record ties (ticket 20).
     "award-199461-signed": contract_signed,
     "notice-199461-signed": notice_signature_date,

@@ -130,6 +130,27 @@ def test_as_of_june_30_2024_p156634_had_one_signal_and_says_which_checks_it_coul
     assert result["coverage"]["used"] < result["coverage"]["matched"]
 
 
+def test_the_mission_brief_records_hold_the_two_contracts_signed_since_isr_19_and_the_credits(engine):
+    """project_records, which the mission brief writer drafts from: since ISR 19 (June 30, 2026), two contracts were
+    signed, KE-CWSB-567630-CW-DIR on August 28, 2026 and KE-CWSB-565568-GO-RFQ on September 4, 2026, the first at
+    US$2,432,125.50 against the plan's US$2,600,000.00; the credits are IDA60290 and IDA60300."""
+    result = registry.call("project_records", {"project_id": "P156634"},
+                           registry.Context(engine=engine, viewer=ANA, as_of=AS_OF))
+    by_part = {}
+    for row in result["rows"]:
+        by_part.setdefault(row["part"], []).append({field["key"]: field["value"] for field in row["fields"]})
+
+    assert result["isr"]["sequence"] == 19 and result["isr"]["isr_date"] == "2026-06-30"
+    assert [(award["step_reference"], award["signed_on"]) for award in by_part["awards"]] == [
+        ("KE-CWSB-567630-CW-DIR", TRUTH["award-567630-signed"]["value"].isoformat()),
+        ("KE-CWSB-565568-GO-RFQ", TRUTH["award-565568-signed"]["value"].isoformat())]
+    assert by_part["awards"][0]["signed_amount_usd"] == f'{TRUTH["award-567630-amount"]["value"]:.2f}'
+    assert by_part["awards"][0]["estimated_amount_usd"] == f'{TRUTH["plan-cwsb-567630-estimated"]["value"].replace(",", "")}'
+    assert sorted(loan["loan_number"] for loan in by_part["disbursement"]) == ["IDA60290", "IDA60300"]
+    assert result["summary"]["totals"]["awards"]["count"] == 2
+    assert result["summary"]["totals"]["closing"]["moves"] == 3
+
+
 def test_raising_the_needs_a_look_count_above_four_turns_p156634_to_watch_with_no_code_change(engine):
     assert signals(engine, thresholds=with_signals(look_min=5))["status"] == "watch"
     assert signals(engine, thresholds=with_signals(look_min=5, strong=["closing_moves"]))["status"] == "needs_a_look"

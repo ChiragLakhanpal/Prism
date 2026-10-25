@@ -172,6 +172,45 @@ summary_fields = ["status", "counts"]
 # its own evidence id, so an answer or a draft can cite the record and state its values.
 nested_rows = ["items"]
 
+# project_records (ticket 37): what the mission brief writer drafts from, part by part.
+[tools.project_records]
+description = """Returns the records a mission brief for one project is written from, in five parts: plans \
+(each implementing agency's latest Procurement Plan, with how many activities it lists and how many need a look \
+or are worth watching), awards (each contract signed after the latest ISR's date, with its supplier as the award \
+record names it and the Estimated Amount of the latest plan that lists it), ratings (each ISR's ratings for \
+progress towards the development objective and overall implementation progress), disbursement (each loan or \
+credit's commitment, disbursed, undisbursed and canceled amounts in its newest snapshot) and closing (each month \
+the loan history showed a new closing date, and each activity planned to finish after the closing date). Each \
+row is one record with its part and its fields, cited by its own evidence id. The totals a sentence may state, \
+such as how many contracts were signed and their total, the share of the money committed and not canceled that \
+was disbursed, the days left before closing and how many times the closing date moved, come back in the result's \
+summary, which you cite for them. A part with no records says why. It cannot see the prior-review queue, \
+complaints, contract amendments or contract management reports."""
+adapter = "strata.tools.project_records:project_records"
+benchmark = "project-records-p156634"
+sources = ["documents", "projects", "awards", "ida_credits", "ibrd_loans", "ida_credit_history", "ibrd_loan_history"]
+
+[[tools.project_records.parameters]]
+name = "project_id"
+type = "string"
+required = true
+description = "The project ID, P followed by six digits, such as P156634."
+
+[[tools.project_records.parameters]]
+name = "as_of"
+type = "date"
+required = false
+description = "Use only records public on or before this date. Leave it out for today."
+
+[tools.project_records.result]
+row = "One record behind a mission brief's part: its part, what it names and its fields by key."
+row_fields = ["evidence_id", "public_from", "source", "part", "reference", "fields"]
+source_fields = ["source_key", "document_type", "project_id", "document_date"]
+fields = ["project", "isr", "parts", "unmatched_agencies", "totals"]
+reasons = ["no_plans", "no_isr", "no_awards", "no_loans", "closed", "no_closing_date"]
+abstentions = ["unknown_project"]
+summary_fields = ["totals"]
+
 [tools.search_passages]
 description = """Searches the numbered passages of World Bank project documents (PADs, ISRs, ICRs, \
 ICR Reviews, Project Papers and PPARs) and the scope and qualification text of procurement notices, by \

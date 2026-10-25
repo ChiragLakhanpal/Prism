@@ -939,6 +939,30 @@ record = "api/notices/P156634.json"
 at = "procnotices[id=OP00474946].noticedate"
 
 [[value]]
+id = "award-567630-signed"
+says = "Since ISR 19 (June 30, 2026), the first contract signed for P156634 is KE-CWSB-567630-CW-DIR, on August 28, 2026: the first row of the mission brief's awards (ticket 37)."
+value = 2026-08-28
+quote = "28-Aug-2026"
+record = "api/awards/P156634.json"
+at = "data[wb_contract_number=1901323].contract_signing_date"
+
+[[value]]
+id = "award-567630-amount"
+says = "The awards dataset's amount for KE-CWSB-567630-CW-DIR is US$2,432,125.50, against the plan's US$2,600,000.00."
+value = 2432125.50
+quote = "2432125.5"
+record = "api/awards/P156634.json"
+at = "data[wb_contract_number=1901323].supplier_contract_amount_usd"
+
+[[value]]
+id = "award-565568-signed"
+says = "The second contract signed since ISR 19 is KE-CWSB-565568-GO-RFQ, on September 4, 2026."
+value = 2026-09-04
+quote = "04-Sep-2026"
+record = "api/awards/P156634.json"
+at = "data[wb_contract_number=1902413].contract_signing_date"
+
+[[value]]
 id = "award-541062-signed"
 says = "The awards dataset shows KE-NWWDA-541062-CW-RFQ signed on May 11, 2026, while the October 9, 2026 plan shows it Pending Implementation."
 value = 2026-05-11

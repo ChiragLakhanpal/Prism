@@ -393,6 +393,10 @@ export const copy = {
       ask_genie: "whether the records I looked up are the ones you meant",
       check_plan: "whether the plan's published records are complete",
       writer_review_notes: "whether these notes are what you would tell the borrower",
+      // The mission brief (ticket 37): project_records' clause, then the writer's.
+      project_records: "whether the project's published records are complete",
+      project_signals: "whether the project's published records are complete",
+      writer_mission_brief: "whether this brief covers what your mission needs",
     },
   },
 
@@ -787,6 +791,9 @@ export const copy = {
       projects_api_ratings: "World Bank projects API, ratings from the ISR of {date}.",
       isr_ratings: "The overall ratings table of the ISR of {date}, as I read it.",
       plan_baseline: "Strata's baseline, saved by World Bank staff on {date}.",
+      // A mission brief's records (ticket 37).
+      awards: "World Bank contract awards data, contract signed {date}.",
+      plans: "Procurement Plan of {date}, from the World Bank documents API.",
     } as Record<string, string>,
     // The fields of a Summary record, by their key, as the projects API and the loans data name them.
     summaryRecordFields: {
@@ -829,6 +836,29 @@ export const copy = {
       project_id: "Project",
       reason_for_rejection: "Reason for Rejection",
       bids_rejected: "Bids rejected for this reason",
+      // The records a mission brief cites (ticket 37; project_records).
+      activities: "Activities",
+      needs_a_look: "Need a look",
+      watch: "Worth watching",
+      step_reference: "STEP reference",
+      contract_description: "Contract description",
+      signed_on: "Signed",
+      supplier: "Supplier",
+      individual_consultant: "Individual consultant",
+      signed_amount_usd: "Signed amount (US$)",
+      signed_amount: "Signed amount",
+      currency: "Currency",
+      estimated_amount_usd: "Estimated Amount (US$)",
+      rating_key: "Rating, as Strata names it",
+      undisbursed_usd: "Undisbursed (US$)",
+      original_principal_millions: "Original principal (US$, millions)",
+      disbursed_millions: "Disbursed (US$, millions)",
+      undisbursed_millions: "Undisbursed (US$, millions)",
+      cancelled_millions: "Canceled (US$, millions)",
+      loan_number: "Loan or credit",
+      activity_reference_no: "Activity",
+      planned_completion_on: "Planned completion",
+      days_after_closing: "Days after closing",
     } as Record<string, string>,
     // A lesson in Strata's library, which an answer or the lesson review writer cites by version: the
     // drawer's eyebrow, its source line and the marker's name ("Source 2: Lesson, version 1, Put forest and
@@ -845,6 +875,8 @@ export const copy = {
     // "page" and its number never part at a line end: a no-break space joins them (DESIGN.md section 7).
     recordSource: "{doc}, {agency}, {pid}, version of {date}, page\u00a0{page}.",
     recordSourceShort: "{doc}, {pid}, {date}.",
+    // A tool's totals record, such as the mission brief's totals (ticket 37), as a footnote names it.
+    toolSource: "Strata's totals of the records above, as of {date}.",
     // The heading when no source could be shown.
     untitled: "Source",
     visited: "You have opened this source.",
@@ -1914,6 +1946,82 @@ export const copy = {
         previewPiuTitle: "I don't show review notes in this preview, because they are a World Bank staff draft.",
         previewPiuBody: "Leave the preview to see them. Nothing about the draft changed.",
       },
+      // The mission brief (ticket 37; the 37 brief, sections 7 and 9.7 to 9.8): five parts, each with cited
+      // sentences first and a table of the records they rest on second. Its keys match review_notes' so the
+      // draft page, bar and Drafts tab read either kind the same way.
+      mission_brief: {
+        title: "Mission brief",
+        crumb: (_date: string) => "Mission brief",
+        rowTitle: (name: string, _date: string) => `Mission brief for ${name}`,
+        pageTitle: (name: string, pid: string) => `Mission brief for ${name} (${pid})`,
+        // Under the h1: "Water and Sanitation Development Project (P156634), Kenya".
+        subtitle: "{name} ({pid}), {country}",
+        lede: (_count: number) => "I drafted all five parts of the mission brief.",
+        ledePartial: "I drafted {written} of the five parts of the mission brief. Each other part says what I'm missing.",
+        method:
+          "I wrote each part from public records through {date} and cited the record or paragraph behind every sentence. " +
+          "Open a source number to see it beside the brief.",
+        methodLink: "public records",
+        countLine: (_count: number, _countText: string) => "",
+        columns: {} as Record<string, string>,
+        tableCaption: (name: string, _date: string) => `Mission brief for ${name}`,
+        abstain: "I removed every sentence I wrote for this part. They are in the removed box above, with the reason for each.",
+        refused: {
+          out_of_scope: "I didn't write this part, because it would need more than the project's records show.",
+        } as Record<string, string>,
+        refusedOther: "I didn't write this part.",
+        metaYou: (date: string) => `I drafted this brief for you on ${date}.`,
+        metaTeammate: (author: string, date: string) => `I drafted this brief for ${author} on ${date}.`,
+        barLead: "A working draft of your mission brief.",
+        barLeadTeammate: (author: string) => `A working draft of ${author}'s mission brief.`,
+        holdNotChecked: "Mark the brief as checked before you export it.",
+        readOnly: (author: string) => `Only ${author} can mark this brief as checked or export it.`,
+        markedChecked: "You marked this brief as checked. You can export it now.",
+        discarded: "I discarded this mission brief, and your team no longer sees it in Drafts.",
+        removedReasons: {
+          id_not_returned: {
+            item: "It cited a source from another part of the brief.",
+            joined: "it cited a source from another part of the brief",
+          },
+        } as Record<string, { item: string; joined: string }>,
+        rowNotes: (count: number, countText: string) => (count === 1 ? "One part." : `${countText} parts.`),
+        steps: {
+          read: {
+            running: "I'm reading the project's records.",
+            done: (_date: string) => "I read the project's latest plans, its contracts since the last ISR, its ISRs and its loan records.",
+          },
+          write: {
+            running: (_count: number, _countText: string) => "I'm writing the five parts.",
+            done: (sentences: number, sentencesText: string, _notes: number, _notesText: string) =>
+              `I wrote ${sentences === 1 ? "one sentence" : `${sentencesText} sentences`} in five parts.`,
+          },
+          save: { running: "I'm saving the draft.", done: "I saved the draft." },
+        },
+        ready: (count: number, countText: string) =>
+          count === 5 ? "The draft is ready. I wrote all five parts." : `The draft is ready. I wrote ${countText} of the five parts.`,
+        writeErrors: {
+          no_agent: "I can't write a mission brief yet, because the model that writes my drafts isn't connected. I saved nothing.",
+          agent_unavailable:
+            "I couldn't write the mission brief, because the model that writes my drafts did not respond. I saved nothing.",
+          content_filter: "I couldn't write the mission brief, because a content filter stopped the writer. I saved nothing.",
+          agent_output: "I wrote a mission brief I couldn't check, so I saved nothing.",
+          data_service: "I couldn't read the project's records, because the data service didn't answer. I saved nothing.",
+          draft_store: "I couldn't save the draft, because I can't write to my drafts tables right now. I saved nothing.",
+          no_project: "I don't hold a record of this project, so I wrote nothing and saved nothing.",
+          not_active: "I draft mission briefs only for active projects, so I wrote nothing and saved nothing.",
+          no_plan: "I don't hold a record of this project, so I wrote nothing and saved nothing.",
+          nothing_marked: "I found nothing to write about, so I saved nothing.",
+          permission:
+            "Your account can't read this project's records in Strata's tables, so I can't write a mission brief. Ask your " +
+            "workspace admin for read access to the strata catalog.",
+          internal: "Something went wrong on my side, so I couldn't write the mission brief. I saved nothing.",
+          dropped: "The connection dropped before I finished the mission brief. I saved nothing.",
+        } as Record<string, string>,
+        nothingTitle: "I couldn't write a part that passed my checks, so I saved no draft.",
+        nothingBody: "The sentences I removed are below, with the reason for each.",
+        previewPiuTitle: "I don't show mission briefs in this preview, because they are a World Bank staff draft.",
+        previewPiuBody: "Leave the preview to see them. Nothing about the draft changed.",
+      },
     },
     // The writing page (`/drafts/new`).
     writing: {
@@ -2067,6 +2175,49 @@ export const copy = {
             "Drafted with Strata on {created} and checked by {checker} on {checked}. Strata is an independent demo " +
             "built on World Bank open data. These notes are not a World Bank review, clearance or no-objection.",
           columns: ["Activity", "Review note"],
+        },
+        // The mission brief's Word file (the 37 brief, section 7.4).
+        mission_brief: {
+          heading: "Mission brief for {project_name} ({project_id})",
+          line: "{country}. Public records through {date}.",
+          origin:
+            "Drafted with Strata on {created} and checked by {checker} on {checked}. Strata is an independent demo " +
+            "built on World Bank open data. This brief is not a World Bank review, clearance or no-objection.",
+          parts: {
+            plans: "Latest Procurement Plans",
+            awards: "Awards since the last ISR",
+            ratings: "Rating history",
+            disbursement: "Disbursement",
+            closing: "Closing check",
+          },
+          tables: {
+            plans: "The latest plan from each implementing agency",
+            awards: "Contracts signed after the ISR dated {date}",
+            ratings: "Ratings in each ISR read",
+            disbursement: "Disbursement by loan or credit, in US$ millions",
+            closing: "Activities planned to finish after the closing date, and the closing date history",
+          },
+          columns: {
+            plans: ["Implementing agency", "Latest plan", "Activities", "Need a look", "Worth watching"],
+            awards: ["Activity", "Signed", "Supplier", "Signed amount (US$)", "Estimated Amount (US$)"],
+            ratings: ["ISR", "Dated", "Progress towards achievement of PDO", "Overall implementation progress"],
+            disbursement: ["Loan or credit", "Commitment", "Disbursed", "Undisbursed", "Canceled"],
+            closing: ["Activity or change", "Implementing agency, or closing date before", "Planned completion, or closing date after", "Days after closing, or first reported"],
+          },
+          none: {
+            plans: "No Procurement Plan was read for this project.",
+            awards: "No contract was signed after the last ISR, or no ISR was read.",
+            ratings: "No ISR was read for this project.",
+            disbursement: "No loan record is held for this project.",
+            closing: "The project has closed, so there is no closing check.",
+          },
+          planVersion: "Plan of {date}",
+          noPlan: "No plan read",
+          individual: "Individual consultant",
+          isr: "ISR {sequence}",
+          notRated: "Not rated",
+          total: "Total",
+          moved: "Closing date moved",
         },
       },
       pack: {

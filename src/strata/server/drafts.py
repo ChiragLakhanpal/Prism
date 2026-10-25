@@ -64,8 +64,9 @@ KEEP_ALIVE = ": keep-alive\n\n"
 class DraftRequest(BaseModel):
     kind: str = Field(min_length=1, max_length=64)
     project_id: str = Field(pattern=r"^P\d{6}$")
-    agency_id: str = Field(min_length=1, max_length=200)
-    plan_date: dt.date
+    # The plan version review notes are written on; a mission brief (ticket 37) names only its project.
+    agency_id: str | None = Field(default=None, min_length=1, max_length=200)
+    plan_date: dt.date | None = None
     idempotency_key: str | None = Field(default=None, max_length=128)
     view: VIEWS = "staff"
     lang: Literal["en", "fr", "es", "pt"] = "en"
@@ -150,7 +151,7 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: DraftStore 
                     return refused(409, "in_progress")
                 running.add((viewer.user_id, key))
         request = {"kind": body.kind, "project_id": body.project_id, "agency_id": body.agency_id,
-                   "plan_date": body.plan_date.isoformat()}
+                   "plan_date": body.plan_date.isoformat() if body.plan_date else None}
         writing = runtime.Writing(kinds.kinds[body.kind], request, viewer, access.team(viewer).key, key,
                                   new_run_id(), body.lang)
         return StreamingResponse(_stream(writing, trace_ids()), media_type="text/event-stream", headers=STREAM_HEADERS)
