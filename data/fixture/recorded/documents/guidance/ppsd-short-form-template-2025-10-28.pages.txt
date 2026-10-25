@@ -1,0 +1,294 @@
+Source: https://documents.worldbank.org/curated/en/099008510282548554/pdf/IDU-7f9874dd-1915-4507-89a1-96ceb10cf046.pdf
+License: The World Bank: Documents & Reports (documents.worldbank.org). License: CC BY 4.0.
+Recorded: 2026-10-25
+About: The PPSD Short-Form template of October 28, 2025 (report 206239), whose Procurement Risk Analysis table gives the Short Form's three columns. Documents API id 40065140.
+Pages: 7, one after each form feed, read from the PDF's text layer
+
+PPSD Short-Form 
+Page 1 of 7 
+Official Use Only 
+PPSD TEMPLATE 
+Short-Form 
+ 
+DRAFTING NOTE: PPSD SHORT-FORM - Completion of this template should focus on describing the 
+details of each of the higher value / higher risk contracts identified through the application of Supply 
+Positioning as described in the PPSD Preparation and Project Cycle Section of the PPSD Guidance Note. 
+All similar contracts, having similar approaches should be consolidated and described under one 
+heading. 
+For further information on completing this template refer to the Procurement Guidance PPSD Long-
+Form (2024 Edition) 
+Please delete all yellow highlighted text once this document has been finalized. 
+ 
+Project Procurement Strategy for 
+Development (PPSD Short-Form) 
+1. Project Overview 
+2. Overview of Country, Borrower and Marketplace 
+DRAFTING NOTE: For each key contract detail a short one -line summary of the requirement including the cost 
+estimate. 
+1. Operational Context 
+a. Governance aspects  
+ 
+b. Economic aspects 
+Country  
+Full Project Name  
+Total Finance ($)  
+Project Number  
+Summary of Project 
+Development 
+Objectives 
+ 
+ Public Disclosure Authorized
+Public Disclosure Authorized
+Public Disclosure Authorized
+Public Disclosure Authorized
+PPSD Short-Form 
+Page 2 of 7 
+Official Use Only 
+ 
+c. Sustainability aspects 
+ 
+d. Technological aspects 
+ 
+KEY CONCLUSIONS  
+ 
+ 
+ 
+2. Client Capability and PIU Assessment 
+a. Experience  
+ 
+b. Need for hands-on support  
+ 
+c. Contract management capacity and capability 
+ 
+d. Complaints management and dispute resolution systems 
+ 
+KEY CONCLUSIONS 
+ 
+ 
+ 
+3. Market Analysis 
+a. Market sector dynamics  
+ 
+b. Financial  
+ 
+c. Procurement trends  
+ 
+KEY CONCLUSIONS 
+ 
+ PPSD Short-Form 
+Page 3 of 7 
+Official Use Only 
+ 
+3. Procurement Risk Analysis  
+Risk Description Description of mitigation Risk Owner 
+   
+   
+   
+   
+   
+   
+4. Procurement Objectives 
+1.  
+2.  
+3.  
+4.  
+5.  
+5. Recommended Procurement Approach for the Project 
+a. Contract and estimated cost 
+ 
+b. Procurement Approach DRAFTING NOTE select from options and complete table below     
+Attribute Selected Approach Justification 
+Specifications 
+User reference PPSD Procurement 
+Guidance page 47 and Annex B   
+Conformance/Performance   
+Sustainability 
+Requirements 
+User reference PPSD Procurement 
+Guidance page 48 and Annex B   
+Yes/No    
+Contract Type 
+User reference PPSD Procurement 
+Guidance page 49 
+A. Traditional 
+B. Design and Build 
+  PPSD Short-Form 
+Page 4 of 7 
+Official Use Only 
+Attribute Selected Approach Justification 
+C. Design, Build, Operate, 
+Maintain 
+D. Design and Build – 
+Turnkey or Prime 
+Contractor 
+E. EPC and EPCM 
+F. Other please describe 
+Pricing and Costing 
+Mechanism 
+User reference PPSD Procurement 
+Guidance page 50 and 53  
+A. Lump Sum 
+B. Performance based 
+contracts 
+C. Schedule of 
+Rates/Admeasurement  
+D. Time and Materials 
+E. Cost Plus 
+  
+Supplier Relationship 
+User reference PPSD Procurement 
+Guidance page 54  
+Adversarial / Collaborative 
+ 
+Price Adjustments 
+User reference PPSD Procurement 
+Guidance page 55 
+A. None, Fixed Price 
+B. Negotiated 
+C. Percentage 
+ 
+Form of Contract (Terms 
+and Conditions) 
+User reference PPSD Procurement 
+Guidance page 55 
+State any special conditions 
+of contract 
+ 
+Selection Method 
+User reference PPSD Procurement 
+Guidance page 56 
+A. Request for Proposals 
+(RFP) 
+B. Requests for Bids (RFB) 
+C. Requests for Quotations 
+(RFQ)  
+D. Direct Selection 
+  
+Selection Arrangement 
+User reference PPSD Procurement 
+Guidance page 65 
+A. Competitive Dialogue 
+B. Public Private 
+Partnerships (PPP) 
+C. Commercial Practices 
+D. United Nations (UN) 
+Agencies 
+E. e-Reverse Auctions 
+F. Imports 
+G. Commodities 
+H. Community Driven 
+Development 
+I. Force Accounts 
+J. Framework Agreements 
+K. Cross Project 
+Opportunities 
+  PPSD Short-Form 
+Page 5 of 7 
+Official Use Only 
+Attribute Selected Approach Justification 
+Market Approach 
+User reference PPSD Procurement 
+Guidance page 67 
+A. Type of Competition 
+1. Open 
+2. Limited 
+3. International 
+4. National 
+5. No Competition – 
+Direct Selection 
+B. Number of Envelopes / 
+Stages 
+1. Single Envelope 
+2. Two Envelopes 
+3. Single Stage 
+4. Multi Stage 
+C. BAFO (Yes/No) 
+D. Negotiations (Yes/No) 
+  
+Qualification 
+User reference PPSD Procurement 
+Guidance page 70 
+A. Pre-Qualification 
+B. Post-Qualification 
+C. Initial Selection 
+  
+Evaluation Selection 
+Method 
+User reference PPSD Procurement 
+Guidance page 74 
+A. Quality Cost Based 
+Selection (QCBS) 
+B. Fixed Budget Based 
+Selection (FBS) 
+C. Least Cost Based Selection 
+(LCS)  
+D. Quality Based Selection 
+(QBS) 
+E. Consultant’s Qualifications 
+Based Selection (CQS) 
+F. Direct Selection 
+  
+Evaluation of Costs 
+User reference PPSD Procurement 
+Guidance pages 73 and 76 
+A. Adjusted Bid Price 
+B. Life-Cycle Costs 
+  
+Domestic Preference 
+User reference PPSD Procurement 
+Guidance page 77 
+National/international   
+Rated Criteria 
+User reference PPSD Procurement 
+Guidance pages 4, 72, 77, 109,  
+Annex B, and Annex C 
+List the type of criteria to be 
+used (mandatory/desired) 
+  
+6. Preferred Arrangement for Low Value Low Risk Activities 
+Activity Category Estimated Cost Procurement Arrangement 
+       PPSD Short-Form 
+Page 6 of 7 
+Official Use Only 
+       
+    
+    
+    PPSD Short-Form 
+Page 7 of 7 
+Official Use Only 
+7. Summary of PPSD to inform Bank’s preparation of the PAD 
+Contract 
+a. Contract Title 
+b. Description 
+c. Category 
+Cost & Risk 
+a. Estimated 
+Cost (US$) 
+b. Risk Rating 
+Bank Oversight Procurement 
+Approach & 
+Competition 
+a. National 
+b. International 
+c. Open 
+a. Limited 
+b. Direct 
+c. Sole Source 
+Selection Methods 
+a. Pre/Post Qualification 
+b. SPD (RFP/RFB) 
+c. Competitive Dialogue 
+d. Framework Agreements 
+e. e-Reverse Auctions 
+f. QCBS/QBS etc. 
+g. Negotiation 
+h. BAFO 
+Evaluation Method 
+a. Rated Criteria (VfM) 
+b. Lowest Evaluated Cost 
+      
+      
+      
+      
+      
+ 

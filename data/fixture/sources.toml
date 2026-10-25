@@ -690,3 +690,31 @@ text_url = "https://documents.worldbank.org/curated/en/310191631508626407/text/H
 pdf_url = "https://documents.worldbank.org/curated/en/310191631508626407/pdf/Haiti-Rebuilding-Energy-Infrastructure-and-Access-Project.pdf"
 about = "The completion report for P127203 in French, July 29, 2021 (ICR4990): the stress shelf's report in another language. Documents API id 33407968."
 
+# The PPSD templates and guidance (ticket 36). The template registry (config/ppsd_templates.toml)
+# copies each risk table's column names from the two templates, and config/thresholds.toml's
+# [ppsd_table_i] copies the guidance's Table I.
+
+[[source]]
+file = "documents/guidance/ppsd-short-form-template-2025-10-28"
+kind = "document"
+dataset = "documents"
+text_url = "https://documents.worldbank.org/curated/en/099008510282548554/text/IDU-7f9874dd-1915-4507-89a1-96ceb10cf046.txt"
+pdf_url = "https://documents.worldbank.org/curated/en/099008510282548554/pdf/IDU-7f9874dd-1915-4507-89a1-96ceb10cf046.pdf"
+about = "The PPSD Short-Form template of October 28, 2025 (report 206239), whose Procurement Risk Analysis table gives the Short Form's three columns. Documents API id 40065140."
+
+[[source]]
+file = "documents/guidance/ppsd-long-form-template-2025-10-28"
+kind = "document"
+dataset = "documents"
+text_url = "https://documents.worldbank.org/curated/en/099851210282541606/text/IDU-ae1c2f23-7b10-42c3-87d0-d9799e5e4f8b.txt"
+pdf_url = "https://documents.worldbank.org/curated/en/099851210282541606/pdf/IDU-ae1c2f23-7b10-42c3-87d0-d9799e5e4f8b.pdf"
+about = "The PPSD Long-Form template of October 28, 2025 (report 206236), whose Procurement Risk Analysis table gives the Long Form's seven columns. Documents API id 40065124."
+
+[[source]]
+file = "documents/guidance/ppsd-long-form-guidance-2025-03-31"
+kind = "document"
+dataset = "documents"
+text_url = "https://documents.worldbank.org/curated/en/099629208202516861/text/IDU-e2e57ebf-34aa-4499-9ed1-99d1b06fe315.txt"
+pdf_url = "https://documents.worldbank.org/curated/en/099629208202516861/pdf/IDU-e2e57ebf-34aa-4499-9ed1-99d1b06fe315.pdf"
+about = "The PPSD Long Form Detailed User Guidance, third edition of March 2025 (report 203913), whose Table I gives the cost thresholds for the Long Form, with the 1 to 5 risk ratings and the Procurement Process stages. Documents API id 40038790."
+

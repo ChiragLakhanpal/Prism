@@ -503,7 +503,9 @@ def test_the_long_plan_lists_its_activities_and_the_documents_have_the_pages_the
     assert sum(reference.endswith("-2") for reference in references) == plan["with_a_second_issue"]
     for key in ("long_plan", "french_report", "longest_pad"):
         assert len(fmt.pages(RECORDED / f"{SHELF[key]['document']}.pages.txt")) == SHELF[key]["pdf_pages"], key
-    recorded = [len(fmt.pages(path)) for path in RECORDED.glob("documents/*/*.pages.txt")]
+    # The documents the run reads are projects' documents, in a folder per project. The PPSD templates and
+    # guidance (documents/guidance, ticket 36) belong to no project, and the run never reads them.
+    recorded = [len(fmt.pages(path)) for path in RECORDED.glob("documents/P*/*.pages.txt")]
     assert max(recorded) == SHELF["over_parser_limit"]["longest_pages"] < 500
 
 

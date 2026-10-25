@@ -1,0 +1,140 @@
+# The PPSD template registry (ticket 36; CLAUDE.md rule 9): the risk table of the borrower's Project Procurement
+# Strategy for Development (PPSD), as the World Bank's Short Form and Long Form templates lay it out.
+# strata.config.load_ppsd_templates() reads it. The suggested PPSD rows' page, its Word file, its holds and the
+# fields endpoint all take their columns, ratings and stages from here, so a template change is a change here.
+#
+# Every name is copied word for word from the recorded templates and guidance (data/fixture/sources.toml,
+# documents/guidance), never typed from memory. Each column names its entry in tests/ground_truth/values.toml
+# (value), which gives the document and the PDF page, and tests/test_ppsd_templates.py checks them together.
+#
+# [forms.<key>]       one form of the risk table: its name, the template it comes from and the PDF page of its
+#                     table, and its columns in the template's order.
+#   [[forms.<key>.columns]]
+#     key             the column's key, the same in both forms where the column means the same thing
+#     header          the template's header, word for word
+#     value           its entry in tests/ground_truth/values.toml
+#     letter          the letter the Long Form puts above a rating column (A, B), which its score's header uses
+#     filled_by       strata (the writer fills it, with sources) or people (only a person sets it; Strata never does)
+#     control         for a column people fill: text, rating (from [ratings]), score ([score]) or stage ([stages])
+#     hold            the export hold it counts toward in config/drafts.toml: owners or ratings, or none
+#     max_length      for a text control, the most characters it takes
+#
+# default_form is the form a new draft uses. The Short Form stays the default even above Table I's threshold
+# (the ticket; the 36 brief, decision 6): the Long Form is offered, never chosen for you.
+
+default_form = "short"
+
+[forms.short]
+name = "Short Form"
+document = "documents/guidance/ppsd-short-form-template-2025-10-28"
+pdf_page = 3
+
+[[forms.short.columns]]
+key = "risk_description"
+header = "Risk Description"
+value = "ppsd-short-risk-description"
+filled_by = "strata"
+
+[[forms.short.columns]]
+key = "mitigation"
+header = "Description of mitigation"
+value = "ppsd-short-mitigation"
+filled_by = "strata"
+
+[[forms.short.columns]]
+key = "risk_owner"
+header = "Risk Owner"
+value = "ppsd-short-risk-owner"
+filled_by = "people"
+control = "text"
+hold = "owners"
+max_length = 120
+
+[forms.long]
+name = "Long Form"
+document = "documents/guidance/ppsd-long-form-template-2025-10-28"
+pdf_page = 6
+
+[[forms.long.columns]]
+key = "risk_description"
+header = "Risk Description"
+value = "ppsd-long-risk-description"
+filled_by = "strata"
+
+[[forms.long.columns]]
+key = "likelihood"
+header = "Likelihood Rating"
+value = "ppsd-long-likelihood"
+letter = "A"
+filled_by = "people"
+control = "rating"
+hold = "ratings"
+
+[[forms.long.columns]]
+key = "impact"
+header = "Impact Rating"
+value = "ppsd-long-impact"
+letter = "B"
+filled_by = "people"
+control = "rating"
+hold = "ratings"
+
+[[forms.long.columns]]
+key = "score"
+header = "Overall Risk Score (A*B)"
+value = "ppsd-long-score"
+filled_by = "people"
+control = "score"
+hold = "ratings"
+
+[[forms.long.columns]]
+key = "mitigation"
+header = "Description of proposed mitigation through the procurement process"
+value = "ppsd-long-mitigation"
+filled_by = "strata"
+
+[[forms.long.columns]]
+key = "risk_owner"
+header = "Risk Owner"
+value = "ppsd-long-risk-owner"
+filled_by = "people"
+control = "text"
+hold = "owners"
+max_length = 120
+
+[[forms.long.columns]]
+key = "stage"
+header = "Procurement Process Stage"
+value = "ppsd-long-stage"
+filled_by = "people"
+control = "stage"
+max_length = 80
+
+# The guidance's ratings for a risk's likelihood and impact (PPSD Long Form Detailed User Guidance, March 2025,
+# PDF page 43; values.toml ppsd-ratings).
+[ratings]
+document = "documents/guidance/ppsd-long-form-guidance-2025-03-31"
+pdf_page = 43
+levels = [
+  { value = 1, label = "Very Low", short = "VL" },
+  { value = 2, label = "Low", short = "L" },
+  { value = 3, label = "Medium", short = "M" },
+  { value = 4, label = "High", short = "H" },
+  { value = 5, label = "Very High", short = "VH" },
+]
+
+# The Overall Risk Score: the Long Form template's header defines it as A*B, the likelihood times the impact,
+# each from 1 to 5, so a score runs from 1 to 25. A person types it; Strata never computes it, and the editor
+# never shows the product of the two ratings (the 36 brief, 4.3).
+[score]
+definition = "A*B"
+minimum = 1
+maximum = 25
+
+# The guidance's Procurement Process stages, "a starting point to complete" the risk table (PDF page 42;
+# values.toml ppsd-stage-1 to ppsd-stage-6), in its order.
+[stages]
+document = "documents/guidance/ppsd-long-form-guidance-2025-03-31"
+pdf_page = 42
+names = ["Market engagement", "Prequalification", "Specification", "Procurement Arrangements", "Evaluation",
+         "Contract Management"]
