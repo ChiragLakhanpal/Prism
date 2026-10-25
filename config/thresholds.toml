@@ -636,3 +636,33 @@ mcnemar_alpha = 0.05
 # awards dataset for FY2001 to 2016 (docs/PLAN.md section 3). past_range.period_from starts in 2019, which would
 # leave no comparable for most approval dates. Source: docs/PLAN.md section 3.
 notices_from = 2000-07-01
+
+# The benchmark file and the full gate (ticket 33; docs/PLAN.md section 10). src/strata/evals reads these.
+[benchmark]
+# evals/benchmark.yaml holds at least this many questions of each kind other than refusals (sql, documents and
+# estimates); the must-refuse set holds one question per refusal key instead. Source: ticket 33's acceptance
+# criteria ("at least ten questions of each other kind").
+min_questions_per_kind = 10
+
+# Genie (ticket 33): the client that asks the Genie space's conversation API as the viewer (src/strata/genie/client.py)
+# and the ask_genie tool. Free Edition stops the SQL warehouse after 10 idle minutes, and Genie then waits in
+# PENDING_WAREHOUSE far longer than a direct start, which takes about 8 seconds, so the client starts the warehouse
+# first. Ticket 48's demo-ready check, "the first Genie call answers within a stated threshold", reads the same two
+# waits. Source: fairshare's Genie client, which waited up to 90 seconds for the warehouse and 150 for Genie
+# (ticket 33's notes; fairshare's docs/limits.md, which this build could not open). Starting values for the owner
+# to confirm.
+[genie]
+# The longest the client waits for a stopped warehouse to reach RUNNING before it gives up.
+warehouse_start_seconds = 90
+# The longest the client waits for Genie's answer once it has asked, through every status before COMPLETED.
+answer_seconds = 150
+# How often the client looks again at the warehouse's state or the message's status.
+poll_seconds = 2
+# Genie answers too many questions in a minute with 429. The client waits this long the first time, twice as long
+# each time after, never longer than backoff_max_seconds at once, all inside answer_seconds.
+backoff_first_seconds = 2
+backoff_max_seconds = 30
+# ask_genie gives the agent at most this many rows; its coverage line counts the rest. Source: search_passages'
+# limit of 20 is for passages an answer reads one by one; a table of counts by year or country rarely passes 100.
+# A starting value for the owner to confirm.
+max_rows = 100

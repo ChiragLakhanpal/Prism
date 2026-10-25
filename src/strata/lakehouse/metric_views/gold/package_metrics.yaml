@@ -1,0 +1,33 @@
+# The metric view strata.gold.package_metrics, which the Genie space reads (config/genie.toml). Databricks only,
+# with the same rules as contract_metrics.yaml.
+version: 1.1
+comment: >-
+  Procurement packages, one row per STEP reference, with their first notice, their signed contract if any, and
+  whether they were signed, canceled or are still open.
+source: strata.gold.package
+dimensions:
+  - name: country_code
+    expr: source.country_code
+  - name: project_id
+    expr: source.project_id
+  - name: procurement_category
+    expr: source.procurement_category
+  - name: procurement_method
+    expr: source.procurement_method
+  - name: review_type
+    expr: source.review_type
+  - name: step_reference
+    expr: source.step_reference
+  - name: first_notice_date
+    expr: source.first_notice_date
+  - name: contract_signed_on
+    expr: source.contract_signed_on
+  - name: package_state
+    expr: >-
+      CASE WHEN source.signed_in IS NOT NULL THEN source.signed_in
+      WHEN source.process_status = 'Canceled' THEN 'canceled' ELSE 'still open' END
+  - name: public_from
+    expr: source.public_from
+measures:
+  - name: packages
+    expr: COUNT(1)

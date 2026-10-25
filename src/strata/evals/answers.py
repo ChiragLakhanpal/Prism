@@ -1,0 +1,264 @@
+"""How each registry tool's result answers its benchmark question, in the question's shape (ticket 33).
+
+Each tool question in evals/benchmark.yaml has an expected answer whose keys a reader here fills from the tool's
+result: check_plan's references under each mark, find_comparables' past range, and so on. The offline gate reads
+each tool's answer on the fixture this way and compares it with the question's expected answer, which comes from
+tests/ground_truth/values.toml or ground-truth SQL (tests/test_tools.py). The full gate reads the live agent's tool
+calls the same way (strata.evals.scoring), so both gates mean the same thing by a tool's answer.
+
+A reader may find more than a question asks. answered() keeps only the keys the question expects, so a question
+can check part of an answer, such as only the packages advertised again.
+"""
+
+from __future__ import annotations
+
+import datetime as dt
+from decimal import Decimal, InvalidOperation
+from pathlib import Path
+
+from strata.lakehouse import ground_truth
+
+ROOT = Path(__file__).resolve().parents[3]
+
+
+def canonical(value) -> str:
+    """One value as text, for comparing rows at the same rounding (CLAUDE.md rule 1): a number with no trailing
+    zeros and no exponent, so 1245092.760 and "1245092.76" agree and 4.1503 and 4.15 do not; a date as ISO; true
+    or false; and nothing as empty text."""
+    if value is None or value == "":
+        return ""
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    if isinstance(value, dt.datetime | dt.date):
+        return value.isoformat()
+    try:
+        number = Decimal(str(value).strip())
+    except InvalidOperation:
+        return str(value)
+    if not number.is_finite():
+        return str(value)
+    text = format(number.normalize(), "f")
+    return text if text != "-0" else "0"
+
+
+def same_rows(rows) -> list[list[str]]:
+    """Rows as canonical text, in a fixed order, so two queries that order their rows differently agree."""
+    return sorted([canonical(cell) for cell in row] for row in rows)
+
+
+def ground_truth_rows(question, root: Path = ROOT) -> list[list[str]]:
+    """The rows a question's ground-truth SQL expects on the fixture, from its '-- expect:' lines."""
+    return same_rows(ground_truth.read(root / question["ground_truth"]).expected[1:])
+
+
+def marks(result) -> dict[str, list[str]]:
+    return {row["activity_reference_no"]: [mark["mark"] for mark in row["marks"]] for row in result["rows"]}
+
+
+def marked(result, question) -> dict[str, list[str]]:
+    """check_plan's answer: the references under each mark, in the benchmark question's shape."""
+    found = {"unmarked": sorted(ref for ref, given in marks(result).items() if not given)}
+    for mark in ("needs_a_look", "watch", "data_note"):
+        found[mark] = sorted(ref for ref, given in marks(result).items() if mark in given)
+    found["with_a_signal"] = sorted(ref for ref, given in marks(result).items() if {"needs_a_look", "watch"} & set(given))
+    # Ticket 21: the activities whose reasons give a delay from the saved baseline as well.
+    found["baseline_delays"] = sorted(row["activity_reference_no"] for row in result["rows"]
+                                      if any("baseline" in reason for mark in row["marks"] for reason in mark["reasons"]))
+    return found
+
+
+def in_top_three(result, question) -> dict[str, list[str]]:
+    """search_passages' answer: which of the expected passages are among its first three, which matched passages
+    it left out because Prompt Shields found an attack or never screened them, and which a passage reviewer
+    ranked lower for the query's kind of question (ticket 32)."""
+    top = {row["evidence_id"] for row in result["rows"][:3]}
+    left_out = [evidence for entry in result["coverage"]["not_used"]
+                if entry["reason"] in ("prompt_shields_hit", "not_screened") for evidence in entry["evidence_ids"]]
+    found = {"top_three_include": sorted(set(question["expected"]["top_three_include"]) & top),
+             "left_out": sorted(left_out)}
+    if "ranked_lower" in question["expected"]:
+        found["ranked_lower"] = sorted(result["ranked_lower"]["evidence_ids"])
+    return found
+
+
+def readiness_answer(result, question) -> dict[str, list]:
+    """data_readiness_for's answer, in the keys its question expects: the awards row's STEP-reference
+    measure and the known gaps shown, or the stress shelf's P130164 risk annex outcome."""
+    found = {}
+    awards = [row for row in result["sources"] if row["id"] == "awards"]
+    if awards:
+        linked = result["rows"][awards[0]["cells"]["linked"]["row"]]
+        found["linked_step_reference"] = [linked["count"], linked["denominator"]]
+    found["known_gaps"] = [row["id"] for row in result["sources"] if row["type"] == "gap"]
+    annex = [entry for entry in result["stress_shelf"] if entry["kind"] == "scan_annex"]
+    if annex and annex[0]["outcome_row"] is not None:
+        outcome = result["rows"][annex[0]["outcome_row"]]
+        found["rated_risks_recovered"] = [outcome["count"], outcome["denominator"]]
+    return {key: found.get(key) for key in question["expected"]}
+
+
+def lessons_answer(result, question) -> dict[str, list]:
+    """get_lessons' answer: the first lesson, the evidence ids it rests on and IEG's part in them, and the
+    editions of the rules the lessons' projects followed; with packages, from the summary record, the completion
+    reports counted and each risk factor they raised with how many raised it (ticket 30)."""
+    rows = result["rows"]
+    found = {"first": [rows[0]["statement"]] if rows else [],
+             "first_evidence": [source["evidence_id"] for source in rows[0]["evidence"]] if rows else [],
+             "first_ieg_status": [rows[0]["ieg_status"]] if rows else [],
+             "editions": sorted({row["edition"]["key"] for row in rows if row["edition"]})}
+    reports = result["summary"]["reports"]
+    if reports is not None:
+        found |= {"reports_read": [reports["read"]],
+                  "raised": [[factor["key"], factor["k"]] for factor in reports["risk_factors"]]}
+    return found
+
+
+def past_range(result, question) -> dict[str, list]:
+    """find_comparables' answer: the quartiles and 8-in-10 point in months, read from the summary record
+    the agent cites them by, the packages still open, the canceled ones it left out, the packages
+    signed within the plan's months, and the numbers each "in 10" phrase states, with the words that go
+    with the plan's. A package with no plan row (ticket 15) has no plan, so its question asks nothing of one.
+    A question about the quantile dots (ticket 15) asks only how many there are and which packages the last
+    one stands for. With too few comparables for a range (ticket 33), it gives the abstention's reason and how
+    many comparables there were instead."""
+    if result["abstention"] is not None and result["summary"]["past_range"] is None:
+        return {"abstention": [result["abstention"]["reason"]], "comparables": [result["counts"]["comparables"]]}
+    if "last_dot" in question["expected"]:
+        dots = result["quantile_dots"] or []
+        return {"quantile_dots": [len(dots)], "last_dot": sorted(dots[-1]["step_references"]) if dots else [],
+                "last_dot_still_open": [dots[-1]["still_open"]] if dots else []}
+    found = {
+        "past_range_months": [result["summary"]["past_range"][name] for name in ("q25", "q50", "q75", "q80")],
+        "cited_as": [result["summary"]["evidence_id"]],
+        "still_open": sorted(row["step_reference"] for row in result["rows"] if row["still_open"]),
+        "canceled_left_out": sorted(evidence.split(":", 1)[1] for entry in result["coverage"]["not_used"]
+                                    if entry["reason"] == "canceled" for evidence in entry["evidence_ids"]),
+        "eight_in_ten": result["summary"]["frequencies"]["q80"],
+    }
+    if result["plan"] is not None:
+        plan_months = result["plan"]["months"]
+        found |= {
+            "signed_within_plan": sorted(row["step_reference"] for row in result["rows"]
+                                         if not row["still_open"] and row["months"] <= plan_months),
+            "plan_in_ten": result["summary"]["frequencies"]["plan"]["states"],
+            "plan_in_ten_words": [result["summary"]["frequencies"]["plan"]["words"]],
+        }
+    return found
+
+
+def disagreement_answer(result, question) -> dict[str, list]:
+    """get_disagreements' answer: each disagreement's two sides by evidence id in the order written, the side
+    it leans on, the ladder's rule, the sides that carry their passage's words for a quote, and, from the
+    summary record the agent cites them by, the runs of the trajectory, each as [rating, first ISR, last ISR],
+    and the count of assertions the run left out."""
+    evidence = {side["assertion_id"]: side["evidence_id"] for row in result["rows"] for side in row["sides"]}
+    return {"disagreements": [[side["evidence_id"] for side in row["sides"]] for row in result["rows"]],
+            "leans_on": [evidence[row["lean_assertion_id"]] for row in result["rows"]],
+            "rules": [row["rule_id"] for row in result["rows"]],
+            "quotable_sides": [side["evidence_id"] for row in result["rows"] for side in row["sides"] if side["text"]],
+            "cited_as": [result["summary"]["evidence_id"]],
+            "trajectory_runs": [[run["value"], run["first_sequence"], run["last_sequence"]]
+                                for trajectory in result["summary"]["trajectories"] for run in trajectory["runs"]],
+            "rejected": [result["summary"]["rejected"]["count"]]}
+
+
+def step_dates_answer(result, question) -> dict[str, list]:
+    """estimate_time's planned dates for each step (ticket 27), from the summary record the agent cites them by:
+    the method family, the basis, the comparables counted, the steps that got a cautious date, how many steps the
+    tool counts as undated, and one named comparable's delay at the signed contract."""
+    steps = result["summary"]["step_dates"]
+    signed = next(entry for entry in steps["steps"] if entry["step_key"] == "contract_signed")
+    named = {reference for reference, _ in question["expected"].get("signed_delay", [])}
+    return {"family": [steps["family"]], "basis": [steps["basis"]], "comparables": [steps["coverage"]["total"]],
+            "dated_steps": [entry["step_key"] for entry in steps["steps"]
+                            if entry["cautious"] and entry["cautious"]["planned_date"]],
+            "undated_steps": [steps["undated_n"]],
+            "signed_delay": [[entry["step_reference"], entry["days"]] for entry in signed["comparables"]
+                             if entry["step_reference"] in named],
+            "cited_as": [result["summary"]["evidence_id"]]}
+
+
+def cost_answer(result, question) -> dict[str, list]:
+    """compare_cost_estimates' answer: the packages signed above and below their own cost estimates, its
+    abstention, and the package's own cost estimate (ticket 31)."""
+    return {"signed_above": sorted(row["step_reference"] for row in result["rows"] if row["diff_pct"] > 0),
+            "signed_below": sorted(row["step_reference"] for row in result["rows"] if row["diff_pct"] < 0),
+            "abstention": [result["abstention"]["reason"]] if result["abstention"] else [],
+            "own_estimate": [result["package"]["estimated_amount_usd"]]}
+
+
+def rejected_answer(result, question) -> dict[str, list]:
+    """rejected_bids' answer: n of m from the summary, the packages in two of its groups, and the groups' order
+    (ticket 31)."""
+    def packages(key: str) -> list[str]:
+        return sorted({row["step_reference"] for row in result["rows"] if row["item_key"] == key})
+    counts = result["summary"]["counts"]
+    return {"n_of_m": [counts["n"], counts["m"]], "bid_security": packages("bid_security"),
+            "key_staff": packages("key_staff"),
+            "group_order": [group["item_key"] for group in result["summary"]["groups"]]}
+
+
+def criteria_answer(result, question) -> dict[str, list]:
+    """compare_criteria's answer: n of the total whose criteria are public, one item's stated, compared and same or
+    less, and the comparables still open, which it never compares (ticket 31)."""
+    counts = result["summary"]["counts"]
+    items = {item["item_key"]: item for item in result["summary"]["items"]}
+    found = {"public": [counts["n"], counts["total"]],
+             "still_open": sorted(evidence.split(":", 1)[1] for entry in result["coverage"]["not_used"]
+                                  if entry["reason"] == "still_open" for evidence in entry["evidence_ids"])}
+    for key in items:
+        found[key] = [items[key]["stated"], items[key]["compared"], items[key]["same_or_less"]]
+    return found
+
+
+def signals_answer(result, question) -> dict[str, list]:
+    """project_signals' answer: the status, and what each check that fired fired on: the activities by STEP
+    reference, or the months the loan history first showed a new closing date (ticket 37)."""
+    found = {"status": [result["status"]]}
+    for row in result["rows"]:
+        found[row["check"]] = sorted(item.get("activity_reference_no") or item.get("reported_on") for item in row["items"])
+    return found
+
+
+def rebidding_answer(result, question) -> dict[str, list]:
+    """rebidding_risk's answer: n of m and the past range's total from the summary, the packages advertised again,
+    each reason quoted with its notice, the groups' order and why the model is not shown (ticket 28)."""
+    summary = result["summary"]
+    return {"n_of_m": [summary["n"], summary["m"]], "past_range_total": [summary["past_range_total"]],
+            "advertised_again": sorted(row["step_reference"] for row in result["rows"]),
+            "quoted": [[row["step_reference"], row["quote"]["notice_id"], row["quote"]["text"]]
+                       for row in result["rows"] if row["quote"]],
+            "group_order": [group["reason_code"] for group in summary["groups"]],
+            "model_not_shown": [summary["model"]["not_shown_reason"]] if not summary["model"]["shown"] else [],
+            "cited_as": [summary["evidence_id"]]}
+
+
+def genie_answer(result, question) -> dict[str, list]:
+    """ask_genie's answer: the rows of the query Genie wrote, by value and in a fixed order, which its ground-truth
+    SQL's rows must equal (ticket 33). Column names are left out: Genie names its columns its own way."""
+    return {"rows": same_rows(list(row["values"].values()) for row in result["rows"])}
+
+
+ANSWERS = {"ask_genie": genie_answer, "check_plan": marked, "search_passages": in_top_three, "data_readiness_for": readiness_answer,
+           "find_comparables": past_range, "get_disagreements": disagreement_answer,
+           "get_lessons": lessons_answer, "estimate_time": step_dates_answer, "compare_cost_estimates": cost_answer,
+           "rejected_bids": rejected_answer, "compare_criteria": criteria_answer, "project_signals": signals_answer,
+           "rebidding_risk": rebidding_answer,
+           "project_records": lambda result, question: {
+               part: sorted(row["reference"] for row in result["rows"] if row["part"] == part)
+               for part in question["expected"]}}
+
+
+def answered(result, question) -> dict[str, list[str]]:
+    """The tool's answer, in its benchmark question's shape: only the keys the question expects."""
+    found = ANSWERS[question["tool"]](result, question)
+    return {key: found.get(key) for key in expected(question)}
+
+
+def expected(question) -> dict[str, list[str]]:
+    if question["tool"] == "ask_genie":
+        return {"rows": ground_truth_rows(question)}
+    if question["tool"] in ("data_readiness_for", "get_disagreements", "get_lessons", "compare_cost_estimates",
+                            "rejected_bids", "compare_criteria", "project_signals", "project_records", "rebidding_risk"):
+        return question["expected"]
+    return {mark: sorted(refs) for mark, refs in question["expected"].items()}

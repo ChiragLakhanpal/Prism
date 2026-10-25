@@ -4578,6 +4578,8 @@ export const copy = {
         // The activity page and a project's Connections tab (ticket 22).
         contract_trail: "the contract trail",
         connections: "the Connections tab",
+        // Structured questions through the Genie space (ticket 33).
+        ask_genie: "the records Genie looked up",
         ask: "the answer",
         unknown: "the coverage line you opened",
       },

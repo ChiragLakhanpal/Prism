@@ -978,3 +978,35 @@ abstentions = ["unknown_package", "no_public_notice", "no_comparables", "none_me
 summary_fields = ["m", "n", "past_range_total", "groups", "model", "coverage"]
 # Each record a row rests on is cited and dated like a row, so a claim can cite it.
 nested_rows = ["evidence"]
+
+# Ticket 33: structured questions through Strata's Genie space (config/genie.toml), as the viewer.
+[tools.ask_genie]
+description = """Asks Strata's Genie space a structured question about contracts and packages, in words, such \
+as how many contracts a country signed in each fiscal year, and returns the rows of the query Genie wrote and \
+ran. Each row holds its values by column. Use it for counts and amounts across many records that no other tool \
+gives. Genie reads the records as they stand today, so for an as-of date before its newest record it gives no \
+rows and says so, and you use another tool instead. State each number exactly as a row gives it."""
+adapter = "strata.tools.ask_genie:ask_genie"
+benchmark = "genie-kenya-contracts-since-fy2020"
+sources = ["awards", "awards_fy2001_2016", "notices", "documents", "projects"]
+
+[[tools.ask_genie.parameters]]
+name = "question"
+type = "string"
+required = true
+description = """The question in plain words, with every country, project, STEP reference and date it is about, \
+such as How many contracts did Kenya sign in fiscal 2025?"""
+
+[[tools.ask_genie.parameters]]
+name = "as_of"
+type = "date"
+required = false
+description = "Answer only when nothing Genie reads became public after this date. Leave it out for today."
+
+[tools.ask_genie.result]
+row = "One row of the query Genie wrote and ran, with its values by column."
+row_fields = ["evidence_id", "public_from", "source", "values"]
+source_fields = ["space", "sql"]
+fields = ["question", "sql", "columns", "records_through"]
+reasons = ["over_row_limit"]
+abstentions = ["as_of_before_records", "not_answered", "genie_unavailable"]

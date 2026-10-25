@@ -1,0 +1,47 @@
+# The metric view strata.gold.contract_metrics, which the Genie space reads (config/genie.toml). Databricks only:
+# DuckDB has no metric views, so the gate checks this file's rules (catalog.metric_view_definitions) and the deploy
+# creates the view on the SQL warehouse. No semicolon anywhere in it, because the SQL task cuts files there; no
+# join named like a dimension; every name in snake_case.
+version: 1.1
+comment: >-
+  Signed contracts on World Bank-financed projects, one row per contract: the contract awards since fiscal 2020,
+  the awards for fiscal 2001 to 2016, and Contract Award notices for the years neither dataset covers.
+source: strata.gold.contract
+joins:
+  - name: country_record
+    source: strata.gold.country
+    on: source.country_code = country_record.country_code
+dimensions:
+  - name: country_code
+    expr: source.country_code
+  - name: country_name
+    expr: country_record.country_name
+  - name: project_id
+    expr: source.project_id
+  - name: award_source
+    expr: source.source
+  - name: fiscal_year
+    expr: source.fiscal_year
+  - name: procurement_category
+    expr: source.procurement_category
+  - name: procurement_method
+    expr: source.procurement_method
+  - name: review_type
+    expr: source.review_type
+  - name: step_reference
+    expr: source.step_reference
+  - name: wb_contract_number
+    expr: source.wb_contract_number
+  - name: contract_signing_date
+    expr: source.contract_signing_date
+  - name: joint_venture
+    expr: source.joint_venture
+  - name: public_from
+    expr: source.public_from
+measures:
+  - name: contracts
+    expr: COUNT(1)
+  - name: contracts_with_step_reference
+    expr: COUNT(source.step_reference)
+  - name: contract_amount_usd
+    expr: SUM(source.contract_amount_usd)

@@ -2029,3 +2029,50 @@ def load_package_form(path: Path = CONFIG_DIR / "package_form.toml") -> PackageF
             optional=bool(table.get("optional", False)), asked=bool(table.get("asked", table["source"] != "computed")),
             unit=table.get("unit"), unit_one=table.get("unit_one"), aliases=bool(table.get("aliases", False))))
     return PackageForm(tuple(groups), tuple(fields))
+
+
+# ── The Genie space (ticket 33) ──────────────────────────────────────────
+
+GENIE_TABLE = re.compile(r"strata\.gold\.[a-z][a-z0-9_]*")
+
+
+@dataclass(frozen=True)
+class GenieTrusted:
+    """One trusted SQL example: a question and the file in src/strata/genie/trusted/ that answers it."""
+
+    question: str
+    sql: str
+
+
+@dataclass(frozen=True)
+class GenieConfig:
+    """The Genie space as config/genie.toml defines it."""
+
+    title: str
+    description: str
+    instruction: str
+    metric_views: tuple[str, ...]
+    tables: tuple[str, ...]
+    sample_questions: tuple[str, ...]
+    trusted: tuple[GenieTrusted, ...]
+
+
+def load_genie(path: Path = CONFIG_DIR / "genie.toml") -> GenieConfig:
+    """The Genie space: its title, description, one text instruction, what it reads and its trusted SQL."""
+    data = _read(path)
+    space = _Entry(path, "space", data.get("space"))
+    space.only({"title", "description", "instruction", "metric_views", "tables", "sample_questions"})
+    reads = space.texts("metric_views") + space.texts("tables")
+    wrong = [name for name in reads if not GENIE_TABLE.fullmatch(name)]
+    if wrong:
+        raise ConfigError(f"In {path.name}, the space reads {', '.join(wrong)}. Name each metric view and table in "
+                          "three parts, in strata.gold.")
+    trusted = []
+    for entry in _tables(path, data, "trusted"):
+        entry.only({"question", "sql"})
+        trusted.append(GenieTrusted(entry.text("question"), entry.text("sql")))
+    if not trusted:
+        raise ConfigError(f"In {path.name}, give the space at least one [[trusted]] question with its SQL.")
+    return GenieConfig(space.text("title"), space.text("description"), space.text("instruction"),
+                       space.texts("metric_views"), space.texts("tables"), space.texts("sample_questions"),
+                       tuple(trusted))
