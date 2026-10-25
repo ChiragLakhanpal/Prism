@@ -456,18 +456,25 @@ export function EvidenceDrawerView({
   }, [panelRef]);
 
   // The sentence it was opened from, while that same answer is still on the page.
-  // A side of a disagreement shown under a sentence opens from that sentence too (ticket 24), so the drawer
-  // highlights the words the side quotes, as the stream marks them for that sentence.
-  const sideOfCard = Boolean(
-    from && run && run.disagreements.some((found) => found.after === from.sentence && found.sides.some((side) => side.evidence_id === id)),
-  );
   const claim =
     from && run && from.id === id && from.serial === run.serial && from.sentence !== null
-      ? run.sentences.find((sentence) => sentence.index === from.sentence && (sentence.evidence_ids.includes(id) || sideOfCard))
+      ? run.sentences.find((sentence) => sentence.index === from.sentence && sentence.evidence_ids.includes(id))
       : undefined;
+  // A side of a disagreement shown under a sentence, opened from the card's marker (ticket 24): the sentence does
+  // not cite it, so no claim block shows, but the drawer highlights the words the side quotes, as the stream marks
+  // them for the sentence the card follows.
+  const cardSentence =
+    !claim &&
+    from &&
+    run &&
+    from.id === id &&
+    from.serial === run.serial &&
+    run.disagreements.some((found) => found.after === from.sentence && found.sides.some((side) => side.evidence_id === id))
+      ? from.sentence
+      : null;
   const numbering = run ? citationNumbers(run) : new Map<string, number>();
   const evidence = data.status === "ready" ? data.evidence : null;
-  const switcherIds = claim && claim.evidence_ids.length > 1 && claim.evidence_ids.includes(id) ? claim.evidence_ids : null;
+  const switcherIds = claim && claim.evidence_ids.length > 1 ? claim.evidence_ids : null;
   // A comparable package from the range chart (ticket 15): its region names it as one, and its close says
   // what it closes. A quantile dot's list of packages is named by its count and its dot, and a package
   // opened from that list has a way back to it above its title.
@@ -583,7 +590,7 @@ export function EvidenceDrawerView({
             {evidence?.kind === "passage" && (
               <PassageView
                 evidence={evidence}
-                sentence={claim ? claim.index : null}
+                sentence={claim ? claim.index : cardSentence}
                 fromAnswer={Boolean(claim)}
                 given={!claim && from?.id === id && from.highlight ? [from.highlight] : null}
               />

@@ -159,10 +159,12 @@ test("ICR paragraph 78 shows under ISR 7's sentence with both sides, though the 
   const second = card.locator("[data-citation='2']");
   await second.click();
   await expect(page.getByRole("dialog")).toContainText("paragraph 78");
-  // The drawer highlights the words the side quotes, though no sentence quoted them.
+  // The drawer highlights the words the side quotes, though no sentence quoted them, and shows no sentence as
+  // citing it, since none does.
   await expect(page.getByRole("dialog").locator("[data-passage] mark")).toContainText(
     "it was clearly identified at the MTR that the achievement of part of the PDO was compromised",
   );
+  await expect(page.getByRole("dialog").locator("[data-claim]")).toHaveCount(0);
   await page.keyboard.press("Escape");
   await expect(second).toBeFocused();
 });
