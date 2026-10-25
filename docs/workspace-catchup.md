@@ -1718,3 +1718,66 @@ It worked if the deploy exits 0, its last line is `Strata is running at https://
 2. Set one owner and reload the page. It worked if the owner is still there, the count line says "1 of {n} risk owners set.", `SELECT count(*) FROM strata.ops.draft_fields` returns at least 1, and `DESCRIBE HISTORY strata.ops.draft_fields LIMIT 1` shows that the App's service principal wrote the row.
 3. Plan a package from a sentence and select risks in section 3. It worked if the same action appears next to "No STEP reference yet" and its draft saves.
 4. On Check a plan for P156634's NWWDA plan of October 9, 2026, choose "Draft a Project Paper summary". It worked if the draft says the plan lists nine activities, one that needs a look and two worth watching, and 0 of 7 signed by the date in the plan as first published, and the check line shows all six checks.
+
+## Ticket 26, step 1 of 5: deploy the time estimate's two tables
+
+The merger parked this step on October 25, 2026, after merge commit a4ed00d. All ten keys were set, but the Free Edition SQL warehouse had reached its free daily limit at 10:33 UTC that morning, and the header above holds workspace steps back during a merge. Run it only once the warehouse answers again. It needs the Databricks keys in `.env`. Ticket 26 adds two tables: `strata.gold.time_estimate_score` (`src/strata/lakehouse/tables/gold/time_estimate_score.sql`), which holds each package's stored time estimate and its what-if grid, and `strata.gold.time_estimate_model` (`time_estimate_model.sql` beside it), the copy of each registered model that the score task and the App read without MLflow. Tickets 22, 34, 37, 23 and 36 run the same deploy command. One deploy from a4ed00d or later serves every block that names it, ticket 36's step 3 included. This workspace's earlier deploys passed `--fairshare-catalog workspace`, so this one does too.
+
+Run this from the main checkout, twice:
+
+    uv run --script ops/bundle/deploy.py --env-file .env --fairshare-catalog workspace
+
+It worked if the first run exits 0, lists `strata.gold.time_estimate_score` and `strata.gold.time_estimate_model` as new, each with its `public_from` column, and changes no existing table, and the second run prints "No changes." Then `SHOW TABLES IN strata.gold` lists both tables.
+
+## Ticket 26, step 2 of 5: run the backtest again, so a champion lands in strata.gold.time_estimate_model
+
+The merger parked this step on October 25, 2026, after merge commit a4ed00d, while the warehouse's daily limit held. Run it after step 1. It needs the Databricks keys in `.env`. It is ticket 25's command. From this merge on, a run that registers a model also writes it to `strata.gold.time_estimate_model` (`src/strata/estimates/portable.py`, `keep`). Ticket 25's runs before this merge wrote no row there. Until a champion row exists, every package's `/api/packages/<ref>/estimate` answers `no_model`, lane 2 draws no bar, and section 4 says "I'm not listing approach options, because I have no time estimate for this package." That is true, so the App is safe to show while this waits.
+
+Ticket 25's second run on October 25 found only 8 packages to train on and 2 to calibrate on for 2025, under the minimum of 20, so it trained no model. Unless more notices or plans have been read since (ticket 25's decision for the user), this run will print "No model was trained for today, so none was registered." and write no row. That still counts as the step having run: the time estimate abstains, as its model card says it should.
+
+Run this from the main checkout:
+
+    uv run --script ops/estimates/backtest_live.py --env-file .env
+
+It worked if it exits 0 and prints "Registered strata.gold.time_estimate version N as champion." Then this returns one row:
+
+    SELECT model, version, alias, training_through, public_from FROM strata.gold.time_estimate_model WHERE alias = 'champion'
+
+## Ticket 26, step 3 of 5: run the nightly job, so the score task fills strata.gold.time_estimate_score
+
+The merger parked this step on October 25, 2026, after merge commit a4ed00d, while the warehouse's daily limit held. Run it after step 2. It needs the Databricks keys in `.env`. It is ticket 04's command, and one run serves every block that names it. The `score` task scores every package with the champion in `strata.gold.time_estimate_model`. With no champion it has no work, as in the sixth run of October 24.
+
+Run this from the main checkout:
+
+    uv run --script ops/bundle/check.py job-run --env-file .env
+
+It worked if every task succeeds, the `score` line says it succeeded, and this returns a count above 0 when step 2 registered a champion:
+
+    SELECT count(*), max(public_from) FROM strata.gold.time_estimate_score WHERE as_described
+
+Then the 100 ms check (criterion 1, warehouse half): time `src/strata/tools/sql/estimate_time/scores.sql` for one scored package through `WarehouseEngine`. The verifier proved the lookup offline on the fixture, which is what the criterion names.
+
+## Ticket 26, step 4 of 5: sync the agent, since estimate_time's description changed
+
+The merger parked this step on October 25, 2026, after merge commit a4ed00d, while the warehouse's daily limit held. It needs the four Foundry keys in `.env`, not the warehouse. The description of `estimate_time` in `config/tools.toml` changed in this ticket. The agent's tool list is generated from that file, so the orchestrator agent in Foundry is out of date until this runs. Ticket 13's sync runs the same command, and one sync from a4ed00d or later serves every block that names it.
+
+Run this from the main checkout:
+
+    uv run --script ops/agent/sync.py --env-file .env
+    uv run --script ops/agent/sync.py --env-file .env --check
+
+It worked if the first run's diff shows the change in `### estimate_time` and ends "I made version N of strata-orchestrator, which matches the repo.", and the `--check` run exits 0.
+
+## Ticket 26, step 5 of 5: redeploy the App with lane 2, section 4 and the plan dates
+
+The merger parked this step on October 25, 2026, after merge commit a4ed00d. Run it after steps 1 to 3. It needs the Databricks keys in `.env`. It is ticket 06's deploy command, and one deploy from a4ed00d or later serves every block that names it, ticket 36's step 4 included. From this merge on, the App serves `GET /api/packages/<ref>/estimate`, `GET /api/planned-packages/<id>/estimate` and `PUT .../plan-dates` (`src/strata/server/estimates.py`).
+
+Run this from the main checkout:
+
+    uv run --script ops/app/deploy_app.py --env-file .env
+
+It worked if the deploy exits 0 and its last line is `Strata is running at https://...`. Then, signed in to the App:
+
+1. With a champion from step 2, open a package inside the champion's training range, such as KE-NWWDA-229129-CW-RFB. It worked if lane 2 draws its navy bar with the white notch and the line to the 8-in-10 point, and section 4 lists up to three approaches with "N of M" counts, or gives a true reason for listing none.
+2. Choose the other plan date and reload. It worked if your choice stays checked, and `SELECT count(*) FROM strata.app.plan_date_choices` in Lakebase returns at least 1.
+3. Without a champion, the same page shows no bar in lane 2, and section 4 says "I'm not listing approach options, because I have no time estimate for this package."

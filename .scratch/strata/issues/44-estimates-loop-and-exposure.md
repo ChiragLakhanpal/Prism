@@ -6,7 +6,7 @@ Read first: docs/PLAN.md sections 7 and 11 ("Loops through the world", Retrainin
 
 **Blocked by:** 26 (The time estimate on screen); 34 (The hindsight test); 37 (Following, project signals and the mission brief)
 
-**Status:** ready-for-agent
+**Status:** in-progress
 **Area:** ml
 **Phase:** P2
 **Design review:** no
@@ -18,3 +18,7 @@ Read first: docs/PLAN.md sections 7 and 11 ("Loops through the world", Retrainin
 - [ ] Each retrain trigger fires on a seeded series: coverage outside 75–85% for two months, error trailing the past range by more than 10%, input-mix drift, and a new Regulations edition marking lessons and models as being re-checked.
 - [ ] Promotion is refused without a backtest win, a shadow-quarter win, per-edition coverage and a sign-off from both roles; with all four it succeeds and moves the champion alias.
 - [ ] The hazard model's shadow scores are stored nightly with its comparison against the fixed signals, and no screen shows them.
+
+## Comments
+
+- October 23, 2026, orchestrator: dispatched to an implementer in its own worktree on branch strata/44-estimates-loop-and-exposure, as soon as ticket 26 landed. Credentials are still missing, so every live step is parked in docs/workspace-catchup.md; the offline side is built against the fixtures.
