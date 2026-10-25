@@ -132,13 +132,13 @@ function removedItems(draft: Draft, kind: KindWords): Removed[] {
 }
 
 // The writing's four steps, as the draft keeps them, past tense. The number of checks is the server's. Suggested PPSD
-// rows count the risks selected and the rows written (ticket 36).
+// rows count the risks selected and the rows written, as the write step stored them (ticket 36).
 function stepsOf(draft: Draft, kind: KindWords): Step[] {
   const steps = kind.steps;
   const checks = draft.checks;
   const done = (key: string, text: string): Step => ({ key, running: "", done: text, state: "done" });
-  const read = draft.kind === "mission_brief" ? "" : draft.kind === "ppsd_rows" ? formatCount(draft.ppsd!.selected) : day(draft.subject.plan_date);
-  const notes = draft.kind === "ppsd_rows" ? draft.ppsd!.rows.length : draft.written.notes;
+  const read = draft.kind === "mission_brief" ? "" : draft.ppsd ? formatCount(draft.ppsd.selected) : day(draft.subject.plan_date);
+  const notes = draft.ppsd ? (draft.written.rows ?? draft.ppsd.counts.total) : draft.written.notes;
   return [
     done("read", steps.read.done(read)),
     done("write", steps.write.done(draft.written.sentences, formatCount(draft.written.sentences), notes, formatCount(notes))),
@@ -319,14 +319,14 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
       // A passage a lesson rests on comes inside get_lessons' row, without its text (ticket 36), so the drawer asks
       // the server for the whole passage rather than show that part.
       const row = (evidence as { row?: Record<string, unknown> }).row;
-      if (draft.kind === "ppsd_rows" && row && row.passage_id && !row.text) continue;
+      if (draft.ppsd && row && row.passage_id && !row.text) continue;
       remember(evidence);
     }
     draftScope.set(draft.subject.project_id ?? null);
     setPageTitle(draft.kind === "mission_brief"
       ? copy.draft.kinds.mission_brief.pageTitle(draft.subject.project_name, draft.subject.project_id)
-      : draft.kind === "ppsd_rows"
-        ? copy.draft.kinds.ppsd_rows.pageTitle(draft.subject.package_title ?? "", "")
+      : draft.ppsd
+        ? copy.draft.kinds[draft.kind].pageTitle(draft.subject.package_title ?? "", "")
         : copy.draft.kinds[draft.kind].pageTitle(draft.subject.implementing_agency, short(draft.subject.plan_date)));
   }, [draft]);
   useEffect(() => () => draftScope.set(null), []);
@@ -498,15 +498,16 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
   );
   // A mission brief (ticket 37): five parts, with the project's name, country and records' date.
   const brief = d.kind === "mission_brief";
-  // Suggested PPSD rows and the Project Paper summary (ticket 36).
-  const ppsd = d.kind === "ppsd_rows" ? d.ppsd! : null;
-  const paper = d.kind === "project_paper";
+  // Suggested PPSD rows and the Project Paper summary (ticket 36), by what the kind's writer adds to the page, so a
+  // kind registered with the same writer (ticket 38's agency variant) gets the same page in its own words.
+  const ppsd = d.ppsd ?? null;
+  const paper = Boolean(d.summary);
   const editable = d.author.you && view !== "piu" && view !== "public" && (d.state === "draft" || d.state === "checked");
   const lede = ppsd ? (
-    ppsd.rows.length === ppsd.selected ? (
+    ppsd.counts.total === ppsd.selected ? (
       <Fill template={kind.lede(ppsd.selected)} slots={{ count: formatCount(ppsd.selected) }} />
     ) : (
-      <Fill template={kind.ledePartial} slots={{ written: formatCount(ppsd.rows.length), count: formatCount(ppsd.selected) }} />
+      <Fill template={kind.ledePartial} slots={{ written: formatCount(ppsd.counts.total), count: formatCount(ppsd.selected) }} />
     )
   ) : paper ? (
     <Fill template={kind.lede(d.summary?.ppsd_rows ?? 0)} slots={{ count: formatCount(d.summary?.ppsd_rows ?? 0) }} />

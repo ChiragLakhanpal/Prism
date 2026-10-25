@@ -154,7 +154,8 @@ export type Draft = {
   discarded: Who | null;
   subject: DraftSubject;
   counts: { signal: number; written: number };
-  written: { notes: number; sentences: number };
+  // Suggested PPSD rows also keep how many rows the writer wrote (ticket 36): two cells each.
+  written: { notes: number; sentences: number; rows?: number };
   notes: DraftNote[];
   evidence: Record<string, EvidenceEvent>;
   checks: ChecksEvent;

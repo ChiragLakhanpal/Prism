@@ -212,6 +212,25 @@ def test_a_package_planned_from_a_sentence_suggests_rows_from_its_saved_criteria
     assert (refused.status_code, refused.json()["code"]) == (404, "unknown_package")
 
 
+def test_a_kind_registered_with_the_ppsd_rows_writer_is_prepared_as_ppsd_rows(database, tmp_path):
+    """Ticket 38 registers the implementing agency's variant as one entry in config/drafts.toml with writer =
+    "strata.drafts.ppsd_rows" (CLAUDE.md rule 9): the route prepares a kind by its writer, not by its key."""
+    registry = (ROOT / "config" / "drafts.toml").read_text()
+    start = registry.index("[kinds.ppsd_rows]")
+    entry = registry[start:registry.index("\n\n", start)].replace("[kinds.ppsd_rows]", "[kinds.ppsd_rows_variant]")
+    path = tmp_path / "drafts.toml"
+    path.write_text(registry.replace("[holds.notChecked]", f"{entry}\n\n[holds.notChecked]"))
+    story = story_of.Story(database, tmp_path, kinds=load_draft_kinds(path))
+    assert story.select().status_code == 200
+
+    answer = story.call("POST", "/api/drafts", json={"kind": "ppsd_rows_variant", "package": story_of.PACKAGE,
+                                                      "criteria": story_of.INDIA, "idempotency_key": "variant-1"})
+
+    assert answer.headers["content-type"].startswith("text/event-stream"), answer.text
+    sent = story_of.events(answer.text)
+    assert [kind for kind, _ in sent if kind in ("draft", "error")] == ["draft"], sent
+
+
 def test_a_row_with_one_failed_cell_stays_with_that_cell_empty(story):
     draft = suggested(story, "ppsd-rows-one-cell-fails")
     permits = next(note for note in draft["notes"] if note["key"] == "permits_before_award/mitigation")

@@ -182,6 +182,14 @@ test("the Short Form shows exactly the template's three columns, with the counts
   expect(await axe(page)).toEqual([]);
 });
 
+test("with a row left out because both its cells failed, the lede and the count line state the server's count, and the steps the rows written", async ({ page }) => {
+  // tests/test_ppsd_rows.py's ppsd-rows-a-row-removed: two risks selected, two rows written, one left out.
+  await openDraft(page, "drafts-ppsd-row-removed.json");
+  await expect(page.locator("[data-lede]")).toHaveText("I drafted rows for one of the two risks you selected.");
+  await expect(page.locator("[data-count-line]")).toHaveText("Showing the one row");
+  await expect(page.locator("[data-step=done]")).toContainText(["I wrote two rows."]);
+});
+
 test("setting an owner counts it at once, and once checked, export waits for the last owner and the bar says so", async ({ page }) => {
   await openDraft(page, "drafts-ppsd-draft.json", {
     answers: {

@@ -192,19 +192,24 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: DraftStore 
         return StreamingResponse(_stream(writing, trace_ids()), media_type="text/event-stream", headers=STREAM_HEADERS)
 
     def prepare(body: DraftRequest, viewer: Viewer) -> dict | JSONResponse:
-        """What a kind's workflow reads beside the viewer's tables: for suggested PPSD rows, the package and the risks
-        the viewer selected in section 3, from the package store; for a Project Paper summary, the PPSD rows the
-        viewer's team checked for the project's packages, from the drafts store (ticket 36)."""
-        if body.kind == "ppsd_rows":
-            return ppsd_request(body, viewer)
-        if body.kind == "project_paper":
-            if not body.project_id or not body.agency_id or not body.plan_date:
-                return refused(422, "no_plan")
-            found = guarded("the team's checked PPSD rows", lambda: checked_ppsd_rows(viewer, body.project_id))
-            return found if isinstance(found, JSONResponse) else {"ppsd": found}
+        """What a kind's workflow reads beside the viewer's tables, by the kind's writer, so a kind registered with
+        an existing writer, such as ticket 38's agency variant of suggested PPSD rows, is prepared as that writer's
+        kind (CLAUDE.md rule 9): for suggested PPSD rows, the package and the risks the viewer selected in section 3,
+        from the package store; for a Project Paper summary, the PPSD rows the viewer's team checked for the
+        project's packages, from the drafts store (ticket 36)."""
+        by_writer = {"strata.drafts.ppsd_rows": ppsd_request, "strata.drafts.project_paper": paper_request}
+        prepared = by_writer.get(kinds.kinds[body.kind].writer)
+        if prepared is not None:
+            return prepared(body, viewer)
         if not body.project_id:
             return refused(422, "no_project")
         return {}
+
+    def paper_request(body: DraftRequest, viewer: Viewer) -> dict | JSONResponse:
+        if not body.project_id or not body.agency_id or not body.plan_date:
+            return refused(422, "no_plan")
+        found = guarded("the team's checked PPSD rows", lambda: checked_ppsd_rows(viewer, body.project_id))
+        return found if isinstance(found, JSONResponse) else {"ppsd": found}
 
     def ppsd_request(body: DraftRequest, viewer: Viewer) -> dict | JSONResponse:
         if not body.package:

@@ -208,7 +208,7 @@ export function PpsdRows({ draft, editable, opened, open, ledeId, onSave, onForm
         {long ? words.progressLong : words.progressShort}
       </p>
       <p className="mt-2 text-caption text-ink-muted" data-count-line data-numbers>
-        {kind.countLine(rows.length, whole(rows.length))}
+        {kind.countLine(counts.total, whole(counts.total))}
       </p>
       <div className="mt-2">
         {table ? (
