@@ -563,6 +563,9 @@ export const galleryCopy = {
     otherMethod: "Framework Agreement",
     middleChosen: "Middle chosen",
     cautiousChosen: "Cautious chosen",
+    // The toggle kind, ticket 26's "Compare with" in section 1's heading row.
+    toggleNone: "Toggle kind, none pressed",
+    togglePressed: "Toggle kind, one pressed",
   },
   // The rebidding page's sections (ticket 28).
   rebidSections: {

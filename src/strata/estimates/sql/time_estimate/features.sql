@@ -45,9 +45,13 @@ listings AS (
   WHERE v.public_from <= :as_of
 ),
 known AS (
-  SELECT step_reference FROM notices
-  UNION
-  SELECT step_reference FROM listings
+  SELECT step_reference FROM (
+    SELECT step_reference FROM notices
+    UNION
+    SELECT step_reference FROM listings
+  ) AS named
+  -- :only keeps one package, for estimate_time scoring a package the nightly batch has not scored (ticket 26).
+  WHERE CAST(:only AS STRING) IS NULL OR step_reference = :only
 ),
 dated AS (
   SELECT

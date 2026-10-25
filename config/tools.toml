@@ -617,22 +617,44 @@ summary_fields = ["past_range", "plan", "frequencies", "counts", "coverage"]
 backs_advice = true
 
 [tools.estimate_time]
-description = """Gives Strata's planned date for each STEP step of one package, from how its comparable packages \
-went at each step: the steps STEP uses for the package's method family (goods, works and non-consulting services; \
-consulting firms; or individual consultants), in STEP's order. For a package whose Procurement Plan gives planned \
-dates, each step's date is the plan's date as first published plus how far comparable packages ran past their own \
-first published dates at that step, because later plans can move them. For a package with no plan dates, each step \
-counts from the one before, by how long that stretch took in comparable packages, starting from start_date, which \
-the person gives; without it, it gives each step's days and no dates. Each step comes with two dates: the middle \
-date, which half of the comparable packages ran later than, and the cautious date, the point by which a share of \
+description = """Gives Strata's time estimate for one package: the months by which a quarter, half, three quarters \
+and 8 in 10 of packages like it were signed, from its specific procurement notice to its signed contract, from the \
+survival model scored in batch every night. It picks the package's comparable packages by the same criteria as \
+find_comparables, which you give the same way, and counts them. Below {time_estimate.min_comparables} comparable \
+packages it gives no time estimate and abstains, and it abstains too as of a date before the model's training \
+data ended, or for a package whose estimated amount or planned duration lies outside what the model learned from. \
+It says how far the estimate's middle is from the past range's middle and why, as counts, such as that the \
+package is larger than some of its comparable packages. It gives the track record: how many packages from the \
+latest test year that the model had not seen finished inside its 8-in-10 range, and each test year's counts and \
+typical errors. It gives the two plan dates, the estimate's middle and its 8-in-10 point, each with how many \
+unseen packages ran longer than that point of their own estimate. It gives the what-if comparisons for market \
+approach, lots and qualification: for each, how many comparable packages went with another value, their STEP \
+references, and the time estimate with that value, or why there is none, such as fewer than \
+{what_if.min_subgroup} that went with it. Review type is never changed, since it is computed from the whole \
+package's estimated amount. It gives up to {what_if.max_approaches} procurement approaches comparable packages went with, how many \
+went with each, and the time estimate with each. It leaves out an approach the thresholds rule out for this \
+package, and counts the comparable packages that went with one, apart from those whose records don't give their \
+market approach, lots and qualification. Say that comparable packages went with an approach, never \
+that the approach made them faster or slower. Each \
+row is one stored combination of market approach and qualification with its range; the estimate, the \
+difference, the track record, the plan dates, the comparisons, the approaches and the counts also come back in \
+the result's summary, which you cite for them. For a package that is not in a plan yet, leave out \
+step_reference and describe it with the described_ parameters.
+
+It also gives the planned date for each STEP step of the package, in step_dates (ticket 27): the steps STEP uses \
+for the package's method family (goods, works and non-consulting services; consulting firms; or individual \
+consultants), in STEP's order. For a package whose Procurement Plan gives planned dates, each step's date is the \
+plan's date as first published plus how far comparable packages ran past their own first published dates at that \
+step, because later plans can move them. For a package with no plan dates, each step counts from the one before, \
+by how long that stretch took in comparable packages, starting from start_date, which the person gives; without \
+it, it gives each step's days and no dates. Each step comes with two dates: the middle date, which half of the \
+comparable packages ran later than, and the cautious date, the point by which a share of \
 {time_estimate.step_cautious_share} of them had reached the step. It counts the comparable packages whose plans \
-recorded the step and, for each date, how many ran later. Below {time_estimate.min_comparables} comparable packages \
-for a step it gives that step no date and says why, and a later step that counts from it cannot be dated either. \
-Below {time_estimate.min_comparables} comparable packages in all it gives no dates. It says which stage, up to the \
-signed contract, ran longest in the most comparable packages, and the track record of the dates from the stored \
-backtests. It never gives an actual date: it counts the steps STEP records actual dates for. The comparables are \
-find_comparables' for the same criteria, which you give the same way. The dates, counts and track record come back \
-in the result's summary, which you cite for them."""
+recorded the step and, for each date, how many ran later. Below {time_estimate.min_comparables} comparable \
+packages for a step it gives that step no date and says why, and a later step that counts from it cannot be dated \
+either. It says which stage, up to the signed contract, ran longest in the most comparable packages, and the track \
+record of the step dates from the stored backtests. It never gives an actual date: it counts the steps STEP \
+records actual dates for. The step dates come back even when the package has no time estimate."""
 adapter = "strata.tools.estimate_time:estimate_time"
 benchmark = "estimate-time-ke-nwwda-541055"
 sources = ["notices", "awards", "documents", "projects"]
@@ -643,19 +665,21 @@ type = "string"
 required = false
 key = true
 description = """The package's STEP activity reference, as its Procurement Plan writes it, such as \
-KE-NWWDA-541055-CW-RFB. Leave it out for a package that is not in a plan yet, and give its category and method."""
+KE-NWWDA-229129-CW-RFB. Leave it out for a package that is not in a plan yet, and describe it yourself."""
 
 [[tools.estimate_time.parameters]]
 name = "method"
 type = "string"
 required = false
-description = "Comparable packages with this selection method, as find_comparables takes it. Leave it out for the package's own Method."
+description = """Comparable packages with this selection method, as find_comparables takes it. Leave it out for the \
+package's own Method, or write any."""
 
 [[tools.estimate_time.parameters]]
 name = "category"
 type = "string"
 required = false
-description = "Comparable packages in this procurement category, as find_comparables takes it. Leave it out for the package's own category."
+description = """Comparable packages in this procurement category, as find_comparables takes it. Leave it out for \
+the package's own category, or write any."""
 
 [[tools.estimate_time.parameters]]
 name = "market_approach"
@@ -685,7 +709,8 @@ description = "Comparable packages whose signed contracts add up to at most this
 name = "country"
 type = "string"
 required = false
-description = "Comparable packages in this country, by its two-letter ISO code, such as KE. Leave it out for the package's own country."
+description = """Comparable packages in this country, by its two-letter ISO code, such as KE. Leave it out for the \
+package's own country, or write any."""
 
 [[tools.estimate_time.parameters]]
 name = "notice_from"
@@ -700,6 +725,36 @@ required = false
 description = "Comparable packages whose specific procurement notice is dated on or before this date. Leave it out for the plan's date."
 
 [[tools.estimate_time.parameters]]
+name = "described_amount_usd"
+type = "number"
+required = false
+description = "For a package not in a plan yet: its estimated amount in US dollars."
+
+[[tools.estimate_time.parameters]]
+name = "described_market_approach"
+type = "string"
+required = false
+description = "For a package not in a plan yet: its Market Approach, in STEP's words, such as Open - National."
+
+[[tools.estimate_time.parameters]]
+name = "described_review_type"
+type = "string"
+required = false
+description = "For a package not in a plan yet: its Review Type, Prior or Post."
+
+[[tools.estimate_time.parameters]]
+name = "described_prequalification"
+type = "string"
+required = false
+description = "For a package not in a plan yet: whether bidders are prequalified, Y or N, as STEP writes it."
+
+[[tools.estimate_time.parameters]]
+name = "described_lots"
+type = "integer"
+required = false
+description = "For a package not in a plan yet, or to say a planned package's lots: its number of lots."
+
+[[tools.estimate_time.parameters]]
 name = "start_date"
 type = "date"
 required = false
@@ -710,20 +765,30 @@ chose. Every later step is dated from it. Leave it out to get each step's days a
 name = "as_of"
 type = "date"
 required = false
-description = "Use only records, plan versions and stored backtests public on or before this date. Leave it out for today."
+description = """Use only records, plan versions, model versions, stored scores and backtests public on or before \
+this date. Leave it out for today."""
 
 [tools.estimate_time.result]
-row = "None yet: the planned dates for each step come back in step_dates and in the summary."
-row_fields = ["evidence_id", "public_from", "source"]
-source_fields = ["tool"]
-fields = ["package", "step_dates", "sources", "records_through"]
-# Why a comparable package gave no step dates: its published plans dated none of the family's steps.
-reasons = ["no_plan_dates"]
-abstentions = ["unknown_package"]
-# The planned dates, their counts, ran longest, the track record and the coverage are derived figures the agent
-# may state, so they come back as one citable record too (spec, "a derived figure the agent needs is returned as a
-# column").
-summary_fields = ["step_dates"]
+row = """One combination of market approach and qualification for the package, as described or as a what-if, with \
+its time estimate in months and days, or the reason it has none."""
+row_fields = ["evidence_id", "public_from", "source", "as_described", "market_approach", "prequalification",
+              "review_type", "q25", "q50", "q75", "q80", "days", "abstention"]
+source_fields = ["model", "model_version", "run_id", "scored"]
+fields = ["package", "comparables", "estimate", "difference", "track_record", "test_years", "plan_dates",
+          "comparisons", "options", "axis_max_months", "thresholds", "step_dates", "sources", "records_through"]
+# Why a combination has no range: a feature outside what the model learned from, or a lever's value it never saw.
+# no_plan_dates is step_dates' own coverage reason (ticket 27): a comparable package whose published plans dated
+# none of the family's steps.
+reasons = ["outside_training", "value_not_learned", "no_plan_dates"]
+# The closed list of why there is no time estimate (brief 40 adds view_public_active here). The first four come
+# from find_comparables for the same criteria.
+abstentions = ["unknown_package", "no_public_notice", "no_comparables", "none_measurable", "too_few_comparables",
+               "asof_before_training", "outside_training", "no_model"]
+# The time estimate, the difference and its reasons, the track record, the plan dates, the comparisons and the
+# approaches are figures the agent may state, so they come back as one citable record too.
+# The planned dates for each step, their counts, ran longest and their track record (ticket 27) are too.
+summary_fields = ["estimate", "difference", "track_record", "plan_dates", "comparisons", "options", "comparables",
+                  "coverage", "step_dates"]
 
 [tools.get_disagreements]
 description = """Says where two sources disagree about a project or a package, and which one Strata leans on. \

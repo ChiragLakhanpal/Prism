@@ -21,10 +21,71 @@
 //
 // Every number arrives from the tool, written by the caller with web/src/lib/format.ts; the chart only
 // places it. Text over marks has a surface halo. There is no animation.
-import { Fragment, useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
+import {
+  Fragment,
+  useCallback,
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type KeyboardEvent,
+  type PointerEvent,
+  type ReactNode,
+} from "react";
+import { CircleDashed, CircleX } from "lucide-react";
 import { cx } from "../lib/cx";
 import { formatNumber } from "../lib/format";
 import { MonoWords } from "./MonoWords";
+
+// Lane 2, the time estimate (ticket 26; the 26 brief, section 5). The chart is 392 px tall at every width when it
+// has lane 2: row A, the lane 1 label over its key (40 px), row B, lane 1 (112 px, 96 under 400 px wide), row C, a
+// 16 px divider, row D, the lane 2 label over its key (40 px), lane 2 (40 px), row E, its two label lines (40 px),
+// and the axis (32 px). A reader's text spacing can make a label row taller, as on lane 1.
+export type Lane2Points = { q25: number; q50: number; q75: number; q80: number };
+export type Lane2 =
+  // A static bar where the estimate will be, while lane 1 has drawn and lane 2 has not.
+  | { kind: "loading" }
+  // An abstention or an error: HTML over the lane and row E, so it wraps.
+  | { kind: "message"; tone: "abstain" | "error"; text: ReactNode }
+  // The estimate: bar is the solid estimate shown now (the comparison's while comparing, null when too few went
+  // with it); ghost is the estimate as described while comparing; note replaces row E's lines when bar is null.
+  | {
+      kind: "estimate";
+      bar: Lane2Points | null;
+      ghost: Lane2Points | null;
+      labels: { middle: string; in10: string } | null;
+      note: string | null;
+      keyBar: string | null;
+      keyGhost: string | null;
+    };
+
+// One part of a key: a glyph drawn as the mark it stands for, then its words.
+type KeyGlyph = "filled" | "hollow" | "grey" | "bar" | "ghost" | "none";
+type KeyPart = { glyph: KeyGlyph; text: string };
+const KEY_A = ["keyA0", "keyA1", "keyA2"];
+const KEY_D = ["keyD0", "keyD1"];
+
+// Where each part of a key sits: on one line while they fit, each part moving whole to the next line when not.
+// A part wider than the whole room takes two lines of its own (tall), as a reader's text spacing makes the quantile
+// key at 320 px (breakFor), and the next part starts on the line after it.
+function placeParts(parts: KeyPart[], widths: number[], glyphWidth: (glyph: KeyGlyph) => number, room: number, gap: number, tall: boolean[] = []) {
+  const at: { x: number; line: number }[] = [];
+  let x = 0;
+  let line = 0;
+  parts.forEach((part, index) => {
+    const width = glyphWidth(part.glyph) + widths[index];
+    const afterTall = index > 0 && tall[index - 1];
+    if (index > 0 && (afterTall || tall[index] || x + gap + width > room)) {
+      line += afterTall ? 2 : 1;
+      x = 0;
+    } else if (index > 0) x += gap;
+    at.push({ x, line });
+    x += width;
+  });
+  return { at, lines: line + 1 + (tall[parts.length - 1] ? 1 : 0) };
+}
 
 export type RangeMark = {
   key: string;
@@ -273,6 +334,78 @@ function Knockout({ kind, box, floor }: { kind: string; box: Box | undefined; fl
 // A 3 px surface halo under text that sits over marks (DESIGN.md section 6).
 const HALO = { stroke: "var(--color-surface)", strokeWidth: 3, paintOrder: "stroke", strokeLinejoin: "round" } as const;
 
+// One part of a key: its glyph, drawn with the mark it stands for, then its words, on the key's line.
+function KeyItem({
+  part,
+  at,
+  top,
+  lineGap,
+  fontSize,
+  glyph,
+  textRef,
+  breakAt = null,
+}: {
+  part: KeyPart;
+  at: { x: number; line: number };
+  top: number;
+  lineGap: number;
+  fontSize: number;
+  glyph: number;
+  textRef: (element: SVGTextContentElement | null) => void;
+  // Where the words take their second line, for a part wider than the chart (breakFor), or null.
+  breakAt?: number | null;
+}) {
+  const cy = top + at.line * lineGap;
+  const textX = at.x + (part.glyph === "none" ? 0 : part.glyph === "bar" || part.glyph === "ghost" ? 22 : 2 * (part.glyph === "grey" ? 3 : glyph) + 6);
+  return (
+    <g data-key-part={part.glyph}>
+      {part.glyph === "filled" && <circle cx={at.x + glyph} cy={cy} r={glyph} className="fill-chart-cat1-text" />}
+      {part.glyph === "hollow" && <circle cx={at.x + glyph} cy={cy} r={glyph - 0.75} strokeWidth={1.5} className="fill-surface stroke-chart-cat1-text" />}
+      {part.glyph === "grey" && <circle cx={at.x + 3} cy={cy} r={3} className="fill-chart-grey300" />}
+      {part.glyph === "bar" && (
+        <>
+          <rect x={at.x} y={cy - 5} width={16} height={10} rx={2} className="fill-primary" />
+          <rect x={at.x + 9} y={cy - 5} width={2} height={10} className="fill-surface" />
+        </>
+      )}
+      {part.glyph === "ghost" && (
+        <>
+          <rect x={at.x} y={cy - 6} width={16} height={12} fill="none" strokeWidth={3} className="stroke-surface" />
+          <rect x={at.x} y={cy - 6} width={16} height={12} fill="none" strokeWidth={1.5} strokeDasharray="4 2" className="stroke-chart-grey500" />
+        </>
+      )}
+      <text ref={textRef} x={textX} y={cy + fontSize * 0.35} fontSize={fontSize} className="fill-chart-text">
+        <Lines text={part.text} at={breakAt} x={textX} step={lineGap} />
+      </text>
+    </g>
+  );
+}
+
+// The time estimate as described while a comparison shows: a dashed outline from its quarter to its three quarters,
+// a tick at its middle and an end cap at its 8-in-10 point, each a 1.5 px grey500 dash (4, 2) over a 3 px surface
+// underlay, so it reads over the navy bar and over white alike (the 26 brief, section 5.4). It never moves.
+function Ghost({ points, x, centre }: { points: Lane2Points; x: (months: number) => number; centre: number }) {
+  const left = x(points.q25);
+  const right = x(points.q75);
+  const shapes = (
+    <>
+      <rect x={left} y={centre - 12} width={Math.max(1, right - left)} height={24} />
+      <line x1={x(points.q50)} x2={x(points.q50)} y1={centre - 12} y2={centre + 12} />
+      <line x1={x(points.q80)} x2={x(points.q80)} y1={centre - 6} y2={centre + 6} />
+    </>
+  );
+  return (
+    <g data-lane2-ghost fill="none">
+      <g strokeWidth={3} className="stroke-surface">
+        {shapes}
+      </g>
+      <g strokeWidth={1.5} strokeDasharray="4 2" className="stroke-chart-grey500">
+        {shapes}
+      </g>
+    </g>
+  );
+}
+
 const clamp = (value: number, low: number, high: number) => Math.min(Math.max(value, low), Math.max(low, high));
 
 export function RangeChart({
@@ -305,6 +438,11 @@ export function RangeChart({
   opened = null,
   openHint,
   openLabel,
+  lane2,
+  lane2Label = "",
+  lane2LabelShort = "",
+  matching = null,
+  compareKey = null,
 }: {
   width: number;
   marks: RangeMark[];
@@ -351,7 +489,18 @@ export function RangeChart({
   // The tooltip's last line for a pointer, and the touch tooltip's button.
   openHint?: string;
   openLabel?: string;
+  // Ticket 26: lane 2, the time estimate, under lane 1 on the same axis, and its label. Without it the chart
+  // draws lane 1 alone, as ticket 12 built it.
+  lane2?: Lane2;
+  lane2Label?: string;
+  // The label in fewer words, for a chart its full label would not fit in, as at 320 px with a reader's text spacing.
+  lane2LabelShort?: string;
+  // While comparing: the marks of the packages that went with the option keep their look, every other dot turns
+  // grey300 at r 3, and row A's key says how many went with it ("{k} went with 3 lots", "{rest} others").
+  matching?: ReadonlySet<string> | null;
+  compareKey?: { match: string; others: string; open: string | null } | null;
 }) {
+  const twoLanes = lane2 !== undefined;
   const altId = useId();
   const helpId = useId();
   const narrow = width < 400;
@@ -366,9 +515,12 @@ export function RangeChart({
   const layout = useMemo(() => fit(xs, r0, big ? r0 : 4, baseLane), [xs, r0, big, baseLane]);
   const widestKeys = readoutWidest.map((_, index) => [`widest${index}`, `widest${index}-0`, `widest${index}-1`] as const);
   const { widths, boxes, breaks, ref } = useTextWidths(
-    ["lane", "keySigned", "keyHollow", "plan", ...READOUT_LINES, ...widestKeys.flat(), "middle", "in10", "tickLast", "tickPrev"],
-    ["keySigned", "middle", ...widestKeys.map(([one]) => one)],
+    ["lane", "keySigned", "keyHollow", "plan", ...READOUT_LINES, ...widestKeys.flat(), "middle", "in10", "tickLast", "tickPrev",
+      ...KEY_A, ...KEY_D, "lane2", "lane2Full", "middle2", "in102"],
+    ["keySigned", "middle", "middle2", ...KEY_A, ...widestKeys.map(([one]) => one)],
   );
+  // Lane 2's label, in fewer words when the full one is wider than the chart.
+  const lane2Shown = lane2LabelShort && (widths.lane2Full ?? 0) > width ? lane2LabelShort : lane2Label;
   // Row A: the lane label and the key, from the chart's left edge. When the key is wider than the
   // chart, its hollow half takes a line of its own, and row A grows by that line before the first paint.
   // A signed half wider than the chart takes two lines (breakFor).
@@ -389,7 +541,36 @@ export function RangeChart({
   const keyWraps = Boolean(keySigned && keyHollow) && keyStart + keyWidth > width;
   const lineGap = type.s + 2;
   const signedLines = signedBreak ? 2 : 1;
-  const rowA = ROW_A + (signedLines - 1 + (keyWraps ? 1 : 0)) * lineGap;
+  // With lane 2, row A is two lines: the lane label, then the key, whose parts move whole to a line of their own
+  // when they don't fit. While comparing, the key counts the dots that went with the option.
+  const keyAParts: KeyPart[] = compareKey
+    ? [
+        { glyph: keyLead ? "none" : "filled", text: compareKey.match },
+        ...(keyLead ? [] : [{ glyph: "grey" as const, text: compareKey.others }]),
+        ...(compareKey.open && !keyLead ? [{ glyph: "hollow" as const, text: compareKey.open }] : []),
+      ]
+    : [
+        ...(keySigned ? [{ glyph: (keyLead ? "none" : "filled") as KeyGlyph, text: keySigned }] : []),
+        ...(keyHollow ? [{ glyph: (keyLead ? "none" : "hollow") as KeyGlyph, text: keyHollow }] : []),
+      ];
+  const keyGlyphWidth = (glyph: KeyGlyph) => (glyph === "none" ? 0 : glyph === "bar" || glyph === "ghost" ? 22 : 2 * glyphRadius(glyph) + 6);
+  function glyphRadius(kind: KeyGlyph) {
+    return kind === "grey" ? 3 : glyph;
+  }
+  const keyABreaks = keyAParts.map((part, index) =>
+    breakFor(breaks[KEY_A[index]], widths[KEY_A[index]] ?? 0, width - keyGlyphWidth(part.glyph)),
+  );
+  const placedA = placeParts(
+    keyAParts,
+    keyAParts.map((_, index) => widths[KEY_A[index]] ?? 0),
+    keyGlyphWidth,
+    width,
+    keyGap,
+    keyABreaks.map((one) => one !== null),
+  );
+  const rowA = twoLanes
+    ? 40 + (placedA.lines - 1) * lineGap
+    : ROW_A + (signedLines - 1 + (keyWraps ? 1 : 0)) * lineGap;
   const hollowStart = keyWraps ? keyStart : keySigned ? keyStart + signedPart + keyGap : keyStart;
   const textBaseline = ROW_A / 2 + type.s * 0.35;
   const hollowY = keyWraps ? signedLines * lineGap : 0;
@@ -432,10 +613,28 @@ export function RangeChart({
   // Row C grows by a line when the middle's label takes two (breakFor).
   const rowCStep = type.s + 4;
   const middleBreak = middleLabel ? breakFor(breaks.middle, widths.middle ?? 0, plotRight - PAD) : null;
-  const axisY = laneBottom + ROW_C + (middleBreak ? rowCStep : 0);
+  const rowCBottom = laneBottom + ROW_C + (middleBreak ? rowCStep : 0);
+  // Lane 2's rows under lane 1's: the divider, row D (its label over its key), the lane and row E.
+  const estimate = lane2?.kind === "estimate" ? lane2 : null;
+  const keyDParts: KeyPart[] = estimate
+    ? [
+        ...(estimate.bar && estimate.keyBar ? [{ glyph: "bar" as const, text: estimate.keyBar }] : []),
+        ...(estimate.ghost && estimate.keyGhost ? [{ glyph: "ghost" as const, text: estimate.keyGhost }] : []),
+      ]
+    : [];
+  const placedD = placeParts(keyDParts, keyDParts.map((_, index) => widths[KEY_D[index]] ?? 0), keyGlyphWidth, width, 16);
+  const rowDTop = rowCBottom + 16;
+  const rowDHeight = 40 + (Math.max(placedD.lines, 1) - 1) * lineGap;
+  const lane2Top = rowDTop + rowDHeight;
+  const lane2Centre = lane2Top + 20;
+  const rowETop = lane2Top + 40;
+  const middle2Break = estimate?.labels && estimate.bar ? breakFor(breaks.middle2, widths.middle2 ?? 0, plotRight - PAD) : null;
+  const axisY = twoLanes ? rowETop + 40 + (middle2Break ? rowCStep : 0) : rowCBottom;
   const height = axisY + AXIS;
   const centre = laneTop + layout.lane / 2;
   const dots = marks.map((mark, index) => ({ ...mark, cx: xs[index], cy: centre + layout.offsets[index] }));
+  // A dot's drawn radius: r 3 while a comparison fades it, its own otherwise. Its rings follow it.
+  const drawnR = (key: string) => (matching !== null && !matching.has(key) ? 3 : layout.r);
 
   const ticks = Array.from({ length: Math.floor(axisMax / step) + 1 }, (_, index) => index * step);
 
@@ -722,6 +921,33 @@ export function RangeChart({
   const rowC1 = laneBottom + type.s + 2;
   const rowC2 = rowC1 + rowCStep * (middleBreak ? 2 : 1);
 
+  // Row E: lane 2's labels, placed as row C places lane 1's: the middle's centred on the notch, clamped inside the
+  // plot, and the 8-in-10 label 4 px right of the end cap, or left when there is no room; each moves off the plan
+  // line when it would cross it, if it can clear the line by 6 px, and its knockout stops the line otherwise.
+  const bar = estimate?.bar ?? null;
+  const middle2Width = lineWidth(middle2Break, widths.middle2 ?? 0);
+  let middle2X = bar ? clamp(x(bar.q50) - middle2Width / 2, PAD, plotRight - middle2Width) : 0;
+  if (bar && planX !== null && middle2X - 3 < planX && planX < middle2X + middle2Width + 3) {
+    const notch = x(bar.q50);
+    const options = [planX + 6, planX - 6 - middle2Width].filter((start) => start >= PAD && start + middle2Width <= plotRight);
+    if (options.length) middle2X = options.reduce((a, b) => (Math.abs(a + middle2Width / 2 - notch) <= Math.abs(b + middle2Width / 2 - notch) ? a : b));
+  }
+  const in102Width = widths.in102 ?? 0;
+  const e80x = bar ? x(bar.q80) : 0;
+  const in102Start = (right: boolean) => (right ? e80x + 4 : Math.max(0, e80x - 4 - in102Width));
+  let in102Right = e80x + 4 + in102Width <= plotRight;
+  if (bar && planX !== null) {
+    const start = in102Start(in102Right);
+    const other = in102Start(!in102Right);
+    const crossed = start - 3 < planX && planX < start + in102Width + 3;
+    const otherFits = other >= 0 && other + in102Width <= plotRight;
+    const otherClears = other + in102Width <= planX - 6 || other >= planX + 6;
+    if (crossed && otherFits && otherClears) in102Right = !in102Right;
+  }
+  const in102Pinned = !in102Right && e80x - 4 - in102Width < 0;
+  const rowE1 = rowETop + type.s + 2;
+  const rowE2 = rowE1 + rowCStep * (middle2Break ? 2 : 1);
+
   // The axis: the label before the last one is dropped when it comes within 8 px of the last, whose
   // tick and gridline stay.
   const lastTick = ticks[ticks.length - 1];
@@ -806,19 +1032,36 @@ export function RangeChart({
           <line key={tick} x1={x(tick)} x2={x(tick)} y1={laneTop} y2={axisY} className="stroke-chart-grey200" strokeWidth={1} strokeDasharray="3 3" />
         ))}
 
-        {/* Row A: the lane label and the key. */}
+        {/* Row A: the lane label and the key. With lane 2, the label takes the first line and the key the second. */}
         <text
           ref={ref("lane")}
           x={0}
-          y={textBaseline}
+          y={twoLanes ? 10 + type.s * 0.35 : textBaseline}
           fontSize={type.s}
           fontWeight={600}
-          opacity={showLaneLabel ? 1 : 0}
+          opacity={twoLanes || showLaneLabel ? 1 : 0}
           className="fill-chart-text-subtle uppercase"
         >
           {laneLabel}
         </text>
-        {keySigned && (
+        {twoLanes && (
+          <g data-key-a>
+            {keyAParts.map((part, index) => (
+              <KeyItem
+                key={index}
+                part={part}
+                at={placedA.at[index]}
+                top={30}
+                lineGap={lineGap}
+                fontSize={type.s}
+                glyph={glyph}
+                textRef={ref(KEY_A[index])}
+                breakAt={keyABreaks[index]?.at ?? null}
+              />
+            ))}
+          </g>
+        )}
+        {!twoLanes && keySigned && (
           <>
             {!keyLead && <circle cx={keyStart + glyph} cy={ROW_A / 2} r={glyph} className="fill-chart-cat1-text" />}
             <text ref={ref("keySigned")} x={keyStart + glyphPart} y={textBaseline} fontSize={type.s} className="fill-chart-text">
@@ -826,7 +1069,7 @@ export function RangeChart({
             </text>
           </>
         )}
-        {keyHollow && (
+        {!twoLanes && keyHollow && (
           <>
             {!keyLead && (
               <circle cx={hollowStart + glyph} cy={ROW_A / 2 + hollowY} r={glyph - 0.75} strokeWidth={1.5} className="fill-surface stroke-chart-cat1-text" />
@@ -865,14 +1108,25 @@ export function RangeChart({
           />
         )}
 
-        {/* The dots, each with a surface ring so touching dots stay apart. */}
-        {dots.map((dot) => (
-          <g key={dot.key} data-dot={dot.hollow ? "hollow" : "filled"}>
-            <circle cx={dot.cx} cy={dot.cy} r={layout.r + 2} className="fill-surface" />
+        {/* The dots, each with a surface ring so touching dots stay apart. While comparing, a dot that did not go
+            with the option turns grey300 at r 3 at the same centre, so nothing reflows. */}
+        {dots.map((dot) => {
+          const faded = matching !== null && !matching.has(dot.key);
+          const r = faded ? 3 : layout.r;
+          return (
+          <g key={dot.key} data-dot={dot.hollow ? "hollow" : "filled"} data-went-with={matching === null ? undefined : faded ? "no" : "yes"}>
+            <circle data-dot-mark cx={dot.cx} cy={dot.cy} r={r + 2} className="fill-surface" />
             {dot.hollow ? (
-              <circle cx={dot.cx} cy={dot.cy} r={layout.r - 0.75} strokeWidth={1.5} className="fill-surface stroke-chart-cat1-text" />
+              <circle
+                data-dot-mark
+                cx={dot.cx}
+                cy={dot.cy}
+                r={r - 0.75}
+                strokeWidth={1.5}
+                className={cx("fill-surface", faded ? "stroke-chart-grey300" : "stroke-chart-cat1-text")}
+              />
             ) : (
-              <circle cx={dot.cx} cy={dot.cy} r={layout.r} className="fill-chart-cat1-text" />
+              <circle data-dot-mark cx={dot.cx} cy={dot.cy} r={r} className={faded ? "fill-chart-grey300" : "fill-chart-cat1-text"} />
             )}
             {dot.beyond && (
               <path
@@ -884,17 +1138,39 @@ export function RangeChart({
               />
             )}
           </g>
-        ))}
+          );
+        })}
         {/* The opened dot's ring, in selection1, while the evidence drawer shows its records (ticket 15). */}
         {opened !== null &&
           dots
             .filter((dot) => dot.key === opened)
             .map((dot) => (
-              <circle key="opened" data-opened-ring cx={dot.cx} cy={dot.cy} r={layout.r + 3} fill="none" strokeWidth={2} className="stroke-info-icon" />
+              <circle key="opened" data-opened-ring cx={dot.cx} cy={dot.cy} r={drawnR(dot.key) + 3} fill="none" strokeWidth={2} className="stroke-info-icon" />
             ))}
         {/* The hovered dot's ring, drawn after every dot so the dots stacked around it never hide part of it. */}
         {hover !== null && focused === null && dots[hover] && (
-          <circle data-hover-ring cx={dots[hover].cx} cy={dots[hover].cy} r={layout.r + 2} fill="none" strokeWidth={2} className="stroke-chart-grey500" />
+          <circle data-hover-ring cx={dots[hover].cx} cy={dots[hover].cy} r={drawnR(dots[hover].key) + 2} fill="none" strokeWidth={2} className="stroke-chart-grey500" />
+        )}
+
+        {/* Lane 2, the time estimate (ticket 26): the divider, row D, the lane and row E. */}
+        {twoLanes && (
+          <g data-lane2={lane2.kind}>
+            <line aria-hidden="true" data-lane-divider x1={PAD} x2={plotRight} y1={rowCBottom + 8} y2={rowCBottom + 8} strokeWidth={1} className="stroke-chart-grey200" />
+            {lane2.kind === "loading" && (
+              <rect data-lane2-skeleton x={PAD + 0.3 * (width - 2 * PAD)} y={lane2Centre - 10} width={0.3 * (width - 2 * PAD)} height={20} rx={2} className="fill-surface-2" />
+            )}
+            {bar && (
+              <g data-lane2-bar>
+                <rect data-lane2-move x={x(bar.q25)} y={lane2Centre - 10} width={Math.max(1, x(bar.q75) - x(bar.q25))} height={20} rx={2} className="fill-primary" />
+                {x(bar.q80) - x(bar.q75) >= 2 && (
+                  <rect data-lane2-move data-lane2-connector x={x(bar.q75)} y={lane2Centre - 1} width={x(bar.q80) - x(bar.q75)} height={2} className="fill-chart-grey500" />
+                )}
+                <rect data-lane2-move data-lane2-cap x={x(bar.q80) - 1} y={lane2Centre - 6} width={2} height={12} className="fill-chart-grey500" />
+                <rect data-lane2-move data-lane2-notch x={x(bar.q50) - 1.25} y={lane2Centre - 10} width={2.5} height={20} className="fill-surface" />
+              </g>
+            )}
+            {estimate?.ghost && <Ghost points={estimate.ghost} x={x} centre={lane2Centre} />}
+          </g>
         )}
 
         {/* The axis. */}
@@ -984,11 +1260,86 @@ export function RangeChart({
             {in10Label}
           </text>
         )}
+        {/* Lane 2's words, over the plan line: row D's label and key, and row E's labels, each on a knockout. */}
+        {twoLanes && (
+          <g data-lane2-words>
+            <Knockout kind="lane2" box={boxes.lane2} floor={axisY - 0.5} />
+            {keyDParts.map((_, index) => (
+              <Knockout key={index} kind={`keyD${index}`} box={boxes[KEY_D[index]]} floor={axisY - 0.5} />
+            ))}
+            <text ref={ref("lane2")} x={0} y={rowDTop + 10 + type.s * 0.35} fontSize={type.s} fontWeight={600} className="fill-chart-text-subtle uppercase">
+              {lane2Shown}
+            </text>
+            {keyDParts.map((part, index) => (
+              <KeyItem
+                key={index}
+                part={part}
+                at={placedD.at[index]}
+                top={rowDTop + 30}
+                lineGap={lineGap}
+                fontSize={type.s}
+                glyph={glyph}
+                textRef={ref(KEY_D[index])}
+              />
+            ))}
+            {/* Row E: the solid bar's numbers, each on its knockout over the plan line, with its halo. */}
+            {bar && estimate?.labels && (
+              <>
+                <Knockout kind="middle2" box={boxes.middle2} floor={axisY - 0.5} />
+                <Knockout kind="in102" box={boxes.in102} floor={axisY - 0.5} />
+                <text ref={ref("middle2")} data-row-e="middle" x={middle2X} y={rowE1} fontSize={type.s} className="fill-chart-text" style={HALO}>
+                  <Lines text={estimate.labels.middle} at={middle2Break?.at ?? null} x={middle2X} step={rowCStep} />
+                </text>
+                <text
+                  ref={ref("in102")}
+                  data-row-e="in10"
+                  x={in102Right ? e80x + 4 : in102Pinned ? 0 : e80x - 4}
+                  y={rowE2}
+                  textAnchor={in102Right || in102Pinned ? "start" : "end"}
+                  fontSize={type.s}
+                  className="fill-chart-text"
+                  style={HALO}
+                >
+                  {estimate.labels.in10}
+                </text>
+              </>
+            )}
+          </g>
+        )}
 
       </svg>
 
-      {/* The widest readouts, drawn hidden in the readout's type so its lines can be chosen from them. */}
+      {/* Lane 2's messages, after the drawing so they are read with the chart: an abstention or an error over the
+          lane and row E, as HTML so it wraps, with the plan line passing behind it; and, while comparing with an
+          option too few went with, row E's sentence in place of its labels. */}
+      {lane2?.kind === "message" && (
+        <div
+          data-lane2-message={lane2.tone}
+          className="absolute flex items-start gap-2 bg-surface p-1 text-chart-text"
+          style={{ left: PAD, top: lane2Top, width: width - 2 * PAD, minHeight: 80, fontSize: type.m }}
+        >
+          {lane2.tone === "error" ? (
+            <CircleX aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-error-icon" />
+          ) : (
+            <CircleDashed aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-line-strong" />
+          )}
+          <p className="min-w-0">{lane2.text}</p>
+        </div>
+      )}
+      {estimate && !estimate.bar && estimate.note && (
+        <p data-lane2-note className="absolute text-chart-text" style={{ left: PAD, top: rowETop + 2, width: width - 2 * PAD, fontSize: type.s }}>
+          {estimate.note}
+        </p>
+      )}
+
+      {/* The widest readouts, drawn hidden in the readout's type so its lines can be chosen from them, and lane 2's
+          full label, so the chart knows whether it fits. */}
       <svg aria-hidden="true" width={0} height={0} className="pointer-events-none absolute top-0 left-0 overflow-hidden" style={{ visibility: "hidden" }}>
+        {twoLanes && (
+          <text ref={ref("lane2Full")} fontSize={type.s} fontWeight={600} className="uppercase">
+            {lane2Label}
+          </text>
+        )}
         {readoutWidest.flatMap((widest, index) =>
           [widest.one, ...widest.lines].map((text, part) => (
             <text key={widestKeys[index][part]} ref={ref(widestKeys[index][part])} fontSize={type.s} className="tabular-nums">

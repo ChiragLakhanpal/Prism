@@ -23,8 +23,8 @@
 import { readFileSync, readdirSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { causalChecker, copyChecker } from "./copy.ts";
-import { CAUSAL_SCOPES } from "./rules.ts";
+import { causalChecker, copyChecker, whatIfChecker } from "./copy.ts";
+import { CAUSAL_SCOPES, WHAT_IF_SAYS, WHAT_IF_SCOPES } from "./rules.ts";
 import { copyStrings, lineOf, literalText, offTokenClasses, scopedRanges, termLiterals } from "./source.ts";
 import { staleServerCopies } from "./server-copy.ts";
 import { definitions } from "../src/lib/definitions.ts";
@@ -91,15 +91,25 @@ function main(): number {
   const terms = definitions(readFileSync(join(REPO, "GLOSSARY.md"), "utf8"));
 
   const causal = causalChecker();
+  const whatIf = whatIfChecker();
   for (const file of copy) {
     const source = readFileSync(file, "utf8");
     // The blocks that write about links between a contract and a paragraph also refuse causal words (ticket 22).
     const scoped = scopedRanges(source, file, CAUSAL_SCOPES);
+    // The time estimate's blocks refuse "caused", "split" and "splitting", and its what-ifs say "went with" (ticket 26).
+    const whatIfScoped = scopedRanges(source, file, WHAT_IF_SCOPES);
+    const [says] = scopedRanges(source, file, [WHAT_IF_SAYS.scope]);
+    let saysWords = false;
     for (const found of copyStrings(source, file)) {
       const inScope = scoped.some(([start, end]) => found.offset >= start && found.offset < end);
-      for (const problem of [...check(found.text), ...(inScope ? causal(found.text) : [])]) {
+      const inWhatIf = whatIfScoped.some(([start, end]) => found.offset >= start && found.offset < end);
+      if (says && found.offset >= says[0] && found.offset < says[1] && found.text.includes(WHAT_IF_SAYS.words)) saysWords = true;
+      for (const problem of [...check(found.text), ...(inScope ? causal(found.text) : []), ...(inWhatIf ? whatIf(found.text) : [])]) {
         problems.push(`${at(file, lineOf(source, found.offset))}: "${found.text.trim()}" ${problem}`);
       }
+    }
+    if (says && !saysWords) {
+      problems.push(`${at(file, lineOf(source, says[0]))}: the ${WHAT_IF_SAYS.scope} block never says "${WHAT_IF_SAYS.words}", as a what-if must (the 26 brief, section 7.4).`);
     }
   }
   for (const file of glossary) {

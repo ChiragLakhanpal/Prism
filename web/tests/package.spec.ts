@@ -13,6 +13,9 @@ const API = `/api/packages/${REF}`;
 // values.toml [past_range]: 49 comparables, 45 signed and four still open; the middle half 3.3 to
 // 7.9 months, the middle 4.4, 8 in 10 within 9.1; the plan's 1.5 months, and two signed within them.
 const FINDING = "2 of 49 comparable packages, fewer than 1 in 10, were signed within the plan's 1.5 months.";
+// Lane 2 (ticket 26): the demo package's estimated amount, US$1,230,000.00, lies outside what the fixture's model
+// learned from (tests/fixtures/api/estimate-ke-nwwda-541055.json), so lane 2 says so in the first person.
+const OUTSIDE_TRAINING = "I'm not giving a time estimate: this package is larger than any package my model learned from.";
 
 type Answer = { status?: number; body: string };
 type Comparables = { rows: { step_reference: string; months: number; still_open: boolean }[]; [key: string]: unknown };
@@ -22,7 +25,7 @@ const ICR_54 = "strata.gold.passage:31525018/v1/54";
 
 async function openPackage(
   page: Page,
-  options: { width?: number; comparables?: Answer | null; pkg?: Answer | null; ref?: string; evidence?: boolean } = {},
+  options: { width?: number; comparables?: Answer | null; pkg?: Answer | null; ref?: string; evidence?: boolean; estimate?: Answer | null } = {},
 ) {
   const { width = 1440, ref = REF } = options;
   await page.setViewportSize({ width, height: 900 });
@@ -39,6 +42,12 @@ async function openPackage(
   answers[`${api}/risks`] = { body: await recorded("risks-ke-nwwda-541055.json") };
   // Section 2, the planned date for each step (ticket 27): on the fixture every step abstains.
   answers[`${api}/steps`] = { body: await recorded("steps-ke-nwwda-541055.json") };
+  // Lane 2, the time estimate (ticket 26): the demo package lies outside what the fixture's model learned from, so
+  // lane 2 says so in a sentence; another package's time estimate never answers, so its lane 2 stays loading.
+  const estimate = options.estimate === undefined && ref === REF ? { body: await recorded("estimate-ke-nwwda-541055.json") } : options.estimate;
+  if (estimate) answers[`${api}/estimate`] = estimate;
+  if (estimate) answering.add(page);
+  else answering.delete(page);
   if (options.evidence) {
     answers["/api/evidence"] = { body: await recorded("evidence-icr-p130164-54.json") };
     answers["/api/evidence/opened"] = { body: '{"opened":[],"recorded":true}' };
@@ -47,11 +56,17 @@ async function openPackage(
   // A path left out never answers, so the page stays loading.
   if (options.pkg === null) await page.route(`**${api}`, () => new Promise(() => {}));
   if (options.comparables === null) await page.route(`**${api}/comparables`, () => new Promise(() => {}));
+  if (!estimate) await page.route(`**${api}/estimate`, () => new Promise(() => {}));
   await page.goto(`/packages/${encodeURIComponent(ref)}${options.evidence ? `?evidence=${encodeURIComponent(ICR_54)}` : ""}`);
 }
 
 const section = (page: Page) => page.locator("[data-past-range]");
-const ready = async (page: Page) => expect(page.locator("[data-past-range]:not([data-past-range=loading])")).toBeVisible();
+// A page whose time estimate answers: ready waits for lane 2 too, so nothing moves after a test measures the chart.
+const answering = new WeakSet<Page>();
+const ready = async (page: Page) => {
+  await expect(page.locator("[data-past-range]:not([data-past-range=loading])")).toBeVisible();
+  if (answering.has(page)) await expect(page.locator("[data-lane2=loading]")).toHaveCount(0);
+};
 const readout = (page: Page) => page.locator("[data-readout]");
 
 async function derived(name: string, edit: (body: Comparables) => void): Promise<Answer> {
@@ -108,7 +123,9 @@ test("the workspace names the package, lists its facts in STEP's field names, an
   await expect(page.getByRole("figure", { name: FINDING })).toBeVisible();
   await expect(section(page).locator("[data-summary]")).toHaveText(
     "The middle half of these packages took 3.3 to 7.9 months, and the middle one took 4.4. 8 in 10 were signed within 9.1 months. " +
-      "Four of the 49 are still open. I kept them in the range as not signed yet, so the range does not look shorter than it was.",
+      "Four of the 49 are still open. I kept them in the range as not signed yet, so the range does not look shorter than it was. " +
+      // Lane 2 (ticket 26): the demo package lies outside what the fixture's model learned from.
+      "The past range above still shows every comparable package.",
   );
   await expect(section(page).locator("[data-coverage-line]")).toContainText(
     "Based on 49 of 65 matching packages; three lacked the STEP reference that links notice to contract, 10 had no specific procurement " +
@@ -155,9 +172,10 @@ test("the chart draws each comparable as a dot on a month axis, hollow if still 
   await expect(chart.locator("text").filter({ hasText: /^(0|6|12|18 months)$/ })).toHaveCount(4);
   // The text alternative states the same numbers, and says what happened to the canceled packages.
   await expect(page.locator("[data-chart-alt]")).toHaveText(
-    "Dot chart of 49 comparable packages on a month axis from 0 to 18 months: 45 signed and four still open. The middle half took " +
-      "3.3 to 7.9 months, the middle one took 4.4, and 8 in 10 were signed within 9.1. A line marks 1.5 months, and 2 of 49 were " +
-      "signed within it. I left out the three canceled packages, because a canceled package was never signed and is not still open.",
+    "Two lanes on one month axis from 0 to 18 months. " +
+      "Dot chart of 49 comparable packages on a month axis from 0 to 18 months: 45 signed and four still open. The middle half took " +
+      `3.3 to 7.9 months, the middle one took 4.4, and 8 in 10 were signed within 9.1. ${OUTSIDE_TRAINING} A line marks 1.5 months, ` +
+      "and 2 of 49 were signed within it. I left out the three canceled packages, because a canceled package was never signed and is not still open.",
   );
 });
 
@@ -210,6 +228,8 @@ test("a drag gives the slider focus, so the arrow keys nudge the line you just m
   await openPackage(page);
   await ready(page);
   const slider = page.getByRole("slider", { name: "Planned months" });
+  // The two-lane chart (ticket 26) is 392 px tall, so bring it on screen before the mouse reaches for its knob.
+  await page.locator("[data-range-chart]").scrollIntoViewIfNeeded();
   const box = (await page.locator("[data-range-chart]").boundingBox())!;
   const knob = (await slider.boundingBox())!;
 
@@ -298,8 +318,9 @@ test("the statistics' labels and their knockouts stop above the axis, so the axi
     for (const width of [1440, 1024, 390]) {
       await openPackage(page, { width, comparables: { body: await recorded(comparables) } });
       await ready(page);
-      // Both answers draw the middle's and the 8-in-10 point's knockouts, so the check below has two to read.
-      await expect(page.locator("[data-chart-drawing] [data-knockout]"), `${comparables} at ${width} px`).toHaveCount(2);
+      // Both answers draw the middle's and the 8-in-10 point's knockouts, so the check below has two to read, and lane
+      // 2's label has its own (ticket 26), which stops above the axis too.
+      await expect(page.locator("[data-chart-drawing] :is([data-knockout=middle], [data-knockout=in10])"), `${comparables} at ${width} px`).toHaveCount(2);
       const overlaps = await page.evaluate(() => {
         // The axis is a 1 px line, so its stroke starts half a pixel above its y.
         const axis = document.querySelector("[data-chart-drawing] [data-axis]")!.getBoundingClientRect().top - 0.5;
@@ -833,7 +854,10 @@ test("a quantile dot the curve never reached is pinned at the plot's edge, so th
 });
 
 test("below 20 comparables there is no range and no share: the copy file's sentence, every package, and the table open", async ({ page }) => {
-  await openPackage(page, { comparables: { body: await recorded("comparables-ke-nwwda-541055-prior.json") } });
+  await openPackage(page, {
+    comparables: { body: await recorded("comparables-ke-nwwda-541055-prior.json") },
+    estimate: { body: await recorded("estimate-ke-nwwda-541055-prior.json") },
+  });
   await ready(page);
 
   // The first h3: section 1's card ends with the "Advertised again" block's own h3 (ticket 28).
@@ -850,8 +874,9 @@ test("below 20 comparables there is no range and no share: the copy file's sente
   await expect(page.locator("[data-comparables-table] [data-table-caption]")).toHaveText("All seven comparable packages, shortest first.");
   // With none still open, the text alternative names only the signed ones.
   await expect(page.locator("[data-chart-alt]")).toHaveText(
-    "Dot chart of seven comparable packages on a month axis from 0 to 12 months: seven signed. I'm not giving a range for so few. " +
-      "A line marks 1.5 months, and 0 of 7 were signed within it.",
+    "Two lanes on one month axis from 0 to 12 months. " +
+      "Dot chart of seven comparable packages on a month axis from 0 to 12 months: seven signed. I'm not giving a range for so few. " +
+      "I'm not giving a time estimate for so few. A line marks 1.5 months, and 0 of 7 were signed within it.",
   );
 });
 
@@ -1470,7 +1495,7 @@ test("a plan row with no planned dates has no plan line until you type months", 
   // The title already gives the middle half, so the summary starts with the middle one.
   await expect(section(page).locator("[data-summary]")).toHaveText(
     "The middle one took 4.4 months. 8 in 10 were signed within 9.1 months. Four of the 49 are still open. I kept them in the range " +
-      "as not signed yet, so the range does not look shorter than it was.",
+      "as not signed yet, so the range does not look shorter than it was. The past range above still shows every comparable package.",
   );
   await expect(page.getByRole("slider")).toHaveCount(0);
   await expect(section(page).getByText(/^The plan row has no planned notice date or signing date, so there is no plan line yet/)).toBeVisible();

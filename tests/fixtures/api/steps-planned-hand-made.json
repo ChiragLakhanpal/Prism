@@ -4,30 +4,32 @@
   "view": "staff",
   "rows": [],
   "coverage": {
-    "matched": 25,
-    "used": 25,
+    "matched": 0,
+    "used": 0,
     "not_used": []
   },
-  "package": null,
-  "sources": [
-    {
-      "key": "notices",
-      "dataset_name": "Procurement Notices"
-    },
-    {
-      "key": "awards",
-      "dataset_name": "Contract Awards in Investment Project Financing (Since FY 2020)"
-    },
-    {
-      "key": "documents",
-      "dataset_name": "Documents & Reports: Documents API"
-    },
-    {
-      "key": "projects",
-      "dataset_name": "World Bank Projects & Operations"
-    }
-  ],
-  "records_through": "2020-08-03",
+  "package": {
+    "step_reference": null,
+    "described": null
+  },
+  "comparables": {
+    "n": 25,
+    "signed": 25,
+    "still_open": 0
+  },
+  "estimate": null,
+  "difference": null,
+  "track_record": null,
+  "test_years": [],
+  "plan_dates": null,
+  "comparisons": [],
+  "options": null,
+  "axis_max_months": null,
+  "thresholds": {
+    "min_comparables": 20,
+    "min_subgroup": 20,
+    "min_unseen_packages": 20
+  },
   "step_dates": {
     "min_comparables": 20,
     "middle_in10": 5,
@@ -1136,7 +1138,28 @@
       ]
     }
   },
-  "abstention": null,
+  "sources": [
+    {
+      "key": "notices",
+      "dataset_name": "Procurement Notices"
+    },
+    {
+      "key": "awards",
+      "dataset_name": "Contract Awards in Investment Project Financing (Since FY 2020)"
+    },
+    {
+      "key": "documents",
+      "dataset_name": "Documents & Reports: Documents API"
+    },
+    {
+      "key": "projects",
+      "dataset_name": "World Bank Projects & Operations"
+    }
+  ],
+  "records_through": "2020-08-03",
+  "abstention": {
+    "reason": "no_model"
+  },
   "summary": {
     "evidence_id": "strata.tools.estimate_time:@2021-01-15?method=Request%20for%20Bids&category=Works&country=KE",
     "public_from": "2021-01-15",
@@ -1148,6 +1171,22 @@
         "documents",
         "projects"
       ]
+    },
+    "estimate": null,
+    "difference": null,
+    "track_record": null,
+    "plan_dates": null,
+    "comparisons": [],
+    "options": null,
+    "comparables": {
+      "n": 25,
+      "signed": 25,
+      "still_open": 0
+    },
+    "coverage": {
+      "matched": 0,
+      "used": 0,
+      "not_used": []
     },
     "step_dates": {
       "min_comparables": 20,

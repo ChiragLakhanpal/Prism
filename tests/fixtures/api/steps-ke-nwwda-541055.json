@@ -4,105 +4,132 @@
   "view": "staff",
   "rows": [],
   "coverage": {
-    "matched": 49,
-    "used": 7,
-    "not_used": [
-      {
-        "reason": "no_plan_dates",
-        "count": 42,
-        "evidence_ids": [
-          "strata.gold.package:KE-CWSB-150896-CW-RFB",
-          "strata.gold.package:KE-GAWASCO-111742-CW-RFB",
-          "strata.gold.package:KE-GAWASCO-266383-CW-RFB",
-          "strata.gold.package:KE-GAWASCO-436012-CW-RFB",
-          "strata.gold.package:KE-GAWASCO-54759-CW-RFB",
-          "strata.gold.package:KE-GAWASCO-54761-CW-RFB",
-          "strata.gold.package:KE-GAWASCO-54763-CW-RFB",
-          "strata.gold.package:KE-GAWASCO-54771-CW-RFB",
-          "strata.gold.package:KE-GAWASCO-54775-CW-RFB",
-          "strata.gold.package:KE-ICTA-571738-CW-RFB",
-          "strata.gold.package:KE-KAJIADO COUNTY-567787-CW-RFB",
-          "strata.gold.package:KE-KWAWASCO-201675-CW-RFB",
-          "strata.gold.package:KE-KWAWASCO-203531-CW-RFB",
-          "strata.gold.package:KE-KWAWASCO-203535-CW-RFB",
-          "strata.gold.package:KE-KWAWASCO-203571-CW-RFB",
-          "strata.gold.package:KE-KWAWASCO-206973-CW-RFB",
-          "strata.gold.package:KE-MAWASCO-149056-CW-RFB",
-          "strata.gold.package:KE-MAWASCO-156444-CW-RFB",
-          "strata.gold.package:KE-MAWASCO-178688-CW-RFB",
-          "strata.gold.package:KE-MAWASCO-236797-CW-RFB",
-          "strata.gold.package:KE-MAWASCO-236802-CW-RFB",
-          "strata.gold.package:KE-MAWASCO-69899-CW-RFB",
-          "strata.gold.package:KE-MIGORI COUNTY-532367-CW-RFB",
-          "strata.gold.package:KE-MOWASCO-113723-CW-RFB",
-          "strata.gold.package:KE-MOWASCO-228804-CW-RFB",
-          "strata.gold.package:KE-MOWI-47509-CW-RFB",
-          "strata.gold.package:KE-TAVEVO-151304-CW-RFB",
-          "strata.gold.package:KE-TAVEVO-151330-CW-RFB",
-          "strata.gold.package:KE-TAVEVO-170154-CW-RFB",
-          "strata.gold.package:KE-TAVEVO-175703-CW-RFB",
-          "strata.gold.package:KE-TAVEVO-338455-CW-RFB",
-          "strata.gold.package:KE-TAVEVO-449427-CW-RFB",
-          "strata.gold.package:KE-TAVEVO-451075-CW-RFB",
-          "strata.gold.package:KE-TAVEVO-466579-GO-RFB",
-          "strata.gold.package:KE-UASIN GISHU COUNTY-571338-CW-RFB",
-          "strata.gold.package:KE-WAJWASCO-205491-CW-RFB",
-          "strata.gold.package:KE-WAJWASCO-220077-CW-RFB",
-          "strata.gold.package:KE-WAJWASCO-226565-CW-RFB",
-          "strata.gold.package:KE-WAJWASCO-26664-CW-RFB",
-          "strata.gold.package:KE-WAJWASCO-356671-CW-RFB",
-          "strata.gold.package:KE-WAJWASCO-372776-CW-RFB",
-          "strata.gold.package:KE-WAJWASCO-456993-CW-RFB"
-        ]
-      }
-    ]
+    "matched": 0,
+    "used": 0,
+    "not_used": []
   },
   "package": {
-    "evidence_id": "strata.silver.plan_rows:40132287/KE-NWWDA-541055-CW-RFB",
-    "public_from": "2026-10-09",
     "step_reference": "KE-NWWDA-541055-CW-RFB",
-    "description": "Equipping of Exploratory Bo reholes Project-Lot 1- Sarma n - Tarbaj Water Supply",
-    "project_id": "P156634",
-    "project_name": "Water and Sanitation Development Project",
-    "country_code": "KE",
-    "country_name": "Kenya",
-    "section": "WORKS",
-    "category": "Works",
-    "method": "Request for Bids",
-    "market_approach": "Open - National",
-    "review_type": "Post",
-    "estimated_amount_usd": "1230000.00",
-    "process_status": "Pending Implementation",
-    "planned_notice_on": "2026-03-10",
-    "planned_signing_on": "2026-04-24",
-    "plan": {
-      "document_id": "40132287",
-      "implementing_agency": "Northern Water Works Development Agency",
-      "agency_id": "northern-water-works-development-agency",
-      "plan_date": "2026-10-09",
-      "disclosed_on": "2026-10-09",
-      "pdf_page": 3
+    "described": {
+      "market_approach": "Open - National",
+      "prequalification": "N",
+      "lots": null,
+      "review_type": "Post",
+      "estimated_amount_usd": 1230000.0,
+      "category": "Works",
+      "method": "Request for Bids",
+      "country_code": "KE"
     }
   },
-  "sources": [
+  "comparables": {
+    "n": 49,
+    "signed": 45,
+    "still_open": 4
+  },
+  "estimate": null,
+  "difference": null,
+  "track_record": {
+    "year": 2025,
+    "abstention": {
+      "reason": "too_few_unseen_packages",
+      "n": 0,
+      "min_unseen_packages": 20
+    }
+  },
+  "test_years": [
     {
-      "key": "notices",
-      "dataset_name": "Procurement Notices"
+      "year": 2021,
+      "n": 0,
+      "m": 0,
+      "expected": 0,
+      "error_estimate_months": null,
+      "error_past_range_months": null,
+      "error_plan_months": null,
+      "mlflow_run_id": "offline-run-0001",
+      "abstention": null
     },
     {
-      "key": "awards",
-      "dataset_name": "Contract Awards in Investment Project Financing (Since FY 2020)"
+      "year": 2022,
+      "n": 0,
+      "m": 0,
+      "expected": 0,
+      "error_estimate_months": null,
+      "error_past_range_months": null,
+      "error_plan_months": null,
+      "mlflow_run_id": "offline-run-0002",
+      "abstention": null
     },
     {
-      "key": "documents",
-      "dataset_name": "Documents & Reports: Documents API"
+      "year": 2023,
+      "n": 0,
+      "m": 0,
+      "expected": 0,
+      "error_estimate_months": null,
+      "error_past_range_months": null,
+      "error_plan_months": null,
+      "mlflow_run_id": "offline-run-0003",
+      "abstention": null
     },
     {
-      "key": "projects",
-      "dataset_name": "World Bank Projects & Operations"
+      "year": 2024,
+      "n": 0,
+      "m": 0,
+      "expected": 0,
+      "error_estimate_months": null,
+      "error_past_range_months": null,
+      "error_plan_months": null,
+      "mlflow_run_id": "offline-run-0004",
+      "abstention": null
+    },
+    {
+      "year": 2025,
+      "n": 0,
+      "m": 0,
+      "expected": 0,
+      "error_estimate_months": null,
+      "error_past_range_months": null,
+      "error_plan_months": null,
+      "mlflow_run_id": "offline-run-0005",
+      "abstention": null
     }
   ],
-  "records_through": "2026-10-13",
+  "plan_dates": null,
+  "comparisons": [],
+  "options": {
+    "approaches": [
+      {
+        "market_approach": "Open - National",
+        "lots": 1,
+        "prequalification": "N",
+        "k": 3,
+        "matching_ids": [
+          "KE-CWSB-232660-CW-RFB",
+          "KE-CWSB-233052-CW-RFB",
+          "KE-NWWDA-229129-CW-RFB"
+        ],
+        "is_as_described": false,
+        "estimate": null,
+        "abstention": {
+          "reason": "too_few_in_subgroup",
+          "k": 3,
+          "n": 49,
+          "min_subgroup": 20
+        }
+      }
+    ],
+    "count": 1,
+    "recorded": 3,
+    "ruled_out": 0,
+    "unrecorded": 46,
+    "n": 49,
+    "review_type": "Post"
+  },
+  "axis_max_months": null,
+  "thresholds": {
+    "min_comparables": 20,
+    "min_subgroup": 20,
+    "min_unseen_packages": 20
+  },
   "step_dates": {
     "min_comparables": 20,
     "middle_in10": 5,
@@ -515,7 +542,32 @@
       ]
     }
   },
-  "abstention": null,
+  "sources": [
+    {
+      "key": "notices",
+      "dataset_name": "Procurement Notices"
+    },
+    {
+      "key": "awards",
+      "dataset_name": "Contract Awards in Investment Project Financing (Since FY 2020)"
+    },
+    {
+      "key": "documents",
+      "dataset_name": "Documents & Reports: Documents API"
+    },
+    {
+      "key": "projects",
+      "dataset_name": "World Bank Projects & Operations"
+    }
+  ],
+  "records_through": "2026-10-13",
+  "abstention": {
+    "reason": "outside_training",
+    "feature": "estimated_amount_usd",
+    "high": 300000.0,
+    "low": 275743.49,
+    "value": 1230000.0
+  },
   "summary": {
     "evidence_id": "strata.tools.estimate_time:KE-NWWDA-541055-CW-RFB@2026-10-28",
     "public_from": "2026-10-28",
@@ -527,6 +579,57 @@
         "documents",
         "projects"
       ]
+    },
+    "estimate": null,
+    "difference": null,
+    "track_record": {
+      "year": 2025,
+      "abstention": {
+        "reason": "too_few_unseen_packages",
+        "n": 0,
+        "min_unseen_packages": 20
+      }
+    },
+    "plan_dates": null,
+    "comparisons": [],
+    "options": {
+      "approaches": [
+        {
+          "market_approach": "Open - National",
+          "lots": 1,
+          "prequalification": "N",
+          "k": 3,
+          "matching_ids": [
+            "KE-CWSB-232660-CW-RFB",
+            "KE-CWSB-233052-CW-RFB",
+            "KE-NWWDA-229129-CW-RFB"
+          ],
+          "is_as_described": false,
+          "estimate": null,
+          "abstention": {
+            "reason": "too_few_in_subgroup",
+            "k": 3,
+            "n": 49,
+            "min_subgroup": 20
+          }
+        }
+      ],
+      "count": 1,
+      "recorded": 3,
+      "ruled_out": 0,
+      "unrecorded": 46,
+      "n": 49,
+      "review_type": "Post"
+    },
+    "comparables": {
+      "n": 49,
+      "signed": 45,
+      "still_open": 4
+    },
+    "coverage": {
+      "matched": 0,
+      "used": 0,
+      "not_used": []
     },
     "step_dates": {
       "min_comparables": 20,

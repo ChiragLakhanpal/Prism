@@ -64,8 +64,9 @@ def no_pages(source, engine):
 
 # The tasks that change rows on a first run over the recorded fixture: every task but two. sync_index finds
 # strata.gold.passage already equal to the passages, because the passage reader syncs it before it measures, and
-# refresh_drafts finds no draft to mark (tests/test_refresh_drafts.py marks some). score counts the rebidding
-# labels on every run, and scores packages only with a champion from the live MLflow.
+# refresh_drafts finds no draft to mark (tests/test_refresh_drafts.py marks some). score scores every package's time
+# estimate and counts the rebidding labels on every run, and scores rebidding only with a champion from the live
+# MLflow.
 WORKING = set(PLAN_ORDER) - {"sync_index", "refresh_drafts"}
 
 

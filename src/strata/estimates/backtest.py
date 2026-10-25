@@ -49,7 +49,7 @@ from decimal import Decimal
 from fractions import Fraction
 
 from strata.config import Thresholds, TimeEstimateSettings, load_thresholds, load_time_estimate
-from strata.estimates import harness, model_card
+from strata.estimates import harness, model_card, portable
 from strata.estimates.harness import Reader, Replay, Score, Scored, Window
 from strata.estimates.past_range import QUARTERS, Observation, months, quantile, rounded, survival, whole
 from strata.estimates.time_estimate import NoModel, Package, fit, packages_as_of
@@ -186,6 +186,7 @@ class BacktestRun:
     version: int | None  # the model version registered, or None when no champion could be trained
     alias: str | None
     card: str
+    model: object = None  # the model it registered, which strata.gold.time_estimate_model also keeps (ticket 26)
 
 
 def train(engine, as_of: dt.date, settings: TimeEstimateSettings, thresholds: Thresholds):
@@ -226,15 +227,17 @@ def run(engine, tracker, *, years: tuple[int, ...] | None = None, outcomes_throu
         rows = [Score("version", version), Score("alias", text=alias), *_model_scores(champion)]
         segment = Window(through, through, REGISTERED, str(version))
         harness.write(store, [harness.row(run_id, scorer, segment, score, mlflow_run, ran_at) for score in rows])
+        # The version in a form the nightly score task and the app can score with, with no MLflow (ticket 26).
+        portable.keep(store, settings.registered_model, version, alias, champion, mlflow_run, ran_at)
     tracker.end_run(mlflow_run)
-    return BacktestRun(run_id, scored, version, alias, card)
+    return BacktestRun(run_id, scored, version, alias, card, champion)
 
 
 # ── Reading the stored results ───────────────────────────────────────────
 
-def stored_years(engine, run_id: str | None = None) -> dict[int, dict]:
-    """Each test year's stored scores, from one run or the latest, keyed by year."""
-    run_id = run_id or harness.latest_run(engine, SCORER)
+def stored_years(engine, run_id: str | None = None, as_of: dt.date | None = None) -> dict[int, dict]:
+    """Each test year's stored scores, from one run or the latest (public on as_of, when given), by year."""
+    run_id = run_id or harness.latest_run(engine, SCORER, as_of)
     if run_id is None:
         return {}
     return {int(segment): record for (kind, segment), record in harness.segments(harness.run_rows(engine, run_id)).items()

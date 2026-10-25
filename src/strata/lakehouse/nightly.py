@@ -5,7 +5,7 @@ Databricks, each task runs nightly_task.py, which calls main() here with the tas
 job run's id. Each task does its work, runs its quality checks (strata.lakehouse.quality) and records
 its run in strata.ops.pipeline_runs.
 
-Every task has its work (tickets 07, 17, 19, 20, 22, 28, 29 and 43), in docs/PLAN.md section 11's order:
+Every task has its work (tickets 07, 17, 19, 20, 22, 26, 28, 29 and 43), in docs/PLAN.md section 11's order:
 
 1. fetch_by_watermark fetches each source in config/sources.toml that it fetches page by page into bronze,
    for every country or for the slice's countries as each entry says, from its watermark on.
@@ -19,9 +19,10 @@ Every task has its work (tickets 07, 17, 19, 20, 22, 28, 29 and 43), in docs/PLA
    holds; a document is sent once, and those whose quotes pass the check wait in the review queue
    (strata.knowledge.lessons.propose).
 7. detect_disagreements rebuilds the assertions and the disagreements between them (strata.knowledge.assertions).
-8. score counts the rebidding labels from each source and, on the workspace, scores every planned activity
-   with the rebidding champion (strata.estimates.rebidding) and replays the signals for their track record
-   once a week (strata.estimates.signals_track).
+8. score scores every package's time estimate and its what-ifs with the champion model (ticket 26;
+   strata.estimates.scoring), counts the rebidding labels from each source and, on the workspace, scores every
+   planned activity with the rebidding champion (strata.estimates.rebidding) and replays the signals for their
+   track record once a week (strata.estimates.signals_track).
 9. measure_data_readiness writes the data readiness measures and each table's size to strata.ops.
 10. refresh_drafts marks each open draft row that cites a lesson at a version a lead has since changed or
     retired (strata.knowledge.lessons.notices). It never changes a draft.
@@ -66,7 +67,7 @@ JOB = "nightly"  # the job's key under resources.jobs in the bundle
 RUN_LOGS = ("strata.ops.pipeline_runs", "strata.ops.quality_checks", "strata.ops.data_readiness",
             "strata.ops.table_sizes", "strata.ops.readiness_snapshot", "strata.ops.parse_runs",
             "strata.ops.documents_read", "strata.ops.stress_shelf", "strata.ops.rebidding_labels",
-            "strata.ops.supplier_match_quality", "strata.ops.evaluation_result")
+            "strata.ops.supplier_match_quality", "strata.ops.evaluation_result", "strata.gold.time_estimate_score")
 
 # Where a source's pages come from: the live API on the workspace, the recorded fixture here.
 Fetch = Callable[[Source, Engine], Iterable[pages.Page]]
@@ -215,13 +216,19 @@ def _propose_lessons(run: Run) -> int:
 
 
 def _score(run: Run) -> int:
-    """How many packages each rebidding label source names, in strata.ops.rebidding_labels, and, on a run that
-    fetches from the live APIs, the rebidding champion's chance for every activity a Procurement Plan lists, in
-    strata.ops.rebidding_scores (ticket 28), and the signals' track record (ticket 37). Any other run only counts.
-    The time estimates and the what-if grid wait for tickets 26 and 44, which have not landed."""
-    from strata.estimates import rebidding
+    """The time estimate of every package Strata knows, and of every what-if combination, scored with the
+    champion model into strata.gold.time_estimate_score (ticket 26; strata.estimates.scoring). A run on the
+    recorded fixture has no workspace registry, so it runs ticket 25's backtest first and scores with the
+    champion that trains; a live run scores with the champion the live backtest registered, or with none.
 
-    changed = rebidding.record_label_counts(run.engine, run.run_id, run.clock)
+    Then how many packages each rebidding label source names, in strata.ops.rebidding_labels, and, on a run that
+    fetches from the live APIs, the rebidding champion's chance for every activity a Procurement Plan lists, in
+    strata.ops.rebidding_scores (ticket 28), and the signals' track record (ticket 37). The what-if grid's own
+    screen waits for ticket 44."""
+    from strata.estimates import rebidding, scoring
+
+    changed = scoring.run(run.engine, run.run_id, run.clock(), train_here=run.fetch is not fetch_live)
+    changed += rebidding.record_label_counts(run.engine, run.run_id, run.clock)
     if run.fetch is fetch_live:
         changed += _score_packages(run) + _replay_signals(run)
     return changed

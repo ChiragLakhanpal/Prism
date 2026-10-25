@@ -212,19 +212,26 @@ export function ComparableRecords({ evidence }: { evidence: EvidenceEvent }) {
   );
 }
 
-type DotRow = QuantileDot & { total: number; entries: DotEntry[] };
+// A quantile dot's list, or (ticket 26) the packages a "{k} of {n} went with" count names: went_with is then the
+// option's words, such as "3 lots", and the list is the drawer's same list view.
+type DotRow = QuantileDot & { total: number; entries: DotEntry[]; went_with?: string };
 
 const months1 = (value: number) => formatNumber(value, { decimals: 1, compact: false });
 
 // The drawer's title for a quantile dot's list: "Five comparable packages".
 export function dotTitle(evidence: EvidenceEvent): string {
   const row = evidence.row as DotRow;
+  if (row.went_with !== undefined) {
+    return row.count === 1 ? copy.whatIf.drawer.titleOne : copy.whatIf.drawer.title(formatCount(row.count, { capital: true }));
+  }
   return row.count === 1 ? words.dot.titleOne : words.dot.title(formatCount(row.count, { capital: true }));
 }
 
-// The drawer's region name for it: "The five comparable packages dot 20 stands for".
+// The drawer's region name for it: "The five comparable packages dot 20 stands for", or "Comparable packages that
+// went with 3 lots".
 export function dotRegion(evidence: EvidenceEvent): string {
   const row = evidence.row as DotRow;
+  if (row.went_with !== undefined) return copy.whatIf.drawer.region(row.went_with);
   const k = formatNumber(row.k, { compact: false });
   return row.count === 1 ? words.dot.regionOne(k) : words.dot.region(formatCount(row.count), k);
 }
@@ -246,7 +253,11 @@ export function ComparableDotList({
   const low = months1(row.low_months);
   const high = months1(row.high_months);
   const sentence =
-    row.count === 1
+    row.went_with !== undefined
+      ? row.count === 1
+        ? copy.whatIf.drawer.sentenceOne(total, row.went_with)
+        : copy.whatIf.drawer.sentence(formatCount(row.count), total, row.went_with)
+      : row.count === 1
       ? row.still_open
         ? w.sentenceOneOpen(total, high)
         : w.sentenceOne(total, high)
