@@ -271,5 +271,5 @@ The probes make these things and leave them in place. Most of them make a second
 - The schema `workspace.strata_dayone`, with the volume `files` for the PAD, the table `passages` and the index `passages_index`.
 - The AI Search endpoint `strata-search`, which Strata keeps for its own index.
 - One-time job runs whose names start with `strata-dayone`, in the workspace's job run history.
-- A conversation in the Genie space you chose in the wizard, which asks "How many trips are in the table?"
+- A conversation in the Genie space that GENIE_SPACE_ID names, which asks "How many contracts were signed in each fiscal year, and for how much in US dollars?"
 - Read access for the app `strata` to the secret scope `strata`. The app reads only `APPLICATIONINSIGHTS_CONNECTION_STRING`, but Databricks grants access to the whole scope, which also holds `AZURE_OPENAI_API_KEY`.

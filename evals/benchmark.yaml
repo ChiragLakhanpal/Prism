@@ -1,16 +1,22 @@
 # The benchmark file: questions with their expected answers or citations (docs/PLAN.md section 10;
-# spec, "Ten single places", item 9). It holds four kinds of question: sql, documents, estimates and
-# refusals. Ticket 33 adds the runner that asks each one through the live answer contract, and the
-# other kinds.
+# spec, "Ten single places", item 9). It holds four kinds of question: sql (with ground-truth SQL),
+# documents (with the citations the answer must carry, cites), estimates (with the range or the
+# abstention expected) and refusals (the must-refuse set, one question per refusal key). It holds at
+# least ten questions of each kind but refusals (config/thresholds.toml, [benchmark]), and
+# src/strata/evals/benchmark.py says what it lacks.
 #
 # Each tool in the tool registry (config/tools.toml) names its question here by id, and changing a
-# tool's contract means updating its question in the same change (CLAUDE.md rule 4). The offline
-# gate calls each tool question's tool with its arguments on the fixture database and checks the
-# expected answer (tests/test_tools.py).
+# tool's contract means updating its question in the same change (CLAUDE.md rule 4); a test fails
+# when a tool has none. The offline gate calls each tool question's tool with its arguments on the
+# fixture database and checks the expected answer (tests/test_tools.py). The full gate
+# (ops/evals/full_gate.py) asks every question here through /api/ask with the live agent and scores
+# the answer (src/strata/evals/scoring.py), so a question added here runs in the next full gate with
+# no other change. The questions ask_genie answers are also the Genie space's benchmark questions.
 #
 # Each question has: id, kind, tool (for a question a tool answers), the question as a person would
 # ask it, the tool's arguments, the expected answer, the ground-truth SQL that checks the same
-# answer, and where the expected answer comes from.
+# answer, and where the expected answer comes from. A question may set as_of and scope, which the
+# full gate asks it with; as_of: null asks it as of the day the full gate runs.
 
 questions:
   - id: check-plan-nwwda-2026-10-09
@@ -268,6 +274,7 @@ questions:
       top_three_include: [strata.gold.passage:31525018/v1/54]
       left_out: []
       ranked_lower: []
+    cites: [strata.gold.passage:31525018/v1/54]
     ground_truth: tests/ground_truth/icr_paragraph_54_passage.sql
     source: >-
       The ticket's query and its known answer: ICR P130164 paragraph 54, on PDF page 23, "108 of 328
@@ -287,6 +294,7 @@ questions:
     expected:
       top_three_include: [strata.gold.passage:OP00118817/v1/s5, strata.gold.passage:OP00128730/v1/s6]
       left_out: []
+    cites: [strata.gold.passage:OP00118817/v1/s5, strata.gold.passage:OP00128730/v1/s6]
     source: >-
       Ticket 18 indexed notices' scope and qualification text as passages. The two Requests for
       Expression of Interest in tests/ground_truth/values.toml ([stress_shelf.similar_experience]) ask
@@ -357,6 +365,8 @@ questions:
         - [Moderately Satisfactory, 10, 11]
         - [Moderately Unsatisfactory, 12, 13]
       rejected: [1]
+    # A disagreement shows both sides (the verifier's check 6), so the answer cites both.
+    cites: [strata.gold.passage:26733307/v1/s4, strata.gold.passage:31525018/v1/78]
     ground_truth: tests/ground_truth/p130164_isr_7_against_icr_paragraph_78.sql
     source: >-
       The blueprint's "When reports disagree, both stay on screen" and the ticket: ISR 7 (August 26,
@@ -391,6 +401,8 @@ questions:
       # they raised with how many of them raised it.
       reports_read: [1]
       raised: [[cost_estimates, 1], [permits_before_award, 1]]
+    # The passages the first lesson rests on: an answer about it cites them.
+    cites: [strata.gold.passage:31525018/v1/54, strata.gold.passage:34056616/v2/10.b]
     source: >-
       ICR P130164 paragraph 54, on PDF page 23, "108 of 328 cases had to go through rebidding"
       (tests/ground_truth/values.toml, icr-para-54), which the ICR Review restates in section 10.b on
@@ -446,6 +458,10 @@ questions:
                      KE-MOWI-47509-CW-RFB, KE-WAJWASCO-456993-CW-RFB]
       key_staff: [KE-KIMAWASCO-141042-CW-RFB, KE-KIMAWASCO-142995-CW-RFB, KE-KIMAWASCO-158691-CW-RFB]
       group_order: [bid_security, key_staff, other]
+    # The reason rows of the three packages rejected over key staff, one per award notice: an answer that names
+    # them cites each one's notice (values.toml, rejection-key-experts-OP00125851, -OP00125855 and -OP00124759).
+    cites: [strata.gold.notice:OP00125851/reason/3, strata.gold.notice:OP00125855/reason/4,
+            strata.gold.notice:OP00124759/reason/4]
     source: >-
       The Contract Award notices recorded in data/fixture/recorded/api/notices/P156634.json for the 49
       comparables: 40 of them have one, and 28 of those list a rejected bidder with a Reason for Rejection.
@@ -481,6 +497,245 @@ questions:
       the only reason in words is inside Invitation for Bids OP00083890, word for word with its British spelling.
       The fixture holds no rebidding backtest, so the model is not shown, and the counts stand alone.
 
+  # Ticket 33: more questions of each kind, so the benchmark holds at least ten of each (config/thresholds.toml,
+  # [benchmark] min_questions_per_kind). Each expected value is a literal in tests/ground_truth/values.toml, named
+  # in its source. A documents question names the passages its answer must cite (cites); the full gate checks
+  # that the answer's kept sentences cite each one. A question may expect part of a tool's answer: only the keys
+  # it lists are compared (strata.evals.answers).
+
+  - id: search-passages-icr-clearances
+    kind: documents
+    tool: search_passages
+    question: >-
+      In P130164, what did the completion report and IEG's review say about clearances before works contracts
+      were awarded?
+    arguments:
+      query: forest administrative clearances before awarding contracts
+      project_id: P130164
+      as_of: "2026-10-23"
+    expected:
+      top_three_include: [strata.gold.passage:31525018/v1/55, strata.gold.passage:34056616/v2/12]
+      left_out: []
+    cites: [strata.gold.passage:31525018/v1/55, strata.gold.passage:34056616/v2/12]
+    source: >-
+      ICR P130164 paragraph 55, on PDF page 23 (tests/ground_truth/values.toml, icr-para-55), and IEG's lesson in
+      section 12 of the ICR Review of May 4, 2023, on PDF page 14 (icr-review-2023-ieg-lesson), which says it again.
+
+  - id: search-passages-mid-term-review
+    kind: documents
+    tool: search_passages
+    question: >-
+      In P130164, what did the completion report say the mid-term review found about the development objective?
+    arguments:
+      query: mid-term review part of the PDO compromised
+      project_id: P130164
+      as_of: "2026-10-23"
+    expected:
+      top_three_include: [strata.gold.passage:31525018/v1/78]
+      left_out: []
+    cites: [strata.gold.passage:31525018/v1/78]
+    source: >-
+      ICR P130164 paragraph 78, on PDF page 27: the mid-term review found the achievement of part of the PDO
+      compromised (tests/ground_truth/values.toml, icr-para-78).
+
+  - id: search-passages-icr-review-rebidding
+    kind: documents
+    tool: search_passages
+    question: >-
+      Did IEG's review of the P130164 completion report repeat the lesson about works estimates and rebidding?
+    arguments:
+      query: IEG lesson estimates market rate rebidding
+      project_id: P130164
+      document_type: ICR Review
+      as_of: "2026-10-23"
+    expected:
+      top_three_include: [strata.gold.passage:34056616/v2/10.b]
+      left_out: []
+    cites: [strata.gold.passage:34056616/v2/10.b]
+    source: >-
+      Section 10.b of the ICR Review of May 4, 2023, on PDF page 13, restates ICR paragraph 54
+      (tests/ground_truth/values.toml, icr-review-2023-restates-para-54).
+
+  - id: search-passages-pad-overall-risk
+    kind: documents
+    tool: search_passages
+    question: >-
+      At appraisal, how did the P130164 Project Appraisal Document rate the project's overall risk?
+    arguments:
+      query: overall risk rated substantial
+      project_id: P130164
+      document_type: PAD
+      as_of: "2026-10-23"
+    expected:
+      top_three_include: [strata.gold.passage:18381488/v1/49]
+      left_out: []
+    cites: [strata.gold.passage:18381488/v1/49]
+    source: >-
+      The P130164 PAD's paragraph 49, on PDF page 26, rates the overall risk Substantial
+      (tests/ground_truth/values.toml, pad-overall-risk).
+
+  - id: find-comparables-ke-nwwda-541055-prior-review
+    kind: estimates
+    tool: find_comparables
+    question: >-
+      As of October 22, 2026, if only packages under prior review count, how long did packages like
+      KE-NWWDA-541055-CW-RFB take from their notice to a signed contract?
+    arguments:
+      step_reference: KE-NWWDA-541055-CW-RFB
+      review_type: Prior
+      as_of: "2026-10-22"
+    expected:
+      abstention: [too_few_comparables]
+      comparables: [7]
+    source: >-
+      Adding review type Prior leaves 7 of the 49 comparables (tests/ground_truth/values.toml, [comparables]
+      narrower_count), under the 20 a range needs, so the tool gives every comparable and no range.
+
+  - id: rebidding-risk-ke-nwwda-541055-prior-review
+    kind: estimates
+    tool: rebidding_risk
+    question: >-
+      As of October 22, 2026, if only packages under prior review count, how many comparable packages of
+      KE-NWWDA-541055-CW-RFB were advertised again?
+    arguments:
+      step_reference: KE-NWWDA-541055-CW-RFB
+      review_type: Prior
+      as_of: "2026-10-22"
+    expected:
+      n_of_m: [0, 7]
+      advertised_again: []
+    source: >-
+      The same 7 comparables under prior review ([comparables] narrower_count), none of them advertised again,
+      because the three canceled packages were under post review ([rebidding] narrower_advertised_again).
+
+  - id: rebidding-risk-planned-ke-works-rfb-2024-12-31
+    kind: estimates
+    tool: rebidding_risk
+    question: >-
+      As of December 31, 2024, I am planning a works package under Request for Bids in Kenya. How many comparable
+      packages had been advertised again by then?
+    arguments:
+      method: Request for Bids
+      category: Works
+      country: KE
+      as_of: "2024-12-31"
+    expected:
+      advertised_again: [KE-KIMAWASCO-149448-CW-RFB, KE-KIMAWASCO-157517-CW-RFB]
+    source: >-
+      On December 31, 2024, before the Kilifi agency's plan of March 19, 2025 was public, only two of the three
+      canceled packages had waited long enough with no award to count as advertised again
+      (tests/ground_truth/values.toml, [rebidding] advertised_again_before_the_plan).
+
+  - id: estimate-time-planned-ke-works-rfb
+    kind: estimates
+    tool: estimate_time
+    question: >-
+      As of October 22, 2026, I am planning a works package under Request for Bids in Kenya that is not in a
+      Procurement Plan yet. What planned date should each STEP step get?
+    arguments:
+      method: Request for Bids
+      category: Works
+      country: KE
+      as_of: "2026-10-22"
+    expected:
+      step_comparables: [49]
+      dated_steps: []
+    source: >-
+      The step dates counted the same 49 comparables as find-comparables-planned-ke-works-rfb
+      (tests/ground_truth/values.toml, [past_range] comparables). No step has 20 comparable packages whose plans
+      recorded it, so no step is dated.
+
+  # Ticket 33: questions Genie answers through ask_genie, which are also the Genie space's benchmark questions
+  # (config/genie.toml). Each one's expected answer is its ground-truth SQL: plain SQL over the gold tables, written
+  # apart from the space's trusted SQL, so it checks the SQL Genie writes (expected rows: ground_truth). The offline
+  # gate runs each file on the fixture against its expected rows (tests/test_ground_truth.py) and asks ask_genie the
+  # question there (tests/test_tools.py). The full gate asks the live space and compares its rows, at the same
+  # rounding, with the same SQL run on the SQL warehouse. Genie cannot be trusted to filter on public_from, so
+  # ask_genie answers only for an as-of date on or after the newest record it reads; the full gate asks these
+  # questions as of the day it runs (as_of: null), and the offline gate as of the date in their arguments.
+  - id: genie-kenya-contracts-since-fy2020
+    kind: sql
+    tool: ask_genie
+    question: &genie-kenya-contracts >-
+      How many contracts did Kenya sign in the contract awards since fiscal 2020, and how many of them carry a STEP
+      reference?
+    arguments:
+      question: *genie-kenya-contracts
+      as_of: "2026-10-23"
+    as_of: null
+    ground_truth: tests/ground_truth/genie_kenya_contracts_since_fy2020.sql
+    expected:
+      rows: ground_truth
+    source: >-
+      tests/ground_truth/values.toml's [counts.kenya]: 603 contracts, 528 of them with a STEP reference, counted
+      from the recorded award files.
+
+  - id: genie-award-notice-contracts-fy2017-2019
+    kind: sql
+    tool: ask_genie
+    question: &genie-gap-years >-
+      How many contracts signed in fiscal 2017, 2018 and 2019 does only a Contract Award notice record, by fiscal
+      year?
+    arguments:
+      question: *genie-gap-years
+      as_of: "2026-10-23"
+    as_of: null
+    ground_truth: tests/ground_truth/genie_award_notice_contracts_fy2017_2019.sql
+    expected:
+      rows: ground_truth
+    source: >-
+      tests/ground_truth/values.toml's [counts.gap_years]: two contracts in fiscal 2017, one in fiscal 2018 and four
+      in fiscal 2019, read from the award notices by hand.
+
+  - id: genie-joint-venture-1624689
+    kind: sql
+    tool: ask_genie
+    question: &genie-joint-venture >-
+      Which suppliers signed contract 1624689 together, by their supplier ID, and what was each one's share in US
+      dollars?
+    arguments:
+      question: *genie-joint-venture
+      as_of: "2026-10-23"
+    as_of: null
+    ground_truth: tests/ground_truth/genie_joint_venture_1624689.sql
+    expected:
+      rows: ground_truth
+    source: >-
+      tests/ground_truth/values.toml's [awkward.joint_venture]: suppliers 503708 and 503711, with 697,972.33 US
+      dollars each.
+
+  - id: genie-contract-ke-nwwda-229129
+    kind: sql
+    tool: ask_genie
+    question: &genie-contract-229129 >-
+      When was the contract for KE-NWWDA-229129-CW-RFB signed, and for how much in US dollars?
+    arguments:
+      question: *genie-contract-229129
+      as_of: "2026-10-23"
+    as_of: null
+    ground_truth: tests/ground_truth/genie_contract_ke_nwwda_229129.sql
+    expected:
+      rows: ground_truth
+    source: >-
+      tests/ground_truth/values.toml: award-229129-signed (January 3, 2022) and plan-229129-actual (1,245,092.76).
+
+  - id: genie-kenya-works-rfb-package-states
+    kind: sql
+    tool: ask_genie
+    question: &genie-package-states >-
+      Of Kenya's works packages under Request for Bids whose first notice was dated from July 1, 2019 to October 9,
+      2026, how many were signed in the contract awards, signed only in an award notice, canceled or still open?
+    arguments:
+      question: *genie-package-states
+      as_of: "2026-10-23"
+    as_of: null
+    ground_truth: tests/ground_truth/kenya_comparables_signed.sql
+    expected:
+      rows: ground_truth
+    source: >-
+      tests/ground_truth/values.toml's [comparables]: 43 signed in the contract awards, two only in their award
+      notices, three canceled and four still open.
+
   # The fixture's works comparables publish no qualification criteria in their notices, so this question asks
   # about a consultant services package, whose comparables' Requests for Expression of Interest state their
   # short-listing criteria.
@@ -501,6 +756,9 @@ questions:
       public: [14, 17]
       similar_experience: [13, 13, 13]
       still_open: [KE-GAWASCO-202394-CS-QCBS, KE-WASREB-229126-CS-QCBS]
+    # One counted comparable's requirement, in the notice text it was read from: KE-KWAWASCO-105286-CS-QCBS asked
+    # for two projects of similar nature with no amount, the same or less (values.toml, criteria-OP00118816).
+    cites: [strata.gold.passage:OP00118816/v1/s5]
     source: >-
       The specific procurement notices of the 17 comparables, recorded in
       data/fixture/recorded/api/notices/P156634.json. The 15 signed comparables' notices hold their short-listing

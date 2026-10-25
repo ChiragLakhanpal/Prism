@@ -2220,3 +2220,85 @@ def load_quality_checks(path: Path = CONFIG_DIR / "quality_checks.toml") -> tupl
             entry._fail("table", "is listed twice for the same task")
         found.append(QualityCheck(task, table, key, entry.boolean("contacts") if "contacts" in entry.table else False))
     return tuple(found)
+
+
+# ── The Genie space (ticket 33) ──────────────────────────────────────────
+
+GENIE_TABLE = re.compile(r"strata\.gold\.[a-z][a-z0-9_]*")
+
+
+@dataclass(frozen=True)
+class GenieTrusted:
+    """One trusted SQL example: a question and the file in src/strata/genie/trusted/ that answers it."""
+
+    question: str
+    sql: str
+
+
+@dataclass(frozen=True)
+class GenieConfig:
+    """The Genie space as config/genie.toml defines it."""
+
+    title: str
+    description: str
+    instruction: str
+    metric_views: tuple[str, ...]
+    tables: tuple[str, ...]
+    sample_questions: tuple[str, ...]
+    trusted: tuple[GenieTrusted, ...]
+
+
+def load_genie(path: Path = CONFIG_DIR / "genie.toml") -> GenieConfig:
+    """The Genie space: its title, description, one text instruction, what it reads and its trusted SQL."""
+    data = _read(path)
+    space = _Entry(path, "space", data.get("space"))
+    space.only({"title", "description", "instruction", "metric_views", "tables", "sample_questions"})
+    reads = space.texts("metric_views") + space.texts("tables")
+    wrong = [name for name in reads if not GENIE_TABLE.fullmatch(name)]
+    if wrong:
+        raise ConfigError(f"In {path.name}, the space reads {', '.join(wrong)}. Name each metric view and table in "
+                          "three parts, in strata.gold.")
+    trusted = []
+    for entry in _tables(path, data, "trusted"):
+        entry.only({"question", "sql"})
+        trusted.append(GenieTrusted(entry.text("question"), entry.text("sql")))
+    if not trusted:
+        raise ConfigError(f"In {path.name}, give the space at least one [[trusted]] question with its SQL.")
+    return GenieConfig(space.text("title"), space.text("description"), space.text("instruction"),
+                       space.texts("metric_views"), space.texts("tables"), space.texts("sample_questions"),
+                       tuple(trusted))
+
+
+# ── Foundry evaluations (ticket 33) ──────────────────────────────────────
+
+@dataclass(frozen=True)
+class Evaluator:
+    key: str
+    label: str
+    builtin: str
+    data_mapping: dict[str, str]
+
+
+@dataclass(frozen=True)
+class Evaluations:
+    api_version: str
+    judge_role: str
+    evaluators: tuple[Evaluator, ...]
+
+
+def load_evaluations(path: Path = CONFIG_DIR / "evaluations.toml") -> Evaluations:
+    """The Foundry evaluators the full gate runs, with the API version and the judge's model role."""
+    data = _read(path)
+    top = _Entry(path, "the file", {key: value for key, value in data.items() if key != "evaluators"})
+    top.only({"api_version", "judge_role"})
+    evaluators = []
+    for entry in _tables(path, data, "evaluators"):
+        entry.only({"key", "label", "builtin", "data_mapping"})
+        mapping = entry.table.get("data_mapping")
+        if not isinstance(mapping, dict) or not mapping or not all(
+                isinstance(value, str) and value.startswith("{{item.") for value in mapping.values()):
+            entry._fail("data_mapping", "must map each input to a field of an item, such as {{item.query}}")
+        evaluators.append(Evaluator(entry.text("key"), entry.text("label"), entry.text("builtin"), dict(mapping)))
+    if len({evaluator.key for evaluator in evaluators}) != len(evaluators) or not evaluators:
+        raise ConfigError(f"In {path.name}, give each evaluator a key of its own.")
+    return Evaluations(top.text("api_version"), top.text("judge_role"), tuple(evaluators))

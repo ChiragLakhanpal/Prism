@@ -55,7 +55,7 @@ def test_an_answer_as_the_tokens_user_passes(place):
     code, test5 = run(place, genie)
     assert code == 0
     assert test5["Status"] == "passed"
-    assert genie.questions == [("01f0abc", "How many trips are in the table?")]
+    assert genie.questions == [("01f0abc", "How many contracts were signed in each fiscal year, and for how much in US dollars?")]
     assert any("c-77" in line for line in test5["Evidence"])
     assert test5["Chosen path"].startswith("Default")
 
