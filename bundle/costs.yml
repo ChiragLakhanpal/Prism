@@ -1,0 +1,33 @@
+# The daily cost pull (ticket 45; src/strata/lakehouse/costs.py): Azure's charges for Strata's resource group, into
+# strata.ops.azure_costs, for the dashboard's Governance page.
+#
+# It is a job of its own, not an eleventh nightly task, because tests/test_nightly.py keeps the nightly job to
+# docs/PLAN.md section 11's ten tasks. It runs src/strata/lakehouse/cost_task.py on serverless compute at 05:40 in
+# Washington, after the nightly job stops at 05:30 and before fairshare's job starts at 07:00 there, and takes
+# seconds. It reads the service principal's sign-in and the subscription from the secret scope the variable
+# secret_scope names (FOUNDRY_TENANT_ID, FOUNDRY_CLIENT_ID, FOUNDRY_CLIENT_SECRET and AZURE_SUBSCRIPTION_ID). The
+# service principal needs the Cost Management Reader role on the resource group (docs/workspace-catchup.md).
+
+resources:
+  jobs:
+    costs:
+      name: strata cost pull
+      description: Each day, writes Azure's charges for Strata's resource group to strata.ops.azure_costs.
+      schedule:
+        quartz_cron_expression: "0 40 5 * * ?"
+        timezone_id: America/New_York
+        pause_status: ${var.nightly_pause_status}
+      max_concurrent_runs: 1
+      timeout_seconds: 900
+      environments:
+        - environment_key: default
+          spec:
+            environment_version: "4"
+            dependencies: ["pyyaml==6.0.3"]
+      tasks:
+        - task_key: pull_azure_costs
+          environment_key: default
+          spark_python_task:
+            python_file: ../src/strata/lakehouse/cost_task.py
+            parameters: [--run-id, "{{job.run_id}}", --src, "${workspace.file_path}/src", --secret-scope,
+                         "${var.secret_scope}"]

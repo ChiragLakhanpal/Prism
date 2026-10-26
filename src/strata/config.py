@@ -29,6 +29,10 @@ request lands in one file (CLAUDE.md rule 9). This module reads them:
                      written in, and how Strata writes and checks the four working languages (ticket 42)
 - load_method_names() config/method_names.toml, the method-name registry: the current Procurement
                      Regulations' names and every other name a source writes for one (ticket 42)
+- load_budget()      config/budget.toml, the Azure budget: the free credit, the day it ends and the
+                     monthly budget after it, for the daily cost pull and the wizard (ticket 45)
+- load_kpis()        config/kpis.toml, the KPI registry: each KPI the dashboard shows, defined once by
+                     its query, with its kind, rounding, target and copy keys (ticket 45)
 
 Each function checks the file's shape and raises ConfigError with a sentence that names the
 file, the entry and the fix. It uses only the standard library, so the nightly job can call it.
@@ -2533,3 +2537,41 @@ def load_evaluations(path: Path = CONFIG_DIR / "evaluations.toml") -> Evaluation
     if len({evaluator.key for evaluator in evaluators}) != len(evaluators) or not evaluators:
         raise ConfigError(f"In {path.name}, give each evaluator a key of its own.")
     return Evaluations(top.text("api_version"), top.text("judge_role"), tuple(evaluators))
+
+
+# ── The Azure budget (ticket 45) ─────────────────────────────────────────
+
+@dataclass(frozen=True)
+class Budget:
+    """The free credit, the day it ends, and the monthly budget after it (config/budget.toml)."""
+
+    credit_usd: int
+    credit_ends_on: dt.date
+    monthly_usd: int
+    name: str
+    alert_percents: tuple[int, ...]
+    forecast_percent: int
+    resource_group: str
+    pull_days: int
+
+
+def load_budget(path: Path = CONFIG_DIR / "budget.toml") -> Budget:
+    """The budget the daily cost pull and the Governance page measure spend against, and the wizard sets."""
+    data = _read(path)
+    unknown = sorted(set(data) - {"credit", "monthly", "pull"})
+    if unknown:
+        raise ConfigError(f"In {path.name}, {', '.join(unknown)} is not a section I know: use credit, monthly and "
+                          "pull.")
+    credit = _Entry(path, "credit", data.get("credit"))
+    credit.only({"usd", "ends_on"})
+    monthly = _Entry(path, "monthly", data.get("monthly"))
+    monthly.only({"usd", "name", "alert_percents", "forecast_percent"})
+    pull = _Entry(path, "pull", data.get("pull"))
+    pull.only({"resource_group", "days"})
+    alerts = monthly.table.get("alert_percents", [])
+    if not isinstance(alerts, list) or not all(isinstance(value, int) and not isinstance(value, bool)
+                                               for value in alerts):
+        monthly._fail("alert_percents", "must be a list of whole numbers")
+    return Budget(credit.integer("usd"), credit.date("ends_on"), monthly.integer("usd"), monthly.text("name"),
+                  tuple(alerts), monthly.integer("forecast_percent"), pull.text("resource_group"),
+                  pull.integer("days"))

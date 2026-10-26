@@ -12,6 +12,8 @@
 //   STEP step names estimate_time reads to date each step (ticket 27).
 // - src/strata/server/timeline_copy.json: a project timeline's title and alt text (copy.timeline.server), with the
 //   words for one to nine, which the timeline route writes on the server (ticket 23).
+// - src/strata/dashboard/copy.json: the AI/BI dashboard's words (copy.dash and copy.kpi), which the dashboard
+//   generator and the nightly job's "What the measures say" read (ticket 45).
 //
 // The lint lane fails when a JSON file is out of date (web/lint/run.ts), and this command writes them
 // again:
@@ -30,6 +32,7 @@ export const DRAFTS_COPY_FILE = at("src/strata/drafts/copy.json");
 export const LESSONS_COPY_FILE = at("src/strata/knowledge/lessons/copy.json");
 export const STEPS_COPY_FILE = at("src/strata/estimates/steps.json");
 export const TIMELINE_COPY_FILE = at("src/strata/server/timeline_copy.json");
+export const DASHBOARD_COPY_FILE = at("src/strata/dashboard/copy.json");
 
 const json = (words: unknown) => `${JSON.stringify(words, null, 2)}\n`;
 
@@ -83,6 +86,18 @@ export function timelineCopy(): string {
   return json({ ...copy.timeline.server, numberWords: copy.num.words });
 }
 
+// The dashboard's words (ticket 45): titles, descriptions, text tiles, the words its queries show, and the templates
+// the nightly job fills for "What the measures say", with the words for one to nine and the months.
+export function dashboardCopy(): string {
+  return json({
+    dash: copy.dash,
+    kpi: copy.kpi,
+    words: copy.num.words,
+    months: copy.dataReadiness.server.months,
+    footer: copy.footer,
+  });
+}
+
 // Each JSON file, and the words it must hold.
 export const SERVER_COPIES: { file: string; words: () => string; from: string }[] = [
   { file: SERVER_COPY_FILE, words: serverCopy, from: "copy.dataReadiness.server" },
@@ -90,6 +105,7 @@ export const SERVER_COPIES: { file: string; words: () => string; from: string }[
   { file: LESSONS_COPY_FILE, words: lessonsCopy, from: "copy.lessons.server" },
   { file: STEPS_COPY_FILE, words: stepsCopy, from: "web/src/steps.ts" },
   { file: TIMELINE_COPY_FILE, words: timelineCopy, from: "copy.timeline.server" },
+  { file: DASHBOARD_COPY_FILE, words: dashboardCopy, from: "copy.dash and copy.kpi" },
 ];
 
 function isCurrent(file: string, words: () => string): boolean {

@@ -59,9 +59,25 @@ class Outcome:
 
 # ── Settings and places ──────────────────────────────────────────────────
 
+BUDGET_PATH = HERE.parents[1] / "config" / "budget.toml"
+
+
 def load_config(path: Path = CONFIG_PATH) -> dict:
+    """dayone.toml, with the budget's values from config/budget.toml, their one home (ticket 45): the daily cost
+    pull runs on the workspace, where only src and config are synced, so the budget lives there and the wizard
+    and the probes read it under the names they always used."""
     with open(path, "rb") as handle:
-        return tomllib.load(handle)
+        config = tomllib.load(handle)
+    with open(BUDGET_PATH, "rb") as handle:
+        budget = tomllib.load(handle)
+    config.setdefault("payg", {}).update(deadline=budget["credit"]["ends_on"].isoformat(),
+                                         credit_usd=budget["credit"]["usd"])
+    config.setdefault("caps", {}).update(monthly_budget_usd=budget["monthly"]["usd"],
+                                         budget_alert_percents=budget["monthly"]["alert_percents"],
+                                         budget_forecast_percent=budget["monthly"]["forecast_percent"])
+    config.setdefault("names", {}).update(budget=budget["monthly"]["name"],
+                                          resource_group=budget["pull"]["resource_group"])
+    return config
 
 
 def models() -> dict:
