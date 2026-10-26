@@ -188,5 +188,6 @@ def test_the_fixture_s_run_recorded_every_page_of_every_source_once(fixture_db):
             found = engine.run(f"SELECT page_hash, tables, version FROM {SILVER_PAGES} WHERE source = :source",
                                {"source": source.key}).rows
             named = PROJECT_TABLES if source.key == "projects" else silver.tables(silver.transform(source))
+            numbered = silver.version(silver.transform(source))  # 1, or the VERSION a transform sets (notices: 2)
             assert held, source.key
-            assert Counter(found) == Counter({(page, named, 1): 1 for page in held}), source.key
+            assert Counter(found) == Counter({(page, named, numbered): 1 for page in held}), source.key

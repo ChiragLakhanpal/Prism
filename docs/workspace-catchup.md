@@ -303,6 +303,8 @@ The warehouse's counts may differ if the World Bank's hosts now list newer ISRs.
 
 **Ran again on October 26, 2026 (orchestrator), from a snapshot of b5269651, 02:22 to 06:39 UTC.** Exit 2 after 4 hours 17 minutes: "The run stopped before it finished: I could not fetch https://search.worldbank.org/api/v3/wds?format=json&proid=P089634&rows=500&os=0&...: HTTP Error 503: Service Unavailable. The pages it parsed are kept, and the next run goes on from there." The plan reader parsed 358 scanned pages through the layout parser today (`strata.bronze.layout_pages` with `parsed_at` on October 26) before the search host refused P089634's document list, and the passage reader never started: `strata.gold.passage` still has 0 rows. An earlier attempt the same night (01:04 to 02:19, from the shared checkout) died when a merge rewrote config/slice.toml under it, which is why this one ran from a snapshot. The next run uses ticket 66's paced, cached fetcher (ticket 66, step 3 of 3) and follows the nightly job run.
 
+**Seen on October 26, 2026 (orchestrator).** Ticket 72's step 1 has the run of 12:02 UTC: `strata.gold.passage` holds 1,028 passages from 23 documents (counted at 12:45 UTC), the first on this workspace; the run stopped at the warehouse's daily limit before its index sync, so steps 2 to 4 follow the rerun.
+
 ## Ticket 11, step 2 of 4: paragraph 54's passage on DuckDB and on the SQL warehouse
 
 The merger parked this step on October 23, 2026, after merge commit e0721da. Run it after step 1. It is the same command as ticket 04's step 3, ticket 07's step 2 and ticket 08's step 2. If you ran it before step 1, run it again now, because `tests/ground_truth/icr_paragraph_54_passage.sql` reads `strata.gold.passage`, which step 1 fills.
@@ -352,6 +354,8 @@ Run this command again after every bundle deploy made from a commit before ticke
 **Found on October 26, 2026 (orchestrator).** The user ran this deploy themselves tonight: the App `strata` was created at 05:08:53 UTC (service principal `app-4mv05v strata`, client id e796c089-1500-4cf2-9c1f-8e6a8f5aba10), two deployments failed at 05:14 and 05:46 with "Error installing packages" (the numpy pin for the Apps runtime's Python 3.11, fixed by ticket 69), and the deployment of 06:11:36 succeeded: "App started successfully". The App is RUNNING at https://strata-7474658003099155.aws.databricksapps.com with nine resources bound (sql-warehouse, appinsights, app-state, the four Foundry secrets and the two Azure OpenAI secrets), and the scope `strata` holds all six keys written at 06:08. From this computer, with an OAuth token from the wizard's CLI profile (`databricks auth token -p strata`; a personal access token gets 401), `GET /api/health` answers 200 `{"status":"ok"}`, `GET /api/me` answers 200 as chiraglakhanpal@gwu.edu with `staff` true and the views staff, piu and public, and `GET /api/freshness` answers 200 with `data_through` 2026-10-24. Answers through the agent fail with 401 PermissionDenied until the user assigns the principal `strata-app` the "Cognitive Services User" role (ticket 45, step 3 of 6, has the command).
 
 **Seen on October 26, 2026 (orchestrator).** The warning above held: ticket 68's bundle deploy (10:20 UTC) removed the App's service principal's USE CATALOG on strata and USE SCHEMA on strata.ops (`SHOW GRANTS` listed only `account users` afterwards; table grants stayed), and the App deploy of 10:25 to 10:33 UTC put them back. Each bundle deploy costs an App redeploy and about nine minutes of 502s; told the build orchestrator, who may want the bundle's grants to carry the App's principal.
+
+**Seen on October 26, 2026 (orchestrator), 13:01 UTC.** The Free Edition's daily limit stopped the App: the probe beside ticket 77's run saw `/api/health` 200 until 12:57:19 UTC and 503 from 12:57:34; `apps get strata` then showed app_status UNAVAILABLE ("App status is unavailable."), compute_status STOPPED ("App compute was stopped due to workspace or account status."), no active deployment and update_time 12:58:02Z, and `/api/health` returned Databricks' "App Not Available" page with 503. The same hour had stopped the job's compute (12:43), Genie's budget (12:48) and the SQL warehouse (12:53). The App needs a start once the limit lifts; ticket 77's `ops/demo/ready.py` does it for a stopped App.
 
 ## Ticket 06, step 2 of 6: the identity route shows your own account
 
@@ -1555,6 +1559,8 @@ It worked if it exits 0, prints "Replayed on <dates>, N projects, MLflow run <id
 
 Then, with the App deployed from 568dbc0 or later (step 2), `GET <App url>/api/following` as a staff viewer must return a `track_record` with that run's `run_id` and the same k and n for each status, and the Following page must state them instead of "I haven't replayed these checks on past dates yet". Exit 2 means the replay could not run, and it prints why.
 
+**Ran on October 26, 2026 (orchestrator), from 03349a45, twice, neither to the end.** The replay prints nothing until it finishes and issues two small statements per project per date (about 57 a minute, median 0.7 seconds) over the cohort of `strata.gold.project_closing_date` (1,017 projects public by 2023-06-30, 1,044 by 2024-06-30, 1,060 by 2025-06-30), so a full run needs about 110 minutes of warehouse time. The first start (09:55 UTC) was stopped by the orchestrator at 65 minutes on a wrong size estimate. The second (11:09 UTC) ran 104 minutes and exited 2 at 12:53:16 with "The warehouse could not run a statement: The warehouse did not run the statement. Its state was FAILED: Failed on SQL Endpoint 882107b449dd59cd due to compute cluster maintenance": the warehouse had reached the free daily limit (`warehouses get` at 12:54 UTC: "Serverless warehouse cannot start since workspace 7474658003099155 is no longer eligible for Serverless Compute"). `strata.ops.evaluation_result` holds no `signals_track_record` row. It runs again once the limit lifts, first thing, with nothing else on the warehouse. Logs: the scratchpad's replay37.log and replay37b.log.
+
 ## Ticket 37, step 6 of 6: a mission brief through the live writer on the deployed App
 
 The merger parked this step on October 25, 2026, after merge commit 568dbc0. Run it after steps 2, 3 and 4. It is a check in your own browser, so it has no command.
@@ -1912,6 +1918,8 @@ It worked if it exits 0 with the same ten task lines and "finished inside the jo
 
 **Ran on October 26, 2026 (orchestrator), from 6b5ff48d.** `check.py job-run` started run 601237901444983 at 06:40 UTC and exited 1 at 09:11 with "The run ended TIMEDOUT, so it did not finish every task." `strata.ops.pipeline_runs` and `strata.ops.quality_checks` for that run: `fetch_by_watermark` succeeded (06:41 to 06:55, 365 rows changed, five checks passed); `bronze_to_gold` succeeded (06:55 to 07:32, 808,547 rows changed, 36 checks passed and one failed: `contacts_left` on `strata.silver.notices` found 1,256); `parse_and_embed` ran from 07:32 to the job's 150-minute stop at 09:11 and is recorded as failed with 0 rows, having written 97 layout pages of one document, 34106903 of P156634, to `strata.bronze.layout_pages` between 08:12 and 09:10 (its task log is 506 lines of pypdf messages for that file, such as PdfReadError "Invalid Elementary Object" and "Object 813 0 not defined", and nothing else); `relink`, `score`, `sync_index`, `measure_data_readiness`, `propose_lessons`, `refresh_drafts` and `detect_disagreements` were skipped (UPSTREAM_CANCELED). The check printed no task lines, because the run did not finish. The per-country fetch did land: `strata.gold.notice` holds 126,396 rows across 152 country codes, by `notice_date` year from 2005 to 2026 (2009 to 2023 between 215 and 4,529 a year; 2024: 3,997; 2025: 63,847; 2026: 36,463; 90 undated), where October 24's fetch held notices from 2024 on only. The scheduled-run half (criterion 2) waits for a run that finishes inside the window.
 
+**Scheduled run seen on October 26, 2026 (orchestrator).** The job's own run 417138743946638 (PERIODIC) started at 07:00:08 UTC, 03:00 in New York, while the hand-started run 601237901444983 was still in its `parse_and_embed` task: `fetch_by_watermark` succeeded, `bronze_to_gold` ended TIMEDOUT at the job's 150-minute stop (its `strata.ops.pipeline_runs` row: failed, 0 rows, 09:20:28 to 09:30:25), and the other eight tasks were UPSTREAM_CANCELED. Criterion 2 (a scheduled run that finishes inside the window) is still open, and a hand-started run must keep clear of 07:00 UTC.
+
 ## Ticket 43, step 2 of 4: check that Strata's and fairshare's nightly windows never meet (criterion 5, window half)
 
 The merger parked this step on October 25, 2026, after merge commit 60cf29b, while the warehouse's daily limit held. Run it after step 1, so Strata's job has a recent run to measure. It needs the Databricks keys in `.env`. Offline, the verifier found no overlap on any of 366 days against fairshare's schedule measured on October 24, 2026 (06:00 America/Chicago, longest run 21 minutes), with a smallest gap of 1 hour 30 minutes.
@@ -2027,6 +2035,8 @@ Then, in the SQL editor:
 It worked if the run exits 0, `passages_language_set` has its count equal to its denominator, `passage_language_sample_agrees` reads 50 of 50 (or its detail names each passage that disagreed), and `passage_language_checks` holds the sampled passages with `agrees` true for nearly all of them. Criterion 1 asks for this across the whole slice, so check the same two rows again after the next nightly `parse_and_embed` task (`bundle/nightly.yml`, which now installs `py3langid==0.3.0`).
 
 **October 26, 2026 (orchestrator).** The documents run of this night is recorded under ticket 11, step 1 of 4: it stopped on a 503 before the passage reader ran, so no passage has a language yet.
+
+**Seen on October 26, 2026 (orchestrator).** Ticket 72's step 1 has the run of 12:02 UTC; the language checks on `strata.ops.passage_language_checks` are read after the rerun, once the warehouse answers again.
 
 ## Ticket 42, step 3 of 6: sync the changed orchestrator and writer instructions
 
@@ -2202,6 +2212,8 @@ The merger of ticket 77 updated the expected lines above on October 26, 2026, fo
 
 **Ran on October 26, 2026 (orchestrator), from 03349a45, with the orchestrator agent at version 9 and the data after run 601237901444983.** Twice: 09:28 to 09:38 UTC (exit 1) and, with `data/out/fixture.duckdb` copied into the snapshot, 09:39 to 09:50 UTC (exit 1). Step 1 printed "It was running. I restarted it, so it runs for 24 hours from now." both times and then failed both times: "The app did not answer GET /api/health within 300 seconds. The last try said: Calling the app at /api/health failed: HTTP Error 502: Bad Gateway". A probe of `/api/health` every 15 seconds beside the second run (the scratchpad's health48.log) saw 200 at 09:39:47, 503 from 09:40:02, 502 from 09:42:40 and 200 again from 09:48:12, so the App needs about eight and a half minutes after a restart, against `[demo_ready] health_timeout_seconds` of 300; the build orchestrator was told at 09:52 UTC. Step 2 passed both times: Genie answered the warming question after 20 then 16 seconds and the demo's first question after 15 then 18 seconds, within the 60-second limit. Step 3 failed both times: "The answer did not pass. Its kept sentences do not cite strata.gold.passage:31525018/v1/54." (the second run: "It kept no sentence ... The verifier removed one sentence (date_not_in_records)."), because `strata.gold.passage` holds 0 rows and search_passages logged "no passages, because the passage index is not available yet" three times a run. Step 4 failed in the first run only because the snapshot lacked the fixture database, and passed in the second: "In the fixture: Needs a look, with four signals." and "On the workspace: Watch, with two signals. It closes on October 31, 2026." (Signed far above its estimate: KE-NWWDA-229129-CW-RFQ at about 4 times its estimate, US$1,245,092.76 against US$300,000.00; Closing date moved three times since 2022; Restructured and ISR rating lowered could not run, "because I hold no ISR for the project"), 37 changes since the fixture (new Procurement Plan dates for the project's agencies, Planned completion passed and Direct selection added late no longer firing, Signed far above its estimate naming KE-NWWDA-229129-CW-RFQ instead of -RFB), and the one disagreement reported, not decided: KE-NWWDA-541062-CW-RFQ, where the plan of October 9, 2026 shows no signed contract and the awards dataset shows contract 1903551 signed on May 11, 2026 for US$301,170.36. Step 5 said Home's examples and window are not built yet (ticket 41). Step 6 listed one change in the first run (the rows of `strata.ops.pipeline_runs`) and two in the second (`strata.ops.cost_pulls` and `strata.ops.dashboard_findings`, written by the cost pull job's scheduled run at 09:40 UTC, ticket 45's step 3). Last line both times: "Strata is not ready for the demo.", with the app and the smoke question named (and the P156634 recheck in the first run). Logs: the scratchpad's ready48.log and ready48b.log.
 
+**Third run on October 26, 2026 (orchestrator), ticket 77's step 1, from ff33c29c, 12:45 to 12:47 UTC, exit 1.** Step 1 passed this time (the App left running, health after 1 second). Step 2 failed: "Genie gave no answer to the warm-up question (not_answered): genie_failed"; a direct `start-conversation` on the space at 12:48 UTC came back FAILED after 7 seconds with `RESOURCE_EXHAUSTED: You've reached your budget. Contact your admin to request a budget increase.` (BUDGET_EXCEEDED_EXCEPTION), where Genie had answered in 15 to 20 seconds at 09:30 and 09:40: the Free Edition's Genie budget for the day was spent. Step 3 failed: "It kept no sentence ... The verifier removed two sentences (not_supported)." (`strata.gold.passage` held 1,028 rows by then, but the index was not synced yet). Step 4 passed as in the second run (Watch, 37 changes). Step 5 as before. Step 6: "No changes." Last line: "Strata is not ready for the demo. These steps failed: Genie and the smoke question."
+
 ## Ticket 48, step 3 of 3: the same command again, right away, changes nothing (criterion 6, live)
 
 The merger parked this step on October 25, 2026, after merge commit cfc7130, for the same reasons as step 1. Run it right after step 2, with the same keys and sign-ins.
@@ -2215,6 +2227,8 @@ It worked if it exits 0, step 1 prints "It was running, and it last started or w
 The merger of ticket 77 updated the expected lines above on October 26, 2026, for merge commit 7e808ad4 and later. The record below quotes what the command printed before that change.
 
 **Ran on October 26, 2026 (orchestrator), from 03349a45.** The second run of step 2 (09:39 to 09:50 UTC) is this run, started within two minutes of the first. Step 1 printed "It was running. I restarted it, so it runs for 24 hours from now." Step 6 did not print "No changes.": it listed the rows of `strata.ops.cost_pulls` and `strata.ops.dashboard_findings`, which the cost pull job's scheduled run at 09:40 UTC wrote, not the command. It exited 1 for the same two steps as the first run (the App's restart time and the smoke question), so the last line was not "Strata is ready for the demo." The restart itself is a change the command makes every time: the App answered 502 and 503 for about eight and a half minutes after each run (step 2 has the probe), which is worth knowing before anyone runs it in the minutes before the demo.
+
+**Seen on October 26, 2026 (orchestrator).** Ticket 77's run of 12:45 UTC is the first in which step 6 printed "No changes." and step 1 left the App running, so the command no longer changes the workspace on a rerun; it still exits 1 while Genie's budget and the passage index are short (ticket 48's step 2, third run).
 
 ## Ticket 38, step 1 of 6: sync the implementing agency's PPSD rows writer to Foundry, with a --check run (criterion 6, live)
 
@@ -2373,6 +2387,8 @@ Run this from the main checkout, twice:
     uv run --script ops/documents/run_live.py --env-file .env
 
 It worked if requests to documents.worldbank.org are 3 seconds apart, each fetched text appears under `.cache/documents`, the second run asks for no kept text again, and if the host answers 403 the run stops with exit 2 and "The run stopped before it finished: ..." and the next run goes on from there.
+
+**Seen on October 26, 2026 (orchestrator).** Ticket 72's step 1 has the run of 12:02 UTC, through PoliteFetch and the shared per-document writer: it wrote passages as it went (1,028 from 23 documents by 12:45 UTC) and stopped on the warehouse's daily limit at 13:10 with its documents kept; no host refusal appeared in its output. The end line and the stop's exit code are the rerun's to show.
 
 ## Ticket 45, step 1 of 6: deploy "Strata operations" and its test copy, with the nine new ops tables and the cost job (criterion 1, live)
 
@@ -2677,6 +2693,8 @@ Record the four results here. If `recorded` falls short of `pages` for a source 
 
 **Deploy half ran on October 26, 2026 (orchestrator), from a snapshot of f90b8c2d (ticket 79's step 1 is the same deploy).** The first deploy (11:35 to 11:38 UTC) exited 0, listed `strata.ops.silver_pages` as new and changed no table that holds rows; the second printed "No changes." No App redeploy was needed: the deploy gave the App's principal its USE CATALOG and USE SCHEMA back itself (ticket 79). The `bronze_to_gold` task alone was started at 11:40:34 UTC with `databricks jobs run-now --json '{"job_id": 730097284330653, "only": ["bronze_to_gold"]}' --timeout 160m` (the CLI accepted `only`), outside the nightly window; its result and the four queries are recorded below when it ends.
 
+**Job half ran on October 26, 2026 (orchestrator), and stopped at the free daily limit.** Run 760942398375680 (bronze_to_gold only) started at 11:40:35 UTC; its first attempt (task run 269486529136187) failed at 12:43:08 with "(DENY_NEW_AND_EXISTING_RESOURCES) BAD_REQUEST: Sorry, cannot run the resource because you have hit your free daily limit. Please come back again tomorrow." from Spark Connect (trace 7474658003099155/730097284330653/760942398375680/269486529136187), and the retry attempt was cancelled before it started at 12:43:19 ("Run cancelled by user"; no session of ours did it). The task wrote no `strata.ops.pipeline_runs` row. The pass had recorded 462 of the 890 awards pages in `strata.ops.silver_pages` and none of the other sources (awards_fy2001_2016 147, cpia 378, ibrd_loan_history 39, ibrd_loans 10, ida_credit_history 178, ida_credits 12, ieg_ratings 26, notices 320, projects 285, wgi 36), so `strata.silver.project_sectors` still holds 0 rows for P130164, and the last query reads pages_before_ticket_21 284, with_sector_rows 0, sector_rows 0, projects 0. The recorded pages stay recorded; the same run-now command goes again once the limit lifts (about 01:00 UTC on October 27), outside the nightly window, and its minutes add to this attempt's 63. Log: the scratchpad's ticket79.log.
+
 ## Ticket 79, step 1 of 1: a bundle deploy leaves the App its USE CATALOG and USE SCHEMA, with no App redeploy (criterion 3, live)
 
 Parked on October 26, 2026 with ticket 79; the merger parked it after merge commit 353ad5ad, so run it from a snapshot of 353ad5ad or later. The second session runs it one workspace step at a time. It needs the Databricks keys in `.env` and the Databricks CLI 0.287.0 or later. It changes no table, job or dashboard file, so the deploy also serves as the next bundle deploy any other block asks for. Do not redeploy the App in this step: the point is that the App keeps serving through the bundle deploy.
@@ -2745,6 +2763,8 @@ What to expect, from the review and verify notes (`.notes/72-review-r3.md`, `.no
 
 If K is 0, or the run exits 2 with no document written, tell the orchestrator before anyone shows a cited answer on the App.
 
+**Ran on October 26, 2026 (orchestrator), from a snapshot of 95487b11.** The bundle deploy (12:00 to 12:02 UTC) exited 0, listed `strata.ops.skipped_documents` as new and changed no table that holds rows. `run_live.py` started at 12:02:15 UTC. At 12:45 UTC, with the run still reading, `strata.gold.passage` held 1,028 passages from 23 documents (0 before this run; the layout pages of earlier runs plus 45 pages of 2 documents parsed since 12:00), and `strata.ops.skipped_documents` had no row. The warehouse then reached the free daily limit (12:53 UTC, "no longer eligible for Serverless Compute"), and the run ended at 13:10:03 UTC with exit 1: its own line "The run stopped: The warehouse took longer than 600 seconds, so I stopped waiting for statement 01f1d13c-36b7-1be6-b032-7705174b7418. The documents it wrote before that stay in strata.gold.passage, and the next run goes on from there.", then a traceback from `ops/documents/run_live.py` line 134 (`read_documents`, one more statement after the stop) through `src/strata/lakehouse/engine.py` line 362 to `databricks.sdk.errors.platform.BadRequest: The request could not be processed by the warehouse.` (told the build orchestrator: the exit should be the stop's 2). No end line and no index line were printed, so the index is not synced. The per-document writer is proven: passages exist on the workspace for the first time. The counts after the warehouse is back, the second run and both queries are recorded with the rerun. Log: the scratchpad's documents72.log.
+
 ## Ticket 77, step 1 of 1: the demo-ready command leaves a healthy App running and passes step 1 (criterion 3, live)
 
 Parked on October 26, 2026 by the merger, after merge commit 7e808ad4, so run it from a snapshot of 7e808ad4 or later. Every key is set, but the second session runs every workspace step from a snapshot of the commit, one at a time. It needs what ticket 48's step 2 needs: DATABRICKS_HOST, DATABRICKS_TOKEN, DATABRICKS_WAREHOUSE_ID, GENIE_SPACE_ID, FOUNDRY_PROJECT_ENDPOINT, AZURE_OPENAI_ENDPOINT and AZURE_OPENAI_API_KEY in `.env`, `az` signed in for the Foundry agent, the browser sign-in under the Databricks CLI profile `strata`, and `data/out/fixture.duckdb` copied into the snapshot for step 4. Run it when neither nightly job is running and the warehouse is under its free daily limit.
@@ -2777,6 +2797,8 @@ This criterion covers step 1 only. While `strata.gold.passage` holds 0 rows, the
 Record here the four fields from each `apps get`, the step 1 lines with the time they printed, the summary's app line, the exit code, the run's start and end times, and the probe's answers.
 
 Then, about review follow-up 1 in `.notes/77-review.md`: `last_start` assumes that `apps start` moves the active deployment's times. The `apps get` in deploy70.log (10:09 UTC on October 26) supports it: after the demo-ready restart's start, the active deployment 01f1d1219e59... showed `create_time` 09:42:54Z and `update_time` 09:48:11Z, and no deploy ran in between. The next time the App is started or restarted for any reason (a run on a stopped App, or a run 12 hours or more after the last start), record the same four fields before and after. If the active deployment's times moved to the start, nothing changes. If only the top-level `update_time` moved, tell the orchestrator: `last_start` must read it too, and the review note gives the fix and the test. Do not stop and start the App only to check this, because a restart takes it down for about eight and a half minutes.
+
+**Ran on October 26, 2026 (orchestrator), from a snapshot of ff33c29c with `data/out/fixture.duckdb` copied in, 12:45:28 to 12:47:31 UTC, exit 1 (Genie and the smoke question, not the App).** The first `apps get`: compute ACTIVE, active deployment 01f1d128181514959c3e683ed71050f2, create_time 2026-10-26T10:29:15Z, update_time 2026-10-26T10:33:12Z, top-level update_time 2026-10-26T10:29:15Z. Step 1 printed at 12:45 UTC: "It was running, and it last started or was deployed at 10:33 UTC on October 26, 2026, two hours and 12 minutes ago. That is less than the 12 hours in [demo_ready] restart_after_hours, so I left it running. The platform stops it at 10:33 UTC on October 27, 2026, 24 hours after that start." (10:33 is the deployment's update_time, the later of its two times) and "GET /api/health answered after 1 second, within the 900-second limit, at https://strata-7474658003099155.aws.databricksapps.com." The summary: "The app: passed. I left it running, since it last started two hours and 12 minutes ago. It answered its health route after 1 second." Step 6 printed "No changes." and no started-again or stopped line. The second `apps get` shows the same four fields. The probe beside the run (every 15 seconds, the scratchpad's health77.log) saw only 200 during the run and until 12:57:19 UTC; from 12:57:34 it saw 503, when the daily limit stopped the App's compute (ticket 06's step 1, seen at 13:01). Passed. Steps 2 to 6 are under ticket 48's steps 2 and 3. No start or restart happened, so review follow-up 1 (whether `apps start` moves the deployment's times) waits for the next one. Log: the scratchpad's ready77.log.
 
 ## Ticket 78, step 1 of 4: deploy the bundle, so the nightly job's plan reader writes a misread reference as the plan's text gives it
 
@@ -2822,9 +2844,9 @@ Record the run's last lines, the exit code, the `bronze_to_gold` run's status an
 
 ## Ticket 78, step 3 of 4: the two ground-truth queries return rows on the warehouse (criterion 3, live)
 
-Parked with step 1, after merge commit 60843437. Run it from the same snapshot, after step 2:
+Parked with step 1, after merge commit 60843437. Run it from the same snapshot, after step 2, with `--env-file` pointing at the main checkout's file, as the header says:
 
-    uv run --script ops/bundle/check.py same-rows --env-file "<main checkout>/.env"
+    uv run --script ops/bundle/check.py same-rows --env-file .env
 
 It worked if:
 
@@ -2844,3 +2866,77 @@ This is ticket 48's command, so record what its other steps printed under ticket
 It worked if step 4 prints neither "Signed far above its estimate: KE-NWWDA-229129-CW-RFQ fired on the workspace and not in the fixture." nor "Signed far above its estimate: KE-NWWDA-229129-CW-RFB no longer fired on the workspace.", and both the fixture's run and the workspace's run name KE-NWWDA-229129-CW-RFB, as in "KE-NWWDA-229129-CW-RFB was signed at about 4 times its estimate: US$1,245,092.76 against US$300,000.00." When the warehouse holds all nine rows of the October 9 plan, step 4 ends "Nothing changed since the fixture was recorded." If it does not, step 4 may list other changes; a line that does not name KE-NWWDA-229129 is not this ticket's. An exit 1 that names another step, such as step 3's smoke question while `strata.gold.passage` holds 0 rows, does not fail this step.
 
 Record here the snapshot's commit, the run's start and end times, everything step 4 printed, and the exit code.
+
+## Ticket 76, step 1 of 4: count the notices whose text still holds a labelled phone number, before the fix reaches the workspace
+
+The merger parked this step on October 26, 2026, after merge commit e8ee6cf6, so run steps 1 to 4 from a snapshot of e8ee6cf6 or later. Every key is set, but the second session runs every workspace step from a snapshot of the commit, one at a time, so the merger ran none. Steps 1 to 4 need the Databricks keys in `.env` and the Databricks CLI 0.287.0 or later. Run them in order, after ticket 75's `bronze_to_gold` run of 11:40 UTC on October 26 has ended, and run step 1 before any bundle deploy from e8ee6cf6 or later. If ticket 78's step 1 has not run yet, one deploy from e8ee6cf6 or later serves both tickets: run step 1 here first, then that deploy as step 2 here.
+
+What ticket 76 changes: `LEFT_EMAIL` and `LEFT_PHONE` in `src/strata/lakehouse/contacts.py` are now the one definition of an email address and a labelled phone number. The nightly `contacts_left` check binds them as parameters, and the contact removal runs them as its last pass, which keeps the label and writes `[contact removed]` for the number. Silver's notices transform runs the removal again on each page it reads, and its `VERSION` is now 2, so through ticket 75's record (`strata.ops.silver_pages`) the first `bronze_to_gold` after the deploy reads every notices page again. No table, column or job changes. Bronze keeps its pages as the old removal left them (a decision parked for the user in ticket 76's comment).
+
+Run this from the snapshot's root, with `--env-file` pointing at the main checkout's file, as the header says:
+
+    uv run --script ops/notices/contacts_left_live.py --env-file .env
+
+It worked if it exits 0 and prints "The nightly check's patterns find N notices on M pages of strata.silver.notices." It writes nothing. Record N and M. N may differ from the 1,256 that ticket 43's step 1 found, because `LEFT_PHONE` now also counts Facsimile, Telefax and Mob labels, a label glued to the digits, dotted numbers and a second number after a removed one, and it counts seven digits instead of seven characters. Exit 2 means it could not ask the SQL warehouse, and it prints why.
+
+## Ticket 76, step 2 of 4: deploy the bundle, so the nightly job runs the shared patterns and the notices transform's VERSION 2
+
+Parked with step 1, after merge commit e8ee6cf6. Run this from the same snapshot's root, twice:
+
+    uv run --script ops/bundle/deploy.py --env-file .env --fairshare-catalog workspace
+
+It worked if the first run exits 0 and its "3. What changed:" names no new or changed table for this ticket (it may list what other merges added since the last deploy), and the second run prints "No changes." Record both exit codes and what "3. What changed:" listed.
+
+## Ticket 76, step 3 of 4: run only `bronze_to_gold`, which reads every notices page again with the fixed removal (criterion 3, live)
+
+Parked with step 1, after merge commit e8ee6cf6. Run it right after step 2, outside the nightly window (03:00 to 05:30 in Washington), with the job ID that the list prints (the orchestrator's runs on October 26 used 730097284330653):
+
+    databricks jobs list --name "strata nightly" -p strata
+    databricks jobs run-now --json '{"job_id": <the job ID>, "only": ["bronze_to_gold"]}' --timeout 160m -p strata
+
+If the CLI refuses `only`, run the whole job outside the window instead (`uv run --script ops/bundle/check.py job-run --env-file .env`); its `bronze_to_gold` makes the same pass. The pass reads again every notices page that ticket 75's record holds under version 1, which is the same work as ticket 75's first pass for notices, plus about 4.5 minutes for the second removal (the verifier measured 1.71 ms per notice on the fixture, against 0.11 ms before). If the run ends TIMEDOUT at the job's 150-minute stop, run the same command again: every page the run recorded stays recorded, so the next run reads only the rest. If a nightly run on the deployed code comes first and its `bronze_to_gold` succeeds, record that run here instead. Then run these in the workspace's SQL editor:
+
+    SELECT run_id, status, rows_changed, started_at, finished_at,
+      timestampdiff(MINUTE, started_at, finished_at) AS minutes
+    FROM strata.ops.pipeline_runs WHERE task_key = 'bronze_to_gold' ORDER BY started_at DESC LIMIT 3
+
+    SELECT version, count(*) AS page_reads FROM strata.ops.silver_pages
+    WHERE source = 'notices' GROUP BY version ORDER BY version
+
+    SELECT count(DISTINCT p.page_hash) AS pages, count(DISTINCT r.page_hash) AS read_at_version_2
+    FROM strata.bronze.api_pages AS p
+    LEFT JOIN (SELECT DISTINCT page_hash FROM strata.ops.silver_pages WHERE source = 'notices' AND version = 2) AS r
+      ON r.page_hash = p.page_hash
+    WHERE p.source = 'notices'
+
+It worked if:
+
+- The newest `bronze_to_gold` row succeeded. Record its `minutes`, and the minutes of each try when it took more than one: together they are the time of the pass.
+- The second query lists version 2 rows.
+- In the third query, `read_at_version_2` equals `pages`.
+
+## Ticket 76, step 4 of 4: the check finds 0, and gold's bid_description holds no labelled phone number (criterion 3, live)
+
+Parked with step 1, after merge commit e8ee6cf6. Run this from the same snapshot's root, after step 3 succeeded:
+
+    uv run --script ops/notices/contacts_left_live.py --env-file .env --check-zero
+
+Then print the shared phone pattern from the same snapshot's root:
+
+    python3 -c "import sys; sys.path.insert(0, 'src'); from strata.lakehouse import contacts; print(contacts.LEFT_PHONE)"
+
+Run these in the workspace's SQL editor, and paste the printed line as the value of the `phone` parameter. Bind it rather than write it into the query: Spark SQL changes the backslashes in a literal, which is why `quality.py` binds the patterns too.
+
+    SELECT found, passed, checked_at FROM strata.ops.quality_checks
+    WHERE check_kind = 'contacts_left' AND table_name = 'strata.silver.notices'
+    ORDER BY checked_at DESC LIMIT 1
+
+    SELECT count(*) AS phone_in_bid_description FROM strata.gold.notice WHERE regexp_like(bid_description, :phone)
+
+It worked if:
+
+- The script exits 0 and prints "The nightly check's patterns find 0 notices on 0 pages of strata.silver.notices." Exit 1 means the check still finds a notice, and the line says how many.
+- The newest `contacts_left` row for `strata.silver.notices` reads found 0 and passed true, with a `checked_at` inside step 3's run.
+- The gold query returns 0. `strata.gold.notice` has no `notice_text` column. In `bronze_to_gold`, `gold.sync`'s MERGE makes it equal its query over each notice's newest silver row, so its `bid_description` takes the stripped text with no step of its own. Screens and tools read `notice_text` from `strata.silver.notices`.
+
+Record here the snapshot's commit, N and M from step 1, the count from this step, the pass's minutes from step 3, and the three query results from steps 3 and 4. If the script still finds notices after a successful step 3, record their shapes as under "Ticket 76, before step 1" (every digit written as 9, every email address masked, thirty characters kept on each side of the label) and tell the orchestrator.
