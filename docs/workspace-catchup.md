@@ -3047,3 +3047,65 @@ It worked if:
 - In the answer whose window holds October 9, 2026, the first two Worth knowing lines are KE-NWWDA-541055-CW-RFB (Needs a look, US$1.23 million, planned completion July 31, 2026, project closes October 31, 2026) and KE-NWWDA-229129-CW-RFB (Watch, signed at US$1,245,092.76 against an estimate of US$300,000), with the amounts as the workspace's `check_plan` gives them, and each "Open the activity" lands on that activity's page.
 
 Record the three request times, the two load times, the `data_through` date, whether you used `?asof=2026-10-15`, and the first two lines as shown.
+
+## Ticket 47, step 1 of 3: rebuild the deck's data in the same commit as the proposal's snapshot (criterion 4, live)
+
+The merger parked this step on October 26, 2026, after merge commit bf9c7214, so run steps 1 to 3 from a snapshot of bf9c7214 or later. Every key is set, but the second session runs every workspace step from a snapshot of the commit, one at a time, so the merger ran none.
+
+What ticket 47 adds: the deck at `/present` reads `web/public/deck/data.json`. `python -m strata.proposal deck` builds that file from `docs/proposal/snapshot.json` (ticket 46, step 1) and `docs/proposal/demo-package.json` (step 2 below). If either input is committed without that file rebuilt in the same commit, `tests/test_deck_data.py::test_the_committed_deck_data_is_built_from_the_committed_snapshot` fails, and so does the gate. So the commit in ticket 46 step 2's item 3 must also carry `web/public/deck/data.json`.
+
+In the main checkout, after ticket 46 step 1 has put `docs/proposal/snapshot.json` in place, and before the commit in ticket 46 step 2's item 3, run:
+
+    uv run python -m strata.proposal deck
+
+Then add `web/public/deck/data.json` to that same commit, through the gate.
+
+It worked if:
+
+- The command exits 0 and prints "Wrote web/public/deck/data.json. Not measured yet, so their slides say so: ..." followed by "none" or a list of names. Each name it lists is a result the workspace has not measured, and its slide says so.
+- `uv run --frozen pytest "tests/test_deck_data.py::test_the_committed_deck_data_is_built_from_the_committed_snapshot" -q` passes, and the commit's gate passes.
+
+Record the exit code, the names after "so:", and the commit.
+
+## Ticket 47, step 2 of 3: record the demo package's answers on the workspace, so slide 8 draws its range chart (criterion 4, live)
+
+Parked with step 1, after merge commit bf9c7214. Run it after step 1, and after the nightly job and the estimates loop have run on the workspace (the script's docstring). It needs DATABRICKS_HOST, DATABRICKS_WAREHOUSE_ID and DATABRICKS_TOKEN from the env file. It runs the app's own routes in its own process, on the SQL warehouse, and asks `GET /api/packages/KE-NWWDA-541055-CW-RFB/comparables` and `/estimate`. That package is the demo package that `config/slice.toml` `[demo_plan]` names.
+
+Run this from the snapshot's root:
+
+    uv run --frozen python ops/proposal/record_demo_live.py --env-file "<main checkout>/.env"
+
+Copy the snapshot's `docs/proposal/demo-package.json` into the main checkout's `docs/proposal/`. Then, in the main checkout:
+
+    uv run python -m strata.proposal deck
+
+Commit `docs/proposal/demo-package.json` and `web/public/deck/data.json` together, through the gate.
+
+It worked if:
+
+- The recorder exits 0 and prints "Wrote .../docs/proposal/demo-package.json. Now run uv run python -m strata.proposal deck, which builds the deck's data from it." Exit 2 with "I could not record the demo package: ..." means a route answered with something other than 200, or the answers cannot fill slide 8. Record that line word for word and commit nothing.
+- The deck command exits 0, and it does not print "There is no docs/proposal/demo-package.json".
+- The commit's gate passes. Its screen test of the committed deck (`web/tests/deck.spec.ts`) then runs the number check and axe over all 16 slides with these real numbers.
+- Check the comparables count in slide 8's title (step 3 opens it). If it reads 0, the recorded comparables answer abstained before counting (review round 2, follow-up 4). Record the answer's abstention reason, and leave the files uncommitted until the demo package changes.
+
+Record both exit codes, the commit, and the comparables count.
+
+## Ticket 47, step 3 of 3: /present on the deployed App, and How Strata works has no link to it (criteria 1 and 5, live)
+
+Parked with step 1, after merge commit bf9c7214. Run it after step 2's commit, on an App deployed from a snapshot of that commit or later. One App deploy serves this block and every earlier block that names one. Deploy with `--keep-secrets` (ticket 70, in the header), after `npm ci --prefix web` in the snapshot:
+
+    uv run --script ops/app/deploy_app.py --env-file "<main checkout>/.env" --keep-secrets
+
+Then, in a browser:
+
+1. Open `https://strata-7474658003099155.aws.databricksapps.com/present/1`. Press the right arrow 15 times and watch the address. Then open `/present/8`.
+2. Open `https://strata-7474658003099155.aws.databricksapps.com/data/how-strata-works`. In the DevTools console, run `document.querySelectorAll('a[href*="/present"]').length`.
+
+It worked if:
+
+- The deploy exits 0, and its last line is `Strata is running at https://...`.
+- Each press moves one slide and the address follows it, ending at `/present/16`, and every slide shows the DESIGN.md section 8 footer.
+- `/present/8` draws the demo package's range chart, with a credit row that names both answers' days and has the World Bank logo at its right.
+- The console prints 0, and How Strata works shows its eight figures with their captions.
+
+Record the deploy's exit code and last line, any slide that did not move or draw, and the console count.
