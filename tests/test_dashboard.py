@@ -130,7 +130,7 @@ def test_the_bundle_deploys_the_dashboard_file_with_each_viewer_s_own_credential
 
 
 def test_the_data_readiness_page_holds_the_brief_s_ten_tiles_in_order_on_a_six_column_grid():
-    [page] = lvdash()["pages"]
+    page = lvdash()["pages"][0]
 
     assert page["displayName"] == "Data readiness"
     assert [tile["widget"]["name"] for tile in page["layout"]] == TENTH_PLACE_ORDER
@@ -153,9 +153,10 @@ def test_one_date_filter_sets_every_dataset_and_starts_at_today():
     board = lvdash()
     [date] = [tile for tile in board["pages"][0]["layout"] if tile["widget"]["name"] == "measure_date"]
 
-    assert {query["query"]["datasetName"] for query in date["widget"]["queries"]} == {
-        dataset["name"] for dataset in board["datasets"]}
+    assert {query["query"]["datasetName"] for query in date["widget"]["queries"]} == set(dashboard.DATASETS)
     for dataset in board["datasets"]:
+        if dataset["name"] not in dashboard.DATASETS:
+            continue  # the other pages' datasets read their own filters (tests/test_dashboard_pages.py)
         [date] = dataset["parameters"]
         assert (date["keyword"], date["dataType"]) == ("measure_date", "DATE")
         assert ":measure_date" in "".join(dataset["queryLines"])
@@ -170,8 +171,12 @@ def test_the_charts_use_design_md_s_categorical_colors_in_order_with_the_text_va
     expected = [variants[i] if i in (0, 1, 3, 8) else categorical[i] for i in range(9)]
 
     assert list(dashboard.COLORS) == expected
+    # Ticket 45 adds DESIGN.md's reference grey for budgets, target edges and passed checks, the one state color for
+    # a failed check, and the theme's page, surface, line, text and selection (the 45 brief, section 8).
+    from strata.dashboard import render, tiles
     used = set(re.findall(r"#[0-9a-fA-F]{6}", dashboard.FILE.read_text()))
-    assert used <= set(expected)
+    theme = {value["light"] for value in render.THEME.values() if isinstance(value, dict)}
+    assert used <= set(expected) | {tiles.REFERENCE, tiles.FAILED} | theme
     [awards] = [tile for tile in lvdash()["pages"][0]["layout"] if tile["widget"]["name"] == "award_rows"]
     mappings = awards["widget"]["spec"]["encodings"]["color"]["scale"]["mappings"]
     assert [mapping["color"] for mapping in mappings] == expected[:len(mappings)]

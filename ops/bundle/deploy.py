@@ -114,8 +114,8 @@ def deploy(workspace, fairshare: str = FAIRSHARE) -> int:
     before = flatten(workspace.listing(catalog.CATALOG), workspace.job(job), workspace.dashboard(board))
     neighbour_before = workspace.listing(fairshare)
 
-    print("1. Deploying the bundle: the catalog, its four schemas, the volume, the grants, the nightly job and the "
-          "dashboard.")
+    print("1. Deploying the bundle: the catalog, its four schemas, the volume, the grants, the jobs and the "
+          "dashboards.")
     code, output = workspace.deploy_bundle()
     if code != 0:
         print("The bundle deploy failed, so I created no tables. The Databricks CLI said:")

@@ -132,6 +132,22 @@ def transpile(sql: str) -> str:
         raise EngineError(f"The transpile step could not rewrite this SQL for DuckDB: {error}") from error
 
 
+# Databricks SQL functions DuckDB lacks, as macros with the same name and meaning, for what the transpile step leaves
+# as it is. format_number(x, d) writes a number with commas and d decimals (1,234.50), as the dashboard's counters
+# and tables show numbers (ticket 45).
+DUCKDB_MACROS = (
+    "CREATE OR REPLACE TEMP MACRO format_number(x, d) AS CASE WHEN d = 0 THEN format('{:,}', CAST(round(x) AS BIGINT)) "
+    "ELSE format('{:,.' || CAST(d AS VARCHAR) || 'f}', CAST(x AS DOUBLE)) END",
+)
+
+
+def _session(connection) -> None:
+    connection.execute("USE strata")
+    connection.execute("SET TimeZone = 'UTC'")  # as on the warehouse, whatever this computer's zone
+    for macro in DUCKDB_MACROS:
+        connection.execute(macro)
+
+
 class DuckDBEngine:
     """A DuckDB database attached as the catalog `strata`, so three-part names work as on Databricks."""
 
@@ -148,8 +164,7 @@ class DuckDBEngine:
         connection = duckdb.connect()
         connection.execute(f"ATTACH ? AS strata{' (READ_ONLY)' if read_only else ''}",  # sql-lint: names only
                            [str(path) if path else ":memory:"])  # the path is bound; only the keyword is built in
-        connection.execute("USE strata")
-        connection.execute("SET TimeZone = 'UTC'")  # as on the warehouse, whatever this computer's zone
+        _session(connection)
         return cls(connection)
 
     def cursor(self) -> DuckDBEngine:
@@ -157,8 +172,7 @@ class DuckDBEngine:
         it sees the same catalog, and closing it leaves this one open. DuckDB refuses to attach one file twice
         in a process, so two uses at once share the database this way."""
         connection = self.connection.cursor()
-        connection.execute("USE strata")
-        connection.execute("SET TimeZone = 'UTC'")
+        _session(connection)
         return DuckDBEngine(connection)
 
     def run(self, sql: str, params: Params = None) -> Result:

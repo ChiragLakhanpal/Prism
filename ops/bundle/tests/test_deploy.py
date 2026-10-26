@@ -102,7 +102,7 @@ def test_the_first_deploy_creates_the_catalog_its_schemas_the_volume_the_tables_
                  "The table strata.ops.pipeline_runs is new.",
                  "The grants on strata are new.",
                  "The job strata nightly is new.",
-                 "The dashboard Strata is new."):
+                 "The dashboard Strata operations is new."):
         assert line in out
     assert ("fairshare's catalog lists the same before and after the deploy: "
             "one schema, one table and no volumes.") in out

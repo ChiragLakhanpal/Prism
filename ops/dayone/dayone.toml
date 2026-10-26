@@ -10,11 +10,11 @@ results_document = "docs/day-one-results.md"
 secret_scope = "strata"            # the app's Databricks secret scope
 oauth_profile = "strata"           # the Databricks CLI profile the browser sign-in saves
 ai_search_endpoint = "strata-search"
-resource_group = "WorldBank-demo"
+# The resource group and the Azure budget's name are in config/budget.toml, the budget's one home (ticket 45);
+# dayone.py reads them in as names.resource_group and names.budget.
 foundry_resource = "wb-strata"
 foundry_project = "Strata"
 appinsights_resource = "wb-strata-insights"
-budget = "strata-monthly"
 # The probe app takes Strata's own app slot. The app shell ticket deploys the real app over it.
 app = "strata"
 # The Lakebase database instance that holds app state (ADR 0005), which ops/app/deploy_app.py makes or starts
@@ -28,16 +28,14 @@ volume = "workspace.strata_dayone.files"
 search_table = "workspace.strata_dayone.passages"
 search_index = "workspace.strata_dayone.passages_index"
 
+# The free credit, the day it ends and the monthly budget are in config/budget.toml, the budget's one home, which
+# the daily cost pull also reads (ticket 45). dayone.py reads them in as payg.deadline, payg.credit_usd,
+# caps.monthly_budget_usd, caps.budget_alert_percents and caps.budget_forecast_percent.
 [payg]
-deadline = "2026-11-10"
-credit_usd = 197                   # the free Azure credit, in US dollars
 who = "The subscription owner (the user)"
 
 # Hard caps. Budgets only send email; these limits stop spend (PLAN.md section 2).
 [caps]
-monthly_budget_usd = 50
-budget_alert_percents = [50, 80, 100]
-budget_forecast_percent = 100
 appinsights_daily_cap_gb = 0.15
 
 # One entry per model role, with that role's cap. The deployment's name and the embedding size

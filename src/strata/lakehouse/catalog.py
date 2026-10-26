@@ -142,6 +142,16 @@ def view_definitions(folder: Path = TABLES.with_name(VIEWS),
     return found
 
 
+def defined_names() -> frozenset[str]:
+    """The three-part name of every table, view and metric view this catalog defines, read from the definition
+    files' places alone. It does not read the bundle, so the App, which holds src/strata but no databricks.yml,
+    can call it (the tool registry's lineage, ticket 45)."""
+    tables = TABLES.glob("*/*.sql")
+    views = TABLES.with_name(VIEWS).glob("*/*.sql")
+    metric_views = METRIC_VIEWS.glob("*/*.yaml")
+    return frozenset(f"{CATALOG}.{path.parent.name}.{path.stem}" for path in (*tables, *views, *metric_views))
+
+
 def check_public_from(engine: Engine, skip: tuple[str, ...] = ()) -> None:
     """Stop when any table in the catalog, outside the schemas in skip, has no public_from DATE column (ADR 0002)."""
     missing = [(schema, table) for schema, table in engine.run(MISSING_PUBLIC_FROM, {"catalog": CATALOG}).as_text()

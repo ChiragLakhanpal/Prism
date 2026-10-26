@@ -27,6 +27,7 @@ import asyncio
 import datetime as dt
 import json
 import logging
+import time
 from collections.abc import AsyncIterator, Callable, Mapping
 from typing import Any, Protocol
 
@@ -135,10 +136,11 @@ def keep_result(facts: Facts, name: str, result: Mapping, tools: dict[str, Tool]
 
 
 def tool_context(engine, viewer, view: str, as_of: dt.date, limits: Thresholds,
-                 environ: Mapping[str, str] | None = None) -> registry.Context:
+                 environ: Mapping[str, str] | None = None, reads: list[str] | None = None) -> registry.Context:
     """The Context every /api/ask tool call runs in. It carries no reader of uploads, so no agent answer reads an
-    implementing agency team's upload, whoever asks (ticket 38; tests/test_uploads.py's must-refuse case)."""
-    return registry.Context(engine, viewer, view, as_of, limits, environ=environ)
+    implementing agency team's upload, whoever asks (ticket 38; tests/test_uploads.py's must-refuse case). reads
+    collects the tables the call read, for the run's lineage (ticket 45)."""
+    return registry.Context(engine, viewer, view, as_of, limits, environ=environ, reads=reads)
 
 
 def answer_runner(agent_for: Callable[[Turn], Agent], engine_for: EngineFor, tools: dict[str, Tool] | None = None,
@@ -167,10 +169,14 @@ def answer_runner(agent_for: Callable[[Turn], Agent], engine_for: EngineFor, too
             note.update(arguments=call.get("arguments"), error="bad_arguments")
             return {"error": "bad_arguments", "detail": f"The arguments are not a JSON object: {error}."}, note
         note["arguments"] = arguments
+        # Lineage (ticket 45): the tables the call read, when it started and how long it took, for the run log.
+        reads: list[str] = []
+        note.update(reads=reads, called_at=dt.datetime.now(dt.UTC).isoformat())
+        started = time.monotonic()
         try:
             with engine_for(turn.viewer) as engine:
                 result = registry.call(name, arguments, tool_context(engine, turn.viewer, turn.scope.view, as_of, limits,
-                                                                     environ), tools_held)
+                                                                     environ, reads), tools_held)
         except registry.ToolError as error:
             note["error"] = "bad_arguments"
             return {"error": "bad_arguments", "detail": str(error)}, note
@@ -185,7 +191,9 @@ def answer_runner(agent_for: Callable[[Turn], Agent], engine_for: EngineFor, too
         keep_result(turn.facts, name, shown, tools_held)
         if on_result is not None:
             on_result(turn, name, arguments, result)
-        note.update(rows=len(result["rows"]), abstention=(result["abstention"] or {}).get("reason"))
+        note.update(rows=len(result["rows"]), abstention=(result["abstention"] or {}).get("reason"),
+                    took_ms=round((time.monotonic() - started) * 1000),
+                    evidence_ids=[row["evidence_id"] for row in result["rows"]])
         if shown.get("summary"):  # which call a cited summary came from, such as the past range an exposure logs
             note["summary_id"] = shown["summary"]["evidence_id"]
         return shown, note

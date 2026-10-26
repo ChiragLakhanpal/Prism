@@ -1,0 +1,23 @@
+{
+  "id": "subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/WorldBank-demo/providers/Microsoft.CostManagement/query/made-up-for-the-offline-tests",
+  "name": "made-up-for-the-offline-tests",
+  "type": "Microsoft.CostManagement/query",
+  "properties": {
+    "nextLink": null,
+    "columns": [
+      {"name": "Cost", "type": "Number"},
+      {"name": "UsageDate", "type": "Number"},
+      {"name": "ServiceName", "type": "String"},
+      {"name": "ResourceId", "type": "String"},
+      {"name": "Currency", "type": "String"}
+    ],
+    "rows": [
+      [1.25, 20261020, "Azure OpenAI", "/subscriptions/00000000-0000-0000-0000-000000000000/resourcegroups/worldbank-demo/providers/microsoft.cognitiveservices/accounts/wb-strata", "USD"],
+      [0.1, 20261020, "Application Insights", "/subscriptions/00000000-0000-0000-0000-000000000000/resourcegroups/worldbank-demo/providers/microsoft.insights/components/wb-strata-insights", "USD"],
+      [2.5, 20261021, "Azure OpenAI", "/subscriptions/00000000-0000-0000-0000-000000000000/resourcegroups/worldbank-demo/providers/microsoft.cognitiveservices/accounts/wb-strata", "USD"],
+      [0.12, 20261021, "Application Insights", "/subscriptions/00000000-0000-0000-0000-000000000000/resourcegroups/worldbank-demo/providers/microsoft.insights/components/wb-strata-insights", "USD"],
+      [3.75, 20261022, "Azure OpenAI", "/subscriptions/00000000-0000-0000-0000-000000000000/resourcegroups/worldbank-demo/providers/microsoft.cognitiveservices/accounts/wb-strata", "USD"],
+      [0.08, 20261022, "Application Insights", "/subscriptions/00000000-0000-0000-0000-000000000000/resourcegroups/worldbank-demo/providers/microsoft.insights/components/wb-strata-insights", "USD"]
+    ]
+  }
+}

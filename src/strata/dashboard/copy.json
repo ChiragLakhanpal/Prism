@@ -1,0 +1,812 @@
+{
+  "dash": {
+    "name": "Strata operations",
+    "testName": "Strata operations (test)",
+    "testLine": "This copy is for testing deploys. The dashboard people use is Strata operations.",
+    "warehouse": "These tiles read Strata's tables through the SQL warehouse. If they are blank at first, the warehouse is starting, which can take up to a minute.",
+    "sourceLabel": "Source:",
+    "noteLabel": "Note:",
+    "note": "I give no percentage, median, rate per 100 or range from fewer than {fewest} cases. Where a tile has fewer, it shows the count instead.",
+    "percent": "{n} percent",
+    "none": "none",
+    "ratio": {
+      "percent": "{count}, {pct}%",
+      "underPercent": "{count}, <1%",
+      "overPercent": "{count}, >99%",
+      "inTen": "{count}, about {in10} in 10",
+      "inTenExact": "{count}, {in10} in 10",
+      "fewerThanOne": "{count}, fewer than 1 in 10",
+      "moreThanNine": "{count}, more than 9 in 10"
+    },
+    "findings": {
+      "title": "What the measures say",
+      "about": "Written each night from the measures, for the period each sentence names. The filters on this page don't change these sentences.",
+      "aboutColumn": "About",
+      "finding": "Finding",
+      "measured": "Measured",
+      "notYet": "Not yet"
+    },
+    "dates": {
+      "title": "Dates",
+      "about": "The tiles on this page read the dates chosen here. It starts at the last 90 days."
+    },
+    "periods": {
+      "credit": "Free credit, to {date}",
+      "creditName": "the free credit, which ends {date}"
+    },
+    "readiness": {
+      "source": "Strata's data readiness measures in strata.ops."
+    },
+    "gov": {
+      "page": "Governance",
+      "intro": "This page shows whether each nightly run passed its quality checks, what Azure has cost against the budget, and what personal data I removed at ingestion. It also shows who read Strata's tables, and traces any answer back through its tool calls to its sources.",
+      "source": "Strata's pipeline runs, quality checks, agent runs and Azure cost records in strata.ops, and the workspace's query history where Free Edition shows it.",
+      "budgetPeriod": {
+        "title": "Budget period",
+        "about": "The free credit, then each month after it, newest first. It sets the Azure spend tiles."
+      },
+      "runId": {
+        "title": "Run ID",
+        "about": "Empty means the latest answer run. Paste a run ID from Recent answer runs to see that run."
+      },
+      "about": {
+        "runs": "Nightly runs and checks",
+        "spend": "Azure spend",
+        "personal": "Personal data",
+        "queries": "Who queried what",
+        "lineage": "Lineage"
+      },
+      "sections": {
+        "runs": "Nightly runs and quality checks",
+        "runsText": "Each night the job takes in only what changed and checks row counts, missing keys, missing Disclosed dates and duplicate rows. The chart shows the last run of each night.",
+        "spend": "Azure spend against the budget",
+        "spendText": "Azure budgets only send alerts. The limits come from caps: a tokens-per-minute limit on each model deployment, a daily page cap on reading documents, and at most two copies of anything hosted.",
+        "personal": "Personal data removed at ingestion",
+        "queries": "Who queried what",
+        "queriesText": "Strata's app runs every query as the person using it, so their name appears here, not the app's.",
+        "lineage": "Lineage from an answer to its sources",
+        "lineageText": "Leave Run ID empty to see the latest answer, or paste a run ID from Recent answer runs, at the end of this section. If the tables stay empty, no answer run has that ID."
+      },
+      "removeWhy": "I remove the contact person's name, email address and phone number from every procurement notice as I take it in, before it reaches any table that answers or this dashboard can read. Strata never shows them and never answers questions about them. The counter above counts any email addresses and phone numbers that got through.",
+      "noHistory": "I can't show who queried what, because this workspace doesn't let me read its query history. I checked when this dashboard was deployed on {date}. If Free Edition adds it later, deploying the dashboard again adds the table here.",
+      "tiles": {
+        "checksChart": {
+          "title": "Quality checks per nightly run",
+          "about": "Checks. One bar for the last run of each night in the dates chosen above.",
+          "night": "Night of",
+          "checks": "Checks",
+          "result": "Result"
+        },
+        "runs": {
+          "title": "Nightly runs",
+          "about": "One row per run, reruns included, newest first, in the dates chosen above.",
+          "night": "Night of",
+          "outcome": "Outcome",
+          "tasks": "Tasks finished",
+          "minutes": "Took, minutes",
+          "rows": "Rows changed",
+          "passed": "Checks passed",
+          "failed": "Checks failed"
+        },
+        "failed": {
+          "title": "Quality checks that failed",
+          "about": "Newest first, in the dates chosen above.",
+          "night": "Night of",
+          "task": "Task",
+          "check": "Check",
+          "table": "Table",
+          "found": "What it found"
+        },
+        "spendChart": {
+          "title": "Azure spend against the budget, by day",
+          "about": "US$. The running total of Azure charges for each day of the budget period chosen above, against its budget.",
+          "day": "Day",
+          "amount": "US$",
+          "spent": "Spent so far",
+          "budget": "Budget"
+        },
+        "serviceChart": {
+          "title": "Azure spend by service",
+          "about": "US$. Charges in the budget period chosen above, by service.",
+          "service": "Service",
+          "spent": "US$"
+        },
+        "spendDays": {
+          "title": "Azure spend by day",
+          "about": "Two decimals, in the budget period chosen above. It is the table for the chart of the running total.",
+          "day": "Day",
+          "thatDay": "Spent that day, US$",
+          "soFar": "Spent so far, US$"
+        },
+        "spendResources": {
+          "title": "Azure spend by service and resource",
+          "about": "Two decimals, largest first, in the budget period chosen above. It is the table for the chart by service.",
+          "service": "Service",
+          "resource": "Resource",
+          "spent": "Spent, US$"
+        },
+        "contacts": {
+          "title": "Contact details removed, by kind",
+          "about": "Counts from each night's ingestion, in the dates chosen above.",
+          "kind": "Kind",
+          "removed": "Removed",
+          "notices": "From notices",
+          "last": "Last removed"
+        },
+        "queries": {
+          "title": "Queries on Strata's tables, by person and day",
+          "about": "One row per person, day, way in and table, in the dates chosen above. It shows which tables were read, never the text of a query, because a query can carry a person's question.",
+          "day": "Day",
+          "person": "Person",
+          "through": "Through",
+          "table": "Table read",
+          "queries": "Queries"
+        },
+        "run": {
+          "title": "The answer run",
+          "about": "The run the Run ID names, or the latest answer run when it is empty.",
+          "runId": "Run ID",
+          "asked": "Asked, UTC",
+          "view": "View",
+          "question": "Question",
+          "calls": "Tool calls",
+          "kept": "Sentences kept",
+          "removed": "Sentences removed"
+        },
+        "calls": {
+          "title": "Its tool calls",
+          "about": "In call order.",
+          "order": "Order",
+          "tool": "Tool",
+          "inputs": "Inputs",
+          "rows": "Rows returned",
+          "took": "Took, ms",
+          "evidence": "Evidence IDs"
+        },
+        "reads": {
+          "title": "The tables those calls read",
+          "about": "Each table a tool call read, the nightly run that last wrote it before the call, and the source it holds.",
+          "call": "Call",
+          "table": "Table or view",
+          "version": "Version read",
+          "writtenBy": "Written by the nightly run of",
+          "source": "From source"
+        },
+        "recent": {
+          "title": "Recent answer runs",
+          "about": "Newest first, in the dates chosen above.",
+          "asked": "Asked, UTC",
+          "runId": "Run ID",
+          "view": "View",
+          "calls": "Tool calls",
+          "removed": "Sentences removed"
+        }
+      },
+      "find": {
+        "runs": {
+          "allPassed": "The nightly run of {night} finished all {tasks} tasks in {minutes} minutes, and all {checks} quality checks passed.",
+          "oneFailed": "The nightly run of {night} finished all {tasks} tasks in {minutes} minutes. Of its {checks} quality checks, {passed} passed. The one that failed found {checkPhrase}.",
+          "severalFailed": "The nightly run of {night} finished all {tasks} tasks in {minutes} minutes. Of its {checks} quality checks, {passed} passed and {failed} failed. The first failure found {checkPhrase}.",
+          "stopped": {
+            "one": "The nightly run of {night} stopped at the {taskName} task, after {done} of {tasks} tasks had finished. The task that finished ran {ran} quality checks, and {passed} passed.",
+            "other": "The nightly run of {night} stopped at the {taskName} task, after {done} of {tasks} tasks had finished. The tasks that finished ran {ran} quality checks, and {passed} passed."
+          },
+          "stoppedFirst": "The nightly run of {night} stopped at the {taskName} task, before any of its {tasks} tasks had finished.",
+          "none": "I have no nightly runs recorded yet. Each run and its quality checks appear here after the job's first night."
+        },
+        "spend": {
+          "inside": "By {day}, the latest day with cost data, my Azure resources had cost US${spent} of the US${budget} budget for {periodName}.",
+          "over": "By {day}, the latest day with cost data, my Azure resources had cost US${spent}. That is US${over} more than the US${budget} budget for {periodName}.",
+          "pullFailed": "I couldn't pull Azure costs on {failedOn}, so these figures stop at {day}.",
+          "none": "I have no Azure cost data yet. The daily cost pull adds each day's charges once Azure reports them."
+        },
+        "personal": {
+          "removed": {
+            "one": "Up to {day}, I removed contact details from {notices} procurement notice as I took it in: {names} names, {emails} email addresses and {phones} phone numbers.",
+            "other": "Up to {day}, I removed contact details from {notices} procurement notices as I took them in: {names} names, {emails} email addresses and {phones} phone numbers."
+          },
+          "noneLeft": "The latest check found none left.",
+          "someLeft": {
+            "one": "The latest check found contact details still in {left} notice.",
+            "other": "The latest check found contact details still in {left} notices."
+          },
+          "none": "I haven't taken in any procurement notices yet, so I have removed no contact details."
+        },
+        "queries": {
+          "readable": {
+            "one": "In the 7 days to {day}, {people} person ran {queries} queries on Strata's tables, {appQueries} of them through the app, which runs each query as the person asking.",
+            "other": "In the 7 days to {day}, {people} people ran {queries} queries on Strata's tables, {appQueries} of them through the app, which runs each query as the person asking."
+          },
+          "none": "No one queried Strata's tables in the 7 days to {day}.",
+          "notReadable": "I can't show who queried what, because this workspace doesn't let me read its query history."
+        },
+        "lineage": {
+          "all": "All {runs} answer runs in the 7 days to {day} lead back to their tool calls and the tables those calls read.",
+          "one": "The one answer run in the 7 days to {day} leads back to its tool calls and the tables they read.",
+          "some": {
+            "one": "Of the {runs} answer runs in the 7 days to {day}, {complete} lead back to their tool calls and the tables those calls read. The other {missing} has no record of the tables it read.",
+            "other": "Of the {runs} answer runs in the 7 days to {day}, {complete} lead back to their tool calls and the tables those calls read. The other {missing} have no record of the tables they read."
+          },
+          "oneIncomplete": "The one answer run in the 7 days to {day} has no record of the tables its tool calls read.",
+          "none": "No answer runs were recorded in the 7 days to {day}. Ask a question in Strata, and its run appears under Lineage."
+        }
+      },
+      "check": {
+        "row_count": {
+          "one": "{found} row in {table}, outside the expected {min} to {max}",
+          "other": "{found} rows in {table}, outside the expected {min} to {max}"
+        },
+        "missing_key": {
+          "one": "{found} row in {table} with no {keyName}",
+          "other": "{found} rows in {table} with no {keyName}"
+        },
+        "missing_public_from": {
+          "one": "{found} row in {table} with no Disclosed date",
+          "other": "{found} rows in {table} with no Disclosed date"
+        },
+        "duplicates": {
+          "one": "{found} duplicate row in {table}",
+          "other": "{found} duplicate rows in {table}"
+        },
+        "contacts_left": {
+          "one": "contact details left in {found} notice",
+          "other": "contact details left in {found} notices"
+        }
+      },
+      "checkName": {
+        "row_count": "Row count",
+        "missing_key": "Missing key",
+        "missing_public_from": "Missing Disclosed date",
+        "duplicates": "Duplicate rows",
+        "contacts_left": "Contact details left"
+      },
+      "task": {
+        "fetch_by_watermark": "Fetch what changed",
+        "bronze_to_gold": "Clean and model the records",
+        "parse_and_embed": "Read and index new documents",
+        "sync_index": "Update the search index",
+        "relink": "Link new contracts and passages",
+        "propose_lessons": "Propose lessons",
+        "detect_disagreements": "Find disagreements",
+        "score": "Score time estimates and signals",
+        "measure_data_readiness": "Measure data readiness",
+        "refresh_drafts": "Mark drafts that cite a changed lesson"
+      },
+      "outcome": {
+        "finished": "Finished",
+        "stopped": "Stopped at {task}",
+        "rerunFinished": "Rerun, finished"
+      },
+      "result": {
+        "failed": "Failed",
+        "passed": "Passed"
+      },
+      "tasksDone": "{done} of {tasks}",
+      "kinds": {
+        "names": "Contact names",
+        "emails": "Email addresses",
+        "phones": "Phone numbers"
+      },
+      "through": {
+        "app": "Strata app",
+        "genie": "Genie",
+        "dashboard": "Dashboard",
+        "sql_editor": "SQL editor",
+        "notebook": "Notebook",
+        "job": "Job",
+        "other": "Another way"
+      },
+      "views": {
+        "staff": "World Bank staff",
+        "piu": "Implementing agency",
+        "public": "Public"
+      },
+      "privateQuestion": "Not shown, because this run read a private upload.",
+      "privateUpload": "a private upload",
+      "callName": "{order}. {tool}"
+    },
+    "ai": {
+      "page": "AI quality and adoption",
+      "intro": "This page shows how my answers did on the benchmark, in Microsoft Foundry's evaluations and in my own six checks. It also shows the leading and lagging indicators of the knowledge, retrieval and estimates loops, and how people used Strata. Each tile's description defines its measure.",
+      "source": "Strata's evaluation results, agent runs, feedback, lesson decisions, exposure logs, usage events and draft states in strata.ops.",
+      "about": {
+        "benchmark": "Benchmark",
+        "foundry": "Foundry evaluations",
+        "checks": "Checks on answers",
+        "knowledge": "Knowledge loop",
+        "retrieval": "Retrieval loop",
+        "estimates": "Estimates loop",
+        "adoption": "Adoption"
+      },
+      "sections": {
+        "answers": "Answers",
+        "answersText": "How my answers did on the benchmark, in Microsoft Foundry's evaluations and in my own six checks.",
+        "loops": "The three loops",
+        "loopsText": "Each loop has a leading indicator, which moves first, and a lagging indicator, which confirms it later. Lessons are decided weekly, search is tuned at most monthly, and the time estimate model is retrained quarterly.",
+        "adoption": "Adoption",
+        "adoptionText": "Who used Strata, which drafts their authors finished, and how often a plan row was dated within 14 days of a date I offered."
+      },
+      "abbreviations": "Implementation Completion and Results Report (ICR), Project Performance Assessment Report (PPAR), normalized discounted cumulative gain at 10 (nDCG at 10). ICR Review is the World Bank's own name.",
+      "tiles": {
+        "benchmarkChart": {
+          "title": "Share of benchmark questions passed, per full gate run",
+          "about": "%. One point per full gate run in the dates chosen above, from {fewest} questions.",
+          "run": "Run",
+          "share": "Passed (%)"
+        },
+        "foundryChart": {
+          "title": "Answers that met Microsoft Foundry's threshold, by evaluator",
+          "about": "%. Share of the answers scored in the latest evaluation run that met Foundry's pass threshold for each evaluator, from {fewest} answers.",
+          "evaluator": "Evaluator",
+          "share": "Met the threshold (%)"
+        },
+        "benchmark": {
+          "title": "Benchmark results",
+          "about": "Each full gate run in the dates chosen above, by kind of question. It is the table for the chart of shares passed.",
+          "run": "Run",
+          "kind": "Kind",
+          "passed": "Passed",
+          "questions": "Questions",
+          "target": "Target",
+          "against": "Against the target"
+        },
+        "foundry": {
+          "title": "Foundry evaluations",
+          "about": "Each evaluation run in the dates chosen above, by evaluator. It is the table for the chart by evaluator.",
+          "run": "Run",
+          "evaluator": "Evaluator",
+          "met": "Met the threshold",
+          "scored": "Answers scored",
+          "mean": "Mean score, 1–5"
+        },
+        "removedChart": {
+          "title": "Sentences removed, by reason",
+          "about": "Sentences. In the dates chosen above.",
+          "reason": "Reason",
+          "count": "Sentences"
+        },
+        "heldChart": {
+          "title": "Answers where I held back, by reason",
+          "about": "Answers. In the dates chosen above.",
+          "reason": "Reason",
+          "count": "Answers"
+        },
+        "reasons": {
+          "title": "Removed sentences and held-back answers, by reason",
+          "about": "In the dates chosen above. It is the table for the two charts of reasons.",
+          "what": "What",
+          "reason": "Reason",
+          "count": "Count",
+          "outOf": "Out of"
+        },
+        "indicators": {
+          "title": "Each loop's indicators",
+          "about": "Written each night from the measures, for the period each cell names. The dates above don't change it.",
+          "loop": "Loop",
+          "indicator": "Indicator",
+          "kind": "Kind",
+          "latest": "Latest",
+          "target": "Target",
+          "against": "Against the target",
+          "measured": "Measured"
+        },
+        "decisionsChart": {
+          "title": "Days from publication to decision",
+          "about": "Days. One dot per proposed lesson a lead decided in the dates chosen above.",
+          "decided": "Decided",
+          "days": "Days"
+        },
+        "wrongChart": {
+          "title": "Wrong-passage reports per 100 sources opened",
+          "about": "Reports per 100 sources opened. One point per week, from {fewest} sources opened.",
+          "week": "Week of",
+          "rate": "Per 100 sources opened",
+          "kind": "Report"
+        },
+        "coverageChart": {
+          "title": "Coverage of my 8-in-10 range, rolling 12 months",
+          "about": "%. Of the packages that finished in the 12 months to each month, the share inside the 8-in-10 range I gave them, from {fewest} packages.",
+          "month": "Month",
+          "share": "%",
+          "series": "Series",
+          "coverage": "Coverage",
+          "low": "75% target edge",
+          "high": "85% target edge"
+        },
+        "decisions": {
+          "title": "Lesson decisions",
+          "about": "Newest first. It is the table for the chart of days.",
+          "decided": "Decided",
+          "report": "Report",
+          "days": "Days from publication"
+        },
+        "opened": {
+          "title": "Sources opened and reports, by week",
+          "about": "Newest first. A week with too few sources opened shows the counts instead of a rate.",
+          "week": "Week of",
+          "opened": "Opened",
+          "wrong": "Wrong passage",
+          "notUseful": "Not useful",
+          "per100": "Wrong passage per 100",
+          "fewer": "{reports} in {opened}"
+        },
+        "coverage": {
+          "title": "Coverage by month",
+          "about": "Newest first. A month with too few finished packages shows the counts instead of a percentage.",
+          "month": "Month",
+          "finished": "Finished",
+          "inside": "Inside the range",
+          "coverage": "Coverage"
+        },
+        "hindsight": {
+          "title": "Hindsight test, per release",
+          "about": "Hindsight recall is coverage times shown-when-covered: the blamed risks I showed in the top five for their package, out of all blamed risks. Projects exposed to Strata are left out.",
+          "release": "Release",
+          "projects": "Projects",
+          "blamed": "Blamed risks",
+          "covered": "Covered at approval",
+          "shown": "Shown when covered",
+          "recall": "Hindsight recall",
+          "checklist": "Checklist caught"
+        },
+        "retrievalChart": {
+          "title": "Precision at 10 and recall at 20, held-out set",
+          "about": "Scores from 0 to 1. One point per evaluation run, on the held-out set, from {fewest} queries.",
+          "run": "Run",
+          "score": "Score",
+          "series": "Measure",
+          "precision": "Precision at 10",
+          "recall": "Recall at 20"
+        },
+        "retrieval": {
+          "title": "Retrieval evaluation",
+          "about": "Every query set of each evaluation run in the dates chosen above.",
+          "run": "Run",
+          "set": "Query set",
+          "queries": "Queries",
+          "precision": "Precision at 10",
+          "recall": "Recall at 20",
+          "ndcg": "nDCG at 10"
+        },
+        "accuracy": {
+          "title": "Plan accuracy and duration",
+          "about": "From the latest monthly watch in the dates chosen above.",
+          "rows": "Plan rows",
+          "countries": "Countries",
+          "actual": "Rows with an actual date",
+          "days": "Median days from the plan",
+          "months": "Median months from notice to signing",
+          "offered": "Dated within 14 days of a date I offered",
+          "other": "Other plan rows",
+          "using": "Using Strata",
+          "notYet": "Not yet using Strata",
+          "tooFew": {
+            "one": "{n} row, too few for a median",
+            "other": "{n} rows, too few for a median"
+          }
+        },
+        "usersChart": {
+          "title": "People who used Strata, by week",
+          "about": "People. Each person counts once a week, whatever view they used.",
+          "week": "Week of",
+          "people": "People"
+        },
+        "draftsChart": {
+          "title": "Drafts checked and exported, by week",
+          "about": "Drafts. Counted in the week each draft reached that state.",
+          "week": "Week of",
+          "drafts": "Drafts",
+          "state": "State",
+          "checked": "Checked by their author",
+          "exported": "Exported"
+        },
+        "use": {
+          "title": "Use by week",
+          "about": "Newest first, in the dates chosen above. It is the table for the two charts by week.",
+          "week": "Week of",
+          "people": "People",
+          "answers": "Answers",
+          "started": "Drafts started",
+          "checked": "Checked by their author",
+          "exported": "Exported"
+        },
+        "planRows": {
+          "title": "Plan rows after I showed a range, by month",
+          "about": "From each monthly watch in the dates chosen above. It is the table for the counter of plan rows.",
+          "month": "Month",
+          "rows": "Plan rows",
+          "offered": "Dated within 14 days of a date I offered",
+          "share": "Share"
+        }
+      },
+      "kinds": {
+        "sql": "SQL",
+        "documents": "Documents",
+        "estimates": "Estimates",
+        "must_refuse": "Must refuse",
+        "all": "All"
+      },
+      "evaluators": {
+        "groundedness": "Groundedness",
+        "relevance": "Relevance",
+        "task_adherence": "Task adherence",
+        "tool_use": "Tool use"
+      },
+      "querySets": {
+        "icr_review_citations": "ICR Reviews' citations",
+        "pad_lessons": "PADs' lessons sections",
+        "notice_queries": "Questions written from award notices",
+        "bilingual_en_fr": "English questions, French passages",
+        "bilingual_fr_en": "French questions, English passages"
+      },
+      "against": {
+        "met": "Met",
+        "missedBy": "Missed by {gap} points"
+      },
+      "what": {
+        "removed": "Removed sentence",
+        "held": "Held-back answer"
+      },
+      "outOf": {
+        "written": "{written} sentences written",
+        "answers": "{answers} answers"
+      },
+      "removed": {
+        "number_not_in_records": "No record supports a number or date",
+        "date_not_in_records": "No record supports a number or date",
+        "number_only_in_table_summary": "No record supports a number or date",
+        "id_not_returned": "Cited a source I didn't retrieve",
+        "no_source": "Its sources don't say this",
+        "quote_not_on_page": "Quote not on the page it cites",
+        "quote_not_in_sentence": "Quote not on the page it cites",
+        "not_supported": "Its sources don't say this",
+        "judge_unavailable": "The judging model didn't respond",
+        "advice_without_lesson_or_comparable": "Advice without a lesson or comparable package",
+        "disagreements_unavailable": "Rests on a disputed report"
+      },
+      "held": {
+        "too_few_comparables": "Too few comparable packages for a range",
+        "outside_training": "Outside what my model learned from",
+        "asof_before_training": "Asked as of a date before my first model",
+        "no_public_notice": "No public notice to measure from",
+        "none_measurable": "No comparable package to measure from"
+      },
+      "find": {
+        "benchmark": {
+          "first": "In the full gate of {day}, {passed} of {total} benchmark questions passed.",
+          "firstRefused": "In the full gate of {day}, {passed} of {total} benchmark questions passed, and I refused {refused} of the {mustRefuse} questions I must refuse.",
+          "allMet": "Every target was met.",
+          "oneMissed": "It missed one target, {targetName}, at {got} against a target of {target}.",
+          "severalMissed": "It missed {missed} targets. The first was {targetName}, at {got} against a target of {target}.",
+          "none": "No full gate has run yet. Each run of the full gate command adds its results here."
+        },
+        "foundry": {
+          "ran": {
+            "one": "Of the {n} answer Microsoft Foundry scored on {day}, {g} met its threshold for groundedness, {r} for relevance, {t} for task adherence and {u} for tool use.",
+            "other": "Of the {n} answers Microsoft Foundry scored on {day}, {g} met its threshold for groundedness, {r} for relevance, {t} for task adherence and {u} for tool use."
+          },
+          "none": "Microsoft Foundry hasn't evaluated any answers yet. Its evaluations run with the full gate after a Microsoft Entra sign-in."
+        },
+        "checks": {
+          "removed": "In the 7 days to {day}, I removed {removed} of the {written} sentences I wrote. The most common reason was \"{reasonLabel}\", for {topCount} of them.",
+          "removedTied": "In the 7 days to {day}, I removed {removed} of the {written} sentences I wrote. No one reason was the most common, because {tied} reasons tied at {topCount} each.",
+          "noneRemoved": "In the 7 days to {day}, I removed none of the {written} sentences I wrote.",
+          "held": "I held back in {held} of the {answers} answers I gave. The most common reason was \"{holdLabel}\".",
+          "heldTied": "I held back in {held} of the {answers} answers I gave. No one reason was the most common, because {tied} reasons tied.",
+          "noneHeld": "I held back in none of the {answers} answers I gave.",
+          "none": "I gave no answers in the 7 days to {day}, so there was nothing to check."
+        },
+        "knowledge": {
+          "many": "In the 90 days to {day}, lead procurement specialists decided {n} proposed lessons, a median of {median} days after their reports were published. They decided {k} of the {n} within 10 business days.",
+          "few": {
+            "one": "In the 90 days to {day}, lead procurement specialists decided {n} proposed lesson, {k} of them within 10 business days of its report being published.",
+            "other": "In the 90 days to {day}, lead procurement specialists decided {n} proposed lessons, {k} of them within 10 business days of their report being published."
+          },
+          "none": "No proposed lessons were decided in the 90 days to {day}.",
+          "waiting": {
+            "one": "One is waiting for a decision.",
+            "other": "{waiting} are waiting for a decision."
+          },
+          "hindsight": "In the hindsight test of {day}, I caught {caught} of {blamed} blamed risks across {projects} projects, at five risks per package. A checklist of the sector's five commonest risks caught {checklist}.",
+          "interval": "The 95 percent interval runs from {low} to {high} percent.",
+          "noHindsight": "The hindsight test hasn't run yet. It runs on every release."
+        },
+        "retrieval": {
+          "evaluated": "On the held-out set, in the evaluation of {day}, precision at 10 was {p} and recall at 20 was {r}.",
+          "fewQueries": "I'm not giving precision or recall for the held-out set: it has only {queries} queries.",
+          "none": "No retrieval evaluation has run yet.",
+          "feedback": {
+            "one": "In the 7 days to {day}, people opened {opened} sources and marked {wrong} passage as wrong, or {rate} for every 100 sources opened. They marked {notUseful} as not useful.",
+            "other": "In the 7 days to {day}, people opened {opened} sources and marked {wrong} passages as wrong, or {rate} for every 100 sources opened. They marked {notUseful} as not useful."
+          },
+          "feedbackFew": {
+            "one": "In the 7 days to {day}, people opened {opened} source and marked {wrong} as wrong and {notUseful} as not useful.",
+            "other": "In the 7 days to {day}, people opened {opened} sources and marked {wrong} as wrong and {notUseful} as not useful."
+          },
+          "nothingOpened": "No one opened a source from an answer in the 7 days to {day}."
+        },
+        "estimates": {
+          "percent": "Of the {finished} packages that finished in the 12 months to {month}, {inside} finished inside my 8-in-10 range, or {pct} percent.",
+          "inTen": "Of the {finished} packages that finished in the 12 months to {month}, {inside} finished inside my 8-in-10 range, about {in10} in 10.",
+          "few": "I'm not giving coverage: only {finished} packages finished in the 12 months to {month}, and {inside} of them finished inside my 8-in-10 range.",
+          "inside": "That is inside the {low} to {high} percent target.",
+          "outside": {
+            "one": "That is outside the {low} to {high} percent target, as it has been for {months} month.",
+            "other": "That is outside the {low} to {high} percent target, as it has been for {months} months."
+          },
+          "retrain": {
+            "one": "I raised a retrain on {day}, because coverage stayed outside the target for {months} month.",
+            "other": "I raised a retrain on {day}, because coverage stayed outside the target for {months} months."
+          },
+          "accuracy": "Plan rows dated within 14 days of a date I offered were a median of {a} days from their actual dates, against {b} days for other plan rows.",
+          "accuracyFew": {
+            "one": "I'm not comparing plan accuracy yet: only {n} plan row dated within 14 days of a date I offered has an actual date.",
+            "other": "I'm not comparing plan accuracy yet: only {n} plan rows dated within 14 days of a date I offered have an actual date."
+          },
+          "none": "No monthly watch of the time estimate has run yet."
+        },
+        "adoption": {
+          "used": {
+            "one": "In the week of Monday, {week}, {people} person used Strata. In the 90 days to {day}, authors marked {checked} drafts as checked and exported {exported}.",
+            "other": "In the week of Monday, {week}, {people} people used Strata. In the 90 days to {day}, authors marked {checked} drafts as checked and exported {exported}."
+          },
+          "planRows": "Of the {rows} plan rows published after I showed a range for their package, {anchored} were dated within 14 days of a date I offered.",
+          "none": "No one used Strata in the week of Monday, {week}."
+        }
+      },
+      "loops": {
+        "knowledge": "Knowledge",
+        "retrieval": "Retrieval",
+        "estimates": "Estimates"
+      },
+      "kind": {
+        "leading": "Leading",
+        "lagging": "Lagging"
+      },
+      "noneSet": "None set",
+      "notCompared": "Not compared",
+      "noneYet": "None yet",
+      "cells": {
+        "decisionsMany": "{median} days, median of {n}",
+        "decisionsFew": {
+          "one": "{n} decision",
+          "other": "{n} decisions"
+        },
+        "decisionsTarget": "Within 10 business days",
+        "decisionsAgainst": "{k} of {n} within it",
+        "blamed": "{covered} of {blamed}",
+        "wrongMany": "{rate} per 100, {opened} opened",
+        "wrongFew": "{reports} in {opened} opened",
+        "scores": "{p} and {r}, held-out set",
+        "scoresFew": "{queries} queries, too few to score",
+        "scoresTarget": "No loss against the last run",
+        "scoresMatched": "Matched or beat the last run",
+        "scoresLower": "Lower than the last run",
+        "coveragePercent": "{pct}%, {inside} of {finished}",
+        "coverageInTen": "{inside} of {finished}, about {in10} in 10",
+        "coverageFew": "{inside} of {finished}",
+        "coverageTarget": "{low}–{high}%",
+        "coverageInside": "Inside",
+        "coverageOutside": {
+          "one": "Outside for {months} month",
+          "other": "Outside for {months} months"
+        },
+        "coverageTooFew": "Too few to compare",
+        "accuracyBoth": "{a} against {b} days",
+        "accuracyFew": {
+          "one": "{n} row, too few",
+          "other": "{n} rows, too few"
+        }
+      }
+    }
+  },
+  "kpi": {
+    "display": {
+      "share": "{n} of {d}",
+      "money": "US${spent} of US${budget}",
+      "none": "None yet",
+      "noCost": "No cost data yet"
+    },
+    "checks_failed": {
+      "name": "Quality checks failed in the latest nightly run",
+      "definition": "Checks of row counts, missing keys, missing Disclosed dates and duplicate rows, run by each task of the nightly job. The latest run in the dates chosen above.",
+      "outof": "Out of the checks that run ran. The table of nightly runs gives the total."
+    },
+    "azure_spend": {
+      "name": "Azure spend this budget period",
+      "definition": "Azure charges from the daily cost pull, against the budget for the period chosen above. Azure budgets only send alerts, so the caps set the limit.",
+      "outof": "Out of the budget for that period. The table of spend by day gives the running total."
+    },
+    "contacts_left": {
+      "name": "Notices still carrying contact details",
+      "definition": "Procurement notices in which the latest check found an email address or a phone number. I remove them at ingestion, so this count should be zero.",
+      "outof": "Out of the procurement notices that check read."
+    },
+    "benchmark_passed": {
+      "name": "Benchmark questions passed",
+      "definition": "Benchmark questions that met their expected answer, citations, range or refusal. The latest full gate run in the dates chosen above.",
+      "outof": "Out of the questions in the latest full gate run. The table under Answers gives the total."
+    },
+    "sentences_removed": {
+      "name": "Sentences the verifier removed",
+      "definition": "Sentences in answers that failed one of my six checks, out of all the sentences I wrote in answers. In the dates chosen above.",
+      "outof": "Out of the sentences I wrote. The table of reasons gives the total."
+    },
+    "answers_held_back": {
+      "name": "Answers where I held back",
+      "definition": "Answers in which I gave no range, time estimate or share because the evidence fell short, out of all answers, refusals included. In the dates chosen above.",
+      "outof": "Out of the answers I gave. The table of reasons gives the total."
+    },
+    "weekly_users": {
+      "name": "Weekly users",
+      "definition": "People who opened at least one page of Strata in the last full week in the dates chosen above, Monday to Sunday. Each person counts once, whatever view they used.",
+      "outof": "A count of people, with no total."
+    },
+    "drafts_exported": {
+      "name": "Drafts exported",
+      "definition": "Drafts started in the dates chosen above that their authors marked as checked and then exported. Only a draft's author can do either.",
+      "outof": "Out of the drafts started. The table of use by week gives the total."
+    },
+    "plan_rows_offered": {
+      "name": "Plan rows dated within 14 days of a date I offered",
+      "definition": "Plan rows published after I showed a past range or time estimate for their package, whose planned signing date fell within 14 days of a date I offered. In the dates chosen above.",
+      "outof": "Out of the plan rows published after I showed a range. The table of plan rows by month gives the total."
+    },
+    "days_to_decision": {
+      "name": "Days from publication to decision",
+      "definition": "Calendar days from the day an Implementation Completion and Results Report (ICR), ICR Review or Project Performance Assessment Report (PPAR) was published to the day a lead procurement specialist decided on a lesson proposed from it. The target is a decision within 10 business days.",
+      "outof": "Out of the proposed lessons decided."
+    },
+    "blamed_covered": {
+      "name": "Blamed risks a lesson covered at approval",
+      "definition": "In the hindsight test, the risks that completion reports later blamed, and how many of them a lesson in my library already covered on the project's approval date.",
+      "outof": "Out of the risks completion reports blamed."
+    },
+    "wrong_passage_rate": {
+      "name": "Wrong-passage reports per 100 sources opened",
+      "definition": "How many passages people marked as wrong for every 100 sources they opened from an answer. Reports sent in a preview, and reports that were withdrawn, don't count.",
+      "outof": "Out of the sources opened that week."
+    },
+    "precision_recall": {
+      "name": "Precision at 10 and recall at 20",
+      "definition": "On the held-out set of labeled queries, precision at 10 is the share of my top 10 passages that a person labeled as right, and recall at 20 is the share of the right passages that appear in my top 20. Both use only documents published before each query's date. Normalized discounted cumulative gain at 10 (nDCG at 10) is in the table beside them.",
+      "outof": "Out of the queries in the held-out set."
+    },
+    "rolling_coverage": {
+      "name": "Rolling coverage of the 8-in-10 range",
+      "definition": "Of the packages that finished in the last 12 months, the share that finished inside the 8-in-10 range I gave them. A well-sized range catches about 8 in 10, so the target is 75 to 85 percent. Coverage outside it for 2 months in a row raises a retrain.",
+      "outof": "Out of the packages that finished in the 12 months."
+    },
+    "plan_accuracy": {
+      "name": "Plan accuracy",
+      "definition": "The median number of days between a plan row's planned signing date and the actual one, early or late. I report it for plan rows dated within 14 days of a date I offered and for all other plan rows, and separately for countries not yet using Strata.",
+      "outof": "Out of the plan rows with an actual date."
+    }
+  },
+  "words": [
+    "one",
+    "two",
+    "three",
+    "four",
+    "five",
+    "six",
+    "seven",
+    "eight",
+    "nine"
+  ],
+  "months": [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December"
+  ],
+  "footer": "Strata is an independent demo built on World Bank open data. It is not a World Bank product, and the World Bank has not reviewed or endorsed it."
+}

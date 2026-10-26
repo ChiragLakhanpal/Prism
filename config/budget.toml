@@ -1,0 +1,34 @@
+# The Azure budget: the free credit, the day it ends, and the monthly budget after it (ticket 45).
+#
+# This is the one place for these numbers (CLAUDE.md rule 9). strata.config.load_budget() reads it for the
+# daily cost pull (src/strata/lakehouse/costs.py), which writes the budget periods the dashboard's Governance page
+# offers, and ops/dayone/dayone.py reads it for the wizard and the caps probe, so the two never disagree. The
+# bundle sends only src and config to the workspace, which is why it lives here and not in ops/dayone.
+#
+# Azure budgets only send email. The caps that stop spend (tokens per minute on each deployment, the daily page
+# cap, at most two replicas) are in ops/dayone/dayone.toml and config/thresholds.toml (docs/PLAN.md section 2).
+
+[credit]
+# The free Azure credit, in US dollars, and the last day it can be spent. The subscription moves to
+# pay-as-you-go before then (docs/PLAN.md section 2). The Governance page's first budget period is the free
+# credit, up to and including this day.
+usd = 197
+ends_on = 2026-11-10
+
+[monthly]
+# After the credit ends, each calendar month is a budget period with this budget, in US dollars. The month the
+# credit ends in starts the day after it ends.
+usd = 50
+# The Azure budget's name, which the wizard creates and the caps probe reads.
+name = "strata-monthly"
+# The budget's email alerts, as percents of its amount, actual and forecast.
+alert_percents = [50, 80, 100]
+forecast_percent = 100
+
+[pull]
+# The resource group whose charges the daily cost pull asks Azure Cost Management for: every resource Strata
+# runs in Azure is in it.
+resource_group = "WorldBank-demo"
+# How many days back each pull asks for. Azure revises the last few days' charges, so each pull asks again for
+# days it has seen, and the dashboard reads each day from the newest pull that holds it.
+days = 35

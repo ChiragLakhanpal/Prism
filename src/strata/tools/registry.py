@@ -24,6 +24,7 @@ strata.config.load_tools() reads it. This module does three things with those de
 from __future__ import annotations
 
 import datetime as dt
+import functools
 import importlib
 import re
 from collections.abc import Callable, Mapping
@@ -77,6 +78,40 @@ class Context:
     # environment. None reads the process's environment, as the deployed App sets it. Kept out of repr, since it holds
     # keys.
     environ: Mapping[str, str] | None = field(default=None, repr=False)
+    # Lineage (ticket 45): a list the call adds each table it read to, in three parts and in the order it first read
+    # them, so the run log can trace an answer to the tables its tool calls read. None records nothing.
+    reads: list[str] | None = None
+
+
+TABLE_READ = re.compile(r"\bstrata\.[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*\b")
+SQL_COMMENT = re.compile(r"--[^\n]*|/\*.*?\*/", re.S)
+
+
+@functools.cache
+def _catalog_names() -> frozenset[str]:
+    """The tables and views the catalog defines, read once, on the first call that records lineage."""
+    from strata.lakehouse import catalog
+
+    return catalog.defined_names()
+
+
+class _Reading:
+    """The viewer's engine, noting each table a query names before it runs it (ticket 45). Every query names its
+    tables in three parts (gates/sql_lint.py), so the names in its text are the tables it read. A name in a comment,
+    such as the module strata.knowledge.retrieval, is not read, and only names the catalog defines are kept."""
+
+    def __init__(self, engine: Engine, reads: list[str]):
+        self._engine, self._reads = engine, reads
+
+    def run(self, sql: str, params=None):
+        known = _catalog_names()
+        for name in TABLE_READ.findall(SQL_COMMENT.sub("", sql)):
+            if name in known and name not in self._reads:
+                self._reads.append(name)
+        return self._engine.run(sql, params)
+
+    def __getattr__(self, name: str):
+        return getattr(self._engine, name)
 
 
 @dataclass(frozen=True)
@@ -187,7 +222,8 @@ def call(name: str, arguments: Mapping[str, Any], context: Context, tools: dict[
     bound = _bind(tool, arguments)
     asked = [date for date in (bound.pop("as_of", None), context.as_of) if date is not None]
     as_of = min(asked) if asked else today()
-    output = _adapter(tool)(Call(context.engine, context.viewer, context.view, as_of, context.thresholds,
+    engine = context.engine if context.reads is None else _Reading(context.engine, context.reads)
+    output = _adapter(tool)(Call(engine, context.viewer, context.view, as_of, context.thresholds,
                                  context.decided_by, context.uploads, context.environ), **bound)
     result = {"tool": name, "as_of": as_of.isoformat(), "view": context.view, **output}
     if tool.result.summary_fields:

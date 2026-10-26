@@ -33,8 +33,15 @@ name and country stay too: they say who runs the procurement, not how to reach a
 from __future__ import annotations
 
 import re
+from collections import Counter
+from dataclasses import dataclass
 
 CONTACT_FIELDS = ("contact_name", "contact_email", "contact_phone_no", "contact_address", "contact_web_url")
+# What strip() counts, by kind (ticket 45): the dashboard's Governance page shows names, emails and phones. Addresses
+# and web addresses come out of their contact fields only, and are counted under their own kinds.
+KINDS = ("names", "emails", "phones", "addresses", "web_addresses")
+FIELD_KINDS = dict(zip(CONTACT_FIELDS, ("names", "emails", "phones", "addresses", "web_addresses")))
+ANY = "any"  # every kind together: how many details a page lost, and from how many of its records
 SEARCHED = ("contact_name", "contact_email", "contact_phone_no")  # also taken out of the free text
 FREE_TEXT = ("notice_text", "bid_description")  # the only fields searched; every other field stays as received
 REMOVED = "[contact removed]"
@@ -119,43 +126,53 @@ def _digits(value: str) -> str | None:
     return digits if len(digits) >= 7 and len(digits) >= len(re.sub(r"[\s+()./–-]", "", value)) else None
 
 
+def _pattern(values: list[str]) -> re.Pattern | None:
+    words = [r"\s+".join(re.escape(word) for word in value.split()) for value in values]
+    return re.compile(r"\b(?:" + "|".join(words) + r")\b", re.I) if words else None
+
+
 class Stripper:
-    """Strips one page, counting what it removed. The page's own contact names are one pattern,
-    longest first, matched whatever their spacing or capitals. Its phone numbers are matched by
-    their digits, whatever their separators."""
+    """Strips one page, counting what it removed by kind. The page's own contact emails, then its
+    names, are each one pattern, longest first, matched whatever their spacing or capitals. Its phone
+    numbers are matched by their digits, whatever their separators."""
 
     def __init__(self, values: list[str]):
         self.phones = {digits for digits in (_digits(value) for value in values) if digits}
-        names = sorted((value.strip() for value in values if not _digits(value) and len(value.strip()) >= 4),
+        known = sorted((value.strip() for value in values if not _digits(value) and len(value.strip()) >= 4),
                        key=len, reverse=True)
-        words = [r"\s+".join(re.escape(word) for word in name.split()) for name in names]
-        self.patterns = [re.compile(r"\b(?:" + "|".join(words) + r")\b", re.I)] if words else []
-        self.removed = 0
+        self.patterns = [(kind, pattern) for kind, pattern in (
+            ("emails", _pattern([value for value in known if "@" in value])),
+            ("names", _pattern([value for value in known if "@" not in value]))) if pattern]
+        self.counts: Counter = Counter()
+
+    @property
+    def removed(self) -> int:
+        return sum(self.counts.values())
 
     def _known_phone(self, run: str) -> bool:
         digits = re.sub(r"\D", "", run)
         return any(phone in digits for phone in self.phones)
 
-    def _sub(self, pattern: re.Pattern, text: str, check=None) -> str:
+    def _sub(self, pattern: re.Pattern, text: str, kind: str, check=None) -> str:
         def replace(match):
             if check and not check(match.group(0)):
                 return match.group(0)
-            self.removed += 1
+            self.counts[kind] += 1
             return REMOVED
         return pattern.sub(replace, text)
 
     def text(self, text: str, labelled_only: bool = False) -> str:
         """The text with its contact details replaced. With labelled_only, a number comes out only when
         a phone label comes before it: a number with no label is left as written."""
-        for pattern in self.patterns:
-            text = self._sub(pattern, text)
+        for kind, pattern in self.patterns:
+            text = self._sub(pattern, text, kind)
         if self.phones:
-            text = self._sub(DIGIT_RUN, text, self._known_phone)
-        text = self._sub(EMAIL, text, _an_address)
-        text = self._sub(EMAIL_SPELLED_OUT, text)
+            text = self._sub(DIGIT_RUN, text, "phones", self._known_phone)
+        text = self._sub(EMAIL, text, "emails", _an_address)
+        text = self._sub(EMAIL_SPELLED_OUT, text, "emails")
         text = AFTER_EMAIL.sub(REMOVED, text)  # part of an address already counted
         if not labelled_only:
-            text = self._sub(PHONE, text, _phone)
+            text = self._sub(PHONE, text, "phones", _phone)
             text = LINE_ENDING.sub(REMOVED, text)  # part of a number already counted
         text = LABELLED.sub(self._labelled, text)
         return MOBILE_LABELLED.sub(self._labelled, text)
@@ -164,7 +181,7 @@ class Stripper:
         numbers = match.group("numbers")
         if not _labelled_number(numbers):
             return match.group(0)
-        self.removed += 1
+        self.counts["phones"] += 1
         return match.group("label") + REMOVED + TRAILING.search(numbers).group(0)
 
 
@@ -180,29 +197,59 @@ def _records(value):
             yield from _records(item)
 
 
-def strip(body: dict) -> tuple[dict, int]:
-    """The page with its contact details replaced, and how many it replaced."""
-    found, dropped = set(), 0
+@dataclass(frozen=True)
+class Removed:
+    """One kind of contact detail strip() took out of a page: how many, and from how many of its records."""
+
+    removed: int
+    records: int
+
+
+def strip_counted(body: dict) -> tuple[dict, dict[str, Removed]]:
+    """The page with its contact details replaced, and, for each kind it replaced (KINDS), how many and from how
+    many records: a contact field it emptied, or a name, email or phone number it took out of the free text."""
+    found, fields = set(), Counter()
     for record in _records(body):
         for field in CONTACT_FIELDS:
             if _filled(record.get(field)):
-                dropped += 1
+                fields[FIELD_KINDS[field]] += 1
                 if field in SEARCHED:
                     found.add(str(record[field]))
     stripper = Stripper(sorted(found))
+    records: Counter = Counter()
 
-    def stripped(key, value):
+    def stripped(key, value, kinds: set | None):
         if key in CONTACT_FIELDS:
             return REMOVED if _filled(value) else value
         if key in FREE_TEXT and isinstance(value, str):
-            return stripper.text(value)
+            before = Counter(stripper.counts)
+            text = stripper.text(value)
+            if kinds is not None:
+                kinds.update(kind for kind, number in (stripper.counts - before).items() if number)
+            return text
         if isinstance(value, dict):
-            return {name: stripped(name, item) for name, item in value.items()}
+            if any(field in value for field in CONTACT_FIELDS + FREE_TEXT):
+                own = {FIELD_KINDS[field] for field in CONTACT_FIELDS if _filled(value.get(field))}
+                out = {name: stripped(name, item, own) for name, item in value.items()}
+                records.update(own | ({ANY} if own else set()))
+                return out
+            return {name: stripped(name, item, kinds) for name, item in value.items()}
         if isinstance(value, list):
-            return [stripped(None, item) for item in value]
+            return [stripped(None, item, kinds) for item in value]
         return value
 
-    return stripped(None, body), dropped + stripper.removed
+    body = stripped(None, body, None)
+    totals = fields + stripper.counts
+    found = {kind: Removed(totals[kind], records[kind]) for kind in KINDS if totals[kind]}
+    if found:  # every kind together, so a count of notices counts a notice once whatever it lost
+        found[ANY] = Removed(sum(item.removed for item in found.values()), records[ANY])
+    return body, found
+
+
+def strip(body: dict) -> tuple[dict, int]:
+    """The page with its contact details replaced, and how many it replaced."""
+    body, removals = strip_counted(body)
+    return body, removals[ANY].removed if removals else 0
 
 
 def strip_text(text: str) -> tuple[str, int]:

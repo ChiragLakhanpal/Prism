@@ -49,6 +49,7 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
+import logging
 import sys
 from collections.abc import Callable, Iterable, MutableMapping
 from dataclasses import dataclass
@@ -58,6 +59,8 @@ from strata.config import Source, load_sources
 from strata.lakehouse import bronze, gold, pages, quality, readers, readiness, silver, storage
 from strata.lakehouse.engine import Engine
 from strata.lakehouse.schedule import Window, as_utc, daily_start
+
+LOG = logging.getLogger(__name__)
 
 JOB = "nightly"  # the job's key under resources.jobs in the bundle
 
@@ -71,7 +74,9 @@ RUN_LOGS = ("strata.ops.pipeline_runs", "strata.ops.quality_checks", "strata.ops
             # Each document run's sample of passages checked against the language detector (ticket 42).
             "strata.ops.passage_language_checks",
             # The challenger's and the hazard model's nightly scores in shadow (ticket 44).
-            "strata.ops.time_estimate_shadow", "strata.ops.hazard_scores")
+            "strata.ops.time_estimate_shadow", "strata.ops.hazard_scores",
+            # The dashboard's "What the measures say" and each loop's indicators, written each night (ticket 45).
+            "strata.ops.dashboard_findings", "strata.ops.loop_indicators")
 
 # Where a source's pages come from: the live API on the workspace, the recorded fixture here.
 Fetch = Callable[[Source, Engine], Iterable[pages.Page]]
@@ -327,14 +332,17 @@ def _replay_signals(run: Run) -> int:
 
 def _measure_data_readiness(run: Run) -> int:
     """The data readiness measures of every source, how often supplier auto-merge is right on the labeled
-    pairs (ticket 19), the room each table takes, and the Data readiness page built from them for the
-    dashboard (strata.dashboard.snapshot)."""
-    from strata.dashboard import snapshot
+    pairs (ticket 19), the room each table takes, the Data readiness page built from them for the
+    dashboard (strata.dashboard.snapshot), and the dashboard's "What the measures say" and each loop's indicators,
+    once every measure of the night is in (strata.dashboard.findings; ticket 45). How the night ended waits for the
+    night to end (run_task)."""
+    from strata.dashboard import findings, snapshot
     from strata.knowledge.suppliers import quality
 
     measured = readiness.measure(run.engine, run.run_id, run.clock) + quality.measure(run.engine, run.run_id, run.clock)
     measured += storage.measure(run.engine, run.run_id, run.clock)
-    return measured + snapshot.write(run.engine, run.run_id, run.clock)
+    measured += snapshot.write(run.engine, run.run_id, run.clock)
+    return measured + findings.write(run.engine, run.run_id, run.clock, leave_out=findings.AFTER_THE_RUN)
 
 
 def _refresh_drafts(run: Run) -> int:
@@ -358,6 +366,7 @@ TASKS: dict[str, Callable[[Run], int]] = {
     "measure_data_readiness": _measure_data_readiness,
     "refresh_drafts": _refresh_drafts,
 }
+LAST_TASK = list(TASKS)[-1]  # the job's tasks run one after another in this order (bundle/nightly.yml)
 
 
 def _record_sql() -> str:
@@ -378,11 +387,23 @@ def night_of(engine: Engine, run_id: str, started: dt.datetime) -> dt.date:
     return when.astimezone(ZoneInfo(window().timezone)).date()
 
 
+def _say_how_the_night_ended(engine: Engine, run_id: str, clock: Callable[[], dt.datetime]) -> None:
+    """The Governance page's Nightly runs and checks sentence, once every task of the night has recorded its row and
+    checks (strata.dashboard.findings.AFTER_THE_RUN). It never stops the job or hides why a task failed."""
+    from strata.dashboard import findings
+
+    try:
+        findings.write(engine, run_id, clock, sections=findings.AFTER_THE_RUN)
+    except Exception:  # noqa: BLE001 - the sentence waits for the next night, and the task's own error still raises
+        LOG.exception("How the night of run %s ended could not be written for the dashboard.", run_id)
+
+
 def run_task(engine: Engine, task_key: str, run_id: str, fetch: Fetch,
              clock: Callable[[], dt.datetime] = _now, readers_for: ReadersFor | None = None,
              search_endpoint: str | None = None) -> None:
     """Do one task's work, run its quality checks (strata.lakehouse.quality) and record it. A task that fails is
-    recorded as failed, with no checks, then raises again."""
+    recorded as failed, with no checks, then raises again. Each task runs after the one before it, so the night ends
+    with the last task or with a task that fails, and then the dashboard's sentence on how it ended is written."""
     work = TASKS[task_key]
     started = clock()
     status, changed = "failed", 0
@@ -397,6 +418,8 @@ def run_task(engine: Engine, task_key: str, run_id: str, fetch: Fetch,
             "run_id": run_id, "task_key": task_key, "status": status, "rows_changed": changed,
             "started_at": started, "finished_at": finished, "public_from": finished.astimezone(dt.UTC).date(),
         })
+        if status == "failed" or task_key == LAST_TASK:
+            _say_how_the_night_ended(engine, run_id, clock)
 
 
 # The keys the tasks read from their environment, which on Databricks the job reads from its secret scope
