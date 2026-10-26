@@ -3,7 +3,9 @@
 render() turns the pages of strata.dashboard.definition into the JSON an AI/BI dashboard file holds: its datasets,
 each with its query and the parameters it reads, its pages with each tile placed on the six-column grid in reading
 order, and the theme every page shares. Nothing on the dashboard computes a number (CLAUDE.md rule 1): every number
-is a column of a dataset's query, and every counter shows its KPI query's display string as it is.
+is a column of a dataset's query, and every counter shows its KPI query's display string as it is. The pivot sums
+each cell, as AI/BI's pivots do, over the one dataset row the cell holds. Each widget has the type, version and fields
+of the known-good widgets in tests/fixtures/dashboard/widget_shapes.json (ticket 68).
 
 A dataset's query is the SQL file of its name in sql/ (or, for kpi_<id>, the KPI's query in sql/kpi/, from
 config/kpis.toml). Before a query is written into the file, or run in a test, these placeholders in it are filled:
@@ -61,6 +63,9 @@ THEME = {
     "visualizationColors": list(COLORS),
     "widgetHeaderAlignment": "LEFT",
 }
+# A table column's date formats, as AI/BI writes them: "Oct 22, 2026", and with the hour and minute.
+DATE_FORMATS = {"date": {"type": "date", "date": "locale-short-month"},
+                "datetime": {"type": "date-time", "date": "locale-short-month", "time": "locale-hour-minute"}}
 
 
 # ── Words ────────────────────────────────────────────────────────────────
@@ -256,20 +261,24 @@ def _text(name: str, lines: list[str]) -> dict:
     return {"widget": {"name": name, "multilineTextboxSpec": {"lines": lines}}}
 
 
+def _column(column: kinds.Column, fewest: str | None) -> dict:
+    """A table column as AI/BI's table (version 2) holds it: the field, its heading and its format. A date reads
+    "Oct 22, 2026", a date and time adds the hour and minute, and a number keeps its decimals and is never shortened
+    to K, M or B (DESIGN.md section 6)."""
+    entry = {"fieldName": column.field, "displayName": words(column.title, fewest)}
+    if column.kind in DATE_FORMATS:
+        entry["format"] = dict(DATE_FORMATS[column.kind])
+    elif column.kind in ("integer", "number"):
+        entry["format"] = _number(column.decimals or 0)
+    return entry
+
+
 def _table(tile: kinds.Table) -> dict:
-    columns = []
-    for order, column in enumerate(tile.columns):
-        entry = {"fieldName": column.field, "title": words(column.title, tile.fewest), "type": column.kind,
-                 "displayAs": "datetime" if column.kind in ("date", "datetime") else column.kind, "order": order}
-        if column.kind == "date":
-            entry["dateTimeFormat"] = "MMM D, YYYY"
-        if column.kind == "datetime":
-            entry["dateTimeFormat"] = "MMM D, YYYY HH:mm"
-        if column.decimals is not None:
-            entry["numberFormat"] = _number(column.decimals)
-        columns.append(entry)
+    """AI/BI's table, version 2. Version 1 needs a dozen display fields on every column, and the version 1 tables
+    this file first wrote, without them, showed "Invalid widget definition is imported." (ticket 68)."""
     return {"widget": {"name": tile.name, "queries": _main(tile.dataset, *(column.field for column in tile.columns)),
-                       "spec": {"version": 1, "widgetType": "table", "encodings": {"columns": columns},
+                       "spec": {"version": 2, "widgetType": "table", "encodings": {
+                           "columns": [_column(column, tile.fewest) for column in tile.columns]},
                                 "frame": _frame(words(tile.title, tile.fewest), words(tile.about, tile.fewest))}}}
 
 
@@ -324,12 +333,22 @@ def _chart(tile: kinds.Chart) -> dict:
 
 
 def _pivot(tile: kinds.Pivot) -> dict:
-    return {"widget": {"name": tile.name, "queries": _main(tile.dataset, tile.rows[0], tile.columns[0], tile.cell[0]),
+    """AI/BI's pivot aggregates its cells over the rows and columns it groups by, as every pivot its editor writes
+    does (tests/fixtures/dashboard/widget_shapes.json). Each row and column pair is one row of the dataset, so each
+    cell's sum is that row's number as the query returned it (ticket 68)."""
+    row, column, (cell, cell_title) = tile.rows[0], tile.columns[0], tile.cell
+    total = f"sum({cell})"
+    query = {"datasetName": tile.dataset,
+             "fields": [*_fields(row, column), {"name": total, "expression": f"SUM(`{cell}`)"}],
+             "cubeGroupingSets": {"sets": [{"fieldNames": [row]}, {"fieldNames": [column]}]},
+             "disaggregated": False,
+             "orders": [{"direction": "ASC", "expression": f"`{row}`"}, {"direction": "ASC", "expression": f"`{column}`"}]}
+    return {"widget": {"name": tile.name, "queries": [{"name": "main_query", "query": query}],
                        "spec": {"version": 3, "widgetType": "pivot", "encodings": {
-                           "rows": [{"fieldName": tile.rows[0], "displayName": words(tile.rows[1])}],
-                           "columns": [{"fieldName": tile.columns[0], "displayName": words(tile.columns[1])}],
+                           "rows": [{"fieldName": row, "displayName": words(tile.rows[1])}],
+                           "columns": [{"fieldName": column, "displayName": words(tile.columns[1])}],
                            "cell": {"type": "multi-cell", "fields": [
-                               {"fieldName": tile.cell[0], "cellType": "text", "displayName": words(tile.cell[1])}]}},
+                               {"fieldName": total, "cellType": "text", "displayName": words(cell_title)}]}},
                            "frame": _frame(words(tile.title), words(tile.about))}}}
 
 
