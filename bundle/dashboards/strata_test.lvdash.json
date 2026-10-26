@@ -367,7 +367,7 @@
         "  p.name AS period_name,\n",
         "  CASE\n",
         "    WHEN s.charges = 0 OR p.budget_usd IS NULL THEN 'No cost data yet'\n",
-        "    ELSE replace(replace('US${spent} of US${budget}', '{spent}', format_number(round(s.spent), 0)), '{budget}',\n",
+        "    ELSE replace(replace(concat('US$', '{spent} of US$', '{budget}'), '{spent}', format_number(round(s.spent), 0)), '{budget}',\n",
         "                 format_number(p.budget_usd, 0))\n",
         "  END AS display\n",
         "FROM spent AS s\n",

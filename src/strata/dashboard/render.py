@@ -93,6 +93,12 @@ def _literal(text: str) -> str:
     """Words as SQL text. Spark SQL reads 'don''t' as two strings run together, and mangles backslashes, so words
     with an apostrophe go in double quotes, which Databricks SQL reads as text and the transpile step rewrites for
     DuckDB; words with both kinds of quote are joined from parts."""
+    if "${" in text:
+        # The Databricks CLI reads ${name} inside a dashboard file as a bundle variable and refuses the deploy
+        # when no such variable exists, so a dollar sign never stands right before a brace: the words are joined
+        # from parts that end with the dollar sign and start with the brace, which replace() still fills.
+        pieces = text.replace("${", "$\x00{").split("\x00")
+        return "concat(" + ", ".join(_literal(piece) for piece in pieces) + ")"
     if "'" not in text:
         return f"'{text}'"
     if '"' not in text:
