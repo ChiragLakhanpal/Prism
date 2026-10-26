@@ -17,6 +17,8 @@ its figures. In the source:
 - {when:measured:key} at the start of a line, or after its {#slug}, keeps the line only while result key has a
   measured value, and {when:unmeasured:key} only while it has none, so a state such as "No cost data yet" has
   its own words instead of stopping the build.
+- {when:rehearsed} and {when:unrehearsed}, in the same places, keep a line only once every drill of the change
+  drill has a rehearsal in docs/proposal/rehearsals.toml, or only while one has none ("Not rehearsed yet").
 - A block that is only {datasheet}, {rubric-map}, {framework}, {caps}, {drill}, {ladder}, {designed} or {annex:...}
   is replaced by the table that registry gives; {copy:key} is the app's own words (src/strata/proposal/copy.json).
 - {model:role} is the deployment config/models.toml names for that role, in code, so swapping a model changes the
@@ -551,8 +553,8 @@ DRILL_TARGET = "drill-target"  # docs/proposal/settings.toml: the minutes a dril
 def _drill_time(build: _Build, rehearsal: Rehearsal, linked: bool = True) -> str:
     """A rehearsal's minutes, as the change drill's table shows them (linked to the rehearsal's row in Annex 1) and
     as that row shows them, and under them the 46 brief's Missed target words when the drill took longer than the
-    target (section 15), which are never left out. The target is cited, and so listed in Annex 2, only by a drill
-    that missed it."""
+    target (section 15), which are never left out. In the table, those words cite the target as any sentence does;
+    the Annex 1 row repeats them without counting itself as a citation."""
     minutes = rehearsal.minutes
     unit = "minute" if minutes == 1 else "minutes"
     title = _title(f"{minutes} {unit}. {REHEARSAL_KIND}, measured {short_date(rehearsal.measured_on)}.")
