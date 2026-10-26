@@ -55,7 +55,7 @@ Scored under [System and knowledge architecture](#rubric-architecture), and in p
 
 {#m1-ask} The assessment asks for a pipeline that takes in tables and long documents and matches the same things across them. Strata names the assessment's layers of evidence What, How and Why, after the question each answers. [Annex 4](#sec-annex-words) maps the words.
 
-{#m1-sources} The source registry, `config/sources.toml`, lists {s:source-count} sources: the contract awards, the procurement notices, the projects, the loans and credits, the Independent Evaluation Group (IEG) ratings and the governance indicators. Each entry names its endpoint, the field that marks new rows, how often it is fetched, its license and the transform that cleans it. Adding a source is one entry and one transform.
+{#m1-sources} The source registry, `config/sources.toml`, lists {s:source-count} sources. They hold the contract awards, the procurement notices, the projects, the loans and credits, the Independent Evaluation Group (IEG) ratings, the governance indicators and the project documents. Each entry names its endpoint, the field that marks new rows, how often it is fetched, its license and the transform that cleans it. Adding a source is one entry and one transform.
 
 {figure:pipeline}
 **Figure. Databricks holds the data, Foundry holds the agent, and the app runs every tool as the person asking.**
@@ -83,7 +83,7 @@ Scored under [System and knowledge architecture](#rubric-architecture), and in p
 **Figure. Records and documents meet at the passage, joined on the project ID and the STEP reference.**
 **Note:** {copy:trailLegend}
 
-{#m1-model-trail} The assessment's own example is in P130164. Award notice OP00044090 records contract IN-RRSMP-7431-CW-RFB, signed on June 15, 2017, in a year neither awards dataset covers. Its notice and its plan row share the STEP reference. The completion report's paragraph {r:trail|paragraph}, on page {r:trail|page}, appeared together with the contract. [Its contract trail]({url:app|/projects/P130164/packages/IN-RRSMP-7431-CW-RFB}) shows the notice, the plan row and the paragraph.
+{#m1-model-trail} The assessment's own example is in P130164. Award notice OP00044090 records contract IN-RRSMP-7431-CW-RFB, signed on June 15, 2017, in a year neither awards dataset covers. The notice carries the package's STEP reference, so Strata joins it to the package on that key. The completion report's paragraph {r:trail|paragraph}, on page {r:trail|page}, appeared together with the contract. [Its contract trail]({url:app|/projects/P130164/packages/IN-RRSMP-7431-CW-RFB}) shows the award notice with its bids, the contract, and each report paragraph that appeared together with it.
 
 {#m1-model-assertions} Reports also make dated claims, such as an ISR's rating of progress or a completion report's view of the same period. Strata keeps each one as an assertion with its source, its date and the period it is about. When assertions about the same thing differ, Strata records a disagreement. Module 3 explains how it handles one.
 
@@ -101,7 +101,7 @@ Scored under [System and knowledge architecture](#rubric-architecture), and in p
 
 {#m1-reading-passages} Strata divides each report at its numbered paragraphs, as completion reports and appraisal documents number them. A table becomes one passage per row, with its header kept. Each passage keeps its page, its section and a header such as "ICR, P130164, India, roads, III.B, ¶54, p.23" that names where it came from. The knowledge model holds {r:passages} passages.
 
-{#m1-reading-index} Strata embeds each passage with `text-embedding-3-large`, as {s:embedding-size} numbers. The passage index is hybrid. It searches by words and by meaning, and it returns only passages public before the question's date.
+{#m1-reading-index} Strata embeds each passage with {model:embed}, as {s:embedding-size} numbers. The passage index is hybrid. It searches by words and by meaning, and it returns only passages public before the question's date.
 
 {#m1-reading-shelf} Strata keeps a shelf of the hardest documents in the slice: a scanned appraisal document with a risk annex set in columns, the longest appraisal document, a Procurement Plan with hundreds of rows, a completion report in French and a document longer than the layout parser takes. The reader read {r:shelf-read} of them, and the Data readiness page records each outcome.
 

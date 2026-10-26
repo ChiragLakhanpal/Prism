@@ -139,6 +139,32 @@ def test_each_module_opens_with_its_scored_under_line_and_an_in_short_paragraph(
         assert "**In short.**" in lines[2]
 
 
+def test_the_showcase_trail_names_only_the_records_its_contract_trail_holds(built):
+    # tests/fixtures/api/activity-in-rrsmp-7431.json, the package's trail: no plan read for P130164 and no invitation
+    # found, so the trail holds the award notice OP00044090 with its bids, the contract, and the report paragraphs
+    # that appeared together with it.
+    import json
+
+    trail = json.loads((ROOT / "tests" / "fixtures" / "api" / "activity-in-rrsmp-7431.json").read_text())
+    found = {stage["stage"]: stage["found"] for stage in trail["stages"]}
+    assert found == {"plan": False, "notice": False, "bids": True, "contract": True, "paragraphs": True}
+    sentences = next(line for line in built.markdown.splitlines() if "IN-RRSMP-7431-CW-RFB" in line
+                     and line.startswith('<a id="p'))
+    assert "plan row" not in sentences and "invitation" not in sentences
+    assert "Award notice OP00044090" in sentences and "bids" in sentences and "appeared together" in sentences
+
+
+def test_model_names_come_from_the_model_file_so_swapping_a_model_changes_the_next_build(snap):
+    # docs/PLAN.md section 15's drill "Swap the model" changes config/models.toml alone (CLAUDE.md rule 9).
+    for model in config.load_models().values():
+        assert model.deployment not in SOURCE, model.deployment
+    models = {**config.load_models()}
+    models["embed"] = replace(models["embed"], deployment="text-embedding-swapped")
+    swapped = build.build(SOURCE, inputs(snap, models=models)).markdown
+    assert "`text-embedding-swapped`" in swapped
+    assert config.load_models()["embed"].deployment not in swapped
+
+
 # ── Designed, not built ──────────────────────────────────────────────────
 
 def test_with_nothing_designed_but_unbuilt_the_list_says_so_and_the_summary_leaves_it_out(built):

@@ -6,10 +6,11 @@
 # the README says where to set it. Two addresses are never set here, because they follow from the others: the deck is
 # {app}/present, and the proposal is {repo}/blob/main/docs/proposal.md.
 #
-#   app        the Databricks App's address, as `databricks apps get strata -o json` prints it (url)
-#   dashboard  the published "Strata operations" dashboard's address
+#   app        the Databricks App's address, as `databricks apps get strata -o json` prints it (url). Set from the
+#              deploy of October 26, 2026, whose last line was "Strata is running at ..." (docs/workspace-catchup.md)
+#   dashboard  the published "Strata operations" dashboard's address, from its Share link in the workspace
 #   repo       the GitHub repo's address, once its owner is chosen (docs/STATUS.md, decision 10)
 
-app = ""
+app = "https://strata-7474658003099155.aws.databricksapps.com"
 dashboard = ""
 repo = ""

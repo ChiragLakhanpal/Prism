@@ -15,6 +15,8 @@ its figures. In the source:
 - {when:designed} at the start of a paragraph keeps it only while something is designed but not built.
 - A block that is only {datasheet}, {rubric-map}, {framework}, {caps}, {drill}, {ladder}, {designed} or {annex:...}
   is replaced by the table that registry gives; {copy:key} is the app's own words (src/strata/proposal/copy.json).
+- {model:role} is the deployment config/models.toml names for that role, in code, so swapping a model changes the
+  next build (docs/PLAN.md section 15).
 
 Paragraphs are numbered from the Summary to the end of "Designed, not built", as in a World Bank project document.
 Titles (a block in bold), source and note lines, "Scored under" and "What you can open" lines, tables, lists and
@@ -46,7 +48,7 @@ MONTHS = ("January", "February", "March", "April", "May", "June", "July", "Augus
 NUMBERED_FROM, NUMBERED_TO = "Summary", "Annex 1: Results register"
 UNNUMBERED = ("#", "|", "<", "!", "- ", "* ", ">", "{figure:", "**Source:**", "**Note:**", "**What you can open.**",
               "Scored under")
-PLACEHOLDER = re.compile(r"\{(r|s|p|¶|sec|fig|copy|url):([^{}]+)\}")
+PLACEHOLDER = re.compile(r"\{(r|s|p|¶|sec|fig|copy|url|model):([^{}]+)\}")
 SLUG = re.compile(r"^\{#([a-z0-9-]+)\}\s*")
 HEADING_SLUG = re.compile(r"\s*\{#([a-z0-9-]+)\}\s*$")
 TIERS = {"ieg": "IEG's ICR Review or PPAR", "icr": "the ICR", "isr": "the ISRs", "pad": "the PAD",
@@ -105,6 +107,7 @@ class Inputs:
     rubric: config.Rubric = field(default_factory=config.load_rubric)
     designed: tuple[config.DesignedNotBuilt, ...] = field(default_factory=config.load_designed_not_built)
     drills: tuple[config.ChangeDrill, ...] = field(default_factory=config.load_change_drills)
+    models: dict = field(default_factory=config.load_models)
     day_one: Path = DAY_ONE_FILE
     copy: dict = field(default_factory=lambda: json.loads(COPY_FILE.read_text()))
 
@@ -292,6 +295,11 @@ class _Build:
             if kind == "url":
                 route = part or ""
                 return self.app(route) if name == "app" else self.url(name)
+            if kind == "model":
+                if name not in self.inputs.models:
+                    raise BuildError(f"The proposal did not build. {self.where[0]} names the model for {name}, which "
+                                     "config/models.toml does not hold.")
+                return f"`{self.inputs.models[name].deployment}`"
             raise BuildError(f"{self.where[0]} has a placeholder I don't know: {match.group(0)}.")
 
         return PLACEHOLDER.sub(one, text)
@@ -643,7 +651,7 @@ def _figure_data(build: _Build, slug: str) -> tuple[dict, str | None]:
         labels = [source.readiness[0].label if source.readiness else key for key, source in config.load_sources().items()]
         return {"sources": list(dict.fromkeys(labels))}, None
     if slug == "reading":
-        return {"embedding": config.load_models()["embed"].deployment}, None
+        return {"embedding": build.inputs.models["embed"].deployment}, None
     if slug == "checks":
         from strata.agent.verifier import ALL_CHECKS
 
