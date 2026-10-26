@@ -2940,3 +2940,50 @@ It worked if:
 - The gold query returns 0. `strata.gold.notice` has no `notice_text` column. In `bronze_to_gold`, `gold.sync`'s MERGE makes it equal its query over each notice's newest silver row, so its `bid_description` takes the stripped text with no step of its own. Screens and tools read `notice_text` from `strata.silver.notices`.
 
 Record here the snapshot's commit, N and M from step 1, the count from this step, the pass's minutes from step 3, and the three query results from steps 3 and 4. If the script still finds notices after a successful step 3, record their shapes as under "Ticket 76, before step 1" (every digit written as 9, every email address masked, thirty characters kept on each side of the label) and tell the orchestrator.
+
+## Ticket 46, step 1 of 2: pull the proposal's measures from the workspace into docs/proposal/snapshot.json (criteria 2 and 4, live)
+
+The merger parked this step on October 26, 2026, after merge commit 58853964, so run steps 1 and 2 from a snapshot of 58853964 or later. Every key is set, but the second session runs every workspace step from a snapshot of the commit, one at a time, so the merger ran none. This step needs the Databricks keys in `.env`. Run it after the nightly job, the full gate, the backtests, the hindsight test and the cost pull have each run at least once on the workspace, as the script's docstring says.
+
+What ticket 46 adds: `docs/proposal/source.md` is the proposal's source, and every number in it is a placeholder that `docs/proposal/results.toml` fills from a query. The live pull runs each of those queries on the SQL warehouse and writes one dated snapshot. The built `docs/proposal.md` and its figures in `docs/proposal/figures/` come only from that snapshot, so the real proposal does not exist until this step runs.
+
+Run this from the snapshot's root, with `--env-file` pointing at the main checkout's file, as the header says:
+
+    uv run --script ops/proposal/pull_live.py --env-file .env
+
+Then print the run and day behind the three retrieval scores:
+
+    python3 -c "import json; r = json.load(open('docs/proposal/snapshot.json'))['results']; [print(k, r[k].get('run_id'), r[k].get('measured_on'), r[k].get('measured')) for k in ('retrieval-precision', 'retrieval-recall', 'retrieval-ndcg')]"
+
+It worked if:
+
+- The script exits 0 and prints "Wrote .../docs/proposal/snapshot.json." Exit 1 means it wrote the snapshot but the workspace has not measured some results yet; it names them, and the build would stop on any sentence that cites one. Record the names. Exit 2 means it could not ask the warehouse, and it prints why.
+- Each of the three retrieval lines names an evaluation run whose id holds no "/" (not one ending /current or /candidate, which are the tuning gate's runs) with that run's date, and `True`.
+
+Copy the snapshot's `docs/proposal/snapshot.json` into the main checkout's `docs/proposal/` and keep it for step 2. Record the snapshot's commit, the exit code, any names it printed, and the three retrieval lines.
+
+## Ticket 46, step 2 of 2: set the dashboard and repo addresses, then build and check the real docs/proposal.md (criteria 2 and 4, live)
+
+Parked with step 1, after merge commit 58853964. The two addresses are the user's to choose (decision 10 in docs/STATUS.md), so a session cannot set them. Until both are set, `python -m strata.proposal build` stops by design with "The data sheet can't link to repo, because its URL isn't set in config/urls.toml." (or the same for dashboard), exit 1.
+
+In the main checkout, after step 1's `docs/proposal/snapshot.json` is in place:
+
+1. Fill `dashboard` (the published "Strata operations" dashboard's Share link) and `repo` (the GitHub repo's address) in `config/urls.toml`. Leave `app` as it is.
+2. Run, in this order:
+
+       uv run python -m strata.proposal readme --write
+       uv run python -m strata.proposal build
+       uv run python -m strata.proposal check
+       node web/lint/proposal.ts
+
+3. Commit `config/urls.toml`, `README.md`, `docs/proposal/snapshot.json`, `docs/proposal.md` and `docs/proposal/figures/` together, through the gate.
+
+It worked if:
+
+- `readme --write` prints "Wrote README.md's links for the panel."
+- `build` exits 0 and prints "Wrote docs/proposal.md and 9 figures."
+- `check` and `node web/lint/proposal.ts` both exit 0 with the built file present.
+- The data sheet in `docs/proposal.md` has a "The deck" row that links `https://strata-7474658003099155.aws.databricksapps.com/present`, and Annex 1's three retrieval rows name the run and the date that step 1 recorded, not a run id ending /current or /candidate.
+- The commit's gate passes.
+
+Record the commit, the four exit codes and the deck row.

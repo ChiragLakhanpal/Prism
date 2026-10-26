@@ -16,6 +16,9 @@
 //   generator and the nightly job's "What the measures say" read (ticket 45).
 // - src/strata/server/home_copy.json: Home's briefing sentences and lines (copy.home.server), with the words for one
 //   to nine, which Home's route writes on the server (ticket 41).
+// - src/strata/proposal/copy.json: the app's words the proposal repeats word for word (ticket 46): the attribution
+//   lines of the Sources and licenses page, the contract trail's legend, the "Designed, not built" badge and the
+//   footer.
 //
 // The lint lane fails when a JSON file is out of date (web/lint/run.ts), and this command writes them
 // again:
@@ -36,6 +39,7 @@ export const STEPS_COPY_FILE = at("src/strata/estimates/steps.json");
 export const TIMELINE_COPY_FILE = at("src/strata/server/timeline_copy.json");
 export const DASHBOARD_COPY_FILE = at("src/strata/dashboard/copy.json");
 export const HOME_COPY_FILE = at("src/strata/server/home_copy.json");
+export const PROPOSAL_COPY_FILE = at("src/strata/proposal/copy.json");
 
 const json = (words: unknown) => `${JSON.stringify(words, null, 2)}\n`;
 
@@ -108,6 +112,23 @@ export function homeCopy(): string {
   return json({ ...copy.home.server, words: copy.num.words });
 }
 
+// The app's words the proposal repeats word for word (ticket 46): DESIGN.md section 8's attribution lines as the
+// Sources and licenses page writes them, the trail's legend for Figure 3, the badge's words and the footer. The
+// attribution line's template is written out with its slots, as Python fills it.
+export function proposalCopy(): string {
+  const sources = copy.dataReadiness.sourcesPage;
+  return json({
+    attribution: `${sources.attribution.before}{dataset}${sources.attribution.after("{source}", "{license}")}`,
+    terms: `${sources.terms.before}${sources.terms.link}`,
+    changes: sources.changes,
+    caveat: sources.caveat,
+    authorizes: `${sources.authorizes.before}${sources.authorizes.link}${sources.authorizes.after}`,
+    trailLegend: copy.trail.legend,
+    designedNotBuilt: copy.badge.designedNotBuilt,
+    footer: copy.footer,
+  });
+}
+
 // Each JSON file, and the words it must hold.
 export const SERVER_COPIES: { file: string; words: () => string; from: string }[] = [
   { file: SERVER_COPY_FILE, words: serverCopy, from: "copy.dataReadiness.server" },
@@ -117,6 +138,7 @@ export const SERVER_COPIES: { file: string; words: () => string; from: string }[
   { file: TIMELINE_COPY_FILE, words: timelineCopy, from: "copy.timeline.server" },
   { file: DASHBOARD_COPY_FILE, words: dashboardCopy, from: "copy.dash and copy.kpi" },
   { file: HOME_COPY_FILE, words: homeCopy, from: "copy.home.server" },
+  { file: PROPOSAL_COPY_FILE, words: proposalCopy, from: "copy.dataReadiness.sourcesPage, copy.trail.legend and copy.badge" },
 ];
 
 function isCurrent(file: string, words: () => string): boolean {

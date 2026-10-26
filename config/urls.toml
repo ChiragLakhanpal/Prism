@@ -1,0 +1,16 @@
+# Where the panel finds Strata, its deck, the dashboard, the repo and this proposal (ticket 46; the 46 brief, sections
+# 5 and 18). This is the one place each address is set: the proposal's data sheet, the README's "For the panel"
+# section and the deck's last slide (ticket 47) all read it through strata.config.load_urls().
+#
+# An empty value means the address isn't known yet. The proposal's build then stops and names the missing one, and
+# the README says where to set it. Two addresses are never set here, because they follow from the others: the deck is
+# {app}/present, and the proposal is {repo}/blob/main/docs/proposal.md.
+#
+#   app        the Databricks App's address, as `databricks apps get strata -o json` prints it (url). Set from the
+#              deploy of October 26, 2026, whose last line was "Strata is running at ..." (docs/workspace-catchup.md)
+#   dashboard  the published "Strata operations" dashboard's address, from its Share link in the workspace
+#   repo       the GitHub repo's address, once its owner is chosen (docs/STATUS.md, decision 10)
+
+app = "https://strata-7474658003099155.aws.databricksapps.com"
+dashboard = ""
+repo = ""

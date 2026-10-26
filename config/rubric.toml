@@ -1,0 +1,168 @@
+# The rubric map (ticket 46; the 46 brief, section 7; docs/PLAN.md section 17): the assessment's four dimensions,
+# their points and their 13 criteria, with where the proposal answers each one and what the panel can open to see
+# it working. The proposal's "Where Strata earns each point" and the deck's rubric slide (ticket 47) read it, so the
+# points are written once, here, and cited to the assessment (docs/assessment.md, section 5).
+#
+# strata.config.load_rubric() reads it, and tests/test_proposal_registries.py checks it against the assessment's own
+# table, word for word.
+#
+# source, anchor     the file and the heading the points cite
+# [[dimensions]]     in the rubric's order:
+#   name             the dimension as Strata writes it, in sentence case with "and" (GLOSSARY.md, DESIGN.md section 7)
+#   rubric_name      the dimension word for word from the assessment's table
+#   points           its points, from that table
+#   summary          the one line under its name: where Strata earns it. {s:key} is a count or setting the proposal
+#                    fills from docs/proposal/settings.toml, so a change drill can't leave it wrong
+#   [[dimensions.criteria]]
+#     rubric         the criterion word for word from the assessment's table
+#     says           the criterion in the rubric map, in sentence case. One drops "validation", which DESIGN.md
+#                    section 7, rule 19 bans
+#     answered_in    where the proposal answers it: sec:<slug> for a section's paragraphs, fig:<slug> for a figure
+#     open           two or three things to open: { label, href }, where href is app:<route>, dashboard:<page> or
+#                    repo:<path>
+
+source = "docs/assessment.md"
+anchor = "5-evaluation--assessment-rubric"
+
+[[dimensions]]
+key = "architecture"
+name = "System and knowledge architecture"
+rubric_name = "System & Knowledge Architecture"
+points = 30
+summary = "{s:source-count|cap} sources, a page router, numbered passages, a Unity Catalog knowledge model with edges and dated assertions, and entity resolution."
+
+[[dimensions.criteria]]
+rubric = "Robustness of multimodal data ingestion"
+says = "Robustness of multimodal data ingestion"
+answered_in = ["sec:m1-taking-in", "fig:pipeline", "fig:award-gap"]
+open = [
+  { label = "Data readiness", href = "app:/data" },
+  { label = "Sources and licenses", href = "app:/data/sources" },
+  { label = "lineage on the Governance page", href = "dashboard:Governance" },
+]
+
+[[dimensions.criteria]]
+rubric = "depth and scalability of Knowledge Graph/relational schema design"
+says = "Depth and scalability of the knowledge graph or relational schema design"
+answered_in = ["sec:m1-knowledge-model", "fig:knowledge-model"]
+open = [
+  { label = "the Connections tab for P130164", href = "app:/projects/P130164/connections" },
+  { label = "one activity's contract trail", href = "app:/projects/P130164/packages/IN-RRSMP-7431-CW-RFB" },
+]
+
+[[dimensions.criteria]]
+rubric = "effective handling of unstructured text and document hierarchy"
+says = "Effective handling of unstructured text and document hierarchy"
+answered_in = ["sec:m1-long-reports", "fig:reading"]
+open = [
+  { label = "the P130164 ICR at paragraph 54", href = "app:/projects/P130164/documents/icr-2019-10-10?page=23&para=54" },
+  { label = "the hardest documents on Data readiness", href = "app:/data" },
+]
+
+[[dimensions]]
+key = "method"
+name = "Analytical and AI methodology"
+rubric_name = "Analytical & AI Methodology"
+points = 30
+summary = "A survival model with calibrated ranges and backtests, agentic retrieval over SQL, hybrid search and the graph, {s:check-count} checks, the evidence ladder and the hindsight test."
+
+[[dimensions.criteria]]
+rubric = "Soundness of predictive risk modeling"
+says = "Soundness of predictive risk modeling"
+answered_in = ["sec:m2-time-estimates", "fig:backtest", "sec:m4-kpis", "fig:hindsight"]
+open = [
+  { label = "a package workspace with its time estimate", href = "app:/packages/KE-NWWDA-541055-CW-RFB" },
+  { label = "the AI quality and adoption page", href = "dashboard:AI quality and adoption" },
+]
+
+[[dimensions.criteria]]
+rubric = "sophistication of the retrieval pipeline"
+says = "Sophistication of the retrieval pipeline"
+answered_in = ["sec:m2-retrieval", "fig:retrieval"]
+open = [
+  { label = "the one box on the P130164 project page", href = "app:/projects/P130164" },
+  { label = "retrieval results on the AI quality and adoption page", href = "dashboard:AI quality and adoption" },
+]
+
+[[dimensions.criteria]]
+rubric = "practical mitigation of hallucinations"
+says = "Practical mitigation of hallucinations"
+answered_in = ["sec:m3-checks", "fig:checks"]
+open = [
+  { label = "the check line under any answer", href = "app:/projects/P130164" },
+  { label = "evals/benchmark.yaml", href = "repo:evals/benchmark.yaml" },
+]
+
+[[dimensions.criteria]]
+rubric = "strict citation and grounding mechanics"
+says = "Strict citation and grounding mechanics"
+answered_in = ["sec:m3-checks", "sec:m1-long-reports"]
+open = [
+  { label = "the evidence drawer from any citation", href = "app:/projects/P130164" },
+  { label = "Foundry evaluations on the AI quality and adoption page", href = "dashboard:AI quality and adoption" },
+]
+
+[[dimensions]]
+key = "domain"
+name = "Domain alignment and data use"
+rubric_name = "Domain Alignment & Data Utilization"
+points = 25
+summary = "The borrower's PPSD and Procurement Plan as the decision, checked row by row; STEP's own words and formats; the 2025 Regulations; and the FY2017–19 gap and contract modifications handled honestly."
+
+[[dimensions.criteria]]
+rubric = "Effective use of specified open development data sources"
+says = "Effective use of the specified open development data sources"
+answered_in = ["sec:m1-taking-in", "sec:annex-sources"]
+open = [
+  { label = "Sources and licenses", href = "app:/data/sources" },
+]
+
+[[dimensions.criteria]]
+rubric = "deep understanding of public procurement stages"
+says = "Deep understanding of public procurement stages"
+answered_in = ["sec:m2-stages"]
+open = [
+  { label = "Check a plan on the demo plan", href = "app:/projects/P156634/procurement/northern-water-works-development-agency/2026-10-09" },
+  { label = "Drafts", href = "app:/drafts" },
+]
+
+[[dimensions.criteria]]
+rubric = "realistic handling of missing or incomplete reporting"
+says = "Realistic handling of missing or incomplete reporting"
+answered_in = ["fig:award-gap", "sec:m2-time-estimates"]
+open = [
+  { label = "the gaps on Data readiness", href = "app:/data" },
+  { label = "Check a plan on the demo plan", href = "app:/projects/P156634/procurement/northern-water-works-development-agency/2026-10-09" },
+]
+
+[[dimensions]]
+key = "operations"
+name = "Operationalization and scalability"
+rubric_name = "Operationalization & Scalability"
+points = 15
+summary = "Incremental nightly jobs, {s:loop-count} learning loops with gates, KPIs, a phased rollout, cost caps and the change drill."
+
+[[dimensions.criteria]]
+rubric = "Feasibility of the deployment roadmap"
+says = "Feasibility of the deployment roadmap"
+answered_in = ["sec:m4-rollout", "sec:m4-costs"]
+open = [
+  { label = "Azure spend on the Governance page", href = "dashboard:Governance" },
+]
+
+[[dimensions.criteria]]
+rubric = "concrete validation metrics and KPIs"
+says = "Concrete metrics and KPIs"
+answered_in = ["sec:m4-kpis", "fig:hindsight"]
+open = [
+  { label = "the AI quality and adoption page", href = "dashboard:AI quality and adoption" },
+]
+
+[[dimensions.criteria]]
+rubric = "clarity of continuous learning and data feedback loops"
+says = "Clarity of continuous learning and data feedback loops"
+answered_in = ["sec:m4-loops", "fig:loops"]
+open = [
+  { label = "Lessons", href = "app:/lessons" },
+  { label = "Waiting for review", href = "app:/lessons/review" },
+]

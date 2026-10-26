@@ -1,0 +1,44 @@
+# The number check's allow list (ticket 46; the 46 brief, section 9.1): names fixed by definition that hold a number,
+# each with the reason it needs no source. The check in src/strata/proposal/numbers.py removes these phrases, word
+# for word, before it looks for numbers. Keep the list short: a count of something the change drill can change
+# belongs in docs/proposal/settings.toml, filled from its registry, never here.
+
+[[allow]]
+phrase = "the three strata"
+reason = "GLOSSARY.md defines the strata as What, How and Why: three by definition, not a count Strata measured."
+
+[[allow]]
+phrase = "the four modules"
+reason = "The assessment asks for four modules (docs/assessment.md, section 4)."
+
+[[allow]]
+phrase = "the four dimensions"
+reason = "The assessment's rubric has four dimensions (docs/assessment.md, section 5)."
+
+[[allow]]
+phrase = "All four dimensions"
+reason = "The rubric map's last row names the same four dimensions."
+
+[[allow]]
+phrase = "8-in-10"
+reason = "The name of the range a time estimate gives, defined in GLOSSARY.md and DESIGN.md: the point by which 8 in 10 comparable packages were signed."
+
+[[allow]]
+phrase = "8 in 10"
+reason = "The same definition, written out in a figure's reference line and alt text."
+
+[[allow]]
+phrase = "precision at 10"
+reason = "The name of a retrieval measure, as the replay harness stores it and the dashboard names it."
+
+[[allow]]
+phrase = "recall at 20"
+reason = "The name of a retrieval measure, as the replay harness stores it and the dashboard names it."
+
+[[allow]]
+phrase = "nDCG at 10"
+reason = "The name of a retrieval measure, as the replay harness stores it and the dashboard names it."
+
+[[allow]]
+phrase = "per 100 sources opened"
+reason = "The name of the retrieval loop's leading indicator, as ticket 32 named the measure."

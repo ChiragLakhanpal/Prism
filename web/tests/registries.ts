@@ -13,7 +13,10 @@ type Fix = { measure: string; counted_in?: string; projects?: string; projects_c
 export type SourceRegistry = { sources: Record<string, { readiness?: ReadinessRow[]; fixes?: Fix[] }> };
 export type ToolRegistry = { tools: Record<string, { readiness?: { ready_for: { row: string; measure: string; counted_in?: string } } }> };
 
-export function readRegistry<T>(name: "sources.toml" | "tools.toml"): T {
+// What is designed but not built (ticket 46): each item's key and the route where the app labels it.
+export type DesignedNotBuiltRegistry = { items?: { key: string; route: string }[] };
+
+export function readRegistry<T>(name: "sources.toml" | "tools.toml" | "designed_not_built.toml"): T {
   const path = fileURLToPath(new URL(`../../config/${name}`, import.meta.url));
   const read = spawnSync("python3", ["-c", "import json, sys, tomllib; print(json.dumps(tomllib.load(open(sys.argv[1], 'rb')), default=str))", path], {
     encoding: "utf8",

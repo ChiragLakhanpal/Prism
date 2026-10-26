@@ -544,6 +544,16 @@ export const copy = {
     sourcesDiffer: "Sources differ",
     // An estimate the blueprint labels experimental (ticket 28), always followed at once by why.
     experimental: "Experimental",
+    // A part the proposal describes but the app does not have yet (ticket 46), always followed at once by what I do
+    // instead, from designedNotBuilt.items.
+    designedNotBuilt: "Designed, not built",
+  },
+
+  // What is designed but not built (ticket 46; config/designed_not_built.toml): for each item there, keyed by its key,
+  // one sentence saying what I do instead, which follows the "Designed, not built" badge beside the part's heading.
+  // The list is empty while everything the proposal describes is built.
+  designedNotBuilt: {
+    items: {},
   },
 
   // The citation marker's accessible name, such as "Source 1: Implementation Completion and

@@ -6,7 +6,7 @@ Read first: DESIGN.md sections 6, 8, 9 and 11; the blueprint's "Navigation and r
 
 **Blocked by:** 46 (The proposal by module, with the rubric map, every number measured)
 
-**Status:** ready-for-agent
+**Status:** in-progress
 **Area:** design
 **Phase:** P3
 **Design review:** yes
@@ -17,3 +17,7 @@ Read first: DESIGN.md sections 6, 8, 9 and 11; the blueprint's "Navigation and r
 - [ ] The number check passes on every slide and its speaker notes.
 - [ ] Arrow keys move between slides, the speaker notes view opens, and axe finds no WCAG 2.2 AA violations on any slide.
 - [ ] How Strata works shows the same figures with plain-language captions and no link to the deck.
+
+## Comments
+
+- October 23, 2026, orchestrator: dispatched to an implementer in its own worktree on branch strata/47-deck-at-present, as soon as ticket 46 landed. Credentials are still missing, so every live step is parked in docs/workspace-catchup.md; the offline side is built against the fixtures.

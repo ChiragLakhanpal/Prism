@@ -1,0 +1,23 @@
+# What is designed but not built (ticket 46; the 46 brief, section 12; the spec, "Designed, not built"). One entry
+# per part of Strata that the proposal describes but the app does not have yet. The app's labels and the proposal's
+# short list both read this file, so they cannot disagree:
+#
+# - In the app, the part's page shows <DesignedNotBuilt item="<key>" /> beside the heading that would hold it: the
+#   Status badge "Designed, not built", then the first-person sentence at copy.designedNotBuilt.items.<key> in
+#   web/src/copy.ts, saying what Strata does instead.
+# - In the proposal, the list after Module 4 has one row per entry, and the paragraph that describes it starts with
+#   the lead-in "Designed, not built.".
+#
+# web/tests/sweep.spec.ts opens every route and fails when a label shows on a route with no entry here, or an entry
+# has no label at its route. strata.config.load_designed_not_built() reads it.
+#
+# [[items]]
+#   key         lower case letters, digits and _; the copy key's last part
+#   name        what the part is, as the proposal's "What" column names it
+#   route       an address in the app where the label shows, such as /projects/P156634; it must be one of the
+#               routes web/tests/sweep.spec.ts opens
+#   paragraph   the slug of the proposal paragraph that describes it (docs/proposal/source.md)
+#   exists_now  one sentence in the third person for the proposal's "What exists now" column
+#
+# docs/STATUS.md, decision 6 has moved nothing here yet, so the list is empty, and the proposal says that everything
+# it describes is built.

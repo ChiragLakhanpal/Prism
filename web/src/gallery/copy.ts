@@ -429,6 +429,9 @@ export const galleryCopy = {
     readiness: "Data readiness",
     planChecks: "Plan checks",
     estimates: "Experimental estimates",
+    designedNotBuilt: "Designed, not built, with what Strata does instead",
+    // The 46 brief's example of what Strata does instead (section 12.2), for the label's gallery state.
+    designedNotBuiltSample: "I don't run this model yet, so these signals come from fixed checks.",
     breadcrumb: "The trail above a project's pages",
     pill: "Check pill",
     planReady: "A checked plan, with two activities folded",
