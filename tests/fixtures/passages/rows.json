@@ -1,0 +1,142 @@
+{
+  "fixture": {
+    "strata.bronze.document_lists": [
+      4,
+      "65c9c50bb9995ea6d028e8c239b9e49ef9b49ad3f8d2d1a5c29d65736b419948"
+    ],
+    "strata.bronze.document_pages": [
+      701,
+      "737209f6cb4897a6c3e53fbdb8b9d1000514091bdaf9cbddd9c2c344cf4b105f"
+    ],
+    "strata.bronze.document_texts": [
+      51,
+      "8d32956160ceb8d3a8ae818577ba633bd3f0228a1350ab5ffe0c716171f78165"
+    ],
+    "strata.bronze.layout_pages": [
+      124,
+      "6d4a1094ef32f628d450b364c44e8703f6331022901789206186a460d57f7fa5"
+    ],
+    "strata.gold.passage": [
+      2198,
+      "471cb7c38b00d9a9c37c10817a97ffbb6b2abbbd2c8084d472b06e8eb4dd9742"
+    ],
+    "strata.ops.data_readiness": [
+      66,
+      "fa6c5a22a21c6d643b3300ef2c288bdbff5b784badd87490804ac3e782165f88"
+    ],
+    "strata.ops.documents_read": [
+      20,
+      "3bcb5a9f785fccdddcf434d5fbae63e5840c73af3afb25910413b48b9aa68951"
+    ],
+    "strata.ops.parse_failures": [
+      25,
+      "05608422ed3f82f053b00a2767a937d0bbb00cf3adaeb8205abac3e8149acb6b"
+    ],
+    "strata.ops.parse_runs": [
+      5,
+      "f361ac9efb7c93bd5236ecef4991688dfed2d4df8482c153aa7dba8eda6fce80"
+    ],
+    "strata.ops.passage_language_checks": [
+      50,
+      "1bf6195c230e32c373680593d4d9a839cb774c0a2e6a71d6a56a15994ae265b9"
+    ],
+    "strata.ops.stress_shelf": [
+      5,
+      "264bf13f728f39279d9fd199d5fc4fae5a182ace6b382a006869a24df486ce47"
+    ],
+    "strata.silver.document_page_routes": [
+      650,
+      "66a37e74f4304e6571d83e0201a7c7732a050d12ba352d2020003279a0215210"
+    ],
+    "strata.silver.documents": [
+      39,
+      "89254799af08f77917025d9a1e44b86b2d264d20a315020f0acfe79a7e38534d"
+    ],
+    "strata.silver.isr_ratings": [
+      96,
+      "f4b7ebc6171d8528ec3be76b0f4c6ede985a3ab373f2401f7f6f6cdac6fc2c28"
+    ],
+    "strata.silver.passage_embeddings": [
+      2022,
+      "af9556a6d2b7e859287c1a15d0b0607e4694534b12417a6d0cff76d20158753f"
+    ],
+    "strata.silver.passage_shields": [
+      2022,
+      "e303984e673c08951c309945ff38a7390360d40d628841178f49d63aabe2e011"
+    ],
+    "strata.silver.passages": [
+      2198,
+      "ee31a24596ba62b6d5911b4f27ac0a72abaa0ae59700218219b365022418c44d"
+    ]
+  },
+  "nightly": {
+    "strata.bronze.document_lists": [
+      6,
+      "be46526da7362ced4e89870a5e3cca78cb5cab0c87b4d84ed35b693e5304abb6"
+    ],
+    "strata.bronze.document_pages": [
+      701,
+      "737209f6cb4897a6c3e53fbdb8b9d1000514091bdaf9cbddd9c2c344cf4b105f"
+    ],
+    "strata.bronze.document_texts": [
+      51,
+      "8d32956160ceb8d3a8ae818577ba633bd3f0228a1350ab5ffe0c716171f78165"
+    ],
+    "strata.bronze.layout_pages": [
+      124,
+      "e49db1ff80d09f3cec6198fe7eef890e2b7cc237c9bd38881314cd8b89a391fb"
+    ],
+    "strata.gold.passage": [
+      1400,
+      "309ce61b1b03fb876e9c6f1f8e005212205c9635755abd1088574e5ba955a32d"
+    ],
+    "strata.ops.data_readiness": [
+      124,
+      "e428b71eacdef1bd4368ff5dd07acf5ef708e74ea7ea8ca7491281ffc78d5e9f"
+    ],
+    "strata.ops.documents_read": [
+      39,
+      "03252e9c9e8c6fcc05dc9ad9a5e2ab44ee38b5bf4b5c2a973e8205a486450476"
+    ],
+    "strata.ops.parse_failures": [
+      43,
+      "7ac8643a07be3e9f4bd9976db37ec3f06590e4bd3d69a7f6765d3f80236c9fe2"
+    ],
+    "strata.ops.parse_runs": [
+      10,
+      "b6127954fbd5d204bdb5a8884c7afb0aa79bd9d98f613ad6e77e2901f0c08c25"
+    ],
+    "strata.ops.passage_language_checks": [
+      100,
+      "99ceb5b6cbb4aaada867b114b2efe5cab87ec7d96025d871af5d4e0a1570795b"
+    ],
+    "strata.ops.stress_shelf": [
+      10,
+      "bc915084fda2901a154ee6167f5a223d6b1f6bc103b12f1f5ff5b7775a1efc51"
+    ],
+    "strata.silver.document_page_routes": [
+      650,
+      "66a37e74f4304e6571d83e0201a7c7732a050d12ba352d2020003279a0215210"
+    ],
+    "strata.silver.documents": [
+      39,
+      "89254799af08f77917025d9a1e44b86b2d264d20a315020f0acfe79a7e38534d"
+    ],
+    "strata.silver.isr_ratings": [
+      96,
+      "f4b7ebc6171d8528ec3be76b0f4c6ede985a3ab373f2401f7f6f6cdac6fc2c28"
+    ],
+    "strata.silver.passage_embeddings": [
+      1264,
+      "a52520bb52a695a5cc2487fea2d234db2093298ad24515e55e40c7b5a9c1d03d"
+    ],
+    "strata.silver.passage_shields": [
+      1264,
+      "9a171e021a9b27f9d858916c51adfdc94ec166f72d0363833214a783ded67c35"
+    ],
+    "strata.silver.passages": [
+      1400,
+      "6e59b67b03f1e46d62c1cebdf90b30bc9b2416e19f39bea6a4c3fb2205cb4500"
+    ]
+  }
+}

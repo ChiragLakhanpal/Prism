@@ -1,8 +1,13 @@
 # The strata catalog: four schemas and the volume for documents (docs/PLAN.md section 4).
 #
 # The people in var.readers can read every schema, so the app can query as each viewer
-# (ADR 0003). A bundle does not declare tables, so the deploy command creates them from the
-# table definitions in src/strata/lakehouse/tables/, one folder per schema below.
+# (ADR 0003). These grants replace every other grant on the catalog and its schemas, the app's own
+# USE CATALOG and USE SCHEMA among them, so ops/bundle/deploy.py gives the app's service principal
+# those two back right after the bundle deploys (ticket 79). The app's principal is not listed here:
+# it exists only once the app does, and a bundle cannot leave a grant out when it is missing.
+#
+# A bundle does not declare tables, so the deploy command creates them from the table definitions
+# in src/strata/lakehouse/tables/, one folder per schema below.
 
 resources:
   catalogs:

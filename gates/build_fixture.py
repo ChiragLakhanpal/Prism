@@ -42,6 +42,7 @@ never leaves a half-built database behind. Run it with this command:
 import datetime as dt
 import itertools
 import json
+import logging
 import os
 import sys
 from pathlib import Path
@@ -162,12 +163,19 @@ def build(out=FIXTURE_DB, manifest=None, tables=catalog.TABLES, plans_for=PLAN_P
 
 
 def main():
+    # The fixture's document lists name many documents it never recorded. The readers skip each one with its reason
+    # in strata.ops.skipped_documents and a warning in the log (ticket 72); the build counts them in one line instead.
+    logging.getLogger("strata.lakehouse.plans").setLevel(logging.ERROR)
     manifest = fmt.load_manifest()
     out = build(manifest=manifest)
     files = manifest.files()
     recorded_mb = sum((manifest.recorded / name).stat().st_size for name in files) / 1_000_000
+    with DuckDBEngine.open(out, read_only=True) as engine:
+        skipped = engine.run("SELECT count(DISTINCT document_id) AS n FROM strata.ops.skipped_documents").rows[0][0]
     print(f"The fixture holds {len(files)} recorded files ({recorded_mb:.1f} MB) from {len(manifest.sources)} "
-          f"sources. The fixture database is {out.stat().st_size / 1_000_000:.1f} MB, at {out.relative_to(ROOT)}.")
+          f"sources. The fixture database is {out.stat().st_size / 1_000_000:.1f} MB, at {out.relative_to(ROOT)}. "
+          f"The readers skipped {skipped} listed documents that the fixture does not record "
+          "(strata.ops.skipped_documents).")
     return 0
 
 

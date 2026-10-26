@@ -347,7 +347,7 @@ Run this from the main checkout:
 
 It worked if the command exits 0 and its last line reads `Strata is running at https://...`, and the App's Logs tab in the workspace shows that it installed `ops/app/requirements.txt` and that the server is serving (criterion 1). The logs should not show the agent-framework metapackage installed, because the lean requirements file leaves it out.
 
-Run this command again after every bundle deploy. The bundle's grants replace the App's USE CATALOG and USE SCHEMA on `strata`, so its usage events stop being written until the App's deploy grants them again.
+Run this command again after every bundle deploy made from a commit before ticket 79's merge. The bundle's grants replace the App's USE CATALOG and USE SCHEMA on `strata`, so its usage events stop being written until the App's deploy grants them again. From ticket 79's merge on, the bundle deploy gives the App both back itself (ticket 79's step 1 below checks it on the workspace), and this deploy is needed again only after a bundle deploy that makes a table the App writes.
 
 **Found on October 26, 2026 (orchestrator).** The user ran this deploy themselves tonight: the App `strata` was created at 05:08:53 UTC (service principal `app-4mv05v strata`, client id e796c089-1500-4cf2-9c1f-8e6a8f5aba10), two deployments failed at 05:14 and 05:46 with "Error installing packages" (the numpy pin for the Apps runtime's Python 3.11, fixed by ticket 69), and the deployment of 06:11:36 succeeded: "App started successfully". The App is RUNNING at https://strata-7474658003099155.aws.databricksapps.com with nine resources bound (sql-warehouse, appinsights, app-state, the four Foundry secrets and the two Azure OpenAI secrets), and the scope `strata` holds all six keys written at 06:08. From this computer, with an OAuth token from the wizard's CLI profile (`databricks auth token -p strata`; a personal access token gets 401), `GET /api/health` answers 200 `{"status":"ok"}`, `GET /api/me` answers 200 as chiraglakhanpal@gwu.edu with `staff` true and the views staff, piu and public, and `GET /api/freshness` answers 200 with `data_through` 2026-10-24. Answers through the agent fail with 401 PermissionDenied until the user assigns the principal `strata-app` the "Cognitive Services User" role (ticket 45, step 3 of 6, has the command).
 
@@ -1435,6 +1435,8 @@ It worked if it exits 0 and prints one line for each test year 2021 to 2025, eac
     WHERE scorer = 'rebidding_backtest' AND segment_kind = 'test_year'
 
 Then `strata.gold.rebidding_risk` in Unity Catalog has a version under the champion alias, and that version's run holds `model_card.md`. The script registers a model as champion only when no version holds that alias yet. So if step 2 registered a champion, this run registers its model as challenger and prints "as challenger". Whether to move the champion alias to this run's version, which was tested on every year, is a decision for the user.
+
+**Ran on October 26, 2026 (orchestrator), from 03349a45, after step 2's 171-second year.** `rebidding_backtest_live.py` with every year exited 0 in 484 seconds, 11:01 to 11:09 UTC, one line per test year with its MLflow run: 2021 "7 packages tested, 0 advertised again, 0 undecided. gbm Brier 0.0005, calibration error 0.0213; logistic Brier 0.0001, calibration error 0.012; baseline Brier 0.0002, calibration error 0.0125" (86dc9fe6406741d8b38f9240ff165956); 2022 "9 packages tested, 2 advertised again, 0 undecided. gbm Brier 0.1849, calibration error 0.1081; logistic Brier 0.2083, calibration error 0.1884; baseline Brier 0.187, calibration error 0.134" (4c89748dd3a446448c17b8bef1654189); 2023 "1 packages tested, 0 advertised again, 0 undecided. gbm Brier 0.006, calibration error 0.0774; logistic Brier 0.0027, calibration error 0.0519; baseline Brier 0.016, calibration error 0.1263" (a2b7a077d61144d1831df1ccb665543d); 2024 "0 packages tested, 0 advertised again, 0 undecided. No results." (0800a9cb20d245c889b2cceb06b107fc); 2025 as in step 2 (09dc189cad20484cbe6f4434ede26d87). Then "The better calibrated model is logistic. Registered strata.gold.rebidding_risk version 2 as challenger." and "Run rebidding_backtest-20261026T110111Z-2749049f is in strata.ops.evaluation_result." Version 1 (step 2, tested on 2025 alone) keeps the champion alias; whether to move it to version 2, tested on every year but on 18 packages in all, is the user's decision, as the block says. Log: the scratchpad's rebid28b.log.
 
 ## Ticket 28, step 4 of 6: score the planned packages with the champion, and see the estimate on the deployed App
 
@@ -2623,4 +2625,82 @@ It worked if:
 The exit code does not decide it. On October 26 the same check, run with `--with`, exited 1 with 8 of 19 files matching, because the warehouse's rows differ from the fixture's for the reasons recorded under "Ticket 04, step 3 of 4". Those differences are not this ticket's. Record the run here: the snapshot's commit, the time, whether a `ModuleNotFoundError` appeared, the number of result lines, and the files that matched.
 
 **Ran on October 26, 2026 (orchestrator), from a snapshot of 9738b97f.** `check.py same-rows --env-file <the main checkout's .env>` with no `--with`, 10:58:04 to 10:58:39 UTC (41 packages installed from the script's own list). No `ModuleNotFoundError` appeared. It printed 19 result lines, one for each of the 19 files marked for databricks in the snapshot. Exit 1, with the same 8 files matching as the `--with` run under ticket 04's step 3: `data_notes_actual_amount_zero.sql`, `gap_years_contracts_from_award_notices.sql`, `genie_contract_ke_nwwda_229129.sql`, `genie_joint_venture_1624689.sql`, `kenya_step_reference_link_rate.sql`, `pipeline_runs_columns.sql`, `showcase_fiscal_years.sql` and `structured_data_under_the_limit.sql`; the other 11 differ for the reasons recorded there. Passed. Log: the scratchpad's samerows74.log.
+
+## Ticket 75, step 1 of 1: one `bronze_to_gold` pass reads every page bronze holds, and P130164 gets its sectors (criterion 3, live)
+
+Parked on October 26, 2026, by ticket 75's builder; the merger parked it after merge commit 4c223032, so run it from a snapshot of 4c223032 or later. Every key is set, but the second session runs every workspace step from a snapshot of the commit, one at a time. It needs the Databricks keys in `.env`, the Databricks CLI 0.287.0 or later, and a time outside the nightly window (03:00 to 05:30 in Washington), because the first pass reads every page of every source once and takes longer than a usual night's `bronze_to_gold`.
+
+Ticket 75 adds `strata.ops.silver_pages` (`src/strata/lakehouse/tables/ops/silver_pages.sql`): what silver wrote from each bronze page, with the transform's tables and its `VERSION`. Silver now reads a page when it has no row there, or when its newest row names other tables or another version than the transform has. The table is empty after the deploy, so the next `bronze_to_gold` reads every page of every source once: one parse per page, and for each table a read, a DELETE with a WHERE when the table holds the page, and an insert. That pass fills `strata.silver.project_sectors` and `project_environment` from the 285 project pages bronze held before ticket 21's deploy, P130164's among them. If the nightly job runs before this step, its own `bronze_to_gold` makes the pass, which may reach the job's 150-minute stop; that night's later tasks then do not run, and the next night goes on from the pages it recorded. Record those runs here instead.
+
+Run this from the snapshot's root, twice:
+
+    uv run --script ops/bundle/deploy.py --env-file .env --fairshare-catalog workspace
+
+It worked if the first run exits 0, lists `strata.ops.silver_pages` as new and changes no table that holds rows, and the second prints "No changes." Until ticket 79 merges, a bundle deploy takes away the App's USE CATALOG on strata and USE SCHEMA on strata.ops (ticket 68's step 2 saw it), so redeploy the App afterwards with ticket 70's command (`uv run --script ops/app/deploy_app.py --env-file .env --keep-secrets`), or run this step after ticket 79's merge with one deploy that serves both. Then run only the job's `bronze_to_gold` task, with the job ID that the list prints:
+
+    databricks jobs list --name "strata nightly" -p strata
+    databricks jobs run-now --json '{"job_id": <the job ID>, "only": ["bronze_to_gold"]}' --timeout 160m -p strata
+
+If the CLI refuses `only`, run the whole job outside the window instead (`uv run --script ops/bundle/check.py job-run --env-file .env`); its `bronze_to_gold` makes the same pass. If the run ends TIMEDOUT at the job's 150-minute stop, run the same command again: every page the run recorded stays recorded, so the next run reads only the rest. Then run these in the workspace's SQL editor:
+
+    SELECT run_id, status, rows_changed, started_at, finished_at,
+      timestampdiff(MINUTE, started_at, finished_at) AS minutes
+    FROM strata.ops.pipeline_runs WHERE task_key = 'bronze_to_gold' ORDER BY started_at DESC LIMIT 3
+
+    SELECT p.source, count(*) AS pages, count(r.page_hash) AS recorded
+    FROM strata.bronze.api_pages AS p
+    LEFT JOIN (SELECT DISTINCT source, page_hash FROM strata.ops.silver_pages) AS r
+      ON r.source = p.source AND r.page_hash = p.page_hash
+    GROUP BY p.source ORDER BY p.source
+
+    SELECT count(*) AS sector_rows FROM strata.silver.project_sectors WHERE project_id = 'P130164'
+
+    SELECT count(DISTINCT p.page_hash) AS pages_before_ticket_21, count(DISTINCT s.page_hash) AS with_sector_rows,
+      count(s.page_hash) AS sector_rows, count(DISTINCT s.project_id) AS projects
+    FROM strata.bronze.api_pages AS p
+    LEFT JOIN strata.silver.project_sectors AS s ON s.page_hash = p.page_hash
+    WHERE p.source = 'projects' AND p.fetched_at < TIMESTAMP '2026-10-26 06:54:00Z'
+
+It worked if:
+
+- The newest `bronze_to_gold` row succeeded. Record its `minutes`, and the minutes of each try when it took more than one: together they are the time of the full pass.
+- In the second query, `recorded` equals `pages` for every source.
+- P130164 has more than 0 sector rows (the fixture's recorded page gives two: TF at 3 percent and TI at 97 percent).
+- `pages_before_ticket_21` reads 285 and `with_sector_rows` is above 0. A page whose projects list no sectors gives no row, so record both numbers, the sector rows and the projects.
+- A second `run-now` of the same task, right after, adds no row to `strata.ops.silver_pages` and takes about as long as a night with no new pages.
+
+Record the four results here. If `recorded` falls short of `pages` for a source after a run that succeeded, or P130164 still has 0 sector rows, tell the orchestrator before anyone shows the Summary on the App.
+
+**Deploy half ran on October 26, 2026 (orchestrator), from a snapshot of f90b8c2d (ticket 79's step 1 is the same deploy).** The first deploy (11:35 to 11:38 UTC) exited 0, listed `strata.ops.silver_pages` as new and changed no table that holds rows; the second printed "No changes." No App redeploy was needed: the deploy gave the App's principal its USE CATALOG and USE SCHEMA back itself (ticket 79). The `bronze_to_gold` task alone was started at 11:40:34 UTC with `databricks jobs run-now --json '{"job_id": 730097284330653, "only": ["bronze_to_gold"]}' --timeout 160m` (the CLI accepted `only`), outside the nightly window; its result and the four queries are recorded below when it ends.
+
+## Ticket 79, step 1 of 1: a bundle deploy leaves the App its USE CATALOG and USE SCHEMA, with no App redeploy (criterion 3, live)
+
+Parked on October 26, 2026 with ticket 79; the merger parked it after merge commit 353ad5ad, so run it from a snapshot of 353ad5ad or later. The second session runs it one workspace step at a time. It needs the Databricks keys in `.env` and the Databricks CLI 0.287.0 or later. It changes no table, job or dashboard file, so the deploy also serves as the next bundle deploy any other block asks for. Do not redeploy the App in this step: the point is that the App keeps serving through the bundle deploy.
+
+From ticket 79 on, `ops/bundle/deploy.py` reads the App that `ops/dayone/dayone.toml` names (`apps get`), and right after `databricks bundle deploy` adds USE CATALOG on `strata` and USE SCHEMA on `strata.ops` for the App's service principal through Unity Catalog's permissions update, which only adds. The bundle's own grants still replace the App's from the moment the CLI writes them until the CLI finishes, one to three minutes (the CLI ran for about three minutes on October 26). In that window the App's own writes, such as drafts, decisions and labels, can fail. Usage events wait in the App and are written on its next flush. Viewers' queries run as the viewer and are not touched. The "What changed" report now also lists both dashboards with the time each was last written.
+
+Run these from the snapshot, with `--env-file` pointing at the main checkout's `.env`. The first command records the App's active deployment (its id and create time) before the deploy:
+
+    databricks apps get strata -p strata
+    databricks grants get catalog strata -p strata
+    databricks grants get schema strata.ops -p strata
+    uv run --script ops/bundle/deploy.py --env-file "<main checkout>/.env" --fairshare-catalog workspace
+    databricks grants get catalog strata -p strata
+    databricks grants get schema strata.ops -p strata
+    uv run --script ops/bundle/deploy.py --env-file "<main checkout>/.env" --fairshare-catalog workspace
+
+Then, with an OAuth token from the CLI profile (`databricks auth token -p strata`; a personal access token gets 401), ask the App for `/api/health`:
+
+    curl -s -w ' %{http_code}\n' -H "Authorization: Bearer <token>" https://strata-7474658003099155.aws.databricksapps.com/api/health
+
+It worked if:
+
+- The first deploy exits 0 and, under "1. Deploying the bundle", prints "The bundle's grants replace every other grant on strata and its schemas, so I gave the app strata's service principal e796c089-1500-4cf2-9c1f-8e6a8f5aba10 back USE CATALOG on strata and USE SCHEMA on strata.ops." Its "3. What changed:" does not list "The grants on strata changed." or "The grants on strata.ops changed." if the first two `databricks grants get` commands already listed the App's principal (it may list tables that other merges added). If they did not, because a bundle deploy from before ticket 79 ran since the App's last redeploy, the report lists both grant lines, and that is correct.
+- After the deploy, `databricks grants get catalog strata` lists the App's service principal e796c089-1500-4cf2-9c1f-8e6a8f5aba10 with USE_CATALOG beside `account users`, and `databricks grants get schema strata.ops` lists it with USE_SCHEMA beside `account users` with SELECT and USE_SCHEMA. `SHOW GRANTS ON TABLE strata.ops.follows` on the warehouse still lists SELECT and MODIFY for it.
+- `/api/health` answers 200 `{"status":"ok"}` with no App redeploy since the bundle deploy, and a second `databricks apps get strata -p strata` shows the same active deployment (id and create time) as the first command of this step.
+- The second deploy prints "No changes." If it names "The dashboard Strata operations changed." and "The dashboard Strata operations (test) changed." although no dashboard file changed, the Databricks CLI rewrites every dashboard on each deploy: record that and tell the orchestrator, because the report then names dashboards that did not change.
+
+Record here the App line the first deploy printed, both grants listings after it, the `/api/health` answer and its time, and what the second deploy printed. If the first deploy says "I found no app named strata", the App was deleted: tell the orchestrator, and deploy it with ticket 06's step 1. The next deploy that rewrites a dashboard file (a new tile through `src/strata/dashboard`) should list "The dashboard ... changed." for that dashboard, which closes the report half of the ticket on the workspace.
+
+**Ran on October 26, 2026 (orchestrator), from a snapshot of f90b8c2d.** Before the deploy, `apps get` showed the active deployment 01f1d128181514959c3e683ed71050f2 (created 10:29:15 UTC, RUNNING), and `grants get` listed the App's service principal e796c089-1500-4cf2-9c1f-8e6a8f5aba10 with USE_CATALOG on strata beside `account users` USE_CATALOG, and with USE_SCHEMA on strata.ops beside `account users` SELECT and USE_SCHEMA. The first deploy (11:35 to 11:38 UTC) exited 0 and printed, under "1. Deploying the bundle", "The bundle's grants replace every other grant on strata and its schemas, so I gave the app strata's service principal e796c089-1500-4cf2-9c1f-8e6a8f5aba10 back USE CATALOG on strata and USE SCHEMA on strata.ops."; its "3. What changed:" listed only "The table strata.ops.silver_pages is new." (ticket 75's table) and no grant line. After it, both `grants get` listings read the same as before (the principal with USE_CATALOG, and with USE_SCHEMA), and `SHOW GRANTS ON TABLE strata.ops.follows` still lists SELECT and MODIFY for it. The second deploy (11:38 to 11:40 UTC) printed the same App line and "No changes.", naming no dashboard. `/api/health` with the CLI profile's OAuth token answered 200 `{"status":"ok"}` at 11:40:32 UTC with no App redeploy, and `apps get` afterwards shows the same active deployment 01f1d128181514959c3e683ed71050f2 of 10:29:15 UTC. Passed. The report half (a dashboard that changes is named) waits for the next deploy that rewrites a dashboard file. Log: the scratchpad's ticket79.log.
 

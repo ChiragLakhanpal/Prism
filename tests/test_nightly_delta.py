@@ -12,6 +12,7 @@ and each lesson's region; the other structured sources would only slow the test.
 
 import copy
 import datetime as dt
+from contextlib import contextmanager
 from pathlib import Path
 
 import pytest
@@ -65,9 +66,14 @@ def column(engine, sql, **params):
 
 @pytest.fixture(scope="module")
 def nights(tmp_path_factory):
-    """Night one, the day's decisions and the draft, then night two, on one database. It returns the database
-    and what each step left, read between the steps."""
-    path: Path = tmp_path_factory.mktemp("delta") / "nightly.duckdb"
+    with two_nights(tmp_path_factory.mktemp("delta") / "nightly.duckdb") as found:
+        yield found
+
+
+@contextmanager
+def two_nights(path: Path):
+    """Night one, the day's decisions and the draft, then night two, on one database at path. It gives the
+    database and what each step left, read between the steps. tests/passage_rows.py hashes the rows it leaves."""
     manifest = fmt.load_manifest()
     with DuckDBEngine.open(path) as engine:
         catalog.build(engine)
@@ -169,3 +175,14 @@ def test_the_draft_citing_the_changed_lesson_is_marked_and_its_content_is_unchan
                               "night-2")]
     assert (engine.run("SELECT * FROM strata.ops.drafts").rows,
             engine.run("SELECT * FROM strata.ops.draft_states").rows) == drafts
+
+
+def test_the_nightly_task_writes_the_same_document_rows_as_before_the_reader_wrote_each_document_on_its_own(nights):
+    """Ticket 72: the passage reader writes each document's passages as soon as it has read that document, and the
+    nightly task's parse_and_embed and ops/documents/run_live.py share that writer. Over these two nights it gives
+    the same rows, table by table, as the reader that wrote every passage at the end (tests/passage_rows.py)."""
+    from passage_rows import digest, golden
+
+    engine, *_ = nights
+
+    assert digest(engine) == golden()["nightly"]

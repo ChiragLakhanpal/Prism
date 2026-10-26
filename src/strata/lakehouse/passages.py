@@ -39,7 +39,16 @@ with the showcase, the demo plan and the stress shelf's projects named first), a
    fiscal year go to strata.ops.documents_read, and each stress shelf entry's outcome to
    strata.ops.stress_shelf (src/strata/lakehouse/stress_shelf.py).
 
-Bronze only grows. Silver is rebuilt from bronze for each project of the run on every run. On the
+Steps 1, 3, 5 and 6 run one document at a time (ticket 72): the run fetches a document, reads it, scans and
+embeds its new passage texts and syncs its rows of strata.gold.passage (write_document) before it fetches the
+next, so a run that stops later keeps every document it wrote. A document or a document list the source cannot
+give is skipped with its reason in strata.ops.skipped_documents, and the run goes on with the next. A stop (the
+host refused a request, or the night's reading time is spent) ends the run, and the document it was reading is
+listed there as unfinished. The nightly job's parse_and_embed and ops/documents/run_live.py both run it through
+strata.lakehouse.readers.reading, so one code path writes passages.
+
+Bronze only grows. Silver is rebuilt from bronze for each document the run reads, and once every document is
+read, a document of the run's projects that the run neither read nor skipped leaves silver (prune). On the
 workspace, ops/documents/run_live.py runs it with the live adapters and then syncs the index.
 
 Run it on the fixture and print what it wrote:
@@ -54,7 +63,7 @@ import json
 import sys
 from collections import Counter
 from collections.abc import Callable
-from dataclasses import astuple, dataclass, fields
+from dataclasses import astuple, dataclass, field, fields
 
 from strata.config import Slice, Thresholds, load_languages, load_slice, load_sources, load_thresholds
 from strata.knowledge import language
@@ -66,7 +75,7 @@ from strata.lakehouse.clean import fiscal_year
 from strata.lakehouse.clean import public_from  # ADR 0002's rule, defined once for every source
 from strata.lakehouse.engine import Engine
 from strata.reader import passages as route_a
-from strata.reader.documents import Documents, list_url
+from strata.reader.documents import Documents, NotFetched, StopReading, list_url
 from strata.reader.layout import LayoutParser
 from strata.reader.templates import TEMPLATES, template
 
@@ -180,14 +189,6 @@ def _held(engine: Engine, listed: Listed) -> Held | None:
                 route_a.split_pages(text, len(pages)) is not None, pages=pages)
 
 
-@dataclass(frozen=True)
-class Chosen:
-    documents: list[Held]
-    # For each project, the documents this run fetched whose text had contact details taken out, and
-    # the documents it fetched.
-    with_contacts: dict[str, tuple[int, int]]
-
-
 HELD_WITH_CONTACTS = """
 SELECT DISTINCT document_id FROM strata.bronze.document_texts WHERE project_id = :project_id AND text LIKE :marker
 """
@@ -208,33 +209,24 @@ def with_contacts_held(engine: Engine, chosen: list[Held]) -> dict[str, tuple[in
     return found
 
 
-def choose(engine: Engine, documents: Documents, endpoint: str, projects: list[str], cap: int) -> Chosen:
-    """The documents to read, fetched into bronze: up to cap whose text Route A can read, and any
-    scan met on the way, whose pages wait for Route B."""
-    chosen, paged, removed, lists = [], 0, {}, {}
-    for project_id in projects:
-        if paged >= cap:
-            break
-        plans.fetch_listing(engine, documents, endpoint, project_id)
-        listed = lists[project_id] = listed_documents(engine, project_id)
-        for document in listed:
-            if paged >= cap:
-                break
-            fetching = plans.fetch_documents(engine, documents, project_id, [document.entry()])
-            count, fetched = removed.get(project_id, (0, 0))
-            removed[project_id] = (count + fetching.with_contacts, fetched + fetching.fetched)
-            held = _held(engine, document)
-            if held is None:
-                continue  # listed but not fetched: the source could not give it
-            chosen.append(held)
-            paged += held.paged
-    return Chosen([_versioned(engine, held, lists[held.listed.project_id]) for held in chosen], removed)
+def _why_not_held(fetching: plans.Fetching, document: Listed) -> tuple[str, str]:
+    """Why bronze holds no text for a listed document after the run asked the source for it, with the address the
+    run could not fetch or read: its text's, or its PDF's when the PDF failed."""
+    for document_id, url, reason in fetching.not_fetched:
+        if document_id == document.document_id:
+            return url, reason
+    characters = dict(fetching.not_kept).get(document.document_id)
+    if characters is not None:
+        return document.text_url, (f"Its text has {characters:,} characters, more than the SQL warehouse takes in "
+                                   "one statement, so bronze could not keep it.")
+    return document.text_url, "The source gave neither its text nor its PDF."
 
 
 def _versioned(engine: Engine, held: Held, listed: list[Listed]) -> Held:
     """The document's version of its report, and the day the next version replaced it: the next
     version's own public date as bronze holds it, so one version is current every day. The list's
-    date is used only for a next version bronze does not hold."""
+    date is used only for a next version bronze does not hold. A project's documents are read newest
+    first, so a next version the run fetched is in bronze before this one is read."""
     document = held.listed
     if document.report_number is None:
         return held
@@ -355,12 +347,15 @@ PASSAGE_COLUMNS = tuple(f.name for f in fields(PassageRow))
 
 @dataclass(frozen=True)
 class Read:
-    """One document as the run read it: its page routes and its passages, from both routes."""
+    """One document as the run read it: its page routes and its passages, from both routes, with its rows of
+    silver.documents and silver.document_page_routes."""
 
     held: Held
     routes: tuple[route_a.PageRoute, ...]
     passages: tuple[PassageRow, ...]
     parsed: frozenset[int]  # the PDF pages the layout parser read, with something recovered
+    document_row: tuple = ()
+    route_rows: tuple[tuple, ...] = ()
 
 
 def _route_a(held: Held, max_tokens: int) -> route_a.Reading:
@@ -368,84 +363,261 @@ def _route_a(held: Held, max_tokens: int) -> route_a.Reading:
                         page_texts=[text for _, _, text in held.pages])
 
 
-def parse_route_b(engine: Engine, layout: LayoutParser, readings: list[tuple[Held, route_a.Reading]], cap: int,
-                  part_pages: int, clock: Callable[[], dt.datetime], run_id: str) -> None:
-    """Each project's Route B pages, parsed once under the daily page cap, document by document in the
-    run's order, each long document part by part, with one row of strata.ops.parse_runs per project."""
-    by_project: dict[str, list] = {}
-    for held, reading in readings:
-        listed = held.listed
-        by_project.setdefault(listed.project_id, []).extend(
-            route_b.waiting(listed.document_id, listed.project_id, listed.pdf_url, held.public_from, reading.pages,
-                            held.hashes))
-    for project_id, pages in by_project.items():
-        if not pages:
+def read_document(engine: Engine, held: Held, reading: route_a.Reading, max_tokens: int, part_pages: int | None,
+                  about: Project, others: list[Listed]) -> Read:
+    """One document read through Route A and, for the pages the layout parser has read, Route B, into its silver
+    rows. others are the project's documents this run read before it, whose keys its own key must not repeat."""
+    listed = held.listed
+    reads = template(listed.document_type, listed.language)
+    parsed = route_b.layouts(engine, listed.document_id, held.hashes)
+    second = route_b.read(reading.pages, parsed, reads, max_tokens, listed.document_type)
+    long = part_pages is not None and held.pdf_pages > part_pages
+    document_row = (listed.document_id, listed.project_id, listed.document_type, listed.report_number, held.version,
+                    listed.document_date, listed.disclosed_on, listed.language, listed.title, held.pdf_pages,
+                    held.paged, listed.text_url, listed.pdf_url, held.replaced_on, doc_key(listed, [*others, listed]),
+                    route_b.parts(held.pdf_pages, part_pages) if long else 1, held.public_from)
+    route_rows = tuple((listed.document_id, listed.project_id, page.pdf_page, page.route, page.reason,
+                        page.printed_page, page.numbering_found, page.passages,
+                        route_b.part_of(page.pdf_page, part_pages) if long else 1, held.public_from)
+                       for page in second.routes)
+    rows = []
+
+    def add(key, section, paragraph, numbered, part, parts_, first, last, printed, route, kind, scanned, line,
+            text, title=None, row=None, cells=None):
+        rows.append(PassageRow(f"{listed.document_id}/v{held.version}/{key}", listed.document_id,
+                               listed.project_id, listed.document_type, held.version, section, paragraph,
+                               numbered, part, parts_, first, last, printed, listed.language, route, kind,
+                               scanned, title, row, cells, about.slice_sector, line, text, route_a.tokens(text),
+                               route_a.text_hash(embedded_text(line, text)), held.public_from))
+
+    for passage in reading.passages:
+        add(passage.key, passage.section_path, passage.paragraph, passage.paragraph_numbered, passage.part,
+            passage.parts, passage.pdf_page, passage.last_pdf_page, passage.printed_page, route_a.ROUTE_A,
+            route_a.PARAGRAPH, False, header(reads.short_name, about, passage), passage.text)
+    for passage in second.paragraphs:
+        add(passage.key, passage.section_path, passage.paragraph, passage.paragraph_numbered, passage.part,
+            passage.parts, passage.pdf_page, passage.last_pdf_page, passage.printed_page, route_a.ROUTE_B,
+            route_a.PARAGRAPH, True, header(reads.short_name, about, passage), passage.text)
+    for item in second.tables:
+        add(item.key, item.table.title, item.key, False, 1, 1, item.pdf_page, item.last_pdf_page, None,
+            route_a.ROUTE_B, item.kind, not held.paged, table_header(reads.short_name, about, item), item.text,
+            item.table.title or None, item.row.number if item.row else None, route_b.cells_json(item.row))
+    return Read(held, second.routes, tuple(rows), frozenset(n for n, layout in parsed.items()
+                                                            if route_b.read_well(layout)), document_row, route_rows)
+
+
+SILVER_TABLES = ("documents", "document_page_routes", "passages")  # each document's own rows in silver
+
+
+def write_document(engine: Engine, item: Read, shield: Shield, embedder: Embedder,
+                   clock: Callable[[], dt.datetime]) -> tuple[int, int, int]:
+    """The one writer of a document's passages, which the nightly job's parse_and_embed and
+    ops/documents/run_live.py share through run() (ticket 72). It replaces the document's rows in silver with what
+    the run read, scans each passage text the shield has not scanned, embeds each the model has not embedded, and
+    syncs the document's rows of strata.gold.passage, so a run that stops after it keeps them. A rerun writes the
+    same rows, scans and embeds nothing, and changes no row of gold. Returns how many texts it scanned and
+    embedded, and the gold rows it added, changed or removed."""
+    listed = item.held.listed
+    for table in SILVER_TABLES:
+        engine.run(f"DELETE FROM strata.silver.{table} "  # sql-lint: names only
+                   "WHERE project_id = :project_id AND document_id = :document_id",
+                   {"project_id": listed.project_id, "document_id": listed.document_id})
+    engine.insert_rows("strata.silver.documents", DOCUMENT_COLUMNS, [item.document_row])
+    engine.insert_rows("strata.silver.document_page_routes", ROUTE_COLUMNS, list(item.route_rows))
+    engine.insert_rows("strata.silver.passages", PASSAGE_COLUMNS, [astuple(row) for row in item.passages])
+    scanned = screen(engine, shield, clock)
+    embedded = embed(engine, embedder, clock)
+    return scanned, embedded, gold.sync_where(engine, "passage", "document_id", listed.document_id)
+
+
+# What silver and strata.gold.passage hold of a project's documents, read once a project, so a run tells which
+# documents it read again are unchanged and writes none of their rows. Each document a run reads is written as soon
+# as it is read (ticket 72), so a rerun reads every document an earlier run wrote; rewriting each one costs about a
+# dozen statements on the SQL warehouse, a second or more each. A passage's header and text are compared through
+# its text_hash, which hashes both.
+COMPARED = ("document_id", *(column for column in PASSAGE_COLUMNS if column not in ("document_id", "header", "text")))
+HELD_ROWS = {
+    "documents": f"SELECT {', '.join(DOCUMENT_COLUMNS)} FROM strata.silver.documents "  # sql-lint: names only
+                 "WHERE project_id = :project_id",
+    "routes": f"SELECT {', '.join(ROUTE_COLUMNS)} FROM strata.silver.document_page_routes "  # sql-lint: names only
+              "WHERE project_id = :project_id",
+    "passages": f"SELECT {', '.join(COMPARED)} FROM strata.silver.passages "  # sql-lint: names only
+                "WHERE project_id = :project_id",
+    "indexed": "SELECT document_id, passage_id FROM strata.gold.passage WHERE project_id = :project_id",
+}
+
+
+def _as_text(value) -> str | None:
+    """A value as the SQL warehouse's JSON answer gives it, so a row DuckDB or Spark gives back, a row the warehouse
+    gives back and a row the run read compare equal when they hold the same values."""
+    if value is None:
+        return None
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    if isinstance(value, dt.date):
+        return value.isoformat()[:10]
+    return str(value)
+
+
+def _rows_of(rows) -> dict[str, list]:
+    """Rows by their first column, the document id, each row as text, sorted, so two sets of rows compare whole."""
+    found: dict[str, list] = {}
+    for row in rows:
+        found.setdefault(str(row[0]), []).append(tuple(_as_text(value) for value in row))
+    return {document_id: sorted(held, key=repr) for document_id, held in found.items()}
+
+
+@dataclass(frozen=True)
+class Written:
+    """A project's documents as silver and strata.gold.passage hold them, by document id."""
+
+    documents: dict[str, list]
+    routes: dict[str, list]
+    passages: dict[str, list]
+    indexed: dict[str, list]
+
+    @classmethod
+    def of(cls, engine: Engine, project_id: str) -> Written:
+        return cls(*(_rows_of(engine.run(sql, {"project_id": project_id}).rows) for sql in HELD_ROWS.values()))
+
+    def holds(self, item: Read) -> bool:
+        """Whether silver holds exactly the rows the run read for this document, and strata.gold.passage holds
+        every one of its passages."""
+        document_id = item.held.listed.document_id
+        passages = [astuple(row) for row in item.passages]
+        at = [PASSAGE_COLUMNS.index(column) for column in COMPARED]
+        return (self.documents.get(document_id) == _rows_of([item.document_row]).get(document_id)
+                and self.routes.get(document_id, []) == _rows_of(item.route_rows).get(document_id, [])
+                and self.passages.get(document_id, []) == _rows_of(
+                    [tuple(row[n] for n in at) for row in passages]).get(document_id, [])
+                and len(self.indexed.get(document_id, [])) == len(passages))
+
+
+@dataclass
+class Tally:
+    """What a run has done so far, document by document. The caller can hold it, so it still has the counts when
+    the run stops partway, as when the document host refuses a request (StopReading)."""
+
+    parsed: int = 0  # documents read through the page router
+    written: int = 0  # documents with passages written to strata.gold.passage
+    passages: int = 0  # the passages of those documents
+    unchanged: int = 0  # documents whose passages strata.gold.passage already held, unchanged, so the run left them
+    scanned: int = 0  # passage texts the shield scanned
+    embedded: int = 0  # passage texts the embedder embedded
+    synced: int = 0  # rows of strata.gold.passage added, changed or removed
+    skipped: list[plans.Skipped] = field(default_factory=list)  # what the passage reader skipped or left unfinished
+
+
+def read_slice(engine: Engine, documents: Documents, endpoint: str, projects: list[str], *, shield: Shield,
+               embedder: Embedder, layout: LayoutParser | None, limits: Thresholds, clock: Callable[[], dt.datetime],
+               run_id: str, started: dt.datetime, tally: Tally) -> list[Read]:
+    """Each project's documents, one at a time: fetched into bronze, read through Route A and Route B, and written
+    (write_document) before the next is fetched, up to ingestion.passage_documents whose text Route A can read.
+    A project's document list, or a document, that the source cannot give (NotFetched) is skipped with its reason
+    and the run goes on. A stop (StopReading) ends the run, and what it wrote before stays. started is when the run
+    started, which each project's row of strata.ops.parse_runs keeps, as the plan reader's row does."""
+    cap = int(limits.value("ingestion.passage_documents"))
+    max_tokens = int(limits.value("passages.max_tokens"))
+    part_pages = int(limits.value("ingestion.parser_part_pages"))
+    page_cap = int(limits.value("ingestion.daily_page_cap"))
+
+    def skipping(project_id: str, document_id: str | None, url: str, reason: str) -> None:
+        skipped = plans.Skipped(project_id, document_id, url, reason)
+        tally.skipped.append(skipped)
+        plans.skip(engine, run_id, "passages", skipped, clock())
+
+    found: list[Read] = []
+    paged = 0
+    for project_id in projects:
+        if paged >= cap:
+            break
+        try:
+            plans.fetch_listing(engine, documents, endpoint, project_id)
+        except NotFetched as error:
+            skipping(project_id, None, list_url(endpoint, project_id), str(error))
             continue
-        started = clock()
-        parsing = plans.parse_pages(engine, layout, project_id, pages, cap, clock, run_id)
-        plans.record_parse_run(engine, run_id, project_id, parsing, started, clock())
-
-
-def read_documents(engine: Engine, chosen: list[Held], max_tokens: int, run_projects: list[str],
-                   readings: list[tuple[Held, route_a.Reading]] | None = None, part_pages: int | None = None) -> list[Read]:
-    """Each chosen document read through Route A and Route B, then written to silver, which is rebuilt
-    for every project of the run: a project the cap left out this time keeps no passages from an
-    earlier run."""
-    readings = readings if readings is not None else [(held, _route_a(held, max_tokens)) for held in chosen]
-    projects = {held.listed.project_id: project(engine, held.listed.project_id) for held in chosen}
-    lists: dict[str, list[Listed]] = {}
-    for held in chosen:
-        lists.setdefault(held.listed.project_id, []).append(held.listed)
-    for project_id in dict.fromkeys([*run_projects, *projects]):
-        for table in ("documents", "document_page_routes", "passages"):
-            engine.run(f"DELETE FROM strata.silver.{table} WHERE project_id = :project_id",  # sql-lint: names only
-                       {"project_id": project_id})
-    documents, routes, found = [], [], []
-    for held, reading in readings:
-        listed = held.listed
-        reads = template(listed.document_type, listed.language)
-        hashes = held.hashes
-        parsed = route_b.layouts(engine, listed.document_id, hashes)
-        second = route_b.read(reading.pages, parsed, reads, max_tokens, listed.document_type)
-        long = part_pages is not None and held.pdf_pages > part_pages
-        documents.append((listed.document_id, listed.project_id, listed.document_type, listed.report_number,
-                          held.version, listed.document_date, listed.disclosed_on, listed.language, listed.title,
-                          held.pdf_pages, held.paged, listed.text_url, listed.pdf_url, held.replaced_on,
-                          doc_key(listed, lists[listed.project_id]),
-                          route_b.parts(held.pdf_pages, part_pages) if long else 1, held.public_from))
-        routes += [(listed.document_id, listed.project_id, page.pdf_page, page.route, page.reason, page.printed_page,
-                    page.numbering_found, page.passages,
-                    route_b.part_of(page.pdf_page, part_pages) if long else 1, held.public_from)
-                   for page in second.routes]
-        about = projects[listed.project_id]
-        rows = []
-
-        def add(key, section, paragraph, numbered, part, parts_, first, last, printed, route, kind, scanned, line,
-                text, title=None, row=None, cells=None):
-            rows.append(PassageRow(f"{listed.document_id}/v{held.version}/{key}", listed.document_id,
-                                   listed.project_id, listed.document_type, held.version, section, paragraph,
-                                   numbered, part, parts_, first, last, printed, listed.language, route, kind,
-                                   scanned, title, row, cells, about.slice_sector, line, text, route_a.tokens(text),
-                                   route_a.text_hash(embedded_text(line, text)), held.public_from))
-
-        for passage in reading.passages:
-            add(passage.key, passage.section_path, passage.paragraph, passage.paragraph_numbered, passage.part,
-                passage.parts, passage.pdf_page, passage.last_pdf_page, passage.printed_page, route_a.ROUTE_A,
-                route_a.PARAGRAPH, False, header(reads.short_name, about, passage), passage.text)
-        for passage in second.paragraphs:
-            add(passage.key, passage.section_path, passage.paragraph, passage.paragraph_numbered, passage.part,
-                passage.parts, passage.pdf_page, passage.last_pdf_page, passage.printed_page, route_a.ROUTE_B,
-                route_a.PARAGRAPH, True, header(reads.short_name, about, passage), passage.text)
-        for item in second.tables:
-            add(item.key, item.table.title, item.key, False, 1, 1, item.pdf_page, item.last_pdf_page, None,
-                route_a.ROUTE_B, item.kind, not held.paged, table_header(reads.short_name, about, item), item.text,
-                item.table.title or None, item.row.number if item.row else None, route_b.cells_json(item.row))
-        found.append(Read(held, second.routes, tuple(rows),
-                          frozenset(n for n, layout in parsed.items() if route_b.read_well(layout))))
-    engine.insert_rows("strata.silver.documents", DOCUMENT_COLUMNS, documents)
-    engine.insert_rows("strata.silver.document_page_routes", ROUTE_COLUMNS, routes)
-    engine.insert_rows("strata.silver.passages", PASSAGE_COLUMNS, [astuple(row) for item in found for row in item.passages])
+        listed = listed_documents(engine, project_id)
+        about = project(engine, project_id)
+        written = Written.of(engine, project_id)
+        read_here: list[Listed] = []
+        parsing: plans.Parsing | None = None
+        try:
+            for document in listed:
+                if paged >= cap:
+                    break
+                fetching = plans.fetch_documents(engine, documents, project_id, [document.entry()])
+                held = _held(engine, document)
+                if held is None:
+                    skipping(project_id, document.document_id, *_why_not_held(fetching, document))
+                    continue
+                held = _versioned(engine, held, listed)
+                reading = _route_a(held, max_tokens)
+                waiting = route_b.waiting(document.document_id, project_id, document.pdf_url, held.public_from,
+                                          reading.pages, held.hashes) if layout is not None else []
+                if waiting:  # the pages the router sends to the layout parser, parsed once under the daily cap
+                    try:
+                        done = plans.parse_pages(engine, layout, project_id, waiting, page_cap, clock, run_id)
+                    except NotFetched as error:
+                        skipping(project_id, document.document_id, error.url or document.pdf_url, str(error))
+                        # Its earlier rows stay (prune), with its key, so the next document's key must not repeat it.
+                        read_here.append(document)
+                        continue
+                    parsing = done if parsing is None else parsing.then(done)
+                    if done.stop is not None:  # the host refused, or the night's reading time is spent
+                        tally.skipped.append(plans.record_stop(engine, run_id, "passages", project_id, parsing,
+                                                               started, clock()))
+                        raise done.stop
+                tally.parsed += 1
+                item = read_document(engine, held, reading, max_tokens, part_pages, about, read_here)
+                if written.holds(item):  # an earlier run wrote it and nothing about it changed: its rows are there
+                    tally.unchanged += bool(item.passages)
+                else:
+                    scanned, embedded, synced = write_document(engine, item, shield, embedder, clock)
+                    tally.scanned, tally.embedded, tally.synced = (tally.scanned + scanned, tally.embedded + embedded,
+                                                                   tally.synced + synced)
+                    if item.passages:
+                        tally.written += 1
+                        tally.passages += len(item.passages)
+                read_here.append(document)
+                found.append(item)
+                paged += held.paged
+        except StopReading:
+            if parsing is not None and parsing.stop is None:  # the project's pages parsed before a stop met elsewhere
+                plans.record_parse_run(engine, run_id, project_id, parsing, started, clock())
+            raise
+        if parsing is not None:
+            plans.record_parse_run(engine, run_id, project_id, parsing, started, clock())
     return found
+
+
+HELD_IN_SILVER = """
+SELECT DISTINCT project_id, document_id FROM strata.silver.documents WHERE array_contains(split(:projects, ','), project_id)
+UNION
+SELECT DISTINCT project_id, document_id FROM strata.silver.passages
+WHERE array_contains(split(:projects, ','), project_id) AND kind <> :notice
+"""
+
+
+def prune(engine: Engine, projects: list[str], found: list[Read], skipped: list[plans.Skipped]) -> int:
+    """Once every document is read: take out of silver each document of the run's projects that this run neither
+    read nor skipped, so a project the cap left out this time keeps no passages from an earlier run, and the
+    projects' notices' passages, which read_notices writes again. A document the run skipped, and every document
+    of a project whose list it could not fetch, keep what an earlier run wrote. Returns the documents taken out."""
+    names = ",".join(dict.fromkeys(projects))
+    engine.run("DELETE FROM strata.silver.passages WHERE array_contains(split(:projects, ','), project_id) "
+               "AND kind = :notice", {"projects": names, "notice": route_a.NOTICE_TEXT})
+    kept = {(item.held.listed.project_id, item.held.listed.document_id) for item in found}
+    kept |= {(skipped_.project_id, skipped_.document_id) for skipped_ in skipped}
+    unlisted = {skipped_.project_id for skipped_ in skipped if skipped_.document_id is None}
+    stale = sorted((str(project_id), str(document_id)) for project_id, document_id in engine.run(
+        HELD_IN_SILVER, {"projects": names, "notice": route_a.NOTICE_TEXT}).rows
+                   if (str(project_id), str(document_id)) not in kept and str(project_id) not in unlisted)
+    for project_id, document_id in stale:
+        for table in SILVER_TABLES:
+            engine.run(f"DELETE FROM strata.silver.{table} "  # sql-lint: names only
+                       "WHERE project_id = :project_id AND document_id = :document_id",
+                       {"project_id": project_id, "document_id": document_id})
+    return len(stale)
 
 
 def read_notices(engine: Engine, projects: list[str], notice_types: tuple[str, ...], max_tokens: int) -> int:
@@ -539,6 +711,28 @@ def embed(engine: Engine, embedder: Embedder, clock: Callable[[], dt.datetime]) 
         store_vectors(engine, [(row["text_hash"], embedder.name, embedder.dimensions, vector, when, row["public_from"])
                                for row, vector in zip(batch, vectors, strict=True)])
     return len(waiting)
+
+
+EARLIEST = "SELECT text_hash, min(public_from) AS public_from FROM strata.silver.passages GROUP BY text_hash"
+
+
+def earliest(engine: Engine) -> int:
+    """Each scan's and each vector's public date made the earliest public date of a passage that has its text, as
+    when every document's passages were scanned and embedded at once. A run now scans and embeds each document's
+    texts as soon as it reads the document, newest first, so a text two reports share is first scanned with the
+    later report's date (ticket 72). Returns the rows it changed."""
+    changed = 0
+    for table in ("strata.silver.passage_shields", "strata.silver.passage_embeddings"):
+        moved = int(engine.run(f"SELECT count(*) AS n FROM {table} AS target JOIN ({EARLIEST}) AS source "  # sql-lint: names only
+                               "ON target.text_hash = source.text_hash "
+                               "WHERE target.public_from <> source.public_from").rows[0][0])
+        if moved:
+            engine.run(f"MERGE INTO {table} AS target USING ({EARLIEST}) AS source "  # sql-lint: names only
+                       "ON target.text_hash = source.text_hash "
+                       "WHEN MATCHED AND target.public_from <> source.public_from "
+                       "THEN UPDATE SET public_from = source.public_from")
+        changed += moved
+    return changed
 
 
 # ── The slice ────────────────────────────────────────────────────────────
@@ -755,14 +949,18 @@ class Report:
     notice_passages: int = 0
     shelf: tuple = ()  # each stress shelf entry's outcome (stress_shelf.Outcome)
     synced: int = 0  # rows of strata.gold.passage the run added, changed or removed
+    written: int = 0  # documents whose passages the run wrote to strata.gold.passage
+    skipped: tuple[plans.Skipped, ...] = ()  # the documents and document lists it skipped, each with why
 
 
 def run(engine: Engine, documents: Documents, projects: list[str] | None = None, *, shield: Shield,
         embedder: Embedder, layout: LayoutParser | None = None, thresholds: Thresholds | None = None,
         endpoint: str | None = None, clock: Callable[[], dt.datetime] = _now, run_id: str | None = None,
-        chosen: Slice | None = None, detector: language.Detector | None = None) -> Report:
+        chosen: Slice | None = None, detector: language.Detector | None = None, tally: Tally | None = None) -> Report:
     """Read the slice's documents into passages. See the module's docstring for the steps. Without a
-    layout parser, the pages the router sends to Route B wait for a run that has one."""
+    layout parser, the pages the router sends to Route B wait for a run that has one. Each document's passages
+    are written as soon as it is read (read_slice); tally, when given, counts them as the run goes, so a caller
+    still has the counts when the run stops partway."""
     limits = thresholds or load_thresholds()
     endpoint = endpoint or load_sources()[SOURCE].endpoint
     chosen = chosen or load_slice()
@@ -770,28 +968,26 @@ def run(engine: Engine, documents: Documents, projects: list[str] | None = None,
     projects = list(selection.projects) if projects is None else projects
     started = clock()
     run_id = run_id or f"passages-{started:%Y%m%dT%H%M%S%f}"
-    max_tokens = int(limits.value("passages.max_tokens"))
-    part_pages = int(limits.value("ingestion.parser_part_pages"))
-    picked = choose(engine, documents, endpoint, projects, int(limits.value("ingestion.passage_documents")))
-    readings = [(held, _route_a(held, max_tokens)) for held in picked.documents]
-    if layout is not None:
-        parse_route_b(engine, layout, readings, int(limits.value("ingestion.daily_page_cap")), part_pages, clock,
-                      run_id)
-    found = read_documents(engine, picked.documents, max_tokens, projects, readings, part_pages)
-    notices = read_notices(engine, projects, chosen.notice_types, max_tokens)
+    tally = tally if tally is not None else Tally()
+    found = read_slice(engine, documents, endpoint, projects, shield=shield, embedder=embedder, layout=layout,
+                       limits=limits, clock=clock, run_id=run_id, started=started, tally=tally)
+    prune(engine, projects, found, tally.skipped)
+    notices = read_notices(engine, projects, chosen.notice_types, int(limits.value("passages.max_tokens")))
     isr_ratings.write(engine, projects)
-    scanned = screen(engine, shield, clock)
-    embedded = embed(engine, embedder, clock)
-    synced = gold.sync(engine, "passage")
+    scanned = tally.scanned + screen(engine, shield, clock)
+    embedded = tally.embedded + embed(engine, embedder, clock)
+    earliest(engine)
+    synced = tally.synced + gold.sync(engine, "passage")
     when = clock()
-    measure(engine, run_id, found, with_contacts_held(engine, picked.documents), shield.name, when, selection, chosen)
+    measure(engine, run_id, found, with_contacts_held(engine, [item.held for item in found]), shield.name, when,
+            selection, chosen)
     language.check(engine, run_id, when, limits, detector)
     documents_read(engine, run_id, found, when)
     shelf = stress_shelf.record(engine, run_id, chosen, limits, layout.name if layout else None, when,
                                 selection.selected)
     return Report(run_id, sum(item.held.paged for item in found), sum(not item.held.paged for item in found),
                   sum(len(item.passages) for item in found), scanned, embedded, len(selection.selected), notices,
-                  tuple(shelf), synced)
+                  tuple(shelf), synced, tally.written, tuple(tally.skipped))
 
 
 def default_projects(engine: Engine | None = None) -> list[str]:
