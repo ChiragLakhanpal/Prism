@@ -73,6 +73,11 @@ class Context:
     # the one access rule (src/strata/server/access.py), or None for one they may not read or that does not exist. Only
     # the server gives it, per request; without it, a tool reads no upload, so no other caller can reach one.
     uploads: Callable[[str], Mapping[str, Any] | None] | None = None
+    # The settings a tool reads the addresses and keys of the services it calls from, such as search_passages's Azure
+    # OpenAI endpoint and key and the workspace's host (ticket 66): the env file a live script loaded, or the app's
+    # environment. None reads the process's environment, as the deployed App sets it. Kept out of repr, since it holds
+    # keys.
+    environ: Mapping[str, str] | None = field(default=None, repr=False)
     # Lineage (ticket 45): a list the call adds each table it read to, in three parts and in the order it first read
     # them, so the run log can trace an answer to the tables its tool calls read. None records nothing.
     reads: list[str] | None = None
@@ -120,6 +125,7 @@ class Call:
     thresholds: Thresholds
     decided_by: dt.date | None = None  # Context.decided_by
     uploads: Callable[[str], Mapping[str, Any] | None] | None = None  # Context.uploads
+    environ: Mapping[str, str] | None = field(default=None, repr=False)  # Context.environ
 
 
 # ── The agent's tool list ────────────────────────────────────────────────
@@ -218,7 +224,7 @@ def call(name: str, arguments: Mapping[str, Any], context: Context, tools: dict[
     as_of = min(asked) if asked else today()
     engine = context.engine if context.reads is None else _Reading(context.engine, context.reads)
     output = _adapter(tool)(Call(engine, context.viewer, context.view, as_of, context.thresholds,
-                                 context.decided_by, context.uploads), **bound)
+                                 context.decided_by, context.uploads, context.environ), **bound)
     result = {"tool": name, "as_of": as_of.isoformat(), "view": context.view, **output}
     if tool.result.summary_fields:
         result["summary"] = summary(tool, bound, result)

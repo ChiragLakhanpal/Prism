@@ -40,7 +40,7 @@ async function everyRecording(): Promise<Record<string, Answer>> {
     "/api/data/readiness": await file("data-readiness.json"),
     "/api/data/sources": await file("data-sources.json"),
     "/api/lessons/me": await file("lessons-me-reviewer.json"),
-    "/api/lessons": await file("lessons-library-reviewer.json"),
+    "/api/lessons/page": await file("lessons-page-reviewer.json"),
     "/api/lessons/review": await file("lessons-queue.json"),
     [`/api/lessons/review/${LESSON_ITEM}`]: await file("lessons-item-recommend.json"),
   };

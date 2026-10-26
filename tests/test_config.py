@@ -532,12 +532,13 @@ def test_a_threshold_added_to_the_file_is_read(tmp_path):
 
 def test_review_notes_are_a_draft_kind_with_their_writer_columns_and_holds():
     # The 35 design brief, sections 1, 3.5 and 11: two columns, Activity and Review note, and its holds, not yet
-    # checked first and a preview last; ticket 36 adds a warning disagreement left without a choice between them.
+    # checked first and a preview last; ticket 36 adds a warning disagreement left without a choice between them, and
+    # ticket 39 a note that cites a lesson retired as wrong.
     kind = config.load_draft_kinds().kinds["review_notes"]
 
     assert (kind.key, kind.agent, kind.export) == ("review_notes", "review_notes_writer", "word")
     assert kind.columns == ("activity", "note")
-    assert kind.holds == ("notChecked", "disagreements", "preview")
+    assert kind.holds == ("notChecked", "disagreements", "lessonRetiredWrong", "preview")
     assert (kind.sources_list, kind.removed_box) == (True, "always")
 
 
@@ -555,7 +556,8 @@ def test_adding_a_draft_kind_is_one_entry(tmp_path):
 
 
 def test_a_draft_kind_with_a_hold_the_registry_does_not_define_is_refused(tmp_path):
-    path = copy("drafts.toml", tmp_path, old='holds = ["notChecked", "disagreements", "preview"]', new='holds = ["retired"]')
+    path = copy("drafts.toml", tmp_path, old='holds = ["notChecked", "disagreements", "lessonRetiredWrong", "preview"]',
+                new='holds = ["retired"]')
 
     with pytest.raises(ConfigError, match=r"kinds\.review_notes\.holds names retired"):
         config.load_draft_kinds(path)

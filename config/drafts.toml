@@ -39,6 +39,12 @@
 #   agency_only    true when only implementing agency officers (a team in config/roles.toml that names an agency)
 #                  may start one, for their own agency; others get 403 not_agency_team. Every draft of the kind is
 #                  Official Use Only. Leave it out for false (ticket 38).
+#   row_label      the function that gives the values of the sentence naming one of its rows, as module:function
+#                  (ticket 39): the Lessons page's "Used in" line names the row with copy.draft.kinds.<kind>.rowLabel,
+#                  such as "Row {n}, {risk_label}." Leave it out for a kind whose rows cite no lesson.
+#   rewrite_row    the function that rewrites one row from the current version of the lesson it cites, through the
+#                  kind's writer agent and then the verifier, as module:function (ticket 39's "Update the row").
+#                  Leave it out for a kind whose rows cite no lesson; "Update the row" is then not offered.
 #
 # [holds.<key>]
 #   test           the function that says how many items the hold has left on a draft and where the first is,
@@ -54,7 +60,7 @@ word = "strata.drafts.review_notes:word"
 export = "word"
 csv = []
 columns = ["activity", "note"]
-holds = ["notChecked", "disagreements", "preview"]
+holds = ["notChecked", "disagreements", "lessonRetiredWrong", "preview"]
 sources_list = true
 removed_box = "always"
 not_checked = ["writer_review_notes"]
@@ -70,7 +76,7 @@ word = "strata.drafts.mission_brief:word"
 export = "word"
 csv = []
 columns = ["plans", "awards", "ratings", "disbursement", "closing"]
-holds = ["notChecked", "disagreements", "preview"]
+holds = ["notChecked", "disagreements", "lessonRetiredWrong", "preview"]
 sources_list = true
 removed_box = "always"
 not_checked = ["writer_mission_brief"]
@@ -89,12 +95,15 @@ word = "strata.drafts.ppsd_rows:word"
 export = "word"
 csv = []
 columns = ["risk_description", "mitigation", "risk_owner"]
-holds = ["notChecked", "owners", "ratings", "disagreements", "preview"]
+holds = ["notChecked", "owners", "ratings", "disagreements", "lessonRetiredWrong", "preview"]
 sources_list = true
 removed_box = "always"
 not_checked = ["writer_ppsd_rows"]
 files = "ppsd-rows-{package_slug}-{created_date}"
 staff_only = true
+# Ticket 39: each row cites a lesson at a version in its mitigation, so a changed lesson can rewrite that row.
+row_label = "strata.drafts.ppsd_rows:row_label"
+rewrite_row = "strata.drafts.ppsd_rows:rewrite_row"
 
 # The Project Paper summary (ticket 36): the procurement summary for the Project Paper, started from the "Drafts from
 # this check" panel at the end of Check a plan. Three parts, in order: the plan check, the implementing agency's
@@ -107,7 +116,7 @@ word = "strata.drafts.project_paper:word"
 export = "word"
 csv = []
 columns = ["plan", "record", "ppsd"]
-holds = ["notChecked", "disagreements", "preview"]
+holds = ["notChecked", "disagreements", "lessonRetiredWrong", "preview"]
 sources_list = true
 removed_box = "always"
 not_checked = ["writer_project_paper"]
@@ -142,12 +151,16 @@ word = "strata.drafts.ppsd_rows:word"
 export = "word"
 csv = []
 columns = ["risk_description", "mitigation", "risk_owner"]
-holds = ["notChecked", "owners", "ratings", "disagreements", "preview"]
+holds = ["notChecked", "owners", "ratings", "disagreements", "lessonRetiredWrong", "preview"]
 sources_list = true
 removed_box = "always"
 not_checked = ["writer_ppsd_rows"]
 files = "ppsd-rows-{package_slug}-{created_date}"
 agency_only = true
+# Ticket 39: its rows cite lessons at a version as ticket 36's do, so a lesson retired as wrong holds the export and
+# the Lessons page names the row. It has no rewrite_row yet, so a changed lesson offers Keep, and a retired one Remove
+# or Keep, until the agency's writer instructions learn to rewrite one row.
+row_label = "strata.drafts.ppsd_rows:row_label"
 
 [holds.notChecked]
 test = "strata.drafts.holds:not_checked"
@@ -173,6 +186,15 @@ capability = "export"
 [holds.disagreements]
 test = "strata.drafts.holds:disagreements"
 copy = "disagreements"
+capability = "export"
+
+# Ticket 39: a row that cites a lesson a lead retired as wrong, until its author removes the row or keeps it with a
+# reason. A change of wording or a retirement as out of date holds nothing; its notice on the row is the reminder.
+# Every kind lists it, because any note can cite a lesson version: the Project Paper summary's PPSD part cites the
+# lessons its checked rows cite. On a draft that cites no lesson it holds nothing.
+[holds.lessonRetiredWrong]
+test = "strata.drafts.holds:lesson_retired_wrong"
+copy = "lessonRetiredWrong"
 capability = "export"
 
 # Whether a draft's page shows the disagreement cards check 6 attaches, so a warning card holds export until its

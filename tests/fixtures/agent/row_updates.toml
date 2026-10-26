@@ -1,0 +1,49 @@
+# "Update the row" (ticket 39): the draft kind's writer rewrites one row of a draft from the current version of the
+# lesson the row cites, and the verifier checks it, as the draft runtime does when a draft is written
+# (strata.drafts.runtime.rewrite). The scripted writer replays these cases offline, in tests/lessons_page_story.py's
+# story: Ana's suggested PPSD rows cite the rebidding lesson (lesson-e903b07ad1) at version 1, and a re-check changed
+# its wording to version 2 on October 29, 2026.
+#
+# They sit apart from writers.toml because ops/agent/record.py --writers re-records a writer from a fresh draft request,
+# and these start from a saved draft. The live recording is a workspace step (docs/workspace-catchup.md).
+
+[[cases]]
+id = "ppsd-row-update-cost-estimates"
+says = """The writer rewrites the cost estimates row's Description of mitigation from version 2 of the rebidding lesson, \
+citing that version and the passages it rests on, and the sentence passes the checks."""
+question = "Rewrite the suggested PPSD row Cost estimates below market rates from version 2 of its lesson."
+scope = "P156634"
+as_of = 2026-10-30
+recording = "ppsd-row-update-cost-estimates"
+
+[[cases]]
+id = "ppsd-row-update-nothing-passes"
+says = """The writer's sentence cites version 1 of the lesson, which get_lessons did not return this turn, so the \
+verifier removes it, nothing passes, and the row is left as it was."""
+question = "Rewrite the suggested PPSD row Cost estimates below market rates from version 2 of its lesson."
+scope = "P156634"
+as_of = 2026-10-30
+recording = "ppsd-row-update-cost-estimates"
+
+[[cases.plant_notes]]
+cell_key = "cost_estimates/mitigation"
+claims = [
+  { sentence = "Base the works cost estimates on market rates before the contracts go to bid.", kind = "advice", evidence_ids = ["strata.ops.lesson_versions:lesson-e903b07ad1/v1", "strata.gold.passage:31525018/v1/54"], numbers = [], dates = [] },
+]
+
+[[cases]]
+id = "ppsd-row-update-removed-number"
+says = """The writer rewrites the cost estimates row from version 2 and adds a sentence with a number no tool returned \
+(37 percent), so the verifier removes that sentence, keeps the other, and the draft shows the removed one in its \
+removed box (CLAUDE.md rule 2)."""
+question = "Rewrite the suggested PPSD row Cost estimates below market rates from version 2 of its lesson."
+scope = "P156634"
+as_of = 2026-10-30
+recording = "ppsd-row-update-cost-estimates"
+
+[[cases.plant_notes]]
+cell_key = "cost_estimates/mitigation"
+claims = [
+  { sentence = "Base the works cost estimates on current market rates before the contracts go to bid.", kind = "advice", evidence_ids = ["strata.ops.lesson_versions:lesson-e903b07ad1/v2", "strata.gold.passage:31525018/v1/54", "strata.gold.passage:34056616/v2/10.b"], numbers = [], dates = [] },
+  { sentence = "Estimates in the earlier bids were 37 percent below market rates.", kind = "record", evidence_ids = ["strata.ops.lesson_versions:lesson-e903b07ad1/v2", "strata.gold.passage:31525018/v1/54"], numbers = ["37 percent"], dates = [] },
+]

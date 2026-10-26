@@ -50,10 +50,18 @@ export const ROUTES: Route[] = [
       link: DATA_LINK,
     },
     // Ticket 29: the library, empty, as anyone who is not a lesson reviewer reads it (tests/fixtures/api,
-    // lessons-me-viewer.json and lessons-library-empty.json).
+    // lessons-me-viewer.json), in ticket 39's page answer (lessons-page-empty.json).
     api: {
       "/api/lessons/me": '{"signed_in":true,"tabs":["library"],"acts":[],"regions":[],"role":null,"waiting":null}',
-      "/api/lessons": '{"as_of":"2026-10-27","page":1,"pages":1,"page_size":8,"total":0,"from":0,"to":0,"can_recheck":false,"waiting":null,"lessons":[]}',
+      "/api/lessons/page":
+        '{"view":"staff","as_of":null,"visit":{"first_visit":true,"last_visit_on":null},' +
+        '"digest":{"kind":"first","segments":[{"text":"This is your first visit to Lessons. The library has no lessons yet."}],' +
+        '"counts":{"total":0,"proposed":0},"items":{},"strengthened":null},"notices":[],"new_lessons":null,' +
+        '"feedback":{"never":true,"segments":null,"counts":null},"library":{"as_of":"2026-10-22","page":1,"pages":1,' +
+        '"page_size":8,"total":0,"of":0,"from":0,"to":0,"status":"current","filters":{"stage":null,"method":null,' +
+        '"sector":null,"status":null},"narrowed":false,"unknown_filter":false,"shown":null,"options":{"stage":[],' +
+        '"method":[],"sector":[],"status":[]},"count":[],"can_recheck":false,"limits":{"reason_max_chars":500},' +
+        '"waiting":null,"lessons":[]}}',
     },
   },
   {

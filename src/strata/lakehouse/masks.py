@@ -31,12 +31,14 @@ MASKED: dict[str, tuple[str, ...]] = {
     # editor reads none of the officer's words: the file's name, how it was read, and each activity's reference,
     # Description and values. The drafts a team makes, an agency's planned dates and PPSD rows among them, keep their
     # words in the same way: each draft's content, each export's snapshot and each exported file. The app reads all
-    # of them as itself (src/strata/uploads/store.py, src/strata/drafts/store.py).
+    # of them as itself (src/strata/uploads/store.py, src/strata/drafts/store.py). A draft's lesson choices keep the
+    # author's reason and the rewritten row, which are the draft's words too (ticket 39).
     "strata.ops.uploads": ("uploader_name", "file_name", "reading"),
     "strata.ops.upload_rows": ("activity_reference_no", "description", "content"),
     "strata.ops.drafts": ("content",),
     "strata.ops.draft_exports": ("snapshot",),
     "strata.ops.draft_files": ("content",),
+    "strata.ops.draft_lesson_choices": ("reason", "rewrite"),
 }
 
 

@@ -4,17 +4,16 @@
 // - The frame: the h1 and brief 06's purpose, then, for lesson reviewers only, a row of sub-tabs, "Lessons" and
 //   "Waiting for review ({waiting})". Everyone else sees no row, since a row of one tab offers no choice. The
 //   viewer's roles (/api/lessons/me) load once a page load, so switching tabs never moves the row.
-// - Lessons: the interim library, eight lesson cards a page, newest decision first (by date, never by use).
+// - Lessons: ticket 39's page (web/src/pages/LessonsTab.tsx), which opens on what came in since your last visit.
 // - Waiting for review: the tab's purpose, the server's lead sentence, the quote check's caption, the rows
 //   grouped "Waiting for you" and "With other reviewers", oldest first, and the decisions of the last 90 days.
 //   Anyone who is not a lesson reviewer gets the no-access card (the route answers 403 not_a_reviewer).
 //
 // Every Lessons page keeps to columns 1 to 7 from a 1200 px window, so the evidence drawer opens into the
 // free space and the column never moves (DESIGN.md section 4, Document column).
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { EmptyState } from "../components/Card";
 import { Fill, Joined } from "../components/Fill";
-import { LessonCard } from "../components/LessonCard";
 import { Sentence, fillText } from "../components/LessonParts";
 import { Pagination } from "../components/Pagination";
 import { QueueRow } from "../components/LessonReview";
@@ -29,12 +28,10 @@ import { copy } from "../copy";
 import { getJson } from "../lib/api";
 import { formatNumber } from "../lib/format";
 import { useStore } from "../lib/store";
-import { address } from "../lib/router";
-import { evidenceIn, visited as visitedStore } from "../lib/evidence";
 import { useLoad, type Load } from "../lib/load";
 import { createStore } from "../lib/store";
 import { setPageTitle } from "../lib/title";
-import { itemHref, LESSONS_HREF, pageHref, QUEUE_HREF, type Library, type Me, type Queue, type QueueRow as Row } from "../lib/lessons";
+import { itemHref, LESSONS_HREF, pageHref, QUEUE_HREF, type Me, type Queue, type QueueRow as Row } from "../lib/lessons";
 import { JUDGING_HREF, REPORTS_HREF } from "../lib/retrieval";
 import { dataReadinessHref } from "../routes";
 import { DocumentColumn } from "./DraftPage";
@@ -182,106 +179,9 @@ export function LibrarySkeleton() {
   );
 }
 
-export function LibraryList({
-  library,
-  open = null,
-  visited = new Set(),
-  onRecheckSaved = refreshLessonsMe,
-}: {
-  library: Library;
-  open?: string | null;
-  visited?: ReadonlySet<string>;
-  // After a re-check is saved from a card, the sub-tab's count is asked for again (the 29 brief, section 9).
-  onRecheckSaved?: () => void;
-}) {
-  const countRef = useRef<HTMLParagraphElement>(null);
-  const count =
-    library.total === 1
-      ? words.library.countOne
-      : library.total === 2 && library.from <= 1 && library.to >= library.total
-        ? words.library.countBoth
-      : library.from <= 1 && library.to >= library.total
-        ? <Fill template={words.library.countAll} slots={{ total: <Num value={library.total} options={{ compact: false }} /> }} />
-        : (
-            <Fill
-              template={words.library.countRange}
-              slots={{ from: <Num value={library.from} options={{ compact: false }} />, to: <Num value={library.to} options={{ compact: false }} />, total: <Num value={library.total} options={{ compact: false }} /> }}
-            />
-          );
-  return (
-    <div data-library="ready" className="flex flex-col">
-      <p ref={countRef} tabIndex={-1} data-lead className="text-caption text-ink-muted outline-none" data-numbers>
-        {count}
-      </p>
-      <p className="mt-1 max-w-prose text-caption text-ink-muted">{words.sourcesNote}</p>
-      <ul aria-label={words.library.list} className="mt-4 flex flex-col gap-4">
-        {library.lessons.map((card) => (
-          <li key={card.lesson_id}>
-            <LessonCard
-              card={card}
-              canRecheck={library.can_recheck}
-              reasonMax={library.limits.reason_max_chars}
-              onRecheckSaved={onRecheckSaved}
-              open={open}
-              visited={visited}
-            />
-          </li>
-        ))}
-      </ul>
-      {library.pages > 1 && (
-        <div className="mt-8">
-          <Pagination page={library.page} pages={library.pages} href={(n) => pageHref(LESSONS_HREF, n)} />
-        </div>
-      )}
-    </div>
-  );
-}
-
-export function LibraryBody({ load, me, retry }: { load: Load<Library>; me: MeState; retry: () => void }) {
-  const here = useStore(address);
-  const seen = useStore(visitedStore);
-  if (load.status === "loading") return <LibrarySkeleton />;
-  if (load.status === "error") {
-    return (
-      <LoadError error={load.error} message={words.library.error} permission={words.library.permission} onRetry={retry} retrying={load.retrying} attempt={load.attempt} />
-    );
-  }
-  const library = load.data;
-  if (library.total === 0) {
-    const waiting = me.status === "ready" && me.me.tabs.includes("review") && (me.me.waiting ?? 0) > 0;
-    return (
-      <EmptyState
-        title={page.emptyTitle}
-        body={page.emptyBody}
-        link={waiting ? { href: QUEUE_HREF, text: words.library.reviewerLink } : { href: "/data", text: page.link }}
-      />
-    );
-  }
-  if (library.lessons.length === 0) {
-    return (
-      <EmptyState
-        title={fillText(words.library.outOfRangeTitle, { page: library.page })}
-        body={library.pages === 1 ? words.library.outOfRangeBodyOne : <Fill template={words.library.outOfRangeBody} slots={{ pages: <Num count={library.pages} /> }} />}
-        link={{ href: LESSONS_HREF, text: words.library.firstPage }}
-      />
-    );
-  }
-  return <LibraryList library={library} open={evidenceIn(here.search)} visited={seen} />;
-}
-
 function pageOf(search: string): number {
   const asked = Number(new URLSearchParams(search).get("page") ?? "1");
   return Number.isInteger(asked) && asked >= 1 ? asked : 1;
-}
-
-export function LessonsPage({ search }: { search: string }) {
-  const me = useMe();
-  const [load, retry] = useLoad<Library>(`/api/lessons?page=${pageOf(search)}`);
-  return (
-    <LessonsFrame tabKey="library" me={me}>
-      <LibraryBody load={load} me={me} retry={retry} />
-    </LessonsFrame>
-  );
 }
 
 // ── Waiting for review ───────────────────────────────────────────────────

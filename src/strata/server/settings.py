@@ -16,11 +16,12 @@ reads only the environment it is given:
   uploads to strata.ops.uploads and upload_rows (ticket 38), and
   each decision or label a person gives a candidate pair of supplier name matching to
   strata.ops.supplier_review_decisions or supplier_pair_labels, and each lesson reviewer's act to the
-  lesson review tables (ticket 29), with its token. Each row names the viewer the Databricks App
+  lesson review tables (ticket 29), and each reader's visits to Lessons to strata.ops.lesson_visits
+  (ticket 39), with its token. Each row names the viewer the Databricks App
   forwarded. Without them, the server
   keeps no usage events, records no opened sources, decisions, labels or lesson reviews and keeps no drafts, and runs go
   to the server log only. On this computer, STRATA_APP_STATE_FILE can name a DuckDB file that keeps the
-  opened sources, the drafts and the uploads instead.
+  opened sources, the drafts, the uploads and the Lessons visits instead.
 - PGHOST, PGPORT, PGDATABASE, PGUSER and PGSSLMODE, which the platform sets for the app's Lakebase database
   resource: app state lives there (ADR 0005; src/strata/appstate), starting with the packages a person
   plans and the plan checks they open (ticket 15). The app signs in as its own service principal, with the
@@ -65,6 +66,7 @@ from strata.drafts.store import DraftStore
 from strata.server.following import FollowStore
 from strata.server.viewer_settings import SettingsStore
 from strata.knowledge.lessons.review import LessonReview
+from strata.knowledge.lessons.visits import LessonVisits
 from strata.lakehouse.engine import Engine, EngineError, Transport, WarehouseEngine, base_url, http_transport
 from strata.packages.store import PackageStore
 from strata.criteria.store import CriteriaStore
@@ -185,6 +187,7 @@ def app_from_env(environ: Mapping[str, str] | None = None) -> FastAPI:
                       uploads=UploadStore(state) if state else None,
                       follows=FollowStore(state) if state else None,
                       settings=SettingsStore(state) if state else None,
+                      visits=LessonVisits(state) if state else None,
                       packages=PackageStore(app_state) if app_state else None,
                       package_reader=agent_runner.agent_from_environment(environ, "package_reader"),
                       criteria=CriteriaStore(app_state) if app_state else None,
@@ -197,4 +200,4 @@ def app_from_env(environ: Mapping[str, str] | None = None) -> FastAPI:
                       feedback_record=the_app, citations=CitationLog(the_app) if the_app else None,
                       lesson_writer=agent_runner.lesson_writer_from_environment(environ),
                       tracer_provider=tracing.from_env(environ), judge=answer_judge.from_environment(environ),
-                      web_dist=web if (web / "index.html").is_file() else None)
+                      web_dist=web if (web / "index.html").is_file() else None, environ=environ)

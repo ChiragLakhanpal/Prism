@@ -43,7 +43,7 @@ const subTabs = (page: Page) => page.getByRole("navigation", { name: "Lesson pag
 test("a passage reviewer sees Lessons and Passage reports, and a query judge Lessons and Judging, each with the page's own count", async ({ page }) => {
   await serve(page, {
     "/api/lessons/me": await file("retrieval-me-passage-reviewer-waiting.json"),
-    "/api/lessons": await file("lessons-library-empty.json"),
+    "/api/lessons/page": await file("lessons-page-empty.json"),
     "/api/passage-reports": await file("passage-reports.json"),
   });
   await page.goto("/lessons/reports");

@@ -75,7 +75,9 @@ export function draftsCopy(): string {
 }
 
 export function lessonsCopy(): string {
-  return json(copy.lessons.server);
+  // The Lessons page (ticket 39) writes its count words on the server, from one to nine, and the feedback sentence
+  // from ticket 32's templates, so both keep one home in the copy file.
+  return json({ ...copy.lessons.server, words: copy.num.words, feedback: copy.retrieval.sentence });
 }
 
 export function stepsCopy(): string {

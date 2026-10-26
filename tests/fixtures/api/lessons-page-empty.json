@@ -1,0 +1,129 @@
+{
+  "view": "staff",
+  "as_of": null,
+  "visit": {
+    "first_visit": true,
+    "started_at": "2026-10-22T12:01:00Z",
+    "last_visit_at": null,
+    "last_visit_on": null
+  },
+  "digest": {
+    "kind": "first",
+    "segments": [
+      {
+        "text": "This is your first visit to Lessons. The library has no lessons yet."
+      }
+    ],
+    "counts": {
+      "total": 0,
+      "rechecking": 0,
+      "proposed": 3
+    },
+    "items": {},
+    "strengthened": null
+  },
+  "notices": [],
+  "new_lessons": null,
+  "feedback": {
+    "never": true,
+    "segments": null,
+    "counts": null
+  },
+  "library": {
+    "as_of": "2026-10-22",
+    "page": 1,
+    "pages": 1,
+    "page_size": 8,
+    "total": 0,
+    "of": 0,
+    "from": 0,
+    "to": 0,
+    "status": "current",
+    "filters": {
+      "stage": null,
+      "method": null,
+      "sector": null,
+      "status": null
+    },
+    "narrowed": false,
+    "unknown_filter": false,
+    "shown": null,
+    "options": {
+      "stage": [
+        {
+          "key": "procurement_planning",
+          "label": "Procurement planning"
+        },
+        {
+          "key": "tender_design",
+          "label": "Tender design and packaging"
+        },
+        {
+          "key": "bidding_and_evaluation",
+          "label": "Bidding and evaluation"
+        },
+        {
+          "key": "contract_award",
+          "label": "Contract award"
+        },
+        {
+          "key": "contract_management",
+          "label": "Contract management"
+        }
+      ],
+      "method": [
+        {
+          "key": "Request for Bids",
+          "label": "Request for Bids (RFB)"
+        },
+        {
+          "key": "Request for Quotations",
+          "label": "Request for Quotations (RFQ)"
+        },
+        {
+          "key": "Request for Proposals",
+          "label": "Request for Proposals (RFP)"
+        },
+        {
+          "key": "Direct Selection",
+          "label": "Direct selection"
+        }
+      ],
+      "sector": [],
+      "status": [
+        {
+          "key": "current"
+        },
+        {
+          "key": "rechecking"
+        },
+        {
+          "key": "retired"
+        }
+      ]
+    },
+    "count": [
+      {
+        "text": "Showing all "
+      },
+      {
+        "number": 0
+      },
+      {
+        "text": " "
+      },
+      {
+        "text": "current lessons"
+      },
+      {
+        "text": ", newest first."
+      }
+    ],
+    "can_recheck": false,
+    "limits": {
+      "reason_max_chars": 500
+    },
+    "waiting": null,
+    "lessons": []
+  }
+}

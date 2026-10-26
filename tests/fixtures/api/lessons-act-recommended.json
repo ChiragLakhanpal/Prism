@@ -152,6 +152,8 @@
         "name": "the World Bank's Procurement Guidelines of January 2011",
         "short": "Procurement Guidelines, January 2011"
       },
+      "categories": [],
+      "methods": [],
       "sector": "Transportation"
     },
     "lesson": {
@@ -413,6 +415,42 @@
         {
           "key": "did_not_work",
           "label": "What didn't work"
+        }
+      ],
+      "categories": [
+        {
+          "key": "Works",
+          "label": "Works"
+        },
+        {
+          "key": "Goods",
+          "label": "Goods"
+        },
+        {
+          "key": "Non-consulting Services",
+          "label": "Non-consulting services"
+        },
+        {
+          "key": "Consultant Services",
+          "label": "Consultant services"
+        }
+      ],
+      "methods": [
+        {
+          "key": "Request for Bids",
+          "label": "Request for Bids (RFB)"
+        },
+        {
+          "key": "Request for Quotations",
+          "label": "Request for Quotations (RFQ)"
+        },
+        {
+          "key": "Request for Proposals",
+          "label": "Request for Proposals (RFP)"
+        },
+        {
+          "key": "Direct Selection",
+          "label": "Direct selection"
         }
       ]
     },

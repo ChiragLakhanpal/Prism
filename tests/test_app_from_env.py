@@ -19,6 +19,7 @@ from urllib.parse import parse_qs
 
 import httpx
 
+from strata.server import settings
 from strata.server.settings import app_from_env, app_state_file
 
 RECORDED = Path(__file__).parent / "fixtures" / "api"
@@ -273,6 +274,27 @@ def test_on_this_computer_packages_are_kept_in_the_app_state_file(fixture_db, tm
     assert "event: error" in read.text and '"no_reader"' in read.text
     assert "event: package" in yourself.text
     assert [row["type"] for row in listed.json()["rows"]] == ["package"]
+
+
+def test_on_this_computer_the_lessons_page_remembers_the_reader_s_visit_in_the_app_state_file(fixture_db, tmp_path,
+                                                                                               monkeypatch):
+    """STRATA_APP_STATE_FILE keeps the reader's visits to Lessons (ticket 39), so the second load in one visit
+    belongs to the visit the first load started, and each load adds one row to strata.ops.lesson_visits."""
+    # DuckDB attaches a file once per process, so the count reads through the app's own opener of the file.
+    openers = []
+    monkeypatch.setattr(settings, "app_state_file", lambda environ: openers.append(app_state_file(environ)) or openers[-1])
+    app = settings.app_from_env({"STRATA_DATABASE_FILE": str(fixture_db),
+                                 "STRATA_APP_STATE_FILE": str(tmp_path / "state.duckdb"), "STRATA_WEB_DIST": str(tmp_path)})
+
+    first, again = serve(app, [("/api/lessons/page", ANA), ("/api/lessons/page", ANA)])
+
+    assert first.status_code == 200 and again.status_code == 200
+    assert first.json()["visit"]["first_visit"] is True
+    assert again.json()["visit"]["started_at"] == first.json()["visit"]["started_at"]
+    [opener] = openers
+    with opener() as engine:
+        rows = engine.run("SELECT viewer_id FROM strata.ops.lesson_visits").rows
+    assert rows == (("4021@1984",), ("4021@1984",))
 
 
 def test_on_this_computer_two_uses_of_the_app_state_file_at_once_both_work(tmp_path):

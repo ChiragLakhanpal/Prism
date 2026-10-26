@@ -109,6 +109,21 @@ def item_of(engine, passage_id: str, kind: str = "new") -> str:
     return result.rows[0][0]
 
 
+def recheck(database: Path, lesson_id: str, day: dt.date, outcome: str, change: dict | None = None,
+            reason: str = "The lead read both reports again.") -> dict:
+    """Wanjiru asks for a re-check of a current lesson in the morning, Asha recommends the outcome at noon, and Omar
+    decides it in the afternoon: keep, change (with the Lesson editor's change), retire_wrong or retire_outdated. The
+    same LessonReview the HTTP routes use writes each act (ticket 29)."""
+    with DuckDBEngine.open(database) as engine:
+        asked = review_on(day, 9).recheck(engine, WANJIRU, lesson_id, "Please read it against the newer reports.", engine)
+        body = {"outcome": outcome, **({"change": change} if change else {})}
+        review_on(day, 12).act(engine, ASHA, asked["item_id"], "recommend",
+                               {"expected_stage": "recommendation", "reason": "The reports support it.", **body},
+                               writer=engine)
+        return review_on(day, 15).act(engine, OMAR, asked["item_id"], "decide",
+                                      {"expected_stage": "decision", "reason": reason, **body}, writer=engine)
+
+
 def decide(database: Path, passage_id: str, day: dt.date, outcome: str = "add", recommender: Viewer = ASHA,
            decider: Viewer = OMAR, **decision) -> dict:
     """Recommend, then decide, the new lesson from a passage, a day apart in the morning and the afternoon."""
