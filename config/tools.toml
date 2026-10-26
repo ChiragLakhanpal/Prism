@@ -71,7 +71,8 @@ mark come back in the result's summary, which you cite for them. When World Bank
 as the baseline, the plan agreed at negotiations, the result names it, and each reason that states a delay also \
 gives the delay from the baseline's planned date; the marks still come from the first published planned date. \
 It reads only the plan's own record. It cannot see the \
-prior-review queue, complaints, contract amendments or contract management reports."""
+prior-review queue, complaints, contract amendments or contract management reports. An implementing agency's \
+private upload is checked only on its own team's pages, which pass upload_id; leave upload_id out."""
 adapter = "strata.tools.check_plan:check_plan"
 benchmark = "check-plan-nwwda-2026-10-09"
 sources = ["documents", "projects"]
@@ -101,6 +102,15 @@ required = false
 description = "The version to check, by the plan's date. Leave it out to check the agency's latest version."
 
 [[tools.check_plan.parameters]]
+name = "upload_id"
+type = "string"
+required = false
+description = """Only the app's own pages pass this: the id of an upload of the implementing agency's plan, which is \
+checked instead of a published version (ticket 38). An upload is Official Use Only, so the tool reads it only through \
+the app's team rule, and answers unknown_upload, with no rows, for an upload of another team or one that does not \
+exist. Leave it out."""
+
+[[tools.check_plan.parameters]]
 name = "as_of"
 type = "date"
 required = false
@@ -112,14 +122,17 @@ row_fields = ["evidence_id", "public_from", "source", "activity_reference_no", "
               "review_type", "method", "market_approach", "estimated_amount_usd", "actual_amount_usd",
               "process_status", "signed_on", "planned_signing_on", "planned_signing_plan_date", "days_late",
               "planned_completion_on", "planned_completion_plan_date", "first_listing_confirmed",
-              "actual_to_estimate", "marks"]
+              "actual_to_estimate", "marks", "position", "listed"]
 source_fields = ["document_type", "project_id", "implementing_agency", "plan_date", "document_id", "pdf_page"]
 fields = ["plan", "project", "checks_run", "thresholds", "counts", "baseline"]
+# An upload's rows (ticket 38) give their place in the officer's file (position) and whether a published plan of the
+# project lists them (listed); a published plan's rows give neither. The last four reasons are an upload's data
+# notes: a date or an amount the reader could not read, a row with no Method, and a reference two rows share.
 reasons = ["completion_passed_no_contract", "pending_near_closing", "pending_on_closing_day", "pending_after_closing",
            "signed_late_over_estimate", "signed_over_estimate", "method_differs_from_reference", "actual_amount_zero",
-           "no_planned_date", "no_estimate"]
+           "no_planned_date", "no_estimate", "unread_date", "unread_amount", "no_method", "duplicate_ref"]
 abstentions = ["unknown_project", "no_plan_from_agency", "no_plan_as_of", "version_not_found", "version_not_public",
-               "no_activities"]
+               "no_activities", "unknown_upload"]
 # The plan's counts (how many activities, how many need a look, are worth watching or carry a data note) are
 # figures a Project Paper summary states (ticket 36), so they come back as one citable record, the summary.
 summary_fields = ["counts"]
@@ -762,6 +775,15 @@ description = """For a package whose plan gives no planned dates: the date of it
 chose. Every later step is dated from it. Leave it out to get each step's days and no dates."""
 
 [[tools.estimate_time.parameters]]
+name = "upload_row"
+type = "string"
+required = false
+description = """Only the app's own pages pass this: one activity of an implementing agency's upload, as the \
+upload's id, a colon and the activity's place in the file, whose steps are dated from the upload's own dates (ticket 38). The tool reads an upload only \
+through the app's team rule, and answers unknown_upload, with nothing, for one of another team or one that does not \
+exist. Leave it out."""
+
+[[tools.estimate_time.parameters]]
 name = "as_of"
 type = "date"
 required = false
@@ -783,7 +805,7 @@ reasons = ["outside_training", "value_not_learned", "no_plan_dates"]
 # The closed list of why there is no time estimate (brief 40 adds view_public_active here). The first four come
 # from find_comparables for the same criteria.
 abstentions = ["unknown_package", "no_public_notice", "no_comparables", "none_measurable", "too_few_comparables",
-               "asof_before_training", "outside_training", "no_model"]
+               "asof_before_training", "outside_training", "no_model", "unknown_upload"]
 # The time estimate, the difference and its reasons, the track record, the plan dates, the comparisons and the
 # approaches are figures the agent may state, so they come back as one citable record too.
 # The planned dates for each step, their counts, ran longest and their track record (ticket 27) are too.

@@ -154,6 +154,8 @@ from strata.server import criteria as criteria_routes
 from strata.criteria.store import CriteriaStore
 from strata.criteria.workflow import Package as CriteriaPackage
 from strata.server import risks as risk_routes
+from strata.server import uploads as upload_routes
+from strata.uploads.store import UploadStore
 from strata.server import estimates as estimate_routes
 from strata.server import following as following_routes
 from strata.server.following import FollowStore
@@ -299,8 +301,9 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                passage_reports: PassageReports | None = None, judging: Judging | None = None,
                feedback_record: Callable[[], Engine] | None = None,
                citations: CitationLog | None = None, choices: ChoiceLog | None = None,
-               follows: FollowStore | None = None, settings: SettingsStore | None = None,
-               exposures: ExposureLog | None = None) -> FastAPI:
+               follows: FollowStore | None = None, uploads: UploadStore | None = None,
+               new_upload_id: Callable[[], str] = upload_routes.new_upload_id,
+               settings: SettingsStore | None = None, exposures: ExposureLog | None = None) -> FastAPI:
     """The app.
 
     engine_for makes the engine for each request's viewer; without it, the environment names one.
@@ -670,6 +673,21 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
         # The public view hides the baseline, and a preview only takes things away (the 21 review, round 3).
         if view == "public" and evidence_id.startswith(f"{baseline.TABLE}:"):
             return JSONResponse({"code": "unknown_evidence"}, status_code=404)
+        # An upload's row (ticket 38) is Official Use Only: only its team reads it, through the one access rule, and
+        # another team gets the same answer as for an id no source has.
+        if evidence_id.startswith(upload_routes.ROW_ID):
+            upload_id, _, position = evidence_id.removeprefix(upload_routes.ROW_ID).rpartition(":")
+            if not position.isdigit() or view != STAFF or uploads is None or not viewer.user_id:
+                return JSONResponse({"code": "unknown_evidence"}, status_code=404)
+            try:
+                saved = upload_routes.readable(uploads, access, viewer, upload_id)
+            except EngineError:
+                return JSONResponse({"code": "data_service", "trace_id": request_reference()}, status_code=503)
+            row = next((row for row in saved.rows if row["position"] == int(position)), None) if saved else None
+            if row is None:
+                return JSONResponse({"code": "unknown_evidence"}, status_code=404)
+            return {"id": evidence_id, "kind": "upload_row", "tool": None, "row": row, "highlights": [],
+                    "upload": upload_routes.listing(saved, viewer)}
 
         def read(engine: Engine):
             found = evidence.read(engine, evidence_id, as_of_for(asof), step_ref, view=view)
@@ -742,7 +760,11 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                             kinds=kinds or load_draft_kinds(), today=today, now=now, new_draft_id=new_draft_id,
                             new_run_id=new_run_id, runs=runs, trace_ids=trace_ids, reference=request_reference,
                             heartbeat_seconds=heartbeat_seconds, six_checks=six_checks, packages=packages,
-                            planned_view=planned_package_view)
+                            planned_view=planned_package_view, uploads=uploads)
+
+    # An implementing agency's private uploads of its plan (ticket 38), through the one access rule.
+    upload_routes.add_routes(app, engine_for=engine_for, store=uploads, access=access, today=today, now=now,
+                             new_upload_id=new_upload_id, reference=request_reference)
 
     # Following and the follow buttons (ticket 37).
     following_routes.add_routes(app, engine_for=engine_for, store=follows, access=access, drafts=drafts, today=today,
@@ -1016,10 +1038,14 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
         # Whether the viewer has the World Bank staff role (ticket 37): the navy bar's Projects tab then opens
         # Following, and the project page offers Follow. The language of answers and drafts in effect, and where it
         # came from (ticket 42): the page's ?lang=, which the app passes on, the saved choice, the team's, English.
+        # An implementing agency officer (ticket 38): their agency, and the implementing agency view the pill names.
         saved, readable = saved_language(viewer)
         language = working_language(lang, saved, access.team_language(viewer) if viewer.user_id else None)
+        agency = access.agency(viewer)
         return {"email": viewer.email, "name": viewer.name, "signed_in": viewer.signed_in,
                 "has_token": viewer.token is not None, "staff": access.is_staff(viewer),
+                "agency": {"name": agency, "agency_id": upload_routes.agency_id(agency)} if agency else None,
+                "own_view": "piu" if agency else "staff",
                 "language": {**language.as_dict(), "saved_readable": readable, "choices": language_choices()}}
 
     @app.put("/api/me/working-language")

@@ -23,6 +23,7 @@ import datetime as dt
 import json
 import sys
 import tempfile
+from unittest import mock
 from contextlib import contextmanager
 from pathlib import Path
 
@@ -39,10 +40,15 @@ from strata.criteria.store import CriteriaStore  # noqa: E402
 from strata.lakehouse.engine import DuckDBEngine  # noqa: E402
 from strata.packages.store import PackageStore  # noqa: E402
 from strata.server.app import create_app  # noqa: E402
+from strata.tools import registry  # noqa: E402
 
 FIXTURE_DB = ROOT / "data" / "out" / "fixture.duckdb"
 OUT = ROOT / "tests" / "fixtures" / "api"
 TODAY = dt.date(2026, 10, 28)
+# The day these answers were recorded. A route called with no asof date dates its answer by the registry's clock
+# (strata.tools.registry.today), not by the app's today, so the recorder pins that clock: without it the
+# recorded answers stop matching at the next midnight UTC.
+RECORDED_ON = dt.date(2026, 10, 25)
 ANA = {"X-Forwarded-Email": "ana.example@worldbank.org", "X-Forwarded-Preferred-Username": "Ana Example",
        "X-Forwarded-User": "4021@1984", "X-Forwarded-Access-Token": "token-for-ana-only"}
 CY = {"X-Forwarded-Email": "cy.example@worldbank.org", "X-Forwarded-Preferred-Username": "Cy Example",
@@ -136,7 +142,8 @@ def answers(folder: Path) -> dict[str, str]:
             found["criteria-run-planned-rural-roads.sse"] = await post("/api/planned-packages/pkg-000000000001/criteria/run", {})
         return found
 
-    return asyncio.run(story())
+    with mock.patch.object(registry, "today", lambda: RECORDED_ON):
+        return asyncio.run(story())
 
 
 def main() -> int:

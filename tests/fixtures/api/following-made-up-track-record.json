@@ -81,7 +81,9 @@
           }
          ]
         }
-       ]
+       ],
+       "position": null,
+       "listed": null
       }
      ]
     },
@@ -153,6 +155,8 @@
          ]
         }
        ],
+       "position": null,
+       "listed": null,
        "ratio": 4,
        "ratio_exact": "4.15"
       }
@@ -220,6 +224,8 @@
          ]
         }
        ],
+       "position": null,
+       "listed": null,
        "amount_millions": "2.6",
        "first_plan_date": "2026-08-17",
        "first_document_id": "40122770"

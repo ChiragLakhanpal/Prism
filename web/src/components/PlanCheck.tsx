@@ -431,15 +431,33 @@ function ChangedLine({ change }: { change?: keyof typeof copy.changes.cell }) {
   );
 }
 
+// A row's key, and the id a link's hash names: its STEP reference, or its place in an upload with no reference yet.
+export const rowKey = (row: Activity) => row.activity_reference_no ?? `row-${row.position}`;
+
+// An upload's row with no reference yet says so where the reference goes, and one no published plan lists says that
+// under its Description (ticket 38; the 38 brief, 3.4). A published plan's rows have neither.
+function UploadLines({ row }: { row: Activity }) {
+  return row.listed === false ? (
+    <span className="mt-1 block text-caption text-ink-muted" data-new-activity>
+      {copy.uploadCheck.newActivity}
+    </span>
+  ) : null;
+}
+
 function TableRow({ row, result, fresh, named, change }: { row: Activity; result: CheckedPlan; fresh?: boolean; named?: boolean; change?: keyof typeof copy.changes.cell }) {
   const ref = row.activity_reference_no;
   return (
-    <tr id={ref} data-named={named || undefined} className={cx("border-t border-line align-top", named && "bg-tint", fresh && "animate-fade-in")}>
-      <th scope="row" tabIndex={-1} data-activity={ref} className={cx(CELL, "text-left font-normal focus-visible:outline-offset-[-2px]")}>
-        <span className="block font-mono font-medium wrap-anywhere text-ink">{ref}</span>
+    <tr id={rowKey(row)} data-named={named || undefined} className={cx("border-t border-line align-top", named && "bg-tint", fresh && "animate-fade-in")}>
+      <th scope="row" tabIndex={-1} data-activity={rowKey(row)} className={cx(CELL, "text-left font-normal focus-visible:outline-offset-[-2px]")}>
+        {ref ? (
+          <span className="block font-mono font-medium wrap-anywhere text-ink">{ref}</span>
+        ) : (
+          <span className="block text-small text-ink-muted">{copy.uploadCheck.noRef}</span>
+        )}
         {row.description && <span className="mt-1 block text-small text-ink">{row.description}</span>}
+        <UploadLines row={row} />
         <ChangedLine change={change} />
-        <ActivityLinks reference={ref} pid={result.plan.project_id} />
+        {ref && row.listed !== false && <ActivityLinks reference={ref} pid={result.plan.project_id} />}
       </th>
       <td className={CELL}>{methodText(row)}</td>
       <td className={CELL}>{row.review_type ?? blank}</td>
@@ -483,11 +501,12 @@ function ActivityCard({ row, result, fresh, named, change }: { row: Activity; re
           {row.marks.map((mark) => (
             <StatusBadge key={mark.mark} kind={BADGE[mark.mark]} />
           ))}
-          <span tabIndex={-1} data-activity={ref} className="font-mono font-medium wrap-anywhere text-ink-heading">
-            {ref}
+          <span tabIndex={-1} data-activity={rowKey(row)} className={cx(ref ? "font-mono font-medium" : "font-normal text-ink-muted", "wrap-anywhere text-ink-heading")}>
+            {ref ?? copy.uploadCheck.noRef}
           </span>
         </h3>
         {row.description && <p className="mt-1 text-small text-ink">{row.description}</p>}
+        <UploadLines row={row} />
         <ChangedLine change={change} />
         <div className="mt-2 flex flex-col gap-2">
           {row.marks.length > 0 ? (
@@ -502,7 +521,7 @@ function ActivityCard({ row, result, fresh, named, change }: { row: Activity; re
           {field(words.columns.estimated, row.estimated_amount_usd ? amount(row.estimated_amount_usd) : blank)}
           {field(words.columns.status, row.process_status ?? blank, true)}
         </dl>
-        <ActivityLinks reference={ref} pid={result.plan.project_id} inCard />
+        {ref && row.listed !== false && <ActivityLinks reference={ref} pid={result.plan.project_id} inCard />}
       </article>
     </li>
   );
@@ -605,8 +624,11 @@ export function checkPill(result: CheckedPlan): ReactNode {
   );
 }
 
-export function PlanCheck({ result, findingRef, defaultOpen = false, afterMethod, changed = {}, after }: {
+export function PlanCheck({ result, findingRef, defaultOpen = false, afterMethod, changed = {}, after, method, source }: {
   result: CheckedPlan;
+  // Ticket 38: an upload's check says how it measured delay, and names the upload as its source.
+  method?: ReactNode;
+  source?: ReactNode;
   findingRef?: Ref<HTMLHeadingElement>;
   // The gallery shows the fold open; the page opens it from a link's hash.
   defaultOpen?: boolean;
@@ -645,9 +667,9 @@ export function PlanCheck({ result, findingRef, defaultOpen = false, afterMethod
   useEffect(() => {
     const follow = () => {
       const ref = hashReference();
-      if (!ref || !result.rows.some((row) => row.activity_reference_no === ref)) return;
+      if (!ref || !result.rows.some((row) => rowKey(row) === ref)) return;
       setNamed(ref);
-      if (unmarkedRows.some((row) => row.activity_reference_no === ref)) setOpen(true);
+      if (unmarkedRows.some((row) => rowKey(row) === ref)) setOpen(true);
       requestAnimationFrame(() => {
         const target = visibleActivity(ref);
         if (!target) return;
@@ -670,7 +692,7 @@ export function PlanCheck({ result, findingRef, defaultOpen = false, afterMethod
           <Finding result={result} />
         </h2>
         <div className="mt-2">
-          <Method result={result} />
+          {method ?? <Method result={result} />}
         </div>
         {afterMethod}
       </EightColumns>
@@ -704,7 +726,7 @@ export function PlanCheck({ result, findingRef, defaultOpen = false, afterMethod
           </thead>
           <tbody>
             {ordered.map((row) => (
-              <TableRow key={row.activity_reference_no} row={row} result={result} named={named === row.activity_reference_no} change={changed[row.activity_reference_no]} />
+              <TableRow key={rowKey(row)} row={row} result={result} named={named === rowKey(row)} change={changed[row.activity_reference_no]} />
             ))}
             {unmarked > 0 && (
               <tr className="border-t border-line bg-page" data-fold>
@@ -719,7 +741,7 @@ export function PlanCheck({ result, findingRef, defaultOpen = false, afterMethod
           </tbody>
           <tbody id={foldId} hidden={!open}>
             {unmarkedRows.map((row) => (
-              <TableRow key={row.activity_reference_no} row={row} result={result} fresh={opened} named={named === row.activity_reference_no} change={changed[row.activity_reference_no]} />
+              <TableRow key={rowKey(row)} row={row} result={result} fresh={opened} named={named === rowKey(row)} change={changed[row.activity_reference_no]} />
             ))}
           </tbody>
         </table>
@@ -728,7 +750,7 @@ export function PlanCheck({ result, findingRef, defaultOpen = false, afterMethod
       <div data-view="cards" className={cx("mt-2", VIEW.cards)}>
         <ul aria-labelledby={findingId} className="flex flex-col gap-3">
           {ordered.map((row) => (
-            <ActivityCard key={row.activity_reference_no} row={row} result={result} named={named === row.activity_reference_no} change={changed[row.activity_reference_no]} />
+            <ActivityCard key={rowKey(row)} row={row} result={result} named={named === rowKey(row)} change={changed[row.activity_reference_no]} />
           ))}
           {unmarked > 0 && (
             <li className="rounded-md border border-line bg-page p-4" data-fold>
@@ -741,13 +763,13 @@ export function PlanCheck({ result, findingRef, defaultOpen = false, afterMethod
         </ul>
         <ul id={foldCardsId} hidden={!open} aria-labelledby={findingId} className="mt-3 flex flex-col gap-3">
           {unmarkedRows.map((row) => (
-            <ActivityCard key={row.activity_reference_no} row={row} result={result} fresh={opened} named={named === row.activity_reference_no} change={changed[row.activity_reference_no]} />
+            <ActivityCard key={rowKey(row)} row={row} result={result} fresh={opened} named={named === rowKey(row)} change={changed[row.activity_reference_no]} />
           ))}
         </ul>
       </div>
 
       <EightColumns prose className="mt-2">
-        <PlanSource result={result} />
+        {source ?? <PlanSource result={result} />}
         <p className="mt-6 text-small text-ink-muted" data-not-visible>
           {words.notVisible}
         </p>

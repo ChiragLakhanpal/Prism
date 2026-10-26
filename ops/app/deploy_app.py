@@ -182,8 +182,11 @@ def grants(principal: str) -> list[str]:
     # (ticket 23): the report each person kept on a disagreement, for an answer or a draft, which the drafts' hold
     # reads too (ticket 36). draft_fields (ticket 36): the values people set on a draft's fields, read through its
     # latest-value view. exposures (ticket 44): each past range or time estimate the app showed in the staff view.
+    # uploads and upload_rows (ticket 38): an implementing agency team's uploads of its plan, kept as the app and
+    # read only through its team rule.
     tables = ("usage_events", "agent_runs", "evidence_opened", "drafts", "draft_states", "draft_exports",
-              "draft_files", "follows", "disagreement_choices", "draft_fields", "exposures")
+              "draft_files", "follows", "disagreement_choices", "draft_fields", "exposures", "uploads",
+              "upload_rows")
     return [f"GRANT USE CATALOG ON CATALOG strata TO `{principal}`",
             f"GRANT USE SCHEMA ON SCHEMA strata.ops TO `{principal}`",
             *[f"GRANT SELECT, MODIFY ON TABLE strata.ops.{table} TO `{principal}`" for table in tables],

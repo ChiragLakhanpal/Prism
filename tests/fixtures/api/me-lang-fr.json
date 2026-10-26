@@ -4,6 +4,8 @@
   "signed_in": true,
   "has_token": true,
   "staff": false,
+  "agency": null,
+  "own_view": "staff",
   "language": {
     "code": "fr",
     "source": "link",

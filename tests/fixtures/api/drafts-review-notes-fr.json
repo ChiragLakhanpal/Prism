@@ -255,7 +255,9 @@
               }
             ]
           }
-        ]
+        ],
+        "position": null,
+        "listed": null
       },
       "highlights": []
     },
@@ -314,7 +316,9 @@
               }
             ]
           }
-        ]
+        ],
+        "position": null,
+        "listed": null
       },
       "highlights": []
     },
@@ -368,7 +372,9 @@
               }
             ]
           }
-        ]
+        ],
+        "position": null,
+        "listed": null
       },
       "highlights": []
     }

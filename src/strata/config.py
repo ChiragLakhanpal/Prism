@@ -25,6 +25,8 @@ request lands in one file (CLAUDE.md rule 9). This module reads them:
 - load_editions()    config/editions.toml, the editions of the procurement rules a project followed
 - load_package_form() config/package_form.toml, the package form schema: the groups and fields a
                      package planned from a sentence has, each one a chip (ticket 15)
+- load_uploads()     config/uploads.toml, the upload and STEP row registry: what an implementing agency's
+                     upload may be and the STEP columns its reader and the STEP rows CSV use (ticket 38)
 - load_languages()   config/languages.toml, the language registry: each language a source can be
                      written in, and how Strata writes and checks the four working languages (ticket 42)
 - load_method_names() config/method_names.toml, the method-name registry: the current Procurement
@@ -1279,7 +1281,7 @@ def load_agent(key: str, path: Path = CONFIG_DIR / "agents.toml") -> AgentSpec:
 # ── The draft-kind registry ──────────────────────────────────────────────
 
 REMOVED_BOXES = ("always", "when_removed")
-EXPORTS = ("word",)
+EXPORTS = ("word", "step_rows")
 FUNCTION = re.compile(r"[a-z_][a-z0-9_.]*:[a-z_][a-z0-9_]*")
 MODULE = re.compile(r"[a-z_][a-z0-9_]*(?:\.[a-z_][a-z0-9_]*)+")
 
@@ -1312,6 +1314,9 @@ class DraftKind:
     files: str
     # Only viewers with the World Bank staff role may start one (ticket 37's mission brief).
     staff_only: bool = False
+    # Only implementing agency officers may start one, for their own agency (ticket 38), and every draft of the kind
+    # is Official Use Only. Its words are the agency's (copy.draft.kinds.<kind>).
+    agency_only: bool = False
 
 
 @dataclass(frozen=True)
@@ -1339,15 +1344,20 @@ def load_draft_kinds(path: Path = CONFIG_DIR / "drafts.toml") -> DraftKinds:
     for key, table in (data.get("kinds") or {}).items():
         entry = _Entry(path, f"kinds.{key}", table)
         entry.only({"writer", "agent", "word", "export", "csv", "columns", "holds", "sources_list", "removed_box",
-                    "not_checked", "files", "staff_only"})
+                    "not_checked", "files", "staff_only", "agency_only"})
         if not MODULE.fullmatch(entry.text("writer")):
             entry._fail("writer", "must name a module, such as strata.drafts.review_notes")
-        if not FUNCTION.fullmatch(entry.text("word")):
-            entry._fail("word", "must name a function as module:function")
-        if not all(FUNCTION.fullmatch(name) for name in entry.texts("csv")):
-            entry._fail("csv", "must list functions as module:function")
         if entry.text("export") not in EXPORTS:
             entry._fail("export", f"must be one of {', '.join(EXPORTS)}")
+        # A kind exported to Word names the function that lays out its file; a kind whose file is STEP rows names
+        # the CSV writer under csv instead (ticket 38).
+        word = entry.text("word", required=entry.text("export") == "word") or ""
+        if word and not FUNCTION.fullmatch(word):
+            entry._fail("word", "must name a function as module:function")
+        if entry.text("export") == "step_rows" and not entry.texts("csv"):
+            entry._fail("csv", "must name the STEP rows writer for a kind exported as STEP rows")
+        if not all(FUNCTION.fullmatch(name) for name in entry.texts("csv")):
+            entry._fail("csv", "must list functions as module:function")
         unknown = [hold for hold in entry.texts("holds") if hold not in holds]
         if unknown:
             entry._fail("holds", f"names {', '.join(unknown)}, which [holds] does not define")
@@ -1355,10 +1365,13 @@ def load_draft_kinds(path: Path = CONFIG_DIR / "drafts.toml") -> DraftKinds:
             entry._fail("removed_box", f"must be one of {', '.join(REMOVED_BOXES)}")
         if not entry.texts("columns"):
             entry._fail("columns", "must name at least one column")
-        kinds[key] = DraftKind(key, entry.text("writer"), entry.text("agent"), entry.text("word"),
+        # A kind with no agent is worked out by its module alone, with no model call, and still checked by the
+        # verifier (ticket 38's planned dates).
+        kinds[key] = DraftKind(key, entry.text("writer"), entry.text("agent", required=False) or "", word,
                                entry.text("export"), entry.texts("csv"), entry.texts("columns"), entry.texts("holds"),
                                entry.boolean("sources_list"), entry.text("removed_box"), entry.texts("not_checked"),
-                               entry.text("files"), entry.boolean("staff_only") if "staff_only" in table else False)
+                               entry.text("files"), entry.boolean("staff_only") if "staff_only" in table else False,
+                               entry.boolean("agency_only") if "agency_only" in table else False)
     if not kinds:
         raise ConfigError(f"{path.name} defines no draft kind. Add a [kinds.<key>] table.")
     return DraftKinds(kinds, holds, cards.boolean("cards_on_drafts"))
@@ -1520,11 +1533,14 @@ class Person:
 
 @dataclass(frozen=True)
 class Team:
-    """A team of World Bank staff that shares its drafts, by the workspace groups its members are in."""
+    """A team that shares its drafts, by the workspace groups its members are in. A team that names an implementing
+    agency is that agency's team (ticket 38): its members are implementing agency officers, who upload their plans and
+    draft for their own agency, and everything the team makes is Official Use Only."""
 
     key: str
     name: str
     groups: tuple[str, ...]
+    agency: str | None = None  # the implementing agency, as the projects API's records name it
     # The language its members get answers and drafts in when they have chosen none (ticket 42), or None for English.
     working_language: str | None = None
 
@@ -1569,14 +1585,15 @@ def load_roles(path: Path = CONFIG_DIR / "roles.toml") -> Roles:
     teams = []
     for key, table in (data.get("teams") or {}).items():
         entry = _Entry(path, f"teams.{key}", table)
-        entry.only({"name", "groups", "working_language"})
+        entry.only({"name", "groups", "agency", "working_language"})
         if not entry.texts("groups"):
             entry._fail("groups", "must name at least one workspace group")
         working = entry.text("working_language", required=False)
         if working is not None and working not in {language.code for language in load_languages().working}:
             entry._fail("working_language", f"names {working!r}, which is not a working language in "
                                             "config/languages.toml")
-        teams.append(Team(key, entry.text("name"), entry.texts("groups"), working))
+        teams.append(Team(key, entry.text("name"), entry.texts("groups"), entry.text("agency", required=False),
+                          working))
     groups = {}
     for key, table in (data.get("groups") or {}).items():
         entry = _Entry(path, f"groups.{key}", table)
@@ -2261,6 +2278,71 @@ def load_package_form(path: Path = CONFIG_DIR / "package_form.toml") -> PackageF
     return PackageForm(tuple(groups), tuple(fields))
 
 
+# ── The upload and STEP row registry (ticket 38) ─────────────────────────
+
+UPLOAD_FORMATS = ("step_export", "published_tables")
+UPLOAD_CSV = ("copied", "left", "split")
+UPLOAD_STEP_CSV = ("planned", "left")
+
+
+@dataclass(frozen=True)
+class UploadColumn:
+    """One of STEP's descriptive columns, by its key in src/strata/reader/step.py's COLUMNS."""
+
+    key: str
+    need: bool
+    csv: str  # copied, left or split
+
+
+@dataclass(frozen=True)
+class Uploads:
+    """What an implementing agency's upload may be, and how the STEP rows CSV lays out STEP's columns."""
+
+    accept: tuple[str, ...]
+    max_size_bytes: int
+    max_rows: int
+    format: str
+    columns: tuple[UploadColumn, ...]
+    step_planned: str
+    step_actual: str
+    one_row: str
+    aliases: dict[str, tuple[str, ...]]
+    max_unzipped_bytes: int  # the most an Excel file may hold once unzipped
+    max_columns: int  # the last column read on a sheet
+
+
+def load_uploads(path: Path = CONFIG_DIR / "uploads.toml") -> Uploads:
+    """The upload and STEP row registry, in its file's order. src/strata/reader/step_columns.py checks its keys against
+    STEP's columns."""
+    data = _read(path)
+    _Entry(path, "the file", data).only({"uploads", "columns", "steps", "aliases"})
+    limits = _Entry(path, "uploads", data.get("uploads"))
+    limits.only({"accept", "max_size_bytes", "max_rows", "format", "max_unzipped_bytes", "max_columns"})
+    accept = limits.texts("accept")
+    if not accept or not all(ending.startswith(".") for ending in accept):
+        limits._fail("accept", "must list file name endings, such as .xlsx")
+    if limits.text("format") not in UPLOAD_FORMATS:
+        limits._fail("format", f"must be one of {', '.join(UPLOAD_FORMATS)}")
+    columns = []
+    for key, table in (data.get("columns") or {}).items():
+        entry = _Entry(path, f"columns.{key}", table)
+        entry.only({"need", "csv"})
+        if entry.text("csv") not in UPLOAD_CSV:
+            entry._fail("csv", f"must be one of {', '.join(UPLOAD_CSV)}")
+        columns.append(UploadColumn(key, bool(table.get("need", False)), entry.text("csv")))
+    steps = _Entry(path, "steps", data.get("steps"))
+    steps.only({"planned", "actual", "one_row"})
+    for name in ("planned", "actual"):
+        if steps.text(name) not in UPLOAD_STEP_CSV:
+            steps._fail(name, f"must be one of {', '.join(UPLOAD_STEP_CSV)}")
+    if "{step}" not in steps.text("one_row") or "{head}" not in steps.text("one_row"):
+        steps._fail("one_row", "must hold {step} and {head}")
+    aliases = {}
+    for key, names in (data.get("aliases") or {}).items():
+        aliases[key] = _Entry(path, "aliases", {key: names}).texts(key)
+    return Uploads(accept, limits.integer("max_size_bytes"), limits.integer("max_rows"), limits.text("format"),
+                   tuple(columns), steps.text("planned"), steps.text("actual"), steps.text("one_row"), aliases,
+                   limits.integer("max_unzipped_bytes"), limits.integer("max_columns"))
 # ── The language registry (ticket 42) ────────────────────────────────────
 
 DIRECTIONS = ("ltr", "rtl")

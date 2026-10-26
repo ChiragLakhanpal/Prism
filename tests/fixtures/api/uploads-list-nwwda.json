@@ -1,0 +1,19 @@
+{
+  "uploads": [
+    {
+      "upload_id": "upl-000000000001",
+      "uploaded_at": "2026-10-22T09:30:00Z",
+      "uploaded_on": "2026-10-22",
+      "uploader": {
+        "name": "Amina Example",
+        "you": true
+      },
+      "project_id": "P156634",
+      "implementing_agency": "Northern Water Works Development Agency",
+      "agency_id": "northern-water-works-development-agency",
+      "file_name": "nwwda-plan-2026-10-09.csv",
+      "activities": 9
+    }
+  ],
+  "preview": false
+}

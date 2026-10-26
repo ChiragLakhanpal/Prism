@@ -69,6 +69,8 @@ def marked(result, question) -> dict[str, list[str]]:
     # Ticket 36: the plan's counts come back as a citable summary, which a Project Paper summary cites.
     found["activities"] = [result["summary"]["counts"]["activities"]]
     found["counts_cited_as"] = [result["summary"]["evidence_id"]]
+    # Ticket 38: the rows that came from an upload, by their place in its file.
+    found["upload_positions"] = sorted(row["position"] for row in result["rows"] if row.get("position") is not None)
     return found
 
 
@@ -198,7 +200,10 @@ def estimate_time_answer(result, question) -> dict[str, list]:
                             if entry["cautious"] and entry["cautious"]["planned_date"]],
             "undated_steps": [steps["undated_n"]],
             "signed_delay": [[entry["step_reference"], entry["days"]] for entry in signed["comparables"]
-                             if entry["step_reference"] in named]}
+                             if entry["step_reference"] in named],
+            # Ticket 38: the date the signed contract's step is dated from, the plan's as first published here, or an
+            # upload's own date for an upload's row.
+            "dated_from": [signed["plan_first_date"]]}
 
 
 def cost_answer(result, question) -> dict[str, list]:

@@ -9,6 +9,8 @@
 import { copy } from "../copy";
 import { cx } from "../lib/cx";
 import { startPpsdRows } from "../lib/drafts";
+import { useStore } from "../lib/store";
+import { officerAgency } from "../lib/uploads";
 import { formatNumber } from "../lib/format";
 import { navigate } from "../lib/router";
 import { Button } from "./Button";
@@ -38,6 +40,8 @@ export function PpsdAction({
   const reasonId = useId();
   const describedId = useId();
   const feedforwardId = useId();
+  // An implementing agency officer drafts the agency's own kind, in their own words (ticket 38).
+  const officer = Boolean(useStore(officerAgency));
   if (!selection || selection.rows === 0) return null;
   const shown = inline ? "@md/page:hidden" : "hidden @md/page:flex";
   if (asOf) {
@@ -53,7 +57,7 @@ export function PpsdAction({
   );
   const start = () => {
     if (held) return;
-    navigate(startPpsdRows({ ...pkg, selected: selection.chosen }, null));
+    navigate(startPpsdRows({ ...pkg, selected: selection.chosen }, null, officer ? "ppsd_rows_agency" : "ppsd_rows"));
   };
   return (
     <div
@@ -68,7 +72,8 @@ export function PpsdAction({
         onClick={start}
         className={inline ? "w-full min-[30rem]:w-auto" : undefined}
       >
-        {held ? words.heldLabel : words.button(selection.chosen, formatNumber(selection.chosen, { compact: false }))}
+        {held ? (officer ? words.agencyHeldLabel : words.heldLabel)
+          : (officer ? words.agencyButton : words.button)(selection.chosen, formatNumber(selection.chosen, { compact: false }))}
       </Button>
       {held ? (
         <p id={reasonId} className="max-w-[320px] text-caption text-ink-muted" data-ppsd-held>
@@ -77,7 +82,7 @@ export function PpsdAction({
       ) : (
         <>
           <p id={describedId} className="sr-only">
-            {words.description}
+            {officer ? words.agencyDescription : words.description}
           </p>
           <p id={feedforwardId} className="max-w-[320px] text-caption text-ink-muted">
             {words.feedforward}
