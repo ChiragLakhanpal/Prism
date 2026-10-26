@@ -35,6 +35,14 @@ request lands in one file (CLAUDE.md rule 9). This module reads them:
                      monthly budget after it, for the daily cost pull and the wizard (ticket 45)
 - load_kpis()        config/kpis.toml, the KPI registry: each KPI the dashboard shows, defined once by
                      its query, with its kind, rounding, target and copy keys (ticket 45)
+- load_urls()        config/urls.toml, the panel's addresses: Strata, the dashboard and the repo, and the
+                     deck and the proposal that follow from them (ticket 46)
+- load_rubric()      config/rubric.toml, the rubric map: the assessment's dimensions, points and criteria,
+                     and where the proposal answers each one (ticket 46)
+- load_change_drills() config/change_drills.toml, the change drill: each likely change, its one place,
+                     its proving test and its rehearsal time (tickets 46 and 49)
+- load_designed_not_built() config/designed_not_built.toml, what is designed but not built: the app's
+                     labels and the proposal's short list both read it (ticket 46)
 
 Each function checks the file's shape and raises ConfigError with a sentence that names the
 file, the entry and the fix. It uses only the standard library, so the nightly job can call it.
@@ -2841,3 +2849,189 @@ def load_kpis(path: Path = CONFIG_DIR / "kpis.toml") -> dict[str, Kpi]:
                          entry.text("fewest", required=False),
                          entry.boolean("target") if "target" in table else False, loop, role)
     return found
+
+
+# ── The proposal's registries (ticket 46) ────────────────────────────────
+
+URL_KEYS = ("app", "dashboard", "repo")
+
+
+@dataclass(frozen=True)
+class Urls:
+    """Where the panel finds Strata, the deck, the dashboard, the repo and the proposal (config/urls.toml). An
+    address that isn't known yet is None, and so is any address that follows from it."""
+
+    app: str | None
+    dashboard: str | None
+    repo: str | None
+
+    @property
+    def deck(self) -> str | None:
+        return f"{self.app}/present" if self.app else None
+
+    @property
+    def proposal(self) -> str | None:
+        return f"{self.repo}/blob/main/docs/proposal.md" if self.repo else None
+
+
+def load_urls(path: Path = CONFIG_DIR / "urls.toml") -> Urls:
+    """The panel's addresses, the one place the proposal, the README and the deck read them."""
+    data = _read(path)
+    entry = _Entry(path, "the file", data)
+    entry.only(set(URL_KEYS))
+    found = {}
+    for key in URL_KEYS:
+        value = data.get(key, "")
+        if not isinstance(value, str):
+            raise ConfigError(f"In {path.name}, {key} must be text: an https address, or \"\" until it is known.")
+        value = value.strip().rstrip("/")
+        if value and not re.fullmatch(r"https://[^\s\"<>]+", value):
+            raise ConfigError(f"In {path.name}, {key} must be an https address, such as https://example.org, "
+                              f"or \"\" until it is known.")
+        found[key] = value or None
+    return Urls(**found)
+
+
+@dataclass(frozen=True)
+class OpenLink:
+    """Something the panel can open to see a criterion working: an app route, a dashboard page or a repo file."""
+
+    label: str
+    href: str
+
+    @property
+    def kind(self) -> str:
+        return self.href.split(":", 1)[0]
+
+    @property
+    def target(self) -> str:
+        return self.href.split(":", 1)[1]
+
+
+@dataclass(frozen=True)
+class Criterion:
+    rubric: str
+    says: str
+    answered_in: tuple[str, ...]
+    open: tuple[OpenLink, ...]
+
+
+@dataclass(frozen=True)
+class Dimension:
+    key: str
+    name: str
+    rubric_name: str
+    points: int
+    summary: str
+    criteria: tuple[Criterion, ...]
+
+
+@dataclass(frozen=True)
+class Rubric:
+    """The assessment's rubric as the proposal's map and the deck use it (config/rubric.toml)."""
+
+    source: str
+    anchor: str
+    dimensions: tuple[Dimension, ...]
+
+    @property
+    def total(self) -> int:
+        return sum(dimension.points for dimension in self.dimensions)
+
+
+OPEN_KINDS = ("app", "dashboard", "repo")
+ANSWERED_KINDS = ("sec", "fig")
+
+
+def load_rubric(path: Path = CONFIG_DIR / "rubric.toml") -> Rubric:
+    """The rubric map: each dimension with its points and criteria, and where the proposal answers each one."""
+    data = _read(path)
+    _Entry(path, "the file", data).only({"source", "anchor", "dimensions"})
+    head = _Entry(path, "the file", data)
+    dimensions = []
+    for dimension in _tables(path, data, "dimensions"):
+        dimension.only({"key", "name", "rubric_name", "points", "summary", "criteria"})
+        criteria = []
+        for criterion in _tables(path, dimension.table, "criteria"):
+            criterion.where = f"{dimension.where}.{criterion.where}"
+            criterion.only({"rubric", "says", "answered_in", "open"})
+            answered = criterion.texts("answered_in")
+            for ref in answered:
+                if ref.split(":", 1)[0] not in ANSWERED_KINDS or ":" not in ref:
+                    criterion._fail("answered_in", f"holds {ref}: write sec:<slug> or fig:<slug>")
+            links = []
+            for number, link in enumerate(criterion.table.get("open", []), 1):
+                found = _Entry(path, f"{criterion.where}.open[{number}]", link)
+                found.only({"label", "href"})
+                opened = OpenLink(found.text("label"), found.text("href"))
+                if opened.kind not in OPEN_KINDS or ":" not in opened.href:
+                    found._fail("href", f"must start with {', '.join(kind + ':' for kind in OPEN_KINDS)}")
+                links.append(opened)
+            criteria.append(Criterion(criterion.text("rubric"), criterion.text("says"), tuple(answered), tuple(links)))
+        dimensions.append(Dimension(dimension.text("key"), dimension.text("name"), dimension.text("rubric_name"),
+                                    dimension.integer("points"), dimension.text("summary"), tuple(criteria)))
+    return Rubric(head.text("source"), head.text("anchor"), tuple(dimensions))
+
+
+@dataclass(frozen=True)
+class ChangeDrill:
+    """One change the panel is likely to ask for, its one place, its proving test and its rehearsal time."""
+
+    change: str
+    place: str
+    proved_by: str
+    minutes: int | None
+
+
+def load_change_drills(path: Path = CONFIG_DIR / "change_drills.toml") -> tuple[ChangeDrill, ...]:
+    """The change drill, in docs/PLAN.md section 15's order (config/change_drills.toml)."""
+    data = _read(path)
+    _Entry(path, "the file", data).only({"drills"})
+    drills = []
+    for drill in _tables(path, data, "drills"):
+        drill.only({"change", "place", "proved_by", "minutes"})
+        minutes = drill.integer("minutes", required=False)
+        if minutes is not None and minutes <= 0:
+            drill._fail("minutes", "must be a whole number of minutes above 0")
+        drills.append(ChangeDrill(drill.text("change"), drill.text("place"), drill.text("proved_by"), minutes))
+    return tuple(drills)
+
+
+DESIGNED_KEY = re.compile(r"[a-z][a-z0-9_]*")
+
+
+@dataclass(frozen=True)
+class DesignedNotBuilt:
+    """A part of Strata that is designed but not built, where the app labels it and the proposal describes it."""
+
+    key: str
+    name: str
+    route: str
+    paragraph: str
+    exists_now: str
+
+    @property
+    def copy_key(self) -> str:
+        """The app's first-person sentence in web/src/copy.ts, saying what Strata does instead."""
+        return f"designedNotBuilt.items.{self.key}"
+
+
+def load_designed_not_built(path: Path = CONFIG_DIR / "designed_not_built.toml") -> tuple[DesignedNotBuilt, ...]:
+    """Every part designed but not built, in the file's order (config/designed_not_built.toml)."""
+    data = _read(path)
+    _Entry(path, "the file", data).only({"items"})
+    items = []
+    for item in _tables(path, data, "items"):
+        item.only({"key", "name", "route", "paragraph", "exists_now"})
+        key = item.text("key")
+        if not DESIGNED_KEY.fullmatch(key):
+            item._fail("key", "must be lower case letters, digits and _")
+        route = item.text("route")
+        if not route.startswith("/") or route.startswith("//"):
+            item._fail("route", "must be an address in the app, such as /projects/P156634")
+        items.append(DesignedNotBuilt(key, item.text("name"), route, item.text("paragraph"), item.text("exists_now")))
+    keys = [item.key for item in items]
+    twice = sorted({key for key in keys if keys.count(key) > 1})
+    if twice:
+        raise ConfigError(f"In {path.name}, more than one item has the key {', '.join(twice)}. Give each its own key.")
+    return tuple(items)

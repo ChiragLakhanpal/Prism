@@ -1,0 +1,60 @@
+# The change drill (docs/PLAN.md section 15; the spec, "Ten single places"; ticket 46's Module 4 table and ticket
+# 49's rehearsal): each change the panel is likely to ask for in round 2, the one place it lives, the test that
+# shows it worked, and how long the rehearsal took. strata.config.load_change_drills() reads it.
+#
+# [[drills]], in docs/PLAN.md section 15's order:
+#   change     the change, in PLAN.md's words
+#   place      the one file it lives in, from the repo's root
+#   proved_by  the test that shows the change worked, from the repo's root
+#   minutes    the rehearsal's time in whole minutes. Ticket 49 adds it after timing each drill; until then it is
+#              left out, and the proposal says "Not rehearsed yet"
+
+[[drills]]
+change = "Add a data source"
+place = "config/sources.toml"
+proved_by = "tests/test_structured_sources.py"
+
+[[drills]]
+change = "Add a tool"
+place = "config/tools.toml"
+proved_by = "tests/test_tools.py"
+
+[[drills]]
+change = "Change a signal threshold"
+place = "config/thresholds.toml"
+proved_by = "tests/test_project_signals.py"
+
+[[drills]]
+change = "Add a country to the slice"
+place = "config/slice.toml"
+proved_by = "tests/test_document_slice.py"
+
+[[drills]]
+change = "Swap the model"
+place = "config/models.toml"
+proved_by = "tests/test_agent_sync.py"
+
+[[drills]]
+change = "Reorder the evidence ladder"
+place = "config/evidence_ladder.toml"
+proved_by = "tests/test_get_disagreements.py"
+
+[[drills]]
+change = "Add a field to the package form"
+place = "config/package_form.toml"
+proved_by = "tests/test_planned_packages.py"
+
+[[drills]]
+change = "Reword copy"
+place = "web/src/copy.ts"
+proved_by = "web/tests/lint.spec.ts"
+
+[[drills]]
+change = "Add a benchmark or must-refuse question"
+place = "evals/benchmark.yaml"
+proved_by = "tests/test_benchmark.py"
+
+[[drills]]
+change = "Add a dashboard tile"
+place = "src/strata/dashboard/definition.py"
+proved_by = "tests/test_dashboard_pages.py"
