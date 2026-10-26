@@ -76,6 +76,7 @@ export const deckCopy = {
     count: (n: string, noun: string, kind: string, date: string) => `${n} ${noun}. ${kind}, measured ${date}.`,
     setting: (name: string, where: string) => `${name}. Set in ${where}.`,
     tool: (step: string, date: string) => `Counted from the comparable packages for ${step}, run ${date}.`,
+    estimate: (step: string, date: string) => `From the time estimate for ${step}, run ${date}.`,
     rubric: "Points the assessment brief gives this dimension, in its section 5.",
     definition: (kind: string, table: string) => `${kind}, read from ${table} in the measures snapshot the proposal cites.`,
     settingDefinition: (kind: string) => `${kind}: a value Strata is set to, read from the file that sets it.`,
@@ -98,8 +99,8 @@ export const deckCopy = {
       notes:
         "Strata is a working demo built only on World Bank open data, and I built it for this assessment. Over the next " +
         "slides I'll show how it links the three strata of evidence, how it checks an answer before anyone sees it, and " +
-        "what it still can't do. Every number on these slides came from a measured run, and you can point at any of " +
-        "them to see where it came from. The figure shows the idea behind the name: the three strata, one under the other.",
+        "what it still can't do. Every number on these slides comes from a measured run, a setting or the assessment " +
+        "brief, and you can point at any of them to see which. The figure shows the idea behind the name: the three strata, one under the other.",
     },
     s2: {
       title: "A planning question needs three strata of evidence, kept apart today",
@@ -201,17 +202,18 @@ export const deckCopy = {
     s8: {
       title: "{ratio} comparable packages were signed within this plan's {months} months",
       titleFew: "Strata gave no range, because it found only {total} comparable packages",
+      titleNoPlan: "Strata found {total} comparable packages, and this plan sets no signing date to count against",
       titleNone: "Strata has not recorded the demo package's comparable packages yet",
       dots: "Each dot is one comparable package. Hollow dots were still open, and the range counts them.",
       estimate: "The time estimate puts the middle half at {low} to {high} months.",
       estimateNone: "Strata gave no time estimate for this package, and the chart's lower lane says why.",
-      backtest: "In {year}, {ratio} packages that Strata had not seen were signed within its 8-in-10 range.",
+      backtest: "In {year}, {ratio} packages that Strata had not seen were signed within its 8-in-10 point.",
       few: "Under {min} comparable packages, Strata shows every package and gives no range.",
       none: "The demo package's answers are recorded on the workspace, then the deck is built again.",
       source: "comparable packages and the time estimate for {step}, run {date}.",
+      sourceTwoDates: "comparable packages for {step}, run {date}, and its time estimate, run {estimateDate}.",
       notes:
-        "This is the package workspace for {step}, a real package in the Northern Water Works Development Agency's " +
-        "plan. The top lane is what happened. Each dot is one comparable package, chosen by method, category, market " +
+        "This is the package workspace for {step}, a real package in the {agency}'s plan. The top lane is what happened. Each dot is one comparable package, chosen by method, category, market " +
         "approach, review type, size, region and period. Hollow dots were still open when the data were taken, and the " +
         "range counts them, so the slowest cases don't drop out. The lower lane is Strata's time estimate for this " +
         "package, from a survival model. The line is the plan's date. Strata doesn't say the plan is wrong. It counts " +
@@ -252,8 +254,7 @@ export const deckCopy = {
     },
     s11: {
       title: "When reports disagree, both stay on screen in the order written",
-      // The showcase project (config/slice.toml [showcase]), whose disagreement the slide quotes.
-      project: "P130164",
+      // {project} is the showcase project (config/slice.toml [showcase]), whose disagreement the slide quotes.
       point:
         "For how a project turned out, Strata leans on the most independent report written after the project closed. " +
         "For a fact about a moment, such as a rating on a date, the record made at that moment wins.",
@@ -291,8 +292,8 @@ export const deckCopy = {
         "date. It listed its top risks for each main package, and {coders} people compared them with the risks the " +
         "completion report blamed.",
       checklist:
-        "That was at {top} risks per package. A checklist of the sector's {top} most common risks showed {ratio} of the " +
-        "same blamed risks.",
+        "That was at {top} risks per package. A checklist of the sector's {checklist} most common risks showed {ratio} " +
+        "of the same blamed risks.",
       none: "The test has not run yet, so there is no result to show.",
       costHeading: "What it cost to run",
       spend: "Azure spend to {date} was {spent}, against a budget of {budget} for {period}.",

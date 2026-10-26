@@ -215,17 +215,6 @@
    "noun": "must-refuse questions",
    "table": "strata.ops.evaluation_result"
   },
-  "sentences-removed": {
-   "measured": true,
-   "n": 3,
-   "d": 20,
-   "value": 3,
-   "measured_on": "2026-10-22",
-   "name": "Sentences the verifier removed from answers, out of the sentences the answers wrote, in the 90 days to the pull",
-   "kind": "Query",
-   "noun": "sentences",
-   "table": "strata.ops.agent_runs"
-  },
   "hindsight-caught": {
    "measured": true,
    "n": 14,
@@ -306,6 +295,12 @@
    "where": "config/thresholds.toml, package_risks.max_rows",
    "kind": "Setting"
   },
+  "checklist-size": {
+   "value": 5,
+   "name": "Risks on the hindsight test's checklist, the sector's commonest",
+   "where": "config/thresholds.toml, hindsight.checklist_size",
+   "kind": "Setting"
+  },
   "hindsight-coders": {
    "value": 2,
    "name": "People who code each risk a completion report blamed, for the hindsight test",
@@ -367,6 +362,9 @@
  "designed_not_built": [],
  "demo": {
   "step_reference": "KE-NWWDA-541055-CW-RFB",
+  "project_id": "P156634",
+  "agency": "Northern Water Works Development Agency",
+  "plan_href": "/projects/P156634/procurement/northern-water-works-development-agency",
   "comparables": {
    "tool": "find_comparables",
    "as_of": "2026-10-22",
@@ -2748,6 +2746,9 @@
    },
    "plan_date_choice": null
   }
+ },
+ "showcase": {
+  "project_id": "P130164"
  },
  "award_gap": {
   "start": 2017,

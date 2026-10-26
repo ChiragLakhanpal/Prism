@@ -12,9 +12,12 @@ the panel. build() gathers everything the slides read into one JSON object:
 - rubric     the assessment's four dimensions and their points (config/rubric.toml, citing docs/assessment.md)
 - urls       the panel's addresses (config/urls.toml); presenter, the title slide's name and date (config/deck.toml)
 - designed_not_built  the parts designed but not built (config/designed_not_built.toml), for the last slide
-- demo       the demo package (config/slice.toml) and the answers find_comparables and estimate_time gave for it,
-             recorded on the workspace (docs/proposal/demo-package.json), which slide 8's range chart draws
-- award_gap  the fiscal years between the two contract awards datasets, from the rows-by-year series
+- demo       the demo package and its plan (config/slice.toml [demo_plan]) and the answers find_comparables and
+             estimate_time gave for it, recorded on the workspace (docs/proposal/demo-package.json), which slide 8's
+             range chart draws
+- showcase   the showcase project (config/slice.toml [showcase]), whose disagreement slide 11 quotes
+- award_gap  the fiscal years no contract awards dataset publishes, from config/sources.toml's known gap, which the
+             Data readiness page's Gap row shows; the rows-by-year series must agree with it
 
 `uv run python -m strata.proposal deck` writes web/public/deck/data.json, which the built app serves and the deck
 fetches. A result the snapshot has not measured is kept with "measured": false, and its slide says so.
@@ -33,11 +36,13 @@ DEMO_FILE = ROOT / "docs" / "proposal" / "demo-package.json"
 
 # The results and settings the slides read, by their register keys.
 RESULTS = ("passages", "documents-read", "pages-read-well", "award-rows-by-year", "linked-notice", "backtest-years",
-           "benchmark-passed", "must-refuse", "sentences-removed", "hindsight-caught", "hindsight-checklist",
-           "hindsight-interval", "azure-spend")
-SETTINGS = ("check-count", "loop-count", "pilot-countries", "rollout-phases", "risks-per-package", "hindsight-coders",
-            "fewest-comparables")
+           "benchmark-passed", "must-refuse", "hindsight-caught", "hindsight-checklist", "hindsight-interval",
+           "azure-spend")
+SETTINGS = ("check-count", "loop-count", "pilot-countries", "rollout-phases", "risks-per-package", "checklist-size",
+            "hindsight-coders", "fewest-comparables")
 DEMO_ANSWERS = ("comparables", "estimate")
+# The known gap in config/sources.toml that slide 7 states: the fiscal years no contract awards dataset publishes.
+AWARD_GAP = ("awards", "fy2017_2019")
 
 
 class DeckError(ValueError):
@@ -62,27 +67,47 @@ def _settings() -> dict[str, dict]:
             for key in SETTINGS}
 
 
-def _award_gap(result: dict) -> dict | None:
+def _series_gap(series: list[dict]) -> dict | None:
     """The fiscal years after the first dataset's last year and before the last dataset's first, if there are any."""
-    series = result.get("series") or []
     groups = list(dict.fromkeys(row["dataset"] for row in series))
-    if not result.get("measured") or len(groups) < 2:
+    if len(groups) < 2:
         return None
     first_ends = max(row["fiscal_year"] for row in series if row["dataset"] == groups[0])
     last_starts = min(row["fiscal_year"] for row in series if row["dataset"] == groups[-1])
     return {"start": first_ends + 1, "end": last_starts - 1} if last_starts - first_ends > 1 else None
 
 
+def _award_gap(result: dict) -> dict | None:
+    """The known gap's fiscal years, once the award rows are measured. The rows-by-year series is only a check: when it
+    shows a different gap, the slide's sentence and its chart would disagree, so the build stops."""
+    if not result.get("measured"):
+        return None
+    source, gap_id = AWARD_GAP
+    known = next(gap for gap in config.load_sources()[source].known_gaps if gap.id == gap_id)
+    gap = {"start": known.first_fiscal_year, "end": known.last_fiscal_year}
+    seen = _series_gap(result.get("series") or [])
+    if seen is not None and seen != gap:
+        raise DeckError(f"The award rows by year leave fiscal {seen['start']} to {seen['end']} empty, but "
+                        f"config/sources.toml's known gap {gap_id} is fiscal {gap['start']} to {gap['end']}. "
+                        "Check the snapshot's series, or correct the known gap.")
+    return gap
+
+
 def _demo(answers: dict | None) -> dict:
-    package = config.load_slice().demo_plan.package
+    from strata.tools.check_plan import agency_id
+
+    plan = config.load_slice().demo_plan
+    package = plan.package
+    where = {"step_reference": package, "project_id": plan.project_id, "agency": plan.implementing_agency,
+             "plan_href": f"/projects/{plan.project_id}/procurement/{agency_id(plan.implementing_agency)}"}
     if answers is None:
-        return {"step_reference": package, "comparables": None, "estimate": None}
+        return {**where, "comparables": None, "estimate": None}
     for name in DEMO_ANSWERS:
         found = ((answers.get(name) or {}).get("package") or {}).get("step_reference")
         if found != package:
             raise DeckError(f"The recorded {name} answer is for {found}, but config/slice.toml names {package} as "
                             "the demo package. Record both answers for the demo package again.")
-    return {"step_reference": package, **{name: answers[name] for name in DEMO_ANSWERS}}
+    return {**where, **{name: answers[name] for name in DEMO_ANSWERS}}
 
 
 def build(snapshot: dict | None, demo: dict | None, results: tuple[str, ...] = RESULTS) -> dict:
@@ -106,5 +131,6 @@ def build(snapshot: dict | None, demo: dict | None, results: tuple[str, ...] = R
         "designed_not_built": [{"key": item.key, "name": item.name, "route": item.route}
                                for item in config.load_designed_not_built()],
         "demo": _demo(demo),
+        "showcase": {"project_id": config.load_slice().showcase.project_id},
         "award_gap": _award_gap(found["award-rows-by-year"]) if "award-rows-by-year" in found else None,
     }

@@ -16,7 +16,7 @@ import type { FigureId } from "../figures/registry";
 import { AwardChart, AwardKey, AwardTable } from "./AwardChart";
 import { deckCopy } from "./copy";
 import { measured, type DeckData, type DeckResult } from "./data";
-import { NoteNum, ResultNum, RubricPoints, SettingWord, TOOL_KEY, ToolNum } from "./nums";
+import { ESTIMATE_KEY, NoteNum, ResultNum, RubricPoints, SettingWord, TOOL_KEY, ToolNum } from "./nums";
 
 // Each slide's title has this id, so a chart and a table region can be named by it.
 export const TITLE_ID = (n: number) => `slide-${n}-title`;
@@ -32,7 +32,8 @@ export type Slide = {
   template: Template;
   title: ReactNode;
   figure?: FigureId;
-  // A chart drawn from data: the drawing as each mode shows it, and its table twin.
+  // A chart drawn from data: the drawing as each mode shows it, its table twin, and the keys of where its numbers
+  // came from, separated by spaces when it draws more than one answer.
   chart?: { drawing: (mode: Mode) => ReactNode; table: ReactNode; source: string };
   credit?: ReactNode;
   side?: ReactNode;
@@ -99,9 +100,15 @@ export function buildSlides(data: DeckData): Slide[] {
   const backtest = r("backtest-years");
   const latestYear = backtest?.series?.filter((row) => Number(row.d) > 0).at(-1) ?? null;
   const fewest = data.settings["fewest-comparables"].value;
-  const total = comparables?.rows.length ?? 0;
+  // The tool's own count (CLAUDE.md rule 1), never one made here from its rows.
+  const total = comparables?.counts?.comparables ?? 0;
   const tool = (value: Parameters<typeof ToolNum>[0]["value"]) =>
     comparables ? <ToolNum step={demo.step_reference} date={comparables.as_of} value={value} /> : null;
+  // The time estimate's months came from estimate_time, on the day it ran.
+  const months = (value: number) =>
+    estimate ? (
+      <ToolNum step={demo.step_reference} date={estimate.as_of} sourceKey={ESTIMATE_KEY} value={{ value, options: { decimals: 1, compact: false } }} />
+    ) : null;
 
   // ── 10: the six checks ──
   const passed = r("benchmark-passed");
@@ -112,7 +119,9 @@ export function buildSlides(data: DeckData): Slide[] {
   const checklist = r("hindsight-checklist");
   const interval = r("hindsight-interval");
   const spend = r("azure-spend");
-  const money = (value: number) => deckCopy.money(formatNumber(value, { decimals: 2, compact: false }));
+  // In a sentence an amount keeps its cents, with a trailing ".00" dropped (DESIGN.md section 7, rule 49).
+  const amount = (value: number) => formatNumber(value, { decimals: 2, compact: false }).replace(/\.00$/, "");
+  const money = (value: number) => deckCopy.money(amount(value));
 
   const urls = data.urls;
   const items = data.designed_not_built;
@@ -254,9 +263,11 @@ export function buildSlides(data: DeckData): Slide[] {
       template: "narrow",
       title: !comparables
         ? s.s8.titleNone
-        : total < fewest || !comparables.plan
+        : total < fewest
           ? <Fill template={s.s8.titleFew} slots={{ total: tool({ count: total }) }} />
-          : (
+          : !comparables.plan
+            ? <Fill template={s.s8.titleNoPlan} slots={{ total: tool({ count: total }) }} />
+            : (
             <Fill
               template={s.s8.title}
               slots={{
@@ -267,7 +278,8 @@ export function buildSlides(data: DeckData): Slide[] {
           ),
       chart: comparables
         ? {
-            source: TOOL_KEY,
+            // The top lane draws find_comparables' answer; the lower lane, estimate_time's.
+            source: estimate ? `${TOOL_KEY} ${ESTIMATE_KEY}` : TOOL_KEY,
             drawing: (mode) =>
               mode === "present" ? (
                 <div className="origin-top-left" style={{ width: 831, transform: `scale(${268 / 392})` }} data-scaled-chart>
@@ -281,7 +293,14 @@ export function buildSlides(data: DeckData): Slide[] {
         : undefined,
       credit: comparables ? (
         <Source>
-          <Fill template={s.s8.source} slots={{ step: <span className="font-mono">{demo.step_reference}</span>, date: day(comparables.as_of) }} />
+          {!estimate || estimate.as_of === comparables.as_of ? (
+            <Fill template={s.s8.source} slots={{ step: <span className="font-mono">{demo.step_reference}</span>, date: day(comparables.as_of) }} />
+          ) : (
+            <Fill
+              template={s.s8.sourceTwoDates}
+              slots={{ step: <span className="font-mono">{demo.step_reference}</span>, date: day(comparables.as_of), estimateDate: day(estimate.as_of) }}
+            />
+          )}
         </Source>
       ) : undefined,
       side: !comparables ? (
@@ -295,10 +314,7 @@ export function buildSlides(data: DeckData): Slide[] {
             estimate?.estimate ? (
               <Fill
                 template={s.s8.estimate}
-                slots={{
-                  low: tool({ value: estimate.estimate.q25, options: { decimals: 1, compact: false } }),
-                  high: tool({ value: estimate.estimate.q75, options: { decimals: 1, compact: false } }),
-                }}
+                slots={{ low: months(estimate.estimate.q25), high: months(estimate.estimate.q75) }}
               />
             ) : (
               s.s8.estimateNone
@@ -324,7 +340,7 @@ export function buildSlides(data: DeckData): Slide[] {
           ]}
         />
       ),
-      notes: <Fill template={s.s8.notes} slots={{ step: note(TOOL_KEY, demo.step_reference) }} />,
+      notes: <Fill template={s.s8.notes} slots={{ step: note(TOOL_KEY, demo.step_reference), agency: demo.agency }} />,
     },
     {
       n: 9,
@@ -385,10 +401,10 @@ export function buildSlides(data: DeckData): Slide[] {
         <div className="flex flex-col gap-3" data-showcase>
           <p className="text-body text-ink">{s.s11.point}</p>
           <p className="text-small text-ink">
-            <Fill template={s.s11.example} slots={{ project: <span className="font-mono">{s.s11.project}</span> }} />
+            <Fill template={s.s11.example} slots={{ project: <span className="font-mono">{data.showcase.project_id}</span> }} />
           </p>
           <Source>
-            <Fill template={s.s11.source} slots={{ project: <span className="font-mono">{s.s11.project}</span> }} />
+            <Fill template={s.s11.source} slots={{ project: <span className="font-mono">{data.showcase.project_id}</span> }} />
           </Source>
         </div>
       ),
@@ -420,7 +436,7 @@ export function buildSlides(data: DeckData): Slide[] {
                     <p>
                       <Fill
                         template={s.s13.checklist}
-                        slots={{ top: word("risks-per-package"), ratio: ratio(checklist, "hindsight-checklist") }}
+                        slots={{ top: word("risks-per-package"), checklist: word("checklist-size"), ratio: ratio(checklist, "hindsight-checklist") }}
                       />
                     </p>
                   )}
@@ -437,8 +453,15 @@ export function buildSlides(data: DeckData): Slide[] {
                     template={s.s13.spend}
                     slots={{
                       date: day(spend.latest ?? spend.measured_on),
-                      spent: <ResultNum result={spend} resultKey="azure-spend" value={{ written: money(spend.n ?? 0) }} />,
-                      budget: <ResultNum result={{ ...spend, n: spend.budget ?? spend.d }} resultKey="azure-spend" value={{ written: money(spend.budget ?? spend.d ?? 0) }} />,
+                      spent: <ResultNum result={spend} resultKey="azure-spend" value={{ written: money(spend.n ?? 0) }} tooltipValue={amount(spend.n ?? 0)} />,
+                      budget: (
+                        <ResultNum
+                          result={{ ...spend, n: spend.budget ?? spend.d }}
+                          resultKey="azure-spend"
+                          value={{ written: money(spend.budget ?? spend.d ?? 0) }}
+                          tooltipValue={amount(spend.budget ?? spend.d ?? 0)}
+                        />
+                      ),
                       period: <NoteNum sourceKey={SPEND_KEY} text={spend.period ?? ""} />,
                     }}
                   />
@@ -609,17 +632,17 @@ export function buildSlides(data: DeckData): Slide[] {
 // What a reviewer can open for a dimension of the rubric: screens in the app, and the dashboard when its address is set.
 function RubricOpen({ data, dimension }: { data: DeckData; dimension: string }) {
   const o = s.s15.open;
-  const plan = `/projects/P156634/procurement/northern-water-works-development-agency`;
+  const showcase = data.showcase.project_id;
   const links: Record<string, ReactNode[]> = {
     architecture: [
       <TextLink key="data" href="/data">{o.readiness}</TextLink>,
-      <TextLink key="connections" href="/projects/P130164/connections">
-        <Fill template={o.connections} slots={{ project: <span className="font-mono">{s.s11.project}</span> }} />
+      <TextLink key="connections" href={`/projects/${showcase}/connections`}>
+        <Fill template={o.connections} slots={{ project: <span className="font-mono">{showcase}</span> }} />
       </TextLink>,
     ],
     method: [<TextLink key="workspace" href={`/packages/${data.demo.step_reference}`}>{o.workspace}</TextLink>],
     domain: [
-      <TextLink key="check" href={plan}>{o.checkPlan}</TextLink>,
+      <TextLink key="check" href={data.demo.plan_href}>{o.checkPlan}</TextLink>,
       <TextLink key="data" href="/data">{o.readiness}</TextLink>,
     ],
     operations: data.urls.dashboard ? [<ExternalLink key="dashboard" href={data.urls.dashboard}>{o.dashboard}</ExternalLink>] : [],

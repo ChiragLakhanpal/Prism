@@ -22,6 +22,7 @@ import { FIGURES, SLOTS, type Slot } from "../figures/registry";
 import { deckCopy, figureCopy } from "./copy";
 import { loadDeck, type DeckData } from "./data";
 import { buildSlides, type Mode, type Slide } from "./slides";
+import { slideInAddress, type DeckView } from "./view";
 
 const CANVAS = { width: 960, height: 540 };
 const PRESENT = "(min-width: 63rem) and (min-height: 40.25rem)";
@@ -29,18 +30,6 @@ const CHANNEL = "strata-deck";
 const GHOST =
   "inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-pill border-2 border-transparent px-4 text-button text-primary " +
   "transition-paint duration-150 select-none hover:bg-tint-hover active:bg-tint active:text-primary-pressed";
-
-export type DeckView = { kind: "slides"; n: number | null } | { kind: "page" } | { kind: "notes" };
-
-// Which part of the deck an address under /present names, or null for an address that is not the deck's.
-export function deckView(pathname: string): DeckView | null {
-  const path = pathname.replace(/\/+$/, "");
-  if (path === "/present") return { kind: "slides", n: null };
-  if (path === "/present/page") return { kind: "page" };
-  if (path === "/present/notes") return { kind: "notes" };
-  const match = /^\/present\/(\d{1,4})$/.exec(path);
-  return match ? { kind: "slides", n: Number(match[1]) } : null;
-}
 
 const clampSlide = (n: number, total: number) => Math.min(Math.max(n, 1), total);
 const counter = (n: number, total: number) => deckCopy.counter(String(n), String(total));
@@ -89,7 +78,9 @@ export function DeckApp({ view }: { view: DeckView }) {
   const slides = buildSlides(data);
   if (view.kind === "notes") return <NotesView slides={slides} />;
   if (view.kind === "page" || !big) return <ReadingView slides={slides} data={data} page={view.kind === "page"} big={big} />;
-  return <Presentation slides={slides} data={data} start={view.n ?? 1} />;
+  // The slide the address shows now, which presentation mode keeps current, so a window that shrinks to the reading
+  // view and grows again comes back to the same slide.
+  return <Presentation slides={slides} data={data} start={slideInAddress() ?? 1} />;
 }
 
 // The stage at its final size, with the empty slide's border and footer, while the deck's data arrive.
@@ -518,8 +509,10 @@ function ReadingView({ slides, data, page, big }: { slides: Slide[]; data: DeckD
   const total = slides.length;
   useEffect(() => {
     document.title = deckCopy.readingTitle;
+    // The section the hash names, or else the slide the address names (/present/{n}), as presentation mode left it.
     const id = decodeURIComponent(window.location.hash.slice(1));
-    const target = id ? document.getElementById(id) : null;
+    const at = slideInAddress();
+    const target = id ? document.getElementById(id) : at && at > 1 ? document.getElementById(`slide-${Math.min(at, total)}`) : null;
     target?.scrollIntoView();
   }, []);
   return (

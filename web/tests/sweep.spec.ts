@@ -114,6 +114,43 @@ const ROUTES: [string, string][] = [
   ["/projects/130164", "main h1"],
 ];
 
+// Ticket 47: the app's other pages, which the P-code and label checks above do not cover, opened only to show that
+// none of them links to the deck either. Each opens with the recordings and the ready marker its own spec uses, so
+// the page is the one that spec checks: the Timeline tab (timeline.spec.ts), Passage reports and Judging
+// (retrieval-pages.spec.ts), Check my plan and an upload's check (uploads.spec.ts), a package planned from a sentence
+// (planned-package.spec.ts), a reload of the writing page (drafts.spec.ts) and the not-found page (routes.spec.ts).
+const PLANNED = "pkg-000000000001";
+const PASSAGE_GROUP = "grp-6fa04e510789";
+const JUDGING_QUERY = "nq-rural-works-delays";
+const PLANNED_COMPARABLES = "/api/comparables?category=Works&country=KE&method=Request+for+";
+
+async function deckOnlyRoutes(): Promise<[string, string, Record<string, Answer>][]> {
+  const file = async (name: string) => ({ body: await recorded(name) });
+  const reviewer = { "/api/lessons/me": await file("retrieval-me-passage-reviewer-waiting.json") };
+  const judge = { "/api/lessons/me": await file("retrieval-me-judge-after.json") };
+  const officer = { "/api/me": await file("me-officer.json") };
+  return [
+    ["/projects/P130164/timeline", "[data-timeline=ready]", { "/api/projects/P130164/timeline": await file("timeline-p130164.json") }],
+    ["/lessons/reports", "[data-reports-lead]", { ...reviewer, "/api/lessons/page": await file("lessons-page-empty.json"), "/api/passage-reports": await file("passage-reports.json") }],
+    [`/lessons/reports/${PASSAGE_GROUP}`, `[data-report-page="${PASSAGE_GROUP}"]`, { ...reviewer, [`/api/passage-reports/${PASSAGE_GROUP}`]: await file("passage-report.json") }],
+    ["/lessons/judging", "[data-judging=ready]", { ...judge, "/api/judging/queries": await file("judging-queries.json") }],
+    [`/lessons/judging/${JUDGING_QUERY}`, `[data-judging-query="${JUDGING_QUERY}"]`, { ...judge, [`/api/judging/queries/${JUDGING_QUERY}`]: await file("judging-query.json") }],
+    ["/packages/check", "[data-upload-card]", { ...officer, "/api/uploads/form": await file("uploads-form-officer.json") }],
+    ["/packages/uploads/upl-000000000001", "[data-upload-check-page=ready]", { ...officer, "/api/uploads/upl-000000000001": await file("upload-check-nwwda.json") }],
+    // A reload of the reading page goes to the Packages tab.
+    ["/packages/new", "[data-box-band] [data-placeholder]", { "/api/planned-packages": await file("planned-packages-empty.json") }],
+    [`/packages/${PLANNED}`, "[data-planned-package]:not([data-planned-package=loading])", {
+      [`/api/planned-packages/${PLANNED}`]: await file("planned-package-rural-roads.json"),
+      [`/api/planned-packages/${PLANNED}/risks`]: await file("risks-planned-rural-roads.json"),
+      [`/api/planned-packages/${PLANNED}/steps`]: await file("steps-planned-rural-roads.json"),
+      [`${PLANNED_COMPARABLES}Bids`]: await file("comparables-planned-works-rfb-ke.json"),
+      [`${PLANNED_COMPARABLES}Quotations`]: await file("comparables-planned-works-rfq-ke.json"),
+    }],
+    [`/drafts/new?kind=review_notes&pid=P156634&agency=northern-water-works-development-agency&version=2026-10-09`, "[data-draft-new=none]", {}],
+    ["/not-a-page", "main h1", {}],
+  ];
+}
+
 test("every P-code on every route is a link to its project page, with the drawer opened from a citation", async ({ page }) => {
   test.setTimeout(60_000);
   await page.setViewportSize({ width: 1440, height: 900 });
@@ -153,6 +190,17 @@ test("every P-code on every route is a link to its project page, with the drawer
   await page.getByRole("button", { name: "Menu" }).click();
   await expect(page.getByRole("button", { name: "Menu" })).toHaveAttribute("aria-expanded", "true");
   toDeck.push(...(await deckLinks(page)).map((link) => `Menu: ${link}`));
+
+  // The pages the P-code sweep does not open, each with its own recordings: no link to the deck there either.
+  await page.setViewportSize({ width: 1440, height: 900 });
+  const recordings = await everyRecording();
+  for (const [path, ready, answers] of await deckOnlyRoutes()) {
+    await page.unrouteAll();
+    await mockApi(page, { ...recordings, ...answers });
+    await page.goto(path);
+    await expect(page.locator(ready).first(), path).toBeVisible();
+    toDeck.push(...(await deckLinks(page)).map((link) => `${path}: ${link}`));
+  }
   expect(toDeck).toEqual([]);
 
   const items = readRegistry<DesignedNotBuiltRegistry>("designed_not_built.toml").items ?? [];

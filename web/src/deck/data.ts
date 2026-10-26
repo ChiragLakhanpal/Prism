@@ -37,7 +37,17 @@ export type DeckData = {
   urls: { app: string | null; dashboard: string | null; repo: string | null; deck: string | null; proposal: string | null };
   presenter: { name: string | null; date: string | null };
   designed_not_built: { key: string; name: string; route: string }[];
-  demo: { step_reference: string; comparables: ComparablesResult | null; estimate: EstimateResult | null };
+  // The demo package, its project and its plan's address (config/slice.toml [demo_plan]), and its recorded answers.
+  demo: {
+    step_reference: string;
+    project_id: string;
+    agency: string;
+    plan_href: string;
+    comparables: ComparablesResult | null;
+    estimate: EstimateResult | null;
+  };
+  // The showcase project (config/slice.toml [showcase]), whose disagreement slide 11 quotes.
+  showcase: { project_id: string };
   award_gap: { start: number; end: number } | null;
 };
 

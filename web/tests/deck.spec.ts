@@ -10,6 +10,7 @@ import { fileURLToPath } from "node:url";
 import type { Page } from "@playwright/test";
 import { copyChecker } from "../lint/copy";
 import { deckCopy, figureCopy } from "../src/deck/copy";
+import type { DeckData } from "../src/deck/data";
 import { formatDate } from "../src/lib/format";
 import { scan } from "./axe";
 import { footerSentence } from "./design-md";
@@ -25,6 +26,9 @@ async function serveDeck(page: Page, file = "deck-data.json", status = 200) {
   const body = await recorded(file);
   await page.route("**/deck/data.json", (route) => route.fulfill({ status, contentType: "application/json", body }));
 }
+
+const serveData = (page: Page, data: DeckData) =>
+  page.route("**/deck/data.json", (route) => route.fulfill({ contentType: "application/json", body: JSON.stringify(data) }));
 
 async function present(page: Page, n = 1, size = { width: 1440, height: 900 }) {
   await serveDeck(page);
@@ -110,6 +114,12 @@ test("arrow keys, Page Up and Down, Home and End move the slides, the address fo
   // No single-letter shortcut: n does nothing.
   await page.keyboard.press("n");
   await expect(page.locator("section[data-slide='14']")).toBeVisible();
+  // A window that drops to the reading view and grows again keeps the slide, and the reading view opens at it.
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(page.locator("[data-reading-slide='14']")).toBeInViewport();
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await expect(page.locator("section[data-slide='14']")).toBeVisible();
+  expect(new URL(page.url()).pathname).toBe("/present/14");
 });
 
 test("the speaker notes open in their own window and follow the deck, and the table twin swaps in on a chart slide", async ({ page, context }) => {
@@ -133,10 +143,8 @@ test("the speaker notes open in their own window and follow the deck, and the ta
   await expect(page.locator("section[data-slide='9']")).toBeVisible();
 });
 
-test("the number check passes on every slide and its speaker notes, and fails a number planted in one", async ({ page }) => {
-  await serveDeck(page);
-  await page.setViewportSize({ width: 1440, height: 900 });
-  await page.goto("/present/page");
+// Every slide and its notes as the reading view shows them, which the page has open at /present/page.
+async function readingPieces(page: Page): Promise<Record<string, string>> {
   await expect(page.locator("[data-reading-slide]")).toHaveCount(TOTAL);
   const pieces: Record<string, string> = {};
   for (let n = 1; n <= TOTAL; n += 1) {
@@ -148,14 +156,100 @@ test("the number check passes on every slide and its speaker notes, and fails a 
     });
     pieces[`Slide ${n}, notes`] = await section.locator("[data-notes]").evaluate((element) => element.outerHTML);
   }
+  return pieces;
+}
+
+// Every key a number is bound to in these pieces of HTML. A chart that draws two answers names both, with a space.
+const sourceKeys = (pieces: Record<string, string>) => [
+  ...new Set(Object.values(pieces).flatMap((html) => [...html.matchAll(/data-source-key="([^"]*)"/g)].flatMap((found) => found[1].split(/\s+/)))),
+];
+
+// The keys the deck's data does not hold: a result the snapshot does not carry, a setting, a dimension of the rubric
+// or a tool that is not one of the demo package's two recorded answers.
+function unknownKeys(keys: string[], data: DeckData): string[] {
+  const dimensions = new Set(data.rubric.dimensions.map((dimension) => dimension.key));
+  const known = (key: string) => {
+    const [kind, name] = [key.slice(0, key.indexOf(":")), key.slice(key.indexOf(":") + 1)];
+    if (kind === "r") return name in data.results;
+    if (kind === "s") return name in data.settings;
+    if (kind === "rubric") return dimensions.has(name);
+    return key === "tool:find_comparables" || key === "tool:estimate_time";
+  };
+  return keys.filter((key) => !known(key));
+}
+
+test("the number check passes on every slide and its speaker notes, every key it reads is in the deck's data, and it fails a number planted in one", async ({ page }) => {
+  await serveDeck(page);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/present/page");
+  const pieces = await readingPieces(page);
   // Presentation mode draws the same slides on the canvas, the footer's counter included.
   await page.goto("/present/1");
   for (let n = 1; n <= TOTAL; n += 1) {
     pieces[`Slide ${n}, presented`] = await page.locator(`section[data-slide='${n}']`).evaluate((element) => element.outerHTML);
   }
   expect(numberCheck(pieces)).toEqual([]);
+  const keys = sourceKeys(pieces);
+  const data = JSON.parse(await recorded("deck-data.json")) as DeckData;
+  expect(keys).toEqual(expect.arrayContaining(["r:benchmark-passed", "s:check-count", "s:checklist-size", "rubric:architecture", "tool:find_comparables"]));
+  expect(unknownKeys(keys, data)).toEqual([]);
+  expect(unknownKeys(["r:not-a-result", "s:check-count", "tool:find_everything"], data)).toEqual(["r:not-a-result", "tool:find_everything"]);
   const planted = { ...pieces, "Slide 5": pieces["Slide 5"].replace("</h2>", " across 12 countries</h2>") };
   expect(numberCheck(planted).map((found) => [found.where, found.number])).toEqual([["Slide 5", "12"]]);
+});
+
+test("the deck the App serves says on each slide which number is not measured yet, and passes the number check", async ({ page }) => {
+  // web/public/deck/data.json, built from the committed snapshot: until the workspace pull, no result is measured
+  // and the demo package's answers are not recorded. Each slide that reads one says so in its own words.
+  const committed = readFileSync(new URL("../public/deck/data.json", import.meta.url), "utf8");
+  const data = JSON.parse(committed) as DeckData;
+  await serveData(page, data);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/present/page");
+  const pieces = await readingPieces(page);
+  const s = deckCopy.slides;
+  const unmeasured: [boolean, number, string][] = [
+    [!data.results.passages.measured, 5, s.s5.passagesNone],
+    [!data.results["award-rows-by-year"].measured, 7, s.s7.titleNone],
+    [!data.demo.comparables, 8, s.s8.titleNone],
+    [!data.results["benchmark-passed"].measured || !data.results["must-refuse"].measured, 10, s.s10.none.split("{checks}")[0]],
+    [!data.results["hindsight-caught"].measured, 13, s.s13.titleNone],
+    [!data.results["azure-spend"].measured, 13, s.s13.noSpend],
+  ];
+  // Today all six apply; after the workspace pull, only those still not measured.
+  for (const [, n, sentence] of unmeasured.filter(([missing]) => missing)) {
+    await expect(page.locator(`[data-reading-slide='${n}']`), `slide ${n}`).toContainText(sentence);
+  }
+  expect(numberCheck(pieces)).toEqual([]);
+  expect(unknownKeys(sourceKeys(pieces), data)).toEqual([]);
+});
+
+test("slide 8's time estimate names estimate_time and the day it ran, and the slide still passes the number check", async ({ page }) => {
+  const data = JSON.parse(await recorded("deck-data.json")) as DeckData;
+  // An estimate that did not abstain: KE-NWWDA-229129's recorded answer puts the middle half at 6.2 to 13.9 months,
+  // run October 23, a day after the comparable packages.
+  const answer = JSON.parse(await recorded("estimate-ke-nwwda-229129.json"));
+  data.demo.estimate = { ...answer, package: { ...answer.package, step_reference: data.demo.step_reference } };
+  await serveData(page, data);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/present/8");
+  const slide = page.locator("section[data-slide='8']");
+  const months = slide.locator("[data-source-key='tool:estimate_time']");
+  await expect(months).toHaveText(["6.2", "13.9"]);
+  for (const index of [0, 1]) {
+    await months.nth(index).getByRole("button").focus();
+    await expect(page.getByRole("tooltip")).toHaveText(
+      deckCopy.num.estimate(data.demo.step_reference, formatDate(answer.as_of, { style: "table" })),
+    );
+  }
+  // The credit row gives each answer its own day.
+  await expect(slide.locator("[data-credit-row]")).toContainText(formatDate(answer.as_of));
+  await expect(slide.locator("[data-credit-row]")).toContainText(formatDate(data.demo.comparables!.as_of));
+  const pieces = { "Slide 8, presented": await slide.evaluate((element) => element.outerHTML) };
+  expect(numberCheck(pieces)).toEqual([]);
+  const keys = sourceKeys(pieces);
+  expect(keys).toContain("tool:estimate_time");
+  expect(unknownKeys(keys, data)).toEqual([]);
 });
 
 test("below the size of the canvas the deck is a page that reflows, with each slide's notes and figure text, and the footer once", async ({ page }) => {

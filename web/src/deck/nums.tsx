@@ -4,7 +4,7 @@
 //
 // Each one sits in a <data> element whose data-source-key names where it came from: "r:<key>" for a result in the
 // measures snapshot, "s:<key>" for a setting, "rubric:<key>" for the assessment's points and "tool:<name>" for the
-// demo package's recorded answer. The number check (src/strata/proposal/numbers.py) reads a slide's HTML and accepts
+// demo package's recorded answers ("tool:find_comparables" or "tool:estimate_time"). The number check (src/strata/proposal/numbers.py) reads a slide's HTML and accepts
 // a number only inside such an element, so a number typed into a slide fails it. In the speaker notes the same
 // numbers are plain text, still inside their <data> element.
 import type { ReactNode } from "react";
@@ -15,8 +15,12 @@ import { deckCopy } from "./copy";
 import type { DeckData, DeckResult } from "./data";
 
 const words = deckCopy.num;
-// Where the demo package's numbers came from: its recorded find_comparables answer.
+// Where the demo package's numbers came from: its recorded find_comparables answer, or its recorded estimate_time
+// answer for the time estimate's months, each with the date its tool ran.
 export const TOOL_KEY = "tool:find_comparables";
+export const ESTIMATE_KEY = "tool:estimate_time";
+export type ToolKey = typeof TOOL_KEY | typeof ESTIMATE_KEY;
+const TOOL_TOOLTIP: Record<ToolKey, (step: string, date: string) => string> = { [TOOL_KEY]: words.tool, [ESTIMATE_KEY]: words.estimate };
 const day = (iso: string | undefined) => (iso ? formatDate(iso, { style: "table" }) : "");
 const whole = (value: number) => numText({ value, options: { compact: false } });
 
@@ -36,12 +40,13 @@ function resultRows(result: DeckResult) {
 }
 
 // A number from a result in the measures snapshot. value is how it is written; the tooltip counts what the
-// result counts, from its own numerator and denominator.
-export function ResultNum({ result, resultKey, value }: { result: DeckResult; resultKey: string; value: NumValue }) {
+// result counts, from its own numerator and denominator. tooltipValue is the number as the tooltip writes it before
+// the result's noun, where value carries a unit of its own, as "US$7.80" does before "US dollars".
+export function ResultNum({ result, resultKey, value, tooltipValue }: { result: DeckResult; resultKey: string; value: NumValue; tooltipValue?: string }) {
   const tooltip =
     result.d !== undefined && result.d !== null && result.n !== undefined && result.n !== null && "part" in value
       ? words.ratio(whole(result.n), whole(result.d), result.noun, result.kind, day(result.measured_on))
-      : words.count(numText(value), result.noun, result.kind, day(result.measured_on));
+      : words.count(tooltipValue ?? numText(value), result.noun, result.kind, day(result.measured_on));
   return (
     <Bound sourceKey={`r:${resultKey}`}>
       <MeasureNum
@@ -75,11 +80,12 @@ export function SettingWord({ data, settingKey, capital = false }: { data: DeckD
   );
 }
 
-// A number the demo package's recorded tool answer gave, such as its count of comparable packages.
-export function ToolNum({ step, date, value }: { step: string; date: string; value: NumValue }) {
+// A number one of the demo package's recorded tool answers gave: its count of comparable packages from
+// find_comparables, or the time estimate's months from estimate_time. date is the day that tool ran.
+export function ToolNum({ step, date, value, sourceKey = TOOL_KEY }: { step: string; date: string; value: NumValue; sourceKey?: ToolKey }) {
   return (
-    <Bound sourceKey={TOOL_KEY}>
-      <MeasureNum value={value} tooltip={words.tool(step, day(date))} />
+    <Bound sourceKey={sourceKey}>
+      <MeasureNum value={value} tooltip={TOOL_TOOLTIP[sourceKey](step, day(date))} />
     </Bound>
   );
 }

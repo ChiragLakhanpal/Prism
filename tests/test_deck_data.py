@@ -43,7 +43,12 @@ def test_with_no_snapshot_every_result_is_not_measured_and_the_registries_still_
     # The verifier runs six checks on every sentence (GLOSSARY.md, "Six checks").
     assert data["settings"]["check-count"]["value"] == 6
     assert data["checks"] == [1, 2, 3, 4, 5, 6]
-    assert data["demo"] == {"step_reference": "KE-NWWDA-541055-CW-RFB", "comparables": None, "estimate": None}
+    # config/slice.toml [demo_plan] and [showcase]: the demo package in NWWDA's plan, and P130164.
+    assert data["demo"] == {"step_reference": "KE-NWWDA-541055-CW-RFB", "project_id": "P156634",
+                            "agency": "Northern Water Works Development Agency",
+                            "plan_href": "/projects/P156634/procurement/northern-water-works-development-agency",
+                            "comparables": None, "estimate": None}
+    assert data["showcase"] == {"project_id": "P130164"}
 
 
 def test_a_result_carries_its_measured_values_and_what_the_register_says_it_counts(fixture_deck):
@@ -72,6 +77,11 @@ def test_a_design_count_names_the_registry_it_counts_and_a_planning_choice_names
     assert settings["rollout-phases"]["value"] == 3
     # docs/PLAN.md section 10: blamed risks are coded by two people, at five risks per package.
     assert (settings["hindsight-coders"]["value"], settings["risks-per-package"]["value"]) == (2, 5)
+    # The spec's hindsight test: the baseline is "a checklist of the sector's five commonest risks", a setting of its
+    # own (hindsight.checklist_size), not the risk table's length.
+    assert settings["checklist-size"] == {"value": 5, "name": "Risks on the hindsight test's checklist, the sector's "
+                                          "commonest", "where": "config/thresholds.toml, hindsight.checklist_size",
+                                          "kind": "Setting"}
 
 
 def test_the_rubric_points_are_the_assessments():
@@ -83,10 +93,14 @@ def test_the_rubric_points_are_the_assessments():
     assert rubric["source"] == "docs/assessment.md"
 
 
-def test_the_award_gap_is_the_fiscal_years_between_the_two_awards_datasets(fixture_deck):
+def test_the_award_gap_is_the_known_gap_and_the_rows_by_year_must_agree(fixture_deck):
     # docs/proposal/results.toml, gap-contracts: neither awards dataset covers fiscal 2017 to 2019.
     assert fixture_deck["award_gap"] == {"start": 2017, "end": 2019}
     assert deck.build(None, None)["award_gap"] is None
+    rows = fixture_deck["results"]["award-rows-by-year"]
+    stray = {**rows, "series": [*rows["series"], {**rows["series"][-1], "fiscal_year": 2018}]}
+    with pytest.raises(deck.DeckError, match="fy2017_2019"):
+        deck._award_gap(stray)
 
 
 def test_the_demo_package_is_the_one_the_slice_names_with_its_recorded_answers(fixture_deck):
