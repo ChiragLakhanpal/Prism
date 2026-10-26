@@ -56,6 +56,78 @@ def test_a_script_that_runs_the_answer_stream_installs_the_language_detector(scr
     assert pinned("py3langid") in inline_dependencies(ROOT / script)
 
 
+def canonical(name: str) -> str:
+    return re.sub(r"[-_.]+", "-", name).lower()
+
+
+def installed_by(requirements: list[str]) -> set[str]:
+    """Every distribution `uv run --script` installs for these requirements: each one and what it requires in turn,
+    read from the metadata of the versions this checkout's environment holds."""
+    from importlib import metadata
+
+    from packaging.requirements import Requirement
+
+    found, waiting = set(), [Requirement(line) for line in requirements]
+    while waiting:
+        requirement = waiting.pop()
+        if canonical(requirement.name) in found:
+            continue
+        found.add(canonical(requirement.name))
+        try:
+            needs = metadata.requires(requirement.name) or []
+        except metadata.PackageNotFoundError:  # a package only the script installs, such as Application Insights'
+            needs = []
+        waiting += [need for need in map(Requirement, needs) if need.marker is None or need.marker.evaluate({"extra": ""})]
+    return found
+
+
+# Loads a script as uv runs it, then what its app loads to answer: the server, every tool's adapter and the stream's
+# language detector (ticket 42), and prints every module they imported.
+LOADS = """
+import importlib, importlib.util, json, sys, tomllib
+root, script = sys.argv[1], sys.argv[2]
+sys.path[:0] = [root + "/src", root + "/ops/agent"]
+before = set(sys.modules)
+spec = importlib.util.spec_from_file_location("script", root + "/" + script)
+spec.loader.exec_module(importlib.util.module_from_spec(spec))
+import strata.server.app
+from strata.config import load_thresholds
+from strata.knowledge import language
+for tool in tomllib.loads(open(root + "/config/tools.toml").read())["tools"].values():
+    importlib.import_module(tool["adapter"].split(":")[0])
+language.detect("Why were works contracts in P130164 advertised again?", load_thresholds())
+print(json.dumps(sorted(set(sys.modules) - before)))
+"""
+
+
+@pytest.mark.parametrize("script", ANSWER_STREAM_SCRIPTS)
+def test_a_script_that_runs_the_answer_stream_installs_every_package_its_app_imports(script):
+    """The must-refuse check and the showcase check build the app in the uv environment their inline list makes, so
+    each package the app imports to answer must be one that list installs; ticket 38's uploads brought defusedxml
+    into the server's imports, which neither list named."""
+    import subprocess
+    from importlib import metadata
+
+    loaded = json.loads(subprocess.run([sys.executable, "-c", LOADS, str(ROOT), script], check=True,
+                                       capture_output=True, text=True).stdout)
+    owners, files = metadata.packages_distributions(), {}
+
+    def owner(module: str) -> set[str]:
+        """The distribution a module comes from. Where several share its top-level name, as opentelemetry's api, sdk
+        and semantic conventions do, the one whose files hold it."""
+        names = owners.get(module.split(".")[0], [])
+        if len(names) < 2:
+            return {canonical(name) for name in names}
+        path = module.replace(".", "/")
+        return {canonical(name) for name in names
+                if {f"{path}.py", f"{path}/__init__.py"} & files.setdefault(name, {str(f) for f in metadata.files(name)})}
+
+    imported = set().union(*(owner(module) for module in loaded if module.split(".")[0] not in sys.stdlib_module_names))
+
+    assert "fastapi" in imported and "py3langid" in imported  # the scan saw the server and the detector
+    assert sorted(imported - installed_by(inline_dependencies(ROOT / script))) == []
+
+
 # ── The env file reaches every tool ──────────────────────────────────────
 
 class SearchesThenAnswers:

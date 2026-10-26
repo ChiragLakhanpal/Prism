@@ -1,7 +1,7 @@
 # /// script
 # requires-python = ">=3.12,<3.14"
 # dependencies = ["fastapi==0.161.1", "httpx==0.28.1", "duckdb==2.0.0", "sqlglot==30.24.0", "pytz==2026.5",
-#                 "pyyaml==6.0.3", "opentelemetry-api==1.45.1", "py3langid==0.3.0"]
+#                 "pyyaml==6.0.3", "opentelemetry-api==1.45.1", "py3langid==0.3.0", "defusedxml==0.7.1"]
 # ///
 """Ask every must-refuse question of the live Foundry agent and check each refusal: ticket 24's live check.
 
