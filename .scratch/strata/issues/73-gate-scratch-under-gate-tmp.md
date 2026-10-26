@@ -6,15 +6,16 @@ Read first: `gates/offline.py` (`stop`, `run_step`, `main`); `gates/steps.toml` 
 
 **Blocked by:** None (can start immediately)
 
-**Status:** in-progress
+**Status:** done
 **Area:** ops
 **Phase:** P2
 **Design review:** no
 
-- [ ] `pyproject.toml` sets `tmp_path_retention_policy = "failed"`, and each pytest step in `gates/steps.toml` passes `--basetemp .gate-tmp/<lane>` with a folder of its own; `tests/test_gate.py` fails a steps file that breaks either rule, and `.gitignore` lists `.gate-tmp/`.
-- [ ] The gate makes `.gate-tmp/` before a step that names it runs, proven by a throwaway repo whose only step passes when the folder exists; a full gate run on this change leaves no new folder in `$TMPDIR/pytest-of-<user>` and at most one folder per lane under `.gate-tmp/`.
-- [ ] README's gate section says where the gate's pytest scratch lives, that a passing test's folder is removed at once, and how to keep every folder for one run.
+- [x] `pyproject.toml` sets `tmp_path_retention_policy = "failed"`, and each pytest step in `gates/steps.toml` passes `--basetemp .gate-tmp/<lane>` with a folder of its own; `tests/test_gate.py` fails a steps file that breaks either rule, and `.gitignore` lists `.gate-tmp/`.
+- [x] The gate makes `.gate-tmp/` before a step that names it runs, proven by a throwaway repo whose only step passes when the folder exists; a full gate run on this change leaves no new folder in `$TMPDIR/pytest-of-<user>` and at most one folder per lane under `.gate-tmp/`.
+- [x] README's gate section says where the gate's pytest scratch lives, that a passing test's folder is removed at once, and how to keep every folder for one run.
 
 ## Comments
 
 - October 26, 2026, orchestrator: opened at 02:40 PDT after the disk filled overnight and stopped every session. Built by the orchestrator itself in the worktree `.claude/worktrees/orch-73`, because no wave can run safely until it lands. The lasting fix for the orphaned Playwright servers stays with ticket 56 or 57; this ticket is only the pytest scratch.
+- October 26, 2026, orchestrator (merger): built in `.claude/worktrees/orch-73` (7c55ab30) and merged into build/strata as 88334d55, with the gate green in the worktree (116.1 seconds) and again at the merge. Evidence: `tests/test_gate.py` holds the scratch checks (five bad edits of the app step caught; the gate makes `.gate-tmp/` for a step that names it and not otherwise); after the worktree's gate run `.gate-tmp/python` held 76 entries (575 MB, the session fixtures' folders), `.gate-tmp/ops` 6 and `.gate-tmp/app` 0, and pytest's shared temporary folder still held 301 run folders, none new. One more change: `tests/test_structured_sources.py` escapes the quote in its scratch path the Databricks way, since the repo's path holds one and the strict xfail there wants an AssertionError, not an EngineError.
