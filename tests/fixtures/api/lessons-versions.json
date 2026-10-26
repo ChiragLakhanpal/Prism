@@ -1,0 +1,233 @@
+{
+  "id": "versions:lesson-e903b07ad1:1:2",
+  "kind": "versions",
+  "tool": null,
+  "stratum": "What",
+  "short_name": null,
+  "row": {
+    "evidence_id": "versions:lesson-e903b07ad1:1:2",
+    "lesson_id": "lesson-e903b07ad1",
+    "current": 2,
+    "tier": "narrowed",
+    "versions": [
+      {
+        "version": 1,
+        "statement": "Base works estimates on market rates to avoid rebidding",
+        "risk_factors": [
+          {
+            "key": "cost_estimates",
+            "label": "Cost estimates below market rates"
+          }
+        ],
+        "stage": {
+          "key": "procurement_planning",
+          "label": "Procurement planning"
+        },
+        "kind": {
+          "key": "did_not_work",
+          "label": "What didn't work"
+        },
+        "edition": {
+          "key": "guidelines_2011",
+          "name": "the World Bank's Procurement Guidelines of January 2011",
+          "short": "Procurement Guidelines, January 2011"
+        },
+        "categories": [],
+        "methods": [],
+        "sector": "Transportation",
+        "decided_on": "2026-10-27",
+        "state": "current",
+        "change_kind": "added",
+        "reason": null,
+        "evidence": [
+          {
+            "evidence_id": "strata.gold.passage:31525018/v1/54",
+            "passage_id": "31525018/v1/54",
+            "role": "source",
+            "doc_type": "Implementation Completion and Results Report",
+            "doc_short": "ICR",
+            "pid": "P130164",
+            "project_name": "Rajasthan Road Sector Modernization Project",
+            "date": "2019-10-10",
+            "report_number": "ICR4803",
+            "locator": {
+              "kind": "paragraph",
+              "text": "54"
+            },
+            "page": 23,
+            "quote": "108 of 328 cases had to go through rebidding.",
+            "restated_by_ieg": false,
+            "highlight": [
+              149,
+              194
+            ]
+          },
+          {
+            "evidence_id": "strata.gold.passage:34056616/v2/10.b",
+            "passage_id": "34056616/v2/10.b",
+            "role": "restatement",
+            "doc_type": "Implementation Completion Report Review",
+            "doc_short": "ICR Review",
+            "pid": "P130164",
+            "project_name": "Rajasthan Road Sector Modernization Project",
+            "date": "2023-05-04",
+            "report_number": "ICRR0021929",
+            "locator": {
+              "kind": "section",
+              "text": "10.b"
+            },
+            "page": 13,
+            "quote": "The works contract estimates were not based on market rate. This resulted in rebidding of one-third of the contracts (108 out of 328) (ICR para 54).",
+            "restated_by_ieg": true,
+            "highlight": [
+              812,
+              960
+            ]
+          }
+        ],
+        "ieg_status": "restated",
+        "review_date": null
+      },
+      {
+        "version": 2,
+        "statement": "Base works cost estimates on current market rates to avoid rebidding",
+        "risk_factors": [
+          {
+            "key": "cost_estimates",
+            "label": "Cost estimates below market rates"
+          }
+        ],
+        "stage": {
+          "key": "procurement_planning",
+          "label": "Procurement planning"
+        },
+        "kind": {
+          "key": "did_not_work",
+          "label": "What didn't work"
+        },
+        "edition": {
+          "key": "guidelines_2011",
+          "name": "the World Bank's Procurement Guidelines of January 2011",
+          "short": "Procurement Guidelines, January 2011"
+        },
+        "categories": [
+          {
+            "key": "Works",
+            "label": "Works"
+          }
+        ],
+        "methods": [
+          {
+            "key": "Request for Bids",
+            "label": "Request for Bids (RFB)"
+          }
+        ],
+        "sector": "Transportation",
+        "decided_on": "2026-10-29",
+        "state": "current",
+        "change_kind": "wording",
+        "reason": "Current market rates is what the 2025 rules ask for.",
+        "evidence": [
+          {
+            "evidence_id": "strata.gold.passage:31525018/v1/54",
+            "passage_id": "31525018/v1/54",
+            "role": "source",
+            "doc_type": "Implementation Completion and Results Report",
+            "doc_short": "ICR",
+            "pid": "P130164",
+            "project_name": "Rajasthan Road Sector Modernization Project",
+            "date": "2019-10-10",
+            "report_number": "ICR4803",
+            "locator": {
+              "kind": "paragraph",
+              "text": "54"
+            },
+            "page": 23,
+            "quote": "108 of 328 cases had to go through rebidding.",
+            "restated_by_ieg": false,
+            "highlight": [
+              149,
+              194
+            ]
+          },
+          {
+            "evidence_id": "strata.gold.passage:34056616/v2/10.b",
+            "passage_id": "34056616/v2/10.b",
+            "role": "restatement",
+            "doc_type": "Implementation Completion Report Review",
+            "doc_short": "ICR Review",
+            "pid": "P130164",
+            "project_name": "Rajasthan Road Sector Modernization Project",
+            "date": "2023-05-04",
+            "report_number": "ICRR0021929",
+            "locator": {
+              "kind": "section",
+              "text": "10.b"
+            },
+            "page": 13,
+            "quote": "The works contract estimates were not based on market rate. This resulted in rebidding of one-third of the contracts (108 out of 328) (ICR para 54).",
+            "restated_by_ieg": true,
+            "highlight": [
+              812,
+              960
+            ]
+          }
+        ],
+        "ieg_status": "restated",
+        "review_date": null
+      }
+    ],
+    "a": 1,
+    "b": 2,
+    "statement_a": "Base works estimates on market rates to avoid rebidding",
+    "statement_b": "Base works cost estimates on current market rates to avoid rebidding",
+    "changes": [
+      {
+        "field": "statement",
+        "was": "Base works estimates on market rates to avoid rebidding",
+        "now": "Base works cost estimates on current market rates to avoid rebidding",
+        "was_ranges": [],
+        "now_ranges": [
+          [
+            11,
+            15
+          ],
+          [
+            29,
+            36
+          ]
+        ]
+      },
+      {
+        "field": "categories",
+        "was": "",
+        "now": "Works",
+        "was_ranges": [],
+        "now_ranges": [
+          [
+            0,
+            5
+          ]
+        ]
+      },
+      {
+        "field": "methods",
+        "was": "",
+        "now": "Request for Bids (RFB)",
+        "was_ranges": [],
+        "now_ranges": [
+          [
+            0,
+            22
+          ]
+        ]
+      }
+    ],
+    "decided_on": "2026-10-29",
+    "retired_on": null,
+    "retired_as": null,
+    "reason": "Current market rates is what the 2025 rules ask for.",
+    "between": []
+  },
+  "highlights": []
+}

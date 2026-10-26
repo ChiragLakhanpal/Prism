@@ -1,0 +1,192 @@
+{
+  "as_of": "2026-10-30",
+  "page": 1,
+  "pages": 1,
+  "page_size": 8,
+  "total": 1,
+  "of": 2,
+  "from": 1,
+  "to": 1,
+  "status": "current",
+  "filters": {
+    "stage": "contract_award",
+    "method": null,
+    "sector": null,
+    "status": null
+  },
+  "narrowed": true,
+  "unknown_filter": false,
+  "shown": null,
+  "options": {
+    "stage": [
+      {
+        "key": "procurement_planning",
+        "label": "Procurement planning"
+      },
+      {
+        "key": "tender_design",
+        "label": "Tender design and packaging"
+      },
+      {
+        "key": "bidding_and_evaluation",
+        "label": "Bidding and evaluation"
+      },
+      {
+        "key": "contract_award",
+        "label": "Contract award"
+      },
+      {
+        "key": "contract_management",
+        "label": "Contract management"
+      }
+    ],
+    "method": [
+      {
+        "key": "Request for Bids",
+        "label": "Request for Bids (RFB)"
+      },
+      {
+        "key": "Request for Quotations",
+        "label": "Request for Quotations (RFQ)"
+      },
+      {
+        "key": "Request for Proposals",
+        "label": "Request for Proposals (RFP)"
+      },
+      {
+        "key": "Direct Selection",
+        "label": "Direct selection"
+      }
+    ],
+    "sector": [
+      {
+        "key": "Transportation",
+        "label": "Transportation"
+      }
+    ],
+    "status": [
+      {
+        "key": "current"
+      },
+      {
+        "key": "rechecking"
+      },
+      {
+        "key": "retired"
+      }
+    ]
+  },
+  "count": [
+    {
+      "text": "Showing "
+    },
+    {
+      "number": 1,
+      "capital": false
+    },
+    {
+      "text": " of "
+    },
+    {
+      "number": 2
+    },
+    {
+      "text": " "
+    },
+    {
+      "text": "current lessons"
+    },
+    {
+      "text": ", newest first."
+    }
+  ],
+  "can_recheck": false,
+  "limits": {
+    "reason_max_chars": 500
+  },
+  "waiting": null,
+  "lessons": [
+    {
+      "lesson_id": "lesson-cfdf000a46",
+      "version": 2,
+      "statement": "Put forest and other permits in place before awarding contracts",
+      "risk_factors": [
+        {
+          "key": "permits_before_award",
+          "label": "Land, forest and other permits not in place before award"
+        }
+      ],
+      "stage": {
+        "key": "contract_award",
+        "label": "Contract award"
+      },
+      "kind": {
+        "key": "did_not_work",
+        "label": "What didn't work"
+      },
+      "edition": {
+        "key": "guidelines_2011",
+        "name": "the World Bank's Procurement Guidelines of January 2011",
+        "short": "Procurement Guidelines, January 2011"
+      },
+      "categories": [],
+      "methods": [],
+      "sector": "Transportation",
+      "pid": "P130164",
+      "ieg_status": "ieg_lesson",
+      "review_date": null,
+      "decided_on": "2026-10-29",
+      "state": "current",
+      "rechecking_since": null,
+      "retired": null,
+      "region": "South Asia",
+      "quote": "forest and other administrative clearances need to be in place prior to awarding contracts",
+      "evidence": [
+        {
+          "evidence_id": "strata.gold.passage:34056616/v2/12",
+          "passage_id": "34056616/v2/12",
+          "role": "source",
+          "doc_type": "Implementation Completion Report Review",
+          "doc_short": "ICR Review",
+          "pid": "P130164",
+          "project_name": "Rajasthan Road Sector Modernization Project",
+          "date": "2023-05-04",
+          "report_number": "ICRR0021929",
+          "locator": {
+            "kind": "section",
+            "text": "12"
+          },
+          "page": 14,
+          "quote": "forest and other administrative clearances need to be in place prior to awarding contracts",
+          "restated_by_ieg": true,
+          "highlight": [
+            1555,
+            1645
+          ]
+        },
+        {
+          "evidence_id": "strata.gold.passage:31525018/v1/55",
+          "passage_id": "31525018/v1/55",
+          "role": "source",
+          "doc_type": "Implementation Completion and Results Report",
+          "doc_short": "ICR",
+          "pid": "P130164",
+          "project_name": "Rajasthan Road Sector Modernization Project",
+          "date": "2019-10-10",
+          "report_number": "ICR4803",
+          "locator": {
+            "kind": "paragraph",
+            "text": "55"
+          },
+          "page": 23,
+          "quote": "forest and other administrative clearances should have been in place prior to awarding contracts",
+          "restated_by_ieg": false,
+          "highlight": [
+            72,
+            168
+          ]
+        }
+      ]
+    }
+  ]
+}

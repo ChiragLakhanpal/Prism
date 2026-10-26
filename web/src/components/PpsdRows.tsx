@@ -17,7 +17,7 @@ import { Fragment, useId, useLayoutEffect, useRef, useState, type ReactNode } fr
 import { copy } from "../copy";
 import type { EvidenceEvent, SentenceEvent } from "../lib/answer";
 import { cx } from "../lib/cx";
-import type { Draft, DraftNote, Footnote, PpsdColumn, PpsdRow, PpsdView } from "../lib/drafts";
+import type { Draft, DraftNote, Footnote, PpsdColumn, PpsdRow } from "../lib/drafts";
 import { valueOf } from "../lib/drafts";
 import { evidenceHref, openEvidence } from "../lib/evidence";
 import { formatAmountText, formatNumber } from "../lib/format";
@@ -28,6 +28,8 @@ import { Fill } from "./Fill";
 import { fillText } from "./LessonParts";
 import type { OpenSource } from "./DraftNotes";
 import { SegmentedControl } from "./SegmentedControl";
+import { DraftRowNotice, RowChoice } from "./VersionNotice";
+import { draftTitle } from "../lib/lessonsPage";
 
 const words = copy.ppsd;
 const kind = copy.draft.kinds.ppsd_rows;
@@ -135,9 +137,11 @@ export type PpsdRowsProps = {
   ledeId: string;
   onSave: (rowKey: string, field: string, value: string | null) => Promise<boolean>;
   onForm: (form: "short" | "long") => void;
+  // Ticket 39: the draft as the server answers after its author chose for a row whose lesson changed.
+  onLesson?: (next: Draft) => void;
 };
 
-export function PpsdRows({ draft, editable, opened, open, ledeId, onSave, onForm }: PpsdRowsProps) {
+export function PpsdRows({ draft, editable, opened, open, ledeId, onSave, onForm, onLesson }: PpsdRowsProps) {
   const ppsd = draft.ppsd!;
   const [frame, width] = useWidth<HTMLDivElement>();
   const form = ppsd.forms[ppsd.form];
@@ -180,6 +184,35 @@ export function PpsdRows({ draft, editable, opened, open, ledeId, onSave, onForm
   );
   const counts = ppsd.counts;
   const long = ppsd.form === "long";
+  // Ticket 39: under a row, its version notice, or what its author chose for it (the 39 brief, section 2.4).
+  const title = draftTitle(draft.kind, draft.subject as unknown as Record<string, string | null>);
+  const canAct = Boolean(draft.lesson_can_act);
+  const done = (answer: { draft: Draft }) => onLesson?.(answer.draft);
+  const under = (row: PpsdRow): ReactNode => {
+    const notice = (draft.lesson_notices ?? []).find((one) => one.row_key === row.row_key);
+    if (notice) {
+      return (
+        <DraftRowNotice<Draft> notice={notice} draftId={draft.draft_id} draftState={draft.state} title={title} canAct={canAct && notice.can_act} author={draft.author.name} onDone={done} />
+      );
+    }
+    const updated = (draft.lesson_updated ?? []).filter((one) => one.row_key === row.row_key).at(-1);
+    if (updated) {
+      const earlier = (updated.earlier ?? []).find((note) => note.key === row.cells.mitigation);
+      return (
+        <RowChoice<Draft>
+          record={updated}
+          kind="updated"
+          draftId={draft.draft_id}
+          canAct={canAct}
+          onDone={done}
+          earlierText={earlier ? earlier.sentences.map((sentence) => sentence.text).join(" ") : undefined}
+        />
+      );
+    }
+    const kept = (draft.lesson_kept ?? []).find((one) => one.row_key === row.row_key);
+    return kept ? <RowChoice<Draft> record={kept} kind="kept" draftId={draft.draft_id} canAct={canAct} onDone={done} /> : null;
+  };
+  const removed = draft.lesson_removed ?? [];
   return (
     <div ref={frame} data-ppsd-rows={ppsd.form} data-layout={table ? "table" : "blocks"}>
       {tableI.applies ? (
@@ -234,21 +267,33 @@ export function PpsdRows({ draft, editable, opened, open, ledeId, onSave, onForm
                 </tr>
               </thead>
               <tbody>
-                {rows.map((row) => (
-                  <tr key={row.row_key} id={`row-${row.row_key}`} className="border-t border-line align-top" data-ppsd-row={row.row_key}>
-                    {form.columns.map((column, index) =>
-                      index === 0 ? (
-                        <th key={column.key} scope="row" className="p-3 text-left font-normal">
-                          {cell(row, column)}
-                        </th>
-                      ) : (
-                        <td key={column.key} className="p-3">
-                          {column.filled_by === "strata" ? cell(row, column) : chip(row, column)}
-                        </td>
-                      ),
-                    )}
-                  </tr>
-                ))}
+                {rows.map((row) => {
+                  const below = under(row);
+                  return (
+                    <Fragment key={row.row_key}>
+                      <tr id={`row-${row.row_key}`} className="border-t border-line align-top" data-ppsd-row={row.row_key}>
+                        {form.columns.map((column, index) =>
+                          index === 0 ? (
+                            <th key={column.key} scope="row" className="p-3 text-left font-normal">
+                              {cell(row, column)}
+                            </th>
+                          ) : (
+                            <td key={column.key} className="p-3">
+                              {column.filled_by === "strata" ? cell(row, column) : chip(row, column)}
+                            </td>
+                          ),
+                        )}
+                      </tr>
+                      {below && (
+                        <tr data-notice-row={row.row_key}>
+                          <td colSpan={form.columns.length} className="px-3">
+                            {below}
+                          </td>
+                        </tr>
+                      )}
+                    </Fragment>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -286,12 +331,20 @@ export function PpsdRows({ draft, editable, opened, open, ledeId, onSave, onForm
                       ))}
                     </div>
                   </div>
+                  {under(row) && <div className="border-t border-line px-4" data-notice-row={row.row_key}>{under(row)}</div>}
                 </article>
               </li>
             ))}
           </ol>
         )}
       </div>
+      {removed.length > 0 && (
+        <div className="mt-3 rounded-md border border-line bg-surface" data-removed-rows>
+          {removed.map((record) => (
+            <RowChoice<Draft> key={record.row_key} record={record} kind="removed" draftId={draft.draft_id} canAct={canAct} onDone={done} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

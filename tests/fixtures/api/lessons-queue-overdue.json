@@ -142,7 +142,9 @@
               "cost_estimates"
             ],
             "stage": "procurement_planning",
-            "kind": "did_not_work"
+            "kind": "did_not_work",
+            "categories": [],
+            "methods": []
           }
         },
         "origin": {

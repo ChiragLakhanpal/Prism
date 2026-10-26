@@ -740,11 +740,53 @@ ABSTENTION = "abstention"  # what the judge calls a tool's abstention among a se
 def proven(sentence: Checked) -> bool:
     """Whether checks 1 to 3 prove a kept sentence, so check 4 needs no judge: a record or quote sentence that
     states at least one number, date or quote, all of which matched, and whose quoted words are words."""
-    claim = sentence.claim
-    if claim.kind not in ("record", "quote") or not sentence.kept:
+    return sentence.kept and _proves(sentence.claim.kind, bool(sentence.numbers or sentence.dates), sentence.quoted,
+                                     sentence.quote_found, sentence.quoted_words)
+
+
+def _proves(kind: str, states_a_value: bool, quoted: bool, quote_found: bool, quoted_words: bool) -> bool:
+    if kind not in ("record", "quote"):
         return False
-    stated = bool(sentence.numbers or sentence.dates or sentence.quoted)
-    return stated and (not sentence.quoted or (sentence.quote_found and sentence.quoted_words))
+    return (states_a_value or quoted) and (not quoted or (quote_found and quoted_words))
+
+
+def kept_counts(kept: Iterable[Mapping], removed: int, checks_run: Iterable[int],
+                evidence: Mapping[str, Mapping] | None = None, language: str = ENGLISH) -> dict:
+    """What some sentences of a saved draft add to the counts the screens show (Verdict.counts' sentences and shown),
+    read back from the kept sentences' events, with how many of theirs were removed. A draft takes a row's counts away
+    when its author updates or removes the row, and adds the rewrite's own in their place (ticket 39).
+
+    Each kept sentence is read as counts() reads it: every number and date it states matched and its quote was found,
+    or it would have been removed; proven by checks 1 to 3 as proven() says; otherwise judged, when check 4 ran; and
+    judged across two languages when a source it cites (evidence, the draft's evidence by id) is written in another
+    language than the draft."""
+    kept = list(kept)
+    run = set(checks_run)
+    counts = {"sentences": {"written": len(kept) + removed, "kept": len(kept), "removed": removed}}
+    if 4 not in run:
+        return counts
+    numbers = [mention for sentence in kept for mention in sentence.get("numbers") or ()]
+    dates = [mention for sentence in kept for mention in sentence.get("dates") or ()]
+    quoted = proven_count = judged = crossed = 0
+    for sentence in kept:
+        text, quote = sentence.get("text") or "", sentence.get("quote")
+        runs = [text[start:end] for start, end in quoted_spans(text)] + ([quote["text"]] if quote else [])
+        says_quote = bool(runs)
+        quoted += says_quote
+        words = says_quote and all(re.search(r"[^\W\d_]", run) for run in runs)
+        if _proves(sentence.get("kind") or "", bool(sentence.get("numbers") or sentence.get("dates")), says_quote,
+                   says_quote, words):
+            proven_count += 1
+            continue
+        judged += 1
+        crossed += any(_language_of(((evidence or {}).get(cited) or {}).get("row")) != language
+                       for cited in sentence.get("evidence_ids") or ())
+    shown = {"numbers": {"total": len(numbers), "matched": sum(m.get("evidence_id") is not None for m in numbers)},
+             "dates": {"total": len(dates), "matched": sum(m.get("evidence_id") is not None for m in dates)},
+             "quotes": {"total": quoted, "found": quoted}, "judged": judged, "proven": proven_count}
+    if crossed:
+        shown["cross_language"] = crossed
+    return {**counts, "shown": shown}
 
 
 def _sides(row: Mapping) -> list[str]:

@@ -423,6 +423,31 @@ def snapshot(draft: dict, say: Say) -> dict:
         "reason": (kept.get(sides.get(entry["evidence_id"])) or {}).get("reason")} for entry in draft["sources"]]}
 
 
+def lesson_rows(draft: dict, say: Say) -> list[dict]:
+    """The pack's "Lesson versions" table (ticket 39): each row that cites a lesson a lead changed or retired after
+    the version it cites, the version it cites, the lesson's version at export, and its author's choice and reason."""
+    pack = words()["files"]["pack"]
+
+    def named(entry: dict) -> str:
+        label = entry.get("row_label") or {}
+        return label.get("risk_label") or entry["row_key"]
+
+    found = []
+    for entry in draft.get("lesson_updated") or []:
+        found.append({"row": named(entry), "cited": entry["cited_version"], "current": entry["current_version"],
+                      "choice": _fill(pack["choiceUpdated"], date=say.date(entry["at"]))})
+    for entry in draft.get("lesson_kept") or []:  # retired: the lesson's version at the choice retired it
+        kept = pack["choiceKeptRow"] if entry.get("retired") else pack["choiceKept"]
+        found.append({"row": named(entry), "cited": entry["cited_version"], "current": entry["current_version"],
+                      "choice": _fill(kept, a=entry["cited_version"], reason=entry["reason"] or "")})
+    for entry in draft.get("lesson_removed") or []:
+        found.append({"row": named(entry), "cited": entry["cited_version"], "current": entry["current_version"],
+                      "choice": _fill(pack["choiceRemoved"], date=say.date(entry["at"]))})
+    for notice in draft.get("lesson_notices") or []:
+        found.append({"row": named(notice), "cited": notice["a"], "current": notice["b"], "choice": pack["choiceNone"]})
+    return found
+
+
 def pack_csv(rows: list[dict]) -> bytes:
     """The evidence pack as a CSV. The source line's no-break space keeps "page" with its number on a page; a
     CSV has no line ends, and a search for "page 3" in a spreadsheet must find it, so it gets a plain space."""
@@ -546,6 +571,21 @@ def pack_pdf(kind: DraftKind, draft: dict, rows: list[dict], title: str, exporte
                 cells.cell(save["value"] or pack["fieldsRemoved"])
                 cells.cell(save["set_by_name"] or "")
                 cells.cell(Say.moment(iso_moment(save["set_at"])))
+    lessons = lesson_rows(draft, say)
+    if lessons:
+        pdf.ln(16)
+        text(pack["lessonsTitle"], 13, "B", "ink_heading", 6)
+        pdf.set_font("OpenSans", "", 9)
+        pdf.set_text_color(*STATE_COLORS["ink"])
+        with pdf.table(col_widths=(30, 16, 18, 36), headings_style=heading, line_height=13, text_align="LEFT",
+                       padding=4) as table:
+            header = table.row()
+            for name in pack["lessonsColumns"]:
+                header.cell(name)
+            for row in lessons:
+                cells = table.row()
+                for value in (row["row"], str(row["cited"]), str(row["current"]), row["choice"]):
+                    cells.cell(value)
     pdf.ln(16)
     text(copy["footer"], 9, color="ink_muted", gap=2)
     text(pack["dataCaveat"], 9, color="ink_muted", gap=0)
@@ -585,6 +625,7 @@ def make(kind: DraftKind, draft: dict, exporter: str | None, exported_at: dt.dat
     function(kind.word)(document, draft, words(), say)  # the kind lays out its file, its heading first
     heading = document.title
     taken = snapshot(draft, say)
+    taken["lessons"] = lesson_rows(draft, say)  # ticket 39: the rows whose lesson changed, and each choice
     named = names(kind, draft["subject"])
     files = [(named["word"], DOCX, document.bytes()),
              (named["pdf"], PDF, pack_pdf(kind, draft, taken["sources"], heading, exporter, exported_at, say)),

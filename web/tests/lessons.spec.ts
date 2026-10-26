@@ -64,7 +64,9 @@ const subTabs = (page: Page) => page.getByRole("navigation", { name: "Lesson pag
 test("someone who is not a lesson reviewer sees no sub-tab row, and the queue's address shows the no-access card", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await viewer(page, {
-    "/api/lessons": await file("lessons-library-empty.json"),
+    // Ticket 39's page answers in one request (tests/record_lessons_page_api.py): here, Ana's first visit to an
+    // empty library.
+    "/api/lessons/page": await file("lessons-page-empty.json"),
     "/api/lessons/review": await file("lessons-queue-no-access.json"),
   });
   await page.goto("/lessons");
@@ -281,26 +283,27 @@ test("a decided record shows the outcome where the form was, with days from publ
 
 test("the library lists lesson cards newest first, naming roles and never people, with each lesson's edition", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
-  await viewer(page, { "/api/lessons": await file("lessons-library.json") });
+  // Ticket 39's page (tests/record_lessons_page_api.py): the library comes last, after what changed and what is new.
+  await viewer(page, { "/api/lessons/page": await file("lessons-page.json") });
   await page.goto("/lessons");
-  const cards = page.locator("[data-lesson-card=full]");
+  const cards = page.locator("[data-library] [data-lesson-card=full]");
   await expect(cards).toHaveCount(2);
-  await expect(page.locator("[data-library] [data-lead]")).toHaveText("Showing both lessons in the library, newest first");
+  await expect(page.locator("[data-library] [data-lead]")).toHaveText("Showing all two current lessons, newest first.");
   const first = cards.first();
-  await expect(first).toContainText("A lead procurement specialist decided version 2 on October 27, 2026, after an accredited procurement specialist recommended it.");
+  await expect(first).toContainText("A lead procurement specialist decided version 2 on October 29, 2026, after an accredited procurement specialist recommended it.");
   await expect(first).toContainText("Its projects followed the World Bank's Procurement Guidelines of January 2011.");
   await expect(page.locator("main")).not.toContainText("Asha Raman");
   await expect(page.locator("main")).not.toContainText("Omar Haddad");
   await expect(page.getByRole("button", { name: "Ask for a re-check" })).toHaveCount(0);
   // A chip shows the document's short name and the item; its name then says what it opens.
-  await expect(first.locator("[data-source-chip]").first()).toHaveText(/^ICR Review 12, opens the source: /);
+  await expect(first.locator("[data-source-chip]").first()).toHaveText(/^ICR ¶54, opens the source: /);
 });
 
 test("a lesson reviewer can ask for a re-check from a card, with a reason", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
-  const lesson = JSON.parse(await recorded("lessons-library-reviewer.json")).lessons[1].lesson_id;
+  const lesson = JSON.parse(await recorded("lessons-page-reviewer.json")).library.lessons[1].lesson_id;
   const asked = await reviewer(page, {
-    "/api/lessons": await file("lessons-library-reviewer.json"),
+    "/api/lessons/page": await file("lessons-page-reviewer.json"),
     [`POST /api/lessons/${lesson}/recheck`]: await file("lessons-act-recheck.json"),
   });
   await page.goto("/lessons");
@@ -363,7 +366,11 @@ test("a likely repeat's citation of a library lesson opens the drawer at the les
 // ── Accessibility at three widths ────────────────────────────────────────
 
 const PAGES: { name: string; path: string; me: "reviewer" | "viewer"; answers: Record<string, string> }[] = [
-  { name: "the library", path: "/lessons", me: "reviewer", answers: { "/api/lessons": "lessons-library-reviewer.json" } },
+  { name: "the library", path: "/lessons", me: "reviewer", answers: { "/api/lessons/page": "lessons-page-reviewer.json" } },
+  // Ticket 39: the whole page with a notice, what is new and the reader's reports, and the page with a lesson retired
+  // as wrong, at the three widths.
+  { name: "the Lessons page", path: "/lessons", me: "viewer", answers: { "/api/lessons/page": "lessons-page.json" } },
+  { name: "the Lessons page with a lesson retired as wrong", path: "/lessons", me: "viewer", answers: { "/api/lessons/page": "lessons-page-retired.json" } },
   { name: "the queue", path: "/lessons/review", me: "reviewer", answers: { "/api/lessons/review": "lessons-queue-overdue.json" } },
   { name: "the decided table", path: "/lessons/review", me: "reviewer", answers: { "/api/lessons/review": "lessons-queue-decided.json" } },
   { name: "a recommendation with likely repeats", path: `/lessons/review/${PERMITS}`, me: "reviewer", answers: { [`/api/lessons/review/${PERMITS}`]: "lessons-item-recommend-repeats.json" } },

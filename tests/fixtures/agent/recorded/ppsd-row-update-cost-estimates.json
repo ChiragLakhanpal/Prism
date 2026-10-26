@@ -1,0 +1,35 @@
+{
+ "about": "One answer of the Foundry agent strata-ppsd-rows-writer through the Responses API, written by hand in the shape the API documents, because the gate's machine has no key. It rewrites the Description of mitigation of the cost estimates row of Ana's suggested PPSD rows for KE-NWWDA-541055-CW-RFB from version 2 of the rebidding lesson, as of October 30, 2026, citing only what get_lessons returned for that lesson (ticket 39, \"Update the row\"). Replace it with a recording once ops/agent/record.py records row updates (docs/workspace-catchup.md).",
+ "recorded": false,
+ "recorded_on": null,
+ "question": "Rewrite the suggested PPSD row Cost estimates below market rates from version 2 of its lesson.",
+ "scope": "P156634",
+ "as_of": "2026-10-30",
+ "agent": {
+  "name": "strata-ppsd-rows-writer",
+  "version": null
+ },
+ "responses": [
+  {
+   "id": "resp_ppsd_row_update_cost_estimates_1",
+   "object": "response",
+   "status": "completed",
+   "model": "gpt-5.4",
+   "output": [
+    {
+     "type": "message",
+     "id": "msg_ppsd_row_update_cost_estimates_1",
+     "role": "assistant",
+     "status": "completed",
+     "content": [
+      {
+       "type": "output_text",
+       "annotations": [],
+       "text": "{\"notes\": [{\"cell_key\": \"cost_estimates/mitigation\", \"claims\": [{\"sentence\": \"Base the works cost estimates on current market rates before the contracts go to bid.\", \"kind\": \"advice\", \"evidence_ids\": [\"strata.ops.lesson_versions:lesson-e903b07ad1/v2\", \"strata.gold.passage:31525018/v1/54\", \"strata.gold.passage:34056616/v2/10.b\"], \"numbers\": [], \"dates\": [], \"quote\": null}]}]}"
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

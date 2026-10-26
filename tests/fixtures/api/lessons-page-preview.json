@@ -1,0 +1,627 @@
+{
+  "view": "preview",
+  "as_of": null,
+  "visit": {
+    "first_visit": false,
+    "started_at": "2026-10-30T09:01:00Z",
+    "last_visit_at": "2026-10-22T12:01:00Z",
+    "last_visit_on": "2026-10-22"
+  },
+  "digest": {
+    "kind": "since",
+    "segments": [
+      {
+        "text": "Since your last visit on "
+      },
+      {
+        "date": "2026-10-22"
+      },
+      {
+        "text": ", "
+      },
+      {
+        "number": 2,
+        "word": "two",
+        "capital": false,
+        "popover": "reports"
+      },
+      {
+        "text": " completion reports"
+      },
+      {
+        "text": " and "
+      },
+      {
+        "number": 2,
+        "word": "two",
+        "capital": false,
+        "popover": "reports"
+      },
+      {
+        "text": " ICR Reviews"
+      },
+      {
+        "text": " came in."
+      },
+      {
+        "text": " "
+      },
+      {
+        "number": 2,
+        "word": "Two",
+        "capital": true,
+        "popover": "new"
+      },
+      {
+        "text": " lessons are new"
+      },
+      {
+        "text": " and "
+      },
+      {
+        "number": 2,
+        "word": "two",
+        "capital": false,
+        "popover": "changed"
+      },
+      {
+        "text": " changed"
+      },
+      {
+        "text": "."
+      }
+    ],
+    "counts": {
+      "reports": {
+        "icr": 2,
+        "review": 2,
+        "ppar": 0
+      },
+      "new": 2,
+      "changed": 2,
+      "retired": 0,
+      "proposed": null
+    },
+    "items": {
+      "reports": [
+        {
+          "kind": "icr",
+          "doc_type": "Implementation Completion and Results Report",
+          "doc_short": "ICR",
+          "document_id": "31525018",
+          "doc_key": "icr-2019-10-10",
+          "pid": "P130164",
+          "project_name": "Rajasthan Road Sector Modernization Project",
+          "disclosed_on": "2019-11-02"
+        },
+        {
+          "kind": "review",
+          "doc_type": "Implementation Completion Report Review",
+          "doc_short": "ICR Review",
+          "document_id": "31906731",
+          "doc_key": "icr-review-2020-03-27",
+          "pid": "P130164",
+          "project_name": "Rajasthan Road Sector Modernization Project",
+          "disclosed_on": "2020-03-27"
+        },
+        {
+          "kind": "review",
+          "doc_type": "Implementation Completion Report Review",
+          "doc_short": "ICR Review",
+          "document_id": "34056616",
+          "doc_key": "icr-review-2023-05-04",
+          "pid": "P130164",
+          "project_name": "Rajasthan Road Sector Modernization Project",
+          "disclosed_on": "2023-05-04"
+        },
+        {
+          "kind": "icr",
+          "doc_type": "Implementation Completion and Results Report",
+          "doc_short": "ICR",
+          "document_id": "33407968",
+          "doc_key": "icr-2021-07-29",
+          "pid": "P127203",
+          "project_name": "Rebuilding Energy Infrastructure and Access",
+          "disclosed_on": "2021-09-13"
+        }
+      ],
+      "new": [
+        {
+          "lesson_id": "lesson-cfdf000a46",
+          "version": 1,
+          "statement": "Put forest and other permits in place before awarding contracts",
+          "decided_on": "2026-10-27",
+          "change_kind": "added",
+          "state": "current"
+        },
+        {
+          "lesson_id": "lesson-e903b07ad1",
+          "version": 1,
+          "statement": "Base works estimates on market rates to avoid rebidding",
+          "decided_on": "2026-10-27",
+          "change_kind": "added",
+          "state": "current"
+        }
+      ],
+      "changed": [
+        {
+          "lesson_id": "lesson-cfdf000a46",
+          "version": 2,
+          "statement": "Put forest and other permits in place before awarding contracts",
+          "decided_on": "2026-10-29",
+          "change_kind": "merged",
+          "state": "current"
+        },
+        {
+          "lesson_id": "lesson-e903b07ad1",
+          "version": 2,
+          "statement": "Base works cost estimates on current market rates to avoid rebidding",
+          "decided_on": "2026-10-29",
+          "change_kind": "wording",
+          "state": "current"
+        }
+      ],
+      "retired": []
+    },
+    "strengthened": null
+  },
+  "notices": [],
+  "new_lessons": {
+    "cards": [
+      {
+        "lesson_id": "lesson-e903b07ad1",
+        "version": 2,
+        "statement": "Base works cost estimates on current market rates to avoid rebidding",
+        "risk_factors": [
+          {
+            "key": "cost_estimates",
+            "label": "Cost estimates below market rates"
+          }
+        ],
+        "stage": {
+          "key": "procurement_planning",
+          "label": "Procurement planning"
+        },
+        "kind": {
+          "key": "did_not_work",
+          "label": "What didn't work"
+        },
+        "edition": {
+          "key": "guidelines_2011",
+          "name": "the World Bank's Procurement Guidelines of January 2011",
+          "short": "Procurement Guidelines, January 2011"
+        },
+        "categories": [
+          {
+            "key": "Works",
+            "label": "Works"
+          }
+        ],
+        "methods": [
+          {
+            "key": "Request for Bids",
+            "label": "Request for Bids (RFB)"
+          }
+        ],
+        "sector": "Transportation",
+        "pid": "P130164",
+        "ieg_status": "restated",
+        "review_date": null,
+        "decided_on": "2026-10-29",
+        "state": "current",
+        "rechecking_since": null,
+        "retired": null,
+        "region": "South Asia",
+        "quote": "108 of 328 cases had to go through rebidding.",
+        "evidence": [
+          {
+            "evidence_id": "strata.gold.passage:31525018/v1/54",
+            "passage_id": "31525018/v1/54",
+            "role": "source",
+            "doc_type": "Implementation Completion and Results Report",
+            "doc_short": "ICR",
+            "pid": "P130164",
+            "project_name": "Rajasthan Road Sector Modernization Project",
+            "date": "2019-10-10",
+            "report_number": "ICR4803",
+            "locator": {
+              "kind": "paragraph",
+              "text": "54"
+            },
+            "page": 23,
+            "quote": "108 of 328 cases had to go through rebidding.",
+            "restated_by_ieg": false,
+            "highlight": [
+              149,
+              194
+            ]
+          },
+          {
+            "evidence_id": "strata.gold.passage:34056616/v2/10.b",
+            "passage_id": "34056616/v2/10.b",
+            "role": "restatement",
+            "doc_type": "Implementation Completion Report Review",
+            "doc_short": "ICR Review",
+            "pid": "P130164",
+            "project_name": "Rajasthan Road Sector Modernization Project",
+            "date": "2023-05-04",
+            "report_number": "ICRR0021929",
+            "locator": {
+              "kind": "section",
+              "text": "10.b"
+            },
+            "page": 13,
+            "quote": "The works contract estimates were not based on market rate. This resulted in rebidding of one-third of the contracts (108 out of 328) (ICR para 54).",
+            "restated_by_ieg": true,
+            "highlight": [
+              812,
+              960
+            ]
+          }
+        ]
+      },
+      {
+        "lesson_id": "lesson-cfdf000a46",
+        "version": 2,
+        "statement": "Put forest and other permits in place before awarding contracts",
+        "risk_factors": [
+          {
+            "key": "permits_before_award",
+            "label": "Land, forest and other permits not in place before award"
+          }
+        ],
+        "stage": {
+          "key": "contract_award",
+          "label": "Contract award"
+        },
+        "kind": {
+          "key": "did_not_work",
+          "label": "What didn't work"
+        },
+        "edition": {
+          "key": "guidelines_2011",
+          "name": "the World Bank's Procurement Guidelines of January 2011",
+          "short": "Procurement Guidelines, January 2011"
+        },
+        "categories": [],
+        "methods": [],
+        "sector": "Transportation",
+        "pid": "P130164",
+        "ieg_status": "ieg_lesson",
+        "review_date": null,
+        "decided_on": "2026-10-29",
+        "state": "current",
+        "rechecking_since": null,
+        "retired": null,
+        "region": "South Asia",
+        "quote": "forest and other administrative clearances need to be in place prior to awarding contracts",
+        "evidence": [
+          {
+            "evidence_id": "strata.gold.passage:34056616/v2/12",
+            "passage_id": "34056616/v2/12",
+            "role": "source",
+            "doc_type": "Implementation Completion Report Review",
+            "doc_short": "ICR Review",
+            "pid": "P130164",
+            "project_name": "Rajasthan Road Sector Modernization Project",
+            "date": "2023-05-04",
+            "report_number": "ICRR0021929",
+            "locator": {
+              "kind": "section",
+              "text": "12"
+            },
+            "page": 14,
+            "quote": "forest and other administrative clearances need to be in place prior to awarding contracts",
+            "restated_by_ieg": true,
+            "highlight": [
+              1555,
+              1645
+            ]
+          },
+          {
+            "evidence_id": "strata.gold.passage:31525018/v1/55",
+            "passage_id": "31525018/v1/55",
+            "role": "source",
+            "doc_type": "Implementation Completion and Results Report",
+            "doc_short": "ICR",
+            "pid": "P130164",
+            "project_name": "Rajasthan Road Sector Modernization Project",
+            "date": "2019-10-10",
+            "report_number": "ICR4803",
+            "locator": {
+              "kind": "paragraph",
+              "text": "55"
+            },
+            "page": 23,
+            "quote": "forest and other administrative clearances should have been in place prior to awarding contracts",
+            "restated_by_ieg": false,
+            "highlight": [
+              72,
+              168
+            ]
+          }
+        ]
+      }
+    ],
+    "more": 0,
+    "more_segments": null
+  },
+  "feedback": null,
+  "library": {
+    "as_of": "2026-10-30",
+    "page": 1,
+    "pages": 1,
+    "page_size": 8,
+    "total": 2,
+    "of": 2,
+    "from": 1,
+    "to": 2,
+    "status": "current",
+    "filters": {
+      "stage": null,
+      "method": null,
+      "sector": null,
+      "status": null
+    },
+    "narrowed": false,
+    "unknown_filter": false,
+    "shown": null,
+    "options": {
+      "stage": [
+        {
+          "key": "procurement_planning",
+          "label": "Procurement planning"
+        },
+        {
+          "key": "tender_design",
+          "label": "Tender design and packaging"
+        },
+        {
+          "key": "bidding_and_evaluation",
+          "label": "Bidding and evaluation"
+        },
+        {
+          "key": "contract_award",
+          "label": "Contract award"
+        },
+        {
+          "key": "contract_management",
+          "label": "Contract management"
+        }
+      ],
+      "method": [
+        {
+          "key": "Request for Bids",
+          "label": "Request for Bids (RFB)"
+        },
+        {
+          "key": "Request for Quotations",
+          "label": "Request for Quotations (RFQ)"
+        },
+        {
+          "key": "Request for Proposals",
+          "label": "Request for Proposals (RFP)"
+        },
+        {
+          "key": "Direct Selection",
+          "label": "Direct selection"
+        }
+      ],
+      "sector": [
+        {
+          "key": "Transportation",
+          "label": "Transportation"
+        }
+      ],
+      "status": [
+        {
+          "key": "current"
+        },
+        {
+          "key": "rechecking"
+        },
+        {
+          "key": "retired"
+        }
+      ]
+    },
+    "count": [
+      {
+        "text": "Showing all "
+      },
+      {
+        "number": 2
+      },
+      {
+        "text": " "
+      },
+      {
+        "text": "current lessons"
+      },
+      {
+        "text": ", newest first."
+      }
+    ],
+    "can_recheck": false,
+    "limits": {
+      "reason_max_chars": 500
+    },
+    "waiting": null,
+    "lessons": [
+      {
+        "lesson_id": "lesson-e903b07ad1",
+        "version": 2,
+        "statement": "Base works cost estimates on current market rates to avoid rebidding",
+        "risk_factors": [
+          {
+            "key": "cost_estimates",
+            "label": "Cost estimates below market rates"
+          }
+        ],
+        "stage": {
+          "key": "procurement_planning",
+          "label": "Procurement planning"
+        },
+        "kind": {
+          "key": "did_not_work",
+          "label": "What didn't work"
+        },
+        "edition": {
+          "key": "guidelines_2011",
+          "name": "the World Bank's Procurement Guidelines of January 2011",
+          "short": "Procurement Guidelines, January 2011"
+        },
+        "categories": [
+          {
+            "key": "Works",
+            "label": "Works"
+          }
+        ],
+        "methods": [
+          {
+            "key": "Request for Bids",
+            "label": "Request for Bids (RFB)"
+          }
+        ],
+        "sector": "Transportation",
+        "pid": "P130164",
+        "ieg_status": "restated",
+        "review_date": null,
+        "decided_on": "2026-10-29",
+        "state": "current",
+        "rechecking_since": null,
+        "retired": null,
+        "region": "South Asia",
+        "quote": "108 of 328 cases had to go through rebidding.",
+        "evidence": [
+          {
+            "evidence_id": "strata.gold.passage:31525018/v1/54",
+            "passage_id": "31525018/v1/54",
+            "role": "source",
+            "doc_type": "Implementation Completion and Results Report",
+            "doc_short": "ICR",
+            "pid": "P130164",
+            "project_name": "Rajasthan Road Sector Modernization Project",
+            "date": "2019-10-10",
+            "report_number": "ICR4803",
+            "locator": {
+              "kind": "paragraph",
+              "text": "54"
+            },
+            "page": 23,
+            "quote": "108 of 328 cases had to go through rebidding.",
+            "restated_by_ieg": false,
+            "highlight": [
+              149,
+              194
+            ]
+          },
+          {
+            "evidence_id": "strata.gold.passage:34056616/v2/10.b",
+            "passage_id": "34056616/v2/10.b",
+            "role": "restatement",
+            "doc_type": "Implementation Completion Report Review",
+            "doc_short": "ICR Review",
+            "pid": "P130164",
+            "project_name": "Rajasthan Road Sector Modernization Project",
+            "date": "2023-05-04",
+            "report_number": "ICRR0021929",
+            "locator": {
+              "kind": "section",
+              "text": "10.b"
+            },
+            "page": 13,
+            "quote": "The works contract estimates were not based on market rate. This resulted in rebidding of one-third of the contracts (108 out of 328) (ICR para 54).",
+            "restated_by_ieg": true,
+            "highlight": [
+              812,
+              960
+            ]
+          }
+        ]
+      },
+      {
+        "lesson_id": "lesson-cfdf000a46",
+        "version": 2,
+        "statement": "Put forest and other permits in place before awarding contracts",
+        "risk_factors": [
+          {
+            "key": "permits_before_award",
+            "label": "Land, forest and other permits not in place before award"
+          }
+        ],
+        "stage": {
+          "key": "contract_award",
+          "label": "Contract award"
+        },
+        "kind": {
+          "key": "did_not_work",
+          "label": "What didn't work"
+        },
+        "edition": {
+          "key": "guidelines_2011",
+          "name": "the World Bank's Procurement Guidelines of January 2011",
+          "short": "Procurement Guidelines, January 2011"
+        },
+        "categories": [],
+        "methods": [],
+        "sector": "Transportation",
+        "pid": "P130164",
+        "ieg_status": "ieg_lesson",
+        "review_date": null,
+        "decided_on": "2026-10-29",
+        "state": "current",
+        "rechecking_since": null,
+        "retired": null,
+        "region": "South Asia",
+        "quote": "forest and other administrative clearances need to be in place prior to awarding contracts",
+        "evidence": [
+          {
+            "evidence_id": "strata.gold.passage:34056616/v2/12",
+            "passage_id": "34056616/v2/12",
+            "role": "source",
+            "doc_type": "Implementation Completion Report Review",
+            "doc_short": "ICR Review",
+            "pid": "P130164",
+            "project_name": "Rajasthan Road Sector Modernization Project",
+            "date": "2023-05-04",
+            "report_number": "ICRR0021929",
+            "locator": {
+              "kind": "section",
+              "text": "12"
+            },
+            "page": 14,
+            "quote": "forest and other administrative clearances need to be in place prior to awarding contracts",
+            "restated_by_ieg": true,
+            "highlight": [
+              1555,
+              1645
+            ]
+          },
+          {
+            "evidence_id": "strata.gold.passage:31525018/v1/55",
+            "passage_id": "31525018/v1/55",
+            "role": "source",
+            "doc_type": "Implementation Completion and Results Report",
+            "doc_short": "ICR",
+            "pid": "P130164",
+            "project_name": "Rajasthan Road Sector Modernization Project",
+            "date": "2019-10-10",
+            "report_number": "ICR4803",
+            "locator": {
+              "kind": "paragraph",
+              "text": "55"
+            },
+            "page": 23,
+            "quote": "forest and other administrative clearances should have been in place prior to awarding contracts",
+            "restated_by_ieg": false,
+            "highlight": [
+              72,
+              168
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
