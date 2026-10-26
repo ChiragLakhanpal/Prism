@@ -281,6 +281,8 @@ The measures it prints come from `strata.ops.data_readiness` on the warehouse. `
 
 The warehouse's counts may differ if the World Bank's hosts now list newer ISRs. Read `contact_details_removed` from the first run only: a second run writes it as 0 of 0, because it counts only the documents fetched in that run (review round 2, P1, not fixed yet).
 
+**Ran again on October 26, 2026 (orchestrator), from a snapshot of b5269651, 02:22 to 06:39 UTC.** Exit 2 after 4 hours 17 minutes: "The run stopped before it finished: I could not fetch https://search.worldbank.org/api/v3/wds?format=json&proid=P089634&rows=500&os=0&...: HTTP Error 503: Service Unavailable. The pages it parsed are kept, and the next run goes on from there." The plan reader parsed 358 scanned pages through the layout parser today (`strata.bronze.layout_pages` with `parsed_at` on October 26) before the search host refused P089634's document list, and the passage reader never started: `strata.gold.passage` still has 0 rows. An earlier attempt the same night (01:04 to 02:19, from the shared checkout) died when a merge rewrote config/slice.toml under it, which is why this one ran from a snapshot. The next run uses ticket 66's paced, cached fetcher (ticket 66, step 3 of 3) and follows the nightly job run.
+
 ## Ticket 11, step 2 of 4: paragraph 54's passage on DuckDB and on the SQL warehouse
 
 The merger parked this step on October 23, 2026, after merge commit e0721da. Run it after step 1. It is the same command as ticket 04's step 3, ticket 07's step 2 and ticket 08's step 2. If you ran it before step 1, run it again now, because `tests/ground_truth/icr_paragraph_54_passage.sql` reads `strata.gold.passage`, which step 1 fills.
@@ -324,6 +326,8 @@ Run this from the main checkout:
 It worked if the command exits 0 and its last line reads `Strata is running at https://...`, and the App's Logs tab in the workspace shows that it installed `ops/app/requirements.txt` and that the server is serving (criterion 1). The logs should not show the agent-framework metapackage installed, because the lean requirements file leaves it out.
 
 Run this command again after every bundle deploy. The bundle's grants replace the App's USE CATALOG and USE SCHEMA on `strata`, so its usage events stop being written until the App's deploy grants them again.
+
+**Found on October 26, 2026 (orchestrator).** The user ran this deploy themselves tonight: the App `strata` was created at 05:08:53 UTC (service principal `app-4mv05v strata`, client id e796c089-1500-4cf2-9c1f-8e6a8f5aba10), two deployments failed at 05:14 and 05:46 with "Error installing packages" (the numpy pin for the Apps runtime's Python 3.11, fixed by ticket 69), and the deployment of 06:11:36 succeeded: "App started successfully". The App is RUNNING at https://strata-7474658003099155.aws.databricksapps.com with nine resources bound (sql-warehouse, appinsights, app-state, the four Foundry secrets and the two Azure OpenAI secrets), and the scope `strata` holds all six keys written at 06:08. From this computer, with an OAuth token from the wizard's CLI profile (`databricks auth token -p strata`; a personal access token gets 401), `GET /api/health` answers 200 `{"status":"ok"}`, `GET /api/me` answers 200 as chiraglakhanpal@gwu.edu with `staff` true and the views staff, piu and public, and `GET /api/freshness` answers 200 with `data_through` 2026-10-24. Answers through the agent fail with 401 PermissionDenied until the user assigns the principal `strata-app` the "Cognitive Services User" role (ticket 45, step 3 of 6, has the command).
 
 ## Ticket 06, step 2 of 6: the identity route shows your own account
 
@@ -705,6 +709,8 @@ It worked if it exits 0, its first line starts "Run <run id> counted N projects 
     SELECT document_type, fiscal_year, documents, pdf_pages FROM strata.ops.documents_read WHERE run_id = '<run id>' ORDER BY document_type, fiscal_year
 
 The first query must return five rows. Its `over_parser_limit` row must be either `no_document` with the live slice's longest page count, or `read` with `parts` above 1 and `count` equal to `denominator` (criterion 6, live half). On the fixture it read `no_document` with 103 pages. The second must return `slice_projects`, `slice_projects_read` and one `documents_read_projects` row per project. The third must list Project Paper rows. The run's summary line must also say "Prompt Shields scanned N new passage texts and text-embedding-3-large embedded N", which covers the Prompt Shields scan and the embeddings of the new passages (Project Papers, PPARs and notice text).
+
+**October 26, 2026 (orchestrator).** The documents run of this night is recorded under ticket 11, step 1 of 4: exit 2 on a 503 from search.worldbank.org, no passages yet, so the three measures still have no new rows to check.
 
 ## Ticket 18, step 3 of 5: a second run the same day parses nothing
 
@@ -1453,6 +1459,8 @@ It worked if P156634 is still listed after the restart, and `SELECT viewer_id, p
 
 **Parked on October 26, 2026 (orchestrator).** This is the App deploy, `ops/app/deploy_app.py`, which writes the Foundry and Azure OpenAI keys into the secret scope `strata` through the SDK. Secret writes are the user's (ticket 06, step 1, and ticket 43, step 4), so this step waits for their decision on the scope.
 
+**Workspace half found done on October 26, 2026 (orchestrator).** The user's App deploy of 06:11 UTC (ticket 06, step 1 of 6) granted the App's service principal e796c089-1500-4cf2-9c1f-8e6a8f5aba10 SELECT and MODIFY on `strata.ops.follows` (`SHOW GRANTS ON TABLE`), beside `account users` SELECT on the schema. The follow-and-restart check and the refusal of a non-staff identity are the user's, in the browser.
+
 ## Ticket 37, step 3 of 6: sync the mission brief writer and the orchestrator
 
 The merger parked this step on October 25, 2026, after merge commit 568dbc0. It needs the four Foundry keys in `.env`, and `az` signed in. Ticket 37 adds the Foundry agent `strata-mission-brief-writer` (`config/agents.toml`, `src/strata/agent/instructions/mission_brief_writer.md`). It also adds the tools project_signals and project_records to `config/tools.toml`, and the orchestrator's tool list is generated from that file, so `strata-orchestrator` (version 2, synced from 23df355) is out of date too. The builder named the writer's sync and a plain `--check`, which checks the orchestrator, so this block syncs both. One sync from 568dbc0 or later serves every block that names it.
@@ -1671,6 +1679,8 @@ It worked if the deploy exits 0, prints "7. Masking who sent each passage report
 Run as you, the same two queries count every report and every cited source that has a sender, which shows the mask lets the owner through. If the workspace has no second person to sign in as, `DESCRIBE FUNCTION EXTENDED strata.ops.mask_viewer` must show a body that names only the App's service principal and your user name. If the warehouse refuses `SET MASK`, the deploy stops at step 7 with the warehouse's message; tell the orchestrator, since the fallback is to move the two tables to a schema without the readers' grant.
 
 **Parked on October 26, 2026 (orchestrator).** This is the App deploy, `ops/app/deploy_app.py`, which writes the Foundry and Azure OpenAI keys into the secret scope `strata` through the SDK. Secret writes are the user's (ticket 06, step 1, and ticket 43, step 4), so this step waits for their decision on the scope.
+
+**Checked on October 26, 2026 (orchestrator).** After the user's App deploy of 06:11 UTC, `system.information_schema.column_masks` has no row for `strata.ops`, and `strata.information_schema.routines` lists no routine in `ops`, so no mask function `mask_viewer` exists and the deploy's step 7 did not take. Whether it printed a refusal of `SET MASK` is in the user's terminal; the next App deploy (ticket 70) shows what step 7 prints.
 
 ## Ticket 64, step 2 of 3: sync the agent, since get_disagreements' description changed
 
@@ -1951,6 +1961,8 @@ Then, in the SQL editor:
     SELECT agrees, count(*) FROM strata.ops.passage_language_checks GROUP BY agrees
 
 It worked if the run exits 0, `passages_language_set` has its count equal to its denominator, `passage_language_sample_agrees` reads 50 of 50 (or its detail names each passage that disagreed), and `passage_language_checks` holds the sampled passages with `agrees` true for nearly all of them. Criterion 1 asks for this across the whole slice, so check the same two rows again after the next nightly `parse_and_embed` task (`bundle/nightly.yml`, which now installs `py3langid==0.3.0`).
+
+**October 26, 2026 (orchestrator).** The documents run of this night is recorded under ticket 11, step 1 of 4: it stopped on a 503 before the passage reader ran, so no passage has a language yet.
 
 ## Ticket 42, step 3 of 6: sync the changed orchestrator and writer instructions
 
@@ -2285,6 +2297,8 @@ Run this from the main checkout, twice:
 It worked if the first run exits 0, lists the nine tables above as new and changes no table that holds rows, names the job `strata cost pull` as new, and shows the dashboard `Strata` renamed to `Strata operations` and `Strata operations (test)` as new; and the second run prints "No changes." Then open both dashboards in the workspace. Each has three pages in this order: Data readiness, Governance, and AI quality and adoption. Each counter shows its value as text in the form "{n} of {d}", and each filter is bound to the datasets `bundle/dashboards/strata.lvdash.json` names for it. The pages stay mostly empty until step 2's nightly run writes their findings.
 
 **Failed on October 26, 2026 (orchestrator), from a snapshot of db96b3a.** Both deploy passes exited 1 at 06:12 and 06:13 UTC in step 1, before any table or dashboard changed: `Error: invalid dependency "${budget}", no such node ""`. The cause is the SQL text `'US${spent} of US${budget}'` at line 370 of `bundle/dashboards/strata.lvdash.json` (and of `strata_test.lvdash.json`): the CLI interpolates `${...}` inside the dashboard files it uploads, and `budget` is not a bundle variable. The fix is to escape the two as `$${spent}` and `$${budget}`, or to build the string without `${`. The build orchestrator was told on October 26. Until it lands, no bundle deploy from db96b3a or later can run; the deploy of 00:55 UTC from 7f43303 stays the live one. Log: the scratchpad's deploy45.log.
+
+**Ran on October 26, 2026 (orchestrator), from a snapshot of 6b5ff48 (ticket 71 done).** Passed. The first pass, 06:31 to 06:34 UTC, exited 0, listed 23 ops tables as new (the nine of this ticket among them: answer_removals, azure_costs, budget_periods, contact_removals, cost_pulls, dashboard_findings, lesson_visits, tool_call_reads, tool_calls, with anchored_plan_rows, draft_lesson_choices, estimates_watch, exposures, hazard_scores, lesson_version_tags, loop_indicators, model_promotions, model_signoffs, model_states, retrain_triggers, time_estimate_shadow, upload_rows and uploads from the tickets merged since the 00:55 deploy), changed no table that holds rows, changed the grants on strata and strata.ops, and printed "The dashboard Strata operations is new." The second pass, 06:34 to 06:36, printed "No changes." `databricks jobs list` shows `strata cost pull` (job 396792678616370, daily at 05:40) beside the three other Strata jobs, and `databricks lakeview list` shows "Strata operations" under the old dashboard's id 01f1cfd370f01f6ab7aafcb4fffadd48 (updated 06:32:35 UTC, three pages in order: Data readiness, Governance, AI quality and adoption; 47 datasets; 74 widgets) and "Strata operations (test)" as 01f1d10708201fddad8610f06e6b4071. The JSON as the API returns it is saved in the orchestrator's scratchpad for ticket 68. Which tiles the page renders as invalid, and the counters' text, need a look in the browser: the user's, in the morning.
 
 ## Ticket 45, step 2 of 6: the first nightly run after the deploy writes "Nightly runs and checks" after its last task (criteria 1 and 4, live)
 

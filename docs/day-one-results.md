@@ -266,6 +266,8 @@ Command: `uv run --script ops/dayone/probe_traces.py --env-file .env`
 
 The probes make these things and leave them in place. Most of them make a second run quicker. They change nothing else in the workspace.
 
+**Removed on October 26, 2026, by the user, through the Databricks CLI:** the Genie space "NYC Taxi Trip Data" (the wizard's throwaway for test 5), the schema `workspace.strata_dayone` with its tables and volume, the Vector Search index `workspace.strata_dayone.passages_index`, the folder `strata-dayone`, and the service principal `strata-probes`. Kept: the endpoint `strata-search`, the scope `strata`, the tokens, and the one-time runs, which expire on their own. Verified afterwards by listing each. A later run of the probes makes its scratch again.
+
 - The app `strata`, which runs the probe app until the app shell ticket deploys Strata over it.
 - The folder `strata-dayone` in your user folder, with the code that the jobs and the app run.
 - The schema `workspace.strata_dayone`, with the volume `files` for the PAD, the table `passages` and the index `passages_index`.
