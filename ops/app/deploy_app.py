@@ -236,9 +236,15 @@ def plan() -> list[tuple[str, str]]:
                ("The column mask", f"{MASK}, on {sum(len(columns) for columns in MASKED.values())} columns")])
 
 
-def deploy(workspace, env: dict, build_web: Callable[[], tuple[int, str]] = build_web, dist: Path = DIST) -> int:
+def secret_names(env: dict, scope: str) -> list[str]:
+    """The secrets the app reads from the scope, by their names there: the ones resources() gives it."""
+    return [resource["secret"]["key"] for resource in resources(env, scope) if "secret" in resource]
+
+
+def deploy(workspace, env: dict, build_web: Callable[[], tuple[int, str]] = build_web, dist: Path = DIST,
+           keep_secrets: bool = False) -> int:
     names = dayone.load_config()["names"]
-    name = names["app"]
+    name, scope = names["app"], names["secret_scope"]
 
     print("1. Building the web app.")
     code, output = build_web()
@@ -261,18 +267,34 @@ def deploy(workspace, env: dict, build_web: Callable[[], tuple[int, str]] = buil
 
     print("3. Giving it the SQL warehouse, the Application Insights connection string, each viewer's SQL token "
           "and the app state database.")
+    if keep_secrets:
+        expected = secret_names(env, scope)
+        print(f"   I wrote no secret, because you asked me to keep them (--keep-secrets). I expect these secrets in "
+              f"the scope {scope}: {', '.join(expected)}.")
+        listed = set(workspace.secret_keys(scope))
+        missing = [key for key in expected if key not in listed]
+        if missing:
+            print(f"The secret scope {scope} has no {', '.join(missing)}, so I stopped before giving the app its "
+                  "resources or uploading anything. Write the missing secrets first, or run the deploy without "
+                  "--keep-secrets so it writes them from your env file.")
+            return 1
     foundry = has_foundry(env)
-    if foundry:
+    if foundry and keep_secrets:
+        print("   The Foundry agent's four keys are in the secret scope, so /api/ask answers through the agent.")
+    elif foundry:
         for key in FOUNDRY:
-            workspace.put_secret(names["secret_scope"], key, env[key].strip())
+            workspace.put_secret(scope, key, env[key].strip())
         print("   I saved the Foundry agent's four keys in the secret scope, so /api/ask answers through the agent.")
     else:
         missing = ", ".join(key for key in FOUNDRY if not (env.get(key) or "").strip())
         print(f"   .env has no {missing}, so the app gets no Foundry agent and /api/ask says there is no agent.")
     judge = has_judge(env)
-    if judge:
+    if judge and keep_secrets:
+        print("   The two Azure OpenAI keys are in the secret scope, so the model that judges sentences checks "
+              "each answer.")
+    elif judge:
         for key in JUDGE:
-            workspace.put_secret(names["secret_scope"], key, env[key].strip())
+            workspace.put_secret(scope, key, env[key].strip())
         print("   I saved the two Azure OpenAI keys in the secret scope, so the model that judges sentences checks "
               "each answer.")
     else:
@@ -292,7 +314,7 @@ def deploy(workspace, env: dict, build_web: Callable[[], tuple[int, str]] = buil
         print(f"   I could not make or start the Lakebase instance {instance}: {reason}. The app gets no app state "
               "database, so it keeps no packages.")
         instance = None
-    workspace.configure_app(name, DESCRIPTION, resources(env, names["secret_scope"], instance), SCOPES)
+    workspace.configure_app(name, DESCRIPTION, resources(env, scope, instance), SCOPES)
 
     folder = f"/Workspace/Users/{workspace.me()}/{FOLDER}"
     files = package(dist, foundry, judge, genie_space)
@@ -316,10 +338,15 @@ def deploy(workspace, env: dict, build_web: Callable[[], tuple[int, str]] = buil
     return 0
 
 
-def main(argv: list[str] | None = None, workspace=None) -> int:
+def main(argv: list[str] | None = None, workspace=None, **options) -> int:
+    """The command. The tests pass a fake workspace, and through options a stand-in for the web build."""
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--env-file", type=Path, default=None,
                         help="The main checkout's .env, which the wizard filled. That file is the default.")
+    parser.add_argument("--keep-secrets", action="store_true",
+                        help="Write no secret. Check instead that the secret scope already holds each secret the app "
+                             "reads, and stop before uploading if one is missing. Use it to redeploy new code from a "
+                             "session that may not write secrets, once the user has written them.")
     args = parser.parse_args(argv)
     try:
         env = load_workspace_env(args.env_file)
@@ -330,7 +357,7 @@ def main(argv: list[str] | None = None, workspace=None) -> int:
         from app_live import LiveApps
 
         workspace = LiveApps(env)
-    return deploy(workspace, env)
+    return deploy(workspace, env, keep_secrets=args.keep_secrets, **options)
 
 
 if __name__ == "__main__":

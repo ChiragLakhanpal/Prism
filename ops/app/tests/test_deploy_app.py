@@ -6,6 +6,7 @@ A fake workspace stands in for Databricks. docs/workspace-catchup.md runs the re
 
 import sys
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 import yaml
@@ -29,10 +30,11 @@ JUDGE = {"AZURE_OPENAI_ENDPOINT": "https://wb-strata.openai.azure.com/openai/dep
 
 
 class FakeWorkspace:
-    def __init__(self, app=None):
+    def __init__(self, app=None, secrets=None):
         self.apps = {} if app is None else {"strata": dict(app)}
         self.uploaded, self.deployed, self.configured, self.statements, self.started = {}, [], [], [], []
-        self.secrets = {}
+        self.secrets = dict(secrets or {})  # the secret scope, by (scope, key)
+        self.written = []  # each put_secret call's (scope, key)
         self.databases = []
 
     def app_state_database(self, instance):
@@ -68,7 +70,12 @@ class FakeWorkspace:
         self.statements.append(statement)
 
     def put_secret(self, scope, key, value):
+        self.written.append((scope, key))
         self.secrets[(scope, key)] = value
+
+    def secret_keys(self, scope):
+        """The scope's keys, never their values, as the live adapter lists them."""
+        return [key for (named, key) in self.secrets if named == scope]
 
 
 def built(dist):
@@ -395,3 +402,75 @@ def test_with_a_genie_space_the_app_asks_it_as_each_viewer():
     assert {"name": "GENIE_SPACE_ID", "value": "01f0aaaabbbbccccddddeeeeffff0000"} in started["env"]
     assert deploy_app.app_yaml(True, True) == (deploy_app.HERE / "app.yaml").read_bytes()
     assert "dashboards.genie" in deploy_app.SCOPES
+
+
+# Ticket 70: only the user may write secrets in the shared workspace, so a session that may not still redeploys new
+# code with --keep-secrets once the user has written them.
+APPINSIGHTS = "APPLICATIONINSIGHTS_CONNECTION_STRING"
+WRITTEN_BY_THE_USER = {("strata", key): "written by the user" for key in (APPINSIGHTS, *FOUNDRY, *JUDGE)}
+
+
+def env_file(tmp_path, env):
+    path = tmp_path / "strata.env"
+    path.write_text("".join(f"{key}='{value}'\n" for key, value in env.items()))
+    return path
+
+
+@pytest.mark.parametrize("keys", [{}, FOUNDRY, FOUNDRY | JUDGE], ids=["no agent", "agent", "agent and judge"])
+def test_with_keep_secrets_the_deploy_writes_no_secret_and_gives_the_app_what_a_run_without_it_gives(
+        tmp_path, capsys, keys):
+    env = ENV | keys
+    kept = FakeWorkspace(secrets=WRITTEN_BY_THE_USER)
+    dist = tmp_path / "dist"
+
+    code = deploy_app.main(["--env-file", str(env_file(tmp_path, env)), "--keep-secrets"], workspace=kept,
+                           build_web=built(dist), dist=dist)
+    out = capsys.readouterr().out
+    rewritten = FakeWorkspace()
+    deploy(rewritten, tmp_path, capsys, env=env)
+
+    assert code == 0
+    assert kept.written == [] and kept.secrets == WRITTEN_BY_THE_USER
+    assert kept.configured == rewritten.configured
+    assert kept.uploaded == rewritten.uploaded and kept.deployed == rewritten.deployed
+    assert kept.statements == rewritten.statements
+    expected = " ".join(out.split()).split("I expect these secrets in the scope strata: ")[1].split(".")[0]
+    assert expected.split(", ") == [APPINSIGHTS, *keys]
+    assert not [value for value in keys.values() if value in out]
+    assert out.rstrip().splitlines()[-1] == "Strata is running at https://strata-1.aws.databricksapps.com"
+
+
+def test_with_keep_secrets_a_secret_the_scope_lacks_is_named_and_the_deploy_stops_before_uploading(tmp_path, capsys):
+    lacking = {named: value for named, value in WRITTEN_BY_THE_USER.items() if named[1] != "FOUNDRY_CLIENT_SECRET"}
+    workspace = FakeWorkspace(secrets=lacking)
+    dist = tmp_path / "dist"
+
+    code = deploy_app.main(["--env-file", str(env_file(tmp_path, ENV | FOUNDRY | JUDGE)), "--keep-secrets"],
+                           workspace=workspace, build_web=built(dist), dist=dist)
+    out = " ".join(capsys.readouterr().out.split())
+
+    assert code == 1
+    assert "The secret scope strata has no FOUNDRY_CLIENT_SECRET, so I stopped before" in out
+    assert workspace.written == [] and workspace.secrets == lacking
+    assert workspace.configured == [] and workspace.databases == []
+    assert workspace.uploaded == {} and workspace.deployed == [] and workspace.statements == []
+    assert "not-a-real-key" not in out
+
+
+def test_the_live_workspace_lists_the_scope_s_keys_and_never_their_values():
+    """The live adapter answers every call the fake workspace answers, and reads only the keys' names, which the
+    Databricks secrets API returns without their values."""
+    import app_live
+
+    class Secrets:
+        def list_secrets(self, scope):
+            assert scope == "strata"
+            return [SimpleNamespace(key=APPINSIGHTS, last_updated_timestamp=1761400000000),
+                    SimpleNamespace(key="FOUNDRY_CLIENT_ID", last_updated_timestamp=1761400000000)]
+
+    live = object.__new__(app_live.LiveApps)
+    live.w = SimpleNamespace(secrets=Secrets())
+
+    assert live.secret_keys("strata") == [APPINSIGHTS, "FOUNDRY_CLIENT_ID"]
+    called = {name for name in vars(FakeWorkspace) if not name.startswith("_")}
+    assert called <= {name for name in vars(app_live.LiveApps) if not name.startswith("_")}
