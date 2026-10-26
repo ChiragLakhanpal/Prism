@@ -97,3 +97,25 @@ def warehouse_engine_for(env: dict):
         yield WarehouseEngine(env["DATABRICKS_WAREHOUSE_ID"], http_transport(env["DATABRICKS_HOST"],
                                                                              env["DATABRICKS_TOKEN"]))
     return engine_for
+
+
+def answer_app(env: dict, **options):
+    """The app the live checks ask through, as the deployed App answers: the Foundry agent, its tools on the SQL
+    warehouse as the env file's token, the verifier's judge when the env file names Azure OpenAI, and the env file
+    as the settings every tool reads (search_passages's Azure OpenAI endpoint and key and the workspace's host), so
+    one load of the env file serves them all (ticket 66). options go to create_app, such as runs."""
+    from strata.agent import judge
+    from strata.agent.loop import answer_runner
+    from strata.config import load_agent
+    from strata.server.app import create_app
+
+    spec, engine_for = load_agent("orchestrator"), warehouse_engine_for(env)
+    return create_app(runner=answer_runner(lambda turn: foundry_agent(env, spec), engine_for, environ=env),
+                      engine_for=engine_for, judge=judge.from_environment(env), environ=env, **options)
+
+
+def viewer_headers(env: dict, user: str | None = None) -> dict[str, str]:
+    """The headers the Databricks Apps proxy forwards for a viewer, here the env file's token holder: their token,
+    so the tools that call the workspace as the viewer (search_passages on AI Search) do so as that person, and the
+    user id the run log keeps, when one is given."""
+    return {"X-Forwarded-Access-Token": env["DATABRICKS_TOKEN"], **({"X-Forwarded-User": user} if user else {})}

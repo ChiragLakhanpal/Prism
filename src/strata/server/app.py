@@ -113,7 +113,7 @@ import json
 import logging
 import threading
 import uuid
-from collections.abc import AsyncIterator, Callable
+from collections.abc import AsyncIterator, Callable, Mapping
 from contextlib import asynccontextmanager
 from pathlib import Path
 from urllib.parse import parse_qs
@@ -317,8 +317,14 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                follows: FollowStore | None = None, uploads: UploadStore | None = None,
                new_upload_id: Callable[[], str] = upload_routes.new_upload_id,
                settings: SettingsStore | None = None, exposures: ExposureLog | None = None,
-               visits: LessonVisits | None = None, views: Views | None = None) -> FastAPI:
+               visits: LessonVisits | None = None, views: Views | None = None,
+               environ: Mapping[str, str] | None = None) -> FastAPI:
     """The app.
+
+    environ is the settings every tool the app runs itself reads its services' addresses and keys from
+    (registry.Context.environ, ticket 66): the env file a live script loaded, or the environment app_from_env read;
+    without it, the process's environment. /api/ask's tools run in the runner, which takes the same environ
+    (strata.agent.loop.answer_runner).
 
     engine_for makes the engine for each request's viewer; without it, the environment names one.
     runner answers /api/ask; without it, the stream says there is no agent (app_from_env in
@@ -419,7 +425,7 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
     app.add_middleware(GZipMiddleware, minimum_size=1024)
     thresholds = load_thresholds()
     tools = load_tools()
-    six_checks = SixChecks(engine_for, judge, tools, thresholds)
+    six_checks = SixChecks(engine_for, judge, tools, thresholds, environ)
     timeout = stamp_timeout_seconds or thresholds.value("app.stamp_timeout_seconds")
     labeled_pairs_target = int(thresholds.value("supplier_matching.labeled_pairs_target"))
     tracer = (tracer_provider or trace.get_tracer_provider()).get_tracer("strata.server")
@@ -501,7 +507,8 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
         and give the page a reference to it."""
         def call(engine: Engine):
             try:
-                return registry.call(name, arguments, registry.Context(engine, viewer, view, as_of or today()))
+                return registry.call(name, arguments, registry.Context(engine, viewer, view, as_of or today(),
+                                                                       environ=environ))
             except registry.ToolError as error:  # a view or an argument the tool does not take
                 return JSONResponse({"code": "bad_request", "detail": str(error)}, status_code=422)
             except registry.ToolContractError:
@@ -542,7 +549,7 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                 checked = registry.call("check_plan", {"project_id": project["project_id"],
                                                        "implementing_agency": plan["agency_id"],
                                                        "plan_date": plan["plan_date"]},
-                                        registry.Context(engine, viewer, tool_view, as_of))
+                                        registry.Context(engine, viewer, tool_view, as_of, environ=environ))
                 listed.append({"project_id": project["project_id"], "project_name": project["project_name"],
                                "display_name": project["display_name"], "plan": plan,
                                "counts": checked["counts"], "withheld": checked["withheld"],

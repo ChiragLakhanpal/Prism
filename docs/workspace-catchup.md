@@ -2237,3 +2237,37 @@ The merger parked this step on October 25, 2026, after merge commit 2cb3915, for
 Once the recording option exists, re-record the case `ppsd-row-update-cost-estimates` from the live writer `strata-ppsd-rows-writer` and its judge, in place of the hand-written files, then run the gate, which replays the new recordings on the fixture, and commit them.
 
 It worked if the recorded update answers `updated` with a row that cites version 2 of `lesson-e903b07ad1`, and its check line counts what the verifier removed.
+
+## Ticket 66, step 1 of 3: sync the agent, then the must-refuse set through the live agent holds 11 of 11 (criteria 2 and 5, live)
+
+The merger parked this step on October 25, 2026, after merge commit 7ea3c0f. All ten keys were set, but the header above holds workspace steps back during a merge, and the orchestrator's notes for this wave held every workspace step for the warehouse's daily limit of October 25 until the second session reports the warehouse back. The sync needs only Foundry; the refusal check reads its tools on the SQL warehouse, so it waits for the daily limit to lift. The sync needs FOUNDRY_PROJECT_ENDPOINT and FOUNDRY_TENANT_ID in `.env`; the refusal check needs FOUNDRY_PROJECT_ENDPOINT, DATABRICKS_HOST, DATABRICKS_WAREHOUSE_ID, DATABRICKS_TOKEN, AZURE_OPENAI_ENDPOINT and AZURE_OPENAI_API_KEY; both need `az` signed in. Ticket 66 tells the orchestrator agent when a refusal is whole and when it is partial (the "What you turn down" section of `src/strata/agent/instructions/orchestrator.md`), passes the env file the script loaded to every tool (so search_passages no longer raises `KeyError: 'AZURE_OPENAI_ENDPOINT'`), counts nothing for a plan listed but not read in project_records (so KE-NWWDA-541055-CW-RFB and contract 1624689 no longer raise a TypeError), and adds `py3langid==0.3.0` and `defusedxml==0.7.1` to the script's inline dependencies. This rerun replaces the 6 of 11 result recorded under ticket 28, step 6 of 6, and under ticket 42, step 3 of 6. One sync from 7ea3c0f or later serves every block that names the orchestrator sync.
+
+Run these from the main checkout, in this order:
+
+    uv run --script ops/agent/sync.py --env-file .env
+    uv run --script ops/agent/sync.py --env-file .env --check
+    uv run --script ops/agent/refuse_live.py --env-file .env
+
+It worked if the first run's diff shows the whole-or-partial refusal lines and ends "I made version N of strata-orchestrator, which matches the repo.", the `--check` run exits 0, and the refusal check prints 11 lines that start "Holds." and exits 0, with no `KeyError`, no `TypeError` from project_records and no `ModuleNotFoundError`, and no `--with` on the command.
+
+**Ran in part on October 26, 2026 (orchestrator), from a snapshot of 1a7631a.** The sync found `strata-orchestrator` version 7 differed from the repo in its instructions and made version 8, which matches the repo; the `--check` run exited 0. `refuse_live.py` ran as written, with no `--with` and no exported env, and reached the agent on every question, so the py3langid and `searcher_for` fixes hold. It printed 5 of 11 lines starting "Holds." and exited 1 at 04:24 UTC, for two reasons. First, six questions (fraud-and-redactions held, but review-decisions, estimates-for-decisions, rule-breach-findings, personal-details and wrong-edition did not) had the agent call search_passages, which raised `EngineError: The workspace answered 404 to POST /api/2.0/vector-search/indexes/strata.gold.passage_index/query: RESOURCE_DOES_NOT_EXIST` (eight tracebacks), because the passage index exists only after ticket 11's step 4 syncs it from the documents run; each such run failed and its verdict reads "refused with []". Second, refuse-live-tenders-criteria still ended "could not answer (agent_output): A partial refusal must answer the rest of the question with claims" under the version 8 instructions. Run the check again after ticket 11's step 4; the build orchestrator was told on October 26. Log: the scratchpad's refuse66.log.
+
+## Ticket 66, step 2 of 3: the showcase question through the live agent reaches AI Search from the env file alone (criterion 1, live)
+
+The merger parked this step on October 25, 2026, after merge commit 7ea3c0f, for the same reasons as step 1. Run it after step 1. It needs the keys of ticket 13's step 3 and AZURE_OPENAI_ENDPOINT and AZURE_OPENAI_API_KEY in `.env`, and `az` signed in. Export no key to the shell first: the point is that the env file alone reaches search_passages.
+
+Run this from the main checkout:
+
+    uv run --script ops/agent/ask_live.py --env-file .env
+
+It worked if the four checks print as holding (the four "Holds." lines of ticket 13's step 3) and it exits 0, with no `KeyError: 'AZURE_OPENAI_ENDPOINT'` from search_passages and no `--with` on the command.
+
+## Ticket 66, step 3 of 3: the live document run is paced, keeps what it fetched, and stops on a 403 (criterion 4, live)
+
+The merger parked this step on October 25, 2026, after merge commit 7ea3c0f, for the same reasons as step 1. It needs the Databricks keys, AZURE_OPENAI_ENDPOINT, AZURE_OPENAI_API_KEY and AI_SEARCH_ENDPOINT in `.env`, and the warehouse under its free daily limit. Ticket 66 makes `ops/documents/run_live.py` fetch through the nightly job's fetch (`strata.lakehouse.readers.document_host`, a `PoliteFetch`): it pauses `pause_seconds` (3, in `config/sources.toml`) between requests to documents.worldbank.org, keeps each fetched text under `.cache/documents` (gitignored), and stops on a 403 with exit 2. Ticket 11's and ticket 42's blocks that run this script benefit from the same change.
+
+Run this from the main checkout, twice:
+
+    uv run --script ops/documents/run_live.py --env-file .env
+
+It worked if requests to documents.worldbank.org are 3 seconds apart, each fetched text appears under `.cache/documents`, the second run asks for no kept text again, and if the host answers 403 the run stops with exit 2 and "The run stopped before it finished: ..." and the next run goes on from there.

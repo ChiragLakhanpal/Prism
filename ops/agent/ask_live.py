@@ -1,7 +1,8 @@
 # /// script
 # requires-python = ">=3.12,<3.14"
 # dependencies = ["fastapi==0.161.1", "httpx==0.28.1", "duckdb==2.0.0", "sqlglot==30.24.0", "pytz==2026.5",
-#                 "pyyaml==6.0.3", "azure-monitor-opentelemetry==1.8.11"]
+#                 "pyyaml==6.0.3", "azure-monitor-opentelemetry==1.8.11", "py3langid==0.3.0",
+#                 "defusedxml==0.7.1"]
 # ///
 """Ask the showcase question through the live Foundry agent and check the answer: ticket 13's live check.
 
@@ -12,8 +13,9 @@ and the deploy that made strata.ops.agent_runs (ops/bundle/deploy.py):
 
 It sends "Why were works contracts in P130164 advertised again?" through the same HTTP route and stream
 the app runs, inside one traced span that goes to Application Insights. The agent is the Foundry agent,
-and its tools run on the SQL warehouse as the env file's token. The run is written to
-strata.ops.agent_runs with the same token. It then checks four things and prints each:
+and its tools run on the SQL warehouse and AI Search as the env file's token, with the env file as every tool's
+settings: search_passages embeds its query with the env file's Azure OpenAI endpoint and key (ticket 66). The run
+is written to strata.ops.agent_runs with the same token. It then checks four things and prints each:
 
 1. The answer passed checks 1 to 3: every number matched, every quote was on its page, every source
    came back, and no sentence was removed.
@@ -22,8 +24,9 @@ strata.ops.agent_runs with the same token. It then checks four things and prints
 4. Application Insights holds that trace, which can take a few minutes.
 
 It exits 0 when all four hold, 1 when one does not, and 2 when it could not run. It needs
-FOUNDRY_PROJECT_ENDPOINT, DATABRICKS_HOST, DATABRICKS_WAREHOUSE_ID, DATABRICKS_TOKEN and
-APPLICATIONINSIGHTS_CONNECTION_STRING (with its ApplicationId) in the env file, and az signed in.
+FOUNDRY_PROJECT_ENDPOINT, DATABRICKS_HOST, DATABRICKS_WAREHOUSE_ID, DATABRICKS_TOKEN,
+APPLICATIONINSIGHTS_CONNECTION_STRING (with its ApplicationId), AZURE_OPENAI_ENDPOINT and AZURE_OPENAI_API_KEY in
+the env file, and az signed in.
 """
 
 from __future__ import annotations
@@ -38,17 +41,14 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from live import LiveSetupError, az, foundry_agent, load_env, warehouse_engine_for  # noqa: E402
+from live import LiveSetupError, answer_app, az, load_env, viewer_headers  # noqa: E402
 
-from strata.agent import judge  # noqa: E402
-from strata.agent.loop import answer_runner  # noqa: E402
 from strata.agent.runs import RunLog  # noqa: E402
-from strata.agent.scripted import load_cases  # noqa: E402
-from strata.config import load_agent  # noqa: E402
+from strata.agent.scripted import Case, load_cases  # noqa: E402
 from strata.lakehouse.engine import EngineError, WarehouseEngine, http_transport  # noqa: E402
 
 NEEDS = ("FOUNDRY_PROJECT_ENDPOINT", "DATABRICKS_HOST", "DATABRICKS_WAREHOUSE_ID", "DATABRICKS_TOKEN",
-         "APPLICATIONINSIGHTS_CONNECTION_STRING")
+         "APPLICATIONINSIGHTS_CONNECTION_STRING", "AZURE_OPENAI_ENDPOINT", "AZURE_OPENAI_API_KEY")
 CASE = "p130164-rebidding"
 ICR_54 = "strata.gold.passage:31525018/v1/54"
 RUN_ROW = "SELECT run_id, status, application_insights_trace_id FROM strata.ops.agent_runs WHERE run_id = :run_id"
@@ -72,29 +72,33 @@ def events(text: str) -> list[tuple[str, dict]]:
     return parsed
 
 
-def ask(env: dict) -> tuple[list[tuple[str, dict]], str]:
+def app_for(env: dict):
+    """The app the check asks through (ops/agent/live.py's answer_app), writing its run to strata.ops.agent_runs as
+    the env file's token. The env file is every tool's settings, so search_passages reaches AI Search (ticket 66)."""
+    writer = RunLog(lambda: WarehouseEngine(env["DATABRICKS_WAREHOUSE_ID"],
+                                            http_transport(env["DATABRICKS_HOST"], env["DATABRICKS_TOKEN"])))
+    return answer_app(env, runs=writer)
+
+
+async def post(app, env: dict, case: Case) -> str:
+    """The showcase question through POST /api/ask, as the env file's token holder; the stream's text."""
     import httpx
+
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://strata.local", timeout=300) as client:
+        response = await client.post("/api/ask", headers=viewer_headers(env),
+                                     json={"question": case.question, "scope": case.scope})
+        return response.text
+
+
+def ask(env: dict) -> tuple[list[tuple[str, dict]], str]:
     from azure.monitor.opentelemetry import configure_azure_monitor
     from opentelemetry import trace
 
-    from strata.server.app import create_app
-
     configure_azure_monitor(connection_string=env["APPLICATIONINSIGHTS_CONNECTION_STRING"])
-    case, spec = load_cases()[CASE], load_agent("orchestrator")
-    engine_for = warehouse_engine_for(env)
-    writer = RunLog(lambda: WarehouseEngine(env["DATABRICKS_WAREHOUSE_ID"],
-                                            http_transport(env["DATABRICKS_HOST"], env["DATABRICKS_TOKEN"])))
-    app = create_app(runner=answer_runner(lambda turn: foundry_agent(env, spec), engine_for), engine_for=engine_for,
-                     runs=writer, judge=judge.from_environment(env))
-
-    async def post() -> str:
-        transport = httpx.ASGITransport(app=app)
-        async with httpx.AsyncClient(transport=transport, base_url="http://strata.local", timeout=300) as client:
-            response = await client.post("/api/ask", json={"question": case.question, "scope": case.scope})
-            return response.text
-
+    app = app_for(env)
     with trace.get_tracer("strata.ops.agent").start_as_current_span("POST /api/ask (ops/agent/ask_live.py)"):
-        text = asyncio.run(post())
+        text = asyncio.run(post(app, env, load_cases()[CASE]))
     trace.get_tracer_provider().force_flush(30000)
     return events(text), text
 

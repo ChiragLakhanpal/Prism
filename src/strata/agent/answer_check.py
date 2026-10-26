@@ -54,11 +54,12 @@ class Asker:
 
 class SixChecks:
     """Checks 4 to 6 for one app: the engine each viewer's questions run on, the judge, the tool registry and the
-    thresholds file. Without engine_for, check 6 cannot ask; without a judge, check 4 removes what needed one."""
+    thresholds file. Without engine_for, check 6 cannot ask; without a judge, check 4 removes what needed one.
+    environ is the settings check 6's tool reads its services' settings from (registry.Context.environ)."""
 
     def __init__(self, engine_for: EngineFor | None, judge: Judge | None, tools: Mapping[str, Tool] | None = None,
-                 thresholds: Thresholds | None = None):
-        self.engine_for, self.judge = engine_for, judge
+                 thresholds: Thresholds | None = None, environ: Mapping[str, str] | None = None):
+        self.engine_for, self.judge, self.environ = engine_for, judge, environ
         self.tools = dict(tools) if tools is not None else load_tools()
         self.thresholds = thresholds or load_thresholds()
         # The tools whose rows back advice (config/tools.toml, backs_advice): check 5's lessons and comparables.
@@ -112,7 +113,8 @@ class SixChecks:
             return answers
         try:
             with self.engine_for(asker.viewer) as engine:
-                context = registry.Context(engine, asker.viewer, asker.view, asker.as_of, self.thresholds)
+                context = registry.Context(engine, asker.viewer, asker.view, asker.as_of, self.thresholds,
+                                           environ=self.environ)
                 for project in projects:
                     try:
                         result = registry.call(DISAGREEMENTS_TOOL, {"subject_id": project}, context, self.tools)

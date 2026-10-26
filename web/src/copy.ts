@@ -1104,6 +1104,8 @@ export const copy = {
       activities: "Activities",
       needs_a_look: "Need a look",
       watch: "Worth watching",
+      // A plan listed but not read, whose activities nobody counted (ticket 66).
+      counts_missing: "Activity counts missing",
       step_reference: "STEP reference",
       signed_on: "Signed",
       individual_consultant: "Individual consultant",
