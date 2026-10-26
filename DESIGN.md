@@ -85,6 +85,7 @@ Light theme only: the World Bank publishes no dark theme.
   --color-error-bg: #fdf2f2;  --color-error: #9d161d;  --color-error-icon: #c91c25;
   --color-neutral-bg: #e7edf3;  --color-neutral: #3d4c5c;
   --color-chart-text: #111111;  --color-chart-text-subtle: #666666;  --color-chart-cat1-text: #106ca1;
+  --color-chart-cat2-text: #b65f0c;  --color-chart-cat3-text: #664ab6;
   --color-chart-grey100: #ebeef4;  --color-chart-grey200: #ced4de;  --color-chart-grey300: #8a969f;
   --color-chart-grey400: #666666;  --color-chart-grey500: #111111;
   --font-sans: "Open Sans", "Open Sans Fallback", "Helvetica Neue", Arial, sans-serif;
@@ -94,7 +95,7 @@ Light theme only: the World Bank publishes no dark theme.
 }
 ```
 
-The `chart-*` tokens are section 6's chart text, greys and cat1's text variant, kept here as tokens so a chart draws from them and the token test checks them.
+The `chart-*` tokens are section 6's chart text, greys and the first three categorical text variants (cat2 and cat3 added for the deck's award chart, ticket 47), kept here as tokens so a chart draws from them and the token test checks them.
 
 Brand navy `#002244` (`navy`) is used only for the top navigation bar that carries the logo, as The Loop specifies; text on it is white (about 16:1). Brand blue `#009fda` is used sparingly and never for text.
 
@@ -144,6 +145,7 @@ Text in French, Spanish and Portuguese uses the same scale (Strata, ticket 42). 
 | Scrim | `scrim`, `rgba(0,13,26,.57)` | Strata |
 | Targets | 24 x 24 px minimum; buttons 44 px tall | WCAG 2.5.8 |
 | Document column | Reading columns that open the evidence drawer (the package workspace, drafts, the Lessons pages) span columns 1 to 7 from 1200 px, so the drawer opens into free space; all 12 columns below 1200 px. In a window of 1200 px or more the column is measured against the window, not the page area the drawer narrows, so it keeps its place and width when the drawer opens, and its sticky header keeps sticking. A draft's notes are a table when the column is at least 560 px wide, and cards below that | Strata |
+| Slide canvas | The deck at /present (Strata, ticket 47): slides are laid out once on a 960 by 540 canvas on `page`, 48 px side margins, 12 columns of 50 px with 24 px gutters, and scaled as one unit by `min((W - 48) / 960, (H - 104) / 540)`. Presentation mode only at a scale of 1 or more, `(min-width: 63rem) and (min-height: 40.25rem)`; otherwise the deck is a reflowing reading view, and /present/page shows that view at any size | Strata |
 
 ## 5. Components
 
@@ -255,6 +257,11 @@ Text in French, Spanish and Portuguese uses the same scale (Strata, ticket 42). 
 
 
 - **Documents: the proposal** (Strata, ticket 46; the 46 brief). `docs/proposal.md` is built from `docs/proposal/source.md`, read on GitHub, never typed by hand. Paragraphs are numbered from the Summary to the end of "Designed, not built", as in a PAD or ICR, each starting with its bold number and an anchor `p{n}`; the front matter, titles, source lines, tables, lists, "Scored under" and "What you can open" lines and the annexes have none. The data sheet is a two-column Fact table with row headers. The rubric map is one HTML table with a row group per dimension (`th scope="rowgroup"`, the points linked to the assessment's rubric) and one row per criterion: "What the rubric looks for", "Where this proposal answers it", "What you can open". The results register (Annex 1) has Result, Value, Measured, Source and Cited in; the settings register (Annex 2) has Setting, Value, Where it is set, What enforces it and Cited in. The results framework has Indicator, Target, Measured and Where it stands, and status is a word, never a color: "Met", "Not met", "No target", "Not measured yet" or "Waits for the pilot". A number is a link to its register row, with a link title that says what it counts and when it was measured, never a footnote marker.
+- **Slide frame** (Strata, ticket 47; `web/src/deck/Deck.tsx`). The 960 by 540 canvas: a header zone (the `label` eyebrow "Module 1" to "Module 4" at y 32 on slides 4 to 14, the `display` title at y 56 over columns 1 to 10, at most two lines), a body zone from y 152 to 456, and a footer zone (a 1 px `line` at y 472, the section 8 footer in `caption` over columns 1 to 10, and "{n} of {N}" in columns 11 and 12). Six templates: title, text, wide figure, narrow figure (8 and 4 columns), half figure (6 and 6) and table. Every slide is in the page; only the current one is shown.
+- **Figure frame, deck only** (Strata, ticket 47). A figure's drawing slot (wide 864 by 268, narrow 568 by 268, half 420 by 268, the hairline figure 346 by 277), then a credit row: the source line or a note in `caption` at left, and the World Bank logo for light backgrounds at right, 24 px tall with 12 px above it, never inside the drawing. In the reading view the credit row stacks. A chart's frame is a `surface` card, and "Show the table" swaps its table twin into the same slot.
+- **Deck control bar** (Strata, ticket 47). Under the slide, on `surface-2`, as wide as the slide: ghost pills 44 px tall. Previous and Next are links (`/present/{n}`) that keep their places, hidden, at the ends; Show the table or Show the chart is a button on chart slides only, its place kept elsewhere; Read as a page is a link; Speaker notes is a link that opens a new window; Full screen or Leave full screen is a button, left out where the browser has no full screen. No primary button.
+- **Speaker notes view** (Strata, ticket 47). /present/notes, in its own window: "Slide {n} of {N}", a timer with "Restart the timer", the slide's title as the h1, its notes in `body` at 65ch at most, "Next: {title}" or "This is the last slide.", then Previous (secondary) and Next (primary). It follows the deck through a BroadcastChannel named `strata-deck`, and says in an info alert when no deck answers within a second.
+- **Figure with a text version** (Strata, ticket 47). A figure, then the ghost disclosure "Show the figure as text" / "Hide the text" over its steps as an ordered list in `small`. It opens by default when the drawing is wider than its column, which then scrolls in its own focusable region named "{figure title}, scrolls sideways". In presentation mode the list is visually hidden after the drawing.
 
 ## 6. Data visualization
 
@@ -301,6 +308,8 @@ Lane 1 (ticket 12) is 240 px tall in every state, or 256 px from 400 px wide whe
 **Lines between records** (Strata, ticket 22). On the contract trail and the Connections tab a solid line means two records joined on a shared key (the STEP reference or the project ID), and a dashed line means a scored "appeared together" link between a contract and a paragraph. A one-sentence legend says so wherever lines show. Line weight and color never encode a score, so no link looks more certain than another; the score is one click away, in "How I scored this link".
 
 **Figures in documents** (Strata, ticket 46). A data figure in the proposal is drawn by code from the measures snapshot, never by hand, and its table twin sits under it in a "Show the table" disclosure on screen, printed open on paper. Its numbers link to the results register like any other.
+
+**Charts on slides** (Strata, ticket 47). A chart on a slide is drawn by code from the measures snapshot the proposal cites (the award rows by fiscal year), or is the app's own chart component scaled as one picture and read-only (the range chart); never drawn by hand. The slide's title states its finding, and its table twin swaps in from the control bar.
 
 **Maps.** None by default. If one is needed, use World Bank Official Boundaries (CC BY 4.0) and print: "The boundaries, colors, denominations, and any other information shown on this map do not imply, on the part of Strata or the World Bank Group, any judgment on the legal status of any territory, or any endorsement or acceptance of such boundaries."
 
@@ -355,6 +364,8 @@ All copy lives in one file, `web/src/copy.ts`, so it can be reviewed and transla
 45. Views (Strata, ticket 40) are 'World Bank staff', 'implementing agency officer' and 'the public'; the pill's short forms are 'Agency officer' and 'Public'. A preview names the agency in full once per screen. A past date is 'as of {date}', and what it keeps is what was 'disclosed by that date'. The ways out are 'Leave the preview' and 'Back to today'. On active projects the public view's rule reads: 'so a procurement still under way isn't prejudged'. The address value `piu` never appears in copy.
 46. Documents (Strata, ticket 46): in the proposal and the deck every number links to a measured result (the results register) or a setting (the settings register), except dates, years, fiscal years, sequence numbers (paragraph, section, module, figure, annex, page, ISR, component, phase), identifiers, standard names and the short allow list of fixed names in `docs/proposal/number_check.toml`, each with its reason; the gate's number check (`src/strata/proposal/numbers.py`) enforces it. Measured results are past tense with their date. Unbuilt parts and rollout outcomes use "would", never "will". Strata is in the third person, the reader is "you", and the author does not appear; Strata's "I" appears only in quoted app copy, in straight quotes. Assessment wording that uses a rule 19 word or a GLOSSARY.md Avoid term is restated, never quoted, except in the rubric map's criteria and Annex 4's first column, which quote the assessment and where the copy lint (`web/lint/proposal.ts`) allows the Avoid terms. "Clear" is banned in every sense, so write "plain" or "explicit". "Application Insights" is a product name the lint allows.
 
+On the deck (Strata, ticket 47), slides name Strata in the third person, because the presenter speaks as "I", and the speaker notes are the presenter's first person; How Strata works keeps rule 5. A slide's title states the finding in two lines at most.
+
 ## 8. Attribution and disclaimers
 
 | Where | Text |
@@ -368,6 +379,8 @@ All copy lives in one file, `web/src/copy.ts`, so it can be reviewed and transla
 | Exported files | Word file, under the title: "Drafted with Strata on {date} and checked by {name} on {date}. Strata is an independent demo built on World Bank open data. These notes are not a World Bank review, clearance or no-objection." A mission brief's ends "This brief is not a World Bank review, clearance or no-objection." and gives each part a Heading 2, its sentences with a footnote where each citation was, its table title in bold and its table; an abstaining part keeps its heading and its line (ticket 37). Evidence pack PDF, at the end: the footer disclaimer and the data caveat. Suggested PPSD rows (ticket 36) end the paragraph with "These are suggested rows for the borrower's PPSD and are not a World Bank review, clearance or no-objection.", and the Project Paper summary with "This summary is not a World Bank review, clearance or no-objection." |
 | Agency exports | Word files and evidence packs from an implementing agency team (ticket 38) carry 'Official Use Only' in the page header (Word) or as the first line (PDF). A STEP rows CSV carries exactly STEP's columns, UTF-8 with a byte order mark, and no other line. |
 
+On the deck (Strata, ticket 47), every slide carries the footer sentence in presentation mode and in print; the reading view carries it once, at the end of the page. The deck's chrome (the slide numbers and the notes view's timer) is marked `data-chrome` and is the only text the number check leaves out; every other number on a slide sits in an element whose `data-source-key` names its result, setting or the assessment's rubric.
+
 In the proposal (Strata, ticket 46), the footer sentence follows the title and ends the document on GitHub; a printed copy puts it on every page beside "Page {n} of {m}". Annex 3 writes every dataset's line and the fixed lines from the same words the Sources and licenses page uses (`src/strata/proposal/copy.json`, written from the copy file).
 
 Word runs of the writer's text in another language carry the draft's proofing locale from the language registry (fr-FR, es-ES, pt-PT), and the words they quote carry their source's; headings and the origin paragraph stay in the Normal style's English (Strata, ticket 42).
@@ -377,6 +390,7 @@ Word runs of the writer's text in another language carry the draft's proofing lo
 - **Decision (Strata, October 22, 2026):** the World Bank logo appears in the private demo: the app's top navigation bar, the deck's title slide, and one corner of each deck figure. The World Bank's terms say its logos need express written permission (legalhelpdesk@worldbank.org) and must not imply an association. We use it anyway because Strata is a private demo built for a World Bank assessment panel and shown only to them inside a private workspace. It never goes on a public page, and the footer disclaimer in section 8 stays on every screen and slide.
 - Use the official file from worldbank.org unaltered: no redrawing, recoloring, stretching, shadows or effects. worldbank.org's white mark, in its footer, is the World Bank Group logo; Strata uses that file because the header file's wordmark is dark navy, and its text alternative is "World Bank Group logo". Keep clear space of at least half the logo's height on every side, and never set it smaller than 24px tall. (Strata: the World Bank publishes no third-party logo rules, so these are conservative defaults.)
 - Proposal figures and How Strata works figures carry no logo (Strata, ticket 46). Only the deck's export of a figure adds the logo corner.
+- On the deck's light slides (Strata, ticket 47) the logo is the World Bank's artwork for light backgrounds, the header logo of data.worldbank.org (`web/src/assets/world-bank-logo-light.svg`, viewBox 172 by 34, shown 121 by 24), unaltered, as an `<img>` on the title slide and in each figure frame's credit row. Its lettering reads WORLD BANK GROUP, so its text alternative is "World Bank Group logo". The white file stays in the navy bar.
 - The product name stays "Strata". The World Bank's name appears as attribution and as context ("built for the World Bank Group's procurement intelligence assessment"), never with "official", "partner" or "powered by".
 - Wordmark: "Strata" in Open Sans 700, white on the navy bar and `ink-heading` on light surfaces.
 
@@ -397,6 +411,7 @@ Word runs of the writer's text in another language carry the draft's proofing lo
 - Motion 120 to 200ms; none under `prefers-reduced-motion`.
 - Single-key shortcuts work only while focus is inside the panel they belong to, ignore key repeat, and are named with `aria-keyshortcuts` and a visible hint (WCAG 2.1.4; Strata, ticket 32's judging page).
 - A sticky bottom bar sets the page's bottom scroll padding to its own height (Strata, ticket 32's grade bar, as the draft bar does).
+- The deck (Strata, ticket 47) moves with the arrow keys, Page Up, Page Down, Home and End only, never a single-character shortcut, and not while focus is in a field or a scrolling table. A polite live region says "Slide {n} of {N}: {title}" on each move, and a move from inside a slide moves focus to the new slide's title. The deck has no skip link, because the slide comes first in the page and nothing repeated comes before it.
 
 ## 11. Diagram-design profile (`strata-wb`)
 
@@ -428,3 +443,5 @@ For figures made with the `diagram-design` skill. Saved as `~/.diagram-design/pr
 On `paper`: accent 4.78, muted 6.23, soft 4.92, link 5.40. Keep accent text off `paper-2` (4.36). Deliberate breaks from the skill's defaults: cool grey paper, and no serif, because the World Bank sets everything in sans.
 
 For documents (Strata, ticket 46): figure titles, source lines and notes are text in the document or slide, never drawn into the image, so the copy lint and the number check read them. Numbers drawn in a data figure come from the measures snapshot at build time. Figures are drawn on `paper`, never transparent, 720 px wide, with no text under 12 px, so labels stay at 11 px or more when GitHub shows them at 880 px and a printed page at 640 px. That raises `sublabel` (9 px) and `eyebrow` (7 to 8 px) to 12 px in document figures. The proposal's figures are drawn by `src/strata/proposal/figures.py` from these roles and section 6's chart tokens.
+
+For the deck and How Strata works (Strata, ticket 47): the seven structural figures are drawn with this profile as HTML in `web/figures/` and exported with `export_svg.py --system-fonts` into `web/src/figures/`, each `viewBox` its slot (wide 864 by 268, narrow 568 by 268, half 420 by 268), drawn 1:1 with the standard ramp, a 24 px outer margin, no legend strip, no digits, plain words for labels except STEP, and no logo inside the SVG. Charts of measured data are never drawn this way. The hairline figure (`hairline-create`) runs on the skill's kernel, vendored unchanged, with this palette set through the kernel's custom properties, light only: `--hairline-plate #f5f7f9`, `--hairline-hi #0071bc`, `--hairline-edge #586e84`, `--hairline-mid #bdccdb`, `--hairline-lo #dae3eb`.

@@ -40,6 +40,7 @@
   --color-error-bg: #fdf2f2;  --color-error: #9d161d;  --color-error-icon: #c91c25;
   --color-neutral-bg: #e7edf3;  --color-neutral: #3d4c5c;
   --color-chart-text: #111111;  --color-chart-text-subtle: #666666;  --color-chart-cat1-text: #106ca1;
+  --color-chart-cat2-text: #b65f0c;  --color-chart-cat3-text: #664ab6;
   --color-chart-grey100: #ebeef4;  --color-chart-grey200: #ced4de;  --color-chart-grey300: #8a969f;
   --color-chart-grey400: #666666;  --color-chart-grey500: #111111;
   --font-sans: "Open Sans", "Open Sans Fallback", "Helvetica Neue", Arial, sans-serif;

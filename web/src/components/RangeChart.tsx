@@ -443,6 +443,7 @@ export function RangeChart({
   lane2LabelShort = "",
   matching = null,
   compareKey = null,
+  readOnly = false,
 }: {
   width: number;
   marks: RangeMark[];
@@ -499,6 +500,9 @@ export function RangeChart({
   // grey300 at r 3, and row A's key says how many went with it ("{k} went with 3 lots", "{rest} others").
   matching?: ReadonlySet<string> | null;
   compareKey?: { match: string; others: string; open: string | null } | null;
+  // Ticket 47: the drawing alone, as a slide shows it (the 47 brief, section 4.4): no plan slider, no dot tab
+  // stops and no tooltips, so the chart is one picture named by its alt text, and nothing in it takes focus.
+  readOnly?: boolean;
 }) {
   const twoLanes = lane2 !== undefined;
   const altId = useId();
@@ -1010,18 +1014,19 @@ export function RangeChart({
     <div
       ref={wrapper}
       data-range-chart
+      data-read-only={readOnly ? "" : undefined}
       className="relative touch-pan-y select-none"
       style={{ width, height }}
-      onPointerDown={onPointerDown}
-      onPointerMove={onPointerMove}
-      onPointerUp={endDrag}
-      onPointerCancel={endDrag}
+      onPointerDown={readOnly ? undefined : onPointerDown}
+      onPointerMove={readOnly ? undefined : onPointerMove}
+      onPointerUp={readOnly ? undefined : endDrag}
+      onPointerCancel={readOnly ? undefined : endDrag}
       onPointerLeave={(event) => {
         // A finger lifting off sends pointerleave too; a tapped dot keeps its details until the next tap.
-        if (drag || event.pointerType === "touch") return;
+        if (readOnly || drag || event.pointerType === "touch") return;
         hideLater();
       }}
-      onKeyDown={onWrapperKeyDown}
+      onKeyDown={readOnly ? undefined : onWrapperKeyDown}
     >
       <p id={altId} className="sr-only" data-chart-alt>
         {alt}
@@ -1351,7 +1356,18 @@ export function RangeChart({
 
       {/* The plan line as a slider: dragged by its knob or within 8 px of the line, moved by the arrow
           keys, or set by clicking the axis row. Only the knob stops the page from scrolling under a thumb. */}
-      {plan !== null && planX !== null && (
+      {readOnly && plan !== null && planX !== null && (
+        <div
+          aria-hidden="true"
+          data-plan-knob-drawn
+          className="absolute flex h-6 w-3 items-center justify-center gap-0.5 rounded-pill bg-primary"
+          style={{ left: knobLeft, top: rowA, transform: "translateX(-50%)" }}
+        >
+          <span className="h-3 w-px bg-surface" />
+          <span className="h-3 w-px bg-surface" />
+        </div>
+      )}
+      {!readOnly && plan !== null && planX !== null && (
         <div
           ref={knobRef}
           role="slider"
@@ -1383,9 +1399,12 @@ export function RangeChart({
 
       {/* The dots as one group with one tab stop: arrow keys move between them, and each one's name
           says everything its tooltip shows. */}
+      {!readOnly && (
       <p id={helpId} className="sr-only">
         {groupHelp}
       </p>
+      )}
+      {!readOnly && (
       <div role="group" aria-label={groupName} aria-describedby={helpId} onKeyDown={onGroupKeyDown} className="pointer-events-none absolute inset-0">
         {dots.map((dot, index) => (
           <span
@@ -1409,9 +1428,10 @@ export function RangeChart({
           />
         ))}
       </div>
+      )}
 
       {/* A dot's tooltip: hidden from screen readers, because the dot's name says the same. */}
-      {tipFor && (
+      {!readOnly && tipFor && (
         <div
           ref={tipRef}
           aria-hidden="true"

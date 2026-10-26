@@ -87,9 +87,10 @@ const NOT_FOUND: Route[] = [
     purpose: "I don't have a page at this address. Check the address, or go to Home.",
     link: ["Go to Home", "/"],
   },
-  // The deck belongs to ticket 47. Until then its address is not found, and nothing links to it.
+  // The deck is /present, /present/{n}, /present/page and /present/notes (ticket 47); any other address under
+  // /present is not found, and nothing links to the deck.
   {
-    path: "/present",
+    path: "/present/nowhere",
     h1: "Page not found",
     purpose: "I don't have a page at this address. Check the address, or go to Home.",
     link: ["Go to Home", "/"],

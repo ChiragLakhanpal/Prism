@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Three loops, one dated store</title>
+  <!-- Strata deck figure (ticket 47): diagram-design, strata-wb profile, standard ramp, drawn 1:1 in its slot.
+       Font source: system. The app self-hosts Open Sans and Roboto Mono, so this file loads no web font. -->
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Open Sans', system-ui, sans-serif; background: #f5f7f9; color: #181f25; min-height: 100vh; display: flex;
+           align-items: center; justify-content: center; padding: 3rem 2rem; }
+    .frame { max-width: 1200px; width: 100%; }
+    .diagram-container { width: 100%; overflow-x: auto; }
+    h1 { font-family: 'Open Sans', system-ui, sans-serif; font-size: 1.75rem; font-weight: 700; margin-bottom: 1.5rem; }
+    svg { width: 100%; min-width: 864px; max-width: 864px; display: block; }
+    @media print {
+      .diagram-container { overflow-x: visible; }
+      svg { min-width: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <h1>Three loops, one dated store</h1>
+    <div class="diagram-container">
+      <svg viewBox="0 0 864 268" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="loops-title loops-desc">
+        <title id="loops-title">Three loops, one dated store</title>
+        <desc id="loops-desc">The knowledge loop each week, the retrieval loop each month and the estimates loop each quarter each read from and write to one dated store that keeps every version, and plans made with the estimates come back as new signings, so each estimate shown is logged.</desc>
+        <defs>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4b5e71"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0071bc"/></marker>
+<marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#01707e"/></marker>
+        </defs>
+        <rect width="100%" height="100%" fill="#f5f7f9"/>
+<path d="M148,72 H163" fill="none" stroke="#4b5e71" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M424,72 H439" fill="none" stroke="#4b5e71" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M688,72 H703" fill="none" stroke="#4b5e71" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M222,96 V179" fill="none" stroke="#4b5e71" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M500,96 V179" fill="none" stroke="#4b5e71" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M772,96 V179" fill="none" stroke="#4b5e71" stroke-width="1.2" marker-end="url(#arrow)"/>
+<path d="M86,180 V97" fill="none" stroke="#4b5e71" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+<path d="M364,180 V97" fill="none" stroke="#4b5e71" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+<path d="M636,180 V97" fill="none" stroke="#0071bc" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+<rect x="544" y="132" width="84" height="12" rx="2" fill="#f5f7f9"/>
+<text x="586" y="141" fill="#0071bc" font-size="8" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">EXPOSURE LOGGED</text>
+<rect x="24" y="48" width="124" height="48" rx="6" fill="#f5f7f9"/>
+<rect x="24" y="48" width="124" height="48" rx="6" fill="#ffffff" stroke="#181f25" stroke-width="1"/>
+<text x="86" y="69" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Proposed lesson</text>
+<text x="86" y="83" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">quote on its page</text>
+<rect x="164" y="48" width="116" height="48" rx="6" fill="#f5f7f9"/>
+<rect x="164" y="48" width="116" height="48" rx="6" fill="#ffffff" stroke="#181f25" stroke-width="1"/>
+<text x="222" y="69" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Lesson review</text>
+<text x="222" y="83" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">a lead decides</text>
+<rect x="304" y="48" width="120" height="48" rx="6" fill="#f5f7f9"/>
+<rect x="304" y="48" width="120" height="48" rx="6" fill="#ffffff" stroke="#181f25" stroke-width="1"/>
+<text x="364" y="69" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Reader reports</text>
+<text x="364" y="83" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">wrong passage</text>
+<rect x="440" y="48" width="120" height="48" rx="6" fill="#f5f7f9"/>
+<rect x="440" y="48" width="120" height="48" rx="6" fill="#ffffff" stroke="#181f25" stroke-width="1"/>
+<text x="500" y="69" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Label review</text>
+<text x="500" y="83" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">a person checks</text>
+<rect x="584" y="48" width="104" height="48" rx="6" fill="#f5f7f9"/>
+<rect x="584" y="48" width="104" height="48" rx="6" fill="#ffffff" stroke="#181f25" stroke-width="1"/>
+<text x="636" y="69" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">New signings</text>
+<text x="636" y="83" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">outcomes mature</text>
+<rect x="704" y="48" width="136" height="48" rx="6" fill="#f5f7f9"/>
+<rect x="704" y="48" width="136" height="48" rx="6" fill="#ffffff" stroke="#181f25" stroke-width="1"/>
+<text x="772" y="69" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Challenger model</text>
+<text x="772" y="83" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">wins its backtest</text>
+<rect x="24" y="180" width="816" height="48" rx="6" fill="#f5f7f9"/>
+<rect x="24" y="180" width="816" height="48" rx="6" fill="rgba(24,31,37,0.05)" stroke="#4b5e71" stroke-width="1"/>
+<text x="432" y="201" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Dated store</text>
+<text x="432" y="215" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">every version kept, fed nightly</text>
+<text x="24" y="32" fill="#586e84" font-size="8" font-weight="500" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start" letter-spacing="0.18em">KNOWLEDGE LOOP, WEEKLY</text>
+<text x="304" y="32" fill="#586e84" font-size="8" font-weight="500" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start" letter-spacing="0.18em">RETRIEVAL LOOP, MONTHLY</text>
+<text x="584" y="32" fill="#586e84" font-size="8" font-weight="500" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start" letter-spacing="0.18em">ESTIMATES LOOP, QUARTERLY</text>
+      </svg>
+    </div>
+  </div>
+</body>
+</html>

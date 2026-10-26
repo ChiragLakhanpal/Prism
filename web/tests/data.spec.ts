@@ -3,6 +3,8 @@
 // recorded in tests/fixtures/api by tests/record_api.py, so every number the page shows is checked
 // against the measure the server returned. Fixed words come from the brief and DESIGN.md section 8,
 // copied here so the test checks the copy file against an independent source.
+import { figureCopy } from "../src/deck/copy";
+import { PAGE_ORDER } from "../src/figures/order";
 import { scan } from "./axe";
 import type { Page, Route } from "@playwright/test";
 import { readFile } from "node:fs/promises";
@@ -794,14 +796,28 @@ test("Sources and licenses works while the warehouse is down, because it reads o
   await expect(page.locator("[data-dataset]")).toHaveCount((await json("data-sources.json")).datasets.length);
 });
 
-test("How Strata works states its purpose and links to the other two pages, and nothing links to /present", async ({ page }) => {
+test("How Strata works shows the deck's eight figures with plain captions and their text, and nothing links to /present", async ({ page }) => {
   await mockData(page, FULL);
   await open(page, "/data/how-strata-works");
 
   await expect(page.locator("main [data-lead]")).toHaveText(
-    "This page is for the figures that show how I turn World Bank records and documents into cited answers. They are not drawn yet.",
+    "This page shows how I turn World Bank records and documents into answers you can check. Each section explains one part in a few sentences, then shows it as a figure.",
   );
-  await expect(page.locator("main a[href='/present']")).toHaveCount(0);
+  // Ticket 47: the same figures as the deck, from one registry, each under its first-person caption.
+  const sections = page.locator("main [data-how-section]");
+  await expect(sections).toHaveCount(PAGE_ORDER.length);
+  for (const [index, id] of PAGE_ORDER.entries()) {
+    const section = sections.nth(index);
+    await expect(section.getByRole("heading", { level: 2 })).toHaveText(figureCopy[id].heading);
+    await expect(section.getByText(figureCopy[id].caption, { exact: true })).toBeVisible();
+    if (id === "core-sample") await expect(section.locator("[data-hairline=core-sample] svg")).toHaveCount(1);
+    else await expect(section.getByRole("img", { name: figureCopy[id].title })).toHaveAttribute("aria-labelledby", `${id}-title ${id}-desc`);
+    await expect(section.locator("[data-figure-text]")).toHaveCount(1);
+  }
+  // No logo corner here: the navy bar carries the logo (DESIGN.md section 9), and "What I don't do" stays last.
+  await expect(page.locator("main img")).toHaveCount(0);
+  await expect(page.locator("main h2").last()).toHaveText("What I don't do");
+  await expect(page.locator('a[href*="/present"]')).toHaveCount(0);
 });
 
 // ── Accessibility in every state ─────────────────────────────────────────

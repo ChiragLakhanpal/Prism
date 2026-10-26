@@ -3035,3 +3035,31 @@ def load_designed_not_built(path: Path = CONFIG_DIR / "designed_not_built.toml")
     if twice:
         raise ConfigError(f"In {path.name}, more than one item has the key {', '.join(twice)}. Give each its own key.")
     return tuple(items)
+
+
+# ── The deck (ticket 47) ─────────────────────────────────────────────────
+
+@dataclass(frozen=True)
+class Deck:
+    """Who presents the deck at /present, and on what day (config/deck.toml). None until the user fills it in."""
+
+    presenter_name: str | None
+    presentation_date: dt.date | None
+
+
+def load_deck(path: Path = CONFIG_DIR / "deck.toml") -> Deck:
+    """The title slide's presenter and date."""
+    data = _read(path)
+    _Entry(path, "the file", data).only({"presenter_name", "presentation_date"})
+    name, day = data.get("presenter_name", ""), data.get("presentation_date", "")
+    if not isinstance(name, str):
+        raise ConfigError(f"In {path.name}, presenter_name must be text, or \"\" until it is known.")
+    if not isinstance(day, str):
+        raise ConfigError(f"In {path.name}, presentation_date must be a date in quotes, such as \"2026-10-30\", "
+                          "or \"\" until it is known.")
+    try:
+        date = dt.date.fromisoformat(day.strip()) if day.strip() else None
+    except ValueError as error:
+        raise ConfigError(f"In {path.name}, presentation_date must be a date such as \"2026-10-30\", "
+                          f"not {day!r}.") from error
+    return Deck(name.strip() or None, date)

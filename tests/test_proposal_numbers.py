@@ -5,6 +5,10 @@ name on the allow list. The check reads text, so the deck (ticket 47) runs it on
 Each expected outcome is worked out by hand from the brief's rules.
 """
 
+import json
+import subprocess
+import sys
+
 from strata.proposal import numbers
 
 
@@ -76,3 +80,36 @@ def test_the_check_reads_html_where_a_sourced_number_carries_its_snapshot_key():
 
 def test_images_carry_no_links_so_their_alt_text_is_left_to_the_build():
     assert sentences("![Bars for 12 fiscal years](proposal/figures/02-award-gap.svg)") == []
+
+
+# ── The deck (ticket 47; the 47 brief, section 6.3) ──────────────────────
+
+def test_deck_chrome_marked_data_chrome_is_exempt_but_a_number_beside_it_is_not():
+    html = ('<footer><p>Strata is an independent demo.</p><p data-chrome="">4 of 16</p></footer>'
+            "<p>Strata read 12 reports.</p>")
+    assert [p.number for p in numbers.unsourced(html, form="html")] == ["12"]
+
+
+def test_a_sourced_chart_that_spans_block_elements_is_taken_out_whole():
+    html = ('<figure data-source-key="r:award-rows-by-year"><div><p>250</p><table><tr><td>14</td></tr></table></div>'
+            "</figure><p>And 7 more.</p>")
+    assert [p.number for p in numbers.unsourced(html, form="html")] == ["7"]
+
+
+def test_an_inlined_figures_style_block_holds_no_number_the_check_counts():
+    html = '<svg><style>#pipeline-root { width: 100%; }</style><title>Where Strata runs</title></svg>'
+    assert numbers.unsourced(html, form="html") == []
+
+
+def test_a_reports_sequence_number_is_excepted_like_an_isrs():
+    html = "<p>Source: Implementation Status and Results Report 7, P130164, August 26, 2016.</p>"
+    assert numbers.unsourced(html, form="html") == []
+
+
+def test_the_command_checks_each_named_piece_of_html_and_names_where_each_number_is():
+    pieces = {"Slide 3": "<p>Three loops ran 4 times.</p>", "Slide 4, notes": "<p>Nothing here counts.</p>"}
+    done = subprocess.run([sys.executable, "-m", "strata.proposal.numbers"], input=json.dumps(pieces),
+                          capture_output=True, text=True, check=False)
+    assert done.returncode == 1
+    assert json.loads(done.stdout) == [{"where": "Slide 3", "number": "Three", "excerpt": "Three loops ran 4 times."},
+                                        {"where": "Slide 3", "number": "4", "excerpt": "Three loops ran 4 times."}]

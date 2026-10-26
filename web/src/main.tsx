@@ -1,6 +1,7 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { App } from "./App";
+import { DeckApp, deckView } from "./deck/Deck";
 import "./styles/app.css";
 
 const root = createRoot(document.getElementById("root")!);
@@ -14,6 +15,14 @@ if (__GALLERY__ && /^\/gallery(\/|$)/.test(window.location.pathname)) {
         <Gallery path={window.location.pathname} search={window.location.search} />
       </StrictMode>,
     ),
+  );
+} else if (deckView(window.location.pathname)) {
+  // The deck at /present (ticket 47) stands outside the app's frame: no navy bar, no box, and nothing in the app
+  // links to it. Any other address under /present is the app's not-found page.
+  root.render(
+    <StrictMode>
+      <DeckApp view={deckView(window.location.pathname)!} />
+    </StrictMode>,
   );
 } else {
   root.render(

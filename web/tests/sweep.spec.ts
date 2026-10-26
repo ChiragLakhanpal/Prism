@@ -70,6 +70,15 @@ async function offenders(page: Page): Promise<string[]> {
   }, PROJECT_ID_EXEMPT);
 }
 
+// Every link, menu item or button on the page whose address or action names /present.
+async function deckLinks(page: Page): Promise<string[]> {
+  return page.evaluate(() =>
+    [...document.querySelectorAll("a[href], [role=menuitem], [data-href], form[action]")]
+      .map((element) => element.getAttribute("href") ?? element.getAttribute("data-href") ?? element.getAttribute("action") ?? "")
+      .filter((href) => /(^|\/)present(\/|$|[?#])/.test(new URL(href, location.origin).pathname + "/")),
+  );
+}
+
 const ROUTES: [string, string][] = [
   ["/", "main h1"],
   ["/packages", "main h1"],
@@ -98,6 +107,8 @@ const ROUTES: [string, string][] = [
   ["/drafts/draft-0001", "[data-draft-page]:not([data-draft-page=loading])"],
   ["/data", "main h1"],
   ["/data/sources", "main h1"],
+  // Ticket 47: How Strata works shows the deck's figures, and like every other route it never links to the deck.
+  ["/data/how-strata-works", "[data-how-section]"],
   ["/projects/130164", "main h1"],
 ];
 
@@ -107,10 +118,13 @@ test("every P-code on every route is a link to its project page, with the drawer
   await mockApi(page, await everyRecording());
   const found: string[] = [];
   const labels: { route: string; key: string }[] = [];
+  // Ticket 47: nothing in the app links to the deck at /present, on any route, in any link or menu item.
+  const toDeck: string[] = [];
   for (const [path, ready] of ROUTES) {
     await page.goto(path);
     await expect(page.locator(ready).first()).toBeVisible();
     found.push(...(await offenders(page)).map((offender) => `${path}: ${offender}`));
+    toDeck.push(...(await deckLinks(page)).map((link) => `${path}: ${link}`));
     for (const key of await page.locator("[data-dnb]").evaluateAll((els) => els.map((el) => el.getAttribute("data-dnb") ?? ""))) {
       labels.push({ route: path, key });
     }
@@ -130,6 +144,14 @@ test("every P-code on every route is a link to its project page, with the drawer
   found.push(...(await offenders(page)).map((offender) => `record drawer: ${offender}`));
 
   expect(found).toEqual([]);
+
+  // Below 1024 px the tabs move into the Menu (DESIGN.md section 4): its items link nowhere near the deck either.
+  await page.setViewportSize({ width: 1000, height: 900 });
+  await page.goto("/");
+  await page.getByRole("button", { name: "Menu" }).click();
+  await expect(page.getByRole("button", { name: "Menu" })).toHaveAttribute("aria-expanded", "true");
+  toDeck.push(...(await deckLinks(page)).map((link) => `Menu: ${link}`));
+  expect(toDeck).toEqual([]);
 
   const items = readRegistry<DesignedNotBuiltRegistry>("designed_not_built.toml").items ?? [];
   expect(labelProblems(labels, items, ROUTES.map(([path]) => path))).toEqual([]);

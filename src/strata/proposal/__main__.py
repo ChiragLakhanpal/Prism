@@ -5,6 +5,8 @@
     uv run python -m strata.proposal readme     print the README's links for the panel; --write writes them
     uv run python -m strata.proposal pull --database data/out/fixture.duckdb --out /tmp/snapshot.json
                                                 a snapshot from a DuckDB file, to try the build on this computer
+    uv run python -m strata.proposal deck       web/public/deck/data.json, the deck's numbers (ticket 47), from the
+                                                same snapshot and docs/proposal/demo-package.json
 
 The real snapshot comes from the workspace (ops/proposal/pull_live.py), never from the fixture: the fixture's numbers
 are not findings (the spec, "Wireframe numbers"), so a snapshot pulled from a DuckDB file must go to a path you name.
@@ -148,6 +150,30 @@ def pull(args) -> int:
     return 0
 
 
+def write_deck(args) -> int:
+    """The deck's data from the committed snapshot and the demo package's recorded answers, when there are any."""
+    import json
+
+    from strata.proposal import deck
+
+    found = snapshot.read() if snapshot.SNAPSHOT_FILE.exists() else None
+    demo = json.loads(deck.DEMO_FILE.read_text()) if deck.DEMO_FILE.exists() else None
+    try:
+        data = deck.build(found, demo)
+    except (deck.DeckError, ConfigError, register.RegisterError) as error:
+        print(error)
+        return 1
+    out = Path(args.out)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(data, indent=1, ensure_ascii=False) + "\n")
+    waiting = [key for key, result in data["results"].items() if not result["measured"]]
+    print(f"Wrote {out.relative_to(ROOT) if out.is_relative_to(ROOT) else out}. "
+          f"Not measured yet, so their slides say so: {', '.join(waiting) or 'none'}.")
+    if demo is None:
+        print("There is no docs/proposal/demo-package.json, so slide 8 says the demo package was not recorded yet.")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="python -m strata.proposal", description=__doc__.split("\n\n")[0])
     commands = parser.add_subparsers(dest="command", required=True)
@@ -160,9 +186,13 @@ def main(argv: list[str] | None = None) -> int:
     pulling = commands.add_parser("pull", help="a snapshot from a DuckDB file, to a path you name")
     pulling.add_argument("--database", required=True)
     pulling.add_argument("--out", required=True)
+    decking = commands.add_parser("deck", help="the deck's data, from the snapshot, the registries and the demo")
+    decking.add_argument("--out", default=str(ROOT / "web" / "public" / "deck" / "data.json"))
     args = parser.parse_args(argv)
     if args.command == "check":
         return check()
+    if args.command == "deck":
+        return write_deck(args)
     if args.command == "build":
         return build(args)
     if args.command == "pull":

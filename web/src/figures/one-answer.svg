@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 568 268" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="one-answer-title one-answer-desc" id="one-answer-root">
+        <title id="one-answer-title">One question, three strata, one cited answer</title>
+        <desc id="one-answer-desc">A question about a package draws on records of what happened, documents on how it was done and evaluations of why, which meet in one answer whose every sentence names its source.</desc>
+        <defs>
+      <style>#one-answer-root { font-family: 'Open Sans', system-ui, sans-serif; color: #181f25; }
+      #one-answer-root .diagram-container { width: 100%; overflow-x: auto; }
+      @media print {
+#one-answer-root .diagram-container { overflow-x: visible; }
+}</style>
+<marker id="one-answer-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4b5e71"/></marker>
+<marker id="one-answer-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0071bc"/></marker>
+<marker id="one-answer-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#01707e"/></marker>
+        </defs>
+        <rect width="100%" height="100%" fill="#f5f7f9"/>
+<path d="M244,72 V79 Q244,87 236,87 H112 Q104,87 104,95 V101" fill="none" stroke="#4b5e71" stroke-width="1.2" marker-end="url(#one-answer-arrow)"/>
+<path d="M284,72 V101" fill="none" stroke="#4b5e71" stroke-width="1.2" marker-end="url(#one-answer-arrow)"/>
+<path d="M324,72 V79 Q324,87 332,87 H456 Q464,87 464,95 V101" fill="none" stroke="#4b5e71" stroke-width="1.2" marker-end="url(#one-answer-arrow)"/>
+<path d="M104,150 V165 Q104,173 112,173 H230 Q238,173 238,181 V195" fill="none" stroke="#4b5e71" stroke-width="1.2" marker-end="url(#one-answer-arrow)"/>
+<path d="M284,150 V195" fill="none" stroke="#4b5e71" stroke-width="1.2" marker-end="url(#one-answer-arrow)"/>
+<path d="M464,150 V165 Q464,173 456,173 H338 Q330,173 330,181 V195" fill="none" stroke="#4b5e71" stroke-width="1.2" marker-end="url(#one-answer-arrow)"/>
+<rect x="137" y="155" width="68" height="12" rx="2" fill="#f5f7f9"/>
+<text x="171" y="164" fill="#586e84" font-size="8" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">COMPARABLES</text>
+<rect x="290" y="158" width="64" height="12" rx="2" fill="#f5f7f9"/>
+<text x="322" y="167" fill="#586e84" font-size="8" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">PLAN DATES</text>
+<rect x="373" y="155" width="48" height="12" rx="2" fill="#f5f7f9"/>
+<text x="397" y="164" fill="#586e84" font-size="8" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">LESSONS</text>
+<rect x="204" y="24" width="160" height="48" rx="6" fill="#f5f7f9"/>
+<rect x="204" y="24" width="160" height="48" rx="6" fill="#4b5e71" stroke="#586e84" stroke-width="1" fill-opacity="0.10"/>
+<text x="284" y="45" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Your question</text>
+<text x="284" y="59" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">method, size, country</text>
+<rect x="24" y="102" width="160" height="48" rx="6" fill="#f5f7f9"/>
+<rect x="24" y="102" width="160" height="48" rx="6" fill="#4b5e71" stroke="#586e84" stroke-width="1" fill-opacity="0.10"/>
+<text x="104" y="123" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">What happened</text>
+<text x="104" y="137" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">awards, notices, projects</text>
+<rect x="204" y="102" width="160" height="48" rx="6" fill="#f5f7f9"/>
+<rect x="204" y="102" width="160" height="48" rx="6" fill="#4b5e71" stroke="#586e84" stroke-width="1" fill-opacity="0.10"/>
+<text x="284" y="123" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">How it was done</text>
+<text x="284" y="137" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">plans, status reports</text>
+<rect x="384" y="102" width="160" height="48" rx="6" fill="#f5f7f9"/>
+<rect x="384" y="102" width="160" height="48" rx="6" fill="#4b5e71" stroke="#586e84" stroke-width="1" fill-opacity="0.10"/>
+<text x="464" y="123" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Why it worked or not</text>
+<text x="464" y="137" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">completion reports</text>
+<rect x="192" y="196" width="184" height="48" rx="6" fill="#f5f7f9"/>
+<rect x="192" y="196" width="184" height="48" rx="6" fill="#0071bc" stroke="#0071bc" stroke-width="1" fill-opacity="0.08"/>
+<text x="284" y="217" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">One cited answer</text>
+<text x="284" y="231" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">every sentence sourced</text>
+      </svg>

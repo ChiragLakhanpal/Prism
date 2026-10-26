@@ -23,6 +23,8 @@ export type Shot = {
   pending?: string[];
   // Photograph the whole page even after an action, such as the plan check with its fold open.
   full?: boolean;
+  // Ticket 47: the deck's data, a recorded file served at /deck/data.json in place of the build's own.
+  deckData?: string;
 };
 
 const hover = (selector: string) => async (page: Page) => {
@@ -1823,6 +1825,24 @@ const LANGUAGE_SHOTS: Shot[] = [
     "/api/drafts/draft-0005": { recorded: "drafts-review-notes-fr.json" }, "/api/drafts/existing": { body: '{"draft":null}' } } }),
 ];
 
+// Ticket 47: the deck at /present, from the fixture's deck data. Under the function-first rule each is taken at 1440 px
+// only; the other widths, hover and focus wait for the design pass.
+const deck = (name: string, path: string, rest: Partial<Shot> = {}): Shot => ({
+  name: `deck--${name}`,
+  path,
+  server: "app",
+  deckData: "deck-data.json",
+  widths: [1440],
+  ...rest,
+});
+const DECK_SHOTS: Shot[] = [
+  deck("title", "/present/1", { full: false }),
+  deck("range-chart", "/present/8", { full: false }),
+  deck("award-gap", "/present/7", { full: false }),
+  deck("reading-view", "/present/page"),
+  deck("speaker-notes", "/present/notes"),
+];
+
 export const SHOTS: Shot[] = [
   { name: "index", path: "/gallery" },
   ...pages,
@@ -1981,4 +2001,5 @@ export const SHOTS: Shot[] = [
   ...UPLOAD_SHOTS,
   ...LANGUAGE_SHOTS,
   ...VIEW_SHOTS,
+  ...DECK_SHOTS,
 ];

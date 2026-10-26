@@ -197,6 +197,18 @@ read = "plan:2"
 form = "word"
 where = "docs/PLAN.md section 11, Rollout"
 
+[settings.rollout-phases]
+name = "Phases of the rollout, each measured before the next"
+read = "plan:3"
+form = "word"
+where = "docs/PLAN.md section 11, Rollout"
+
+[settings.hindsight-coders]
+name = "People who code each risk a completion report blamed, for the hindsight test"
+read = "plan:2"
+form = "word"
+where = "docs/PLAN.md section 10, The hindsight test"
+
 [settings.replicas]
 name = "Replicas anything hosted may run, at most"
 read = "plan:2"
