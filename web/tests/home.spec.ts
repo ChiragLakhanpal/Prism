@@ -101,7 +101,8 @@ test("each Start here link lands where it says", async ({ page }) => {
     "/api/projects/P156634": await file("project-p156634.json"),
     [`/api${NWWDA}/2026-10-09`]: await file("check-plan-p156634-nwwda-2026-10-09.json"),
     [`/api${NWWDA}/2026-10-09/changes`]: await file("changes-nwwda-2026-10-09.json"),
-    "/api/drafts/existing": { body: '{"draft":null}' },
+    // The review notes the seed command set up for Ana on this plan, as the server names them to her.
+    "/api/drafts/existing": await file("drafts-existing-example-review-notes.json"),
     "/api/planned-packages": await file("planned-packages-list.json"),
     "/api/examples/rural_roads_kenya": await file("example-rural-roads-kenya.json"),
     "/api/projects/P130164/timeline": await file("timeline-p130164.json"),
@@ -121,6 +122,10 @@ test("each Start here link lands where it says", async ({ page }) => {
   await follow("Check a published plan (P156634)");
   await expect(page).toHaveURL(`${NWWDA}/2026-10-09`);
   await expect(page.locator("[data-check-plan-page=ready]")).toBeVisible();
+  // The notice names the seeded draft as Strata's example, never as one Ana started (the 41 brief, 5.12).
+  const notice = page.locator("[data-existing-draft]");
+  await expect(notice).toHaveText("I set up review notes on this plan for you as an example on October 28, 2026.");
+  await expect(page.locator("[data-existing-draft-example] [data-tag]")).toHaveText("Example");
 
   await follow("Plan a package from a sentence");
   await expect(page).toHaveURL("/packages?box=plan&example=rural_roads_kenya");
@@ -170,6 +175,13 @@ test("Remove hides the strip with an undo row, and a later visit ends Home with 
   await open(page, "/", { "/api/home": { body: JSON.stringify(home) }, "/api/me": { body: JSON.stringify(me) } });
   await expect(page.locator("[data-start-here]")).toHaveCount(0);
   await expect(page.locator("[data-restore-line]")).toContainText("You removed the examples Strata set up.");
+
+  // A viewer who is not World Bank staff never had the strip: the server sends no links, and Home never says they
+  // removed it.
+  home.start_here = { visible: false, links: [] };
+  await open(page, "/", { "/api/home": { body: JSON.stringify(home) }, "/api/me": { body: JSON.stringify(me) } });
+  await expect(page.locator("[data-start-here]")).toHaveCount(0);
+  await expect(page.locator("[data-restore-line]")).toHaveCount(0);
 });
 
 test("Waiting for you lists the drafts to check with their progress, and shows its empty state once none remain", async ({ page }) => {
@@ -209,10 +221,29 @@ test("the agency preview and the public preview show the Home their column of th
 
   await open(page, "/?view=public");
   await expect(page.getByRole("heading", { level: 1 })).toContainText("I hold records for 93 World Bank-financed projects.");
-  await expect(page.locator("li[data-line-kind=public]")).toHaveCount(8);
+  // The fixture's one closed project with contracts, P130164 (values.toml, counts.p130164_trail).
+  const closed = page.locator("li[data-line-kind=public]");
+  await expect(closed).toHaveCount(1);
+  await expect(closed).toContainText(
+    "The Rajasthan Road Sector Modernization Project (P130164) in India closed on December 31, 2018. I traced 1 of its 8 " +
+      "contracts from notice to signature.",
+  );
+  await expect(closed.getByRole("link", { name: "See its contracts Rajasthan Road Sector Modernization Project" })).toHaveAttribute(
+    "href",
+    "/projects/P130164/procurement#packages",
+  );
   await expect(page.locator("[data-waiting]")).toHaveCount(0);
   await expect(page.locator("[data-start-here]")).toHaveCount(0);
   await expect(page).toHaveTitle("Home (public preview) | Strata");
+});
+
+test("a plan that changed with no activity marked never reads as no plan changed below the briefing", async ({ page }) => {
+  await open(page, "/?asof=2025-03-25", { "/api/home": await file("home-nothing-marked.json") });
+
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("One plan changed in the 15 days to March 25, 2025.");
+  const worth = page.locator("[data-worth=staff]");
+  await expect(worth).not.toContainText("No plan changed");
+  await expect(worth).toContainText("None of the activities in the plans that changed needs a look or is worth watching");
 });
 
 test("past eight lines the rest fold behind Show them, and the briefing's counts include the folded lines", async ({ page }) => {
@@ -248,6 +279,26 @@ test("each example the seed command set up is labeled Example where it is listed
 
   await page.goto("/packages");
   await expect(page.locator("[data-packages-page] [data-tag]:visible")).toHaveText(["Example"]);
+});
+
+test("the package workspace names the PPSD rows the seed command set up as an example", async ({ page }) => {
+  const api = "/api/packages/KE-NWWDA-541055-CW-RFB";
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await mockApi(page, await homeApi({
+    "/api/me": await file("me-staff.json"),
+    [api]: await file("package-ke-nwwda-541055.json"),
+    [`${api}/comparables`]: await file("comparables-ke-nwwda-541055.json"),
+    [`${api}/risks`]: await file("risks-ke-nwwda-541055-india-selected.json"),
+    [`${api}/steps`]: await file("steps-ke-nwwda-541055.json"),
+    [`${api}/risk-selection`]: await file("risks-selection-saved.json"),
+    "/api/drafts/existing": await file("drafts-existing-example-ppsd-rows.json"),
+  }));
+  await page.goto("/packages/KE-NWWDA-541055-CW-RFB");
+
+  await expect(page.locator("[data-existing-ppsd]")).toHaveText(
+    "I set up suggested PPSD rows for this package for you as an example on October 28, 2026.",
+  );
+  await expect(page.locator("[data-existing-draft-example] [data-tag]")).toHaveText("Example");
 });
 
 // ── The budget on a throttled 3G profile ─────────────────────────────────
@@ -307,4 +358,8 @@ test("axe finds no WCAG 2.2 AA violations on Home populated, on its first run an
     expect((await scan(page)).violations, home).toEqual([]);
   }
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Nothing changed in the plans of the one project you follow in the past 15 days.");
+  // The block below words the window as the server did: the page picks no count word.
+  await expect(page.locator("[data-worth=staff]")).toContainText(
+    "No plan changed and no new signal came up in the past 15 days for the projects you follow.",
+  );
 });

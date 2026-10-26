@@ -2594,6 +2594,8 @@ export const copy = {
       asof: "I draft review notes only from today's check, not from a past date.",
       existingYou: (date: string) => `You started review notes on this plan on ${date}.`,
       existingTeammate: (author: string, date: string) => `${author} started review notes on this plan on ${date}.`,
+      // The review notes the seed command set up for you (ticket 41; the 41 brief, 5.12), which you never started.
+      existingExample: (date: string) => `I set up review notes on this plan for you as an example on ${date}.`,
       existingLink: "Open the draft",
       stopped: "I stopped writing the review notes and saved nothing.",
     },
@@ -4120,6 +4122,8 @@ export const copy = {
       asof: "I draft PPSD rows only from today's records, not from a past date.",
       existingYou: (date: string) => `You started suggested PPSD rows for this package on ${date}.`,
       existingTeammate: (author: string, date: string) => `${author} started suggested PPSD rows for this package on ${date}.`,
+      // The rows the seed command set up for you (ticket 41; the 41 brief, 5.12), which you never started.
+      existingExample: (date: string) => `I set up suggested PPSD rows for this package for you as an example on ${date}.`,
       existingLink: "Open the draft",
       stopped: "I stopped writing the PPSD rows and saved nothing.",
     },
@@ -8494,11 +8498,14 @@ export const copy = {
       firstRunTitle: "I brief you on the projects you follow.",
       firstRunBody: "Follow a project from its page, and each day I list its changed plans and new signals here.",
       firstRunLink: "Go to All projects",
-      quiet: (window: string) =>
-        `No plan changed and no new signal came up in the past ${window} days for the projects you follow.`,
-      quietAsOf: (window: string, date: string) =>
-        `No plan changed and no new signal came up in the ${window} days to ${date} for the projects you follow.`,
+      // {window} is the server's window phrase ("the past seven days", "the 15 days to October 20, 2026").
+      quiet: "No plan changed and no new signal came up in {window} for the projects you follow.",
       quietLink: "Open Following",
+      // A plan changed in the window but check_plan marked none of its activities: never "No plan changed", which the
+      // briefing above contradicts.
+      nothingMarked:
+        "None of the activities in the plans that changed needs a look or is worth watching, and no new signal came " +
+        "up for the projects you follow.",
       agencyNothing: "No activity in your team's latest plan is behind its planned dates.",
       agencyCheck: "Check my plan before you submit an update",
     },
@@ -8549,8 +8556,8 @@ export const copy = {
     popovers: {
       plans: (start: string, end: string) => `Plans disclosed from ${start} to ${end}`,
       planItem: "{agency}, Procurement Plan of {date}, for the {project} ({pid}). Disclosed {disclosed}.",
-      plansNote: (window: string, through: string) =>
-        `I count a plan when it was disclosed in the ${window} days up to ${through}, the date of my latest data.`,
+      // {window} is the server's window phrase; {through} the date of the latest data.
+      plansNote: "I count a plan when it was disclosed in {window}, up to {through}, the date of my latest data.",
       look: "Activities that need a look",
       watch: "Activities worth watching",
       projects: "Projects with a new signal",
@@ -8609,9 +8616,14 @@ export const copy = {
         },
         noPlan: "I don't hold a published Procurement Plan from your team yet.",
       },
-      public:
-        "I hold records for {total} World Bank-financed projects. Search for one by name, project ID or country in " +
-        "the search box, or start from one of the {count} that closed most recently.",
+      public: {
+        one:
+          "I hold records for {total} World Bank-financed projects. Search for one by name, project ID or country in " +
+          "the search box, or start from the one that closed most recently.",
+        many:
+          "I hold records for {total} World Bank-financed projects. Search for one by name, project ID or country in " +
+          "the search box, or start from one of the {count} that closed most recently.",
+      },
       publicNone: "I hold records for {total} World Bank-financed projects. Search for one by name, project ID or country in the search box.",
       line: {
         intro: "{ref}, US${millions} million of {category} in the {project} ({pid}),",

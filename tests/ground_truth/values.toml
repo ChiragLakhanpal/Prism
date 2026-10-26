@@ -2759,6 +2759,18 @@ same_name_counted = "Those whose name, in capitals with only letters and digits 
 same_name_agrees = 128
 same_name_agrees_counted = "Those whose ID is the supplier_id the award rows give that same name. The other 29 carry another ID, such as TRADECON (MSA) LTD (supplier-id-tradecon-notice and supplier-id-tradecon-award)."
 
+# P130164's contracts as the public Home counts them (ticket 41), counted on October 26, 2026 from the recorded
+# files apart from Strata's code. A contract is traced from notice to signature when it has a signing date and a
+# notice of the same project carries its STEP reference, the link the contract trail follows.
+[counts.p130164_trail]
+says = "Strata holds eight contracts of P130164 and traced one of them from notice to signature."
+awards = ["api/awards/P130164-fy2001-2016.json"]
+notice_files = ["api/notices/P130164.json"]
+contracts = 8
+contracts_counted = "The seven rows of the FY2001 to FY2016 awards file, each a contract of its own, and the contract that award notice OP00044090 records for IN-RRSMP-7431-CW-RFB, which neither awards dataset holds (award-7431-signed)."
+traced = 1
+traced_counted = "The contracts whose STEP reference a notice of P130164 carries: IN-RRSMP-7431-CW-RFB alone, signed June 15, 2017. The seven award rows' references, such as CF/RRSMP/02, were written before STEP and are no STEP reference."
+
 # FY2017 to FY2019, which neither awards dataset covers. Each Contract Award notice in the
 # fixture whose Contract Signature Date falls in one of those fiscal years, read from the notice's
 # text by hand on October 23, 2026. Every one has a signature date. The fiscal year runs July to

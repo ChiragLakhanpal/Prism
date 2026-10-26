@@ -35,6 +35,7 @@ import { HOME_PATH, START_HERE_PATH, startHereVisible, type HomeAnswer, type Hom
 import { draftTitle } from "../lib/lessonsPage";
 import { useLoad } from "../lib/load";
 import { useStore } from "../lib/store";
+import { CHECK_MY_PLAN } from "../lib/uploads";
 import { DraftRow } from "./DraftsPage";
 
 const words = copy.home;
@@ -119,7 +120,9 @@ function countWindow(answer: HomeAnswer) {
             ))}
           </ul>
           {window?.data_through && (
-            <p className="mt-2 text-caption text-ink-muted">{p.plansNote(window.days > 9 ? String(window.days) : copy.num.words[window.days - 1], formatDate(window.data_through))}</p>
+            <p className="mt-2 text-caption text-ink-muted">
+              <Fill template={p.plansNote} slots={{ window: <Segments segments={window.phrase} />, through: formatDate(window.data_through) }} />
+            </p>
           )}
         </>
       );
@@ -419,10 +422,11 @@ function WorthEmpty({ answer }: { answer: HomeAnswer }) {
   }
   if (worth.empty === "no_closed") return <p className="mt-4 text-small text-ink-muted">{words.publicView.empty}</p>;
   if (worth.empty === "nothing_behind" || worth.empty === "no_plan") return <p className="mt-4 text-small text-ink-muted">{w.agencyNothing}</p>;
-  const days = answer.window ? (answer.window.days > 9 ? String(answer.window.days) : copy.num.words[answer.window.days - 1]) : "";
+  if (worth.empty === "nothing_marked") return <p className="mt-4 text-small text-ink-muted">{w.nothingMarked}</p>;
+  // The window's words are the server's (the page picks no count word).
   return (
     <p className="mt-4 text-small text-ink-muted">
-      {answer.as_of ? w.quietAsOf(days, formatDate(answer.as_of)) : w.quiet(days)}{" "}
+      <Fill template={w.quiet} slots={{ window: answer.window ? <Segments segments={answer.window.phrase} /> : "" }} />{" "}
       <TextLink href="/projects/following">{w.quietLink}</TextLink>
     </p>
   );
@@ -514,7 +518,7 @@ export function HomePage() {
             {/* An implementing agency officer's own Home: "Check my plan" takes the strip's place (the 41 brief, 5.8). */}
             {answer.view === "piu" && !answer.preview && !answer.as_of && (
               <p className="mt-6 text-body @md/page:mt-8" data-check-my-plan>
-                <TextLink href="/packages/check">{words.worth.agencyCheck}</TextLink>
+                <TextLink href={CHECK_MY_PLAN}>{words.worth.agencyCheck}</TextLink>
               </p>
             )}
             <div className="mt-6 grid grid-cols-1 gap-6 @md/page:mt-8 @[75rem]/page:grid-cols-12 @[75rem]/page:gap-8">

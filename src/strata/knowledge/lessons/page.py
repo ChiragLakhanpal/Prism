@@ -257,6 +257,11 @@ class LessonsPage:
                 "holds_export": notice["holds_export"], "can_act": may_act,
                 "can_update": bool(kind and kind.rewrite_row)}
 
+    def notices_for(self, engine: Engine, drafts: list, extra_versions: dict[str, list[dict]] | None) -> list[dict]:
+        """"Changed where you used it" for these drafts today, with the reader's own example versions (ticket 41's
+        Home), the same notices the Lessons tab shows them."""
+        return self.changed_where_used(with_versions(self.review._load(engine), extra_versions), drafts)
+
     def changed_where_used(self, store: Store, drafts: list) -> list[dict]:
         """One notice per lesson and cited version across the reader's own open drafts (Draft and Checked by you),
         each with every row that cites it. Retired as wrong first, since they hold an export, then the newest

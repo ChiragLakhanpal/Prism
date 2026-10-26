@@ -56,7 +56,10 @@
     },
     "noPlan": "I don't hold a published Procurement Plan from your team yet."
   },
-  "public": "I hold records for {total} World Bank-financed projects. Search for one by name, project ID or country in the search box, or start from one of the {count} that closed most recently.",
+  "public": {
+    "one": "I hold records for {total} World Bank-financed projects. Search for one by name, project ID or country in the search box, or start from the one that closed most recently.",
+    "many": "I hold records for {total} World Bank-financed projects. Search for one by name, project ID or country in the search box, or start from one of the {count} that closed most recently."
+  },
   "publicNone": "I hold records for {total} World Bank-financed projects. Search for one by name, project ID or country in the search box.",
   "line": {
     "intro": "{ref}, US${millions} million of {category} in the {project} ({pid}),",

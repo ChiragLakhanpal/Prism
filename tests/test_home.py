@@ -9,7 +9,6 @@ Every expected sentence is written here from tests/ground_truth/values.toml and 
 from __future__ import annotations
 
 import datetime as dt
-import json
 import tomllib
 from pathlib import Path
 
@@ -145,6 +144,19 @@ def test_the_lesson_line_names_the_seeded_change_and_lands_on_its_notice(story):
     assert link["href"] == lesson["action"]["href"]
 
 
+def test_a_viewer_who_follows_nothing_still_gets_the_lesson_count_for_the_lesson_lines_below(story):
+    """Lesson lines come from the viewer's drafts, not their follows, so the briefing counts them on a first run too."""
+    for project_id in ("P156634", "P130164"):
+        assert story.call("DELETE", f"/api/projects/{project_id}/follow", json={"view": "staff"}).status_code == 200
+    answer = story.home().json()
+
+    assert sentences(answer) == ["You don't follow any projects yet, so I have no plans to brief you on.",
+                                 "One lesson cited in your drafts changed.",
+                                 "Two drafts are waiting for you to check."]
+    assert counts(answer)["lessonsChanged"]["ids"] == [line["id"] for line in lines(answer, "lesson", "changed")]
+    assert len(lines(answer, "lesson", "changed")) == 1
+
+
 def test_every_kind_of_draft_has_the_words_a_lesson_line_names_it_by():
     """A lesson line names the draft that cites the lesson by its kind ("Your suggested PPSD risk rows for ... cite"),
     so a kind added to config/drafts.toml fails here until copy.home.server.line.cites has its words."""
@@ -234,7 +246,8 @@ def test_a_preview_cannot_remove_the_strip_and_never_shows_it(story):
 def test_the_strip_shows_only_to_world_bank_staff(story):
     """Cy is signed in but holds no group the roles file's [staff] names, so the examples are not his."""
     assert story.get("/api/me", CY).json()["start_here_visible"] is False
-    assert story.home(CY).json()["start_here"]["visible"] is False
+    # No links either, so the page never reads the hidden strip as one Cy removed and offers to show it again.
+    assert story.home(CY).json()["start_here"] == {"visible": False, "links": []}
 
 
 # ── The roles table's other columns ──────────────────────────────────────
@@ -293,14 +306,24 @@ def test_an_officers_own_home_lists_their_plans_activities_behind_their_dates_an
 
 
 def test_the_public_preview_lists_closed_projects_with_the_contracts_traced_and_nothing_private(story):
+    """A closed project with no contract has no trail, so the fixture's one closed project with contracts is the line:
+    P130164, whose one contract with a STEP reference a notice also carries is the one traced (values.toml,
+    counts.p130164_trail)."""
     answer = story.home(view="public").json()
+    trail = TRUTH["counts"]["p130164_trail"]
 
     assert answer["view"] == "public" and answer["start_here"] == {"visible": False, "links": []}
-    assert answer["waiting"]["rows"] == [] and len(lines(answer)) <= 8
-    assert all(line["kind"] == "public" for line in lines(answer))
-    assert sentences(answer)[0].startswith("I hold records for 93 World Bank-financed projects.")
-    assert all(line["action"]["href"].endswith("/procurement#packages") for line in lines(answer))
-    assert "lesson" not in json.dumps(answer) or not lines(answer, "lesson")
+    assert answer["waiting"]["rows"] == []
+    assert sentences(answer) == [
+        "I hold records for 93 World Bank-financed projects. Search for one by name, project ID or country in the "
+        "search box, or start from the one that closed most recently."]
+    [line] = lines(answer)
+    assert line["kind"] == "public" and line["action"]["href"] == "/projects/P130164/procurement#packages"
+    assert text_of(line["segments"]) == (
+        f"The {value('project-p130164-name')} (P130164) in {value('project-p130164-country')} closed on "
+        f"{long(value('project-p130164-closing'))}. I traced {trail['traced']} of its {trail['contracts']} contracts "
+        f"from notice to signature.")
+    assert not lines(answer, "lesson") and answer["waiting"]["reason"] == "public"
 
 
 def test_as_of_a_past_date_the_window_ends_on_it_and_lessons_drafts_and_the_strip_are_left_out(story):
@@ -311,6 +334,16 @@ def test_as_of_a_past_date_the_window_ends_on_it_and_lessons_drafts_and_the_stri
     assert answer["start_here"]["visible"] is False
     assert sentences(answer)[0] == "One plan changed in the 15 days to October 20, 2026."
     assert not any("draft" in sentence for sentence in sentences(answer))
+
+
+def test_a_plan_that_changed_with_no_activity_marked_never_reads_as_no_plan_changed(story):
+    """As of March 25, 2025, the window holds one plan of P156634, Kilifi - Mariakani's of March 19, 2025, and check_plan
+    marks none of its activities. "Worth knowing" then says that, never "No plan changed", which the briefing contradicts."""
+    answer = story.home(asof="2025-03-25").json()
+
+    assert sentences(answer) == ["One plan changed in the 15 days to March 25, 2025.",
+                                 "None of its activities needs a look or is worth watching."]
+    assert lines(answer) == [] and answer["worth"]["empty"] == "nothing_marked"
 
 
 # ── The seed command ─────────────────────────────────────────────────────
@@ -355,6 +388,22 @@ def test_every_seeded_item_is_labeled_an_example_where_it_is_listed_and_only_for
     story.call("PUT", "/api/projects/P156634/follow", BEN, json={"view": "staff"})
     assert story.get("/api/projects/P156634/follow", BEN).json() == {"following": True}
     assert [entry.get("example") for entry in story.get("/api/following", BEN).json()["projects"]] == [None]
+
+
+EXISTING_NOTES = {"kind": "review_notes", "project_id": "P156634",
+                  "agency_id": "northern-water-works-development-agency", "plan_date": "2026-10-09"}
+EXISTING_ROWS = {"kind": "ppsd_rows", "package": "KE-NWWDA-541055-CW-RFB"}
+
+
+def test_the_existing_draft_notices_name_a_seeded_draft_an_example_for_its_viewer_alone(story):
+    """The plan check the first Start here link opens, and the package workspace, name the open draft the team
+    started. For Ana's seeded drafts they say Strata set them up (the 41 brief, 5.12); Ben's view is unchanged."""
+    for query in (EXISTING_NOTES, EXISTING_ROWS):
+        ana = story.get("/api/drafts/existing", **query).json()["draft"]
+        ben = story.get("/api/drafts/existing", BEN, **query).json()["draft"]
+
+        assert (ana["author"]["you"], ana.get("example")) == (True, True), query
+        assert ben["draft_id"] == ana["draft_id"] and "example" not in ben, query
 
 
 def test_running_the_seed_command_twice_sets_up_nothing_twice(story):

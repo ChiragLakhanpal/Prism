@@ -49,7 +49,6 @@ from strata.server.viewer_sql import data_through
 from strata.tools import registry
 from strata.tools.check_plan import agency_id as agency_key
 from strata.tools.data_readiness_for import fill
-from strata.knowledge.lessons.page import with_examples
 
 log = logging.getLogger("strata.server.home")
 HERE = Path(__file__).resolve().parent
@@ -131,7 +130,7 @@ def _date(value, style: str | None = None) -> dict:
     return found
 
 
-def _text_of(segments: list[dict]) -> str:
+def text_of(segments: list[dict]) -> str:
     """A line's words as plain text, as a test or a screen reader reads them."""
     out = []
     for segment in segments:
@@ -153,10 +152,6 @@ def _text_of(segments: list[dict]) -> str:
             day = _day(segment["date"])
             out.append(f"{day:%B} {day.day}, {day.year}" if day else "")
     return "".join(out)
-
-
-def text_of(segments: list[dict]) -> str:
-    return _text_of(segments)
 
 
 # ── The store: the strip, the examples set up and the example lesson versions ──
@@ -360,15 +355,11 @@ def lesson_line(notice: dict) -> dict:
 
 # ── The briefing ─────────────────────────────────────────────────────────
 
-def window_phrase(days: int, end: dt.date, as_of: dt.date | None) -> list[dict]:
+def window_phrase(days: int, as_of: dt.date | None) -> list[dict]:
     found = words()
     if as_of is not None:
         return fill(found["windowAsOf"], {"window": count(days), "date": _date(as_of)})
     return fill(found["window"], {"window": count(days)})
-
-
-def _sentence(template: str, slots: dict) -> list[dict]:
-    return fill(template, slots)
 
 
 def drafts_sentence(rows: list[dict]) -> list[dict]:
@@ -385,60 +376,51 @@ def staff_briefing(plans: list[dict], lines: list[dict], followed: int, window: 
     a past date, when the drafts sentence is left out."""
     found = words()
     sentences: list[list[dict]] = []
+    activity = [line for line in lines if line["kind"] == "activity"]
+    projects = [line for line in lines if line["kind"] == "project"]
+    # Lesson lines come from the viewer's own drafts, not their follows, so they are counted on a first run too.
+    changed = [line for line in lines if line["kind"] == "lesson" and line["status"] == "changed"]
+    retired = [line for line in lines if line["kind"] == "lesson" and line["status"] != "changed"]
     if not followed:
         sentences.append(fill(found["firstRun"], {}))
+    elif not plans and not projects and not changed and not retired:
+        sentences.append(fill(form(found["quiet"], followed), {"count": count(followed), "window": window}))
     else:
-        activity = [line for line in lines if line["kind"] == "activity"]
-        projects = [line for line in lines if line["kind"] == "project"]
-        changed = [line for line in lines if line["kind"] == "lesson" and line["status"] == "changed"]
-        retired = [line for line in lines if line["kind"] == "lesson" and line["status"] != "changed"]
-        if not plans and not projects and not changed and not retired:
-            sentences.append(fill(form(found["quiet"], followed),
-                                  {"count": count(followed), "window": window}))
-        else:
-            if plans:
-                sentences.append(fill(form(found["plans"], len(plans)), {
-                    "count": count(len(plans), "plans", [plan["document_id"] for plan in plans], capital=True),
-                    "window": window}))
-                look = [line["id"] for line in activity if line["status"] == "needs_a_look"]
-                watch = [line["id"] for line in activity if line["status"] == "watch"]
-                verbs = found["activities"]
-                its = form(verbs["its"], len(plans))
-                if look and watch:
-                    template, slots = verbs["lookAndWatch"], {
-                        "look": count(len(look), "look", look, capital=True), "watch": count(len(watch), "watch", watch),
-                        "its": its, "needs": form(verbs["needs"], len(look)), "is": form(verbs["is"], len(watch))}
-                elif look:
-                    template, slots = verbs["lookOnly"], {"look": count(len(look), "look", look, capital=True),
-                                                          "its": its, "needs": form(verbs["needs"], len(look))}
-                elif watch:
-                    template, slots = verbs["watchOnly"], {"watch": count(len(watch), "watch", watch, capital=True),
-                                                           "its": its, "is": form(verbs["is"], len(watch))}
-                else:
-                    template, slots = verbs["none"], {"its": its}
-                sentences.append(fill(template, slots))
+        if plans:
+            sentences.append(fill(form(found["plans"], len(plans)), {
+                "count": count(len(plans), "plans", [plan["document_id"] for plan in plans], capital=True),
+                "window": window}))
+            look = [line["id"] for line in activity if line["status"] == "needs_a_look"]
+            watch = [line["id"] for line in activity if line["status"] == "watch"]
+            verbs = found["activities"]
+            its = form(verbs["its"], len(plans))
+            if look and watch:
+                template, slots = verbs["lookAndWatch"], {
+                    "look": count(len(look), "look", look, capital=True), "watch": count(len(watch), "watch", watch),
+                    "its": its, "needs": form(verbs["needs"], len(look)), "is": form(verbs["is"], len(watch))}
+            elif look:
+                template, slots = verbs["lookOnly"], {"look": count(len(look), "look", look, capital=True),
+                                                      "its": its, "needs": form(verbs["needs"], len(look))}
+            elif watch:
+                template, slots = verbs["watchOnly"], {"watch": count(len(watch), "watch", watch, capital=True),
+                                                       "its": its, "is": form(verbs["is"], len(watch))}
             else:
-                sentences.append(fill(found["plans"]["none"], {"window": window}))
-            if projects:
-                sentences.append(fill(form(found["projects"], len(projects)), {
-                    "count": count(len(projects), "projects", [line["id"] for line in projects], capital=True)}))
-            if changed:
-                sentences.append(fill(form(found["lessonsChanged"], len(changed)), {
-                    "count": count(len(changed), "lessonsChanged", [line["id"] for line in changed], capital=True)}))
-            if retired:
-                sentences.append(fill(form(found["lessonsRetired"], len(retired)), {
-                    "count": count(len(retired), "lessonsRetired", [line["id"] for line in retired], capital=True)}))
+                template, slots = verbs["none"], {"its": its}
+            sentences.append(fill(template, slots))
+        else:
+            sentences.append(fill(found["plans"]["none"], {"window": window}))
+        if projects:
+            sentences.append(fill(form(found["projects"], len(projects)), {
+                "count": count(len(projects), "projects", [line["id"] for line in projects], capital=True)}))
+    if changed:
+        sentences.append(fill(form(found["lessonsChanged"], len(changed)), {
+            "count": count(len(changed), "lessonsChanged", [line["id"] for line in changed], capital=True)}))
+    if retired:
+        sentences.append(fill(form(found["lessonsRetired"], len(retired)), {
+            "count": count(len(retired), "lessonsRetired", [line["id"] for line in retired], capital=True)}))
     if waiting is not None:
         sentences.append(drafts_sentence(waiting))
     return sentences
-
-
-def capitalized(segments: list[dict]) -> list[dict]:
-    if segments and "word" in segments[0]:
-        first = dict(segments[0])
-        first["word"] = first["word"][:1].upper() + first["word"][1:]
-        return [first, *segments[1:]]
-    return segments
 
 
 # ── The routes ───────────────────────────────────────────────────────────
@@ -522,10 +504,8 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, access: Access, vi
         the Lessons tab's own function, never a second computation."""
         if lessons_page is None or not mine:
             return []
-        store_now = lessons_page.review._load(engine)
         extra = store.lesson_versions(viewer.user_id) if store is not None and viewer.user_id else {}
-        store_now.versions = with_examples(store_now.versions, extra)
-        return lessons_page.changed_where_used(store_now, mine)
+        return lessons_page.notices_for(engine, mine, extra)
 
     def staff_home(engine: Engine, viewer: Viewer, as_of: dt.date | None, start_here: bool) -> dict:
         day = as_of or today()
@@ -576,15 +556,19 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, access: Access, vi
             lesson_lines.sort(key=lambda line: LESSON_ORDER.index(line["reason"]))
         lines = lines + projects_lines + lesson_lines
         waiting = waiting_rows(viewer, mine, example_drafts(seeded)) if as_of is None else None
-        window = window_phrase(days, end, as_of)
+        window = window_phrase(days, as_of)
         sentences = staff_briefing(plans, lines, len(followed), window, waiting)
         lesson_notice = ""
         if "lesson_change" in seeded:
             lesson_id, cited, _version = seeded["lesson_change"]["item_id"].split(":")
             lesson_notice = f"#notice-{lesson_id}-v{cited}"
         chosen = examples()
-        links = chosen.links(agency_key(chosen.demo_plan.implementing_agency), lesson_notice)
-        empty = None if lines else ("first_run" if not followed else "quiet")
+        # The examples are World Bank staff's alone: anyone else gets no links, so the page never reads a strip they
+        # never had as one they removed.
+        links = (chosen.links(agency_key(chosen.demo_plan.implementing_agency), lesson_notice)
+                 if access.is_staff(viewer) else [])
+        # A plan that changed with nothing marked is not a quiet window: the briefing has just said it changed.
+        empty = None if lines else ("first_run" if not followed else "nothing_marked" if plans else "quiet")
         return {
             "view": STAFF, "preview": False, "today": day.isoformat(), "as_of": _iso(as_of),
             "window": {"days": days, "start": start.isoformat(), "end": end.isoformat(),
@@ -680,8 +664,8 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, access: Access, vi
                                      "hidden": row["project_name"] or pid},
                           "differs": None})
         public = words()
-        sentence = (fill(public["public"], {"total": {"number": total}, "count": count(len(lines))}) if lines
-                    else fill(public["publicNone"], {"total": {"number": total}}))
+        sentence = (fill(form(public["public"], len(lines)), {"total": {"number": total}, "count": count(len(lines))})
+                    if lines else fill(public["publicNone"], {"total": {"number": total}}))
         through = as_of or data_through(engine) or day
         return {
             "view": PUBLIC, "preview": True, "today": day.isoformat(), "as_of": _iso(as_of), "window": None,

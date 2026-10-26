@@ -445,9 +445,16 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: DraftStore 
         if not viewer.user_id:
             return refused(401, "no_identity")
 
+        examples: set[str] | None = None
+
         def named(draft: Saved) -> dict:
+            # A draft the seed command set up for this viewer (ticket 41) says Strata set it up, never "You started".
+            nonlocal examples
+            if examples is None:
+                examples = example_drafts(viewer) if example_drafts is not None else set()
             return {"draft_id": draft.draft_id, "created_at": runtime.iso(draft.created_at),
-                    "author": {"name": draft.author_name, "you": is_author(viewer, draft.author_id)}}
+                    "author": {"name": draft.author_name, "you": is_author(viewer, draft.author_id)},
+                    **({"example": True} if draft.draft_id in examples else {})}
 
         def on_package():
             found = None

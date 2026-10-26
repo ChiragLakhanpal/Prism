@@ -45,7 +45,8 @@ export type HomeAnswer = {
   preview: boolean;
   today: string;
   as_of: string | null;
-  window: { days: number; start: string; end: string; data_through: string | null } | null;
+  // phrase: the window as the server words it ("the past seven days"), which the page writes as it is.
+  window: { days: number; start: string; end: string; data_through: string | null; phrase: HomeSegment[] } | null;
   briefing: { sentences: HomeSegment[][]; plans: HomePlan[] };
   start_here: { visible: boolean; links: { key: string; href: string; pid: string | null }[] };
   worth: {
@@ -55,7 +56,7 @@ export type HomeAnswer = {
     partial: number | null;
     checked_on: string;
     through: string;
-    empty: "first_run" | "quiet" | "no_plan" | "nothing_behind" | "no_closed" | null;
+    empty: "first_run" | "quiet" | "nothing_marked" | "no_plan" | "nothing_behind" | "no_closed" | null;
     followed?: number;
   };
   waiting: { rows: (DraftRow & { example?: boolean })[]; total: number; more: boolean; reason: "preview" | "asof" | "public" | null };

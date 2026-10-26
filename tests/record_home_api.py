@@ -14,6 +14,8 @@ data-through date, October 23:
 - home-preview-piu.json and home-preview-public.json: Ana's previews of an implementing agency officer's Home (the
   Northern Water Works Development Agency's) and the public's.
 - home-asof.json: Ana's Home as of October 20, 2026.
+- home-nothing-marked.json: Ana's Home as of March 25, 2025, when one plan changed in the window (Kilifi - Mariakani's
+  of March 19, 2025) and check_plan marked none of its activities.
 - home-drafts-checked.json: Ana's Home once she marked both drafts as checked.
 - me-home.json: who Ana is, World Bank staff whose Start here strip shows.
 - start-here-removed.json, start-here-shown.json and start-here-refused-preview.json: the answers to removing the strip,
@@ -21,6 +23,8 @@ data-through date, October 23:
 - example-rural-roads-kenya.json: the sentence "Plan a package from a sentence" fills into the box.
 - following-examples.json and planned-packages-examples.json: Ana's Following and Packages tab, where the follows and
   the package the seed command set up for her are labeled as examples.
+- drafts-existing-example-review-notes.json and drafts-existing-example-ppsd-rows.json: the open drafts the October 9
+  plan check and the workspace of KE-NWWDA-541055-CW-RFB name for Ana, which the seed command set up for her.
 """
 
 import json
@@ -59,9 +63,15 @@ def answers(folder: Path, fixture_db: Path = FIXTURE_DB, built: tuple[Path, Path
     found["home-preview-piu.json"] = text(story.home(view="piu"))
     found["home-preview-public.json"] = text(story.home(view="public"))
     found["home-asof.json"] = text(story.home(asof="2026-10-20"))
+    found["home-nothing-marked.json"] = text(story.home(asof="2025-03-25"))
     found["example-rural-roads-kenya.json"] = text(story.get("/api/examples/rural_roads_kenya"))
     found["following-examples.json"] = text(story.get("/api/following"))
     found["planned-packages-examples.json"] = text(story.get("/api/planned-packages"))
+    found["drafts-existing-example-review-notes.json"] = text(story.get(
+        "/api/drafts/existing", kind="review_notes", project_id="P156634",
+        agency_id="northern-water-works-development-agency", plan_date="2026-10-09"))
+    found["drafts-existing-example-ppsd-rows.json"] = text(story.get(
+        "/api/drafts/existing", kind="ppsd_rows", package="KE-NWWDA-541055-CW-RFB"))
     found["start-here-refused-preview.json"] = text(
         story.call("POST", "/api/home/start-here", json={"visible": False, "view": "public"}))
     found["start-here-removed.json"] = text(
