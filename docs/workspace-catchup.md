@@ -1550,6 +1550,8 @@ It worked if it exits 0, lists `strata.ops.hindsight_codings`, `strata.ops.hinds
 
 **Ran on October 26, 2026 (orchestrator), from 7f43303.** The warehouse came back from its daily limit at 00:54 UTC. One bundle deploy served every block that names it: the first pass (00:55 to 00:58 UTC) exited 0, printed "The metric views Genie reads exist now: strata.gold.contract_metrics, strata.gold.package_metrics.", listed 32 tables as new (gold: contract_metrics, edge, package_metrics, time_estimate_model, time_estimate_score; silver: contract_passage_links, notice_bids; ops: answer_citations, candidate_labels, disagreement_choices, draft_fields, draft_fields_latest, exposed_projects, follows, hindsight_agreement, hindsight_blamed, hindsight_codings, label_decisions, lesson_version_notices, passage_language_checks, quality_checks, rebidding_labels, rebidding_scores, retrieval_agreement, retrieval_feedback_viewers, retrieval_feedback_weekly, retrieval_grades, retrieval_label_builds, retrieval_labels, retrieval_pool, retrieval_queries, viewer_settings), changed no existing table, and said "The job strata nightly changed." The second pass (00:58 to 00:59 UTC) printed "No changes." Both printed "workspace's catalog lists the same before and after the deploy: two schemas, three tables and one volume." `SHOW TABLES` in each schema lists every table above.
 
+**Changed by ticket 44 (merger, October 25, 2026, after merge commit 05052ba).** Ticket 44 deleted `strata.ops.exposed_projects` from the repo and replaced it with `strata.ops.exposures`, the one log that all three routes write and that the recall KPI's query (`src/strata/estimates/sql/hindsight/exposed.sql`) now reads. The table this deploy made on October 26 stays on the workspace unused, because the deploy never drops a table. Ticket 44's step 1 deploys `strata.ops.exposures`. From 05052ba on, a deploy on a new workspace lists only the three hindsight tables from this block, and no `exposed_projects`.
+
 ## Ticket 34, step 2 of 4: see the hindsight test's gate set
 
 The merger parked this step on October 25, 2026, after merge commit 2b5e5f9. It needs the Databricks keys in `.env`. Run it after step 1, and after a nightly run has filled gold and silver with the pilot projects' documents. It only reads.
@@ -1999,3 +2001,73 @@ Then, in the SQL editor, with the App's service principal (its application id, s
 It worked if the deploy exits 0 with the last line `Strata is running at https://...`, `GET /api/me` returns a `language` block, and, signed in as a viewer, choosing French in the view popover saves it: `PUT /api/me/working-language` returns 204, a reload of `/api/me` gives `source: saved`, and `strata.ops.viewer_settings` holds a new row for that viewer.
 
 **Parked on October 26, 2026 (orchestrator).** This is the App deploy, `ops/app/deploy_app.py`, which writes the Foundry and Azure OpenAI keys into the secret scope `strata` through the SDK. Secret writes are the user's (ticket 06, step 1, and ticket 43, step 4), so this step waits for their decision on the scope.
+
+## Ticket 44, step 1 of 5: deploy the estimates loop's nine tables
+
+The merger parked this step on October 25, 2026, after merge commit 05052ba. All ten keys were set, but the header above holds workspace steps back during a merge, and the orchestrator's notes for this wave held every workspace step for the warehouse's daily limit of October 25. It needs the Databricks keys in `.env`. Ticket 44 adds nine tables under `src/strata/lakehouse/tables/ops/`: `strata.ops.exposures` (each past range or time estimate shown in the World Bank staff view), `strata.ops.estimates_watch`, `strata.ops.anchored_plan_rows` (plan rows dated within 14 days of a date Strata offered), `strata.ops.retrain_triggers`, `strata.ops.model_signoffs`, `strata.ops.model_promotions`, `strata.ops.model_states`, `strata.ops.time_estimate_shadow` (the challenger's nightly scores in shadow) and `strata.ops.hazard_scores` (the hazard model's nightly scores in shadow). It deletes ticket 34's `strata.ops.exposed_projects` from the repo. The deploy of October 26 already made that table, and it stays on the workspace unused, because the deploy never drops a table. One deploy from 05052ba or later serves every block that names it. This workspace's earlier deploys passed `--fairshare-catalog workspace`, so this one does too.
+
+Run this from the main checkout:
+
+    uv run --script ops/bundle/deploy.py --env-file .env --fairshare-catalog workspace
+
+It worked if it exits 0, lists the nine tables above as new, changes no existing table, and `SHOW TABLES IN strata.ops` lists all nine.
+
+## Ticket 44, step 2 of 5: redeploy the App, then the demo question in the staff view writes one exposure (criterion 1, live)
+
+The merger parked this step on October 25, 2026, after merge commit 05052ba, for the same reasons as step 1. Run it after step 1: from this merge on, the deploy grants the App's own service principal SELECT and MODIFY on `strata.ops.exposures` (`ops/app/deploy_app.py`, `grants()`), and a grant on a table that does not exist fails. It needs the Databricks keys and the four Foundry keys in `.env`, because the answer comes from the live agent. It is ticket 06's deploy command, and one deploy from 05052ba or later serves every block that names it. Like every App deploy parked since October 26, it writes the Foundry and Azure OpenAI keys into the secret scope `strata` through the SDK, so it also waits for the user's decision on the scope (ticket 06, step 1, and ticket 43, step 4).
+
+Run this from the main checkout:
+
+    uv run --script ops/app/deploy_app.py --env-file .env
+
+Then, signed in to the App in the World Bank staff view, ask the showcase past-range question, "How long did packages like KE-NWWDA-541055-CW-RFB take from notice to signed contract?", and run this on the SQL warehouse:
+
+    SELECT route, step_reference, shown FROM strata.ops.exposures ORDER BY shown_at DESC LIMIT 5
+
+It worked if the deploy exits 0 with the last line `Strata is running at https://...`, and one new row reads `/api/ask`, `KE-NWWDA-541055-CW-RFB`, `past_range`. Its `range_shown` holds the past range from the tool's own summary, which should match the range the answer cited. Then ask the same question in the PIU view and run the query again: it worked if no row was added.
+
+## Ticket 44, step 3 of 5: two nights of the nightly job store the hazard model's shadow scores and its weekly comparison (criterion 7, live)
+
+The merger parked this step on October 25, 2026, after merge commit 05052ba, for the same reasons as step 1. Run it after step 1, on two nights. It needs the Databricks keys in `.env`. It is ticket 04's command, and one run serves every block that names it. From this merge on, the `score` task also scores every package in shadow with a challenger when one is kept, runs the monthly watch, and stores the hazard model's score for every open project in `strata.ops.hazard_scores`. Once a week, on the signals' own schedule (`signals.track_record_every_days`), it replays the hazard model against the fixed signals and logs the comparison to the MLflow experiment `/Shared/strata/time_estimate` and to `strata.ops.evaluation_result` under the scorer `hazard_vs_signals`. No screen shows either.
+
+Run this from the main checkout, once on each of two nights (a scheduled run of the job counts as one of them):
+
+    uv run --script ops/bundle/check.py job-run --env-file .env
+
+It worked if every task succeeds each time, this shows one run for each night:
+
+    SELECT run_id, count(*) FROM strata.ops.hazard_scores GROUP BY run_id
+
+and this returns at least one run, which also appears in the MLflow experiment `/Shared/strata/time_estimate`:
+
+    SELECT run_id, count(*) FROM strata.ops.evaluation_result WHERE scorer = 'hazard_vs_signals' GROUP BY run_id
+
+## Ticket 44, step 4 of 5: a retrain registers a challenger in Unity Catalog (criterion 5, live)
+
+The merger parked this step on October 25, 2026, after merge commit 05052ba, for the same reasons as step 1. Run it after step 3, and after ticket 26's step 2 has made a champion. It needs the Databricks keys in `.env`. The nightly `score` task retrains only when the monthly watch says a retrain is due: once a quarter, or after a raised trigger (`strata.estimates.watch.retrain_due`). It then runs ticket 25's backtest, which registers the new version as the challenger while a champion holds the alias. Fix review follow-up 4 first (`.notes/44-review-r2.md`): after it registers a challenger, `ops/estimates/backtest_live.py` prints the champion's track-record sentence, not the sentence for the run it just made. Ticket 25's runs on October 25 found too few packages to train on, so until more notices or plans are read this run may train no model, and then step 5 has no challenger to decide on.
+
+To run the retrain by hand instead of waiting for a nightly run that finds one due, run this from the main checkout:
+
+    uv run --script ops/estimates/backtest_live.py --env-file .env
+
+It worked if it exits 0 and prints "Registered strata.gold.time_estimate version N as challenger.", this returns one row for version N:
+
+    SELECT model, version, alias, training_through, public_from FROM strata.gold.time_estimate_model WHERE alias = 'challenger'
+
+and the Unity Catalog model `strata.gold.time_estimate` shows the `challenger` alias on version N.
+
+## Ticket 44, step 5 of 5: two sign-offs, then the promotion decision moves the champion alias (criterion 6, live)
+
+The merger parked this step on October 25, 2026, after merge commit 05052ba, for the same reasons as step 1. Run it after step 4, once the challenger has scored in shadow for a quarter. It needs the Databricks keys in `.env`. A sign-off is recorded for the person the env file signs in as, and only when `config/roles.toml` puts them in that role's group: `strata-model-owners` for the model owner, and `strata-lead-procurement-specialists` for the lead. The lead must be a different person from the model owner, so the second command runs with that person's `.env`. Use step 4's version in place of 2.
+
+Run this from the main checkout, in this order:
+
+    uv run --script ops/estimates/promote_live.py --env-file .env sign-off --role model_owner --version 2
+    uv run --script ops/estimates/promote_live.py --env-file .env sign-off --role lead --version 2
+    uv run --script ops/estimates/promote_live.py --env-file .env promote --version 2
+
+It worked if each exits 0, or 1 with the refusal codes printed (`no_backtest_win`, `no_shadow_win`, `edition_coverage`, `no_model_owner_sign_off` or `no_lead_sign_off`), and the promote adds one row here:
+
+    SELECT version, champion_version, promoted, refusals, decided_at FROM strata.ops.model_promotions ORDER BY decided_at DESC LIMIT 1
+
+When `promoted` is true, the `champion` alias in Unity Catalog points to version 2, and `strata.gold.time_estimate_model` keeps version 2 as champion. The time estimate screen's track record changes only after that move.

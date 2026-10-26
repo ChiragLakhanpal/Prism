@@ -6,7 +6,7 @@ Read first: docs/PLAN.md sections 9 and 11; the blueprint's "The dashboard for t
 
 **Blocked by:** 16 (Data readiness: the page and the first dashboard page); 32 (The retrieval loop); 33 (Genie, the benchmark, Foundry evaluations and the full gate); 34 (The hindsight test); 43 (The nightly job, incremental, with quality checks); 44 (Exposure logging, the estimates loop and the hazard model in shadow)
 
-**Status:** ready-for-agent
+**Status:** in-progress
 **Area:** ops
 **Phase:** P2
 **Design review:** yes
@@ -18,3 +18,7 @@ Read first: docs/PLAN.md sections 9 and 11; the blueprint's "The dashboard for t
 - [ ] Weekly users and drafts checked and exported are computed from usage events and draft states.
 - [ ] Adding a tile, then removing it, takes one entry in the dashboard definition each time, shown in a test deploy.
 - [ ] Every chart follows DESIGN.md section 6 (the finding as the title, a source note, category colors in order with text variants for essential marks, the number rules) and the lists in the blueprint's dashboard section.
+
+## Comments
+
+- October 23, 2026, orchestrator: dispatched to an implementer in its own worktree on branch strata/45-three-dashboard-pages-and-kpis, as soon as ticket 44 landed. Credentials are still missing, so every live step is parked in docs/workspace-catchup.md; the offline side is built against the fixtures.
