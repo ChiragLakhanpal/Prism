@@ -70,12 +70,30 @@ def flatten(listing: dict | None, job: dict | None = None, dashboard: dict | Non
     return found
 
 
-def changes(before: dict, after: dict) -> list[str]:
-    """One sentence per thing that is new, gone or changed, in the order of KINDS."""
+def plan(loaded: bundle.Bundle | None = None) -> list[tuple[str, str]]:
+    """What a first deploy makes on a fresh workspace, read from the repo alone and keyed as flatten() keys what
+    the workspace lists: the catalog, its schemas and volume, every table, view and metric view, the grants, every
+    job in bundle/*.yml and the dashboard. The demo-ready command's dry run prints it (ops/demo/ready.py
+    --fresh-workspace), so its list cannot drift from this deploy."""
+    loaded = loaded or bundle.load()
+    declared = catalog.declared(loaded)
+    defined = catalog.table_definitions() + catalog.view_definitions() + catalog.metric_view_definitions()
+    return ([("catalog", declared.catalog)]
+            + [("schemas", f"{declared.catalog}.{schema}") for schema in declared.schemas]
+            + [("volumes", f"{declared.catalog}.{volume}") for volume in declared.volumes]
+            + [("tables", definition.full_name) for definition in defined]
+            + [("grants", securable) for securable in declared.grants]
+            + [("jobs", loaded.resolve(job["name"])) for job in loaded.resources("jobs").values()]
+            + [("dashboards", loaded.resolve(board["display_name"])) for board in loaded.resources("dashboards").values()])
+
+
+def changes(before: dict, after: dict, kinds: dict[str, str] = KINDS) -> list[str]:
+    """One sentence per thing that is new, gone or changed, in the order of kinds: KINDS, or the demo-ready
+    command's listing (ops/demo/ready.py), which adds the app and the rows of strata.ops."""
     lines = []
-    order = list(KINDS)
+    order = list(kinds)
     for kind, name in sorted(set(before) | set(after), key=lambda key: (order.index(key[0]), key[1])):
-        label, plural = KINDS[kind], kind == "grants"
+        label, plural = kinds[kind], kind in ("grants", "rows")
         if (kind, name) not in before:
             lines.append(f"{label} {name} {'are' if plural else 'is'} new.")
         elif (kind, name) not in after:

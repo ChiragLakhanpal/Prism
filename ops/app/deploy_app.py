@@ -182,8 +182,11 @@ def grants(principal: str) -> list[str]:
     # (ticket 23): the report each person kept on a disagreement, for an answer or a draft, which the drafts' hold
     # reads too (ticket 36). draft_fields (ticket 36): the values people set on a draft's fields, read through its
     # latest-value view. exposures (ticket 44): each past range or time estimate the app showed in the staff view.
+    # uploads and upload_rows (ticket 38): an implementing agency team's uploads of its plan, kept as the app and
+    # read only through its team rule.
     tables = ("usage_events", "agent_runs", "evidence_opened", "drafts", "draft_states", "draft_exports",
-              "draft_files", "follows", "disagreement_choices", "draft_fields", "exposures")
+              "draft_files", "follows", "disagreement_choices", "draft_fields", "exposures", "uploads",
+              "upload_rows")
     return [f"GRANT USE CATALOG ON CATALOG strata TO `{principal}`",
             f"GRANT USE SCHEMA ON SCHEMA strata.ops TO `{principal}`",
             *[f"GRANT SELECT, MODIFY ON TABLE strata.ops.{table} TO `{principal}`" for table in tables],
@@ -211,6 +214,23 @@ def masks(principal: str, owner: str) -> list[str]:
                 f"RETURN CASE WHEN current_user() IN ('{principal}', '{owner}') THEN value END")
     return [function, *[f"ALTER TABLE {table} ALTER COLUMN {column} SET MASK {MASK}"
                         for table, columns in MASKED.items() for column in columns]]
+
+
+def plan() -> list[tuple[str, str]]:
+    """What a first deploy makes, read from the repo alone, as (what, name) pairs, with the Foundry agent's and the
+    judge's keys in the env file, as the wizard fills it. The demo-ready command's dry run prints it
+    (ops/demo/ready.py --fresh-workspace), so its list cannot drift from this deploy."""
+    names = dayone.load_config()["names"]
+    scope, instance = names["secret_scope"], names["app_state_instance"]
+    filled = {"DATABRICKS_WAREHOUSE_ID": "the env file's", **dict.fromkeys((*FOUNDRY, *JUDGE), "set")}
+    example = "00000000-0000-0000-0000-000000000000"  # the app's service principal, known only once it exists
+    return ([("The app", f"{names['app']} ({DESCRIPTION})"), ("Its code", f"/Workspace/Users/<you>/{FOLDER}"),
+             ("The Lakebase instance", instance)]
+            + [("The app resource", resource["name"]) for resource in resources(filled, scope, instance)]
+            + [("The user authorization scope", name) for name in SCOPES]
+            + [("The secret", f"{scope}/{key}") for key in (*FOUNDRY, *JUDGE)]
+            + [("The grants to the app's service principal", f"{len(grants(example))} grants on strata.ops"),
+               ("The column mask", f"{MASK}, on {sum(len(columns) for columns in MASKED.values())} columns")])
 
 
 def deploy(workspace, env: dict, build_web: Callable[[], tuple[int, str]] = build_web, dist: Path = DIST) -> int:

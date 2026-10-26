@@ -135,6 +135,14 @@ def keep_result(facts: Facts, name: str, result: Mapping, tools: dict[str, Tool]
         facts.abstained(name, result["abstention"])
 
 
+def tool_context(engine, viewer, view: str, as_of: dt.date, limits: Thresholds,
+                 reads: list[str] | None = None) -> registry.Context:
+    """The Context every /api/ask tool call runs in. It carries no reader of uploads, so no agent answer reads an
+    implementing agency team's upload, whoever asks (ticket 38; tests/test_uploads.py's must-refuse case). reads
+    collects the tables the call read, for the run's lineage (ticket 45)."""
+    return registry.Context(engine, viewer, view, as_of, limits, reads=reads)
+
+
 def answer_runner(agent_for: Callable[[Turn], Agent], engine_for: EngineFor, tools: dict[str, Tool] | None = None,
                   thresholds: Thresholds | None = None,
                   today: Callable[[], dt.date] = registry.today,
@@ -164,8 +172,8 @@ def answer_runner(agent_for: Callable[[Turn], Agent], engine_for: EngineFor, too
         started = time.monotonic()
         try:
             with engine_for(turn.viewer) as engine:
-                result = registry.call(name, arguments, registry.Context(
-                    engine, turn.viewer, turn.scope.view, as_of, limits, reads=reads), tools_held)
+                result = registry.call(name, arguments, tool_context(engine, turn.viewer, turn.scope.view, as_of, limits,
+                                                                     reads), tools_held)
         except registry.ToolError as error:
             note["error"] = "bad_arguments"
             return {"error": "bad_arguments", "detail": str(error)}, note

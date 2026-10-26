@@ -18,7 +18,7 @@ from pathlib import Path
 
 from strata.agent.definition import INSTRUCTIONS, agent_definition, guardrail_policy
 from strata.agent.foundry import Foundry
-from strata.config import Thresholds, Tool, load_agent
+from strata.config import CONFIG_DIR, Thresholds, Tool, load_agent, load_models
 
 AGENT_KEYS = ("type", "name", "description", "parameters")  # what the repo sets on each tool
 
@@ -70,6 +70,22 @@ def _policy_view(policy: dict | None) -> dict | None:
 
 LABELS = {"model": "its model deployment", "instructions": "its instructions", "tools": "its tools",
           "guardrail": "the guardrail it names", "description": "its description"}
+
+
+def plan(path: Path = CONFIG_DIR / "agents.toml") -> list[tuple[str, str]]:
+    """Every agent the sync makes in Foundry, read from the agent registry alone, as (its key, what it is): its
+    name, the deployment its role runs on and the guardrail it runs under. The demo-ready command's dry run prints
+    it (ops/demo/ready.py --fresh-workspace), one sync per agent, so its list cannot drift from the registry."""
+    import tomllib
+
+    models = load_models()
+    found = []
+    for key in tomllib.loads(path.read_text()).get("agents", {}):
+        spec = load_agent(key, path)
+        tools = "every tool" if spec.tools is None else f"{len(spec.tools)} tools" if spec.tools else "no tools"
+        found.append((key, f"{spec.name} on {models[spec.role].deployment}, with {tools}, under the guardrail "
+                           f"{spec.guardrail.name}"))
+    return found
 
 
 def run(foundry: Foundry, key: str = "orchestrator", apply: bool = True, instructions_folder: Path = INSTRUCTIONS,

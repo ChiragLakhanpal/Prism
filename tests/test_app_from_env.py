@@ -65,6 +65,11 @@ def fake_workspace():
             calls.append(("statement", self.headers["Authorization"], statement["statement"]))
             if "strata.ops.agent_runs" in statement["statement"]:
                 calls.append(("run", self.headers["Authorization"], json.dumps(statement.get("parameters"))))
+            if "strata.ops.uploads" in statement["statement"]:
+                calls.append(("uploads", self.headers["Authorization"], json.dumps(statement.get("parameters"))))
+                return self.answer({"statement_id": "s-4", "status": {"state": "SUCCEEDED"},
+                                    "manifest": {"schema": {"columns": [{"name": "upload_id", "position": 0}]}},
+                                    "result": {"data_array": []}})
             if "strata.ops.drafts" in statement["statement"]:
                 calls.append(("drafts", self.headers["Authorization"], json.dumps(statement.get("parameters"))))
                 return self.answer({"statement_id": "s-2", "status": {"state": "SUCCEEDED"},
@@ -177,6 +182,43 @@ def test_on_the_app_drafts_are_read_with_the_app_s_own_token_for_the_team_the_vi
     # Ben is in no team's group, so his team is his own.
     assert [[p["value"] for p in params if p["name"] == "team_key"] for _, params in reads] == [
         ["team:kenya-water"], ["viewer:4022@1984"]]
+
+
+def test_on_the_app_uploads_are_read_with_the_app_s_own_token_for_the_viewer_s_team():
+    """Uploads live in strata.ops beside the drafts, written and read by the app as itself (ticket 38), for the
+    team the viewer's own groups name."""
+    with fake_workspace() as (host, calls):
+        app = app_from_env({"DATABRICKS_HOST": host, "DATABRICKS_WAREHOUSE_ID": "wh-1",
+                            "DATABRICKS_CLIENT_ID": "strata-app", "DATABRICKS_CLIENT_SECRET": "not-a-real-key"})
+
+        ana, ben = serve(app, [("/api/uploads", ANA), ("/api/uploads", BEN)])
+
+    assert ana.json() == ben.json() == {"uploads": [], "preview": False}
+    reads = [(auth, json.loads(params)) for kind, auth, params in calls if kind == "uploads"]
+    assert [auth for auth, _ in reads] == ["Bearer app-not-real", "Bearer app-not-real"]
+    assert [[p["value"] for p in params if p["name"] == "team_key"] for _, params in reads] == [
+        ["team:kenya-water"], ["viewer:4022@1984"]]
+
+
+def test_on_this_computer_uploads_are_kept_in_the_app_state_file(fixture_db, tmp_path):
+    """STRATA_APP_STATE_FILE keeps uploads too: an upload kept in the file for Ana's own team is the one the app
+    lists for her, and Ben, on a team of his own, gets none of it."""
+    import datetime as dt
+
+    from strata.lakehouse.engine import DuckDBEngine
+    from strata.uploads.store import NewUpload, UploadStore
+
+    state = tmp_path / "state.duckdb"
+    app = app_from_env({"STRATA_DATABASE_FILE": str(fixture_db), "STRATA_APP_STATE_FILE": str(state)})
+    UploadStore(lambda: DuckDBEngine.open(state)).create(NewUpload(
+        "upl-000000000001", "viewer:4021@1984", "4021@1984", "Ana Example", None, "P156634",
+        "Northern Water Works Development Agency", "plan.csv", {"activities": 0}, dt.datetime(2026, 10, 22, 9, 30,
+                                                                                               tzinfo=dt.UTC)))
+
+    ana, ben = serve(app, [("/api/uploads", ANA), ("/api/uploads", BEN)])
+
+    assert [upload["upload_id"] for upload in ana.json()["uploads"]] == ["upl-000000000001"]
+    assert ben.json() == {"uploads": [], "preview": False}
 
 
 def test_on_this_computer_the_app_reads_the_fixture_database_and_serves_the_built_web_app(fixture_db, tmp_path):

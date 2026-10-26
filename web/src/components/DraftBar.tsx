@@ -80,6 +80,9 @@ export type BarProps = {
     holdClause: string;
     holdCompose: string;
     readOnly: (author: string) => string;
+    // Planned dates (ticket 38): the export button names what it makes, and the opened line what was opened.
+    exportLabel?: string;
+    openedLine?: (opened: string, total: string) => string;
   };
   opened: number;
   // The act the server is answering, if any; the act that failed, if any.
@@ -181,7 +184,7 @@ export const DraftBar = forwardRef(function DraftBar(
       <p className="max-w-[80ch] text-small text-ink" data-bar-lead>
         {mine ? words.barLead : words.barLeadTeammate(author)} <Consequence />{" "}
         <TextLink href={`#${SOURCES_ID}`} onClick={focusSources} className="whitespace-nowrap" data-opened-link>
-          {bar.opened(whole(opened), whole(draft.opened.of))}
+          {(words.openedLine ?? bar.opened)(whole(opened), whole(draft.opened.of))}
         </TextLink>
         {bar.end}
         {hold && (
@@ -234,7 +237,7 @@ export const DraftBar = forwardRef(function DraftBar(
               onClick={exportClick}
               className={BAR_BUTTON_WIDTH}
             >
-              {bar.export}
+              {words.exportLabel ?? bar.export}
             </Button>
             {!checked && (
               <Button

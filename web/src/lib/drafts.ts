@@ -83,7 +83,10 @@ export type DraftSubject = {
 export type DraftFile = { name: string; media_type: string; size: number };
 
 // The kinds of draft (config/drafts.toml); each has its words under copy.draft.kinds.<kind>.
-export type DraftKind = "review_notes" | "mission_brief" | "ppsd_rows" | "project_paper";
+// Ticket 38 adds an implementing agency's planned dates and its own PPSD rows.
+export type DraftKind = "review_notes" | "mission_brief" | "ppsd_rows" | "project_paper" | "step_rows" | "ppsd_rows_agency";
+// Suggested PPSD rows and the agency's own, which share one workflow and one page.
+export const isPpsdKind = (kind: string | null | undefined) => kind === "ppsd_rows" || kind === "ppsd_rows_agency";
 
 // A hold that keeps a draft from export (config/drafts.toml): how many items it has left, and the anchor of the
 // first, which the bar's hold line links to (ticket 36).
@@ -138,6 +141,48 @@ export type PpsdView = {
 // One footnote per marker (ticket 36): the sources the marker carries and the text Word gets, which the page shows
 // as its "In Word:" line.
 export type Footnote = { number: number; evidence_ids: string[]; text: string; row_key: string; cell: string; sentence: number; position: number };
+// Planned dates (ticket 38): the one choice, each activity with its steps as estimate_time dated them, the counts the
+// page states, and STEP's columns the file leaves to people. Every date and count is the server's.
+export type DatesChoice = { planned_date: string | null; days: number | null; days_relation: string | null; longer: number | null; in10: number | null };
+export type DatesStep = {
+  step_key: string;
+  label: string | null;
+  step_name: string | null;
+  is_anchor: boolean | null;
+  comparables_n: number | null;
+  abstain_reason: string | null;
+  plan_first_date: string | null;
+  middle: DatesChoice | null;
+  cautious: DatesChoice | null;
+  list_id: string;
+  removed: string[] | null;
+};
+export type DatesActivity = {
+  key: string;
+  position: number;
+  reference: string | null;
+  description: string | null;
+  section: string | null;
+  fields: Record<string, string | null>;
+  family: string | null;
+  family_reason: string | null;
+  basis: string | null;
+  needs_start_date: boolean | null;
+  abstain_all: { n: number } | null;
+  steps: DatesStep[];
+  // The steps that can take a date and how many each choice dated, counted by the server after the verifier.
+  counts: { steps: number; dated: { middle: number; cautious: number } };
+};
+export type DatesView = {
+  choice: "middle" | "cautious";
+  activities: DatesActivity[];
+  counts: { activities: number; steps: number; dated: { middle: number; cautious: number }; lists: number; no_family: number };
+  min_comparables: number | null;
+  // About how many in 10 comparable packages ran later than the cautious date, from the thresholds file.
+  cautious_in10: number;
+  left_to_people: string[];
+  csv_columns: string[];
+};
 export type SummaryView = {
   agencies_with_plans: number | null;
   ppsd_rows: number;
@@ -168,13 +213,14 @@ export type Draft = {
   sources: DraftSource[];
   citations: number;
   opened: { count: number; of: number };
-  layout: { columns: string[]; export: "word"; sources_list: boolean; removed_box: "always" | "when_removed"; not_checked: string[] };
+  layout: { columns: string[]; export: "word" | "step_rows"; sources_list: boolean; removed_box: "always" | "when_removed"; not_checked: string[] };
   holds: Hold[];
   // Ticket 36: suggested PPSD rows' form, fields and footnotes, a summary's parts, and the disagreements check 6
   // attached with the report kept on each.
   ppsd?: PpsdView;
   footnotes?: Footnote[];
   summary?: SummaryView;
+  dates?: DatesView;
   disagreements?: DisagreementEvent[];
   choices?: { disagreement_id: string; kept: "lean" | "other"; reason: string | null; at: string | null; by: string | null }[];
   // A state made up for layout only (tests/record_ppsd_api.py), never a finding.
@@ -256,7 +302,10 @@ export const draftHref = (draftId: string) => `/drafts/${encodeURIComponent(draf
 export function writingHref(pid: string, agencyId: string, version: string, kind: DraftKind = "review_notes"): string {
   return `/drafts/new?${new URLSearchParams({ kind, pid, agency: agencyId, version }).toString()}`;
 }
-export const ppsdWritingHref = (packageId: string) => `/drafts/new?${new URLSearchParams({ kind: "ppsd_rows", package: packageId }).toString()}`;
+export const ppsdWritingHref = (packageId: string, kind: DraftKind = "ppsd_rows") =>
+  `/drafts/new?${new URLSearchParams({ kind, package: packageId }).toString()}`;
+// Planned dates (ticket 38): the writing page for an upload or a published plan, named by its id only.
+export const datesWritingHref = (source: string) => `/drafts/new?${new URLSearchParams({ kind: "step_rows", from: source }).toString()}`;
 
 // A person's own value on a field only people fill (ticket 36): a risk owner, a rating, the score or the stage, or
 // its removal (null). The server answers with the draft as its page now shows it.
@@ -312,6 +361,8 @@ export type Writing = {
     plan_date?: string;
     package?: string;
     criteria?: Record<string, string | number>;
+    // Planned dates (ticket 38): upload:{id} or plan:{pid}:{agency}:{date}.
+    source?: string;
     idempotency_key: string;
     // The language of answers and drafts in effect when the person asked (ticket 42), fixed for the draft.
     lang?: string;
@@ -326,6 +377,10 @@ export type Writing = {
   package?: { id: string; title: string; step_reference: string | null; selected: number };
   // The Project Paper summary's plan, for its header (ticket 36).
   summaryPlan?: { project_id: string; project_name: string; agency_id: string; implementing_agency: string; plan_date: string };
+  // Planned dates (ticket 38): the upload or plan they are drafted from, for the header, and what the server counted
+  // when no step could be dated.
+  datesPlan?: { project_id: string; project_name: string; implementing_agency: string; date: string; upload: boolean; back: string };
+  nothingDated?: { activities: number; steps: number; min_comparables: number | null };
   phase: "writing" | "done" | "nothing" | "failed" | "dropped";
   steps: WriteStep[];
   draftId: string | null;
@@ -365,6 +420,11 @@ function withEvent(current: Writing, type: string, data: any): Writing {
     }
     case "draft":
       return { ...current, draftId: String(data.draft_id), phase: "done" };
+    case "nothing_dated":
+      // What my verifier removed comes with it, so the page shows each claim and its reason (CLAUDE.md rule 2).
+      return { ...current, phase: "nothing", nothingDated: { activities: data.counts?.activities ?? 0, steps: data.counts?.steps ?? 0,
+        min_comparables: data.min_comparables ?? null }, removed: (data.removed ?? []) as RemovedEvent[],
+        checks: (data.checks ?? null) as ChecksEvent | null };
     case "nothing_survived":
       return { ...current, phase: "nothing", removed: data.removed as RemovedEvent[], checks: data.checks as ChecksEvent };
     case "error":
@@ -379,7 +439,7 @@ function withEvent(current: Writing, type: string, data: any): Writing {
 // Start writing: one request with one idempotency key, so a double click or React's StrictMode never
 // starts two writers. A writing already started for the same key is left alone.
 export function startWriting(request: Writing["request"], plan: CheckPlanResult | null, rows: Activity[], project?: Writing["project"],
-  extra: Pick<Writing, "package" | "summaryPlan"> = {}) {
+  extra: Pick<Writing, "package" | "summaryPlan" | "datesPlan"> = {}) {
   const current = writing.get();
   if (current && current.request.idempotency_key === request.idempotency_key && current.phase === "writing") return;
   stopping?.abort();
@@ -392,10 +452,23 @@ export function startWriting(request: Writing["request"], plan: CheckPlanResult 
 
 // "Suggest {n} PPSD risk rows" on the package workspace (ticket 36): start the writer for the package, and the
 // writing page's address. The server reads the risks selected in section 3 itself; the request never carries them.
-export function startPpsdRows(pkg: NonNullable<Writing["package"]>, criteria: Record<string, string | number> | null): string {
-  startWriting({ kind: "ppsd_rows", package: pkg.id, ...(criteria ? { criteria } : {}), idempotency_key: newKey() }, null, [],
+export function startPpsdRows(pkg: NonNullable<Writing["package"]>, criteria: Record<string, string | number> | null,
+  kind: DraftKind = "ppsd_rows"): string {
+  startWriting({ kind, package: pkg.id, ...(criteria ? { criteria } : {}), idempotency_key: newKey() }, null, [],
     undefined, { package: pkg });
-  return ppsdWritingHref(pkg.id);
+  return ppsdWritingHref(pkg.id, kind);
+}
+
+// "Draft planned dates ({n} activities)" on an upload's check (ticket 38): start dating its steps, and the writing
+// page's address. The request names the upload by its id only.
+export function startDates(upload: { upload_id: string; uploaded_on: string; project_id: string },
+  check: { plan: { implementing_agency: string } | null; project: { project_name: string; display_name?: string | null } | null }): string {
+  const source = `upload:${upload.upload_id}`;
+  startWriting({ kind: "step_rows", source, idempotency_key: newKey() }, null, [], undefined, {
+    datesPlan: { project_id: upload.project_id, project_name: check.project?.display_name ?? check.project?.project_name ?? "",
+      implementing_agency: check.plan?.implementing_agency ?? "", date: upload.uploaded_on, upload: true,
+      back: `/packages/uploads/${encodeURIComponent(upload.upload_id)}` } });
+  return datesWritingHref(source);
 }
 
 // "Draft a Project Paper summary" at the end of Check a plan (ticket 36).

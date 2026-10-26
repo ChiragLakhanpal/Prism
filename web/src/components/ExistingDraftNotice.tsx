@@ -6,6 +6,8 @@ import { copy } from "../copy";
 import { getJson } from "../lib/api";
 import { draftHref, stopped, type ExistingDraft } from "../lib/drafts";
 import { formatDate } from "../lib/format";
+import { useStore } from "../lib/store";
+import { officerAgency } from "../lib/uploads";
 import { Alert } from "./Alert";
 import { TextLink } from "./TextLink";
 
@@ -13,6 +15,8 @@ const words = copy.packageWorkspace.ppsdAction;
 
 export function ExistingPpsdNotice({ packageKey }: { packageKey: string }) {
   const [existing, setExisting] = useState<ExistingDraft | null>(null);
+  // An implementing agency officer's drafts are the agency's own kind (ticket 38).
+  const kind = useStore(officerAgency) ? "ppsd_rows_agency" : "ppsd_rows";
   // Read once, then cleared, so the notice shows on this visit only.
   const [stoppedHere] = useState(() => {
     const at = stopped.get();
@@ -23,13 +27,13 @@ export function ExistingPpsdNotice({ packageKey }: { packageKey: string }) {
   }, [stoppedHere]);
   useEffect(() => {
     const controller = new AbortController();
-    const query = new URLSearchParams({ kind: "ppsd_rows", package: packageKey });
+    const query = new URLSearchParams({ kind, package: packageKey });
     getJson<{ draft: ExistingDraft | null }>(`/api/drafts/existing?${query.toString()}`, { signal: controller.signal }).then(
       (found) => setExisting(found.draft),
       () => undefined,
     );
     return () => controller.abort();
-  }, [packageKey]);
+  }, [packageKey, kind]);
   const notices: ReactNode[] = [];
   if (stoppedHere) notices.push(<Alert key="stopped" state="info" live="status">{words.stopped}</Alert>);
   if (existing) {

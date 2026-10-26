@@ -14,6 +14,33 @@ import { formatCount, formatDate } from "../lib/format";
 import { useLoad, type Load } from "../lib/load";
 import { enterBoxMode, type PlannedList, type PlannedRow } from "../lib/packages";
 import { PublicView } from "./PlannedPackagePage";
+import { AccessLabel } from "../components/AccessLabel";
+import { PRIMARY_LINK } from "../components/Button";
+import { useStore } from "../lib/store";
+import { CHECK_MY_PLAN, officerAgency, uploadHref, type UploadListing } from "../lib/uploads";
+
+// An implementing agency team's uploads, newest first, each with the compact access label (ticket 38). Only the team
+// gets them from the server; a preview gets none.
+function UploadsList() {
+  const [load] = useLoad<{ uploads: UploadListing[] }>("/api/uploads");
+  if (load.status !== "ready" || load.data.uploads.length === 0) return null;
+  return (
+    <section className="mt-6" aria-labelledby="uploads-heading" data-uploads>
+      <h2 id="uploads-heading" className="text-title text-ink-heading">{words.uploadsTitle}</h2>
+      <ul className="mt-3 flex flex-col gap-3">
+        {load.data.uploads.map((upload) => (
+          <li key={upload.upload_id} className="flex flex-col">
+            <TextLink href={uploadHref(upload.upload_id)}>{words.uploadName(formatDate(upload.uploaded_on))}</TextLink>
+            <span className="flex flex-wrap items-center gap-x-3 text-caption text-ink-muted">
+              {words.uploadCaption(upload.activities, formatCount(upload.activities, { capital: true }))}
+              <AccessLabel compact />
+            </span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
 
 const words = copy.packagesTab;
 const PAGE = 20;
@@ -133,19 +160,27 @@ export function PackagesPage({ search }: { search: string }) {
 // the empty or error state, replaces the loading rows (design review round 2, F9).
 function PackagesTab({ preview }: { preview: boolean }) {
   const [load, retry] = useLoad<PlannedList>("/api/planned-packages");
+  const officer = Boolean(useStore(officerAgency)) && !preview;
   return (
     <div className="layout-grid min-h-svh" data-packages-page={load.status}>
       <div className="col-span-12">
-        <PageHeader title={copy.pages.packages.title} purpose={words.purpose} />
+        <PageHeader title={copy.pages.packages.title} purpose={officer ? words.purposeAgency : words.purpose} />
         <div className="mt-4 flex flex-col gap-3 @md/page:flex-row @md/page:flex-wrap @md/page:items-center">
-          <Button variant="primary" held={preview} onClick={() => !preview && enterBoxMode("check")} className="w-full @md/page:w-auto">
-            {words.checkPlan}
-          </Button>
+          {officer ? (
+            <a href={CHECK_MY_PLAN} className={PRIMARY_LINK} data-check-mine>
+              {words.checkMine}
+            </a>
+          ) : (
+            <Button variant="primary" held={preview} onClick={() => !preview && enterBoxMode("check")} className="w-full @md/page:w-auto">
+              {words.checkPlan}
+            </Button>
+          )}
           <Button variant="secondary" held={preview} onClick={() => !preview && enterBoxMode("plan")} className="w-full @md/page:w-auto">
             {words.planPackage}
           </Button>
           {preview && <p className="text-caption text-ink-muted">{words.previewOff}</p>}
         </div>
+        {officer && <UploadsList />}
         <div className="mt-6 @lg/page:mt-8">
           <PackagesList load={load} onRetry={retry} />
         </div>

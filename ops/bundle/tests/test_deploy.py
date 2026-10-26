@@ -152,6 +152,19 @@ def test_a_second_deploy_reports_no_changes(capsys):
     assert "is new" not in out
 
 
+def test_the_plan_lists_from_the_repo_alone_everything_a_first_deploy_reports_as_new(capsys):
+    """The demo-ready command's dry run (ops/demo/ready.py --fresh-workspace) prints this plan, so it cannot drift
+    from what the deploy makes. The plan also holds what the fake cannot list: the metric views and every job."""
+    code, out = deploy_into(FakeWorkspace(), capsys)
+    new = {line.strip() for line in out.splitlines() if line.strip().endswith((" is new.", " are new."))}
+    planned = set(deploy.changes({}, dict.fromkeys(deploy.plan(), True)))
+
+    assert code == 0 and new
+    assert new <= planned
+    assert {"The table strata.gold.contract_metrics is new.", "The job strata lesson cross-check is new.",
+            "The job strata retrieval weekly is new."} <= planned
+
+
 def test_a_deploy_that_changes_fairshare_s_catalog_fails_and_says_what_changed(capsys):
     code, out = deploy_into(FakeWorkspace(touch_fairshare=True), capsys)
 

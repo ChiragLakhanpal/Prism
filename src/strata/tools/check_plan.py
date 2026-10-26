@@ -48,8 +48,10 @@ from __future__ import annotations
 
 import datetime as dt
 import re
+from collections.abc import Mapping
 from dataclasses import dataclass
 from decimal import ROUND_HALF_UP, Decimal
+from functools import cache
 from importlib import resources
 
 from strata.tools.registry import Call
@@ -392,12 +394,155 @@ def _row(activity: dict, evidence_id: str, plan: dict, marks: list[dict]) -> dic
     }
 
 
-def check_plan(call: Call, project_id: str, implementing_agency: str, plan_date: dt.date | None = None) -> dict:
-    """Check every activity in the chosen plan version, as of call.as_of."""
+# ── An implementing agency's upload (ticket 38) ──────────────────────────
+#
+# An upload is checked with the same checks, against the project's closing date. Its delay is measured from each
+# step's first published planned date when a published plan of the project lists the activity, and from the
+# upload's own planned date when none does. The upload's own values are its rows: the officer's Method, amounts
+# and status, and each step's Actual date. Every row is cited as upload-row:{upload_id}:{position}, public on the
+# day the upload was kept, and the reading's data notes become data notes on their rows.
+
+UPLOAD_NOTES = ("unread_date", "unread_amount", "no_method", "duplicate_ref")
+
+
+def upload_row_id(upload_id: str, position: int) -> str:
+    """The evidence id of one activity of an upload."""
+    return f"upload-row:{upload_id}:{position}"
+
+
+def _upload_activity(row: Mapping, first: dict[tuple[str, str], dict], uploaded_on: dt.date) -> dict:
+    """One upload row as the checks read a plan row: its STEP values, its own Signed Contract date, and the planned
+    signing and completion dates its delay is measured from."""
+    fields, steps = row.get("fields") or {}, row.get("steps") or {}
+    reference = row.get("reference")
+
+    def own(step: str, head: str) -> dt.date | None:
+        return _date((steps.get(step) or {}).get(head))
+
+    def measured_from(step: str) -> tuple[dt.date | None, dt.date | None]:
+        published = first.get((reference, step)) if reference else None
+        if published and published["first_planned_on"]:
+            return _date(published["first_planned_on"]), _date(published["first_planned_plan_date"])
+        planned = own(step, "planned")
+        return planned, uploaded_on if planned else None
+
+    signed_on = own(SIGNING, "actual")
+    signing_on, signing_plan = measured_from(SIGNING)
+    completion_on, completion_plan = measured_from(COMPLETION)
+    listed = bool(reference) and any(key[0] == reference for key in first)
+    return {"activity_reference_no": reference, "section": row.get("section"), "description": row.get("description"),
+            "review_type": fields.get("review_type"), "method": fields.get("method"),
+            "market_approach": fields.get("market_approach"),
+            "estimated_amount_usd": _money(fields.get("estimated_amount_usd")),
+            "actual_amount_usd": _money(fields.get("actual_amount_usd")), "process_status": fields.get("process_status"),
+            "pdf_page": None, "signed_on": signed_on, "planned_signing_on": signing_on,
+            "planned_signing_plan_date": signing_plan,
+            "days_late": (signed_on - signing_on).days if signed_on and signing_on else None,
+            "planned_completion_on": completion_on, "planned_completion_plan_date": completion_plan,
+            "first_listing_confirmed": (any(first[key]["first_listing_confirmed"] for key in first if key[0] == reference)
+                                        if listed else None),
+            "public_from": uploaded_on, "position": int(row["position"]), "listed": listed}
+
+
+@cache
+def reference_methods() -> dict[str, str]:
+    """The reference codes whose method the plan reader's method_differs_from_reference note knows, read from that
+    note's one definition (src/strata/lakehouse/sql/plans/plan_data_notes.sql), so an upload gets the same note."""
+    text = (resources.files("strata.lakehouse") / "sql" / "plans" / "plan_data_notes.sql").read_text()
+    return dict(re.findall(r"\('([A-Z]+)', '([^']+)'\)", text))
+
+
+def _upload_notes(row: Mapping, activity: dict, cite: list[str]) -> list[dict]:
+    """The reading's data notes on one row, then the plan reader's two notes as it writes them on a published plan
+    (plan_data_notes.sql): a reference that ends in another method's code, and a signed or completed contract whose
+    actual amount reads 0.00."""
+    notes = []
+    for note in row.get("notes") or []:
+        values = {key: value for key, value in note.items() if key != "code"}
+        notes.append(_reason(note["code"], "data_note", cite, **values))
+    reference, method = activity["activity_reference_no"], activity["method"]
+    code = re.search(r"-([A-Z]+)$", reference).group(1) if reference and re.search(r"-([A-Z]+)$", reference) else None
+    if method and code in reference_methods() and reference_methods()[code] != method:
+        notes.append(_reason("method_differs_from_reference", "data_note", cite, reference_method_code=code,
+                             reference_method=reference_methods()[code], method=method))
+    if activity["process_status"] in CONTRACT_STATUSES and activity["actual_amount_usd"] == Decimal("0.00"):
+        notes.append(_reason("actual_amount_zero", "data_note", cite, process_status=activity["process_status"],
+                             actual_amount_usd=_text(activity["actual_amount_usd"])))
+    return notes
+
+
+def check_upload(call: Call, upload: Mapping, project: dict, limits: Thresholds) -> dict:
+    """Check every activity of an upload, in the order of the officer's file."""
+    uploaded_on = _date(upload["uploaded_on"])
+    agency = upload["implementing_agency"]
+    first = {(row["activity_reference_no"], row["step"]): row
+             for row in _rows(call, "upload_first_dates.sql", project_id=upload["project_id"], as_of=call.as_of)}
+    plan = {"evidence_id": f"strata.ops.uploads:{upload['upload_id']}", "public_from": _iso(uploaded_on),
+            "document_id": upload["upload_id"], "project_id": upload["project_id"], "implementing_agency": agency,
+            "agency_id": agency_id(agency), "plan_date": _iso(uploaded_on), "disclosed_on": None, "is_latest": None,
+            "pdf_url": None, "text_url": None, "upload_id": upload["upload_id"]}
+    activities, not_used = [], {}
+    for row in upload["rows"]:
+        evidence_id = upload_row_id(upload["upload_id"], int(row["position"]))
+        activity = _upload_activity(row, first, uploaded_on)
+        signals, unchecked = _signals(activity, [evidence_id], project, limits, call.as_of)
+        written = _upload_notes(row, activity, [evidence_id])
+        marks = []
+        if signals:
+            strongest = "needs_a_look" if any(s["mark"] == "needs_a_look" for s in signals) else "watch"
+            marks.append({"mark": strongest, "reasons": signals})
+        if written or unchecked:
+            marks.append({"mark": "data_note", "reasons": written + unchecked})
+        for note in unchecked:
+            not_used.setdefault(note["code"], []).append(evidence_id)
+        shown = _row(activity, evidence_id, plan, marks)
+        shown["source"] = {**shown["source"], "document_type": "Upload"}
+        activities.append({**shown, "position": activity["position"], "listed": activity["listed"]})
+    return _result(activities, not_used, plan, project, limits, None)
+
+
+def _result(activities: list[dict], not_used: dict, plan: dict, project: dict, limits: Thresholds,
+            baseline: dict | None) -> dict:
+    def count(mark: str) -> int:
+        return sum(1 for row in activities if any(m["mark"] == mark for m in row["marks"]))
+
+    partly = {evidence for ids in not_used.values() for evidence in ids}
+    return {
+        "rows": activities,
+        "coverage": {"matched": len(activities), "used": len(activities) - len(partly),
+                     "not_used": [{"reason": code, "count": len(ids), "evidence_ids": ids}
+                                  for code, ids in not_used.items()]},
+        "abstention": None,
+        "plan": plan,
+        "project": project,
+        "checks_run": [check for check in CHECKS if check != "closing_date" or project["closing_date"]],
+        "thresholds": limits.as_values(),
+        "baseline": baseline,
+        "counts": {"activities": len(activities), "checked": len(activities) - len(partly),
+                   "not_fully_checked": len(partly),
+                   "needs_a_look": count("needs_a_look"), "watch": count("watch"), "data_note": count("data_note"),
+                   "signal": sum(1 for row in activities if any(m["mark"] in SIGNALS for m in row["marks"])),
+                   "marked": sum(1 for row in activities if row["marks"]),
+                   "unmarked": sum(1 for row in activities if not row["marks"])},
+    }
+
+
+def check_plan(call: Call, project_id: str, implementing_agency: str, plan_date: dt.date | None = None,
+               upload_id: str | None = None) -> dict:
+    """Check every activity in the chosen plan version, or in the viewer's team's upload, as of call.as_of."""
     limits = Thresholds.read(call)
     project, record_agencies = _project(call, project_id)
     empty = {"rows": [], "coverage": {"matched": 0, "used": 0, "not_used": []}, "plan": None, "project": project,
              "checks_run": [], "thresholds": limits.as_values(), "counts": None, "baseline": None}
+    if upload_id is not None:
+        # The same answer for an upload that does not exist, belongs to another team, or is of another project or
+        # agency, so a call reveals nothing about another team's uploads.
+        upload = call.uploads(upload_id) if call.uploads is not None else None
+        wanted = implementing_agency.strip().lower()
+        if (upload is None or project is None or upload["project_id"] != project_id
+                or wanted not in (upload["implementing_agency"].lower(), agency_id(upload["implementing_agency"]))):
+            return {**empty, "project": None, "abstention": {"reason": "unknown_upload"}}
+        return check_upload(call, upload, project, limits)
     if project is None:
         return {**empty, "abstention": {"reason": "unknown_project", "project_id": project_id}}
     version, abstention = _choose(call, project_id, implementing_agency, plan_date, record_agencies)
@@ -429,27 +574,6 @@ def check_plan(call: Call, project_id: str, implementing_agency: str, plan_date:
             marks.append({"mark": "data_note", "reasons": written + unchecked})
         for note in unchecked:
             not_used.setdefault(note["code"], []).append(evidence_id)
-        activities.append(_row(activity, evidence_id, plan, marks))
-
-    def count(mark: str) -> int:
-        return sum(1 for row in activities if any(m["mark"] == mark for m in row["marks"]))
-
-    partly = {evidence for ids in not_used.values() for evidence in ids}
-    return {
-        "rows": activities,
-        "coverage": {"matched": len(activities), "used": len(activities) - len(partly),
-                     "not_used": [{"reason": code, "count": len(ids), "evidence_ids": ids}
-                                  for code, ids in not_used.items()]},
-        "abstention": None,
-        "plan": plan,
-        "project": project,
-        "checks_run": [check for check in CHECKS if check != "closing_date" or project["closing_date"]],
-        "thresholds": limits.as_values(),
-        "baseline": empty["baseline"],
-        "counts": {"activities": len(activities), "checked": len(activities) - len(partly),
-                   "not_fully_checked": len(partly),
-                   "needs_a_look": count("needs_a_look"), "watch": count("watch"), "data_note": count("data_note"),
-                   "signal": sum(1 for row in activities if any(m["mark"] in SIGNALS for m in row["marks"])),
-                   "marked": sum(1 for row in activities if row["marks"]),
-                   "unmarked": sum(1 for row in activities if not row["marks"])},
-    }
+        # position and listed describe an upload's rows; a published plan's rows have neither.
+        activities.append({**_row(activity, evidence_id, plan, marks), "position": None, "listed": None})
+    return _result(activities, not_used, plan, project, limits, empty["baseline"])

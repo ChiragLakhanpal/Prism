@@ -26,6 +26,7 @@ import { getJson, type Me } from "./lib/api";
 import { languageName, workingLanguage, type WorkingLanguage } from "./lib/lang";
 import { draftScope } from "./lib/drafts";
 import { FOLLOWING_HREF, staffRole } from "./lib/following";
+import { officerAgency } from "./lib/uploads";
 import { drawerClosed, evidenceIn, origin, routeOf, visited } from "./lib/evidence";
 import { readStamp, retryStamp, stamp, type Problem } from "./lib/freshness";
 import { formatDate } from "./lib/format";
@@ -41,12 +42,15 @@ const viewer = createStore<Viewer>({ status: "loading" });
 async function readViewer(lang: string | null = new URLSearchParams(window.location.search).get("lang")) {
   try {
     const me = await getJson<Me>(lang ? `/api/me?lang=${encodeURIComponent(lang)}` : "/api/me");
-    viewer.set(me.signed_in && me.email ? { status: "signed-in", email: me.email } : me.signed_in ? { status: "error" } : { status: "signed-out" });
+    viewer.set(me.signed_in && me.email ? { status: "signed-in", email: me.email, agency: me.agency?.name ?? null }
+      : me.signed_in ? { status: "error" } : { status: "signed-out" });
     staffRole.set(Boolean(me.staff));
+    officerAgency.set(me.agency ?? null);
     workingLanguage.set(me.language ?? null);
   } catch {
     viewer.set({ status: "error" });
     staffRole.set(false);
+    officerAgency.set(null);
   }
 }
 

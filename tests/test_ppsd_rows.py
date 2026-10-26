@@ -493,3 +493,91 @@ def test_the_evidence_pack_records_who_set_each_owner_and_when(story):
     assert "Fieldsyouset" in text
     fields = text.split("Fieldsyouset", 1)[1]
     assert fields.count("RiskOwnerImplementingagency,procurementAnaExample") == 2
+
+
+# ── Ticket 38, criterion 6: an implementing agency's own PPSD rows ─────────
+#
+# An officer on the Northern Water Works Development Agency's team (tests/fixtures/roles.toml) drafts PPSD risk rows for
+# their own PPSD (kind ppsd_rows_agency): this workflow, with the agency's own writer, the same Short Form and Long Form
+# rules and the same footnotes, and only the words that name who the rows are for changed. Ana is the officer here;
+# Ben stays on the World Bank staff team.
+
+AGENCY_GROUPS = {"4021@1984": ["users", "strata-agency-nwwda"], "4022@1984": ["users", "strata-team-kenya-water"]}
+
+
+@pytest.fixture
+def agency_story(database, tmp_path):
+    import dataclasses
+
+    from strata.config import load_roles
+    from strata.server.access import Access, StaticGroups
+
+    real = load_roles()
+    roles = dataclasses.replace(real, teams=real.teams + load_roles(ROOT / "tests" / "fixtures" / "roles.toml").teams)
+    made = story_of.Story(database, tmp_path, access=Access(roles, StaticGroups(AGENCY_GROUPS)))
+    assert made.select().status_code == 200
+    return made
+
+
+def test_an_officers_ppsd_rows_follow_the_short_form_and_long_form_rules_and_carry_the_same_footnotes(agency_story):
+    story = agency_story
+    sent, draft_id = story.write("ppsd-rows-ke-nwwda-541055", {"kind": "ppsd_rows_agency", "package": story_of.PACKAGE,
+                                                               "criteria": story_of.INDIA, "idempotency_key": "agency-1"})
+    assert draft_id, sent
+    draft = story.get(f"/api/drafts/{draft_id}").json()
+    shown = draft["ppsd"]
+
+    assert draft["kind"] == "ppsd_rows_agency" and shown["form"] == "short"
+    assert [column["header"] for column in shown["forms"]["short"]["columns"]] == SHORT
+    # Below Table I's works threshold the Long Form is not offered, as for World Bank staff; above it, it adds its four
+    # columns, empty, for the officer's team to fill.
+    assert shown["table_i"]["applies"] is False
+    assert story.call("PUT", f"/api/drafts/{draft_id}/form", json={"form": "long"}).json()["code"] == "form_not_offered"
+    above = above_table_i(story, draft_id)
+    changed = story.call("PUT", f"/api/drafts/{above}/form", json={"form": "long"}).json()
+    assert [column["header"] for column in changed["ppsd"]["forms"]["long"]["columns"]] == LONG
+    assert [(hold["key"], hold["left"]) for hold in changed["holds"]] == [("notChecked", 1), ("owners", 2), ("ratings", 2)]
+    # Strata writes the descriptions and mitigations with counts and sources as footnotes.
+    cost = RISK_TABLE["rows"][0]
+    texts = [footnote["text"] for footnote in draft["footnotes"]]
+    assert texts[0] == COUNT_FOOTNOTE.format(k=cost["k"], m=RISK_TABLE["m"])
+    assert texts[1] == "ICR P130164 ¶54, page 23; ICR Review 10.b."
+    assert draft["citations"] == len(draft["footnotes"]) == 4
+    assert all(entry["value"] is None for entry in shown["values"])
+    # The officer's team sets the owners, and the exported Word file carries "Official Use Only" in every page's header.
+    for row in ("cost_estimates", "permits_before_award"):
+        assert story.set_field(draft_id, row, "risk_owner", "Procurement unit").status_code == 200
+    story.act(draft_id, "check", "draft")
+    assert story.act(draft_id, "export", "checked").status_code == 200
+    _, document = story.download(draft_id, ".docx")
+    header = zipfile.ZipFile(io.BytesIO(document)).read("word/header1.xml").decode()
+    assert "Official Use Only" in header
+
+
+def test_an_officer_drafts_the_agency_kind_and_world_bank_staff_the_staff_kind(agency_story):
+    officer = agency_story.call("POST", "/api/drafts", story_of.ANA,
+                                json={"kind": "ppsd_rows", "package": story_of.PACKAGE, "criteria": story_of.INDIA})
+    staff = agency_story.call("POST", "/api/drafts", story_of.BEN,
+                              json={"kind": "ppsd_rows_agency", "package": story_of.PACKAGE, "criteria": story_of.INDIA})
+
+    assert (officer.status_code, officer.json()["code"]) == (403, "not_staff")
+    assert (staff.status_code, staff.json()["code"]) == (403, "not_agency_team")
+
+
+def test_an_officers_run_row_keeps_none_of_the_teams_words(agency_story):
+    """strata.ops.agent_runs is read by every account user, so an agency draft's run keeps the kind's key for its
+    question and only the reason each removed sentence was removed, never the team's package or the sentences."""
+    story = agency_story
+    sent, draft_id = story.write("ppsd-rows-a-row-removed", {"kind": "ppsd_rows_agency", "package": story_of.PACKAGE,
+                                                             "criteria": story_of.INDIA, "idempotency_key": "agency-2"})
+    assert draft_id, sent
+    removed = story.get(f"/api/drafts/{draft_id}").json()["removed"]
+    assert len(removed) == 2
+
+    with DuckDBEngine.open(story.state_db, read_only=True) as engine:
+        result = engine.run("SELECT question, removed FROM strata.ops.agent_runs")
+    [(question, logged)] = result.rows
+    assert question == "ppsd_rows_agency"
+    assert json.loads(logged) == [{"reason": "id_not_returned"}] * 2
+    texts = [item[key] for item in removed for key in ("sentence", "text") if item.get(key)]
+    assert texts and [text for text in texts if text in logged] == []

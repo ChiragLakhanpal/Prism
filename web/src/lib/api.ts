@@ -55,6 +55,9 @@ export type Me = {
   signed_in: boolean;
   has_token: boolean;
   staff?: boolean;
+  // Ticket 38: the implementing agency whose team the viewer is on, and the view the server applies to them.
+  agency?: { name: string; agency_id: string } | null;
+  own_view?: "staff" | "piu";
   // The language of answers and drafts in effect, and where it came from (ticket 42).
   language?: import("./lang").WorkingLanguage;
 };
@@ -310,7 +313,11 @@ export type Reason = {
 export type Activity = {
   evidence_id: string;
   public_from: string;
+  // An upload's row may have no reference yet (ticket 38); a published plan's always has one.
   activity_reference_no: string;
+  // An upload's row: its place in the officer's file, and whether a published plan of the project lists it.
+  position?: number | null;
+  listed?: boolean | null;
   section: string | null;
   description: string | null;
   review_type: string | null;

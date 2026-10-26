@@ -102,6 +102,26 @@ def test_one_command_uploads_the_app_with_its_lean_requirements_deploys_it_and_p
     assert out.rstrip().splitlines()[-1] == "Strata is running at https://strata-1.aws.databricksapps.com"
 
 
+def test_the_plan_names_from_the_repo_alone_what_a_first_deploy_makes(tmp_path, capsys):
+    """The demo-ready command's dry run (ops/demo/ready.py --fresh-workspace) prints this plan, so it cannot drift
+    from what the deploy makes."""
+    workspace = FakeWorkspace()
+    code, _ = deploy(workspace, tmp_path, capsys, env=ENV | FOUNDRY | JUDGE)
+    planned = deploy_app.plan()
+
+    def named(label):
+        return {name for kind, name in planned if kind == label}
+
+    [(name, description, resources, scopes)] = workspace.configured
+    assert code == 0
+    assert named("The app") == {f"{name} ({description})"}
+    assert {resource["name"] for resource in resources} == named("The app resource")
+    assert set(scopes) == named("The user authorization scope")
+    assert {f"{scope}/{key}" for scope, key in workspace.secrets} == named("The secret")
+    assert set(workspace.databases) == named("The Lakebase instance")
+    assert {workspace.uploaded["folder"].replace("owner@example.org", "<you>")} == named("Its code")
+
+
 def test_the_app_gets_the_warehouse_the_connection_string_and_each_viewer_s_sql_token(tmp_path, capsys):
     workspace = FakeWorkspace()
 
@@ -239,6 +259,9 @@ def test_the_app_s_own_principal_may_write_usage_events_agent_runs_opened_source
         f"GRANT SELECT, MODIFY ON TABLE strata.ops.draft_fields TO `{PRINCIPAL}`",
         # Ticket 44: each past range or time estimate the app showed in the World Bank staff view.
         f"GRANT SELECT, MODIFY ON TABLE strata.ops.exposures TO `{PRINCIPAL}`",
+        # Ticket 38: an implementing agency team's uploads and their activities.
+        f"GRANT SELECT, MODIFY ON TABLE strata.ops.uploads TO `{PRINCIPAL}`",
+        f"GRANT SELECT, MODIFY ON TABLE strata.ops.upload_rows TO `{PRINCIPAL}`",
         f"GRANT SELECT ON TABLE strata.ops.draft_fields_latest TO `{PRINCIPAL}`",
         f"GRANT SELECT ON TABLE strata.ops.supplier_pairs TO `{PRINCIPAL}`",
         f"GRANT SELECT, MODIFY ON TABLE strata.ops.supplier_review_decisions TO `{PRINCIPAL}`",
@@ -278,6 +301,16 @@ def test_after_its_grants_the_deploy_masks_who_sent_each_report_and_who_asked_ea
         "ALTER TABLE strata.ops.candidate_labels ALTER COLUMN viewer_id SET MASK strata.ops.mask_viewer",
         "ALTER TABLE strata.ops.candidate_labels ALTER COLUMN viewer_email SET MASK strata.ops.mask_viewer",
         "ALTER TABLE strata.ops.answer_citations ALTER COLUMN viewer_id SET MASK strata.ops.mask_viewer",
+        # Ticket 38: an implementing agency's upload and every team's drafts keep their words from every reader.
+        "ALTER TABLE strata.ops.uploads ALTER COLUMN uploader_name SET MASK strata.ops.mask_viewer",
+        "ALTER TABLE strata.ops.uploads ALTER COLUMN file_name SET MASK strata.ops.mask_viewer",
+        "ALTER TABLE strata.ops.uploads ALTER COLUMN reading SET MASK strata.ops.mask_viewer",
+        "ALTER TABLE strata.ops.upload_rows ALTER COLUMN activity_reference_no SET MASK strata.ops.mask_viewer",
+        "ALTER TABLE strata.ops.upload_rows ALTER COLUMN description SET MASK strata.ops.mask_viewer",
+        "ALTER TABLE strata.ops.upload_rows ALTER COLUMN content SET MASK strata.ops.mask_viewer",
+        "ALTER TABLE strata.ops.drafts ALTER COLUMN content SET MASK strata.ops.mask_viewer",
+        "ALTER TABLE strata.ops.draft_exports ALTER COLUMN snapshot SET MASK strata.ops.mask_viewer",
+        "ALTER TABLE strata.ops.draft_files ALTER COLUMN content SET MASK strata.ops.mask_viewer",
     ]
 
 

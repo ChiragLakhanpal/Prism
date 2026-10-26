@@ -17,6 +17,20 @@
 #   passage report in the tests, so she may not decide that group (own_report) and Daniel decides it.
 # - Mei Tanaka and Tomas Rivera are the two query judges. Neither reviews lessons, so neither names a region.
 # - Leela Iyer works on P130164, so a passage report she sends on its ICR is about her own project.
+#
+# Implementing agency teams (ticket 38): team A is the Northern Water Works Development Agency's, whose plan of
+# October 9, 2026 is the upload fixture, and team B the Coast Water Works Development Agency's, another agency P156634's
+# record names. Their members are made up too, and only their groups name them.
+
+[teams.nwwda]
+name = "Northern Water Works Development Agency procurement team"
+groups = ["strata-agency-nwwda"]
+agency = "Northern Water Works Development Agency"
+
+[teams.cwwda]
+name = "Coast Water Works Development Agency procurement team"
+groups = ["strata-agency-cwwda"]
+agency = "Coast Water Works Development Agency"
 
 [groups.accredited_procurement_specialist]
 workspace_group = "strata-accredited-procurement-specialists"

@@ -174,10 +174,12 @@ def written_runs(sentence: dict, draft: dict) -> list:
 class Word:
     """A .docx file built from headings, paragraphs and tables, with footnotes numbered in order."""
 
-    def __init__(self, created: dt.datetime):
+    def __init__(self, created: dt.datetime, header: str | None = None):
         self.title, self.created = "", created
         self.body: list[str] = []
         self.notes: list[str] = []
+        # Every page's header, in Word's Header style: "Official Use Only" on an implementing agency team's file (ticket 38).
+        self.header = header
 
     def footnote(self, text: str) -> Footnote:
         self.notes.append(text)
@@ -250,7 +252,9 @@ class Word:
 
     def bytes(self) -> bytes:
         stamp = self.created.astimezone(dt.UTC)
-        section = ('<w:sectPr><w:footnotePr><w:numFmt w:val="decimal"/></w:footnotePr><w:pgSz w:w="11906" w:h="16838"/>'
+        heading = '<w:headerReference w:type="default" r:id="rId4"/>' if self.header else ""
+        section = (f'<w:sectPr>{heading}<w:footnotePr><w:numFmt w:val="decimal"/></w:footnotePr>'
+                   '<w:pgSz w:w="11906" w:h="16838"/>'
                    '<w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440" w:header="708" w:footer="708" '
                    'w:gutter="0"/></w:sectPr>')
         parts = {
@@ -298,6 +302,15 @@ class Word:
                 f'<dcterms:created xsi:type="dcterms:W3CDTF">{stamp:%Y-%m-%dT%H:%M:%SZ}</dcterms:created>'
                 '</cp:coreProperties>'),
         }
+        if self.header:
+            parts["[Content_Types].xml"] = parts["[Content_Types].xml"].replace(
+                "</Types>", '<Override PartName="/word/header1.xml" '
+                'ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.header+xml"/></Types>')
+            parts["word/_rels/document.xml.rels"] = parts["word/_rels/document.xml.rels"].replace(
+                "</Relationships>", f'<Relationship Id="rId4" Type="{R}/header" Target="header1.xml"/></Relationships>')
+            parts["word/header1.xml"] = (
+                f'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:hdr xmlns:w="{W}">'
+                f'<w:p><w:pPr><w:pStyle w:val="Header"/></w:pPr>{self._runs([self.header])}</w:p></w:hdr>')
         out = io.BytesIO()
         with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as archive:
             for name, text in parts.items():
@@ -368,7 +381,8 @@ def check_line(checks: dict, kind: DraftKind) -> str:
     parts = [ratio(line[name], shown[name][found], shown[name]["total"])
              for name, found in (("numbers", "matched"), ("dates", "matched"), ("quotes", "found"))
              if shown[name]["total"] > 0]
-    clauses = [key for key in ([] if 4 in checks["checks_run"] else ["sentences"])]
+    # A draft no model wrote, such as planned dates (ticket 38), has no sentences to follow from their sources.
+    clauses = [key for key in ([] if 4 in checks["checks_run"] or checks.get("computed") else ["sentences"])]
     clauses += [key for key in line["notCheckedClauses"] if key in checks["tools"]]
     clauses += [key for key in kind.not_checked if key in line["notCheckedClauses"]]
     said = [line["notCheckedClauses"][key] for key in clauses]
@@ -453,6 +467,8 @@ def pack_pdf(kind: DraftKind, draft: dict, rows: list[dict], title: str, exporte
         pdf.multi_cell(0, size * 1.45, words_, align="L", new_x="LMARGIN", new_y="NEXT")
         pdf.ln(gap)
 
+    if kind.agency_only:  # an implementing agency team's draft is Official Use Only, and its pack says so first
+        text(pack["officialUseOnly"], 9, "B", "ink_muted", 8)
     text(pack["title"], 24, "B", "ink_heading", 4)
     text(title, 14, "B", "ink_heading", 12)
     # "Draft ID draft-0001", with the ID in Roboto Mono, as DESIGN.md section 3 sets every ID.
@@ -545,15 +561,27 @@ class Made:
 
 def names(kind: DraftKind, subject: dict) -> dict[str, str]:
     stem = _fill(kind.files, **subject)
-    return {"word": f"{stem}.docx", "pdf": f"{stem}-evidence-pack.pdf", "csv": f"{stem}-evidence-pack.csv"}
+    return {"word": f"{stem}.docx", "pdf": f"{stem}-evidence-pack.pdf", "csv": f"{stem}-evidence-pack.csv",
+            "step_rows": f"{stem}.csv"}
 
 
 def make(kind: DraftKind, draft: dict, exporter: str | None, exported_at: dt.datetime) -> Made:
-    """The Word file and the evidence pack's PDF and CSV for one export of a draft, as its author sees it."""
+    """The Word file and the evidence pack's PDF and CSV for one export of a draft, as its author sees it. A kind
+    exported as STEP rows (ticket 38) makes its STEP rows CSV in place of the Word file."""
     from strata.drafts.runtime import function
 
     say = Say()
-    document = Word(exported_at)
+    if kind.export == "step_rows":
+        taken = snapshot(draft, say)
+        named = names(kind, draft["subject"])
+        heading = _fill(words()["files"]["stepRows"]["title"], agency=draft["subject"]["implementing_agency"],
+                        date=say.date(draft["subject"]["plan_date"]))
+        files = [(named["step_rows"], CSV, function(kind.csv[0])(draft)),
+                 (named["pdf"], PDF, pack_pdf(kind, draft, taken["sources"], heading, exporter, exported_at, say)),
+                 (named["csv"], CSV, pack_csv(taken["sources"]))]
+        return Made(files, 0, taken)
+    official = words()["files"]["pack"]["officialUseOnly"] if kind.agency_only else None
+    document = Word(exported_at, official)
     function(kind.word)(document, draft, words(), say)  # the kind lays out its file, its heading first
     heading = document.title
     taken = snapshot(draft, say)

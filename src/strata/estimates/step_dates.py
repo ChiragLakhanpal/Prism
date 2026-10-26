@@ -292,14 +292,16 @@ def _dated_step(entry: dict, k: int, fitted: StepFit | None, basis: str, own: Ac
 
 def step_dates(rows: Rows, *, category: str | None, method: str | None, package_reference: str | None,
                comparables: list[str], as_of: dt.date, start_date: dt.date | None, settings: Settings,
-               track: dict | None, sources: list[str]) -> dict:
+               track: dict | None, sources: list[str], own: Activity | None = None) -> dict:
     """Section 2's planned date for each step of one package, with both choices, as estimate_time returns it. The
     package's own plan row, when it has one, picks its family by its STEP table; otherwise its category and
-    Method do."""
+    Method do. own, given, is the package's own plan instead of its newest public version: an implementing agency's
+    upload (ticket 38), whose dates are the baseline the steps are dated from."""
     shared = {"min_comparables": settings.min_comparables, "middle_in10": settings.in10("middle"),
               "cautious_in10": settings.in10("cautious"), "start_range": settings.start_range(as_of), "method": method}
     total = len(comparables)
-    own = activities(rows, [package_reference]).get(package_reference) if package_reference else None
+    if own is None:
+        own = activities(rows, [package_reference]).get(package_reference) if package_reference else None
     family_key, family_reason = family_for(category, method, own.section if own else None)
     if family_key is None:
         return {**shared, **_counts([]), "family": None, "family_reason": family_reason, "basis": None,

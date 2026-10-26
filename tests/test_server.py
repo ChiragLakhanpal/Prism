@@ -78,6 +78,7 @@ def test_the_identity_route_says_when_no_one_signed_in():
     response = call(create_app(), "GET", "/api/me")
 
     assert response.json() == {"email": None, "name": None, "signed_in": False, "has_token": False, "staff": False,
+                               "agency": None, "own_view": "staff",
                                "language": {"code": "en", "source": "default", "saved": None, "team": None,
                                             "link": None, "saved_readable": True,
                                             "choices": json.loads((RECORDED / "me.json").read_text())["language"]["choices"]}}
