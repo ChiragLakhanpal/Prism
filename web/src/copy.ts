@@ -8616,6 +8616,11 @@ export const copy = {
         many: "Nothing changed in the plans of the {count} projects you follow in {window}.",
       },
       firstRun: "You don't follow any projects yet, so I have no plans to brief you on.",
+      // As of a past date, when none of the projects the viewer follows had a record public by then.
+      notPublicYet: {
+        one: "I hold no records disclosed by {date} for the project you follow, so I have nothing to brief you on for that date.",
+        many: "I hold no records disclosed by {date} for the {count} projects you follow, so I have nothing to brief you on for that date.",
+      },
       agency: {
         plan: "I checked your team's latest Procurement Plan, the plan of {date} for the {project} ({pid}).",
         plans: "I checked your team's latest Procurement Plans for {count} projects.",

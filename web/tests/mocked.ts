@@ -76,6 +76,7 @@ export async function viewAnswers(): Promise<Record<string, { body: string }>> {
     "/api/home?view=piu": { body: await recorded("home-preview-piu.json") },
     "/api/home?view=public": { body: await recorded("home-preview-public.json") },
     "/api/home?asof=2016-08-26": { body: await recorded("home-asof-2016-08-26.json") },
+    "/api/home?view=public&asof=2016-08-26": { body: await recorded("home-preview-public-2016-08-26.json") },
   };
   return { ...answers, ...Object.fromEntries(Object.entries(answers).map(([key, value]) => [`GET ${key}`, value])) };
 }

@@ -357,6 +357,26 @@ def test_as_of_a_past_date_the_briefing_counts_only_the_followed_projects_public
     assert answer["worth"]["followed"] == 1
 
 
+def test_as_of_a_date_before_every_followed_project_was_public_the_briefing_never_says_you_follow_none(story):
+    """Ana follows P130164 (public from April 18, 2013) and P156634 (public from March 1, 2017). As of a date before
+    both, she still follows them: the briefing says I hold nothing for that date, never that she follows no project,
+    and the page shows the quiet state, not the first-run card that asks her to follow one."""
+    answer = story.home(asof="2012-01-01").json()
+
+    assert sentences(answer) == [
+        "I hold no records disclosed by January 1, 2012 for the two projects you follow, so I have nothing to brief "
+        "you on for that date."]
+    assert lines(answer) == [] and answer["worth"]["empty"] == "quiet"
+
+    assert story.call("DELETE", "/api/projects/P130164/follow", json={"view": "staff"}).status_code == 200
+    answer = story.home(asof="2016-08-26").json()
+
+    assert sentences(answer) == [
+        "I hold no records disclosed by August 26, 2016 for the project you follow, so I have nothing to brief "
+        "you on for that date."]
+    assert lines(answer) == [] and answer["worth"]["empty"] == "quiet"
+
+
 def test_a_plan_that_changed_with_no_activity_marked_never_reads_as_no_plan_changed(story):
     """As of March 25, 2025, the window holds one plan of P156634, Kilifi - Mariakani's of March 19, 2025, and check_plan
     marks none of its activities. "Worth knowing" then says that, never "No plan changed", which the briefing contradicts."""

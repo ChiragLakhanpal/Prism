@@ -371,9 +371,12 @@ def drafts_sentence(rows: list[dict]) -> list[dict]:
 
 
 def staff_briefing(plans: list[dict], lines: list[dict], followed: int, window: list[dict],
-                   waiting: list[dict] | None) -> list[list[dict]]:
+                   waiting: list[dict] | None, following: int | None = None,
+                   as_of: dt.date | None = None) -> list[list[dict]]:
     """The briefing's sentences, in the order of the lines they count (the 41 brief, section 5.2). waiting is None as of
-    a past date, when the drafts sentence is left out."""
+    a past date, when the drafts sentence is left out. following is how many projects the viewer follows in the follow
+    store, and followed how many of those were public by the as-of date, so a viewer whose follows all came later is
+    never told they follow none (it defaults to followed)."""
     found = words()
     sentences: list[list[dict]] = []
     activity = [line for line in lines if line["kind"] == "activity"]
@@ -381,8 +384,12 @@ def staff_briefing(plans: list[dict], lines: list[dict], followed: int, window: 
     # Lesson lines come from the viewer's own drafts, not their follows, so they are counted on a first run too.
     changed = [line for line in lines if line["kind"] == "lesson" and line["status"] == "changed"]
     retired = [line for line in lines if line["kind"] == "lesson" and line["status"] != "changed"]
-    if not followed:
+    following = followed if following is None else following
+    if not following:
         sentences.append(fill(found["firstRun"], {}))
+    elif not followed:
+        sentences.append(fill(form(found["notPublicYet"], following),
+                              {"count": count(following), "date": _date(as_of)}))
     elif not plans and not projects and not changed and not retired:
         sentences.append(fill(form(found["quiet"], followed), {"count": count(followed), "window": window}))
     else:
@@ -512,10 +519,13 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, access: Access, vi
         end = as_of or data_through(engine) or day
         days = window_days()
         start = end - dt.timedelta(days=days - 1)
-        followed = follows.followed(viewer.user_id) if follows is not None and viewer.user_id else {}
-        if as_of is not None and followed:
+        # following is the follow store's answer; followed narrows it to the projects public by the as-of date
+        # (ADR 0002). The two stay apart so a viewer whose follows all came later is not read as following none.
+        following = follows.followed(viewer.user_id) if follows is not None and viewer.user_id else {}
+        followed = following
+        if as_of is not None and following:
             public = {row[0] for row in engine.run(_query("public_projects"), {"as_of": as_of}).rows}
-            followed = {project_id: at for project_id, at in followed.items() if project_id in public}
+            followed = {project_id: at for project_id, at in following.items() if project_id in public}
         found = engine.run(_query("plans_disclosed"), {"start": start, "end": end})
         disclosed = [dict(zip(found.columns, row)) for row in found.rows]
         plans, lines, partial = [], [], 0
@@ -560,7 +570,7 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, access: Access, vi
         lines = lines + projects_lines + lesson_lines
         waiting = waiting_rows(viewer, mine, example_drafts(seeded)) if as_of is None else None
         window = window_phrase(days, as_of)
-        sentences = staff_briefing(plans, lines, len(followed), window, waiting)
+        sentences = staff_briefing(plans, lines, len(followed), window, waiting, following=len(following), as_of=as_of)
         lesson_notice = ""
         if "lesson_change" in seeded:
             lesson_id, cited, _version = seeded["lesson_change"]["item_id"].split(":")
@@ -571,7 +581,7 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, access: Access, vi
         links = (chosen.links(agency_key(chosen.demo_plan.implementing_agency), lesson_notice)
                  if access.is_staff(viewer) else [])
         # A plan that changed with nothing marked is not a quiet window: the briefing has just said it changed.
-        empty = None if lines else ("first_run" if not followed else "nothing_marked" if plans else "quiet")
+        empty = None if lines else ("first_run" if not following else "nothing_marked" if plans else "quiet")
         return {
             "view": STAFF, "preview": False, "today": day.isoformat(), "as_of": _iso(as_of),
             "window": {"days": days, "start": start.isoformat(), "end": end.isoformat(),
