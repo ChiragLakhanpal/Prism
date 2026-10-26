@@ -2606,3 +2606,18 @@ Name its file under `sources` in `tests/fixtures/dashboard/widget_shapes.json` a
     uv run --frozen pytest tests/test_dashboard_widgets.py
 
 It worked if every test passes. A failure means Strata's workspace writes a widget shape the fixture does not know yet; tell the orchestrator.
+
+## Ticket 74, step 1 of 1: same-rows runs from the script's own dependency list, with no `--with` (criteria 1 and 3, live)
+
+The merger parked this step on October 26, 2026, after merge commit e3ceb423. Every key is set, but the second session runs every workspace step from a snapshot of the commit, one at a time, so the merger ran none. Ticket 74 changes only the inline dependency list of `ops/bundle/check.py`, which now holds splink 5.0.0, xgboost 3.4.1 (xgboost-cpu on Linux), numpy 2.5.4, py3langid 0.3.0, pypdf 6.20.0, fastapi, httpx, fpdf2, defusedxml and opentelemetry-api at the pins in `uv.lock`, and it adds `ops/bundle/tests/test_script_dependencies.py`. No table, job, query or deploy changes, so nothing needs deploying first. This is the next same-rows run, and it needs none of the `--with` packages that the run of October 26 under "Ticket 04, step 3 of 4" used.
+
+Run this from a snapshot of e3ceb423 or later, with `--env-file` pointing at the main checkout's `.env`, and with no `--with`:
+
+    uv run --script ops/bundle/check.py same-rows --env-file .env
+
+It worked if:
+
+- No `ModuleNotFoundError` appears. On October 26 the old list stopped at `No module named 'splink'`, and then at numpy.
+- It prints one result line for each ground-truth file marked for databricks: 19 files on October 26. `grep -l "^-- engines:.*databricks" tests/ground_truth/*.sql | wc -l` in the snapshot gives the count to expect.
+
+The exit code does not decide it. On October 26 the same check, run with `--with`, exited 1 with 8 of 19 files matching, because the warehouse's rows differ from the fixture's for the reasons recorded under "Ticket 04, step 3 of 4". Those differences are not this ticket's. Record the run here: the snapshot's commit, the time, whether a `ModuleNotFoundError` appeared, the number of result lines, and the files that matched.
