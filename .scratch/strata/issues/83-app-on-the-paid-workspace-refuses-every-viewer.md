@@ -6,15 +6,16 @@ Read first: `src/strata/server/app.py` (`as_viewer`, `read_for`, the viewer and 
 
 **Blocked by:** None (can start immediately)
 
-**Status:** in-progress
+**Status:** done
 **Area:** app
 **Phase:** P4
 **Design review:** no
 
 - [x] The server logs the workspace's answer when it refuses a viewer, in both refusal paths, without the token (d7423568; the existing server tests pass).
-- [ ] The App's log on the paid workspace holds the refusal's status and body for one browser open after a redeploy from 912306fe or later (recorded in the catch-up file under this ticket).
-- [ ] The cause is fixed and the App's pages load for the user on the paid workspace; `docs/paid-workspace.md` section 8 names the problem and the fix.
+- [x] The App's log on the paid workspace holds the refusal's status and body for one browser open after a redeploy from 912306fe or later (recorded in the catch-up file under this ticket).
+- [x] The cause is fixed and the App's pages load for the user on the paid workspace; `docs/paid-workspace.md` section 8 names the problem and the fix.
 
 ## Comments
 
 - October 26, 2026, orchestrator: opened at 15:05 PDT, as the second exception to the rule of no new tickets without the user's yes, because the App must answer on the paid workspace for the demo. Step 1 was built by the orchestrator in `.claude/worktrees/orch-83` and merged with the gate green (120.6 seconds in the worktree, green again at the merge); the second session runs step 2.
+- October 26, 2026, orchestrator: step 2 done by the second session after the redeploy from 912306fe at 22:05 UTC. The App's log, in Application Insights, holds the refusal word for word: "The warehouse refused <the user>: The workspace answered 403 to POST /api/2.0/sql/statements/: {\"error_code\":403,\"message\":\"Provided OAuth token does not have required scopes: sql [ReqId: 6241ae60-50b6-4d69-9aa7-298bc3203717]\"}" (22:22:29 UTC), and earlier "Invalid scope, required scopes: sql" (22:19:57 UTC). The cause: the user's normal browser window kept the App session it had opened when the day-one probe app held the same address without the scopes, and the Apps proxy keeps that session's token until it expires; a private window with a fresh consent (the page listed Databricks SQL) loaded every page at 22:19 UTC. The fix needs no code: sign out of the App once in that window, or clear the site's cookies, and open it again from the workspace's Apps page. Step 3 (this commit): the App deploy prints that warning after a deploy over an existing app (tested on the probe-app case), and `docs/paid-workspace.md` section 8 gains item 8. Merged by the orchestrator with the gate green.

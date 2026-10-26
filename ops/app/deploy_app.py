@@ -298,6 +298,7 @@ def deploy(workspace, env: dict, build_web: Callable[[], tuple[int, str]] = buil
 
     print(f"2. Finding the app {name}.")
     app = workspace.app(name)
+    existed = app is not None
     if app is None:
         workspace.create_app(name, DESCRIPTION)
         app = workspace.app(name)
@@ -385,6 +386,13 @@ def deploy(workspace, env: dict, build_web: Callable[[], tuple[int, str]] = buil
     for statement in masks(app["principal"], workspace.me()):
         workspace.run_sql(statement)
 
+    if existed:
+        # A browser keeps the app session it opened before this deploy, with that session's token and scopes, until it
+        # expires; a session consented before the app had the sql scope (the day-one probe app, an older deploy) gets 403
+        # from the warehouse on every page (ticket 83, October 26, 2026).
+        print("   The app existed before this deploy. Anyone who opened its address earlier, before it had the user "
+              "authorization scopes, keeps that window's old session: the pages say the account cannot read the data until "
+              "they sign out of the app once, or clear the site's cookies, and open it again from the workspace's Apps page.")
     print(f"Strata is running at {url}")
     return 0
 
