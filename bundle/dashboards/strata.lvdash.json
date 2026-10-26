@@ -1784,7 +1784,7 @@
         "  wrong_per_100,\n",
         "  not_useful_per_100,\n",
         "  CASE\n",
-        "    WHEN wrong_per_100 IS NOT NULL THEN format_number(wrong_per_100, 1)\n",
+        "    WHEN wrong_per_100 IS NOT NULL THEN format_number(round(wrong_per_100, 1), 1)\n",
         "    ELSE replace(replace('{reports} in {opened}', '{reports}', format_number(coalesce(wrong_passage, 0), 0)),\n",
         "                 '{opened}', format_number(opened, 0))\n",
         "  END AS wrong_per_100_cell\n",
@@ -2011,12 +2011,12 @@
         "  with_actual,\n",
         "  median_days,\n",
         "  CASE\n",
-        "    WHEN median_days IS NOT NULL THEN format_number(median_days, 0)\n",
+        "    WHEN median_days IS NOT NULL THEN format_number(round(median_days), 0)\n",
         "    WHEN with_actual = 1 THEN replace('{n} row, too few for a median', '{n}', format_number(with_actual, 0))\n",
         "    ELSE replace('{n} rows, too few for a median', '{n}', format_number(coalesce(with_actual, 0), 0))\n",
         "  END AS median_days_cell,\n",
         "  CASE\n",
-        "    WHEN median_months IS NOT NULL THEN format_number(median_months, 1)\n",
+        "    WHEN median_months IS NOT NULL THEN format_number(round(median_months, 1), 1)\n",
         "    WHEN with_cycle = 1 THEN replace('{n} row, too few for a median', '{n}', format_number(with_cycle, 0))\n",
         "    ELSE replace('{n} rows, too few for a median', '{n}', format_number(coalesce(with_cycle, 0), 0))\n",
         "  END AS median_months_cell\n",
@@ -4224,7 +4224,7 @@
             "name": "remove_why",
             "multilineTextboxSpec": {
               "lines": [
-                "I remove the contact person's name, email address and phone number from every procurement notice as I take it in, before it reaches any table that answers or this dashboard can read. Strata never shows them and never answers questions about them. The counter above counts any that got through."
+                "I remove the contact person's name, email address and phone number from every procurement notice as I take it in, before it reaches any table that answers or this dashboard can read. Strata never shows them and never answers questions about them. The counter above counts any email addresses and phone numbers that got through."
               ]
             }
           },

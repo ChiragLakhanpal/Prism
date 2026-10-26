@@ -67,7 +67,7 @@
         "lineage": "Lineage from an answer to its sources",
         "lineageText": "Leave Run ID empty to see the latest answer, or paste a run ID from Recent answer runs, at the end of this section. If the tables stay empty, no answer run has that ID."
       },
-      "removeWhy": "I remove the contact person's name, email address and phone number from every procurement notice as I take it in, before it reaches any table that answers or this dashboard can read. Strata never shows them and never answers questions about them. The counter above counts any that got through.",
+      "removeWhy": "I remove the contact person's name, email address and phone number from every procurement notice as I take it in, before it reaches any table that answers or this dashboard can read. Strata never shows them and never answers questions about them. The counter above counts any email addresses and phone numbers that got through.",
       "noHistory": "I can't show who queried what, because this workspace doesn't let me read its query history. I checked when this dashboard was deployed on {date}. If Free Edition adds it later, deploying the dashboard again adds the table here.",
       "tiles": {
         "checksChart": {
@@ -589,8 +589,10 @@
         },
         "checks": {
           "removed": "In the 7 days to {day}, I removed {removed} of the {written} sentences I wrote. The most common reason was \"{reasonLabel}\", for {topCount} of them.",
+          "removedTied": "In the 7 days to {day}, I removed {removed} of the {written} sentences I wrote. No one reason was the most common, because {tied} reasons tied at {topCount} each.",
           "noneRemoved": "In the 7 days to {day}, I removed none of the {written} sentences I wrote.",
           "held": "I held back in {held} of the {answers} answers I gave. The most common reason was \"{holdLabel}\".",
+          "heldTied": "I held back in {held} of the {answers} answers I gave. No one reason was the most common, because {tied} reasons tied.",
           "noneHeld": "I held back in none of the {answers} answers I gave.",
           "none": "I gave no answers in the 7 days to {day}, so there was nothing to check."
         },

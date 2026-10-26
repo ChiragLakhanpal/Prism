@@ -32,7 +32,7 @@ SELECT
   wrong_per_100,
   not_useful_per_100,
   CASE
-    WHEN wrong_per_100 IS NOT NULL THEN format_number(wrong_per_100, 1)
+    WHEN wrong_per_100 IS NOT NULL THEN format_number(round(wrong_per_100, 1), 1)
     ELSE replace(replace(:copy__dash__ai__tiles__opened__fewer, '{reports}', format_number(coalesce(wrong_passage, 0), 0)),
                  '{opened}', format_number(opened, 0))
   END AS wrong_per_100_cell

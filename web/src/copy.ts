@@ -7196,7 +7196,8 @@ export const copy = {
       removeWhy:
         "I remove the contact person's name, email address and phone number from every procurement notice as I take " +
         "it in, before it reaches any table that answers or this dashboard can read. Strata never shows them and " +
-        "never answers questions about them. The counter above counts any that got through.",
+        "never answers questions about them. The counter above counts any email addresses and phone numbers that " +
+        "got through.",
       // Tile 21 when the workspace doesn't let Strata read its query history (the 45 brief, section 6.4). {date} is
       // the day the dashboard was deployed.
       noHistory:
@@ -7779,8 +7780,15 @@ export const copy = {
           removed:
             "In the 7 days to {day}, I removed {removed} of the {written} sentences I wrote. The most common reason " +
             "was \"{reasonLabel}\", for {topCount} of them.",
+          // When the largest reasons have the same count, no one reason is named as the most common.
+          removedTied:
+            "In the 7 days to {day}, I removed {removed} of the {written} sentences I wrote. No one reason was the " +
+            "most common, because {tied} reasons tied at {topCount} each.",
           noneRemoved: "In the 7 days to {day}, I removed none of the {written} sentences I wrote.",
           held: "I held back in {held} of the {answers} answers I gave. The most common reason was \"{holdLabel}\".",
+          heldTied:
+            "I held back in {held} of the {answers} answers I gave. No one reason was the most common, because " +
+            "{tied} reasons tied.",
           noneHeld: "I held back in none of the {answers} answers I gave.",
           none: "I gave no answers in the 7 days to {day}, so there was nothing to check.",
         },

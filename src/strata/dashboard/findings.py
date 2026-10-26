@@ -248,6 +248,14 @@ def foundry(engine: Engine, today: dt.date) -> tuple[str, dt.date | None]:
     return say.say("dash.ai.find.foundry.ran", "n", n=scored, day=say.day(day, today), **met), day
 
 
+def _tied(reasons: list[dict], column: str) -> int:
+    """How many reasons share the largest count, or 0 when one reason has it alone. The query sorts the largest
+    first, so a tie is the first rows with the same count."""
+    top = reasons[0][column]
+    tied = sum(1 for row in reasons if row[column] == top)
+    return tied if tied > 1 else 0
+
+
 def checks(engine: Engine, today: dt.date) -> tuple[str, dt.date | None]:
     """What my six checks removed and where I held back, in the 7 days to today (section 7.3)."""
     start = today - dt.timedelta(days=6)
@@ -258,16 +266,21 @@ def checks(engine: Engine, today: dt.date) -> tuple[str, dt.date | None]:
         return say.fill(say.at("dash.ai.find.checks.none"), day=day), today
     written, count = int(removed["denominator"] or 0), int(removed["numerator"] or 0)
     if count:
-        top = _rows(engine, "removed_reasons", start, today)[0]
-        text = say.fill(say.at("dash.ai.find.checks.removed"), day=day, removed=count, written=written,
-                        reasonLabel=say.Unit(top["reason"]), topCount=int(top["sentences"]))
+        reasons = _rows(engine, "removed_reasons", start, today)
+        top, tied = reasons[0], _tied(reasons, "sentences")
+        slots = {"day": day, "removed": count, "written": written, "topCount": int(top["sentences"])}
+        text = (say.fill(say.at("dash.ai.find.checks.removedTied"), tied=tied, **slots) if tied
+                else say.fill(say.at("dash.ai.find.checks.removed"), reasonLabel=say.Unit(top["reason"]), **slots))
     else:
         text = say.fill(say.at("dash.ai.find.checks.noneRemoved"), day=day, written=written)
     answers, held_count = int(held["denominator"]), int(held["numerator"] or 0)
     if held_count:
-        top = _rows(engine, "held_reasons", start, today)[0]
-        text += " " + say.fill(say.at("dash.ai.find.checks.held"), held=held_count, answers=answers,
-                               holdLabel=say.Unit(top["reason"]))
+        reasons = _rows(engine, "held_reasons", start, today)
+        tied = _tied(reasons, "answers")
+        text += " " + (say.fill(say.at("dash.ai.find.checks.heldTied"), held=held_count, answers=answers, tied=tied)
+                       if tied else
+                       say.fill(say.at("dash.ai.find.checks.held"), held=held_count, answers=answers,
+                                holdLabel=say.Unit(reasons[0]["reason"])))
     else:
         text += " " + say.fill(say.at("dash.ai.find.checks.noneHeld"), answers=answers)
     return text, today
@@ -335,6 +348,12 @@ def _held_out(engine: Engine, today: dt.date) -> tuple[dict | None, dict | None]
     return (best(runs[0]) if runs else None), (best(runs[1]) if len(runs) > 1 else None)
 
 
+def last_finished_week(today: dt.date) -> dt.date:
+    """The Sunday that ends the latest week the retrieval run measures in full, by today (ticket 32's weeks start on
+    Monday), so "the 7 days to {day}" names a finished week and never one still under way."""
+    return today - dt.timedelta(days=(today.weekday() + 1) % 7)
+
+
 def retrieval(engine: Engine, today: dt.date) -> tuple[str, dt.date | None]:
     """Precision and recall on the held-out set, and the week's passage reports (section 7.3, Retrieval loop)."""
     latest, _ = _held_out(engine, today)
@@ -348,17 +367,17 @@ def retrieval(engine: Engine, today: dt.date) -> tuple[str, dt.date | None]:
         measured = _date(latest["run_on"])
         text = say.fill(say.at("dash.ai.find.retrieval.evaluated"), day=say.day(measured, today),
                         p=say.Unit(f"{latest['precision_at_10']:.2f}"), r=say.Unit(f"{latest['recall_at_20']:.2f}"))
-    weeks = _rows(engine, "kpi_wrong_passage_rate", today - dt.timedelta(days=13), today)
+    end = last_finished_week(today)
+    weeks = _rows(engine, "kpi_wrong_passage_rate", end - dt.timedelta(days=6), end - dt.timedelta(days=6))
     week = weeks[0] if weeks else None
     if week is None or not week["opened"]:
-        text += " " + say.fill(say.at("dash.ai.find.retrieval.nothingOpened"), day=say.day(today, today))
+        text += " " + say.fill(say.at("dash.ai.find.retrieval.nothingOpened"), day=say.day(end, today))
     else:
-        end = min(_date(week["week_start"]) + dt.timedelta(days=6), today)
         wrong, not_useful = int(week["wrong_passage"]), int(week["not_useful"])
         slots = {"day": say.day(end, today), "opened": int(week["opened"]), "wrong": _none_or(wrong),
                  "notUseful": _none_or(not_useful)}
         text += " " + (say.say("dash.ai.find.retrieval.feedback", "count", count=wrong,
-                               rate=say.Unit(f"{week['wrong_per_100']:.1f}"), **slots)
+                               rate=say.Unit(week["wrong_per_100_cell"]), **slots)
                        if week["wrong_per_100"] is not None else
                        say.say("dash.ai.find.retrieval.feedbackFew", "opened", **slots))
         measured = measured or end

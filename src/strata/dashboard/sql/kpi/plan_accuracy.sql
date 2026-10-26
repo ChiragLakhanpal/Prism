@@ -3,7 +3,9 @@
 -- countries not yet using it, the rows with an actual signing date, the median days between planned and actual
 -- signing, and the median months from first notice to signing, as the latest monthly watch in the dates chosen
 -- stored them (strata.ops.estimates_watch, plan_accuracy and plan_duration; ticket 44). A median is kept only from
--- estimates_loop.min_cases rows, so a group with fewer shows its count in words. Four rows, in a fixed order.
+-- estimates_loop.min_cases rows, so a group with fewer shows its count in words. Each median is rounded half up
+-- before it is written, as the nightly sentence rounds it, since Spark's format_number alone rounds half to
+-- even. Four rows, in a fixed order.
 WITH latest AS (
   SELECT run_id, month
   FROM strata.ops.estimates_watch
@@ -34,12 +36,12 @@ SELECT
   with_actual,
   median_days,
   CASE
-    WHEN median_days IS NOT NULL THEN format_number(median_days, 0)
+    WHEN median_days IS NOT NULL THEN format_number(round(median_days), 0)
     WHEN with_actual = 1 THEN replace(:copy__dash__ai__tiles__accuracy__tooFew__one, '{n}', format_number(with_actual, 0))
     ELSE replace(:copy__dash__ai__tiles__accuracy__tooFew__other, '{n}', format_number(coalesce(with_actual, 0), 0))
   END AS median_days_cell,
   CASE
-    WHEN median_months IS NOT NULL THEN format_number(median_months, 1)
+    WHEN median_months IS NOT NULL THEN format_number(round(median_months, 1), 1)
     WHEN with_cycle = 1 THEN replace(:copy__dash__ai__tiles__accuracy__tooFew__one, '{n}', format_number(with_cycle, 0))
     ELSE replace(:copy__dash__ai__tiles__accuracy__tooFew__other, '{n}', format_number(coalesce(with_cycle, 0), 0))
   END AS median_months_cell

@@ -355,6 +355,18 @@ def test_every_reason_code_the_dashboard_counts_has_a_label_so_none_reaches_it_a
         assert {item["key"] for item in tomllib.load(handle)["evaluators"]} == set(wording.at("dash.ai.evaluators"))
 
 
+def test_the_personal_data_tile_claims_only_what_the_contacts_counter_checks():
+    """Counter 7 reads ticket 43's contacts_left check, which looks for email addresses and labelled phone numbers
+    (contacts.LEFT_EMAIL and LEFT_PHONE), not names. The text tile beside it says what the counter counts."""
+    from strata.lakehouse import contacts
+
+    assert {name for name in vars(contacts) if name.startswith("LEFT_")} == {"LEFT_EMAIL", "LEFT_PHONE"}
+    [tile] = [tile for tile in board()["pages"][1]["layout"] if tile["widget"]["name"] == "remove_why"]
+    text = "".join(tile["widget"]["multilineTextboxSpec"]["lines"])
+    assert text.rstrip().endswith(
+        "The counter above counts any email addresses and phone numbers that got through.")
+
+
 def test_every_kpi_has_its_name_definition_and_fallback_sentence_in_the_copy_file():
     for kpi in load_kpis().values():
         for key in kpi.copy_keys:

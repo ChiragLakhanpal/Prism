@@ -77,9 +77,9 @@ def test_ai_quality_says_how_the_answers_did_and_how_each_loop_is_learning(writt
         "Of the 40 answers Microsoft Foundry scored on October 20, 34 met its threshold for groundedness, 36 for "
         "relevance, 30 for task adherence and 38 for tool use.")
     assert found["Checks on answers"][0] == (
-        'In the 7 days to October 23, I removed three of the 20 sentences I wrote. The most common reason was "Its '
-        'sources don\'t say this", for one of them. I held back in two of the three answers I gave. The most common '
-        'reason was "Outside what my model learned from".')
+        "In the 7 days to October 23, I removed three of the 20 sentences I wrote. No one reason was the most common, "
+        "because three reasons tied at one each. I held back in two of the three answers I gave. No one reason was the "
+        "most common, because two reasons tied.")
     assert found["Knowledge loop"][0] == (
         "In the 90 days to October 23, lead procurement specialists decided three proposed lessons, two of them within "
         "10 business days of their report being published. In the hindsight test of October 15, I caught 14 of 30 "
@@ -87,7 +87,8 @@ def test_ai_quality_says_how_the_answers_did_and_how_each_loop_is_learning(writt
         "caught 9. The 95 percent interval runs from 25 to 58 percent.")
     assert found["Retrieval loop"][0] == (
         "On the held-out set, in the evaluation of October 10, precision at 10 was 0.62 and recall at 20 was 0.71. In "
-        "the 7 days to October 23, people opened 12 sources and marked one as wrong and none as not useful.")
+        "the 7 days to October 18, people opened 40 sources and marked three passages as wrong, or 7.5 for every 100 "
+        "sources opened. They marked two as not useful.")
     assert found["Estimates loop"][0] == (
         "Of the 60 packages that finished in the 12 months to September 2026, 52 finished inside my 8-in-10 range, or "
         "87 percent. That is outside the 75 to 85 percent target, as it has been for one month. I raised a retrain on "
@@ -97,6 +98,20 @@ def test_ai_quality_says_how_the_answers_did_and_how_each_loop_is_learning(writt
         "In the week of Monday, October 12, two people used Strata. In the 90 days to October 23, authors marked two "
         "drafts as checked and exported one. Of the nine plan rows published after I showed a range for their package, "
         "four were dated within 14 days of a date I offered.")
+
+
+def test_the_week_a_sentence_names_is_the_latest_finished_one_never_a_week_still_under_way():
+    """Ticket 32's weeks start on Monday. On Friday October 23 the week of October 19 is still under way, so the
+    sentence names the 7 days to Sunday October 18; on a Sunday, the week that ends that day is finished."""
+    assert findings.last_finished_week(dt.date(2026, 10, 23)) == dt.date(2026, 10, 18)
+    assert findings.last_finished_week(dt.date(2026, 10, 19)) == dt.date(2026, 10, 18)
+    assert findings.last_finished_week(dt.date(2026, 10, 25)) == dt.date(2026, 10, 25)
+
+
+def test_a_reason_is_named_the_most_common_only_when_no_other_reason_has_its_count():
+    assert findings._tied([{"sentences": 2}, {"sentences": 1}], "sentences") == 0
+    assert findings._tied([{"answers": 1}, {"answers": 1}, {"answers": 1}], "answers") == 3
+    assert findings._tied([{"answers": 2}, {"answers": 2}, {"answers": 1}], "answers") == 2
 
 
 def test_each_loop_s_indicators_are_six_rows_in_loop_order_with_targets_and_where_each_stands_in_words(written):
