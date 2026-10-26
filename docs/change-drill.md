@@ -15,10 +15,12 @@ No drill edits `tests/ground_truth/values.toml`. That file holds what the World 
 
 ## How to rehearse a drill
 
-1. Make a branch of its own from the branch you are on, named `drill-49/<nn>-<change>`, such as `git switch -c drill-49/03-change-a-signal-threshold`. Never merge it.
+1. Make a branch of its own from the branch you are on, named `drill/<nn>-<change>`, such as `git switch -c drill/03-change-a-signal-threshold`. Never merge it. Ticket 49's rehearsal ran on `drill-49/<nn>-<change>` branches, which also count as drill branches.
 2. Start the timer, and follow the drill's steps.
 3. Commit. Git runs the gate, and the drill ends when the commit is made with the gate green. A red gate means the drill is not done: fix what it reports and commit again.
-4. Write the time, the branch, the commit and the gate's seconds in `docs/proposal/rehearsals.toml`, on the ticket branch, then switch back to it.
+4. Switch back to the ticket branch, then write the time, the branch, the commit and the gate's seconds in `docs/proposal/rehearsals.toml`. Write the commit's own date, from `git log -1 --format=%aI <commit>`, as its `gate_started_at`. Git dates a commit before the gate runs, so that is when the edits were done, and the proposal's Annex 1 gives the editing time from it.
+
+Ticket 49's rehearsal timed each change a second time: each drill was worked through once, without a timer, while its entry here was written. Its times measure making a known change and the gate's run. To measure how long a new change takes, pick an example nobody has tried yet and start the timer when you read the request.
 
 The live part of each drill, under "On the workspace", runs later, one step at a time, from the main checkout with its `.env`.
 
@@ -87,7 +89,7 @@ A new signal is a check added to `src/strata/tools/project_signals.py`, not a th
 **Steps.**
 
 1. Add a `[[countries]]` entry with the country's name and its two ISO codes. The nightly fetch of the notices and the monthly loan history follows this list, so `config/sources.toml` needs no change.
-2. Run `uv run --frozen python gates/build_fixture.py`, then `uv run --frozen python tests/record_api.py` and `uv run --frozen python tests/passage_rows.py`. The slice's data readiness sentence names every country, and the second command writes the hash of those rows again.
+2. Run `uv run --frozen python gates/build_fixture.py`, then `uv run --frozen python tests/record_api.py` and `uv run --frozen python tests/passage_rows.py`. The slice's data readiness sentence names every country, and `tests/passage_rows.py` writes the hash of those rows again.
 3. `web/tests/shelf.spec.ts` types the slice's countries in full. Add the new one.
 4. Commit.
 

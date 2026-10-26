@@ -29,7 +29,10 @@ SETTINGS_FILE = FOLDER / "settings.toml"
 REHEARSALS_FILE = FOLDER / "rehearsals.toml"
 # The source kind of a rehearsal time, beside the 46 brief's six (section 9.2): a drill timed on its own branch.
 REHEARSAL_KIND = "Rehearsal"
-DRILL_BRANCH = "drill-49/"
+# A drill's throwaway branch: drill/<nn>-<change>. Ticket 49's own rehearsal ran on drill-49/<nn>-<change>, which
+# still reads as a drill branch.
+DRILL_BRANCH = "drill/"
+_DRILL_BRANCH = re.compile(r"drill(?:-[0-9]+)?/")
 DAY_ONE_FILE = ROOT / "docs" / "day-one-results.md"
 DAY_ONE_CONFIG = ROOT / "ops" / "dayone" / "dayone.toml"
 
@@ -147,13 +150,15 @@ def load_settings(path: Path = SETTINGS_FILE) -> dict[str, Setting]:
 @dataclass(frozen=True)
 class Rehearsal:
     """One drill of the change drill, timed: what it changed, on which branch and commit, and how long it took from
-    making the branch to the commit the gate passed."""
+    making the branch to the commit the gate passed. gate_started_at is the commit's own date: git dates a commit
+    before its pre-commit hook runs, so that is when the edits were done and the gate began."""
 
     change: str
     example: str
     branch: str
     commit: str
     started_at: dt.datetime
+    gate_started_at: dt.datetime
     finished_at: dt.datetime
     gate_seconds: float
 
@@ -161,6 +166,11 @@ class Rehearsal:
     def minutes(self) -> int:
         """Whole minutes, rounded up, so a drill never reads as shorter than it took."""
         return math.ceil((self.finished_at - self.started_at).total_seconds() / 60)
+
+    @property
+    def editing_seconds(self) -> int:
+        """The seconds from the drill's start to the moment its edits were done and the gate began."""
+        return round((self.gate_started_at - self.started_at).total_seconds())
 
     @property
     def measured_on(self) -> dt.date:
@@ -191,19 +201,25 @@ def load_rehearsals(path: Path = REHEARSALS_FILE) -> dict[str, Rehearsal]:
             raise RegisterError(f"{where} has keys I do not know: {', '.join(unknown)}.")
         if missing:
             raise RegisterError(f"{where} needs {', '.join(missing)}.")
+        for text in ("change", "example", "branch", "commit"):
+            if not isinstance(entry[text], str):
+                raise RegisterError(f"{where}'s {text} must be text, in quotes.")
         rehearsal = Rehearsal(**entry)
         if rehearsal.change not in changes:
             raise RegisterError(f"{where} times {rehearsal.change}, which config/change_drills.toml does not list. "
                                 "Write the drill's change word for word.")
         if rehearsal.change in found:
             raise RegisterError(f"In {path.name}, {rehearsal.change} is rehearsed twice. Keep the run you mean.")
-        if not all(isinstance(moment, dt.datetime) and moment.tzinfo for moment in (rehearsal.started_at,
-                                                                                   rehearsal.finished_at)):
-            raise RegisterError(f"{where}'s started_at and finished_at must be times with their offset, such as "
-                                "2026-10-26T10:00:05-07:00.")
+        if not all(isinstance(moment, dt.datetime) and moment.tzinfo for moment in (
+                rehearsal.started_at, rehearsal.gate_started_at, rehearsal.finished_at)):
+            raise RegisterError(f"{where}'s started_at, gate_started_at and finished_at must be times with their "
+                                "offset, such as 2026-10-26T10:00:05-07:00.")
         if rehearsal.finished_at <= rehearsal.started_at:
             raise RegisterError(f"{where}'s finished_at must come after started_at.")
-        if not rehearsal.branch.startswith(DRILL_BRANCH):
+        if not rehearsal.started_at <= rehearsal.gate_started_at <= rehearsal.finished_at:
+            raise RegisterError(f"{where}'s gate_started_at must fall between started_at and finished_at. Write the "
+                                "drill commit's own date, from git log -1 --format=%aI <commit>.")
+        if not _DRILL_BRANCH.match(rehearsal.branch):
             raise RegisterError(f"{where}'s branch must start with {DRILL_BRANCH}, so nobody takes it for a ticket "
                                 "branch and merges it.")
         if not re.fullmatch(r"[0-9a-f]{40}", rehearsal.commit):

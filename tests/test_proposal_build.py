@@ -199,10 +199,11 @@ PACIFIC = dt.timezone(dt.timedelta(hours=-7))
 
 def rehearsed(minutes: dict[str, int]) -> dict[str, register.Rehearsal]:
     """Made-up rehearsals that took the minutes given, each finished on October 26, 2026, 30 seconds short of a
-    whole minute."""
+    whole minute, with its edits done 40 seconds after its start."""
     start = dt.datetime(2026, 10, 26, 10, 0, tzinfo=PACIFIC)
-    return {change: register.Rehearsal(change, "An example.", f"drill-49/{number:02d}-example", f"{number:040d}",
-                                       start, start + dt.timedelta(minutes=taken, seconds=-30), 130.5)
+    return {change: register.Rehearsal(change, "An example.", f"drill/{number:02d}-example", f"{number:040d}",
+                                       start, start + dt.timedelta(seconds=40),
+                                       start + dt.timedelta(minutes=taken, seconds=-30), 130.5)
             for number, (change, taken) in enumerate(minutes.items(), 1)}
 
 
@@ -221,7 +222,7 @@ def test_until_a_drill_is_rehearsed_its_time_reads_not_rehearsed_yet_and_a_note_
     assert section.count("Not rehearsed yet") == len(CHANGES) == 10
     assert ("**Note:** The rehearsal times come from the change drill run in phase P4. This version was built before "
             "it.") in section
-    assert "Their rehearsal has not run yet, so the table gives no times." in section
+    assert "A change that has not been rehearsed yet says so in the table." in section
     assert "The table gives the minutes each one took" not in section
 
 
@@ -234,13 +235,18 @@ def test_a_rehearsed_drill_shows_its_minutes_linked_to_its_row_in_annex_1_and_th
     assert "Not rehearsed yet" not in section and "**Note:**" not in section
     assert "**Source:** Annex 1." in section
     [row] = [line for line in markdown.splitlines() if line.startswith('| <a id="r-drill-swap-the-model"></a>')]
-    assert "| 6 | Oct 26, 2026 | Rehearsal; branch `drill-49/05-example`, commit `0000000`" in row
-    assert "the gate passed in 130.5 seconds" in row
+    assert "| 6 | Oct 26, 2026 | Rehearsal; branch `drill/05-example`, commit `0000000`" in row
+    # The 49 review's B1: the row splits the time into the edits and the gate's run.
+    assert "the edits were done after 40 seconds, then the gate passed in 130.5 seconds" in row
     assert '[The section "Changing Strata in round 2"](#sec-m4-drill)' in row  # as every Cited in cell
     # The P3 phase gate's finding: the ten-minute claim links to its target in Annex 2, and the times are cited.
     assert re.search(r"so it can land in under \[10\]\(#s-drill-target [^)]*\) minutes with the gate green\.", section)
     assert "The table gives the minutes each one took when it was rehearsed" in section
-    assert "Their rehearsal has not run yet" not in section
+    # The 49 review's B1: the times measure a known change made again, so the intro says so.
+    assert ("Each change had been worked through once before its timed run, so most of each time is the gate's own "
+            "run. A change nobody has worked through before takes longer.") in section
+    assert "Claude Code ran each drill from the runbook." in section
+    assert "has not been rehearsed yet says so" not in section
     assert numbers.unsourced(markdown) == []
 
 
@@ -262,6 +268,9 @@ def test_while_any_drill_is_not_rehearsed_the_note_stays(snap):
 
     assert section.count("Not rehearsed yet") == len(CHANGES) - 1
     assert "**Note:** The rehearsal times come from the change drill run in phase P4." in section
+    # The 49 review's F2: one drill shows its time, so the intro never says the table gives none.
+    assert "A change that has not been rehearsed yet says so in the table." in section
+    assert "gives no times" not in section
 
 
 def test_the_retrieval_scores_name_the_query_set_they_were_measured_on(built):
