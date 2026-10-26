@@ -122,7 +122,9 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: PackageStor
                reader_for: Callable[[], object | None], form: Form, thresholds: Thresholds,
                today: Callable[[], dt.date], now: Callable[[], dt.datetime], new_package_id: Callable[[], str],
                new_save_id: Callable[[], str], new_run_id: Callable[[], str], runs: RunLog | None,
-               trace_ids: Callable[[], TraceIds], reference: Callable[[], str], heartbeat_seconds: float) -> None:
+               trace_ids: Callable[[], TraceIds], reference: Callable[[], str], heartbeat_seconds: float,
+               examples: Callable[[Viewer], set[str]] | None = None) -> None:
+    # examples gives the packages the seed command planned for the viewer (ticket 41), each labeled "Example".
     max_months = float(thresholds.value("past_range.max_plan_months"))
     # One lock per package, so two changes to it are made one after the other (review round 2, P1).
     locks: dict[str, threading.Lock] = {}
@@ -255,7 +257,12 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: PackageStor
             except (PermissionDenied, EngineError):
                 log.warning("I listed %s's packages without country names: the warehouse did not answer.", viewer.user_id)
                 names, projects = {}, {}
-            return workflow.list_rows(store.mine(viewer.user_id), checks, form, thresholds, names, projects)
+            found = workflow.list_rows(store.mine(viewer.user_id), checks, form, thresholds, names, projects)
+            made = examples(viewer) if examples is not None else set()
+            for row in found["rows"]:
+                if row["type"] == "package" and row["package_id"] in made:
+                    row["example"] = True
+            return found
         return guarded("the viewer's packages", read)
 
     # ── One package ──────────────────────────────────────────────────────
@@ -269,8 +276,10 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: PackageStor
             saved = mine(viewer, package_id)
             if saved is None:
                 return refused(404, "unknown_package")
+            made = examples(viewer) if examples is not None else set()
             return {"package": workflow.package_view(saved, form, thresholds),
-                    "form": payload(form, countries(viewer), max_months)}
+                    "form": payload(form, countries(viewer), max_months),
+                    **({"example": True} if package_id in made else {})}
         return guarded(f"package {package_id}", read)
 
     @app.post("/api/planned-packages/{package_id}")

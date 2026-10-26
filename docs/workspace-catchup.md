@@ -2987,3 +2987,63 @@ It worked if:
 - The commit's gate passes.
 
 Record the commit, the four exit codes and the deck row.
+
+## Ticket 41, step 1 of 3: deploy Home's three tables, then redeploy the App for their grants
+
+The merger parked this step on October 26, 2026, after merge commit a1ac8fec, so run steps 1 to 3 from a snapshot of a1ac8fec or later. The Databricks keys are set, but the second session runs every workspace step from a snapshot of the commit, one at a time, so the merger ran none. The builder named only the seed command (step 2). I added this step because the seed command and Home write three tables the workspace does not hold yet: `strata.ops.start_here_choices` (whether each viewer keeps Home's Start here strip), `strata.ops.seeded_examples` (one row per viewer and example the seed command set up) and `strata.ops.example_lesson_versions` (an example lesson version only its viewer sees), all in `src/strata/lakehouse/tables/ops/`. The bundle deploy makes the tables. The App deploy (`ops/app/deploy_app.py`, `grants()`) then grants the App's own service principal SELECT and MODIFY on all three. A grant on a missing table fails, so the bundle deploy runs first. No column mask changes. One bundle deploy and one App deploy from a1ac8fec or later serve this block and every earlier block that names them. Run the App deploy with `--keep-secrets` (ticket 70, in the header), after `npm ci --prefix web` in the snapshot.
+
+Run these from the snapshot's root, in this order:
+
+    uv run --script ops/bundle/deploy.py --env-file "<main checkout>/.env" --fairshare-catalog workspace
+    uv run --script ops/app/deploy_app.py --env-file "<main checkout>/.env" --keep-secrets
+
+It worked if the bundle deploy exits 0 and its "3. What changed:" lists the three tables as new and changes no existing table, the App deploy exits 0 with the last line `Strata is running at https://...`, and on the SQL warehouse
+
+    SHOW GRANTS ON TABLE strata.ops.start_here_choices
+    SHOW GRANTS ON TABLE strata.ops.seeded_examples
+    SHOW GRANTS ON TABLE strata.ops.example_lesson_versions
+
+each list SELECT and MODIFY for the App's service principal. Record both exit codes, what "3. What changed:" listed, and the grant lines.
+
+## Ticket 41, step 2 of 3: the seed command sets up the reviewing panel's examples once (criterion 4, live)
+
+Parked with step 1, after merge commit a1ac8fec. Run it after step 1. It needs two things only the user can give, so no session can run it yet:
+
+- **The panel's people.** On October 26, `config/roles.toml` names no one in the `reviewing_panel` group (`load_roles().people` is empty), so the command prints "The roles file names no one with a user_id in the group reviewing_panel, so I set up no examples." and exits 1. Who sits on the panel is the user's choice. Add one `[[people]]` entry per panelist with `email`, `name`, `groups = ["reviewing_panel"]` and `user_id` (the id the Databricks App forwards as X-Forwarded-User), and commit it through the gate.
+- **The App's service principal in the env file.** The command runs the App's own routes in its own process as that principal, so it reads DATABRICKS_HOST, DATABRICKS_WAREHOUSE_ID, DATABRICKS_CLIENT_ID and DATABRICKS_CLIENT_SECRET from the env file. On October 26, `python3 .claude/hooks/guard.py --env-keys` listed neither DATABRICKS_CLIENT_ID nor DATABRICKS_CLIENT_SECRET. Without them the command prints "I need the workspace: DATABRICKS_HOST, DATABRICKS_WAREHOUSE_ID, DATABRICKS_CLIENT_ID and DATABRICKS_CLIENT_SECRET, in the env file --env-file names." and exits 1. Writing the secret is the user's job.
+
+The examples' drafts come from the live review notes writer and PPSD rows writer through Foundry, and the verifier checks them, so the Foundry keys are needed too (they are set).
+
+Run this twice from the snapshot's root:
+
+    uv run python -m strata.seed_examples --env-file "<main checkout>/.env"
+
+Then, on the SQL warehouse:
+
+    SELECT viewer_id, count(*) AS examples, count_if(seeded_by = 'strata') AS by_strata FROM strata.ops.seeded_examples GROUP BY viewer_id
+    SELECT viewer_id, example_key FROM strata.ops.seeded_examples GROUP BY viewer_id, example_key HAVING count(*) > 1
+
+It worked if:
+
+- The first run exits 0 and prints one line per panelist, `<email>: follows set up, review_notes_demo_plan set up, package_rural_roads_kenya set up, ppsd_rows_demo_package set up, lesson_change set up.`
+- The second run prints `already` for each of the five keys, and the row counts of `strata.ops.drafts` and `strata.ops.follows` are the same after it as before it.
+- The first query gives one row per panelist with `examples` 5 and `by_strata` 5, and the second query returns no rows.
+
+The lesson_change example is set up only when the PPSD rows cite a lesson. `strata.gold.passage` held 0 rows on the workspace on October 26, because the nightly job timed out in `parse_and_embed`. If a key prints a reason in place of `set up` (for example `no risks`, `not written` or `no draft`), record the line word for word.
+
+## Ticket 41, step 3 of 3: Home on the deployed App with live data, its budget and its first lines (criteria 1, 2 and 7, live; review F14)
+
+Parked with step 1, after merge commit a1ac8fec. Run it after step 2, as one seeded panelist, in Chrome with DevTools open:
+
+1. With the Network panel's cache off and no throttling, open the App's `/` three times. For each, note the `GET /api/home` request's time from its Timing tab.
+2. Add a custom throttling profile with the values of `FAST_3G` in `web/tests/home.spec.ts`: 562.5 ms latency, 1.44 Mbit/s down, 675 kbit/s up. Choose it, open `/` in a new tab, and note the time until the briefing shows (cold). Then open `/data`, click the Strata logo, and note the time until Home shows.
+3. Read the `GET /api/home` answer's `window.data_through`, `window.start` and `worth.lines`. If `data_through` is after October 15, 2026, the NWWDA plan of October 9, 2026 is outside the 7-day window (`[home] window_days`), so also open `/?asof=2026-10-15` and read that answer's `worth.lines`.
+
+It worked if:
+
+- Each unthrottled `GET /api/home` takes at most 2 seconds.
+- Under the throttling profile, the cold load shows Home within 5 seconds and the visit from Data within 2 seconds.
+- `window.data_through` is the day of the App's data freshness stamp, and each count in the briefing equals the number of lines of its kind below it.
+- In the answer whose window holds October 9, 2026, the first two Worth knowing lines are KE-NWWDA-541055-CW-RFB (Needs a look, US$1.23 million, planned completion July 31, 2026, project closes October 31, 2026) and KE-NWWDA-229129-CW-RFB (Watch, signed at US$1,245,092.76 against an estimate of US$300,000), with the amounts as the workspace's `check_plan` gives them, and each "Open the activity" lands on that activity's page.
+
+Record the three request times, the two load times, the `data_through` date, whether you used `?asof=2026-10-15`, and the first two lines as shown.

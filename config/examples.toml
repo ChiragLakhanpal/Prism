@@ -1,0 +1,66 @@
+# The examples registry (ticket 41; the 41 design brief, sections 4.3 and 4.5): the examples Strata sets up for the
+# reviewing panel, and where each Start here link on Home lands. strata.config.load_examples() reads it; Home's route
+# (src/strata/server/home.py) and the seed command (python -m strata.seed_examples, src/strata/seed_examples.py) use
+# it, so a change to an example or a link is one edit here (CLAUDE.md rule 9).
+#
+# The showcase project and the demo plan are not repeated here: they come from config/slice.toml's [showcase] and
+# [demo_plan], so the examples follow the demo when it moves.
+#
+#   viewers   the key of the group in config/roles.toml whose people the seed command sets the examples up for
+#   follows   the projects each viewer follows, beside the demo plan's project: "showcase" names the showcase project
+#
+# [packages.<key>], a package planned from a sentence: the sentence Strata reads, the same one the Start here link
+#                  "Plan a package from a sentence" fills into the box (/packages?box=plan&example=<key>)
+#
+# [ppsd_rows], the suggested PPSD rows the seed command drafts:
+#   package   the STEP reference of the package they are for
+#   criteria  section 1's criteria, as find_comparables' own parameter names
+#   risks     how many risks to select, in the risk-table builder's order
+#
+# [[start_here]], one per link on Home's Start here strip, in the strip's order. key names its words in the copy file
+# (copy.home.start.links), and href is where it lands, with {showcase}, {demo_project}, {demo_agency_id},
+# {demo_plan_date} and {lesson_notice} filled from the slice file and the seeded lesson change.
+
+viewers = "reviewing_panel"
+follows = ["showcase"]
+
+[packages.rural_roads_kenya]
+sentence = "rural roads, Kenya, about US$15 million"
+
+# The demo package with section 1's country set to India, whose comparables reach P130164's completion report and its
+# two procurement risks; the fixture's Kenya comparables reach none (the 36 brief; tests/ppsd_story.py). A parked
+# decision: the 41 brief's example is the Kenya rural roads package, whose comparables on the fixture raise no risk.
+[ppsd_rows]
+package = "KE-NWWDA-541055-CW-RFB"
+criteria = { country = "IN", notice_from = "2013-01-01" }
+risks = 3
+
+# The example lesson change: the first lesson the suggested PPSD rows cite, at a version after its latest, with this
+# sentence added to its wording, so was and now differ by words anyone can see are the example's own. No lead decided
+# it, and only the viewer it was set up for sees it.
+[lesson_change]
+sentence = "I added this sentence to show how a changed lesson reaches your draft."
+
+[[start_here]]
+key = "checkPlan"
+href = "/projects/{demo_project}/procurement/{demo_agency_id}/{demo_plan_date}"
+
+[[start_here]]
+key = "planPackage"
+href = "/packages?box=plan&example=rural_roads_kenya"
+
+[[start_here]]
+key = "wholeStory"
+href = "/projects/{showcase}/timeline"
+
+[[start_here]]
+key = "lessonChange"
+href = "/lessons{lesson_notice}"
+
+[[start_here]]
+key = "checkData"
+href = "/data"
+
+[[start_here]]
+key = "publicView"
+href = "/?view=public"

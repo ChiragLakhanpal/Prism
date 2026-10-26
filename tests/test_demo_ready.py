@@ -517,11 +517,14 @@ def test_the_recheck_names_the_showcase_package_as_the_fixture_does_when_the_wor
         (True, False) if misread_characters == 0 else (False, True)), out
 
 
-def test_until_ticket_41_merges_home_says_its_seed_command_and_window_are_not_built(two_runs):
+def test_without_the_seed_command_home_says_so_and_checks_the_demo_plan_against_the_seven_day_window(two_runs):
+    """The runs pin the seed command off. Home's window is the thresholds file's seven days (ticket 41), ending on the
+    fixture's data-through date, October 23, 2026, so the plan disclosed on October 9 falls outside it."""
     _, out = two_runs["first"]
 
     assert "The seed command, python -m strata.seed_examples, is not built yet (ticket 41)" in out
-    assert "home.window_days in config/thresholds.toml, is not set yet (ticket 41)" in out
+    assert (f"The plan of {long_day(DEMO.plan_date)}, disclosed on {long_day(DEMO.plan_date)}, falls outside Home's "
+            "window, the seven days from October 17, 2026 to October 23, 2026.") in out
     assert "   Home: not built yet." in out
 
 
@@ -675,12 +678,14 @@ def test_the_dry_run_lists_every_resource_from_code_alone_with_the_command_that_
     assert [out.index(command) for command in commands[:5]] == sorted(out.index(command) for command in commands[:5])
 
 
-def test_until_ticket_41_merges_the_dry_run_names_the_examples_as_the_one_resource_with_no_deployer():
+def test_the_dry_run_names_the_seed_command_and_the_examples_it_sets_up():
+    """Ticket 41's seed command gives its plan (strata.seed_examples.plan), so every resource deploys from code."""
     code, out = dry_run()
 
-    assert code == 1
-    assert "The examples for the reviewing panel: no deployer yet. Ticket 41 adds python -m strata.seed_examples." in out
-    assert out.rstrip().splitlines()[-1] == "One resource has no deployer yet, so a fresh workspace still needs it: the examples for the reviewing panel."
+    assert code == 0
+    assert "uv run python -m strata.seed_examples --env-file .env" in out
+    assert "follows on P156634 and P130164" in out and "with no risk owner set" in out
+    assert out.rstrip().splitlines()[-1] == "Every resource above deploys from code, with no manual step."
 
 
 def test_once_the_seed_command_has_a_plan_every_resource_deploys_from_code():

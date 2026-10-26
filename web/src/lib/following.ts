@@ -41,6 +41,8 @@ export type FollowedProject = {
   counts: { signals: number; strong: number; ran: number; checks: number; not_ran: number };
   following_since: string | null;
   mission_brief: { draft_id: string; created_at: string } | null;
+  // A follow the seed command made for you (ticket 41), labeled "Example".
+  example?: boolean;
 };
 
 export type Counts = {

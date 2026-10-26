@@ -83,6 +83,8 @@ def test_the_identity_route_says_when_no_one_signed_in():
                                             "reasons", "asof")}
     assert response.json() == {"email": None, "name": None, "signed_in": False, "has_token": False, "staff": False,
                                "agency": None, "own_view": "staff", **views,
+                               # Home's Start here strip shows only to someone signed in (ticket 41).
+                               "start_here_visible": False,
                                "language": {"code": "en", "source": "default", "saved": None, "team": None,
                                             "link": None, "saved_readable": True,
                                             "choices": recorded["language"]["choices"]}}

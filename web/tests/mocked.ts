@@ -72,20 +72,27 @@ export async function viewAnswers(): Promise<Record<string, { body: string }>> {
     "/api/me?view=public": { body: await recorded("me-preview-public.json") },
     "/api/me?asof=2016-08-26": { body: await recorded("me-asof.json") },
     "/api/me?view=public&asof=2016-08-26": { body: await recorded("me-preview-public-asof.json") },
+    // Home in each preview, and as of a past date (ticket 41; tests/record_home_api.py).
+    "/api/home?view=piu": { body: await recorded("home-preview-piu.json") },
+    "/api/home?view=public": { body: await recorded("home-preview-public.json") },
+    "/api/home?asof=2016-08-26": { body: await recorded("home-asof-2016-08-26.json") },
+    "/api/home?view=public&asof=2016-08-26": { body: await recorded("home-preview-public-2016-08-26.json") },
   };
   return { ...answers, ...Object.fromEntries(Object.entries(answers).map(([key, value]) => [`GET ${key}`, value])) };
 }
 
 // The two calls every page of the shell makes, answered from the recordings unless a test says
-// otherwise: who is viewing (/api/me) and the data-freshness stamp (/api/freshness).
+// otherwise: who is viewing (/api/me) and the data-freshness stamp (/api/freshness). Home's one read (/api/home,
+// ticket 41) is answered too, since the shell's tests start there: Ana's Home with her seeded examples.
 export async function mockShell(
   page: Page,
-  answers: { me?: { status?: number; body: string }; freshness?: { status?: number; body: string } } = {},
+  answers: { me?: { status?: number; body: string }; freshness?: { status?: number; body: string }; home?: { status?: number; body: string } } = {},
 ) {
   return mockApi(page, {
     ...(answers.me ? {} : await viewAnswers()),
     "/api/me": answers.me ?? { body: await recorded("me.json") },
     "/api/freshness": answers.freshness ?? { body: await recorded("freshness.json") },
+    "/api/home": answers.home ?? { body: await recorded("home.json") },
   });
 }
 

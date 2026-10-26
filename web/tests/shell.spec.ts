@@ -344,13 +344,13 @@ const lastLine = (el: Element) => {
 
 for (const width of [390, 320]) {
   test(`at ${width} px the Home card's title wraps into even lines, and the Menu's view line never ends on one word`, async ({ page }) => {
-    await mockShell(page);
+    // Home's first run (ticket 41): its empty-state card, as a viewer who follows nothing sees it.
+    await mockShell(page, { home: { body: await recorded("home-first-run.json") } });
     await page.setViewportSize({ width, height: 900 });
     await page.goto("/");
 
-    // Without balancing, the title broke as "I have nothing to brief you / on yet."
     const title = page.locator("[data-empty-state]").getByRole("heading");
-    await expect(title).toHaveText("I have nothing to brief you on yet.");
+    await expect(title).toHaveText("I brief you on the projects you follow.");
     expect((await title.evaluate(lastLine)).share).toBeGreaterThan(0.5);
 
     // The Menu's view rows wrap with text-pretty, so no description ends on one word (ticket 40).

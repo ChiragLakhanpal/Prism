@@ -12,7 +12,8 @@ reads only the environment it is given:
   to strata.ops.agent_runs, each source a viewer opens in the evidence drawer to
   strata.ops.evidence_opened, each past range or time estimate shown in the World Bank staff view to
   strata.ops.exposures (ticket 44), each side of a disagreement a person keeps to strata.ops.disagreement_choices
-  (ticket 23), drafts to strata.ops.drafts and the tables beside it (ticket 35), an implementing agency's
+  (ticket 23), drafts to strata.ops.drafts and the tables beside it (ticket 35), what Home keeps per viewer to
+  strata.ops.start_here_choices, seeded_examples and example_lesson_versions (ticket 41), an implementing agency's
   uploads to strata.ops.uploads and upload_rows (ticket 38), and
   each decision or label a person gives a candidate pair of supplier name matching to
   strata.ops.supplier_review_decisions or supplier_pair_labels, and each lesson reviewer's act to the
@@ -64,6 +65,7 @@ from strata.appstate import lakebase
 from strata.config import load_roles, load_thresholds
 from strata.drafts.store import DraftStore
 from strata.server.following import FollowStore
+from strata.server.home import HomeStore
 from strata.server.viewer_settings import SettingsStore
 from strata.knowledge.lessons.review import LessonReview
 from strata.knowledge.lessons.visits import LessonVisits
@@ -165,12 +167,15 @@ def _app_state(environ: Mapping[str, str]) -> Callable[[], Engine] | None:
     return lakebase.from_environment(environ, app_token(host, client_id, secret))
 
 
-def app_from_env(environ: Mapping[str, str] | None = None) -> FastAPI:
+def app_from_env(environ: Mapping[str, str] | None = None, engine_for: engines.EngineFor | None = None,
+                 access: Access | None = None) -> FastAPI:
+    """engine_for and access stand in for the viewer's own warehouse reads and the workspace's groups, for a command
+    that drives the app's routes as the app itself, such as the seed command (ticket 41)."""
     environ = os.environ if environ is None else environ
     thresholds = load_thresholds()
     timeout = thresholds.value("app.stamp_timeout_seconds")
     web = Path(environ["STRATA_WEB_DIST"]) if environ.get("STRATA_WEB_DIST") else WEB_DIST
-    engine_for = engines.from_environment(environ, timeout_seconds=timeout)
+    engine_for = engine_for or engines.from_environment(environ, timeout_seconds=timeout)
     the_app = _the_app_s_engine(environ)
     state_file = app_state_file(environ) if not the_app else None
     state = the_app or state_file
@@ -186,6 +191,7 @@ def app_from_env(environ: Mapping[str, str] | None = None) -> FastAPI:
                       drafts=DraftStore(state) if state else None,
                       uploads=UploadStore(state) if state else None,
                       follows=FollowStore(state) if state else None,
+                      home=HomeStore(state) if state else None,
                       settings=SettingsStore(state) if state else None,
                       visits=LessonVisits(state) if state else None,
                       packages=PackageStore(app_state) if app_state else None,
@@ -193,7 +199,7 @@ def app_from_env(environ: Mapping[str, str] | None = None) -> FastAPI:
                       criteria=CriteriaStore(app_state) if app_state else None,
                       criteria_reader=agent_runner.agent_from_environment(environ, "criteria_reader"),
                       writers=agent_runner.writers_from_environment(environ),
-                      access=Access(load_roles(), WorkspaceGroups(host) if host else NoGroups()),
+                      access=access or Access(load_roles(), WorkspaceGroups(host) if host else NoGroups()),
                       supplier_log=SupplierLog(the_app) if the_app else None,
                       lessons=LessonReview(load_roles()), lesson_record=the_app,
                       passage_reports=PassageReports(load_roles()), judging=Judging(load_roles()),

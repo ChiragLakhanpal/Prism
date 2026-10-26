@@ -95,6 +95,8 @@ export type NoticeBody = {
   anchor: string;
   // The longest reason the keep route takes (lesson_review.reason_max_chars).
   reason_max_chars: number;
+  // A change the seed command made as an example for this reader alone (ticket 41): no lead decided it.
+  example?: boolean;
 };
 
 export type Notice = NoticeBody & { actions: ("versions" | "update" | "remove" | "keep")[]; uses: DraftUse[] };

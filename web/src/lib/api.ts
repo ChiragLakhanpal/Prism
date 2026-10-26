@@ -73,6 +73,8 @@ export type Me = {
   capabilities?: string[];
   reasons?: Record<string, string>;
   asof?: import("./view").AppliedView["asof"];
+  // Ticket 41: whether Home shows its Start here strip for this viewer.
+  start_here_visible?: boolean;
 };
 
 // One page of a list the server searches and pages (ticket 21): the rows shown, and the range and

@@ -1,0 +1,45 @@
+{
+  "view": "public",
+  "preview": true,
+  "today": "2016-08-26",
+  "as_of": "2016-08-26",
+  "window": null,
+  "briefing": {
+    "sentences": [
+      [
+        {
+          "text": "I hold records for "
+        },
+        {
+          "number": 42
+        },
+        {
+          "text": " World Bank-financed projects. Search for one by name, project ID or country in the search box."
+        }
+      ]
+    ],
+    "plans": []
+  },
+  "start_here": {
+    "visible": false,
+    "links": []
+  },
+  "worth": {
+    "kind": "public",
+    "lines": [],
+    "fold_after": 8,
+    "partial": null,
+    "checked_on": "2016-08-26",
+    "through": "2016-08-26",
+    "empty": "no_closed"
+  },
+  "waiting": {
+    "rows": [],
+    "total": 0,
+    "more": false,
+    "reason": "public"
+  },
+  "public": {
+    "total": 42
+  }
+}

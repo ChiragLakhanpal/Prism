@@ -1,0 +1,396 @@
+{
+  "view": "staff",
+  "preview": false,
+  "today": "2026-10-28",
+  "as_of": null,
+  "window": {
+    "days": 15,
+    "start": "2026-10-09",
+    "end": "2026-10-23",
+    "data_through": "2026-10-23",
+    "phrase": [
+      {
+        "text": "the past "
+      },
+      {
+        "count": 15,
+        "word": "15"
+      },
+      {
+        "text": " days"
+      }
+    ]
+  },
+  "briefing": {
+    "sentences": [
+      [
+        {
+          "count": 1,
+          "word": "One",
+          "kind": "plans",
+          "ids": [
+            "40132287"
+          ]
+        },
+        {
+          "text": " plan changed in "
+        },
+        {
+          "text": "the past "
+        },
+        {
+          "count": 15,
+          "word": "15"
+        },
+        {
+          "text": " days"
+        },
+        {
+          "text": "."
+        }
+      ],
+      [
+        {
+          "count": 1,
+          "word": "One",
+          "kind": "look",
+          "ids": [
+            "line-activity-KE-NWWDA-541055-CW-RFB"
+          ]
+        },
+        {
+          "text": " of "
+        },
+        {
+          "text": "its"
+        },
+        {
+          "text": " activities "
+        },
+        {
+          "text": "needs"
+        },
+        {
+          "text": " a look and "
+        },
+        {
+          "count": 2,
+          "word": "two",
+          "kind": "watch",
+          "ids": [
+            "line-activity-KE-NWWDA-229129-CW-RFB",
+            "line-activity-KE-NWWDA-541062-CW-RFQ"
+          ]
+        },
+        {
+          "text": " "
+        },
+        {
+          "text": "are"
+        },
+        {
+          "text": " worth watching."
+        }
+      ],
+      [
+        {
+          "count": 1,
+          "word": "One",
+          "kind": "lessonsChanged",
+          "ids": [
+            "line-lesson-lesson-e903b07ad1-v1"
+          ]
+        },
+        {
+          "text": " lesson cited in your drafts changed."
+        }
+      ],
+      [
+        {
+          "text": "No draft is waiting for you to check."
+        }
+      ]
+    ],
+    "plans": [
+      {
+        "document_id": "40132287",
+        "project_id": "P156634",
+        "project_name": "Water and Sanitation Development Project",
+        "implementing_agency": "Northern Water Works Development Agency",
+        "agency_id": "northern-water-works-development-agency",
+        "plan_date": "2026-10-09",
+        "disclosed_on": "2026-10-09"
+      }
+    ]
+  },
+  "start_here": {
+    "visible": true,
+    "links": [
+      {
+        "key": "checkPlan",
+        "href": "/projects/P156634/procurement/northern-water-works-development-agency/2026-10-09",
+        "pid": "P156634"
+      },
+      {
+        "key": "planPackage",
+        "href": "/packages?box=plan&example=rural_roads_kenya",
+        "pid": null
+      },
+      {
+        "key": "wholeStory",
+        "href": "/projects/P130164/timeline",
+        "pid": "P130164"
+      },
+      {
+        "key": "lessonChange",
+        "href": "/lessons#notice-lesson-e903b07ad1-v1",
+        "pid": null
+      },
+      {
+        "key": "checkData",
+        "href": "/data",
+        "pid": null
+      },
+      {
+        "key": "publicView",
+        "href": "/?view=public",
+        "pid": null
+      }
+    ]
+  },
+  "worth": {
+    "kind": "staff",
+    "lines": [
+      {
+        "kind": "activity",
+        "id": "line-activity-KE-NWWDA-541055-CW-RFB",
+        "key": "KE-NWWDA-541055-CW-RFB",
+        "status": "needs_a_look",
+        "reason": "completion_passed_no_contract",
+        "example": false,
+        "plan": "40132287",
+        "segments": [
+          {
+            "ref": "KE-NWWDA-541055-CW-RFB"
+          },
+          {
+            "text": ", US$"
+          },
+          {
+            "written": "1.23"
+          },
+          {
+            "text": " million of "
+          },
+          {
+            "text": "works"
+          },
+          {
+            "text": " in the "
+          },
+          {
+            "text": "Water and Sanitation Development Project"
+          },
+          {
+            "text": " ("
+          },
+          {
+            "pid": "P156634"
+          },
+          {
+            "text": "),"
+          },
+          {
+            "text": " passed its planned completion date of "
+          },
+          {
+            "date": "2026-07-31"
+          },
+          {
+            "text": " with no signed contract in the plan."
+          },
+          {
+            "text": " The project closes "
+          },
+          {
+            "date": "2026-10-31"
+          },
+          {
+            "text": "."
+          }
+        ],
+        "source": {
+          "evidence_id": "strata.silver.plan_rows:40132287/KE-NWWDA-541055-CW-RFB",
+          "kind": "plan",
+          "date": "2026-10-09",
+          "agency": "Northern Water Works Development Agency",
+          "pid": "P156634"
+        },
+        "action": {
+          "key": "openActivity",
+          "href": "/projects/P156634/packages/KE-NWWDA-541055-CW-RFB",
+          "hidden": "KE-NWWDA-541055-CW-RFB"
+        },
+        "differs": null
+      },
+      {
+        "kind": "activity",
+        "id": "line-activity-KE-NWWDA-229129-CW-RFB",
+        "key": "KE-NWWDA-229129-CW-RFB",
+        "status": "watch",
+        "reason": "signed_late_over_estimate",
+        "example": false,
+        "plan": "40132287",
+        "segments": [
+          {
+            "text": "In the same plan, "
+          },
+          {
+            "ref": "KE-NWWDA-229129-CW-RFB"
+          },
+          {
+            "text": " was signed at US$"
+          },
+          {
+            "written": "1,245,092.76"
+          },
+          {
+            "text": " against an estimate of US$"
+          },
+          {
+            "written": "300,000"
+          },
+          {
+            "text": "."
+          }
+        ],
+        "source": {
+          "evidence_id": "strata.silver.plan_rows:40132287/KE-NWWDA-229129-CW-RFB",
+          "kind": "plan",
+          "date": "2026-10-09",
+          "agency": "Northern Water Works Development Agency",
+          "pid": "P156634"
+        },
+        "action": {
+          "key": "openActivity",
+          "href": "/projects/P156634/packages/KE-NWWDA-229129-CW-RFB",
+          "hidden": "KE-NWWDA-229129-CW-RFB"
+        },
+        "differs": null
+      },
+      {
+        "kind": "activity",
+        "id": "line-activity-KE-NWWDA-541062-CW-RFQ",
+        "key": "KE-NWWDA-541062-CW-RFQ",
+        "status": "watch",
+        "reason": "pending_near_closing",
+        "example": false,
+        "plan": "40132287",
+        "segments": [
+          {
+            "text": "In the same plan, "
+          },
+          {
+            "ref": "KE-NWWDA-541062-CW-RFQ"
+          },
+          {
+            "text": " is still pending in the plan, "
+          },
+          {
+            "number": 3
+          },
+          {
+            "text": " days before the project closes on "
+          },
+          {
+            "date": "2026-10-31"
+          },
+          {
+            "text": "."
+          }
+        ],
+        "source": {
+          "evidence_id": "strata.silver.plan_rows:40132287/KE-NWWDA-541062-CW-RFQ",
+          "kind": "plan",
+          "date": "2026-10-09",
+          "agency": "Northern Water Works Development Agency",
+          "pid": "P156634"
+        },
+        "action": {
+          "key": "openActivity",
+          "href": "/projects/P156634/packages/KE-NWWDA-541062-CW-RFQ",
+          "hidden": "KE-NWWDA-541062-CW-RFQ"
+        },
+        "differs": null
+      },
+      {
+        "kind": "lesson",
+        "id": "line-lesson-lesson-e903b07ad1-v1",
+        "key": "lesson-e903b07ad1/v1",
+        "status": "changed",
+        "reason": "narrowed",
+        "example": true,
+        "segments": [
+          {
+            "text": "The lesson \""
+          },
+          {
+            "text": "Base works estimates on market rates to avoid rebidding"
+          },
+          {
+            "text": "\" changed on "
+          },
+          {
+            "date": "2026-10-28"
+          },
+          {
+            "text": ". "
+          },
+          {
+            "text": "Your suggested PPSD risk rows for "
+          },
+          {
+            "text": "Equipping of Exploratory Bo reholes Project-Lot 1- Sarma n - Tarbaj Water Supply"
+          },
+          {
+            "text": " cite"
+          },
+          {
+            "text": " version "
+          },
+          {
+            "number": 1
+          },
+          {
+            "text": "."
+          }
+        ],
+        "decided_on": "2026-10-28",
+        "source": {
+          "evidence_id": "versions:lesson-e903b07ad1:1:2",
+          "kind": "lesson",
+          "version": 2
+        },
+        "action": {
+          "key": "seeChange",
+          "href": "/lessons#notice-lesson-e903b07ad1-v1",
+          "hidden": "Base works estimates on market rates to avoid rebidding"
+        },
+        "differs": null
+      }
+    ],
+    "fold_after": 8,
+    "partial": null,
+    "checked_on": "2026-10-28",
+    "through": "2026-10-23",
+    "empty": null,
+    "followed": 2
+  },
+  "waiting": {
+    "rows": [],
+    "total": 0,
+    "more": false,
+    "reason": null
+  },
+  "public": null
+}

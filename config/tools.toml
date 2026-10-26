@@ -119,10 +119,12 @@ description = "Use only plan versions and project dates public on or before this
 [tools.check_plan.result]
 row = "One activity in the plan: its STEP fields as the plan gives them, its marks and the values behind each reason."
 row_fields = ["evidence_id", "public_from", "source", "activity_reference_no", "section", "description",
-              "review_type", "method", "market_approach", "estimated_amount_usd", "actual_amount_usd",
-              "process_status", "signed_on", "planned_signing_on", "planned_signing_plan_date", "days_late",
-              "planned_completion_on", "planned_completion_plan_date", "first_listing_confirmed",
+              "review_type", "method", "market_approach", "estimated_amount_usd", "estimated_millions",
+              "actual_amount_usd", "process_status", "signed_on", "planned_signing_on", "planned_signing_plan_date",
+              "days_late", "planned_completion_on", "planned_completion_plan_date", "first_listing_confirmed",
               "actual_to_estimate", "marks", "position", "listed"]
+# estimated_millions is the estimate in US$ millions to two decimals with trailing zeros dropped, the figure Home's
+# briefing line writes ("US$1.23 million of works", ticket 41): a derived figure, so the tool returns it (rule 1).
 source_fields = ["document_type", "project_id", "implementing_agency", "plan_date", "document_id", "pdf_page"]
 fields = ["plan", "project", "checks_run", "thresholds", "counts", "baseline", "withheld"]
 # An upload's rows (ticket 38) give their place in the officer's file (position) and whether a published plan of the

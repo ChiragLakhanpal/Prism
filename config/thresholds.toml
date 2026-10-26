@@ -892,3 +892,17 @@ health_poll_seconds = 5
 # warehouse running only the answer remains, and a panel waits about a minute for a table of counts. A starting
 # value for the owner to confirm.
 genie_first_call_seconds = 60
+
+# Home (ticket 41; src/strata/server/home.py). The briefing counts what changed in a window that ends on the data-through
+# date, the freshness stamp's day, so the window and the records stay in step when a nightly run is late.
+[home]
+# The window: this many days, ending on the data-through date, counted by each plan's Disclosed date (public_from).
+# The briefing writes it in words ("in the past seven days"). Source: the ticket's "One plan changed this week" and
+# the 41 design brief, section 4.1, which settled the past seven days over the calendar week. On demo day the NWWDA
+# plan of October 9, 2026 falls inside it only when the data-through date is October 15, 2026 or earlier (a parked
+# decision for the owner).
+window_days = 7
+# "Worth knowing" shows this many lines and folds the rest behind "Show them"; "Waiting for you" lists this many drafts
+# and then links to Drafts; the public Home lists this many closed projects. Source: DESIGN.md section 5, cards, at
+# most eight per group.
+lines_in_view = 8

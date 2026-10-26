@@ -193,6 +193,21 @@ export type DateStyle = "sentence" | "table" | "short" | "month";
 // freshness stamp's form: "Oct 21" in the current year and "Dec 30, 2025" in any other. "month" is
 // a frozen source's on the Data readiness page: "Jun 2016".
 // Dates arrive as ISO dates ("2024-03-04") and are read in UTC, so no time zone moves them.
+// Home's date line (ticket 41): the weekday and the day, "Wednesday, October 28", with the year only when it is not
+// this year's, or always when asked, as an as-of date is.
+export function formatDayLine(iso: string, options: { today?: string; withYear?: boolean } = {}): string {
+  const date = new Date(`${iso.slice(0, 10)}T00:00:00Z`);
+  const today = options.today ? new Date(`${options.today}T00:00:00Z`) : new Date();
+  const year = options.withYear || date.getUTCFullYear() !== today.getUTCFullYear();
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: "UTC",
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: year ? "numeric" : undefined,
+  }).format(date);
+}
+
 export function formatDate(iso: string, options: { style?: DateStyle; today?: string } = {}): string {
   const style = options.style ?? "sentence";
   const date = new Date(`${iso.slice(0, 10)}T00:00:00Z`);

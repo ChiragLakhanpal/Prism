@@ -22,17 +22,7 @@ type Route = {
 const DATA_LINK: [string, string] = ["Go to Data", "/data"];
 
 export const ROUTES: Route[] = [
-  {
-    path: "/",
-    h1: "Your briefing",
-    purpose:
-      "This page lists what changed in the plans and projects you work on, and the drafts waiting for you to check. It comes from fixed checks on public records, and no model writes it.",
-    empty: {
-      title: "I have nothing to brief you on yet.",
-      body: "When my fixed checks find a change in a plan or project you work on, I list it here, with the drafts waiting for you.",
-      link: DATA_LINK,
-    },
-  },
+  // Home is built in ticket 41; web/tests/home.spec.ts tests it.
   // All projects and a project's page are built in ticket 10; web/tests/projects.spec.ts tests them.
   // The package workspace is built in ticket 12; web/tests/package.spec.ts tests it. The Packages tab and a
   // package planned from a sentence are built in ticket 15; web/tests/planned-package.spec.ts tests them. The
@@ -180,7 +170,7 @@ test("a tab opens its page without reloading, moves focus to the new title and u
   await expect(page.getByRole("navigation", { name: "Main" }).locator("[aria-current=page]")).toHaveText("Lessons");
 
   await page.goBack();
-  await expect(title).toHaveText("Your briefing");
+  await expect(title).toContainText("Your briefing for");
   await expect(page.getByRole("link", { name: "Strata", exact: true })).toHaveAttribute("aria-current", "page");
 });
 
