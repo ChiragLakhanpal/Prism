@@ -1,0 +1,35 @@
+{
+ "about": "The Foundry agent strata-orchestrator's answers through the Responses API, written by hand in the shape the API documents, because the gate's machine has no key. Every part of the question is refused, so it turns the whole request down with live_tenders and no claims, as its instructions say. Replace them with a recording: uv run --script ops/agent/record.py --env-file .env",
+ "recorded": false,
+ "recorded_on": null,
+ "question": "Bids for KE-MIGORI COUNTY-532367-CW-RFB closed last week. Mwangaza Builders Ltd listed two similar contracts and Pwani Works Ltd listed one. Which bidder qualifies under our similar experience requirement, and who is likely to win?",
+ "scope": "KE-CWSB-224323-CS-QCBS",
+ "as_of": "2026-10-22",
+ "agent": {
+  "name": "strata-orchestrator",
+  "version": null
+ },
+ "responses": [
+  {
+   "id": "resp_whole_refusal_live_tender_bidders_1",
+   "object": "response",
+   "status": "completed",
+   "model": "gpt-5.4-mini",
+   "output": [
+    {
+     "type": "message",
+     "id": "msg_whole_refusal_live_tender_bidders_1",
+     "role": "assistant",
+     "status": "completed",
+     "content": [
+      {
+       "type": "output_text",
+       "annotations": [],
+       "text": "{\"claims\": [], \"refusal\": {\"key\": \"live_tenders\", \"partial\": false}}"
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

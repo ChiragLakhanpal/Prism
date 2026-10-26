@@ -376,7 +376,7 @@ source_fields = ["document_type", "project_id", "project_name", "document_id", "
                  "doc_key", "notice_id", "notice_url"]
 fields = ["query", "filters", "search", "ranked_lower"]
 reasons = ["prompt_shields_hit", "not_screened", "ranked_below_limit"]
-abstentions = ["no_match", "unknown_document_type", "unknown_sector"]
+abstentions = ["no_match", "unknown_document_type", "unknown_sector", "index_not_available"]
 
 [tools.data_readiness_for]
 description = """Says how fit each data source is to support answers, from Strata's data readiness \

@@ -11,7 +11,9 @@ A passage in which Prompt Shields found a prompt attack when it was read in is l
 coverage line counts it with its evidence id. So is a passage with no stored result, which the
 shield never screened. The rule and its reason codes are strata.knowledge.shields.held_back's, which
 get_disagreements follows too. The coverage line also says how many matched passages ranked below the limit. A document type or sector the slice does not know, or a query nothing
-matches, is an abstention, whose reason the registry lists.
+matches, is an abstention, whose reason the registry lists. So is a workspace with no passage index yet, before
+ticket 11's step 4 first syncs it: the tool logs the workspace's answer once and returns no passages, in the shape
+of a search that found nothing, so the agent can answer from records or refuse, and the run goes on (ticket 67).
 
 The call's view (staff, piu or public) is returned with the result. It does not change which passages come back:
 the reports are public, and the as-of date (ticket 40) is what limits them.
@@ -21,18 +23,21 @@ from __future__ import annotations
 
 import datetime as dt
 import json
+import logging
 from importlib import resources
 
 from strata.config import load_slice, load_sources
 from strata.knowledge import shields
 from strata.knowledge.retrieval.demotion import lowered, rank
 from strata.knowledge.retrieval.kinds import query_kind
-from strata.knowledge.search import Filters, searcher_for
+from strata.knowledge.search import Filters, IndexNotFound, searcher_for
 from strata.reader.passages import NOTICE_TEXT, ROUTE_B
 from strata.reader.templates import template_for
 from strata.tools.registry import Call
 
 TABLE = "strata.gold.passage"
+NO_INDEX = "Nothing was searched: the passage index is not available yet."
+log = logging.getLogger("strata.tools.search_passages")
 
 
 def _sql(name: str) -> str:
@@ -167,7 +172,14 @@ def search_passages(call: Call, query: str, project_id: str | None = None, docum
         return {**empty, "abstention": {"reason": "unknown_sector", "sector": sector}}
 
     searcher = searcher_for(call)
-    hits = searcher.search(query, filters, most * int(value("passages.search_depth")))
+    try:
+        hits = searcher.search(query, filters, most * int(value("passages.search_depth")))
+    except IndexNotFound as missing:
+        # Before ticket 11's step 4 syncs it, the workspace has no passage index. The search then finds nothing and
+        # says why, so the agent answers from records or refuses, and the run goes on (ticket 67).
+        log.warning("search_passages found no passages, because the passage index is not available yet: %s", missing)
+        return {**empty, "search": {"searcher": searcher.name, "method": NO_INDEX, "matched_is_at_least": False},
+                "abstention": {"reason": "index_not_available", "query": query}}
     # matched_is_at_least: the searcher counted only the hits it gave back, so more passages may match.
     search = {"searcher": searcher.name, "method": hits.method, "matched_is_at_least": not hits.complete}
     if not hits.hits:

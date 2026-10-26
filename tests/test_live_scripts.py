@@ -249,6 +249,36 @@ def test_the_must_refuse_check_gives_search_passages_the_env_file_s_settings(age
     assert all(result.get("rows") and "error" not in result for result in the_workspace["tool_results"])
 
 
+def test_the_must_refuse_check_holds_while_the_workspace_has_no_passage_index_yet(agent_script, the_workspace,
+                                                                                  tmp_path, capsys, monkeypatch):
+    """Ticket 67. On October 26, 2026 the workspace had no passage index yet, and every question whose agent called
+    search_passages ended "refused with []": the 404 ended the run before the agent could refuse. Now the search
+    finds no passages and says why, and the agent goes on to its refusal."""
+    from strata.lakehouse import engine as engines
+
+    def no_index(host, token, timeout=120):
+        def call(method, path, body=None):
+            raise engines.EngineError(f"The workspace answered 404 to {method} {path}: "
+                                      '{"error_code":"RESOURCE_DOES_NOT_EXIST"}')
+        return call
+
+    refuse_live = agent_script("refuse_live")
+    the_workspace["replace"](sys.modules["live"], refuse_live)
+    monkeypatch.setattr(engines, "http_transport", no_index)
+    env_file = tmp_path / ".env"
+    env_file.write_text("".join(f"{key}={value}\n" for key, value in ENV.items()))
+
+    code = refuse_live.main(["--env-file", str(env_file)])
+
+    printed = capsys.readouterr().out.splitlines()
+    assert code == 0, printed
+    assert len(printed) == 11 and all(line.startswith("Holds. ") for line in printed)
+    # Every question's agent searched, and each search came back with no passages and the missing index as its reason.
+    assert len(the_workspace["tool_results"]) == 11
+    assert all(result["rows"] == [] and result["abstention"]["reason"] == "index_not_available"
+               for result in the_workspace["tool_results"])
+
+
 def test_the_showcase_check_gives_search_passages_the_env_file_s_settings(agent_script, the_workspace, monkeypatch):
     ask_live = agent_script("ask_live")
     the_workspace["replace"](sys.modules["live"], ask_live)
