@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 864 268" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="retrieval-title retrieval-desc" id="retrieval-root">
+        <title id="retrieval-title">How an answer is checked</title>
+        <desc id="retrieval-desc">The viewer asks, the Strata agent chooses tools, the app runs them as the viewer, the data come back with their IDs, the agent writes claims with those IDs and may go back for more, and the verifier checks every sentence before the viewer reads the answer.</desc>
+        <defs>
+      <style>#retrieval-root { font-family: 'Open Sans', system-ui, sans-serif; color: #181f25; }
+      #retrieval-root .diagram-container { width: 100%; overflow-x: auto; }
+      @media print {
+#retrieval-root .diagram-container { overflow-x: visible; }
+}</style>
+<marker id="retrieval-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4b5e71"/></marker>
+<marker id="retrieval-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0071bc"/></marker>
+<marker id="retrieval-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#01707e"/></marker>
+        </defs>
+        <rect width="100%" height="100%" fill="#f5f7f9"/>
+<line x1="24" y1="80" x2="840" y2="80" stroke="#181f25" stroke-width="0.8" stroke-opacity="0.10"/>
+<line x1="24" y1="136" x2="840" y2="136" stroke="#181f25" stroke-width="0.8" stroke-opacity="0.10"/>
+<line x1="24" y1="192" x2="840" y2="192" stroke="#181f25" stroke-width="0.8" stroke-opacity="0.10"/>
+<path d="M216,52 H264 Q272,52 272,60 V139" fill="none" stroke="#4b5e71" stroke-width="1.2" marker-end="url(#retrieval-arrow)"/>
+<path d="M320,156 H368 Q376,156 376,148 V133" fill="none" stroke="#4b5e71" stroke-width="1.2" marker-end="url(#retrieval-arrow)"/>
+<path d="M424,108 H472 Q480,108 480,116 V195" fill="none" stroke="#4b5e71" stroke-width="1.2" marker-end="url(#retrieval-arrow)"/>
+<path d="M528,220 H576 Q584,220 584,212 V189" fill="none" stroke="#4b5e71" stroke-width="1.2" marker-end="url(#retrieval-arrow)"/>
+<path d="M632,164 H680 Q688,164 688,156 V133" fill="none" stroke="#4b5e71" stroke-width="1.2" marker-end="url(#retrieval-arrow)"/>
+<path d="M736,108 H784 Q792,108 792,100 V77" fill="none" stroke="#4b5e71" stroke-width="1.2" marker-end="url(#retrieval-arrow)"/>
+<path d="M536,172 H488 a 8,8 0 0,0 -16,0 H321" fill="none" stroke="#4b5e71" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#retrieval-arrow)"/>
+<rect x="388" y="178" width="64" height="12" rx="2" fill="#f5f7f9"/>
+<text x="420" y="187" fill="#586e84" font-size="8" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">MORE ROUNDS</text>
+<rect x="120" y="28" width="96" height="48" rx="6" fill="#f5f7f9"/>
+<rect x="120" y="28" width="96" height="48" rx="6" fill="#4b5e71" stroke="#586e84" stroke-width="1" fill-opacity="0.10"/>
+<text x="168" y="48" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Asks a</text>
+<text x="168" y="63" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">question</text>
+<rect x="224" y="140" width="96" height="48" rx="6" fill="#f5f7f9"/>
+<rect x="224" y="140" width="96" height="48" rx="6" fill="#ffffff" stroke="#181f25" stroke-width="1"/>
+<text x="272" y="160" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Chooses</text>
+<text x="272" y="175" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">tools</text>
+<rect x="328" y="84" width="96" height="48" rx="6" fill="#f5f7f9"/>
+<rect x="328" y="84" width="96" height="48" rx="6" fill="#ffffff" stroke="#181f25" stroke-width="1"/>
+<text x="376" y="96.5" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Runs each</text>
+<text x="376" y="111.5" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">tool as the</text>
+<text x="376" y="126.5" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">viewer</text>
+<rect x="432" y="196" width="96" height="48" rx="6" fill="#f5f7f9"/>
+<rect x="432" y="196" width="96" height="48" rx="6" fill="#181f25" stroke="#4b5e71" stroke-width="1" fill-opacity="0.05"/>
+<text x="480" y="208.5" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Returns</text>
+<text x="480" y="223.5" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">rows with</text>
+<text x="480" y="238.5" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">their IDs</text>
+<rect x="536" y="140" width="96" height="48" rx="6" fill="#f5f7f9"/>
+<rect x="536" y="140" width="96" height="48" rx="6" fill="#ffffff" stroke="#181f25" stroke-width="1"/>
+<text x="584" y="152.5" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Writes its</text>
+<text x="584" y="167.5" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">claims with</text>
+<text x="584" y="182.5" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">their IDs</text>
+<rect x="640" y="84" width="96" height="48" rx="6" fill="#f5f7f9"/>
+<rect x="640" y="84" width="96" height="48" rx="6" fill="#0071bc" stroke="#0071bc" stroke-width="1" fill-opacity="0.08"/>
+<text x="688" y="96.5" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Checks</text>
+<text x="688" y="111.5" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">every</text>
+<text x="688" y="126.5" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">sentence</text>
+<rect x="744" y="28" width="96" height="48" rx="6" fill="#f5f7f9"/>
+<rect x="744" y="28" width="96" height="48" rx="6" fill="#4b5e71" stroke="#586e84" stroke-width="1" fill-opacity="0.10"/>
+<text x="792" y="48" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Reads the</text>
+<text x="792" y="63" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">answer</text>
+<text x="24" y="56" fill="#586e84" font-size="8" font-weight="500" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start" letter-spacing="0.18em">VIEWER</text>
+<text x="24" y="112" fill="#586e84" font-size="8" font-weight="500" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start" letter-spacing="0.18em">STRATA APP</text>
+<text x="24" y="168" fill="#586e84" font-size="8" font-weight="500" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start" letter-spacing="0.18em">STRATA AGENT</text>
+<text x="24" y="224" fill="#586e84" font-size="8" font-weight="500" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start" letter-spacing="0.18em">DATA</text>
+      </svg>

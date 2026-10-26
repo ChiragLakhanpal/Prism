@@ -84,7 +84,7 @@ import type { Comparable, ComparablesResult, PackageFacts } from "../lib/api";
 import { formatDate } from "../lib/format";
 import { ReadinessView } from "../pages/data/DataReadiness";
 import { HardestDocuments } from "../pages/data/HardestDocuments";
-import { HowStrataWorks } from "../pages/data/HowStrataWorks";
+import { WhatIDontDo } from "../pages/data/HowStrataWorks";
 import { galleryCopy } from "./copy";
 import { draftsPage } from "./drafts";
 import { followingPage } from "./following";
@@ -1503,7 +1503,7 @@ function sixChecksSections(): GalleryPage["sections"] {
       ),
     },
     { id: "partial", title: titles.partial, body: <PanelSample run={CHECK_RUNS.partial} /> },
-    { id: "what-i-dont-do", title: titles.dontDo, body: <HowStrataWorks /> },
+    { id: "what-i-dont-do", title: titles.dontDo, body: <WhatIDontDo /> },
   ];
 }
 

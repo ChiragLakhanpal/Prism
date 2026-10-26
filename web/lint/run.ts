@@ -32,8 +32,9 @@ import { definitions } from "../src/lib/definitions.ts";
 const WEB = fileURLToPath(new URL("..", import.meta.url));
 const REPO = resolve(WEB, "..");
 // The step-label registry holds words people read too (ticket 27): each step's label and phrase, each stage and
-// each family's name and abbreviation note, so it is checked like the copy file.
-const COPY_FILES = [join(WEB, "src/copy.ts"), join(WEB, "src/gallery/copy.ts"), join(WEB, "src/steps.ts")];
+// each family's name and abbreviation note, so it is checked like the copy file. So is the deck's copy file (ticket
+// 47): its slides, speaker notes, and the figures' titles, text versions and captions.
+const COPY_FILES = [join(WEB, "src/copy.ts"), join(WEB, "src/gallery/copy.ts"), join(WEB, "src/steps.ts"), join(WEB, "src/deck/copy.ts")];
 
 function sourceFiles(dir: string): string[] {
   return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {

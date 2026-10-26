@@ -1,0 +1,197 @@
+{
+ "pulled_on": null,
+ "results": {
+  "passages": {
+   "measured": false,
+   "name": "Numbered passages in the knowledge model",
+   "kind": "Query",
+   "noun": "passages",
+   "table": "strata.gold.passage"
+  },
+  "documents-read": {
+   "measured": false,
+   "name": "Documents the passage reader read, through either route",
+   "kind": "Data readiness measure",
+   "noun": "documents",
+   "table": "strata.ops.data_readiness"
+  },
+  "pages-read-well": {
+   "measured": false,
+   "name": "Document pages read well across both routes, out of every page of the documents read",
+   "kind": "Data readiness measure",
+   "noun": "pages",
+   "table": "strata.ops.data_readiness"
+  },
+  "award-rows-by-year": {
+   "measured": false,
+   "name": "Contract award rows per fiscal year, by the dataset or the award notices they came from",
+   "kind": "Data readiness measure",
+   "noun": "contract award rows",
+   "table": "strata.ops.readiness_snapshot"
+  },
+  "linked-notice": {
+   "measured": false,
+   "name": "Contract award rows since fiscal 2020 whose STEP reference a procurement notice also carries",
+   "kind": "Data readiness measure",
+   "noun": "contract award rows",
+   "table": "strata.ops.data_readiness"
+  },
+  "backtest-years": {
+   "measured": false,
+   "name": "Test packages signed within the 8-in-10 point, by test year",
+   "kind": "Backtest",
+   "noun": "test packages",
+   "table": "strata.ops.evaluation_result"
+  },
+  "benchmark-passed": {
+   "measured": false,
+   "name": "Benchmark questions that met their expected answer, citations, range or refusal, in the latest full gate",
+   "kind": "Benchmark run",
+   "noun": "benchmark questions",
+   "table": "strata.ops.evaluation_result"
+  },
+  "must-refuse": {
+   "measured": false,
+   "name": "Must-refuse questions that Strata turned down, in the latest full gate",
+   "kind": "Benchmark run",
+   "noun": "must-refuse questions",
+   "table": "strata.ops.evaluation_result"
+  },
+  "hindsight-caught": {
+   "measured": false,
+   "name": "Risks completion reports later blamed that Strata's risk tables showed at approval",
+   "kind": "Hindsight test",
+   "noun": "blamed risks",
+   "table": "strata.ops.evaluation_result"
+  },
+  "hindsight-checklist": {
+   "measured": false,
+   "name": "The same blamed risks that a checklist of each sector's commonest risks named",
+   "kind": "Hindsight test",
+   "noun": "blamed risks",
+   "table": "strata.ops.evaluation_result"
+  },
+  "hindsight-interval": {
+   "measured": false,
+   "name": "The interval around the share of blamed risks Strata's tables showed",
+   "kind": "Hindsight test",
+   "noun": "percent",
+   "table": "strata.ops.evaluation_result"
+  },
+  "azure-spend": {
+   "measured": false,
+   "name": "Azure charges in the current budget period, against its budget",
+   "kind": "Query",
+   "noun": "US dollars",
+   "table": "strata.ops.azure_costs"
+  }
+ },
+ "settings": {
+  "check-count": {
+   "value": 6,
+   "name": "Checks the verifier runs on every sentence",
+   "where": "src/strata/agent/verifier.py, ALL_CHECKS",
+   "kind": "Count"
+  },
+  "loop-count": {
+   "value": 3,
+   "name": "Learning loops, each with its leading and lagging indicator",
+   "where": "config/kpis.toml, the loops its indicators name",
+   "kind": "Count"
+  },
+  "pilot-countries": {
+   "value": 2,
+   "name": "Countries in the pilot's first phase",
+   "where": "docs/PLAN.md section 11, Rollout",
+   "kind": "Setting"
+  },
+  "rollout-phases": {
+   "value": 3,
+   "name": "Phases of the rollout, each measured before the next",
+   "where": "docs/PLAN.md section 11, Rollout",
+   "kind": "Setting"
+  },
+  "risks-per-package": {
+   "value": 5,
+   "name": "Risks a package's risk table shows at most",
+   "where": "config/thresholds.toml, package_risks.max_rows",
+   "kind": "Setting"
+  },
+  "checklist-size": {
+   "value": 5,
+   "name": "Risks on the hindsight test's checklist, the sector's commonest",
+   "where": "config/thresholds.toml, hindsight.checklist_size",
+   "kind": "Setting"
+  },
+  "hindsight-coders": {
+   "value": 2,
+   "name": "People who code each risk a completion report blamed, for the hindsight test",
+   "where": "docs/PLAN.md section 10, The hindsight test",
+   "kind": "Setting"
+  },
+  "fewest-comparables": {
+   "value": 20,
+   "name": "Fewest comparable packages for a past range",
+   "where": "config/thresholds.toml, past_range.min_comparables",
+   "kind": "Setting"
+  }
+ },
+ "checks": [
+  1,
+  2,
+  3,
+  4,
+  5,
+  6
+ ],
+ "rubric": {
+  "source": "docs/assessment.md",
+  "anchor": "5-evaluation--assessment-rubric",
+  "dimensions": [
+   {
+    "key": "architecture",
+    "name": "System and knowledge architecture",
+    "points": 30
+   },
+   {
+    "key": "method",
+    "name": "Analytical and AI methodology",
+    "points": 30
+   },
+   {
+    "key": "domain",
+    "name": "Domain alignment and data use",
+    "points": 25
+   },
+   {
+    "key": "operations",
+    "name": "Operationalization and scalability",
+    "points": 15
+   }
+  ]
+ },
+ "urls": {
+  "app": "https://strata-7474658003099155.aws.databricksapps.com",
+  "dashboard": null,
+  "repo": null,
+  "deck": "https://strata-7474658003099155.aws.databricksapps.com/present",
+  "proposal": null
+ },
+ "presenter": {
+  "name": null,
+  "date": null
+ },
+ "designed_not_built": [],
+ "demo": {
+  "step_reference": "KE-NWWDA-541055-CW-RFB",
+  "project_id": "P156634",
+  "agency": "Northern Water Works Development Agency",
+  "plan_href": "/projects/P156634/procurement/northern-water-works-development-agency",
+  "comparables": null,
+  "estimate": null
+ },
+ "showcase": {
+  "project_id": "P130164"
+ },
+ "award_gap": null
+}

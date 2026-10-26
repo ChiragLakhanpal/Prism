@@ -102,6 +102,14 @@ where = "config/thresholds.toml, package_risks.max_rows"
 enforced_by = "tests/test_package_risks.py"
 enforces = "A risk table never holds more rows"
 
+[settings.checklist-size]
+name = "Risks on the hindsight test's checklist, the sector's commonest"
+read = "threshold:hindsight.checklist_size"
+form = "word"
+where = "config/thresholds.toml, hindsight.checklist_size"
+enforced_by = "tests/test_hindsight.py"
+enforces = "The baseline checklist holds this many risks"
+
 [settings.lesson-decision-days]
 name = "Business days within which a lead decides on a proposed lesson"
 read = "threshold:lesson_review.business_days"
@@ -196,6 +204,18 @@ name = "Countries in the pilot's first phase"
 read = "plan:2"
 form = "word"
 where = "docs/PLAN.md section 11, Rollout"
+
+[settings.rollout-phases]
+name = "Phases of the rollout, each measured before the next"
+read = "plan:3"
+form = "word"
+where = "docs/PLAN.md section 11, Rollout"
+
+[settings.hindsight-coders]
+name = "People who code each risk a completion report blamed, for the hindsight test"
+read = "plan:2"
+form = "word"
+where = "docs/PLAN.md section 10, The hindsight test"
 
 [settings.replicas]
 name = "Replicas anything hosted may run, at most"

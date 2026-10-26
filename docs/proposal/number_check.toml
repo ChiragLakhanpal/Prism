@@ -8,6 +8,22 @@ phrase = "the three strata"
 reason = "GLOSSARY.md defines the strata as What, How and Why: three by definition, not a count Strata measured."
 
 [[allow]]
+phrase = "three strata"
+reason = "The same definition without its article, as the deck's slide 2 title and its first figure's name write it (ticket 47)."
+
+[[allow]]
+phrase = "two roads"
+reason = "The page router has two routes by design, the World Bank's published text and the layout parser (GLOSSARY.md, Published text and Layout parser; docs/PLAN.md section 5)."
+
+[[allow]]
+phrase = "Two assertions about the same thing"
+reason = "GLOSSARY.md defines a disagreement as two assertions about the same thing, for the same period, that cannot both be true."
+
+[[allow]]
+phrase = "Three loops, one dated store"
+reason = "The name of the deck's loops figure (ticket 47), a drawing of the knowledge, retrieval and estimates loops. Adding a loop to config/kpis.toml means drawing the figure again, and the slide's own count is bound to the loop-count setting."
+
+[[allow]]
 phrase = "the four modules"
 reason = "The assessment asks for four modules (docs/assessment.md, section 4)."
 

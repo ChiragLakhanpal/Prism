@@ -42,6 +42,20 @@ The proposal is `docs/proposal.md`. It is built, never written by hand, from `do
 
 The gate runs `uv run python -m strata.proposal check` and `node web/lint/proposal.ts` on every commit, Markdown included: no typed number in the source, every placeholder in its register, the README's links in step with `config/urls.toml`, and DESIGN.md section 7's words.
 
+### The deck
+
+The deck at `/present` (ticket 47) shows numbers from the same snapshot, so the deck and the proposal never disagree, and it never asks the warehouse while it is shown. Its slide on the demo package draws that package's comparable packages and time estimate as the app answered them on the workspace. After step 1 above:
+
+1. Record the demo package's answers into `docs/proposal/demo-package.json`:
+
+       uv run --frozen python ops/proposal/record_demo_live.py --env-file .env
+
+2. Write the deck's data, `web/public/deck/data.json`, from the snapshot, the demo package's answers and the registries, then build and deploy the app as usual:
+
+       uv run python -m strata.proposal deck
+
+Put the presenter's name and the day of the panel in `config/deck.toml` first. The gate fails when `web/public/deck/data.json` is out of date with what this command would write. Until a snapshot is pulled, each slide says its numbers are not measured yet. The deck's slides, notes and figures are in `web/src/deck/` and `web/src/figures/`; the figures' sources are the diagram-design files in `web/figures/`.
+
 ## Install
 
 You need uv, Node.js 24 or later with npm, git, and python3 3.11 or later, which runs the gate and the guard hook.
@@ -309,6 +323,7 @@ Each part of the spec has one home. Folders marked "later" do not exist yet. The
 | The KPI registry: each KPI the dashboard shows, defined once by its query in `src/strata/dashboard/sql/kpi/`, with its kind, rounding, target and loop, read by `load_kpis` (ticket 45) | `config/kpis.toml` |
 | The proposal's source, its results register (each measured value and its query), its settings register (each setting or count, its file and its enforcing test), its number check's allow list and the dated snapshot of the measures (ticket 46) | `docs/proposal/` (`source.md`, `results.toml`, `settings.toml`, `number_check.toml`, `snapshot.json` once pulled) |
 | The proposal's build, number check, figures, snapshot pull and README links, and its queries | `src/strata/proposal/` and `src/strata/proposal/sql/`; the live pull is `ops/proposal/pull_live.py` |
+| The deck at /present and How Strata works' figures (ticket 47): the slides, speaker notes and their copy (`web/src/deck/`), the figure registry, the seven diagram-design exports and the hairline figure on its vendored kernel (`web/src/figures/`), the figures' HTML sources (`web/figures/`), the deck's data and its build (`src/strata/proposal/deck.py`, written to `web/public/deck/data.json`; the screen tests' copy by `uv run --frozen python tests/record_deck_api.py`), and who presents it (`config/deck.toml`) | `web/src/deck/` and `web/src/figures/` |
 | The panel's addresses: Strata, the dashboard and the repo, with the deck and the proposal that follow from them, read by `load_urls` (ticket 46) | `config/urls.toml` |
 | The rubric map: the assessment's dimensions, points and criteria, and where the proposal answers each one, read by `load_rubric` (tickets 46 and 47) | `config/rubric.toml` |
 | What is designed but not built: the app's labels and the proposal's short list both read it, by `load_designed_not_built` (ticket 46) | `config/designed_not_built.toml` |

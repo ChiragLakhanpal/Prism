@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 864 268" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="knowledge-model-title knowledge-model-desc" id="knowledge-model-root">
+        <title id="knowledge-model-title">Strata&#x27;s knowledge model</title>
+        <desc id="knowledge-model-desc">Projects, packages, contracts and suppliers join on their keys, documents hold numbered passages that lessons quote and assertions rest on, assertions that cannot both be true make a disagreement, and a contract and a passage about the same work appeared together.</desc>
+        <defs>
+      <style>#knowledge-model-root { font-family: 'Open Sans', system-ui, sans-serif; color: #181f25; }
+      #knowledge-model-root .diagram-container { width: 100%; overflow-x: auto; }
+      @media print {
+#knowledge-model-root .diagram-container { overflow-x: visible; }
+}</style>
+<marker id="knowledge-model-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4b5e71"/></marker>
+<marker id="knowledge-model-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0071bc"/></marker>
+<marker id="knowledge-model-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#01707e"/></marker>
+        </defs>
+        <rect width="100%" height="100%" fill="#f5f7f9"/>
+<path d="M168,64 H192" fill="none" stroke="#4b5e71" stroke-width="1.2"/>
+<path d="M336,64 H360" fill="none" stroke="#4b5e71" stroke-width="1.2"/>
+<path d="M504,64 H528" fill="none" stroke="#4b5e71" stroke-width="1.2"/>
+<path d="M672,64 H696" fill="none" stroke="#4b5e71" stroke-width="1.2"/>
+<path d="M168,204 H192" fill="none" stroke="#4b5e71" stroke-width="1.2"/>
+<path d="M336,204 H360" fill="none" stroke="#4b5e71" stroke-width="1.2"/>
+<path d="M504,204 H528" fill="none" stroke="#4b5e71" stroke-width="1.2"/>
+<path d="M768,88 V104 Q768,112 760,112 H464 Q456,112 456,120 V180" fill="none" stroke="#4b5e71" stroke-width="1.2"/>
+<path d="M264,88 V140 Q264,148 272,148 H400 Q408,148 408,156 V180" fill="none" stroke="#0071bc" stroke-width="1.2" stroke-dasharray="5,4"/>
+<rect x="286" y="130" width="100" height="12" rx="2" fill="#f5f7f9"/>
+<text x="336" y="139" fill="#586e84" font-size="8" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">APPEARED TOGETHER</text>
+<rect x="24" y="40" width="144" height="48" rx="6" fill="#f5f7f9"/>
+<rect x="24" y="40" width="144" height="48" rx="6" fill="#ffffff" stroke="#181f25" stroke-width="1"/>
+<text x="96" y="61" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Supplier</text>
+<text x="96" y="75" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">STEP supplier ID</text>
+<rect x="192" y="40" width="144" height="48" rx="6" fill="#f5f7f9"/>
+<rect x="192" y="40" width="144" height="48" rx="6" fill="#ffffff" stroke="#181f25" stroke-width="1"/>
+<text x="264" y="61" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Contract</text>
+<text x="264" y="75" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">signed date, amount</text>
+<rect x="360" y="40" width="144" height="48" rx="6" fill="#f5f7f9"/>
+<rect x="360" y="40" width="144" height="48" rx="6" fill="#ffffff" stroke="#181f25" stroke-width="1"/>
+<text x="432" y="61" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Package</text>
+<text x="432" y="75" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">STEP reference</text>
+<rect x="528" y="40" width="144" height="48" rx="6" fill="#f5f7f9"/>
+<rect x="528" y="40" width="144" height="48" rx="6" fill="#ffffff" stroke="#181f25" stroke-width="1"/>
+<text x="600" y="61" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Project</text>
+<text x="600" y="75" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">project ID</text>
+<rect x="696" y="40" width="144" height="48" rx="6" fill="#f5f7f9"/>
+<rect x="696" y="40" width="144" height="48" rx="6" fill="#ffffff" stroke="#181f25" stroke-width="1"/>
+<text x="768" y="61" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Document</text>
+<text x="768" y="75" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">type, date, version</text>
+<rect x="24" y="180" width="144" height="48" rx="6" fill="#f5f7f9"/>
+<rect x="24" y="180" width="144" height="48" rx="6" fill="#ffffff" stroke="#181f25" stroke-width="1"/>
+<text x="96" y="201" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Disagreement</text>
+<text x="96" y="215" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">same thing, same time</text>
+<rect x="192" y="180" width="144" height="48" rx="6" fill="#f5f7f9"/>
+<rect x="192" y="180" width="144" height="48" rx="6" fill="#ffffff" stroke="#181f25" stroke-width="1"/>
+<text x="264" y="201" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Assertion</text>
+<text x="264" y="215" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">value, period, source</text>
+<rect x="360" y="180" width="144" height="48" rx="6" fill="#f5f7f9"/>
+<rect x="360" y="180" width="144" height="48" rx="6" fill="#0071bc" stroke="#0071bc" stroke-width="1" fill-opacity="0.08"/>
+<text x="432" y="201" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Passage</text>
+<text x="432" y="215" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">paragraph, page</text>
+<rect x="528" y="180" width="144" height="48" rx="6" fill="#f5f7f9"/>
+<rect x="528" y="180" width="144" height="48" rx="6" fill="#ffffff" stroke="#181f25" stroke-width="1"/>
+<text x="600" y="201" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Lesson</text>
+<text x="600" y="215" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">quote, page</text>
+<text x="708" y="198" fill="#181f25" font-size="14" font-weight="400" font-family="'Open Sans', system-ui, sans-serif" font-style="italic" text-anchor="start">Every row keeps</text>
+<text x="708" y="216" fill="#181f25" font-size="14" font-weight="400" font-family="'Open Sans', system-ui, sans-serif" font-style="italic" text-anchor="start">the date it</text>
+<text x="708" y="234" fill="#181f25" font-size="14" font-weight="400" font-family="'Open Sans', system-ui, sans-serif" font-style="italic" text-anchor="start">became public.</text>
+      </svg>

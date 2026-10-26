@@ -374,6 +374,13 @@ function Ready({
   return <Populated result={result} open={open} planned={planned} more={more} {...lane2} />;
 }
 
+// Ticket 47: the range chart for a slide, from a recorded find_comparables answer and, for lane 2, a recorded
+// estimate_time answer: the same chart the package workspace draws, read-only, or its own table in its place.
+const SILENT = () => undefined;
+export function RangeFigure({ result, estimate, twin }: { result: ComparablesResult; estimate?: EstimateState; twin: boolean }) {
+  return <Populated result={result} estimate={estimate} comparison={null} say={SILENT} figure={{ twin }} />;
+}
+
 // A state with no chart: a first-person title beside the dashed circle of the neutral state.
 function NoChart({ title, children }: { title: ReactNode; children: ReactNode }) {
   return (
@@ -530,7 +537,8 @@ function Populated({
   comparison,
   planDate,
   say: setAnnounce,
-}: { result: ComparablesResult; open?: OpenComparable; planned?: PlannedMonths; more?: ReactNode } & Lane2Props) {
+  figure,
+}: { result: ComparablesResult; open?: OpenComparable; planned?: PlannedMonths; more?: ReactNode; figure?: { twin: boolean } } & Lane2Props) {
   const abstained = result.abstention?.reason === "too_few_comparables";
   const rows = result.rows;
   const total = rows.length;
@@ -841,20 +849,9 @@ function Populated({
     </p>
   );
 
-  return (
-    <div ref={measure} className="mt-4">
-      <h3 id={ids.title} className="font-bold text-pretty text-ink-heading" style={{ fontSize: type.l, lineHeight: 1.3 }} data-finding>
-        {title}
-      </h3>
-      {abstained && more}
-      {narrow && <div className="mt-2">{summaryBlock}</div>}
-      <p className="mt-2 text-ink-muted" style={{ fontSize: type.m }}>
-        {quantile ? <Fill template={words.subtitleDots} slots={{ total: whole(total) }} /> : words.subtitle}
-      </p>
-      <div className="mt-4">{control}</div>
-      <figure aria-labelledby={ids.title} className="mt-4" data-chart-figure>
-        {width > 0 && (
+  const chart = width > 0 && (
           <RangeChart
+            readOnly={Boolean(figure)}
             width={width}
             marks={marks}
             big={Boolean(quantile)}
@@ -912,8 +909,40 @@ function Populated({
                 : null
             }
           />
+  );
+  const placeholder = width === 0 && <div style={{ height: estimate ? TWO_LANE_HEIGHT : CHART_HEIGHT }} />;
+
+  // Ticket 47: a slide shows the chart alone, read-only, or its table twin in the chart's place (the 47 brief,
+  // section 4.4). The slide's own title states the finding, so there is no heading, plan control or summary here.
+  if (figure) {
+    return (
+      <div ref={measure} data-range-figure={figure.twin ? "table" : "chart"}>
+        {figure.twin ? (
+          <ComparablesTable result={result} plan={plan} page={page} onPage={setPage} captionRef={captionRef} comparison={null} />
+        ) : (
+          <>
+            {chart}
+            {placeholder}
+          </>
         )}
-        {width === 0 && <div style={{ height: estimate ? TWO_LANE_HEIGHT : CHART_HEIGHT }} />}
+      </div>
+    );
+  }
+
+  return (
+    <div ref={measure} className="mt-4">
+      <h3 id={ids.title} className="font-bold text-pretty text-ink-heading" style={{ fontSize: type.l, lineHeight: 1.3 }} data-finding>
+        {title}
+      </h3>
+      {abstained && more}
+      {narrow && <div className="mt-2">{summaryBlock}</div>}
+      <p className="mt-2 text-ink-muted" style={{ fontSize: type.m }}>
+        {quantile ? <Fill template={words.subtitleDots} slots={{ total: whole(total) }} /> : words.subtitle}
+      </p>
+      <div className="mt-4">{control}</div>
+      <figure aria-labelledby={ids.title} className="mt-4" data-chart-figure>
+        {chart}
+        {placeholder}
       </figure>
       {!narrow && <div className="mt-4">{summaryBlock}</div>}
       {/* Ticket 26: the track record, its test years and the plan-date choice, about lane 2, after the chart. */}

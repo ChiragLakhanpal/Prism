@@ -5,19 +5,22 @@ Every number in the proposal links to its row in the results register (#r-<key>,
 fails, unless it is one of the excepted kinds:
 
 - dates, years and fiscal years ("October 20, 2026", "Oct 20, 2026", "fiscal 2017", "FY2017–19", "2019–23")
-- sequence numbers: paragraph, section, module, figure, annex, page, ISR, component, phase, rule, decision, ticket
-  and step numbers, and ¶ references
+- sequence numbers: paragraph, section, module, figure, annex, page, ISR, report, component, phase, rule, decision,
+  ticket and step numbers, and ¶ references
 - identifiers: project IDs, STEP references, notice IDs, passage IDs, model names and anything in code
 - standard names (WCAG 2.2, the 7th edition of the Regulations)
 - the fixed names on the allow list, docs/proposal/number_check.toml, each with its reason, in any case
 - a row of Annex 1 or Annex 2 itself (a line with an r- or s- anchor), which holds the value its links point at
+- in the deck's HTML (ticket 47), its chrome: an element marked data-chrome, such as "4 of 16" under a slide
 
 It counts numerals and the words two to nine. "One" is left out, because it is mostly a pronoun. Image alt text
 holds no links, so the check leaves it to the build, which fills every number there from the snapshot.
 
 unsourced() reads Markdown, as the proposal is written, or HTML, as the deck renders a slide, where an element with
 a data-source-key attribute holds a number bound to its snapshot key. It is a plain function over text, so any
-document can call it.
+document can call it. The deck's screen tests call it as a command: `python -m strata.proposal.numbers` reads a JSON
+object of HTML pieces by where each is ("Slide 4, notes"), prints a JSON list of the numbers with no source, and
+exits 1 when there is one.
 """
 
 from __future__ import annotations
@@ -38,7 +41,7 @@ RUBRIC_ANCHOR = "assessment.md#5-evaluation--assessment-rubric"
 MONTHS = "|".join((*register.MONTHS, *(month[:3] for month in register.MONTHS if month != "May"), "Sept"))
 SEQUENCE = ("paragraphs?|Paragraphs?|sections?|Sections?|Modules?|modules?|Figures?|figures?|Annex(?:es)?|annex|"
             "pages?|Pages?|ISRs?|Components?|components?|Phases?|phases?|rules?|Rules?|decisions?|tickets?|Tickets?|"
-            "steps?|Steps?|Slides?|slides?|ADRs?|version|Seq No|[Rr]ounds?")
+            "steps?|Steps?|Slides?|slides?|ADRs?|version|Seq No|[Rr]ounds?|Reports?")
 EXCEPTED = [re.compile(pattern) for pattern in (
     rf"\b(?:{MONTHS})\.? \d{{1,2}}(?:, \d{{4}})?\b",       # October 20, 2026; Oct 20
     rf"\b(?:{MONTHS}) \d{{4}}\b",                          # March 2022
@@ -65,6 +68,11 @@ _SOURCED_LINK = re.compile(r"\[[^\]]*\]\((?:#[rs]-[^)\s]*|[^)\s]*" + re.escape(R
 _SOURCED_ANCHOR = re.compile(r"<a\s[^>]*href=\"(?:#[rs]-[^\"]*|[^\"]*" + re.escape(RUBRIC_ANCHOR) + r")\"[^>]*>.*?</a>",
                              re.S)
 _SOURCED_ELEMENT = re.compile(r"<(\w+)\b[^>]*\bdata-source-key=\"[^\"]*\"[^>]*>.*?</\1>", re.S)
+# The deck's chrome (ticket 47; the 47 brief, section 6.3): slide numbers and the notes view's timer, which count
+# slides and minutes, not anything Strata measured. The element holds no other element.
+_CHROME = re.compile(r"<(\w+)\b[^>]*\bdata-chrome\b[^>]*>[^<]*</\1>")
+# In HTML, a style or script block holds no words a reader reads, such as an inlined figure's CSS.
+_STYLE = re.compile(r"<(style|script)\b[^>]*>.*?</\1>", re.S | re.I)
 _IMAGE = re.compile(r"!\[[^\]]*\]\([^)]*\)")
 _LINK = re.compile(r"\[([^\]]*)\]\([^)]*\)")
 _CODE = re.compile(r"`[^`]*`|<code>.*?</code>")
@@ -133,7 +141,10 @@ def unsourced(text: str, form: str = "markdown", allow: Sequence[str] | None = N
         raise ValueError(f"The number check reads markdown or html, not {form}.")
     allow = allow_list() if allow is None else allow
     if form == "html":
-        text = _COMMENT.sub(" ", text)
+        # Whole elements go before the text is cut into lines, so a sourced chart or table, which spans many block
+        # elements, is taken out whole.
+        for pattern in (_COMMENT, _STYLE, _SOURCED_ELEMENT, _CHROME):
+            text = pattern.sub(" ", text)
         text = re.sub(r"</(?:p|li|tr|h[1-6]|div|section|td|th)>", "\n", text)
     found: list[Unsourced] = []
     where = "The text"
@@ -154,3 +165,19 @@ def unsourced(text: str, form: str = "markdown", allow: Sequence[str] | None = N
             excerpt = excerpt[:157].rstrip() + "..."
         found += [Unsourced(where, number, excerpt) for _, number in numbers]
     return found
+
+
+def main() -> int:
+    """The check over named pieces of HTML, as the deck's screen tests give them on standard input."""
+    import json
+    import sys
+
+    pieces = json.loads(sys.stdin.read())
+    found = [{"where": where, "number": problem.number, "excerpt": problem.excerpt}
+             for where, html in pieces.items() for problem in unsourced(html, form="html")]
+    print(json.dumps(found))
+    return 1 if found else 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

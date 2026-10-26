@@ -1,0 +1,12 @@
+# The deck at /present (ticket 47; the 47 brief, sections 5 and 15): who presents it, and on what day, for the title
+# slide. Fill both before the panel, then rebuild the deck's data with `uv run python -m strata.proposal deck`.
+#
+#   presenter_name     the presenter's name as the title slide shows it, or "" until it is known
+#   presentation_date  the day of the panel, as 2026-10-30 in quotes, or "" until it is known
+#
+# The deck's addresses (the app, the dashboard, the repo, and the proposal that follows from the repo) are not set
+# here: they come from config/urls.toml, the one place the proposal, the README and the deck read them.
+# strata.config.load_deck() reads this file.
+
+presenter_name = ""
+presentation_date = ""

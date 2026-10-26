@@ -1,6 +1,7 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { App } from "./App";
+import { deckView } from "./deck/view";
 import "./styles/app.css";
 
 const root = createRoot(document.getElementById("root")!);
@@ -12,6 +13,18 @@ if (__GALLERY__ && /^\/gallery(\/|$)/.test(window.location.pathname)) {
     root.render(
       <StrictMode>
         <Gallery path={window.location.pathname} search={window.location.search} />
+      </StrictMode>,
+    ),
+  );
+} else if (deckView(window.location.pathname)) {
+  // The deck at /present (ticket 47) stands outside the app's frame: no navy bar, no box, and nothing in the app
+  // links to it. Any other address under /present is the app's not-found page. The deck loads only here, so its
+  // slides and their copy are not in any app page's first download.
+  const view = deckView(window.location.pathname)!;
+  void import("./deck/Deck").then(({ DeckApp }) =>
+    root.render(
+      <StrictMode>
+        <DeckApp view={view} />
       </StrictMode>,
     ),
   );

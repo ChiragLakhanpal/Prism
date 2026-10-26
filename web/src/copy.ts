@@ -5596,17 +5596,24 @@ export const copy = {
       emptyBody: "Each dataset appears here, credited the way the World Bank asks, once I'm set up to read it.",
       failed: "I couldn't load the list of sources, because the server didn't answer. Try again.",
     },
+    // Ticket 47 drew the figures (the 47 brief, section 8.2); each section's heading and caption are in
+    // web/src/deck/copy.ts under figureCopy, which the deck shares.
     howPage: {
       lead:
-        "This page is for the figures that show how I turn World Bank records and documents into cited answers. They " +
-        "are not drawn yet.",
+        "This page shows how I turn World Bank records and documents into answers you can check. Each section explains " +
+        "one part in a few sentences, then shows it as a figure.",
       next: {
-        before: "Until they are, ",
+        before: "",
         readiness: "Data readiness",
         middle: " shows what each source covers, and ",
         sources: "Sources and licenses",
         after: " lists every dataset I use.",
       },
+      index: "On this page",
+      showText: "Show the figure as text",
+      hideText: "Hide the text",
+      scrolls: (title: string) => `${title}, scrolls sideways`,
+      failed: "I couldn't draw this figure, so here it is as text.",
       // The section the link under every refusal goes to (ticket 24; the 24 brief, section 5.7). Each
       // refusal's lead and why follow, from refusals above.
       dontDo: {
