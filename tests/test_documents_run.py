@@ -396,3 +396,44 @@ def test_the_passage_reader_keeps_the_documents_it_wrote_when_the_time_runs_out_
     assert fresh.run("SELECT pages_parsed, stopped_at_cap, stopped_at_document_id FROM strata.ops.parse_runs "
                      "WHERE run_id = 'night'").rows[0] == (3, False, icr)
     assert (done.stopped.measure, done.tally.written) == ("document_host_budget_spent", 2)
+
+
+def test_the_live_run_reads_passages_first_so_plan_pages_that_outlast_the_time_still_leave_passages(
+        fresh, run_live, monkeypatch, capsys):
+    """On October 26, 2026 the plan reader spent the whole reading time on one plan's scanned pages, and the passage
+    reader never started: strata.gold.passage still held no row. The live run (ops/documents/run_live.py) reads the
+    slice's reports into passages first, then the Procurement Plans with the time that is left. Here P130164's three
+    documents are read first; then P156634's plan pages, at 7 minutes each, outlast the 60 minutes, and the plan the
+    reader was in is listed as unfinished. The run wrote passages, so it exits 0 and the index is synced after it."""
+    from strata import config
+    from strata.reader import layout
+
+    limits = load_thresholds()
+    limits.values["ingestion"]["passage_documents"] = 3
+    monkeypatch.setattr(passages, "load_thresholds", lambda: limits)
+    manifest = fmt.load_manifest()
+    ticks = Ticks()
+    slow = SlowParser(RecordedLayout(manifest), ticks)
+    monkeypatch.setitem(layout.PARSERS, config.load_layout_parser(), slow)
+    host = readers.document_host(lambda url: b"", None, sleep=ticks.sleep, clock=ticks)
+    found = readers.Readers(RecordedDocuments(manifest), readers.live_parser(fresh, host, upload=lambda path, data: None),
+                            PatternShield(), offline(), plan_projects=lambda engine: ["P156634"],
+                            report_projects=lambda engine: ["P130164"])
+
+    code = run_live.read_documents(fresh, found, "live", clock=ticks.utc)
+    printed = capsys.readouterr().out
+
+    assert code == 0
+    # P130164's two ICR Reviews and its ICR, whose 7 scanned pages took 49 of the 60 minutes, are written first.
+    icr_reviews, icr = {"34056616", "31906731"}, "31525018"  # tests/ground_truth/values.toml's showcase documents
+    assert column(fresh, "SELECT DISTINCT document_id FROM strata.gold.passage") == {*icr_reviews, icr}
+    # Then the plan reader reads P156634's plan pages with the 11 minutes left, and the plan it reaches after them
+    # is listed as unfinished.
+    plan_pages = [page for page in slow.read if page[0] != icr]
+    assert len(plan_pages) == 2
+    [(project_id, document_id, reason)] = fresh.run(
+        "SELECT project_id, document_id, reason FROM strata.ops.skipped_documents WHERE run_id = 'live' "
+        "AND reader = 'plans' AND outcome = 'unfinished'").rows
+    assert project_id == "P156634" and "60 minutes" in reason
+    assert document_id not in {read for read, _ in slow.read}
+    assert "It stopped before it finished: I spent the night's 60 minutes" in printed

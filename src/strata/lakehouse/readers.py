@@ -215,37 +215,57 @@ def read(engine: Engine, readers: Readers, run_id: str, clock: Callable[[], dt.d
 
 
 def reading(engine: Engine, readers: Readers, run_id: str, clock: Callable[[], dt.datetime],
-            tally: passages.Tally | None = None) -> Reading:
+            tally: passages.Tally | None = None, passages_first: bool = False) -> Reading:
     """Both readers, over only what changed, as the nightly job's parse_and_embed and ops/documents/run_live.py
     run them. A project whose plans the source cannot give (NotFetched, as when search.worldbank.org answered 503
     for P089634's document list on October 26, 2026) is skipped with its reason and the plan reader goes on; the
     passage reader writes each document as soon as it has read it and skips the same way (ticket 72). A stop ends
     the reading for the run and writes a data readiness note. tally, when given, counts the passage reader's
-    documents as it goes, so a caller still has the counts when something else ends the run."""
+    documents as it goes, so a caller still has the counts when something else ends the run.
+
+    The nightly job reads the plans first and the passages with the time that is left. passages_first turns the
+    order round, as ops/documents/run_live.py does: on October 26, 2026 the plan reader's scanned pages filled the
+    whole reading time and the passage reader never started, so strata.gold.passage held no row after the run."""
     before = {table: _count(engine, table) for table in ADDED_TO}
-    stop: StopReading | None = None
-    try:
-        for project_id in readers.plan_projects(engine):
-            try:
-                plans.run(engine, readers.documents, readers.layout, project_id, clock=clock, run_id=run_id)
-            except NotFetched as error:  # its document list, or a PDF the layout parser needed
-                plans.skip(engine, run_id, "plans",
-                           plans.Skipped(project_id, None, error.url or _list(project_id), str(error)), clock())
-    except StopReading as stopped:
-        stop = stopped
-    synced = gold.sync(engine, "package")  # its query reads the plan rows read tonight, before any stop
-    report, tally = None, tally if tally is not None else passages.Tally()
-    if stop is None and readers.shield is not None and readers.embedder is not None:
+    tally = tally if tally is not None else passages.Tally()
+    report: passages.Report | None = None
+    synced = 0
+
+    def read_plans() -> StopReading | None:
+        nonlocal synced
+        stop = None
+        try:
+            for project_id in readers.plan_projects(engine):
+                try:
+                    plans.run(engine, readers.documents, readers.layout, project_id, clock=clock, run_id=run_id)
+                except NotFetched as error:  # its document list, or a PDF the layout parser needed
+                    plans.skip(engine, run_id, "plans",
+                               plans.Skipped(project_id, None, error.url or _list(project_id), str(error)), clock())
+        except StopReading as stopped:
+            stop = stopped
+        synced += gold.sync(engine, "package")  # its query reads the plan rows read tonight, before any stop
+        return stop
+
+    def read_passages() -> StopReading | None:
+        nonlocal report, synced
+        if readers.shield is None or readers.embedder is None:
+            return None
         try:
             report = passages.run(engine, readers.documents, readers.report_projects(engine), shield=readers.shield,
                                   embedder=readers.embedder, layout=readers.layout, clock=clock, run_id=run_id,
                                   tally=tally)
-            synced += report.synced
         except StopReading as stopped:
-            stop = stopped
             synced += tally.synced  # the documents written before the stop stay in strata.gold.passage
-    if stop is not None:
-        note_stop(engine, run_id, clock(), stop)
+            return stopped
+        synced += report.synced
+        return None
+
+    stop: StopReading | None = None
+    for read_one in (read_passages, read_plans) if passages_first else (read_plans, read_passages):
+        stop = read_one()
+        if stop is not None:  # the reader after it waits for the next run
+            note_stop(engine, run_id, clock(), stop)
+            break
     changed = synced + sum(_count(engine, table) - count for table, count in before.items())
     return Reading(changed, report, tally, stop)
 

@@ -11,11 +11,11 @@ and its tables, and after the nightly job has filled strata.gold.project:
 
     uv run --script ops/documents/run_live.py --env-file .env
 
-It runs the same readers as the gate with the live adapters. First the plan reader
-(src/strata/lakehouse/plans.py) reads each slice project's Procurement Plans. Then the passage reader
+It runs the same readers as the gate with the live adapters. First the passage reader
 (src/strata/lakehouse/passages.py) counts the projects the slice criteria select from
 strata.gold.project (config/slice.toml) and fetches their documents, with the showcase's, the demo
-plan's and the stress shelf's, from the World Bank's hosts on this computer. Both readers fetch through the
+plan's and the stress shelf's, from the World Bank's hosts on this computer. Then the plan reader
+(src/strata/lakehouse/plans.py) reads each slice project's Procurement Plans. Both readers fetch through the
 nightly job's fetch (strata.lakehouse.readers.document_host): the documents source's pause between requests, each
 document kept in .cache/documents once fetched, so a later run never asks for it again, and a stop at the host's
 first refusal or once the reading time in config/thresholds.toml is spent. Route A reads the published
@@ -30,8 +30,10 @@ names on the AI Search endpoint the env file names (AI_SEARCH_ENDPOINT), when it
 and waits until it holds every passage. A second run the same day parses no page it read.
 
 The run reads through the nightly job's own path (strata.lakehouse.readers.reading), so the job and this
-script share one writer of passages. It writes each document's passages to strata.gold.passage as soon as it
-has read that document (ticket 72). A document, or a project's document list, that a host does not give, as
+script share one writer of passages. It reads the slice's reports into passages first, then the Procurement
+Plans with the time that is left, so a run whose plan pages outlast the reading time still writes passages; the
+nightly job reads the plans first. It writes each document's passages to strata.gold.passage as soon as it has
+read that document (ticket 72). A document, or a project's document list, that a host does not give, as
 when search.worldbank.org answered 503 for P089634's list on October 26, 2026, is skipped: the run prints it
 with its reason as it goes, records it in strata.ops.skipped_documents, and goes on with the next. At the end
 it prints how many documents it parsed, skipped and wrote.
@@ -107,7 +109,9 @@ WHERE run_id = :run_id ORDER BY skipped_at, project_id, document_id
 
 def read_documents(engine, found: readers.Readers, run_id: str, clock: Callable[[], dt.datetime] = _now) -> int:
     """Both readers over the slice, through the nightly job's own path (strata.lakehouse.readers.reading), so the
-    job and this script share one writer of passages. Each document a reader skips or leaves unfinished is printed
+    job and this script share one writer of passages: the passage reader first, then the plan reader with the time
+    that is left (passages_first), so the plans' scanned pages cannot spend the reading time before a passage is
+    written, as they did on October 26, 2026. Each document a reader skips or leaves unfinished is printed
     with its reason as the run goes (a warning from strata.lakehouse.plans) and again at the end from the run's
     record in strata.ops.skipped_documents, with how many documents the run parsed, skipped and wrote. Returns 0 when
     the run wrote at least one document's passages to strata.gold.passage, and 2 when it wrote none or could not
@@ -118,7 +122,7 @@ def read_documents(engine, found: readers.Readers, run_id: str, clock: Callable[
     tally = passages.Tally()
     done = None
     try:
-        done = readers.reading(engine, found, run_id, clock, tally=tally)
+        done = readers.reading(engine, found, run_id, clock, tally=tally, passages_first=True)
     # The warehouse, Prompt Shields or the embedding deployment failed, or a request did: urllib's errors and the
     # Databricks SDK's are OSErrors. What the run wrote before stays.
     except (EngineError, ShieldError, EmbedError, OSError) as error:
