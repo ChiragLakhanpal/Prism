@@ -24,6 +24,7 @@ strata.config.load_tools() reads it. This module does three things with those de
 from __future__ import annotations
 
 import datetime as dt
+import functools
 import importlib
 import re
 from collections.abc import Callable, Mapping
@@ -78,18 +79,29 @@ class Context:
 
 
 TABLE_READ = re.compile(r"\bstrata\.[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*\b")
+SQL_COMMENT = re.compile(r"--[^\n]*|/\*.*?\*/", re.S)
+
+
+@functools.cache
+def _catalog_names() -> frozenset[str]:
+    """The tables and views the catalog defines, read once, on the first call that records lineage."""
+    from strata.lakehouse import catalog
+
+    return catalog.defined_names()
 
 
 class _Reading:
     """The viewer's engine, noting each table a query names before it runs it (ticket 45). Every query names its
-    tables in three parts (gates/sql_lint.py), so the names in its text are the tables it read."""
+    tables in three parts (gates/sql_lint.py), so the names in its text are the tables it read. A name in a comment,
+    such as the module strata.knowledge.retrieval, is not read, and only names the catalog defines are kept."""
 
     def __init__(self, engine: Engine, reads: list[str]):
         self._engine, self._reads = engine, reads
 
     def run(self, sql: str, params=None):
-        for name in TABLE_READ.findall(sql):
-            if name not in self._reads:
+        known = _catalog_names()
+        for name in TABLE_READ.findall(SQL_COMMENT.sub("", sql)):
+            if name in known and name not in self._reads:
                 self._reads.append(name)
         return self._engine.run(sql, params)
 

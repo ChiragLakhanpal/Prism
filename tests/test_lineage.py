@@ -19,8 +19,10 @@ from strata.agent.loop import answer_runner
 from strata.agent.runs import RunLog
 from strata.agent.scripted import ScriptedAgent, ScriptedJudge, load_cases
 from strata.lakehouse import catalog
+from strata.dbx import Viewer
 from strata.lakehouse.engine import DuckDBEngine
 from strata.server.app import create_app
+from strata.tools import registry
 
 TODAY = dt.date(2026, 10, 23)
 ANA = {"X-Forwarded-Email": "ana.example@worldbank.org", "X-Forwarded-Preferred-Username": "Ana Example",
@@ -67,7 +69,9 @@ def test_from_an_answer_s_run_id_the_lineage_reaches_its_tool_calls_and_the_tabl
     assert call["rows_returned"] > 0 and call["took_ms"] is not None
     assert "strata.gold.passage:31525018/v1/54" in call["evidence_ids"]  # ICR paragraph 54, which the answer cites
     tables = [row["table_name"] for row in reads]
-    assert "strata.gold.passage" in tables  # the passages a search returns are the knowledge model's
+    # The passages a search returns, and the decisions that hold a passage back. A module named in a query's comment,
+    # such as strata.knowledge.retrieval, is not a table and is not listed.
+    assert tables == ["strata.gold.passage", "strata.ops.label_decisions"]
     assert all(row["call"] == "1. search_passages" for row in reads)
     assert all(row["version_read"] is None for row in reads)  # DuckDB keeps no versions
     assert all(row["sources"] for row in reads)
@@ -90,3 +94,18 @@ def test_the_run_log_keeps_each_removed_sentence_s_reason_without_its_words(logg
     today = dt.datetime.now(dt.UTC).date()  # the run log dates a run by the clock it ended on
     assert [(row["reason"], row["sentences"]) for row in rows(logged, "removed_reasons", date_to=today)] == [
         ("No record supports a number or date", 1)]
+
+
+def test_a_tool_call_records_only_tables_the_catalog_defines(fixture_db):
+    """get_disagreements' queries name Python modules in their comments, such as strata.knowledge.shields; only the
+    tables and views the catalog defines are recorded as read."""
+    known = {d.full_name for d in (*catalog.table_definitions(), *catalog.view_definitions())}
+    reads: list[str] = []
+    with DuckDBEngine.open(fixture_db, read_only=True) as engine:
+        registry.call("get_disagreements", {"subject_id": "P130164", "as_of": "2026-10-23"},
+                      registry.Context(engine=engine, viewer=Viewer(email="ana.example@worldbank.org",
+                                                                    token="not-a-real-key"), reads=reads))
+
+    assert reads and set(reads) <= known
+    assert known <= catalog.defined_names()  # the names the registry checks against, read without the bundle
+    assert not [name for name in reads if name.startswith("strata.knowledge.")]
