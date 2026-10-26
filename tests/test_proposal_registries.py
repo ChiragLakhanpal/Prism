@@ -1,0 +1,153 @@
+"""The registries the proposal reads beside the app and the deck (ticket 46; the 46 brief, sections 5, 7, 11.4 and 12):
+the addresses the panel opens, the rubric map, the change drill and what is designed but not built.
+
+Expected values come from docs/assessment.md, the spec's "Ten single places" and docs/PLAN.md section 15, never
+from the files under test.
+"""
+
+import re
+from pathlib import Path
+
+import pytest
+
+from strata import config
+from strata.config import ConfigError
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+def write(tmp_path, name, text):
+    path = tmp_path / name
+    path.write_text(text)
+    return path
+
+
+# ── The addresses ────────────────────────────────────────────────────────
+
+def test_the_deck_and_the_proposal_take_their_addresses_from_the_app_and_the_repo(tmp_path):
+    urls = config.load_urls(write(tmp_path, "urls.toml", 'app = "https://strata-1.aws.databricksapps.com/"\n'
+                                  'dashboard = ""\nrepo = "https://github.com/someone/strata"\n'))
+    assert urls.app == "https://strata-1.aws.databricksapps.com"
+    assert urls.deck == "https://strata-1.aws.databricksapps.com/present"
+    assert urls.dashboard is None
+    assert urls.proposal == "https://github.com/someone/strata/blob/main/docs/proposal.md"
+
+
+def test_an_address_left_empty_leaves_what_it_derives_empty_too(tmp_path):
+    urls = config.load_urls(write(tmp_path, "urls.toml", 'app = ""\ndashboard = ""\nrepo = ""\n'))
+    assert (urls.app, urls.deck, urls.repo, urls.proposal) == (None, None, None, None)
+
+
+def test_an_address_that_is_not_https_names_its_key_and_the_fix(tmp_path):
+    with pytest.raises(ConfigError, match=r"In urls.toml, app must be an https address"):
+        config.load_urls(write(tmp_path, "urls.toml", 'app = "strata.example"\ndashboard = ""\nrepo = ""\n'))
+
+
+def test_the_committed_addresses_load():
+    urls = config.load_urls()
+    for name in ("app", "dashboard", "repo"):
+        value = getattr(urls, name)
+        assert value is None or value.startswith("https://")
+
+
+# ── The rubric map ───────────────────────────────────────────────────────
+
+def assessment_rubric() -> list[tuple[str, int, list[str]]]:
+    """The rubric table in docs/assessment.md, section 5: each dimension, its points and its criteria."""
+    text = (ROOT / "docs" / "assessment.md").read_text()
+    rows = re.findall(r"^\| \*\*(.+?)\*\*\s*\| (\d+) \| (.+?) \|$", text, re.M)
+    return [(name.strip(), int(points), [part.strip().rstrip(".") for part in criteria.split(";")])
+            for name, points, criteria in rows]
+
+
+def test_the_rubric_registry_holds_the_assessment_rubric_word_for_word():
+    rubric = config.load_rubric()
+    table = assessment_rubric()
+    assert len(table) == 4
+    assert [(d.rubric_name, d.points) for d in rubric.dimensions] == [(name, points) for name, points, _ in table]
+    assert [[c.rubric for c in d.criteria] for d in rubric.dimensions] == [criteria for _, _, criteria in table]
+    assert sum(d.points for d in rubric.dimensions) == rubric.total == 100
+    assert sum(len(d.criteria) for d in rubric.dimensions) == 13
+
+
+def test_the_rubric_map_names_dimensions_and_criteria_in_sentence_case_as_the_46_brief_gives_them():
+    # The 46 brief, section 7.2: the rubric's words in sentence case, with "validation" dropped (rule 19).
+    rubric = config.load_rubric()
+    assert [d.name for d in rubric.dimensions] == [
+        "System and knowledge architecture", "Analytical and AI methodology", "Domain alignment and data use",
+        "Operationalization and scalability"]
+    assert [c.says for d in rubric.dimensions for c in d.criteria] == [
+        "Robustness of multimodal data ingestion",
+        "Depth and scalability of the knowledge graph or relational schema design",
+        "Effective handling of unstructured text and document hierarchy",
+        "Soundness of predictive risk modeling",
+        "Sophistication of the retrieval pipeline",
+        "Practical mitigation of hallucinations",
+        "Strict citation and grounding mechanics",
+        "Effective use of the specified open development data sources",
+        "Deep understanding of public procurement stages",
+        "Realistic handling of missing or incomplete reporting",
+        "Feasibility of the deployment roadmap",
+        "Concrete metrics and KPIs",
+        "Clarity of continuous learning and data feedback loops"]
+
+
+def test_each_criterion_names_where_the_proposal_answers_it_and_what_you_can_open():
+    rubric = config.load_rubric()
+    for dimension in rubric.dimensions:
+        assert dimension.summary
+        for criterion in dimension.criteria:
+            assert criterion.answered_in, criterion.says
+            assert 1 <= len(criterion.open) <= 3, criterion.says
+
+
+def test_a_dimension_whose_points_are_not_whole_numbers_names_the_fix(tmp_path):
+    text = (ROOT / "config" / "rubric.toml").read_text().replace("points = 30", 'points = "thirty"', 1)
+    with pytest.raises(ConfigError, match=r"points must be a whole number"):
+        config.load_rubric(write(tmp_path, "rubric.toml", text))
+
+
+# ── The change drill ─────────────────────────────────────────────────────
+
+def test_the_change_drill_lists_plan_section_15s_ten_changes_in_order():
+    drills = config.load_change_drills()
+    assert [drill.change for drill in drills] == [
+        "Add a data source", "Add a tool", "Change a signal threshold", "Add a country to the slice",
+        "Swap the model", "Reorder the evidence ladder", "Add a field to the package form", "Reword copy",
+        "Add a benchmark or must-refuse question", "Add a dashboard tile"]
+
+
+def test_each_drill_names_a_place_and_a_test_that_exist():
+    for drill in config.load_change_drills():
+        assert (ROOT / drill.place).exists(), drill.place
+        assert (ROOT / drill.proved_by).exists(), drill.proved_by
+        assert drill.minutes is None or drill.minutes > 0
+
+
+# ── Designed, not built ──────────────────────────────────────────────────
+
+ITEM = """
+[[items]]
+key = "hazard_model"
+name = "The early-warning model"
+route = "/projects/P156634"
+paragraph = "m2-time-estimates"
+exists_now = "Strata shows fixed signals."
+"""
+
+
+def test_an_item_designed_but_not_built_names_its_route_and_its_paragraph(tmp_path):
+    items = config.load_designed_not_built(write(tmp_path, "designed_not_built.toml", ITEM))
+    assert [(item.key, item.route, item.paragraph) for item in items] == [
+        ("hazard_model", "/projects/P156634", "m2-time-estimates")]
+    assert items[0].copy_key == "designedNotBuilt.items.hazard_model"
+
+
+def test_an_item_with_a_route_outside_the_app_names_the_fix(tmp_path):
+    with pytest.raises(ConfigError, match=r"route must be an address in the app"):
+        config.load_designed_not_built(write(tmp_path, "designed_not_built.toml",
+                                             ITEM.replace('"/projects/P156634"', '"https://example.org"')))
+
+
+def test_the_committed_list_loads():
+    assert isinstance(config.load_designed_not_built(), tuple)

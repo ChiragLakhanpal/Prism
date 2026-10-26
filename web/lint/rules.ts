@@ -24,6 +24,8 @@ export const FIXED_TERMS = [
   "This summary is not a World Bank review, clearance or no-objection.",
   // DESIGN.md section 7, rule 8: the one fixed term where "the Bank" stays.
   "the Bank's no-objection",
+  // Azure's monitoring service, by its product name (ticket 46's caps table), which GLOSSARY.md's "insight" is not.
+  "Application Insights",
 ];
 
 // DESIGN.md section 7, rule 32 (ticket 22; the 22 brief, section 11): a link between a contract and a paragraph is
@@ -195,6 +197,8 @@ export const NON_COPY_PROPS = new Set([
   "own",
   "preview",
   "capability",
+  // DesignedNotBuilt's key in config/designed_not_built.toml (ticket 46), such as "hazard_model".
+  "item",
 ]);
 
 // A prop or key that ends in one of these holds an address, an id or a class, such as pdfHref,

@@ -4,6 +4,44 @@ Strata is procurement intelligence on World Bank open data. It links records of 
 
 Strata is an independent demo built on World Bank open data. It is not a World Bank product, and the World Bank has not reviewed or endorsed it.
 
+## For the panel
+
+<!-- proposal:links -->
+- The proposal: [docs/proposal.md](docs/proposal.md), once it is built from `docs/proposal/source.md` (`python -m strata.proposal build`). It follows the assessment's modules, and every number in it links to the result the build measured.
+- The deck: <https://strata-7474658003099155.aws.databricksapps.com/present>. The deck is not linked from inside Strata, so this is where to find it.
+- Strata: <https://strata-7474658003099155.aws.databricksapps.com>. Open it with the account your invitation went to.
+- The dashboard: not set yet. Set `dashboard` in `config/urls.toml`.
+- The repo: not set yet. Set `repo` in `config/urls.toml`.
+<!-- /proposal:links -->
+
+These addresses come from `config/urls.toml`, the one file the proposal's data sheet and the deck also read, so they always agree.
+
+## Run Strata
+
+1. To run Strata on this computer, against the gate's fixture or the workspace, follow [Run the app](#run-the-app). `scripts/dev` starts the server and the web app.
+2. To run it on the workspace as a Databricks App, follow [Deploy the app](#deploy-the-app).
+3. Before each review, run the demo-ready command in [Before a demo](#before-a-demo). Its last line says `Strata is ready for the demo.` when every step passed.
+
+## The proposal
+
+The proposal is `docs/proposal.md`. It is built, never written by hand, from `docs/proposal/source.md`, a dated snapshot of the measures and the registries, so every number in it links to the result the build measured (Annex 1) or the setting that fixes it (Annex 2). Its parts are in `src/strata/proposal/`.
+
+1. Pull the measures from the workspace into `docs/proposal/snapshot.json`, from the main checkout:
+
+       uv run --script ops/proposal/pull_live.py --env-file .env
+
+2. Build the proposal and its figures:
+
+       uv run python -m strata.proposal build
+
+   It stops with a plain sentence when a result has no measured value, a URL in `config/urls.toml` is not set, a link has no target, or a number has no source. It runs the number check and the proposal's copy lint before it writes anything.
+
+3. Write the README's links for the panel from `config/urls.toml`:
+
+       uv run python -m strata.proposal readme --write
+
+The gate runs `uv run python -m strata.proposal check` and `node web/lint/proposal.ts` on every commit, Markdown included: no typed number in the source, every placeholder in its register, the README's links in step with `config/urls.toml`, and DESIGN.md section 7's words.
+
 ## Install
 
 You need uv, Node.js 24 or later with npm, git, and python3 3.11 or later, which runs the gate and the guard hook.
@@ -34,18 +72,19 @@ Git runs the gate before every commit, as CLAUDE.md rule 6 requires. It also run
 It runs the steps in `gates/steps.toml`. Steps that do not depend on each other run side by side, in lanes. Today it has these steps:
 
 1. Scan the staged changes and the history of the branch for secrets. This step runs alone, before the lanes start.
-2. Run eight lanes side by side:
+2. Run nine lanes side by side:
    - The guard lane tests the guard hook.
    - The python lane builds the fixture database from the recorded sources, reads P156634's Procurement Plans into STEP rows, and prints its size. The nightly job's own tasks build bronze, silver, gold and the data readiness measures from the recorded pages. Then the passage reader reads the first 20 documents of P130164 and P156634 into numbered passages, scans and embeds them with the offline stand-ins, and fills `strata.gold.passage`, which the fixture search reads. Then it runs the Python tests that may read that database, on eight pytest-xdist workers that take tests from each other when one runs out: the tests under `tests/` and the bundle commands' tests under `ops/bundle/tests/`. They cover the gate, the server (its routes, the data-freshness stamp as each viewer, usage events and traces), the fixture and its ground truth, the ground-truth SQL on DuckDB, the lakehouse run and its fetch, the catalog and its table definitions, the config files, the nightly job, the plan reader, the passage reader, `search_passages` and its live adapters, the answer stream with the scripted agent and the verifier, the agent sync, the recording command and the shield set, and the bundle commands.
    - The ops lane runs the Python tests for the wizard and the day-one probes, on six pytest-xdist workers that take tests from each other in the same way.
    - The app lane runs the Python tests for the app's deploy, what it uploads, and the Lakebase probe, under `ops/app/tests/`.
    - The lint lane lints the copy and the components. It fails on DESIGN.md section 7's banned words, em dashes and exclamation marks in the copy files and in the words the source registry puts on screen, on a server copy of the Data readiness sentences (`src/strata/tools/data_readiness_copy.json`) that is out of date with the copy file, on text a component renders, passes to a prop or writes into the page that is not from the copy file (words joined with `+` included), on a Term that names a word GLOSSARY.md does not define, and on spacing or colors outside DESIGN.md's tokens. The props that never hold copy, such as `className` and `href`, are listed in `web/lint/rules.ts`.
    - The sql lane lints the SQL (`gates/sql_lint.py`): every query names its tables in three parts and binds its values as parameters.
+   - The proposal lane checks the proposal (`python -m strata.proposal check`): no number typed into `docs/proposal/source.md`, every placeholder in its register, and the README's links for the panel in step with `config/urls.toml`; once `docs/proposal.md` is built, the number check, paragraph numbers without gaps and in-page links that land. Then it lints the proposal's words (`web/lint/proposal.ts`). Both run even when only Markdown is staged.
    - The web-1 and web-2 lanes each type check and bundle the web app and build the design gallery into a folder of their own: `web/dist-1` and `web/dist-1-gallery` for web-1, `web/dist-2` and `web/dist-2-gallery` for web-2. Each lane then runs half of the Playwright tests against its own build, with `--shard=1/2` or `--shard=2/2`. One of the halves also holds the test against Vite's dev server, where React's StrictMode runs each effect twice, as `scripts/dev` does. The environment variable `STRATA_WEB_OUT` names a lane's folder, and `web/out-dirs.ts` reads it for the builds, both Playwright configs and `web/tests/build.spec.ts`. Without it, the builds go to `web/dist` and `web/dist-gallery`.
 
-The gate prints each step's name and time as the step finishes. When a step fails, the gate stops the other lanes, prints the output of the step that failed, and fails. The gate tells uv, npm and Playwright to work offline, and the tests refuse any connection that leaves this computer. It prints its total time and fails when the whole run takes longer than two minutes. When every staged file is Markdown, it runs only the secret scan.
+The gate prints each step's name and time as the step finishes. When a step fails, the gate stops the other lanes, prints the output of the step that failed, and fails. The gate tells uv, npm and Playwright to work offline, and the tests refuse any connection that leaves this computer. It prints its total time and fails when the whole run takes longer than 150 seconds. When every staged file is Markdown, it runs only the steps marked `always`: the secret scan, the proposal's check and the proposal's copy lint.
 
-One gate runs at a time on this computer, so gates in other worktrees and sessions cannot slow it past its limit. Before it starts, the gate holds a lock on the file `strata-gate.lock` in your temporary folder (`$TMPDIR` on a Mac), or on the file that `STRATA_GATE_LOCK` names, as the gate's own tests do. A gate that finds another gate running prints that it is waiting, waits up to 20 minutes (`lock_wait_seconds` in `gates/steps.toml`) and then gives up, and its two-minute limit counts from the moment it holds the lock, not from the start of the wait.
+One gate runs at a time on this computer, so gates in other worktrees and sessions cannot slow it past its limit. Before it starts, the gate holds a lock on the file `strata-gate.lock` in your temporary folder (`$TMPDIR` on a Mac), or on the file that `STRATA_GATE_LOCK` names, as the gate's own tests do. A gate that finds another gate running prints that it is waiting, waits up to 20 minutes (`lock_wait_seconds` in `gates/steps.toml`) and then gives up, and its 150-second limit counts from the moment it holds the lock, not from the start of the wait.
 
 The gate tests the files in your working tree. When code is staged, the gate first checks that no tracked file has changes you have not staged, so the tests see what you commit. To add a ground-truth SQL check, add a `.sql` file to `tests/ground_truth/`. Write the query in Databricks SQL, with three-part names such as `strata.ops.pipeline_runs`; the engine adapter rewrites it for DuckDB. Put its expected rows in `-- expect:` lines, one CSV row per line with the header first, and name the source of those values in a comment. A `-- param: name = value` line binds a parameter, and a `-- engines: duckdb, databricks` line marks a query that `ops/bundle/check.py same-rows` also runs on the workspace's SQL warehouse. Values copied from a source, with the page or record they came from, go in `tests/ground_truth/values.toml`, and a test checks each one against the recorded fixture.
 
@@ -268,6 +307,12 @@ Each part of the spec has one home. Folders marked "later" do not exist yet. The
 | The other evaluation sets | `evals/` (later) |
 | The dashboard definition, "Strata operations": its three pages and their tiles as code (`definition.py`, one entry a tile), the kinds of tile (`tiles.py`), the AI/BI file they become (`render.py`), the queries of its datasets (`sql/`), "What the measures say" and each loop's indicators, which the nightly job writes (`findings.py`), and its words (`copy.json`, from `web/src/copy.ts`'s `dash` and `kpi`). The bundle deploys the file and its test copy (`uv run --frozen python -m strata.dashboard --write` writes both again) | `src/strata/dashboard/`, `bundle/dashboard.yml` and `bundle/dashboards/` |
 | The KPI registry: each KPI the dashboard shows, defined once by its query in `src/strata/dashboard/sql/kpi/`, with its kind, rounding, target and loop, read by `load_kpis` (ticket 45) | `config/kpis.toml` |
+| The proposal's source, its results register (each measured value and its query), its settings register (each setting or count, its file and its enforcing test), its number check's allow list and the dated snapshot of the measures (ticket 46) | `docs/proposal/` (`source.md`, `results.toml`, `settings.toml`, `number_check.toml`, `snapshot.json` once pulled) |
+| The proposal's build, number check, figures, snapshot pull and README links, and its queries | `src/strata/proposal/` and `src/strata/proposal/sql/`; the live pull is `ops/proposal/pull_live.py` |
+| The panel's addresses: Strata, the dashboard and the repo, with the deck and the proposal that follow from them, read by `load_urls` (ticket 46) | `config/urls.toml` |
+| The rubric map: the assessment's dimensions, points and criteria, and where the proposal answers each one, read by `load_rubric` (tickets 46 and 47) | `config/rubric.toml` |
+| What is designed but not built: the app's labels and the proposal's short list both read it, by `load_designed_not_built` (ticket 46) | `config/designed_not_built.toml` |
+| The change drill: each likely change, its one place, its proving test and its rehearsal time, read by `load_change_drills` (tickets 46 and 49) | `config/change_drills.toml` |
 | The Azure budget: the free credit, the day it ends and the monthly budget, read by `load_budget` for the daily cost pull (`src/strata/lakehouse/costs.py`, the job in `bundle/costs.yml`) and by the wizard | `config/budget.toml` |
 | The Data tab's pages: Data readiness, Sources and licenses and How Strata works | `web/src/pages/data/` |
 | The server's copy of the Data readiness sentences, written from `web/src/copy.ts` by `node web/lint/server-copy.ts --write` | `src/strata/tools/data_readiness_copy.json` |

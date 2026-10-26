@@ -68,6 +68,7 @@ import { Num, type NumValue } from "../components/Num";
 import { PageHeader, WithIds } from "../components/PageHeader";
 import { Skeleton, SkeletonText } from "../components/Skeleton";
 import { DocumentSource } from "../components/Source";
+import { DesignedNotBuilt } from "../components/DesignedNotBuilt";
 import { StatusBadge, type BadgeKind } from "../components/StatusBadge";
 import { Steps, type Step } from "../components/Steps";
 import { Table, type Column, type Row } from "../components/Table";
@@ -842,17 +843,21 @@ export const PAGES: GalleryPage[] = [
   },
   {
     slug: "badges",
-    sections: BADGES.map(([title, kinds]) => ({
-      id: title,
-      title,
-      body: (
-        <Inline>
-          {kinds.map((kind) => (
-            <StatusBadge key={kind} kind={kind} />
-          ))}
-        </Inline>
-      ),
-    })),
+    sections: [
+      ...BADGES.map(([title, kinds]) => ({
+        id: title,
+        title,
+        body: (
+          <Inline>
+            {kinds.map((kind) => (
+              <StatusBadge key={kind} kind={kind} />
+            ))}
+          </Inline>
+        ),
+      })),
+      // Ticket 46: the label a part designed but not built carries, with what Strata does instead.
+      { id: t.designedNotBuilt, title: t.designedNotBuilt, body: <DesignedNotBuilt item="sample" instead={t.designedNotBuiltSample} /> },
+    ],
   },
   {
     slug: "numbers",

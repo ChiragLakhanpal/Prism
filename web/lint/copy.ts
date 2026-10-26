@@ -84,8 +84,11 @@ export function whatIfChecker(): CopyChecker {
 
 export type CopyChecker = (text: string) => string[];
 
-export function copyChecker(designPath: string): CopyChecker {
-  const rules = [...designRules(designPath), ...FIXED_RULES];
+// avoid: false leaves out GLOSSARY.md's Avoid terms, for the two places a document quotes the assessment's own
+// words: the proposal's rubric map criteria and Annex 4's first column (ticket 46). Rule 19's words, em dashes,
+// curly quotes and "the Bank" are refused there too.
+export function copyChecker(designPath: string, { avoid = true }: { avoid?: boolean } = {}): CopyChecker {
+  const rules = [...designRules(designPath), ...(avoid ? FIXED_RULES : FIXED_RULES.slice(0, FIXED_RULES.length - GLOSSARY_AVOID.length))];
   return (text) => {
     let rest = text;
     for (const term of FIXED_TERMS) rest = rest.replaceAll(term, " ");
