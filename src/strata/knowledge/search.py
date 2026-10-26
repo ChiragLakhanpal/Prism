@@ -342,8 +342,13 @@ def searcher_for(call, environ: dict | None = None, setup: SearchSetup | None = 
                     setup=setup)
 
 
+class IndexNotFound(LookupError):
+    """The workspace has no such index, as before ticket 11's step 4 first syncs the passage index. Only this
+    reads as a missing index: a KeyError or IndexError from a bug stays a bug (ticket 67)."""
+
+
 def not_found_as_lookup(transport: Transport) -> Transport:
-    """The workspace's transport, with a 404 raised as LookupError, so a missing index reads as missing."""
+    """The workspace's transport, with a 404 raised as IndexNotFound, so a missing index reads as missing."""
     from strata.lakehouse.engine import EngineError
 
     def call(method: str, path: str, body: dict | None = None) -> dict:
@@ -351,7 +356,7 @@ def not_found_as_lookup(transport: Transport) -> Transport:
             return transport(method, path, body)
         except EngineError as error:
             if " 404 " in str(error) or "RESOURCE_DOES_NOT_EXIST" in str(error):
-                raise LookupError(str(error)) from error
+                raise IndexNotFound(str(error)) from error
             raise
 
     return call

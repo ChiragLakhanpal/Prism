@@ -218,6 +218,63 @@ def test_search_passages_asks_ai_search_for_max_results_times_its_depth_and_says
     assert (result["coverage"]["matched"], result["search"]["matched_is_at_least"]) == (3, at_least)
 
 
+# What the workspace answered on October 26, 2026, before ticket 11's step 4 had synced the passage index
+# (docs/workspace-catchup.md, ticket 66, step 1).
+NO_INDEX = ('The workspace answered 404 to POST /api/2.0/vector-search/indexes/strata.gold.passage_index/query: '
+            '{"error_code":"RESOURCE_DOES_NOT_EXIST","message":"Unity Catalog entity strata.gold.passage_index does '
+            'not exist."}')
+
+
+def test_search_passages_answers_with_no_passages_and_says_why_when_the_passage_index_does_not_exist_yet(
+        fixture_db, monkeypatch, caplog):
+    """Ticket 67: a search that cannot reach its index answers in the shape of a search that found nothing, with
+    the missing index as the reason, so the agent can answer from records or refuse, and the run goes on."""
+    import logging
+
+    from strata.dbx import Viewer
+    from strata.knowledge.search import AiSearch, not_found_as_lookup
+    from strata.lakehouse.engine import DuckDBEngine, EngineError
+    from strata.tools import registry
+    from strata.tools import search_passages as tool
+
+    path = "/api/2.0/vector-search/indexes/strata.gold.passage_index/query"
+    workspace = Workspace({("POST", path): EngineError(NO_INDEX)})
+    monkeypatch.setattr(tool, "searcher_for", lambda call: AiSearch(not_found_as_lookup(workspace), FixedVector()))
+    viewer = Viewer(email="ana.example@worldbank.org", name="Ana", token="token-for-ana-only")
+
+    with caplog.at_level(logging.WARNING), DuckDBEngine.open(fixture_db, read_only=True) as engine:
+        result = registry.call("search_passages", {"query": "works estimates market rates rebidding",
+                                                   "project_id": "P130164"},
+                               registry.Context(engine=engine, viewer=viewer))
+
+    assert result["rows"] == []
+    assert result["coverage"] == {"matched": 0, "used": 0, "not_used": []}
+    # The shape of a search that found nothing, with the missing index as its reason.
+    assert result["abstention"] == {"reason": "index_not_available", "query": "works estimates market rates rebidding"}
+    assert (result["search"]["searcher"], result["filters"]["project_id"]) == ("AI Search", "P130164")
+    # The engine's answer is logged once, as one line with no traceback.
+    [logged] = [record for record in caplog.records if "RESOURCE_DOES_NOT_EXIST" in record.getMessage()]
+    assert logged.levelno == logging.WARNING and logged.exc_info is None
+
+
+def test_a_workspace_error_other_than_a_missing_index_still_stops_search_passages(fixture_db, monkeypatch):
+    """Only a missing index reads as no passages: a warehouse or AI Search that fails otherwise is the data
+    service's failure, which the answer loop reports as such."""
+    from strata.dbx import Viewer
+    from strata.knowledge.search import AiSearch, not_found_as_lookup
+    from strata.lakehouse.engine import DuckDBEngine, EngineError
+    from strata.tools import registry
+    from strata.tools import search_passages as tool
+
+    path = "/api/2.0/vector-search/indexes/strata.gold.passage_index/query"
+    workspace = Workspace({("POST", path): EngineError("The workspace answered 503 to POST " + path + ": busy")})
+    monkeypatch.setattr(tool, "searcher_for", lambda call: AiSearch(not_found_as_lookup(workspace), FixedVector()))
+    viewer = Viewer(email="ana.example@worldbank.org", name="Ana", token="token-for-ana-only")
+
+    with DuckDBEngine.open(fixture_db, read_only=True) as engine, pytest.raises(EngineError, match="503"):
+        registry.call("search_passages", {"query": "rebidding"}, registry.Context(engine=engine, viewer=viewer))
+
+
 def test_the_index_is_made_over_gold_passage_with_its_change_feed_and_synced_after_each_run():
     from strata.knowledge.search import AiSearchIndex
 
