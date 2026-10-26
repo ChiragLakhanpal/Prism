@@ -151,3 +151,49 @@ def test_a_lesson_counts_within_the_limit_by_the_lesson_review_s_own_business_da
     assert findings.within_limit(friday, dt.date(2026, 10, 9))
     assert not findings.within_limit(friday, dt.date(2026, 10, 12))
     assert TODAY.weekday() == 4
+
+
+class Refusing:
+    """A seeded engine that raises its own error, as Spark raises AnalysisException rather than EngineError, for any
+    query that names one of the given tables."""
+
+    def __init__(self, engine, *names):
+        self._engine, self._names = engine, names
+
+    def run(self, sql, params=None):
+        if any(name in sql for name in self._names):
+            raise RuntimeError(f"[TABLE_OR_VIEW_NOT_FOUND] {self._names[0]} cannot be read")
+        return self._engine.run(sql, params)
+
+    def __getattr__(self, name):
+        return getattr(self._engine, name)
+
+
+def test_a_workspace_that_hides_its_query_history_still_gets_every_finding():
+    """On Databricks the nightly job runs on Spark, which raises its own error when system.access can't be read. The
+    Who queried what row says so, and the job's task goes on (the 45 brief, section 6.4)."""
+    engine = seeded()
+    try:
+        findings.write(Refusing(engine, "system.access"), "run-23", lambda: WRITTEN_AT)
+        found = said(engine, "governance")
+    finally:
+        engine.close()
+
+    assert found["Who queried what"][0] == (
+        "I can't show who queried what, because this workspace doesn't let me read its query history.")
+    assert list(found) == ["Nightly runs and checks", "Azure spend", "Personal data", "Who queried what", "Lineage"]
+
+
+def test_a_section_that_fails_is_left_out_and_the_others_are_written(caplog):
+    engine = seeded()
+    try:
+        findings.write(Refusing(engine, "strata.ops.cost_pulls", "strata.ops.cost_daily"), "run-23",
+                       lambda: WRITTEN_AT)
+        governance, ai = said(engine, "governance"), said(engine, "ai")
+        indicators = rows(engine, "loop_indicators")
+    finally:
+        engine.close()
+
+    assert list(governance) == ["Nightly runs and checks", "Personal data", "Who queried what", "Lineage"]
+    assert len(ai) == 7 and len(indicators) == 6
+    assert "spend" in caplog.text

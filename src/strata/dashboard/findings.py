@@ -15,6 +15,7 @@ measure_data_readiness task writes every section after its measures; the daily c
 from __future__ import annotations
 
 import datetime as dt
+import logging
 import statistics
 from collections.abc import Callable
 from decimal import ROUND_HALF_UP, Decimal
@@ -22,8 +23,9 @@ from decimal import ROUND_HALF_UP, Decimal
 from strata.config import load_kpis, load_thresholds
 from strata.dashboard import render
 from strata.dashboard import wording as say
-from strata.lakehouse.engine import Engine, EngineError
+from strata.lakehouse.engine import Engine
 
+LOG = logging.getLogger(__name__)
 FINDINGS = "strata.ops.dashboard_findings"
 INDICATORS = "strata.ops.loop_indicators"
 FINDING_COLUMNS = ("run_id", "page", "section", "position", "about", "finding", "measured_on", "written_at",
@@ -155,7 +157,8 @@ def queries(engine: Engine, today: dt.date) -> tuple[str, dt.date | None]:
     """Who queried Strata's tables in the 7 days to today, where the workspace lets Strata read its history (6.3)."""
     try:
         found = _rows(engine, "queries", today - dt.timedelta(days=6), today)
-    except EngineError:  # no query history to read here, as on DuckDB or a workspace that hides it
+    except Exception:  # noqa: BLE001 - no query history to read here, as on DuckDB or a workspace that hides it:
+        # Spark raises AnalysisException, the warehouse and DuckDB EngineError
         return say.at("dash.gov.find.queries.notReadable"), today
     if not found:
         return say.fill(say.at("dash.gov.find.queries.none"), day=say.day(today, today)), today
@@ -572,16 +575,25 @@ def write(engine: Engine, run_id: str, clock: Callable[[], dt.datetime] = _now,
     for position_key, (page, about, section) in SECTIONS.items():
         if position_key not in chosen:
             continue
-        text, measured = section(engine, today)
+        try:
+            text, measured = section(engine, today)
+        except Exception:  # noqa: BLE001 - one section that can't be measured must not stop the nightly task
+            LOG.exception("The %s finding could not be written, so its row is left out tonight.", position_key)
+            continue
         position = [key for key, entry in SECTIONS.items() if entry[0] == page].index(position_key) + 1
         rows.append((run_id, page, position_key, position, say.at(about), text, measured, written_at, today))
     count = engine.insert_rows(FINDINGS, FINDING_COLUMNS, rows) if rows else 0
     if sections is None:
+        try:
+            measured_indicators = indicators(engine, today)
+        except Exception:  # noqa: BLE001 - as with a section, the task goes on without them
+            LOG.exception("Each loop's indicators could not be written, so they are left out tonight.")
+            return count
         kpis = load_kpis()
         names = say.at("dash.ai.loops")
         kinds = say.at("dash.ai.kind")
         cells = [(run_id, position, kpi, names[kpis[kpi].loop], say.at(kpis[kpi].copy_keys[0]), kinds[kpis[kpi].role],
                   latest, target, against, measured, written_at, today)
-                 for position, (kpi, latest, target, against, measured) in enumerate(indicators(engine, today), 1)]
+                 for position, (kpi, latest, target, against, measured) in enumerate(measured_indicators, 1)]
         count += engine.insert_rows(INDICATORS, INDICATOR_COLUMNS, cells)
     return count
