@@ -2704,3 +2704,40 @@ Record here the App line the first deploy printed, both grants listings after it
 
 **Ran on October 26, 2026 (orchestrator), from a snapshot of f90b8c2d.** Before the deploy, `apps get` showed the active deployment 01f1d128181514959c3e683ed71050f2 (created 10:29:15 UTC, RUNNING), and `grants get` listed the App's service principal e796c089-1500-4cf2-9c1f-8e6a8f5aba10 with USE_CATALOG on strata beside `account users` USE_CATALOG, and with USE_SCHEMA on strata.ops beside `account users` SELECT and USE_SCHEMA. The first deploy (11:35 to 11:38 UTC) exited 0 and printed, under "1. Deploying the bundle", "The bundle's grants replace every other grant on strata and its schemas, so I gave the app strata's service principal e796c089-1500-4cf2-9c1f-8e6a8f5aba10 back USE CATALOG on strata and USE SCHEMA on strata.ops."; its "3. What changed:" listed only "The table strata.ops.silver_pages is new." (ticket 75's table) and no grant line. After it, both `grants get` listings read the same as before (the principal with USE_CATALOG, and with USE_SCHEMA), and `SHOW GRANTS ON TABLE strata.ops.follows` still lists SELECT and MODIFY for it. The second deploy (11:38 to 11:40 UTC) printed the same App line and "No changes.", naming no dashboard. `/api/health` with the CLI profile's OAuth token answered 200 `{"status":"ok"}` at 11:40:32 UTC with no App redeploy, and `apps get` afterwards shows the same active deployment 01f1d128181514959c3e683ed71050f2 of 10:29:15 UTC. Passed. The report half (a dashboard that changes is named) waits for the next deploy that rewrites a dashboard file. Log: the scratchpad's ticket79.log.
 
+## Ticket 72, step 1 of 1: the live documents run writes each document's passages as it goes and lists what it skipped (criterion 4, live)
+
+Parked on October 26, 2026 by the merger, after merge commit 5d67dd02, so run it from a snapshot of 5d67dd02 or later. Every key is set, but the second session runs every workspace step from a snapshot of the commit, one at a time. It needs the Databricks keys, AI_SEARCH_ENDPOINT, AZURE_OPENAI_ENDPOINT and AZURE_OPENAI_API_KEY in `.env`, the Databricks CLI 0.287.0 or later, and a time outside the nightly window (03:00 to 05:30 in Washington), because the nightly job's `parse_and_embed` writes the same tables.
+
+Ticket 72 changes `ops/documents/run_live.py` to read through the nightly job's own path (`strata.lakehouse.readers.reading`), so the job and the script share one writer of passages. The live run reads the reports into passages first and the Procurement Plans with the time that is left, so plan pages that outlast the 60 minutes in `config/thresholds.toml` (`ingestion.document_host_minutes`) no longer leave `strata.gold.passage` empty. It writes each document's passages as soon as it has read that document. A document, or a project's document list, that a host does not give is skipped: the run prints it with its reason, writes a row to the new table `strata.ops.skipped_documents`, and goes on. A stop (a host refusal, or the reading time spent, which is now checked between pages too) keeps every document written before it. The run exits 0 when at least one document's passages are in `strata.gold.passage`, 1 when the index did not catch up in time, and 2 when it has none or could not run.
+
+The deploy comes first, because its `catalog.build` creates `strata.ops.skipped_documents`. Without that table, the first skip raises an engine error and the run exits 2. Ticket 79's deploy ran from f90b8c2d, before this merge, so it does not count. Run these from the snapshot's root, with `--env-file` pointing at the main checkout's `.env`:
+
+    uv run --script ops/bundle/deploy.py --env-file "<main checkout>/.env" --fairshare-catalog workspace
+    uv run --script ops/documents/run_live.py --env-file "<main checkout>/.env"
+
+Then run these in the workspace's SQL editor, with the run ID the script printed:
+
+    SELECT count(*) AS passages, count(DISTINCT document_id) AS documents FROM strata.gold.passage
+
+    SELECT reader, project_id, document_id, url, outcome, reason
+    FROM strata.ops.skipped_documents WHERE run_id = '<the run ID, documents-...>' ORDER BY skipped_at
+
+It worked if:
+
+- The deploy exits 0, lists `strata.ops.skipped_documents` as new, and changes no table that holds rows.
+- The documents run prints the passage reader's warnings first and then the plan reader's, and ends with "Run documents-... parsed N documents, skipped M and wrote the passages of K to strata.gold.passage" with K above 0. When the plan pages outlast the 60 minutes, the line may add ", and left 1 unfinished." and a line "It stopped before it finished: ...". The run then prints "The index ... holds X of the X passages in strata.gold.passage and is ready".
+- The script exits 0.
+- The first query's `passages` is above 0.
+- The second query lists each skipped document with its reason. Its rows with `outcome` skipped and a `document_id` give M distinct pairs of project and document. Rows with an empty `document_id` are projects whose document list or plans the run could not fetch, and the end line counts them in its own sentence.
+
+Record here the end line, the exit code, the index line, both query results and the run's start and end times. A second run is optional. If you make one, it should print "wrote the passages of 0 ... The passages of K more were already in strata.gold.passage, unchanged." and exit 0.
+
+What to expect, from the review and verify notes (`.notes/72-review-r3.md`, `.notes/72-verify-r3.md`):
+
+- Do not read the stress shelf's `long_plan` state right after this run. The live run records the shelf before its plan reader runs, so `long_plan` shows `not_read` for one run (review follow-up F1). The next nightly run writes it correctly.
+- If the warehouse, Prompt Shields or the embedding deployment fails partway, the run prints "The run stopped: ..." and exits 2, even when it wrote documents before that. Those passages stay in `strata.gold.passage`, but the index is not synced until the next run. Run the same command again, and record both runs.
+- A host refusal at a document's text fetch prints the stop and writes the `document_host_refused` readiness note, but writes no unfinished row to `strata.ops.skipped_documents`. Only a stop inside the layout parser lists its document as unfinished.
+- This is the same command as ticket 11's step 1 and ticket 66's step 3. If those blocks are still open, record what this run shows for them there too.
+
+If K is 0, or the run exits 2 with no document written, tell the orchestrator before anyone shows a cited answer on the App.
+
