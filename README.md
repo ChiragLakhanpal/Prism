@@ -137,7 +137,7 @@ It takes these steps, in order:
 6. It lets the app's own service principal write usage events and agent runs.
 7. It prints the app's address.
 
-Run it again after every bundle deploy. The bundle's grants replace the app's grants on the `strata` catalog and the `strata.ops` schema, and without them the server can't write usage events or agent runs.
+The bundle's grants replace the app's grants on the `strata` catalog and the `strata.ops` schema, so the bundle deploy gives the app both back right after (ticket 79). Run the app's deploy again after a bundle deploy that makes a table the app writes, so the app gets that table's grant.
 
 Only you may write secrets in the shared workspace. Once you have written them, with a deploy without the option, the wizard or `databricks secrets put-secret strata <name>`, a session that may not write secrets can still deploy new code:
 

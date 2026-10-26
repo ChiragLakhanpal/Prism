@@ -383,14 +383,18 @@ def test_the_command_needs_the_workspace_keys_from_the_env_file(tmp_path, capsys
     assert "DATABRICKS_WAREHOUSE_ID" in capsys.readouterr().err
 
 
-def test_the_command_s_help_says_how_to_run_it_and_to_run_it_again_after_a_bundle_deploy(capsys):
+def test_the_command_s_help_says_how_to_run_it_and_when_a_bundle_deploy_needs_it_again(capsys):
+    """Since ticket 79 the bundle deploy gives the app back its USE CATALOG and USE SCHEMA, so only a bundle deploy
+    that makes a new table the app writes needs this deploy again, for that table's grant."""
     with pytest.raises(SystemExit) as stopped:
         deploy_app.main(["--help"])
 
     out = " ".join(capsys.readouterr().out.split())
     assert stopped.value.code == 0
     assert "uv run --script ops/app/deploy_app.py --env-file .env" in out
-    assert "Run it again after every bundle deploy" in out
+    assert "Run it again after every bundle deploy" not in out
+    assert ("Run it again after a bundle deploy that makes a table the app writes, so the app gets that table's "
+            "grant.") in out
 
 
 def test_with_a_genie_space_the_app_asks_it_as_each_viewer():
