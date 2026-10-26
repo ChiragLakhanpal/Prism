@@ -35,7 +35,9 @@ class LiveStandIn:
     def respond(self, items, previous_response_id):
         if self.answers is None:
             asked = json.loads(items[0]["content"])["question"]
-            recording = next(r for r in self.recordings if r["question"] == asked)
+            # The criteria reader's recordings sit beside the orchestrator's, and one asks the same question
+            # (criteria-live-tender and whole-refusal-live-tender-bidders, ticket 67), so the agent's name picks.
+            recording = next(r for r in self.recordings if r["question"] == asked and r["agent"]["name"] == self.name)
             self.answers = copy.deepcopy(recording["responses"])
             final = self.answers[-1]["output"][0]["content"][0]
             claims = json.loads(final["text"])
@@ -254,7 +256,8 @@ class LiveCriteriaReader:
     def respond(self, items, previous_response_id):
         message = json.loads(items[0]["content"])
         self.asked.append(message)
-        answer = copy.deepcopy(next(r for r in self.recordings if r["question"] == message["text"])["responses"][0])
+        answer = copy.deepcopy(next(r for r in self.recordings if r["question"] == message["text"]
+                                    and r["agent"]["name"] == self.name)["responses"][0])
         content = answer["output"][0]["content"][0]
         read = json.loads(content["text"])
         for item in read["items"]:
