@@ -188,7 +188,7 @@ ask = { kind = "read", staff = true, piu = true, public = true }
 packages = { kind = "read", staff = true, piu = true, public = false }
 following = { kind = "read", staff = true, piu = false, public = false }
 signals_on_active_projects = { kind = "read", staff = true, piu = true, public = false }
-time_estimates = { kind = "read", staff = true, piu = true, public = false }
+time_estimates_on_active_projects = { kind = "read", staff = true, piu = true, public = false }
 disagreements_on_active_projects = { kind = "read", staff = true, piu = true, public = false }
 baseline = { kind = "read", staff = true, piu = true, public = false }
 baseline_saver = { kind = "read", staff = true, piu = false, public = false }
@@ -271,14 +271,14 @@ export_draft = { kind = "export", staff = true, piu = true, public = false, reas
 "POST /api/suppliers/labels" = "review_suppliers"
 "GET /api/packages/{step_reference}" = "packages"
 "GET /api/packages/{step_reference}/comparables" = "packages"
-"GET /api/packages/{step_reference}/estimate" = "time_estimates"
+"GET /api/packages/{step_reference}/estimate" = "packages"
 "GET /api/packages/{step_reference}/rebidding" = "packages"
 "GET /api/packages/{step_reference}/risks" = "packages"
 "GET /api/packages/{step_reference}/steps" = "packages"
 "GET /api/packages/{key}/criteria" = "packages"
 "GET /api/planned-packages" = "packages"
 "GET /api/planned-packages/{package_id}" = "packages"
-"GET /api/planned-packages/{package_id}/estimate" = "time_estimates"
+"GET /api/planned-packages/{package_id}/estimate" = "packages"
 "GET /api/planned-packages/{package_id}/risks" = "packages"
 "GET /api/planned-packages/{package_id}/steps" = "packages"
 "GET /api/planned-packages/{key}/criteria" = "packages"

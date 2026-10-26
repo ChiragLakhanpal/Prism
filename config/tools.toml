@@ -124,7 +124,7 @@ row_fields = ["evidence_id", "public_from", "source", "activity_reference_no", "
               "planned_completion_on", "planned_completion_plan_date", "first_listing_confirmed",
               "actual_to_estimate", "marks", "position", "listed"]
 source_fields = ["document_type", "project_id", "implementing_agency", "plan_date", "document_id", "pdf_page"]
-fields = ["plan", "project", "checks_run", "thresholds", "counts", "baseline"]
+fields = ["plan", "project", "checks_run", "thresholds", "counts", "baseline", "withheld"]
 # An upload's rows (ticket 38) give their place in the officer's file (position) and whether a published plan of the
 # project lists them (listed); a published plan's rows give neither. The last four reasons are an upload's data
 # notes: a date or an amount the reader could not read, a row with no Method, and a reference two rows share.
@@ -182,7 +182,7 @@ row_fields = ["evidence_id", "public_from", "source", "check", "strong", "count"
 source_fields = ["source_key", "project_id", "document_id", "date", "evidence_id"]
 fields = ["project", "status", "checks", "counts", "thresholds", "plans"]
 reasons = ["no_plans", "no_recent_plans", "no_loan_history", "no_isr", "no_loans"]
-abstentions = ["unknown_project", "not_active", "no_records"]
+abstentions = ["unknown_project", "not_active", "no_records", "view_public_active"]
 # The status and the counts are figures an answer may state ("it needs a look, with four signals").
 summary_fields = ["status", "counts"]
 # Each record a signal rests on (a plan row, a closing-date move, an ISR rating, a passage, a loan) is cited by
@@ -805,7 +805,7 @@ reasons = ["outside_training", "value_not_learned", "no_plan_dates"]
 # The closed list of why there is no time estimate (brief 40 adds view_public_active here). The first four come
 # from find_comparables for the same criteria.
 abstentions = ["unknown_package", "no_public_notice", "no_comparables", "none_measurable", "too_few_comparables",
-               "asof_before_training", "outside_training", "no_model", "unknown_upload"]
+               "asof_before_training", "outside_training", "no_model", "unknown_upload", "view_public_active"]
 # The time estimate, the difference and its reasons, the track record, the plan dates, the comparisons and the
 # approaches are figures the agent may state, so they come back as one citable record too.
 # The planned dates for each step, their counts, ran longest and their track record (ticket 27) are too.
@@ -865,7 +865,7 @@ fields = ["subject", "trajectories", "rejected"]
 # prompt_shields_hit and not_screened count passages, not disagreements: the sides whose passage's words the tool
 # kept from the agent (strata.knowledge.shields), as search_passages counts the passages it leaves out.
 reasons = ["replaced_by_later_version", "prompt_shields_hit", "not_screened"]
-abstentions = ["unknown_subject", "unknown_attribute", "no_assertions"]
+abstentions = ["unknown_subject", "unknown_attribute", "no_assertions", "view_public_active"]
 # The ratings of each trajectory, its runs and the count of left-out assertions are figures the agent may
 # state, so they come back as one citable record too.
 summary_fields = ["trajectories", "rejected"]

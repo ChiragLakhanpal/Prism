@@ -9,6 +9,95 @@
     "agency_id": "northern-water-works-development-agency"
   },
   "own_view": "piu",
+  "views": [
+    "piu",
+    "public"
+  ],
+  "applied": {
+    "view": "piu",
+    "preview": false,
+    "problem": null
+  },
+  "preview_agency": {
+    "name": "Northern Water Works Development Agency",
+    "short_name": "NWWDA",
+    "agency_id": "northern-water-works-development-agency"
+  },
+  "tabs": [
+    "packages",
+    "projects",
+    "lessons",
+    "drafts",
+    "data"
+  ],
+  "hidden": [
+    "following",
+    "lessonsQueue",
+    "lessonReview",
+    "lessonsReports",
+    "passageReport",
+    "lessonsJudging",
+    "judgingQuery"
+  ],
+  "capabilities": [
+    "ask",
+    "baseline",
+    "change_package",
+    "compare_criteria",
+    "contract_trail",
+    "data",
+    "disagreements_on_active_projects",
+    "discard_draft",
+    "drafts",
+    "export_draft",
+    "fill_draft",
+    "keep_other_report",
+    "lessons",
+    "mark_checked",
+    "packages",
+    "personal_lessons",
+    "plan_date_choice",
+    "plan_package",
+    "projects",
+    "record_opened",
+    "report_passage",
+    "risk_selection",
+    "save_baseline",
+    "save_language",
+    "signals_on_active_projects",
+    "start_draft",
+    "step_start",
+    "time_estimates_on_active_projects",
+    "upload_and_check",
+    "uploads"
+  ],
+  "reasons": {
+    "record_opened": "evidence.preview",
+    "keep_other_report": "disagreement.card.keep.preview",
+    "report_passage": "feedback.preview",
+    "follow": "view.actPreview",
+    "save_baseline": "view.actPreview",
+    "plan_package": "packagesTab.previewOff",
+    "change_package": "packageWorkspace.preview",
+    "plan_date_choice": "stepDates.choice.preview",
+    "step_start": "stepDates.start.preview",
+    "risk_selection": "packageRisks.preview",
+    "review_lesson": "view.actPreview",
+    "review_passage_reports": "view.actPreview",
+    "judge_passages": "view.actPreview",
+    "review_suppliers": "view.actPreview",
+    "start_draft": "packageWorkspace.ppsdAction.heldPreview",
+    "fill_draft": "fill.preview",
+    "discard_draft": "draft.bar.hold.preview",
+    "mark_checked": "draft.bar.hold.preview",
+    "upload_and_check": "upload.holdPreview",
+    "compare_criteria": "criteria.preview",
+    "export_draft": "draft.bar.hold.preview"
+  },
+  "asof": {
+    "applied": null,
+    "problem": null
+  },
   "language": {
     "code": "en",
     "source": "default",

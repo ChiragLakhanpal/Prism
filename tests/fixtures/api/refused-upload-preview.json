@@ -1,0 +1,10 @@
+{
+  "status": 403,
+  "body": {
+    "code": "preview",
+    "error": "preview",
+    "capability": "upload_and_check",
+    "copy_key": "upload.holdPreview",
+    "view": "piu"
+  }
+}

@@ -33,7 +33,7 @@ def test_each_capability_is_listed_with_its_kind_and_its_value_in_every_view():
     # The roles table's rows (the blueprint's "Navigation and roles"; the 40 brief, 5.1), one capability each.
     assert table["packages"] == ("read", {"staff": True, "piu": True, "public": False})
     assert table["following"] == ("read", {"staff": True, "piu": False, "public": False})
-    assert table["time_estimates"] == ("read", {"staff": True, "piu": True, "public": False})
+    assert table["time_estimates_on_active_projects"] == ("read", {"staff": True, "piu": True, "public": False})
     assert table["signals_on_active_projects"] == ("read", {"staff": True, "piu": True, "public": False})
     assert table["disagreements_on_active_projects"] == ("read", {"staff": True, "piu": True, "public": False})
     assert table["contract_trail"] == ("read", {"staff": True, "piu": True, "public": True})
@@ -194,6 +194,39 @@ def test_a_preview_leaves_out_a_quiet_record_and_hides_a_page_it_does_not_keep()
     assert (following.status_code, following.json()) == (404, {"code": "not_in_view", "error": "not_in_view",
                                                                "capability": "following", "view": "piu"})
     assert (package.status_code, package.json()["capability"]) == (404, "packages")
+
+
+def test_who_is_viewing_says_which_view_and_date_the_server_applied():
+    app = server()
+
+    own = call(app, "GET", "/api/me", STAFF).json()
+    public = call(app, "GET", "/api/me", STAFF, params={"view": "public", "asof": "2016-08-26"}).json()
+    officer = call(app, "GET", "/api/me", OFFICER, params={"view": "piu"}).json()
+    unknown = call(app, "GET", "/api/me", STAFF, params={"view": "everyone", "asof": "October-22"}).json()
+    today = call(app, "GET", "/api/me", STAFF, params={"asof": TODAY.isoformat()}).json()
+
+    assert (own["own_view"], own["views"], own["applied"]) == (
+        "staff", ["staff", "piu", "public"], {"view": "staff", "preview": False, "problem": None})
+    assert own["tabs"] == ["packages", "projects", "lessons", "drafts", "data"] and own["hidden"] == []
+    assert own["preview_agency"] == {"name": "Northern Water Works Development Agency", "short_name": "NWWDA",
+                                     "agency_id": "northern-water-works-development-agency"}
+    assert public["applied"] == {"view": "public", "preview": True, "problem": None}
+    assert public["tabs"] == ["projects", "lessons", "data"] and "packages" in public["hidden"]
+    assert public["asof"] == {"applied": "2016-08-26", "problem": None}
+    assert "export_draft" not in public["capabilities"] and "contract_trail" in public["capabilities"]
+    assert public["reasons"]["export_draft"] == "draft.bar.hold.preview"
+    assert (officer["own_view"], officer["views"], officer["applied"]["preview"]) == ("piu", ["piu", "public"], False)
+    assert unknown["applied"] == {"view": "staff", "preview": False, "problem": "unknown"}
+    assert unknown["asof"] == {"applied": None, "problem": "unreadable"}
+    assert today["asof"] == {"applied": None, "problem": "not_past"}
+
+
+def test_the_view_switchs_recorded_answers_are_what_the_server_answers(fixture_db):
+    from record_views_api import answers
+
+    for name, text in answers(fixture_db).items():
+        assert text == (ROOT / "tests" / "fixtures" / "api" / name).read_text(), (
+            f"{name} is out of date: uv run --frozen python tests/record_views_api.py")
 
 
 def test_an_officers_own_view_is_not_a_preview_but_their_public_preview_is():

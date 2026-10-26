@@ -82,8 +82,8 @@ def test_each_request_writes_one_usage_event_with_its_viewer_route_view_and_time
     rows = events(ops)
     assert [row[:3] for row in rows] == [
         ("4021@1984", "/api/me", "staff"),
-        # Until ticket 40, every request sees the World Bank staff view, whatever the link asks for.
-        ("4022@1984", "/api/freshness", "staff"),
+        # The view the server applied (ticket 40): anyone may preview the public view.
+        ("4022@1984", "/api/freshness", "public"),
         (None, "/api/me", "staff"),
     ]
     assert all(before <= row[3] <= after for row in rows)

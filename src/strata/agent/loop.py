@@ -163,6 +163,16 @@ def answer_runner(agent_for: Callable[[Turn], Agent], engine_for: EngineFor, too
             note.update(arguments=call.get("arguments"), error="bad_arguments")
             return {"error": "bad_arguments", "detail": f"The arguments are not a JSON object: {error}."}, note
         note["arguments"] = arguments
+        # The page's as-of date and view go with every call, from the request; the agent never chooses what was public
+        # (ticket 40; ADR 0002). A date the agent wrote is replaced, and the run's record keeps what it wrote.
+        note.update(as_of=as_of.isoformat(), view=turn.scope.view)
+        written = arguments.get("as_of")
+        if written is not None:
+            arguments = {key: value for key, value in arguments.items() if key != "as_of"}
+            if str(written) != as_of.isoformat():
+                note["as_of_replaced"] = written
+                log.info("Run %s: the agent asked %s as of %s; it ran as of the page's %s.", turn.run_id, name, written,
+                         as_of.isoformat())
         try:
             with engine_for(turn.viewer) as engine:
                 result = registry.call(name, arguments, tool_context(engine, turn.viewer, turn.scope.view, as_of, limits),

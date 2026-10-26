@@ -228,20 +228,25 @@ def test_the_public_view_of_a_project_still_under_way_shows_no_disagreement(serv
     assert not any("disagree" in segment.get("text", "") for segment in body["finding"] + body["alt"])
 
 
-def test_the_public_view_of_a_project_still_under_way_shows_no_disagreement_from_a_drawer_link_either(
-        server, p130164, monkeypatch):
-    from strata.server import timeline
+def test_the_public_view_of_a_project_still_under_way_shows_no_disagreement_from_a_drawer_link_either(server, fixture_db):
+    import datetime as dt
 
-    # No active project in the fixture has a disagreement, so P130164 stands in for one still under way.
-    monkeypatch.setattr(timeline, "ACTIVE", p130164["project"]["status"])
-    line = next(item for item in placed(p130164, kind="disagreement") if item["attribute"] == "pdo_progress")
-    icr = one(p130164, kind="report", type="icr")
+    from strata.dbx import Viewer
+    from strata.tools import registry
 
-    assert get(server, f"/api/evidence?id={line['evidence_id']}&{DAY}&view=public").status_code == 404
-    assert get(server, f"/api/evidence?id={icr['evidence_id']}&{DAY}&view=public").json()["row"]["disagreements"] == []
-    # World Bank staff still see both.
-    assert get(server, f"/api/evidence?id={line['evidence_id']}&{DAY}").status_code == 200
-    assert get(server, f"/api/evidence?id={icr['evidence_id']}&{DAY}").json()["row"]["disagreements"] != []
+    # P156634 was under way on the page's date, and get_disagreements finds disagreements about its packages in the
+    # staff view (ticket 40 judges "under way" as of the page's date with one rule, strata.tools.withheld). They sit on
+    # no timeline mark, but a drawer link names them.
+    from strata.server.timeline import DISAGREEMENT
+
+    with DuckDBEngine.open(fixture_db, read_only=True) as engine:
+        found = registry.call("get_disagreements", {"subject_id": "P156634"},
+                              registry.Context(engine, Viewer(user_id="ana"), "staff", dt.date(2026, 10, 23)))
+    link = f"{DISAGREEMENT}:{found['rows'][0]['disagreement_id']}"
+
+    assert get(server, f"/api/evidence?id={link}&{DAY}&view=public").status_code == 404
+    # World Bank staff still see it.
+    assert get(server, f"/api/evidence?id={link}&{DAY}").status_code == 200
 
 
 def test_a_crowded_what_lane_groups_contracts_by_year_and_the_table_keeps_every_contract(server):

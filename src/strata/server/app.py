@@ -116,6 +116,7 @@ import uuid
 from collections.abc import AsyncIterator, Callable
 from contextlib import asynccontextmanager
 from pathlib import Path
+from urllib.parse import parse_qs
 from typing import Annotated, Literal
 
 from fastapi import BackgroundTasks, Depends, FastAPI, Query, Request
@@ -425,7 +426,6 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
         with tracer.start_as_current_span(name, kind=trace.SpanKind.SERVER) as span:
             span.set_attribute("http.request.method", request.method)
             span.set_attribute("url.path", path)
-            span.set_attribute("strata.view", STAFF)
             try:
                 response = await call_next(request)
             except Exception:  # an error no route expected: its details stay in the server log
@@ -433,8 +433,11 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                 log.exception("%s failed in a way I did not expect, reference %s.", name, reference)
                 response = JSONResponse({"code": "internal", "trace_id": reference}, status_code=500)
             finally:  # whatever the route did, the request is counted
+                # The view ViewParams bound for the request (ticket 40): a preview's, or the viewer's own.
+                bound = parse_qs(request.scope.get("query_string", b"").decode("latin-1")).get("view", [STAFF])[0]
+                span.set_attribute("strata.view", bound)
                 if usage is not None:
-                    usage.record(UsageEvent(viewer.user_id, path, STAFF, requested_at, tracing.trace_id(span)))
+                    usage.record(UsageEvent(viewer.user_id, path, bound, requested_at, tracing.trace_id(span)))
             # One operation per route in Application Insights, not one per project or agency.
             route = getattr(request.scope.get("route"), "path", None)
             if route and path.startswith("/api/"):
@@ -1043,18 +1046,34 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
             return None, False
 
     @app.get("/api/me")
-    def me(lang: str | None = None, viewer: Viewer = Depends(current_viewer)) -> dict:
+    def me(request: Request, lang: str | None = None, viewer: Viewer = Depends(current_viewer)) -> dict:
         # Whether the viewer has the World Bank staff role (ticket 37): the navy bar's Projects tab then opens
         # Following, and the project page offers Follow. The language of answers and drafts in effect, and where it
         # came from (ticket 42): the page's ?lang=, which the app passes on, the saved choice, the team's, English.
         # An implementing agency officer (ticket 38): their agency, and the implementing agency view the pill names.
+        # The view switch (ticket 40): the views the popover offers, the view and as-of date the server applied to the
+        # address's ?view= and ?asof= and why it could not apply what was asked, and what the applied view keeps.
         saved, readable = saved_language(viewer)
         language = working_language(lang, saved, access.team_language(viewer) if viewer.user_id else None)
         agency = access.agency(viewer)
+        own = view_routes.PIU if agency else view_routes.STAFF
+        asked = view_routes.requested(request)
+        found = view_routes.applied(view_rules, own, asked["view"] if asked["view"] else None)
+        date = view_routes.as_of(asked["asof"], today())
+        rule = view_rules.views[found.view]
         return {"email": viewer.email, "name": viewer.name, "signed_in": viewer.signed_in,
                 "has_token": viewer.token is not None, "staff": access.is_staff(viewer),
                 "agency": {"name": agency, "agency_id": upload_routes.agency_id(agency)} if agency else None,
-                "own_view": "piu" if agency else "staff",
+                "own_view": own, "views": list(view_routes.offered(view_rules, own)),
+                "applied": {"view": found.view, "preview": found.preview, "problem": found.problem},
+                "preview_agency": {"name": view_rules.preview_agency, "short_name": view_rules.preview_agency_short,
+                                   "agency_id": upload_routes.agency_id(view_rules.preview_agency)},
+                "tabs": list(rule.tabs), "hidden": list(rule.hidden),
+                # What the applied view keeps, and for each act the copy key of the sentence a preview gives.
+                "capabilities": sorted(found.capabilities),
+                "reasons": {key: capability.reason for key, capability in view_rules.capabilities.items()
+                            if capability.reason},
+                "asof": {"applied": date.applied.isoformat() if date.applied else None, "problem": date.problem},
                 "language": {**language.as_dict(), "saved_readable": readable, "choices": language_choices()}}
 
     @app.put("/api/me/working-language")

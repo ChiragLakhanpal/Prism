@@ -553,6 +553,17 @@ as_of = 2026-10-23
 recording = "p130164-isr-7-rating"
 
 [[cases]]
+id = "p130164-as-of-isr-7"
+says = """The ISR 7 question, asked as of August 26, 2016, the day ISR 7 was disclosed (ticket 40). The app runs every \
+tool call as of that date: the agent's own later date on its first search is replaced, the completion report, public \
+from November 2, 2019, gives no passage, and check 6 finds no disagreement, because the ICR paragraph that disagrees \
+was not public yet. The sentence about ISR 7 is kept."""
+question = "How did the status reports rate P130164's progress towards its development objective in 2016?"
+scope = "P130164"
+as_of = 2016-08-26
+recording = "p130164-as-of-isr-7"
+
+[[cases]]
 id = "p130164-isr-7-and-risk-rating"
 says = """The ISR 7 answer, with a second sentence that quotes another rating from the same section of ISR 7: the overall \
 risk, which no report disagrees about. Only the sentence that states the disputed rating rests on the disagreement, \

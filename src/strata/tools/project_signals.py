@@ -48,6 +48,7 @@ from importlib import resources
 from strata.config import load_project_page
 from strata.tools import check_plan as plan_check
 from strata.tools.registry import Call
+from strata.tools.withheld import WITHHELD, status_as_of, withheld
 
 CHECKS = ("completion_passed", "above_estimate", "late_direct", "closing_moves", "restructured", "isr_lowered",
           "disbursement")
@@ -57,8 +58,7 @@ NEEDS = {"completion_passed": "plans", "above_estimate": "plans", "late_direct":
          "closing_moves": "loan_history", "restructured": "isr", "isr_lowered": "isr", "disbursement": "loans"}
 COMPLETION = ("completion_passed_no_contract",)
 ABOVE = ("signed_over_estimate", "signed_late_over_estimate")
-ACTIVE, CLOSED = "active", "closed"
-STATUS_KIND = {"Active": ACTIVE, "Closed": CLOSED, "Pipeline": "pipeline", "Dropped": "dropped"}
+ACTIVE = "active"  # strata.tools.withheld.status_as_of's word for a project still under way
 RESTRUCTURING = re.compile(r"Restructuring Level (\d+) Approved on (\d{2})-([A-Za-z]{3})-(\d{4})")
 MONTHS = {name: number for number, name in enumerate(
     ("jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"), 1)}
@@ -185,14 +185,9 @@ def _project(call: Call, project_id: str, history: list[dict]) -> dict | None:
     if not found:
         return None
     row = found[0]
-    current = plan_check.record_is_current(row, call.as_of)
-    if current:
-        status, closing = STATUS_KIND.get(row["status"] or "", None), _date(row["closing_date"])
-        record_on = plan_check.record_date(row)
-    else:
-        closing = _date(history[-1]["closing_date"]) if history else None
-        status = None if closing is None else ACTIVE if closing >= call.as_of else CLOSED
-        record_on = _date(row["public_from"])
+    # The one rule for whether a project was active on a date (strata.tools.withheld, ticket 40).
+    status, closing, current = status_as_of(row, history, call.as_of)
+    record_on = plan_check.record_date(row) if current else _date(row["public_from"])
     if status == ACTIVE and closing is not None:
         closing_kind = "closes" if closing >= call.as_of else "past_closing"
     else:
@@ -369,6 +364,9 @@ def project_signals(call: Call, project_id: str) -> dict:
     if project["status"] != ACTIVE:
         return {**empty, "status": project["status"] or "not_checked",
                 "abstention": {"reason": "not_active" if project["status"] else "no_records", "project_id": project_id}}
+    # The public view shows no signals on a project still under way (the roles file's [views], ticket 40).
+    if withheld(call, "signals_on_active_projects", project["project_id"]):
+        return {**empty, "status": None, "abstention": {"reason": WITHHELD, "project_id": project_id}}
 
     found: dict[str, list[dict]] = {}
     values: dict[str, dict] = {key: {} for key in CHECKS}

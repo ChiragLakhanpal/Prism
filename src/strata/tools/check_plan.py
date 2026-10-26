@@ -502,7 +502,7 @@ def check_upload(call: Call, upload: Mapping, project: dict, limits: Thresholds)
 
 
 def _result(activities: list[dict], not_used: dict, plan: dict, project: dict, limits: Thresholds,
-            baseline: dict | None) -> dict:
+            baseline: dict | None, withheld: str | None = None) -> dict:
     def count(mark: str) -> int:
         return sum(1 for row in activities if any(m["mark"] == mark for m in row["marks"]))
 
@@ -518,6 +518,7 @@ def _result(activities: list[dict], not_used: dict, plan: dict, project: dict, l
         "checks_run": [check for check in CHECKS if check != "closing_date" or project["closing_date"]],
         "thresholds": limits.as_values(),
         "baseline": baseline,
+        "withheld": withheld,
         "counts": {"activities": len(activities), "checked": len(activities) - len(partly),
                    "not_fully_checked": len(partly),
                    "needs_a_look": count("needs_a_look"), "watch": count("watch"), "data_note": count("data_note"),
@@ -533,7 +534,7 @@ def check_plan(call: Call, project_id: str, implementing_agency: str, plan_date:
     limits = Thresholds.read(call)
     project, record_agencies = _project(call, project_id)
     empty = {"rows": [], "coverage": {"matched": 0, "used": 0, "not_used": []}, "plan": None, "project": project,
-             "checks_run": [], "thresholds": limits.as_values(), "counts": None, "baseline": None}
+             "checks_run": [], "thresholds": limits.as_values(), "counts": None, "baseline": None, "withheld": None}
     if upload_id is not None:
         # The same answer for an upload that does not exist, belongs to another team, or is of another project or
         # agency, so a call reveals nothing about another team's uploads.
@@ -560,11 +561,15 @@ def check_plan(call: Call, project_id: str, implementing_agency: str, plan_date:
     for note in _rows(call, "data_notes.sql", **params):
         notes.setdefault(note["activity_reference_no"], []).append(note)
 
+    # The public view shows no signal on a project still under way, and keeps the data notes, which describe the
+    # published record, not the progress of a live process (the roles file's [views], ticket 40; the 10 brief, 6).
+    from strata.tools.withheld import WITHHELD, withheld
+    hidden = withheld(call, "signals_on_active_projects", project_id)
     activities, not_used = [], {}
     for activity in found:
         evidence_id = f"strata.silver.plan_rows:{plan['document_id']}/{activity['activity_reference_no']}"
         signals, unchecked = _signals(activity, [evidence_id], project, limits, call.as_of)
-        signals = _with_baseline(signals, activity, baseline, call.as_of)
+        signals = [] if hidden else _with_baseline(signals, activity, baseline, call.as_of)
         written = [_note(note, [evidence_id]) for note in notes.get(activity["activity_reference_no"], [])]
         marks = []
         if signals:
@@ -576,4 +581,4 @@ def check_plan(call: Call, project_id: str, implementing_agency: str, plan_date:
             not_used.setdefault(note["code"], []).append(evidence_id)
         # position and listed describe an upload's rows; a published plan's rows have neither.
         activities.append({**_row(activity, evidence_id, plan, marks), "position": None, "listed": None})
-    return _result(activities, not_used, plan, project, limits, empty["baseline"])
+    return _result(activities, not_used, plan, project, limits, empty["baseline"], WITHHELD if hidden else None)

@@ -1,0 +1,10 @@
+{
+  "status": 403,
+  "body": {
+    "code": "preview",
+    "error": "preview",
+    "capability": "compare_criteria",
+    "copy_key": "criteria.preview",
+    "view": "piu"
+  }
+}

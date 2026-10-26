@@ -246,9 +246,11 @@ def test_without_an_as_of_date_each_tool_answers_as_of_today(engine, library, mo
         assert answered(result, question) == expected(question)
 
 
-@pytest.mark.parametrize("view", ["piu", "public"])
+@pytest.mark.parametrize("view", ["piu"])
 def test_each_tool_answers_under_each_view(engine, library, view):
-    """Until ticket 40 applies each view's rules, every view gets the World Bank staff result."""
+    """The implementing agency view gets the World Bank staff result for every benchmark question. The public view
+    leaves signals, time estimates and disagreements out on a project still under way (ticket 40), which
+    tests/test_public_view.py proves."""
     for question in tool_questions():
         result = registry.call(question["tool"], arguments_of(question, engine, library),
                                registry.Context(engine=engine_for(question, engine, library), viewer=ANA, view=view))
