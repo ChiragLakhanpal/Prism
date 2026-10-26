@@ -33,11 +33,12 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[1]
-for folder in (REPO / "src", REPO / "ops" / "dayone", HERE):
+for folder in (REPO / "src", REPO / "ops" / "dayone", REPO / "ops" / "app", HERE):
     if str(folder) not in sys.path:
         sys.path.insert(0, str(folder))
 
 import dayone  # noqa: E402
+import deploy_app  # noqa: E402  (ops/app/deploy_app.py, which says what the app's service principal holds)
 from strata.lakehouse import bundle, catalog, nightly  # noqa: E402
 from strata.lakehouse.catalog import CatalogError  # noqa: E402
 from strata.lakehouse.engine import EngineError  # noqa: E402
@@ -48,13 +49,15 @@ KINDS = {"catalog": "The catalog", "schemas": "The schema", "volumes": "The volu
          "grants": "The grants on", "jobs": "The job", "dashboards": "The dashboard"}
 
 
-def dashboard_name() -> str:
-    """The dashboard's name in the workspace, as bundle/dashboard.yml gives it."""
-    return bundle.load().resources("dashboards")["strata_dashboard"]["display_name"]
+def dashboard_names() -> list[str]:
+    """Each dashboard's name in the workspace, as bundle/dashboard.yml gives it: the dashboard and its test copy."""
+    loaded = bundle.load()
+    return [loaded.resolve(board["display_name"]) for board in loaded.resources("dashboards").values()]
 
 
-def flatten(listing: dict | None, job: dict | None = None, dashboard: dict | None = None) -> dict:
-    """One entry per thing the deploy can change, keyed by its kind and full name."""
+def flatten(listing: dict | None, job: dict | None = None, dashboards: list[dict | None] = ()) -> dict:
+    """One entry per thing the deploy can change, keyed by its kind and full name. A dashboard's entry holds its
+    update_time, so one the bundle rewrote reads as changed even when its pages kept their names."""
     if not listing:
         found = {}
     else:
@@ -65,8 +68,7 @@ def flatten(listing: dict | None, job: dict | None = None, dashboard: dict | Non
         found |= {("grants", securable): value for securable, value in listing.get("grants", {}).items()}
     if job:
         found[("jobs", job["name"])] = job
-    if dashboard:
-        found[("dashboards", dashboard["name"])] = dashboard
+    found |= {("dashboards", dashboard["name"]): dashboard for dashboard in dashboards if dashboard}
     return found
 
 
@@ -103,6 +105,27 @@ def changes(before: dict, after: dict, kinds: dict[str, str] = KINDS) -> list[st
     return lines
 
 
+def give_app_access(workspace) -> str:
+    """Give the app's own service principal back its way in to the catalog and to strata.ops (deploy_app.ACCESS),
+    which the bundle's grants replace, and say what I did (ticket 79). The app is the one ops/dayone/dayone.toml
+    names, as apps get returns it. No app yet, or an app that is not Strata's, gets nothing."""
+    name = dayone.load_config()["names"]["app"]
+    app = workspace.app(name)
+    if app is None:
+        return (f"I found no app named {name}, so I granted nothing for it. Its deploy, ops/app/deploy_app.py, "
+                "grants its service principal what it needs.")
+    if not deploy_app.is_strata(app):
+        return f"The app {name} is not Strata's: its description is {app['description']!r}. I granted nothing for it."
+    principal = app.get("principal") or ""
+    if not deploy_app.PRINCIPAL.fullmatch(principal):
+        return f"The app {name} has no service principal yet, so I granted nothing for it."
+    for kind, securable, privilege in deploy_app.ACCESS:
+        workspace.grant(kind, securable, principal, [privilege])
+    held = " and ".join(f"{privilege.replace('_', ' ')} on {securable}" for _, securable, privilege in deploy_app.ACCESS)
+    return (f"The bundle's grants replace every other grant on {catalog.CATALOG} and its schemas, so I gave the app "
+            f"{name}'s service principal {principal} back {held}.")
+
+
 def summary(listing: dict) -> str:
     counts = [dayone.count_words(len(listing.get(kind, {})), noun)
               for kind, noun in (("schemas", "schema"), ("tables", "table"), ("volumes", "volume"))]
@@ -110,8 +133,8 @@ def summary(listing: dict) -> str:
 
 
 def deploy(workspace, fairshare: str = FAIRSHARE) -> int:
-    job, board = nightly.job_name(), dashboard_name()
-    before = flatten(workspace.listing(catalog.CATALOG), workspace.job(job), workspace.dashboard(board))
+    job, boards = nightly.job_name(), dashboard_names()
+    before = flatten(workspace.listing(catalog.CATALOG), workspace.job(job), [workspace.dashboard(b) for b in boards])
     neighbour_before = workspace.listing(fairshare)
 
     print("1. Deploying the bundle: the catalog, its four schemas, the volume, the grants, the jobs and the "
@@ -121,6 +144,7 @@ def deploy(workspace, fairshare: str = FAIRSHARE) -> int:
         print("The bundle deploy failed, so I created no tables. The Databricks CLI said:")
         print("".join(f"    {line}\n" for line in output.splitlines()), end="")
         return 1
+    print(f"   {give_app_access(workspace)}")
 
     print("2. Creating the tables and views from src/strata/lakehouse/tables and views on the SQL warehouse.")
     try:
@@ -141,7 +165,7 @@ def deploy(workspace, fairshare: str = FAIRSHARE) -> int:
         print("   This engine has no metric views, so I made none of the ones Genie reads.")
 
     print("3. What changed:")
-    after = flatten(workspace.listing(catalog.CATALOG), workspace.job(job), workspace.dashboard(board))
+    after = flatten(workspace.listing(catalog.CATALOG), workspace.job(job), [workspace.dashboard(b) for b in boards])
     for line in changes(before, after) or ["No changes."]:
         print(f"   {line}")
 

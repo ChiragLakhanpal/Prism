@@ -189,6 +189,17 @@ LESSON_REVIEW_TABLES = ("lesson_review_acts", "lesson_review_items", "lesson_ver
 # each answer cited, the query judges' grades, and the pair of judges a query keeps at its first grade, which the
 # app writes as itself with the person in each row. tests/test_judging.py checks that a grade writes only these.
 RETRIEVAL_TABLES = ("candidate_labels", "label_decisions", "answer_citations", "retrieval_grades", "retrieval_queries")
+# The app's way in to the catalog and to strata.ops, as (securable type, full name, privilege). The bundle's grants
+# (bundle/catalog.yml) replace every other grant on strata and its schemas, so the bundle deploy
+# (ops/bundle/deploy.py) gives these back to the app's service principal right after (ticket 79). Its table grants
+# below are on tables, which the bundle leaves alone.
+ACCESS = (("catalog", "strata", "USE_CATALOG"), ("schema", "strata.ops", "USE_SCHEMA"))
+
+
+def is_strata(app: dict) -> bool:
+    """Whether the app that ops/dayone/dayone.toml names is Strata's, or the day-one probe app it replaces, by its
+    description. Strata leaves an app that someone else made alone."""
+    return app["description"] in (DESCRIPTION, PROBE_DESCRIPTION)
 
 
 def grants(principal: str) -> list[str]:
@@ -207,8 +218,8 @@ def grants(principal: str) -> list[str]:
     tables = ("usage_events", "agent_runs", "evidence_opened", "drafts", "draft_states", "draft_exports",
               "draft_files", "follows", "disagreement_choices", "draft_fields", "exposures", "uploads",
               "upload_rows", "lesson_visits", "draft_lesson_choices")
-    return [f"GRANT USE CATALOG ON CATALOG strata TO `{principal}`",
-            f"GRANT USE SCHEMA ON SCHEMA strata.ops TO `{principal}`",
+    return [*[f"GRANT {privilege.replace('_', ' ')} ON {kind.upper()} {name} TO `{principal}`"
+              for kind, name, privilege in ACCESS],
             *[f"GRANT SELECT, MODIFY ON TABLE strata.ops.{table} TO `{principal}`" for table in tables],
             f"GRANT SELECT ON TABLE strata.ops.draft_fields_latest TO `{principal}`",
             f"GRANT SELECT ON TABLE strata.ops.supplier_pairs TO `{principal}`",
@@ -285,7 +296,7 @@ def deploy(workspace, env: dict, build_web: Callable[[], tuple[int, str]] = buil
         workspace.create_app(name, DESCRIPTION)
         app = workspace.app(name)
         print(f"   I made the app {name}.")
-    elif app["description"] not in (DESCRIPTION, PROBE_DESCRIPTION):
+    elif not is_strata(app):
         print(f"The app {name} is not Strata's: its description is {app['description']!r} and it runs "
               f"{app['source'] or 'nothing yet'}. I left it alone. Set names.app in ops/dayone/dayone.toml "
               "to a free app name.")
