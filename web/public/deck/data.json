@@ -171,10 +171,10 @@
   ]
  },
  "urls": {
-  "app": "https://strata-7474658003099155.aws.databricksapps.com",
+  "app": "https://strata-7405609289499029.9.azure.databricksapps.com",
   "dashboard": null,
   "repo": null,
-  "deck": "https://strata-7474658003099155.aws.databricksapps.com/present",
+  "deck": "https://strata-7405609289499029.9.azure.databricksapps.com/present",
   "proposal": null
  },
  "presenter": {

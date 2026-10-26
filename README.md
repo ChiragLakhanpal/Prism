@@ -8,8 +8,8 @@ Strata is an independent demo built on World Bank open data. It is not a World B
 
 <!-- proposal:links -->
 - The proposal: [docs/proposal.md](docs/proposal.md), once it is built from `docs/proposal/source.md` (`python -m strata.proposal build`). It follows the assessment's modules, and every number in it links to the result the build measured.
-- The deck: <https://strata-7474658003099155.aws.databricksapps.com/present>. The deck is not linked from inside Strata, so this is where to find it.
-- Strata: <https://strata-7474658003099155.aws.databricksapps.com>. Open it with the account your invitation went to.
+- The deck: <https://strata-7405609289499029.9.azure.databricksapps.com/present>. The deck is not linked from inside Strata, so this is where to find it.
+- Strata: <https://strata-7405609289499029.9.azure.databricksapps.com>. Open it with the account your invitation went to.
 - The dashboard: not set yet. Set `dashboard` in `config/urls.toml`.
 - The repo: not set yet. Set `repo` in `config/urls.toml`.
 <!-- /proposal:links -->

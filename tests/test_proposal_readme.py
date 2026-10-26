@@ -14,7 +14,7 @@ from strata.proposal import readme
 ROOT = Path(__file__).resolve().parents[1]
 README = ROOT / "README.md"
 # docs/workspace-catchup.md, ticket 70's redeploy of October 26, 2026: "Strata is running at https://strata-..."
-APP = "https://strata-7474658003099155.aws.databricksapps.com"
+APP = "https://strata-7405609289499029.9.azure.databricksapps.com"
 
 
 def section(name: str) -> str:
