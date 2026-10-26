@@ -63,6 +63,13 @@ def test_the_officers_public_preview_is_a_subset_of_their_own_view_and_of_the_st
     assert own.capabilities - private <= rules.applied(VIEWS, own="staff", requested=None).capabilities
 
 
+def test_the_public_preview_keeps_the_same_from_either_own_view():
+    """The guard and keeps() work out a public preview from the staff view alone, whoever is asking
+    (src/strata/server/views.py); that holds only while both own views give the public preview the same."""
+    assert (rules.applied(VIEWS, own="staff", requested="public").capabilities
+            == rules.applied(VIEWS, own="piu", requested="public").capabilities)
+
+
 @pytest.mark.parametrize("own, previewed", [("staff", "piu"), ("staff", "public"), ("piu", "public")])
 def test_no_key_private_to_a_team_and_no_act_is_kept_in_any_preview(own, previewed):
     preview = rules.applied(VIEWS, own=own, requested=previewed)
@@ -268,3 +275,38 @@ def test_an_officers_own_view_is_not_a_preview_but_their_public_preview_is():
 
     assert own.json().get("code") != "preview"
     assert (preview.status_code, preview.json()["view"]) == (403, "public")
+
+
+class ThreadNoted(StaticGroups):
+    """StaticGroups that notes the thread each read of a viewer's groups ran on: in production that read is a
+    request to the workspace's SCIM API (strata.server.access.WorkspaceGroups)."""
+
+    def __init__(self, groups):
+        super().__init__(groups)
+        self.threads = []
+
+    def groups(self, viewer):
+        import threading
+        self.threads.append(threading.get_ident())
+        return super().groups(viewer)
+
+
+def test_asking_who_the_viewer_is_never_blocks_the_server_loop():
+    """ViewParams and the guard ask whether a viewer is an officer for every request in the agency preview. They run on
+    the server's event loop, so the workspace call behind that question runs on a worker thread, and a slow workspace
+    can't stall an answer that is streaming to someone else."""
+    import threading
+
+    noted = ThreadNoted(GROUPS)
+    app = create_app(engine_for=None, access=Access(roles(), noted), today=lambda: TODAY)
+    loop_threads = []
+
+    async def go():
+        loop_threads.append(threading.get_ident())
+        transport = httpx.ASGITransport(app=app)
+        async with httpx.AsyncClient(transport=transport, base_url="http://strata.test") as client:
+            await client.post("/api/drafts/draft-1/check", headers=OFFICER, params={"view": "piu"},
+                              json={"expected_state": "draft", "view": "piu"})
+
+    asyncio.run(go())
+    assert noted.threads and loop_threads[0] not in noted.threads

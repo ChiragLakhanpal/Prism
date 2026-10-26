@@ -63,7 +63,9 @@ from strata.packages import compute
 from strata.lakehouse.engine import EngineError
 from strata.tools.find_comparables import find_comparables, read_package
 from strata.tools.registry import Call, ToolError
-from strata.tools.withheld import WITHHELD, withheld
+from strata.tools.withheld import WITHHELD, lacks, withheld
+
+ACTIVE_RULE = "time_estimates_on_active_projects"  # the roles file's [views] capability the public view lacks
 
 TOOL = "estimate_time"
 log = logging.getLogger("strata.tools.estimate_time")
@@ -504,10 +506,12 @@ def estimate_time(call: Call, step_reference: str | None = None, method: str | N
             described_market_approach = described_market_approach or fields.get("market_approach")
             described_review_type = described_review_type or fields.get("review_type")
             described_prequalification = described_prequalification or fields.get("prequalification")
-    # The public view gives no time estimate on a project still under way (the roles file's [views], ticket 40).
-    package = read_package(call.engine, step_reference, call.as_of) if step_reference else None
-    if package is not None and withheld(call, "time_estimates_on_active_projects", package["project_id"]):
-        return _nothing(thresholds, {"reason": WITHHELD, "step_reference": step_reference}, step_reference)
+    # The public view gives no time estimate on a project still under way (the roles file's [views], ticket 40). Only
+    # a view that lacks the capability reads the package to find its project.
+    if step_reference and lacks(call.view, ACTIVE_RULE):
+        package = read_package(call.engine, step_reference, call.as_of)
+        if package is not None and withheld(call, ACTIVE_RULE, package["project_id"]):
+            return _nothing(thresholds, {"reason": WITHHELD, "step_reference": step_reference}, step_reference)
     criteria = {"method": method, "category": category, "market_approach": market_approach, "review_type": review_type,
                 "size_from_usd": size_from_usd, "size_to_usd": size_to_usd, "country": country,
                 "notice_from": notice_from, "notice_to": notice_to}

@@ -13,8 +13,8 @@ shield never screened. The rule and its reason codes are strata.knowledge.shield
 get_disagreements follows too. The coverage line also says how many matched passages ranked below the limit. A document type or sector the slice does not know, or a query nothing
 matches, is an abstention, whose reason the registry lists.
 
-The call's view (staff, piu or public) is returned with the result but not yet applied: until
-ticket 40 applies each view's rules, every view gets the World Bank staff result.
+The call's view (staff, piu or public) is returned with the result. It does not change which passages come back:
+the reports are public, and the as-of date (ticket 40) is what limits them.
 """
 
 from __future__ import annotations

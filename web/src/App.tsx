@@ -37,7 +37,7 @@ import { address, navigate, startRouter } from "./lib/router";
 import { createStore, useStore } from "./lib/store";
 import { pageTitle } from "./lib/title";
 import { RoutePage } from "./RoutePage";
-import { fill, isDay, matchRoute, type Match } from "./routes";
+import { fill, isDay, matchRoute, type Match, type PageKey } from "./routes";
 
 const viewer = createStore<Viewer>({ status: "loading" });
 
@@ -162,6 +162,26 @@ function modeWords(preview: Preview | null, asOf: string | null): { line: string
   if (preview) return { line: words.mode[preview], title: (title) => words.title[preview](title) };
   if (date && short) return { line: words.mode.asOf(date), title: (title) => words.title.asOf(title, short) };
   return { line: null, title: (title) => copy.pageTitle(title) };
+}
+
+// The pages that show today's state whatever the as-of date, and the sentence the as-of banner adds on each, so the
+// banner never claims a date the page does not keep (the 35, 38 and 40 briefs).
+const TODAY_STATE: Partial<Record<PageKey, keyof typeof copy.view.banner>> = {
+  checkMyPlan: "uploads",
+  uploadCheck: "uploads",
+  packages: "packages",
+  lessonsQueue: "reviewQueue",
+  lessonReview: "reviewQueue",
+  lessonsReports: "passageReports",
+  passageReport: "passageReports",
+  lessonsJudging: "judging",
+  judgingQuery: "judging",
+};
+
+function todayStateLine(match: Match): string | null {
+  const key = match.section === "drafts" ? "drafts" : TODAY_STATE[match.key];
+  const line = key ? copy.view.banner[key] : null;
+  return typeof line === "string" ? line : null;
 }
 
 export function App() {
@@ -346,9 +366,8 @@ export function App() {
   // The banners (the 40 brief, 3.4): the preview first (whose view), then the date (when). The agency banner names the
   // agency from the roles file, so it waits for /api/me the first time.
   const previewText = preview === "piu" ? (applied ? copy.view.banner.piu(agencyInSentence(applied)) : null) : preview === "public" ? copy.view.banner.public : null;
-  const asOfLine = asOf
-    ? `${copy.view.banner.asOf(formatDate(asOf))}${match.section === "drafts" ? ` ${copy.view.banner.drafts}` : match.key === "checkMyPlan" || match.key === "uploadCheck" ? ` ${copy.view.banner.uploads}` : ""}`
-    : null;
+  const today = todayStateLine(match);
+  const asOfLine = asOf ? `${copy.view.banner.asOf(formatDate(asOf))}${today ? ` ${today}` : ""}` : null;
   const hiddenIn = fresh?.applied.preview && fresh.hidden.includes(match.key) ? (fresh.applied.view as Preview) : null;
   const pending = Boolean(preview && !fresh && who.status !== "error");
   const anySlot = slot.errors.length + slot.notes.length > 0 || previewText || asOfLine;

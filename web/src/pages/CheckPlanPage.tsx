@@ -34,7 +34,7 @@ import { useLoad } from "../lib/load";
 import { address, navigate } from "../lib/router";
 import { useStore } from "../lib/store";
 import { setPageTitle } from "../lib/title";
-import { withReadParams } from "../lib/view";
+import { appliedView, previewOf, withReadParams } from "../lib/view";
 import { useScrollPadding } from "../lib/useScrollPadding";
 import { fill } from "../routes";
 
@@ -192,7 +192,9 @@ export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyI
   const slotId = useId();
   const search = useStore(address).search;
   const params = new URLSearchParams(search);
-  const preview = params.get("view") === "piu" || params.get("view") === "public";
+  // A preview as the server applied it (GET /api/me), so an officer's own ?view=piu is not one.
+  const shownView = useStore(appliedView);
+  const preview = shownView ? shownView.applied.preview : previewOf(search) !== null;
   const asOf = params.get("asof");
   const baselineView = useBaselineView();
   // The draft action's slot holds a button on today's check outside a preview.

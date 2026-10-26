@@ -600,8 +600,8 @@ function stateOf(run: Run, opened: Opened, visited: ReadonlySet<string>, stillWo
   };
 }
 
-// "Asked within P130164, as of October 1, 2026." It names no view: until ticket 40 the server
-// applies no view's rules, so a preview would be a claim about something that did not happen.
+// "Asked within P130164, as of October 1, 2026." It names the preview the answer ran in, since the
+// server applied that view's rules to every tool call (ticket 40).
 function AskedLine({ run, current }: { run: Run; current: string }) {
   const { scope, asOf, view } = run.asked;
   const words = copy.answer;

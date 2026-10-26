@@ -39,9 +39,9 @@ that has or has not passed in the baseline, an activity the baseline did not lis
 date. A baseline adds a measure and never changes the marks, which come from the first published
 planned date.
 
-The call's view (staff, piu or public) is returned with the result. Until ticket 40 applies each view's
-rules, every view gets the World Bank staff result, except the baseline, which a preview can only take
-away from: the implementing agency view gets it without who saved it, and the public view not at all.
+The call's view (staff, piu or public) is returned with the result and applied by the roles file's [views]
+(ticket 40): the implementing agency view gets the baseline without who saved it, and the public view gets no
+baseline and, on a project not yet closed on the as-of date, the data notes without any signal.
 """
 
 from __future__ import annotations

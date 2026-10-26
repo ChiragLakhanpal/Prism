@@ -382,6 +382,10 @@ export const copy = {
       // Added after the as-of banner's sentence on the pages that keep today's state (the 35 and 38 briefs).
       drafts: "I show drafts as they are today, whatever the as-of date.",
       uploads: "I check uploads against today's records, whatever the as-of date.",
+      packages: "I show your packages and checked plans as they are today, whatever the as-of date.",
+      reviewQueue: "I show the lessons waiting for review as they are today, whatever the as-of date.",
+      passageReports: "I show passage reports as they are today, whatever the as-of date.",
+      judging: "I show the queries to judge as they are today, whatever the as-of date.",
       back: "Back to today",
       asOfRegion: "Past date",
     },

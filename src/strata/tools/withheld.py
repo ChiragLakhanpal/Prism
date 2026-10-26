@@ -65,10 +65,16 @@ def project_status(engine, project_id: str, as_of: dt.date) -> str | None:
     return status_as_of(found[0], history, as_of)[0]
 
 
+def lacks(view: str, capability: str) -> bool:
+    """Whether the view lacks a capability that is withheld only on active projects, so a tool knows whether it needs
+    to read the project at all."""
+    return not views().capabilities[capability].values.get(view, True)
+
+
 def withheld_in(engine, view: str, as_of: dt.date, capability: str, project_id: str | None) -> bool:
     """Whether the view leaves this capability out for the project: the view lacks it, and the project was active on
     the as-of date."""
-    if project_id is None or views().capabilities[capability].values.get(view, True):
+    if project_id is None or not lacks(view, capability):
         return False
     return project_status(engine, project_id, as_of) == "active"
 

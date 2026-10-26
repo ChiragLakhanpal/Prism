@@ -7,6 +7,9 @@ import { useId } from "react";
 import { copy } from "../copy";
 import { formatDate } from "../lib/format";
 import { useLoad, type Load } from "../lib/load";
+import { address } from "../lib/router";
+import { useStore } from "../lib/store";
+import { keptQuery, MODE_KEYS } from "../lib/view";
 import { Fill } from "./Fill";
 import { LoadError } from "./LoadError";
 import { Num } from "./Num";
@@ -50,6 +53,8 @@ export function AgencyFinding({ counts, withheld }: { counts: AgencyCounts | nul
 
 export function AgencyProjectsView({ load, onRetry, asOf }: { load: Load<AgencyProjectsAnswer>; onRetry: () => void; asOf: string | null }) {
   const heading = useId();
+  // Each plan link keeps the page's view, date and language, so it holds them when opened in a new tab too.
+  const mode = keptQuery(useStore(address).search, [...MODE_KEYS]);
   const data = load.status === "ready" ? load.data : null;
   const agency = data ? copy.view.agencyInSentence(data.agency.name, data.agency.short_name) : null;
   return (
@@ -82,7 +87,7 @@ export function AgencyProjectsView({ load, onRetry, asOf }: { load: Load<AgencyP
             {data.projects.map((project) => (
               <li key={project.project_id} data-agency-project={project.project_id}>
                 <TextLink
-                  href={`/projects/${project.project_id}/procurement/${project.plan.agency_id}/${project.plan.plan_date}`}
+                  href={`/projects/${project.project_id}/procurement/${project.plan.agency_id}/${project.plan.plan_date}${mode}`}
                   className="text-body font-semibold"
                 >
                   {words.item(formatDate(project.plan.plan_date))}

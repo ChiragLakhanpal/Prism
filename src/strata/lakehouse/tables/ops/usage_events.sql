@@ -10,7 +10,7 @@
 --
 -- viewer_id     the user id the Databricks App forwarded; empty when no one was signed in
 -- route         the path asked for, without its query, such as /projects/P130164 or /api/freshness
--- view          the view the server applied: staff, until ticket 40 adds piu and public
+-- view          the view the server bound for the request (ticket 40): piu or public in a preview, else staff
 -- requested_at  when the request arrived, in UTC
 -- trace_id      the request's trace in Application Insights, as 32 hex digits
 -- public_from   the day of the request, in UTC (ADR 0002)

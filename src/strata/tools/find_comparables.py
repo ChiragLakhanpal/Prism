@@ -38,7 +38,8 @@ How it works, with its thresholds in config/thresholds.toml's [past_range] (CLAU
 
 Every number is at its rounding here: days are whole, and months have one decimal. The rows come
 shortest first, by months and then STEP reference, which is the order the chart's dots and its table
-use. The call's view is returned with the result but not applied until ticket 40.
+use. The call's view is returned with the result; it does not change it, since comparable packages are signed
+contracts in the public record (the roles file's [views], ticket 40).
 """
 
 from __future__ import annotations

@@ -203,6 +203,25 @@ test("as of August 26, 2016, P130164's timeline ends at the date; ISR 7's drawer
   await expect(page.locator("[data-mode-status]")).toHaveText("You are seeing today's data again.");
 });
 
+test("as of a past date, the pages that keep today's state say so under the date", async ({ page }) => {
+  await open(page, "/packages?asof=2016-08-26", {
+    "/api/planned-packages": { body: await recorded("planned-packages-empty.json") },
+    "/api/uploads": { body: await recorded("uploads-list-nwwda.json") },
+  });
+  const banner = page.getByRole("region", { name: "Past date" }).locator("[data-alert] p").first();
+  await expect(banner).toHaveText(
+    "I'm showing this page as of August 26, 2016. I use only what was disclosed by that date. I show your packages and checked plans as they are today, whatever the as-of date.",
+  );
+  for (const [path, line] of [
+    ["/lessons/review", "I show the lessons waiting for review as they are today, whatever the as-of date."],
+    ["/lessons/reports", "I show passage reports as they are today, whatever the as-of date."],
+    ["/lessons/judging", "I show the queries to judge as they are today, whatever the as-of date."],
+  ]) {
+    await page.goto(`${path}?asof=2016-08-26`);
+    await expect(banner).toContainText(line);
+  }
+});
+
 test("Your agency's projects lists each disclosed plan with its check, in the agency preview", async ({ page }) => {
   await open(page, "/projects?view=piu", {
     "/api/projects": { body: await recorded("projects.json") },
@@ -213,7 +232,8 @@ test("Your agency's projects lists each disclosed plan with its check, in the ag
   await expect(section).toContainText(
     "These are the projects where the Northern Water Works Development Agency (NWWDA) has a disclosed Procurement Plan. I checked the latest plan for each one.",
   );
-  await expect(section.getByRole("link", { name: "Procurement Plan of October 9, 2026" })).toHaveAttribute("href", PLAN);
+  // The link keeps the preview, so it holds it opened in a new tab too.
+  await expect(section.getByRole("link", { name: "Procurement Plan of October 9, 2026" })).toHaveAttribute("href", `${PLAN}?view=piu`);
   await expect(section.locator("[data-agency-project=P156634]")).toContainText("One needs a look and two are worth watching; three have data notes.");
   await expect(section.locator("[data-agency-project]")).toHaveCount(2);
 });

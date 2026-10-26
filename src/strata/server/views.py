@@ -28,6 +28,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from urllib.parse import parse_qsl, urlencode
 
+import anyio.to_thread
 from fastapi import Request
 
 from strata.config import VIEW_KEYS, Views
@@ -133,10 +134,14 @@ class ViewParams:
             return await self.app(scope, receive, send)
         pairs = parse_qsl(scope.get("query_string", b"").decode("latin-1"), keep_blank_values=True)
         asked = dict(pairs)
+        # Whether the viewer is an officer is a workspace call in production, so it runs on a worker thread, never on
+        # the server's loop, and only when the address names piu.
+        officer = (await anyio.to_thread.run_sync(self.officer, viewer_of(scope))
+                   if any(key == "view" and value == PIU for key, value in pairs) else False)
         kept = []
         for key, value in pairs:
             if key == "view":
-                if value == PUBLIC or (value == PIU and not self.officer(viewer_of(scope))):
+                if value == PUBLIC or (value == PIU and not officer):
                     kept.append((key, value))
             elif key == "asof":
                 # A date I can't read is left out, so the route reads today. A date of today or later stays: every
@@ -205,7 +210,8 @@ def make_guard(views: Callable[[], Views], officer: Callable[[Viewer], bool]):
             return
         # An officer whose body names piu is in their own view (the query was already bound by ViewParams). The public
         # preview keeps the same capabilities from either own view (tests/test_views.py), so only piu asks who it is.
-        own = PIU if preview == PIU and officer(viewer_from_headers(request.headers)) else STAFF
+        own = (PIU if preview == PIU and await anyio.to_thread.run_sync(officer, viewer_from_headers(request.headers))
+               else STAFF)
         found = applied(held, own, preview)
         if not found.preview or found.allows(capability):
             return
