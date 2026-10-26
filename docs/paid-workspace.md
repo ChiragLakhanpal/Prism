@@ -293,6 +293,8 @@ To get the day-one results again: the probes rewrite each test's block when they
 
 7. The probes or the demo-ready command cannot reach the App's health route, though the App runs. The CLI profile strata still points at the old host. Run the sign-in command in section 4 again with the new address.
 
+8. The App loads but every page says "Your account can't read the data I hold yet", while the same account can query the warehouse. This happened on October 26, 2026, at the first open of the real App: the browser window kept the App session it had opened earlier, when the day-one probe app held the same address without the user authorization scopes, and the Apps proxy keeps a window's session token until it expires. The App's log (Application Insights, not `databricks apps logs`) says it word for word: "Provided OAuth token does not have required scopes: sql". The fix: in that window, sign out of the App, or clear the site's cookies for the App's address, then open the App again from the workspace's Apps page and accept the consent page that lists Databricks SQL. A private window, which starts with a fresh consent, loads the pages at once. The App deploy prints this warning after a deploy over an existing app (ticket 83).
+
 ## 9. Switching back
 
 Two commands in your own terminal, from the main checkout:

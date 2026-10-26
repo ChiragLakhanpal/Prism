@@ -107,6 +107,7 @@ def test_one_command_uploads_the_app_with_its_lean_requirements_deploys_it_and_p
     assert not [name for name in files if "__pycache__" in name or name.startswith(("tests/", "data/", "web/src/"))]
     assert workspace.deployed == [("strata", "/Workspace/Users/owner@example.org/strata-app")]
     assert out.rstrip().splitlines()[-1] == "Strata is running at https://strata-1.aws.databricksapps.com"
+    assert "The app existed before this deploy." not in out  # a first deploy has no old sessions to warn about
 
 
 def test_the_plan_names_from_the_repo_alone_what_a_first_deploy_makes(tmp_path, capsys):
@@ -354,6 +355,10 @@ def test_the_deploy_replaces_the_day_one_probe_app_and_starts_a_stopped_app(tmp_
     assert workspace.started == ["strata"]
     assert workspace.apps["strata"]["source"] == "/Workspace/Users/owner@example.org/strata-app"
     assert "Strata is running at" in out
+    # The probe app's address was open in a browser before it had the sql scope (ticket 83): the deploy says what to do.
+    assert "The app existed before this deploy." in out
+    assert "sign out of the app once" in out
+    assert out.rstrip().splitlines()[-1].startswith("Strata is running at")
 
 
 def test_the_deploy_leaves_an_app_someone_else_made_alone(tmp_path, capsys):
