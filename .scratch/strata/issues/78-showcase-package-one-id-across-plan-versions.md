@@ -17,4 +17,4 @@ Read first: `src/strata/reader/` and `src/strata/lakehouse/plans.py` (the plan r
 
 ## Comments
 
-- October 26, 2026, orchestrator: opened at 04:35 PDT from the second session's demo-ready runs (48-2 and 48-3). On the demo path: the showcase question's package must read the same on the fixture and on the workspace.
+- October 26, 2026, orchestrator: opened at 02:56 PDT from the second session's demo-ready runs (48-2 and 48-3). On the demo path: the showcase question's package must read the same on the fixture and on the workspace.
