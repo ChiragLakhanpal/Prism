@@ -23,7 +23,7 @@ import pytest
 from packaging.requirements import Requirement
 
 REPO = Path(__file__).resolve().parents[3]
-SCRIPTS = ("ops/bundle/check.py", "ops/agent/refuse_live.py", "ops/agent/ask_live.py")
+SCRIPTS = ("ops/bundle/check.py", "ops/agent/refuse_live.py", "ops/agent/ask_live.py", "ops/notices/contacts_left_live.py")
 CHECK = REPO / "ops" / "bundle" / "check.py"
 # The folders check.py puts on sys.path, in the order Python then searches them.
 CHECK_PATH = (REPO / "ops" / "bundle", REPO / "ops" / "dayone", REPO / "src")

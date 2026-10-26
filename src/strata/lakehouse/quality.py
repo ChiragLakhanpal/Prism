@@ -27,6 +27,15 @@ from strata.lakehouse.engine import Engine
 
 COLUMNS = ("run_id", "night", "task_key", "check_kind", "table_name", "key_name", "found", "expected_min",
            "expected_max", "passed", "checked_at", "public_from")
+# A notice that contacts_left counts: its text or its description holds what contacts.LEFT_EMAIL or LEFT_PHONE finds,
+# the patterns the removal's last pass takes out. Silver's notices transform finds the pages to read again with it.
+CONTACTS_LEFT = ("regexp_like(notice_text, :email) OR regexp_like(notice_text, :phone) "
+                 "OR regexp_like(bid_description, :email) OR regexp_like(bid_description, :phone)")
+
+
+def contacts_left_params() -> dict[str, str]:
+    """The patterns CONTACTS_LEFT binds, as parameters: Spark SQL mangles the backslashes of a literal."""
+    return {"email": contacts.LEFT_EMAIL, "phone": contacts.LEFT_PHONE}
 
 
 @dataclass(frozen=True)
@@ -68,10 +77,8 @@ def check_table(engine: Engine, check: QualityCheck) -> list[Result]:
     key = key_of(check)
     missing = "".join(f", coalesce(count_if({column} IS NULL), 0) AS missing_{number}"
                       for number, column in enumerate(key))
-    contacted = (", coalesce(count_if(regexp_like(notice_text, :email) OR regexp_like(notice_text, :phone) "
-                 "OR regexp_like(bid_description, :email) OR regexp_like(bid_description, :phone)), 0) AS contacts"
-                 if check.contacts else "")
-    params = {"email": contacts.LEFT_EMAIL, "phone": contacts.LEFT_PHONE} if check.contacts else {}
+    contacted = f", coalesce(count_if({CONTACTS_LEFT}), 0) AS contacts" if check.contacts else ""
+    params = contacts_left_params() if check.contacts else {}
     counts = engine.run(  # sql-lint: names only, the table and its columns come from config/quality_checks.toml
         f"SELECT count(*) AS n, coalesce(count_if(public_from IS NULL), 0) AS no_public_from{missing}{contacted} "
         f"FROM {check.table}", params).rows[0]
