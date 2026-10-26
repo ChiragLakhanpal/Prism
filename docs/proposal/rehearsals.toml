@@ -10,8 +10,103 @@
 #   example       what the rehearsal changed, in one sentence
 #   branch        the throwaway branch it ran on, made from the ticket branch and never merged: drill-49/<nn>-<slug>
 #   commit        the full hash of the commit the gate passed on that branch
-#   started_at    when the branch was made and the timer started, with its offset from UTC
+#   started_at    when the timer started, right after the branch was made, with its offset from UTC
 #   finished_at   when the commit the gate passed was made, the end of the drill
 #   gate_seconds  the gate's own time in that commit, as its last line printed it
 # The time is finished_at less started_at, in whole minutes rounded up. tests/test_proposal_registries.py checks
 # that no rehearsal's commit is on the branch being tested, the integration branch included.
+#
+# Ticket 49's builder ran the rehearsal on October 26, 2026, from its worktree, following docs/change-drill.md at
+# the ticket branch's commit 0e00b75, one drill at a time so the gates did not share the processors. Each timer started
+# right after its branch was made, except the first drill's, which started after its fixture page was recorded,
+# as the runbook says. Each ended when the date was read after the commit the gate passed.
+
+[[rehearsals]]
+change = "Add a data source"
+example = "The Logistics Performance Index's overall score, LP.LPI.OVRL.XQ, as the source lpi."
+branch = "drill-49/01-add-a-data-source"
+commit = "49049b1da1d052aa0e28d4e3be1c22fed79336f1"
+started_at = 2026-10-26T10:51:37-07:00
+finished_at = 2026-10-26T10:54:28-07:00
+gate_seconds = 125.2
+
+[[rehearsals]]
+change = "Add a tool"
+example = "package_notices, which lists every notice published for one package by its STEP reference."
+branch = "drill-49/02-add-a-tool"
+commit = "9f5861c821a7fde7444fb2a361ff8abeae7c7ecb"
+started_at = 2026-10-26T10:54:45-07:00
+finished_at = 2026-10-26T10:57:10-07:00
+gate_seconds = 121.0
+
+[[rehearsals]]
+change = "Change a signal threshold"
+example = "The Needs a look count, signals.look_min, from three signals to four."
+branch = "drill-49/03-change-a-signal-threshold"
+commit = "02f133512a1816e40ae1442c00581a116644cc93"
+started_at = 2026-10-26T10:57:18-07:00
+finished_at = 2026-10-26T10:59:57-07:00
+gate_seconds = 129.0
+
+[[rehearsals]]
+change = "Add a country to the slice"
+example = "Nepal, NP and NPL."
+branch = "drill-49/04-add-a-country-to-the-slice"
+commit = "591658d5ad2aa4ba8907768e58a7014b848b7918"
+started_at = 2026-10-26T11:00:06-07:00
+finished_at = 2026-10-26T11:03:07-07:00
+gate_seconds = 126.0
+
+[[rehearsals]]
+change = "Swap the model"
+example = "The agent role's deployment, from gpt-5.4-mini to gpt-4.1-mini."
+branch = "drill-49/05-swap-the-model"
+commit = "e79a5d25eaab4634ff28ba6f31531da0c0b3e847"
+started_at = 2026-10-26T11:03:17-07:00
+finished_at = 2026-10-26T11:05:30-07:00
+gate_seconds = 126.7
+
+[[rehearsals]]
+change = "Reorder the evidence ladder"
+example = "The two ties, the more recent source before the more specific one."
+branch = "drill-49/06-reorder-the-evidence-ladder"
+commit = "56184b66921eddaf5665df87c7965c86dd094688"
+started_at = 2026-10-26T11:05:41-07:00
+finished_at = 2026-10-26T11:07:58-07:00
+gate_seconds = 127.7
+
+[[rehearsals]]
+change = "Add a field to the package form"
+example = "Contract Type, STEP's column for consulting packages, as a text field under How."
+branch = "drill-49/07-add-a-field-to-the-package-form"
+commit = "6369cc49c8dd4d1a98a605a3ee20b6560a6dd635"
+started_at = 2026-10-26T11:08:07-07:00
+finished_at = 2026-10-26T11:10:38-07:00
+gate_seconds = 124.5
+
+[[rehearsals]]
+change = "Reword copy"
+example = "Home's error line, which now asks the reader to try again in a minute."
+branch = "drill-49/08-reword-copy"
+commit = "cfe579f90cdf42268a827d96a92c51a1f10ad80b"
+started_at = 2026-10-26T11:10:48-07:00
+finished_at = 2026-10-26T11:13:05-07:00
+gate_seconds = 128.8
+
+[[rehearsals]]
+change = "Add a benchmark or must-refuse question"
+example = "A documents question on the procurement rules P130164's PAD named, citing its Annex 3.B, paragraph 21."
+branch = "drill-49/09-add-a-benchmark-question"
+commit = "8f5289914dcb1761d7f3056ad256452083c4d91d"
+started_at = 2026-10-26T11:13:15-07:00
+finished_at = 2026-10-26T11:15:38-07:00
+gate_seconds = 131.8
+
+[[rehearsals]]
+change = "Add a dashboard tile"
+example = "A counter for the KPI rolling_coverage on the AI quality page."
+branch = "drill-49/10-add-a-dashboard-tile"
+commit = "29280615e873473b42851f13646dfa3f417255f4"
+started_at = 2026-10-26T11:15:47-07:00
+finished_at = 2026-10-26T11:18:08-07:00
+gate_seconds = 130.2

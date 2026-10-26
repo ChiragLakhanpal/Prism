@@ -330,6 +330,7 @@ Each part of the spec has one home. Folders marked "later" do not exist yet. The
 | The change drill: each likely change, its one place and its proving test, read by `load_change_drills` (tickets 46 and 49) | `config/change_drills.toml` |
 | The change drill's runbook: each change's steps, the files the gate keeps in step with it, and its live part on the workspace, checked against the list above by `tests/test_change_drill.py` (ticket 49) | `docs/change-drill.md` |
 | The change drill's rehearsal record: each drill's time, branch, commit and gate run, read by `load_rehearsals` in `src/strata/proposal/register.py` for the proposal's Module 4 table and Annex 1 (ticket 49) | `docs/proposal/rehearsals.toml` |
+| The full rehearsal on the deployed App: the demo-ready command's runs and the specialist's path, each step with what it should show and a row for its time (ticket 49) | `docs/rehearsal.md` |
 | The Azure budget: the free credit, the day it ends and the monthly budget, read by `load_budget` for the daily cost pull (`src/strata/lakehouse/costs.py`, the job in `bundle/costs.yml`) and by the wizard | `config/budget.toml` |
 | The Data tab's pages: Data readiness, Sources and licenses and How Strata works | `web/src/pages/data/` |
 | The server's copy of the Data readiness sentences, written from `web/src/copy.ts` by `node web/lint/server-copy.ts --write` | `src/strata/tools/data_readiness_copy.json` |

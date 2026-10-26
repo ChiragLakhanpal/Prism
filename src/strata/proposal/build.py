@@ -673,7 +673,7 @@ def _drill_row(build: _Build, rehearsal: Rehearsal, where: tuple[str, str]) -> s
     """A rehearsal's row in Annex 1: what it timed, its minutes, the day, and the branch, commit and gate run that
     measured it."""
     change = rehearsal.change[:1].lower() + rehearsal.change[1:]
-    name = f"Minutes to {change}, from making the drill's branch to the commit the gate passed on it"
+    name = f"Minutes to {change}, from the drill's start on its own branch to the commit the gate passed on it"
     source = (f"{REHEARSAL_KIND}; branch `{rehearsal.branch}`, commit `{rehearsal.commit[:7]}`; the gate passed in "
               f"{numeral(rehearsal.gate_seconds)} seconds; {REHEARSALS_LINK}")
     label, anchor = where
