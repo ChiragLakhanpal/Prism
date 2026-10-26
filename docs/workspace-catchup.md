@@ -2109,3 +2109,72 @@ Run this from the main checkout:
     uv run --with databricks-sdk==0.156.0 python ops/demo/ready.py --env-file .env
 
 It worked if it exits 0, step 1 prints "It was running. I restarted it, so it runs for 24 hours from now.", it prints "6. What changed on the workspace." followed by "   No changes.", and its last line is "Strata is ready for the demo." If the listing names `strata.ops` tables the workspace lacks, run the bundle deploy (ticket 44, step 1) and start again from step 2.
+
+## Ticket 38, step 1 of 6: sync the implementing agency's PPSD rows writer to Foundry, with a --check run (criterion 6, live)
+
+The merger parked this step on October 25, 2026, after merge commit dbf7a8d. All ten keys were set, but the header above holds workspace steps back during a merge, and the orchestrator's notes for this wave held every workspace step for the warehouse's daily limit of October 25 until the second session reports the warehouse back. The sync needs only Foundry, not the warehouse. It needs FOUNDRY_PROJECT_ENDPOINT and FOUNDRY_TENANT_ID in `.env`, and `az` signed in. Ticket 38 adds a new writer, `strata-ppsd-rows-agency-writer` (`[agents.ppsd_rows_agency_writer]` in `config/agents.toml`, instructions in `src/strata/agent/instructions/ppsd_rows_agency_writer.md`), which carries ticket 42's working-language line. The plain sync covers only the orchestrator, so this writer needs its own `--agent` run.
+
+Run these from the main checkout, in this order:
+
+    uv run --script ops/agent/sync.py --env-file .env --agent ppsd_rows_agency_writer
+    uv run --script ops/agent/sync.py --env-file .env --agent ppsd_rows_agency_writer --check
+
+It worked if the first run ends "I made version N of strata-ppsd-rows-agency-writer, which matches the repo.", and the `--check` run exits 0 and reports no difference in model, instructions, tools, description or guardrail for `strata-ppsd-rows-agency-writer`.
+
+## Ticket 38, step 2 of 6: deploy the two upload tables, then redeploy the App for their grants and masks
+
+The merger parked this step on October 25, 2026, after merge commit dbf7a8d, for the same reasons as step 1. It needs the Databricks keys in `.env`, and the warehouse under its free daily limit. Ticket 38 adds `strata.ops.uploads` and `strata.ops.upload_rows` (`src/strata/lakehouse/tables/ops/`). The bundle deploy makes the tables. The App deploy (`ops/app/deploy_app.py`, `grants()` and `masks()`) then grants the App's own service principal SELECT and MODIFY on both, and masks the officer's words: `uploads.uploader_name`, `file_name` and `reading`, `upload_rows.activity_reference_no`, `description` and `content`, and also `drafts.content`, `draft_exports.snapshot` and `draft_files.content` (`strata.lakehouse.masks.MASKED`). A grant on a table that does not exist fails, so the bundle deploy runs first. One bundle deploy and one App deploy from dbf7a8d or later serve every block that names them, ticket 44's steps 1 and 2 among them. This workspace's earlier deploys passed `--fairshare-catalog workspace`, so this one does too. The App deploy writes the Foundry and Azure OpenAI keys into the secret scope `strata`, so it also waits for the user's decision on the scope (ticket 06, step 1, and ticket 43, step 4).
+
+Run these from the main checkout, in this order:
+
+    uv run --script ops/bundle/deploy.py --env-file .env --fairshare-catalog workspace
+    uv run --script ops/bundle/check.py job-run --env-file .env
+    uv run --script ops/app/deploy_app.py --env-file .env
+
+It worked if the bundle deploy exits 0, lists `strata.ops.uploads` and `strata.ops.upload_rows` as new and changes no existing table, every task of the job run succeeds, the App deploy exits 0 with the last line `Strata is running at https://...`, and on the SQL warehouse
+
+    SHOW GRANTS ON TABLE strata.ops.uploads
+    SHOW GRANTS ON TABLE strata.ops.upload_rows
+
+each list SELECT and MODIFY for the App's service principal, and `DESCRIBE TABLE EXTENDED strata.ops.upload_rows` shows the mask `strata.ops.mask_viewer` on `activity_reference_no`, `description` and `content`.
+
+## Ticket 38, step 3 of 6: an officer uploads through the deployed App, and no one else sees it (criterion 2, live)
+
+The merger parked this step on October 25, 2026, after merge commit dbf7a8d, for the same reasons as step 1. Run it after step 2. It also waits for a decision only the user can make: no implementing agency team names a workspace group yet, so no live viewer is an officer. Add an agency team to `config/roles.toml` with its `agency` line and the workspace group its officers are in (the comment at the top of the file explains each key), commit it, and deploy the App again. It needs the Databricks keys in `.env` and three people: an officer in that group, a member of another team, and World Bank staff.
+
+As the officer, open the App's Check my plan page (`/packages/check`) and upload `tests/fixtures/uploads/nwwda-plan-2026-10-09.csv`. Note the upload's id from `GET /api/uploads`. Then, as the other team's member and as staff, open `/api/uploads/<id>`. Last, as the officer, upload any file larger than 5,242,880 bytes (`max_size_bytes` in `config/uploads.toml`).
+
+It worked if the officer's `POST /api/uploads` answers 200 and the page shows the plan's check with "Official Use Only · visible to your team", the other team's member and staff each get 404 on `/api/uploads/<id>` and their `GET /api/uploads` does not list it, and the large file is refused unread: the route answers 422 with the reason `size` and keeps nothing (or the App proxy refuses the body first).
+
+## Ticket 38, step 4 of 6: the live agent refuses a question about another team's upload (criterion 2, live)
+
+The merger parked this step on October 25, 2026, after merge commit dbf7a8d, for the same reasons as step 1. Run it after the orchestrator syncs above (tickets 13, 33, 42 and 64), because the live agent must match the repo, and when the warehouse is under its free daily limit, because the tools run there. It needs the Databricks keys and the four Foundry keys in `.env`, and `az` signed in. The plain recording run re-records every scripted case in `tests/fixtures/agent/cases.toml`, and ticket 38 added `refuses-private-uploads` there (benchmark id `refuse-private-uploads` in `evals/benchmark.yaml`). One plain recording run from dbf7a8d or later serves every block that names it.
+
+Run this from the main checkout:
+
+    uv run --script ops/agent/record.py --env-file .env
+
+It worked if it exits 0, and in `git diff tests/fixtures/agent` the recording `refuses-private-uploads` ends with the `private_uploads` refusal and holds no upload id, file name or Description from any upload. Then run the gate, which replays the new recordings on the fixture, and commit them.
+
+## Ticket 38, step 5 of 6: a marker upload never reaches the live AI Search index (criterion 3, live)
+
+The merger parked this step on October 25, 2026, after merge commit dbf7a8d, for the same reasons as step 1. Run it after step 3, since only an officer can upload. It needs the Databricks keys, AI_SEARCH_ENDPOINT, AZURE_OPENAI_ENDPOINT and AZURE_OPENAI_API_KEY in `.env`. `ops/documents/search_live.py` asks only its one benchmark question and takes no query of its own, so it shows the index still answers but cannot look for the marker. The marker search goes through the Azure portal's Search explorer on Strata's passages index until the script gains a query option (a follow-up for the build, not a reason to wait).
+
+As the officer, upload a copy of `tests/fixtures/uploads/nwwda-plan-2026-10-09.csv` whose first Description reads "Rehabilitation of the Zebrafinch Hill pumping station" (the marker the offline test uses). Then run the passage sync and the live search from the main checkout:
+
+    uv run --script ops/documents/run_live.py --env-file .env
+    uv run --script ops/documents/search_live.py --env-file .env
+
+Then, in the Azure portal, open the AI Search service that AI_SEARCH_ENDPOINT names, open Strata's passages index in Search explorer, and search for `"Zebrafinch Hill"`.
+
+It worked if `search_live.py` exits 0 with ICR P130164 paragraph 54 in its top three, and Search explorer returns no document for `"Zebrafinch Hill"`.
+
+## Ticket 38, step 6 of 6: a 200-row upload's planned-dates draft saves on the SQL warehouse (review F17, live)
+
+The merger parked this step on October 25, 2026, after merge commit dbf7a8d, for the same reasons as step 1. Run it after step 3, when the warehouse is under its free daily limit. It needs the Databricks keys in `.env` and an officer. Each draft keeps its whole content in one `strata.ops.drafts.content` value, and review follow-up F17 (`.notes/38-review-r4.md`) estimated about 15 MB there for a 500-activity upload. Only the warehouse can show whether it takes a large one.
+
+As the officer, upload a file of 200 activities in the fallback layout (`config/uploads.toml`; repeat the fixture file's rows with new Activity Reference Nos, under 5,242,880 bytes), then draft its planned dates from the upload's page and save the draft. Then, on the SQL warehouse, as the App's owner:
+
+    SELECT draft_id, kind, created_at, length(content) FROM strata.ops.drafts WHERE kind = 'step_rows' ORDER BY created_at DESC LIMIT 1
+
+It worked if the writing page ends with the saved draft, not an error, and the query returns that draft's row, made a moment ago, with a length above 0. The mask on `content` gives its value to the App and to the owner who deploys (`ops/app/deploy_app.py`, `masks()`), so run the query as that owner. If the insert fails, write the error and the length refused next to F17 in `.notes/38-review-r4.md`'s follow-up list for the build.
