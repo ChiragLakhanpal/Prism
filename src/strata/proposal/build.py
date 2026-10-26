@@ -14,6 +14,9 @@ its figures. In the source:
 - {fig:slug} becomes "Figure N", a link. A block that starts with {figure:slug} is the figure: its title line, which
   says "Figure." for the build to number, the image, its source line and any note, and for a data chart its table.
 - {when:designed} at the start of a paragraph keeps it only while something is designed but not built.
+- {when:measured:key} at the start of a line, or after its {#slug}, keeps the line only while result key has a
+  measured value, and {when:unmeasured:key} only while it has none, so a state such as "No cost data yet" has
+  its own words instead of stopping the build.
 - A block that is only {datasheet}, {rubric-map}, {framework}, {caps}, {drill}, {ladder}, {designed} or {annex:...}
   is replaced by the table that registry gives; {copy:key} is the app's own words (src/strata/proposal/copy.json).
 - {model:role} is the deployment config/models.toml names for that role, in code, so swapping a model changes the
@@ -51,6 +54,7 @@ UNNUMBERED = ("#", "|", "<", "!", "- ", "* ", ">", "{figure:", "**Source:**", "*
 PLACEHOLDER = re.compile(r"\{(r|s|p|¶|sec|fig|copy|url|model):([^{}]+)\}")
 SLUG = re.compile(r"^\{#([a-z0-9-]+)\}\s*")
 HEADING_SLUG = re.compile(r"\s*\{#([a-z0-9-]+)\}\s*$")
+WHEN_MEASURED = re.compile(r"^(\{#[a-z0-9-]+\} )?\{when:(measured|unmeasured):([a-z0-9-]+)\} ")
 TIERS = {"ieg": "IEG's ICR Review or PPAR", "icr": "the ICR", "isr": "the ISRs", "pad": "the PAD",
          "record": "a record made at that moment, such as a contract, a notice or a plan row"}
 TIES = {"tieSpecific": "the more specific source", "tieRecent": "the more recent source"}
@@ -322,6 +326,20 @@ class _Build:
 
 # ── Splitting and numbering ──────────────────────────────────────────────
 
+def _measured_lines(source: str, results: dict) -> str:
+    """The source with each {when:measured:key} line kept only while that result was measured, and each
+    {when:unmeasured:key} line only while it was not."""
+    kept = []
+    for line in source.split("\n"):
+        found = WHEN_MEASURED.match(line)
+        if found:
+            if bool(results.get(found.group(3), {}).get("measured")) != (found.group(2) == "measured"):
+                continue
+            line = (found.group(1) or "") + line[found.end():]
+        kept.append(line)
+    return "\n".join(kept)
+
+
 def _blocks(source: str) -> list[_Block]:
     blocks, section, subsection = [], "", None
     for chunk in re.split(r"\n\s*\n", source.strip()):
@@ -511,8 +529,6 @@ def _drill(build: _Build) -> str:
 
 
 def _framework(build: _Build) -> str:
-    from strata.dashboard import wording
-
     kpis = config.load_kpis()
     words = wording.words()["kpi"]
     by_kpi = {defined.params.get("kpi"): key for key, defined in build.inputs.results.items()
@@ -739,7 +755,7 @@ LATE = {"{annex:results}": _register, "{annex:settings}": _settings_annex}
 def build(source: str, inputs: Inputs) -> Built:
     """docs/proposal.md and its figures, from the source, the snapshot and the registries."""
     work = _Build(inputs)
-    blocks = _number(work, _blocks(source), designed=bool(inputs.designed))
+    blocks = _number(work, _blocks(_measured_lines(source, work.results)), designed=bool(inputs.designed))
     out: list[str] = []
     late: list[tuple[int, str]] = []
     for block in blocks:

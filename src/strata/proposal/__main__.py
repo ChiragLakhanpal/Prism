@@ -28,6 +28,7 @@ ROOT = Path(__file__).resolve().parents[3]
 PROPOSAL = ROOT / "docs" / "proposal.md"
 SOURCE = builder.SOURCE_FILE
 PLACEHOLDER = re.compile(r"\{([rs]):([^{}|\\]+)(?:\\?\|[^{}]*)?\}")
+CONDITION = re.compile(r"\{when:(?:un)?measured:([^{}]+)\}")
 
 
 def _commit() -> str:
@@ -43,8 +44,8 @@ def lint(path: Path) -> list[str]:
 
 
 def source_problems(source: str) -> list[str]:
-    """What the gate checks in docs/proposal/source.md: each {r:} and {s:} names a register entry, and every other
-    number is excepted, since a typed number has no source."""
+    """What the gate checks in docs/proposal/source.md: each {r:}, {s:} and {when:measured:} names a register entry,
+    and every other number is excepted, since a typed number has no source."""
     results, settings = register.load_results(), register.load_settings()
     problems = []
     for kind, key in PLACEHOLDER.findall(source):
@@ -54,6 +55,10 @@ def source_problems(source: str) -> list[str]:
         if kind == "s" and key not in settings:
             problems.append(f"docs/proposal/source.md cites the setting {key}, which is not in "
                             "docs/proposal/settings.toml.")
+    for key in CONDITION.findall(source):
+        if key not in results:
+            problems.append(f"docs/proposal/source.md keeps a line on the result {key}, which is not in "
+                            "docs/proposal/results.toml.")
     sourced = re.sub(r"\{[rs]:[^{}]*\}", "[0](#r-placeholder)", source)
     unsourced = re.sub(r"\{(?:#|[a-z¶]+:)[^{}]*\}|\{[a-z-]+(?::[a-z-]+)?\}", " ", sourced)
     problems += [found.sentence() for found in numbers.unsourced(unsourced)]

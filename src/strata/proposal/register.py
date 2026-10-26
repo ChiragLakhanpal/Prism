@@ -169,7 +169,6 @@ def _count(name: str) -> int:
     raise RegisterError(f"count:{name} is not a registry I can count: use one of {', '.join(COUNTS)}.")
 
 
-
 def read_back_caps(path: Path = DAY_ONE_FILE) -> tuple[dict[str, int], int | None, dt.date | None, str]:
     """The caps Azure reported back, from the dayone:caps block ops/dayone/probe_caps.py writes: each deployment's
     tokens by its name, the monthly budget in US dollars, the day they were checked, and the block's status."""

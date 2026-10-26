@@ -234,6 +234,27 @@ def test_spend_past_the_budget_says_how_far_past_as_the_dashboards_over_sentence
     assert "of the US$5.00 budget" not in markdown
 
 
+def test_with_no_cost_data_yet_the_spend_paragraph_and_its_summary_row_say_so_instead_of_stopping_the_build(snap):
+    # The 46 brief, section 15, "No cost data yet": brief 45's words, with the dashboard's "I" made "Strata".
+    none = {**snap, "results": {**snap["results"], "azure-spend": {"measured": False}}}
+    markdown = build.build(SOURCE, inputs(none)).markdown
+    said = ("Strata has no Azure cost data yet. The daily cost pull adds each day's charges once Azure reports them.")
+    spend = next(line for line in markdown.splitlines() if line.startswith('<a id="p') and "Azure cost data" in line)
+    assert said in spend
+    summary = markdown.split("### What the build measured")[1].split("**Source:**")[0]
+    assert f"| Operationalization and scalability | {said} | Not measured yet |" in summary
+    assert "the latest day with cost data" not in markdown
+    assert proposal_problems(markdown) == []
+    # With cost data, the no-cost words are left out.
+    assert "Strata has no Azure cost data yet" not in build.build(SOURCE, inputs(snap)).markdown
+
+
+def test_the_gate_names_a_measured_condition_whose_result_is_not_in_the_register():
+    planted = SOURCE.replace("{when:unmeasured:azure-spend}", "{when:unmeasured:azure-spent}", 1)
+    assert source_problems(planted) == ["docs/proposal/source.md keeps a line on the result azure-spent, which is not "
+                                        "in docs/proposal/results.toml."]
+
+
 # ── Designed, not built ──────────────────────────────────────────────────
 
 def test_with_nothing_designed_but_unbuilt_the_list_says_so_and_the_summary_leaves_it_out(built):

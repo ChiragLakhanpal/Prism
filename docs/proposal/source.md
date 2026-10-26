@@ -31,7 +31,8 @@ Strata is procurement intelligence on World Bank open data, built for the World 
 | Domain alignment and data use | Strata built {r:gap-contracts} contracts for fiscal 2017 to 2019 from award notices, the years no awards dataset covers. | {r:gap-contracts\|measured_on} | {sec:m1-taking-in} |
 | Domain alignment and data use | Ingestion removed contact details from {r:contacts-removed} procurement notices. | {r:contacts-removed\|measured_on} | {sec:m1-taking-in} |
 | Operationalization and scalability | Strata's risk tables showed {r:hindsight-caught} risks that completion reports later blamed. | {r:hindsight-caught\|measured_on} | {sec:m4-kpis} |
-| Operationalization and scalability | Strata's Azure resources had cost {r:azure-spend}{r:azure-spend\|against}. | {r:azure-spend\|measured_on} | {sec:m4-costs} |
+{when:measured:azure-spend} | Operationalization and scalability | Strata's Azure resources had cost {r:azure-spend}{r:azure-spend\|against}. | {r:azure-spend\|measured_on} | {sec:m4-costs} |
+{when:unmeasured:azure-spend} | Operationalization and scalability | Strata has no Azure cost data yet. The daily cost pull adds each day's charges once Azure reports them. | Not measured yet | {sec:m4-costs} |
 
 **Source:** Annex 1.
 
@@ -258,7 +259,9 @@ Scored under [Operationalization and scalability](#rubric-operations).
 
 ### Cost caps and actual spend {#m4-costs}
 
-{#m4-spend} By {r:azure-spend|latest}, the latest day with cost data, Strata's Azure resources had cost {r:azure-spend}{r:azure-spend|against} for {r:azure-spend|period}. Azure budgets only send alerts, so hard caps limit spend.
+{#m4-spend} {when:measured:azure-spend} By {r:azure-spend|latest}, the latest day with cost data, Strata's Azure resources had cost {r:azure-spend}{r:azure-spend|against} for {r:azure-spend|period}. Azure budgets only send alerts, so hard caps limit spend.
+
+{#m4-spend} {when:unmeasured:azure-spend} Strata has no Azure cost data yet. The daily cost pull adds each day's charges once Azure reports them. Azure budgets only send alerts, so hard caps limit spend.
 
 **Hard caps hold Azure spend, because Azure budgets only send alerts.**
 
