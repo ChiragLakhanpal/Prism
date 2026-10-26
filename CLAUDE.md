@@ -16,7 +16,7 @@ Procurement intelligence on World Bank open data: every claim cited to a record 
 3. **Glossary words, World Bank usage.** Use `GLOSSARY.md` terms and STEP's field names; `DESIGN.md` section 7 lists the words Strata never writes.
 4. **One source of truth per definition.** Each measure and each tool contract is defined once; changing one means updating its benchmark question in the same change.
 5. **Nothing destructive.** `CREATE OR REPLACE` changes a table; rows leave only through a `DELETE` with a `WHERE`. `.claude/hooks/guard.py` enforces rules 5, 6, 7 and 10 before every tool call; when it blocks you, follow the reason it gives.
-6. **The gate runs before every commit** (`.githooks/pre-commit`): the ground-truth SQL and the offline test suite, in under two minutes.
+6. **The gate runs before every commit** (`.githooks/pre-commit`): the ground-truth SQL and the offline test suite, in under 150 seconds (two minutes until October 26, 2026; back to two minutes after the polish pass trims the tests).
 7. **Secrets stay in `.env`** (gitignored, in the main checkout only). `python3 .claude/hooks/guard.py --env-keys` shows which keys are set without their values. Inside the Databricks App, the viewer's forwarded token is bound per request; nothing about a viewer lives in a module global.
 8. **Public data in, private uploads kept private.** Notice contact details are stripped at ingestion; a borrower's uploaded plan or PPSD is visible only to the uploader's team.
 9. **Changeability.** Each extension point (sources, tools, signals, thresholds, the slice, models, copy, benchmark questions) lives in one registry or config file, so a change request lands in under ten minutes.
