@@ -96,8 +96,6 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: PackageStor
     def save(viewer: Viewer, body: SelectionRequest, kind: str, key: str):
         if not viewer.user_id:
             return refused(401, "no_identity")
-        if body.view != STAFF:
-            return refused(403, "preview", capability="select", copy="preview")
         unknown = sorted(risk for risk in body.changes if lists.risk_factor(risk) is None)
         if unknown:
             return refused(422, "unknown_risk", risk_keys=unknown)

@@ -120,3 +120,167 @@ acts = []
 [model_sign_off]
 model_owner = "model_owner"
 lead = "lead_procurement_specialist"
+
+# [views], the view switch (ticket 40; the blueprint's "Navigation and roles", its roles table; the 40 brief, 5.1).
+# The one place each view's rules live. strata.config.load_views() reads it, src/strata/server/views.py applies it to
+# every request, and GET /api/me sends the applied view to the screens, so no other file holds a view's rule.
+#
+# Three views: staff (World Bank staff), piu (an implementing agency officer; "piu" is only the address's value,
+# docs/PLAN.md section 8, and no screen ever shows it) and public (a member of the public). A person sees their own
+# view: an implementing agency officer (a member of a [teams] entry with an agency) sees piu, and everyone else staff.
+# A person may preview a view whose capabilities their own view also has, apart from those private to a team, so World
+# Bank staff preview piu and public, and an officer previews public. A preview can only take things away: it keeps a
+# capability only where the previewed view and the person's own view both have it, never one private to a team, and
+# never an act. A person is always still signed in as themselves.
+#
+#   preview_agency        the implementing agency the agency preview shows, as the projects API's records name it. It
+#                         is one line, so changing which agency a preview shows is one edit.
+#   preview_agency_short  its short name, which the banner writes after the full name, or "" for none
+#
+# [views.<view>], one per view:
+#   tabs    the navy bar's tabs in that view, in order
+#   hidden  the app's pages that view does not show, by their key in web/src/routes.ts. A hidden page keeps its address
+#           and says why, and the server never sends what it holds.
+#
+# [views.capabilities], one line per capability: what a person may read or do.
+#   kind     read (a page or a part of one), setting (a person's own choice, such as the language of answers, which a
+#            preview keeps because you are still signed in as yourself), or an act: record (a choice, a follow, a
+#            report or an opened source), check, export or draft
+#   staff, piu, public
+#            whether that view has it. "By role" in the roles table is true here: the route still checks the role
+#            (a reviewer group, the World Bank staff role, the agency's team), as the sections above set.
+#   private  true when it is private to a team or a person (drafts, uploads, personal sections). A preview never
+#            keeps it, so the officer's own team's keys are left out when a preview is compared with the staff view.
+#   reason   for an act, the copy key (a path into web/src/copy.ts) of the sentence a preview gives. The server's 403
+#            names it, and the screen's held button shows its sentence, so both say the same.
+#   quiet    for a record a preview leaves out without refusing: the server answers {"recorded": false}.
+#
+# [views.routes], one line per route that reads something a view may hide, and every route that writes: "METHOD path",
+# as the server declares it, and the capability it needs. A route whose act depends on a path value, such as a draft's
+# action, names that value under param and one capability per value. tests/test_views.py fails on a write route with no
+# line here.
+[views]
+preview_agency = "Northern Water Works Development Agency"
+preview_agency_short = "NWWDA"
+
+[views.staff]
+tabs = ["packages", "projects", "lessons", "drafts", "data"]
+hidden = []
+
+[views.piu]
+tabs = ["packages", "projects", "lessons", "drafts", "data"]
+hidden = ["following", "lessonsQueue", "lessonReview", "lessonsReports", "passageReport", "lessonsJudging",
+          "judgingQuery"]
+
+[views.public]
+tabs = ["projects", "lessons", "data"]
+hidden = ["packages", "package", "packageNew", "plannedPackage", "checkMyPlan", "uploadCheck", "drafts", "draft",
+          "draftNew", "following", "lessonsQueue", "lessonReview", "lessonsReports", "passageReport", "lessonsJudging",
+          "judgingQuery"]
+
+[views.capabilities]
+# Reads.
+projects = { kind = "read", staff = true, piu = true, public = true }
+contract_trail = { kind = "read", staff = true, piu = true, public = true }
+lessons = { kind = "read", staff = true, piu = true, public = true }
+data = { kind = "read", staff = true, piu = true, public = true }
+ask = { kind = "read", staff = true, piu = true, public = true }
+packages = { kind = "read", staff = true, piu = true, public = false }
+following = { kind = "read", staff = true, piu = false, public = false }
+signals_on_active_projects = { kind = "read", staff = true, piu = true, public = false }
+time_estimates = { kind = "read", staff = true, piu = true, public = false }
+disagreements_on_active_projects = { kind = "read", staff = true, piu = true, public = false }
+baseline = { kind = "read", staff = true, piu = true, public = false }
+baseline_saver = { kind = "read", staff = true, piu = false, public = false }
+drafts = { kind = "read", staff = true, piu = true, public = false, private = true }
+uploads = { kind = "read", staff = false, piu = true, public = false, private = true }
+personal_lessons = { kind = "read", staff = true, piu = true, public = false, private = true }
+reviewer_pages = { kind = "read", staff = true, piu = false, public = false }
+# A person's own settings.
+save_language = { kind = "setting", staff = true, piu = true, public = true }
+# Acts, each with the sentence a preview gives (the 40 brief, 6.7: the earlier briefs' words, kept as they wrote them).
+record_opened = { kind = "record", staff = true, piu = true, public = false, reason = "evidence.preview", quiet = true }
+keep_other_report = { kind = "record", staff = true, piu = true, public = false, reason = "disagreement.card.keep.preview", quiet = true }
+report_passage = { kind = "record", staff = true, piu = true, public = false, reason = "feedback.preview" }
+follow = { kind = "record", staff = true, piu = false, public = false, reason = "view.actPreview" }
+save_baseline = { kind = "record", staff = true, piu = true, public = false, reason = "view.actPreview" }
+plan_package = { kind = "record", staff = true, piu = true, public = false, reason = "packagesTab.previewOff" }
+change_package = { kind = "record", staff = true, piu = true, public = false, reason = "packageWorkspace.preview" }
+plan_date_choice = { kind = "record", staff = true, piu = true, public = false, reason = "stepDates.choice.preview" }
+step_start = { kind = "record", staff = true, piu = true, public = false, reason = "stepDates.start.preview" }
+risk_selection = { kind = "record", staff = true, piu = true, public = false, reason = "packageRisks.preview" }
+review_lesson = { kind = "record", staff = true, piu = false, public = false, reason = "view.actPreview" }
+review_passage_reports = { kind = "record", staff = true, piu = false, public = false, reason = "view.actPreview" }
+judge_passages = { kind = "record", staff = true, piu = false, public = false, reason = "view.actPreview" }
+review_suppliers = { kind = "record", staff = true, piu = false, public = false, reason = "view.actPreview" }
+start_draft = { kind = "draft", staff = true, piu = true, public = false, reason = "packageWorkspace.ppsdAction.heldPreview" }
+fill_draft = { kind = "draft", staff = true, piu = true, public = false, reason = "fill.preview" }
+discard_draft = { kind = "draft", staff = true, piu = true, public = false, reason = "draft.bar.hold.preview" }
+mark_checked = { kind = "check", staff = true, piu = true, public = false, reason = "draft.bar.hold.preview" }
+upload_and_check = { kind = "check", staff = false, piu = true, public = false, private = true, reason = "upload.holdPreview" }
+compare_criteria = { kind = "check", staff = true, piu = true, public = false, reason = "criteria.preview" }
+export_draft = { kind = "export", staff = true, piu = true, public = false, reason = "draft.bar.hold.preview" }
+
+[views.routes]
+"POST /api/ask" = "ask"
+"PUT /api/me/working-language" = "save_language"
+"POST /api/evidence/opened" = "record_opened"
+"POST /api/disagreements/{disagreement_id}/choices" = "keep_other_report"
+"POST /api/feedback" = "report_passage"
+"POST /api/feedback/{report_id}/withdraw" = "report_passage"
+"PUT /api/projects/{project_id}/follow" = "follow"
+"DELETE /api/projects/{project_id}/follow" = "follow"
+"GET /api/projects/{project_id}/follow" = "following"
+"GET /api/following" = "following"
+"PUT /api/projects/{project_id}/procurement/{agency_id}/baseline" = "save_baseline"
+"DELETE /api/projects/{project_id}/procurement/{agency_id}/baseline" = "save_baseline"
+"POST /api/planned-packages" = "plan_package"
+"POST /api/planned-packages/{package_id}" = "change_package"
+"PUT /api/packages/{step_reference}/plan-dates" = "plan_date_choice"
+"PUT /api/planned-packages/{package_id}/plan-dates" = "plan_date_choice"
+"PUT /api/packages/{step_reference}/step-start" = "step_start"
+"PUT /api/planned-packages/{package_id}/step-start" = "step_start"
+"PUT /api/packages/{step_reference}/risk-selection" = "risk_selection"
+"PUT /api/planned-packages/{package_id}/risk-selection" = "risk_selection"
+"POST /api/packages/{key}/criteria/compare" = "compare_criteria"
+"POST /api/planned-packages/{key}/criteria/compare" = "compare_criteria"
+# The package-level run of "Check your criteria" reads the comparables' criteria; it keeps nothing a person wrote.
+"POST /api/packages/{key}/criteria/run" = "packages"
+"POST /api/planned-packages/{key}/criteria/run" = "packages"
+"POST /api/uploads" = "upload_and_check"
+"POST /api/drafts" = "start_draft"
+"PUT /api/drafts/{draft_id}/fields" = "fill_draft"
+"PUT /api/drafts/{draft_id}/form" = "fill_draft"
+"POST /api/drafts/{draft_id}/{action}" = { param = "action", check = "mark_checked", export = "export_draft", discard = "discard_draft", restore = "discard_draft" }
+"GET /api/drafts" = "drafts"
+"GET /api/drafts/{draft_id}" = "drafts"
+"GET /api/drafts/{draft_id}/files/{name}" = "drafts"
+"POST /api/lessons/review/{item_id}/{verb}" = "review_lesson"
+"POST /api/lessons/review/{item_id}/summary" = "review_lesson"
+"POST /api/lessons/{lesson_id}/recheck" = "review_lesson"
+"GET /api/lessons/review" = "reviewer_pages"
+"GET /api/lessons/review/{item_id}" = "reviewer_pages"
+"POST /api/passage-reports/{group_id}/decide" = "review_passage_reports"
+"POST /api/passage-reports/{group_id}/reopen" = "review_passage_reports"
+"GET /api/passage-reports" = "reviewer_pages"
+"GET /api/passage-reports/{group_id}" = "reviewer_pages"
+"PUT /api/judging/queries/{query_id}/passages/{passage_id:path}" = "judge_passages"
+"GET /api/judging/queries" = "reviewer_pages"
+"GET /api/judging/queries/{query_id}" = "reviewer_pages"
+"POST /api/suppliers/review" = "review_suppliers"
+"POST /api/suppliers/labels" = "review_suppliers"
+"GET /api/packages/{step_reference}" = "packages"
+"GET /api/packages/{step_reference}/comparables" = "packages"
+"GET /api/packages/{step_reference}/estimate" = "time_estimates"
+"GET /api/packages/{step_reference}/rebidding" = "packages"
+"GET /api/packages/{step_reference}/risks" = "packages"
+"GET /api/packages/{step_reference}/steps" = "packages"
+"GET /api/packages/{key}/criteria" = "packages"
+"GET /api/planned-packages" = "packages"
+"GET /api/planned-packages/{package_id}" = "packages"
+"GET /api/planned-packages/{package_id}/estimate" = "time_estimates"
+"GET /api/planned-packages/{package_id}/risks" = "packages"
+"GET /api/planned-packages/{package_id}/steps" = "packages"
+"GET /api/planned-packages/{key}/criteria" = "packages"
+"GET /api/comparables" = "packages"
+"GET /api/rebidding" = "packages"

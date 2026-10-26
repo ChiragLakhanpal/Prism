@@ -1574,7 +1574,8 @@ def load_roles(path: Path = CONFIG_DIR / "roles.toml") -> Roles:
     """The roles file's teams, in the file's order, each with at least one workspace group, then its reviewer
     groups and the people in them."""
     data = _read(path)
-    _Entry(path, "the file", data).only({"teams", "groups", "people", "staff", "model_sign_off"})
+    # The [views] section (ticket 40) is load_views()'s, read from the same file.
+    _Entry(path, "the file", data).only({"teams", "groups", "people", "staff", "model_sign_off", "views"})
     staff: tuple[str, ...] = ()
     if "staff" in data:
         entry = _Entry(path, "staff", data["staff"])
@@ -1642,6 +1643,118 @@ def load_roles(path: Path = CONFIG_DIR / "roles.toml") -> Roles:
         if sign_off["model_owner"] == sign_off["lead"]:
             entry._fail("lead", "names the model owner's group. The lead co-signs, so name another group")
     return Roles(tuple(teams), groups, tuple(people), staff, sign_off)
+
+
+# ── The view switch: the roles file's [views] (ticket 40) ────────────────
+
+VIEW_KEYS = ("staff", "piu", "public")  # World Bank staff, an implementing agency officer, the public
+CAPABILITY_KINDS = ("read", "setting", "record", "check", "export", "draft")
+ACT_KINDS = ("record", "check", "export", "draft")  # what a preview never keeps
+TAB_KEYS = ("packages", "projects", "lessons", "drafts", "data")
+WRITE_METHODS = ("POST", "PUT", "PATCH", "DELETE")
+
+
+@dataclass(frozen=True)
+class ViewRule:
+    """One view: the navy bar's tabs in it, and the app's pages it does not show (by their web/src/routes.ts key)."""
+
+    key: str
+    tabs: tuple[str, ...]
+    hidden: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class Capability:
+    """Something a person may read or do, its kind, whether each view has it, whether it is private to a team, and for
+    an act, the copy key of the sentence a preview gives and whether a preview leaves it out quietly."""
+
+    key: str
+    kind: str
+    values: dict[str, bool]
+    private: bool = False
+    reason: str | None = None
+    quiet: bool = False
+
+    @property
+    def act(self) -> bool:
+        return self.kind in ACT_KINDS
+
+
+@dataclass(frozen=True)
+class RouteRule:
+    """The capability a route needs: one for the route, or one per value of a path parameter (param)."""
+
+    capability: str | None = None
+    param: str | None = None
+    by_value: dict[str, str] = field(default_factory=dict)
+
+    def needs(self, path_params: dict) -> str | None:
+        if self.param is None:
+            return self.capability
+        return self.by_value.get(str(path_params.get(self.param, "")))
+
+    def capabilities(self) -> tuple[str, ...]:
+        return (self.capability,) if self.param is None else tuple(self.by_value.values())
+
+
+@dataclass(frozen=True)
+class Views:
+    views: dict[str, ViewRule]
+    capabilities: dict[str, Capability]
+    routes: dict[str, RouteRule]  # by "METHOD path", as the server declares the route
+    preview_agency: str
+    preview_agency_short: str | None = None
+
+    def route(self, method: str, path: str) -> RouteRule | None:
+        return self.routes.get(f"{method.upper()} {path}")
+
+
+def load_views(path: Path = CONFIG_DIR / "roles.toml") -> Views:
+    """The roles file's [views] section: each view's tabs and hidden pages, every capability with its kind and its value
+    in each view, the routes that need one, and the implementing agency the agency preview shows."""
+    data = _read(path)
+    section = _Entry(path, "views", data.get("views"))
+    section.only({"preview_agency", "preview_agency_short", "capabilities", "routes", *VIEW_KEYS})
+    views = {}
+    for key in VIEW_KEYS:
+        entry = _Entry(path, f"views.{key}", section.table.get(key))
+        entry.only({"tabs", "hidden"})
+        tabs = entry.texts("tabs")
+        unknown = [tab for tab in tabs if tab not in TAB_KEYS]
+        if unknown or not tabs:
+            entry._fail("tabs", f"must name tabs from {', '.join(TAB_KEYS)}")
+        views[key] = ViewRule(key, tabs, entry.texts("hidden"))
+    capabilities = {}
+    for key, table in (_Entry(path, "views.capabilities", section.table.get("capabilities")).table).items():
+        entry = _Entry(path, f"views.capabilities.{key}", table)
+        entry.only({"kind", "private", "reason", "quiet", *VIEW_KEYS})
+        kind = entry.text("kind")
+        if kind not in CAPABILITY_KINDS:
+            entry._fail("kind", f"must be one of {', '.join(CAPABILITY_KINDS)}")
+        reason = entry.text("reason", required=False)
+        if kind in ACT_KINDS and not reason:
+            entry._fail("reason", "is missing: an act names the copy key of the sentence a preview gives")
+        capabilities[key] = Capability(key, kind, {view: entry.boolean(view) for view in VIEW_KEYS},
+                                       bool(table.get("private", False)), reason, bool(table.get("quiet", False)))
+    routes = {}
+    for route, value in (_Entry(path, "views.routes", section.table.get("routes")).table).items():
+        method, _, address = route.partition(" ")
+        if method not in ("GET", *WRITE_METHODS) or not address.startswith("/api/"):
+            raise ConfigError(f"In {path.name}, views.routes names {route!r}. Write a method and a path, such as "
+                              "\"POST /api/drafts\".")
+        if isinstance(value, str):
+            rule = RouteRule(value)
+        else:
+            entry = _Entry(path, f"views.routes.{route!r}", value)
+            rule = RouteRule(param=entry.text("param"),
+                             by_value={name: capability for name, capability in value.items() if name != "param"})
+        for capability in rule.capabilities():
+            if capability not in capabilities:
+                raise ConfigError(f"In {path.name}, views.routes.{route!r} names the capability {capability!r}, which "
+                                  "views.capabilities does not list.")
+        routes[route] = rule
+    short = section.text("preview_agency_short", required=False)
+    return Views(views, capabilities, routes, section.text("preview_agency"), short or None)
 
 
 # ── The evidence ladder ──────────────────────────────────────────────────

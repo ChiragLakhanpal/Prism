@@ -119,11 +119,11 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: PackageStor
             return refused(404, "unknown_package")
         return workflow.package_view(package, form, thresholds)["comparables_query"] or {}
 
-    def keep(viewer: Viewer, body_view: str, kind: str, key: str, write: Callable[[], None]):
+    # A preview never reaches these writes: the view switch's guard refuses it first, with the reason the roles file's
+    # [views] names (ticket 40; src/strata/server/views.py).
+    def keep(viewer: Viewer, kind: str, key: str, write: Callable[[], None]):
         if not viewer.user_id:
             return refused(401, "no_identity")
-        if body_view != STAFF:
-            return refused(403, "preview", capability="save", copy="preview")
         if store is None:
             return refused(503, "no_data_service")
         try:
@@ -135,8 +135,7 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: PackageStor
         return None
 
     def choose(viewer: Viewer, body: ChoiceRequest, kind: str, key: str):
-        failed = keep(viewer, body.view, kind, key,
-                      lambda: store.choose_plan_date(viewer.user_id, kind, key, body.choice, now()))
+        failed = keep(viewer, kind, key, lambda: store.choose_plan_date(viewer.user_id, kind, key, body.choice, now()))
         return failed or {"plan_date_choice": body.choice}
 
     def known(viewer: Viewer, step_reference: str) -> JSONResponse | None:
@@ -157,15 +156,12 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: PackageStor
     def start_from(viewer: Viewer, body: StartRequest, asof: dt.date | None, criteria: dict, kind: str, key: str):
         """Date the steps from the viewer's date, as of the page's date, which estimate_time checks against the
         thresholds file's range, and keep the date only when it was in range and the package needs one."""
-        if body.view != STAFF:
-            return refused(403, "preview", capability="save", copy="preview")
         checked = dates(viewer, STAFF, asof, criteria, kind, key, start=body.start_date)
         if isinstance(checked, JSONResponse):
             return checked
         if checked["step_dates"] and checked["step_dates"]["basis"] != "duration":
             return refused(409, "no_start_needed")
-        failed = keep(viewer, body.view, kind, key,
-                      lambda: store.choose_step_start(viewer.user_id, kind, key, body.start_date, now()))
+        failed = keep(viewer, kind, key, lambda: store.choose_step_start(viewer.user_id, kind, key, body.start_date, now()))
         return failed or checked
 
     @app.get("/api/packages/{step_reference}/steps")
@@ -180,8 +176,6 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: PackageStor
     def step_row_choice(step_reference: str, body: ChoiceRequest, viewer: Viewer = Depends(current_viewer)):
         if not viewer.user_id:
             return refused(401, "no_identity")
-        if body.view != STAFF:
-            return refused(403, "preview", capability="save", copy="preview")
         return known(viewer, step_reference) or choose(viewer, body, STEP_ROW, step_reference)
 
     @app.put("/api/packages/{step_reference}/step-start")

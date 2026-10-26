@@ -177,18 +177,17 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: PackageStor
         saved = store.get(package_id)
         return saved if saved is not None and saved.author_id == viewer.user_id else None
 
-    def allowed(viewer: Viewer, view: str) -> JSONResponse | None:
+    def allowed(viewer: Viewer) -> JSONResponse | None:
+        """A signed-in viewer. A preview never reaches here: the view switch's guard refuses it (ticket 40)."""
         if not viewer.user_id:
             return refused(401, "no_identity")
-        if view != STAFF:
-            return refused(403, "preview", capability="plan", copy="preview")
         return None
 
     # ── Planning ─────────────────────────────────────────────────────────
 
     @app.post("/api/planned-packages")
     async def start_package(body: PlanRequest, viewer: Viewer = Depends(current_viewer)):
-        if (refusal := allowed(viewer, body.view)) is not None:
+        if (refusal := allowed(viewer)) is not None:
             return refusal
         if store is None or engine_for is None:
             return JSONResponse({"code": "no_data_service"}, status_code=503)
@@ -276,7 +275,7 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: PackageStor
 
     @app.post("/api/planned-packages/{package_id}")
     def change_package(package_id: str, body: ChangeRequest, viewer: Viewer = Depends(current_viewer)):
-        if (refusal := allowed(viewer, body.view)) is not None:
+        if (refusal := allowed(viewer)) is not None:
             return refusal
 
         def act():

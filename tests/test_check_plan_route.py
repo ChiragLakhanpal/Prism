@@ -170,7 +170,11 @@ def test_with_no_data_service_set_up_the_route_says_so(monkeypatch):
 
 
 @pytest.mark.parametrize("query", ["asof=October-22", "view=everyone"])
-def test_a_malformed_as_of_date_or_view_is_refused(fixture_app, query):
+def test_a_malformed_as_of_date_or_view_reads_today_in_the_viewers_own_view(fixture_app, query):
+    # The view switch (ticket 40) binds what the address asks for: a date it can't read is today, and a view it doesn't
+    # know is the viewer's own, as the shell's alert then says (GET /api/me names the problem).
     response = get(fixture_app, f"{NWWDA_PLAN}/2026-10-09?{query}", ANA)
+    plain = get(fixture_app, f"{NWWDA_PLAN}/2026-10-09", ANA)
 
-    assert response.status_code == 422
+    assert response.status_code == 200
+    assert (response.json()["as_of"], response.json()["view"]) == (plain.json()["as_of"], "staff")

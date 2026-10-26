@@ -361,8 +361,6 @@ class PassageReports:
 
     def send(self, viewer: Viewer, body: dict, view: str, writer: Engine) -> dict:
         """Write one passage report from the answer's own record, or refuse it."""
-        if view != STAFF:
-            raise Refused(403, "preview")
         if body.get("kind") not in KINDS:
             raise Refused(422, "bad_kind")
         reason = (body.get("reason") or "").strip()

@@ -832,7 +832,8 @@ def test_the_baseline_s_record_does_not_open_in_the_public_view(writable):
 
 def test_only_a_signed_in_viewer_in_the_staff_view_can_save_a_read_version_as_the_baseline(writable):
     preview = call(writable, "PUT", f"{NWWDA}/baseline?view=piu", body={"plan_date": "2025-07-21"})
-    assert (preview.status_code, preview.json()) == (403, {"code": "preview"})
+    # The view switch's guard answers with the capability and the reason the roles file's [views] names (ticket 40).
+    assert (preview.status_code, preview.json()["code"], preview.json()["capability"]) == (403, "preview", "save_baseline")
     nobody = call(writable, "PUT", f"{NWWDA}/baseline", headers={}, body={"plan_date": "2025-07-21"})
     assert (nobody.status_code, nobody.json()) == (401, {"code": "no_identity"})
     unknown = call(writable, "PUT", f"{NWWDA}/baseline", body={"plan_date": "2024-01-01"})

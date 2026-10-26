@@ -85,7 +85,8 @@ def test_the_following_route_and_follows_refuse_a_viewer_without_the_world_bank_
 
 
 def test_a_preview_reads_no_following_list_and_writes_no_follow(app):
-    assert call(app, "GET", "/api/following?view=piu", ANA).json()["code"] == "preview"
+    # No preview keeps Following (the roles file's [views], ticket 40): the page is not in that view.
+    assert call(app, "GET", "/api/following?view=piu", ANA).json()["code"] == "not_in_view"
     assert call(app, "PUT", "/api/projects/P156634/follow?view=public", ANA).status_code == 403
 
 

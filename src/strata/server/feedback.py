@@ -134,8 +134,7 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, record: Callable[[
 
     @app.post("/api/feedback")
     def send_report(body: FeedbackRequest, viewer: Viewer = Depends(current_viewer)):
-        if body.view != "staff":
-            return refused(403, "preview")
+        # A preview never reaches this route: the view switch's guard refuses it (ticket 40).
         return recorded(f"a passage report on {body.evidence_id}", viewer,
                         lambda _engine, writer: reports.send(viewer, body.model_dump(), body.view, writer))
 

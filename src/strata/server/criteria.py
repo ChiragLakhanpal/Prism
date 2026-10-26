@@ -151,8 +151,6 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: CriteriaSto
     def start_compare(viewer: Viewer, package: workflow.Package, body: CompareRequest):
         if not viewer.user_id:
             return refused(401, "no_identity")
-        if body.view != STAFF:
-            return refused(403, "preview", capability="compare", copy="preview")
         text = body.text.strip()
         if not text:
             return refused(422, "empty")
