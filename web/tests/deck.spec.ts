@@ -10,6 +10,7 @@ import { fileURLToPath } from "node:url";
 import type { Page } from "@playwright/test";
 import { copyChecker } from "../lint/copy";
 import { deckCopy, figureCopy } from "../src/deck/copy";
+import { formatDate } from "../src/lib/format";
 import { scan } from "./axe";
 import { footerSentence } from "./design-md";
 import { expect, recorded, test } from "./mocked";
@@ -171,6 +172,26 @@ test("below the size of the canvas the deck is a page that reflows, with each sl
   await expect(slide.locator("[data-figure-text=pipeline]")).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   expect((await scan(page)).violations.map((found) => found.id)).toEqual([]);
+});
+
+test("slide 11's showcase is the ground truth's: ISR 7's date and rating, and the ICR's date, paragraph and PDF page", async ({ page }) => {
+  const read = spawnSync(
+    "python3",
+    [
+      "-c",
+      "import json, sys, tomllib; v = tomllib.load(open(sys.argv[1], 'rb'))['value']; print(json.dumps({x['id']: x for x in v}, default=str))",
+      `${REPO}tests/ground_truth/values.toml`,
+    ],
+    { encoding: "utf8" },
+  );
+  const facts = JSON.parse(read.stdout) as Record<string, { value: string; paragraph?: number; pdf_page?: number; date: string }>;
+  await present(page, 11);
+  const text = (await page.locator("section[data-slide='11'] [data-showcase]").innerText()).replace(/\s+/g, " ");
+  expect(text).toContain(`Report 7, P130164, ${formatDate(facts["isr-7-date"].value)};`);
+  expect(text).toContain(`rated progress toward the objective ${facts["isr-7-rating"].value} in August 2016`);
+  expect(text).toContain(
+    `Report, P130164, ${formatDate(facts["icr-date"].value)}, paragraph ${facts["icr-para-78"].paragraph}, page ${facts["icr-para-78"].pdf_page}.`,
+  );
 });
 
 test("a deck that cannot load says so on the stage with a way to try again", async ({ page }) => {

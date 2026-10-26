@@ -111,6 +111,30 @@ def test_the_addresses_and_the_presenter_come_from_their_config_files():
     assert set(data["presenter"]) == {"name", "date"}
 
 
+def test_the_live_recording_asks_the_apps_own_routes_for_the_demo_package(fixture_db):
+    import importlib.util
+    from contextlib import contextmanager
+
+    from strata.lakehouse.engine import DuckDBEngine
+
+    spec = importlib.util.spec_from_file_location("record_demo_live", ROOT / "ops" / "proposal" / "record_demo_live.py")
+    recorder = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(recorder)
+
+    @contextmanager
+    def reading(viewer):
+        with DuckDBEngine.open(fixture_db, read_only=True) as engine:
+            yield engine
+
+    answers = recorder.record(reading, "not-a-real-key")
+    demo = deck.build(None, answers)["demo"]
+    assert demo["comparables"]["package"]["step_reference"] == "KE-NWWDA-541055-CW-RFB"
+    counted = values()["comparables"]
+    # values.toml [comparables]: 45 signed and four still open.
+    assert demo["comparables"]["counts"]["comparables"] == counted["signed"] + counted["still_open"]
+    assert demo["estimate"]["tool"] == "estimate_time"
+
+
 def test_the_committed_deck_data_is_built_from_the_committed_snapshot():
     snap = snapshot.read() if snapshot.SNAPSHOT_FILE.exists() else None
     demo = json.loads(deck.DEMO_FILE.read_text()) if deck.DEMO_FILE.exists() else None
