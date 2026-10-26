@@ -538,17 +538,24 @@ ROW_COLUMNS = (*(key for key in step.COLUMNS.values() if key != "activity"), "me
 @dataclass(frozen=True)
 class RowsRead:
     """What write_rows read: the versions it wrote STEP rows for, the table rows in which the STEP
-    reader found an Activity Reference No. and those in which it found none, and the column
-    names it did not know."""
+    reader found an Activity Reference No. and those in which it found none, the column
+    names it did not know, and each reference the layout parser misread that it wrote as the plan's
+    text gives it."""
 
     versions: frozenset[str]
     with_reference: int
     without_reference: int
     unknown_columns: tuple[str, ...]
+    settled: tuple[tuple[str, str, str], ...] = ()  # (document_id, as the parser read it, as the text writes it)
 
 
-def write_rows(engine: Engine, project_id: str, versions: list[Version]) -> RowsRead:
-    """STEP rows and step dates for every version whose table pages are all parsed."""
+def write_rows(engine: Engine, project_id: str, versions: list[Version], misread_characters: int) -> RowsRead:
+    """STEP rows and step dates for every version whose table pages are all parsed.
+
+    Each version's references are checked against the ones its text lists (Route A): a reference the layout parser
+    misread by at most misread_characters characters (config/thresholds.toml, ingestion.reference_misread_characters)
+    is written as the text gives it, so its steps keep their first listing and their delay (ticket 78). Bronze keeps
+    what the parser read."""
     parsed: dict[tuple[str, int], tuple[str, str, str]] = {}
     for document_id, number, digest, parser, tables, _ in engine.run(
             "SELECT document_id, pdf_page, page_hash, parser, tables, parsed_at FROM strata.bronze.layout_pages "
@@ -557,17 +564,22 @@ def write_rows(engine: Engine, project_id: str, versions: list[Version]) -> Rows
     for table in ("plan_rows", "plan_steps", "plan_step_delays", "plan_data_notes"):
         engine.run(f"DELETE FROM strata.silver.{table} WHERE project_id = :project_id",  # sql-lint: names only
                    {"project_id": project_id})
-    rows, steps, read, without_reference, unknown = [], [], set(), 0, set()
+    rows, steps, read, without_reference, unknown, settled = [], [], set(), 0, set(), []
     for version in versions:
         pages = version.table_pages
         found = [parsed.get((version.document_id, number)) for number, _ in pages]
         if not pages or any(page is None or page[0] != digest for page, (_, digest) in zip(found, pages)):
             continue
-        reading = step.plan_rows([(number, tables_from_json(page[2])) for (number, _), page in zip(pages, found)])
+        reading = step.plan_rows([(number, tables_from_json(page[2])) for (number, _), page in zip(pages, found)],
+                                 version.listings, misread_characters)
         parser = found[0][1]
         read.add(version.document_id)
         without_reference += reading.rows_without_reference
         unknown |= reading.unknown_columns
+        for misread, written in reading.settled:
+            log.warning("The layout parser read %s in document %s of %s, which the plan's text writes as %s, so I "
+                        "wrote %s.", misread, version.document_id, project_id, written, written)
+            settled.append((version.document_id, misread, written))
         for row in reading.rows:
             rows.append((version.document_id, project_id, row.section, row.activity_reference_no,
                          row.description or None, *(row.fields.get(column) for column in ROW_COLUMNS),
@@ -582,7 +594,7 @@ def write_rows(engine: Engine, project_id: str, versions: list[Version]) -> Rows
             "public_from"), steps)
     for transform in ("plan_step_delays.sql", "plan_data_notes.sql"):
         engine.run(_sql(transform), {"project_id": project_id})
-    return RowsRead(frozenset(read), len(rows), without_reference, tuple(sorted(unknown)))
+    return RowsRead(frozenset(read), len(rows), without_reference, tuple(sorted(unknown)), tuple(settled))
 
 
 # ── 6. Data readiness ────────────────────────────────────────────────────
@@ -640,13 +652,16 @@ class Report:
     measures: list[Measure]
     unknown_columns: tuple[str, ...]  # STEP table columns the reader did not know, which it left out
     not_kept: tuple[tuple[str, int], ...] = ()  # plans fetched but too large for the warehouse (Fetching.not_kept)
+    settled: tuple[tuple[str, str, str], ...] = ()  # references the layout parser misread (RowsRead.settled)
 
 
 def run(engine: Engine, documents: Documents, layout: LayoutParser, project_id: str, *,
         thresholds: Thresholds | None = None, endpoint: str | None = None,
         clock: Callable[[], dt.datetime] = _now, run_id: str | None = None) -> Report:
     """Read one project's Procurement Plans into STEP rows. See the module's docstring for the steps."""
-    cap = int((thresholds or load_thresholds()).value("ingestion.daily_page_cap"))
+    thresholds = thresholds or load_thresholds()
+    cap = int(thresholds.value("ingestion.daily_page_cap"))
+    misread_characters = int(thresholds.value("ingestion.reference_misread_characters"))
     endpoint = endpoint or load_sources()[SOURCE].endpoint
     started = clock()
     run_id = run_id or f"plans-{project_id}-{started:%Y%m%dT%H%M%S%f}"
@@ -664,13 +679,13 @@ def run(engine: Engine, documents: Documents, layout: LayoutParser, project_id: 
     if parsing.stop is not None:  # the host refused, or the night's reading time is spent: the reading ends here
         record_stop(engine, run_id, "plans", project_id, parsing, started, clock())
         raise parsing.stop
-    read = write_rows(engine, project_id, versions)
+    read = write_rows(engine, project_id, versions, misread_characters)
     finished = clock()
     record_parse_run(engine, run_id, project_id, parsing, started, finished)
     measures = measure(engine, project_id, run_id, versions, len(listing.dates), read, parsed_pages(engine, project_id),
                        finished)
     return Report(run_id, len(versions), parsing, len(read.versions), measures, read.unknown_columns,
-                  fetching.not_kept)
+                  fetching.not_kept, read.settled)
 
 
 def run_on_fixture(engine: Engine, project_id: str | None = None, manifest=None, **options) -> Report:
@@ -699,11 +714,15 @@ def _print_fixture_run() -> int:
 
 
 def print_measures(report: Report) -> None:
-    """The run's measures, one a line, and any STEP column the reader did not know."""
+    """The run's measures, one a line, any STEP column the reader did not know, and each reference the layout parser
+    misread."""
     for m in report.measures:
         print(f"  {m.subject} {m.measure}: {m.count} of {m.denominator}")
     if report.unknown_columns:
         print(f"The STEP reader did not know these columns and left them out: {', '.join(report.unknown_columns)}.")
+    for document_id, misread, written in report.settled:
+        print(f"In document {document_id}, the layout parser read {misread}, which the plan's text writes {written}. "
+              f"I wrote {written}.")
     if report.not_kept:
         listed = ", ".join(f"{document_id} ({characters:,} characters)" for document_id, characters in report.not_kept)
         plans = "1 plan was" if len(report.not_kept) == 1 else f"{len(report.not_kept)} plans were"

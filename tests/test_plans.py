@@ -12,6 +12,7 @@ import tomllib
 from decimal import Decimal
 from pathlib import Path
 
+import misread_layout
 import pytest
 
 from strata.lakehouse.engine import DuckDBEngine
@@ -95,6 +96,30 @@ def test_ke_nwwda_229129_was_signed_186_days_after_its_first_published_planned_d
     assert (signed["first_planned_on"], signed["first_planned_plan_date"]) == (first["value"], first["date"])
     assert signed["delay_days"] == value("plan-229129-days-late")["value"]
     assert signed["actual_amount_usd"] == Decimal(str(value("plan-229129-actual")["value"]))
+
+
+SHOWCASE_VERSIONS = [entry for entry in GROUND_TRUTH["value"] if entry["id"].startswith("plan-229129-reference-")]
+
+
+def test_the_showcase_package_keeps_one_reference_across_its_four_plan_versions_and_in_gold(db):
+    """Ticket 78: each recorded plan version writes the showcase package the same way, and silver and gold agree.
+    The activity is found by its description, so a version whose row named it another way would show here."""
+    [reference] = {entry["value"] for entry in SHOWCASE_VERSIONS}
+    expected = next(row for row in GROUND_TRUTH["plan_row"] if row["reference"] == reference)
+    found = rows(db, """
+        SELECT v.plan_date, r.document_id, r.activity_reference_no, r.description
+        FROM strata.silver.plan_rows AS r JOIN strata.silver.plan_versions AS v ON v.document_id = r.document_id
+        WHERE v.implementing_agency = :agency""", agency=NWWDA)
+    history = {(row["plan_date"], row["activity_reference_no"]) for row in found
+               if squash(row["description"] or "") == squash(expected["description"])}
+    demo_plan = {row["document_id"] for row in found if row["plan_date"] == DEMO_PLAN}
+    [package] = rows(db, "SELECT process_status, process_status_document_id FROM strata.gold.package "
+                         "WHERE step_reference = :reference", reference=reference)
+
+    assert len(SHOWCASE_VERSIONS) == 4
+    assert history == {(entry["date"], reference) for entry in SHOWCASE_VERSIONS}
+    assert ({package["process_status_document_id"]}, package["process_status"]) == (
+        demo_plan, expected["process_status"])
 
 
 def measured(engine, run_id: str | None = None, subject: str = "P156634") -> dict:
@@ -629,3 +654,39 @@ def test_words_a_cell_wrapped_at_its_edge_read_as_the_pdf_gives_them_unless_the_
     expected = next(row for row in GROUND_TRUTH["plan_row"] if row["reference"] == "KE-NWWDA-229129-CW-RFB")
     assert (found["description"] == expected["description"]) is rejoin
     assert squash(found["description"]) == squash(expected["description"])
+
+
+# ── A reference the layout parser misreads (ticket 78) ──
+
+@pytest.mark.parametrize("misread, written", [
+    # One letter of the suffix, as on the workspace: the plan's text lists RFB and no table row read it.
+    (misread_layout.ON_THE_WORKSPACE, misread_layout.SHOWCASE["value"]),
+    # Nothing the plan's text lists is that close, so the reader has no grounds to change what the parser read.
+    ("KE-NWWDA-777777-GO-DIR", "KE-NWWDA-777777-GO-DIR"),
+], ids=["one-letter-is-read-as-the-text-writes-it", "a-reference-far-from-any-in-the-text-stays-as-read"])
+def test_a_reference_the_layout_parser_misreads_is_written_as_the_plans_own_text_gives_it(fresh, capsys, misread,
+                                                                                          written):
+    """The published text is the PDF's own words, and the plan reader already reads every reference from it (Route
+    A). A table row whose reference the text does not list, within a letter or two of one the text lists and no
+    other row read, takes the text's reference, so its steps keep their first listing and their delay. The run's
+    report names each one, as the live run prints it."""
+    from strata.fixture import recorded as fmt
+    from strata.lakehouse import plans
+    from strata.reader.documents import RecordedDocuments
+
+    manifest = fmt.load_manifest()
+    layout = misread_layout.MisreadsTheShowcaseReference(manifest, misread)
+    report = plans.run(fresh, RecordedDocuments(manifest), layout, "P156634", clock=clock(dt.date(2026, 10, 23)))
+    plans.print_measures(report)
+
+    misread_in_bronze = rows(fresh, "SELECT count(*) AS n FROM strata.bronze.layout_pages WHERE tables LIKE :misread",
+                             misread=f"%{misread}%")
+    references = {row["activity_reference_no"] for row in rows(fresh, DEMO_ROWS, agency=NWWDA, plan_date=DEMO_PLAN)}
+    printed = capsys.readouterr().out
+    assert misread_in_bronze == [{"n": 1}]  # bronze keeps what the parser read
+    assert written in references and ({misread} - {written}).isdisjoint(references)
+    assert [(read, kept) for _, read, kept in report.settled] == ([(misread, written)] if misread != written else [])
+    assert (f"read {misread}" in printed and f"writes {written}" in printed) is (misread != written)
+    if written == value("plan-229129-reference-2026-10-09")["value"]:
+        signed = demo_step(fresh, written, "Signed Contract")
+        assert signed["delay_days"] == value("plan-229129-days-late")["value"]
