@@ -863,11 +863,19 @@ hazard_ridge = 1.0
 # The demo-ready command (ticket 48; ops/demo/ready.py; docs/PLAN.md section 16, "The app stops 24 hours after a
 # deploy" and "Genie stalls on a cold warehouse").
 [demo_ready]
-# How long the command waits, after it starts the app, for GET /api/health to answer. Source: ops/dayone/live.py's
-# call_app gives a freshly started app six tries 15 seconds apart, 90 seconds; the platform's start already waits
-# up to 20 minutes for the app's compute (apps.start_and_wait), so five minutes covers a slow first container. A
-# starting value for the owner to confirm.
-health_timeout_seconds = 300
+# The command restarts a running app only when its last start or deploy, as the Apps API reports it, is this many
+# hours old or older (ticket 77). Source: the platform stops an app 24 hours after each start or deploy (docs/PLAN.md
+# section 16), and a restart takes about eight and a half minutes (health_timeout_seconds below). With 12, a run on
+# the morning of the demo restarts an app started the day before, and leaves running an app started that morning,
+# which then has at least 12 hours left. A starting value for the owner to confirm.
+restart_after_hours = 12
+# How long the command waits for GET /api/health to answer, after it starts or restarts the app or finds it
+# running. Source: the second session's run on October 26, 2026 (docs/workspace-catchup.md, ticket 48, steps 2 and
+# 3) measured a restart: the App answered 200 at 09:39:47 UTC, 503 from 09:40:02, 502 from 09:42:40 and 200 again
+# at 09:48:12, so it needs about eight and a half minutes, because the runtime installs ops/app/requirements.txt on
+# every start. The first value, 300 seconds, failed both runs that day. 900 seconds, 15 minutes, leaves room for a
+# slower start.
+health_timeout_seconds = 900
 # How often the command asks the health route again while it waits.
 health_poll_seconds = 5
 # After the command warms the warehouse and Genie, the next Genie call must answer within this many seconds.
