@@ -6,7 +6,7 @@ Read first: `src/strata/dashboard/render.py` (`_literal` and the `:copy__` param
 
 **Blocked by:** None (can start immediately)
 
-**Status:** in-progress
+**Status:** done
 **Area:** data
 **Phase:** P2
 **Design review:** no
@@ -18,3 +18,4 @@ Read first: `src/strata/dashboard/render.py` (`_literal` and the `:copy__` param
 ## Comments
 
 - October 25, 2026, orchestrator: opened at 23:25 PDT from the second session's deploy failure and built by the orchestrator itself in the worktree `.claude/worktrees/orch-71`, because every live step waited on it tonight. The dashboard tests (49) pass with the change; the live proof is the second session's next bundle deploy.
+- October 25, 2026, orchestrator (merger): merged into build/strata with the gate green; the third criterion (the second session's bundle deploy from a snapshot) is the live proof, recorded in the catch-up file under this ticket when it runs.
