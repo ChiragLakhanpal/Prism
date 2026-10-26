@@ -60,14 +60,26 @@ def closure(names, lock):
     return seen
 
 
+# Packages pinned below their uv.lock version because that version needs a Python newer than the App's 3.11.
+APP_PYTHON_PINS = {"numpy"}
+
+
 def test_the_lean_requirements_pin_each_package_at_its_uv_lock_version_and_leave_out_the_agent_framework():
     pins, lock = requirements(), locked()
 
     assert not [name for name in pins if name.startswith("agent-framework")]
     # Every package the server's packages install is pinned at the version the gate tested, so the
     # App never resolves a newer Starlette or pydantic on its own.
-    assert {name: pins.get(name) for name in closure(pins, lock)} == {
-        name: lock[name]["version"] for name in closure(pins, lock)}
+    # Except a package whose uv.lock version needs a newer Python than the App's: the Databricks Apps
+    # runtime is Python 3.11 (its pip log of October 25, 2026 names ./.venv/lib/python3.11, and numpy 2.5
+    # "Requires-Python >=3.12"), so such a package is pinned at its newest version for 3.11, under an
+    # "# app-python:" comment in requirements.txt that says so.
+    text = (APP / "requirements.txt").read_text()
+    for name in APP_PYTHON_PINS:
+        assert f"# app-python: uv.lock pins {name} " in text, f"{name} needs its app-python comment"
+        assert pins[name] < lock[name]["version"], f"{name} is pinned at or above its uv.lock version; drop the marker"
+    assert {name: pins.get(name) for name in closure(pins, lock) if name not in APP_PYTHON_PINS} == {
+        name: lock[name]["version"] for name in closure(pins, lock) if name not in APP_PYTHON_PINS}
     # The pins uv.lock does not hold: the tracing package, which the app imports only with a connection
     # string, at the version the day-one probe app sends its trace with, and Postgres's driver, which the
     # app imports only with a Lakebase database (ADR 0005), at the version the Lakebase probe timed it with.
