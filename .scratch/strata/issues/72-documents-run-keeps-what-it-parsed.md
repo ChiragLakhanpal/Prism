@@ -1,0 +1,20 @@
+# 72: The documents run keeps what it parsed: write per document, and skip a document whose fetch fails
+
+**What to build:** Two live documents runs on October 26, 2026 ended with nothing written to `strata.gold.passage`: the first crashed at 02:19 UTC on a config read (the shared checkout had moved under it, a lesson already recorded), and the rerun from a snapshot stopped at 06:39 UTC with exit 2, "I could not fetch https://search.worldbank.org/api/v3/wds?...proid=P089634...", after it had parsed 358 scanned pages over four hours. The run (`ops/documents/run_live.py` and what it calls in `src/strata/reader/` and `src/strata/knowledge/`) parses every document first and writes passages at the end, so one failed fetch throws the day's work away, and the app has no passages to cite until a run gets through every document in one go. Change the run so that each document's passages are written as soon as that document is parsed (the same rows, the same `public_from`, the same dedup rule as today, so a rerun writes nothing twice), a document whose fetch or parse fails is skipped with its reason in the run's log and in a per-run summary table or the existing `strata.ops` run record, and the run ends with exit 0 and a count of parsed, skipped and written documents when at least one document was written; exit 2 stays for a run that wrote nothing. Keep the paced fetcher from ticket 66. Prove it on the fixture with a fake fetcher that fails on the third document: the first two documents' passages are in the table, the third is listed as skipped with its reason, and a second run writes nothing new.
+
+Read first: `ops/documents/run_live.py`; `src/strata/reader/documents.py` (`LiveDocuments`, `NotFetched`); `src/strata/lakehouse/readers.py` (`live()`, `PoliteFetch`); the nightly task `parse_and_embed` in `src/strata/lakehouse/nightly.py` (which writes passages the same way, so share the writer); `tests/test_plans.py` and the documents tests; the catch-up blocks for ticket 11 step 1 and ticket 66 step 3 (the runs' logs and what they printed).
+
+**Blocked by:** None (can start immediately)
+
+**Status:** in-progress
+**Area:** data
+**Phase:** P2
+**Design review:** no
+
+- [ ] On the fixture with a fake fetcher that fails on the third document, the first two documents' passages are written before the failure, the third is skipped with its reason in the log and the run record, the run exits 0 with its counts, and a second run writes nothing new; the existing documents and plan tests pass unchanged.
+- [ ] The nightly task `parse_and_embed` and the live script share the per-document writer, so one code path writes passages; a test proves the nightly task's rows are unchanged on the fixture.
+- [ ] The second session's next live documents run from a snapshot writes passages for every document it fetched, lists the skipped ones, and `strata.gold.passage` holds rows after it (recorded in the catch-up file under this ticket).
+
+## Comments
+
+- October 25, 2026, orchestrator: opened at 23:45 PDT from the second session's two failed documents runs. Without passages the app cannot cite a document, so this is on the live demo's path. Dispatched to an implementer in a side run; a merge-only run lands it.
