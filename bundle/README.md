@@ -21,7 +21,7 @@ You need the Databricks CLI 0.287.0 or later, because only the direct deployment
 
     uv run --script ops/bundle/deploy.py --env-file .env
 
-It lists what the workspace holds, deploys the bundle, creates the tables, and prints what changed. A second run prints "No changes." It also lists fairshare's catalog before and after, and fails if the two listings differ. If fairshare's catalog has another name, pass it with `--fairshare-catalog`.
+It lists what the workspace holds, deploys the bundle, gives the app back its way in to the catalog (below), creates the tables, and prints what changed, a dashboard the bundle rewrote among them. A second run prints "No changes." It also lists fairshare's catalog before and after, and fails if the two listings differ. If fairshare's catalog has another name, pass it with `--fairshare-catalog`.
 
 Then run these four checks, also from the main checkout:
 
@@ -36,7 +36,7 @@ Some things to know before the first deploy:
 
 - If a catalog named `strata` already exists, the deploy cannot create it. Bind it to the bundle first with `databricks bundle deployment bind strata strata`.
 - The target has no development mode on purpose. Development mode would put a prefix on the schema names, and Strata's SQL names them `strata.bronze` and so on.
-- The grants in `catalog.yml` replace any other grants on Strata's own catalog, schemas and volume. They never touch fairshare's.
+- The grants in `catalog.yml` replace any other grants on Strata's own catalog, schemas and volume. They never touch fairshare's. They would also take away the app's USE CATALOG on `strata` and USE SCHEMA on `strata.ops`, so right after the bundle deploys, the deploy command gives both back to the app's own service principal, which it reads from the app that `ops/dayone/dayone.toml` names (ticket 79). The two privileges are defined once, as `ACCESS` in `ops/app/deploy_app.py`. With no app yet, the deploy says so and grants nothing for it. The app's table grants are on tables, which the bundle leaves alone.
 - SELECT on `strata.ops` reaches every future table in that schema. A table that holds uploads (CLAUDE.md rule 8) needs a row filter on the uploader's team, or a schema without this grant.
 - Who sent each passage report (`strata.ops.candidate_labels`, `viewer_id` and `viewer_email`) and who asked each question (`strata.ops.answer_citations`, `viewer_id`) are masked: readers read NULL there. `src/strata/lakehouse/masks.py` lists those columns, and the app's deploy, `ops/app/deploy_app.py`, puts the mask `strata.ops.mask_viewer` on each, because only it knows the app's service principal. Only that principal and you, who run the deploy, read the values. A bundle deploy leaves the masks in place.
 

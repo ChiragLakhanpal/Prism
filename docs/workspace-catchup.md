@@ -347,7 +347,7 @@ Run this from the main checkout:
 
 It worked if the command exits 0 and its last line reads `Strata is running at https://...`, and the App's Logs tab in the workspace shows that it installed `ops/app/requirements.txt` and that the server is serving (criterion 1). The logs should not show the agent-framework metapackage installed, because the lean requirements file leaves it out.
 
-Run this command again after every bundle deploy. The bundle's grants replace the App's USE CATALOG and USE SCHEMA on `strata`, so its usage events stop being written until the App's deploy grants them again.
+Run this command again after every bundle deploy made from a commit before ticket 79's merge. The bundle's grants replace the App's USE CATALOG and USE SCHEMA on `strata`, so its usage events stop being written until the App's deploy grants them again. From ticket 79's merge on, the bundle deploy gives the App both back itself (ticket 79's step 1 below checks it on the workspace), and this deploy is needed again only after a bundle deploy that makes a table the App writes.
 
 **Found on October 26, 2026 (orchestrator).** The user ran this deploy themselves tonight: the App `strata` was created at 05:08:53 UTC (service principal `app-4mv05v strata`, client id e796c089-1500-4cf2-9c1f-8e6a8f5aba10), two deployments failed at 05:14 and 05:46 with "Error installing packages" (the numpy pin for the Apps runtime's Python 3.11, fixed by ticket 69), and the deployment of 06:11:36 succeeded: "App started successfully". The App is RUNNING at https://strata-7474658003099155.aws.databricksapps.com with nine resources bound (sql-warehouse, appinsights, app-state, the four Foundry secrets and the two Azure OpenAI secrets), and the scope `strata` holds all six keys written at 06:08. From this computer, with an OAuth token from the wizard's CLI profile (`databricks auth token -p strata`; a personal access token gets 401), `GET /api/health` answers 200 `{"status":"ok"}`, `GET /api/me` answers 200 as chiraglakhanpal@gwu.edu with `staff` true and the views staff, piu and public, and `GET /api/freshness` answers 200 with `data_through` 2026-10-24. Answers through the agent fail with 401 PermissionDenied until the user assigns the principal `strata-app` the "Cognitive Services User" role (ticket 45, step 3 of 6, has the command).
 
@@ -2668,3 +2668,32 @@ It worked if:
 - A second `run-now` of the same task, right after, adds no row to `strata.ops.silver_pages` and takes about as long as a night with no new pages.
 
 Record the four results here. If `recorded` falls short of `pages` for a source after a run that succeeded, or P130164 still has 0 sector rows, tell the orchestrator before anyone shows the Summary on the App.
+
+## Ticket 79, step 1 of 1: a bundle deploy leaves the App its USE CATALOG and USE SCHEMA, with no App redeploy (criterion 3, live)
+
+Parked on October 26, 2026 with ticket 79. The second session runs it from a snapshot of ticket 79's merge commit or later, one workspace step at a time. It needs the Databricks keys in `.env` and the Databricks CLI 0.287.0 or later. It changes no table, job or dashboard file, so the deploy also serves as the next bundle deploy any other block asks for. Do not redeploy the App in this step: the point is that the App keeps serving through the bundle deploy.
+
+From ticket 79 on, `ops/bundle/deploy.py` reads the App that `ops/dayone/dayone.toml` names (`apps get`), and right after `databricks bundle deploy` adds USE CATALOG on `strata` and USE SCHEMA on `strata.ops` for the App's service principal through Unity Catalog's permissions update, which only adds. The bundle's own grants still replace the App's from the moment the CLI writes them until the CLI finishes, one to three minutes (the CLI ran for about three minutes on October 26). In that window the App's own writes, such as drafts, decisions and labels, can fail. Usage events wait in the App and are written on its next flush. Viewers' queries run as the viewer and are not touched. The "What changed" report now also lists both dashboards with the time each was last written.
+
+Run these from the snapshot, with `--env-file` pointing at the main checkout's `.env`. The first command records the App's active deployment (its id and create time) before the deploy:
+
+    databricks apps get strata -p strata
+    databricks grants get catalog strata -p strata
+    databricks grants get schema strata.ops -p strata
+    uv run --script ops/bundle/deploy.py --env-file "<main checkout>/.env" --fairshare-catalog workspace
+    databricks grants get catalog strata -p strata
+    databricks grants get schema strata.ops -p strata
+    uv run --script ops/bundle/deploy.py --env-file "<main checkout>/.env" --fairshare-catalog workspace
+
+Then, with an OAuth token from the CLI profile (`databricks auth token -p strata`; a personal access token gets 401), ask the App for `/api/health`:
+
+    curl -s -w ' %{http_code}\n' -H "Authorization: Bearer <token>" https://strata-7474658003099155.aws.databricksapps.com/api/health
+
+It worked if:
+
+- The first deploy exits 0 and, under "1. Deploying the bundle", prints "The bundle's grants replace every other grant on strata and its schemas, so I gave the app strata's service principal e796c089-1500-4cf2-9c1f-8e6a8f5aba10 back USE CATALOG on strata and USE SCHEMA on strata.ops." Its "3. What changed:" does not list "The grants on strata changed." or "The grants on strata.ops changed." if the first two `databricks grants get` commands already listed the App's principal (it may list tables that other merges added). If they did not, because a bundle deploy from before ticket 79 ran since the App's last redeploy, the report lists both grant lines, and that is correct.
+- After the deploy, `databricks grants get catalog strata` lists the App's service principal e796c089-1500-4cf2-9c1f-8e6a8f5aba10 with USE_CATALOG beside `account users`, and `databricks grants get schema strata.ops` lists it with USE_SCHEMA beside `account users` with SELECT and USE_SCHEMA. `SHOW GRANTS ON TABLE strata.ops.follows` on the warehouse still lists SELECT and MODIFY for it.
+- `/api/health` answers 200 `{"status":"ok"}` with no App redeploy since the bundle deploy, and a second `databricks apps get strata -p strata` shows the same active deployment (id and create time) as the first command of this step.
+- The second deploy prints "No changes." If it names "The dashboard Strata operations changed." and "The dashboard Strata operations (test) changed." although no dashboard file changed, the Databricks CLI rewrites every dashboard on each deploy: record that and tell the orchestrator, because the report then names dashboards that did not change.
+
+Record here the App line the first deploy printed, both grants listings after it, the `/api/health` answer and its time, and what the second deploy printed. If the first deploy says "I found no app named strata", the App was deleted: tell the orchestrator, and deploy it with ticket 06's step 1. The next deploy that rewrites a dashboard file (a new tile through `src/strata/dashboard`) should list "The dashboard ... changed." for that dashboard, which closes the report half of the ticket on the workspace.
