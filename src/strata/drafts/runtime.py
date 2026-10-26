@@ -32,6 +32,7 @@ from strata.agent.verifier import AnswerCheck, Verdict, answer_events, check
 from strata.config import DraftKind, DraftKinds
 from strata.dbx import Viewer
 from strata.drafts.holds import Draft as HoldDraft
+from strata.drafts.lesson_choices import next_index
 from strata.drafts.store import DraftStore, NewDraft, Saved, iso
 from strata.harness.facts import Facts
 from strata.harness.turn import Event
@@ -371,10 +372,9 @@ async def rewrite(saved: Saved, kind: DraftKind, row_key: str, lesson_id: str, v
     if verdict is None:  # the checks gave no verdict, so nothing can be shown as checked
         raise WriteError("internal")
     content = compose(plan, plan.facts, written, verdict, seen, owners)
-    # The new sentences take numbers after the draft's own, removed ones included, so a citation marker names one
-    # sentence on the page.
-    start = 1 + max([sentence["index"] for note in saved.content["notes"] for sentence in note.get("sentences") or ()]
-                    + [item["index"] for item in saved.content.get("removed") or () if "index" in item], default=-1)
+    # The new sentences take numbers after every sentence the draft has had, removed ones and removed rows' included,
+    # so a citation marker names one sentence on the page.
+    start = saved.content.get("next_index", next_index(saved.content))
     notes = [{**note, "sentences": [{**sentence, "index": sentence["index"] + start}
                                     for sentence in note.get("sentences") or ()]}
              for note in content["notes"] if note["state"] == "written"] if verdict.kept else []

@@ -76,11 +76,24 @@ def _row_keys(content: dict, row_key: str) -> set[str]:
     return {row_key}
 
 
+def next_index(content: dict, choices: list[LessonChoice] | tuple[LessonChoice, ...] = ()) -> int:
+    """The number a new sentence takes: one after every sentence the draft has had, on the page or in the removed box,
+    in its saved notes and in every rewrite, so a citation marker names one sentence even after a removed row comes
+    back (the draft page opens a source by its sentence's number)."""
+    parts = [content, *(choice.rewrite for choice in choices if choice.rewrite)]
+    numbers = [sentence["index"] for part in parts for note in part.get("notes") or ()
+               for sentence in note.get("sentences") or ()]
+    numbers += [item["index"] for part in parts for item in part.get("removed") or () if "index" in item]
+    return 1 + max(numbers, default=-1)
+
+
 def apply(content: dict, choices: list[LessonChoice]) -> dict:
-    """The draft as its author's choices leave it. The saved content is not changed; a copy is."""
+    """The draft as its author's choices leave it. The saved content is not changed; a copy is. It carries next_index,
+    counted before any removed row's notes leave it."""
     if not choices:
         return content
     shown = copy.deepcopy(content)
+    shown["next_index"] = next_index(content, choices)
     original = {note["key"]: note for note in content.get("notes") or []}
     rows = {row["row_key"]: row for row in (shown.get("ppsd") or {}).get("rows") or []}
     updates: dict[tuple[str, str], list[LessonChoice]] = {}

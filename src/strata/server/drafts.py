@@ -368,21 +368,28 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: DraftStore 
             done["trace_ids"] = {"application_insights": trace.application_insights, "mlflow": trace.mlflow}
         yield frame(Event("done", done))
 
-    def _run_row(writing: runtime.Writing, trace: TraceIds, error_code: str | None, started: dt.datetime) -> dict:
-        """The writer's run for strata.ops.agent_runs, in the shape the answer stream logs its runs. Every account user
-        can read that table, so an implementing agency team's run keeps the kind's key for its question and only each
-        removed sentence's reason, never the team's words (CLAUDE.md rule 8)."""
-        private = writing.kind.agency_only
-        turn = Turn(question=writing.kind.key if private else (writing.question or writing.kind.key),
-                    viewer=writing.viewer, run_id=writing.run_id,
-                    scope=Scope(chip=writing.request.get("project_id"), as_of=today(), language=writing.language),
-                    trace=trace)
-        turn.notes.agent, turn.notes.agent_version, turn.notes.as_of = writing.agent, writing.agent_version, today()
-        row = run_row(turn, writing.verdict, error_code, started, dt.datetime.now(dt.UTC))
+    def _writer_run(kind, question: str | None, verdict, *, viewer: Viewer, run_id: str, project_id: str | None,
+                    language: str, trace: TraceIds, agent: str | None, agent_version, error_code: str | None,
+                    started: dt.datetime) -> dict:
+        """A writer's run for strata.ops.agent_runs, in the shape the answer stream logs its runs, for a draft written
+        or one row rewritten. Every account user can read that table, so an implementing agency team's run keeps the
+        kind's key for its question and only each removed sentence's reason, never the team's words (CLAUDE.md
+        rule 8)."""
+        private = kind.agency_only
+        turn = Turn(question=kind.key if private else (question or kind.key), viewer=viewer, run_id=run_id,
+                    scope=Scope(chip=project_id, as_of=today(), language=language), trace=trace)
+        turn.notes.agent, turn.notes.agent_version, turn.notes.as_of = agent, agent_version, today()
+        row = run_row(turn, verdict, error_code, started, dt.datetime.now(dt.UTC))
         if private:
             row["removed"] = json.dumps([{"reason": sentence.reasons[0].code}
-                                         for sentence in (writing.verdict.removed if writing.verdict else [])])
+                                         for sentence in (verdict.removed if verdict else [])])
         return row
+
+    def _run_row(writing: runtime.Writing, trace: TraceIds, error_code: str | None, started: dt.datetime) -> dict:
+        return _writer_run(writing.kind, writing.question, writing.verdict, viewer=writing.viewer,
+                           run_id=writing.run_id, project_id=writing.request.get("project_id"),
+                           language=writing.language, trace=trace, agent=writing.agent,
+                           agent_version=writing.agent_version, error_code=error_code, started=started)
 
     # ── The Drafts tab ───────────────────────────────────────────────────
 
@@ -685,14 +692,12 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: DraftStore 
             except CannotRewrite:  # the kind's own refusal that the row cannot be rewritten
                 error_code = "stale"
             finally:
-                if runs is not None and noted:
-                    turn = Turn(question=noted[1], viewer=viewer, run_id=run_id,
-                                scope=Scope(chip=saved.project_id, as_of=today(), language=saved.content.get("lang") or "en"),
-                                trace=trace_ids())
-                    turn.notes.agent, turn.notes.agent_version, turn.notes.as_of = noted[2], noted[3], today()
-                    row = run_row(turn, noted[0], error_code or (None if rewrite and rewrite["notes"] else "no_answer"),
-                                  started,
-                                  dt.datetime.now(dt.UTC))
+                if runs is not None and noted:  # the same rule as a written draft's run, for an agency's rows too
+                    row = _writer_run(kind, noted[1], noted[0], viewer=viewer, run_id=run_id,
+                                      project_id=saved.project_id, language=saved.content.get("lang") or "en",
+                                      trace=trace_ids(), agent=noted[2], agent_version=noted[3],
+                                      error_code=error_code or (None if rewrite and rewrite["notes"] else "no_answer"),
+                                      started=started)
                     await asyncio.to_thread(runs.record, row)
             if error_code == "stale":
                 return refused(409, "stale", state=saved.state.state)

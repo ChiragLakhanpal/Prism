@@ -253,6 +253,23 @@ def test_a_removed_row_can_be_restored_and_its_notice_and_hold_come_back(story):
                                                                  ("restore", "permits_before_award")]
 
 
+def test_a_row_restored_after_another_row_was_updated_keeps_each_sentence_s_own_number(story):
+    """A citation marker opens one sentence's source by its number, so no two sentences share one: a rewrite takes
+    numbers after every sentence the draft has had, a removed row's included."""
+    retire_ieg_lesson_as_wrong(story)
+    choose(story, "draft-0002", "permits_before_award", lesson_id=story_of.IEG_LESSON, action="remove",
+           expected_cited_version=1, expected_current_version=3)
+    assert story.update("draft-0002").json()["outcome"] == "updated"
+
+    restored = choose(story, "draft-0002", "permits_before_award", lesson_id=story_of.IEG_LESSON, action="restore",
+                      expected_cited_version=1, expected_current_version=3).json()["draft"]
+
+    numbers = [sentence["index"] for note in restored["notes"] for sentence in note["sentences"]] + [
+        item["index"] for item in restored["removed"] if "index" in item]
+    assert {note["key"].split("/")[0] for note in restored["notes"]} == {"cost_estimates", "permits_before_award"}
+    assert sorted(numbers) == sorted(set(numbers))
+
+
 def test_a_project_paper_summary_that_cites_a_lesson_retired_as_wrong_is_held_until_its_part_is_removed(story):
     """The summary's PPSD part cites the rows' lesson at its version, so a retirement as wrong holds its export too."""
     _, paper = story.summarize()
