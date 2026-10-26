@@ -11,17 +11,21 @@ Run it from the main checkout after the wizard:
 It needs the Databricks CLI 0.287.0 or later on the path. It does these things, in order:
 
 1. It lists what the workspace holds: the strata catalog, its schemas, the volume, the tables, the
-   grants, the nightly job that bundle/nightly.yml names and the dashboard, and also fairshare's
-   catalog.
+   grants, the nightly job that bundle/nightly.yml names and both dashboards with the time each was
+   last written, and also fairshare's catalog.
 2. It runs `databricks bundle deploy`, which creates or updates the catalog, the bronze, silver,
    gold and ops schemas, the bronze files volume, the read grants, the nightly job and the AI/BI
-   dashboard that src/strata/dashboard defines (bundle/dashboard.yml), with the env file's SQL
-   warehouse for the dashboard's queries.
+   dashboards that src/strata/dashboard defines (bundle/dashboard.yml), with the env file's SQL
+   warehouse for the dashboards' queries. The bundle's grants replace every other grant on strata
+   and its schemas, so right after, it gives the app's own service principal (the app that
+   ops/dayone/dayone.toml names, as apps get returns it) back USE CATALOG on strata and USE SCHEMA
+   on strata.ops (ticket 79). With no app yet, it says so and grants nothing for it.
 3. It creates the tables from src/strata/lakehouse/tables on the SQL warehouse. Each one is
    CREATE TABLE IF NOT EXISTS, so a table that holds rows is never replaced. Then it creates or
    replaces the metric views the Genie space reads, from src/strata/lakehouse/metric_views (ticket 33),
    which hold no rows.
-4. It lists the same things again and prints what changed. A second run prints "No changes."
+4. It lists the same things again and prints what changed, a dashboard the bundle rewrote among
+   them. A second run prints "No changes."
    It also checks that fairshare's catalog lists the same as before, and fails if it does not.
 """
 

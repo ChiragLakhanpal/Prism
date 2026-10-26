@@ -49,10 +49,11 @@ It needs npm, which builds the web app. It does these things, in order:
    all of strata.ops.
 8. It prints the app's address.
 
-Run it again after every bundle deploy. The grants in bundle/catalog.yml replace any other
-grants on the strata catalog and its schemas (bundle/README.md), so a bundle deploy removes the
-app's USE CATALOG and USE SCHEMA, and its usage events, agent runs, opened sources, drafts, decisions
-and labels stop being written.
+The grants in bundle/catalog.yml replace any other grants on the strata catalog and its schemas
+(bundle/README.md), so the bundle deploy (ops/bundle/deploy.py) gives the app's service principal
+its USE CATALOG on strata and USE SCHEMA on strata.ops back right after (ticket 79), and its table
+grants stay. Run it again after a bundle deploy that makes a table the app writes, so the app gets
+that table's grant.
 
 Only the user may write secrets in the shared workspace. To redeploy new code from a session that may
 not write them, once the user has written the secrets, run:
