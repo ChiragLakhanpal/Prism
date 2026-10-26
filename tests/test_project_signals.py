@@ -164,6 +164,46 @@ def test_the_mission_brief_records_hold_the_two_contracts_signed_since_isr_19_an
     assert result["summary"]["totals"]["closing"]["moves"] == 3
 
 
+KILIFI = "Kilifi - Mariakani Water and Sewerage Company Ltd"
+
+
+def plans_by_agency(result: dict) -> dict[str, dict]:
+    return {fields["implementing_agency"]: fields for fields in (
+        {field["key"]: field["value"] for field in row["fields"]} for row in result["rows"] if row["part"] == "plans")}
+
+
+def test_a_plan_listed_but_not_read_counts_nothing_and_says_its_counts_are_missing(engine, fixture_db, tmp_path):
+    """The first live runs (October 26, 2026) found project_records failing for P156634 with a TypeError: an agency's
+    latest Procurement Plan was listed but its text was never read (an oversized plan the plan run skips), so it has
+    no rows, and check_plan gives it no counts. Here a newer Kilifi - Mariakani plan of September 30, 2026 is listed
+    with no rows on a copy of the fixture. Its record counts nothing and carries a data note that its counts are
+    missing; every other agency's plan reads as the fixture holds it."""
+    import shutil
+
+    copy = tmp_path / "fixture.duckdb"
+    shutil.copy(fixture_db, copy)
+    context = dict(viewer=ANA, as_of=AS_OF)
+    before = plans_by_agency(registry.call("project_records", {"project_id": "P156634"},
+                                           registry.Context(engine=engine, **context)))
+    with DuckDBEngine.open(copy) as listed:
+        listed.insert_rows("strata.silver.plan_versions", (
+            "document_id", "project_id", "implementing_agency", "plan_date", "disclosed_on", "series_order",
+            "previous_document_id", "is_latest", "pdf_pages", "route_b_pages", "text_url", "pdf_url", "public_from"),
+            [("49999999", "P156634", KILIFI, dt.date(2026, 9, 30), dt.date(2026, 9, 30), 2, "40001676", True, 0, 0,
+              "https://documents.worldbank.org/49999999.txt", "https://documents.worldbank.org/49999999.pdf",
+              dt.date(2026, 9, 30))])
+        result = registry.call("project_records", {"project_id": "P156634"}, registry.Context(engine=listed, **context))
+
+    after = plans_by_agency(result)
+    assert after[KILIFI]["plan_date"] == "2026-09-30"
+    assert (after[KILIFI]["activities"], after[KILIFI]["needs_a_look"], after[KILIFI]["watch"]) == (0, 0, 0)
+    assert after[KILIFI]["counts_missing"] is True and "counts_missing" not in before[KILIFI]
+    assert before[KILIFI]["activities"] == 22  # the March 19, 2025 plan, read, as the fixture holds it
+    assert {name: fields for name, fields in after.items() if name != KILIFI} == {
+        name: fields for name, fields in before.items() if name != KILIFI}
+    assert result["parts"]["plans"] == {"state": "ok", "reason": None}
+
+
 def test_raising_the_needs_a_look_count_above_four_turns_p156634_to_watch_with_no_code_change(engine):
     assert signals(engine, thresholds=with_signals(look_min=5))["status"] == "watch"
     assert signals(engine, thresholds=with_signals(look_min=5, strong=["closing_moves"]))["status"] == "needs_a_look"

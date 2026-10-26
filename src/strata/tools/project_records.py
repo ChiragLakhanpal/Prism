@@ -6,7 +6,8 @@ own evidence id, in the shape the evidence drawer shows a record (its fields by 
 as), with the part it belongs to:
 
 - plans: each implementing agency's latest Procurement Plan, with how many activities it lists and how many of
-  them check_plan marks as needing a look or worth watching (strata.silver.plan_versions:<document>);
+  them check_plan marks as needing a look or worth watching (strata.silver.plan_versions:<document>); a plan listed
+  but not read, which has no rows, counts zero of each and carries the data note counts_missing;
 - awards: each contract signed after the latest ISR's date, oldest first, with the supplier as the award record
   names it (never an individual consultant's name) and the Estimated Amount of the latest plan that lists its STEP
   reference (strata.gold.contract:<contract>);
@@ -94,6 +95,10 @@ def _plans(call: Call, project: dict, record_agencies: list[str]) -> tuple[list[
         if result["plan"] is None:
             continue
         plan, counts = result["plan"], result["counts"]
+        # A plan listed but not read has no rows, so check_plan counted nothing (as for an oversized plan the plan
+        # run skips): it counts zero of each, and its record carries a data note that its counts are missing.
+        missing = counts is None
+        counts = counts or {"activities": 0, "needs_a_look": 0, "watch": 0}
         series.append(plan["implementing_agency"].lower())
         rows.append(_record(plan["evidence_id"], plan["public_from"], "plans", "plans", project["project_id"],
                             plan["plan_date"], plan["implementing_agency"],
@@ -101,7 +106,8 @@ def _plans(call: Call, project: dict, record_agencies: list[str]) -> tuple[list[
                              # The agency's id in links, for the page's link to this version's plan check.
                              ("agency_id", plan_check.agency_id(plan["implementing_agency"]), "key"),
                              ("plan_date", plan["plan_date"], "date"), ("activities", counts["activities"], "count"),
-                             ("needs_a_look", counts["needs_a_look"], "count"), ("watch", counts["watch"], "count")]))
+                             ("needs_a_look", counts["needs_a_look"], "count"), ("watch", counts["watch"], "count"),
+                             ("counts_missing", True if missing else None, "flag")]))
         for row in result["rows"]:
             finish = _date(row["planned_completion_on"])
             signed = row["signed_on"] is not None or row["process_status"] in plan_check.CONTRACT_STATUSES
