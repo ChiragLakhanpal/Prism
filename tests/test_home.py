@@ -359,21 +359,28 @@ def test_as_of_a_past_date_the_briefing_counts_only_the_followed_projects_public
 
 def test_as_of_a_date_before_every_followed_project_was_public_the_briefing_never_says_you_follow_none(story):
     """Ana follows P130164 (public from April 18, 2013) and P156634 (public from March 1, 2017). As of a date before
-    both, she still follows them: the briefing says I hold nothing for that date, never that she follows no project,
-    and the page shows the quiet state, not the first-run card that asks her to follow one."""
+    both, she still follows them: the briefing says I hold no project record for them by that date, never that she
+    follows no project, and the page shows the quiet state, not the first-run card that asks her to follow one."""
     answer = story.home(asof="2012-01-01").json()
 
     assert sentences(answer) == [
-        "I hold no records disclosed by January 1, 2012 for the two projects you follow, so I have nothing to brief "
-        "you on for that date."]
+        "I hold no project record disclosed by January 1, 2012 for the two projects you follow, so I have nothing to "
+        "brief you on for that date."]
     assert lines(answer) == [] and answer["worth"]["empty"] == "quiet"
+
+    # P130164's General Procurement Notice (December 28, 2012) and Invitation for Bids (February 18, 2013) were public
+    # by then, but its project record only from April 18, 2013: the sentence names the record it checked.
+    answer = story.home(asof="2013-02-20").json()
+    assert sentences(answer) == [
+        "I hold no project record disclosed by February 20, 2013 for the two projects you follow, so I have nothing "
+        "to brief you on for that date."]
 
     assert story.call("DELETE", "/api/projects/P130164/follow", json={"view": "staff"}).status_code == 200
     answer = story.home(asof="2016-08-26").json()
 
     assert sentences(answer) == [
-        "I hold no records disclosed by August 26, 2016 for the project you follow, so I have nothing to brief "
-        "you on for that date."]
+        "I hold no project record disclosed by August 26, 2016 for the project you follow, so I have nothing to "
+        "brief you on for that date."]
     assert lines(answer) == [] and answer["worth"]["empty"] == "quiet"
 
 
