@@ -18,6 +18,15 @@
 # the whole document slice, a value for the owner to confirm: at 500 a day, the slice's Route B pages
 # take days to read the first time, and later runs parse only changed pages.
 daily_page_cap = 500
+# A Procurement Plan's published text holds each Activity Reference No. as STEP wrote it, while the layout
+# parser reads the page as an image and can misread a letter: on the workspace on October 26, 2026,
+# ai_parse_document read KE-NWWDA-229129-CW-RFB on page 3 of the October 9, 2026 plan as -RFQ (ticket 78).
+# A table row whose reference the text does not list takes the one reference the text lists and no other
+# row read, when the two differ by at most this many characters (src/strata/reader/step.py, _settle). Two
+# allows one or two misread letters. The reader never takes a reference that another row read, or one that
+# is no closer than another, since one agency's references can differ in one digit
+# (KE-NWWDA-541061-CW-RFQ and KE-NWWDA-541062-CW-RFQ). 0 turns it off. A value for the owner to confirm.
+reference_misread_characters = 2
 # The most pages the layout parser reads of one document in one part. A longer document is read in
 # parts of this many pages, every page keeping its number in the whole PDF. The live parser gets each
 # page as a PDF of its own, so a part's pages go one at a time. Source: ticket 18 ("a document over
