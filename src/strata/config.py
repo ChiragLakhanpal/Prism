@@ -519,13 +519,17 @@ class Showcase:
 
 @dataclass(frozen=True)
 class DemoPlan:
-    """The published Procurement Plan that "Check a plan" opens in the demo."""
+    """The published Procurement Plan that "Check a plan" opens in the demo, with the demo package and the two
+    benchmark questions the demo-ready command asks (config/slice.toml says what each means)."""
 
     project_id: str
     project_name: str
     implementing_agency: str
     agency_short_name: str
     plan_date: dt.date
+    package: str
+    smoke_question: str
+    genie_question: str
 
 
 # The stress shelf's kinds, in the order the 18 design brief lists them, and the rules that pick a
@@ -651,7 +655,8 @@ def load_slice(path: Path = CONFIG_DIR / "slice.toml") -> Slice:
     showcase = _Entry(path, "showcase", data.get("showcase"))
     showcase.only({"project_id", "name"})
     plan = _Entry(path, "demo_plan", data.get("demo_plan"))
-    plan.only({"project_id", "project_name", "implementing_agency", "agency_short_name", "plan_date"})
+    plan.only({"project_id", "project_name", "implementing_agency", "agency_short_name", "plan_date", "package",
+               "smoke_question", "genie_question"})
 
     onboarded = []
     for entry in _tables(path, data, "onboarded"):
@@ -675,7 +680,8 @@ def load_slice(path: Path = CONFIG_DIR / "slice.toml") -> Slice:
         last_fiscal_year=last,
         showcase=Showcase(showcase.project_id("project_id"), showcase.text("name")),
         demo_plan=DemoPlan(plan.project_id("project_id"), plan.text("project_name"),
-                           plan.text("implementing_agency"), plan.text("agency_short_name"), plan.date("plan_date")),
+                           plan.text("implementing_agency"), plan.text("agency_short_name"), plan.date("plan_date"),
+                           plan.text("package"), plan.text("smoke_question"), plan.text("genie_question")),
         stress_shelf=tuple(shelf),
         planned_projects=top.integer("planned_projects", required=False),
         notice_types=top.texts("notice_types"),
