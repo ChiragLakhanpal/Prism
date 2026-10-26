@@ -77,8 +77,8 @@ Command: `uv run --script ops/dayone/probe_hosts.py --env-file .env`
 - Result: The notebook, the job and the app each reached all four World Bank hosts.
 - Evidence:
   - This computer: search.worldbank.org 200; documents1.worldbank.org 200; datacatalogapi.worldbank.org 200; api.worldbank.org 200.
-  - The notebook (https://adb-7405609289499029.9.azuredatabricks.net/?o=7405609289499029#job/206478860009276/run/503976203938189): search.worldbank.org 200; documents1.worldbank.org 200; datacatalogapi.worldbank.org 200; api.worldbank.org 200.
-  - The job (https://adb-7405609289499029.9.azuredatabricks.net/?o=7405609289499029#job/757287689357399/run/1100189828451314): search.worldbank.org 200; documents1.worldbank.org 200; datacatalogapi.worldbank.org 200; api.worldbank.org 200.
+  - The notebook (https://adb-7405609289499029.9.azuredatabricks.net/?o=7405609289499029#job/728958432808114/run/646817633445246): search.worldbank.org 200; documents1.worldbank.org 200; datacatalogapi.worldbank.org 200; api.worldbank.org 200.
+  - The job (https://adb-7405609289499029.9.azuredatabricks.net/?o=7405609289499029#job/1018775688105798/run/216880754587085): search.worldbank.org 200; documents1.worldbank.org 200; datacatalogapi.worldbank.org 200; api.worldbank.org 200.
   - The app (https://strata-7405609289499029.9.azure.databricksapps.com): search.worldbank.org 200; documents1.worldbank.org 200; datacatalogapi.worldbank.org 200; api.worldbank.org 200.
 - Chosen path: Default. Ingestion runs in Databricks, and jobs fetch from the World Bank hosts.
 - Last run: October 26, 2026
@@ -97,7 +97,7 @@ Command: `uv run --script ops/dayone/probe_azure_from_job.py --env-file .env`
 - Status: passed
 - Result: The job reached Foundry and Azure OpenAI, and Azure OpenAI accepted the key.
 - Evidence:
-  - Job run: https://adb-7405609289499029.9.azuredatabricks.net/?o=7405609289499029#job/42324177463427/run/827354555173020
+  - Job run: https://adb-7405609289499029.9.azuredatabricks.net/?o=7405609289499029#job/109502183789487/run/155700649679184
   - Foundry project endpoint, asked without a key: 404.
   - Azure OpenAI model list, asked without a key: 401.
   - Azure OpenAI model list, asked with the key from the secret scope: 200.
@@ -255,10 +255,10 @@ Command: `uv run --script ops/dayone/probe_traces.py --env-file .env`
 - Status: passed
 - Result: A trace the app sent reached Application Insights.
 - Evidence:
-  - Marker: strata-dayone-a89a68c1e470.
+  - Marker: strata-dayone-6307e88ee4cd.
   - App: https://strata-7405609289499029.9.azure.databricksapps.com.
-  - The app sent trace 8a4f97cde3357b9a9de2d42eefd02667.
-  - Application Insights holds it: 2026-10-26T20:35:35.794675Z, dependency, 8a4f97cde3357b9a9de2d42eefd02667.
+  - The app sent trace 872e45cac676e66e878a6016fcc85c3f.
+  - Application Insights holds it: 2026-10-26T20:47:11.156268Z, dependency, 872e45cac676e66e878a6016fcc85c3f.
 - Chosen path: Default. The app sends its traces to Application Insights.
 - Last run: October 26, 2026
 <!-- /dayone:test-10 -->
