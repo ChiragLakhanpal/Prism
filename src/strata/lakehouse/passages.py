@@ -39,7 +39,16 @@ with the showcase, the demo plan and the stress shelf's projects named first), a
    fiscal year go to strata.ops.documents_read, and each stress shelf entry's outcome to
    strata.ops.stress_shelf (src/strata/lakehouse/stress_shelf.py).
 
-Bronze only grows. Silver is rebuilt from bronze for each project of the run on every run. On the
+Steps 1, 3, 5 and 6 run one document at a time (ticket 72): the run fetches a document, reads it, scans and
+embeds its new passage texts and syncs its rows of strata.gold.passage (write_document) before it fetches the
+next, so a run that stops later keeps every document it wrote. A document or a document list the source cannot
+give is skipped with its reason in strata.ops.skipped_documents, and the run goes on with the next. A stop (the
+host refused a request, or the night's reading time is spent) ends the run, and the document it was reading is
+listed there as unfinished. The nightly job's parse_and_embed and ops/documents/run_live.py both run it through
+strata.lakehouse.readers.reading, so one code path writes passages.
+
+Bronze only grows. Silver is rebuilt from bronze for each document the run reads, and once every document is
+read, a document of the run's projects that the run neither read nor skipped leaves silver (prune). On the
 workspace, ops/documents/run_live.py runs it with the live adapters and then syncs the index.
 
 Run it on the fixture and print what it wrote:
@@ -51,7 +60,6 @@ from __future__ import annotations
 
 import datetime as dt
 import json
-import logging
 import sys
 from collections import Counter
 from collections.abc import Callable
@@ -70,8 +78,6 @@ from strata.reader import passages as route_a
 from strata.reader.documents import Documents, NotFetched, StopReading, list_url
 from strata.reader.layout import LayoutParser
 from strata.reader.templates import TEMPLATES, template
-
-log = logging.getLogger(__name__)
 
 SOURCE = "documents"  # the source registry's key for the documents API
 # The Documents API's lang field, "French", to its ISO 639-1 code, from the language registry (config/languages.toml).
@@ -201,28 +207,6 @@ def with_contacts_held(engine: Engine, chosen: list[Held]) -> dict[str, tuple[in
                                                                         "marker": f"%{REMOVED}%"}).rows}
         found[project_id] = (len(ids & marked), len(ids))
     return found
-
-
-@dataclass(frozen=True)
-class Skipped:
-    """A document, or a project's document list, that a run could not fetch or read, and why (ticket 72)."""
-
-    project_id: str
-    document_id: str | None  # None when the run could not fetch the project's document list
-    url: str
-    reason: str
-
-
-SKIP_COLUMNS = ("run_id", "reader", "project_id", "document_id", "url", "reason", "skipped_at", "public_from")
-
-
-def skip(engine: Engine, run_id: str, reader: str, skipped: Skipped, when: dt.datetime) -> None:
-    """Record a document or a document list the run skipped, in the run's log and in strata.ops.skipped_documents.
-    reader is the reader that skipped it: plans or passages."""
-    what = f"document {skipped.document_id}" if skipped.document_id else "the document list"
-    log.info("I skipped %s of %s and went on with the next: %s", what, skipped.project_id, skipped.reason)
-    engine.insert_rows("strata.ops.skipped_documents", SKIP_COLUMNS, [
-        (run_id, reader, skipped.project_id, skipped.document_id, skipped.url, skipped.reason, when, when.date())])
 
 
 def _why_not_held(fetching: plans.Fetching, document: Listed) -> str:
@@ -456,7 +440,7 @@ class Tally:
     scanned: int = 0  # passage texts the shield scanned
     embedded: int = 0  # passage texts the embedder embedded
     synced: int = 0  # rows of strata.gold.passage added, changed or removed
-    skipped: list[Skipped] = field(default_factory=list)
+    skipped: list[plans.Skipped] = field(default_factory=list)  # what the passage reader skipped or left unfinished
 
 
 def read_slice(engine: Engine, documents: Documents, endpoint: str, projects: list[str], *, shield: Shield,
@@ -473,9 +457,9 @@ def read_slice(engine: Engine, documents: Documents, endpoint: str, projects: li
     page_cap = int(limits.value("ingestion.daily_page_cap"))
 
     def skipping(project_id: str, document_id: str | None, url: str, reason: str) -> None:
-        skipped = Skipped(project_id, document_id, url, reason)
+        skipped = plans.Skipped(project_id, document_id, url, reason)
         tally.skipped.append(skipped)
-        skip(engine, run_id, "passages", skipped, clock())
+        plans.skip(engine, run_id, "passages", skipped, clock())
 
     found: list[Read] = []
     paged = 0
@@ -511,6 +495,10 @@ def read_slice(engine: Engine, documents: Documents, endpoint: str, projects: li
                         skipping(project_id, document.document_id, document.pdf_url, str(error))
                         continue
                     parsing = done if parsing is None else parsing.then(done)
+                    if done.stop is not None:  # the host refused, or the night's reading time is spent
+                        tally.skipped.append(plans.record_stop(engine, run_id, "passages", project_id, parsing,
+                                                               started, clock()))
+                        raise done.stop
                 tally.parsed += 1
                 item = read_document(engine, held, reading, max_tokens, part_pages, about, read_here)
                 scanned, embedded, synced = write_document(engine, item, shield, embedder, clock)
@@ -523,7 +511,7 @@ def read_slice(engine: Engine, documents: Documents, endpoint: str, projects: li
                 found.append(item)
                 paged += held.paged
         except StopReading:
-            if parsing is not None:  # the project's pages parsed before the stop, in strata.ops.parse_runs
+            if parsing is not None and parsing.stop is None:  # the project's pages parsed before a stop met elsewhere
                 plans.record_parse_run(engine, run_id, project_id, parsing, started, clock())
             raise
         if parsing is not None:
@@ -539,7 +527,7 @@ WHERE array_contains(split(:projects, ','), project_id) AND kind <> :notice
 """
 
 
-def prune(engine: Engine, projects: list[str], found: list[Read], skipped: list[Skipped]) -> int:
+def prune(engine: Engine, projects: list[str], found: list[Read], skipped: list[plans.Skipped]) -> int:
     """Once every document is read: take out of silver each document of the run's projects that this run neither
     read nor skipped, so a project the cap left out this time keeps no passages from an earlier run, and the
     projects' notices' passages, which read_notices writes again. A document the run skipped, and every document
@@ -891,7 +879,7 @@ class Report:
     shelf: tuple = ()  # each stress shelf entry's outcome (stress_shelf.Outcome)
     synced: int = 0  # rows of strata.gold.passage the run added, changed or removed
     written: int = 0  # documents whose passages the run wrote to strata.gold.passage
-    skipped: tuple[Skipped, ...] = ()  # the documents and document lists it skipped, each with why
+    skipped: tuple[plans.Skipped, ...] = ()  # the documents and document lists it skipped, each with why
 
 
 def run(engine: Engine, documents: Documents, projects: list[str] | None = None, *, shield: Shield,

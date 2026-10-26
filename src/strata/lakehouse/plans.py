@@ -20,6 +20,9 @@ For one project, a run:
    ingestion.daily_page_cap). Each page read goes to bronze.layout_pages. A page the parser cannot
    read goes to strata.ops.parse_failures, counts against the cap, and waits until the next day.
    The run, with the page it stopped at and the first page that failed, goes to strata.ops.parse_runs.
+   When the host refuses a request or the night's reading time is spent (StopReading), the run stops
+   before the next page, keeps the pages it read, and lists the document as unfinished in
+   strata.ops.skipped_documents (ticket 72).
 5. Reads the parsed tables into silver.plan_rows and silver.plan_steps, for every version whose
    table pages have all been parsed, then runs the SQL that defines delay (silver.plan_step_delays)
    and the data notes (silver.plan_data_notes).
@@ -40,6 +43,7 @@ from __future__ import annotations
 import datetime as dt
 import hashlib
 import json
+import logging
 import sys
 from collections import defaultdict
 from collections.abc import Callable
@@ -51,8 +55,10 @@ from strata.lakehouse import contacts
 from strata.lakehouse.clean import public_from  # ADR 0002's rule, defined once for every source
 from strata.lakehouse.engine import Engine, RowTooLarge, WarehouseEngine
 from strata.reader import step
-from strata.reader.documents import Documents, NotFetched, list_url
+from strata.reader.documents import Documents, NotFetched, StopReading, list_url
 from strata.reader.layout import LayoutParser, Page, ParseFailed, Table, tables_from_json, tables_to_json
+
+log = logging.getLogger(__name__)
 
 SOURCE = "documents"  # the source registry's key for the documents API
 PLAN = "Procurement Plan"
@@ -97,6 +103,50 @@ def insert(engine: Engine, table: str, columns: tuple[str, ...], rows: list[tupl
     if isinstance(engine, WarehouseEngine):
         return engine.insert_rows(table, columns, list(rows), chunk=WAREHOUSE_CHUNK)
     return engine.insert_rows(table, columns, list(rows))
+
+
+# ── What a run skipped or left unfinished (ticket 72) ────────────────────
+
+SKIPPED, UNFINISHED = "skipped", "unfinished"
+
+
+@dataclass(frozen=True)
+class Skipped:
+    """A document, or a project's document list, that a reader could not fetch or read, so it skipped it and went
+    on (skipped), or a document it was reading when the run stopped (unfinished), and why. The plan reader and the
+    passage reader both record them, in strata.ops.skipped_documents."""
+
+    project_id: str
+    document_id: str | None  # None when the run could not fetch the project's document list
+    url: str
+    reason: str
+    outcome: str = SKIPPED
+
+
+SKIP_COLUMNS = ("run_id", "reader", "project_id", "document_id", "url", "outcome", "reason", "skipped_at",
+                "public_from")
+
+
+def named(reader: str, document_id: str | None) -> str:
+    """What a reader skipped, in words: a document, or, with no document, the project's plans (the plan reader
+    stopped on the project) or its document list (the passage reader could not fetch it)."""
+    if document_id:
+        return f"document {document_id}"
+    return "the plans" if reader == "plans" else "the document list"
+
+
+def skip(engine: Engine, run_id: str, reader: str, skipped: Skipped, when: dt.datetime) -> None:
+    """Record a document or a document list the run skipped or left unfinished, in the run's log and in
+    strata.ops.skipped_documents. reader is the reader that met it: plans or passages."""
+    what = named(reader, skipped.document_id)
+    # A warning, so the nightly job's log shows it without a logging setup of its own, and the live script's too.
+    if skipped.outcome == UNFINISHED:
+        log.warning("I left %s of %s unfinished: %s", what, skipped.project_id, skipped.reason)
+    else:
+        log.warning("I skipped %s of %s and went on with the next: %s", what, skipped.project_id, skipped.reason)
+    insert(engine, "strata.ops.skipped_documents", SKIP_COLUMNS, [
+        (run_id, reader, skipped.project_id, skipped.document_id, skipped.url, skipped.outcome, skipped.reason, when,
+         when.date())])
 
 
 # ── 1. Fetch into bronze ─────────────────────────────────────────────────
@@ -342,14 +392,22 @@ class Parsing:
     parsed_earlier_today: int  # pages the parser tried earlier that day, read or failed
     waiting: int
     parsed: int
-    stopped_at: tuple[str, int] | None  # the document and PDF page the run did not reach
+    stopped_at: tuple[str, int] | None  # the document and PDF page the run did not reach, at the cap or at a stop
     failed: tuple[tuple[str, int], ...] = ()  # the document and PDF page of each page the parser could not read
+    # What stopped the run at stopped_at, when it was not the cap: the host refused a request, or the night's reading
+    # time was spent (ticket 72).
+    stop: StopReading | None = None
+
+    @property
+    def at_cap(self) -> bool:
+        return self.stopped_at is not None and self.stop is None
 
     def then(self, later: Parsing) -> Parsing:
         """This parse and a later one for the same project in the same run, as one: the passage reader parses a
         project's pages document by document (ticket 72), and strata.ops.parse_runs keeps one row per project."""
         return Parsing(self.parser, self.cap, self.parsed_earlier_today, self.waiting + later.waiting,
-                       self.parsed + later.parsed, self.stopped_at or later.stopped_at, self.failed + later.failed)
+                       self.parsed + later.parsed, self.stopped_at or later.stopped_at, self.failed + later.failed,
+                       self.stop or later.stop)
 
 
 def parsed_pages(engine: Engine, project_id: str) -> set[tuple[str, int, str]]:
@@ -394,7 +452,12 @@ def parse_pages(engine: Engine, layout: LayoutParser, project_id: str, pages: li
     Each page is parsed once: a page whose document, PDF page and text hash bronze.layout_pages holds
     is not parsed again. The cap counts every page the parser tried that day, in UTC, across every
     project and both readers, whether it read the page or not, because each attempt costs a parse. A
-    page that failed that day waits until the next."""
+    page that failed that day waits until the next.
+
+    When the host refuses a request or the night's reading time is spent before a page (StopReading, which the
+    live parser checks before each page: strata.lakehouse.readers.OnBudget), the parse ends there and the Parsing
+    it returns holds the stop and the page it did not read; the pages read before it are already in bronze. The
+    caller records it (record_stop) and raises the stop again."""
     today = clock().date()
     done = parsed_pages(engine, project_id)
     failed_today = {(str(d), int(n), str(h)) for d, n, h in engine.run(
@@ -411,6 +474,9 @@ def parse_pages(engine: Engine, layout: LayoutParser, project_id: str, pages: li
         tried += 1
         try:
             found = layout.parse(Page(page.document_id, page.pdf_url, page.pdf_page))
+        except StopReading as stop:  # the pages parsed before this one stay in bronze (ticket 72)
+            return Parsing(layout.name, cap, earlier, len(waiting), parsed, (page.document_id, page.pdf_page),
+                           tuple(failed), stop)
         except ParseFailed as error:
             when = clock()
             insert(engine, "strata.ops.parse_failures",
@@ -443,8 +509,22 @@ def record_parse_run(engine: Engine, run_id: str, project_id: str, parsing: Pars
             "stopped_at_document_id", "stopped_at_pdf_page", "started_at", "finished_at", "public_from"),
            [(run_id, project_id, parsing.parser, parsing.cap, parsing.parsed_earlier_today, parsing.waiting,
              parsing.parsed, len(parsing.failed), *(parsing.failed[0] if parsing.failed else (None, None)),
-             parsing.stopped_at is not None, *(parsing.stopped_at or (None, None)), started, finished,
-             finished.date())])
+             parsing.at_cap, *(parsing.stopped_at or (None, None)), started, finished, finished.date())])
+
+
+def record_stop(engine: Engine, run_id: str, reader: str, project_id: str, parsing: Parsing, started: dt.datetime,
+                finished: dt.datetime) -> Skipped:
+    """A parse that a stop ended (parsing.stop): its row of strata.ops.parse_runs, with the page it did not read, and
+    the document it was reading listed as unfinished in strata.ops.skipped_documents. The caller raises the stop
+    again, so the reading ends there; the pages read before it stay in bronze.layout_pages, and the next run reads
+    the rest. Returns what it listed."""
+    record_parse_run(engine, run_id, project_id, parsing, started, finished)
+    document_id, page = parsing.stopped_at
+    unfinished = Skipped(project_id, document_id, parsing.stop.url,
+                         f"{parsing.stop} The pages read before page {page} are kept, and the next run reads the rest.",
+                         UNFINISHED)
+    skip(engine, run_id, reader, unfinished, finished)
+    return unfinished
 
 
 # ── 5. Silver rows, steps, delays and data notes ─────────────────────────
@@ -574,9 +654,17 @@ def run(engine: Engine, documents: Documents, layout: LayoutParser, project_id: 
     fetch_listing(engine, documents, endpoint, project_id)
     listing = listed_plans(engine, project_id)
     fetching = fetch_documents(engine, documents, project_id, listing.entries)
+    texts = {entry.document_id: entry.text_url for entry in listing.entries}
+    # Each plan listed but not fetched, which the run goes on without (ticket 72), at the time the run started: the
+    # fetches follow it at once, and the fixture's clock, which moves on each time it is read, keeps its times.
+    for document_id, reason in fetching.not_fetched:
+        skip(engine, run_id, "plans", Skipped(project_id, document_id, texts[document_id], reason), started)
     versions = read_versions(engine, project_id, listing)
     write_versions(engine, project_id, versions)
     parsing = parse_chosen(engine, layout, project_id, versions, cap, clock, run_id)
+    if parsing.stop is not None:  # the host refused, or the night's reading time is spent: the reading ends here
+        record_stop(engine, run_id, "plans", project_id, parsing, started, clock())
+        raise parsing.stop
     read = write_rows(engine, project_id, versions)
     finished = clock()
     record_parse_run(engine, run_id, project_id, parsing, started, finished)

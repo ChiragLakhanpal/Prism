@@ -28,9 +28,21 @@ silver, strata.gold.passage and strata.ops on the warehouse, with the stress she
 strata.ops.stress_shelf. Then it makes the Delta Sync index that config/models.toml's [search] table
 names on the AI Search endpoint the env file names (AI_SEARCH_ENDPOINT), when it is missing, syncs it,
 and waits until it holds every passage. A second run the same day parses no page it read.
-It exits 0 when the index holds every passage, 1 when the run finished but the index did not catch
-up in time, and 2 when it could not run or stopped before it finished, as when a World Bank host refuses
-a PDF: the pages parsed before that are kept, and the next run goes on from there.
+
+The run reads through the nightly job's own path (strata.lakehouse.readers.reading), so the job and this
+script share one writer of passages. It writes each document's passages to strata.gold.passage as soon as it
+has read that document (ticket 72). A document, or a project's document list, that a host does not give, as
+when search.worldbank.org answered 503 for P089634's list on October 26, 2026, is skipped: the run prints it
+with its reason as it goes, records it in strata.ops.skipped_documents, and goes on with the next. At the end
+it prints how many documents it parsed, skipped and wrote.
+
+A run that stops before it finished, as when a World Bank host refuses a request or the reading time in
+config/thresholds.toml (ingestion.document_host_minutes) is spent, keeps every document it wrote before the stop,
+lists the document it was reading as unfinished in strata.ops.skipped_documents, and syncs the index; the next run
+goes on from there. The time is checked before each page the layout parser reads as well as before each request.
+
+It exits 0 when it wrote at least one document's passages and the index holds every passage, 1 when the index
+did not catch up in time, and 2 when it wrote no document's passages or could not run.
 
 It needs DATABRICKS_HOST, DATABRICKS_WAREHOUSE_ID, a token or a service principal, AI_SEARCH_ENDPOINT,
 AZURE_OPENAI_ENDPOINT and AZURE_OPENAI_API_KEY. Then check the ground-truth queries on both engines, as
@@ -42,9 +54,11 @@ for every file marked for databricks, among them the slice's project count:
 from __future__ import annotations
 
 import argparse
+import datetime as dt
 import io
 import sys
 import time
+from collections.abc import Callable
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -54,9 +68,8 @@ for folder in (REPO / "src", REPO / "ops" / "dayone", REPO / "ops" / "bundle"):
         sys.path.insert(0, str(folder))
 
 from strata.config import load_layout_parser, load_models  # noqa: E402
-from strata.lakehouse import passages, plans  # noqa: E402
+from strata.lakehouse import passages, plans, readers  # noqa: E402
 from strata.lakehouse.engine import EngineError  # noqa: E402
-from strata.reader.documents import NotFetched, StopReading  # noqa: E402
 from workspace_env import WorkspaceEnvError, load_workspace_env  # noqa: E402
 
 NEEDS = ("AI_SEARCH_ENDPOINT", "AZURE_OPENAI_ENDPOINT", "AZURE_OPENAI_API_KEY")
@@ -71,15 +84,73 @@ def document_readers(engine, upload, fetch=None, cache=CACHE, sleep=None, clock=
     (strata.lakehouse.readers.document_host, ticket 66): the documents source's pause between requests
     (config/sources.toml), each document kept in cache once fetched, every project's document list asked for again,
     a HostRefused stop at the host's first 403 or 429, and the night's reading time (config/thresholds.toml,
-    ingestion.document_host_minutes), after which the run stops and the next goes on from the kept copies. fetch is
-    the host (plain urllib unless a test gives one); upload writes a page's PDF to the volume for the parser."""
+    ingestion.document_host_minutes), checked before each request and before each page the parser reads, after
+    which the run stops and the next goes on from the kept copies (ticket 72). fetch is the host (plain urllib unless
+    a test gives one); upload writes a page's PDF to the volume for the parser."""
     from strata.fixture.record import fetch_url
-    from strata.lakehouse.readers import document_host
+    from strata.lakehouse.readers import document_host, live_parser
     from strata.reader.documents import LiveDocuments
-    from strata.reader.layout import PARSERS
 
     paced = document_host(fetch or fetch_url, cache, sleep=sleep, clock=clock)
-    return LiveDocuments(paced), PARSERS[load_layout_parser()](engine, fetch=paced, upload=upload)
+    return LiveDocuments(paced), live_parser(engine, paced, upload)
+
+
+def _now() -> dt.datetime:
+    return dt.datetime.now(dt.UTC)
+
+
+RUN_RECORD = """
+SELECT reader, project_id, document_id, url, outcome, reason FROM strata.ops.skipped_documents
+WHERE run_id = :run_id ORDER BY skipped_at, project_id, document_id
+"""
+
+
+def read_documents(engine, found: readers.Readers, run_id: str, clock: Callable[[], dt.datetime] = _now) -> int:
+    """Both readers over the slice, through the nightly job's own path (strata.lakehouse.readers.reading), so the
+    job and this script share one writer of passages. Each document a reader skips or leaves unfinished is printed
+    with its reason as the run goes (a warning from strata.lakehouse.plans) and again at the end from the run's
+    record in strata.ops.skipped_documents, with how many documents the run parsed, skipped and wrote. Returns 0 when
+    the run wrote at least one document's passages to strata.gold.passage, and 2 when it wrote none or could not
+    run."""
+    from strata.knowledge.embed import EmbedError
+    from strata.knowledge.shields import ShieldError
+
+    tally = passages.Tally()
+    done = None
+    try:
+        done = readers.reading(engine, found, run_id, clock, tally=tally)
+    # The warehouse, Prompt Shields or the embedding deployment failed, or a request did: urllib's errors and the
+    # Databricks SDK's are OSErrors. What the run wrote before stays.
+    except (EngineError, ShieldError, EmbedError, OSError) as error:
+        print(f"The run stopped: {str(error).rstrip('.')}. The documents it wrote before that stay in "
+              "strata.gold.passage, and the next run goes on from there.")
+    try:
+        record = engine.run(RUN_RECORD, {"run_id": run_id}).rows
+    except EngineError:
+        record = []  # the warehouse is what failed; the skips were printed as the run went
+    skipped = [row for row in record if row[4] == "skipped"]
+    unfinished = [row for row in record if row[4] != "skipped"]
+    print(f"Run {run_id} parsed {tally.parsed} document{'' if tally.parsed == 1 else 's'}, skipped {len(skipped)} and "
+          f"wrote the passages of {tally.written} to strata.gold.passage"
+          + (f", and left {len(unfinished)} unfinished." if unfinished else "."))
+    for reader, project_id, document_id, url, outcome, reason in record:
+        what = plans.named(reader, document_id)
+        print(f"  {what} of {project_id}, {'skipped' if outcome == 'skipped' else 'left unfinished'} by the "
+              f"{'plan' if reader == 'plans' else 'passage'} reader ({url}): {reason}")
+    if done is not None and done.stopped is not None:
+        print(f"It stopped before it finished: {str(done.stopped).rstrip('.')}. The documents it wrote before that "
+              "stay, and the next run goes on from there.")
+    report = done.report if done is not None else None
+    if report is not None:
+        print(f"It counted {report.slice_projects} projects in the slice and read {report.documents} documents into "
+              f"{report.passages} passages, with {report.scans} scans read by {found.layout.name}, and "
+              f"{report.notice_passages} passages of notices' text. {found.shield.name} scanned {report.scanned} "
+              f"new passage texts and {found.embedder.name} embedded {report.embedded}.")
+        passages.print_measures(engine, report.run_id)
+        for outcome in report.shelf:
+            shown = f"{outcome.count} of {outcome.denominator}" if outcome.count is not None else outcome.state
+            print(f"  stress shelf {outcome.shelf_key}: {outcome.document_id or 'no document'}, {shown}")
+    return 0 if done is not None and tally.written else 2
 
 
 def main(argv=None) -> int:
@@ -100,9 +171,9 @@ def main(argv=None) -> int:
     from bundle_live import LiveWorkspace  # the Databricks SDK, which only the live run needs
     from databricks.sdk.errors import NotFound
 
-    from strata.knowledge.embed import AzureOpenAIEmbeddings, EmbedError
+    from strata.knowledge.embed import AzureOpenAIEmbeddings
     from strata.knowledge.search import AiSearchIndex
-    from strata.knowledge.shields import PromptShields, ShieldError, content_safety_endpoint
+    from strata.knowledge.shields import PromptShields, content_safety_endpoint
     from strata.reader.layout import PARSERS
 
     name = load_layout_parser()
@@ -122,31 +193,14 @@ def main(argv=None) -> int:
             raise LookupError(str(error)) from error
 
     model = load_models()["embed"]
-    try:
-        shield = PromptShields(content_safety_endpoint(env["AZURE_OPENAI_ENDPOINT"]), env["AZURE_OPENAI_API_KEY"])
-        embedder = AzureOpenAIEmbeddings(env["AZURE_OPENAI_ENDPOINT"], env["AZURE_OPENAI_API_KEY"], model.deployment,
-                                         model.dimensions)
-        projects = passages.default_projects(engine)
-        for project_id in projects:
-            plans.run(engine, documents, layout, project_id)
-        report = passages.run(engine, documents, projects, shield=shield, embedder=embedder, layout=layout)
-    except (EngineError, ShieldError, EmbedError) as error:
-        print(f"The run stopped: {error}")
-        return 2
-    # The host refused a request, or the reading time was spent (StopReading), or a fetch failed: urllib's errors and
-    # the Databricks SDK's are OSErrors.
-    except (StopReading, NotFetched, OSError) as error:
-        print(f"The run stopped before it finished: {str(error).rstrip('.')}. The pages it parsed are kept, "
-              "and the next run goes on from there.")
-        return 2
-    print(f"Run {report.run_id} counted {report.slice_projects} projects in the slice and read {report.documents} "
-          f"documents into {report.passages} passages, with {report.scans} scans read by {layout.name}, and "
-          f"{report.notice_passages} passages of notices' text. Prompt Shields scanned {report.scanned} new "
-          f"passage texts and {model.deployment} embedded {report.embedded}.")
-    passages.print_measures(engine, report.run_id)
-    for outcome in report.shelf:
-        shown = f"{outcome.count} of {outcome.denominator}" if outcome.count is not None else outcome.state
-        print(f"  stress shelf {outcome.shelf_key}: {outcome.document_id or 'no document'}, {shown}")
+    shield = PromptShields(content_safety_endpoint(env["AZURE_OPENAI_ENDPOINT"]), env["AZURE_OPENAI_API_KEY"])
+    embedder = AzureOpenAIEmbeddings(env["AZURE_OPENAI_ENDPOINT"], env["AZURE_OPENAI_API_KEY"], model.deployment,
+                                     model.dimensions)
+    found = readers.Readers(documents, layout, shield, embedder, plan_projects=passages.default_projects,
+                            report_projects=passages.default_projects)
+    code = read_documents(engine, found, f"documents-{_now():%Y%m%dT%H%M%S%f}")
+    if code:
+        return code
 
     held = int(engine.run("SELECT count(*) AS n FROM strata.gold.passage").rows[0][0])
     index = AiSearchIndex(rest, env["AI_SEARCH_ENDPOINT"], model.dimensions)
