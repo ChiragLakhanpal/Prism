@@ -1,0 +1,239 @@
+"""The proposal's build (ticket 46; the 46 brief, sections 4, 7, 9, 10, 12, 13 and 15), on a snapshot pulled from the
+fixture and the dashboard's made-up month (tests/proposal_seed.py). The real proposal is built from the workspace's
+snapshot, so nothing here is a finding.
+
+Expected words and structure come from the brief, docs/assessment.md and DESIGN.md, never from the build.
+"""
+
+import html
+import re
+import subprocess
+from dataclasses import replace
+from pathlib import Path
+
+import pytest
+
+from proposal_seed import merged
+from strata import config
+from strata.proposal import build, figures, numbers
+from strata.proposal.__main__ import proposal_problems, source_problems
+
+ROOT = Path(__file__).resolve().parents[1]
+SOURCE = (ROOT / "docs" / "proposal" / "source.md").read_text()
+URLS = config.Urls("https://strata-1.aws.databricksapps.com", "https://dbc-1.cloud.databricks.com/dashboards/1",
+                   "https://github.com/someone/strata")
+
+
+@pytest.fixture(scope="module")
+def snap(fixture_db):
+    return merged(fixture_db)
+
+
+def inputs(snap, **changes):
+    return build.Inputs(**{"snapshot": snap, "commit": "0123456789abcdef", "urls": URLS, **changes})
+
+
+@pytest.fixture(scope="module")
+def built(snap):
+    return build.build(SOURCE, inputs(snap))
+
+
+def lint(path: Path) -> subprocess.CompletedProcess:
+    return subprocess.run(["node", str(ROOT / "web" / "lint" / "proposal.ts"), str(path)], capture_output=True,
+                          text=True)
+
+
+def paragraph(markdown: str, number: int) -> str:
+    return next(line for line in markdown.splitlines() if line.startswith(f'<a id="p{number}"></a>'))
+
+
+# ── The number check, on the proposal and on a planted copy ──────────────
+
+def test_the_number_check_passes_on_the_built_proposal_and_its_links_all_land(built):
+    assert numbers.unsourced(built.markdown) == []
+    assert proposal_problems(built.markdown) == []
+
+
+def test_the_number_check_fails_when_an_unlinked_number_is_planted_in_a_copy(built):
+    planted = built.markdown.replace(paragraph(built.markdown, 3), paragraph(built.markdown, 3)
+                                     + " Strata read 4,812 pages in a day.", 1)
+    found = numbers.unsourced(planted)
+    assert [(problem.where, problem.number) for problem in found] == [("Paragraph 3", "4,812")]
+    assert proposal_problems(planted)[0].startswith("The number check failed. Paragraph 3 has a number with no source")
+
+
+def test_a_number_typed_into_the_source_stops_the_build_and_the_gate(snap):
+    planted = SOURCE.replace("{#summary-how} Strata keeps its data", "{#summary-how} In 14 months, Strata keeps its data")
+    with pytest.raises(build.BuildError, match=r"Paragraph 3 has a number with no source: \"In 14 months"):
+        build.build(planted, inputs(snap))
+    assert any('has a number with no source: "In 14 months' in problem for problem in source_problems(planted))
+    assert source_problems(SOURCE) == []
+
+
+# ── Every state the build stops on ───────────────────────────────────────
+
+def test_a_result_with_no_measured_value_stops_the_build_and_names_its_query_and_paragraph(snap):
+    results = {**snap["results"], "passages": {"measured": False}}
+    with pytest.raises(build.BuildError) as stopped:
+        build.build(SOURCE, inputs({**snap, "results": results}))
+    assert re.fullmatch(r"The proposal did not build\. Result passages has no measured value\. Measure it with "
+                        r"src/strata/proposal/sql/passages\.sql, or remove the sentence that cites it in Paragraph "
+                        r"\d+\.", str(stopped.value))
+
+
+def test_a_missing_url_stops_the_build(snap):
+    with pytest.raises(build.BuildError, match=r"^The data sheet can't link to app, because its URL isn't set in "
+                                               r"config/urls.toml.$"):
+        build.build(SOURCE, inputs(snap, urls=replace(URLS, app=None)))
+
+
+def test_a_reference_to_a_paragraph_that_is_not_there_stops_the_build(snap):
+    planted = SOURCE.replace("{fig:pipeline} shows the parts.", "{p:nowhere} shows the parts.")
+    with pytest.raises(build.BuildError, match=r"^Paragraph 3 links to nowhere, which is not in the proposal.$"):
+        build.build(planted, inputs(snap))
+
+
+def test_a_figure_with_no_drawing_stops_the_build(snap):
+    planted = SOURCE.replace("## Designed, not built", "{figure:ladder-drawing}\n**Figure. The ladder.**\n\n"
+                                                         "## Designed, not built")
+    with pytest.raises(build.BuildError, match=r"^Figure 10 is missing: proposal/figures/10-ladder-drawing.svg."):
+        build.build(planted, inputs(snap))
+
+
+# ── Structure: the modules and the rubric map ────────────────────────────
+
+def test_the_sections_follow_the_assessments_four_modules_in_order(built):
+    headings = re.findall(r"^## (.+)$", built.markdown, re.M)
+    assert headings == [
+        "Summary", "Where Strata earns each point", "Module 1: Ingestion and knowledge representation",
+        "Module 2: Estimates and agentic retrieval", "Module 3: Guardrails, faithfulness and attribution",
+        "Module 4: Learning loops and implementation", "Designed, not built", "Annex 1: Results register",
+        "Annex 2: Settings and counts", "Annex 3: Data sources and licenses", "Annex 4: Words and abbreviations"]
+
+
+def test_paragraphs_are_numbered_from_the_summary_without_gaps_and_the_annexes_have_none(built):
+    body, annexes = built.markdown.split("## Annex 1: Results register")
+    numbered = [int(n) for n in re.findall(r'<a id="p(\d+)"></a>\*\*(?:\d+)\.\*\*', body)]
+    assert numbered == list(range(1, len(numbered) + 1)) and len(numbered) > 40
+    assert '<a id="p' not in annexes
+    assert '<a id="p1"></a>' not in body.split("## Summary")[0]
+
+
+def test_the_rubric_map_lists_each_dimension_with_its_points_and_the_sections_that_earn_them(built):
+    rubric_map = built.markdown.split("## Where Strata earns each point")[1].split("## Module 1")[0]
+    # docs/assessment.md, section 5: the four dimensions and their points, linked to the rubric.
+    for name, points in (("System and knowledge architecture", 30), ("Analytical and AI methodology", 30),
+                         ("Domain alignment and data use", 25), ("Operationalization and scalability", 15)):
+        assert re.search(rf"<strong>{name}</strong>, <a href=\"assessment.md#5-evaluation--assessment-rubric\">"
+                         rf"{points}</a> points", rubric_map), name
+    assert rubric_map.count('<td data-quote="assessment">') == 13
+    rows = re.findall(r'<td data-quote="assessment">[^<]+</td><td>(.*?)</td>', rubric_map)
+    assert all(re.search(r'href="#(p\d+|figure-\d|sec-annex-sources)"', row) for row in rows)
+    assert 'All four dimensions, <a href="assessment.md#5-evaluation--assessment-rubric">100</a> points' in rubric_map
+
+
+def test_each_module_opens_with_its_scored_under_line_and_an_in_short_paragraph(built):
+    for module in re.split(r"^## Module \d: ", built.markdown, flags=re.M)[1:]:
+        lines = [line for line in module.splitlines() if line.strip()]
+        assert lines[1].startswith("Scored under [")
+        assert "**In short.**" in lines[2]
+
+
+# ── Designed, not built ──────────────────────────────────────────────────
+
+def test_with_nothing_designed_but_unbuilt_the_list_says_so_and_the_summary_leaves_it_out(built):
+    section = built.markdown.split("## Designed, not built")[1].split("## Annex 1")[0]
+    assert 'Everything this proposal describes is built. Strata shows no "Designed, not built" labels.' in section
+    assert "designed but not built" not in built.markdown.split("## Where Strata earns")[0]
+
+
+def test_each_item_designed_but_not_built_gets_its_row_and_the_summary_names_the_list(snap):
+    item = config.DesignedNotBuilt("hazard_model", "The early-warning model", "/projects/P156634",
+                                   "m2-signals", "Strata shows fixed signals.")
+    markdown = build.build(SOURCE, inputs(snap, designed=(item,))).markdown
+    section = markdown.split("## Designed, not built")[1].split("## Annex 1")[0]
+    assert ('| <a id="dnb-hazard_model"></a>The early-warning model | Strata shows fixed signals. | '
+            "[/projects/P156634](https://strata-1.aws.databricksapps.com/projects/P156634) |") in section
+    assert "Some parts of Strata are designed but not built" in markdown.split("## Where Strata earns")[0]
+
+
+# ── Annexes: attributions word for word ──────────────────────────────────
+
+def design_section_8() -> str:
+    text = (ROOT / "DESIGN.md").read_text()
+    return text.split("## 8. Attribution and disclaimers")[1].split("## 9.")[0]
+
+
+def test_annex_3_credits_every_dataset_and_the_fixed_lines_word_for_word_from_design_md(built):
+    from strata.tools.data_readiness_for import registry_page
+
+    annex = built.markdown.split("## Annex 3: Data sources and licenses")[1].split("## Annex 4")[0]
+    section = design_section_8()
+    # DESIGN.md section 8's example line, with the source registry's names in its slots.
+    example = re.search(r'For example: "(The World Bank: [^"]+)"', section).group(1)
+    template = example.replace("Contract Awards in Investment Project Financing (Since FY 2020)", "{dataset}").replace(
+        "Systematic Tracking of Exchanges in Procurement (STEP)", "{source}").replace("CC BY 4.0", "{license}")
+    for row in registry_page()["datasets"]:
+        assert template.format(dataset=row["dataset_name"], source=row["data_source"], license=row["license"]) in annex
+    for fixed in ("Terms of use: https://www.worldbank.org/ext/en/legal/terms-conditions/datasets",
+                  "Strata joined these records, read the documents, and summarized them. These changes are Strata's own.",
+                  "The World Bank does not guarantee the accuracy of the data.",
+                  "The World Bank Group authorizes the use of this material subject to the terms and conditions on its "
+                  "website, Legal."):
+        assert fixed in section and fixed in annex
+    footer = re.search(r'\| Footer, every screen, slide and dashboard page \| "([^"]+)" \|', section).group(1)
+    assert built.markdown.count(footer) == 2
+
+
+# ── Figures: the strata-wb profile and DESIGN.md section 6 ───────────────
+
+def design_colors() -> set[str]:
+    text = (ROOT / "DESIGN.md").read_text()
+    profile = text.split("## 11. Diagram-design profile")[1]
+    charts = text.split("## 6. Data visualization")[1].split("## 7. Writing")[0]
+    light = {row.split("|")[2].strip().strip("`").lower() for row in profile.splitlines()
+             if re.match(r"^\| `[a-z0-9-]+` \| `#", row)}
+    return light | {color.lower() for color in re.findall(r"#[0-9a-fA-F]{6}", charts)} | {"#ffffff"}
+
+
+def test_the_nine_figures_use_the_strata_wb_colors_and_type_on_the_paper_background(built):
+    assert len(built.figures) == 9
+    allowed = design_colors()
+    for file, svg in built.figures.items():
+        colors = {color.lower() for color in re.findall(r"#[0-9a-fA-F]{6}\b", svg)}
+        assert colors <= allowed, (file, colors - allowed)
+        assert re.search(r'<rect width="720" height="\d+" fill="#f5f7f9"/>', svg), file
+        assert set(re.findall(r"font-family=\"'([^']+)'", svg)) <= {"Open Sans", "Roboto Mono"}, file
+        assert min(int(size) for size in re.findall(r'font-size="(\d+)"', svg)) >= 12, file
+        assert "logo" not in svg.lower(), file
+
+
+def test_a_data_chart_has_a_table_twin_whose_numbers_link_to_the_register(built):
+    figure = built.markdown.split('<a id="figure-5"></a>')[1].split("</details>")[0]
+    assert "<details><summary>Show the table</summary>" in figure
+    assert re.search(r"\| 2021 \| \[31 of 40\]\(#r-backtest-years ", figure)  # tests/proposal_seed.py, BACKTEST
+    assert "| 2023 | [9 of 12](#r-backtest-years" in figure and "Too few for a share" in figure
+
+
+def test_diagrams_carry_no_numbers(built):
+    for slug in ("pipeline", "knowledge-model", "reading", "retrieval", "checks", "loops"):
+        svg = next(text for file, text in built.figures.items() if file.endswith(f"-{slug}.svg"))
+        words = html.unescape(" ".join(re.findall(r">([^<>]+)</text>", svg)))
+        for model in config.load_models().values():  # a model's name holds digits, and is a name
+            words = words.replace(model.deployment, " ")
+        assert not re.search(r"\d|\b(two|three|four|five|six|seven|eight|nine)\b", words, re.I), slug
+    assert figures.DATA_CHARTS == ("award-gap", "backtest", "hindsight")
+
+
+# ── The copy lint ────────────────────────────────────────────────────────
+
+def test_the_copy_lint_passes_on_the_built_proposal_and_catches_a_planted_word(built, tmp_path):
+    good = tmp_path / "proposal.md"
+    good.write_text(built.markdown)
+    assert lint(good).returncode == 0, lint(good).stdout
+    bad = tmp_path / "planted.md"
+    bad.write_text(built.markdown.replace(paragraph(built.markdown, 3),
+                                          paragraph(built.markdown, 3) + " The Bank must validate the PP — quickly."))
+    found = lint(bad)
+    assert found.returncode == 1
+    assert all(word in found.stdout for word in ('"The Bank"', '"validate"', '"PP"', "em dash"))

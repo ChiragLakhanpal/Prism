@@ -1,0 +1,419 @@
+# The results register (ticket 46; the 46 brief, sections 9.3 and 20): every measured value the proposal cites,
+# defined once, with the query that measures it. `python -m strata.proposal pull` runs each query through the engine
+# adapter, on the workspace's warehouse or on a DuckDB file, into one dated snapshot; the build fills each {r:key} in
+# docs/proposal/source.md from that snapshot and writes Annex 1 from this file, in the order of first citation.
+#
+# [results.<key>]
+#   name     what the result counts, in plain words: Annex 1's Result column
+#   module   the module whose part of Annex 1 lists it, 1 to 4 (the module that cites it first)
+#   kind     the source kind, exactly one of: Evaluation result, Data readiness measure, Benchmark run, Backtest,
+#            Hindsight test, Query
+#   noun     what one counted thing is called, for the number's link title ("contract award rows")
+#   query    the query that measures it: a file in src/strata/proposal/sql/, or dashboard:<dataset> for the dashboard's
+#            own query (src/strata/dashboard/sql), such as dashboard:kpi_<id> for a KPI's defining query in
+#            config/kpis.toml, so the proposal and the dashboard count a measure the same way (CLAUDE.md rule 4).
+#            row picks one of its rows by column values (the first row when left out), and columns names the
+#            columns that hold n, d and value (numerator, denominator and value when left out) and any others
+#   meta     for a dashboard query, the file in src/strata/proposal/sql/ that says when and in which run it was
+#            measured
+#   params   the query's bound parameters; the pull adds today, date_from and date_to (the 90 days to today) and the
+#            fewest cases for a share and a percentage from config/thresholds.toml
+#   form     ratio ("{n} of {d}", and "about {k} in 10" where the query gives one), count, money (whole US dollars),
+#            score (two decimals), days, rate (per 100, one decimal), interval (low to high percent), series (one row
+#            per label, drawn in a figure) or fact (words, such as a paragraph number, never a claim of size)
+#   count_of n (the default) or d: which column a count shows
+#   table    the table the value was read from, in code, for Annex 1's Source column
+#   labels   who made the labels the result rests on, and how many, when people made them (docs/STATUS.md,
+#            decision 5)
+#   target   the settings key (docs/proposal/settings.toml) of the target it is held to, if it has one
+
+# ── Module 1 ─────────────────────────────────────────────────────────────
+
+[results.award-rows-since-2020]
+name = "Contract award rows held from the dataset since fiscal 2020, out of the rows it reported"
+module = 1
+kind = "Data readiness measure"
+noun = "contract award rows"
+query = "readiness.sql"
+params = { source = "awards", measure = "coverage_rows" }
+form = "count"
+table = "strata.ops.data_readiness"
+
+[results.award-rows-2001-2016]
+name = "Contract award rows held from the dataset for fiscal 2001 to 2016"
+module = 1
+kind = "Data readiness measure"
+noun = "contract award rows"
+query = "readiness.sql"
+params = { source = "awards_fy2001_2016", measure = "coverage_rows" }
+form = "count"
+table = "strata.ops.data_readiness"
+
+[results.award-rows-by-year]
+name = "Contract award rows per fiscal year, by the dataset or the award notices they came from"
+module = 1
+kind = "Data readiness measure"
+noun = "contract award rows"
+query = "dashboard:award_rows_by_year"
+meta = "readiness_snapshot_meta.sql"
+form = "series"
+table = "strata.ops.readiness_snapshot"
+
+[results.gap-contracts]
+name = "Contracts built from award notices for fiscal 2017 to 2019, which neither awards dataset covers"
+module = 1
+kind = "Data readiness measure"
+noun = "contracts"
+query = "readiness.sql"
+params = { source = "awards", measure = "gap_years_contracts_in_local_currency" }
+form = "count"
+count_of = "d"
+table = "strata.ops.data_readiness"
+
+[results.linked-notice]
+name = "Contract award rows since fiscal 2020 whose STEP reference a procurement notice also carries"
+module = 1
+kind = "Data readiness measure"
+noun = "contract award rows"
+query = "readiness.sql"
+params = { source = "awards", measure = "linked_notice" }
+form = "ratio"
+table = "strata.ops.data_readiness"
+
+[results.supplier-ids]
+name = "Awarded bidders whose award rows name them the same way and give the same STEP supplier ID"
+module = 1
+kind = "Data readiness measure"
+noun = "awarded bidders"
+query = "readiness.sql"
+params = { source = "notices", measure = "awarded_bidder_id_same_name" }
+form = "ratio"
+table = "strata.ops.data_readiness"
+
+[results.contacts-removed]
+name = "Procurement notices that had contact details, which ingestion removed"
+module = 1
+kind = "Data readiness measure"
+noun = "notices"
+query = "readiness.sql"
+params = { source = "notices", measure = "contact_details_removed" }
+form = "ratio"
+table = "strata.ops.data_readiness"
+
+[results.contacts-left]
+name = "Notices in which the latest nightly check found an email or phone number that ingestion missed"
+module = 1
+kind = "Query"
+noun = "notices"
+query = "dashboard:kpi_contacts_left"
+meta = "quality_checks_meta.sql"
+form = "ratio"
+table = "strata.ops.quality_checks"
+
+[results.passages-linked]
+name = "Contract and paragraph pairs scored as appearing together"
+module = 1
+kind = "Query"
+noun = "contract and paragraph pairs"
+query = "appeared_together.sql"
+form = "count"
+table = "strata.gold.edge"
+
+[results.trail]
+name = "The completion report paragraph with the highest score for award notice OP00044090's contract"
+module = 1
+kind = "Query"
+noun = "paragraph"
+query = "trail.sql"
+params = { contract = "strata.gold.contract:OP00044090", document_type = "Implementation Completion and Results Report" }
+form = "fact"
+table = "strata.gold.edge"
+
+[results.documents-read]
+name = "Documents the passage reader read, through either route"
+module = 1
+kind = "Data readiness measure"
+noun = "documents"
+query = "readiness.sql"
+params = { source = "documents", measure = "documents_read" }
+form = "count"
+table = "strata.ops.data_readiness"
+
+[results.pages-read-well]
+name = "Document pages read well across both routes, out of every page of the documents read"
+module = 1
+kind = "Data readiness measure"
+noun = "pages"
+query = "readiness.sql"
+params = { source = "documents", measure = "document_pages_read_well" }
+form = "ratio"
+table = "strata.ops.data_readiness"
+
+[results.pages-published-text]
+name = "Document pages read from the World Bank's published text, out of every page"
+module = 1
+kind = "Data readiness measure"
+noun = "pages"
+query = "readiness.sql"
+params = { source = "documents", measure = "document_pages_route_a" }
+form = "ratio"
+table = "strata.ops.data_readiness"
+
+[results.passages]
+name = "Numbered passages in the knowledge model"
+module = 1
+kind = "Query"
+noun = "passages"
+query = "passages.sql"
+form = "count"
+table = "strata.gold.passage"
+
+[results.shelf-read]
+name = "Documents on the shelf of the hardest documents that the reader read"
+module = 1
+kind = "Data readiness measure"
+noun = "documents"
+query = "stress_shelf.sql"
+form = "ratio"
+table = "strata.ops.stress_shelf"
+
+# ── Module 2 ─────────────────────────────────────────────────────────────
+
+[results.backtest-coverage]
+name = "Test packages, 2021 to 2025, signed within the 8-in-10 point of the range Strata gave them"
+module = 2
+kind = "Backtest"
+noun = "test packages"
+query = "backtest_total.sql"
+params = { scorer = "time_estimate_backtest" }
+form = "ratio"
+table = "strata.ops.evaluation_result"
+target = "coverage-band"
+
+[results.backtest-years]
+name = "Test packages signed within the 8-in-10 point, by test year"
+module = 2
+kind = "Backtest"
+noun = "test packages"
+query = "backtest_years.sql"
+params = { scorer = "time_estimate_backtest" }
+form = "series"
+table = "strata.ops.evaluation_result"
+
+[results.hazard-caught]
+name = "Projects that later extended their closing date that the early-warning model named first"
+module = 2
+kind = "Backtest"
+noun = "projects"
+query = "evaluation.sql"
+params = { scorer = "hazard_vs_signals", segment_kind = "replay", segment = "hazard", numerator = "hazard_caught", denominator = "extended" }
+form = "ratio"
+table = "strata.ops.evaluation_result"
+
+[results.signals-caught]
+name = "The same projects that the fixed signals named first"
+module = 2
+kind = "Backtest"
+noun = "projects"
+query = "evaluation.sql"
+params = { scorer = "hazard_vs_signals", segment_kind = "replay", segment = "hazard", numerator = "signals_caught", denominator = "extended" }
+form = "ratio"
+table = "strata.ops.evaluation_result"
+
+[results.retrieval-precision]
+name = "Precision at 10 on the retrieval set, the newest run"
+module = 2
+kind = "Evaluation result"
+noun = "precision at 10"
+query = "dashboard:kpi_precision_recall"
+row = { segment_kind = "query_set" }
+columns = { value = "precision_at_10" }
+meta = "evaluation_meta.sql"
+params = { scorer = "retrieval_evaluation" }
+form = "score"
+table = "strata.ops.evaluation_result"
+labels = "Labels: the retrieval set's queries, drafted from ICR Review citations and checked by one person."
+
+[results.retrieval-recall]
+name = "Recall at 20 on the retrieval set, the newest run"
+module = 2
+kind = "Evaluation result"
+noun = "recall at 20"
+query = "dashboard:kpi_precision_recall"
+row = { segment_kind = "query_set" }
+columns = { value = "recall_at_20" }
+meta = "evaluation_meta.sql"
+params = { scorer = "retrieval_evaluation" }
+form = "score"
+table = "strata.ops.evaluation_result"
+
+[results.retrieval-ndcg]
+name = "nDCG at 10 on the retrieval set, the newest run"
+module = 2
+kind = "Evaluation result"
+noun = "nDCG at 10"
+query = "dashboard:kpi_precision_recall"
+row = { segment_kind = "query_set" }
+columns = { value = "ndcg_at_10" }
+meta = "evaluation_meta.sql"
+params = { scorer = "retrieval_evaluation" }
+form = "score"
+table = "strata.ops.evaluation_result"
+
+# ── Module 3 ─────────────────────────────────────────────────────────────
+
+[results.benchmark-passed]
+name = "Benchmark questions that met their expected answer, citations, range or refusal, in the latest full gate"
+module = 3
+kind = "Benchmark run"
+noun = "benchmark questions"
+query = "dashboard:kpi_benchmark_passed"
+meta = "evaluation_meta.sql"
+params = { scorer = "benchmark" }
+form = "ratio"
+table = "strata.ops.evaluation_result"
+
+[results.must-refuse]
+name = "Must-refuse questions that Strata turned down, in the latest full gate"
+module = 3
+kind = "Benchmark run"
+noun = "must-refuse questions"
+query = "evaluation.sql"
+params = { scorer = "benchmark", segment_kind = "kind", segment = "must_refuse", numerator = "passed", denominator = "questions" }
+form = "ratio"
+table = "strata.ops.evaluation_result"
+
+[results.sentences-removed]
+name = "Sentences the verifier removed from answers, out of the sentences the answers wrote, in the 90 days to the pull"
+module = 3
+kind = "Query"
+noun = "sentences"
+query = "dashboard:kpi_sentences_removed"
+meta = "agent_runs_meta.sql"
+form = "ratio"
+table = "strata.ops.agent_runs"
+
+[results.answers-held-back]
+name = "Answers where Strata held back, out of the answers it gave, in the 90 days to the pull"
+module = 3
+kind = "Query"
+noun = "answers"
+query = "dashboard:kpi_answers_held_back"
+meta = "agent_runs_meta.sql"
+form = "ratio"
+table = "strata.ops.agent_runs"
+
+[results.groundedness]
+name = "Answers that met Foundry's groundedness evaluator, out of the answers it scored"
+module = 3
+kind = "Evaluation result"
+noun = "answers"
+query = "evaluation.sql"
+params = { scorer = "foundry_evaluation", segment_kind = "evaluator", segment = "groundedness", numerator = "met", denominator = "scored" }
+form = "ratio"
+table = "strata.ops.evaluation_result"
+
+[results.disagreements]
+name = "Disagreements found between two reports or records about the same thing"
+module = 3
+kind = "Query"
+noun = "disagreements"
+query = "disagreements.sql"
+form = "count"
+table = "strata.gold.disagreement"
+
+# ── Module 4 ─────────────────────────────────────────────────────────────
+
+[results.hindsight-caught]
+name = "Risks completion reports later blamed that Strata's risk tables showed at approval"
+module = 4
+kind = "Hindsight test"
+noun = "blamed risks"
+query = "evaluation.sql"
+params = { scorer = "hindsight_test", segment_kind = "release", segment = "", numerator = "shown", denominator = "blamed" }
+form = "ratio"
+table = "strata.ops.evaluation_result"
+labels = "Labels: each blamed risk was coded from the completion report by two people and reconciled."
+
+[results.hindsight-checklist]
+name = "The same blamed risks that a checklist of each sector's commonest risks named"
+module = 4
+kind = "Hindsight test"
+noun = "blamed risks"
+query = "evaluation.sql"
+params = { scorer = "hindsight_test", segment_kind = "release", segment = "", numerator = "checklist_caught", denominator = "blamed" }
+form = "ratio"
+table = "strata.ops.evaluation_result"
+
+[results.hindsight-interval]
+name = "The interval around the share of blamed risks Strata's tables showed"
+module = 4
+kind = "Hindsight test"
+noun = "percent"
+query = "hindsight_interval.sql"
+params = { scorer = "hindsight_test" }
+form = "interval"
+table = "strata.ops.evaluation_result"
+
+[results.azure-spend]
+name = "Azure charges in the current budget period, against its budget"
+module = 4
+kind = "Query"
+noun = "US dollars"
+query = "dashboard:kpi_azure_spend"
+columns = { n = "numerator", d = "denominator", budget = "denominator", latest = "latest_day", period = "period_name" }
+form = "money"
+table = "strata.ops.azure_costs"
+
+# Each loop's indicators, in the dashboard's own words, as the nightly job last wrote them for the dashboard's "Each
+# loop" table (strata.ops.loop_indicators). The results framework in Module 4 links each one here.
+
+[results.loop-days-to-decision]
+name = "Days from a completion report's publication to the decision on its lessons"
+module = 4
+kind = "Query"
+noun = "days"
+query = "loop_indicator.sql"
+params = { kpi = "days_to_decision" }
+form = "text"
+table = "strata.ops.loop_indicators"
+
+[results.loop-blamed-covered]
+name = "Blamed risks a lesson covered at approval"
+module = 4
+kind = "Query"
+noun = "blamed risks"
+query = "loop_indicator.sql"
+params = { kpi = "blamed_covered" }
+form = "text"
+table = "strata.ops.loop_indicators"
+
+[results.loop-wrong-passage-rate]
+name = "Wrong-passage reports per 100 sources opened"
+module = 4
+kind = "Query"
+noun = "reports"
+query = "loop_indicator.sql"
+params = { kpi = "wrong_passage_rate" }
+form = "text"
+table = "strata.ops.loop_indicators"
+
+[results.loop-precision-recall]
+name = "Precision at 10 and recall at 20 on the retrieval set"
+module = 4
+kind = "Query"
+noun = "scores"
+query = "loop_indicator.sql"
+params = { kpi = "precision_recall" }
+form = "text"
+table = "strata.ops.loop_indicators"
+
+[results.loop-rolling-coverage]
+name = "Rolling coverage of the 8-in-10 range"
+module = 4
+kind = "Query"
+noun = "packages"
+query = "loop_indicator.sql"
+params = { kpi = "rolling_coverage" }
+form = "text"
+table = "strata.ops.loop_indicators"

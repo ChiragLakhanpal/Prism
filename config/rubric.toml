@@ -140,7 +140,7 @@ key = "operations"
 name = "Operationalization and scalability"
 rubric_name = "Operationalization & Scalability"
 points = 15
-summary = "Incremental nightly jobs, three learning loops with gates, KPIs, a phased rollout, cost caps and the change drill."
+summary = "Incremental nightly jobs, {s:loop-count} learning loops with gates, KPIs, a phased rollout, cost caps and the change drill."
 
 [[dimensions.criteria]]
 rubric = "Feasibility of the deployment roadmap"

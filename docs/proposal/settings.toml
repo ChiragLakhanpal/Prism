@@ -1,0 +1,204 @@
+# The settings register (ticket 46; the 46 brief, sections 9.1 and 9.4): every value the proposal states that Strata is
+# set to, or that counts a registry, with the file that sets it and the test that enforces it. The build fills each
+# {s:key} in docs/proposal/source.md from the file itself, through strata.config's loaders, so a change drill in round 2
+# changes the proposal's next build too (CLAUDE.md rules 4 and 9). Annex 2 lists them in order of first citation.
+#
+# [settings.<key>]
+#   name         what it is, in plain words: Annex 2's Setting column
+#   read         where the value comes from:
+#                  count:<registry>   the number of entries in a registry: sources, checks (the verifier's), refusals,
+#                                     ladder (the evidence ladder's rules), shelf (the hardest documents), drills or loops
+#                  threshold:<key>    config/thresholds.toml, through load_thresholds().value()
+#                  model:<role>       the embedding size of a role in config/models.toml
+#                  cap:<role>         a cap read back from Azure into docs/day-one-results.md (ops/dayone/probe_caps.py):
+#                                     agent, draft, batch or embed for a deployment's cap, budget for the monthly budget,
+#                                     appinsights for Application Insights' daily cap, which the probe does not read yet
+#                  plan:<value>       a planning choice no config sets, written here with the document that makes it
+#                  rubric:<key>       not a setting: see config/rubric.toml, which the rubric map reads
+#   form         word (one to nine in words, DESIGN.md section 7, rule 12), number, percent_band (two thresholds read
+#                as "75 to 85 percent"), money (whole US dollars), tokens or gigabytes
+#   second       for percent_band, the threshold that gives the band's top
+#   where        the file, and the key in it, as Annex 2's "Where it is set" names them
+#   enforced_by  the test that shows Strata keeps it, from the repo's root; left out for a planning choice
+#   enforces     what that test checks, in a few words
+
+[settings.source-count]
+name = "Sources in the source registry"
+read = "count:sources"
+form = "word"
+where = "config/sources.toml"
+enforced_by = "tests/test_config.py"
+enforces = "Each source loads with its endpoint, watermark, cadence, license and transform"
+
+[settings.check-count]
+name = "Checks the verifier runs on every sentence"
+read = "count:checks"
+form = "word"
+where = "src/strata/agent/verifier.py, ALL_CHECKS"
+enforced_by = "tests/test_six_checks.py"
+enforces = "Every answer and draft gets every check"
+
+[settings.refusal-count]
+name = "Requests Strata turns down every time"
+read = "count:refusals"
+form = "number"
+where = "src/strata/agent/refusals.py"
+enforced_by = "tests/test_refusals.py"
+enforces = "Each refusal has its words, its rule and a must-refuse question"
+
+[settings.ladder-rules]
+name = "Rules on the evidence ladder"
+read = "count:ladder"
+form = "word"
+where = "config/evidence_ladder.toml"
+enforced_by = "tests/test_get_disagreements.py"
+enforces = "A disagreement is settled by the first rule that applies"
+
+[settings.shelf-size]
+name = "Documents on the shelf of the hardest documents in the slice"
+read = "count:shelf"
+form = "word"
+where = "config/slice.toml, stress_shelf"
+enforced_by = "tests/test_stress_shelf.py"
+enforces = "Each shelf document gets a recorded outcome"
+
+[settings.drill-count]
+name = "Changes in the change drill"
+read = "count:drills"
+form = "number"
+where = "config/change_drills.toml"
+enforced_by = "tests/test_proposal_registries.py"
+enforces = "The drill lists docs/PLAN.md section 15's changes, each with its place and its test"
+
+[settings.loop-count]
+name = "Learning loops, each with its leading and lagging indicator"
+read = "count:loops"
+form = "word"
+where = "config/kpis.toml, the loops its indicators name"
+enforced_by = "tests/test_dashboard_kpis.py"
+enforces = "Each loop has a leading and a lagging indicator"
+
+[settings.fewest-comparables]
+name = "Fewest comparable packages for a past range"
+read = "threshold:past_range.min_comparables"
+form = "number"
+where = "config/thresholds.toml, past_range.min_comparables"
+enforced_by = "tests/test_find_comparables.py"
+enforces = "No range from fewer comparable packages"
+
+[settings.fewest-share]
+name = "Fewest cases for a share written as about N in 10"
+read = "threshold:data_readiness.fewest_for_a_share"
+form = "number"
+where = "config/thresholds.toml, data_readiness.fewest_for_a_share"
+enforced_by = "tests/test_data_readiness.py"
+enforces = "Below it, a measure shows its count alone"
+
+[settings.risks-per-package]
+name = "Risks a package's risk table shows at most"
+read = "threshold:package_risks.max_rows"
+form = "word"
+where = "config/thresholds.toml, package_risks.max_rows"
+enforced_by = "tests/test_package_risks.py"
+enforces = "A risk table never holds more rows"
+
+[settings.lesson-decision-days]
+name = "Business days within which a lead decides on a proposed lesson"
+read = "threshold:lesson_review.business_days"
+form = "number"
+where = "config/thresholds.toml, lesson_review.business_days"
+enforced_by = "tests/test_dashboard_findings.py"
+enforces = "A decision after it counts as late"
+
+[settings.coverage-band]
+name = "The share of packages a well-sized 8-in-10 range should catch"
+read = "threshold:time_estimate.coverage_low"
+second = "time_estimate.coverage_high"
+form = "percent_band"
+where = "config/thresholds.toml, time_estimate.coverage_low and coverage_high"
+enforced_by = "tests/test_estimates_loop.py"
+enforces = "Coverage outside the band for two months asks for retraining"
+
+[settings.tool-rounds]
+name = "Rounds of tool results the agent gets for one answer"
+read = "threshold:agent.tool_rounds"
+form = "word"
+where = "config/thresholds.toml, agent.tool_rounds"
+enforced_by = "tests/test_answer_stream.py"
+enforces = "The answer stops after the last round"
+
+[settings.daily-page-cap]
+name = "Pages the document reader reads in one day, at most"
+read = "threshold:ingestion.daily_page_cap"
+form = "number"
+where = "config/thresholds.toml, ingestion.daily_page_cap"
+enforced_by = "tests/test_plans.py"
+enforces = "A run stops reading at the cap"
+
+[settings.embedding-size]
+name = "Numbers in each passage's embedding"
+read = "model:embed"
+form = "number"
+where = "config/models.toml, roles.embed.dimensions"
+enforced_by = "tests/test_passages.py"
+enforces = "Every stored embedding has this many numbers"
+
+[settings.cap-agent]
+name = "The agent's deployment, its cap"
+read = "cap:agent"
+form = "tokens"
+where = "ops/dayone/dayone.toml, caps.deployments.agent"
+enforced_by = "ops/dayone/tests/test_probe_caps.py"
+enforces = "The probe reads the cap back from Azure"
+
+[settings.cap-draft]
+name = "The drafting deployment, its cap"
+read = "cap:draft"
+form = "tokens"
+where = "ops/dayone/dayone.toml, caps.deployments.draft"
+enforced_by = "ops/dayone/tests/test_probe_caps.py"
+enforces = "The probe reads the cap back from Azure"
+
+[settings.cap-batch]
+name = "The batch extraction deployment, its cap on queued tokens"
+read = "cap:batch"
+form = "tokens"
+where = "ops/dayone/dayone.toml, caps.deployments.batch"
+enforced_by = "ops/dayone/tests/test_probe_caps.py"
+enforces = "The probe reads the cap back from Azure"
+
+[settings.cap-embed]
+name = "The embedding deployment, its cap"
+read = "cap:embed"
+form = "tokens"
+where = "ops/dayone/dayone.toml, caps.deployments.embed"
+enforced_by = "ops/dayone/tests/test_probe_caps.py"
+enforces = "The probe reads the cap back from Azure"
+
+[settings.cap-appinsights]
+name = "Application Insights' daily cap on stored traces"
+read = "cap:appinsights"
+form = "gigabytes"
+where = "ops/dayone/dayone.toml, caps.appinsights_daily_cap_gb"
+enforced_by = "ops/dayone/tests/test_probe_caps.py"
+enforces = "The probe reads the deployments' caps; this cap is set by the wizard"
+
+[settings.budget]
+name = "The monthly Azure budget, which sends alerts and stops nothing"
+read = "cap:budget"
+form = "money"
+where = "config/budget.toml, monthly.usd"
+enforced_by = "ops/dayone/tests/test_probe_caps.py"
+enforces = "The probe reads the budget back from Azure"
+
+[settings.pilot-countries]
+name = "Countries in the pilot's first phase"
+read = "plan:2"
+form = "word"
+where = "docs/PLAN.md section 11, Rollout"
+
+[settings.replicas]
+name = "Replicas anything hosted may run, at most"
+read = "plan:2"
+form = "word"
+where = "docs/PLAN.md section 2, Azure billing"

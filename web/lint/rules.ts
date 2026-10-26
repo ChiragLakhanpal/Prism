@@ -24,6 +24,8 @@ export const FIXED_TERMS = [
   "This summary is not a World Bank review, clearance or no-objection.",
   // DESIGN.md section 7, rule 8: the one fixed term where "the Bank" stays.
   "the Bank's no-objection",
+  // Azure's monitoring service, by its product name (ticket 46's caps table), which GLOSSARY.md's "insight" is not.
+  "Application Insights",
 ];
 
 // DESIGN.md section 7, rule 32 (ticket 22; the 22 brief, section 11): a link between a contract and a paragraph is

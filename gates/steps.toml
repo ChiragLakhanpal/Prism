@@ -93,6 +93,20 @@ name = "Lint the SQL: every table in three parts, every value a bound parameter"
 run = ["uv", "run", "--frozen", "python", "gates/sql_lint.py"]
 lane = "sql"
 
+# The proposal (ticket 46): its check and its copy lint read only files, never the fixture database, so they run even
+# when only Markdown is staged (always = true), in a lane of their own. Together they take about a second.
+[[step]]
+name = "Check the proposal: no typed number in its source, every placeholder in its register, the README's links in step"
+run = ["uv", "run", "--frozen", "python", "-m", "strata.proposal", "check"]
+always = true
+lane = "proposal"
+
+[[step]]
+name = "Lint the proposal's words: DESIGN.md section 7, and GLOSSARY.md's Avoid terms outside the assessment's quotes"
+run = ["node", "web/lint/proposal.ts"]
+always = true
+lane = "proposal"
+
 # The Playwright tests run in two lanes, web-1 and web-2, and --shard gives each lane half of them,
 # so the two halves run side by side. Each lane builds the app and the gallery into a folder of its
 # own, which STRATA_WEB_OUT names and web/out-dirs.ts reads, and its Playwright run serves that
