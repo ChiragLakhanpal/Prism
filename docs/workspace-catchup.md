@@ -2071,3 +2071,41 @@ It worked if each exits 0, or 1 with the refusal codes printed (`no_backtest_win
     SELECT version, champion_version, promoted, refusals, decided_at FROM strata.ops.model_promotions ORDER BY decided_at DESC LIMIT 1
 
 When `promoted` is true, the `champion` alias in Unity Catalog points to version 2, and `strata.gold.time_estimate_model` keeps version 2 as champion. The time estimate screen's track record changes only after that move.
+
+## Ticket 48, step 1 of 3: deploy the Genie space before the App, so the App asks Strata's space
+
+The merger parked this step on October 25, 2026, after merge commit cfc7130. All ten keys were set, but the header above holds workspace steps back during a merge, and the orchestrator's notes for this wave held every workspace step for the warehouse's daily limit of October 25 until the second session reports the warehouse back. It needs the Databricks keys in `.env`. This adds no new deploy. It sets the order of two commands that blocks above already park: the App deploy writes the env file's `GENIE_SPACE_ID` into `app.yaml`, so `ops/genie/deploy_space.py` must run before `ops/app/deploy_app.py`, as `ops/demo/fresh_workspace.py` lists them (steps 3 and 4). Ticket 33's step 1 made the space 01f1d0d8c9a214c7b9d665e04a462ba6 on October 26 and added its id as the env file's last line, and no App deploy has run since, so the first App deploy above (ticket 06, step 1, which waits for the user's decision on the secret scope) already comes after it. If the App was deployed before the space, or `deploy_space.py` later makes a new space, deploy the App again: the demo-ready command reads the env file's id and cannot tell when the running App asks another space (review follow-up F9 in `.notes/48-review-r2.md`). One space deploy and one App deploy from cfc7130 or later serve every block that names them.
+
+Run these from the main checkout, in this order:
+
+    uv run python ops/genie/deploy_space.py --env-file .env
+    uv run --script ops/app/deploy_app.py --env-file .env
+
+It worked if both exit 0 and the App deploy prints "The app asks the Genie space <id> as each viewer." with the id that `deploy_space.py` printed or added to `.env` (01f1d0d8c9a214c7b9d665e04a462ba6 unless it made a new space).
+
+## Ticket 48, step 2 of 3: the demo-ready command restarts the App, warms Genie, asks the smoke question and rechecks P156634 (criteria 1 to 4, live)
+
+The merger parked this step on October 25, 2026, after merge commit cfc7130, for the same reasons as step 1. Run it after every block above it, and in particular after step 1's App deploy, the agent syncs that make `strata-orchestrator` match the repo (tickets 13, 33, 42 and 64), and the nightly job's run that fills the gold tables (ticket 04). Run it when neither Strata's nor fairshare's nightly job is running (ticket 43, step 2), and when the warehouse is under its free daily limit: it asks Genie twice, asks the smoke question through the Foundry agent and the warehouse, and rechecks P156634 on the warehouse. It needs DATABRICKS_HOST, DATABRICKS_TOKEN, DATABRICKS_WAREHOUSE_ID, GENIE_SPACE_ID, FOUNDRY_PROJECT_ENDPOINT, AZURE_OPENAI_ENDPOINT and AZURE_OPENAI_API_KEY in `.env`, `az` signed in for the Foundry agent, and the browser sign-in the wizard saved under the Databricks CLI profile `strata` (`ops/dayone/dayone.toml`), which the App's health route needs. Criterion 1 asks for a stopped App. The platform stops the App 24 hours after its last start or deploy, so run this at least a day after step 1, or stop the App first from the workspace's Apps page. The command writes no rows to `strata.ops`.
+
+Run this from the main checkout:
+
+    uv run --with databricks-sdk==0.156.0 python ops/demo/ready.py --env-file .env
+
+It worked if it exits 0, its last line is "Strata is ready for the demo.", and:
+
+- step 1 prints "The app strata was stopped, so I started it." and "GET /api/health answered after N seconds, within the 300-second limit" (criterion 1; `[demo_ready] health_timeout_seconds`);
+- step 2 prints that the second Genie call "answered after N seconds, within the 60-second limit" (criterion 2; `[demo_ready] genie_first_call_seconds`);
+- step 3 prints "The verifier ran all six checks and kept ... removing none.", and the summary shows "The smoke question: passed." (criterion 3);
+- step 4 prints the state of each of P156634's seven checks, the project's status, and either "Nothing changed since the fixture was recorded." or the list of what changed, such as a package signed since October 9, 2026 (criterion 4). A closed project or a plan that disagrees with the awards is reported, never failed (decisions 4 and 7 in `docs/STATUS.md`).
+
+Until ticket 41 merges, step 5 says Home's examples are not built, and that is not a failure. Exit 1 names each step that failed; exit 2 means the env file is not ready.
+
+## Ticket 48, step 3 of 3: the same command again, right away, changes nothing (criterion 6, live)
+
+The merger parked this step on October 25, 2026, after merge commit cfc7130, for the same reasons as step 1. Run it right after step 2, with the same keys and sign-ins.
+
+Run this from the main checkout:
+
+    uv run --with databricks-sdk==0.156.0 python ops/demo/ready.py --env-file .env
+
+It worked if it exits 0, step 1 prints "It was running. I restarted it, so it runs for 24 hours from now.", it prints "6. What changed on the workspace." followed by "   No changes.", and its last line is "Strata is ready for the demo." If the listing names `strata.ops` tables the workspace lacks, run the bundle deploy (ticket 44, step 1) and start again from step 2.
