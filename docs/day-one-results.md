@@ -19,16 +19,16 @@ Each probe also runs alone, with the command under its test. Every probe writes 
 <!-- dayone:summary -->
 | Test | What it checks | Status | Chosen path |
 |---|---|---|---|
-| 1 | The World Bank hosts from a notebook, a job and the app | waiting | Default |
-| 2 | Foundry and Azure OpenAI from a job | partly | Default |
+| 1 | The World Bank hosts from a notebook, a job and the app | passed | Default |
+| 2 | Foundry and Azure OpenAI from a job | passed | Default |
 | 3 | ai_parse_document on a long PAD | passed | Default |
 | 4 | An AI Search endpoint and a hybrid index | passed | Default |
 | 5 | The Genie conversation API as the token's user | passed | Default |
-| 6 | An outside email joins the workspace and opens the app | waiting | Default |
+| 6 | An outside email joins the workspace and opens the app | failed | Gap fill |
 | 7 | A personal access token or a service principal | passed | Default |
 | 8 | The four models within the subscription's quota | passed | Default |
 | 9 | Foundry evaluations after an Entra sign-in | passed | Default |
-| 10 | Traces from the app in Application Insights | not run | Default |
+| 10 | Traces from the app in Application Insights | passed | Default |
 <!-- /dayone:summary -->
 
 ## Pay-as-you-go
@@ -39,8 +39,8 @@ The free Azure credit of about US$197 ends on November 10, 2026. The subscriptio
 - Step: Move the Azure subscription from the free credit to pay-as-you-go.
 - Deadline: Before November 10, 2026, when the free credit ends.
 - Who: The subscription owner (the user)
-- Status: The subscription showed pay-as-you-go on October 24, 2026.
-- Last updated: October 24, 2026
+- Status: The subscription showed pay-as-you-go on October 26, 2026.
+- Last updated: October 26, 2026
 <!-- /dayone:payg -->
 
 ## Azure caps and budget
@@ -58,7 +58,7 @@ Command: `uv run --script ops/dayone/probe_caps.py --env-file .env`
   - text-embedding-3-large: 150,000 tokens per minute, as Global Standard.
 - Budget: strata-monthly: US$50 a month, with four alerts (actual cost at 50, 80, 100 percent; forecast cost at 100 percent), sent to one email address.
 - Subscription offer: Azure subscription 1 is on pay-as-you-go (quota ID PayAsYouGo_2014-09-01, spending limit Off).
-- Last checked: October 24, 2026
+- Last checked: October 26, 2026
 <!-- /dayone:caps -->
 
 ## The ten tests
@@ -73,15 +73,15 @@ Free Edition reaches `search.worldbank.org`, `documents1.worldbank.org`, `dataca
 Command: `uv run --script ops/dayone/probe_hosts.py --env-file .env`
 
 <!-- dayone:test-1 -->
-- Status: waiting
-- Result: The notebook and the job reached all four World Bank hosts. The app could not run. Run this probe again once every place can run.
+- Status: passed
+- Result: The notebook, the job and the app each reached all four World Bank hosts.
 - Evidence:
   - This computer: search.worldbank.org 200; documents1.worldbank.org 200; datacatalogapi.worldbank.org 200; api.worldbank.org 200.
-  - The notebook (https://dbc-b5ef314b-b0cd.cloud.databricks.com/?o=7474658003099155#job/638677209083782/run/531946699240339): search.worldbank.org 200; documents1.worldbank.org 200; datacatalogapi.worldbank.org 200; api.worldbank.org 200.
-  - The job (https://dbc-b5ef314b-b0cd.cloud.databricks.com/?o=7474658003099155#job/945154332832638/run/505353775579027): search.worldbank.org 200; documents1.worldbank.org 200; datacatalogapi.worldbank.org 200; api.worldbank.org 200.
-  - The app could not run, so it did not ask the hosts. Finding or making the app strata failed: Invalid secret resource appinsights: Secret with scope strata and key APPLICATIONINSIGHTS_CONNECTION_STRING does not exist.
-- Chosen path: Default. The job reached every host, and ingestion runs as a job. Ingestion runs in Databricks, and jobs fetch from the World Bank hosts.
-- Last run: October 24, 2026
+  - The notebook (https://adb-7405609289499029.9.azuredatabricks.net/?o=7405609289499029#job/206478860009276/run/503976203938189): search.worldbank.org 200; documents1.worldbank.org 200; datacatalogapi.worldbank.org 200; api.worldbank.org 200.
+  - The job (https://adb-7405609289499029.9.azuredatabricks.net/?o=7405609289499029#job/757287689357399/run/1100189828451314): search.worldbank.org 200; documents1.worldbank.org 200; datacatalogapi.worldbank.org 200; api.worldbank.org 200.
+  - The app (https://strata-7405609289499029.9.azure.databricksapps.com): search.worldbank.org 200; documents1.worldbank.org 200; datacatalogapi.worldbank.org 200; api.worldbank.org 200.
+- Chosen path: Default. Ingestion runs in Databricks, and jobs fetch from the World Bank hosts.
+- Last run: October 26, 2026
 <!-- /dayone:test-1 -->
 
 ### Test 2. Foundry and Azure OpenAI from a job
@@ -94,15 +94,15 @@ Free Edition reaches the Foundry and Azure OpenAI endpoints from a job, not only
 Command: `uv run --script ops/dayone/probe_azure_from_job.py --env-file .env`
 
 <!-- dayone:test-2 -->
-- Status: partly
-- Result: Both endpoints answered the job. The job could not read the key from the secret scope, so save it there again with the wizard.
+- Status: passed
+- Result: The job reached Foundry and Azure OpenAI, and Azure OpenAI accepted the key.
 - Evidence:
-  - Job run: https://dbc-b5ef314b-b0cd.cloud.databricks.com/?o=7474658003099155#job/490375248433612/run/1040314533115024
+  - Job run: https://adb-7405609289499029.9.azuredatabricks.net/?o=7405609289499029#job/42324177463427/run/827354555173020
   - Foundry project endpoint, asked without a key: 404.
   - Azure OpenAI model list, asked without a key: 401.
-  - Azure OpenAI model list, asked with the key from the secret scope: no key (IllegalArgumentException: Secret does not exist with scope: strata and key: AZURE_OPENAI_API_KEY).
-- Chosen path: Default. The network allows the calls from a job. The job could not read the key from the secret scope, so save it there again with the wizard. The nightly job calls Foundry and Azure OpenAI directly.
-- Last run: October 24, 2026
+  - Azure OpenAI model list, asked with the key from the secret scope: 200.
+- Chosen path: Default. The nightly job calls Foundry and Azure OpenAI directly.
+- Last run: October 26, 2026
 <!-- /dayone:test-2 -->
 
 ### Test 3. ai_parse_document on a long PAD
@@ -120,9 +120,9 @@ Command: `uv run --script ops/dayone/probe_parse_pad.py --env-file .env`
 - Evidence:
   - P160009 PAD: https://documents.worldbank.org/curated/en/212451501293669530/pdf/Kenya-off-grid-PAD-07072017.pdf, 131 pages.
   - Uploaded to /Volumes/workspace/strata_dayone/files/P160009-pad.pdf.
-  - Statement 01f1cfd1-01d1-1d44-8cf5-2488192d3f30 took 129 seconds and read 131 pages.
+  - Statement 01f1d17d-3efe-1d08-8524-a84aa1011071 took 159 seconds and read 131 pages.
 - Chosen path: Default. `ai_parse_document` reads route B pages.
-- Last run: October 24, 2026
+- Last run: October 26, 2026
 <!-- /dayone:test-3 -->
 
 ### Test 4. An AI Search endpoint and a hybrid index
@@ -139,10 +139,10 @@ Command: `uv run --script ops/dayone/probe_ai_search.py --env-file .env`
 - Result: The endpoint is online, and the hybrid index answered a hybrid query with three passages.
 - Evidence:
   - Endpoint strata-search: ONLINE.
-  - Index workspace.strata_dayone.passages_index: ready, three rows, over workspace.strata_dayone.passages. Index creation succeeded. Check latest status: https://dbc-b5ef314b-b0cd.cloud.databricks.com/explore/data/workspace/strata_dayone/passages_index
+  - Index workspace.strata_dayone.passages_index: ready, three rows, over workspace.strata_dayone.passages. Index is currently online, pipeline update is pending setup of pipeline resources. Check latest status: https://adb-7405609289499029.9.azuredatabricks.net/explore/data/workspace/strata_dayone/passages_index
   - Hybrid query "advertised again after the bids were rejected" returned p1, p2, p3, best first.
 - Chosen path: Default. Strata's own AI Search endpoint holds a hybrid index of passages.
-- Last run: October 24, 2026
+- Last run: October 26, 2026
 <!-- /dayone:test-4 -->
 
 ### Test 5. The Genie conversation API as the token's user
@@ -158,13 +158,13 @@ Command: `uv run --script ops/dayone/probe_genie.py --env-file .env`
 - Status: passed
 - Result: Genie answered as the token's user.
 - Evidence:
-  - Space 01f1cfbec8f41a988ac163374f50deab, conversation 01f1cfd0b732135891b157277738912b, message 01f1cfd0b7471738bdd46632ea1c4e68.
-  - Question: How many trips are in the table?
+  - Space 01f1d17269a81cfdbf2dc585f916e592, conversation 01f1d17c3ab01ca9b149c32169852322, message 01f1d17c3acf1dce860c3fdffec2b35a.
+  - Question: How many contracts were signed in each fiscal year, and for how much in US dollars?
   - Status: COMPLETED.
-  - Answer: SQL: SELECT COUNT(*) AS trip_count FROM `samples`.`nyctaxi`.`trips` There are a total of **21,932 trips** recorded in the table.
-  - The message's user ID, 72033249950994, is the token's user.
+  - Answer: This database only contains NYC taxi trip data in `samples`.`nyctaxi`.`trips`, with columns like pickup/dropoff timestamps, distance, fare amount, and ZIP codes. It does not contain contracts, fiscal years, or contract values, so I can’t fetch that from this schema.
+  - The message's user ID, 146827166867001, is the token's user.
 - Chosen path: Default. The Genie conversation API answers structured questions as the viewer.
-- Last run: October 24, 2026
+- Last run: October 26, 2026
 <!-- /dayone:test-5 -->
 
 ### Test 6. An outside email joins the workspace and opens the app
@@ -177,12 +177,12 @@ An outside email can join the workspace and open the app.
 Command: `bash ops/wizard/strata-setup.sh`
 
 <!-- dayone:test-6 -->
-- Status: waiting
-- Result: An outside email joined the workspace. The app is not deployed yet, so that person could not open it.
+- Status: failed
+- Result: An outside email joined the workspace but could not open the app.
 - Evidence:
-  - The probes deploy a small app named strata. Run the wizard again after them to finish this test.
-- Chosen path: Default, until the rest of this test runs. Reviewers join the workspace and open the Databricks App.
-- Last run: October 24, 2026
+  - App: https://strata-7474658003099155.aws.databricksapps.com
+- Chosen path: Gap fill. A Container Apps copy of the app runs behind Entra sign-in for reviewers.
+- Last run: October 26, 2026
 <!-- /dayone:test-6 -->
 
 ### Test 7. A personal access token or a service principal
@@ -196,12 +196,11 @@ Command: `bash ops/wizard/strata-setup.sh`
 
 <!-- dayone:test-7 -->
 - Status: passed
-- Result: The saved Databricks personal access token works.
+- Result: A personal access token works.
 - Evidence:
-  - databricks current-user me returned the user ID 72033249950994 for chiraglakhanpal@gwu.edu, with the token from .env.
-  - The wizard's own check failed on October 24, 2026 because the Databricks CLI refused every command run from the repo root: the bundle declared two resources with the key strata (catalogs.strata and dashboards.strata). The dashboard's key is now strata_dashboard, and the same command passes from the repo root.
+  - databricks current-user me returned the user ID 146827166867001. It used a new personal access token.
 - Chosen path: Default. Scripts and probes reach Databricks with a personal access token.
-- Last run: October 24, 2026
+- Last run: October 26, 2026
 <!-- /dayone:test-7 -->
 
 ### Test 8. The four models within the subscription's quota
@@ -222,7 +221,7 @@ Command: `uv run --script ops/dayone/probe_caps.py --env-file .env`
   - gpt-5.4-nano: 2,000,000 enqueued tokens, as Global Standard. A Global Standard deployment has no tokens-per-minute limit, so Azure caps the tokens it holds in the queue instead.
   - text-embedding-3-large: 150,000 tokens per minute, as Global Standard.
 - Chosen path: Default. The four deployments named in `config/models.toml` serve Strata, each with the cap set in `ops/dayone/dayone.toml`.
-- Last run: October 24, 2026
+- Last run: October 26, 2026
 <!-- /dayone:test-8 -->
 
 ### Test 9. Foundry evaluations after an Entra sign-in
@@ -253,13 +252,15 @@ Traces reach Application Insights from the app.
 Command: `uv run --script ops/dayone/probe_traces.py --env-file .env`
 
 <!-- dayone:test-10 -->
-- Status: not run
-- Result: The probe could not get ready, so the test did not run. The evidence says what went wrong. Fix it, then run the probe again.
+- Status: passed
+- Result: A trace the app sent reached Application Insights.
 - Evidence:
-  - Marker: strata-dayone-19bf8259eea4.
-  - Finding or making the app strata failed: Invalid secret resource appinsights: Secret with scope strata and key APPLICATIONINSIGHTS_CONNECTION_STRING does not exist.
-- Chosen path: Default, until a result says otherwise. The app sends its traces to Application Insights.
-- Last run: October 24, 2026
+  - Marker: strata-dayone-a89a68c1e470.
+  - App: https://strata-7405609289499029.9.azure.databricksapps.com.
+  - The app sent trace 8a4f97cde3357b9a9de2d42eefd02667.
+  - Application Insights holds it: 2026-10-26T20:35:35.794675Z, dependency, 8a4f97cde3357b9a9de2d42eefd02667.
+- Chosen path: Default. The app sends its traces to Application Insights.
+- Last run: October 26, 2026
 <!-- /dayone:test-10 -->
 
 ## What the probes leave in the workspace
