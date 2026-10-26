@@ -14,7 +14,9 @@ pyyaml==6.0.3
 # The language detector that reads which language a question was asked in (ticket 42; src/strata/knowledge/
 # language.py), with the one package it installs. Its model ships inside its wheel.
 py3langid==0.3.0
-numpy==2.5.4
+# app-python: uv.lock pins numpy 2.5.4, which needs Python 3.12, and the Databricks Apps runtime is Python 3.11
+# (its pip log, October 25, 2026), so the App takes the newest numpy for 3.11. The test below allows this one marker.
+numpy==2.4.6
 # What those three install, pinned at their uv.lock versions too, so the App runs the versions
 # the gate tested (uv export --frozen --no-dev --no-hashes --no-emit-project lists them).
 annotated-doc==0.0.5

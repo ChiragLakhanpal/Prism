@@ -6,7 +6,7 @@ viewer's own token (ADR 0003). The environment names the principal:
 
 - FOUNDRY_PROJECT_ENDPOINT   the Foundry project, such as https://wb-strata.services.ai.azure.com/api/projects/Strata
 - FOUNDRY_TENANT_ID          the Entra tenant
-- FOUNDRY_CLIENT_ID and FOUNDRY_CLIENT_SECRET   the app's principal, which needs the Azure AI User role on
+- FOUNDRY_CLIENT_ID and FOUNDRY_CLIENT_SECRET   the app's principal, which needs the Azure AI Developer role on
                              the project. The wizard does not make it yet (see the ticket's parked decisions).
 
 Without all four, or without a data service for the tools, there is no runner, and /api/ask says there is
