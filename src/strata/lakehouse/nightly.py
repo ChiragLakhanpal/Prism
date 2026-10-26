@@ -35,7 +35,8 @@ this way (gates/build_fixture.py), and repair_locally() reruns a run that stoppe
 repair run does.
 
 A rerun changes nothing that the first run already wrote: bronze keeps a page or a document once, by
-its hash or id; silver reads a page only once all its tables hold it; gold and the edge table are
+its hash or id; silver reads a page only until strata.ops.silver_pages records it, and again only when
+its transform gains a table or bumps its VERSION (ticket 75); gold and the edge table are
 made equal to their queries with one MERGE; the readers parse and embed only what is new; and a
 document is sent to the batch model once. What a run adds every time is its own record, under its own
 run id (RUN_LOGS), and a fresh try of a request or a page that failed before.
@@ -155,7 +156,7 @@ def _bronze_to_gold(run: Run) -> int:
     them every pair in the middle waits for a person (no_model)."""
     from strata.knowledge.suppliers import bidders, judge, resolve
 
-    added = sum(silver.run(run.engine, source) for source in _paged())
+    added = sum(silver.run(run.engine, source, run.clock) for source in _paged())
     added += bidders.store(run.engine) + bidders.store_bids(run.engine)
     deciding = judge.from_environment() if run.fetch is fetch_live else judge.SameNameStandIn()
     added += resolve.run(run.engine, run.run_id, deciding, run.clock)
