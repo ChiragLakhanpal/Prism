@@ -100,12 +100,41 @@ def test_ai_quality_says_how_the_answers_did_and_how_each_loop_is_learning(writt
         "four were dated within 14 days of a date I offered.")
 
 
-def test_the_week_a_sentence_names_is_the_latest_finished_one_never_a_week_still_under_way():
-    """Ticket 32's weeks start on Monday. On Friday October 23 the week of October 19 is still under way, so the
-    sentence names the 7 days to Sunday October 18; on a Sunday, the week that ends that day is finished."""
-    assert findings.last_finished_week(dt.date(2026, 10, 23)) == dt.date(2026, 10, 18)
-    assert findings.last_finished_week(dt.date(2026, 10, 19)) == dt.date(2026, 10, 18)
-    assert findings.last_finished_week(dt.date(2026, 10, 25)) == dt.date(2026, 10, 25)
+def week_of_reports(engine, week, wrong, not_useful, opened, measured_at):
+    """One measure of a week's passage reports, as the weekly retrieval run stores it (ticket 32)."""
+    rate = (lambda reports: round(100 * reports / opened, 1) if opened >= 20 else None)
+    engine.insert_rows("strata.ops.retrieval_feedback_weekly",
+                       ("week_start", "kind", "reports", "opened", "per_100", "computed_at", "public_from"),
+                       [(week, kind, reports, opened, rate(reports), measured_at, measured_at.date())
+                        for kind, reports in (("wrong_passage", wrong), ("not_useful", not_useful))])
+
+
+def test_the_week_a_sentence_names_is_the_newest_one_the_weekly_run_measured_after_it_ended():
+    """Ticket 32's weeks run Monday to Sunday in UTC, and the weekly retrieval run measures them on Mondays at 06:30 in
+    Washington, after the nightly job. So on Monday night the newest measure of last week was taken in its first hours,
+    and the sentence names the week before it; once a run has measured a week after it ended, the sentence names that
+    week, and a week the run found nothing in says no one opened a source (review round 2, N1)."""
+    engine = seeded()  # the seed's weekly run measured both weeks on Friday, October 23
+    try:
+        monday_night = findings.retrieval(engine, dt.date(2026, 10, 26))
+        week_of_reports(engine, dt.date(2026, 10, 19), 2, 1, 30, dt.datetime(2026, 10, 26, 10, 30, tzinfo=dt.UTC))
+        tuesday_night = findings.retrieval(engine, dt.date(2026, 10, 27))
+        week_of_reports(engine, dt.date(2026, 10, 19), 2, 1, 30, dt.datetime(2026, 11, 2, 11, 30, tzinfo=dt.UTC))
+        a_week_later = findings.retrieval(engine, dt.date(2026, 11, 3))
+    finally:
+        engine.close()
+
+    assert monday_night[0].endswith(
+        "In the 7 days to October 18, people opened 40 sources and marked three passages as wrong, or 7.5 for every 100 "
+        "sources opened. They marked two as not useful.")
+    assert tuesday_night[0].endswith(
+        "In the 7 days to October 25, people opened 30 sources and marked two passages as wrong, or 6.7 for every 100 "
+        "sources opened. They marked one as not useful.")
+    assert a_week_later[0].endswith("No one opened a source from an answer in the 7 days to November 1.")
+
+
+def test_before_the_weekly_run_has_measured_a_finished_week_the_sentence_says_nothing_of_reports(empty):
+    assert said(empty, "ai")["Retrieval loop"] == ("No retrieval evaluation has run yet.", "Not yet")
 
 
 def test_each_reason_row_says_how_many_reasons_share_its_count_so_a_tie_is_a_query_column(written):
@@ -130,7 +159,7 @@ def test_each_loop_s_indicators_are_six_rows_in_loop_order_with_targets_and_wher
         ("Knowledge", "Days from publication to decision", "Leading", "3 decisions", "Within 10 business days",
          "2 of 3 within it"),
         ("Knowledge", "Blamed risks a lesson covered at approval", "Lagging", "18 of 30", "None set", "Not compared"),
-        ("Retrieval", "Wrong-passage reports per 100 sources opened", "Leading", "1 in 12 opened", "None set",
+        ("Retrieval", "Wrong-passage reports per 100 sources opened", "Leading", "7.5 per 100, 40 opened", "None set",
          "Not compared"),
         ("Retrieval", "Precision at 10 and recall at 20", "Lagging", "0.62 and 0.71, held-out set",
          "No loss against the last run", "Matched or beat the last run"),
@@ -138,6 +167,8 @@ def test_each_loop_s_indicators_are_six_rows_in_loop_order_with_targets_and_wher
          "Outside for 1 month"),
         ("Estimates", "Plan accuracy", "Lagging", "12 against 30 days", "None set", "Not compared")]
     assert all(row["measured"] for row in found)
+    # The same week as the Retrieval loop sentence, "the 7 days to October 18" (review round 2, N2)
+    assert found[2]["measured"] == "Oct 12, 2026"
 
 
 def test_before_anything_happened_each_finding_says_what_will_fill_it_and_measured_says_not_yet(empty):

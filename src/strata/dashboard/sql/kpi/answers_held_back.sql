@@ -1,7 +1,7 @@
 -- KPI answers_held_back (config/kpis.toml): answers in the dates chosen in which a tool call held back a range, a time
 -- estimate or a share because the evidence fell short, out of all answers. The codes that count are the abstentions
--- copy.dash.ai.held names; a refusal gives none of them, so refusals don't count. Each call is in strata.ops.tool_calls
--- (the run log, ticket 45). Always one row: "None yet" before the first answer.
+-- copy.dash.ai.held names; a refusal gives none of them, so it is never held back but counts among all answers. Each
+-- call is in strata.ops.tool_calls (the run log, ticket 45). Always one row: "None yet" before the first answer.
 WITH answers AS (
   SELECT run_id
   FROM strata.ops.agent_runs

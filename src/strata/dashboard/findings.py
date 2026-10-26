@@ -348,10 +348,30 @@ def _held_out(engine: Engine, today: dt.date) -> tuple[dict | None, dict | None]
     return (best(runs[0]) if runs else None), (best(runs[1]) if len(runs) > 1 else None)
 
 
-def last_finished_week(today: dt.date) -> dt.date:
-    """The Sunday that ends the latest week the retrieval run measures in full, by today (ticket 32's weeks start on
-    Monday), so "the 7 days to {day}" names a finished week and never one still under way."""
-    return today - dt.timedelta(days=(today.weekday() + 1) % 7)
+LATEST_RETRIEVAL_MEASURE = """
+SELECT max(computed_at) AS measured_at
+FROM strata.ops.retrieval_feedback_weekly
+"""
+
+
+def _utc_day(value) -> dt.date | None:
+    if isinstance(value, dt.datetime):
+        return (value.astimezone(dt.UTC) if value.tzinfo else value).date()
+    return _date(value)
+
+
+def finished_week(engine: Engine, today: dt.date) -> tuple[dt.date, dict | None] | None:
+    """The Monday that starts the newest week the weekly retrieval run measured after it ended, with that week's row
+    of passage reports, or no row when the run found no source opened and no report sent in it; None before the run
+    has measured a finished week. Ticket 32's weeks run Monday to Sunday in UTC, and the run stores every week that
+    had any, so "the 7 days to {Sunday}" always counts a whole week (review round 2, N1 and N2)."""
+    ran = _utc_day(engine.run(LATEST_RETRIEVAL_MEASURE).rows[0][0])
+    if ran is None or ran > today:
+        return None
+    start = ran - dt.timedelta(days=ran.weekday() + 7)
+    found = _rows(engine, "kpi_wrong_passage_rate", start, start)
+    measured = found and (_utc_day(found[0]["measured_at"]) or EPOCH) >= start + dt.timedelta(days=7)
+    return start, (found[0] if measured else None)
 
 
 def retrieval(engine: Engine, today: dt.date) -> tuple[str, dt.date | None]:
@@ -367,9 +387,11 @@ def retrieval(engine: Engine, today: dt.date) -> tuple[str, dt.date | None]:
         measured = _date(latest["run_on"])
         text = say.fill(say.at("dash.ai.find.retrieval.evaluated"), day=say.day(measured, today),
                         p=say.Unit(f"{latest['precision_at_10']:.2f}"), r=say.Unit(f"{latest['recall_at_20']:.2f}"))
-    end = last_finished_week(today)
-    weeks = _rows(engine, "kpi_wrong_passage_rate", end - dt.timedelta(days=6), end - dt.timedelta(days=6))
-    week = weeks[0] if weeks else None
+    finished = finished_week(engine, today)
+    if finished is None:
+        return text, measured
+    end, week = finished[0] + dt.timedelta(days=6), finished[1]
+    measured = measured or end
     if week is None or not week["opened"]:
         text += " " + say.fill(say.at("dash.ai.find.retrieval.nothingOpened"), day=say.day(end, today))
     else:
@@ -380,7 +402,6 @@ def retrieval(engine: Engine, today: dt.date) -> tuple[str, dt.date | None]:
                                rate=say.Unit(week["wrong_per_100_cell"]), **slots)
                        if week["wrong_per_100"] is not None else
                        say.say("dash.ai.find.retrieval.feedbackFew", "opened", **slots))
-        measured = measured or end
     return text, measured
 
 
@@ -523,17 +544,17 @@ def indicators(engine: Engine, today: dt.date) -> list[tuple[str, str, str, str,
                                              blamed=int(releases[0]["blamed"] or 0)) if releases else none_yet,
                   none_set, not_compared, _date(releases[0]["ran_on"]) if releases else None))
 
-    weeks = _rows(engine, "kpi_wrong_passage_rate", EPOCH, today)
-    if weeks:
-        week = weeks[0]
-        latest = (say.fill(say.at(f"{cells}.wrongMany"), numerals=True, rate=say.Unit(f"{week['wrong_per_100']:.1f}"),
+    finished = finished_week(engine, today)  # the week the Retrieval loop sentence names
+    if finished is None:
+        found.append(("wrong_passage_rate", none_yet, none_set, not_compared, None))
+    else:
+        week = finished[1] or {"wrong_per_100": None, "wrong_passage": 0, "opened": 0}
+        latest = (say.fill(say.at(f"{cells}.wrongMany"), numerals=True, rate=say.Unit(week["wrong_per_100_cell"]),
                            opened=int(week["opened"]))
                   if week["wrong_per_100"] is not None else
                   say.fill(say.at(f"{cells}.wrongFew"), numerals=True, reports=int(week["wrong_passage"]),
                            opened=int(week["opened"])))
-        found.append(("wrong_passage_rate", latest, none_set, not_compared, _date(week["week_start"])))
-    else:
-        found.append(("wrong_passage_rate", none_yet, none_set, not_compared, None))
+        found.append(("wrong_passage_rate", latest, none_set, not_compared, finished[0]))
 
     held_out, before = _held_out(engine, today)
     fewest = int(_value(load_kpis()["precision_recall"].fewest))

@@ -7967,7 +7967,7 @@ export const copy = {
       name: "Answers where I held back",
       definition:
         "Answers in which I gave no range, time estimate or share because the evidence fell short, out of all " +
-        "answers. Refusals don't count. In the dates chosen above.",
+        "answers, refusals included. In the dates chosen above.",
       outof: "Out of the answers I gave. The table of reasons gives the total.",
     },
     weekly_users: {

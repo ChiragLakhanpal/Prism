@@ -1762,7 +1762,7 @@
       "displayName": "Wrong-passage reports per 100 sources opened",
       "queryLines": [
         "WITH latest AS (\n",
-        "  SELECT f.week_start, f.kind, f.reports, f.opened, f.per_100\n",
+        "  SELECT f.week_start, f.kind, f.reports, f.opened, f.per_100, f.computed_at\n",
         "  FROM strata.ops.retrieval_feedback_weekly AS f\n",
         "  WHERE f.week_start BETWEEN :dates.min AND :dates.max\n",
         "    AND f.computed_at = (\n",
@@ -1778,7 +1778,8 @@
         "    CAST(max(CASE WHEN kind = 'wrong_passage' THEN reports END) AS BIGINT) AS wrong_passage,\n",
         "    CAST(max(CASE WHEN kind = 'not_useful' THEN reports END) AS BIGINT) AS not_useful,\n",
         "    max(CASE WHEN kind = 'wrong_passage' THEN per_100 END) AS wrong_per_100,\n",
-        "    max(CASE WHEN kind = 'not_useful' THEN per_100 END) AS not_useful_per_100\n",
+        "    max(CASE WHEN kind = 'not_useful' THEN per_100 END) AS not_useful_per_100,\n",
+        "    max(computed_at) AS measured_at\n",
         "  FROM latest\n",
         "  GROUP BY week_start\n",
         ")\n",
@@ -1793,7 +1794,8 @@
         "    WHEN wrong_per_100 IS NOT NULL THEN format_number(round(wrong_per_100, 1), 1)\n",
         "    ELSE replace(replace('{reports} in {opened}', '{reports}', format_number(coalesce(wrong_passage, 0), 0)),\n",
         "                 '{opened}', format_number(opened, 0))\n",
-        "  END AS wrong_per_100_cell\n",
+        "  END AS wrong_per_100_cell,\n",
+        "  measured_at\n",
         "FROM weeks\n",
         "ORDER BY week_start DESC\n"
       ],
@@ -5456,7 +5458,7 @@
                 "showTitle": true,
                 "title": "Answers where I held back",
                 "showDescription": true,
-                "description": "Answers in which I gave no range, time estimate or share because the evidence fell short, out of all answers. Refusals don't count. In the dates chosen above."
+                "description": "Answers in which I gave no range, time estimate or share because the evidence fell short, out of all answers, refusals included. In the dates chosen above."
               }
             }
           },
