@@ -67,7 +67,10 @@ def genie_for(call: Call, space: genie_space.Space, environ=None) -> GenieClient
     if getattr(call.engine, "name", "") == "duckdb":
         return GenieClient(genie_fixture.FixtureGenie(call.engine, _fixture_benchmarks()), genie_fixture.SPACE,
                            genie_fixture.WAREHOUSE, waits)
-    env = os.environ if environ is None else environ
+    # The space's id from environ, else from the call's environ (the env file a live script loaded), else from the
+    # process's environment, as the deployed App sets it (ticket 66).
+    given = environ if environ is not None else getattr(call, "environ", None)
+    env = os.environ if given is None else given
     transport, warehouse = getattr(call.engine, "transport", None), getattr(call.engine, "warehouse_id", None)
     space_id = (env.get("GENIE_SPACE_ID") or "").strip()
     if not (transport and warehouse and space_id):

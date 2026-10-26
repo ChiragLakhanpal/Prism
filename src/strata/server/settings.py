@@ -197,4 +197,4 @@ def app_from_env(environ: Mapping[str, str] | None = None) -> FastAPI:
                       feedback_record=the_app, citations=CitationLog(the_app) if the_app else None,
                       lesson_writer=agent_runner.lesson_writer_from_environment(environ),
                       tracer_provider=tracing.from_env(environ), judge=answer_judge.from_environment(environ),
-                      web_dist=web if (web / "index.html").is_file() else None)
+                      web_dist=web if (web / "index.html").is_file() else None, environ=environ)

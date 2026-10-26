@@ -11,14 +11,17 @@ Run it from the main checkout, after ops/agent/sync.py has synced the orchestrat
     uv run --script ops/agent/refuse_live.py --env-file .env
 
 It asks each question of kind refusals in evals/benchmark.yaml through the same HTTP route and stream the app
-runs, with the Foundry agent, its tools on the SQL warehouse as the env file's token, and the verifier's
-judge (config/models.toml's draft role) when the env file names Azure OpenAI. For each it checks what the
+runs, with the Foundry agent, its tools on the SQL warehouse and AI Search as the env file's token, and the
+verifier's judge (config/models.toml's draft role). Every tool reads its services' settings from the env file, as
+the deployed App reads them from its environment: search_passages embeds its query with the env file's Azure
+OpenAI endpoint and key (ticket 66). For each it checks what the
 offline gate checks of the scripted cases (strata.agent.refusals.refusal_problems): the refusal carries the
 question's key and is not partial, no sentence is shown about the request, and the stream holds no email
 address and none of the values the offline gate scans for (strata.agent.refusals.restricted_values: the recorded
 notices' contact names, emails and phone numbers, and individual consultants' supplier ids). It prints one line per question and exits 0 when
 every refusal holds, 1 when one does not, and 2 when it could not run. It needs FOUNDRY_PROJECT_ENDPOINT,
-DATABRICKS_HOST, DATABRICKS_WAREHOUSE_ID and DATABRICKS_TOKEN in the env file, and az signed in.
+DATABRICKS_HOST, DATABRICKS_WAREHOUSE_ID, DATABRICKS_TOKEN, AZURE_OPENAI_ENDPOINT and AZURE_OPENAI_API_KEY in the
+env file, and az signed in.
 """
 
 from __future__ import annotations
@@ -31,16 +34,14 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import yaml  # noqa: E402
-from live import REPO, LiveSetupError, foundry_agent, load_env, warehouse_engine_for  # noqa: E402
+from live import REPO, LiveSetupError, answer_app, load_env, viewer_headers  # noqa: E402
 
-from strata.agent import judge  # noqa: E402
-from strata.agent.loop import answer_runner  # noqa: E402
 from strata.agent.refusals import refusal_problems, restricted_values  # noqa: E402
 from strata.harness.sse import events  # noqa: E402
-from strata.config import load_agent  # noqa: E402
 from strata.lakehouse.engine import EngineError  # noqa: E402
 
-NEEDS = ("FOUNDRY_PROJECT_ENDPOINT", "DATABRICKS_HOST", "DATABRICKS_WAREHOUSE_ID", "DATABRICKS_TOKEN")
+NEEDS = ("FOUNDRY_PROJECT_ENDPOINT", "DATABRICKS_HOST", "DATABRICKS_WAREHOUSE_ID", "DATABRICKS_TOKEN",
+         "AZURE_OPENAI_ENDPOINT", "AZURE_OPENAI_API_KEY")
 
 
 def main(argv=None) -> int:
@@ -55,11 +56,7 @@ def main(argv=None) -> int:
 
     import httpx
 
-    from strata.server.app import create_app
-
-    spec, engine_for = load_agent("orchestrator"), warehouse_engine_for(env)
-    app = create_app(runner=answer_runner(lambda turn: foundry_agent(env, spec), engine_for), engine_for=engine_for,
-                     judge=judge.from_environment(env))
+    app = answer_app(env)  # the env file is every tool's settings, so search_passages reaches AI Search (ticket 66)
     questions = [question for question in yaml.safe_load((REPO / "evals" / "benchmark.yaml").read_text())["questions"]
                  if question["kind"] == "refusals"]
     restricted = restricted_values(REPO / "data" / "fixture" / "recorded" / "api")
@@ -67,7 +64,7 @@ def main(argv=None) -> int:
     async def ask(question: dict) -> str:
         transport = httpx.ASGITransport(app=app)
         async with httpx.AsyncClient(transport=transport, base_url="http://strata.local", timeout=300) as client:
-            response = await client.post("/api/ask", headers={"X-Forwarded-User": "refuse-live@strata"}, json={
+            response = await client.post("/api/ask", headers=viewer_headers(env, "refuse-live@strata"), json={
                 "question": question["question"], "scope": question.get("scope"), "asof": question.get("as_of")})
             return response.text
 

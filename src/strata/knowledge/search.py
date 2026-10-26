@@ -322,7 +322,9 @@ class AiSearchIndex:
 def searcher_for(call, environ: dict | None = None, setup: SearchSetup | None = None) -> Searcher:
     """The fixture search on DuckDB; on the workspace, AI Search with the viewer's own token and the
     query embedded by the deployment config/models.toml names. setup is production's unless the tuning gate
-    gives a candidate (ticket 32)."""
+    gives a candidate (ticket 32). The workspace's host and Azure OpenAI's endpoint and key come from environ, else
+    from the call's environ (registry.Context.environ: the env file a live script loaded), else from the process's
+    environment, as the deployed App sets it (ticket 66)."""
     if getattr(call.engine, "name", "") == "duckdb":
         return FixtureSearch(call.engine, setup=setup)
     import os
@@ -331,7 +333,8 @@ def searcher_for(call, environ: dict | None = None, setup: SearchSetup | None = 
     from strata.knowledge.embed import AzureOpenAIEmbeddings
     from strata.lakehouse.engine import http_transport
 
-    env = os.environ if environ is None else environ
+    given = environ if environ is not None else getattr(call, "environ", None)
+    env = os.environ if given is None else given
     model = load_models()["embed"]
     embedder = AzureOpenAIEmbeddings(env["AZURE_OPENAI_ENDPOINT"], env["AZURE_OPENAI_API_KEY"], model.deployment,
                                      model.dimensions)

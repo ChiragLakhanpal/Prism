@@ -79,4 +79,5 @@ def from_environment(environ: Mapping[str, str], engine_for: EngineFor | None) -
         return None
     endpoint, token = foundry
     spec = load_agent("orchestrator")
-    return answer_runner(lambda turn: FoundryAgent(endpoint, spec, token), engine_for)
+    # The agent's tools read their services' settings from the same environment (ticket 66).
+    return answer_runner(lambda turn: FoundryAgent(endpoint, spec, token), engine_for, environ=environ)
