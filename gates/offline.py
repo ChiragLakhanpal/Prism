@@ -11,6 +11,8 @@ first checks that no tracked file has changes that are not staged, so the tests 
 commit holds. Steps run with the network switched off for uv, npm and Playwright. They also
 run without git's hook variables, so a test that builds its own repo cannot touch the commit
 in progress.
+A step that names the scratch folder .gate-tmp/, as the pytest steps do with --basetemp, finds
+it made, since pytest needs the folder's parent to exist; .gitignore leaves it out (ticket 73).
 
 One gate runs at a time on this computer. Before it starts its clock, the gate holds a lock on
 a file in the temporary folder, or on the file that STRATA_GATE_LOCK names. A second gate waits
@@ -35,6 +37,7 @@ STEPS_FILE = Path("gates/steps.toml")
 # each worktree is its own copy of the repo. The gate's own tests name their own file instead.
 LOCK_FILE = Path(tempfile.gettempdir()) / "strata-gate.lock"
 LOCK_VARIABLE = "STRATA_GATE_LOCK"
+SCRATCH = Path(".gate-tmp")  # the steps' scratch folder, where the pytest steps' --basetemp folders live (ticket 73)
 MARKDOWN = (".md", ".markdown")
 STEP_KEYS = {"name", "run", "always", "git_env", "show", "lane"}
 OFFLINE = {
@@ -283,6 +286,8 @@ def listed(names):
 
 def main():
     limit, lock_wait, steps = load_steps()
+    if any(arg.startswith(str(SCRATCH)) for step in steps for arg in step["run"]):
+        SCRATCH.mkdir(exist_ok=True)  # pytest's --basetemp needs the folder's parent to exist
     path = lock_path()
     lock = hold_lock(path, lock_wait, limit)  # Held until this process ends. The limit starts once it is held.
     if lock is None:

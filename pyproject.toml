@@ -40,3 +40,8 @@ packages = ["src/strata"]
 [tool.pytest.ini_options]
 testpaths = ["tests", "ops/dayone/tests", "ops/wizard/tests", "ops/bundle/tests", "ops/app/tests"]
 addopts = "-q -p no:cacheprovider"
+# A passing test's temporary folder is removed as soon as the test ends; a failed test's stays for a look. Most
+# tests copy the 38 MB fixture database into their tmp_path, so a run that kept every folder held about 7 GB, and
+# a run the gate stopped kept its folder locked for three days (ticket 73). To keep every folder for one run, add
+# `-o tmp_path_retention_policy=all` to the command.
+tmp_path_retention_policy = "failed"

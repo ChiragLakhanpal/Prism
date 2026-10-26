@@ -712,10 +712,16 @@ def test_structured_data_projected_to_every_country_from_the_fixture_stays_under
     fewer records. The workspace measures the real size (strata.ops.table_sizes)."""
     written = iter(range(10_000))
 
+    def quoted(path):
+        return str(path).replace("'", "\\'")
+
     def parquet_bytes(query):
         full, empty = tmp_path / f"{next(written)}.parquet", tmp_path / f"{next(written)}.parquet"
-        db.run(f"COPY ({query}) TO '{full}' (FORMAT parquet)")
-        db.run(f"COPY ({query} LIMIT 0) TO '{empty}' (FORMAT parquet)")
+        # The folder's path goes into the statement as text, and the gate's scratch lives under the repo
+        # (ticket 73), whose path may hold a quote. Databricks SQL escapes a quote with a backslash, and
+        # the transpile step writes it the way DuckDB reads it.
+        db.run(f"COPY ({query}) TO '{quoted(full)}' (FORMAT parquet)")
+        db.run(f"COPY ({query} LIMIT 0) TO '{quoted(empty)}' (FORMAT parquet)")
         return full.stat().st_size - empty.stat().st_size
 
     projected, layers, records_held = {}, {"bronze": 0.0, "silver": 0.0, "gold": 0.0}, 0
