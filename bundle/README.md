@@ -52,9 +52,9 @@ The block below records both schedules and how long each job's runs took, as mea
 
 <!-- bundle:schedules -->
 - fairshare's job: fairshare nightly, daily at 06:00 America/Chicago. Its longest of the last 19 runs took 21 minutes.
-- Strata's job: strata nightly, daily at 03:00 America/New_York. Its longest of the last four runs took 122 minutes, and it stops after 150 minutes.
-- Overlap: none. With these durations the two jobs share no minute on any day from October 24, 2026 to October 24, 2027, and the same holds if Strata's job runs to its limit.
-- Measured: October 24, 2026, with `uv run --script ops/bundle/check.py schedules --env-file .env --write`.
+- Strata's job: strata nightly, daily at 03:00 America/New_York. Its longest of the last eight runs took 151 minutes, and it stops after 150 minutes.
+- Overlap: none. With these durations the two jobs share no minute on any day from October 26, 2026 to October 26, 2027, and the same holds if Strata's job runs to its limit.
+- Measured: October 26, 2026, with `uv run --script ops/bundle/check.py schedules --env-file .env --write`.
 <!-- /bundle:schedules -->
 
 To keep the job to manual runs, set the default of `nightly_pause_status` in `databricks.yml` to `PAUSED` and deploy again.
