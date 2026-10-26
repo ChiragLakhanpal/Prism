@@ -26,7 +26,11 @@ LIST_FIELDS = "id,docty,docdt,disclosure_date,display_title,repnb,lang,txturl,pd
 
 
 class NotFetched(LookupError):
-    """A document or list the source could not give."""
+    """A document or list the source could not give. url is the address it could not fetch or read, when known."""
+
+    def __init__(self, message: str, url: str = ""):
+        super().__init__(message)
+        self.url = url
 
 
 @dataclass(frozen=True)
@@ -73,7 +77,7 @@ class RecordedDocuments:
     def _read(self, files: dict, url: str):
         name = files.get(https(url))
         if name is None:
-            raise NotFetched(f"The fixture has no recording of {url}.")
+            raise NotFetched(f"The fixture has no recording of {url}.", url)
         return self._fmt.read(self._recorded / name)
 
     @staticmethod
@@ -118,15 +122,17 @@ class HostRefused(StopReading):
 
 class BudgetSpent(StopReading):
     """The night's time for the document host is spent (config/thresholds.toml, ingestion.document_host_minutes),
-    so the readers stop and the job's later tasks still run inside its window."""
+    so the readers stop and the job's later tasks still run inside its window. page is the PDF page the layout
+    parser did not read, when the time ran out between pages rather than between requests (ticket 72)."""
 
     measure = "document_host_budget_spent"
 
-    def __init__(self, url: str, seconds: float):
-        self.url, self.seconds = url, seconds
+    def __init__(self, url: str, seconds: float, page: int | None = None):
+        self.url, self.seconds, self.page = url, seconds, page
         self.minutes = round(seconds / 60)
+        missed = f"read page {page} of {url}" if page is not None else f"ask for {url}"
         super().__init__(f"I spent the night's {self.minutes} minute{'' if self.minutes == 1 else 's'} for the "
-                         f"document host, so I did not ask for {url}.")
+                         f"document host, so I did not {missed}.")
 
 
 REFUSED = (403, 429)
@@ -155,9 +161,12 @@ class PoliteFetch:
         self.last: float | None = None
         self.asked = 0  # requests that reached the host, for the tests and the run's report
 
-    def _within_budget(self, url: str) -> None:
+    def within_budget(self, url: str, page: int | None = None) -> None:
+        """Raise BudgetSpent once the night's reading time is spent. The fetch checks it before each request, and the
+        live layout parser before each page it reads (strata.lakehouse.readers.OnBudget), because the parser fetches
+        a PDF once and then reads its pages one by one, about 36 seconds each (ticket 72)."""
         if self.budget is not None and self.clock() - self.began >= self.budget:
-            raise BudgetSpent(url, self.budget)
+            raise BudgetSpent(url, self.budget, page)
 
     def _cached(self, url: str):
         import hashlib
@@ -169,7 +178,7 @@ class PoliteFetch:
     def __call__(self, url: str) -> bytes:
         import urllib.error
 
-        self._within_budget(url)  # once the night's time is spent, the readers get nothing more, kept or not
+        self.within_budget(url)  # once the night's time is spent, the readers get nothing more, kept or not
         kept = self._cached(url)
         if kept is not None and kept.is_file():
             return kept.read_bytes()
@@ -177,7 +186,7 @@ class PoliteFetch:
             waited = self.clock() - self.last
             if waited < self.pause:
                 self.sleep(self.pause - waited)
-                self._within_budget(url)
+                self.within_budget(url)
         self.asked += 1
         try:
             body = self.fetch(url)
@@ -208,7 +217,7 @@ class LiveDocuments:
         except StopReading:
             raise  # the host refused, or the night's time is spent: the run stops instead of asking for the next
         except Exception as error:  # noqa: BLE001 - any failure means the source did not give it
-            raise NotFetched(f"I could not fetch {url}: {error}") from error
+            raise NotFetched(f"I could not fetch {url}: {error}", url) from error
 
     def listing(self, url: str) -> Fetched:
         return Fetched(url, json.loads(self._get(url)), self.clock())
@@ -227,7 +236,7 @@ class LiveDocuments:
         try:
             pages = list(PdfReader(io.BytesIO(pdf)).pages)
         except Exception as error:  # noqa: BLE001 - pypdf raises its own errors and Python's for a broken file
-            raise NotFetched(f"I could not read the PDF at {url}: {error}") from error
+            raise NotFetched(f"I could not read the PDF at {url}: {error}", url) from error
         texts = []
         for number, page in enumerate(pages, 1):
             try:

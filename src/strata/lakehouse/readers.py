@@ -12,12 +12,18 @@ Readers holds what the readers need, which is the one thing that differs between
 - recorded(): the fixture's recorded lists, texts, pages and layouts, the offline embedder and shield, the
   projects whose plans the fixture records, and no index.
 - live(): the World Bank's hosts through PoliteFetch (a pause between requests, each answer kept in the bronze
-  files volume, and a stop at the first refusal), ai_parse_document, Prompt Shields and the embedding
-  deployment with the keys the job reads from the secret scope, and the AI Search index.
+  files volume, and a stop at the first refusal), ai_parse_document with the night's reading time checked before
+  each page (live_parser), Prompt Shields and the embedding deployment with the keys the job reads from the secret
+  scope, and the AI Search index.
 
 When the document host refuses a request (HostRefused), or the night's reading time is spent (BudgetSpent), the
 task stops reading, writes a data readiness note and finishes, so the job goes on and the next night starts where
-this one stopped.
+this one stopped. The time is checked before each request and before each page the layout parser reads: the page
+being read finishes, its layout stays in strata.bronze.layout_pages, and the document is listed as unfinished in
+strata.ops.skipped_documents. A document, or a project's document list, that the source cannot give (NotFetched)
+does not stop the reading: it is skipped with its reason in strata.ops.skipped_documents, and a later run tries it
+again. The passage reader writes each document's passages as soon as it has read it, so a stop keeps them
+(ticket 72).
 """
 
 from __future__ import annotations
@@ -30,7 +36,7 @@ from dataclasses import dataclass
 from strata.config import load_slice, load_sources
 from strata.lakehouse import gold, passages, plans
 from strata.lakehouse.engine import Engine
-from strata.reader.documents import Documents, HostRefused, StopReading
+from strata.reader.documents import Documents, HostRefused, NotFetched, StopReading
 
 SOURCE = "documents"
 NOTE_COLUMNS = ("run_id", "source", "subject", "measure", "kind", "count", "denominator", "as_of", "detail",
@@ -96,20 +102,44 @@ def document_host(fetch, cache, sleep=None, clock=None):
                        keep=lambda url: not https(url).startswith(lists), budget=minutes * 60)
 
 
+class OnBudget:
+    """A layout parser that checks the night's reading time before each page it reads, as the fetch checks it before
+    each request. ai_parse_document fetches a PDF once and reads its pages one by one: on October 26, 2026 it read 97
+    pages of one plan in 99 minutes with no request between them, the time was never checked, and the job's
+    150-minute stop ended parse_and_embed with the seven tasks after it never run (ticket 72). Once the time is
+    spent, the page being read finishes and the next raises BudgetSpent."""
+
+    def __init__(self, parser, fetch):
+        self.parser, self.fetch, self.name = parser, fetch, parser.name
+
+    def parse(self, page):
+        self.fetch.within_budget(page.pdf_url, page.pdf_page)
+        return self.parser.parse(page)
+
+
+def live_parser(engine: Engine, fetch, upload):
+    """The layout parser config/models.toml names ([layout] parser), on the job's fetch (document_host), with the
+    night's reading time checked before each page. The nightly job and ops/documents/run_live.py build it here.
+    upload(path, data) writes a page's PDF to the volume the parser reads."""
+    from strata.config import load_layout_parser
+    from strata.reader.layout import PARSERS
+
+    return OnBudget(PARSERS[load_layout_parser()](engine, upload=upload, fetch=fetch), fetch)
+
+
 def live(engine: Engine, environ: Mapping[str, str] | None = None, search_endpoint: str | None = None) -> Readers:
     """The readers on the workspace, as the job runs them on serverless compute. Without Azure OpenAI's keys the
     plan reader still runs, and the passage reader waits for a night that has them. search_endpoint is the AI
     Search endpoint the bundle names (variable ai_search_endpoint); without it sync_index syncs only gold."""
-    from strata.config import load_layout_parser, load_models
+    from strata.config import load_models
     from strata.fixture.record import fetch_url
     from strata.knowledge.embed import AzureOpenAIEmbeddings
     from strata.knowledge.shields import PromptShields, content_safety_endpoint
     from strata.reader.documents import LiveDocuments
-    from strata.reader.layout import PARSERS
 
     env = os.environ if environ is None else environ
     fetch = document_host(fetch_url, CACHE if os.path.isdir(os.path.dirname(CACHE)) else None)
-    layout = PARSERS[load_layout_parser()](engine, upload=_write_to_volume, fetch=fetch)
+    layout = live_parser(engine, fetch, _write_to_volume)
     endpoint, key = env.get("AZURE_OPENAI_ENDPOINT", "").strip(), env.get("AZURE_OPENAI_API_KEY", "").strip()
     shield = embedder = None
     if endpoint and key:
@@ -167,26 +197,84 @@ def _count(engine: Engine, table: str) -> int:
     return int(engine.run(f"SELECT count(*) AS n FROM {table}").rows[0][0])  # sql-lint: names only, from ADDED_TO
 
 
+@dataclass(frozen=True)
+class Reading:
+    """What both readers did in one run: the rows they added or changed, the passage reader's report when it
+    finished, its counts so far (which hold what it wrote even when it stopped), and the stop that ended the
+    reading, if one did. What each reader skipped or left unfinished is in strata.ops.skipped_documents."""
+
+    changed: int
+    report: passages.Report | None
+    tally: passages.Tally
+    stopped: StopReading | None = None
+
+
 def read(engine: Engine, readers: Readers, run_id: str, clock: Callable[[], dt.datetime]) -> int:
     """The parse_and_embed task: both readers, over only what changed. Returns the rows they added or changed."""
+    return reading(engine, readers, run_id, clock).changed
+
+
+def reading(engine: Engine, readers: Readers, run_id: str, clock: Callable[[], dt.datetime],
+            tally: passages.Tally | None = None, passages_first: bool = False) -> Reading:
+    """Both readers, over only what changed, as the nightly job's parse_and_embed and ops/documents/run_live.py
+    run them. A project whose plans the source cannot give (NotFetched, as when search.worldbank.org answered 503
+    for P089634's document list on October 26, 2026) is skipped with its reason and the plan reader goes on; the
+    passage reader writes each document as soon as it has read it and skips the same way (ticket 72). A stop ends
+    the reading for the run and writes a data readiness note. tally, when given, counts the passage reader's
+    documents as it goes, so a caller still has the counts when something else ends the run.
+
+    The nightly job reads the plans first and the passages with the time that is left. passages_first turns the
+    order round, as ops/documents/run_live.py does: on October 26, 2026 the plan reader's scanned pages filled the
+    whole reading time and the passage reader never started, so strata.gold.passage held no row after the run."""
     before = {table: _count(engine, table) for table in ADDED_TO}
-    stop: StopReading | None = None
-    try:
-        for project_id in readers.plan_projects(engine):
-            plans.run(engine, readers.documents, readers.layout, project_id, clock=clock, run_id=run_id)
-    except StopReading as stopped:
-        stop = stopped
-    synced = gold.sync(engine, "package")  # its query reads the plan rows read tonight, before any stop
-    if stop is None and readers.shield is not None and readers.embedder is not None:
+    tally = tally if tally is not None else passages.Tally()
+    report: passages.Report | None = None
+    synced = 0
+
+    def read_plans() -> StopReading | None:
+        nonlocal synced
+        stop = None
         try:
-            report = passages.run(engine, readers.documents, readers.report_projects(engine), shield=readers.shield,
-                                  embedder=readers.embedder, layout=readers.layout, clock=clock, run_id=run_id)
-            synced += report.synced
+            for project_id in readers.plan_projects(engine):
+                try:
+                    plans.run(engine, readers.documents, readers.layout, project_id, clock=clock, run_id=run_id)
+                except NotFetched as error:  # its document list, or a PDF the layout parser needed
+                    plans.skip(engine, run_id, "plans",
+                               plans.Skipped(project_id, None, error.url or _list(project_id), str(error)), clock())
         except StopReading as stopped:
             stop = stopped
-    if stop is not None:
-        note_stop(engine, run_id, clock(), stop)
-    return synced + sum(_count(engine, table) - count for table, count in before.items())
+        synced += gold.sync(engine, "package")  # its query reads the plan rows read tonight, before any stop
+        return stop
+
+    def read_passages() -> StopReading | None:
+        nonlocal report, synced
+        if readers.shield is None or readers.embedder is None:
+            return None
+        try:
+            report = passages.run(engine, readers.documents, readers.report_projects(engine), shield=readers.shield,
+                                  embedder=readers.embedder, layout=readers.layout, clock=clock, run_id=run_id,
+                                  tally=tally)
+        except StopReading as stopped:
+            synced += tally.synced  # the documents written before the stop stay in strata.gold.passage
+            return stopped
+        synced += report.synced
+        return None
+
+    stop: StopReading | None = None
+    for read_one in (read_passages, read_plans) if passages_first else (read_plans, read_passages):
+        stop = read_one()
+        if stop is not None:  # the reader after it waits for the next run
+            note_stop(engine, run_id, clock(), stop)
+            break
+    changed = synced + sum(_count(engine, table) - count for table, count in before.items())
+    return Reading(changed, report, tally, stop)
+
+
+def _list(project_id: str) -> str:
+    """The documents API address of the project's document list, which a skipped plan reading names."""
+    from strata.reader.documents import list_url
+
+    return list_url(load_sources()[SOURCE].endpoint, project_id)
 
 
 def note_stop(engine: Engine, run_id: str, when: dt.datetime, stopped: StopReading) -> None:
