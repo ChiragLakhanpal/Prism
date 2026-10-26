@@ -2192,3 +2192,48 @@ As the officer, upload a file of 200 activities in the fallback layout (`config/
     SELECT draft_id, kind, created_at, length(content) FROM strata.ops.drafts WHERE kind = 'step_rows' ORDER BY created_at DESC LIMIT 1
 
 It worked if the writing page ends with the saved draft, not an error, and the query returns that draft's row, made a moment ago, with a length above 0. The mask on `content` gives its value to the App and to the owner who deploys (`ops/app/deploy_app.py`, `masks()`), so run the query as that owner. If the insert fails, write the error and the length refused next to F17 in `.notes/38-review-r4.md`'s follow-up list for the build.
+
+## Ticket 39, step 1 of 4: deploy the three Lessons tables, then redeploy the App for their grants and masks
+
+The merger parked this step on October 25, 2026, after merge commit 2cb3915. All ten keys were set, but the header above holds workspace steps back during a merge, and the orchestrator's notes for this wave held every workspace step for the warehouse's daily limit of October 25 until the second session reports the warehouse back. It needs the Databricks keys in `.env`, and the warehouse under its free daily limit. Ticket 39 adds `strata.ops.lesson_visits`, `strata.ops.draft_lesson_choices` and `strata.ops.lesson_version_tags` (`src/strata/lakehouse/tables/ops/`). The bundle deploy makes the tables. The App deploy (`ops/app/deploy_app.py`, `grants()` and `masks()`) then grants the App's own service principal SELECT and MODIFY on all three and SELECT on `strata.ops.retrieval_feedback_viewers`, and masks a draft's lesson choices: `draft_lesson_choices.reason` and `rewrite` (`strata.lakehouse.masks.MASKED`). A grant on a table that does not exist fails, so the bundle deploy runs first; the builder named only the App deploy, and I added the bundle deploy and the job run for that reason. One bundle deploy and one App deploy from 2cb3915 or later serve every earlier block that names them, ticket 38's step 2 and ticket 44's steps 1 and 2 among them. This workspace's earlier deploys passed `--fairshare-catalog workspace`, so this one does too. The App deploy writes the Foundry and Azure OpenAI keys into the secret scope `strata`, so it also waits for the user's decision on the scope (ticket 06, step 1, and ticket 43, step 4).
+
+Run these from the main checkout, in this order:
+
+    uv run --script ops/bundle/deploy.py --env-file .env --fairshare-catalog workspace
+    uv run --script ops/bundle/check.py job-run --env-file .env
+    uv run --script ops/app/deploy_app.py --env-file .env
+
+It worked if the bundle deploy exits 0, lists `strata.ops.lesson_visits`, `strata.ops.draft_lesson_choices` and `strata.ops.lesson_version_tags` as new and changes no existing table, every task of the job run succeeds, the App deploy exits 0 with the last line `Strata is running at https://...` and its summary shows "The column mask" as `strata.ops.mask_viewer, on 14 columns` (two more than before this ticket), and on the SQL warehouse
+
+    SHOW GRANTS ON TABLE strata.ops.lesson_visits
+    SHOW GRANTS ON TABLE strata.ops.draft_lesson_choices
+    SHOW GRANTS ON TABLE strata.ops.lesson_version_tags
+
+each list SELECT and MODIFY for the App's service principal, and `DESCRIBE TABLE EXTENDED strata.ops.draft_lesson_choices` shows the mask `strata.ops.mask_viewer` on `reason` and `rewrite`.
+
+## Ticket 39, step 2 of 4: sync the changed PPSD rows writer to Foundry, with a --check run (round 2 follow-up 11)
+
+The merger parked this step on October 25, 2026, after merge commit 2cb3915, for the same reasons as step 1. The sync needs only Foundry, not the warehouse. It needs FOUNDRY_PROJECT_ENDPOINT and FOUNDRY_TENANT_ID in `.env`, and `az` signed in. Ticket 39 teaches `src/strata/agent/instructions/ppsd_rows_writer.md` the `ppsd_row_update` task ("Update the row"). The plain sync covers only the orchestrator, so this writer needs its own `--agent` run.
+
+Run these from the main checkout, in this order:
+
+    uv run --script ops/agent/sync.py --env-file .env --agent ppsd_rows_writer
+    uv run --script ops/agent/sync.py --env-file .env --agent ppsd_rows_writer --check
+
+It worked if the first run ends "I made version N of strata-ppsd-rows-writer, which matches the repo.", and the `--check` run exits 0 and reports no difference in model, instructions, tools, description or guardrail for `strata-ppsd-rows-writer`.
+
+## Ticket 39, step 3 of 4: one person's Lessons visits on the deployed App (criterion 4, live)
+
+The merger parked this step on October 25, 2026, after merge commit 2cb3915, for the same reasons as step 1. Run it after step 1. It needs the Databricks keys in `.env` and one person who can open the App. The App's service principal writes `strata.ops.lesson_visits` with the viewer the Databricks App forwards; a visit lasts until `lessons.visit_gap_minutes` (`config/thresholds.toml`, 30 minutes) pass with no load.
+
+As that person, open the App's `/lessons` page, note `visit.started_at` from `GET /api/lessons`, reload the page a minute later, and read it again. Then open `/lessons` again more than 30 minutes after the last load.
+
+It worked if both loads in the first visit give the same `visit.started_at`, and the later visit's opening sentence begins "Since your last visit on" with the first visit's date.
+
+## Ticket 39, step 4 of 4: "Update the row" with the live writer and the judge (criterion 2, live)
+
+The merger parked this step on October 25, 2026, after merge commit 2cb3915, for the same reasons as step 1. Run it after step 2. No script records it yet: `ops/agent/record.py` re-records a writer only from a fresh draft request (`--writers`), and the update cases in `tests/fixtures/agent/row_updates.toml` start from a saved draft, so `tests/fixtures/agent/recorded/ppsd-row-update-cost-estimates.json` and the two judged files beside it are hand-written. Adding a row-updates option to `ops/agent/record.py` is a follow-up for the build, not a reason to wait on the steps above. It needs the four Foundry keys and the Databricks keys in `.env`, and `az` signed in.
+
+Once the recording option exists, re-record the case `ppsd-row-update-cost-estimates` from the live writer `strata-ppsd-rows-writer` and its judge, in place of the hand-written files, then run the gate, which replays the new recordings on the fixture, and commit them.
+
+It worked if the recorded update answers `updated` with a row that cites version 2 of `lesson-e903b07ad1`, and its check line counts what the verifier removed.
