@@ -2777,3 +2777,70 @@ This criterion covers step 1 only. While `strata.gold.passage` holds 0 rows, the
 Record here the four fields from each `apps get`, the step 1 lines with the time they printed, the summary's app line, the exit code, the run's start and end times, and the probe's answers.
 
 Then, about review follow-up 1 in `.notes/77-review.md`: `last_start` assumes that `apps start` moves the active deployment's times. The `apps get` in deploy70.log (10:09 UTC on October 26) supports it: after the demo-ready restart's start, the active deployment 01f1d1219e59... showed `create_time` 09:42:54Z and `update_time` 09:48:11Z, and no deploy ran in between. The next time the App is started or restarted for any reason (a run on a stopped App, or a run 12 hours or more after the last start), record the same four fields before and after. If the active deployment's times moved to the start, nothing changes. If only the top-level `update_time` moved, tell the orchestrator: `last_start` must read it too, and the review note gives the fix and the test. Do not stop and start the App only to check this, because a restart takes it down for about eight and a half minutes.
+
+## Ticket 78, step 1 of 4: deploy the bundle, so the nightly job's plan reader writes a misread reference as the plan's text gives it
+
+The merger parked this step on October 26, 2026, after merge commit 60843437, so run it from a snapshot of 60843437 or later. Every key is set, but the second session runs every workspace step from a snapshot of the commit, one at a time, so the merger ran none. Steps 1 to 4 need the Databricks keys in `.env` and the Databricks CLI 0.287.0 or later. Run them in order, outside the nightly window (03:00 to 05:30 in Washington), after ticket 75's `bronze_to_gold` run of 11:40 UTC on October 26 has ended.
+
+What ticket 78 changes: on the workspace on October 26, the layout parser read KE-NWWDA-229129-CW-RFB on page 3 of P156634's October 9, 2026 plan (document 40132287) as KE-NWWDA-229129-CW-RFQ. The recorded PDF writes RFB on that page, and so do the three earlier versions, so STEP did not rename the package. The plan reader (`src/strata/reader/step.py` and `src/strata/lakehouse/plans.py`) now checks each table row's Activity Reference No. against the references the plan's text lists. When a row's reference is not listed, it writes the one listed reference that no other row read, if the two differ by at most `[ingestion] reference_misread_characters` (2) characters and no other listed reference is as close. Bronze keeps what the parser read. No table, column, job or dashboard changes. The deploy carries the new reader to the nightly job, so its `parse_and_embed` does not write the -RFQ row back. Deploy before step 2: a nightly run on the old code rewrites P156634's rows in `strata.silver.plan_rows` with the misread.
+
+Run this from the snapshot's root:
+
+    uv run --script ops/bundle/deploy.py --env-file "<main checkout>/.env" --fairshare-catalog workspace
+
+It worked if it exits 0 and its "3. What changed:" names no table for this ticket (it may list what other merges added since the last deploy). Record the exit code and what "3. What changed:" listed.
+
+## Ticket 78, step 2 of 4: rewrite P156634's plan rows with the fixed reader, then rebuild gold (criterion 3, live)
+
+Parked with step 1, after merge commit 60843437. Run it from the same snapshot, right after step 1:
+
+    uv run --script ops/plans/run_live.py --env-file "<main checkout>/.env" --project P156634
+
+`run_live.py` writes bronze, silver and ops but not gold, so then run only the nightly job's `bronze_to_gold` task, which rebuilds `strata.gold.package` from the new rows (the orchestrator's runs on October 26 used job ID 730097284330653):
+
+    databricks jobs list --name "strata nightly" -p strata
+    databricks jobs run-now --json '{"job_id": <the job ID>, "only": ["bronze_to_gold"]}' --timeout 160m -p strata
+
+A `bronze_to_gold` run alone is not enough. Only the plan reader (`plans.run`, through `write_rows`) rewrites `strata.silver.plan_rows`. The nightly job's `parse_and_embed` does both halves, because it runs the plan reader and then syncs `strata.gold.package`. If a nightly run on the deployed code comes first and its `parse_and_embed` succeeds, record that run here instead. Then run these in the workspace's SQL editor:
+
+    SELECT document_id, activity_reference_no, process_status, estimated_amount_usd, actual_amount_usd
+    FROM strata.silver.plan_rows
+    WHERE project_id = 'P156634' AND activity_reference_no LIKE 'KE-NWWDA-229129-%'
+    ORDER BY document_id
+
+    SELECT step_reference, process_status, process_status_document_id
+    FROM strata.gold.package WHERE step_reference LIKE 'KE-NWWDA-229129-%'
+
+It worked if:
+
+- `run_live.py` exits 0 and parses no new page of document 40132287, since bronze keeps its pages by their hash. It prints no "It stopped at the cap" line and no "The run stopped before it finished" line, and it prints "In document 40132287, the layout parser read KE-NWWDA-229129-CW-RFQ, which the plan's text writes KE-NWWDA-229129-CW-RFB. I wrote KE-NWWDA-229129-CW-RFB." The plan reader raises before it writes any row when it stops at the daily page cap, so after a stop, run it again the next day; the pages it parsed are kept.
+- The `bronze_to_gold` run ends SUCCESS.
+- The first query names KE-NWWDA-229129-CW-RFB for document 40132287 (Signed, 300000.00, 1245092.76) and has no -RFQ row. On the fixture it names RFB in 33014836 (Pending Implementation), 40031468, 40090127 and 40132287. Record which documents the warehouse lists.
+- The second query gives one row: KE-NWWDA-229129-CW-RFB, Signed, with `process_status_document_id` 40132287.
+
+Record the run's last lines, the exit code, the `bronze_to_gold` run's status and minutes, and both query results. If the "In document 40132287" line does not appear and the first query still shows -RFQ, tell the orchestrator. That means the parser read the reference more than 2 characters off, or another listed reference was as close, so the fix did not apply.
+
+## Ticket 78, step 3 of 4: the two ground-truth queries return rows on the warehouse (criterion 3, live)
+
+Parked with step 1, after merge commit 60843437. Run it from the same snapshot, after step 2:
+
+    uv run --script ops/bundle/check.py same-rows --env-file "<main checkout>/.env"
+
+It worked if:
+
+- `delay_from_first_published_planned_date.sql` returns the same row on both engines: (2021-04-21, 2021-07-01, 2022-01-03, 186, 1245092.76).
+- `agency_track_record_nwwda_2026_10_09.sql` returns a row with n above 0 on the warehouse. It matches the fixture's (7, 0, 7, 2) only if the warehouse holds all nine rows of the October 9 plan. It held 6 on October 26, so a difference in its counts alone does not fail this step.
+
+The exit code does not decide it, because other files differ for the reasons recorded under "Ticket 04, step 3 of 4". Record both files' result lines, the warehouse's row for the track record, and how many files matched.
+
+## Ticket 78, step 4 of 4: the demo recheck names the showcase package the same way on the fixture and on the workspace (criterion 3, live)
+
+Parked with step 1, after merge commit 60843437. Run it from the same snapshot's root, after step 3, with `data/out/fixture.duckdb` copied into the snapshot for the command's step 4, when neither nightly job is running and the warehouse is under its free daily limit:
+
+    uv run --with databricks-sdk==0.156.0 python ops/demo/ready.py --env-file "<main checkout>/.env"
+
+This is ticket 48's command, so record what its other steps printed under ticket 48's steps 2 and 3 as well.
+
+It worked if step 4 prints neither "Signed far above its estimate: KE-NWWDA-229129-CW-RFQ fired on the workspace and not in the fixture." nor "Signed far above its estimate: KE-NWWDA-229129-CW-RFB no longer fired on the workspace.", and both the fixture's run and the workspace's run name KE-NWWDA-229129-CW-RFB, as in "KE-NWWDA-229129-CW-RFB was signed at about 4 times its estimate: US$1,245,092.76 against US$300,000.00." When the warehouse holds all nine rows of the October 9 plan, step 4 ends "Nothing changed since the fixture was recorded." If it does not, step 4 may list other changes; a line that does not name KE-NWWDA-229129 is not this ticket's. An exit 1 that names another step, such as step 3's smoke question while `strata.gold.passage` holds 0 rows, does not fail this step.
+
+Record here the snapshot's commit, the run's start and end times, everything step 4 printed, and the exit code.
