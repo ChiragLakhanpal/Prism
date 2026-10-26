@@ -21,7 +21,13 @@ counts what it took out:
 - every number written after a phone label (Tel, Telephone, Telefax, Phone, Cellphone, Mobile, Mob,
   Cell, Fax, also followed by No., Number or #, or by /Fax or /WhatsApp), also one with a country
   code and no plus (Tel 254 20 1234567) or a second number after a slash, is replaced too, and so
-  is an Indian mobile with no trunk zero after Ph, M or Contact (Ph: 98123 45678).
+  is an Indian mobile with no trunk zero after Ph, M or Contact (Ph: 98123 45678);
+- last, whatever the nightly job's check would still find (LEFT_EMAIL and LEFT_PHONE below) is
+  replaced, with the label kept (Fax:: [contact removed]), so the check never finds what this leaves.
+
+Silver runs the same removal again on each notices page it reads (strip_again), and the last pass
+once more on the plain text it keeps (strip_left), so a fix here reaches the pages bronze already
+holds when silver reads them again (ticket 76).
 
 Every other field stays as received. bid_reference_no is STEP's field and, when it holds a STEP
 reference, the join from a notice to its package. A reference such as NWWDA-WSDP-03-2019-2020
@@ -86,12 +92,24 @@ MOBILE_LABELLED = re.compile(
     r"(?P<numbers>(?:\+?91[ \t-]?)?[6-9]\d{4}[ \t-]?\d{5})(?!\d)", re.I)
 TRAILING = re.compile(r"[ \t()–-]*$")  # what a number's pattern takes after its last digit, kept as written
 
-# The nightly job's check for contact details that ingestion missed (strata.lakehouse.quality, contacts_left):
-# a plain email address, or a number of seven digits or more written after a phone label. They are simpler than
-# the patterns above, so the SQL warehouse (Java's regular expressions) and DuckDB (RE2) read them the same way,
-# and they go to the query as bound parameters, since Spark SQL mangles backslashes in a literal.
-LEFT_EMAIL = r"[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}"
-LEFT_PHONE = r"(?i)\b(tel|telephone|phone|mobile|cell|fax)\b[^0-9\n]{0,12}\+?[0-9][0-9 ()-]{5,}[0-9]"
+# One definition of a contact detail left in a notice (CLAUDE.md rule 4; ticket 76). The nightly job's check
+# (strata.lakehouse.quality, contacts_left) counts the notices these find, and the removal's last pass (Stripper.left)
+# takes out all they find, so the check never finds what the removal leaves:
+# - an email address, also with a space before or after its "@" (name@ example.org);
+# - a number of seven digits or more, with spaces, dots, brackets or dashes between them, written after a phone label
+#   (Tel, Telephone, Telefax, Phone, Cellphone, Mobile, Mob, Cell, Fax, Facsimile) with up to 12 other characters
+#   but no digit between (Fax #: , Phone No. , Tel: (-), or with none, the label run into the digits (Phone0722...);
+# - such a number written after one already removed, with a comma, slash, semicolon or dash before it, and maybe the
+#   letter l typed for a 1 ([contact removed]l, 0722...).
+# They are simpler than the patterns above, so the SQL warehouse (Java's regular expressions) and DuckDB (RE2) read
+# them as Python does, and they go to the query as bound parameters, since Spark SQL mangles backslashes in a literal.
+LEFT_EMAIL = r"[A-Za-z0-9._%+-]+ ?@ ?[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}"
+LEFT_PHONE = (r"(?i)(\b(tel|telephone|telefax|phone|cellphone|mobile|mob|cell|fax|facsimile)(\b[^0-9\n]{0,12})?"
+              r"|\[contact removed\][ \t]*l?[ \t]*[,;/-][ \t]*)\+?[0-9]([ ().-]*[0-9]){6,}")
+# The same two, as the removal reads them. ASCII, because RE2 and Java's \b and (?i) know only ASCII letters.
+CHECKED_EMAIL = re.compile(LEFT_EMAIL, re.A)
+CHECKED_PHONE = re.compile(LEFT_PHONE, re.A)
+SIGNS_BEFORE = re.compile(r"[(+][(+ \t–-]*$")  # a number's own bracket or plus, written before its first digit
 
 
 def _phone(candidate: str) -> bool:
@@ -175,7 +193,25 @@ class Stripper:
             text = self._sub(PHONE, text, "phones", _phone)
             text = LINE_ENDING.sub(REMOVED, text)  # part of a number already counted
         text = LABELLED.sub(self._labelled, text)
-        return MOBILE_LABELLED.sub(self._labelled, text)
+        text = MOBILE_LABELLED.sub(self._labelled, text)
+        return text if labelled_only else self.left(text)
+
+    def left(self, text: str) -> str:
+        """The removal's last pass: every email address and labelled phone number the nightly check looks for
+        (LEFT_EMAIL, LEFT_PHONE), with the label and the words around it kept. A number taken out can leave
+        another written after it ([contact removed]l, 0722...), so it runs until it finds nothing."""
+        text = self._sub(CHECKED_EMAIL, text, "emails")
+        while True:
+            found = CHECKED_PHONE.sub(self._checked_number, text)
+            if found == text:
+                return text
+            text = found
+
+    def _checked_number(self, match: re.Match) -> str:
+        found = match.group(0)
+        label = SIGNS_BEFORE.sub("", found[:re.search(r"\d", found).start()])
+        self.counts["phones"] += 1
+        return label + REMOVED
 
     def _labelled(self, match: re.Match) -> str:
         numbers = match.group("numbers")
@@ -264,6 +300,20 @@ def strip_text(text: str) -> tuple[str, int]:
     references out of the plan as published."""
     stripper = Stripper([])
     return stripper.text(text, labelled_only=True), stripper.removed
+
+
+def strip_again(text: str | None) -> str | None:
+    """A notice's free text with every contact detail the patterns find replaced, as strip() replaces them on a
+    page, but without the record's contact fields to say whose they are: bronze has replaced those already. Silver
+    runs it on each page it reads, so a page bronze kept before a fix to the patterns loses what the fix takes out
+    when silver reads the page again (ticket 76)."""
+    return Stripper([]).text(text) if isinstance(text, str) and text else text
+
+
+def strip_left(text: str | None) -> str | None:
+    """The removal's last pass alone (Stripper.left), for a notice's text as silver keeps it: the plain text the
+    nightly check reads, where an HTML entity or tag no longer sits between a label and its number."""
+    return Stripper([]).left(text) if text else text
 
 
 def _filled(value) -> bool:
