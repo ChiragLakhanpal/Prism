@@ -71,7 +71,9 @@ RUN_LOGS = ("strata.ops.pipeline_runs", "strata.ops.quality_checks", "strata.ops
             # Each document run's sample of passages checked against the language detector (ticket 42).
             "strata.ops.passage_language_checks",
             # The challenger's and the hazard model's nightly scores in shadow (ticket 44).
-            "strata.ops.time_estimate_shadow", "strata.ops.hazard_scores")
+            "strata.ops.time_estimate_shadow", "strata.ops.hazard_scores",
+            # The dashboard's "What the measures say" and each loop's indicators, written each night (ticket 45).
+            "strata.ops.dashboard_findings", "strata.ops.loop_indicators")
 
 # Where a source's pages come from: the live API on the workspace, the recorded fixture here.
 Fetch = Callable[[Source, Engine], Iterable[pages.Page]]
@@ -327,14 +329,16 @@ def _replay_signals(run: Run) -> int:
 
 def _measure_data_readiness(run: Run) -> int:
     """The data readiness measures of every source, how often supplier auto-merge is right on the labeled
-    pairs (ticket 19), the room each table takes, and the Data readiness page built from them for the
-    dashboard (strata.dashboard.snapshot)."""
-    from strata.dashboard import snapshot
+    pairs (ticket 19), the room each table takes, the Data readiness page built from them for the
+    dashboard (strata.dashboard.snapshot), and the dashboard's "What the measures say" and each loop's indicators,
+    once every measure of the night is in (strata.dashboard.findings; ticket 45)."""
+    from strata.dashboard import findings, snapshot
     from strata.knowledge.suppliers import quality
 
     measured = readiness.measure(run.engine, run.run_id, run.clock) + quality.measure(run.engine, run.run_id, run.clock)
     measured += storage.measure(run.engine, run.run_id, run.clock)
-    return measured + snapshot.write(run.engine, run.run_id, run.clock)
+    measured += snapshot.write(run.engine, run.run_id, run.clock)
+    return measured + findings.write(run.engine, run.run_id, run.clock)
 
 
 def _refresh_drafts(run: Run) -> int:

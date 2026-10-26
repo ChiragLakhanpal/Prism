@@ -24,6 +24,9 @@ TABLE = "strata.bronze.api_pages"
 COLUMNS = ("source", "country_code", "request", "page_hash", "body", "records", "reported_total",
            "newest_record_on", "contact_details_removed", "fetched_at", "public_from")
 HELD = "SELECT page_hash FROM strata.bronze.api_pages WHERE source = :source"
+# What stripping took out of each page, by kind (ticket 45), kept beside the page for the Governance page.
+REMOVALS = "strata.ops.contact_removals"
+REMOVAL_COLUMNS = ("source", "country_code", "page_hash", "kind", "removed", "records", "fetched_at", "public_from")
 GROUP = 20  # pages a write adds at most
 # The pages of a source that a fetch task that finished holds: how many, and the newest record date
 # among them, for one series (a country's, or with '', the one with no country filter) or, with
@@ -85,25 +88,32 @@ def store(engine: Engine, source: Source, pages: Iterable[source_pages.Page]) ->
     fetch ends or fails. Returns how many it added."""
     held = {row[0] for row in engine.run(HELD, {"source": source.key}).rows}
     waiting: list[tuple] = []
+    removals: list[tuple] = []
     added = 0
 
     def write() -> int:
         written = engine.insert_rows(TABLE, COLUMNS, waiting) if waiting else 0
+        if removals:
+            engine.insert_rows(REMOVALS, REMOVAL_COLUMNS, removals)
         waiting.clear()
+        removals.clear()
         return written
 
     try:
         for page in pages:
-            body, removed = contacts.strip(page.body)  # before anything is kept (CLAUDE.md rule 8)
+            body, kinds = contacts.strip_counted(page.body)  # before anything is kept (CLAUDE.md rule 8)
             page_hash = content_hash(source, body)
             if page_hash in held:
                 continue
             held.add(page_hash)
+            day = page.fetched_at.astimezone(dt.UTC).date()
             waiting.append((
                 source.key, page.country_code, page.request, page_hash, json.dumps(body, ensure_ascii=False),
                 len(source_pages.records(source, body)), source_pages.reported_total(source, body),
-                source_pages.newest_record(source, body), removed, page.fetched_at,
-                page.fetched_at.astimezone(dt.UTC).date()))
+                source_pages.newest_record(source, body), kinds[contacts.ANY].removed if kinds else 0,
+                page.fetched_at, day))
+            removals.extend((source.key, page.country_code, page_hash, kind, found.removed, found.records,
+                             page.fetched_at, day) for kind, found in kinds.items())
             if len(waiting) >= GROUP:
                 added += write()
     finally:

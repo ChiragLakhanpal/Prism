@@ -85,26 +85,27 @@ def short_month(value: dt.date) -> Unit:
     return Unit(f"{words()['months'][value.month - 1][:3]} {value.year}")
 
 
-def _text(value, table: bool) -> str:
+def _text(value, numerals: bool) -> str:
     if isinstance(value, bool):
         raise TypeError("A sentence slot takes a count, a Unit or text, not true or false.")
     if isinstance(value, int):
-        return numeral(value) if table else count(value)
+        return numeral(value) if numerals else count(value)
     return str(value)
 
 
 def _capitalized(text: str) -> str:
     """Each sentence starts with a capital: "One is waiting" rather than "one is waiting"."""
-    return re.sub(r"(^|[.:]\s+)([a-z])", lambda match: match.group(1) + match.group(2).upper(), text)
+    return re.sub(r"(^|[.?]\s+)([a-z])", lambda match: match.group(1) + match.group(2).upper(), text)
 
 
-def fill(template: str, table: bool = False, **slots) -> str:
-    """A template with each {slot} filled. A count is written by rule 12, or as a numeral in a table."""
+def fill(template: str, numerals: bool = False, phrase: bool = False, **slots) -> str:
+    """A template with each {slot} filled. A count is written by rule 12, or as a numeral in a table. A phrase that
+    goes inside a sentence, as a check's finding does, keeps its first letter as written."""
     missing = [name for name in SLOT.findall(template) if name not in slots]
     if missing:
         raise KeyError(f"The template {template!r} needs {', '.join(missing)}.")
-    text = SLOT.sub(lambda match: _text(slots[match.group(1)], table), template)
-    return text if table else _capitalized(text)
+    text = SLOT.sub(lambda match: _text(slots[match.group(1)], numerals), template)
+    return text if numerals or phrase else _capitalized(text)
 
 
 def form(template, number: int):
@@ -114,11 +115,11 @@ def form(template, number: int):
     return template
 
 
-def say(key: str, by: str | None = None, table: bool = False, **slots) -> str:
+def say(key: str, by: str | None = None, numerals: bool = False, phrase: bool = False, **slots) -> str:
     """The copy at key, in the form its count slot `by` needs, filled."""
     template = at(key)
     if isinstance(template, dict):
         if by is None:
             raise KeyError(f"{key} has a form for one and for more than one, so say which slot counts.")
         template = form(template, int(slots[by]))
-    return fill(template, table, **slots)
+    return fill(template, numerals, phrase, **slots)

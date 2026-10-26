@@ -1,0 +1,127 @@
+# The KPI registry: each measure the dashboard shows as a KPI, defined once (ticket 45; CLAUDE.md rule 4; the 45
+# design brief, section 4.3). It sits beside the dashboard definition (src/strata/dashboard/definition.py), the
+# spec's tenth single place, and the proposal's results framework reads it too (ticket 46).
+#
+# strata.config.load_kpis() reads it. Each [kpis.<id>] table has:
+#   kind      count, share or money for a counter, which shows one row's display string; median, share,
+#             rate_per_100 or score for a loop indicator, whose query gives the rows its twin table shows
+#   rounding  the decimals of its value: 0 for counts, shares as whole percents, days and money in counters;
+#             1 for rates per 100; 2 for scores from 0 to 1 and money in tables
+#   query     its defining query: src/strata/dashboard/sql/kpi/<query>.sql, over strata.ops and strata.gold only.
+#             It selects the rows upstream tickets stored (benchmark results, retrieval scores, hindsight recall,
+#             anchored rows, coverage, plan accuracy, days from publication to decision) and never works them
+#             out again. A counter's query always returns one row, with numerator, denominator, value and display.
+#             A counter, its twin table and the sentence in "What the measures say" all read this query.
+#   fewest    the thresholds value that holds the fewest cases for a percentage, median, rate or range, when the
+#             kind needs one (config/thresholds.toml)
+#   target    whether the KPI has a target, which its copy states in words (copy.dash.ai.cells); the targets
+#             themselves are thresholds (time_estimate.coverage_low and coverage_high, lesson_review.business_days)
+#   loop      for a loop indicator: knowledge, retrieval or estimates; with role leading or lagging
+#
+# Its words are copy.kpi.<id> in web/src/copy.ts: name (the tile's title), definition (its description, and its
+# line in "What each indicator measures") and outof (the sentence a counter adds if AI/BI can't show text).
+#
+# Adding a tile for a KPI here is one entry in the dashboard definition. A new KPI is one entry here, its query,
+# and its copy keys.
+
+# ── Governance's counters ────────────────────────────────────────────────
+
+[kpis.checks_failed]
+kind = "share"
+rounding = 0
+query = "checks_failed"
+
+[kpis.azure_spend]
+kind = "money"
+rounding = 0
+query = "azure_spend"
+
+[kpis.contacts_left]
+kind = "share"
+rounding = 0
+query = "contacts_left"
+
+# ── AI quality and adoption's counters ───────────────────────────────────
+
+[kpis.benchmark_passed]
+kind = "share"
+rounding = 0
+query = "benchmark_passed"
+
+[kpis.sentences_removed]
+kind = "share"
+rounding = 0
+query = "sentences_removed"
+
+[kpis.answers_held_back]
+kind = "share"
+rounding = 0
+query = "answers_held_back"
+
+[kpis.weekly_users]
+kind = "count"
+rounding = 0
+query = "weekly_users"
+
+[kpis.drafts_exported]
+kind = "share"
+rounding = 0
+query = "drafts_exported"
+
+[kpis.plan_rows_offered]
+kind = "share"
+rounding = 0
+query = "plan_rows_offered"
+
+# ── Each loop's indicators (the 45 brief, section 7.4), in loop order ────
+
+[kpis.days_to_decision]
+kind = "median"
+rounding = 0
+query = "days_to_decision"
+fewest = "data_readiness.fewest_for_a_share"
+target = true
+loop = "knowledge"
+role = "leading"
+
+[kpis.blamed_covered]
+kind = "share"
+rounding = 0
+query = "blamed_covered"
+fewest = "data_readiness.fewest_for_a_percentage"
+loop = "knowledge"
+role = "lagging"
+
+[kpis.wrong_passage_rate]
+kind = "rate_per_100"
+rounding = 1
+query = "wrong_passage_rate"
+fewest = "retrieval.min_opened"
+loop = "retrieval"
+role = "leading"
+
+[kpis.precision_recall]
+kind = "score"
+rounding = 2
+query = "precision_recall"
+fewest = "retrieval.min_opened"
+target = true
+loop = "retrieval"
+role = "lagging"
+
+[kpis.rolling_coverage]
+kind = "share"
+rounding = 0
+query = "rolling_coverage"
+fewest = "data_readiness.fewest_for_a_share"
+target = true
+loop = "estimates"
+role = "leading"
+
+[kpis.plan_accuracy]
+kind = "median"
+rounding = 0
+query = "plan_accuracy"
+fewest = "estimates_loop.min_cases"
+loop = "estimates"
+role = "lagging"

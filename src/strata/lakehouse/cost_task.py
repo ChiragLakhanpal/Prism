@@ -37,15 +37,17 @@ def main(argv, engine, secret, clock=lambda: dt.datetime.now(dt.UTC)):
     print(f"Keys read from the secret scope: {', '.join(key for key in KEYS if key not in missing) or 'none'}.")
     run_id = option(argv, "--run-id") or "local"
     budget = load_budget()
-    if missing:
-        source = None
-    else:
-        source = costs.AzureCostManagement(found["AZURE_SUBSCRIPTION_ID"], budget.resource_group,
-                                           found["FOUNDRY_TENANT_ID"], found["FOUNDRY_CLIENT_ID"],
-                                           found["FOUNDRY_CLIENT_SECRET"])
-    try:
-        if source is None:
+
+    class NoSignIn:
+        """A pull with no sign-in fails as not authorized, and its row says so."""
+
+        def charges(self, starts_on, ends_on):
             raise costs.CostError("not_authorized", f"The secret scope lacks {', '.join(missing)}.")
+
+    source = NoSignIn() if missing else costs.AzureCostManagement(
+        found["AZURE_SUBSCRIPTION_ID"], budget.resource_group, found["FOUNDRY_TENANT_ID"], found["FOUNDRY_CLIENT_ID"],
+        found["FOUNDRY_CLIENT_SECRET"])
+    try:
         costs.pull(engine, source, run_id, clock, budget)
     finally:
         findings.write(engine, run_id, clock, sections=("spend",))

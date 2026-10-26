@@ -6819,6 +6819,22 @@ export const copy = {
     note:
       "I give no percentage, median, rate per 100 or range from fewer than {fewest} cases. Where a tile has fewer, " +
       "it shows the count instead.",
+    // A whole percent in a sentence (DESIGN.md section 7, rule 11).
+    percent: "{n} percent",
+    // A count of zero in a sentence that names what was counted before it ("marked none as not useful").
+    none: "none",
+    // A count with its share, as a table cell writes it (DESIGN.md section 7, rules 6, 11 and 15; web/src/lib/format.ts
+    // writes the same in the app): the count alone under data_readiness.fewest_for_a_share cases, "about N in 10"
+    // beside it up to data_readiness.fewest_for_a_percentage, and a whole percent from there.
+    ratio: {
+      percent: "{count}, {pct}%",
+      underPercent: "{count}, <1%",
+      overPercent: "{count}, >99%",
+      inTen: "{count}, about {in10} in 10",
+      inTenExact: "{count}, {in10} in 10",
+      fewerThanOne: "{count}, fewer than 1 in 10",
+      moreThanNine: "{count}, more than 9 in 10",
+    },
     findings: {
       title: "What the measures say",
       about:
@@ -6926,7 +6942,8 @@ export const copy = {
           about: "US$. The running total of Azure charges for each day of the budget period chosen above, against its budget.",
           day: "Day",
           amount: "US$",
-          series: "Series",
+          spent: "Spent so far",
+          budget: "Budget",
         },
         serviceChart: {
           title: "Azure spend by service",
@@ -7500,12 +7517,20 @@ export const copy = {
           evaluated: "On the held-out set, in the evaluation of {day}, precision at 10 was {p} and recall at 20 was {r}.",
           fewQueries: "I'm not giving precision or recall for the held-out set: it has only {queries} queries.",
           none: "No retrieval evaluation has run yet.",
-          feedback:
-            "In the 7 days to {day}, people opened {opened} sources and marked {wrong} passages as wrong, or {rate} " +
-            "for every 100 sources opened. They marked {notUseful} as not useful.",
-          feedbackFew:
-            "In the 7 days to {day}, people opened {opened} sources and marked {wrong} passages as wrong and " +
-            "{notUseful} as not useful.",
+          feedback: {
+            one:
+              "In the 7 days to {day}, people opened {opened} sources and marked {wrong} passage as wrong, or {rate} " +
+              "for every 100 sources opened. They marked {notUseful} as not useful.",
+            other:
+              "In the 7 days to {day}, people opened {opened} sources and marked {wrong} passages as wrong, or {rate} " +
+              "for every 100 sources opened. They marked {notUseful} as not useful.",
+          },
+          feedbackFew: {
+            one: "In the 7 days to {day}, people opened {opened} source and marked {wrong} as wrong and {notUseful} as not useful.",
+            other:
+              "In the 7 days to {day}, people opened {opened} sources and marked {wrong} as wrong and {notUseful} as " +
+              "not useful.",
+          },
           nothingOpened: "No one opened a source from an answer in the 7 days to {day}.",
         },
         estimates: {

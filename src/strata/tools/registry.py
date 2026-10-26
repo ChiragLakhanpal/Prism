@@ -68,6 +68,29 @@ class Context:
     # counted from the day the passages it rests on became public, not from its decision. None everywhere else,
     # where a lesson counts from the day two people decided it (ADR 0002).
     decided_by: dt.date | None = None
+    # Lineage (ticket 45): a list the call adds each table it read to, in three parts and in the order it first read
+    # them, so the run log can trace an answer to the tables its tool calls read. None records nothing.
+    reads: list[str] | None = None
+
+
+TABLE_READ = re.compile(r"\bstrata\.[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*\b")
+
+
+class _Reading:
+    """The viewer's engine, noting each table a query names before it runs it (ticket 45). Every query names its
+    tables in three parts (gates/sql_lint.py), so the names in its text are the tables it read."""
+
+    def __init__(self, engine: Engine, reads: list[str]):
+        self._engine, self._reads = engine, reads
+
+    def run(self, sql: str, params=None):
+        for name in TABLE_READ.findall(sql):
+            if name not in self._reads:
+                self._reads.append(name)
+        return self._engine.run(sql, params)
+
+    def __getattr__(self, name: str):
+        return getattr(self._engine, name)
 
 
 @dataclass(frozen=True)
@@ -176,7 +199,8 @@ def call(name: str, arguments: Mapping[str, Any], context: Context, tools: dict[
     bound = _bind(tool, arguments)
     asked = [date for date in (bound.pop("as_of", None), context.as_of) if date is not None]
     as_of = min(asked) if asked else today()
-    output = _adapter(tool)(Call(context.engine, context.viewer, context.view, as_of, context.thresholds,
+    engine = context.engine if context.reads is None else _Reading(context.engine, context.reads)
+    output = _adapter(tool)(Call(engine, context.viewer, context.view, as_of, context.thresholds,
                                  context.decided_by), **bound)
     result = {"tool": name, "as_of": as_of.isoformat(), "view": context.view, **output}
     if tool.result.summary_fields:

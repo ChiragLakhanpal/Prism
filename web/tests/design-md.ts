@@ -85,7 +85,7 @@ export async function draftBarSentence(): Promise<string> {
 // Section 8's footer sentence, word for word.
 export async function footerSentence(): Promise<string> {
   const text = await section(8);
-  const row = text.split("\n").find((line) => line.startsWith("| Footer, every screen and slide |"));
+  const row = text.split("\n").find((line) => line.startsWith("| Footer, every screen, slide and dashboard page |"));
   if (!row) throw new Error("DESIGN.md section 8 has no footer row.");
   return /"(.+)"/.exec(row)![1];
 }

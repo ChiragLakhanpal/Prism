@@ -182,3 +182,16 @@ _Avoid_: Flag, red flag (an integrity term), alert, risk score
 
 **Hindsight test**:
 Replaying Strata as of a closed project's approval date to count which risks later blamed in its completion report Strata would have shown.
+
+**Hindsight recall**:
+Of the risks completion reports later blamed, the share Strata would have shown in the top five for their package on the project's approval date: coverage (a lesson covered the risk at approval) times shown-when-covered. The hindsight test reports it, and projects exposed to Strata are left out.
+
+**Leading indicator**:
+A loop's measure that moves first, as soon as people use what the loop changed, such as days from publication to decision for lessons.
+
+**Lagging indicator**:
+A loop's measure that confirms a leading indicator later, once outcomes are known, such as hindsight recall for lessons or plan accuracy for time estimates.
+
+**Anchored plan row**:
+A plan row published after Strata showed a past range or time estimate for its package, whose planned signing date fell within 14 days of a date Strata offered. Screens write "plan rows dated within 14 days of a date I offered".
+_Avoid_: Anchored (in user-facing copy)

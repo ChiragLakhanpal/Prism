@@ -2575,3 +2575,55 @@ def load_budget(path: Path = CONFIG_DIR / "budget.toml") -> Budget:
     return Budget(credit.integer("usd"), credit.date("ends_on"), monthly.integer("usd"), monthly.text("name"),
                   tuple(alerts), monthly.integer("forecast_percent"), pull.text("resource_group"),
                   pull.integer("days"))
+
+
+# ── The KPI registry (ticket 45) ─────────────────────────────────────────
+
+KPI_KINDS = ("count", "share", "money", "median", "rate_per_100", "score")
+KPI_LOOPS = ("knowledge", "retrieval", "estimates")
+KPI_ROLES = ("leading", "lagging")
+KPI_ID = re.compile(r"[a-z][a-z0-9_]*")
+
+
+@dataclass(frozen=True)
+class Kpi:
+    """One KPI, defined once: its kind, rounding, defining query and the loop it belongs to (config/kpis.toml)."""
+
+    id: str
+    kind: str
+    rounding: int
+    query: str
+    fewest: str | None = None
+    target: bool = False
+    loop: str | None = None
+    role: str | None = None
+
+    @property
+    def copy_keys(self) -> tuple[str, str, str]:
+        """Its words in web/src/copy.ts: the tile's title, its description and the counter's fallback sentence."""
+        return (f"kpi.{self.id}.name", f"kpi.{self.id}.definition", f"kpi.{self.id}.outof")
+
+
+def load_kpis(path: Path = CONFIG_DIR / "kpis.toml") -> dict[str, Kpi]:
+    """Every KPI in the registry, by id, in the file's order."""
+    data = _read(path)
+    tables = data.get("kpis")
+    if not isinstance(tables, dict) or not tables or set(data) != {"kpis"}:
+        raise ConfigError(f"In {path.name}, write each KPI as a [kpis.<id>] table, and nothing else.")
+    found = {}
+    for key, table in tables.items():
+        if not KPI_ID.fullmatch(key):
+            raise ConfigError(f"In {path.name}, {key} is not a KPI id: use lower case letters, digits and _.")
+        entry = _Entry(path, f"kpis.{key}", table)
+        entry.only({"kind", "rounding", "query", "fewest", "target", "loop", "role"})
+        kind = entry.text("kind")
+        if kind not in KPI_KINDS:
+            entry._fail("kind", f"must be one of {', '.join(KPI_KINDS)}")
+        loop, role = entry.text("loop", required=False), entry.text("role", required=False)
+        if (loop is None) != (role is None) or (loop and loop not in KPI_LOOPS) or (role and role not in KPI_ROLES):
+            entry._fail("loop", f"and role go together: a loop of {', '.join(KPI_LOOPS)} and a role of "
+                                f"{', '.join(KPI_ROLES)}")
+        found[key] = Kpi(key, kind, entry.integer("rounding"), entry.text("query"),
+                         entry.text("fewest", required=False),
+                         entry.boolean("target") if "target" in table else False, loop, role)
+    return found

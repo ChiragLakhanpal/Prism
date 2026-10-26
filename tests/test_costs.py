@@ -85,6 +85,49 @@ def test_a_pull_writes_the_budget_periods_the_governance_page_offers(ops):
         ("credit", "Free credit, to Nov 10, 2026", dt.date(2026, 11, 10), 197.0),)
 
 
+def test_the_live_adapter_signs_in_as_the_service_principal_and_reads_every_page_of_the_answer():
+    """Azure Resource Manager's answer comes in pages linked by nextLink. The transport stands in for the network."""
+    answer = json.loads((FIXTURES / "query.json").read_text())
+    first = {"properties": {**answer["properties"], "rows": answer["properties"]["rows"][:4],
+                            "nextLink": "https://management.azure.com/next-page"}}
+    second = {"properties": {**answer["properties"], "rows": answer["properties"]["rows"][4:], "nextLink": None}}
+    asked = []
+
+    def transport(method, url, body, headers):
+        asked.append((method, url.split("?")[0], headers.get("Authorization")))
+        if "login.microsoftonline.com" in url:
+            assert body["grant_type"] == "client_credentials" and body["scope"] == "https://management.azure.com/.default"
+            return {"access_token": "not-a-real-key"}
+        assert body["dataset"]["granularity"] == "Daily" and body["type"] == "ActualCost"
+        return first if "next-page" not in url else second
+
+    source = costs.AzureCostManagement("sub-id", "WorldBank-demo", "tenant-id", "client-id", "not-a-real-key",
+                                       transport)
+    found = source.charges(dt.date(2026, 9, 18), dt.date(2026, 10, 23))
+
+    assert len(found) == 6 and found[-1].cost == 0.08
+    assert asked[1] == ("POST", "https://management.azure.com/subscriptions/sub-id/resourceGroups/WorldBank-demo"
+                                "/providers/Microsoft.CostManagement/query", "Bearer not-a-real-key")
+    assert asked[2][1] == "https://management.azure.com/next-page"
+
+
+def test_the_job_s_entry_point_records_a_failed_pull_when_the_secret_scope_lacks_a_key(ops):
+    """cost_task.py reads the sign-in from the secret scope; with none there, the pull is recorded as failed and the
+    Governance page's spend sentence says there is no cost data yet."""
+    from strata.lakehouse import cost_task
+
+    def secret(key):
+        raise KeyError(key)
+
+    with pytest.raises(costs.CostError):
+        cost_task.main(["--run-id", "job-7"], ops, secret, lambda: PULLED_AT)
+
+    assert ops.run("SELECT run_id, status, error_code FROM strata.ops.cost_pulls").rows == (
+        ("job-7", "failed", "not_authorized"),)
+    assert ops.run("SELECT section, finding FROM strata.ops.dashboard_findings").rows == ((
+        "spend", "I have no Azure cost data yet. The daily cost pull adds each day's charges once Azure reports them."),)
+
+
 def test_the_cost_pull_runs_as_its_own_daily_job_beside_the_nightly_one():
     """tests/test_nightly.py pins the nightly job's ten tasks, so the pull is a job of its own."""
     from strata.lakehouse import bundle

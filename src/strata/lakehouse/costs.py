@@ -174,7 +174,7 @@ def periods(budget: Budget, today: dt.date) -> list[Period]:
     ends = budget.credit_ends_on
     found = [Period("credit", None, ends, budget.credit_usd,
                     dash_words.fill(say["credit"], date=dash_words.table_day(ends)),
-                    dash_words.fill(say["creditName"], date=dash_words.long_day(ends)))]
+                    dash_words.fill(say["creditName"], phrase=True, date=dash_words.long_day(ends)))]
     start = ends + dt.timedelta(days=1)
     while start <= today:
         end = _month_end(start)

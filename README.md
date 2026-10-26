@@ -176,7 +176,7 @@ Each part of the spec has one home. Folders marked "later" do not exist yet. The
 | The engine adapter, which runs one Databricks SQL query on the SQL warehouse, in a job and on DuckDB | `src/strata/lakehouse/engine.py` |
 | The table definitions, one `CREATE TABLE IF NOT EXISTS` file per table, and the view definitions, one `CREATE OR REPLACE VIEW` file per view, built by the gate and the deploy | `src/strata/lakehouse/tables/<schema>/` and `src/strata/lakehouse/views/<schema>/` |
 | The nightly job's tasks | `src/strata/lakehouse/nightly.py` |
-| The bundle: the strata catalog, its schemas, the volume, the grants, the nightly job and the dashboard, with its notes | `databricks.yml` and `bundle/` |
+| The bundle: the strata catalog, its schemas, the volume, the grants, the nightly job, the daily cost pull and the dashboard with its test copy, with its notes | `databricks.yml` and `bundle/` |
 | The deploy command and the workspace checks for the bundle | `ops/bundle/` |
 | The lakehouse: where pages come from (the live APIs, or the recorded fixture in the gate), bronze and the contact details it never keeps, the cleaning rules, silver's transforms, gold's tables (one SQL query each), the data readiness measures (one SQL file per silver transform), each table's size, and governance scores as of a date | `src/strata/lakehouse/`: `pages.py`, `bronze.py` and `contacts.py`, `clean.py`, `silver/`, `gold/`, `readiness/`, `storage.py`, `governance.py` |
 | The SQL lint: three-part names and bound parameters | `gates/sql_lint.py` |
@@ -237,7 +237,9 @@ Each part of the spec has one home. Folders marked "later" do not exist yet. The
 | The Foundry evaluators the full gate runs, with their built-in names and data mappings, read by `load_evaluations` | `config/evaluations.toml` |
 | The shield set: five real passages with rule-like sentences that must reach the agent without a Prompt Shields refusal | `evals/shield_passages.toml` |
 | The other evaluation sets | `evals/` (later) |
-| The dashboard definition: its pages and tiles as code, the queries of its datasets, and the file it writes, which the bundle deploys (`uv run --frozen python -m strata.dashboard --write` writes it again) | `src/strata/dashboard/`, `bundle/dashboard.yml` and `bundle/dashboards/strata.lvdash.json` |
+| The dashboard definition, "Strata operations": its three pages and their tiles as code (`definition.py`, one entry a tile), the kinds of tile (`tiles.py`), the AI/BI file they become (`render.py`), the queries of its datasets (`sql/`), "What the measures say" and each loop's indicators, which the nightly job writes (`findings.py`), and its words (`copy.json`, from `web/src/copy.ts`'s `dash` and `kpi`). The bundle deploys the file and its test copy (`uv run --frozen python -m strata.dashboard --write` writes both again) | `src/strata/dashboard/`, `bundle/dashboard.yml` and `bundle/dashboards/` |
+| The KPI registry: each KPI the dashboard shows, defined once by its query in `src/strata/dashboard/sql/kpi/`, with its kind, rounding, target and loop, read by `load_kpis` (ticket 45) | `config/kpis.toml` |
+| The Azure budget: the free credit, the day it ends and the monthly budget, read by `load_budget` for the daily cost pull (`src/strata/lakehouse/costs.py`, the job in `bundle/costs.yml`) and by the wizard | `config/budget.toml` |
 | The Data tab's pages: Data readiness, Sources and licenses and How Strata works | `web/src/pages/data/` |
 | The server's copy of the Data readiness sentences, written from `web/src/copy.ts` by `node web/lint/server-copy.ts --write` | `src/strata/tools/data_readiness_copy.json` |
 | The recorded answers of the Data tab's routes, written again by `uv run --frozen python tests/record_api.py` | `tests/fixtures/api/data-*.json` |
