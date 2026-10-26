@@ -10,7 +10,7 @@ Strata is procurement intelligence on World Bank open data, built for the World 
 
 ## Summary {#summary}
 
-{#summary-what} Strata checks a borrower's Procurement Plan against what happened to packages like it. It links the World Bank's contract awards, procurement notices and project records to the completion reports and supervision reports that say why a procurement went well or badly. Every claim cites a record or a numbered paragraph with its page, and every number comes from a query.
+{#summary-what} Strata checks a borrower's Procurement Plan against what happened to packages like it. It links the World Bank's contract awards, procurement notices and project records to the completion reports and supervision reports that say why a procurement went well or badly. Every claim cites a record or a numbered paragraph with its page, and every number comes from a tool.
 
 {#summary-who} Strata serves World Bank procurement specialists and task team leaders first, then implementing agencies. The decision it supports is the borrower's own. Strata checks the borrower's Procurement Plan and Project Procurement Strategy for Development (PPSD) package by package. The borrower prepares the plan, and nothing Strata produces is a World Bank decision.
 
@@ -49,13 +49,13 @@ Strata is procurement intelligence on World Bank open data, built for the World 
 
 Scored under [System and knowledge architecture](#rubric-architecture), and in part under [Domain alignment and data use](#rubric-domain).
 
-{#m1-in-short} **In short.** Strata takes in {s:source-count} sources by watermark and keeps every row with the date it became public. It joins records on their own keys first, and it reads long reports into numbered passages, each with its page. On the slice's documents, it read {r:pages-read-well} pages well.
+{#m1-in-short} **In short.** Strata takes in {s:source-count} sources, fetches only what changed in each, and keeps every row with the date it became public. It joins records on their own keys first, and it reads long reports into numbered passages, each with its page. On the slice's documents, it read {r:pages-read-well} pages well.
 
 ### Taking in records and documents {#m1-taking-in}
 
 {#m1-ask} The assessment asks for a pipeline that takes in tables and long documents and matches the same things across them. Strata names the assessment's layers of evidence What, How and Why, after the question each answers. [Annex 4](#sec-annex-words) maps the words.
 
-{#m1-sources} The source registry, `config/sources.toml`, lists {s:source-count} sources. They hold the contract awards, the procurement notices, the projects, the loans and credits, the Independent Evaluation Group (IEG) ratings, the governance indicators and the project documents. Each entry names its endpoint, the field that marks new rows, how often it is fetched, its license and the transform that cleans it. Adding a source is one entry and one transform.
+{#m1-sources} The source registry, `config/sources.toml`, lists {s:source-count} sources. They hold the contract awards, the procurement notices, the projects, the loans and credits, the Independent Evaluation Group (IEG) ratings, the governance indicators and the project documents. Each entry names its endpoint, the field that marks new rows, how often Strata fetches it, its license and the transform that cleans it. Adding a source is one entry and one transform.
 
 {figure:pipeline}
 **Figure. Databricks holds the data, Foundry holds the agent, and the app runs every tool as the person asking.**
@@ -65,7 +65,7 @@ Scored under [System and knowledge architecture](#rubric-architecture), and in p
 
 {#m1-contacts} Procurement notices name contact people, emails and phone numbers. Ingestion removes them before bronze keeps a page. It removed contact details from {r:contacts-removed} notices, and on {r:contacts-left|on} the nightly check found {r:contacts-left} notices with an email or phone number left.
 
-{#m1-keys} Strata joins records on their own keys before it tries names. The STEP reference joins a notice, a contract and a Procurement Plan row. {r:linked-notice} contract award rows since fiscal 2020 carried a STEP reference that a notice also carried. For suppliers, the STEP supplier ID comes first. Of the awarded bidders that the award rows named the same way, {r:supplier-ids} also carried the same ID. Strata never merges different IDs on a name alone, and a person decides each uncertain match.
+{#m1-keys} Strata joins records on their own keys before it tries names. The STEP reference joins a notice, a contract and a Procurement Plan row. {r:linked-notice} contract award rows since fiscal 2020 carried a STEP reference that a notice also carried. For suppliers, the STEP supplier ID comes first. For {r:supplier-ids} awarded bidders whose award rows gave the same name, the rows also gave the same ID. Strata never merges different IDs on a name alone, and a person decides each uncertain match.
 
 {#m1-gap} The awards datasets leave a gap. The older one covers fiscal 2001 to 2016 and holds only contracts under prior review. The newer one starts in fiscal 2020. Strata read the award notices for the years between and built {r:gap-contracts} contracts from them, each in the currency the notice gives. {fig:award-gap} shows the rows by year.
 
@@ -91,7 +91,7 @@ Scored under [System and knowledge architecture](#rubric-architecture), and in p
 
 ### Reading long reports {#m1-long-reports}
 
-{#m1-reading-ask} The assessment asks how Strata reads long reports, with tables, annexes and technical text. Strata reads each page by the best route for it and keeps the report's own paragraph numbers.
+{#m1-reading-ask} The assessment asks how Strata reads long reports, with tables, annexes and technical text. Strata picks how to read each page and keeps the report's own paragraph numbers.
 
 {#m1-reading-router} The page router chooses how to read each page. Where the World Bank publishes the page's text, Strata reads it. Where it does not, as with a scanned page, the layout parser reads the page's words and their boxes. Strata read {r:pages-published-text} pages from the published text, and {r:pages-read-well} pages well across both routes, in {r:documents-read} documents.
 
@@ -119,14 +119,14 @@ Scored under [Analytical and AI methodology](#rubric-method), and in part under 
 
 {#m2-past-range} The past range is what happened to comparable packages: same category, method, market approach and size band. It counts packages still open, so a slow package is never dropped for being slow. Strata gives no range from fewer than {s:fewest-comparables} comparable packages. Below that, it shows the packages one by one and says why.
 
-{#m2-estimate} The time estimate comes from a survival model trained on past packages. It gives the middle and the 8-in-10 point. Each year from 2021 to 2025, a backtest trained the model only on what was public by January 1 and scored it on packages advertised that year. Across the test years, {r:backtest-coverage} test packages were signed within the 8-in-10 point. A track record under every estimate says the same in plain words.
+{#m2-estimate} The time estimate comes from a survival model trained on past packages. It gives the middle and the 8-in-10 point. Each year from 2021 to 2025, a backtest trained the model only on what was public by January 1 and scored it on packages advertised that year. Across the test years, {r:backtest-coverage} test packages were signed within the 8-in-10 point. A track record under every estimate shows how earlier estimates for packages like it turned out.
 
 {figure:backtest}
 **Figure. Across the test years, {r:backtest-coverage} packages were signed within the 8-in-10 point of their range.**
 **Source:** the time estimate's rolling backtest, in `strata.ops.evaluation_result`.
 **Note:** A year with too few packages for a share shows its count and no dot.
 
-{#m2-signals} Strata also checks each package in a plan for reasons to look: a planned date already past, a closing date moved, a direct selection made late. A signal is a reason to look, never a finding. A backtest compared an early-warning model with these fixed checks on projects that later extended their closing date. The model caught {r:hazard-caught} of those projects, and the fixed checks caught {r:signals-caught}.
+{#m2-signals} Strata also checks each package in a plan for reasons to look: a planned date already past, a closing date moved, a direct selection made late. A signal is a reason to look, never a finding. A backtest compared an early-warning model with these fixed checks on projects that later extended their closing date. The model caught {r:hazard-caught} such projects, and the fixed checks caught {r:signals-caught}.
 
 {#m2-rebidding} Strata labels rebidding risk Experimental. It counts the comparable packages that were advertised again and why, and it gives a model's frequency only when the model beat its baseline in its backtest.
 
@@ -169,7 +169,7 @@ Scored under [Analytical and AI methodology](#rubric-method).
 
 ### Checks before anyone sees an answer {#m3-checks}
 
-{#m3-checks-ask} The assessment asks for concrete layers of checks that keep every recommendation tied to documents and records. Strata's verifier runs on every answer and every draft, and it is never skipped.
+{#m3-checks-ask} The assessment asks for concrete layers of checks that keep every recommendation tied to documents and records. Strata's verifier runs on every answer and every draft, and nothing skips it.
 
 {#m3-checks-list} A number or date must match a row the sentence cites, at the same rounding. Every id a sentence cites must have come back from a tool in that answer. A quote must be word for word on its page. A model then judges whether each sentence follows from its sources. Advice must cite a lesson or a comparable package. A sentence that rests on one side of a disagreement shows both sides.
 
@@ -191,7 +191,7 @@ Scored under [Analytical and AI methodology](#rubric-method).
 
 {ladder}
 
-{#m3-showcase} P130164 holds the assessment's own case. ISR 7, archived on August 26, 2016, after the mid-term review, rated progress towards the development objective "Satisfactory". The completion report's paragraph 78, on page 27, says: "Indeed, it was clearly identified at the MTR that the achievement of part of the PDO was compromised by the major delays in implementing activities under Components 2 and 3 and lack of endorsement from relevant stakeholders." ([ICR, P130164, paragraph 78, page 27]({url:app|/projects/P130164/documents/icr-2019-10-10?page=27&para=78})) For a judgment of how a project went, Strata leans on the later, more independent report, so it leans on the completion report and keeps ISR 7 as the record of the earlier view.
+{#m3-showcase} The assessment's own case is in P130164. ISR 7, archived on August 26, 2016, after the mid-term review, rated progress towards the development objective "Satisfactory". The completion report's paragraph 78, on page 27, says: "Indeed, it was clearly identified at the MTR that the achievement of part of the PDO was compromised by the major delays in implementing activities under Components 2 and 3 and lack of endorsement from relevant stakeholders." ([ICR, P130164, paragraph 78, page 27]({url:app|/projects/P130164/documents/icr-2019-10-10?page=27&para=78})) For a judgment of how a project went, Strata leans on the later, more independent report, so it leans on the completion report and keeps ISR 7 as the record of the earlier view.
 
 {#m3-card} A disagreement card shows both sides in the order they were written, the side Strata leans on, the rule that decided it, and what would change if you kept the other. Keeping the other side needs a reason, and Strata records it.
 
