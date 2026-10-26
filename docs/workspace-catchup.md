@@ -2822,9 +2822,9 @@ Record the run's last lines, the exit code, the `bronze_to_gold` run's status an
 
 ## Ticket 78, step 3 of 4: the two ground-truth queries return rows on the warehouse (criterion 3, live)
 
-Parked with step 1, after merge commit 60843437. Run it from the same snapshot, after step 2:
+Parked with step 1, after merge commit 60843437. Run it from the same snapshot, after step 2, with `--env-file` pointing at the main checkout's file, as the header says:
 
-    uv run --script ops/bundle/check.py same-rows --env-file "<main checkout>/.env"
+    uv run --script ops/bundle/check.py same-rows --env-file .env
 
 It worked if:
 
