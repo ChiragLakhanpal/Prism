@@ -13,7 +13,7 @@ fails, unless it is one of the excepted kinds:
 - a row of Annex 1 or Annex 2 itself (a line with an r- or s- anchor), which holds the value its links point at
 - in the deck's HTML (ticket 47), its chrome: an element marked data-chrome, such as "4 of 16" under a slide
 
-It counts numerals and the words two to nine. "One" is left out, because it is mostly a pronoun. Image alt text
+It counts numerals and number words, two to nine and ten and up. "One" is left out, because it is mostly a pronoun. Image alt text
 holds no links, so the check leaves it to the build, which fills every number there from the snapshot.
 
 unsourced() reads Markdown, as the proposal is written, or HTML, as the deck renders a slide, where an element with
@@ -62,7 +62,13 @@ EXCEPTED = [re.compile(pattern) for pattern in (
     r"https?://[^\s\"<>)]+",                               # an address, as a link's text
 )]
 NUMERAL = re.compile(r"(?<![\w.])\d(?:[\d,]*\d)?(?:\.\d+)?(?![\w])")
-WORD = re.compile(r"\b(?:two|three|four|five|six|seven|eight|nine)\b", re.I)
+# Number words: two to nine, and ten and up (ticket 49: the P3 gate found "in under ten minutes" unchecked). A word
+# such as ninety-nine counts once. "One" is left out, because it is mostly a pronoun.
+_UNITS = "one|two|three|four|five|six|seven|eight|nine"
+_TENS = "twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety"
+WORD = re.compile(rf"\b(?:(?:{_TENS})(?:-(?:{_UNITS}))?|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|"
+                  r"thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|hundred|thousand|million|billion)\b",
+                  re.I)
 
 _SOURCED_LINK = re.compile(r"\[[^\]]*\]\((?:#[rs]-[^)\s]*|[^)\s]*" + re.escape(RUBRIC_ANCHOR) + r")(?:\s+\"[^\"]*\")?\)")
 _SOURCED_ANCHOR = re.compile(r"<a\s[^>]*href=\"(?:#[rs]-[^\"]*|[^\"]*" + re.escape(RUBRIC_ANCHOR) + r")\"[^>]*>.*?</a>",

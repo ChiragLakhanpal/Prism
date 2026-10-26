@@ -348,20 +348,20 @@ def _measured_lines(source: str, results: dict) -> str:
     return "\n".join(kept)
 
 
-WHEN_REHEARSED = re.compile(r"^\{when:(rehearsed|unrehearsed)\} ")
+WHEN_REHEARSED = re.compile(r"^(\{#[a-z0-9-]+\} )?\{when:(rehearsed|unrehearsed)\} ")
 
 
 def _rehearsed_lines(source: str, every_drill_rehearsed: bool) -> str:
-    """The source with each {when:unrehearsed} line kept only while a drill of the change drill has no rehearsal,
-    such as the note that the times come later (the 46 brief, section 15, "Not rehearsed yet"), and each
-    {when:rehearsed} line only once every drill has one."""
+    """The source with each {when:unrehearsed} line, at its start or after its {#slug}, kept only while a drill of
+    the change drill has no rehearsal, such as the note that the times come later (the 46 brief, section 15, "Not
+    rehearsed yet"), and each {when:rehearsed} line only once every drill has one."""
     kept = []
     for line in source.split("\n"):
         found = WHEN_REHEARSED.match(line)
         if found:
-            if every_drill_rehearsed != (found.group(1) == "rehearsed"):
+            if every_drill_rehearsed != (found.group(2) == "rehearsed"):
                 continue
-            line = line[found.end():]
+            line = (found.group(1) or "") + line[found.end():]
         kept.append(line)
     return "\n".join(kept)
 
@@ -665,7 +665,7 @@ def _register(build: _Build) -> str:
     return "\n\n".join(out)
 
 
-DRILL_MODULE = 4  # the change drill's table is in Module 4, "Changing Strata in under ten minutes"
+DRILL_MODULE = 4  # the change drill's table is in Module 4, "Changing Strata in round 2"
 REHEARSALS_LINK = "[rehearsals.toml](../docs/proposal/rehearsals.toml)"
 
 

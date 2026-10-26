@@ -269,9 +269,11 @@ Scored under [Operationalization and scalability](#rubric-operations).
 
 **Source:** Annex 2. Each cap was read back from Azure where Annex 2 says so.
 
-### Changing Strata in under ten minutes {#m4-drill}
+### Changing Strata in round 2 {#m4-drill}
 
-{#m4-drill-intro} Each change the panel may ask for in round 2 lives in one place, a registry or a config file, so it can land in under ten minutes with the gate green. The change drill lists {s:drill-count} of them.
+{#m4-drill-intro} {when:rehearsed} Each change the panel may ask for in round 2 lives in one place, a registry or a config file, so it can land in under {s:drill-target} minutes with the gate green. The change drill lists {s:drill-count} of them. The table gives the minutes each one took when it was rehearsed, from its start to a commit the gate passed, and Annex 1 gives each run.
+
+{#m4-drill-intro} {when:unrehearsed} Each change the panel may ask for in round 2 lives in one place, a registry or a config file, so it can land in under {s:drill-target} minutes with the gate green. The change drill lists {s:drill-count} of them. Their rehearsal has not run yet, so the table gives no times.
 
 **Each change Strata expects in round 2 lives in one place.**
 

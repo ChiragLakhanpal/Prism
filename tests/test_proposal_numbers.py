@@ -37,6 +37,17 @@ def test_a_number_word_from_two_to_nine_fails_but_one_does_not():
     assert [p.number for p in numbers.unsourced('<a id="p2"></a>**2.** One reviewer read seven reports.')] == ["seven"]
 
 
+def test_a_number_word_from_ten_up_fails_too_as_the_change_drill_s_ten_minutes_did():
+    """The P3 phase gate's finding (ticket 49): the proposal said a change lands "in under ten minutes", and the check
+    read only two to nine, so it never saw the claim. Ten and up, in words, need a source as a numeral does."""
+    text = ('<a id="p56"></a>**56.** A change lands in under ten minutes, twelve of them took fifteen, '
+            "and a hundred or a thousand more, sixty, ninety-nine.")
+    assert [p.number for p in numbers.unsourced(text)] == [
+        "ten", "twelve", "fifteen", "hundred", "thousand", "sixty", "ninety-nine"]
+    linked = '<a id="p56"></a>**56.** A change lands in under [ten](#s-drill-target) minutes.'
+    assert sentences(linked) == []
+
+
 def test_dates_years_and_fiscal_years_are_excepted():
     text = ('<a id="p4"></a>**4.** On October 20, 2026, and again on Oct 23, 2026, in fiscal 2017 to 2019 (FY2017–19, '
             "FY01 to FY26), from 2021 to 2025 and in 2019–23, on 2026-10-09.")

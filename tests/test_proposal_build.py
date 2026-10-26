@@ -207,7 +207,7 @@ def rehearsed(minutes: dict[str, int]) -> dict[str, register.Rehearsal]:
 
 
 def drill_section(markdown: str) -> str:
-    return markdown.split("### Changing Strata in under ten minutes")[1].split("## Designed, not built")[0]
+    return markdown.split("### Changing Strata in round 2")[1].split("## Designed, not built")[0]
 
 
 CHANGES = [drill.change for drill in config.load_change_drills()]
@@ -221,6 +221,8 @@ def test_until_a_drill_is_rehearsed_its_time_reads_not_rehearsed_yet_and_a_note_
     assert section.count("Not rehearsed yet") == len(CHANGES) == 10
     assert ("**Note:** The rehearsal times come from the change drill run in phase P4. This version was built before "
             "it.") in section
+    assert "Their rehearsal has not run yet, so the table gives no times." in section
+    assert "The table gives the minutes each one took" not in section
 
 
 def test_a_rehearsed_drill_shows_its_minutes_linked_to_its_row_in_annex_1_and_the_note_goes(snap):
@@ -234,7 +236,11 @@ def test_a_rehearsed_drill_shows_its_minutes_linked_to_its_row_in_annex_1_and_th
     [row] = [line for line in markdown.splitlines() if line.startswith('| <a id="r-drill-swap-the-model"></a>')]
     assert "| 6 | Oct 26, 2026 | Rehearsal; branch `drill-49/05-example`, commit `0000000`" in row
     assert "the gate passed in 130.5 seconds" in row
-    assert '[The section "Changing Strata in under ten minutes"](#sec-m4-drill)' in row  # as every Cited in cell
+    assert '[The section "Changing Strata in round 2"](#sec-m4-drill)' in row  # as every Cited in cell
+    # The P3 phase gate's finding: the ten-minute claim links to its target in Annex 2, and the times are cited.
+    assert re.search(r"so it can land in under \[10\]\(#s-drill-target [^)]*\) minutes with the gate green\.", section)
+    assert "The table gives the minutes each one took when it was rehearsed" in section
+    assert "Their rehearsal has not run yet" not in section
     assert numbers.unsourced(markdown) == []
 
 
