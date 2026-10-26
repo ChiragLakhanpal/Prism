@@ -2844,3 +2844,77 @@ This is ticket 48's command, so record what its other steps printed under ticket
 It worked if step 4 prints neither "Signed far above its estimate: KE-NWWDA-229129-CW-RFQ fired on the workspace and not in the fixture." nor "Signed far above its estimate: KE-NWWDA-229129-CW-RFB no longer fired on the workspace.", and both the fixture's run and the workspace's run name KE-NWWDA-229129-CW-RFB, as in "KE-NWWDA-229129-CW-RFB was signed at about 4 times its estimate: US$1,245,092.76 against US$300,000.00." When the warehouse holds all nine rows of the October 9 plan, step 4 ends "Nothing changed since the fixture was recorded." If it does not, step 4 may list other changes; a line that does not name KE-NWWDA-229129 is not this ticket's. An exit 1 that names another step, such as step 3's smoke question while `strata.gold.passage` holds 0 rows, does not fail this step.
 
 Record here the snapshot's commit, the run's start and end times, everything step 4 printed, and the exit code.
+
+## Ticket 76, step 1 of 4: count the notices whose text still holds a labelled phone number, before the fix reaches the workspace
+
+The merger parked this step on October 26, 2026, after merge commit e8ee6cf6, so run steps 1 to 4 from a snapshot of e8ee6cf6 or later. Every key is set, but the second session runs every workspace step from a snapshot of the commit, one at a time, so the merger ran none. Steps 1 to 4 need the Databricks keys in `.env` and the Databricks CLI 0.287.0 or later. Run them in order, after ticket 75's `bronze_to_gold` run of 11:40 UTC on October 26 has ended, and run step 1 before any bundle deploy from e8ee6cf6 or later. If ticket 78's step 1 has not run yet, one deploy from e8ee6cf6 or later serves both tickets: run step 1 here first, then that deploy as step 2 here.
+
+What ticket 76 changes: `LEFT_EMAIL` and `LEFT_PHONE` in `src/strata/lakehouse/contacts.py` are now the one definition of an email address and a labelled phone number. The nightly `contacts_left` check binds them as parameters, and the contact removal runs them as its last pass, which keeps the label and writes `[contact removed]` for the number. Silver's notices transform runs the removal again on each page it reads, and its `VERSION` is now 2, so through ticket 75's record (`strata.ops.silver_pages`) the first `bronze_to_gold` after the deploy reads every notices page again. No table, column or job changes. Bronze keeps its pages as the old removal left them (a decision parked for the user in ticket 76's comment).
+
+Run this from the snapshot's root, with `--env-file` pointing at the main checkout's file, as the header says:
+
+    uv run --script ops/notices/contacts_left_live.py --env-file .env
+
+It worked if it exits 0 and prints "The nightly check's patterns find N notices on M pages of strata.silver.notices." It writes nothing. Record N and M. N may differ from the 1,256 that ticket 43's step 1 found, because `LEFT_PHONE` now also counts Facsimile, Telefax and Mob labels, a label glued to the digits, dotted numbers and a second number after a removed one, and it counts seven digits instead of seven characters. Exit 2 means it could not ask the SQL warehouse, and it prints why.
+
+## Ticket 76, step 2 of 4: deploy the bundle, so the nightly job runs the shared patterns and the notices transform's VERSION 2
+
+Parked with step 1, after merge commit e8ee6cf6. Run this from the same snapshot's root, twice:
+
+    uv run --script ops/bundle/deploy.py --env-file .env --fairshare-catalog workspace
+
+It worked if the first run exits 0 and its "3. What changed:" names no new or changed table for this ticket (it may list what other merges added since the last deploy), and the second run prints "No changes." Record both exit codes and what "3. What changed:" listed.
+
+## Ticket 76, step 3 of 4: run only `bronze_to_gold`, which reads every notices page again with the fixed removal (criterion 3, live)
+
+Parked with step 1, after merge commit e8ee6cf6. Run it right after step 2, outside the nightly window (03:00 to 05:30 in Washington), with the job ID that the list prints (the orchestrator's runs on October 26 used 730097284330653):
+
+    databricks jobs list --name "strata nightly" -p strata
+    databricks jobs run-now --json '{"job_id": <the job ID>, "only": ["bronze_to_gold"]}' --timeout 160m -p strata
+
+If the CLI refuses `only`, run the whole job outside the window instead (`uv run --script ops/bundle/check.py job-run --env-file .env`); its `bronze_to_gold` makes the same pass. The pass reads again every notices page that ticket 75's record holds under version 1, which is the same work as ticket 75's first pass for notices, plus about 4.5 minutes for the second removal (the verifier measured 1.71 ms per notice on the fixture, against 0.11 ms before). If the run ends TIMEDOUT at the job's 150-minute stop, run the same command again: every page the run recorded stays recorded, so the next run reads only the rest. If a nightly run on the deployed code comes first and its `bronze_to_gold` succeeds, record that run here instead. Then run these in the workspace's SQL editor:
+
+    SELECT run_id, status, rows_changed, started_at, finished_at,
+      timestampdiff(MINUTE, started_at, finished_at) AS minutes
+    FROM strata.ops.pipeline_runs WHERE task_key = 'bronze_to_gold' ORDER BY started_at DESC LIMIT 3
+
+    SELECT version, count(*) AS page_reads FROM strata.ops.silver_pages
+    WHERE source = 'notices' GROUP BY version ORDER BY version
+
+    SELECT count(DISTINCT p.page_hash) AS pages, count(DISTINCT r.page_hash) AS read_at_version_2
+    FROM strata.bronze.api_pages AS p
+    LEFT JOIN (SELECT DISTINCT page_hash FROM strata.ops.silver_pages WHERE source = 'notices' AND version = 2) AS r
+      ON r.page_hash = p.page_hash
+    WHERE p.source = 'notices'
+
+It worked if:
+
+- The newest `bronze_to_gold` row succeeded. Record its `minutes`, and the minutes of each try when it took more than one: together they are the time of the pass.
+- The second query lists version 2 rows.
+- In the third query, `read_at_version_2` equals `pages`.
+
+## Ticket 76, step 4 of 4: the check finds 0, and gold's bid_description holds no labelled phone number (criterion 3, live)
+
+Parked with step 1, after merge commit e8ee6cf6. Run this from the same snapshot's root, after step 3 succeeded:
+
+    uv run --script ops/notices/contacts_left_live.py --env-file .env --check-zero
+
+Then print the shared phone pattern from the same snapshot's root:
+
+    python3 -c "import sys; sys.path.insert(0, 'src'); from strata.lakehouse import contacts; print(contacts.LEFT_PHONE)"
+
+Run these in the workspace's SQL editor, and paste the printed line as the value of the `phone` parameter. Bind it rather than write it into the query: Spark SQL changes the backslashes in a literal, which is why `quality.py` binds the patterns too.
+
+    SELECT found, passed, checked_at FROM strata.ops.quality_checks
+    WHERE check_kind = 'contacts_left' AND table_name = 'strata.silver.notices'
+    ORDER BY checked_at DESC LIMIT 1
+
+    SELECT count(*) AS phone_in_bid_description FROM strata.gold.notice WHERE regexp_like(bid_description, :phone)
+
+It worked if:
+
+- The script exits 0 and prints "The nightly check's patterns find 0 notices on 0 pages of strata.silver.notices." Exit 1 means the check still finds a notice, and the line says how many.
+- The newest `contacts_left` row for `strata.silver.notices` reads found 0 and passed true, with a `checked_at` inside step 3's run.
+- The gold query returns 0. `strata.gold.notice` has no `notice_text` column. In `bronze_to_gold`, `gold.sync`'s MERGE makes it equal its query over each notice's newest silver row, so its `bid_description` takes the stripped text with no step of its own. Screens and tools read `notice_text` from `strata.silver.notices`.
+
+Record here the snapshot's commit, N and M from step 1, the count from this step, the pass's minutes from step 3, and the three query results from steps 3 and 4. If the script still finds notices after a successful step 3, record their shapes as under "Ticket 76, before step 1" (every digit written as 9, every email address masked, thirty characters kept on each side of the label) and tell the orchestrator.
