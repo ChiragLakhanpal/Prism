@@ -23,7 +23,9 @@
 # the build.
 
 # The whole run fails when it takes longer than this. The clock starts when the gate holds the lock.
-limit_seconds = 120
+# 150 since October 26, 2026 (the user's call): with four build agents on this computer the gate ran 105 to 120
+# seconds and merges needed two or three tries at 120. The polish pass trims the tests and puts 120 back.
+limit_seconds = 150
 
 # One gate runs at a time on this computer. A gate that finds another gate running waits for
 # the lock this long (20 minutes), then gives up.
