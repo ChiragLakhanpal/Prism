@@ -13,6 +13,7 @@ a made-up one of the same shape, with a space after the "@". No value here is a 
 """
 
 import datetime as dt
+import random
 
 import pytest
 
@@ -99,6 +100,14 @@ def strip_notices(texts: list[str]) -> list[str]:
     return [notice["notice_text"] for notice in stripped["procnotices"]]
 
 
+def silver_texts(texts: list[str]) -> list[str]:
+    """What silver keeps of each text, read from a page bronze kept as it is."""
+    page = {"procnotices": [{"id": f"OP-made-up-{n}", "notice_text": text} for n, text in enumerate(texts)]}
+    column = notices_module.TABLES[NOTICES.table].index("notice_text")
+    rows = notices_module.parse(page, "page-1", dt.datetime(2026, 10, 26, tzinfo=dt.UTC))[NOTICES.table]
+    return [row[column] or "" for row in rows]
+
+
 def test_the_check_flags_every_recorded_shape_and_ingestion_leaves_none_of_them_keeping_each_label(notices):
     recorded = [shape for shape, _ in SHAPES]
 
@@ -127,3 +136,42 @@ def test_silver_reads_a_page_bronze_kept_before_the_fix_without_the_numbers_the_
     assert notice["bid_description"] == f"Works. Mobile: {R}. Fax {R}"
     assert notice["contact_details_removed"] is True
     assert contacts_left(notices, [notice["notice_text"], notice["bid_description"]]) == 0
+
+
+def made_up_texts(count: int, seed: int = 76) -> list[str]:
+    """Notice text put together at random from labels, the characters between a label and its number, numbers in
+    many shapes, removed details and the words around them. Every digit and address is made up."""
+    pick = random.Random(seed)
+    labels = ["Tel", "TEL", "Telephone", "Telefax", "Phone", "Cellphone", "Mobile", "Mob", "Cell", "Fax", "Facsimile",
+              "Ph", "Contact", "E-mail", "Ref"]
+    between = ["", " ", ": ", ":: ", " No. ", " #: ", ". (", ": (-", ": + ", " number: ", "/Fax: ", " (office): ",
+               "</b>&nbsp;", "&#160;", "<br/>", " Nr ", "\n", " and "]
+    around = [R, "Nairobi", "2019-2020", "P.O. Box 05586-00100", "USD 1,234,567.00", "jdoe@ example.org",
+              "JDOE @ EXAMPLE.COM", "l, ", ", ", " / ", " - ", "; ", "l - ", " or ", "Dated 12/03/2019", "Ext. 42301",
+              "Société", "Tél"]
+
+    def number() -> str:
+        groups = ["".join(pick.choice("0123456789") for _ in range(pick.randint(1, 8)))
+                  for _ in range(pick.randint(1, 5))]
+        return "".join(group + pick.choice(["", " ", "-", ".", " . ", ")", "(", " -"]) for group in groups).strip()
+
+    def part() -> str:
+        kind = pick.random()
+        if kind < 0.45:
+            return pick.choice(labels) + pick.choice(between) + number()
+        return pick.choice(around) if kind < 0.8 else number()
+
+    return [pick.choice(["", " "]).join(part() for _ in range(pick.randint(2, 8))) for _ in range(count)]
+
+
+def test_the_check_finds_nothing_in_what_either_removal_leaves_of_a_thousand_made_up_texts(notices):
+    """The removal and the check share one definition, so the check never finds what the removal leaves: not
+    in a page bronze keeps, and not in the plain text silver keeps. The check reads the patterns with RE2, as on
+    DuckDB, and the removal with Python, so this also shows that the two read them the same way."""
+    texts = made_up_texts(1000)
+    from_bronze = strip_notices(texts)
+    from_silver = silver_texts(texts)
+
+    assert contacts_left(notices, texts) > 300  # the texts carry what the check looks for
+    assert contacts_left(notices, from_bronze) == 0
+    assert contacts_left(notices, from_silver) == 0

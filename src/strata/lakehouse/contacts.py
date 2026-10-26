@@ -21,7 +21,13 @@ counts what it took out:
 - every number written after a phone label (Tel, Telephone, Telefax, Phone, Cellphone, Mobile, Mob,
   Cell, Fax, also followed by No., Number or #, or by /Fax or /WhatsApp), also one with a country
   code and no plus (Tel 254 20 1234567) or a second number after a slash, is replaced too, and so
-  is an Indian mobile with no trunk zero after Ph, M or Contact (Ph: 98123 45678).
+  is an Indian mobile with no trunk zero after Ph, M or Contact (Ph: 98123 45678);
+- last, whatever the nightly job's check would still find (LEFT_EMAIL and LEFT_PHONE below) is
+  replaced, with the label kept (Fax:: [contact removed]), so the check never finds what this leaves.
+
+Silver runs the same removal again on each notices page it reads (strip_again), and the last pass
+once more on the plain text it keeps (strip_left), so a fix here reaches the pages bronze already
+holds when silver reads them again (ticket 76).
 
 Every other field stays as received. bid_reference_no is STEP's field and, when it holds a STEP
 reference, the join from a notice to its package. A reference such as NWWDA-WSDP-03-2019-2020
