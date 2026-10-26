@@ -76,6 +76,16 @@ def test_the_live_passage_runs_queries_are_read_too(tmp_path):
         "ops/documents/run_live.py:1: gold.passage is not a three-part name. Write it as strata.<schema>.<table>."]
 
 
+def test_the_demo_ready_command_s_queries_are_read_too(tmp_path):
+    """ops/demo runs SQL on the workspace's warehouse and on the fixture (ticket 48): its .sql files and its Python."""
+    root = tree(tmp_path, **{"ops__demo__sql__awards.sql": "SELECT contract_id FROM gold.contract\n",
+                             "ops__demo__demo_live.py": 'HELD = "SELECT count(*) FROM ops.agent_runs"\n'})
+
+    assert lint().problems(root) == [
+        "ops/demo/sql/awards.sql: gold.contract is not a three-part name. Write it as strata.<schema>.<table>.",
+        "ops/demo/demo_live.py:1: ops.agent_runs is not a three-part name. Write it as strata.<schema>.<table>."]
+
+
 BUILT = ("this query's text is built in code. Bind each value as a :name parameter; a query that builds in only "
          "table or column names says so with '# sql-lint: names only'.")
 

@@ -36,6 +36,10 @@ section 6.6):
   estimate's typical error was smaller than the past range's, its baseline, and 0 when it was not.
 - middle_ran_longer and eight_in_ten_ran_longer, each with its total (n) and in10, for the plan-date
   choice; misses_early (always 0, as the 8-in-10 point is an upper point) and misses_late.
+- edition.{key}.n and edition.{key}.m: n and m again for the packages whose project followed each edition of the
+  procurement rules, as its PAD names it (config/editions.toml; ticket 29's tag), and edition.none for those whose
+  project's PAD names none or was not read. A challenger's coverage must hold for each edition before it is promoted
+  (ticket 44; strata.estimates.promotion).
 
 Every number here is a count or a median the harness worked out; nothing is typed in.
 """
@@ -59,6 +63,28 @@ SCORER = "time_estimate_backtest"
 TEST_YEAR = "test_year"
 REGISTERED = "registered_model"
 CHAMPION, CHALLENGER = "champion", "challenger"
+NO_EDITION = "none"  # the edition count for packages whose project's PAD names no edition
+
+
+def _sql(name: str) -> str:
+    from importlib import resources
+
+    return (resources.files("strata.estimates") / "sql" / "time_estimate" / name).read_text()
+
+
+def package_editions(reader: Reader) -> dict[str, str]:
+    """Each package's edition of the procurement rules, by its project's PAD as public on the reader's date, or
+    NO_EDITION when its project's PAD names none or was not read."""
+    from collections import defaultdict
+
+    from strata.config import load_editions
+
+    editions, texts = load_editions(), defaultdict(list)
+    for row in reader.rows(_sql("editions.sql")):
+        texts[row["project_id"]].append(row["text"])
+    keys = {project: edition.key for project, found in texts.items() if (edition := editions.followed(found))}
+    return {row["step_reference"]: keys.get(row["project_id"], NO_EDITION)
+            for row in reader.rows(_sql("package_projects.sql"))}
 
 
 def _months(days) -> float:
@@ -117,13 +143,16 @@ class TimeEstimateBacktest:
                          and item.step_reference in outcomes
                          and cutoff <= dt.date.fromisoformat(outcomes[item.step_reference]["notice_date"]) < end),
                         key=lambda item: item.step_reference)
-        return Scored(_model_scores(model) + _test_scores(model, unseen, outcomes, replay, thresholds),
+        editions = package_editions(replay.inputs) if unseen else {}
+        return Scored(_model_scores(model) + _test_scores(model, unseen, outcomes, replay, thresholds, editions),
                       self.params(), model)
 
 
-def _test_scores(model, unseen: list[Package], outcomes: dict, replay: Replay, thresholds: Thresholds) -> list[Score]:
+def _test_scores(model, unseen: list[Package], outcomes: dict, replay: Replay, thresholds: Thresholds,
+                 editions: dict[str, str] | None = None) -> list[Score]:
     cutoff = replay.window.cutoff
     given, abstained, undecided, n, m, ran_longer_middle, errors, scored = [], 0, 0, 0, 0, 0, [], []
+    by_edition: dict[str, list[int]] = {}  # each edition's [n, m]
     for item in unseen:
         found = replay.inputs.call("find_comparables", step_reference=item.step_reference)
         estimate = model.estimate(item.features, len(found["rows"]), cutoff, thresholds)
@@ -132,9 +161,11 @@ def _test_scores(model, unseen: list[Package], outcomes: dict, replay: Replay, t
             continue
         days, outcome = estimate["days"], outcomes[item.step_reference]
         given.append(days)
+        counts = by_edition.setdefault((editions or {}).get(item.step_reference, NO_EDITION), [0, 0])
         if outcome["still_open"]:
             if outcome["days"] > days["q80"]:  # still open past its 8-in-10 point: a known miss
                 n, ran_longer_middle = n + 1, ran_longer_middle + 1
+                counts[0] += 1
                 scored.append(Observation(outcome["days"], False))
             else:
                 undecided += 1
@@ -142,6 +173,7 @@ def _test_scores(model, unseen: list[Package], outcomes: dict, replay: Replay, t
         actual = outcome["days"]
         scored.append(Observation(actual, True))
         n, m, ran_longer_middle = n + 1, m + (actual <= days["q80"]), ran_longer_middle + (actual > days["q50"])
+        counts[0], counts[1] = counts[0] + 1, counts[1] + (actual <= days["q80"])
         past = ((found.get("past_range") or {}).get("days") or {}).get("q50")
         planned = item.features["planned_days"]
         if past is not None and planned is not None:
@@ -153,6 +185,8 @@ def _test_scores(model, unseen: list[Package], outcomes: dict, replay: Replay, t
               Score("middle_ran_longer", ran_longer_middle), Score("middle_total", n),
               Score("eight_in_ten_ran_longer", n - m), Score("eight_in_ten_total", n),
               Score("error_packages", len(errors))]
+    scores += [Score(f"edition.{key}.{measure}", value) for key, counts in sorted(by_edition.items()) if counts[0]
+               for measure, value in zip(("n", "m"), counts)]
     if n:
         share = Fraction(m, n)
         low, high = (Fraction(str(thresholds.value("time_estimate.coverage_low"))),
@@ -244,12 +278,31 @@ def stored_years(engine, run_id: str | None = None, as_of: dt.date | None = None
             if kind == TEST_YEAR}
 
 
-def track_record(engine, thresholds: Thresholds | None = None) -> dict | None:
-    """The latest test year's track record from the latest run (model_card.track_record): what the
-    estimate_time tool and the model card read. None before any run."""
-    return model_card.track_record(stored_years(engine), thresholds or load_thresholds())
+def registered_run(engine, version: int, as_of: dt.date | None = None) -> str | None:
+    """The backtest run that registered this version, public on as_of when given, or None."""
+    result = engine.run(_sql("registered_by.sql"), {"scorer": SCORER, "segment_kind": REGISTERED,
+                                                    "version": str(int(version)), "measure": "version",
+                                                    "as_of": as_of or dt.date.max})
+    return result.rows[0][0] if result.rows else None
+
+
+def version_years(engine, version: int | None, as_of: dt.date | None = None) -> dict[int, dict]:
+    """The test years of the run that registered a version, public on as_of: the track record of the model an
+    estimate came from, so a challenger's newer backtest changes nothing until it is promoted. With no version, or
+    no run that registered it, the latest run's."""
+    run_id = registered_run(engine, version, as_of) if version is not None else None
+    return stored_years(engine, run_id, as_of)
+
+
+def track_record(engine, thresholds: Thresholds | None = None, as_of: dt.date | None = None,
+                 settings: TimeEstimateSettings | None = None) -> dict | None:
+    """The latest test year's track record of the champion on as_of (model_card.track_record), from the run that
+    registered it: what the estimate_time tool reports. None before any run."""
+    name = (settings or load_time_estimate()).registered_model
+    version = portable.version_on(engine, name, as_of or dt.date.max)
+    return model_card.track_record(version_years(engine, version, as_of), thresholds or load_thresholds())
 
 
 def track_record_sentence(engine, thresholds: Thresholds | None = None) -> str:
-    """The model card's track-record sentence, filled from the latest stored run."""
+    """The model card's track-record sentence, filled from the champion's backtest run."""
     return model_card.sentence(track_record(engine, thresholds))

@@ -11,4 +11,5 @@ Read: `docs/PLAN.md` section 8, all of `DESIGN.md`, and the blueprint's "Navigat
 - The viewer's forwarded token is bound per request, and the view switch's previews can only take things away.
 - `/present` serves the deck, and nothing in the app links to it.
 - Ports come from environment variables with free-port defaults, so several worktrees can run the app side by side during reviews.
+- Every route reads a page's as-of date from the `today` that `create_app` was given; `registry.today`, the wall clock, is only its default. A recorder that writes `tests/fixtures/api` must pin that clock (`today=lambda: TODAY`), so its answers hold still after midnight UTC.
 - Playwright covers each screen against a mocked API. `design-lead` and `design-critic` review every user-visible change.

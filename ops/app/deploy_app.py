@@ -33,7 +33,7 @@ It needs npm, which builds the web app. It does these things, in order:
    runs, opened sources, drafts, decisions and labels on supplier pairs, and the lesson review record,
    and nothing more: USE CATALOG on strata, USE SCHEMA on strata.ops, SELECT and MODIFY on
    strata.ops.usage_events, agent_runs, evidence_opened, drafts, draft_states, draft_exports,
-   draft_files, follows, ticket 23's disagreement_choices and draft_fields, SELECT on its view
+   draft_files, follows, ticket 23's disagreement_choices and draft_fields, ticket 44's exposures, SELECT on its view
    draft_fields_latest, SELECT on strata.ops.supplier_pairs, SELECT and MODIFY on
    strata.ops.supplier_review_decisions and strata.ops.supplier_pair_labels, and SELECT and MODIFY on
    ticket 29's lesson_review_acts, lesson_review_items, lesson_versions, lesson_sources and
@@ -181,11 +181,12 @@ def grants(principal: str) -> list[str]:
     # follows (ticket 37): the projects each World Bank staff viewer follows, kept as the app. disagreement_choices
     # (ticket 23): the report each person kept on a disagreement, for an answer or a draft, which the drafts' hold
     # reads too (ticket 36). draft_fields (ticket 36): the values people set on a draft's fields, read through its
-    # latest-value view.
+    # latest-value view. exposures (ticket 44): each past range or time estimate the app showed in the staff view.
     # lesson_visits and draft_lesson_choices (ticket 39): each reader's visits to Lessons, and what a draft's author
     # chose for a row whose lesson changed, both kept as the app.
     tables = ("usage_events", "agent_runs", "evidence_opened", "drafts", "draft_states", "draft_exports",
-              "draft_files", "follows", "disagreement_choices", "draft_fields", "lesson_visits", "draft_lesson_choices")
+              "draft_files", "follows", "disagreement_choices", "draft_fields", "exposures", "lesson_visits",
+              "draft_lesson_choices")
     return [f"GRANT USE CATALOG ON CATALOG strata TO `{principal}`",
             f"GRANT USE SCHEMA ON SCHEMA strata.ops TO `{principal}`",
             *[f"GRANT SELECT, MODIFY ON TABLE strata.ops.{table} TO `{principal}`" for table in tables],
@@ -215,6 +216,23 @@ def masks(principal: str, owner: str) -> list[str]:
                 f"RETURN CASE WHEN current_user() IN ('{principal}', '{owner}') THEN value END")
     return [function, *[f"ALTER TABLE {table} ALTER COLUMN {column} SET MASK {MASK}"
                         for table, columns in MASKED.items() for column in columns]]
+
+
+def plan() -> list[tuple[str, str]]:
+    """What a first deploy makes, read from the repo alone, as (what, name) pairs, with the Foundry agent's and the
+    judge's keys in the env file, as the wizard fills it. The demo-ready command's dry run prints it
+    (ops/demo/ready.py --fresh-workspace), so its list cannot drift from this deploy."""
+    names = dayone.load_config()["names"]
+    scope, instance = names["secret_scope"], names["app_state_instance"]
+    filled = {"DATABRICKS_WAREHOUSE_ID": "the env file's", **dict.fromkeys((*FOUNDRY, *JUDGE), "set")}
+    example = "00000000-0000-0000-0000-000000000000"  # the app's service principal, known only once it exists
+    return ([("The app", f"{names['app']} ({DESCRIPTION})"), ("Its code", f"/Workspace/Users/<you>/{FOLDER}"),
+             ("The Lakebase instance", instance)]
+            + [("The app resource", resource["name"]) for resource in resources(filled, scope, instance)]
+            + [("The user authorization scope", name) for name in SCOPES]
+            + [("The secret", f"{scope}/{key}") for key in (*FOUNDRY, *JUDGE)]
+            + [("The grants to the app's service principal", f"{len(grants(example))} grants on strata.ops"),
+               ("The column mask", f"{MASK}, on {sum(len(columns) for columns in MASKED.values())} columns")])
 
 
 def deploy(workspace, env: dict, build_web: Callable[[], tuple[int, str]] = build_web, dist: Path = DIST) -> int:

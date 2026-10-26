@@ -143,6 +143,27 @@ Before ticket 15 writes the first app state, run the Lakebase probe, which recor
 
     uv run --script ops/app/probe_lakebase.py --env-file .env
 
+## Before a demo
+
+Run the demo-ready command from the main checkout an hour or so before each review. It is safe to run any number of times.
+
+    uv run --with databricks-sdk==0.156.0 python ops/demo/ready.py --env-file .env
+
+It needs the env file the wizard filled, `az` signed in for the Foundry agent, and the browser sign-in the wizard saved for the app. It lists the workspace first, then takes these steps, in order:
+
+1. It restarts the app, because an app stops 24 hours after each start or deploy, and waits for `GET /api/health` to answer within `demo_ready.health_timeout_seconds` in `config/thresholds.toml`. It never starts or stops an app that does not run Strata's code.
+2. It warms the SQL warehouse and Genie with the Genie question that `config/slice.toml`'s `[demo_plan]` names, then asks again. The second call must answer within `demo_ready.genie_first_call_seconds`.
+3. It asks one smoke question, the documents question `[demo_plan]` names in `evals/benchmark.yaml`, through the app's `/api/ask` route, run in this process as the benchmark runner runs it, with the Foundry agent and the SQL warehouse. It passes when the verifier ran all six checks, removed no sentence, and the answer cites what the benchmark file expects.
+4. It rechecks the `P156634` signals on the fixture and on the workspace, prints each check's state and what changed since the fixture was recorded, and lists the activities whose plan row shows no signed contract while the awards dataset holds one. A closed project or a plan that disagrees with the awards is reported, never failed; what the demo says about them is the user's choice (`docs/STATUS.md`, decisions 4 and 7).
+5. It runs ticket 41's seed command for the reviewing panel's group and checks Home's briefing window against the demo plan's Disclosed date. Until ticket 41 merges, it says that neither is built.
+6. It lists the workspace again and prints what changed. A second run prints `No changes.` Genie keeps the conversations it started, and the warehouse its query history.
+
+Then it prints one line per step. When no step failed, its last line is `Strata is ready for the demo.` and it exits 0. Otherwise its last line names each step that failed, such as `Strata is not ready for the demo. This step failed: the smoke question.`, and it exits 1.
+
+To see how a fresh workspace reaches the demo state from code alone, run it with `--fresh-workspace`. It changes nothing and needs no env file. It prints each resource, in the order to make them, with the command that makes it: the bundle, the AI Search endpoint, the Genie space, the app, the nightly job's first run, the Foundry agents and the examples for the reviewing panel. The Genie space comes before the app because its deploy saves Strata's space id in the env file, and the app deploy writes that id into `app.yaml`.
+
+    uv run python ops/demo/ready.py --fresh-workspace
+
 ## Where things live
 
 Each part of the spec has one home. Folders marked "later" do not exist yet. The ticket that builds a part creates its folder.
@@ -217,6 +238,8 @@ Each part of the spec has one home. Folders marked "later" do not exist yet. The
 | The rebidding models' live backtests for 2021 to 2025 on the workspace, which log to MLflow and register the better calibrated as champion in Unity Catalog | `ops/estimates/rebidding_backtest_live.py` |
 | The hindsight test (ticket 34): the gate set of pilot projects with an ICR, less extraction examples and exposed projects; the scorer that replays each project's first-plan packages through the risk-table builder as of its approval date; the release's totals, hindsight recall, the report sentence and the release gate's McNemar comparison with the champion (`hindsight.py`, SQL in `sql/hindsight/`); and the coding tool's two readings per ICR, the ICR Review that settles differences, and the coders' agreement (`hindsight_coding.py`). Its settings are `[hindsight]` in the thresholds file | `src/strata/estimates/hindsight.py` and `hindsight_coding.py` |
 | The hindsight test's two commands: the coding tool (`code.py`) and the release gate (`release_gate.py`), on the workspace with `--env-file` or on a DuckDB file with `--database` | `ops/hindsight/` |
+| The estimates loop (ticket 44). The exposure log (`exposures.py`) writes one row in `strata.ops.exposures` for each past range or time estimate shown in the World Bank staff view, by the estimate and comparables routes or in an answer, and is the one place an exposure is defined. The monthly watch (`watch.py`) marks plan rows dated within 14 days of a date Strata offered, reports plan accuracy, coverage, the two typical errors and the input mix, and raises a retrain with its reason code. The promotion (`promotion.py`) moves the champion alias only after a backtest win, a shadow quarter, coverage for each edition and two sign-offs. The hazard model for project delay early warning (`hazard.py`) is scored in shadow and replayed against the fixed signals, and nothing shows it. The settings are `[estimates_loop]` in the thresholds file, and the countries using Strata are `[[onboarded]]` in the slice file | `src/strata/estimates/` |
+| A challenger's sign-offs and its promotion on the workspace | `ops/estimates/promote_live.py` |
 | The registry and config files for the change drill: the source registry, the slice file, the sector taxonomy, the model file, the thresholds file, the tool registry and the agent registry, each read by one function in `src/strata/config.py` | `config/` |
 | The evidence ladder: the rules that choose the assertion Strata leans on when two disagree (outcome judgments, then moments, then the two ties), the evidence tiers, and the attributes an assertion can be about with their rating scales, read by `load_ladder`. Reordering a rule is a change to this file only | `config/evidence_ladder.toml` |
 | The package form schema: each field of a package planned from a sentence, one chip each, in its group (What, Where, How), read by `load_package_form` in `src/strata/config.py`. Adding a field is one entry | `config/package_form.toml` |
@@ -240,6 +263,7 @@ Each part of the spec has one home. Folders marked "later" do not exist yet. The
 | The server's copy of the Data readiness sentences, written from `web/src/copy.ts` by `node web/lint/server-copy.ts --write` | `src/strata/tools/data_readiness_copy.json` |
 | The recorded answers of the Data tab's routes, written again by `uv run --frozen python tests/record_api.py` | `tests/fixtures/api/data-*.json` |
 | The credentials wizard and the day-one probes | `ops/` (ticket 03) |
+| The demo-ready command: the app's restart, the Genie warm-up, the smoke question, the `P156634` recheck and Home's examples (`ready.py`, with its live adapter `demo_live.py` and its awards query in `sql/`), and the fresh-workspace dry run built from each deployer's plan (`fresh_workspace.py`). Its limits are `[demo_ready]` in `config/thresholds.toml`, and its demo package and two benchmark questions are `[demo_plan]` in `config/slice.toml` | `ops/demo/` (ticket 48; README, "Before a demo") |
 
 ## Ports at a glance
 

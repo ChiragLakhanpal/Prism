@@ -179,6 +179,10 @@ def test_the_backtest_for_2021_stores_the_known_scores_of_the_hand_made_set(ran_
     assert year["training_through"] == KNOWN["cutoff"].isoformat()
     # The estimate's typical error (2.2 months) did not beat the past range's (2.0): the year records the loss.
     assert year["beat_past_range"] == 0
+    # Strata read no PAD for the hand-made project, so its packages count under no edition of the procurement rules
+    # (ticket 44: a challenger's coverage must hold for each edition before it is promoted).
+    assert (year["edition.none.n"], year["edition.none.m"]) == (KNOWN["n"], KNOWN["m"])
+    assert not [measure for measure in year if measure.startswith("edition.") and ".none." not in measure]
 
 
 # ── Leakage ──────────────────────────────────────────────────────────────

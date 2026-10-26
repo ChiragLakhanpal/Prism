@@ -68,6 +68,17 @@ def first_plan(engine, project_id, document_id, plan_date, packages):
         for reference, section, description, method, amount in packages])
 
 
+def expose(engine, step_reference, shown_at):
+    """A past range the server showed for one of a project's packages in the staff view, written by the exposure log
+    as the package's comparables route writes it (ticket 44): the project is read from the package's plan row."""
+    from strata.estimates.exposures import ExposureLog, Shown
+
+    past_range = {"q25": 4.0, "q50": 6.1, "q75": 8.3, "q80": 9.0, "days": {"q25": 122, "q50": 186, "q75": 253, "q80": 274}}
+    shown = Shown("find_comparables", {"abstention": None, "past_range": past_range}, step_reference, "staff",
+                  shown_at.date(), "/api/packages/{step_reference}/comparables", "4021@1984", None)
+    assert ExposureLog(engine.cursor, now=lambda: shown_at).record(engine, shown)
+
+
 @pytest.fixture(scope="module")
 def showcase(fixture_db, tmp_path_factory):
     """A copy of the fixture with the rebidding, permits and IEG lessons decided, and P130164's hand-made first plan."""
@@ -354,9 +365,7 @@ def gate_db(records, tmp_path_factory):
             first_plan(engine, project, f"93{project[1:]}", approved + dt.timedelta(days=120),
                        [(f"XX-{project}-{n}-CW-RFB", "WORKS", f"{project} works package {n}", "Request for Bids",
                          f"{(5 - n) * 1000000}.00") for n in range(1, 5)])
-        insert(engine, "strata.ops.exposed_projects", [{"project_id": EXPOSED, "exposed_on": dt.date(2026, 10, 22),
-                                                       "shown": "past_range", "step_reference": f"XX-{EXPOSED}-1-CW-RFB",
-                                                       "public_from": dt.date(2026, 10, 22)}])
+        expose(engine, f"XX-{EXPOSED}-1-CW-RFB", dt.datetime(2026, 10, 22, 12, tzinfo=dt.UTC))
         library(engine)
     return path
 

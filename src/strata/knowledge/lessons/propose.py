@@ -226,9 +226,8 @@ def rebuild(engine: Engine, project_id: str, answered: list[dict], lists: Lesson
     """A project's proposals, restatements and evidence, from its answered requests, written again only when they
     differ from the ones held (strata.lakehouse.rewrites), so a night with nothing new changes no row. Returns the
     proposals it added or removed."""
-    edition = next((found.key for found in (editions.named_in(row["text"])
-                                            for row in _rows(engine, "pad_passages", project_id=project_id))
-                    if found), None)
+    followed = editions.followed(row["text"] for row in _rows(engine, "pad_passages", project_id=project_id))
+    edition = followed.key if followed else None
     proposals, restatements = [], []
     for state in answered:
         document_id, version = str(state["document_id"]), _int(state["version"])
