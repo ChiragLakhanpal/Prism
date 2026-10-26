@@ -76,7 +76,9 @@ RUN_LOGS = ("strata.ops.pipeline_runs", "strata.ops.quality_checks", "strata.ops
             # The challenger's and the hazard model's nightly scores in shadow (ticket 44).
             "strata.ops.time_estimate_shadow", "strata.ops.hazard_scores",
             # The dashboard's "What the measures say" and each loop's indicators, written each night (ticket 45).
-            "strata.ops.dashboard_findings", "strata.ops.loop_indicators")
+            "strata.ops.dashboard_findings", "strata.ops.loop_indicators",
+            # Each document or document list a document run could not fetch or read, tried again each run (ticket 72).
+            "strata.ops.skipped_documents")
 
 # Where a source's pages come from: the live API on the workspace, the recorded fixture here.
 Fetch = Callable[[Source, Engine], Iterable[pages.Page]]

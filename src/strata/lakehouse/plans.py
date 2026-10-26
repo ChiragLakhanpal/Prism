@@ -173,6 +173,9 @@ class Fetching:
     # statement's parameters up to about 1 MB, so a text past that cannot be written through it. Such a
     # document counts as listed but not read, which leaves later first listings unconfirmed.
     not_kept: tuple[tuple[str, int], ...] = ()
+    # Documents the source could not give, each with why (NotFetched's message), which the passage reader
+    # records when it skips them (ticket 72).
+    not_fetched: tuple[tuple[str, str], ...] = ()
 
 
 def fetch_documents(engine: Engine, documents: Documents, project_id: str, entries: list[Entry]) -> Fetching:
@@ -184,12 +187,14 @@ def fetch_documents(engine: Engine, documents: Documents, project_id: str, entri
         {"project_id": project_id}).rows}
     fetched = with_contacts = 0
     not_kept: list[tuple[str, int]] = []
+    not_fetched: list[tuple[str, str]] = []
     for entry in entries:
         if entry.document_id in held:
             continue
         try:
             text, pages = documents.text(entry.text_url), documents.pages(entry.pdf_url)
-        except NotFetched:
+        except NotFetched as error:
+            not_fetched.append((entry.document_id, str(error)))
             continue  # a document listed but not read, which leaves later first listings unconfirmed
         body, count = contacts.strip_text(text.body)
         page_texts = [contacts.strip_text(page)[0] for page in pages.body]  # the same details again, counted once
@@ -207,7 +212,7 @@ def fetch_documents(engine: Engine, documents: Documents, project_id: str, entri
                 for number, page in enumerate(page_texts, 1)])
         fetched += 1
         with_contacts += count > 0
-    return Fetching(fetched, with_contacts, tuple(not_kept))
+    return Fetching(fetched, with_contacts, tuple(not_kept), tuple(not_fetched))
 
 
 # ── 2 and 3. Read every version's text, and choose the ones whose tables get read ───
@@ -339,6 +344,12 @@ class Parsing:
     parsed: int
     stopped_at: tuple[str, int] | None  # the document and PDF page the run did not reach
     failed: tuple[tuple[str, int], ...] = ()  # the document and PDF page of each page the parser could not read
+
+    def then(self, later: Parsing) -> Parsing:
+        """This parse and a later one for the same project in the same run, as one: the passage reader parses a
+        project's pages document by document (ticket 72), and strata.ops.parse_runs keeps one row per project."""
+        return Parsing(self.parser, self.cap, self.parsed_earlier_today, self.waiting + later.waiting,
+                       self.parsed + later.parsed, self.stopped_at or later.stopped_at, self.failed + later.failed)
 
 
 def parsed_pages(engine: Engine, project_id: str) -> set[tuple[str, int, str]]:
