@@ -8,7 +8,7 @@ Read first: `gates/offline.py` (`only_markdown`, `main`), `gates/steps.toml`, `t
 
 **Status:** ready
 **Area:** ops
-**Phase:** P2
+**Phase:** P4
 **Design review:** no
 
 - [ ] A Markdown-only commit runs the secret scan and the new docs step, and a throwaway repo whose always step fails blocks such a commit (a test in `tests/test_gate.py`); the gate's time for a Markdown-only commit stays under 30 seconds.
