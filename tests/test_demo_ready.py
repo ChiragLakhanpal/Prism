@@ -1,13 +1,14 @@
 """The demo-ready command (ticket 48): one command makes Strata ready for a review.
 
-It restarts the app and waits for its health route, warms the SQL warehouse and Genie through ask_genie, asks
-one smoke question through the answer contract (ticket 33's runner), rechecks P156634's signals on the fixture
-and on the workspace and prints what changed, checks Home's seeds and window, and lists the workspace before and
-after. With --fresh-workspace it lists, from code alone, every resource a fresh workspace needs.
+It starts a stopped app, restarts a running one only when its last start or deploy is restart_after_hours old
+(ticket 77), and waits for its health route, warms the SQL warehouse and Genie through ask_genie, asks one smoke
+question through the answer contract (ticket 33's runner), rechecks P156634's signals on the fixture and on the
+workspace and prints what changed, checks Home's seeds and window, and lists the workspace before and after. With
+--fresh-workspace it lists, from code alone, every resource a fresh workspace needs.
 
-The fake workspace stands in for Databricks: its app starts and stops, its health route answers, and its SQL
-warehouse is the fixture database or a copy of it, so the real tools, the real /api/ask stream and the real
-verifier run. Expected values come from tests/ground_truth/values.toml, never from the tools' own arithmetic. The
+The fake workspace stands in for Databricks: its app starts and stops and reports when it last started or was
+deployed, as the Apps API's App object does, its health route answers, and its SQL warehouse is the fixture
+database or a copy of it, so the real tools, the real /api/ask stream and the real verifier run. Expected values come from tests/ground_truth/values.toml, never from the tools' own arithmetic. The
 live run is a workspace step (docs/workspace-catchup.md).
 
 Each scenario runs the whole command once or twice in a module fixture, and several tests read what it printed,
@@ -42,6 +43,9 @@ DEMO = load_slice().demo_plan
 QUESTIONS = {question["id"]: question for question in benchmark.load()}
 ANA = Viewer(email="ana.example@worldbank.org", name="Ana Example", user_id="ana", token="token-for-ana-only")
 TODAY = dt.date(2026, 10, 25)
+NOW = dt.datetime(2026, 10, 25, 8, 0, tzinfo=dt.UTC)  # 08:00 UTC on TODAY, the morning of a demo
+EARLIER_THIS_MORNING = NOW - dt.timedelta(hours=3)
+URL = "https://strata-1234.aws.databricksapps.com"
 AFTER_CLOSING = dt.date(2026, 11, 6)  # the Round 2 date the PM counts on (docs/STATUS.md, decision 4)
 NUMBER_WORDS = ("no", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine")  # DESIGN.md 7, rule 12
 ENV = {"DATABRICKS_HOST": "https://example.cloud.databricks.com", "DATABRICKS_TOKEN": "not-a-real-key",
@@ -116,17 +120,18 @@ def ops_tables() -> list[str]:
 
 
 class FakeWorkspace:
-    """Strata's app, stopped or running, whose health route answers after a number of tries once it runs; the SQL
+    """Strata's app, stopped or running, with the time of its last start or deploy (None when the Apps API gives
+    none; a start sets it to NOW), whose health route answers after a number of tries once it runs; the SQL
     warehouse as the fixture database or a copy; the stand-in agent; the examples' seed command, which may write
     rows; and a listing that holds the app, the strata.ops tables the workspace has, and their row counts, counted
     by the live adapter's own code."""
 
-    def __init__(self, live_db, running=False, source=None, health_after=1, healthy=True, agent=None, seeded=(0, ""),
-                 listing_error=None, seed_writes=(), missing_tables=()):
+    def __init__(self, live_db, running=False, started=EARLIER_THIS_MORNING, source=None, health_after=1,
+                 healthy=True, agent=None, seeded=(0, ""), listing_error=None, seed_writes=(), missing_tables=()):
         app = command().deploy_app
-        self.apps = {"strata": {"description": app.DESCRIPTION, "running": running,
+        self.apps = {"strata": {"description": app.DESCRIPTION, "running": running, "started": started,
                                 "source": source or f"/Workspace/Users/ana.example@worldbank.org/{app.FOLDER}",
-                                "url": "https://strata-1234.aws.databricksapps.com"}}
+                                "url": URL}}
         self.calls: list[tuple] = []
         self.health_after, self.healthy, self.tries = health_after, healthy, 0
         self.viewer = dataclasses.replace(ANA, token="not-a-real-key")
@@ -149,6 +154,7 @@ class FakeWorkspace:
     def start_app(self, name):
         self.calls.append(("start", name))
         self.apps[name]["running"] = True
+        self.apps[name]["started"] = NOW
         self.tries = 0
 
     def health(self, url):
@@ -183,7 +189,7 @@ class FakeWorkspace:
 
 def setup(fixture_db, **changed):
     clock = changed.pop("clock", Clock())
-    options = {"fixture_db": fixture_db, "today": TODAY, "clock": clock, "sleep": clock.sleep,
+    options = {"fixture_db": fixture_db, "today": TODAY, "now": lambda: NOW, "clock": clock, "sleep": clock.sleep,
                "reviewer_path": lambda: "default", "seed_command": lambda: False, **changed}
     return command().Setup(**options)
 
@@ -222,29 +228,92 @@ def with_values(**sections) -> object:
 
 # ── 1. The app ───────────────────────────────────────────────────────────
 
+# The app step's limits, pinned so each sentence below is known: 12 hours and 900 seconds are the values ticket 77
+# sets in config/thresholds.toml, which a test below holds the file to.
+APP_LIMITS = {"restart_after_hours": 12, "health_timeout_seconds": 900, "health_poll_seconds": 5}
+
+
 def app_step(workspace, fixture_db, **changed):
     said = []
+    changed.setdefault("thresholds", with_values(demo_ready=APP_LIMITS))
     outcome = command().app_step(workspace, setup(fixture_db, **changed), said.append)
     return outcome, "\n".join(said)
 
 
-def test_a_running_app_is_restarted_so_it_runs_24_hours_from_now(fixture_db):
-    workspace = FakeWorkspace(fixture_db, running=True)
+def test_a_running_app_started_less_than_restart_after_hours_ago_is_left_running_and_the_output_says_why(fixture_db):
+    workspace = FakeWorkspace(fixture_db, running=True, started=NOW - dt.timedelta(hours=11, minutes=59), health_after=3)
+
+    outcome, said = app_step(workspace, fixture_db)
+
+    assert outcome.state == "passed", outcome
+    assert [call for call in workspace.calls if call[0] != "health"] == []
+    assert workspace.calls.count(("health", URL)) == 3
+    assert ("   It was running, and it last started or was deployed at 20:01 UTC on October 24, 2026, 11 hours and "
+            "59 minutes ago. That is less than the 12 hours in [demo_ready] restart_after_hours, so I left it "
+            "running. The platform stops it at 20:01 UTC on October 25, 2026, 24 hours after that start.") in said
+    assert "GET /api/health answered after " in said and "within the 900-second limit" in said
+    assert outcome.summary.startswith("I left it running, since it last started 11 hours and 59 minutes ago. It "
+                                      "answered its health route after ")
+
+
+def test_a_running_app_that_last_started_restart_after_hours_ago_or_earlier_is_restarted_and_the_output_says_why(fixture_db):
+    workspace = FakeWorkspace(fixture_db, running=True, started=NOW - dt.timedelta(hours=12), health_after=3)
 
     outcome, said = app_step(workspace, fixture_db)
 
     assert outcome.state == "passed", outcome
     assert [call for call in workspace.calls if call[0] != "health"] == [("stop", "strata"), ("start", "strata")]
-    assert "I restarted it, so it runs for 24 hours from now." in said
+    assert workspace.calls[2:] == [("health", URL)] * 3
+    assert ("   It was running, and it last started or was deployed at 20:00 UTC on October 24, 2026, 12 hours ago. "
+            "That is at least the 12 hours in [demo_ready] restart_after_hours, so I restarted it, and it runs for 24 "
+            "hours from now.") in said
+    assert "within the 900-second limit" in said
+    assert outcome.summary.startswith("I restarted it, since it last started 12 hours ago. It answered its health "
+                                      "route after ")
 
 
-def test_an_app_that_never_answers_its_health_route_fails_after_the_timeout(fixture_db):
-    outcome, _ = app_step(FakeWorkspace(fixture_db, healthy=False), fixture_db)
+def test_a_running_app_whose_last_start_the_apps_api_does_not_give_is_restarted(fixture_db):
+    workspace = FakeWorkspace(fixture_db, running=True, started=None)
 
-    timeout = load_thresholds().value("demo_ready.health_timeout_seconds")
+    outcome, said = app_step(workspace, fixture_db)
+
+    assert outcome.state == "passed", outcome
+    assert [call for call in workspace.calls if call[0] != "health"] == [("stop", "strata"), ("start", "strata")]
+    assert ("   It was running, and the Apps API gave no time for its last start or deploy, so I restarted it, and it "
+            "runs for 24 hours from now.") in said
+
+
+def test_a_stopped_app_is_started_whenever_it_last_ran_and_the_output_says_why(fixture_db):
+    workspace = FakeWorkspace(fixture_db, running=False, started=NOW - dt.timedelta(hours=1), health_after=3)
+
+    outcome, said = app_step(workspace, fixture_db)
+
+    assert outcome.state == "passed", outcome
+    assert [call for call in workspace.calls if call[0] != "health"] == [("start", "strata")]
+    assert workspace.calls[1:] == [("health", URL)] * 3
+    assert "   The app strata was stopped, so I started it. It runs for 24 hours from now." in said
+    assert "within the 900-second limit" in said
+    assert outcome.summary.startswith("I started it, since it was stopped. It answered its health route after ")
+
+
+@pytest.mark.parametrize(("running", "started", "done"), [
+    (True, EARLIER_THIS_MORNING, "I left it running, since it last started three hours ago."),
+    (True, NOW - dt.timedelta(hours=20), "I restarted it, since it last started 20 hours ago."),
+    (False, NOW - dt.timedelta(hours=30), "I started it, since it was stopped."),
+], ids=["left running", "restarted", "started"])
+def test_in_each_case_the_step_waits_for_health_up_to_the_timeout_and_its_message_names_the_last_answer(
+        fixture_db, running, started, done):
+    clock = Clock()
+    workspace = FakeWorkspace(fixture_db, running=running, started=started, healthy=False)
+
+    outcome, _ = app_step(workspace, fixture_db, clock=clock)
+
     assert outcome.state == "failed"
-    assert outcome.summary.startswith(f"The app did not answer GET /api/health within {timeout} seconds.")
-    assert "502" in outcome.summary
+    assert outcome.summary == (f"{done} Then it did not answer GET /api/health within 900 seconds. The last try said: "
+                               "HTTP Error 502: Bad Gateway")
+    # It asked every five seconds until 900 seconds had passed, and no longer.
+    assert 900 <= clock.now <= 900 + 2 * APP_LIMITS["health_poll_seconds"]
+    assert workspace.calls.count(("health", URL)) >= 900 // (APP_LIMITS["health_poll_seconds"] + 2)
 
 
 def test_an_app_that_does_not_run_strata_s_code_is_never_started_or_stopped(fixture_db):
@@ -273,6 +342,28 @@ def test_a_health_route_that_answers_another_status_is_said_in_words(fixture_db)
 
     assert outcome.state == "failed"
     assert outcome.summary.endswith("The last try said: it answered with the status starting.")
+
+
+def test_the_thresholds_file_restarts_an_app_after_12_hours_and_waits_longer_than_the_measured_restart():
+    """Ticket 77: on October 26, 2026 a restart of the App took about eight and a half minutes, from its last 200 at
+    09:39:47 UTC to the next at 09:48:12 (docs/workspace-catchup.md, ticket 48, step 2), against a 300-second wait.
+    Each value's comment names where it comes from."""
+    section = (ROOT / "config" / "thresholds.toml").read_text().split("[demo_ready]\n")[1].split("\n[")[0]
+    comments, above = {}, []
+    for line in section.splitlines():
+        if line.startswith("#"):
+            above.append(line.lstrip("# "))
+        elif "=" in line:
+            comments[line.split("=")[0].strip()] = " ".join(above)
+            above = []
+    limits = load_thresholds()
+    measured = (dt.datetime(2026, 10, 26, 9, 48, 12) - dt.datetime(2026, 10, 26, 9, 39, 47)).total_seconds()
+
+    assert limits.value("demo_ready.restart_after_hours") == 12
+    assert limits.value("demo_ready.health_timeout_seconds") == 900 > measured
+    assert "eight and a half minutes" in comments["health_timeout_seconds"]
+    assert "docs/workspace-catchup.md" in comments["health_timeout_seconds"]
+    assert "24 hours after each start or deploy" in comments["restart_after_hours"]
 
 
 # ── 2. Genie ─────────────────────────────────────────────────────────────
@@ -438,9 +529,18 @@ def test_two_runs_in_a_row_both_succeed_and_the_second_leaves_nothing_different(
     (first_code, first), (second_code, second) = two_runs["first"], two_runs["second"]
 
     assert (first_code, second_code) == (0, 0), second
-    assert "The app strata runs now, and was stopped before." in first
+    assert "6. What changed on the workspace.\n   The app strata runs now, and was stopped before.\n   Genie" in first
+    assert "less than a minute ago. That is less than the 12 hours in [demo_ready] restart_after_hours, so I left it running." in second
     assert "6. What changed on the workspace.\n   No changes." in second
     assert first.rstrip().splitlines()[-1] == second.rstrip().splitlines()[-1] == "Strata is ready for the demo."
+
+
+def test_a_restart_is_listed_as_a_change_with_the_time_the_app_started_again():
+    app = {"description": "Strata", "running": True, "source": "/Workspace/strata-app", "url": URL}
+    before = {("apps", "strata"): {**app, "started": NOW - dt.timedelta(hours=20)}}
+    after = {("apps", "strata"): {**app, "started": NOW}}
+
+    assert command().app_changes(before, after) == ["The app strata started again at 08:00 UTC on October 25, 2026."]
 
 
 # ── Demo day after P156634 closed ────────────────────────────────────────
@@ -603,6 +703,31 @@ def test_the_readme_documents_the_command_its_dry_run_and_the_last_line_it_print
     assert "    uv run python ops/demo/ready.py --fresh-workspace\n" in section
     assert f"`{out.rstrip().splitlines()[-1]}`" in section
     assert "`No changes.`" in section
+    # When it restarts the app (ticket 77): only a running app whose last start or deploy is restart_after_hours old.
+    first_step = section.split("\n1. ")[1].split("\n2. ")[0]
+    assert "`demo_ready.restart_after_hours`" in first_step and "`demo_ready.health_timeout_seconds`" in first_step
+    assert "leaves it running" in first_step
+
+
+# ── The live adapter ─────────────────────────────────────────────────────
+
+def test_the_live_adapter_takes_the_app_s_last_start_or_deploy_from_its_active_deployment_s_times():
+    """The Apps API's App object names no start time. Its active deployment has a create_time (a deploy makes a new
+    one) and an update_time, as ISO 8601 strings; a start runs that deployment again (the SDK's apps.start). The
+    later of the two is the last start or deploy, in UTC, and an app with no active deployment has none."""
+    from types import SimpleNamespace
+
+    def app(**times):
+        return SimpleNamespace(active_deployment=SimpleNamespace(**{"create_time": None, "update_time": None, **times}))
+
+    last_start = live_adapter().last_start
+
+    assert last_start(app(create_time="2026-10-26T10:25:31Z", update_time="2026-10-26T10:33:02.481Z")) == \
+        dt.datetime(2026, 10, 26, 10, 33, 2, 481000, tzinfo=dt.UTC)
+    assert last_start(app(create_time="2026-10-26T10:25:31Z")) == dt.datetime(2026, 10, 26, 10, 25, 31, tzinfo=dt.UTC)
+    assert last_start(app(create_time="2026-10-26T12:25:31+02:00")) == dt.datetime(2026, 10, 26, 10, 25, 31, tzinfo=dt.UTC)
+    assert last_start(app()) is None
+    assert last_start(SimpleNamespace(active_deployment=None)) is None
 
 
 # ── The live listing ─────────────────────────────────────────────────────

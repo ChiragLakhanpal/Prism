@@ -10,10 +10,12 @@ and the browser sign-in the wizard saved under the Databricks CLI profile that o
 the app's health route needs. It lists the workspace first, then, in order:
 
 1. The app. It finds the app ops/dayone/dayone.toml names and leaves it alone unless it runs Strata's code from
-   ops/app/deploy_app.py's folder. It starts a stopped app, and restarts a running one, because an app stops 24
-   hours after each start or deploy (docs/PLAN.md section 16). Then it asks GET /api/health until the app answers,
-   for at most [demo_ready] health_timeout_seconds in config/thresholds.toml. When day-one test 6 chose the Container
-   Apps copy for reviewers, it says that no command checks that copy yet.
+   ops/app/deploy_app.py's folder. It starts a stopped app. An app stops 24 hours after each start or deploy
+   (docs/PLAN.md section 16), so it restarts a running app whose last start or deploy, as the Apps API reports it,
+   was [demo_ready] restart_after_hours ago or earlier, and leaves a more recent one running, since a restart takes
+   about eight and a half minutes (ticket 77). It says which of the three it did and why. Then it asks GET
+   /api/health until the app answers, for at most [demo_ready] health_timeout_seconds in config/thresholds.toml.
+   When day-one test 6 chose the Container Apps copy for reviewers, it says that no command checks that copy yet.
 2. The SQL warehouse and Genie. It asks the ask_genie question that config/slice.toml's [demo_plan] names, through
    the tool registry as the env file's token, which starts a stopped warehouse first (ticket 33). Then it asks again,
    and that call must answer within [demo_ready] genie_first_call_seconds.
@@ -108,6 +110,8 @@ class Setup:
     fixture_db: Path = FIXTURE_DB
     thresholds: Thresholds | None = None
     today: dt.date | None = None
+    # The time now, in UTC, which the app step measures the app's last start or deploy against.
+    now: Callable[[], dt.datetime] = field(default=lambda: dt.datetime.now(dt.UTC))
     clock: Callable[[], float] = time.monotonic
     sleep: Callable[[float], None] = time.sleep
     # Which path day-one test 6 chose for reviewers: "default" (the Databricks App) or "gap fill" (a Container Apps
@@ -175,12 +179,31 @@ def questions() -> dict[str, dict]:
 
 # ── 1. The app ───────────────────────────────────────────────────────────
 
+LIFETIME = dt.timedelta(hours=24)  # the platform stops an app 24 hours after each start or deploy (PLAN.md 16)
+
+
+def at(moment: dt.datetime) -> str:
+    moment = moment.astimezone(dt.UTC)
+    return f"{moment:%H:%M} UTC on {dayone.long_date(moment.date())}"
+
+
+def ago(span: dt.timedelta) -> str:
+    """How long ago, in hours and minutes, such as "three hours and five minutes ago"."""
+    hours, minutes = divmod(max(0, int(span.total_seconds() // 60)), 60)
+    if not hours and not minutes:
+        return "less than a minute ago"
+    parts = [dayone.count_words(hours, "hour")] if hours else []
+    parts += [dayone.count_words(minutes, "minute")] if minutes else []
+    return f"{' and '.join(parts)} ago"
+
+
 def app_step(workspace, setup: Setup, say) -> Outcome:
     step = "the app"
     name = dayone.load_config()["names"]["app"]
     limits = setup.limits()
     timeout = int(limits.value("demo_ready.health_timeout_seconds"))
     poll = float(limits.value("demo_ready.health_poll_seconds"))
+    restart_after = float(limits.value("demo_ready.restart_after_hours"))
     say(f"1. The app {name}.")
     app = workspace.app(name)
     if app is None:
@@ -191,13 +214,31 @@ def app_step(workspace, setup: Setup, say) -> Outcome:
         return Outcome(step, FAILED, f"The app {name} runs {source or 'nothing yet'}, not Strata's code from the "
                                      f"{deploy_app.FOLDER} folder, so I left it alone. Deploy Strata with "
                                      "ops/app/deploy_app.py, or set names.app in ops/dayone/dayone.toml.")
-    if app.get("running"):
+    # Which of three things to do, and why: start a stopped app, leave running one that started recently, or restart
+    # one that started restart_after_hours ago or earlier, or whose start the Apps API does not give.
+    last_start = app.get("started")
+    age = None if last_start is None else setup.now() - last_start
+    since = "" if age is None else (f"   It was running, and it last started or was deployed at {at(last_start)}, "
+                                    f"{ago(age)}. That is")
+    if not app.get("running"):
+        workspace.start_app(name)
+        say(f"   The app {name} was stopped, so I started it. It runs for 24 hours from now.")
+        done = "I started it, since it was stopped"
+    elif age is not None and age < dt.timedelta(hours=restart_after):
+        say(f"{since} less than the {restart_after:g} hours in [demo_ready] restart_after_hours, so I left it "
+            f"running. The platform stops it at {at(last_start + LIFETIME)}, 24 hours after that start.")
+        done = f"I left it running, since it last started {ago(age)}"
+    else:
         workspace.stop_app(name)
         workspace.start_app(name)
-        say("   It was running. I restarted it, so it runs for 24 hours from now.")
-    else:
-        workspace.start_app(name)
-        say(f"   The app {name} was stopped, so I started it.")
+        if age is None:
+            say("   It was running, and the Apps API gave no time for its last start or deploy, so I restarted it, "
+                "and it runs for 24 hours from now.")
+            done = "I restarted it, since the Apps API gave no time for its last start"
+        else:
+            say(f"{since} at least the {restart_after:g} hours in [demo_ready] restart_after_hours, so I restarted "
+                "it, and it runs for 24 hours from now.")
+            done = f"I restarted it, since it last started {ago(age)}"
     started, last = setup.clock(), "no answer"
     while True:
         try:
@@ -208,8 +249,8 @@ def app_step(workspace, setup: Setup, say) -> Outcome:
         except Exception as error:  # a container still starting answers 502, or the sign-in fails
             last = one_line(error)
         if setup.clock() - started >= timeout:
-            return Outcome(step, FAILED, f"The app did not answer GET /api/health within {timeout} seconds. The "
-                                         f"last try said: {last}")
+            return Outcome(step, FAILED, f"{done}. Then it did not answer GET /api/health within {timeout} seconds. "
+                                         f"The last try said: {last}")
         setup.sleep(poll)
     took = seconds(setup.clock() - started)
     say(f"   GET /api/health answered after {took}, within the {timeout}-second limit, at {app['url']}.")
@@ -217,7 +258,7 @@ def app_step(workspace, setup: Setup, say) -> Outcome:
         return Outcome(step, FAILED, "Day-one test 6 chose a Container Apps copy of the app for reviewers, and no "
                                      "command deploys or checks that copy yet, so I could not check the address "
                                      "reviewers open.")
-    return Outcome(step, PASSED, f"It answered its health route after {took}.")
+    return Outcome(step, PASSED, f"{done}. It answered its health route after {took}.")
 
 
 # ── 2. The SQL warehouse and Genie ───────────────────────────────────────
@@ -537,7 +578,8 @@ def home_step(workspace, setup: Setup, say, kept: dict) -> Outcome:
 # ── The run ──────────────────────────────────────────────────────────────
 
 def app_changes(before: dict, after: dict) -> list[str]:
-    """What changed about each app between the two listings, in words: whether it runs, and anything else."""
+    """What changed about each app between the two listings, in words: whether it runs, whether it started again
+    while it ran, and anything else."""
     lines = []
     for kind, name in sorted(key for key in set(before) | set(after) if key[0] == "apps"):
         was, now = before.get((kind, name)), after.get((kind, name))
@@ -547,7 +589,10 @@ def app_changes(before: dict, after: dict) -> list[str]:
         if bool(was.get("running")) != bool(now.get("running")):
             lines.append(f"The app {name} runs now, and was stopped before." if now.get("running")
                          else f"The app {name} is stopped now, and was running before.")
-        lines += [f"The app {name}'s {field} changed." for field in sorted((set(was) | set(now)) - {"running"})
+        elif now.get("running") and was.get("started") != now.get("started"):
+            lines.append(f"The app {name} started again at {at(now['started'])}." if now.get("started")
+                         else f"The app {name} started again.")
+        lines += [f"The app {name}'s {field} changed." for field in sorted((set(was) | set(now)) - {"running", "started"})
                   if was.get(field) != now.get(field)]
     return lines
 
