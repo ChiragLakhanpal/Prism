@@ -13,12 +13,15 @@ a made-up one of the same shape, with a space after the "@". No value here is a 
 """
 
 import datetime as dt
+import json
 import random
+import shutil
 
 import pytest
+from nightly_helpers import clock
 
 from strata.config import load_quality_checks
-from strata.lakehouse import contacts, quality
+from strata.lakehouse import bronze, contacts, nightly, quality
 from strata.lakehouse.catalog import table_definitions
 from strata.lakehouse.engine import DuckDBEngine
 from strata.lakehouse.silver import notices as notices_module
@@ -175,3 +178,46 @@ def test_the_check_finds_nothing_in_what_either_removal_leaves_of_a_thousand_mad
     assert contacts_left(notices, texts) > 300  # the texts carry what the check looks for
     assert contacts_left(notices, from_bronze) == 0
     assert contacts_left(notices, from_silver) == 0
+
+
+@pytest.fixture
+def workspace_before_the_fix(fixture_db, tmp_path):
+    """A writable copy of the fixture database holding what the workspace held on October 26, 2026: a notices
+    page bronze kept after the removal as it was then, and the silver row read from it, with a fax number left."""
+    target = tmp_path / "fixture.duckdb"
+    shutil.copy(fixture_db, target)
+    fetched = dt.datetime(2026, 10, 20, 6, 54, tzinfo=dt.UTC)
+    kept = f"Tel: {R} Fax: 99-9-9999999 Email: {R}"
+    page = {"procnotices": [{"id": "OP-made-up-76", "notice_type": "Invitation for Bids", "noticedate": "2009-06-01",
+                             "project_id": "P156634", "notice_text": f"<p>The works are in Kisumu.</p><p>{kept}</p>"}]}
+    with DuckDBEngine.open(target) as engine:
+        engine.insert_rows("strata.bronze.api_pages", bronze.COLUMNS, [(
+            "notices", "KE", "made-up request", "made-up-page", json.dumps(page), 1, 1, dt.date(2009, 6, 1), 2,
+            fetched, fetched.date())])
+        engine.insert_rows(NOTICES.table, ("notice_id", "notice_type", "notice_date", "project_id", "notice_text",
+                                           "contact_details_removed", "page_hash", "fetched_at", "public_from"),
+                           [("OP-made-up-76", "Invitation for Bids", dt.date(2009, 6, 1), "P156634",
+                             f"The works are in Kisumu.\n{kept}", True, "made-up-page", fetched, dt.date(2009, 6, 1))])
+        yield engine
+
+
+def test_the_flagged_pages_read_again_lose_their_numbers_and_the_check_then_finds_none(workspace_before_the_fix):
+    """The live step's route before ticket 75 lands: take the rows of the pages the check flags out of
+    strata.silver.notices, so the next bronze_to_gold reads those pages again from bronze, with the fixed removal."""
+    engine = workspace_before_the_fix
+    night = dt.datetime(2026, 10, 27, 7, 0, tzinfo=dt.UTC)
+
+    before = notices_module.contacts_left(engine)
+    removed = notices_module.forget_pages_with_contacts_left(engine)
+    nightly.main(["--task", "bronze_to_gold", "--run-id", "night-76", "--src", "src"], engine,
+                 fetch=lambda source, engine: (), clock=clock(night, step=dt.timedelta(seconds=1)))
+
+    assert (before.notices, before.pages, removed) == (1, 1, 1)
+    assert notices_module.contacts_left(engine) == notices_module.Flagged(0, 0)
+    assert engine.run("SELECT notice_text, contact_details_removed FROM strata.silver.notices "
+                      "WHERE notice_id = :id", {"id": "OP-made-up-76"}).rows == (
+        (f"The works are in Kisumu.\nTel: {R} Fax: {R} Email: {R}", True),)
+    assert engine.run("SELECT found FROM strata.ops.quality_checks WHERE run_id = :run AND check_kind = :kind",
+                      {"run": "night-76", "kind": "contacts_left"}).rows == ((0,),)
+    assert engine.run("SELECT notice_type, project_id FROM strata.gold.notice WHERE notice_id = :id",
+                      {"id": "OP-made-up-76"}).rows == (("Invitation for Bids", "P156634"),)
