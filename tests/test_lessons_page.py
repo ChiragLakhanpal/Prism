@@ -698,3 +698,19 @@ def test_as_of_a_date_the_library_shows_each_lesson_at_the_version_current_then(
     statements = [card["statement"] for card in page["library"]["lessons"]]
     assert "Base works estimates on market rates to avoid rebidding" in statements
     assert story_of.NARROWED not in statements
+
+
+def test_a_filter_or_page_change_as_of_a_date_keeps_that_date(story):
+    """Ticket 40: the as-of banner says the page uses only what was disclosed by its date, so the library's own route
+    (a filter or page change) and the two-versions view keep the date the page loaded with."""
+    on_the_28th = story.get("/api/lessons/library", asof="2026-10-28", status="current").json()
+    assert on_the_28th == story.page(asof="2026-10-28", status="current").json()["library"]
+    assert story_of.NARROWED not in [card["statement"] for card in on_the_28th["lessons"]]
+
+    # Both lessons were decided on October 27, so the day before holds neither of them.
+    assert story.get("/api/lessons/library", asof="2026-10-26").json()["lessons"] == []
+
+    later = story.get(f"/api/lessons/{story_of.REBIDDING_LESSON}/versions", asof="2026-10-28", **{"from": 1, "to": 2})
+    assert (later.status_code, later.json()["code"]) == (404, "unknown_version")
+    drawer = story.get("/api/evidence", id=f"versions:{story_of.REBIDDING_LESSON}:1:2", asof="2026-10-28")
+    assert drawer.status_code == 404

@@ -19,8 +19,8 @@ so the tool reads the decided versions in strata.ops.lesson_versions and the evi
   restated, then one that rests on the ICR alone); then by how many quotes it rests on. strata.ops.
   lesson_uses, which counts how often each lesson was cited, is never read here.
 
-The call's view (staff, piu or public) is returned with the result but not yet applied: lessons in the
-library are for every view, and ticket 40 applies each view's rules.
+The call's view (staff, piu or public) is returned with the result. It does not change the result: lessons in
+the library are for every view (the roles file's [views], ticket 40).
 """
 
 from __future__ import annotations

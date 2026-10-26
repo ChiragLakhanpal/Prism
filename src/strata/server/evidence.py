@@ -70,7 +70,7 @@ def _plan_row(engine: Engine, key: str, as_of: dt.date) -> dict | None:
 
 def _versions(engine: Engine, key: str, as_of: dt.date) -> dict | None:
     """Two versions of a lesson (versions:{lesson_id}:{a}:{b}; ticket 39's "See both versions"), as the Lessons
-    page's server builds them (strata.knowledge.lessons.page.LessonsPage.versions)."""
+    page's server builds them (strata.knowledge.lessons.page.LessonsPage.versions), as of the page's date."""
     from strata.config import load_roles
     from strata.knowledge.lessons.page import LessonsPage
     from strata.knowledge.lessons.review import LessonReview, Refused
@@ -80,7 +80,7 @@ def _versions(engine: Engine, key: str, as_of: dt.date) -> dict | None:
     if not (first.isdigit() and last.isdigit()):
         return None
     try:
-        found = LessonsPage(LessonReview(load_roles())).versions(engine, lesson_id, int(first), int(last))
+        found = LessonsPage(LessonReview(load_roles())).versions(engine, lesson_id, int(first), int(last), as_of)
     except Refused:
         return None
     return {"kind": "versions", "row": found}

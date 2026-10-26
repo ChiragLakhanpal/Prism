@@ -26,7 +26,7 @@ import { useLoad } from "../lib/load";
 import { newKey } from "../lib/drafts";
 import { navigate } from "../lib/router";
 import { endingOf, sendUpload, uploadHref, type UploadForm, type UploadRefusal } from "../lib/uploads";
-import { viewOf } from "../lib/view";
+import { previewReason, viewOf } from "../lib/view";
 
 const words = copy.upload;
 const short = (iso: string) => formatDate(iso, { style: "table" });
@@ -272,7 +272,7 @@ function UploadCard({ form, preview }: { form: UploadForm; preview: boolean }) {
               {words.submit}
             </Button>
             <p id={`${id}-feedforward`} className="text-caption text-ink-muted">
-              {preview ? words.holdPreview : words.feedforward}
+              {preview ? (previewReason("upload_and_check") ?? words.holdPreview) : words.feedforward}
             </p>
           </div>
         </form>

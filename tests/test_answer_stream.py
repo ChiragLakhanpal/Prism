@@ -605,14 +605,15 @@ class EverySentenceFollows:
         return [Judgement(question.index, True, "It follows.") for question in questions]
 
 
-def ask_with_tools(fixture_db, agent, tools, judge=None):
+def ask_with_tools(fixture_db, agent, tools, judge=None, **body):
     @contextmanager
     def engine_for(viewer):
         with DuckDBEngine.open(fixture_db, read_only=True) as engine:
             yield engine
 
     return events(ask_with(create_app(runner=answer_runner(lambda turn: agent, engine_for, tools=tools,
-                                                           today=lambda: TODAY), engine_for=engine_for, judge=judge)))
+                                                           today=lambda: TODAY), engine_for=engine_for, judge=judge),
+                           **body))
 
 
 def test_a_number_quoted_from_a_table_summary_is_not_backed_by_it(fixture_db):
@@ -709,7 +710,8 @@ def test_a_past_range_the_agent_states_in_strata_s_words_is_backed_by_find_compa
     agent = CallsThenAnswers([("find_comparables", {"step_reference": "KE-NWWDA-541055-CW-RFB", "as_of": "2026-10-22"})],
                              answer)
 
-    parsed = ask_with_tools(fixture_db, agent, load_tools())
+    # The page's as-of date is the one every tool call runs at (ticket 40): the past range's values are as of October 22.
+    parsed = ask_with_tools(fixture_db, agent, load_tools(), asof="2026-10-22")
 
     assert [sentence["text"].split(" ")[:3] for sentence in of(parsed, "sentence")] == [
         ["The", "middle", "half"], ["8", "in", "10"], [str(within), "of", str(truth["comparables"])]]

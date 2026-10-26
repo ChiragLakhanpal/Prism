@@ -1,3 +1,5 @@
+import { withPageParams } from "./view";
+
 // Calls to Strata's server. Paths start with /api; in development Vite passes them on to the
 // server, and in the Databricks App the server serves them itself. Each call carries the
 // viewer's session through the App's proxy, so nothing here holds a token.
@@ -16,8 +18,9 @@ export class ApiError extends Error {
   }
 }
 
+// Every call carries the page's ?view= and ?asof= (ticket 40), which the server applies; the error names the path asked.
 async function call<T>(path: string, init: RequestInit): Promise<T> {
-  const response = await fetch(path, { ...init, headers: { Accept: "application/json", ...init.headers } });
+  const response = await fetch(withPageParams(path), { ...init, headers: { Accept: "application/json", ...init.headers } });
   if (!response.ok) {
     const body = (await response.json().catch(() => ({}))) as ErrorBody;
     throw new ApiError(response.status, path, body && typeof body === "object" ? body : {});
@@ -60,6 +63,16 @@ export type Me = {
   own_view?: "staff" | "piu";
   // The language of answers and drafts in effect, and where it came from (ticket 42).
   language?: import("./lang").WorkingLanguage;
+  // Ticket 40: the views the popover offers, the view and as-of date the server applied, and what that view keeps
+  // (src/strata/server/app.py, me). lib/view.ts keeps them as the page's applied view.
+  views?: import("./view").View[];
+  applied?: import("./view").AppliedView["applied"];
+  preview_agency?: import("./view").AppliedView["preview_agency"];
+  tabs?: string[];
+  hidden?: string[];
+  capabilities?: string[];
+  reasons?: Record<string, string>;
+  asof?: import("./view").AppliedView["asof"];
 };
 
 // One page of a list the server searches and pages (ticket 21): the rows shown, and the range and
@@ -379,6 +392,8 @@ export type CheckPlanResult = {
   } | null;
   // Ticket 21: the baseline saved for this agency's plans, as the view may see it.
   baseline?: Baseline | null;
+  // Ticket 40: "view_public_active" when the public view left out the signals of a project still under way.
+  withheld?: "view_public_active" | null;
 };
 
 // A package as its newest public Procurement Plan row states it (find_comparables' package field,

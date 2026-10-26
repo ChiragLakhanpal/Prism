@@ -193,8 +193,6 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: DraftStore 
             return refused(401, "no_identity")
         if body.kind not in kinds.kinds:
             return refused(422, "unknown_kind")
-        if body.view != STAFF:
-            return refused(403, "preview", capability="draft", copy="preview")
         if kinds.kinds[body.kind].staff_only and not access.is_staff(viewer):
             return refused(403, "not_staff")
         if kinds.kinds[body.kind].agency_only and access.agency(viewer) is None:
@@ -397,8 +395,6 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: DraftStore 
     def list_drafts(view: VIEWS = "staff", viewer: Viewer = Depends(current_viewer)):
         if not viewer.user_id:
             return refused(401, "no_identity")
-        if view != STAFF:
-            return refused(403, "preview", capability="read", copy="preview", view=view)
 
         def read():
             team = access.team(viewer)
@@ -502,8 +498,6 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: DraftStore 
     def open_draft(draft_id: str, view: VIEWS = "staff", viewer: Viewer = Depends(current_viewer)):
         if not viewer.user_id:
             return refused(401, "no_identity")
-        if view != STAFF:
-            return refused(403, "preview", capability="read", copy="preview", view=view)
 
         def read():
             saved = readable(viewer, draft_id)
@@ -522,8 +516,6 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: DraftStore 
             saved = readable(viewer, draft_id)
             if saved is None:
                 return JSONResponse({"code": "unknown_draft"}, status_code=404)
-            if body.view != STAFF:
-                return refused(403, "preview", capability=rule.capability, copy="preview")
             if not is_author(viewer, saved.author_id):
                 return refused(403, "not_author")
             state = saved.state.state
@@ -565,15 +557,13 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: DraftStore 
 
     # ── What people fill, and the reports they keep (ticket 36) ──────────
 
-    def fillable(viewer: Viewer, draft_id: str, view: str, capability: str):
-        """The draft its author may change now, or the refusal: a preview (403), not the author (403), or a state
+    def fillable(viewer: Viewer, draft_id: str):
+        """The draft its author may change now, or the refusal: not the author (403), or a state
         where nothing changes (409: exported, discarded). Owners, ratings and the form stay open in Draft and in
         Checked by you, and lock at export (the 36 brief, 6.2)."""
         saved = readable(viewer, draft_id)
         if saved is None:
             return JSONResponse({"code": "unknown_draft"}, status_code=404)
-        if view != STAFF:
-            return refused(403, "preview", capability=capability, copy="preview")
         if not is_author(viewer, saved.author_id):
             return refused(403, "not_author")
         if saved.state.state not in runtime.OPEN_STATES:
@@ -585,7 +575,7 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: DraftStore 
             return refused(401, "no_identity")
 
         def act():
-            saved = fillable(viewer, draft_id, view, "fill")
+            saved = fillable(viewer, draft_id)
             if isinstance(saved, JSONResponse):
                 return saved
             module = runtime.writer_module(kinds.kinds[saved.kind])
@@ -621,10 +611,10 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: DraftStore 
     reason_max = runtime.reason_max_chars()
 
     def choice_check(viewer: Viewer, draft_id: str, row_key: str, body: LessonChoiceRequest):
-        """The draft and what the choice changes, or the refusal: not found, a preview, not the author, a state where
-        nothing changes, a choice the row does not offer (422), or versions other than the ones the author saw (409
-        stale, with the draft as it is now)."""
-        saved = fillable(viewer, draft_id, body.view, "choose")
+        """The draft and what the choice changes, or the refusal: not found, not the author, a state where nothing
+        changes, a choice the row does not offer (422), or versions other than the ones the author saw (409 stale, with
+        the draft as it is now). A preview never reaches this: the roles file's [views] refuses it (ticket 40)."""
+        saved = fillable(viewer, draft_id)
         if isinstance(saved, JSONResponse):
             return saved
         with engine_for(viewer) as engine:

@@ -426,11 +426,13 @@ def test_a_preview_cannot_check_or_export_and_says_which_capability_and_why(draf
     _, draft_id = draft_review_notes(app)
     act(app, draft_id, "check", "draft")
 
-    for action, expected, capability in (("check", "draft", "check"), ("export", "checked", "export")):
+    # The capability and the reason's copy key are the roles file's [views] (ticket 40), so the draft bar's held
+    # button and the server say the same sentence.
+    for action, expected, capability in (("check", "draft", "mark_checked"), ("export", "checked", "export_draft")):
         refused = act(app, draft_id, action, expected, view=view)
         assert refused.status_code == 403
-        assert {key: refused.json()[key] for key in ("error", "capability", "copy")} == {
-            "error": "preview", "capability": capability, "copy": "preview"}
+        assert {key: refused.json()[key] for key in ("error", "capability", "copy_key")} == {
+            "error": "preview", "capability": capability, "copy_key": "draft.bar.hold.preview"}
     assert call(app, "GET", f"/api/drafts/{draft_id}", ANA).json()["state"] == "checked"
 
 
@@ -559,9 +561,10 @@ def test_a_preview_lists_no_drafts_and_says_why(drafting):
     app = drafting()
     draft_review_notes(app)
 
+    # Drafts are private to their team, so no preview keeps them (the roles file's [views], ticket 40).
     for view in ("piu", "public"):
         answer = call(app, "GET", "/api/drafts", ANA, params={"view": view})
-        assert (answer.status_code, answer.json()["error"], answer.json()["view"]) == (403, "preview", view)
+        assert (answer.status_code, answer.json()["error"], answer.json()["view"]) == (404, "not_in_view", view)
 
 
 def test_check_a_plan_finds_the_team_s_open_draft_on_the_same_plan_version(drafting, clock):

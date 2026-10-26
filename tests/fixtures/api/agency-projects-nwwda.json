@@ -1,0 +1,34 @@
+{
+  "agency": {
+    "name": "Northern Water Works Development Agency",
+    "short_name": "NWWDA",
+    "agency_id": "northern-water-works-development-agency"
+  },
+  "as_of": "2026-10-23",
+  "state": "ok",
+  "projects": [
+    {
+      "project_id": "P156634",
+      "project_name": "Water and Sanitation Development Project",
+      "display_name": "Water and Sanitation Development",
+      "plan": {
+        "plan_date": "2026-10-09",
+        "disclosed_on": "2026-10-09",
+        "agency_id": "northern-water-works-development-agency"
+      },
+      "counts": {
+        "activities": 9,
+        "checked": 9,
+        "not_fully_checked": 0,
+        "needs_a_look": 1,
+        "watch": 2,
+        "data_note": 3,
+        "signal": 3,
+        "marked": 6,
+        "unmarked": 3
+      },
+      "withheld": null,
+      "abstention": null
+    }
+  ]
+}

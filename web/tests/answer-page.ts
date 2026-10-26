@@ -3,7 +3,7 @@
 // panel, its markers and the drawer. answer.spec.ts runs these against the production build and
 // dev.spec.ts against the development build.
 import type { Page, Request } from "@playwright/test";
-import { expect, mockApi, recorded } from "./mocked";
+import { expect, mockApi, recorded, viewAnswers } from "./mocked";
 
 export const QUESTION = "Why were works contracts in P130164 advertised again?";
 export const ICR_54 = "strata.gold.passage:31525018/v1/54";
@@ -31,6 +31,7 @@ export async function open(
   });
   await page.setViewportSize({ width, height: 900 });
   await mockApi(page, {
+    ...(await viewAnswers()),
     "/api/me": { body: await recorded("me.json") },
     "/api/freshness": { body: await recorded("freshness.json") },
     "/api/projects/P130164": { body: await recorded("project-p130164.json") },

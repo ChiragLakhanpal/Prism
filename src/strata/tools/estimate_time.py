@@ -39,7 +39,7 @@ record, the plan-date choice and section 4 need, so no comparison and no choice 
   estimate does, since section 2 stands on its own; they are left out only for a package no record holds.
 
 Every number is a tool column at its rounding: days whole, months to one decimal. The browser counts nothing.
-The call's view is returned with the result but not applied until ticket 40.
+The public view gives no time estimate for a package of a project still under way (ticket 40; strata.tools.withheld).
 """
 
 from __future__ import annotations
@@ -63,6 +63,9 @@ from strata.packages import compute
 from strata.lakehouse.engine import EngineError
 from strata.tools.find_comparables import find_comparables, read_package
 from strata.tools.registry import Call, ToolError
+from strata.tools.withheld import WITHHELD, lacks, withheld
+
+ACTIVE_RULE = "time_estimates_on_active_projects"  # the roles file's [views] capability the public view lacks
 
 TOOL = "estimate_time"
 log = logging.getLogger("strata.tools.estimate_time")
@@ -451,14 +454,20 @@ def _thresholds(thresholds) -> dict:
             "min_unseen_packages": int(thresholds.value("time_estimate.min_unseen_packages"))}
 
 
+def _nothing(thresholds, abstention: dict, step_reference: str | None = None) -> dict:
+    """An answer with no estimate and nothing read, for the abstention given."""
+    return {"rows": [], "coverage": {"matched": 0, "used": 0, "not_used": []},
+            "package": {"step_reference": step_reference, "described": None},
+            "comparables": {"n": 0, "signed": 0, "still_open": 0},
+            "estimate": None, "difference": None, "track_record": None, "test_years": [], "plan_dates": None,
+            "comparisons": [], "options": None, "axis_max_months": None, "thresholds": _thresholds(thresholds),
+            "step_dates": None, "sources": _sources(), "records_through": None, "abstention": abstention}
+
+
 def _unknown_upload(call: Call, thresholds) -> dict:
     """The answer for an upload row the viewer may not read, or that does not exist: the same for both, with no
     rows and nothing of the upload."""
-    return {"rows": [], "coverage": {"matched": 0, "used": 0, "not_used": []},
-            "package": {"step_reference": None, "described": None}, "comparables": {"n": 0, "signed": 0, "still_open": 0},
-            "estimate": None, "difference": None, "track_record": None, "test_years": [], "plan_dates": None,
-            "comparisons": [], "options": None, "axis_max_months": None, "thresholds": _thresholds(thresholds),
-            "step_dates": None, "sources": _sources(), "records_through": None, "abstention": {"reason": "unknown_upload"}}
+    return _nothing(thresholds, {"reason": "unknown_upload"})
 
 
 # ── The tool ─────────────────────────────────────────────────────────────
@@ -497,6 +506,12 @@ def estimate_time(call: Call, step_reference: str | None = None, method: str | N
             described_market_approach = described_market_approach or fields.get("market_approach")
             described_review_type = described_review_type or fields.get("review_type")
             described_prequalification = described_prequalification or fields.get("prequalification")
+    # The public view gives no time estimate on a project still under way (the roles file's [views], ticket 40). Only
+    # a view that lacks the capability reads the package to find its project.
+    if step_reference and lacks(call.view, ACTIVE_RULE):
+        package = read_package(call.engine, step_reference, call.as_of)
+        if package is not None and withheld(call, ACTIVE_RULE, package["project_id"]):
+            return _nothing(thresholds, {"reason": WITHHELD, "step_reference": step_reference}, step_reference)
     criteria = {"method": method, "category": category, "market_approach": market_approach, "review_type": review_type,
                 "size_from_usd": size_from_usd, "size_to_usd": size_to_usd, "country": country,
                 "notice_from": notice_from, "notice_to": notice_to}

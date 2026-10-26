@@ -18,7 +18,7 @@
 
 Every route goes through the one access rule (src/strata/server/access.py): only the uploader and their team read an
 upload. Only an officer of an implementing agency's team (config/roles.toml) uploads, and only for a project whose
-record names their agency; a preview of another view uploads nothing (403 preview, upload.hold.preview). The tools
+record names their agency; a preview of another view uploads nothing (the view switch's guard answers 403 preview, upload.holdPreview). The tools
 read an upload only through reader(), which asks the same rule, so no answer, search or other team ever reaches
 one. Uploads are written as the app's own service principal, like the drafts.
 """
@@ -205,8 +205,6 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: UploadStore
             return refused(422, "bad_request", kept=False)
         if not viewer.user_id:
             return refused(401, "no_identity")
-        if view != STAFF:
-            return refused(403, "preview", capability="upload", copy_key="upload.hold.preview")
         agency = access.agency(viewer)
         if agency is None:
             return refused(403, "not_agency_team")

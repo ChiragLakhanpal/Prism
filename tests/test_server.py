@@ -76,12 +76,16 @@ def test_the_identity_route_names_the_viewer_the_app_forwarded():
 
 def test_the_identity_route_says_when_no_one_signed_in():
     response = call(create_app(), "GET", "/api/me")
+    recorded = json.loads((RECORDED / "me.json").read_text())
 
+    # The view switch's part (ticket 40) is the same for anyone in the World Bank staff view: me.json's.
+    views = {key: recorded[key] for key in ("views", "applied", "preview_agency", "tabs", "hidden", "capabilities",
+                                            "reasons", "asof")}
     assert response.json() == {"email": None, "name": None, "signed_in": False, "has_token": False, "staff": False,
-                               "agency": None, "own_view": "staff",
+                               "agency": None, "own_view": "staff", **views,
                                "language": {"code": "en", "source": "default", "saved": None, "team": None,
                                             "link": None, "saved_readable": True,
-                                            "choices": json.loads((RECORDED / "me.json").read_text())["language"]["choices"]}}
+                                            "choices": recorded["language"]["choices"]}}
 
 
 def test_with_no_agent_the_stream_says_so_and_ends():

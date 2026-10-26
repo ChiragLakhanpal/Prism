@@ -57,6 +57,7 @@ import { CheckPill } from "../components/CheckPill";
 import { Fill } from "../components/Fill";
 import { checkPill, PlanCheck, PlanCheckHeader, PlanCheckSkeleton, planSubtitle, type CheckedPlan } from "../components/PlanCheck";
 import { Alert } from "../components/Alert";
+import { ViewBanner } from "../components/ViewBanner";
 import { FreshnessStamp, OneBox, type Freshness } from "../components/BoxBand";
 import { Button } from "../components/Button";
 import { Card, EmptyState } from "../components/Card";
@@ -626,11 +627,19 @@ export const PAGES: GalleryPage[] = [
           <div className="flex max-w-[54rem] flex-col gap-2">
             <Alert state="error">{copy.alerts.noAccess}</Alert>
             <Alert state="error">{copy.alerts.noIdentity}</Alert>
-            <Alert state="info">{copy.alerts.viewPiu}</Alert>
-            <Alert state="info">{copy.alerts.viewPublic}</Alert>
+            {/* The view switch's banners and the address alerts (ticket 40; the 40 brief, 3.4 and 6.3). */}
+            <ViewBanner kind="preview" region={copy.view.banner.previewRegion} link={copy.view.banner.leave} href="#preview">
+              {copy.view.banner.piu(copy.view.agencyInSentence(galleryCopy.sampleAgency, galleryCopy.sampleAgencyShort))}
+            </ViewBanner>
+            <ViewBanner kind="preview" region={copy.view.banner.previewRegion} link={copy.view.banner.leave} href="#preview">
+              {copy.view.banner.public}
+            </ViewBanner>
+            <ViewBanner kind="asof" region={copy.view.banner.asOfRegion} link={copy.view.banner.back} href="#asof">
+              {copy.view.banner.asOf(date(galleryCopy.sampleDate))}
+            </ViewBanner>
             <Alert state="info">{copy.alerts.viewUnknown}</Alert>
-            <Alert state="info">{copy.alerts.asOf(date(galleryCopy.sampleDate))}</Alert>
             <Alert state="info">{copy.alerts.asOfUnreadable}</Alert>
+            <Alert state="info">{copy.alerts.asOfNotPast}</Alert>
           </div>
         ),
       },

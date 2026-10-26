@@ -360,15 +360,74 @@ export const copy = {
   alerts: {
     noAccess: "Your account can't read the data I hold yet; ask the person who shared Strata with you for access.",
     noIdentity: "I can't tell who you are, so I can't read any data; open Strata from its link in the workspace.",
-    viewPiu: "I can't show the implementing agency preview yet, so you are seeing the World Bank staff view.",
-    viewPublic: "I can't show the public preview yet, so you are seeing the World Bank staff view.",
+    // What the address asks for that the server could not apply (the 40 brief, 6.3). The banners for a view and a
+    // date it did apply are under view.banner.
     viewUnknown: "I don't know the view in this link, so you are seeing the World Bank staff view.",
-    // The page's reads take no date yet, but /api/ask does, so the alert says which part uses it.
-    // Ticket 40 replaces it with its as-of banner.
-    asOf: (date: string) => `I can't show this page as of ${date} yet, so it shows today's data. Questions you ask from the box, and sources opened from a link, use ${date}.`,
-    // A project's Connections tab draws its links as of the date, under a project header that shows today's.
-    asOfPart: (date: string) => `The connections below are as of ${date}. The project's header above them shows today's data.`,
+    viewUnknownOfficer: "I don't know the view in this link, so you are seeing your own view.",
     asOfUnreadable: "I can't read the date in this link, so you are seeing today's data.",
+    asOfNotPast: "I can only show past dates, so you are seeing today's data.",
+  },
+
+  // The view switch (ticket 40; the 40 brief, section 6). {agency} is view.agencyInSentence's output.
+  view: {
+    agencyInSentence: (name: string, short: string | null) => (short ? `the ${name} (${short})` : `the ${name}`),
+    // The {view_name} of earlier briefs' preview sentences.
+    name: { piu: "implementing agency", public: "public" },
+    banner: {
+      piu: (agency: string) => `Preview of what an implementing agency officer at ${agency} sees. You are still signed in as yourself.`,
+      public: "Preview of what the public sees. You are still signed in as yourself.",
+      leave: "Leave the preview",
+      previewRegion: "Preview",
+      asOf: (date: string) => `I'm showing this page as of ${date}. I use only what was disclosed by that date.`,
+      // Added after the as-of banner's sentence on the pages that keep today's state (the 35 and 38 briefs).
+      drafts: "I show drafts as they are today, whatever the as-of date.",
+      uploads: "I check uploads against today's records, whatever the as-of date.",
+      packages: "I show your packages and checked plans as they are today, whatever the as-of date.",
+      reviewQueue: "I show the lessons waiting for review as they are today, whatever the as-of date.",
+      passageReports: "I show passage reports as they are today, whatever the as-of date.",
+      judging: "I show the queries to judge as they are today, whatever the as-of date.",
+      back: "Back to today",
+      asOfRegion: "Past date",
+    },
+    // Read with every page's h1, so a screen reader says the mode on each page; the page title adds it too.
+    mode: {
+      piu: "Implementing agency preview.",
+      public: "Public preview.",
+      asOf: (date: string) => `As of ${date}.`,
+      piuAsOf: (date: string) => `Implementing agency preview, as of ${date}.`,
+      publicAsOf: (date: string) => `Public preview, as of ${date}.`,
+    },
+    title: {
+      piu: (title: string) => `${title} (implementing agency preview) | Strata`,
+      public: (title: string) => `${title} (public preview) | Strata`,
+      asOf: (title: string, date: string) => `${title} (as of ${date}) | Strata`,
+      piuAsOf: (title: string, date: string) => `${title} (implementing agency preview, as of ${date}) | Strata`,
+      publicAsOf: (title: string, date: string) => `${title} (public preview, as of ${date}) | Strata`,
+    },
+    status: {
+      leftPreview: "You left the preview. You are seeing the World Bank staff view.",
+      leftPreviewOfficer: "You left the preview. You are seeing your own view.",
+      backToToday: "You are seeing today's data again.",
+    },
+    // A page the applied view does not show (the 40 brief, 6.4): its section's name as the h1, then this card,
+    // unless its own brief wrote one.
+    hidden: {
+      title: (viewName: string) => `This page isn't part of the ${viewName} view.`,
+      body: "Leave the preview to see it again. Nothing on the page changed.",
+      link: "Go to Projects",
+      packagesBody: "Members of the public see projects, lessons and data in Strata. Leave the preview to see Packages again.",
+    },
+    // The reason the server gives, and the held control shows, for an act whose screen no preview shows.
+    actPreview: "This is a preview, so I don't record anything you do here.",
+    // Home in the public view, until ticket 41 builds each view's Home (the 40 brief, 3.9 and 6.5).
+    publicHome: {
+      title: "Start from a project",
+      purpose: "I link each World Bank-financed project to its Procurement Plans, contracts and evaluations, and I cite every claim to its source.",
+      cardTitle: "I show the public projects, lessons and data.",
+      cardBody:
+        "Find a project by its name, project ID or country. For a closed project, I show each contract from its notice to its signing, with the reports that discussed it.",
+      link: "Go to Projects",
+    },
   },
 
   // The navy bar (DESIGN.md section 5, Top navigation). Nouns navigate.
@@ -385,17 +444,35 @@ export const copy = {
     },
     menu: "Menu",
     view: {
-      // The pill names the view the server applies (the 38 brief, 5.11): brief 40's officer label, which fits the bar at
-      // 1024 px where "View: Implementing agency" does not.
-      pill: { staff: "View: World Bank staff", officer: "View: Agency officer" },
+      // The pill names the view the server applies (the 40 brief, 3.2): each label fits the bar at 1024 px.
+      pill: {
+        staff: "View: World Bank staff",
+        officer: "View: Agency officer",
+        previewOfficer: "Preview: Agency officer",
+        previewPublic: "Preview: Public",
+      },
       dialog: "Your view",
       signedIn: (email: string) => `Signed in as ${email}`,
       identityError: "I can't tell which account you signed in with.",
       signedOut: "You are not signed in.",
-      current: "You are seeing the World Bank staff view.",
-      currentOfficer: (agency: string) => `You are seeing the implementing agency view for ${agency}.`,
-      notReady: "Previews of what an implementing agency officer or the public sees are not ready yet.",
-      notReadyOfficer: "A preview of what the public sees is not ready yet.",
+      // The views the popover offers, as link rows (the 40 brief, 3.3). "See Strata as" keeps the ticket's words.
+      group: "See Strata as",
+      rows: {
+        staff: { label: "World Bank staff", desc: "Your own view, with everything I show." },
+        piu: {
+          label: "Implementing agency officer",
+          descPreview: (agency: string) => `A preview of what an officer at ${agency} sees.`,
+          descOwn: (agency: string) => `Your own view, for ${agency}.`,
+        },
+        public: { label: "The public", desc: "A preview of what a member of the public sees. It has projects, lessons and data only." },
+      },
+      date: {
+        label: "See Strata as of a past date",
+        hint: "I show only what was disclosed by that date.",
+        submit: "Show this date",
+        errorEmpty: "Choose a date first.",
+        errorNotPast: "Choose a date before today.",
+      },
     },
   },
 
@@ -827,8 +904,8 @@ export const copy = {
     askedLanguage: (language: string) => `, for an answer in ${language}`,
     // Asks the same question again in your current choice of language.
     askAgain: (language: string) => `Ask again in ${language}`,
-    // No view is named: until ticket 40 applies a view's rules on the server, every answer is the
-    // World Bank staff view's. Ticket 40 adds ", in a preview of the {view} view" back.
+    // A preview the server applied names its view (ticket 40; the 40 brief, 6.6): the {view_name} of view.name.
+    askedPreview: (viewName: string) => `, in a preview of the ${viewName} view`,
     askedEnd: ".",
     // Every sentence the agent wrote failed a check (the 14 brief, section 5.7).
     nothingSurvived: (count: number, countText: string) =>
@@ -1458,6 +1535,22 @@ export const copy = {
     emptyLink: "Data readiness",
     error: "I couldn't load the list of projects because the data service didn't answer.",
     permission: "Your account can't read Strata's tables, so I can't list the projects.",
+  },
+
+  // Your agency's projects, at the top of /projects in the implementing agency view (ticket 40; the 40 brief, 6.5).
+  // {agency} is view.agencyInSentence's output; the finding is copy.checkPlan.finding's, from check_plan's counts.
+  projectsAgency: {
+    heading: "Your agency's projects",
+    lead: (agency: string) =>
+      `These are the projects where ${agency} has a disclosed Procurement Plan. I checked the latest plan for each one.`,
+    none: (agency: string) => `The World Bank hasn't disclosed a Procurement Plan from ${agency} yet.`,
+    item: (date: string) => `Procurement Plan of ${date}`,
+    caption: "{name} ({pid}).",
+    source: (agency: string) => `Procurement Plans that the World Bank disclosed for ${agency}. Marks from Strata's fixed checks.`,
+    sourceAsOf: (agency: string, date: string) =>
+      `Procurement Plans that the World Bank disclosed for ${agency}. Records as of ${date}.`,
+    loading: "Loading your agency's plans.",
+    error: "I couldn't load your agency's plans because the data service didn't answer.",
   },
 
   // The Projects sub-tabs (ticket 37; the 37 brief, section 9.1), shown only to World Bank staff.
@@ -2335,6 +2428,8 @@ export const copy = {
       none: "No activity needs a look or is worth watching",
       notes: (notes: number) => (notes === 1 ? "; {notes} has a data note" : "; {notes} have data notes"),
       end: ".",
+      // The public view of a project still under way (the 10 brief, section 6; ticket 40): data notes only.
+      withheld: "I don't show signals on active projects in this view, so a procurement still under way isn't prejudged",
     },
     method:
       "I checked every activity against {checks}. I measure delay from the first published planned date, because " +
@@ -2389,6 +2484,14 @@ export const copy = {
     watchRule:
       "An activity is worth watching when it is still pending {days} days or fewer before the project closes, or " +
       "after the project closed. It is also worth watching when it was signed at {ratio} times its estimate or more.",
+    // The fold in a view that holds back signals on a project still under way (ticket 40): an activity in it may still
+    // have a signal I don't show, so it says only that the activity has no data notes.
+    foldWithheld: {
+      listed: (count: number) =>
+        count === 1 ? "{count} more activity has no data notes: {refs}." : "{count} more activities have no data notes: {refs}.",
+      counted: "{count} more activities have no data notes.",
+    },
+    noDataNotes: "No data notes.",
     // The fold under the marked rows. Up to fold.listUpTo references are named in the sentence.
     fold: {
       listUpTo: 3,
@@ -2489,7 +2592,8 @@ export const copy = {
     notFoundTitle: (date: string) => `I don't have a plan from this agency dated ${date}.`,
     notFoundBody: (date: string) => `The latest plan I have from this agency is dated ${date}.`,
     notPublicTitle: (date: string) => `I can't show this plan as of ${date}.`,
-    notPublicBody: (date: string) => `The World Bank disclosed it on ${date}, after that date.`,
+    // The later day it was disclosed is not named: as of the page's date it had not happened (ADR 0002; ticket 40).
+    notPublicBody: "The World Bank disclosed it after that date.",
     noPlanAsOfTitle: (date: string) => `I have no plan from this agency that was public on ${date}.`,
     latestLink: (date: string) => `Plan of ${date}`,
     error: "I couldn't load this plan's check because the data service didn't answer.",
@@ -7315,6 +7419,9 @@ export const copy = {
       doc: {
         heading: "{label}, {date}",
         labels: { type: "Document type", number: "Report number", date: "Document date", disclosed: "Disclosed", pages: "Pages" },
+        // The as-of action (ticket 40; the 40 brief, 3.6): it opens the Timeline as of the day the report was disclosed.
+        asofAction: "See Strata as of this date",
+        asofCaption: (date: string) => `It opens this project as it was on ${date}, the day the World Bank disclosed this report.`,
         ratings: "Ratings in this report",
         ratingsCols: { rating: "Rating", value: "Value", where: "Where" },
         wherePara: "Paragraph {para}, page {page}",

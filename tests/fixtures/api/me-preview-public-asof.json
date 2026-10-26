@@ -1,0 +1,113 @@
+{
+  "email": "ana.example@worldbank.org",
+  "name": "Ana Example",
+  "signed_in": true,
+  "has_token": true,
+  "staff": true,
+  "agency": null,
+  "own_view": "staff",
+  "views": [
+    "staff",
+    "piu",
+    "public"
+  ],
+  "applied": {
+    "view": "public",
+    "preview": true,
+    "problem": null
+  },
+  "preview_agency": {
+    "name": "Northern Water Works Development Agency",
+    "short_name": "NWWDA",
+    "agency_id": "northern-water-works-development-agency"
+  },
+  "tabs": [
+    "projects",
+    "lessons",
+    "data"
+  ],
+  "hidden": [
+    "packages",
+    "package",
+    "packageNew",
+    "plannedPackage",
+    "checkMyPlan",
+    "uploadCheck",
+    "drafts",
+    "draft",
+    "draftNew",
+    "following",
+    "lessonsQueue",
+    "lessonReview",
+    "lessonsReports",
+    "passageReport",
+    "lessonsJudging",
+    "judgingQuery"
+  ],
+  "capabilities": [
+    "ask",
+    "contract_trail",
+    "data",
+    "lessons",
+    "projects",
+    "save_language"
+  ],
+  "reasons": {
+    "record_opened": "evidence.preview",
+    "keep_other_report": "disagreement.card.keep.preview",
+    "report_passage": "feedback.preview",
+    "follow": "view.actPreview",
+    "save_baseline": "view.actPreview",
+    "plan_package": "packagesTab.previewOff",
+    "change_package": "packageWorkspace.preview",
+    "plan_date_choice": "stepDates.choice.preview",
+    "step_start": "stepDates.start.preview",
+    "risk_selection": "packageRisks.preview",
+    "review_lesson": "view.actPreview",
+    "review_passage_reports": "view.actPreview",
+    "judge_passages": "view.actPreview",
+    "review_suppliers": "view.actPreview",
+    "start_draft": "packageWorkspace.ppsdAction.heldPreview",
+    "fill_draft": "fill.preview",
+    "discard_draft": "draft.bar.hold.preview",
+    "lesson_choice": "draft.bar.hold.preview",
+    "mark_checked": "draft.bar.hold.preview",
+    "upload_and_check": "upload.holdPreview",
+    "compare_criteria": "criteria.preview",
+    "export_draft": "draft.bar.hold.preview"
+  },
+  "asof": {
+    "applied": "2016-08-26",
+    "problem": null
+  },
+  "language": {
+    "code": "en",
+    "source": "default",
+    "saved": null,
+    "team": null,
+    "link": null,
+    "saved_readable": true,
+    "choices": [
+      {
+        "code": "en",
+        "endonym": "English",
+        "direction": "ltr"
+      },
+      {
+        "code": "fr",
+        "endonym": "Français",
+        "direction": "ltr"
+      },
+      {
+        "code": "es",
+        "endonym": "Español",
+        "direction": "ltr"
+      },
+      {
+        "code": "pt",
+        "endonym": "Português",
+        "direction": "ltr"
+      }
+    ]
+  }
+}

@@ -158,9 +158,11 @@ def test_a_teammate_opens_the_upload_and_another_team_or_staff_get_the_answer_fo
         assert (evidence.status_code, evidence.json()) == (404, {"code": "unknown_evidence"})
     assert [row["upload_id"] for row in call(app, "GET", "/api/uploads", BARAKA).json()["uploads"]] == [upload_id]
     assert call(app, "GET", "/api/evidence", BARAKA, params={"id": f"upload-row:{upload_id}:1"}).status_code == 200
-    # A preview never shows any team's upload, the previewing person's own team's included.
-    assert call(app, "GET", f"/api/uploads/{upload_id}", AMINA, params={"view": "piu"}).status_code == 404
-    assert call(app, "GET", "/api/uploads", AMINA, params={"view": "piu"}).json()["uploads"] == []
+    # A preview never shows any team's upload, the previewing person's own team's included. An officer's ?view=piu is
+    # their own view (ticket 40), so their preview is the public one.
+    assert call(app, "GET", f"/api/uploads/{upload_id}", AMINA, params={"view": "public"}).status_code == 404
+    assert call(app, "GET", "/api/uploads", AMINA, params={"view": "public"}).json()["uploads"] == []
+    assert call(app, "GET", f"/api/uploads/{upload_id}", AMINA, params={"view": "piu"}).status_code == 200
 
 
 def test_the_tools_read_an_upload_only_through_the_team_rule(make, fixture_db, state_db):
@@ -301,8 +303,10 @@ def test_only_an_officer_of_the_projects_agency_uploads_and_a_preview_uploads_no
 
     assert upload(app, DANA).json()["code"] == "not_agency_team"
     assert upload(app, CHEGE, project="P130164").json()["code"] == "unknown_project"
-    held = upload(app, AMINA, view="piu")
-    assert (held.status_code, held.json()["code"], held.json()["copy_key"]) == (403, "preview", "upload.hold.preview")
+    # The officer's preview of the public view (ticket 40: their ?view=piu is their own view) refuses the upload with the
+    # reason the roles file names, which the held button shows.
+    held = upload(app, AMINA, view="public")
+    assert (held.status_code, held.json()["code"], held.json()["copy_key"]) == (403, "preview", "upload.holdPreview")
     assert kept_rows(state_db) == (0, 0)
     form = call(app, "GET", "/api/uploads/form", DANA).json()
     assert (form["officer"], form["agency"]) == (False, None)

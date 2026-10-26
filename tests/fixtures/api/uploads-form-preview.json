@@ -1,0 +1,54 @@
+{
+  "officer": false,
+  "agency": null,
+  "projects": [],
+  "earlier": 0,
+  "preview": true,
+  "columns": {
+    "needed": [
+      "Activity Reference No. / Description",
+      "Method"
+    ],
+    "optional": [
+      "Loan / Credit No.",
+      "Component",
+      "Review Type",
+      "Market Approach",
+      "Procurement Process",
+      "Prequalification (Y/N)",
+      "High SEA/SH Risk",
+      "Procurement Document Type",
+      "Contract Type",
+      "Estimated Amount (US$)",
+      "Actual Amount (US$)",
+      "Process Status",
+      "Draft Pre-qualification Documents",
+      "Prequalification Evaluation Report",
+      "Draft Bidding Document / Justification",
+      "Specific Procurement Notice / Invitation",
+      "Bidding Documents as Issued",
+      "Proposal Submission / Opening / Minutes",
+      "Bid Evaluation Report and Recommendation for Award",
+      "Terms of Reference",
+      "Expression of Interest Notice",
+      "Short List and Draft Request for Proposals",
+      "Request for Proposals as Issued",
+      "Opening of Technical Proposals / Minutes",
+      "Evaluation of Technical Proposal",
+      "Combined Evaluation Report and Draft Negotiated Contract",
+      "Invitation to Identified/Selected Consultant",
+      "Draft Negotiated Contract",
+      "Signed Contract",
+      "Contract Completion"
+    ]
+  },
+  "limits": {
+    "accept": [
+      ".xlsx",
+      ".csv"
+    ],
+    "max_size_bytes": 5242880,
+    "max_rows": 500
+  },
+  "format": "published_tables"
+}

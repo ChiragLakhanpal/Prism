@@ -4,6 +4,7 @@
 // and src/strata/tools/data_readiness_for.py's registry_page. The page computes no number: every
 // count, sum and share arrives from the tool.
 import { createStore } from "./store";
+import { withPageParams } from "./view";
 
 // A sentence's part: text, or a number with the result row it comes from, what it counts, and, when
 // it is neither that row's count nor its denominator, what it is (a shortfall, or days late).
@@ -195,7 +196,7 @@ export function readinessPath(search: string): string {
 
 export async function readReadiness(search: string, signal?: AbortSignal): Promise<ReadinessState> {
   try {
-    const response = await fetch(readinessPath(search), { headers: { Accept: "application/json" }, signal });
+    const response = await fetch(withPageParams(readinessPath(search)), { headers: { Accept: "application/json" }, signal });
     const body = await response.json().catch(() => ({}));
     if (response.ok) return { status: "ready", result: body as Readiness };
     if (response.status === 504) return { status: "error", reason: "timeout", seconds: body.timeout_seconds };

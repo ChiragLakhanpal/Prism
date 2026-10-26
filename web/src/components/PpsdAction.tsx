@@ -17,6 +17,7 @@ import { Button } from "./Button";
 import { Fill } from "./Fill";
 import { TextLink } from "./TextLink";
 import { useId } from "react";
+import { previewReason } from "../lib/view";
 
 const words = copy.packageWorkspace.ppsdAction;
 
@@ -52,7 +53,7 @@ export function PpsdAction({
     );
   }
   const held = preview || selection.saveFailed || selection.chosen === 0;
-  const reason = preview ? words.heldPreview : selection.saveFailed ? words.heldSaveFailed : inline ? words.heldNoneInline : (
+  const reason = preview ? (previewReason("start_draft") ?? words.heldPreview) : selection.saveFailed ? words.heldSaveFailed : inline ? words.heldNoneInline : (
     <Fill template={words.heldNone} slots={{ section: <TextLink href="#risks">{words.heldNoneLink}</TextLink> }} />
   );
   const start = () => {

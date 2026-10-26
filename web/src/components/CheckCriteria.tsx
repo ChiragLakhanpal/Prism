@@ -23,7 +23,7 @@ import { useLoad } from "../lib/load";
 import { address } from "../lib/router";
 import { streamEvents } from "../lib/sse";
 import { useStore } from "../lib/store";
-import { withReadParams } from "../lib/view";
+import { previewReason, withReadParams } from "../lib/view";
 import { cx } from "../lib/cx";
 import { Alert } from "./Alert";
 import { Button } from "./Button";
@@ -331,7 +331,7 @@ function PasteField({ summary, text, onText, onCompare, fieldError, edited, comp
           className="w-full @md/page:w-auto" data-compare>
           {words.compare}
         </Button>
-        {preview && <p className="mt-2 text-caption text-ink-muted">{words.preview}</p>}
+        {preview && <p className="mt-2 text-caption text-ink-muted" data-held-reason="compare_criteria">{previewReason("compare_criteria") ?? words.preview}</p>}
       </div>
       {comparing && <p className="mt-2 text-small text-ink-muted" data-compare-status>{words.status.running}</p>}
       {!comparing && edited && <p className="mt-2 text-caption text-ink-muted" data-edited>{words.status.edited}</p>}

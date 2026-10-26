@@ -63,6 +63,19 @@ export async function mockApi(page: Page, responses: Record<string, { status?: n
   return unrecorded;
 }
 
+// Who is viewing when the address asks for a preview or a past date (ticket 40): the server's own answers for Ana,
+// World Bank staff, recorded by tests/record_views_api.py. A spec that mocks /api/me by its path alone adds these, so
+// a page opened with ?view=piu or ?view=public gets the preview the server applies.
+export async function viewAnswers(): Promise<Record<string, { body: string }>> {
+  const answers: Record<string, { body: string }> = {
+    "/api/me?view=piu": { body: await recorded("me-preview-piu.json") },
+    "/api/me?view=public": { body: await recorded("me-preview-public.json") },
+    "/api/me?asof=2016-08-26": { body: await recorded("me-asof.json") },
+    "/api/me?view=public&asof=2016-08-26": { body: await recorded("me-preview-public-asof.json") },
+  };
+  return { ...answers, ...Object.fromEntries(Object.entries(answers).map(([key, value]) => [`GET ${key}`, value])) };
+}
+
 // The two calls every page of the shell makes, answered from the recordings unless a test says
 // otherwise: who is viewing (/api/me) and the data-freshness stamp (/api/freshness).
 export async function mockShell(
@@ -70,6 +83,7 @@ export async function mockShell(
   answers: { me?: { status?: number; body: string }; freshness?: { status?: number; body: string } } = {},
 ) {
   return mockApi(page, {
+    ...(answers.me ? {} : await viewAnswers()),
     "/api/me": answers.me ?? { body: await recorded("me.json") },
     "/api/freshness": answers.freshness ?? { body: await recorded("freshness.json") },
   });

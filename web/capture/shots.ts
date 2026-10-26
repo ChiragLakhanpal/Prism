@@ -221,6 +221,33 @@ function app(name: string, path: string, answers: { me?: Answer; freshness?: Ans
   };
 }
 
+// Ticket 40: the view switch and the as-of date, with /api answered from the server's own answers
+// (tests/record_views_api.py). Under the function-first rule each is taken at 1440 px only; the other widths wait for
+// the design pass.
+const VIEW_PLAN = "/projects/P156634/procurement/northern-water-works-development-agency/2026-10-09";
+const viewApi = (rest: Record<string, Answer>): Record<string, Answer> => ({
+  "/api/me": { recorded: "me.json" },
+  "/api/me?view=piu": { recorded: "me-preview-piu.json" },
+  "/api/me?view=public": { recorded: "me-preview-public.json" },
+  "/api/me?asof=2016-08-26": { recorded: "me-asof.json" },
+  "/api/freshness": { recorded: "freshness.json" },
+  ...rest,
+});
+const VIEW_SHOTS: Shot[] = [
+  { name: "views--popover-public-preview", path: "/gallery/navigation?pill=public&view=open", widths: [1440] },
+  app("views--agency-preview-projects", "/projects?view=piu", {}, { widths: [1440], full: true,
+    api: viewApi({ "/api/projects": { recorded: "projects.json" }, "/api/agency/projects": { recorded: "agency-projects-two.json" } }) }),
+  app("views--public-preview-home", "/?view=public", {}, { widths: [1440], api: viewApi({}) }),
+  app("views--public-preview-packages-hidden", "/packages?view=public", {}, { widths: [1440], api: viewApi({}) }),
+  app("views--public-preview-check-plan", `${VIEW_PLAN}?view=public`, {}, { widths: [1440], full: true,
+    api: viewApi({ [`/api${VIEW_PLAN}`]: { recorded: "check-plan-p156634-nwwda-2026-10-09-public.json" },
+      "/api/projects/P156634": { recorded: "project-p156634.json" } }) }),
+  app("views--asof-timeline-p130164", "/projects/P130164/timeline?asof=2016-08-26", {}, { widths: [1440], full: true,
+    api: viewApi({ "/api/projects/P130164": { recorded: "project-p130164-2016-08-26.json" },
+      "/api/projects/P130164/follow": { recorded: "follow-off.json" },
+      "/api/projects/P130164/timeline": { recorded: "timeline-p130164-2016-08-26.json" } }) }),
+];
+
 // Ticket 38: an implementing agency officer's Check my plan, an upload's check, a draft of planned dates, and what World
 // Bank staff and another team get, with /api answered from the server's own answers (tests/record_uploads_api.py). Under
 // the function-first rule each is taken at 1440 px only; the other widths wait for the design pass.
@@ -1953,4 +1980,5 @@ export const SHOTS: Shot[] = [
   ...PPSD_SHOTS,
   ...UPLOAD_SHOTS,
   ...LANGUAGE_SHOTS,
+  ...VIEW_SHOTS,
 ];

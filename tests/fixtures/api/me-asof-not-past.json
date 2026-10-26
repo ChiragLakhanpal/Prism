@@ -1,0 +1,130 @@
+{
+  "email": "ana.example@worldbank.org",
+  "name": "Ana Example",
+  "signed_in": true,
+  "has_token": true,
+  "staff": true,
+  "agency": null,
+  "own_view": "staff",
+  "views": [
+    "staff",
+    "piu",
+    "public"
+  ],
+  "applied": {
+    "view": "staff",
+    "preview": false,
+    "problem": null
+  },
+  "preview_agency": {
+    "name": "Northern Water Works Development Agency",
+    "short_name": "NWWDA",
+    "agency_id": "northern-water-works-development-agency"
+  },
+  "tabs": [
+    "packages",
+    "projects",
+    "lessons",
+    "drafts",
+    "data"
+  ],
+  "hidden": [],
+  "capabilities": [
+    "agency_projects",
+    "ask",
+    "baseline",
+    "baseline_saver",
+    "change_package",
+    "compare_criteria",
+    "contract_trail",
+    "data",
+    "disagreements_on_active_projects",
+    "discard_draft",
+    "drafts",
+    "export_draft",
+    "fill_draft",
+    "follow",
+    "following",
+    "judge_passages",
+    "keep_other_report",
+    "lesson_choice",
+    "lessons",
+    "mark_checked",
+    "packages",
+    "personal_lessons",
+    "plan_date_choice",
+    "plan_package",
+    "projects",
+    "record_opened",
+    "report_passage",
+    "review_lesson",
+    "review_passage_reports",
+    "review_suppliers",
+    "reviewer_pages",
+    "risk_selection",
+    "save_baseline",
+    "save_language",
+    "signals_on_active_projects",
+    "start_draft",
+    "step_start",
+    "time_estimates_on_active_projects"
+  ],
+  "reasons": {
+    "record_opened": "evidence.preview",
+    "keep_other_report": "disagreement.card.keep.preview",
+    "report_passage": "feedback.preview",
+    "follow": "view.actPreview",
+    "save_baseline": "view.actPreview",
+    "plan_package": "packagesTab.previewOff",
+    "change_package": "packageWorkspace.preview",
+    "plan_date_choice": "stepDates.choice.preview",
+    "step_start": "stepDates.start.preview",
+    "risk_selection": "packageRisks.preview",
+    "review_lesson": "view.actPreview",
+    "review_passage_reports": "view.actPreview",
+    "judge_passages": "view.actPreview",
+    "review_suppliers": "view.actPreview",
+    "start_draft": "packageWorkspace.ppsdAction.heldPreview",
+    "fill_draft": "fill.preview",
+    "discard_draft": "draft.bar.hold.preview",
+    "lesson_choice": "draft.bar.hold.preview",
+    "mark_checked": "draft.bar.hold.preview",
+    "upload_and_check": "upload.holdPreview",
+    "compare_criteria": "criteria.preview",
+    "export_draft": "draft.bar.hold.preview"
+  },
+  "asof": {
+    "applied": null,
+    "problem": "not_past"
+  },
+  "language": {
+    "code": "en",
+    "source": "default",
+    "saved": null,
+    "team": null,
+    "link": null,
+    "saved_readable": true,
+    "choices": [
+      {
+        "code": "en",
+        "endonym": "English",
+        "direction": "ltr"
+      },
+      {
+        "code": "fr",
+        "endonym": "Français",
+        "direction": "ltr"
+      },
+      {
+        "code": "es",
+        "endonym": "Español",
+        "direction": "ltr"
+      },
+      {
+        "code": "pt",
+        "endonym": "Português",
+        "direction": "ltr"
+      }
+    ]
+  }
+}

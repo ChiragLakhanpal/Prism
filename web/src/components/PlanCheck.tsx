@@ -23,9 +23,7 @@ import { Button } from "./Button";
 import { CheckPill } from "./CheckPill";
 import { EightColumns } from "./EightColumns";
 import { Fill, Joined, Unbroken } from "./Fill";
-import { address } from "../lib/router";
-import { useStore } from "../lib/store";
-import { viewOf, type View } from "../lib/view";
+import { useShows, type View } from "../lib/view";
 import { Num } from "./Num";
 import { ProjectId } from "./ProjectId";
 import { Skeleton, SkeletonLine, SkeletonText } from "./Skeleton";
@@ -285,7 +283,8 @@ function Finding({ result }: { result: CheckedPlan }) {
       check={{ tooltip: <Counted rows={result.rows.filter((row) => row.marks.some((m) => m.mark === mark))} /> }}
     />
   );
-  const first = look && watch ? f.lookAndWatch(look, watch) : look ? f.lookOnly(look) : watch ? f.watchOnly(watch) : f.none;
+  // In the public view of a project still under way the server sent no signal, and the finding says why (ticket 40).
+  const first = result.withheld ? f.withheld : look && watch ? f.lookAndWatch(look, watch) : look ? f.lookOnly(look) : watch ? f.watchOnly(watch) : f.none;
   return (
     <>
       <Fill template={first} slots={{ look: word(look, "needs_a_look", true), watch: word(watch, "watch", false) }} />
@@ -343,16 +342,19 @@ function Definition({ result, triggerClassName }: { result: CheckedPlan; trigger
 
 // The fold's sentence: the references when there are a few, else how many. The count is
 // check_plan's (counts.unmarked); the rows only give the references.
-function FoldSentence({ rows, unmarked, id }: { rows: Activity[]; unmarked: number; id: string }) {
+// In a view that holds back signals on a project still under way (ticket 40), an unmarked activity may still have one, so
+// the sentence says only that it has no data notes.
+function FoldSentence({ rows, unmarked, id, withheld = false }: { rows: Activity[]; unmarked: number; id: string; withheld?: boolean }) {
+  const fold = withheld ? words.foldWithheld : words.fold;
   const count = formatCount(unmarked, { capital: true });
   // Each reference stays whole on one line when it fits there.
   const refs = rows.map((row) => <span className="inline-block max-w-full wrap-anywhere font-mono">{row.activity_reference_no}</span>);
   return (
     <p id={id} className="text-small text-ink-muted">
       {unmarked <= words.fold.listUpTo ? (
-        <Fill template={words.fold.listed(unmarked)} slots={{ count, refs: <Joined items={refs} /> }} />
+        <Fill template={fold.listed(unmarked)} slots={{ count, refs: <Joined items={refs} /> }} />
       ) : (
-        <Fill template={words.fold.counted} slots={{ count }} />
+        <Fill template={fold.counted} slots={{ count }} />
       )}
     </p>
   );
@@ -403,13 +405,14 @@ const CELL = "px-2 py-3 @xl/page:px-3";
 // says why. The public view has no Packages tab, so it shows only the first. In a card they sit 12 px under the
 // last field, so they don't read as part of the Process status value.
 function ActivityLinks({ reference, pid, inCard = false }: { reference: string; pid: string; inCard?: boolean }) {
-  const isPublic = viewOf(useStore(address).search) === "public";
+  // The past range opens the package page, which the view the server applied may hide (the roles file's [views]).
+  const showsPackage = useShows("package");
   return (
     <span className={cx(inCard ? "mt-3" : "mt-1", "flex flex-wrap gap-x-4 text-small font-normal")}>
       <TextLink href={`/projects/${pid}/packages/${encodeURIComponent(reference)}`} aria-label={words.openActivityLabel(reference)} data-activity-link={reference}>
         {words.openActivity}
       </TextLink>
-      {!isPublic && (
+      {showsPackage && (
         <TextLink href={`/packages/${encodeURIComponent(reference)}`} aria-label={words.pastRangeLabel(reference)} data-past-range-link={reference}>
           {words.pastRangeLink}
         </TextLink>
@@ -474,7 +477,7 @@ function TableRow({ row, result, fresh, named, change }: { row: Activity; result
             ))}
           </div>
         ) : (
-          <p className="text-small text-ink-muted">{words.noSignals}</p>
+          <p className="text-small text-ink-muted">{result.withheld ? words.noDataNotes : words.noSignals}</p>
         )}
       </td>
     </tr>
@@ -512,7 +515,7 @@ function ActivityCard({ row, result, fresh, named, change }: { row: Activity; re
           {row.marks.length > 0 ? (
             row.marks.map((mark) => <MarkReasons key={mark.mark} mark={mark} result={result} />)
           ) : (
-            <p className="text-small text-ink-muted">{words.noSignals}</p>
+            <p className="text-small text-ink-muted">{result.withheld ? words.noDataNotes : words.noSignals}</p>
           )}
         </div>
         <dl className={cx("mt-3 border-t border-line pt-3", CARD_FIELDS)} data-numbers>
@@ -732,7 +735,7 @@ export function PlanCheck({ result, findingRef, defaultOpen = false, afterMethod
               <tr className="border-t border-line bg-page" data-fold>
                 <td colSpan={COLUMNS.length} className="px-2 py-2 @xl/page:px-3">
                   <div className="flex flex-wrap items-center gap-x-4">
-                    <FoldSentence rows={unmarkedRows} unmarked={unmarked} id={sentenceId} />
+                    <FoldSentence rows={unmarkedRows} unmarked={unmarked} id={sentenceId} withheld={Boolean(result.withheld)} />
                     <FoldButton count={unmarked} open={open} controls={foldId} describedBy={sentenceId} onToggle={toggle} />
                   </div>
                 </td>
@@ -754,7 +757,7 @@ export function PlanCheck({ result, findingRef, defaultOpen = false, afterMethod
           ))}
           {unmarked > 0 && (
             <li className="rounded-md border border-line bg-page p-4" data-fold>
-              <FoldSentence rows={unmarkedRows} unmarked={unmarked} id={cardSentenceId} />
+              <FoldSentence rows={unmarkedRows} unmarked={unmarked} id={cardSentenceId} withheld={Boolean(result.withheld)} />
               <div className="mt-2">
                 <FoldButton count={unmarked} open={open} controls={foldCardsId} describedBy={cardSentenceId} onToggle={toggle} />
               </div>

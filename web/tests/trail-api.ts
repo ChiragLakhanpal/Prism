@@ -1,7 +1,7 @@
 // The recorded answers the contract trail's and the Connections tab's screen tests share (ticket 22), as
 // tests/record_api.py wrote them from the server on the fixture, which tests/test_project_hub.py checks the
 // server against.
-import { recorded } from "./mocked";
+import { recorded, viewAnswers } from "./mocked";
 
 type Answer = { status?: number; body: string };
 
@@ -12,6 +12,7 @@ export const ICR_54 = "strata.gold.passage:31525018/v1/54";
 export async function trailApi(): Promise<Record<string, Answer>> {
   const file = async (name: string) => ({ body: await recorded(name) });
   return {
+    ...(await viewAnswers()),
     "/api/me": await file("me.json"),
     "/api/freshness": await file("freshness.json"),
     "/api/projects/P130164": await file("project-p130164.json"),

@@ -186,11 +186,10 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: FollowStore
     def refused(status: int, code: str, **details) -> JSONResponse:
         return JSONResponse({"code": code, **details}, status_code=status, headers={"Cache-Control": "no-store"})
 
-    def allowed(viewer: Viewer, view: str) -> JSONResponse | None:
+    # A preview never reaches these routes: the view switch's guard answers first (ticket 40; src/strata/server/views.py).
+    def allowed(viewer: Viewer) -> JSONResponse | None:
         if not viewer.user_id:
             return refused(401, "no_identity")
-        if view != STAFF:
-            return refused(403, "preview", capability="follow", copy="preview", view=view)
         if not access.is_staff(viewer):
             return refused(403, "not_staff")
         if store is None or engine_for is None:
@@ -213,14 +212,14 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: FollowStore
             return bool(engine.run(_query("known"), {"project_id": project_id, "as_of": today()}).rows)
 
     @app.get("/api/projects/{project_id}/follow")
-    def follow_state(project_id: str, view: str = STAFF, viewer: Viewer = Depends(current_viewer)):
-        refusal = allowed(viewer, view)
+    def follow_state(project_id: str, viewer: Viewer = Depends(current_viewer)):
+        refusal = allowed(viewer)
         if refusal is not None:
             return refusal
         return guarded(f"the follow of {project_id}", lambda: {"following": store.follows(viewer.user_id, project_id.upper())})
 
-    def change(project_id: str, view: str, viewer: Viewer, following: bool):
-        refusal = allowed(viewer, view)
+    def change(project_id: str, viewer: Viewer, following: bool):
+        refusal = allowed(viewer)
         if refusal is not None:
             return refusal
         pid = project_id.upper()
@@ -233,12 +232,12 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: FollowStore
         return guarded(f"{'following' if following else 'unfollowing'} {pid}", act)
 
     @app.put("/api/projects/{project_id}/follow")
-    def follow(project_id: str, view: str = STAFF, viewer: Viewer = Depends(current_viewer)):
-        return change(project_id, view, viewer, True)
+    def follow(project_id: str, viewer: Viewer = Depends(current_viewer)):
+        return change(project_id, viewer, True)
 
     @app.delete("/api/projects/{project_id}/follow")
-    def unfollow(project_id: str, view: str = STAFF, viewer: Viewer = Depends(current_viewer)):
-        return change(project_id, view, viewer, False)
+    def unfollow(project_id: str, viewer: Viewer = Depends(current_viewer)):
+        return change(project_id, viewer, False)
 
     def open_briefs(viewer: Viewer) -> dict[str, dict]:
         """The viewer's own newest open mission brief on each project: only its author can act on a draft."""
@@ -254,8 +253,8 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: FollowStore
                 for pid, draft in newest.items()}
 
     @app.get("/api/following")
-    def following(asof: dt.date | None = None, view: str = STAFF, viewer: Viewer = Depends(current_viewer)):
-        refusal = allowed(viewer, view)
+    def following(asof: dt.date | None = None, viewer: Viewer = Depends(current_viewer)):
+        refusal = allowed(viewer)
         if refusal is not None:
             return refusal
         checked_on = today()

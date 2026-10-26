@@ -98,7 +98,7 @@ test("below 1024 px a labeled Menu holds the tabs and the view lines, and Escape
   await expect(menu).toHaveAttribute("aria-expanded", "true");
   const main = page.getByRole("navigation", { name: "Main" });
   await expect(main.getByRole("link")).toHaveText(["Packages", "Projects", "Lessons", "Drafts", "Data"]);
-  await expect(page.getByText("You are seeing the World Bank staff view.")).toBeVisible();
+  await expect(page.locator("[data-menu-panel]").getByRole("link", { name: "World Bank staff" })).toHaveAttribute("aria-current", "true");
 
   await main.getByRole("link", { name: "Lessons" }).focus();
   await page.keyboard.press("Escape");
@@ -110,12 +110,23 @@ test("below 1024 px a labeled Menu holds the tabs and the view lines, and Escape
   await expect(menu).toBeHidden();
 });
 
-test("at 1024 px the whole bar fits on one line, with no overflow", async ({ page }) => {
+// Every pill label the view switch shows (ticket 40; the 40 brief, 3.2) fits the bar at 1024 px.
+const PILLS: [string, string][] = [
+  ["", "View: World Bank staff"],
+  ["?pill=officer", "View: Agency officer"],
+  ["?pill=piu", "Preview: Agency officer"],
+  ["?pill=public", "Preview: Public"],
+];
+
+test("at 1024 px the whole bar fits on one line, with no overflow, with every pill label", async ({ page }) => {
   await page.setViewportSize({ width: 1024, height: 900 });
-  await page.goto("/gallery/navigation");
-  const bar = page.locator("[data-nav-bar] > .layout");
-  expect(await bar.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true);
-  expect((await page.locator("[data-nav-bar]").boundingBox())!.height).toBe(56);
+  for (const [query, label] of PILLS) {
+    await page.goto(`/gallery/navigation${query}`);
+    await expect(page.getByRole("button", { name: label })).toBeVisible();
+    const bar = page.locator("[data-nav-bar] > .layout");
+    expect(await bar.evaluate((el) => el.scrollWidth <= el.clientWidth), label).toBe(true);
+    expect((await page.locator("[data-nav-bar]").boundingBox())!.height, label).toBe(56);
+  }
 });
 
 test("the view pill opens who is signed in and which view this is", async ({ page }) => {
@@ -124,7 +135,7 @@ test("the view pill opens who is signed in and which view this is", async ({ pag
   await page.getByRole("button", { name: "View: World Bank staff" }).click();
   const dialog = page.getByRole("dialog", { name: "Your view" });
   await expect(dialog).toContainText("Signed in as ana.example@worldbank.org");
-  await expect(dialog).toContainText("You are seeing the World Bank staff view.");
+  await expect(dialog.getByRole("link", { name: "World Bank staff" })).toHaveAttribute("aria-current", "true");
   await page.keyboard.press("Escape");
   await expect(dialog).toBeHidden();
   await expect(page.getByRole("button", { name: "View: World Bank staff" })).toBeFocused();

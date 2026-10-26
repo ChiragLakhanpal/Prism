@@ -14,6 +14,9 @@ export const galleryCopy = {
   allComponents: "All components",
   sampleEmail: "ana.example@worldbank.org",
   sampleDate: "2026-10-21",
+  // The implementing agency the agency preview names (ticket 40), as the roles file's [views] sets it.
+  sampleAgency: "Northern Water Works Development Agency",
+  sampleAgencyShort: "NWWDA",
 
   pages: {
     navigation: {

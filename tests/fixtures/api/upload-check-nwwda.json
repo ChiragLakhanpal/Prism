@@ -435,6 +435,7 @@
     "actual_to_estimate_ratio": "2.0"
   },
   "baseline": null,
+  "withheld": null,
   "counts": {
     "activities": 9,
     "checked": 9,

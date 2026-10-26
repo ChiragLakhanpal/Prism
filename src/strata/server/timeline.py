@@ -49,6 +49,7 @@ from strata.lakehouse.engine import Engine
 from strata.server.projects import display_name
 from strata.server.viewer_sql import data_through
 from strata.tools import registry
+from strata.tools.withheld import WITHHELD, withheld_in
 
 SQL = Path(__file__).resolve().parent / "sql" / "timeline"
 DOC, RATINGS, CONTRACTS, DISAGREEMENT = "doc", "ratings", "contracts", "disagreement"
@@ -382,10 +383,10 @@ def timeline(engine: Engine, viewer: Viewer, project_id: str, as_of: dt.date, vi
         return None
     pid = project["project_id"]
     ladder = load_ladder()
-    hidden = view == "public" and project["status"] == ACTIVE
     try:
         found = registry.call("get_disagreements", {"subject_id": pid}, registry.Context(engine, viewer, view, as_of))
-        status = "hidden" if hidden else "ok"
+        # The tool applies the view: the public view of a project under way on the page's date gets no disagreement.
+        status = "hidden" if (found.get("abstention") or {}).get("reason") == WITHHELD else "ok"
     except Exception:  # the tool did not answer: the marks still draw, with no dashed lines and no bands
         found, status = {"rows": [], "trajectories": [], "rejected": {"count": 0}}, "failed"
     trajectory = next((one for one in found.get("trajectories") or []
@@ -594,11 +595,10 @@ def read_signing(engine: Engine, key: str, as_of: dt.date) -> dict | None:
 def in_view(engine: Engine, found: dict, view: str, as_of: dt.date) -> dict | None:
     """A drawer view as a preview shows it: the public view of a project still under way shows no disagreement
     (spec, user story 55), from a link as on the timeline. A disagreement gives None; a document view keeps its
-    report and loses the disagreements it is a side of. Any other view, or any other preview, is unchanged."""
-    if view != "public" or found["kind"] not in ("disagreement", "document"):
-        return found
-    project = _project(engine, found["row"]["project_id"], as_of)
-    if project is None or project["status"] != ACTIVE:
+    report and loses the disagreements it is a side of. Any other view, or any other preview, is unchanged. Whether the
+    project was under way is judged as of the page's date (strata.tools.withheld, ticket 40)."""
+    if found["kind"] not in ("disagreement", "document") or not withheld_in(
+            engine, view, as_of, "disagreements_on_active_projects", found["row"]["project_id"]):
         return found
     return None if found["kind"] == "disagreement" else {**found, "row": {**found["row"], "disagreements": []}}
 

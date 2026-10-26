@@ -22,7 +22,7 @@ import type { SideData } from "../lib/disagreement";
 import { cx } from "../lib/cx";
 import { formatDate } from "../lib/format";
 import { address } from "../lib/router";
-import { viewOf } from "../lib/view";
+import { previewReason, viewOf } from "../lib/view";
 import { Button } from "./Button";
 import { ReasonField } from "./DecisionForm";
 import { Source } from "./Source";
@@ -261,7 +261,7 @@ function KeepChoice({
     return <p className="mt-2 text-small text-ink-muted">{fill(words.keep.lineNoTarget)}</p>;
   }
   if (target.preview) {
-    return <p className="mt-2 text-small text-ink-muted">{words.keep.preview}</p>;
+    return <p className="mt-2 text-small text-ink-muted">{previewReason("keep_other_report") ?? words.keep.preview}</p>;
   }
 
   const save = async (kept: string, text: string) => {

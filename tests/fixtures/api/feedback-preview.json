@@ -1,6 +1,10 @@
 {
   "status": 403,
   "body": {
-    "code": "preview"
+    "code": "preview",
+    "error": "preview",
+    "capability": "report_passage",
+    "copy_key": "feedback.preview",
+    "view": "piu"
   }
 }

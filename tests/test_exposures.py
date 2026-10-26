@@ -119,7 +119,8 @@ def test_a_preview_an_abstention_and_a_package_with_no_step_reference_write_no_e
     app, log = served
 
     preview = call(app, "GET", f"/api/packages/{SIGNED_2022}/estimate?view=piu", ANA)
-    public = call(app, "GET", f"/api/packages/{SIGNED_2022}/comparables?view=public", ANA)
+    # The public view has no package workspace (ticket 40), so the agency preview's past range stands in for it.
+    public = call(app, "GET", f"/api/packages/{SIGNED_2022}/comparables?view=piu", ANA)
     # Under 20 comparable packages, the tools give no range (tests/test_estimate_routes.py names this count).
     too_few = call(app, "GET", f"/api/packages/{DEMO}/estimate?review_type=Prior", ANA)
     too_few_range = call(app, "GET", f"/api/packages/{DEMO}/comparables?review_type=Prior", ANA)

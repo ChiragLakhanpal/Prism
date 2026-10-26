@@ -28,6 +28,7 @@
   },
   "counts": null,
   "baseline": null,
+  "withheld": null,
   "abstention": {
     "reason": "no_plan_from_agency",
     "implementing_agency": "wajir-water-and-sewerage-company",

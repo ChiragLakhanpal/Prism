@@ -188,6 +188,13 @@ export const NON_COPY_PROPS = new Set([
   // The grade bar's two grades once a query is locked (ticket 32): grade codes such as "partly".
   "mine",
   "theirs",
+  // The view switch (ticket 40): a view's key ("staff", "piu" or "public"), the viewer's own view and the preview the
+  // server applied, a banner's kind ("preview" or "asof"), a capability's key and a copy key the server names. Each is
+  // a code the copy file turns into words; "piu" is never shown.
+  "view",
+  "own",
+  "preview",
+  "capability",
 ]);
 
 // A prop or key that ends in one of these holds an address, an id or a class, such as pdfHref,

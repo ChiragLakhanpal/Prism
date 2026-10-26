@@ -37,7 +37,28 @@ const here = (moves: number): Address => ({
 
 export const address = createStore<Address>(here(0));
 
-export function navigate(to: string, options: { replace?: boolean; samePage?: boolean; quiet?: boolean } = {}) {
+// The keys that carry the page's mode (ticket 40): the view, the as-of date and the language. A move to another of the
+// app's addresses keeps each one the target does not name, so a preview or a past date survives navigation. A link that
+// changes the mode itself (a view row, "Leave the preview", "Back to today") carries data-mode, and goes exactly where
+// it says.
+const MODE_KEYS = ["view", "asof", "lang"];
+
+function keepingMode(to: string): string {
+  const target = new URL(to, window.location.origin);
+  const here = new URLSearchParams(window.location.search);
+  let changed = false;
+  for (const key of MODE_KEYS) {
+    const value = here.get(key);
+    if (value !== null && !target.searchParams.has(key)) {
+      target.searchParams.set(key, value);
+      changed = true;
+    }
+  }
+  return changed ? target.pathname + target.search + target.hash : to;
+}
+
+export function navigate(to: string, options: { replace?: boolean; samePage?: boolean; quiet?: boolean; exact?: boolean } = {}) {
+  if (!options.exact) to = keepingMode(to);
   if (options.replace) {
     window.history.replaceState(window.history.state, "", to);
     address.set({ ...here(address.get().moves), quiet: options.quiet });
@@ -57,7 +78,7 @@ function onClick(event: MouseEvent) {
   if (to.origin !== window.location.origin || LOADS_AS_USUAL.test(to.pathname)) return;
   if (to.pathname === window.location.pathname && to.search === window.location.search && to.hash) return;
   event.preventDefault();
-  navigate(to.pathname + to.search + to.hash);
+  navigate(to.pathname + to.search + to.hash, { exact: link.hasAttribute("data-mode") });
 }
 
 function onPopState() {

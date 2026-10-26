@@ -6,7 +6,7 @@
 import { scan } from "./axe";
 import type { Page } from "@playwright/test";
 import { askFromTheBox, drawer, ICR_54, landed, marker } from "./answer-page";
-import { expect, mockApi, recorded, test } from "./mocked";
+import { expect, mockApi, recorded, test, viewAnswers } from "./mocked";
 
 const REASON = "It is about estimates in general, not why these contracts were advertised again.";
 
@@ -18,6 +18,7 @@ async function openAnswer(page: Page, width = 1440, { preview = false, mine = "f
   if (limit) stream = stream.replaceAll('"reason_max_chars": 500', `"reason_max_chars": ${limit}`);
   await page.setViewportSize({ width, height: 900 });
   await mockApi(page, {
+    ...(await viewAnswers()),
     "/api/me": { body: await recorded("me.json") },
     "/api/freshness": { body: await recorded("freshness.json") },
     "/api/projects/P130164": { body: await recorded("project-p130164.json") },

@@ -212,19 +212,27 @@ test("with no forwarded identity, one error alert says to open Strata from its l
   await expect(page.getByRole("dialog", { name: "Your view" })).toContainText("You are not signed in.");
 });
 
-test("the view popover says who is signed in and which view this is", async ({ page }) => {
+test("the view popover says who is signed in and offers each view as a link, with yours current", async ({ page }) => {
   await mockShell(page);
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/");
 
   await page.getByRole("button", { name: "View: World Bank staff" }).click();
 
-  // The lines about who is viewing come first; the language of answers and drafts follows them (ticket 42).
-  await expect(page.getByRole("dialog", { name: "Your view" }).locator("[data-view-popover]")).toHaveText(
-    "Signed in as ana.example@worldbank.orgYou are seeing the World Bank staff view." +
-      "Previews of what an implementing agency officer or the public sees are not ready yet.",
-  );
-  await expect(page.getByRole("dialog", { name: "Your view" }).getByRole("group")).toHaveAccessibleName("Language of answers and drafts");
+  // Who is viewing comes first, then the views as link rows and the past date (ticket 40), then the language of answers
+  // and drafts (ticket 42).
+  const dialog = page.getByRole("dialog", { name: "Your view" });
+  await expect(dialog.locator("[data-view-popover] p").first()).toHaveText("Signed in as ana.example@worldbank.org");
+  await expect(dialog.locator("[data-view-row]")).toHaveText([
+    "World Bank staffYour own view, with everything I show.",
+    "Implementing agency officerA preview of what an officer at the Northern Water Works Development Agency (NWWDA) sees.",
+    "The publicA preview of what a member of the public sees. It has projects, lessons and data only.",
+  ]);
+  const own = dialog.getByRole("link", { name: "World Bank staff" });
+  await expect(own).toHaveAttribute("aria-current", "true");
+  await expect(own).toBeFocused();
+  await expect(dialog.getByRole("link", { name: "The public" })).toHaveAttribute("href", "/?view=public");
+  await expect(dialog.getByRole("group")).toHaveAccessibleName("Language of answers and drafts");
 });
 
 test("Tab in the view popover closes it and moves on to the box; Shift+Tab closes it and returns to the pill", async ({ page }) => {
@@ -235,10 +243,10 @@ test("Tab in the view popover closes it and moves on to the box; Shift+Tab close
 
   await pill.click();
   await expect(page.getByRole("dialog", { name: "Your view" })).toBeVisible();
-  // The language group is the popover's one tab stop (ticket 42); the next Tab leaves the popover.
-  await page.keyboard.press("Tab");
-  await expect(page.getByRole("radio", { name: /^English/ })).toBeFocused();
-  await page.keyboard.press("Tab");
+  // Tab moves through the view rows, the past date and the language group (tickets 40 and 42); past the last control
+  // it leaves the popover for the box.
+  await expect(page.getByRole("link", { name: "World Bank staff" })).toBeFocused();
+  for (let press = 0; press < 12 && (await page.getByRole("dialog").count()) > 0; press += 1) await page.keyboard.press("Tab");
 
   await expect(page.locator("[data-box-band]").getByRole("combobox")).toBeFocused();
   await expect(page.getByRole("dialog")).toHaveCount(0);
@@ -251,24 +259,22 @@ test("Tab in the view popover closes it and moves on to the box; Shift+Tab close
   await expect(page.getByRole("dialog")).toHaveCount(0);
 });
 
+// The view switch's banners and the alerts for what the server could not apply (ticket 40; the 40 brief, 6.2 and 6.3).
 const ADDRESS_ALERTS: [string, string][] = [
-  ["?view=piu", "I can't show the implementing agency preview yet, so you are seeing the World Bank staff view."],
-  ["?view=public", "I can't show the public preview yet, so you are seeing the World Bank staff view."],
+  ["?view=piu", "Preview of what an implementing agency officer at the Northern Water Works Development Agency (NWWDA) sees. You are still signed in as yourself."],
+  ["?view=public", "Preview of what the public sees. You are still signed in as yourself."],
   ["?view=board", "I don't know the view in this link, so you are seeing the World Bank staff view."],
-  // The answer panel and the evidence drawer do use the date (App.tsx sends it to /api/ask, and
-  // EvidenceDrawer.tsx to /api/evidence), so the alert speaks for the page and names both.
-  ["?asof=2016-08-26", "I can't show this page as of August 26, 2016 yet, so it shows today's data. Questions you ask from the box, and sources opened from a link, use August 26, 2016."],
+  ["?asof=2016-08-26", "I'm showing this page as of August 26, 2016. I use only what was disclosed by that date."],
   ["?asof=last-tuesday", "I can't read the date in this link, so you are seeing today's data."],
 ];
 
-// Home, which applies none of these: the draft pages and the Packages tab apply the previews themselves.
 for (const [query, sentence] of ADDRESS_ALERTS) {
-  test(`a link with ${query} says what I can't show yet, above the title`, async ({ page }) => {
+  test(`a link with ${query} says so above the title`, async ({ page }) => {
     await mockShell(page);
     await page.goto(`/${query}`);
 
     const alert = page.locator("[data-alert=info]");
-    await expect(alert).toHaveText(sentence);
+    await expect(alert.locator("p").first()).toHaveText(sentence);
     const [alertBox, title] = [await alert.boundingBox(), await page.getByRole("heading", { level: 1 }).boundingBox()];
     expect(alertBox!.y).toBeLessThan(title!.y);
   });
@@ -286,7 +292,7 @@ test("a link with ?view=staff, ?lang= or ?evidence= shows no alert", async ({ pa
 
 test("error alerts come before the address's info alerts", async ({ page }) => {
   await mockShell(page, { freshness: { status: 403, body: await recorded("freshness-no-access.json") } });
-  await page.goto("/?view=piu&asof=2016-08-26");
+  await page.goto("/?view=public&asof=2016-08-26");
 
   await expect(page.locator("[data-alert]")).toHaveCount(3);
   await expect(page.locator("[data-alert]").first()).toHaveAttribute("data-alert", "error");
@@ -347,9 +353,9 @@ for (const width of [390, 320]) {
     await expect(title).toHaveText("I have nothing to brief you on yet.");
     expect((await title.evaluate(lastLine)).share).toBeGreaterThan(0.5);
 
-    // Without it, at 320 px the line broke as "You are seeing the World Bank staff / view."
+    // The Menu's view rows wrap with text-pretty, so no description ends on one word (ticket 40).
     await page.getByRole("button", { name: "Menu" }).click();
-    const view = page.getByText("You are seeing the World Bank staff view.");
+    const view = page.locator("[data-menu-panel]").getByText("A preview of what a member of the public sees. It has projects, lessons and data only.");
     await expect(view).toBeVisible();
     expect((await view.evaluate(lastLine)).words).toBeGreaterThan(1);
   });

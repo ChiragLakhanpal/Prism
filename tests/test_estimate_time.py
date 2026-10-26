@@ -208,12 +208,20 @@ def test_a_package_larger_than_any_the_model_learned_from_gets_no_estimate_and_s
     assert result["estimate"] is None and result["plan_dates"] is None
 
 
-@pytest.mark.parametrize("view", ["staff", "piu", "public"])
+@pytest.mark.parametrize("view", ["staff", "piu"])
 def test_it_answers_under_each_view_and_says_which_one(engine, view):
     result = estimate(engine, view=view)
 
     assert result["view"] == view
     assert result["estimate"] is not None
+
+
+def test_the_public_view_gives_no_time_estimate_for_a_package_of_a_project_under_way(engine):
+    # The roles file's [views] (ticket 40): P156634 was under way on the scoring date, so a procurement still under way
+    # isn't prejudged.
+    result = estimate(engine, view="public")
+
+    assert (result["view"], result["estimate"], result["abstention"]["reason"]) == ("public", None, "view_public_active")
 
 
 def test_without_an_as_of_date_it_answers_as_of_today(engine):

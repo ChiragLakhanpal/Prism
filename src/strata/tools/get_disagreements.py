@@ -34,8 +34,8 @@ side keeps its values, dates and evidence id but gives no text and no quote, tex
 coverage line counts each such passage once under that reason, as search_passages does. The disagreement itself
 stays, so every number the tool returns is the same.
 
-The call's view (staff, piu or public) is returned with the result but not yet applied: until ticket 40
-applies each view's rules, every view gets the World Bank staff result.
+The public view shows no disagreement on a project that was still under way on the as-of date (the roles file's
+[views], ticket 40; strata.tools.withheld): the tool abstains with view_public_active and keeps the trajectories.
 """
 
 from __future__ import annotations
@@ -48,6 +48,7 @@ from strata.knowledge import shields
 from strata.knowledge.assertions import (CONTRACT_SIGNING, PASSAGES, REPORT_PERIOD, WHOLE_PROJECT, Assertion, from_row,
                                         overlap, typed)
 from strata.tools.registry import Call
+from strata.tools.withheld import WITHHELD, withheld
 
 TABLE = "strata.gold.disagreement"
 NOT_A_MOMENT = (REPORT_PERIOD, WHOLE_PROJECT, CONTRACT_SIGNING)  # periods that name no single moment
@@ -235,6 +236,12 @@ def get_disagreements(call: Call, subject_id: str, attribute: str | None = None)
             ids.append(side["evidence_id"])
     not_used += shields.coverage_entries(left_out)
     abstention = None if current or rows else {"reason": "no_assertions", "subject_id": subject_id}
+    if abstention is None and withheld(call, "disagreements_on_active_projects", project_id):
+        # The public view shows no disagreement on a project still under way (the roles file's [views], ticket 40). The
+        # ratings of successive reports are records, not disagreements, so the trajectories stay.
+        return {"rows": [], "coverage": {"matched": 0, "used": 0, "not_used": []},
+                "abstention": {"reason": WITHHELD, "subject_id": subject_id}, "subject": subject,
+                "trajectories": trajectories(current), "rejected": rejected}
     return {"rows": rows, "coverage": {"matched": len(found), "used": len(rows), "not_used": not_used},
             "abstention": abstention, "subject": subject, "trajectories": [] if abstention else trajectories(current),
             "rejected": rejected}

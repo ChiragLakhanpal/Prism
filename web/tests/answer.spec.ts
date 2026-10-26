@@ -698,14 +698,14 @@ test("a drawer opened from a link stays open when you ask a question", async ({ 
   await expect(panel(page).locator("[data-sentence-text].bg-tint")).toHaveCount(0);
 });
 
-// The server applies no view's rules until ticket 40 (src/strata/server/app.py), so the answer must not
-// say it was asked in a preview; the alert above it says what the page shows instead.
-test("an answer asked with ?view=public names no preview, and page alerts sit above it", async ({ page }) => {
+// The server applies the view's rules (ticket 40), so the answer says it was asked in a preview of the public view, and
+// the preview banner sits above it.
+test("an answer asked with ?view=public names the preview, and the banner sits above it", async ({ page }) => {
   await open(page, { path: "/projects/P130164?view=public" });
   await askFromTheBox(page);
   await landed(page);
 
-  await expect(panel(page).locator("[data-asked]")).toHaveText("Asked within P130164.");
+  await expect(panel(page).locator("[data-asked]")).toHaveText("Asked within P130164, in a preview of the public view.");
   const alert = (await page.locator("main [data-alert]").first().boundingBox())!;
   expect(alert.y + alert.height).toBeLessThanOrEqual((await panel(page).boundingBox())!.y);
 

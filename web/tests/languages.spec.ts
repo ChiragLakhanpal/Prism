@@ -154,8 +154,13 @@ test("the language of answers and drafts is one tab stop in the view popover; ar
   await expect(group.locator("[data-language=fr] [lang=fr]")).toHaveText("Français");
   expect(await axe(page, "[role=dialog]")).toEqual([]);
 
-  await page.keyboard.press("Tab");
-  await expect(group.getByRole("radio", { name: /^English/ })).toBeFocused();
+  // The popover opens on the current view's row (ticket 40, which keeps brief 40's focus rule over brief 42's); Tab
+  // moves through the rows and the past date to the language group, one tab stop on its chosen language.
+  const english = group.getByRole("radio", { name: /^English/ });
+  for (let press = 0; press < 10 && !(await english.evaluate((element) => element === document.activeElement)); press += 1) {
+    await page.keyboard.press("Tab");
+  }
+  await expect(english).toBeFocused();
   await page.keyboard.press("ArrowDown");
   await page.keyboard.press("ArrowDown");
   await expect(group.getByRole("radio", { name: "Spanish Español" })).toBeChecked();

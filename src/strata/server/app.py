@@ -116,6 +116,7 @@ import uuid
 from collections.abc import AsyncIterator, Callable, Mapping
 from contextlib import asynccontextmanager
 from pathlib import Path
+from urllib.parse import parse_qs
 from typing import Annotated, Literal
 
 from fastapi import BackgroundTasks, Depends, FastAPI, Query, Request
@@ -129,7 +130,8 @@ from strata.agent.answer_check import Asker, SixChecks
 from strata.agent.judge import Judge
 from strata.agent.runs import RunLog, run_row
 from strata.agent.verifier import Verdict, answer_events
-from strata.config import ENGLISH, DraftKinds, load_draft_kinds, load_roles, load_thresholds, load_tools
+from strata.config import (ENGLISH, DraftKinds, Views, load_draft_kinds, load_roles, load_thresholds, load_tools,
+                           load_views)
 from strata.dbx import Viewer, viewer_from_headers
 from strata.drafts.store import DraftStore
 from strata.estimates import exposures as exposure_log
@@ -156,6 +158,7 @@ from strata.server import criteria as criteria_routes
 from strata.criteria.store import CriteriaStore
 from strata.criteria.workflow import Package as CriteriaPackage
 from strata.server import risks as risk_routes
+from strata.server import views as view_routes
 from strata.server import uploads as upload_routes
 from strata.uploads.store import UploadStore
 from strata.server import estimates as estimate_routes
@@ -314,7 +317,7 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                follows: FollowStore | None = None, uploads: UploadStore | None = None,
                new_upload_id: Callable[[], str] = upload_routes.new_upload_id,
                settings: SettingsStore | None = None, exposures: ExposureLog | None = None,
-               visits: LessonVisits | None = None,
+               visits: LessonVisits | None = None, views: Views | None = None,
                environ: Mapping[str, str] | None = None) -> FastAPI:
     """The app.
 
@@ -405,7 +408,18 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
             if usage is not None:
                 await asyncio.to_thread(usage.stop)
 
-    app = FastAPI(title="Strata", docs_url=None, redoc_url=None, openapi_url=None, lifespan=lifespan)
+    # The view switch (ticket 40): the roles file's [views], applied to every request by ViewParams, which binds the
+    # request's view and as-of date, and by the guard every route runs, which refuses in a preview what it does not keep.
+    view_rules = views or load_views()
+
+    def officer(viewer: Viewer) -> bool:
+        return access.agency(viewer) is not None
+
+    app = FastAPI(title="Strata", docs_url=None, redoc_url=None, openapi_url=None, lifespan=lifespan,
+                  dependencies=[Depends(view_routes.make_guard(lambda: view_rules, officer))])
+    app.add_exception_handler(view_routes.ViewRefused, lambda _request, refusal: JSONResponse(
+        refusal.body, status_code=refusal.status, headers={"Cache-Control": "no-store"}))
+    app.add_middleware(view_routes.ViewParams, officer=officer, views=lambda: view_rules, today=today)
     # The built app and the larger answers go compressed, so the Summary keeps its cold 3G budget (the 21
     # brief, section 3.5). Starlette leaves text/event-stream alone, so /api/ask still streams.
     app.add_middleware(GZipMiddleware, minimum_size=1024)
@@ -428,7 +442,6 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
         with tracer.start_as_current_span(name, kind=trace.SpanKind.SERVER) as span:
             span.set_attribute("http.request.method", request.method)
             span.set_attribute("url.path", path)
-            span.set_attribute("strata.view", STAFF)
             try:
                 response = await call_next(request)
             except Exception:  # an error no route expected: its details stay in the server log
@@ -436,8 +449,11 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                 log.exception("%s failed in a way I did not expect, reference %s.", name, reference)
                 response = JSONResponse({"code": "internal", "trace_id": reference}, status_code=500)
             finally:  # whatever the route did, the request is counted
+                # The view ViewParams bound for the request (ticket 40): a preview's, or the viewer's own.
+                bound = parse_qs(request.scope.get("query_string", b"").decode("latin-1")).get("view", [STAFF])[0]
+                span.set_attribute("strata.view", bound)
                 if usage is not None:
-                    usage.record(UsageEvent(viewer.user_id, path, STAFF, requested_at, tracing.trace_id(span)))
+                    usage.record(UsageEvent(viewer.user_id, path, bound, requested_at, tracing.trace_id(span)))
             # One operation per route in Application Insights, not one per project or agency.
             route = getattr(request.scope.get("route"), "path", None)
             if route and path.startswith("/api/"):
@@ -509,6 +525,39 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
         as_of = asof or today()
         return read_for("all projects", viewer,
                         lambda engine: projects.all_projects(engine, as_of, q.strip(), page, page_size))
+
+    @app.get("/api/agency/projects")
+    def your_agencys_projects(request: Request, asof: dt.date | None = None, viewer: Viewer = Depends(current_viewer)):
+        """Your agency's projects (ticket 40; the 40 brief, 3.8): each project where the implementing agency has a
+        disclosed Procurement Plan by the as-of date, with check_plan's counts on its latest plan, the same check the
+        Check a plan page shows. The agency is an officer's own, or, in the agency preview, the one the roles file's
+        [views] names. Anyone else, World Bank staff in their own view, gets 404 not_in_view."""
+        own = access.agency(viewer)
+        preview = request.query_params.get("view")
+        agency = view_rules.preview_agency if preview == view_routes.PIU else own if preview is None else None
+        if agency is None:
+            return refused(404, "not_in_view")
+        as_of = as_of_for(asof)
+        tool_view = view_routes.PIU if preview else view_routes.STAFF
+
+        def read(engine: Engine):
+            listed = []
+            for project in upload_routes.agency_projects(engine, agency, as_of):
+                plan = project["latest_plan"]
+                if plan is None:
+                    continue
+                checked = registry.call("check_plan", {"project_id": project["project_id"],
+                                                       "implementing_agency": plan["agency_id"],
+                                                       "plan_date": plan["plan_date"]},
+                                        registry.Context(engine, viewer, tool_view, as_of, environ=environ))
+                listed.append({"project_id": project["project_id"], "project_name": project["project_name"],
+                               "display_name": project["display_name"], "plan": plan,
+                               "counts": checked["counts"], "withheld": checked["withheld"],
+                               "abstention": checked["abstention"]})
+            short = view_rules.preview_agency_short if agency == view_rules.preview_agency else None
+            return {"agency": {"name": agency, "short_name": short, "agency_id": upload_routes.agency_id(agency)},
+                    "as_of": as_of.isoformat(), "state": "ok" if listed else "none", "projects": listed}
+        return read_for(f"the projects of {agency}", viewer, read)
 
     versions_shown = int(thresholds.value("app.versions_shown"))
 
@@ -626,29 +675,26 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
             return found if found is not None else JSONResponse({"code": "unknown_plan"}, status_code=404)
         return read_for(f"the changes in {project_id}'s plan of {version}", viewer, read)
 
-    def write_baseline(viewer: Viewer, view: str, what: str, write: Callable[[Engine], object]):
-        """A write to an agency's baseline as the viewer, or why it was not made. Only a signed-in viewer
-        in the World Bank staff view writes: a preview can only take things away (the 40 brief)."""
+    def write_baseline(viewer: Viewer, what: str, write: Callable[[Engine], object]):
+        """A write to an agency's baseline as the viewer, or why it was not made. Only a signed-in viewer writes, and a
+        preview never reaches here: the view switch's guard refuses it (ticket 40)."""
         if not viewer.user_id:
             return refused(401, "no_identity")
-        if view != STAFF:
-            return refused(403, "preview")
         return read_for(what, viewer, write)
 
     @app.put("/api/projects/{project_id}/procurement/{agency_id}/baseline")
-    def save_baseline(project_id: str, agency_id: str, body: BaselineRequest, view: str = "staff",
-                      viewer: Viewer = Depends(current_viewer)):
+    def save_baseline(project_id: str, agency_id: str, body: BaselineRequest, viewer: Viewer = Depends(current_viewer)):
         def write(engine: Engine):
             saved = baseline.save(engine, project_id, agency_id, body.plan_date, viewer, now())
             return {"baseline": saved} if saved is not None else refused(404, "unknown_plan")
-        return write_baseline(viewer, view, f"saving the baseline of {project_id}, {agency_id}", write)
+        return write_baseline(viewer, f"saving the baseline of {project_id}, {agency_id}", write)
 
     @app.delete("/api/projects/{project_id}/procurement/{agency_id}/baseline")
-    def remove_baseline(project_id: str, agency_id: str, view: str = "staff", viewer: Viewer = Depends(current_viewer)):
+    def remove_baseline(project_id: str, agency_id: str, viewer: Viewer = Depends(current_viewer)):
         def write(engine: Engine):
             baseline.remove(engine, project_id, agency_id)
             return {"baseline": None}
-        return write_baseline(viewer, view, f"removing the baseline of {project_id}, {agency_id}", write)
+        return write_baseline(viewer, f"removing the baseline of {project_id}, {agency_id}", write)
 
     @app.get("/api/data/readiness")
     async def data_readiness(sources: str | None = None, from_tool: str | None = Query(None, alias="from"),
@@ -688,8 +734,9 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
     def open_evidence(evidence_id: str = Query(alias="id", min_length=1, max_length=512), asof: dt.date | None = None,
                       view: Literal["staff", "piu", "public"] = STAFF,
                       step_ref: str | None = Query(None, max_length=128), viewer: Viewer = Depends(current_viewer)):
-        # The public view hides the baseline, and a preview only takes things away (the 21 review, round 3).
-        if view == "public" and evidence_id.startswith(f"{baseline.TABLE}:"):
+        # A view without the baseline hides it (the roles file's [views]: the public view), and a preview only takes
+        # things away (the 21 review, round 3).
+        if not view_rules.allows(view, "baseline") and evidence_id.startswith(f"{baseline.TABLE}:"):
             return JSONResponse({"code": "unknown_evidence"}, status_code=404)
         # An upload's row (ticket 38) is Official Use Only: only its team reads it, through the one access rule, and
         # another team gets the same answer as for an id no source has.
@@ -714,9 +761,9 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
 
     @app.post("/api/evidence/opened")
     def record_opened(body: OpenedRequest, viewer: Viewer = Depends(current_viewer)) -> dict:
-        # A preview can only take things away: someone looking through another view is not checking
-        # sources as themselves, so nothing is recorded (the 14 brief, section 5.10).
-        if opened is None or body.view != STAFF or not viewer.user_id:
+        # A preview can only take things away: someone looking through another view is not checking sources as
+        # themselves, so the view switch's guard answers {"recorded": false} before this runs (the 14 brief, 5.10).
+        if opened is None or not viewer.user_id:
             return {"recorded": False}
         return {"recorded": opened.record(viewer.user_id, body.evidence_id, body.run_id, body.route)}
 
@@ -731,11 +778,9 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
     def keep_a_side(disagreement_id: str, body: ChoiceRequest, viewer: Viewer = Depends(current_viewer)):
         """Keep one side of a disagreement for an answer or a draft (ticket 23): one new row, with the viewer and the
         reason. Keeping the side Strata does not lean on needs a reason; keeping Strata's side is going back to it.
-        A preview of another view records nothing."""
+        A preview of another view records nothing: the view switch's guard answers {"recorded": false} first."""
         if not viewer.token or not viewer.user_id:
             return refused(401, "no_identity")
-        if body.view != STAFF:
-            return {"recorded": False}
         if bool(body.run_id) == bool(body.draft_id):
             return refused(422, "bad_request", detail="Give the answer's run_id or the draft's draft_id, not both.")
         found = read_for(f"disagreement {disagreement_id}", viewer,
@@ -1030,19 +1075,21 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                            page: int = Query(1, ge=1, le=10_000), show: str | None = Query(None, max_length=64),
                            viewer: Viewer = Depends(current_viewer)):
         """The whole Lessons tab in one answer, so the page renders once (the 39 brief, section 9). It records the
-        visit, unless it is a preview or an as-of view, which can only take things away (ticket 40 moves the preview
-        rule into the roles file's views)."""
-        preview = view != STAFF
+        visit and shows what is about the reader only where the view keeps them (the roles file's [views]:
+        record_opened and personal_lessons, which no preview keeps), and never as of a past date."""
+        personal = view_routes.keeps(view_rules, view, "personal_lessons")
+        preview = not personal
+        recorded = view_routes.keeps(view_rules, view, "record_opened") and asof is None
         moment = now()
         try:
-            visit = (visits.visit(viewer.user_id, moment, visit_gap, record=not preview and asof is None)
+            visit = (visits.visit(viewer.user_id, moment, visit_gap, record=recorded)
                      if visits is not None and viewer.user_id else Visit(moment, None))
             # The reader's own drafts, for "Changed where you used it": read as the app, which keeps them, and
             # filtered by the one access rule (src/strata/server/access.py) to the drafts they wrote.
             mine = ([draft for draft in drafts.for_team(access.team(viewer).key, viewer.user_id)
                      if is_author(viewer, draft.author_id)]
-                    if drafts is not None and viewer.user_id and not preview and asof is None else [])
-            counts = feedback_counts(viewer) if not preview and asof is None else None
+                    if drafts is not None and viewer.user_id and personal and asof is None else [])
+            counts = feedback_counts(viewer) if personal and asof is None else None
         except EngineError:
             reference = request_reference()
             log.exception("I could not read the Lessons visits or drafts of %s, reference %s.", viewer.user_id,
@@ -1054,20 +1101,22 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
 
     @app.get("/api/lessons/{lesson_id}/versions")
     def lesson_versions(lesson_id: str, version_from: int = Query(alias="from", ge=1),
-                        version_to: int = Query(alias="to", ge=1), viewer: Viewer = Depends(current_viewer)):
-        """Two versions of a lesson, for the evidence drawer (the 39 brief, section 5.7)."""
+                        version_to: int = Query(alias="to", ge=1), asof: dt.date | None = None,
+                        viewer: Viewer = Depends(current_viewer)):
+        """Two versions of a lesson, for the evidence drawer (the 39 brief, section 5.7), as of the page's date."""
         return lesson_read(f"versions of {lesson_id}", viewer,
-                           lambda engine: lessons_page.versions(engine, lesson_id, version_from, version_to))
+                           lambda engine: lessons_page.versions(engine, lesson_id, version_from, version_to, asof))
 
     @app.get("/api/lessons")
     @app.get("/api/lessons/library")
     def lesson_library(page: int = Query(1, ge=1, le=10_000), stage: str | None = Query(None, max_length=64),
                        method: str | None = Query(None, max_length=64), sector: str | None = Query(None, max_length=128),
                        status: str | None = Query(None, max_length=16), show: str | None = Query(None, max_length=64),
-                       viewer: Viewer = Depends(current_viewer)):
-        """The library alone, for a filter or page change on the Lessons tab (the 39 brief, section 9)."""
-        return lesson_read("the lesson library", viewer, lambda engine: lessons.library(
-            engine, viewer, page, library_filters(stage, method, sector, status), show))
+                       asof: dt.date | None = None, viewer: Viewer = Depends(current_viewer)):
+        """The library alone, for a filter or page change on the Lessons tab (the 39 brief, section 9), as of the same
+        date as the page (ticket 40)."""
+        return lesson_read("the lesson library", viewer, lambda engine: lessons_page.library(
+            engine, viewer, page, library_filters(stage, method, sector, status), show, as_of=asof))
 
     @app.get("/api/lessons/review")
     def lesson_queue(page: int = Query(1, ge=1, le=10_000), viewer: Viewer = Depends(current_viewer)):
@@ -1116,18 +1165,34 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
             return None, False
 
     @app.get("/api/me")
-    def me(lang: str | None = None, viewer: Viewer = Depends(current_viewer)) -> dict:
+    def me(request: Request, lang: str | None = None, viewer: Viewer = Depends(current_viewer)) -> dict:
         # Whether the viewer has the World Bank staff role (ticket 37): the navy bar's Projects tab then opens
         # Following, and the project page offers Follow. The language of answers and drafts in effect, and where it
         # came from (ticket 42): the page's ?lang=, which the app passes on, the saved choice, the team's, English.
         # An implementing agency officer (ticket 38): their agency, and the implementing agency view the pill names.
+        # The view switch (ticket 40): the views the popover offers, the view and as-of date the server applied to the
+        # address's ?view= and ?asof= and why it could not apply what was asked, and what the applied view keeps.
         saved, readable = saved_language(viewer)
         language = working_language(lang, saved, access.team_language(viewer) if viewer.user_id else None)
         agency = access.agency(viewer)
+        own = view_routes.PIU if agency else view_routes.STAFF
+        asked = view_routes.requested(request)
+        found = view_routes.applied(view_rules, own, asked["view"] if asked["view"] else None)
+        date = view_routes.as_of(asked["asof"], today())
+        rule = view_rules.views[found.view]
         return {"email": viewer.email, "name": viewer.name, "signed_in": viewer.signed_in,
                 "has_token": viewer.token is not None, "staff": access.is_staff(viewer),
                 "agency": {"name": agency, "agency_id": upload_routes.agency_id(agency)} if agency else None,
-                "own_view": "piu" if agency else "staff",
+                "own_view": own, "views": list(view_routes.offered(view_rules, own)),
+                "applied": {"view": found.view, "preview": found.preview, "problem": found.problem},
+                "preview_agency": {"name": view_rules.preview_agency, "short_name": view_rules.preview_agency_short,
+                                   "agency_id": upload_routes.agency_id(view_rules.preview_agency)},
+                "tabs": list(rule.tabs), "hidden": list(rule.hidden),
+                # What the applied view keeps, and for each act the copy key of the sentence a preview gives.
+                "capabilities": sorted(found.capabilities),
+                "reasons": {key: capability.reason for key, capability in view_rules.capabilities.items()
+                            if capability.reason},
+                "asof": {"applied": date.applied.isoformat() if date.applied else None, "problem": date.problem},
                 "language": {**language.as_dict(), "saved_readable": readable, "choices": language_choices()}}
 
     @app.put("/api/me/working-language")

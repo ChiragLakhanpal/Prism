@@ -304,6 +304,7 @@
     "evidence_id": "strata.ops.plan_baselines:P156634/northern-water-works-development-agency",
     "public_from": "2026-10-23"
   },
+  "withheld": null,
   "counts": {
     "activities": 6,
     "checked": 6,

@@ -18,6 +18,7 @@ import { AccessLabel } from "../components/AccessLabel";
 import { PRIMARY_LINK } from "../components/Button";
 import { useStore } from "../lib/store";
 import { CHECK_MY_PLAN, officerAgency, uploadHref, type UploadListing } from "../lib/uploads";
+import { previewReason } from "../lib/view";
 
 // An implementing agency team's uploads, newest first, each with the compact access label (ticket 38). Only the team
 // gets them from the server; a preview gets none.
@@ -178,7 +179,7 @@ function PackagesTab({ preview }: { preview: boolean }) {
           <Button variant="secondary" held={preview} onClick={() => !preview && enterBoxMode("plan")} className="w-full @md/page:w-auto">
             {words.planPackage}
           </Button>
-          {preview && <p className="text-caption text-ink-muted">{words.previewOff}</p>}
+          {preview && <p className="text-caption text-ink-muted">{previewReason("plan_package") ?? words.previewOff}</p>}
         </div>
         {officer && <UploadsList />}
         <div className="mt-6 @lg/page:mt-8">

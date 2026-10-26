@@ -1,6 +1,6 @@
 // The recorded answers the project hub's screen tests share (ticket 21): P130164's project, Summary,
 // Documents and source view pages, as tests/record_api.py wrote them from the server on the fixture.
-import { recorded } from "./mocked";
+import { recorded, viewAnswers } from "./mocked";
 
 type Answer = { status?: number; body: string };
 
@@ -10,6 +10,7 @@ export const KENHA_PLAN = "procurement-plan-kenya-national-highways-authority-20
 export async function hubApi(): Promise<Record<string, Answer>> {
   const file = async (name: string) => ({ body: await recorded(name) });
   return {
+    ...(await viewAnswers()),
     "/api/me": await file("me.json"),
     "/api/freshness": await file("freshness.json"),
     "/api/projects/P130164": await file("project-p130164.json"),

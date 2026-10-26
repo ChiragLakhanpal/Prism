@@ -3,6 +3,7 @@
 // the server; nothing here reads the file.
 import { ApiError, type CheckPlanResult } from "./api";
 import { createStore } from "./store";
+import { withPageParams } from "./view";
 
 // The implementing agency whose team the viewer is on, from /api/me: null for anyone else, undefined until it is known.
 export const officerAgency = createStore<{ name: string; agency_id: string } | null | undefined>(undefined);
@@ -68,7 +69,7 @@ export const CHECK_MY_PLAN = "/packages/check";
 // a header, percent-encoded, never in the address, where a proxy's log may keep it.
 export async function sendUpload(file: File, projectId: string, key: string): Promise<UploadCheck & { upload_id: string }> {
   const query = new URLSearchParams({ project_id: projectId, idempotency_key: key });
-  const response = await fetch(`/api/uploads?${query.toString()}`, {
+  const response = await fetch(withPageParams(`/api/uploads?${query.toString()}`), {
     method: "POST",
     headers: { "Content-Type": "application/octet-stream", Accept: "application/json", "X-Strata-File-Name": encodeURIComponent(file.name) },
     body: file,

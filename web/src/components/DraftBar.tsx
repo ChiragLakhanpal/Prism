@@ -26,6 +26,7 @@ import { Button } from "./Button";
 import { Fill } from "./Fill";
 import { SOURCES_ID } from "./SourcesList";
 import { TextLink } from "./TextLink";
+import { previewReason } from "../lib/view";
 
 const whole = (value: number) => formatNumber(value, { compact: false });
 // After the notes are marked as checked, Export to Word takes Mark as checked's place under the pointer.
@@ -109,7 +110,7 @@ export function HoldLine({ draft, words }: { draft: Draft; words: BarProps["word
   if (holds.length === 0) return null;
   const bar = copy.draft.bar;
   const preview = holds.find((hold) => hold.key === "preview");
-  if (preview) return bar.hold.preview as string;
+  if (preview) return previewReason("mark_checked") ?? (bar.hold.preview as string);
   if (holds.length === 1 && holds[0].key === "notChecked") return words.holdNotChecked;
   const clauses: ReactNode[] = holds.map((hold) => {
     if (hold.key === "notChecked") return words.holdClause;
