@@ -27,7 +27,7 @@ The live part of each drill, under "On the workspace", runs later, one step at a
 ## 1. Add a data source
 
 - **The one place.** `config/sources.toml`
-- **Proved by.** `tests/test_config.py`, `test_a_source_is_one_entry_in_the_registry`
+- **Proved by.** `tests/test_ground_truth.py`, `test_ground_truth`, on its case `every_source_holds_the_rows_its_api_reported`, which step 4 gives the new source's `<key>,true` line. It shows the fixture database holds every row the source's API reported. `tests/test_config.py`'s `test_a_source_is_one_entry_in_the_registry` shows the change is one entry.
 - **Rehearsed with.** The Logistics Performance Index, the Indicators API's overall score `LP.LPI.OVRL.XQ`, as the source `lpi`.
 
 **Steps.**
@@ -76,14 +76,14 @@ Write the dataset name without a number in it. The proposal's Annex 3 credits ev
 
 A threshold that changes a mark on the demo plan also changes the benchmark answers and the screen tests that state the mark. For example, `[plan_check] completion_passed_min_estimated_usd` above 1,230,000 would take Needs a look off KE-NWWDA-541055-CW-RFB.
 
-A new signal is a check added to `src/strata/tools/project_signals.py`, not a threshold. `tests/test_project_signals.py` fails when a reason that check gives for not running is missing from `config/tools.toml` or from the Following page's words, so the gate finds it before the live page would answer HTTP 500.
+A new signal is a check added to `src/strata/tools/project_signals.py`, not a threshold. A check that can fail to run takes its reason from `NOT_RUN` in that file, and `tests/test_project_signals.py` fails when a reason there is missing from `config/tools.toml` or from the Following page's words, so the gate finds it before the live page would answer HTTP 500.
 
 **On the workspace.** The tool's description names `{signals.look_min}`, so run `uv run --script ops/agent/sync.py --env-file .env`. Then deploy the App, which reads the file when it starts: `uv run --script ops/app/deploy_app.py --env-file .env --keep-secrets`.
 
 ## 4. Add a country to the slice
 
 - **The one place.** `config/slice.toml`
-- **Proved by.** `tests/test_config.py`, `test_adding_a_country_to_the_slice_is_one_entry`
+- **Proved by.** `tests/test_fetch.py`, `test_the_notices_fetch_asks_for_each_slice_country_on_its_own_with_its_own_watermark`. It reads the slice and checks that the nightly fetch asks for every country's notices, the new one included. `tests/test_config.py`'s `test_adding_a_country_to_the_slice_is_one_entry` shows the change is one entry.
 - **Rehearsed with.** Nepal, `NP` and `NPL`.
 
 **Steps.**

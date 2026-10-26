@@ -13,7 +13,7 @@
 [[drills]]
 change = "Add a data source"
 place = "config/sources.toml"
-proved_by = "tests/test_config.py"
+proved_by = "tests/test_ground_truth.py"
 
 [[drills]]
 change = "Add a tool"
@@ -28,7 +28,7 @@ proved_by = "tests/test_project_signals.py"
 [[drills]]
 change = "Add a country to the slice"
 place = "config/slice.toml"
-proved_by = "tests/test_config.py"
+proved_by = "tests/test_fetch.py"
 
 [[drills]]
 change = "Swap the model"

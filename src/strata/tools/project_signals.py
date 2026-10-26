@@ -56,6 +56,13 @@ PLAN_CHECKS = ("completion_passed", "above_estimate", "late_direct")
 # What each check reads, for the reason it gives when it cannot run (the registry's reasons).
 NEEDS = {"completion_passed": "plans", "above_estimate": "plans", "late_direct": "plans",
          "closing_moves": "loan_history", "restructured": "isr", "isr_lowered": "isr", "disbursement": "loans"}
+# The reason a check gives when it cannot run, by what it lacks. Every check takes its reason from here, and each one
+# must be in project_signals' reasons in config/tools.toml, or the registry refuses the result and the page answers
+# HTTP 500, and needs its words on the Following page (web/src/copy.ts). A signal added in round 2 that can fail to
+# run adds its reason here, and tests/test_project_signals.py fails the gate until both list it.
+NOT_RUN = {"plans": "no_plans", "recent_plans": "no_recent_plans", "loan_history": "no_loan_history",
+           "isr": "no_isr", "loans": "no_loans"}
+NOT_RUN_REASONS = tuple(NOT_RUN.values())
 COMPLETION = ("completion_passed_no_contract",)
 ABOVE = ("signed_over_estimate", "signed_late_over_estimate")
 ACTIVE = "active"  # strata.tools.withheld.status_as_of's word for a project still under way
@@ -206,14 +213,14 @@ def _plan_checks(call: Call, project: dict, limits: Limits) -> tuple[dict[str, l
     could run (no_plans, no_recent_plans), and the plans read."""
     latest = _rows(call, "latest_plans.sql", project_id=project["project_id"])
     if not latest:
-        return None, "no_plans", []
+        return None, NOT_RUN["plans"], []
     since = months_before(call.as_of, limits.plan_months)
     recent = [row for row in latest if _date(row["plan_date"]) >= since]
     plans = [{"implementing_agency": row["implementing_agency"], "agency_id": plan_check.agency_id(row["implementing_agency"]),
               "document_id": row["document_id"], "plan_date": _iso(row["plan_date"]),
               "in_scope": _date(row["plan_date"]) >= since} for row in latest]
     if not recent:
-        return None, "no_recent_plans", plans
+        return None, NOT_RUN["recent_plans"], plans
     firsts = {row["activity_reference_no"]: row for row in _rows(call, "first_listings.sql", project_id=project["project_id"])}
     closing = _date(project["closing_date"])
     found: dict[str, list[dict]] = {key: [] for key in PLAN_CHECKS}
@@ -389,7 +396,7 @@ def project_signals(call: Call, project_id: str) -> dict:
         values["late_direct"] = {"total_millions": millions(total)}
 
     if not history:
-        missing["closing_moves"] = "no_loan_history"
+        missing["closing_moves"] = NOT_RUN["loan_history"]
     else:
         moves = _closing_moves(project_id, history)
         found["closing_moves"] = moves if len(moves) >= limits.closing_moves_min else []
@@ -401,7 +408,7 @@ def project_signals(call: Call, project_id: str) -> dict:
 
     latest = _latest_isr(_rows(call, "isr_ratings.sql", project_id=project_id))
     if not latest:
-        missing["isr_lowered"] = missing["restructured"] = "no_isr"
+        missing["isr_lowered"] = missing["restructured"] = NOT_RUN["isr"]
     else:
         isr_source = {"source_key": "isr", "project_id": project_id, "document_id": latest[0]["document_id"],
                       "date": _iso(latest[0]["isr_date"])}
@@ -411,7 +418,7 @@ def project_signals(call: Call, project_id: str) -> dict:
             sources["isr_lowered"] = isr_source
         restructurings = _restructurings(call, latest, limits)
         if restructurings is None:
-            missing["restructured"] = "no_isr"
+            missing["restructured"] = NOT_RUN["isr"]
         else:
             found["restructured"] = restructurings
             if restructurings:
@@ -421,7 +428,7 @@ def project_signals(call: Call, project_id: str) -> dict:
 
     loans = _rows(call, "loans.sql", project_id=project_id)
     if not loans:
-        missing["disbursement"] = "no_loans"
+        missing["disbursement"] = NOT_RUN["loans"]
     else:
         disbursed, available, share = disbursed_share(loans)
         closing = _date(project["closing_date"])
