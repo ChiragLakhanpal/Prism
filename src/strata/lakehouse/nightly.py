@@ -69,7 +69,9 @@ RUN_LOGS = ("strata.ops.pipeline_runs", "strata.ops.quality_checks", "strata.ops
             "strata.ops.documents_read", "strata.ops.stress_shelf", "strata.ops.rebidding_labels",
             "strata.ops.supplier_match_quality", "strata.ops.evaluation_result", "strata.gold.time_estimate_score",
             # Each document run's sample of passages checked against the language detector (ticket 42).
-            "strata.ops.passage_language_checks")
+            "strata.ops.passage_language_checks",
+            # The challenger's and the hazard model's nightly scores in shadow (ticket 44).
+            "strata.ops.time_estimate_shadow", "strata.ops.hazard_scores")
 
 # Where a source's pages come from: the live API on the workspace, the recorded fixture here.
 Fetch = Callable[[Source, Engine], Iterable[pages.Page]]
@@ -225,15 +227,64 @@ def _score(run: Run) -> int:
 
     Then how many packages each rebidding label source names, in strata.ops.rebidding_labels, and, on a run that
     fetches from the live APIs, the rebidding champion's chance for every activity a Procurement Plan lists, in
-    strata.ops.rebidding_scores (ticket 28), and the signals' track record (ticket 37). The what-if grid's own
-    screen waits for ticket 44."""
-    from strata.estimates import rebidding, scoring
+    strata.ops.rebidding_scores (ticket 28), and the signals' track record (ticket 37).
+
+    Then the estimates loop (ticket 44): every package scored in shadow with the challenger, when one newer than the
+    champion is kept (strata.estimates.promotion, which no tool reads); the monthly watch of each whole month not
+    watched yet, which marks plan rows dated near a date Strata offered, measures plan accuracy and rolling coverage
+    and raises the retrains they call for (strata.estimates.watch); and, on a run that fetches from the live APIs,
+    the retrain itself when one is due, quarterly or after a raised trigger, which registers a challenger.
+
+    Last, the discrete-time hazard model for project delay early warning, in shadow beside the fixed signals: every
+    open project's score in strata.ops.hazard_scores, and, once a week, its replay against the signals
+    (strata.estimates.hazard). Nothing shows either."""
+    from strata.estimates import hazard, promotion, rebidding, scoring, watch
 
     changed = scoring.run(run.engine, run.run_id, run.clock(), train_here=run.fetch is not fetch_live)
     changed += rebidding.record_label_counts(run.engine, run.run_id, run.clock)
+    changed += promotion.score_in_shadow(run.engine, run.run_id, run.clock())
     if run.fetch is fetch_live:
         changed += _score_packages(run) + _replay_signals(run)
-    return changed
+    changed += watch.run(run.engine, run.run_id, run.clock())
+    if run.fetch is fetch_live:
+        changed += _retrain(run)
+    return changed + hazard.score_in_shadow(run.engine, run.run_id, run.clock()) + _compare_hazard(run)
+
+
+def _compare_hazard(run: Run) -> int:
+    """The hazard model replayed against the fixed signals (strata.estimates.hazard.compare), when the stored
+    comparison is signals.track_record_every_days old or there is none, on the signals' own cadence. A live run logs
+    it to MLflow, or skips it when MLflow is missing; any other run uses the offline tracker. Returns the rows stored
+    in strata.ops.evaluation_result."""
+    from strata.config import load_thresholds, load_time_estimate
+    from strata.estimates import harness, hazard
+    from strata.estimates.tracking import OfflineTracker
+
+    now = run.clock()
+    held = hazard.stored(run.engine)
+    every = int(load_thresholds().value("signals.track_record_every_days"))
+    if held is not None and (now.astimezone(dt.UTC).date() - as_utc(held["ran_at"]).date()).days < every:
+        return 0
+    tracker = _tracker(load_time_estimate().experiment) if run.fetch is fetch_live else OfflineTracker()
+    if tracker is None:
+        return 0
+    return len(harness.run_rows(run.engine, hazard.compare(run.engine, tracker, ran_at=now)))
+
+
+def _retrain(run: Run) -> int:
+    """Ticket 25's backtest, which trains the time estimate and registers it as the challenger while a champion holds
+    the alias, when the watch says a retrain is due (strata.estimates.watch.retrain_due). Returns the rows it stored
+    in strata.ops.evaluation_result."""
+    from strata.config import load_time_estimate
+    from strata.estimates import backtest, harness, watch
+
+    now = run.clock()
+    if watch.retrain_due(run.engine, now.astimezone(dt.UTC).date()) is None:
+        return 0
+    tracker = _tracker(load_time_estimate().experiment)
+    if tracker is None:
+        return 0
+    return len(harness.run_rows(run.engine, backtest.run(run.engine, tracker, ran_at=now).run_id))
 
 
 def _tracker(experiment: str):

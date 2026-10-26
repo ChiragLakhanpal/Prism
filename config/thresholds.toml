@@ -802,3 +802,50 @@ targets = { groundedness = 0.8, relevance = 0.8, task_adherence = 0.8, tool_use 
 # fairshare's evaluation runs on 40 answers took minutes, not hours. Starting values for the owner to confirm.
 poll_seconds = 10
 wait_seconds = 1800
+
+# The estimates loop (ticket 44; docs/PLAN.md section 11, "Three loops" and "Retraining"): the exposure log, the plan
+# rows dated near a date Strata offered, the monthly watch that raises a retrain, the challenger's promotion and the
+# hazard model in shadow. src/strata/estimates/watch.py, promotion.py and hazard.py read these. The coverage band,
+# 75 to 85 percent, is time_estimate.coverage_low and coverage_high, set once for the backtest and this watch.
+[estimates_loop]
+# A plan row published after Strata showed a range for its package is dated within this many days of a date Strata
+# offered when its planned signing date is this close to the middle or the 8-in-10 point offered, early or late.
+# Source: docs/PLAN.md section 11 ("later plan rows within 14 days of Strata's value are marked as anchored") and
+# the 45 design brief, section 7.2, tile 9.
+anchored_within_days = 14
+# Below this many cases a measure gives only its counts: no median, no rate and no coverage share, and no trigger
+# fires on it. Source: the 45 design brief, decision 14 ("The 20-case rule now covers medians and rates per 100"),
+# and DESIGN.md section 7, rules 6 and 15.
+min_cases = 20
+# Rolling coverage counts the packages that finished in this many months up to each watched month. Source: the 45
+# design brief, section 7.4 ("Of the packages that finished in the last 12 months").
+coverage_window_months = 12
+# Coverage outside the band for this many watched months in a row raises a retrain. Source: docs/PLAN.md section 11
+# ("interval coverage leaves 75-85% for two months").
+coverage_outside_months = 2
+# The time estimate's typical error trails the past range's when it is larger by more than this share, which raises
+# a retrain. Source: docs/PLAN.md section 11 ("error trails the past range by more than 10%").
+error_trail_share = 0.10
+# The input mix drifts when a chi-square test of homogeneity between the mix the champion learned from and the
+# packages advertised in the watched month gives a p-value below drift_alpha divided by the number of inputs tested
+# (Bonferroni), for any input in drift_inputs (columns of strata.gold.package). Source: none in PLAN.md; the 1
+# percent level and these three inputs are starting values for the model owner to confirm.
+drift_alpha = 0.01
+# A column not listed yet must also be added to INPUTS in src/strata/estimates/watch.py and to the SELECT in
+# src/strata/estimates/sql/loop/input_mix.sql, which read only the columns named there.
+drift_inputs = ["procurement_category", "procurement_method", "review_type"]
+# A challenger scores in shadow beside the champion for this many months before it may be promoted, and the time
+# estimate is retrained this often. Source: docs/PLAN.md section 11 ("retrained quarterly", "a quarter in shadow").
+shadow_quarter_months = 3
+retrain_every_months = 3
+# The hazard model beats the fixed signals only when, picking as many projects as the signals did on each replay
+# date, it caught more later closing-date extensions and McNemar's exact test on the discordant projects gives a
+# p-value below this. It shares the signals' replay dates, follow-up window and track_record_min ([signals]).
+# Source: none; the usual 5 percent level, as hindsight.mcnemar_alpha, a starting value for the owner to confirm.
+hazard_beats_alpha = 0.05
+# The discrete-time hazard model learns from one row per open project every hazard_period_months, from each
+# project's loan history, whose follow-up window (signals.track_record_window_months) ended by the day it is trained
+# on. Its logistic regression is shrunk toward no effect by hazard_ridge, so a small cohort cannot give it extreme
+# weights. Source: none; quarterly rows and a ridge of 1 are starting values for the model owner to confirm.
+hazard_period_months = 3
+hazard_ridge = 1.0

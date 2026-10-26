@@ -17,7 +17,9 @@
   answer the runner hands over, so no runner can send a sentence the checks did not see: checks 1 to
   3 and 5 at once, check 6 with get_disagreements asked as the viewer, and check 4 with one call to
   the judge (src/strata/agent/judge.py). A run that breaks ends with an error event whose details
-  stay in the server log. Each run is written to strata.ops.agent_runs (src/strata/agent/runs.py).
+  stay in the server log. Each run is written to strata.ops.agent_runs (src/strata/agent/runs.py). Each past range
+  or time estimate a kept sentence cited, for a package with a STEP reference in the World Bank staff view, is an
+  exposure (ticket 44; src/strata/estimates/exposures.py), written to strata.ops.exposures beside the run row.
 - GET /api/projects lists every project Strata holds a record for, and GET /api/projects/{project_id}
   gives a project page's header and each agency's Procurement Plan versions (src/strata/server/
   projects.py), as the viewer and as of ?asof=; an unknown project gets 404 with the code
@@ -55,7 +57,9 @@
   public Procurement Plan row states it, with that plan and its project, or 404 with the code
   unknown_package. GET /api/packages/{step_reference}/comparables runs find_comparables through the
   tool registry for the workspace's section 1, with the tool's criteria as query parameters
-  (?review_type=Prior, ?category=any), ?asof= and ?view=, as the viewer.
+  (?review_type=Prior, ?category=any), ?asof= and ?view=, as the viewer. A past range it sends in the World Bank
+  staff view is an exposure, as a time estimate is (ticket 44; src/strata/estimates/exposures.py): a background
+  task writes one row in strata.ops.exposures after the answer has gone.
 - POST, GET /api/planned-packages and GET, POST /api/planned-packages/{package_id} plan a package from a
   sentence, list a viewer's packages and the plans they checked, and open or change one package, and GET
   /api/comparables runs find_comparables for a package with no STEP row (ticket 15; src/strata/server/
@@ -103,6 +107,7 @@ Each request builds its own Viewer, Turn and engine; create_app keeps only setti
 """
 
 import asyncio
+import dataclasses
 import datetime as dt
 import json
 import logging
@@ -127,6 +132,8 @@ from strata.agent.verifier import Verdict, answer_events
 from strata.config import ENGLISH, DraftKinds, load_draft_kinds, load_roles, load_thresholds, load_tools
 from strata.dbx import Viewer, viewer_from_headers
 from strata.drafts.store import DraftStore
+from strata.estimates import exposures as exposure_log
+from strata.estimates.exposures import ExposureLog, Shown
 from strata.knowledge import language
 from strata.knowledge.lessons.review import LessonReview, Refused
 from strata.harness.aio import HEARTBEAT, with_heartbeats
@@ -292,7 +299,8 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                passage_reports: PassageReports | None = None, judging: Judging | None = None,
                feedback_record: Callable[[], Engine] | None = None,
                citations: CitationLog | None = None, choices: ChoiceLog | None = None,
-               follows: FollowStore | None = None, settings: SettingsStore | None = None) -> FastAPI:
+               follows: FollowStore | None = None, settings: SettingsStore | None = None,
+               exposures: ExposureLog | None = None) -> FastAPI:
     """The app.
 
     engine_for makes the engine for each request's viewer; without it, the environment names one.
@@ -339,6 +347,10 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
     choices keeps the side of a disagreement each person kept for an answer or a draft, with their reason
     (strata.ops.disagreement_choices, ticket 23), written as the app's own service principal; without it, keeping
     the other report says nothing was recorded.
+
+    exposures is the exposure log (ticket 44; src/strata/estimates/exposures.py), written as the app's own service
+    principal: each past range or time estimate sent for a package with a STEP reference in the World Bank staff view.
+    Without it, no exposure is recorded.
 
     criteria keeps the runs of "Check your criteria", section 5 of the package workspace (src/strata/criteria/
     store.py), with each person's pasted text readable only by them, written as the app's own service principal;
@@ -773,7 +785,7 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                                heartbeat_seconds=heartbeat_seconds, six_checks=six_checks)
     estimate_routes.add_routes(app, engine_for=engine_for, store=packages, form=package_form or load_package_form(),
                                thresholds=package_thresholds or thresholds, today=today, now=now,
-                               reference=request_reference)
+                               reference=request_reference, exposures=exposures)
 
     @app.get("/api/packages/{step_reference}")
     def open_package(step_reference: str, asof: dt.date | None = None, viewer: Viewer = Depends(current_viewer)):
@@ -786,14 +798,57 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
             return {"as_of": as_of.isoformat(), "package": found}
         return read_for(f"package {step_reference}", viewer, read)
 
+    def saved_choice(viewer: Viewer, step_reference: str) -> str | None:
+        """The viewer's plan-date choice for a package, the option an exposure records (ticket 44), or None."""
+        if packages is None or not viewer.user_id:
+            return None
+        try:
+            return packages.plan_date_choice(viewer.user_id, "step_reference", step_reference)
+        except Exception:  # Lakebase or the network: the exposure records the cautious default
+            log.exception("I could not read %s's plan-date choice for %s.", viewer.user_id, step_reference)
+            return None
+
+    def expose_past_range(background: BackgroundTasks, viewer: Viewer, result, step_reference: str, view: str,
+                          asof: dt.date | None) -> None:
+        """A past range sent in the staff view, written to the exposure log after the answer has gone (ticket 44)."""
+        if exposures is None or engine_for is None or not isinstance(result, dict):
+            return
+        as_of = min(asof, today()) if asof else today()
+        route = "/api/packages/{step_reference}/comparables"
+        if not Shown("find_comparables", result, step_reference, view, as_of, route, viewer.user_id, None).counts():
+            return
+
+        def write() -> None:
+            exposures.record_as(engine_for, viewer, [Shown("find_comparables", result, step_reference, view, as_of,
+                                                           route, viewer.user_id, saved_choice(viewer, step_reference))])
+        background.add_task(write)
+
+    def exposed_in(turn: Turn, verdict: Verdict) -> list[Shown]:
+        """The past ranges and time estimates the answer's kept sentences cited, as the exposures POST /api/ask
+        writes (ticket 44): in the staff view, for calls that named a STEP reference."""
+        if exposures is None or engine_for is None or turn.scope.view != exposure_log.STAFF:
+            return []
+        cited = [evidence for sentence in verdict.kept for evidence in sentence.claim.evidence_ids]
+        as_of = as_of_of(turn)
+        return [Shown(tool, result, reference, turn.scope.view, as_of, exposure_log.ASK_ROUTE, turn.viewer.user_id,
+                      None) for tool, reference, result in exposure_log.stated(cited, turn.notes.tool_calls,
+                                                                              turn.facts.get)]
+
+    def expose_answer(turn: Turn, shown: list[Shown]) -> None:
+        """Write the answer's exposures with the viewer's saved plan-date choice for each package."""
+        exposures.record_as(engine_for, turn.viewer, [
+            dataclasses.replace(item, saved_option=saved_choice(turn.viewer, item.step_reference)) for item in shown])
+
     @app.get("/api/packages/{step_reference}/comparables")
-    def comparables(step_reference: str, request: Request, asof: dt.date | None = None, view: str = "staff",
-                    viewer: Viewer = Depends(current_viewer)):
+    def comparables(step_reference: str, request: Request, background: BackgroundTasks, asof: dt.date | None = None,
+                    view: str = "staff", viewer: Viewer = Depends(current_viewer)):
         # The criteria come from the query as the tool's own parameter names; the registry checks them.
         criteria = package_routes.comparables_criteria(request)
         if isinstance(criteria, JSONResponse):
             return criteria
-        return run_tool("find_comparables", {**criteria, "step_reference": step_reference}, viewer, view, asof)
+        result = run_tool("find_comparables", {**criteria, "step_reference": step_reference}, viewer, view, asof)
+        expose_past_range(background, viewer, result, step_reference, view, asof)
+        return result
 
     @app.get("/api/packages/{step_reference}/rebidding")
     def rebidding(step_reference: str, request: Request, asof: dt.date | None = None, view: str = "staff",
@@ -1027,6 +1082,18 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                 else:
                     writers.append(threading.Thread(target=citations.record, args=(cited,),
                                                     name=f"strata-cited-{turn.run_id}"))
+                    writers[-1].start()
+            # Each past range or time estimate the kept sentences cited, for a STEP package in the staff view, is
+            # an exposure (ticket 44), written beside the run row.
+            if outcome["verdict"] is not None:
+                try:
+                    shown = exposed_in(turn, outcome["verdict"])
+                except Exception:  # a fact in a shape the log doesn't expect: the answer and its run row stand
+                    log.exception("Run %s could not list the ranges it showed.", turn.run_id)
+                    shown = []
+                if shown:
+                    writers.append(threading.Thread(target=expose_answer, args=(turn, shown),
+                                                    name=f"strata-exposed-{turn.run_id}"))
                     writers[-1].start()
             for writer in writers:
                 await asyncio.to_thread(writer.join, 60)

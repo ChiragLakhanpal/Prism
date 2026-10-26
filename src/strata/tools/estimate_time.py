@@ -322,9 +322,15 @@ def _size_reason(direction: str, gap: Decimal, described: dict, went: dict[str, 
 
 # ── The track record and the plan dates ──────────────────────────────────
 
-def _backtests(engine, as_of: dt.date, thresholds, viewer) -> tuple[dict | None, list[dict], dict | None]:
+def _backtests(engine, as_of: dt.date, thresholds, viewer, model: str,
+               version: int | None = None) -> tuple[dict | None, list[dict], dict | None]:
+    """The track record, each test year and the latest test year of the version the estimate comes from: the
+    champion on as_of, unless version names another (a score stored before a promotion). They come from the backtest
+    run that registered that version, so a challenger's newer run changes nothing until it is promoted (ticket 44)."""
     try:
-        years = backtest.stored_years(engine, as_of=as_of)
+        if version is None:
+            version = portable.version_on(engine, model, as_of)
+        years = backtest.version_years(engine, version, as_of)
     except EngineError:  # a viewer who cannot read strata.ops still gets the estimate, with no track record
         # The user id, never the name, which falls back to the viewer's email when no name header arrives.
         log.warning("I could not read the time estimate's backtests for %s.", viewer.user_id, exc_info=True)
@@ -421,7 +427,8 @@ def estimate_time(call: Call, step_reference: str | None = None, method: str | N
     n = len(comparables)
     counts = found["counts"]
     fewest = int(thresholds.value("time_estimate.min_comparables"))
-    track, test_years, latest_year = _backtests(call.engine, call.as_of, thresholds, call.viewer)
+    track, test_years, latest_year = _backtests(call.engine, call.as_of, thresholds, call.viewer,
+                                                settings.registered_model)
     result = {"rows": [], "coverage": {"matched": 0, "used": 0, "not_used": []},
               "package": {"step_reference": step_reference, "described": None},
               "comparables": {"n": n, "signed": counts["signed"] if counts else 0,
@@ -467,6 +474,10 @@ def estimate_time(call: Call, step_reference: str | None = None, method: str | N
         cells = _requested_cells(kept, features, levers, key, call.as_of, call.as_of.isoformat())
         name, version, alias, scored_on = kept.name, kept.version, kept.alias, call.as_of
     model = kept.model if kept is not None and kept.version == version else None
+    if kept is None or kept.version != version:  # scored by an earlier champion: that version's own track record
+        track, test_years, latest_year = _backtests(call.engine, call.as_of, thresholds, call.viewer,
+                                                    settings.registered_model, version)
+        result = {**result, "track_record": track, "test_years": test_years}
     described_cell = next(cell for cell in cells if cell["as_described"])
     values = {"country": described["country_code"], "category": described["category"],
               "estimated_amount_usd": described["estimated_amount_usd"]}
