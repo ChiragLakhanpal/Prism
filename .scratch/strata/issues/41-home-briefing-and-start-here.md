@@ -6,7 +6,7 @@ Read first: the blueprint's Home wireframe and its "why" panels, "Navigation and
 
 **Blocked by:** 39 (The Lessons page, with versions and was and now in drafts); 40 (The view switch and the as-of date, applied by the server)
 
-**Status:** ready-for-agent
+**Status:** in-progress
 **Area:** app
 **Phase:** P2
 **Design review:** yes
@@ -19,3 +19,7 @@ Read first: the blueprint's Home wireframe and its "why" panels, "Navigation and
 - [ ] The implementing agency and public previews show the Home content their column of the roles table describes.
 - [ ] Home loads within its budget on a throttled 3G profile.
 - [ ] The page follows the Home wireframe and DESIGN.md sections 5 (cards, at most eight per group) and 7 (drafts are "to check", never "to approve"); first-run and quiet-week states are captured at 1440, 1024 and 390 px; axe finds no WCAG 2.2 AA violations.
+
+## Comments
+
+- October 23, 2026, orchestrator: dispatched to an implementer in its own worktree on branch strata/41-home-briefing-and-start-here, as soon as ticket 40 landed. Credentials are still missing, so every live step is parked in docs/workspace-catchup.md; the offline side is built against the fixtures.
