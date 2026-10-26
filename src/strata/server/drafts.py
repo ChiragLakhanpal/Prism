@@ -46,6 +46,7 @@ from strata.config import DraftKinds
 from strata.dbx import Viewer, viewer_from_headers
 from strata.drafts import files as draft_files
 from strata.drafts import runtime
+from strata.drafts.lesson_choices import CannotRewrite
 from strata.drafts.store import DraftStore, NewExport, Saved, Stale
 from strata.harness.aio import HEARTBEAT, with_heartbeats
 from strata.harness.turn import Event, Scope, TraceIds, Turn
@@ -618,7 +619,7 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: DraftStore 
                                                 six_checks, today(), run_id, noted)
             except runtime.WriteError as error:
                 error_code = error.code if error.code in runtime.WRITE_ERRORS else "internal"
-            except runtime.CannotRewrite:  # the kind's own refusal that the row cannot be rewritten
+            except CannotRewrite:  # the kind's own refusal that the row cannot be rewritten
                 error_code = "stale"
             finally:
                 if runs is not None and noted:
@@ -626,15 +627,16 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: DraftStore 
                                 scope=Scope(chip=saved.project_id, as_of=today(), language=saved.content.get("lang") or "en"),
                                 trace=trace_ids())
                     turn.notes.agent, turn.notes.agent_version, turn.notes.as_of = noted[2], noted[3], today()
-                    row = run_row(turn, noted[0], error_code or (None if rewrite else "no_answer"), started,
+                    row = run_row(turn, noted[0], error_code or (None if rewrite and rewrite["notes"] else "no_answer"),
+                                  started,
                                   dt.datetime.now(dt.UTC))
                     await asyncio.to_thread(runs.record, row)
             if error_code == "stale":
                 return refused(409, "stale", state=saved.state.state)
             if error_code:
                 return refused(502, "update_failed", reason_code=error_code)
-            if rewrite is None:
-                return JSONResponse({"outcome": "nothing_passed",
+            if not rewrite["notes"]:  # nothing passed, so nothing is saved; the notice shows what the verifier removed
+                return JSONResponse({"outcome": "nothing_passed", "removed": rewrite["removed"],
                                      "draft": await asyncio.to_thread(guarded, f"draft {draft_id}",
                                                                       lambda: shown(saved, viewer, body.view))},
                                     headers={"Cache-Control": "no-store"})

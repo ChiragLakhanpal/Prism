@@ -32,7 +32,6 @@ from strata.agent.verifier import AnswerCheck, Verdict, answer_events, check
 from strata.config import DraftKind, DraftKinds
 from strata.dbx import Viewer
 from strata.drafts.holds import Draft as HoldDraft
-from strata.drafts.lesson_choices import CannotRewrite  # noqa: F401  (a kind's rewrite_row raises it)
 from strata.drafts.store import DraftStore, NewDraft, Saved, iso
 from strata.harness.facts import Facts
 from strata.harness.turn import Event
@@ -277,12 +276,14 @@ async def write(writing: Writing, engine_for: EngineFor, agent_for: Callable[[st
 
 async def rewrite(saved: Saved, kind: DraftKind, row_key: str, lesson_id: str, viewer: Viewer, engine_for: EngineFor,
                   agent_for: Callable[[str], object | None], six_checks: SixChecks, today: dt.date,
-                  run_id: str, checked: list | None = None) -> dict | None:
+                  run_id: str, checked: list | None = None) -> dict:
     """"Update the row": the kind's writer rewrites the one row from the lesson's current version, and the verifier
     checks every sentence, as it does when a draft is written. Returns the row's new notes, the evidence they cite,
-    the verifier's counts and the row's sources, or None when no sentence passed, so nothing is saved. A step that
-    cannot run raises WriteError with its code. checked, when given, receives the verdict, the question, and the
-    agent's name and version, for the run log."""
+    the verifier's counts, the sentences it removed (each keyed to its note, as a written draft's are, so the draft's
+    removed box shows them: CLAUDE.md rule 2) and the row's sources. When no sentence passed, the notes are empty and
+    nothing is saved, and the removed sentences are still returned for the notice to show. A step that cannot run
+    raises WriteError with its code. checked, when given, receives the verdict, the question, and the agent's name and
+    version, for the run log."""
     checked = checked if checked is not None else []
     def read():
         with engine_for(viewer) as engine:
@@ -313,16 +314,18 @@ async def rewrite(saved: Saved, kind: DraftKind, row_key: str, lesson_id: str, v
         if isinstance(item, Verdict):
             verdict = item
     checked[:] = [verdict, plan.question(), getattr(agent, "name", None), getattr(agent, "version", None)]
-    if verdict is None or not verdict.kept:
-        return None
+    if verdict is None:  # the checks gave no verdict, so nothing can be shown as checked
+        raise WriteError("internal")
     content = compose(plan, plan.facts, written, verdict, seen, owners)
-    # The new sentences take numbers after the draft's own, so a citation marker names one sentence on the page.
-    start = 1 + max((sentence["index"] for note in saved.content["notes"] for sentence in note.get("sentences") or ()),
-                    default=-1)
+    # The new sentences take numbers after the draft's own, removed ones included, so a citation marker names one
+    # sentence on the page.
+    start = 1 + max([sentence["index"] for note in saved.content["notes"] for sentence in note.get("sentences") or ()]
+                    + [item["index"] for item in saved.content.get("removed") or () if "index" in item], default=-1)
     notes = [{**note, "sentences": [{**sentence, "index": sentence["index"] + start}
                                     for sentence in note.get("sentences") or ()]}
-             for note in content["notes"] if note["state"] == "written"]
-    return {"notes": notes, "evidence": content["evidence"], "checks": content["checks"],
+             for note in content["notes"] if note["state"] == "written"] if verdict.kept else []
+    removed = [{**item, "index": item["index"] + start} for item in content["removed"]]
+    return {"notes": notes, "evidence": content["evidence"], "checks": content["checks"], "removed": removed,
             "sources": plan.sources, "version": plan.version, "question": plan.question()}
 
 
@@ -416,12 +419,13 @@ def lesson_rows(saved: Saved, notices: list[dict], viewer: Viewer, view: str) ->
     if not notices and not (kind and kind.row_label):
         return {}  # a kind whose rows cite no lesson
     labels = getattr(module, "row_label", None) if kind and kind.row_label else None
+    reason_max = reason_max_chars() if notices else None
     shown = []
     # Nobody chooses on a discarded draft, so it shows no notice; what its author chose before stays on record.
     for notice in ([] if state == "discarded" else notices):
         actions = (["remove", "keep"] if notice["tier"] in ("retired_wrong", "retired_outdated")
                    else (["update", "keep"] if kind and kind.rewrite_row else ["keep"]))
-        shown.append({**notice, "can_act": may, "actions": actions, "reason_max_chars": reason_max_chars(),
+        shown.append({**notice, "can_act": may, "actions": actions, "reason_max_chars": reason_max,
                       "row_label": labels(saved.content, notice["row_key"]) if labels else None})
     def named(entries: list[dict]) -> list[dict]:
         return [{**entry, "row_label": labels(saved.content, entry["row_key"]) if labels else None} for entry in entries]

@@ -7,10 +7,13 @@ file reads the draft as the author left it:
 
 - update   the row's notes become the ones the kind's writer rewrote from the lesson's current version, which the
            verifier checked; the row now cites that version, and its earlier text stays on record for "Show the
-           earlier text" and "Go back to version {a}".
+           earlier text" and "Go back to version {a}". The sentences the verifier removed from the rewrite take the
+           place of the earlier text's in the removed box (CLAUDE.md rule 2), and the counts the screens show (the
+           steps' sentences and the check line's) are the draft's as it now stands.
 - revert   undoes the latest update of that row, with no model call.
 - keep     the row keeps citing its version; the reason is kept, and the notice comes back only for a later change.
-- remove   the row leaves the draft's notes, its counts, its sources and its Word file; it stays on record, so
+- remove   the row leaves the draft's notes, its counts, its sources, its check line and its Word file; it stays on
+           record, so the sentences the verifier removed from it stay in the removed box, and
 - restore  brings it back as it was.
 
 Nothing here decides a tier; strata.knowledge.lessons.notices does, from the draft apply() returns.
@@ -21,12 +24,19 @@ from __future__ import annotations
 import copy
 import datetime as dt
 import json
+from collections.abc import Mapping
 from dataclasses import dataclass
+
+from strata.agent.verifier import kept_counts
 
 ACTIONS = ("update", "keep", "remove", "restore", "revert")
 COLUMNS = ("draft_id", "choice_no", "row_key", "lesson_id", "action", "cited_version", "current_version", "reason",
            "rewrite", "draft_state", "actor_id", "actor_name", "chosen_at", "public_from")
 VERSIONS = "strata.ops.lesson_versions"
+# The draft's counts the screens show: the steps' sentences, and the check line's counts over the sentences on screen.
+SHOWN_COUNTS = ("sentences", "shown")
+# The tools behind the check line's "Not checked" clauses, which a rewrite's tools join.
+TOOL_LISTS = ("tools", "cited_tools", "cited_only")
 
 
 class CannotRewrite(Exception):
@@ -91,10 +101,21 @@ def apply(content: dict, choices: list[LessonChoice]) -> dict:
             removed.pop(choice.row_key, None)
 
     notes = {note["key"]: note for note in shown.get("notes") or []}
+    checks, removed_box = shown.get("checks"), list(shown.get("removed") or [])
+    language = content.get("lang") or "en"
     for (row_key, lesson_id), done in updates.items():
         if not done:
             continue
         latest = done[-1]
+        replaced = [note["key"] for note in latest.rewrite.get("notes") or [] if note["key"] in notes]
+        for key in replaced:  # the earlier text's counts and removed sentences give way to the rewrite's
+            gone_too = sum(1 for item in removed_box if item.get("key") == key)
+            checks = _counted(checks, kept_counts(original[key].get("sentences") or (), gone_too,
+                                                  (checks or {}).get("checks_run") or (), content.get("evidence"),
+                                                  language), -1)
+        removed_box = [item for item in removed_box if item.get("key") not in replaced] + list(
+            latest.rewrite.get("removed") or [])
+        checks = _counted(checks, latest.rewrite.get("checks"), 1)
         for note in latest.rewrite.get("notes") or []:
             if note["key"] in notes:
                 notes[note["key"]] = {**notes[note["key"]], **note}
@@ -110,13 +131,46 @@ def apply(content: dict, choices: list[LessonChoice]) -> dict:
     shown["notes"] = [notes[note["key"]] for note in shown.get("notes") or []]
     shown["lesson_kept"] = [choice.as_dict() for choice in kept.values()]
     gone = {key for row_key in removed for key in _row_keys(content, row_key)}
+    for key in sorted(gone & set(notes)):  # a removed row's sentences leave the counts; its removed ones stay shown
+        checks = _counted(checks, kept_counts(notes[key].get("sentences") or (), 0,
+                                              (checks or {}).get("checks_run") or (), shown.get("evidence"), language), -1)
     shown["notes"] = [note for note in shown["notes"] if note["key"] not in gone]
+    shown["checks"], shown["removed"] = checks, removed_box
     for row_key, choice in removed.items():
         if row_key in rows:
             rows[row_key]["removed"] = True
             rows[row_key]["removed_at"] = choice.as_dict()["at"]
     shown["lesson_removed"] = [choice.as_dict() for choice in removed.values()]
     return shown
+
+
+def _added(total: Mapping, part: Mapping, sign: int) -> dict:
+    out = dict(total)
+    for key, value in part.items():
+        if isinstance(value, Mapping):
+            out[key] = _added(total.get(key) or {}, value, sign)
+        elif isinstance(value, int) and not isinstance(value, bool):
+            out[key] = (total.get(key) or 0) + sign * value
+    return out
+
+
+def _counted(checks: dict | None, part: Mapping | None, sign: int) -> dict | None:
+    """The draft's counts with a part of its sentences' counts added (sign 1) or taken away (-1): only the counts the
+    screens show, and only those the draft has (a draft saved before ticket 24 has no shown counts). A rewrite's tools
+    join the ones behind the "Not checked" clauses."""
+    if not checks or not part:
+        return checks
+    out = dict(checks)
+    for key in SHOWN_COUNTS:
+        if key in checks and key in part:
+            out[key] = _added(checks[key], part[key], sign)
+    if "shown" in out and not out["shown"].get("cross_language"):  # sent only when some are (ticket 42)
+        out["shown"] = {key: value for key, value in out["shown"].items() if key != "cross_language"}
+    if sign > 0:
+        for key in TOOL_LISTS:
+            if key in checks and part.get(key):
+                out[key] = sorted(set(checks[key]) | set(part[key]))
+    return out
 
 
 def from_row(row: dict, moment) -> LessonChoice:

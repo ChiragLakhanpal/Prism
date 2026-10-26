@@ -250,6 +250,24 @@ def test_a_row_whose_two_cells_both_failed_is_left_out_and_its_sentences_are_sho
     assert all(not note["key"].startswith("permits_before_award/") for note in draft["notes"])
 
 
+def test_the_counts_a_row_gives_back_are_read_from_its_sentences_as_the_verifier_counted_them(story):
+    """Ticket 39: a draft takes an updated or removed row's counts away by reading them back from the row's kept
+    sentences (strata.agent.verifier.kept_counts). Read over a whole draft, they must be the verifier's own counts:
+    for drafts with sentences proven by checks 1 to 3 and judged ones, and one with a sentence removed for its number."""
+    from strata.agent.verifier import kept_counts
+
+    _, failed_cell = story.suggest("ppsd-rows-one-cell-fails", key="ppsd-2")
+    _, paper = story.summarize()
+    drafts = [suggested(story), *(story.get(f"/api/drafts/{draft_id}").json() for draft_id in (failed_cell, paper))]
+    for draft in drafts:
+        kept = [sentence for note in draft["notes"] for sentence in note["sentences"]]
+        read_back = kept_counts(kept, len(draft["removed"]), draft["checks"]["checks_run"], draft["evidence"])
+        assert read_back == {key: draft["checks"][key] for key in ("sentences", "shown")}, draft["draft_id"]
+    assert drafts[1]["checks"]["sentences"]["removed"] == 1
+    assert [(draft["checks"]["shown"]["proven"] > 0, draft["checks"]["shown"]["judged"] > 0) for draft in drafts] == [
+        (False, True), (False, True), (True, False)]  # PPSD rows' sentences are judged; the summary's are proven
+
+
 # ── Criterion 2: the Short Form, and the Long Form only above Table I ─────
 
 def test_the_short_form_shows_exactly_the_template_s_three_columns_and_no_long_form_below_table_i(story):

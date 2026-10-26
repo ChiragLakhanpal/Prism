@@ -179,6 +179,20 @@ export type Removed = {
   quoted?: boolean;
 };
 
+// Removed sentences as the verifier sent them, in the box's words: a kind's own words for a reason first (such as
+// suggested PPSD rows' "It cited a source other than this risk's records."), then the shared ones.
+export function removedFrom(
+  items: { sentence: string; reason: string; reasons: { code: string }[] }[],
+  kindReasons: Record<string, { item: string; joined: string }> = {},
+): Removed[] {
+  const reasons: Record<string, { item: string; joined: string }> = { ...copy.removed.reasons, ...kindReasons };
+  return items.map((item) => {
+    const code = [item.reason, ...item.reasons.map((reason) => reason.code)].find((one) => one in reasons);
+    const reason = code ? reasons[code] : copy.removed.unknownReason;
+    return { sentence: item.sentence, reason: reason.item, reasonJoined: reason.joined };
+  });
+}
+
 // "It said bids were usually opened within 45 days": the sentence without its final period,
 // with its first letter lowercased unless the first word is a name or a code (IDA, P130164), "I" (section
 // 5's "I read this as ..."), or appears capitalized elsewhere in the answer.

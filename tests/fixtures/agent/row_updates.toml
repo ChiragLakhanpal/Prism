@@ -30,3 +30,20 @@ cell_key = "cost_estimates/mitigation"
 claims = [
   { sentence = "Base the works cost estimates on market rates before the contracts go to bid.", kind = "advice", evidence_ids = ["strata.ops.lesson_versions:lesson-e903b07ad1/v1", "strata.gold.passage:31525018/v1/54"], numbers = [], dates = [] },
 ]
+
+[[cases]]
+id = "ppsd-row-update-removed-number"
+says = """The writer rewrites the cost estimates row from version 2 and adds a sentence with a number no tool returned \
+(37 percent), so the verifier removes that sentence, keeps the other, and the draft shows the removed one in its \
+removed box (CLAUDE.md rule 2)."""
+question = "Rewrite the suggested PPSD row Cost estimates below market rates from version 2 of its lesson."
+scope = "P156634"
+as_of = 2026-10-30
+recording = "ppsd-row-update-cost-estimates"
+
+[[cases.plant_notes]]
+cell_key = "cost_estimates/mitigation"
+claims = [
+  { sentence = "Base the works cost estimates on current market rates before the contracts go to bid.", kind = "advice", evidence_ids = ["strata.ops.lesson_versions:lesson-e903b07ad1/v2", "strata.gold.passage:31525018/v1/54", "strata.gold.passage:34056616/v2/10.b"], numbers = [], dates = [] },
+  { sentence = "Estimates in the earlier bids were 37 percent below market rates.", kind = "record", evidence_ids = ["strata.ops.lesson_versions:lesson-e903b07ad1/v2", "strata.gold.passage:31525018/v1/54"], numbers = ["37 percent"], dates = [] },
+]

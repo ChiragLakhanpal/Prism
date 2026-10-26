@@ -225,9 +225,11 @@ class LessonsPage:
         """One notice per lesson and cited version across the reader's own open drafts (Draft and Checked by you),
         each with every row that cites it. Retired as wrong first, since they hold an export, then the newest
         decision first (the 39 brief, section 2.3)."""
-        from strata.drafts.runtime import OPEN_STATES
+        from strata.drafts.runtime import OPEN_STATES, reason_max_chars
         from strata.knowledge.lessons.notices import row_notices
 
+        # The keep route's limit, read where the route reads it, so the form counts against the same number.
+        reason_max = reason_max_chars()
         grouped: dict[tuple[str, int], dict] = {}
         for draft in drafts:
             if draft.state.state not in OPEN_STATES:
@@ -239,7 +241,7 @@ class LessonsPage:
                     "anchor": f"notice-{notice['lesson_id']}-v{notice['a']}",
                     "actions": ["versions", "remove", "keep"] if notice["tier"].startswith("retired")
                     else ["versions", "update", "keep"], "uses": [],
-                    "reason_max_chars": int(self.review.value("reason_max_chars"))})
+                    "reason_max_chars": reason_max})
                 entry["uses"].append(self.use(draft, notice, True))
                 entry["holds_export"] = entry["holds_export"] or notice["holds_export"]
         found = list(grouped.values())

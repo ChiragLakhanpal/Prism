@@ -2,6 +2,7 @@
 // and the version choices return, and the addresses the page links to. The server counts everything, decides each
 // notice's tier and writes each count's word; the page formats dates and fills copy templates, and nothing else.
 import { copy } from "../copy";
+import type { RemovedEvent } from "./answer";
 import { formatDate } from "./format";
 import type { Item, LessonCard, LessonEvidence } from "./lessons";
 
@@ -160,7 +161,13 @@ export type VersionBlock = {
 export type VersionsView = NoticeBody & { evidence_id: string; current: number; versions: [VersionBlock, VersionBlock] };
 
 // What a choice on a row returns.
-export type ChoiceAnswer<D> = { outcome: "updated" | "kept" | "removed" | "restored" | "reverted" | "nothing_passed"; back_to_draft?: boolean; draft: D };
+// removed: when nothing passed, the sentences the verifier removed from the rewrite, which the notice shows.
+export type ChoiceAnswer<D> = {
+  outcome: "updated" | "kept" | "removed" | "restored" | "reverted" | "nothing_passed";
+  back_to_draft?: boolean;
+  removed?: RemovedEvent[];
+  draft: D;
+};
 
 // The addresses: the library's filters keep only the keys the server knows (the 39 brief, section 4.8).
 export const FILTER_KEYS = ["stage", "method", "sector", "status"] as const;

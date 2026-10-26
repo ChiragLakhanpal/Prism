@@ -349,6 +349,8 @@ function LibrarySection({ initial, search, isReviewerWaiting }: { initial: Libra
     setBusy(true);
     getJson<LibraryAnswer>(`/api/lessons/library${query}`, { signal: controller.signal }).then(
       (found) => {
+        // An answer that arrived after a newer change cut it short is for filters the reader already left.
+        if (controller.signal.aborted) return;
         shown.current = query;
         setLibrary(found);
         setBusy(false);

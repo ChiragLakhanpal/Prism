@@ -125,6 +125,18 @@ test("updating the row on the checked draft ends on its outcome, which says the 
   expect(asked.find((call) => call.call.startsWith("POST /api/drafts/draft-0002"))?.body).toMatchObject({ action: "update", expected_cited_version: 1, expected_current_version: 2 });
 });
 
+test("when none of the rewrite's sentences pass, the notice says the row is unchanged and shows what I removed and why", async ({ page }) => {
+  await openLessons(page, "lessons-page.json", { "POST /api/drafts/draft-0002/rows/cost_estimates/lesson": await file("lessons-choice-nothing-passed.json") });
+  const use = page.locator("[data-use=draft-0002]");
+  await use.getByRole("button", { name: /^Update the row/ }).click();
+  await expect(use.getByRole("alert")).toContainText("none of my sentences passed my checks, so I left the row as it was. It still cites version 1.");
+  const box = use.locator("[data-removed-box]");
+  await expect(box.locator("[data-removed-lead]")).toHaveText("I removed the one sentence I wrote.");
+  await expect(box.getByRole("listitem")).toHaveText(
+    '"Base the works cost estimates on market rates before the contracts go to bid." It cited a source other than this risk\'s records.',
+  );
+});
+
 test("a lesson retired as wrong comes first and says it holds the export, with Remove the row and Keep the row", async ({ page }) => {
   await openLessons(page, "lessons-page-retired.json");
   const first = page.locator("[data-version-notice]").first();
@@ -265,6 +277,24 @@ test("a lesson retired as wrong holds the draft's export, and the hold line link
   const hold = page.locator("[data-hold-line]");
   await expect(hold).toContainText("remove or keep, with a reason, one row that cites a lesson retired as wrong");
   await expect(hold.locator("[data-hold-link=lessonRetiredWrong]")).toHaveAttribute("href", "#notice-permits_before_award");
+});
+
+test("a part that cites two changed lessons shows both notices, the one that holds the export first, and the hold links to it", async ({ page }) => {
+  // The recorded summary, with a narrowed notice for a second lesson listed before the retired one.
+  const draft = JSON.parse(await recorded("drafts-paper-lesson-retired.json"));
+  const [retired] = draft.lesson_notices;
+  const narrowed = { ...retired, lesson_id: "lesson-0000000002", tier: "narrowed", holds_export: false, anchor: "notice-ppsd", retired_on: null, retired_as: null, a: 1, b: 2, between: [], actions: ["keep"] };
+  draft.lesson_notices = [narrowed, retired];
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await serve(page, { "GET /api/drafts/draft-0003": { body: JSON.stringify(draft) } });
+  await page.goto("/drafts/draft-0003");
+  const notices = page.locator("[data-paper-part=ppsd] [data-row-notice]");
+  await expect(notices).toHaveCount(2);
+  await expect(notices.nth(0)).toHaveAttribute("data-row-notice", "retired_wrong");
+  await expect(notices.nth(0)).toHaveAttribute("id", "notice-ppsd");
+  await expect(notices.nth(1)).toHaveAttribute("data-row-notice", "narrowed");
+  await expect(notices.nth(1)).toHaveAttribute("id", "notice-ppsd-lesson-0000000002-v1");
+  await expect(page.locator("[data-hold-link=lessonRetiredWrong]")).toHaveAttribute("href", "#notice-ppsd");
 });
 
 test("on a Project Paper summary, the PPSD part that cites a lesson retired as wrong shows its notice, and the hold links to it", async ({ page }) => {

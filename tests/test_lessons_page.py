@@ -69,8 +69,12 @@ def test_the_headline_counts_equal_the_rows_stored_since_the_reader_s_last_visit
                                   "WHERE viewer_id = :viewer AND visit_started_at < :now",
                   viewer="4021@1984", now=story_of.NEXT_VISIT)
     since, until = last["at"], story_of.NEXT_VISIT
+    # Each version decided in the window, with the state its lesson is in at its latest version: a lesson added and
+    # retired in one window is not new.
     decided = rows(story.database, """
-        SELECT v.lesson_id, v.version, v.change_kind
+        SELECT v.lesson_id, v.version, v.change_kind,
+               (SELECT l.state FROM strata.ops.lesson_versions AS l WHERE l.lesson_id = v.lesson_id
+                ORDER BY l.version DESC LIMIT 1) AS latest_state
         FROM strata.ops.lesson_versions AS v
         JOIN strata.ops.lesson_review_acts AS a ON a.item_id = v.item_id AND a.act = 'decide'
         WHERE a.acted_at >= :since AND a.acted_at < :until""", since=since, until=until)
@@ -90,7 +94,8 @@ def test_the_headline_counts_equal_the_rows_stored_since_the_reader_s_last_visit
     counts = page["digest"]["counts"]
     assert page["visit"]["last_visit_on"] == "2026-10-22"
     assert counts["reports"] == {"icr": by_type.get(ICR, 0), "review": by_type.get(ICR_REVIEW, 0), "ppar": 0}
-    assert counts["new"] == len({row["lesson_id"] for row in decided if row["version"] == 1})
+    assert counts["new"] == len({row["lesson_id"] for row in decided
+                                 if row["version"] == 1 and row["latest_state"] == "current"})
     assert counts["changed"] == len({row["lesson_id"] for row in decided if row["version"] > 1
                                      and row["change_kind"] != "retired"})
     assert counts["retired"] == len({row["lesson_id"] for row in decided if row["change_kind"] == "retired"})
@@ -186,6 +191,10 @@ def test_a_lesson_retired_as_wrong_holds_the_draft_s_export_with_the_lead_s_reas
     assert after["ppsd"]["counts"] == {"total": 1, "owners_set": 1, "rated": 0}  # a removed row leaves the counts
     assert [row["row_key"] for row in after["ppsd"]["rows"]] == ["cost_estimates"]
     assert [entry["row_key"] for entry in after["lesson_removed"]] == ["permits_before_award"]
+    # The check line and the steps count the sentences still on screen: each was proven by checks 1 to 3 or judged.
+    on_screen = sum(len(note["sentences"]) for note in after["notes"])
+    assert after["checks"]["sentences"] == {"written": 2, "kept": 2, "removed": 0} and on_screen == 2
+    assert after["checks"]["shown"]["judged"] + after["checks"]["shown"]["proven"] == on_screen
     assert story.act("draft-0002", "export", "checked").json()["state"] == "exported"
 
 
@@ -340,6 +349,53 @@ def test_updating_the_row_rewrites_it_from_the_new_version_and_a_checked_draft_g
     assert [row["state"] for row in states] == ["draft", "checked", "draft"]
 
 
+PLANTED = "Estimates in the earlier bids were 37 percent below market rates."
+
+
+def test_a_sentence_the_verifier_removes_from_the_rewrite_is_shown_and_counted_until_you_go_back(story):
+    """CLAUDE.md rule 2: a sentence that can't be checked is removed and shown. The rewrite's second sentence states a
+    number no tool returned, so the row keeps only the first, the removed box lists the second with its reason, and the
+    counts are the draft's as it now stands: the row's one sentence gave way to the rewrite's two, one of them kept."""
+    before = story.get("/api/drafts/draft-0002").json()
+    assert (before["removed"], before["checks"]["sentences"]) == ([], {"written": 4, "kept": 4, "removed": 0})
+
+    answer = story.update("draft-0002", case="ppsd-row-update-removed-number").json()
+
+    draft = answer["draft"]
+    assert answer["outcome"] == "updated"
+    assert [sentence["text"] for sentence in mitigation(draft)] == [REWRITTEN]
+    assert [(item["sentence"], item["reason"], item["key"]) for item in draft["removed"]] == [
+        (PLANTED, "number_not_in_records", "cost_estimates/mitigation")]
+    assert draft["checks"]["sentences"] == {"written": 5, "kept": 4, "removed": 1}
+    # One judged sentence of advice gave way to another, and the removed one's number is not on screen.
+    assert draft["checks"]["shown"] == before["checks"]["shown"]
+
+    back = choose(story, "draft-0002", "cost_estimates", lesson_id=story_of.REBIDDING_LESSON, action="revert",
+                  expected_cited_version=2, expected_current_version=2).json()["draft"]
+
+    assert (back["removed"], back["checks"]) == ([], before["checks"])
+
+
+def test_the_evidence_pack_lists_the_sentence_the_verifier_removed_from_the_rewrite(story):
+    """The exported evidence pack says the same as the page: under "Sentences I removed", the rewrite's sentence with
+    the number no tool returned, and its reason."""
+    import io
+
+    from pypdf import PdfReader
+
+    story.update("draft-0002", case="ppsd-row-update-removed-number")
+    set_owners(story, "draft-0002")
+    story.act("draft-0002", "check", "draft")
+    assert story.act("draft-0002", "export", "checked").json()["state"] == "exported"
+
+    _, pack = story.download("draft-0002", ".pdf")
+    # The PDF's text layer loses the space where a line wraps, so the words are compared without spaces.
+    text = "".join("".join(page.extract_text().split()) for page in PdfReader(io.BytesIO(pack)).pages)
+    removed = text.split("SentencesIremoved", 1)[1]
+    assert "".join(f'"{PLANTED}" No record supports this number.'.split()) in removed
+    assert "Iremovednosentences." not in removed
+
+
 def test_going_back_to_version_1_restores_the_earlier_text_with_no_model_call(story):
     story.update("draft-0001")
 
@@ -354,6 +410,9 @@ def test_when_nothing_passes_the_checks_the_row_is_left_as_it_was(story):
     answer = story.update("draft-0002", case="ppsd-row-update-nothing-passes").json()
 
     assert answer["outcome"] == "nothing_passed"
+    # The notice shows what the verifier removed: the sentence cited version 1, which get_lessons did not return.
+    assert [(item["sentence"], item["reason"]) for item in answer["removed"]] == [
+        ("Base the works cost estimates on market rates before the contracts go to bid.", "id_not_returned")]
     assert answer["draft"]["state"] == "checked"
     assert mitigation(answer["draft"])[0]["text"] == (
         "Base the works cost estimates on market rates before the contracts go to bid.")

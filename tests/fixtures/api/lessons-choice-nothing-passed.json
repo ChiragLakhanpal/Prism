@@ -1,5 +1,21 @@
 {
   "outcome": "nothing_passed",
+  "removed": [
+    {
+      "index": 4,
+      "sentence": "Base the works cost estimates on market rates before the contracts go to bid.",
+      "kind": "advice",
+      "reason": "id_not_returned",
+      "reasons": [
+        {
+          "check": 2,
+          "code": "id_not_returned",
+          "text": "strata.ops.lesson_versions:lesson-e903b07ad1/v1"
+        }
+      ],
+      "key": "cost_estimates/mitigation"
+    }
+  ],
   "draft": {
     "draft_id": "draft-0001",
     "kind": "ppsd_rows",

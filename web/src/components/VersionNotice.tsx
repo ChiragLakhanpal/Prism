@@ -14,6 +14,7 @@ import { evidenceHref, openEvidence } from "../lib/evidence";
 import type { Change, ChoiceAnswer, DraftUse, NoticeBody, Tier, VersionBlock, VersionsView as VersionsViewData } from "../lib/lessonsPage";
 import { choiceUrl, draftTitle, rowLabel, versionsId } from "../lib/lessonsPage";
 import { Alert } from "./Alert";
+import { RemovedBox, removedFrom, type Removed } from "./Checks";
 import { Button } from "./Button";
 import { ReasonField } from "./DecisionForm";
 import { Fill } from "./Fill";
@@ -127,12 +128,21 @@ export type ChoiceProps<D> = {
   view?: string;
 };
 
+// A draft kind's own words for the verifier's reasons, from the draft an answer carries.
+function kindReasons(draft: unknown): Record<string, { item: string; joined: string }> {
+  const kind = (draft as { kind?: string } | null)?.kind ?? "";
+  const kinds = copy.draft.kinds as Record<string, { removedReasons?: Record<string, { item: string; joined: string }> }>;
+  return kinds[kind]?.removedReasons ?? {};
+}
+
 // The two choices of one use, the keep form, and what each choice will do (feedforward).
 export function Choices<D>({ notice, draftId, rowKey, draftState, title, actions, onDone, holdSentence = false, view }: ChoiceProps<D>) {
   const [busy, setBusy] = useState<Busy>(null);
   const [form, setForm] = useState<{ open: boolean; error: string | null }>({ open: false, error: null });
   const [reason, setReason] = useState("");
   const [problem, setProblem] = useState<ReactNode>(null);
+  // When none of the rewrite's sentences passed, what the verifier removed (CLAUDE.md rule 2: removed and shown).
+  const [removedNow, setRemovedNow] = useState<Removed[]>([]);
   const keepButton = useRef<HTMLButtonElement>(null);
   const field = useRef<HTMLTextAreaElement>(null);
   const feedforwardId = useId();
@@ -151,6 +161,7 @@ export function Choices<D>({ notice, draftId, rowKey, draftState, title, actions
     }
     setBusy(action);
     setProblem(null);
+    setRemovedNow([]);
     try {
       const answer = await postJson<ChoiceAnswer<D>>(choiceUrl(draftId, rowKey), {
         lesson_id: notice.lesson_id,
@@ -160,8 +171,10 @@ export function Choices<D>({ notice, draftId, rowKey, draftState, title, actions
         reason: action === "keep" ? reason : null,
         view: view ?? "staff",
       });
-      if (answer.outcome === "nothing_passed") setProblem(fillText(n.nothingPassed, { a: notice.a, b: notice.b }));
-      else onDone(answer, action);
+      if (answer.outcome === "nothing_passed") {
+        setProblem(fillText(n.nothingPassed, { a: notice.a, b: notice.b }));
+        setRemovedNow(removedFrom(answer.removed ?? [], kindReasons(answer.draft)));
+      } else onDone(answer, action);
     } catch (error) {
       const code = error instanceof ApiError ? error.body.code : null;
       setProblem(
@@ -187,6 +200,7 @@ export function Choices<D>({ notice, draftId, rowKey, draftState, title, actions
           {problem}
         </Alert>
       )}
+      {removedNow.length > 0 && <RemovedBox removed={removedNow} all />}
       {holdSentence && (
         <p id={holdId} className="text-small text-ink" data-hold-sentence>
           {n.holdSentence}
@@ -467,6 +481,7 @@ export function RowChoice<D>({
 }
 
 // The notice under a draft row (the 39 brief, section 2.4): a lead sentence in place of the title and "Used in".
+// anchorId is the id the draft bar's hold link goes to: notice-{row_key} unless a part shows several notices.
 export function DraftRowNotice<D>({
   notice,
   draftId,
@@ -475,6 +490,7 @@ export function DraftRowNotice<D>({
   canAct,
   author,
   onDone,
+  anchorId,
 }: {
   notice: NoticeBody & { row_key: string; actions: ("update" | "remove" | "keep")[] };
   draftId: string;
@@ -483,10 +499,11 @@ export function DraftRowNotice<D>({
   canAct: boolean;
   author: string | null;
   onDone: (answer: ChoiceAnswer<D>, action: "update" | "keep" | "remove") => void;
+  anchorId?: string;
 }) {
   const leadId = useId();
   return (
-    <div role="group" aria-labelledby={leadId} id={`notice-${notice.row_key}`} className="flex flex-col gap-3 py-4 pl-6" data-row-notice={notice.tier}>
+    <div role="group" aria-labelledby={leadId} id={anchorId ?? `notice-${notice.row_key}`} className="flex flex-col gap-3 py-4 pl-6" data-row-notice={notice.tier}>
       <div>
         <StatusBadge kind={BADGE[notice.tier]} />
       </div>
@@ -567,17 +584,37 @@ export function VersionsView({ view }: { view: VersionsViewData }) {
 // Under a part of a draft whose kind has no rows of its own, such as the Project Paper summary's PPSD part, which cites
 // the lessons its checked rows cite (ticket 39): the part's version notice, or the choice its author kept. A removed
 // part has left the notes, so the page lists it after them with RemovedParts.
+// A part can cite several lessons, so it shows a notice for each, those that hold the export first, and only the first
+// takes the part's anchor, which the draft bar's hold link goes to. Each choice its author kept follows, for a lesson
+// with no newer notice.
 export function NoteLesson({ draft, noteKey, onDone }: { draft: Draft; noteKey: string; onDone: (draft: Draft) => void }) {
   const canAct = Boolean(draft.lesson_can_act);
-  const notice = (draft.lesson_notices ?? []).find((one) => one.row_key === noteKey);
-  if (notice) {
-    const title = draftTitle(draft.kind, draft.subject as unknown as Record<string, string | null>);
-    return (
-      <DraftRowNotice<Draft> notice={notice} draftId={draft.draft_id} draftState={draft.state} title={title} canAct={canAct && notice.can_act} author={draft.author.name} onDone={(answer) => onDone(answer.draft)} />
-    );
-  }
-  const kept = (draft.lesson_kept ?? []).find((one) => one.row_key === noteKey);
-  return kept ? <RowChoice<Draft> record={kept} kind="kept" draftId={draft.draft_id} canAct={canAct} onDone={(answer) => onDone(answer.draft)} /> : null;
+  const notices = (draft.lesson_notices ?? [])
+    .filter((one) => one.row_key === noteKey)
+    .sort((one, other) => Number(other.holds_export) - Number(one.holds_export));
+  const kept = (draft.lesson_kept ?? []).filter((one) => one.row_key === noteKey && !notices.some((notice) => notice.lesson_id === one.lesson_id));
+  if (notices.length === 0 && kept.length === 0) return null;
+  const title = draftTitle(draft.kind, draft.subject as unknown as Record<string, string | null>);
+  return (
+    <>
+      {notices.map((notice, index) => (
+        <DraftRowNotice<Draft>
+          key={`${notice.lesson_id}-v${notice.a}`}
+          notice={notice}
+          draftId={draft.draft_id}
+          draftState={draft.state}
+          title={title}
+          canAct={canAct && notice.can_act}
+          author={draft.author.name}
+          onDone={(answer) => onDone(answer.draft)}
+          anchorId={index === 0 ? `notice-${noteKey}` : `notice-${noteKey}-${notice.lesson_id}-v${notice.a}`}
+        />
+      ))}
+      {kept.map((entry) => (
+        <RowChoice<Draft> key={`kept-${entry.lesson_id}`} record={entry} kind="kept" draftId={draft.draft_id} canAct={canAct} onDone={(answer) => onDone(answer.draft)} />
+      ))}
+    </>
+  );
 }
 
 export function RemovedParts({ draft, names, onDone }: { draft: Draft; names: Record<string, string>; onDone: (draft: Draft) => void }) {
