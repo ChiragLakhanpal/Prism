@@ -142,7 +142,7 @@ Scored under [Analytical and AI methodology](#rubric-method), and in part under 
 **Figure. One answer: the agent picks the tools, the app runs them as the person asking, and the verifier checks every sentence.**
 **Source:** the agent's tool registry, `config/tools.toml`, and ADR 0003.
 
-{#m2-retrieval-measured} The retrieval evaluation asks questions whose right passages are known and uses only documents public before each question's date. In the newest run, precision at 10 was {r:retrieval-precision}, recall at 20 was {r:retrieval-recall} and nDCG at 10 was {r:retrieval-ndcg}.
+{#m2-retrieval-measured} The retrieval evaluation asks questions whose right passages are known and uses only documents public before each question's date. In the newest run, on the ICR Review citation set, precision at 10 was {r:retrieval-precision}, recall at 20 was {r:retrieval-recall} and nDCG at 10 was {r:retrieval-ndcg}.
 
 ### What a specialist gets at each stage {#m2-stages}
 

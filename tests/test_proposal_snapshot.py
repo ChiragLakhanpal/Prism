@@ -10,10 +10,11 @@ from pathlib import Path
 
 import pytest
 
-from proposal_seed import merged
+from proposal_seed import merged, seeded_engine
 from strata.lakehouse.engine import DuckDBEngine
 from strata.proposal import snapshot
-from dashboard_seed import TODAY
+from strata.proposal.register import load_results
+from dashboard_seed import TODAY, _result, at, insert
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -74,3 +75,19 @@ def test_the_backtest_adds_its_test_years_and_holds_back_a_percent_below_the_few
 
 def test_every_result_in_the_register_has_a_measured_value_in_the_test_snapshot(pulled):
     assert [key for key, found in pulled["results"].items() if not found["measured"]] == ["hindsight-interval"]
+
+
+def test_the_retrieval_scores_come_from_the_icr_review_citation_set_when_a_run_scores_other_sets_too():
+    # The live run scores five sets, and bilingual_en_fr sorts before icr_review_citations. Here it scores worse on
+    # every measure, so a score taken from the first set the query returns would read 0.11, 0.2 or 0.15.
+    engine = seeded_engine()
+    insert(engine, "strata.ops.evaluation_result", [
+        _result("retrieval-1", "retrieval_evaluation", "query_set", "bilingual_en_fr", measure, value,
+                at(TODAY.replace(day=10), 4))
+        for measure, value in (("queries", 40), ("precision_at_10", 0.11), ("recall_at_20", 0.2),
+                               ("ndcg_at_10", 0.15))])
+    results = load_results()
+    # tests/dashboard_seed.py: the October 10 run scored 0.62, 0.71 and 0.58 on the ICR Review citation set.
+    found = {key: snapshot.measure(engine, results[key], TODAY)["value"]
+             for key in ("retrieval-precision", "retrieval-recall", "retrieval-ndcg")}
+    assert found == pytest.approx({"retrieval-precision": 0.62, "retrieval-recall": 0.71, "retrieval-ndcg": 0.58})

@@ -173,6 +173,15 @@ def test_model_names_come_from_the_model_file_so_swapping_a_model_changes_the_ne
     assert config.load_models()["embed"].deployment not in swapped
 
 
+def test_the_retrieval_scores_name_the_query_set_they_were_measured_on(built):
+    # docs/proposal/results.toml pins precision, recall and nDCG to the ICR Review citation set; the live run scores
+    # four other sets too (src/strata/knowledge/retrieval/labels.py).
+    measured = next(line for line in built.markdown.splitlines() if "precision at 10 was" in line)
+    shown = re.sub(r' "[^"]*"\)', ")", measured)  # the words a reader sees, without each number's link title
+    assert "on the ICR Review citation set" in shown
+    register = built.markdown.split("## Annex 1")[1].split("## Annex 2")[0]
+    assert "Precision at 10 on the ICR Review citation set, the newest run" in register
+
 # ── Designed, not built ──────────────────────────────────────────────────
 
 def test_with_nothing_designed_but_unbuilt_the_list_says_so_and_the_summary_leaves_it_out(built):

@@ -221,12 +221,12 @@ form = "ratio"
 table = "strata.ops.evaluation_result"
 
 [results.retrieval-precision]
-name = "Precision at 10 on the retrieval set, the newest run"
+name = "Precision at 10 on the ICR Review citation set, the newest run"
 module = 2
 kind = "Evaluation result"
 noun = "precision at 10"
 query = "dashboard:kpi_precision_recall"
-row = { segment_kind = "query_set" }
+row = { segment_kind = "query_set", query_set_key = "icr_review_citations" }
 columns = { value = "precision_at_10" }
 meta = "evaluation_meta.sql"
 params = { scorer = "retrieval_evaluation" }
@@ -235,12 +235,12 @@ table = "strata.ops.evaluation_result"
 labels = "Labels: the retrieval set's queries, drafted from ICR Review citations and checked by one person."
 
 [results.retrieval-recall]
-name = "Recall at 20 on the retrieval set, the newest run"
+name = "Recall at 20 on the ICR Review citation set, the newest run"
 module = 2
 kind = "Evaluation result"
 noun = "recall at 20"
 query = "dashboard:kpi_precision_recall"
-row = { segment_kind = "query_set" }
+row = { segment_kind = "query_set", query_set_key = "icr_review_citations" }
 columns = { value = "recall_at_20" }
 meta = "evaluation_meta.sql"
 params = { scorer = "retrieval_evaluation" }
@@ -248,12 +248,12 @@ form = "score"
 table = "strata.ops.evaluation_result"
 
 [results.retrieval-ndcg]
-name = "nDCG at 10 on the retrieval set, the newest run"
+name = "nDCG at 10 on the ICR Review citation set, the newest run"
 module = 2
 kind = "Evaluation result"
 noun = "nDCG at 10"
 query = "dashboard:kpi_precision_recall"
-row = { segment_kind = "query_set" }
+row = { segment_kind = "query_set", query_set_key = "icr_review_citations" }
 columns = { value = "ndcg_at_10" }
 meta = "evaluation_meta.sql"
 params = { scorer = "retrieval_evaluation" }
