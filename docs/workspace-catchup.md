@@ -2465,6 +2465,33 @@ The merger parked this step on October 25, 2026, after merge commit 3b2b02e, for
 
 It worked if the refusal check prints 11 lines that start "Holds." and exits 0, with no `EngineError` or `LookupError` traceback from search_passages, and no "A partial refusal must answer the rest of the question with claims". The line for refuse-live-tenders-criteria must read "Holds. refuse-live-tenders-criteria: refused with live_tenders.". This run also completes ticket 66's step 1, whose rerun waited for the index. If refuse-live-tenders-criteria fails again with the partial-refusal error, the review's follow-up F3 for ticket 67 (in `.notes/67-review.md`) gives the fix in `src/strata/agent/claims.py`.
 
+## Ticket 76, before step 1: the masked shapes of the phone numbers the check found
+
+**Recorded on October 26, 2026 (orchestrator).** On `strata.silver.notices` (158,587 rows) the `contacts_left` patterns, bound as parameters as `quality.py` binds them, find 1,256 notices with a labelled phone number in `notice_text`, none in `bid_description`, and no email address in either column (`with_email` 0, `with_phone` 1,256, both 0). By notice type and year, the largest groups: Request for Expression of Interest 2025: 217 and 2026: 132; Contract Award 2025: 212 and 2026: 73; Invitation for Bids 2026: 143, 2025: 141, 2011: 36, 2014: 25, 2016: 19, 2015: 19, 2012: 19 and 2010: 17. The first twenty distinct shapes by `notice_id` (the 2009 and 2010 notices sort first), every digit written as 9 and up to thirty characters kept on each side of the label; `[contact removed]` is what ingestion already wrote:
+
+1. General Procurement Notice, 2009: `etnam. Tel: [contact removed] Fax: 99-9-9999999 Email: [contact removed] ; [c`
+2. General Procurement Notice, 2009: `eral Phone: [contact removed] Fax: 99-9-99999999 E-mail: [contact removed]`
+3. Request for Expression of Interest, 2009: `oad. Phone: [contact removed] Fax #: 9999 99-999 9999 E-mail Address: [contact remo`
+4. Invitation for Bids, 2009: `akistan Ph: [contact removed] Fax:: 99-99-9999999 Email: [contact removed] Web:`
+5. Request for Expression of Interest, 2009: `Telephone: [contact removed] Fax: 99-99-9999999`
+6. Invitation for Bids, 2009: `Telephone: [contact removed] Fax: 99-9-9999999 Email: [contact removed]`
+7. Invitation for Bids, 2009: `o 999, Building C, 9th Floor. Telephone: 999 999 9 999 999. Facsimile number: 999 999 9`
+8. Request for Expression of Interest, 2009: `ietnam Tel: [contact removed] Fax: 99-9-99999999 E-mail: pmuw@ fpt.vn`
+9. Request for Expression of Interest, 2009: `tact removed], 99-99-99999999 Fax: 99-99-99999999 Email: [contact removed]`
+10. Request for Expression of Interest, 2009: `kistan Tel: [contact removed] Fax: 99-99-99999999 Email: [contact removed]`
+11. Invitation for Bids, 2009: `removed] or [contact removed] Tel. (99) 9 -9 9 . 999 . 999 ; Fax. ( 99) 9 -9`
+12. Request for Expression of Interest, 2009: `et Nam Tel: [contact removed] Fax: 99-9-99999999 E-mail: [contact removed]`
+13. Request for Expression of Interest, 2009: `999 Giang Vo, Hanoi , Vietnam Tel: (-99-9)9999999 Fax: (-99-9)9999999 Email: [c`
+14. Invitation for Bids, 2009: `emoved] Ph: [contact removed] Fax: 99-99-9999999`
+15. General Procurement Notice, 2009: `Phone99 99 9999999l, 99999999 Fax 99 99 99999999, 99999999 E-mail: [contact re`
+16. Request for Expression of Interest, 2009: `ietnam Tel: [contact removed] Fax: 99-9-99999999 E-mail: [contact removed]`
+17. Request for Expression of Interest, 2009: `stafabad, Dharampura, Lahore. Phone No. 99 99 9999999l - 99999999 Fax No. [contact`
+18. General Procurement Notice, 2009: `t removed], [contact removed] Fax: 99 99 9999999`
+19. Invitation for Prequalification, 2010: `[contact removed]l, 99999999 Fax: 99-99-99999999, 99999999 E-mail: [contact re`
+20. Invitation for Bids, 2010: `etnam Tel.: [contact removed] Fax: + 99 9 99999999 9. Qualifications requirement`
+
+What they show: in 17 of the 20 the match is the number after a `Fax` label (`LEFT_PHONE` names fax, the stripper's label list does not); three are a second number written after a removed one (`[contact removed]l, 99999999` and `[contact removed], 99-99-99999999`); one glues the label to the digits (`Phone99 99 9999999l`); one spaces the digits one by one (`Telephone: 999 999 9 999 999. Facsimile number: ...`); and one email survives with a space after its `@` (`E-mail: pmuw@ fpt.vn`), which neither `LEFT_EMAIL` nor the stripper matches. The values were never printed; the scratchpad's shapes76.json holds the masked twenty.
+
 ## Day-one test resources removed on October 26, 2026
 
 **Removed on October 26, 2026, by the user, through the Databricks CLI:** the Genie space "NYC Taxi Trip Data" (the wizard's throwaway for test 5), the schema `workspace.strata_dayone` with its tables and volume, the Vector Search index `workspace.strata_dayone.passages_index`, the folder `strata-dayone`, and the service principal `strata-probes`. Kept: the endpoint `strata-search`, the scope `strata`, the tokens, and the one-time runs, which expire on their own. Verified afterwards by listing each. A later run of the probes makes its scratch again.
