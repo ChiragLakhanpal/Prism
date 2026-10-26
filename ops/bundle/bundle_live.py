@@ -49,10 +49,14 @@ def cli_env(env: dict, environ: dict) -> dict:
     """The Databricks CLI's environment: the shell's, without its DATABRICKS_* keys, plus one way to sign in.
 
     The CLI stops when it sees more than one way, so a token wins over a service principal, as it
-    does in ticket 03's workspace client (ops/dayone/live.py).
+    does in ticket 03's workspace client (ops/dayone/live.py). The config file is pointed at nothing,
+    because the CLI's bundle commands take the default profile in ~/.databrickscfg over the host and
+    token in the environment: on October 26, 2026 a deploy meant for the new workspace landed on the
+    old one that way (ticket 82). With no config file, only the environment file's workspace exists.
     """
     found = {key: value for key, value in environ.items() if not key.startswith("DATABRICKS_")}
     found["DATABRICKS_HOST"] = env["DATABRICKS_HOST"]
+    found["DATABRICKS_CONFIG_FILE"] = os.devnull
     if env.get("DATABRICKS_TOKEN"):
         return found | {"DATABRICKS_AUTH_TYPE": "pat", "DATABRICKS_TOKEN": env["DATABRICKS_TOKEN"]}
     return found | {"DATABRICKS_AUTH_TYPE": "oauth-m2m", "DATABRICKS_CLIENT_ID": env["DATABRICKS_CLIENT_ID"],

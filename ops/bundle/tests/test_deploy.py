@@ -8,6 +8,7 @@ run. The workspace step in docs/workspace-catchup.md runs the real thing.
 """
 
 import json
+import os
 import sys
 from pathlib import Path
 from types import SimpleNamespace
@@ -348,7 +349,7 @@ def test_the_cli_gets_the_token_alone_when_the_env_file_has_both_ways_to_sign_in
     env = {"DATABRICKS_HOST": HOST, "DATABRICKS_TOKEN": "not-a-real-key",
            "DATABRICKS_CLIENT_ID": "sp-client", "DATABRICKS_CLIENT_SECRET": "not-a-real-secret"}
 
-    assert bundle_live.cli_env(env, SHELL) == {"PATH": "/usr/bin", "DATABRICKS_HOST": HOST,
+    assert bundle_live.cli_env(env, SHELL) == {"PATH": "/usr/bin", "DATABRICKS_HOST": HOST, "DATABRICKS_CONFIG_FILE": os.devnull,
                                                "DATABRICKS_AUTH_TYPE": "pat", "DATABRICKS_TOKEN": "not-a-real-key"}
 
 
@@ -356,9 +357,23 @@ def test_the_cli_gets_the_service_principal_when_the_env_file_has_no_token():
     env = {"DATABRICKS_HOST": HOST, "DATABRICKS_TOKEN": "",
            "DATABRICKS_CLIENT_ID": "sp-client", "DATABRICKS_CLIENT_SECRET": "not-a-real-secret"}
 
-    assert bundle_live.cli_env(env, SHELL) == {"PATH": "/usr/bin", "DATABRICKS_HOST": HOST,
+    assert bundle_live.cli_env(env, SHELL) == {"PATH": "/usr/bin", "DATABRICKS_HOST": HOST, "DATABRICKS_CONFIG_FILE": os.devnull,
                                                "DATABRICKS_AUTH_TYPE": "oauth-m2m", "DATABRICKS_CLIENT_ID": "sp-client",
                                                "DATABRICKS_CLIENT_SECRET": "not-a-real-secret"}
+
+
+def test_the_cli_never_reads_the_config_file_s_default_profile():
+    """The CLI's bundle commands take ~/.databrickscfg's default profile over the host and token in the environment,
+    so a deploy meant for one workspace can land on another (October 26, 2026, ticket 82). The config file is pointed
+    at nothing, and the shell's own profile choice never reaches the CLI."""
+    env = {"DATABRICKS_HOST": HOST, "DATABRICKS_TOKEN": "not-a-real-key"}
+    shell = SHELL | {"DATABRICKS_CONFIG_FILE": "/Users/someone/.databrickscfg", "HOME": "/Users/someone"}
+
+    found = bundle_live.cli_env(env, shell)
+
+    assert found["DATABRICKS_CONFIG_FILE"] == os.devnull
+    assert "DATABRICKS_CONFIG_PROFILE" not in found
+    assert found["HOME"] == "/Users/someone"
 
 
 def test_the_deploy_passes_every_bundle_variable_the_job_s_tasks_name_that_has_no_default():
