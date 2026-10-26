@@ -6,7 +6,7 @@ Read first: docs/PLAN.md sections 13 (P4) and 15; the blueprint's "A specialist'
 
 **Blocked by:** 45 (All three dashboard pages and the KPIs); 47 (The deck at /present, and How Strata works); 48 (The demo-ready command)
 
-**Status:** in-progress
+**Status:** done
 **Area:** ops
 **Phase:** P4
 **Design review:** no
@@ -26,3 +26,19 @@ Read first: docs/PLAN.md sections 13 (P4) and 15; the blueprint's "A specialist'
   - `config/sources.toml`'s `awards` known gap `fy2017_2019`
   - any setting the deck reads through `docs/proposal/settings.toml`, such as `hindsight.checklist_size` in `config/thresholds.toml`
 - October 26, 2026, orchestrator: the P3 phase gate (run after ticket 47 merged, 10:10 PDT) failed on one finding that this ticket settles: `docs/proposal/source.md` lines 272 and 274 say a change lands "in under ten minutes" (the Module 4 heading and paragraph 56), but nothing has measured it, the drill table under it says "Not rehearsed yet" for all ten changes, and the number check in `src/strata/proposal/numbers.py` line 65 counts only the words two to nine, so it never saw the claim. When the drills run, cite their measured times there, take the number out of the heading unless the measurement supports it, and add ten and up to the number check's word list with a test. Everything else in the P3 gate passed (offline 129.1 s; 46 and 47 done; probes held). The gate runs again in the next wave.
+- October 26, 2026, merger: merged strata/49-change-drills-and-rehearsal (head 6454cec6) into build/strata as merge commit 5d923cbc, with history, since the history scan found no key-shaped line in the branch's commits. Its parents are 8362d875 and 6454cec6. The worktree that built it was `.claude/worktrees/wf_b78fa5cb-ded-61`. I removed it and kept the branch. No dependency file changed, and `scripts/install` ran before the merge commit. The merge commit's gate passed in 125.0 seconds. The gate run by hand on build/strata, with its history scan over the merged history, passed in 124.8 seconds at 12:14 PDT.
+  - Evidence. Review round 2 (`.notes/49-review-r2.md`) approved with 0 blocking findings. Verify round 2 (`.notes/49-verify-r2.md`) passed, and the worktree's gate passed in 132.6 seconds. Criterion 1 passed: `docs/change-drill.md` has ten entries in `config/change_drills.toml`'s order. Each one names its one place, its proving test and its workspace line, and every named test passed when run by name. Criterion 2 passed: each drill was rehearsed on its own `drill-49/` branch and took 3 to 4 minutes with the gate green. The edits took 6 to 55 seconds and the gates 121.0 to 131.8 seconds. The verifier checked every time against git's commit dates and reflog, not against the record. Criterion 3 passed: none of the ten drill commits is on build/strata, HEAD or `main` (`git merge-base --is-ancestor` and `git cherry`), and no drill's content is on either branch. The rendered proposal shows the measured times in Module 4 and Annex 1. Paragraph 56 says each change had been worked through once before its timed run, and it no longer says "under ten minutes" or "Not rehearsed yet". The number check now reads ten and up, with a test. This settles the P3 phase gate's finding in the comment above.
+  - Criteria 4 and 5 are parked. They need the workspace and a person signed in to the App.
+  - Workspace results: none ran. Every key is set, but the second session runs every workspace step from a snapshot of the commit, so the merger ran none. Three blocks are parked in `docs/workspace-catchup.md` for a snapshot of 5d923cbc or later:
+    1. "Ticket 49, step 1 of 3" runs the demo-ready command twice (criterion 4). The second session runs it. It cannot pass while `strata.gold.passage` holds 0 rows, so it waits on ticket 72's documents run.
+    2. "Ticket 49, step 2 of 3" walks the specialist's eight steps with timings into `docs/rehearsal.md` section 2 (criterion 5). It needs the user signed in as the test account. Ask answers 401 until the user assigns the App's role.
+    3. "Ticket 49, step 3 of 3" is each drill's live part. It is optional, no criterion needs it, and it waits for the user's go-ahead, because it would put a drill's change on the workspace the demo runs on.
+  - Follow-ups (none blocks this ticket):
+    1. A plan with a `method_unknown` data note makes check_plan answer HTTP 500 (review round 1's F3, carried). It needs a check_plan ticket of its own. The fix is in `.notes/49-review-r2.md`, follow-up 1.
+    2. Add the as-of June 30, 2017 behaviour test to `tests/test_project_signals.py`, plus one runbook line under "A new signal" (review follow-up 2). The verifier's probe shows it passes today.
+    3. The two git-backed rehearsal tests skip any commit this clone does not hold, and the drill branches exist only in this local repo (verify follow-up 3). Keep the ten `drill-49/*` branches, and never delete them as cleanup.
+  - Decisions parked for the user:
+    1. Time the drills again from a cold start? The reviewer and verifier kept the current times. The proposal says plainly that they measure a known change made again, plus the gate.
+    2. Push the ten `drill-49/*` branches, or one tag per drill commit, so a reader can open the commits Annex 1 cites? They stay local and are not deleted. Pushing waits for your go-ahead (CLAUDE.md rule 10).
+    3. Run each drill's live part on the shared workspace (catch-up step 3 of 3)? I parked it as optional and ran nothing, because the demo runs on that workspace.
+  - Deferred to the design pass: nothing. This ticket changes no screen.

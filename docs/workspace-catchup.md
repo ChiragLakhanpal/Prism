@@ -3109,3 +3109,47 @@ It worked if:
 - The console prints 0, and How Strata works shows its eight figures with their captions.
 
 Record the deploy's exit code and last line, any slide that did not move or draw, and the console count.
+
+## Ticket 49, step 1 of 3: the demo-ready command, run twice, before the rehearsal (criterion 4, live)
+
+The merger parked this step on October 26, 2026, after merge commit 5d923cbc, so run steps 1 and 2 from a snapshot of 5d923cbc or later. Every key is set, but the second session runs every workspace step from a snapshot of the commit, one at a time, so the merger ran none. Steps 1 and 2 go in this order: the demo-ready command passes first, then a person walks the path.
+
+It needs what ticket 77's block needs: the keys in `.env`, `az` signed in for the Foundry agent, the browser sign-in under the Databricks CLI profile `strata`, and `data/out/fixture.duckdb` copied into the snapshot for step 4 of the command. Run it when neither nightly job is running and the warehouse is under its free daily limit, with the person who will walk step 2 below signed in to the App in the browser the wizard saved.
+
+Run this twice in a row from the snapshot's root:
+
+    uv run --with databricks-sdk==0.156.0 python ops/demo/ready.py --env-file "<main checkout>/.env"
+
+It worked if:
+
+- The first run exits 0, and its last line is `Strata is ready for the demo.`
+- The second run also exits 0, and its step 6 prints `No changes.`
+
+While `strata.gold.passage` holds 0 rows (the nightly job timed out in parse_and_embed on October 26; see ticket 72's block), the smoke question at the command's step 3 fails, so the command exits 1 and ends "Strata is not ready for the demo." Ticket 77's run at 12:45 UTC on October 26 ended that way, from Genie and the smoke question, not the App. That is not a pass for this criterion: record it, and run this step again after ticket 72's documents run has filled the passages.
+
+Write both runs into the main checkout's `docs/rehearsal.md` section 1 (when each started, its minutes, its last line and the steps that failed), and commit that file through the gate.
+
+## Ticket 49, step 2 of 3: a specialist's path on the deployed App, with timings (criterion 5, live; needs a person)
+
+Parked with step 1, after merge commit 5d923cbc. Walk it only after step 1 passes. It needs a person signed in to the App in the World Bank staff view, as the reviewing panel's test account (`config/examples.toml` names its group), and never in a preview, which can't check or export. So the user walks it; the second session cannot do it alone. Step 4 of the path, the evidence drawer, also waits for the user to assign the App's role: until then, ask answers 401.
+
+Walk the eight steps in the table in `docs/rehearsal.md` section 2 at https://strata-7474658003099155.aws.databricksapps.com: Home, Check a plan, the package workspace, the evidence drawer, the project timeline, Drafts, Projects you follow and Lessons. Time each step from opening its page to seeing what its "Should show" column names, and compare what the App shows with `tests/ground_truth/values.toml` by the ids the table gives.
+
+It worked if every row of that table has its start time, its seconds, and "Worked", or a follow-up: a new ticket, or a "Designed, not built" line (an entry in `config/designed_not_built.toml` and the label at its route, added in the same change). Steps 1 and 2 may differ from the blueprint on live data, since the awards dataset shows KE-NWWDA-541055-CW-RFB signed on June 22, 2026 (award-541055-signed) and KE-NWWDA-541062-CW-RFQ signed on May 11, 2026 (award-541062-signed). Record what they show as a finding for the demo's story, not as a failure. Which story the demo tells is the user's choice (`docs/STATUS.md`, decisions 4 and 7).
+
+Steps 6 and 8 of the path write rows to `strata.ops` as the test account. Leave them there. If they must go, a row leaves only through a `DELETE` with a `WHERE` that names that account (CLAUDE.md rule 5).
+
+Fill in the table in the main checkout's `docs/rehearsal.md` and commit it through the gate. Tell the orchestrator about each failure, so it opens the follow-up ticket.
+
+## Ticket 49, step 3 of 3: optional, and only with the user's go-ahead: the live part of each change drill (no criterion)
+
+Parked with step 1, after merge commit 5d923cbc. No criterion of ticket 49 needs this step. The ten drills were rehearsed and timed offline with the gate (criterion 2), and their changes live only on the ten local `drill-49/*` branches, never on build/strata (criterion 3). Running a drill's live part puts that drill's change on the shared workspace: a new source, a new tool, a new Needs a look count, Nepal in the nightly job, the agent's model swapped to gpt-4.1-mini, or a test dashboard. The demo runs on that workspace. So run this only when the user says so, one drill at a time, each from a snapshot of its own drill commit (`git archive drill-49/<nn>-<name>`). Right after each one, put the workspace back by running the same commands from a snapshot of build/strata. Never delete the `drill-49/*` branches: the proposal's Annex 1 cites their commits.
+
+The builder's commands, from the "On the workspace" lines in `docs/change-drill.md`:
+
+- Tool and threshold drills (2 and 3): `uv run --script ops/agent/sync.py --env-file "<main checkout>/.env"`. It worked if a second run reports no difference.
+- Model drill (5): the user runs `bash ops/wizard/strata-setup.sh`, which deploys the model in Azure with its cap, then `uv run --script ops/dayone/probe_caps.py --env-file "<main checkout>/.env"`. It worked if the probe exits 0 and prints the new deployment's limit.
+- Source and country drills (1 and 4): `uv run --script ops/bundle/deploy.py --env-file "<main checkout>/.env"`, then `uv run --script ops/bundle/check.py same-rows --env-file "<main checkout>/.env"`. It worked if the new source's `<key>,true` row prints.
+- Tile drill (10): the bundle deploy above deploys "Strata operations (test)" beside "Strata operations". It worked if the test copy shows the new tile.
+
+Record each command's exit code and proof line, and the commands that put the workspace back.
