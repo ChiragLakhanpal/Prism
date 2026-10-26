@@ -86,12 +86,24 @@ MOBILE_LABELLED = re.compile(
     r"(?P<numbers>(?:\+?91[ \t-]?)?[6-9]\d{4}[ \t-]?\d{5})(?!\d)", re.I)
 TRAILING = re.compile(r"[ \t()–-]*$")  # what a number's pattern takes after its last digit, kept as written
 
-# The nightly job's check for contact details that ingestion missed (strata.lakehouse.quality, contacts_left):
-# a plain email address, or a number of seven digits or more written after a phone label. They are simpler than
-# the patterns above, so the SQL warehouse (Java's regular expressions) and DuckDB (RE2) read them the same way,
-# and they go to the query as bound parameters, since Spark SQL mangles backslashes in a literal.
-LEFT_EMAIL = r"[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}"
-LEFT_PHONE = r"(?i)\b(tel|telephone|phone|mobile|cell|fax)\b[^0-9\n]{0,12}\+?[0-9][0-9 ()-]{5,}[0-9]"
+# One definition of a contact detail left in a notice (CLAUDE.md rule 4; ticket 76). The nightly job's check
+# (strata.lakehouse.quality, contacts_left) counts the notices these find, and the removal's last pass (Stripper.left)
+# takes out all they find, so the check never finds what the removal leaves:
+# - an email address, also with a space before or after its "@" (name@ example.org);
+# - a number of seven digits or more, with spaces, dots, brackets or dashes between them, written after a phone label
+#   (Tel, Telephone, Telefax, Phone, Cellphone, Mobile, Mob, Cell, Fax, Facsimile) with up to 12 other characters
+#   but no digit between (Fax #: , Phone No. , Tel: (-), or with none, the label run into the digits (Phone0722...);
+# - such a number written after one already removed, with a comma, slash, semicolon or dash before it, and maybe the
+#   letter l typed for a 1 ([contact removed]l, 0722...).
+# They are simpler than the patterns above, so the SQL warehouse (Java's regular expressions) and DuckDB (RE2) read
+# them as Python does, and they go to the query as bound parameters, since Spark SQL mangles backslashes in a literal.
+LEFT_EMAIL = r"[A-Za-z0-9._%+-]+ ?@ ?[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}"
+LEFT_PHONE = (r"(?i)(\b(tel|telephone|telefax|phone|cellphone|mobile|mob|cell|fax|facsimile)(\b[^0-9\n]{0,12})?"
+              r"|\[contact removed\][ \t]*l?[ \t]*[,;/-][ \t]*)\+?[0-9]([ ().-]*[0-9]){6,}")
+# The same two, as the removal reads them. ASCII, because RE2 and Java's \b and (?i) know only ASCII letters.
+CHECKED_EMAIL = re.compile(LEFT_EMAIL, re.A)
+CHECKED_PHONE = re.compile(LEFT_PHONE, re.A)
+SIGNS_BEFORE = re.compile(r"[(+][(+ \t–-]*$")  # a number's own bracket or plus, written before its first digit
 
 
 def _phone(candidate: str) -> bool:
@@ -175,7 +187,25 @@ class Stripper:
             text = self._sub(PHONE, text, "phones", _phone)
             text = LINE_ENDING.sub(REMOVED, text)  # part of a number already counted
         text = LABELLED.sub(self._labelled, text)
-        return MOBILE_LABELLED.sub(self._labelled, text)
+        text = MOBILE_LABELLED.sub(self._labelled, text)
+        return text if labelled_only else self.left(text)
+
+    def left(self, text: str) -> str:
+        """The removal's last pass: every email address and labelled phone number the nightly check looks for
+        (LEFT_EMAIL, LEFT_PHONE), with the label and the words around it kept. A number taken out can leave
+        another written after it ([contact removed]l, 0722...), so it runs until it finds nothing."""
+        text = self._sub(CHECKED_EMAIL, text, "emails")
+        while True:
+            found = CHECKED_PHONE.sub(self._checked_number, text)
+            if found == text:
+                return text
+            text = found
+
+    def _checked_number(self, match: re.Match) -> str:
+        found = match.group(0)
+        label = SIGNS_BEFORE.sub("", found[:re.search(r"\d", found).start()])
+        self.counts["phones"] += 1
+        return label + REMOVED
 
     def _labelled(self, match: re.Match) -> str:
         numbers = match.group("numbers")
