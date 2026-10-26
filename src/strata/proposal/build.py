@@ -675,11 +675,11 @@ def _figure_data(build: _Build, slug: str) -> tuple[dict, str | None]:
         years = [row for row in measured["series"] if row.get("d")]
         alt = ("Dot chart of test years, the share of packages signed within the 8-in-10 point each year: "
                + "; ".join(f"{row['label']}, {row['percent']} percent" if row.get("percent") is not None
-                           else f"{row['label']}, {row['n']} of {row['d']}, too few for a share" for row in years)
+                           else f"{row['label']}, {row['n']} of {row['d']}, too few for a percentage" for row in years)
                + ". A reference line marks 8 in 10.")
         rows = ["| Test year | Signed within the 8-in-10 point | Share |", "|---|---:|---:|"]
         rows += [f"| {row['label']} | {build.result_link(defined.key, text=f'{numeral(row['n'])} of {numeral(row['d'])}')} "
-                 f"| {build.result_link(defined.key, text=f'{row['percent']}%') if row.get('percent') is not None else 'Too few for a share'} |"
+                 f"| {build.result_link(defined.key, text=f'{row['percent']}%') if row.get('percent') is not None else 'Too few for a percentage'} |"
                  for row in years]
         return {"series": years, "alt": alt}, "\n".join(rows)
     if slug == "hindsight":

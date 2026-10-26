@@ -238,7 +238,11 @@ def test_a_data_chart_has_a_table_twin_whose_numbers_link_to_the_register(built)
     figure = built.markdown.split('<a id="figure-5"></a>')[1].split("</details>")[0]
     assert "<details><summary>Show the table</summary>" in figure
     assert re.search(r"\| 2021 \| \[31 of 40\]\(#r-backtest-years ", figure)  # tests/proposal_seed.py, BACKTEST
-    assert "| 2023 | [9 of 12](#r-backtest-years" in figure and "Too few for a share" in figure
+    assert "| 2023 | [9 of 12](#r-backtest-years" in figure
+    # 2021 has 40 packages: enough for "about N in 10" (20) but not for a percentage (50), DESIGN.md section 7, rule 15
+    # and config/thresholds.toml's data_readiness.fewest_for_a_percentage. The chart draws percentages.
+    assert re.search(r"\| 2021 \| \[31 of 40\][^|]*\| Too few for a percentage \|", figure)
+    assert "Too few for a share" not in built.markdown
 
 
 def test_diagrams_carry_no_numbers(built):

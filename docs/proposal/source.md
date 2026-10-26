@@ -124,7 +124,7 @@ Scored under [Analytical and AI methodology](#rubric-method), and in part under 
 {figure:backtest}
 **Figure. Across the test years, {r:backtest-coverage} packages were signed within the 8-in-10 point of their range.**
 **Source:** the time estimate's rolling backtest, in `strata.ops.evaluation_result`.
-**Note:** A year with too few packages for a share shows its count and no dot.
+**Note:** A year with too few packages for a percentage shows its count and no dot.
 
 {#m2-signals} Strata also checks each package in a plan for reasons to look: a planned date already past, a closing date moved, a direct selection made late. A signal is a reason to look, never a finding. A backtest compared an early-warning model with these fixed checks on projects that later extended their closing date. The model caught {r:hazard-caught} such projects, and the fixed checks caught {r:signals-caught}.
 
