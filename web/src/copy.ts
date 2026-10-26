@@ -2941,6 +2941,11 @@ export const copy = {
         nothingTitle: "I couldn't date any step of your plan, so I saved no draft.",
         nothingBody:
           "Every step had fewer than {min} comparable packages that recorded it. Your plan's check still lists every activity.",
+        // When my verifier removed what I worked out and no step was left dated: never "too few", which may be untrue.
+        nothingRemovedBody: (count: number, countText: string) =>
+          count === 1
+            ? "My checks removed what I worked out for one step, because it didn't match my delay model's results, and no other step had a date. What I removed is below, with its reason."
+            : `My checks removed what I worked out for ${countText} steps, because it didn't match my delay model's results, and no other step had a date. What I removed is below, with the reason for each.`,
         previewPiuTitle: "I don't show this team's drafts in a preview.",
         previewPiuBody: "In a preview I don't show an implementing agency's drafts, because they stay with the team that made them.",
         // What only this kind says (the 38 brief, 5.7), each count from the draft.

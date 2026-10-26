@@ -9,7 +9,7 @@ import { scan } from "./axe";
 import type { Page } from "@playwright/test";
 import { expect, recorded, test } from "./mocked";
 
-type Answer = { status?: number; body: string };
+type Answer = { status?: number; body: string; type?: string };
 const UPLOAD = "/packages/uploads/upl-000000000001";
 const ACCESS = "Official Use Only · visible to your team";
 
@@ -27,7 +27,7 @@ async function serve(page: Page, answers: Record<string, Answer>, me = "me-offic
     asked.push(key);
     const answer = all[key];
     if (!answer) return route.fulfill({ status: 404, json: { detail: "Not Found" } });
-    return route.fulfill({ status: answer.status ?? 200, contentType: "application/json", body: answer.body });
+    return route.fulfill({ status: answer.status ?? 200, contentType: answer.type ?? "application/json", body: answer.body });
   });
   return asked;
 }
@@ -186,4 +186,27 @@ test("When my verifier removes a step's dates on a draft of planned dates, the p
   await page.locator("[data-overview-row]").first().getByRole("button", { name: /Aug 1, 2021/ }).click();
   await expect(page.getByRole("dialog").locator("[data-step-entry]")).toHaveCount(25);
   await expect(bar).toContainText("You opened 1 of 4 lists of comparable packages");
+});
+
+test("When my verifier removes every date I worked out, the writing page shows what it removed and why, and never blames too few packages", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  // The server's stream when the draft stated a cautious date estimate_time did not return on all five steps it dates,
+  // each with 25 comparable packages (tests/record_uploads_api.py): nothing is left dated, so nothing is saved.
+  await serve(page, {
+    "GET /api/uploads/upl-000000000001": { body: await recorded("upload-check-nwwda.json") },
+    "POST /api/drafts": { body: await recorded("drafts-step-rows-nothing-removed.sse"), type: "text/event-stream" },
+  });
+  await page.goto(UPLOAD);
+  await page.getByRole("button", { name: "Draft planned dates (9 activities)" }).click();
+
+  const nothing = page.locator("[data-nothing-dated]");
+  await expect(nothing.getByRole("heading", { name: "I couldn't date any step of your plan, so I saved no draft." })).toBeVisible();
+  await expect(nothing).toContainText("My checks removed what I worked out for five steps, because it didn't match my delay model's results, and no other step had a date.");
+  await expect(nothing).not.toContainText("fewer than");
+  const box = nothing.locator("[data-removed-box]");
+  await expect(box).toContainText("I removed five sentences.");
+  await expect(box).toContainText("bid invitation (SPN): middle date 2021-03-09; cautious date 2021-03-25; 25 comparable packages");
+  await expect(box).toContainText("no record supports that date");
+  expect(await shownText(page, "[data-draft-new] [data-access-label]")).toBe(ACCESS);
+  expect(await violations(page)).toEqual([]);
 });

@@ -2,12 +2,14 @@
 // no model writes them, so the page lists the server's steps (reading the activities and finding comparable packages,
 // checking every date and count, saving) and nothing is saved until the verifier finishes. When the draft is saved,
 // the address is replaced with the draft's, so Back returns to the upload's check. When no step could be dated, the
-// page says so and that I saved no draft; "Stop writing" goes back and saves nothing.
+// page says so and that I saved no draft, and shows what my verifier removed when it removed anything; "Stop writing"
+// goes back and saves nothing.
 import { useEffect } from "react";
 import { AccessLabel } from "../components/AccessLabel";
 import { Alert } from "../components/Alert";
 import { Button } from "../components/Button";
 import { EmptyState } from "../components/Card";
+import { RemovedBox } from "../components/Checks";
 import { Fill } from "../components/Fill";
 import { Steps, type Step } from "../components/Steps";
 import { TextLink } from "../components/TextLink";
@@ -16,7 +18,7 @@ import { formatCount, formatDate } from "../lib/format";
 import { draftHref, stopWriting, type Writing } from "../lib/drafts";
 import { navigate } from "../lib/router";
 import { setPageTitle } from "../lib/title";
-import { DocumentColumn, DraftCrumbs, DraftHeader } from "./DraftPage";
+import { DocumentColumn, DraftCrumbs, DraftHeader, removedItems } from "./DraftPage";
 
 const kind = copy.draft.kinds.step_rows;
 const words = copy.draft;
@@ -82,10 +84,24 @@ export function WritingDatesPage({ current }: { current: Writing }) {
         {current.phase === "nothing" && (
           <div className="mt-6 max-w-[72ch]" data-nothing-dated>
             <h2 className="text-title text-ink-heading">{kind.nothingTitle}</h2>
-            <p className="mt-2 text-body text-ink">
-              <Fill template={kind.nothingBody} slots={{ min: String(current.nothingDated?.min_comparables ?? "") }} />{" "}
-              <TextLink href={back}>{copy.uploadCheck.backToCheck}</TextLink>
-            </p>
+            {current.removed.length > 0 ? (
+              // My verifier removed what I worked out, so "too few comparable packages" may be untrue: say what it
+              // removed and why instead (CLAUDE.md rule 2).
+              <>
+                <p className="mt-2 text-body text-ink">{kind.nothingRemovedBody(current.removed.length, formatCount(current.removed.length))}</p>
+                <div className="mt-4">
+                  <RemovedBox removed={removedItems(current, kind)} all={current.checks?.sentences.written === current.removed.length} />
+                </div>
+                <p className="mt-4 text-body text-ink">
+                  <TextLink href={back}>{copy.uploadCheck.backToCheck}</TextLink>
+                </p>
+              </>
+            ) : (
+              <p className="mt-2 text-body text-ink">
+                <Fill template={kind.nothingBody} slots={{ min: String(current.nothingDated?.min_comparables ?? "") }} />{" "}
+                <TextLink href={back}>{copy.uploadCheck.backToCheck}</TextLink>
+              </p>
+            )}
           </div>
         )}
         {(current.phase === "failed" || current.phase === "dropped") && (

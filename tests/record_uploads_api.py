@@ -15,7 +15,9 @@ Two stories make them:
 - On ticket 27's hand-made set (tests/step_set.py), as of January 15, 2021, Amina uploads the target package with its
   own dates and drafts planned dates: drafts-step-rows-draft.json, the draft as its page shows it. She drafts them
   again while the draft states one cautious date estimate_time did not return (test_step_rows's fault injection), and
-  the verifier removes it: drafts-step-rows-removed.json.
+  the verifier removes it: drafts-step-rows-removed.json. Then the draft states a cautious date estimate_time did not
+  return on every step it dates, the verifier removes all five, no step is left dated and nothing is saved:
+  drafts-step-rows-nothing-removed.sse, the stream the writing page reads.
 """
 
 import asyncio
@@ -33,7 +35,7 @@ sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT / "tests"))
 
 import step_set  # noqa: E402
-from test_step_rows import HAND_PROJECT, NWWDA, a_value_the_delay_model_did_not_return, hand_file  # noqa: E402
+from test_step_rows import DATED_STEPS, HAND_PROJECT, NWWDA, a_value_the_delay_model_did_not_return, hand_file  # noqa: E402
 from test_uploads import AMINA, DANA, FIXTURE, GROUPS, roles  # noqa: E402
 
 from strata.drafts.store import DraftStore  # noqa: E402
@@ -109,6 +111,10 @@ def answers(folder: Path, fixture_db: Path = FIXTURE_DB) -> dict[str, str]:
             draft_id = next(json.loads(line.removeprefix("data: "))["draft_id"] for line in sent.text.splitlines()
                             if line.startswith("data: ") and "draft_id" in line)
             found["drafts-step-rows-removed.json"] = _text(await client.get(f"/api/drafts/{draft_id}", headers=AMINA))
+            with a_value_the_delay_model_did_not_return("date", steps=DATED_STEPS):
+                sent = await client.post("/api/drafts", headers=AMINA, json={"kind": "step_rows", "source": source,
+                                                                             "idempotency_key": "key-3"})
+            found["drafts-step-rows-nothing-removed.sse"] = sent.text
 
     asyncio.run(story())
     return found

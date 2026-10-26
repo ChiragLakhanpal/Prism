@@ -13,7 +13,7 @@ import { Alert } from "../components/Alert";
 import { Button } from "../components/Button";
 import { EmptyState } from "../components/Card";
 import { Fill } from "../components/Fill";
-import { RemovedBox, type Removed } from "../components/Checks";
+import { RemovedBox } from "../components/Checks";
 import { DraftNotes, type NoteRow } from "../components/DraftNotes";
 import { Skeleton } from "../components/Skeleton";
 import { Steps, type Step } from "../components/Steps";
@@ -26,7 +26,7 @@ import { DatesReloadCard, WritingDatesPage } from "./WritingDatesPage";
 import { navigate } from "../lib/router";
 import { useStore } from "../lib/store";
 import { setPageTitle } from "../lib/title";
-import { DocumentColumn, DraftCrumbs, DraftHeader, PackageCrumbs, ppsdSubtitle, subtitleOf } from "./DraftPage";
+import { DocumentColumn, DraftCrumbs, DraftHeader, PackageCrumbs, ppsdSubtitle, removedItems, subtitleOf } from "./DraftPage";
 import { FOLLOWING_HREF } from "../lib/following";
 import { IdText } from "../components/ProjectId";
 import { SkeletonText } from "../components/Skeleton";
@@ -64,16 +64,6 @@ function stepsOf(current: Writing, kind: KindWords): Step[] {
   }
   if (by.save) lines.push({ key: "save", running: s.save.running, done: s.save.done, state: by.save.status });
   return lines;
-}
-
-function removedItems(current: Writing, kind: KindWords): Removed[] {
-  // The kind's own words for a reason first, then the answer's.
-  const reasons: Record<string, { item: string; joined: string }> = { ...copy.removed.reasons, ...kind.removedReasons };
-  return current.removed.map((item) => {
-    const code = [item.reason, ...item.reasons.map((reason) => reason.code)].find((one) => one in reasons);
-    const reason = code ? reasons[code] : copy.removed.unknownReason;
-    return { sentence: item.sentence, reason: reason.item, reasonJoined: reason.joined };
-  });
 }
 
 export function DraftNewPage({ search }: { search: string }) {

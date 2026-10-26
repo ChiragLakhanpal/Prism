@@ -305,7 +305,10 @@ async def write_computed(writing: Writing, module, engine_for: EngineFor, store:
                dates=counts["dates"], numbers=counts["numbers"], removed=counts["sentences"]["removed"],
                dated=content["counts"]["dated"], steps=content["counts"]["steps"])
     if module.nothing_dated(content):
-        yield Event("nothing_dated", {"counts": content["counts"], "min_comparables": content.get("min_comparables")})
+        # What the verifier removed goes with it, so the page shows each claim and its reason instead of blaming too
+        # few comparable packages (CLAUDE.md rule 2).
+        yield Event("nothing_dated", {"counts": content["counts"], "min_comparables": content.get("min_comparables"),
+                                      "removed": content["removed"], "checks": counts})
         return
     yield step("save", "running")
     draft_id = new_draft_id()

@@ -35,6 +35,7 @@ import type { Step } from "../components/Steps";
 import { TextLink } from "../components/TextLink";
 import { copy } from "../copy";
 import { ApiError, getJson } from "../lib/api";
+import type { RemovedEvent } from "../lib/answer";
 import { cx } from "../lib/cx";
 import { act, draftScope, fileHref, preloaded, refusalOf, setField, setForm, storeFailed, type Action, type Draft } from "../lib/drafts";
 import { evidenceIn, openEvidence, openedAt, origin, recordOpened, remember } from "../lib/evidence";
@@ -124,10 +125,11 @@ function useScrollPadding(header: HTMLElement | null, bar: HTMLElement | null) {
   }, [header, bar]);
 }
 
-function removedItems(draft: Draft, kind: KindWords): Removed[] {
+// What the removed box lists, for a saved draft or a writing that saved nothing (DraftNewPage, WritingDatesPage).
+export function removedItems(holder: { removed: RemovedEvent[] }, kind: KindWords): Removed[] {
   // The kind's own words for a reason first, then the answer's.
   const reasons: Record<string, { item: string; joined: string }> = { ...copy.removed.reasons, ...kind.removedReasons };
-  return draft.removed.map((item) => {
+  return holder.removed.map((item) => {
     const code = [item.reason, ...item.reasons.map((reason) => reason.code)].find((one) => one in reasons);
     const reason = code ? reasons[code] : copy.removed.unknownReason;
     return { sentence: item.sentence, reason: reason.item, reasonJoined: reason.joined };

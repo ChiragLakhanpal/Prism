@@ -421,8 +421,10 @@ function withEvent(current: Writing, type: string, data: any): Writing {
     case "draft":
       return { ...current, draftId: String(data.draft_id), phase: "done" };
     case "nothing_dated":
+      // What my verifier removed comes with it, so the page shows each claim and its reason (CLAUDE.md rule 2).
       return { ...current, phase: "nothing", nothingDated: { activities: data.counts?.activities ?? 0, steps: data.counts?.steps ?? 0,
-        min_comparables: data.min_comparables ?? null } };
+        min_comparables: data.min_comparables ?? null }, removed: (data.removed ?? []) as RemovedEvent[],
+        checks: (data.checks ?? null) as ChecksEvent | null };
     case "nothing_survived":
       return { ...current, phase: "nothing", removed: data.removed as RemovedEvent[], checks: data.checks as ChecksEvent };
     case "error":

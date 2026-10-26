@@ -111,6 +111,8 @@ def test_on_the_fixture_every_step_of_every_activity_names_its_comparables_and_a
     [nothing] = [data for kind, data in sent if kind == "nothing_dated"]
     assert nothing["counts"]["activities"] == 9 and nothing["counts"]["dated"] == {"middle": 0, "cautious": 0}
     assert nothing["min_comparables"] == MIN
+    # Too few comparable packages, not the verifier, left every step undated, so no removed claim goes with it.
+    assert nothing["removed"] == [] and nothing["checks"]["sentences"]["removed"] == 0
     with DuckDBEngine.open(state, read_only=True) as engine:
         assert engine.run("SELECT count(*) FROM strata.ops.drafts").rows[0][0] == 0
 
@@ -275,23 +277,27 @@ def test_the_steps_are_dated_from_the_uploads_own_dates_not_the_published_plans(
     assert [step["middle"]["planned_date"] for step in dated] == [(day + later).isoformat() for day in DATES["middle_dates"]]
 
 
+# The target's five steps that the hand-made set dates, in STEP's order (the 38 verifier's round 3 table).
+DATED_STEPS = ("bid_invitation", "bidding_document_issued", "bid_opening", "bid_evaluation_report", "contract_signed")
+
+
 @contextmanager
-def a_value_the_delay_model_did_not_return(what: str):
-    """Fault injection: the draft states one value estimate_time did not return this turn, for the target's bid
-    evaluation report: a cautious date 9 days later ("date"), or one more comparable package than it counted
-    ("count"). A change to the step-label registry or to estimate_time's rounding could do this; the verifier must
-    remove it and show it (CLAUDE.md rules 1 and 2)."""
+def a_value_the_delay_model_did_not_return(what: str, steps: tuple[str, ...] = ("bid_evaluation_report",)):
+    """Fault injection: the draft states values estimate_time did not return this turn, for the target's bid
+    evaluation report or the steps named: a cautious date 9 days later ("date"), or one more comparable package than
+    it counted ("count"). A change to the step-label registry or to estimate_time's rounding could do this, and could
+    hit every date at once; the verifier must remove each one and show it (CLAUDE.md rules 1 and 2)."""
     real = step_rows._activity
 
     def tampered(found, labels):
         activity = real(found, labels)
         if found["position"] == 1:
-            step = next(step for step in activity["steps"] if step["step_key"] == "bid_evaluation_report")
-            if what == "date":
-                later = dt.date.fromisoformat(step["cautious"]["planned_date"]) + dt.timedelta(days=9)
-                step["cautious"] = {**step["cautious"], "planned_date": later.isoformat()}
-            else:
-                step["comparables_n"] += 1
+            for step in (step for step in activity["steps"] if step["step_key"] in steps):
+                if what == "date":
+                    later = dt.date.fromisoformat(step["cautious"]["planned_date"]) + dt.timedelta(days=9)
+                    step["cautious"] = {**step["cautious"], "planned_date": later.isoformat()}
+                else:
+                    step["comparables_n"] += 1
         return activity
 
     with mock.patch.object(step_rows, "_activity", tampered):
@@ -341,6 +347,30 @@ def test_a_value_the_delay_model_did_not_return_is_removed_and_shown_and_the_dra
     text = " ".join(" ".join(page.extract_text() for page in PdfReader(io.BytesIO(pack)).pages).split())
     # The evidence pack records the removed claim with its reason.
     assert said in text and "Bid evaluation report:" in text
+
+
+def test_when_the_verifier_removes_every_date_nothing_is_saved_and_the_answer_shows_each_removed_claim(hand, state):
+    """No step is left dated, so nothing is saved; the page must show what was removed and why, not say the plan had
+    too few comparable packages, because each of these steps had 25 (CLAUDE.md rule 2)."""
+    app = app_on(hand, state, DATES["as_of"], dt.datetime(2021, 1, 15, 10, 0, tzinfo=dt.UTC))
+    upload_id = upload(app, data=hand_file(), name="team-a-plan.csv", project=HAND_PROJECT).json()["upload_id"]
+    with a_value_the_delay_model_did_not_return("date", steps=DATED_STEPS):
+        sent, draft_id = draft(app, AMINA, f"upload:{upload_id}")
+
+    assert draft_id is None
+    [nothing] = [data for kind, data in sent if kind == "nothing_dated"]
+    assert nothing["counts"]["dated"] == {"middle": 0, "cautious": 0}
+    removed = nothing["removed"]
+    assert [(entry["key"], entry["step_key"], entry["reason"]) for entry in removed] == [
+        ("activity-1", step, "date_not_in_records") for step in DATED_STEPS]
+    # Each entry has what the removed box reads: the claim as written, with its 25 comparable packages, and its reason.
+    for entry in removed:
+        assert entry["sentence"].endswith("; 25 comparable packages.") and "cautious date" in entry["sentence"]
+        assert [reason["code"] for reason in entry["reasons"]] == ["date_not_in_records"]
+    assert nothing["checks"]["sentences"]["removed"] == 5
+    assert nothing["checks"]["sentences"]["written"] > 5  # the new activity's counts were kept
+    with DuckDBEngine.open(state, read_only=True) as engine:
+        assert engine.run("SELECT count(*) FROM strata.ops.drafts").rows[0][0] == 0
 
 
 def test_the_upload_screens_recorded_answers_are_what_the_routes_answer(fixture_db, tmp_path):
