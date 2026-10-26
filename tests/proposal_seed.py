@@ -4,7 +4,8 @@ hindsight test, answers and the cost pull), and a made-up rolling backtest, sinc
 package with a known outcome.
 
 Every made-up value is in tests/dashboard_seed.py or below, so a test can name the number it expects. None of it is a
-finding: the proposal's real snapshot is pulled from the workspace (python -m strata.proposal pull --env-file .env).
+finding: the proposal's real snapshot is pulled from the workspace by ops/proposal/pull_live.py, run as the README's
+section "The proposal" says.
 """
 
 from __future__ import annotations

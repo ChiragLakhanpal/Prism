@@ -19,7 +19,8 @@ BLOCK = re.compile(re.escape(START) + r"\n(.*?)" + re.escape(END), re.S)
 
 
 def _address(url: str | None, missing: str) -> str:
-    return f"<{url}>" if url else missing
+    """The address as the end of its sentence, or the sentence that says where to set it."""
+    return f"<{url}>." if url else missing
 
 
 def links(urls: Urls) -> str:

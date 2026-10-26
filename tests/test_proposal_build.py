@@ -162,6 +162,24 @@ def test_the_showcase_trail_names_only_the_records_its_contract_trail_holds(buil
     assert "Award notice OP00044090" in sentences and "bids" in sentences and "appeared together" in sentences
 
 
+def test_the_module_3_disagreement_quotes_the_icr_and_isr_7_as_the_ground_truth_holds_them_and_links_both(built):
+    # tests/ground_truth/values.toml: ICR paragraph 78 on PDF page 27 against ISR 7 of August 26, 2016, rated
+    # Satisfactory, each from its own page of the recorded documents.
+    import tomllib
+
+    with open(ROOT / "tests" / "ground_truth" / "values.toml", "rb") as handle:
+        facts = {entry["id"]: entry for entry in tomllib.load(handle)["value"]}
+    icr, day, rating = facts["icr-para-78"], facts["isr-7-date"], facts["isr-7-rating"]
+    showcase = next(line for line in built.markdown.splitlines() if "The assessment's own case is in" in line)
+    assert f"{day['value']:%B} {day['value'].day}, {day['value'].year}" in showcase
+    assert f'"{rating["value"]}"' in showcase
+    assert f'"{icr["quote"]}"' in showcase
+    assert f"paragraph {icr['paragraph']}, on page {icr['pdf_page']}" in showcase
+    for fact, part in ((icr, f"?page={icr['pdf_page']}&para={icr['paragraph']}"), (day, f"?page={day['pdf_page']}")):
+        project, key = fact["document"].split("/")[1:]
+        assert f"(https://strata-1.aws.databricksapps.com/projects/{project}/documents/{key}{part})" in showcase
+
+
 def test_model_names_come_from_the_model_file_so_swapping_a_model_changes_the_next_build(snap):
     # docs/PLAN.md section 15's drill "Swap the model" changes config/models.toml alone (CLAUDE.md rule 9).
     for model in config.load_models().values():
@@ -193,12 +211,34 @@ def test_the_retrieval_label_line_says_code_builds_the_labels_and_counts_the_que
     assert "checked by one person" not in built.markdown
 
 
+def shown_words(line: str) -> str:
+    """A built line as a reader sees it: each link's text, without its target or title."""
+    return re.sub(r"\[([^\]]*)\]\([^)]*\)", r"\1", line)
+
+
+def test_the_spend_sentence_writes_money_as_the_dashboards_sentence_does(built):
+    # tests/test_dashboard_findings.py: the dashboard says "had cost US$7.80 of the US$197.00 budget for the free
+    # credit" from the same made-up cost pull. The 46 brief, section 11.3: the proposal and the dashboard agree.
+    spend = shown_words(next(line for line in built.markdown.splitlines() if "the latest day with cost data" in line))
+    assert "Strata's Azure resources had cost US$7.80 of the US$197.00 budget for the free credit" in spend
+
+
+def test_spend_past_the_budget_says_how_far_past_as_the_dashboards_over_sentence_does(snap):
+    # tests/test_dashboard_kpis.py: US$7.80 against a US$5.00 budget is US$2.80 over, in the dashboard's words.
+    over = {**snap["results"]["azure-spend"], "n": 7.8, "d": 5, "budget": 5, "over": 2.8}
+    markdown = build.build(SOURCE, inputs({**snap, "results": {**snap["results"], "azure-spend": over}})).markdown
+    spend = shown_words(next(line for line in markdown.splitlines() if "the latest day with cost data" in line))
+    assert "had cost US$7.80. That is US$2.80 more than the US$5.00 budget for the free credit" in spend
+    assert "of the US$5.00 budget" not in markdown
+
+
 # ── Designed, not built ──────────────────────────────────────────────────
 
 def test_with_nothing_designed_but_unbuilt_the_list_says_so_and_the_summary_leaves_it_out(built):
     section = built.markdown.split("## Designed, not built")[1].split("## Annex 1")[0]
     assert 'Everything this proposal describes is built. Strata shows no "Designed, not built" labels.' in section
     assert "These parts of Strata are designed" not in section
+    assert 'Anything marked "Designed, not built"' not in built.markdown.split("## Summary")[0]
     assert "designed but not built" not in built.markdown.split("## Where Strata earns")[0]
 
 
@@ -212,6 +252,7 @@ def test_each_item_designed_but_not_built_gets_its_row_and_the_summary_names_the
     assert "Some parts of Strata are designed but not built" in markdown.split("## Where Strata earns")[0]
     assert "These parts of Strata are designed, and this proposal describes them, but they are not in the app yet." \
         in section
+    assert 'Anything marked "Designed, not built"' in markdown.split("## Summary")[0]
 
 
 # ── Annexes: attributions word for word ──────────────────────────────────

@@ -117,7 +117,7 @@ second = "time_estimate.coverage_high"
 form = "percent_band"
 where = "config/thresholds.toml, time_estimate.coverage_low and coverage_high"
 enforced_by = "tests/test_estimates_loop.py"
-enforces = "Coverage outside the band for two months asks for retraining"
+enforces = "Coverage that stays outside the band for the months the estimates loop watches asks for retraining"
 
 [settings.tool-rounds]
 name = "Rounds of tool results the agent gets for one answer"

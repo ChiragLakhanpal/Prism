@@ -6,7 +6,9 @@ Strata is procurement intelligence on World Bank open data, built for the World 
 
 {datasheet}
 
-**How to read it.** Paragraphs are numbered, as in a World Bank project document, so you can point to one. A number links to [Annex 1](#sec-annex-results), which names the run or query that produced it, or to [Annex 2](#sec-annex-settings), which names the file that sets it and the test that enforces it. Anything marked "Designed, not built" is described here but is not in Strata yet, and [the list after Module 4](#sec-designed-not-built) names each one.
+**How to read it.** Paragraphs are numbered, as in a World Bank project document, so you can point to one. A number links to [Annex 1](#sec-annex-results), which names the run or query that produced it, or to [Annex 2](#sec-annex-settings), which names the file that sets it and the test that enforces it.
+
+{when:designed} Anything marked "Designed, not built" is described here but is not in Strata yet, and [the list after Module 4](#sec-designed-not-built) names each one.
 
 ## Summary {#summary}
 
@@ -29,7 +31,7 @@ Strata is procurement intelligence on World Bank open data, built for the World 
 | Domain alignment and data use | Strata built {r:gap-contracts} contracts for fiscal 2017 to 2019 from award notices, the years no awards dataset covers. | {r:gap-contracts\|measured_on} | {sec:m1-taking-in} |
 | Domain alignment and data use | Ingestion removed contact details from {r:contacts-removed} procurement notices. | {r:contacts-removed\|measured_on} | {sec:m1-taking-in} |
 | Operationalization and scalability | Strata's risk tables showed {r:hindsight-caught} risks that completion reports later blamed. | {r:hindsight-caught\|measured_on} | {sec:m4-kpis} |
-| Operationalization and scalability | Strata's Azure resources had cost {r:azure-spend} of the {r:azure-spend\|budget} budget. | {r:azure-spend\|measured_on} | {sec:m4-costs} |
+| Operationalization and scalability | Strata's Azure resources had cost {r:azure-spend}{r:azure-spend\|against}. | {r:azure-spend\|measured_on} | {sec:m4-costs} |
 
 **Source:** Annex 1.
 
@@ -191,7 +193,7 @@ Scored under [Analytical and AI methodology](#rubric-method).
 
 {ladder}
 
-{#m3-showcase} The assessment's own case is in P130164. ISR 7, archived on August 26, 2016, after the mid-term review, rated progress towards the development objective "Satisfactory". The completion report's paragraph 78, on page 27, says: "Indeed, it was clearly identified at the MTR that the achievement of part of the PDO was compromised by the major delays in implementing activities under Components 2 and 3 and lack of endorsement from relevant stakeholders." ([ICR, P130164, paragraph 78, page 27]({url:app|/projects/P130164/documents/icr-2019-10-10?page=27&para=78})) For a judgment of how a project went, Strata leans on the later, more independent report, so it leans on the completion report and keeps ISR 7 as the record of the earlier view.
+{#m3-showcase} The assessment's own case is in P130164. [ISR 7]({url:app|/projects/P130164/documents/isr-07-2016-08-26?page=1}), archived on August 26, 2016, after the mid-term review, rated progress towards the development objective "Satisfactory". The completion report's paragraph 78, on page 27, says: "Indeed, it was clearly identified at the MTR that the achievement of part of the PDO was compromised by the major delays in implementing activities under Components 2 and 3 and lack of endorsement from relevant stakeholders." ([ICR, P130164, paragraph 78, page 27]({url:app|/projects/P130164/documents/icr-2019-10-10?page=27&para=78})) For a judgment of how a project went, Strata leans on the later, more independent report, so it leans on the completion report and keeps ISR 7 as the record of the earlier view.
 
 {#m3-card} A disagreement card shows both sides in the order they were written, the side Strata leans on, the rule that decided it, and what would change if you kept the other. Keeping the other side needs a reason, and Strata records it.
 
@@ -248,7 +250,7 @@ Scored under [Operationalization and scalability](#rubric-operations).
 
 | Phase | Who uses Strata | What they get | Starts when |
 |---|---|---|---|
-| Phase 1 | World Bank procurement specialists and task team leaders in {s:pilot-countries} countries | Everything in the World Bank staff view | The benchmark and the backtest meet their targets, and the demo-ready command passes |
+| Phase 1 | World Bank procurement specialists and task team leaders in {s:pilot-countries} countries | Everything in the World Bank staff view | The backtest's coverage stays in its band, the full gate passes and the demo-ready command passes |
 | Phase 2 | Implementing agencies in those countries | The implementing agency view, private uploads and drafts | Phase 1's indicators in the results framework meet their targets |
 | Phase 3 | The public | A read-only view | Phase 2's indicators meet their targets, and a review of what the public view shows |
 
@@ -256,7 +258,7 @@ Scored under [Operationalization and scalability](#rubric-operations).
 
 ### Cost caps and actual spend {#m4-costs}
 
-{#m4-spend} By {r:azure-spend|latest}, the latest day with cost data, Strata's Azure resources had cost {r:azure-spend} of the {r:azure-spend|budget} budget for {r:azure-spend|period}. Azure budgets only send alerts, so hard caps limit spend.
+{#m4-spend} By {r:azure-spend|latest}, the latest day with cost data, Strata's Azure resources had cost {r:azure-spend}{r:azure-spend|against} for {r:azure-spend|period}. Azure budgets only send alerts, so hard caps limit spend.
 
 **Hard caps hold Azure spend, because Azure budgets only send alerts.**
 

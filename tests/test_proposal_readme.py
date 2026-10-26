@@ -23,9 +23,9 @@ def section(name: str) -> str:
 
 def test_the_links_give_the_decks_address_as_the_apps_address_with_present():
     block = readme.links(config.Urls("https://strata-1.aws.databricksapps.com", None, None))
-    assert "- The deck: <https://strata-1.aws.databricksapps.com/present> The deck is not linked from inside " \
+    assert "- The deck: <https://strata-1.aws.databricksapps.com/present>. The deck is not linked from inside " \
            "Strata, so this is where to find it." in block
-    assert "- Strata: <https://strata-1.aws.databricksapps.com> " in block
+    assert "- Strata: <https://strata-1.aws.databricksapps.com>. Open it " in block
 
 
 def test_an_address_not_known_yet_says_where_to_set_it():

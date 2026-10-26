@@ -29,11 +29,13 @@ from dataclasses import dataclass
 from functools import cache
 from pathlib import Path
 
+from strata.proposal import register
+
 ALLOW_FILE = Path(__file__).resolve().parents[3] / "docs" / "proposal" / "number_check.toml"
 RUBRIC_ANCHOR = "assessment.md#5-evaluation--assessment-rubric"
 
-MONTHS = ("January|February|March|April|May|June|July|August|September|October|November|December|"
-          "Jan|Feb|Mar|Apr|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec")
+# The month names and their short forms, as in "October 20, 2026", "Oct 20" and "Sept 3".
+MONTHS = "|".join((*register.MONTHS, *(month[:3] for month in register.MONTHS if month != "May"), "Sept"))
 SEQUENCE = ("paragraphs?|Paragraphs?|sections?|Sections?|Modules?|modules?|Figures?|figures?|Annex(?:es)?|annex|"
             "pages?|Pages?|ISRs?|Components?|components?|Phases?|phases?|rules?|Rules?|decisions?|tickets?|Tickets?|"
             "steps?|Steps?|Slides?|slides?|ADRs?|version|Seq No|[Rr]ounds?")

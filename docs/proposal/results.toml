@@ -18,7 +18,8 @@
 #            measured
 #   params   the query's bound parameters; the pull adds today, date_from and date_to (the 90 days to today) and the
 #            fewest cases for a share and a percentage from config/thresholds.toml
-#   form     ratio ("{n} of {d}", and "about {k} in 10" where the query gives one), count, money (whole US dollars),
+#   form     ratio ("{n} of {d}", and "about {k} in 10" where the query gives one), count, money (US dollars with
+#            cents, as the dashboard's sentences write them),
 #            score (two decimals), days, rate (per 100, one decimal), interval (low to high percent), series (one row
 #            per label, drawn in a figure) or fact (words, such as a paragraph number, never a claim of size)
 #   count_of n (the default) or d: which column a count shows
@@ -361,7 +362,7 @@ module = 4
 kind = "Query"
 noun = "US dollars"
 query = "dashboard:kpi_azure_spend"
-columns = { n = "numerator", d = "denominator", budget = "denominator", latest = "latest_day", period = "period_name" }
+columns = { n = "numerator", d = "denominator", budget = "denominator", over = "over", latest = "latest_day", period = "period_name" }
 form = "money"
 table = "strata.ops.azure_costs"
 

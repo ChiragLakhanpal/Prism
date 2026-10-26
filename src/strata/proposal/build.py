@@ -5,7 +5,8 @@ its figures. In the source:
 
 - {r:key} is a measured result (docs/proposal/results.toml), and {r:key|field} one of its other values, such as
   {r:azure-spend|budget}. It becomes a link to the result's row in Annex 1, with a title that says what it counts and
-  when it was measured.
+  when it was measured. {r:key|against} follows a money result with brief 45's words for where it stands against its
+  budget: " of the US$B budget", or ". That is US$O more than the US$B budget" once the query's over column is above 0.
 - {s:key} is a setting or a count (docs/proposal/settings.toml), and {s:key|cap} the same with a capital, for the
   start of a sentence. It becomes a link to its row in Annex 2.
 - {#slug} at the start of a paragraph names it, and {#slug} at the end of a heading names its section.
@@ -28,23 +29,22 @@ from __future__ import annotations
 
 import datetime as dt
 import json
-import os
 import re
 from dataclasses import dataclass, field
 from html import escape
 from pathlib import Path
 
 from strata import config
+from strata.dashboard import wording
 from strata.proposal import figures as drawings
 from strata.proposal import numbers
-from strata.proposal.register import (DAY_ONE_FILE, Result, Setting, Value, load_results, load_settings, value)
+from strata.proposal.register import (DAY_ONE_FILE, MONTHS, Result, Setting, Value, load_results, load_settings,
+                                     value)
 
 ROOT = Path(__file__).resolve().parents[3]
 SOURCE_FILE = ROOT / "docs" / "proposal" / "source.md"
 COPY_FILE = Path(__file__).with_name("copy.json")
 WORDS = ("zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine")
-MONTHS = ("January", "February", "March", "April", "May", "June", "July", "August", "September", "October",
-          "November", "December")
 NUMBERED_FROM, NUMBERED_TO = "Summary", "Annex 1: Results register"
 UNNUMBERED = ("#", "|", "<", "!", "- ", "* ", ">", "{figure:", "**Source:**", "**Note:**", "**What you can open.**",
               "Scored under")
@@ -82,6 +82,11 @@ def numeral(number) -> str:
     if isinstance(number, float) and not number.is_integer():
         return f"{number:,}"
     return f"{int(number):,}"
+
+
+def _money(amount) -> str:
+    """US dollars as the dashboard's sentences write them: two decimals, half up, with commas."""
+    return f"US${wording.money(amount)}"
 
 
 def word(number) -> str:
@@ -178,8 +183,8 @@ class _Build:
                 return short_date(_day(found))
             if part in ("latest", "month") and re.fullmatch(r"\d{4}-\d{2}-\d{2}.*", str(found)):
                 return long_date(_day(found))
-            if part in ("budget", "d") and defined.form == "money":
-                return f"US${numeral(round(found))}"
+            if part in ("budget", "d", "over") and defined.form == "money":
+                return _money(found)
             return numeral(found) if isinstance(found, int | float) else str(found)
         form = defined.form
         if form == "ratio":
@@ -187,7 +192,7 @@ class _Build:
         if form == "count":
             return word(measured[defined.count_of])
         if form == "money":
-            return f"US${numeral(round(measured['n']))}"
+            return _money(measured["n"])
         if form == "score":
             return f"{measured['value']:.2f}"
         if form == "days":
@@ -203,6 +208,16 @@ class _Build:
                              if name not in ("measured", "run_id", "measured_on", "document_id"))
         raise BuildError(f"The proposal did not build. Result {defined.key} is a {form}, which a sentence can't cite. "
                          "Cite it in its figure.")
+
+    def against(self, key: str) -> str:
+        """Where a money result stands against its budget, in the dashboard's two spend sentences (brief 45)."""
+        defined, measured = self.result(key)
+        if defined.form != "money" or measured.get("budget") is None:
+            raise BuildError(f"The proposal did not build. {self.where[0]} says where result {key} stands against a "
+                             "budget, but it is not money with a budget column.")
+        if (measured.get("over") or 0) > 0:
+            return f". That is {self.result_link(key, 'over')} more than the {self.result_link(key, 'budget')} budget"
+        return f" of the {self.result_link(key, 'budget')} budget"
 
     def result_link(self, key: str, part: str | None = None, text: str | None = None) -> str:
         defined, measured = self.result(key)
@@ -280,7 +295,7 @@ class _Build:
             kind, body = match.group(1), match.group(2).replace("\\|", "|")
             name, _, part = body.partition("|")
             if kind == "r":
-                return self.result_link(name, part or None)
+                return self.against(name) if part == "against" else self.result_link(name, part or None)
             if kind == "s":
                 return self.setting_link(name, capital=part == "cap")
             if kind in ("p", "¶", "sec"):
@@ -567,8 +582,8 @@ def _register(build: _Build) -> str:
             if defined.form == "ratio" and measured.get("in_ten"):
                 shown += f"; about {measured['in_ten']} in 10"
             if defined.target and defined.form == "ratio" and measured.get("percent") is not None:
-                low, high = (build.values.get(defined.target) or value(build.inputs.settings[defined.target])).number, \
-                    (build.values.get(defined.target) or value(build.inputs.settings[defined.target])).second
+                band = build.values.get(defined.target) or value(build.inputs.settings[defined.target])
+                low, high = band.number, band.second
                 if not low * 100 <= measured["percent"] <= high * 100:
                     shown += f"<br>Target: {build.setting_link(defined.target)}. Not met."
             source = (f"{defined.kind}; `{defined.table}`" + (f", run `{measured['run_id']}`" if measured.get("run_id")
@@ -761,8 +776,6 @@ def build(source: str, inputs: Inputs) -> Built:
     markdown = "\n\n".join(part for part in out if part) + "\n"
     problems = numbers.unsourced(markdown)
     if problems:
-        if os.environ.get("STRATA_PROPOSAL_DEBUG"):
-            print([(problem.where, problem.number) for problem in problems])
         raise BuildError("\n".join(problem.sentence() for problem in problems))
     return Built(markdown, work.figures)
 

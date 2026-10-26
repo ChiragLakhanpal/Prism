@@ -27,6 +27,8 @@ KINDS = ("Evaluation result", "Data readiness measure", "Benchmark run", "Backte
 FORMS = ("ratio", "count", "money", "score", "days", "rate", "interval", "series", "fact", "text")
 SETTING_FORMS = ("word", "number", "percent_band", "money", "tokens", "gigabytes")
 READS = ("count", "threshold", "model", "cap", "plan")
+MONTHS = ("January", "February", "March", "April", "May", "June", "July", "August", "September", "October",
+          "November", "December")
 COUNTS = ("sources", "checks", "refusals", "ladder", "shelf", "drills", "loops")
 
 
@@ -166,9 +168,6 @@ def _count(name: str) -> int:
         return len({kpi.loop for kpi in config.load_kpis().values() if kpi.loop})
     raise RegisterError(f"count:{name} is not a registry I can count: use one of {', '.join(COUNTS)}.")
 
-
-MONTHS = ("January", "February", "March", "April", "May", "June", "July", "August", "September", "October",
-          "November", "December")
 
 
 def read_back_caps(path: Path = DAY_ONE_FILE) -> tuple[dict[str, int], int | None, dt.date | None, str]:

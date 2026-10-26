@@ -8,8 +8,8 @@ Strata is an independent demo built on World Bank open data. It is not a World B
 
 <!-- proposal:links -->
 - The proposal: [docs/proposal.md](docs/proposal.md), once it is built from `docs/proposal/source.md` (`python -m strata.proposal build`). It follows the assessment's modules, and every number in it links to the result the build measured.
-- The deck: <https://strata-7474658003099155.aws.databricksapps.com/present> The deck is not linked from inside Strata, so this is where to find it.
-- Strata: <https://strata-7474658003099155.aws.databricksapps.com> Open it with the account your invitation went to.
+- The deck: <https://strata-7474658003099155.aws.databricksapps.com/present>. The deck is not linked from inside Strata, so this is where to find it.
+- Strata: <https://strata-7474658003099155.aws.databricksapps.com>. Open it with the account your invitation went to.
 - The dashboard: not set yet. Set `dashboard` in `config/urls.toml`.
 - The repo: not set yet. Set `repo` in `config/urls.toml`.
 <!-- /proposal:links -->
@@ -82,7 +82,7 @@ It runs the steps in `gates/steps.toml`. Steps that do not depend on each other 
    - The proposal lane checks the proposal (`python -m strata.proposal check`): no number typed into `docs/proposal/source.md`, every placeholder in its register, and the README's links for the panel in step with `config/urls.toml`; once `docs/proposal.md` is built, the number check, paragraph numbers without gaps and in-page links that land. Then it lints the proposal's words (`web/lint/proposal.ts`). Both run even when only Markdown is staged.
    - The web-1 and web-2 lanes each type check and bundle the web app and build the design gallery into a folder of their own: `web/dist-1` and `web/dist-1-gallery` for web-1, `web/dist-2` and `web/dist-2-gallery` for web-2. Each lane then runs half of the Playwright tests against its own build, with `--shard=1/2` or `--shard=2/2`. One of the halves also holds the test against Vite's dev server, where React's StrictMode runs each effect twice, as `scripts/dev` does. The environment variable `STRATA_WEB_OUT` names a lane's folder, and `web/out-dirs.ts` reads it for the builds, both Playwright configs and `web/tests/build.spec.ts`. Without it, the builds go to `web/dist` and `web/dist-gallery`.
 
-The gate prints each step's name and time as the step finishes. When a step fails, the gate stops the other lanes, prints the output of the step that failed, and fails. The gate tells uv, npm and Playwright to work offline, and the tests refuse any connection that leaves this computer. It prints its total time and fails when the whole run takes longer than two minutes. When every staged file is Markdown, it runs only the steps marked `always`: the secret scan, the proposal's check and the proposal's copy lint.
+The gate prints each step's name and time as the step finishes. When a step fails, the gate stops the other lanes, prints the output of the step that failed, and fails. The gate tells uv, npm and Playwright to work offline, and the tests refuse any connection that leaves this computer. It prints its total time and fails when the whole run takes longer than 150 seconds. When every staged file is Markdown, it runs only the steps marked `always`: the secret scan, the proposal's check and the proposal's copy lint.
 
 One gate runs at a time on this computer, so gates in other worktrees and sessions cannot slow it past its limit. Before it starts, the gate holds a lock on the file `strata-gate.lock` in your temporary folder (`$TMPDIR` on a Mac), or on the file that `STRATA_GATE_LOCK` names, as the gate's own tests do. A gate that finds another gate running prints that it is waiting, waits up to 20 minutes (`lock_wait_seconds` in `gates/steps.toml`) and then gives up, and its two-minute limit counts from the moment it holds the lock, not from the start of the wait.
 
