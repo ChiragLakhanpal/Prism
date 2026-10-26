@@ -87,6 +87,14 @@ def test_a_missing_url_stops_the_build(snap):
         build.build(SOURCE, inputs(snap, urls=replace(URLS, app=None)))
 
 
+def test_the_data_sheet_gives_the_decks_address_as_the_apps_with_present_and_the_repo(built):
+    # The 46 brief, section 5: full addresses as link text, so a reader of a printed copy can type them in.
+    sheet = built.markdown.split("## Summary")[0]
+    deck = URLS.app + "/present"
+    assert f'<tr><th scope="row">The deck</th><td><a href="{deck}">{deck}</a></td></tr>' in sheet
+    assert f'<a href="{URLS.repo}">{URLS.repo}</a>' in sheet
+
+
 def test_a_reference_to_a_paragraph_that_is_not_there_stops_the_build(snap):
     planted = SOURCE.replace("{fig:pipeline} shows the parts.", "{p:nowhere} shows the parts.")
     with pytest.raises(build.BuildError, match=r"^Paragraph 3 links to nowhere, which is not in the proposal.$"):
