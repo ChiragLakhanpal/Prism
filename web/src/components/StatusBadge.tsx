@@ -7,8 +7,10 @@
 // 29): the four evidence badges (Restated by IEG, IEG's lesson, Awaiting IEG review, Rests on the ICR
 // alone), May repeat a lesson, Being re-checked, and Overdue, amber because a late decision is stale work.
 // Rebidding risk (ticket 28): Experimental, neutral with a flask, no visible border and an 8 px icon gap, the one
-// quiet mark of an estimate the blueprint labels experimental (the 28 brief, section 4.2).
-import { Circle, CircleDashed, FlaskConical, Info, TriangleAlert, type LucideIcon } from "lucide-react";
+// quiet mark of an estimate the blueprint labels experimental (the 28 brief, section 4.2). Designed, not built (ticket
+// 46): Experimental's quiet look with drafting-compass, the mark of a part the proposal describes but the app does
+// not have yet (the 46 brief, section 12.2); DesignedNotBuilt sets it beside what Strata does instead.
+import { Circle, CircleDashed, DraftingCompass, FlaskConical, Info, TriangleAlert, type LucideIcon } from "lucide-react";
 import { copy } from "../copy";
 import { cx } from "../lib/cx";
 import { STATES, type State } from "./state";
@@ -37,6 +39,7 @@ export type BadgeKind =
   | "their-project"
   | "audit-sample"
   | "experimental"
+  | "designed-not-built"
   | "changed"
   | "retired-wrong"
   | "retired-outdated";
@@ -81,6 +84,7 @@ const KINDS: Record<BadgeKind, Kind> = {
   "retired-outdated": { state: "neutral", Icon: CircleDashed, dashed: false, text: lessons.retiredOutdated },
   // Quiet: its 1px border is transparent, so it keeps every badge's height, and its icon sits 8 px from the word.
   experimental: { state: "neutral", Icon: FlaskConical, dashed: false, text: copy.badge.experimental, quiet: true },
+  "designed-not-built": { state: "neutral", Icon: DraftingCompass, dashed: false, text: copy.badge.designedNotBuilt, quiet: true },
 };
 
 export function StatusBadge({ kind, className, describedBy }: { kind: BadgeKind; className?: string; describedBy?: string }) {

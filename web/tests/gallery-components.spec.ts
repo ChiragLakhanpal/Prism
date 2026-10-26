@@ -57,6 +57,28 @@ test("Partial uses the warning state with triangle-alert, and Gap the neutral st
   expect(gap.icon).toContain("lucide-circle-dashed");
 });
 
+// Ticket 46 (the 46 brief, section 12.2): a part that is designed but not built carries a neutral badge with its own
+// icon, drafting-compass, and no visible border, followed at once by one sentence saying what Strata does instead.
+test("Designed, not built is a quiet neutral badge with drafting-compass, followed at once by what Strata does instead", async ({
+  page,
+}) => {
+  await page.goto("/gallery/badges");
+  const found = badge(page, "Designed, not built").first();
+  await expect(found.locator("svg.lucide-drafting-compass")).toHaveCount(1);
+  await expect(found.locator("svg")).toHaveAttribute("aria-hidden", "true");
+  const look = await found.evaluate((el) => {
+    const style = getComputedStyle(el);
+    return { background: style.backgroundColor, border: style.borderTopColor };
+  });
+  expect(look).toEqual({ background: "rgb(231, 237, 243)", border: "rgba(0, 0, 0, 0)" });
+  const label = page.locator("[data-dnb=sample]");
+  await expect(label.locator("[data-badge=designed-not-built]")).toHaveText("Designed, not built");
+  await expect(label.locator("[data-dnb-instead]")).toHaveText("I don't run this model yet, so these signals come from fixed checks.");
+  const instead = await label.locator("[data-dnb-instead]").getAttribute("id");
+  expect(instead).toBeTruthy();
+  await expect(label.locator("[data-badge=designed-not-built]")).toHaveAttribute("aria-describedby", instead!);
+});
+
 test("the citation marker's accessible name names the source, and a copy of it reads [1]", async ({ page }) => {
   await page.goto("/gallery/citations");
   const marker = page.getByRole("link", { name: "Source 1: Implementation Completion and Results Report, June 30, 2021, paragraph 54" }).first();

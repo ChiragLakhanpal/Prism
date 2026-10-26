@@ -195,6 +195,8 @@ export const NON_COPY_PROPS = new Set([
   "own",
   "preview",
   "capability",
+  // DesignedNotBuilt's key in config/designed_not_built.toml (ticket 46), such as "hazard_model".
+  "item",
 ]);
 
 // A prop or key that ends in one of these holds an address, an id or a class, such as pdfHref,

@@ -11,6 +11,8 @@ import { askFromTheBox, landed, marker } from "./answer-page";
 import { hubApi } from "./hub-api";
 import { trailApi } from "./trail-api";
 import { expect, mockApi, recorded, test } from "./mocked";
+import { labelProblems } from "./designed-not-built";
+import { readRegistry, type DesignedNotBuiltRegistry } from "./registries";
 
 type Answer = { status?: number; body: string };
 
@@ -104,10 +106,14 @@ test("every P-code on every route is a link to its project page, with the drawer
   await page.setViewportSize({ width: 1440, height: 900 });
   await mockApi(page, await everyRecording());
   const found: string[] = [];
+  const labels: { route: string; key: string }[] = [];
   for (const [path, ready] of ROUTES) {
     await page.goto(path);
     await expect(page.locator(ready).first()).toBeVisible();
     found.push(...(await offenders(page)).map((offender) => `${path}: ${offender}`));
+    for (const key of await page.locator("[data-dnb]").evaluateAll((els) => els.map((el) => el.getAttribute("data-dnb") ?? ""))) {
+      labels.push({ route: path, key });
+    }
   }
   // An answer, and the drawer opened from its first citation, on a project's page.
   await page.goto("/projects/P130164");
@@ -124,4 +130,26 @@ test("every P-code on every route is a link to its project page, with the drawer
   found.push(...(await offenders(page)).map((offender) => `record drawer: ${offender}`));
 
   expect(found).toEqual([]);
+
+  const items = readRegistry<DesignedNotBuiltRegistry>("designed_not_built.toml").items ?? [];
+  expect(labelProblems(labels, items, ROUTES.map(([path]) => path))).toEqual([]);
+});
+
+test("the label check fails on a label with no entry, an entry with no label at its route, and a route the sweep skips", () => {
+  const items = [
+    { key: "hazard_model", route: "/projects/P156634" },
+    { key: "word_add_in", route: "/drafts/new" },
+  ];
+  const labels = [
+    { route: "/projects/P156634", key: "hazard_model" },
+    { route: "/data", key: "teams_channel" },
+  ];
+  expect(labelProblems(labels, items, ["/projects/P156634", "/data"])).toEqual([
+    'teams_channel is labeled "Designed, not built" in Strata at /data but is missing from the proposal\'s list.',
+    "word_add_in is in the proposal's list at /drafts/new, which web/tests/sweep.spec.ts does not open. Add the route to ROUTES there.",
+  ]);
+  expect(labelProblems([], [items[0]], ["/projects/P156634"])).toEqual([
+    "hazard_model is in the proposal's list, but Strata shows no label at /projects/P156634.",
+  ]);
+  expect(labelProblems(labels.slice(0, 1), items.slice(0, 1), ["/projects/P156634"])).toEqual([]);
 });
