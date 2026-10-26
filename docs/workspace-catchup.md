@@ -10,6 +10,12 @@ The merger appends a block below each time it parks a step.
 
 **While the user works through the wizard and the catch-up steps.** All ten keys were set by 10:58 PDT on October 24, 2026, and day-one test 7 passes. The user is running the wizard and the catch-up steps by hand in the main checkout, which means two things for a merger. First, do not run any workspace step during a merge, even though the keys are there: work on the shared workspace runs one at a time, and the user holds that turn today. Park your ticket's steps here as before, in order, and the orchestrator runs the backlog after the user's run. Second, if the main checkout holds staged or unstaged changes you did not make, do not commit, revert, unstage or set them aside; stop before `git merge`, and return merged false with the summary "blocked by uncommitted changes in the main checkout", naming the files. The orchestrator commits the user's work and the merge runs again. Never read or print `.env`.
 
+**Redeploying the App from a session that may not write secrets (ticket 70).** Only the user may write secrets in the shared workspace, and the App deploy saves the Foundry agent's and the judge's keys in the secret scope `strata` each time it runs. Once the user has written them, with the deploy or the wizard, a block below that redeploys the App runs from a session with `--keep-secrets`:
+
+    uv run --script ops/app/deploy_app.py --env-file .env --keep-secrets
+
+It writes no secret, prints the names of the secrets the App reads, and checks that the scope holds each one by listing its keys, never their values. If the scope lacks one, it names it and stops before it uploads anything; ask the user to write that secret. Otherwise the App gets the same resources, scopes and `app.yaml` as the deploy without the option, so a block parked because "secret writes are the user's" can run this way.
+
 ## Ticket 03, before every other step: the wizard, the day-one probes and the pay-as-you-go check
 
 The orchestrator added this block on October 23, 2026, after the P0 phase gate found it missing. Ticket 03 is ready-for-human: its criteria 2, 3, 4 and 5 are parked until you run these. Every block below needs the `.env` that the wizard writes, so this comes first.

@@ -457,6 +457,15 @@ def test_with_keep_secrets_a_secret_the_scope_lacks_is_named_and_the_deploy_stop
     assert "not-a-real-key" not in out
 
 
+def test_the_command_s_help_says_when_to_keep_the_secrets(capsys):
+    with pytest.raises(SystemExit):
+        deploy_app.main(["--help"])
+
+    out = " ".join(capsys.readouterr().out.split())
+    assert "uv run --script ops/app/deploy_app.py --env-file .env --keep-secrets" in out
+    assert "once the user has written the secrets" in out
+
+
 def test_the_live_workspace_lists_the_scope_s_keys_and_never_their_values():
     """The live adapter answers every call the fake workspace answers, and reads only the keys' names, which the
     Databricks secrets API returns without their values."""

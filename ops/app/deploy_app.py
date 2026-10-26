@@ -25,7 +25,8 @@ It needs npm, which builds the web app. It does these things, in order:
    so /api/ask answers through the agent. Without all four, it leaves them out of the app.yaml it
    uploads, and /api/ask says there is no agent. It does the same with the two keys of the judge that
    checks each sentence (AZURE_OPENAI_ENDPOINT and AZURE_OPENAI_API_KEY, src/strata/agent/judge.py);
-   without them, the app removes every sentence that needs the judge.
+   without them, the app removes every sentence that needs the judge. With --keep-secrets, it writes
+   no secret (see below).
 4. It uploads the app, laid out as in the repo: app.yaml and the lean requirements.txt from
    ops/app, src/strata, config and web/dist, to the folder strata-app in your workspace folder.
 5. It deploys the app, starting it first if it is stopped, and waits for it.
@@ -52,6 +53,17 @@ Run it again after every bundle deploy. The grants in bundle/catalog.yml replace
 grants on the strata catalog and its schemas (bundle/README.md), so a bundle deploy removes the
 app's USE CATALOG and USE SCHEMA, and its usage events, agent runs, opened sources, drafts, decisions
 and labels stop being written.
+
+Only the user may write secrets in the shared workspace. To redeploy new code from a session that may
+not write them, once the user has written the secrets, run:
+
+    uv run --script ops/app/deploy_app.py --env-file .env --keep-secrets
+
+Step 3 then writes no secret. It prints the names of the secrets the app reads (the Application
+Insights connection string, and the Foundry agent's and the judge's keys when .env has them), lists the
+scope's keys, never their values, and stops before it gives the app its resources or uploads anything
+if one is missing, naming it. Every other step runs as without the option, and the app gets the same
+resources, scopes and app.yaml.
 
 This was written from docs/PLAN.md section 12's description of fairshare's lakehouse/app_deploy.py,
 because fairshare could not be read on the build machine.
