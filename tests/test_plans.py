@@ -12,6 +12,7 @@ import tomllib
 from decimal import Decimal
 from pathlib import Path
 
+import misread_layout
 import pytest
 
 from strata.lakehouse.engine import DuckDBEngine
@@ -657,35 +658,9 @@ def test_words_a_cell_wrapped_at_its_edge_read_as_the_pdf_gives_them_unless_the_
 
 # ── A reference the layout parser misreads (ticket 78) ──
 
-class MisreadsTheShowcaseReference:
-    """The recorded layout parser, except that on the October 9, 2026 plan it reads the showcase package's Activity
-    Reference No. as `misread`. On the workspace on October 26, 2026, ai_parse_document read KE-NWWDA-229129-CW-RFB
-    on that plan's page 3 as KE-NWWDA-229129-CW-RFQ, while the PDF's own words write RFB."""
-
-    def __init__(self, manifest, misread: str):
-        from strata.reader.layout import RecordedLayout, https
-
-        self.recorded, self.misread = RecordedLayout(manifest), misread
-        self.name = self.recorded.name
-        self.reference = value("plan-229129-reference-2026-10-09")
-        self.pdf_url = next(https(source.pdf_url) for source in manifest.sources
-                            if source.file == self.reference["document"])
-
-    def parse(self, page):
-        from strata.reader.layout import Layout, Table, https
-
-        found = self.recorded.parse(page)
-        if https(page.pdf_url) != self.pdf_url:
-            return found
-        right = self.reference["value"]
-        return Layout(tuple(Table(table.title, table.header_rows,
-                                  tuple(tuple(cell.replace(right, self.misread) for cell in row) for row in table.rows))
-                            for table in found.tables), found.text, found.figures)
-
-
 @pytest.mark.parametrize("misread, written", [
     # One letter of the suffix, as on the workspace: the plan's text lists RFB and no table row read it.
-    ("KE-NWWDA-229129-CW-RFQ", "KE-NWWDA-229129-CW-RFB"),
+    (misread_layout.ON_THE_WORKSPACE, misread_layout.SHOWCASE["value"]),
     # Nothing the plan's text lists is that close, so the reader has no grounds to change what the parser read.
     ("KE-NWWDA-777777-GO-DIR", "KE-NWWDA-777777-GO-DIR"),
 ], ids=["one-letter-is-read-as-the-text-writes-it", "a-reference-far-from-any-in-the-text-stays-as-read"])
@@ -700,8 +675,8 @@ def test_a_reference_the_layout_parser_misreads_is_written_as_the_plans_own_text
     from strata.reader.documents import RecordedDocuments
 
     manifest = fmt.load_manifest()
-    report = plans.run(fresh, RecordedDocuments(manifest), MisreadsTheShowcaseReference(manifest, misread), "P156634",
-                       clock=clock(dt.date(2026, 10, 23)))
+    layout = misread_layout.MisreadsTheShowcaseReference(manifest, misread)
+    report = plans.run(fresh, RecordedDocuments(manifest), layout, "P156634", clock=clock(dt.date(2026, 10, 23)))
     plans.print_measures(report)
 
     misread_in_bronze = rows(fresh, "SELECT count(*) AS n FROM strata.bronze.layout_pages WHERE tables LIKE :misread",

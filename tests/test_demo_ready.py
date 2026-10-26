@@ -25,6 +25,7 @@ import sys
 import tomllib
 from pathlib import Path
 
+import misread_layout
 import pytest
 import stand_in_agent
 
@@ -383,6 +384,46 @@ def test_the_recheck_reports_the_plan_and_the_award_rows_disagreeing_as_known_an
             "The fixture holds it too.") in out
     assert f"KE-NWWDA-541062-CW-RFQ: the plan of {long_day(DEMO.plan_date)} shows no signed contract" in out
     assert f"signed on {long_day(TRUTH['award-541062-signed']['value'])}" in out
+
+
+def read_as_the_workspace_did(fixture_db, folder: Path, misread_characters: int) -> Path:
+    """A copy of the fixture with the demo plan's table pages parsed again by a layout parser that misreads the
+    showcase reference, as ai_parse_document did on October 26, 2026, then its plan rows written with the plan
+    reader's check against the plan's text set to misread_characters, and strata.gold.package synced, as the nightly
+    job's parse_and_embed task does (ticket 78)."""
+    from strata.fixture import recorded as fmt
+    from strata.lakehouse import gold, plans
+    from strata.reader.documents import RecordedDocuments
+
+    path, manifest = copy_of(fixture_db, folder), fmt.load_manifest()
+    with DuckDBEngine.open(path) as engine:
+        engine.run("DELETE FROM strata.bronze.layout_pages WHERE document_id IN (SELECT document_id FROM "
+                   "strata.silver.plan_versions WHERE implementing_agency = :agency AND plan_date = :plan_date)",
+                   {"agency": DEMO.implementing_agency, "plan_date": DEMO.plan_date})
+        plans.run(engine, RecordedDocuments(manifest), misread_layout.MisreadsTheShowcaseReference(manifest),
+                  DEMO.project_id, thresholds=with_values(ingestion={"reference_misread_characters": misread_characters}))
+        gold.sync(engine, "package")
+    return path
+
+
+@pytest.mark.parametrize("misread_characters", [0, load_thresholds().value("ingestion.reference_misread_characters")],
+                         ids=["as-on-october-26-with-the-check-off", "with-the-check-config-sets"])
+def test_the_recheck_names_the_showcase_package_as_the_fixture_does_when_the_workspace_misread_its_reference(
+        fixture_db, tmp_path, misread_characters):
+    """Ticket 78. On October 26, 2026 the workspace's layout parser read KE-NWWDA-229129-CW-RFB on the October 9, 2026
+    plan as -RFQ, and the recheck reported the signal on both names. With the plan reader's check against the plan's
+    text off, this reproduces that report; with it on, the recheck finds nothing changed."""
+    workspace = FakeWorkspace(read_as_the_workspace_did(fixture_db, tmp_path, misread_characters))
+    said = []
+    command().recheck_step(workspace, setup(fixture_db), said.append, {})
+    out = "\n".join(said)
+
+    misread, written = misread_layout.ON_THE_WORKSPACE, misread_layout.SHOWCASE["value"]
+    reported = (f"Signed far above its estimate: {misread} fired on the workspace and not in the fixture." in out,
+                f"Signed far above its estimate: {written} no longer fired on the workspace." in out)
+    assert reported == ((True, True) if misread_characters == 0 else (False, False)), out
+    assert (misread in out, "Nothing changed since the fixture was recorded." in out) == (
+        (True, False) if misread_characters == 0 else (False, True)), out
 
 
 def test_until_ticket_41_merges_home_says_its_seed_command_and_window_are_not_built(two_runs):
