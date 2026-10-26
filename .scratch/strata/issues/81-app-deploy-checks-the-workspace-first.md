@@ -8,7 +8,7 @@ Read first: `ops/app/deploy_app.py` (`main`, `deploy`, steps 5 and 6), `ops/app/
 
 **Status:** ready
 **Area:** ops
-**Phase:** P2
+**Phase:** P4
 **Design review:** no
 
 - [ ] With the fake workspace, a stopped App compute or a stopped warehouse makes `deploy_app.py` exit 2 before step 1 with one sentence that names the state; a run where step 5 registers no new deployment fails there and names what it found; the existing tests pass unchanged.
