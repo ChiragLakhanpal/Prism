@@ -486,8 +486,10 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
             value = await asyncio.wait_for(asyncio.to_thread(read_as, viewer, read), timeout)
         except TimeoutError:
             return refused(504, "timeout", **({"timeout_seconds": timeout} if say_timeout else {}))
-        except PermissionDenied:
-            log.warning("The warehouse refused %s.", viewer.email or viewer.user_id)
+        except PermissionDenied as error:
+            # The message carries the workspace's own answer (status and body), which says whether a grant is
+            # missing or the forwarded token itself was refused (ticket 83); it never holds the token.
+            log.warning("The warehouse refused %s: %s", viewer.email or viewer.user_id, error)
             return refused(403, "permission")
         except EngineError:
             log.exception("A query for %s failed.", viewer.email or viewer.user_id)
@@ -502,7 +504,8 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
         try:
             with engine_for(viewer) as engine:
                 return read(engine)
-        except PermissionDenied:
+        except PermissionDenied as error:
+            log.warning("The warehouse refused %s on %s: %s", viewer.email or viewer.user_id, what, error)
             return JSONResponse({"code": "permission"}, status_code=403)
         except EngineError:
             reference = request_reference()
