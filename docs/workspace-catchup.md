@@ -2617,7 +2617,7 @@ Run this from the snapshot's root, twice:
 
     uv run --script ops/bundle/deploy.py --env-file .env --fairshare-catalog workspace
 
-It worked if the first run exits 0, lists `strata.ops.silver_pages` as new and changes no table that holds rows, and the second prints "No changes." Then run only the job's `bronze_to_gold` task, with the job ID that the list prints:
+It worked if the first run exits 0, lists `strata.ops.silver_pages` as new and changes no table that holds rows, and the second prints "No changes." Until ticket 79 merges, a bundle deploy takes away the App's USE CATALOG on strata and USE SCHEMA on strata.ops (ticket 68's step 2 saw it), so redeploy the App afterwards with ticket 70's command (`uv run --script ops/app/deploy_app.py --env-file .env --keep-secrets`), or run this step after ticket 79's merge with one deploy that serves both. Then run only the job's `bronze_to_gold` task, with the job ID that the list prints:
 
     databricks jobs list --name "strata nightly" -p strata
     databricks jobs run-now --json '{"job_id": <the job ID>, "only": ["bronze_to_gold"]}' --timeout 160m -p strata
