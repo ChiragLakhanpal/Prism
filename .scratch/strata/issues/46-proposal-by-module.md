@@ -6,7 +6,7 @@ Read first: docs/assessment.md; docs/PLAN.md sections 13 and 17; DESIGN.md secti
 
 **Blocked by:** 45 (All three dashboard pages and the KPIs)
 
-**Status:** ready-for-agent
+**Status:** in-progress
 **Area:** docs
 **Phase:** P3
 **Design review:** yes
@@ -18,3 +18,7 @@ Read first: docs/assessment.md; docs/PLAN.md sections 13 and 17; DESIGN.md secti
 - [ ] The copy lint run over the proposal finds no em dash, no DESIGN.md section 7 rule 19 word, no "the Bank" outside a fixed term and no "PP" for Procurement Plan, and the unslop pass is recorded.
 - [ ] Dataset attributions and any quoted Open Knowledge Repository work follow DESIGN.md section 8 word for word.
 - [ ] Figures use the strata-wb profile's colors and type (DESIGN.md section 11) and DESIGN.md section 6's chart rules.
+
+## Comments
+
+- October 25, 2026, orchestrator: dispatched to an implementer in its own worktree on branch strata/46-proposal-by-module, as soon as ticket 45 landed. All ten keys are set, but the Free Edition warehouse's daily limit holds every live step, so each one is parked in docs/workspace-catchup.md; the offline side is built against the fixtures.

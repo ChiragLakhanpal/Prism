@@ -2271,3 +2271,84 @@ Run this from the main checkout, twice:
     uv run --script ops/documents/run_live.py --env-file .env
 
 It worked if requests to documents.worldbank.org are 3 seconds apart, each fetched text appears under `.cache/documents`, the second run asks for no kept text again, and if the host answers 403 the run stops with exit 2 and "The run stopped before it finished: ..." and the next run goes on from there.
+
+## Ticket 45, step 1 of 6: deploy "Strata operations" and its test copy, with the nine new ops tables and the cost job (criterion 1, live)
+
+The merger parked this step on October 25, 2026, after merge commit d5c7a5f. All ten keys were set, but the header above holds workspace steps back during a merge, and the orchestrator's notes for this wave held every workspace step for the warehouse's daily limit of October 25 until the second session reports the warehouse back. It needs the Databricks keys in `.env`, the Databricks CLI 0.287.0 or later, and the warehouse under its free daily limit. Ticket 45 renames the dashboard `Strata` to `Strata operations` (the same bundle resource, `strata_dashboard`, so the deploy renames it and makes no second copy), adds its test copy `Strata operations (test)` (`bundle/dashboard.yml`), adds the job `strata cost pull` (`bundle/costs.yml`), and adds nine tables under `src/strata/lakehouse/tables/ops/`: `answer_removals`, `azure_costs`, `budget_periods`, `contact_removals`, `cost_pulls`, `dashboard_findings`, `loop_indicators`, `tool_call_reads` and `tool_calls`. The builder named `uv run --frozen python ops/bundle/deploy.py`; I wrote the form the script's docstring and every earlier block use, with the env file and this workspace's `--fairshare-catalog workspace`. One bundle deploy from d5c7a5f or later serves every earlier block that names it.
+
+Run this from the main checkout, twice:
+
+    uv run --script ops/bundle/deploy.py --env-file .env --fairshare-catalog workspace
+
+It worked if the first run exits 0, lists the nine tables above as new and changes no table that holds rows, names the job `strata cost pull` as new, and shows the dashboard `Strata` renamed to `Strata operations` and `Strata operations (test)` as new; and the second run prints "No changes." Then open both dashboards in the workspace. Each has three pages in this order: Data readiness, Governance, and AI quality and adoption. Each counter shows its value as text in the form "{n} of {d}", and each filter is bound to the datasets `bundle/dashboards/strata.lvdash.json` names for it. The pages stay mostly empty until step 2's nightly run writes their findings.
+
+## Ticket 45, step 2 of 6: the first nightly run after the deploy writes "Nightly runs and checks" after its last task (criteria 1 and 4, live)
+
+The merger parked this step on October 25, 2026, after merge commit d5c7a5f, for the same reasons as step 1. Run it after step 1. It needs the Databricks keys in `.env` and the warehouse under its free daily limit. Ticket 45 makes `run_task` (`src/strata/lakehouse/nightly.py`) write the Governance page's "Nightly runs and checks" sentence after the last task, or after the task that stopped the night, has recorded its `strata.ops.pipeline_runs` row. The `measure_data_readiness` task writes every other section of "What the measures say" and each loop's indicators to `strata.ops.dashboard_findings` and `strata.ops.loop_indicators`. One job run serves every block that asks for ticket 04's step 2.
+
+Run this from the main checkout:
+
+    uv run --script ops/bundle/check.py job-run --env-file .env
+
+Then, on the SQL warehouse:
+
+    SELECT finding, written_at FROM strata.ops.dashboard_findings WHERE section = 'runs' ORDER BY written_at DESC LIMIT 1
+    SELECT max(finished_at) FROM strata.ops.pipeline_runs WHERE run_id = (SELECT run_id FROM strata.ops.pipeline_runs ORDER BY finished_at DESC LIMIT 1)
+
+It worked if every task of the job run succeeds, the first query's `written_at` is after the second query's `finished_at`, and the number of quality checks the sentence names (for example "all 118 quality checks passed") equals the denominator of the Governance page's "Checks failed" counter (`kpi_checks_failed`) for that night. On the AI quality and adoption page, the loop indicators table shows six rows, a Leading and a Lagging row for each loop, each with its definition.
+
+## Ticket 45, step 3 of 6: the daily cost pull writes Azure spend, and Governance shows it against the budget (criterion 2, live)
+
+The merger parked this step on October 25, 2026, after merge commit d5c7a5f, for the same reasons as step 1. Run it after step 1. It needs four keys in the secret scope `strata` that `.env` does not hold and no deploy writes: `FOUNDRY_TENANT_ID`, `FOUNDRY_CLIENT_ID`, `FOUNDRY_CLIENT_SECRET` and `AZURE_SUBSCRIPTION_ID` (review round 1, follow-up 10). Writing a secret is the user's step. It also needs that service principal to hold the Cost Management Reader role on the resource group `config/budget.toml` names (`resource_group = "WorldBank-demo"`). The job runs on its own each day at 05:40 in Washington; these commands run it once by hand with the CLI profile the wizard signs in (`strata`).
+
+First, as the user, put the four keys in the scope (each command asks for its value, so no value reaches the shell history), and give the service principal the role:
+
+    databricks secrets put-secret strata FOUNDRY_TENANT_ID -p strata
+    databricks secrets put-secret strata FOUNDRY_CLIENT_ID -p strata
+    databricks secrets put-secret strata FOUNDRY_CLIENT_SECRET -p strata
+    databricks secrets put-secret strata AZURE_SUBSCRIPTION_ID -p strata
+    az role assignment create --assignee <the service principal's client ID> --role "Cost Management Reader" --scope /subscriptions/<subscription ID>/resourceGroups/WorldBank-demo
+
+Then run the job once:
+
+    databricks jobs list --name "strata cost pull" -p strata
+    databricks jobs run-now <the job ID the list printed> -p strata
+
+It worked if the run succeeds, `SELECT run_id, status, from_day, through_day, charges FROM strata.ops.cost_pulls ORDER BY pulled_at DESC LIMIT 1` shows status `succeeded`, `SELECT count(*), sum(cost_usd) FROM strata.ops.azure_costs WHERE run_id = (SELECT run_id FROM strata.ops.cost_pulls ORDER BY pulled_at DESC LIMIT 1)` gives the same count as that row's `charges` and above 0, and the Governance page's Azure spend counter reads "US$N of US$197", the 197 being `[credit] usd` in `config/budget.toml`.
+
+## Ticket 45, step 4 of 6: an answer's run ID leads to its tool calls and the Delta version of each table they read (criterion 3, live)
+
+The merger parked this step on October 25, 2026, after merge commit d5c7a5f, for the same reasons as step 1. Run it after steps 1 and 2. It needs the App redeployed from d5c7a5f or later.
+
+**Expect it to fail until a follow-up lands.** The App writes each run's tool calls, the tables they read and the removed sentences' reasons to `strata.ops.tool_calls`, `strata.ops.tool_call_reads` and `strata.ops.answer_removals` through its own service principal (`RunLog(the_app)` in `src/strata/server/settings.py`), but `grants()` in `ops/app/deploy_app.py` gives that service principal no MODIFY on these three tables, and `bundle/catalog.yml` grants `strata.ops` only USE_SCHEMA and SELECT. The run log catches the error and logs "I could not write the lineage of run ...", so the answer still arrives but the lineage tables stay empty. The merger found this after the review and the verify passed and left the code alone. The fix is to add the three tables to the `tables` tuple in `grants()` and to its test in `ops/app/tests/test_deploy_app.py`, then redeploy the App.
+
+Run this from the main checkout, after that fix:
+
+    uv run --script ops/app/deploy_app.py --env-file .env
+
+Then ask any question in the deployed App, open the dashboard `Strata operations`, go to Governance, copy that answer's run ID from the "Recent answer runs" table, and paste it into the Run ID filter.
+
+It worked if the lineage tiles list the run's tool calls in order, each with the tables it read, and every table's `version_read` is a number, not empty. On the SQL warehouse, `SELECT table_name, version_read FROM strata.ops.tool_call_reads WHERE run_id = '<the run ID>'` gives the same tables, each with a non-null version.
+
+## Ticket 45, step 5 of 6: add a tile, then remove it, on the test copy only (criterion 6, live)
+
+The merger parked this step on October 25, 2026, after merge commit d5c7a5f, for the same reasons as step 1. Run it after step 1. It changes `src/strata/dashboard/definition.py` and `bundle/dashboards/strata_test.lvdash.json` for a while; commit neither, and the second half puts both back.
+
+Add one tile entry to a page in `src/strata/dashboard/definition.py` (for example a second Counter of drafts exported, as the verify's `tile_probe.py` did), then run from the main checkout:
+
+    uv run --frozen python -m strata.dashboard --write --test-only
+    uv run --script ops/bundle/deploy.py --env-file .env --fairshare-catalog workspace
+
+Then remove the entry and run the same two commands again. Finish with `git status --short`, which must print nothing.
+
+It worked if after the first deploy the new tile shows on `Strata operations (test)` and not on `Strata operations`, and after the second deploy it is gone from the test copy, while `Strata operations` never changed.
+
+## Ticket 45, step 6 of 6: can Free Edition show who queried what (the brief, section 6.4, live)
+
+The merger parked this step on October 25, 2026, after merge commit d5c7a5f, for the same reasons as step 1. It runs with step 2: the `measure_data_readiness` task writes the "Who queried what" sentence from `system.access.table_lineage` (`src/strata/dashboard/sql/queries.sql`), and writes a fixed sentence if the workspace hides it.
+
+After step 2's job run, on the SQL warehouse:
+
+    SELECT finding FROM strata.ops.dashboard_findings WHERE section = 'queries' ORDER BY written_at DESC LIMIT 1
+
+It worked either way, and the answer is what this step records: the Governance page's "Who queried what" table fills and the sentence starts "In the 7 days to ...", or the sentence reads "I can't show who queried what, because this workspace doesn't let me read its query history." Write which one here.
