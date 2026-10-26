@@ -422,9 +422,10 @@ def lesson_rows(draft: dict, say: Say) -> list[dict]:
     for entry in draft.get("lesson_updated") or []:
         found.append({"row": named(entry), "cited": entry["cited_version"], "current": entry["current_version"],
                       "choice": _fill(pack["choiceUpdated"], date=say.date(entry["at"]))})
-    for entry in draft.get("lesson_kept") or []:
+    for entry in draft.get("lesson_kept") or []:  # retired: the lesson's version at the choice retired it
+        kept = pack["choiceKeptRow"] if entry.get("retired") else pack["choiceKept"]
         found.append({"row": named(entry), "cited": entry["cited_version"], "current": entry["current_version"],
-                      "choice": _fill(pack["choiceKept"], a=entry["cited_version"], reason=entry["reason"] or "")})
+                      "choice": _fill(kept, a=entry["cited_version"], reason=entry["reason"] or "")})
     for entry in draft.get("lesson_removed") or []:
         found.append({"row": named(entry), "cited": entry["cited_version"], "current": entry["current_version"],
                       "choice": _fill(pack["choiceRemoved"], date=say.date(entry["at"]))})

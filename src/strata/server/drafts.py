@@ -163,13 +163,18 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: DraftStore 
         ids = [entry["evidence_id"] for entry in runtime.sources(saved.content)]
         return store.opened_since(viewer_id or "", ids, saved.created_at)
 
-    def lesson_notices(viewer: Viewer, saved: Saved) -> list[dict]:
-        """The open version notices on a draft's rows (ticket 39), from the lesson versions as the viewer reads them.
-        A draft that cites no lesson needs no read."""
+    def lesson_history(viewer: Viewer, saved: Saved) -> dict[str, list[dict]]:
+        """Every version of the lessons, as the viewer reads them, for a draft that cites one (ticket 39). A draft
+        that cites no lesson needs no read."""
         if engine_for is None or not any(notices.citations(saved.content)):
-            return []
+            return {}
         with engine_for(viewer) as engine:
-            return notices.row_notices(saved.content, notices.history(engine))
+            return notices.history(engine)
+
+    def lesson_notices(viewer: Viewer, saved: Saved) -> list[dict]:
+        """The open version notices on a draft's rows (ticket 39)."""
+        versions = lesson_history(viewer, saved)
+        return notices.row_notices(saved.content, versions) if versions else []
 
     def shown(saved: Saved, viewer: Viewer, view: str) -> dict:
         return runtime.draft_view(saved, viewer, view, kinds, opened_by(viewer.user_id, saved),
@@ -491,7 +496,13 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: DraftStore 
         kind = kinds.kinds[saved.kind]
         opened = store.opened_since(saved.author_id, [entry["evidence_id"] for entry in runtime.sources(saved.content)],
                                     saved.created_at)
-        draft = runtime.draft_view(saved, viewer, STAFF, kinds, opened, lesson_notices(viewer, saved))
+        versions = lesson_history(viewer, saved)
+        draft = runtime.draft_view(saved, viewer, STAFF, kinds, opened,
+                                   notices.row_notices(saved.content, versions) if versions else [])
+        # A row kept against a retired lesson is a kept row in the evidence pack, not a kept version (ticket 39).
+        draft["lesson_kept"] = [{**entry, "retired": notices.retired(versions, entry["lesson_id"],
+                                                                     entry["current_version"])}
+                                for entry in draft.get("lesson_kept") or []]
         draft["field_history"] = store.field_history(saved.draft_id) if "ppsd" in draft else []
         made = draft_files.make(kind, draft, exporter=viewer.name, exported_at=moment)
         return NewExport(f"{saved.draft_id}-export-{moment:%Y%m%d%H%M%S}", moment, viewer.user_id, viewer.name,

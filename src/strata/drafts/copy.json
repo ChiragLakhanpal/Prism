@@ -161,6 +161,7 @@
       ],
       "choiceUpdated": "Updated on {date}",
       "choiceKept": "Kept version {a}: {reason}",
+      "choiceKeptRow": "Kept the row: {reason}",
       "choiceRemoved": "Removed on {date}",
       "choiceNone": "No choice yet"
     }

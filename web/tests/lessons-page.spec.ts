@@ -137,6 +137,20 @@ test("when none of the rewrite's sentences pass, the notice says the row is unch
   );
 });
 
+test("a use whose draft kind cannot rewrite the row offers only Keep, and says nothing about removing it", async ({ page }) => {
+  // The recorded page, with draft-0001 standing in for a kind that has no writer for one row.
+  const answer = JSON.parse(await recorded("lessons-page.json"));
+  answer.notices[0].uses[0].can_update = false;
+  await openLessons(page, "lessons-page.json", { "/api/lessons/page": { body: JSON.stringify(answer) } });
+  const use = page.locator("[data-use=draft-0001]");
+  await expect(use.getByRole("button", { name: /^Keep version 1, with a reason/ })).toBeVisible();
+  await expect(use.getByRole("button", { name: /^(Update|Remove) the row/ })).toHaveCount(0);
+  await expect(use.locator("[data-feedforward]")).toHaveCount(0);
+  await expect(use).not.toContainText("If you remove the row");
+  // The Keep button names no description that is not on the page.
+  await expect(use.getByRole("button", { name: /^Keep version 1/ })).not.toHaveAttribute("aria-describedby", /.*/);
+});
+
 test("a lesson retired as wrong comes first and says it holds the export, with Remove the row and Keep the row", async ({ page }) => {
   await openLessons(page, "lessons-page-retired.json");
   const first = page.locator("[data-version-notice]").first();

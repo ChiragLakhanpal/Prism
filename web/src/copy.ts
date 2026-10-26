@@ -3079,6 +3079,8 @@ export const copy = {
         lessonsColumns: ["Row", "Lesson version cited", "Current version at export", "Your choice and reason"],
         choiceUpdated: "Updated on {date}",
         choiceKept: "Kept version {a}: {reason}",
+        // A retired lesson has no version to keep, so its author kept the row (the 39 brief, section 11).
+        choiceKeptRow: "Kept the row: {reason}",
         choiceRemoved: "Removed on {date}",
         choiceNone: "No choice yet",
       },

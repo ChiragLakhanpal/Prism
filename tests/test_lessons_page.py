@@ -7,7 +7,9 @@ words from the reviewers' acts in the story.
 """
 
 import datetime as dt
+import fcntl
 import json
+from pathlib import Path
 
 import pytest
 
@@ -19,11 +21,23 @@ ICR, ICR_REVIEW = "Implementation Completion and Results Report", "Implementatio
 
 
 @pytest.fixture(scope="module")
-def prebuilt(fixture_db, tmp_path_factory):
-    """The story, built once for this module, and Ana's first visit's answer, which the recorded answers hold."""
+def prebuilt(fixture_db, tmp_path_factory, worker_id):
+    """The story, built once per run, and Ana's first visit's answer, which the recorded answers hold. The xdist
+    workers that pick a test from this module take turns on a lock in the run's shared temporary folder, as
+    tests/conftest.py's fixture_db does, so only the first builds it; every test works on its own copy."""
     from record_lessons_page_api import built_story
 
-    return built_story(fixture_db, tmp_path_factory.mktemp("lessons-page"))
+    shared = tmp_path_factory.getbasetemp()
+    shared = shared.parent if worker_id != "master" else shared  # a lone run's parent folder outlives the run
+    folder, done = shared / "lessons-page-story", shared / "lessons-page-story.json"
+    with open(shared / "lessons-page-story.lock", "w") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        if not done.exists():
+            folder.mkdir(exist_ok=True)
+            (database, state), first = built_story(fixture_db, folder)
+            done.write_text(json.dumps({"database": str(database), "state": str(state), "first": first}))
+    found = json.loads(done.read_text())
+    return (Path(found["database"]), Path(found["state"])), found["first"]
 
 
 @pytest.fixture(scope="module")
@@ -298,6 +312,23 @@ def test_the_kept_version_and_its_reason_go_into_the_evidence_pack_at_export(sto
     assert json.loads(snapshot["snapshot"])["lessons"] == [{
         "row": "Cost estimates below market rates", "cited": 1, "current": 2,
         "choice": "Kept version 1: The borrower's estimates already use current rates."}]
+
+
+def test_a_row_kept_on_a_retired_lesson_goes_into_the_evidence_pack_as_a_kept_row(story):
+    """A retired lesson has no version to keep, so the pack says the author kept the row (the 39 brief, section 11)."""
+    retire_ieg_lesson_as_wrong(story)
+    set_owners(story, "draft-0002")
+    choose(story, "draft-0002", "permits_before_award", lesson_id=story_of.IEG_LESSON, action="keep",
+           expected_cited_version=1, expected_current_version=3, reason="The permits risk still applies here.")
+    choose(story, "draft-0002", "cost_estimates", lesson_id=story_of.REBIDDING_LESSON, action="keep",
+           expected_cited_version=1, expected_current_version=2, reason="The estimates already use current rates.")
+
+    assert story.act("draft-0002", "export", "checked").json()["state"] == "exported"
+
+    [snapshot] = rows(story.state_db, "SELECT snapshot FROM strata.ops.draft_exports WHERE draft_id = 'draft-0002'")
+    assert sorted((row["cited"], row["current"], row["choice"]) for row in json.loads(snapshot["snapshot"])["lessons"]) == [
+        (1, 2, "Kept version 1: The estimates already use current rates."),
+        (1, 3, "Kept the row: The permits risk still applies here.")]
 
 
 def test_a_kept_row_shows_a_notice_again_only_for_a_later_change(story):

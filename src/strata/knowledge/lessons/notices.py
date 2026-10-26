@@ -65,6 +65,13 @@ def version_tier(version: dict) -> str | None:
     return {"merged": "strengthened", "wording": "narrowed", "tags": "narrowed"}.get(version["change_kind"])
 
 
+def retired(versions: dict[str, list[dict]], lesson_id: str, version: int) -> bool:
+    """Whether a lesson's version retired it, as wrong or as out of date: an author who keeps a row against it keeps
+    the row, since the lesson has no version left to keep."""
+    return any(_version(row) == version and row["state"] in ("retired_wrong", "retired_outdated")
+               for row in versions.get(lesson_id, []))
+
+
 def tier(since: Iterable[dict]) -> str | None:
     """The strongest tier among the versions decided after the cited one, or None when there are none."""
     found = [t for t in (version_tier(v) for v in since) if t is not None]

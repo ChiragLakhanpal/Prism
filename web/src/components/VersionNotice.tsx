@@ -192,7 +192,9 @@ export function Choices<D>({ notice, draftId, rowKey, draftState, title, actions
   };
 
   const primary = actions.includes("update") ? "update" : actions.includes("remove") ? "remove" : null;
-  const describedBy = [feedforwardId, holdSentence ? holdId : null].filter(Boolean).join(" ");
+  // What each choice will do is said only when there is a second choice to tell it from: a notice that offers only
+  // Keep (a kind with no writer for one row) has nothing to compare, so it shows no feedforward.
+  const describedBy = [primary !== null ? feedforwardId : null, holdSentence ? holdId : null].filter(Boolean).join(" ") || undefined;
   return (
     <div className="flex flex-col gap-3" data-choices>
       {problem && (
@@ -284,16 +286,18 @@ export function Choices<D>({ notice, draftId, rowKey, draftState, title, actions
           </div>
         </form>
       )}
-      <p id={feedforwardId} className="max-w-prose text-caption text-ink-muted" data-feedforward>
-        {primary === "update" ? (
-          <>
-            {fillText(n.feedforwardUpdate, { b: notice.b })}
-            {draftState === "checked" && <> {n.feedforwardChecked}</>}
-          </>
-        ) : (
-          n.feedforwardRemove
-        )}
-      </p>
+      {primary !== null && (
+        <p id={feedforwardId} className="max-w-prose text-caption text-ink-muted" data-feedforward>
+          {primary === "update" ? (
+            <>
+              {fillText(n.feedforwardUpdate, { b: notice.b })}
+              {draftState === "checked" && <> {n.feedforwardChecked}</>}
+            </>
+          ) : (
+            n.feedforwardRemove
+          )}
+        </p>
+      )}
       {busy === "update" && (
         <p role="status" className="text-caption text-ink-muted">
           {fillText(n.updatingStatus, { b: notice.b })}
