@@ -182,11 +182,23 @@ def test_the_retrieval_scores_name_the_query_set_they_were_measured_on(built):
     register = built.markdown.split("## Annex 1")[1].split("## Annex 2")[0]
     assert "Precision at 10 on the ICR Review citation set, the newest run" in register
 
+
+def test_the_retrieval_label_line_says_code_builds_the_labels_and_counts_the_queries_from_the_run(built):
+    # src/strata/knowledge/retrieval/labels.py: icr_review_citations are silver labels that code takes from each
+    # "ICR para N" citation, and no step has a person check them (STATUS.md decision 5 asks the proposal to say how).
+    # tests/dashboard_seed.py: the October 10 run asked 250 queries of the set.
+    row = next(line for line in built.markdown.splitlines() if line.startswith('| <a id="r-retrieval-precision">'))
+    assert ('Labels: 250 queries that code built from ICR Reviews. Each "ICR para N" citation in an ICR Review is a '
+            "query, and the paragraphs it names answer it. No person checks them.") in row
+    assert "checked by one person" not in built.markdown
+
+
 # ── Designed, not built ──────────────────────────────────────────────────
 
 def test_with_nothing_designed_but_unbuilt_the_list_says_so_and_the_summary_leaves_it_out(built):
     section = built.markdown.split("## Designed, not built")[1].split("## Annex 1")[0]
     assert 'Everything this proposal describes is built. Strata shows no "Designed, not built" labels.' in section
+    assert "These parts of Strata are designed" not in section
     assert "designed but not built" not in built.markdown.split("## Where Strata earns")[0]
 
 
@@ -198,6 +210,8 @@ def test_each_item_designed_but_not_built_gets_its_row_and_the_summary_names_the
     assert ('| <a id="dnb-hazard_model"></a>The early-warning model | Strata shows fixed signals. | '
             "[/projects/P156634](https://strata-1.aws.databricksapps.com/projects/P156634) |") in section
     assert "Some parts of Strata are designed but not built" in markdown.split("## Where Strata earns")[0]
+    assert "These parts of Strata are designed, and this proposal describes them, but they are not in the app yet." \
+        in section
 
 
 # ── Annexes: attributions word for word ──────────────────────────────────

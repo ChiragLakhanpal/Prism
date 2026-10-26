@@ -575,12 +575,24 @@ def _register(build: _Build) -> str:
                                                                 else "")
                       + f"; [{Path(defined.query_file).name}](../{defined.query_file})")
             if defined.labels:
-                source += f"<br>{defined.labels}"
+                source += f"<br>{_labels(defined, measured)}"
             cited = ", ".join(f"[{label}]({anchor})" for label, anchor in build.cited_results[key])
             rows.append(f'| <a id="r-{key}"></a>{_cell(defined.name)} | {_cell(shown)} | '
                         f"{short_date(_day(measured['measured_on']))} | {source} | {cited} |")
         out.append("\n".join(rows))
     return "\n\n".join(out)
+
+
+def _labels(defined: Result, measured: dict) -> str:
+    """The line that says how a result's labels were made, with each {column} filled from the measured row."""
+    def filled(match: re.Match) -> str:
+        if measured.get(match.group(1)) is None:
+            raise BuildError(f"The proposal did not build. The labels line of result {defined.key} counts "
+                             f"{match.group(1)}, which its measured row does not hold. Name that column in the "
+                             f"entry's columns in docs/proposal/results.toml, and pull the snapshot again.")
+        return numeral(measured[match.group(1)])
+
+    return re.sub(r"\{(\w+)\}", filled, defined.labels)
 
 
 def _series_value(defined: Result, measured: dict) -> str:

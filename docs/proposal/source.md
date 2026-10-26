@@ -278,7 +278,7 @@ Scored under [Operationalization and scalability](#rubric-operations).
 
 ## Designed, not built {#designed-not-built}
 
-{#designed-intro} These parts of Strata are designed, and this proposal describes them, but they are not in the app yet. Where the app would show one, it shows the label "Designed, not built" and says what it does instead.
+{#designed-intro} {when:designed} These parts of Strata are designed, and this proposal describes them, but they are not in the app yet. Where the app would show one, it shows the label "Designed, not built" and says what it does instead.
 
 {designed}
 

@@ -23,8 +23,8 @@
 #            per label, drawn in a figure) or fact (words, such as a paragraph number, never a claim of size)
 #   count_of n (the default) or d: which column a count shows
 #   table    the table the value was read from, in code, for Annex 1's Source column
-#   labels   who made the labels the result rests on, and how many, when people made them (docs/STATUS.md,
-#            decision 5)
+#   labels   how the labels the result rests on were made, by code or by people, and how many (docs/STATUS.md,
+#            decision 5); a {column} in it is filled from that column of the measured row, so a count is never typed
 #   target   the settings key (docs/proposal/settings.toml) of the target it is held to, if it has one
 
 # ── Module 1 ─────────────────────────────────────────────────────────────
@@ -227,12 +227,12 @@ kind = "Evaluation result"
 noun = "precision at 10"
 query = "dashboard:kpi_precision_recall"
 row = { segment_kind = "query_set", query_set_key = "icr_review_citations" }
-columns = { value = "precision_at_10" }
+columns = { value = "precision_at_10", queries = "queries" }
 meta = "evaluation_meta.sql"
 params = { scorer = "retrieval_evaluation" }
 form = "score"
 table = "strata.ops.evaluation_result"
-labels = "Labels: the retrieval set's queries, drafted from ICR Review citations and checked by one person."
+labels = 'Labels: {queries} queries that code built from ICR Reviews. Each "ICR para N" citation in an ICR Review is a query, and the paragraphs it names answer it. No person checks them.'
 
 [results.retrieval-recall]
 name = "Recall at 20 on the ICR Review citation set, the newest run"
