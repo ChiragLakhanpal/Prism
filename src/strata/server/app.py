@@ -319,8 +319,8 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
     without it, the draft routes say there is no data service. writers gives each draft kind's writer
     agent, or None when none is connected. access is the one access rule (src/strata/server/access.py);
     without it, every viewer is on a team of their own. kinds is the draft-kind registry, today the day
-    a draft's facts are read as of, now the clock (also for when a baseline was saved) and new_draft_id
-    the ids drafts get.
+    every route reads a page's as-of date by when the page names none (a recorder pins it, so its answers hold still),
+    now the clock (also for when a baseline was saved) and new_draft_id the ids drafts get.
 
     passage_reports and judging are the retrieval loop (ticket 32; src/strata/knowledge/retrieval): the evidence
     drawer's passage reports, Lessons > Passage reports and Lessons > Judging, with the roles file; without them,
@@ -459,7 +459,7 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
         and give the page a reference to it."""
         def call(engine: Engine):
             try:
-                return registry.call(name, arguments, registry.Context(engine, viewer, view, as_of))
+                return registry.call(name, arguments, registry.Context(engine, viewer, view, as_of or today()))
             except registry.ToolError as error:  # a view or an argument the tool does not take
                 return JSONResponse({"code": "bad_request", "detail": str(error)}, status_code=422)
             except registry.ToolContractError:
@@ -473,7 +473,7 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
     @app.get("/api/projects")
     def list_projects(asof: dt.date | None = None, q: str = Query("", max_length=200), page: int = Query(1, ge=1),
                       viewer: Viewer = Depends(current_viewer)):
-        as_of = asof or registry.today()
+        as_of = asof or today()
         return read_for("all projects", viewer,
                         lambda engine: projects.all_projects(engine, as_of, q.strip(), page, page_size))
 
@@ -482,7 +482,7 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
     @app.get("/api/projects/{project_id}")
     def open_project(project_id: str, asof: dt.date | None = None, view: str = "staff",
                      viewer: Viewer = Depends(current_viewer)):
-        as_of = asof or registry.today()
+        as_of = asof or today()
 
         def read(engine: Engine):
             found = projects.project_page(engine, project_id, as_of, view, versions_shown)
@@ -624,7 +624,7 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
         # An empty value reads as left out, so a link that writes sources= or from= opens the page.
         arguments = {"sources": sources or None, "from_tool": from_tool or None}
         return await as_viewer(viewer, lambda engine: registry.call(
-            "data_readiness_for", arguments, registry.Context(engine, viewer, view, asof)),
+            "data_readiness_for", arguments, registry.Context(engine, viewer, view, asof or today())),
             lambda result: result, say_timeout=True)
 
     @app.get("/api/data/sources")
@@ -632,8 +632,8 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
         return registry_page()
 
     def as_of_for(asof: dt.date | None) -> dt.date:
-        """The page's as-of date, never later than today (ADR 0002)."""
-        return min(asof, registry.today()) if asof else registry.today()
+        """The page's as-of date, never later than today (ADR 0002), by the clock create_app was given."""
+        return min(asof, today()) if asof else today()
 
     @app.get("/api/lookup/loan")
     def look_up_loan(q: str = Query(min_length=1, max_length=64), asof: dt.date | None = None,
@@ -777,7 +777,7 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
 
     @app.get("/api/packages/{step_reference}")
     def open_package(step_reference: str, asof: dt.date | None = None, viewer: Viewer = Depends(current_viewer)):
-        as_of = asof or registry.today()
+        as_of = asof or today()
 
         def read(engine: Engine):
             found = read_package(engine, step_reference, as_of)
