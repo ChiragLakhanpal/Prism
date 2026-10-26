@@ -219,6 +219,8 @@ review_suppliers = { kind = "record", staff = true, piu = false, public = false,
 start_draft = { kind = "draft", staff = true, piu = true, public = false, reason = "packageWorkspace.ppsdAction.heldPreview" }
 fill_draft = { kind = "draft", staff = true, piu = true, public = false, reason = "fill.preview" }
 discard_draft = { kind = "draft", staff = true, piu = true, public = false, reason = "draft.bar.hold.preview" }
+# A choice on a draft's row whose lesson changed (ticket 39): update, keep, remove, restore or revert. The 40 brief, 6.7.
+lesson_choice = { kind = "draft", staff = true, piu = true, public = false, reason = "draft.bar.hold.preview" }
 mark_checked = { kind = "check", staff = true, piu = true, public = false, reason = "draft.bar.hold.preview" }
 upload_and_check = { kind = "check", staff = false, piu = true, public = false, private = true, reason = "upload.holdPreview" }
 compare_criteria = { kind = "check", staff = true, piu = true, public = false, reason = "criteria.preview" }
@@ -254,6 +256,7 @@ export_draft = { kind = "export", staff = true, piu = true, public = false, reas
 "POST /api/drafts" = "start_draft"
 "PUT /api/drafts/{draft_id}/fields" = "fill_draft"
 "PUT /api/drafts/{draft_id}/form" = "fill_draft"
+"POST /api/drafts/{draft_id}/rows/{row_key}/lesson" = "lesson_choice"
 "POST /api/drafts/{draft_id}/{action}" = { param = "action", check = "mark_checked", export = "export_draft", discard = "discard_draft", restore = "discard_draft" }
 "GET /api/drafts" = "drafts"
 "GET /api/drafts/{draft_id}" = "drafts"

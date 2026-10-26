@@ -91,13 +91,17 @@ class Story:
         def state():
             return DuckDBEngine.open(self.state_db)
 
-        self.app = create_app(engine_for=reading, drafts=DraftStore(state), opened=OpenedLog(state, now=self.clock),
-                              runs=RunLog(state),
-                              choices=ChoiceLog(state, now=self.clock, new_id=lambda: next(choice_ids)),
-                              packages=PackageStore(state), writers=lambda kind: ScriptedAgent(self.cases[self.case]),
-                              judge=Judge(), access=access or Access(load_roles(), StaticGroups(GROUPS)),
-                              today=lambda: TODAY,
-                              now=self.clock, new_draft_id=lambda: next(ids), new_run_id=lambda: next(runs), kinds=kinds)
+        self.app = create_app(**{**dict(
+            engine_for=reading, drafts=DraftStore(state), opened=OpenedLog(state, now=self.clock), runs=RunLog(state),
+            choices=ChoiceLog(state, now=self.clock, new_id=lambda: next(choice_ids)),
+            packages=PackageStore(state), writers=lambda kind: ScriptedAgent(self.cases[self.case]),
+            judge=Judge(), access=access or Access(load_roles(), StaticGroups(GROUPS)), today=lambda: TODAY,
+            now=self.clock, new_draft_id=lambda: next(ids), new_run_id=lambda: next(runs), kinds=kinds),
+            **self.app_options(state)})
+
+    def app_options(self, state) -> dict:
+        """More of create_app's options, for a story built on this one, such as the Lessons page's (ticket 39)."""
+        return {}
 
     def clock(self) -> dt.datetime:
         self.at += dt.timedelta(minutes=1)

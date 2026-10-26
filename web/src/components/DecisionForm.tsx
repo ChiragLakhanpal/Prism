@@ -146,7 +146,9 @@ function Fieldset({ legend, error, children, legendRef }: { legend: ReactNode; e
 
 // ── The lesson editor ────────────────────────────────────────────────────
 
-export type Change = { statement: string; risk_factors: string[]; stage: string; kind: string };
+// Ticket 39 adds procurement categories and selection methods, from the package form's closed lists; a lesson that
+// names none applies to every category and method.
+export type Change = { statement: string; risk_factors: string[]; stage: string; kind: string; categories?: string[]; methods?: string[] };
 type ChangeErrors = Partial<Record<keyof Change, string>>;
 
 export function validChange(change: Change, max: number): ChangeErrors {
@@ -163,7 +165,7 @@ export function validChange(change: Change, max: number): ChangeErrors {
 export function LessonEditor({ value, onChange, lists, max, errors, disabled }: {
   value: Change;
   onChange: (value: Change) => void;
-  lists: { risk_factors: Item[]; stages: Item[]; kinds: Item[] };
+  lists: { risk_factors: Item[]; stages: Item[]; kinds: Item[]; categories?: Item[]; methods?: Item[] };
   max: number;
   errors: ChangeErrors;
   disabled?: boolean;
@@ -207,6 +209,29 @@ export function LessonEditor({ value, onChange, lists, max, errors, disabled }: 
           </Choice>
         ))}
       </Fieldset>
+      {(["categories", "methods"] as const).map((list) =>
+        lists[list] ? (
+          <Fieldset key={list} legend={e[list]}>
+            <div className="grid gap-x-4 @md/page:grid-cols-2">
+              {lists[list]!.map((item) => {
+                const chosen = value[list] ?? [];
+                return (
+                  <Choice
+                    key={item.key}
+                    type="checkbox"
+                    groupId={`${name}-${list}`}
+                    checked={chosen.includes(item.key)}
+                    onChange={() => onChange({ ...value, [list]: chosen.includes(item.key) ? chosen.filter((one) => one !== item.key) : [...chosen, item.key] })}
+                    disabled={disabled}
+                  >
+                    {item.label}
+                  </Choice>
+                );
+              })}
+            </div>
+          </Fieldset>
+        ) : null,
+      )}
       <p className="text-caption text-ink-muted">{e.fixed}</p>
     </div>
   );
@@ -228,6 +253,8 @@ export function currentChange(item: ReviewItem): Change {
     risk_factors: (item.tags.risk_factors ?? []).map((factor) => factor.key),
     stage: item.tags.stage?.key ?? "",
     kind: item.tags.kind?.key ?? "",
+    categories: (item.tags.categories ?? []).map((tag) => tag.key),
+    methods: (item.tags.methods ?? []).map((tag) => tag.key),
   };
 }
 
@@ -267,7 +294,9 @@ export function DecisionForm({ item, onDone, onGaveWay, initial }: {
     ? fillText(words.reasonHelperCrossCheck, { region })
     : verb === "recommend"
       ? words.reasonHelperRecommend
-      : words.reasonHelperDecide;
+      : recheck
+        ? words.reasonHelperRecheckDecide
+        : words.reasonHelperDecide;
   const noReason = crossCheck ? fillText(words.errors.noReasonCrossCheck, { region }) : verb === "recommend" ? words.errors.noReasonRecommend : words.errors.noReasonDecide;
   const noChoice = crossCheck ? words.errors.noChoiceCrossCheck : recheck ? words.errors.noChoiceRecheck : words.errors.noChoiceNew;
   const changeErrors = editorShown ? validChange(change, item.limits.statement_max_chars) : {};

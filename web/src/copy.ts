@@ -86,6 +86,8 @@ const PPSD_ROWS = {
     crumb: (_date: string) => "Suggested PPSD risk rows",
     rowTitle: (title: string, _date: string) => `Suggested PPSD risk rows for ${title}`,
     pageTitle: (title: string, _date: string) => `Suggested PPSD risk rows for ${title}`,
+    // Ticket 39: a row as the Lessons page's "Used in" line names it (config/drafts.toml, row_label).
+    rowLabel: "Row {n}, {risk_label}.",
     // Under the h1: "Rural roads. No STEP reference yet." {reference} is the STEP reference in Roboto Mono.
     subtitle: "{title}. {reference}",
     lede: (count: number) =>
@@ -3216,6 +3218,12 @@ export const copy = {
           one: "choose which report to keep in one disagreement",
           many: "choose which report to keep in {count} disagreements",
         },
+        // Ticket 39: a row that cites a lesson a lead retired as wrong. It joins the one composed sentence, as DESIGN.md
+        // section 5's Draft bar row sets, and links to the row's notice.
+        lessonRetiredWrong: {
+          one: "remove or keep, with a reason, one row that cites a lesson retired as wrong",
+          many: "remove or keep, with a reason, {count} rows that cite lessons retired as wrong",
+        },
       } as Record<string, string | { one: string; many: string }>,
       // Two clauses join with " and "; three or more take commas, with ", and " before the last (the 24 brief's
       // serial comma).
@@ -3446,6 +3454,15 @@ export const copy = {
         fieldsColumns: ["Row", "Field", "Value", "Set by", "Set on (UTC)"],
         fieldsRemoved: "Removed",
         fieldsForm: "Risk table form",
+        // Ticket 39: each row whose lesson changed after the version it cites, and what its author chose.
+        lessonsTitle: "Lesson versions",
+        lessonsColumns: ["Row", "Lesson version cited", "Current version at export", "Your choice and reason"],
+        choiceUpdated: "Updated on {date}",
+        choiceKept: "Kept version {a}: {reason}",
+        // A retired lesson has no version to keep, so its author kept the row (the 39 brief, section 11).
+        choiceKeptRow: "Kept the row: {reason}",
+        choiceRemoved: "Removed on {date}",
+        choiceNone: "No choice yet",
       },
     },
   },
@@ -5856,6 +5873,10 @@ export const copy = {
       mayRepeat: "May repeat a lesson",
       overdue: "Overdue",
       rechecking: "Being re-checked",
+      // Ticket 39's change badges: a change that asks something of a draft's author.
+      changed: "Changed",
+      retiredWrong: "Retired as wrong",
+      retiredOutdated: "Retired as out of date",
     },
     // The library (section 5.2).
     library: {
@@ -6049,6 +6070,9 @@ export const copy = {
         rules: "Rules followed",
         project: "Project",
         sector: "Sector",
+        categories: "Procurement categories",
+        methods: "Selection methods",
+        none: "None named, so every one",
       },
       summaryTitle: "My summary of the evidence",
       summaryWriting: "I'm still writing my summary. The quotes above are complete, so you can decide without it.",
@@ -6130,6 +6154,10 @@ export const copy = {
       reasonLabel: "Your reason",
       reasonHelperRecommend: "The lead reads your reason before deciding. It stays in the record with your name.",
       reasonHelperDecide: "It stays in the record with your name, beside the recommendation.",
+      // Ticket 39 (the 39 brief, departure 12): a re-check's decision reaches the authors of drafts that cite it.
+      reasonHelperRecheckDecide:
+        "It stays in the record with your name, beside the recommendation. If you change or retire the lesson, I show " +
+        "your reason, without your name, to authors whose drafts cite it.",
       reasonHelperCrossCheck: "Optional if you agree. If you disagree, the reviewers for {region} read it, and a re-check starts.",
       counter: "{count} characters left.",
       counterOne: "One character left.",
@@ -6139,6 +6167,8 @@ export const copy = {
         riskFactors: "Risk factors",
         stage: "Stage",
         kind: "Kind",
+        categories: "Procurement categories",
+        methods: "Selection methods",
         fixed: "Quotes and pages can't be changed. They are the record.",
       },
       recommendAdd: "Recommend adding it",
@@ -6247,7 +6277,253 @@ export const copy = {
         have: { one: "has", many: "have" },
         itsTheir: { one: "its", many: "their" },
       },
+      // The Lessons page's opening sentence, the digest (ticket 39; the 39 brief, section 5.2). The server picks each
+      // part above zero, joins them and writes each count's word, so the page counts nothing. {count} is a count
+      // word that opens the items it counts.
+      digest: {
+        since: "Since your last visit on {date}, {reports} came in.",
+        noReports: "Since your last visit on {date}, no completion report or ICR Review came in.",
+        reports: {
+          icr: { one: "{count} completion report", many: "{count} completion reports" },
+          review: { one: "{count} ICR Review", many: "{count} ICR Reviews" },
+          ppar: { one: "{count} PPAR", many: "{count} PPARs" },
+        },
+        lessons: {
+          new: { one: "{count} lesson is new", many: "{count} lessons are new" },
+          changed: { one: "{count} changed", many: "{count} changed" },
+          retired: { one: "{count} was retired", many: "{count} were retired" },
+          proposed: { one: "{count} proposed lesson is with reviewers", many: "{count} proposed lessons are with reviewers" },
+        },
+        lessonsEnd: ".",
+        none: "No lesson is new or changed.",
+        noneProposed: "No lesson is new or changed, and {proposed}.",
+        nothing: "Nothing came in since your last visit on {date}, and no lesson changed.",
+        nothingProposed: " {proposed}.",
+        first: "This is your first visit to Lessons. The library holds {total}.",
+        firstProposed: "This is your first visit to Lessons. The library holds {total}, and {proposed}.",
+        firstTotal: { one: "{count} current lesson", many: "{count} current lessons" },
+        firstEmpty: "This is your first visit to Lessons. The library has no lessons yet.",
+        // The quiet line under the sentence: lessons the reader cites that only gained a quote.
+        strengthened: {
+          one: "{count} lesson you cite gained evidence since your last visit. Your drafts don't need to change.",
+          many: "{count} lessons you cite gained evidence since your last visit. Your drafts don't need to change.",
+        },
+        // Parts join with commas, ", and " before the last, and " and " between two.
+        join: ", ",
+        lastJoin: ", and ",
+        pairJoin: " and ",
+      },
+      // "New" shows at most eight cards, then this caption; {link} is an in-page link to the library.
+      newMore: {
+        one: "{count} more new lesson is in {link}, which lists the newest first.",
+        many: "{count} more new lessons are in {link}, which lists the newest first.",
+      },
+      newMoreLink: "the library below",
+      // The library's count line (the 39 brief, section 5.6). Status sets the population, so "of {m}" always counts
+      // that status with no other filter; stage, method and sector narrow {n}.
+      count: {
+        all: "Showing all {m} {noun}, newest first.",
+        range: "Showing {from}–{to} of {m} {noun}, newest first.",
+        narrowed: "Showing {n} of {m} {noun}, newest first.",
+        narrowedRange: "{n} of {m} {noun} match. Showing {from}–{to}, newest first.",
+        nouns: {
+          current: { one: "current lesson", many: "current lessons" },
+          rechecking: { one: "lesson being re-checked", many: "lessons being re-checked" },
+          retired: { one: "retired lesson", many: "retired lessons" },
+        },
+      },
     },
+  },
+
+  // The Lessons tab's page (ticket 39; the 39 brief, sections 5.2 to 5.8): the opening sentence's popovers, "Changed
+  // where you used it", "New", "Your reports" and the library's filters. The sentences with counts come from the
+  // server (copy.lessons.server), which writes each count's word.
+  lessonsPage: {
+    loading: "Loading the lessons.",
+    error: "I couldn't load the lessons because the data service didn't answer.",
+    permission:
+      "Your account can't read Strata's tables, so I can't show the lessons. Ask your workspace admin for read " +
+      "access to the strata catalog.",
+    firstCaption: "From your next visit, I start this page with what came in since this one.",
+    previewNote:
+      "This is a preview, so I leave out what is about you: the drafts you wrote, your reports and the proposed lessons.",
+    asOfNote: "You are seeing the library as of {date}, with each lesson at the version that was current then.",
+    // A count word opens the items it counts, in a window named by its heading.
+    popovers: {
+      reports: "Reports I read since {date}",
+      reportItem: "{doc} for {project} ({pid}), disclosed {date}.",
+      new: "Lessons added since {date}",
+      changed: "Lessons that changed since {date}",
+      changedMerged: "Version {version} added evidence on {date}.",
+      changedWording: "Version {version} changed its wording or tags on {date}.",
+      retired: "Lessons retired since {date}",
+      retiredWrong: "Retired as wrong on {date}.",
+      retiredOutdated: "Retired as out of date on {date}.",
+      retiredExported: "Your exported draft {title} cites version {version}.",
+      proposed: "Proposed lessons",
+      proposedBody:
+        "Proposed lessons wait for an accredited procurement specialist to recommend them and a lead procurement " +
+        "specialist to decide. Only lesson reviewers can read them.",
+      proposedLink: "Go to Waiting for review",
+      total: "The library",
+      totalBody: "These are the current lessons, including those being re-checked.",
+      totalLink: "Go to the library",
+      strengthened: "Lessons you cite that gained evidence",
+      marked: "Passages you marked as wrong",
+      markedBody: "I count each passage once, for the kind of question you asked when you marked it.",
+      fixed: "Passages now ranked lower",
+      fixedBody: "A reviewer, or people who agreed with you, ranked these passages lower for that kind of question.",
+      recited: "How I counted these answers",
+      recitedBody:
+        "Answers to the same kinds of questions, asked after a reviewer ranked your reported passages lower, that now " +
+        "cite a different paragraph. I don't list them, because other people asked them.",
+    },
+    // The quiet line under the sentence, for lessons that only gained evidence.
+    strengthenedShow: { one: "Show it", many: "Show them" },
+    strengthenedHide: { one: "Hide it", many: "Hide them" },
+    rested: "Rested on {quotes} quotes from {reports} reports.",
+    rests: "Rests on {quotes} quotes from {reports} reports.",
+    changedTitle: "Changed where you used it",
+    changedCaption: "Your drafts still cite the versions you used. Nothing in a draft changes until you choose.",
+    newTitle: "New",
+    newCaption: "Lessons a lead procurement specialist added to the library since your last visit, newest first.",
+    reportsTitle: "Your reports",
+    reportsNone:
+      "When a passage I cite is wrong, open it in the evidence drawer and choose Wrong passage. I tell you here what " +
+      "your report fixed.",
+    libraryTitle: "The library",
+    filters: {
+      legend: "Filter the library",
+      stage: "Stage",
+      method: "Method",
+      sector: "Sector",
+      status: "Status",
+      anyStage: "Any stage",
+      anyMethod: "Any method",
+      anySector: "Any sector",
+      statuses: { current: "Current", rechecking: "Being re-checked", retired: "Retired" } as Record<string, string>,
+      reset: "Reset the filters",
+      methodCaption: "Lessons that name no method are included, because they apply to every method.",
+      updating: "Updating the list.",
+      unknown: "I don't recognize a filter in this link, so I left it out.",
+      failed: "I couldn't update the list just now. It still shows your earlier filters.",
+    },
+    nothingMatches: "I have no {noun} that match these filters.",
+    nothingMatchesBody: "Try fewer filters. Stage, method and sector each narrow the list.",
+    // A retired lesson's card (brief 29's Lesson card, retired variant).
+    retiredLine: "A lead procurement specialist retired it on {date}. The lead's reason: \"{reason}\"",
+  },
+
+  // A version notice (ticket 39; the 39 brief, section 5.3): a lesson that changed after the version a draft row
+  // cites, on the Lessons tab and under the row on the draft page. The lead's reason is shown by role, never by name.
+  notice: {
+    rowLead: {
+      narrowed: "This row cites version {a} of a lesson that changed.",
+      retired_wrong: "This row cites a lesson that a lead procurement specialist retired as wrong.",
+      retired_outdated: "This row cites a lesson that a lead procurement specialist retired as out of date.",
+    } as Record<string, string>,
+    was: "Was",
+    now: "Now",
+    citesYours: "Version {a}, the one your draft cites.",
+    citesRow: "Version {a}, the one this row cites.",
+    decidedNow: "Version {b}, decided on {date}.",
+    retiredNow: {
+      retired_wrong: "Retired as wrong on {date}.",
+      retired_outdated: "Retired as out of date on {date}.",
+    } as Record<string, string>,
+    decided: {
+      narrowed:
+        "A lead procurement specialist made this change after an accredited procurement specialist recommended it. " +
+        "The lead's reason: \"{reason}\"",
+      retired_wrong:
+        "A lead procurement specialist retired it as wrong after an accredited procurement specialist recommended it. " +
+        "The lead's reason: \"{reason}\"",
+      retired_outdated:
+        "A lead procurement specialist retired it as out of date after an accredited procurement specialist " +
+        "recommended it. The lead's reason: \"{reason}\"",
+    } as Record<string, string>,
+    // A changed field, as "Was" and "Now" write it; the statement stands alone.
+    fields: {
+      statement: "{value}",
+      risk_factors: "Risk factors: {value}.",
+      stage: "Stage: {value}.",
+      kind: "Kind: {value}.",
+      categories: "Procurement categories: {value}.",
+      methods: "Selection methods: {value}.",
+    } as Record<string, string>,
+    fieldNone: "none",
+    changedStart: "Changed words start.",
+    changedEnd: "Changed words end.",
+    seeBoth: "See both versions",
+    readRetired: "Read the retired lesson",
+    usedIn: "Used in: {title} (cites version {a})",
+    holdSentence: "You can't export this draft until you choose what to do with this row.",
+    update: "Update the row",
+    keepVersion: "Keep version {a}, with a reason",
+    remove: "Remove the row",
+    keepRow: "Keep the row, with a reason",
+    // Visually hidden words that say which use a repeated button acts on.
+    inDraft: " in {title}",
+    fromDraft: " from {title}",
+    feedforwardUpdate: "If you update the row, I rewrite it from version {b} and check it again.",
+    feedforwardChecked: "A draft you marked as checked goes back to Draft.",
+    feedforwardRemove: "If you remove the row, the draft keeps it on record, and you can restore it.",
+    keepLabelVersion: "Why keep version {a}?",
+    keepLabelRow: "Why keep this row?",
+    keepHelper: "Your reason stays with the draft and goes into its evidence pack.",
+    keepSubmitVersion: "Keep version {a}",
+    keepSubmitRow: "Keep the row",
+    cancel: "Cancel",
+    keepEmpty: "Write your reason first. It goes into the draft's evidence pack.",
+    busy: { update: "Updating", keep: "Saving", remove: "Removing", restore: "Restoring", revert: "Going back" } as Record<string, string>,
+    updatingStatus: "I'm rewriting the row from version {b} and checking it.",
+    outcomes: {
+      updated: "You updated the row to version {b}.",
+      updatedBody: "I checked the new text.",
+      updatedBodyChecked: "I checked the new text, and the draft is back in Draft so you can check it.",
+      kept: "You kept version {a}.",
+      keptBody: "I saved your reason with the draft, and it goes into the evidence pack.",
+      removed: "You removed the row.",
+      removedBody: "The draft keeps it on record, and you can restore it there.",
+      keptRow: "You kept the row.",
+      keptRowBody: "I saved your reason with the draft.",
+      released: "This lesson no longer holds the draft's export.",
+      openDraft: "Open the draft",
+    },
+    updateFailed: "I couldn't rewrite the row just now. It still cites version {a}.",
+    nothingPassed:
+      "I rewrote the row from version {b}, but none of my sentences passed my checks, so I left the row as it was. It " +
+      "still cites version {a}.",
+    saveFailed: "I couldn't save your choice just now. Your reason is still here.",
+    removeFailed: "I couldn't remove the row just now. It is unchanged.",
+    stale: "You already chose for this row in another tab or window, so I reloaded it.",
+    tryAgain: "Try again",
+    // The draft page, after a choice.
+    updatedCaption: "You updated this row to version {b} on {date}. I checked the new text.",
+    showEarlier: "Show the earlier text",
+    hideEarlier: "Hide the earlier text",
+    goBack: "Go back to version {a}",
+    goneBack: "The row cites version {a} again.",
+    keptCaption: "This row cites version {a}. You kept it on {date}. Your reason: \"{reason}\"",
+    removedCaption: "You removed row {n}, {risk}, on {date}. It stays on record, and the Word file leaves it out.",
+    removedPartCaption: "You removed the part \"{part}\" on {date}. It stays on record, and the Word file leaves it out.",
+    restore: "Restore the row",
+    restored: "I restored the row.",
+    teammate: "Only {name} can choose what happens to this row.",
+    exported: "This draft was exported, so this row keeps the version it cited then. The exported files stay as they were.",
+  },
+
+  // Two versions of a lesson, in the evidence drawer (ticket 39; the 39 brief, section 5.7).
+  versions: {
+    eyebrow: "Lesson",
+    title: "Versions {a} and {b} of a lesson",
+    retiredTitle: "A retired lesson",
+    caption: "Version {b} is current.",
+    heading: "Version {n}",
+    decidedOn: "Decided on {date}.",
+    thisCurrent: "This one is current.",
+    between: "Version {n} came between them, on {date}.",
+    retiredHeading: "Retired",
   },
 
   // The activity page, its contract trail, a project's Connections tab and "Why this source" (ticket 22; the 22
@@ -6639,6 +6915,8 @@ export const copy = {
         "You marked {marked} passages as wrong; {fixed} {isAre} fixed, and {recited} answers now cite the right paragraph.",
       fixed: "You marked {marked} passages as wrong; {fixed} {isAre} fixed.",
       oneFixed: "You marked one passage as wrong, and it is fixed. {recited} answers now cite the right paragraph.",
+      // Ticket 39: one marked and fixed, and no answer changed yet.
+      oneFixedOnly: "You marked one passage as wrong, and it is fixed.",
       waiting: "You marked {marked} passages as wrong. A reviewer hasn't decided on {themIt} yet.",
       kept: "You marked {marked} passages as wrong. Reviewers kept their ranking, and the evidence drawer shows why.",
       isAre: { one: "is", many: "are" },

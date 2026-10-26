@@ -33,6 +33,7 @@ import { DiscardedOn, StateStepper } from "../components/StateStepper";
 import { DraftDisagreements } from "../components/DraftDisagreements";
 import type { Step } from "../components/Steps";
 import { TextLink } from "../components/TextLink";
+import { NoteLesson, RemovedParts } from "../components/VersionNotice";
 import { copy } from "../copy";
 import { ApiError, getJson } from "../lib/api";
 import type { RemovedEvent } from "../lib/answer";
@@ -724,11 +725,18 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
           </div>
         ) : ppsd ? (
           <div className="mt-6">
-            <PpsdRows draft={d} editable={editable} opened={opened} open={open} ledeId={ledeId} onSave={onSave} onForm={onForm} />
+            <PpsdRows draft={d} editable={editable} opened={opened} open={open} ledeId={ledeId} onSave={onSave} onForm={onForm} onLesson={replace} />
           </div>
         ) : paper ? (
           <div className="mt-6">
-            <PaperSheet draft={d} numbers={numbers} opened={opened} open={open} />
+            <PaperSheet
+              draft={d}
+              numbers={numbers}
+              opened={opened}
+              open={open}
+              under={(key) => <NoteLesson draft={d} noteKey={key} onDone={replace} />}
+              after={<RemovedParts draft={d} names={copy.paper.parts} onDone={replace} />}
+            />
           </div>
         ) : brief ? (
           <div className="mt-8">

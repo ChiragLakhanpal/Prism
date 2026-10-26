@@ -137,7 +137,9 @@ from strata.drafts.store import DraftStore
 from strata.estimates import exposures as exposure_log
 from strata.estimates.exposures import ExposureLog, Shown
 from strata.knowledge import language
+from strata.knowledge.lessons.page import LessonsPage
 from strata.knowledge.lessons.review import LessonReview, Refused
+from strata.knowledge.lessons.visits import LessonVisits, Visit
 from strata.harness.aio import HEARTBEAT, with_heartbeats
 from strata.harness.turn import (ERROR_CODES, Event, RunError, Runner, Scope, TraceIds, Turn,
                                  new_run_id as random_run_id, no_agent)
@@ -164,7 +166,7 @@ from strata.server import following as following_routes
 from strata.server.following import FollowStore
 from strata.server.viewer_settings import SettingsStore, working_language
 from strata.estimates import signals_track
-from strata.server.access import Access, NoGroups
+from strata.server.access import Access, NoGroups, is_author
 from strata.server.choices import REASON_LIMIT, ChoiceLog
 from strata.server.evidence import OpenedLog
 from strata.server.suppliers import SupplierLog
@@ -181,6 +183,14 @@ STREAM_HEADERS = {"Cache-Control": "no-cache", "X-Accel-Buffering": "no"}
 ANSWER_EVENTS = {"refusal", "sentence", "evidence", "disagreement", "checks", "removed", "done", "language"}
 # The platform's check that the app is up. It is not a viewer's request, so it is not counted.
 UNCOUNTED = {"/api/health"}
+# The reader's latest counts from the weekly retrieval run, for the Lessons page's "Your reports" (ticket 39).
+LATEST_FEEDBACK = """
+SELECT marked, fixed, waiting, kept, recited
+FROM strata.ops.retrieval_feedback_viewers
+WHERE viewer_id = :viewer_id
+ORDER BY computed_at DESC
+LIMIT 1
+"""
 # The view the server applies. Until ticket 40 adds the implementing agency and public previews,
 # every request sees the World Bank staff view, whatever ?view= asks for.
 STAFF = "staff"
@@ -307,7 +317,7 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                follows: FollowStore | None = None, uploads: UploadStore | None = None,
                new_upload_id: Callable[[], str] = upload_routes.new_upload_id,
                settings: SettingsStore | None = None, exposures: ExposureLog | None = None,
-               views: Views | None = None) -> FastAPI:
+               visits: LessonVisits | None = None, views: Views | None = None) -> FastAPI:
     """The app.
 
     engine_for makes the engine for each request's viewer; without it, the environment names one.
@@ -1029,9 +1039,75 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
             return found
         return lesson_read("the viewer's lesson tabs", viewer, read)
 
+    # ── The Lessons page (ticket 39): the digest, the notices, what is new, the reader's reports and the library ──
+
+    lessons_page = LessonsPage(lessons)
+    visit_gap = dt.timedelta(minutes=int(thresholds.value("lessons.visit_gap_minutes")))
+
+    def library_filters(stage: str | None, method: str | None, sector: str | None, status: str | None) -> dict:
+        return {"stage": stage, "method": method, "sector": sector, "status": status}
+
+    def feedback_counts(viewer: Viewer) -> dict | None:
+        """The reader's latest per-person counts from the weekly retrieval run (ticket 32), read as the app's own
+        identity, which alone reads who sent each report (strata.lakehouse.masks)."""
+        if feedback_record is None or not viewer.user_id:
+            return None
+        record = feedback_record()
+        try:
+            result = record.run(LATEST_FEEDBACK, {"viewer_id": viewer.user_id})
+            return dict(zip(result.columns, result.rows[0], strict=True)) if result.rows else None
+        finally:
+            close = getattr(record, "close", None)
+            if callable(close):
+                close()
+
+    @app.get("/api/lessons/page")
+    def lessons_page_route(view: Literal["staff", "piu", "public"] = STAFF, asof: dt.date | None = None,
+                           stage: str | None = Query(None, max_length=64), method: str | None = Query(None, max_length=64),
+                           sector: str | None = Query(None, max_length=128), status: str | None = Query(None, max_length=16),
+                           page: int = Query(1, ge=1, le=10_000), show: str | None = Query(None, max_length=64),
+                           viewer: Viewer = Depends(current_viewer)):
+        """The whole Lessons tab in one answer, so the page renders once (the 39 brief, section 9). It records the
+        visit and shows what is about the reader only where the view keeps them (the roles file's [views]:
+        record_opened and personal_lessons, which no preview keeps), and never as of a past date."""
+        personal = view_routes.keeps(view_rules, view, "personal_lessons")
+        preview = not personal
+        recorded = view_routes.keeps(view_rules, view, "record_opened") and asof is None
+        moment = now()
+        try:
+            visit = (visits.visit(viewer.user_id, moment, visit_gap, record=recorded)
+                     if visits is not None and viewer.user_id else Visit(moment, None))
+            # The reader's own drafts, for "Changed where you used it": read as the app, which keeps them, and
+            # filtered by the one access rule (src/strata/server/access.py) to the drafts they wrote.
+            mine = ([draft for draft in drafts.for_team(access.team(viewer).key, viewer.user_id)
+                     if is_author(viewer, draft.author_id)]
+                    if drafts is not None and viewer.user_id and personal and asof is None else [])
+            counts = feedback_counts(viewer) if personal and asof is None else None
+        except EngineError:
+            reference = request_reference()
+            log.exception("I could not read the Lessons visits or drafts of %s, reference %s.", viewer.user_id,
+                          reference)
+            return JSONResponse({"code": "data_service", "trace_id": reference}, status_code=503)
+        return lesson_read("the Lessons page", viewer, lambda engine: lessons_page.build(
+            engine, viewer, visit=visit, preview=preview, drafts=mine, feedback=counts,
+            filters=library_filters(stage, method, sector, status), page=page, show=show, as_of=asof))
+
+    @app.get("/api/lessons/{lesson_id}/versions")
+    def lesson_versions(lesson_id: str, version_from: int = Query(alias="from", ge=1),
+                        version_to: int = Query(alias="to", ge=1), viewer: Viewer = Depends(current_viewer)):
+        """Two versions of a lesson, for the evidence drawer (the 39 brief, section 5.7)."""
+        return lesson_read(f"versions of {lesson_id}", viewer,
+                           lambda engine: lessons_page.versions(engine, lesson_id, version_from, version_to))
+
     @app.get("/api/lessons")
-    def lesson_library(page: int = Query(1, ge=1, le=10_000), viewer: Viewer = Depends(current_viewer)):
-        return lesson_read("the lesson library", viewer, lambda engine: lessons.library(engine, viewer, page))
+    @app.get("/api/lessons/library")
+    def lesson_library(page: int = Query(1, ge=1, le=10_000), stage: str | None = Query(None, max_length=64),
+                       method: str | None = Query(None, max_length=64), sector: str | None = Query(None, max_length=128),
+                       status: str | None = Query(None, max_length=16), show: str | None = Query(None, max_length=64),
+                       viewer: Viewer = Depends(current_viewer)):
+        """The library alone, for a filter or page change on the Lessons tab (the 39 brief, section 9)."""
+        return lesson_read("the lesson library", viewer, lambda engine: lessons.library(
+            engine, viewer, page, library_filters(stage, method, sector, status), show))
 
     @app.get("/api/lessons/review")
     def lesson_queue(page: int = Query(1, ge=1, le=10_000), viewer: Viewer = Depends(current_viewer)):

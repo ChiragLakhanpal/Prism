@@ -2,7 +2,9 @@
 // draft's exportable text on a surface sheet, so it reads as the page that becomes the Word file. Three parts, one
 // per input, each an h3: the Procurement Plan, the implementing agency's track record and the PPSD's risks. A part
 // with nothing to draw on says why in the first person, and the Word file leaves it out. The PPSD part names each
-// draft it drew on, by its title, as a link to it.
+// draft it drew on, by its title, as a link to it. Under a part that cites a lesson a lead has since changed or retired,
+// its version notice (ticket 39), and after the parts, any part its author removed.
+import type { ReactNode } from "react";
 import { copy } from "../copy";
 import type { EvidenceEvent } from "../lib/answer";
 import type { Draft, DraftNote } from "../lib/drafts";
@@ -38,11 +40,13 @@ function PartBody({ note, draft, evidence, numbers, opened, open }: {
   );
 }
 
-export function PaperSheet({ draft, numbers, opened, open }: {
+export function PaperSheet({ draft, numbers, opened, open, under, after }: {
   draft: Draft;
   numbers: Map<string, number>;
   opened: ReadonlySet<string>;
   open: OpenSource;
+  under?: (key: string) => ReactNode;
+  after?: ReactNode;
 }) {
   return (
     <article aria-label={words.sheetLabel} className="rounded-md border border-line bg-surface p-4 md:p-6 lg:p-8" data-paper-sheet>
@@ -75,8 +79,10 @@ export function PaperSheet({ draft, numbers, opened, open }: {
             <div className="mt-2">
               <PartBody note={note} draft={draft} evidence={draft.evidence} numbers={numbers} opened={opened} open={open} />
             </div>
+            {under?.(note.key)}
           </section>
         ))}
+        {after}
       </div>
     </article>
   );

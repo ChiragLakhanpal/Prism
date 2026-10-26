@@ -932,7 +932,9 @@ const lessonShot = (name: string, path: string, answers: Shot["api"], rest: Part
     ...rest,
     api: { ...app(name, path).api, "/api/lessons/me": me, "/api/evidence": { recorded: "evidence-icr-p130164-54.json" }, "/api/evidence/opened": { body: '{"recorded":true}' }, ...answers },
   });
-const LIBRARY = { "/api/lessons": { recorded: "lessons-library-reviewer.json" } };
+// Ticket 39: the Lessons tab answers in one request (tests/record_lessons_page_api.py), with the library inside it.
+const LIBRARY = { "/api/lessons/page": { recorded: "lessons-page-reviewer.json" } };
+const libraryWith = (name: string, edit: (library: Record<string, any>) => void): Answer => lessonsWith(name, (body) => edit(body.library));
 const QUEUE = (file: string) => ({ "/api/lessons/review": { recorded: file } });
 const REB = "new-e903b07ad1";
 const PERM = "new-64ec0401e3";
@@ -956,8 +958,8 @@ const choose = (label: string) => async (page: Page) => {
   await page.getByRole("radio", { name: label }).first().check();
   await page.waitForTimeout(250);
 };
-const manySources = (body: Record<string, any>) => {
-  const card = body.lessons[0];
+const manySources = (library: Record<string, any>) => {
+  const card = library.lessons[0];
   const more = Array.from({ length: 6 }, (_, n) => ({ ...card.evidence[0], evidence_id: `${card.evidence[0].evidence_id}-${n}`, locator: { kind: "paragraph", text: String(60 + n) } }));
   card.evidence = [...card.evidence, ...more];
 };
@@ -981,16 +983,22 @@ const barred = (code: string, values: Record<string, string>) => (body: Record<s
 const LESSON_SHOTS: Shot[] = [
   // The frame and the library.
   lessonShot("library", "/lessons", LIBRARY),
-  lessonShot("library-viewer", "/lessons", { "/api/lessons": { recorded: "lessons-library.json" } }, {}, NOT_A_REVIEWER),
-  lessonShot("library-loading", "/lessons", LIBRARY, { pending: ["/api/lessons?page=1"] }),
-  lessonShot("library-empty-viewer", "/lessons", { "/api/lessons": { recorded: "lessons-library-empty.json" } }, {}, NOT_A_REVIEWER),
-  lessonShot("library-empty-reviewer", "/lessons", { "/api/lessons": { recorded: "lessons-library-empty.json" } }),
-  lessonShot("library-page-2", "/lessons?page=2", { "/api/lessons": lessonsWith("lessons-library-reviewer.json", pageTwo) }),
-  lessonShot("library-out-of-range", "/lessons?page=5", { "/api/lessons": lessonsWith("lessons-library-reviewer.json", (body) => Object.assign(body, { page: 5, pages: 1, lessons: [], from: 0, to: 0 })) }),
-  lessonShot("library-error", "/lessons", { "/api/lessons": { status: 503, body: SERVICE_DOWN } }),
-  lessonShot("library-rechecking", "/lessons", { "/api/lessons": { recorded: "lessons-library-rechecking.json" } }),
-  lessonShot("card-many-sources", "/lessons", { "/api/lessons": lessonsWith("lessons-library-reviewer.json", manySources) }),
-  lessonShot("card-many-sources-open", "/lessons", { "/api/lessons": lessonsWith("lessons-library-reviewer.json", manySources) }, { full: true, act: click("[data-source-chips] button") }),
+  lessonShot("library-viewer", "/lessons", { "/api/lessons/page": { recorded: "lessons-page.json" } }, {}, NOT_A_REVIEWER),
+  lessonShot("library-loading", "/lessons", LIBRARY, { pending: ["/api/lessons/page"] }),
+  lessonShot("library-empty-viewer", "/lessons", { "/api/lessons/page": { recorded: "lessons-page-empty.json" } }, {}, NOT_A_REVIEWER),
+  lessonShot("library-empty-reviewer", "/lessons", { "/api/lessons/page": { recorded: "lessons-page-empty.json" } }),
+  lessonShot("library-page-2", "/lessons?page=2", { "/api/lessons/page": libraryWith("lessons-page-reviewer.json", pageTwo) }),
+  lessonShot("library-error", "/lessons", { "/api/lessons/page": { status: 503, body: SERVICE_DOWN } }),
+  lessonShot("library-rechecking", "/lessons", { "/api/lessons/page": libraryWith("lessons-page-reviewer.json", (library) => Object.assign(library.lessons[0], { state: "rechecking", rechecking_since: "2026-10-28" })) }),
+  lessonShot("card-many-sources", "/lessons", { "/api/lessons/page": libraryWith("lessons-page-reviewer.json", manySources) }),
+  lessonShot("card-many-sources-open", "/lessons", { "/api/lessons/page": libraryWith("lessons-page-reviewer.json", manySources) }, { full: true, act: click("[data-library] [data-source-chips] button") }),
+  // Ticket 39's states, at 1440 px until the design pass (the user's rule of October 25, 2026): the whole page, a
+  // first visit, nothing new, a lesson retired as wrong, and a draft row's notice with the bar's hold.
+  lessonShot("page", "/lessons", { "/api/lessons/page": { recorded: "lessons-page.json" } }, { widths: [1440] }, NOT_A_REVIEWER),
+  lessonShot("page-first-visit", "/lessons", { "/api/lessons/page": { recorded: "lessons-page-first.json" } }, { widths: [1440] }, NOT_A_REVIEWER),
+  lessonShot("page-nothing-new", "/lessons", { "/api/lessons/page": { recorded: "lessons-page-nothing.json" } }, { widths: [1440] }, NOT_A_REVIEWER),
+  lessonShot("page-retired", "/lessons", { "/api/lessons/page": { recorded: "lessons-page-retired.json" } }, { widths: [1440] }, NOT_A_REVIEWER),
+  lessonShot("draft-notice", "/drafts/draft-0001", { "/api/drafts/draft-0001": { recorded: "drafts-lesson-retired.json" }, "/api/drafts/existing": { body: '{"draft":null}' } }, { widths: [1440] }, NOT_A_REVIEWER),
   lessonShot("recheck-open", "/lessons", LIBRARY, { full: true, act: click("[data-recheck=closed] button") }),
   lessonShot("recheck-empty", "/lessons", LIBRARY, { full: true, act: async (page) => {
     await click("[data-recheck=closed] button")(page);

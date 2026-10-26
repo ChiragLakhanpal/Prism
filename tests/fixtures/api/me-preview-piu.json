@@ -69,6 +69,7 @@
     "start_draft": "packageWorkspace.ppsdAction.heldPreview",
     "fill_draft": "fill.preview",
     "discard_draft": "draft.bar.hold.preview",
+    "lesson_choice": "draft.bar.hold.preview",
     "mark_checked": "draft.bar.hold.preview",
     "upload_and_check": "upload.holdPreview",
     "compare_criteria": "criteria.preview",

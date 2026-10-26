@@ -155,7 +155,19 @@
         "Set on (UTC)"
       ],
       "fieldsRemoved": "Removed",
-      "fieldsForm": "Risk table form"
+      "fieldsForm": "Risk table form",
+      "lessonsTitle": "Lesson versions",
+      "lessonsColumns": [
+        "Row",
+        "Lesson version cited",
+        "Current version at export",
+        "Your choice and reason"
+      ],
+      "choiceUpdated": "Updated on {date}",
+      "choiceKept": "Kept version {a}: {reason}",
+      "choiceKeptRow": "Kept the row: {reason}",
+      "choiceRemoved": "Removed on {date}",
+      "choiceNone": "No choice yet"
     }
   },
   "holds": {
@@ -173,6 +185,10 @@
         "one": "choose which report to keep in one disagreement",
         "many": "choose which report to keep in {count} disagreements"
       },
+      "lessonRetiredWrong": {
+        "one": "remove or keep, with a reason, one row that cites a lesson retired as wrong",
+        "many": "remove or keep, with a reason, {count} rows that cite lessons retired as wrong"
+      },
       "notChecked": "Mark the notes as checked before you export them."
     },
     "mission_brief": {
@@ -188,6 +204,10 @@
       "disagreements": {
         "one": "choose which report to keep in one disagreement",
         "many": "choose which report to keep in {count} disagreements"
+      },
+      "lessonRetiredWrong": {
+        "one": "remove or keep, with a reason, one row that cites a lesson retired as wrong",
+        "many": "remove or keep, with a reason, {count} rows that cite lessons retired as wrong"
       },
       "notChecked": "Mark the brief as checked before you export it."
     },
@@ -205,6 +225,10 @@
         "one": "choose which report to keep in one disagreement",
         "many": "choose which report to keep in {count} disagreements"
       },
+      "lessonRetiredWrong": {
+        "one": "remove or keep, with a reason, one row that cites a lesson retired as wrong",
+        "many": "remove or keep, with a reason, {count} rows that cite lessons retired as wrong"
+      },
       "notChecked": "Mark the rows as checked before you export them."
     },
     "ppsd_rows_agency": {
@@ -220,6 +244,10 @@
       "disagreements": {
         "one": "choose which report to keep in one disagreement",
         "many": "choose which report to keep in {count} disagreements"
+      },
+      "lessonRetiredWrong": {
+        "one": "remove or keep, with a reason, one row that cites a lesson retired as wrong",
+        "many": "remove or keep, with a reason, {count} rows that cite lessons retired as wrong"
       },
       "notChecked": "Mark the rows as checked before you export them."
     },
@@ -237,6 +265,10 @@
         "one": "choose which report to keep in one disagreement",
         "many": "choose which report to keep in {count} disagreements"
       },
+      "lessonRetiredWrong": {
+        "one": "remove or keep, with a reason, one row that cites a lesson retired as wrong",
+        "many": "remove or keep, with a reason, {count} rows that cite lessons retired as wrong"
+      },
       "notChecked": "Mark the dates as checked before you export them."
     },
     "project_paper": {
@@ -252,6 +284,10 @@
       "disagreements": {
         "one": "choose which report to keep in one disagreement",
         "many": "choose which report to keep in {count} disagreements"
+      },
+      "lessonRetiredWrong": {
+        "one": "remove or keep, with a reason, one row that cites a lesson retired as wrong",
+        "many": "remove or keep, with a reason, {count} rows that cite lessons retired as wrong"
       },
       "notChecked": "Mark the summary as checked before you export it."
     }

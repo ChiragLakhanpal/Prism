@@ -418,6 +418,29 @@ questions:
       (pad-procurement-guidelines). IN-RRSMP-7431-CW-RFB is P130164's (award-7431-reference), whose
       one completion report, the ICR, raised the rebidding lesson (icr-para-54) and the permits lesson
       (icr-para-55).
+  # Ticket 39: get_lessons' lesson_id, which "Update the row" calls to rewrite a draft row from the current
+  # version of the lesson it cites. Same library as the question above.
+  - id: get-lessons-one-lesson
+    kind: documents
+    tool: get_lessons
+    question: >-
+      What does the library's rebidding lesson from P130164's completion report say now, and which
+      quotes does it rest on?
+    arguments:
+      lesson_id: lesson-e903b07ad1
+      as_of: "2026-10-28"
+    needs: decided_lessons
+    expected:
+      first: [Base works estimates on market rates to avoid rebidding]
+      first_evidence: [strata.gold.passage:31525018/v1/54, strata.gold.passage:34056616/v2/10.b]
+      first_ieg_status: [restated]
+      editions: [guidelines_2011]
+    # The passages the lesson rests on: an answer about it cites them.
+    cites: [strata.gold.passage:31525018/v1/54, strata.gold.passage:34056616/v2/10.b]
+    source: >-
+      ICR P130164 paragraph 54, on PDF page 23 (tests/ground_truth/values.toml, icr-para-54), restated
+      by the ICR Review in section 10.b (icr-review-2023-restates-para-54); the lesson's id is the one
+      tests/lesson_scenario.py's reviewers give it when they add it on October 27, 2026.
 
   # Ticket 31: the check-your-criteria tools. Each takes the comparable packages find_comparables returned,
   # so a question names the find_comparables call it starts from (comparables_of), and the offline gate

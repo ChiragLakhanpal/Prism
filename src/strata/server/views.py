@@ -83,6 +83,15 @@ def applied(views: Views, own: str, requested: str | None) -> Applied:
     return Applied(own, requested, True, kept)
 
 
+def keeps(views: Views, view: str | None, capability: str) -> bool:
+    """Whether a request in this view keeps a capability, for a route that leaves part of its answer out rather than
+    refusing it. ViewParams binds ?view= only for a preview the person may have, so a route that reads piu or public is
+    in a preview and keeps what applied() keeps; anything else is the person's own view, whose role the route checks."""
+    if view not in PREVIEWS:
+        return True
+    return applied(views, STAFF, view).allows(capability)
+
+
 # ── The as-of date ───────────────────────────────────────────────────────
 
 @dataclass(frozen=True)
