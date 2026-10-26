@@ -370,13 +370,12 @@ def drafts_sentence(rows: list[dict]) -> list[dict]:
     return fill(form(forms, total), {"count": count(total, "drafts", [row["draft_id"] for row in rows], capital=True)})
 
 
-def staff_briefing(plans: list[dict], lines: list[dict], followed: int, window: list[dict],
-                   waiting: list[dict] | None, following: int | None = None,
-                   as_of: dt.date | None = None) -> list[list[dict]]:
+def staff_briefing(plans: list[dict], lines: list[dict], public_follows: int, all_follows: int, window: list[dict],
+                   waiting: list[dict] | None, as_of: dt.date | None = None) -> list[list[dict]]:
     """The briefing's sentences, in the order of the lines they count (the 41 brief, section 5.2). waiting is None as of
-    a past date, when the drafts sentence is left out. following is how many projects the viewer follows in the follow
-    store, and followed how many of those were public by the as-of date, so a viewer whose follows all came later is
-    never told they follow none (it defaults to followed)."""
+    a past date, when the drafts sentence is left out. all_follows is how many projects the viewer follows in the follow
+    store, and public_follows how many of those had their project record public by the as-of date, so a viewer whose
+    follows all came later is never told they follow none."""
     found = words()
     sentences: list[list[dict]] = []
     activity = [line for line in lines if line["kind"] == "activity"]
@@ -384,14 +383,13 @@ def staff_briefing(plans: list[dict], lines: list[dict], followed: int, window: 
     # Lesson lines come from the viewer's own drafts, not their follows, so they are counted on a first run too.
     changed = [line for line in lines if line["kind"] == "lesson" and line["status"] == "changed"]
     retired = [line for line in lines if line["kind"] == "lesson" and line["status"] != "changed"]
-    following = followed if following is None else following
-    if not following:
+    if not all_follows:
         sentences.append(fill(found["firstRun"], {}))
-    elif not followed:
-        sentences.append(fill(form(found["notPublicYet"], following),
-                              {"count": count(following), "date": _date(as_of)}))
+    elif not public_follows:
+        sentences.append(fill(form(found["notPublicYet"], all_follows),
+                              {"count": count(all_follows), "date": _date(as_of)}))
     elif not plans and not projects and not changed and not retired:
-        sentences.append(fill(form(found["quiet"], followed), {"count": count(followed), "window": window}))
+        sentences.append(fill(form(found["quiet"], public_follows), {"count": count(public_follows), "window": window}))
     else:
         if plans:
             sentences.append(fill(form(found["plans"], len(plans)), {
@@ -570,7 +568,8 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, access: Access, vi
         lines = lines + projects_lines + lesson_lines
         waiting = waiting_rows(viewer, mine, example_drafts(seeded)) if as_of is None else None
         window = window_phrase(days, as_of)
-        sentences = staff_briefing(plans, lines, len(followed), window, waiting, following=len(following), as_of=as_of)
+        sentences = staff_briefing(plans, lines, public_follows=len(followed), all_follows=len(following),
+                                   window=window, waiting=waiting, as_of=as_of)
         lesson_notice = ""
         if "lesson_change" in seeded:
             lesson_id, cited, _version = seeded["lesson_change"]["item_id"].split(":")
