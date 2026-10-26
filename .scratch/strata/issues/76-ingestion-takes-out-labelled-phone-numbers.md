@@ -1,0 +1,20 @@
+# 76: Ingestion takes out the labelled phone numbers the nightly check still finds in 1,256 notices
+
+**What to build:** The nightly job's `contacts_left` check on `strata.silver.notices` failed on October 26, 2026: 1,256 of 158,587 notices still carry a labelled phone number in `notice_text` (none in `bid_description`, and no email address anywhere), found with the check's own pattern `LEFT_PHONE` in `src/strata/lakehouse/contacts.py` (a phone label such as tel, telephone, phone, mobile, cell or fax, up to 12 characters that are not digits, then a number of seven digits or more with spaces, brackets or dashes). Ingestion's removal (`contacts.removed_from`, called from `src/strata/lakehouse/silver/notices.py` line 114) uses stricter patterns, so it left these shapes. Rule 8 says contact details are stripped at ingestion, and rule 4 says one definition per thing. Make the removal catch every shape the check catches, by giving both one definition of a labelled phone number (the check's pattern as the last pass of the removal, with the label kept and the number taken out, or the check reading the removal's patterns), and keep the guards against dates, amounts, fiscal years and postal codes. The second session records twenty of the shapes it found, with every digit replaced by 9 and the thirty characters around the label, in the catch-up file under this ticket, so the test cases come from real shapes and never from a real number. Then the live step: the pages whose notices the check flagged are read again with the fixed removal, through ticket 75's record (bump the notices module's `VERSION`) once 75 has landed, or before that by deleting the flagged pages' rows from `strata.silver.notices` with `DELETE ... WHERE page_hash IN (...)`, which the current rule treats as pending; the second session runs `bronze_to_gold` from a snapshot, and the check finds 0. Say in the ticket's comment how `strata.gold.notice` takes the stripped text, and add a step if gold needs one.
+
+Read first: `src/strata/lakehouse/contacts.py` (the patterns, `removed_from`, `LEFT_EMAIL`, `LEFT_PHONE`), `src/strata/lakehouse/quality.py` (`contacts_left`), `src/strata/lakehouse/silver/notices.py` line 114, `src/strata/lakehouse/silver/__init__.py` (`run`, the pending set), the contacts tests under `tests/`, the catch-up file's block for ticket 43 step 1 of October 26 (the check's result) and this ticket's masked shapes.
+
+**Blocked by:** None (can start immediately)
+
+**Status:** ready
+**Area:** data
+**Phase:** P2
+**Design review:** no
+
+- [ ] On the masked shapes the second session recorded, `removed_from` leaves no text the check's pattern matches, keeps the label and the words around it, and the existing contacts tests pass unchanged (dates, amounts, fiscal years and postal codes stay).
+- [ ] The removal and the check share one definition of a labelled phone number (one pattern, or a test that runs the check's pattern over every string the removal's tests produce), so the check can never find what the removal leaves.
+- [ ] On the workspace, after the second session's re-read of the flagged pages, `contacts_left` on `strata.silver.notices` finds 0 and `strata.gold.notice` holds the stripped text (recorded in the catch-up file under this ticket with the counts).
+
+## Comments
+
+- October 26, 2026, orchestrator: opened at 03:40 PDT from the second session's finding (ticket 43 step 1: `contacts_left` found 1,256; with_email 0, with_phone 1,256, phone_in_bid_description 0). Rule 8 is on the panel's list, so this is functional, not polish.

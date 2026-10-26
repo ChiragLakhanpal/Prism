@@ -1,0 +1,20 @@
+# 75: Silver records what it wrote for each bronze page, so a table a module gains fills from the pages bronze already holds
+
+**What to build:** `src/strata/lakehouse/silver/__init__.py` `run(engine, source)` (line 50) takes as pending every `strata.bronze.api_pages` row of the source whose `page_hash` the module's first table lacks (`strata.silver.projects` for the projects source), parses each pending page, and for the other tables deletes that page's rows and inserts them again, with the first table written last as the mark that the page was read. So a page the first table holds is never parsed again, and the two tables ticket 21 added, `strata.silver.project_sectors` and `strata.silver.project_environment`, hold only the pages fetched after ticket 21's deploy: on October 26, 2026, 208 sector rows for 95 projects and 79 environment rows, all fetched at 06:54:03 UTC that day, and none for P130164, the showcase project, which is closed and never fetched again, so its Summary shows no sectors. Replace the mark with a record of what was written: a new table `strata.ops.silver_pages` (source, page_hash, tables, which holds the module's table names sorted and joined with commas, version, the module's `VERSION`, 1 unless the module sets one, written_at, public_from), written after the module's tables for each page. A page is pending when it has no record, or when its record's tables or version differ from the module's. The first run after this change reads every page of every source once (one parse, and for each table a read, a DELETE with a WHERE when the table holds the page, and an insert), later runs read only new pages, and a module that gains a table or bumps its `VERSION` reads its pages once more. Prove it on the fixture: after a run, a page that every table holds is not read again (0 rows added); with one table's rows for a page deleted, the page is still not pending (the record is the mark, not the rows); with the module's table list changed (a test module with one more table) or its version bumped, every page of the source is read again and the rows match the first run's. The live proof is the second session's `bronze_to_gold` run from a snapshot outside the nightly window, after which `strata.silver.project_sectors` holds rows for P130164 and the project pages bronze held before ticket 21 (285 on October 26), with the time the full pass took recorded.
+
+Read first: `src/strata/lakehouse/silver/__init__.py` (`run`, `_holds`, `PAGE`), `src/strata/lakehouse/silver/projects.py` (`TABLES`), `src/strata/lakehouse/tables/ops/` (an ops table's file, with its `public_from`), `src/strata/lakehouse/nightly.py` (`bronze_to_gold`), `tests/test_nightly_delta.py` and the silver tests, the catch-up file's block for ticket 21 step 1 of October 26.
+
+**Blocked by:** None (can start immediately)
+
+**Status:** ready
+**Area:** data
+**Phase:** P2
+**Design review:** no
+
+- [ ] On the fixture, a page every table holds is not read again (0 rows added); a page whose rows in one table were deleted is still not pending; a module with one more table, or a bumped `VERSION`, reads every page of its source again, and the rows match the first run's; the existing silver, nightly and ground-truth tests pass unchanged.
+- [ ] `strata.ops.silver_pages` is one file under `src/strata/lakehouse/tables/ops/` with a `public_from` column, the fixture build creates it, and the bundle's catalog step deploys it; the pending query costs one join on the record, not one NOT EXISTS per table.
+- [ ] After the second session's `bronze_to_gold` run from a snapshot, `strata.silver.project_sectors` holds rows for P130164 and for the project pages bronze held before ticket 21, with the row counts and the time of the full pass recorded in the catch-up file under this ticket.
+
+## Comments
+
+- October 26, 2026, orchestrator: opened at 03:40 PDT from the second session's finding (ticket 21 step 1: the Summary of the showcase project shows no sectors until this runs). The record also gives ticket 76 its way to read the notices pages again with the fixed removal: bump the notices module's `VERSION`.
