@@ -91,3 +91,21 @@ def test_the_retrieval_scores_come_from_the_icr_review_citation_set_when_a_run_s
     found = {key: snapshot.measure(engine, results[key], TODAY)["value"]
              for key in ("retrieval-precision", "retrieval-recall", "retrieval-ndcg")}
     assert found == pytest.approx({"retrieval-precision": 0.62, "retrieval-recall": 0.71, "retrieval-ndcg": 0.58})
+
+
+def test_the_retrieval_scores_name_the_run_and_day_they_came_from_when_a_tuning_gate_ran_after_it():
+    # ops/retrieval/evaluate_live.py --gate writes held-out rows under the same scorer, on October 12, for the setup
+    # it kept and the one it blocked. Neither run measured the ICR Review citation set, so neither may be named.
+    engine = seeded_engine()
+    insert(engine, "strata.ops.evaluation_result", [
+        _result(run_id, "retrieval_evaluation", "held_out", "icr_review_citations", measure, value,
+                at(TODAY.replace(day=12), 4))
+        for run_id in ("retrieval-2/current", "retrieval-2/candidate")
+        for measure, value in (("queries", 60), ("precision_at_10", 0.4), ("recall_at_20", 0.5),
+                               ("ndcg_at_10", 0.45))])
+    results = load_results()
+    found = {key: snapshot.measure(engine, results[key], TODAY)
+             for key in ("retrieval-precision", "retrieval-recall", "retrieval-ndcg")}
+    # tests/dashboard_seed.py: the ICR Review citation set's scores came from run retrieval-1, on October 10.
+    assert {key: (row["run_id"], row["measured_on"]) for key, row in found.items()} == {
+        key: ("retrieval-1", "2026-10-10") for key in found}

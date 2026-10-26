@@ -205,9 +205,11 @@ def test_the_retrieval_label_line_says_code_builds_the_labels_and_counts_the_que
     # src/strata/knowledge/retrieval/labels.py: icr_review_citations are silver labels that code takes from each
     # "ICR para N" citation, and no step has a person check them (STATUS.md decision 5 asks the proposal to say how).
     # tests/dashboard_seed.py: the October 10 run asked 250 queries of the set.
-    row = next(line for line in built.markdown.splitlines() if line.startswith('| <a id="r-retrieval-precision">'))
-    assert ('Labels: 250 queries that code built from ICR Reviews. Each "ICR para N" citation in an ICR Review is a '
-            "query, and the paragraphs it names answer it. No person checks them.") in row
+    # Recall and nDCG rest on the same labels, so their rows say so too.
+    for key in ("retrieval-precision", "retrieval-recall", "retrieval-ndcg"):
+        row = next(line for line in built.markdown.splitlines() if line.startswith(f'| <a id="r-{key}">'))
+        assert ('Labels: 250 queries that code built from ICR Reviews. Each "ICR para N" citation in an ICR Review '
+                "is a query, and the paragraphs it names answer it. No person checks them.") in row, key
     assert "checked by one person" not in built.markdown
 
 

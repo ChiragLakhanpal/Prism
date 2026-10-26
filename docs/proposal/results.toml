@@ -15,7 +15,8 @@
 #            row picks one of its rows by column values (the first row when left out), and columns names the
 #            columns that hold n, d and value (numerator, denominator and value when left out) and any others
 #   meta     for a dashboard query, the file in src/strata/proposal/sql/ that says when and in which run it was
-#            measured
+#            measured. When the query's rows carry their own run and day, name them in columns instead
+#            (run_id = ..., measured_on = ...), so both come from the row the value came from
 #   params   the query's bound parameters; the pull adds today, date_from and date_to (the 90 days to today) and the
 #            fewest cases for a share and a percentage from config/thresholds.toml
 #   form     ratio ("{n} of {d}", and "about {k} in 10" where the query gives one), count, money (US dollars with
@@ -228,9 +229,7 @@ kind = "Evaluation result"
 noun = "precision at 10"
 query = "dashboard:kpi_precision_recall"
 row = { segment_kind = "query_set", query_set_key = "icr_review_citations" }
-columns = { value = "precision_at_10", queries = "queries" }
-meta = "evaluation_meta.sql"
-params = { scorer = "retrieval_evaluation" }
+columns = { value = "precision_at_10", queries = "queries", run_id = "run_id", measured_on = "run_on" }
 form = "score"
 table = "strata.ops.evaluation_result"
 labels = 'Labels: {queries} queries that code built from ICR Reviews. Each "ICR para N" citation in an ICR Review is a query, and the paragraphs it names answer it. No person checks them.'
@@ -242,11 +241,10 @@ kind = "Evaluation result"
 noun = "recall at 20"
 query = "dashboard:kpi_precision_recall"
 row = { segment_kind = "query_set", query_set_key = "icr_review_citations" }
-columns = { value = "recall_at_20" }
-meta = "evaluation_meta.sql"
-params = { scorer = "retrieval_evaluation" }
+columns = { value = "recall_at_20", queries = "queries", run_id = "run_id", measured_on = "run_on" }
 form = "score"
 table = "strata.ops.evaluation_result"
+labels = 'Labels: {queries} queries that code built from ICR Reviews. Each "ICR para N" citation in an ICR Review is a query, and the paragraphs it names answer it. No person checks them.'
 
 [results.retrieval-ndcg]
 name = "nDCG at 10 on the ICR Review citation set, the newest run"
@@ -255,11 +253,10 @@ kind = "Evaluation result"
 noun = "nDCG at 10"
 query = "dashboard:kpi_precision_recall"
 row = { segment_kind = "query_set", query_set_key = "icr_review_citations" }
-columns = { value = "ndcg_at_10" }
-meta = "evaluation_meta.sql"
-params = { scorer = "retrieval_evaluation" }
+columns = { value = "ndcg_at_10", queries = "queries", run_id = "run_id", measured_on = "run_on" }
 form = "score"
 table = "strata.ops.evaluation_result"
+labels = 'Labels: {queries} queries that code built from ICR Reviews. Each "ICR para N" citation in an ICR Review is a query, and the paragraphs it names answer it. No person checks them.'
 
 # ── Module 3 ─────────────────────────────────────────────────────────────
 
