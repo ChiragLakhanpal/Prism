@@ -223,9 +223,9 @@ class Fetching:
     # statement's parameters up to about 1 MB, so a text past that cannot be written through it. Such a
     # document counts as listed but not read, which leaves later first listings unconfirmed.
     not_kept: tuple[tuple[str, int], ...] = ()
-    # Documents the source could not give, each with why (NotFetched's message), which the passage reader
-    # records when it skips them (ticket 72).
-    not_fetched: tuple[tuple[str, str], ...] = ()
+    # Documents the source could not give, each with the address that failed (its text's or its PDF's) and why
+    # (NotFetched's message), which both readers record when they skip them (ticket 72).
+    not_fetched: tuple[tuple[str, str, str], ...] = ()
 
 
 def fetch_documents(engine: Engine, documents: Documents, project_id: str, entries: list[Entry]) -> Fetching:
@@ -237,14 +237,14 @@ def fetch_documents(engine: Engine, documents: Documents, project_id: str, entri
         {"project_id": project_id}).rows}
     fetched = with_contacts = 0
     not_kept: list[tuple[str, int]] = []
-    not_fetched: list[tuple[str, str]] = []
+    not_fetched: list[tuple[str, str, str]] = []
     for entry in entries:
         if entry.document_id in held:
             continue
         try:
             text, pages = documents.text(entry.text_url), documents.pages(entry.pdf_url)
         except NotFetched as error:
-            not_fetched.append((entry.document_id, str(error)))
+            not_fetched.append((entry.document_id, error.url or entry.text_url, str(error)))
             continue  # a document listed but not read, which leaves later first listings unconfirmed
         body, count = contacts.strip_text(text.body)
         page_texts = [contacts.strip_text(page)[0] for page in pages.body]  # the same details again, counted once
@@ -654,11 +654,10 @@ def run(engine: Engine, documents: Documents, layout: LayoutParser, project_id: 
     fetch_listing(engine, documents, endpoint, project_id)
     listing = listed_plans(engine, project_id)
     fetching = fetch_documents(engine, documents, project_id, listing.entries)
-    texts = {entry.document_id: entry.text_url for entry in listing.entries}
     # Each plan listed but not fetched, which the run goes on without (ticket 72), at the time the run started: the
     # fetches follow it at once, and the fixture's clock, which moves on each time it is read, keeps its times.
-    for document_id, reason in fetching.not_fetched:
-        skip(engine, run_id, "plans", Skipped(project_id, document_id, texts[document_id], reason), started)
+    for document_id, url, reason in fetching.not_fetched:
+        skip(engine, run_id, "plans", Skipped(project_id, document_id, url, reason), started)
     versions = read_versions(engine, project_id, listing)
     write_versions(engine, project_id, versions)
     parsing = parse_chosen(engine, layout, project_id, versions, cap, clock, run_id)

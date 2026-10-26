@@ -154,7 +154,10 @@ def test_the_documents_run_writes_as_it_goes_skips_the_third_document_and_exits_
 
     before = held(fresh)
     assert run_live.read_documents(fresh, found, "second") == 0  # the third still fails, and is skipped again
-    assert held(fresh) == before  # the second run wrote nothing new
+    assert held(fresh) == before  # the second run wrote nothing new, and says so
+    printed = capsys.readouterr().out
+    assert (f"Run second parsed {read} documents, skipped 1 and wrote the passages of 0 to strata.gold.passage. "
+            f"The passages of {read} more were already in strata.gold.passage, unchanged.") in printed
     assert column(fresh, "SELECT run_id FROM strata.ops.skipped_documents") == {"first", "second"}
 
 
@@ -200,8 +203,9 @@ def test_a_rerun_writes_the_rows_of_only_the_documents_that_changed(fresh):
     fresh.run("DELETE FROM strata.gold.passage WHERE passage_id = :id", {"id": gone})
     writes = Writes(fresh)
 
-    read_p130164(writes, documents, "second")
+    report = read_p130164(writes, documents, "second")
 
+    assert report.written == 2  # the two documents it wrote again, not the one it found unchanged
     documents_rows = ("strata.silver.documents", "strata.silver.document_page_routes", "strata.silver.passages",
                       "strata.silver.passage_shields", "strata.silver.passage_embeddings", "strata.gold.passage")
     # Every run takes the notices' passages out and reads them again (passages.prune and read_notices).
@@ -249,6 +253,62 @@ def test_a_documents_run_that_wrote_no_document_exits_2(fresh, run_live, capsys)
     assert run_live.read_documents(fresh, found, "nothing") == 2
     assert "skipped" in capsys.readouterr().out
     assert fresh.run("SELECT count(*) FROM strata.gold.passage").rows[0][0] == 0
+
+
+
+def test_the_documents_run_counts_a_document_list_it_could_not_fetch_apart_from_the_documents(
+        fresh, run_live, monkeypatch, capsys):
+    """When a project's document list cannot be fetched, both readers skip it, each with a row of its own in
+    strata.ops.skipped_documents. The count at the end names the project once, apart from the documents it skipped.
+    The fixture records no list for P089634."""
+    limits = load_thresholds()
+    limits.values["ingestion"]["passage_documents"] = 3
+    monkeypatch.setattr(passages, "load_thresholds", lambda: limits)
+    manifest = fmt.load_manifest()
+    found = readers.Readers(RecordedDocuments(manifest), RecordedLayout(manifest), PatternShield(), offline(),
+                            plan_projects=lambda engine: ["P089634"],
+                            report_projects=lambda engine: ["P089634", "P130164"])
+
+    assert run_live.read_documents(fresh, found, "lists") == 0
+    printed = capsys.readouterr().out
+
+    assert column(fresh, "SELECT reader FROM strata.ops.skipped_documents WHERE project_id = 'P089634' "
+                         "AND document_id IS NULL") == {"plans", "passages"}
+    assert ("Run lists parsed 3 documents, skipped 0 and wrote the passages of 3 to strata.gold.passage. "
+            "It could not fetch the document list or the plans of 1 project.") in printed
+
+
+class FailsEveryPdf:
+    """The recorded documents, except that no PDF can be read, as pypdf failed on a damaged file."""
+
+    def __init__(self, documents):
+        self.documents = documents
+
+    def listing(self, url):
+        return self.documents.listing(url)
+
+    def text(self, url):
+        return self.documents.text(url)
+
+    def pages(self, url):
+        raise NotFetched(f"I could not read the PDF at {url}: EOF marker not found", url)
+
+
+def test_a_skipped_document_names_the_address_that_failed(fresh):
+    """strata.ops.skipped_documents keeps the address the run could not fetch or read: the PDF's when the PDF
+    failed, not the text's it fetched before."""
+    limits = load_thresholds()
+    limits.values["ingestion"]["passage_documents"] = 3
+    manifest = fmt.load_manifest()
+    found = readers.Readers(FailsEveryPdf(RecordedDocuments(manifest)), RecordedLayout(manifest), PatternShield(),
+                            offline(), plan_projects=lambda engine: ["P156634"],
+                            report_projects=lambda engine: ["P130164"])
+
+    readers.reading(fresh, found, "pdfs", passages._now)
+
+    rows = fresh.run("SELECT reader, url, reason FROM strata.ops.skipped_documents WHERE run_id = 'pdfs'").rows
+    assert {reader for reader, url, _ in rows if url.endswith(".pdf")} == {"plans", "passages"}
+    assert [(url, reason) for _, url, reason in rows if url not in reason] == []
 
 
 # ── The reading budget between pages (the nightly run of October 26, 2026) ──

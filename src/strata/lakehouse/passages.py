@@ -209,16 +209,17 @@ def with_contacts_held(engine: Engine, chosen: list[Held]) -> dict[str, tuple[in
     return found
 
 
-def _why_not_held(fetching: plans.Fetching, document: Listed) -> str:
-    """Why bronze holds no text for a listed document after the run asked the source for it."""
-    reasons = dict(fetching.not_fetched)
-    if document.document_id in reasons:
-        return reasons[document.document_id]
+def _why_not_held(fetching: plans.Fetching, document: Listed) -> tuple[str, str]:
+    """Why bronze holds no text for a listed document after the run asked the source for it, with the address the
+    run could not fetch or read: its text's, or its PDF's when the PDF failed."""
+    for document_id, url, reason in fetching.not_fetched:
+        if document_id == document.document_id:
+            return url, reason
     characters = dict(fetching.not_kept).get(document.document_id)
     if characters is not None:
-        return (f"Its text has {characters:,} characters, more than the SQL warehouse takes in one statement, so "
-                "bronze could not keep it.")
-    return "The source gave neither its text nor its PDF."
+        return document.text_url, (f"Its text has {characters:,} characters, more than the SQL warehouse takes in "
+                                   "one statement, so bronze could not keep it.")
+    return document.text_url, "The source gave neither its text nor its PDF."
 
 
 def _versioned(engine: Engine, held: Held, listed: list[Listed]) -> Held:
@@ -500,6 +501,7 @@ class Tally:
     parsed: int = 0  # documents read through the page router
     written: int = 0  # documents with passages written to strata.gold.passage
     passages: int = 0  # the passages of those documents
+    unchanged: int = 0  # documents whose passages strata.gold.passage already held, unchanged, so the run left them
     scanned: int = 0  # passage texts the shield scanned
     embedded: int = 0  # passage texts the embedder embedded
     synced: int = 0  # rows of strata.gold.passage added, changed or removed
@@ -546,7 +548,7 @@ def read_slice(engine: Engine, documents: Documents, endpoint: str, projects: li
                 fetching = plans.fetch_documents(engine, documents, project_id, [document.entry()])
                 held = _held(engine, document)
                 if held is None:
-                    skipping(project_id, document.document_id, document.text_url, _why_not_held(fetching, document))
+                    skipping(project_id, document.document_id, *_why_not_held(fetching, document))
                     continue
                 held = _versioned(engine, held, listed)
                 reading = _route_a(held, max_tokens)
@@ -556,7 +558,9 @@ def read_slice(engine: Engine, documents: Documents, endpoint: str, projects: li
                     try:
                         done = plans.parse_pages(engine, layout, project_id, waiting, page_cap, clock, run_id)
                     except NotFetched as error:
-                        skipping(project_id, document.document_id, document.pdf_url, str(error))
+                        skipping(project_id, document.document_id, error.url or document.pdf_url, str(error))
+                        # Its earlier rows stay (prune), with its key, so the next document's key must not repeat it.
+                        read_here.append(document)
                         continue
                     parsing = done if parsing is None else parsing.then(done)
                     if done.stop is not None:  # the host refused, or the night's reading time is spent
@@ -565,14 +569,15 @@ def read_slice(engine: Engine, documents: Documents, endpoint: str, projects: li
                         raise done.stop
                 tally.parsed += 1
                 item = read_document(engine, held, reading, max_tokens, part_pages, about, read_here)
-                # A document an earlier run wrote and nothing about it changed: its rows are already there.
-                scanned, embedded, synced = (0, 0, 0) if written.holds(item) else write_document(
-                    engine, item, shield, embedder, clock)
-                tally.scanned, tally.embedded, tally.synced = (tally.scanned + scanned, tally.embedded + embedded,
-                                                               tally.synced + synced)
-                if item.passages:
-                    tally.written += 1
-                    tally.passages += len(item.passages)
+                if written.holds(item):  # an earlier run wrote it and nothing about it changed: its rows are there
+                    tally.unchanged += bool(item.passages)
+                else:
+                    scanned, embedded, synced = write_document(engine, item, shield, embedder, clock)
+                    tally.scanned, tally.embedded, tally.synced = (tally.scanned + scanned, tally.embedded + embedded,
+                                                                   tally.synced + synced)
+                    if item.passages:
+                        tally.written += 1
+                        tally.passages += len(item.passages)
                 read_here.append(document)
                 found.append(item)
                 paged += held.paged

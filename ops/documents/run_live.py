@@ -36,15 +36,16 @@ nightly job reads the plans first. It writes each document's passages to strata.
 read that document (ticket 72). A document, or a project's document list, that a host does not give, as
 when search.worldbank.org answered 503 for P089634's list on October 26, 2026, is skipped: the run prints it
 with its reason as it goes, records it in strata.ops.skipped_documents, and goes on with the next. At the end
-it prints how many documents it parsed, skipped and wrote.
+it prints how many documents it parsed, skipped and wrote, and how many it found already written and unchanged.
 
 A run that stops before it finished, as when a World Bank host refuses a request or the reading time in
 config/thresholds.toml (ingestion.document_host_minutes) is spent, keeps every document it wrote before the stop,
 lists the document it was reading as unfinished in strata.ops.skipped_documents, and syncs the index; the next run
 goes on from there. The time is checked before each page the layout parser reads as well as before each request.
 
-It exits 0 when it wrote at least one document's passages and the index holds every passage, 1 when the index
-did not catch up in time, and 2 when it wrote no document's passages or could not run.
+It exits 0 when it wrote at least one document's passages, or found them already written and unchanged, and the
+index holds every passage, 1 when the index did not catch up in time, and 2 when it has no document's passages or
+could not run.
 
 It needs DATABRICKS_HOST, DATABRICKS_WAREHOUSE_ID, a token or a service principal, AI_SEARCH_ENDPOINT,
 AZURE_OPENAI_ENDPOINT and AZURE_OPENAI_API_KEY. Then check the ground-truth queries on both engines, as
@@ -113,8 +114,9 @@ def read_documents(engine, found: readers.Readers, run_id: str, clock: Callable[
     that is left (passages_first), so the plans' scanned pages cannot spend the reading time before a passage is
     written, as they did on October 26, 2026. Each document a reader skips or leaves unfinished is printed
     with its reason as the run goes (a warning from strata.lakehouse.plans) and again at the end from the run's
-    record in strata.ops.skipped_documents, with how many documents the run parsed, skipped and wrote. Returns 0 when
-    the run wrote at least one document's passages to strata.gold.passage, and 2 when it wrote none or could not
+    record in strata.ops.skipped_documents, with how many documents the run parsed, skipped and wrote, and how many
+    it found already written and unchanged. Returns 0 when the run wrote at least one document's passages to
+    strata.gold.passage or found them there unchanged from an earlier run, and 2 when it has none or could not
     run."""
     from strata.knowledge.embed import EmbedError
     from strata.knowledge.shields import ShieldError
@@ -132,11 +134,21 @@ def read_documents(engine, found: readers.Readers, run_id: str, clock: Callable[
         record = engine.run(RUN_RECORD, {"run_id": run_id}).rows
     except EngineError:
         record = []  # the warehouse is what failed; the skips were printed as the run went
-    skipped = [row for row in record if row[4] == "skipped"]
-    unfinished = [row for row in record if row[4] != "skipped"]
+    # Each document once, though both readers may skip it, and apart from the projects whose document list (or, for
+    # the plan reader, whose plans) the run could not fetch, which have no document.
+    skipped = {(project_id, document_id) for _, project_id, document_id, _, outcome, _ in record
+               if outcome == "skipped" and document_id}
+    projects = {project_id for _, project_id, document_id, _, outcome, _ in record
+                if outcome == "skipped" and not document_id}
+    unfinished = {(project_id, document_id) for _, project_id, document_id, _, outcome, _ in record
+                  if outcome != "skipped"}
     print(f"Run {run_id} parsed {tally.parsed} document{'' if tally.parsed == 1 else 's'}, skipped {len(skipped)} and "
           f"wrote the passages of {tally.written} to strata.gold.passage"
-          + (f", and left {len(unfinished)} unfinished." if unfinished else "."))
+          + (f", and left {len(unfinished)} unfinished." if unfinished else ".")
+          + (f" The passages of {tally.unchanged} more were already in strata.gold.passage, unchanged."
+             if tally.unchanged else "")
+          + (f" It could not fetch the document list or the plans of {len(projects)} "
+             f"project{'' if len(projects) == 1 else 's'}." if projects else ""))
     for reader, project_id, document_id, url, outcome, reason in record:
         what = plans.named(reader, document_id)
         print(f"  {what} of {project_id}, {'skipped' if outcome == 'skipped' else 'left unfinished'} by the "
@@ -154,7 +166,7 @@ def read_documents(engine, found: readers.Readers, run_id: str, clock: Callable[
         for outcome in report.shelf:
             shown = f"{outcome.count} of {outcome.denominator}" if outcome.count is not None else outcome.state
             print(f"  stress shelf {outcome.shelf_key}: {outcome.document_id or 'no document'}, {shown}")
-    return 0 if done is not None and tally.written else 2
+    return 0 if done is not None and (tally.written or tally.unchanged) else 2
 
 
 def main(argv=None) -> int:
