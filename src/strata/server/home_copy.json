@@ -57,8 +57,8 @@
     "noPlan": "I don't hold a published Procurement Plan from your team yet."
   },
   "public": {
-    "one": "I hold records for {total} World Bank-financed projects. Search for one by name, project ID or country in the search box, or start from the one that closed most recently.",
-    "many": "I hold records for {total} World Bank-financed projects. Search for one by name, project ID or country in the search box, or start from one of the {count} that closed most recently."
+    "one": "I hold records for {total} World Bank-financed projects. Search for one by name, project ID or country in the search box, or start from the closed project below, the latest to close among those whose contracts I hold.",
+    "many": "I hold records for {total} World Bank-financed projects. Search for one by name, project ID or country in the search box, or start from the {count} closed projects below, the latest to close among those whose contracts I hold."
   },
   "publicNone": "I hold records for {total} World Bank-financed projects. Search for one by name, project ID or country in the search box.",
   "line": {

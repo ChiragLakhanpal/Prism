@@ -8550,7 +8550,7 @@ export const copy = {
       action: "See its contracts",
       source: (through: string) => `Project records, notices and contract awards from World Bank APIs, through ${through}.`,
       more: "Find more projects",
-      empty: "I don't hold records for a closed project yet.",
+      empty: "I don't hold contracts for a closed project yet.",
     },
     // The briefing's count words open a window that lists what they count (5.2).
     popovers: {
@@ -8619,10 +8619,12 @@ export const copy = {
       public: {
         one:
           "I hold records for {total} World Bank-financed projects. Search for one by name, project ID or country in " +
-          "the search box, or start from the one that closed most recently.",
+          "the search box, or start from the closed project below, the latest to close among those whose contracts I " +
+          "hold.",
         many:
           "I hold records for {total} World Bank-financed projects. Search for one by name, project ID or country in " +
-          "the search box, or start from one of the {count} that closed most recently.",
+          "the search box, or start from the {count} closed projects below, the latest to close among those whose " +
+          "contracts I hold.",
       },
       publicNone: "I hold records for {total} World Bank-financed projects. Search for one by name, project ID or country in the search box.",
       line: {

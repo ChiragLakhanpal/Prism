@@ -75,7 +75,7 @@ export async function viewAnswers(): Promise<Record<string, { body: string }>> {
     // Home in each preview, and as of a past date (ticket 41; tests/record_home_api.py).
     "/api/home?view=piu": { body: await recorded("home-preview-piu.json") },
     "/api/home?view=public": { body: await recorded("home-preview-public.json") },
-    "/api/home?asof=2016-08-26": { body: await recorded("home-asof.json") },
+    "/api/home?asof=2016-08-26": { body: await recorded("home-asof-2016-08-26.json") },
   };
   return { ...answers, ...Object.fromEntries(Object.entries(answers).map(([key, value]) => [`GET ${key}`, value])) };
 }

@@ -316,7 +316,7 @@ def test_the_public_preview_lists_closed_projects_with_the_contracts_traced_and_
     assert answer["waiting"]["rows"] == []
     assert sentences(answer) == [
         "I hold records for 93 World Bank-financed projects. Search for one by name, project ID or country in the "
-        "search box, or start from the one that closed most recently."]
+        "search box, or start from the closed project below, the latest to close among those whose contracts I hold."]
     [line] = lines(answer)
     assert line["kind"] == "public" and line["action"]["href"] == "/projects/P130164/procurement#packages"
     assert text_of(line["segments"]) == (
@@ -324,6 +324,17 @@ def test_the_public_preview_lists_closed_projects_with_the_contracts_traced_and_
         f"{long(value('project-p130164-closing'))}. I traced {trail['traced']} of its {trail['contracts']} contracts "
         f"from notice to signature.")
     assert not lines(answer, "lesson") and answer["waiting"]["reason"] == "public"
+
+
+def test_the_public_preview_before_any_closed_project_has_contracts_says_so_and_lists_none(story):
+    """As of June 30, 2018 the fixture holds closed projects, but none whose contracts it holds (P130164 closed on
+    December 31, 2018), so the public Home lists no project and its empty words say that, not that none closed."""
+    answer = story.home(view="public", asof="2018-06-30").json()
+
+    assert lines(answer) == [] and answer["worth"]["empty"] == "no_closed"
+    [sentence] = sentences(answer)
+    assert sentence.startswith("I hold records for ") and "closed" not in sentence
+    assert sentence.endswith("Search for one by name, project ID or country in the search box.")
 
 
 def test_as_of_a_past_date_the_window_ends_on_it_and_lessons_drafts_and_the_strip_are_left_out(story):
@@ -334,6 +345,16 @@ def test_as_of_a_past_date_the_window_ends_on_it_and_lessons_drafts_and_the_stri
     assert answer["start_here"]["visible"] is False
     assert sentences(answer)[0] == "One plan changed in the 15 days to October 20, 2026."
     assert not any("draft" in sentence for sentence in sentences(answer))
+
+
+def test_as_of_a_past_date_the_briefing_counts_only_the_followed_projects_public_by_then(story):
+    """Ana follows P130164 and P156634, but P156634's record was public from March 1, 2017, so as of August 26, 2016
+    her briefing counts one project, not two."""
+    answer = story.home(asof="2016-08-26").json()
+
+    assert sentences(answer) == [
+        "Nothing changed in the plans of the one project you follow in the 15 days to August 26, 2016."]
+    assert answer["worth"]["followed"] == 1
 
 
 def test_a_plan_that_changed_with_no_activity_marked_never_reads_as_no_plan_changed(story):

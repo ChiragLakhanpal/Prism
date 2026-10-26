@@ -6,8 +6,8 @@
   window (the projects they follow), the new project-level signals project_signals found in it, the lesson notices on
   their own open drafts (strata.knowledge.lessons.page, the same function as the Lessons tab), and their own drafts in
   Draft. An implementing agency officer, and the agency preview, get the activities behind their planned dates in the
-  team's latest plans. The public preview gets the projects that closed most recently, with how many of their contracts
-  Strata traced. As of a past date, the window ends on that date and the lesson lines, the drafts and the strip are left
+  team's latest plans. The public preview gets the closed projects whose contracts Strata holds, latest to close first,
+  with how many of their contracts it traced. As of a past date, the window ends on that date and the lesson lines, the drafts and the strip are left
   out. A preview can only take things away, and a read records nothing.
 - POST /api/home/start-here {"visible": false} removes the strip for the viewer, and {"visible": true} shows it again:
   one new row in strata.ops.start_here_choices, written as the app's own service principal, so the choice follows the
@@ -513,6 +513,9 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, access: Access, vi
         days = window_days()
         start = end - dt.timedelta(days=days - 1)
         followed = follows.followed(viewer.user_id) if follows is not None and viewer.user_id else {}
+        if as_of is not None and followed:
+            public = {row[0] for row in engine.run(_query("public_projects"), {"as_of": as_of}).rows}
+            followed = {project_id: at for project_id, at in followed.items() if project_id in public}
         found = engine.run(_query("plans_disclosed"), {"start": start, "end": end})
         disclosed = [dict(zip(found.columns, row)) for row in found.rows]
         plans, lines, partial = [], [], 0

@@ -14,6 +14,7 @@ data-through date, October 23:
 - home-preview-piu.json and home-preview-public.json: Ana's previews of an implementing agency officer's Home (the
   Northern Water Works Development Agency's) and the public's.
 - home-asof.json: Ana's Home as of October 20, 2026.
+- home-asof-2016-08-26.json: Ana's Home as of August 26, 2016, the past date the shell's and the views' tests open.
 - home-nothing-marked.json: Ana's Home as of March 25, 2025, when one plan changed in the window (Kilifi - Mariakani's
   of March 19, 2025) and check_plan marked none of its activities.
 - home-drafts-checked.json: Ana's Home once she marked both drafts as checked.
@@ -63,6 +64,7 @@ def answers(folder: Path, fixture_db: Path = FIXTURE_DB, built: tuple[Path, Path
     found["home-preview-piu.json"] = text(story.home(view="piu"))
     found["home-preview-public.json"] = text(story.home(view="public"))
     found["home-asof.json"] = text(story.home(asof="2026-10-20"))
+    found["home-asof-2016-08-26.json"] = text(story.home(asof="2016-08-26"))
     found["home-nothing-marked.json"] = text(story.home(asof="2025-03-25"))
     found["example-rural-roads-kenya.json"] = text(story.get("/api/examples/rural_roads_kenya"))
     found["following-examples.json"] = text(story.get("/api/following"))

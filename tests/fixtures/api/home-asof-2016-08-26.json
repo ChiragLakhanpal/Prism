@@ -1,0 +1,105 @@
+{
+  "view": "staff",
+  "preview": false,
+  "today": "2016-08-26",
+  "as_of": "2016-08-26",
+  "window": {
+    "days": 15,
+    "start": "2016-08-12",
+    "end": "2016-08-26",
+    "data_through": null,
+    "phrase": [
+      {
+        "text": "the "
+      },
+      {
+        "count": 15,
+        "word": "15"
+      },
+      {
+        "text": " days to "
+      },
+      {
+        "date": "2016-08-26"
+      }
+    ]
+  },
+  "briefing": {
+    "sentences": [
+      [
+        {
+          "text": "Nothing changed in the plans of the one project you follow in "
+        },
+        {
+          "text": "the "
+        },
+        {
+          "count": 15,
+          "word": "15"
+        },
+        {
+          "text": " days to "
+        },
+        {
+          "date": "2016-08-26"
+        },
+        {
+          "text": "."
+        }
+      ]
+    ],
+    "plans": []
+  },
+  "start_here": {
+    "visible": false,
+    "links": [
+      {
+        "key": "checkPlan",
+        "href": "/projects/P156634/procurement/northern-water-works-development-agency/2026-10-09",
+        "pid": "P156634"
+      },
+      {
+        "key": "planPackage",
+        "href": "/packages?box=plan&example=rural_roads_kenya",
+        "pid": null
+      },
+      {
+        "key": "wholeStory",
+        "href": "/projects/P130164/timeline",
+        "pid": "P130164"
+      },
+      {
+        "key": "lessonChange",
+        "href": "/lessons",
+        "pid": null
+      },
+      {
+        "key": "checkData",
+        "href": "/data",
+        "pid": null
+      },
+      {
+        "key": "publicView",
+        "href": "/?view=public",
+        "pid": null
+      }
+    ]
+  },
+  "worth": {
+    "kind": "staff",
+    "lines": [],
+    "fold_after": 8,
+    "partial": null,
+    "checked_on": "2016-08-26",
+    "through": "2016-08-26",
+    "empty": "quiet",
+    "followed": 1
+  },
+  "waiting": {
+    "rows": [],
+    "total": 0,
+    "more": false,
+    "reason": "asof"
+  },
+  "public": null
+}
