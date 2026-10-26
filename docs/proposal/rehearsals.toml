@@ -1,0 +1,17 @@
+# The change drill's rehearsal record (ticket 49): how long each drill in config/change_drills.toml took when it was
+# rehearsed, measured on a throwaway branch with a timer. The steps of each drill are in docs/change-drill.md.
+# strata.proposal.register.load_rehearsals() reads it, and the proposal's build writes each time into Module 4's
+# change drill table, linked to its row in Annex 1, whose source kind is "Rehearsal". A drill with no rehearsal here
+# reads "Not rehearsed yet". A time over the target, ten minutes (docs/proposal/settings.toml, drill-target), shows
+# "Target: 10. Not met." and is never left out.
+#
+# [[rehearsals]], one per drill at most, in config/change_drills.toml's order:
+#   change        the drill's change, word for word as config/change_drills.toml writes it
+#   example       what the rehearsal changed, in one sentence
+#   branch        the throwaway branch it ran on, made from the ticket branch and never merged: drill-49/<nn>-<slug>
+#   commit        the full hash of the commit the gate passed on that branch
+#   started_at    when the branch was made and the timer started, with its offset from UTC
+#   finished_at   when the commit the gate passed was made, the end of the drill
+#   gate_seconds  the gate's own time in that commit, as its last line printed it
+# The time is finished_at less started_at, in whole minutes rounded up. tests/test_proposal_registries.py checks
+# that no rehearsal's commit is on the branch being tested, the integration branch included.

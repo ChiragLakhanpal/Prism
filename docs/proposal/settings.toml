@@ -70,6 +70,12 @@ where = "config/change_drills.toml"
 enforced_by = "tests/test_proposal_registries.py"
 enforces = "The drill lists docs/PLAN.md section 15's changes, each with its place and its test"
 
+[settings.drill-target]
+name = "Minutes a change in the change drill may take"
+read = "plan:10"
+form = "number"
+where = "docs/PLAN.md, section 15"
+
 [settings.loop-count]
 name = "Learning loops, each with its leading and lagging indicator"
 read = "count:loops"

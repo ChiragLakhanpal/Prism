@@ -8,9 +8,12 @@ API and Azure's RAI policies, runs on the workspace with ops/agent/sync.py.
 import re
 import shutil
 
+from strata import config
+from strata.agent import definition as agent_file
 from strata.agent import sync
 from strata.agent.definition import AGENTS_FILE, agent_definition, load_agent
 from strata.agent.foundry import LocalFoundry
+from strata.config import load_models
 from strata.tools import registry
 
 
@@ -24,7 +27,8 @@ def test_the_agents_tools_and_the_tool_section_of_its_instructions_come_from_the
         tool["name"] for tool in registry.agent_tools()]
     # The thresholds file allows three rounds of tool calls (agent.tool_rounds).
     assert "at most 3 rounds of tool calls" in definition["instructions"]
-    assert definition["model"] == "gpt-5.4-mini"  # config/models.toml, the agent role
+    # The agent role's deployment in config/models.toml, the one place a model is swapped (the change drill).
+    assert definition["model"] == load_models()["agent"].deployment
 
 
 def test_the_instructions_name_the_summary_record_wherever_a_tool_returns_one():
@@ -134,6 +138,26 @@ def test_a_changed_instruction_shows_in_the_diff_and_makes_a_new_version(tmp_pat
     assert report.changed and report.version == "2"
     assert "+Keep each sentence under 30 words." in report.text()
     assert sync.run(foundry, instructions_folder=instructions).differences == []
+
+
+def test_swapping_the_agents_model_is_one_line_and_the_next_sync_changes_only_its_model(tmp_path, monkeypatch):
+    """The change drill's "Swap the model" (docs/change-drill.md): one line in a copy of config/models.toml, and
+    the next sync finds the agent's model deployment changed and nothing else, and makes a new version."""
+    foundry = LocalFoundry()
+    sync.run(foundry)
+    text = (config.CONFIG_DIR / "models.toml").read_text()
+    current = load_models()["agent"].deployment
+    line = f'deployment = "{current}"'
+    assert text.count(line) == 1, "the agent's deployment line is not one line of config/models.toml"
+    swapped = tmp_path / "models.toml"
+    swapped.write_text(text.replace(line, f'deployment = "{current}-swapped"'))
+    monkeypatch.setattr(agent_file, "load_models", lambda: config.load_models(swapped))
+
+    report = sync.run(foundry)
+
+    assert report.differences == ["It has other values in its model deployment."]
+    assert report.changed and report.version == "2"
+    assert foundry.agent("strata-orchestrator")["definition"]["model"] == f"{current}-swapped"
 
 
 def test_a_check_reports_a_difference_and_changes_nothing():

@@ -5,13 +5,16 @@ Expected values come from docs/assessment.md, the spec's "Ten single places" and
 from the files under test.
 """
 
+import datetime as dt
 import re
+import subprocess
 from pathlib import Path
 
 import pytest
 
 from strata import config
 from strata.config import ConfigError
+from strata.proposal import register
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -121,7 +124,62 @@ def test_each_drill_names_a_place_and_a_test_that_exist():
     for drill in config.load_change_drills():
         assert (ROOT / drill.place).exists(), drill.place
         assert (ROOT / drill.proved_by).exists(), drill.proved_by
-        assert drill.minutes is None or drill.minutes > 0
+
+
+# ── The rehearsal record (ticket 49) ─────────────────────────────────────
+
+REHEARSAL = """
+[[rehearsals]]
+change = "Swap the model"
+example = "The agent's deployment changed from one model to another."
+branch = "drill-49/05-swap-the-model"
+commit = "0123456789abcdef0123456789abcdef01234567"
+started_at = 2026-10-26T10:00:05-07:00
+finished_at = 2026-10-26T10:06:06-07:00
+gate_seconds = 131.4
+"""
+
+
+def test_a_rehearsal_gives_its_whole_minutes_rounded_up_and_the_day_it_finished(tmp_path):
+    [rehearsal] = register.load_rehearsals(write(tmp_path, "rehearsals.toml", REHEARSAL)).values()
+
+    assert rehearsal.change == "Swap the model"
+    assert rehearsal.minutes == 7  # 6 minutes 1 second never reads as 6
+    assert rehearsal.measured_on == dt.date(2026, 10, 26)
+    assert (rehearsal.branch, rehearsal.commit[:7], rehearsal.gate_seconds) == (
+        "drill-49/05-swap-the-model", "0123456", 131.4)
+
+
+@pytest.mark.parametrize("old, new, says", [
+    ('change = "Swap the model"', 'change = "Swap the agent"', r"Swap the agent, which config/change_drills\.toml "
+                                                                r"does not list"),
+    ("finished_at = 2026-10-26T10:06:06-07:00", "finished_at = 2026-10-26T09:06:06-07:00",
+     r"finished_at must come after started_at"),
+    ('branch = "drill-49/05-swap-the-model"', 'branch = "strata/49-change-drills-and-rehearsal"',
+     r"branch must start with drill-49/"),
+    ("gate_seconds = 131.4\n", "", r"needs gate_seconds"),
+], ids=["unknown-change", "backwards", "ticket-branch", "no-gate-time"])
+def test_a_rehearsal_of_the_wrong_shape_is_refused_with_a_sentence(tmp_path, old, new, says):
+    with pytest.raises(register.RegisterError, match=says):
+        register.load_rehearsals(write(tmp_path, "rehearsals.toml", REHEARSAL.replace(old, new)))
+
+
+def test_two_rehearsals_of_one_drill_are_refused(tmp_path):
+    with pytest.raises(register.RegisterError, match=r"Swap the model is rehearsed twice"):
+        register.load_rehearsals(write(tmp_path, "rehearsals.toml", REHEARSAL + REHEARSAL))
+
+
+def test_no_rehearsal_left_its_change_on_this_branch():
+    """Criterion 3 of ticket 49: each drill ran on a throwaway branch, and none of its commits reached the branch
+    being tested, the integration branch included. A clone without the drill branches' objects skips the check."""
+    for rehearsal in register.load_rehearsals().values():
+        here = subprocess.run(["git", "cat-file", "-e", f"{rehearsal.commit}^{{commit}}"], cwd=ROOT,
+                              capture_output=True)
+        if here.returncode != 0:
+            continue
+        merged = subprocess.run(["git", "merge-base", "--is-ancestor", rehearsal.commit, "HEAD"], cwd=ROOT,
+                                capture_output=True)
+        assert merged.returncode == 1, f"{rehearsal.branch}'s commit {rehearsal.commit[:7]} is on this branch"
 
 
 # ── Designed, not built ──────────────────────────────────────────────────

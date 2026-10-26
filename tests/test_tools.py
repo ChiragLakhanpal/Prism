@@ -675,3 +675,29 @@ def test_every_reason_code_check_plan_may_return_has_a_sentence_in_the_screen_s_
     codes = config.load_tools()["check_plan"].result.reasons
     assert codes
     assert set(codes) - sentences == set()
+
+
+def data_notes_written(sql: str) -> set[str]:
+    """The name of each note plan_data_notes.sql writes."""
+    return set(re.findall(r"r\.activity_reference_no, '([a-z_]+)'", sql))
+
+
+# The one note the plan reader writes that check_plan's reasons do not list, found when this test was written
+# (ticket 49): method_unknown, a Method cell the method-name registry does not list (ticket 42). A plan with such a
+# row would get HTTP 500 tool_contract. The fix is check_plan's own (its reasons, its values and a copy sentence),
+# so it is a follow-up; when it lands, this set becomes empty and the test below says so.
+UNLISTED_NOTES = {"method_unknown"}
+
+
+def test_every_data_note_the_plan_reader_writes_is_a_reason_check_plan_lists():
+    """Ticket 09's review, R2-P2, for the change drill: plan_data_notes.sql is the one definition of each note, and
+    check_plan passes each note's name through as a reason code. A note added there without the same name in
+    check_plan's reasons in config/tools.toml would make the registry refuse the result, HTTP 500 tool_contract, on
+    every plan with that note. This fails the gate first, whether or not a fixture row gets the note."""
+    sql = (ROOT / "src" / "strata" / "lakehouse" / "sql" / "plans" / "plan_data_notes.sql").read_text()
+    reasons = set(config.load_tools()["check_plan"].result.reasons)
+
+    assert {"method_differs_from_reference", "actual_amount_zero"} <= data_notes_written(sql)  # the scan still works
+    assert data_notes_written(sql) - reasons == UNLISTED_NOTES
+    planted = sql + "\nUNION ALL\nSELECT r.document_id, r.project_id, r.activity_reference_no, 'lot_count_differs'"
+    assert data_notes_written(planted) - reasons == UNLISTED_NOTES | {"lot_count_differs"}

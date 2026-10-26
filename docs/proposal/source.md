@@ -277,7 +277,9 @@ Scored under [Operationalization and scalability](#rubric-operations).
 
 {drill}
 
-**Note:** The rehearsal times come from the change drill run in phase P4. This version was built before it.
+{when:unrehearsed} **Note:** The rehearsal times come from the change drill run in phase P4. This version was built before it.
+
+{when:rehearsed} **Source:** Annex 1. Each time ran from making the drill's own branch to the commit the gate passed on it, and no drill's change stayed in Strata. The steps of each drill are in [the change drill's runbook](change-drill.md).
 
 **What you can open.** [The Governance page]({url:dashboard}), [Lessons]({url:app|/lessons}) and [the change drill's list](../config/change_drills.toml).
 

@@ -9,13 +9,16 @@ Expected values come from tests/ground_truth/values.toml (the plans' rows with t
 history's months) and from the ticket's four lines, never from the tool's own arithmetic.
 """
 
+import ast
 import dataclasses
 import datetime as dt
+import re
 import tomllib
 from pathlib import Path
 
 import pytest
 
+from strata import config
 from strata.config import load_thresholds
 from strata.dbx import Viewer
 from strata.lakehouse.engine import DuckDBEngine
@@ -207,6 +210,49 @@ def test_a_plan_listed_but_not_read_counts_nothing_and_says_its_counts_are_missi
 def test_raising_the_needs_a_look_count_above_four_turns_p156634_to_watch_with_no_code_change(engine):
     assert signals(engine, thresholds=with_signals(look_min=5))["status"] == "watch"
     assert signals(engine, thresholds=with_signals(look_min=5, strong=["closing_moves"]))["status"] == "needs_a_look"
+
+
+# ── A signal added in round 2 (the change drill, docs/change-drill.md) ───
+
+def reasons_written(source: str) -> set[str]:
+    """Each code project_signals gives for a check it could not run: a text it stores in missing[...], or that
+    _plan_checks returns as its reason. The registry refuses a code that config/tools.toml does not list, so the
+    page would answer HTTP 500 tool_contract (ticket 09's review, R2-P2)."""
+    found = set()
+    for node in ast.walk(ast.parse(source)):
+        if isinstance(node, ast.Assign) and isinstance(node.value, ast.Constant) and any(
+                isinstance(target, ast.Subscript) and isinstance(target.value, ast.Name) and target.value.id == "missing"
+                for target in node.targets):
+            found.add(node.value.value)
+        if isinstance(node, ast.FunctionDef) and node.name == "_plan_checks":
+            for returned in ast.walk(node):
+                if (isinstance(returned, ast.Return) and isinstance(returned.value, ast.Tuple)
+                        and isinstance(returned.value.elts[1], ast.Constant)):
+                    found.add(returned.value.elts[1].value)
+    return {code for code in found if isinstance(code, str)}  # a check that ran gives None
+
+
+def test_every_reason_a_check_could_not_run_is_in_the_registry_with_its_words_on_the_page():
+    """Adding a signal adds a check to src/strata/tools/project_signals.py, and the gate, not the live page, must
+    catch a reason for not running it that config/tools.toml does not list, or that the Following page has no
+    words for."""
+    source = (ROOT / "src" / "strata" / "tools" / "project_signals.py").read_text()
+    reasons = set(config.load_tools()["project_signals"].result.reasons)
+    copy = (ROOT / "web" / "src" / "copy.ts").read_text()
+    block = copy[copy.index("    missing: {\n      no_plans"):]
+    words = set(re.findall(r"^ {6}(\w+):", block[:block.index("\n    } as Record")], flags=re.M))
+
+    written = reasons_written(source)
+    assert {"no_plans", "no_recent_plans", "no_loan_history", "no_isr", "no_loans"} <= written  # the scan still works
+    assert written - reasons == set()
+    assert reasons - words == set()
+
+
+def test_a_new_check_whose_reason_the_registry_does_not_list_fails_the_gate():
+    source = (ROOT / "src" / "strata" / "tools" / "project_signals.py").read_text()
+    planted = source + '\n\ndef _contracts_late(missing):\n    missing["contracts_late"] = "no_contracts"\n'
+
+    assert reasons_written(planted) - set(config.load_tools()["project_signals"].result.reasons) == {"no_contracts"}
 
 
 def test_the_disbursement_signal_gives_the_closing_date_its_months_are_counted_to(engine):

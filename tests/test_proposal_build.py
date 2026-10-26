@@ -5,6 +5,7 @@ snapshot, so nothing here is a finding.
 Expected words and structure come from the brief, docs/assessment.md and DESIGN.md, never from the build.
 """
 
+import datetime as dt
 import html
 import re
 import subprocess
@@ -15,7 +16,7 @@ import pytest
 
 from proposal_seed import merged
 from strata import config
-from strata.proposal import build, figures, numbers
+from strata.proposal import build, figures, numbers, register
 from strata.proposal.__main__ import proposal_problems, source_problems
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -189,6 +190,72 @@ def test_model_names_come_from_the_model_file_so_swapping_a_model_changes_the_ne
     swapped = build.build(SOURCE, inputs(snap, models=models)).markdown
     assert "`text-embedding-swapped`" in swapped
     assert config.load_models()["embed"].deployment not in swapped
+
+
+# ── The change drill's times (ticket 49; the 46 brief, sections 11.4 and 15) ──
+
+PACIFIC = dt.timezone(dt.timedelta(hours=-7))
+
+
+def rehearsed(minutes: dict[str, int]) -> dict[str, register.Rehearsal]:
+    """Made-up rehearsals that took the minutes given, each finished on October 26, 2026, 30 seconds short of a
+    whole minute."""
+    start = dt.datetime(2026, 10, 26, 10, 0, tzinfo=PACIFIC)
+    return {change: register.Rehearsal(change, "An example.", f"drill-49/{number:02d}-example", f"{number:040d}",
+                                       start, start + dt.timedelta(minutes=taken, seconds=-30), 130.5)
+            for number, (change, taken) in enumerate(minutes.items(), 1)}
+
+
+def drill_section(markdown: str) -> str:
+    return markdown.split("### Changing Strata in under ten minutes")[1].split("## Designed, not built")[0]
+
+
+CHANGES = [drill.change for drill in config.load_change_drills()]
+
+
+def test_until_a_drill_is_rehearsed_its_time_reads_not_rehearsed_yet_and_a_note_says_why(snap):
+    section = drill_section(build.build(SOURCE, inputs(snap, rehearsals={})).markdown)
+
+    assert "| Change | The one place it lives | Time, minutes | Proved by |" in section
+    assert "| Add a data source | [`config/sources.toml`](../config/sources.toml) | Not rehearsed yet |" in section
+    assert section.count("Not rehearsed yet") == len(CHANGES) == 10
+    assert ("**Note:** The rehearsal times come from the change drill run in phase P4. This version was built before "
+            "it.") in section
+
+
+def test_a_rehearsed_drill_shows_its_minutes_linked_to_its_row_in_annex_1_and_the_note_goes(snap):
+    markdown = build.build(SOURCE, inputs(snap, rehearsals=rehearsed({change: 6 for change in CHANGES}))).markdown
+    section = drill_section(markdown)
+
+    assert ('| Swap the model | [`config/models.toml`](../config/models.toml) | '
+            '[6](#r-drill-swap-the-model "6 minutes. Rehearsal, measured Oct 26, 2026.") |') in section
+    assert "Not rehearsed yet" not in section and "**Note:**" not in section
+    assert "**Source:** Annex 1." in section
+    [row] = [line for line in markdown.splitlines() if line.startswith('| <a id="r-drill-swap-the-model"></a>')]
+    assert "| 6 | Oct 26, 2026 | Rehearsal; branch `drill-49/05-example`, commit `0000000`" in row
+    assert "the gate passed in 130.5 seconds" in row
+    assert '[The section "Changing Strata in under ten minutes"](#sec-m4-drill)' in row  # as every Cited in cell
+    assert numbers.unsourced(markdown) == []
+
+
+def test_a_drill_over_ten_minutes_says_its_target_was_not_met_and_is_never_left_out(snap):
+    times = {change: 6 for change in CHANGES} | {"Add a data source": 12}
+    markdown = build.build(SOURCE, inputs(snap, rehearsals=rehearsed(times))).markdown
+    section = drill_section(markdown)
+
+    [line] = [line for line in section.splitlines() if line.startswith("| Add a data source |")]
+    assert '[12](#r-drill-add-a-data-source "12 minutes. Rehearsal, measured Oct 26, 2026.")' in line
+    assert re.search(r"<br>Target: \[10\]\(#s-drill-target [^)]*\)\. Not met\. \|", line)
+    [row] = [line for line in markdown.splitlines() if line.startswith('| <a id="r-drill-add-a-data-source"></a>')]
+    assert re.search(r"\| 12<br>Target: \[10\]\(#s-drill-target [^)]*\)\. Not met\. \|", row)
+    assert '<a id="s-drill-target"></a>' in markdown.split("## Annex 2")[1]
+
+
+def test_while_any_drill_is_not_rehearsed_the_note_stays(snap):
+    section = drill_section(build.build(SOURCE, inputs(snap, rehearsals=rehearsed({CHANGES[0]: 4}))).markdown)
+
+    assert section.count("Not rehearsed yet") == len(CHANGES) - 1
+    assert "**Note:** The rehearsal times come from the change drill run in phase P4." in section
 
 
 def test_the_retrieval_scores_name_the_query_set_they_were_measured_on(built):

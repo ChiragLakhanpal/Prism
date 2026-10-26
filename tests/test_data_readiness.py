@@ -52,6 +52,9 @@ from strata.tools import registry  # noqa: E402
 ANA = Viewer(email="ana.example@worldbank.org", name="Ana Example", token="token-for-ana-only")
 KENYA = tomllib.loads((ROOT / "tests" / "ground_truth" / "values.toml").read_text())["counts"]["kenya"]
 COLUMNS = ("coverage", "linked", "read_well", "fresh")
+# The Sources table's rows: one per readiness row in config/sources.toml, 14 when ticket 16 wrote these tests. A
+# source added in round 2 is one entry (the change drill, docs/change-drill.md), and its rows join this count.
+ROWS = sum(len(source.readiness) for source in config.load_sources().values())
 
 
 def readiness(engine, context=None, **arguments):
@@ -327,7 +330,7 @@ def test_opened_from_a_coverage_line_it_shows_only_the_sources_behind_it(engine)
 
     assert [row["id"] for row in result["sources"]] == ["awards", "fy2017_2019", "notices"]
     assert result["filter"] == {"sources": ["awards", "notices"], "unknown": 0, "from": "find_comparables",
-                                "shown": 2, "total": 14}
+                                "shown": 2, "total": ROWS}
     assert result["kinds"] == []  # neither tool in the registry reads awards or notices yet
     assert result["headline"]["text"].startswith("Two sources are behind the past range. The biggest gaps are ")
 
@@ -338,7 +341,7 @@ def test_opened_from_the_plan_check_it_shows_only_the_rows_the_plan_check_draws_
     result = readiness(engine, sources="documents,projects", from_tool="check_plan")
 
     assert [row["id"] for row in result["sources"]] == ["projects", "plans"]  # in registry order
-    assert (result["filter"]["shown"], result["filter"]["total"]) == (2, 14)
+    assert (result["filter"]["shown"], result["filter"]["total"]) == (2, ROWS)
     # Review r4 P3: when every entry falls short, the headline's gap says so rather than "258 of 258".
     assert result["headline"]["text"] == (
         "Two sources are behind the plan check. The biggest gap is the 258 activity entries in the latest plan "
@@ -528,7 +531,7 @@ def test_a_source_with_no_measures_leaves_the_headline_out_and_says_how_many(wri
     result = call_on(written(*awards()))
 
     assert result["headline"] is None
-    assert result["headline_abstention"] == {"reason": "unmeasured", "unmeasured": 13, "sources": 14}
+    assert result["headline_abstention"] == {"reason": "unmeasured", "unmeasured": ROWS - 1, "sources": ROWS}
     [notices] = [row for row in result["sources"] if row["id"] == "notices"]
     assert notices["type"] == "unmeasured"
 

@@ -16,6 +16,7 @@ from pathlib import Path
 
 import pytest
 
+from strata import config
 from strata.lakehouse.engine import DuckDBEngine
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -63,7 +64,11 @@ def test_the_slice_counts_the_projects_its_criteria_select_and_records_how_that_
     assert measure["denominator"] is None  # PLAN.md's figure is a plan, not a denominator
     assert f"planned {case['planned']}, {case['planned'] - case['count']} fewer" in measure["detail"]
     assert "Kenya 17, Bangladesh 0, Vietnam 0, Pakistan 0" in measure["detail"]
-    assert "holds no such project for Bangladesh, Vietnam and Pakistan" in measure["detail"]
+    # The fixture holds projects for Kenya alone, so every other slice country is named, a country added to the
+    # slice in one entry (the change drill) among them.
+    others = [country.name for country in config.load_slice().countries if country.name != "Kenya"]
+    assert f"holds no such project for {', '.join(others[:-1])} and {others[-1]}." in measure["detail"]
+    assert others[:3] == ["Bangladesh", "Vietnam", "Pakistan"]
     assert "approve" not in measure["detail"].lower()  # DESIGN.md section 7, rule 19
     # The run read the documents of each selected project whose list the fixture records, and the named
     # ones: the showcase (India) and the French report's project (Haiti) are outside the criteria.
