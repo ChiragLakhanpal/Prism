@@ -196,3 +196,146 @@ def test_the_showcase_check_gives_search_passages_the_env_file_s_settings(agent_
     [row] = logged
     assert (row["question"], row["status"], row["error_code"]) == (case.question, "answered", None)
     assert [call["tool"] for call in json.loads(row["tool_calls"])] == ["search_passages"]
+
+
+# ── The live document run fetches as the nightly job does ────────────────
+
+class Host:
+    """The World Bank's document host: each address answered with its own bytes, or refused."""
+
+    def __init__(self, refuse=()):
+        self.asked, self.refuse = [], set(refuse)
+
+    def __call__(self, url):
+        import urllib.error
+
+        self.asked.append(url)
+        if url in self.refuse:
+            raise urllib.error.HTTPError(url, 403, "Forbidden", {}, None)
+        return json.dumps({"documents": {}}).encode() if "/v3/wds" in url else f"the text at {url}".encode()
+
+
+class Clock:
+    def __init__(self):
+        self.now, self.slept = 100.0, []
+
+    def __call__(self):
+        return self.now
+
+    def sleep(self, seconds):
+        self.slept.append(round(seconds, 3))
+        self.now += seconds
+
+
+@pytest.fixture
+def run_live(monkeypatch):
+    """ops/documents/run_live.py as a module, as uv runs it; sys.path goes back after."""
+    monkeypatch.setattr(sys, "path", list(sys.path))
+    path = ROOT / "ops" / "documents" / "run_live.py"
+    spec = importlib.util.spec_from_file_location("strata_ops_documents_run_live", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_the_live_document_run_reads_through_the_nightly_job_s_paced_and_kept_fetch(run_live, tmp_path):
+    """The catch-up's document runs asked documents.worldbank.org back to back with plain urllib, were refused, and
+    fetched the oversized plan texts again on every attempt. The run now builds its documents source and its layout
+    parser on the nightly job's fetch (strata.lakehouse.readers.document_host): a pause between requests, each
+    document kept once fetched, and a stop at the host's first refusal."""
+    from strata import config
+    from strata.lakehouse import readers
+    from strata.reader.documents import HostRefused, LiveDocuments, PoliteFetch, list_url
+
+    refused = "https://documents.worldbank.org/curated/en/099/refused.txt"
+    host, clock = Host(refuse={refused}), Clock()
+    documents, layout = run_live.document_readers(None, upload=lambda path, data: None, fetch=host,
+                                                  cache=tmp_path / "fetched", sleep=clock.sleep, clock=clock)
+
+    assert isinstance(documents, LiveDocuments) and isinstance(documents.fetch, PoliteFetch)
+    assert layout.fetch is documents.fetch  # one fetcher for the texts, the PDFs and the pages the parser cuts
+    assert documents.fetch.pause == config.load_sources()[readers.SOURCE].pause_seconds == 3.0
+    listing = list_url(config.load_sources()[readers.SOURCE].endpoint, "P156634")
+    text = "https://documents.worldbank.org/curated/en/099/plan.txt"
+
+    documents.listing(listing)
+    clock.now += 1.0  # the reader spends a second on the list
+    documents.text(text)
+    assert documents.text(text).body == f"the text at {text}"  # a second attempt reads the kept copy
+    with pytest.raises(HostRefused):
+        documents.text(refused)
+
+    assert host.asked == [listing, text, refused]
+    assert clock.slept == [2.0, 3.0]
+    assert len(list((tmp_path / "fetched").iterdir())) == 1  # the text, never the list
+
+
+def pdf_of(pages: list[str]) -> bytes:
+    """A PDF whose text layer holds each page's lines, written by hand so the test needs no PDF writer."""
+    objects = ["<< /Type /Catalog /Pages 2 0 R >>", "", "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>"]
+    kids = []
+    for text in pages:
+        lines = " ".join("({}) Tj T*".format(line.encode("latin-1", "replace").decode("latin-1").replace(
+            "\\", "\\\\").replace("(", "\\(").replace(")", "\\)")) for line in text.split("\n"))
+        stream = f"BT /F1 6 Tf 7 TL 20 780 Td {lines} ET"
+        kids.append(f"{len(objects) + 1} 0 R")
+        objects.append(f"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> "
+                       f"/Contents {len(objects) + 2} 0 R >>")
+        objects.append(f"<< /Length {len(stream.encode('latin-1'))} >>\nstream\n{stream}\nendstream")
+    objects[1] = f"<< /Type /Pages /Kids [{' '.join(kids)}] /Count {len(pages)} >>"
+    out, offsets = "%PDF-1.4\n", []
+    for number, body in enumerate(objects, 1):
+        offsets.append(len(out.encode("latin-1")))
+        out += f"{number} 0 obj\n{body}\nendobj\n"
+    xref = len(out.encode("latin-1"))
+    out += f"xref\n0 {len(objects) + 1}\n0000000000 65535 f \n" + "".join(f"{offset:010d} 00000 n \n" for offset in offsets)
+    return (out + f"trailer\n<< /Size {len(objects) + 1} /Root 1 0 R >>\nstartxref\n{xref}\n%%EOF\n").encode("latin-1")
+
+
+def test_the_live_document_run_s_reader_reads_the_fixture_s_plans_into_the_same_pages_and_rows(run_live, tmp_path):
+    """A dry run of the live document run's documents source on the fixture: P156634's recorded list, plan texts and
+    PDFs (each PDF's text layer written from the recorded page texts) served by a stand-in host, through the paced,
+    kept fetch, give the plan reader the same versions, the same 15 Route B pages and the same STEP rows as the
+    fixture's own recorded source. The layout parser is the recorded one on both sides, since ai_parse_document needs
+    the warehouse."""
+    import urllib.error
+
+    from strata.fixture import recorded as fmt
+    from strata.lakehouse import catalog, plans
+    from strata.reader.documents import RecordedDocuments, https
+    from strata.reader.layout import RecordedLayout
+
+    manifest = fmt.load_manifest()
+    recorded = RecordedDocuments(manifest)
+    by_url = {https(source.url): ("list", source.url) for source in manifest.sources if source.kind == "json"}
+    by_url |= {https(source.text_url): ("text", source.text_url) for source in manifest.sources if source.kind != "json"}
+    by_url |= {https(source.pdf_url): ("pdf", source.pdf_url) for source in manifest.sources if source.kind != "json"}
+    asked, waits = [], []
+
+    def host(url):
+        asked.append(url)
+        kind, address = by_url.get(url, (None, None))
+        if kind == "list":
+            return json.dumps(recorded.listing(address).body).encode()
+        if kind == "text":
+            return recorded.text(address).body.encode()
+        if kind == "pdf":
+            return pdf_of(recorded.pages(address).body)
+        raise urllib.error.HTTPError(url, 404, "Not Found", {}, None)
+
+    def read(documents):
+        with DuckDBEngine.open() as engine:
+            catalog.build(engine)
+            report = plans.run(engine, documents, RecordedLayout(manifest), "P156634")
+            return report.parsing.parsed, [sorted(engine.run(sql).as_text()) for sql in (
+                "SELECT document_id, pdf_page FROM strata.bronze.layout_pages",
+                "SELECT document_id, activity_reference_no, section FROM strata.silver.plan_rows",
+                "SELECT document_id, pdf_pages, route_b_pages, parse_reason FROM strata.silver.plan_versions")]
+
+    documents, _ = run_live.document_readers(None, upload=lambda path, data: None, fetch=host,
+                                             cache=tmp_path / "fetched", sleep=waits.append)
+    through_the_live_reader = read(documents)
+
+    assert through_the_live_reader == read(recorded)
+    assert through_the_live_reader[0] == 15 and len(through_the_live_reader[1][1]) > 0
+    assert len(asked) == len(set(asked)) and waits  # each address asked once, with pauses between requests
