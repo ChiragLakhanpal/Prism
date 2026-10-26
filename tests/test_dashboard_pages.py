@@ -147,6 +147,17 @@ def test_adding_a_tile_for_a_kpi_that_exists_is_one_entry_and_removing_it_is_del
     assert render.render((definition.DATA_READINESS, removed, definition.AI_QUALITY), test=True) == before
 
 
+def test_a_tile_can_be_tried_on_the_test_copy_before_the_dashboard_people_use_gets_it(tmp_path, monkeypatch):
+    from strata.dashboard import __main__ as command
+
+    monkeypatch.setattr(command, "FILE", tmp_path / "strata.lvdash.json")
+    monkeypatch.setattr(command, "TEST_FILE", tmp_path / "strata_test.lvdash.json")
+
+    assert command.main(["--write", "--test-only"]) == 0
+    assert [path.name for path in tmp_path.iterdir()] == ["strata_test.lvdash.json"]
+    assert command.main(["--write"]) == 0 and command.main([]) == 0
+
+
 def test_the_test_copy_says_so_first_on_every_page():
     for page in board(dashboard.TEST_FILE)["pages"]:
         lines = page["layout"][0]["widget"]["multilineTextboxSpec"]["lines"]

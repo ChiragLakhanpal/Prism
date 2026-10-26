@@ -2,10 +2,12 @@
 
     uv run --frozen python -m strata.dashboard --write
     uv run --frozen python -m strata.dashboard --write --no-query-history
+    uv run --frozen python -m strata.dashboard --write --test-only
 
 The first writes "Strata operations" and its test copy with the table of who queried what. If the workspace doesn't
 let Strata read its query history (docs/workspace-catchup.md), the second writes them with the dated text tile in its
-place (the 45 design brief, section 6.4); deploy and commit what it wrote.
+place (the 45 design brief, section 6.4); deploy and commit what it wrote. The third writes only the test copy, to try
+a new tile there before the dashboard people use gets it (section 9.6); the gate fails until both files are written.
 """
 
 import sys
@@ -15,7 +17,8 @@ from strata.dashboard import FILE, TEST_FILE, written
 
 def main(argv: list[str]) -> int:
     history = "--no-query-history" not in argv
-    files = ((FILE, written(False, history)), (TEST_FILE, written(True, history)))
+    files = ((TEST_FILE, written(True, history)),) if "--test-only" in argv else (
+        (FILE, written(False, history)), (TEST_FILE, written(True, history)))
     if "--write" in argv:
         for path, text in files:
             path.parent.mkdir(parents=True, exist_ok=True)
