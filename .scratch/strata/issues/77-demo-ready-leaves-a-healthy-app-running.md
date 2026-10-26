@@ -17,4 +17,4 @@ Read first: `ops/demo/ready.py` (step 1, the app section), its tests (the fake w
 
 ## Comments
 
-- October 26, 2026, orchestrator: opened at 04:20 PDT from the second session's two runs, recorded under 48-2 and 48-3. On the demo-day path: a clean demo day starts with this check.
+- October 26, 2026, orchestrator: opened at 02:53 PDT from the second session's two runs, recorded under 48-2 and 48-3. On the demo-day path: a clean demo day starts with this check.

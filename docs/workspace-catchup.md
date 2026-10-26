@@ -8,6 +8,8 @@ Check which keys are set first:
 
 The merger appends a block below each time it parks a step.
 
+**Running a step from a snapshot (October 26, 2026).** Long or App-touching steps run from a snapshot of the commit (`git archive <sha> | tar -x -C <scratchpad>/snap-<sha>`), never from the shared checkout, so a merge cannot rewrite config under the process. A snapshot has no `web/node_modules`, so `ops/app/deploy_app.py` stops at step 1 with `sh: tsc: command not found`: run `npm ci --prefix web` in the snapshot, or link the main checkout's `web/node_modules` into it, before the App deploy. Point `--env-file` at the main checkout's `.env`; the snapshot holds no secrets.
+
 **While the user works through the wizard and the catch-up steps.** All ten keys were set by 10:58 PDT on October 24, 2026, and day-one test 7 passes. The user is running the wizard and the catch-up steps by hand in the main checkout, which means two things for a merger. First, do not run any workspace step during a merge, even though the keys are there: work on the shared workspace runs one at a time, and the user holds that turn today. Park your ticket's steps here as before, in order, and the orchestrator runs the backlog after the user's run. Second, if the main checkout holds staged or unstaged changes you did not make, do not commit, revert, unstage or set them aside; stop before `git merge`, and return merged false with the summary "blocked by uncommitted changes in the main checkout", naming the files. The orchestrator commits the user's work and the merge runs again. Never read or print `.env`.
 
 **Redeploying the App from a session that may not write secrets (ticket 70).** Only the user may write secrets in the shared workspace, and the App deploy saves the Foundry agent's and the judge's keys in the secret scope `strata` each time it runs. Once the user has written them, with the deploy, the wizard or `databricks secrets put-secret strata <name>`, a block below that redeploys the App runs from a session with `--keep-secrets`:
@@ -1415,6 +1417,8 @@ Run this from the main checkout:
 
 It worked if it exits 0 and prints a 2025 line with the packages tested and the Brier score and calibration error for gbm, logistic and the baseline, with its MLflow run id. Then it prints "The better calibrated model is ... Registered strata.gold.rebidding_risk version N as champion." and "Run ... is in strata.ops.evaluation_result." If the warehouse had too few decided packages, it prints "No champion was trained, so none was registered. The model card says why." instead. Either way the model card states the results, whether or not the model beat its baseline. Note how long it took before step 3.
 
+**Ran on October 26, 2026 (orchestrator), from 03349a45, after run 601237901444983.** `rebidding_backtest_live.py --years 2025` exited 0 in 171 seconds, 09:52 to 09:55 UTC. It made the experiment `/Shared/strata/rebidding_risk` (2826322192914825) and printed "2025: 1 packages tested, 0 advertised again, 2 undecided. gbm Brier 0.0277, calibration error 0.1665; logistic Brier 0.0106, calibration error 0.1031; baseline Brier 0.027, calibration error 0.1643. MLflow run 5252d96a5cad4f5eb4c81893f04f7efe.", then "The better calibrated model is logistic. Registered strata.gold.rebidding_risk version 1 as champion." and "Run rebidding_backtest-20261026T095255Z-cf3c4532 is in strata.ops.evaluation_result." The lines the block asks for are all there, so the step passed as written, but the champion was chosen on one tested package for 2025 (the warehouse's rebidding labels count 1,535 packages of 14,211 over every year, ticket 04's step 3), which is thin ground for a champion; whether to keep it is the user's call, beside ticket 25's data decision. Step 3 (every year) follows. Log: the scratchpad's rebid28.log.
+
 ## Ticket 28, step 3 of 6: backtest the rebidding models for 2021 to 2025 on the workspace
 
 The merger parked this step on October 25, 2026, after merge commit 6044bd4. It needs the Databricks keys in `.env`. Run it after step 2, and only if step 2's year took a reasonable time.
@@ -1496,6 +1500,8 @@ It worked if P156634 is still listed after the restart, and `SELECT viewer_id, p
 **Parked on October 26, 2026 (orchestrator); runs with `--keep-secrets` since ticket 70 merged (da9a906d).** This is the App deploy, `ops/app/deploy_app.py`. Without the option it writes the Foundry and Azure OpenAI keys into the secret scope `strata` through the SDK, and secret writes are the user's (ticket 06, step 1, and ticket 43, step 4). The user has written the secrets, so a session runs this step as `uv run --script ops/app/deploy_app.py --env-file .env --keep-secrets`, which writes no secret (the header's note on ticket 70). One such deploy from da9a906d or later, such as ticket 70's step 1, serves this block; the checks above then run as written.
 
 **Workspace half found done on October 26, 2026 (orchestrator).** The user's App deploy of 06:11 UTC (ticket 06, step 1 of 6) granted the App's service principal e796c089-1500-4cf2-9c1f-8e6a8f5aba10 SELECT and MODIFY on `strata.ops.follows` (`SHOW GRANTS ON TABLE`), beside `account users` SELECT on the schema. The follow-and-restart check and the refusal of a non-staff identity are the user's, in the browser.
+
+**Redeployed on October 26, 2026 (orchestrator).** Ticket 70's step 1 has the deploy: `ops/app/deploy_app.py --keep-secrets` from a snapshot of 15052345, 10:10 to 10:19 UTC, exit 0, last line "Strata is running at https://strata-7474658003099155.aws.databricksapps.com". `strata.ops.follows` keeps SELECT and MODIFY for the App's service principal, and `GET /api/following` with the CLI profile's OAuth token answered 200 at 10:20 UTC (counts all 0, no project followed yet). The follow-and-restart check and the non-staff refusal stay the user's, in the browser.
 
 ## Ticket 37, step 3 of 6: sync the mission brief writer and the orchestrator
 
@@ -1678,6 +1684,8 @@ It worked if the deploy exits 0, its last line is `Strata is running at https://
 
 **Parked on October 26, 2026 (orchestrator); runs with `--keep-secrets` since ticket 70 merged (da9a906d).** This is the App deploy, `ops/app/deploy_app.py`. Without the option it writes the Foundry and Azure OpenAI keys into the secret scope `strata` through the SDK, and secret writes are the user's (ticket 06, step 1, and ticket 43, step 4). The user has written the secrets, so a session runs this step as `uv run --script ops/app/deploy_app.py --env-file .env --keep-secrets`, which writes no secret (the header's note on ticket 70). One such deploy from da9a906d or later, such as ticket 70's step 1, serves this block; the checks above then run as written.
 
+**Ran on October 26, 2026 (orchestrator).** Ticket 70's step 1 has the deploy: `ops/app/deploy_app.py --keep-secrets` from a snapshot of 15052345, 10:10 to 10:19 UTC, exit 0, last line "Strata is running at https://strata-7474658003099155.aws.databricksapps.com". `SHOW GRANTS ON TABLE strata.ops.disagreement_choices` lists SELECT and MODIFY for the App's service principal. `GET /api/projects/P130164/timeline` with the CLI profile's OAuth token answered 200 at 10:21 UTC with 0 items and no disagreement, because `strata.gold.passage` holds 0 rows and `detect_disagreements` was skipped in run 601237901444983; the two disagreement items and the POST follow a run with passages. The deploy half passed.
+
 ## Ticket 23, step 3 of 3: the timeline, the warning card and a kept side on the deployed App (criteria 4 and 5, live)
 
 The merger parked this step on October 25, 2026, after merge commit f5b445f. The verifier proved all three checks offline and parked their live halves. It needs the Databricks keys, the four Foundry keys, and `AZURE_OPENAI_ENDPOINT` and `AZURE_OPENAI_API_KEY` in `.env`. Run it after step 2 and after ticket 24's step 4.
@@ -1721,6 +1729,8 @@ Run as you, the same two queries count every report and every cited source that 
 **Parked on October 26, 2026 (orchestrator); runs with `--keep-secrets` since ticket 70 merged (da9a906d).** This is the App deploy, `ops/app/deploy_app.py`. Without the option it writes the Foundry and Azure OpenAI keys into the secret scope `strata` through the SDK, and secret writes are the user's (ticket 06, step 1, and ticket 43, step 4). The user has written the secrets, so a session runs this step as `uv run --script ops/app/deploy_app.py --env-file .env --keep-secrets`, which writes no secret (the header's note on ticket 70). One such deploy from da9a906d or later, such as ticket 70's step 1, serves this block; the checks above then run as written.
 
 **Checked on October 26, 2026 (orchestrator).** After the user's App deploy of 06:11 UTC, `system.information_schema.column_masks` has no row for `strata.ops`, and `strata.information_schema.routines` lists no routine in `ops`, so no mask function `mask_viewer` exists and the deploy's step 7 did not take. Whether it printed a refusal of `SET MASK` is in the user's terminal; the next App deploy (ticket 70) shows what step 7 prints.
+
+**Ran on October 26, 2026 (orchestrator).** Ticket 70's step 1 has the deploy: `ops/app/deploy_app.py --keep-secrets` from a snapshot of 15052345, 10:10 to 10:19 UTC, exit 0, last line "Strata is running at https://strata-7474658003099155.aws.databricksapps.com". Step 7 printed its one line, "7. Masking who sent each passage report and who asked each question from everyone but the app and you." `strata.information_schema.column_masks` now lists `strata.ops.mask_viewer` on `answer_citations.viewer_id`, `candidate_labels.viewer_email` and `candidate_labels.viewer_id` (and on eleven more columns of tickets 35, 38 and 39). Passed.
 
 ## Ticket 64, step 2 of 3: sync the agent, since get_disagreements' description changed
 
@@ -1873,6 +1883,8 @@ It worked if the deploy exits 0 and its last line is `Strata is running at https
 3. Without a champion, the same page shows no bar in lane 2, and section 4 says "I'm not listing approach options, because I have no time estimate for this package."
 
 **Parked on October 26, 2026 (orchestrator); runs with `--keep-secrets` since ticket 70 merged (da9a906d).** This is the App deploy, `ops/app/deploy_app.py`. Without the option it writes the Foundry and Azure OpenAI keys into the secret scope `strata` through the SDK, and secret writes are the user's (ticket 06, step 1, and ticket 43, step 4). The user has written the secrets, so a session runs this step as `uv run --script ops/app/deploy_app.py --env-file .env --keep-secrets`, which writes no secret (the header's note on ticket 70). One such deploy from da9a906d or later, such as ticket 70's step 1, serves this block; the checks above then run as written.
+
+**Deploy half ran on October 26, 2026 (orchestrator).** Ticket 70's step 1 has the deploy: `ops/app/deploy_app.py --keep-secrets` from a snapshot of 15052345, 10:10 to 10:19 UTC, exit 0, last line "Strata is running at https://strata-7474658003099155.aws.databricksapps.com". Lane 2 and section 4 need a champion from step 2 (none yet, the data decision), so the browser checks wait.
 
 ## Ticket 43, step 1 of 4: deploy the job's two new tables, then run the nightly job and check a scheduled run (criterion 2)
 
@@ -2078,6 +2090,8 @@ It worked if the deploy exits 0 with the last line `Strata is running at https:/
 
 **Parked on October 26, 2026 (orchestrator); runs with `--keep-secrets` since ticket 70 merged (da9a906d).** This is the App deploy, `ops/app/deploy_app.py`. Without the option it writes the Foundry and Azure OpenAI keys into the secret scope `strata` through the SDK, and secret writes are the user's (ticket 06, step 1, and ticket 43, step 4). The user has written the secrets, so a session runs this step as `uv run --script ops/app/deploy_app.py --env-file .env --keep-secrets`, which writes no secret (the header's note on ticket 70). One such deploy from da9a906d or later, such as ticket 70's step 1, serves this block; the checks above then run as written.
 
+**Deploy half ran on October 26, 2026 (orchestrator).** Ticket 70's step 1 has the deploy: `ops/app/deploy_app.py --keep-secrets` from a snapshot of 15052345, 10:10 to 10:19 UTC, exit 0, last line "Strata is running at https://strata-7474658003099155.aws.databricksapps.com". `GET /api/me` with the CLI profile's OAuth token returns a `language` block: code `en`, source `default`, saved null, with the four choices en, fr, es and pt. Choosing French and the `viewer_settings` row are the user's, in the browser.
+
 ## Ticket 44, step 1 of 5: deploy the estimates loop's nine tables
 
 The merger parked this step on October 25, 2026, after merge commit 05052ba. All ten keys were set, but the header above holds workspace steps back during a merge, and the orchestrator's notes for this wave held every workspace step for the warehouse's daily limit of October 25. It needs the Databricks keys in `.env`. Ticket 44 adds nine tables under `src/strata/lakehouse/tables/ops/`: `strata.ops.exposures` (each past range or time estimate shown in the World Bank staff view), `strata.ops.estimates_watch`, `strata.ops.anchored_plan_rows` (plan rows dated within 14 days of a date Strata offered), `strata.ops.retrain_triggers`, `strata.ops.model_signoffs`, `strata.ops.model_promotions`, `strata.ops.model_states`, `strata.ops.time_estimate_shadow` (the challenger's nightly scores in shadow) and `strata.ops.hazard_scores` (the hazard model's nightly scores in shadow). It deletes ticket 34's `strata.ops.exposed_projects` from the repo. The deploy of October 26 already made that table, and it stays on the workspace unused, because the deploy never drops a table. One deploy from 05052ba or later serves every block that names it. This workspace's earlier deploys passed `--fairshare-catalog workspace`, so this one does too.
@@ -2103,6 +2117,8 @@ Then, signed in to the App in the World Bank staff view, ask the showcase past-r
     SELECT route, step_reference, shown FROM strata.ops.exposures ORDER BY shown_at DESC LIMIT 5
 
 It worked if the deploy exits 0 with the last line `Strata is running at https://...`, and one new row reads `/api/ask`, `KE-NWWDA-541055-CW-RFB`, `past_range`. Its `range_shown` holds the past range from the tool's own summary, which should match the range the answer cited. Then ask the same question in the PIU view and run the query again: it worked if no row was added.
+
+**Deploy half ran on October 26, 2026 (orchestrator).** Ticket 70's step 1 has the deploy: `ops/app/deploy_app.py --keep-secrets` from a snapshot of 15052345, 10:10 to 10:19 UTC, exit 0, last line "Strata is running at https://strata-7474658003099155.aws.databricksapps.com". The question in the staff view and the `strata.ops.exposures` row are the user's, in the browser.
 
 ## Ticket 44, step 3 of 5: two nights of the nightly job store the hazard model's shadow scores and its weekly comparison (criterion 7, live)
 
@@ -2222,6 +2238,8 @@ each list SELECT and MODIFY for the App's service principal, and `DESCRIBE TABLE
 
 **Ran on October 26, 2026 (orchestrator), deploy half, from 6b5ff48d.** Ticket 45's step 1 deploy (06:31 to 06:36 UTC) listed `strata.ops.uploads` and `strata.ops.upload_rows` as new and changed no existing table. The job run of that morning (601237901444983, ticket 43's step 1) did not finish, and the App has not been redeployed since the tables appeared (the user's deploy was at 06:11 UTC), so `SHOW GRANTS ON TABLE strata.ops.uploads` at 09:19 UTC lists only `account users` SELECT on the schema, and no mask exists. The grants and the masks come with ticket 70's `--keep-secrets` redeploy.
 
+**App half ran on October 26, 2026 (orchestrator).** Ticket 70's step 1 has the deploy: `ops/app/deploy_app.py --keep-secrets` from a snapshot of 15052345, 10:10 to 10:19 UTC, exit 0, last line "Strata is running at https://strata-7474658003099155.aws.databricksapps.com". `SHOW GRANTS ON TABLE strata.ops.uploads` and `upload_rows` now list SELECT and MODIFY for the App's service principal, and `column_masks` shows `strata.ops.mask_viewer` on `upload_rows.activity_reference_no`, `description` and `content`, and on `uploads.uploader_name`, `file_name` and `reading`. The job-run half waits for a run that finishes (ticket 43's step 1).
+
 ## Ticket 38, step 3 of 6: an officer uploads through the deployed App, and no one else sees it (criterion 2, live)
 
 The merger parked this step on October 25, 2026, after merge commit dbf7a8d, for the same reasons as step 1. Run it after step 2. It also waits for a decision only the user can make: no implementing agency team names a workspace group yet, so no live viewer is an officer. Add an agency team to `config/roles.toml` with its `agency` line and the workspace group its officers are in (the comment at the top of the file explains each key), commit it, and deploy the App again. It needs the Databricks keys in `.env` and three people: an officer in that group, a member of another team, and World Bank staff.
@@ -2282,6 +2300,8 @@ It worked if the bundle deploy exits 0, lists `strata.ops.lesson_visits`, `strat
 each list SELECT and MODIFY for the App's service principal, and `DESCRIBE TABLE EXTENDED strata.ops.draft_lesson_choices` shows the mask `strata.ops.mask_viewer` on `reason` and `rewrite`.
 
 **Ran on October 26, 2026 (orchestrator), deploy half, from 6b5ff48d.** Ticket 45's step 1 deploy (06:31 to 06:36 UTC) listed `strata.ops.lesson_visits`, `strata.ops.draft_lesson_choices` and `strata.ops.lesson_version_tags` as new and changed no existing table. The job run of that morning (601237901444983) did not finish, and the App has not been redeployed since, so `SHOW GRANTS ON TABLE strata.ops.lesson_visits` at 09:19 UTC lists only `account users` SELECT on the schema. The grants and the masks come with ticket 70's `--keep-secrets` redeploy.
+
+**App half ran on October 26, 2026 (orchestrator).** Ticket 70's step 1 has the deploy: `ops/app/deploy_app.py --keep-secrets` from a snapshot of 15052345, 10:10 to 10:19 UTC, exit 0, last line "Strata is running at https://strata-7474658003099155.aws.databricksapps.com". `SHOW GRANTS ON TABLE` on `strata.ops.lesson_visits`, `draft_lesson_choices` and `lesson_version_tags` now list SELECT and MODIFY for the App's service principal, `column_masks` shows `strata.ops.mask_viewer` on `draft_lesson_choices.reason` and `rewrite`, and the mask is on 14 columns in all, as this block expects. The deploy printed no "The column mask" summary line (step 7 printed only its heading). The job-run half waits for a run that finishes.
 
 ## Ticket 39, step 2 of 4: sync the changed PPSD rows writer to Foundry, with a --check run (round 2 follow-up 11)
 
@@ -2528,8 +2548,55 @@ It worked if:
 
 Record here the App's address, every secret step 3 named as missing, and what the deploy's step 7 printed, which ticket 64's step 1 waits on. The App has had all nine resources since the user's deploy at 06:11 UTC. If step 3 names a Foundry or Azure OpenAI key as missing, this redeploy leaves the App without the agent or the judge until the user writes the key with the printed command and a session deploys again; say so in the record. A session never writes a secret. If the scope does not exist, or the session cannot read it, the deploy stops at step 3 with a traceback after step 2, with nothing configured or uploaded (review follow-up F1 in `.notes/70-review.md`); tell the orchestrator.
 
+**Ran on October 26, 2026 (orchestrator), from a snapshot of 15052345.** The first try (10:09 UTC) stopped at step 1, "The web app did not build, so I left the workspace alone. npm said: sh: tsc: command not found": a `git archive` snapshot has no `web/node_modules`. With the main checkout's `web/node_modules` linked into the snapshot, the second try ran 10:10 to 10:19 UTC and exited 0. Step 3 printed "I wrote no secret, because you asked me to keep them (--keep-secrets)." and "I expect these secrets in the scope strata: APPLICATIONINSIGHTS_CONNECTION_STRING, FOUNDRY_PROJECT_ENDPOINT, FOUNDRY_TENANT_ID, FOUNDRY_CLIENT_ID, FOUNDRY_CLIENT_SECRET, AZURE_OPENAI_ENDPOINT, AZURE_OPENAI_API_KEY.", then "The Foundry agent's four keys are in the secret scope, so /api/ask answers through the agent.", "The two Azure OpenAI keys are in the secret scope, so the model that judges sentences checks each answer.", the Genie space 01f1d0d8c9a214c7b9d665e04a462ba6 and the Lakebase instance strata-state; it named no secret as missing and printed no put-secret command. Step 4 uploaded 862 files to /Workspace/Users/chiraglakhanpal@gwu.edu/strata-app, step 6 printed its grants line, and step 7 printed exactly one line, "7. Masking who sent each passage report and who asked each question from everyone but the app and you.", and nothing under it. Last line: "Strata is running at https://strata-7474658003099155.aws.databricksapps.com". `databricks secrets list-secrets strata -p strata` before and after lists the same seven keys with the same last-updated stamps (APPLICATIONINSIGHTS_CONNECTION_STRING 1792866329682; the six others between 1792994900170 and 1792994900773). `databricks apps get strata -p strata` shows the App RUNNING with compute ACTIVE, the new deployment 01f1d126085b1ee8b20f952182776ee8 SUCCEEDED ("App started successfully", created 10:14:30 UTC) and the nine resources bound (sql-warehouse, appinsights, app-state, foundry-endpoint, foundry-tenant, foundry-client-id, foundry-client-secret, azure-openai-endpoint, azure-openai-key). `/api/health` with the CLI profile's OAuth token answered 200 `{"status":"ok"}` at 10:20:12 UTC, and `/api/freshness` `{"data_through":"2026-10-24"}`. On the warehouse after the deploy: `strata.information_schema.column_masks` lists `strata.ops.mask_viewer` on 14 columns (answer_citations.viewer_id; candidate_labels.viewer_email and viewer_id; draft_exports.snapshot; draft_files.content; draft_lesson_choices.reason and rewrite; drafts.content; upload_rows.activity_reference_no, content and description; uploads.file_name, reading and uploader_name), and the App's service principal e796c089-1500-4cf2-9c1f-8e6a8f5aba10 holds USE CATALOG on strata, USE SCHEMA on strata.ops and SELECT and MODIFY on uploads, upload_rows, lesson_visits, draft_lesson_choices, lesson_version_tags, disagreement_choices and follows. Passed. Logs: the scratchpad's deploy70.log and deploy70b.log.
+
 ## Day-one test resources removed on October 26, 2026
 
 **Removed on October 26, 2026, by the user, through the Databricks CLI:** the Genie space "NYC Taxi Trip Data" (the wizard's throwaway for test 5), the schema `workspace.strata_dayone` with its tables and volume, the Vector Search index `workspace.strata_dayone.passages_index`, the folder `strata-dayone`, and the service principal `strata-probes`. Kept: the endpoint `strata-search`, the scope `strata`, the tokens, and the one-time runs, which expire on their own. Verified afterwards by listing each. A later run of the probes makes its scratch again.
 
 Moved here from docs/day-one-results.md on October 26, 2026 by the orchestrator: the text outside that document's marked blocks must match the rendering from ops/dayone/dayone.toml (ops/dayone/tests/test_results_document.py), so notes about the workspace go in this file.
+
+## Ticket 68, step 1 of 3: before the redeploy, note which tiles show "Invalid widget definition is imported." (confirms the cause; optional)
+
+The merger parked this step on October 26, 2026, after merge commit 261d66c8. Every key is set, but the second session runs every workspace step from a snapshot of the commit, one at a time, so the merger ran none. It is a look in the browser, and it only means something while the dashboards deployed from 6b5ff48 are still the live ones, so it runs before step 2's redeploy or not at all.
+
+Open "Strata operations" (id 01f1cfd370f01f6ab7aafcb4fffadd48) and "Strata operations (test)" (id 01f1d10708201fddad8610f06e6b4071) in the workspace, and look at every tile on each of the three pages: Data readiness, Governance, and AI quality and adoption.
+
+It worked if the tiles that show "Invalid widget definition is imported." are the 27 tables and the "Rows per fiscal year, by source" pivot on each dashboard, and no text box, chart, counter or filter shows it. That is what `tests/test_dashboard_widgets.py` predicts for the file deployed from 6b5ff48. Record here which tiles showed the message. A tile outside that list means the cause is not fully found; tell the orchestrator.
+
+## Ticket 68, step 2 of 3: redeploy both dashboards, and no tile shows "Invalid widget definition is imported." (criterion 2, live)
+
+The merger parked this step on October 26, 2026, after merge commit 261d66c8. Every key is set, but the second session runs every workspace step from a snapshot of the commit, one at a time, so the merger ran none. It needs the Databricks keys in `.env`, the Databricks CLI 0.287.0 or later, and the warehouse under its free daily limit. Ticket 68 changes only the two dashboard files, `bundle/dashboards/strata.lvdash.json` and `bundle/dashboards/strata_test.lvdash.json`: each file's 27 tables are now AI/BI table version 2, and its pivot sums its cells with `cubeGroupingSets`. No dataset query, table, job or measure changes. One bundle deploy from 261d66c8 or later serves this step.
+
+Run this from the main checkout, twice:
+
+    uv run --script ops/bundle/deploy.py --env-file .env --fairshare-catalog workspace
+
+Then fetch both dashboards as the workspace stores them:
+
+    databricks lakeview get 01f1cfd370f01f6ab7aafcb4fffadd48 -p strata
+    databricks lakeview get 01f1d10708201fddad8610f06e6b4071 -p strata
+
+It worked if:
+
+- The first deploy exits 0 and changes only the two dashboards, "Strata operations" and "Strata operations (test)", and the second prints "No changes."
+- In each `lakeview get`, the `serialized_dashboard` holds every `table` widget at `version` 2 and the `pivot` widget with `cubeGroupingSets`.
+- On both dashboards, no tile on Data readiness, Governance, or AI quality and adoption shows "Invalid widget definition is imported."
+- The "Rows per fiscal year, by source" pivot on Data readiness shows no Total row and no Total column.
+- One of the pivot's cells equals `source_rows` for the same source and fiscal year in the `rows_by_year` dataset (`src/strata/dashboard/sql/rows_by_year.sql`), read in the dashboard editor's Data tab with the page's measure date. Record the source, the year and both numbers.
+
+The pivot sorts its rows by source name and the date columns read as `locale-short-month`; both are left to the design pass, so they are not part of this check.
+
+## Ticket 68, step 3 of 3: optional: add widgets from a dashboard made in Strata's workspace to the known-good shapes
+
+The merger parked this step on October 26, 2026, after merge commit 261d66c8. Criterion 1 asked for known-good shapes exported from the workspace. The fixture holds widgets from dashboard files that Databricks and others published, each named by repository, commit and path, because no Strata export was at hand overnight (a decision parked for the user). This step adds Strata's own. It changes a test fixture, so it goes through a ticket worktree and the gate like any code change.
+
+In the workspace UI, make a small dashboard with one table (a date column and an integer column) and one pivot, then export it:
+
+    databricks lakeview get <the new dashboard's id> -p strata
+
+Name its file under `sources` in `tests/fixtures/dashboard/widget_shapes.json` and add its widgets to their kind's examples, as the file's `about` says. Then run:
+
+    uv run --frozen pytest tests/test_dashboard_widgets.py
+
+It worked if every test passes. A failure means Strata's workspace writes a widget shape the fixture does not know yet; tell the orchestrator.

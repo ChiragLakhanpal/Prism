@@ -17,4 +17,4 @@ Read first: `ops/bundle/check.py` (the header and `_local_engine()`), `ops/bundl
 
 ## Comments
 
-- October 26, 2026, orchestrator: opened at 03:40 PDT from the second session's finding of 09:12 UTC. Small, and on the path of every same-rows comparison the demo-ready check needs.
+- October 26, 2026, orchestrator: opened at 02:48 PDT from the second session's finding of 09:12 UTC. Small, and on the path of every same-rows comparison the demo-ready check needs.

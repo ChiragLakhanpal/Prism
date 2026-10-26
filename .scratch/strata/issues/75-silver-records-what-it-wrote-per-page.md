@@ -17,4 +17,4 @@ Read first: `src/strata/lakehouse/silver/__init__.py` (`run`, `_holds`, `PAGE`),
 
 ## Comments
 
-- October 26, 2026, orchestrator: opened at 03:40 PDT from the second session's finding (ticket 21 step 1: the Summary of the showcase project shows no sectors until this runs). The record also gives ticket 76 its way to read the notices pages again with the fixed removal: bump the notices module's `VERSION`.
+- October 26, 2026, orchestrator: opened at 02:48 PDT from the second session's finding (ticket 21 step 1: the Summary of the showcase project shows no sectors until this runs). The record also gives ticket 76 its way to read the notices pages again with the fixed removal: bump the notices module's `VERSION`.
