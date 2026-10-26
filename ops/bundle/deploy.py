@@ -33,6 +33,7 @@ from __future__ import annotations
 
 import argparse
 import sys
+from collections.abc import Sequence
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -59,7 +60,7 @@ def dashboard_names() -> list[str]:
     return [loaded.resolve(board["display_name"]) for board in loaded.resources("dashboards").values()]
 
 
-def flatten(listing: dict | None, job: dict | None = None, dashboards: list[dict | None] = ()) -> dict:
+def flatten(listing: dict | None, job: dict | None = None, dashboards: Sequence[dict | None] = ()) -> dict:
     """One entry per thing the deploy can change, keyed by its kind and full name. A dashboard's entry holds its
     update_time, so one the bundle rewrote reads as changed even when its pages kept their names."""
     if not listing:

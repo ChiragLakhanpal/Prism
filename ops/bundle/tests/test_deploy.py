@@ -195,14 +195,19 @@ def test_the_live_workspace_adds_the_app_s_privilege_and_removes_no_other_grant(
     assert called <= {name for name in vars(bundle_live.LiveWorkspace) if not name.startswith("_")}
 
 
-def test_an_app_that_is_not_strata_s_gets_no_grant(capsys):
-    workspace = FakeWorkspace(app=strata_app(description="Someone else's app"))
+@pytest.mark.parametrize("app, said", [
+    ({"description": "Someone else's app", "principal": APP_PRINCIPAL},
+     "The app strata is not Strata's: its description is \"Someone else's app\". I granted nothing for it."),
+    ({"description": deploy_app.DESCRIPTION, "principal": None},
+     "The app strata has no service principal yet, so I granted nothing for it.")])
+def test_an_app_that_is_not_strata_s_or_has_no_service_principal_gets_no_grant(app, said, capsys):
+    workspace = FakeWorkspace(app=app)
 
     code, out = deploy_into(workspace, capsys)
 
     assert code == 0
     assert workspace.granted == []
-    assert "The app strata is not Strata's: its description is \"Someone else's app\". I granted nothing for it." in out
+    assert said in out
 
 
 class Warehouse:
