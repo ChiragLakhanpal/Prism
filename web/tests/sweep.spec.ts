@@ -26,6 +26,8 @@ async function everyRecording(): Promise<Record<string, Answer>> {
     ...(await trailApi()),
     ...(await hubApi()),
     "/api/ask": await file("ask-p130164-removed-number.sse"),
+    // Ticket 41: Home with Ana's examples, whose Start here links name P-codes inside their own words.
+    "/api/home": await file("home.json"),
     "/api/projects": await file("projects.json"),
     "/api/following": await file("following-p156634.json"),
     "/api/projects?q=india": await file("projects-india.json"),
@@ -71,7 +73,7 @@ async function offenders(page: Page): Promise<string[]> {
 }
 
 const ROUTES: [string, string][] = [
-  ["/", "main h1"],
+  ["/", "[data-home=ready]"],
   ["/packages", "main h1"],
   ["/lessons", "[data-library=ready]"],
   ["/lessons/review", "[data-queue=ready]"],

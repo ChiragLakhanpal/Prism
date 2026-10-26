@@ -363,6 +363,17 @@ def test_every_row_carries_an_evidence_id_a_public_date_and_its_source_line(engi
     assert result["project"]["evidence_id"] == "strata.gold.project:P156634"
 
 
+def test_each_row_gives_its_estimate_in_us_millions_to_two_decimals_as_home_writes_it(engine):
+    """Ticket 41: Home's first line writes "US$1.23 million of works", a derived figure, so the tool returns it."""
+    result = check_plan(engine, plan_date="2026-10-09", as_of="2026-10-22")
+
+    millions = {row["activity_reference_no"]: row["estimated_millions"] for row in result["rows"]}
+    # values.toml, plan-541055-estimated: US$1,230,000.00. Trailing zeros are dropped, as a sentence writes them.
+    assert millions["KE-NWWDA-541055-CW-RFB"] == "1.23"
+    assert millions["NWWDA-WSDP-03-2019-2020"] == "2"
+    assert millions["KE-NWWDA-229129-CW-RFB"] == "0.3"
+
+
 def leak_a_later_row(call, **arguments):
     """check_plan with its first row dated the day after the as-of date: the registry must refuse it."""
     from strata.tools.check_plan import check_plan as adapter

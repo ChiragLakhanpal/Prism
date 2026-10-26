@@ -22,6 +22,7 @@ import { LoadError } from "../components/LoadError";
 import { Num } from "../components/Num";
 import { PageHeader } from "../components/PageHeader";
 import { ProjectIdText } from "../components/ProjectId";
+import { Tag } from "../components/LessonParts";
 import { ProjectsTabs } from "../components/ProjectsTabs";
 import { SignalLine } from "../components/SignalLine";
 import { Skeleton, SkeletonLine, SkeletonText } from "../components/Skeleton";
@@ -375,6 +376,12 @@ function ProjectCell({ entry }: { entry: FollowedProject }) {
     <>
       <h3 className="text-title text-ink-heading">
         <TextLink href={`/projects/${project.project_id}`}>{project.project_name}</TextLink>
+        {/* A follow the seed command made for you (ticket 41). */}
+        {entry.example && (
+          <span className="ml-2 inline-block align-middle">
+            <Tag>{copy.home.example}</Tag>
+          </span>
+        )}
       </h3>
       <p className="mt-1 text-caption text-ink-muted" data-meta data-project-row-meta>
         <Fill template={metaTemplate(project)} slots={{

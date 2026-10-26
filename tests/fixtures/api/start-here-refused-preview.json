@@ -1,0 +1,10 @@
+{
+  "status": 403,
+  "body": {
+    "code": "preview",
+    "error": "preview",
+    "capability": "start_here",
+    "copy_key": "home.start.preview",
+    "view": "public"
+  }
+}

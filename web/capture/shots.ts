@@ -62,7 +62,6 @@ const NARROW = [390];
 // project's page and Check a plan have their own shots below (ticket 10), and so do the package
 // workspace (ticket 12) and the Packages tab (ticket 15).
 const ROUTES: [string, string][] = [
-  ["home", "/"],
   ["lessons", "/lessons"],
   ["drafts", "/drafts"],
   ["not-found", "/nowhere"],
@@ -221,6 +220,25 @@ function app(name: string, path: string, answers: { me?: Answer; freshness?: Ans
   };
 }
 
+// Ticket 41: Home, from the server's answers on tests/home_story.py's story (tests/record_home_api.py): Ana's Home
+// with her seeded examples, the first run, a quiet window, both drafts checked, the strip removed, and the agency
+// preview. Under the function-first rule each is taken at 1440 px; the other widths wait for the design pass.
+const homeApi = (home: string, me = "me-home.json"): Record<string, Answer> => ({
+  "/api/me": { recorded: me },
+  "/api/me?view=piu": { recorded: "me-preview-piu.json" },
+  "/api/freshness": { recorded: "freshness.json" },
+  "/api/home": { recorded: home },
+  "/api/home?view=piu": { recorded: "home-preview-piu.json" },
+});
+const HOME_SHOTS: Shot[] = [
+  app("home--populated", "/", {}, { widths: [1440], full: true, api: homeApi("home.json") }),
+  app("home--first-run", "/", {}, { widths: [1440], full: true, api: homeApi("home-first-run.json") }),
+  app("home--quiet-week", "/", {}, { widths: [1440], full: true, api: homeApi("home-quiet.json") }),
+  app("home--drafts-checked", "/", {}, { widths: [1440], full: true, api: homeApi("home-drafts-checked.json") }),
+  app("home--agency-preview", "/?view=piu", {}, { widths: [1440], full: true, api: homeApi("home.json") }),
+  app("home--loading", "/", {}, { widths: [1440], api: homeApi("home.json"), pending: ["/api/home"] }),
+];
+
 // Ticket 40: the view switch and the as-of date, with /api answered from the server's own answers
 // (tests/record_views_api.py). Under the function-first rule each is taken at 1440 px only; the other widths wait for
 // the design pass.
@@ -237,7 +255,8 @@ const VIEW_SHOTS: Shot[] = [
   { name: "views--popover-public-preview", path: "/gallery/navigation?pill=public&view=open", widths: [1440] },
   app("views--agency-preview-projects", "/projects?view=piu", {}, { widths: [1440], full: true,
     api: viewApi({ "/api/projects": { recorded: "projects.json" }, "/api/agency/projects": { recorded: "agency-projects-two.json" } }) }),
-  app("views--public-preview-home", "/?view=public", {}, { widths: [1440], api: viewApi({}) }),
+  app("views--public-preview-home", "/?view=public", {}, { widths: [1440],
+    api: viewApi({ "/api/home?view=public": { recorded: "home-preview-public.json" } }) }),
   app("views--public-preview-packages-hidden", "/packages?view=public", {}, { widths: [1440], api: viewApi({}) }),
   app("views--public-preview-check-plan", `${VIEW_PLAN}?view=public`, {}, { widths: [1440], full: true,
     api: viewApi({ [`/api${VIEW_PLAN}`]: { recorded: "check-plan-p156634-nwwda-2026-10-09-public.json" },
@@ -1981,4 +2000,5 @@ export const SHOTS: Shot[] = [
   ...UPLOAD_SHOTS,
   ...LANGUAGE_SHOTS,
   ...VIEW_SHOTS,
+  ...HOME_SHOTS,
 ];

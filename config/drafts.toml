@@ -12,8 +12,9 @@
 # writes from the copy file, and the lint lane fails when it is out of date.
 #
 # Adding a kind is one entry here, its workflow module, its words in the copy file and its benchmark
-# question. Tickets 36 to 41 add their kinds and keys (row_label_sentence, rewrite_row, home_cites,
-# home_progress) here.
+# question. Tickets 36 to 41 add their kinds and keys (row_label_sentence, rewrite_row) here. Home (ticket 41)
+# needs no key: a kind's progress on Home is its row on the Drafts tab, and the words a lesson line on Home names a
+# kind by are copy.home.server.line.cites.<kind> in the copy file, which tests/test_home.py checks for every kind.
 #
 # [kinds.<key>]
 #   writer         the workflow module that writes it. It reads the facts the draft is written from as

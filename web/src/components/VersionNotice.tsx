@@ -90,7 +90,7 @@ export function WasNow({ notice, onRow }: { notice: NoticeBody; onRow: boolean }
 function Decided({ notice }: { notice: NoticeBody }) {
   return (
     <p className="max-w-prose text-small text-ink-muted" data-decided-line>
-      {fillText(n.decided[notice.tier], { reason: notice.reason })}
+      {notice.example ? copy.home.exampleDecided(String(notice.a)) : fillText(n.decided[notice.tier], { reason: notice.reason })}
     </p>
   );
 }
@@ -374,14 +374,23 @@ function UseBlock({ notice, use, actions }: { notice: NoticeBody; use: DraftUse;
 // The notice on the Lessons tab, in "Changed where you used it".
 export function VersionNotice({ notice, level = 3 }: { notice: NoticeBody & { actions: string[]; uses: DraftUse[] }; level?: 3 | 4 }) {
   const headingId = useId();
+  const heading = useRef<HTMLHeadingElement>(null);
+  // An address that names this notice, such as Home's "See a lesson change" (ticket 41), lands on its title.
+  useEffect(() => {
+    if (decodeURIComponent(window.location.hash.slice(1)) !== notice.anchor) return;
+    heading.current?.scrollIntoView({ block: "start" });
+    heading.current?.focus({ preventScroll: true });
+  }, [notice.anchor]);
   const actions = notice.actions.filter((action): action is "update" | "remove" | "keep" => action !== "versions");
   return (
     <li id={notice.anchor} className="border-t-2 border-line py-4" data-version-notice={notice.tier}>
       <article aria-labelledby={headingId} className="flex flex-col gap-3">
-        <div>
+        <div className="flex flex-wrap items-center gap-2">
           <StatusBadge kind={BADGE[notice.tier]} />
+          {notice.example && <Tag>{copy.home.example}</Tag>}
         </div>
-        {createElement(`h${level}`, { id: headingId, className: "text-title text-balance text-ink-heading" }, notice.statement_a)}
+        {/* Home's "See a lesson change" lands on the notice and focuses its title (ticket 41). */}
+        {createElement(`h${level}`, { ref: heading, id: headingId, tabIndex: -1, className: "text-title text-balance text-ink-heading focus:outline-none" }, notice.statement_a)}
         <WasNow notice={notice} onRow={false} />
         <Decided notice={notice} />
         <div>

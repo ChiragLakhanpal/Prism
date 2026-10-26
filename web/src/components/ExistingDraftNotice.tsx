@@ -1,6 +1,7 @@
 // The package workspace's notices about suggested PPSD rows (ticket 36; the 36 brief, section 5.1), in brief 06's
 // alert slot above the h1: "I stopped writing ..." once after Stop writing, and the open draft your team already
-// started for this package, newest first, with a link to it. The action still offers a new draft.
+// started for this package, newest first, with a link to it, or, for rows the seed command set up for you (ticket 41),
+// the Example tag and Strata's sentence. The action still offers a new draft.
 import { useEffect, useState, type ReactNode } from "react";
 import { copy } from "../copy";
 import { getJson } from "../lib/api";
@@ -9,6 +10,7 @@ import { formatDate } from "../lib/format";
 import { useStore } from "../lib/store";
 import { officerAgency } from "../lib/uploads";
 import { Alert } from "./Alert";
+import { Tag } from "./LessonParts";
 import { TextLink } from "./TextLink";
 
 const words = copy.packageWorkspace.ppsdAction;
@@ -40,7 +42,14 @@ export function ExistingPpsdNotice({ packageKey }: { packageKey: string }) {
     const date = formatDate(existing.created_at.slice(0, 10));
     notices.push(
       <Alert key="existing" state="info" action={<TextLink href={draftHref(existing.draft_id)}>{words.existingLink}</TextLink>}>
-        <span data-existing-ppsd>{existing.author.you ? words.existingYou(date) : words.existingTeammate(existing.author.name ?? "", date)}</span>
+        {existing.example ? (
+          <span data-existing-draft-example className="flex flex-wrap items-center gap-2">
+            <Tag>{copy.home.example}</Tag>
+            <span data-existing-ppsd>{words.existingExample(date)}</span>
+          </span>
+        ) : (
+          <span data-existing-ppsd>{existing.author.you ? words.existingYou(date) : words.existingTeammate(existing.author.name ?? "", date)}</span>
+        )}
       </Alert>,
     );
   }

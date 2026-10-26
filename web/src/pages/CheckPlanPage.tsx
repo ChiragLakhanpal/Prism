@@ -16,6 +16,7 @@ import { EmptyState } from "../components/Card";
 import { TextLink } from "../components/TextLink";
 import { EightColumns } from "../components/EightColumns";
 import { Fill, Unbroken } from "../components/Fill";
+import { Tag } from "../components/LessonParts";
 import { LoadError } from "../components/LoadError";
 import { BaselinePanel, useBaselineView } from "../components/BaselinePanel";
 import { ChangeTables, changedRows } from "../components/ChangeTables";
@@ -536,9 +537,16 @@ function DraftNotices({ existing }: { existing: ExistingDraft | null }) {
     const date = formatDate(existing.created_at.slice(0, 10));
     notices.push(
       <Alert key="existing" state="info" action={<TextLink href={draftHref(existing.draft_id)}>{action.existingLink}</TextLink>}>
-        <span data-existing-draft>
-          {existing.author.you ? action.existingYou(date) : action.existingTeammate(existing.author.name ?? "", date)}
-        </span>
+        {existing.example ? (
+          <span data-existing-draft-example className="flex flex-wrap items-center gap-2">
+            <Tag>{copy.home.example}</Tag>
+            <span data-existing-draft>{action.existingExample(date)}</span>
+          </span>
+        ) : (
+          <span data-existing-draft>
+            {existing.author.you ? action.existingYou(date) : action.existingTeammate(existing.author.name ?? "", date)}
+          </span>
+        )}
       </Alert>,
     );
   }

@@ -1,0 +1,11 @@
+{
+  "draft": {
+    "draft_id": "draft-0002",
+    "created_at": "2026-10-28T09:09:00Z",
+    "author": {
+      "name": "Ana Example",
+      "you": true
+    },
+    "example": true
+  }
+}

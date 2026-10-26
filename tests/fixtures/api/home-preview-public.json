@@ -1,0 +1,106 @@
+{
+  "view": "public",
+  "preview": true,
+  "today": "2026-10-28",
+  "as_of": null,
+  "window": null,
+  "briefing": {
+    "sentences": [
+      [
+        {
+          "text": "I hold records for "
+        },
+        {
+          "number": 93
+        },
+        {
+          "text": " World Bank-financed projects. Search for one by name, project ID or country in the search box, or start from the closed project below, the latest to close among those whose contracts I hold."
+        }
+      ]
+    ],
+    "plans": []
+  },
+  "start_here": {
+    "visible": false,
+    "links": []
+  },
+  "worth": {
+    "kind": "public",
+    "lines": [
+      {
+        "kind": "public",
+        "id": "line-public-P130164",
+        "key": "P130164",
+        "status": "closed",
+        "reason": "closed",
+        "example": false,
+        "segments": [
+          {
+            "text": "The "
+          },
+          {
+            "text": "Rajasthan Road Sector Modernization Project"
+          },
+          {
+            "text": " ("
+          },
+          {
+            "pid": "P130164"
+          },
+          {
+            "text": ") in "
+          },
+          {
+            "text": "India"
+          },
+          {
+            "text": " closed on "
+          },
+          {
+            "date": "2018-12-31"
+          },
+          {
+            "text": ". I traced "
+          },
+          {
+            "number": 1
+          },
+          {
+            "text": " of its "
+          },
+          {
+            "number": 8
+          },
+          {
+            "text": " contracts from notice to signature."
+          }
+        ],
+        "source": {
+          "evidence_id": "strata.gold.project:P130164",
+          "kind": "record",
+          "pid": "P130164"
+        },
+        "action": {
+          "key": "seeContracts",
+          "href": "/projects/P130164/procurement#packages",
+          "hidden": "Rajasthan Road Sector Modernization Project"
+        },
+        "differs": null
+      }
+    ],
+    "fold_after": 8,
+    "partial": null,
+    "checked_on": "2026-10-28",
+    "through": "2026-10-23",
+    "empty": null
+  },
+  "waiting": {
+    "rows": [],
+    "total": 0,
+    "more": false,
+    "reason": "public"
+  },
+  "public": {
+    "total": 93
+  }
+}

@@ -127,6 +127,32 @@ def as_of_store(store: Store, as_of: dt.date | None) -> Store:
     return store
 
 
+def with_examples(versions: dict[str, list[dict]], extra: dict[str, list[dict]]) -> dict[str, list[dict]]:
+    """Every lesson's versions with one reader's example versions after them (ticket 41), for that reader's notices and
+    two-versions view only. The lead's versions are copied, never changed, so the library and the digest keep them."""
+    if not extra:
+        return versions
+    merged = {lesson_id: list(rows) for lesson_id, rows in versions.items()}
+    for lesson_id, rows in extra.items():
+        if lesson_id in merged:
+            known = {_int(row["version"]) for row in merged[lesson_id]}
+            merged[lesson_id].extend(row for row in rows if _int(row["version"]) not in known)
+            merged[lesson_id].sort(key=lambda row: _int(row["version"]))
+    return merged
+
+
+def with_versions(store: Store, extra: dict[str, list[dict]] | None) -> Store:
+    """A shallow copy of the store whose versions include the reader's example versions, for "Changed where you used
+    it" alone."""
+    if not extra:
+        return store
+    import copy as copying
+
+    shown = copying.copy(store)
+    shown.versions = with_examples(store.versions, extra)
+    return shown
+
+
 def waiting_proposals(store: Store) -> int:
     """Proposed lessons waiting in the review queue now, in every region: a count, never a list."""
     return sum(1 for item in store.items.values() if item["kind"] == "new" and store.stage(item) != "decided")
@@ -230,6 +256,11 @@ class LessonsPage:
                 "row_label": label(draft.content, notice["row_key"]) if label else None,
                 "holds_export": notice["holds_export"], "can_act": may_act,
                 "can_update": bool(kind and kind.rewrite_row)}
+
+    def notices_for(self, engine: Engine, drafts: list, extra_versions: dict[str, list[dict]] | None) -> list[dict]:
+        """"Changed where you used it" for these drafts today, with the reader's own example versions (ticket 41's
+        Home), the same notices the Lessons tab shows them."""
+        return self.changed_where_used(with_versions(self.review._load(engine), extra_versions), drafts)
 
     def changed_where_used(self, store: Store, drafts: list) -> list[dict]:
         """One notice per lesson and cited version across the reader's own open drafts (Draft and Checked by you),
@@ -337,7 +368,8 @@ class LessonsPage:
 
     # ── Two versions of a lesson ─────────────────────────────────────────
 
-    def versions(self, engine: Engine, lesson_id: str, a: int, b: int, as_of: dt.date | None = None) -> dict:
+    def versions(self, engine: Engine, lesson_id: str, a: int, b: int, as_of: dt.date | None = None,
+                 extra: dict[str, list[dict]] | None = None) -> dict:
         """Version a of a lesson beside version b, for the evidence drawer's "Two versions of a lesson" (evidence id
         versions:{lesson_id}:{a}:{b}): each with its statement, tags, the quotes it rests on and its decision by role,
         the change between them with the changed words, the lead's reason on the later one, and the versions that came
@@ -347,6 +379,8 @@ class LessonsPage:
         from strata.knowledge.lessons.review import Refused
 
         store = as_of_store(self.review._load(engine), as_of)
+        # One viewer's example lesson versions (ticket 41), which only their own two-versions view shows.
+        store.versions = with_examples(store.versions, extra or {})
         rows = store.versions.get(lesson_id) or []
         numbers = {_int(row["version"]): row for row in rows}
         if a not in numbers or b not in numbers or a >= b:
@@ -361,7 +395,8 @@ class LessonsPage:
                     "state": row["state"], "change_kind": row["change_kind"],
                     "reason": row["reason"] if version != 1 else None,
                     "evidence": [self.review.evidence_row(store, item) for item in evidence],
-                    **self.review.ieg(store, evidence, row["project_id"])}
+                    **self.review.ieg(store, evidence, row["project_id"]),
+                    **({"example": True} if row.get("example") else {})}
 
         later = [row for row in rows if a < _int(row["version"]) <= b]
         return {"evidence_id": f"versions:{lesson_id}:{a}:{b}", "lesson_id": lesson_id,
@@ -406,9 +441,10 @@ class LessonsPage:
 
     def build(self, engine: Engine, viewer, *, visit: Visit, preview: bool, drafts: list = (),
               feedback: dict | None = None, filters: dict | None = None, page: int = 1, show: str | None = None,
-              as_of: dt.date | None = None) -> dict:
+              as_of: dt.date | None = None, extra_versions: dict[str, list[dict]] | None = None) -> dict:
         """The whole Lessons tab in one answer. A preview leaves out what is about the signed-in person; an as-of view
-        shows only the library (the 39 brief, section 4.9)."""
+        shows only the library (the 39 brief, section 4.9). extra_versions are the reader's own example lesson versions
+        (ticket 41), which only their notices read: the library and the digest keep the lead's versions."""
         store = as_of_store(self.review._load(engine), as_of)
         library = self.review.library(engine, viewer, page, filters, show, store=store)
         if as_of is not None:
@@ -420,5 +456,6 @@ class LessonsPage:
         for item in (digest.get("items") or {}).get("retired") or []:
             item["exported_uses"] = self.exported_uses(store, drafts, item["lesson_id"])
         return {"view": "preview" if preview else "staff", "as_of": None, "visit": visit.as_dict(), "digest": digest,
-                "notices": self.changed_where_used(store, drafts), "new_lessons": self.new_lessons(store, visit),
+                "notices": self.changed_where_used(with_versions(store, extra_versions), drafts),
+                "new_lessons": self.new_lessons(store, visit),
                 "feedback": None if preview else self.feedback(feedback), "library": library}

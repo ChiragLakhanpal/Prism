@@ -21,6 +21,7 @@ import { DraftNewPage } from "./pages/DraftNewPage";
 import { DraftPage } from "./pages/DraftPage";
 import { DraftsPage } from "./pages/DraftsPage";
 import { FollowingPage } from "./pages/FollowingPage";
+import { HomePage } from "./pages/HomePage";
 import { QueuePage } from "./pages/LessonsPages";
 import { LessonsPage } from "./pages/LessonsTab";
 import { ReviewPage } from "./pages/ReviewPage";
@@ -62,25 +63,9 @@ function NotInView({ match, view }: { match: Match; view: "piu" | "public" }) {
   );
 }
 
-// Home in the public view, until ticket 41 (the 40 brief, 3.9): "Your briefing" is about plans and drafts, which the
-// public view does not have.
-function PublicHome() {
-  const words = copy.view.publicHome;
-  return (
-    <div className="layout-grid" data-public-home>
-      <div className="col-span-12 @md/page:col-span-8">
-        <PageHeader title={words.title} purpose={words.purpose} />
-        <EmptyState className="mt-6 @lg/page:mt-8" title={words.cardTitle} body={words.cardBody} link={{ href: "/projects", text: words.link }} />
-      </div>
-    </div>
-  );
-}
-
-export function RoutePage({ match, search = "", hiddenIn = null, pending = false, publicView = false }: {
+export function RoutePage({ match, search = "", hiddenIn = null, pending = false }: {
   match: Match;
   search?: string;
-  // The server applied the public view (ticket 40), whose Home differs.
-  publicView?: boolean;
   // The preview whose view does not show this page, from GET /api/me (ticket 40), or null.
   hiddenIn?: "piu" | "public" | null;
   // A preview whose rules the server has not confirmed yet: the page waits, so nothing it hides is drawn.
@@ -89,7 +74,8 @@ export function RoutePage({ match, search = "", hiddenIn = null, pending = false
   const { pid, agencyId, version } = match.values;
   if (pending) return <Skeleton className="h-8 w-3/5 max-w-[560px]" />;
   if (hiddenIn) return <NotInView match={match} view={hiddenIn} />;
-  if (match.key === "home" && publicView) return <PublicHome />;
+  // Home (ticket 41) draws the briefing for World Bank staff, an officer's Home, or the public's, as the server applies.
+  if (match.key === "home") return <HomePage />;
   if (match.key === "projects") return <ProjectsPage />;
   if (match.key === "following") return <FollowingPage search={search} />;
   if (match.key === "project") return <ProjectPage pid={pid} tab={match.values.tab as ProjectTab} />;

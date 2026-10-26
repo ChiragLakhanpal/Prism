@@ -1535,6 +1535,8 @@ class Person:
     groups: tuple[str, ...]
     regions: tuple[str, ...]
     projects: tuple[str, ...]
+    # The user id the Databricks App forwards for them, which the seed command sets the examples up under (ticket 41).
+    user_id: str | None = None
 
     def acts(self, roles: Roles) -> tuple[str, ...]:
         """Everything this person may do, from every group they are in, in ROLE_ACTS's order."""
@@ -1629,7 +1631,7 @@ def load_roles(path: Path = CONFIG_DIR / "roles.toml") -> Roles:
         groups[key] = Group(key, entry.text("workspace_group"), entry.text("role"), pages, acts)
     people, seen = [], set()
     for entry in _tables(path, data, "people"):
-        entry.only({"email", "name", "groups", "regions", "projects"})
+        entry.only({"email", "name", "groups", "regions", "projects", "user_id"})
         email = entry.text("email")
         if email.lower() in seen:
             raise ConfigError(f"In {path.name}, {email} is listed more than once. List each person once, with "
@@ -1651,7 +1653,7 @@ def load_roles(path: Path = CONFIG_DIR / "roles.toml") -> Roles:
         for project in projects:
             if not PROJECT_ID.fullmatch(project):
                 entry._fail("projects", f"must be a project ID, P followed by six digits, not {project!r}")
-        people.append(Person(email, entry.text("name"), named, regions, projects))
+        people.append(Person(email, entry.text("name"), named, regions, projects, entry.text("user_id", required=False)))
     sign_off = {}
     if "model_sign_off" in data:
         entry = _Entry(path, "model_sign_off", data["model_sign_off"])
@@ -2849,6 +2851,87 @@ def load_kpis(path: Path = CONFIG_DIR / "kpis.toml") -> dict[str, Kpi]:
                          entry.text("fewest", required=False),
                          entry.boolean("target") if "target" in table else False, loop, role)
     return found
+
+
+# ── The examples registry (ticket 41) ────────────────────────────────────
+
+START_HERE_SLOTS = ("showcase", "demo_project", "demo_agency_id", "demo_plan_date", "lesson_notice")
+
+
+@dataclass(frozen=True)
+class StartHereLink:
+    """One link on Home's Start here strip: its words' key in the copy file and where it lands."""
+
+    key: str
+    href: str
+
+
+@dataclass(frozen=True)
+class Examples:
+    """The examples Strata sets up for the reviewing panel, and where Start here's links land (config/examples.toml).
+    The showcase project and the demo plan come from the slice file, so they are not repeated here."""
+
+    viewers: str  # the roles file's group whose people get the examples
+    follows: tuple[str, ...]  # project IDs each viewer follows beside the demo plan's project
+    sentences: dict[str, str]  # a package planned from a sentence, by its key
+    ppsd_package: str
+    ppsd_criteria: dict
+    ppsd_risks: int
+    lesson_change_sentence: str  # the sentence the example lesson change adds to the lesson's wording
+    start_here: tuple[StartHereLink, ...]
+    showcase: Showcase
+    demo_plan: DemoPlan
+
+    def links(self, agency_id: str, lesson_notice: str = "") -> list[dict]:
+        """Each Start here link with its address filled in: the demo plan's agency id from check_plan's result, and the
+        seeded lesson change's anchor on Lessons (#notice-{lesson}-v{version}), or nothing when none was seeded."""
+        values = {"showcase": self.showcase.project_id, "demo_project": self.demo_plan.project_id,
+                  "demo_agency_id": agency_id, "demo_plan_date": self.demo_plan.plan_date.isoformat(),
+                  "lesson_notice": lesson_notice}
+        found = []
+        for link in self.start_here:
+            # The project a link names in its words: the demo plan's, or the showcase project's.
+            pid = (self.demo_plan.project_id if "{demo_project}" in link.href else
+                   self.showcase.project_id if "{showcase}" in link.href else None)
+            found.append({"key": link.key, "href": link.href.format(**values), "pid": pid})
+        return found
+
+
+def load_examples(path: Path = CONFIG_DIR / "examples.toml", slice_path: Path = CONFIG_DIR / "slice.toml") -> Examples:
+    """The examples registry, with the slice file's showcase project and demo plan."""
+    data = _read(path)
+    top = _Entry(path, "the file", data)
+    top.only({"viewers", "follows", "packages", "ppsd_rows", "lesson_change", "start_here"})
+    chosen = load_slice(slice_path)
+    named = {"showcase": chosen.showcase.project_id}
+    follows = []
+    for project in top.texts("follows"):
+        if project not in named and not PROJECT_ID.fullmatch(project):
+            top._fail("follows", f"must name showcase or a project ID, not {project!r}")
+        follows.append(named.get(project, project))
+    sentences = {}
+    for key, table in (data.get("packages") or {}).items():
+        entry = _Entry(path, f"packages.{key}", table)
+        entry.only({"sentence"})
+        sentences[key] = entry.text("sentence")
+    ppsd = _Entry(path, "ppsd_rows", data.get("ppsd_rows"))
+    ppsd.only({"package", "criteria", "risks"})
+    criteria = ppsd.table.get("criteria") or {}
+    if not isinstance(criteria, dict):
+        ppsd._fail("criteria", "must be a table of find_comparables' parameters")
+    change = _Entry(path, "lesson_change", data.get("lesson_change"))
+    change.only({"sentence"})
+    links = []
+    for entry in _tables(path, data, "start_here"):
+        entry.only({"key", "href"})
+        href = entry.text("href")
+        slots = set(re.findall(r"\{(\w+)\}", href))
+        if not slots <= set(START_HERE_SLOTS):
+            entry._fail("href", f"names {', '.join(sorted(slots - set(START_HERE_SLOTS)))}, which I can't fill. Use only "
+                                f"{', '.join(START_HERE_SLOTS)}")
+        links.append(StartHereLink(entry.text("key"), href))
+    return Examples(top.text("viewers"), tuple(follows), sentences, ppsd.text("package"), dict(criteria),
+                    ppsd.integer("risks"), change.text("sentence"), tuple(links), chosen.showcase, chosen.demo_plan)
 
 
 # ── The proposal's registries (ticket 46) ────────────────────────────────

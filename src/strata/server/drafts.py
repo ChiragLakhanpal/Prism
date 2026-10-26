@@ -51,6 +51,7 @@ from strata.drafts.store import DraftStore, NewExport, Saved, Stale
 from strata.harness.aio import HEARTBEAT, with_heartbeats
 from strata.harness.turn import Event, Scope, TraceIds, Turn
 from strata.knowledge.lessons import notices
+from strata.knowledge.lessons.page import with_examples
 from strata.lakehouse.engine import EngineError, PermissionDenied
 from strata.packages.store import PackageStore
 from strata.server import uploads as upload_routes
@@ -134,10 +135,14 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: DraftStore 
                now: Callable[[], dt.datetime], new_draft_id: Callable[[], str], new_run_id: Callable[[], str],
                runs: RunLog | None, trace_ids: Callable[[], TraceIds], reference: Callable[[], str],
                heartbeat_seconds: float, six_checks: SixChecks, packages: PackageStore | None = None,
-               planned_view: Callable[[object], dict] | None = None, uploads: UploadStore | None = None) -> None:
+               planned_view: Callable[[object], dict] | None = None, uploads: UploadStore | None = None,
+               example_versions: Callable[[Viewer], dict] | None = None,
+               example_drafts: Callable[[Viewer], set[str]] | None = None) -> None:
     """six_checks runs the verifier's checks 4 to 6 on every draft, with the app's judge, as the answer stream does.
     packages keeps planned packages and each viewer's risk selection (ticket 30), which suggested PPSD rows read;
-    planned_view shows a planned package as the package workspace does (strata.packages.workflow.package_view)."""
+    planned_view shows a planned package as the package workspace does (strata.packages.workflow.package_view);
+    example_versions gives a viewer's own example lesson versions (ticket 41), which only their drafts' notices read,
+    and example_drafts the drafts the seed command set up for a viewer, which the Drafts tab labels "Example"."""
     running: set[tuple[str, str]] = set()  # (author, idempotency key) of the drafts being written now
     lock = threading.Lock()
 
@@ -174,7 +179,10 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: DraftStore 
         if engine_for is None or not any(notices.citations(saved.content)):
             return {}
         with engine_for(viewer) as engine:
-            return notices.history(engine)
+            versions = notices.history(engine)
+        # The viewer's own example lesson version (ticket 41), which only their own drafts' notices show.
+        extra = example_versions(viewer) if example_versions is not None and is_author(viewer, saved.author_id) else {}
+        return with_examples(versions, extra)
 
     def lesson_notices(viewer: Viewer, saved: Saved) -> list[dict]:
         """The open version notices on a draft's rows (ticket 39)."""
@@ -182,8 +190,12 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: DraftStore 
         return notices.row_notices(saved.content, versions) if versions else []
 
     def shown(saved: Saved, viewer: Viewer, view: str) -> dict:
-        return runtime.draft_view(saved, viewer, view, kinds, opened_by(viewer.user_id, saved),
-                                  lesson_notices(viewer, saved))
+        found = runtime.draft_view(saved, viewer, view, kinds, opened_by(viewer.user_id, saved),
+                                   lesson_notices(viewer, saved))
+        # A draft the seed command set up for this viewer (ticket 41): its page labels it "Example".
+        if example_drafts is not None and saved.draft_id in example_drafts(viewer):
+            found["example"] = True
+        return found
 
     # ── Writing ──────────────────────────────────────────────────────────
 
@@ -399,6 +411,8 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: DraftStore 
         def read():
             team = access.team(viewer)
             saved = store.for_team(team.key, viewer.user_id)
+            # The drafts the seed command set up for this viewer (ticket 41), each labeled "Example".
+            examples = example_drafts(viewer) if example_drafts is not None else set()
             groups: dict[str, list[dict]] = {group: [] for group in GROUPS.values()}
             discarded = []
             for draft in saved:
@@ -409,7 +423,10 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: DraftStore 
                         discarded.append(runtime.list_row(draft, viewer, None))
                     continue
                 opened = opened_by(viewer.user_id, draft) if mine and state == "draft" else None
-                groups[GROUPS[state]].append(runtime.list_row(draft, viewer, opened))
+                row = runtime.list_row(draft, viewer, opened)
+                if draft.draft_id in examples:
+                    row["example"] = True
+                groups[GROUPS[state]].append(row)
             for rows in [*groups.values(), discarded]:
                 rows.sort(key=lambda row: row["changed"]["at"], reverse=True)
             return {"groups": groups, "counts": {group: len(rows) for group, rows in groups.items()},
@@ -428,9 +445,16 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: DraftStore 
         if not viewer.user_id:
             return refused(401, "no_identity")
 
+        examples: set[str] | None = None
+
         def named(draft: Saved) -> dict:
+            # A draft the seed command set up for this viewer (ticket 41) says Strata set it up, never "You started".
+            nonlocal examples
+            if examples is None:
+                examples = example_drafts(viewer) if example_drafts is not None else set()
             return {"draft_id": draft.draft_id, "created_at": runtime.iso(draft.created_at),
-                    "author": {"name": draft.author_name, "you": is_author(viewer, draft.author_id)}}
+                    "author": {"name": draft.author_name, "you": is_author(viewer, draft.author_id)},
+                    **({"example": True} if draft.draft_id in examples else {})}
 
         def on_package():
             found = None

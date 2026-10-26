@@ -75,7 +75,8 @@ export type PlannedPackage = {
   missing: string[];
 };
 
-export type PlannedPage = { package: PlannedPackage; form: PackageForm };
+// example: the seed command planned it for you (ticket 41).
+export type PlannedPage = { package: PlannedPackage; form: PackageForm; example?: boolean };
 
 export type PlannedRow =
   | {
@@ -88,6 +89,8 @@ export type PlannedRow =
       project_id: string | null;
       guesses: number;
       last_worked_on: string;
+      // A package the seed command planned for you (ticket 41), labeled "Example".
+      example?: boolean;
     }
   | {
       type: "plan_check";

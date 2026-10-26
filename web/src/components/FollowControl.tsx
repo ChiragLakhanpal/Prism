@@ -27,6 +27,8 @@ export function FollowControl({ pid, name, sample }: {
   const start = sample ? (sample.unread ? "unread" : sample.following === null ? "loading" : sample.following ? "on" : "off") : "loading";
   // unread: reading whether you follow it failed, so no button claims a state until it is read again.
   const [state, setState] = useState<"loading" | "off" | "on" | "unread">(start);
+  // A follow the seed command made for you (ticket 41): the sentence says Strata made it, until you change it.
+  const [example, setExample] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const [busy, setBusy] = useState(sample?.busy ?? false);
   const [failed, setFailed] = useState<"on" | "off" | null>(sample?.failed ? (sample.following ? "off" : "on") : null);
@@ -40,8 +42,11 @@ export function FollowControl({ pid, name, sample }: {
   useEffect(() => {
     if (sample) return;
     const controller = new AbortController();
-    getJson<{ following: boolean }>(path, { signal: controller.signal }).then(
-      (answer) => setState(answer.following ? "on" : "off"),
+    getJson<{ following: boolean; example?: boolean }>(path, { signal: controller.signal }).then(
+      (answer) => {
+        setState(answer.following ? "on" : "off");
+        setExample(Boolean(answer.example));
+      },
       () => !controller.signal.aborted && setState("unread"),
     );
     return () => controller.abort();
@@ -60,6 +65,7 @@ export function FollowControl({ pid, name, sample }: {
     try {
       const answer = await (to === "on" ? putJson<{ following: boolean }>(path, {}) : deleteJson<{ following: boolean }>(path));
       focusNext.current = true;
+      setExample(false);
       setState(answer.following ? "on" : "off");
       setSaid(answer.following ? words.announceOn(name ?? pid) : words.announceOff(name ?? pid));
     } catch {
@@ -93,7 +99,7 @@ export function FollowControl({ pid, name, sample }: {
           <>
             <p id={sentenceId} className="flex items-center gap-1 text-small text-ink">
               <Check aria-hidden="true" className="size-4 text-ink-muted" />
-              {words.state}
+              {example ? copy.home.exampleFollowed : words.state}
             </p>
             <Button ref={unfollow} variant="ghost" onPage loading={busy} busyLabel={words.busy} aria-describedby={sentenceId} onClick={() => change("off")}>
               {words.unfollow}
