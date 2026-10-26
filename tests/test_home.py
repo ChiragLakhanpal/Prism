@@ -231,6 +231,12 @@ def test_a_preview_cannot_remove_the_strip_and_never_shows_it(story):
     assert story.get("/api/me").json()["start_here_visible"] is True
 
 
+def test_the_strip_shows_only_to_world_bank_staff(story):
+    """Cy is signed in but holds no group the roles file's [staff] names, so the examples are not his."""
+    assert story.get("/api/me", CY).json()["start_here_visible"] is False
+    assert story.home(CY).json()["start_here"]["visible"] is False
+
+
 # ── The roles table's other columns ──────────────────────────────────────
 
 def test_the_agency_preview_lists_the_activities_behind_their_planned_dates_in_the_agencys_latest_plan(story):

@@ -464,7 +464,7 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, access: Access, vi
 
     def start_here_visible(viewer: Viewer, own: str, preview: bool, as_of: dt.date | None) -> bool:
         """The strip shows for World Bank staff in their own view, today, until they remove it."""
-        if own != STAFF or preview or as_of is not None or not viewer.user_id:
+        if own != STAFF or preview or as_of is not None or not viewer.user_id or not access.is_staff(viewer):
             return False
         if store is None:
             return True

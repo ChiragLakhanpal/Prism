@@ -99,7 +99,7 @@
     "applied": null,
     "problem": null
   },
-  "start_here_visible": true,
+  "start_here_visible": false,
   "language": {
     "code": "fr",
     "source": "link",
