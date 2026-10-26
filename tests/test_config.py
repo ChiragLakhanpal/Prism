@@ -7,6 +7,7 @@ Expected values come from docs/PLAN.md sections 2 and 3 and the ticket, never fr
 """
 
 import datetime as dt
+import re
 import shutil
 import tomllib
 from pathlib import Path
@@ -171,9 +172,12 @@ def test_the_frozen_awards_dataset_says_so_and_the_cpia_and_wgi_sources_name_the
 
 
 def test_the_nightly_job_fetches_every_structured_source_page_by_page_and_the_plan_reader_fetches_the_documents():
+    """PLAN.md section 3's structured sources are paged. A source added in round 2 is one more entry (the change
+    drill, docs/change-drill.md), so this checks that PLAN.md's sources are among the paged ones, not that they
+    are all of them."""
     sources = config.load_sources()
 
-    assert {key for key, source in sources.items() if source.paged} == set(FINANCES_ONE) | {
+    assert {key for key, source in sources.items() if source.paged} >= set(FINANCES_ONE) | {
         "notices", "projects", "cpia", "wgi"}
     assert not sources["documents"].paged
 
@@ -597,10 +601,11 @@ def test_the_evidence_ladder_orders_outcome_judgments_then_moments_then_the_two_
     assert ladder.attribute("signed_on").class_ == "moment"
 
 
+# Each edit adds to a line rather than restating it, so reordering the ladder (the change drill) leaves these alone.
 @pytest.mark.parametrize("old, new, says", [
-    ('tiers = ["ieg", "icr", "isr", "pad"]', 'tiers = ["ieg", "icr", "isr", "appraisal"]',
+    ('tiers = [', 'tiers = ["appraisal", ',
      r"rules\[1\]\.tiers names appraisal, which \[tiers\] does not define"),
-    ('order = ["tieSpecific", "tieRecent"]', 'order = ["tieSpecific", "tieOldest"]',
+    ('order = [', 'order = ["tieOldest", ',
      r"ties\.order can use only tieSpecific and tieRecent"),
     ('applies_to = "judgment"', 'applies_to = "opinion"', r"rules\[1\]\.applies_to must be judgment or moment"),
     ('class = "judgment"', 'class = "judgment"\nclass = "moment"', r"evidence_ladder\.toml is not valid TOML"),
@@ -613,10 +618,14 @@ def test_an_evidence_ladder_of_the_wrong_shape_is_refused_with_a_sentence(tmp_pa
 
 
 def test_reordering_the_outcome_tiers_in_a_copy_of_the_ladder_is_read_from_its_path(tmp_path):
-    path = copy("evidence_ladder.toml", tmp_path, 'tiers = ["ieg", "icr", "isr", "pad"]',
-                'tiers = ["ieg", "isr", "icr", "pad"]')
+    """The change drill's "Reorder the evidence ladder" is this line of config/evidence_ladder.toml, whatever order
+    it holds now."""
+    path = copy("evidence_ladder.toml", tmp_path)
+    text = path.read_text()
+    [line] = re.findall(r"^tiers = \[[^\]]*\]$", text, flags=re.M)
+    path.write_text(text.replace(line, 'tiers = ["pad", "isr", "icr", "ieg"]', 1))
 
-    assert config.load_ladder(path).rules[0].tiers == ("ieg", "isr", "icr", "pad")
+    assert config.load_ladder(path).rules[0].tiers == ("pad", "isr", "icr", "ieg")
 
 
 # ── The project page's lists (ticket 21) ─────────────────────────────────

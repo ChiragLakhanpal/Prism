@@ -11,15 +11,17 @@ history's months) and from the ticket's four lines, never from the tool's own ar
 
 import dataclasses
 import datetime as dt
+import re
 import tomllib
 from pathlib import Path
 
 import pytest
 
+from strata import config
 from strata.config import load_thresholds
 from strata.dbx import Viewer
 from strata.lakehouse.engine import DuckDBEngine
-from strata.tools import registry
+from strata.tools import project_signals, registry
 
 ROOT = Path(__file__).resolve().parents[1]
 TRUTH = {entry["id"]: entry for entry in tomllib.loads((ROOT / "tests" / "ground_truth" / "values.toml").read_text())["value"]}
@@ -207,6 +209,38 @@ def test_a_plan_listed_but_not_read_counts_nothing_and_says_its_counts_are_missi
 def test_raising_the_needs_a_look_count_above_four_turns_p156634_to_watch_with_no_code_change(engine):
     assert signals(engine, thresholds=with_signals(look_min=5))["status"] == "watch"
     assert signals(engine, thresholds=with_signals(look_min=5, strong=["closing_moves"]))["status"] == "needs_a_look"
+
+
+# ── A signal added in round 2 (the change drill, docs/change-drill.md) ───
+
+def following_missing_words() -> set[str]:
+    """The keys of the Following page's could-not-run words in web/src/copy.ts: the missing block that holds
+    no_plans, however it is indented or ordered."""
+    copy = (ROOT / "web" / "src" / "copy.ts").read_text()
+    blocks = [block for block in re.findall(r"^\s*missing: \{(.*?)^\s*\}", copy, flags=re.S | re.M)
+              if re.search(r"^\s*no_plans:", block, flags=re.M)]
+    assert len(blocks) == 1, "copy.ts needs one missing block with the Following page's no_plans words"
+    return set(re.findall(r"^\s*(\w+):", blocks[0], flags=re.M))
+
+
+def test_every_reason_a_check_could_not_run_is_in_the_registry_with_its_words_on_the_page():
+    """Adding a signal adds a check to src/strata/tools/project_signals.py, and the gate, not the live page, must
+    catch a reason for not running it that config/tools.toml does not list, or that the Following page has no
+    words for (ticket 09's review, R2-P2). Each check takes its reason from project_signals.NOT_RUN."""
+    reasons = set(config.load_tools()["project_signals"].result.reasons)
+
+    assert set(project_signals.NOT_RUN_REASONS) - reasons == set()
+    assert reasons - following_missing_words() == set()
+
+
+def test_a_reason_the_registry_does_not_list_is_refused_so_the_page_would_answer_500(engine, monkeypatch):
+    """Why the test above runs in the gate: a check that gives a reason config/tools.toml does not list makes the
+    registry refuse the whole result, and the live page answers HTTP 500 tool_contract. As of June 30, 2024 no loan
+    snapshot of P156634 was public, so the disbursement check gives its reason from NOT_RUN."""
+    monkeypatch.setitem(project_signals.NOT_RUN, "loans", "no_contracts")
+
+    with pytest.raises(registry.ToolContractError, match="'no_contracts', which its result's reasons do not list"):
+        signals(engine, as_of=dt.date(2024, 6, 30))
 
 
 def test_the_disbursement_signal_gives_the_closing_date_its_months_are_counted_to(engine):

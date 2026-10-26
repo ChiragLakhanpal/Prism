@@ -17,6 +17,8 @@ its figures. In the source:
 - {when:measured:key} at the start of a line, or after its {#slug}, keeps the line only while result key has a
   measured value, and {when:unmeasured:key} only while it has none, so a state such as "No cost data yet" has
   its own words instead of stopping the build.
+- {when:rehearsed} and {when:unrehearsed}, in the same places, keep a line only once every drill of the change
+  drill has a rehearsal in docs/proposal/rehearsals.toml, or only while one has none ("Not rehearsed yet").
 - A block that is only {datasheet}, {rubric-map}, {framework}, {caps}, {drill}, {ladder}, {designed} or {annex:...}
   is replaced by the table that registry gives; {copy:key} is the app's own words (src/strata/proposal/copy.json).
 - {model:role} is the deployment config/models.toml names for that role, in code, so swapping a model changes the
@@ -41,8 +43,8 @@ from strata import config
 from strata.dashboard import wording
 from strata.proposal import figures as drawings
 from strata.proposal import numbers
-from strata.proposal.register import (DAY_ONE_FILE, MONTHS, Result, Setting, Value, load_results, load_settings,
-                                     value)
+from strata.proposal.register import (DAY_ONE_FILE, MONTHS, REHEARSAL_KIND, Rehearsal, Result, Setting, Value,
+                                     load_rehearsals, load_results, load_settings, value)
 
 ROOT = Path(__file__).resolve().parents[3]
 SOURCE_FILE = ROOT / "docs" / "proposal" / "source.md"
@@ -116,6 +118,7 @@ class Inputs:
     rubric: config.Rubric = field(default_factory=config.load_rubric)
     designed: tuple[config.DesignedNotBuilt, ...] = field(default_factory=config.load_designed_not_built)
     drills: tuple[config.ChangeDrill, ...] = field(default_factory=config.load_change_drills)
+    rehearsals: dict[str, Rehearsal] = field(default_factory=load_rehearsals)
     models: dict = field(default_factory=config.load_models)
     day_one: Path = DAY_ONE_FILE
     copy: dict = field(default_factory=lambda: json.loads(COPY_FILE.read_text()))
@@ -142,6 +145,7 @@ class _Build:
         self.results = inputs.snapshot["results"]
         self.cited_results: dict[str, list[tuple[str, str]]] = {}
         self.cited_settings: dict[str, list[tuple[str, str]]] = {}
+        self.cited_drills: list[tuple[Rehearsal, tuple[str, str]]] = []
         self.values: dict[str, Value] = {}
         self.paragraphs: dict[str, int] = {}
         self.sections: dict[str, list[int]] = {}
@@ -254,8 +258,14 @@ class _Build:
             return f"{number} GB a day"
         return numeral(number)
 
-    def setting_link(self, key: str, capital: bool = False) -> str:
-        setting, found = self.setting(key)
+    def setting_link(self, key: str, capital: bool = False, cite: bool = True) -> str:
+        """The setting as a link to its row in Annex 2. cite=False links without counting the place as citing it,
+        for an annex row that repeats a value its section already cited."""
+        if cite:
+            setting, found = self.setting(key)
+        else:
+            setting = self.inputs.settings[key]
+            found = self.values.get(key) or value(setting, self.inputs.day_one)
         text = self.setting_text(setting, found)
         if capital:
             text = text[:1].upper() + text[1:]
@@ -334,6 +344,24 @@ def _measured_lines(source: str, results: dict) -> str:
         found = WHEN_MEASURED.match(line)
         if found:
             if bool(results.get(found.group(3), {}).get("measured")) != (found.group(2) == "measured"):
+                continue
+            line = (found.group(1) or "") + line[found.end():]
+        kept.append(line)
+    return "\n".join(kept)
+
+
+WHEN_REHEARSED = re.compile(r"^(\{#[a-z0-9-]+\} )?\{when:(rehearsed|unrehearsed)\} ")
+
+
+def _rehearsed_lines(source: str, every_drill_rehearsed: bool) -> str:
+    """The source with each {when:unrehearsed} line, at its start or after its {#slug}, kept only while a drill of
+    the change drill has no rehearsal, such as the note that the times come later (the 46 brief, section 15, "Not
+    rehearsed yet"), and each {when:rehearsed} line only once every drill has one."""
+    kept = []
+    for line in source.split("\n"):
+        found = WHEN_REHEARSED.match(line)
+        if found:
+            if every_drill_rehearsed != (found.group(2) == "rehearsed"):
                 continue
             line = (found.group(1) or "") + line[found.end():]
         kept.append(line)
@@ -519,10 +547,32 @@ def _caps(build: _Build) -> str:
     return "\n".join(rows)
 
 
+DRILL_TARGET = "drill-target"  # docs/proposal/settings.toml: the minutes a drill may take, PLAN.md section 15
+
+
+def _drill_time(build: _Build, rehearsal: Rehearsal, linked: bool = True) -> str:
+    """A rehearsal's minutes, as the change drill's table shows them (linked to the rehearsal's row in Annex 1) and
+    as that row shows them, and under them the 46 brief's Missed target words when the drill took longer than the
+    target (section 15), which are never left out. In the table, those words cite the target as any sentence does;
+    the Annex 1 row repeats them without counting itself as a citation."""
+    minutes = rehearsal.minutes
+    unit = "minute" if minutes == 1 else "minutes"
+    title = _title(f"{minutes} {unit}. {REHEARSAL_KIND}, measured {short_date(rehearsal.measured_on)}.")
+    shown = f'[{numeral(minutes)}](#r-{rehearsal.key} "{title}")' if linked else numeral(minutes)
+    if minutes > value(build.inputs.settings[DRILL_TARGET], build.inputs.day_one).number:
+        shown += f"<br>Target: {build.setting_link(DRILL_TARGET, cite=linked)}. Not met."
+    return shown
+
+
 def _drill(build: _Build) -> str:
     rows = ["| Change | The one place it lives | Time, minutes | Proved by |", "|---|---|---:|---|"]
     for drill in build.inputs.drills:
-        minutes = "Not rehearsed yet" if drill.minutes is None else str(drill.minutes)
+        rehearsal = build.inputs.rehearsals.get(drill.change)
+        if rehearsal is None:
+            minutes = "Not rehearsed yet"
+        else:
+            minutes = _drill_time(build, rehearsal)
+            build.cited_drills.append((rehearsal, build.where))
         rows.append(f"| {drill.change} | [`{drill.place}`](../{drill.place}) | {minutes} | "
                     f"[`{Path(drill.proved_by).name}`](../{drill.proved_by}) |")
     return "\n".join(rows)
@@ -584,9 +634,11 @@ def _register(build: _Build) -> str:
     for module in (1, 2, 3, 4):
         keys = [key for key, defined in build.inputs.results.items() if defined.module == module
                 and key in build.cited_results]
-        if not keys:
+        drills = build.cited_drills if module == DRILL_MODULE else []
+        if not keys and not drills:
             continue
-        days = sorted(_day(build.results[key]["measured_on"]) for key in keys)
+        days = sorted([_day(build.results[key]["measured_on"]) for key in keys]
+                      + [rehearsal.measured_on for rehearsal, _ in drills])
         span = (f"Measured on {long_date(days[0])}." if days[0] == days[-1] else
                 f"Measured from {long_date(days[0])} to {long_date(days[-1])}.")
         out.append(f"### Module {module} results\n\n{span}")
@@ -610,8 +662,27 @@ def _register(build: _Build) -> str:
             cited = ", ".join(f"[{label}]({anchor})" for label, anchor in build.cited_results[key])
             rows.append(f'| <a id="r-{key}"></a>{_cell(defined.name)} | {_cell(shown)} | '
                         f"{short_date(_day(measured['measured_on']))} | {source} | {cited} |")
+        rows += [_drill_row(build, rehearsal, where) for rehearsal, where in drills]
         out.append("\n".join(rows))
     return "\n\n".join(out)
+
+
+DRILL_MODULE = 4  # the change drill's table is in Module 4, "Changing Strata in round 2"
+REHEARSALS_LINK = "[rehearsals.toml](../docs/proposal/rehearsals.toml)"
+
+
+def _drill_row(build: _Build, rehearsal: Rehearsal, where: tuple[str, str]) -> str:
+    """A rehearsal's row in Annex 1: what it timed, its minutes, the day, and the branch, commit and gate run that
+    measured it, with the minutes split into the edits and the gate's run (the 49 review's B1), since the timed run
+    made a change already worked through once."""
+    change = rehearsal.change[:1].lower() + rehearsal.change[1:]
+    name = f"Minutes to {change}, from the drill's start on its own branch to the commit the gate passed on it"
+    source = (f"{REHEARSAL_KIND}; branch `{rehearsal.branch}`, commit `{rehearsal.commit[:7]}`; the edits were done "
+              f"after {numeral(rehearsal.editing_seconds)} seconds, then the gate passed in "
+              f"{numeral(rehearsal.gate_seconds)} seconds; {REHEARSALS_LINK}")
+    label, anchor = where
+    return (f'| <a id="r-{rehearsal.key}"></a>{_cell(name)} | {_drill_time(build, rehearsal, linked=False)} | '
+            f"{short_date(rehearsal.measured_on)} | {source} | [{label}]({anchor}) |")
 
 
 def _labels(defined: Result, measured: dict) -> str:
@@ -755,7 +826,9 @@ LATE = {"{annex:results}": _register, "{annex:settings}": _settings_annex}
 def build(source: str, inputs: Inputs) -> Built:
     """docs/proposal.md and its figures, from the source, the snapshot and the registries."""
     work = _Build(inputs)
-    blocks = _number(work, _blocks(_measured_lines(source, work.results)), designed=bool(inputs.designed))
+    rehearsed = all(drill.change in inputs.rehearsals for drill in inputs.drills)
+    source = _rehearsed_lines(_measured_lines(source, work.results), rehearsed)
+    blocks = _number(work, _blocks(source), designed=bool(inputs.designed))
     out: list[str] = []
     late: list[tuple[int, str]] = []
     for block in blocks:

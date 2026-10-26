@@ -306,7 +306,8 @@ def test_the_notices_fetch_asks_for_each_slice_country_on_its_own_with_its_own_w
                                     newest_held=lambda country: asked.append(country)))
 
     codes = [country.iso2 for country in config.load_slice().countries]
-    assert asked == codes == ["KE", "BD", "VN", "PK"]
+    # PLAN.md section 3's four come first; a country added to the slice (the change drill) is asked for after them.
+    assert asked == codes and codes[:4] == ["KE", "BD", "VN", "PK"]
     assert [parse_qs(urlparse(url).query)["project_ctry_code"] for url in api.asked] == [[code] for code in codes]
     assert [page.country_code for page in fetched] == codes
 

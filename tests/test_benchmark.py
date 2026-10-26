@@ -129,6 +129,44 @@ def test_a_question_whose_tool_gave_the_expected_answer_and_whose_answer_cites_i
         (plan["id"], "sql", True, ()), (search["id"], "documents", True, ())]
 
 
+# The change drill's "Add a benchmark or must-refuse question" (docs/change-drill.md): one entry at the end of the
+# file. Its expected citation is tests/ground_truth/values.toml's icr-review-2020-restates-para-54, the March 27,
+# 2020 ICR Review's section 10.b, which a search as of January 1, 2022 finds before the 2023 re-issue replaced it.
+ADDED = """
+  - id: search-passages-icr-review-2020-rebidding
+    kind: documents
+    tool: search_passages
+    question: >-
+      As of January 2022, did IEG's review of the P130164 completion report repeat the lesson about works estimates
+      and rebidding?
+    arguments:
+      query: IEG lesson estimates market rate rebidding
+      project_id: P130164
+      document_type: ICR Review
+      as_of: "2022-01-01"
+    expected:
+      top_three_include: [strata.gold.passage:31906731/v1/10.b]
+      left_out: []
+    cites: [strata.gold.passage:31906731/v1/10.b]
+    source: >-
+      Section 10.b of the ICR Review of March 27, 2020, on PDF page 13 (tests/ground_truth/values.toml,
+      icr-review-2020-restates-para-54).
+"""
+
+
+def test_a_question_added_to_the_file_is_one_entry_and_the_next_full_gate_asks_and_scores_it(engine_for, tmp_path):
+    added = tmp_path / "benchmark.yaml"
+    added.write_text((ROOT / "evals" / "benchmark.yaml").read_text().rstrip("\n") + "\n" + ADDED)
+
+    questions = benchmark.load(added)
+    [new] = [item for item in questions if item["id"] == "search-passages-icr-review-2020-rebidding"]
+
+    assert benchmark.problems(questions) == []
+    assert benchmark.counts(questions)["documents"] == benchmark.counts(benchmark.load())["documents"] + 1
+    [(_, scored)] = ask(engine_for, [new], {new["id"]: StandIn("search_passages", new["arguments"])})
+    assert (scored.passed, scored.problems) == (True, ())
+
+
 def test_a_tool_called_with_the_wrong_arguments_fails_and_says_so(engine_for):
     plan = question("check-plan-nwwda-2026-10-09")
 

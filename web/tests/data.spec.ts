@@ -27,6 +27,12 @@ async function mockData(page: Page, readiness: Answer | ((query: URLSearchParams
 }
 
 const FULL: Answer = { file: "data-readiness.json" };
+// How many rows the Sources table holds in all, from the server's recorded answer, so a source added to the registry
+// in one entry (the change drill, docs/change-drill.md) changes the recording, not these tests.
+const sourceRows = async (file: string): Promise<number> => {
+  const answer = JSON.parse(await recorded(file)) as { filter?: { total: number }; headline_abstention?: { sources: number } };
+  return answer.filter?.total ?? answer.headline_abstention?.sources ?? Number.NaN;
+};
 const byQuery = (query: URLSearchParams): Answer =>
   query.get("asof") === "2026-10-01"
     ? { file: "data-readiness-before-first.json" }
@@ -386,7 +392,9 @@ test("opened from the plan check, it shows only the rows the plan check reads, a
   await expect(page.locator("[data-headline]")).toContainText("Two sources are behind the plan check.");
   await expect(page.locator("[data-headline]")).not.toContainText("body pages");
   await expect(table(page, "sources").locator("tbody tr")).toHaveCount(2);
-  await expect(page.locator("[data-readiness-table=sources] > p").first()).toHaveText("Showing 2 of 14 sources.");
+  const total = await sourceRows("data-readiness-plan-check.json");
+  expect(total).toBeGreaterThanOrEqual(14);
+  await expect(page.locator("[data-readiness-table=sources] > p").first()).toHaveText(`Showing 2 of ${total} sources.`);
   // The headline names no STEP gap here, so the first STEP, in What you can ask, is spelled out.
   await expect(table(page, "kinds").locator("[data-cell='plan_check:readyFor']")).toContainText(
     "rows in the format of Systematic Tracking of Exchanges in Procurement (STEP)",
@@ -559,7 +567,9 @@ test("opened from a coverage line, it shows only the sources behind it; Show all
   await expect(page.locator("[data-headline]")).toContainText("Two sources are behind the past range.");
   const rows = table(page, "sources").locator("tbody tr");
   await expect(rows).toHaveCount(3);
-  await expect(page.locator("[data-readiness-table=sources] > p").first()).toHaveText("Showing 2 of 14 sources.");
+  const total = await sourceRows("data-readiness-filtered.json");
+  expect(total).toBeGreaterThanOrEqual(14);
+  await expect(page.locator("[data-readiness-table=sources] > p").first()).toHaveText(`Showing 2 of ${total} sources.`);
 
   await page.getByRole("link", { name: "Show all sources" }).click();
   await expect(page).toHaveURL(/\/data$/);
@@ -665,9 +675,11 @@ test("a source with no measures leaves the headline out, and its row says it is 
   await mockData(page, { file: "data-readiness-unmeasured.json" });
   await open(page);
 
+  const total = await sourceRows("data-readiness-unmeasured.json");
+  expect(total).toBeGreaterThanOrEqual(14);
   await expect(page.locator("[data-headline]")).toHaveText(
     // One to nine in words, as in any sentence (DESIGN.md section 7, rule 12; design r5 P4).
-    "I'm not giving a headline: one of the 14 sources below has no measures yet. Its row says so.",
+    `I'm not giving a headline: one of the ${total} sources below has no measures yet. Its row says so.`,
   );
   // With no headline, the caption says when the measures were taken, with no "this" to point at nothing.
   await expect(page.locator("[data-lead] [data-headline] + p")).toHaveText("I took the measures below on October 23, 2026.");

@@ -39,8 +39,9 @@ request lands in one file (CLAUDE.md rule 9). This module reads them:
                      deck and the proposal that follow from them (ticket 46)
 - load_rubric()      config/rubric.toml, the rubric map: the assessment's dimensions, points and criteria,
                      and where the proposal answers each one (ticket 46)
-- load_change_drills() config/change_drills.toml, the change drill: each likely change, its one place,
-                     its proving test and its rehearsal time (tickets 46 and 49)
+- load_change_drills() config/change_drills.toml, the change drill: each likely change, its one place and
+                     its proving test (tickets 46 and 49). Its rehearsal times are measured results, in
+                     docs/proposal/rehearsals.toml (strata.proposal.register.load_rehearsals)
 - load_designed_not_built() config/designed_not_built.toml, what is designed but not built: the app's
                      labels and the proposal's short list both read it (ticket 46)
 
@@ -3058,12 +3059,12 @@ def load_rubric(path: Path = CONFIG_DIR / "rubric.toml") -> Rubric:
 
 @dataclass(frozen=True)
 class ChangeDrill:
-    """One change the panel is likely to ask for, its one place, its proving test and its rehearsal time."""
+    """One change the panel is likely to ask for, its one place and its proving test. How long its rehearsal took is
+    a measured result, in docs/proposal/rehearsals.toml."""
 
     change: str
     place: str
     proved_by: str
-    minutes: int | None
 
 
 def load_change_drills(path: Path = CONFIG_DIR / "change_drills.toml") -> tuple[ChangeDrill, ...]:
@@ -3072,11 +3073,8 @@ def load_change_drills(path: Path = CONFIG_DIR / "change_drills.toml") -> tuple[
     _Entry(path, "the file", data).only({"drills"})
     drills = []
     for drill in _tables(path, data, "drills"):
-        drill.only({"change", "place", "proved_by", "minutes"})
-        minutes = drill.integer("minutes", required=False)
-        if minutes is not None and minutes <= 0:
-            drill._fail("minutes", "must be a whole number of minutes above 0")
-        drills.append(ChangeDrill(drill.text("change"), drill.text("place"), drill.text("proved_by"), minutes))
+        drill.only({"change", "place", "proved_by"})
+        drills.append(ChangeDrill(drill.text("change"), drill.text("place"), drill.text("proved_by")))
     return tuple(drills)
 
 
