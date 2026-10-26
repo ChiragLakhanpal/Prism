@@ -1,6 +1,10 @@
 # /// script
 # requires-python = ">=3.12,<3.14"
-# dependencies = ["databricks-sdk==0.156.0", "pyyaml==6.0.3", "duckdb==2.0.0", "sqlglot==30.24.0", "pytz==2026.5"]
+# dependencies = ["databricks-sdk==0.156.0", "pyyaml==6.0.3", "duckdb==2.0.0", "sqlglot==30.24.0", "pytz==2026.5",
+#                 "splink==5.0.0", "xgboost==3.4.1; sys_platform != 'linux'",
+#                 "xgboost-cpu==3.4.1; sys_platform == 'linux'", "numpy==2.5.4", "py3langid==0.3.0", "pypdf==6.20.0",
+#                 "fastapi==0.161.1", "httpx==0.28.1", "fpdf2==2.8.9", "defusedxml==0.7.1",
+#                 "opentelemetry-api==1.45.1"]
 # ///
 """Check the deployed catalog and nightly job on the shared workspace.
 
@@ -22,6 +26,8 @@ same-rows  Runs each ground-truth query marked for databricks (tests/ground_trut
            the demo plan's recorded Procurement Plans into them and runs the nightly job's tasks
            over the recorded pages, as the fixture build does. Run it after the live plan run
            (ops/plans/run_live.py) and job-run, because some files read what they wrote.
+           The inline list at the top names every package that build imports, at the project's
+           versions, so it needs no --with (ops/bundle/tests/test_script_dependencies.py checks it).
 readiness  Builds the Data readiness page on the SQL warehouse with data_readiness_for, as the app
            does, and checks that its awards row's rows held and contracts with a STEP reference
            match a direct query on strata.ops.data_readiness. It also prints Kenya's own measures.
