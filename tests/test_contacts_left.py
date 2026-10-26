@@ -20,6 +20,7 @@ from strata.config import load_quality_checks
 from strata.lakehouse import contacts, quality
 from strata.lakehouse.catalog import table_definitions
 from strata.lakehouse.engine import DuckDBEngine
+from strata.lakehouse.silver import notices as notices_module
 
 R = contacts.REMOVED
 
@@ -106,3 +107,23 @@ def test_the_check_flags_every_recorded_shape_and_ingestion_leaves_none_of_them_
     assert contacts_left(notices, recorded) == len(SHAPES)
     assert kept == [expected for _, expected in SHAPES]
     assert contacts_left(notices, kept) == 0
+
+
+def test_silver_reads_a_page_bronze_kept_before_the_fix_without_the_numbers_the_check_finds(notices):
+    """The workspace's bronze pages were stripped by the removal as it was, so silver runs the removal again when it
+    reads one. A notice is HTML, and an entity between a label and its number (Fax:&#160;99...) hid the number from
+    a removal that reads the HTML, so the last pass runs again on the plain text silver keeps, the text the check
+    reads."""
+    shapes = [shape for shape, _ in SHAPES] + ["Fax:&#160;99-9-9999999 Tel:<b> </b>99 99 9999999"]
+    body = {"procnotices": [{"id": "OP-made-up-1", "notice_type": "Invitation for Bids", "noticedate": "2009-06-01",
+                             "notice_text": "".join(f"<p>{shape}</p>" for shape in shapes),
+                             "bid_description": "Works. Mobile: 99999 99999. Fax 99-99-9999999"}]}
+    columns = notices_module.TABLES[NOTICES.table]
+
+    [row] = notices_module.parse(body, "page-1", dt.datetime(2026, 10, 26, tzinfo=dt.UTC))[NOTICES.table]
+    notice = dict(zip(columns, row, strict=True))
+
+    assert notice["notice_text"].split("\n") == [expected for _, expected in SHAPES] + [f"Fax: {R} Tel: {R}"]
+    assert notice["bid_description"] == f"Works. Mobile: {R}. Fax {R}"
+    assert notice["contact_details_removed"] is True
+    assert contacts_left(notices, [notice["notice_text"], notice["bid_description"]]) == 0

@@ -296,6 +296,20 @@ def strip_text(text: str) -> tuple[str, int]:
     return stripper.text(text, labelled_only=True), stripper.removed
 
 
+def strip_again(text: str | None) -> str | None:
+    """A notice's free text with every contact detail the patterns find replaced, as strip() replaces them on a
+    page, but without the record's contact fields to say whose they are: bronze has replaced those already. Silver
+    runs it on each page it reads, so a page bronze kept before a fix to the patterns loses what the fix takes out
+    when silver reads the page again (ticket 76)."""
+    return Stripper([]).text(text) if isinstance(text, str) and text else text
+
+
+def strip_left(text: str | None) -> str | None:
+    """The removal's last pass alone (Stripper.left), for a notice's text as silver keeps it: the plain text the
+    nightly check reads, where an HTML entity or tag no longer sits between a label and its number."""
+    return Stripper([]).left(text) if text else text
+
+
 def _filled(value) -> bool:
     return bool(str(value or "").strip())
 

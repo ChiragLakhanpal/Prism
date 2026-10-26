@@ -72,7 +72,11 @@ def parse(body: dict, page_hash: str, fetched_at: dt.datetime) -> dict[str, list
     for record in body.get("procnotices") or []:
         if not clean.text(record.get("id")):
             continue
-        text = plain_text(record.get("notice_text"))
+        # Bronze kept the page after the removal as it was then, so silver runs it again: a fix to the patterns
+        # reaches every page silver reads. Its last pass runs once more on the plain text, the text the nightly
+        # check reads, where no HTML entity or tag sits between a label and its number (ticket 76).
+        text = contacts.strip_left(plain_text(contacts.strip_again(record.get("notice_text"))))
+        description = contacts.strip_again(clean.text(record.get("bid_description")))
         reference = clean.step_reference(record.get("bid_reference_no"))
         method = clean.method(record.get("procurement_method_code"), record.get("procurement_method_name"))
         notice_date = clean.parse_date(record.get("noticedate")) or clean.parse_date(record.get("submission_date"))
@@ -95,7 +99,7 @@ def parse(body: dict, page_hash: str, fetched_at: dt.datetime) -> dict[str, list
             clean.text(record.get("bid_reference_no")),
             reference.reference if reference else None,
             reference.method_code if reference else None,
-            clean.text(record.get("bid_description")),
+            description,
             group,
             clean.CATEGORIES.get(group or ""),
             clean.text(record.get("procurement_method_code")),
@@ -111,7 +115,7 @@ def parse(body: dict, page_hash: str, fetched_at: dt.datetime) -> dict[str, list
             price,
             currency,
             text or None,
-            contacts.removed_from(record),
+            contacts.removed_from({**record, "notice_text": text, "bid_description": description}),
             page_hash,
             fetched_at,
             clean.public_from(notice_date, fetched),
