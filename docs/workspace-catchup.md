@@ -2607,6 +2607,23 @@ Name its file under `sources` in `tests/fixtures/dashboard/widget_shapes.json` a
 
 It worked if every test passes. A failure means Strata's workspace writes a widget shape the fixture does not know yet; tell the orchestrator.
 
+## Ticket 74, step 1 of 1: same-rows runs from the script's own dependency list, with no `--with` (criteria 1 and 3, live)
+
+The merger parked this step on October 26, 2026, after merge commit e3ceb423. Every key is set, but the second session runs every workspace step from a snapshot of the commit, one at a time, so the merger ran none. Ticket 74 changes only the inline dependency list of `ops/bundle/check.py`, which now holds splink 5.0.0, xgboost 3.4.1 (xgboost-cpu on Linux), numpy 2.5.4, py3langid 0.3.0, pypdf 6.20.0, fastapi, httpx, fpdf2, defusedxml and opentelemetry-api at the pins in `uv.lock`, and it adds `ops/bundle/tests/test_script_dependencies.py`. No table, job, query or deploy changes, so nothing needs deploying first. This is the next same-rows run, and it needs none of the `--with` packages that the run of October 26 under "Ticket 04, step 3 of 4" used.
+
+Run this from a snapshot of e3ceb423 or later, with `--env-file` pointing at the main checkout's `.env`, and with no `--with`:
+
+    uv run --script ops/bundle/check.py same-rows --env-file .env
+
+It worked if:
+
+- No `ModuleNotFoundError` appears. On October 26 the old list stopped at `No module named 'splink'`, and then at numpy.
+- It prints one result line for each ground-truth file marked for databricks: 19 files on October 26. `grep -l "^-- engines:.*databricks" tests/ground_truth/*.sql | wc -l` in the snapshot gives the count to expect.
+
+The exit code does not decide it. On October 26 the same check, run with `--with`, exited 1 with 8 of 19 files matching, because the warehouse's rows differ from the fixture's for the reasons recorded under "Ticket 04, step 3 of 4". Those differences are not this ticket's. Record the run here: the snapshot's commit, the time, whether a `ModuleNotFoundError` appeared, the number of result lines, and the files that matched.
+
+**Ran on October 26, 2026 (orchestrator), from a snapshot of 9738b97f.** `check.py same-rows --env-file <the main checkout's .env>` with no `--with`, 10:58:04 to 10:58:39 UTC (41 packages installed from the script's own list). No `ModuleNotFoundError` appeared. It printed 19 result lines, one for each of the 19 files marked for databricks in the snapshot. Exit 1, with the same 8 files matching as the `--with` run under ticket 04's step 3: `data_notes_actual_amount_zero.sql`, `gap_years_contracts_from_award_notices.sql`, `genie_contract_ke_nwwda_229129.sql`, `genie_joint_venture_1624689.sql`, `kenya_step_reference_link_rate.sql`, `pipeline_runs_columns.sql`, `showcase_fiscal_years.sql` and `structured_data_under_the_limit.sql`; the other 11 differ for the reasons recorded there. Passed. Log: the scratchpad's samerows74.log.
+
 ## Ticket 79, step 1 of 1: a bundle deploy leaves the App its USE CATALOG and USE SCHEMA, with no App redeploy (criterion 3, live)
 
 Parked on October 26, 2026 with ticket 79. The second session runs it from a snapshot of ticket 79's merge commit or later, one workspace step at a time. It needs the Databricks keys in `.env` and the Databricks CLI 0.287.0 or later. It changes no table, job or dashboard file, so the deploy also serves as the next bundle deploy any other block asks for. Do not redeploy the App in this step: the point is that the App keeps serving through the bundle deploy.

@@ -6,7 +6,7 @@ Read first: `ops/bundle/check.py` (the header and `_local_engine()`), `ops/bundl
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready
+**Status:** done
 **Area:** ops
 **Phase:** P2
 **Design review:** no
@@ -18,3 +18,16 @@ Read first: `ops/bundle/check.py` (the header and `_local_engine()`), `ops/bundl
 ## Comments
 
 - October 26, 2026, orchestrator: opened at 02:48 PDT from the second session's finding of 09:12 UTC. Small, and on the path of every same-rows comparison the demo-ready check needs.
+- October 26, 2026, merger: merged strata/74-check-script-dependencies (head a7143961: one commit of work, 2e1c5910, and one merge of build/strata) into build/strata as merge commit e3ceb423, with history, since the branch's commits hold no key-shaped line. The worktree that built it was `.claude/worktrees/wf_b78fa5cb-ded-4`; I removed it and kept the branch. No dependency file changed; I ran `scripts/install` before the merge commit anyway. The merge touched two files: `ops/bundle/check.py` (its inline dependency list and its docstring) and the new `ops/bundle/tests/test_script_dependencies.py`. The headers of `ops/agent/refuse_live.py` and `ops/agent/ask_live.py` did not change, because both already held `py3langid==0.3.0` since b8f5ce20; the new test keeps their pins matched.
+  - The gate: the merge commit's gate passed in 115.9 seconds. By hand on build/strata at e3ceb423 it passed in 116.7 seconds, finishing at 03:49 PDT on October 26 (10:49 UTC). The python lane sets the total (22.9 seconds to build the fixture, then 91.2 for the tests); web-2 took 77.1 seconds, web-1 63.9 and ops 26.7. The ticket's own test file takes 0.9 to 4.4 seconds, depending on the machine's load.
+  - Notes that passed, both at a7143961. The code review approved round 1 with no blocking finding and three polish items (`.notes/74-review.md`). Design review and design critique are off until every functional ticket has merged, under the user's rule of October 25, 2026.
+  - Verify (`.notes/74-verify.md`): pass, with criterion 1's second half and criterion 3 parked. Criterion 1, local half: a probe whose header is check.py's inline block byte for byte ran the real `same_rows` under `uv run --offline --no-project --script`, with no `--with` and no fixture database, against a fake warehouse that answers with each file's expected rows; DuckDB's in-memory build returned the expected rows for all 19 databricks-marked files, exit 0, in 11.1 seconds. The same probe with build/strata's old header raised `ModuleNotFoundError: No module named 'splink'`, as on October 26. Under the new list, 129 modules under `strata/tools`, `drafts`, `lakehouse`, `knowledge` and `estimates` import with none failing. The import test goes red on the old check.py (13 packages missing), when splink or pypdf is dropped, and when a nightly task, a tool adapter or a silver transform loaded by name gains an import the list lacks. Criterion 2: the pins of the three scripts (16, 9 and 9 entries) match `uv.lock` and `pyproject.toml`, and the pin test caught each of six drift changes, such as numpy 2.5.3 in check.py and duckdb 1.4.0 in ask_live.py.
+  - Workspace results: none ran. Every key is set, but the second session runs every workspace step from a snapshot of the commit, so I parked the builder's one step in `docs/workspace-catchup.md` as "Ticket 74, step 1 of 1": `uv run --script ops/bundle/check.py same-rows --env-file .env` from a snapshot, with no `--with`. It passes if no `ModuleNotFoundError` appears and each of the 19 databricks-marked files prints a result line; the exit code does not decide it, since the warehouse's rows differ from the fixture's for the data reasons recorded on October 26. The second session runs it and records it there.
+  - Decisions parked for the user: none. The builder, the reviewer and the verifier named none.
+
+  **Deferred to the design pass**
+
+  - None. The ticket has no screen.
+
+  - Follow-ups for the PM, not blocking. From the review and the verify notes: (1) five other scripts (`ops/assertions/batch_live.py`, `ops/documents/run_live.py`, `ops/lessons/run_live.py`, `ops/plans/run_live.py` and `ops/dayone/probe_parse_pad.py`) pin `pypdf==6.21.2`, while `uv.lock` and check.py hold 6.20.0, and the pin test checks only three scripts; widening its `SCRIPTS` to every inline script under `ops/` outside `tests` folders would catch it. (2) A dropped direct pin can go unseen: with `numpy==2.5.4` removed from check.py the import test stays green, because py3langid brings numpy in; the review gives a one-line assert for it. (3) The import test does not run on the two agent scripts, and nothing keeps py3langid in them; the same walk on them reports fpdf2, pypdf, splink and xgboost, though the reviewer found no path on the ask route that imports them. (4) A bare `import opentelemetry.sdk` slips past the walk, because that package ships `__init__.pyi` and `owner()` matches only `{stem}.py` and `{stem}/__init__.py`; no code imports it that way today.
+  - No ticket names 74 on its Blocked by line, so no ticket starts from this merge.
