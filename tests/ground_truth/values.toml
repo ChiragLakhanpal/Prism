@@ -1016,6 +1016,55 @@ pdf_page = 3
 first_lists = "KE-NWWDA-229129-CW-RFB"
 not_in = "documents/P156634/procurement-plan-2020-12-07"
 
+# The showcase package's Activity Reference No. in each of the four recorded plan versions that list it (ticket 78).
+# Each PDF writes KE-NWWDA-229129-CW-RFB on page 3, at the top of its row in the WORKS table, with the method
+# Request for Bids; the October 9, 2026 plan's words file (pdftotext -bbox) has it at x 16.44 to 59.56, y 141. On
+# the workspace on October 26, 2026, ai_parse_document read the October 9 plan's reference as -RFQ: a misreading,
+# not a renaming by STEP, so no version names the package another way.
+[[value]]
+id = "plan-229129-reference-2021-04-21"
+says = "The plan of April 21, 2021 writes the showcase package as KE-NWWDA-229129-CW-RFB."
+value = "KE-NWWDA-229129-CW-RFB"
+quote = "KE-NWWDA-229129-CW-RFB / Drilling of 4 Number Exploratory Boreholes In Wajir County"
+document = "documents/P156634/procurement-plan-2021-04-21"
+document_type = "Procurement Plan"
+project = "P156634"
+date = 2021-04-21
+pdf_page = 3
+
+[[value]]
+id = "plan-229129-reference-2025-07-21"
+says = "The plan of July 21, 2025 writes the showcase package as KE-NWWDA-229129-CW-RFB."
+value = "KE-NWWDA-229129-CW-RFB"
+quote = "KE-NWWDA-229129-CW-RFB / Drilling of 4 Number Explor atory Boreholes In Wajir Cou nty"
+document = "documents/P156634/procurement-plan-2025-07-21"
+document_type = "Procurement Plan"
+project = "P156634"
+date = 2025-07-21
+pdf_page = 3
+
+[[value]]
+id = "plan-229129-reference-2026-03-05"
+says = "The plan of March 5, 2026 writes the showcase package as KE-NWWDA-229129-CW-RFB."
+value = "KE-NWWDA-229129-CW-RFB"
+quote = "KE-NWWDA-229129-CW-RFB / Drilling of 4 Number Explor atory Boreholes In Wajir Cou nty"
+document = "documents/P156634/procurement-plan-2026-03-05"
+document_type = "Procurement Plan"
+project = "P156634"
+date = 2026-03-05
+pdf_page = 3
+
+[[value]]
+id = "plan-229129-reference-2026-10-09"
+says = "The plan of October 9, 2026 writes the showcase package as KE-NWWDA-229129-CW-RFB, with the method Request for Bids."
+value = "KE-NWWDA-229129-CW-RFB"
+quote = "KE-NWWDA-229129-CW-RFB / Drilling of 4 Number Explor atory Boreholes In Wajir Cou nty"
+document = "documents/P156634/procurement-plan-2026-10-09"
+document_type = "Procurement Plan"
+project = "P156634"
+date = 2026-10-09
+pdf_page = 3
+
 [[value]]
 id = "plan-229129-days-late"
 says = "KE-NWWDA-229129-CW-RFB was signed 186 days after its first published planned date."

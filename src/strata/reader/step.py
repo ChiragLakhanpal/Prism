@@ -12,6 +12,8 @@ for the sections, columns, steps and fixed values, and reads plans two ways:
   activity, with its Step dates. The method comes from the Method column, never from the reference. A
   method a plan writes by an old or a French name, such as STEP's French "Appel d'offres", is stored as
   the current name, with the plan's words beside it (strata.lakehouse.clean.read_method; ticket 42).
+  Given the references Route A read, plan_rows writes each row's reference as the plan's text gives it
+  where the layout parser misread a letter or two of it (ticket 78).
 
 Fixed values (a review type, a method, a market approach, a procurement process, a contract type
 or a process status) are matched to STEP's words without their spaces, because a PDF cell drops
@@ -22,6 +24,7 @@ from __future__ import annotations
 
 import datetime as dt
 import re
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from decimal import Decimal, InvalidOperation
 
@@ -215,13 +218,19 @@ class Reading:
     rows: list[PlanRow] = field(default_factory=list)
     unknown_columns: set[str] = field(default_factory=set)
     rows_without_reference: int = 0
+    # Each reference the layout parser misread, with the reference the plan's text gives, as (read, written).
+    settled: list[tuple[str, str]] = field(default_factory=list)
 
 
-def plan_rows(pages: list[tuple[int, list[Table]]]) -> Reading:
+def plan_rows(pages: list[tuple[int, list[Table]]], listed: Sequence[str] = (), misread_characters: int = 0) -> Reading:
     """Every activity in a plan's STEP tables, one PlanRow each, from (PDF page, tables) pairs.
 
     A table with no header rows continues the table before it onto a new page, so it is read with
     that table's title and header when it has as many columns.
+
+    listed is every reference the plan's text lists (Route A, references_in). A row whose reference the
+    text does not list takes the reference the text gives, when the two differ by at most
+    misread_characters characters (see _settle).
     """
     reading, last = Reading(), None
     for pdf_page, tables in pages:
@@ -233,7 +242,45 @@ def plan_rows(pages: list[tuple[int, list[Table]]]) -> Reading:
                 table = Table(last.title, 2, (*last.rows[:2], *table.rows))
             _read_table(table, pdf_page, reading)
             last = table
+    reading.settled = _settle(reading.rows, listed, misread_characters)
     return reading
+
+
+def _changes(read: str, written: str) -> int:
+    """How many characters must be added, taken out or changed to turn one reference into the other."""
+    previous = list(range(len(written) + 1))
+    for i, letter in enumerate(read, 1):
+        current = [i]
+        for j, other in enumerate(written, 1):
+            current.append(min(previous[j] + 1, current[j - 1] + 1, previous[j - 1] + (letter != other)))
+        previous = current
+    return previous[-1]
+
+
+def _settle(rows: list[PlanRow], listed: Sequence[str], most: int) -> list[tuple[str, str]]:
+    """Each row's Activity Reference No. as the plan's own text writes it, where the layout parser misread it.
+
+    The published text is the PDF's own words, so a reference it lists is the one STEP wrote. The layout
+    parser reads the page as an image and can misread a letter: on the workspace on October 26, 2026,
+    ai_parse_document read KE-NWWDA-229129-CW-RFB on page 3 of the October 9, 2026 plan as
+    KE-NWWDA-229129-CW-RFQ (ticket 78). A row whose reference the text does not list takes the reference
+    the text lists and no other row read, when that one is at most `most` characters away and no other such
+    reference is as close. Otherwise the row keeps what the parser read: a plan with no text lists nothing,
+    and two equally close references give no grounds to choose. Returns each (read, written) pair."""
+    written_in_text, read = set(listed), {row.activity_reference_no for row in rows}
+    unread = [reference for reference in dict.fromkeys(listed) if reference not in read]
+    settled = []
+    for row in rows:
+        if most <= 0 or not unread or row.activity_reference_no in written_in_text:
+            continue
+        (fewest, closest), *others = sorted((_changes(row.activity_reference_no, reference), reference)
+                                            for reference in unread)
+        if fewest > most or (others and others[0][0] == fewest):
+            continue
+        settled.append((row.activity_reference_no, closest))
+        row.activity_reference_no = closest
+        unread.remove(closest)
+    return settled
 
 
 def _read_table(table: Table, pdf_page: int, reading: Reading) -> None:
