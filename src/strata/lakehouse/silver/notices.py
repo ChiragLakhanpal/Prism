@@ -36,7 +36,8 @@ RECORD_KEY = ("notice_id",)
 # Each record's fiscal year, by which the dashboard splits coverage_rows (strata.lakehouse.readiness).
 FISCAL_YEAR = "fiscal_year"
 # 2 since parse() runs the contact removal again (ticket 76). Ticket 75's record of what silver wrote for each page
-# reads it: a page read under another version is read again, with the removal as it is now.
+# (strata.ops.silver_pages) holds the version each page was read under, so the next run reads every page recorded
+# under 1 again, with the removal as it is now, and the nightly check then finds none of the numbers it left.
 VERSION = 2
 
 
@@ -48,30 +49,15 @@ class Flagged:
     pages: int
 
 
-# Each builds in only quality.CONTACTS_LEFT, the check's own condition, whose values are bound parameters.
+# It builds in only quality.CONTACTS_LEFT, the check's own condition, whose values are bound parameters.
 FLAGGED = ("SELECT count(*) AS notices, count(DISTINCT page_hash) AS pages FROM strata.silver.notices WHERE "
            + quality.CONTACTS_LEFT)  # sql-lint: names only
-FLAGGED_PAGES = "SELECT page_hash FROM strata.silver.notices WHERE " + quality.CONTACTS_LEFT  # sql-lint: names only
-ROWS_OF_FLAGGED_PAGES = (  # sql-lint: names only
-    f"SELECT count(*) AS n FROM strata.silver.notices WHERE page_hash IN ({FLAGGED_PAGES})")
-FORGET_FLAGGED_PAGES = f"DELETE FROM strata.silver.notices WHERE page_hash IN ({FLAGGED_PAGES})"  # sql-lint: names only
 
 
 def contacts_left(engine: Engine) -> Flagged:
     """How many notices the nightly check would flag now, and on how many pages."""
     notices, pages = engine.run(FLAGGED, quality.contacts_left_params()).rows[0]
     return Flagged(int(notices), int(pages))
-
-
-def forget_pages_with_contacts_left(engine: Engine) -> int:
-    """Take every row of the pages the check flags out of strata.silver.notices, so the next run of silver reads
-    those pages again from bronze, which still holds them, with the removal as it is now (ticket 76; CLAUDE.md
-    rule 5, a DELETE with a WHERE). Returns how many rows it took out."""
-    params = quality.contacts_left_params()
-    rows = int(engine.run(ROWS_OF_FLAGGED_PAGES, params).rows[0][0])
-    if rows:  # a read first: a Delta DELETE is a commit
-        engine.run(FORGET_FLAGGED_PAGES, params)
-    return rows
 
 
 BREAKS = re.compile(r"<\s*(br|/p|/div|/h\d|/li|/tr)\s*/?\s*>", re.I)

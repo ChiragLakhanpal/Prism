@@ -4,7 +4,8 @@ On October 26, 2026 the nightly job's contacts_left check found a labelled phone
 workspace's 158,587 notices, because ingestion's removal used stricter patterns than the check. Now the two share one
 definition: the removal's last pass is the check's own patterns (contacts.LEFT_EMAIL and LEFT_PHONE), with the label
 and the words around it kept. These tests run the check as the nightly job runs it (quality.check_table, on DuckDB,
-with the patterns as bound parameters) over what the removal leaves.
+with the patterns as bound parameters) over what the removal leaves. Silver runs the removal again on each notices
+page it reads, and the notices transform's VERSION is 2, so the pages bronze kept before the fix are read again.
 
 SHAPES are the twenty the second session recorded (docs/workspace-catchup.md, "Ticket 76, before step 1"), with every
 digit written as 9 and thirty characters kept on each side of the label. Where those thirty characters cut through a
@@ -22,8 +23,8 @@ from pathlib import Path
 import pytest
 from nightly_helpers import clock
 
-from strata.config import load_quality_checks
-from strata.lakehouse import bronze, contacts, nightly, quality
+from strata.config import load_quality_checks, load_sources
+from strata.lakehouse import bronze, contacts, nightly, quality, silver
 from strata.lakehouse.catalog import table_definitions
 from strata.lakehouse.engine import DuckDBEngine
 from strata.lakehouse.silver import notices as notices_module
@@ -186,7 +187,8 @@ def test_the_check_finds_nothing_in_what_either_removal_leaves_of_a_thousand_mad
 @pytest.fixture
 def workspace_before_the_fix(fixture_db, tmp_path):
     """A writable copy of the fixture database holding what the workspace held on October 26, 2026: a notices
-    page bronze kept after the removal as it was then, and the silver row read from it, with a fax number left."""
+    page bronze kept after the removal as it was then, the silver row read from it with a fax number left, and
+    ticket 75's record that silver read the page under version 1 of the notices transform."""
     target = tmp_path / "fixture.duckdb"
     shutil.copy(fixture_db, target)
     fetched = dt.datetime(2026, 10, 20, 6, 54, tzinfo=dt.UTC)
@@ -201,6 +203,8 @@ def workspace_before_the_fix(fixture_db, tmp_path):
                                            "contact_details_removed", "page_hash", "fetched_at", "public_from"),
                            [("OP-made-up-76", "Invitation for Bids", dt.date(2009, 6, 1), "P156634",
                              f"The works are in Kisumu.\n{kept}", True, "made-up-page", fetched, dt.date(2009, 6, 1))])
+        engine.insert_rows(silver.SILVER_PAGES, silver.SILVER_PAGES_COLUMNS, [
+            ("notices", "made-up-page", silver.tables(notices_module), 1, fetched, fetched.date())])
         yield engine
 
 
@@ -222,26 +226,25 @@ def live_script():
     return module
 
 
-def test_the_flagged_pages_read_again_lose_their_numbers_and_the_check_then_finds_none(workspace_before_the_fix,
-                                                                                         capsys):
-    """The live step's route before ticket 75 lands (ops/notices/contacts_left_live.py --forget): take the rows of
-    the pages the check flags out of strata.silver.notices, so the next bronze_to_gold reads those pages again from
-    bronze, with the fixed removal. Afterwards the script's --check-zero passes."""
+def test_the_next_bronze_to_gold_reads_the_pages_read_under_version_1_again_and_the_check_then_finds_none(
+        workspace_before_the_fix, capsys):
+    """The live step's route: the notices transform's VERSION is 2, so ticket 75's record sends every notices page
+    read under version 1 back to silver, which runs the fixed removal on it. The fixture's own pages were read under
+    version 2, so the page left from before the fix is the only one read again. The live script counts what the
+    check finds before and after."""
     engine = workspace_before_the_fix
     script = live_script()
     night = dt.datetime(2026, 10, 27, 7, 0, tzinfo=dt.UTC)
+    source = load_sources()["notices"]
 
+    assert silver.pending(engine, source) == ["made-up-page"]
     assert script.main(["--check-zero"], Workspace(engine), env={}) == 1
-    assert script.main(["--forget"], Workspace(engine), env={}) == 0
     nightly.main(["--task", "bronze_to_gold", "--run-id", "night-76", "--src", "src"], engine,
                  fetch=lambda source, engine: (), clock=clock(night, step=dt.timedelta(seconds=1)))
     assert script.main(["--check-zero"], Workspace(engine), env={}) == 0
 
     assert capsys.readouterr().out.splitlines() == [
         "The nightly check's patterns find 1 notice on 1 page of strata.silver.notices.",
-        "The nightly check's patterns find 1 notice on 1 page of strata.silver.notices.",
-        "I took 1 row out of strata.silver.notices, every row of those pages. The next bronze_to_gold reads the pages "
-        "again from bronze, with the contact removal as it is now.",
         "The nightly check's patterns find 0 notices on 0 pages of strata.silver.notices."]
     assert engine.run("SELECT notice_text, contact_details_removed FROM strata.silver.notices "
                       "WHERE notice_id = :id", {"id": "OP-made-up-76"}).rows == (
@@ -250,3 +253,6 @@ def test_the_flagged_pages_read_again_lose_their_numbers_and_the_check_then_find
                       {"run": "night-76", "kind": "contacts_left"}).rows == ((0,),)
     assert engine.run("SELECT notice_type, project_id FROM strata.gold.notice WHERE notice_id = :id",
                       {"id": "OP-made-up-76"}).rows == (("Invitation for Bids", "P156634"),)
+    assert silver.pending(engine, source) == []
+
+
