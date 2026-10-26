@@ -139,11 +139,11 @@ It takes these steps, in order:
 
 Run it again after every bundle deploy. The bundle's grants replace the app's grants on the `strata` catalog and the `strata.ops` schema, and without them the server can't write usage events or agent runs.
 
-Only you may write secrets in the shared workspace. Once you have written them, with a deploy without the option or with the wizard, a session that may not write secrets can still deploy new code:
+Only you may write secrets in the shared workspace. Once you have written them, with a deploy without the option, the wizard or `databricks secrets put-secret strata <name>`, a session that may not write secrets can still deploy new code:
 
     uv run --script ops/app/deploy_app.py --env-file .env --keep-secrets
 
-With `--keep-secrets`, step 3 writes no secret. It prints the names of the secrets the app reads and checks that the scope holds each one, listing the scope's keys but never their values. If one is missing, it names it and stops before it gives the app its resources or uploads anything. The app gets the same resources, scopes and `app.yaml` as a run without the option.
+With `--keep-secrets`, step 3 writes no secret. It prints the names of the secrets the app reads and checks that the scope holds each one, listing the scope's keys but never their values. When the scope holds them all, the app gets the same resources, scopes and `app.yaml` as a run without the option. When it lacks one, step 3 names it with the command that writes it, and the app comes up without what reads it, as if `.env` had no value for it: it says there is no agent, removes every sentence that needs the judge, or sends no traces. The deploy still ends with the app's address.
 
 Before ticket 15 writes the first app state, run the Lakebase probe, which records where app state lives in `docs/app-state.md`:
 

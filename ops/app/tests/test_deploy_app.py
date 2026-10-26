@@ -440,21 +440,50 @@ def test_with_keep_secrets_the_deploy_writes_no_secret_and_gives_the_app_what_a_
     assert out.rstrip().splitlines()[-1] == "Strata is running at https://strata-1.aws.databricksapps.com"
 
 
-def test_with_keep_secrets_a_secret_the_scope_lacks_is_named_and_the_deploy_stops_before_uploading(tmp_path, capsys):
-    lacking = {named: value for named, value in WRITTEN_BY_THE_USER.items() if named[1] != "FOUNDRY_CLIENT_SECRET"}
+@pytest.mark.parametrize(("lacks", "like"), [("FOUNDRY_TENANT_ID", ENV | JUDGE), ("AZURE_OPENAI_API_KEY", ENV | FOUNDRY)],
+                         ids=["no agent", "no judge"])
+def test_with_keep_secrets_a_secret_the_scope_lacks_is_named_and_the_app_deploys_as_without_its_key_in_the_env_file(
+        tmp_path, capsys, lacks, like):
+    """The app comes up and says it has no agent or no judge, and the line before the upload says what to write into
+    the scope. (Ticket 70's criterion 2 changed on October 25, 2026 from a stop: the scope lacked FOUNDRY_TENANT_ID.)"""
+    lacking = {named: value for named, value in WRITTEN_BY_THE_USER.items() if named[1] != lacks}
     workspace = FakeWorkspace(secrets=lacking)
     dist = tmp_path / "dist"
 
     code = deploy_app.main(["--env-file", str(env_file(tmp_path, ENV | FOUNDRY | JUDGE)), "--keep-secrets"],
                            workspace=workspace, build_web=built(dist), dist=dist)
     out = " ".join(capsys.readouterr().out.split())
+    without_the_key = FakeWorkspace()
+    deploy(without_the_key, tmp_path, capsys, env=like)
 
-    assert code == 1
-    assert "The secret scope strata has no FOUNDRY_CLIENT_SECRET, so I stopped before" in out
+    assert code == 0
+    named = out.index(f"The secret scope strata has no {lacks}, so the app gets no ")
+    assert named < out.index(f"databricks secrets put-secret strata {lacks}") < out.index("4. Uploading")
     assert workspace.written == [] and workspace.secrets == lacking
-    assert workspace.configured == [] and workspace.databases == []
-    assert workspace.uploaded == {} and workspace.deployed == [] and workspace.statements == []
+    assert workspace.configured == without_the_key.configured
+    assert workspace.uploaded == without_the_key.uploaded and workspace.deployed == without_the_key.deployed
     assert "not-a-real-key" not in out
+    assert out.endswith("Strata is running at https://strata-1.aws.databricksapps.com")
+
+
+def test_with_keep_secrets_a_scope_without_the_connection_string_gives_an_app_that_sends_no_traces(tmp_path, capsys):
+    """An app resource or an app.yaml entry that names a secret the scope lacks would stop the app from starting."""
+    lacking = {named: value for named, value in WRITTEN_BY_THE_USER.items() if named[1] != APPINSIGHTS}
+    workspace = FakeWorkspace(secrets=lacking)
+    dist = tmp_path / "dist"
+
+    code = deploy_app.main(["--env-file", str(env_file(tmp_path, ENV)), "--keep-secrets"],
+                           workspace=workspace, build_web=built(dist), dist=dist)
+    out = " ".join(capsys.readouterr().out.split())
+
+    assert code == 0
+    [(_, _, resources, _)] = workspace.configured
+    assert [resource["name"] for resource in resources] == ["sql-warehouse", "app-state"]
+    started = yaml.safe_load(workspace.uploaded["files"]["app.yaml"])
+    assert APPINSIGHTS not in [entry["name"] for entry in started["env"]]
+    assert started["command"] == ["python", "-m", "strata.server"]
+    assert f"The secret scope strata has no {APPINSIGHTS}, so the app sends no traces to Application Insights" in out
+    assert f"databricks secrets put-secret strata {APPINSIGHTS}" in out
 
 
 def test_the_command_s_help_says_when_to_keep_the_secrets(capsys):
