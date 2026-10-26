@@ -72,6 +72,11 @@ class Context:
     # the one access rule (src/strata/server/access.py), or None for one they may not read or that does not exist. Only
     # the server gives it, per request; without it, a tool reads no upload, so no other caller can reach one.
     uploads: Callable[[str], Mapping[str, Any] | None] | None = None
+    # The settings a tool reads the addresses and keys of the services it calls from, such as search_passages's Azure
+    # OpenAI endpoint and key and the workspace's host (ticket 66): the env file a live script loaded, or the app's
+    # environment. None reads the process's environment, as the deployed App sets it. Kept out of repr, since it holds
+    # keys.
+    environ: Mapping[str, str] | None = field(default=None, repr=False)
 
 
 @dataclass(frozen=True)
@@ -85,6 +90,7 @@ class Call:
     thresholds: Thresholds
     decided_by: dt.date | None = None  # Context.decided_by
     uploads: Callable[[str], Mapping[str, Any] | None] | None = None  # Context.uploads
+    environ: Mapping[str, str] | None = field(default=None, repr=False)  # Context.environ
 
 
 # ── The agent's tool list ────────────────────────────────────────────────
@@ -182,7 +188,7 @@ def call(name: str, arguments: Mapping[str, Any], context: Context, tools: dict[
     asked = [date for date in (bound.pop("as_of", None), context.as_of) if date is not None]
     as_of = min(asked) if asked else today()
     output = _adapter(tool)(Call(context.engine, context.viewer, context.view, as_of, context.thresholds,
-                                 context.decided_by, context.uploads), **bound)
+                                 context.decided_by, context.uploads, context.environ), **bound)
     result = {"tool": name, "as_of": as_of.isoformat(), "view": context.view, **output}
     if tool.result.summary_fields:
         result["summary"] = summary(tool, bound, result)

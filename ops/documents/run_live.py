@@ -15,7 +15,10 @@ It runs the same readers as the gate with the live adapters. First the plan read
 (src/strata/lakehouse/plans.py) reads each slice project's Procurement Plans. Then the passage reader
 (src/strata/lakehouse/passages.py) counts the projects the slice criteria select from
 strata.gold.project (config/slice.toml) and fetches their documents, with the showcase's, the demo
-plan's and the stress shelf's, from the World Bank's hosts on this computer. Route A reads the published
+plan's and the stress shelf's, from the World Bank's hosts on this computer. Both readers fetch through the
+nightly job's fetch (strata.lakehouse.readers.document_host): the documents source's pause between requests, each
+document kept in .cache/documents once fetched, so a later run never asks for it again, and a stop at the host's
+first refusal or once the reading time in config/thresholds.toml is spent. Route A reads the published
 text; every page the page router sends to Route B goes, one page at a time, to the layout parser that
 config/models.toml names ([layout] parser: ai_parse_document until day-one test 3 chooses), under the
 daily page cap both readers share (config/thresholds.toml, ingestion.daily_page_cap). Each passage is
@@ -53,11 +56,30 @@ for folder in (REPO / "src", REPO / "ops" / "dayone", REPO / "ops" / "bundle"):
 from strata.config import load_layout_parser, load_models  # noqa: E402
 from strata.lakehouse import passages, plans  # noqa: E402
 from strata.lakehouse.engine import EngineError  # noqa: E402
-from strata.reader.documents import NotFetched  # noqa: E402
+from strata.reader.documents import NotFetched, StopReading  # noqa: E402
 from workspace_env import WorkspaceEnvError, load_workspace_env  # noqa: E402
 
 NEEDS = ("AI_SEARCH_ENDPOINT", "AZURE_OPENAI_ENDPOINT", "AZURE_OPENAI_API_KEY")
 WAIT_MINUTES = 30
+# Where this computer keeps each document it fetched, so a run that stopped never asks for it again; the nightly
+# job keeps them in the bronze files volume instead. .cache is gitignored.
+CACHE = REPO / ".cache" / "documents"
+
+
+def document_readers(engine, upload, fetch=None, cache=CACHE, sleep=None, clock=None):
+    """The documents source and the layout parser the run reads with, on the one fetch the nightly job uses
+    (strata.lakehouse.readers.document_host, ticket 66): the documents source's pause between requests
+    (config/sources.toml), each document kept in cache once fetched, every project's document list asked for again,
+    a HostRefused stop at the host's first 403 or 429, and the night's reading time (config/thresholds.toml,
+    ingestion.document_host_minutes), after which the run stops and the next goes on from the kept copies. fetch is
+    the host (plain urllib unless a test gives one); upload writes a page's PDF to the volume for the parser."""
+    from strata.fixture.record import fetch_url
+    from strata.lakehouse.readers import document_host
+    from strata.reader.documents import LiveDocuments
+    from strata.reader.layout import PARSERS
+
+    paced = document_host(fetch or fetch_url, cache, sleep=sleep, clock=clock)
+    return LiveDocuments(paced), PARSERS[load_layout_parser()](engine, fetch=paced, upload=upload)
 
 
 def main(argv=None) -> int:
@@ -78,11 +100,9 @@ def main(argv=None) -> int:
     from bundle_live import LiveWorkspace  # the Databricks SDK, which only the live run needs
     from databricks.sdk.errors import NotFound
 
-    from strata.fixture.record import fetch_url
     from strata.knowledge.embed import AzureOpenAIEmbeddings, EmbedError
     from strata.knowledge.search import AiSearchIndex
     from strata.knowledge.shields import PromptShields, ShieldError, content_safety_endpoint
-    from strata.reader.documents import LiveDocuments
     from strata.reader.layout import PARSERS
 
     name = load_layout_parser()
@@ -92,8 +112,8 @@ def main(argv=None) -> int:
         return 2
     workspace = LiveWorkspace(env)
     engine = workspace.engine()
-    layout = PARSERS[name](engine, fetch=fetch_url,
-                           upload=lambda path, data: workspace.w.files.upload(path, io.BytesIO(data), overwrite=True))
+    documents, layout = document_readers(
+        engine, upload=lambda path, data: workspace.w.files.upload(path, io.BytesIO(data), overwrite=True))
 
     def rest(method: str, path: str, body: dict | None = None) -> dict:
         try:
@@ -108,12 +128,14 @@ def main(argv=None) -> int:
                                          model.dimensions)
         projects = passages.default_projects(engine)
         for project_id in projects:
-            plans.run(engine, LiveDocuments(), layout, project_id)
-        report = passages.run(engine, LiveDocuments(), projects, shield=shield, embedder=embedder, layout=layout)
+            plans.run(engine, documents, layout, project_id)
+        report = passages.run(engine, documents, projects, shield=shield, embedder=embedder, layout=layout)
     except (EngineError, ShieldError, EmbedError) as error:
         print(f"The run stopped: {error}")
         return 2
-    except (NotFetched, OSError) as error:  # urllib's errors and the Databricks SDK's are OSErrors
+    # The host refused a request, or the reading time was spent (StopReading), or a fetch failed: urllib's errors and
+    # the Databricks SDK's are OSErrors.
+    except (StopReading, NotFetched, OSError) as error:
         print(f"The run stopped before it finished: {str(error).rstrip('.')}. The pages it parsed are kept, "
               "and the next run goes on from there.")
         return 2

@@ -134,20 +134,24 @@ def keep_result(facts: Facts, name: str, result: Mapping, tools: dict[str, Tool]
         facts.abstained(name, result["abstention"])
 
 
-def tool_context(engine, viewer, view: str, as_of: dt.date, limits: Thresholds) -> registry.Context:
+def tool_context(engine, viewer, view: str, as_of: dt.date, limits: Thresholds,
+                 environ: Mapping[str, str] | None = None) -> registry.Context:
     """The Context every /api/ask tool call runs in. It carries no reader of uploads, so no agent answer reads an
     implementing agency team's upload, whoever asks (ticket 38; tests/test_uploads.py's must-refuse case)."""
-    return registry.Context(engine, viewer, view, as_of, limits)
+    return registry.Context(engine, viewer, view, as_of, limits, environ=environ)
 
 
 def answer_runner(agent_for: Callable[[Turn], Agent], engine_for: EngineFor, tools: dict[str, Tool] | None = None,
                   thresholds: Thresholds | None = None,
                   today: Callable[[], dt.date] = registry.today,
-                  on_result: Callable[[Turn, str, dict, dict], None] | None = None) -> Runner:
+                  on_result: Callable[[Turn, str, dict, dict], None] | None = None,
+                  environ: Mapping[str, str] | None = None) -> Runner:
     """The runner for /api/ask: agent_for gives each turn its own agent, and engine_for opens the
     viewer's engine for each tool call. on_result, when given, gets each tool call's whole result with the turn,
     the tool's name and its arguments: the full gate's benchmark reads the answer each tool gave this way
-    (strata.evals.answer_benchmark). The app passes none."""
+    (strata.evals.answer_benchmark). The app passes none. environ is the settings every tool call reads its
+    services' addresses and keys from (registry.Context.environ): the env file a live script loaded, or the app's
+    environment; without it, the process's environment (ticket 66)."""
     limits = thresholds or load_thresholds()
     rounds = int(limits.value("agent.tool_rounds"))
     tools_held = tools if tools is not None else load_tools()
@@ -165,8 +169,8 @@ def answer_runner(agent_for: Callable[[Turn], Agent], engine_for: EngineFor, too
         note["arguments"] = arguments
         try:
             with engine_for(turn.viewer) as engine:
-                result = registry.call(name, arguments, tool_context(engine, turn.viewer, turn.scope.view, as_of, limits),
-                                       tools_held)
+                result = registry.call(name, arguments, tool_context(engine, turn.viewer, turn.scope.view, as_of, limits,
+                                                                     environ), tools_held)
         except registry.ToolError as error:
             note["error"] = "bad_arguments"
             return {"error": "bad_arguments", "detail": str(error)}, note
