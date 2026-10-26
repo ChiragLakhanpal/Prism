@@ -2580,3 +2580,48 @@ Name its file under `sources` in `tests/fixtures/dashboard/widget_shapes.json` a
     uv run --frozen pytest tests/test_dashboard_widgets.py
 
 It worked if every test passes. A failure means Strata's workspace writes a widget shape the fixture does not know yet; tell the orchestrator.
+
+## Ticket 75, step 1 of 1: one `bronze_to_gold` pass reads every page bronze holds, and P130164 gets its sectors (criterion 3, live)
+
+Parked on October 26, 2026, by ticket 75's builder; the merger names the merge commit here. Every key is set, but the second session runs every workspace step from a snapshot of the commit, one at a time. It needs the Databricks keys in `.env`, the Databricks CLI 0.287.0 or later, and a time outside the nightly window (03:00 to 05:30 in Washington), because the first pass reads every page of every source once and takes longer than a usual night's `bronze_to_gold`.
+
+Ticket 75 adds `strata.ops.silver_pages` (`src/strata/lakehouse/tables/ops/silver_pages.sql`): what silver wrote from each bronze page, with the transform's tables and its `VERSION`. Silver now reads a page when it has no row there, or when its newest row names other tables or another version than the transform has. The table is empty after the deploy, so the next `bronze_to_gold` reads every page of every source once: one parse per page, and for each table a read, a DELETE with a WHERE when the table holds the page, and an insert. That pass fills `strata.silver.project_sectors` and `project_environment` from the 285 project pages bronze held before ticket 21's deploy, P130164's among them. If the nightly job runs before this step, its own `bronze_to_gold` makes the pass and the night runs longer than usual; record that run here instead.
+
+Run this from the snapshot's root, twice:
+
+    uv run --script ops/bundle/deploy.py --env-file .env --fairshare-catalog workspace
+
+It worked if the first run exits 0, lists `strata.ops.silver_pages` as new and changes no table that holds rows, and the second prints "No changes." Then run only the job's `bronze_to_gold` task, with the job ID that the list prints:
+
+    databricks jobs list --name "strata nightly" -p strata
+    databricks jobs run-now --json '{"job_id": <the job ID>, "only": ["bronze_to_gold"]}' --timeout 160m -p strata
+
+If the CLI refuses `only`, run the whole job outside the window instead (`uv run --script ops/bundle/check.py job-run --env-file .env`); its `bronze_to_gold` makes the same pass. If the run ends TIMEDOUT at the job's 150-minute stop, run the same command again: every page the run recorded stays recorded, so the next run reads only the rest. Then run these in the workspace's SQL editor:
+
+    SELECT run_id, status, rows_changed, started_at, finished_at,
+      timestampdiff(MINUTE, started_at, finished_at) AS minutes
+    FROM strata.ops.pipeline_runs WHERE task_key = 'bronze_to_gold' ORDER BY started_at DESC LIMIT 3
+
+    SELECT p.source, count(*) AS pages, count(r.page_hash) AS recorded
+    FROM strata.bronze.api_pages AS p
+    LEFT JOIN (SELECT DISTINCT source, page_hash FROM strata.ops.silver_pages) AS r
+      ON r.source = p.source AND r.page_hash = p.page_hash
+    GROUP BY p.source ORDER BY p.source
+
+    SELECT count(*) AS sector_rows FROM strata.silver.project_sectors WHERE project_id = 'P130164'
+
+    SELECT count(DISTINCT p.page_hash) AS pages_before_ticket_21, count(DISTINCT s.page_hash) AS with_sector_rows,
+      count(s.page_hash) AS sector_rows, count(DISTINCT s.project_id) AS projects
+    FROM strata.bronze.api_pages AS p
+    LEFT JOIN strata.silver.project_sectors AS s ON s.page_hash = p.page_hash
+    WHERE p.source = 'projects' AND p.fetched_at < TIMESTAMP '2026-10-26 06:54:00'
+
+It worked if:
+
+- The newest `bronze_to_gold` row succeeded. Record its `minutes`, and the minutes of each try when it took more than one: together they are the time of the full pass.
+- In the second query, `recorded` equals `pages` for every source.
+- P130164 has more than 0 sector rows (the fixture's recorded page gives two: TF at 3 percent and TI at 97 percent).
+- `pages_before_ticket_21` reads 285 and `with_sector_rows` is above 0. A page whose projects list no sectors gives no row, so record both numbers, the sector rows and the projects.
+- A second `run-now` of the same task, right after, adds no row to `strata.ops.silver_pages` and takes about as long as a night with no new pages.
+
+Record the four results here. If `recorded` falls short of `pages` for a source after a run that succeeded, or P130164 still has 0 sector rows, tell the orchestrator before anyone shows the Summary on the App.
