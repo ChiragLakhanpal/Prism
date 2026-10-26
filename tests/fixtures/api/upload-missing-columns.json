@@ -1,0 +1,9 @@
+{
+  "code": "missing_columns",
+  "error": "missing_columns",
+  "kept": false,
+  "file_name": "draft-plan.csv",
+  "missing": [
+    "Method"
+  ]
+}

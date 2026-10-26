@@ -53,8 +53,10 @@ from strata.harness.turn import Event, Scope, TraceIds, Turn
 from strata.knowledge.lessons import notices
 from strata.lakehouse.engine import EngineError, PermissionDenied
 from strata.packages.store import PackageStore
+from strata.server import uploads as upload_routes
 from strata.server.access import Access, is_author
 from strata.server.engines import EngineFor
+from strata.uploads.store import UploadStore
 
 log = logging.getLogger("strata.server.drafts")
 STAFF = "staff"
@@ -78,6 +80,9 @@ class DraftRequest(BaseModel):
     # risks selected in section 3 itself; the request never carries risk keys.
     package: str | None = Field(default=None, min_length=1, max_length=128)
     criteria: dict[str, str | int | float] | None = None
+    # Planned dates (ticket 38): what they are drafted from, by id only, never a file name or the file's words:
+    # upload:{upload_id} for the team's upload, or plan:{project_id}:{agency_id}:{plan_date} for a published plan.
+    source: str | None = Field(default=None, min_length=1, max_length=300)
     idempotency_key: str | None = Field(default=None, max_length=128)
     view: VIEWS = "staff"
     lang: Literal["en", "fr", "es", "pt"] = "en"
@@ -129,7 +134,7 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: DraftStore 
                now: Callable[[], dt.datetime], new_draft_id: Callable[[], str], new_run_id: Callable[[], str],
                runs: RunLog | None, trace_ids: Callable[[], TraceIds], reference: Callable[[], str],
                heartbeat_seconds: float, six_checks: SixChecks, packages: PackageStore | None = None,
-               planned_view: Callable[[object], dict] | None = None) -> None:
+               planned_view: Callable[[object], dict] | None = None, uploads: UploadStore | None = None) -> None:
     """six_checks runs the verifier's checks 4 to 6 on every draft, with the app's judge, as the answer stream does.
     packages keeps planned packages and each viewer's risk selection (ticket 30), which suggested PPSD rows read;
     planned_view shows a planned package as the package workspace does (strata.packages.workflow.package_view)."""
@@ -192,6 +197,8 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: DraftStore 
             return refused(403, "preview", capability="draft", copy="preview")
         if kinds.kinds[body.kind].staff_only and not access.is_staff(viewer):
             return refused(403, "not_staff")
+        if kinds.kinds[body.kind].agency_only and access.agency(viewer) is None:
+            return refused(403, "not_agency_team")
         if store is None or engine_for is None:
             return JSONResponse({"code": "no_data_service"}, status_code=503)
         key = body.idempotency_key
@@ -225,13 +232,46 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: DraftStore 
         kind (CLAUDE.md rule 9): for suggested PPSD rows, the package and the risks the viewer selected in section 3,
         from the package store; for a Project Paper summary, the PPSD rows the viewer's team checked for the
         project's packages, from the drafts store (ticket 36)."""
-        by_writer = {"strata.drafts.ppsd_rows": ppsd_request, "strata.drafts.project_paper": paper_request}
+        by_writer = {"strata.drafts.ppsd_rows": ppsd_request, "strata.drafts.project_paper": paper_request,
+                     "strata.drafts.step_rows": dates_request}
         prepared = by_writer.get(kinds.kinds[body.kind].writer)
         if prepared is not None:
             return prepared(body, viewer)
         if not body.project_id:
             return refused(422, "no_project")
         return {}
+
+    def dates_request(body: DraftRequest, viewer: Viewer) -> dict | JSONResponse:
+        """Planned dates (ticket 38): the team's upload, read here through the one access rule, so the writer and its
+        tools get that upload and nothing else; or the officer's own agency's published plan. Another team's upload
+        is not found, as it is on every route; another agency's plan is refused."""
+        source = body.source or ""
+        if source.startswith("upload:"):
+            if uploads is None:
+                return JSONResponse({"code": "no_data_service"}, status_code=503)
+            try:
+                saved = upload_routes.readable(uploads, access, viewer, source.removeprefix("upload:"))
+            except EngineError:
+                ref = reference()
+                log.exception("The data service failed on the upload of %s, reference %s.", viewer.user_id, ref)
+                return JSONResponse({"code": "data_service", "trace_id": ref}, status_code=503)
+            if saved is None:
+                return refused(404, "unknown_upload")
+            return {"project_id": saved.project_id, "agency_id": None, "plan_date": None,
+                    "upload": upload_routes.as_mapping(saved)}
+        parts = source.split(":")
+        if len(parts) != 4 or parts[0] != "plan":
+            return refused(422, "no_plan")
+        _, project_id, agency, plan_date = parts
+        try:
+            dt.date.fromisoformat(plan_date)
+        except ValueError:
+            return refused(422, "no_plan")
+        from strata.tools.check_plan import agency_id
+
+        if agency_id(access.agency(viewer) or "") != agency:
+            return refused(403, "not_own_agency")
+        return {"project_id": project_id, "agency_id": agency, "plan_date": plan_date}
 
     def paper_request(body: DraftRequest, viewer: Viewer) -> dict | JSONResponse:
         if not body.project_id or not body.agency_id or not body.plan_date:
@@ -329,12 +369,20 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: DraftStore 
         yield frame(Event("done", done))
 
     def _run_row(writing: runtime.Writing, trace: TraceIds, error_code: str | None, started: dt.datetime) -> dict:
-        """The writer's run for strata.ops.agent_runs, in the shape the answer stream logs its runs."""
-        turn = Turn(question=writing.question or writing.kind.key, viewer=writing.viewer, run_id=writing.run_id,
+        """The writer's run for strata.ops.agent_runs, in the shape the answer stream logs its runs. Every account user
+        can read that table, so an implementing agency team's run keeps the kind's key for its question and only each
+        removed sentence's reason, never the team's words (CLAUDE.md rule 8)."""
+        private = writing.kind.agency_only
+        turn = Turn(question=writing.kind.key if private else (writing.question or writing.kind.key),
+                    viewer=writing.viewer, run_id=writing.run_id,
                     scope=Scope(chip=writing.request.get("project_id"), as_of=today(), language=writing.language),
                     trace=trace)
         turn.notes.agent, turn.notes.agent_version, turn.notes.as_of = writing.agent, writing.agent_version, today()
-        return run_row(turn, writing.verdict, error_code, started, dt.datetime.now(dt.UTC))
+        row = run_row(turn, writing.verdict, error_code, started, dt.datetime.now(dt.UTC))
+        if private:
+            row["removed"] = json.dumps([{"reason": sentence.reasons[0].code}
+                                         for sentence in (writing.verdict.removed if writing.verdict else [])])
+        return row
 
     # ── The Drafts tab ───────────────────────────────────────────────────
 
@@ -536,6 +584,10 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: DraftStore 
             module = runtime.writer_module(kinds.kinds[saved.kind])
             if not hasattr(module, "check_value"):
                 return refused(422, "unknown_field")
+            # A field set only in Draft, such as planned dates' one choice (ticket 38): once checked, the export uses
+            # the checked value.
+            if name in getattr(module, "DRAFT_ONLY_FIELDS", ()) and saved.state.state != "draft":
+                return refused(409, "draft_state", state=saved.state.state)
             text = value.strip() if isinstance(value, str) else None
             problem = module.check_value(saved.content, row_key, name, text)
             if problem:

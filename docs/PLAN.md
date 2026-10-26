@@ -214,5 +214,5 @@ Add a data source; add a tool; change a signal threshold; add a country to the s
 
 - fairshare's nightly job schedule, so Strata's runs at a different hour.
 - The exact dataset names for the attribution page.
-- That STEP can export a plan to Excel for the implementing agency's private upload.
+- That STEP can export a plan to Excel for the implementing agency's private upload. Settled in ticket 38 on October 25, 2026: it could not be confirmed, since STEP's help sits behind its sign-in and no public page describes an export, and no STEP Excel file is recorded, so there is no parsed sample. The World Bank's Procurement Plan template is a text template whose tables live in STEP. So Strata reads the fallback: the columns of the plan tables that every published Procurement Plan prints, as `src/strata/reader/step.py` records them, set out as a published plan sets them out or in one header row. `config/uploads.toml` records this answer and the layouts, and its `format` value picks the upload page's hint.
 - Whether a Lakebase project would be simpler than `strata.ops` for app state on Free Edition.

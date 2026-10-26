@@ -47,7 +47,9 @@
             }
           ]
         }
-      ]
+      ],
+      "position": null,
+      "listed": null
     },
     {
       "evidence_id": "strata.silver.plan_rows:31998332/MOWS-WSDP-01-2017-2018",
@@ -93,7 +95,9 @@
             }
           ]
         }
-      ]
+      ],
+      "position": null,
+      "listed": null
     },
     {
       "evidence_id": "strata.silver.plan_rows:31998332/MWI-WSDP-001",
@@ -123,7 +127,9 @@
       "planned_completion_plan_date": "2019-08-26",
       "first_listing_confirmed": false,
       "actual_to_estimate": null,
-      "marks": []
+      "marks": [],
+      "position": null,
+      "listed": null
     },
     {
       "evidence_id": "strata.silver.plan_rows:31998332/MWI-WSDP-002",
@@ -153,7 +159,9 @@
       "planned_completion_plan_date": "2019-08-26",
       "first_listing_confirmed": false,
       "actual_to_estimate": null,
-      "marks": []
+      "marks": [],
+      "position": null,
+      "listed": null
     },
     {
       "evidence_id": "strata.silver.plan_rows:31998332/KE-MOWI-96348-CS-QCBS",
@@ -183,7 +191,9 @@
       "planned_completion_plan_date": "2019-08-26",
       "first_listing_confirmed": false,
       "actual_to_estimate": null,
-      "marks": []
+      "marks": [],
+      "position": null,
+      "listed": null
     },
     {
       "evidence_id": "strata.silver.plan_rows:31998332/MOWS-WSDP-02-2019-2020",
@@ -231,7 +241,9 @@
             }
           ]
         }
-      ]
+      ],
+      "position": null,
+      "listed": null
     },
     {
       "evidence_id": "strata.silver.plan_rows:31998332/NWWDA-WSDP-03-2019-2020",
@@ -279,7 +291,9 @@
             }
           ]
         }
-      ]
+      ],
+      "position": null,
+      "listed": null
     }
   ],
   "coverage": {

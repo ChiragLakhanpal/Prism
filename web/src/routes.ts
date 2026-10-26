@@ -108,6 +108,10 @@ export function matchRoute(pathname: string): Match {
   // Ticket 15: a package planned from a sentence, while I read the sentence (/packages/new) and once it is
   // saved (/packages/pkg-...). A STEP reference is never "new" and never starts with "pkg-".
   if (first === "packages" && parts.length === 2 && second === "new") return page("packageNew", "packages");
+  // Ticket 38: an implementing agency officer's Check my plan, and one upload's check. PLAN.md section 8 does not list
+  // these routes; "check" and "uploads" join "new" as words a package's id never is.
+  if (first === "packages" && parts.length === 2 && second === "check") return page("checkMyPlan", "packages");
+  if (first === "packages" && parts.length === 3 && second === "uploads") return page("uploadCheck", "packages", { id: third });
   if (first === "packages" && parts.length === 2 && PLANNED_ID.test(second)) return page("plannedPackage", "packages", { id: second });
   if (first === "packages" && parts.length === 2) return page("package", "packages", { id: second });
   if (first === "lessons" && parts.length === 1) return page("lessons", "lessons");

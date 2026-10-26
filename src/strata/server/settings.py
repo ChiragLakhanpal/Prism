@@ -12,7 +12,8 @@ reads only the environment it is given:
   to strata.ops.agent_runs, each source a viewer opens in the evidence drawer to
   strata.ops.evidence_opened, each past range or time estimate shown in the World Bank staff view to
   strata.ops.exposures (ticket 44), each side of a disagreement a person keeps to strata.ops.disagreement_choices
-  (ticket 23), drafts to strata.ops.drafts and the tables beside it (ticket 35), and
+  (ticket 23), drafts to strata.ops.drafts and the tables beside it (ticket 35), an implementing agency's
+  uploads to strata.ops.uploads and upload_rows (ticket 38), and
   each decision or label a person gives a candidate pair of supplier name matching to
   strata.ops.supplier_review_decisions or supplier_pair_labels, and each lesson reviewer's act to the
   lesson review tables (ticket 29), and each reader's visits to Lessons to strata.ops.lesson_visits
@@ -20,7 +21,7 @@ reads only the environment it is given:
   forwarded. Without them, the server
   keeps no usage events, records no opened sources, decisions, labels or lesson reviews and keeps no drafts, and runs go
   to the server log only. On this computer, STRATA_APP_STATE_FILE can name a DuckDB file that keeps the
-  opened sources, the drafts and the Lessons visits instead.
+  opened sources, the drafts, the uploads and the Lessons visits instead.
 - PGHOST, PGPORT, PGDATABASE, PGUSER and PGSSLMODE, which the platform sets for the app's Lakebase database
   resource: app state lives there (ADR 0005; src/strata/appstate), starting with the packages a person
   plans and the plan checks they open (ticket 15). The app signs in as its own service principal, with the
@@ -80,6 +81,7 @@ from strata.estimates.exposures import ExposureLog
 from strata.server.evidence import OpenedLog
 from strata.server.suppliers import SupplierLog
 from strata.server.usage import UsageLog
+from strata.uploads.store import UploadStore
 
 ROOT = Path(__file__).resolve().parents[3]
 WEB_DIST = ROOT / "web" / "dist"
@@ -182,6 +184,7 @@ def app_from_env(environ: Mapping[str, str] | None = None) -> FastAPI:
                       exposures=ExposureLog(state) if state else None,
                       choices=ChoiceLog(state) if state else None,
                       drafts=DraftStore(state) if state else None,
+                      uploads=UploadStore(state) if state else None,
                       follows=FollowStore(state) if state else None,
                       settings=SettingsStore(state) if state else None,
                       visits=LessonVisits(state) if state else None,

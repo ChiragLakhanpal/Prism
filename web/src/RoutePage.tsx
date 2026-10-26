@@ -13,6 +13,8 @@ import { TextLink } from "./components/TextLink";
 import { copy } from "./copy";
 import { ActivityPage } from "./pages/ActivityPage";
 import { CheckPlanPage } from "./pages/CheckPlanPage";
+import { CheckMyPlanPage } from "./pages/CheckMyPlanPage";
+import { UploadCheckPage } from "./pages/UploadCheckPage";
 import { DataPage } from "./pages/data/DataPage";
 import { DraftNewPage } from "./pages/DraftNewPage";
 import { DraftPage } from "./pages/DraftPage";
@@ -53,6 +55,8 @@ export function RoutePage({ match, search = "" }: { match: Match; search?: strin
   if (match.key === "package") return <PackagePage stepRef={match.values.id} />;
   if (match.key === "packages") return <PackagesPage search={search} />;
   if (match.key === "packageNew") return <PlannedPackagePage packageId={null} search={search} />;
+  if (match.key === "checkMyPlan") return <CheckMyPlanPage search={search} />;
+  if (match.key === "uploadCheck") return <UploadCheckPage uploadId={match.values.id} search={search} />;
   if (match.key === "plannedPackage") return <PlannedPackagePage packageId={match.values.id} search={search} />;
   return (
     <div className="layout-grid">

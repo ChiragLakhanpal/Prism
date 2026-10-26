@@ -73,9 +73,99 @@ const REFUSALS = {
   private_uploads: {
     lead:
       "I don't show a borrower's uploaded Procurement Plan or Project Procurement Strategy for Development (PPSD) to anyone outside the team that uploaded it.",
-    instead: "If the upload belongs to your team, you can open it from Drafts.",
+    // Ticket 38: uploads are plan checks, which Packages lists (the 38 brief, 5.11); the lead and why stay word for word.
+    instead: "If the upload belongs to your team, you can open it from Packages.",
     why: "An upload is a private draft. Only the team that uploaded it can open it.",
   },
+};
+
+// Suggested risk rows for a PPSD (ticket 36), which World Bank staff draft for the borrower; ticket 38's agency
+// variant (copy.draft.kinds.ppsd_rows_agency) keeps every key and swaps the words that name who the rows are for.
+const PPSD_ROWS = {
+    title: "Suggested risk rows for the borrower's PPSD",
+    crumb: (_date: string) => "Suggested PPSD risk rows",
+    rowTitle: (title: string, _date: string) => `Suggested PPSD risk rows for ${title}`,
+    pageTitle: (title: string, _date: string) => `Suggested PPSD risk rows for ${title}`,
+    // Ticket 39: a row as the Lessons page's "Used in" line names it (config/drafts.toml, row_label).
+    rowLabel: "Row {n}, {risk_label}.",
+    // Under the h1: "Rural roads. No STEP reference yet." {reference} is the STEP reference in Roboto Mono.
+    subtitle: "{title}. {reference}",
+    lede: (count: number) =>
+      count === 1 ? "I drafted a row for the one risk you selected." : "I drafted a row for each of the {count} risks you selected.",
+    ledePartial: "I drafted rows for {written} of the {count} risks you selected.",
+    // PPSD is spelled out here, once on the page (the 36 brief, section 5).
+    method:
+      "I wrote each Risk Description and Description of mitigation from {check} and their lessons, for the " +
+      "borrower's Project Procurement Strategy for Development (PPSD). Open a source number to see its evidence " +
+      "beside the row.",
+    methodLink: "the risks you selected",
+    countLine: (count: number, countText: string) => (count === 1 ? "Showing the one row" : `Showing all ${countText} rows`),
+    columns: {} as Record<string, string>,
+    tableCaption: (form: string, _date: string) =>
+      `Suggested risk rows for the borrower's PPSD, ${form}, one row per risk you selected`,
+    // A cell of Strata's that nothing passed the checks for; Word leaves it empty for the borrower.
+    abstain: "I couldn't write this cell so that it passed my checks. The sentences I removed are listed above.",
+    refused: {
+      out_of_scope: "I didn't write this cell, because it would need more than this risk's records show.",
+    } as Record<string, string>,
+    refusedOther: "I didn't write this cell.",
+    metaYou: (date: string) => `I drafted these rows for you on ${date}.`,
+    metaTeammate: (author: string, date: string) => `I drafted these rows for ${author} on ${date}.`,
+    barLead: "A working draft of suggested rows for the borrower's PPSD.",
+    barLeadTeammate: (author: string) => `A working draft of ${author}'s suggested rows for the borrower's PPSD.`,
+    holdNotChecked: "Mark the rows as checked before you export them.",
+    // The composed hold line's first clause, and its frame (section 4.5).
+    holdClause: "mark the rows as checked",
+    holdCompose: "Before you export them, {clauses}.",
+    readOnly: (author: string) => `Only ${author} can set owners, mark these rows as checked or export them.`,
+    markedChecked: "You marked these rows as checked.",
+    discarded: "You discarded these suggested rows, so your team no longer sees them in Drafts.",
+    removedReasons: {
+      id_not_returned: {
+        item: "It cited a source other than this risk's records.",
+        joined: "it cited a source other than this risk's records",
+      },
+    } as Record<string, { item: string; joined: string }>,
+    rowNotes: (count: number, countText: string) => (count === 1 ? "One row." : `${countText} rows.`),
+    steps: {
+      read: {
+        running: "I'm reading the risks you selected.",
+        // {count} is the selected risks' count as a word from one to nine, then numerals.
+        done: (count: string) =>
+          count === "one" ? "I read the one risk you selected and its lesson." : `I read the ${count} risks you selected and their lessons.`,
+      },
+      write: {
+        running: (_count: number, _countText: string) => "I'm writing a row for each risk.",
+        // notes are the rows written.
+        done: (_sentences: number, _sentencesText: string, rows: number, rowsText: string) =>
+          rows === 1 ? "I wrote one row." : `I wrote ${rowsText} rows.`,
+      },
+      save: { running: "I'm saving the draft.", done: "I saved the draft." },
+    },
+    ready: (count: number, countText: string) =>
+      count === 1 ? "The draft is ready. I wrote one row." : `The draft is ready. I wrote ${countText} rows.`,
+    writeErrors: {
+      no_agent: "I can't write PPSD rows yet, because the model that writes my drafts isn't connected. I saved nothing.",
+      agent_unavailable:
+        "I couldn't write the PPSD rows, because the model that writes my drafts did not respond. I saved nothing.",
+      content_filter: "I couldn't write the PPSD rows, because a content filter stopped the writer. I saved nothing.",
+      agent_output: "I wrote PPSD rows I couldn't check, so I saved nothing.",
+      data_service: "I couldn't read the package's risks, because the data service didn't answer. I saved nothing.",
+      draft_store: "I couldn't save the draft, because I can't write to my drafts tables right now. I saved nothing.",
+      no_package: "I couldn't find this package, so I wrote nothing and saved nothing.",
+      no_selected_risks: "None of the risks you selected is in the table now, so I wrote nothing and saved nothing.",
+      no_plan: "I couldn't find this package, so I wrote nothing and saved nothing.",
+      nothing_marked: "None of the risks you selected is in the table now, so I wrote nothing and saved nothing.",
+      permission:
+        "Your account can't read this package's records in Strata's tables, so I can't write PPSD rows. Ask your " +
+        "workspace admin for read access to the strata catalog.",
+      internal: "Something went wrong on my side, so I couldn't write the PPSD rows. I saved nothing.",
+      dropped: "The connection dropped before I finished the PPSD rows. I saved nothing.",
+    } as Record<string, string>,
+    nothingTitle: "I couldn't write a row that passed my checks, so I saved no draft.",
+    nothingBody: "The sentences I removed are below, with the reason for each.",
+    previewPiuTitle: "I don't show these suggested rows in this preview, because they are a World Bank staff draft.",
+    previewPiuBody: "Leave the preview to see them. Nothing about the draft changed.",
 };
 
 export const copy = {
@@ -227,6 +317,16 @@ export const copy = {
       title: "Review notes",
       purpose: "I'm writing review notes for you to check. I save the draft when I finish.",
     },
+    // An implementing agency officer's upload (ticket 38): Check my plan, and an upload's check, which names itself in
+    // the browser tab once it loads. Both have their own words under copy.upload and copy.uploadCheck.
+    checkMyPlan: {
+      title: "Check my plan",
+      purpose: "Upload the Procurement Plan you are preparing, and I check every activity in it before you submit it.",
+    },
+    uploadCheck: {
+      title: "Your plan",
+      purpose: "I checked every activity in the Procurement Plan your team uploaded.",
+    },
     // The Data tab's three pages share one title and purpose, and each names itself in the browser
     // tab (the 16 design brief, section 2).
     data: {
@@ -285,13 +385,17 @@ export const copy = {
     },
     menu: "Menu",
     view: {
-      pill: "View: World Bank staff",
+      // The pill names the view the server applies (the 38 brief, 5.11): brief 40's officer label, which fits the bar at
+      // 1024 px where "View: Implementing agency" does not.
+      pill: { staff: "View: World Bank staff", officer: "View: Agency officer" },
       dialog: "Your view",
       signedIn: (email: string) => `Signed in as ${email}`,
       identityError: "I can't tell which account you signed in with.",
       signedOut: "You are not signed in.",
       current: "You are seeing the World Bank staff view.",
+      currentOfficer: (agency: string) => `You are seeing the implementing agency view for ${agency}.`,
       notReady: "Previews of what an implementing agency officer or the public sees are not ready yet.",
+      notReadyOfficer: "A preview of what the public sees is not ready yet.",
     },
   },
 
@@ -442,6 +546,9 @@ export const copy = {
       writer_ppsd_rows: "whether these rows are what the borrower should put in the PPSD",
       agency_track_record: "whether the agency's past packages are like the ones in this plan",
       writer_project_paper: "whether this summary is what you would write in the Project Paper",
+      // Ticket 38: an implementing agency's planned dates, then what an upload adds.
+      writer_step_rows: "whether these comparable packages fit your activities",
+      upload_dates: "whether the dates in your plan are the ones you meant",
     },
   },
 
@@ -2360,6 +2467,12 @@ export const copy = {
       actual_amount_zero: "{status}, but Actual Amount reads {actual}.",
       no_planned_date: "The plan gives no planned date for {step}, so I couldn't check its timing.",
       no_estimate: "The plan gives no Estimated Amount, so I couldn't compare the signed amount with it.",
+      // Ticket 38: the data notes on an upload's rows (the 38 brief, 5.4). The officer's own cell values are quoted on
+      // their own team's page.
+      unread_date: 'I couldn\'t read the date in "{column}": "{value}". I left that step undated.',
+      unread_amount: 'I couldn\'t read the amount in "{column}": "{value}".',
+      no_method: "The row gives no Method, so I couldn't choose its steps.",
+      duplicate_ref: "Another row in your file has the same reference, {ref}. I checked both.",
     },
     // The states a plan check can end in, other than its rows (the 10 brief, section 6).
     noPlanTitle: (agency: string) => `I don't have a Procurement Plan from ${agency} yet.`,
@@ -2422,6 +2535,140 @@ export const copy = {
     // Ticket 22: each row's link to its activity page, the contract trail, before "See the past range".
     openActivity: "Open the activity",
     openActivityLabel: (ref: string) => `Open the activity ${ref}`,
+  },
+
+  // An implementing agency officer's private upload of their Procurement Plan (ticket 38; the 38 brief, sections 5.2 to
+  // 5.4 and 5.10). STEP's column names come from the server's STEP column registry, never from here.
+  upload: {
+    title: "Check my plan",
+    crumb: "Check my plan",
+    purpose:
+      "Upload the Procurement Plan you are preparing, and I check every activity in it before you submit it. I can then " +
+      "draft a planned date for each step, as rows you can paste into Systematic Tracking of Exchanges in Procurement (STEP).",
+    heading: "Upload your plan",
+    // The access label (DESIGN.md section 5): "Official Use Only · visible to your team". The middle dot is hidden
+    // from screen readers, which hear a comma instead.
+    access: { lead: "Official Use Only", dot: "·", comma: ",", rest: "visible to your team" },
+    accessCompact: "Official Use Only",
+    privacy: (agency: string) =>
+      `Strata shows this upload, and every draft I make from it, only to your team at ${agency}. I keep it out of the ` +
+      "search that answers other people's questions.",
+    kept: "I keep the activities I read from your file, not the file itself.",
+    projectLabel: "Project",
+    projectOption: (name: string, pid: string) => `${name} (${pid})`,
+    // STEP column names a reading missed, in straight quotes: "A", "A and B" or "A, B and C".
+    missingList: (names: string[]) => {
+      const quoted = names.map((name) => `"${name}"`);
+      return quoted.length <= 1 ? (quoted[0] ?? "") : `${quoted.slice(0, -1).join(", ")} and ${quoted[quoted.length - 1]}`;
+    },
+    projectPlaceholder: "Choose a project",
+    projectHint: "The project this plan belongs to.",
+    projectError: "Choose the project this plan belongs to.",
+    fileLabel: "Procurement Plan file",
+    // Which hint shows is config/uploads.toml's format: step_export once a STEP export is confirmed, published_tables
+    // while Strata reads the column names of a published plan's tables (the STEP export check, docs/PLAN.md section 18).
+    format: {
+      step_export: (formats: string, size: string) => `Choose the plan you exported from STEP, as ${formats}. Files up to ${size}.`,
+      published_tables: (formats: string, size: string) =>
+        `Choose your plan as ${formats}, with the column names of the tables in a published Procurement Plan. Files up to ${size}.`,
+    },
+    formats: "an Excel file (.xlsx) or a CSV file",
+    // A file's size, from the browser's file object, with one decimal.
+    sizeKb: (size: string) => `${size} KB`,
+    sizeMb: (size: string) => `${size} MB`,
+    choose: "Choose a file",
+    none: "No file chosen.",
+    chosen: (name: string, size: string) => `${name}, ${size}.`,
+    errorNone: "Choose a file to upload.",
+    errorType: (name: string, ending: string) => `I can read an Excel file (.xlsx) or a CSV file. ${name} is a ${ending} file.`,
+    errorSize: (name: string, size: string, max: string) => `${name} is ${size}. I can read files up to ${max}.`,
+    errorEmpty: (name: string) => `${name} is empty. Choose another file.`,
+    columnsShow: "Show the columns I read",
+    columnsHide: "Hide the columns I read",
+    columnsIntro: "I find the header row by STEP's column names, on every sheet in the file.",
+    columnsRequired: "I need these columns:",
+    columnsOptional: "I also read these when your file has them, and each step's Planned and Actual dates:",
+    columnsOther: "I don't use any other column.",
+    columnsHeading: "The columns I read",
+    submit: "Upload and check",
+    feedforward: "Uploading doesn't submit your plan. I send nothing to the World Bank or to STEP.",
+    holdPreview: "Uploading is off in a preview.",
+    reading: "I'm reading your file. I keep nothing until I finish.",
+    readingSteps: {
+      upload: (name: string) => `I'm uploading ${name}.`,
+      check: "I'm reading the columns and rows, then checking every activity.",
+    },
+    ready: "Your plan's check is ready.",
+    // Each reading error ends "I kept nothing" (the 38 brief, 5.3), by the server's code.
+    errors: {
+      unreadable: (name: string) => `I couldn't open ${name}. It may be damaged or protected by a password. I kept nothing.`,
+      no_table: (name: string) =>
+        `I couldn't find a Procurement Plan table in ${name}. I look for a header row with STEP's column names. I kept nothing.`,
+      missing_one: (name: string, missing: string) => `I couldn't check ${name}, because it has no ${missing} column. I kept nothing.`,
+      missing_many: (name: string, missing: string) => `I couldn't check ${name}, because it has no ${missing} columns. I kept nothing.`,
+      no_rows: (name: string) => `I found the columns in ${name} but no activities under them. I kept nothing.`,
+      too_many_rows: (name: string, n: string, max: string) =>
+        `${name} lists ${n} activities, and I check up to ${max} at a time. I kept nothing.`,
+      service: (name: string) => `I read ${name} but couldn't check it, because the data service didn't answer. I kept nothing.`,
+      permission: (_name: string) => "Your account can't save to Strata's tables, so I can't keep a check of your plan. I kept nothing.",
+      dropped: (name: string) => `The connection dropped while I was uploading ${name}. I kept nothing.`,
+      type: (name: string) => `I can read an Excel file (.xlsx) or a CSV file, and ${name} is neither. I kept nothing.`,
+      empty: (name: string) => `${name} is empty. I kept nothing.`,
+      size: (name: string) => `${name} is larger than the files I can read. I kept nothing.`,
+    } as Record<string, (name: string, ...rest: string[]) => string>,
+    permissionBody: "Ask your workspace admin for write access to the strata catalog.",
+    chooseAnother: "Choose another file",
+    reference: (id: string) => `If it fails again, send the data team this reference: ${id}.`,
+    publishedHeading: "Or check a published plan",
+    publishedIntro: (agency: string) =>
+      `These are the latest Procurement Plans the World Bank disclosed for ${agency}. I check them the same way.`,
+    publishedItem: (date: string) => `Procurement Plan of ${date}`,
+    publishedCaption: "{name} ({pid}), disclosed {date}",
+    publishedNone: (agency: string) =>
+      `The World Bank hasn't disclosed a Procurement Plan from ${agency} yet. Upload your draft above to check it.`,
+    earlier: (count: number, countText: string) =>
+      count === 1 ? "Your team has one earlier upload. You can open it from Packages." : `Your team has ${countText} earlier uploads. You can open them from Packages.`,
+    loading: "Loading your team's projects.",
+    loadError: "I couldn't load your team's projects because the data service didn't answer.",
+    notOfficerTitle: "I check uploads only for implementing agency teams, and your account isn't on one.",
+    notOfficerBody: "You can check any published plan from its project's Procurement tab.",
+    notOfficerLink: "Go to Projects",
+    noProjectTitle: (agency: string) => `I can't find a project for ${agency} in the World Bank's project records.`,
+    noProjectBody:
+      "I need the project to check a plan against its closing date and its comparable packages. Ask the person who shared " +
+      "Strata with you to add the project to your team.",
+  },
+  // The upload's check (the 38 brief, section 5.4): brief 10's page, with these lines added.
+  uploadCheck: {
+    crumb: (date: string) => `Your plan, uploaded ${date}`,
+    subtitleYou: (date: string) => `Your Procurement Plan, uploaded ${date} by you`,
+    subtitleTeammate: (date: string, name: string) => `Your team's Procurement Plan, uploaded ${date} by ${name}`,
+    method:
+      "I checked every activity against its own dates, its cost estimate and the project's closing date. Where an activity " +
+      "was in a published plan, I measure delay from its first published planned date. Where it is new, I measure from your dates.",
+    readLine: (count: number, countText: string, file: string, name: string, pid: string) =>
+      count === 1 ? `I read one activity from ${file} for ${name} (${pid}).` : `I read ${countText} activities from ${file} for ${name} (${pid}).`,
+    howShow: "Show how I read your file",
+    howHide: "Hide how I read your file",
+    sheets: (names: string[]) => `I read these sheets: ${names.map((name) => `"${name}"`).join(", ")}.`,
+    used: "I used these columns:",
+    usedAs: (header: string, name: string) => `${header}, as ${name}`,
+    unused: "I didn't use these columns:",
+    values: (count: number, countText: string) =>
+      count === 1 ? "I couldn't read one value. It is a data note on its row." : `I couldn't read ${countText} values. Each one is a data note on its row.`,
+    noRef: "No reference yet",
+    newActivity: "Not in a published plan yet.",
+    meta: (date: string, id: string) => `Uploaded on ${date}. Upload ID ${id}`,
+    datesButton: (count: number, countText: string) =>
+      count === 1 ? "Draft planned dates (1 activity)" : `Draft planned dates (${countText} activities)`,
+    datesFeedforward: "The draft waits in Drafts for you to check. I send nothing.",
+    datesDescription: "I date each STEP step of every activity from my delay model, and I make rows you can paste into STEP.",
+    notFoundTitle: "I can't find this upload.",
+    notFoundBody: "The link may be incomplete, or the upload may belong to another team.",
+    notFoundLink: "Go to Packages",
+    error: "I couldn't load this upload's check because the data service didn't answer.",
+    asofUploads: "I check uploads against today's records, whatever the as-of date.",
+    backToCheck: "Back to your plan's check",
   },
 
   // Drafts (the 35 brief): the writing page, a draft's page with its bar, its files and the Drafts tab.
@@ -2617,91 +2864,120 @@ export const copy = {
       // Suggested risk rows for the borrower's PPSD (ticket 36; the 36 brief, sections 5.2 to 5.5). Its keys match
       // review_notes' so the draft page, the bar and the Drafts tab read every kind the same way; copy.ppsd holds what
       // only this kind says. Ticket 38's agency variant swaps these words and keeps the column names.
-      ppsd_rows: {
-        title: "Suggested risk rows for the borrower's PPSD",
-        crumb: (_date: string) => "Suggested PPSD risk rows",
-        rowTitle: (title: string, _date: string) => `Suggested PPSD risk rows for ${title}`,
-        pageTitle: (title: string, _date: string) => `Suggested PPSD risk rows for ${title}`,
-        // Ticket 39: a row as the Lessons page's "Used in" line names it (config/drafts.toml, row_label).
-        rowLabel: "Row {n}, {risk_label}.",
-        // Under the h1: "Rural roads. No STEP reference yet." {reference} is the STEP reference in Roboto Mono.
-        subtitle: "{title}. {reference}",
-        lede: (count: number) =>
-          count === 1 ? "I drafted a row for the one risk you selected." : "I drafted a row for each of the {count} risks you selected.",
-        ledePartial: "I drafted rows for {written} of the {count} risks you selected.",
-        // PPSD is spelled out here, once on the page (the 36 brief, section 5).
+      ppsd_rows: PPSD_ROWS,
+      // Risk rows for an implementing agency's own PPSD (ticket 38; the 38 brief, 5.8): ticket 36's rows, with the
+      // officer's words, since the officer drafts rows for their own PPSD and nothing is suggested to someone else.
+      ppsd_rows_agency: {
+        ...PPSD_ROWS,
+        title: "Risk rows for your PPSD",
+        crumb: (_date: string) => "Risk rows for your PPSD",
+        rowTitle: (title: string, _date: string) => `Risk rows for your PPSD, ${title}`,
+        pageTitle: (title: string, _date: string) => `Risk rows for your PPSD, ${title}`,
         method:
-          "I wrote each Risk Description and Description of mitigation from {check} and their lessons, for the " +
-          "borrower's Project Procurement Strategy for Development (PPSD). Open a source number to see its evidence " +
-          "beside the row.",
-        methodLink: "the risks you selected",
-        countLine: (count: number, countText: string) => (count === 1 ? "Showing the one row" : `Showing all ${countText} rows`),
-        columns: {} as Record<string, string>,
-        tableCaption: (form: string, _date: string) =>
-          `Suggested risk rows for the borrower's PPSD, ${form}, one row per risk you selected`,
-        // A cell of Strata's that nothing passed the checks for; Word leaves it empty for the borrower.
-        abstain: "I couldn't write this cell so that it passed my checks. The sentences I removed are listed above.",
-        refused: {
-          out_of_scope: "I didn't write this cell, because it would need more than this risk's records show.",
-        } as Record<string, string>,
-        refusedOther: "I didn't write this cell.",
-        metaYou: (date: string) => `I drafted these rows for you on ${date}.`,
-        metaTeammate: (author: string, date: string) => `I drafted these rows for ${author} on ${date}.`,
-        barLead: "A working draft of suggested rows for the borrower's PPSD.",
-        barLeadTeammate: (author: string) => `A working draft of ${author}'s suggested rows for the borrower's PPSD.`,
-        holdNotChecked: "Mark the rows as checked before you export them.",
-        // The composed hold line's first clause, and its frame (section 4.5).
-        holdClause: "mark the rows as checked",
+          "I wrote each Risk Description and Description of mitigation from {check} and their lessons, for your " +
+          "Project Procurement Strategy for Development (PPSD). Open a source number to see its evidence beside the row.",
+        tableCaption: (form: string, _date: string) => `Risk rows for your PPSD, ${form}, one row per risk you selected`,
+        barLead: "A working draft of risk rows for your Project Procurement Strategy for Development (PPSD).",
+        barLeadTeammate: (author: string) => `A working draft of ${author}'s risk rows for your team's PPSD.`,
+        discarded: "I discarded these risk rows, and your team no longer sees them in Drafts.",
+        previewPiuTitle: "I don't show this team's drafts in a preview.",
+        previewPiuBody: "In a preview I don't show an implementing agency's drafts, because they stay with the team that made them.",
+      },
+      // Planned dates for an implementing agency's plan (ticket 38; the 38 brief, 5.7). Its keys match review_notes'
+      // so the bar and the Drafts tab read it the same way; dates holds what only this kind says. Every count is the
+      // draft runtime's or estimate_time's.
+      step_rows: {
+        title: "Planned dates",
+        crumb: (date: string) => `Planned dates for your plan uploaded ${date}`,
+        rowTitle: (_title: string, date: string) => `Planned dates for your plan uploaded ${date}`,
+        pageTitle: (agency: string, date: string) => `Planned dates for ${agency}'s plan of ${date}`,
+        subtitle: "{agency}, your plan uploaded {date}",
+        lede: (count: number) => (count === 1 ? "I dated all {total} steps of your activity." : "I dated all {total} steps of your {count} activities."),
+        ledePartial: "I dated {written} of the {total} steps of your {count} activities.",
+        method:
+          "I started from the dates in your plan and added how far comparable packages ran past their planned dates at " +
+          "each step. Open a count of comparable packages to see them.",
+        methodLink: "the dates in your plan",
+        countLine: (count: number, countText: string) => (count === 1 ? "Showing the one activity" : `Showing all ${countText} activities`),
+        columns: { activity: "Activity", signed: "Contract signed", dated: "Steps dated" } as Record<string, string>,
+        tableCaption: (_form: string, _date: string) => "Your activities, in your file's order",
+        abstain: "I removed this date, because it didn't match my delay model's results.",
+        refused: {} as Record<string, string>,
+        refusedOther: "I didn't date this activity.",
+        metaYou: (date: string) => `I drafted these dates for you on ${date}.`,
+        metaTeammate: (author: string, date: string) => `I drafted these dates for ${author} on ${date}.`,
+        barLead: "A working draft of planned dates for your Procurement Plan.",
+        barLeadTeammate: (author: string) => `A working draft of ${author}'s planned dates for your team's Procurement Plan.`,
+        holdNotChecked: "Mark the dates as checked before you export them.",
+        holdClause: "mark the dates as checked",
         holdCompose: "Before you export them, {clauses}.",
-        readOnly: (author: string) => `Only ${author} can set owners, mark these rows as checked or export them.`,
-        markedChecked: "You marked these rows as checked.",
-        discarded: "You discarded these suggested rows, so your team no longer sees them in Drafts.",
-        removedReasons: {
-          id_not_returned: {
-            item: "It cited a source other than this risk's records.",
-            joined: "it cited a source other than this risk's records",
-          },
-        } as Record<string, { item: string; joined: string }>,
-        rowNotes: (count: number, countText: string) => (count === 1 ? "One row." : `${countText} rows.`),
+        readOnly: (author: string) => `Only ${author} can mark these dates as checked or export them.`,
+        markedChecked: "You marked these dates as checked. You can export them now.",
+        discarded: "I discarded these planned dates, and your team no longer sees them in Drafts.",
+        removedReasons: {} as Record<string, { item: string; joined: string }>,
+        rowNotes: (count: number, countText: string) => (count === 1 ? "One activity." : `${countText} activities.`),
         steps: {
           read: {
-            running: "I'm reading the risks you selected.",
-            // {count} is the selected risks' count as a word from one to nine, then numerals.
-            done: (count: string) =>
-              count === "one" ? "I read the one risk you selected and its lesson." : `I read the ${count} risks you selected and their lessons.`,
+            running: "I'm reading the activities in your plan and finding comparable packages for each one.",
+            done: (count: string) => (count === "one" ? "I read the one activity in your plan." : `I read the ${count} activities in your plan.`),
           },
           write: {
-            running: (_count: number, _countText: string) => "I'm writing a row for each risk.",
-            // notes are the rows written.
-            done: (_sentences: number, _sentencesText: string, rows: number, rowsText: string) =>
-              rows === 1 ? "I wrote one row." : `I wrote ${rowsText} rows.`,
+            running: (_count: number, _countText: string) => "I'm checking every date and count against my delay model's results.",
+            done: (_sentences: number, _sentencesText: string, dated: number, datedText: string) =>
+              dated === 1 ? "I dated one step and checked it." : `I dated ${datedText} steps and checked them.`,
           },
           save: { running: "I'm saving the draft.", done: "I saved the draft." },
         },
         ready: (count: number, countText: string) =>
-          count === 1 ? "The draft is ready. I wrote one row." : `The draft is ready. I wrote ${countText} rows.`,
+          count === 1 ? "The draft is ready. I dated one step." : `The draft is ready. I dated ${countText} steps.`,
         writeErrors: {
-          no_agent: "I can't write PPSD rows yet, because the model that writes my drafts isn't connected. I saved nothing.",
-          agent_unavailable:
-            "I couldn't write the PPSD rows, because the model that writes my drafts did not respond. I saved nothing.",
-          content_filter: "I couldn't write the PPSD rows, because a content filter stopped the writer. I saved nothing.",
-          agent_output: "I wrote PPSD rows I couldn't check, so I saved nothing.",
-          data_service: "I couldn't read the package's risks, because the data service didn't answer. I saved nothing.",
+          data_service: "I couldn't draft the planned dates, because my delay model didn't answer. I saved nothing.",
           draft_store: "I couldn't save the draft, because I can't write to my drafts tables right now. I saved nothing.",
-          no_package: "I couldn't find this package, so I wrote nothing and saved nothing.",
-          no_selected_risks: "None of the risks you selected is in the table now, so I wrote nothing and saved nothing.",
-          no_plan: "I couldn't find this package, so I wrote nothing and saved nothing.",
-          nothing_marked: "None of the risks you selected is in the table now, so I wrote nothing and saved nothing.",
+          no_plan: "I couldn't find this plan, so I dated nothing and saved nothing.",
           permission:
-            "Your account can't read this package's records in Strata's tables, so I can't write PPSD rows. Ask your " +
+            "Your account can't read the records I date from in Strata's tables, so I can't draft planned dates. Ask your " +
             "workspace admin for read access to the strata catalog.",
-          internal: "Something went wrong on my side, so I couldn't write the PPSD rows. I saved nothing.",
-          dropped: "The connection dropped before I finished the PPSD rows. I saved nothing.",
+          internal: "Something went wrong on my side, so I couldn't draft the planned dates. I saved nothing.",
+          dropped: "The connection dropped before I finished the planned dates. I saved nothing.",
         } as Record<string, string>,
-        nothingTitle: "I couldn't write a row that passed my checks, so I saved no draft.",
-        nothingBody: "The sentences I removed are below, with the reason for each.",
-        previewPiuTitle: "I don't show these suggested rows in this preview, because they are a World Bank staff draft.",
-        previewPiuBody: "Leave the preview to see them. Nothing about the draft changed.",
+        nothingTitle: "I couldn't date any step of your plan, so I saved no draft.",
+        nothingBody:
+          "Every step had fewer than {min} comparable packages that recorded it. Your plan's check still lists every activity.",
+        // When my verifier removed what I worked out and no step was left dated: never "too few", which may be untrue.
+        nothingRemovedBody: (count: number, countText: string) =>
+          count === 1
+            ? "My checks removed what I worked out for one step, because it didn't match my delay model's results, and no other step had a date. What I removed is below, with its reason."
+            : `My checks removed what I worked out for ${countText} steps, because it didn't match my delay model's results, and no other step had a date. What I removed is below, with the reason for each.`,
+        previewPiuTitle: "I don't show this team's drafts in a preview.",
+        previewPiuBody: "In a preview I don't show an implementing agency's drafts, because they stay with the team that made them.",
+        // What only this kind says (the 38 brief, 5.7), each count from the draft.
+        dates: {
+          fileNote: "The file I make has STEP's own columns. I fill in the planned dates and copy the other values from your plan, and I leave these empty for you and STEP:",
+          choiceLegend: "Date each step with",
+          choices: { middle: "Middle dates: half ran later", cautious: "Cautious dates: {in10} in 10 ran later" },
+          choiceLocked: { middle: "You checked the middle dates.", cautious: "You checked the cautious dates." },
+          noRef: "No reference yet. STEP assigns one.",
+          signedAbstain: (count: number) =>
+            count === 0
+              ? "I'm not dating it: no comparable packages recorded it."
+              : count === 1
+                ? "I'm not dating it: only one comparable package recorded it."
+                : "I'm not dating it: only {count} comparable packages recorded it.",
+          undated: "Not dated yet.",
+          notListed: "I don't have STEP's steps for {method} yet, so I can't date them.",
+          stepsDated: "{dated} of {total}",
+          opened: "You opened {opened} of {lists} lists.",
+          family: "These are the steps STEP uses for {family}.",
+          columns: { step: "Step", plan: "In your plan", planned: "Planned date", comparables: "Comparable packages" },
+          comparables: (count: number) => (count === 1 ? "one comparable package" : "{count} comparable packages"),
+          removed: "I removed this date, because it didn't match my delay model's results.",
+          stepAbstain: "Fewer than {min} comparable packages recorded this step, so I'm not dating it.",
+          notInPlan: "Your plan gives no date for this step, so I can't date it from your plan.",
+          notReached: "Too many comparable packages have not reached this step yet, so I'm not dating it.",
+          exportButton: "Export STEP rows",
+          barOpened: (opened: string, total: string) => `You opened ${opened} of ${total} lists of comparable packages`,
+          exportedTitle: (count: number) => (count === 1 ? "Exported. I made one STEP row and an evidence pack." : "Exported. I made {count} STEP rows and an evidence pack."),
+        },
       },
       // The procurement summary for the Project Paper (ticket 36; the 36 brief, section 5.8). copy.paper holds what
       // only this kind says.
@@ -2952,6 +3228,8 @@ export const copy = {
     // (node web/lint/server-copy.ts --write). Word's text speaks in the document's voice: no "I" or
     // "you". {braces} are filled from the draft.
     files: {
+      // The STEP rows file's title, which the evidence pack repeats (ticket 38).
+      stepRows: { title: "Planned dates for {agency}'s plan of {date}" },
       word: {
         review_notes: {
           heading: "Review notes on the {agency} plan of {date}",
@@ -3052,6 +3330,8 @@ export const copy = {
       },
       pack: {
         title: "Evidence pack",
+        // The first line of the evidence pack from an implementing agency team's draft (the 38 brief, 6.10).
+        officialUseOnly: "Official Use Only",
         draftId: "Draft ID {id}",
         drafted: "Drafted on {date} for {author}.",
         checked: "Checked by {author} on {date}.",
@@ -3732,6 +4012,13 @@ export const copy = {
         "I write a Risk Description and a Description of mitigation for each risk you selected, for the borrower's " +
         "Project Procurement Strategy for Development (PPSD).",
       heldLabel: "Suggest PPSD risk rows",
+      // An implementing agency officer drafts rows for their own PPSD, so nothing is suggested to someone else (ticket 38;
+      // the 38 brief, 5.6).
+      agencyButton: (count: number, countText: string) => (count === 1 ? "Draft 1 PPSD risk row" : `Draft ${countText} PPSD risk rows`),
+      agencyHeldLabel: "Draft PPSD risk rows",
+      agencyDescription:
+        "I write a Risk Description and a Description of mitigation for each risk you selected, for your Project " +
+        "Procurement Strategy for Development (PPSD).",
       // "section 3" links to the risks section.
       heldNone: "Select the risks you want in {section} first.",
       heldNoneLink: "section 3",
@@ -4696,6 +4983,13 @@ export const copy = {
     purpose: "The packages you are planning and the plans you checked. Check a published plan, or plan a new package from one sentence.",
     checkPlan: "Check a plan",
     planPackage: "Plan a package",
+    // An implementing agency officer's Packages tab (ticket 38; the 38 brief, 5.1): their uploads, and Check my plan.
+    purposeAgency:
+      "The plans you checked and the packages you are planning. Check your plan before you submit it, or plan a new package from one sentence.",
+    checkMine: "Check my plan",
+    uploadsTitle: "Your team's uploads",
+    uploadName: (date: string) => `Your plan, uploaded ${date}`,
+    uploadCaption: (count: number, countText: string) => (count === 1 ? "One activity checked." : `${countText} activities checked.`),
     previewOff: "Checking and planning are off in a preview.",
     // Zero is "no", never "0" (DESIGN.md section 7, rule 12).
     title: (packages: number, packageWords: string, plans: number, planWords: string) =>

@@ -3,6 +3,7 @@
 // notice's tier and writes each count's word; the page formats dates and fills copy templates, and nothing else.
 import { copy } from "../copy";
 import type { RemovedEvent } from "./answer";
+import { isPpsdKind } from "./drafts";
 import { formatDate } from "./format";
 import type { Item, LessonCard, LessonEvidence } from "./lessons";
 
@@ -11,7 +12,7 @@ export function draftTitle(kindKey: string, subject: Partial<Record<string, stri
   const kinds = copy.draft.kinds as Record<string, { rowTitle: (title: string, date: string) => string }>;
   const kind = kinds[kindKey] ?? kinds.review_notes;
   if (kindKey === "mission_brief") return kind.rowTitle(subject.project_name ?? "", "");
-  if (kindKey === "ppsd_rows") return kind.rowTitle(subject.package_title ?? "", "");
+  if (isPpsdKind(kindKey)) return kind.rowTitle(subject.package_title ?? "", "");
   const date = subject.plan_date ? formatDate(subject.plan_date.slice(0, 10), { style: "table" }) : "";
   return kind.rowTitle(subject.implementing_agency ?? "", date);
 }

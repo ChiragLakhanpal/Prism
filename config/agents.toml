@@ -74,6 +74,16 @@ guardrail = "strata"
 description = "Writes suggested risk rows for a borrower's PPSD, citing the counts and lessons the risk table returned."
 tools = []
 
+# The implementing agency's own PPSD rows writer (ticket 38; docs/PLAN.md section 6): the same message, cells, rules and
+# citations as ppsd_rows_writer, written for the officer whose PPSD it is, so nothing is suggested to someone else.
+[agents.ppsd_rows_agency_writer]
+name = "strata-ppsd-rows-agency-writer"
+role = "draft"
+instructions = "ppsd_rows_agency_writer.md"
+guardrail = "strata"
+description = "Writes risk rows for an implementing agency's own PPSD, citing the counts and lessons the risk table returned."
+tools = []
+
 # The Project Paper summary's writer (ticket 36): the procurement summary for the Project Paper in three parts, from
 # the plan check, the implementing agency's track record and the PPSD rows the team checked, which the app hands it.
 # It never rates the agency's procurement risk. The draft runtime runs the verifier before any draft is saved.

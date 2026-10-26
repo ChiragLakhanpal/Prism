@@ -13,7 +13,7 @@ import { Alert } from "../components/Alert";
 import { Button } from "../components/Button";
 import { EmptyState } from "../components/Card";
 import { Fill } from "../components/Fill";
-import { RemovedBox, type Removed } from "../components/Checks";
+import { RemovedBox } from "../components/Checks";
 import { DraftNotes, type NoteRow } from "../components/DraftNotes";
 import { Skeleton } from "../components/Skeleton";
 import { Steps, type Step } from "../components/Steps";
@@ -21,11 +21,12 @@ import { TextLink } from "../components/TextLink";
 import { copy } from "../copy";
 import { getJson } from "../lib/api";
 import { formatCount, formatDate } from "../lib/format";
-import { PROJECT_PAPER_STOPPED, draftScope, newKey, preloaded, startWriting, stopped, stopWriting, writing as writingStore, type Draft, type Writing } from "../lib/drafts";
+import { PROJECT_PAPER_STOPPED, draftScope, isPpsdKind, newKey, preloaded, startWriting, stopped, stopWriting, writing as writingStore, type Draft, type Writing } from "../lib/drafts";
+import { DatesReloadCard, WritingDatesPage } from "./WritingDatesPage";
 import { navigate } from "../lib/router";
 import { useStore } from "../lib/store";
 import { setPageTitle } from "../lib/title";
-import { DocumentColumn, DraftCrumbs, DraftHeader, PackageCrumbs, ppsdSubtitle, subtitleOf } from "./DraftPage";
+import { DocumentColumn, DraftCrumbs, DraftHeader, PackageCrumbs, ppsdSubtitle, removedItems, subtitleOf } from "./DraftPage";
 import { FOLLOWING_HREF } from "../lib/following";
 import { IdText } from "../components/ProjectId";
 import { SkeletonText } from "../components/Skeleton";
@@ -65,16 +66,6 @@ function stepsOf(current: Writing, kind: KindWords): Step[] {
   return lines;
 }
 
-function removedItems(current: Writing, kind: KindWords): Removed[] {
-  // The kind's own words for a reason first, then the answer's.
-  const reasons: Record<string, { item: string; joined: string }> = { ...copy.removed.reasons, ...kind.removedReasons };
-  return current.removed.map((item) => {
-    const code = [item.reason, ...item.reasons.map((reason) => reason.code)].find((one) => one in reasons);
-    const reason = code ? reasons[code] : copy.removed.unknownReason;
-    return { sentence: item.sentence, reason: reason.item, reasonJoined: reason.joined };
-  });
-}
-
 export function DraftNewPage({ search }: { search: string }) {
   const current = useStore(writingStore);
   const params = new URLSearchParams(search);
@@ -85,12 +76,18 @@ export function DraftNewPage({ search }: { search: string }) {
   // A mission brief (ticket 37) is started from Following, and goes back there; suggested PPSD rows (ticket 36) from
   // the package workspace, and go back there.
   const brief = kindKey === "mission_brief";
-  const pkg = kindKey === "ppsd_rows" ? params.get("package") : null;
+  const pkg = isPpsdKind(kindKey) ? params.get("package") : null;
+  // Planned dates (ticket 38): named by what they are drafted from, an upload or a published plan, by its id.
+  const datesFrom = kindKey === "step_rows" ? params.get("from") : null;
+  if (datesFrom !== null) {
+    if (current && current.request.kind === "step_rows" && current.request.source === datesFrom) return <WritingDatesPage current={current} />;
+    return <DatesReloadCard source={datesFrom} />;
+  }
   const planHref = brief ? FOLLOWING_HREF
     : pkg ? `/packages/${encodeURIComponent(pkg)}`
       : pid && agency ? `/projects/${pid}/procurement/${agency}${version ? `/${version}` : ""}` : null;
   const matches = current !== null && (
-    pkg ? current.request.kind === "ppsd_rows" && current.request.package === pkg
+    pkg ? current.request.kind === kindKey && current.request.package === pkg
       : current.request.project_id === pid && (brief ? current.request.kind === "mission_brief"
         : current.request.kind === (kindKey ?? "review_notes") && current.request.agency_id === agency && current.request.plan_date === version));
   if (!current || !matches) {
@@ -112,7 +109,7 @@ export function DraftNewPage({ search }: { search: string }) {
     );
   }
   if (brief) return <WritingBriefPage current={current} />;
-  if (current.request.kind === "ppsd_rows" || current.request.kind === "project_paper") {
+  if (isPpsdKind(current.request.kind) || current.request.kind === "project_paper") {
     return <WritingKindPage current={current} backHref={planHref!} />;
   }
   return <WritingPage current={current} planHref={planHref!} />;
@@ -124,7 +121,7 @@ export function DraftNewPage({ search }: { search: string }) {
 // saved, this page becomes its page in place; Stop writing goes back to the package or the plan check, which says
 // nothing was saved.
 function WritingKindPage({ current, backHref }: { current: Writing; backHref: string }) {
-  const ppsdKind = current.request.kind === "ppsd_rows";
+  const ppsdKind = isPpsdKind(current.request.kind);
   const kind: KindWords = copy.draft.kinds[current.request.kind];
   const [stillWorking, setStillWorking] = useState(false);
   const opening = useRef(false);

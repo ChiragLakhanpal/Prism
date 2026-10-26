@@ -40,7 +40,8 @@ function ratio(forms: { one: string; many: string }, part: number, whole: number
 // 24 brief, section 5.2). src/strata/drafts/files.py writes the evidence pack's line by the same rule.
 // With none, the line gives the fallback.
 export function notCheckedFor(
-  checks: { checks_run: number[]; tools: string[]; cited_tools?: string[]; cited_only?: string[] },
+  // computed: a draft no model wrote, such as planned dates (ticket 38), has no sentences to follow from sources.
+  checks: { checks_run: number[]; tools: string[]; cited_tools?: string[]; cited_only?: string[]; computed?: boolean },
   own: string[] = [],
 ): NotChecked[] {
   const clauses = copy.checkLine.notCheckedClauses;
@@ -48,7 +49,7 @@ export function notCheckedFor(
   const cited = checks.cited_tools ?? [];
   const citedOnly = checks.cited_only ?? [];
   return [
-    ...(checks.checks_run.includes(4) ? [] : (["sentences"] as NotChecked[])),
+    ...(checks.checks_run.includes(4) || checks.computed ? [] : (["sentences"] as NotChecked[])),
     ...keys.filter((key) => (citedOnly.includes(key) ? cited.includes(key) : checks.tools.includes(key))),
     ...own.filter((key): key is NotChecked => key in clauses),
   ];

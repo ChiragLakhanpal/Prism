@@ -259,6 +259,9 @@ def test_the_app_s_own_principal_may_write_usage_events_agent_runs_opened_source
         f"GRANT SELECT, MODIFY ON TABLE strata.ops.draft_fields TO `{PRINCIPAL}`",
         # Ticket 44: each past range or time estimate the app showed in the World Bank staff view.
         f"GRANT SELECT, MODIFY ON TABLE strata.ops.exposures TO `{PRINCIPAL}`",
+        # Ticket 38: an implementing agency team's uploads and their activities.
+        f"GRANT SELECT, MODIFY ON TABLE strata.ops.uploads TO `{PRINCIPAL}`",
+        f"GRANT SELECT, MODIFY ON TABLE strata.ops.upload_rows TO `{PRINCIPAL}`",
         # Ticket 39: each reader's visits to Lessons, and the choices on rows whose lesson changed.
         f"GRANT SELECT, MODIFY ON TABLE strata.ops.lesson_visits TO `{PRINCIPAL}`",
         f"GRANT SELECT, MODIFY ON TABLE strata.ops.draft_lesson_choices TO `{PRINCIPAL}`",
@@ -305,6 +308,16 @@ def test_after_its_grants_the_deploy_masks_who_sent_each_report_and_who_asked_ea
         "ALTER TABLE strata.ops.candidate_labels ALTER COLUMN viewer_id SET MASK strata.ops.mask_viewer",
         "ALTER TABLE strata.ops.candidate_labels ALTER COLUMN viewer_email SET MASK strata.ops.mask_viewer",
         "ALTER TABLE strata.ops.answer_citations ALTER COLUMN viewer_id SET MASK strata.ops.mask_viewer",
+        # Ticket 38: an implementing agency's upload and every team's drafts keep their words from every reader.
+        "ALTER TABLE strata.ops.uploads ALTER COLUMN uploader_name SET MASK strata.ops.mask_viewer",
+        "ALTER TABLE strata.ops.uploads ALTER COLUMN file_name SET MASK strata.ops.mask_viewer",
+        "ALTER TABLE strata.ops.uploads ALTER COLUMN reading SET MASK strata.ops.mask_viewer",
+        "ALTER TABLE strata.ops.upload_rows ALTER COLUMN activity_reference_no SET MASK strata.ops.mask_viewer",
+        "ALTER TABLE strata.ops.upload_rows ALTER COLUMN description SET MASK strata.ops.mask_viewer",
+        "ALTER TABLE strata.ops.upload_rows ALTER COLUMN content SET MASK strata.ops.mask_viewer",
+        "ALTER TABLE strata.ops.drafts ALTER COLUMN content SET MASK strata.ops.mask_viewer",
+        "ALTER TABLE strata.ops.draft_exports ALTER COLUMN snapshot SET MASK strata.ops.mask_viewer",
+        "ALTER TABLE strata.ops.draft_files ALTER COLUMN content SET MASK strata.ops.mask_viewer",
     ]
 
 

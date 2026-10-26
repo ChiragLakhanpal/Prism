@@ -52,7 +52,9 @@
             }
           ]
         }
-      ]
+      ],
+      "position": null,
+      "listed": null
     },
     {
       "evidence_id": "strata.silver.plan_rows:40031468/KE-NWWDA-503455-CW-RFQ",
@@ -98,7 +100,9 @@
             }
           ]
         }
-      ]
+      ],
+      "position": null,
+      "listed": null
     },
     {
       "evidence_id": "strata.silver.plan_rows:40031468/KE-NWWDA-199461-GO-RFB",
@@ -144,7 +148,9 @@
             }
           ]
         }
-      ]
+      ],
+      "position": null,
+      "listed": null
     },
     {
       "evidence_id": "strata.silver.plan_rows:40031468/KE-NWWDA-199471-GO-RFQ",
@@ -174,7 +180,9 @@
       "planned_completion_plan_date": "2020-12-07",
       "first_listing_confirmed": false,
       "actual_to_estimate": "0.99",
-      "marks": []
+      "marks": [],
+      "position": null,
+      "listed": null
     },
     {
       "evidence_id": "strata.silver.plan_rows:40031468/NWWDA-WSDP-03-2019-2020",
@@ -204,7 +212,9 @@
       "planned_completion_plan_date": "2019-11-08",
       "first_listing_confirmed": false,
       "actual_to_estimate": "0.51",
-      "marks": []
+      "marks": [],
+      "position": null,
+      "listed": null
     },
     {
       "evidence_id": "strata.silver.plan_rows:40031468/KE-NWWDA-207796-CS-INDV",
@@ -234,7 +244,9 @@
       "planned_completion_plan_date": "2020-12-07",
       "first_listing_confirmed": false,
       "actual_to_estimate": "1.19",
-      "marks": []
+      "marks": [],
+      "position": null,
+      "listed": null
     }
   ],
   "coverage": {

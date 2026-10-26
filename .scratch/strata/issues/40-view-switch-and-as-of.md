@@ -6,7 +6,7 @@ Read first: docs/PLAN.md section 8; ADR 0002; the blueprint's "Navigation and ro
 
 **Blocked by:** 23 (Disagreements on screen: the project timeline and the disagreement card); 37 (Following, project signals and the mission brief); 38 (Implementing agency drafts: planned dates, a STEP row and private uploads)
 
-**Status:** ready-for-agent
+**Status:** in-progress
 **Area:** app
 **Phase:** P2
 **Design review:** yes
@@ -17,3 +17,7 @@ Read first: docs/PLAN.md section 8; ADR 0002; the blueprint's "Navigation and ro
 - [ ] The preview banner reads as in the blueprint, never collapses, is reachable by keyboard, and the view survives navigation through the URL.
 - [ ] On P130164 with the as-of date August 26, 2016, the timeline shows nothing after that date, no ICR passage is retrievable, and the scripted answer's tool calls all carry the date; "Back to today" clears it.
 - [ ] The pill and banners follow DESIGN.md section 5 (top navigation, Alerts) and the blueprint's "The view switch" panel; states are captured at 1440, 1024 and 390 px; axe finds no WCAG 2.2 AA violations.
+
+## Comments
+
+- October 23, 2026, orchestrator: dispatched to an implementer in its own worktree on branch strata/40-view-switch-and-as-of, as soon as ticket 38 landed. Credentials are still missing, so every live step is parked in docs/workspace-catchup.md; the offline side is built against the fixtures.

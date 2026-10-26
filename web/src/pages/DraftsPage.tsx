@@ -14,6 +14,7 @@ import { Skeleton, SkeletonLine } from "../components/Skeleton";
 import { TextLink } from "../components/TextLink";
 import { ProjectId } from "../components/ProjectId";
 import { copy } from "../copy";
+import { isPpsdKind } from "../lib/drafts";
 import type { DraftGroup, DraftList, DraftRow as Row } from "../lib/drafts";
 import { draftHref, storeFailed } from "../lib/drafts";
 import { formatCount, formatDate, formatNumber } from "../lib/format";
@@ -59,7 +60,7 @@ export function DraftRow({ row, linkRef }: { row: Row; linkRef?: (element: HTMLA
         {row.kind === "mission_brief" ? (
           // The title already names the project (the 37 brief, section 9.8): "P156634, Kenya. Drafted by you on ...".
           <Fill template={subject.country ? words.projectCountry : words.projectOnly} slots={{ pid: <ProjectId pid={subject.project_id} />, country: subject.country ?? "" }} />
-        ) : row.kind === "ppsd_rows" ? (
+        ) : isPpsdKind(row.kind) ? (
           // Suggested PPSD rows (ticket 36): the package's project, or a package from a sentence, then its rows.
           <>
             {subject.project_id ? (
