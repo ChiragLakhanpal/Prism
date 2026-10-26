@@ -2535,3 +2535,48 @@ Record here the App's address, every secret step 3 named as missing, and what th
 **Removed on October 26, 2026, by the user, through the Databricks CLI:** the Genie space "NYC Taxi Trip Data" (the wizard's throwaway for test 5), the schema `workspace.strata_dayone` with its tables and volume, the Vector Search index `workspace.strata_dayone.passages_index`, the folder `strata-dayone`, and the service principal `strata-probes`. Kept: the endpoint `strata-search`, the scope `strata`, the tokens, and the one-time runs, which expire on their own. Verified afterwards by listing each. A later run of the probes makes its scratch again.
 
 Moved here from docs/day-one-results.md on October 26, 2026 by the orchestrator: the text outside that document's marked blocks must match the rendering from ops/dayone/dayone.toml (ops/dayone/tests/test_results_document.py), so notes about the workspace go in this file.
+
+## Ticket 68, step 1 of 3: before the redeploy, note which tiles show "Invalid widget definition is imported." (confirms the cause; optional)
+
+The merger parked this step on October 26, 2026, after merge commit 261d66c8. Every key is set, but the second session runs every workspace step from a snapshot of the commit, one at a time, so the merger ran none. It is a look in the browser, and it only means something while the dashboards deployed from 6b5ff48 are still the live ones, so it runs before step 2's redeploy or not at all.
+
+Open "Strata operations" (id 01f1cfd370f01f6ab7aafcb4fffadd48) and "Strata operations (test)" (id 01f1d10708201fddad8610f06e6b4071) in the workspace, and look at every tile on each of the three pages: Data readiness, Governance, and AI quality and adoption.
+
+It worked if the tiles that show "Invalid widget definition is imported." are the 27 tables and the "Rows per fiscal year, by source" pivot on each dashboard, and no text box, chart, counter or filter shows it. That is what `tests/test_dashboard_widgets.py` predicts for the file deployed from 6b5ff48. Record here which tiles showed the message. A tile outside that list means the cause is not fully found; tell the orchestrator.
+
+## Ticket 68, step 2 of 3: redeploy both dashboards, and no tile shows "Invalid widget definition is imported." (criterion 2, live)
+
+The merger parked this step on October 26, 2026, after merge commit 261d66c8. Every key is set, but the second session runs every workspace step from a snapshot of the commit, one at a time, so the merger ran none. It needs the Databricks keys in `.env`, the Databricks CLI 0.287.0 or later, and the warehouse under its free daily limit. Ticket 68 changes only the two dashboard files, `bundle/dashboards/strata.lvdash.json` and `bundle/dashboards/strata_test.lvdash.json`: each file's 27 tables are now AI/BI table version 2, and its pivot sums its cells with `cubeGroupingSets`. No dataset query, table, job or measure changes. One bundle deploy from 261d66c8 or later serves this step.
+
+Run this from the main checkout, twice:
+
+    uv run --script ops/bundle/deploy.py --env-file .env --fairshare-catalog workspace
+
+Then fetch both dashboards as the workspace stores them:
+
+    databricks lakeview get 01f1cfd370f01f6ab7aafcb4fffadd48 -p strata
+    databricks lakeview get 01f1d10708201fddad8610f06e6b4071 -p strata
+
+It worked if:
+
+- The first deploy exits 0 and changes only the two dashboards, "Strata operations" and "Strata operations (test)", and the second prints "No changes."
+- In each `lakeview get`, the `serialized_dashboard` holds every `table` widget at `version` 2 and the `pivot` widget with `cubeGroupingSets`.
+- On both dashboards, no tile on Data readiness, Governance, or AI quality and adoption shows "Invalid widget definition is imported."
+- The "Rows per fiscal year, by source" pivot on Data readiness shows no Total row and no Total column.
+- One of the pivot's cells equals `source_rows` for the same source and fiscal year in the `rows_by_year` dataset (`src/strata/dashboard/sql/rows_by_year.sql`), read in the dashboard editor's Data tab with the page's measure date. Record the source, the year and both numbers.
+
+The pivot sorts its rows by source name and the date columns read as `locale-short-month`; both are left to the design pass, so they are not part of this check.
+
+## Ticket 68, step 3 of 3: optional: add widgets from a dashboard made in Strata's workspace to the known-good shapes
+
+The merger parked this step on October 26, 2026, after merge commit 261d66c8. Criterion 1 asked for known-good shapes exported from the workspace. The fixture holds widgets from dashboard files that Databricks and others published, each named by repository, commit and path, because no Strata export was at hand overnight (a decision parked for the user). This step adds Strata's own. It changes a test fixture, so it goes through a ticket worktree and the gate like any code change.
+
+In the workspace UI, make a small dashboard with one table (a date column and an integer column) and one pivot, then export it:
+
+    databricks lakeview get <the new dashboard's id> -p strata
+
+Name its file under `sources` in `tests/fixtures/dashboard/widget_shapes.json` and add its widgets to their kind's examples, as the file's `about` says. Then run:
+
+    uv run --frozen pytest tests/test_dashboard_widgets.py
+
+It worked if every test passes. A failure means Strata's workspace writes a widget shape the fixture does not know yet; tell the orchestrator.
