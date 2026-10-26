@@ -2410,3 +2410,9 @@ The merger parked this step on October 25, 2026, after merge commit 3b2b02e, for
         uv run --script ops/agent/refuse_live.py --env-file .env
 
 It worked if the refusal check prints 11 lines that start "Holds." and exits 0, with no `EngineError` or `LookupError` traceback from search_passages, and no "A partial refusal must answer the rest of the question with claims". The line for refuse-live-tenders-criteria must read "Holds. refuse-live-tenders-criteria: refused with live_tenders.". This run also completes ticket 66's step 1, whose rerun waited for the index. If refuse-live-tenders-criteria fails again with the partial-refusal error, the review's follow-up F3 for ticket 67 (in `.notes/67-review.md`) gives the fix in `src/strata/agent/claims.py`.
+
+## Day-one test resources removed on October 26, 2026
+
+**Removed on October 26, 2026, by the user, through the Databricks CLI:** the Genie space "NYC Taxi Trip Data" (the wizard's throwaway for test 5), the schema `workspace.strata_dayone` with its tables and volume, the Vector Search index `workspace.strata_dayone.passages_index`, the folder `strata-dayone`, and the service principal `strata-probes`. Kept: the endpoint `strata-search`, the scope `strata`, the tokens, and the one-time runs, which expire on their own. Verified afterwards by listing each. A later run of the probes makes its scratch again.
+
+Moved here from docs/day-one-results.md on October 26, 2026 by the orchestrator: the text outside that document's marked blocks must match the rendering from ops/dayone/dayone.toml (ops/dayone/tests/test_results_document.py), so notes about the workspace go in this file.
