@@ -17,7 +17,7 @@ import { TextLink } from "../components/TextLink";
 import { EightColumns } from "../components/EightColumns";
 import { Fill, Unbroken } from "../components/Fill";
 import { LoadError } from "../components/LoadError";
-import { BaselinePanel } from "../components/BaselinePanel";
+import { BaselinePanel, useBaselineView } from "../components/BaselinePanel";
 import { ChangeTables, changedRows } from "../components/ChangeTables";
 import { Num } from "../components/Num";
 import { checkPill, PlanCheck, PlanCheckHeader, PlanCheckSkeleton, planSubtitle, type CheckedPlan } from "../components/PlanCheck";
@@ -34,7 +34,7 @@ import { useLoad } from "../lib/load";
 import { address, navigate } from "../lib/router";
 import { useStore } from "../lib/store";
 import { setPageTitle } from "../lib/title";
-import { viewOf, withReadParams } from "../lib/view";
+import { withReadParams } from "../lib/view";
 import { useScrollPadding } from "../lib/useScrollPadding";
 import { fill } from "../routes";
 
@@ -194,6 +194,7 @@ export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyI
   const params = new URLSearchParams(search);
   const preview = params.get("view") === "piu" || params.get("view") === "public";
   const asOf = params.get("asof");
+  const baselineView = useBaselineView();
   // The draft action's slot holds a button on today's check outside a preview.
   const slotShown = !preview && asOf === null;
 
@@ -325,7 +326,7 @@ export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyI
           }
           sticky={false}
         />
-        <PlanCheckSkeleton slow={load.status === "loading" && load.slow} baseline={viewOf(search)} />
+        <PlanCheckSkeleton slow={load.status === "loading" && load.slow} baseline={baselineView} />
         <p className="mt-6 max-w-[72ch] text-small text-ink-muted">{words.notVisible}</p>
       </>
     );
@@ -373,7 +374,7 @@ export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyI
                   agency={checked.plan.implementing_agency}
                   planDate={checked.plan.plan_date}
                   baseline={checked.baseline ?? null}
-                  view={viewOf(search)}
+                  view={baselineView}
                   readOnly={asOf !== null}
                   refresh={async () => {
                     const next = await getJson<CheckPlanResult>(path);
@@ -440,7 +441,7 @@ export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyI
         break;
       case "version_not_public":
         title = words.notPublicTitle(formatDate(found.as_of));
-        text = words.notPublicBody(formatDate(abstention.public_from!));
+        text = words.notPublicBody;
         link = latestLink;
         break;
       case "no_plan_as_of":

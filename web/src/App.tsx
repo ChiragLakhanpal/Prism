@@ -11,6 +11,7 @@
 // Ticket 14 adds the box's intents, the answer panel at the top of the page and the evidence drawer
 // beside it. The answer belongs to the history entry it was asked on (web/src/lib/answer.ts).
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import logo from "./assets/world-bank-logo.svg";
 import { Alert } from "./components/Alert";
 import { AnswerPanel } from "./components/AnswerPanel";
@@ -19,7 +20,8 @@ import { EvidenceDrawer } from "./components/EvidenceDrawer";
 import { Frame } from "./components/Frame";
 import { IntentBox } from "./components/IntentBox";
 import { RETURNING } from "./components/Popover";
-import { TopNav, type Viewer } from "./components/TopNav";
+import { SECTIONS, TopNav, type NavMode, type Section, type Viewer } from "./components/TopNav";
+import { ViewBanner } from "./components/ViewBanner";
 import { copy } from "./copy";
 import { answer, ask, earlier, removedScopes } from "./lib/answer";
 import { getJson, type Me } from "./lib/api";
@@ -30,6 +32,7 @@ import { officerAgency } from "./lib/uploads";
 import { drawerClosed, evidenceIn, origin, routeOf, visited } from "./lib/evidence";
 import { readStamp, retryStamp, stamp, type Problem } from "./lib/freshness";
 import { formatDate } from "./lib/format";
+import { agencyInSentence, appliedView, asOfOf, viewOf, withMode, type AppliedView, type Preview } from "./lib/view";
 import { address, navigate, startRouter } from "./lib/router";
 import { createStore, useStore } from "./lib/store";
 import { pageTitle } from "./lib/title";
@@ -38,19 +41,44 @@ import { fill, isDay, matchRoute, type Match } from "./routes";
 
 const viewer = createStore<Viewer>({ status: "loading" });
 
-// The page's ?lang= goes with it, so the server says which language of answers and drafts is in effect (ticket 42).
-async function readViewer(lang: string | null = new URLSearchParams(window.location.search).get("lang")) {
+// What the address asks of /api/me: its ?lang= (ticket 42), and its ?view= and ?asof= exactly as written (ticket 40),
+// so the server says which language, view and date it applied, and why it could not apply what was asked.
+const ASKED = ["lang", "view", "asof"] as const;
+const askedOf = (search: string) => {
+  const params = new URLSearchParams(search);
+  const kept = new URLSearchParams();
+  for (const key of ASKED) {
+    const value = params.get(key);
+    if (value !== null) kept.set(key, value);
+  }
+  return kept.toString();
+};
+
+// The address /api/me last answered for, beside what it applied, so a fresh view change shows the address's mode
+// until the server confirms it (the 40 brief, section 9).
+const answeredFor = createStore<string | null>(null);
+
+async function readViewer(search: string = window.location.search) {
+  const asked = askedOf(search);
   try {
-    const me = await getJson<Me>(lang ? `/api/me?lang=${encodeURIComponent(lang)}` : "/api/me");
+    const me = await getJson<Me>(asked ? `/api/me?${asked}` : "/api/me");
     viewer.set(me.signed_in && me.email ? { status: "signed-in", email: me.email, agency: me.agency?.name ?? null }
       : me.signed_in ? { status: "error" } : { status: "signed-out" });
     staffRole.set(Boolean(me.staff));
     officerAgency.set(me.agency ?? null);
     workingLanguage.set(me.language ?? null);
+    appliedView.set(me.applied && me.preview_agency ? ({
+      own: me.own_view ?? "staff", views: me.views ?? [], applied: me.applied, preview_agency: me.preview_agency,
+      tabs: me.tabs ?? [], hidden: me.hidden ?? [], capabilities: me.capabilities ?? [], reasons: me.reasons ?? {},
+      asof: me.asof ?? { applied: null, problem: null },
+    } as AppliedView) : null);
+    answeredFor.set(asked);
   } catch {
     viewer.set({ status: "error" });
     staffRole.set(false);
     officerAgency.set(null);
+    appliedView.set(null);
+    answeredFor.set(asked);
   }
 }
 
@@ -97,53 +125,43 @@ function returnFocus() {
   } else document.querySelector<HTMLElement>("main h1")?.focus();
 }
 
-const VIEW_ALERTS: Record<string, string> = { piu: copy.alerts.viewPiu, public: copy.alerts.viewPublic };
-// The pages that apply the implementing agency and public previews themselves: the draft pages (ticket 35),
-// the Packages tab with its planned packages (ticket 15), Following (ticket 37), and the activity page, which
-// hides "See the past range" in the public view and is the same in every other (ticket 22).
-const VIEW_PAGES: ReadonlySet<string> = new Set(["drafts", "draft", "draftNew", "packages", "packageNew", "plannedPackage", "following", "activity"]);
-
-// How a page treats the address's ?asof=: it applies the date itself (the Data readiness page, whose reads
-// take one, Following, whose checks run as of the page's date (ticket 37), and the activity page, whose trail
-// is all as of the date); only its own part does (a project's Connections tab, whose links are as of the date
-// under a header that shows today's); or not yet. Ticket 40's banner replaces this.
-type AsOfUse = "page" | "part" | "none";
-const AS_OF_PAGES: ReadonlySet<string> = new Set(["data", "following", "activity"]);
-
-// The alert slot: errors first, then what the address asks for that I can't show yet. Ticket 40
-// replaces the view and as-of alerts with its preview and as-of banners in this same slot.
-function alerts(problem: Problem, search: string, asOfUse: AsOfUse, appliesView: boolean, language: WorkingLanguage | null): { state: "error" | "info"; text: string }[] {
+// The alert slot's alerts other than the view banners: errors first, then what the address asks for that the server
+// could not apply (the 40 brief, 6.3). The banners for a preview and a past date sit between the two.
+function alerts(problem: Problem, search: string, language: WorkingLanguage | null, shown: AppliedView | null): {
+  errors: { state: "error" | "info"; text: string }[];
+  notes: { state: "error" | "info"; text: string }[];
+} {
   const params = new URLSearchParams(search);
-  const found: { state: "error" | "info"; text: string }[] = [];
+  const errors: { state: "error" | "info"; text: string }[] = [];
+  const notes: { state: "error" | "info"; text: string }[] = [];
+  if (problem === "no_access") errors.push({ state: "error", text: copy.alerts.noAccess });
+  if (problem === "no_identity") errors.push({ state: "error", text: copy.alerts.noIdentity });
   // A ?lang= no working language matches: I use the language in effect without the link, and never repeat the link's
   // text (the 42 brief, section 5.2).
-  if (language?.link === "unknown" && params.get("lang") !== null) found.push({ state: "info", text: copy.language.alertUnknown(languageName(language.code)) });
-  if (problem === "no_access") found.push({ state: "error", text: copy.alerts.noAccess });
-  if (problem === "no_identity") found.push({ state: "error", text: copy.alerts.noIdentity });
+  if (language?.link === "unknown" && params.get("lang") !== null) notes.push({ state: "info", text: copy.language.alertUnknown(languageName(language.code)) });
   const view = params.get("view");
-  // These pages show what each preview holds, so the alert that says the page shows the staff view would be
-  // untrue there.
-  const shown = (view === "piu" || view === "public") && appliesView;
-  if (view !== null && view !== "staff" && !shown) found.push({ state: "info", text: VIEW_ALERTS[view] ?? copy.alerts.viewUnknown });
+  const unknownView = shown?.applied.problem === "unknown" || (view !== null && !["staff", "piu", "public"].includes(view));
+  if (unknownView) notes.push({ state: "info", text: shown?.own === "piu" ? copy.alerts.viewUnknownOfficer : copy.alerts.viewUnknown });
   const asOf = params.get("asof");
-  // A page that applies the date itself still gets the alert when it can't read it, since it then shows today's data.
-  if (asOf !== null && (asOfUse !== "page" || !isDay(asOf))) {
-    const text = !isDay(asOf) ? copy.alerts.asOfUnreadable : asOfUse === "part" ? copy.alerts.asOfPart(formatDate(asOf)) : copy.alerts.asOf(formatDate(asOf));
-    found.push({ state: "info", text });
-  }
-  return found;
+  if (asOf !== null && !isDay(asOf)) notes.push({ state: "info", text: copy.alerts.asOfUnreadable });
+  else if (shown?.asof.problem === "not_past") notes.push({ state: "info", text: copy.alerts.asOfNotPast });
+  return { errors, notes };
 }
 
-// What the page at this address does with ?asof= and ?view= (see AsOfUse and VIEW_PAGES).
-function pageUse(match: { key: string; values: Record<string, string> }): { asOf: AsOfUse; view: boolean } {
-  const connections = match.key === "project" && match.values.tab === "connections";
-  // A project's Timeline tab ends its axis at the as-of date (ticket 23), and applies the view too: its server
-  // hides the disagreements of a project still under way in the public preview, and the implementing agency's
-  // preview shows what World Bank staff see (the 23 brief, section 7.3).
-  const timeline = match.key === "project" && match.values.tab === "timeline";
-  const asOf: AsOfUse = AS_OF_PAGES.has(match.key) || timeline ? "page" : connections ? "part" : "none";
-  // Every node and link on the Connections tab is public data, so each preview sees the staff view's tab.
-  return { asOf, view: VIEW_PAGES.has(match.key) || connections || timeline };
+// The visually hidden line that says the mode, which describes every page's h1 and, in a preview, the Menu button.
+const MODE_LINE = "strata-mode-line";
+
+function modeWords(preview: Preview | null, asOf: string | null): { line: string | null; title: (title: string) => string } {
+  const words = copy.view;
+  const date = asOf ? formatDate(asOf) : null;
+  const short = asOf ? formatDate(asOf, { style: "short" }) : null;
+  if (preview && date && short) {
+    return { line: preview === "piu" ? words.mode.piuAsOf(date) : words.mode.publicAsOf(date),
+             title: (title) => (preview === "piu" ? words.title.piuAsOf(title, short) : words.title.publicAsOf(title, short)) };
+  }
+  if (preview) return { line: words.mode[preview], title: (title) => words.title[preview](title) };
+  if (date && short) return { line: words.mode.asOf(date), title: (title) => words.title.asOf(title, short) };
+  return { line: null, title: (title) => copy.pageTitle(title) };
 }
 
 export function App() {
@@ -159,19 +177,39 @@ export function App() {
   const match = matchRoute(here.pathname);
   const draftProject = useStore(draftScope);
   const { scope, kind } = scopeOf(match, draftProject);
-  const params = new URLSearchParams(here.search);
   const evidenceId = evidenceIn(here.search);
-  const asOf = params.get("asof");
-  const view = params.get("view");
   const language = useStore(workingLanguage);
-  const lang = params.get("lang");
-  // The language of answers and drafts follows the address's ?lang= as it changes (ticket 42).
-  const firstLang = useRef(lang);
+  // The language of answers and drafts (ticket 42), and the view and date (ticket 40), follow the address as it changes:
+  // /api/me says again what the server applies.
+  const asked = askedOf(here.search);
+  const firstAsked = useRef(asked);
   useEffect(() => {
-    if (firstLang.current === lang) return;
-    firstLang.current = lang;
-    void readViewer(lang);
-  }, [lang]);
+    if (firstAsked.current === asked) return;
+    firstAsked.current = asked;
+    void readViewer(here.search);
+  }, [asked]);
+  // What the server applied to this address, or null while it has not answered for it. Until it has, a preview's pill
+  // and banner come from the address, and a page the preview may hide waits.
+  const applied = useStore(appliedView);
+  const answered = useStore(answeredFor);
+  const fresh = applied && answered === asked ? applied : null;
+  const addressPreview = viewOf(here.search) === "staff" ? null : (viewOf(here.search) as Preview);
+  const preview: Preview | null = fresh ? (fresh.applied.preview ? (fresh.applied.view as Preview) : null) : addressPreview;
+  // The address's date, unless the server said it could not apply it (a date of today or later).
+  const asOf = fresh?.asof.problem ? null : asOfOf(here.search);
+  const own = applied?.own ?? (who.status === "signed-in" && who.agency ? "piu" : "staff");
+  const navMode: NavMode = {
+    own,
+    preview,
+    offered: applied?.views ?? [],
+    agency: applied ? agencyInSentence(applied) : null,
+    tabs: fresh ? (fresh.tabs as Section[]) : preview ? null : SECTIONS.map((section) => section.key),
+    pathname: match.key === "notFound" || match.key === "notAProject" ? "/" : here.pathname,
+    search: here.search,
+    asOf,
+    unknown: !applied && !preview && who.status === "loading",
+  };
+  const mode = modeWords(preview, asOf);
   // The answer shows on the history entry it was asked on: the current one, or the last one finished there.
   const shown = run && run.asked.key === here.key ? run : (kept[here.key] ?? null);
 
@@ -194,12 +232,15 @@ export function App() {
 
   // A page with sub-pages, such as the Data tab's, names the sub-page in the browser tab.
   // A page that knows a more specific title once its data loads, such as a draft, sets it (lib/title.ts).
-  const words: { title: string; documentTitle?: string } = copy.pages[match.key];
-  const own = useStore(pageTitle);
-  const title = own && own.path === here.pathname ? own.title : fill(words.documentTitle ?? words.title, match.values);
+  // The public view's Home has its own title until ticket 41 (ticket 40).
+  const words: { title: string; documentTitle?: string } = match.key === "home" && preview === "public" ? copy.view.publicHome : copy.pages[match.key];
+  const ownTitle = useStore(pageTitle);
+  const title = ownTitle && ownTitle.path === here.pathname ? ownTitle.title : fill(words.documentTitle ?? words.title, match.values);
+  // In a preview or as of a date, the browser tab names the mode too (the 40 brief, 6.2).
+  const documentTitle = mode.title(title);
   useEffect(() => {
-    document.title = copy.pageTitle(title);
-  }, [title]);
+    document.title = documentTitle;
+  }, [documentTitle]);
 
   // A route change, but not the first page: scroll to the top, focus the new title, and try the
   // stamp again if it failed. A move within one tab's pages, such as a Data sub-tab or "Show all
@@ -250,21 +291,67 @@ export function App() {
     (drawerHeading ?? pageLead ?? lead ?? document.querySelector<HTMLElement>("main h1"))?.focus();
   }, [route, here.moves]);
 
+  // After a view or date change, focus moves to the new banner, so its sentence is read; leaving a preview or going
+  // back to today moves it to the h1 and says so politely (the 40 brief, 8.2).
+  const previewBanner = useRef<HTMLElement>(null);
+  const asOfBanner = useRef<HTMLElement>(null);
+  const [announce, setAnnounce] = useState("");
+  const lastMode = useRef({ preview, asOf });
+  useEffect(() => {
+    const was = lastMode.current;
+    lastMode.current = { preview, asOf };
+    if (was.preview === preview && was.asOf === asOf) return;
+    // Two frames on, after the evidence drawer has given focus back to the mark that opened it (its onClosed waits one
+    // frame), so a change made from inside the drawer, such as "See Strata as of this date", still lands on the banner.
+    const later = (target: () => HTMLElement | null | undefined) =>
+      requestAnimationFrame(() => requestAnimationFrame(() => target()?.focus()));
+    if (asOf && asOf !== was.asOf) later(() => asOfBanner.current);
+    else if (preview && preview !== was.preview) later(() => previewBanner.current);
+    else {
+      later(() => document.querySelector<HTMLElement>("main h1"));
+      if (was.preview && !preview) setAnnounce(own === "piu" ? copy.view.status.leftPreviewOfficer : copy.view.status.leftPreview);
+      else if (was.asOf && !asOf) setAnnounce(copy.view.status.backToToday);
+    }
+  }, [preview, asOf]);
+
+  // Every page's h1 is described by the mode line while a mode is on, so "Lessons, heading level 1, Public preview."
+  // is read on each page (the 40 brief, 8.4). Pages draw their h1 when they are ready, so this follows the page.
+  useEffect(() => {
+    const main = document.querySelector("main");
+    if (!main) return;
+    const mark = () => {
+      const heading = main.querySelector("h1");
+      if (!heading) return;
+      if (mode.line && heading.getAttribute("aria-describedby") !== MODE_LINE) heading.setAttribute("aria-describedby", MODE_LINE);
+      if (!mode.line && heading.getAttribute("aria-describedby") === MODE_LINE) heading.removeAttribute("aria-describedby");
+    };
+    mark();
+    const observer = new MutationObserver(mark);
+    observer.observe(main, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, [mode.line]);
+
   const onAsk = (question: string, chip: string | null) =>
     ask({
       question,
       scope: chip,
-      asOf: asOf && isDay(asOf) ? asOf : null,
-      view: view === "piu" || view === "public" ? view : null,
+      asOf,
+      view: preview,
       // The language in effect: the link's, your saved choice, your team's or English, as the server said (ticket 42).
       lang: workingLanguage.get()?.code ?? null,
       key: address.get().key,
     });
 
-  // A page that applies the as-of date itself, such as the Data readiness page (data_readiness_for takes one),
-  // Following or the activity page, gets no alert that says it shows today's data (pageUse).
-  const use = pageUse(match);
-  const slot = alerts(problem, here.search, use.asOf, use.view, language);
+  const slot = alerts(problem, here.search, language, fresh);
+  // The banners (the 40 brief, 3.4): the preview first (whose view), then the date (when). The agency banner names the
+  // agency from the roles file, so it waits for /api/me the first time.
+  const previewText = preview === "piu" ? (applied ? copy.view.banner.piu(agencyInSentence(applied)) : null) : preview === "public" ? copy.view.banner.public : null;
+  const asOfLine = asOf
+    ? `${copy.view.banner.asOf(formatDate(asOf))}${match.section === "drafts" ? ` ${copy.view.banner.drafts}` : match.key === "checkMyPlan" || match.key === "uploadCheck" ? ` ${copy.view.banner.uploads}` : ""}`
+    : null;
+  const hiddenIn = fresh?.applied.preview && fresh.hidden.includes(match.key) ? (fresh.applied.view as Preview) : null;
+  const pending = Boolean(preview && !fresh && who.status !== "error");
+  const anySlot = slot.errors.length + slot.notes.length > 0 || previewText || asOfLine;
   return (
     <Frame
       nav={
@@ -274,7 +361,9 @@ export function App() {
           home={match.key === "home"}
           viewer={who}
           // World Bank staff open Following from the Projects tab (ticket 37); a preview, and everyone else, All projects.
-          projectsHref={staff && (view === null || view === "staff") ? FOLLOWING_HREF : undefined}
+          projectsHref={staff && !preview ? FOLLOWING_HREF : undefined}
+          mode={navMode}
+          modeLineId={MODE_LINE}
         />
       }
       band={<BoxBand box={<IntentBox scope={scope} scopeKind={kind} onAsk={onAsk} />} stamp={<FreshnessStamp freshness={freshness} />} />}
@@ -285,8 +374,8 @@ export function App() {
             id={evidenceId}
             run={shown}
             narrow={narrow}
-            preview={view === "piu" || view === "public"}
-            asOf={asOf && isDay(asOf) ? asOf : null}
+            preview={preview !== null}
+            asOf={asOf}
             onClosed={(inside) => {
               drawerClosed();
               // Focus goes back to the marker that opened it, and then the drawer's origin is done
@@ -304,10 +393,37 @@ export function App() {
       <div className="layout layout-grid pt-6 @md/page:pt-8 @lg/page:pt-10">
         {/* The alert slot frames everything on the page, the answer included (DESIGN.md section 5,
             Page header), so it sits above the answer panel. */}
-        {slot.length > 0 && (
+        <p id={MODE_LINE} className="clip-visually">
+          {mode.line}
+        </p>
+        {/* Outside the page's main, so a page's own status line is the only one in it. */}
+        {createPortal(
+          <p role="status" data-mode-status className="clip-visually">
+            {announce}
+          </p>,
+          document.body,
+        )}
+        {anySlot && (
           <div className="col-span-12 mb-6 flex flex-col gap-2 @md/page:col-span-8">
-            {slot.map((alert) => (
-              <Alert key={alert.text} state={alert.state} live={alert.state === "error" ? "alert" : undefined}>
+            {slot.errors.map((alert) => (
+              <Alert key={alert.text} state={alert.state} live="alert">
+                {alert.text}
+              </Alert>
+            ))}
+            {previewText && (
+              <ViewBanner ref={previewBanner} kind="preview" region={copy.view.banner.previewRegion} link={copy.view.banner.leave}
+                href={withMode(here.pathname, here.search, { view: null })}>
+                {previewText}
+              </ViewBanner>
+            )}
+            {asOfLine && (
+              <ViewBanner ref={asOfBanner} kind="asof" region={copy.view.banner.asOfRegion} link={copy.view.banner.back}
+                href={withMode(here.pathname, here.search, { asof: null })}>
+                {asOfLine}
+              </ViewBanner>
+            )}
+            {slot.notes.map((alert) => (
+              <Alert key={alert.text} state={alert.state}>
                 {alert.text}
               </Alert>
             ))}
@@ -326,7 +442,8 @@ export function App() {
             table that needs the width, such as the plan check or the Data tab, spans all 12. */}
         <div className="col-span-12">
           {/* A project's tabs share one page, so its header and tab row stay in place between them. */}
-          <RoutePage key={match.frame ?? here.pathname} match={match} search={here.search} />
+          {/* A new view or date is a new page: every read on it carries them (ticket 40). */}
+          <RoutePage key={`${match.frame ?? here.pathname}|${preview ?? ""}|${asOf ?? ""}`} match={match} search={here.search} hiddenIn={hiddenIn} pending={pending} publicView={preview === "public"} />
         </div>
       </div>
     </Frame>

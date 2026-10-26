@@ -196,6 +196,9 @@ drafts = { kind = "read", staff = true, piu = true, public = false, private = tr
 uploads = { kind = "read", staff = false, piu = true, public = false, private = true }
 personal_lessons = { kind = "read", staff = true, piu = true, public = false, private = true }
 reviewer_pages = { kind = "read", staff = true, piu = false, public = false }
+# Your agency's projects (the 40 brief, 3.8): an officer's own agency's, or the preview agency's in the staff preview. The route
+# names the agency, so World Bank staff in their own view get none.
+agency_projects = { kind = "read", staff = true, piu = true, public = false }
 # A person's own settings.
 save_language = { kind = "setting", staff = true, piu = true, public = true }
 # Acts, each with the sentence a preview gives (the 40 brief, 6.7: the earlier briefs' words, kept as they wrote them).
@@ -284,3 +287,4 @@ export_draft = { kind = "export", staff = true, piu = true, public = false, reas
 "GET /api/planned-packages/{key}/criteria" = "packages"
 "GET /api/comparables" = "packages"
 "GET /api/rebidding" = "packages"
+"GET /api/agency/projects" = "agency_projects"

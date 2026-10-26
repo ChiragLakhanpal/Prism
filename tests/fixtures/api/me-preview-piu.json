@@ -38,6 +38,7 @@
     "judgingQuery"
   ],
   "capabilities": [
+    "agency_projects",
     "ask",
     "baseline",
     "contract_trail",

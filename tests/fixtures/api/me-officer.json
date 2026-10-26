@@ -40,6 +40,7 @@
     "judgingQuery"
   ],
   "capabilities": [
+    "agency_projects",
     "ask",
     "baseline",
     "change_package",

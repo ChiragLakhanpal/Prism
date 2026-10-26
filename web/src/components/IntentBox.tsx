@@ -14,7 +14,8 @@ import { formatDate } from "../lib/format";
 import { removedScopes, removeScope } from "../lib/answer";
 import { hrefFor, intentKey, intentsFor, lookUp, type Found, type Intent, type Lookup } from "../lib/intents";
 import { boxMode, startPlanning } from "../lib/packages";
-import { address, navigate } from "../lib/router";
+import { navigate } from "../lib/router";
+import { allows, appliedView } from "../lib/view";
 import { useStore } from "../lib/store";
 import { currentLanguage, ENGLISH, languageName, workingLanguage } from "../lib/lang";
 import { OneBox, type BoxOption } from "./BoxBand";
@@ -188,8 +189,10 @@ export function IntentBox({
     setOpen(Boolean(asked_mode.text));
   }, [asked_mode?.at]);
 
-  const viewParam = new URLSearchParams(useStore(address).search).get("view");
-  const view = viewParam === "piu" || viewParam === "public" ? viewParam : "staff";
+  // Whether the box offers to plan a package, from the view the server applied (the roles file's [views]): not where
+  // the view has no packages, held where it keeps packages but not planning one (a preview), and offered otherwise.
+  const shownView = useStore(appliedView);
+  const view = !allows("packages", shownView) ? "public" : !allows("plan_package", shownView) ? "piu" : "staff";
   const { ids, options, choices, notes } = boxList(value, chip, lookups, mode, view);
 
   const lookupOf = (intent: Intent) => {

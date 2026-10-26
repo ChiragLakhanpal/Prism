@@ -26,6 +26,8 @@ import { usePagedList } from "../lib/paged";
 import { staffRole } from "../lib/following";
 import { useStore } from "../lib/store";
 import { ProjectsTabs } from "../components/ProjectsTabs";
+import { AgencyProjects } from "../components/AgencyProjects";
+import { appliedView } from "../lib/view";
 
 const words = copy.projectsPage;
 const NAMES = { query: "q", page: "page" };
@@ -53,7 +55,10 @@ const PROJECT_SKELETON = (
 
 export function ProjectsPage() {
   const list = usePagedList<ProjectList>("/api/projects", NAMES);
-  const staff = useStore(staffRole) === true;
+  const shownView = useStore(appliedView);
+  // The implementing agency view the server applied: an officer's own view, or the staff preview of it.
+  const agencyView = shownView?.applied.view === "piu";
+  const staff = useStore(staffRole) === true && !shownView?.applied.preview;
   const { load, shown, query } = list;
   const headingId = useId();
   // The count line, said once each time a search settles, through a polite status.
@@ -149,6 +154,12 @@ export function ProjectsPage() {
         {/* World Bank staff get the Projects sub-tabs, Following and All projects (ticket 37). */}
         {staff && <ProjectsTabs following={false} />}
       </div>
+      {/* Your agency's projects, in the implementing agency view (ticket 40): an officer's own, and the staff preview's. */}
+      {agencyView && (
+        <div className="col-span-12 @md/page:col-span-8">
+          <AgencyProjects asOf={shownView?.asof.applied ?? null} />
+        </div>
+      )}
       <section aria-labelledby={headingId} className="col-span-12 mt-8 @lg/page:mt-8" data-projects-page={load.status}>
         {/* With the sub-tabs showing, the selected one already names the list, so its heading is for screen readers. */}
         <h2 id={headingId} className={staff ? "sr-only" : "text-title text-ink-heading"}>

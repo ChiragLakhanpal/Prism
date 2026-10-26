@@ -2,6 +2,8 @@
 // EventSource cannot POST, so this reads the response body itself. Each event's data is JSON.
 // Comment lines (the server's keep-alives) are skipped.
 
+import { withPageParams } from "./view";
+
 export type StreamEvent = { type: string; data: unknown };
 
 export async function* streamEvents(
@@ -9,7 +11,8 @@ export async function* streamEvents(
   payload: unknown,
   init: { signal?: AbortSignal } = {},
 ): AsyncGenerator<StreamEvent> {
-  const response = await fetch(path, {
+  // The page's ?view= and ?asof= go with the request, as with every call (lib/api.ts; ticket 40).
+  const response = await fetch(withPageParams(path), {
     method: "POST",
     headers: { "Content-Type": "application/json", Accept: "text/event-stream" },
     body: JSON.stringify(payload),

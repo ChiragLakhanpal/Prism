@@ -7,7 +7,7 @@
 import { scan } from "./axe";
 import type { Page } from "@playwright/test";
 import { draftBarSentence } from "./design-md";
-import { expect, recorded, test } from "./mocked";
+import { expect, recorded, test, viewAnswers } from "./mocked";
 
 const PLAN = "/projects/P156634/procurement/northern-water-works-development-agency/2026-10-09";
 const DRAFT = "/drafts/draft-0001";
@@ -22,6 +22,7 @@ type Answer = { status?: number; body: string; delay?: number };
 async function serve(page: Page, answers: Record<string, Answer>) {
   const asked: string[] = [];
   const base: Record<string, Answer> = {
+    ...(await viewAnswers()),
     "/api/me": { body: await recorded("me.json") },
     "/api/freshness": { body: await recorded("freshness.json") },
     "POST /api/evidence/opened": { body: '{"recorded":true}' },
@@ -30,9 +31,11 @@ async function serve(page: Page, answers: Record<string, Answer>) {
   const all = { ...base, ...answers };
   await page.route("**/api/**", async (route) => {
     const request = route.request();
-    const path = new URL(request.url()).pathname;
+    const url = new URL(request.url());
+    const path = url.pathname;
     asked.push(`${request.method()} ${path}`);
-    const answer = all[`${request.method()} ${path}`] ?? all[path];
+    // Who is viewing is answered by the address's view too (ticket 40); every other answer by its path.
+    const answer = (path === "/api/me" ? all[`${path}${url.search}`] : undefined) ?? all[`${request.method()} ${path}`] ?? all[path];
     if (!answer) return route.fulfill({ status: 404, json: { detail: "Not Found" } });
     if (answer.delay) await new Promise((resolve) => setTimeout(resolve, answer.delay));
     return route.fulfill({ status: answer.status ?? 200, contentType: "application/json", body: answer.body });

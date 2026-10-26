@@ -29,6 +29,7 @@ import { Num } from "./Num";
 import { fillText } from "./LessonParts";
 import { OutcomePanel } from "./LessonReview";
 import { ToggleButton } from "./ToggleButton";
+import { previewReason } from "../lib/view";
 
 const words = copy.feedback;
 const KINDS: ReportKind[] = ["wrong_passage", "not_useful"];
@@ -195,7 +196,7 @@ export function FeedbackRow({
           </div>
           {disabled && (
             <p id={previewId} className="mt-2 text-caption text-ink-muted">
-              {words.preview}
+              {previewReason("report_passage") ?? words.preview}
             </p>
           )}
           {chosen && !disabled && (

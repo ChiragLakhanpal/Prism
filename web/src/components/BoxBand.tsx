@@ -7,7 +7,7 @@
 // list under it says what Enter will do, laid over the page so the band never grows. Its options
 // come from the intent rules (web/src/lib/intents.ts, through IntentBox.tsx); this file draws them.
 // On a project or package page the box holds a removable scope chip.
-import { useEffect, useId, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode, type RefObject } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode, type RefObject } from "react";
 import { CircleX, Search, X, type LucideIcon } from "lucide-react";
 import { copy } from "../copy";
 import { cx } from "../lib/cx";
@@ -133,7 +133,8 @@ export function OneBox({
   const inputId = useId();
   const [focused, setFocused] = useState(false);
 
-  useEffect(() => {
+  // Attached as the box mounts, before the page can take a key, so a "/" pressed as soon as the page loads lands here.
+  useLayoutEffect(() => {
     if (!shortcut) return;
     const onKey = (event: KeyboardEvent) => {
       if (!isBoxShortcut(event) || event.isComposing) return;

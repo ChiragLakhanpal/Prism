@@ -54,6 +54,7 @@ from decimal import ROUND_HALF_UP, Decimal
 from functools import cache
 from importlib import resources
 
+from strata.config import load_views
 from strata.tools.registry import Call
 
 CONTRACT_STATUSES = ("Signed", "Completed")  # STEP's Process Status once a contract is signed
@@ -237,9 +238,15 @@ class Baseline:
     dates: dict[str, dict[str, dt.date | None]]  # each listed activity's planned dates, by step
 
 
+@cache
+def _views():
+    return load_views()
+
+
 def read_baseline(engine, project_id: str, agency: str, as_of: dt.date, view: str) -> Baseline | None:
-    """The baseline saved for this agency's plans by the as-of date, as the view may see it, or None."""
-    if view == "public":
+    """The baseline saved for this agency's plans by the as-of date, as the view may see it (the roles file's [views]:
+    baseline, and baseline_saver for who saved it), or None."""
+    if not _views().allows(view, "baseline"):
         return None
     result = engine.run(_sql("baseline.sql"), {"project_id": project_id, "agency_id": agency, "as_of": as_of})
     rows = [dict(zip(result.columns, row)) for row in result.rows]
@@ -252,7 +259,8 @@ def read_baseline(engine, project_id: str, agency: str, as_of: dt.date, view: st
             dates.setdefault(row["activity_reference_no"], {})[row["step"]] = _date(row["planned_on"])
     saved_on = _iso(_date(first["public_from"]))
     return Baseline({"plan_date": _iso(_date(first["plan_date"])), "document_id": first["document_id"],
-                     "saved_by": first["saved_by_name"] if view == "staff" else None, "saved_on": saved_on,
+                     "saved_by": first["saved_by_name"] if _views().allows(view, "baseline_saver") else None,
+                     "saved_on": saved_on,
                      "evidence_id": f"strata.ops.plan_baselines:{project_id}/{agency}", "public_from": saved_on},
                     dates)
 

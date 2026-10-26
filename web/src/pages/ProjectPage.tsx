@@ -28,7 +28,7 @@ import { useLoad } from "../lib/load";
 import { address, navigate } from "../lib/router";
 import { useStore } from "../lib/store";
 import { setPageTitle } from "../lib/title";
-import { keptQuery, viewOf, withReadParams } from "../lib/view";
+import { keptQuery, useAllows, withReadParams } from "../lib/view";
 import { staffRole } from "../lib/following";
 import { FollowControl } from "../components/FollowControl";
 import { BUILT_TABS, TAB_PATH, type ProjectTab } from "../routes";
@@ -43,6 +43,7 @@ const words = copy.projectPage;
 export function ProjectPage({ pid, tab }: { pid: string; tab: ProjectTab }) {
   const here = useStore(address);
   const staff = useStore(staffRole) === true;
+  const follows = useAllows("follow");
   // The view and as-of date the address asks for go on to the project's read, since the baseline is hidden in
   // the public view and shown without its saver in the implementing agency view.
   const [load, retry] = useLoad<Page>(withReadParams(`/api/projects/${encodeURIComponent(pid)}`, here.search));
@@ -153,8 +154,9 @@ export function ProjectPage({ pid, tab }: { pid: string; tab: ProjectTab }) {
         {data ? (
           <>
             <AgencyLine names={data.project.implementing_agencies} />
-            {/* Follow and unfollow, for World Bank staff and never in a preview (ticket 37). */}
-            {staff && viewOf(here.search) === "staff" && <FollowControl pid={pid} name={data.project.project_name} />}
+            {/* Follow and unfollow, for World Bank staff (ticket 37), where the view the server applied keeps following:
+                never in a preview (the roles file's [views]). */}
+            {staff && follows && <FollowControl pid={pid} name={data.project.project_name} />}
           </>
         ) : (
           // The agency line's two lines and the place of "Show all agencies", as a project with many agencies

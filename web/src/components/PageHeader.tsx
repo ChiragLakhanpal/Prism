@@ -12,7 +12,8 @@ export function PageHeader({
   level = 1,
 }: {
   title: ReactNode;
-  purpose: ReactNode;
+  // Every page states its purpose; a page a view hides (ticket 40) has only its title and a card.
+  purpose?: ReactNode;
   // Every page's title is its h1. The design gallery shows samples one level down, under its own h1.
   level?: 1 | 2;
 }) {
@@ -23,7 +24,7 @@ export function PageHeader({
         { tabIndex: -1, className: "text-h1 wrap-anywhere text-ink-heading focus:outline-none" },
         title,
       )}
-      <p className="mt-2 max-w-prose text-body text-pretty text-ink-muted">{purpose}</p>
+      {purpose != null && <p className="mt-2 max-w-prose text-body text-pretty text-ink-muted">{purpose}</p>}
     </div>
   );
 }

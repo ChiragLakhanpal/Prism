@@ -8,6 +8,7 @@
 // (ticket 29), and a project's Summary, Documents and the source view (ticket 21) are built, so
 // they render their own pages, as do the activity page and a project's Connections tab (ticket 22).
 import { EmptyState } from "./components/Card";
+import { Skeleton } from "./components/Skeleton";
 import { PageHeader, WithIds } from "./components/PageHeader";
 import { TextLink } from "./components/TextLink";
 import { copy } from "./copy";
@@ -32,8 +33,62 @@ import { ProjectsPage } from "./pages/ProjectsPage";
 import { SourcePage } from "./pages/SourcePage";
 import type { Match, ProjectTab } from "./routes";
 
-export function RoutePage({ match, search = "" }: { match: Match; search?: string }) {
+// A page the applied view does not show (ticket 40; the 40 brief, 3.7 and 6.4): it keeps its address, its section's
+// name is the h1, and an empty-state card says why, in the words its own brief wrote when it wrote some. The server
+// never sends what the page holds, so the page itself is not drawn.
+function NotInView({ match, view }: { match: Match; view: "piu" | "public" }) {
+  const words = copy.view.hidden;
+  const name = copy.view.name[view];
+  const card: { title: string; body: string } =
+    match.key === "packages"
+      ? { title: copy.packageWorkspace.publicTitle, body: words.packagesBody }
+      : match.key === "package" || match.key === "packageNew" || match.key === "plannedPackage"
+        ? { title: copy.packageWorkspace.publicTitle, body: copy.packageWorkspace.publicBody }
+        : match.key === "drafts" || match.key === "draft" || match.key === "draftNew"
+          ? { title: copy.draft.page.publicTitle, body: copy.draft.page.publicBody }
+          : match.key === "following"
+            ? view === "piu"
+              ? { title: copy.following.previewPiuTitle, body: copy.following.previewPiuBody }
+              : { title: copy.following.previewPublicTitle, body: copy.following.previewPublicBody }
+            : { title: words.title(name), body: words.body };
+  return (
+    <div className="layout-grid" data-not-in-view={match.key}>
+      <div className="col-span-12 @md/page:col-span-8">
+        <PageHeader title={match.section ? copy.nav.tabs[match.section] : copy.pages[match.key].title} />
+        <EmptyState className="mt-6" title={card.title} body={card.body} link={{ href: "/projects", text: words.link }} />
+      </div>
+    </div>
+  );
+}
+
+// Home in the public view, until ticket 41 (the 40 brief, 3.9): "Your briefing" is about plans and drafts, which the
+// public view does not have.
+function PublicHome() {
+  const words = copy.view.publicHome;
+  return (
+    <div className="layout-grid" data-public-home>
+      <div className="col-span-12 @md/page:col-span-8">
+        <PageHeader title={words.title} purpose={words.purpose} />
+        <EmptyState className="mt-6 @lg/page:mt-8" title={words.cardTitle} body={words.cardBody} link={{ href: "/projects", text: words.link }} />
+      </div>
+    </div>
+  );
+}
+
+export function RoutePage({ match, search = "", hiddenIn = null, pending = false, publicView = false }: {
+  match: Match;
+  search?: string;
+  // The server applied the public view (ticket 40), whose Home differs.
+  publicView?: boolean;
+  // The preview whose view does not show this page, from GET /api/me (ticket 40), or null.
+  hiddenIn?: "piu" | "public" | null;
+  // A preview whose rules the server has not confirmed yet: the page waits, so nothing it hides is drawn.
+  pending?: boolean;
+}) {
   const { pid, agencyId, version } = match.values;
+  if (pending) return <Skeleton className="h-8 w-3/5 max-w-[560px]" />;
+  if (hiddenIn) return <NotInView match={match} view={hiddenIn} />;
+  if (match.key === "home" && publicView) return <PublicHome />;
   if (match.key === "projects") return <ProjectsPage />;
   if (match.key === "following") return <FollowingPage search={search} />;
   if (match.key === "project") return <ProjectPage pid={pid} tab={match.values.tab as ProjectTab} />;

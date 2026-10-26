@@ -509,6 +509,39 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
         return read_for("all projects", viewer,
                         lambda engine: projects.all_projects(engine, as_of, q.strip(), page, page_size))
 
+    @app.get("/api/agency/projects")
+    def your_agencys_projects(request: Request, asof: dt.date | None = None, viewer: Viewer = Depends(current_viewer)):
+        """Your agency's projects (ticket 40; the 40 brief, 3.8): each project where the implementing agency has a
+        disclosed Procurement Plan by the as-of date, with check_plan's counts on its latest plan, the same check the
+        Check a plan page shows. The agency is an officer's own, or, in the agency preview, the one the roles file's
+        [views] names. Anyone else, World Bank staff in their own view, gets 404 not_in_view."""
+        own = access.agency(viewer)
+        preview = request.query_params.get("view")
+        agency = view_rules.preview_agency if preview == view_routes.PIU else own if preview is None else None
+        if agency is None:
+            return refused(404, "not_in_view")
+        as_of = as_of_for(asof)
+        tool_view = view_routes.PIU if preview else view_routes.STAFF
+
+        def read(engine: Engine):
+            listed = []
+            for project in upload_routes.agency_projects(engine, agency, as_of):
+                plan = project["latest_plan"]
+                if plan is None:
+                    continue
+                checked = registry.call("check_plan", {"project_id": project["project_id"],
+                                                       "implementing_agency": plan["agency_id"],
+                                                       "plan_date": plan["plan_date"]},
+                                        registry.Context(engine, viewer, tool_view, as_of))
+                listed.append({"project_id": project["project_id"], "project_name": project["project_name"],
+                               "display_name": project["display_name"], "plan": plan,
+                               "counts": checked["counts"], "withheld": checked["withheld"],
+                               "abstention": checked["abstention"]})
+            short = view_rules.preview_agency_short if agency == view_rules.preview_agency else None
+            return {"agency": {"name": agency, "short_name": short, "agency_id": upload_routes.agency_id(agency)},
+                    "as_of": as_of.isoformat(), "state": "ok" if listed else "none", "projects": listed}
+        return read_for(f"the projects of {agency}", viewer, read)
+
     versions_shown = int(thresholds.value("app.versions_shown"))
 
     @app.get("/api/projects/{project_id}")
@@ -684,8 +717,9 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
     def open_evidence(evidence_id: str = Query(alias="id", min_length=1, max_length=512), asof: dt.date | None = None,
                       view: Literal["staff", "piu", "public"] = STAFF,
                       step_ref: str | None = Query(None, max_length=128), viewer: Viewer = Depends(current_viewer)):
-        # The public view hides the baseline, and a preview only takes things away (the 21 review, round 3).
-        if view == "public" and evidence_id.startswith(f"{baseline.TABLE}:"):
+        # A view without the baseline hides it (the roles file's [views]: the public view), and a preview only takes
+        # things away (the 21 review, round 3).
+        if not view_rules.allows(view, "baseline") and evidence_id.startswith(f"{baseline.TABLE}:"):
             return JSONResponse({"code": "unknown_evidence"}, status_code=404)
         # An upload's row (ticket 38) is Official Use Only: only its team reads it, through the one access rule, and
         # another team gets the same answer as for an id no source has.

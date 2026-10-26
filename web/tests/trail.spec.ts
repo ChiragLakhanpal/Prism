@@ -347,9 +347,10 @@ test("a consultant award notice keeps a rejected firm's reason when its price is
   await expect(page.locator("main")).not.toContainText("Reason for Rejection");
 });
 
-test("the Connections tab's alert says only its links are as of the date, and the activity page has none", async ({ page }) => {
+test("the Connections tab and its header are as of the date the banner names, and the activity page has no other alert", async ({ page }) => {
   await open(page, "/projects/P130164/connections?asof=2017-06-14");
-  await expect(page.getByText("The connections below are as of June 14, 2017. The project's header above them shows today's data.")).toBeVisible();
+  // Every read on the page carries the date (ticket 40), so one banner speaks for the whole page.
+  await expect(page.locator("[data-view-banner=asof]")).toContainText("I'm showing this page as of June 14, 2017.");
   await expect(page.locator("[data-diagram] > svg path[stroke-dasharray]")).toHaveCount(0);
   // The project node is one link, with its P-code and name inside it.
   await expect(page.locator("[data-node=project] a")).toHaveCount(1);

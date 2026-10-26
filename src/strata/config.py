@@ -1708,6 +1708,10 @@ class Views:
     def route(self, method: str, path: str) -> RouteRule | None:
         return self.routes.get(f"{method.upper()} {path}")
 
+    def allows(self, view: str, capability: str) -> bool:
+        """Whether the view has the capability. A tool or route asks this, so no view's rule is written anywhere else."""
+        return self.capabilities[capability].values[view]
+
 
 def load_views(path: Path = CONFIG_DIR / "roles.toml") -> Views:
     """The roles file's [views] section: each view's tabs and hidden pages, every capability with its kind and its value

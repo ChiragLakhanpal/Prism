@@ -16,6 +16,8 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { copy } from "../copy";
 import { ApiError, deleteJson, putJson, type Baseline, type CheckPlanResult } from "../lib/api";
 import { formatDate } from "../lib/format";
+import { useStore } from "../lib/store";
+import { allows, appliedView } from "../lib/view";
 import { Alert } from "./Alert";
 import { Button } from "./Button";
 import { Fill } from "./Fill";
@@ -24,6 +26,15 @@ import { TextLink } from "./TextLink";
 
 const words = copy.baseline;
 const short = (iso: string) => formatDate(iso, { style: "table" });
+
+// How the baseline shows in the view the server applied, from the roles file's [views] (ticket 40): not at all without
+// the baseline capability (the public view), read-only without the saver's name where the view lacks the saver or
+// saving (the implementing agency view and its preview), and in full with its controls for World Bank staff.
+export function useBaselineView(): "staff" | "piu" | "public" {
+  const shown = useStore(appliedView);
+  if (!allows("baseline", shown)) return "public";
+  return allows("baseline_saver", shown) && allows("save_baseline", shown) ? "staff" : "piu";
+}
 
 type Action = "save" | "remove" | "replace" | "undo";
 type Mode =

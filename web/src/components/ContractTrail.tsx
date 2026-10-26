@@ -37,7 +37,7 @@ import {
   type Trail,
 } from "../lib/trail";
 import { excerpt } from "../lib/sources";
-import { viewOf } from "../lib/view";
+import { useShows } from "../lib/view";
 import { dataReadinessHref } from "../routes";
 import { Button } from "./Button";
 import { CitationMarker } from "./CitationMarker";
@@ -166,7 +166,9 @@ function datasetLine(source: Record<string, string | number | null>): string {
 
 function PlanStage({ record, n, pid, stepRef }: { record: PlanRecord; n: number; pid: string; stepRef: string }) {
   const search = useStore(address).search;
-  const isPublic = viewOf(search) === "public";
+  // "See the past range" opens the package page, so it shows only where the view shows that page (the roles file's
+  // [views]): the public view hides it.
+  const showsPackage = useShows("package");
   const value = (key: string) => record.fields.find((field) => field.key === key)?.value ?? null;
   const fields = ["method", "market_approach", "review_type", "estimated_amount_usd", "process_status"].map((key) => ({
     label: words.plan.field[key],
@@ -233,7 +235,7 @@ function PlanStage({ record, n, pid, stepRef }: { record: PlanRecord; n: number;
           {words.plan.showInPlan}
           <span className="clip-visually">{words.plan.forRef(stepRef)}</span>
         </TextLink>
-        {!isPublic && (
+        {showsPackage && (
           <TextLink href={`/packages/${encodeURIComponent(stepRef)}`} className="inline-flex min-h-6 items-center" data-past-range-link={stepRef}>
             {words.plan.pastRange}
             <span className="clip-visually">{words.plan.forRef(stepRef)}</span>

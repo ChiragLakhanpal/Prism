@@ -331,8 +331,9 @@ test("below 768 px the chart is a list in date order, and as of August 26, 2016 
   // The chart carries its own label, so the list's line is not drawn.
   await expect(page.locator("[data-timeline-as-of]")).toHaveCount(0);
   await expect(page.locator("[data-timeline-card] [data-source]").first()).toContainText("as of August 26, 2016.");
-  // The tab applies the date itself, so no alert says it shows today's data.
-  await expect(page.locator("main [data-alert]")).toHaveCount(0);
+  // The as-of banner says the page's date (ticket 40), and no other alert says it shows today's data.
+  await expect(page.locator("main [data-view-banner=asof]")).toContainText("I'm showing this page as of August 26, 2016.");
+  await expect(page.locator("main [data-alert]")).toHaveCount(1);
   await expect(chart(page).locator("[data-disagreement-line]")).toHaveCount(0);
 });
 
@@ -342,7 +343,8 @@ test("a link whose date I can't read shows today's timeline and says so, as othe
   const { requests } = await open(page, "/projects/P130164/timeline?asof=last-tuesday");
   await expect(page.locator("main [data-alert=info]")).toHaveText("I can't read the date in this link, so you are seeing today's data.");
   await expect(items(page)).toHaveCount(14);
-  expect(requests.map((request) => request.url()).filter((url) => url.includes("/api/") && url.includes("asof="))).toEqual([]);
+  // Only GET /api/me hears the date as written, so it can say why I could not apply it (ticket 40).
+  expect(requests.map((request) => request.url()).filter((url) => url.includes("/api/") && !url.includes("/api/me?") && url.includes("asof="))).toEqual([]);
 });
 
 test("as of a date after the ICR Review's re-issue, no dashed line or chip covers the as-of date, beside the drawer too", async ({ page }) => {
@@ -543,5 +545,7 @@ test("the public preview of a project still under way hides its disagreements, a
     "I don't show disagreements on active projects in the public view, so I don't prejudge a project still under way.",
   );
   await expect(page.locator("[data-timeline-subtitle]")).toHaveText("Each mark is a report, an event or a record.");
-  await expect(page.locator("main [data-alert]")).toHaveCount(0);
+  // The preview banner is the page's one alert (ticket 40).
+  await expect(page.locator("main [data-view-banner=preview]")).toContainText("Preview of what the public sees.");
+  await expect(page.locator("main [data-alert]")).toHaveCount(1);
 });

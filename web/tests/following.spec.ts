@@ -4,7 +4,7 @@
 // the real one and saying so; they are used for layout and states only, never as findings.
 import { scan } from "./axe";
 import type { Page } from "@playwright/test";
-import { expect, recorded, test } from "./mocked";
+import { expect, recorded, test, viewAnswers } from "./mocked";
 
 const FOLLOWING = "/projects/following";
 // The ticket's four lines, word for word (criterion 1).
@@ -22,6 +22,7 @@ type Answer = { status?: number; body: string; delay?: number };
 async function serve(page: Page, answers: Record<string, Answer>) {
   const asked: string[] = [];
   const all: Record<string, Answer> = {
+    ...(await viewAnswers()),
     "/api/me": { body: await recorded("me-staff.json") },
     "/api/freshness": { body: await recorded("freshness.json") },
     "POST /api/evidence/opened": { body: '{"recorded":true}' },
@@ -179,7 +180,10 @@ test("Following refuses a viewer without the World Bank staff role, and a previe
   // A viewer who cannot follow is not told to follow: the purpose is All projects'.
   await expect(page.locator("main")).not.toContainText("Follow the projects you work on");
 
-  await openFollowing(page, { path: `${FOLLOWING}?view=public` });
+  // No preview keeps Following (the roles file's [views], ticket 40): the page says so where its list would be.
+  await serve(page, { "/api/following": { body: await recorded("following-p156634.json") } });
+  await page.goto(`${FOLLOWING}?view=public`);
+  await expect(page.locator("[data-not-in-view=following]")).toBeVisible();
   await expect(page.getByRole("heading", { level: 2, name: "The public view has no Following list." })).toBeVisible();
   // The page shows what the preview holds, so the shell never says it shows the staff view.
   await expect(page.getByText("I can't show the public preview yet")).toHaveCount(0);

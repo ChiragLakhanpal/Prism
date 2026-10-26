@@ -603,7 +603,7 @@ function stateOf(run: Run, opened: Opened, visited: ReadonlySet<string>, stillWo
 // "Asked within P130164, as of October 1, 2026." It names no view: until ticket 40 the server
 // applies no view's rules, so a preview would be a claim about something that did not happen.
 function AskedLine({ run, current }: { run: Run; current: string }) {
-  const { scope, asOf } = run.asked;
+  const { scope, asOf, view } = run.asked;
   const words = copy.answer;
   // The answer's language, when it is not English or not your choice now (the 42 brief, section 5.4).
   const named = run.lang !== ENGLISH || run.lang !== current;
@@ -611,6 +611,7 @@ function AskedLine({ run, current }: { run: Run; current: string }) {
     <p data-asked className="mt-1 text-caption text-ink-muted">
       {scope ? <Fill template={words.askedWithin} slots={{ id: mono(scope) }} /> : words.askedAcross}
       {asOf && words.askedAsOf(formatDate(asOf))}
+      {(view === "piu" || view === "public") && words.askedPreview(copy.view.name[view])}
       {named && words.askedLanguage(languageName(run.lang))}
       {words.askedEnd}
     </p>

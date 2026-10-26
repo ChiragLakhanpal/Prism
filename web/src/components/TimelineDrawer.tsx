@@ -16,6 +16,9 @@ import { evidenceHref, openEvidence } from "../lib/evidence";
 import { cx } from "../lib/cx";
 import { capitalize, shortName } from "../lib/timeline";
 import { formatDate } from "../lib/format";
+import { address } from "../lib/router";
+import { useStore } from "../lib/store";
+import { asOfOf, withMode } from "../lib/view";
 import { sideContext, sideInSentence, sideMeta, sideOpen, sideShort, sideTitle, subjectOf, ruleSentence, whatChanges, type SideData } from "../lib/disagreement";
 import { Alert } from "./Alert";
 import { Button } from "./Button";
@@ -94,6 +97,30 @@ export function ClaimLine({ text, warning, disagreementId }: { text: string; war
   );
 }
 
+// "See Strata as of this date" (ticket 40; the 40 brief, 3.6): the Timeline as of the day this report was disclosed,
+// so the mark you came from is still on it. The drawer closes, since the link drops ?evidence=, and the view and the
+// language stay. Left out when the page already shows that date.
+function AsOfAction({ row }: { row: Record<string, any> }) {
+  const here = useStore(address);
+  const captionId = useId();
+  if (!row.public_from || asOfOf(here.search) === row.public_from) return null;
+  return (
+    <div data-asof-action>
+      <TextLink
+        data-mode
+        href={withMode(`/projects/${row.project_id}/timeline`, here.search, { asof: row.public_from })}
+        aria-describedby={captionId}
+        className="text-small font-semibold"
+      >
+        {words.doc.asofAction}
+      </TextLink>
+      <p id={captionId} className="mt-1 text-caption text-ink-muted">
+        {words.doc.asofCaption(formatDate(row.public_from))}
+      </p>
+    </div>
+  );
+}
+
 function DocumentView({ evidence }: { evidence: EvidenceEvent }) {
   const row = evidence.row;
   const thisShort = shortName(row as { type: string; sequence: number | null });
@@ -116,6 +143,7 @@ function DocumentView({ evidence }: { evidence: EvidenceEvent }) {
     );
   return (
     <div data-document-view className="flex flex-col gap-4">
+      <AsOfAction row={row} />
       {row.replaced_by && (
         <Alert state="info">
           {words.doc.replaced.replace("{date}", formatDate(row.replaced_by.date))}{" "}

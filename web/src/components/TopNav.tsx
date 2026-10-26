@@ -1,5 +1,5 @@
 // The top navigation (DESIGN.md section 5): a navy bar, 56 px tall, with the logo, the
-// Strata wordmark (a link to Home), five tabs and the view switch. Nouns navigate.
+// Strata wordmark (a link to Home), the tabs of the view the server applied and the view switch. Nouns navigate.
 //
 // From 1024 px (64rem) the tabs and the view switch sit in the bar. The full bar is 856 px
 // wide and the 768 grid gives 672, so below 1024 a labeled Menu button holds them in a panel
@@ -13,12 +13,20 @@
 // bar, which would drop focus to the page. Focus moves to the control that now holds the same
 // thing instead: a tab to its twin, the pill or the view popover to the Menu button, and the
 // Menu button to the pill (DESIGN.md section 10).
-import { useEffect, useId, useRef, useState, type ReactNode, type RefObject } from "react";
+//
+// The view switch (ticket 40; the 40 brief, section 3): the pill names the view the server applied, and in a preview
+// it fills white with navy text, as the Menu button does below 1024 px. Its popover (the Menu panel's foot below
+// 1024 px) holds the views as link rows, a past-date field and the language of answers and drafts (ticket 42). Every
+// row and date is an address, so the mode lives in the address and survives Back, reload and a shared link.
+import { useEffect, useId, useRef, useState, type FormEvent, type ReactNode, type RefObject } from "react";
 import * as RadixPopover from "@radix-ui/react-popover";
-import { ChevronDown, CircleX, Menu as MenuIcon, X } from "lucide-react";
+import { Check, ChevronDown, CircleX, Menu as MenuIcon, X } from "lucide-react";
 import { copy } from "../copy";
 import { cx } from "../lib/cx";
+import { navigate } from "../lib/router";
+import { withMode, type Preview, type View } from "../lib/view";
 import { isBoxShortcut } from "./BoxBand";
+import { Button } from "./Button";
 import { LanguageChoice } from "./LanguageChoice";
 import { POPOVER } from "./Popover";
 import { Skeleton } from "./Skeleton";
@@ -40,13 +48,47 @@ export type Viewer =
   | { status: "signed-out" }
   | { status: "error" };
 
-const officerOf = (viewer: Viewer) => (viewer.status === "signed-in" ? (viewer.agency ?? null) : null);
+// The view the bar shows, from GET /api/me, or from the address while it loads (App.tsx).
+export type NavMode = {
+  // The viewer's own view, and the preview the server applied (or the address asks for, while /api/me loads).
+  own: "staff" | "piu";
+  preview: Preview | null;
+  // The views the popover offers, own first; empty while /api/me loads.
+  offered: View[];
+  // The implementing agency the agency rows name in a sentence, from the roles file through /api/me.
+  agency: string | null;
+  // The tabs of the applied view, or null while they are not known (a preview while /api/me loads).
+  tabs: Section[] | null;
+  // The address, for the rows' and the date's links.
+  pathname: string;
+  search: string;
+  // The page's as-of date, which the date field holds.
+  asOf: string | null;
+  // No view known yet and none in the address: the pill is a skeleton (the 40 brief, 3.2).
+  unknown: boolean;
+};
+
+export const STAFF_MODE: NavMode = {
+  own: "staff", preview: null, offered: ["staff", "piu", "public"], agency: null, tabs: SECTIONS.map((section) => section.key),
+  pathname: "/", search: "", asOf: null, unknown: false,
+};
 
 const WIDE = "(min-width: 64rem)";
 
 // The view popover hangs 8 px below the navy bar, not 8 px below the pill, so no white lip of
 // it sits on the bar. The 32 px pill is centered in the 56 px bar, 12 px above its bottom edge.
 const BELOW_BAR = 12 + 8;
+
+// In a preview the pill and the Menu button fill white with navy text (about 16:1), tint on hover and when open.
+const PREVIEW_LOOK = "border-surface bg-surface text-navy hover:bg-tint data-[state=open]:bg-tint aria-expanded:bg-tint";
+const OWN_LOOK = "border-surface text-surface hover:bg-primary-hover data-[state=open]:bg-primary-hover aria-expanded:bg-primary-hover";
+
+export function pillLabel(mode: NavMode): string {
+  const words = copy.nav.view.pill;
+  if (mode.preview === "piu") return words.previewOfficer;
+  if (mode.preview === "public") return words.previewPublic;
+  return mode.own === "piu" ? words.officer : words.staff;
+}
 
 // Calls back each time the window crosses 1024 px, with whether it is now wide. The callbacks
 // here use only state setters and refs, which never change, so the first one is kept.
@@ -59,95 +101,220 @@ function useWideChange(onChange: (wide: boolean) => void) {
   }, []);
 }
 
-// Who is signed in, as the first of the view lines. An error carries the circle-x icon, as the
+// Who is signed in, as the first line of the view panel. An error carries the circle-x icon, as the
 // freshness stamp's does, so it does not read like the signed-in line.
-function WhoLine({ viewer }: { viewer: Viewer }) {
+function WhoLine({ viewer, id }: { viewer: Viewer; id?: string }) {
   if (viewer.status === "loading") return <Skeleton className="h-[13px] w-[200px] max-w-full" />;
   if (viewer.status === "error") {
     return (
-      <p className="flex items-start gap-1 text-caption text-ink-muted">
+      <p id={id} className="flex items-start gap-1 text-caption text-ink-muted">
         <CircleX aria-hidden="true" className="size-4 shrink-0 text-error-icon" />
         {copy.nav.view.identityError}
       </p>
     );
   }
   return (
-    <p className="text-caption text-ink-muted">
+    <p id={id} className="text-caption text-ink-muted">
       {viewer.status === "signed-in" ? copy.nav.view.signedIn(viewer.email) : copy.nav.view.signedOut}
     </p>
   );
 }
 
-// The three lines about who is viewing, in the view popover and at the foot of the Menu panel.
-function ViewLines({ viewer }: { viewer: Viewer }) {
+// One view as a link row: its label and what it is, the current one marked with a check, tint and a 3 px bar.
+function ViewRow({ view, mode, current }: { view: View; mode: NavMode; current: boolean }) {
+  const desc = useId();
+  const rows = copy.nav.view.rows;
+  const own = view === mode.own;
+  const label = rows[view].label;
+  const description =
+    view === "staff" ? rows.staff.desc : view === "public" ? rows.public.desc : own ? rows.piu.descOwn(mode.agency ?? "") : rows.piu.descPreview(mode.agency ?? "");
   return (
-    <div className="flex flex-col gap-2">
-      <WhoLine viewer={viewer} />
-      <p className="text-small text-pretty text-ink">
-        {officerOf(viewer) ? copy.nav.view.currentOfficer(officerOf(viewer)!) : copy.nav.view.current}
+    <li>
+      <a
+        data-mode
+        data-view-row={view}
+        href={withMode(mode.pathname, mode.search, { view: own ? null : view })}
+        aria-current={current ? "true" : undefined}
+        aria-describedby={desc}
+        className={cx(
+          "relative flex min-h-12 items-start gap-2 rounded-sm px-3 py-2 transition-paint duration-150",
+          "before:absolute before:inset-y-0 before:left-0 before:w-[3px] before:rounded-l-sm",
+          current ? "bg-tint before:bg-primary" : "hover:bg-tint-hover",
+        )}
+      >
+        <span className="mt-0.5 flex size-4 shrink-0 items-center justify-center">
+          {current && <Check aria-hidden="true" className="size-4 text-primary" />}
+        </span>
+        <span className="flex flex-col">
+          <span className="text-small font-bold text-ink-heading">{label}</span>
+          <span id={desc} className="text-caption text-pretty text-ink-muted">
+            {description}
+          </span>
+        </span>
+      </a>
+    </li>
+  );
+}
+
+// The past-date field (the 40 brief, 3.3): a native date input and "Show this date", which opens the page as of that
+// date. It checks the date here and the server checks it again.
+function DateForm({ mode, onDone }: { mode: NavMode; onDone: () => void }) {
+  const words = copy.nav.view.date;
+  const field = useId();
+  const hint = useId();
+  const errorId = useId();
+  const [value, setValue] = useState(mode.asOf ?? "");
+  const [error, setError] = useState<string | null>(null);
+  const input = useRef<HTMLInputElement>(null);
+  // Yesterday, by this computer's calendar: the latest past date the field offers.
+  const now = new Date();
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  const submit = (event: FormEvent) => {
+    event.preventDefault();
+    const problem = !value ? words.errorEmpty : value >= today ? words.errorNotPast : null;
+    setError(problem);
+    if (problem) {
+      input.current?.focus();
+      return;
+    }
+    onDone();
+    navigate(withMode(mode.pathname, mode.search, { asof: value }), { exact: true });
+  };
+  return (
+    <form noValidate onSubmit={submit} data-date-form className="flex flex-col items-start gap-2">
+      <label htmlFor={field} className="text-small font-bold text-ink-heading">
+        {words.label}
+      </label>
+      <input
+        ref={input}
+        id={field}
+        type="date"
+        value={value}
+        onChange={(event) => setValue(event.target.value)}
+        aria-describedby={error ? `${hint} ${errorId}` : hint}
+        aria-invalid={error ? "true" : undefined}
+        className="h-11 w-full rounded-md border border-line-strong bg-surface px-3 text-body text-ink"
+      />
+      <p id={hint} className="text-caption text-ink-muted">
+        {words.hint}
       </p>
-      <p className="text-caption text-pretty text-ink-muted">
-        {officerOf(viewer) ? copy.nav.view.notReadyOfficer : copy.nav.view.notReady}
-      </p>
+      {error && (
+        <p id={errorId} className="flex items-start gap-1 text-caption text-error">
+          <CircleX aria-hidden="true" className="size-4 shrink-0 text-error-icon" />
+          {error}
+        </p>
+      )}
+      <Button variant="secondary" type="submit" className="mt-1">
+        {words.submit}
+      </Button>
+    </form>
+  );
+}
+
+// The view panel: who is signed in, the views as link rows, the past-date field. A viewer whose identity failed sees
+// only the error line (the 40 brief, 7.1).
+function ViewPanel({ viewer, mode, onDone, whoId }: { viewer: Viewer; mode: NavMode; onDone: () => void; whoId?: string }) {
+  const group = useId();
+  const current: View = mode.preview ?? mode.own;
+  if (viewer.status === "error") return <WhoLine viewer={viewer} id={whoId} />;
+  return (
+    <div className="flex flex-col gap-3">
+      <WhoLine viewer={viewer} id={whoId} />
+      <div>
+        <p id={group} className="text-small font-bold text-ink-heading">
+          {copy.nav.view.group}
+        </p>
+        {mode.offered.length > 0 ? (
+          <ul aria-labelledby={group} className="mt-2 flex flex-col gap-1">
+            {mode.offered.map((view) => (
+              <ViewRow key={view} view={view} mode={mode} current={view === current} />
+            ))}
+          </ul>
+        ) : (
+          <div className="mt-2 flex flex-col gap-1">
+            {[0, 1, 2].map((index) => (
+              <Skeleton key={index} className="h-12 w-full" />
+            ))}
+          </div>
+        )}
+      </div>
+      <div className="border-t border-line pt-4">
+        <DateForm mode={mode} onDone={onDone} />
+      </div>
     </div>
   );
 }
 
 function ViewSwitch({
   viewer,
+  mode,
   defaultOpen,
   menuButton,
 }: {
   viewer: Viewer;
+  mode: NavMode;
   defaultOpen?: boolean;
   // Where focus goes when a narrowing window closes the popover.
   menuButton: RefObject<HTMLButtonElement | null>;
 }) {
   const [open, setOpen] = useState(defaultOpen ?? false);
-  const body = useRef<HTMLDivElement>(null);
   const pill = useRef<HTMLButtonElement>(null);
+  const content = useRef<HTMLDivElement>(null);
+  const whoId = useId();
   // Where Tab or Shift+Tab sends focus once the popover has closed. The popover is portaled to
-  // the end of the page and holds nothing to focus, so without this Tab would leave the page.
+  // the end of the page, so without this Tab past its last control would leave the page.
   const after = useRef<HTMLElement | null>(null);
 
   // Narrowing the window below 1024 px hides the pill, so the popover closes with it.
   useWideChange((wide) => !wide && setOpen(false));
+  if (mode.unknown) {
+    // Before the viewer is known, an outline pill with no text, since an officer's label differs from staff's.
+    return <Skeleton className="block h-8 w-[193px] border border-surface bg-transparent" radius="rounded-pill" />;
+  }
   return (
     <RadixPopover.Root open={open} onOpenChange={setOpen}>
+      {/* Keyed by its look, so a change of view draws the new fill at once instead of fading it (the 40 brief, 9). */}
       <RadixPopover.Trigger
+        key={mode.preview ?? "own"}
         ref={pill}
         data-view-pill
+        data-preview={mode.preview ?? undefined}
         aria-haspopup="dialog"
         className={cx(
-          "flex h-8 shrink-0 items-center gap-1 rounded-pill border border-surface px-3 text-button whitespace-nowrap text-surface",
-          "transition-paint duration-150 hover:bg-primary-hover data-[state=open]:bg-primary-hover",
+          "flex h-8 shrink-0 items-center gap-1 rounded-pill border px-3 text-button whitespace-nowrap",
+          "transition-paint duration-150",
+          mode.preview ? PREVIEW_LOOK : OWN_LOOK,
         )}
       >
-        {officerOf(viewer) ? copy.nav.view.pill.officer : copy.nav.view.pill.staff}
+        {pillLabel(mode)}
         <ChevronDown aria-hidden="true" className={cx("size-4 transition-transform duration-150", open && "rotate-180")} />
       </RadixPopover.Trigger>
       <RadixPopover.Portal>
         <RadixPopover.Content
+          ref={content}
           align="end"
           sideOffset={BELOW_BAR}
           collisionPadding={16}
           aria-label={copy.nav.view.dialog}
+          aria-describedby={whoId}
           onOpenAutoFocus={(event) => {
+            // Focus lands on the current view's row, so you can move to another at once (the 40 brief, 8.2).
             event.preventDefault();
-            body.current?.focus();
+            const row = content.current?.querySelector<HTMLElement>("[data-view-row][aria-current]");
+            (row ?? content.current?.querySelector<HTMLElement>("a, input, button"))?.focus();
           }}
           onKeyDown={(event) => {
-            // Tab closes the popover and moves on to the box, the next control after the pill;
-            // Shift+Tab closes it and goes back to the pill (the 06 brief's keyboard table). From the
-            // popover's lines, Tab first reaches the language group, one tab stop on its chosen language
-            // (ticket 42; the 42 brief, section 7.1).
+            // Tab moves through the rows, the date field and its button, and the language group; past the last
+            // control it closes the popover and moves on to the box, and Shift+Tab before the first goes back to the
+            // pill (the 40 brief, 8.3).
             if (event.key !== "Tab") return;
-            const chosen = event.currentTarget.querySelector<HTMLInputElement>("[data-language-choice] input:checked");
-            if (!event.shiftKey && chosen && document.activeElement === body.current) {
-              event.preventDefault();
-              chosen.focus();
-              return;
-            }
+            const focusable = [...event.currentTarget.querySelectorAll<HTMLElement>("a[href], input:not([type=radio]), input[type=radio]:checked, button")].filter(
+              (element) => element.getClientRects().length > 0,
+            );
+            const first = focusable[0];
+            const last = focusable[focusable.length - 1];
+            const atEdge = event.shiftKey ? document.activeElement === first : document.activeElement === last;
+            if (!atEdge) return;
             event.preventDefault();
             after.current = event.shiftKey ? pill.current : document.querySelector<HTMLElement>("[data-box-band] input");
             setOpen(false);
@@ -159,31 +326,44 @@ function ViewSwitch({
               after.current = null;
               return;
             }
-            // Below 1024 px the pill is hidden and the Menu holds the view lines, so focus goes there.
+            // Below 1024 px the pill is hidden and the Menu holds the view panel, so focus goes there.
             if (!window.matchMedia(WIDE).matches) {
               event.preventDefault();
               menuButton.current?.focus();
             }
           }}
-          className={cx(POPOVER, "w-80 p-4")}
+          className={cx(POPOVER, "max-h-[calc(100vh-4.5rem)] w-80 overflow-y-auto p-4")}
         >
-          {/* Focus lands here so the three lines are read; it is not a control, so no ring. */}
-          <div ref={body} tabIndex={-1} data-view-popover className="outline-none">
-            <ViewLines viewer={viewer} />
+          <div data-view-popover>
+            <ViewPanel viewer={viewer} mode={mode} whoId={whoId} onDone={() => setOpen(false)} />
           </div>
-          <div className="mt-4 border-t border-line pt-4">
-            <LanguageChoice />
-          </div>
+          {viewer.status !== "error" && (
+            <div className="mt-4 border-t border-line pt-4">
+              <LanguageChoice />
+            </div>
+          )}
         </RadixPopover.Content>
       </RadixPopover.Portal>
     </RadixPopover.Root>
   );
 }
 
-function BarTab({ section, current, href }: { section: (typeof SECTIONS)[number]; current: boolean; href?: string }) {
+// A tab keeps the address's view, date and language, so the mode survives a move between tabs.
+function withModeOf(href: string, search: string): string {
+  const params = new URLSearchParams(search);
+  const kept = new URLSearchParams();
+  for (const key of ["view", "asof", "lang"]) {
+    const value = params.get(key);
+    if (value) kept.set(key, value);
+  }
+  const rest = kept.toString();
+  return rest ? `${href}${href.includes("?") ? "&" : "?"}${rest}` : href;
+}
+
+function BarTab({ section, current, href }: { section: (typeof SECTIONS)[number]; current: boolean; href: string }) {
   return (
     <a
-      href={href ?? section.href}
+      href={href}
       aria-current={current ? "page" : undefined}
       data-nav-tab={section.key}
       className={cx(
@@ -205,13 +385,13 @@ function PanelRow({
 }: {
   section: (typeof SECTIONS)[number];
   current: boolean;
-  href?: string;
+  href: string;
   // A row opens its page and closes the panel.
   onNavigate: () => void;
 }) {
   return (
     <a
-      href={href ?? section.href}
+      href={href}
       aria-current={current ? "page" : undefined}
       onClick={onNavigate}
       data-nav-tab={section.key}
@@ -239,6 +419,8 @@ export function TopNav({
   menuOpen: menuOpenAtStart = false,
   viewOpen,
   projectsHref,
+  mode = STAFF_MODE,
+  modeLineId,
 }: {
   // The logo, at least 24 px tall. The slot gives it clear space of half its height, and 24 px
   // before the wordmark, so the two never read as one co-branded name (DESIGN.md section 9). The app and
@@ -254,6 +436,10 @@ export function TopNav({
   viewOpen?: boolean;
   // Where the Projects tab goes: Following for World Bank staff (ticket 37), All projects for everyone else.
   projectsHref?: string;
+  // The view the server applied (ticket 40).
+  mode?: NavMode;
+  // The visually hidden line that says the mode, which describes the Menu button in a preview.
+  modeLineId?: string;
 }) {
   const [menuOpen, setMenuOpen] = useState(menuOpenAtStart);
   const menuButton = useRef<HTMLButtonElement>(null);
@@ -262,6 +448,9 @@ export function TopNav({
   // change, so the header notes it on blur and forgets it after the frame.
   const hidden = useRef<HTMLElement | null>(null);
   const panelId = useId();
+  const sections = mode.tabs === null ? [] : SECTIONS.filter((section) => mode.tabs!.includes(section.key));
+  const hrefOf = (section: (typeof SECTIONS)[number]) =>
+    withModeOf(section.key === "projects" && projectsHref ? projectsHref : section.href, mode.search);
 
   // "/" anywhere outside a text field focuses the box (OneBox), and closes the Menu panel first.
   useEffect(() => {
@@ -313,7 +502,7 @@ export function TopNav({
             </div>
           )}
           <a
-            href={homeHref}
+            href={withModeOf(homeHref, mode.search)}
             aria-current={home ? "page" : undefined}
             className="flex h-10 shrink-0 items-center text-h3 text-surface underline-offset-4 hover:underline"
           >
@@ -321,25 +510,29 @@ export function TopNav({
           </a>
           <nav aria-label={copy.nav.label} className="ml-6 hidden lg:block">
             <ul className="flex items-center">
-              {SECTIONS.map((section) => (
+              {sections.map((section) => (
                 <li key={section.key}>
-                  <BarTab section={section} current={section.key === current} href={section.key === "projects" ? projectsHref : undefined} />
+                  <BarTab section={section} current={section.key === current} href={hrefOf(section)} />
                 </li>
               ))}
             </ul>
           </nav>
           <div className="ml-auto hidden pl-6 lg:block">
-            <ViewSwitch viewer={viewer} defaultOpen={viewOpen} menuButton={menuButton} />
+            <ViewSwitch viewer={viewer} mode={mode} defaultOpen={viewOpen} menuButton={menuButton} />
           </div>
           <button
+            key={mode.preview ?? "own"}
             ref={menuButton}
             type="button"
             aria-expanded={menuOpen}
             aria-controls={panelId}
+            aria-describedby={mode.preview && modeLineId ? modeLineId : undefined}
+            data-preview={mode.preview ?? undefined}
             onClick={() => setMenuOpen(!menuOpen)}
             className={cx(
-              "ml-auto flex shrink-0 items-center rounded-md border border-surface text-surface xs:rounded-pill lg:hidden",
-              "transition-paint duration-150 hover:bg-primary-hover aria-expanded:bg-primary-hover",
+              "ml-auto flex shrink-0 items-center rounded-md border xs:rounded-pill lg:hidden",
+              "transition-paint duration-150",
+              mode.preview ? PREVIEW_LOOK : OWN_LOOK,
               "size-11 flex-col justify-center gap-0.5 text-label",
               "xs:h-11 xs:w-auto xs:flex-row xs:gap-2 xs:px-3 xs:text-button",
             )}
@@ -357,24 +550,21 @@ export function TopNav({
       >
         <nav aria-label={copy.nav.label}>
           <ul className="px-0.5">
-            {SECTIONS.map((section) => (
+            {sections.map((section) => (
               <li key={section.key}>
-                <PanelRow
-                  section={section}
-                  current={section.key === current}
-                  href={section.key === "projects" ? projectsHref : undefined}
-                  onNavigate={() => setMenuOpen(false)}
-                />
+                <PanelRow section={section} current={section.key === current} href={hrefOf(section)} onNavigate={() => setMenuOpen(false)} />
               </li>
             ))}
           </ul>
         </nav>
         <div className="layout mt-2 border-t border-line pt-4 pb-2">
-          <ViewLines viewer={viewer} />
+          <ViewPanel viewer={viewer} mode={mode} onDone={() => setMenuOpen(false)} />
           {/* Below 1024 px the language of answers and drafts sits at the foot of the Menu panel (ticket 42). */}
-          <div className="mt-4 border-t border-line pt-4">
-            <LanguageChoice />
-          </div>
+          {viewer.status !== "error" && (
+            <div className="mt-4 border-t border-line pt-4">
+              <LanguageChoice />
+            </div>
+          )}
         </div>
       </div>
     </div>

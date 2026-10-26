@@ -221,6 +221,36 @@ def test_who_is_viewing_says_which_view_and_date_the_server_applied():
     assert today["asof"] == {"applied": None, "problem": "not_past"}
 
 
+def test_your_agencys_projects_lists_each_disclosed_plan_with_its_check(fixture_db):
+    # The roles table's "Your agency's projects, with signals against your own plan" (the 40 brief, 3.8): the projects
+    # where the agency has a disclosed Procurement Plan, each with check_plan's counts on the latest plan. In the
+    # fixture the Northern Water Works Development Agency has plans only for P156634 (the plan of October 9, 2026,
+    # whose marks the benchmark question check-plan-nwwda-2026-10-09 gives: one needs a look, two worth watching).
+    from contextlib import contextmanager
+
+    from strata.lakehouse.engine import DuckDBEngine
+
+    @contextmanager
+    def reading(viewer):
+        with DuckDBEngine.open(fixture_db, read_only=True) as engine:
+            yield engine
+
+    app = create_app(engine_for=reading, access=Access(roles(), StaticGroups(GROUPS)), today=lambda: TODAY)
+
+    preview = call(app, "GET", "/api/agency/projects", STAFF, params={"view": "piu"}).json()
+    officer = call(app, "GET", "/api/agency/projects", OFFICER).json()
+    before = call(app, "GET", "/api/agency/projects", OFFICER, params={"asof": "2016-08-26"}).json()
+    staff = call(app, "GET", "/api/agency/projects", STAFF)
+    public = call(app, "GET", "/api/agency/projects", STAFF, params={"view": "public"})
+
+    assert preview == officer
+    assert preview["agency"]["name"] == "Northern Water Works Development Agency"
+    assert [(item["project_id"], item["plan"]["plan_date"], item["counts"]["needs_a_look"], item["counts"]["watch"])
+            for item in preview["projects"]] == [("P156634", "2026-10-09", 1, 2)]
+    assert (before["state"], before["projects"]) == ("none", [])
+    assert (staff.status_code, public.status_code) == (404, 404)
+
+
 def test_the_view_switchs_recorded_answers_are_what_the_server_answers(fixture_db):
     from record_views_api import answers
 

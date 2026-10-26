@@ -12,7 +12,15 @@ implementing agency teams: Ana is World Bank staff, Amina an officer of the Nort
 - me-preview-piu.json, me-preview-public.json, me-asof.json, me-preview-public-asof.json, me-view-unknown.json,
   me-asof-unreadable.json and me-asof-not-past.json: Ana with each ?view= and ?asof= the screens show.
 - me-officer-public.json: Amina's preview of the public view.
+- timeline-p130164-public.json: P130164's Timeline in the public view, which keeps its disagreements, since the project
+  closed in 2018.
+- project-p130164-2016-08-26.json: P130164's header as of August 26, 2016, before its projects API record was public, so
+  it names no status.
+- uploads-form-preview.json: Check my plan's form in the agency preview, whose upload is held.
 - check-plan-p156634-nwwda-2026-10-09-public.json: the plan of October 9, 2026 in the public view, data notes only.
+- agency-projects-nwwda.json and agency-projects-none.json: Your agency's projects in the agency preview, today and as of
+  August 26, 2016, before the agency disclosed a plan. agency-projects-two.json is written by hand from the first, with
+  a second project, since the fixture holds plans of the agency for one project only.
 - refused-export-preview.json, refused-check-preview.json, refused-upload-preview.json and
   refused-compare-preview.json: the server's 403 for each check and export a preview refuses.
 """
@@ -77,6 +85,16 @@ def answers(fixture_db: Path = FIXTURE_DB) -> dict[str, str]:
             found["me-officer-public.json"] = _text(await client.get("/api/me", headers=OFFICER, params={"view": "public"}))
             found["check-plan-p156634-nwwda-2026-10-09-public.json"] = _text(await client.get(
                 PLAN, headers=ANA, params={"view": "public", "asof": TODAY.isoformat()}))
+            found["timeline-p130164-public.json"] = _text(await client.get("/api/projects/P130164/timeline", headers=ANA,
+                                                                          params={"view": "public"}))
+            found["project-p130164-2016-08-26.json"] = _text(await client.get("/api/projects/P130164", headers=ANA,
+                                                                               params={"asof": "2016-08-26"}))
+            found["uploads-form-preview.json"] = _text(await client.get("/api/uploads/form", headers=ANA,
+                                                                        params={"view": "piu"}))
+            found["agency-projects-nwwda.json"] = _text(await client.get("/api/agency/projects", headers=ANA,
+                                                                         params={"view": "piu"}))
+            found["agency-projects-none.json"] = _text(await client.get("/api/agency/projects", headers=ANA,
+                                                                        params={"view": "piu", "asof": "2016-08-26"}))
             for name, method, path, body in (
                     ("refused-export-preview.json", "POST", "/api/drafts/draft-0001/export", {"expected_state": "checked"}),
                     ("refused-check-preview.json", "POST", "/api/drafts/draft-0001/check", {"expected_state": "draft"}),

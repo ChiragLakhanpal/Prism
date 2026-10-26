@@ -6,7 +6,7 @@
 // copy file against an independent source.
 import { scan } from "./axe";
 import type { Page, Request } from "@playwright/test";
-import { expect, recorded, test } from "./mocked";
+import { expect, recorded, test, viewAnswers } from "./mocked";
 
 const SENTENCE = "rural roads, Kenya, about US$15 million";
 const PACKAGE = "/packages/pkg-000000000001";
@@ -18,6 +18,7 @@ type Answer = { status?: number; body: string; type?: string; delay?: number; ho
 async function serve(page: Page, answers: Record<string, Answer>) {
   const asked: Request[] = [];
   const base: Record<string, Answer> = {
+    ...(await viewAnswers()),
     "/api/me": { body: await recorded("me.json") },
     "/api/freshness": { body: await recorded("freshness.json") },
     "POST /api/evidence/opened": { body: '{"recorded":true}' },
@@ -40,7 +41,13 @@ async function serve(page: Page, answers: Record<string, Answer>) {
     const request = route.request();
     const url = new URL(request.url());
     asked.push(request);
+    // Every call carries the page's view and date (ticket 40), so a key written without them still matches.
+    const bare = new URLSearchParams(url.search);
+    bare.delete("view");
+    bare.delete("asof");
+    const rest = bare.toString() ? `?${bare}` : "";
     const answer = all[`${request.method()} ${url.pathname}${url.search}`] ?? all[`${url.pathname}${url.search}`] ??
+      all[`${request.method()} ${url.pathname}${rest}`] ?? all[`${url.pathname}${rest}`] ??
       all[`${request.method()} ${url.pathname}`] ?? all[url.pathname];
     if (!answer) return route.fulfill({ status: 404, json: { detail: "Not Found" } });
     if (answer.hold) return new Promise(() => {});
@@ -856,9 +863,14 @@ test("a package someone else saved, or that does not exist, says so and links to
 });
 
 test("in the public view the workspace and the Packages tab are not offered", async ({ page }) => {
-  const asked = await openPackage(page, { path: `${PACKAGE}?view=public` });
+  await page.setViewportSize({ width: 1440, height: 900 });
+  const asked = await serve(page, {});
+  await page.goto(`${PACKAGE}?view=public`);
 
-  await expect(page.locator("[data-planned-package=public]")).toBeVisible();
+  // The public view hides the page (the roles file's [views], ticket 40): its section's name, then the card. The
+  // server never sends the package, and the page never asks for it.
+  await expect(page.locator("[data-not-in-view=plannedPackage]")).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Packages");
   await expect(page.getByText("Packages are not part of the public view.")).toBeVisible();
   await expect(page.getByRole("link", { name: "Go to Projects" })).toHaveAttribute("href", "/projects");
   // The page applies the public view itself, so the frame does not say it shows the staff view.
@@ -870,7 +882,7 @@ test("in the public view the workspace and the Packages tab are not offered", as
   await expect(page.getByRole("button", { name: "Plan a package" })).toHaveCount(0);
   await expect(page.locator("table")).toHaveCount(0);
   await expect(page.getByText(/you are seeing the World Bank staff view/)).toHaveCount(0);
-  expect(asked.filter((request) => new URL(request.url()).pathname === "/api/planned-packages")).toEqual([]);
+  expect(asked.filter((request) => new URL(request.url()).pathname.startsWith("/api/planned-packages"))).toEqual([]);
 });
 
 test("in an implementing agency preview the chips open read-only editors and nothing is saved", async ({ page }) => {

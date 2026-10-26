@@ -30,6 +30,7 @@
   ],
   "hidden": [],
   "capabilities": [
+    "agency_projects",
     "ask",
     "baseline",
     "baseline_saver",

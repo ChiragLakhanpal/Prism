@@ -10,7 +10,7 @@ import { useState, type ReactNode } from "react";
 import logo from "../assets/world-bank-logo.svg";
 import { BoxBand, FreshnessStamp, OneBox } from "../components/BoxBand";
 import { Frame } from "../components/Frame";
-import { TopNav, type Section, type Viewer } from "../components/TopNav";
+import { STAFF_MODE, TopNav, type NavMode, type Section, type Viewer } from "../components/TopNav";
 import { copy } from "../copy";
 import { cx } from "../lib/cx";
 import { formatDate } from "../lib/format";
@@ -27,23 +27,44 @@ function Box() {
   return <OneBox value={value} onChange={setValue} />;
 }
 
+// The bar's sample views (ticket 40): World Bank staff, an implementing agency officer in their own view, each preview.
+// The tabs here are a sample; in the app they come from the roles file through GET /api/me.
+const PUBLIC_TABS: Section[] = ["projects", "lessons", "data"];
+
+export function sampleMode(pill: string | null): NavMode {
+  const agency = copy.view.agencyInSentence(galleryCopy.sampleAgency, galleryCopy.sampleAgencyShort);
+  const officer = pill === "officer" || pill === "officer-public";
+  const preview = pill === "piu" ? "piu" : pill === "public" || pill === "officer-public" ? "public" : null;
+  return {
+    ...STAFF_MODE,
+    own: officer ? "piu" : "staff",
+    preview,
+    offered: officer ? ["piu", "public"] : ["staff", "piu", "public"],
+    agency,
+    tabs: preview === "public" ? PUBLIC_TABS : STAFF_MODE.tabs,
+    pathname: "/gallery/navigation",
+  };
+}
+
 export function GalleryFrame({
   current,
   viewer = { status: "signed-in", email: galleryCopy.sampleEmail },
   menuOpen,
   viewOpen,
+  mode = sampleMode(null),
   children,
 }: {
   current?: Section;
   viewer?: Viewer;
   menuOpen?: boolean;
   viewOpen?: boolean;
+  mode?: NavMode;
   children: ReactNode;
 }) {
   const date = formatDate(galleryCopy.sampleDate, { style: "short", today: galleryCopy.sampleDate });
   return (
     <Frame
-      nav={<TopNav logo={<LogoSlot />} current={current} viewer={viewer} menuOpen={menuOpen} viewOpen={viewOpen} />}
+      nav={<TopNav logo={<LogoSlot />} current={current} viewer={viewer} menuOpen={menuOpen} viewOpen={viewOpen} mode={mode} />}
       band={<BoxBand box={<Box />} stamp={<FreshnessStamp freshness={{ status: "ready", date }} />} />}
     >
       {children}
@@ -124,12 +145,14 @@ function Index() {
 }
 
 // The frame's own states come from the address, so the capture command can open each one:
-// ?menu=open opens the Menu panel, ?view=open the view popover, and ?viewer=loading,
-// ?viewer=signed-out or ?viewer=error sets what the view lines say.
-function frameState(search: string): { menuOpen: boolean; viewOpen: boolean; viewer: Viewer } {
+// ?menu=open opens the Menu panel, ?view=open the view popover, ?viewer=loading,
+// ?viewer=signed-out or ?viewer=error sets what the view lines say, and ?pill=officer, ?pill=piu, ?pill=public or
+// ?pill=officer-public shows that view's pill (ticket 40).
+function frameState(search: string): { menuOpen: boolean; viewOpen: boolean; viewer: Viewer; mode: NavMode } {
   const params = new URLSearchParams(search);
   const viewer = params.get("viewer");
   return {
+    mode: sampleMode(params.get("pill")),
     menuOpen: params.get("menu") === "open",
     viewOpen: params.get("view") === "open",
     viewer:
