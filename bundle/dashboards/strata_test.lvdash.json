@@ -1556,7 +1556,10 @@
         "  SELECT CASE reason WHEN 'number_not_in_records' THEN 'No record supports a number or date' WHEN 'date_not_in_records' THEN 'No record supports a number or date' WHEN 'number_only_in_table_summary' THEN 'No record supports a number or date' WHEN 'id_not_returned' THEN \"Cited a source I didn't retrieve\" WHEN 'no_source' THEN \"Its sources don't say this\" WHEN 'quote_not_on_page' THEN 'Quote not on the page it cites' WHEN 'quote_not_in_sentence' THEN 'Quote not on the page it cites' WHEN 'not_supported' THEN \"Its sources don't say this\" WHEN 'judge_unavailable' THEN \"The judging model didn't respond\" WHEN 'advice_without_lesson_or_comparable' THEN 'Advice without a lesson or comparable package' WHEN 'disagreements_unavailable' THEN 'Rests on a disputed report' ELSE reason END AS reason_label\n",
         "  FROM removed\n",
         ")\n",
-        "SELECT reason_label AS reason, count(*) AS sentences\n",
+        "SELECT\n",
+        "  reason_label AS reason,\n",
+        "  count(*) AS sentences,\n",
+        "  count(*) OVER (PARTITION BY count(*)) AS reasons_at_this_count\n",
         "FROM labelled\n",
         "GROUP BY reason_label\n",
         "ORDER BY sentences DESC, reason\n"
@@ -1597,7 +1600,10 @@
         "  SELECT run_id, CASE abstention WHEN 'too_few_comparables' THEN 'Too few comparable packages for a range' WHEN 'outside_training' THEN 'Outside what my model learned from' WHEN 'asof_before_training' THEN 'Asked as of a date before my first model' WHEN 'no_public_notice' THEN 'No public notice to measure from' WHEN 'none_measurable' THEN 'No comparable package to measure from' ELSE abstention END AS reason_label\n",
         "  FROM held\n",
         ")\n",
-        "SELECT reason_label AS reason, count(DISTINCT run_id) AS answers\n",
+        "SELECT\n",
+        "  reason_label AS reason,\n",
+        "  count(DISTINCT run_id) AS answers,\n",
+        "  count(*) OVER (PARTITION BY count(DISTINCT run_id)) AS reasons_at_this_count\n",
         "FROM labelled\n",
         "GROUP BY reason_label\n",
         "ORDER BY answers DESC, reason\n"

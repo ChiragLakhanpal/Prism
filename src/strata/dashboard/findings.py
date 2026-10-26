@@ -249,11 +249,10 @@ def foundry(engine: Engine, today: dt.date) -> tuple[str, dt.date | None]:
     return say.say("dash.ai.find.foundry.ran", "n", n=scored, day=say.day(day, today), **met), day
 
 
-def _tied(reasons: list[dict], column: str) -> int:
-    """How many reasons share the largest count, or 0 when one reason has it alone. The query sorts the largest
-    first, so a tie is the first rows with the same count."""
-    top = reasons[0][column]
-    tied = sum(1 for row in reasons if row[column] == top)
+def _tied(reasons: list[dict]) -> int:
+    """How many reasons share the largest count, from the query's own column, or 0 when one reason has it alone. The
+    query sorts the largest first."""
+    tied = int(reasons[0]["reasons_at_this_count"])
     return tied if tied > 1 else 0
 
 
@@ -268,7 +267,7 @@ def checks(engine: Engine, today: dt.date) -> tuple[str, dt.date | None]:
     written, count = int(removed["denominator"] or 0), int(removed["numerator"] or 0)
     if count:
         reasons = _rows(engine, "removed_reasons", start, today)
-        top, tied = reasons[0], _tied(reasons, "sentences")
+        top, tied = reasons[0], _tied(reasons)
         slots = {"day": day, "removed": count, "written": written, "topCount": int(top["sentences"])}
         text = (say.fill(say.at("dash.ai.find.checks.removedTied"), tied=tied, **slots) if tied
                 else say.fill(say.at("dash.ai.find.checks.removed"), reasonLabel=say.Unit(top["reason"]), **slots))
@@ -277,7 +276,7 @@ def checks(engine: Engine, today: dt.date) -> tuple[str, dt.date | None]:
     answers, held_count = int(held["denominator"]), int(held["numerator"] or 0)
     if held_count:
         reasons = _rows(engine, "held_reasons", start, today)
-        tied = _tied(reasons, "answers")
+        tied = _tied(reasons)
         text += " " + (say.fill(say.at("dash.ai.find.checks.heldTied"), held=held_count, answers=answers, tied=tied)
                        if tied else
                        say.fill(say.at("dash.ai.find.checks.held"), held=held_count, answers=answers,

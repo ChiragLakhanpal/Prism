@@ -1,6 +1,7 @@
 -- Tile 16: the answers in the dates chosen in which I held back, by the label of the reason a tool gave
 -- (copy.dash.ai.held), largest first, from strata.ops.tool_calls beside each run in strata.ops.agent_runs. An answer
 -- counts once for each reason it held back for. The codes are the ones KPI answers_held_back counts.
+-- reasons_at_this_count is how many reasons share the row's count of answers.
 WITH held AS (
   SELECT DISTINCT c.run_id, c.abstention
   FROM strata.ops.tool_calls AS c
@@ -13,7 +14,10 @@ labelled AS (
   SELECT run_id, :held_label__abstention AS reason_label
   FROM held
 )
-SELECT reason_label AS reason, count(DISTINCT run_id) AS answers
+SELECT
+  reason_label AS reason,
+  count(DISTINCT run_id) AS answers,
+  count(*) OVER (PARTITION BY count(DISTINCT run_id)) AS reasons_at_this_count
 FROM labelled
 GROUP BY reason_label
 ORDER BY answers DESC, reason

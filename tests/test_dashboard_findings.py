@@ -108,10 +108,18 @@ def test_the_week_a_sentence_names_is_the_latest_finished_one_never_a_week_still
     assert findings.last_finished_week(dt.date(2026, 10, 25)) == dt.date(2026, 10, 25)
 
 
-def test_a_reason_is_named_the_most_common_only_when_no_other_reason_has_its_count():
-    assert findings._tied([{"sentences": 2}, {"sentences": 1}], "sentences") == 0
-    assert findings._tied([{"answers": 1}, {"answers": 1}, {"answers": 1}], "answers") == 3
-    assert findings._tied([{"answers": 2}, {"answers": 2}, {"answers": 1}], "answers") == 2
+def test_each_reason_row_says_how_many_reasons_share_its_count_so_a_tie_is_a_query_column(written):
+    """The Checks on answers sentence names the most common reason only when no other reason has its count, and says
+    how many tied from this column, never from a count of its own (CLAUDE.md rule 1; review round 2, N3)."""
+    week = {"date_from": TODAY - dt.timedelta(days=6)}
+
+    assert [(row["reason"], row["sentences"], row["reasons_at_this_count"])
+            for row in rows(written, "removed_reasons", **week)] == [
+        ("Its sources don't say this", 1, 3), ("No record supports a number or date", 1, 3),
+        ("Quote not on the page it cites", 1, 3)]
+    assert [(row["reason"], row["answers"], row["reasons_at_this_count"])
+            for row in rows(written, "held_reasons", **week)] == [
+        ("Outside what my model learned from", 1, 2), ("Too few comparable packages for a range", 1, 2)]
 
 
 def test_each_loop_s_indicators_are_six_rows_in_loop_order_with_targets_and_where_each_stands_in_words(written):
