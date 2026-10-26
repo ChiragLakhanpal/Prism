@@ -653,12 +653,22 @@ def folders_in_testpaths():
         return [Path(path) for path in tomllib.load(handle)["tool"]["pytest"]["ini_options"]["testpaths"]]
 
 
+# The pytest options the steps file uses that take a value, so a value is never read as a tested path.
+OPTIONS_WITH_A_VALUE = ("--numprocesses", "--dist", "--basetemp")
+
+
+def pytest_args(step):
+    """What a pytest step passes after "pytest", or nothing when the step does not run pytest."""
+    return step["run"][step["run"].index("pytest") + 1:] if "pytest" in step["run"] else []
+
+
 def paths_tested(step):
-    """The paths a pytest step names after "pytest", or every folder in testpaths when it names none."""
+    """The paths a pytest step names, or every folder in testpaths when it names none."""
     if "pytest" not in step["run"]:
         return []
-    args = step["run"][step["run"].index("pytest") + 1:]
-    named = [Path(arg) for arg in args if not arg.startswith("-") and (ROOT / arg).exists()]
+    args = pytest_args(step)
+    values = {args[i + 1] for i, arg in enumerate(args[:-1]) if arg in OPTIONS_WITH_A_VALUE}
+    named = [Path(arg) for arg in args if not arg.startswith("-") and arg not in values and (ROOT / arg).exists()]
     return named or folders_in_testpaths()
 
 
@@ -714,6 +724,79 @@ def test_the_python_tests_that_read_the_fixture_database_run_on_pytest_xdist_wor
     readers = [step for step in gate_steps() if reads_the_fixture_database(step)]
 
     assert readers and all(workers(step) > 1 for step in readers), [step["run"] for step in readers]
+
+
+# The gate's pytest scratch (ticket 73). A run the limit stops leaves its folder where the next run
+# clears it, in a folder of its own under .gate-tmp/, not locked for three days in pytest's shared
+# temporary folder, which 301 stopped runs, about 408 GB, filled on October 25, 2026.
+SCRATCH = Path(".gate-tmp")
+
+
+def scratch_folder(step):
+    """The folder a pytest step gives --basetemp, or None when it gives none."""
+    args = pytest_args(step)
+    return Path(args[args.index("--basetemp") + 1]) if "--basetemp" in args[:-1] else None
+
+
+def pytest_steps_without_a_scratch_folder_of_their_own(steps):
+    """The pytest steps whose --basetemp is missing, lies outside .gate-tmp/, or is another step's too."""
+    folders = {step["name"]: scratch_folder(step) for step in steps if "pytest" in step["run"]}
+    shared = [folder for folder in folders.values() if folder and list(folders.values()).count(folder) > 1]
+    return [name for name, folder in folders.items()
+            if folder is None or SCRATCH not in folder.parents or folder in shared]
+
+
+def test_each_pytest_step_keeps_its_scratch_in_a_folder_of_its_own_under_gate_tmp():
+    assert pytest_steps_without_a_scratch_folder_of_their_own(gate_steps()) == []
+    assert ".gate-tmp/" in (ROOT / ".gitignore").read_text().splitlines()
+
+
+def test_a_passing_test_keeps_no_temporary_folder():
+    """Most tests copy the 38 MB fixture into their tmp_path, so a run that kept every folder held about 7 GB."""
+    with open(ROOT / "pyproject.toml", "rb") as handle:
+        options = tomllib.load(handle)["tool"]["pytest"]["ini_options"]
+
+    assert options["tmp_path_retention_policy"] == "failed"
+
+
+# Edits to the app lane's pytest step that the scratch check must catch, each named by what it does.
+SCRATCH_EDITS = {
+    "no --basetemp": ["uv", "run", "--frozen", "pytest", "ops/app/tests"],
+    "a folder outside .gate-tmp": ["uv", "run", "--frozen", "pytest", "--basetemp", "/tmp/strata", "ops/app/tests"],
+    ".gate-tmp itself": ["uv", "run", "--frozen", "pytest", "--basetemp", ".gate-tmp", "ops/app/tests"],
+    "--basetemp with no folder after it": ["uv", "run", "--frozen", "pytest", "ops/app/tests", "--basetemp"],
+    "the python lane's folder": ["uv", "run", "--frozen", "pytest", "--basetemp", ".gate-tmp/python", "ops/app/tests"],
+}
+
+
+@pytest.mark.parametrize("run", SCRATCH_EDITS.values(), ids=SCRATCH_EDITS.keys())
+def test_a_pytest_step_without_a_scratch_folder_of_its_own_fails_the_check(run):
+    steps = gate_steps()
+    app = next(step for step in steps if step["run"][-1] == "ops/app/tests")
+    app["run"] = run
+
+    assert app["name"] in pytest_steps_without_a_scratch_folder_of_their_own(steps)
+
+
+def test_the_gate_makes_the_scratch_folder_for_a_step_that_names_it(repo):
+    """pytest's --basetemp needs the folder's parent to exist, so the gate makes .gate-tmp/ before the steps run."""
+    write(repo, "gates/steps.toml", steps_file(steps=[("Need the scratch folder", '["ls", "-d", ".gate-tmp"]')]))
+    git(repo, "add", "-A")
+
+    done = commit(repo)
+
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert (repo / ".gate-tmp").is_dir()
+
+
+def test_the_gate_makes_no_scratch_folder_when_no_step_names_it(repo):
+    write(repo, "gates/steps.toml", steps_file(steps=[("Pass", '["true"]')]))
+    git(repo, "add", "-A")
+
+    done = commit(repo)
+
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert not (repo / ".gate-tmp").exists()
 
 
 # Edits to the steps file that the two checks above must catch: each adds a second pytest step,

@@ -121,6 +121,17 @@ def test_the_dashboard_file_says_what_its_definition_in_code_says():
     assert dashboard.FILE.read_text() == dashboard.written(), "run: uv run --frozen python -m strata.dashboard --write"
 
 
+def test_no_dashboard_file_holds_a_bundle_variable_reference():
+    """The Databricks CLI reads ${name} inside a dashboard file as a bundle variable (ticket 71: the deploy of
+    October 26, 2026 failed on the money tile's US${spent}), so the writer joins such words from parts."""
+    for path in (dashboard.FILE, dashboard.TEST_FILE):
+        assert "${" not in path.read_text(), path.name
+    from strata.dashboard.render import _literal
+
+    assert _literal("US${spent} of US${budget}") == "concat('US$', '{spent} of US$', '{budget}')"
+    assert _literal("plain words") == "'plain words'"
+
+
 def test_the_bundle_deploys_the_dashboard_file_with_each_viewer_s_own_credentials():
     declared = bundle.load().resources("dashboards")["strata_dashboard"]
 

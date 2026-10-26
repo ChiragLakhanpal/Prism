@@ -1,0 +1,1823 @@
+{
+  "about": "Known-good AI/BI dashboard widgets, by kind, for ticket 68. The deployed dashboard showed \"Invalid widget definition is imported.\" on some tiles on October 25, 2026, and no export of a dashboard made in Strata's own workspace was at hand, so each example is a widget copied as it is, without its position, from a dashboard file that Databricks publishes or that a workspace's dashboard editor exported. filter-text-entry, which no export shows, comes from Databricks' own reference. sources names each file's repository, commit and path. tests/test_dashboard_widgets.py checks every widget strata.dashboard writes against its kind: the version for its widget type, the fields in required (every example of the kind carries them, and the test checks that too), the values in equals, and no field or enum value that no example of the kind carries. A format, frame or scale may use any field that any example's format, frame or scale uses. To add a workspace export, name its file under sources and add its widgets to their kind's examples.",
+  "sources": {
+    "bundle-examples-cdc": {
+      "repository": "databricks/bundle-examples",
+      "commit": "463e8383903666046f48ae3babbf77d5615c7ab4",
+      "committed": "2026-10-01",
+      "path": "contrib/databricks_ingestion_monitoring/cdc_connector_monitoring_dab/dashboards/CDC Connector Monitoring Dashboard Template.lvdash.json"
+    },
+    "bundle-examples-nyc-taxi": {
+      "repository": "databricks/bundle-examples",
+      "commit": "463e8383903666046f48ae3babbf77d5615c7ab4",
+      "committed": "2026-10-01",
+      "path": "knowledge_base/dashboard_nyc_taxi/src/nyc_taxi_trip_analysis.lvdash.json"
+    },
+    "cloud-infra-costs-aws": {
+      "repository": "databricks-solutions/cloud-infra-costs",
+      "commit": "729e95daf7e13342bc21e872ac6c2af9ee3b6563",
+      "committed": "2026-10-20",
+      "path": "aws/src/aws_cost_dashboard.lvdash.json"
+    },
+    "cloud-infra-costs-azure": {
+      "repository": "databricks-solutions/cloud-infra-costs",
+      "commit": "729e95daf7e13342bc21e872ac6c2af9ee3b6563",
+      "committed": "2026-10-20",
+      "path": "azure/src/azure_cost_dashboard.lvdash.json"
+    },
+    "databricks-aibi-filters": {
+      "repository": "databricks/databricks-agent-skills",
+      "commit": "54dce3ff94d8157a3305155e2e4ec0855d0ec765",
+      "committed": "2026-10-24",
+      "path": "skills/databricks-aibi-dashboards/references/3-filters.md"
+    },
+    "dbdemos-customer-support": {
+      "repository": "databricks-demos/dbdemos-notebooks",
+      "commit": "234b6d7f8abe8c2e1b16f8a967506eea97f2f33d",
+      "committed": "2026-10-13",
+      "path": "aibi/aibi-customer-support/_resources/dashboards/customer-support.lvdash.json"
+    },
+    "dbdemos-genie-code-metrics": {
+      "repository": "databricks-demos/dbdemos-notebooks",
+      "commit": "234b6d7f8abe8c2e1b16f8a967506eea97f2f33d",
+      "committed": "2026-10-13",
+      "path": "product_demos/Unity-Catalog/uc-04-system-tables/_resources/dashboards/genie-code-metrics.lvdash.json"
+    },
+    "model-serving-cost": {
+      "repository": "tiantan32/Model-Serving-Cost-Attribution-Dashboard",
+      "commit": "df78e37f0b0ed0147af6fbcc34103e0f50fd9690",
+      "committed": "2025-06-25",
+      "path": "Model Serving Cost Attribution.lvdash.json"
+    },
+    "oulad-quality": {
+      "repository": "killuazai/oulad-dataset",
+      "commit": "98181818d7bcdf1f1b87db8c64b2a87b4da7a075",
+      "committed": "2026-09-10",
+      "path": "dashboards/OULAD Data Quality Monitoring.lvdash.json"
+    },
+    "tmm-genie-usage": {
+      "repository": "databricks/tmm",
+      "commit": "2d83fd197c6b6c8db5b96e935ccb7c8a0dcb88c8",
+      "committed": "2026-10-22",
+      "path": "System-Tables-Demo/Genie-Observability/Genie Usage Dashboard.lvdash.json"
+    }
+  },
+  "sharedObjects": [
+    "format",
+    "frame",
+    "scale"
+  ],
+  "enumKeys": [
+    "type",
+    "widgetType",
+    "by",
+    "layout",
+    "date",
+    "time",
+    "cellType",
+    "abbreviation",
+    "direction"
+  ],
+  "kinds": {
+    "text": {
+      "widgetTypes": {},
+      "required": [
+        "name",
+        "multilineTextboxSpec.lines"
+      ],
+      "equals": {},
+      "examples": [
+        {
+          "source": "bundle-examples-cdc",
+          "widget": {
+            "name": "c1f6e5a8",
+            "multilineTextboxSpec": {
+              "lines": [
+                "# Errors"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "table": {
+      "widgetTypes": {
+        "table": 2
+      },
+      "required": [
+        "name",
+        "queries[].name",
+        "queries[].query.datasetName",
+        "queries[].query.fields[].name",
+        "queries[].query.fields[].expression",
+        "queries[].query.disaggregated",
+        "spec.encodings.columns[].fieldName",
+        "spec.frame.showTitle",
+        "spec.frame.title"
+      ],
+      "equals": {},
+      "examples": [
+        {
+          "source": "tmm-genie-usage",
+          "widget": {
+            "name": "84103572",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "user_summary",
+                  "fields": [
+                    {
+                      "name": "user",
+                      "expression": "`user`"
+                    },
+                    {
+                      "name": "genie_code_free_dbus",
+                      "expression": "`genie_code_free_dbus`"
+                    },
+                    {
+                      "name": "genie_code_paid_cost",
+                      "expression": "`genie_code_paid_cost`"
+                    }
+                  ],
+                  "disaggregated": true,
+                  "orders": [
+                    {
+                      "direction": "DESC",
+                      "expression": "`genie_code_free_dbus`"
+                    }
+                  ]
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "User-level breakdown, cross-surface",
+                "showTitle": true,
+                "showDescription": true,
+                "description": "Free usage DBU was only exposed starting 07/20/26 in system tables - free usage counts are partial in this month"
+              },
+              "widgetType": "table",
+              "encodings": {
+                "columns": [
+                  {
+                    "fieldName": "user",
+                    "displayName": "User"
+                  },
+                  {
+                    "fieldName": "genie_code_free_dbus",
+                    "format": {
+                      "type": "number-plain",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "exact",
+                        "places": 2
+                      },
+                      "hideGroupSeparator": true
+                    },
+                    "style": {
+                      "type": "basic",
+                      "rules": [
+                        {
+                          "condition": {
+                            "operand": {
+                              "type": "data-value",
+                              "value": "120"
+                            },
+                            "operator": ">="
+                          },
+                          "backgroundColor": {
+                            "themeColorType": "visualizationColors",
+                            "position": 7
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "fieldName": "genie_code_paid_cost",
+                    "format": {
+                      "type": "number-currency",
+                      "currencyCode": "USD",
+                      "abbreviation": "compact",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 2
+                      }
+                    },
+                    "displayName": "Code Paid ($)"
+                  }
+                ],
+                "rowOrder": [
+                  {
+                    "by": "column-reversed",
+                    "field": {
+                      "index": 1
+                    }
+                  }
+                ]
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          }
+        },
+        {
+          "source": "oulad-quality",
+          "widget": {
+            "name": "volume_bar",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "dq_volume_history",
+                  "fields": [
+                    {
+                      "name": "dataset_name",
+                      "expression": "`dataset_name`"
+                    },
+                    {
+                      "name": "observed_row_count",
+                      "expression": "`observed_row_count`"
+                    },
+                    {
+                      "name": "difference_from_baseline",
+                      "expression": "`difference_from_baseline`"
+                    },
+                    {
+                      "name": "status",
+                      "expression": "`status`"
+                    },
+                    {
+                      "name": "executed_at",
+                      "expression": "`executed_at`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "Source Volume by Dataset",
+                  "fields": []
+                }
+              },
+              "version": 2,
+              "widgetType": "table",
+              "encodings": {
+                "columns": [
+                  {
+                    "fieldName": "dataset_name",
+                    "displayName": "Dataset"
+                  },
+                  {
+                    "fieldName": "observed_row_count",
+                    "format": {
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "places": 0,
+                        "type": "exact"
+                      },
+                      "hideGroupSeparator": false,
+                      "type": "number-plain"
+                    },
+                    "displayName": "Observed Rows"
+                  },
+                  {
+                    "fieldName": "difference_from_baseline",
+                    "format": {
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "places": 0,
+                        "type": "exact"
+                      },
+                      "hideGroupSeparator": false,
+                      "type": "number-plain"
+                    },
+                    "displayName": "Diff from Baseline"
+                  },
+                  {
+                    "fieldName": "status",
+                    "displayName": "Status"
+                  },
+                  {
+                    "fieldName": "executed_at",
+                    "format": {
+                      "date": "locale-short-month",
+                      "time": "locale-hour-minute",
+                      "type": "date-time"
+                    },
+                    "displayName": "Executed At"
+                  }
+                ]
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "chart": {
+      "widgetTypes": {
+        "bar": 3,
+        "line": 3,
+        "scatter": 3
+      },
+      "required": [
+        "name",
+        "queries[].name",
+        "queries[].query.datasetName",
+        "queries[].query.fields[].name",
+        "queries[].query.fields[].expression",
+        "queries[].query.disaggregated",
+        "spec.encodings.x.scale.type",
+        "spec.encodings.y.scale.type"
+      ],
+      "equals": {},
+      "examples": [
+        {
+          "source": "tmm-genie-usage",
+          "widget": {
+            "name": "47b5b381",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "genie_daily_all",
+                  "fields": [
+                    {
+                      "name": "workspace_name",
+                      "expression": "`workspace_name`"
+                    },
+                    {
+                      "name": "usage_date",
+                      "expression": "`usage_date`"
+                    },
+                    {
+                      "name": "sum(cost)",
+                      "expression": "SUM(`cost`)"
+                    }
+                  ],
+                  "filters": [
+                    {
+                      "expression": "`genie_surface` IN ('GENIE_ONE')"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "title": "Cost by Day",
+                "showTitle": true,
+                "showDescription": true,
+                "description": "Paid Genie One costs per day"
+              },
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "usage_date",
+                  "scale": {
+                    "type": "temporal"
+                  }
+                },
+                "y": {
+                  "fieldName": "sum(cost)",
+                  "format": {
+                    "type": "number-currency",
+                    "currencyCode": "USD",
+                    "abbreviation": "compact",
+                    "decimalPlaces": {
+                      "type": "max",
+                      "places": 2
+                    }
+                  },
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "color": {
+                  "fieldName": "workspace_name",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          }
+        },
+        {
+          "source": "bundle-examples-cdc",
+          "widget": {
+            "name": "6e698544",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "2faba057",
+                  "fields": [
+                    {
+                      "name": "Pipeline Name",
+                      "expression": "`Pipeline Name`"
+                    },
+                    {
+                      "name": "hourly(Hour)",
+                      "expression": "DATE_TRUNC(\"HOUR\", `Hour`)"
+                    },
+                    {
+                      "name": "sum(Number of Errors)",
+                      "expression": "SUM(`Number of Errors`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "line",
+              "encodings": {
+                "x": {
+                  "fieldName": "hourly(Hour)",
+                  "scale": {
+                    "type": "temporal"
+                  },
+                  "displayName": "Hour"
+                },
+                "y": {
+                  "fieldName": "sum(Number of Errors)",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "color": {
+                  "fieldName": "Pipeline Name",
+                  "scale": {
+                    "type": "categorical"
+                  },
+                  "displayName": "Pipeline Name"
+                },
+                "label": {
+                  "show": false
+                }
+              },
+              "annotations": [],
+              "frame": {
+                "showDescription": true,
+                "showTitle": true,
+                "title": "Hourly error rate",
+                "description": "The number of errors per hour across selected pipelines"
+              }
+            }
+          }
+        },
+        {
+          "source": "bundle-examples-nyc-taxi",
+          "widget": {
+            "name": "35a5a364",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "3f5450e6",
+                  "disaggregated": true,
+                  "fields": [
+                    {
+                      "expression": "`day_of_week`",
+                      "name": "day_of_week"
+                    },
+                    {
+                      "expression": "`fare_amount`",
+                      "name": "fare_amount"
+                    },
+                    {
+                      "expression": "`trip_distance`",
+                      "name": "trip_distance"
+                    }
+                  ]
+                }
+              }
+            ],
+            "spec": {
+              "encodings": {
+                "color": {
+                  "displayName": "Day of Week",
+                  "fieldName": "day_of_week",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "x": {
+                  "axis": {
+                    "title": "Trip Distance (miles)"
+                  },
+                  "displayName": "trip_distance",
+                  "fieldName": "trip_distance",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "y": {
+                  "axis": {
+                    "title": "Fare Amount (USD)"
+                  },
+                  "displayName": "fare_amount",
+                  "fieldName": "fare_amount",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Daily Fare Trends by Day of Week"
+              },
+              "version": 3,
+              "widgetType": "scatter"
+            }
+          }
+        },
+        {
+          "source": "tmm-genie-usage",
+          "widget": {
+            "name": "c5bc8763",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "genie_agents_by_agent_id",
+                  "fields": [
+                    {
+                      "name": "agent_id",
+                      "expression": "`agent_id`"
+                    },
+                    {
+                      "name": "sum(free_dbus)",
+                      "expression": "SUM(`free_dbus`)"
+                    },
+                    {
+                      "name": "sum(paid_dbus)",
+                      "expression": "SUM(`paid_dbus`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "title": "Top 20 Agents by DBUs (Free and Paid)",
+                "showTitle": true
+              },
+              "mark": {
+                "layout": "stack"
+              },
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "agent_id",
+                  "displayName": "Agent ID",
+                  "scale": {
+                    "type": "categorical",
+                    "categorySize": {
+                      "type": "number-of-categories",
+                      "number": 20
+                    },
+                    "sort": {
+                      "by": "y-reversed"
+                    }
+                  }
+                },
+                "y": {
+                  "fields": [
+                    {
+                      "fieldName": "sum(free_dbus)",
+                      "displayName": "Free DBUs"
+                    },
+                    {
+                      "fieldName": "sum(paid_dbus)",
+                      "displayName": "Paid DBUs"
+                    }
+                  ],
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          }
+        },
+        {
+          "source": "bundle-examples-cdc",
+          "widget": {
+            "name": "dd54ef0b",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "19d796af",
+                  "fields": [
+                    {
+                      "name": "Status String",
+                      "expression": "`Status String`"
+                    },
+                    {
+                      "name": "Pipeline Name",
+                      "expression": "`Pipeline Name`"
+                    },
+                    {
+                      "name": "minutely(Create time)",
+                      "expression": "DATE_TRUNC(\"MINUTE\", `Create time`)"
+                    },
+                    {
+                      "name": "sum(Total seconds)",
+                      "expression": "SUM(`Total seconds`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "minutely(Create time)",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "y": {
+                  "fieldName": "sum(Total seconds)",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "color": {
+                  "fieldName": "Status String",
+                  "scale": {
+                    "type": "categorical",
+                    "mappings": [
+                      {
+                        "value": "COMPLETED",
+                        "color": {
+                          "themeColorType": "visualizationColors",
+                          "position": 3
+                        }
+                      },
+                      {
+                        "value": "FAILED",
+                        "color": {
+                          "themeColorType": "visualizationColors",
+                          "position": 4
+                        }
+                      },
+                      {
+                        "value": "WAITING_FOR_RESOURCES",
+                        "color": {
+                          "themeColorType": "visualizationColors",
+                          "position": 5
+                        }
+                      }
+                    ]
+                  }
+                },
+                "extra": [
+                  {
+                    "fieldName": "Pipeline Name"
+                  }
+                ]
+              },
+              "frame": {
+                "showTitle": true,
+                "showDescription": true,
+                "title": "Total time of pipeline runs",
+                "description": "Total execution time and final status for recent pipeline runs"
+              }
+            }
+          }
+        },
+        {
+          "source": "oulad-quality",
+          "widget": {
+            "name": "suite_bar",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "dq_layer_scores",
+                  "fields": [
+                    {
+                      "name": "score_category",
+                      "expression": "`score_category`"
+                    },
+                    {
+                      "name": "sum(total_checks)",
+                      "expression": "SUM(`total_checks`)"
+                    },
+                    {
+                      "name": "sum(warning_checks)",
+                      "expression": "SUM(`warning_checks`)"
+                    },
+                    {
+                      "name": "sum(failed_checks)",
+                      "expression": "SUM(`failed_checks`)"
+                    },
+                    {
+                      "name": "sum(weighted_quality_score_pct)",
+                      "expression": "SUM(`weighted_quality_score_pct`)"
+                    },
+                    {
+                      "name": "layer",
+                      "expression": "`layer`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "showTitle": true,
+                "title": {
+                  "value": "Current Quality Score by Validation Suite",
+                  "fields": []
+                }
+              },
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "sum(weighted_quality_score_pct)",
+                  "displayName": "Quality Score %",
+                  "scale": {
+                    "type": "quantitative",
+                    "domain": {
+                      "min": 0,
+                      "max": 100
+                    }
+                  }
+                },
+                "y": {
+                  "fieldName": "layer",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "color": {
+                  "fieldName": "score_category",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "extra": [
+                  {
+                    "fieldName": "sum(total_checks)"
+                  },
+                  {
+                    "fieldName": "sum(warning_checks)"
+                  },
+                  {
+                    "fieldName": "sum(failed_checks)"
+                  }
+                ]
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          }
+        },
+        {
+          "source": "bundle-examples-nyc-taxi",
+          "widget": {
+            "name": "64a2a1f5",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "3f5450e6",
+                  "disaggregated": false,
+                  "fields": [
+                    {
+                      "expression": "COUNT(`*`)",
+                      "name": "count(*)"
+                    },
+                    {
+                      "expression": "DATE_TRUNC(\"HOUR\", `tpep_dropoff_datetime`)",
+                      "name": "hourly(tpep_dropoff_datetime)"
+                    }
+                  ]
+                }
+              }
+            ],
+            "spec": {
+              "encodings": {
+                "x": {
+                  "axis": {
+                    "title": "Dropoff Hour"
+                  },
+                  "displayName": "Dropoff Hour",
+                  "fieldName": "hourly(tpep_dropoff_datetime)",
+                  "scale": {
+                    "type": "temporal"
+                  }
+                },
+                "y": {
+                  "axis": {
+                    "title": "Number of Rides"
+                  },
+                  "displayName": "Number of Rides",
+                  "fieldName": "count(*)",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Dropoff Hour Distribution"
+              },
+              "mark": {
+                "colors": [
+                  "#FFAB00",
+                  "#FFAB00",
+                  "#00A972",
+                  "#FF3621",
+                  "#8BCAE7",
+                  "#AB4057",
+                  "#99DDB4",
+                  "#FCA4A1",
+                  "#919191",
+                  "#BF7080"
+                ]
+              },
+              "version": 3,
+              "widgetType": "bar"
+            }
+          }
+        },
+        {
+          "source": "dbdemos-genie-code-metrics",
+          "widget": {
+            "name": "hourly_bar",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "hourly_patterns",
+                  "fields": [
+                    {
+                      "name": "hour_of_day",
+                      "expression": "`hour_of_day`"
+                    },
+                    {
+                      "name": "sum(submissions)",
+                      "expression": "SUM(`submissions`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "showTitle": true,
+                "title": "Activity by Hour",
+                "showDescription": true,
+                "description": "Total submissions by hour (UTC)"
+              },
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "hour_of_day",
+                  "displayName": "Hour (UTC)",
+                  "scale": {
+                    "type": "categorical",
+                    "sort": {
+                      "by": "natural-order"
+                    }
+                  }
+                },
+                "y": {
+                  "fieldName": "sum(submissions)",
+                  "displayName": "Submissions",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "source": "dbdemos-customer-support",
+          "widget": {
+            "name": "s_bar_priority",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "ds_metrics",
+                  "fields": [
+                    {
+                      "name": "Priority Level",
+                      "expression": "`Priority Level`"
+                    },
+                    {
+                      "name": "Channel",
+                      "expression": "`Channel`"
+                    },
+                    {
+                      "name": "measure(Total Cases)",
+                      "expression": "MEASURE(`Total Cases`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "mark": {
+                "layout": "group"
+              },
+              "encodings": {
+                "x": {
+                  "fieldName": "Channel",
+                  "scale": {
+                    "type": "categorical"
+                  },
+                  "displayName": "Channel"
+                },
+                "y": {
+                  "fieldName": "measure(Total Cases)",
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "displayName": "Cases"
+                },
+                "color": {
+                  "fieldName": "Priority Level",
+                  "scale": {
+                    "type": "categorical"
+                  },
+                  "displayName": "Priority"
+                }
+              },
+              "frame": {
+                "title": "Volume by Channel & Priority",
+                "showTitle": true
+              }
+            }
+          }
+        }
+      ]
+    },
+    "pivot": {
+      "widgetTypes": {
+        "pivot": 3
+      },
+      "required": [
+        "name",
+        "queries[].name",
+        "queries[].query.datasetName",
+        "queries[].query.fields[].name",
+        "queries[].query.fields[].expression",
+        "queries[].query.cubeGroupingSets.sets",
+        "queries[].query.orders",
+        "spec.encodings.rows[].fieldName",
+        "spec.encodings.cell.type",
+        "spec.encodings.cell.fields[].fieldName",
+        "spec.encodings.cell.fields[].cellType"
+      ],
+      "equals": {
+        "queries[].query.disaggregated": false
+      },
+      "examples": [
+        {
+          "source": "cloud-infra-costs-aws",
+          "widget": {
+            "name": "531da5ee",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "9190182f",
+                  "fields": [
+                    {
+                      "name": "sku_name",
+                      "expression": "`sku_name`"
+                    },
+                    {
+                      "name": "daily(usage_date)",
+                      "expression": "DATE_TRUNC(\"DAY\", `usage_date`)"
+                    },
+                    {
+                      "name": "sum(cloud_cost_compute_dollars)",
+                      "expression": "SUM(`cloud_cost_compute_dollars`)"
+                    },
+                    {
+                      "name": "sum(cloud_cost_networking_dollars)",
+                      "expression": "SUM(`cloud_cost_networking_dollars`)"
+                    },
+                    {
+                      "name": "sum(cloud_cost_storage_dollars)",
+                      "expression": "SUM(`cloud_cost_storage_dollars`)"
+                    },
+                    {
+                      "name": "sum(total_cloud_cost_dollars)",
+                      "expression": "SUM(`total_cloud_cost_dollars`)"
+                    },
+                    {
+                      "name": "sum(databricks_cost_dollars)",
+                      "expression": "SUM(`databricks_cost_dollars`)"
+                    },
+                    {
+                      "name": "sum(total_cost_dollars)",
+                      "expression": "SUM(`total_cost_dollars`)"
+                    }
+                  ],
+                  "cubeGroupingSets": {
+                    "sets": [
+                      {
+                        "fieldNames": [
+                          "sku_name"
+                        ]
+                      },
+                      {
+                        "fieldNames": [
+                          "daily(usage_date)"
+                        ]
+                      }
+                    ]
+                  },
+                  "disaggregated": false,
+                  "orders": [
+                    {
+                      "direction": "ASC",
+                      "expression": "`sku_name`"
+                    },
+                    {
+                      "direction": "ASC",
+                      "expression": "DATE_TRUNC(\"DAY\", `usage_date`)"
+                    }
+                  ]
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "pivot",
+              "encodings": {
+                "rows": [
+                  {
+                    "fieldName": "sku_name",
+                    "displayName": "SKU"
+                  }
+                ],
+                "columns": [
+                  {
+                    "fieldName": "daily(usage_date)",
+                    "displayName": "Date"
+                  }
+                ],
+                "cell": {
+                  "type": "multi-cell",
+                  "fields": [
+                    {
+                      "fieldName": "sum(cloud_cost_compute_dollars)",
+                      "cellType": "text",
+                      "format": {
+                        "type": "number-currency",
+                        "currencyCode": "USD",
+                        "abbreviation": "none",
+                        "decimalPlaces": {
+                          "type": "exact",
+                          "places": 2
+                        },
+                        "hideGroupSeparator": true
+                      },
+                      "displayName": "AWS Compute"
+                    },
+                    {
+                      "fieldName": "sum(cloud_cost_networking_dollars)",
+                      "cellType": "text",
+                      "format": {
+                        "type": "number-currency",
+                        "currencyCode": "USD",
+                        "abbreviation": "none",
+                        "decimalPlaces": {
+                          "type": "exact",
+                          "places": 2
+                        },
+                        "hideGroupSeparator": true
+                      },
+                      "displayName": "AWS Networking"
+                    },
+                    {
+                      "fieldName": "sum(cloud_cost_storage_dollars)",
+                      "cellType": "text",
+                      "format": {
+                        "type": "number-currency",
+                        "currencyCode": "USD",
+                        "abbreviation": "none",
+                        "decimalPlaces": {
+                          "type": "exact",
+                          "places": 2
+                        },
+                        "hideGroupSeparator": true
+                      },
+                      "displayName": "AWS Storage"
+                    },
+                    {
+                      "fieldName": "sum(total_cloud_cost_dollars)",
+                      "cellType": "text",
+                      "format": {
+                        "type": "number-currency",
+                        "currencyCode": "USD",
+                        "abbreviation": "none",
+                        "decimalPlaces": {
+                          "type": "exact",
+                          "places": 2
+                        },
+                        "hideGroupSeparator": true
+                      },
+                      "displayName": "AWS Total"
+                    },
+                    {
+                      "fieldName": "sum(databricks_cost_dollars)",
+                      "cellType": "text",
+                      "format": {
+                        "type": "number-currency",
+                        "currencyCode": "USD",
+                        "abbreviation": "none",
+                        "decimalPlaces": {
+                          "type": "exact",
+                          "places": 2
+                        },
+                        "hideGroupSeparator": true
+                      },
+                      "displayName": "Databricks Total"
+                    },
+                    {
+                      "fieldName": "sum(total_cost_dollars)",
+                      "cellType": "text",
+                      "format": {
+                        "type": "number-currency",
+                        "currencyCode": "USD",
+                        "abbreviation": "none",
+                        "decimalPlaces": {
+                          "type": "exact",
+                          "places": 2
+                        },
+                        "hideGroupSeparator": true
+                      },
+                      "style": {
+                        "type": "color-scale",
+                        "backgroundColor": {
+                          "scale": {
+                            "type": "quantitative",
+                            "colorRamp": {
+                              "mode": "scheme",
+                              "scheme": "spectral"
+                            }
+                          }
+                        }
+                      },
+                      "displayName": "Total"
+                    }
+                  ],
+                  "displayAs": "columns"
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Cost by SKU"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "counter": {
+      "widgetTypes": {
+        "counter": 2
+      },
+      "required": [
+        "name",
+        "queries[].name",
+        "queries[].query.datasetName",
+        "queries[].query.fields[].name",
+        "queries[].query.fields[].expression",
+        "queries[].query.disaggregated",
+        "spec.encodings.value.fieldName"
+      ],
+      "equals": {},
+      "examples": [
+        {
+          "source": "bundle-examples-cdc",
+          "widget": {
+            "name": "83ad2cf3",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "b18ee129",
+                  "fields": [
+                    {
+                      "name": "count(*)",
+                      "expression": "COUNT(`*`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "count(*)"
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Number of Selected Tables",
+                "showDescription": true,
+                "description": "See \"Selected Tables\" below"
+              }
+            }
+          }
+        },
+        {
+          "source": "dbdemos-genie-code-metrics",
+          "widget": {
+            "name": "counter_data_through",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "596c7066",
+                  "fields": [
+                    {
+                      "name": "max(event_date)",
+                      "expression": "MAX(`event_date`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "showTitle": true,
+                "title": "Data Through",
+                "showDescription": true,
+                "description": "Most recent event in dataset"
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "max(event_date)",
+                  "format": {
+                    "type": "date",
+                    "date": "locale-short-month"
+                  },
+                  "displayName": "Data Through"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "filter": {
+      "widgetTypes": {
+        "filter-date-picker": 2,
+        "filter-date-range-picker": 2,
+        "filter-single-select": 2,
+        "filter-text-entry": 2
+      },
+      "required": [
+        "name",
+        "queries[].name",
+        "queries[].query.datasetName",
+        "spec.encodings.fields[].queryName",
+        "spec.frame.showTitle",
+        "spec.frame.title"
+      ],
+      "equals": {},
+      "examples": [
+        {
+          "source": "model-serving-cost",
+          "widget": {
+            "name": "423beb24",
+            "queries": [
+              {
+                "name": "parameter_dashboards/01f03b7f9cd31dea9209dace0bc1f8b1/datasets/01f03b7fa2d817a1bd9d6ecc775e94ee_start_date",
+                "query": {
+                  "datasetName": "69ebd6fc",
+                  "parameters": [
+                    {
+                      "name": "start_date",
+                      "keyword": "start_date"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "parameter_dashboards/01f03b7f9cd31dea9209dace0bc1f8b1/datasets/01f03b823052197b8752819e8c306239_start_date",
+                "query": {
+                  "datasetName": "3ac0c15e",
+                  "parameters": [
+                    {
+                      "name": "start_date",
+                      "keyword": "start_date"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "filter-date-picker",
+              "encodings": {
+                "fields": [
+                  {
+                    "parameterName": "start_date",
+                    "queryName": "parameter_dashboards/01f03b7f9cd31dea9209dace0bc1f8b1/datasets/01f03b7fa2d817a1bd9d6ecc775e94ee_start_date"
+                  },
+                  {
+                    "parameterName": "start_date",
+                    "queryName": "parameter_dashboards/01f03b7f9cd31dea9209dace0bc1f8b1/datasets/01f03b823052197b8752819e8c306239_start_date"
+                  }
+                ]
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Date Range"
+              }
+            }
+          }
+        },
+        {
+          "source": "bundle-examples-cdc",
+          "widget": {
+            "name": "cc47542d",
+            "queries": [
+              {
+                "name": "dashboards/01f097e16d3b145a851abc79c8c30922/datasets/01f09979986011938281b2e91deeb22e_event_timestamp",
+                "query": {
+                  "datasetName": "5e3eb18f",
+                  "fields": [
+                    {
+                      "name": "event_timestamp",
+                      "expression": "`event_timestamp`"
+                    },
+                    {
+                      "name": "event_timestamp_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "parameter_dashboards/01f097e16d3b145a851abc79c8c30922/datasets/01f0997998601166bd423ceb08ab0480_event_range",
+                "query": {
+                  "datasetName": "19d796af",
+                  "parameters": [
+                    {
+                      "name": "event_range",
+                      "keyword": "event_range"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "parameter_dashboards/01f097e16d3b145a851abc79c8c30922/datasets/01f09b17b212157aaf06cacc9e20a714_event_range",
+                "query": {
+                  "datasetName": "82c4e3b5",
+                  "parameters": [
+                    {
+                      "name": "event_range",
+                      "keyword": "event_range"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "parameter_dashboards/01f097e16d3b145a851abc79c8c30922/datasets/01f09b1d1f751ec0a5513c9b7bbc36ba_event_range",
+                "query": {
+                  "datasetName": "c0688ffc",
+                  "parameters": [
+                    {
+                      "name": "event_range",
+                      "keyword": "event_range"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "parameter_dashboards/01f097e16d3b145a851abc79c8c30922/datasets/01f09b357c42177b884faa4ece765b86_event_range",
+                "query": {
+                  "datasetName": "3b8b7d86",
+                  "parameters": [
+                    {
+                      "name": "event_range",
+                      "keyword": "event_range"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "parameter_dashboards/01f097e16d3b145a851abc79c8c30922/datasets/01f09b368fb01653b59b6beab34c1a0e_event_range",
+                "query": {
+                  "datasetName": "8897fc81",
+                  "parameters": [
+                    {
+                      "name": "event_range",
+                      "keyword": "event_range"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "parameter_dashboards/01f097e16d3b145a851abc79c8c30922/datasets/01f09b3922e015488ee3e51f8258cb39_event_range",
+                "query": {
+                  "datasetName": "2faba057",
+                  "parameters": [
+                    {
+                      "name": "event_range",
+                      "keyword": "event_range"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "parameter_dashboards/01f097e16d3b145a851abc79c8c30922/datasets/01f0a07596bd183e8afc05567f618049_event_range",
+                "query": {
+                  "datasetName": "62d03d54",
+                  "parameters": [
+                    {
+                      "name": "event_range",
+                      "keyword": "event_range"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "parameter_dashboards/01f097e16d3b145a851abc79c8c30922/datasets/01f0a0b4e13f111593341bd3e635c51e_event_range",
+                "query": {
+                  "datasetName": "95ce6f6c",
+                  "parameters": [
+                    {
+                      "name": "event_range",
+                      "keyword": "event_range"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "parameter_dashboards/01f097e16d3b145a851abc79c8c30922/datasets/01f0a0b72e4f14a8a47d55a3ada231a4_event_range",
+                "query": {
+                  "datasetName": "2660d018",
+                  "parameters": [
+                    {
+                      "name": "event_range",
+                      "keyword": "event_range"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "parameter_dashboards/01f097e16d3b145a851abc79c8c30922/datasets/01f0a3a926d2197f977cc64094d50850_event_range",
+                "query": {
+                  "datasetName": "248b74c6",
+                  "parameters": [
+                    {
+                      "name": "event_range",
+                      "keyword": "event_range"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "parameter_dashboards/01f097e16d3b145a851abc79c8c30922/datasets/01f0a3b4ca4f13e4b04ebcec0af2eebc_event_range",
+                "query": {
+                  "datasetName": "7103e200",
+                  "parameters": [
+                    {
+                      "name": "event_range",
+                      "keyword": "event_range"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "parameter_dashboards/01f097e16d3b145a851abc79c8c30922/datasets/01f0a3be2f241744ab763e896db478c0_event_range",
+                "query": {
+                  "datasetName": "e816f2b3",
+                  "parameters": [
+                    {
+                      "name": "event_range",
+                      "keyword": "event_range"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "parameter_dashboards/01f097e16d3b145a851abc79c8c30922/datasets/01f0a3bf4f0515ad858b1dc97af26143_event_range",
+                "query": {
+                  "datasetName": "b18cca98",
+                  "parameters": [
+                    {
+                      "name": "event_range",
+                      "keyword": "event_range"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "filter-date-range-picker",
+              "encodings": {
+                "fields": [
+                  {
+                    "fieldName": "event_timestamp",
+                    "queryName": "dashboards/01f097e16d3b145a851abc79c8c30922/datasets/01f09979986011938281b2e91deeb22e_event_timestamp"
+                  },
+                  {
+                    "parameterName": "event_range",
+                    "queryName": "parameter_dashboards/01f097e16d3b145a851abc79c8c30922/datasets/01f0997998601166bd423ceb08ab0480_event_range"
+                  },
+                  {
+                    "parameterName": "event_range",
+                    "queryName": "parameter_dashboards/01f097e16d3b145a851abc79c8c30922/datasets/01f09b17b212157aaf06cacc9e20a714_event_range"
+                  },
+                  {
+                    "parameterName": "event_range",
+                    "queryName": "parameter_dashboards/01f097e16d3b145a851abc79c8c30922/datasets/01f09b1d1f751ec0a5513c9b7bbc36ba_event_range"
+                  },
+                  {
+                    "parameterName": "event_range",
+                    "queryName": "parameter_dashboards/01f097e16d3b145a851abc79c8c30922/datasets/01f09b357c42177b884faa4ece765b86_event_range"
+                  },
+                  {
+                    "parameterName": "event_range",
+                    "queryName": "parameter_dashboards/01f097e16d3b145a851abc79c8c30922/datasets/01f09b368fb01653b59b6beab34c1a0e_event_range"
+                  },
+                  {
+                    "parameterName": "event_range",
+                    "queryName": "parameter_dashboards/01f097e16d3b145a851abc79c8c30922/datasets/01f09b3922e015488ee3e51f8258cb39_event_range"
+                  },
+                  {
+                    "parameterName": "event_range",
+                    "queryName": "parameter_dashboards/01f097e16d3b145a851abc79c8c30922/datasets/01f0a07596bd183e8afc05567f618049_event_range"
+                  },
+                  {
+                    "parameterName": "event_range",
+                    "queryName": "parameter_dashboards/01f097e16d3b145a851abc79c8c30922/datasets/01f0a0b4e13f111593341bd3e635c51e_event_range"
+                  },
+                  {
+                    "parameterName": "event_range",
+                    "queryName": "parameter_dashboards/01f097e16d3b145a851abc79c8c30922/datasets/01f0a0b72e4f14a8a47d55a3ada231a4_event_range"
+                  },
+                  {
+                    "parameterName": "event_range",
+                    "queryName": "parameter_dashboards/01f097e16d3b145a851abc79c8c30922/datasets/01f0a3a926d2197f977cc64094d50850_event_range"
+                  },
+                  {
+                    "parameterName": "event_range",
+                    "queryName": "parameter_dashboards/01f097e16d3b145a851abc79c8c30922/datasets/01f0a3b4ca4f13e4b04ebcec0af2eebc_event_range"
+                  },
+                  {
+                    "parameterName": "event_range",
+                    "queryName": "parameter_dashboards/01f097e16d3b145a851abc79c8c30922/datasets/01f0a3be2f241744ab763e896db478c0_event_range"
+                  },
+                  {
+                    "parameterName": "event_range",
+                    "queryName": "parameter_dashboards/01f097e16d3b145a851abc79c8c30922/datasets/01f0a3bf4f0515ad858b1dc97af26143_event_range"
+                  }
+                ]
+              },
+              "frame": {
+                "showTitle": true,
+                "showDescription": true,
+                "title": "Date/Time Range",
+                "description": "Select a event log data/time range to observe"
+              },
+              "selection": {
+                "defaultSelection": {
+                  "range": {
+                    "dataType": "DATETIME",
+                    "min": {
+                      "value": "now-24h/h"
+                    },
+                    "max": {
+                      "value": "now/h"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "source": "cloud-infra-costs-azure",
+          "widget": {
+            "name": "f1e2d3c4",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "a1b2c3d4",
+                  "fields": [
+                    {
+                      "name": "cost_dataset",
+                      "expression": "`cost_dataset`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              },
+              {
+                "name": "parameter_ae7776ee_param_cost_dataset",
+                "query": {
+                  "datasetName": "ae7776ee",
+                  "parameters": [
+                    {
+                      "name": "param_cost_dataset",
+                      "keyword": "param_cost_dataset"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "parameter_0ae67941_param_cost_dataset",
+                "query": {
+                  "datasetName": "0ae67941",
+                  "parameters": [
+                    {
+                      "name": "param_cost_dataset",
+                      "keyword": "param_cost_dataset"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "parameter_538a5330_param_cost_dataset",
+                "query": {
+                  "datasetName": "538a5330",
+                  "parameters": [
+                    {
+                      "name": "param_cost_dataset",
+                      "keyword": "param_cost_dataset"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "parameter_4c5663a7_param_cost_dataset",
+                "query": {
+                  "datasetName": "4c5663a7",
+                  "parameters": [
+                    {
+                      "name": "param_cost_dataset",
+                      "keyword": "param_cost_dataset"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "filter-single-select",
+              "encodings": {
+                "fields": [
+                  {
+                    "fieldName": "cost_dataset",
+                    "queryName": "main_query",
+                    "displayName": "Cost Type",
+                    "defaultSelection": {
+                      "values": {
+                        "dataType": "STRING",
+                        "values": [
+                          {
+                            "value": "Actuals"
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  {
+                    "parameterName": "param_cost_dataset",
+                    "queryName": "parameter_ae7776ee_param_cost_dataset"
+                  },
+                  {
+                    "parameterName": "param_cost_dataset",
+                    "queryName": "parameter_0ae67941_param_cost_dataset"
+                  },
+                  {
+                    "parameterName": "param_cost_dataset",
+                    "queryName": "parameter_538a5330_param_cost_dataset"
+                  },
+                  {
+                    "parameterName": "param_cost_dataset",
+                    "queryName": "parameter_4c5663a7_param_cost_dataset"
+                  }
+                ]
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Cost Type"
+              }
+            }
+          }
+        },
+        {
+          "source": "databricks-aibi-filters",
+          "widget": {
+            "name": "workspace-name-filter",
+            "queries": [
+              {
+                "name": "workspace_name_query",
+                "query": {
+                  "datasetName": "workspace_inventory",
+                  "fields": [
+                    {
+                      "name": "workspace_name",
+                      "expression": "`workspace_name`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "filter-text-entry",
+              "matchMode": "contains",
+              "isCaseSensitive": false,
+              "encodings": {
+                "fields": [
+                  {
+                    "fieldName": "workspace_name",
+                    "displayName": "Workspace name",
+                    "queryName": "workspace_name_query"
+                  }
+                ]
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Workspace name"
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

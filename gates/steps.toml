@@ -21,6 +21,11 @@
 # test folder whose tests read the fixture database goes in the python lane, and in
 # FIXTURE_READERS in tests/test_gate.py, which checks that each of those folders runs after
 # the build.
+# Each pytest step also keeps its scratch in a folder of its own under .gate-tmp/ (--basetemp),
+# which pytest clears at the start of the step's next run and .gitignore leaves out. Without
+# one, a run the limit stopped left its folder, up to 7 GB, locked for three days in pytest's
+# shared temporary folder, and 301 of them filled the disk on October 25, 2026 (ticket 73).
+# The gate makes .gate-tmp/ when a step names it.
 
 # The whole run fails when it takes longer than this. The clock starts when the gate holds the lock.
 # 150 since October 26, 2026 (the user's call): with four build agents on this computer the gate ran 105 to 120
@@ -62,7 +67,7 @@ lane = "python"
 # and keep the number that gives the lower total gate time over three runs, because the lanes share
 # the processors. Each test must be safe beside the others: README's gate section says how.
 name = "Run the Python tests under tests/ and ops/bundle/tests/, which may read the fixture database"
-run = ["uv", "run", "--frozen", "pytest", "--numprocesses", "8", "--dist", "worksteal", "tests", "ops/bundle/tests"]
+run = ["uv", "run", "--frozen", "pytest", "--basetemp", ".gate-tmp/python", "--numprocesses", "8", "--dist", "worksteal", "tests", "ops/bundle/tests"]
 lane = "python"
 
 # The wizard tests take about 60 seconds in one process, so six pytest-xdist workers share them.
@@ -71,14 +76,14 @@ lane = "python"
 # 25 seconds with xdist's default.
 [[step]]
 name = "Run the Python tests for the wizard and the day-one probes"
-run = ["uv", "run", "--frozen", "pytest", "--numprocesses", "6", "--dist", "worksteal", "ops/wizard/tests", "ops/dayone/tests"]
+run = ["uv", "run", "--frozen", "pytest", "--basetemp", ".gate-tmp/ops", "--numprocesses", "6", "--dist", "worksteal", "ops/wizard/tests", "ops/dayone/tests"]
 lane = "ops"
 
 # The app's deploy and what it uploads (ticket 06). They read no fixture database and take a few
 # seconds in one process, so they run in a lane of their own instead of lengthening the ops lane.
 [[step]]
 name = "Run the Python tests for the app's deploy and the Lakebase probe"
-run = ["uv", "run", "--frozen", "pytest", "ops/app/tests"]
+run = ["uv", "run", "--frozen", "pytest", "--basetemp", ".gate-tmp/app", "ops/app/tests"]
 lane = "app"
 
 # The two lints read only source files, so each needs nothing from the other steps and runs

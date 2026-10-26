@@ -69,6 +69,19 @@ def ops_rows(engine, found: dict) -> dict:
             **{("missing", name): True for name in defined if ("tables", name) not in found}}
 
 
+def last_start(found) -> dt.datetime | None:
+    """When the app last started or was deployed, in UTC, as the Apps API's App object reports it, or None.
+
+    The App object names no start time. Its active deployment has a create_time, which a deploy sets, since each
+    deploy makes a new deployment, and an update_time; a start runs the last active deployment again (the SDK's
+    apps.start). The later of the two is the last start or deploy (ticket 77)."""
+    deployment = getattr(found, "active_deployment", None)
+    times = [dt.datetime.fromisoformat(text) for text in (getattr(deployment, "create_time", None),
+                                                          getattr(deployment, "update_time", None)) if text]
+    times = [moment if moment.tzinfo else moment.replace(tzinfo=dt.UTC) for moment in times]
+    return max(times).astimezone(dt.UTC) if times else None
+
+
 class LiveDemo:
     def __init__(self, env: dict, env_path: Path):
         from strata.agent import judge
@@ -114,7 +127,7 @@ class LiveDemo:
         state = found.compute_status.state if found.compute_status else None
         return {"description": found.description or "",
                 "source": getattr(found.active_deployment, "source_code_path", None),
-                "url": found.url, "running": state == apps.ComputeState.ACTIVE}
+                "url": found.url, "running": state == apps.ComputeState.ACTIVE, "started": last_start(found)}
 
     def stop_app(self, name: str) -> None:
         self.w.apps.stop_and_wait(name, timeout=dt.timedelta(minutes=MINUTES))

@@ -8,7 +8,15 @@ Check which keys are set first:
 
 The merger appends a block below each time it parks a step.
 
+**Running a step from a snapshot (October 26, 2026).** Long or App-touching steps run from a snapshot of the commit (`git archive <sha> | tar -x -C <scratchpad>/snap-<sha>`), never from the shared checkout, so a merge cannot rewrite config under the process. A snapshot has no `web/node_modules`, so `ops/app/deploy_app.py` stops at step 1 with `sh: tsc: command not found`: run `npm ci --prefix web` in the snapshot, or link the main checkout's `web/node_modules` into it, before the App deploy. Point `--env-file` at the main checkout's `.env`; the snapshot holds no secrets.
+
 **While the user works through the wizard and the catch-up steps.** All ten keys were set by 10:58 PDT on October 24, 2026, and day-one test 7 passes. The user is running the wizard and the catch-up steps by hand in the main checkout, which means two things for a merger. First, do not run any workspace step during a merge, even though the keys are there: work on the shared workspace runs one at a time, and the user holds that turn today. Park your ticket's steps here as before, in order, and the orchestrator runs the backlog after the user's run. Second, if the main checkout holds staged or unstaged changes you did not make, do not commit, revert, unstage or set them aside; stop before `git merge`, and return merged false with the summary "blocked by uncommitted changes in the main checkout", naming the files. The orchestrator commits the user's work and the merge runs again. Never read or print `.env`.
+
+**Redeploying the App from a session that may not write secrets (ticket 70).** Only the user may write secrets in the shared workspace, and the App deploy saves the Foundry agent's and the judge's keys in the secret scope `strata` each time it runs. Once the user has written them, with the deploy, the wizard or `databricks secrets put-secret strata <name>`, a block below that redeploys the App runs from a session with `--keep-secrets`:
+
+    uv run --script ops/app/deploy_app.py --env-file .env --keep-secrets
+
+It writes no secret, prints the names of the secrets the App reads, and checks that the scope holds each one by listing its keys, never their values. When the scope holds them all, the App gets the same resources, scopes and `app.yaml` as the deploy without the option, so a block parked because "secret writes are the user's" can run this way. When the scope lacks one, step 3 names it with the `databricks secrets put-secret` command that writes it, and the deploy goes on without what reads it, as if `.env` had no value for it: the App says there is no agent, removes every sentence that needs the judge, or sends no traces. It still exits 0 and prints the App's address. Record the named secrets for the user, who writes them; the next deploy with `--keep-secrets` then gives the App all of it.
 
 ## Ticket 03, before every other step: the wizard, the day-one probes and the pay-as-you-go check
 
@@ -79,6 +87,8 @@ Run this from the main checkout:
 
 It worked if the app's service principal has READ on the scope `strata`. If it is not listed, Databricks granted the app only the one key. In that case, change the last bullet of `docs/day-one-results.md`, under "What the probes leave in the workspace", back to naming only `APPLICATIONINSIGHTS_CONNECTION_STRING`. As in step 3, add `-p strata` if the default profile points at a different workspace.
 
+**Ran on October 26, 2026 (orchestrator).** `databricks secrets list-acls strata` at 09:19 UTC lists MANAGE for chiraglakhanpal@gwu.edu and READ for e796c089-1500-4cf2-9c1f-8e6a8f5aba10, the service principal of the App `strata` (ticket 06's step 1), so the App reads the whole scope and the results document's last bullet stands. Passed.
+
 ## Ticket 04, step 1 of 4: deploy the bundle twice
 
 **Ran on October 24, 2026 (orchestrator).** Two things stood in the way first. The Databricks CLI (v1.22.1) refused every command from the repo root because `bundle/dashboard.yml` and `bundle/catalog.yml` both used the resource key `strata`; the dashboard's key is now `strata_dashboard`. Then the bundle could not create the catalog: the Free Edition metastore has no storage root and uses Default Storage (400 INVALID_STATE). `CREATE CATALOG IF NOT EXISTS strata` on the SQL warehouse made it, `databricks bundle deployment bind strata strata` bound it, and the deploy then made the four schemas, the volume, the grants, the job `strata nightly` (730097284330653), the dashboard and every table and view. fairshare has no catalog of its own: its data is in `workspace`, so the second run used `--fairshare-catalog workspace`. It printed "No changes." and "workspace's catalog lists the same before and after the deploy: two schemas, two tables and one volume."
@@ -127,6 +137,8 @@ It worked if the command exits 0, and for each of `showcase_fiscal_years.sql`, `
 - `past_range_coverage_ke_works_rfb.sql` and `past_range_criteria_ke_works_rfb.sql` (ticket 12's step 1): the warehouse returned canceled 0, matched 298, no STEP reference 54, no notice 217, used 27, and two criteria rows (KE-KIAMBU COUNTY-510866-CW-RFB, KE-TAVEVO-466579-GO-RFB) against the file's fifteen. The warehouse holds every Kenya works package since FY2020 where the fixture held NWWDA's, and its notices are only those from 2024 on (the offset cap), so most packages have no notice. Not changed; the orchestrator decides with the notices decision.
 - `icr_paragraph_54_passage.sql` and `slice_projects.sql`: the documents are not read yet (ticket 11's step 1 runs next). `p130164_isr_7_against_icr_paragraph_78.sql`: waits on ticket 20's step 1 (the batch deployment decision).
 
+**Ran on October 26, 2026 (orchestrator), after run 601237901444983 (ticket 43's step 1), from 6b5ff48d.** `check.py same-rows` crashes as written: `_local_engine()` runs the nightly fixture, which now needs splink (`ModuleNotFoundError: No module named 'splink'`, resolve.py line 463 via matching.py line 126) and then numpy (time_estimate.py line 182 via scoring.py line 129), and the script's inline dependencies name neither (told the build orchestrator at 09:16 UTC). With `--with splink==5.0.0 --with numpy --with xgboost==3.4.1 --with pypdf==6.21.2 --with py3langid==0.3.0 --with fpdf2==2.8.9 --with opentelemetry-api` it ran 09:17 to 09:18 UTC and exited 1: 8 of 19 files match on both engines as the files expect (`data_notes_actual_amount_zero.sql`, `gap_years_contracts_from_award_notices.sql`, `genie_contract_ke_nwwda_229129.sql`, `genie_joint_venture_1624689.sql`, `kenya_step_reference_link_rate.sql`, `pipeline_runs_columns.sql`, `showcase_fiscal_years.sql`, `structured_data_under_the_limit.sql`). Different, each with its reason: `delay_from_first_published_planned_date.sql` and `agency_track_record_nwwda_2026_10_09.sql` return no row and 0, 0, 0, 0 on the warehouse (`strata.silver.plan_rows` holds 6 rows for the October 9, 2026 plan 40132287 and none of them is KE-NWWDA-229129-CW-RFB, whose rows sit under 33014836, 40031468 and 40090127); `data_readiness_fix_measures.sql` reads false for both gap-years measures (`strata.ops.data_readiness` was last written by run 873581300211320 on October 25, since `measure_data_readiness` was skipped); `every_source_holds_the_rows_its_api_reported.sql` reads false for notices, projects, wgi and ibrd_loan_history (the unsliced notices fetch still holds 126,500 of 424,135, while ticket 43's per-country pages are complete: BD 9,045, KE 7,238, PK 10,280 and VN 5,524 records, each equal to its reported total; projects 28,411 records across its pages against 28,212 reported; wgi and the IBRD history as on October 24); `icr_paragraph_54_passage.sql` and `p130164_isr_7_against_icr_paragraph_78.sql` return no row (`strata.gold.passage` holds 0 rows); `past_range_coverage_ke_works_rfb.sql` returns canceled 4, matched 316, no STEP reference 54, no notice 77 and used 181 against the fixture's 3, 65, 3, 10 and 49, `past_range_criteria_ke_works_rfb.sql` 57 rows against 15 (county packages such as KE-ISIOLO COUNTY-300132-CW-RFB that the fixture does not record), `rebidding_ke_works_rfb.sql` advertised again 20, canceled plan row 4, comparables 185, no award 20 and same reference 0 against 3, 3, 52, 3 and 0, and `rebidding_label_counts.sql` any 1,535, canceled_row 7, no_award 1,526 and same_reference 10 of 14,211 against 12, 3, 12 and 0 of 139: the warehouse's notices now reach back to 2005 for the slice countries, so every Kenya works set is wider than the fixture's; `slice_projects.sql` returns an empty `agree` against true. Log: the scratchpad's samerows29.log.
+
 ## Ticket 04, step 4 of 4: record both nightly schedules
 
 The merger parked this step on October 23, 2026, after merge commit 01a7286. Run it after step 2, and after fairshare's nightly job has finished at least one run.
@@ -173,6 +185,10 @@ Run this from the main checkout:
 
 It worked if the command exits 0 and prints "DuckDB and the SQL warehouse returned the same one row, and they are the rows the file expects." for `tests/ground_truth/delay_from_first_published_planned_date.sql`, with 2021-04-21, 2021-07-01, 2022-01-03, 186 and 1245092.76 (criterion 2). It must also print "... the same two rows, and they are the rows the file expects." for `tests/ground_truth/data_notes_actual_amount_zero.sql`, with KE-NWWDA-503455-CW-RFQ Signed 0.00 and KE-NWWDA-541061-CW-RFQ Completed 0.00 (criterion 4).
 
+**Ran on October 26, 2026 (orchestrator), after run 601237901444983.** Ticket 04's step 3 has the run: `data_notes_actual_amount_zero.sql` matched (the two rows), `delay_from_first_published_planned_date.sql` still returns no row on the warehouse: `strata.silver.plan_rows` holds 6 rows for the October 9, 2026 plan 40132287 and none for KE-NWWDA-229129-CW-RFB, whose rows sit under 33014836 (Pending Implementation, 300,000.00, public 2021-04-21), 40031468 (1,245,092.76, public 2025-07-21) and 40090127 (Signed, 300,000.00 and 1,245,092.76, public 2026-03-05). The plan reader has not read that plan's STEP table yet (ticket 08's step 1).
+
+**Seen on October 26, 2026 (orchestrator), 09:51 UTC.** Why the October 9, 2026 plan (40132287) gives the file no row: `strata.silver.plan_rows` names the package KE-NWWDA-229129-CW-RFQ in that version (Signed, 300,000.00 and 1,245,092.76, method_original "Request for Bids", method_mapped false), where the three earlier versions and `strata.gold.package` name KE-NWWDA-229129-CW-RFB. The file and the fixture look for -RFB, and ticket 48's step 2 recheck names the signal on -RFQ for the same reason. Told the build orchestrator.
+
 ## Ticket 07, step 1 of 3: the job fetched Kenya into bronze
 
 The merger parked this step on October 23, 2026, after merge commit dbc054a. Run it after ticket 04's steps 1 and 2, because the deploy makes `strata.bronze.api_pages` and the job run fills it. Deploy from `build/strata` at f5c933d (ticket 17's merge) or later, so that the first deploy creates `strata.silver.notices` with its `fiscal_year` column, `strata.ops.data_readiness` with `as_of` and `detail`, and ticket 17's tables and columns, which ticket 04's step 1 lists. Each table is defined with `CREATE TABLE IF NOT EXISTS`, so a table that already exists keeps its old columns.
@@ -196,6 +212,8 @@ Run this from the main checkout:
     uv run --script ops/bundle/check.py same-rows --env-file .env
 
 It worked if the command exits 0 and prints "kenya_step_reference_link_rate.sql: DuckDB and the SQL warehouse returned the same one row, and they are the rows the file expects." That row is `linked_step_reference,true` (criterion 8). The file compares the link rate that the job's last run wrote to `strata.ops.data_readiness` with a direct count of Kenya's contracts in `strata.gold.contract` that carry a STEP reference. Offline it was 528 of 603 on the fixture. The warehouse's counts will be larger, because the job fetches every Kenya award since FY2020, but the file returns only true or false.
+
+**Ran on October 26, 2026 (orchestrator), after run 601237901444983.** Ticket 04's step 3 has the run: "kenya_step_reference_link_rate.sql: DuckDB and the SQL warehouse returned the same one row, and they are the rows the file expects.", `linked_step_reference | true`, with `strata.gold.contract` holding 6,413 Kenya contracts. Passed.
 
 ## Ticket 07, step 3 of 3: a second run adds no award pages
 
@@ -226,6 +244,8 @@ Run this from the main checkout:
 If the command line refuses the field, open the App in the workspace, choose Configure, then User authorization, and add the scope `sql`. Each user signs in to the App again to agree to the new scope.
 
 It worked if `databricks apps get strata -o json` lists `sql` under `effective_user_api_scopes`, and `GET /api/me` on the App, opened in a browser as a signed-in user, returns `"has_token": true`. That shows each request now carries `X-Forwarded-Access-Token`. As in ticket 03's steps, add `-p strata` if the default profile points at a different workspace.
+
+**Ran on October 26, 2026 (orchestrator).** No update was needed: the user's App deploy of 06:11 UTC asked for the scopes. `databricks apps get strata -o json` at 09:19 UTC lists `user_api_scopes` as sql and dashboards.genie and `effective_user_api_scopes` as dashboards.genie, iam.access-control:read, iam.current-user:read and sql, and `GET /api/me` on the App with the wizard profile's OAuth token (`databricks auth token -p strata`) answered 200 with `"signed_in": true`, `"has_token": true` and `"staff": true` for chiraglakhanpal@gwu.edu. Passed; the browser half is the user's.
 
 ## Ticket 09, step 2 of 3: a user who cannot read strata gets a permission error
 
@@ -281,6 +301,8 @@ The measures it prints come from `strata.ops.data_readiness` on the warehouse. `
 
 The warehouse's counts may differ if the World Bank's hosts now list newer ISRs. Read `contact_details_removed` from the first run only: a second run writes it as 0 of 0, because it counts only the documents fetched in that run (review round 2, P1, not fixed yet).
 
+**Ran again on October 26, 2026 (orchestrator), from a snapshot of b5269651, 02:22 to 06:39 UTC.** Exit 2 after 4 hours 17 minutes: "The run stopped before it finished: I could not fetch https://search.worldbank.org/api/v3/wds?format=json&proid=P089634&rows=500&os=0&...: HTTP Error 503: Service Unavailable. The pages it parsed are kept, and the next run goes on from there." The plan reader parsed 358 scanned pages through the layout parser today (`strata.bronze.layout_pages` with `parsed_at` on October 26) before the search host refused P089634's document list, and the passage reader never started: `strata.gold.passage` still has 0 rows. An earlier attempt the same night (01:04 to 02:19, from the shared checkout) died when a merge rewrote config/slice.toml under it, which is why this one ran from a snapshot. The next run uses ticket 66's paced, cached fetcher (ticket 66, step 3 of 3) and follows the nightly job run.
+
 ## Ticket 11, step 2 of 4: paragraph 54's passage on DuckDB and on the SQL warehouse
 
 The merger parked this step on October 23, 2026, after merge commit e0721da. Run it after step 1. It is the same command as ticket 04's step 3, ticket 07's step 2 and ticket 08's step 2. If you ran it before step 1, run it again now, because `tests/ground_truth/icr_paragraph_54_passage.sql` reads `strata.gold.passage`, which step 1 fills.
@@ -290,6 +312,8 @@ Run this from the main checkout:
     uv run --script ops/bundle/check.py same-rows --env-file .env
 
 It worked if the command exits 0 and prints "icr_paragraph_54_passage.sql: DuckDB and the SQL warehouse returned the same one row, and they are the rows the file expects." with the row `31525018/v1/54`, `III.B`, 23, 66, `19 of 62`, 1, 2019-11-02 (criterion 7).
+
+**Ran on October 26, 2026 (orchestrator), after run 601237901444983.** Ticket 04's step 3 has the run: `icr_paragraph_54_passage.sql` returns no row on the warehouse, because `strata.gold.passage` holds 0 rows (step 1, ticket 72).
 
 ## Ticket 11, step 3 of 4: search_passages finds paragraph 54 through AI Search
 
@@ -323,7 +347,11 @@ Run this from the main checkout:
 
 It worked if the command exits 0 and its last line reads `Strata is running at https://...`, and the App's Logs tab in the workspace shows that it installed `ops/app/requirements.txt` and that the server is serving (criterion 1). The logs should not show the agent-framework metapackage installed, because the lean requirements file leaves it out.
 
-Run this command again after every bundle deploy. The bundle's grants replace the App's USE CATALOG and USE SCHEMA on `strata`, so its usage events stop being written until the App's deploy grants them again.
+Run this command again after every bundle deploy made from a commit before ticket 79's merge. The bundle's grants replace the App's USE CATALOG and USE SCHEMA on `strata`, so its usage events stop being written until the App's deploy grants them again. From ticket 79's merge on, the bundle deploy gives the App both back itself (ticket 79's step 1 below checks it on the workspace), and this deploy is needed again only after a bundle deploy that makes a table the App writes.
+
+**Found on October 26, 2026 (orchestrator).** The user ran this deploy themselves tonight: the App `strata` was created at 05:08:53 UTC (service principal `app-4mv05v strata`, client id e796c089-1500-4cf2-9c1f-8e6a8f5aba10), two deployments failed at 05:14 and 05:46 with "Error installing packages" (the numpy pin for the Apps runtime's Python 3.11, fixed by ticket 69), and the deployment of 06:11:36 succeeded: "App started successfully". The App is RUNNING at https://strata-7474658003099155.aws.databricksapps.com with nine resources bound (sql-warehouse, appinsights, app-state, the four Foundry secrets and the two Azure OpenAI secrets), and the scope `strata` holds all six keys written at 06:08. From this computer, with an OAuth token from the wizard's CLI profile (`databricks auth token -p strata`; a personal access token gets 401), `GET /api/health` answers 200 `{"status":"ok"}`, `GET /api/me` answers 200 as chiraglakhanpal@gwu.edu with `staff` true and the views staff, piu and public, and `GET /api/freshness` answers 200 with `data_through` 2026-10-24. Answers through the agent fail with 401 PermissionDenied until the user assigns the principal `strata-app` the "Cognitive Services User" role (ticket 45, step 3 of 6, has the command).
+
+**Seen on October 26, 2026 (orchestrator).** The warning above held: ticket 68's bundle deploy (10:20 UTC) removed the App's service principal's USE CATALOG on strata and USE SCHEMA on strata.ops (`SHOW GRANTS` listed only `account users` afterwards; table grants stayed), and the App deploy of 10:25 to 10:33 UTC put them back. Each bundle deploy costs an App redeploy and about nine minutes of 502s; told the build orchestrator, who may want the bundle's grants to carry the App's principal.
 
 ## Ticket 06, step 2 of 6: the identity route shows your own account
 
@@ -410,6 +438,8 @@ It worked if it returns two rows, each with `structured` false and `row_count` a
 
 Criterion 7 stays parked until you answer decision 18 in `docs/STATUS.md`. On the fixture, `strata.ops.table_sizes` recorded 36 structured tables with 11,010,048 bytes in all, and the size file returned `true,true`. At full scale the branch projects 1.57 GB: bronze 885 MB, silver 541 MB and gold 146 MB, and notices are 964 MB of it. So as built, expect the size file to return `true,false` and the command to exit 1. To see the bytes per table, run `SELECT table_name, row_count, bytes FROM strata.ops.table_sizes WHERE structured AND run_id = (SELECT run_id FROM strata.ops.table_sizes ORDER BY measured_at DESC LIMIT 1) ORDER BY bytes DESC`.
 
+**Ran on October 26, 2026 (orchestrator), after run 601237901444983.** Ticket 04's step 3 has the run: `gap_years_contracts_from_award_notices.sql` matched (three rows, true and true for 2017, 2018 and 2019), `structured_data_under_the_limit.sql` matched (true, true), and `every_source_holds_the_rows_its_api_reported.sql` reads false for notices (the unsliced fetch, 126,500 of 424,135 under the offset cap; the four slice countries are complete), projects (28,411 records across its pages against 28,212 reported, after the watermark pages), wgi and ibrd_loan_history (as on October 24). The two not-structured tables still hold 0 rows.
+
 ## Ticket 17, step 2 of 3: P156634's closing date moved three times since 2022
 
 The merger parked this step on October 23, 2026, after merge commit f5c933d. Run it after ticket 04's step 2, because the job fills `strata.gold.project_closing_date` from the monthly loan history.
@@ -481,6 +511,8 @@ Run this from the main checkout:
     uv run --script ops/agent/ask_live.py --env-file .env
 
 It sends "Why were works contracts in P130164 advertised again?" through the same `POST /api/ask` route and stream the App runs. It worked if it exits 0 and prints four lines that each start "Holds.": "1. Checks 1 to 3" with every number matched, every quote found, every source returned and nothing removed; "2. A kept sentence cites strata.gold.passage:31525018/v1/54."; "3. strata.ops.agent_runs holds run ..." with the run's row and its Application Insights trace id; and "4. Application Insights holds operation ..." (criterion 6). The fourth check waits up to 10 minutes for the trace to arrive. Then open that operation id in Application Insights, under Transaction search, and check that the trace opens.
+
+**Ran on October 26, 2026 (orchestrator), from 03349a45.** Ticket 66's step 2 has the two runs of 09:20 and 09:23 UTC: checks 3 and 4 hold (the `strata.ops.agent_runs` row and the Application Insights operation), checks 1 and 2 do not, because `strata.gold.passage` holds 0 rows, so no sentence can cite paragraph 54. Run it again after ticket 11's step 1.
 
 ## Ticket 13, step 4 of 4: re-record the scripted cases from the live agent
 
@@ -706,6 +738,8 @@ It worked if it exits 0, its first line starts "Run <run id> counted N projects 
 
 The first query must return five rows. Its `over_parser_limit` row must be either `no_document` with the live slice's longest page count, or `read` with `parts` above 1 and `count` equal to `denominator` (criterion 6, live half). On the fixture it read `no_document` with 103 pages. The second must return `slice_projects`, `slice_projects_read` and one `documents_read_projects` row per project. The third must list Project Paper rows. The run's summary line must also say "Prompt Shields scanned N new passage texts and text-embedding-3-large embedded N", which covers the Prompt Shields scan and the embeddings of the new passages (Project Papers, PPARs and notice text).
 
+**October 26, 2026 (orchestrator).** The documents run of this night is recorded under ticket 11, step 1 of 4: exit 2 on a 503 from search.worldbank.org, no passages yet, so the three measures still have no new rows to check.
+
 ## Ticket 18, step 3 of 5: a second run the same day parses nothing
 
 The merger parked this step on October 24, 2026, after merge commit a8d605c. Run it right after step 2, on the same day. It needs the same keys as step 2.
@@ -734,6 +768,8 @@ It worked if it exits 0 and `slice_projects.sql` agrees on both engines (criteri
     SELECT count, detail FROM strata.ops.data_readiness WHERE measure = 'slice_projects' ORDER BY measured_at DESC LIMIT 1
 
 On the fixture the detail reads 17 projects ("Kenya 17, Bangladesh 0, Vietnam 0, Pakistan 0"), 111 fewer than 128. The PM copies the live detail sentence into `docs/STATUS.md`.
+
+**Ran on October 26, 2026 (orchestrator), after run 601237901444983.** Ticket 04's step 3 has the run: `slice_projects.sql` returns an empty `agree` on the warehouse against true on DuckDB, so the engines do not agree yet.
 
 ## Ticket 18, step 5 of 5: "similar experience" finds the notices through AI Search
 
@@ -828,6 +864,8 @@ Run this from the main checkout:
 
 It worked if it exits 0 and prints "DuckDB and the SQL warehouse returned the same ... rows, and they are the rows the file expects." for both `past_range_criteria_ke_works_rfb.sql` and `past_range_coverage_ke_works_rfb.sql` (criteria 1 and 3, live half). As of October 22, 2026, the coverage file's rows are canceled 3, matched 65, no STEP reference 3, no notice 10 and used 49. The warehouse returns every value as text, and this is the first time find_comparables' date and amount handling runs there. If the warehouse holds Kenya works packages that the fixture does not record, the command prints the DuckDB rows, the warehouse rows and the expected rows side by side. Tell the orchestrator before you change a file's expected rows.
 
+**Ran on October 26, 2026 (orchestrator), after run 601237901444983.** Ticket 04's step 3 has the run: `past_range_coverage_ke_works_rfb.sql` returns canceled 4, matched 316, no STEP reference 54, no notice 77 and used 181 on the warehouse, and `past_range_criteria_ke_works_rfb.sql` 57 rows (17 in the 1M to 2M US$ band, 40 Open - National), both wider than the fixture's rows, because the warehouse holds Kenya works packages the fixture does not record (the notices now reach back to 2005 for Kenya, ticket 43). The values came back as numbers that the check compared without a type error.
+
 ## Ticket 12, step 2 of 3: the Foundry agent offers find_comparables
 
 **Ran on October 24, 2026 (orchestrator).** Ticket 13's step 1 ran from the tree after bbab425, so the first sync printed find_comparables among the tools and the sentence about citing a tool's summary, and made version 1. The `--check` run exited 0.
@@ -894,6 +932,8 @@ Run this from the main checkout:
     uv run --script ops/bundle/check.py same-rows --env-file .env
 
 It worked if it exits 0 and prints "DuckDB and the SQL warehouse returned the same ... rows, and they are the rows the file expects." for `p130164_isr_7_against_icr_paragraph_78.sql`. Its one expected row is ISR 7's side `strata.gold.passage:26733307/v1/s4` (Satisfactory, made 2016-08-26) against `strata.gold.passage:31525018/v1/78` (PDF page 27, public 2019-11-02), for the period from the mid-term review on 2016-05-16, leaning on paragraph 78 under the `outcome` rule. If the warehouse's row differs, the command prints the DuckDB, warehouse and expected rows side by side. Tell the orchestrator before you change the file's expected row.
+
+**Ran on October 26, 2026 (orchestrator), after run 601237901444983.** Ticket 04's step 3 has the run: `p130164_isr_7_against_icr_paragraph_78.sql` returns no row on the warehouse, because `strata.gold.passage` holds 0 rows and `detect_disagreements` was skipped in that run.
 
 ## Ticket 20, step 4 of 4: re-record the batch answers from the live model
 
@@ -1044,6 +1084,8 @@ Then ask the benchmark question `find-comparables-planned-ke-works-rfb` through 
 
 It worked if the check exits 0 and prints "DuckDB and the SQL warehouse returned the same ... rows, and they are the rows the file expects." for `past_range_coverage_ke_works_rfb.sql`, and the question's answer holds the same 49 comparables, with the quartiles 3.3, 4.4, 7.9 and 9.1 months, and the four still-open packages and three canceled packages left out that the benchmark lists. If the warehouse holds Kenya works packages that the fixture does not record, the rows differ. Tell the orchestrator before you change a file's expected rows.
 
+**Ran on October 26, 2026 (orchestrator), after run 601237901444983.** Ticket 12's step 1 has the rows: the warehouse holds Kenya works packages the fixture does not record (used 181 against 49), so the rows differ, as this block foresaw; the build orchestrator was told with the same-rows result. The 49-comparable answer is the fixture's.
+
 ## Ticket 25, step 1 of 2: backtest 2025 alone on the workspace and register the champion
 
 **Deploy on October 25, 2026 (orchestrator):** the deploy recorded under ticket 21's step 1 listed `strata.ops.evaluation_result` as new and changed no existing table. The backtest for 2025 started at 10:09 UTC and is recorded below when it finishes.
@@ -1099,6 +1141,8 @@ It worked if both runs exit 0. The first run lists these four tables as new and 
       AND table_name IN ('plan_baselines', 'plan_baseline_steps', 'project_sectors', 'project_environment')
 
 It must return four rows (ADR 0002). The builder named `ops/bundle/check.py same-rows` as the proof, but that command compares ground-truth queries and lists no tables, so this query takes its place. After the next nightly run (ticket 04's `uv run --script ops/bundle/check.py job-run --env-file .env`), `SELECT count(*) FROM strata.silver.project_sectors WHERE project_id = 'P130164'` must return more than 0, because the bronze_to_gold task's projects transform fills both silver tables. If it returns 0, tell the orchestrator before anyone shows the Summary on the App.
+
+**Ran on October 26, 2026 (orchestrator), after run 601237901444983 (ticket 43's step 1 has the run).** `bronze_to_gold` succeeded, and `strata.silver.project_sectors` holds 208 rows for 95 projects, every row with `fetched_at` 2026-10-26T06:54:03Z, the project pages the watermark fetch brought that night; `strata.silver.project_environment` holds 79 rows. `SELECT count(*) FROM strata.silver.project_sectors WHERE project_id = 'P130164'` returned 0: P130164 is Closed (`strata.gold.project`: transport, IN, South Asia), so no new page carries it, and the 285 project pages fetched before ticket 21's deploy gave the two new silver tables no rows. The build orchestrator was told at 09:12 UTC, before anyone shows the Summary on the App; the fix is a transform pass over the pages bronze already holds.
 
 ## Ticket 21, step 2 of 4: a staff viewer saves a baseline on the deployed App
 
@@ -1363,6 +1407,8 @@ It worked if the check exits 0 and this query, with that job run's id, returns f
 
 **Ran on October 26, 2026 (orchestrator), from 7f43303.** The warehouse came back from its daily limit at 00:54 UTC. One bundle deploy served every block that names it: the first pass (00:55 to 00:58 UTC) exited 0, printed "The metric views Genie reads exist now: strata.gold.contract_metrics, strata.gold.package_metrics.", listed 32 tables as new (gold: contract_metrics, edge, package_metrics, time_estimate_model, time_estimate_score; silver: contract_passage_links, notice_bids; ops: answer_citations, candidate_labels, disagreement_choices, draft_fields, draft_fields_latest, exposed_projects, follows, hindsight_agreement, hindsight_blamed, hindsight_codings, label_decisions, lesson_version_notices, passage_language_checks, quality_checks, rebidding_labels, rebidding_scores, retrieval_agreement, retrieval_feedback_viewers, retrieval_feedback_weekly, retrieval_grades, retrieval_label_builds, retrieval_labels, retrieval_pool, retrieval_queries, viewer_settings), changed no existing table, and said "The job strata nightly changed." The second pass (00:58 to 00:59 UTC) printed "No changes." Both printed "workspace's catalog lists the same before and after the deploy: two schemas, three tables and one volume." `SHOW TABLES` in each schema lists every table above. The deploy half passed; the job run and the label counts follow the backtests.
 
+**Ran on October 26, 2026 (orchestrator), from 6b5ff48d.** `check.py job-run` started run 601237901444983 at 06:40 UTC and exited 1 at 09:11 with "The run ended TIMEDOUT, so it did not finish every task." `strata.ops.pipeline_runs` and `strata.ops.quality_checks` for that run: `fetch_by_watermark` succeeded (06:41 to 06:55, 365 rows changed, five checks passed); `bronze_to_gold` succeeded (06:55 to 07:32, 808,547 rows changed, 36 checks passed and one failed: `contacts_left` on `strata.silver.notices` found 1,256); `parse_and_embed` ran from 07:32 to the job's 150-minute stop at 09:11 and is recorded as failed with 0 rows, having written 97 layout pages of one document, 34106903 of P156634, to `strata.bronze.layout_pages` between 08:12 and 09:10 (its task log is 506 lines of pypdf messages for that file, such as PdfReadError "Invalid Elementary Object" and "Object 813 0 not defined", and nothing else); `relink`, `score`, `sync_index`, `measure_data_readiness`, `propose_lessons`, `refresh_drafts` and `detect_disagreements` were skipped (UPSTREAM_CANCELED). So `score` did not run, and `strata.ops.rebidding_labels` holds 0 rows; the four label counts wait for a run that reaches `score`.
+
 ## Ticket 28, step 2 of 6: backtest the rebidding models for 2025 alone on the workspace
 
 The merger parked this step on October 25, 2026, after merge commit 6044bd4. The warehouse limit and the header above held it back. It needs the Databricks keys in `.env`. Run it after step 1, which adds `strata.ops.rebidding_scores`, and after ticket 25's deploy, which added `strata.ops.evaluation_result`. Each package it tests calls rebidding_risk once on the warehouse, so time this one year before step 3. Ticket 25's live run found few packages on the warehouse with both a first notice and an outcome, so this run may also train no model.
@@ -1372,6 +1418,8 @@ Run this from the main checkout:
     uv run --script ops/estimates/rebidding_backtest_live.py --env-file .env --years 2025
 
 It worked if it exits 0 and prints a 2025 line with the packages tested and the Brier score and calibration error for gbm, logistic and the baseline, with its MLflow run id. Then it prints "The better calibrated model is ... Registered strata.gold.rebidding_risk version N as champion." and "Run ... is in strata.ops.evaluation_result." If the warehouse had too few decided packages, it prints "No champion was trained, so none was registered. The model card says why." instead. Either way the model card states the results, whether or not the model beat its baseline. Note how long it took before step 3.
+
+**Ran on October 26, 2026 (orchestrator), from 03349a45, after run 601237901444983.** `rebidding_backtest_live.py --years 2025` exited 0 in 171 seconds, 09:52 to 09:55 UTC. It made the experiment `/Shared/strata/rebidding_risk` (2826322192914825) and printed "2025: 1 packages tested, 0 advertised again, 2 undecided. gbm Brier 0.0277, calibration error 0.1665; logistic Brier 0.0106, calibration error 0.1031; baseline Brier 0.027, calibration error 0.1643. MLflow run 5252d96a5cad4f5eb4c81893f04f7efe.", then "The better calibrated model is logistic. Registered strata.gold.rebidding_risk version 1 as champion." and "Run rebidding_backtest-20261026T095255Z-cf3c4532 is in strata.ops.evaluation_result." The lines the block asks for are all there, so the step passed as written, but the champion was chosen on one tested package for 2025 (the warehouse's rebidding labels count 1,535 packages of 14,211 over every year, ticket 04's step 3), which is thin ground for a champion; whether to keep it is the user's call, beside ticket 25's data decision. Step 3 (every year) follows. Log: the scratchpad's rebid28.log.
 
 ## Ticket 28, step 3 of 6: backtest the rebidding models for 2021 to 2025 on the workspace
 
@@ -1387,6 +1435,8 @@ It worked if it exits 0 and prints one line for each test year 2021 to 2025, eac
     WHERE scorer = 'rebidding_backtest' AND segment_kind = 'test_year'
 
 Then `strata.gold.rebidding_risk` in Unity Catalog has a version under the champion alias, and that version's run holds `model_card.md`. The script registers a model as champion only when no version holds that alias yet. So if step 2 registered a champion, this run registers its model as challenger and prints "as challenger". Whether to move the champion alias to this run's version, which was tested on every year, is a decision for the user.
+
+**Ran on October 26, 2026 (orchestrator), from 03349a45, after step 2's 171-second year.** `rebidding_backtest_live.py` with every year exited 0 in 484 seconds, 11:01 to 11:09 UTC, one line per test year with its MLflow run: 2021 "7 packages tested, 0 advertised again, 0 undecided. gbm Brier 0.0005, calibration error 0.0213; logistic Brier 0.0001, calibration error 0.012; baseline Brier 0.0002, calibration error 0.0125" (86dc9fe6406741d8b38f9240ff165956); 2022 "9 packages tested, 2 advertised again, 0 undecided. gbm Brier 0.1849, calibration error 0.1081; logistic Brier 0.2083, calibration error 0.1884; baseline Brier 0.187, calibration error 0.134" (4c89748dd3a446448c17b8bef1654189); 2023 "1 packages tested, 0 advertised again, 0 undecided. gbm Brier 0.006, calibration error 0.0774; logistic Brier 0.0027, calibration error 0.0519; baseline Brier 0.016, calibration error 0.1263" (a2b7a077d61144d1831df1ccb665543d); 2024 "0 packages tested, 0 advertised again, 0 undecided. No results." (0800a9cb20d245c889b2cceb06b107fc); 2025 as in step 2 (09dc189cad20484cbe6f4434ede26d87). Then "The better calibrated model is logistic. Registered strata.gold.rebidding_risk version 2 as challenger." and "Run rebidding_backtest-20261026T110111Z-2749049f is in strata.ops.evaluation_result." Version 1 (step 2, tested on 2025 alone) keeps the champion alias; whether to move it to version 2, tested on every year but on 18 packages in all, is the user's decision, as the block says. Log: the scratchpad's rebid28b.log.
 
 ## Ticket 28, step 4 of 6: score the planned packages with the champion, and see the estimate on the deployed App
 
@@ -1451,7 +1501,11 @@ It worked if the deploy exits 0, its last line is `Strata is running at https://
 
 It worked if P156634 is still listed after the restart, and `SELECT viewer_id, project_id, following, changed_at FROM strata.ops.follows WHERE project_id = 'P156634'` shows your row with `following` true. The refusal half needs a workspace identity outside `[staff].groups` in `config/roles.toml`. That list is `["users"]` until ticket 38 narrows it (a parked decision), and every workspace user is in `users`, so until then only an identity outside that group can show it. Such an identity must get HTTP 403 with the code `not_staff` from `GET <App url>/api/following` and from `PUT <App url>/api/projects/P156634/follow`.
 
-**Parked on October 26, 2026 (orchestrator).** This is the App deploy, `ops/app/deploy_app.py`, which writes the Foundry and Azure OpenAI keys into the secret scope `strata` through the SDK. Secret writes are the user's (ticket 06, step 1, and ticket 43, step 4), so this step waits for their decision on the scope.
+**Parked on October 26, 2026 (orchestrator); runs with `--keep-secrets` since ticket 70 merged (da9a906d).** This is the App deploy, `ops/app/deploy_app.py`. Without the option it writes the Foundry and Azure OpenAI keys into the secret scope `strata` through the SDK, and secret writes are the user's (ticket 06, step 1, and ticket 43, step 4). The user has written the secrets, so a session runs this step as `uv run --script ops/app/deploy_app.py --env-file .env --keep-secrets`, which writes no secret (the header's note on ticket 70). One such deploy from da9a906d or later, such as ticket 70's step 1, serves this block; the checks above then run as written.
+
+**Workspace half found done on October 26, 2026 (orchestrator).** The user's App deploy of 06:11 UTC (ticket 06, step 1 of 6) granted the App's service principal e796c089-1500-4cf2-9c1f-8e6a8f5aba10 SELECT and MODIFY on `strata.ops.follows` (`SHOW GRANTS ON TABLE`), beside `account users` SELECT on the schema. The follow-and-restart check and the refusal of a non-staff identity are the user's, in the browser.
+
+**Redeployed on October 26, 2026 (orchestrator).** Ticket 70's step 1 has the deploy: `ops/app/deploy_app.py --keep-secrets` from a snapshot of 15052345, 10:10 to 10:19 UTC, exit 0, last line "Strata is running at https://strata-7474658003099155.aws.databricksapps.com". `strata.ops.follows` keeps SELECT and MODIFY for the App's service principal, and `GET /api/following` with the CLI profile's OAuth token answered 200 at 10:20 UTC (counts all 0, no project followed yet). The follow-and-restart check and the non-staff refusal stay the user's, in the browser.
 
 ## Ticket 37, step 3 of 6: sync the mission brief writer and the orchestrator
 
@@ -1538,6 +1592,8 @@ On the fixture the first query returns 1,169 and the second returns 0. Once P130
 
 **Ran on October 26, 2026 (orchestrator), from 7f43303.** The warehouse came back from its daily limit at 00:54 UTC. One bundle deploy served every block that names it: the first pass (00:55 to 00:58 UTC) exited 0, printed "The metric views Genie reads exist now: strata.gold.contract_metrics, strata.gold.package_metrics.", listed 32 tables as new (gold: contract_metrics, edge, package_metrics, time_estimate_model, time_estimate_score; silver: contract_passage_links, notice_bids; ops: answer_citations, candidate_labels, disagreement_choices, draft_fields, draft_fields_latest, exposed_projects, follows, hindsight_agreement, hindsight_blamed, hindsight_codings, label_decisions, lesson_version_notices, passage_language_checks, quality_checks, rebidding_labels, rebidding_scores, retrieval_agreement, retrieval_feedback_viewers, retrieval_feedback_weekly, retrieval_grades, retrieval_label_builds, retrieval_labels, retrieval_pool, retrieval_queries, viewer_settings), changed no existing table, and said "The job strata nightly changed." The second pass (00:58 to 00:59 UTC) printed "No changes." Both printed "workspace's catalog lists the same before and after the deploy: two schemas, three tables and one volume." `SHOW TABLES` in each schema lists every table above. The relink that builds `strata.gold.edge` waits for the nightly job run that follows the backtests.
 
+**Ran on October 26, 2026 (orchestrator), from 6b5ff48d.** `check.py job-run` started run 601237901444983 at 06:40 UTC and exited 1 at 09:11 with "The run ended TIMEDOUT, so it did not finish every task." `strata.ops.pipeline_runs` and `strata.ops.quality_checks` for that run: `fetch_by_watermark` succeeded (06:41 to 06:55, 365 rows changed, five checks passed); `bronze_to_gold` succeeded (06:55 to 07:32, 808,547 rows changed, 36 checks passed and one failed: `contacts_left` on `strata.silver.notices` found 1,256); `parse_and_embed` ran from 07:32 to the job's 150-minute stop at 09:11 and is recorded as failed with 0 rows, having written 97 layout pages of one document, 34106903 of P156634, to `strata.bronze.layout_pages` between 08:12 and 09:10 (its task log is 506 lines of pypdf messages for that file, such as PdfReadError "Invalid Elementary Object" and "Object 813 0 not defined", and nothing else); `relink`, `score`, `sync_index`, `measure_data_readiness`, `propose_lessons`, `refresh_drafts` and `detect_disagreements` were skipped (UPSTREAM_CANCELED). So `relink` did not run: `strata.gold.edge` and `strata.gold.passage` hold 0 rows, and both queries wait for a run in which `parse_and_embed` finishes inside the window (ticket 72's per-document writer) and P130164's passages exist. `strata.gold.contract` holds 7 contracts for P130164. The build orchestrator was told at 09:12 UTC.
+
 ## Ticket 22, step 2 of 2: the four-hop recursive SQL on the SQL warehouse
 
 The merger parked this step on October 25, 2026, after merge commit d8bdbb7. It needs the Databricks keys in `.env`. Run it after step 1, once `strata.gold.edge` on the warehouse holds the path from AMIT CONSTRUCTION through contract OP00044090 and project P130164 to ICR paragraph 31525018/v1/54. Criterion 2 is already proved on DuckDB in the gate. This step checks that the warehouse runs the same `WITH RECURSIVE` query.
@@ -1571,6 +1627,8 @@ Run this from the main checkout:
     uv run --script ops/hindsight/code.py --env-file .env status
 
 It worked if it exits 0 and prints "Pilot projects with an ICR on <date>: N. The hindsight test replays 0.", with N near PLAN.md's 49, then lists each project as waiting ("not coded yet" or "ICR not read yet"), and lists any project left out with its reason (an extraction example, or exposed to Strata).
+
+**Ran on October 26, 2026 (orchestrator), from 03349a45.** `code.py status` exited 0 at 09:19 UTC and printed "Pilot projects with an ICR on 2026-10-26: 0. The hindsight test replays 0." and no project line: `strata.gold.passage` holds 0 rows, so no ICR is read yet (ticket 72). Run it again after a documents run.
 
 ## Ticket 34, step 3 of 4: two people code the blamed risks (a human step)
 
@@ -1628,7 +1686,9 @@ Run this from the main checkout:
 
 It worked if the deploy exits 0, its last line is `Strata is running at https://...`, and `SHOW GRANTS ON TABLE strata.ops.disagreement_choices` lists SELECT and MODIFY for the App's service principal. Then, signed in to the App as a staff viewer, `GET <App url>/api/projects/P130164/timeline` must answer 200 with two disagreement items (ISR 7 against ICR paragraph 78 on `pdo_progress`, and the ICR against the ICR Review on `efficiency`). A POST to `<App url>/api/disagreements/437378890475ef48/choices` with a reason and a run id (the body the card sends: `kept_assertion_id`, `reason`, `run_id`, `view`) must answer `recorded: true` and add one row to `strata.ops.disagreement_choices`.
 
-**Parked on October 26, 2026 (orchestrator).** This is the App deploy, `ops/app/deploy_app.py`, which writes the Foundry and Azure OpenAI keys into the secret scope `strata` through the SDK. Secret writes are the user's (ticket 06, step 1, and ticket 43, step 4), so this step waits for their decision on the scope.
+**Parked on October 26, 2026 (orchestrator); runs with `--keep-secrets` since ticket 70 merged (da9a906d).** This is the App deploy, `ops/app/deploy_app.py`. Without the option it writes the Foundry and Azure OpenAI keys into the secret scope `strata` through the SDK, and secret writes are the user's (ticket 06, step 1, and ticket 43, step 4). The user has written the secrets, so a session runs this step as `uv run --script ops/app/deploy_app.py --env-file .env --keep-secrets`, which writes no secret (the header's note on ticket 70). One such deploy from da9a906d or later, such as ticket 70's step 1, serves this block; the checks above then run as written.
+
+**Ran on October 26, 2026 (orchestrator).** Ticket 70's step 1 has the deploy: `ops/app/deploy_app.py --keep-secrets` from a snapshot of 15052345, 10:10 to 10:19 UTC, exit 0, last line "Strata is running at https://strata-7474658003099155.aws.databricksapps.com". `SHOW GRANTS ON TABLE strata.ops.disagreement_choices` lists SELECT and MODIFY for the App's service principal. `GET /api/projects/P130164/timeline` with the CLI profile's OAuth token answered 200 at 10:21 UTC with 0 items and no disagreement, because `strata.gold.passage` holds 0 rows and `detect_disagreements` was skipped in run 601237901444983; the two disagreement items and the POST follow a run with passages. The deploy half passed.
 
 ## Ticket 23, step 3 of 3: the timeline, the warning card and a kept side on the deployed App (criteria 4 and 5, live)
 
@@ -1670,7 +1730,11 @@ It worked if the deploy exits 0, prints "7. Masking who sent each passage report
 
 Run as you, the same two queries count every report and every cited source that has a sender, which shows the mask lets the owner through. If the workspace has no second person to sign in as, `DESCRIBE FUNCTION EXTENDED strata.ops.mask_viewer` must show a body that names only the App's service principal and your user name. If the warehouse refuses `SET MASK`, the deploy stops at step 7 with the warehouse's message; tell the orchestrator, since the fallback is to move the two tables to a schema without the readers' grant.
 
-**Parked on October 26, 2026 (orchestrator).** This is the App deploy, `ops/app/deploy_app.py`, which writes the Foundry and Azure OpenAI keys into the secret scope `strata` through the SDK. Secret writes are the user's (ticket 06, step 1, and ticket 43, step 4), so this step waits for their decision on the scope.
+**Parked on October 26, 2026 (orchestrator); runs with `--keep-secrets` since ticket 70 merged (da9a906d).** This is the App deploy, `ops/app/deploy_app.py`. Without the option it writes the Foundry and Azure OpenAI keys into the secret scope `strata` through the SDK, and secret writes are the user's (ticket 06, step 1, and ticket 43, step 4). The user has written the secrets, so a session runs this step as `uv run --script ops/app/deploy_app.py --env-file .env --keep-secrets`, which writes no secret (the header's note on ticket 70). One such deploy from da9a906d or later, such as ticket 70's step 1, serves this block; the checks above then run as written.
+
+**Checked on October 26, 2026 (orchestrator).** After the user's App deploy of 06:11 UTC, `system.information_schema.column_masks` has no row for `strata.ops`, and `strata.information_schema.routines` lists no routine in `ops`, so no mask function `mask_viewer` exists and the deploy's step 7 did not take. Whether it printed a refusal of `SET MASK` is in the user's terminal; the next App deploy (ticket 70) shows what step 7 prints.
+
+**Ran on October 26, 2026 (orchestrator).** Ticket 70's step 1 has the deploy: `ops/app/deploy_app.py --keep-secrets` from a snapshot of 15052345, 10:10 to 10:19 UTC, exit 0, last line "Strata is running at https://strata-7474658003099155.aws.databricksapps.com". Step 7 printed its one line, "7. Masking who sent each passage report and who asked each question from everyone but the app and you." `strata.information_schema.column_masks` now lists `strata.ops.mask_viewer` on `answer_citations.viewer_id`, `candidate_labels.viewer_email` and `candidate_labels.viewer_id` (and on eleven more columns of tickets 35, 38 and 39). Passed.
 
 ## Ticket 64, step 2 of 3: sync the agent, since get_disagreements' description changed
 
@@ -1793,6 +1857,8 @@ It worked if every task succeeds, the `score` line says it succeeded, and this r
 
 Then the 100 ms check (criterion 1, warehouse half): time `src/strata/tools/sql/estimate_time/scores.sql` for one scored package through `WarehouseEngine`. The verifier proved the lookup offline on the fixture, which is what the criterion names.
 
+**Ran on October 26, 2026 (orchestrator), from 6b5ff48d.** `check.py job-run` started run 601237901444983 at 06:40 UTC and exited 1 at 09:11 with "The run ended TIMEDOUT, so it did not finish every task." `strata.ops.pipeline_runs` and `strata.ops.quality_checks` for that run: `fetch_by_watermark` succeeded (06:41 to 06:55, 365 rows changed, five checks passed); `bronze_to_gold` succeeded (06:55 to 07:32, 808,547 rows changed, 36 checks passed and one failed: `contacts_left` on `strata.silver.notices` found 1,256); `parse_and_embed` ran from 07:32 to the job's 150-minute stop at 09:11 and is recorded as failed with 0 rows, having written 97 layout pages of one document, 34106903 of P156634, to `strata.bronze.layout_pages` between 08:12 and 09:10 (its task log is 506 lines of pypdf messages for that file, such as PdfReadError "Invalid Elementary Object" and "Object 813 0 not defined", and nothing else); `relink`, `score`, `sync_index`, `measure_data_readiness`, `propose_lessons`, `refresh_drafts` and `detect_disagreements` were skipped (UPSTREAM_CANCELED). So `score` did not run, and `strata.gold.time_estimate_score` holds 0 rows; with no champion (step 2) it would have had no work. The 100 ms check waits for a scored package.
+
 ## Ticket 26, step 4 of 5: sync the agent, since estimate_time's description changed
 
 The merger parked this step on October 25, 2026, after merge commit a4ed00d, while the warehouse's daily limit held. It needs the four Foundry keys in `.env`, not the warehouse. The description of `estimate_time` in `config/tools.toml` changed in this ticket. The agent's tool list is generated from that file, so the orchestrator agent in Foundry is out of date until this runs. Ticket 13's sync runs the same command, and one sync from a4ed00d or later serves every block that names it.
@@ -1820,7 +1886,9 @@ It worked if the deploy exits 0 and its last line is `Strata is running at https
 2. Choose the other plan date and reload. It worked if your choice stays checked, and `SELECT count(*) FROM strata.app.plan_date_choices` in Lakebase returns at least 1.
 3. Without a champion, the same page shows no bar in lane 2, and section 4 says "I'm not listing approach options, because I have no time estimate for this package."
 
-**Parked on October 26, 2026 (orchestrator).** This is the App deploy, `ops/app/deploy_app.py`, which writes the Foundry and Azure OpenAI keys into the secret scope `strata` through the SDK. Secret writes are the user's (ticket 06, step 1, and ticket 43, step 4), so this step waits for their decision on the scope.
+**Parked on October 26, 2026 (orchestrator); runs with `--keep-secrets` since ticket 70 merged (da9a906d).** This is the App deploy, `ops/app/deploy_app.py`. Without the option it writes the Foundry and Azure OpenAI keys into the secret scope `strata` through the SDK, and secret writes are the user's (ticket 06, step 1, and ticket 43, step 4). The user has written the secrets, so a session runs this step as `uv run --script ops/app/deploy_app.py --env-file .env --keep-secrets`, which writes no secret (the header's note on ticket 70). One such deploy from da9a906d or later, such as ticket 70's step 1, serves this block; the checks above then run as written.
+
+**Deploy half ran on October 26, 2026 (orchestrator).** Ticket 70's step 1 has the deploy: `ops/app/deploy_app.py --keep-secrets` from a snapshot of 15052345, 10:10 to 10:19 UTC, exit 0, last line "Strata is running at https://strata-7474658003099155.aws.databricksapps.com". Lane 2 and section 4 need a champion from step 2 (none yet, the data decision), so the browser checks wait.
 
 ## Ticket 43, step 1 of 4: deploy the job's two new tables, then run the nightly job and check a scheduled run (criterion 2)
 
@@ -1842,6 +1910,8 @@ It worked if it exits 0 with the same ten task lines and "finished inside the jo
 
 **Ran on October 26, 2026 (orchestrator), from 7f43303.** The warehouse came back from its daily limit at 00:54 UTC. One bundle deploy served every block that names it: the first pass (00:55 to 00:58 UTC) exited 0, printed "The metric views Genie reads exist now: strata.gold.contract_metrics, strata.gold.package_metrics.", listed 32 tables as new (gold: contract_metrics, edge, package_metrics, time_estimate_model, time_estimate_score; silver: contract_passage_links, notice_bids; ops: answer_citations, candidate_labels, disagreement_choices, draft_fields, draft_fields_latest, exposed_projects, follows, hindsight_agreement, hindsight_blamed, hindsight_codings, label_decisions, lesson_version_notices, passage_language_checks, quality_checks, rebidding_labels, rebidding_scores, retrieval_agreement, retrieval_feedback_viewers, retrieval_feedback_weekly, retrieval_grades, retrieval_label_builds, retrieval_labels, retrieval_pool, retrieval_queries, viewer_settings), changed no existing table, and said "The job strata nightly changed." The second pass (00:58 to 00:59 UTC) printed "No changes." Both printed "workspace's catalog lists the same before and after the deploy: two schemas, three tables and one volume." `SHOW TABLES` in each schema lists every table above. `DESCRIBE TABLE` finds `public_from` on quality_checks (1 match) and on lesson_version_notices (1 match). The job run follows the backtests.
 
+**Ran on October 26, 2026 (orchestrator), from 6b5ff48d.** `check.py job-run` started run 601237901444983 at 06:40 UTC and exited 1 at 09:11 with "The run ended TIMEDOUT, so it did not finish every task." `strata.ops.pipeline_runs` and `strata.ops.quality_checks` for that run: `fetch_by_watermark` succeeded (06:41 to 06:55, 365 rows changed, five checks passed); `bronze_to_gold` succeeded (06:55 to 07:32, 808,547 rows changed, 36 checks passed and one failed: `contacts_left` on `strata.silver.notices` found 1,256); `parse_and_embed` ran from 07:32 to the job's 150-minute stop at 09:11 and is recorded as failed with 0 rows, having written 97 layout pages of one document, 34106903 of P156634, to `strata.bronze.layout_pages` between 08:12 and 09:10 (its task log is 506 lines of pypdf messages for that file, such as PdfReadError "Invalid Elementary Object" and "Object 813 0 not defined", and nothing else); `relink`, `score`, `sync_index`, `measure_data_readiness`, `propose_lessons`, `refresh_drafts` and `detect_disagreements` were skipped (UPSTREAM_CANCELED). The check printed no task lines, because the run did not finish. The per-country fetch did land: `strata.gold.notice` holds 126,396 rows across 152 country codes, by `notice_date` year from 2005 to 2026 (2009 to 2023 between 215 and 4,529 a year; 2024: 3,997; 2025: 63,847; 2026: 36,463; 90 undated), where October 24's fetch held notices from 2024 on only. The scheduled-run half (criterion 2) waits for a run that finishes inside the window.
+
 ## Ticket 43, step 2 of 4: check that Strata's and fairshare's nightly windows never meet (criterion 5, window half)
 
 The merger parked this step on October 25, 2026, after merge commit 60cf29b, while the warehouse's daily limit held. Run it after step 1, so Strata's job has a recent run to measure. It needs the Databricks keys in `.env`. Offline, the verifier found no overlap on any of 366 days against fairshare's schedule measured on October 24, 2026 (06:00 America/Chicago, longest run 21 minutes), with a smallest gap of 1 hour 30 minutes.
@@ -1851,6 +1921,8 @@ Run this from the main checkout:
     uv run --script ops/bundle/check.py schedules --env-file .env --write
 
 It worked if it exits 0 and the `<!-- bundle:schedules -->` block in `bundle/README.md` records both schedules with a new "Measured:" date and says the strata and fairshare windows never meet. Commit that change to `bundle/README.md`.
+
+**Ran on October 26, 2026 (orchestrator), from e9879d4e's parent, in the main checkout.** `check.py schedules --env-file .env --write` exited 0 at 09:14 UTC: "fairshare's job: fairshare nightly, daily at 06:00 America/Chicago. Its longest of the last 19 runs took 21 minutes."; "Strata's job: strata nightly, daily at 03:00 America/New_York. Its longest of the last eight runs took 151 minutes, and it stops after 150 minutes."; "Overlap: none. With these durations the two jobs share no minute on any day from October 26, 2026 to October 26, 2027, and the same holds if Strata's job runs to its limit."; "Measured: October 26, 2026". The changed `bundle/README.md` block is commit e9879d4e on build/strata. Passed.
 
 ## Ticket 43, step 3 of 4: after a repair run, see whether {{job.repair_count}} tells tries apart
 
@@ -1871,6 +1943,10 @@ Record here whether `{{job.repair_count}}` would add anything the start times do
 The merger parked this step on October 25, 2026, after merge commit 60cf29b, while the warehouse's daily limit held. It needs the Databricks keys in `.env`. From this merge on, each task of `strata nightly` reads its keys from the secret scope `strata` through `keys_from_scope`. So `bronze_to_gold` (the uncertain middle of supplier matching) and `parse_and_embed` reach Azure OpenAI only when the scope holds `AZURE_OPENAI_ENDPOINT` and `AZURE_OPENAI_API_KEY`. The App deploy (`ops/app/deploy_app.py`, ticket 26's step 5) saves both keys there when `.env` has them. Claude cannot write secrets in auto mode, so this is your step: rerun the App deploy or the wizard (`bash ops/wizard/strata-setup.sh`), or save a missing key with the Databricks CLI's put-secret command for the scope `strata`. Do this before step 1's job run if you can; otherwise the next night picks the keys up.
 
 It worked if the scope `strata` lists both keys in the workspace's secret listing. Then, after the next nightly run, ticket 19's step 5 checks that `strata.ops.supplier_pairs.model` is filled, and the count of `person` pairs with `no_model` in ticket 19's earlier step falls.
+
+**Done by the user on October 26, 2026.** `databricks secrets list-secrets strata` shows `AZURE_OPENAI_ENDPOINT` and `AZURE_OPENAI_API_KEY` written at 05:10 UTC, beside `APPLICATIONINSIGHTS_CONNECTION_STRING` (October 24), so the next nightly run's `bronze_to_gold` and `parse_and_embed` reach Azure OpenAI.
+
+**Checked on October 26, 2026 (orchestrator).** The task logs of run 601237901444983 (`fetch_by_watermark`, `bronze_to_gold` and `parse_and_embed`) each begin "Keys read from the secret scope strata: AZURE_OPENAI_ENDPOINT, AZURE_OPENAI_API_KEY, FOUNDRY_PROJECT_ENDPOINT, FOUNDRY_TENANT_ID, FOUNDRY_CLIENT_ID, FOUNDRY_CLIENT_SECRET.", so the tasks reach both keys. Passed. Ticket 19's step 5 is checked after a run that finishes.
 
 ## Ticket 33, step 1 of 3: make the metric views Genie reads, then deploy the Genie space twice (criterion 1, live)
 
@@ -1950,6 +2026,8 @@ Then, in the SQL editor:
 
 It worked if the run exits 0, `passages_language_set` has its count equal to its denominator, `passage_language_sample_agrees` reads 50 of 50 (or its detail names each passage that disagreed), and `passage_language_checks` holds the sampled passages with `agrees` true for nearly all of them. Criterion 1 asks for this across the whole slice, so check the same two rows again after the next nightly `parse_and_embed` task (`bundle/nightly.yml`, which now installs `py3langid==0.3.0`).
 
+**October 26, 2026 (orchestrator).** The documents run of this night is recorded under ticket 11, step 1 of 4: it stopped on a 503 before the passage reader ran, so no passage has a language yet.
+
 ## Ticket 42, step 3 of 6: sync the changed orchestrator and writer instructions
 
 The merger parked this step on October 25, 2026, after merge commit 3422fff, while the header above held workspace steps back during a merge. The sync needs only Foundry, not the warehouse. It needs FOUNDRY_PROJECT_ENDPOINT and FOUNDRY_TENANT_ID in `.env`, and `az` signed in. Ticket 42 changed the orchestrator's instructions (`src/strata/agent/orchestrator.md`: write in the working language, keep quotes word for word in their own language) and four draft writers' instructions. The orchestrator sync that ran for ticket 33 on October 25 came from 3b8c15aa, before this merge, so it does not cover these changes. One sync from 3422fff or later serves every block that names it.
@@ -2014,7 +2092,9 @@ Then, in the SQL editor, with the App's service principal (its application id, s
 
 It worked if the deploy exits 0 with the last line `Strata is running at https://...`, `GET /api/me` returns a `language` block, and, signed in as a viewer, choosing French in the view popover saves it: `PUT /api/me/working-language` returns 204, a reload of `/api/me` gives `source: saved`, and `strata.ops.viewer_settings` holds a new row for that viewer.
 
-**Parked on October 26, 2026 (orchestrator).** This is the App deploy, `ops/app/deploy_app.py`, which writes the Foundry and Azure OpenAI keys into the secret scope `strata` through the SDK. Secret writes are the user's (ticket 06, step 1, and ticket 43, step 4), so this step waits for their decision on the scope.
+**Parked on October 26, 2026 (orchestrator); runs with `--keep-secrets` since ticket 70 merged (da9a906d).** This is the App deploy, `ops/app/deploy_app.py`. Without the option it writes the Foundry and Azure OpenAI keys into the secret scope `strata` through the SDK, and secret writes are the user's (ticket 06, step 1, and ticket 43, step 4). The user has written the secrets, so a session runs this step as `uv run --script ops/app/deploy_app.py --env-file .env --keep-secrets`, which writes no secret (the header's note on ticket 70). One such deploy from da9a906d or later, such as ticket 70's step 1, serves this block; the checks above then run as written.
+
+**Deploy half ran on October 26, 2026 (orchestrator).** Ticket 70's step 1 has the deploy: `ops/app/deploy_app.py --keep-secrets` from a snapshot of 15052345, 10:10 to 10:19 UTC, exit 0, last line "Strata is running at https://strata-7474658003099155.aws.databricksapps.com". `GET /api/me` with the CLI profile's OAuth token returns a `language` block: code `en`, source `default`, saved null, with the four choices en, fr, es and pt. Choosing French and the `viewer_settings` row are the user's, in the browser.
 
 ## Ticket 44, step 1 of 5: deploy the estimates loop's nine tables
 
@@ -2026,9 +2106,11 @@ Run this from the main checkout:
 
 It worked if it exits 0, lists the nine tables above as new, changes no existing table, and `SHOW TABLES IN strata.ops` lists all nine.
 
+**Ran on October 26, 2026 (orchestrator), from 6b5ff48d.** Ticket 45's step 1 deploy (06:31 to 06:36 UTC, the scratchpad's deploy71.log) served this block: its first pass exited 0 and listed the nine tables as new among 23 (`strata.ops.exposures`, `estimates_watch`, `anchored_plan_rows`, `retrain_triggers`, `model_signoffs`, `model_promotions`, `model_states`, `time_estimate_shadow`, `hazard_scores`; `exposed_projects` came with the deploy of 00:55), changed no existing table, and the second pass printed "No changes." `SHOW TABLES IN strata.ops` at 09:18 UTC lists all of them. Passed.
+
 ## Ticket 44, step 2 of 5: redeploy the App, then the demo question in the staff view writes one exposure (criterion 1, live)
 
-The merger parked this step on October 25, 2026, after merge commit 05052ba, for the same reasons as step 1. Run it after step 1: from this merge on, the deploy grants the App's own service principal SELECT and MODIFY on `strata.ops.exposures` (`ops/app/deploy_app.py`, `grants()`), and a grant on a table that does not exist fails. It needs the Databricks keys and the four Foundry keys in `.env`, because the answer comes from the live agent. It is ticket 06's deploy command, and one deploy from 05052ba or later serves every block that names it. Like every App deploy parked since October 26, it writes the Foundry and Azure OpenAI keys into the secret scope `strata` through the SDK, so it also waits for the user's decision on the scope (ticket 06, step 1, and ticket 43, step 4).
+The merger parked this step on October 25, 2026, after merge commit 05052ba, for the same reasons as step 1. Run it after step 1: from this merge on, the deploy grants the App's own service principal SELECT and MODIFY on `strata.ops.exposures` (`ops/app/deploy_app.py`, `grants()`), and a grant on a table that does not exist fails. It needs the Databricks keys and the four Foundry keys in `.env`, because the answer comes from the live agent. It is ticket 06's deploy command, and one deploy from 05052ba or later serves every block that names it. Like every App deploy parked since October 26, it writes the Foundry and Azure OpenAI keys into the secret scope `strata` through the SDK unless it runs with `--keep-secrets`. The user has written the secrets, so a session runs it with that option (ticket 70, explained in the header), and one such deploy from da9a906d or later, such as ticket 70's step 1, serves this block.
 
 Run this from the main checkout:
 
@@ -2039,6 +2121,8 @@ Then, signed in to the App in the World Bank staff view, ask the showcase past-r
     SELECT route, step_reference, shown FROM strata.ops.exposures ORDER BY shown_at DESC LIMIT 5
 
 It worked if the deploy exits 0 with the last line `Strata is running at https://...`, and one new row reads `/api/ask`, `KE-NWWDA-541055-CW-RFB`, `past_range`. Its `range_shown` holds the past range from the tool's own summary, which should match the range the answer cited. Then ask the same question in the PIU view and run the query again: it worked if no row was added.
+
+**Deploy half ran on October 26, 2026 (orchestrator).** Ticket 70's step 1 has the deploy: `ops/app/deploy_app.py --keep-secrets` from a snapshot of 15052345, 10:10 to 10:19 UTC, exit 0, last line "Strata is running at https://strata-7474658003099155.aws.databricksapps.com". The question in the staff view and the `strata.ops.exposures` row are the user's, in the browser.
 
 ## Ticket 44, step 3 of 5: two nights of the nightly job store the hazard model's shadow scores and its weekly comparison (criterion 7, live)
 
@@ -2088,7 +2172,7 @@ When `promoted` is true, the `champion` alias in Unity Catalog points to version
 
 ## Ticket 48, step 1 of 3: deploy the Genie space before the App, so the App asks Strata's space
 
-The merger parked this step on October 25, 2026, after merge commit cfc7130. All ten keys were set, but the header above holds workspace steps back during a merge, and the orchestrator's notes for this wave held every workspace step for the warehouse's daily limit of October 25 until the second session reports the warehouse back. It needs the Databricks keys in `.env`. This adds no new deploy. It sets the order of two commands that blocks above already park: the App deploy writes the env file's `GENIE_SPACE_ID` into `app.yaml`, so `ops/genie/deploy_space.py` must run before `ops/app/deploy_app.py`, as `ops/demo/fresh_workspace.py` lists them (steps 3 and 4). Ticket 33's step 1 made the space 01f1d0d8c9a214c7b9d665e04a462ba6 on October 26 and added its id as the env file's last line, and no App deploy has run since, so the first App deploy above (ticket 06, step 1, which waits for the user's decision on the secret scope) already comes after it. If the App was deployed before the space, or `deploy_space.py` later makes a new space, deploy the App again: the demo-ready command reads the env file's id and cannot tell when the running App asks another space (review follow-up F9 in `.notes/48-review-r2.md`). One space deploy and one App deploy from cfc7130 or later serve every block that names them.
+The merger parked this step on October 25, 2026, after merge commit cfc7130. All ten keys were set, but the header above holds workspace steps back during a merge, and the orchestrator's notes for this wave held every workspace step for the warehouse's daily limit of October 25 until the second session reports the warehouse back. It needs the Databricks keys in `.env`. This adds no new deploy. It sets the order of two commands that blocks above already park: the App deploy writes the env file's `GENIE_SPACE_ID` into `app.yaml`, so `ops/genie/deploy_space.py` must run before `ops/app/deploy_app.py`, as `ops/demo/fresh_workspace.py` lists them (steps 3 and 4). Ticket 33's step 1 made the space 01f1d0d8c9a214c7b9d665e04a462ba6 on October 26 and added its id as the env file's last line, and no App deploy has run since, so the first App deploy above (ticket 06, step 1, which a session now runs with `--keep-secrets` as ticket 70's step 1) already comes after it. If the App was deployed before the space, or `deploy_space.py` later makes a new space, deploy the App again: the demo-ready command reads the env file's id and cannot tell when the running App asks another space (review follow-up F9 in `.notes/48-review-r2.md`). One space deploy and one App deploy from cfc7130 or later serve every block that names them.
 
 Run these from the main checkout, in this order:
 
@@ -2107,12 +2191,16 @@ Run this from the main checkout:
 
 It worked if it exits 0, its last line is "Strata is ready for the demo.", and:
 
-- step 1 prints "The app strata was stopped, so I started it." and "GET /api/health answered after N seconds, within the 300-second limit" (criterion 1; `[demo_ready] health_timeout_seconds`);
+- step 1 prints "The app strata was stopped, so I started it. It runs for 24 hours from now." and "GET /api/health answered after N seconds, within the 900-second limit" (criterion 1; `[demo_ready] health_timeout_seconds`). Since ticket 77 (merge commit 7e808ad4), step 1 restarts a running App only when its last start or deploy was 12 hours ago or more (`[demo_ready] restart_after_hours`), so it prints one of three sentences: the one above for a stopped App; "It was running, and it last started or was deployed at HH:MM UTC on <date>, <N hours> ago. That is less than the 12 hours in [demo_ready] restart_after_hours, so I left it running. The platform stops it at HH:MM UTC on <date>, 24 hours after that start." for a recent one; or "It was running, and it last started or was deployed at HH:MM UTC on <date>, <N hours> ago. That is at least the 12 hours in [demo_ready] restart_after_hours, so I restarted it, and it runs for 24 hours from now." for an older one. Criterion 1 asks for the first;
 - step 2 prints that the second Genie call "answered after N seconds, within the 60-second limit" (criterion 2; `[demo_ready] genie_first_call_seconds`);
 - step 3 prints "The verifier ran all six checks and kept ... removing none.", and the summary shows "The smoke question: passed." (criterion 3);
 - step 4 prints the state of each of P156634's seven checks, the project's status, and either "Nothing changed since the fixture was recorded." or the list of what changed, such as a package signed since October 9, 2026 (criterion 4). A closed project or a plan that disagrees with the awards is reported, never failed (decisions 4 and 7 in `docs/STATUS.md`).
 
 Until ticket 41 merges, step 5 says Home's examples are not built, and that is not a failure. Exit 1 names each step that failed; exit 2 means the env file is not ready.
+
+The merger of ticket 77 updated the expected lines above on October 26, 2026, for merge commit 7e808ad4 and later. The record below quotes what the command printed before that change.
+
+**Ran on October 26, 2026 (orchestrator), from 03349a45, with the orchestrator agent at version 9 and the data after run 601237901444983.** Twice: 09:28 to 09:38 UTC (exit 1) and, with `data/out/fixture.duckdb` copied into the snapshot, 09:39 to 09:50 UTC (exit 1). Step 1 printed "It was running. I restarted it, so it runs for 24 hours from now." both times and then failed both times: "The app did not answer GET /api/health within 300 seconds. The last try said: Calling the app at /api/health failed: HTTP Error 502: Bad Gateway". A probe of `/api/health` every 15 seconds beside the second run (the scratchpad's health48.log) saw 200 at 09:39:47, 503 from 09:40:02, 502 from 09:42:40 and 200 again from 09:48:12, so the App needs about eight and a half minutes after a restart, against `[demo_ready] health_timeout_seconds` of 300; the build orchestrator was told at 09:52 UTC. Step 2 passed both times: Genie answered the warming question after 20 then 16 seconds and the demo's first question after 15 then 18 seconds, within the 60-second limit. Step 3 failed both times: "The answer did not pass. Its kept sentences do not cite strata.gold.passage:31525018/v1/54." (the second run: "It kept no sentence ... The verifier removed one sentence (date_not_in_records)."), because `strata.gold.passage` holds 0 rows and search_passages logged "no passages, because the passage index is not available yet" three times a run. Step 4 failed in the first run only because the snapshot lacked the fixture database, and passed in the second: "In the fixture: Needs a look, with four signals." and "On the workspace: Watch, with two signals. It closes on October 31, 2026." (Signed far above its estimate: KE-NWWDA-229129-CW-RFQ at about 4 times its estimate, US$1,245,092.76 against US$300,000.00; Closing date moved three times since 2022; Restructured and ISR rating lowered could not run, "because I hold no ISR for the project"), 37 changes since the fixture (new Procurement Plan dates for the project's agencies, Planned completion passed and Direct selection added late no longer firing, Signed far above its estimate naming KE-NWWDA-229129-CW-RFQ instead of -RFB), and the one disagreement reported, not decided: KE-NWWDA-541062-CW-RFQ, where the plan of October 9, 2026 shows no signed contract and the awards dataset shows contract 1903551 signed on May 11, 2026 for US$301,170.36. Step 5 said Home's examples and window are not built yet (ticket 41). Step 6 listed one change in the first run (the rows of `strata.ops.pipeline_runs`) and two in the second (`strata.ops.cost_pulls` and `strata.ops.dashboard_findings`, written by the cost pull job's scheduled run at 09:40 UTC, ticket 45's step 3). Last line both times: "Strata is not ready for the demo.", with the app and the smoke question named (and the P156634 recheck in the first run). Logs: the scratchpad's ready48.log and ready48b.log.
 
 ## Ticket 48, step 3 of 3: the same command again, right away, changes nothing (criterion 6, live)
 
@@ -2122,7 +2210,11 @@ Run this from the main checkout:
 
     uv run --with databricks-sdk==0.156.0 python ops/demo/ready.py --env-file .env
 
-It worked if it exits 0, step 1 prints "It was running. I restarted it, so it runs for 24 hours from now.", it prints "6. What changed on the workspace." followed by "   No changes.", and its last line is "Strata is ready for the demo." If the listing names `strata.ops` tables the workspace lacks, run the bundle deploy (ticket 44, step 1) and start again from step 2.
+It worked if it exits 0, step 1 prints "It was running, and it last started or was deployed at HH:MM UTC on <date>, <N minutes> ago. That is less than the 12 hours in [demo_ready] restart_after_hours, so I left it running." and "GET /api/health answered after N seconds, within the 900-second limit", it prints "6. What changed on the workspace." followed by "   No changes.", and its last line is "Strata is ready for the demo." Since ticket 77 (merge commit 7e808ad4), this second run makes no stop or start call, so the App never answers 502 or 503 during it. If the listing names `strata.ops` tables the workspace lacks, run the bundle deploy (ticket 44, step 1) and start again from step 2.
+
+The merger of ticket 77 updated the expected lines above on October 26, 2026, for merge commit 7e808ad4 and later. The record below quotes what the command printed before that change.
+
+**Ran on October 26, 2026 (orchestrator), from 03349a45.** The second run of step 2 (09:39 to 09:50 UTC) is this run, started within two minutes of the first. Step 1 printed "It was running. I restarted it, so it runs for 24 hours from now." Step 6 did not print "No changes.": it listed the rows of `strata.ops.cost_pulls` and `strata.ops.dashboard_findings`, which the cost pull job's scheduled run at 09:40 UTC wrote, not the command. It exited 1 for the same two steps as the first run (the App's restart time and the smoke question), so the last line was not "Strata is ready for the demo." The restart itself is a change the command makes every time: the App answered 502 and 503 for about eight and a half minutes after each run (step 2 has the probe), which is worth knowing before anyone runs it in the minutes before the demo.
 
 ## Ticket 38, step 1 of 6: sync the implementing agency's PPSD rows writer to Foundry, with a --check run (criterion 6, live)
 
@@ -2137,7 +2229,7 @@ It worked if the first run ends "I made version N of strata-ppsd-rows-agency-wri
 
 ## Ticket 38, step 2 of 6: deploy the two upload tables, then redeploy the App for their grants and masks
 
-The merger parked this step on October 25, 2026, after merge commit dbf7a8d, for the same reasons as step 1. It needs the Databricks keys in `.env`, and the warehouse under its free daily limit. Ticket 38 adds `strata.ops.uploads` and `strata.ops.upload_rows` (`src/strata/lakehouse/tables/ops/`). The bundle deploy makes the tables. The App deploy (`ops/app/deploy_app.py`, `grants()` and `masks()`) then grants the App's own service principal SELECT and MODIFY on both, and masks the officer's words: `uploads.uploader_name`, `file_name` and `reading`, `upload_rows.activity_reference_no`, `description` and `content`, and also `drafts.content`, `draft_exports.snapshot` and `draft_files.content` (`strata.lakehouse.masks.MASKED`). A grant on a table that does not exist fails, so the bundle deploy runs first. One bundle deploy and one App deploy from dbf7a8d or later serve every block that names them, ticket 44's steps 1 and 2 among them. This workspace's earlier deploys passed `--fairshare-catalog workspace`, so this one does too. The App deploy writes the Foundry and Azure OpenAI keys into the secret scope `strata`, so it also waits for the user's decision on the scope (ticket 06, step 1, and ticket 43, step 4).
+The merger parked this step on October 25, 2026, after merge commit dbf7a8d, for the same reasons as step 1. It needs the Databricks keys in `.env`, and the warehouse under its free daily limit. Ticket 38 adds `strata.ops.uploads` and `strata.ops.upload_rows` (`src/strata/lakehouse/tables/ops/`). The bundle deploy makes the tables. The App deploy (`ops/app/deploy_app.py`, `grants()` and `masks()`) then grants the App's own service principal SELECT and MODIFY on both, and masks the officer's words: `uploads.uploader_name`, `file_name` and `reading`, `upload_rows.activity_reference_no`, `description` and `content`, and also `drafts.content`, `draft_exports.snapshot` and `draft_files.content` (`strata.lakehouse.masks.MASKED`). A grant on a table that does not exist fails, so the bundle deploy runs first. One bundle deploy and one App deploy from dbf7a8d or later serve every block that names them, ticket 44's steps 1 and 2 among them. This workspace's earlier deploys passed `--fairshare-catalog workspace`, so this one does too. The App deploy writes the Foundry and Azure OpenAI keys into the secret scope `strata` unless it runs with `--keep-secrets`. The user has written the secrets, so a session runs it with that option (ticket 70, explained in the header), and one such deploy from da9a906d or later, such as ticket 70's step 1, serves this block after the bundle deploy.
 
 Run these from the main checkout, in this order:
 
@@ -2151,6 +2243,10 @@ It worked if the bundle deploy exits 0, lists `strata.ops.uploads` and `strata.o
     SHOW GRANTS ON TABLE strata.ops.upload_rows
 
 each list SELECT and MODIFY for the App's service principal, and `DESCRIBE TABLE EXTENDED strata.ops.upload_rows` shows the mask `strata.ops.mask_viewer` on `activity_reference_no`, `description` and `content`.
+
+**Ran on October 26, 2026 (orchestrator), deploy half, from 6b5ff48d.** Ticket 45's step 1 deploy (06:31 to 06:36 UTC) listed `strata.ops.uploads` and `strata.ops.upload_rows` as new and changed no existing table. The job run of that morning (601237901444983, ticket 43's step 1) did not finish, and the App has not been redeployed since the tables appeared (the user's deploy was at 06:11 UTC), so `SHOW GRANTS ON TABLE strata.ops.uploads` at 09:19 UTC lists only `account users` SELECT on the schema, and no mask exists. The grants and the masks come with ticket 70's `--keep-secrets` redeploy.
+
+**App half ran on October 26, 2026 (orchestrator).** Ticket 70's step 1 has the deploy: `ops/app/deploy_app.py --keep-secrets` from a snapshot of 15052345, 10:10 to 10:19 UTC, exit 0, last line "Strata is running at https://strata-7474658003099155.aws.databricksapps.com". `SHOW GRANTS ON TABLE strata.ops.uploads` and `upload_rows` now list SELECT and MODIFY for the App's service principal, and `column_masks` shows `strata.ops.mask_viewer` on `upload_rows.activity_reference_no`, `description` and `content`, and on `uploads.uploader_name`, `file_name` and `reading`. The job-run half waits for a run that finishes (ticket 43's step 1).
 
 ## Ticket 38, step 3 of 6: an officer uploads through the deployed App, and no one else sees it (criterion 2, live)
 
@@ -2195,7 +2291,7 @@ It worked if the writing page ends with the saved draft, not an error, and the q
 
 ## Ticket 39, step 1 of 4: deploy the three Lessons tables, then redeploy the App for their grants and masks
 
-The merger parked this step on October 25, 2026, after merge commit 2cb3915. All ten keys were set, but the header above holds workspace steps back during a merge, and the orchestrator's notes for this wave held every workspace step for the warehouse's daily limit of October 25 until the second session reports the warehouse back. It needs the Databricks keys in `.env`, and the warehouse under its free daily limit. Ticket 39 adds `strata.ops.lesson_visits`, `strata.ops.draft_lesson_choices` and `strata.ops.lesson_version_tags` (`src/strata/lakehouse/tables/ops/`). The bundle deploy makes the tables. The App deploy (`ops/app/deploy_app.py`, `grants()` and `masks()`) then grants the App's own service principal SELECT and MODIFY on all three and SELECT on `strata.ops.retrieval_feedback_viewers`, and masks a draft's lesson choices: `draft_lesson_choices.reason` and `rewrite` (`strata.lakehouse.masks.MASKED`). A grant on a table that does not exist fails, so the bundle deploy runs first; the builder named only the App deploy, and I added the bundle deploy and the job run for that reason. One bundle deploy and one App deploy from 2cb3915 or later serve every earlier block that names them, ticket 38's step 2 and ticket 44's steps 1 and 2 among them. This workspace's earlier deploys passed `--fairshare-catalog workspace`, so this one does too. The App deploy writes the Foundry and Azure OpenAI keys into the secret scope `strata`, so it also waits for the user's decision on the scope (ticket 06, step 1, and ticket 43, step 4).
+The merger parked this step on October 25, 2026, after merge commit 2cb3915. All ten keys were set, but the header above holds workspace steps back during a merge, and the orchestrator's notes for this wave held every workspace step for the warehouse's daily limit of October 25 until the second session reports the warehouse back. It needs the Databricks keys in `.env`, and the warehouse under its free daily limit. Ticket 39 adds `strata.ops.lesson_visits`, `strata.ops.draft_lesson_choices` and `strata.ops.lesson_version_tags` (`src/strata/lakehouse/tables/ops/`). The bundle deploy makes the tables. The App deploy (`ops/app/deploy_app.py`, `grants()` and `masks()`) then grants the App's own service principal SELECT and MODIFY on all three and SELECT on `strata.ops.retrieval_feedback_viewers`, and masks a draft's lesson choices: `draft_lesson_choices.reason` and `rewrite` (`strata.lakehouse.masks.MASKED`). A grant on a table that does not exist fails, so the bundle deploy runs first; the builder named only the App deploy, and I added the bundle deploy and the job run for that reason. One bundle deploy and one App deploy from 2cb3915 or later serve every earlier block that names them, ticket 38's step 2 and ticket 44's steps 1 and 2 among them. This workspace's earlier deploys passed `--fairshare-catalog workspace`, so this one does too. The App deploy writes the Foundry and Azure OpenAI keys into the secret scope `strata` unless it runs with `--keep-secrets`. The user has written the secrets, so a session runs it with that option (ticket 70, explained in the header), and one such deploy from da9a906d or later, such as ticket 70's step 1, serves this block after the bundle deploy.
 
 Run these from the main checkout, in this order:
 
@@ -2210,6 +2306,10 @@ It worked if the bundle deploy exits 0, lists `strata.ops.lesson_visits`, `strat
     SHOW GRANTS ON TABLE strata.ops.lesson_version_tags
 
 each list SELECT and MODIFY for the App's service principal, and `DESCRIBE TABLE EXTENDED strata.ops.draft_lesson_choices` shows the mask `strata.ops.mask_viewer` on `reason` and `rewrite`.
+
+**Ran on October 26, 2026 (orchestrator), deploy half, from 6b5ff48d.** Ticket 45's step 1 deploy (06:31 to 06:36 UTC) listed `strata.ops.lesson_visits`, `strata.ops.draft_lesson_choices` and `strata.ops.lesson_version_tags` as new and changed no existing table. The job run of that morning (601237901444983) did not finish, and the App has not been redeployed since, so `SHOW GRANTS ON TABLE strata.ops.lesson_visits` at 09:19 UTC lists only `account users` SELECT on the schema. The grants and the masks come with ticket 70's `--keep-secrets` redeploy.
+
+**App half ran on October 26, 2026 (orchestrator).** Ticket 70's step 1 has the deploy: `ops/app/deploy_app.py --keep-secrets` from a snapshot of 15052345, 10:10 to 10:19 UTC, exit 0, last line "Strata is running at https://strata-7474658003099155.aws.databricksapps.com". `SHOW GRANTS ON TABLE` on `strata.ops.lesson_visits`, `draft_lesson_choices` and `lesson_version_tags` now list SELECT and MODIFY for the App's service principal, `column_masks` shows `strata.ops.mask_viewer` on `draft_lesson_choices.reason` and `rewrite`, and the mask is on 14 columns in all, as this block expects. The deploy printed no "The column mask" summary line (step 7 printed only its heading). The job-run half waits for a run that finishes.
 
 ## Ticket 39, step 2 of 4: sync the changed PPSD rows writer to Foundry, with a --check run (round 2 follow-up 11)
 
@@ -2262,6 +2362,8 @@ Run this from the main checkout:
 
 It worked if the four checks print as holding (the four "Holds." lines of ticket 13's step 3) and it exits 0, with no `KeyError: 'AZURE_OPENAI_ENDPOINT'` from search_passages and no `--with` on the command.
 
+**Ran on October 26, 2026 (orchestrator), from 03349a45, with the orchestrator agent at version 9.** Two runs, with no key exported to the shell and no `--with`. 09:20 UTC: the stream ended `error: agent_unavailable` after one tool round (rebidding_risk with `bad_arguments`, then find_comparables with 2,143 rows), `strata.ops.agent_runs` holds run run-14576874e3ad479381917a04b5fd6138 as failed with its Application Insights trace 5a02dd9c5a39d96b3e3f3a1c9014b6a7, and the checks ended 2 of 4 holding (3 and 4). 09:23 UTC, a copy of the script that prints the Foundry error: no error this time; the agent wrote one sentence, "I could not determine why works contracts in P130164 were advertised again because the package was unknown to the tools, and the rebidding-risk check had no comparable packages to count.", which the verifier removed (numbers 0 of 1, dates 0 of 1, sources 0 of 2), run run-7376a9af01984a32b373fd9f74e0d6b6 is `answered` with trace b7aa4bd386b0f714b799c5b940427745, found in Application Insights; checks 1 and 2 do not hold, 3 and 4 hold, exit 1. Neither `KeyError: 'AZURE_OPENAI_ENDPOINT'` nor a search_passages traceback appeared: search_passages logged its "no passages, because the passage index is not available yet" warning, so the env file alone reaches it (ticket 66's point). The four "Holds." lines need `strata.gold.passage` and the index (tickets 72 and 11). Logs: the scratchpad's ask66.log and ask66b.log.
+
 ## Ticket 66, step 3 of 3: the live document run is paced, keeps what it fetched, and stops on a 403 (criterion 4, live)
 
 The merger parked this step on October 25, 2026, after merge commit 7ea3c0f, for the same reasons as step 1. It needs the Databricks keys, AZURE_OPENAI_ENDPOINT, AZURE_OPENAI_API_KEY and AI_SEARCH_ENDPOINT in `.env`, and the warehouse under its free daily limit. Ticket 66 makes `ops/documents/run_live.py` fetch through the nightly job's fetch (`strata.lakehouse.readers.document_host`, a `PoliteFetch`): it pauses `pause_seconds` (3, in `config/sources.toml`) between requests to documents.worldbank.org, keeps each fetched text under `.cache/documents` (gitignored), and stops on a 403 with exit 2. Ticket 11's and ticket 42's blocks that run this script benefit from the same change.
@@ -2282,6 +2384,10 @@ Run this from the main checkout, twice:
 
 It worked if the first run exits 0, lists the nine tables above as new and changes no table that holds rows, names the job `strata cost pull` as new, and shows the dashboard `Strata` renamed to `Strata operations` and `Strata operations (test)` as new; and the second run prints "No changes." Then open both dashboards in the workspace. Each has three pages in this order: Data readiness, Governance, and AI quality and adoption. Each counter shows its value as text in the form "{n} of {d}", and each filter is bound to the datasets `bundle/dashboards/strata.lvdash.json` names for it. The pages stay mostly empty until step 2's nightly run writes their findings.
 
+**Failed on October 26, 2026 (orchestrator), from a snapshot of db96b3a.** Both deploy passes exited 1 at 06:12 and 06:13 UTC in step 1, before any table or dashboard changed: `Error: invalid dependency "${budget}", no such node ""`. The cause is the SQL text `'US${spent} of US${budget}'` at line 370 of `bundle/dashboards/strata.lvdash.json` (and of `strata_test.lvdash.json`): the CLI interpolates `${...}` inside the dashboard files it uploads, and `budget` is not a bundle variable. The fix is to escape the two as `$${spent}` and `$${budget}`, or to build the string without `${`. The build orchestrator was told on October 26. Until it lands, no bundle deploy from db96b3a or later can run; the deploy of 00:55 UTC from 7f43303 stays the live one. Log: the scratchpad's deploy45.log.
+
+**Ran on October 26, 2026 (orchestrator), from a snapshot of 6b5ff48 (ticket 71 done).** Passed. The first pass, 06:31 to 06:34 UTC, exited 0, listed 23 ops tables as new (the nine of this ticket among them: answer_removals, azure_costs, budget_periods, contact_removals, cost_pulls, dashboard_findings, lesson_visits, tool_call_reads, tool_calls, with anchored_plan_rows, draft_lesson_choices, estimates_watch, exposures, hazard_scores, lesson_version_tags, loop_indicators, model_promotions, model_signoffs, model_states, retrain_triggers, time_estimate_shadow, upload_rows and uploads from the tickets merged since the 00:55 deploy), changed no table that holds rows, changed the grants on strata and strata.ops, and printed "The dashboard Strata operations is new." The second pass, 06:34 to 06:36, printed "No changes." `databricks jobs list` shows `strata cost pull` (job 396792678616370, daily at 05:40) beside the three other Strata jobs, and `databricks lakeview list` shows "Strata operations" under the old dashboard's id 01f1cfd370f01f6ab7aafcb4fffadd48 (updated 06:32:35 UTC, three pages in order: Data readiness, Governance, AI quality and adoption; 47 datasets; 74 widgets) and "Strata operations (test)" as 01f1d10708201fddad8610f06e6b4071. The JSON as the API returns it is saved in the orchestrator's scratchpad for ticket 68. Which tiles the page renders as invalid, and the counters' text, need a look in the browser: the user's, in the morning.
+
 ## Ticket 45, step 2 of 6: the first nightly run after the deploy writes "Nightly runs and checks" after its last task (criteria 1 and 4, live)
 
 The merger parked this step on October 25, 2026, after merge commit d5c7a5f, for the same reasons as step 1. Run it after step 1. It needs the Databricks keys in `.env` and the warehouse under its free daily limit. Ticket 45 makes `run_task` (`src/strata/lakehouse/nightly.py`) write the Governance page's "Nightly runs and checks" sentence after the last task, or after the task that stopped the night, has recorded its `strata.ops.pipeline_runs` row. The `measure_data_readiness` task writes every other section of "What the measures say" and each loop's indicators to `strata.ops.dashboard_findings` and `strata.ops.loop_indicators`. One job run serves every block that asks for ticket 04's step 2.
@@ -2296,6 +2402,8 @@ Then, on the SQL warehouse:
     SELECT max(finished_at) FROM strata.ops.pipeline_runs WHERE run_id = (SELECT run_id FROM strata.ops.pipeline_runs ORDER BY finished_at DESC LIMIT 1)
 
 It worked if every task of the job run succeeds, the first query's `written_at` is after the second query's `finished_at`, and the number of quality checks the sentence names (for example "all 118 quality checks passed") equals the denominator of the Governance page's "Checks failed" counter (`kpi_checks_failed`) for that night. On the AI quality and adoption page, the loop indicators table shows six rows, a Leading and a Lagging row for each loop, each with its definition.
+
+**Ran on October 26, 2026 (orchestrator).** Run 601237901444983 (ticket 43's step 1) ended TIMEDOUT in `parse_and_embed`. At 09:19 UTC the first query returned no row and the second returned 2026-10-26T09:10:52Z: when the job's own stop kills a task, `run_task` never reaches the line that writes the sentence, so the Governance page has no "Nightly runs and checks" sentence for that night, and `strata.ops.loop_indicators` holds 0 rows because `measure_data_readiness` was skipped. Told the build orchestrator. It is checked again after a run that finishes.
 
 ## Ticket 45, step 3 of 6: the daily cost pull writes Azure spend, and Governance shows it against the budget (criterion 2, live)
 
@@ -2315,6 +2423,15 @@ Then run the job once:
     databricks jobs run-now <the job ID the list printed> -p strata
 
 It worked if the run succeeds, `SELECT run_id, status, from_day, through_day, charges FROM strata.ops.cost_pulls ORDER BY pulled_at DESC LIMIT 1` shows status `succeeded`, `SELECT count(*), sum(cost_usd) FROM strata.ops.azure_costs WHERE run_id = (SELECT run_id FROM strata.ops.cost_pulls ORDER BY pulled_at DESC LIMIT 1)` gives the same count as that row's `charges` and above 0, and the Governance page's Azure spend counter reads "US$N of US$197", the 197 being `[credit] usd` in `config/budget.toml`.
+
+**In part on October 26, 2026.** The user made the Entra app registration `strata-app` (application id c9da9842-0971-4370-992b-40366fdbe42b) at 05:32 UTC, put `FOUNDRY_CLIENT_ID` (05:36) and `FOUNDRY_CLIENT_SECRET` (05:41, 40 characters) in the scope `strata` and in `.env`, and assigned it "Azure AI Developer" on `wb-strata` and "Cost Management Reader" on `WorldBank-demo` (05:34). `az ad sp create-for-rbac` had refused "Azure AI User": that role does not exist in this subscription. A live test as the principal (orchestrator, 05:43 UTC): Entra issues the token, but the project answers 401 PermissionDenied, "lacks the required data action Microsoft.CognitiveServices/accounts/AIServices/agents/read", because this subscription's "Azure AI Developer" has only the OpenAI, Speech, ContentSafety and MaaS data actions. "Cognitive Services User" grants `Microsoft.CognitiveServices/*` and is the fix (ticket 69 records it); assigning it is a permission grant the classifier leaves to the user, so it waits for them. The command to paste, signed in to "Azure subscription 1":
+
+    SUB=$(az account show --query id -o tsv)
+    az role assignment create --assignee c9da9842-0971-4370-992b-40366fdbe42b --role "Cognitive Services User" --scope /subscriptions/$SUB/resourceGroups/WorldBank-demo/providers/Microsoft.CognitiveServices/accounts/wb-strata
+
+Until it runs, the deployed App starts but every answer through the agent fails with that 401. Still missing from the scope for this step: `FOUNDRY_TENANT_ID` and `AZURE_SUBSCRIPTION_ID`; the App deploy writes the first, and the second is the user's.
+
+**Seen on October 26, 2026 (orchestrator).** The job's own scheduled run went at 09:40 UTC (05:40 in Washington): `strata.ops.cost_pulls` holds run 680787411693694 twice, pulled at 09:40:44 and 09:41:27, status `failed`, from_day 2026-09-21, charges 0, error_code `not_authorized`; `strata.ops.azure_costs` holds 0 rows, and `strata.ops.dashboard_findings` got the spend finding "I have no Azure cost data yet. The daily cost pull adds each day's charges once Azure reports them." at 09:40:47 and 09:41:30. The scope `strata` still lacks `AZURE_SUBSCRIPTION_ID` (the user's step above), so the pull cannot name the subscription. Check again after the key is in the scope and the next scheduled run.
 
 ## Ticket 45, step 4 of 6: an answer's run ID leads to its tool calls and the Delta version of each table they read (criterion 3, live)
 
@@ -2364,6 +2481,8 @@ Run these from the main checkout, in this order:
 
 It worked if the first run's diff shows the new "Whole, too" bullet, the new `live_tenders` line and the "Check this last" line, and the run ends "I made version N of strata-orchestrator, which matches the repo." with N at 9 or later. The `--check` run must exit 0.
 
+**Ran on October 26, 2026 (orchestrator), from 03349a45.** The first run's diff showed the new "Whole, too" bullet, the new `live_tenders` line ("a comment on a tender not yet awarded, even after its bids have closed, such as which of its bidders qualifies or who is likely to win it") and the "Check this last" line, and ended "I made version 9 of strata-orchestrator, which matches the repo." at 09:19 UTC. `--check` exited 0 at 09:20: "Foundry's agent strata-orchestrator, version 9, matches the repo: there is no difference in its model, instructions, tools, description or guardrail (strata-guardrail)." Passed.
+
 ## Ticket 67, step 2 of 3: optional, only while the passage index does not exist yet: a missing index no longer ends a run (criterion 1, live)
 
 The merger parked this step on October 25, 2026, after merge commit 3b2b02e, for the same reasons as step 1. Run it after step 1, and only if ticket 11's step 1 has not yet made `strata.gold.passage_index`. Once the index exists, skip it and go to step 3. It reads its tools on the SQL warehouse, so it waits for the daily limit to lift. It needs the keys of ticket 66's step 1 for the refusal check, and `az` signed in.
@@ -2373,6 +2492,8 @@ Run this from the main checkout:
     uv run --script ops/agent/refuse_live.py --env-file .env
 
 It worked if no question ends "refused with []" because of a 404 from `/api/2.0/vector-search/indexes/strata.gold.passage_index/query`, and there is no `EngineError` or `LookupError` traceback from search_passages. Each search instead logs one warning: "search_passages found no passages, because the passage index is not available yet: ...". Questions may still fail here for other reasons. The 11 of 11 result is step 3's.
+
+**Ran on October 26, 2026 (orchestrator), from 03349a45, with the orchestrator agent at version 9, before the index exists.** `refuse_live.py` ran 09:20 to 09:25 UTC and exited 1 with 6 of 11 holding. No question failed on a 404 from the passage index and no `EngineError` or `LookupError` traceback appeared: each search logged one warning, "search_passages found no passages, because the passage index is not available yet: The workspace answered 404 to POST /api/2.0/vector-search/indexes/strata.gold.passage_index/query: {"error_code":"RESOURCE_DOES_NOT_EXIST" ...", which is this step's criterion. Passed. Holding: refuse-live-tenders-criteria (live_tenders), refuse-supplier-scores, refuse-live-tenders, refuse-dividing-packages, refuse-personal-details and refuse-private-uploads. Not holding, each "refused with [], not <code>": refuse-fraud-and-redactions, refuse-review-decisions, refuse-estimates-for-decisions, refuse-rule-breach-findings and refuse-wrong-edition; one run ended "could not answer (agent_output): A refusal with claims must be partial: true." The 11 of 11 result is step 3's, after the index. Log: the scratchpad's refuse67.log.
 
 ## Ticket 67, step 3 of 3: after ticket 11's index step, the must-refuse set through the live agent holds 11 of 11 (criterion 3, live)
 
@@ -2385,3 +2506,274 @@ The merger parked this step on October 25, 2026, after merge commit 3b2b02e, for
         uv run --script ops/agent/refuse_live.py --env-file .env
 
 It worked if the refusal check prints 11 lines that start "Holds." and exits 0, with no `EngineError` or `LookupError` traceback from search_passages, and no "A partial refusal must answer the rest of the question with claims". The line for refuse-live-tenders-criteria must read "Holds. refuse-live-tenders-criteria: refused with live_tenders.". This run also completes ticket 66's step 1, whose rerun waited for the index. If refuse-live-tenders-criteria fails again with the partial-refusal error, the review's follow-up F3 for ticket 67 (in `.notes/67-review.md`) gives the fix in `src/strata/agent/claims.py`.
+
+## Ticket 76, before step 1: the masked shapes of the phone numbers the check found
+
+**Recorded on October 26, 2026 (orchestrator).** On `strata.silver.notices` (158,587 rows) the `contacts_left` patterns, bound as parameters as `quality.py` binds them, find 1,256 notices with a labelled phone number in `notice_text`, none in `bid_description`, and no email address in either column (`with_email` 0, `with_phone` 1,256, both 0). By notice type and year, the largest groups: Request for Expression of Interest 2025: 217 and 2026: 132; Contract Award 2025: 212 and 2026: 73; Invitation for Bids 2026: 143, 2025: 141, 2011: 36, 2014: 25, 2016: 19, 2015: 19, 2012: 19 and 2010: 17. The first twenty distinct shapes by `notice_id` (the 2009 and 2010 notices sort first), every digit written as 9 and up to thirty characters kept on each side of the label; `[contact removed]` is what ingestion already wrote:
+
+1. General Procurement Notice, 2009: `etnam. Tel: [contact removed] Fax: 99-9-9999999 Email: [contact removed] ; [c`
+2. General Procurement Notice, 2009: `eral Phone: [contact removed] Fax: 99-9-99999999 E-mail: [contact removed]`
+3. Request for Expression of Interest, 2009: `oad. Phone: [contact removed] Fax #: 9999 99-999 9999 E-mail Address: [contact remo`
+4. Invitation for Bids, 2009: `akistan Ph: [contact removed] Fax:: 99-99-9999999 Email: [contact removed] Web:`
+5. Request for Expression of Interest, 2009: `Telephone: [contact removed] Fax: 99-99-9999999`
+6. Invitation for Bids, 2009: `Telephone: [contact removed] Fax: 99-9-9999999 Email: [contact removed]`
+7. Invitation for Bids, 2009: `o 999, Building C, 9th Floor. Telephone: 999 999 9 999 999. Facsimile number: 999 999 9`
+8. Request for Expression of Interest, 2009: `ietnam Tel: [contact removed] Fax: 99-9-99999999 E-mail: pmuw@ fpt.vn`
+9. Request for Expression of Interest, 2009: `tact removed], 99-99-99999999 Fax: 99-99-99999999 Email: [contact removed]`
+10. Request for Expression of Interest, 2009: `kistan Tel: [contact removed] Fax: 99-99-99999999 Email: [contact removed]`
+11. Invitation for Bids, 2009: `removed] or [contact removed] Tel. (99) 9 -9 9 . 999 . 999 ; Fax. ( 99) 9 -9`
+12. Request for Expression of Interest, 2009: `et Nam Tel: [contact removed] Fax: 99-9-99999999 E-mail: [contact removed]`
+13. Request for Expression of Interest, 2009: `999 Giang Vo, Hanoi , Vietnam Tel: (-99-9)9999999 Fax: (-99-9)9999999 Email: [c`
+14. Invitation for Bids, 2009: `emoved] Ph: [contact removed] Fax: 99-99-9999999`
+15. General Procurement Notice, 2009: `Phone99 99 9999999l, 99999999 Fax 99 99 99999999, 99999999 E-mail: [contact re`
+16. Request for Expression of Interest, 2009: `ietnam Tel: [contact removed] Fax: 99-9-99999999 E-mail: [contact removed]`
+17. Request for Expression of Interest, 2009: `stafabad, Dharampura, Lahore. Phone No. 99 99 9999999l - 99999999 Fax No. [contact`
+18. General Procurement Notice, 2009: `t removed], [contact removed] Fax: 99 99 9999999`
+19. Invitation for Prequalification, 2010: `[contact removed]l, 99999999 Fax: 99-99-99999999, 99999999 E-mail: [contact re`
+20. Invitation for Bids, 2010: `etnam Tel.: [contact removed] Fax: + 99 9 99999999 9. Qualifications requirement`
+
+What they show: in 17 of the 20 the match is the number after a `Fax` label (`LEFT_PHONE` names fax, the stripper's label list does not); three are a second number written after a removed one (`[contact removed]l, 99999999` and `[contact removed], 99-99-99999999`); one glues the label to the digits (`Phone99 99 9999999l`); one spaces the digits one by one (`Telephone: 999 999 9 999 999. Facsimile number: ...`); and one email survives with a space after its `@` (`E-mail: pmuw@ fpt.vn`), which neither `LEFT_EMAIL` nor the stripper matches. The values were never printed; the scratchpad's shapes76.json holds the masked twenty.
+
+## Ticket 70, step 1 of 1: redeploy the App with `--keep-secrets` from a session that may not write secrets (criterion 3, live half)
+
+The merger parked this step on October 26, 2026, after merge commit da9a906d. Every key is set, but the second session runs every workspace step from a snapshot of the commit, one at a time, so the merger ran none. It needs the Databricks keys in `.env` and the secrets the user has written in the scope `strata`. It writes no secret, so a session that may not write secrets runs it (the header's note on ticket 70). It is ticket 06's deploy command with the option, and this one deploy from da9a906d or later serves every block above whose "Parked on October 26, 2026" note says it runs with `--keep-secrets`: ticket 37's step 2, ticket 23's step 2, ticket 64's step 1, ticket 26's step 5, ticket 42's step 6, ticket 44's step 2, and the App halves of ticket 38's step 2 and ticket 39's step 1. Each of those blocks' own checks then runs as written.
+
+Run these from the main checkout, in this order. The listings show each secret's name and last-updated time, never its value:
+
+    databricks secrets list-secrets strata -p strata
+    uv run --script ops/app/deploy_app.py --env-file .env --keep-secrets
+    databricks secrets list-secrets strata -p strata
+    databricks apps get strata -p strata
+
+It worked if:
+
+- The deploy exits 0, and its step 3 prints "I wrote no secret, because you asked me to keep them (--keep-secrets)." and "I expect these secrets in the scope strata: ..." with the names `.env` calls for.
+- Any secret the scope lacks (tonight probably FOUNDRY_TENANT_ID) is named before "4. Uploading", with its `databricks secrets put-secret strata <name>` command. The deploy then goes on without what reads it.
+- The second listing shows the same last-updated time for every secret as the first.
+- The deploy's last line reads `Strata is running at https://...`.
+- `databricks apps get strata -p strata` shows the new deployment as succeeded, with nine resources bound (sql-warehouse, appinsights, app-state, the four `foundry-*` and the two `azure-openai-*`), or fewer by exactly the secrets step 3 named as missing.
+- `<App url>/api/health` answers 200 `{"status":"ok"}` with an OAuth token from the CLI profile (`databricks auth token -p strata`; a personal access token gets 401). This shows again that the App starts on Python 3.11 (ticket 69).
+
+Record here the App's address, every secret step 3 named as missing, and what the deploy's step 7 printed, which ticket 64's step 1 waits on. The App has had all nine resources since the user's deploy at 06:11 UTC. If step 3 names a Foundry or Azure OpenAI key as missing, this redeploy leaves the App without the agent or the judge until the user writes the key with the printed command and a session deploys again; say so in the record. A session never writes a secret. If the scope does not exist, or the session cannot read it, the deploy stops at step 3 with a traceback after step 2, with nothing configured or uploaded (review follow-up F1 in `.notes/70-review.md`); tell the orchestrator.
+
+**Ran on October 26, 2026 (orchestrator), from a snapshot of 15052345.** The first try (10:09 UTC) stopped at step 1, "The web app did not build, so I left the workspace alone. npm said: sh: tsc: command not found": a `git archive` snapshot has no `web/node_modules`. With the main checkout's `web/node_modules` linked into the snapshot, the second try ran 10:10 to 10:19 UTC and exited 0. Step 3 printed "I wrote no secret, because you asked me to keep them (--keep-secrets)." and "I expect these secrets in the scope strata: APPLICATIONINSIGHTS_CONNECTION_STRING, FOUNDRY_PROJECT_ENDPOINT, FOUNDRY_TENANT_ID, FOUNDRY_CLIENT_ID, FOUNDRY_CLIENT_SECRET, AZURE_OPENAI_ENDPOINT, AZURE_OPENAI_API_KEY.", then "The Foundry agent's four keys are in the secret scope, so /api/ask answers through the agent.", "The two Azure OpenAI keys are in the secret scope, so the model that judges sentences checks each answer.", the Genie space 01f1d0d8c9a214c7b9d665e04a462ba6 and the Lakebase instance strata-state; it named no secret as missing and printed no put-secret command. Step 4 uploaded 862 files to /Workspace/Users/chiraglakhanpal@gwu.edu/strata-app, step 6 printed its grants line, and step 7 printed exactly one line, "7. Masking who sent each passage report and who asked each question from everyone but the app and you.", and nothing under it. Last line: "Strata is running at https://strata-7474658003099155.aws.databricksapps.com". `databricks secrets list-secrets strata -p strata` before and after lists the same seven keys with the same last-updated stamps (APPLICATIONINSIGHTS_CONNECTION_STRING 1792866329682; the six others between 1792994900170 and 1792994900773). `databricks apps get strata -p strata` shows the App RUNNING with compute ACTIVE, the new deployment 01f1d126085b1ee8b20f952182776ee8 SUCCEEDED ("App started successfully", created 10:14:30 UTC) and the nine resources bound (sql-warehouse, appinsights, app-state, foundry-endpoint, foundry-tenant, foundry-client-id, foundry-client-secret, azure-openai-endpoint, azure-openai-key). `/api/health` with the CLI profile's OAuth token answered 200 `{"status":"ok"}` at 10:20:12 UTC, and `/api/freshness` `{"data_through":"2026-10-24"}`. On the warehouse after the deploy: `strata.information_schema.column_masks` lists `strata.ops.mask_viewer` on 14 columns (answer_citations.viewer_id; candidate_labels.viewer_email and viewer_id; draft_exports.snapshot; draft_files.content; draft_lesson_choices.reason and rewrite; drafts.content; upload_rows.activity_reference_no, content and description; uploads.file_name, reading and uploader_name), and the App's service principal e796c089-1500-4cf2-9c1f-8e6a8f5aba10 holds USE CATALOG on strata, USE SCHEMA on strata.ops and SELECT and MODIFY on uploads, upload_rows, lesson_visits, draft_lesson_choices, lesson_version_tags, disagreement_choices and follows. Passed. Logs: the scratchpad's deploy70.log and deploy70b.log.
+
+## Day-one test resources removed on October 26, 2026
+
+**Removed on October 26, 2026, by the user, through the Databricks CLI:** the Genie space "NYC Taxi Trip Data" (the wizard's throwaway for test 5), the schema `workspace.strata_dayone` with its tables and volume, the Vector Search index `workspace.strata_dayone.passages_index`, the folder `strata-dayone`, and the service principal `strata-probes`. Kept: the endpoint `strata-search`, the scope `strata`, the tokens, and the one-time runs, which expire on their own. Verified afterwards by listing each. A later run of the probes makes its scratch again.
+
+Moved here from docs/day-one-results.md on October 26, 2026 by the orchestrator: the text outside that document's marked blocks must match the rendering from ops/dayone/dayone.toml (ops/dayone/tests/test_results_document.py), so notes about the workspace go in this file.
+
+## Ticket 68, step 1 of 3: before the redeploy, note which tiles show "Invalid widget definition is imported." (confirms the cause; optional)
+
+The merger parked this step on October 26, 2026, after merge commit 261d66c8. Every key is set, but the second session runs every workspace step from a snapshot of the commit, one at a time, so the merger ran none. It is a look in the browser, and it only means something while the dashboards deployed from 6b5ff48 are still the live ones, so it runs before step 2's redeploy or not at all.
+
+Open "Strata operations" (id 01f1cfd370f01f6ab7aafcb4fffadd48) and "Strata operations (test)" (id 01f1d10708201fddad8610f06e6b4071) in the workspace, and look at every tile on each of the three pages: Data readiness, Governance, and AI quality and adoption.
+
+It worked if the tiles that show "Invalid widget definition is imported." are the 27 tables and the "Rows per fiscal year, by source" pivot on each dashboard, and no text box, chart, counter or filter shows it. That is what `tests/test_dashboard_widgets.py` predicts for the file deployed from 6b5ff48. Record here which tiles showed the message. A tile outside that list means the cause is not fully found; tell the orchestrator.
+
+**Not run (orchestrator, October 26, 2026).** A look in the browser is the user's, and the dashboards from 6b5ff48 were replaced by step 2's deploy at 10:21 UTC, so the moment has passed; the prediction stands as `tests/test_dashboard_widgets.py` makes it.
+
+## Ticket 68, step 2 of 3: redeploy both dashboards, and no tile shows "Invalid widget definition is imported." (criterion 2, live)
+
+The merger parked this step on October 26, 2026, after merge commit 261d66c8. Every key is set, but the second session runs every workspace step from a snapshot of the commit, one at a time, so the merger ran none. It needs the Databricks keys in `.env`, the Databricks CLI 0.287.0 or later, and the warehouse under its free daily limit. Ticket 68 changes only the two dashboard files, `bundle/dashboards/strata.lvdash.json` and `bundle/dashboards/strata_test.lvdash.json`: each file's 27 tables are now AI/BI table version 2, and its pivot sums its cells with `cubeGroupingSets`. No dataset query, table, job or measure changes. One bundle deploy from 261d66c8 or later serves this step.
+
+Run this from the main checkout, twice:
+
+    uv run --script ops/bundle/deploy.py --env-file .env --fairshare-catalog workspace
+
+Then fetch both dashboards as the workspace stores them:
+
+    databricks lakeview get 01f1cfd370f01f6ab7aafcb4fffadd48 -p strata
+    databricks lakeview get 01f1d10708201fddad8610f06e6b4071 -p strata
+
+It worked if:
+
+- The first deploy exits 0 and changes only the two dashboards, "Strata operations" and "Strata operations (test)", and the second prints "No changes."
+- In each `lakeview get`, the `serialized_dashboard` holds every `table` widget at `version` 2 and the `pivot` widget with `cubeGroupingSets`.
+- On both dashboards, no tile on Data readiness, Governance, or AI quality and adoption shows "Invalid widget definition is imported."
+- The "Rows per fiscal year, by source" pivot on Data readiness shows no Total row and no Total column.
+- One of the pivot's cells equals `source_rows` for the same source and fiscal year in the `rows_by_year` dataset (`src/strata/dashboard/sql/rows_by_year.sql`), read in the dashboard editor's Data tab with the page's measure date. Record the source, the year and both numbers.
+
+The pivot sorts its rows by source name and the date columns read as `locale-short-month`; both are left to the design pass, so they are not part of this check.
+
+**Ran on October 26, 2026 (orchestrator), from a snapshot of de4f8169.** The first deploy ran 10:20 to 10:23 UTC and exited 0; its "3. What changed:" listed "The grants on strata changed." and "The grants on strata.ops changed." and nothing else, though both dashboards were rewritten (their `update_time` is 10:21:52 UTC): the change report does not name a dashboard whose file changed, a gap in `ops/bundle/deploy.py` (told the build orchestrator). The second deploy (10:23 to 10:25 UTC) printed "No changes." Both printed "workspace's catalog lists the same before and after the deploy: one schema, no tables and no volumes." (fairshare's catalog, after the user removed the day-one schema). `databricks lakeview get` on both dashboards (the scratchpad's lakeview-<id>-after68.json): "Strata operations" and "Strata operations (test)" are ACTIVE, each with 27 `table` widgets all at `version` 2 and one `pivot` widget (source_rows) whose query holds `cubeGroupingSets` with the sets `source` and `fiscal_year_label`; the other widgets are 16 text boxes, 10 bar v3, 5 line v3, 1 scatter v3, 9 counter v2 and 5 filters v2. The two browser checks (no "Invalid widget definition is imported." tile; no Total row or column on the pivot) are the user's. The grants half: the bundle's grants took the App's service principal's USE CATALOG on strata and USE SCHEMA on strata.ops away (table grants such as `strata.ops.follows` stayed), so the App was redeployed right after (`ops/app/deploy_app.py --keep-secrets` from the same snapshot, 10:25 to 10:33 UTC, exit 0, "Strata is running at https://strata-7474658003099155.aws.databricksapps.com"), after which both grants are back and `/api/health` answered 200 at 10:34 UTC.
+
+## Ticket 68, step 3 of 3: optional: add widgets from a dashboard made in Strata's workspace to the known-good shapes
+
+The merger parked this step on October 26, 2026, after merge commit 261d66c8. Criterion 1 asked for known-good shapes exported from the workspace. The fixture holds widgets from dashboard files that Databricks and others published, each named by repository, commit and path, because no Strata export was at hand overnight (a decision parked for the user). This step adds Strata's own. It changes a test fixture, so it goes through a ticket worktree and the gate like any code change.
+
+In the workspace UI, make a small dashboard with one table (a date column and an integer column) and one pivot, then export it:
+
+    databricks lakeview get <the new dashboard's id> -p strata
+
+Name its file under `sources` in `tests/fixtures/dashboard/widget_shapes.json` and add its widgets to their kind's examples, as the file's `about` says. Then run:
+
+    uv run --frozen pytest tests/test_dashboard_widgets.py
+
+It worked if every test passes. A failure means Strata's workspace writes a widget shape the fixture does not know yet; tell the orchestrator.
+
+## Ticket 74, step 1 of 1: same-rows runs from the script's own dependency list, with no `--with` (criteria 1 and 3, live)
+
+The merger parked this step on October 26, 2026, after merge commit e3ceb423. Every key is set, but the second session runs every workspace step from a snapshot of the commit, one at a time, so the merger ran none. Ticket 74 changes only the inline dependency list of `ops/bundle/check.py`, which now holds splink 5.0.0, xgboost 3.4.1 (xgboost-cpu on Linux), numpy 2.5.4, py3langid 0.3.0, pypdf 6.20.0, fastapi, httpx, fpdf2, defusedxml and opentelemetry-api at the pins in `uv.lock`, and it adds `ops/bundle/tests/test_script_dependencies.py`. No table, job, query or deploy changes, so nothing needs deploying first. This is the next same-rows run, and it needs none of the `--with` packages that the run of October 26 under "Ticket 04, step 3 of 4" used.
+
+Run this from a snapshot of e3ceb423 or later, with `--env-file` pointing at the main checkout's `.env`, and with no `--with`:
+
+    uv run --script ops/bundle/check.py same-rows --env-file .env
+
+It worked if:
+
+- No `ModuleNotFoundError` appears. On October 26 the old list stopped at `No module named 'splink'`, and then at numpy.
+- It prints one result line for each ground-truth file marked for databricks: 19 files on October 26. `grep -l "^-- engines:.*databricks" tests/ground_truth/*.sql | wc -l` in the snapshot gives the count to expect.
+
+The exit code does not decide it. On October 26 the same check, run with `--with`, exited 1 with 8 of 19 files matching, because the warehouse's rows differ from the fixture's for the reasons recorded under "Ticket 04, step 3 of 4". Those differences are not this ticket's. Record the run here: the snapshot's commit, the time, whether a `ModuleNotFoundError` appeared, the number of result lines, and the files that matched.
+
+**Ran on October 26, 2026 (orchestrator), from a snapshot of 9738b97f.** `check.py same-rows --env-file <the main checkout's .env>` with no `--with`, 10:58:04 to 10:58:39 UTC (41 packages installed from the script's own list). No `ModuleNotFoundError` appeared. It printed 19 result lines, one for each of the 19 files marked for databricks in the snapshot. Exit 1, with the same 8 files matching as the `--with` run under ticket 04's step 3: `data_notes_actual_amount_zero.sql`, `gap_years_contracts_from_award_notices.sql`, `genie_contract_ke_nwwda_229129.sql`, `genie_joint_venture_1624689.sql`, `kenya_step_reference_link_rate.sql`, `pipeline_runs_columns.sql`, `showcase_fiscal_years.sql` and `structured_data_under_the_limit.sql`; the other 11 differ for the reasons recorded there. Passed. Log: the scratchpad's samerows74.log.
+
+## Ticket 75, step 1 of 1: one `bronze_to_gold` pass reads every page bronze holds, and P130164 gets its sectors (criterion 3, live)
+
+Parked on October 26, 2026, by ticket 75's builder; the merger parked it after merge commit 4c223032, so run it from a snapshot of 4c223032 or later. Every key is set, but the second session runs every workspace step from a snapshot of the commit, one at a time. It needs the Databricks keys in `.env`, the Databricks CLI 0.287.0 or later, and a time outside the nightly window (03:00 to 05:30 in Washington), because the first pass reads every page of every source once and takes longer than a usual night's `bronze_to_gold`.
+
+Ticket 75 adds `strata.ops.silver_pages` (`src/strata/lakehouse/tables/ops/silver_pages.sql`): what silver wrote from each bronze page, with the transform's tables and its `VERSION`. Silver now reads a page when it has no row there, or when its newest row names other tables or another version than the transform has. The table is empty after the deploy, so the next `bronze_to_gold` reads every page of every source once: one parse per page, and for each table a read, a DELETE with a WHERE when the table holds the page, and an insert. That pass fills `strata.silver.project_sectors` and `project_environment` from the 285 project pages bronze held before ticket 21's deploy, P130164's among them. If the nightly job runs before this step, its own `bronze_to_gold` makes the pass, which may reach the job's 150-minute stop; that night's later tasks then do not run, and the next night goes on from the pages it recorded. Record those runs here instead.
+
+Run this from the snapshot's root, twice:
+
+    uv run --script ops/bundle/deploy.py --env-file .env --fairshare-catalog workspace
+
+It worked if the first run exits 0, lists `strata.ops.silver_pages` as new and changes no table that holds rows, and the second prints "No changes." Until ticket 79 merges, a bundle deploy takes away the App's USE CATALOG on strata and USE SCHEMA on strata.ops (ticket 68's step 2 saw it), so redeploy the App afterwards with ticket 70's command (`uv run --script ops/app/deploy_app.py --env-file .env --keep-secrets`), or run this step after ticket 79's merge with one deploy that serves both. Then run only the job's `bronze_to_gold` task, with the job ID that the list prints:
+
+    databricks jobs list --name "strata nightly" -p strata
+    databricks jobs run-now --json '{"job_id": <the job ID>, "only": ["bronze_to_gold"]}' --timeout 160m -p strata
+
+If the CLI refuses `only`, run the whole job outside the window instead (`uv run --script ops/bundle/check.py job-run --env-file .env`); its `bronze_to_gold` makes the same pass. If the run ends TIMEDOUT at the job's 150-minute stop, run the same command again: every page the run recorded stays recorded, so the next run reads only the rest. Then run these in the workspace's SQL editor:
+
+    SELECT run_id, status, rows_changed, started_at, finished_at,
+      timestampdiff(MINUTE, started_at, finished_at) AS minutes
+    FROM strata.ops.pipeline_runs WHERE task_key = 'bronze_to_gold' ORDER BY started_at DESC LIMIT 3
+
+    SELECT p.source, count(*) AS pages, count(r.page_hash) AS recorded
+    FROM strata.bronze.api_pages AS p
+    LEFT JOIN (SELECT DISTINCT source, page_hash FROM strata.ops.silver_pages) AS r
+      ON r.source = p.source AND r.page_hash = p.page_hash
+    GROUP BY p.source ORDER BY p.source
+
+    SELECT count(*) AS sector_rows FROM strata.silver.project_sectors WHERE project_id = 'P130164'
+
+    SELECT count(DISTINCT p.page_hash) AS pages_before_ticket_21, count(DISTINCT s.page_hash) AS with_sector_rows,
+      count(s.page_hash) AS sector_rows, count(DISTINCT s.project_id) AS projects
+    FROM strata.bronze.api_pages AS p
+    LEFT JOIN strata.silver.project_sectors AS s ON s.page_hash = p.page_hash
+    WHERE p.source = 'projects' AND p.fetched_at < TIMESTAMP '2026-10-26 06:54:00Z'
+
+It worked if:
+
+- The newest `bronze_to_gold` row succeeded. Record its `minutes`, and the minutes of each try when it took more than one: together they are the time of the full pass.
+- In the second query, `recorded` equals `pages` for every source.
+- P130164 has more than 0 sector rows (the fixture's recorded page gives two: TF at 3 percent and TI at 97 percent).
+- `pages_before_ticket_21` reads 285 and `with_sector_rows` is above 0. A page whose projects list no sectors gives no row, so record both numbers, the sector rows and the projects.
+- A second `run-now` of the same task, right after, adds no row to `strata.ops.silver_pages` and takes about as long as a night with no new pages.
+
+Record the four results here. If `recorded` falls short of `pages` for a source after a run that succeeded, or P130164 still has 0 sector rows, tell the orchestrator before anyone shows the Summary on the App.
+
+**Deploy half ran on October 26, 2026 (orchestrator), from a snapshot of f90b8c2d (ticket 79's step 1 is the same deploy).** The first deploy (11:35 to 11:38 UTC) exited 0, listed `strata.ops.silver_pages` as new and changed no table that holds rows; the second printed "No changes." No App redeploy was needed: the deploy gave the App's principal its USE CATALOG and USE SCHEMA back itself (ticket 79). The `bronze_to_gold` task alone was started at 11:40:34 UTC with `databricks jobs run-now --json '{"job_id": 730097284330653, "only": ["bronze_to_gold"]}' --timeout 160m` (the CLI accepted `only`), outside the nightly window; its result and the four queries are recorded below when it ends.
+
+## Ticket 79, step 1 of 1: a bundle deploy leaves the App its USE CATALOG and USE SCHEMA, with no App redeploy (criterion 3, live)
+
+Parked on October 26, 2026 with ticket 79; the merger parked it after merge commit 353ad5ad, so run it from a snapshot of 353ad5ad or later. The second session runs it one workspace step at a time. It needs the Databricks keys in `.env` and the Databricks CLI 0.287.0 or later. It changes no table, job or dashboard file, so the deploy also serves as the next bundle deploy any other block asks for. Do not redeploy the App in this step: the point is that the App keeps serving through the bundle deploy.
+
+From ticket 79 on, `ops/bundle/deploy.py` reads the App that `ops/dayone/dayone.toml` names (`apps get`), and right after `databricks bundle deploy` adds USE CATALOG on `strata` and USE SCHEMA on `strata.ops` for the App's service principal through Unity Catalog's permissions update, which only adds. The bundle's own grants still replace the App's from the moment the CLI writes them until the CLI finishes, one to three minutes (the CLI ran for about three minutes on October 26). In that window the App's own writes, such as drafts, decisions and labels, can fail. Usage events wait in the App and are written on its next flush. Viewers' queries run as the viewer and are not touched. The "What changed" report now also lists both dashboards with the time each was last written.
+
+Run these from the snapshot, with `--env-file` pointing at the main checkout's `.env`. The first command records the App's active deployment (its id and create time) before the deploy:
+
+    databricks apps get strata -p strata
+    databricks grants get catalog strata -p strata
+    databricks grants get schema strata.ops -p strata
+    uv run --script ops/bundle/deploy.py --env-file "<main checkout>/.env" --fairshare-catalog workspace
+    databricks grants get catalog strata -p strata
+    databricks grants get schema strata.ops -p strata
+    uv run --script ops/bundle/deploy.py --env-file "<main checkout>/.env" --fairshare-catalog workspace
+
+Then, with an OAuth token from the CLI profile (`databricks auth token -p strata`; a personal access token gets 401), ask the App for `/api/health`:
+
+    curl -s -w ' %{http_code}\n' -H "Authorization: Bearer <token>" https://strata-7474658003099155.aws.databricksapps.com/api/health
+
+It worked if:
+
+- The first deploy exits 0 and, under "1. Deploying the bundle", prints "The bundle's grants replace every other grant on strata and its schemas, so I gave the app strata's service principal e796c089-1500-4cf2-9c1f-8e6a8f5aba10 back USE CATALOG on strata and USE SCHEMA on strata.ops." Its "3. What changed:" does not list "The grants on strata changed." or "The grants on strata.ops changed." if the first two `databricks grants get` commands already listed the App's principal (it may list tables that other merges added). If they did not, because a bundle deploy from before ticket 79 ran since the App's last redeploy, the report lists both grant lines, and that is correct.
+- After the deploy, `databricks grants get catalog strata` lists the App's service principal e796c089-1500-4cf2-9c1f-8e6a8f5aba10 with USE_CATALOG beside `account users`, and `databricks grants get schema strata.ops` lists it with USE_SCHEMA beside `account users` with SELECT and USE_SCHEMA. `SHOW GRANTS ON TABLE strata.ops.follows` on the warehouse still lists SELECT and MODIFY for it.
+- `/api/health` answers 200 `{"status":"ok"}` with no App redeploy since the bundle deploy, and a second `databricks apps get strata -p strata` shows the same active deployment (id and create time) as the first command of this step.
+- The second deploy prints "No changes." If it names "The dashboard Strata operations changed." and "The dashboard Strata operations (test) changed." although no dashboard file changed, the Databricks CLI rewrites every dashboard on each deploy: record that and tell the orchestrator, because the report then names dashboards that did not change.
+
+Record here the App line the first deploy printed, both grants listings after it, the `/api/health` answer and its time, and what the second deploy printed. If the first deploy says "I found no app named strata", the App was deleted: tell the orchestrator, and deploy it with ticket 06's step 1. The next deploy that rewrites a dashboard file (a new tile through `src/strata/dashboard`) should list "The dashboard ... changed." for that dashboard, which closes the report half of the ticket on the workspace.
+
+**Ran on October 26, 2026 (orchestrator), from a snapshot of f90b8c2d.** Before the deploy, `apps get` showed the active deployment 01f1d128181514959c3e683ed71050f2 (created 10:29:15 UTC, RUNNING), and `grants get` listed the App's service principal e796c089-1500-4cf2-9c1f-8e6a8f5aba10 with USE_CATALOG on strata beside `account users` USE_CATALOG, and with USE_SCHEMA on strata.ops beside `account users` SELECT and USE_SCHEMA. The first deploy (11:35 to 11:38 UTC) exited 0 and printed, under "1. Deploying the bundle", "The bundle's grants replace every other grant on strata and its schemas, so I gave the app strata's service principal e796c089-1500-4cf2-9c1f-8e6a8f5aba10 back USE CATALOG on strata and USE SCHEMA on strata.ops."; its "3. What changed:" listed only "The table strata.ops.silver_pages is new." (ticket 75's table) and no grant line. After it, both `grants get` listings read the same as before (the principal with USE_CATALOG, and with USE_SCHEMA), and `SHOW GRANTS ON TABLE strata.ops.follows` still lists SELECT and MODIFY for it. The second deploy (11:38 to 11:40 UTC) printed the same App line and "No changes.", naming no dashboard. `/api/health` with the CLI profile's OAuth token answered 200 `{"status":"ok"}` at 11:40:32 UTC with no App redeploy, and `apps get` afterwards shows the same active deployment 01f1d128181514959c3e683ed71050f2 of 10:29:15 UTC. Passed. The report half (a dashboard that changes is named) waits for the next deploy that rewrites a dashboard file. Log: the scratchpad's ticket79.log.
+
+## Ticket 72, step 1 of 1: the live documents run writes each document's passages as it goes and lists what it skipped (criterion 4, live)
+
+Parked on October 26, 2026 by the merger, after merge commit 5d67dd02, so run it from a snapshot of 5d67dd02 or later. Every key is set, but the second session runs every workspace step from a snapshot of the commit, one at a time. It needs the Databricks keys, AI_SEARCH_ENDPOINT, AZURE_OPENAI_ENDPOINT and AZURE_OPENAI_API_KEY in `.env`, the Databricks CLI 0.287.0 or later, and a time outside the nightly window (03:00 to 05:30 in Washington), because the nightly job's `parse_and_embed` writes the same tables.
+
+Ticket 72 changes `ops/documents/run_live.py` to read through the nightly job's own path (`strata.lakehouse.readers.reading`), so the job and the script share one writer of passages. The live run reads the reports into passages first and the Procurement Plans with the time that is left, so plan pages that outlast the 60 minutes in `config/thresholds.toml` (`ingestion.document_host_minutes`) no longer leave `strata.gold.passage` empty. It writes each document's passages as soon as it has read that document. A document, or a project's document list, that a host does not give is skipped: the run prints it with its reason, writes a row to the new table `strata.ops.skipped_documents`, and goes on. A stop (a host refusal, or the reading time spent, which is now checked between pages too) keeps every document written before it. The run exits 0 when at least one document's passages are in `strata.gold.passage`, 1 when the index did not catch up in time, and 2 when it has none or could not run.
+
+The deploy comes first, because its `catalog.build` creates `strata.ops.skipped_documents`. Without that table, the first skip raises an engine error and the run exits 2. Ticket 79's deploy ran from f90b8c2d, before this merge, so it does not count. Run these from the snapshot's root, with `--env-file` pointing at the main checkout's `.env`:
+
+    uv run --script ops/bundle/deploy.py --env-file "<main checkout>/.env" --fairshare-catalog workspace
+    uv run --script ops/documents/run_live.py --env-file "<main checkout>/.env"
+
+Then run these in the workspace's SQL editor, with the run ID the script printed:
+
+    SELECT count(*) AS passages, count(DISTINCT document_id) AS documents FROM strata.gold.passage
+
+    SELECT reader, project_id, document_id, url, outcome, reason
+    FROM strata.ops.skipped_documents WHERE run_id = '<the run ID, documents-...>' ORDER BY skipped_at
+
+It worked if:
+
+- The deploy exits 0, lists `strata.ops.skipped_documents` as new, and changes no table that holds rows.
+- The documents run prints the passage reader's warnings first and then the plan reader's, and ends with "Run documents-... parsed N documents, skipped M and wrote the passages of K to strata.gold.passage" with K above 0. When the plan pages outlast the 60 minutes, the line may add ", and left 1 unfinished." and a line "It stopped before it finished: ...". The run then prints "The index ... holds X of the X passages in strata.gold.passage and is ready".
+- The script exits 0.
+- The first query's `passages` is above 0.
+- The second query lists each skipped document with its reason. Its rows with `outcome` skipped and a `document_id` give M distinct pairs of project and document. Rows with an empty `document_id` are projects whose document list or plans the run could not fetch, and the end line counts them in its own sentence.
+
+Record here the end line, the exit code, the index line, both query results and the run's start and end times. A second run is optional. If you make one, it should print "wrote the passages of 0 ... The passages of K more were already in strata.gold.passage, unchanged." and exit 0.
+
+What to expect, from the review and verify notes (`.notes/72-review-r3.md`, `.notes/72-verify-r3.md`):
+
+- Do not read the stress shelf's `long_plan` state right after this run. The live run records the shelf before its plan reader runs, so `long_plan` shows `not_read` for one run (review follow-up F1). The next nightly run writes it correctly.
+- If the warehouse, Prompt Shields or the embedding deployment fails partway, the run prints "The run stopped: ..." and exits 2, even when it wrote documents before that. Those passages stay in `strata.gold.passage`, but the index is not synced until the next run. Run the same command again, and record both runs.
+- A host refusal at a document's text fetch prints the stop and writes the `document_host_refused` readiness note, but writes no unfinished row to `strata.ops.skipped_documents`. Only a stop inside the layout parser lists its document as unfinished.
+- This is the same command as ticket 11's step 1 and ticket 66's step 3. If those blocks are still open, record what this run shows for them there too.
+
+If K is 0, or the run exits 2 with no document written, tell the orchestrator before anyone shows a cited answer on the App.
+
+## Ticket 77, step 1 of 1: the demo-ready command leaves a healthy App running and passes step 1 (criterion 3, live)
+
+Parked on October 26, 2026 by the merger, after merge commit 7e808ad4, so run it from a snapshot of 7e808ad4 or later. Every key is set, but the second session runs every workspace step from a snapshot of the commit, one at a time. It needs what ticket 48's step 2 needs: DATABRICKS_HOST, DATABRICKS_TOKEN, DATABRICKS_WAREHOUSE_ID, GENIE_SPACE_ID, FOUNDRY_PROJECT_ENDPOINT, AZURE_OPENAI_ENDPOINT and AZURE_OPENAI_API_KEY in `.env`, `az` signed in for the Foundry agent, the browser sign-in under the Databricks CLI profile `strata`, and `data/out/fixture.duckdb` copied into the snapshot for step 4. Run it when neither nightly job is running and the warehouse is under its free daily limit.
+
+Ticket 77 changes only step 1 of `ops/demo/ready.py`. It starts a stopped App as before. It restarts a running App only when its last start or deploy was 12 hours ago or more (`[demo_ready] restart_after_hours` in `config/thresholds.toml`), and otherwise leaves it running. It reads that time from the Apps API as the later of the active deployment's `create_time` and `update_time` (`last_start` in `ops/demo/demo_live.py`). In every case it then waits up to 900 seconds for `GET /api/health` (`[demo_ready] health_timeout_seconds`, raised from 300).
+
+When to run it: while the App's last start or deploy is less than 12 hours old. The active deployment 01f1d128181514959c3e683ed71050f2 was created at 10:29:15 UTC on October 26, by ticket 68 step 2's redeploy (10:25 to 10:33 UTC), and ticket 79's step 1 still saw it active at 11:40 UTC. So a run before 22:29 UTC on October 26, 2026 counts, unless the App was stopped, started or redeployed since. If that window has passed, run the command twice in a row: the first run starts or restarts the App, and the second run is the one this criterion asks for. That second run also serves ticket 48's step 3.
+
+Run these from the snapshot's root, with `--env-file` pointing at the main checkout's `.env`:
+
+    databricks apps get strata -p strata -o json
+    uv run --with databricks-sdk==0.156.0 python ops/demo/ready.py --env-file "<main checkout>/.env"
+    databricks apps get strata -p strata -o json
+
+Beside the run, if you can, ask `/api/health` every 15 seconds with the CLI profile's OAuth token, as the probe beside ticket 48's step 2 did (`databricks auth token -p strata`; a personal access token gets 401):
+
+    curl -s -o /dev/null -w '%{http_code}\n' -H "Authorization: Bearer <token>" https://strata-7474658003099155.aws.databricksapps.com/api/health
+
+It worked if:
+
+- The first `apps get` shows `compute_status.state` ACTIVE. Record `active_deployment.deployment_id`, `active_deployment.create_time`, `active_deployment.update_time` and the top-level `update_time`.
+- Step 1 prints "It was running, and it last started or was deployed at HH:MM UTC on <date>, <N hours> ago. That is less than the 12 hours in [demo_ready] restart_after_hours, so I left it running. The platform stops it at HH:MM UTC on <date>, 24 hours after that start." Its time equals the later of the first `apps get`'s `active_deployment.create_time` and `active_deployment.update_time`, to the minute.
+- Step 1 then prints "GET /api/health answered after N seconds, within the 900-second limit, at https://strata-7474658003099155.aws.databricksapps.com."
+- The summary prints "The app: passed. I left it running, since it last started <N hours> ago. It answered its health route after N seconds."
+- Step 6 lists no "The app strata started again" line and no "The app strata is stopped now" line.
+- The second `apps get` shows the same `active_deployment.deployment_id`, `create_time` and `update_time` as the first, so no stop or start happened. The probe, if it ran, saw only 200 during the run, never 502 or 503.
+
+This criterion covers step 1 only. While `strata.gold.passage` holds 0 rows, the smoke question in step 3 fails (ticket 72's block), so the command may exit 1 and end "Strata is not ready for the demo." An exit 1 that does not name the app still passes this step. Record what steps 2 to 6 printed under ticket 48's steps 2 and 3, since this is the same command.
+
+Record here the four fields from each `apps get`, the step 1 lines with the time they printed, the summary's app line, the exit code, the run's start and end times, and the probe's answers.
+
+Then, about review follow-up 1 in `.notes/77-review.md`: `last_start` assumes that `apps start` moves the active deployment's times. The `apps get` in deploy70.log (10:09 UTC on October 26) supports it: after the demo-ready restart's start, the active deployment 01f1d1219e59... showed `create_time` 09:42:54Z and `update_time` 09:48:11Z, and no deploy ran in between. The next time the App is started or restarted for any reason (a run on a stopped App, or a run 12 hours or more after the last start), record the same four fields before and after. If the active deployment's times moved to the start, nothing changes. If only the top-level `update_time` moved, tell the orchestrator: `last_start` must read it too, and the review note gives the fix and the test. Do not stop and start the App only to check this, because a restart takes it down for about eight and a half minutes.

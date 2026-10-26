@@ -544,7 +544,7 @@ class AiParseDocument:
             try:
                 fetched = self.fetch(url)  # HostRefused, from the job's PoliteFetch, stops the run as it is
             except OSError as error:  # urllib's errors are OSErrors; the host's answer is in the message
-                raise NotFetched(f"I could not fetch {url}: {error}") from error
+                raise NotFetched(f"I could not fetch {url}: {error}", url) from error
             self._pdfs = {url: fetched}  # keep one PDF at a time: pages come document by document
         path = f"{self.volume}/{page.document_id}/page-{page.pdf_page}.pdf"
         try:

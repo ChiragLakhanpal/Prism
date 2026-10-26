@@ -133,6 +133,14 @@ def test_the_fixture_run_reads_every_recorded_report_of_the_slice_and_routes_the
     assert routes == [{"route": "B", "pages": scan["pdf_pages"]}]
 
 
+def test_the_fixture_run_writes_the_same_document_rows_as_before_the_reader_wrote_each_document_on_its_own(db):
+    """Ticket 72: writing each document's passages as soon as it is read gives the fixture the same rows, table by
+    table, as writing them all at the end did (tests/passage_rows.py)."""
+    from passage_rows import digest, golden
+
+    assert digest(db) == golden()["fixture"]
+
+
 def measured(engine, subject: str) -> dict[str, dict]:
     found = rows(engine, "SELECT * FROM strata.ops.data_readiness WHERE run_id = 'fixture' AND source = 'documents' "
                          "AND subject = :subject", subject=subject)

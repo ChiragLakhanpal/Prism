@@ -25,7 +25,8 @@ It needs npm, which builds the web app. It does these things, in order:
    so /api/ask answers through the agent. Without all four, it leaves them out of the app.yaml it
    uploads, and /api/ask says there is no agent. It does the same with the two keys of the judge that
    checks each sentence (AZURE_OPENAI_ENDPOINT and AZURE_OPENAI_API_KEY, src/strata/agent/judge.py);
-   without them, the app removes every sentence that needs the judge.
+   without them, the app removes every sentence that needs the judge. With --keep-secrets, it writes
+   no secret (see below).
 4. It uploads the app, laid out as in the repo: app.yaml and the lean requirements.txt from
    ops/app, src/strata, config and web/dist, to the folder strata-app in your workspace folder.
 5. It deploys the app, starting it first if it is stopped, and waits for it.
@@ -48,10 +49,23 @@ It needs npm, which builds the web app. It does these things, in order:
    all of strata.ops.
 8. It prints the app's address.
 
-Run it again after every bundle deploy. The grants in bundle/catalog.yml replace any other
-grants on the strata catalog and its schemas (bundle/README.md), so a bundle deploy removes the
-app's USE CATALOG and USE SCHEMA, and its usage events, agent runs, opened sources, drafts, decisions
-and labels stop being written.
+The grants in bundle/catalog.yml replace any other grants on the strata catalog and its schemas
+(bundle/README.md), so the bundle deploy (ops/bundle/deploy.py) gives the app's service principal
+its USE CATALOG on strata and USE SCHEMA on strata.ops back right after (ticket 79), and its table
+grants stay. Run it again after a bundle deploy that makes a table the app writes, so the app gets
+that table's grant.
+
+Only the user may write secrets in the shared workspace. To redeploy new code from a session that may
+not write them, once the user has written the secrets, run:
+
+    uv run --script ops/app/deploy_app.py --env-file .env --keep-secrets
+
+Step 3 then writes no secret. It prints the names of the secrets the app reads (the Application
+Insights connection string, and the Foundry agent's and the judge's keys when .env has them) and lists
+the scope's keys, never their values. When the scope holds them all, the app gets the same resources,
+scopes and app.yaml as without the option. When it lacks one, step 3 names it, says how to write it,
+and deploys the app without what reads it, as if .env had no value for it: no Foundry agent, no judge,
+or no traces to Application Insights. Every other step runs as without the option.
 
 This was written from docs/PLAN.md section 12's description of fairshare's lakehouse/app_deploy.py,
 because fairshare could not be read on the build machine.
@@ -63,7 +77,7 @@ import argparse
 import re
 import subprocess
 import sys
-from collections.abc import Callable
+from collections.abc import Callable, Collection
 from pathlib import Path
 
 import yaml
@@ -88,6 +102,7 @@ DIST = REPO / "web" / "dist"
 SCOPES = ["sql", "dashboards.genie"]
 # The secret's name in the scope, which the wizard saved (ops/wizard/strata-setup.sh).
 APPINSIGHTS_NAME = "APPLICATIONINSIGHTS_CONNECTION_STRING"
+APPINSIGHTS = "appinsights"  # its resource, which app.yaml reads it from
 # The Foundry agent's four keys (src/strata/agent/runner.py), each saved in the secret scope under its own
 # name and given to the app as the resource app.yaml reads it from.
 FOUNDRY = {"FOUNDRY_PROJECT_ENDPOINT": "foundry-endpoint", "FOUNDRY_TENANT_ID": "foundry-tenant",
@@ -114,14 +129,16 @@ def _files(root: Path, under: str) -> dict[str, bytes]:
             if path.is_file() and not any(part in SKIPPED for part in path.parts)}
 
 
-def app_yaml(foundry: bool, judge: bool = True, genie_space: str | None = None) -> bytes:
-    """ops/app/app.yaml as it is, or without the Foundry agent's keys, or the judge's, when the app has no secrets
-    for them, because an env entry whose resource the app lacks would stop it from starting. With a Genie space,
-    GENIE_SPACE_ID names it, so ask_genie asks it (ticket 33). The space's ID is not a secret."""
+def app_yaml(foundry: bool, judge: bool = True, genie_space: str | None = None, traces: bool = True) -> bytes:
+    """ops/app/app.yaml as it is, or without the Foundry agent's keys, or the judge's, or the Application Insights
+    connection string, when the app has no secrets for them, because an env entry whose resource the app lacks would
+    stop it from starting. With a Genie space, GENIE_SPACE_ID names it, so ask_genie asks it (ticket 33). The space's
+    ID is not a secret."""
     text = (HERE / "app.yaml").read_bytes()
-    if foundry and judge and not genie_space:
+    if foundry and judge and traces and not genie_space:
         return text
-    left_out = ([] if foundry else list(FOUNDRY.values())) + ([] if judge else list(JUDGE.values()))
+    left_out = (([] if foundry else list(FOUNDRY.values())) + ([] if judge else list(JUDGE.values()))
+                + ([] if traces else [APPINSIGHTS]))
     started = yaml.safe_load(text)
     started["env"] = [entry for entry in started["env"] if entry.get("valueFrom") not in left_out]
     if genie_space:
@@ -129,35 +146,38 @@ def app_yaml(foundry: bool, judge: bool = True, genie_space: str | None = None) 
     return yaml.safe_dump(started, sort_keys=False).encode()
 
 
-def has_foundry(env: dict) -> bool:
-    return all((env.get(key) or "").strip() for key in FOUNDRY)
+def has_foundry(env: dict, lacking: Collection[str] = ()) -> bool:
+    """.env has the Foundry agent's four keys, and the scope lacks none of them (lacking, under --keep-secrets)."""
+    return all((env.get(key) or "").strip() and key not in lacking for key in FOUNDRY)
 
 
-def has_judge(env: dict) -> bool:
-    return all((env.get(key) or "").strip() for key in JUDGE)
+def has_judge(env: dict, lacking: Collection[str] = ()) -> bool:
+    return all((env.get(key) or "").strip() and key not in lacking for key in JUDGE)
 
 
 def package(dist: Path, foundry: bool = True, judge: bool = True,
-            genie_space: str | None = None) -> dict[str, bytes]:
+            genie_space: str | None = None, traces: bool = True) -> dict[str, bytes]:
     """The app's files, by their path in the app's folder."""
-    return {"app.yaml": app_yaml(foundry, judge, genie_space), "requirements.txt": (HERE / "requirements.txt").read_bytes(),
+    return {"app.yaml": app_yaml(foundry, judge, genie_space, traces),
+            "requirements.txt": (HERE / "requirements.txt").read_bytes(),
             **_files(REPO / "src" / "strata", "src/strata"),
             **{f"config/{path.name}": path.read_bytes() for path in sorted((REPO / "config").glob("*.toml"))},
             **_files(dist, "web/dist")}
 
 
-def resources(env: dict, scope: str, app_state: str | None = None) -> list[dict]:
-    found = [
-        {"name": "sql-warehouse", "sql_warehouse": {"id": env["DATABRICKS_WAREHOUSE_ID"], "permission": "CAN_USE"}},
-        {"name": "appinsights", "secret": {"scope": scope, "key": APPINSIGHTS_NAME, "permission": "READ"}},
-    ]
+def resources(env: dict, scope: str, app_state: str | None = None, lacking: Collection[str] = ()) -> list[dict]:
+    """The app's resources. lacking names the secrets the scope lacks under --keep-secrets: the app gets no resource
+    that reads one, as if .env had no value for it."""
+    found = [{"name": "sql-warehouse", "sql_warehouse": {"id": env["DATABRICKS_WAREHOUSE_ID"], "permission": "CAN_USE"}}]
+    if APPINSIGHTS_NAME not in lacking:
+        found.append({"name": APPINSIGHTS, "secret": {"scope": scope, "key": APPINSIGHTS_NAME, "permission": "READ"}})
     if app_state:
         found.append({"name": APP_STATE, "database": {"instance_name": app_state, "database_name": APP_STATE_DATABASE,
                                                       "permission": "CAN_CONNECT_AND_CREATE"}})
-    if has_foundry(env):
+    if has_foundry(env, lacking):
         found += [{"name": name, "secret": {"scope": scope, "key": key, "permission": "READ"}}
                   for key, name in FOUNDRY.items()]
-    if has_judge(env):
+    if has_judge(env, lacking):
         found += [{"name": name, "secret": {"scope": scope, "key": key, "permission": "READ"}}
                   for key, name in JUDGE.items()]
     return found
@@ -170,6 +190,17 @@ LESSON_REVIEW_TABLES = ("lesson_review_acts", "lesson_review_items", "lesson_ver
 # each answer cited, the query judges' grades, and the pair of judges a query keeps at its first grade, which the
 # app writes as itself with the person in each row. tests/test_judging.py checks that a grade writes only these.
 RETRIEVAL_TABLES = ("candidate_labels", "label_decisions", "answer_citations", "retrieval_grades", "retrieval_queries")
+# The app's way in to the catalog and to strata.ops, as (securable type, full name, privilege). The bundle's grants
+# (bundle/catalog.yml) replace every other grant on strata and its schemas, so the bundle deploy
+# (ops/bundle/deploy.py) gives these back to the app's service principal right after (ticket 79). Its table grants
+# below are on tables, which the bundle leaves alone.
+ACCESS = (("catalog", "strata", "USE_CATALOG"), ("schema", "strata.ops", "USE_SCHEMA"))
+
+
+def is_strata(app: dict) -> bool:
+    """Whether the app that ops/dayone/dayone.toml names is Strata's, or the day-one probe app it replaces, by its
+    description. Strata leaves an app that someone else made alone."""
+    return app["description"] in (DESCRIPTION, PROBE_DESCRIPTION)
 
 
 def grants(principal: str) -> list[str]:
@@ -188,8 +219,8 @@ def grants(principal: str) -> list[str]:
     tables = ("usage_events", "agent_runs", "evidence_opened", "drafts", "draft_states", "draft_exports",
               "draft_files", "follows", "disagreement_choices", "draft_fields", "exposures", "uploads",
               "upload_rows", "lesson_visits", "draft_lesson_choices")
-    return [f"GRANT USE CATALOG ON CATALOG strata TO `{principal}`",
-            f"GRANT USE SCHEMA ON SCHEMA strata.ops TO `{principal}`",
+    return [*[f"GRANT {privilege.replace('_', ' ')} ON {kind.upper()} {name} TO `{principal}`"
+              for kind, name, privilege in ACCESS],
             *[f"GRANT SELECT, MODIFY ON TABLE strata.ops.{table} TO `{principal}`" for table in tables],
             f"GRANT SELECT ON TABLE strata.ops.draft_fields_latest TO `{principal}`",
             f"GRANT SELECT ON TABLE strata.ops.supplier_pairs TO `{principal}`",
@@ -236,9 +267,22 @@ def plan() -> list[tuple[str, str]]:
                ("The column mask", f"{MASK}, on {sum(len(columns) for columns in MASKED.values())} columns")])
 
 
-def deploy(workspace, env: dict, build_web: Callable[[], tuple[int, str]] = build_web, dist: Path = DIST) -> int:
+def secret_names(env: dict, scope: str) -> list[str]:
+    """The secrets the app reads from the scope, by their names there: the ones resources() gives it."""
+    return [resource["secret"]["key"] for resource in resources(env, scope) if "secret" in resource]
+
+
+def write_secrets(scope: str, keys: list[str]) -> str:
+    """What to write into the scope so the next deploy gives the app what it lacks. The Databricks CLI asks for each
+    value, so none is ever typed into a command line."""
+    commands = " and ".join(f"databricks secrets put-secret {scope} {key}" for key in keys)
+    return f"Write {'it' if len(keys) == 1 else 'them'} with {commands}, then deploy again."
+
+
+def deploy(workspace, env: dict, build_web: Callable[[], tuple[int, str]] = build_web, dist: Path = DIST,
+           keep_secrets: bool = False) -> int:
     names = dayone.load_config()["names"]
-    name = names["app"]
+    name, scope = names["app"], names["secret_scope"]
 
     print("1. Building the web app.")
     code, output = build_web()
@@ -253,7 +297,7 @@ def deploy(workspace, env: dict, build_web: Callable[[], tuple[int, str]] = buil
         workspace.create_app(name, DESCRIPTION)
         app = workspace.app(name)
         print(f"   I made the app {name}.")
-    elif app["description"] not in (DESCRIPTION, PROBE_DESCRIPTION):
+    elif not is_strata(app):
         print(f"The app {name} is not Strata's: its description is {app['description']!r} and it runs "
               f"{app['source'] or 'nothing yet'}. I left it alone. Set names.app in ops/dayone/dayone.toml "
               "to a free app name.")
@@ -261,20 +305,44 @@ def deploy(workspace, env: dict, build_web: Callable[[], tuple[int, str]] = buil
 
     print("3. Giving it the SQL warehouse, the Application Insights connection string, each viewer's SQL token "
           "and the app state database.")
-    foundry = has_foundry(env)
-    if foundry:
+    lacking: set[str] = set()  # the secrets the app reads that the scope lacks, under --keep-secrets
+    if keep_secrets:
+        expected = secret_names(env, scope)
+        print(f"   I wrote no secret, because you asked me to keep them (--keep-secrets). I expect these secrets in "
+              f"the scope {scope}: {', '.join(expected)}.")
+        listed = set(workspace.secret_keys(scope))
+        lacking = {key for key in expected if key not in listed}
+    traces = APPINSIGHTS_NAME not in lacking
+    if not traces:
+        print(f"   The secret scope {scope} has no {APPINSIGHTS_NAME}, so the app sends no traces to Application "
+              f"Insights. {write_secrets(scope, [APPINSIGHTS_NAME])}")
+    foundry = has_foundry(env, lacking)
+    if foundry and keep_secrets:
+        print("   The Foundry agent's four keys are in the secret scope, so /api/ask answers through the agent.")
+    elif foundry:
         for key in FOUNDRY:
-            workspace.put_secret(names["secret_scope"], key, env[key].strip())
+            workspace.put_secret(scope, key, env[key].strip())
         print("   I saved the Foundry agent's four keys in the secret scope, so /api/ask answers through the agent.")
+    elif has_foundry(env):
+        absent = [key for key in FOUNDRY if key in lacking]
+        print(f"   The secret scope {scope} has no {', '.join(absent)}, so the app gets no Foundry agent and /api/ask "
+              f"says there is no agent. {write_secrets(scope, absent)}")
     else:
         missing = ", ".join(key for key in FOUNDRY if not (env.get(key) or "").strip())
         print(f"   .env has no {missing}, so the app gets no Foundry agent and /api/ask says there is no agent.")
-    judge = has_judge(env)
-    if judge:
+    judge = has_judge(env, lacking)
+    if judge and keep_secrets:
+        print("   The two Azure OpenAI keys are in the secret scope, so the model that judges sentences checks "
+              "each answer.")
+    elif judge:
         for key in JUDGE:
-            workspace.put_secret(names["secret_scope"], key, env[key].strip())
+            workspace.put_secret(scope, key, env[key].strip())
         print("   I saved the two Azure OpenAI keys in the secret scope, so the model that judges sentences checks "
               "each answer.")
+    elif has_judge(env):
+        absent = [key for key in JUDGE if key in lacking]
+        print(f"   The secret scope {scope} has no {', '.join(absent)}, so the app gets no judge and removes every "
+              f"sentence that needs one. {write_secrets(scope, absent)}")
     else:
         missing = ", ".join(key for key in JUDGE if not (env.get(key) or "").strip())
         print(f"   .env has no {missing}, so the app gets no judge and removes every sentence that needs one.")
@@ -292,10 +360,10 @@ def deploy(workspace, env: dict, build_web: Callable[[], tuple[int, str]] = buil
         print(f"   I could not make or start the Lakebase instance {instance}: {reason}. The app gets no app state "
               "database, so it keeps no packages.")
         instance = None
-    workspace.configure_app(name, DESCRIPTION, resources(env, names["secret_scope"], instance), SCOPES)
+    workspace.configure_app(name, DESCRIPTION, resources(env, scope, instance, lacking), SCOPES)
 
     folder = f"/Workspace/Users/{workspace.me()}/{FOLDER}"
-    files = package(dist, foundry, judge, genie_space)
+    files = package(dist, foundry, judge, genie_space, traces)
     print(f"4. Uploading {len(files)} files to {folder}.")
     workspace.upload(folder, files)
 
@@ -316,10 +384,16 @@ def deploy(workspace, env: dict, build_web: Callable[[], tuple[int, str]] = buil
     return 0
 
 
-def main(argv: list[str] | None = None, workspace=None) -> int:
+def main(argv: list[str] | None = None, workspace=None, **options) -> int:
+    """The command. The tests pass a fake workspace, and through options a stand-in for the web build."""
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--env-file", type=Path, default=None,
                         help="The main checkout's .env, which the wizard filled. That file is the default.")
+    parser.add_argument("--keep-secrets", action="store_true",
+                        help="Write no secret. Check instead that the secret scope already holds each secret the app "
+                             "reads, and name any it lacks; the app then gets nothing that reads that secret. Use it "
+                             "to redeploy new code from a session that may not write secrets, once the user has "
+                             "written them.")
     args = parser.parse_args(argv)
     try:
         env = load_workspace_env(args.env_file)
@@ -330,7 +404,7 @@ def main(argv: list[str] | None = None, workspace=None) -> int:
         from app_live import LiveApps
 
         workspace = LiveApps(env)
-    return deploy(workspace, env)
+    return deploy(workspace, env, keep_secrets=args.keep_secrets, **options)
 
 
 if __name__ == "__main__":

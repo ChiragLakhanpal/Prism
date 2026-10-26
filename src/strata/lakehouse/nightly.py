@@ -35,7 +35,8 @@ this way (gates/build_fixture.py), and repair_locally() reruns a run that stoppe
 repair run does.
 
 A rerun changes nothing that the first run already wrote: bronze keeps a page or a document once, by
-its hash or id; silver reads a page only once all its tables hold it; gold and the edge table are
+its hash or id; silver reads a page only until strata.ops.silver_pages records it, and again only when
+its transform gains a table or bumps its VERSION (ticket 75); gold and the edge table are
 made equal to their queries with one MERGE; the readers parse and embed only what is new; and a
 document is sent to the batch model once. What a run adds every time is its own record, under its own
 run id (RUN_LOGS), and a fresh try of a request or a page that failed before.
@@ -76,7 +77,9 @@ RUN_LOGS = ("strata.ops.pipeline_runs", "strata.ops.quality_checks", "strata.ops
             # The challenger's and the hazard model's nightly scores in shadow (ticket 44).
             "strata.ops.time_estimate_shadow", "strata.ops.hazard_scores",
             # The dashboard's "What the measures say" and each loop's indicators, written each night (ticket 45).
-            "strata.ops.dashboard_findings", "strata.ops.loop_indicators")
+            "strata.ops.dashboard_findings", "strata.ops.loop_indicators",
+            # Each document or document list a document run could not fetch or read, tried again each run (ticket 72).
+            "strata.ops.skipped_documents")
 
 # Where a source's pages come from: the live API on the workspace, the recorded fixture here.
 Fetch = Callable[[Source, Engine], Iterable[pages.Page]]
@@ -155,7 +158,7 @@ def _bronze_to_gold(run: Run) -> int:
     them every pair in the middle waits for a person (no_model)."""
     from strata.knowledge.suppliers import bidders, judge, resolve
 
-    added = sum(silver.run(run.engine, source) for source in _paged())
+    added = sum(silver.run(run.engine, source, run.clock) for source in _paged())
     added += bidders.store(run.engine) + bidders.store_bids(run.engine)
     deciding = judge.from_environment() if run.fetch is fetch_live else judge.SameNameStandIn()
     added += resolve.run(run.engine, run.run_id, deciding, run.clock)

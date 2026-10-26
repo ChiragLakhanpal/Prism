@@ -23,6 +23,8 @@ web/playwright-report/
 data/out/*.duckdb
 data/out/*.duckdb.wal
 .cache/
+# The gate's pytest scratch, one folder per lane (gates/steps.toml, --basetemp; ticket 73)
+.gate-tmp/
 
 # Machine-local
 .DS_Store

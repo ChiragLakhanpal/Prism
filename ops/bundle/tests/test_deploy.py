@@ -7,16 +7,20 @@ and bundle/nightly.yml declare, and its SQL warehouse is DuckDB, so the real tab
 run. The workspace step in docs/workspace-catchup.md runs the real thing.
 """
 
+import json
 import sys
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
 REPO = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(REPO / "ops" / "bundle"))
+sys.path.insert(0, str(REPO / "ops" / "app"))
 
 import bundle_live  # noqa: E402
 import deploy  # noqa: E402
+import deploy_app  # noqa: E402
 
 from strata.lakehouse import bundle, catalog, nightly  # noqa: E402
 from strata.lakehouse.engine import DuckDBEngine  # noqa: E402
@@ -27,14 +31,20 @@ FAIRSHARE = {"catalog": {"name": "fairshare", "comment": ""}, "schemas": {"gold"
 
 
 class FakeWorkspace:
-    """A workspace that holds fairshare's catalog and, once the bundle deploys, Strata's."""
+    """A workspace that holds fairshare's catalog and, once the bundle deploys, Strata's. With app, it also holds
+    the app that ops/dayone/dayone.toml names, as apps get returns it."""
 
-    def __init__(self, deploy_fails=False, touch_fairshare=False):
+    def __init__(self, deploy_fails=False, touch_fairshare=False, app=None):
         self.deploys = 0
         self.deploy_fails, self.touch_fairshare = deploy_fails, touch_fairshare
         self.deployed = None
         self.duckdb = DuckDBEngine.open()
         self.fairshare = dict(FAIRSHARE)
+        self.apps = {"strata": app} if app else {}
+        self.grants = {}  # securable -> principal -> privileges, as the workspace holds them now
+        self.granted = []  # each grant the deploy wrote after the bundle's
+        self.dashboards = {}  # display name -> the file the bundle wrote and when it wrote it
+        self.edit = ""  # a change to every dashboard file, as a new commit of src/strata/dashboard makes one
 
     def deploy_bundle(self):
         self.deploys += 1
@@ -44,6 +54,16 @@ class FakeWorkspace:
         for schema in declared.schemas:
             self.duckdb.run(f"CREATE SCHEMA IF NOT EXISTS strata.{schema}")
         self.deployed = declared
+        # The bundle's grants replace every other grant on Strata's catalog, schemas and volume, the app's too.
+        self.grants = {name: {who: list(what) for who, what in grants.items()}
+                       for name, grants in declared.grants.items()}
+        # The bundle rewrites a dashboard whose file changed, and the workspace stamps its update_time.
+        for board in bundle.load().resources("dashboards").values():
+            text = (REPO / "bundle" / board["file_path"]).read_text()
+            if self.dashboards.get(board["display_name"], {}).get("text") != text + self.edit:
+                self.dashboards[board["display_name"]] = {
+                    "text": text + self.edit, "pages": [page["displayName"] for page in json.loads(text)["pages"]],
+                    "update_time": f"2026-10-26T10:21:{self.deploys:02d}Z"}
         if self.touch_fairshare:
             self.fairshare = {**self.fairshare, "tables": {}}
         return 0, "Deployment complete!"
@@ -66,21 +86,26 @@ class FakeWorkspace:
                 "schemas": {schema: "" for schema in self.deployed.schemas},
                 "volumes": {volume: "MANAGED" for volume in self.deployed.volumes},
                 "tables": listed,
-                "grants": {name: {who: list(what) for who, what in grants.items()}
-                           for name, grants in self.deployed.grants.items()}}
+                "grants": {name: {who: sorted(what) for who, what in grants.items()}
+                           for name, grants in self.grants.items()}}
+
+    def app(self, name):
+        return self.apps.get(name)
+
+    def grant(self, kind, name, principal, privileges):
+        self.granted.append((kind, name, principal, tuple(privileges)))
+        held = self.grants.setdefault(name, {}).setdefault(principal, [])
+        held.extend(privilege for privilege in privileges if privilege not in held)
 
     def job(self, name):
         return {"name": name, "tasks": [task.key for task in nightly.job_tasks()]} if self.deployed else None
 
     def dashboard(self, name):
-        """The dashboard the bundle declares, with the pages of the file it deploys."""
-        if not self.deployed:
+        """A dashboard the bundle deployed, with the pages of its file and when the bundle last wrote it."""
+        if name not in self.dashboards:
             return None
-        import json
-
-        declared = bundle.load().resources("dashboards")["strata_dashboard"]
-        pages = json.loads((REPO / "bundle" / declared["file_path"]).read_text())["pages"]
-        return {"name": name, "pages": [page["displayName"] for page in pages]}
+        found = self.dashboards[name]
+        return {"name": name, "pages": found["pages"], "update_time": found["update_time"]}
 
 
 def deploy_into(workspace, capsys):
@@ -102,10 +127,87 @@ def test_the_first_deploy_creates_the_catalog_its_schemas_the_volume_the_tables_
                  "The table strata.ops.pipeline_runs is new.",
                  "The grants on strata are new.",
                  "The job strata nightly is new.",
-                 "The dashboard Strata operations is new."):
+                 "The dashboard Strata operations is new.",
+                 "The dashboard Strata operations (test) is new."):
         assert line in out
     assert ("fairshare's catalog lists the same before and after the deploy: "
             "one schema, one table and no volumes.") in out
+
+
+APP_PRINCIPAL = "e796c089-0000-4000-8000-000000000079"
+
+
+def strata_app(description=deploy_app.DESCRIPTION):
+    """The app ops/app/deploy_app.py made, as apps get returns it: its description and its service principal's
+    application id."""
+    return {"description": description, "principal": APP_PRINCIPAL}
+
+
+def test_with_an_app_the_deploy_gives_its_service_principal_back_use_catalog_and_use_schema(capsys):
+    """The bundle's grants replace every other grant on strata and its schemas, so a bundle deploy used to take the
+    app's USE CATALOG and USE SCHEMA away until the app was deployed again (ticket 79)."""
+    workspace = FakeWorkspace(app=strata_app())
+    deploy_into(workspace, capsys)
+
+    code, out = deploy_into(workspace, capsys)
+    grants = workspace.listing("strata")["grants"]
+
+    assert code == 0
+    assert grants["strata"] == {"account users": ["USE_CATALOG"], APP_PRINCIPAL: ["USE_CATALOG"]}
+    assert grants["strata.ops"] == {"account users": ["SELECT", "USE_SCHEMA"], APP_PRINCIPAL: ["USE_SCHEMA"]}
+    assert (f"   The bundle's grants replace every other grant on strata and its schemas, so I gave the app strata's "
+            f"service principal {APP_PRINCIPAL} back USE CATALOG on strata and USE SCHEMA on strata.ops.\n") in out
+    assert "No changes." in out
+
+
+def test_with_no_app_the_grants_are_the_bundle_s_own_and_the_deploy_says_no_app_exists(capsys):
+    workspace = FakeWorkspace()
+
+    code, out = deploy_into(workspace, capsys)
+
+    assert code == 0
+    assert workspace.granted == []
+    assert workspace.listing("strata")["grants"] == {
+        "strata": {"account users": ["USE_CATALOG"]},
+        **{f"strata.{schema}": {"account users": ["SELECT", "USE_SCHEMA"]}
+           for schema in ("bronze", "silver", "gold", "ops")},
+        "strata.bronze.files": {"account users": ["READ_VOLUME"]}}
+    assert ("   I found no app named strata, so I granted nothing for it. Its deploy, ops/app/deploy_app.py, grants "
+            "its service principal what it needs.\n") in out
+
+
+def test_the_live_workspace_adds_the_app_s_privilege_and_removes_no_other_grant():
+    """The live adapter answers every call the fake answers. Its grant is Unity Catalog's permissions update with
+    one change that only adds, so the readers' grants the bundle just wrote stay."""
+    calls = []
+    live = object.__new__(bundle_live.LiveWorkspace)
+    live.w = SimpleNamespace(api_client=SimpleNamespace(do=lambda method, path, body: calls.append((method, path, body))))
+
+    for kind, name, privilege in deploy_app.ACCESS:
+        live.grant(kind, name, APP_PRINCIPAL, [privilege])
+
+    assert calls == [
+        ("PATCH", "/api/2.1/unity-catalog/permissions/catalog/strata",
+         {"changes": [{"principal": APP_PRINCIPAL, "add": ["USE_CATALOG"]}]}),
+        ("PATCH", "/api/2.1/unity-catalog/permissions/schema/strata.ops",
+         {"changes": [{"principal": APP_PRINCIPAL, "add": ["USE_SCHEMA"]}]})]
+    called = {name for name in vars(FakeWorkspace) if not name.startswith("_")}
+    assert called <= {name for name in vars(bundle_live.LiveWorkspace) if not name.startswith("_")}
+
+
+@pytest.mark.parametrize("app, said", [
+    ({"description": "Someone else's app", "principal": APP_PRINCIPAL},
+     "The app strata is not Strata's: its description is \"Someone else's app\". I granted nothing for it."),
+    ({"description": deploy_app.DESCRIPTION, "principal": None},
+     "The app strata has no service principal yet, so I granted nothing for it.")])
+def test_an_app_that_is_not_strata_s_or_has_no_service_principal_gets_no_grant(app, said, capsys):
+    workspace = FakeWorkspace(app=app)
+
+    code, out = deploy_into(workspace, capsys)
+
+    assert code == 0
+    assert workspace.granted == []
+    assert said in out
 
 
 class Warehouse:
@@ -150,6 +252,41 @@ def test_a_second_deploy_reports_no_changes(capsys):
     assert code == 0
     assert "No changes." in out
     assert "is new" not in out
+
+
+def test_a_deploy_that_rewrote_both_dashboards_names_each_one_as_changed(capsys):
+    """On October 26, 2026 a deploy rewrote both dashboards with new tiles on the same pages, and the report named only
+    the grants (ticket 79). The workspace stamps a rewritten dashboard's update_time, and the report reads it."""
+    workspace = FakeWorkspace()
+    deploy_into(workspace, capsys)
+    workspace.edit = " "
+
+    code, out = deploy_into(workspace, capsys)
+    changed = out.split("What changed:\n")[1].split("\n")
+
+    assert code == 0
+    assert changed[:2] == ["   The dashboard Strata operations changed.", "   The dashboard Strata operations (test) changed."]
+    assert "No changes." not in out
+
+
+def test_the_live_listing_of_a_dashboard_holds_when_the_workspace_last_wrote_it():
+    """The live listing held only the pages' names and the warehouse, which a rewrite on the same pages kept, so the
+    report missed it. lakeview get's update_time moves with every write."""
+    class Lakeview:
+        def list(self):
+            return [SimpleNamespace(display_name="Someone else's", dashboard_id="d0"),
+                    SimpleNamespace(display_name="Strata operations", dashboard_id="d1")]
+
+        def get(self, dashboard_id):
+            assert dashboard_id == "d1"
+            return SimpleNamespace(serialized_dashboard='{"pages": [{"displayName": "Data readiness"}]}',
+                                   warehouse_id="wh-1", update_time="2026-10-26T10:21:52.000Z")
+
+    live = object.__new__(bundle_live.LiveWorkspace)
+    live.w = SimpleNamespace(lakeview=Lakeview())
+
+    assert live.dashboard("Strata operations") == {"name": "Strata operations", "pages": ["Data readiness"],
+                                                   "warehouse_id": "wh-1", "update_time": "2026-10-26T10:21:52.000Z"}
 
 
 def test_the_plan_lists_from_the_repo_alone_everything_a_first_deploy_reports_as_new(capsys):

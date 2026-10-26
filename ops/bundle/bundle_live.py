@@ -78,6 +78,12 @@ class LiveWorkspace:
         return {assignment.principal: sorted(_text(p) for p in assignment.privileges or [])
                 for assignment in found.privilege_assignments or []}
 
+    def grant(self, kind: str, name: str, principal: str, privileges: list[str]) -> None:
+        """Add these privileges on the catalog or schema for the principal, and change no other grant. It is the call
+        the SDK's grants.update makes, with one change that only adds."""
+        self.w.api_client.do("PATCH", f"/api/2.1/unity-catalog/permissions/{kind}/{name}",
+                             body={"changes": [{"principal": principal, "add": list(privileges)}]})
+
     def listing(self, name: str) -> dict | None:
         """A catalog's schemas, volumes, tables with their columns, and grants; None when it does not exist."""
         from databricks.sdk.errors import NotFound
@@ -100,6 +106,19 @@ class LiveWorkspace:
         return {"catalog": {"name": info.name, "comment": info.comment or ""}, "schemas": schemas,
                 "volumes": volumes, "tables": tables, "grants": grants}
 
+    # ── The app ──
+
+    def app(self, name: str) -> dict | None:
+        """The app with this name, as apps get returns it: its description and its service principal's application
+        id, as ops/app/app_live.py reads them. None when there is no such app."""
+        from databricks.sdk.errors import NotFound
+
+        try:
+            found = self.w.apps.get(name)
+        except NotFound:
+            return None
+        return {"description": found.description or "", "principal": found.service_principal_client_id}
+
     # ── Jobs ──
 
     def _job_id(self, name: str) -> int | None:
@@ -112,7 +131,9 @@ class LiveWorkspace:
         return self.w.jobs.get(job_id).settings.as_dict() if job_id is not None else None
 
     def dashboard(self, name: str) -> dict | None:
-        """The AI/BI dashboard with this name, with its pages and its SQL warehouse, or None."""
+        """The AI/BI dashboard with this name, with its pages, its SQL warehouse and when the workspace last wrote it,
+        or None. The workspace moves update_time with every write, so a dashboard the bundle rewrote reads as changed
+        even when its pages kept their names (ticket 79)."""
         import json
 
         for found in self.w.lakeview.list():
@@ -120,7 +141,7 @@ class LiveWorkspace:
                 full = self.w.lakeview.get(found.dashboard_id)
                 pages = json.loads(full.serialized_dashboard or "{}").get("pages", [])
                 return {"name": name, "pages": [page.get("displayName") for page in pages],
-                        "warehouse_id": full.warehouse_id}
+                        "warehouse_id": full.warehouse_id, "update_time": full.update_time}
         return None
 
     def job_names(self) -> list[str]:

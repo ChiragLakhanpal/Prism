@@ -367,7 +367,7 @@
         "  p.name AS period_name,\n",
         "  CASE\n",
         "    WHEN s.charges = 0 OR p.budget_usd IS NULL THEN 'No cost data yet'\n",
-        "    ELSE replace(replace('US${spent} of US${budget}', '{spent}', format_number(round(s.spent), 0)), '{budget}',\n",
+        "    ELSE replace(replace(concat('US$', '{spent} of US$', '{budget}'), '{spent}', format_number(round(s.spent), 0)), '{budget}',\n",
         "                 format_number(p.budget_usd, 0))\n",
         "  END AS display\n",
         "FROM spent AS s\n",
@@ -2361,24 +2361,21 @@
               }
             ],
             "spec": {
-              "version": 1,
+              "version": 2,
               "widgetType": "table",
               "encodings": {
                 "columns": [
                   {
                     "fieldName": "measured_on",
-                    "title": "Measured on",
-                    "type": "date",
-                    "displayAs": "datetime",
-                    "order": 0,
-                    "dateTimeFormat": "MMM D, YYYY"
+                    "displayName": "Measured on",
+                    "format": {
+                      "type": "date",
+                      "date": "locale-short-month"
+                    }
                   },
                   {
                     "fieldName": "headline",
-                    "title": "Headline",
-                    "type": "string",
-                    "displayAs": "string",
-                    "order": 1
+                    "displayName": "Headline"
                   }
                 ]
               },
@@ -2515,11 +2512,35 @@
                       "expression": "`fiscal_year_label`"
                     },
                     {
-                      "name": "source_rows",
-                      "expression": "`source_rows`"
+                      "name": "sum(source_rows)",
+                      "expression": "SUM(`source_rows`)"
                     }
                   ],
-                  "disaggregated": true
+                  "cubeGroupingSets": {
+                    "sets": [
+                      {
+                        "fieldNames": [
+                          "source"
+                        ]
+                      },
+                      {
+                        "fieldNames": [
+                          "fiscal_year_label"
+                        ]
+                      }
+                    ]
+                  },
+                  "disaggregated": false,
+                  "orders": [
+                    {
+                      "direction": "ASC",
+                      "expression": "`source`"
+                    },
+                    {
+                      "direction": "ASC",
+                      "expression": "`fiscal_year_label`"
+                    }
+                  ]
                 }
               }
             ],
@@ -2543,7 +2564,7 @@
                   "type": "multi-cell",
                   "fields": [
                     {
-                      "fieldName": "source_rows",
+                      "fieldName": "sum(source_rows)",
                       "cellType": "text",
                       "displayName": "Rows"
                     }
@@ -2800,59 +2821,50 @@
               }
             ],
             "spec": {
-              "version": 1,
+              "version": 2,
               "widgetType": "table",
               "encodings": {
                 "columns": [
                   {
                     "fieldName": "source",
-                    "title": "Source",
-                    "type": "string",
-                    "displayAs": "string",
-                    "order": 0
+                    "displayName": "Source"
                   },
                   {
                     "fieldName": "latest_data",
-                    "title": "Latest data",
-                    "type": "date",
-                    "displayAs": "datetime",
-                    "order": 1,
-                    "dateTimeFormat": "MMM D, YYYY"
+                    "displayName": "Latest data",
+                    "format": {
+                      "type": "date",
+                      "date": "locale-short-month"
+                    }
                   },
                   {
                     "fieldName": "updates",
-                    "title": "Updates",
-                    "type": "string",
-                    "displayAs": "string",
-                    "order": 2
+                    "displayName": "Updates"
                   },
                   {
                     "fieldName": "days_late",
-                    "title": "Days late",
-                    "type": "integer",
-                    "displayAs": "integer",
-                    "order": 3
+                    "displayName": "Days late",
+                    "format": {
+                      "type": "number-plain",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 0
+                      },
+                      "hideGroupSeparator": false
+                    }
                   },
                   {
                     "fieldName": "linked",
-                    "title": "Linked",
-                    "type": "string",
-                    "displayAs": "string",
-                    "order": 4
+                    "displayName": "Linked"
                   },
                   {
                     "fieldName": "read_well",
-                    "title": "Read well",
-                    "type": "string",
-                    "displayAs": "string",
-                    "order": 5
+                    "displayName": "Read well"
                   },
                   {
                     "fieldName": "status",
-                    "title": "Status",
-                    "type": "string",
-                    "displayAs": "string",
-                    "order": 6
+                    "displayName": "Status"
                   }
                 ]
               },
@@ -2898,30 +2910,39 @@
               }
             ],
             "spec": {
-              "version": 1,
+              "version": 2,
               "widgetType": "table",
               "encodings": {
                 "columns": [
                   {
                     "fieldName": "rank",
-                    "title": "Rank",
-                    "type": "integer",
-                    "displayAs": "integer",
-                    "order": 0
+                    "displayName": "Rank",
+                    "format": {
+                      "type": "number-plain",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 0
+                      },
+                      "hideGroupSeparator": false
+                    }
                   },
                   {
                     "fieldName": "fix",
-                    "title": "Fix",
-                    "type": "string",
-                    "displayAs": "string",
-                    "order": 1
+                    "displayName": "Fix"
                   },
                   {
                     "fieldName": "projects",
-                    "title": "Projects it would add evidence to",
-                    "type": "integer",
-                    "displayAs": "integer",
-                    "order": 2
+                    "displayName": "Projects it would add evidence to",
+                    "format": {
+                      "type": "number-plain",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 0
+                      },
+                      "hideGroupSeparator": false
+                    }
                   }
                 ]
               },
@@ -3291,30 +3312,21 @@
               }
             ],
             "spec": {
-              "version": 1,
+              "version": 2,
               "widgetType": "table",
               "encodings": {
                 "columns": [
                   {
                     "fieldName": "about",
-                    "title": "About",
-                    "type": "string",
-                    "displayAs": "string",
-                    "order": 0
+                    "displayName": "About"
                   },
                   {
                     "fieldName": "finding",
-                    "title": "Finding",
-                    "type": "string",
-                    "displayAs": "string",
-                    "order": 1
+                    "displayName": "Finding"
                   },
                   {
                     "fieldName": "measured",
-                    "title": "Measured",
-                    "type": "string",
-                    "displayAs": "string",
-                    "order": 2
+                    "displayName": "Measured"
                   }
                 ]
               },
@@ -3612,59 +3624,77 @@
               }
             ],
             "spec": {
-              "version": 1,
+              "version": 2,
               "widgetType": "table",
               "encodings": {
                 "columns": [
                   {
                     "fieldName": "night",
-                    "title": "Night of",
-                    "type": "date",
-                    "displayAs": "datetime",
-                    "order": 0,
-                    "dateTimeFormat": "MMM D, YYYY"
+                    "displayName": "Night of",
+                    "format": {
+                      "type": "date",
+                      "date": "locale-short-month"
+                    }
                   },
                   {
                     "fieldName": "outcome",
-                    "title": "Outcome",
-                    "type": "string",
-                    "displayAs": "string",
-                    "order": 1
+                    "displayName": "Outcome"
                   },
                   {
                     "fieldName": "tasks_finished",
-                    "title": "Tasks finished",
-                    "type": "string",
-                    "displayAs": "string",
-                    "order": 2
+                    "displayName": "Tasks finished"
                   },
                   {
                     "fieldName": "minutes",
-                    "title": "Took, minutes",
-                    "type": "integer",
-                    "displayAs": "integer",
-                    "order": 3
+                    "displayName": "Took, minutes",
+                    "format": {
+                      "type": "number-plain",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 0
+                      },
+                      "hideGroupSeparator": false
+                    }
                   },
                   {
                     "fieldName": "rows_changed",
-                    "title": "Rows changed",
-                    "type": "integer",
-                    "displayAs": "integer",
-                    "order": 4
+                    "displayName": "Rows changed",
+                    "format": {
+                      "type": "number-plain",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 0
+                      },
+                      "hideGroupSeparator": false
+                    }
                   },
                   {
                     "fieldName": "checks_passed",
-                    "title": "Checks passed",
-                    "type": "integer",
-                    "displayAs": "integer",
-                    "order": 5
+                    "displayName": "Checks passed",
+                    "format": {
+                      "type": "number-plain",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 0
+                      },
+                      "hideGroupSeparator": false
+                    }
                   },
                   {
                     "fieldName": "checks_failed",
-                    "title": "Checks failed",
-                    "type": "integer",
-                    "displayAs": "integer",
-                    "order": 6
+                    "displayName": "Checks failed",
+                    "format": {
+                      "type": "number-plain",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 0
+                      },
+                      "hideGroupSeparator": false
+                    }
                   }
                 ]
               },
@@ -3718,45 +3748,33 @@
               }
             ],
             "spec": {
-              "version": 1,
+              "version": 2,
               "widgetType": "table",
               "encodings": {
                 "columns": [
                   {
                     "fieldName": "night",
-                    "title": "Night of",
-                    "type": "date",
-                    "displayAs": "datetime",
-                    "order": 0,
-                    "dateTimeFormat": "MMM D, YYYY"
+                    "displayName": "Night of",
+                    "format": {
+                      "type": "date",
+                      "date": "locale-short-month"
+                    }
                   },
                   {
                     "fieldName": "task",
-                    "title": "Task",
-                    "type": "string",
-                    "displayAs": "string",
-                    "order": 1
+                    "displayName": "Task"
                   },
                   {
                     "fieldName": "check_name",
-                    "title": "Check",
-                    "type": "string",
-                    "displayAs": "string",
-                    "order": 2
+                    "displayName": "Check"
                   },
                   {
                     "fieldName": "table_name",
-                    "title": "Table",
-                    "type": "string",
-                    "displayAs": "string",
-                    "order": 3
+                    "displayName": "Table"
                   },
                   {
                     "fieldName": "found",
-                    "title": "What it found",
-                    "type": "string",
-                    "displayAs": "string",
-                    "order": 4
+                    "displayName": "What it found"
                   }
                 ]
               },
@@ -3993,25 +4011,22 @@
               }
             ],
             "spec": {
-              "version": 1,
+              "version": 2,
               "widgetType": "table",
               "encodings": {
                 "columns": [
                   {
                     "fieldName": "charged_on",
-                    "title": "Day",
-                    "type": "date",
-                    "displayAs": "datetime",
-                    "order": 0,
-                    "dateTimeFormat": "MMM D, YYYY"
+                    "displayName": "Day",
+                    "format": {
+                      "type": "date",
+                      "date": "locale-short-month"
+                    }
                   },
                   {
                     "fieldName": "spent_that_day",
-                    "title": "Spent that day, US$",
-                    "type": "number",
-                    "displayAs": "number",
-                    "order": 1,
-                    "numberFormat": {
+                    "displayName": "Spent that day, US$",
+                    "format": {
                       "type": "number-plain",
                       "abbreviation": "none",
                       "decimalPlaces": {
@@ -4023,11 +4038,8 @@
                   },
                   {
                     "fieldName": "spent_so_far",
-                    "title": "Spent so far, US$",
-                    "type": "number",
-                    "displayAs": "number",
-                    "order": 2,
-                    "numberFormat": {
+                    "displayName": "Spent so far, US$",
+                    "format": {
                       "type": "number-plain",
                       "abbreviation": "none",
                       "decimalPlaces": {
@@ -4081,31 +4093,22 @@
               }
             ],
             "spec": {
-              "version": 1,
+              "version": 2,
               "widgetType": "table",
               "encodings": {
                 "columns": [
                   {
                     "fieldName": "service",
-                    "title": "Service",
-                    "type": "string",
-                    "displayAs": "string",
-                    "order": 0
+                    "displayName": "Service"
                   },
                   {
                     "fieldName": "resource",
-                    "title": "Resource",
-                    "type": "string",
-                    "displayAs": "string",
-                    "order": 1
+                    "displayName": "Resource"
                   },
                   {
                     "fieldName": "spent",
-                    "title": "Spent, US$",
-                    "type": "number",
-                    "displayAs": "number",
-                    "order": 2,
-                    "numberFormat": {
+                    "displayName": "Spent, US$",
+                    "format": {
                       "type": "number-plain",
                       "abbreviation": "none",
                       "decimalPlaces": {
@@ -4179,38 +4182,47 @@
               }
             ],
             "spec": {
-              "version": 1,
+              "version": 2,
               "widgetType": "table",
               "encodings": {
                 "columns": [
                   {
                     "fieldName": "kind",
-                    "title": "Kind",
-                    "type": "string",
-                    "displayAs": "string",
-                    "order": 0
+                    "displayName": "Kind"
                   },
                   {
                     "fieldName": "removed",
-                    "title": "Removed",
-                    "type": "integer",
-                    "displayAs": "integer",
-                    "order": 1
+                    "displayName": "Removed",
+                    "format": {
+                      "type": "number-plain",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 0
+                      },
+                      "hideGroupSeparator": false
+                    }
                   },
                   {
                     "fieldName": "notices",
-                    "title": "From notices",
-                    "type": "integer",
-                    "displayAs": "integer",
-                    "order": 2
+                    "displayName": "From notices",
+                    "format": {
+                      "type": "number-plain",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 0
+                      },
+                      "hideGroupSeparator": false
+                    }
                   },
                   {
                     "fieldName": "last_removed",
-                    "title": "Last removed",
-                    "type": "date",
-                    "displayAs": "datetime",
-                    "order": 3,
-                    "dateTimeFormat": "MMM D, YYYY"
+                    "displayName": "Last removed",
+                    "format": {
+                      "type": "date",
+                      "date": "locale-short-month"
+                    }
                   }
                 ]
               },
@@ -4297,45 +4309,42 @@
               }
             ],
             "spec": {
-              "version": 1,
+              "version": 2,
               "widgetType": "table",
               "encodings": {
                 "columns": [
                   {
                     "fieldName": "day",
-                    "title": "Day",
-                    "type": "date",
-                    "displayAs": "datetime",
-                    "order": 0,
-                    "dateTimeFormat": "MMM D, YYYY"
+                    "displayName": "Day",
+                    "format": {
+                      "type": "date",
+                      "date": "locale-short-month"
+                    }
                   },
                   {
                     "fieldName": "person",
-                    "title": "Person",
-                    "type": "string",
-                    "displayAs": "string",
-                    "order": 1
+                    "displayName": "Person"
                   },
                   {
                     "fieldName": "through",
-                    "title": "Through",
-                    "type": "string",
-                    "displayAs": "string",
-                    "order": 2
+                    "displayName": "Through"
                   },
                   {
                     "fieldName": "table_read",
-                    "title": "Table read",
-                    "type": "string",
-                    "displayAs": "string",
-                    "order": 3
+                    "displayName": "Table read"
                   },
                   {
                     "fieldName": "queries",
-                    "title": "Queries",
-                    "type": "integer",
-                    "displayAs": "integer",
-                    "order": 4
+                    "displayName": "Queries",
+                    "format": {
+                      "type": "number-plain",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 0
+                      },
+                      "hideGroupSeparator": false
+                    }
                   }
                 ]
               },
@@ -4492,59 +4501,69 @@
               }
             ],
             "spec": {
-              "version": 1,
+              "version": 2,
               "widgetType": "table",
               "encodings": {
                 "columns": [
                   {
                     "fieldName": "run_id",
-                    "title": "Run ID",
-                    "type": "string",
-                    "displayAs": "string",
-                    "order": 0
+                    "displayName": "Run ID"
                   },
                   {
                     "fieldName": "asked",
-                    "title": "Asked, UTC",
-                    "type": "datetime",
-                    "displayAs": "datetime",
-                    "order": 1,
-                    "dateTimeFormat": "MMM D, YYYY HH:mm"
+                    "displayName": "Asked, UTC",
+                    "format": {
+                      "type": "date-time",
+                      "date": "locale-short-month",
+                      "time": "locale-hour-minute"
+                    }
                   },
                   {
                     "fieldName": "view",
-                    "title": "View",
-                    "type": "string",
-                    "displayAs": "string",
-                    "order": 2
+                    "displayName": "View"
                   },
                   {
                     "fieldName": "question",
-                    "title": "Question",
-                    "type": "string",
-                    "displayAs": "string",
-                    "order": 3
+                    "displayName": "Question"
                   },
                   {
                     "fieldName": "tool_calls",
-                    "title": "Tool calls",
-                    "type": "integer",
-                    "displayAs": "integer",
-                    "order": 4
+                    "displayName": "Tool calls",
+                    "format": {
+                      "type": "number-plain",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 0
+                      },
+                      "hideGroupSeparator": false
+                    }
                   },
                   {
                     "fieldName": "sentences_kept",
-                    "title": "Sentences kept",
-                    "type": "integer",
-                    "displayAs": "integer",
-                    "order": 5
+                    "displayName": "Sentences kept",
+                    "format": {
+                      "type": "number-plain",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 0
+                      },
+                      "hideGroupSeparator": false
+                    }
                   },
                   {
                     "fieldName": "sentences_removed",
-                    "title": "Sentences removed",
-                    "type": "integer",
-                    "displayAs": "integer",
-                    "order": 6
+                    "displayName": "Sentences removed",
+                    "format": {
+                      "type": "number-plain",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 0
+                      },
+                      "hideGroupSeparator": false
+                    }
                   }
                 ]
               },
@@ -4602,51 +4621,60 @@
               }
             ],
             "spec": {
-              "version": 1,
+              "version": 2,
               "widgetType": "table",
               "encodings": {
                 "columns": [
                   {
                     "fieldName": "call_order",
-                    "title": "Order",
-                    "type": "integer",
-                    "displayAs": "integer",
-                    "order": 0
+                    "displayName": "Order",
+                    "format": {
+                      "type": "number-plain",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 0
+                      },
+                      "hideGroupSeparator": false
+                    }
                   },
                   {
                     "fieldName": "tool",
-                    "title": "Tool",
-                    "type": "string",
-                    "displayAs": "string",
-                    "order": 1
+                    "displayName": "Tool"
                   },
                   {
                     "fieldName": "inputs",
-                    "title": "Inputs",
-                    "type": "string",
-                    "displayAs": "string",
-                    "order": 2
+                    "displayName": "Inputs"
                   },
                   {
                     "fieldName": "rows_returned",
-                    "title": "Rows returned",
-                    "type": "integer",
-                    "displayAs": "integer",
-                    "order": 3
+                    "displayName": "Rows returned",
+                    "format": {
+                      "type": "number-plain",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 0
+                      },
+                      "hideGroupSeparator": false
+                    }
                   },
                   {
                     "fieldName": "took_ms",
-                    "title": "Took, ms",
-                    "type": "integer",
-                    "displayAs": "integer",
-                    "order": 4
+                    "displayName": "Took, ms",
+                    "format": {
+                      "type": "number-plain",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 0
+                      },
+                      "hideGroupSeparator": false
+                    }
                   },
                   {
                     "fieldName": "evidence_ids",
-                    "title": "Evidence IDs",
-                    "type": "string",
-                    "displayAs": "string",
-                    "order": 5
+                    "displayName": "Evidence IDs"
                   }
                 ]
               },
@@ -4700,45 +4728,42 @@
               }
             ],
             "spec": {
-              "version": 1,
+              "version": 2,
               "widgetType": "table",
               "encodings": {
                 "columns": [
                   {
                     "fieldName": "call",
-                    "title": "Call",
-                    "type": "string",
-                    "displayAs": "string",
-                    "order": 0
+                    "displayName": "Call"
                   },
                   {
                     "fieldName": "table_name",
-                    "title": "Table or view",
-                    "type": "string",
-                    "displayAs": "string",
-                    "order": 1
+                    "displayName": "Table or view"
                   },
                   {
                     "fieldName": "version_read",
-                    "title": "Version read",
-                    "type": "integer",
-                    "displayAs": "integer",
-                    "order": 2
+                    "displayName": "Version read",
+                    "format": {
+                      "type": "number-plain",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 0
+                      },
+                      "hideGroupSeparator": false
+                    }
                   },
                   {
                     "fieldName": "written_by",
-                    "title": "Written by the nightly run of",
-                    "type": "date",
-                    "displayAs": "datetime",
-                    "order": 3,
-                    "dateTimeFormat": "MMM D, YYYY"
+                    "displayName": "Written by the nightly run of",
+                    "format": {
+                      "type": "date",
+                      "date": "locale-short-month"
+                    }
                   },
                   {
                     "fieldName": "sources",
-                    "title": "From source",
-                    "type": "string",
-                    "displayAs": "string",
-                    "order": 4
+                    "displayName": "From source"
                   }
                 ]
               },
@@ -4792,45 +4817,52 @@
               }
             ],
             "spec": {
-              "version": 1,
+              "version": 2,
               "widgetType": "table",
               "encodings": {
                 "columns": [
                   {
                     "fieldName": "asked",
-                    "title": "Asked, UTC",
-                    "type": "datetime",
-                    "displayAs": "datetime",
-                    "order": 0,
-                    "dateTimeFormat": "MMM D, YYYY HH:mm"
+                    "displayName": "Asked, UTC",
+                    "format": {
+                      "type": "date-time",
+                      "date": "locale-short-month",
+                      "time": "locale-hour-minute"
+                    }
                   },
                   {
                     "fieldName": "run_id",
-                    "title": "Run ID",
-                    "type": "string",
-                    "displayAs": "string",
-                    "order": 1
+                    "displayName": "Run ID"
                   },
                   {
                     "fieldName": "view",
-                    "title": "View",
-                    "type": "string",
-                    "displayAs": "string",
-                    "order": 2
+                    "displayName": "View"
                   },
                   {
                     "fieldName": "tool_calls",
-                    "title": "Tool calls",
-                    "type": "integer",
-                    "displayAs": "integer",
-                    "order": 3
+                    "displayName": "Tool calls",
+                    "format": {
+                      "type": "number-plain",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 0
+                      },
+                      "hideGroupSeparator": false
+                    }
                   },
                   {
                     "fieldName": "sentences_removed",
-                    "title": "Sentences removed",
-                    "type": "integer",
-                    "displayAs": "integer",
-                    "order": 4
+                    "displayName": "Sentences removed",
+                    "format": {
+                      "type": "number-plain",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 0
+                      },
+                      "hideGroupSeparator": false
+                    }
                   }
                 ]
               },
@@ -5304,30 +5336,21 @@
               }
             ],
             "spec": {
-              "version": 1,
+              "version": 2,
               "widgetType": "table",
               "encodings": {
                 "columns": [
                   {
                     "fieldName": "about",
-                    "title": "About",
-                    "type": "string",
-                    "displayAs": "string",
-                    "order": 0
+                    "displayName": "About"
                   },
                   {
                     "fieldName": "finding",
-                    "title": "Finding",
-                    "type": "string",
-                    "displayAs": "string",
-                    "order": 1
+                    "displayName": "Finding"
                   },
                   {
                     "fieldName": "measured",
-                    "title": "Measured",
-                    "type": "string",
-                    "displayAs": "string",
-                    "order": 2
+                    "displayName": "Measured"
                   }
                 ]
               },
@@ -5840,52 +5863,55 @@
               }
             ],
             "spec": {
-              "version": 1,
+              "version": 2,
               "widgetType": "table",
               "encodings": {
                 "columns": [
                   {
                     "fieldName": "run_on",
-                    "title": "Run",
-                    "type": "date",
-                    "displayAs": "datetime",
-                    "order": 0,
-                    "dateTimeFormat": "MMM D, YYYY"
+                    "displayName": "Run",
+                    "format": {
+                      "type": "date",
+                      "date": "locale-short-month"
+                    }
                   },
                   {
                     "fieldName": "kind",
-                    "title": "Kind",
-                    "type": "string",
-                    "displayAs": "string",
-                    "order": 1
+                    "displayName": "Kind"
                   },
                   {
                     "fieldName": "passed",
-                    "title": "Passed",
-                    "type": "integer",
-                    "displayAs": "integer",
-                    "order": 2
+                    "displayName": "Passed",
+                    "format": {
+                      "type": "number-plain",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 0
+                      },
+                      "hideGroupSeparator": false
+                    }
                   },
                   {
                     "fieldName": "questions",
-                    "title": "Questions",
-                    "type": "integer",
-                    "displayAs": "integer",
-                    "order": 3
+                    "displayName": "Questions",
+                    "format": {
+                      "type": "number-plain",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 0
+                      },
+                      "hideGroupSeparator": false
+                    }
                   },
                   {
                     "fieldName": "target",
-                    "title": "Target",
-                    "type": "string",
-                    "displayAs": "string",
-                    "order": 4
+                    "displayName": "Target"
                   },
                   {
                     "fieldName": "against",
-                    "title": "Against the target",
-                    "type": "string",
-                    "displayAs": "string",
-                    "order": 5
+                    "displayName": "Against the target"
                   }
                 ]
               },
@@ -5939,46 +5965,52 @@
               }
             ],
             "spec": {
-              "version": 1,
+              "version": 2,
               "widgetType": "table",
               "encodings": {
                 "columns": [
                   {
                     "fieldName": "run_on",
-                    "title": "Run",
-                    "type": "date",
-                    "displayAs": "datetime",
-                    "order": 0,
-                    "dateTimeFormat": "MMM D, YYYY"
+                    "displayName": "Run",
+                    "format": {
+                      "type": "date",
+                      "date": "locale-short-month"
+                    }
                   },
                   {
                     "fieldName": "evaluator",
-                    "title": "Evaluator",
-                    "type": "string",
-                    "displayAs": "string",
-                    "order": 1
+                    "displayName": "Evaluator"
                   },
                   {
                     "fieldName": "met",
-                    "title": "Met the threshold",
-                    "type": "integer",
-                    "displayAs": "integer",
-                    "order": 2
+                    "displayName": "Met the threshold",
+                    "format": {
+                      "type": "number-plain",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 0
+                      },
+                      "hideGroupSeparator": false
+                    }
                   },
                   {
                     "fieldName": "scored",
-                    "title": "Answers scored",
-                    "type": "integer",
-                    "displayAs": "integer",
-                    "order": 3
+                    "displayName": "Answers scored",
+                    "format": {
+                      "type": "number-plain",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 0
+                      },
+                      "hideGroupSeparator": false
+                    }
                   },
                   {
                     "fieldName": "mean_score",
-                    "title": "Mean score, 1–5",
-                    "type": "number",
-                    "displayAs": "number",
-                    "order": 4,
-                    "numberFormat": {
+                    "displayName": "Mean score, 1–5",
+                    "format": {
                       "type": "number-plain",
                       "abbreviation": "none",
                       "decimalPlaces": {
@@ -6188,37 +6220,34 @@
               }
             ],
             "spec": {
-              "version": 1,
+              "version": 2,
               "widgetType": "table",
               "encodings": {
                 "columns": [
                   {
                     "fieldName": "what",
-                    "title": "What",
-                    "type": "string",
-                    "displayAs": "string",
-                    "order": 0
+                    "displayName": "What"
                   },
                   {
                     "fieldName": "reason",
-                    "title": "Reason",
-                    "type": "string",
-                    "displayAs": "string",
-                    "order": 1
+                    "displayName": "Reason"
                   },
                   {
                     "fieldName": "count",
-                    "title": "Count",
-                    "type": "integer",
-                    "displayAs": "integer",
-                    "order": 2
+                    "displayName": "Count",
+                    "format": {
+                      "type": "number-plain",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 0
+                      },
+                      "hideGroupSeparator": false
+                    }
                   },
                   {
                     "fieldName": "out_of",
-                    "title": "Out of",
-                    "type": "string",
-                    "displayAs": "string",
-                    "order": 3
+                    "displayName": "Out of"
                   }
                 ]
               },
@@ -6297,58 +6326,37 @@
               }
             ],
             "spec": {
-              "version": 1,
+              "version": 2,
               "widgetType": "table",
               "encodings": {
                 "columns": [
                   {
                     "fieldName": "loop",
-                    "title": "Loop",
-                    "type": "string",
-                    "displayAs": "string",
-                    "order": 0
+                    "displayName": "Loop"
                   },
                   {
                     "fieldName": "indicator",
-                    "title": "Indicator",
-                    "type": "string",
-                    "displayAs": "string",
-                    "order": 1
+                    "displayName": "Indicator"
                   },
                   {
                     "fieldName": "kind",
-                    "title": "Kind",
-                    "type": "string",
-                    "displayAs": "string",
-                    "order": 2
+                    "displayName": "Kind"
                   },
                   {
                     "fieldName": "latest",
-                    "title": "Latest",
-                    "type": "string",
-                    "displayAs": "string",
-                    "order": 3
+                    "displayName": "Latest"
                   },
                   {
                     "fieldName": "target",
-                    "title": "Target",
-                    "type": "string",
-                    "displayAs": "string",
-                    "order": 4
+                    "displayName": "Target"
                   },
                   {
                     "fieldName": "against",
-                    "title": "Against the target",
-                    "type": "string",
-                    "displayAs": "string",
-                    "order": 5
+                    "displayName": "Against the target"
                   },
                   {
                     "fieldName": "measured",
-                    "title": "Measured",
-                    "type": "string",
-                    "displayAs": "string",
-                    "order": 6
+                    "displayName": "Measured"
                   }
                 ]
               },
@@ -6699,31 +6707,34 @@
               }
             ],
             "spec": {
-              "version": 1,
+              "version": 2,
               "widgetType": "table",
               "encodings": {
                 "columns": [
                   {
                     "fieldName": "decided_on",
-                    "title": "Decided",
-                    "type": "date",
-                    "displayAs": "datetime",
-                    "order": 0,
-                    "dateTimeFormat": "MMM D, YYYY"
+                    "displayName": "Decided",
+                    "format": {
+                      "type": "date",
+                      "date": "locale-short-month"
+                    }
                   },
                   {
                     "fieldName": "report",
-                    "title": "Report",
-                    "type": "string",
-                    "displayAs": "string",
-                    "order": 1
+                    "displayName": "Report"
                   },
                   {
                     "fieldName": "days_from_publication",
-                    "title": "Days from publication",
-                    "type": "integer",
-                    "displayAs": "integer",
-                    "order": 2
+                    "displayName": "Days from publication",
+                    "format": {
+                      "type": "number-plain",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 0
+                      },
+                      "hideGroupSeparator": false
+                    }
                   }
                 ]
               },
@@ -6777,45 +6788,60 @@
               }
             ],
             "spec": {
-              "version": 1,
+              "version": 2,
               "widgetType": "table",
               "encodings": {
                 "columns": [
                   {
                     "fieldName": "week_start",
-                    "title": "Week of",
-                    "type": "date",
-                    "displayAs": "datetime",
-                    "order": 0,
-                    "dateTimeFormat": "MMM D, YYYY"
+                    "displayName": "Week of",
+                    "format": {
+                      "type": "date",
+                      "date": "locale-short-month"
+                    }
                   },
                   {
                     "fieldName": "opened",
-                    "title": "Opened",
-                    "type": "integer",
-                    "displayAs": "integer",
-                    "order": 1
+                    "displayName": "Opened",
+                    "format": {
+                      "type": "number-plain",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 0
+                      },
+                      "hideGroupSeparator": false
+                    }
                   },
                   {
                     "fieldName": "wrong_passage",
-                    "title": "Wrong passage",
-                    "type": "integer",
-                    "displayAs": "integer",
-                    "order": 2
+                    "displayName": "Wrong passage",
+                    "format": {
+                      "type": "number-plain",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 0
+                      },
+                      "hideGroupSeparator": false
+                    }
                   },
                   {
                     "fieldName": "not_useful",
-                    "title": "Not useful",
-                    "type": "integer",
-                    "displayAs": "integer",
-                    "order": 3
+                    "displayName": "Not useful",
+                    "format": {
+                      "type": "number-plain",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 0
+                      },
+                      "hideGroupSeparator": false
+                    }
                   },
                   {
                     "fieldName": "wrong_per_100_cell",
-                    "title": "Wrong passage per 100",
-                    "type": "string",
-                    "displayAs": "string",
-                    "order": 4
+                    "displayName": "Wrong passage per 100"
                   }
                 ]
               },
@@ -6865,38 +6891,47 @@
               }
             ],
             "spec": {
-              "version": 1,
+              "version": 2,
               "widgetType": "table",
               "encodings": {
                 "columns": [
                   {
                     "fieldName": "month",
-                    "title": "Month",
-                    "type": "date",
-                    "displayAs": "datetime",
-                    "order": 0,
-                    "dateTimeFormat": "MMM D, YYYY"
+                    "displayName": "Month",
+                    "format": {
+                      "type": "date",
+                      "date": "locale-short-month"
+                    }
                   },
                   {
                     "fieldName": "finished",
-                    "title": "Finished",
-                    "type": "integer",
-                    "displayAs": "integer",
-                    "order": 1
+                    "displayName": "Finished",
+                    "format": {
+                      "type": "number-plain",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 0
+                      },
+                      "hideGroupSeparator": false
+                    }
                   },
                   {
                     "fieldName": "inside",
-                    "title": "Inside the range",
-                    "type": "integer",
-                    "displayAs": "integer",
-                    "order": 2
+                    "displayName": "Inside the range",
+                    "format": {
+                      "type": "number-plain",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 0
+                      },
+                      "hideGroupSeparator": false
+                    }
                   },
                   {
                     "fieldName": "coverage_cell",
-                    "title": "Coverage",
-                    "type": "string",
-                    "displayAs": "string",
-                    "order": 3
+                    "displayName": "Coverage"
                   }
                 ]
               },
@@ -6958,58 +6993,73 @@
               }
             ],
             "spec": {
-              "version": 1,
+              "version": 2,
               "widgetType": "table",
               "encodings": {
                 "columns": [
                   {
                     "fieldName": "release_name",
-                    "title": "Release",
-                    "type": "string",
-                    "displayAs": "string",
-                    "order": 0
+                    "displayName": "Release"
                   },
                   {
                     "fieldName": "projects",
-                    "title": "Projects",
-                    "type": "integer",
-                    "displayAs": "integer",
-                    "order": 1
+                    "displayName": "Projects",
+                    "format": {
+                      "type": "number-plain",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 0
+                      },
+                      "hideGroupSeparator": false
+                    }
                   },
                   {
                     "fieldName": "blamed",
-                    "title": "Blamed risks",
-                    "type": "integer",
-                    "displayAs": "integer",
-                    "order": 2
+                    "displayName": "Blamed risks",
+                    "format": {
+                      "type": "number-plain",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 0
+                      },
+                      "hideGroupSeparator": false
+                    }
                   },
                   {
                     "fieldName": "covered",
-                    "title": "Covered at approval",
-                    "type": "integer",
-                    "displayAs": "integer",
-                    "order": 3
+                    "displayName": "Covered at approval",
+                    "format": {
+                      "type": "number-plain",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 0
+                      },
+                      "hideGroupSeparator": false
+                    }
                   },
                   {
                     "fieldName": "shown_when_covered",
-                    "title": "Shown when covered",
-                    "type": "string",
-                    "displayAs": "string",
-                    "order": 4
+                    "displayName": "Shown when covered"
                   },
                   {
                     "fieldName": "hindsight_recall",
-                    "title": "Hindsight recall",
-                    "type": "string",
-                    "displayAs": "string",
-                    "order": 5
+                    "displayName": "Hindsight recall"
                   },
                   {
                     "fieldName": "checklist_caught",
-                    "title": "Checklist caught",
-                    "type": "integer",
-                    "displayAs": "integer",
-                    "order": 6
+                    "displayName": "Checklist caught",
+                    "format": {
+                      "type": "number-plain",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 0
+                      },
+                      "hideGroupSeparator": false
+                    }
                   }
                 ]
               },
@@ -7169,39 +7219,39 @@
               }
             ],
             "spec": {
-              "version": 1,
+              "version": 2,
               "widgetType": "table",
               "encodings": {
                 "columns": [
                   {
                     "fieldName": "run_on",
-                    "title": "Run",
-                    "type": "date",
-                    "displayAs": "datetime",
-                    "order": 0,
-                    "dateTimeFormat": "MMM D, YYYY"
+                    "displayName": "Run",
+                    "format": {
+                      "type": "date",
+                      "date": "locale-short-month"
+                    }
                   },
                   {
                     "fieldName": "query_set",
-                    "title": "Query set",
-                    "type": "string",
-                    "displayAs": "string",
-                    "order": 1
+                    "displayName": "Query set"
                   },
                   {
                     "fieldName": "queries",
-                    "title": "Queries",
-                    "type": "integer",
-                    "displayAs": "integer",
-                    "order": 2
+                    "displayName": "Queries",
+                    "format": {
+                      "type": "number-plain",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 0
+                      },
+                      "hideGroupSeparator": false
+                    }
                   },
                   {
                     "fieldName": "precision_at_10",
-                    "title": "Precision at 10",
-                    "type": "number",
-                    "displayAs": "number",
-                    "order": 3,
-                    "numberFormat": {
+                    "displayName": "Precision at 10",
+                    "format": {
                       "type": "number-plain",
                       "abbreviation": "none",
                       "decimalPlaces": {
@@ -7213,11 +7263,8 @@
                   },
                   {
                     "fieldName": "recall_at_20",
-                    "title": "Recall at 20",
-                    "type": "number",
-                    "displayAs": "number",
-                    "order": 4,
-                    "numberFormat": {
+                    "displayName": "Recall at 20",
+                    "format": {
                       "type": "number-plain",
                       "abbreviation": "none",
                       "decimalPlaces": {
@@ -7229,11 +7276,8 @@
                   },
                   {
                     "fieldName": "ndcg_at_10",
-                    "title": "nDCG at 10",
-                    "type": "number",
-                    "displayAs": "number",
-                    "order": 5,
-                    "numberFormat": {
+                    "displayName": "nDCG at 10",
+                    "format": {
                       "type": "number-plain",
                       "abbreviation": "none",
                       "decimalPlaces": {
@@ -7295,44 +7339,38 @@
               }
             ],
             "spec": {
-              "version": 1,
+              "version": 2,
               "widgetType": "table",
               "encodings": {
                 "columns": [
                   {
                     "fieldName": "plan_rows",
-                    "title": "Plan rows",
-                    "type": "string",
-                    "displayAs": "string",
-                    "order": 0
+                    "displayName": "Plan rows"
                   },
                   {
                     "fieldName": "countries",
-                    "title": "Countries",
-                    "type": "string",
-                    "displayAs": "string",
-                    "order": 1
+                    "displayName": "Countries"
                   },
                   {
                     "fieldName": "with_actual",
-                    "title": "Rows with an actual date",
-                    "type": "integer",
-                    "displayAs": "integer",
-                    "order": 2
+                    "displayName": "Rows with an actual date",
+                    "format": {
+                      "type": "number-plain",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 0
+                      },
+                      "hideGroupSeparator": false
+                    }
                   },
                   {
                     "fieldName": "median_days_cell",
-                    "title": "Median days from the plan",
-                    "type": "string",
-                    "displayAs": "string",
-                    "order": 3
+                    "displayName": "Median days from the plan"
                   },
                   {
                     "fieldName": "median_months_cell",
-                    "title": "Median months from notice to signing",
-                    "type": "string",
-                    "displayAs": "string",
-                    "order": 4
+                    "displayName": "Median months from notice to signing"
                   }
                 ]
               },
@@ -7576,52 +7614,82 @@
               }
             ],
             "spec": {
-              "version": 1,
+              "version": 2,
               "widgetType": "table",
               "encodings": {
                 "columns": [
                   {
                     "fieldName": "week_start",
-                    "title": "Week of",
-                    "type": "date",
-                    "displayAs": "datetime",
-                    "order": 0,
-                    "dateTimeFormat": "MMM D, YYYY"
+                    "displayName": "Week of",
+                    "format": {
+                      "type": "date",
+                      "date": "locale-short-month"
+                    }
                   },
                   {
                     "fieldName": "people",
-                    "title": "People",
-                    "type": "integer",
-                    "displayAs": "integer",
-                    "order": 1
+                    "displayName": "People",
+                    "format": {
+                      "type": "number-plain",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 0
+                      },
+                      "hideGroupSeparator": false
+                    }
                   },
                   {
                     "fieldName": "answers",
-                    "title": "Answers",
-                    "type": "integer",
-                    "displayAs": "integer",
-                    "order": 2
+                    "displayName": "Answers",
+                    "format": {
+                      "type": "number-plain",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 0
+                      },
+                      "hideGroupSeparator": false
+                    }
                   },
                   {
                     "fieldName": "started",
-                    "title": "Drafts started",
-                    "type": "integer",
-                    "displayAs": "integer",
-                    "order": 3
+                    "displayName": "Drafts started",
+                    "format": {
+                      "type": "number-plain",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 0
+                      },
+                      "hideGroupSeparator": false
+                    }
                   },
                   {
                     "fieldName": "checked",
-                    "title": "Checked by their author",
-                    "type": "integer",
-                    "displayAs": "integer",
-                    "order": 4
+                    "displayName": "Checked by their author",
+                    "format": {
+                      "type": "number-plain",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 0
+                      },
+                      "hideGroupSeparator": false
+                    }
                   },
                   {
                     "fieldName": "exported",
-                    "title": "Exported",
-                    "type": "integer",
-                    "displayAs": "integer",
-                    "order": 5
+                    "displayName": "Exported",
+                    "format": {
+                      "type": "number-plain",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 0
+                      },
+                      "hideGroupSeparator": false
+                    }
                   }
                 ]
               },
@@ -7671,38 +7739,47 @@
               }
             ],
             "spec": {
-              "version": 1,
+              "version": 2,
               "widgetType": "table",
               "encodings": {
                 "columns": [
                   {
                     "fieldName": "month",
-                    "title": "Month",
-                    "type": "date",
-                    "displayAs": "datetime",
-                    "order": 0,
-                    "dateTimeFormat": "MMM D, YYYY"
+                    "displayName": "Month",
+                    "format": {
+                      "type": "date",
+                      "date": "locale-short-month"
+                    }
                   },
                   {
                     "fieldName": "plan_rows",
-                    "title": "Plan rows",
-                    "type": "integer",
-                    "displayAs": "integer",
-                    "order": 1
+                    "displayName": "Plan rows",
+                    "format": {
+                      "type": "number-plain",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 0
+                      },
+                      "hideGroupSeparator": false
+                    }
                   },
                   {
                     "fieldName": "anchored",
-                    "title": "Dated within 14 days of a date I offered",
-                    "type": "integer",
-                    "displayAs": "integer",
-                    "order": 2
+                    "displayName": "Dated within 14 days of a date I offered",
+                    "format": {
+                      "type": "number-plain",
+                      "abbreviation": "none",
+                      "decimalPlaces": {
+                        "type": "max",
+                        "places": 0
+                      },
+                      "hideGroupSeparator": false
+                    }
                   },
                   {
                     "fieldName": "share",
-                    "title": "Share",
-                    "type": "string",
-                    "displayAs": "string",
-                    "order": 3
+                    "displayName": "Share"
                   }
                 ]
               },

@@ -89,6 +89,10 @@ class LiveApps:
     def put_secret(self, scope: str, key: str, value: str) -> None:
         self.w.secrets.put_secret(scope, key, string_value=value)
 
+    def secret_keys(self, scope: str) -> list[str]:
+        """The scope's secret names. The secrets API lists names and dates only, never a value."""
+        return [secret.key for secret in self.w.secrets.list_secrets(scope)]
+
     def app_state_database(self, instance: str) -> None:
         """Make the Lakebase instance that holds app state (ADR 0005), or start it if it is stopped."""
         from databricks.sdk.errors import NotFound
