@@ -2352,3 +2352,36 @@ After step 2's job run, on the SQL warehouse:
     SELECT finding FROM strata.ops.dashboard_findings WHERE section = 'queries' ORDER BY written_at DESC LIMIT 1
 
 It worked either way, and the answer is what this step records: the Governance page's "Who queried what" table fills and the sentence starts "In the 7 days to ...", or the sentence reads "I can't show who queried what, because this workspace doesn't let me read its query history." Write which one here.
+
+## Ticket 67, step 1 of 3: sync the orchestrator agent's new refusal lines to Foundry, with a --check run (criterion 2, live half)
+
+The merger parked this step on October 25, 2026, after merge commit 3b2b02e. Every key was set, but the header above holds workspace steps back during a merge. The orchestrator's notes for this wave also hold every workspace step until the second session reports that the warehouse's free daily limit of October 25 has lifted. The sync needs only Foundry, so it can run before the warehouse is back. It needs the keys that ticket 66's step 1 names for the sync, and `az` signed in. Ticket 67 changed the "What you turn down" section of `src/strata/agent/instructions/orchestrator.md`. It added a "Whole, too" example for a question about a live tender's named bidders, widened the `live_tenders` line to a tender not yet awarded after its bids close, and added a closing check that `partial: true` with no claims is never an answer. Ticket 66's step 1 made version 8 on October 26, 2026 (UTC), so this sync makes version 9, or a later one if another block's sync ran first.
+
+Run these from the main checkout, in this order:
+
+    uv run --script ops/agent/sync.py --env-file .env
+    uv run --script ops/agent/sync.py --env-file .env --check
+
+It worked if the first run's diff shows the new "Whole, too" bullet, the new `live_tenders` line and the "Check this last" line, and the run ends "I made version N of strata-orchestrator, which matches the repo." with N at 9 or later. The `--check` run must exit 0.
+
+## Ticket 67, step 2 of 3: optional, only while the passage index does not exist yet: a missing index no longer ends a run (criterion 1, live)
+
+The merger parked this step on October 25, 2026, after merge commit 3b2b02e, for the same reasons as step 1. Run it after step 1, and only if ticket 11's step 1 has not yet made `strata.gold.passage_index`. Once the index exists, skip it and go to step 3. It reads its tools on the SQL warehouse, so it waits for the daily limit to lift. It needs the keys of ticket 66's step 1 for the refusal check, and `az` signed in.
+
+Run this from the main checkout:
+
+    uv run --script ops/agent/refuse_live.py --env-file .env
+
+It worked if no question ends "refused with []" because of a 404 from `/api/2.0/vector-search/indexes/strata.gold.passage_index/query`, and there is no `EngineError` or `LookupError` traceback from search_passages. Each search instead logs one warning: "search_passages found no passages, because the passage index is not available yet: ...". Questions may still fail here for other reasons. The 11 of 11 result is step 3's.
+
+## Ticket 67, step 3 of 3: after ticket 11's index step, the must-refuse set through the live agent holds 11 of 11 (criterion 3, live)
+
+The merger parked this step on October 25, 2026, after merge commit 3b2b02e, for the same reasons as step 1. The builder's workspace steps did not reach the verifier, so the merger checked their order. Run these in this order:
+
+1. Step 1 above: the agent sync and its `--check` run.
+2. Ticket 11's index step. Ticket 11's step 1 makes and syncs the index: `uv run --script ops/documents/run_live.py --env-file .env`, paced as ticket 66's step 3 describes. Its last line must say the index `strata.gold.passage_index` "holds N of the N passages in strata.gold.passage and is ready". Ticket 11's step 4 has no command of its own; it reads step 1's output.
+3. The refusal check, from the main checkout:
+
+        uv run --script ops/agent/refuse_live.py --env-file .env
+
+It worked if the refusal check prints 11 lines that start "Holds." and exits 0, with no `EngineError` or `LookupError` traceback from search_passages, and no "A partial refusal must answer the rest of the question with claims". The line for refuse-live-tenders-criteria must read "Holds. refuse-live-tenders-criteria: refused with live_tenders.". This run also completes ticket 66's step 1, whose rerun waited for the index. If refuse-live-tenders-criteria fails again with the partial-refusal error, the review's follow-up F3 for ticket 67 (in `.notes/67-review.md`) gives the fix in `src/strata/agent/claims.py`.
