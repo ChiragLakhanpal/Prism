@@ -15,6 +15,7 @@ import pytest
 
 import lessons_page_story as story_of
 from strata.config import load_thresholds
+from strata.lakehouse import masks
 from strata.lakehouse.engine import DuckDBEngine
 
 ICR, ICR_REVIEW = "Implementation Completion and Results Report", "Implementation Completion Report Review"
@@ -306,6 +307,8 @@ def test_keeping_the_cited_version_needs_a_reason_and_stores_it_with_the_draft(s
     assert query_choices(story) == [{"action": "keep", "row_key": "cost_estimates", "draft_state": "draft",
                                      "reason": "The borrower's estimates already use current rates.",
                                      "actor_id": "4021@1984"}]
+    assert rows(story.state_db, masks.as_a_reader("SELECT reason FROM strata.ops.draft_lesson_choices")) == [
+        {"reason": None}]  # the author's reason is the draft's words, which only the app reads
     # The Lessons tab's notice now lists only the draft that still cites version 1 without a choice.
     [notice] = story.page().json()["notices"]
     assert [use["draft_id"] for use in notice["uses"]] == ["draft-0002"]
@@ -387,6 +390,10 @@ def test_updating_the_row_rewrites_it_from_the_new_version_and_a_checked_draft_g
     assert mitigation({"notes": draft["lesson_updated"][0]["earlier"]})[0]["text"] == (
         "Base the works cost estimates on market rates before the contracts go to bid.")
     assert [(row["action"], row["draft_state"]) for row in query_choices(story)] == [("update", "checked")]
+    # The rewritten row is the draft's words, so only the app reads it; a reader of strata.ops reads NULL there.
+    choices = "SELECT rewrite FROM strata.ops.draft_lesson_choices"
+    assert REWRITTEN in rows(story.state_db, choices)[0]["rewrite"]
+    assert rows(story.state_db, masks.as_a_reader(choices)) == [{"rewrite": None}]
     states = rows(story.state_db, "SELECT state FROM strata.ops.draft_states WHERE draft_id = 'draft-0002' "
                                   "ORDER BY step")
     assert [row["state"] for row in states] == ["draft", "checked", "draft"]

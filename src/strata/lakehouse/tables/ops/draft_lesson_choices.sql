@@ -13,9 +13,11 @@
 --                  kept the version the row cites, with a reason), remove, restore, or revert (an update undone)
 -- cited_version    the version the row cited when the author chose
 -- current_version  the lesson's newest version when the author chose
--- reason           the author's reason, for keep; empty otherwise
+-- reason           the author's reason, for keep; empty otherwise. Masked from every reader but the app and the
+--                  owner (strata.lakehouse.masks)
 -- rewrite          for update, the row's new notes as JSON: the sentences the verifier kept, the evidence they
---                  cite and the verifier's counts; empty otherwise
+--                  cite, the sentences it removed and its counts; empty otherwise. Masked from every reader but the
+--                  app and the owner (strata.lakehouse.masks)
 -- draft_state      the draft's state when the author chose: draft or checked
 -- actor_id         the user id of the author, as the Databricks App forwarded it
 -- actor_name       their name

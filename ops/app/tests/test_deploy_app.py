@@ -318,6 +318,9 @@ def test_after_its_grants_the_deploy_masks_who_sent_each_report_and_who_asked_ea
         "ALTER TABLE strata.ops.drafts ALTER COLUMN content SET MASK strata.ops.mask_viewer",
         "ALTER TABLE strata.ops.draft_exports ALTER COLUMN snapshot SET MASK strata.ops.mask_viewer",
         "ALTER TABLE strata.ops.draft_files ALTER COLUMN content SET MASK strata.ops.mask_viewer",
+        # Ticket 39: a draft's lesson choices keep the author's reason and the rewritten row, the draft's words too.
+        "ALTER TABLE strata.ops.draft_lesson_choices ALTER COLUMN reason SET MASK strata.ops.mask_viewer",
+        "ALTER TABLE strata.ops.draft_lesson_choices ALTER COLUMN rewrite SET MASK strata.ops.mask_viewer",
     ]
 
 
