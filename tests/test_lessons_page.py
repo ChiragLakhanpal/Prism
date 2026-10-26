@@ -163,6 +163,18 @@ def test_a_lesson_that_only_gained_a_quote_shows_only_in_the_digest_s_quiet_line
 
 # ── A lesson retired as wrong holds the export ───────────────────────────
 
+def test_every_draft_kind_that_can_cite_a_lesson_holds_its_export_on_one_retired_as_wrong():
+    """Criterion 3 for every kind in the registry, ticket 38's implementing agency PPSD rows among them. Planned dates
+    are the one kind without the hold: estimate_time dates each step, and no step cites a lesson."""
+    from strata.config import load_draft_kinds
+
+    kinds = load_draft_kinds().kinds
+
+    assert [key for key, kind in kinds.items() if "lessonRetiredWrong" not in kind.holds] == ["step_rows"]
+    # A kind whose rows the PPSD rows writer wrote names each row on the Lessons page's "Used in" line.
+    assert [key for key, kind in kinds.items() if kind.writer == "strata.drafts.ppsd_rows" and not kind.row_label] == []
+
+
 WRONG = "IEG's own review later said the permits were not the cause."
 
 

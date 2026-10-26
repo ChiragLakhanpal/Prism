@@ -151,12 +151,16 @@ word = "strata.drafts.ppsd_rows:word"
 export = "word"
 csv = []
 columns = ["risk_description", "mitigation", "risk_owner"]
-holds = ["notChecked", "owners", "ratings", "disagreements", "preview"]
+holds = ["notChecked", "owners", "ratings", "disagreements", "lessonRetiredWrong", "preview"]
 sources_list = true
 removed_box = "always"
 not_checked = ["writer_ppsd_rows"]
 files = "ppsd-rows-{package_slug}-{created_date}"
 agency_only = true
+# Ticket 39: its rows cite lessons at a version as ticket 36's do, so a lesson retired as wrong holds the export and
+# the Lessons page names the row. It has no rewrite_row yet, so a changed lesson offers Keep, and a retired one Remove
+# or Keep, until the agency's writer instructions learn to rewrite one row.
+row_label = "strata.drafts.ppsd_rows:row_label"
 
 [holds.notChecked]
 test = "strata.drafts.holds:not_checked"
