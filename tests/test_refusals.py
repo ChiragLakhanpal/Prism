@@ -105,10 +105,27 @@ def test_every_refusal_key_has_its_lead_instead_and_why_in_the_copy_file_and_no_
     assert [key for key, words in sentences.items() if set(words) != {"lead", "instead", "why"}] == []
 
 
-def test_the_orchestrator_s_instructions_name_every_refusal_key_and_no_other():
+def refusal_section() -> str:
     text = (ROOT / "src" / "strata" / "agent" / "instructions" / "orchestrator.md").read_text()
-    section = text.split("## What you turn down", 1)[1].split("\n## ", 1)[0]
-    assert re.findall(r"^- `(\w+)`", section, re.M) == list(REFUSALS)
+    return text.split("## What you turn down", 1)[1].split("\n## ", 1)[0]
+
+
+def test_the_orchestrator_s_instructions_name_every_refusal_key_and_no_other():
+    assert re.findall(r"^- `(\w+)`", refusal_section(), re.M) == list(REFUSALS)
+
+
+def test_the_orchestrator_s_instructions_say_when_a_refusal_is_whole_and_when_it_is_partial():
+    """The first live run of the must-refuse set (October 26, 2026) held 6 of 11: on questions that ask two things,
+    both refused, the version 7 agent chose a partial refusal, with no claims (which the answer contract rejects as
+    an answer it can't check) or with claims about the request. The instructions now say a refusal is whole when
+    every part of the question is refused, and partial only when another part can be answered with claims."""
+    section = " ".join(refusal_section().split())
+
+    assert "Whole: every part of the question is on this list, even when the question asks two or more things" in section
+    assert '{"claims": [], "refusal": {"key": "supplier_scores", "partial": false}}' in section
+    assert "Partial: one part of the question is on this list and another part is not" in section
+    assert "A partial refusal always has claims" in section
+    assert 'If you have no claim to write about the rest, the refusal is whole' in section
 
 
 def test_every_refusal_key_is_a_must_refuse_question_in_the_benchmark_file():
