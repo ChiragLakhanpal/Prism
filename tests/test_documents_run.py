@@ -158,6 +158,59 @@ def test_the_documents_run_writes_as_it_goes_skips_the_third_document_and_exits_
     assert column(fresh, "SELECT run_id FROM strata.ops.skipped_documents") == {"first", "second"}
 
 
+class Writes:
+    """The engine, noting each statement that adds, changes or removes rows of a table in silver or gold. On the SQL
+    warehouse each one costs a round trip of a second or more, so a rerun that rewrote every document it holds would
+    spend its reading time before it reached a new one."""
+
+    def __init__(self, engine):
+        self.engine, self.writes = engine, []  # each write's table, statement and document, when it names one
+
+    def run(self, sql, params=None):
+        words = sql.split()
+        if words and words[0].upper() in ("DELETE", "INSERT", "MERGE", "UPDATE"):
+            document = (params or {}).get("document_id", (params or {}).get("value"))
+            self.writes += [(word, sql, document) for word in words
+                            if word.startswith(("strata.silver.", "strata.gold."))][:1]
+        return self.engine.run(sql, params)
+
+    def insert_rows(self, table, columns, rows, **options):
+        if rows and table.startswith(("strata.silver.", "strata.gold.")):
+            at = columns.index("document_id") if "document_id" in columns else None
+            self.writes += [(table, "INSERT", row[at] if at is not None else None) for row in rows[:1]]
+        return self.engine.insert_rows(table, columns, rows, **options)
+
+    def __getattr__(self, name):
+        return getattr(self.engine, name)
+
+
+def test_a_rerun_writes_the_rows_of_only_the_documents_that_changed(fresh):
+    """Each document is written as soon as it is read, so a second run reads every document the first one wrote. When
+    silver and strata.gold.passage already hold exactly what it read, the run sends no statement that writes that
+    document's rows; it still writes what every run writes, the notices' passages and the ISR ratings. A document
+    whose rows differ, here one whose passage lost its page number and one that lost a passage from gold, is written
+    again and comes back as it was."""
+    documents = RecordedDocuments(fmt.load_manifest())
+    read_p130164(fresh, documents, "first")
+    kept = held(fresh)
+    [(changed, passage_id), (lost, gone)] = fresh.run(
+        "SELECT document_id, min(passage_id) AS passage_id FROM strata.gold.passage GROUP BY document_id "
+        "ORDER BY document_id LIMIT 2").rows
+    fresh.run("UPDATE strata.silver.passages SET pdf_page = -1 WHERE passage_id = :id", {"id": passage_id})
+    fresh.run("DELETE FROM strata.gold.passage WHERE passage_id = :id", {"id": gone})
+    writes = Writes(fresh)
+
+    read_p130164(writes, documents, "second")
+
+    documents_rows = ("strata.silver.documents", "strata.silver.document_page_routes", "strata.silver.passages",
+                      "strata.silver.passage_shields", "strata.silver.passage_embeddings", "strata.gold.passage")
+    # Every run takes the notices' passages out and reads them again (passages.prune and read_notices).
+    rewritten = {document for table, sql, document in writes.writes if table in documents_rows and ":notice" not in sql}
+    assert rewritten == {changed, lost}
+    assert {table for table, _, _ in writes.writes} <= {*documents_rows, "strata.silver.isr_ratings"}
+    assert held(fresh) == kept
+
+
 def test_a_project_whose_document_list_cannot_be_fetched_is_skipped_and_the_plan_reader_goes_on(fresh, caplog):
     """On October 26, 2026 search.worldbank.org answered 503 for P089634's document list and the run stopped. The
     fixture records no list for P089634, so its list cannot be fetched either: the plan reader skips the project

@@ -429,6 +429,69 @@ def write_document(engine: Engine, item: Read, shield: Shield, embedder: Embedde
     return scanned, embedded, gold.sync_where(engine, "passage", "document_id", listed.document_id)
 
 
+# What silver and strata.gold.passage hold of a project's documents, read once a project, so a run tells which
+# documents it read again are unchanged and writes none of their rows. Each document a run reads is written as soon
+# as it is read (ticket 72), so a rerun reads every document an earlier run wrote; rewriting each one costs about a
+# dozen statements on the SQL warehouse, a second or more each. A passage's header and text are compared through
+# its text_hash, which hashes both.
+COMPARED = ("document_id", *(column for column in PASSAGE_COLUMNS if column not in ("document_id", "header", "text")))
+HELD_ROWS = {
+    "documents": f"SELECT {', '.join(DOCUMENT_COLUMNS)} FROM strata.silver.documents "  # sql-lint: names only
+                 "WHERE project_id = :project_id",
+    "routes": f"SELECT {', '.join(ROUTE_COLUMNS)} FROM strata.silver.document_page_routes "  # sql-lint: names only
+              "WHERE project_id = :project_id",
+    "passages": f"SELECT {', '.join(COMPARED)} FROM strata.silver.passages "  # sql-lint: names only
+                "WHERE project_id = :project_id",
+    "indexed": "SELECT document_id, passage_id FROM strata.gold.passage WHERE project_id = :project_id",
+}
+
+
+def _as_text(value) -> str | None:
+    """A value as the SQL warehouse's JSON answer gives it, so a row DuckDB or Spark gives back, a row the warehouse
+    gives back and a row the run read compare equal when they hold the same values."""
+    if value is None:
+        return None
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    if isinstance(value, dt.date):
+        return value.isoformat()[:10]
+    return str(value)
+
+
+def _rows_of(rows) -> dict[str, list]:
+    """Rows by their first column, the document id, each row as text, sorted, so two sets of rows compare whole."""
+    found: dict[str, list] = {}
+    for row in rows:
+        found.setdefault(str(row[0]), []).append(tuple(_as_text(value) for value in row))
+    return {document_id: sorted(held, key=repr) for document_id, held in found.items()}
+
+
+@dataclass(frozen=True)
+class Written:
+    """A project's documents as silver and strata.gold.passage hold them, by document id."""
+
+    documents: dict[str, list]
+    routes: dict[str, list]
+    passages: dict[str, list]
+    indexed: dict[str, list]
+
+    @classmethod
+    def of(cls, engine: Engine, project_id: str) -> Written:
+        return cls(*(_rows_of(engine.run(sql, {"project_id": project_id}).rows) for sql in HELD_ROWS.values()))
+
+    def holds(self, item: Read) -> bool:
+        """Whether silver holds exactly the rows the run read for this document, and strata.gold.passage holds
+        every one of its passages."""
+        document_id = item.held.listed.document_id
+        passages = [astuple(row) for row in item.passages]
+        at = [PASSAGE_COLUMNS.index(column) for column in COMPARED]
+        return (self.documents.get(document_id) == _rows_of([item.document_row]).get(document_id)
+                and self.routes.get(document_id, []) == _rows_of(item.route_rows).get(document_id, [])
+                and self.passages.get(document_id, []) == _rows_of(
+                    [tuple(row[n] for n in at) for row in passages]).get(document_id, [])
+                and len(self.indexed.get(document_id, [])) == len(passages))
+
+
 @dataclass
 class Tally:
     """What a run has done so far, document by document. The caller can hold it, so it still has the counts when
@@ -473,6 +536,7 @@ def read_slice(engine: Engine, documents: Documents, endpoint: str, projects: li
             continue
         listed = listed_documents(engine, project_id)
         about = project(engine, project_id)
+        written = Written.of(engine, project_id)
         read_here: list[Listed] = []
         parsing: plans.Parsing | None = None
         try:
@@ -501,7 +565,9 @@ def read_slice(engine: Engine, documents: Documents, endpoint: str, projects: li
                         raise done.stop
                 tally.parsed += 1
                 item = read_document(engine, held, reading, max_tokens, part_pages, about, read_here)
-                scanned, embedded, synced = write_document(engine, item, shield, embedder, clock)
+                # A document an earlier run wrote and nothing about it changed: its rows are already there.
+                scanned, embedded, synced = (0, 0, 0) if written.holds(item) else write_document(
+                    engine, item, shield, embedder, clock)
                 tally.scanned, tally.embedded, tally.synced = (tally.scanned + scanned, tally.embedded + embedded,
                                                                tally.synced + synced)
                 if item.passages:
