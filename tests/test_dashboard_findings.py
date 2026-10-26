@@ -212,3 +212,81 @@ def test_a_section_that_fails_is_left_out_and_the_others_are_written(caplog):
     assert list(governance) == ["Nightly runs and checks", "Personal data", "Who queried what", "Lineage"]
     assert len(ai) == 7 and len(indicators) == 6
     assert "spend" in caplog.text
+
+
+# ── How a night ended, written once the night has ended ──────────────────
+
+def a_night(monkeypatch, failing_task=None):
+    """One night of the job through nightly.run_task, as each task of the job calls it, on an empty catalog: every
+    task's work is a stand-in, each task runs one check, measure_data_readiness's check finds three duplicate rows, and
+    failing_task's work raises. The tasks start three minutes apart from 03:00 in Washington on October 23."""
+    from strata.lakehouse import nightly, quality
+
+    def work(key):
+        def done(run):
+            if key == failing_task:
+                raise RuntimeError(f"{key} could not finish")
+            return 0
+        return done
+
+    def one_check(engine, task_key):
+        return [quality.Result("duplicates", "strata.gold.contract", None, 3 if task_key == "measure_data_readiness"
+                               else 0)]
+
+    for key in nightly.TASKS:
+        monkeypatch.setitem(nightly.TASKS, key, work(key))
+    monkeypatch.setattr(quality, "check", one_check)
+    engine = DuckDBEngine.open()
+    catalog.build(engine)
+    now = [dt.datetime(2026, 10, 23, 7, 0, tzinfo=dt.UTC)]
+    for key in nightly.TASKS:
+        try:
+            nightly.run_task(engine, key, "run-23", fetch=None, clock=lambda: now[0])
+        except RuntimeError:
+            break  # the job's next task depends on this one, so it never starts
+        now[0] += dt.timedelta(minutes=3)
+    return engine
+
+
+def test_a_night_that_stops_at_its_last_task_says_so_and_counts_every_check_the_counter_counts(monkeypatch):
+    """The Nightly runs and checks sentence is written once the night has ended, never by a task still under way, so
+    it names the task that stopped the run and counts the checks of every task that finished (verify round 2, F1)."""
+    engine = a_night(monkeypatch, failing_task="refresh_drafts")
+    try:
+        found, counter = said(engine, "governance"), rows(engine, "kpi_checks_failed")[0]
+    finally:
+        engine.close()
+
+    assert found["Nightly runs and checks"] == (
+        "The nightly run of October 23 stopped at the Mark drafts that cite a changed lesson task, after nine of 10 "
+        "tasks had finished. The tasks that finished ran nine quality checks, and eight passed.", "Oct 23, 2026")
+    assert counter["display"] == "1 of 9"
+
+
+def test_a_night_whose_tasks_all_finish_counts_the_checks_of_the_last_two_tasks_too(monkeypatch):
+    engine = a_night(monkeypatch)
+    try:
+        found, counter = said(engine, "governance"), rows(engine, "kpi_checks_failed")[0]
+    finally:
+        engine.close()
+
+    assert found["Nightly runs and checks"] == (
+        "The nightly run of October 23 finished all 10 tasks in 27 minutes. Of its 10 quality checks, nine passed. The "
+        "one that failed found three duplicate rows in strata.gold.contract.", "Oct 23, 2026")
+    assert counter["display"] == "1 of 10"
+
+
+def test_the_fixture_s_night_is_described_once_with_every_check_its_counter_counts(fixture_db):
+    """The fixture's own nightly run, with every real task: one Nightly runs and checks sentence, written after the last
+    task, and it counts the same checks as the counter beside it."""
+    with DuckDBEngine.open(fixture_db, read_only=True) as engine:
+        [run_id] = [row[0] for row in engine.run("SELECT DISTINCT run_id FROM strata.ops.pipeline_runs").rows]
+        written = engine.run("SELECT f.finding, f.written_at, (SELECT max(p.finished_at) FROM strata.ops.pipeline_runs "
+                             "AS p) AS last_task FROM strata.ops.dashboard_findings AS f WHERE f.section = 'runs' "
+                             "AND f.run_id = :run_id", {"run_id": run_id}).rows
+        counter = rows(engine, "kpi_checks_failed")[0]
+
+    [(finding, written_at, last_task)] = written
+    assert written_at >= last_task
+    assert counter["display"] == f"0 of {counter['denominator']}"
+    assert finding.endswith(f"and all {counter['denominator']} quality checks passed.")

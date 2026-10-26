@@ -55,7 +55,7 @@ def test_the_job_runs_its_tasks_one_after_another_in_plan_order():
 
     assert [task.key for task in tasks] == PLAN_ORDER
     assert [task.depends_on for task in tasks] == [()] + [(key,) for key in PLAN_ORDER[:-1]]
-    assert set(nightly.TASKS) == set(PLAN_ORDER)
+    assert list(nightly.TASKS) == PLAN_ORDER  # so nightly.LAST_TASK is the task that ends the night
 
 
 def no_pages(source, engine):

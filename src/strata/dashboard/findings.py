@@ -9,7 +9,8 @@ table and its sentence never disagree (CLAUDE.md rule 4), and it adds no number 
 template fits (CLAUDE.md rule 1). Each loop's indicators (tile 19) are written the same way.
 
 write() appends the rows to strata.ops.dashboard_findings and strata.ops.loop_indicators. The nightly job's
-measure_data_readiness task writes every section after its measures; the daily cost pull writes Azure spend.
+measure_data_readiness task writes every section after its measures but the ones in AFTER_THE_RUN, which the job
+writes once its night has ended (strata.lakehouse.nightly.run_task); the daily cost pull writes Azure spend.
 """
 
 from __future__ import annotations
@@ -495,6 +496,11 @@ SECTIONS: dict[str, tuple[str, str, Section]] = {
 }
 
 
+# The sections that describe the nightly run itself. A task still under way can't say how its own night ended, so
+# the job writes these after its last task, or after the task that stopped it, has recorded its row and checks.
+AFTER_THE_RUN = ("runs",)
+
+
 # ── Each loop's indicators (tile 19) ─────────────────────────────────────
 
 def indicators(engine: Engine, today: dt.date) -> list[tuple[str, str, str, str, dt.date | None]]:
@@ -584,12 +590,12 @@ def _now() -> dt.datetime:
 
 
 def write(engine: Engine, run_id: str, clock: Callable[[], dt.datetime] = _now,
-          sections: tuple[str, ...] | None = None) -> int:
-    """Write each section's sentence, and with every section each loop's indicators, as of today in UTC. Returns how
-    many rows it wrote."""
+          sections: tuple[str, ...] | None = None, leave_out: tuple[str, ...] = ()) -> int:
+    """Write each section's sentence, as of today in UTC: the sections named, or every section and each loop's
+    indicators, less the sections left out. Returns how many rows it wrote."""
     written_at = clock()
     today = written_at.astimezone(dt.UTC).date()
-    chosen = sections or tuple(SECTIONS)
+    chosen = [key for key in (sections or tuple(SECTIONS)) if key not in leave_out]
     rows = []
     for position_key, (page, about, section) in SECTIONS.items():
         if position_key not in chosen:
