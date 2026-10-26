@@ -2626,9 +2626,9 @@ The exit code does not decide it. On October 26 the same check, run with `--with
 
 ## Ticket 75, step 1 of 1: one `bronze_to_gold` pass reads every page bronze holds, and P130164 gets its sectors (criterion 3, live)
 
-Parked on October 26, 2026, by ticket 75's builder; the merger names the merge commit here. Every key is set, but the second session runs every workspace step from a snapshot of the commit, one at a time. It needs the Databricks keys in `.env`, the Databricks CLI 0.287.0 or later, and a time outside the nightly window (03:00 to 05:30 in Washington), because the first pass reads every page of every source once and takes longer than a usual night's `bronze_to_gold`.
+Parked on October 26, 2026, by ticket 75's builder; the merger parked it after merge commit 4c223032, so run it from a snapshot of 4c223032 or later. Every key is set, but the second session runs every workspace step from a snapshot of the commit, one at a time. It needs the Databricks keys in `.env`, the Databricks CLI 0.287.0 or later, and a time outside the nightly window (03:00 to 05:30 in Washington), because the first pass reads every page of every source once and takes longer than a usual night's `bronze_to_gold`.
 
-Ticket 75 adds `strata.ops.silver_pages` (`src/strata/lakehouse/tables/ops/silver_pages.sql`): what silver wrote from each bronze page, with the transform's tables and its `VERSION`. Silver now reads a page when it has no row there, or when its newest row names other tables or another version than the transform has. The table is empty after the deploy, so the next `bronze_to_gold` reads every page of every source once: one parse per page, and for each table a read, a DELETE with a WHERE when the table holds the page, and an insert. That pass fills `strata.silver.project_sectors` and `project_environment` from the 285 project pages bronze held before ticket 21's deploy, P130164's among them. If the nightly job runs before this step, its own `bronze_to_gold` makes the pass and the night runs longer than usual; record that run here instead.
+Ticket 75 adds `strata.ops.silver_pages` (`src/strata/lakehouse/tables/ops/silver_pages.sql`): what silver wrote from each bronze page, with the transform's tables and its `VERSION`. Silver now reads a page when it has no row there, or when its newest row names other tables or another version than the transform has. The table is empty after the deploy, so the next `bronze_to_gold` reads every page of every source once: one parse per page, and for each table a read, a DELETE with a WHERE when the table holds the page, and an insert. That pass fills `strata.silver.project_sectors` and `project_environment` from the 285 project pages bronze held before ticket 21's deploy, P130164's among them. If the nightly job runs before this step, its own `bronze_to_gold` makes the pass, which may reach the job's 150-minute stop; that night's later tasks then do not run, and the next night goes on from the pages it recorded. Record those runs here instead.
 
 Run this from the snapshot's root, twice:
 
@@ -2657,7 +2657,7 @@ If the CLI refuses `only`, run the whole job outside the window instead (`uv run
       count(s.page_hash) AS sector_rows, count(DISTINCT s.project_id) AS projects
     FROM strata.bronze.api_pages AS p
     LEFT JOIN strata.silver.project_sectors AS s ON s.page_hash = p.page_hash
-    WHERE p.source = 'projects' AND p.fetched_at < TIMESTAMP '2026-10-26 06:54:00'
+    WHERE p.source = 'projects' AND p.fetched_at < TIMESTAMP '2026-10-26 06:54:00Z'
 
 It worked if:
 
