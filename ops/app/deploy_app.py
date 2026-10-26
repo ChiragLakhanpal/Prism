@@ -38,8 +38,9 @@ It needs npm, which builds the web app. It does these things, in order:
    draft_fields_latest, SELECT on strata.ops.supplier_pairs, SELECT and MODIFY on
    strata.ops.supplier_review_decisions and strata.ops.supplier_pair_labels, and SELECT and MODIFY on
    ticket 29's lesson_review_acts, lesson_review_items, lesson_versions, lesson_sources and
-   lesson_review_notes, and ticket 32's candidate_labels, label_decisions, answer_citations,
-   retrieval_grades and retrieval_queries. Viewers read as themselves, through the bundle's grants,
+   lesson_review_notes, ticket 32's candidate_labels, label_decisions, answer_citations,
+   retrieval_grades and retrieval_queries, and ticket 41's start_here_choices, seeded_examples and
+   example_lesson_versions. Viewers read as themselves, through the bundle's grants,
    and no reviewer group may write the lesson review record or the retrieval loop's record outside
    the app.
 7. It masks the columns that say who sent each passage report and who asked each question
@@ -216,9 +217,13 @@ def grants(principal: str) -> list[str]:
     # uploads and upload_rows (ticket 38): an implementing agency team's uploads of its plan, kept as the app and
     # read only through its team rule. lesson_visits and draft_lesson_choices (ticket 39): each reader's visits to
     # Lessons, and what a draft's author chose for a row whose lesson changed, both kept as the app.
+    # start_here_choices, seeded_examples and example_lesson_versions (ticket 41): whether each viewer keeps Home's
+    # Start here strip, the examples the seed command set up for each viewer, and the example lesson versions only
+    # their viewer sees, all kept as the app.
     tables = ("usage_events", "agent_runs", "evidence_opened", "drafts", "draft_states", "draft_exports",
               "draft_files", "follows", "disagreement_choices", "draft_fields", "exposures", "uploads",
-              "upload_rows", "lesson_visits", "draft_lesson_choices")
+              "upload_rows", "lesson_visits", "draft_lesson_choices", "start_here_choices", "seeded_examples",
+              "example_lesson_versions")
     return [*[f"GRANT {privilege.replace('_', ' ')} ON {kind.upper()} {name} TO `{principal}`"
               for kind, name, privilege in ACCESS],
             *[f"GRANT SELECT, MODIFY ON TABLE strata.ops.{table} TO `{principal}`" for table in tables],

@@ -185,16 +185,10 @@ export const copy = {
   // come from the address and show in Roboto Mono. Each page's link goes where web/src/routes.ts
   // says; data has none, and the not-found pages have no card.
   pages: {
+    // Home (ticket 41) draws its own page from copy.home; this title names the browser tab.
     home: {
       title: "Your briefing",
-      purpose:
-        "This page lists what changed in the plans and projects you work on, and the drafts waiting for you to " +
-        "check. It comes from fixed checks on public records, and no model writes it.",
-      emptyTitle: "I have nothing to brief you on yet.",
-      emptyBody:
-        "When my fixed checks find a change in a plan or project you work on, I list it here, with the drafts " +
-        "waiting for you.",
-      link: "Go to Data",
+      purpose: "",
     },
     // The Packages tab has its own words below (the 15 brief, packagesTab); this title names the browser tab.
     packages: {
@@ -420,14 +414,6 @@ export const copy = {
     // The reason the server gives, and the held control shows, for an act whose screen no preview shows.
     actPreview: "This is a preview, so I don't record anything you do here.",
     // Home in the public view, until ticket 41 builds each view's Home (the 40 brief, 3.9 and 6.5).
-    publicHome: {
-      title: "Start from a project",
-      purpose: "I link each World Bank-financed project to its Procurement Plans, contracts and evaluations, and I cite every claim to its source.",
-      cardTitle: "I show the public projects, lessons and data.",
-      cardBody:
-        "Find a project by its name, project ID or country. For a closed project, I show each contract from its notice to its signing, with the reports that discussed it.",
-      link: "Go to Projects",
-    },
   },
 
   // The navy bar (DESIGN.md section 5, Top navigation). Nouns navigate.
@@ -8429,6 +8415,261 @@ export const copy = {
 
   // Words for numbers (DESIGN.md section 7, rules 6, 11, 12 and 15). web/src/lib/format.ts
   // decides which one a number gets.
+  // Home (ticket 41; the 41 design brief, section 5): the briefing heading, the Start here strip, "Worth knowing" and
+  // "Waiting for you". The server writes the briefing's sentences and each line from home.server, which
+  // node web/lint/server-copy.ts --write copies to src/strata/server/home_copy.json, so the browser counts nothing,
+  // compares no dates and picks no count word.
+  home: {
+    // The date line opens the h1 (5.1); the browser writes the date from the server's ISO date.
+    dateLine: (date: string) => `Your briefing for ${date}`,
+    dateLineAsOf: (date: string) => `Your briefing as of ${date}`,
+    // Read between the date line and the briefing by a screen reader, which hears the h1 as one heading.
+    dateLineEnd: ". ",
+    publicTitle: "Home",
+    loading: "Loading your briefing.",
+    error: "I couldn't load your briefing because the data service didn't answer.",
+    errorReference: (reference: string) => `If it fails again, send the data team this reference: ${reference}.`,
+    permission:
+      "Your account can't read Strata's tables, so I can't show your briefing. Ask your workspace admin for read " +
+      "access to the strata catalog.",
+    tryAgain: "Try again",
+    // The Start here strip (5.5) and what follows Remove (5.6). The caption and button keep the ticket's words.
+    start: {
+      title: "Start here",
+      caption: "Examples Strata set up for you",
+      remove: "Remove",
+      removeName: "Remove the Start here examples",
+      removing: "Removing",
+      removed: "You removed the examples Strata set up.",
+      showAgain: "Show the examples again",
+      showing: "Showing",
+      removeFailed: "I couldn't remove the examples just now. They are still here.",
+      restoreFailed: "I couldn't show the examples again just now. Try again in a moment.",
+      // The sentence the server's refusal names in a preview (the roles file's start_here capability).
+      preview: "A preview shows Home as that view would, so it keeps your examples as they are.",
+      // Each link's words, by its key in config/examples.toml, in the ticket's order. {pid} is the project the link
+      // opens, from the slice file.
+      links: {
+        checkPlan: "Check a published plan ({pid})",
+        planPackage: "Plan a package from a sentence",
+        wholeStory: "See a project's whole story ({pid})",
+        lessonChange: "See a lesson change",
+        checkData: "Check the data",
+        publicView: "See the public view",
+      } as Record<string, string>,
+    },
+    worth: {
+      title: "Worth knowing · fixed checks, no model",
+      sourceLead: "Source:",
+      source: (through: string, checked: string) =>
+        `Procurement Plans, project records and ISRs from World Bank APIs, through ${through}, and my lesson library. ` +
+        `I ran these checks on ${checked}.`,
+      sourceAgency: (through: string, checked: string) =>
+        `Your team's published Procurement Plans and project records from World Bank APIs, through ${through}. I ran ` +
+        `these checks on ${checked}.`,
+      // The action at the right of each line (5.3), with hidden text that tells the links apart.
+      actions: {
+        openActivity: "Open the activity",
+        seeChange: "See what changed",
+        openProject: "Open the project",
+        seeTimeline: "See the timeline",
+      } as Record<string, string>,
+      // The source each line's marker opens, as its name reads it.
+      sources: {
+        plan: (date: string) => `Plan of ${date}`,
+        lesson: (version: string) => `Lesson, version ${version}`,
+        retired: "Retired lesson",
+        record: "Project record",
+        loanHistory: "Loan history",
+        isr: (date: string) => `ISR of ${date}`,
+        disbursement: (date: string) => `Disbursement of ${date}`,
+      },
+      fold: (count: string) => `I folded ${count} more lines here.`,
+      foldOne: "I folded one more line here.",
+      show: "Show them",
+      hide: "Hide them",
+      showOne: "Show it",
+      hideOne: "Hide it",
+      // The empty states (5.7).
+      firstRunTitle: "I brief you on the projects you follow.",
+      firstRunBody: "Follow a project from its page, and each day I list its changed plans and new signals here.",
+      firstRunLink: "Go to All projects",
+      quiet: (window: string) =>
+        `No plan changed and no new signal came up in the past ${window} days for the projects you follow.`,
+      quietAsOf: (window: string, date: string) =>
+        `No plan changed and no new signal came up in the ${window} days to ${date} for the projects you follow.`,
+      quietLink: "Open Following",
+      agencyNothing: "No activity in your team's latest plan is behind its planned dates.",
+      agencyCheck: "Check my plan before you submit an update",
+    },
+    waiting: {
+      title: "Waiting for you",
+      toDrafts: "Go to Drafts",
+      more: (count: string) => `See all ${count} drafts to check`,
+      empty:
+        "No draft is waiting for you to check. When you check a plan or plan a package, I can draft review notes or " +
+        "suggested rows for the borrower's PPSD for you to check.",
+      emptyAgency:
+        "No draft is waiting for you to check. When you check your plan, I can draft planned dates or risk rows for " +
+        "your PPSD for you to check.",
+      emptyLink: "Go to Packages",
+      preview: "In a preview I don't show an implementing agency's drafts, because they stay with the team that made them.",
+      asOf: "I show drafts only as they are today, so I leave them out of a briefing for a past date.",
+    },
+    // A seeded item (5.12): the Tag, and the sentence that takes the place of "Drafted by you on {date}."
+    example: "Example",
+    exampleSetUp: (date: string) => `I set it up as an example on ${date}.`,
+    // The Example note on a seeded item's own page, and the follow control's sentence for a seeded follow (5.12).
+    exampleNotes: {
+      review_notes: (date: string) =>
+        `I set up these review notes as an example on ${date}, from real records. You can check, export or discard ` +
+        `them like any draft.`,
+      ppsd_rows: (date: string) =>
+        `I set up these rows as an example on ${date}, from real records, and chose their risks myself. The risk ` +
+        `owners are yours to set.`,
+      draft: (date: string) =>
+        `I set up this draft as an example on ${date}, from real records. You can check, export or discard it like ` +
+        `any draft.`,
+      package: (date: string) =>
+        `I planned this package from an example sentence on ${date}. Its comparable packages are real records.`,
+    },
+    exampleFollowed: "I followed this project for you as an example.",
+    // An example lesson change's decided line, on Lessons and in its two-versions view (the 41 brief, 5.12).
+    exampleDecided: (version: string) =>
+      `I made this change as an example, so you can see how a changed lesson reaches your draft. No lead procurement ` +
+      `specialist decided it, and the library still shows version ${version}.`,
+    publicView: {
+      title: "Closed projects · contracts traced from public records",
+      action: "See its contracts",
+      source: (through: string) => `Project records, notices and contract awards from World Bank APIs, through ${through}.`,
+      more: "Find more projects",
+      empty: "I don't hold records for a closed project yet.",
+    },
+    // The briefing's count words open a window that lists what they count (5.2).
+    popovers: {
+      plans: (start: string, end: string) => `Plans disclosed from ${start} to ${end}`,
+      planItem: "{agency}, Procurement Plan of {date}, for the {project} ({pid}). Disclosed {disclosed}.",
+      plansNote: (window: string, through: string) =>
+        `I count a plan when it was disclosed in the ${window} days up to ${through}, the date of my latest data.`,
+      look: "Activities that need a look",
+      watch: "Activities worth watching",
+      projects: "Projects with a new signal",
+      lessonsChanged: "Lessons that changed",
+      lessonsRetired: "Lessons that were retired",
+      drafts: "Drafts waiting for you to check",
+      behind: "Activities behind their planned dates",
+    },
+    // The server's sentences (src/strata/server/home.py). {count} is a count word the server chose, from num.words.
+    server: {
+      window: "the past {window} days",
+      windowAsOf: "the {window} days to {date}",
+      plans: {
+        one: "{count} plan changed in {window}.",
+        many: "{count} plans changed in {window}.",
+        none: "No plan changed in {window}.",
+      },
+      activities: {
+        lookAndWatch: "{look} of {its} activities {needs} a look and {watch} {is} worth watching.",
+        lookOnly: "{look} of {its} activities {needs} a look.",
+        watchOnly: "{watch} of {its} activities {is} worth watching.",
+        none: "None of {its} activities needs a look or is worth watching.",
+        its: { one: "its", many: "their" },
+        needs: { one: "needs", many: "need" },
+        is: { one: "is", many: "are" },
+      },
+      projects: {
+        one: "{count} project you follow has a new signal.",
+        many: "{count} projects you follow have new signals.",
+      },
+      lessonsChanged: {
+        one: "{count} lesson cited in your drafts changed.",
+        many: "{count} lessons cited in your drafts changed.",
+      },
+      lessonsRetired: {
+        one: "{count} lesson cited in your drafts was retired.",
+        many: "{count} lessons cited in your drafts were retired.",
+      },
+      drafts: {
+        one: "{count} draft is waiting for you to check.",
+        many: "{count} drafts are waiting for you to check.",
+        none: "No draft is waiting for you to check.",
+      },
+      quiet: {
+        one: "Nothing changed in the plans of the one project you follow in {window}.",
+        many: "Nothing changed in the plans of the {count} projects you follow in {window}.",
+      },
+      firstRun: "You don't follow any projects yet, so I have no plans to brief you on.",
+      agency: {
+        plan: "I checked your team's latest Procurement Plan, the plan of {date} for the {project} ({pid}).",
+        plans: "I checked your team's latest Procurement Plans for {count} projects.",
+        behind: {
+          one: "{count} of {its} activities is behind its planned dates.",
+          many: "{count} of {its} activities are behind their planned dates.",
+          none: "None of {its} activities is behind its planned dates.",
+        },
+        noPlan: "I don't hold a published Procurement Plan from your team yet.",
+      },
+      public:
+        "I hold records for {total} World Bank-financed projects. Search for one by name, project ID or country in " +
+        "the search box, or start from one of the {count} that closed most recently.",
+      publicNone: "I hold records for {total} World Bank-financed projects. Search for one by name, project ID or country in the search box.",
+      line: {
+        intro: "{ref}, US${millions} million of {category} in the {project} ({pid}),",
+        introFull: "{ref}, US${amount} of {category} in the {project} ({pid}),",
+        introNoEstimate: "{ref}, {category} with no estimate in the {project} ({pid}),",
+        same: "In the same plan, {ref}",
+        own: "{ref}",
+        completion_passed_no_contract: " passed its planned completion date of {date} with no signed contract in the plan.",
+        closes: " The project closes {date}.",
+        closed: " The project closed on {date}.",
+        signed_over_estimate: " was signed at US${actual} against an estimate of US${estimated}.",
+        // The ticket's line, as the wireframe writes it: the days late are on the activity's page and in the plan check.
+        signed_late_over_estimate: " was signed at US${actual} against an estimate of US${estimated}.",
+        pending_near_closing: {
+          one: " is still pending in the plan, {days} day before the project closes on {date}.",
+          many: " is still pending in the plan, {days} days before the project closes on {date}.",
+        },
+        pending_on_closing_day: " is still pending in the plan on the day the project closes.",
+        pending_after_closing: " is still pending in the plan, though the project closed on {date}.",
+        // STEP's procurement category, as a sentence names it.
+        categories: {
+          WORKS: "works",
+          GOODS: "goods",
+          "CONSULTING FIRMS": "consulting services",
+          "INDIVIDUAL CONSULTANTS": "consulting services",
+          "NON CONSULTING SERVICES": "non-consulting services",
+        } as Record<string, string>,
+        categoryOther: "an activity",
+        closing_moves: "The closing date of the {project} ({pid}) moved again on {date}. It has moved {count} times since {year}.",
+        restructured: "The {project} ({pid}) was restructured on {date}.",
+        isr_lowered: "The ISR of {date} for the {project} ({pid}) rated its progress lower than the ISR before it.",
+        disbursement:
+          "By {date}, {percent} percent of the US${millions} million available to the {project} ({pid}) was disbursed, " +
+          "with {months} months left before closing.",
+        lesson: {
+          narrowed: "The lesson \"{statement}\" changed on {date}. {cites} version {version}.",
+          retired_wrong:
+            "A lead procurement specialist retired the lesson \"{statement}\" as wrong on {date}. {cites} it, and you " +
+            "can't export {drafts} until you choose what to do with the row.",
+          retired_outdated: "The lesson \"{statement}\" was retired as out of date on {date}. {cites} it.",
+          thatDraft: "that draft",
+          thoseDrafts: "those drafts",
+          several: "{count} of your drafts cite",
+        },
+        // Which of your drafts cite a lesson, by the draft's kind (the 41 brief, section 5.3).
+        cites: {
+          review_notes: "Your review notes on the {agency} plan of {date} cite",
+          ppsd_rows: "Your suggested PPSD risk rows for {package} cite",
+          mission_brief: "Your mission brief for the {project} cites",
+          project_paper: "Your Project Paper summary for the {agency} plan of {date} cites",
+          step_rows: "Your planned dates for the plan of {date} cite",
+          ppsd_rows_agency: "Your risk rows for your PPSD, {package}, cite",
+        } as Record<string, string>,
+        public: "The {project} ({pid}) in {country} closed on {date}. I traced {traced} of its {contracts} contracts from notice to signature.",
+      },
+    },
+  },
+
   num: {
     words: ["one", "two", "three", "four", "five", "six", "seven", "eight", "nine"],
     of: (part: string, whole: string) => `${part} of ${whole}`,

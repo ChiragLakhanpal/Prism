@@ -20,6 +20,7 @@ import { Alert } from "../components/Alert";
 import { Breadcrumb } from "../components/Breadcrumb";
 import { Button } from "../components/Button";
 import { EmptyState } from "../components/Card";
+import { ExampleNote } from "../components/ExampleNote";
 import { EditorBody, EditorSheet } from "../components/ChipEditor";
 import { CardTop, ChipGroups, ChipSkeletons, ComputedNote, CriterionChip, RefusalAlert, ruleSentence, valueText } from "../components/Criteria";
 import { Fill } from "../components/Fill";
@@ -847,6 +848,7 @@ function Workspace({ initial, preview, focusHeading }: { initial: PlannedPage; p
             }
           />
         </div>
+        {initial.example && <ExampleNote className="mt-4">{copy.home.exampleNotes.package(formatDate(pkg.created_at))}</ExampleNote>}
         <p className="mt-4 max-w-prose text-body text-ink-muted">{words.purpose}</p>
         <section aria-labelledby="what-i-understood" className="mt-6 rounded-md border border-line bg-surface p-4 @md/page:p-6" data-criteria-card>
           <CardTop sentence={pkg.sentence} guesses={pkg.guesses} headingId="what-i-understood" preview={preview} />

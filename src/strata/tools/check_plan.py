@@ -27,7 +27,8 @@ none, so the screen never counts rows itself.
 
 Every number a reason states is a value here, at its rounding: days are whole numbers, amounts
 are text with two decimals, and the ratio is given exactly to two decimals and as the whole
-number "about" rounds it to. The screen and the agent never compute them. Each reason's code and
+number "about" rounds it to. Each row also gives its estimate in US$ millions to two decimals
+(estimated_millions), which Home's briefing line writes (ticket 41). The screen and the agent never compute them. Each reason's code and
 each abstention's reason is listed in the registry's [tools.check_plan.result], and the registry
 refuses one it does not list.
 
@@ -108,6 +109,19 @@ def _iso(value: dt.date | None) -> str | None:
 
 def _text(value: Decimal | None) -> str | None:
     return None if value is None else str(value)
+
+
+MILLION = Decimal(1_000_000)
+
+
+def millions(value: Decimal | None) -> str | None:
+    """An amount in US$ millions to two decimals, with trailing zeros dropped, as Home's sentence writes it (ticket
+    41): 1230000.00 is "1.23", 2000000.00 is "2" and 300000.00 is "0.3"."""
+    if value is None:
+        return None
+    rounded = (value / MILLION).quantize(CENTS, ROUND_HALF_UP)
+    text = format(rounded.normalize(), "f")
+    return text if text != "-0" else "0"
 
 
 def _rows(call: Call, name: str, **params) -> list[dict]:
@@ -391,6 +405,7 @@ def _row(activity: dict, evidence_id: str, plan: dict, marks: list[dict]) -> dic
         **{key: activity[key] for key in ("activity_reference_no", "section", "description", "review_type",
                                           "method", "market_approach")},
         "estimated_amount_usd": _text(estimated),
+        "estimated_millions": millions(estimated),
         "actual_amount_usd": _text(actual),
         "process_status": activity["process_status"],
         **{key: _iso(activity[key]) for key in ("signed_on", "planned_signing_on", "planned_signing_plan_date")},

@@ -29,6 +29,7 @@ import { languageName, workingLanguage, type WorkingLanguage } from "./lib/lang"
 import { draftScope } from "./lib/drafts";
 import { FOLLOWING_HREF, staffRole } from "./lib/following";
 import { officerAgency } from "./lib/uploads";
+import { startHereVisible } from "./lib/home";
 import { drawerClosed, evidenceIn, origin, routeOf, visited } from "./lib/evidence";
 import { readStamp, retryStamp, stamp, type Problem } from "./lib/freshness";
 import { formatDate } from "./lib/format";
@@ -67,6 +68,8 @@ async function readViewer(search: string = window.location.search) {
     staffRole.set(Boolean(me.staff));
     officerAgency.set(me.agency ?? null);
     workingLanguage.set(me.language ?? null);
+    // Whether Home shows its Start here strip (ticket 41), so Home keeps its room while it loads.
+    startHereVisible.set(Boolean(me.start_here_visible));
     appliedView.set(me.applied && me.preview_agency ? ({
       own: me.own_view ?? "staff", views: me.views ?? [], applied: me.applied, preview_agency: me.preview_agency,
       tabs: me.tabs ?? [], hidden: me.hidden ?? [], capabilities: me.capabilities ?? [], reasons: me.reasons ?? {},
@@ -252,8 +255,8 @@ export function App() {
 
   // A page with sub-pages, such as the Data tab's, names the sub-page in the browser tab.
   // A page that knows a more specific title once its data loads, such as a draft, sets it (lib/title.ts).
-  // The public view's Home has its own title until ticket 41 (ticket 40).
-  const words: { title: string; documentTitle?: string } = match.key === "home" && preview === "public" ? copy.view.publicHome : copy.pages[match.key];
+  // The public view's Home is titled Home: "Your briefing" is about plans and drafts, which it does not have (ticket 41).
+  const words: { title: string; documentTitle?: string } = match.key === "home" && preview === "public" ? { title: copy.home.publicTitle } : copy.pages[match.key];
   const ownTitle = useStore(pageTitle);
   const title = ownTitle && ownTitle.path === here.pathname ? ownTitle.title : fill(words.documentTitle ?? words.title, match.values);
   // In a preview or as of a date, the browser tab names the mode too (the 40 brief, 6.2).
@@ -462,7 +465,7 @@ export function App() {
         <div className="col-span-12">
           {/* A project's tabs share one page, so its header and tab row stay in place between them. */}
           {/* A new view or date is a new page: every read on it carries them (ticket 40). */}
-          <RoutePage key={`${match.frame ?? here.pathname}|${preview ?? ""}|${asOf ?? ""}`} match={match} search={here.search} hiddenIn={hiddenIn} pending={pending} publicView={preview === "public"} />
+          <RoutePage key={`${match.frame ?? here.pathname}|${preview ?? ""}|${asOf ?? ""}`} match={match} search={here.search} hiddenIn={hiddenIn} pending={pending} />
         </div>
       </div>
     </Frame>

@@ -50,6 +50,9 @@
 #             passage reviewer who reviews no lessons may leave it empty.
 #   projects  the projects they work on, by project ID. They never recommend or decide on a lesson
 #             from one of these (recusal, docs/PLAN.md section 11).
+#   user_id   optional: the user id the Databricks App forwards for them (X-Forwarded-User). The seed command
+#             (python -m strata.seed_examples, ticket 41) sets the examples up under it for each person in the
+#             reviewing panel's group, so a panel member needs one.
 #
 # Lesson governance (docs/PLAN.md section 11): an accredited procurement specialist recommends, and a
 # lead procurement specialist decides, by delegation from the region's accredited practice manager.
@@ -102,6 +105,15 @@ acts = []
 workspace_group = "strata-query-judges"
 role = "query judge"
 pages = ["judging"]
+acts = []
+
+# The reviewing panel (ticket 41; the blueprint's "The first 60 seconds"): the people the seed command sets Home's
+# examples up for (config/examples.toml names this group). Its members open no reviewer page. The panel is named
+# when the owner names its people (a parked decision), each with their user_id.
+[groups.reviewing_panel]
+workspace_group = "strata-reviewing-panel"
+role = "reviewing panel member"
+pages = []
 acts = []
 
 # The estimates loop (ticket 44; docs/PLAN.md section 11): its owner is the model owner, co-signed by the lead. A
@@ -225,6 +237,9 @@ mark_checked = { kind = "check", staff = true, piu = true, public = false, reaso
 upload_and_check = { kind = "check", staff = false, piu = true, public = false, private = true, reason = "upload.holdPreview" }
 compare_criteria = { kind = "check", staff = true, piu = true, public = false, reason = "criteria.preview" }
 export_draft = { kind = "export", staff = true, piu = true, public = false, reason = "draft.bar.hold.preview" }
+# Removing Home's Start here strip, or showing it again (ticket 41): a choice about the signed-in reviewer's own examples,
+# which no preview shows.
+start_here = { kind = "record", staff = true, piu = false, public = false, reason = "home.start.preview" }
 
 [views.routes]
 "POST /api/ask" = "ask"
@@ -291,3 +306,4 @@ export_draft = { kind = "export", staff = true, piu = true, public = false, reas
 "GET /api/comparables" = "packages"
 "GET /api/rebidding" = "packages"
 "GET /api/agency/projects" = "agency_projects"
+"POST /api/home/start-here" = "start_here"

@@ -13,6 +13,7 @@ import { PageHeader } from "../components/PageHeader";
 import { Skeleton, SkeletonLine } from "../components/Skeleton";
 import { TextLink } from "../components/TextLink";
 import { ProjectId } from "../components/ProjectId";
+import { Tag } from "../components/LessonParts";
 import { copy } from "../copy";
 import { isPpsdKind } from "../lib/drafts";
 import type { DraftGroup, DraftList, DraftRow as Row } from "../lib/drafts";
@@ -34,6 +35,8 @@ const day = (iso: string) => formatDate(iso.slice(0, 10));
 // when it was checked.
 function lineTwo(row: Row): string {
   const author = row.author.name ?? "";
+  // A draft the seed command set up (ticket 41): no person drafted it, so the row says Strata set it up.
+  if (row.example && row.state === "draft") return copy.home.exampleSetUp(day(row.created_at));
   const checked = row.checked ?? row.changed;
   const exported = row.exported ?? row.changed;
   switch (row.state) {
@@ -56,6 +59,11 @@ export function DraftRow({ row, linkRef }: { row: Row; linkRef?: (element: HTMLA
       <TextLink ref={linkRef} href={draftHref(row.draft_id)} className="text-body font-semibold">
         {draftTitle(row.kind, subject as unknown as Record<string, string | null>)}
       </TextLink>
+      {row.example && (
+        <span className="ml-2 inline-block align-middle">
+          <Tag>{copy.home.example}</Tag>
+        </span>
+      )}
       <p className="mt-1 text-small text-ink-muted">
         {row.kind === "mission_brief" ? (
           // The title already names the project (the 37 brief, section 9.8): "P156634, Kenya. Drafted by you on ...".

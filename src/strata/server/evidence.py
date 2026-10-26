@@ -68,7 +68,7 @@ def _plan_row(engine: Engine, key: str, as_of: dt.date) -> dict | None:
     return found
 
 
-def _versions(engine: Engine, key: str, as_of: dt.date) -> dict | None:
+def _versions(engine: Engine, key: str, as_of: dt.date, extra: dict[str, list[dict]] | None = None) -> dict | None:
     """Two versions of a lesson (versions:{lesson_id}:{a}:{b}; ticket 39's "See both versions"), as the Lessons
     page's server builds them (strata.knowledge.lessons.page.LessonsPage.versions), as of the page's date."""
     from strata.config import load_roles
@@ -80,7 +80,7 @@ def _versions(engine: Engine, key: str, as_of: dt.date) -> dict | None:
     if not (first.isdigit() and last.isdigit()):
         return None
     try:
-        found = LessonsPage(LessonReview(load_roles())).versions(engine, lesson_id, int(first), int(last), as_of)
+        found = LessonsPage(LessonReview(load_roles())).versions(engine, lesson_id, int(first), int(last), as_of, extra)
     except Refused:
         return None
     return {"kind": "versions", "row": found}
@@ -110,7 +110,7 @@ READERS: dict[str, Callable[[Engine, str, dt.date], dict | None]] = {
 
 
 def read(engine: Engine, evidence_id: str, as_of: dt.date, step_ref: str | None = None, why: bool = True,
-         view: str = "staff") -> dict | None:
+         view: str = "staff", extra_versions: dict[str, list[dict]] | None = None) -> dict | None:
     """The source this evidence id names, as the viewer could see it on the as-of date and in the page's view, or
     None. The public view of a project still under way shows no disagreement (timeline.in_view). A passage also
     says why it is a source for a contract it appeared together with (ticket 22): for the route's activity when the
@@ -121,7 +121,9 @@ def read(engine: Engine, evidence_id: str, as_of: dt.date, step_ref: str | None 
     reader = READERS.get(table)
     if reader is None or not key or "," in key:
         return None
-    found = reader(engine, key, as_of)
+    # Two versions of a lesson, with the viewer's own example version when the seed command set one up (ticket 41).
+    found = (_versions(engine, key, as_of, extra_versions) if table == "versions" and extra_versions
+             else reader(engine, key, as_of))
     found = None if found is None else timeline.in_view(engine, found, view, as_of)
     if found is None:
         return None

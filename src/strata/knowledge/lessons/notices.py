@@ -213,7 +213,9 @@ def describe(versions: list[dict], a: int, b: int) -> dict:
             "retired_on": _date(last["decided_on"]).isoformat() if retired else None,
             "retired_as": last["state"] if retired else None, "reason": last["reason"],
             "between": [{"version": _version(row), "decided_on": _date(row["decided_on"]).isoformat()}
-                        for row in versions if a < _version(row) < b]}
+                        for row in versions if a < _version(row) < b],
+            # An example version the seed command set up for one viewer (ticket 41): no lead decided it.
+            **({"example": True} if last.get("example") else {})}
 
 
 def row_notices(content: dict, versions: dict[str, list[dict]]) -> list[dict]:

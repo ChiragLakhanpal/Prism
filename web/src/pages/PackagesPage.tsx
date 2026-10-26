@@ -3,9 +3,11 @@
 // actions put the one box into a mode and move focus there: "Check a plan" lists a project's latest plans by
 // agency, and "Plan a package" lists "Plan a package from this sentence" first. Every row and count comes from
 // GET /api/planned-packages; the page counts nothing itself.
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { getJson } from "../lib/api";
 import { Button } from "../components/Button";
 import { Num } from "../components/Num";
+import { Tag } from "../components/LessonParts";
 import { PageHeader } from "../components/PageHeader";
 import { Table, type Column, type Row } from "../components/Table";
 import { TextLink } from "../components/TextLink";
@@ -55,7 +57,15 @@ function rowOf(row: PlannedRow): Row {
       cells: {
         name: (
           <span className="flex flex-col">
-            <TextLink href={`/packages/${encodeURIComponent(row.package_id)}`}>{name}</TextLink>
+            <span>
+              <TextLink href={`/packages/${encodeURIComponent(row.package_id)}`}>{name}</TextLink>
+              {/* A package the seed command planned for you (ticket 41). */}
+              {row.example && (
+                <span className="ml-2 inline-block align-middle">
+                  <Tag>{copy.home.example}</Tag>
+                </span>
+              )}
+            </span>
             <span className="text-caption text-ink-muted">
               {row.step_reference ? mono(row.step_reference) : words.noReference}
               {row.guesses > 0 && <> {copy.packageWorkspace.card.guesses(row.guesses, formatCount(row.guesses, { capital: true }))}</>}
@@ -154,13 +164,37 @@ export function PackagesList({ load, onRetry }: { load: Load<PlannedList>; onRet
 export function PackagesPage({ search }: { search: string }) {
   const view = new URLSearchParams(search).get("view");
   if (view === "public") return <PublicView />;
-  return <PackagesTab preview={view === "piu"} />;
+  return <PackagesTab preview={view === "piu"} search={search} />;
+}
+
+// Home's "Plan a package from a sentence" (ticket 41) lands here with ?box=plan&example={key}: the one box in plan mode,
+// with the examples registry's sentence filled in and focus in the box. The address carries the key, never the
+// sentence, so the page never shows words taken from the address.
+function useBoxFromAddress(search: string, preview: boolean) {
+  useEffect(() => {
+    const params = new URLSearchParams(search);
+    if (params.get("box") !== "plan" || preview) return;
+    const example = params.get("example");
+    if (!example) {
+      requestAnimationFrame(() => enterBoxMode("plan"));
+      return;
+    }
+    let live = true;
+    getJson<{ sentence: string }>(`/api/examples/${encodeURIComponent(example)}`).then(
+      (found) => live && enterBoxMode("plan", found.sentence),
+      () => live && enterBoxMode("plan"),
+    );
+    return () => {
+      live = false;
+    };
+  }, []);
 }
 
 // At least a screen tall in every state, so the footer never rises into view when a short answer, such as
 // the empty or error state, replaces the loading rows (design review round 2, F9).
-function PackagesTab({ preview }: { preview: boolean }) {
+function PackagesTab({ preview, search }: { preview: boolean; search: string }) {
   const [load, retry] = useLoad<PlannedList>("/api/planned-packages");
+  useBoxFromAddress(search, preview);
   const officer = Boolean(useStore(officerAgency)) && !preview;
   return (
     <div className="layout-grid min-h-svh" data-packages-page={load.status}>

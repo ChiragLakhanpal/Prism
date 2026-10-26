@@ -13,6 +13,7 @@ import { Alert } from "../components/Alert";
 import { StepsTaken } from "../components/Answer";
 import { Breadcrumb } from "../components/Breadcrumb";
 import { EmptyState } from "../components/Card";
+import { ExampleNote } from "../components/ExampleNote";
 import { CheckLine, notCheckedFor, RemovedBox, type Removed } from "../components/Checks";
 import { BAR_BUTTONS, BAR_MAIN, Consequence, DiscardedNotice, DraftBar, ExportSuccess, STICKY } from "../components/DraftBar";
 import { DraftNotes, NoteSentences, WrittenIn, type NoteRow } from "../components/DraftNotes";
@@ -38,7 +39,7 @@ import { copy } from "../copy";
 import { ApiError, getJson } from "../lib/api";
 import type { RemovedEvent } from "../lib/answer";
 import { cx } from "../lib/cx";
-import { act, draftScope, fileHref, preloaded, refusalOf, setField, setForm, storeFailed, type Action, type Draft } from "../lib/drafts";
+import { act, draftScope, fileHref, isPpsdKind, preloaded, refusalOf, setField, setForm, storeFailed, type Action, type Draft } from "../lib/drafts";
 import { evidenceIn, openEvidence, openedAt, origin, recordOpened, remember } from "../lib/evidence";
 import { download } from "../lib/export";
 import { formatCount, formatDate, formatNumber } from "../lib/format";
@@ -661,6 +662,12 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
           }
         />
         {agencyDraft && <AccessLabel className="mt-2" />}
+        {/* A draft the seed command set up for you (ticket 41): what Strata set up and what is real. */}
+        {d.example && (
+          <ExampleNote className="mt-2">
+            {(d.kind === "review_notes" ? copy.home.exampleNotes.review_notes : isPpsdKind(d.kind) ? copy.home.exampleNotes.ppsd_rows : copy.home.exampleNotes.draft)(day(d.created_at))}
+          </ExampleNote>
+        )}
         <div className="mt-6 max-w-[72ch]">
           <h2 id={ledeId} tabIndex={-1} className="text-title text-pretty text-ink-heading focus:outline-none" data-lede>
             {lede}

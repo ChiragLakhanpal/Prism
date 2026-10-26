@@ -79,7 +79,6 @@ function page(key: PageKey, section?: Section, values: Record<string, string> = 
 }
 
 const LINKS: Partial<Record<PageKey, (values: Record<string, string>) => string>> = {
-  home: () => "/data",
   packages: () => "/data",
   activity: (values) => `/projects/${values.pid}`,
   document: (values) => `/projects/${values.pid}`,

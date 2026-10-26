@@ -113,10 +113,11 @@ test("choosing a view in the popover opens the preview, with the filled pill and
   const pill = page.getByRole("button", { name: "Preview: Public" });
   await expect(pill).toHaveAttribute("data-preview", "public");
   await expect(page.getByRole("region", { name: "Preview" })).toBeFocused();
-  // The public view has only Projects, Lessons and Data, and its Home until ticket 41.
+  // The public view has only Projects, Lessons and Data, and its own Home (ticket 41): how many projects Strata holds,
+  // and the projects that closed most recently.
   await expect(page.getByRole("navigation", { name: "Main" }).getByRole("link")).toHaveText(["Projects", "Lessons", "Data"]);
-  await expect(page.locator("main h1")).toHaveText("Start from a project");
-  await expect(page).toHaveTitle("Start from a project (public preview) | Strata");
+  await expect(page.locator("main h1")).toContainText("I hold records for 93 World Bank-financed projects.");
+  await expect(page).toHaveTitle("Home (public preview) | Strata");
   expect(await violations(page)).toEqual([]);
 });
 

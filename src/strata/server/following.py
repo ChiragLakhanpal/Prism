@@ -176,9 +176,14 @@ def _counts(entries: list[dict]) -> dict:
 
 def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: FollowStore | None, access: Access,
                drafts, today: Callable[[], dt.date], now: Callable[[], dt.datetime], reference: Callable[[], str],
-               track_record: Callable[[Engine], dict | None]) -> None:
+               track_record: Callable[[Engine], dict | None],
+               examples: Callable[[Viewer], set[str]] | None = None) -> None:
     """drafts is the draft store, for the viewer's open mission briefs; track_record reads the replay harness's
-    stored results (strata.estimates.signals_track.stored)."""
+    stored results (strata.estimates.signals_track.stored); examples gives the projects the seed command followed for
+    the viewer (ticket 41), which the follow control and Following label as examples while the viewer follows them."""
+
+    def seeded(viewer: Viewer) -> set[str]:
+        return examples(viewer) if examples is not None else set()
 
     def current_viewer(request: Request) -> Viewer:
         return viewer_from_headers(request.headers)
@@ -216,7 +221,12 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: FollowStore
         refusal = allowed(viewer)
         if refusal is not None:
             return refusal
-        return guarded(f"the follow of {project_id}", lambda: {"following": store.follows(viewer.user_id, project_id.upper())})
+        def read():
+            following = store.follows(viewer.user_id, project_id.upper())
+            # A follow the seed command made for the viewer (ticket 41), which the control says it made.
+            return {"following": following,
+                    **({"example": True} if following and project_id.upper() in seeded(viewer) else {})}
+        return guarded(f"the follow of {project_id}", read)
 
     def change(project_id: str, viewer: Viewer, following: bool):
         refusal = allowed(viewer)
@@ -263,6 +273,7 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: FollowStore
         def read():
             followed = store.followed(viewer.user_id)
             briefs = open_briefs(viewer) if as_of == checked_on else {}
+            made = seeded(viewer)
             entries, events, thresholds = [], {}, None
             with engine_for(viewer) as engine:
                 for project_id, since in followed.items():
@@ -277,7 +288,9 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: FollowStore
                     entries.append({"project": result["project"], "status": result["status"], "rows": result["rows"],
                                     "checks": result["checks"], "counts": counts,
                                     "coverage": result["coverage"], "following_since": since.isoformat() if since else None,
-                                    "mission_brief": briefs.get(project_id)})
+                                    "mission_brief": briefs.get(project_id),
+                                    # A follow the seed command made (ticket 41), labeled "Example".
+                                    **({"example": True} if project_id in made else {})})
                 if thresholds is None:
                     thresholds = thresholds_used(load_thresholds())
                 through = data_through(engine)

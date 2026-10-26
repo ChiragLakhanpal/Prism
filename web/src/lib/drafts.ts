@@ -208,6 +208,8 @@ export type SummaryView = {
 export type Draft = {
   draft_id: string;
   kind: DraftKind;
+  // A draft the seed command set up for you (ticket 41): its page shows the Example note.
+  example?: boolean;
   state: DraftState;
   discarded_from: DraftState | null;
   author: { name: string | null; you: boolean };
@@ -278,6 +280,8 @@ export type DraftRow = {
   opened: { count: number; of: number } | null;
   // Suggested PPSD rows' progress (ticket 36): owners set and rows rated, from the server.
   progress?: { total: number; owners_set: number; rated: number; form: "short" | "long"; rows: number };
+  // A draft the seed command set up as an example (ticket 41), which its row labels "Example".
+  example?: boolean;
 };
 
 export type DraftGroup = "to_check" | "checked" | "exported";

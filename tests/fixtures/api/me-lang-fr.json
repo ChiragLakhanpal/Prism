@@ -66,6 +66,7 @@
     "save_language",
     "signals_on_active_projects",
     "start_draft",
+    "start_here",
     "step_start",
     "time_estimates_on_active_projects"
   ],
@@ -91,12 +92,14 @@
     "mark_checked": "draft.bar.hold.preview",
     "upload_and_check": "upload.holdPreview",
     "compare_criteria": "criteria.preview",
-    "export_draft": "draft.bar.hold.preview"
+    "export_draft": "draft.bar.hold.preview",
+    "start_here": "home.start.preview"
   },
   "asof": {
     "applied": null,
     "problem": null
   },
+  "start_here_visible": true,
   "language": {
     "code": "fr",
     "source": "link",

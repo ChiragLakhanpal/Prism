@@ -8,6 +8,7 @@ DuckDB, so the checks read real rows. docs/workspace-catchup.md runs each check 
 import contextlib
 import functools
 import re
+import shlex
 import shutil
 import sys
 from pathlib import Path
@@ -402,7 +403,10 @@ def test_a_wrong_option_still_exits_with_code_2(argv, capsys):
     assert "error:" in capsys.readouterr().err
 
 
-COMMAND = re.compile(r"uv run --script ops/bundle/check\.py ([^`\"\n)]*)")
+# A command ends at a backtick, a closing parenthesis, the end of a line or a double quote, which ends a Python
+# string. A whole argument in double quotes after a space, such as the main checkout's path that the second
+# session's steps give --env-file, is part of the command, and shlex reads it as one argument.
+COMMAND = re.compile(r"uv run --script ops/bundle/check\.py ((?:[^`\"\n)]|(?<= )\"[^\"\n]*\"(?=\s|$))*)")
 
 
 def written_commands():
@@ -415,7 +419,7 @@ def written_commands():
         if path.suffix == ".py":
             text = re.sub(r"\"\s*\n\s*f?\"", "", text)  # a message Python splits over two string literals
         for match in COMMAND.finditer(text):
-            yield path.relative_to(REPO).as_posix(), match.group(1).split()
+            yield path.relative_to(REPO).as_posix(), shlex.split(match.group(1))
 
 
 def test_every_check_command_the_repo_writes_parses_as_written(capsys):

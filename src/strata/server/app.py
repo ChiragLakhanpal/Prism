@@ -130,8 +130,8 @@ from strata.agent.answer_check import Asker, SixChecks
 from strata.agent.judge import Judge
 from strata.agent.runs import RunLog, run_row
 from strata.agent.verifier import Verdict, answer_events
-from strata.config import (ENGLISH, DraftKinds, Views, load_draft_kinds, load_roles, load_thresholds, load_tools,
-                           load_views)
+from strata.config import (ENGLISH, DraftKinds, Thresholds, Views, load_draft_kinds, load_roles, load_thresholds,
+                           load_tools, load_views)
 from strata.dbx import Viewer, viewer_from_headers
 from strata.drafts.store import DraftStore
 from strata.estimates import exposures as exposure_log
@@ -164,6 +164,8 @@ from strata.uploads.store import UploadStore
 from strata.server import estimates as estimate_routes
 from strata.server import following as following_routes
 from strata.server.following import FollowStore
+from strata.server import home as home_routes
+from strata.server.home import HomeStore
 from strata.server.viewer_settings import SettingsStore, working_language
 from strata.estimates import signals_track
 from strata.server.access import Access, NoGroups, is_author
@@ -318,7 +320,8 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                new_upload_id: Callable[[], str] = upload_routes.new_upload_id,
                settings: SettingsStore | None = None, exposures: ExposureLog | None = None,
                visits: LessonVisits | None = None, views: Views | None = None,
-               environ: Mapping[str, str] | None = None) -> FastAPI:
+               environ: Mapping[str, str] | None = None, home: HomeStore | None = None,
+               thresholds: Thresholds | None = None) -> FastAPI:
     """The app.
 
     environ is the settings every tool the app runs itself reads its services' addresses and keys from
@@ -375,6 +378,11 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
     principal: each past range or time estimate sent for a package with a STEP reference in the World Bank staff view.
     Without it, no exposure is recorded.
 
+    home keeps what Home keeps per viewer (ticket 41; src/strata/server/home.py): whether they removed the Start here
+    strip, the examples the seed command set up for them, and the example lesson versions only they see; without it,
+    the strip always shows and removing it says nothing was recorded. thresholds stands in for config/thresholds.toml,
+    so a test can change Home's window.
+
     criteria keeps the runs of "Check your criteria", section 5 of the package workspace (src/strata/criteria/
     store.py), with each person's pasted text readable only by them, written as the app's own service principal;
     without it, comparing criteria says there is no data service and no run is kept. criteria_reader gives the
@@ -423,7 +431,7 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
     # The built app and the larger answers go compressed, so the Summary keeps its cold 3G budget (the 21
     # brief, section 3.5). Starlette leaves text/event-stream alone, so /api/ask still streams.
     app.add_middleware(GZipMiddleware, minimum_size=1024)
-    thresholds = load_thresholds()
+    thresholds = thresholds or load_thresholds()
     tools = load_tools()
     six_checks = SixChecks(engine_for, judge, tools, thresholds, environ)
     timeout = stamp_timeout_seconds or thresholds.value("app.stamp_timeout_seconds")
@@ -518,6 +526,31 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
         return read_for(name, viewer, call)
 
     page_size = int(thresholds.value("app.page_size"))
+
+    def home_examples(viewer: Viewer, kind: str) -> set[str]:
+        """The ids of what the seed command set up for this viewer (ticket 41) of one kind (follow, package or draft),
+        which every screen that lists them labels "Example". A follow's item holds its project IDs joined by commas."""
+        if home is None or not viewer.user_id:
+            return set()
+        try:
+            return {item for row in home.seeded(viewer.user_id) if row.get("item_kind") == kind
+                    for item in str(row.get("item_id") or "").split(",") if item}
+        except EngineError:
+            log.exception("I could not read the examples set up for %s.", viewer.user_id)
+            return set()
+
+    def home_drafts(viewer: Viewer) -> set[str]:
+        return home_examples(viewer, "draft")
+
+    def home_versions(viewer: Viewer) -> dict[str, list[dict]]:
+        """The example lesson versions only this viewer sees (ticket 41), for their two-versions view."""
+        if home is None or not viewer.user_id:
+            return {}
+        try:
+            return home.lesson_versions(viewer.user_id)
+        except EngineError:
+            log.exception("I could not read the example lesson versions of %s.", viewer.user_id)
+            return {}
 
     @app.get("/api/projects")
     def list_projects(asof: dt.date | None = None, q: str = Query("", max_length=200), page: int = Query(1, ge=1),
@@ -755,7 +788,8 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                     "upload": upload_routes.listing(saved, viewer)}
 
         def read(engine: Engine):
-            found = evidence.read(engine, evidence_id, as_of_for(asof), step_ref, view=view)
+            found = evidence.read(engine, evidence_id, as_of_for(asof), step_ref, view=view,
+                                  extra_versions=home_versions(viewer) if asof is None else None)
             return found if found is not None else JSONResponse({"code": "unknown_evidence"}, status_code=404)
         return read_for(f"evidence {evidence_id}", viewer, read)
 
@@ -823,7 +857,8 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                             kinds=kinds or load_draft_kinds(), today=today, now=now, new_draft_id=new_draft_id,
                             new_run_id=new_run_id, runs=runs, trace_ids=trace_ids, reference=request_reference,
                             heartbeat_seconds=heartbeat_seconds, six_checks=six_checks, packages=packages,
-                            planned_view=planned_package_view, uploads=uploads)
+                            planned_view=planned_package_view, uploads=uploads, example_versions=home_versions,
+                            example_drafts=home_drafts)
 
     # An implementing agency's private uploads of its plan (ticket 38), through the one access rule.
     upload_routes.add_routes(app, engine_for=engine_for, store=uploads, access=access, today=today, now=now,
@@ -831,13 +866,20 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
 
     # Following and the follow buttons (ticket 37).
     following_routes.add_routes(app, engine_for=engine_for, store=follows, access=access, drafts=drafts, today=today,
-                                now=now, reference=request_reference, track_record=signals_track.stored)
+                                now=now, reference=request_reference, track_record=signals_track.stored,
+                                examples=lambda viewer: home_examples(viewer, "follow"))
+
+    # Home: the briefing, the Start here strip, "Worth knowing" and "Waiting for you" (ticket 41).
+    start_here_visible = home_routes.add_routes(
+        app, engine_for=engine_for, access=access, views=lambda: view_rules, thresholds=thresholds, today=today,
+        now=now, reference=request_reference, store=home, follows=follows, drafts=drafts,
+        lessons_page=LessonsPage(lessons), environ=environ)
 
     package_routes.add_routes(app, engine_for=engine_for, store=packages, reader_for=package_reader or (lambda: None),
                               form=package_form or load_package_form(), thresholds=package_thresholds or thresholds,
                               today=today, now=now, new_package_id=new_package_id, new_save_id=new_save_id,
                               new_run_id=new_run_id, runs=runs, trace_ids=trace_ids, reference=request_reference,
-                              heartbeat_seconds=heartbeat_seconds)
+                              heartbeat_seconds=heartbeat_seconds, examples=lambda viewer: home_examples(viewer, "package"))
     # Section 2, the planned date for each STEP step (ticket 27).
     step_routes.add_routes(app, engine_for=engine_for, store=packages, form=package_form or load_package_form(),
                            thresholds=package_thresholds or thresholds, today=today, now=now,
@@ -1049,6 +1091,9 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
     # ── The Lessons page (ticket 39): the digest, the notices, what is new, the reader's reports and the library ──
 
     lessons_page = LessonsPage(lessons)
+
+    example_versions = home_versions
+
     visit_gap = dt.timedelta(minutes=int(thresholds.value("lessons.visit_gap_minutes")))
 
     def library_filters(stage: str | None, method: str | None, sector: str | None, status: str | None) -> dict:
@@ -1095,17 +1140,21 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
             log.exception("I could not read the Lessons visits or drafts of %s, reference %s.", viewer.user_id,
                           reference)
             return JSONResponse({"code": "data_service", "trace_id": reference}, status_code=503)
+        extra = example_versions(viewer) if personal and asof is None else {}
         return lesson_read("the Lessons page", viewer, lambda engine: lessons_page.build(
             engine, viewer, visit=visit, preview=preview, drafts=mine, feedback=counts,
-            filters=library_filters(stage, method, sector, status), page=page, show=show, as_of=asof))
+            filters=library_filters(stage, method, sector, status), page=page, show=show, as_of=asof,
+            extra_versions=extra))
 
     @app.get("/api/lessons/{lesson_id}/versions")
     def lesson_versions(lesson_id: str, version_from: int = Query(alias="from", ge=1),
                         version_to: int = Query(alias="to", ge=1), asof: dt.date | None = None,
                         viewer: Viewer = Depends(current_viewer)):
-        """Two versions of a lesson, for the evidence drawer (the 39 brief, section 5.7), as of the page's date."""
-        return lesson_read(f"versions of {lesson_id}", viewer,
-                           lambda engine: lessons_page.versions(engine, lesson_id, version_from, version_to, asof))
+        """Two versions of a lesson, for the evidence drawer (the 39 brief, section 5.7), as of the page's date, with the
+        viewer's own example version when the seed command set one up (ticket 41)."""
+        extra = example_versions(viewer) if asof is None else {}
+        return lesson_read(f"versions of {lesson_id}", viewer, lambda engine: lessons_page.versions(
+            engine, lesson_id, version_from, version_to, asof, extra))
 
     @app.get("/api/lessons")
     @app.get("/api/lessons/library")
@@ -1193,6 +1242,8 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                 "reasons": {key: capability.reason for key, capability in view_rules.capabilities.items()
                             if capability.reason},
                 "asof": {"applied": date.applied.isoformat() if date.applied else None, "problem": date.problem},
+                # Whether Home shows its Start here strip (ticket 41), so the page keeps its room before it loads.
+                "start_here_visible": start_here_visible(viewer, own, found.preview, date.applied),
                 "language": {**language.as_dict(), "saved_readable": readable, "choices": language_choices()}}
 
     @app.put("/api/me/working-language")

@@ -1347,6 +1347,24 @@ quote = "2026-10-31"
 record = "api/projects/P156634.json"
 at = "projects.P156634.closingdate"
 
+# Ticket 41's Home names the demo plan's project from its record, never from config/slice.toml's [demo_plan], which
+# writes "Kenya Water and Sanitation Development Project", and counts a plan by the day it was disclosed.
+[[value]]
+id = "project-name-p156634"
+says = "P156634's record names it the Water and Sanitation Development Project."
+value = "Water and Sanitation Development Project"
+quote = "Water and Sanitation Development Project"
+record = "api/projects/P156634.json"
+at = "projects.P156634.project_name"
+
+[[value]]
+id = "plan-2026-10-09-disclosed"
+says = "The documents API gives the NWWDA Procurement Plan of October 9, 2026 (document 40132287) a disclosure date of October 9, 2026."
+value = 2026-10-09
+quote = "2026-10-09T04:00:00Z"
+record = "api/documents/P156634.json"
+at = "documents.D40132287.disclosure_date"
+
 # The October 9, 2026 plan's rows, as the blueprint's Check a plan wireframe shows them. Each
 # field is copied from the plan in STEP's words; each quote must sit inside that activity's
 # row on the page. The plan lists a ninth activity the wireframe leaves out:

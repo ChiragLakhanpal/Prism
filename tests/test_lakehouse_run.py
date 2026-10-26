@@ -117,6 +117,14 @@ def project_closing(gold, value):
     assert row["public_from"] == dt.date.fromisoformat(project["public_disclosure_date"])
 
 
+def project_name(gold, value):
+    """Home names the demo plan's project from its record (ticket 41), as gold keeps it."""
+    project = record(value["record"])["projects"]["P156634"]
+    row = one(gold, "SELECT project_name, public_from FROM strata.gold.project WHERE project_id = 'P156634'")
+    assert row["project_name"] == value["value"]
+    assert row["public_from"] == dt.date.fromisoformat(project["public_disclosure_date"])
+
+
 def individual_consultant(gold, value):
     """The supplier the dataset calls INDIVIDUAL CONSULTANT keeps its own ID, but has no name in gold."""
     rows = gold.run("SELECT s.name, s.kind, s.public_from FROM strata.gold.contract_supplier AS cs "
@@ -265,6 +273,7 @@ CHECKS = {
     "loan-form-older": notice_loan,
     "loan-form-older-with-lender": notice_loan,
     "closing-date-p156634": project_closing,
+    "project-name-p156634": project_name,
     "individual-consultant": individual_consultant,
     "isr-procurement-p156634": isr_rating,
     # The notices the benchmark's documents questions cite (ticket 33).

@@ -14,6 +14,8 @@
 //   words for one to nine, which the timeline route writes on the server (ticket 23).
 // - src/strata/dashboard/copy.json: the AI/BI dashboard's words (copy.dash and copy.kpi), which the dashboard
 //   generator and the nightly job's "What the measures say" read (ticket 45).
+// - src/strata/server/home_copy.json: Home's briefing sentences and lines (copy.home.server), with the words for one
+//   to nine, which Home's route writes on the server (ticket 41).
 //
 // The lint lane fails when a JSON file is out of date (web/lint/run.ts), and this command writes them
 // again:
@@ -33,6 +35,7 @@ export const LESSONS_COPY_FILE = at("src/strata/knowledge/lessons/copy.json");
 export const STEPS_COPY_FILE = at("src/strata/estimates/steps.json");
 export const TIMELINE_COPY_FILE = at("src/strata/server/timeline_copy.json");
 export const DASHBOARD_COPY_FILE = at("src/strata/dashboard/copy.json");
+export const HOME_COPY_FILE = at("src/strata/server/home_copy.json");
 
 const json = (words: unknown) => `${JSON.stringify(words, null, 2)}\n`;
 
@@ -100,6 +103,11 @@ export function dashboardCopy(): string {
   });
 }
 
+// Home's sentences (ticket 41), with the words for one to nine, which the server chooses for each count.
+export function homeCopy(): string {
+  return json({ ...copy.home.server, words: copy.num.words });
+}
+
 // Each JSON file, and the words it must hold.
 export const SERVER_COPIES: { file: string; words: () => string; from: string }[] = [
   { file: SERVER_COPY_FILE, words: serverCopy, from: "copy.dataReadiness.server" },
@@ -108,6 +116,7 @@ export const SERVER_COPIES: { file: string; words: () => string; from: string }[
   { file: STEPS_COPY_FILE, words: stepsCopy, from: "web/src/steps.ts" },
   { file: TIMELINE_COPY_FILE, words: timelineCopy, from: "copy.timeline.server" },
   { file: DASHBOARD_COPY_FILE, words: dashboardCopy, from: "copy.dash and copy.kpi" },
+  { file: HOME_COPY_FILE, words: homeCopy, from: "copy.home.server" },
 ];
 
 function isCurrent(file: string, words: () => string): boolean {

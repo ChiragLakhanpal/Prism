@@ -272,6 +272,11 @@ def test_the_app_s_own_principal_may_write_usage_events_agent_runs_opened_source
         # Ticket 39: each reader's visits to Lessons, and the choices on rows whose lesson changed.
         f"GRANT SELECT, MODIFY ON TABLE strata.ops.lesson_visits TO `{PRINCIPAL}`",
         f"GRANT SELECT, MODIFY ON TABLE strata.ops.draft_lesson_choices TO `{PRINCIPAL}`",
+        # Ticket 41: each viewer's Start here choice, the examples the seed command set up and the example lesson
+        # versions only their viewer sees.
+        f"GRANT SELECT, MODIFY ON TABLE strata.ops.start_here_choices TO `{PRINCIPAL}`",
+        f"GRANT SELECT, MODIFY ON TABLE strata.ops.seeded_examples TO `{PRINCIPAL}`",
+        f"GRANT SELECT, MODIFY ON TABLE strata.ops.example_lesson_versions TO `{PRINCIPAL}`",
         f"GRANT SELECT ON TABLE strata.ops.draft_fields_latest TO `{PRINCIPAL}`",
         f"GRANT SELECT ON TABLE strata.ops.supplier_pairs TO `{PRINCIPAL}`",
         f"GRANT SELECT, MODIFY ON TABLE strata.ops.supplier_review_decisions TO `{PRINCIPAL}`",

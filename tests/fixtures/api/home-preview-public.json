@@ -1,0 +1,533 @@
+{
+  "view": "public",
+  "preview": true,
+  "today": "2026-10-28",
+  "as_of": null,
+  "window": null,
+  "briefing": {
+    "sentences": [
+      [
+        {
+          "text": "I hold records for "
+        },
+        {
+          "number": 93
+        },
+        {
+          "text": " World Bank-financed projects. Search for one by name, project ID or country in the search box, or start from one of the "
+        },
+        {
+          "count": 8,
+          "word": "eight"
+        },
+        {
+          "text": " that closed most recently."
+        }
+      ]
+    ],
+    "plans": []
+  },
+  "start_here": {
+    "visible": false,
+    "links": []
+  },
+  "worth": {
+    "kind": "public",
+    "lines": [
+      {
+        "kind": "public",
+        "id": "line-public-P163035",
+        "key": "P163035",
+        "status": "closed",
+        "reason": "closed",
+        "example": false,
+        "segments": [
+          {
+            "text": "The "
+          },
+          {
+            "text": "Improved Livelihood Opportunities and Accessibility for underserved urban communities in Meru, Kenya"
+          },
+          {
+            "text": " ("
+          },
+          {
+            "pid": "P163035"
+          },
+          {
+            "text": ") in "
+          },
+          {
+            "text": "Kenya"
+          },
+          {
+            "text": " closed on "
+          },
+          {
+            "date": "2025-12-31"
+          },
+          {
+            "text": ". I traced "
+          },
+          {
+            "number": 0
+          },
+          {
+            "text": " of its "
+          },
+          {
+            "number": 0
+          },
+          {
+            "text": " contracts from notice to signature."
+          }
+        ],
+        "source": {
+          "evidence_id": "strata.gold.project:P163035",
+          "kind": "record",
+          "pid": "P163035"
+        },
+        "action": {
+          "key": "seeContracts",
+          "href": "/projects/P163035/procurement#packages",
+          "hidden": "Improved Livelihood Opportunities and Accessibility for underserved urban communities in Meru, Kenya"
+        },
+        "differs": null
+      },
+      {
+        "kind": "public",
+        "id": "line-public-P173820",
+        "key": "P173820",
+        "status": "closed",
+        "reason": "closed",
+        "example": false,
+        "segments": [
+          {
+            "text": "The "
+          },
+          {
+            "text": "KENYA COVID-19 HEALTH EMERGENCY RESPONSE PROJECT"
+          },
+          {
+            "text": " ("
+          },
+          {
+            "pid": "P173820"
+          },
+          {
+            "text": ") in "
+          },
+          {
+            "text": "Kenya"
+          },
+          {
+            "text": " closed on "
+          },
+          {
+            "date": "2025-12-30"
+          },
+          {
+            "text": ". I traced "
+          },
+          {
+            "number": 0
+          },
+          {
+            "text": " of its "
+          },
+          {
+            "number": 0
+          },
+          {
+            "text": " contracts from notice to signature."
+          }
+        ],
+        "source": {
+          "evidence_id": "strata.gold.project:P173820",
+          "kind": "record",
+          "pid": "P173820"
+        },
+        "action": {
+          "key": "seeContracts",
+          "href": "/projects/P173820/procurement#packages",
+          "hidden": "KENYA COVID-19 HEALTH EMERGENCY RESPONSE PROJECT"
+        },
+        "differs": null
+      },
+      {
+        "kind": "public",
+        "id": "line-public-P175188",
+        "key": "P175188",
+        "status": "closed",
+        "reason": "closed",
+        "example": false,
+        "segments": [
+          {
+            "text": "The "
+          },
+          {
+            "text": "COVID-19 HEALTH EMERGENCY RESPONSE PROJECT"
+          },
+          {
+            "text": " ("
+          },
+          {
+            "pid": "P175188"
+          },
+          {
+            "text": ") in "
+          },
+          {
+            "text": "Kenya"
+          },
+          {
+            "text": " closed on "
+          },
+          {
+            "date": "2025-12-30"
+          },
+          {
+            "text": ". I traced "
+          },
+          {
+            "number": 0
+          },
+          {
+            "text": " of its "
+          },
+          {
+            "number": 0
+          },
+          {
+            "text": " contracts from notice to signature."
+          }
+        ],
+        "source": {
+          "evidence_id": "strata.gold.project:P175188",
+          "kind": "record",
+          "pid": "P175188"
+        },
+        "action": {
+          "key": "seeContracts",
+          "href": "/projects/P175188/procurement#packages",
+          "hidden": "COVID-19 HEALTH EMERGENCY RESPONSE PROJECT"
+        },
+        "differs": null
+      },
+      {
+        "kind": "public",
+        "id": "line-public-P176407",
+        "key": "P176407",
+        "status": "closed",
+        "reason": "closed",
+        "example": false,
+        "segments": [
+          {
+            "text": "The "
+          },
+          {
+            "text": "Second Additional Financing for Kenya COVID-19 Health Emergency Response Project"
+          },
+          {
+            "text": " ("
+          },
+          {
+            "pid": "P176407"
+          },
+          {
+            "text": ") in "
+          },
+          {
+            "text": "Kenya"
+          },
+          {
+            "text": " closed on "
+          },
+          {
+            "date": "2025-12-30"
+          },
+          {
+            "text": ". I traced "
+          },
+          {
+            "number": 0
+          },
+          {
+            "text": " of its "
+          },
+          {
+            "number": 0
+          },
+          {
+            "text": " contracts from notice to signature."
+          }
+        ],
+        "source": {
+          "evidence_id": "strata.gold.project:P176407",
+          "kind": "record",
+          "pid": "P176407"
+        },
+        "action": {
+          "key": "seeContracts",
+          "href": "/projects/P176407/procurement#packages",
+          "hidden": "Second Additional Financing for Kenya COVID-19 Health Emergency Response Project"
+        },
+        "differs": null
+      },
+      {
+        "kind": "public",
+        "id": "line-public-P161317",
+        "key": "P161317",
+        "status": "closed",
+        "reason": "closed",
+        "example": false,
+        "segments": [
+          {
+            "text": "The "
+          },
+          {
+            "text": "Kenya Industry and Entrepreneurship"
+          },
+          {
+            "text": " ("
+          },
+          {
+            "pid": "P161317"
+          },
+          {
+            "text": ") in "
+          },
+          {
+            "text": "Kenya"
+          },
+          {
+            "text": " closed on "
+          },
+          {
+            "date": "2025-06-30"
+          },
+          {
+            "text": ". I traced "
+          },
+          {
+            "number": 0
+          },
+          {
+            "text": " of its "
+          },
+          {
+            "number": 0
+          },
+          {
+            "text": " contracts from notice to signature."
+          }
+        ],
+        "source": {
+          "evidence_id": "strata.gold.project:P161317",
+          "kind": "record",
+          "pid": "P161317"
+        },
+        "action": {
+          "key": "seeContracts",
+          "href": "/projects/P161317/procurement#packages",
+          "hidden": "Kenya Industry and Entrepreneurship"
+        },
+        "differs": null
+      },
+      {
+        "kind": "public",
+        "id": "line-public-P165034",
+        "key": "P165034",
+        "status": "closed",
+        "reason": "closed",
+        "example": false,
+        "segments": [
+          {
+            "text": "The "
+          },
+          {
+            "text": "Kenya Affordable Housing Finance Project"
+          },
+          {
+            "text": " ("
+          },
+          {
+            "pid": "P165034"
+          },
+          {
+            "text": ") in "
+          },
+          {
+            "text": "Kenya"
+          },
+          {
+            "text": " closed on "
+          },
+          {
+            "date": "2025-06-30"
+          },
+          {
+            "text": ". I traced "
+          },
+          {
+            "number": 0
+          },
+          {
+            "text": " of its "
+          },
+          {
+            "number": 0
+          },
+          {
+            "text": " contracts from notice to signature."
+          }
+        ],
+        "source": {
+          "evidence_id": "strata.gold.project:P165034",
+          "kind": "record",
+          "pid": "P165034"
+        },
+        "action": {
+          "key": "seeContracts",
+          "href": "/projects/P165034/procurement#packages",
+          "hidden": "Kenya Affordable Housing Finance Project"
+        },
+        "differs": null
+      },
+      {
+        "kind": "public",
+        "id": "line-public-P180339",
+        "key": "P180339",
+        "status": "closed",
+        "reason": "closed",
+        "example": false,
+        "segments": [
+          {
+            "text": "The "
+          },
+          {
+            "text": "Fiscal Sustainability and Inclusive Green Growth (FIGG) Development Policy Operation"
+          },
+          {
+            "text": " ("
+          },
+          {
+            "pid": "P180339"
+          },
+          {
+            "text": ") in "
+          },
+          {
+            "text": "Kenya"
+          },
+          {
+            "text": " closed on "
+          },
+          {
+            "date": "2025-06-30"
+          },
+          {
+            "text": ". I traced "
+          },
+          {
+            "number": 0
+          },
+          {
+            "text": " of its "
+          },
+          {
+            "number": 0
+          },
+          {
+            "text": " contracts from notice to signature."
+          }
+        ],
+        "source": {
+          "evidence_id": "strata.gold.project:P180339",
+          "kind": "record",
+          "pid": "P180339"
+        },
+        "action": {
+          "key": "seeContracts",
+          "href": "/projects/P180339/procurement#packages",
+          "hidden": "Fiscal Sustainability and Inclusive Green Growth (FIGG) Development Policy Operation"
+        },
+        "differs": null
+      },
+      {
+        "kind": "public",
+        "id": "line-public-P500912",
+        "key": "P500912",
+        "status": "closed",
+        "reason": "closed",
+        "example": false,
+        "segments": [
+          {
+            "text": "The "
+          },
+          {
+            "text": "First Kenya Fiscal Sustainability and Resilient Growth"
+          },
+          {
+            "text": " ("
+          },
+          {
+            "pid": "P500912"
+          },
+          {
+            "text": ") in "
+          },
+          {
+            "text": "Kenya"
+          },
+          {
+            "text": " closed on "
+          },
+          {
+            "date": "2025-06-30"
+          },
+          {
+            "text": ". I traced "
+          },
+          {
+            "number": 0
+          },
+          {
+            "text": " of its "
+          },
+          {
+            "number": 0
+          },
+          {
+            "text": " contracts from notice to signature."
+          }
+        ],
+        "source": {
+          "evidence_id": "strata.gold.project:P500912",
+          "kind": "record",
+          "pid": "P500912"
+        },
+        "action": {
+          "key": "seeContracts",
+          "href": "/projects/P500912/procurement#packages",
+          "hidden": "First Kenya Fiscal Sustainability and Resilient Growth"
+        },
+        "differs": null
+      }
+    ],
+    "fold_after": 8,
+    "partial": null,
+    "checked_on": "2026-10-28",
+    "through": "2026-10-23",
+    "empty": null
+  },
+  "waiting": {
+    "rows": [],
+    "total": 0,
+    "more": false,
+    "reason": "public"
+  },
+  "public": {
+    "total": 93
+  }
+}

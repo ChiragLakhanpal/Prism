@@ -1,0 +1,119 @@
+{
+  "window": "the past {window} days",
+  "windowAsOf": "the {window} days to {date}",
+  "plans": {
+    "one": "{count} plan changed in {window}.",
+    "many": "{count} plans changed in {window}.",
+    "none": "No plan changed in {window}."
+  },
+  "activities": {
+    "lookAndWatch": "{look} of {its} activities {needs} a look and {watch} {is} worth watching.",
+    "lookOnly": "{look} of {its} activities {needs} a look.",
+    "watchOnly": "{watch} of {its} activities {is} worth watching.",
+    "none": "None of {its} activities needs a look or is worth watching.",
+    "its": {
+      "one": "its",
+      "many": "their"
+    },
+    "needs": {
+      "one": "needs",
+      "many": "need"
+    },
+    "is": {
+      "one": "is",
+      "many": "are"
+    }
+  },
+  "projects": {
+    "one": "{count} project you follow has a new signal.",
+    "many": "{count} projects you follow have new signals."
+  },
+  "lessonsChanged": {
+    "one": "{count} lesson cited in your drafts changed.",
+    "many": "{count} lessons cited in your drafts changed."
+  },
+  "lessonsRetired": {
+    "one": "{count} lesson cited in your drafts was retired.",
+    "many": "{count} lessons cited in your drafts were retired."
+  },
+  "drafts": {
+    "one": "{count} draft is waiting for you to check.",
+    "many": "{count} drafts are waiting for you to check.",
+    "none": "No draft is waiting for you to check."
+  },
+  "quiet": {
+    "one": "Nothing changed in the plans of the one project you follow in {window}.",
+    "many": "Nothing changed in the plans of the {count} projects you follow in {window}."
+  },
+  "firstRun": "You don't follow any projects yet, so I have no plans to brief you on.",
+  "agency": {
+    "plan": "I checked your team's latest Procurement Plan, the plan of {date} for the {project} ({pid}).",
+    "plans": "I checked your team's latest Procurement Plans for {count} projects.",
+    "behind": {
+      "one": "{count} of {its} activities is behind its planned dates.",
+      "many": "{count} of {its} activities are behind their planned dates.",
+      "none": "None of {its} activities is behind its planned dates."
+    },
+    "noPlan": "I don't hold a published Procurement Plan from your team yet."
+  },
+  "public": "I hold records for {total} World Bank-financed projects. Search for one by name, project ID or country in the search box, or start from one of the {count} that closed most recently.",
+  "publicNone": "I hold records for {total} World Bank-financed projects. Search for one by name, project ID or country in the search box.",
+  "line": {
+    "intro": "{ref}, US${millions} million of {category} in the {project} ({pid}),",
+    "introFull": "{ref}, US${amount} of {category} in the {project} ({pid}),",
+    "introNoEstimate": "{ref}, {category} with no estimate in the {project} ({pid}),",
+    "same": "In the same plan, {ref}",
+    "own": "{ref}",
+    "completion_passed_no_contract": " passed its planned completion date of {date} with no signed contract in the plan.",
+    "closes": " The project closes {date}.",
+    "closed": " The project closed on {date}.",
+    "signed_over_estimate": " was signed at US${actual} against an estimate of US${estimated}.",
+    "signed_late_over_estimate": " was signed at US${actual} against an estimate of US${estimated}.",
+    "pending_near_closing": {
+      "one": " is still pending in the plan, {days} day before the project closes on {date}.",
+      "many": " is still pending in the plan, {days} days before the project closes on {date}."
+    },
+    "pending_on_closing_day": " is still pending in the plan on the day the project closes.",
+    "pending_after_closing": " is still pending in the plan, though the project closed on {date}.",
+    "categories": {
+      "WORKS": "works",
+      "GOODS": "goods",
+      "CONSULTING FIRMS": "consulting services",
+      "INDIVIDUAL CONSULTANTS": "consulting services",
+      "NON CONSULTING SERVICES": "non-consulting services"
+    },
+    "categoryOther": "an activity",
+    "closing_moves": "The closing date of the {project} ({pid}) moved again on {date}. It has moved {count} times since {year}.",
+    "restructured": "The {project} ({pid}) was restructured on {date}.",
+    "isr_lowered": "The ISR of {date} for the {project} ({pid}) rated its progress lower than the ISR before it.",
+    "disbursement": "By {date}, {percent} percent of the US${millions} million available to the {project} ({pid}) was disbursed, with {months} months left before closing.",
+    "lesson": {
+      "narrowed": "The lesson \"{statement}\" changed on {date}. {cites} version {version}.",
+      "retired_wrong": "A lead procurement specialist retired the lesson \"{statement}\" as wrong on {date}. {cites} it, and you can't export {drafts} until you choose what to do with the row.",
+      "retired_outdated": "The lesson \"{statement}\" was retired as out of date on {date}. {cites} it.",
+      "thatDraft": "that draft",
+      "thoseDrafts": "those drafts",
+      "several": "{count} of your drafts cite"
+    },
+    "cites": {
+      "review_notes": "Your review notes on the {agency} plan of {date} cite",
+      "ppsd_rows": "Your suggested PPSD risk rows for {package} cite",
+      "mission_brief": "Your mission brief for the {project} cites",
+      "project_paper": "Your Project Paper summary for the {agency} plan of {date} cites",
+      "step_rows": "Your planned dates for the plan of {date} cite",
+      "ppsd_rows_agency": "Your risk rows for your PPSD, {package}, cite"
+    },
+    "public": "The {project} ({pid}) in {country} closed on {date}. I traced {traced} of its {contracts} contracts from notice to signature."
+  },
+  "words": [
+    "one",
+    "two",
+    "three",
+    "four",
+    "five",
+    "six",
+    "seven",
+    "eight",
+    "nine"
+  ]
+}
