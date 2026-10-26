@@ -13,9 +13,11 @@ a made-up one of the same shape, with a space after the "@". No value here is a 
 """
 
 import datetime as dt
+import importlib.util
 import json
 import random
 import shutil
+from pathlib import Path
 
 import pytest
 from nightly_helpers import clock
@@ -26,6 +28,7 @@ from strata.lakehouse.catalog import table_definitions
 from strata.lakehouse.engine import DuckDBEngine
 from strata.lakehouse.silver import notices as notices_module
 
+ROOT = Path(__file__).resolve().parents[1]
 R = contacts.REMOVED
 
 # Each shape as the workspace's silver.notices holds it, and what ingestion must leave of it.
@@ -201,19 +204,45 @@ def workspace_before_the_fix(fixture_db, tmp_path):
         yield engine
 
 
-def test_the_flagged_pages_read_again_lose_their_numbers_and_the_check_then_finds_none(workspace_before_the_fix):
-    """The live step's route before ticket 75 lands: take the rows of the pages the check flags out of
-    strata.silver.notices, so the next bronze_to_gold reads those pages again from bronze, with the fixed removal."""
+class Workspace:
+    """The live script's workspace, with the copy of the fixture database for its SQL warehouse."""
+
+    def __init__(self, engine):
+        self._engine = engine
+
+    def engine(self):
+        return self._engine
+
+
+def live_script():
+    spec = importlib.util.spec_from_file_location("strata_ops_notices_contacts_left_live",
+                                                  ROOT / "ops" / "notices" / "contacts_left_live.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_the_flagged_pages_read_again_lose_their_numbers_and_the_check_then_finds_none(workspace_before_the_fix,
+                                                                                         capsys):
+    """The live step's route before ticket 75 lands (ops/notices/contacts_left_live.py --forget): take the rows of
+    the pages the check flags out of strata.silver.notices, so the next bronze_to_gold reads those pages again from
+    bronze, with the fixed removal. Afterwards the script's --check-zero passes."""
     engine = workspace_before_the_fix
+    script = live_script()
     night = dt.datetime(2026, 10, 27, 7, 0, tzinfo=dt.UTC)
 
-    before = notices_module.contacts_left(engine)
-    removed = notices_module.forget_pages_with_contacts_left(engine)
+    assert script.main(["--check-zero"], Workspace(engine), env={}) == 1
+    assert script.main(["--forget"], Workspace(engine), env={}) == 0
     nightly.main(["--task", "bronze_to_gold", "--run-id", "night-76", "--src", "src"], engine,
                  fetch=lambda source, engine: (), clock=clock(night, step=dt.timedelta(seconds=1)))
+    assert script.main(["--check-zero"], Workspace(engine), env={}) == 0
 
-    assert (before.notices, before.pages, removed) == (1, 1, 1)
-    assert notices_module.contacts_left(engine) == notices_module.Flagged(0, 0)
+    assert capsys.readouterr().out.splitlines() == [
+        "The nightly check's patterns find 1 notice on 1 page of strata.silver.notices.",
+        "The nightly check's patterns find 1 notice on 1 page of strata.silver.notices.",
+        "I took 1 row out of strata.silver.notices, every row of those pages. The next bronze_to_gold reads the pages "
+        "again from bronze, with the contact removal as it is now.",
+        "The nightly check's patterns find 0 notices on 0 pages of strata.silver.notices."]
     assert engine.run("SELECT notice_text, contact_details_removed FROM strata.silver.notices "
                       "WHERE notice_id = :id", {"id": "OP-made-up-76"}).rows == (
         (f"The works are in Kisumu.\nTel: {R} Fax: {R} Email: {R}", True),)
