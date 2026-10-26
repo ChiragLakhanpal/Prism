@@ -1094,20 +1094,22 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
 
     @app.get("/api/lessons/{lesson_id}/versions")
     def lesson_versions(lesson_id: str, version_from: int = Query(alias="from", ge=1),
-                        version_to: int = Query(alias="to", ge=1), viewer: Viewer = Depends(current_viewer)):
-        """Two versions of a lesson, for the evidence drawer (the 39 brief, section 5.7)."""
+                        version_to: int = Query(alias="to", ge=1), asof: dt.date | None = None,
+                        viewer: Viewer = Depends(current_viewer)):
+        """Two versions of a lesson, for the evidence drawer (the 39 brief, section 5.7), as of the page's date."""
         return lesson_read(f"versions of {lesson_id}", viewer,
-                           lambda engine: lessons_page.versions(engine, lesson_id, version_from, version_to))
+                           lambda engine: lessons_page.versions(engine, lesson_id, version_from, version_to, asof))
 
     @app.get("/api/lessons")
     @app.get("/api/lessons/library")
     def lesson_library(page: int = Query(1, ge=1, le=10_000), stage: str | None = Query(None, max_length=64),
                        method: str | None = Query(None, max_length=64), sector: str | None = Query(None, max_length=128),
                        status: str | None = Query(None, max_length=16), show: str | None = Query(None, max_length=64),
-                       viewer: Viewer = Depends(current_viewer)):
-        """The library alone, for a filter or page change on the Lessons tab (the 39 brief, section 9)."""
-        return lesson_read("the lesson library", viewer, lambda engine: lessons.library(
-            engine, viewer, page, library_filters(stage, method, sector, status), show))
+                       asof: dt.date | None = None, viewer: Viewer = Depends(current_viewer)):
+        """The library alone, for a filter or page change on the Lessons tab (the 39 brief, section 9), as of the same
+        date as the page (ticket 40)."""
+        return lesson_read("the lesson library", viewer, lambda engine: lessons_page.library(
+            engine, viewer, page, library_filters(stage, method, sector, status), show, as_of=asof))
 
     @app.get("/api/lessons/review")
     def lesson_queue(page: int = Query(1, ge=1, le=10_000), viewer: Viewer = Depends(current_viewer)):

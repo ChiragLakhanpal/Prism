@@ -117,6 +117,16 @@ def current_versions(store: Store) -> list[dict]:
     return [versions[-1] for versions in store.versions.values() if versions[-1]["state"] == "current"]
 
 
+def as_of_store(store: Store, as_of: dt.date | None) -> Store:
+    """The store as of a date: each lesson at the version current then, and a lesson first decided later not there
+    yet (ticket 40). The one place the Lessons page applies an as-of date, for the page, its library and its two
+    versions view alike."""
+    if as_of is not None:
+        store.versions = {lesson_id: kept for lesson_id, versions in store.versions.items()
+                          if (kept := [row for row in versions if _date(row["decided_on"]) <= as_of])}
+    return store
+
+
 def waiting_proposals(store: Store) -> int:
     """Proposed lessons waiting in the review queue now, in every region: a count, never a list."""
     return sum(1 for item in store.items.values() if item["kind"] == "new" and store.stage(item) != "decided")
@@ -294,6 +304,15 @@ class LessonsPage:
                     break
         return found
 
+    # ── The library alone ────────────────────────────────────────────────
+
+    def library(self, engine: Engine, viewer, page: int = 1, filters: dict | None = None, show: str | None = None,
+                as_of: dt.date | None = None) -> dict:
+        """The library for a filter or page change, as of the same date as the page it changes (ticket 40), so it
+        always matches build()'s library for the same filters."""
+        store = as_of_store(self.review._load(engine), as_of)
+        return self.review.library(engine, viewer, page, filters, show, store=store)
+
     # ── The whole page ───────────────────────────────────────────────────
 
     # ── New ──────────────────────────────────────────────────────────────
@@ -318,15 +337,16 @@ class LessonsPage:
 
     # ── Two versions of a lesson ─────────────────────────────────────────
 
-    def versions(self, engine: Engine, lesson_id: str, a: int, b: int) -> dict:
+    def versions(self, engine: Engine, lesson_id: str, a: int, b: int, as_of: dt.date | None = None) -> dict:
         """Version a of a lesson beside version b, for the evidence drawer's "Two versions of a lesson" (evidence id
         versions:{lesson_id}:{a}:{b}): each with its statement, tags, the quotes it rests on and its decision by role,
         the change between them with the changed words, the lead's reason on the later one, and the versions that came
-        between. A retired lesson's last block says when and why."""
+        between. A retired lesson's last block says when and why. As of a date, a version decided later is not there
+        yet, so asking for it is unknown_version (ticket 40)."""
         from strata.knowledge.lessons.notices import describe, tier
         from strata.knowledge.lessons.review import Refused
 
-        store = self.review._load(engine)
+        store = as_of_store(self.review._load(engine), as_of)
         rows = store.versions.get(lesson_id) or []
         numbers = {_int(row["version"]): row for row in rows}
         if a not in numbers or b not in numbers or a >= b:
@@ -373,6 +393,15 @@ class LessonsPage:
         return {"never": False, "segments": segments,
                 "counts": {key: int(counts[key]) for key in ("marked", "fixed", "waiting", "kept", "recited")}}
 
+    # ── The library alone ────────────────────────────────────────────────
+
+    def library(self, engine: Engine, viewer, page: int = 1, filters: dict | None = None, show: str | None = None,
+                as_of: dt.date | None = None) -> dict:
+        """The library for a filter or page change, as of the same date as the page it changes (ticket 40), so it
+        always matches build()'s library for the same filters."""
+        store = as_of_store(self.review._load(engine), as_of)
+        return self.review.library(engine, viewer, page, filters, show, store=store)
+
     # ── The whole page ───────────────────────────────────────────────────
 
     def build(self, engine: Engine, viewer, *, visit: Visit, preview: bool, drafts: list = (),
@@ -380,10 +409,7 @@ class LessonsPage:
               as_of: dt.date | None = None) -> dict:
         """The whole Lessons tab in one answer. A preview leaves out what is about the signed-in person; an as-of view
         shows only the library (the 39 brief, section 4.9)."""
-        store = self.review._load(engine)
-        if as_of is not None:  # each lesson at the version current then; a lesson decided later is not there yet
-            store.versions = {lesson_id: kept for lesson_id, versions in store.versions.items()
-                              if (kept := [row for row in versions if _date(row["decided_on"]) <= as_of])}
+        store = as_of_store(self.review._load(engine), as_of)
         library = self.review.library(engine, viewer, page, filters, show, store=store)
         if as_of is not None:
             return {"view": "preview" if preview else "staff", "as_of": as_of.isoformat(), "visit": None,
