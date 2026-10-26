@@ -239,12 +239,15 @@ def compose(facts: Facts) -> tuple[dict, Verdict]:
     removed = []
     by_key = {activity["key"]: activity for activity in activities}
     for sentence in verdict.removed:
+        # The claim states the step's dates and its count together, so all three leave the page and the counts. The
+        # removed entry has the shape every draft's removed box and evidence pack read (verifier.answer_events).
         key, step_key = owners[sentence.index]
         step = next(step for step in by_key[key]["steps"] if step["step_key"] == step_key)
-        step["middle"] = step["cautious"] = None
+        step["middle"] = step["cautious"] = step["comparables_n"] = None
         step["removed"] = [reason.code for reason in sentence.reasons]
-        removed.append({"key": key, "step_key": step_key, "reasons": [{"check": r.check, "code": r.code, "text": r.text}
-                                                                      for r in sentence.reasons]})
+        removed.append({"key": key, "step_key": step_key, "index": sentence.index, "sentence": sentence.claim.sentence,
+                        "kind": sentence.claim.kind, "reason": sentence.reasons[0].code,
+                        "reasons": [{"check": r.check, "code": r.code, "text": r.text} for r in sentence.reasons]})
     lists = [{"evidence_id": step["list_id"], "activity": activity["key"], "step_key": step["step_key"],
               "comparables_n": step["comparables_n"]}
              for activity in activities for step in activity["steps"]

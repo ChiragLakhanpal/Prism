@@ -20,10 +20,18 @@ const words = kind.dates;
 const short = (iso: string) => formatDate(iso, { style: "table" });
 const CHOICES = ["middle", "cautious"] as const;
 
-function signedCell(activity: DatesActivity, choice: "middle" | "cautious", min: number): ReactNode {
+// The signed contract's date opens its list, as the same date does in the activity's Step table. When the verifier
+// removed the step's claim, its date and count are gone, and the cell says so instead of reading as too few packages.
+function signedCell(activity: DatesActivity, choice: "middle" | "cautious", min: number, lists: Record<string, EvidenceEvent>, onOpen: Opener): ReactNode {
   if (!activity.family) return <span className="text-small text-ink-muted"><Fill template={words.notListed} slots={{ method: activity.fields.method ?? "" }} /></span>;
-  const signed = activity.steps.find((step) => step.step_key === "contract_signed");
+  const index = activity.steps.findIndex((step) => step.step_key === "contract_signed");
+  const signed = index >= 0 ? activity.steps[index] : undefined;
+  if (signed?.removed) return <span className="text-small text-ink-muted">{words.removed}</span>;
   const value = signed?.[choice];
+  const held = signed ? rowOf(activity, index, lists) : null;
+  if (value?.planned_date && held) {
+    return <Num date={value.planned_date} style="table" className="text-body font-semibold" check={dateCheck(value as StepPoint, held.row, held.family, onOpen)} />;
+  }
   if (value?.planned_date) return <span className="text-body font-semibold tabular-nums">{short(value.planned_date)}</span>;
   if (activity.needs_start_date) return <span className="text-small text-ink-muted">{words.undated}</span>;
   const count = signed?.comparables_n ?? activity.abstain_all?.n ?? 0;
@@ -151,7 +159,7 @@ export function StepRowsDraft({ view, lists, editable, onChoice, onOpen }: {
                       <span className="mt-1 block text-caption text-ink-muted">{words.noRef}</span>
                     )}
                   </th>
-                  <td className="px-3 py-3">{signedCell(activity, choice, min)}</td>
+                  <td className="px-3 py-3">{signedCell(activity, choice, min, lists, onOpen)}</td>
                   <td className="px-3 py-3 text-right tabular-nums">
                     <Fill template={words.stepsDated} slots={{ dated: String(counted.dated), total: String(counted.total) }} />
                   </td>

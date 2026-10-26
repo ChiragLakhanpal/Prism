@@ -19,12 +19,14 @@ import json
 import tomllib
 from contextlib import contextmanager
 from pathlib import Path
+from unittest import mock
 
 import pytest
 import step_set
 from test_uploads import AMINA, BARAKA, CHEGE, DANA, FIXTURE, GROUPS, call, roles, upload
 
 from strata.config import load_draft_kinds, load_thresholds
+from strata.drafts import step_rows
 from strata.drafts.store import DraftStore
 from strata.lakehouse import catalog
 from strata.lakehouse.engine import DuckDBEngine
@@ -271,6 +273,74 @@ def test_the_steps_are_dated_from_the_uploads_own_dates_not_the_published_plans(
     assert [step["cautious"]["planned_date"] for step in dated] == [(day + later).isoformat()
                                                                     for day in DATES["cautious_dates"]]
     assert [step["middle"]["planned_date"] for step in dated] == [(day + later).isoformat() for day in DATES["middle_dates"]]
+
+
+@contextmanager
+def a_value_the_delay_model_did_not_return(what: str):
+    """Fault injection: the draft states one value estimate_time did not return this turn, for the target's bid
+    evaluation report: a cautious date 9 days later ("date"), or one more comparable package than it counted
+    ("count"). A change to the step-label registry or to estimate_time's rounding could do this; the verifier must
+    remove it and show it (CLAUDE.md rules 1 and 2)."""
+    real = step_rows._activity
+
+    def tampered(found, labels):
+        activity = real(found, labels)
+        if found["position"] == 1:
+            step = next(step for step in activity["steps"] if step["step_key"] == "bid_evaluation_report")
+            if what == "date":
+                later = dt.date.fromisoformat(step["cautious"]["planned_date"]) + dt.timedelta(days=9)
+                step["cautious"] = {**step["cautious"], "planned_date": later.isoformat()}
+            else:
+                step["comparables_n"] += 1
+        return activity
+
+    with mock.patch.object(step_rows, "_activity", tampered):
+        yield
+
+
+@pytest.mark.parametrize(("what", "reason", "said"), [
+    ("date", "date_not_in_records", "No record supports this date."),
+    ("count", "number_not_in_records", "No record supports this number.")])
+def test_a_value_the_delay_model_did_not_return_is_removed_and_shown_and_the_draft_still_opens_and_exports(
+        hand, state, what, reason, said):
+    app = app_on(hand, state, DATES["as_of"], dt.datetime(2021, 1, 15, 10, 0, tzinfo=dt.UTC))
+    upload_id = upload(app, data=hand_file(), name="team-a-plan.csv", project=HAND_PROJECT).json()["upload_id"]
+    with a_value_the_delay_model_did_not_return(what):
+        sent, draft_id = draft(app, AMINA, f"upload:{upload_id}")
+    assert draft_id, sent
+
+    opened = call(app, "GET", f"/api/drafts/{draft_id}", AMINA)
+    assert opened.status_code == 200, opened.text
+    shown = opened.json()
+    target = shown["dates"]["activities"][0]
+    step = next(step for step in target["steps"] if step["step_key"] == "bid_evaluation_report")
+    # The claim stated the step's dates and its count together, so all three leave the page and the counts.
+    assert (step["middle"], step["cautious"], step["comparables_n"], step["removed"]) == (None, None, None, [reason])
+    assert target["counts"]["dated"]["cautious"] == 4 and shown["dates"]["counts"]["dated"]["cautious"] == 4
+    assert shown["opened"]["of"] == shown["dates"]["counts"]["lists"] == 4
+    # The removed box shows what the claim said and why, in the shape every draft's removed box reads.
+    [entry] = shown["removed"]
+    assert (entry["key"], entry["step_key"], entry["reason"]) == ("activity-1", "bid_evaluation_report", reason)
+    assert entry["sentence"].startswith("Bid evaluation report: ") and isinstance(entry["index"], int)
+    assert shown["checks"]["sentences"]["removed"] == 1
+
+    call(app, "POST", f"/api/drafts/{draft_id}/check", AMINA, json={"expected_state": "draft"})
+    exported = call(app, "POST", f"/api/drafts/{draft_id}/export", AMINA, json={"expected_state": "checked"})
+    assert exported.status_code == 200, exported.text
+    stem = f"step-rows-{HAND_PROJECT}-northern-water-works-development-agency-2021-01-15"
+    header, first, _ = list(csv.reader(io.StringIO(call(app, "GET", f"/api/drafts/{draft_id}/files/{stem}.csv",
+                                                       AMINA).content.decode("utf-8-sig"))))
+    by = dict(zip(header, first))
+    planned = {column.step: by[column.name] for column in step_columns().csv_columns() if column.head == "Planned"}
+    # The removed date is left empty in the STEP rows; the steps the verifier kept keep theirs.
+    assert planned[STEPS[3]] == "" and planned[STEPS[4]] == DATES["cautious_dates"][4].isoformat()
+
+    from pypdf import PdfReader
+
+    pack = call(app, "GET", f"/api/drafts/{draft_id}/files/{stem}-evidence-pack.pdf", AMINA).content
+    text = " ".join(" ".join(page.extract_text() for page in PdfReader(io.BytesIO(pack)).pages).split())
+    # The evidence pack records the removed claim with its reason.
+    assert said in text and "Bid evaluation report:" in text
 
 
 def test_the_upload_screens_recorded_answers_are_what_the_routes_answer(fixture_db, tmp_path):

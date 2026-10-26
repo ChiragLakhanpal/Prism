@@ -219,17 +219,21 @@ def test_a_question_about_the_upload_from_another_team_is_refused_and_returns_no
     seen = answer.text + json.dumps(agents[0].received, ensure_ascii=False)
     private = [kept["upload_id"], "nwwda-draft-plan.csv"] + [row["description"] for row in kept["rows"]]
     assert [value for value in private if value in seen] == []
-    # Had the agent asked for the upload by its id, the tool would have found nothing: /api/ask's tools get the
-    # Context answer_runner builds (src/strata/agent/loop.py), which carries no reader of uploads.
+    # Had the agent asked for the upload by its id, the tool would have found nothing, for the uploading team too:
+    # /api/ask's tools get the Context answer_runner builds with tool_context (src/strata/agent/loop.py), which
+    # carries no reader of uploads.
+    from strata.agent.loop import tool_context
     from strata.config import load_thresholds
     from strata.dbx import viewer_from_headers
     from strata.tools import registry
 
-    with engine_for(viewer_from_headers(CHEGE)) as engine:
-        asked = registry.call("check_plan", {"project_id": "P156634", "implementing_agency": NWWDA,
-                                             "upload_id": kept["upload_id"]},
-                              registry.Context(engine, viewer_from_headers(CHEGE), "staff", case.as_of, load_thresholds()))
-    assert (asked["abstention"], asked["rows"]) == ({"reason": "unknown_upload"}, [])
+    for headers in (CHEGE, AMINA):
+        viewer = viewer_from_headers(headers)
+        with engine_for(viewer) as engine:
+            asked = registry.call("check_plan", {"project_id": "P156634", "implementing_agency": NWWDA,
+                                                 "upload_id": kept["upload_id"]},
+                                  tool_context(engine, viewer, "staff", case.as_of, load_thresholds()))
+        assert (asked["abstention"], asked["rows"]) == ({"reason": "unknown_upload"}, [])
 
 
 def test_no_upload_text_ever_reaches_the_shared_search_index(fixture_db, tmp_path):
@@ -362,6 +366,27 @@ def test_two_requests_with_one_key_keep_one_upload(make, state_db):
 
     assert answer.json() == {"upload_id": "upl-000000000099", "kept": True}
     assert kept_rows(state_db) == (0, 0)
+
+
+def test_a_fault_while_reading_back_a_kept_upload_answers_with_the_kept_upload_not_an_error(make, state_db):
+    """The upload was kept; a warehouse fault on the read back must not answer HTTP 500 or say nothing was kept. The
+    answer names the kept upload, as a repeated request with the same key does, and its page reads it."""
+    from strata.lakehouse.engine import EngineError
+
+    class Flaky(UploadStore):
+        failed = False
+
+        def get(self, upload_id):
+            if not self.failed:
+                self.failed = True
+                raise EngineError("the warehouse dropped the connection")
+            return super().get(upload_id)
+
+    app = make(store=Flaky(lambda: DuckDBEngine.open(state_db)))
+    answer = upload(app)
+
+    assert (answer.status_code, answer.json()) == (200, {"upload_id": "upl-000000000001", "kept": True})
+    assert call(app, "GET", "/api/uploads/upl-000000000001", AMINA).status_code == 200
 
 
 def test_a_save_that_fails_part_way_leaves_nothing_a_reader_can_find(make, state_db):

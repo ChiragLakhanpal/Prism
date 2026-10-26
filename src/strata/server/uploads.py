@@ -258,7 +258,13 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: UploadStore
         except EngineError as error:
             failed(f"keeping {file_name}", error)
             return refused(503, "service", kept=False, file_name=file_name)
-        saved = store.get(upload_id)
+        try:
+            saved = store.get(upload_id)
+        except EngineError as error:
+            # The upload is kept, so the answer names it, as a repeated request with the same key does; its page
+            # reads it again.
+            log.warning("Reading back upload %s failed after it was kept: %s", upload_id, error)
+            return {"upload_id": upload_id, "kept": True}
         return {**shown(saved, viewer, result), "upload_id": upload_id, "kept": True}
 
     @app.get("/api/uploads")

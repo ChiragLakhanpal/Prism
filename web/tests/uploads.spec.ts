@@ -166,3 +166,24 @@ test("A count of comparable packages on a draft of planned dates opens its list,
   await expect(bar).toContainText("You opened 1 of 5 lists of comparable packages");
   expect(asked).toContain("POST /api/evidence/opened");
 });
+
+test("When my verifier removes a step's dates on a draft of planned dates, the page shows the removed box and the cell says why", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  // The server's answer when the draft stated a cautious date estimate_time did not return (tests/record_uploads_api.py).
+  await serve(page, { "GET /api/drafts/draft-0003": { body: await recorded("drafts-step-rows-removed.json") } });
+  await page.goto("/drafts/draft-0003");
+
+  const box = page.locator("[data-removed-box]");
+  await expect(box).toContainText("I removed one sentence.");
+  await expect(box).toContainText("bid evaluation report: middle date 2021-05-31; cautious date 2021-06-30; 25 comparable packages, and no record supports that date.");
+  const step = page.locator("#activity-1 [data-step='bid_evaluation_report']");
+  await expect(step).toContainText("I removed this date, because it didn't match my delay model's results.");
+  // The count went with the dates it was stated with.
+  await expect(step.locator("td").last()).toHaveText("");
+  const bar = page.getByRole("region", { name: "Check and export" });
+  await expect(bar).toContainText("You opened 0 of 4 lists of comparable packages");
+  // The signed contract's date in the overview opens its 25 comparable packages, as it does in the Step table.
+  await page.locator("[data-overview-row]").first().getByRole("button", { name: /Aug 1, 2021/ }).click();
+  await expect(page.getByRole("dialog").locator("[data-step-entry]")).toHaveCount(25);
+  await expect(bar).toContainText("You opened 1 of 4 lists of comparable packages");
+});
