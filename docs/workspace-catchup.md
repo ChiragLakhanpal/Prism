@@ -3368,3 +3368,42 @@ It worked if each prints exactly one line that starts "I changed nothing, becaus
 ## Ticket 86, the second document pass of the night on the paid workspace (before the ticket's fix)
 
 **Ran on October 27, 2026 (orchestrator), 04:29 to 05:31 UTC.** `parse_and_embed` alone (run 1471925021545, `run-now --only`) ended SUCCESS after 62 minutes and wrote no passage: `SELECT count(*) FROM strata.gold.passage` is 0, `strata.ops.documents_read` holds 0 rows, and `strata.ops.skipped_documents` holds one row for the run (reader plans, project P156634, document 34147454, outcome unfinished, reason "I spent the night's 60 minutes for the document host, so I did not read page 6 of ...", skipped at 05:30:16 UTC). So the plan reader spent the whole window on one Procurement Plan's scanned pages and the passage reader never started, as the ticket's first builder predicted from the first pass (run 564462742591748). After both passes: strata.ops.anchored_plan_rows 0 rows, strata.ops.plan_baselines 0, strata.silver.plan_data_notes 0, parse_runs rows for this run 2. The chain ran `sync_index` next (recorded under ticket 72 when it ends). The passages come from a `parse_and_embed` run alone after ticket 86 merges with the split of the reading minutes (decision 76) and the bundle deploys; that run is the ticket's live proof.
+
+## Ticket 87, step 1 of 2: the next bundle deploy passes step 2 beside the search index's own objects and prints step 3's report (criterion 4, live)
+
+Parked on October 26, 2026 with ticket 87, which merged into build/strata as 39b7c6d1. Run it from a snapshot of 39b7c6d1 or later, as the header says. Every key is set, but the second session runs every workspace step from a snapshot of the commit, one at a time, so the merger ran none. It needs the Databricks keys in `.env` and the Databricks CLI 0.287.0 or later. It changes no table, job or dashboard file, so one deploy from 39b7c6d1 or later also serves any earlier block that asks for the next bundle deploy.
+
+Why: since the nightly's `sync_index` made the vector index on the paid workspace (October 27, 01:33 UTC), the catalog holds three objects that the AI Search service made: `strata.gold.passage_index`, `strata.gold.event_log_cd8058ce_42aa_4722_ac9a_3ee310032e31` and `strata.gold.__cd8058ce_42aa_4722_ac9a_3ee310032e31___online_index_view`. None of them has a `public_from` column. So ticket 85's deploy at 01:39 UTC stopped at step 2 with "I could not create the tables. These tables have no public_from column of type DATE: ...", and `measure_data_readiness` (run 1023673043723265, 04:18 to 04:27 UTC) failed with `DELTA_READ_TABLE_WITHOUT_COLUMNS` on the view. Ticket 87 makes `listed_tables` in `src/strata/lakehouse/catalog.py` leave out the index that `config/models.toml` names (`[search] index`) and the event log and online index view tables of the same schema. The deploy's check and the table sizes measure both read that one listing.
+
+Run this from the snapshot, with `--env-file` pointing at the main checkout's `.env`:
+
+    uv run --script ops/bundle/deploy.py --env-file "<main checkout>/.env"
+
+It worked if:
+
+- It exits 0.
+- Step 2 prints "Each of these exists now: ..." and no line that starts "I could not create the tables".
+- Step 3 prints its "What changed:" report. The three index objects may show as new tables the first time.
+
+The deploy resets the nightly job's timeout to the bundle's 9000 seconds. Until ticket 89's fix lands, rerun the `databricks jobs update` from ticket 89's block after it.
+
+Record here the exit code, step 2's line, step 3's report and the time.
+
+## Ticket 87, step 2 of 2: measure_data_readiness succeeds and writes no table sizes row for the index's objects (criterion 4, live)
+
+Run it after step 1, so the job runs the new code, and outside the nightly window (03:00 to 05:30 in Washington). Or read the `measure_data_readiness` task of the next scheduled run after step 1, and record it the same way. The paid workspace's deploy listed `strata nightly` as 200833746315993.
+
+    databricks jobs list --name "strata nightly" -p strata
+    databricks jobs run-now --json '{"job_id": <the job ID>, "only": ["measure_data_readiness"]}' -p strata
+
+Then, with the run's id:
+
+    SELECT count(*) FROM strata.ops.table_sizes WHERE run_id = '<run id>'
+    SELECT table_name FROM strata.ops.table_sizes WHERE run_id = '<run id>' AND (table_name LIKE '%online_index_view' OR table_name LIKE 'strata.gold.event_log_%' OR table_name = 'strata.gold.passage_index')
+
+It worked if:
+
+- The task ends SUCCESS, with no `DELTA_READ_TABLE_WITHOUT_COLUMNS` error in its output.
+- The first query counts more than 0 rows for the run, and the second returns no rows.
+
+Record here the run id, the task's state, the first query's count, the second query's result and the time. This closes ticket 87's criterion 4, and the dashboard's Data readiness page can then fill on the paid workspace.
