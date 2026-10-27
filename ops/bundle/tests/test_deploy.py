@@ -29,6 +29,10 @@ from strata.lakehouse.engine import DuckDBEngine  # noqa: E402
 FAIRSHARE = {"catalog": {"name": "fairshare", "comment": ""}, "schemas": {"gold": ""}, "volumes": {},
              "tables": {"gold.flights": ["flight_id STRING", "public_from DATE"]},
              "grants": {"fairshare": {"account users": ["USE_CATALOG"]}}}
+# The passage index's id on the paid workspace, as its two tables carried it (docs/workspace-catchup.md, ticket 85).
+INDEX_ID = "cd8058ce_42aa_4722_ac9a_3ee310032e31"
+INDEX_OBJECTS = ("strata.gold.passage_index", f"strata.gold.event_log_{INDEX_ID}",
+                 f"strata.gold.__{INDEX_ID}___online_index_view")
 
 
 class FakeWorkspace:
@@ -107,6 +111,17 @@ class FakeWorkspace:
             return None
         found = self.dashboards[name]
         return {"name": name, "pages": found["pages"], "update_time": found["update_time"]}
+
+
+def sync_index(workspace, index_id=INDEX_ID):
+    """The nightly's first sync_index, as it went on the paid workspace on October 27, 2026: the AI Search service
+    made the index config/models.toml names and two tables beside it that carry the index's id, an event log and the
+    view the index serves from, none with a public_from column (ticket 87). On Databricks the view has no columns at
+    all; DuckDB needs one."""
+    for name, columns in (("passage_index", "passage_id STRING, header STRING, text STRING"),
+                          (f"event_log_{index_id}", "id STRING, timestamp TIMESTAMP, message STRING"),
+                          (f"__{index_id}___online_index_view", "passage_id STRING")):
+        workspace.duckdb.run(f"CREATE TABLE strata.gold.{name} ({columns})")
 
 
 def deploy_into(workspace, capsys):
@@ -253,6 +268,40 @@ def test_a_second_deploy_reports_no_changes(capsys):
     assert code == 0
     assert "No changes." in out
     assert "is new" not in out
+
+
+def test_a_deploy_after_the_first_index_sync_creates_the_tables_and_says_what_changed(capsys):
+    """On October 27, 2026 the deploy after the first sync_index stopped at the tables, naming the index service's
+    three objects as tables without public_from, and never said what changed (ticket 87). The check leaves those
+    three out, so the deploy creates the tables and prints its report."""
+    workspace = FakeWorkspace()
+    deploy_into(workspace, capsys)
+    sync_index(workspace)
+
+    code, out = deploy_into(workspace, capsys)
+
+    assert code == 0
+    assert "I could not create the tables" not in out
+    assert "   Each of these exists now: strata.bronze." in out
+    assert "3. What changed:\n   No changes.\n" in out
+    assert set(INDEX_OBJECTS) <= {f"strata.{name}" for name in workspace.listing("strata")["tables"]}
+
+
+@pytest.mark.parametrize("table", ["strata.gold.notes", "strata.gold.event_log_notes", f"strata.ops.event_log_{INDEX_ID}",
+                                   f"strata.gold.__{INDEX_ID}___online_index_view_copy", "strata.gold.passage_index_v2"])
+def test_after_the_index_sync_the_deploy_still_names_a_table_without_public_from(table, capsys):
+    """The check leaves out the index's three objects and nothing else: a table with a name like theirs, in another
+    schema or with another ending, is still named."""
+    workspace = FakeWorkspace()
+    deploy_into(workspace, capsys)
+    sync_index(workspace)
+    workspace.duckdb.run(f"CREATE TABLE {table} (id STRING)")
+
+    code, out = deploy_into(workspace, capsys)
+
+    assert code == 1
+    assert (f"I could not create the tables. These tables have no public_from column of type DATE: {table}. Every "
+            "table keeps the date each row became public (ADR 0002), so add a public_from DATE column.\n") in out
 
 
 def test_a_deploy_that_rewrote_both_dashboards_names_each_one_as_changed(capsys):
