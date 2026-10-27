@@ -3295,3 +3295,36 @@ Record the pages before, the minutes of `bronze_to_gold`, the pages left if any,
 ## Ticket 89, step 1 of 2: the paid workspace's nightly window is 300 minutes until the score task fits
 
 **Ran on October 27, 2026 (orchestrator), 04:26 UTC.** The score task run 1086916576670871 timed out at 150 minutes (01:47 to 04:17 UTC, 2h 30m 28s in the UI) without finishing, so the tasks after it were skipped. Stopgap, on the paid workspace's job only: `databricks jobs update --json '{"job_id": 200833746315993, "new_settings": {"timeout_seconds": 18000}}' -p strata`; `databricks jobs get 200833746315993 -p strata` then shows timeout_seconds 18000 with the schedule unchanged (0 0 3 * * ? America/New_York, UNPAUSED). Caution: the next `ops/bundle/deploy.py` run resets the job to the bundle's 9000 seconds; rerun the update after it until ticket 89's fix lands. The remaining tasks of the night (measure_data_readiness, refresh_drafts, parse_and_embed, sync_index) run one at a time by hand from 04:18 UTC, each recorded under its ticket when it ends.
+
+## Ticket 88, step 1 of 2: redeploy the App from the merge commit with `--keep-secrets`, so its install holds sqlglot (criterion 3, live)
+
+Parked on October 26, 2026 with ticket 88, which merged into build/strata as 114ae456. Run it from a snapshot of 114ae456 or later, as the header says, and link the main checkout's `web/node_modules` into the snapshot before the deploy. It needs the Databricks keys in `.env` and the Databricks CLI. It writes no secret, so the second session or the orchestrator runs it with `--keep-secrets` (ticket 70). It changes no table, job or dashboard.
+
+Why: since its first deploy, the App's Packages page has said "I couldn't load your packages and checked plans just now. Try again in a moment." `GET /api/planned-packages` answered 500 with the code `internal`, and Application Insights holds `ModuleNotFoundError: No module named 'sqlglot'` (references e12e0e3f32c043b75483cc9fcac419e0 and be101875624e4a5e7e18a9586b8d0cc8, October 27, 03:46 and 03:53 UTC). The error came from the transpile step that rewrites each statement for Lakebase (`src/strata/lakehouse/engine.py`, `src/strata/appstate/lakebase.py`). Ticket 88 adds `sqlglot==30.24.0` to `ops/app/requirements.txt`, and `ops/app/tests/test_app_imports.py` now fails the gate when the server can import a package the App's list lacks.
+
+Run these from the snapshot, with `--env-file` pointing at the main checkout's `.env`:
+
+    uv run --script ops/app/deploy_app.py --env-file "<main checkout>/.env" --keep-secrets
+    databricks apps get strata -p strata
+
+It worked if:
+
+- The deploy exits 0 and prints the App's address (https://strata-7405609289499029.9.azure.databricksapps.com).
+- `databricks apps get strata` shows the App RUNNING, with an active deployment created after the deploy started and in the state SUCCEEDED.
+- The App's install log (the App's Logs tab in the workspace) lists sqlglot 30.24.0 among the packages pip installed.
+- Application Insights records no new `ModuleNotFoundError` for sqlglot after the deploy.
+
+Record here the deploy's exit code, the active deployment's id and time, the sqlglot line from the install log and the time.
+
+## Ticket 88, step 2 of 2: the Packages page loads on the deployed App and lists the examples (criterion 3, live)
+
+Run it after step 1. It needs a person signed in to the App as a viewer (a member of the reviewing panel's group), so it is the user's or the orchestrator's browser step.
+
+Open https://strata-7405609289499029.9.azure.databricksapps.com, signed in as a viewer, and go to the Packages tab.
+
+It worked if:
+
+- `GET /api/planned-packages` answers 200, not 500 with the code `internal` (the browser's network panel shows it).
+- The page lists the examples Strata set up, each labelled "Example", instead of "I couldn't load your packages and checked plans just now. Try again in a moment."
+
+If the page loads but lists no examples, the seed command has not run on the paid workspace yet. Run "Ticket 41, step 2 of 3" first (`uv run python -m strata.seed_examples --env-file "<main checkout>/.env"`), then reload. Record here the time, the status of `GET /api/planned-packages` and how many rows the page lists. This closes ticket 88's criterion 3.
