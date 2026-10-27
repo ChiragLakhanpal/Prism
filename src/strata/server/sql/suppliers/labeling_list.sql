@@ -1,4 +1,5 @@
--- The labeling tool's next pairs: candidate pairs of the latest run of name matching with no label yet,
+-- The labeling tool's next pairs: candidate pairs of the latest run of name matching with no label yet on the
+-- pair's two names (a label given to the same key when it named other firms does not count),
 -- most likely first, so the pairs auto-merge decides are labeled early. It gives only what a person needs
 -- to judge the pair, and not where Strata sent it, so a label is not swayed by Strata's own decision.
 SELECT
@@ -13,6 +14,7 @@ SELECT
   p.right_contracts
 FROM strata.ops.supplier_pairs AS p
 WHERE p.run_id = (SELECT max_by(q.run_id, q.matched_at) FROM strata.ops.supplier_pairs AS q)
-  AND NOT EXISTS (SELECT 1 FROM strata.ops.supplier_pair_labels AS l WHERE l.pair_id = p.pair_id)
+  AND NOT EXISTS (SELECT 1 FROM strata.ops.supplier_pair_labels AS l
+                  WHERE l.pair_id = p.pair_id AND l.left_name = p.left_name AND l.right_name = p.right_name)
 QUALIFY row_number() OVER (ORDER BY p.match_probability DESC, p.pair_id) <= :limit
 ORDER BY p.match_probability DESC, p.pair_id

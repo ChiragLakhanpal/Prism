@@ -10,7 +10,8 @@
 -- step_supplier_id     the STEP supplier ID the notice writes in brackets after the name, when it
 --                      writes one
 -- country              the bidder's country as the notice writes it
--- individual_consultant  true when the notice writes the bidder as Individual Consultant
+-- individual_consultant  true when the notice writes the bidder as Individual Consultant, or writes a
+--                        person with a personal title such as DR. or MR. (strata.lakehouse.clean.titled)
 -- page_hash, fetched_at  the notice's row in strata.silver.notices that was read
 -- public_from          the notice's public_from (ADR 0002)
 CREATE TABLE IF NOT EXISTS strata.silver.notice_bidders (

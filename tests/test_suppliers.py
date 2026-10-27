@@ -354,6 +354,77 @@ def test_a_judge_that_cannot_answer_leaves_the_middle_to_a_person_and_the_run_go
     assert "failing judge could not answer" in caplog.text
 
 
+def test_a_judge_that_fails_keeps_the_judgements_it_gave_on_earlier_nights_and_only_new_pairs_wait(writable, caplog):
+    """Ticket 19's review, P1. One timeout from Azure OpenAI must not undo every merge the model made: the run keeps
+    each earlier judgement whose judge and names are the same, and only a pair it would ask about now waits for a
+    person. One INTERCONTINENTAL pair has no earlier judgement here, so it is the new question."""
+    from strata.knowledge.suppliers.judge import SameNameStandIn
+
+    old, award = VALUES["fy2001-china-railway"], VALUES["award-china-railway-426408"]
+    writable.run("UPDATE strata.ops.supplier_pairs SET model_decision = NULL WHERE pair_id = :pair",
+                 {"pair": "1527581/1|1541213/1"})
+    failing = FailingJudge()
+    failing.name = SameNameStandIn.name
+
+    resolve_again(writable, judge=failing)
+
+    [kept] = routed(writable, old["value"], award["name"])
+    assert (kept["route"], kept["decided_by"], kept["outcome"]) == ("model", "model", "merge")
+    assert contract_supplier(writable, old["contract"])["supplier_id"] == award["value"]
+    [asked] = rows(writable, "SELECT route, review_reason, outcome FROM strata.ops.supplier_pairs WHERE pair_id = :pair",
+                   pair="1527581/1|1541213/1")
+    assert (asked["route"], asked["review_reason"], asked["outcome"]) == ("person", "no_model", "waiting")
+    assert "kept its earlier judgements" in caplog.text
+
+
+def test_a_name_only_supplier_is_named_by_a_row_public_on_the_day_the_supplier_became_public():
+    """Ticket 19's verify, O2. A supplier known only by name is public from its earliest row, so its name is the
+    longest way the rows public that day write it, never a longer name a later row brought: a query as of the earlier
+    day must not show a name that was not public yet. Made-up rows."""
+    import datetime as dt
+
+    from strata.knowledge.suppliers.resolve import RESOLUTION_COLUMNS
+    from strata.lakehouse import catalog, gold
+
+    def resolved(key, name, day):
+        return ("hand", "awards_fy2001_2016", key, 1, key, "P000001", name, "Kenya", None, False, "N-000000000001",
+                None, "name", day)
+
+    with DuckDBEngine.open() as engine:
+        catalog.build(engine)
+        engine.insert_rows("strata.silver.supplier_resolution", RESOLUTION_COLUMNS, [
+            resolved("1500001", "EGIS INTL", dt.date(2015, 1, 1)),
+            resolved("1500002", "EGIS INTERNATIONAL SA", dt.date(2018, 1, 1))])
+        gold.sync(engine, "supplier")
+        found = rows(engine, "SELECT name, public_from FROM strata.gold.supplier WHERE supplier_id = 'N-000000000001'")
+
+    assert found == [{"name": "EGIS INTL", "public_from": dt.date(2015, 1, 1)}]
+
+
+def test_a_persons_no_merge_keeps_two_rows_apart_whatever_other_merges_link_them(writable):
+    """Ticket 19's verify, V1. The fixture's five EGIS INTERNATIONAL rows with no STEP supplier ID are merged pair by
+    pair. A person says 1500446/1 and 1517730/1 are not one firm. The other merges still link them, so every merge in
+    their group goes to a person (person_kept_apart), and the two rows resolve to two suppliers."""
+    from strata.server.suppliers import SupplierLog
+
+    SupplierLog(lambda: writable.cursor()).decide("1500446/1|1517730/1", "no_merge", "4021@1984",
+                                                  "Two offices with their own registrations.")
+    resolve_again(writable)
+
+    pairs = rows(writable, "SELECT pair_id, route, outcome, decided_by, review_reason FROM strata.ops.supplier_pairs "
+                           "WHERE left_name = 'EGIS INTERNATIONAL' ORDER BY pair_id")
+    suppliers = {row["source_key"]: row["supplier_id"] for row in rows(
+        writable, "SELECT source_key, supplier_id FROM strata.silver.supplier_resolution "
+                  "WHERE source_key IN ('1500446', '1517730')")}
+
+    [said] = [pair for pair in pairs if pair["pair_id"] == "1500446/1|1517730/1"]
+    assert (said["outcome"], said["decided_by"]) == ("no_merge", "person")
+    others = [pair for pair in pairs if pair["pair_id"] != "1500446/1|1517730/1"]
+    assert others and {(pair["route"], pair["outcome"], pair["review_reason"]) for pair in others} == {
+        ("person", "waiting", "person_kept_apart")}
+    assert suppliers["1500446"] != suppliers["1517730"]
+
+
 # ── Routing, on plain rows written by hand ───────────────────────────────
 
 def supplier_row(source_key, name, country="Kenya", project="P000001", supplier_id=None, source="awards_fy2001_2016",
@@ -531,6 +602,35 @@ def test_strata_ops_reports_the_auto_merge_precision_on_the_labeled_pairs_with_i
     assert found["auto_merge_precision"] == pytest.approx(29 / 30)
     assert (found["interval_low"], found["interval_high"]) == pytest.approx(WILSON[(29, 30)], abs=1e-6)
     assert found["lowest_threshold_meeting_target"] is None  # 29 of 30 falls short of 0.98 at every probability
+
+
+def test_a_label_joins_only_the_pair_whose_two_names_it_was_given(writable):
+    """Ticket 19's review, P2. A pair is keyed by row positions, so a revised notice that lists its bidders in a new
+    order gives an old key to another firm. A label keeps the two names it was given and joins a pair only while
+    the pair still has them: a label whose left name differs is not counted, and the pair is offered again."""
+    import datetime as dt
+
+    from strata.knowledge.suppliers import quality as supplier_quality
+    from strata.server.suppliers import SupplierLog, labeling_list
+
+    [first, second] = rows(writable, "SELECT pair_id, left_key, right_key, right_name FROM strata.ops.supplier_pairs "
+                                     "WHERE route = 'auto_merge' ORDER BY pair_id LIMIT 2")
+    SupplierLog(lambda: Unclosed(writable)).label(first["pair_id"], "merge", "4021@1984")
+    writable.insert_rows("strata.ops.supplier_pair_labels", ("pair_id", "left_key", "right_key", "left_name",
+                                                             "right_name", "label", "labeler", "labeled_at",
+                                                             "public_from"),
+                         [(second["pair_id"], second["left_key"], second["right_key"], "ANOTHER FIRM LTD",
+                           second["right_name"], "merge", "4021@1984", dt.datetime(2026, 10, 24, tzinfo=dt.UTC),
+                           dt.date(2026, 10, 24))])
+    supplier_quality.measure(writable, "labeled")
+
+    offered = {pair["pair_id"] for pair in labeling_list(writable, 100, 1000)["pairs"]}
+    assert labeling_list(writable, 100, 1000)["labeled_pairs"] == 1
+    assert quality(writable, "labeled")["labeled_pairs"] == 1
+    assert second["pair_id"] in offered and first["pair_id"] not in offered
+    [kept] = rows(writable, "SELECT left_name, right_name FROM strata.ops.supplier_pair_labels WHERE pair_id = :pair",
+                  pair=first["pair_id"])
+    assert kept["left_name"] and kept["right_name"]
 
 
 def test_the_lowest_threshold_at_which_labeled_pairs_reach_0_98_is_reported(writable):

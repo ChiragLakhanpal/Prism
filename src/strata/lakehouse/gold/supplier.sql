@@ -7,7 +7,8 @@
 --   resolved_firms     each supplier the awards since FY2020 do not hold: a STEP supplier ID known only
 --                      from award notices, or a supplier known only by name (N-...), from the FY2001 to
 --                      FY2016 awards or a notice's bidder with no ID. Its name is the longest way its
---                      rows write it, since the FY2001 to FY2016 dataset cuts names off.
+--                      rows public on its earliest day write it, since the FY2001 to FY2016 dataset cuts
+--                      names off, and a longer name a later row brings was not public then (ticket 63).
 --   resolved_ventures  each joint venture of an award notice or a FY2001 to FY2016 row that the awards
 --                      since FY2020 do not hold, keyed the same way, so a joint venture an award notice
 --                      lists is the same supplier as the one the awards hold
@@ -50,7 +51,7 @@ longest_name AS (
   SELECT supplier_id, name
   FROM resolved
   WHERE name IS NOT NULL
-  QUALIFY row_number() OVER (PARTITION BY supplier_id ORDER BY length(name) DESC, name) = 1
+  QUALIFY row_number() OVER (PARTITION BY supplier_id ORDER BY public_from, length(name) DESC, name) = 1
 ),
 resolved_firms AS (
   SELECT

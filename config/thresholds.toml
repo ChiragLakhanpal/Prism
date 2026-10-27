@@ -464,7 +464,8 @@ auto_merge_min_probability = 0.99
 model_confidence_min = 0.9
 # The model is asked about at most this many new pairs in one nightly run, the likeliest first. The
 # rest wait for a person (review_reason no_model) and are asked on a later night. It keeps the first
-# live night inside the job's time limit and its cost. Source: a starting value for the owner to confirm.
+# live night inside the job's time limit, and keeps its cost down. Source: a starting value for the owner to
+# confirm.
 model_pairs_per_run = 500
 # Auto-merge precision should be at least this on the labeled pairs, and that many pairs should be
 # labeled. Source: docs/PLAN.md section 5 ("auto-merge precision of at least 0.98 on 1,000 labeled

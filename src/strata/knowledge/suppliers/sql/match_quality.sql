@@ -1,25 +1,26 @@
 -- How often auto-merge is right on the pairs people labeled (strata.ops.supplier_match_quality): the
 -- latest run's candidate pairs (strata.ops.supplier_pairs), each with its latest label
--- (strata.ops.supplier_pair_labels). A pair that auto-merged is right when its label is merge.
+-- (strata.ops.supplier_pair_labels) given to the pair's two names. A pair that auto-merged is right when its
+-- label is merge.
 --
 -- Below :min_labeled labeled auto-merged pairs, the precision and its interval stay empty (DESIGN.md
 -- section 7, rules 6 and 15). The interval is the 95% Wilson score interval, with :z from the
 -- thresholds file. lowest_threshold_meeting_target is the lowest match probability at which the
 -- labeled pairs at or above it, at least :min_labeled of them, are right at :precision_target or more.
 WITH pairs AS (
-  SELECT p.pair_id, p.match_probability, p.route
+  SELECT p.pair_id, p.left_name, p.right_name, p.match_probability, p.route
   FROM strata.ops.supplier_pairs AS p
   WHERE p.run_id = (SELECT max_by(q.run_id, q.matched_at) FROM strata.ops.supplier_pairs AS q)
 ),
 labels AS (
-  SELECT l.pair_id, l.label
+  SELECT l.pair_id, l.left_name, l.right_name, l.label
   FROM strata.ops.supplier_pair_labels AS l
-  QUALIFY row_number() OVER (PARTITION BY l.pair_id ORDER BY l.labeled_at DESC) = 1
+  QUALIFY row_number() OVER (PARTITION BY l.pair_id, l.left_name, l.right_name ORDER BY l.labeled_at DESC) = 1
 ),
 labeled AS (
   SELECT p.match_probability, p.route, l.label
   FROM pairs AS p
-  JOIN labels AS l ON l.pair_id = p.pair_id
+  JOIN labels AS l ON l.pair_id = p.pair_id AND l.left_name = p.left_name AND l.right_name = p.right_name
 ),
 counted AS (
   SELECT

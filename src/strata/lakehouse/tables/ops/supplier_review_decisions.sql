@@ -2,9 +2,10 @@
 -- reviewer and the reason (ticket 19). The server writes one row per decision, as the app's own
 -- service principal (src/strata/server/suppliers.py), and takes the reviewer from the viewer the
 -- Databricks App forwarded with the request. The latest decision on a pair stands, and the next
--- nightly run applies it while the pair's two names are the ones the person saw: a pair is keyed by
--- row positions, which a revised notice can give to another firm. No roles file names the reviewers yet (tickets 29 and 38 bring it), so any
--- signed-in viewer can decide.
+-- nightly run applies it while the pair's two names are the ones the latest run gave the pair when the
+-- decision was written: a pair is keyed by row positions, which a revised notice can give to another
+-- firm. No roles file names the reviewers yet (tickets 29 and 38 bring it), so any signed-in viewer can
+-- decide.
 --
 -- The rows keep the user id, not the email, as strata.ops.evidence_opened does: every account user
 -- can read strata.ops (bundle/catalog.yml).
