@@ -3407,3 +3407,7 @@ It worked if:
 - The first query counts more than 0 rows for the run, and the second returns no rows.
 
 Record here the run id, the task's state, the first query's count, the second query's result and the time. This closes ticket 87's criterion 4, and the dashboard's Data readiness page can then fill on the paid workspace.
+
+## Ticket 72, the index sync after the night's second document pass on the paid workspace
+
+**Ran on October 27, 2026 (orchestrator), 05:31 to 05:34 UTC.** `sync_index` alone (`run-now --only`, the last task of the by-hand chain) ended SUCCESS. It had nothing new to index: `strata.gold.passage` holds 0 rows after both passes (the blocks above under tickets 86 and 85 say why), so the Delta Sync index `strata.gold.passage_index` is unchanged. The chain's order and times tonight: `measure_data_readiness` FAILED 04:18 to 04:27 UTC (the index's view, ticket 87), `refresh_drafts` SUCCESS 04:27 to 04:29, `parse_and_embed` SUCCESS 04:29 to 05:31 with no passage written (ticket 86), `sync_index` SUCCESS 05:31 to 05:34. The second reading of ticket 72 (the index holding the slice's passages) is proven by the `parse_and_embed` run after ticket 86 merges and the bundle deploys, followed by `sync_index`; record both here when they run.
