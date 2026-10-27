@@ -1799,7 +1799,7 @@ def load_views(path: Path = CONFIG_DIR / "roles.toml") -> Views:
 
 # ── The evidence ladder ──────────────────────────────────────────────────
 
-CLASSES = ("judgment", "moment")  # an outcome judgment, or a fact about a moment
+CLASSES = ("judgment", "moment")  # an outcome judgment, or a claim about one moment
 KINDS = ("rating", "date", "amount")
 TIES = ("tieSpecific", "tieRecent")  # the more specific source, then the more recent one
 # The forms an assertion takes, as the readers in strata.knowledge.assertions write them: a rating in its

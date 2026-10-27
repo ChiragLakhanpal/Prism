@@ -11,6 +11,10 @@ changed shows as dropped and added), and each activity can change in four ways, 
 - re-estimated: both versions give an Estimated Amount and the two differ. An estimate this version
   gives for the first time is not a re-estimate.
 
+So a version with none of these may still fill in dates or estimates the version before left blank, and the
+screens say it lists the same activities with no planned date moved and no estimate changed, never that its dates
+and estimates are the same (ticket 21's verify, finding 4).
+
 The version before is silver.plan_versions' previous_document_id: the agency's version just before it
 among the versions Strata holds. When the layout parser did not read that version's tables, there is
 nothing to compare, and the answer says so (previous_not_read), as it does for the agency's earliest

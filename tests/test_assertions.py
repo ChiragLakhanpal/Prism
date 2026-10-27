@@ -289,17 +289,25 @@ class LiveStandIn:
     """A batch model named as the live one is, by its deployment, that answers from the recording, answers every
     request with an error, or says its batch is still running. It keeps what it was asked."""
 
-    def __init__(self, deployment: str, error: str | None = None, pending: str | None = None):
+    def __init__(self, deployment: str, error: str | None = None, pending: str | None = None,
+                 answers_on_resume: int | None = None, resume_fails: bool = False):
         self.name = self.deployment = deployment
         self.error, self.pending, self.asked = error, pending, []
+        # On a resumed batch: answer only this many of its requests, as when the Batch API lost the rest, or fail
+        # to read the batch at all, as when its files expired.
+        self.answers_on_resume, self.resume_fails = answers_on_resume, resume_fails
         self.recorded = batch.RecordedBatch(deployment=deployment)
 
     def answer(self, requests, resume=None):
         self.asked.append(([request.custom_id for request in requests], resume))
         if self.pending:
             raise batch.BatchPending(f"Batch {self.pending} was still in_progress.", batch_id=self.pending)
+        if resume and self.resume_fails:
+            raise batch.BatchError(f"GET /batches/{resume} answered 404.")
         if self.error:
             return [batch.Answer(request.custom_id, None, self.error) for request in requests]
+        if resume and self.answers_on_resume is not None:
+            return self.recorded.answer(requests[:self.answers_on_resume])
         return self.recorded.answer(requests)
 
 
@@ -362,6 +370,49 @@ def test_a_batch_still_running_keeps_the_rest_of_the_run_and_is_waited_for_on_th
 
     assert finished.asked == [(asked, "batch-not-a-real-id")]
     assert report.pending == 0
+    assert the_showcase(copy_db) == [(ISR_7, PARAGRAPH_78)]
+
+
+def test_a_request_a_resumed_batch_did_not_answer_is_asked_again_on_the_next_run(copy_db):
+    """Ticket 20's review, F4. A finished batch can leave a request out of its output. Its newest row then says no
+    answer came in that batch, so the next run asks for it in a new batch rather than resuming the finished one for
+    ever."""
+    assertions.run(copy_db, ["P130164"], model=LiveStandIn("not-a-real-deployment", pending="batch-not-a-real-id"))
+    partly = LiveStandIn("not-a-real-deployment", answers_on_resume=1)
+    assertions.run(copy_db, ["P130164"], model=partly)
+    [(resumed, batch_id)] = partly.asked
+    assert batch_id == "batch-not-a-real-id" and len(resumed) > 1
+
+    again = LiveStandIn("not-a-real-deployment")
+    assertions.run(copy_db, ["P130164"], model=again)
+
+    assert again.asked == [(resumed[1:], None)]
+
+
+def test_a_resumed_batch_that_cannot_be_read_is_sent_again_and_the_run_goes_on(copy_db):
+    """Ticket 20's review, F4. A batch whose files expired cannot be read; the run sends its requests again in a new
+    batch instead of stopping."""
+    assertions.run(copy_db, ["P130164"], model=LiveStandIn("not-a-real-deployment", pending="batch-not-a-real-id"))
+    expired = LiveStandIn("not-a-real-deployment", resume_fails=True)
+
+    assertions.run(copy_db, ["P130164"], model=expired)
+
+    [(first, resume), (second, fresh)] = expired.asked
+    assert (resume, fresh, second) == ("batch-not-a-real-id", None, first)
+    assert the_showcase(copy_db) == [(ISR_7, PARAGRAPH_78)]
+
+
+def test_a_run_over_two_projects_asks_the_model_once(copy_db):
+    """Ticket 20's review, F6. The live batch waits up to an hour, so a run builds every project's requests first
+    and sends them in one batch."""
+    live = LiveStandIn("not-a-real-deployment")
+
+    assertions.run(copy_db, ["P130164", "P156634"], model=live)
+
+    [(asked, _)] = live.asked
+    each = {project: [report.custom_id for report in assertions.reports(copy_db, project, assertions.load_ladder())]
+            for project in ("P130164", "P156634")}
+    assert all(each.values()) and sorted(asked) == sorted(each["P130164"] + each["P156634"])
     assert the_showcase(copy_db) == [(ISR_7, PARAGRAPH_78)]
 
 

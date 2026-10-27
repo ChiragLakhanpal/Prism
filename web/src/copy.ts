@@ -1980,7 +1980,9 @@ export const copy = {
     changes: {
       // Two sentences with long dates, so neither is dense (DESIGN.md section 7 rule 13; unslop rule 28).
       lead: "The latest plan is the plan of {plan_date}. Compared with the plan of {prev_date}, it {change_list}.",
-      same: "The latest plan is the plan of {plan_date}. It lists the same activities, dates and estimates as the plan of {prev_date}.",
+      // A date or an estimate a version gives for the first time is no change (src/strata/server/changes.py), so the
+      // sentence says only what the comparison checks (ticket 21's verify, finding 4).
+      same: "The latest plan is the plan of {plan_date}. It lists the same activities as the plan of {prev_date}, with no planned date moved and no estimate changed.",
       link: "See what changed",
       earliest: "The only plan I have from this agency is the plan of {plan_date}, so I can't compare it with an earlier version.",
       prevUnread: "I haven't read the plan of {prev_date}, the version before the latest, so I can't say what changed.",
@@ -2459,7 +2461,7 @@ export const copy = {
       // When only the comparison failed: the line says so and links the section, whose alert has Try again.
       error: "I couldn't load what changed in this plan.",
       errorLink: "Go to that section",
-      same: "This version lists the same activities, dates and estimates as the plan of {prev_date}.",
+      same: "This version lists the same activities as the plan of {prev_date}, with no planned date moved and no estimate changed.",
       earliest: "This is the earliest plan I have from this agency, so I have no earlier version to compare it with.",
       prevUnread: "I haven't read the plan of {prev_date}, the version before this one, so I can't say what changed.",
     },
