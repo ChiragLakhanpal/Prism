@@ -84,6 +84,7 @@ def test_new_pages_cost_fewer_statements_than_one_per_page_per_table_and_no_dele
     assert silver.run(counted, PROJECTS) > 0
     assert new > 120
     assert len(counted.statements) < new * len(projects.TABLES)
+    assert len(counted.statements) < new  # fewer than one a page, so as true of a transform with one table
     assert "DELETE" not in counted.statements
     assert silver.pending(engine, PROJECTS) == []
 

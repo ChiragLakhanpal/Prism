@@ -166,7 +166,7 @@ def _bronze_to_gold(run: Run) -> int:
     from strata.knowledge.suppliers import bidders, judge, resolve
 
     minutes = float(load_thresholds().value("ingestion.silver_minutes"))
-    started = run.started or run.clock()
+    started = (run.started or run.clock()).astimezone(dt.UTC)  # in UTC, as silver takes each record's time
     passed = silver.read(run.engine, _paged(), run.clock, until=started + dt.timedelta(minutes=minutes))
     if passed.waiting:
         silver.note_waiting(run.engine, run.run_id, passed, minutes)
