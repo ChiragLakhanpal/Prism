@@ -105,7 +105,8 @@ function useScrollPadding(header: HTMLElement | null, bar: HTMLElement | null) {
   useLayoutEffect(() => {
     const root = document.documentElement;
     const update = () => {
-      const top = sticks(header) ? `${header!.offsetHeight + 8}px` : "";
+      // The header sticks under the navy bar from 1024 px, so the padding counts the bar too (frame-top, ticket 93).
+      const top = sticks(header) ? `calc(var(--frame-top) + ${header!.offsetHeight + 8}px)` : "";
       const bottom = sticks(bar) ? `${bar!.offsetHeight + 8}px` : "";
       root.style.scrollPaddingTop = top;
       root.style.scrollPaddingBottom = bottom;
@@ -186,7 +187,7 @@ export function DraftHeader({ title, subtitle, state, headerRef, className }: {
     <div
       ref={ref}
       data-draft-header
-      className={cx("border-b border-line bg-page py-4 @lg/page:sticky @lg/page:top-0 @lg/page:z-10 xl:sticky xl:top-0 xl:z-10", className)}
+      className={cx("border-b border-line bg-page py-4 @lg/page:sticky @lg/page:top-(--frame-top) @lg/page:z-10 xl:sticky xl:top-(--frame-top) xl:z-10", className)}
     >
       <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-2">
         <div className="min-w-0">

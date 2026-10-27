@@ -1,19 +1,20 @@
-// The top navigation (DESIGN.md section 5): a navy bar, 56 px tall, with the logo, the Strata wordmark (a link to
-// Home) and the view switch. Nouns navigate. The sections are the sidebar beside the page (Sidebar.tsx, ticket 92).
+// The top bar (DESIGN.md section 5, Top bar; ticket 93): the navy banner that carries the World Bank Group logo, the
+// Strata wordmark (a link to Home), the one box and the view switch. Nouns navigate. The sections are the sidebar beside
+// the page (Sidebar.tsx, ticket 92), and the data stamp sits at its foot.
 //
-// From 1024 px (64rem) the view switch sits in the bar. Below 1024 px a labeled Menu button opens the Menu sheet,
-// which holds the sidebar's items and the view lines; below 360 px the button keeps its name with its word hidden.
-// On navy, focus uses focus-on-dark.
+// From 1024 px (64rem) everything sits on one 56 px row that sticks. Below 1024 px the bar scrolls with the page and has
+// two rows: a labeled Menu button, the logo and the wordmark, with the view switch at the right from 768 px, then the box
+// across the window. Below 768 px the view switch is at the Menu sheet's foot. On navy, focus uses focus-on-dark.
 //
-// When the window crosses 1024 px, the control that had focus can vanish with its half of the bar, which would drop
-// focus to the page. Focus moves to the control that now holds the same thing instead: the pill or the view popover
-// to the Menu button, and the Menu button to the pill (DESIGN.md section 10). The sidebar hands its own items to the
-// Menu button.
+// When the window crosses 768 or 1024 px, the control that had focus can vanish with its part of the bar, which would
+// drop focus to the page. Focus moves to the control that now holds the same thing instead: the view switch or its
+// popover to the Menu button below 768 px, and the Menu button to the view switch from 1024 px (DESIGN.md section 10).
+// The sidebar hands its own items to the Menu button.
 //
-// The view switch (ticket 40; the 40 brief, section 3): the pill names the view the server applied, and in a preview
-// it fills white with navy text, as the Menu button does below 1024 px. Its popover (the Menu sheet's foot below
-// 1024 px) holds the views as link rows, a past-date field and the language of answers and drafts (ticket 42). Every
-// row and date is an address, so the mode lives in the address and survives Back, reload and a shared link.
+// The view switch (ticket 40; the 40 brief, section 3): the button names the view the server applied, and in a preview
+// it fills white with navy text, as the Menu button does. Its popover (the Menu sheet's foot below 768 px) holds the
+// views as link rows, a past-date field and the language of answers and drafts (ticket 42). Every row and date is an
+// address, so the mode lives in the address and survives Back, reload and a shared link.
 import { useEffect, useId, useRef, useState, type FormEvent, type ReactNode, type RefObject } from "react";
 import * as RadixPopover from "@radix-ui/react-popover";
 import { Check, ChevronDown, CircleX, Menu as MenuIcon } from "lucide-react";
@@ -80,15 +81,29 @@ export function pillLabel(mode: NavMode): string {
   return mode.own === "piu" ? words.officer : words.staff;
 }
 
-// Calls back each time the window crosses 1024 px, with whether it is now wide. The callbacks
-// here use only state setters and refs, which never change, so the first one is kept.
-function useWideChange(onChange: (wide: boolean) => void) {
+// The view switch is in the bar from 768 px (48rem), and at the Menu sheet's foot below.
+export const VIEW_IN_BAR = "(min-width: 48rem)";
+
+// Calls back each time the window crosses one of the queries' widths. The callbacks here use only state setters and
+// refs, which never change, so the first one is kept.
+function useWidthChange(queries: string[], onChange: () => void) {
   useEffect(() => {
-    const wide = window.matchMedia(WIDE);
-    const changed = () => onChange(wide.matches);
-    wide.addEventListener("change", changed);
-    return () => wide.removeEventListener("change", changed);
+    const media = queries.map((query) => window.matchMedia(query));
+    media.forEach((one) => one.addEventListener("change", onChange));
+    return () => media.forEach((one) => one.removeEventListener("change", onChange));
   }, []);
+}
+
+const shown = (element: Element) => element.getClientRects().length > 0 && element.checkVisibility({ visibilityProperty: true });
+
+// The control Tab reaches after this one in the page's order, leaving out what is hidden or inert and the popover
+// itself, which is portaled to the end of the page.
+function nextInPage(from: HTMLElement): HTMLElement | null {
+  const tabbable = [
+    ...document.querySelectorAll<HTMLElement>("a[href], button:not([disabled]), input:not([disabled]), select, textarea, [tabindex]:not([tabindex='-1'])"),
+  ].filter((element) => element === from || (!element.closest("[data-radix-popper-content-wrapper], [inert]") && shown(element)));
+  const at = tabbable.indexOf(from);
+  return at < 0 ? null : (tabbable[at + 1] ?? null);
 }
 
 // Who is signed in, as the first line of the view panel. An error carries the circle-x icon, as the
@@ -255,11 +270,11 @@ function ViewSwitch({
   // the end of the page, so without this Tab past its last control would leave the page.
   const after = useRef<HTMLElement | null>(null);
 
-  // Narrowing the window below 1024 px hides the pill, so the popover closes with it.
-  useWideChange((wide) => !wide && setOpen(false));
+  // Narrowing the window below 768 px hides the view switch, so the popover closes with it.
+  useWidthChange([VIEW_IN_BAR], () => !window.matchMedia(VIEW_IN_BAR).matches && setOpen(false));
   if (mode.unknown) {
-    // Before the viewer is known, an outline pill with no text, since an officer's label differs from staff's.
-    return <Skeleton className="block h-8 w-[193px] border border-surface bg-transparent" radius="rounded-pill" />;
+    // Before the viewer is known, an outline button with no text, since an officer's label differs from staff's.
+    return <Skeleton className="block h-8 w-[193px] border border-surface bg-transparent" radius="rounded-sm" />;
   }
   return (
     <RadixPopover.Root open={open} onOpenChange={setOpen}>
@@ -271,7 +286,7 @@ function ViewSwitch({
         data-preview={mode.preview ?? undefined}
         aria-haspopup="dialog"
         className={cx(
-          "flex h-8 shrink-0 items-center gap-1 rounded-pill border px-3 text-button whitespace-nowrap",
+          "flex h-8 shrink-0 items-center gap-1 rounded-sm border px-3 text-button whitespace-nowrap",
           "transition-paint duration-150",
           mode.preview ? PREVIEW_LOOK : OWN_LOOK,
         )}
@@ -295,8 +310,8 @@ function ViewSwitch({
           }}
           onKeyDown={(event) => {
             // Tab moves through the rows, the date field and its button, and the language group; past the last
-            // control it closes the popover and moves on to the box, and Shift+Tab before the first goes back to the
-            // pill (the 40 brief, 8.3).
+            // control it closes the popover and moves on to what follows the view switch in the page, the sidebar's
+            // first item from 1024 px, and Shift+Tab before the first goes back to the view switch (the 40 brief, 8.3).
             if (event.key !== "Tab") return;
             const focusable = [...event.currentTarget.querySelectorAll<HTMLElement>("a[href], input:not([type=radio]), input[type=radio]:checked, button")].filter(
               (element) => element.getClientRects().length > 0,
@@ -306,7 +321,7 @@ function ViewSwitch({
             const atEdge = event.shiftKey ? document.activeElement === first : document.activeElement === last;
             if (!atEdge) return;
             event.preventDefault();
-            after.current = event.shiftKey ? pill.current : document.querySelector<HTMLElement>("[data-box-band] input");
+            after.current = event.shiftKey || !pill.current ? pill.current : nextInPage(pill.current);
             setOpen(false);
           }}
           onCloseAutoFocus={(event) => {
@@ -316,8 +331,8 @@ function ViewSwitch({
               after.current = null;
               return;
             }
-            // Below 1024 px the pill is hidden and the Menu sheet holds the view panel, so focus goes there.
-            if (!window.matchMedia(WIDE).matches) {
+            // Below 768 px the view switch is hidden and the Menu sheet holds the view panel, so focus goes there.
+            if (!window.matchMedia(VIEW_IN_BAR).matches) {
               event.preventDefault();
               menuButton.current?.focus();
             }
@@ -352,6 +367,7 @@ export function withModeOf(href: string, search: string): string {
 
 export function TopNav({
   logo,
+  box,
   viewer,
   homeHref = "/",
   viewOpen,
@@ -362,6 +378,8 @@ export function TopNav({
   // before the wordmark, so the two never read as one co-branded name (DESIGN.md section 9). The app and
   // the gallery pass the World Bank's official file (web/src/assets/world-bank-logo.md).
   logo?: ReactNode;
+  // The one box (IntentBox in the app, OneBox in the gallery), in the bar's search slot.
+  box?: ReactNode;
   viewer: Viewer;
   homeHref?: string;
   // For the gallery: open the view popover on the first render.
@@ -377,15 +395,16 @@ export function TopNav({
   // change, so the bar notes it on blur and forgets it after the frame.
   const hidden = useRef<HTMLElement | null>(null);
 
-  // A focused control that the new width hides hands focus to the control at the bar's right end: the pill when the
-  // window widens, the Menu button when it narrows.
-  useWideChange((wide) => {
+  // A focused control that the new width hides hands focus to the one that now holds the same thing: the view switch
+  // when it shows, and the Menu button otherwise.
+  useWidthChange([VIEW_IN_BAR, WIDE], () => {
     const active = document.activeElement;
     const root = bar.current;
     const focused = active instanceof HTMLElement && root?.contains(active) ? active : active === document.body ? hidden.current : null;
     hidden.current = null;
     if (!root || !focused || !root.contains(focused) || focused.getClientRects().length > 0) return;
-    (wide ? root.querySelector<HTMLElement>("[data-view-pill]") : sheet.button.current)?.focus();
+    const pill = root.querySelector<HTMLElement>("[data-view-pill]");
+    (pill && pill.getClientRects().length > 0 ? pill : sheet.button.current)?.focus();
   });
 
   return (
@@ -400,44 +419,53 @@ export function TopNav({
         requestAnimationFrame(() => (hidden.current = null));
       }}
     >
+      {/* Shown below the bar, over the page, so it never covers the logo or the wordmark (DESIGN.md section 10). */}
       <SkipLink />
-      <div className="layout flex h-14 items-center">
-        {logo && (
-          <div data-logo-slot className="flex h-14 shrink-0 items-center py-4 pr-6">
-            {logo}
+      <div data-bar-row className="bar-row">
+        <div className="bar-brand flex h-14 min-w-0 items-center pl-3 lg:pl-4">
+          {/* A fixed width, 96 px or 44 px below 360 px, so the logo after it never moves when the font arrives and
+              web/index.html paints it in the same place. */}
+          <button
+            key={mode.preview ?? "own"}
+            ref={sheet.button}
+            type="button"
+            data-menu-button
+            aria-expanded={sheet.open}
+            aria-controls={sheet.sheetId}
+            aria-describedby={mode.preview && modeLineId ? modeLineId : undefined}
+            data-preview={mode.preview ?? undefined}
+            onClick={() => sheet.setOpen(!sheet.open)}
+            className={cx(
+              "flex h-11 w-11 shrink-0 items-center justify-center gap-2 rounded-sm border text-button xs:w-24 lg:hidden",
+              "transition-paint duration-150",
+              mode.preview ? PREVIEW_LOOK : OWN_LOOK,
+            )}
+          >
+            <MenuIcon aria-hidden="true" className="size-4 shrink-0" />
+            {/* Below 360 px the word is hidden from sight, and the button keeps its name (DESIGN.md section 5, Menu sheet). */}
+            <span className="max-xs:clip-visually">{copy.nav.menu}</span>
+          </button>
+          {logo && (
+            <div data-logo-slot className="ml-3 flex h-14 shrink-0 items-center py-4 lg:ml-0">
+              {logo}
+            </div>
+          )}
+          <a
+            href={withModeOf(homeHref, mode.search)}
+            className="ml-6 flex h-10 shrink-0 items-center rounded-sm px-1 text-h3 text-surface underline-offset-4 hover:underline"
+          >
+            {copy.appName}
+          </a>
+        </div>
+        {box && (
+          <div data-box-band className="bar-box min-w-0">
+            {box}
           </div>
         )}
-        <a
-          href={withModeOf(homeHref, mode.search)}
-          className="flex h-10 shrink-0 items-center text-h3 text-surface underline-offset-4 hover:underline"
-        >
-          {copy.appName}
-        </a>
-        <div className="ml-auto hidden pl-6 lg:block">
+        <div className="bar-view hidden pl-6 md:block lg:pl-0">
           <ViewSwitch viewer={viewer} mode={mode} defaultOpen={viewOpen} menuButton={sheet.button} />
         </div>
-        <button
-          key={mode.preview ?? "own"}
-          ref={sheet.button}
-          type="button"
-          data-menu-button
-          aria-expanded={sheet.open}
-          aria-controls={sheet.sheetId}
-          aria-describedby={mode.preview && modeLineId ? modeLineId : undefined}
-          data-preview={mode.preview ?? undefined}
-          onClick={() => sheet.setOpen(!sheet.open)}
-          className={cx(
-            "ml-auto flex h-11 min-w-11 shrink-0 items-center justify-center gap-2 rounded-sm border px-3 text-button lg:hidden",
-            "transition-paint duration-150",
-            mode.preview ? PREVIEW_LOOK : OWN_LOOK,
-          )}
-        >
-          <MenuIcon aria-hidden="true" className="size-4" />
-          {/* Below 360 px the word is hidden from sight, and the button keeps its name (DESIGN.md section 5, Menu sheet). */}
-          <span className="max-xs:clip-visually">{copy.nav.menu}</span>
-        </button>
       </div>
     </div>
   );
 }
-

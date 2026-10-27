@@ -350,7 +350,11 @@ test("from 1024 px the header sticks and focused rows stay 8 px clear of it; bel
 
   expect(await header.evaluate((el) => getComputedStyle(el).position)).toBe("sticky");
   const height = await header.evaluate((el) => (el as HTMLElement).offsetHeight);
-  expect(await page.evaluate(() => document.documentElement.style.scrollPaddingTop)).toBe(`${height + 8}px`);
+  // The header sticks under the navy bar, which sticks too from 1024 px, so the padding counts the bar (ticket 93).
+  expect(await page.evaluate(() => getComputedStyle(document.documentElement).scrollPaddingTop)).toBe(`${56 + height + 8}px`);
+  await page.evaluate(() => window.scrollTo(0, 800));
+  await expect.poll(async () => Math.round((await header.boundingBox())!.y), "the header sticks under the bar").toBe(56);
+  await page.evaluate(() => window.scrollTo(0, 0));
 
   await page.setViewportSize({ width: 390, height: 900 });
   await expect.poll(() => header.evaluate((el) => getComputedStyle(el).position)).toBe("static");

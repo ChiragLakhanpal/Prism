@@ -197,7 +197,8 @@ test("every sidebar item opens its page and focuses its h1, in the open sidebar 
       ["Drafts", "/drafts", "Drafts"],
       ["Data", "/data", "Data"],
     ] as const) {
-      await main.getByRole("link", { name: item }).click();
+      // Exact, since the stamp under Data links to the Data page too (ticket 93).
+      await main.getByRole("link", { name: item, exact: true }).click();
       await expect(title, `${item} at ${width} px`).toHaveText(h1);
       await expect(title, `${item} at ${width} px`).toBeFocused();
       expect(new URL(page.url()).pathname).toBe(path);
@@ -217,7 +218,7 @@ test("the stamp is read once per page load and kept across route changes", async
   await expect(page.locator("[data-stamp]")).toContainText("Data through");
 
   for (const tab of ["Packages", "Projects", "Data"]) {
-    await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: tab }).click();
+    await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: tab, exact: true }).click();
     await expect(page.getByRole("heading", { level: 1 })).toHaveText(tab);
   }
 
@@ -231,9 +232,11 @@ test("below 768 px the Menu sheet holds the items; an item opens its page, close
 
   await menu.click();
   const nav = page.getByRole("dialog", { name: "Menu" }).getByRole("navigation", { name: "Main" });
-  await expect(nav.getByRole("link")).toHaveText(["Home", "Packages", "Projects", "Lessons", "Drafts", "Data"]);
-  // Every item shows in full in the sheet's first screen, above the view lines at its foot.
+  await expect(nav.locator("[data-nav-item]")).toHaveText(["Home", "Packages", "Projects", "Lessons", "Drafts", "Data"]);
+  // Every item, and the stamp under Data (ticket 93), shows in full in the sheet's first screen, above the view lines
+  // at its foot.
   for (const link of await nav.getByRole("link").all()) await expect(link).toBeInViewport({ ratio: 1 });
+  await expect(nav.locator("[data-stamp]").getByRole("link")).toHaveText(/^Data through /);
   await nav.getByRole("link", { name: "Drafts" }).click();
 
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Drafts");
@@ -251,7 +254,7 @@ test("at 1024 px with a 15 px scrollbar the navy bar fits on one line", async ({
   await page.addStyleTag({ content: "body { margin-right: 15px; }" });
   expect(await page.evaluate(() => document.body.getBoundingClientRect().width)).toBe(1009);
 
-  const bar = page.locator("[data-nav-bar] > .layout");
+  const bar = page.locator("[data-bar-row]");
   expect(await bar.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true);
   expect((await page.locator("[data-nav-bar]").boundingBox())!.height).toBe(56);
   // The sidebar is the 64 px rail there, and each item keeps at least 36 px of height (DESIGN.md section 5, Sidebar).

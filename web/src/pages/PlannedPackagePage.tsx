@@ -200,7 +200,7 @@ function Header({
   action?: ReactNode;
 }) {
   return (
-    <div ref={headerRef} data-package-header className="border-b border-line bg-page py-4 @md/page:sticky @md/page:top-0 @md/page:z-10">
+    <div ref={headerRef} data-package-header className="border-b border-line bg-page py-4 @md/page:sticky @md/page:top-(--frame-top) @md/page:z-10">
       <div className="flex items-start justify-between gap-x-6">
         <div className="min-w-0 flex-1">
           <h1 ref={headingRef} tabIndex={-1} className="text-h2 text-pretty wrap-anywhere text-ink-heading focus:outline-none @md/page:text-h1">

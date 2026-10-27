@@ -391,7 +391,7 @@ export const galleryCopy = {
 
   notes: {
     bar:
-      "The navy bar at the top of this page is the sample, and the sidebar beside the page holds Home and the sections. Below 1024 px the sidebar's items and the view switch move into the Menu. The box band under the bar is the sample of the box and the stamp, and the footer is the same on every page.",
+      "The navy bar at the top of this page is the sample, with the box and the view switch, and the sidebar beside the page holds Home, the sections and the data stamp under Data. Below 1024 px the sidebar's items move into the Menu, and below 768 px the view switch does too. The footer is the same on every page.",
   },
 
   sections: {

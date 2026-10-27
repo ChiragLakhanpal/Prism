@@ -559,7 +559,7 @@ export function JudgingDesk({ query: loaded, initial, sample = false }: {
       ref={headerRef}
       className={cx(
         "flex flex-col gap-1 bg-page",
-        !sample && "@lg/page:sticky @lg/page:top-0 @lg/page:z-10 @lg/page:-mt-3 @lg/page:border-b @lg/page:pt-3 @lg/page:pb-3",
+        !sample && "@lg/page:sticky @lg/page:top-(--frame-top) @lg/page:z-10 @lg/page:-mt-3 @lg/page:border-b @lg/page:pt-3 @lg/page:pb-3",
         !sample && (stuck ? "@lg/page:border-line" : "@lg/page:border-transparent"),
       )}
       data-judging-header

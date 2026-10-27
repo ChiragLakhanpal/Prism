@@ -680,7 +680,7 @@ export function EvidenceDrawerView({
       <div
         ref={panelRef}
         onScroll={(event) => setScrolled(event.currentTarget.scrollTop > 0)}
-        className={cx(!sample && "overflow-y-auto", !sample && (narrow ? "h-dvh" : "sticky top-0 max-h-dvh"))}
+        className={cx(!sample && "overflow-y-auto", !sample && (narrow ? "h-dvh" : "sticky top-(--frame-top) max-h-[calc(100dvh-var(--frame-top))]"))}
         style={narrow ? { paddingBottom: "env(safe-area-inset-bottom)" } : undefined}
       >
         <div

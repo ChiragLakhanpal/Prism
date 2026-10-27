@@ -28,7 +28,6 @@ export const FROZEN_CLASS_USES: Record<string, readonly string[]> = {
   "src/components/Answer.tsx": ["uppercase"],
   "src/components/AnswerPanel.tsx": ["text-title"],
   "src/components/ApproachOptions.tsx": ["text-title"],
-  "src/components/BoxBand.tsx": ["rounded-box"],
   "src/components/Card.tsx": ["text-title"],
   "src/components/ChangeTables.tsx": ["text-title"],
   "src/components/CollapsedSection.tsx": ["uppercase"],
