@@ -163,6 +163,8 @@ export const NON_COPY_PROPS = new Set([
   "htmlFor",
   // Table's breakpoint for cards: "md" or "lg".
   "cardsBelow",
+  // A deck slide's background, "light" or "navy", which picks its logo file (the deck's loading frame, ticket 106).
+  "theme",
   // The plan prompt's "Show the past range" weight, "primary" or "secondary" (ticket 15, brief 36).
   "showRangeVariant",
   // A readiness column's label in a card: "hidden" leaves it to screen readers (ticket 18).

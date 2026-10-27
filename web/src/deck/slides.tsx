@@ -8,14 +8,12 @@
 import type { ReactNode } from "react";
 import { Fill } from "../components/Fill";
 import { numText } from "../components/Num";
-import { TextLink } from "../components/TextLink";
-import { ExternalLink } from "../components/ExternalLink";
 import { FIGURES, type FigureId } from "../figures/registry";
 import { formatDate, formatNumber } from "../lib/format";
-import { AwardChart, AwardKey, AwardTable } from "./AwardChart";
+import { AwardChart, AwardKey, AwardTable, CHART_WIDTH } from "./AwardChart";
 import { deckCopy, figureCopy } from "./copy";
 import { measured, type DeckData, type DeckResult } from "./data";
-import { Demo, NotMeasured, Phases, Points, Step, Tiles } from "./layouts";
+import { Demo, NewTabLink, NotMeasured, Phases, Points, Step, Tiles } from "./layouts";
 import { NoteNum, ResultNum, RubricPoints, SettingWord } from "./nums";
 import { type, type Mode } from "./ramp";
 import type { Theme } from "./Frame";
@@ -281,18 +279,26 @@ export function buildSlides(data: DeckData): Slide[] {
       kind: "figure",
       title: s.reading.title,
       ...figure("reading", 1),
-      body: (at, mode) => (
-        <Step n={1} at={at} className="flex flex-col gap-1">
-          <p className="text-ink" {...type("note", mode)}>
-            {passages && documents ? (
-              <Fill template={s.reading.passages} slots={{ passages: count(passages, "passages"), documents: count(documents, "documents-read") }} />
-            ) : (
-              s.reading.passagesNone
-            )}{" "}
-            {pages ? <Fill template={s.reading.pages} slots={{ ratio: ratio(pages, "pages-read-well") }} /> : s.reading.pagesNone}
-          </p>
-        </Step>
-      ),
+      // With nothing counted yet, the grey not-measured note, as the other slides show it; with one of the two
+      // counted, the sentence that has its number and the one that says what is still to come.
+      body: (at, mode) =>
+        !(passages && documents) && !pages ? (
+          <NotMeasured n={1} at={at} mode={mode}>
+            {s.reading.passagesNone}{" "}
+            {s.reading.pagesNone}
+          </NotMeasured>
+        ) : (
+          <Step n={1} at={at} className="flex flex-col gap-1">
+            <p className="text-ink" {...type("note", mode)}>
+              {passages && documents ? (
+                <Fill template={s.reading.passages} slots={{ passages: count(passages, "passages"), documents: count(documents, "documents-read") }} />
+              ) : (
+                s.reading.passagesNone
+              )}{" "}
+              {pages ? <Fill template={s.reading.pages} slots={{ ratio: ratio(pages, "pages-read-well") }} /> : s.reading.pagesNone}
+            </p>
+          </Step>
+        ),
       source: pages ? { lead: deckCopy.sourceLead, text: <Fill template={s.reading.source} slots={{ date: day(pages.measured_on) }} /> } : undefined,
       notes: s.reading.notes,
     },
@@ -324,7 +330,7 @@ export function buildSlides(data: DeckData): Slide[] {
                 <AwardChart
                   result={rows}
                   gap={gap}
-                  width={mode === "present" ? 400 : 500}
+                  width={CHART_WIDTH[mode]}
                   height={240}
                   fluid={mode === "present"}
                   labelledById={labelledById}
@@ -349,7 +355,7 @@ export function buildSlides(data: DeckData): Slide[] {
             {lines.length > 0 && <Points lines={lines} at={at} mode={mode} />}
             {rows ? (
               <p {...type("note", mode)}>
-                <TextLink href="/data">{s.gap.link}</TextLink>
+                <NewTabLink href="/data">{s.gap.link}</NewTabLink>
               </p>
             ) : (
               <NotMeasured n={lines.length + 1} at={at} mode={mode}>
@@ -457,9 +463,7 @@ export function buildSlides(data: DeckData): Slide[] {
               <Fill template={s.ladder.example} slots={{ project: mono(showcase) }} />
             </p>
             <p {...type("note", mode)}>
-              <TextLink href={links.wholeStory ?? `/projects/${showcase}/timeline`} target="_blank" rel="noreferrer">
-                {s.ladder.action}
-              </TextLink>
+              <NewTabLink href={links.wholeStory ?? `/projects/${showcase}/timeline`}>{s.ladder.action}</NewTabLink>
             </p>
           </Step>
         </div>
@@ -654,6 +658,7 @@ export function buildSlides(data: DeckData): Slide[] {
       title: s.thanks.title,
       steps: 0,
       hairline: "sediment",
+      hairlineLabel: s.thanks.figure,
       notes: data.designed_not_built.length === 0 ? s.thanks.notes : s.thanks.notesAfterLimits,
     },
   ];
@@ -728,32 +733,39 @@ function RubricMap({ data, at, mode }: { data: DeckData; at: number; mode: Mode 
 function RubricOpen({ data, dimension }: { data: DeckData; dimension: string }) {
   const o = s.rubric.open;
   const showcase = data.showcase.project_id;
+  // Operations shows the dashboard once its address is set; until then, Data readiness, where the nightly job's
+  // measures show.
+  const readiness = (
+    <NewTabLink key="data" href="/data">
+      {o.readiness}
+    </NewTabLink>
+  );
   const links: Record<string, ReactNode[]> = {
     architecture: [
-      <TextLink key="data" href="/data">
-        {o.readiness}
-      </TextLink>,
-      <TextLink key="connections" href={`/projects/${showcase}/connections`}>
+      readiness,
+      <NewTabLink key="connections" href={`/projects/${showcase}/connections`}>
         <Fill template={o.connections} slots={{ project: <span className="font-mono">{showcase}</span> }} />
-      </TextLink>,
+      </NewTabLink>,
     ],
     method: [
-      <TextLink key="workspace" href={`/packages/${data.demo.step_reference}`}>
+      <NewTabLink key="workspace" href={`/packages/${data.demo.step_reference}`}>
         {o.workspace}
-      </TextLink>,
+      </NewTabLink>,
     ],
     domain: [
-      <TextLink key="check" href={data.demo.links?.checkPlan ?? data.demo.plan_href}>
+      <NewTabLink key="check" href={data.demo.links?.checkPlan ?? data.demo.plan_href}>
         {o.checkPlan}
-      </TextLink>,
+      </NewTabLink>,
     ],
-    operations: data.urls.dashboard
-      ? [
-          <ExternalLink key="dashboard" href={data.urls.dashboard}>
-            {o.dashboard}
-          </ExternalLink>,
-        ]
-      : [],
+    operations: [
+      data.urls.dashboard ? (
+        <NewTabLink key="dashboard" href={data.urls.dashboard}>
+          {o.dashboard}
+        </NewTabLink>
+      ) : (
+        readiness
+      ),
+    ],
   };
   return (
     <ul className="flex flex-col gap-1">

@@ -61,6 +61,7 @@ export const deckCopy = {
     showTable: "Show the table",
     hideTable: "Hide the table",
     scrolls: (title: string) => `${title}, scrolls sideways`,
+    scrollHint: "Scroll the drawing sideways to see all of it.",
     tableRegion: (title: string) => `Table: ${title}`,
   },
 
@@ -91,8 +92,6 @@ export const deckCopy = {
     ratio: (n: string, d: string, noun: string, kind: string, date: string) => `${n} of ${d} ${noun}. ${kind}, measured ${date}.`,
     count: (n: string, noun: string, kind: string, date: string) => `${n} ${noun}. ${kind}, measured ${date}.`,
     setting: (name: string, where: string) => `${name}. Set in ${where}.`,
-    tool: (step: string, date: string) => `Counted from the comparable packages for ${step}, run ${date}.`,
-    estimate: (step: string, date: string) => `From the time estimate for ${step}, run ${date}.`,
     rubric: "Points the assessment brief gives this dimension, in its section 5.",
     definition: (kind: string, table: string) => `${kind}, read from ${table} in the measures snapshot the proposal cites.`,
     settingDefinition: (kind: string) => `${kind}: a value Strata is set to, read from the file that sets it.`,
@@ -169,7 +168,7 @@ export const deckCopy = {
       ask: "How does your team find what a completion report said about packages like this one?",
       source: "the assessment brief, section 1.",
       notes:
-        "These are the assessment's own words, a press each: schedules that aren't realistic, packages advertised " +
+        "These restate the assessment's own list, a press each: schedules that aren't realistic, packages advertised " +
         "again or canceled, specifications that miss, and lessons nobody finds in time. Last press, ask the room " +
         "how they find a completion report's lesson today.",
     },
@@ -255,7 +254,7 @@ export const deckCopy = {
       notes: "Now how it's built, from the data up. Let it play a few seconds, then the layers one at a time.",
     },
     layers: {
-      title: "Strata's layers, from World Bank open data up to the screen",
+      title: "Everything but the agent runs on Databricks, and the verifier checks every sentence",
       notes:
         "A press per layer, from the bottom. The data, the knowledge model and the tools stay on Databricks, under " +
         "Unity Catalog. The agent runs in Microsoft Foundry and only picks the tools. The app runs each tool with " +
@@ -270,7 +269,7 @@ export const deckCopy = {
         "shows that every row keeps the date it became public, so any answer can be replayed as of its date.",
     },
     reading: {
-      title: "Every document becomes numbered paragraphs, each with its page",
+      title: "Every document becomes numbered passages, each with its paragraph and page",
       passages: "{passages} passages from {documents} documents, each with its paragraph number and page.",
       passagesNone: "Strata has not counted its passages yet.",
       pages: "Strata read {ratio} pages without errors.",
@@ -296,7 +295,8 @@ export const deckCopy = {
       titleNone: "Strata has not measured its contract award rows yet",
       gapNote: "Award notices fill most of the gap, in local currency, so Strata keeps them apart from awards in US dollars.",
       linked:
-        "{ratio} contract award rows since fiscal 2020 share their Systematic Tracking of Exchanges in Procurement (STEP) reference with a procurement notice, the key that joins an award to its notice.",
+        "{ratio} contract award rows since fiscal 2020 share their Systematic Tracking of Exchanges in Procurement (STEP) " +
+        "reference with a procurement notice. That reference is the key that joins an award to its notice.",
       noneLine: "This slide fills in once the workspace job counts the award rows.",
       link: "Open Data readiness",
       source: "Strata's data readiness measures, taken {date}.",
@@ -345,8 +345,8 @@ export const deckCopy = {
         "plan's date.",
     },
     checks: {
-      title: "Every answer passes {checks} checks before anyone sees it",
-      heading: "In the latest benchmark run",
+      title: "Every sentence meets {checks} checks before anyone sees it",
+      heading: "In the latest benchmark run,",
       passed: "{ratio} benchmark questions passed.",
       refused: "Strata turned down {ratio} questions it must refuse.",
       none: "The benchmark has not run with all {checks} checks yet, so there are no results to show.",
@@ -496,6 +496,7 @@ export const deckCopy = {
     },
     thanks: {
       title: "Thank you",
+      figure: "New reports settle on the core as new layers every night, and every layer is kept.",
       ask: "What would you like to ask?",
       links: { app: "Open Strata", proposal: "Read the proposal", dashboard: "Open the dashboard", repo: "Read the code" },
       notes:

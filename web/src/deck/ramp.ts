@@ -17,7 +17,6 @@ export type Role =
   | "body" // a point, a tile's head, a demo's line
   | "head" // a tile's or a phase's head
   | "note" // what a tile or a phase says under its head; a topic's line
-  | "result" // a measured number on a results slide
   | "source" // the source line under a slide's content
   | "label"; // a column head, a topic number
 
@@ -26,11 +25,10 @@ const CANVAS: Record<Role, CSSProperties> = {
   title: { fontSize: 32, lineHeight: 1.2, fontWeight: 700 },
   figureTitle: { fontSize: 24, lineHeight: 1.25, fontWeight: 700 },
   topic: { fontSize: 40, lineHeight: 1.1, fontWeight: 700 },
-  // Body text sits well under the titles, the figures and the measured numbers, so it never competes with them.
+  // Body text sits well under the titles and the figures, so it never competes with them.
   body: { fontSize: 18, lineHeight: 1.5, fontWeight: 400 },
   head: { fontSize: 18, lineHeight: 1.3, fontWeight: 700 },
   note: { fontSize: 14, lineHeight: 1.5, fontWeight: 400 },
-  result: { fontSize: 40, lineHeight: 1.05, fontWeight: 700 },
   source: { fontSize: 12, lineHeight: 1.45, fontWeight: 400 },
   label: { fontSize: 12, lineHeight: 1.2, fontWeight: 600 },
 };
@@ -43,7 +41,6 @@ const PAGE: Record<Role, string> = {
   body: "text-body",
   head: "text-h2",
   note: "text-small",
-  result: "text-h1",
   source: "text-caption",
   label: "text-label",
 };

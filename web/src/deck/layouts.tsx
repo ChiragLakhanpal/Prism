@@ -4,6 +4,7 @@
 // flow in the page. Every word comes from copy.ts through the slides that call these.
 import { createContext, useContext, useState, type CSSProperties, type ReactNode } from "react";
 import { ChevronRight, CircleDashed, Copy, ExternalLink as ExternalIcon } from "lucide-react";
+import { TextLink } from "../components/TextLink";
 import { cx } from "../lib/cx";
 import { deckCopy } from "./copy";
 import { SHOWN, STEP, type, UNREACHED, type Mode } from "./ramp";
@@ -122,7 +123,6 @@ export function Tiles({ tiles, closing, at, mode }: { tiles: { head: ReactNode; 
 // watch for comes in a press a line.
 export function Demo({
   box,
-  mono = false,
   action,
   href,
   question,
@@ -131,7 +131,6 @@ export function Demo({
   mode,
 }: {
   box: ReactNode;
-  mono?: boolean;
   action: ReactNode;
   href: string;
   question?: string;
@@ -146,7 +145,7 @@ export function Demo({
         className={cx("flex items-center gap-4 rounded-sm border border-line-strong bg-surface", mode === "present" ? "py-2 pr-2 pl-6" : "flex-wrap p-2 pl-4")}
         style={mode === "present" ? { maxWidth: 864 } : undefined}
       >
-        <span className={cx("min-w-0 flex-1 text-ink", mono && "font-mono")} {...type("note", mode)}>
+        <span className="min-w-0 flex-1 text-balance text-ink" {...type("note", mode)}>
           {box}
         </span>
         {question && <CopyQuestion question={question} />}
@@ -188,33 +187,6 @@ function CopyQuestion({ question }: { question: string }) {
       <Copy aria-hidden="true" className="size-4" />
       <span aria-live="polite">{state === "copied" ? deckCopy.demo.copied : state === "failed" ? deckCopy.demo.copyFailed : deckCopy.demo.copy}</span>
     </button>
-  );
-}
-
-// A measured result, a press: what was measured and how, the number as its result gave it, and a miss in the error
-// colour when there is one. With nothing measured yet, the neutral state: a dashed circle and one sentence.
-export function Result({ head, body, value, miss, n, at, mode }: { head: ReactNode; body?: ReactNode; value?: ReactNode; miss?: ReactNode; n: number; at: number; mode: Mode }) {
-  return (
-    <Step n={n} at={at} as="section" className="flex flex-col rounded-md border border-line bg-surface p-6 [&[data-current]]:border-info-icon">
-      <h2 className="text-ink-heading" {...type("head", mode)}>
-        {head}
-      </h2>
-      {body && (
-        <p className="mt-2 text-ink-muted" {...type("note", mode)}>
-          {body}
-        </p>
-      )}
-      {value && (
-        <p className="mt-4 text-primary" {...type("result", mode)}>
-          {value}
-        </p>
-      )}
-      {miss && (
-        <p className="mt-3 text-error" {...type("note", mode)}>
-          {miss}
-        </p>
-      )}
-    </Step>
   );
 }
 
@@ -260,12 +232,25 @@ export function Phases({
           <p className="mt-1 text-ink" {...type("note", mode)}>
             {phase.measured}
           </p>
-          {mode === "present" && index < phases.length - 1 && (
+          {/* The chevron to the next phase shows once that phase is in, so it never points at an empty space. */}
+          {mode === "present" && index < phases.length - 1 && at > index + 1 && (
             <ChevronRight aria-hidden="true" className="absolute top-1/2 -right-4 size-4 -translate-y-1/2 text-ink-muted" />
           )}
         </Step>
       ))}
     </ol>
+  );
+}
+
+// A link on a light slide opens its screen in a new tab, so a click mid-talk never replaces the deck, and it says so
+// to a screen reader, as the demo links do.
+export function NewTabLink({ href, children }: { href: string; children: ReactNode }) {
+  return (
+    <TextLink href={href} target="_blank" rel="noreferrer">
+      {children}
+      {" "}
+      <span className="sr-only">{deckCopy.demo.opens}</span>
+    </TextLink>
   );
 }
 

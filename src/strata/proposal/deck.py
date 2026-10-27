@@ -8,16 +8,17 @@ the panel. build() gathers everything the slides read into one JSON object:
              kind, noun and table, which the number's tooltip and definition window print
 - settings   each design count and planning choice the slides write as a word ("six checks", "two countries"),
              read from its registry through the settings register, as the proposal's Annex 2 reads it
-- checks     the verifier's checks, in the order it runs them, which slide 10 lists
+- checks     the verifier's checks, in the order it runs them, which the checks slide counts
 - rubric     the assessment's four dimensions and their points (config/rubric.toml, citing docs/assessment.md)
 - urls       the panel's addresses (config/urls.toml); presenter, the title slide's name and date (config/deck.toml)
 - designed_not_built  the parts designed but not built (config/designed_not_built.toml), for the last slide
 - demo       the demo package and its plan (config/slice.toml [demo_plan]) and the answers find_comparables and
-             estimate_time gave for it, recorded on the workspace (docs/proposal/demo-package.json); for the second
-             draft's demo slides, the plan's date and project name, the Start here links they open
+             estimate_time gave for it, recorded on the workspace (docs/proposal/demo-package.json), which no slide
+             of the second draft draws, since its package demo opens the live package workspace; for the second
+             draft's demo slides, the plan's date, the Start here links they open
              (config/examples.toml, filled as Home fills them), the sentence the package demo types and the smoke
              question the answer demo asks (evals/benchmark.yaml)
-- showcase   the showcase project (config/slice.toml [showcase]), whose disagreement slide 11 quotes
+- showcase   the showcase project (config/slice.toml [showcase]), whose disagreement the ladder slide quotes
 - award_gap  the fiscal years no contract awards dataset publishes, from config/sources.toml's known gap, which the
              Data readiness page's Gap row shows; the rows-by-year series must agree with it
 
@@ -44,7 +45,7 @@ RESULTS = ("passages", "documents-read", "pages-read-well", "award-rows-by-year"
 SETTINGS = ("check-count", "loop-count", "pilot-countries", "rollout-phases", "risks-per-package", "checklist-size",
             "hindsight-coders", "fewest-comparables")
 DEMO_ANSWERS = ("comparables", "estimate")
-# The known gap in config/sources.toml that slide 7 states: the fiscal years no contract awards dataset publishes.
+# The known gap in config/sources.toml that the gap slide states: the fiscal years no contract awards dataset publishes.
 AWARD_GAP = ("awards", "fy2017_2019")
 
 
@@ -121,8 +122,7 @@ def _demo(answers: dict | None) -> dict:
     plan = config.load_slice().demo_plan
     package = plan.package
     agency = agency_id(plan.implementing_agency)
-    where = {"step_reference": package, "project_id": plan.project_id, "project_name": plan.project_name,
-             "agency": plan.implementing_agency, "plan_date": plan.plan_date.isoformat(),
+    where = {"step_reference": package, "project_id": plan.project_id, "agency": plan.implementing_agency, "plan_date": plan.plan_date.isoformat(),
              "plan_href": f"/projects/{plan.project_id}/procurement/{agency}", **_demo_links(agency),
              "question": _smoke_question(plan.smoke_question)}
     if answers is None:
@@ -156,6 +156,6 @@ def build(snapshot: dict | None, demo: dict | None, results: tuple[str, ...] = R
         "designed_not_built": [{"key": item.key, "name": item.name, "route": item.route}
                                for item in config.load_designed_not_built()],
         "demo": _demo(demo),
-        "showcase": {"project_id": config.load_slice().showcase.project_id, "name": config.load_slice().showcase.name},
+        "showcase": {"project_id": config.load_slice().showcase.project_id},
         "award_gap": _award_gap(found["award-rows-by-year"]) if "award-rows-by-year" in found else None,
     }

@@ -14,8 +14,8 @@ import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useSta
 import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, ExternalLink as ExternalIcon, Maximize, Minimize, Table2 } from "lucide-react";
 import { Alert } from "../components/Alert";
 import { Button } from "../components/Button";
-import { ExternalLink } from "../components/ExternalLink";
 import { Footer } from "../components/Frame";
+import { LoadingLabel, SkeletonText } from "../components/Skeleton";
 import { TextLink } from "../components/TextLink";
 import { copy } from "../copy";
 import { cx } from "../lib/cx";
@@ -24,9 +24,10 @@ import { Diagram, FigureFailed, FigureText, Hairline, hasHairline, useOverflow }
 import { FIGURES, SLOTS } from "../figures/registry";
 import { deckCopy, figureCopy } from "./copy";
 import { loadDeck, type DeckData } from "./data";
-import { SlideFrame, type Theme } from "./Frame";
-import { SourceLine, Step, WholeSlides } from "./layouts";
-import { type, type Mode } from "./ramp";
+import { Logo, SlideFrame, type Theme } from "./Frame";
+import { NewTabLink, SourceLine, Step, WholeSlides } from "./layouts";
+import { CHART_WIDTH } from "./AwardChart";
+import { FOOTER, type, type Mode } from "./ramp";
 import { buildSlides, figureStepText, TITLE_ID, type Slide } from "./slides";
 import { arrive, moved, moveFor, segments, TOPIC_ORDER, type Move, type Place } from "./talk";
 import { slideInAddress, type DeckView } from "./view";
@@ -91,13 +92,32 @@ export function DeckApp({ view }: { view: DeckView }) {
   return <Presentation slides={slides} data={data} start={slideInAddress() ?? 1} />;
 }
 
-// The stage at its final size, with the footer sentence, while the deck's data arrive.
+// While the deck's data arrive: the stage at the size it will have, as a light slide draws it, with the header strip
+// and its logo, a skeleton title and points where a slide's sit, and the footer sentence along its foot, so nothing
+// jumps when the first slide comes in. The reading view's sizes take over once the data say which view shows.
 function Loading() {
+  const scale = useScale(false);
   return (
-    <main className="flex min-h-dvh flex-col items-center justify-center bg-surface-2 p-6" data-deck="loading">
-      <div className="border border-line bg-page" style={{ width: "min(100%, 960px)", aspectRatio: "16 / 9" }}>
-        <p className="p-6 text-caption text-ink-muted">{copy.footer}</p>
+    <main className="flex min-h-dvh flex-col items-center justify-center bg-surface-2 p-6" data-deck="loading" aria-busy="true">
+      <LoadingLabel />
+      <div className="relative shrink-0 overflow-hidden border border-line" style={{ width: CANVAS.width * scale, height: CANVAS.height * scale }}>
+        <div className="relative bg-page" style={{ width: CANVAS.width, height: CANVAS.height, transform: `scale(${scale})`, transformOrigin: "0 0" }}>
+          <div className="absolute inset-x-0 top-0 h-12 border-b border-line bg-surface">
+            <div className="absolute" style={{ left: 48, top: 12 }}>
+              <Logo theme="light" />
+            </div>
+          </div>
+          <div className="absolute flex flex-col gap-8" style={{ left: 48, top: 64, width: 864 }}>
+            <SkeletonText widths={["w-3/4", "w-1/2"]} style={type("title", "present").style} />
+            <SkeletonText widths={["w-2/3", "w-3/5", "w-1/2"]} style={type("body", "present").style} />
+          </div>
+          <p className="absolute whitespace-nowrap text-ink-muted" style={{ ...FOOTER, left: 48, bottom: 9 }}>
+            {copy.footer}
+          </p>
+        </div>
       </div>
+      {/* The control bar's place, so the stage sits where it will once the deck is in. */}
+      <div aria-hidden="true" className="mt-3 h-11 shrink-0" />
     </main>
   );
 }
@@ -223,9 +243,11 @@ function SlideCanvas({
             )}
           </div>
         )}
+        {/* A text slide starts where a figure slide does, its title at y 64 under the header, so the title holds its
+            place from slide to slide; the free space falls below the content (the brief: content from y 72). */}
         {slide.kind === "text" && (
-          <div className="absolute flex flex-col" style={{ left: 48, top: 48, width: 864, bottom: 32 }}>
-            <Fit live={current} className="flex min-h-0 flex-1 flex-col justify-center gap-8">
+          <div className="absolute flex flex-col" style={{ left: 48, top: 64, width: 864, bottom: 32 }}>
+            <Fit live={current} className="flex min-h-0 flex-1 flex-col justify-start gap-8">
               <h1 id={titleId} tabIndex={-1} className="text-balance text-ink-heading outline-none" style={{ ...type("title", "present").style, maxWidth: 800 }}>
                 {slide.title}
               </h1>
@@ -291,7 +313,7 @@ function Fit({ live, className, children }: { live: boolean; className: string; 
   }, [live, zoom, fonts]);
   return (
     <div ref={box} data-fit-zoom={zoom} className={cx(className, "overflow-hidden")}>
-      <div className="flex flex-col justify-center gap-8" style={zoom < 1 ? { zoom } : undefined}>
+      <div className="flex flex-col gap-8" style={zoom < 1 ? { zoom } : undefined}>
         {children}
       </div>
     </div>
@@ -302,7 +324,7 @@ function TitleSlide({ slide, data, current }: { slide: Slide; data: DeckData; cu
   return (
     <>
       <div className="absolute flex flex-col justify-center" style={{ left: 48, top: 72, width: 500, bottom: 56 }}>
-        <p className="text-surface/75" style={{ fontSize: 20, lineHeight: 1.2, fontWeight: 700 }}>
+        <p className="text-surface" style={{ fontSize: 20, lineHeight: 1.2, fontWeight: 700 }}>
           {deckCopy.wordmark}
         </p>
         <h1 id={TITLE_ID(slide.n)} tabIndex={-1} className="mt-4 text-balance text-surface outline-none" {...type("statement", "present")}>
@@ -340,7 +362,7 @@ function OpenerSlide({ slide, current }: { slide: Slide; current: boolean }) {
 
 function AgendaSlide({ slide, step }: { slide: Slide; step: number }) {
   return (
-    <div className="absolute flex flex-col justify-center gap-8" style={{ left: 48, top: 48, width: 864, bottom: 32 }}>
+    <div className="absolute flex flex-col justify-start gap-8" style={{ left: 48, top: 64, width: 864, bottom: 32 }}>
       <h1 id={TITLE_ID(slide.n)} tabIndex={-1} className="text-ink-heading outline-none" {...type("title", "present")}>
         {slide.title}
       </h1>
@@ -388,21 +410,23 @@ function CloseSlide({ slide, data, current }: { slide: Slide; data: DeckData; cu
         <ul className="mt-8 flex flex-col gap-2" {...type("note", "present")} data-close-links>
           <li>
             <a href="/" target="_blank" rel="noreferrer" className="text-surface underline underline-offset-3 focus-visible:outline-focus-on-dark">
-              {w.links.app}
+              {w.links.app}{" "}
+              <span className="sr-only">{deckCopy.demo.opens}</span>
             </a>
           </li>
           {(["proposal", "dashboard", "repo"] as const).map((key) =>
             urls[key] ? (
               <li key={key}>
                 <a href={urls[key]!} target="_blank" rel="noreferrer" className="text-surface underline underline-offset-3 focus-visible:outline-focus-on-dark">
-                  {w.links[key]}
+                  {w.links[key]}{" "}
+                  <span className="sr-only">{deckCopy.demo.opens}</span>
                 </a>
               </li>
             ) : null,
           )}
         </ul>
       </div>
-      <HairlineBox figureKey={slide.hairline ?? "core-sample"} label={deckCopy.slides.welcome.figure} live={current} style={{ left: 520, top: 104, width: 400, height: 320 }} />
+      <HairlineBox figureKey={slide.hairline ?? "core-sample"} label={slide.hairlineLabel ?? ""} live={current} style={{ left: 520, top: 104, width: 400, height: 320 }} />
     </>
   );
 }
@@ -466,14 +490,44 @@ function useBarAwake(full: boolean): boolean {
   return awake;
 }
 
-// What the live region says after a press: the new point's words, or the figure step's text version.
+// The words an item says, block by block: each block's text ends as a sentence, so a head and the line under it are
+// read as two sentences, not one run of words. Text hidden from assistive tech (a marker, an agenda number) is left
+// out, as a screen reader leaves it out.
+function spokenText(item: Element): string {
+  const blocks: string[] = [];
+  let line = "";
+  const end = () => {
+    const text = line.replace(/\s+/g, " ").trim();
+    if (text) blocks.push(/[.?!:;]$/.test(text) ? text : `${text}.`);
+    line = "";
+  };
+  const walk = (node: Node) => {
+    if (node.nodeType === Node.TEXT_NODE) {
+      line += node.textContent ?? "";
+      return;
+    }
+    if (!(node instanceof Element) || node.getAttribute("aria-hidden") === "true") return;
+    const display = getComputedStyle(node).display;
+    if (display === "none") return;
+    const block = !display.startsWith("inline");
+    if (block) end();
+    node.childNodes.forEach(walk);
+    if (block) end();
+  };
+  item.childNodes.forEach(walk);
+  end();
+  return blocks.join(" ");
+}
+
+// What the live region says after a press: the new point's words, or the figure step's text version. The slide's own
+// items carry data-step as the figure's parts do, so the query leaves the figure's parts out.
 function pressWords(slide: Slide, step: number): string {
   if (step === 0) return "";
   const figureSteps = slide.figure?.steps ?? 0;
   if (slide.figure && step <= figureSteps) return figureStepText(slide.figure.id, step);
   const own = step - figureSteps;
-  const item = document.querySelector(`section[data-slide='${slide.n}'] [data-step='${own}']`);
-  return item?.textContent?.trim() ?? "";
+  const item = document.querySelector(`section[data-slide='${slide.n}'] [data-step='${own}']:not([data-motion-item])`);
+  return item ? spokenText(item) : "";
 }
 
 function Presentation({ slides, data, start }: { slides: Slide[]; data: DeckData; start: number }) {
@@ -665,20 +719,83 @@ function Disclosure({ show, hide, open: initially = false, children, testId }: {
   );
 }
 
+// Where a drawing is cut at the column's edge, one line above it says that it scrolls, since the cut alone looks like
+// a broken drawing.
+function ScrollHint() {
+  return (
+    <p className="mb-2 text-caption text-ink-muted" data-scroll-hint>
+      {deckCopy.reading.scrollHint}
+    </p>
+  );
+}
+
 function ScrollFrame({ width, label, children }: { width: number; label: string; children: ReactNode }) {
   const ref = useRef<HTMLDivElement>(null);
   const over = useOverflow(ref, width);
   return (
-    <div
-      ref={ref}
-      className="max-w-full overflow-x-auto"
-      tabIndex={over ? 0 : undefined}
-      role={over ? "region" : undefined}
-      aria-label={over ? label : undefined}
-      data-overflow={over ? "" : undefined}
-    >
-      <div style={{ width }}>{children}</div>
+    <>
+      {over && <ScrollHint />}
+      <div
+        ref={ref}
+        className="max-w-full overflow-x-auto"
+        tabIndex={over ? 0 : undefined}
+        role={over ? "region" : undefined}
+        aria-label={over ? label : undefined}
+        data-overflow={over ? "" : undefined}
+      >
+        <div style={{ width }}>{children}</div>
+      </div>
+    </>
+  );
+}
+
+// A slide's chart in the reading view: drawn at its own size in a card that scrolls on a phone, with the hint, and its
+// table twin behind a disclosure.
+function ReadingChart({ chart, headingId }: { chart: NonNullable<Slide["chart"]>; headingId: string }) {
+  const ref = useRef<HTMLElement>(null);
+  // The card's padding and border are inside its width, beside the drawing's own.
+  const over = useOverflow(ref, CHART_WIDTH.read + 34);
+  return (
+    <div data-figure-frame="chart">
+      {over && <ScrollHint />}
+      <figure
+        ref={ref}
+        data-source-key={chart.source}
+        tabIndex={0}
+        role="region"
+        aria-labelledby={headingId}
+        className="max-w-full overflow-x-auto rounded-md border border-line bg-surface p-4"
+      >
+        {chart.drawing("read", headingId)}
+      </figure>
+      <div className="mt-4">
+        <Disclosure show={deckCopy.reading.showTable} hide={deckCopy.reading.hideTable} testId="table">
+          <figure data-source-key={chart.source} tabIndex={0} role="region" aria-labelledby={headingId} className="max-w-full overflow-x-auto">
+            {chart.table}
+          </figure>
+        </Disclosure>
+      </div>
     </div>
+  );
+}
+
+// The close's ways in, in the reading view: Strata itself, then the proposal, the dashboard and the code once their
+// addresses are set, each in a new tab, as the navy close lists them.
+function ReadingCloseLinks({ data }: { data: DeckData }) {
+  const w = deckCopy.slides.thanks;
+  return (
+    <ul className="flex flex-col gap-1 text-body" data-close-links>
+      <li>
+        <NewTabLink href="/">{w.links.app}</NewTabLink>
+      </li>
+      {(["proposal", "dashboard", "repo"] as const).map((key) =>
+        data.urls[key] ? (
+          <li key={key}>
+            <NewTabLink href={data.urls[key]!}>{w.links[key]}</NewTabLink>
+          </li>
+        ) : null,
+      )}
+    </ul>
   );
 }
 
@@ -711,7 +828,13 @@ function ReadingSlide({ slide, data, total }: { slide: Slide; data: DeckData; to
       <div className="mt-6 flex max-w-full flex-col gap-6">
         {topic && <p className="max-w-prose text-body text-ink-muted">{deckCopy.topics[topic].line}</p>}
         {slide.kind === "agenda" && <Agenda step={TOPIC_ORDER.length} mode="read" />}
-        {slide.kind === "close" && <p className="text-body text-ink">{deckCopy.slides.thanks.ask}</p>}
+        {slide.kind === "close" && (
+          <>
+            <Presenter data={data} mode="read" navy={false} />
+            <p className="text-body text-ink">{deckCopy.slides.thanks.ask}</p>
+            <ReadingCloseLinks data={data} />
+          </>
+        )}
         {figure && (
           <div ref={frameRef}>
             {figure.svg ? (
@@ -730,20 +853,7 @@ function ReadingSlide({ slide, data, total }: { slide: Slide; data: DeckData; to
             )}
           </div>
         )}
-        {slide.chart && (
-          <div data-figure-frame="chart">
-            <figure data-source-key={slide.chart.source} tabIndex={0} role="region" aria-labelledby={headingId} className="max-w-full overflow-x-auto rounded-md border border-line bg-surface p-4">
-              {slide.chart.drawing("read", headingId)}
-            </figure>
-            <div className="mt-4">
-              <Disclosure show={deckCopy.reading.showTable} hide={deckCopy.reading.hideTable} testId="table">
-                <figure data-source-key={slide.chart.source} tabIndex={0} role="region" aria-labelledby={headingId} className="max-w-full overflow-x-auto">
-                  {slide.chart.table}
-                </figure>
-              </Disclosure>
-            </div>
-          </div>
-        )}
+        {slide.chart && <ReadingChart chart={slide.chart} headingId={headingId} />}
         {slide.body && <div className="max-w-full">{slide.body(slide.steps, "read")}</div>}
         {slide.source && (
           <SourceLine lead={slide.source.lead} mode="read">
@@ -789,11 +899,6 @@ function ReadingView({ slides, data, page, big }: { slides: Slide[]; data: DeckD
             ))}
           </div>
         </WholeSlides>
-        {data.urls.repo && (
-          <p className="mt-12">
-            <ExternalLink href={data.urls.repo}>{deckCopy.slides.thanks.links.repo}</ExternalLink>
-          </p>
-        )}
       </main>
       <Footer />
     </div>
@@ -910,15 +1015,13 @@ function NotesView({ slides }: { slides: Slide[] }) {
         <div className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_18rem]">
           <div className="flex max-w-prose flex-col gap-6">
             <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-              <p className="text-caption text-ink-muted tabular-nums">
+              {/* The slide and the press counters, each on its own line, so they never run together. */}
+              <p className="flex flex-col text-caption text-ink-muted tabular-nums">
                 <span data-chrome>{deckCopy.slideOf(String(place.n), String(total))}</span>
                 {slide.steps > 0 && (
-                  <>
-                    {" "}
-                    <span data-chrome data-notes-press>
-                      {deckCopy.pressOf(String(place.step), String(slide.steps))}
-                    </span>
-                  </>
+                  <span data-chrome data-notes-press>
+                    {deckCopy.pressOf(String(place.step), String(slide.steps))}
+                  </span>
                 )}
               </p>
               <div className="flex items-center gap-3">

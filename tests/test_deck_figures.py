@@ -60,7 +60,7 @@ def test_each_figure_is_drawn_in_its_slot_in_strata_wb_colours_and_type_and_name
     # Labels are in sentence case, never tracked capitals (DESIGN.md sections 3 and 11).
     assert "letter-spacing" not in svg and "uppercase" not in svg, f"{slug} sets a tracked or capital label"
     assert "googleapis" not in svg and "@import" not in svg
-    # The logo sits in the deck's credit row, never inside a drawing (DESIGN.md section 9).
+    # The logo sits in each slide's header, never inside a drawing (DESIGN.md section 9).
     assert "<image" not in svg and "logo" not in svg.lower()
     assert f'role="img" aria-labelledby="{slug}-title {slug}-desc"' in svg
     assert re.search(rf'<svg[^>]*>\s*<title id="{slug}-title">', svg), "the title is the first child"

@@ -46,11 +46,10 @@ def test_with_no_snapshot_every_result_is_not_measured_and_the_registries_still_
     # config/slice.toml [demo_plan] and [showcase]: the demo package in NWWDA's plan of October 9, 2026, and P130164.
     demo = {key: value for key, value in data["demo"].items() if key not in ("links", "sentence", "question")}
     assert demo == {"step_reference": "KE-NWWDA-541055-CW-RFB", "project_id": "P156634",
-                    "project_name": "Kenya Water and Sanitation Development Project",
                     "agency": "Northern Water Works Development Agency", "plan_date": "2026-10-09",
                     "plan_href": "/projects/P156634/procurement/northern-water-works-development-agency",
                     "comparables": None, "estimate": None}
-    assert data["showcase"] == {"project_id": "P130164", "name": "India Rajasthan Road Sector Modernization"}
+    assert data["showcase"] == {"project_id": "P130164"}
 
 
 def test_the_demo_slides_open_the_start_here_links_and_type_the_registrys_own_words():

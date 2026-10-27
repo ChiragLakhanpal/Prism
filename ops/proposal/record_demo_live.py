@@ -7,8 +7,9 @@ Run it from the main checkout, after the nightly job and the estimates loop have
 It asks the app's own routes, in this process, on the workspace's SQL warehouse with the env file's token, for the
 demo package config/slice.toml names: GET /api/packages/<package>/comparables and /estimate, the same answers the
 package workspace draws. It writes both to docs/proposal/demo-package.json. Then
-`uv run python -m strata.proposal deck` builds web/public/deck/data.json from it and the measures snapshot, so the
-deck's slide 8 draws the range chart the panel will see in the app, without asking the warehouse in front of them.
+`uv run python -m strata.proposal deck` builds web/public/deck/data.json from it and the measures snapshot. Since the
+deck's second draft (ticket 106) no slide draws these answers: the package demo opens the live package workspace in a
+new tab. The deck's data keeps them, checked against the demo package.
 """
 
 from __future__ import annotations

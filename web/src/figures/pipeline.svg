@@ -32,10 +32,10 @@
 <text x="616" y="93" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Ready to use</text>
 <g data-motion-item="" data-step="1" aria-label="World Bank open data, read every night">
 <text x="24" y="113" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="start">Contract awards</text>
-<text x="24" y="125" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">signed contracts, from STEP</text>
+<text x="24" y="125" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">signed contracts</text>
 <line x1="200" y1="109" x2="227" y2="109" stroke="#4b5e71" stroke-width="1.2" marker-end="url(#pipeline-arrow)"/>
 <text x="24" y="143" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="start">Procurement notices</text>
-<text x="24" y="155" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">every bidder and price</text>
+<text x="24" y="155" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">award notices: bidders, prices</text>
 <line x1="200" y1="139" x2="227" y2="139" stroke="#4b5e71" stroke-width="1.2" marker-end="url(#pipeline-arrow)"/>
 <text x="24" y="173" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="start">Projects and documents</text>
 <text x="24" y="185" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">reports, loans, IEG ratings</text>

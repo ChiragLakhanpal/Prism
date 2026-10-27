@@ -3,10 +3,9 @@
 // ("45 of 52 benchmark questions. Benchmark run, measured Oct 20, 2026."), and a click or Enter opens its window.
 //
 // Each one sits in a <data> element whose data-source-key names where it came from: "r:<key>" for a result in the
-// measures snapshot, "s:<key>" for a setting, "rubric:<key>" for the assessment's points and "tool:<name>" for the
-// demo package's recorded answers ("tool:find_comparables" or "tool:estimate_time"). The number check (src/strata/proposal/numbers.py) reads a slide's HTML and accepts
-// a number only inside such an element, so a number typed into a slide fails it. In the speaker notes the same
-// numbers are plain text, still inside their <data> element.
+// measures snapshot, "s:<key>" for a setting and "rubric:<key>" for the assessment's points. The number check
+// (src/strata/proposal/numbers.py) reads a slide's HTML and accepts a number only inside such an element, so a number
+// typed into a slide fails it. In the speaker notes the same numbers are plain text, still inside their <data> element.
 import type { ReactNode } from "react";
 import { MeasureNum } from "../components/MeasureNum";
 import { numText, type NumValue } from "../components/Num";
@@ -15,12 +14,6 @@ import { deckCopy } from "./copy";
 import type { DeckData, DeckResult } from "./data";
 
 const words = deckCopy.num;
-// Where the demo package's numbers came from: its recorded find_comparables answer, or its recorded estimate_time
-// answer for the time estimate's months, each with the date its tool ran.
-export const TOOL_KEY = "tool:find_comparables";
-export const ESTIMATE_KEY = "tool:estimate_time";
-export type ToolKey = typeof TOOL_KEY | typeof ESTIMATE_KEY;
-const TOOL_TOOLTIP: Record<ToolKey, (step: string, date: string) => string> = { [TOOL_KEY]: words.tool, [ESTIMATE_KEY]: words.estimate };
 const day = (iso: string | undefined) => (iso ? formatDate(iso, { style: "table" }) : "");
 const whole = (value: number) => numText({ value, options: { compact: false } });
 
@@ -76,16 +69,6 @@ export function SettingWord({ data, settingKey, capital = false }: { data: DeckD
           ],
         }}
       />
-    </Bound>
-  );
-}
-
-// A number one of the demo package's recorded tool answers gave: its count of comparable packages from
-// find_comparables, or the time estimate's months from estimate_time. date is the day that tool ran.
-export function ToolNum({ step, date, value, sourceKey = TOOL_KEY }: { step: string; date: string; value: NumValue; sourceKey?: ToolKey }) {
-  return (
-    <Bound sourceKey={sourceKey}>
-      <MeasureNum value={value} tooltip={TOOL_TOOLTIP[sourceKey](step, day(date))} />
     </Bound>
   );
 }

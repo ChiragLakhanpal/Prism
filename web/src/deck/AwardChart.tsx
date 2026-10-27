@@ -10,6 +10,9 @@ import { deckCopy } from "./copy";
 import type { DeckResult } from "./data";
 
 const words = deckCopy.slides.gap;
+// The chart's width in its own units: on the slide it scales to its card from this; in the reading view it is drawn at
+// this size, and its frame scrolls where the column is narrower.
+export const CHART_WIDTH = { present: 400, read: 500 } as const;
 // DESIGN.md section 6's categorical text variants, as the theme's chart tokens, in the order the series lists them.
 const FILLS = ["fill-chart-cat2-text", "fill-chart-cat3-text", "fill-chart-cat1-text"];
 const SWATCHES = ["bg-chart-cat2-text", "bg-chart-cat3-text", "bg-chart-cat1-text"];

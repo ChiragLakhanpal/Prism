@@ -193,6 +193,29 @@ test("a press brings in one figure step or one point at a time, a press after th
   await expect(page.locator(`section[data-slide='${count}']`)).toBeVisible();
 });
 
+test("the live region reads each press's own words: the slide's point after its figure's steps, never a figure part, with each block ended as a sentence", async ({ page }) => {
+  await present(page, 1);
+  const status = page.locator("[data-deck-status]");
+  // The reading slide: its figure's steps, then the slide's own sentence about the passages it counted.
+  const reading = await numberOf(page, "reading");
+  await openAt(page, reading - 1);
+  await page.keyboard.press("ArrowRight");
+  const slide = slideById(page, "reading");
+  const steps = Number(await slide.getAttribute("data-step-count"));
+  for (let step = 1; step <= steps; step += 1) await page.keyboard.press("ArrowRight");
+  await expect(slide).toHaveAttribute("data-step-current", String(steps));
+  for (const words of deckCopy.slides.reading.passages.split(/\{\w+\}/).map((part) => part.trim()).filter(Boolean)) {
+    await expect(status).toContainText(words);
+  }
+  await expect(status).toContainText(deckCopy.slides.reading.pages.split("{ratio}")[1].trim());
+  // The agenda: a topic's name and its line are two sentences, not one run of words, and its number is not read.
+  // A slide opened by its address shows whole, so the walk starts on the slide before it.
+  await openAt(page, (await numberOf(page, "agenda")) - 1);
+  await page.keyboard.press("ArrowRight");
+  await page.keyboard.press("ArrowRight");
+  await expect(status).toHaveText(`${deckCopy.topics.strata.name}. ${deckCopy.topics.strata.line}`);
+});
+
 test("the tracker lights the slide's topic, with a segment per slide of each topic, and the title, the agenda and the close show none", async ({ page }) => {
   await present(page, 1);
   const parts = await page.locator("section[data-slide]").evaluateAll((sections) =>
@@ -281,8 +304,8 @@ const sourceKeys = (pieces: Record<string, string>) => [
   ...new Set(Object.values(pieces).flatMap((html) => [...html.matchAll(/data-source-key="([^"]*)"/g)].flatMap((found) => found[1].split(/\s+/)))),
 ];
 
-// The keys the deck's data does not hold: a result the snapshot does not carry, a setting, a dimension of the rubric
-// or a tool that is not one of the demo package's two recorded answers.
+// The keys the deck's data does not hold: a result the snapshot does not carry, a setting or a dimension of the rubric
+// it lacks, or a key of any other kind.
 function unknownKeys(keys: string[], data: DeckData): string[] {
   const dimensions = new Set(data.rubric.dimensions.map((dimension) => dimension.key));
   const known = (key: string) => {
@@ -290,7 +313,7 @@ function unknownKeys(keys: string[], data: DeckData): string[] {
     if (kind === "r") return name in data.results;
     if (kind === "s") return name in data.settings;
     if (kind === "rubric") return dimensions.has(name);
-    return key === "tool:find_comparables" || key === "tool:estimate_time";
+    return false;
   };
   return keys.filter((key) => !known(key));
 }
@@ -369,6 +392,15 @@ test("the demo slides open Strata's own screens from the examples registry in a 
     await expect(link, id).toHaveAttribute("href", href);
     await expect(link).toHaveAttribute("target", "_blank");
   }
+  // No link on any slide replaces the deck mid-talk: each opens a new tab and says so.
+  const slideLinks = await page.locator("section[data-slide] a").evaluateAll((anchors) =>
+    anchors.map((anchor) => ({ href: anchor.getAttribute("href"), target: anchor.getAttribute("target"), text: anchor.textContent ?? "" })),
+  );
+  expect(slideLinks.length).toBeGreaterThan(5);
+  for (const link of slideLinks) {
+    expect(link.target, link.href ?? "").toBe("_blank");
+    expect(link.text, link.href ?? "").toContain(deckCopy.demo.opens);
+  }
   await expect(slideById(page, "demo-package").locator("[data-demo-box]")).toContainText(data.demo.sentence!);
   const answer = slideById(page, "demo-answer");
   await answer.locator("[data-copy-question]").click();
@@ -390,6 +422,14 @@ test("below the size of the canvas the deck is a page that reflows, with every s
   const slide = page.locator("[data-reading-slide]").filter({ has: page.locator("[data-figure=layers]") });
   await expect(slide.getByRole("region", { name: deckCopy.reading.scrolls(figureCopy.layers.title) })).toBeVisible();
   await expect(slide.locator("[data-figure-text=layers]")).toBeVisible();
+  // A drawing cut at the column's edge says that it scrolls, and so does the award chart.
+  await expect(slide.getByText(deckCopy.reading.scrollHint)).toBeVisible();
+  const gap = page.locator("[data-reading-slide]").filter({ has: page.locator("[data-award-chart]") });
+  await expect(gap.getByText(deckCopy.reading.scrollHint)).toBeVisible();
+  // The close keeps what the navy close shows: the question to the room and the way into Strata.
+  const close = page.locator("[data-reading-slide]").last();
+  await expect(close).toContainText(deckCopy.slides.thanks.ask);
+  await expect(close.getByRole("link", { name: deckCopy.slides.thanks.links.app })).toHaveAttribute("href", "/");
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   expect((await scan(page)).violations.map((found) => found.id)).toEqual([]);
 });
