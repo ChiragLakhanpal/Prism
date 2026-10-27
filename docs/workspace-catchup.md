@@ -3186,3 +3186,26 @@ The user created a paid Azure Databricks workspace on October 26, 2026 (Serverle
 **The user's part between command 3 and command 4.** The user made the scope's keys with values piped from `az`, each answering "saved": AZURE_OPENAI_API_KEY, APPLICATIONINSIGHTS_CONNECTION_STRING and AZURE_SUBSCRIPTION_ID (step 4b), all with `-p strata`; `databricks secrets list-secrets strata` then named those three keys. The scope itself answered "Scope strata already exists!" to the user's create-scope, so something made it between 20:23 and then. Step 4a, the role "Cognitive Services User" for strata-app, is assigned. Ticket 82 merged as efce9da6 (done d233f361) in between.
 
 **Ran on October 26, 2026 (orchestrator), the three probes again.** From the main checkout at d233f361, 20:45:59 to 20:49:53: `uv run --script ops/dayone/probe_hosts.py --env-file .env` exit 0 (test 1 passed: this computer, the notebook, the job and the probe app each reached search.worldbank.org, documents1.worldbank.org, datacatalogapi.worldbank.org and api.worldbank.org with 200; the probe app's address is https://strata-7405609289499029.9.azure.databricksapps.com); `uv run --script ops/dayone/probe_traces.py --env-file .env` exit 0 (test 10 passed: trace 872e45cac676e66e878a6016fcc85c3f in Application Insights at 20:47:11Z, marker strata-dayone-6307e88ee4cd); `uv run --script ops/dayone/probe_azure_from_job.py --env-file .env` exit 0 (test 2 passed: job 109502183789487 run 155700649679184, Foundry 404 and Azure OpenAI 401 without a key, Azure OpenAI 200 with the key from the scope). `python3 ops/dayone/dayone.py show` then lists tests 1, 2, 3, 4, 5, 7, 8, 9 and 10 passed and test 6 failed (Gap fill) until the App and the second wizard run. Next: the user's command 4, the App deploy.
+
+## Ticket 84, step 1 of 1: the App redeploy grants the App's principal SELECT and MODIFY on the run's lineage tables and on viewer_settings (criterion 3, live)
+
+Parked on October 26, 2026 with ticket 84. Run it from a snapshot of ticket 84's merge commit or later, as the header says, and link the main checkout's `web/node_modules` into the snapshot before the deploy. It needs the Databricks keys in `.env` and the Databricks CLI. It writes no secret, so the second session runs the deploy with `--keep-secrets` (ticket 70). It changes no table, job or dashboard.
+
+From ticket 84, `grants()` in `ops/app/deploy_app.py` gives the App's own service principal SELECT and MODIFY on `strata.ops.tool_calls`, `strata.ops.tool_call_reads` and `strata.ops.answer_removals`, which `src/strata/agent/runs.py` writes after each answer, beside the run row. It also gives it SELECT and MODIFY on `strata.ops.viewer_settings`, which the view popover's language choice writes as the App (ticket 42; its review F1 found the 503). The new test `ops/app/tests/test_app_grants.py` found that fourth table by reading the App's writers from the code. On the paid workspace, the App's first answer at 22:28 UTC on October 26, 2026 got `PERMISSION_DENIED` on `strata.ops.tool_calls`, and the user granted the first three tables by hand at 23:58 UTC. There, the deploy's GRANT statements for those three change nothing, and `viewer_settings` is the one grant this redeploy adds, unless the user granted it by hand too. A fresh workspace is the real test of all four.
+
+Run these from the snapshot, with `--env-file` pointing at the main checkout's `.env`:
+
+    uv run --script ops/app/deploy_app.py --env-file "<main checkout>/.env" --keep-secrets
+    databricks apps get strata -p strata
+    databricks grants get table strata.ops.tool_calls -p strata
+    databricks grants get table strata.ops.tool_call_reads -p strata
+    databricks grants get table strata.ops.answer_removals -p strata
+    databricks grants get table strata.ops.viewer_settings -p strata
+
+It worked if:
+
+- The deploy exits 0, prints "6. Letting the app's own service principal write usage events, agent runs, opened sources and drafts to strata.ops." with no error after it, and prints the App's address.
+- Each of the four `databricks grants get table` commands lists the App's service principal, the `service_principal_client_id` that `databricks apps get strata` shows, with both SELECT and MODIFY.
+- After one question on the deployed App, `SELECT count(*) FROM strata.ops.tool_calls WHERE run_id = '<that run's id>'` on the warehouse returns at least 1, and choosing a language in the view popover answers without a 503.
+
+Record here the step 6 line, the four grants listings, the App's principal and the time. This also clears the grant that "Ticket 45, step 4 of 6" waits on, and the browser half of "Ticket 42, step 6 of 6".
