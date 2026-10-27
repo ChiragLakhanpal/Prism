@@ -7753,6 +7753,11 @@ export const copy = {
             "By {day}, the latest day with cost data, my Azure resources had cost US${spent}. That is US${over} more " +
             "than the US${budget} budget for {periodName}.",
           pullFailed: "I couldn't pull Azure costs on {failedOn}, so these figures stop at {day}.",
+          // After any of the sentences above, when the latest pull's row in strata.ops.cost_pulls has the outcome
+          // throttled (ticket 107; GLOSSARY.md, "Throttled").
+          throttled:
+            "Azure throttled the cost pull on {pulledOn}: it had too many requests and asked me to wait. The next " +
+            "daily pull tries again.",
           none: "I have no Azure cost data yet. The daily cost pull adds each day's charges once Azure reports them.",
         },
         personal: {
