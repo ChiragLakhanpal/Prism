@@ -319,7 +319,7 @@ def _list(project_id: str) -> str:
 
 
 def _documents(count: int) -> str:
-    return f"{count} document{'' if count == 1 else 's'}"
+    return f"{plans.count_words(count)} document{'' if count == 1 else 's'}"
 
 
 def _joined(items: list[str]) -> str:

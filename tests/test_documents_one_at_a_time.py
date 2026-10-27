@@ -168,11 +168,11 @@ def test_each_document_is_written_before_the_next_is_fetched_and_the_time_is_che
     [(measure, detail)] = fresh.run("SELECT measure, detail FROM strata.ops.data_readiness WHERE run_id = 'night-1' "
                                     "AND source = 'documents' AND subject = 'all'").rows
     assert (status, measure) == ("succeeded", "document_host_budget_spent")
-    assert ("I wrote the passages of 2 documents before the stop, and left 15 documents and 1 project's document "
-            "list for the next night.") in detail
-    assert any(f"I wrote the passages of 2 documents before the stop: {ICR_REVIEWS[0]} and {ICR_REVIEWS[1]}." in message
+    assert ("I wrote the passages of two documents before the stop, and left 15 documents and one project's "
+            "document list for the next night.") in detail
+    assert any(f"I wrote the passages of two documents before the stop: {ICR_REVIEWS[0]} and {ICR_REVIEWS[1]}." in message
                for message in caplog.messages)
-    assert any(message.startswith("I stopped before I reached 15 documents and 1 project's document list. ")
+    assert any(message.startswith("I stopped before I reached 15 documents and one project's document list. ")
                and ICR in message and "the list of P156634" in message for message in caplog.messages)
 
     # The next night, with a fresh 60 minutes, asks the host for P130164's list only: the ICR Reviews and the ICR are
@@ -240,7 +240,7 @@ def test_the_live_documents_run_names_what_it_wrote_and_what_the_stop_left(fresh
     printed = capsys.readouterr().out
 
     assert ("Run live parsed 2 documents, skipped 0 and wrote the passages of 2 to strata.gold.passage. The stop left "
-            "15 documents and 1 project's document list not read, for the next run.") in printed
+            "15 documents and one project's document list not read, for the next run.") in printed
     assert f"  document {ICR} of P130164, not read by the passage reader" in printed
     assert column(fresh, "SELECT DISTINCT document_id FROM strata.gold.passage") == set(ICR_REVIEWS)
     assert "  the document list of P156634, not read by the passage reader" in printed

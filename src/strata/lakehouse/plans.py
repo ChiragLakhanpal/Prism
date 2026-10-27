@@ -161,12 +161,22 @@ def unreached(project_id: str, document_id: str | None, url: str, stop: StopRead
                    NOT_READ)
 
 
+NUMBER_WORDS = ("one", "two", "three", "four", "five", "six", "seven", "eight", "nine")
+
+
+def count_words(count: int) -> str:
+    """A count as the readers' notes write it: one to nine in words, numerals for 10 and up (DESIGN.md section 7,
+    rule 12)."""
+    return NUMBER_WORDS[count - 1] if 1 <= count <= len(NUMBER_WORDS) else str(count)
+
+
 def left_words(documents: int, lists: int) -> str:
     """The documents, and the projects' document lists, that a stop left, in words, naming only the counts that are
-    not zero: "15 documents and 1 project's document list". The readers' log, the stop's note and
+    not zero: "15 documents and one project's document list". The readers' log, the stop's note and
     ops/documents/run_live.py all say it this way."""
-    words = ([f"{documents} document{'' if documents == 1 else 's'}"] if documents else []) + (
-        [f"{lists} project's document list" if lists == 1 else f"{lists} projects' document lists"] if lists else [])
+    words = ([f"{count_words(documents)} document{'' if documents == 1 else 's'}"] if documents else []) + (
+        [f"{count_words(lists)} project's document list" if lists == 1
+         else f"{count_words(lists)} projects' document lists"] if lists else [])
     return " and ".join(words)
 
 
