@@ -507,7 +507,8 @@ def test_the_seed_command_sets_up_examples_only_for_the_reviewing_panel(tmp_path
         'user_id = "4021@1984"\n\n[[people]]\nemail = "cy.example@worldbank.org"\nname = "Cy Example"\n'
         'groups = ["model_owner"]\nuser_id = "4023@1984"\n'))
 
-    assert panel(load_roles(roles), load_examples()) == [ANA_PANELIST]
+    # The real roles file's own panel members (the owner since October 27, 2026) come first, then Ana.
+    assert panel(load_roles(roles), load_examples()) == panel(load_roles(), load_examples()) + [ANA_PANELIST]
     assert [kind for kind, _ in plan()] == ["The example"] * 5
     assert CY["X-Forwarded-User"] == "4023@1984"
 

@@ -8,5 +8,5 @@
 # here: they come from config/urls.toml, the one place the proposal, the README and the deck read them.
 # strata.config.load_deck() reads this file.
 
-presenter_name = ""
-presentation_date = ""
+presenter_name = "Chirag Lakhanpal"
+presentation_date = "2026-10-28"

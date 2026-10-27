@@ -307,3 +307,13 @@ start_here = { kind = "record", staff = true, piu = false, public = false, reaso
 "GET /api/rebidding" = "packages"
 "GET /api/agency/projects" = "agency_projects"
 "POST /api/home/start-here" = "start_here"
+
+# The reviewing panel's first member: the owner, named on October 27, 2026 (decision 94); the panelists' names
+# follow when they arrive.
+[[people]]
+email = "chirag.lakhanpal.cl@gmail.com"
+name = "Chirag Lakhanpal"
+groups = ["reviewing_panel"]
+regions = []
+projects = []
+user_id = "146827166867001"
