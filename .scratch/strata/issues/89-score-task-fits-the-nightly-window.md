@@ -1,0 +1,20 @@
+# 89: The score task fits the nightly window: the signals replay runs weekly and in batches, and the job's window is measured
+
+**What to build:** On the paid workspace the nightly's `score` task ran alone from October 27, 2026, 01:47 UTC (run 1086916576670871) for the whole 150-minute window (`timeout_seconds` 9000 in `bundle/nightly.yml`), after the first full run had already been cut by the same window at the transform (ticket 85). `_score` in `src/strata/lakehouse/nightly.py` does six things in a row: the time estimate scoring of every package and what-if (`strata.estimates.scoring`), the rebidding label counts, the shadow scoring, and on a live run `_score_packages` and `_replay_signals` (ticket 37's track record: about 1,050 projects a date with two warehouse statements each, about 110 minutes on the 2X-Small serverless warehouse by the second session's measure), then the monthly watch and the retrain. So a scheduled run cannot reach `measure_data_readiness` and `refresh_drafts`, and the dashboard's readiness page stays empty unless those run by hand. Make the task fit: move the signals replay to the weekly cadence the hazard replay already uses (once a week, on the day `config/thresholds.toml` names, with its last run date in `strata.ops.pipeline_runs` or a small ops table), batch its statements (one statement per date over all projects instead of two per project, or a temporary table), and give the whole `score` step a time cap from `config/thresholds.toml` (`nightly.score_minutes`, 45 to start) after which it records what is left for the next night and lets the tasks after it run. Step 1, done tonight as a stopgap by the orchestrator: `timeout_seconds` raised to 18000 (300 minutes) with a comment that names this run and says the Free Edition reason for 150 (fairshare's job at 05:30 on the shared workspace) does not apply to the paid workspace; put it back to the measured need once the replay moves. Prove it on the fixture: the replay runs on its day and not on others (a fake clock), the cap stops the step after the current part with the leftover recorded, and the rows of `strata.ops.signal_track_record` (or whatever table the replay writes) are the same for a batched run and the old one. The live proof is the first scheduled run after the merge that ends with every task SUCCESS inside its window, with each task's duration from `strata.ops.pipeline_runs` recorded in the catch-up file.
+
+Read first: `src/strata/lakehouse/nightly.py` (`_score`, `_score_packages`, `_replay_signals`, `_retrain`, the run record), `src/strata/estimates/hazard.py` (the weekly replay pattern), `src/strata/signals/` or wherever ticket 37's replay lives, `config/thresholds.toml` [nightly] and [signals], `bundle/nightly.yml` (the window and its comment), `tests/test_nightly_delta.py`, the catch-up file's blocks for the paid workspace's first night (October 27) and for ticket 37 step 5.
+
+**Blocked by:** None (can start immediately)
+
+**Status:** in-progress
+**Area:** data
+**Phase:** P4
+**Design review:** no
+
+- [ ] Step 1 (orchestrator): `bundle/nightly.yml`'s window is 18000 seconds with the comment, deployed to the paid workspace before the 07:00 UTC scheduled run of October 27.
+- [ ] On the fixture, the signals replay runs only on its weekly day (a fake clock), its batched statements give the same rows as before, and the score step's cap stops it after the current part with the leftover recorded while the tasks after it run.
+- [ ] The first scheduled run after the merge ends with every task SUCCESS inside its window, with each task's duration recorded in the catch-up file under this ticket, and the window is set back to the measured need.
+
+## Comments
+
+- October 26, 2026, orchestrator: opened at 21:20 PDT from the score run that filled the window, after the side agent's note on tonight's scheduled run. On the demo path: the dashboard's readiness page and the drafts refresh need the tasks after score to run every night.
