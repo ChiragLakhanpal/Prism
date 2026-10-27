@@ -24,7 +24,7 @@ import deploy  # noqa: E402
 import deploy_app  # noqa: E402
 
 from strata.lakehouse import bundle, catalog, nightly  # noqa: E402
-from strata.lakehouse.engine import DuckDBEngine  # noqa: E402
+from strata.lakehouse.engine import DuckDBEngine, EngineError  # noqa: E402
 
 FAIRSHARE = {"catalog": {"name": "fairshare", "comment": ""}, "schemas": {"gold": ""}, "volumes": {},
              "tables": {"gold.flights": ["flight_id STRING", "public_from DATE"]},
@@ -302,6 +302,50 @@ def test_after_the_index_sync_the_deploy_still_names_a_table_without_public_from
     assert code == 1
     assert (f"I could not create the tables. These tables have no public_from column of type DATE: {table}. Every "
             "table keeps the date each row became public (ADR 0002), so add a public_from DATE column.\n") in out
+
+
+class IndexRefusingWarehouse:
+    """The fake workspace's DuckDB as the SQL warehouse after the index sync: like Databricks, it refuses to read the
+    index's view, which has no columns, and the index itself, which is no Delta table."""
+
+    def __init__(self, duckdb):
+        self.duckdb = duckdb
+
+    def __getattr__(self, name):
+        return getattr(self.duckdb, name)
+
+    def _refuse(self, text):
+        for name in (INDEX_OBJECTS[0], INDEX_OBJECTS[2]):
+            if name in text:
+                raise EngineError(f"[DELTA_READ_TABLE_WITHOUT_COLUMNS] You are trying to read a Delta table {name} that "
+                                  "does not have any columns.")
+
+    def run(self, sql, params=None):
+        self._refuse(sql)
+        return self.duckdb.run(sql, params)
+
+    def table_bytes(self, table):
+        self._refuse(table)
+        return self.duckdb.table_bytes(table)
+
+
+def test_after_the_index_sync_the_readiness_task_measures_every_table_but_the_index_s_own(capsys):
+    """On October 27, 2026 measure_data_readiness failed on the paid workspace, because its table sizes measure read
+    the index's view (run 1023673043723265; ticket 87). It reads the catalog's listing, which leaves out the same three
+    objects as the deploy's check."""
+    workspace = FakeWorkspace()
+    deploy_into(workspace, capsys)
+    sync_index(workspace)
+    warehouse = IndexRefusingWarehouse(workspace.duckdb)
+
+    nightly.run_task(warehouse, "measure_data_readiness", "run-87", nightly.fetch_recorded)
+    status = warehouse.run("SELECT status FROM strata.ops.pipeline_runs WHERE run_id = 'run-87'").as_text()
+    measured = {name for (name,) in warehouse.run(
+        "SELECT table_name FROM strata.ops.table_sizes WHERE run_id = 'run-87'").as_text()}
+
+    assert status == [("succeeded",)]
+    assert {"strata.gold.passage", "strata.ops.pipeline_runs", "strata.ops.table_sizes"} <= measured
+    assert not measured & set(INDEX_OBJECTS)
 
 
 def test_a_deploy_that_rewrote_both_dashboards_names_each_one_as_changed(capsys):
