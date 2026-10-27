@@ -2138,7 +2138,7 @@ It worked if the deploy exits 0 with the last line `Strata is running at https:/
 
 ## Ticket 44, step 3 of 5: two nights of the nightly job store the hazard model's shadow scores and its weekly comparison (criterion 7, live)
 
-The merger parked this step on October 25, 2026, after merge commit 05052ba, for the same reasons as step 1. Run it after step 1, on two nights. It needs the Databricks keys in `.env`. It is ticket 04's command, and one run serves every block that names it. From this merge on, the `score` task also scores every package in shadow with a challenger when one is kept, runs the monthly watch, and stores the hazard model's score for every open project in `strata.ops.hazard_scores`. Once a week, on the signals' own schedule (`signals.track_record_every_days`), it replays the hazard model against the fixed signals and logs the comparison to the MLflow experiment `/Shared/strata/time_estimate` and to `strata.ops.evaluation_result` under the scorer `hazard_vs_signals`. No screen shows either.
+The merger parked this step on October 25, 2026, after merge commit 05052ba, for the same reasons as step 1. Run it after step 1, on two nights. It needs the Databricks keys in `.env`. It is ticket 04's command, and one run serves every block that names it. From this merge on, the `score` task also scores every package in shadow with a challenger when one is kept, runs the monthly watch, and stores the hazard model's score for every open project in `strata.ops.hazard_scores`. Once a week, on the night `signals.track_record_day` names in `config/thresholds.toml` (Sunday, in UTC, since ticket 89 replaced `signals.track_record_every_days`; a workspace with nothing stored replays on its first night, and a Sunday that passed without the replay is caught up the next night), it replays the hazard model against the fixed signals and logs the comparison to the MLflow experiment `/Shared/strata/time_estimate` and to `strata.ops.evaluation_result` under the scorer `hazard_vs_signals`. No screen shows either.
 
 Run this from the main checkout, once on each of two nights (a scheduled run of the job counts as one of them):
 
@@ -3415,3 +3415,35 @@ Record here the run id, the task's state, the first query's count, the second qu
 ## Ticket 87, steps 1 and 2 ran: the bundle deploy passes step 2 beside the index's objects, and the readiness task succeeds
 
 **Ran on October 27, 2026 (orchestrator), 05:48 to 06:00 UTC, from a snapshot of d921976a (ticket 87's done commit).** Step 1: `uv run --script ops/bundle/deploy.py --env-file "<main checkout>/.env" --fairshare-catalog workspace` exited 0 at 05:52 UTC; step 2 (the tables and views) passed with the index's three objects in the catalog, and step 3 printed "What changed: The job strata nightly changed" and that the workspace's catalog lists the same before and after (two schemas, two tables and one volume). The deploy reset the nightly's window to the bundle's 9000 seconds, so the orchestrator ran the Jobs API update again at once (`timeout_seconds 18000 | schedule 0 0 3 * * ? UNPAUSED` after it; ticket 89, step 1). Step 2: `measure_data_readiness` alone (run 999955026548349, `run-now --only`) ended SUCCESS, 05:52 to 06:00 UTC, where run 1023673043723265 had failed at 04:27 UTC on the index's view. After it: strata.ops.readiness_snapshot 218 rows, strata.ops.table_sizes 137 rows, strata.ops.data_readiness 6008 rows; rows of table_sizes naming the index's objects (online_index_view, event_log_, passage_index): 0. So the dashboard's Data readiness page has its rows on the paid workspace, and tonight's 07:00 UTC scheduled run reaches that task with 87's code deployed.
+
+## Ticket 89, after the merge, step 1 of 2: deploy the bundle, then set the nightly window to 300 minutes again
+
+Parked on October 26, 2026 with ticket 89, which merged into build/strata as 75da48fa. The orchestrator runs it tonight, right after the merge, from a snapshot of the done commit that follows 75da48fa (the builder named 72f08545 or later; 75da48fa holds it). Every key is set, but builders and mergers run no workspace step. It needs the Databricks keys in `.env`. Ticket 87 is merged, so step 2 of the deploy creates the tables after the index sync without stopping on the index's objects.
+
+Why: the score task now runs the signals' replays only on the night `signals.track_record_day` names (Sunday, in UTC), reads each replay date's projects in batches of `signals.track_record_batch_projects` (500), and stops once `nightly.score_minutes` (45) are spent, after the part it is in. It records the parts it left in the new table `strata.ops.score_parts`, so `measure_data_readiness` and `refresh_drafts` still run, and the next night runs the left parts first. The job needs this code and the new table before tonight's scheduled run.
+
+Run this from the snapshot, with `--env-file` pointing at the main checkout's `.env`:
+
+    uv run --script ops/bundle/deploy.py --env-file "<main checkout>/.env" --fairshare-catalog workspace
+
+It worked if it exits 0 and step 3's report lists `strata.ops.score_parts` as new.
+
+The deploy puts the job's `timeout_seconds` back to the bundle's 9000. Keep the window at 300 minutes until the live measure on Sunday, November 1, so run the Jobs API update from "Ticket 89, step 1 of 2" above right after the deploy:
+
+    databricks jobs update --json '{"job_id": 200833746315993, "new_settings": {"timeout_seconds": 18000}}' -p strata
+    databricks jobs get 200833746315993 -p strata
+
+It worked if the second command shows `timeout_seconds` 18000 with the schedule unchanged (0 0 3 * * ? America/New_York, UNPAUSED). Record here the deploy's exit code, step 3's report, the read-back and the time.
+
+## Ticket 89, after the merge, step 2 of 2: the first scheduled run after the deploy ends with every task succeeded inside its window (criterion 3, live)
+
+Parked on October 26, 2026 with ticket 89 (merge commit 75da48fa). The orchestrator reads it after the first scheduled run of `strata nightly` (job 200833746315993) that follows step 1. It needs the Databricks keys in `.env` and the SQL warehouse. The first night replays the signals, because none is stored on the paid workspace. Sunday, November 1 is the first weekly night.
+
+With that run's id, run these two queries:
+
+    SELECT task_key, status, timestampdiff(MINUTE, started_at, finished_at) AS minutes FROM strata.ops.pipeline_runs WHERE run_id = '<id>' ORDER BY started_at
+    SELECT position, part, state, rows_changed, timestampdiff(SECOND, started_at, finished_at) AS seconds FROM strata.ops.score_parts WHERE run_id = '<id>' ORDER BY task_started, position
+
+It worked if every task is `succeeded` inside the window, and `score` ends soon after 45 minutes, or sooner. A `left` row, if any, names what the next night runs first.
+
+Record each task's minutes here under ticket 89. Then, after Sunday, November 1, read that night's `signals_replays` row in `strata.ops.score_parts` for the replay's minutes, and set `timeout_seconds` in `bundle/nightly.yml` to the measured need, updating `tests/test_nightly.py`'s two window tests and `ops/bundle/tests/test_check.py` in the same change. If the `signals_replays` part runs over about 60 minutes, open the review's follow-up F1 (`.notes/89-review.md`: one score part for each replay date, so the cap can stop between dates).
