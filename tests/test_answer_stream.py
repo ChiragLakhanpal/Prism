@@ -30,6 +30,7 @@ from strata.lakehouse.engine import DuckDBEngine, EngineError
 from strata.reader.passages import TABLE_SUMMARY
 from strata.server.app import create_app
 from strata.tools.check_plan import check_plan
+from strata.tools.estimate_time import estimate_time
 from strata.tools.search_passages import search_passages
 
 RECORDED = Path(__file__).parent / "fixtures" / "api"
@@ -595,6 +596,12 @@ def with_two_envelopes(call, **arguments):
     return result
 
 
+def without_abstention(call, **arguments):
+    """estimate_time as it answers once a model gives a time estimate: no abstention, so the agent gets its summary.
+    The hand-made set trains no model, so the tool abstains with no rows, and the agent then gets no summary."""
+    return {**estimate_time(call, **arguments), "abstention": None}
+
+
 class EverySentenceFollows:
     """A judge for check 4 that finds every sentence follows from its sources, for the tests of checks 1 to 3,
     so check 4 never stands in their way. tests/test_six_checks.py tests check 4 with recorded judges."""
@@ -745,6 +752,84 @@ def test_a_number_that_equals_a_value_of_another_unit_or_rounding_is_not_backed_
     assert [sentence["text"] for sentence in of(parsed, "sentence")] == [
         "The plan allows 45 days, or 1.5 months.", "KE-WAJWASCO-372776-CW-RFB took 34 days.",
         "The middle half took 3.3 to 7.9 months."]
+
+
+def test_a_natural_frequency_is_one_value_that_only_a_frequency_pair_backs(fixture_db):
+    """Ticket 12's review P3 and verify V1: find_comparables' summary holds the pairs [8, 10] and [1, 10] that "8 in
+    10 were signed within" and "fewer than 1 in 10" state, and they used to back any 8, 10 or 1 a sentence wrote.
+    "N in 10", with "about", "fewer than" or "more than" before it, is now one value, which only a pair with the same
+    words backs, and the pairs back nothing else. A count field backs no number written with a time unit. The truth
+    is tests/ground_truth/values.toml's past_range: 2 of 49 were signed within the plan's 1.5 months, fewer than 1 in
+    10, and 8 in 10 within 9.1 months."""
+    truth = TRUTH["past_range"]
+    within, total = len(truth["signed_within_plan"]), truth["comparables"]
+
+    def answer(outputs):
+        summary = outputs[0]["summary"]["evidence_id"]
+        return [claim(sentence, kind="record", evidence_ids=[summary]) for sentence in (
+            f"8 in 10 were signed within {truth['q80_months']} months.",
+            f"{within} of {total} comparable packages, fewer than 1 in 10, were signed within the plan's "
+            f"{truth['plan_months']} months.",
+            f"8 of {total} comparable packages were signed within the plan's {truth['plan_months']} months.",
+            f"About 1 in 10 were signed within the plan's {truth['plan_months']} months.",
+            f"More than 9 in 10 were signed within {truth['q80_months']} months.",
+            f"The plan allows {total} months.")]
+
+    agent = CallsThenAnswers([("find_comparables", {"step_reference": "KE-NWWDA-541055-CW-RFB", "as_of": "2026-10-22"})],
+                             answer)
+
+    parsed = ask_with_tools(fixture_db, agent, load_tools(), asof="2026-10-22")
+
+    assert [sentence["text"].split(" ")[:3] for sentence in of(parsed, "sentence")] == [
+        ["8", "in", "10"], [str(within), "of", str(total)]]
+    assert removed_reasons(parsed) == [[("number_not_in_records", "8")], [("number_not_in_records", "About 1 in 10")],
+                                       [("number_not_in_records", "More than 9 in 10")],
+                                       [("number_not_in_records", str(total))]]
+
+
+def test_a_model_s_frequency_needs_a_value_named_in10_and_none_is_held_when_the_model_is_not_shown(fixture_db):
+    """Ticket 28's verify F2: with rebidding_risk's model not shown (model.shown false, in10 null), the copy file's
+    sentence for a shown model (rebid.model) was kept, because 3 matched n and 10 a coverage count. "About 3 in 10"
+    is one value, which only a field named in10 can back."""
+    def answer(outputs):
+        assert outputs[0]["summary"]["model"]["shown"] is False
+        return [claim("My model estimates that about 3 in 10 packages like this one are advertised again.",
+                      kind="summary", evidence_ids=[outputs[0]["summary"]["evidence_id"]])]
+
+    agent = CallsThenAnswers([("rebidding_risk", {"step_reference": "KE-NWWDA-541055-CW-RFB", "as_of": "2026-10-22"})],
+                             answer)
+
+    parsed = ask_with_tools(fixture_db, agent, load_tools(), EverySentenceFollows(), asof="2026-10-22")
+
+    assert removed_reasons(parsed) == [[("number_not_in_records", "about 3 in 10")]]
+
+
+def test_a_count_of_packages_is_not_backed_by_one_comparable_s_days(tmp_path):
+    """Ticket 27's verify finding 1: estimate_time's summary holds every comparable's days at every step, so "ran
+    longest in 17 of 25" was kept on the hand-made set because one comparable's stage took 17 days; the tool says 15
+    of 25 (values.toml [step_dates], longest_n and longest_m). A value under a days field backs only a number written
+    in days."""
+    import step_set
+
+    step_set.build(tmp_path / "set.duckdb").close()
+    known = TRUTH["step_dates"]
+
+    def answer(outputs):
+        summary = outputs[0]["summary"]["evidence_id"]
+        days = [entry["days"] for step in outputs[0]["step_dates"]["steps"] for entry in step["comparables"]]
+        assert 17 in days and known["longest_n"] != 17
+        return [claim(f"Bid evaluation ran longest in {n} of {known['longest_m']} comparable packages.", kind="record",
+                      evidence_ids=[summary]) for n in (17, known["longest_n"])]
+
+    agent = CallsThenAnswers([("estimate_time", {"step_reference": known["target"],
+                                                 "as_of": known["as_of"].isoformat()})], answer)
+
+    parsed = ask_with_tools(tmp_path / "set.duckdb", agent, with_adapter("estimate_time", "without_abstention"),
+                            asof=known["as_of"].isoformat())
+
+    assert removed_reasons(parsed) == [[("number_not_in_records", "17")]]
+    assert [sentence["text"] for sentence in of(parsed, "sentence")] == [
+        f"Bid evaluation ran longest in {known['longest_n']} of {known['longest_m']} comparable packages."]
 
 
 def test_an_answer_can_quote_each_side_of_a_disagreement_and_state_the_trajectory_and_the_rejected_count(fixture_db):

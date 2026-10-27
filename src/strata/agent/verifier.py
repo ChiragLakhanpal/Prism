@@ -112,10 +112,20 @@ class When:
 
 
 @dataclass(frozen=True)
+class Frequency:
+    """A natural frequency a sentence states as one value, with the words before it: "8 in 10", "about 3 in 10",
+    "fewer than 1 in 10" or "more than 9 in 10". Only a frequency a cited record holds backs it (frequency_backs)."""
+
+    words: str | None  # "about", "fewer_than", "more_than", or None when the sentence writes none
+    k: Decimal
+    of: Decimal
+
+
+@dataclass(frozen=True)
 class Mention:
     kind: str  # "number" or "date"
     text: str
-    value: Decimal | When | str  # a str is an amount no row holds as written, such as "half"
+    value: Decimal | When | Frequency | str  # a str is an amount no row holds as written, such as "half"
     start: int | None = None
     end: int | None = None
 
@@ -185,6 +195,13 @@ HALF_OF = re.compile(r" of\b", re.I)
 HALF_OF_A_TIME = re.compile(
     r" of (?:the )?(?:(?:fiscal |calendar )?year|month|week|quarter|period|decade|FY ?\d{2,4}|fiscal \d{4}|\d{4})\b",
     re.I)
+# A natural frequency, as DESIGN.md section 7 writes a share: "8 in 10", "about 3 in 10", "fewer than 1 in 10" or "more
+# than 9 in 10", in digits or in words. It is one value, not two numbers (ticket 12's review P3), so an 8 or a 10 held
+# elsewhere in a record never backs it, and the record's frequencies back nothing else. "5 in 10 days" is not one.
+FREQUENCY_WORDS = {"about": "about", "fewer than": "fewer_than", "more than": "more_than"}
+FREQUENCY = re.compile(
+    r"\b(?:(about|fewer than|more than)\s+)?(\d+|" + "|".join(word for word, value in SMALL.items() if value <= 10)
+    + r")[\s-]+in[\s-]+(?:10|ten)\b(?![-–]\d)(?!\s*-?\s*(?:months?|days?|weeks?|years?)\b)", re.I)
 
 
 def _word_value(words: list[str]) -> Decimal:
@@ -261,6 +278,12 @@ def _number(written: str, language: str) -> Decimal:
     return Decimal(written.replace(",", "")) if language == ENGLISH else languages.parse_number(written, language)
 
 
+def _frequency(match: re.Match) -> Frequency:
+    k = match[2].lower()
+    return Frequency(FREQUENCY_WORDS[" ".join(match[1].lower().split())] if match[1] else None,
+                     Decimal(k) if k.isdigit() else Decimal(SMALL[k]), Decimal(10))
+
+
 def mentions(text: str, language: str = ENGLISH) -> list[Mention]:
     """The numbers and dates a text states, each with its place in the text, read in the text's language
     (config/languages.toml): "1 287 515,60" is one number in French and "22 juin 2026" one date. A four-digit
@@ -288,6 +311,10 @@ def mentions(text: str, language: str = ENGLISH) -> list[Mention]:
             year = int(match[1]) if len(match[1]) == 4 else 2000 + int(match[1])
             found.append(Mention("number", match.group(0), Decimal(year), *match.span()))
     ids += [match.span() for match in ID.finditer(text) if free(*match.span())]
+    if language == ENGLISH:
+        for match in FREQUENCY.finditer(text):
+            if free(*match.span()):
+                found.append(Mention("number", match.group(0), _frequency(match), *match.span()))
     words = _number_words(text) if language == ENGLISH else languages.number_words(text, language)
     for start, end, value in words:
         if free(start, end):
@@ -305,25 +332,34 @@ def mentions(text: str, language: str = ENGLISH) -> list[Mention]:
 
 def _declared(claim: Claim, stated: list[Mention], language: str = ENGLISH) -> list[Mention]:
     """The numbers and dates the claim lists but the sentence does not show: they are checked too, each as
-    what its text reads as, whichever list it came in."""
-    extra = []
+    what its text reads as, whichever list it came in. The two numbers of a frequency the sentence states, listed
+    alone ("8" and "10" for "8 in 10"), are that frequency."""
+    extra: list[Mention] = []
+    parts = {part for other in stated if isinstance(other.value, Frequency) for part in (other.value.k, other.value.of)}
     for text in claim.numbers + claim.dates:
         for mention in mentions(text, language):
-            if not any(mention.value == other.value for other in stated + extra):
+            if mention.value not in parts and not any(mention.value == other.value for other in stated + extra):
                 extra.append(Mention(mention.kind, mention.text, mention.value))
     return extra
 
 
 # ── Values in a row ──────────────────────────────────────────────────────
 
-NOT_VALUES = {"text", "header", "rank", "score", "public_from"}  # a passage's words, the search's own ranking, and
-# the day a record became public in Strata (ADR 0002), which says when a source could be read, not what it says
+NOT_VALUES = {"text", "header", "rank", "score", "public_from", "frequencies"}  # a passage's words, the search's own
+# ranking, the day a record became public in Strata (ADR 0002), which says when a source could be read, not what it
+# says, and the pairs a natural frequency states, which back only that frequency (frequency_backs)
 ISO_DAY = re.compile(r"^(\d{4})-(\d{2})-(\d{2})(?:[T ].*)?$")
 PLAIN_NUMBER = re.compile(r"^-?\d+(?:\.\d+)?$")
+IN10 = re.compile(r"(?:^|_)in10$")  # a field that gives a share as k in 10, such as a model's in10 or middle_in10
 
 
-# The units a field name can give its values. A count is never a time, so "45 months" is not 45 signed packages.
+# The units a field name can give its values. A count is never a time, so "45 months" is not 45 signed packages, nor
+# the 49 comparables a coverage line used; and a value in days, months or weeks backs only a number written with its
+# unit, so one comparable's 17 days never backs "17 of 25 comparable packages" (ticket 27's verify finding 1). A year
+# is left out of that rule, since a fiscal year is written with no unit after it.
 UNIT_STEMS = ("month", "day", "week", "year", "count")
+COUNT_WORDS = {"coverage", "matched", "used", "within", "total", "n", "m", "k"}
+TIMES = ("month", "day", "week")
 UNIT = r"(months?|days?|weeks?|years?)\b"
 UNIT_AFTER = re.compile(r"\s*-?\s*" + UNIT, re.I)
 RANGE_UNIT_AFTER = re.compile(r"\s*(?:-|\u2013|to|and)\s*" + DIGITS.pattern + r"\s*-?\s*" + UNIT, re.I)
@@ -351,7 +387,7 @@ def _whole(value: Any) -> bool:
 def row_numbers(row: Any, path: tuple[str, ...] = ()) -> list[tuple[Decimal, tuple[str, ...], bool]]:
     """Each number a row holds as a value, with the field names on the way to it and whether it is whole."""
     if isinstance(row, Mapping):
-        return [found for key, value in row.items() if key not in NOT_VALUES
+        return [found for key, value in row.items() if key not in NOT_VALUES and not IN10.search(str(key))
                 for found in row_numbers(value, (*path, str(key)))]
     if isinstance(row, list | tuple):
         return [found for value in row for found in row_numbers(value, path)]
@@ -359,9 +395,71 @@ def row_numbers(row: Any, path: tuple[str, ...] = ()) -> list[tuple[Decimal, tup
     return [(number, path, _whole(row)) for number in numbers]
 
 
-def _unit_conflict(path: tuple[str, ...], unit: str) -> bool:
+def frequency_backs(row: Any) -> list[tuple[str, str | None, Decimal, Decimal]]:
+    """The natural frequencies a record holds, at any depth, each as (kind, words, k, of): each pair under a field
+    named frequencies, [8, 10] or {"words": "fewer_than", "states": [1, 10]} (find_comparables); each value of a field
+    named in10, k in 10 (a model's share, or a step date's); and the 8 in 10 that a past range's or an estimate's q80
+    names, the months by which 8 in 10 were signed."""
+    found: list[tuple[str, str | None, Decimal, Decimal]] = []
+
+    def number(value: Any) -> Decimal | None:
+        if isinstance(value, bool) or not isinstance(value, int | float | Decimal):
+            return None
+        return Decimal(str(value))
+
+    def walk(value: Any) -> None:
+        if isinstance(value, list | tuple):
+            for inner in value:
+                walk(inner)
+        if not isinstance(value, Mapping):
+            return
+        for key, inner in value.items():
+            if key == "frequencies" and isinstance(inner, Mapping):
+                for pair in inner.values():
+                    words, states = (pair.get("words"), pair.get("states")) if isinstance(pair, Mapping) else (None, pair)
+                    if isinstance(states, list | tuple) and len(states) == 2 and None not in map(number, states):
+                        found.append(("pair", words, number(states[0]), number(states[1])))
+            elif IN10.search(str(key)) and number(inner) is not None:
+                found.append(("in10", None, number(inner), Decimal(10)))
+            elif key == "q80" and number(inner) is not None:
+                found.append(("q80", None, Decimal(8), Decimal(10)))
+            elif key not in NOT_VALUES:
+                walk(inner)
+
+    walk(row)
+    return found
+
+
+def _frequency_backed(frequency: Frequency, backs: list) -> bool:
+    """Whether a record's frequency backs the sentence's: the same k in 10, with the same words. "About" and no words
+    are one ("about 3 in 10" and "3 in 10"); "fewer than" and "more than" must be the record's own. A q80 names only
+    "8 in 10", with no words."""
+    loose = (None, "about")
+    for kind, words, k, of in backs:
+        if (k, of) != (frequency.k, frequency.of):
+            continue
+        if kind == "q80" and frequency.words is None:
+            return True
+        if kind == "in10" and frequency.words in loose:
+            return True
+        if kind == "pair" and (frequency.words == words or (frequency.words in loose and words in loose)):
+            return True
+    return False
+
+
+UNREAD = "unread"  # the unit of a number in a sentence whose units are not read: only English's are, so far
+
+
+def _unit_conflict(path: tuple[str, ...], unit: str | None) -> bool:
+    """Whether a value under these field names cannot back a number written in this unit (None: written with none;
+    UNREAD: in a language whose units are not read, where no field conflicts)."""
+    if unit == UNREAD:
+        return False
     words = [word for name in path for word in re.split(r"[_\W\d]+", name.lower()) if word]
-    return any(word.startswith(stem) for word in words for stem in UNIT_STEMS if stem != unit)
+    if unit is None:
+        return any(word.startswith(stem) for word in words for stem in TIMES)
+    return any(word.startswith(stem) for word in words for stem in UNIT_STEMS if stem != unit) or any(
+        word in COUNT_WORDS for word in words)
 
 
 def row_values(row: Any, numbers: set | None = None, days: set | None = None) -> tuple[set, set]:
@@ -394,10 +492,12 @@ def row_values(row: Any, numbers: set | None = None, days: set | None = None) ->
     return numbers, days
 
 
-def _supports(mention: Mention, numbers: list, days: set, unit: str | None = None) -> bool:
+def _supports(mention: Mention, numbers: list, days: set, unit: str | None = None, frequencies: list = ()) -> bool:
+    if isinstance(mention.value, Frequency):
+        return _frequency_backed(mention.value, list(frequencies))
     if mention.kind == "number":
         decimals = isinstance(mention.value, Decimal) and "." in mention.text
-        return any(value == mention.value and not (unit and _unit_conflict(path, unit)) and not (decimals and whole)
+        return any(value == mention.value and not _unit_conflict(path, unit) and not (decimals and whole)
                    for value, path, whole in numbers)
     return any(mention.value.covers(day) for day in days) or (
         mention.value.month is None and any(value == Decimal(mention.value.year) for value, _, _ in numbers))
@@ -614,11 +714,11 @@ def _language_of(row: Mapping | None) -> str:
     return str((row or {}).get("language") or ENGLISH)
 
 
-def _values(row: Mapping | None) -> tuple[list, set]:
-    """The numbers and dates a cited row backs, each number with its field names. A passage backs its dates and
-    no number."""
+def _values(row: Mapping | None) -> tuple[list, set, list]:
+    """The numbers, dates and natural frequencies a cited row backs, each number with its field names. A passage
+    backs its dates and no number."""
     _, days = row_values(row)
-    return ([], days) if _is_passage(row) else (row_numbers(row), days)
+    return ([], days, []) if _is_passage(row) else (row_numbers(row), days, frequency_backs(row))
 
 
 def _texts(row: Any) -> list[str]:
@@ -698,9 +798,9 @@ def check(index: int, claim: Claim, facts: Facts, language: str = ENGLISH) -> Ch
               if not _in_a_value(mention, claim.sentence, texts)]
     checked: dict[str, list] = {"number": [], "date": []}
     for mention in stated + _declared(claim, stated, language):
-        unit = unit_of(claim.sentence, mention)
-        found = next((evidence for evidence, (numbers, days) in rows if _supports(mention, numbers, days, unit)),
-                     None)
+        unit = unit_of(claim.sentence, mention) if languages.language(language).code == ENGLISH else UNREAD
+        found = next((evidence for evidence, (numbers, days, frequencies) in rows
+                      if _supports(mention, numbers, days, unit, frequencies)), None)
         inside = next((source for start, end, source in spans
                        if mention.start is not None and start <= mention.start and mention.end <= end), False)
         if found is None and inside and (inside != getattr(quote, "evidence_id", None) or backs):
