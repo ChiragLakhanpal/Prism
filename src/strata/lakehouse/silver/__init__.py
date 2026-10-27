@@ -205,6 +205,24 @@ def read(engine: Engine, sources: Iterable[Source], clock: Callable[[], dt.datet
     return Pass(added, stopped_at, tuple(waiting))
 
 
+WAITING_MEASURE = "silver_pages_waiting"
+NOTE_COLUMNS = ("run_id", "source", "subject", "measure", "kind", "count", "denominator", "as_of", "detail",
+                "measured_at", "public_from")
+
+
+def note_waiting(engine: Engine, run_id: str, passed: Pass, minutes: float) -> int:
+    """A data readiness note for each source whose pages a pass stopped at its time left for the next run: the pages
+    left, out of those waiting when the pass began. Returns the notes it wrote."""
+    when = passed.stopped_at
+    day = f"{when:%B} {when.day}, {when.year}"
+    notes = [(run_id, found.source, "all", WAITING_MEASURE, "fresh", found.pages, found.pending, when.date(),
+              f"I stopped reading bronze pages into silver on {day}, after the night's {minutes:g} minutes for "
+              f"silver, so gold and the job's later tasks had time to run. {found.pages:,} of the {found.pending:,} "
+              "pages of this source that were waiting are left, and the next night goes on from there.",
+              when, when.date()) for found in passed.waiting]
+    return engine.insert_rows("strata.ops.data_readiness", NOTE_COLUMNS, notes)
+
+
 def run(engine: Engine, source: Source, clock: Callable[[], dt.datetime] = _now, group: int | None = None) -> int:
     """One source's pass with no time limit (read). Returns the rows it added."""
     return read(engine, [source], clock, group=group).added

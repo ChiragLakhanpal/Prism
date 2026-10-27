@@ -9,7 +9,8 @@ Every task has its work (tickets 07, 17, 19, 20, 22, 26, 28, 29 and 43), in docs
 
 1. fetch_by_watermark fetches each source in config/sources.toml that it fetches page by page into bronze,
    for every country or for the slice's countries as each entry says, from its watermark on.
-2. bronze_to_gold builds silver and gold from bronze, with the suppliers resolved (ticket 19).
+2. bronze_to_gold builds silver and gold from bronze, with the suppliers resolved (ticket 19). Silver reads its
+   pages in groups and stops after its minutes, so gold runs inside the window (ticket 85).
 3. parse_and_embed runs the plan reader and the passage reader over only the documents bronze does not
    hold yet, and embeds only passages whose text changed (strata.lakehouse.readers).
 4. sync_index syncs strata.gold.passage and, on the workspace, the AI Search index.
@@ -56,7 +57,7 @@ from collections.abc import Callable, Iterable, MutableMapping
 from dataclasses import dataclass
 from importlib import resources
 
-from strata.config import Source, load_sources
+from strata.config import Source, load_sources, load_thresholds
 from strata.lakehouse import bronze, gold, pages, quality, readers, readiness, silver, storage
 from strata.lakehouse.engine import Engine
 from strata.lakehouse.schedule import Window, as_utc, daily_start
@@ -123,6 +124,7 @@ class Run:
     clock: Callable[[], dt.datetime] = _now
     readers_for: ReadersFor | None = None
     search_endpoint: str | None = None  # the AI Search endpoint the bundle names; the live readers sync its index
+    started: dt.datetime | None = None  # when the task started, from which silver's minutes count (ticket 85)
 
     def document_readers(self) -> readers.Readers | None:
         if self.readers_for is not None:
@@ -155,10 +157,23 @@ def _bronze_to_gold(run: Run) -> int:
     ticket 43 and docs/PLAN.md section 11. Only a run that fetches from the live APIs asks the live
     model about the uncertain middle of name matching; any other run uses the offline stand-in. On
     Databricks each task reads the Azure OpenAI keys from the job's secret scope (keys_from_scope); without
-    them every pair in the middle waits for a person (no_model)."""
+    them every pair in the middle waits for a person (no_model).
+
+    Silver gets the night's minutes for silver (config/thresholds.toml, ingestion.silver_minutes) from the task's
+    start. When they run out it stops at the end of the group it is reading, and the pages it left are counted in
+    a data readiness note and in the task's log; the rest of the task, gold among it, runs on what silver holds,
+    and the next night reads the pages left (ticket 85). On October 26, 2026, silver used the job's whole window."""
     from strata.knowledge.suppliers import bidders, judge, resolve
 
-    added = sum(silver.run(run.engine, source, run.clock) for source in _paged())
+    minutes = float(load_thresholds().value("ingestion.silver_minutes"))
+    started = run.started or run.clock()
+    passed = silver.read(run.engine, _paged(), run.clock, until=started + dt.timedelta(minutes=minutes))
+    if passed.waiting:
+        silver.note_waiting(run.engine, run.run_id, passed, minutes)
+        LOG.warning("Silver stopped after its %g minutes with %s pages left for the next night: %s.", minutes,
+                    f"{sum(found.pages for found in passed.waiting):,}",
+                    ", ".join(f"{found.source} {found.pages:,} of {found.pending:,}" for found in passed.waiting))
+    added = passed.added
     added += bidders.store(run.engine) + bidders.store_bids(run.engine)
     deciding = judge.from_environment() if run.fetch is fetch_live else judge.SameNameStandIn()
     added += resolve.run(run.engine, run.run_id, deciding, run.clock)
@@ -411,7 +426,7 @@ def run_task(engine: Engine, task_key: str, run_id: str, fetch: Fetch,
     started = clock()
     status, changed = "failed", 0
     try:
-        changed = work(Run(engine, run_id, fetch, clock, readers_for, search_endpoint))
+        changed = work(Run(engine, run_id, fetch, clock, readers_for, search_endpoint, started))
         quality.record(engine, quality.check(engine, task_key), run_id, night_of(engine, run_id, started), task_key,
                        clock())
         status = "succeeded"

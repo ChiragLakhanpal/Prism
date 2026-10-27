@@ -13,12 +13,14 @@ and store versions of P130164's recorded projects page in bronze, each with a pr
 
 import copy
 import datetime as dt
+import logging
+import shutil
 from contextlib import contextmanager
 
 import pytest
 
-from strata.config import load_sources
-from strata.lakehouse import bronze, catalog, pages, silver
+from strata.config import load_sources, load_thresholds
+from strata.lakehouse import bronze, catalog, nightly, pages, silver
 from strata.lakehouse.engine import DuckDBEngine, EngineError
 from strata.lakehouse.silver import projects
 
@@ -174,3 +176,50 @@ def test_a_stop_leaves_its_group_pending_and_the_rerun_writes_it_once(engine, st
     for table in projects.TABLES:
         assert mine[table] == theirs[table], f"{table} holds a page twice or misses one"
     assert len(mine["strata.ops.silver_pages"]) == len(waiting)  # one record for each page
+
+
+def project_name(engine, project_id="P130164"):
+    return engine.run("SELECT project_name FROM strata.gold.project WHERE project_id = :pid", {"pid": project_id}
+                      ).rows[0][0]
+
+
+def test_silver_s_minutes_stop_the_pass_after_the_current_group_and_gold_runs_on_what_silver_holds(
+        fixture_db, tmp_path, caplog):
+    """A night with more new pages than silver's minutes allow, as on October 26, 2026, on a copy of the fixture.
+    The task reads the clock when it starts, and silver reads it once for each page it records. The fake clock moves
+    on so that the first group is recorded inside silver's minutes and the second after them, so the pass stops at
+    the end of the second group, gold runs on what silver holds, and the pages left wait for the next night."""
+    limits = load_thresholds()
+    size, minutes = int(limits.value("ingestion.silver_group_pages")), float(limits.value("ingestion.silver_minutes"))
+    count, left = 2 * size + 3, 3
+    target = tmp_path / "fixture.duckdb"
+    shutil.copy(fixture_db, target)
+    with DuckDBEngine.open(target) as engine:
+        bronze.store(engine, PROJECTS, versions_of_p130164(count))
+        night = a_clock(step=dt.timedelta(minutes=minutes) / (1.5 * size))
+        with caplog.at_level(logging.WARNING, logger="strata.lakehouse.nightly"):
+            nightly.run_task(engine, "bronze_to_gold", "night-85", fetch=lambda source, engine: (), clock=night)
+
+        assert engine.run("SELECT status FROM strata.ops.pipeline_runs WHERE run_id = 'night-85'").rows == (
+            ("succeeded",),)
+        assert len(silver.pending(engine, PROJECTS)) == left
+        assert project_name(engine) == f"Rajasthan Road Sector Modernization Project, version {2 * size - 1}"
+        assert engine.run("SELECT source, subject, measure, kind, count, denominator FROM strata.ops.data_readiness "
+                          "WHERE run_id = 'night-85'").rows == (
+            ("projects", "all", "silver_pages_waiting", "fresh", left, count),)
+        assert [record.getMessage() for record in caplog.records] == [
+            f"Silver stopped after its {minutes:.0f} minutes with {left} pages left for the next night: "
+            f"projects {left} of {count}."]
+
+        nightly.run_task(engine, "bronze_to_gold", "night-86", fetch=lambda source, engine: (), clock=a_clock())
+
+        assert silver.pending(engine, PROJECTS) == []
+        assert project_name(engine) == f"Rajasthan Road Sector Modernization Project, version {count - 1}"
+        assert engine.run("SELECT count(*) FROM strata.ops.data_readiness WHERE run_id = 'night-86' "
+                          "AND measure = 'silver_pages_waiting'").rows == ((0,),)
+        for table in projects.TABLES:  # each version of the page once in each table, none twice and none missed
+            per_page = dict(engine.run(
+                f"SELECT page_hash, count(*) AS n FROM {table} WHERE page_hash IN ("
+                "SELECT page_hash FROM strata.bronze.api_pages WHERE request = :request) GROUP BY page_hash",
+                {"request": P130164}).rows)
+            assert len(set(per_page.values())) <= 1 and len(per_page) in (0, count + 1), table
