@@ -73,8 +73,7 @@
   --text-chart-label--letter-spacing: 0.02em;
   --text-button: 0.875rem;   --text-button--line-height: 1.25rem;   --text-button--font-weight: 600;
   /* Deprecated: the deck's last uses (ticket 90). title is retired into h2, so this alias takes h2's
-     values. Since the class sweep (ticket 91) only the deck and the evidence drawer's head, which the
-     frame ticket rewrites, still say text-title. */
+     values. Since the frame ticket (94) rewrote the evidence drawer's head, only the deck says text-title. */
   --text-title: 1.125rem;    --text-title--line-height: 1.5rem;     --text-title--font-weight: 600;
   --font-weight-light: 300;  --font-weight-normal: 400;  --font-weight-medium: 500;  --font-weight-semibold: 600;  --font-weight-bold: 700;
   --default-font-family: var(--font-sans);
@@ -85,6 +84,8 @@
   --spacing: 0.25rem;
   --breakpoint-xs: 22.5rem;  --breakpoint-md: 48rem;  --breakpoint-lg: 64rem;
   --breakpoint-xl: 75rem;  --breakpoint-2xl: 87.5rem;
+  /* 1440 px, used only by the sidebar's default: open from here, a rail below (DESIGN.md section 4, Breakpoints). */
+  --breakpoint-3xl: 90rem;
   /* The same four breakpoints as container sizes, and one for a table's own frame. The page column
      is a size container (ticket 14), so a page lays out by the page area's width, which the evidence
      drawer narrows: its classes use @md/page:, @lg/page: and @xl/page: where the bar and the band use
@@ -98,6 +99,9 @@
   /* A fact table's own frame (DESIGN.md section 5, Fact table): from 45rem, as the Summary's 7 columns are at
      1440 px, its value column has room for "Moderately Unsatisfactory" on one line. */
   --container-fact-wide: 45rem;
+  /* A page head that sets its title beside its actions does so from a page area of 46rem, so a page the evidence
+     drawer narrows stacks them (DESIGN.md section 4, Page layouts; ticket 94): @head/page:. */
+  --container-head: 46rem;
   --container-prose: 65ch;
   --shadow-popover: 0 5px 25px rgba(160,158,143,.25);
 
@@ -174,7 +178,8 @@
    The bar is 56 px. From 1024 px it sticks (ticket 93), so the sticky parts under it stick at frame-top, 56 px, and the
    sidebar is the window's height less the bar; below 1024 px the bar scrolls away with the page and frame-top is 0. The
    window margin is 16, 32 and 40 px (below 768, from 768 and from 1200 px), set by the window: the bar places the box and
-   the skip link by it. */
+   the skip link by it, and the page grid below takes it as its margin (ticket 94). Where focused and linked-to elements
+   land under the bar and a sticky head is set by one hook in the frame (lib/sticky.ts), not here. */
 :root {
   --sidebar-width: 224px;
   --rail-width: 64px;
@@ -187,9 +192,7 @@
   :root { --window-margin: 32px; }
 }
 @media (width >= 64rem) {
-  /* Focused or linked-to elements land 8 px below the sticking bar (DESIGN.md section 10); a page whose header sticks
-     too sets its own padding on the root, which counts the bar (lib/useScrollPadding.ts). */
-  :root { --nav-width: var(--rail-width); --frame-top: var(--bar-height); scroll-padding-top: calc(var(--frame-top) + 8px); }
+  :root { --nav-width: var(--rail-width); --frame-top: var(--bar-height); }
   :root[data-sidebar-rest="open"] { --nav-width: var(--sidebar-width); }
 }
 @media (width >= 75rem) {
@@ -308,27 +311,33 @@
   }
 }
 
-/* The page grid (DESIGN.md section 4): 12 columns, gutters of 16, 24 and 32 px, margins of
-   28, 48 and 72 px, and content at most 1456 px wide. */
+/* The page grid (DESIGN.md section 4, Grid; ticket 94): 12 columns, gutters of 16, 24 and 32 px (below 768, from 768
+   and from 1024 px), the window's margin of 16, 32 and 40 px, and content at most 1280 px wide, left aligned beside the
+   sidebar. The margin and the gutter follow the window, never the page area, so the evidence drawer narrows the page
+   and keeps its left edge; what a page shows still follows the page area's width, through its @md/page: classes. */
 :root {
-  --layout-margin: 28px;
+  --layout-margin: var(--window-margin);
   --layout-gutter: 16px;
-  --layout-max: 1456px;
+  --layout-max: 1280px;
 }
 @media (width >= 48rem) {
-  :root { --layout-margin: 48px; --layout-gutter: 24px; }
+  :root { --layout-gutter: 24px; }
 }
 @media (width >= 64rem) {
-  :root { --layout-margin: 72px; --layout-gutter: 32px; }
+  :root { --layout-gutter: 32px; }
 }
-/* In the page column, the margins and gutters follow the page area's width, not the window's, so a
-   page beside the evidence drawer lays out as a narrower window would (the 14 brief, section 2.5). */
-[data-page-column] > * { --layout-margin: 28px; --layout-gutter: 16px; }
-@container page (width >= 48rem) {
-  [data-page-column] > * { --layout-margin: 48px; --layout-gutter: 24px; }
+
+/* The frame (DESIGN.md section 4, Shell; ticket 94): the window less the sidebar, a size container named frame that
+   the evidence drawer does not change, since the drawer sits inside it beside the page column. --frame-inline is its
+   width in pixels: a registered length computes 100cqw where it is set, on the frame's own children, so it holds the
+   frame's width even inside the page column, which is a size container of its own. */
+@property --frame-inline {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 0px;
 }
-@container page (width >= 64rem) {
-  [data-page-column] > * { --layout-margin: 72px; --layout-gutter: 32px; }
+[data-frame] > * {
+  --frame-inline: 100cqw;
 }
 
 /* The finding and the h1 step down below 48rem (DESIGN.md section 3), so the longest title still leaves the
@@ -342,20 +351,20 @@
   }
 }
 
-/* A draft's document column (the 35 brief, section 3.2; DESIGN.md section 4, Document column). From a
-   1200 px window it spans columns 1 to 7 and keeps its place and width when the evidence drawer opens
-   beside it: the drawer narrows the page area, so the column is measured against the frame instead (the
-   window less the sidebar, ticket 92), with the frame's margins and gutter, and the page keeps its left edge
-   where it was. The window's width is --window-inline, which DraftPage.tsx sets without a classic scroll
-   bar; 100vw counts one. */
-@media (width >= 75rem) {
-  [data-page-column] > main:has([data-document-column]) { --layout-margin: 72px; --layout-gutter: 32px; }
-  main:has([data-document-column]) > .layout {
-    margin-inline: max(0px, (var(--window-inline, 100vw) - var(--nav-width) - var(--layout-max)) / 2 - var(--layout-margin)) 0;
-    padding-top: calc(var(--spacing) * 10);
-  }
+/* A draft's document column (the 35 brief, section 3.2; DESIGN.md section 4, Document column). From a frame of
+   1200 px it spans columns 1 to 7 of the frame's grid and keeps its place and width when the evidence drawer opens
+   beside it: the drawer narrows the page area, not the frame, and the page's left edge never moves (ticket 94). The
+   drawer then fills from the column's end plus a gutter to the window's edge, 384 to 600 px, so it never covers the
+   column. Below that frame the column takes all 12 columns of the page area. */
+[data-frame] > * {
+  --document-inline: calc((min(var(--frame-inline) - 2 * var(--layout-margin), var(--layout-max)) - 11 * var(--layout-gutter)) * 7 / 12 + 6 * var(--layout-gutter));
+}
+@container frame (width >= 75rem) {
   [data-document-column] {
-    width: calc((min(var(--window-inline, 100vw) - var(--nav-width) - 2 * var(--layout-margin), var(--layout-max)) - 11 * var(--layout-gutter)) * 7 / 12 + 6 * var(--layout-gutter));
+    width: var(--document-inline);
+  }
+  [data-frame]:has([data-document-column]) [data-evidence-drawer="drawer"] {
+    width: clamp(384px, calc(var(--frame-inline) - var(--layout-margin) - var(--document-inline) - var(--layout-gutter)), 600px);
   }
 }
 
@@ -383,23 +392,31 @@
   min-height: 100vh;
   min-height: 100dvh;
 }
+/* main holds at least the window's height less the bar that sticks (DESIGN.md section 10; ticket 94), so a short page,
+   such as a not-found or an error, never pulls the footer into the first screen. */
+@utility min-h-main {
+  min-height: calc(100vh - var(--frame-top));
+  min-height: calc(100dvh - var(--frame-top));
+}
 
 /* A control inside a sticky part shifts its scroll margin by the part's scroll padding, so the Tab key does
-   not scroll the page to bring it out of that padding (DESIGN.md section 10). The pages set --sticky-top
-   and --sticky-bottom on html only while their header or bar sticks. */
-:is([data-draft-bar], [data-discarded-notice], [data-grade-bar]) :is(a, button) {
+   not scroll the page to bring it out of that padding (DESIGN.md section 10). A page marks a head that sticks
+   under the bar data-sticky="top" and a bar that sticks to the window's foot data-sticky="bottom"; the frame's
+   one hook (lib/sticky.ts) sets --sticky-top and --sticky-bottom on html only while such a part sticks. */
+[data-sticky="bottom"] :is(a, button) {
   scroll-margin-top: var(--sticky-bottom, 0px);
   scroll-margin-bottom: calc(-1 * var(--sticky-bottom, 0px));
 }
-:is([data-draft-header], [data-plan-header], [data-judging-header]) :is(a, button) {
+[data-sticky="top"] :is(a, button) {
   scroll-margin-top: calc(-1 * var(--sticky-top, 0px));
   scroll-margin-bottom: var(--sticky-top, 0px);
 }
 
+/* The page's content box: the window's margin on each side, at most 1280 px of content, left aligned beside the
+   sidebar, so the space a wide window has left over sits at the right, where the evidence drawer opens. */
 @utility layout {
   width: 100%;
   max-width: calc(var(--layout-max) + 2 * var(--layout-margin));
-  margin-inline: auto;
   padding-inline: var(--layout-margin);
 }
 

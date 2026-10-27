@@ -66,7 +66,6 @@ import { staffRole } from "../lib/following";
 import { address, navigate } from "../lib/router";
 import { useStore } from "../lib/store";
 import { setPageTitle } from "../lib/title";
-import { useScrollPadding } from "../lib/useScrollPadding";
 import { DocumentColumn } from "./DraftPage";
 
 const words = copy.packageWorkspace;
@@ -200,7 +199,7 @@ function Header({
   action?: ReactNode;
 }) {
   return (
-    <div ref={headerRef} data-package-header className="border-b border-line bg-page py-4 @md/page:sticky @md/page:top-(--frame-top) @md/page:z-10">
+    <div ref={headerRef} data-package-header data-sticky="top" className="border-b border-line bg-page py-4 @md/page:sticky @md/page:top-(--frame-top) @md/page:z-10">
       <div className="flex items-start justify-between gap-x-6">
         <div className="min-w-0 flex-1">
           <h1 ref={headingRef} tabIndex={-1} className="text-h2 text-pretty wrap-anywhere text-ink-heading focus:outline-none @md/page:text-h1">
@@ -489,7 +488,6 @@ function Workspace({ initial, preview, focusHeading }: { initial: PlannedPage; p
   const sectionRoot = useRef<HTMLDivElement>(null);
   const narrow = useNarrowWindow();
   const opening = useOpenComparable();
-  const header = useRef<HTMLDivElement>(null);
   const heading = useRef<HTMLHeadingElement>(null);
   const sectionHeading = useRef<HTMLHeadingElement>(null);
   const chips = useRef<Record<string, HTMLButtonElement | null>>({});
@@ -513,7 +511,6 @@ function Workspace({ initial, preview, focusHeading }: { initial: PlannedPage; p
     preview,
   );
   const title = titleOf(pkg, form);
-  useScrollPadding(header, true, { gap: 16 });
   // Section 3's selection, for "Suggest {n} PPSD risk rows" (ticket 36). Suggested PPSD rows are a World Bank staff
   // draft (config/drafts.toml, staff_only), so a viewer without the role gets no action. The server reads the
   // criteria and the selection from this saved package, so the action sends only its id.
@@ -835,7 +832,6 @@ function Workspace({ initial, preview, focusHeading }: { initial: PlannedPage; p
         <ExistingPpsdNotice packageKey={pkg.package_id} />
         <div className="mt-4">
           <Header
-            headerRef={header}
             headingRef={heading}
             title={title}
             action={ppsdAction(false)}

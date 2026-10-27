@@ -652,6 +652,9 @@ for (const width of [1440, 1024, 390]) {
     const before = Object.fromEntries(await titles());
     release();
     await expect(page.locator("[data-readiness=ready]")).toBeVisible();
+    // A face the loaded page uses first can arrive a moment after the page draws; until it does, a fallback face can
+    // wrap a line more at 390 px (ticket 94's 16 px margins), so measure once every face is in.
+    await page.evaluate(() => document.fonts.ready);
     const after = Object.fromEntries(await titles());
     expect(Object.keys(after)).toEqual(Object.keys(before));
     for (const title of Object.keys(after)) {

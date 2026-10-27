@@ -617,18 +617,25 @@ export function PlanCheckHeader({ agency, plan, pill, action, feedforward, heade
   sticky?: boolean;
 }) {
   return (
-    <div ref={headerRef} data-plan-header className={cx("border-b border-line bg-page py-4", sticky && "@lg/page:sticky @lg/page:top-(--frame-top) @lg/page:z-10")}>
-      <div className="flex flex-col gap-3 @lg/page:flex-row @lg/page:items-start @lg/page:justify-between @lg/page:gap-6">
+    <div
+      ref={headerRef}
+      data-plan-header
+      data-sticky={sticky ? "top" : undefined}
+      className={cx("border-b border-line bg-page py-4", sticky && "@lg/page:sticky @lg/page:top-(--frame-top) @lg/page:z-10")}
+    >
+      {/* The title sits beside the actions from a page area of 46rem, so a page the drawer narrows stacks them
+          (DESIGN.md section 4, Page layouts; ticket 94). */}
+      <div className="flex flex-col gap-3 @head/page:flex-row @head/page:items-start @head/page:justify-between @head/page:gap-6">
         {/* The name's column takes the row's free width, so a skeleton bar sized as a share of it
             is as wide as the name it stands for. */}
-        <div className="min-w-0 @lg/page:flex-1">
+        <div className="min-w-0 @head/page:flex-1">
           {createElement(`h${level}`, { tabIndex: -1, className: "text-h1 text-ink-heading focus:outline-none" }, agency)}
           {plan && <p className="mt-2 text-body text-ink-muted">{plan}</p>}
         </div>
         {(pill || action) && (
-          <div className="flex shrink-0 flex-col items-start gap-2 @lg/page:items-end">
-            <div className="flex flex-col items-start gap-2 @lg/page:flex-row @lg/page:items-center @lg/page:gap-3">
-              {pill && <div className="@lg/page:mt-0.5">{pill}</div>}
+          <div className="flex shrink-0 flex-col items-start gap-2 @head/page:items-end">
+            <div className="flex flex-col items-start gap-2 @head/page:flex-row @head/page:items-center @head/page:gap-3">
+              {pill && <div className="@head/page:mt-0.5">{pill}</div>}
               {action}
             </div>
             {feedforward}
@@ -918,7 +925,8 @@ export function PlanCheckSkeleton({ slow, baseline }: {
         </table>
       </div>
       {/* Each skeleton card has an activity card's places: the badge and the reference, two lines
-          of Description, two of reason, the hairline and the four STEP fields under their labels. */}
+          of Description (one from a 768 px page area, whose margins follow the window since ticket 94), two of
+          reason, the hairline and the four STEP fields under their labels. */}
       <ul className={cx("mt-2 flex flex-col gap-3", VIEW.cards)}>
         {[0, 1, 2].map((index) => (
           <li key={index} className="rounded-md border border-line bg-surface p-4">
@@ -926,7 +934,8 @@ export function PlanCheckSkeleton({ slow, baseline }: {
               <Skeleton className="h-[30px] w-28 rounded-pill" />
               <SkeletonLine width="w-[190px] max-w-full" />
             </div>
-            <SkeletonText className="mt-1 text-small" widths={["w-full", "w-3/5"]} />
+            <SkeletonText className="mt-1 text-small @md/page:hidden" widths={["w-full", "w-3/5"]} />
+            <SkeletonLine className="mt-1 hidden text-small @md/page:flex" width="w-4/5" />
             <SkeletonText className="mt-2 text-small" widths={["w-full", "w-4/5"]} />
             <dl className={cx("mt-3 border-t border-line pt-3", CARD_FIELDS)}>
               {[words.columns.method, words.columns.review, words.columns.estimated, words.columns.status].map((label, field) => (

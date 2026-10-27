@@ -69,8 +69,9 @@ function withoutWordJoiners(event: ClipboardEvent<HTMLDivElement>) {
 function InShort({ children, wide = false }: { children: ReactNode; wide?: boolean }) {
   return (
     <>
+      {/* "In short" in label and its sentences in lead (DESIGN.md section 5, Answer panel; ticket 94). */}
       <h3 className="text-label text-ink-muted">{copy.answer.inShort}</h3>
-      <div data-in-short onCopy={withoutWordJoiners} className={cx("mt-2 text-body text-ink", !wide && "max-w-prose")}>
+      <div data-in-short onCopy={withoutWordJoiners} className={cx("mt-2 text-lead text-ink", !wide && "max-w-prose")}>
         {children}
       </div>
     </>
@@ -128,7 +129,7 @@ export function Answer({ state }: { state: AnswerState }) {
           {/* "In short", three lines of answer and the check line, each at its own size. */}
           <div className="mt-6 max-w-prose">
             <SkeletonLine className="text-label" width="w-1/6" />
-            <SkeletonText className="mt-2 text-body" widths={["w-full", "w-11/12", "w-3/5"]} />
+            <SkeletonText className="mt-2 text-lead" widths={["w-full", "w-11/12", "w-3/5"]} />
             <Skeleton className="mt-4 h-14 w-full rounded-md" />
           </div>
         </div>

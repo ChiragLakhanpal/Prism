@@ -357,7 +357,8 @@ test("a likely repeat's citation of a library lesson opens the drawer at the les
   await marker.click();
   const drawer = page.getByRole("dialog");
   await expect(drawer.getByRole("heading", { level: 2 })).toHaveText(statement);
-  await expect(drawer).toContainText("What · lesson");
+  // The drawer's head is its title, with no eyebrow and no middle dot (ticket 94).
+  await expect(drawer.locator("[data-drawer-header]")).not.toContainText("·");
   const source = drawer.locator("[data-source]");
   await expect(source).toHaveText("Source: Strata's lesson library, version 1, decided on October 27, 2026.");
   await expect(source).not.toContainText(", ,");

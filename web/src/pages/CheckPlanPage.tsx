@@ -5,8 +5,8 @@
 // date, a project Strata has no record of, a service that didn't answer, and an account that can't
 // read Strata's tables.
 //
-// The header sticks from 1024 px, so the page keeps scroll-padding-top at its height plus 8 px and a
-// focused control is never hidden under it (DESIGN.md section 10). A visually hidden status says
+// The header sticks from 1024 px, so the frame keeps a focused control from hiding under it (DESIGN.md section 10;
+// lib/sticky.ts). A visually hidden status says
 // "Checking this plan." and then "Checked nine activities.".
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { Alert } from "../components/Alert";
@@ -18,6 +18,7 @@ import { EightColumns } from "../components/EightColumns";
 import { Fill, Unbroken } from "../components/Fill";
 import { Tag } from "../components/LessonParts";
 import { LoadError } from "../components/LoadError";
+import { PageAlert } from "../components/PageAlert";
 import { BaselinePanel, useBaselineView } from "../components/BaselinePanel";
 import { ChangeTables, changedRows } from "../components/ChangeTables";
 import { Num } from "../components/Num";
@@ -36,7 +37,6 @@ import { address, navigate } from "../lib/router";
 import { useStore } from "../lib/store";
 import { setPageTitle } from "../lib/title";
 import { appliedView, previewOf, withReadParams } from "../lib/view";
-import { useScrollPadding } from "../lib/useScrollPadding";
 import { fill } from "../routes";
 
 const words = copy.checkPlan;
@@ -188,7 +188,6 @@ export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyI
   // The check read again after a baseline was saved or removed, shown in place of the first one.
   const [fresh, setFresh] = useState<{ path: string; result: CheckPlanResult } | null>(null);
   const changesHeading = useRef<HTMLHeadingElement>(null);
-  const header = useRef<HTMLDivElement>(null);
   const finding = useRef<HTMLHeadingElement>(null);
   const slotId = useId();
   const search = useStore(address).search;
@@ -211,7 +210,6 @@ export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyI
   const planChanges = usePlanChanges(pid, agencyId, version ?? ready?.plan.plan_date ?? null, search);
   const waiting = ready !== null && (!lookup.settled || !planChanges.settled);
   const checked = waiting ? null : ready;
-  useScrollPadding(header, Boolean(checked), { gap: 8 });
   const { changes } = planChanges;
   const listed = changes !== null && changes.state === "compared" && changed(changes.counts);
 
@@ -317,16 +315,9 @@ export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyI
           plan={<SkeletonLine width="w-60" />}
           pill={<Skeleton className="h-[30px] w-[170px] rounded-pill" />}
           // The draft action's places, so the rows stay put when the check arrives (ticket 35). Its caption
-          // takes two lines below 768 px.
+          // takes one line from a 390 px window, in the window's 16 px margins (ticket 94).
           action={slotShown ? <Skeleton className="h-11 w-56 rounded-sm" /> : undefined}
-          feedforward={
-            slotShown ? (
-              <>
-                <SkeletonText className="text-caption @md/page:hidden" widths={["w-60", "w-24"]} />
-                <SkeletonLine className="hidden text-caption @md/page:flex" width="w-80" />
-              </>
-            ) : undefined
-          }
+          feedforward={slotShown ? <SkeletonLine className="text-caption" width="w-80 max-w-full" /> : undefined}
           sticky={false}
         />
         <PlanCheckSkeleton slow={load.status === "loading" && load.slow} baseline={baselineView} />
@@ -335,10 +326,11 @@ export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyI
     );
   } else if (load.status === "error") {
     crumbs = trail(unnamed, versionCrumb ?? words.agencyUnknown);
+    // The page's one read failed, so its error alert sits in the page's alert slot, above the breadcrumb, and the
+    // page draws only its head, whose h1 names the page (ticket 94; the shell redesign plan, 8.5).
     body = (
       <>
-        <PlanCheckHeader {...headerWords(null, version)} />
-        <EightColumns className="mt-6">
+        <PageAlert>
           <LoadError
             error={load.error}
             message={words.error}
@@ -347,7 +339,8 @@ export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyI
             retrying={load.retrying}
             attempt={load.attempt}
           />
-        </EightColumns>
+        </PageAlert>
+        <PlanCheckHeader {...headerWords(null, version)} />
       </>
     );
   } else if (checked) {
@@ -356,7 +349,6 @@ export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyI
     body = (
       <>
         <PlanCheckHeader
-          headerRef={header}
           agency={checked.plan.implementing_agency}
           plan={planSubtitle(checked.plan.plan_date)}
           pill={checkPill(checked)}

@@ -3,7 +3,8 @@
 // footer, against the mocked API. The words are the 06 design brief's.
 import { createHash } from "node:crypto";
 import type { Page } from "@playwright/test";
-import { expect, mockShell, recorded, test } from "./mocked";
+import { hubApi } from "./hub-api";
+import { expect, mockApi, mockShell, recorded, test } from "./mocked";
 
 // web/src/assets/world-bank-logo.md: the official file's hash when it was downloaded.
 const LOGO_SHA256 = "c11d30bf69ad0f6f224b350e93ea976bbac438ff18c82786d1c11454a0317aff";
@@ -600,3 +601,35 @@ test("/ closes an open Menu and focuses the box", async ({ page }) => {
   await expect(page.getByRole("button", { name: "Menu", exact: true })).toHaveAttribute("aria-expanded", "false");
   await expect(page.locator("[data-box-band]").getByRole("combobox")).toBeFocused();
 });
+
+// Ticket 94: the page's margin follows the window, never the page area, so opening the evidence drawer narrows the
+// page and keeps its left edge. Each page opens with a source in the drawer, then closes it; its h1 does not move.
+const PLAN_CHECK = "/projects/P156634/procurement/northern-water-works-development-agency/2026-10-09";
+const ICR_54 = "strata.gold.passage:31525018/v1/54";
+const LEFT_EDGE_PAGES: [string, string, string][] = [
+  ["the project Summary", "/projects/P130164", ICR_54],
+  ["the plan check", PLAN_CHECK, ICR_54],
+  ["a draft", "/drafts/draft-0001", "strata.silver.plan_rows:40132287/KE-NWWDA-229129-CW-RFB"],
+];
+for (const width of [1440, 1024]) {
+  test(`at ${width} px opening the drawer never moves the h1's left edge on the project Summary, the plan check and a draft`, async ({ page }) => {
+    await mockApi(page, {
+      ...(await hubApi()),
+      [`/api${PLAN_CHECK}`]: { body: await recorded("check-plan-p156634-nwwda-2026-10-09.json") },
+      "/api/drafts/existing": { body: '{"draft":null}' },
+      "/api/drafts/draft-0001": { body: await recorded("drafts-review-notes-draft.json") },
+    });
+    await page.setViewportSize({ width, height: 900 });
+    for (const [name, path, source] of LEFT_EDGE_PAGES) {
+      await page.goto(`${path}?evidence=${encodeURIComponent(source)}`);
+      const drawer = page.getByRole("dialog");
+      const h1 = page.locator("main h1");
+      await expect(drawer).toBeVisible();
+      await expect(h1).toBeVisible();
+      const beside = (await h1.boundingBox())!.x;
+      await drawer.getByRole("button", { name: /^Close/ }).click();
+      await expect(drawer).toBeHidden();
+      expect((await h1.boundingBox())!.x, `${name} at ${width} px`).toBe(beside);
+    }
+  });
+}

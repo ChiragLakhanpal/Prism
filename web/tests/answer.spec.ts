@@ -48,19 +48,27 @@ test("Ask this streams the answer into the panel under the band: steps one at a 
   await expect(panel(page)).toHaveAttribute("aria-busy", "false");
 });
 
-test("the panel sits in the page under the band, on columns 1 to 8 from 1024 px, above the page's own title", async ({ page }) => {
+test("the panel sits at the top of the page column under the bar, on columns 1 to 8 from 1024 px, above the page's own title, with In short in label and its sentences in lead", async ({ page }) => {
   await open(page);
   await askFromTheBox(page);
   await landed(page);
 
   const card = (await panel(page).boundingBox())!;
   const band = (await page.locator("[data-box-band]").boundingBox())!;
+  const column = (await page.locator("[data-page-column]").boundingBox())!;
   const title = (await page.locator("main h1").boundingBox())!;
   expect(card.y).toBeGreaterThanOrEqual(band.y + band.height);
+  // Ticket 94: the first thing in the page column, 40 px under its top from 1024 px, with the window's margin before it.
+  expect(Math.round(card.y - column.y)).toBe(40);
+  expect(Math.round(card.x - column.x)).toBe(40);
   expect(card.y + card.height).toBeLessThan(title.y);
-  // At 1440 px the page area is 1216 px beside the open sidebar (ticket 92), so columns 1 to 8 are 8 columns of 60 px
-  // and 7 gutters of 32 px.
-  expect(Math.round(card.width)).toBe(704);
+  // At 1440 px the page area is 1216 px beside the open sidebar (ticket 92). The window's 40 px margins leave 1136 px
+  // (ticket 94), so columns 1 to 8 are 8 columns of 65.33 px and 7 gutters of 32 px.
+  expect(Math.round(card.width)).toBe(747);
+  // "In short" in label (13/16, 600) and its sentences in lead (18/28, 400), DESIGN.md section 3.
+  const style = (element: Element) => [getComputedStyle(element).fontSize, getComputedStyle(element).lineHeight, getComputedStyle(element).fontWeight];
+  expect(await panel(page).getByRole("heading", { level: 3, name: "In short" }).evaluate(style)).toEqual(["13px", "16px", "600"]);
+  expect(await panel(page).locator("[data-in-short]").evaluate(style)).toEqual(["18px", "28px", "400"]);
 });
 
 test("the steps still to come are listed in muted text while the answer streams", async ({ page }) => {
@@ -144,11 +152,11 @@ test("clicking a marker opens the drawer beside the page at ICR paragraph 54, an
   await expect(marker(page, 1)).toHaveAttribute("aria-expanded", "true");
   await expect(panel(page).locator("[data-sentence-text='0']")).toHaveClass(/bg-tint/);
 
-  // The drawer is 40 percent of the frame, the window less the 224 px sidebar (ticket 92), from 400 to 600 px wide, and
-  // the page beside it stays usable.
+  // On a wide page the drawer is clamp(384px, 40vw, 560px) (ticket 94): 40 percent of 1440 px is 576, so 560 px, and
+  // the page beside it, the 1216 px frame less the drawer, stays usable.
   const width = Math.round((await drawer(page).boundingBox())!.width);
-  expect(width).toBe(486);
-  expect(Math.round((await page.locator("[data-page-column]").boundingBox())!.width)).toBe(730);
+  expect(width).toBe(560);
+  expect(Math.round((await page.locator("[data-page-column]").boundingBox())!.width)).toBe(656);
   await box(page).click();
   await expect(box(page)).toBeFocused();
   await drawer(page).getByRole("heading", { level: 2 }).focus();
@@ -191,16 +199,17 @@ test("closing the drawer gives focus back to its marker without covering the ans
   await expect(page.getByRole("tooltip")).toBeVisible();
 });
 
-test("at 1024 px the drawer takes its least width, 400 px, and the page beside the rail takes the rest", async ({ page }) => {
+test("at 1024 px the drawer takes 40 percent of the window, 410 px, and the page beside the rail takes the rest", async ({ page }) => {
   await open(page, { width: 1024 });
   await askFromTheBox(page);
   await landed(page);
 
   await marker(page, 1).click();
 
-  // 40 percent of the 960 px frame beside the 64 px rail (ticket 92) is under the drawer's 400 px.
-  expect(Math.round((await drawer(page).boundingBox())!.width)).toBe(400);
-  expect(Math.round((await page.locator("[data-page-column]").boundingBox())!.width)).toBe(1024 - 64 - 400);
+  // 40 percent of the 1024 px window is 409.6 px, inside clamp(384px, 40vw, 560px) (ticket 94); the page beside the
+  // 64 px rail (ticket 92) takes the rest.
+  expect(Math.round((await drawer(page).boundingBox())!.width)).toBe(410);
+  expect(Math.round((await page.locator("[data-page-column]").boundingBox())!.width)).toBe(550);
 });
 
 test("reloading with the evidence parameter reopens the drawer at that source, with no claim and no switcher", async ({ page }) => {
@@ -479,10 +488,10 @@ test("a section's closing ID never breaks from its name in the card's source lin
   expect(await text(drawer(page).getByRole("tab").first())).toBe("ISR, Project Development Objective Indicators");
 });
 
-// DESIGN.md section 3 sets body text at 16/24, so a line that holds a number you can check is as tall as
-// one that does not. The ISR answer's fourth sentence holds three of them.
+// "In short" is in lead (ticket 94), which DESIGN.md section 3 sets at 18/28, so a line that holds a number you can
+// check is as tall as one that does not. The ISR answer's fourth sentence holds three of them.
 for (const width of [1440, 390]) {
-  test(`at ${width} px the lines of In short sit 24 px apart, with or without a number you can check`, async ({ page }) => {
+  test(`at ${width} px the lines of In short sit 28 px apart, with or without a number you can check`, async ({ page }) => {
     await open(page, { stream: "ask-p130164-isr-section.sse", width });
     await askFromTheBox(page);
     await landed(page);
@@ -504,7 +513,7 @@ for (const width of [1440, 390]) {
     });
     expect(bottoms.length).toBeGreaterThan(3);
     const gaps = bottoms.slice(1).map((bottom, at) => Math.round(bottom - bottoms[at]));
-    expect(gaps).toEqual(gaps.map(() => 24));
+    expect(gaps).toEqual(gaps.map(() => 28));
   });
 }
 

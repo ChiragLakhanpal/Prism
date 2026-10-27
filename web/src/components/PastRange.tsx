@@ -1146,7 +1146,7 @@ function ComparablesTable({
   const shown = paged ? rows.slice(from, from + PAGE) : rows;
   // With one line per cell the six columns need about 776 px, so the table shows when its frame has
   // 49rem and cards below that (cardsBelow="fit", DESIGN.md section 5, Tables). That is from a page area
-  // of about 930 to 1199 px and from about 1411 px. There a STEP reference keeps to one line, a date fits
+  // of about 930 to 1199 px and from about 1360 px, where the page's content reaches its 1280 px (ticket 94). There a STEP reference keeps to one line, a date fits
   // its 7rem column, and the Months head's definition takes three lines. No cell is kept from wrapping,
   // so with WCAG 1.4.12's text spacing a reference breaks after a hyphen and a date at its space, and no
   // text runs into the next column.

@@ -184,7 +184,8 @@ test("All projects says when it holds no records, and when the data service didn
   await open(page, "/projects", { "/api/projects": { body: '{"as_of":"2026-10-23","total":0,"rows":[],"records_through":null}' } }, windowBeside(1440));
   await expect(page.locator("[data-empty-state]")).toContainText("I don't have any project records yet.");
   await expect(page.locator("[data-empty-state]").getByRole("link", { name: "Data readiness" })).toHaveAttribute("href", "/data");
-  expect(Math.round((await page.locator("[data-empty-state]").boundingBox())!.width)).toBe(853);
+  // Columns 1 to 8 of 1280 px of content, the most a page holds (ticket 94): 8 columns of 77.33 px and 7 gutters of 32 px.
+  expect(Math.round((await page.locator("[data-empty-state]").boundingBox())!.width)).toBe(843);
   await page.setViewportSize({ width: 390, height: 900 });
   expect(await axe(page), "empty at 390 px").toEqual([]);
 
@@ -192,7 +193,7 @@ test("All projects says when it holds no records, and when the data service didn
   await expect(page.getByRole("alert")).toHaveText("I couldn't load the list of projects because the data service didn't answer.");
   await expect(page.getByRole("button", { name: "Try again" })).toBeVisible();
   // In a 1440 px page area the alert holds columns 1 to 8, as on every other page.
-  expect(Math.round((await page.getByRole("alert").boundingBox())!.width)).toBe(853);
+  expect(Math.round((await page.getByRole("alert").boundingBox())!.width)).toBe(843);
   await page.setViewportSize({ width: 390, height: 900 });
   expect(await axe(page), "error at 390 px").toEqual([]);
 });
@@ -335,8 +336,9 @@ test("a project's page says when the data service didn't answer, and when your a
   await expect(page.getByRole("alert")).toHaveText("I couldn't load this project because the data service didn't answer.");
   await expect(page.getByRole("button", { name: "Try again" })).toBeVisible();
   // From a 1024 px page area the alert holds columns 1 to 8, as on every other page: in a 1100 px page area (the
-  // window less the rail, ticket 92), 8 columns of 50.33 px and 7 gutters of 32 px.
-  expect(Math.round((await page.getByRole("alert").boundingBox())!.width)).toBe(627);
+  // window less the rail, ticket 92) with the 1164 px window's 32 px margins (ticket 94), 8 columns of 57 px and 7
+  // gutters of 32 px.
+  expect(Math.round((await page.getByRole("alert").boundingBox())!.width)).toBe(680);
   await page.setViewportSize({ width: 390, height: 900 });
   expect(await axe(page), "error at 390 px").toEqual([]);
 

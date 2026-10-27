@@ -4,10 +4,12 @@
 // are the ticket's, DESIGN.md's and the 35 design brief's, copied here so the test checks the copy file
 // against an independent source. The network is off: the shared fixture fails any test whose page asks
 // for anything outside its own origin, so these tests also prove that exporting reaches nothing outside.
+import { readdir, readFile } from "node:fs/promises";
 import { scan } from "./axe";
 import type { Page } from "@playwright/test";
 import { draftBarSentence } from "./design-md";
 import { expect, recorded, test, viewAnswers, windowBeside } from "./mocked";
+import { tabUnderStickyParts } from "./sticky";
 
 const PLAN = "/projects/P156634/procurement/northern-water-works-development-agency/2026-10-09";
 const DRAFT = "/drafts/draft-0001";
@@ -365,26 +367,68 @@ test("opening a source counts it in the bar and the Sources list at once, and th
   await expect(bar(page).locator("[data-opened-link]")).toHaveText("You opened 1 of 3 sources");
   await expect(page.locator("[data-source-item$='KE-NWWDA-229129-CW-RFB'] [data-opened]")).toHaveText("You opened this.");
   expect(asked).toContain("POST /api/evidence/opened");
-  // From 1200 px the column keeps to columns 1 to 7, so the drawer opens into the free space: the notes
-  // do not move.
+  // Ticket 94: from a frame of 1200 px the column keeps to columns 1 to 7 of the frame (FRAME_COLUMN below), so the
+  // drawer opens into the free space, a gutter after the column: the notes do not move.
+  expect([before[0], before[2]]).toEqual([224 + 40, FRAME_COLUMN]);
   const column = await page.locator("[data-document-column]").boundingBox();
   const drawer = await page.getByRole("dialog").boundingBox();
-  expect(column!.x + column!.width).toBeLessThanOrEqual(drawer!.x);
+  expect(Math.round(drawer!.x - (column!.x + column!.width))).toBe(32);
   expect(await place()).toEqual(before);
   // The header keeps its height too, so nothing under it moves up.
   expect(await headerHeight()).toBe(tall);
+});
 
-  // At 1200 px the drawer narrows the page area below 48rem, but the breadcrumb keeps its whole trail, as
-  // the column keeps its place, so nothing above the notes changes and the window does not move.
-  await openDraft(page, { width: 1200, height: 900 });
-  const marker = notes(page).locator("[data-citation='2']").first();
-  await page.evaluate((by) => window.scrollBy(0, by), (await marker.boundingBox())!.y - 400);
-  const [at1200, scrolled] = [await place(), await page.evaluate(() => window.scrollY)];
-  await marker.click();
-  await expect(page.getByRole("dialog").getByRole("heading").first()).toBeFocused();
-  await expect(page.locator("[data-breadcrumb] ol")).toBeVisible();
-  expect(await place()).toEqual(at1200);
-  expect(await page.evaluate(() => window.scrollY)).toBe(scrolled);
+// Ticket 94: the column is measured against the frame, the window less the sidebar, which the drawer does not change.
+// At 1440 px beside the open sidebar and at 1280 px beside the rail the frame is 1216 px: 40 px margins leave 1136 px,
+// whose 12 columns of 62.67 px and 11 gutters of 32 px give columns 1 to 7 a width of 649 px, starting 40 px after the
+// sidebar. The drawer narrows the page area below 48rem, but the breadcrumb keeps its whole trail, as the column keeps
+// its place, so nothing above the notes changes and the window does not move.
+const FRAME_COLUMN = 649;
+for (const [width, sidebar] of [[1280, 64]]) {
+  test(`at ${width} px the document column keeps its place and width, measured against the frame, when the drawer opens`, async ({ page }) => {
+    await openDraft(page, { width, height: 900 });
+    const place = () =>
+      page.locator("[data-document-column]").evaluate((element) => {
+        const box = element.getBoundingClientRect();
+        return [Math.round(box.x), Math.round(box.top + window.scrollY), Math.round(box.width)];
+      });
+    const marker = notes(page).locator("[data-citation='2']").first();
+    await page.evaluate((by) => window.scrollBy(0, by), (await marker.boundingBox())!.y - 400);
+    const [shut, scrolled] = [await place(), await page.evaluate(() => window.scrollY)];
+    expect([shut[0], shut[2]]).toEqual([sidebar + 40, FRAME_COLUMN]);
+    await marker.click();
+    await expect(page.getByRole("dialog").getByRole("heading").first()).toBeFocused();
+    await expect(page.locator("[data-breadcrumb] ol")).toBeVisible();
+    expect(await place()).toEqual(shut);
+    expect(await page.evaluate(() => window.scrollY)).toBe(scrolled);
+  });
+}
+
+test("app.css measures the document column on the frame, and no longer reads the window's width", async () => {
+  const css = await readFile(new URL("../src/styles/app.css", import.meta.url), "utf8");
+  expect(css).not.toContain("--window-inline");
+  expect(css).toMatch(/@container frame \(width >= 75rem\) \{\s*\[data-document-column\]/);
+});
+
+// Ticket 94: one hook in the frame sets the scroll padding for the bar, a sticky head and a sticky foot. DraftPage's own
+// hook and lib/useScrollPadding.ts are gone, and no other file writes the document's scroll padding.
+test("one hook in the frame writes the document's scroll padding, and DraftPage's hook and useScrollPadding are gone", async () => {
+  const src = new URL("../src/", import.meta.url);
+  const files = (await readdir(src, { recursive: true })).filter((name) => /\.tsx?$/.test(name));
+  const writers: string[] = [];
+  for (const name of files) {
+    const text = await readFile(new URL(name, src), "utf8");
+    if (/style\.scrollPadding|useScrollPadding/.test(text)) writers.push(name);
+  }
+  expect(writers).toEqual(["lib/sticky.ts"]);
+  expect(files).not.toContain("lib/useScrollPadding.ts");
+});
+
+test("tabbing through a draft never leaves the focused element under the bar, the sticky head or the draft bar", async ({ page }) => {
+  await openDraft(page, { width: 1440, height: 900 });
+  const { checked, covered } = await tabUnderStickyParts(page, 30);
+  expect(checked).toBeGreaterThan(30);
+  expect(covered).toEqual([]);
 });
 
 test("opening a source, by click or by Enter, or switching to another, keeps the marker where it was and above the bar", async ({ page }) => {

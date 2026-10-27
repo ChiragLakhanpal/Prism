@@ -599,7 +599,9 @@ test("tabs on a light surface keep one row at 390 and 320 px, with the selected 
 // from under the mouseup and the click would be lost, so only keyboard focus scrolls it. A
 // reader taps where the row fades, because the fade says more tabs are there.
 async function pressInFade(page: Page, press: (x: number, y: number) => Promise<void>) {
-  for (const width of [390, 320]) {
+  // At 390 px, in the window's 16 px margins (ticket 94), the right fade falls mostly on the gap between two tabs, so
+  // these widths each put a tab well inside both fades.
+  for (const width of [375, 320]) {
     await page.setViewportSize({ width, height: 900 });
     // The tabs section has more tabs to the right of its selected tab, tabs-later to the left.
     for (const [section, side] of [["tabs", "right"], ["tabs-later", "left"]] as const) {
@@ -811,8 +813,9 @@ test("the Plan check page shows the plan check at the page's full width, so its 
     await page.setViewportSize({ width: windowBeside(width), height: 900 });
     const table = page.locator("[data-state-section=ready] [data-view=table]");
     await expect(table).toBeVisible();
-    // The frame's margin is 72 px from 1024 px, so the page's 12 columns are the width less 144 px.
-    expect(Math.round((await table.boundingBox())!.width), `${width} px`).toBe(width - 144);
+    // The page's margin follows the window (ticket 94): 32 px in the 1088 px window, so the page's 12 columns are 960 px;
+    // 40 px in the 1664 px window, which leaves 1360 px, and content stops at 1280 px.
+    expect(Math.round((await table.boundingBox())!.width), `${width} px`).toBe(width === 1024 ? 960 : 1280);
     // No cell's text runs past its content box.
     const overflow = await page.evaluate(() =>
       Array.from(document.querySelectorAll("[data-view=table] th, [data-view=table] td")).flatMap((cell) => {
@@ -825,6 +828,20 @@ test("the Plan check page shows the plan check at the page's full width, so its 
     );
     expect(overflow, `${width} px`).toEqual([]);
   }
+});
+
+// Ticket 94: the drawer's head is its title and its close, with no eyebrow above the title and no middle dot, in every
+// view the Evidence page draws.
+test("the drawer's head shows no eyebrow or middle dot on any of its views on the Evidence page", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/gallery/evidence");
+  const heads = page.locator("[data-drawer-header]");
+  await expect(heads.first()).toBeVisible();
+  const found = await heads.evaluateAll((all) =>
+    all.map((head) => ({ text: head.textContent ?? "", eyebrows: head.querySelectorAll("p, .uppercase").length })),
+  );
+  expect(found.length).toBeGreaterThan(5);
+  expect(found.filter((head) => head.text.includes("·") || head.eyebrows > 0)).toEqual([]);
 });
 
 // Ticket 14's evidence drawer, on the gallery's Evidence page. The record is KE-NWWDA-229129-CW-RFB

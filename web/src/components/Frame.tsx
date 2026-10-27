@@ -1,12 +1,15 @@
 // The frame every page shares: the navy bar, the sidebar, the page, and the independent-demo footer (DESIGN.md
 // sections 5 and 8). One header (the banner landmark) holds the bar, so the search landmark around the box sits in
-// it, and from 1024 px it sticks to the top of the window (ticket 93). The page grows, so the footer sits at the bottom
-// of short pages.
+// it, and from 1024 px it sticks to the top of the window (ticket 93). main holds at least the window's height less
+// that bar, so a short page never pulls the footer into the first screen (ticket 94).
 //
 // Under the bar, the sidebar, the page column and the evidence drawer sit side by side (tickets 14 and 92): the
-// drawer narrows the page instead of covering it. The page column is a size container, so a page lays out by its
-// own width, not the window's. Below 768 px the drawer is a modal sheet, and below 1024 px the sidebar is the
-// Menu sheet; while either is open, everything else is inert behind it.
+// drawer narrows the page instead of covering it. The page column and the drawer sit in the frame, the window less
+// the sidebar, a size container the drawer does not change (ticket 94). The page column is a size container too, so a
+// page lays out by its own width, not the window's; its margins follow the window, so the drawer never moves the
+// page's left edge. The frame owns the parts that stick: one hook keeps focused elements clear of the bar, a sticky
+// page head and a sticky foot (lib/sticky.ts). Below 768 px the drawer is a modal sheet, and below 1024 px the
+// sidebar is the Menu sheet; while either is open, everything else is inert behind it.
 //
 // The Menu sheet's state lives here, because three parts share it: the Menu button in the bar opens it, the
 // sidebar draws it, and the frame makes the rest of the page inert. Closing it from inside (Escape, "Close the
@@ -14,6 +17,7 @@
 import { createContext, useCallback, useContext, useEffect, useId, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
 import { flushSync } from "react-dom";
 import { copy } from "../copy";
+import { useStickyPadding } from "../lib/sticky";
 import { isBoxShortcut } from "./BoxBand";
 
 export function Footer() {
@@ -103,6 +107,8 @@ export function Frame({
 
   const sheet = useMemo(() => ({ open: menuOpen, setOpen, button, sheetId }), [menuOpen, setOpen, sheetId]);
   const inert = inertPage || menuOpen;
+  const page = useRef<HTMLDivElement>(null);
+  useStickyPadding(page);
   return (
     <MenuSheetContext.Provider value={sheet}>
       <div className="flex min-h-window flex-col bg-page">
@@ -112,15 +118,18 @@ export function Frame({
         </header>
         <div className="flex flex-1 items-stretch">
           {sidebar}
-          <div data-page-column inert={inert} className="@container/page flex min-w-0 flex-1 flex-col">
-            <main id="main" tabIndex={-1} className="flex-1 pb-12 focus-visible:outline-none @md/page:pb-16">
-              {children}
-            </main>
-            <Footer />
-          </div>
-          {/* The drawer keeps its place in the row; it takes no focus while the Menu sheet is open. */}
-          <div inert={menuOpen} className="contents">
-            {aside}
+          {/* The frame: the window less the sidebar, which the drawer opening beside the page does not change. */}
+          <div data-frame className="@container/frame flex min-w-0 flex-1 items-stretch">
+            <div ref={page} data-page-column inert={inert} className="@container/page flex min-w-0 flex-1 flex-col">
+              <main id="main" tabIndex={-1} className="min-h-main flex-1 pb-12 focus-visible:outline-none @md/page:pb-16">
+                {children}
+              </main>
+              <Footer />
+            </div>
+            {/* The drawer keeps its place in the row; it takes no focus while the Menu sheet is open. */}
+            <div inert={menuOpen} className="contents">
+              {aside}
+            </div>
           </div>
         </div>
       </div>

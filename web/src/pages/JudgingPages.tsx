@@ -37,7 +37,6 @@ import { navigate } from "../lib/router";
 import { JUDGING_HREF, queryHref, type Grade, type JudgingList, type JudgingQuery, type PooledPassage, type QuerySummary } from "../lib/retrieval";
 import { setPageTitle } from "../lib/title";
 import { usePageAtLeast } from "../lib/usePageAtLeast";
-import { useScrollPadding } from "../lib/useScrollPadding";
 import { DocumentColumn } from "./DraftPage";
 import { LessonsFrame, refreshLessonsMe, useMe } from "./LessonsPages";
 
@@ -465,9 +464,6 @@ export function JudgingDesk({ query: loaded, initial, sample = false }: {
     watch.observe(element);
     return () => watch.disconnect();
   }, [sample]);
-  // While the header sticks, the page's top scroll padding is its height plus 8 px, so a focused heading or control
-  // is never under it (DESIGN.md section 10). It follows the header's height, since a long query wraps.
-  useScrollPadding(headerRef, !sample, { gap: 8 });
 
   function show(n: number, focus = true) {
     setAt(n);
@@ -563,6 +559,7 @@ export function JudgingDesk({ query: loaded, initial, sample = false }: {
         !sample && (stuck ? "@lg/page:border-line" : "@lg/page:border-transparent"),
       )}
       data-judging-header
+      data-sticky={sample ? undefined : "top"}
       data-stuck={stuck || undefined}
     >
       <p className="text-caption text-ink-muted">

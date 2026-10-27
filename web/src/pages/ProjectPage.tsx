@@ -143,9 +143,9 @@ export function ProjectPage({ pid, tab }: { pid: string; tab: ProjectTab }) {
               <span className="sr-only">
                 <Fill template={copy.pages.project.title} slots={{ pid: idText }} />
               </span>
-              {/* The line takes three lines below 768 px, two up to 1024 px and one from there, for a name
-                  of about 35 characters, such as P156634's. */}
-              <SkeletonText className="@md/page:hidden" widths={["w-full", "w-4/5", "w-2/5"]} />
+              {/* The line takes two lines below 1024 px and one from there, for a name of about 35 characters,
+                  such as P156634's, in the window's margins (ticket 94). */}
+              <SkeletonText className="@md/page:hidden" widths={["w-full", "w-3/5"]} />
               <SkeletonText className="hidden @md/page:flex @lg/page:hidden" widths={["w-full max-w-[560px]", "w-2/5"]} />
               <SkeletonLine className="hidden @lg/page:flex" width="w-3/5 max-w-[560px]" />
             </>

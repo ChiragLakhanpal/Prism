@@ -83,8 +83,9 @@ function useWidth<T extends HTMLElement>(): [React.RefObject<T | null>, number] 
 // arrives: 20 on a chart card wider than 700 px, 18 on a narrower chart, 16 over the list.
 const titleSize = (chart: boolean, width: number) => (chart ? (width > 700 ? 20 : 18) : 16);
 // How many lines the placeholder draws: a finding fits on one line from a 1,000 px chart card, takes two on a
-// narrower chart, and about four over the list on a phone.
-const titleLines = (chart: boolean, width: number) => (chart ? (width >= 1000 ? 1 : 2) : 4);
+// narrower chart, three over the list on a 390 px phone, whose margins are 16 px (ticket 94), and four on a
+// narrower one.
+const titleLines = (chart: boolean, width: number) => (chart ? (width >= 1000 ? 1 : 2) : width >= 320 ? 3 : 4);
 
 // A disagreement's line takes its card's state: amber only while an answer open on this page has a sentence it
 // changes (the 23 brief, section 4.4), and the default otherwise.

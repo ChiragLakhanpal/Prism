@@ -286,3 +286,55 @@ for (const route of [...ROUTES, ...NOT_FOUND]) {
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
   });
 }
+
+// Ticket 94: main holds at least the window's height less the bar, so a page whose answer is short (not found, an
+// error, an empty list, no access) never pulls the footer into the first screen, whatever the window. Each state is
+// the page's own answer to a recorded or a failed read.
+type Answer = { status?: number; body: string };
+const SERVICE_DOWN: Answer = { status: 503, body: '{"code":"data_service","trace_id":"0af7651916cd43dd8448eb211c80319c"}' };
+async function answer(name: string): Promise<Answer> {
+  const parsed = JSON.parse(await recorded(name));
+  return parsed.status && parsed.body ? { status: parsed.status, body: JSON.stringify(parsed.body) } : { body: JSON.stringify(parsed) };
+}
+const NO_PACKAGE = "KE-NWWDA-000000-CW-RFB";
+const NO_ITEM = "new-0000000000";
+const NO_GROUP = "grp-000000000000";
+const SHORT_STATES: [string, string, () => Promise<Record<string, Answer>>][] = [
+  ["All projects, no match", "/projects?q=atlantis", async () => ({ "/api/projects": await answer("projects-no-match.json") })],
+  ["All projects, error", "/projects", async () => ({ "/api/projects": SERVICE_DOWN })],
+  ["the package page, not found", `/packages/${NO_PACKAGE}`, async () => ({ [`/api/packages/${NO_PACKAGE}`]: { status: 404, body: '{"code":"unknown_package"}' } })],
+  ["the package page, error", "/packages/KE-NWWDA-541055-CW-RFB", async () => ({ "/api/packages/KE-NWWDA-541055-CW-RFB": SERVICE_DOWN })],
+  ["Lessons, empty", "/lessons", async () => ({ "/api/lessons/me": await answer("lessons-me-viewer.json"), "/api/lessons/page": await answer("lessons-page-empty.json") })],
+  ["Lessons, error", "/lessons", async () => ({ "/api/lessons/me": await answer("lessons-me-viewer.json"), "/api/lessons/page": SERVICE_DOWN })],
+  ["Lessons, no access", "/lessons/review", async () => ({ "/api/lessons/me": await answer("lessons-me-viewer.json"), "/api/lessons/review": await answer("lessons-queue-no-access.json") })],
+  ["Passage reports, no access", "/lessons/reports", async () => ({ "/api/lessons/me": await answer("lessons-me-viewer.json"), "/api/passage-reports": await answer("passage-reports-no-access.json") })],
+  ["Passage reports, error", "/lessons/reports", async () => ({ "/api/lessons/me": await answer("retrieval-me-passage-reviewer-waiting.json"), "/api/passage-reports": SERVICE_DOWN })],
+  ["Passage reports, not found", `/lessons/reports/${NO_GROUP}`, async () => ({
+    "/api/lessons/me": await answer("retrieval-me-passage-reviewer-waiting.json"),
+    [`/api/passage-reports/${NO_GROUP}`]: await answer("passage-report-not-found.json"),
+  })],
+  ["the review page, not found", `/lessons/review/${NO_ITEM}`, async () => ({ "/api/lessons/me": await answer("lessons-me-reviewer.json"), [`/api/lessons/review/${NO_ITEM}`]: await answer("lessons-item-not-found.json") })],
+  ["the review page, no access", `/lessons/review/${NO_ITEM}`, async () => ({ "/api/lessons/me": await answer("lessons-me-viewer.json"), [`/api/lessons/review/${NO_ITEM}`]: await answer("lessons-item-no-access.json") })],
+];
+const LOADING = [
+  "main [aria-busy=true]",
+  "main [data-projects-page=loading]",
+  "main [data-package-page=loading]",
+  "main [data-reports=loading]",
+  "main [data-report-page=loading]",
+  "main [data-review-page=loading]",
+].join(", ");
+for (const [name, path, api] of SHORT_STATES) {
+  test(`${name} keeps the footer out of the first screen at 1440, 1024 and 390 px`, async ({ page }) => {
+    await mockApi(page, { "/api/me": { body: await recorded("me.json") }, "/api/freshness": { body: await recorded("freshness.json") }, ...(await api()) });
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto(path);
+    await expect(page.locator("main h1")).toBeVisible();
+    await expect(page.locator(LOADING)).toHaveCount(0);
+    for (const width of [1440, 1024, 390]) {
+      await page.setViewportSize({ width, height: 900 });
+      const top = await page.getByRole("contentinfo").evaluate((footer) => footer.getBoundingClientRect().top + window.scrollY);
+      expect(top, `${name} at ${width} px`).toBeGreaterThanOrEqual(900);
+    }
+  });
+}

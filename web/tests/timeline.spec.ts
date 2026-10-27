@@ -267,9 +267,11 @@ test("the chart is one tab stop with arrow keys between marks, and the dashed li
   await expect(second).not.toContainText("keep ICR paragraph");
 });
 
-test("in a 1024 px page area the chart redraws beside the drawer at 524 px and keeps every label; a band and a report open their views", async ({ page }) => {
-  // Beside the rail (ticket 92) the window is 64 px wider than the page area.
-  await open(page, "/projects/P130164/timeline", windowBeside(1024));
+test("in a 1100 px page area the chart redraws beside the drawer at 536 px and keeps every label; a band and a report open their views", async ({ page }) => {
+  // Beside the rail (ticket 92) the window is 64 px wider than the page area. The drawer takes 40 percent of that
+  // 1164 px window, 466 px (ticket 94), which leaves the chart 536 px in its card; at a 1024 px page area it would
+  // leave less than the 520 px a chart needs, and the timeline would be the list.
+  await open(page, "/projects/P130164/timeline", windowBeside(1100));
   await expect(chart(page).locator("[data-mark-label]")).toHaveCount(9);
 
   await item(page, "ratings:P130164:pdo_progress:1-9").click();
@@ -277,9 +279,9 @@ test("in a 1024 px page area the chart redraws beside the drawer at 524 px and k
   await expect(dialog.getByRole("heading", { level: 2 })).toHaveText("ISRs 1–9, rated Satisfactory");
   await expect(dialog).toContainText("I show them as a trajectory, not a disagreement.");
   await expect(dialog.locator("tbody tr")).toHaveCount(9);
-  // The 410 px drawer is too narrow for the three columns, so each ISR is a card.
+  // The 466 px drawer is too narrow for the three columns, so each ISR is a card.
   await expect(dialog.getByRole("table")).toBeHidden();
-  expect(Math.round((await chart(page).boundingBox())!.width)).toBe(524);
+  expect(Math.round((await chart(page).boundingBox())!.width)).toBe(536);
   await expect(chart(page).locator("[data-mark-label]")).toHaveCount(9);
   expect(await linesThroughLabels(page)).toEqual([]);
   // The narrowest band, beside the drawer, still names its rating by its code.
@@ -349,8 +351,9 @@ test("a link whose date I can't read shows today's timeline and says so, as othe
 });
 
 test("as of a date after the ICR Review's re-issue, no dashed line or chip covers the as-of date, beside the drawer too", async ({ page }) => {
-  // Each width is a page area: beside the sidebar (ticket 92) the window is wider.
-  for (const width of [1440, 1024]) {
+  // Each width is a page area: beside the sidebar (ticket 92) the window is wider. Beside the drawer a 1100 px page
+  // area leaves the chart 536 px (ticket 94).
+  for (const width of [1440, 1100]) {
     await open(page, "/projects/P130164/timeline?asof=2024-01-01", windowBeside(width));
     await expect(chart(page).locator("[data-as-of]")).toContainText("Jan 1, 2024");
     // Both disagreements are public by then, so the second line ends near the chart's right edge.
@@ -396,11 +399,11 @@ test("the skeleton title is sized to the title, so the chart does not move when 
 });
 
 test("two labels in one row keep 16 px apart at every chart width, beside the drawer too, and none is dropped", async ({ page }) => {
-  // 1246 and 830 px with the drawer closed; 718 and 524 px beside it. Each width is a page area: beside the sidebar
-  // (ticket 92) the window is wider.
-  for (const [width, evidence] of [[1440, ""], [1024, ""], [1440, "?evidence=ratings:P130164:pdo_progress:1-9"], [1024, "?evidence=ratings:P130164:pdo_progress:1-9"]] as const) {
+  // 1230 and 986 px with the drawer closed; 750 and 536 px beside it (ticket 94). Each width is a page area: beside the
+  // sidebar (ticket 92) the window is wider.
+  for (const [width, evidence] of [[1440, ""], [1100, ""], [1440, "?evidence=ratings:P130164:pdo_progress:1-9"], [1100, "?evidence=ratings:P130164:pdo_progress:1-9"]] as const) {
     await open(page, `/projects/P130164/timeline${evidence}`, windowBeside(width));
-    // In the 576 px drawer at 1440 px the band's nine ISRs are one table of three columns, not nine tall cards.
+    // In the 560 px drawer at 1440 px the band's nine ISRs are one table of three columns, not nine tall cards.
     if (evidence) await expect(drawer(page).getByRole("table")).toBeVisible({ visible: width === 1440 });
     // And it fits the drawer: a table never scrolls sideways inside its frame (DESIGN.md section 5, Tables).
     if (evidence && width === 1440) expect(await drawer(page).getByRole("table").evaluate((table) => table.parentElement!.scrollWidth <= table.parentElement!.clientWidth)).toBe(true);
