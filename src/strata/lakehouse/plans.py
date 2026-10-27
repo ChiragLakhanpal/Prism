@@ -5,7 +5,9 @@ For one project, a run:
 
 1. Fetches the project's list from the documents API (the source registry's `documents` entry) into
    bronze.document_lists, and each Procurement Plan's published text and the text of each PDF page
-   into bronze.document_texts and bronze.document_pages. A plan already in bronze is not fetched again.
+   into bronze.document_texts and bronze.document_pages, newest plan first by the date the list gives
+   (ticket 86), so a stop during the fetch leaves the oldest plans for the next night. A plan already in
+   bronze is not fetched again.
 2. Reads every version cheaply (Route A): its Executing Agency(ies) line, which puts it in one
    series per implementing agency, and every Activity Reference No. its text lists. These become
    silver.plan_versions and silver.plan_listings.
@@ -195,6 +197,18 @@ class Entry:
     pdf_url: str
 
 
+def by_plan_date(entry: Entry) -> tuple[dt.date, str]:
+    """The one order of a project's plans: by the date the documents API gives (docdt), then document id."""
+    return (entry.plan_date, entry.document_id)
+
+
+def newest_first(entries: list[Entry]) -> list[Entry]:
+    """The plans in the order the plan reader fetches them and parses their tables: newest first. On October 27,
+    2026 it fetched P156634's plans oldest first, and the night ended before the October 9, 2026 demo plan reached
+    bronze (ticket 86)."""
+    return sorted(entries, key=by_plan_date, reverse=True)
+
+
 def fetch_listing(engine: Engine, documents: Documents, endpoint: str, project_id: str) -> None:
     """Every page of the project's document list, kept in bronze when it changed."""
     offset = 0
@@ -240,7 +254,7 @@ def listed_plans(engine: Engine, project_id: str) -> Listing:
                 entries[document["id"]] = Entry(document["id"], _date(document["docdt"]),
                                                 _date(document.get("disclosure_date")),
                                                 document["txturl"], document["pdfurl"])
-    return Listing(sorted(entries.values(), key=lambda e: (e.plan_date, e.document_id)), dates)
+    return Listing(sorted(entries.values(), key=by_plan_date), dates)
 
 
 def fetch_plans(engine: Engine, documents: Documents, project_id: str, entries: list[Entry]) -> int:
@@ -481,7 +495,7 @@ class WaitingPage:
 def parse_chosen(engine: Engine, layout: LayoutParser, project_id: str, versions: list[Version], cap: int,
                  clock: Callable[[], dt.datetime], run_id: str) -> Parsing:
     """Each chosen version's table pages that have not been parsed, newest version first, up to the cap."""
-    chosen = sorted((v for v in versions if v.reasons), key=lambda v: (v.entry.plan_date, v.document_id), reverse=True)
+    chosen = sorted((v for v in versions if v.reasons), key=lambda v: by_plan_date(v.entry), reverse=True)
     return parse_pages(engine, layout, project_id, [
         WaitingPage(version.document_id, project_id, version.entry.pdf_url, number, digest, version.public_from)
         for version in chosen for number, digest in version.table_pages], cap, clock, run_id)
@@ -715,7 +729,7 @@ def run(engine: Engine, documents: Documents, layout: LayoutParser, project_id: 
         not_read(engine, run_id, "plans", [unreached(project_id, None, list_url(endpoint, project_id), stop)], clock())
         raise
     listing = listed_plans(engine, project_id)
-    fetching = fetch_documents(engine, documents, project_id, listing.entries)
+    fetching = fetch_documents(engine, documents, project_id, newest_first(listing.entries))
     # Each plan listed but not fetched, which the run goes on without (ticket 72), at the time the run started: the
     # fetches follow it at once, and the fixture's clock, which moves on each time it is read, keeps its times.
     for document_id, url, reason in fetching.not_fetched:

@@ -361,3 +361,40 @@ def test_a_plan_reader_stopped_at_its_share_while_it_fetches_lists_the_plans_it_
 
     # The passage reader still had its minutes: it wrote P130164's three documents (the fixture's cap here).
     assert column(fresh, "SELECT DISTINCT document_id FROM strata.gold.passage") == {*ICR_REVIEWS, ICR}
+
+
+DEMO_PLANS = ("40132287", "40122770", "40119876")  # P156634's three newest Procurement Plans: October 9, August 17
+# and July 31, 2026 (config/slice.toml's demo plan is the first)
+
+
+def test_the_plan_reader_fetches_a_project_s_newest_plan_first(fresh):
+    """On October 27, 2026 the plan reader fetched P156634's plans oldest first and spent the night's second pass on an
+    August 2023 plan, so the October 9, 2026 demo plan never reached bronze. It now asks for a project's plans newest
+    first, by the date the documents API gives. Each request takes a seventh of the plan reader's 30 minutes: the
+    project's document list, then the text and PDF of each of the three newest plans. The rest wait as not read."""
+    limits = load_thresholds()
+    share = (limits.value("ingestion.document_host_minutes") - limits.value("ingestion.passage_reader_minutes")) * 60
+    ticks = Ticks()
+    host = Host(fresh, ticks, seconds=share / 7)
+    fetch = readers.document_host(host, None, sleep=ticks.sleep, clock=ticks)
+    found = readers.Readers(FromTheHost(fetch, clock=ticks.utc), RecordedLayout(fmt.load_manifest()),
+                            PatternShield(), offline(), plan_projects=lambda _: ["P156634"],
+                            report_projects=lambda _: [], budget=fetch)
+
+    nightly.main(["--task", "parse_and_embed", "--run-id", "night", "--src", "src"], fresh,
+                 fetch=lambda source, _: (), clock=ticks.utc, readers_for=lambda _: found)
+
+    listed = plans.listed_plans(fresh, "P156634").entries
+    by_text = {https(entry.text_url): entry for entry in listed}
+    asked = [by_text[url] for url in host.asked if url in by_text]
+    assert [entry.document_id for entry in asked] == list(DEMO_PLANS)
+    assert [entry.plan_date for entry in asked] == sorted((entry.plan_date for entry in asked), reverse=True)
+    assert column(fresh, "SELECT document_id FROM strata.bronze.document_texts WHERE project_id = 'P156634'") == set(
+        DEMO_PLANS)
+
+    # Every older plan is listed as not read, for the next night.
+    record = fresh.run("SELECT document_id, outcome FROM strata.ops.skipped_documents WHERE run_id = 'night' "
+                       "AND reader = 'plans'").rows
+    assert {outcome for _, outcome in record} == {"not_read"}
+    assert sorted(document_id for document_id, _ in record) == sorted(
+        entry.document_id for entry in listed if entry.document_id not in DEMO_PLANS)
