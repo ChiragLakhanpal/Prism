@@ -75,11 +75,16 @@ def column(engine, sql: str, **params) -> list:
     return [row[0] for row in engine.run(sql, params).rows]
 
 
-def every_version() -> config.Thresholds:
-    """config/thresholds.toml with ingestion.plan_versions = "all", the reader's behavior before ticket 108."""
+def plan_versions(chosen: str) -> config.Thresholds:
+    """config/thresholds.toml with ingestion.plan_versions set to chosen; "all" is the reader's behavior before
+    ticket 108."""
     found = config.load_thresholds()
     return config.Thresholds(found.path, {**found.values, "ingestion": {**found.values["ingestion"],
-                                                                        "plan_versions": "all"}})
+                                                                        "plan_versions": chosen}})
+
+
+def every_version() -> config.Thresholds:
+    return plan_versions("all")
 
 
 @pytest.fixture
@@ -146,3 +151,12 @@ def test_with_plan_versions_all_every_plan_is_read_and_the_newest_plan_s_pages_a
     assert layout.read == [(DEMO_PLAN, 3), (march_2025, 3), (march_2025, 4), (august_2019, 3), (august_2019, 4)]
     assert sorted(column(fresh, "SELECT DISTINCT document_id FROM strata.silver.plan_rows")) == sorted(listed)
     assert column(fresh, "SELECT count(*) FROM strata.ops.skipped_documents") == [0]
+
+
+def test_the_thresholds_file_holds_the_newest_plan_rule_and_any_other_value_stops_the_run_and_says_what_to_write(
+        fresh, manifest):
+    assert config.load_thresholds().value("ingestion.plan_versions") == "newest"
+
+    with pytest.raises(config.ConfigError, match="""is 'every'. Write 'newest' .* or 'all'"""):
+        plans.run(fresh, ThreePlans(manifest), Noting(manifest), "P156634", thresholds=plan_versions("every"))
+    assert column(fresh, "SELECT count(*) FROM strata.bronze.document_lists") == [0]

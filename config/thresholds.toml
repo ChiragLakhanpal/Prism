@@ -65,10 +65,12 @@ passage_reader_minutes = 30
 # "newest" reads only the plan the documents API dates newest (docdt), and lists each older plan once in
 # strata.ops.skipped_documents as superseded; "all" reads every plan the project's document list names, newest first.
 # On the paid workspace on October 27, 2026, P156634's 240 plans held 7,872 pages waiting for the layout parser, the
-# night's plan pages went to a plan of May 2023, and the October 9, 2026 demo plan had no plan rows after three
-# passes. The plan check compares plan versions through the saved baseline (strata.ops.plan_baselines), which the
-# newest plan feeds. The fixture build reads every recorded plan (gates/build_fixture.py), so its tests keep each
-# version. Source: the user's call of October 27, 2026 (decision 95, ticket 108).
+# plan reader's 30 minutes ended inside a plan of May 2023, and a run that stops before every chosen plan is parsed
+# writes no plan rows, so the October 9, 2026 demo plan had none after three passes. With the newest plan only, the
+# run writes its rows as soon as its pages are parsed. The plan check compares plan versions through the saved
+# baseline (strata.ops.plan_baselines), which the newest plan feeds. The fixture build reads every recorded plan
+# (gates/build_fixture.py), so its tests keep each version. Source: the user's call of October 27, 2026 (decision
+# 95, ticket 108).
 plan_versions = "newest"
 # The bronze pages silver reads in one group (src/strata/lakehouse/silver/__init__.py, read). For each group it reads
 # the pages, checks once which of them its tables hold already, and writes each table once, so a group costs a few
