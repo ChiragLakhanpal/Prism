@@ -2,15 +2,17 @@
 -- fetch or read it, and for each document a run was reading when it stopped (ticket 72). The run writes the row
 -- when it skips, keeps what it read before, and goes on with the next document, so one failed fetch no longer
 -- stops the run. A run that stops, because the host refused a request or the night's reading time was spent,
--- keeps the pages it read and lists the document it was reading as unfinished. A later run tries the document
--- again. The plan reader and the passage reader write here (src/strata/lakehouse/plans.py, skip).
+-- keeps the pages it read and lists the document it was reading as unfinished, and each document and project's
+-- document list the stop left it no time to reach as not_read (ticket 86). A later run tries the document again.
+-- The plan reader and the passage reader write here (src/strata/lakehouse/plans.py, skip and not_read).
 --
 -- run_id       the run that skipped it
 -- reader       the reader that met it: plans (the plan reader) or passages (the passage reader)
 -- project_id   the project whose document or list it is
 -- document_id  the document; empty when the run could not fetch the project's document list
 -- url          the address the run could not fetch or read, or the PDF it was reading when it stopped
--- outcome      skipped (the run went on with the next document) or unfinished (the run stopped partway through it)
+-- outcome      skipped (the run went on with the next document), unfinished (the run stopped partway through it)
+--              or not_read (the run stopped before it reached it)
 -- reason       why, in the words of the error the run met
 -- skipped_at   when, in UTC
 -- public_from  the day it was skipped, in UTC (ADR 0002)

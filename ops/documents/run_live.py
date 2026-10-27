@@ -40,8 +40,9 @@ it prints how many documents it parsed, skipped and wrote, and how many it found
 
 A run that stops before it finished, as when a World Bank host refuses a request or the reading time in
 config/thresholds.toml (ingestion.document_host_minutes) is spent, keeps every document it wrote before the stop,
-lists the document it was reading as unfinished in strata.ops.skipped_documents, and syncs the index; the next run
-goes on from there. The time is checked before each page the layout parser reads as well as before each request.
+lists the document it was reading as unfinished in strata.ops.skipped_documents, and each document and project's
+document list it did not reach as not read, and syncs the index; the next run goes on from there. The time is
+checked before each document, before each page the layout parser reads and before each request (ticket 86).
 
 It exits 0 when it wrote at least one document's passages, or found them already written and unchanged, and the
 index holds every passage, 1 when the index did not catch up in time, and 2 when it has no document's passages or
@@ -98,6 +99,16 @@ def document_readers(engine, upload, fetch=None, cache=CACHE, sleep=None, clock=
     return LiveDocuments(paced), live_parser(engine, paced, upload)
 
 
+def live_readers(documents, layout, shield, embedder, report_projects=passages.default_projects,
+                 plan_projects=passages.default_projects) -> readers.Readers:
+    """The readers the run reads with: document_readers' source and layout parser, Prompt Shields and the embedding
+    deployment, and the slice's projects for both readers. The night's reading time is the documents source's own
+    fetch (documents.fetch, from document_host), which the passage reader checks before each document as well as
+    before each request, because a document bronze already holds is read without a request (ticket 86)."""
+    return readers.Readers(documents, layout, shield, embedder, plan_projects=plan_projects,
+                           report_projects=report_projects, budget=documents.fetch)
+
+
 def _now() -> dt.datetime:
     return dt.datetime.now(dt.UTC)
 
@@ -141,17 +152,23 @@ def read_documents(engine, found: readers.Readers, run_id: str, clock: Callable[
     projects = {project_id for _, project_id, document_id, _, outcome, _ in record
                 if outcome == "skipped" and not document_id}
     unfinished = {(project_id, document_id) for _, project_id, document_id, _, outcome, _ in record
-                  if outcome != "skipped"}
+                  if outcome == plans.UNFINISHED}
+    # What a stop left the run no time to reach (ticket 86): documents, and projects' document lists.
+    unread = [document_id for _, _, document_id, _, outcome, _ in record if outcome == plans.NOT_READ]
+    unread_documents = sum(1 for document_id in unread if document_id)
+    left = plans.left_words(unread_documents, len(unread) - unread_documents)
     print(f"Run {run_id} parsed {tally.parsed} document{'' if tally.parsed == 1 else 's'}, skipped {len(skipped)} and "
           f"wrote the passages of {tally.written} to strata.gold.passage"
           + (f", and left {len(unfinished)} unfinished." if unfinished else ".")
           + (f" The passages of {tally.unchanged} more were already in strata.gold.passage, unchanged."
              if tally.unchanged else "")
           + (f" It could not fetch the document list or the plans of {len(projects)} "
-             f"project{'' if len(projects) == 1 else 's'}." if projects else ""))
+             f"project{'' if len(projects) == 1 else 's'}." if projects else "")
+          + (f" The stop left {left} not read, for the next run." if left else ""))
+    said = {plans.SKIPPED: "skipped", plans.UNFINISHED: "left unfinished", plans.NOT_READ: "not read"}
     for reader, project_id, document_id, url, outcome, reason in record:
         what = plans.named(reader, document_id)
-        print(f"  {what} of {project_id}, {'skipped' if outcome == 'skipped' else 'left unfinished'} by the "
+        print(f"  {what} of {project_id}, {said.get(outcome, outcome)} by the "
               f"{'plan' if reader == 'plans' else 'passage'} reader ({url}): {reason}")
     if done is not None and done.stopped is not None:
         print(f"It stopped before it finished: {str(done.stopped).rstrip('.')}. The documents it wrote before that "
@@ -212,8 +229,7 @@ def main(argv=None) -> int:
     shield = PromptShields(content_safety_endpoint(env["AZURE_OPENAI_ENDPOINT"]), env["AZURE_OPENAI_API_KEY"])
     embedder = AzureOpenAIEmbeddings(env["AZURE_OPENAI_ENDPOINT"], env["AZURE_OPENAI_API_KEY"], model.deployment,
                                      model.dimensions)
-    found = readers.Readers(documents, layout, shield, embedder, plan_projects=passages.default_projects,
-                            report_projects=passages.default_projects)
+    found = live_readers(documents, layout, shield, embedder)
     code = read_documents(engine, found, f"documents-{_now():%Y%m%dT%H%M%S%f}")
     if code:
         return code

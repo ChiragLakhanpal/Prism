@@ -15,6 +15,7 @@ import datetime as dt
 import io
 import json
 import logging
+from contextlib import contextmanager
 from dataclasses import dataclass
 from typing import Protocol
 
@@ -123,16 +124,24 @@ class HostRefused(StopReading):
 class BudgetSpent(StopReading):
     """The night's time for the document host is spent (config/thresholds.toml, ingestion.document_host_minutes),
     so the readers stop and the job's later tasks still run inside its window. page is the PDF page the layout
-    parser did not read, when the time ran out between pages rather than between requests (ticket 72)."""
+    parser did not read, when the time ran out between pages rather than between requests (ticket 72).
+
+    left_for names the reader the rest of the night is kept for, when a reader stopped at its share of the night
+    rather than at its end (PoliteFetch.leaving, ticket 86): then the reading goes on with that reader."""
 
     measure = "document_host_budget_spent"
 
-    def __init__(self, url: str, seconds: float, page: int | None = None):
-        self.url, self.seconds, self.page = url, seconds, page
+    def __init__(self, url: str, seconds: float, page: int | None = None, left_for: str | None = None,
+                 night: float | None = None):
+        self.url, self.seconds, self.page, self.left_for = url, seconds, page, left_for
         self.minutes = round(seconds / 60)
         missed = f"read page {page} of {url}" if page is not None else f"ask for {url}"
-        super().__init__(f"I spent the night's {self.minutes} minute{'' if self.minutes == 1 else 's'} for the "
-                         f"document host, so I did not {missed}.")
+        if left_for is not None and night is not None:
+            spent = f"{self.minutes} of the night's {round(night / 60)} minutes for the document host"
+            super().__init__(f"I spent {spent} and kept the rest for {left_for}, so I did not {missed}.")
+        else:
+            super().__init__(f"I spent the night's {self.minutes} minute{'' if self.minutes == 1 else 's'} for the "
+                             f"document host, so I did not {missed}.")
 
 
 REFUSED = (403, 429)
@@ -160,13 +169,33 @@ class PoliteFetch:
         self.began = self.clock()  # the budget, in seconds, counts from here: the start of the night's reading
         self.last: float | None = None
         self.asked = 0  # requests that reached the host, for the tests and the run's report
+        self.kept: tuple[float, str] | None = None  # the seconds kept for a reader that reads later, and its name
 
     def within_budget(self, url: str, page: int | None = None) -> None:
         """Raise BudgetSpent once the night's reading time is spent. The fetch checks it before each request, and the
         live layout parser before each page it reads (strata.lakehouse.readers.OnBudget), because the parser fetches
-        a PDF once and then reads its pages one by one, about 36 seconds each (ticket 72)."""
-        if self.budget is not None and self.clock() - self.began >= self.budget:
+        a PDF once and then reads its pages one by one, about 36 seconds each (ticket 72). The passage reader also
+        checks it before each document (ticket 86). While some of the time is kept for a later reader (leaving), the
+        time runs out that much sooner."""
+        if self.budget is None:
+            return
+        spent = self.clock() - self.began
+        if self.kept is not None and spent >= self.budget - self.kept[0]:
+            raise BudgetSpent(url, max(self.budget - self.kept[0], 0.0), page, left_for=self.kept[1],
+                              night=self.budget)
+        if spent >= self.budget:
             raise BudgetSpent(url, self.budget, page)
+
+    @contextmanager
+    def leaving(self, seconds: float, reader: str):
+        """Inside the block, the night's reading time ends seconds early, so the reader that reads after it still has
+        them (ticket 86): the nightly job's plan reader keeps ingestion.passage_reader_minutes for the passage reader.
+        reader names that later reader in the stop's words."""
+        self.kept = (seconds, reader)
+        try:
+            yield self
+        finally:
+            self.kept = None
 
     def _cached(self, url: str):
         import hashlib

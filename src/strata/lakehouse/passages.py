@@ -493,6 +493,9 @@ class Written:
                 and len(self.indexed.get(document_id, [])) == len(passages))
 
 
+Budget = Callable[[str], None]  # raises BudgetSpent once the night's reading time is spent (PoliteFetch.within_budget)
+
+
 @dataclass
 class Tally:
     """What a run has done so far, document by document. The caller can hold it, so it still has the counts when
@@ -505,17 +508,30 @@ class Tally:
     scanned: int = 0  # passage texts the shield scanned
     embedded: int = 0  # passage texts the embedder embedded
     synced: int = 0  # rows of strata.gold.passage added, changed or removed
-    skipped: list[plans.Skipped] = field(default_factory=list)  # what the passage reader skipped or left unfinished
+    # What the passage reader skipped, left unfinished, or had no time to reach (not read).
+    skipped: list[plans.Skipped] = field(default_factory=list)
+    written_ids: list[str] = field(default_factory=list)  # the documents whose passages the run wrote, in order
+
+    def left(self) -> tuple[int, int]:
+        """The documents, and the projects' document lists, that a stop left for the next run."""
+        left = [item for item in self.skipped if item.outcome in (plans.UNFINISHED, plans.NOT_READ)]
+        documents = sum(1 for item in left if item.document_id)
+        return documents, len(left) - documents
 
 
 def read_slice(engine: Engine, documents: Documents, endpoint: str, projects: list[str], *, shield: Shield,
                embedder: Embedder, layout: LayoutParser | None, limits: Thresholds, clock: Callable[[], dt.datetime],
-               run_id: str, started: dt.datetime, tally: Tally) -> list[Read]:
+               run_id: str, started: dt.datetime, tally: Tally, budget: Budget | None = None) -> list[Read]:
     """Each project's documents, one at a time: fetched into bronze, read through Route A and Route B, and written
     (write_document) before the next is fetched, up to ingestion.passage_documents whose text Route A can read.
     A project's document list, or a document, that the source cannot give (NotFetched) is skipped with its reason
     and the run goes on. A stop (StopReading) ends the run, and what it wrote before stays. started is when the run
-    started, which each project's row of strata.ops.parse_runs keeps, as the plan reader's row does."""
+    started, which each project's row of strata.ops.parse_runs keeps, as the plan reader's row does.
+
+    budget(url), when given, raises BudgetSpent once the night's reading time is spent. It is checked before each
+    document, because a document bronze already holds is read without a request to the host, so the fetch's own check
+    never sees it (ticket 86); the fetch checks it again before each request, and the live layout parser before each
+    page."""
     cap = int(limits.value("ingestion.passage_documents"))
     max_tokens = int(limits.value("passages.max_tokens"))
     part_pages = int(limits.value("ingestion.parser_part_pages"))
@@ -526,9 +542,18 @@ def read_slice(engine: Engine, documents: Documents, endpoint: str, projects: li
         tally.skipped.append(skipped)
         plans.skip(engine, run_id, "passages", skipped, clock())
 
+    def leaving(stop: StopReading, left: list[Listed], later: list[str]) -> None:
+        """What the stop left the run no time to reach: the rest of this project's documents, and each later
+        project's document list, listed as not read so the run's record names them (ticket 86)."""
+        unread = [plans.unreached(document.project_id, document.document_id, document.text_url, stop)
+                  for document in left]
+        unread += [plans.unreached(later_id, None, list_url(endpoint, later_id), stop) for later_id in later]
+        tally.skipped.extend(unread)
+        plans.not_read(engine, run_id, "passages", unread, clock())
+
     found: list[Read] = []
     paged = 0
-    for project_id in projects:
+    for at, project_id in enumerate(projects):
         if paged >= cap:
             break
         try:
@@ -536,16 +561,24 @@ def read_slice(engine: Engine, documents: Documents, endpoint: str, projects: li
         except NotFetched as error:
             skipping(project_id, None, list_url(endpoint, project_id), str(error))
             continue
+        except StopReading as stop:
+            leaving(stop, [], projects[at:])
+            raise
         listed = listed_documents(engine, project_id)
         about = project(engine, project_id)
         written = Written.of(engine, project_id)
         read_here: list[Listed] = []
         parsing: plans.Parsing | None = None
+        reached = 0  # the documents of the list the run has finished or skipped, which a stop does not list again
         try:
-            for document in listed:
+            for reached, document in enumerate(listed):
                 if paged >= cap:
                     break
+                if budget is not None:
+                    budget(document.text_url)
                 fetching = plans.fetch_documents(engine, documents, project_id, [document.entry()])
+                if fetching.stop is not None:  # the host refused, or the night's time is spent, before its fetch
+                    raise fetching.stop
                 held = _held(engine, document)
                 if held is None:
                     skipping(project_id, document.document_id, *_why_not_held(fetching, document))
@@ -578,12 +611,16 @@ def read_slice(engine: Engine, documents: Documents, endpoint: str, projects: li
                     if item.passages:
                         tally.written += 1
                         tally.passages += len(item.passages)
+                        tally.written_ids.append(document.document_id)
                 read_here.append(document)
                 found.append(item)
                 paged += held.paged
-        except StopReading:
+        except StopReading as stop:
             if parsing is not None and parsing.stop is None:  # the project's pages parsed before a stop met elsewhere
                 plans.record_parse_run(engine, run_id, project_id, parsing, started, clock())
+            # A stop inside the layout parser listed the document it was reading as unfinished (record_stop).
+            inside = parsing is not None and parsing.stop is stop
+            leaving(stop, listed[reached + inside:], projects[at + 1:])
             raise
         if parsing is not None:
             plans.record_parse_run(engine, run_id, project_id, parsing, started, clock())
@@ -956,11 +993,13 @@ class Report:
 def run(engine: Engine, documents: Documents, projects: list[str] | None = None, *, shield: Shield,
         embedder: Embedder, layout: LayoutParser | None = None, thresholds: Thresholds | None = None,
         endpoint: str | None = None, clock: Callable[[], dt.datetime] = _now, run_id: str | None = None,
-        chosen: Slice | None = None, detector: language.Detector | None = None, tally: Tally | None = None) -> Report:
+        chosen: Slice | None = None, detector: language.Detector | None = None, tally: Tally | None = None,
+        budget: Budget | None = None) -> Report:
     """Read the slice's documents into passages. See the module's docstring for the steps. Without a
     layout parser, the pages the router sends to Route B wait for a run that has one. Each document's passages
     are written as soon as it is read (read_slice); tally, when given, counts them as the run goes, so a caller
-    still has the counts when the run stops partway."""
+    still has the counts when the run stops partway. budget, when given, is the night's reading time, checked before
+    each document (read_slice)."""
     limits = thresholds or load_thresholds()
     endpoint = endpoint or load_sources()[SOURCE].endpoint
     chosen = chosen or load_slice()
@@ -969,8 +1008,16 @@ def run(engine: Engine, documents: Documents, projects: list[str] | None = None,
     started = clock()
     run_id = run_id or f"passages-{started:%Y%m%dT%H%M%S%f}"
     tally = tally if tally is not None else Tally()
-    found = read_slice(engine, documents, endpoint, projects, shield=shield, embedder=embedder, layout=layout,
-                       limits=limits, clock=clock, run_id=run_id, started=started, tally=tally)
+    try:
+        found = read_slice(engine, documents, endpoint, projects, shield=shield, embedder=embedder, layout=layout,
+                           limits=limits, clock=clock, run_id=run_id, started=started, tally=tally, budget=budget)
+    except StopReading:
+        # The documents read before the stop keep the public dates a whole run gives them, as their passages are kept
+        # (ticket 86). strata.ops.documents_read counts a whole run only, as the data readiness measures do, so the
+        # dashboard's documents by year and the reports' Coverage count the same run; the stop's note counts what this
+        # run wrote and left (strata.lakehouse.readers.note_stop).
+        earliest(engine)
+        raise
     prune(engine, projects, found, tally.skipped)
     notices = read_notices(engine, projects, chosen.notice_types, int(limits.value("passages.max_tokens")))
     isr_ratings.write(engine, projects)

@@ -108,13 +108,15 @@ def insert(engine: Engine, table: str, columns: tuple[str, ...], rows: list[tupl
 # ── What a run skipped or left unfinished (ticket 72) ────────────────────
 
 SKIPPED, UNFINISHED = "skipped", "unfinished"
+NOT_READ = "not_read"  # a document, or a project's document list, that a stop left the reader no time to reach
 
 
 @dataclass(frozen=True)
 class Skipped:
     """A document, or a project's document list, that a reader could not fetch or read, so it skipped it and went
-    on (skipped), or a document it was reading when the run stopped (unfinished), and why. The plan reader and the
-    passage reader both record them, in strata.ops.skipped_documents."""
+    on (skipped), a document it was reading when the run stopped (unfinished), or one the stop left it no time to
+    reach (not_read, ticket 86), and why. The plan reader and the passage reader both record them, in
+    strata.ops.skipped_documents."""
 
     project_id: str
     document_id: str | None  # None when the run could not fetch the project's document list
@@ -147,6 +149,37 @@ def skip(engine: Engine, run_id: str, reader: str, skipped: Skipped, when: dt.da
     insert(engine, "strata.ops.skipped_documents", SKIP_COLUMNS, [
         (run_id, reader, skipped.project_id, skipped.document_id, skipped.url, skipped.outcome, skipped.reason, when,
          when.date())])
+
+
+def unreached(project_id: str, document_id: str | None, url: str, stop: StopReading, kind: str = "document") -> Skipped:
+    """A document (kind: document, or plan for the plan reader), or with no document_id the project's document list,
+    that a stop left the reader no time to reach (ticket 86). Both readers word it the same way."""
+    what = f"this {kind}" if document_id else "this project's document list"
+    return Skipped(project_id, document_id, url, f"I stopped before I reached {what}. {stop} The next run reads it.",
+                   NOT_READ)
+
+
+def left_words(documents: int, lists: int) -> str:
+    """The documents, and the projects' document lists, that a stop left, in words, naming only the counts that are
+    not zero: "15 documents and 1 project's document list". The readers' log, the stop's note and
+    ops/documents/run_live.py all say it this way."""
+    words = ([f"{documents} document{'' if documents == 1 else 's'}"] if documents else []) + (
+        [f"{lists} project's document list" if lists == 1 else f"{lists} projects' document lists"] if lists else [])
+    return " and ".join(words)
+
+
+def not_read(engine: Engine, run_id: str, reader: str, left: list[Skipped], when: dt.datetime) -> None:
+    """Record the documents, and the projects' document lists, that a stop left the reader no time to reach: a row
+    each in strata.ops.skipped_documents, written in one go, and one line in the log for them all (ticket 86)."""
+    if not left:
+        return
+    documents = sum(1 for item in left if item.document_id)
+    log.warning("I stopped before I reached %s. strata.ops.skipped_documents lists each one as not read: %s.",
+                left_words(documents, len(left) - documents),
+                ", ".join(item.document_id or f"the list of {item.project_id}" for item in left))
+    insert(engine, "strata.ops.skipped_documents", SKIP_COLUMNS, [
+        (run_id, reader, item.project_id, item.document_id, item.url, item.outcome, item.reason, when, when.date())
+        for item in left])
 
 
 # ── 1. Fetch into bronze ─────────────────────────────────────────────────
@@ -212,7 +245,10 @@ def listed_plans(engine: Engine, project_id: str) -> Listing:
 
 def fetch_plans(engine: Engine, documents: Documents, project_id: str, entries: list[Entry]) -> int:
     """Each plan's text and page texts, for the plans bronze does not hold yet. Returns how many it fetched."""
-    return fetch_documents(engine, documents, project_id, entries).fetched
+    fetching = fetch_documents(engine, documents, project_id, entries)
+    if fetching.stop is not None:
+        raise fetching.stop
+    return fetching.fetched
 
 
 @dataclass(frozen=True)
@@ -226,12 +262,17 @@ class Fetching:
     # Documents the source could not give, each with the address that failed (its text's or its PDF's) and why
     # (NotFetched's message), which both readers record when they skip them (ticket 72).
     not_fetched: tuple[tuple[str, str, str], ...] = ()
+    # What stopped the fetch before it reached every document: the host refused a request, or the night's reading
+    # time, or the reader's share of it, was spent (ticket 86). The documents fetched before it are in bronze; the
+    # caller records what is left and raises the stop again, as parse_pages's callers do.
+    stop: StopReading | None = None
 
 
 def fetch_documents(engine: Engine, documents: Documents, project_id: str, entries: list[Entry]) -> Fetching:
     """Each document's text and page texts, for the documents bronze does not hold yet, with its email
     addresses and labelled phone numbers taken out before bronze keeps them (contacts.strip_text). The
-    passage reader (src/strata/lakehouse/passages.py) fetches its documents here too."""
+    passage reader (src/strata/lakehouse/passages.py) fetches its documents here too. A stop (StopReading) ends the
+    fetch there and the Fetching it returns holds it, with what the source could not give before it (ticket 86)."""
     held = {str(row[0]) for row in engine.run(
         "SELECT DISTINCT document_id FROM strata.bronze.document_texts WHERE project_id = :project_id",
         {"project_id": project_id}).rows}
@@ -246,6 +287,8 @@ def fetch_documents(engine: Engine, documents: Documents, project_id: str, entri
         except NotFetched as error:
             not_fetched.append((entry.document_id, error.url or entry.text_url, str(error)))
             continue  # a document listed but not read, which leaves later first listings unconfirmed
+        except StopReading as stop:  # the documents fetched before this one stay in bronze
+            return Fetching(fetched, with_contacts, tuple(not_kept), tuple(not_fetched), stop)
         body, count = contacts.strip_text(text.body)
         page_texts = [contacts.strip_text(page)[0] for page in pages.body]  # the same details again, counted once
         public = public_from(entry.disclosed_on, text.fetched_at.date())
@@ -666,13 +709,20 @@ def run(engine: Engine, documents: Documents, layout: LayoutParser, project_id: 
     started = clock()
     run_id = run_id or f"plans-{project_id}-{started:%Y%m%dT%H%M%S%f}"
 
-    fetch_listing(engine, documents, endpoint, project_id)
+    try:
+        fetch_listing(engine, documents, endpoint, project_id)
+    except StopReading as stop:  # the run's record names the list the stop left (ticket 86)
+        not_read(engine, run_id, "plans", [unreached(project_id, None, list_url(endpoint, project_id), stop)], clock())
+        raise
     listing = listed_plans(engine, project_id)
     fetching = fetch_documents(engine, documents, project_id, listing.entries)
     # Each plan listed but not fetched, which the run goes on without (ticket 72), at the time the run started: the
     # fetches follow it at once, and the fixture's clock, which moves on each time it is read, keeps its times.
     for document_id, url, reason in fetching.not_fetched:
         skip(engine, run_id, "plans", Skipped(project_id, document_id, url, reason), started)
+    if fetching.stop is not None:  # the host refused, or the time is spent, before every plan was fetched
+        leave_unfetched(engine, run_id, project_id, listing, fetching, clock())
+        raise fetching.stop
     versions = read_versions(engine, project_id, listing)
     write_versions(engine, project_id, versions)
     parsing = parse_chosen(engine, layout, project_id, versions, cap, clock, run_id)
@@ -686,6 +736,23 @@ def run(engine: Engine, documents: Documents, layout: LayoutParser, project_id: 
                        finished)
     return Report(run_id, len(versions), parsing, len(read.versions), measures, read.unknown_columns,
                   fetching.not_kept, read.settled)
+
+
+def leave_unfetched(engine: Engine, run_id: str, project_id: str, listing: Listing, fetching: Fetching,
+                    when: dt.datetime) -> list[Skipped]:
+    """A fetch a stop ended (fetching.stop): each listed plan that bronze does not hold and the source did not refuse
+    before the stop, listed as not read in strata.ops.skipped_documents, so the run's record names what the next run
+    fetches (ticket 86). On October 27, 2026 the night's time ran out while the plan reader fetched 163 of P156634's
+    240 Procurement Plans, and the run's record held no row. Returns what it listed."""
+    held = {str(row[0]) for row in engine.run(
+        "SELECT DISTINCT document_id FROM strata.bronze.document_texts WHERE project_id = :project_id",
+        {"project_id": project_id}).rows}
+    reached = held | {document_id for document_id, _, _ in fetching.not_fetched} | {
+        document_id for document_id, _ in fetching.not_kept}
+    left = [unreached(project_id, entry.document_id, entry.text_url, fetching.stop, "plan")
+            for entry in listing.entries if entry.document_id not in reached]
+    not_read(engine, run_id, "plans", left, when)
+    return left
 
 
 def run_on_fixture(engine: Engine, project_id: str | None = None, manifest=None, **options) -> Report:
