@@ -132,6 +132,11 @@ def only_markdown(files):
     return bool(files) and all(name.lower().endswith(MARKDOWN) for name in files)
 
 
+def markdown_only_steps(steps):
+    """The steps a commit of only Markdown runs: those marked `always`."""
+    return [step for step in steps if step.get("always")]
+
+
 def step_env(keep_git):
     env = {k: v for k, v in os.environ.items() if keep_git or not k.startswith("GIT_")}
     env.update(OFFLINE)
@@ -297,8 +302,8 @@ def main():
     run = Run(limit)
     files = staged_files()
     if only_markdown(files):
-        print("Only Markdown files are staged, so the gate skips the tests.")
-        steps = [step for step in steps if step.get("always")]
+        print("Only Markdown files are staged, so the gate runs only the steps marked always.")
+        steps = markdown_only_steps(steps)
     elif files and unstaged_changes():
         print("Some changes to tracked files are not staged. Stage them or stash them, then commit again, "
               "so the gate tests what you commit.")

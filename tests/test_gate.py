@@ -4,7 +4,9 @@ Each test builds a throwaway repo that holds this repo's hook and gate runner, w
 list of steps, so a step can fail, sleep or plant a key without touching this repo.
 """
 
+import ast
 import fcntl
+import importlib.util
 import json
 import os
 import re
@@ -87,14 +89,17 @@ def write(repo, name, text):
     target.write_text(textwrap.dedent(text))
 
 
-def steps_file(limit=120, steps=(), lock_wait=None):
-    """A steps file: the secret scan always runs, then the given test steps.
+def steps_file(limit=120, steps=(), lock_wait=None, always=()):
+    """A steps file: the secret scan always runs, then the given always steps alone, then the test steps.
 
-    Each step is (name, run) or (name, run, lane). lock_wait sets how long the gate waits for the lock.
+    Each step is (name, run) or (name, run, lane); each always step is (name, run). lock_wait sets how
+    long the gate waits for the lock.
     """
     lines = [f"limit_seconds = {limit}"] + ([f"lock_wait_seconds = {lock_wait}"] if lock_wait else []) + [""]
     lines += ["[[step]]", 'name = "Scan for secrets"',
               'run = ["python3", "gates/secret_scan.py"]', "always = true", "git_env = true", ""]
+    for name, run in always:
+        lines += ["[[step]]", f'name = "{name}"', f"run = {run}", "always = true", ""]
     for name, run, *lane in steps:
         lines += ["[[step]]", f'name = "{name}"', f"run = {run}"]
         lines += [f'lane = "{lane[0]}"'] if lane else []
@@ -242,6 +247,28 @@ def test_a_commit_of_only_markdown_skips_the_tests(repo):
     assert done.returncode == 0, output
     assert "The tests ran." not in output
     assert "Only Markdown files are staged" in output
+
+
+def test_a_commit_of_only_markdown_runs_the_always_steps_and_one_that_fails_blocks_it(repo):
+    """As the tests that read Markdown do in this repo's gate (ticket 80)."""
+    docs_check = ("Read the docs", '["python3", "docs_check.py"]')
+    write(repo, "gates/steps.toml", steps_file(always=[docs_check], steps=[CHECK]))
+    write(repo, "docs_check.py", "raise SystemExit('A paragraph sits outside the marked blocks.')\n")
+    write(repo, "check.py", "raise SystemExit('The tests ran.')\n")
+    git(repo, "add", "-A")
+    git(repo, "commit", "-q", "--no-verify", "-m", "Add a failing docs check and a failing test")
+    write(repo, "docs/notes.md", "# Notes\n\nA paragraph outside the blocks.\n")
+    git(repo, "add", "-A")
+
+    done = commit(repo)
+
+    output = done.stdout + done.stderr
+    assert done.returncode != 0, output
+    assert head_count(repo) == 2
+    assert "Only Markdown files are staged" in output
+    assert "A paragraph sits outside the marked blocks." in output
+    assert 'The step "Read the docs" exited with code 1.' in output
+    assert "The tests ran." not in output
 
 
 def test_a_commit_that_renames_a_code_file_to_markdown_runs_the_tests(repo):
@@ -662,14 +689,34 @@ def pytest_args(step):
     return step["run"][step["run"].index("pytest") + 1:] if "pytest" in step["run"] else []
 
 
+def pytest_targets(step):
+    """What a pytest step names to run, as written: folders, files and test ids, without its options."""
+    args = pytest_args(step)
+    values = {i + 1 for i, arg in enumerate(args[:-1]) if arg in OPTIONS_WITH_A_VALUE}
+    return [arg for i, arg in enumerate(args) if not arg.startswith("-") and i not in values]
+
+
+def target_path(target):
+    """The file or folder a pytest target names. A test id, such as test_check.py::test_x, names its file."""
+    return Path(target.split("::")[0])
+
+
 def paths_tested(step):
-    """The paths a pytest step names, or every folder in testpaths when it names none."""
+    """The paths a pytest step names, each test id as its file, or every folder in testpaths when it names none."""
     if "pytest" not in step["run"]:
         return []
-    args = pytest_args(step)
-    values = {args[i + 1] for i, arg in enumerate(args[:-1]) if arg in OPTIONS_WITH_A_VALUE}
-    named = [Path(arg) for arg in args if not arg.startswith("-") and arg not in values and (ROOT / arg).exists()]
+    named = [target_path(target) for target in pytest_targets(step) if (ROOT / target_path(target)).exists()]
     return named or folders_in_testpaths()
+
+
+def reruns(step):
+    """Whether a step reruns single tests on every commit, as the step for the tests that read Markdown does.
+
+    It is marked always, so it runs even when only Markdown is staged, and it names test files and
+    test ids, never a folder. Each of its tests also runs in its folder's own step.
+    """
+    return (bool(step.get("always")) and "pytest" in step["run"]
+            and all((ROOT / path).is_file() for path in paths_tested(step)))
 
 
 def overlap(one, other):
@@ -677,7 +724,29 @@ def overlap(one, other):
     return one == other or one in other.parents or other in one.parents
 
 
+# The names a test uses to reach the fixture database: the fixture_db fixture in tests/conftest.py,
+# and the bundle tests' path to the database and their warehouse on it.
+FIXTURE_NAMES = re.compile(r"\b(fixture_db|FIXTURE_DB|fixture_warehouse)\b|fixture\.duckdb")
+
+
+def target_source(target):
+    """The source code a pytest target runs: a test id's function, or the whole file."""
+    file, _, test = target.partition("::")
+    text = (ROOT / file).read_text()
+    name = test.split("::")[-1].split("[")[0]
+    found = [node for node in ast.walk(ast.parse(text))
+             if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name == name]
+    return ast.get_source_segment(text, found[0]) if found else text
+
+
 def reads_the_fixture_database(step):
+    """Whether a step may read the fixture database.
+
+    A step that reruns single tests is judged by their source, since its folder may read the database
+    while the tests it names do not. Any other step is judged by its folders: see FIXTURE_READERS.
+    """
+    if reruns(step):
+        return any(FIXTURE_NAMES.search(target_source(target)) for target in pytest_targets(step))
     return any(overlap(path, reader) for path in paths_tested(step) for reader in FIXTURE_READERS)
 
 
@@ -695,8 +764,11 @@ def steps_that_may_start_before_the_fixture_build(steps):
 
 
 def gate_steps_per_test_folder(steps):
-    """For each folder in testpaths, how many steps run some or all of its tests."""
-    tested = [path for step in steps for path in paths_tested(step)]
+    """For each folder in testpaths, how many steps run some or all of its tests.
+
+    A step that reruns single tests is left out, since its tests also run in their folder's step.
+    """
+    tested = [path for step in steps if not reruns(step) for path in paths_tested(step)]
     return {folder: sum(overlap(folder, path) for path in tested) for folder in folders_in_testpaths()}
 
 
@@ -711,6 +783,56 @@ def test_each_test_folder_in_pyproject_runs_in_exactly_one_gate_step():
     runs = gate_steps_per_test_folder(gate_steps())
 
     assert runs and all(count == 1 for count in runs.values()), runs
+
+
+# The tests that read Markdown files the repo writes. On October 26, 2026, two commits of only Markdown
+# skipped them and broke the next code commit's gate: 929a14c5 put a paragraph outside the marked blocks
+# of docs/day-one-results.md, and 3e684c58 wrote a quoted --env-file path that the written-commands test
+# cut at the quote. So a Markdown-only commit runs them too (ticket 80).
+MARKDOWN_READERS = ["ops/bundle/tests/test_check.py::test_every_check_command_the_repo_writes_parses_as_written",
+                    "ops/dayone/tests/test_results_document.py"]
+
+
+def gate_runner():
+    """gates/offline.py as a module, so a test can ask it which steps a commit runs."""
+    spec = importlib.util.spec_from_file_location("strata_gate_runner", ROOT / "gates" / "offline.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_a_commit_of_only_markdown_runs_the_tests_that_read_markdown_alone_after_the_secret_scan():
+    runner, steps = gate_runner(), gate_steps()
+    pytest_steps = [step for step in runner.markdown_only_steps(steps) if "pytest" in step["run"]]
+
+    assert [pytest_targets(step) for step in pytest_steps] == [MARKDOWN_READERS]
+    secret_scan, docs = runner.stages(steps)[:2]
+    assert secret_scan == {None: [steps[0]]} and "gates/secret_scan.py" in steps[0]["run"]
+    assert docs == {None: pytest_steps}
+
+
+# Edits that add a second always step beside the secret scan, where the docs step sits, which the
+# checks must catch. One that names a folder is a second step for that folder. One whose tests read
+# the fixture database runs before the build, or, on a Markdown-only commit, with no build at all.
+FIXTURE_TEST = "tests/test_fixture.py::test_the_fixture_database_loads_every_recorded_file_with_no_network"
+ALWAYS_STEP_EDITS = {
+    "a folder": (["ops/dayone/tests"], "runs a folder twice"),
+    "a file whose tests read the fixture database": (["tests/test_fixture.py"], "reads the fixture early"),
+    "a test that reads the fixture database": ([FIXTURE_TEST], "reads the fixture early"),
+}
+
+
+@pytest.mark.parametrize(("targets", "fails"), ALWAYS_STEP_EDITS.values(), ids=ALWAYS_STEP_EDITS.keys())
+def test_an_always_step_that_names_a_folder_or_reads_the_fixture_database_fails_its_check(targets, fails):
+    extra = {"name": "Extra", "run": ["uv", "run", "--frozen", "pytest", "--basetemp", ".gate-tmp/extra", *targets],
+             "always": True}
+    steps = gate_steps()
+    steps.insert(1, extra)
+
+    if fails == "runs a folder twice":
+        assert gate_steps_per_test_folder(steps)[Path(targets[0])] == 2
+    else:
+        assert steps_that_may_start_before_the_fixture_build(steps) == ["Extra"]
 
 
 def workers(step):
