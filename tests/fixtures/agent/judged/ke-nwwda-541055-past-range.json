@@ -1,0 +1,28 @@
+{
+ "about": "The judge's answer for this case's sentences, through Azure OpenAI's chat completions, written by hand in the shape the API documents, because the gate's machine has no key. The judge is config/models.toml's draft role. Replace it with a recording: uv run --script ops/agent/record.py --judge --env-file .env",
+ "recorded": false,
+ "recorded_on": null,
+ "case": "ke-nwwda-541055-past-range",
+ "judge": {
+  "deployment": "gpt-5.4"
+ },
+ "asked": [
+  "The newest, \"KE-MIGORI COUNTY-532367-CW-RFB\", was still open 13 days after its notice.",
+  "Another, \"KE-ICTA-571738-CW-RFB\", was still open too."
+ ],
+ "response": {
+  "id": "chatcmpl-ke-nwwda-541055-past-range",
+  "object": "chat.completion",
+  "model": "gpt-5.4",
+  "choices": [
+   {
+    "index": 0,
+    "finish_reason": "stop",
+    "message": {
+     "role": "assistant",
+     "content": "{\"judgements\": [{\"index\": 1, \"follows\": true, \"advises\": false, \"reason\": \"The package's row says it was still open, 13 days after its notice.\"}, {\"index\": 2, \"follows\": true, \"advises\": false, \"reason\": \"The package's row says it was still open.\"}]}"
+    }
+   }
+  ]
+ }
+}

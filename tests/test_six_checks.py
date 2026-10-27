@@ -84,6 +84,10 @@ def test_a_summary_that_cites_nothing_is_judged_once_against_the_abstention_a_to
     assert [question.sentence for question in call] == [NOT_PUBLIC]
     [source] = call[0].sources
     assert source.evidence_id == "check_plan:abstention"
+    # The judge's instructions explain the name the verifier gives it, from one constant (ticket 24's review round
+    # 3, follow-up 4).
+    from strata.agent.judge import ABSTENTION, INSTRUCTIONS
+    assert source.evidence_id.endswith(f":{ABSTENTION}") and f'":{ABSTENTION}"' in INSTRUCTIONS
     # The judge reads the abstention the agent got, with no date after the as-of date (ADR 0002): the plan became
     # public on October 9, 2026 (values.toml, the demo plan's plan_date), after October 1.
     got = json.loads(asked.agent.received[1]["input"][0]["output"])["abstention"]
@@ -185,15 +189,21 @@ def test_when_the_judge_does_not_respond_and_every_sentence_needed_it_nothing_is
     assert [kind for kind, _ in asked.parsed if kind == "error"] == []
 
 
-def test_an_answer_that_checks_1_to_3_prove_after_find_comparables_counts_what_the_check_line_reads(fixture_db):
+def test_an_answer_after_find_comparables_counts_what_the_check_line_reads(fixture_db):
     """The ticket's check line: "Checked: N of N numbers match records; M of M quotes are on their pages. Not
-    checked: whether these are the right comparables." The screen reads every count from this event."""
+    checked: whether these are the right comparables." The screen reads every count from this event. A quote of
+    only a STEP reference proves nothing about "still open" (ticket 61), so the two sentences that quote one go to
+    the judge, in one call, and the past range's sentence needs no model."""
     asked = ask(fixture_db, "ke-nwwda-541055-past-range")
 
-    assert asked.judge.calls == [] and asked.of("removed") == []
+    assert asked.of("removed") == []
+    [call] = asked.judge.calls
+    assert [question.sentence for question in call] == [
+        'The newest, "KE-MIGORI COUNTY-532367-CW-RFB", was still open 13 days after its notice.',
+        'Another, "KE-ICTA-571738-CW-RFB", was still open too.']
     checks = asked.of("checks")[0]
     assert checks["shown"] == {"numbers": {"total": 5, "matched": 5}, "dates": {"total": 0, "matched": 0},
-                               "quotes": {"total": 2, "found": 2}, "judged": 0, "proven": 3}
+                               "quotes": {"total": 2, "found": 2}, "judged": 2, "proven": 1}
     # Check 1's item in the steps counts numbers and dates together; the verifier adds them, not the browser.
     assert checks["checked"] == {"total": 5, "matched": 5}
     assert checks["tools"] == ["find_comparables"]
@@ -244,11 +254,13 @@ def test_advice_that_cites_a_comparable_passes_check_5_and_goes_to_the_judge(fix
 
     assert asked.of("removed") == []
     assert [sentence["kind"] for sentence in asked.of("sentence")] == ["record", "record", "record", "advice"]
-    assert [[question.sentence for question in call] for call in asked.judge.calls] == [
-        ["Plan for longer than the 1.5 months the plan allows."]]
+    assert [[question.sentence for question in call] for call in asked.judge.calls] == [[
+        'The newest, "KE-MIGORI COUNTY-532367-CW-RFB", was still open 13 days after its notice.',
+        'Another, "KE-ICTA-571738-CW-RFB", was still open too.',
+        "Plan for longer than the 1.5 months the plan allows."]]
     checks = asked.of("checks")[0]
     assert checks["advice"] == {"total": 1, "cited": 1}
-    assert (checks["shown"]["judged"], checks["shown"]["proven"]) == (1, 3)
+    assert (checks["shown"]["judged"], checks["shown"]["proven"]) == (3, 1)
 
 
 # ── Check 6: a claim resting on one side of a disagreement shows both ─────

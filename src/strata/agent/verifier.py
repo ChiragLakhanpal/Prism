@@ -4,19 +4,25 @@ The app ran every tool the agent asked for, so it holds every row and passage th
 (ADR 0003, the turn's Facts). Each claim is checked against them:
 
 1. Every number and date the sentence states matches a value in a row the sentence cites, at the same
-   rounding, or sits inside the words it quotes from a cited passage that is not a table summary. A
-   number written with a unit (months, days, weeks or years, or a range ending in one, "3.3 to 7.9
-   months") never matches a value whose field names another unit, so "45 months" is not the plan's 45
-   days; and a number written with decimals never matches a whole number, so "8.0" is not the 8 of "8 in
-   10" (ticket 12's verify V1). A
+   rounding, or sits inside the words it quotes from a cited passage that is not a table summary. Each
+   number is checked against the field that holds it. A number written with a unit (months, days, weeks or
+   years, or a range ending in one, "3.3 to 7.9 months") never matches a value whose field names another unit
+   or a count, so "45 months" is not the plan's 45 days, nor the 49 comparables a coverage line used; a value
+   in days, months or weeks backs only a number written in its unit, so one comparable's 17 days never backs
+   "17 of 25 comparable packages" (ticket 27's verify finding 1); and a number written with decimals never
+   matches a whole number, so "8.0" is not an 8 (ticket 12's verify V1). Units are read in English sentences.
+   A natural frequency ("8 in 10", "about 3 in 10", "fewer than 1 in 10") is one value, which only a frequency
+   the record holds with the same words backs: a frequencies pair, a field named in10, or the q80 that "8 in
+   10" names (ticket 12's review P3, ticket 28's verify F2); those back no other number. A
    table's summary passage is Strata's own words about the table, so a number it alone holds, quoted
    or not, is removed with a reason of its own (number_only_in_table_summary): the table's rows back
    numbers, its summary never does.
    The numbers and dates are read from the sentence itself, so one the agent left off its list is
-   still checked. Every digit run is a number, as in "45-day" or "US$1.2M", unless its token is an id
-   (ID_SHAPES); so is a number written in words ("forty-five", "zero", or "one" unless it stands for a
-   thing named before), and an amount no row holds as written ("half", but not "the middle half", which
-   names a part of a past range). A passage backs only its
+   still checked. Every digit run is a number, as in "45-day", "US$1.2M" or "12,50,000" (grouped in lakhs),
+   unless its token is an id (ID_SHAPES; a token that starts with FY, a quarter or a half is a period); so is a
+   number written in words ("forty-five", "zero", or "one" unless it stands for a thing named before), and an
+   amount no row holds as written ("half" or "doubled", but not "the middle half", which names a part of a past
+   range). A passage backs only its
    dates, such as its report's date: its text is never a value, and its page, paragraph and version
    numbers say where it is, not what the report counted, so a number from a passage must be quoted.
 2. Every id the sentence cites came back from a tool in this turn. A record, quote or advice sentence
@@ -30,14 +36,17 @@ The app ran every tool the agent asked for, so it holds every row and passage th
    The quote checked is the one the person reads: the words in the sentence's quote marks must be in
    the claim's quote, and that quote on its passage. Quote marks with no quote, or with words that are
    not on the page, fail; so does a quote the sentence never shows in quote marks. Words quoted from a
-   cited record's text value, such as a STEP description, are on that record.
+   cited record's text value, at any depth, such as a STEP description or the reason rebidding_risk quotes
+   from a notice (quote.text), are on that record, with or without the claim's quote.
 
 4. Each sentence follows from the sources it cites, judged in one batched call to the judge
    (src/strata/agent/judge.py) and skipped where checks 1 to 3 already prove it. A record or quote sentence
    is proven when it states at least one number, date or quote, every one of them matched, and every run
-   of quoted words holds a word, not only a number: 'Only "108" works contracts were signed' quotes a
-   number that backs any meaning, so it goes to the judge. Advice and summary sentences always go to the
-   judge. A summary that cites nothing goes with the turn's abstentions as its only sources (each named
+   of quoted words holds a word, not only a number or an identifier: 'Only "108" works contracts were
+   signed' quotes a number that backs any meaning, and 'Another, "KE-ICTA-571738-CW-RFB", was still open'
+   quotes a reference, so both go to the judge. Advice and summary sentences always go to the
+   judge, which also says whether each sentence advises; one that does is held to check 5 whatever its kind.
+   A summary that cites nothing goes with the turn's abstentions as its only sources (each named
    "<tool>:abstention", as the agent read it, with no date after the as-of date), so it follows only when it
    says no more than what a tool could not answer. A sentence the judge says does not follow is removed
    (not_supported, or no_source when it cites nothing). When the judge does not respond, every sentence it
@@ -64,6 +73,7 @@ from __future__ import annotations
 import dataclasses
 import datetime as dt
 import decimal
+import json
 import re
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
@@ -72,7 +82,7 @@ from typing import Any
 
 from strata import languages
 from strata.agent.claims import Claim
-from strata.agent.judge import Judgement, Question, Source
+from strata.agent.judge import ABSTENTION, Judgement, Question, Source
 from strata.config import ENGLISH, load_project_page
 from strata.harness.facts import Facts
 from strata.harness.turn import Event
@@ -153,16 +163,18 @@ ID_SHAPES = (
     # alone after it, as in "the IDA 2019 funds", is a year.
     r"\b(?:IDA|IBRD|TF)\s*[-/\u2013]?\s*(?!(?:19|20)\d\d\b)[A-Z0-9]{0,2}\d{4,}[A-Z]{0,2}\b",
     # A STEP reference has three parts or more: KE-NWWDA-541062-CW-RFQ, NWWDA-WSDP-03-2019-2020 or
-    # MWI-WSDP-001. Q3-2020 and FY-2019 have two, so their numbers are read.
-    r"\b[A-Z][A-Z0-9]*(?:-[A-Z0-9]+){2,}\b",
+    # MWI-WSDP-001. Q3-2020 and FY-2019 have two, so their numbers are read. A token that starts with FY, a
+    # quarter (Q1 to Q4) or a half (H1 or H2) is a period, so its numbers are read, as in Q3-2020-21 or FY/2019/20.
+    r"\b(?!(?:FY|Q[1-4]|H[12])[-/])[A-Z][A-Z0-9]*(?:-[A-Z0-9]+){2,}\b",
     # A bid or contract reference written with slashes, with three parts or more: KE/TAVEVO/82755/GO/RFQ or
     # KALRO/HQTS/053/23-24. It starts with a letter, so 2019/20 is two numbers.
-    r"\b[A-Z][A-Z0-9.]*(?:/[A-Z0-9.\-]+){2,}\b",
+    r"\b(?!(?:FY|Q[1-4]|H[12])[-/])[A-Z][A-Z0-9.]*(?:/[A-Z0-9.\-]+){2,}\b",
     r"\bCOVID-19\b",
     r"\b(?:[IVX]+|\d+)\.[A-Za-z]\b",  # a section label, III.B or 10.b
 )
 ID = re.compile("|".join(ID_SHAPES))
-DIGITS = re.compile(r"\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+(?:\.\d+)?")
+# Indian reports group digits in lakhs and crores, as in 12,50,000, which is one number.
+DIGITS = re.compile(r"\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d{1,2}(?:,\d{2})+,\d{3}(?:\.\d+)?|\d+(?:\.\d+)?")
 # A World Bank fiscal year, FY2019 or FY19: a number a row must hold, such as a fiscal_year column.
 FISCAL_YEAR = re.compile(r"\bFY ?(\d{4}|\d{2})\b")
 YEARS = range(1900, 2101)
@@ -179,7 +191,8 @@ SMALL |= {word: value for value, word in zip(range(20, 100, 10), (
     "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"), strict=True)}
 SCALES = {"hundred": 100, "thousand": 1000, "dozen": 12}
 # Amounts no row holds as written: a proportion or a vague count. A sentence that states one is removed.
-VAGUE = {"half", "twice", "double", "triple", "hundreds", "thousands", "dozens"}
+VAGUE = {"half", "twice", "double", "triple", "hundreds", "thousands", "dozens", "doubled", "tripled", "halved",
+         "quadrupled"}
 FRACTIONS = {"third", "quarter"}  # as "a third" or "a quarter"
 WORD = re.compile(r"[A-Za-z]+")
 COUNT_AFTER_ONE = re.compile(r" (?:of|in) (?:the )?(?:\d|(?:" + "|".join(SMALL) + r")\b)", re.I)
@@ -722,12 +735,36 @@ def _values(row: Mapping | None) -> tuple[list, set, list]:
 
 
 def _texts(row: Any) -> list[str]:
-    """The text values a row holds at any depth, leaving out a passage's text."""
+    """The text values a row holds at any depth, leaving out a passage's text, which is its page, and the search's
+    header. A record's own text, such as the reason rebidding_risk quotes from a notice under quote.text, is one of
+    its values (ticket 28's verify F1)."""
     if isinstance(row, Mapping):
-        return [text for key, value in row.items() if key not in NOT_VALUES for text in _texts(value)]
+        skipped = NOT_VALUES if _is_passage(row) else NOT_VALUES - {"text"}
+        return [text for key, value in row.items() if key not in skipped for text in _texts(value)]
     if isinstance(row, list | tuple):
         return [text for value in row for text in _texts(value)]
     return [row] if isinstance(row, str) else []
+
+
+IDENTIFIER_FIELD = re.compile(r"(?:^|_)(?:id|reference|reference_no|no|number)$")
+
+
+def _identifiers(row: Any) -> set[str]:
+    """The identifiers a cited row holds at any depth, such as a step_reference, a notice_id or a contract id."""
+    if isinstance(row, list | tuple):
+        return {name for value in row for name in _identifiers(value)}
+    if not isinstance(row, Mapping):
+        return set()
+    found = {value.strip() for key, value in row.items() if isinstance(value, str) and IDENTIFIER_FIELD.search(str(key))}
+    return found | {name for key, value in row.items() if key not in NOT_VALUES for name in _identifiers(value)}
+
+
+def _names_only(run: str, identifiers: set[str]) -> bool:
+    """Whether quoted words are only an identifier: a whole identifier of a cited row, or a token that reads as an id.
+    Like a quote of only a number, it is on its record whatever the sentence around it says, so it proves nothing
+    and the sentence goes to the judge (ticket 24's review round 3, follow-up 9)."""
+    text = " ".join(run.split())
+    return text in identifiers or ID.fullmatch(text) is not None
 
 
 def _name_words(text: str) -> str:
@@ -767,23 +804,26 @@ def check(index: int, claim: Claim, facts: Facts, language: str = ENGLISH) -> Ch
     records = [(evidence, facts.get(evidence)) for evidence in returned if not _is_passage(facts.get(evidence))]
     # Check 3: the words in the sentence's quote marks are its quote, and its quote is on its page. Words
     # quoted from a cited record's text value, such as a STEP description, are on that record.
-    quote, span, backs = claim.quote, None, False
+    quote, span, backs, found_quote = claim.quote, None, False, False
     if quote is not None:
         passage = facts.get(quote.evidence_id)
         if _is_passage(passage):
             span = find_quote(quote.text, passage["text"], _language_of(passage))
-            backs = span is not None and not _summary(passage)
-        if span is None and facts.came_back(quote.evidence_id):
+            found_quote = span is not None
+            backs = found_quote and not _summary(passage)
+        elif passage is not None:  # a quote from a record's own text, which has no page to highlight
+            backs = found_quote = any(find_quote(quote.text, text) for text in _texts(passage))
+        if not found_quote and facts.came_back(quote.evidence_id):
             reasons.append(Reason(3, NOT_ON_PAGE, quote.evidence_id))
     spans = []  # each run of quoted words: where it is in the sentence, and the evidence id that holds it
     for start, end in quoted_spans(claim.sentence):
         words = claim.sentence[start:end]
-        source = quote.evidence_id if quote is not None and span is not None and find_quote(
+        source = quote.evidence_id if quote is not None and found_quote and find_quote(
             words, quote.text, _language_of(facts.get(quote.evidence_id))) \
             else next((evidence for evidence, row in records if any(find_quote(words, text) for text in _texts(row))),
                       None)
         spans.append((start, end, source))
-    if quote is None or span is not None:
+    if quote is None or found_quote:
         if any(source is None for *_, source in spans):
             reasons.append(Reason(3, NOT_ON_PAGE, None if quote is None else quote.evidence_id))
         elif quote is not None and not any(source == quote.evidence_id for *_, source in spans):
@@ -818,9 +858,10 @@ def check(index: int, claim: Claim, facts: Facts, language: str = ENGLISH) -> Ch
     quoted = bool(spans) or quote is not None
     # A quote counts as on its page only when its page was checked: a quote whose passage did not come
     # back this turn was compared with nothing, so the check line may not count it.
-    on_page = quoted and not quote_reasons and (quote is None or span is not None)
+    on_page = quoted and not quote_reasons and (quote is None or found_quote)
     runs = [claim.sentence[start:end] for start, end, _ in spans] + ([quote.text] if quote is not None else [])
-    words = bool(runs) and all(re.search(r"[^\W\d_]", run) for run in runs)
+    names = {name for evidence in returned for name in _identifiers(facts.get(evidence))}
+    words = bool(runs) and all(re.search(r"[^\W\d_]", run) and not _names_only(run, names) for run in runs)
     return Checked(index, claim, tuple(reasons), tuple(checked["number"]), tuple(checked["date"]), span,
                    quoted=quoted, quote_found=on_page, quoted_words=words)
 
@@ -834,7 +875,6 @@ def verify(claims: Iterable[Claim], facts: Facts, language: str = ENGLISH) -> Ve
 
 PROJECT = re.compile(r"^P\d{6}$")
 DISAGREEMENTS_TOOL = "get_disagreements"
-ABSTENTION = "abstention"  # what the judge calls a tool's abstention among a sentence's sources: check_plan:abstention
 
 
 def proven(sentence: Checked) -> bool:
@@ -873,7 +913,9 @@ def kept_counts(kept: Iterable[Mapping], removed: int, checks_run: Iterable[int]
         runs = [text[start:end] for start, end in quoted_spans(text)] + ([quote["text"]] if quote else [])
         says_quote = bool(runs)
         quoted += says_quote
-        words = says_quote and all(re.search(r"[^\W\d_]", run) for run in runs)
+        names = {name for cited in sentence.get("evidence_ids") or ()
+                 for name in _identifiers(((evidence or {}).get(cited) or {}).get("row"))}
+        words = says_quote and all(re.search(r"[^\W\d_]", run) and not _names_only(run, names) for run in runs)
         if _proves(sentence.get("kind") or "", bool(sentence.get("numbers") or sentence.get("dates")), says_quote,
                    says_quote, words):
             proven_count += 1
@@ -940,8 +982,6 @@ def _project(row: Mapping | None) -> str | None:
 
 def _abstention_text(tool: str, abstention: Mapping, limit: int) -> str:
     """What the judge reads of one abstention: the tool and what it said it could not answer."""
-    import json
-
     return json.dumps(_plain({"tool": tool, "abstention": abstention}), ensure_ascii=False)[:limit]
 
 
@@ -951,8 +991,6 @@ def _source_text(row: Mapping | None, limit: int) -> str:
     if _is_passage(row):
         text = f"{row.get('header') or ''}\n{row['text']}".strip()
     else:
-        import json
-
         text = json.dumps(_plain({key: value for key, value in (row or {}).items() if key != "also"}),
                           ensure_ascii=False)
     return text[:limit]
@@ -976,14 +1014,18 @@ class AnswerCheck:
             evidence: row for evidence, row in facts.returned_by(DISAGREEMENTS_TOOL) if row.get("sides")}
         self.fetched: set[str] = set()  # the ones only check 6's own question found
         self.judge_called, self.judge_responded = False, None
-        backing = set(backs_advice)
+        self.backing = set(backs_advice)
         advice = [sentence for sentence in self.sentences.values() if sentence.claim.kind == "advice"]
-        cited = [sentence for sentence in advice if any(
-            facts.came_back(evidence) and facts.tool(evidence) in backing for evidence in sentence.claim.evidence_ids)]
+        cited = [sentence for sentence in advice if self._backs_advice(sentence)]
         self.advice = (len(advice), len(cited))
         for sentence in advice:
             if sentence not in cited:
                 self._fail(sentence.index, Reason(5, ADVICE_UNBACKED))
+
+    def _backs_advice(self, sentence: Checked) -> bool:
+        """Check 5: the sentence cites a lesson or a comparable, evidence from a tool whose rows back advice."""
+        return any(self.facts.came_back(evidence) and self.facts.tool(evidence) in self.backing
+                   for evidence in sentence.claim.evidence_ids)
 
     @classmethod
     def from_checked(cls, checked: Iterable[Checked], facts: Facts, backs_advice: Iterable[str], *,
@@ -1044,17 +1086,28 @@ class AnswerCheck:
     def judged(self, questions: list[Question], judgements: list[Judgement] | None) -> None:
         """The judge's answers to the questions, or None when it did not respond. A sentence that cites nothing
         and does not follow from what the tools could not answer is removed because it cited no source; the
-        judge's reason is kept with it for the run log."""
+        judge's reason is kept with it for the run log. A sentence the judge says advises, though the agent gave it
+        another kind, is held to check 5 as advice is (ticket 24's verify round 3, O1)."""
         self.judge_called, self.judge_responded = True, judgements is not None
         said = {judgement.index: judgement for judgement in judgements or []}
+        total, cited = self.advice
         for question in questions:
             self.sentences[question.index] = dataclasses.replace(self.sentences[question.index], judged=True)
+            sentence = self.sentences[question.index]
             if judgements is None:
                 self._fail(question.index, Reason(4, JUDGE_UNAVAILABLE))
-            elif not said[question.index].follows:
-                uncited = not self.sentences[question.index].claim.evidence_ids
-                self._fail(question.index, Reason(4, NO_SOURCE if uncited else NOT_SUPPORTED,
-                                                  said[question.index].reason))
+                continue
+            judgement = said[question.index]
+            if judgement.advises and sentence.claim.kind != "advice":
+                total += 1
+                if self._backs_advice(sentence):
+                    cited += 1
+                else:
+                    self._fail(question.index, Reason(5, ADVICE_UNBACKED))
+            if not judgement.follows:
+                uncited = not sentence.claim.evidence_ids
+                self._fail(question.index, Reason(4, NO_SOURCE if uncited else NOT_SUPPORTED, judgement.reason))
+        self.advice = (total, cited)
 
     def verdict(self) -> Verdict:
         sentences = tuple(self.sentences[index] for index in sorted(self.sentences))
