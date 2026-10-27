@@ -786,6 +786,8 @@ The builder named `ops/documents/search_live.py` for this step. That script asks
     uv run --script ops/documents/search_live.py --env-file .env
     uv run --frozen python -c "import sys; sys.path.insert(0, 'ops/documents'); import search_live; search_live.QUESTION = 'search-passages-similar-experience'; sys.exit(search_live.main(['--env-file', '.env']))"
 
+Since ticket 63 (merge commit dab71bf2) the script takes `--question`, so ticket 63's step 5 below gives the command that replaces the second line.
+
 It worked if the first ends "1 of the 1 expected passages are in the top three." (the new passages did not push paragraph 54 out), and the second lists `strata.gold.passage:OP00118817/v1/s5` and `strata.gold.passage:OP00128730/v1/s6`, each with its notice id, and ends "2 of the 2 expected passages are in the top three." (criterion 8, live half). Both must start "search_passages ranked with AI Search". Exit 2 means it could not ask, and the line it prints says why.
 
 ## Ticket 35, step 1 of 5: the Foundry review notes writer matches the repo
@@ -3568,9 +3570,9 @@ One thing to watch, from the verifier (`.notes/107-verify-r2.md`, follow-up 2): 
 
 **Ran on October 27, 2026 (orchestrator), 13:49 to 13:54 UTC, from a snapshot of 19eb82d8 (ticket 107's done commit).** Step 1: `ALTER TABLE strata.ops.cost_pulls ADD COLUMNS (detail STRING)` on the SQL warehouse, state SUCCEEDED; the table's columns are now run_id; pulled_at; status; from_day; through_day; charges; error_code; public_from; detail. Step 2: `uv run --script ops/bundle/deploy.py --env-file "<main checkout>/.env" --fairshare-catalog workspace` exited 0 at 13:52 UTC (step 3's report: "The job strata nightly changed"), and the Jobs API update put the nightly's window back to 18000 seconds (schedule 0 0 3 * * ? UNPAUSED). Step 3: `databricks jobs run-now --json '{"job_id": 528900661133114}' -p strata` started run 604871161430737 at 13:52 UTC; it ended TERMINATED SUCCESS at 13:54 UTC, and the newest run row (run_id, status, from_day, through_day, charges, error_code, detail) is: 604871161430737, succeeded, 2026-09-22, 2026-10-27, 9, None, None. Azure answered this time without a 429, so the row is succeeded with charges and the retry lines did not appear in the task log; criterion 3 holds (succeeded with charges). The two earlier runs of the day (679380286409718 at 09:40 UTC and 404010923973841 at 12:14 UTC) had failed on the 429.
 
-## Ticket 63, step 1 of 4: two table changes, before the deploys that bring ticket 63
+## Ticket 63, step 1 of 5: two table changes, before the deploys that bring ticket 63
 
-Parked on October 27, 2026 with ticket 63 (branch strata/63-data-warehouse-and-models). It needs the Databricks keys in `.env` and the SQL warehouse, and it runs before step 2, because the nightly job's `bronze_to_gold` and the App write the new columns' rows.
+Parked on October 27, 2026 with ticket 63 (branch strata/63-data-warehouse-and-models, merge commit dab71bf2). The second session runs steps 1 to 5 in order from a snapshot of dab71bf2. It needs the Databricks keys in `.env` and the SQL warehouse, and it runs before step 2, because the nightly job's `bronze_to_gold` and the App write the new columns' rows.
 
 On the SQL warehouse, run:
 
@@ -3579,9 +3581,9 @@ On the SQL warehouse, run:
 
 It worked if both statements end SUCCEEDED, `DESCRIBE TABLE strata.gold.contract` shows `amount_basis` as nullable, and `DESCRIBE TABLE strata.ops.supplier_pair_labels` lists `left_name` and `right_name`. A gap-year contract whose award notice gives no price now has no amount basis, and a label keeps the two names it was given. Record the statements' states and the time here.
 
-## Ticket 63, step 2 of 4: the deploys, and the row filter on the passage reports and each answer's sources (criterion 4, live)
+## Ticket 63, step 2 of 5: the deploys, and the row filter on the passage reports and each answer's sources (criterion 4, live)
 
-Parked on October 27, 2026 with ticket 63, after step 1. It needs the Databricks keys in `.env`, the SQL warehouse, and the workspace group `strata-passage-reviewers` (config/roles.toml, `[groups.passage_reviewer]`); with no such group, the filter shows the rows to the App and you only. Run from a snapshot of the merge commit, as the header says:
+Parked on October 27, 2026 with ticket 63, after step 1. It needs the Databricks keys in `.env`, the SQL warehouse, and the group `strata-passage-reviewers` (config/roles.toml, `[groups.passage_reviewer]`) as an account group; with no such group, the filter shows the rows to the App and you only. Run from a snapshot of the merge commit dab71bf2, as the header says:
 
     uv run --script ops/bundle/deploy.py --env-file "<main checkout>/.env" --fairshare-catalog workspace
     uv run --script ops/app/deploy_app.py --env-file "<main checkout>/.env" --keep-secrets
@@ -3596,9 +3598,11 @@ It worked if both deploys exit 0, the App deploy's step 7 prints its one line, a
     SELECT count(*) FROM strata.ops.candidate_labels
     SELECT count(*) FROM strata.ops.answer_citations
 
-Record the deploys' exit codes, the DESCRIBE lines and the counts here.
+A filter that lets no one in would also pass that check, so prove the other half too (`.notes/63-verify.md`, O4). Once at least one report exists, signed in as a member of `strata-passage-reviewers`, `SELECT count(*) FROM strata.ops.candidate_labels` must be above 0. `is_account_group_member` sees account groups only, so also confirm that `strata-passage-reviewers` is an account group, not a workspace-local one (the account console's User management, Groups, or `databricks account groups list`). If it is workspace-local, a reviewer counts 0 as well; record that for the user, who decides where the group lives.
 
-## Ticket 63, step 3 of 4: the orchestrator's new rule on results tables, synced to Foundry
+Record the deploys' exit codes, the DESCRIBE lines, the non-member's and the member's counts, and the group's kind here.
+
+## Ticket 63, step 3 of 5: the orchestrator's new rule on results tables, synced to Foundry
 
 Parked on October 27, 2026 with ticket 63. It needs the Foundry keys in `.env`. Ticket 63 added one paragraph to `src/strata/agent/instructions/orchestrator.md`: a passage that runs a results table's columns together (Indicator Name, Unit of Measure, Baseline, Target) never backs a sentence that calls one of its numbers a baseline or a target. Run from the main checkout:
 
@@ -3607,13 +3611,23 @@ Parked on October 27, 2026 with ticket 63. It needs the Foundry keys in `.env`. 
 
 It worked if the first prints the added paragraph in its diff and a new version of `strata-orchestrator`, and the second prints no difference. Record the version here.
 
-## Ticket 63, step 4 of 4: four-digit loans in project records, and the stripper on Kenya's live notices
+## Ticket 63, step 4 of 5: four-digit loans in project records, and the stripper on Kenya's live notices
 
 Parked on October 27, 2026 with ticket 63, after step 2 and the next nightly run. It needs the SQL warehouse. Ticket 63 keeps a project record's loan with four digits, such as IBRD-8956, in `strata.silver.project_loans` (ticket 07's verify, O4), and strips more contact details: numbers after Ph, M, Contact and WhatsApp, a second number after "or", and a name after "Attention" and a title. On the SQL warehouse:
 
-    SELECT count(*) FROM strata.silver.notices WHERE regexp_like(notice_text, '(?i)attention\\s*:?\\s*(mr|mrs|ms|dr|eng)\\.?\\s+[A-Z]')
+    SELECT count(*) FROM strata.silver.notices WHERE regexp_like(notice_text, '(?i:attention)\\s*:?\\s*(?i:mr|mrs|ms|miss|dr|eng|prof)\\.?\\s+[A-Z]')
     SELECT measure, count, denominator FROM strata.ops.data_readiness WHERE source = 'notices' AND subject = 'KE' AND measure = 'contact_details_removed' ORDER BY measured_at DESC LIMIT 1
 
 and compare each project's loans in bronze with silver by hand: every `loan_transactions[].financier_loan` a project record in `strata.bronze.current_pages` (source `projects`) names is a row of `strata.silver.project_loans` for that project.
 
-It worked if the first query returns 0, the measure has a count and a denominator, and no project's loan is missing from `strata.silver.project_loans`. Record the counts here.
+The first query uses the review's corrected pattern (`.notes/63-review.md`, follow-up 9), with one change. The review dropped the leading `(?i)`, because it made `[A-Z]` match lowercase too, while the stripper removes only a name that starts with a capital. It also added miss and prof to the titles. With no flag at all, though, `attention` would miss the "ATTENTION:" these notices write. So only the label and the title ignore case, as `contacts.ATTENTION` does.
+
+It worked if the first query returns 0, the measure has a count and a denominator, and no project's loan is missing from `strata.silver.project_loans` (four-digit IBRD loans included). Record the counts here.
+
+## Ticket 63, step 5 of 5: ticket 18's step 5 asks its own question
+
+Parked on October 27, 2026 with ticket 63 (merge commit dab71bf2). Ticket 63 gave `ops/documents/search_live.py` a `--question` option, so ticket 18's step 5 no longer needs its one-line override. When the second session runs ticket 18's step 5, it runs this from the main checkout in place of that step's second command:
+
+    uv run --script ops/documents/search_live.py --env-file .env --question search-passages-similar-experience
+
+It worked if the output starts "search_passages ranked with AI Search", lists `strata.gold.passage:OP00118817/v1/s5` and `strata.gold.passage:OP00128730/v1/s6`, each with its notice id, and ends "2 of the 2 expected passages are in the top three." Exit 2 means it could not ask, and the line it prints says why. Record the output's last line here and under ticket 18's step 5.
