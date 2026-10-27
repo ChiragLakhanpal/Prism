@@ -3518,3 +3518,48 @@ Record here, under ticket 86, both run ids, each task's state and minutes, the c
 ## The App's stop of October 27, 2026, and the redeploy that brought it back
 
 **Seen and fixed on October 27, 2026 (orchestrator), 12:12 to 12:31 UTC.** The user found the App's address showing the platform's "App Not Available" page. `databricks apps get strata -p strata` said the compute was STOPPED ("App compute was stopped due to workspace or account status", update time 11:35:16 UTC), the app status UNAVAILABLE, and no active deployment; `/api/health` answered 503. It was not billing: `az account show` gave the subscription state Enabled, the workspace resource Strata (resource group WorldBank-demo, sku premium) Succeeded, the SQL warehouse d45865dbf2e0f97e RUNNING and HEALTHY, and `SELECT 1` succeeded. The timing fits docs/PLAN.md section 16 (an app's compute stops 24 hours after each start; the user's first deploy on the paid workspace was about a day before), and that stop also dropped the deployment. `databricks apps start strata -p strata --no-wait` was accepted at 12:15 UTC (compute STARTING, then ACTIVE with "App has not been deployed yet"). Then `ops/app/deploy_app.py --keep-secrets` from the snapshot of f0f6eddc (the last commit before the redesign, with ticket 86) at 12:19 UTC: it built the web app, uploaded 917 files, made deployment 01f1d20184b11f5b827aae9cfa5088b4 at 12:25:38 UTC, and exited 1 at 12:31 UTC because that deployment was still IN_PROGRESS when its wait ended, so it granted nothing (the grants from the earlier deploys hold, the service principal being the same). By 12:31 UTC the deployment showed SUCCEEDED ("App started successfully"), the app RUNNING, and with the CLI profile's token `/api/health` and `/api/planned-packages` answered 200. Two notes: the demo-ready command (ticket 49, step 1) is the guard for this before a demo once its first step checks the Databricks App; and the deploy script's wait for step 5 is shorter than a deployment after a cold compute start, so a deploy that ends "IN_PROGRESS" is checked with `databricks apps get` before it is called failed.
+
+## Ticket 107, step 1 of 3: add the `detail` column to `strata.ops.cost_pulls` before the bundle deploy
+
+Parked on October 27, 2026 with ticket 107, which merged into build/strata as b6bcf407. The orchestrator runs steps 1 to 3 today, in this order, from a snapshot of the done commit that follows b6bcf407. Every key is set, but mergers run no workspace step. It needs the Databricks keys in `.env` and the paid workspace's SQL warehouse.
+
+Why: the cost pull now writes a ninth column, `detail`, in each run row (Azure's message on a throttled day). The live table was made without it, and `CREATE TABLE IF NOT EXISTS` adds no column to a table that exists (`src/strata/lakehouse/tables/ops/cost_pulls.sql` says the same).
+
+The builder's step, in the builder's words: Step 1, before the bundle deploy (or right after it and before the next scheduled pull or any run-now of job 528900661133114), on the paid workspace's SQL warehouse:
+
+    ALTER TABLE strata.ops.cost_pulls ADD COLUMNS (detail STRING)
+
+It worked if `DESCRIBE TABLE strata.ops.cost_pulls` lists `detail STRING` between `error_code` and `public_from`. If it says the column already exists, go on. Without this step every pull fails on its run row.
+
+A note from the code review (`.notes/107-review-r2.md`): this ALTER puts `detail` after `public_from`, not between `error_code` and `public_from`. That is fine. The run row goes in by column name (`SparkEngine.insert_rows` appends with `saveAsTable`), and the deploy does not compare column order. So `detail STRING` listed last also counts as worked. An old pull that runs between the ALTER and the deploy writes null in `detail` and still works.
+
+## Ticket 107, step 2 of 3: deploy the bundle from the merge commit, then put the nightly window back to 300 minutes
+
+Parked on October 27, 2026 with ticket 107 (merge commit b6bcf407). The orchestrator runs it today, right after step 1, from the same snapshot, with `--env-file` pointing at the main checkout's `.env`.
+
+The builder's step, in the builder's words: Step 2, bundle deploy from the merge commit:
+
+    uv run --script ops/bundle/deploy.py --env-file "<main checkout>/.env" --fairshare-catalog workspace
+
+Then run ticket 89's Jobs API update again to put the nightly's window back to 18000 seconds:
+
+    databricks jobs update --json '{"job_id": 200833746315993, "new_settings": {"timeout_seconds": 18000}}' -p strata
+    databricks jobs get 200833746315993 -p strata
+
+It worked if the deploy exits 0 and `databricks jobs get 200833746315993 -p strata` shows `timeout_seconds` 18000 (with the schedule unchanged: 0 0 3 * * ? America/New_York, UNPAUSED). Record the deploy's exit code, step 3's report, the read-back and the time here.
+
+## Ticket 107, step 3 of 3: the next cost pull ends succeeded, with its run row recorded here (criterion 3, live)
+
+Parked on October 27, 2026 with ticket 107 (merge commit b6bcf407). The orchestrator runs it today, after steps 1 and 2. It needs the Databricks keys in `.env` and the SQL warehouse.
+
+The builder's step, in the builder's words: Step 3, the live proof (criterion 3): wait for the 05:40 New York scheduled run, or run:
+
+    databricks jobs run-now --json '{"job_id": 528900661133114}' -p strata
+
+Then:
+
+    SELECT run_id, status, charges, error_code, detail FROM strata.ops.cost_pulls ORDER BY pulled_at DESC LIMIT 1
+
+It worked if the run ends SUCCESS and the row shows either `succeeded` with charges, or `throttled` with `error_code` `throttled` and Azure's 429 message in `detail`. Lines in the task log such as "Azure throttled the cost pull, so I am waiting N seconds before retry k of 3." show the retries ran. Record the row here under ticket 107, with the run id and the time.
+
+One thing to watch, from the verifier (`.notes/107-verify-r2.md`, follow-up 2): three waits of the longest 240 seconds take 720 of the job's 900-second window. If a throttled run comes close to 900 seconds, note its duration here.
