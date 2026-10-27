@@ -13,8 +13,10 @@ Read first: `src/strata/lakehouse/catalog.py` (`check_public_from`, the skipped 
 
 - [ ] With the fake workspace holding the index's three objects beside the catalog's tables, the check passes, and with one real table lacking `public_from` it still names that table; the existing bundle tests pass unchanged.
 - [ ] `bundle/README.md` says which objects the check leaves out and why.
+- [ ] `measure_data_readiness` (the table sizes measure and any other pass over every table of the catalog) skips the same three objects, proven on the fake workspace, so the nightly task no longer fails on the index's view.
 - [ ] The next bundle deploy from a snapshot on the paid workspace passes step 2 and prints step 3's report (recorded in the catch-up file under this ticket).
 
 ## Comments
 
 - October 26, 2026, orchestrator: opened at 21:05 PDT with the user's go-ahead for the overnight build, from the second session's deploy of October 27, 01:39 UTC.
+- October 26, 2026, orchestrator (21:35 PDT, while the ticket builds): the same objects break the nightly. On the paid workspace `measure_data_readiness` run alone (run 1023673043723265, 04:18 to 04:27 UTC on October 27) failed with `[DELTA_READ_TABLE_WITHOUT_COLUMNS] You are trying to read a Delta table strata.gold.__cd8058ce_42aa_4722_ac9a_3ee310032e31___online_index_view that does not have any columns`, because its table sizes measure reads every table of the catalog. So the skip belongs in one place the deploy's check and the readiness measure both use (the catalog listing in `src/strata/lakehouse/catalog.py`), with a criterion added above; until it lands, the dashboard's Data readiness page stays empty on the paid workspace and tonight's scheduled run fails at that task.
