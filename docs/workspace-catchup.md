@@ -3672,7 +3672,7 @@ It worked if the note comes back with its sentences, and none of the sentences i
 
 ## Ticket 57, step 1 of 1: the App deploy waits out a deployment still in progress
 
-Parked on October 27, 2026 by ticket 57's builder. The orchestrator runs it at the next App deploy, from a snapshot of the commit that merges ticket 57, with `--env-file` pointing at the main checkout's `.env` and the main checkout's `web/node_modules` linked into the snapshot. Mergers run no workspace step. A deploy from that commit or a later one also serves ticket 61's step 2 and ticket 63's step 2, so one deploy covers all three.
+Parked on October 27, 2026 by ticket 57's builder. The orchestrator runs it at the next App deploy, from a snapshot of the commit that merges ticket 57, with `--env-file` pointing at the main checkout's `.env` and the main checkout's `web/node_modules` linked into the snapshot. Mergers run no workspace step. A deploy from that commit or a later one also serves ticket 61's step 2 and ticket 63's step 2, so one deploy covers all three. The commit that merges ticket 57 is 7e921efe; its message names ticket 106, because another session's commit took the staged merge (see ticket 57's done comment).
 
 Why: the redeploy of 12:19 UTC on October 27, 2026 followed a cold start of the App's compute, and it exited 1 at 12:31 UTC because the App's deployments still showed deployment 01f1d20184b11f5b827aae9cfa5088b4 IN_PROGRESS when step 5's wait ended. The deployment succeeded minutes later, and steps 6 and 7 never ran. Step 5 now reads the deployments again every 10 seconds, for up to 20 minutes, while its deployment shows IN_PROGRESS (`ops/app/deploy_app.py`, `step_5_result`).
 
