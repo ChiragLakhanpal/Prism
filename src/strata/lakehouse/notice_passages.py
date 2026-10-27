@@ -10,8 +10,11 @@ notice_text holds one line per paragraph. A notice of a type that carries scope 
 text (config/slice.toml, notice_types) is divided into sections at each heading line: a short line
 that ends with a colon ("The short listing criteria are:"), or a short line in title case with no
 closing stop ("Selection Method"). A section keeps its heading as its name, and the lines before the
-first heading form a section named by the notice's first line. A section of a few words only, such as
-"Country: Kenya", joins the section after it. A section over max_tokens tokens is divided at a line
+first heading form a section named by the notice's first line. A name is kept only when it reads as a
+heading (label()): six words or fewer, no comma, and no lead-in word at its end, so a sentence that ends
+in a colon ("Specifically, the successful candidate shall have the following qualifications:") starts a
+section with no name, and the drawer never shows a sentence as a section (ticket 63). A section of a
+few words only, such as "Country: Kenya", joins the section after it. A section over max_tokens tokens is divided at a line
 end, and the parts share its name. Each section, or part, is one passage of the kind notice_text,
 whose evidence id names the notice: strata.gold.passage:OP00118817/v1/s3.
 """
@@ -37,6 +40,9 @@ QUALIFY row_number() OVER (PARTITION BY notice_id ORDER BY fetched_at DESC) = 1
 """
 SHORTEST_SECTION = 12  # words: a section with fewer joins the one after it, as "Country: Kenya" does
 HEADING_WORDS = 10  # a heading line has at most this many words
+LABEL_WORDS = 6  # a section's name has at most this many words; a longer heading line is a sentence
+# Words that end a sentence leading into what follows, never a heading: "The short listing criteria are:".
+LEAD_INS = {"are", "is", "include", "includes", "from", "following", "follows", "below", "to", "of", "the"}
 
 
 @dataclass(frozen=True)
@@ -78,8 +84,17 @@ def _heading(line: str) -> bool:
     return count <= 4 and title_case and text[-1] not in ".;,!?" and not any(ch.isdigit() for ch in text)
 
 
+def label(line: str) -> str:
+    """A heading line as a section's name, or "" when it reads as a sentence rather than a heading."""
+    words = line.split()
+    if not words or len(words) > LABEL_WORDS or "," in line or words[-1].lower() in LEAD_INS:
+        return ""
+    return line
+
+
 def sections(text: str, max_tokens: int) -> list[Section]:
-    """A notice's text divided into its sections, each with its heading as its name."""
+    """A notice's text divided into its sections, each with its heading as its name, or "" when its heading reads
+    as a sentence."""
     lines = [route_a.words(line) for line in text.splitlines() if line.strip()]
     if not lines:
         return []
@@ -114,5 +129,5 @@ def sections(text: str, max_tokens: int) -> list[Section]:
         parts.append(" ".join(current))
         for index, part in enumerate(parts, 1):
             key = f"s{number}" if len(parts) == 1 else f"s{number}/{index}"
-            found.append(Section(key, name, index, len(parts), part))
+            found.append(Section(key, label(name), index, len(parts), part))
     return found

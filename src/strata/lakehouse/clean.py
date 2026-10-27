@@ -47,6 +47,14 @@ def text(value) -> str | None:
     return None if written.lower() in NOT_GIVEN else written or None
 
 
+def as_written(value) -> str | None:
+    """A field's text exactly as the source wrote it, spaces inside it included, with only the spaces at its ends
+    taken off, or None when it is empty or says it is (NOT_GIVEN). For the columns that keep a source's own words
+    beside Strata's name for them, such as procurement_method_as_written."""
+    written = str(value).strip() if value is not None else ""
+    return None if written.lower() in NOT_GIVEN else written or None
+
+
 def supplier_id(value) -> str | None:
     """A STEP supplier ID, or None when the field is empty or 0, which the awards write for a row that
     names no supplier (ticket 19), so no supplier is keyed 0."""

@@ -144,7 +144,7 @@ def parse(body: dict, page_hash: str, fetched_at: dt.datetime) -> dict[str, list
             group,
             clean.CATEGORIES.get(group or ""),
             clean.text(record.get("procurement_method_code")),
-            clean.text(record.get("procurement_method_name")),
+            clean.as_written(record.get("procurement_method_name")),
             method.name if method else None,
             method.market_approach if method else None,
             clean.parse_date(record.get("submission_deadline_date")),

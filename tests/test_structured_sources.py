@@ -298,6 +298,27 @@ def test_a_contract_from_an_award_notice_keeps_the_price_in_the_currency_the_not
                          "contract_currency": "INR"}]
 
 
+def test_a_method_name_as_written_keeps_its_spacing_and_single_source_selection_is_direct_selection(db):
+    """The awards since FY2020 write "Consultant Qualification  Selection" with two spaces for KE-MOALF-407832-CS-CQS,
+    and "as written" keeps them; the method is the current name. The FY2001 to FY2016 awards write "Single Source
+    Selection" for contract 1535566, which the current Regulations call Direct Selection (config/method_names.toml)."""
+    award = next(row for row in recorded("api/awards/P176758-P170941.json")["data"]
+                 if row["borrower_contract_reference_number"] == "KE-MOALF-407832-CS-CQS")
+    assert award["procurement_method"] == "Consultant Qualification  Selection"
+    old = next(row for row in recorded("api/awards/P124109-fy2001-2016.json")["data"] if row["contract_number"] == "1535566")
+    assert old["procurement_method"] == "Single Source Selection"
+
+    spaced = rows(db, "SELECT DISTINCT procurement_method, procurement_method_as_written FROM strata.silver.awards "
+                      "WHERE step_reference = :reference", reference="KE-MOALF-407832-CS-CQS")
+    single = rows(db, "SELECT procurement_method, procurement_method_as_written, market_approach "
+                      "FROM strata.gold.contract WHERE contract_id = :contract", contract="1535566")
+
+    assert spaced == [{"procurement_method": "Consultant Qualification Selection",
+                       "procurement_method_as_written": "Consultant Qualification  Selection"}]
+    assert single == [{"procurement_method": "Direct Selection", "procurement_method_as_written": "Single Source Selection",
+                       "market_approach": "Direct"}]
+
+
 def test_an_award_notice_that_writes_its_price_under_amount_with_the_currency_s_name_has_a_price_and_a_currency(db):
     """values.toml, counts.gap_years.amount_layout. OP00074816 writes "Amount:" and then the currency's name, not
     its code, so the price is read with the name's code; every award notice with that layout gets one."""

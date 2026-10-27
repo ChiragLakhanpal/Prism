@@ -449,6 +449,10 @@
         "method": "Direct Selection",
         "market_approach": "Direct"
       },
+      "SINGLE SOURCE SELECTION": {
+        "method": "Direct Selection",
+        "market_approach": "Direct"
+      },
       "APPEL D'OFFRES": {
         "method": "Request for Bids",
         "market_approach": null

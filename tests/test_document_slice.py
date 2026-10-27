@@ -457,3 +457,23 @@ def test_the_header_names_each_project_s_sector_in_the_projects_api_s_own_words(
     [header] = [row["header"] for row in rows(db, "SELECT header FROM strata.silver.passages "
                                                   "WHERE passage_id = '31525018/v1/54'")]
     assert header == "ICR, P130164, India, roads, III.B, ¶54, p.23"
+
+
+def test_a_notice_passage_names_its_section_only_by_a_real_heading(db):
+    """A notice's sections start at each heading line, and a passage keeps its section's heading as its section
+    path. A long line that ends in a colon also starts a section, but it is a sentence, not a heading, so the passage
+    has no section path: the drawer's meta line would only repeat the words its text opens with (ticket 18's design
+    review, P5). OP00118817 writes "Selection Method" as a heading and "Specifically, the successful candidate shall
+    have the following qualifications:" as a sentence. The column is never NULL, so no name is an empty one."""
+    notice = {row["passage_id"]: row for row in rows(
+        db, "SELECT passage_id, section_path, header, text FROM strata.silver.passages WHERE document_id = :notice",
+        notice="OP00118817")}
+
+    qualifications = notice["OP00118817/v1/s5"]
+    assert qualifications["text"].startswith("Specifically, the successful candidate shall have the following")
+    assert qualifications["section_path"] == ""
+    assert qualifications["header"] == "Notice OP00118817, P156634, Kenya, sanitation, Request for Expression of Interest"
+    assert notice["OP00118817/v1/s7"]["section_path"] == "Selection Method"
+    long_names = rows(db, "SELECT section_path FROM strata.silver.passages WHERE kind = 'notice_text' AND "
+                          "(section_path LIKE '%,%' OR length(section_path) - length(replace(section_path, ' ', '')) > 5)")
+    assert long_names == []

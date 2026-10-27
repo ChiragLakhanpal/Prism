@@ -66,7 +66,7 @@ def parse(body: dict, page_hash: str, fetched_at: dt.datetime) -> dict[str, list
             None if named else clean.text(record.get("contract_description")),
             clean.text(record.get("procurement_category")),
             method.name if method else None,
-            clean.text(record.get("procurement_method")),
+            clean.as_written(record.get("procurement_method")),
             method.market_approach if method else None,
             clean.text(record.get("review_type")),
             None if individual else supplier,
