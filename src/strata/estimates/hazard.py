@@ -201,26 +201,26 @@ class HazardVsSignals:
         self.dates, self.settings = dates, settings
 
     def score(self, replay: Replay) -> Scored:
+        from strata.estimates import signals_track
         from strata.estimates.hindsight import mcnemar
-        from strata.estimates.signals_track import COHORT, EXTENSIONS, STATUSES
         from strata.tools.project_signals import months_after
 
         totals = defaultdict(int)
         used, without_model = [], []
+        moves = signals_track.later_moves(replay.outcomes)
         for day in (day for day in self.dates if day <= replay.window.cutoff):
             frozen = Reader(replay.inputs.engine, day, replay.thresholds)
             found = histories(frozen)
             model = fit(found, day, self.settings)
             later = months_after(day, self.settings.window_months)
             entries = []
-            for project in frozen.rows(COHORT):
-                pid = project["project_id"]
-                status = frozen.call("project_signals", project_id=pid)["status"]
+            # The projects the signals' track record counts on the day, read in batches as it reads them.
+            for pid, result in signals_track.counted(frozen):
+                status = result["status"]
                 values = features(found.get(pid, []), day)
-                if status not in STATUSES or values is None:
+                if values is None:
                     continue
-                moved = any(day < as_date(row["reported_on"]) <= later
-                            for row in replay.outcomes.rows(EXTENSIONS, project_id=pid))
+                moved = any(day < moved_on <= later for moved_on in moves[pid])
                 chance = model.chance(values) if isinstance(model, HazardModel) else None
                 entries.append({"project": pid, "picked": status in LOOK_STATUSES, "chance": chance, "extended": moved})
             used.append(day.isoformat())

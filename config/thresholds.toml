@@ -322,6 +322,13 @@ track_record_min = 20
 # workspace the score task filled the whole 150-minute window on October 27, 2026 (run 1086916576670871). Sunday is
 # a starting value for the owner to confirm.
 track_record_day = "Sunday"
+# On each replay date, both replays read the cohort's projects this many at a time: one statement for the batch's
+# project records and one for their loan histories (strata.estimates.signals_track.counted), and only a project
+# still active on the date is checked. Before, each project cost two statements on each date, about 6,300 in all on
+# the paid workspace's cohort of about 1,050 projects, which took about 110 minutes at 57 a minute (ticket 37, step
+# 5). A batch's rows are held in memory together, which bounds the size. Source: ticket 89; a starting value for
+# the owner to confirm.
+track_record_batch_projects = 500
 
 # The review thresholds that compute review type (ticket 15). The package workspace computes a planned
 # package's Review Type from its category and its whole estimated amount, never per lot, so dividing a

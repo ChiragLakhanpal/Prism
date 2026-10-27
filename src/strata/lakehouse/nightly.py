@@ -23,7 +23,8 @@ Every task has its work (tickets 07, 17, 19, 20, 22, 26, 28, 29 and 43), in docs
 8. score scores every package's time estimate and its what-ifs with the champion model (ticket 26;
    strata.estimates.scoring), counts the rebidding labels from each source and, on the workspace, scores every
    planned activity with the rebidding champion (strata.estimates.rebidding) and replays the signals for their
-   track record once a week (strata.estimates.signals_track).
+   track record once a week (strata.estimates.signals_track). It works in parts (SCORE_PARTS) and stops after the
+   part that spends its minutes, leaving the rest for the next night (ticket 89).
 9. measure_data_readiness writes the data readiness measures and each table's size to strata.ops.
 10. refresh_drafts marks each open draft row that cites a lesson at a version a lead has since changed or
     retired (strata.knowledge.lessons.notices). It never changes a draft.
@@ -301,7 +302,8 @@ def _compare_hazard(run: Run) -> int:
 
     now = run.clock()
     held = hazard.stored(run.engine)
-    if not weekly_due(held and as_utc(held["ran_at"]).date(), now.astimezone(dt.UTC).date(), _replay_day()):
+    last = None if held is None else as_utc(held["ran_at"]).date()
+    if not weekly_due(last, now.astimezone(dt.UTC).date(), _replay_day()):
         return 0
     tracker = _tracker(load_time_estimate().experiment) if run.fetch is fetch_live else OfflineTracker()
     if tracker is None:
@@ -354,7 +356,8 @@ def _replay_signals(run: Run) -> int:
 
     now = run.clock()
     held = signals_track.stored(run.engine)
-    if not weekly_due(held and dt.date.fromisoformat(held["ran_on"]), now.astimezone(dt.UTC).date(), _replay_day()):
+    last = None if held is None else dt.date.fromisoformat(held["ran_on"])
+    if not weekly_due(last, now.astimezone(dt.UTC).date(), _replay_day()):
         return 0
     tracker = _tracker(load_time_estimate().experiment)
     if tracker is None:

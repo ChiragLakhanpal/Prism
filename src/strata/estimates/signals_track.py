@@ -23,12 +23,14 @@ from __future__ import annotations
 
 import datetime as dt
 import json
+from collections import defaultdict
 
 from strata.config import Thresholds, load_thresholds
 from strata.estimates import harness
 from strata.estimates.harness import Reader, Replay, Score, Scored, Window
 from strata.estimates.past_range import as_date
-from strata.tools.project_signals import CHECKS, months_after
+from strata.tools.project_signals import ACTIVE, CHECKS, months_after
+from strata.tools.withheld import statuses_between
 
 SCORER = "signals_track_record"
 MODEL = "strata.tools.project_signals"
@@ -44,16 +46,47 @@ GROUP BY project_id
 ORDER BY project_id
 """
 
-# The months the loan history first showed a project's closing date moved later, as public by the outcomes date.
-EXTENSIONS = """
-SELECT reported_on, closing_date, previous_closing_date, public_from
+# Each month the loan history showed a project's closing date moved later, as public by the outcomes date.
+MOVES = """
+SELECT project_id, reported_on, public_from
 FROM strata.gold.project_closing_date
-WHERE project_id = :project_id
-  AND public_from <= :as_of
+WHERE public_from <= :as_of
   AND previous_closing_date IS NOT NULL
   AND closing_date > previous_closing_date
-ORDER BY reported_on
+ORDER BY project_id, reported_on
 """
+
+
+def counted(frozen: Reader) -> list[tuple[str, dict]]:
+    """Each project of the cohort on the reader's date that the track record counts, with project_signals' result:
+    a project the checks gave a status (STATUSES). The cohort is read signals.track_record_batch_projects projects
+    at a time, with two statements for each batch (strata.tools.withheld.statuses_between), and only a project
+    still active on the date is checked, since project_signals counts no other: it answers not_active for a closed,
+    pipeline or dropped project and no_records for one with no record. Checked one at a time, each of the cohort's
+    projects cost the SQL warehouse two statements on each date, about 110 minutes in all on the paid workspace's
+    cohort (ticket 89)."""
+    cohort = [row["project_id"] for row in frozen.rows(COHORT)]
+    size = int(frozen.thresholds.value("signals.track_record_batch_projects"))
+    found = []
+    for start in range(0, len(cohort), size):
+        batch = cohort[start:start + size]
+        statuses = statuses_between(frozen.rows, batch[0], batch[-1], frozen.as_of)
+        for project_id in batch:
+            if statuses.get(project_id) != ACTIVE:
+                continue
+            result = frozen.call("project_signals", project_id=project_id)
+            if result["status"] in STATUSES:
+                found.append((project_id, result))
+    return found
+
+
+def later_moves(outcomes: Reader) -> defaultdict[str, list[dt.date]]:
+    """For each project, the months the loan history showed its closing date moved later, as public by the outcomes
+    reader's date, read with one statement for every project."""
+    moves: defaultdict[str, list[dt.date]] = defaultdict(list)
+    for row in outcomes.rows(MOVES):
+        moves[row["project_id"]].append(as_date(row["reported_on"]))
+    return moves
 
 
 class SignalsTrackRecord:
@@ -67,17 +100,13 @@ class SignalsTrackRecord:
         had: dict[str, set[str]] = {key: set() for key in (*STATUSES, *CHECKS)}
         moved: dict[str, set[str]] = {key: set() for key in had}
         cohort: set[str] = set()
+        moves = later_moves(replay.outcomes)
         for date in (day for day in self.dates if day <= replay.window.cutoff):
             frozen = Reader(replay.inputs.engine, date, replay.thresholds)
             later = months_after(date, self.window_months)
-            for project in frozen.rows(COHORT):
-                result = frozen.call("project_signals", project_id=project["project_id"])
-                if result["status"] not in STATUSES:
-                    continue
-                pid = project["project_id"]
+            for pid, result in counted(frozen):
                 cohort.add(pid)
-                extended = any(date < as_date(row["reported_on"]) <= later
-                               for row in replay.outcomes.rows(EXTENSIONS, project_id=pid))
+                extended = any(date < moved_on <= later for moved_on in moves[pid])
                 for key in (result["status"], *(row["check"] for row in result["rows"])):
                     had[key].add(pid)
                     if extended:
