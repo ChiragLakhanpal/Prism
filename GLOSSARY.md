@@ -66,6 +66,10 @@ _Avoid_: Context
 How fit a source is to support answers, measured by its coverage, how much of it links to projects, how well it was read, and how fresh it is.
 _Avoid_: Readiness on its own (the World Bank uses it for projects and borrowers), data quality score
 
+**Throttled**:
+The outcome of a daily cost pull when Azure answered "too many requests" to every try and asked Strata to wait. The pull's run row in strata.ops.cost_pulls records it with Azure's message. The pull wrote no charge for that day, its job still succeeded, and the next day's pull tries again. The Governance page shows that day as a day with no charges, then says Azure throttled the cost pull.
+_Avoid_: Failed (for a throttled pull)
+
 **Working language**:
 The language a person asks Strata to write answers and drafts in: English, French, Spanish or Portuguese. The screens stay in English, and sources keep their own language, word for word.
 _Avoid_: Locale, interface language

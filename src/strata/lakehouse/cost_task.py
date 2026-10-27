@@ -21,8 +21,10 @@ def option(argv, name):
     return None
 
 
-def main(argv, engine, secret, clock=lambda: dt.datetime.now(dt.UTC)):
-    """Pull the charges and write the spend sentence. secret(name) reads one key from the scope."""
+def main(argv, engine, secret, clock=lambda: dt.datetime.now(dt.UTC), transport=None, sleep=None):
+    """Pull the charges and write the spend sentence. secret(name) reads one key from the scope. A pull Azure
+    throttled on every try returns like one with no charges, so the task ends succeeded (ticket 107); any other
+    failure raises and fails the task. transport and sleep stand in for the network and the waits in the tests."""
     from strata.config import load_budget
     from strata.dashboard import findings
     from strata.lakehouse import costs
@@ -46,7 +48,7 @@ def main(argv, engine, secret, clock=lambda: dt.datetime.now(dt.UTC)):
 
     source = NoSignIn() if missing else costs.AzureCostManagement(
         found["AZURE_SUBSCRIPTION_ID"], budget.resource_group, found["FOUNDRY_TENANT_ID"], found["FOUNDRY_CLIENT_ID"],
-        found["FOUNDRY_CLIENT_SECRET"])
+        found["FOUNDRY_CLIENT_SECRET"], transport or costs._http, sleep)
     try:
         costs.pull(engine, source, run_id, clock, budget)
     finally:
