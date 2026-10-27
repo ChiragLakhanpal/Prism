@@ -1,6 +1,7 @@
 # The Databricks App's packages: only what the server imports, at the versions in uv.lock
 # (docs/PLAN.md section 12: the agent-framework metapackage will not install in an App, so the
-# App gets a lean file of its own). ops/app/tests/test_app_package.py checks both.
+# App gets a lean file of its own). ops/app/tests/test_app_package.py checks both, and test_app_imports.py follows the
+# server's imports through src/strata/ and fails when a package it can import is missing here (ticket 88).
 fastapi==0.161.1
 uvicorn==0.54.0
 opentelemetry-api==1.45.1
@@ -14,6 +15,9 @@ pyyaml==6.0.3
 # The language detector that reads which language a question was asked in (ticket 42; src/strata/knowledge/
 # language.py), with the one package it installs. Its model ships inside its wheel.
 py3langid==0.3.0
+# The transpile step, which rewrites each statement from Databricks SQL for Postgres when the app's state lives in
+# Lakebase (ADR 0005; src/strata/appstate/lakebase.py). Without it the Packages page answered 500 (ticket 88).
+sqlglot==30.24.0
 # app-python: uv.lock pins numpy 2.5.4, which needs Python 3.12, and the Databricks Apps runtime is Python 3.11
 # (its pip log, October 25, 2026), so the App takes the newest numpy for 3.11. The test below allows this one marker.
 numpy==2.4.6
