@@ -95,7 +95,8 @@ def steps_file(limit=120, steps=(), lock_wait=None, always=()):
     Each step is (name, run) or (name, run, lane); each always step is (name, run). lock_wait sets how
     long the gate waits for the lock.
     """
-    lines = [f"limit_seconds = {limit}"] + ([f"lock_wait_seconds = {lock_wait}"] if lock_wait else []) + [""]
+    lines = [f"limit_seconds = {limit}"] + ([f"lock_wait_seconds = {lock_wait}"] if lock_wait is not None else [])
+    lines += [""]
     lines += ["[[step]]", 'name = "Scan for secrets"',
               'run = ["python3", "gates/secret_scan.py"]', "always = true", "git_env = true", ""]
     for name, run in always:
@@ -154,6 +155,34 @@ def test_a_step_that_cannot_find_a_command_says_to_run_the_install(repo):
     assert done.returncode != 0
     assert head_count(repo) == 1
     assert "Run scripts/install, then commit again." in done.stdout + done.stderr
+
+
+def path_without_uv(tmp_path):
+    """A PATH that holds git and python3, the two programs the hook and the secret scan need, and no uv."""
+    folder = tmp_path / "bin"
+    folder.mkdir()
+    (folder / "git").symlink_to(shutil.which("git"))
+    (folder / "python3").symlink_to(sys.executable)
+    return str(folder)
+
+
+def test_a_step_whose_program_is_not_installed_points_to_readme_s_install_section(repo, tmp_path):
+    """scripts/install runs uv and npm itself, so it cannot be the first step when one of them is missing."""
+    write(repo, "gates/steps.toml", steps_file(steps=[("Run the tests", '["uv", "run", "--frozen", "pytest"]')]))
+    write(repo, "build.py", "print('ok')\n")
+    git(repo, "add", "-A")
+
+    done = subprocess.run([".githooks/pre-commit"], cwd=repo, capture_output=True, text=True,
+                          env=clean_env() | {"PATH": path_without_uv(tmp_path)})
+
+    output = done.stdout + done.stderr
+    assert done.returncode != 0, output
+    assert "uv is not installed. Install it as the Install section of README.md says, then run scripts/install." \
+        in output
+    assert ('The step "Run the tests" could not start, because uv is not installed. Install it as the Install section '
+            "of README.md says, then run scripts/install and commit again.") in output
+    assert "Run scripts/install first" not in output
+    assert "Run scripts/install, then commit again" not in output
 
 
 def test_a_step_without_a_name_or_a_run_list_is_named_plainly(repo):
@@ -247,6 +276,50 @@ def test_a_commit_of_only_markdown_skips_the_tests(repo):
     assert done.returncode == 0, output
     assert "The tests ran." not in output
     assert "Only Markdown files are staged" in output
+
+
+def test_a_commit_of_only_markdown_also_waits_for_the_lock(repo, gate_lock):
+    write(repo, "gates/steps.toml", steps_file(lock_wait=1))
+    git(repo, "add", "-A")
+    git(repo, "commit", "-q", "--no-verify", "-m", "Wait one second for the lock")
+    write(repo, "docs/notes.md", "# Notes\n\nOnly words changed.\n")
+    git(repo, "add", "-A")
+
+    with open(gate_lock, "a") as held:
+        fcntl.flock(held, fcntl.LOCK_EX)
+        done = commit(repo)
+
+    output = done.stdout + done.stderr
+    assert done.returncode != 0, output
+    assert "The gate gave up after 1 second, the wait limit in gates/steps.toml" in output
+    assert "Only Markdown files are staged" not in output
+
+
+def test_a_commit_of_only_markdown_whose_staged_file_has_unstaged_changes_is_blocked(repo):
+    """The steps that read Markdown read the working tree, so they must see what the commit holds (ticket 80)."""
+    docs_check = ("Read the docs", '["python3", "docs_check.py"]')
+    write(repo, "gates/steps.toml", steps_file(always=[docs_check]))
+    write(repo, "docs_check.py", "import pathlib\nassert 'broken' not in pathlib.Path('docs/notes.md').read_text()\n")
+    write(repo, "settings.py", "TOTAL = 4\n")
+    git(repo, "add", "-A")
+    git(repo, "commit", "-q", "--no-verify", "-m", "Add a docs check and a code file")
+    write(repo, "docs/notes.md", "# Notes\n\nA broken note.\n")
+    git(repo, "add", "-A")
+    write(repo, "docs/notes.md", "# Notes\n\nA fixed note.\n")
+
+    blocked = commit(repo)
+
+    assert blocked.returncode != 0, blocked.stdout + blocked.stderr
+    assert "Some changes to tracked files are not staged." in blocked.stdout + blocked.stderr
+    assert head_count(repo) == 2
+
+    git(repo, "add", "-A")
+    write(repo, "settings.py", "TOTAL = 5\n")  # unstaged, but not Markdown the commit holds
+
+    passed = commit(repo)
+
+    assert passed.returncode == 0, passed.stdout + passed.stderr
+    assert head_count(repo) == 3
 
 
 def test_a_commit_of_only_markdown_runs_the_always_steps_and_one_that_fails_blocks_it(repo):
@@ -389,6 +462,37 @@ def test_a_key_in_the_history_fails_the_gate_even_when_only_markdown_is_staged(r
     assert "old.cfg" in output
     assert "a Databricks personal access token" in output
     assert "An old mistake" in output
+
+
+def merge_with_the_gate(repo, how):
+    """Merge the branch ticket into work: in one step, or as README's "Merge a ticket" does it."""
+    if how == "git merge":  # git runs pre-merge-commit before it writes MERGE_HEAD
+        return git(repo, "merge", "--no-ff", "-m", "Merge the ticket", "ticket", check=False)
+    git(repo, "merge", "--no-ff", "--no-commit", "ticket")  # then git commit runs pre-commit, with MERGE_HEAD set
+    return git(repo, "commit", "--no-edit", check=False)
+
+
+@pytest.mark.parametrize("how", ["git merge", "git merge --no-commit, then git commit"])
+def test_a_merge_that_brings_a_key_in_its_branch_s_history_is_blocked(repo, how):
+    """The branch added a key and deleted it again, so only its history holds the key (ticket 01's V1)."""
+    git(repo, "switch", "-q", "-c", "ticket")
+    write(repo, "old.cfg", f"DATABRICKS_TOKEN={fake_databricks_token()}\n")
+    git(repo, "add", "-A")
+    git(repo, "commit", "-q", "--no-verify", "-m", "Add a key by mistake")
+    git(repo, "rm", "-q", "old.cfg")
+    write(repo, "notes.md", "# Notes\n")
+    git(repo, "add", "-A")
+    git(repo, "commit", "-q", "--no-verify", "-m", "Remove the file but not its history")
+    git(repo, "switch", "-q", "work")
+    before = git(repo, "rev-parse", "HEAD").stdout
+
+    done = merge_with_the_gate(repo, how)
+
+    output = done.stdout + done.stderr
+    assert done.returncode != 0, output
+    assert git(repo, "rev-parse", "HEAD").stdout == before
+    assert "old.cfg" in output and "Add a key by mistake" in output
+    assert fake_databricks_token() not in output
 
 
 @pytest.mark.parametrize("line", [
@@ -640,6 +744,7 @@ def test_two_gates_started_together_take_turns_and_each_limit_starts_when_its_ga
     assert gates[second].returncode == 0, output[second]
     assert WAITING not in output[first]
     assert WAITING in output[second]
+    assert re.search(r"which process \d+ has held since \d{4}-\d\d-\d\d \d\d:\d\d:\d\d\.", output[second]), output[second]
     assert "Its 3.5-second limit starts now." in output[second]
     # The waiting gate ran longer than its limit in all, and passed, so its limit started when it held the lock.
     assert took[second] > 3.5, output[second]
@@ -657,10 +762,47 @@ def test_a_gate_that_cannot_get_the_lock_in_time_stops_with_one_sentence(repo, g
 
     output = done.stdout + done.stderr
     assert done.returncode != 0, output
-    assert (f"The gate gave up after 1 seconds, the wait limit in gates/steps.toml, because another gate "
-            f"on this computer still holds the lock {gate_lock}.") in output
+    assert f"It waits up to 1 second for the lock {gate_lock}" in output
+    assert (f"The gate gave up after 1 second, the wait limit in gates/steps.toml, because another gate "
+            f"on this computer still holds the lock {gate_lock}, so commit again once that gate finishes.") in output
     assert "The checks ran." not in output
     assert 1 <= took < 10, output
+
+
+def test_the_gate_says_its_wait_limit_in_minutes_or_seconds_as_a_person_would():
+    duration = gate_runner().duration
+
+    assert [duration(1200), duration(60), duration(1), duration(90), duration(0.5)] == \
+        ["20 minutes", "1 minute", "1 second", "90 seconds", "0.5 seconds"]
+
+
+def test_the_gate_writes_its_process_and_the_time_into_the_lock_it_holds(repo, gate_lock):
+    """Writing keeps the file's time fresh, so the system never removes it as old while a gate holds it, and a
+    waiting gate can say which process holds it."""
+    gate_lock.write_text("an old holder's line\nand another\n")
+    write(repo, "check.py", "import pathlib, sys\nprint(pathlib.Path(sys.argv[1]).read_text())\n")
+    write(repo, "gates/steps.toml", steps_file(steps=[("Show the lock", json.dumps(["python3", "check.py",
+                                                                                     str(gate_lock)]))]))
+    git(repo, "add", "-A")
+
+    done = commit(repo)
+
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert re.fullmatch(r"process \d+, since \d{4}-\d\d-\d\d \d\d:\d\d:\d\d\n", gate_lock.read_text())
+
+
+def test_a_lock_the_gate_cannot_open_stops_it_with_one_sentence(repo, tmp_path, monkeypatch):
+    missing = tmp_path / "no-such-folder" / "gate.lock"
+    monkeypatch.setenv("STRATA_GATE_LOCK", str(missing))
+    write(repo, "gates/steps.toml", steps_file(steps=[CHECK]))
+    write(repo, "check.py", "raise SystemExit('The checks ran.')\n")
+
+    done = subprocess.run([".githooks/pre-commit"], cwd=repo, capture_output=True, text=True, env=clean_env())
+
+    output = done.stdout + done.stderr
+    assert done.returncode not in (0, None), output
+    assert output.strip() == (f"The gate could not open the lock {missing}: No such file or directory. Set "
+                              "STRATA_GATE_LOCK to a file in a folder you can write, or unset it.")
 
 
 # This repo's own steps file.
@@ -681,7 +823,7 @@ def folders_in_testpaths():
 
 
 # The pytest options the steps file uses that take a value, so a value is never read as a tested path.
-OPTIONS_WITH_A_VALUE = ("--numprocesses", "--dist", "--basetemp")
+OPTIONS_WITH_A_VALUE = ("-n", "--numprocesses", "--dist", "--basetemp")
 
 
 def pytest_args(step):
@@ -789,8 +931,16 @@ def test_each_test_folder_in_pyproject_runs_in_exactly_one_gate_step():
 # skipped them and broke the next code commit's gate: 929a14c5 put a paragraph outside the marked blocks
 # of docs/day-one-results.md, and 3e684c58 wrote a quoted --env-file path that the written-commands test
 # cut at the quote. So a Markdown-only commit runs them too (ticket 80).
+# test_run_probes.py's command test reads the same results document, and the schedules tests copy bundle/README.md
+# (ticket 80's review, follow-up 2); together they take under a second.
 MARKDOWN_READERS = ["ops/bundle/tests/test_check.py::test_every_check_command_the_repo_writes_parses_as_written",
-                    "ops/dayone/tests/test_results_document.py"]
+                    "ops/bundle/tests/test_check.py::test_schedules_that_never_meet_pass_and_the_notes_record_both",
+                    "ops/bundle/tests/test_check.py::test_a_job_with_one_finished_run_is_described_as_one_run",
+                    "ops/bundle/tests/test_check.py::"
+                    "test_a_fairshare_job_with_no_schedule_cannot_overlap_and_the_notes_say_so",
+                    "ops/dayone/tests/test_results_document.py",
+                    "ops/dayone/tests/test_run_probes.py::"
+                    "test_every_command_in_the_results_document_names_a_file_that_exists"]
 
 
 def gate_runner():
@@ -805,7 +955,7 @@ def test_a_commit_of_only_markdown_runs_the_tests_that_read_markdown_alone_after
     runner, steps = gate_runner(), gate_steps()
     pytest_steps = [step for step in runner.markdown_only_steps(steps) if "pytest" in step["run"]]
 
-    assert [pytest_targets(step) for step in pytest_steps] == [MARKDOWN_READERS]
+    assert len(pytest_steps) == 1 and set(MARKDOWN_READERS) <= set(pytest_targets(pytest_steps[0]))
     secret_scan, docs = runner.stages(steps)[:2]
     assert secret_scan == {None: [steps[0]]} and "gates/secret_scan.py" in steps[0]["run"]
     assert docs == {None: pytest_steps}
@@ -815,37 +965,25 @@ def test_a_commit_of_only_markdown_runs_the_tests_that_read_markdown_alone_after
 # checks must catch. One that names a folder is a second step for that folder. One whose tests read
 # the fixture database runs before the build, or, on a Markdown-only commit, with no build at all.
 FIXTURE_TEST = "tests/test_fixture.py::test_the_fixture_database_loads_every_recorded_file_with_no_network"
-ALWAYS_STEP_EDITS = {
-    "a folder": (["ops/dayone/tests"], "runs a folder twice"),
-    "a file whose tests read the fixture database": (["tests/test_fixture.py"], "reads the fixture early"),
-    "a test that reads the fixture database": ([FIXTURE_TEST], "reads the fixture early"),
-}
 
 
-@pytest.mark.parametrize(("targets", "fails"), ALWAYS_STEP_EDITS.values(), ids=ALWAYS_STEP_EDITS.keys())
-def test_an_always_step_that_names_a_folder_or_reads_the_fixture_database_fails_its_check(targets, fails):
+def with_an_always_step(*targets):
+    """This repo's steps, with an extra always step beside the secret scan that runs pytest on targets."""
     extra = {"name": "Extra", "run": ["uv", "run", "--frozen", "pytest", "--basetemp", ".gate-tmp/extra", *targets],
              "always": True}
     steps = gate_steps()
     steps.insert(1, extra)
-
-    if fails == "runs a folder twice":
-        assert gate_steps_per_test_folder(steps)[Path(targets[0])] == 2
-    else:
-        assert steps_that_may_start_before_the_fixture_build(steps) == ["Extra"]
+    return steps
 
 
-def workers(step):
-    """How many pytest-xdist workers a step asks for: the number after --numprocesses, or one."""
-    run = step["run"]
-    return int(run[run.index("--numprocesses") + 1]) if "--numprocesses" in run else 1
+def test_an_always_step_that_names_a_folder_counts_as_a_second_step_for_it():
+    assert gate_steps_per_test_folder(with_an_always_step("ops/dayone/tests"))[Path("ops/dayone/tests")] == 2
 
 
-def test_the_python_tests_that_read_the_fixture_database_run_on_pytest_xdist_workers():
-    """The python lane sets the gate's total, and every ticket adds tests under tests/."""
-    readers = [step for step in gate_steps() if reads_the_fixture_database(step)]
-
-    assert readers and all(workers(step) > 1 for step in readers), [step["run"] for step in readers]
+@pytest.mark.parametrize("target", ["tests/test_fixture.py", FIXTURE_TEST],
+                         ids=["a file whose tests read the fixture database", "a test that reads the fixture database"])
+def test_an_always_step_whose_tests_read_the_fixture_database_runs_too_early(target):
+    assert steps_that_may_start_before_the_fixture_build(with_an_always_step(target)) == ["Extra"]
 
 
 # The gate's pytest scratch (ticket 73). A run the limit stops leaves its folder where the next run
@@ -942,6 +1080,35 @@ def test_a_second_pytest_step_in_another_lane_fails_both_steps_file_checks(paths
     assert any(count > 1 for count in gate_steps_per_test_folder(steps).values())
 
 
+def workers(step):
+    """How many pytest-xdist workers a step asks for, or one when it asks for none. "auto" counts as more than one."""
+    run = step["run"]
+    for i, arg in enumerate(run):
+        if arg in ("-n", "--numprocesses") and i + 1 < len(run):
+            value = run[i + 1]
+        elif arg.startswith("--numprocesses="):
+            value = arg.split("=", 1)[1]
+        else:
+            continue
+        return int(value) if value.isdigit() else 2
+    return 1
+
+
+def test_the_python_tests_that_read_the_fixture_database_run_on_pytest_xdist_workers():
+    """The python lane sets the gate's total, and every ticket adds tests under tests/."""
+    readers = [step for step in gate_steps() if reads_the_fixture_database(step)]
+
+    assert readers and all(workers(step) > 1 for step in readers), [step["run"] for step in readers]
+
+
+@pytest.mark.parametrize(("option", "counted"), [
+    (["-n", "4"], 4), (["--numprocesses", "4"], 4), (["--numprocesses=4"], 4), (["-n", "auto"], 2),
+    (["--numprocesses", "auto"], 2), ([], 1)], ids=["-n 4", "--numprocesses 4", "--numprocesses=4", "-n auto",
+                                                     "--numprocesses auto", "none"])
+def test_the_worker_count_reads_each_spelling_of_the_option(option, counted):
+    assert workers({"run": ["uv", "run", "--frozen", "pytest", *option, "tests"]}) == counted
+
+
 # A pytest-xdist group keeps its tests on one worker only under --dist loadgroup. Under
 # --dist worksteal, which the gate's pytest steps use, a group mark does nothing.
 GROUP_MARK = re.compile(r"\bmark\.xdist_group\(")
@@ -1002,8 +1169,9 @@ def shard(step):
 
 def web_build_problems(steps):
     """What would let a Playwright run test files it did not build: a lane whose web steps name two
-    folders, a lane that runs the tests before it builds the app and the gallery, or two lanes that
-    build into one folder."""
+    folders, a lane that runs the tests before it builds the app and the gallery, two lanes that
+    build into one folder, or a folder named like a gallery, whose app would build into another
+    lane's gallery folder."""
     lanes = {}
     for step in steps:
         if web_script(step) in ("build", "build:gallery", "test"):
@@ -1016,6 +1184,8 @@ def web_build_problems(steps):
         for folder in folders:
             if folder in owner:
                 problems.append(f"the {owner[folder]} and {lane} lanes both build {folder}")
+            if folder.endswith("-gallery"):
+                problems.append(f"the {lane} lane names {folder}, so its app builds into a gallery's folder")
             owner[folder] = lane
         scripts = [web_script(step) for step in found]
         if "test" in scripts:
@@ -1025,9 +1195,22 @@ def web_build_problems(steps):
     return problems
 
 
+# Playwright options that run only some of the tests, which a shard step must never pass.
+TEST_FILTERS = ("--grep", "-g", "--grep-invert", "--project")
+
+
+def filters(step):
+    """The arguments a Playwright step passes after "--" that run only some tests: a filter option, or a test file."""
+    argv = step["run"]
+    passed = argv[argv.index("--") + 1:] if "--" in argv else []
+    return [arg for arg in passed
+            if not arg.startswith("-") or arg in TEST_FILTERS or arg.split("=", 1)[0] in TEST_FILTERS]
+
+
 def shard_problems(steps):
     """What would leave a Playwright test out or run it twice: shards that do not count 1 to N once
-    each, or two shards in one lane, where they would take turns instead of running side by side."""
+    each, two shards in one lane, where they would take turns instead of running side by side, or a
+    shard that passes a filter or a test file, so it runs only some of its share."""
     found = [step for step in steps if web_script(step) == "test"]
     shards = sorted(shard(step) for step in found)
     total = shards[-1][1] if shards else 0
@@ -1036,6 +1219,8 @@ def shard_problems(steps):
         problems.append(f"the shards are {', '.join(f'{c}/{t}' for c, t in shards) or 'missing'}")
     if len({step.get("lane") for step in found}) < len(found):
         problems.append("two shards share a lane")
+    problems += [f"the {step.get('lane')} lane runs only some tests, with {' '.join(filters(step))}"
+                 for step in found if filters(step)]
     return problems
 
 
@@ -1069,6 +1254,10 @@ def renamed(folder):
                                         for arg in step["run"]]}
 
 
+def added(*args):
+    return lambda step: step | {"run": [*step["run"], *args]}
+
+
 def resharded(spec):
     return lambda step: step | {"run": [spec if arg.startswith("--shard=") else arg for arg in step["run"]]}
 
@@ -1089,6 +1278,18 @@ BAD_WEB_EDITS = {
         (lambda steps: edit(steps, in_web_2(), resharded("--shard=2/3")), shard_problems),
     "both shards in one lane":
         (lambda steps: edit(steps, in_web_2(), lambda step: step | {"lane": "web-1"}), shard_problems),
+    "a lane that builds into another lane's gallery folder":
+        (lambda steps: edit(steps, in_web_2(), renamed("dist-1-gallery")), web_build_problems),
+    "a shard that runs only the tests --grep picks":
+        (lambda steps: edit(steps, in_web_2("test"), added("--grep", "Summary")), shard_problems),
+    "a shard that runs only the tests -g picks":
+        (lambda steps: edit(steps, in_web_2("test"), added("-g", "Summary")), shard_problems),
+    "a shard that leaves out the tests --grep-invert picks":
+        (lambda steps: edit(steps, in_web_2("test"), added("--grep-invert=Summary")), shard_problems),
+    "a shard that runs one project":
+        (lambda steps: edit(steps, in_web_2("test"), added("--project", "app")), shard_problems),
+    "a shard that runs one test file":
+        (lambda steps: edit(steps, in_web_2("test"), added("tests/checks.spec.ts")), shard_problems),
 }
 
 
@@ -1101,14 +1302,15 @@ def test_a_bad_edit_to_the_web_lanes_fails_its_check(bad, check):
 # run and find the same violations (ticket 55). web/tests/axe.spec.ts compares the two, so it builds
 # axe's default run as well.
 AXE_RUNNERS = {"axe.ts", "axe.spec.ts"}
-BUILDS_A_SCAN = re.compile(r"\bnew\s+AxeBuilder\b")
+# A file that imports axe's Playwright package can build a scan under any name, so the check looks for the import.
+IMPORTS_AXE = re.compile(r"""from\s+["']@axe-core/playwright["']""")
 
 
 def own_axe_scans(web):
-    """The test and capture files under web, other than the helper and its spec, that build an axe scan
-    of their own."""
+    """The test and capture files under web, other than the helper and its spec, that import axe to build
+    a scan of their own."""
     return sorted(path.relative_to(web).as_posix() for folder in ("tests", "capture") for path in (web / folder).rglob("*.ts")
-                  if path.name not in AXE_RUNNERS and BUILDS_A_SCAN.search(path.read_text()))
+                  if path.name not in AXE_RUNNERS and IMPORTS_AXE.search(path.read_text()))
 
 
 def test_every_axe_scan_in_the_screen_tests_runs_through_the_one_helper():
@@ -1116,11 +1318,17 @@ def test_every_axe_scan_in_the_screen_tests_runs_through_the_one_helper():
 
 
 def test_the_axe_check_finds_a_spec_that_builds_its_own_scan(tmp_path):
-    write(tmp_path, "tests/axe.ts", "export const scan = (page) => new AxeBuilder({ page }).analyze();\n")
-    write(tmp_path, "tests/page.spec.ts", "const results = await new AxeBuilder({ page }).analyze();\n")
-    write(tmp_path, "tests/other.spec.ts", "const results = await scan(page);\n")
+    write(tmp_path, "tests/axe.ts", 'import AxeBuilder from "@axe-core/playwright";\n'
+                                    "export const scan = (page) => new AxeBuilder({ page }).analyze();\n")
+    write(tmp_path, "tests/page.spec.ts", 'import AxeBuilder from "@axe-core/playwright";\n'
+                                          "const results = await new AxeBuilder({ page }).analyze();\n")
+    write(tmp_path, "tests/renamed.spec.ts", "import Axe from '@axe-core/playwright';\n"
+                                             "const results = await new Axe({ page }).analyze();\n")
+    write(tmp_path, "capture/named.ts", 'import { AxeBuilder as B } from "@axe-core/playwright";\n'
+                                        "const results = await new B({ page }).analyze();\n")
+    write(tmp_path, "tests/other.spec.ts", 'import { scan } from "./axe";\nconst results = await scan(page);\n')
 
-    assert own_axe_scans(tmp_path) == ["tests/page.spec.ts"]
+    assert own_axe_scans(tmp_path) == ["capture/named.ts", "tests/page.spec.ts", "tests/renamed.spec.ts"]
 
 
 if __name__ == "__main__":
