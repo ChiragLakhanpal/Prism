@@ -72,7 +72,7 @@ export function Part({ heading, children, headingRef, busy = false, partKey }: {
   const id = useId();
   return (
     <div role="group" aria-labelledby={id} aria-busy={busy || undefined} data-criteria-part={partKey} className="mt-8">
-      <h3 ref={headingRef} id={id} tabIndex={-1} className="text-title text-ink-heading focus:outline-none">{heading}</h3>
+      <h3 ref={headingRef} id={id} tabIndex={-1} className="text-h2 text-ink-heading focus:outline-none">{heading}</h3>
       <div className="mt-2">{children}</div>
     </div>
   );
@@ -531,8 +531,8 @@ function LessonCardView({ lesson, n, firstIcr, firstIeg }: { lesson: LessonEntry
   const shown = lesson.excerpt && lesson.excerpt.range ? excerpt(lesson.excerpt.text, lesson.excerpt.range as [number, number]) : null;
   return (
     <article aria-labelledby={titleId} className="relative rounded-md border border-line bg-surface p-4 @md/page:p-6" data-lesson-card={lesson.lesson_id}>
-      <p className="pr-8 text-label text-ink-muted uppercase">{lessonWords.eyebrow}</p>
-      <h4 id={titleId} className="mt-1 pr-8 text-title text-ink-heading">
+      <p className="pr-8 text-label text-ink-muted">{lessonWords.eyebrow}</p>
+      <h4 id={titleId} className="mt-1 pr-8 text-h2 text-ink-heading">
         {lesson.statement}
       </h4>
       {/* The citation number sits top right, after the title in the DOM, so the card's name is its title alone. */}

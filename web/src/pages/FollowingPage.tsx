@@ -199,7 +199,7 @@ export function FollowingBody({ data }: { data: Following }) {
   return (
     <>
       <section aria-labelledby={findingId}>
-        <h2 id={findingId} data-lead tabIndex={-1} className="max-w-[72ch] text-title text-pretty text-ink-heading focus:outline-none">
+        <h2 id={findingId} data-lead tabIndex={-1} className="max-w-[72ch] text-h2 text-pretty text-ink-heading focus:outline-none">
           {finding(counts, statusOfOne)}
         </h2>
         <p className="mt-2 max-w-[72ch] text-caption text-ink-muted">{madeBy}</p>
@@ -374,7 +374,7 @@ function ProjectCell({ entry }: { entry: FollowedProject }) {
   const project = entry.project;
   return (
     <>
-      <h3 className="text-title text-ink-heading">
+      <h3 className="text-h2 text-ink-heading">
         <TextLink href={`/projects/${project.project_id}`}>{project.project_name}</TextLink>
         {/* A follow the seed command made for you (ticket 41). */}
         {entry.example && (
@@ -609,7 +609,7 @@ function TrackRecordSection({ data }: { data: Following }) {
   ];
   return (
     <section aria-labelledby={TRACK_ID} className="mt-12" data-track-record={track ? "stored" : "none"}>
-      <h2 id={TRACK_ID} tabIndex={-1} className="text-title text-ink-heading focus:outline-none">
+      <h2 id={TRACK_ID} tabIndex={-1} className="text-h2 text-ink-heading focus:outline-none">
         {copy.track.heading}
       </h2>
       <div className="max-w-[72ch]">
@@ -717,16 +717,16 @@ function TrackRecordSection({ data }: { data: Following }) {
 export function FollowingSkeleton() {
   return (
     <div aria-hidden="true">
-      <SkeletonLine className="text-title" width="w-[70%] max-w-[72ch]" />
+      <SkeletonLine className="text-h2" width="w-[70%] max-w-[72ch]" />
       <SkeletonLine className="mt-2 text-caption" width="w-1/2 max-w-[72ch]" />
       <div className="mt-8 flex flex-col">
         {[0, 1, 2].map((row) => (
           <div key={row} className="border-t-2 border-line py-4">
             <Skeleton className="h-7 w-32" radius="rounded-pill" />
-            <SkeletonLine className="mt-2 text-title" width="w-[70%]" />
+            <SkeletonLine className="mt-2 text-h2" width="w-[70%]" />
             <SkeletonLine className="mt-1 text-caption" width="w-1/2" />
             <SkeletonText className="mt-3 text-small" widths={["w-full", "w-[90%]", "w-[70%]"]} />
-            <Skeleton className="mt-4 h-11 w-44" radius="rounded-pill" />
+            <Skeleton className="mt-4 h-11 w-44" radius="rounded-sm" />
           </div>
         ))}
       </div>

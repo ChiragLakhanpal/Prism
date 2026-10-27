@@ -56,8 +56,8 @@ function RecordCard({ title, children, source, link }: { title: string; children
   return (
     <section data-comparable-record className="flex flex-col gap-3 rounded-md border border-line p-4">
       <div>
-        <p className="text-label text-ink-muted uppercase">{words.recordEyebrow}</p>
-        <h3 className="mt-1 text-title text-ink-heading">{title}</h3>
+        <p className="text-label text-ink-muted">{words.recordEyebrow}</p>
+        <h3 className="mt-1 text-h2 text-ink-heading">{title}</h3>
       </div>
       {children}
       <Source>{source}</Source>

@@ -27,7 +27,7 @@ import { join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { causalChecker, copyChecker, whatIfChecker } from "./copy.ts";
 import { CAUSAL_SCOPES, CLASS_RULES_SKIP, FROZEN_CLASS_USES, UPPERCASE_ONLY_WITH, WHAT_IF_SAYS, WHAT_IF_SCOPES } from "./rules.ts";
-import { copyStrings, lineOf, literalText, offTokenClasses, retiredClasses, scopedRanges, termLiterals } from "./source.ts";
+import { copyStrings, lineOf, literalText, offTokenClasses, retiredClasses, scopedRanges, termLiterals, unusedKeeps } from "./source.ts";
 import { staleServerCopies } from "./server-copy.ts";
 import { definitions } from "../src/lib/definitions.ts";
 
@@ -165,6 +165,13 @@ function main(): number {
           ? `${where} sets capitals outside a chart label. Write the words in sentence case, or use "uppercase" ` +
               `with "${UPPERCASE_ONLY_WITH}" on a chart's lane or legend label (DESIGN.md section 3).`
           : `${where} is retired. Use "${found.where}" (DESIGN.md sections 3 and 4).`,
+      );
+    }
+    // Ticket 91: a class the frozen list keeps for a file that no longer uses it comes off the list.
+    for (const name of unusedKeeps(source, file, FROZEN_CLASS_USES[path])) {
+      problems.push(
+        `${at(file, 1)}: the class "${name}" is no longer used here, so take it off FROZEN_CLASS_USES in web/lint/rules.ts. ` +
+          "Delete the list when it is empty.",
       );
     }
   }

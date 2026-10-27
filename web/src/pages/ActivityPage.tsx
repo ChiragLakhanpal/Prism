@@ -93,7 +93,7 @@ function Lead({ trail }: { trail: Trail }) {
   const through = trail.data_through ?? trail.as_of;
   return (
     <div data-lead className="mt-6 max-w-prose">
-      <p className="text-h3 text-ink-heading">
+      <p className="text-lead text-ink-heading">
         {parts.length > 0 && <Fill template={words.lead} slots={{ parts: <>{joined}</> }} />}
         {lead.no_estimate && <> {words.noEstimate}</>}
         {missing && (
@@ -168,7 +168,7 @@ function TrailSkeleton() {
   return (
     <div aria-hidden="true">
       <div className="mt-6 max-w-prose">
-        <SkeletonText className="text-h3" widths={["w-full", "w-4/5"]} />
+        <SkeletonText className="text-lead" widths={["w-full", "w-4/5"]} />
         <SkeletonLine className="mt-4 text-caption" width="w-3/4" />
       </div>
       <ol className="mt-6 flex flex-col gap-4 @md/page:gap-6">

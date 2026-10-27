@@ -336,9 +336,12 @@ test("the class lint refuses spacing off DESIGN.md's scale and colors outside th
 });
 
 // Ticket 90 (DESIGN.md section 3): capitals only in a chart label, and the retired text-title and rounded-box nowhere,
-// except in the deck's folder, which its own branch moves, and in the files that used them when the ticket landed,
-// each for the classes it used then, until the class sweep moves them. The lint names a file by its path from --root
-// (web/ in the gate), so these tests lay out a throwaway web/ folder.
+// except in the deck's folder, which its own branch moves, and in the files on the frozen list, each for the classes it
+// used then. Ticket 91's class sweep moved every other file, so the list keeps only the three files the shell tickets
+// rewrite, and a class a listed file no longer uses fails until it comes off the list. The lint names a file by its
+// path from --root (web/ in the gate), so these tests lay out a throwaway web/ folder.
+const SHELL_TICKET_FILES = ["src/components/BoxBand.tsx", "src/components/CollapsedSection.tsx", "src/components/EvidenceDrawer.tsx"];
+
 function lintTree(files: Record<string, string>) {
   const root = mkdtempSync(join(tmpdir(), "strata-lint-"));
   const args = [RUN, "--root", root];
@@ -352,15 +355,19 @@ function lintTree(files: Record<string, string>) {
 }
 
 test("the class lint refuses uppercase outside a chart label, text-title and rounded-box, but not in the deck or the frozen files", () => {
+  expect(Object.keys(FROZEN_CLASS_USES).sort()).toEqual(SHELL_TICKET_FILES);
   const div = (className: string) => `export const A = () => <div className="${className}" />;\n`;
-  // A file on the frozen list that used capitals and no title when ticket 90 landed.
+  // A file on the frozen list that used capitals and no title when ticket 90 landed, and another as its shell ticket
+  // leaves it, with its classes moved, so it no longer belongs on the list.
   const [frozen] = Object.entries(FROZEN_CLASS_USES).find(([, uses]) => uses.includes("uppercase") && !uses.includes("text-title"))!;
+  const [moved, movedUses] = Object.entries(FROZEN_CLASS_USES).find(([path]) => path !== frozen)!;
   const failed = lintTree({
     "src/components/New.tsx": div("text-label md:uppercase"),
     "src/components/Old.tsx": div("text-title text-ink-heading") + div("rounded-box border"),
     "src/components/Chart.tsx": div("text-chart-label uppercase"),
     "src/deck/Slide.tsx": div("text-label uppercase") + div("text-title rounded-box"),
     [frozen]: div("text-label uppercase") + div("text-title"),
+    [moved]: div("text-h2 rounded-sm text-label"),
   });
   expect(failed.code, failed.output).toBe(1);
   const problems = failed.output.trim().split("\n");
@@ -369,10 +376,12 @@ test("the class lint refuses uppercase outside a chart label, text-title and rou
     "Old.tsx:1 text-title",
     "Old.tsx:2 rounded-box",
     `${frozen.split("/").pop()}:2 text-title`,
+    ...movedUses.map((use) => `${moved.split("/").pop()}:1 ${use}`),
   ]);
   expect(problems[0]).toContain("sentence case");
   expect(problems[1]).toContain('Use "text-h2"');
   expect(problems[2]).toContain('Use "rounded-sm"');
+  expect(problems.at(-1)).toContain("take it off FROZEN_CLASS_USES");
 
   const passed = lintTree({
     "src/components/New.tsx": div("text-label"),

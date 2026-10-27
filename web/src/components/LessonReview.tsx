@@ -117,7 +117,7 @@ export function QueueRow({ row }: { row: Row }) {
   return (
     <li data-queue-row={row.item_id} className="flex flex-col gap-1 border-t-2 border-line py-4">
       <p className="text-small font-semibold text-ink-heading">{statusOf(row)}</p>
-      <h3 className="text-title text-balance">
+      <h3 className="text-h2 text-balance">
         <TextLink href={itemHref(row.item_id)}>{row.statement}</TextLink>
       </h3>
       <p className="text-caption text-ink-muted">

@@ -139,7 +139,7 @@ export function ChipGroups({ form, chip }: { form: PackageForm; chip: (field: Fo
         if (fields.length === 0) return null;
         return (
           <div key={group.key} role="group" aria-label={group.name} data-group={group.key} className="grid gap-x-3 gap-y-2 @md/page:grid-cols-[64px_1fr]">
-            <p aria-hidden="true" className="flex text-label text-ink-muted uppercase @md/page:min-h-8 @md/page:items-center @md/page:self-start">
+            <p aria-hidden="true" className="flex text-label text-ink-muted @md/page:min-h-8 @md/page:items-center @md/page:self-start">
               {group.label}
             </p>
             <div className="flex min-w-0 flex-wrap gap-2">{fields.map((field) => chip(field))}</div>
@@ -163,7 +163,7 @@ export function ChipSkeletons({ form }: { form: PackageForm | null }) {
     <div aria-hidden="true" className="flex flex-col gap-3" data-chip-skeletons>
       {(groups.length ? groups : [{ key: "what", label: "" }, { key: "where", label: "" }, { key: "how", label: "" }]).map((group) => (
         <div key={group.key} className="grid gap-x-3 gap-y-2 @md/page:grid-cols-[64px_1fr]">
-          <p className="flex text-label text-ink-muted uppercase @md/page:min-h-8 @md/page:items-center @md/page:self-start">{group.label}</p>
+          <p className="flex text-label text-ink-muted @md/page:min-h-8 @md/page:items-center @md/page:self-start">{group.label}</p>
           <div className="flex flex-wrap gap-2">
             {(SKELETON_WIDTHS[group.key] ?? ["w-24", "w-32"]).map((width, index) => (
               <Skeleton key={index} className={cx("h-8", width)} radius="rounded-pill" />
@@ -293,7 +293,7 @@ export function ComputedNote({ pkg, form }: { pkg: PlannedPackage; form: Package
 export function CardTop({ sentence, guesses, headingId, preview = false }: { sentence: string; guesses: number | null; headingId?: string; preview?: boolean }) {
   return (
     <>
-      <h2 id={headingId} className="text-title text-ink-heading">
+      <h2 id={headingId} className="text-h2 text-ink-heading">
         {words.card.heading}
       </h2>
       <p className="mt-2 text-small text-ink" data-you-wrote>

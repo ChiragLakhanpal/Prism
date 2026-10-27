@@ -129,7 +129,7 @@ function CardFrame() {
   return (
     <div className="flex flex-col gap-3 rounded-md border border-line bg-surface p-4 @md/page:p-6" data-skeleton-card>
       <SkeletonLine className="text-label" width="w-2/5" />
-      <span className="-mt-1 flex flex-col text-title">
+      <span className="-mt-1 flex flex-col text-h2">
         <SkeletonLine width="w-4/5" />
         <SkeletonLine width="w-1/2" className={NARROW_ONLY} />
       </span>
@@ -156,7 +156,7 @@ function CardFrame() {
         <SkeletonLine width="w-1/2" className={NARROW_ONLY} />
       </span>
       <SkeletonText className="max-w-prose text-caption" widths={["w-full", "w-2/5"]} />
-      <Skeleton className="h-11 w-40" radius="rounded-pill" />
+      <Skeleton className="h-11 w-40" radius="rounded-sm" />
     </div>
   );
 }
@@ -191,7 +191,7 @@ function Group({ groupKey: group, rows }: { groupKey: "you" | "others"; rows: Ro
   const id = `queue-${group}`;
   return (
     <section aria-labelledby={id} data-queue-group={group}>
-      <h2 id={id} className="text-title text-ink-heading">
+      <h2 id={id} className="text-h2 text-ink-heading">
         {words.queue.groups[group]}
       </h2>
       <p className="mt-1 text-caption text-ink-muted">{words.queue.order}</p>
@@ -211,7 +211,7 @@ function Decided({ queue }: { queue: Queue }) {
   if (decided.total === 0) {
     return (
       <section aria-labelledby="queue-decided" data-queue-decided="none">
-        <h2 id="queue-decided" className="text-title text-ink-heading">
+        <h2 id="queue-decided" className="text-h2 text-ink-heading">
           {title}
         </h2>
         <p className="mt-4 text-body text-ink">
@@ -317,7 +317,7 @@ export function QueueBody({ queue }: { queue: Queue }) {
       {empty ? (
         <EmptyState className="mt-6" title={q.emptyTitle} body={q.emptyBody} link={{ href: LESSONS_HREF, text: q.emptyLink }} />
       ) : (
-        <p tabIndex={-1} className="mt-4 text-title text-ink-heading outline-none @md/page:mt-6 @md/page:text-h3" data-queue-lead>
+        <p tabIndex={-1} className="mt-4 text-lead text-ink-heading outline-none @md/page:mt-6" data-queue-lead>
           {queue.lead && <Sentence segments={queue.lead} />}
         </p>
       )}
@@ -351,7 +351,7 @@ export function QueueSkeleton({ me }: { me?: Me | null }) {
         <SkeletonText className="max-w-prose text-body" widths={["w-full", "w-full", "w-full", "w-full", "w-full", "w-2/5"]} />
       )}
       {/* Each part in the text style of what it stands for, so each line is as tall as the line it holds. */}
-      <span className="mt-4 flex flex-col text-title @md/page:mt-6 @md/page:text-h3">
+      <span className="mt-4 flex flex-col text-lead @md/page:mt-6">
         <SkeletonLine width="w-full" />
         <SkeletonLine width="w-3/5" />
         <SkeletonLine width="w-2/5" className={NARROW_ONLY} />
@@ -363,13 +363,13 @@ export function QueueSkeleton({ me }: { me?: Me | null }) {
         <SkeletonLine width="w-1/2" className={NARROW_ONLY} />
       </span>
       <div className="mt-8 @md/page:mt-12">
-        <SkeletonLine className="text-title" width="w-40" />
+        <SkeletonLine className="text-h2" width="w-40" />
         <SkeletonLine className="mt-1 text-caption" width="w-24" />
         <div className="mt-4">
           {[0, 1, 2].map((index) => (
             <div key={index} className="flex flex-col gap-1 border-t-2 border-line py-4" data-skeleton-row>
               <SkeletonLine className="text-small" width="w-2/5" />
-              <span className="flex flex-col text-title">
+              <span className="flex flex-col text-h2">
                 <SkeletonLine width="w-[90%]" />
                 <SkeletonLine width="w-1/2" className={NARROW_ONLY} />
               </span>

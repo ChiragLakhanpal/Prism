@@ -24,8 +24,8 @@ export function PillCard({ source }: { source: RiskSource }) {
   const project = source.project_name ?? source.pcode;
   return (
     <div data-evidence-card className="flex flex-col p-1">
-      <p className="text-label text-ink-muted uppercase">{copy.evidence.eyebrow.Why}</p>
-      <p className="mt-1 text-title text-ink-heading">
+      <p className="text-label text-ink-muted">{copy.evidence.eyebrow.Why}</p>
+      <p className="mt-1 text-h2 text-ink-heading">
         {source.locator.kind === "paragraph" ? (
           <Fill template={copy.evidence.title} slots={{ project, para: source.locator.text }} />
         ) : (

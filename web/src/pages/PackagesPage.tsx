@@ -29,7 +29,7 @@ function UploadsList() {
   if (load.status !== "ready" || load.data.uploads.length === 0) return null;
   return (
     <section className="mt-6" aria-labelledby="uploads-heading" data-uploads>
-      <h2 id="uploads-heading" className="text-title text-ink-heading">{words.uploadsTitle}</h2>
+      <h2 id="uploads-heading" className="text-h2 text-ink-heading">{words.uploadsTitle}</h2>
       <ul className="mt-3 flex flex-col gap-3">
         {load.data.uploads.map((upload) => (
           <li key={upload.upload_id} className="flex flex-col">

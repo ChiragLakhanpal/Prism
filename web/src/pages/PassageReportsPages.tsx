@@ -73,7 +73,7 @@ export function GroupRowItem({ row }: { row: GroupRow }) {
   return (
     <li data-report-row={row.group_id} className="flex flex-col gap-1 border-t-2 border-line py-4">
       <p className="text-small font-semibold text-ink-heading">{fillText(row.group === "you" ? w.status.you : w.status.others, { kind })}</p>
-      <h3 className="text-title text-balance">
+      <h3 className="text-h2 text-balance">
         <TextLink href={reportHref(row.group_id)}>{passageTitle(row)}</TextLink>
       </h3>
       <p className="text-caption text-ink-muted">
@@ -114,7 +114,7 @@ function Lead({ queue }: { queue: ReportsQueue }) {
   };
   const template = you && others ? w.lead.both : you ? w.lead.youOnly : others ? w.lead.othersOnly : w.lead.none;
   return (
-    <p tabIndex={-1} data-lead className="text-title text-ink-heading outline-none @md/page:text-h3" data-reports-lead>
+    <p tabIndex={-1} data-lead className="text-lead text-ink-heading outline-none" data-reports-lead>
       <Fill template={template} slots={slots} />
       {oldest && (you || others) ? (
         <>
@@ -131,7 +131,7 @@ function Group({ groupKey, rows }: { groupKey: "you" | "others"; rows: GroupRow[
   const id = `reports-${groupKey}`;
   return (
     <section aria-labelledby={id} data-report-group={groupKey}>
-      <h2 id={id} className="text-title text-ink-heading">
+      <h2 id={id} className="text-h2 text-ink-heading">
         {w.groups[groupKey]}
       </h2>
       <p className="mt-1 text-caption text-ink-muted">{w.order}</p>
@@ -240,7 +240,7 @@ export function ReportsSkeleton() {
         {w.loading}
       </p>
       <Purpose />
-      <span className="mt-6 flex flex-col text-title @md/page:text-h3">
+      <span className="mt-6 flex flex-col text-lead">
         <SkeletonLine width="w-[70%]" />
       </span>
       <SkeletonLine className="mt-2 text-caption" width="w-1/2" />
@@ -248,7 +248,7 @@ export function ReportsSkeleton() {
         {[0, 1, 2].map((index) => (
           <div key={index} className="flex flex-col gap-1 border-t-2 border-line py-4" data-skeleton-row>
             <SkeletonLine className="text-small" width="w-[30%]" />
-            <SkeletonLine className="text-title" width="w-[60%]" />
+            <SkeletonLine className="text-h2" width="w-[60%]" />
             <SkeletonLine className="text-caption" width="w-[80%]" />
             <SkeletonLine className="text-small" width="w-[40%]" />
           </div>
@@ -331,7 +331,7 @@ function Reports({ group }: { group: ReportGroup }) {
   const more = group.reports.length - SHOWN;
   return (
     <section aria-labelledby={id} className="mt-8 @md/page:mt-12">
-      <h2 id={id} className="text-title text-ink-heading">
+      <h2 id={id} className="text-h2 text-ink-heading">
         {w.reportsTitle}
       </h2>
       <p className="mt-1 text-caption text-ink-muted">{w.reportsCaption}</p>
@@ -395,7 +395,7 @@ function DecisionForm({ group, onSaved, onGaveWay, initial }: {
   return (
     <div data-report-decision={group.stage} className="rounded-md border border-line bg-surface p-4 @md/page:p-6">
       <form noValidate aria-labelledby={headingId} aria-busy={saving !== null || undefined} onSubmit={(event) => event.preventDefault()} className="flex flex-col gap-4">
-        <h2 id={headingId} className="text-title text-ink-heading">
+        <h2 id={headingId} className="text-h2 text-ink-heading">
           {w.form.title}
         </h2>
         {failed && (
@@ -640,7 +640,7 @@ export function ReportGroupView({ group: loaded, initial, sample = false }: {
         </div>
       )}
       <section aria-labelledby={passageId} className="mt-8 flex flex-col gap-4 @md/page:mt-12">
-        <h2 id={passageId} className="text-title text-ink-heading">
+        <h2 id={passageId} className="text-h2 text-ink-heading">
           {w.passageTitle}
         </h2>
         <PassageBlock evidence={passageEvidence(group.passage)} />
@@ -671,7 +671,7 @@ export function ReportGroupSkeleton() {
         <SkeletonLine width="w-1/2" />
       </span>
       <SkeletonLine className="mt-2 text-body" width="w-[70%]" />
-      <h2 className="mt-8 text-title text-ink-heading @md/page:mt-12">{w.passageTitle}</h2>
+      <h2 className="mt-8 text-h2 text-ink-heading @md/page:mt-12">{w.passageTitle}</h2>
       <div className="mt-4 rounded-md border border-line">
         <Skeleton className="h-8 w-full rounded-b-none" />
         <SkeletonText className="max-w-prose p-4 text-body" widths={["w-full", "w-full", "w-full", "w-full", "w-full", "w-3/5"]} />

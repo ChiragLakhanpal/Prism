@@ -70,7 +70,7 @@ export function EvidenceCardFull({ evidence, n, open, visited }: { evidence: Les
   return (
     <article aria-labelledby={titleId} data-lesson-evidence={evidence.evidence_id} className="flex flex-col gap-3 rounded-md border border-line bg-surface p-4 @md/page:p-6">
       <div className="flex items-start justify-between gap-3">
-        <p className="text-label text-ink-muted uppercase">{r.eyebrow}</p>
+        <p className="text-label text-ink-muted">{r.eyebrow}</p>
         <CitationMarker
           n={n}
           evidenceId={evidence.evidence_id}
@@ -82,7 +82,7 @@ export function EvidenceCardFull({ evidence, n, open, visited }: { evidence: Les
           onOpen={(marker) => openEvidence(evidence.evidence_id, { serial: null, sentence: null, marker, runId: null, highlight: evidence.highlight ?? null })}
         />
       </div>
-      <h3 id={titleId} className="-mt-1 text-title text-ink-heading wrap-anywhere">
+      <h3 id={titleId} className="-mt-1 text-h2 text-ink-heading wrap-anywhere">
         {cardTitle(evidence)}
       </h3>
       {evidence.role === "restatement" && <p className="text-caption text-ink-muted">{r.restatedCaption}</p>}
@@ -120,7 +120,7 @@ function Tags({ item }: { item: ReviewItem }) {
   ];
   return (
     <section aria-labelledby={id}>
-      <h2 id={id} className="text-title text-ink-heading">
+      <h2 id={id} className="text-h2 text-ink-heading">
         {r.tagsTitle}
       </h2>
       <p className="mt-1 text-caption text-ink-muted">
@@ -250,7 +250,7 @@ function Summary({ item, numbers, onRetried }: { item: ReviewItem; numbers: Map<
   }
   return (
     <section aria-labelledby={id} data-summary={rewriting ? "rewriting" : shown.status === "writing" && ready ? "became-ready" : shown.status}>
-      <h2 id={id} className="text-title text-ink-heading">
+      <h2 id={id} className="text-h2 text-ink-heading">
         {r.summaryTitle}
       </h2>
       <div className="mt-4 max-w-prose">{body}</div>
@@ -269,7 +269,7 @@ function Repeats({ item, numbers }: { item: ReviewItem; numbers: Map<string, num
   const open = { id: evidenceIn(here.search), sentence: null };
   return (
     <section aria-labelledby={id} data-repeats>
-      <h2 id={id} className="text-title text-ink-heading">
+      <h2 id={id} className="text-h2 text-ink-heading">
         {r.repeatsTitle}
       </h2>
       <div className="mt-4 flex flex-col gap-4">
@@ -506,7 +506,7 @@ export function ReviewView({ item: loaded, initial }: { item: ReviewItem; initia
       </div>
 
       <section aria-labelledby={evidenceId} className="mt-8 @md/page:mt-12">
-        <h2 id={evidenceId} className="text-title text-ink-heading">
+        <h2 id={evidenceId} className="text-h2 text-ink-heading">
           {r.evidenceTitle}
         </h2>
         <p id={sourcesNoteId} className="mt-1 max-w-prose text-caption text-ink-muted">
@@ -536,7 +536,7 @@ export function ReviewView({ item: loaded, initial }: { item: ReviewItem; initia
         </div>
       )}
       <section aria-labelledby={historyId} className="mt-8 @md/page:mt-12">
-        <h2 id={historyId} className="text-title text-ink-heading">
+        <h2 id={historyId} className="text-h2 text-ink-heading">
           {decided ? r.historyDone : r.historyOpen}
         </h2>
         <div className="mt-4">
@@ -560,7 +560,7 @@ function EvidenceFrame() {
         <SkeletonLine className="text-label" width="w-1/4" />
         <Skeleton className="size-5" radius="rounded-pill" />
       </div>
-      <span className="-mt-1 flex flex-col text-title">
+      <span className="-mt-1 flex flex-col text-h2">
         <SkeletonLine width="w-3/4" />
         <SkeletonLine width="w-1/3" className={NARROW_ONLY} />
       </span>
@@ -595,7 +595,7 @@ export function ReviewSkeleton() {
         <SkeletonLine width="w-1/3" className={NARROW_ONLY} />
       </span>
       <Skeleton className="mt-3 h-[30px] w-40" radius="rounded-pill" />
-      <h2 className="mt-8 text-title text-ink-heading @md/page:mt-12">{r.evidenceTitle}</h2>
+      <h2 className="mt-8 text-h2 text-ink-heading @md/page:mt-12">{r.evidenceTitle}</h2>
       {/* Static copy, so "The evidence" and the cards never move when the item arrives. */}
       <p className="mt-1 max-w-prose text-caption text-ink-muted">{words.sourcesNote}</p>
       <div className="mt-4 flex flex-col gap-4">

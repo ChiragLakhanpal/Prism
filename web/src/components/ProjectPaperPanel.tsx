@@ -56,7 +56,7 @@ export function ProjectPaperPanel({ plan, preview, asOf }: {
     : rows === 0 ? words.bodyNoRows : words.body(rows);
   return (
     <section aria-labelledby={headingId} className="max-w-[72ch] rounded-md border border-line bg-surface p-4 md:p-6" data-pp-panel>
-      <h2 id={headingId} className="text-title text-ink-heading">
+      <h2 id={headingId} className="text-h2 text-ink-heading">
         {words.title}
       </h2>
       <p className="mt-2 text-body text-ink" data-pp-body>

@@ -662,7 +662,7 @@ export function AnswerPanel({
             button beside them sets no gap. */}
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
-            <h2 lang={langOf(run.questionLang)} className="text-title wrap-break-word text-ink-heading">
+            <h2 lang={langOf(run.questionLang)} className="text-h2 wrap-break-word text-ink-heading">
               {linkProjectIds(run.asked.question)}
             </h2>
             <AskedLine run={run} current={current} />

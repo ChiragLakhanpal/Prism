@@ -337,7 +337,6 @@ export function retiredClasses(source: string, file: string, keeps: readonly str
         : null;
     if (text === null) return;
     const names = text.split(/\s+/).filter(Boolean);
-    const utility = (name: string) => name.slice(name.lastIndexOf(":") + 1).replace(/^!/, "");
     const chartLabel = names.some((name) => utility(name) === UPPERCASE_ONLY_WITH);
     for (const name of names) {
       const used = utility(name);
@@ -347,4 +346,16 @@ export function retiredClasses(source: string, file: string, keeps: readonly str
     }
   });
   return found;
+}
+
+// A class name without its variants or its important mark: "md:!uppercase" is "uppercase".
+function utility(name: string): string {
+  return name.slice(name.lastIndexOf(":") + 1).replace(/^!/, "");
+}
+
+// The classes FROZEN_CLASS_USES lets a file keep that it no longer uses (ticket 91). Each one comes off the list when
+// its file is fixed, so the list empties as the shell tickets rewrite their files, and then it goes.
+export function unusedKeeps(source: string, file: string, keeps: readonly string[] = []): string[] {
+  const used = new Set(retiredClasses(source, file).map((found) => utility(found.text)));
+  return keeps.filter((name) => !used.has(name));
 }

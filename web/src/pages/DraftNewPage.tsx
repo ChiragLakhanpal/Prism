@@ -231,7 +231,7 @@ function WritingKindPage({ current, backHref }: { current: Writing; backHref: st
         </div>
         {current.phase === "nothing" ? (
           <div className="mt-6 max-w-prose" data-nothing-survived>
-            <h2 tabIndex={-1} className="text-title text-ink-heading focus:outline-none">
+            <h2 tabIndex={-1} className="text-h2 text-ink-heading focus:outline-none">
               {kind.nothingTitle}
             </h2>
             <p className="mt-2 text-body text-ink">{kind.nothingBody}</p>
@@ -288,7 +288,7 @@ function WritingKindPage({ current, backHref }: { current: Writing; backHref: st
             <div className="flex flex-col gap-8">
               {["plan", "record", "ppsd"].map((part) => (
                 <div key={part}>
-                  <h3 className="text-title text-ink-heading">{copy.paper.parts[part]}</h3>
+                  <h3 className="text-h2 text-ink-heading">{copy.paper.parts[part]}</h3>
                   <div aria-hidden="true" className="mt-2">
                     <SkeletonText className="text-body" widths={["w-full", "w-[96%]", "w-[90%]", "w-[55%]"]} />
                   </div>
@@ -410,7 +410,7 @@ function WritingPage({ current, planHref }: { current: Writing; planHref: string
         </div>
         {current.phase === "nothing" ? (
           <div className="mt-6 max-w-prose" data-nothing-survived>
-            <h2 tabIndex={-1} className="text-title text-ink-heading focus:outline-none">
+            <h2 tabIndex={-1} className="text-h2 text-ink-heading focus:outline-none">
               {kind.nothingTitle}
             </h2>
             <p className="mt-2 text-body text-ink">{kind.nothingBody}</p>
@@ -586,7 +586,7 @@ function WritingBriefPage({ current }: { current: Writing }) {
         </div>
         {current.phase === "nothing" ? (
           <div className="mt-6 max-w-prose" data-nothing-survived>
-            <h2 tabIndex={-1} className="text-title text-ink-heading focus:outline-none">
+            <h2 tabIndex={-1} className="text-h2 text-ink-heading focus:outline-none">
               {kind.nothingTitle}
             </h2>
             <p className="mt-2 text-body text-ink">{kind.nothingBody}</p>
@@ -623,7 +623,7 @@ function WritingBriefPage({ current }: { current: Writing }) {
           <section aria-label={copy.mission.writingParts} className="mt-8 flex flex-col gap-12" data-brief-parts="writing">
             {PARTS.map((part) => (
               <div key={part}>
-                <h3 className="text-title text-ink-heading">{copy.mission.parts[part]}</h3>
+                <h3 className="text-h2 text-ink-heading">{copy.mission.parts[part]}</h3>
                 <div aria-hidden="true" className="mt-2">
                   <SkeletonText className="text-body" widths={["w-full", "w-[70%]"]} />
                   <Skeleton className="mt-4 h-16 w-full" />
