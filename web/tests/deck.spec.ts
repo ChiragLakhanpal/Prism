@@ -304,8 +304,8 @@ const sourceKeys = (pieces: Record<string, string>) => [
   ...new Set(Object.values(pieces).flatMap((html) => [...html.matchAll(/data-source-key="([^"]*)"/g)].flatMap((found) => found[1].split(/\s+/)))),
 ];
 
-// The keys the deck's data does not hold: a result the snapshot does not carry, a setting or a dimension of the rubric
-// it lacks, or a key of any other kind.
+// The keys the deck's data does not hold: a result the snapshot does not carry, a setting, a dimension of the rubric
+// or a tool that is not one of the demo package's two recorded answers.
 function unknownKeys(keys: string[], data: DeckData): string[] {
   const dimensions = new Set(data.rubric.dimensions.map((dimension) => dimension.key));
   const known = (key: string) => {
@@ -313,7 +313,7 @@ function unknownKeys(keys: string[], data: DeckData): string[] {
     if (kind === "r") return name in data.results;
     if (kind === "s") return name in data.settings;
     if (kind === "rubric") return dimensions.has(name);
-    return false;
+    return key === "tool:find_comparables" || key === "tool:estimate_time";
   };
   return keys.filter((key) => !known(key));
 }

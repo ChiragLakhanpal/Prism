@@ -92,6 +92,8 @@ export const deckCopy = {
     ratio: (n: string, d: string, noun: string, kind: string, date: string) => `${n} of ${d} ${noun}. ${kind}, measured ${date}.`,
     count: (n: string, noun: string, kind: string, date: string) => `${n} ${noun}. ${kind}, measured ${date}.`,
     setting: (name: string, where: string) => `${name}. Set in ${where}.`,
+    tool: (step: string, date: string) => `Counted from the comparable packages for ${step}, run ${date}.`,
+    estimate: (step: string, date: string) => `From the time estimate for ${step}, run ${date}.`,
     rubric: "Points the assessment brief gives this dimension, in its section 5.",
     definition: (kind: string, table: string) => `${kind}, read from ${table} in the measures snapshot the proposal cites.`,
     settingDefinition: (kind: string) => `${kind}: a value Strata is set to, read from the file that sets it.`,
