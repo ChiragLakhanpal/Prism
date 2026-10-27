@@ -43,6 +43,7 @@ class OfflineVersion:
     run_id: str
     card: str
     summary: str
+    what: str  # what the model is, in the words Unity Catalog's description uses
 
 
 class OfflineTracker:
@@ -72,9 +73,9 @@ class OfflineTracker:
     def end_run(self, run_id: str) -> None:
         self.runs[run_id].ended = True
 
-    def register(self, run_id: str, name: str, card: str, summary: str) -> int:
+    def register(self, run_id: str, name: str, card: str, summary: str, what: str) -> int:
         versions = self.models.setdefault(name, [])
-        versions.append(OfflineVersion(len(versions) + 1, run_id, card, summary))
+        versions.append(OfflineVersion(len(versions) + 1, run_id, card, summary, what))
         return versions[-1].version
 
     def set_alias(self, name: str, alias: str, version: int) -> None:
@@ -159,12 +160,11 @@ class MlflowTracker:
     def end_run(self, run_id: str) -> None:
         self.client.set_terminated(run_id)
 
-    def register(self, run_id: str, name: str, card: str, summary: str) -> int:
+    def register(self, run_id: str, name: str, card: str, summary: str, what: str) -> int:
         """The run's model as a new version. The card itself is the run's model_card.md, which the
-        backtest logged; Unity Catalog's descriptions point to it, whatever its length, and give the
-        track-record sentence."""
+        backtest logged; Unity Catalog's descriptions say what the model is (what, the caller's words), point
+        to the card, whatever its length, and give the track-record sentence."""
         version = self.mlflow.register_model(self._models[run_id], name)
-        what = "rebidding model (experimental)" if name.endswith("rebidding_risk") else "time estimate"
         pointer = f"Strata's {what}. The model card is {MODEL_CARD} in MLflow run {run_id}. {summary}"
         self.client.update_registered_model(name, description=pointer)
         self.client.update_model_version(name, version.version, description=pointer)

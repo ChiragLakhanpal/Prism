@@ -185,6 +185,30 @@ def test_a_passage_with_no_stored_shield_result_is_left_out_and_the_coverage_lin
     assert held_back["count"] == 1 and held_back["evidence_ids"][0].endswith("/v1/54")
 
 
+def search_live(monkeypatch):
+    import importlib.util
+    import sys
+
+    monkeypatch.setattr(sys, "path", list(sys.path))  # the script adds ops/ folders to the path; undo that after
+    spec = importlib.util.spec_from_file_location("search_live", ROOT / "ops" / "documents" / "search_live.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_the_live_search_asks_any_search_passages_question_and_ends_its_method_with_one_full_stop(monkeypatch, capsys):
+    """ops/documents/search_live.py (ticket 11's review, P4): --question picks the benchmark question, so ticket 18's
+    catch-up step can ask search-passages-similar-experience, and the method sentence, which ends with its own full
+    stop, is printed with one."""
+    live = search_live(monkeypatch)
+
+    assert live.main(["--question", "no-such-question"]) == 2
+    assert "evals/benchmark.yaml has no search_passages question no-such-question" in capsys.readouterr().out
+    assert live.question("search-passages-similar-experience")["arguments"]["query"] == "similar experience"
+    assert live.ranked_line({"search": {"searcher": "the offline stand-in", "method": "It ranked by words."}}) == (
+        "search_passages ranked with the offline stand-in: It ranked by words.")
+
+
 def test_a_search_for_similar_experience_returns_notice_passages_with_their_notice_ids(engine):
     """Ticket 18, criterion 8. Notices' scope and qualification text is indexed as passages, from
     strata.silver.notices.notice_text, so qualification criteria can be compared. No notice uses the

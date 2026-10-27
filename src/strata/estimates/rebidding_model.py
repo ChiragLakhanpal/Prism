@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import json
 import math
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -219,13 +220,21 @@ def fit_gbm_model(rows: list[dict], outcomes: list[bool], settings: dict, calibr
                           advertised_again=int(y.sum()), calibration_packages=len(calibrating))
 
 
-def fit(learner: str, rows: list[dict], outcomes: list[bool], settings, ) -> RebiddingModel:
+# The learners config/models.toml's [rebidding] learners may name, each a model fitted from the training packages,
+# their outcomes and the settings. strata.config.load_rebidding refuses a name this table lacks.
+LEARNERS: dict[str, Callable[[list[dict], list[bool], Any], RebiddingModel]] = {
+    "logistic": lambda rows, outcomes, settings: fit_logistic_model(
+        rows, outcomes, settings.learner_settings["logistic"]),
+    "gbm": lambda rows, outcomes, settings: fit_gbm_model(
+        rows, outcomes, settings.learner_settings["gbm"], settings.calibration_every),
+}
+
+
+def fit(learner: str, rows: list[dict], outcomes: list[bool], settings) -> RebiddingModel:
     """One learner's model from its training packages, in the order they were advertised."""
-    if learner == "logistic":
-        return fit_logistic_model(rows, outcomes, settings.learner_settings[learner])
-    if learner == "gbm":
-        return fit_gbm_model(rows, outcomes, settings.learner_settings[learner], settings.calibration_every)
-    raise ValueError(f"There is no rebidding learner {learner}. The learners are gbm and logistic.")
+    if learner not in LEARNERS:
+        raise ValueError(f"There is no rebidding learner {learner}. The learners are {', '.join(sorted(LEARNERS))}.")
+    return LEARNERS[learner](rows, outcomes, settings)
 
 
 # ── Scores ───────────────────────────────────────────────────────────────

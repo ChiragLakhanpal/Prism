@@ -20,8 +20,11 @@ counts what it took out:
   of a second line written after it (0722 123 456/7), is replaced too;
 - every number written after a phone label (Tel, Telephone, Telefax, Phone, Cellphone, Mobile, Mob,
   Cell, Fax, also followed by No., Number or #, or by /Fax or /WhatsApp), also one with a country
-  code and no plus (Tel 254 20 1234567) or a second number after a slash, is replaced too, and so
-  is an Indian mobile with no trunk zero after Ph, M or Contact (Ph: 98123 45678);
+  code and no plus (Tel 254 20 1234567) or a second number after a slash, a comma or "or", is
+  replaced too, and so is a number of nine digits or more after Ph, M, Contact or WhatsApp
+  (Ph: 98123 45678, Contact: 254 722 123456);
+- a person's name after "Attention" and a title (ATTENTION: Mr. Francis Kombe) is replaced, with
+  the label kept; a job title after Attention (Attention: Chief Executive Officer) stays;
 - last, whatever the nightly job's check would still find (LEFT_EMAIL and LEFT_PHONE below) is
   replaced, with the label kept (Fax:: [contact removed]), so the check never finds what this leaves.
 
@@ -54,9 +57,12 @@ REMOVED = "[contact removed]"
 
 # An email address, also when it is written untidily: one stray space after the "@" or inside the
 # domain (name@ gmail.com, name@g mail.com), or a comma for a dot (name@gmail,com).
-# A space may come before the "@" too (JDOE @ EXAMPLE.COM). A firm's name that writes "@" for "&"
-# (ECONOMIC @ TECHNICAL COOPERATIVE CO.) has no dot inside a word, so it stays.
-EMAIL = re.compile(r"[A-Za-z0-9._%+'-]+ ?@ ?[A-Za-z0-9-]+(?: [A-Za-z0-9-]+)?(?:[.,][A-Za-z0-9-]+)+")
+# A space may come before the "@" too (JDOE @ EXAMPLE.COM), but then the address must end in a dot
+# and two letters or more, so a rate written with "@" (Interest @ 12.5% per year, rate @ KES 1,000,000)
+# stays. A firm's name that writes "@" for "&" (ECONOMIC @ TECHNICAL COOPERATIVE CO.) has no dot inside
+# a word, so it stays too.
+EMAIL = re.compile(r"[A-Za-z0-9._%+'-]+(?:@ ?[A-Za-z0-9-]+(?: [A-Za-z0-9-]+)?(?:[.,][A-Za-z0-9-]+)+"
+                   r"| @ ?[A-Za-z0-9-]+(?:[.,][A-Za-z0-9-]+)*[.][A-Za-z]{2,}(?![A-Za-z0-9]))")
 # An address spelled out to get past a scan: jdoe [at] example [dot] com, jdoe(at)example.com.
 EMAIL_SPELLED_OUT = re.compile(
     r"[A-Za-z0-9._%+'-]+\s*[\[(]\s*at\s*[\])]\s*[A-Za-z0-9-]+(?:(?:\s*[\[(]\s*dot\s*[\])]\s*|\.)[A-Za-z0-9-]+)+",
@@ -78,18 +84,25 @@ POSTAL_CODE = re.compile(r"\d{3,5}-\d{5}")  # a P.O. Box and its postal code: 05
 # A number written after a phone label (Tel, Telephone Number, Tel #, Telefax, TEL/FAX, Phone,
 # Cellphone, Mobile/WhatsApp, Mob. No., Cell, Fax), whatever its shape: a country code with no plus
 # (Tel 254 20 1234567), or a second number after a slash (Tel: [contact removed]/722123456). Award
-# notices write firms' and contacts' numbers this way.
+# notices write firms' and contacts' numbers this way. A second number may also follow a comma or "or".
 NUMBER = r"(?:" + re.escape(REMOVED) + r"|[+(]?\d(?:[\d \t()–-]|\.(?=\d))*)"
+NUMBERS = r"(?P<numbers>" + NUMBER + r"(?:[ \t]*(?:[/,]|\bor\b)[ \t]*" + NUMBER + r")*)"
 LABELLED = re.compile(
     r"(?P<label>\b(?:tel(?:ephone|efax)?|(?:cell|mobile)?\s?phone|mobile|mob|cell|fax)\b"
-    r"(?:\s*/\s*(?:fax|mobile|whats\s?app)\b)?\.?\s*(?:no\.?|number|#)?\s*[:.]?[ \t]*)"
-    r"(?P<numbers>" + NUMBER + r"(?:[ \t]*[/,][ \t]*" + NUMBER + r")*)", re.I)
-# A ten-digit Indian mobile with no trunk zero (98123 45678, 91 9812345678) after a short label: Ph,
-# M or Contact, with a colon or No. after it. Only a mobile's shape goes here, because after these
-# words another number may be something else (pH 6.5 to 8.5).
-MOBILE_LABELLED = re.compile(
-    r"(?P<label>\b(?:ph|m|contact)\b\.?(?:\s*(?:no\.?|number)\s*:?|\s*:)[ \t]*)"
-    r"(?P<numbers>(?:\+?91[ \t-]?)?[6-9]\d{4}[ \t-]?\d{5})(?!\d)", re.I)
+    r"(?:\s*/\s*(?:fax|mobile|whats\s?app)\b)?\.?\s*(?:no\.?|number|#)?\s*[:.]?[ \t]*)" + NUMBERS, re.I)
+# A number after a short label: Ph, M, Contact or WhatsApp, with a colon or No. after it, and any
+# second number after a slash, a comma or "or". These words may also come before other numbers
+# (pH 6.5 to 8.5, M: 12 units), so the numbers need nine digits or more, as a phone number with
+# its area or mobile code has: 722 123 456, 254 20 1234567, 98123 45678.
+SHORT_LABELLED = re.compile(
+    r"(?P<label>\b(?:ph|m|contact|whats\s?app)\b\.?(?:\s*(?:no\.?|number)\s*:?|\s*:)[ \t]*)" + NUMBERS, re.I)
+SHORT_LABEL_DIGITS = 9
+# A person's name after "Attention" and a title: ATTENTION: Mr. Francis Kombe, Attention: Mrs. Jane A. Roe.
+# The name is up to four words that each start with a capital letter. A job title after Attention has no
+# title before it (Attention: Chief Executive Officer), so it stays, and so does "Attention is drawn".
+ATTENTION = re.compile(
+    r"(?P<label>\b(?i:attention)\b[ \t]*:?[ \t]*)"
+    r"(?P<name>(?i:mr|mrs|ms|miss|dr|eng|prof)\b\.?(?:[ \t]+[A-Z][A-Za-z'’-]*\.?){1,4})")
 TRAILING = re.compile(r"[ \t()–-]*$")  # what a number's pattern takes after its last digit, kept as written
 
 # One definition of a contact detail left in a notice (CLAUDE.md rule 4; ticket 76). The nightly job's check
@@ -128,11 +141,11 @@ def _an_address(candidate: str) -> bool:
     return bool(re.search(r"@\s?[^@]*[A-Za-z]", candidate))
 
 
-def _labelled_number(numbers: str) -> bool:
-    """Seven digits or more, or any alternate left after a removed number (Tel: [contact removed] / 8,
-    the last digit of a second line)."""
+def _labelled_number(numbers: str, shortest: int = 7) -> bool:
+    """Seven digits or more (nine after a short label, as SHORT_LABELLED says), or any alternate left after a
+    removed number (Tel: [contact removed] / 8, the last digit of a second line)."""
     digits = len(re.sub(r"\D", "", numbers.replace(REMOVED, "")))
-    return digits >= 7 or (REMOVED in numbers and digits >= 1)
+    return digits >= shortest or (REMOVED in numbers and digits >= 1)
 
 
 DIGIT_RUN = re.compile(r"\+?\(?\d[\d \t().–-]{5,}\d")  # digits and the separators a phone number uses
@@ -193,8 +206,11 @@ class Stripper:
             text = self._sub(PHONE, text, "phones", _phone)
             text = LINE_ENDING.sub(REMOVED, text)  # part of a number already counted
         text = LABELLED.sub(self._labelled, text)
-        text = MOBILE_LABELLED.sub(self._labelled, text)
-        return text if labelled_only else self.left(text)
+        text = SHORT_LABELLED.sub(lambda match: self._labelled(match, shortest=SHORT_LABEL_DIGITS), text)
+        if labelled_only:
+            return text
+        text = ATTENTION.sub(self._attention, text)
+        return self.left(text)
 
     def left(self, text: str) -> str:
         """The removal's last pass: every email address and labelled phone number the nightly check looks for
@@ -213,12 +229,16 @@ class Stripper:
         self.counts["phones"] += 1
         return label + REMOVED
 
-    def _labelled(self, match: re.Match) -> str:
+    def _labelled(self, match: re.Match, shortest: int = 7) -> str:
         numbers = match.group("numbers")
-        if not _labelled_number(numbers):
+        if not _labelled_number(numbers, shortest):
             return match.group(0)
         self.counts["phones"] += 1
         return match.group("label") + REMOVED + TRAILING.search(numbers).group(0)
+
+    def _attention(self, match: re.Match) -> str:
+        self.counts["names"] += 1
+        return match.group("label") + REMOVED
 
 
 def _records(value):

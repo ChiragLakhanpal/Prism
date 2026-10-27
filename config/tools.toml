@@ -57,6 +57,8 @@
 #                  Such a measure also needs its window's words in web/src/copy.ts's
 #                  dataReadiness.measureWindows (web/tests/lint.spec.ts checks both).
 #   draws_on       the readiness rows whose gaps hold its answers back
+#   period_from    optional: the key in config/thresholds.toml of the day the tool's records start, so a known gap
+#                  that ended before it is left out of its view and of what holds it back
 
 [tools.check_plan]
 description = """Checks every activity in one implementing agency's Procurement Plan for a project. It \
@@ -544,6 +546,15 @@ adapter = "strata.tools.find_comparables:find_comparables"
 benchmark = "find-comparables-ke-nwwda-541055"
 sources = ["notices", "awards", "documents", "projects"]
 
+# The past range (ticket 63): it reads notices, awards, plan rows and project records, never the project reports,
+# and only packages advertised from past_range.period_from (July 1, 2019), so the awards' fiscal 2017 to 2019 gap
+# holds none of its answers back.
+[tools.find_comparables.readiness]
+kind = "past_range"
+ready_for = { row = "notices", measure = "coverage_rows" }
+draws_on = ["notices", "awards", "plans", "projects"]
+period_from = "past_range.period_from"
+
 [[tools.find_comparables.parameters]]
 name = "step_reference"
 type = "string"
@@ -809,8 +820,9 @@ fields = ["package", "comparables", "estimate", "difference", "track_record", "t
           "comparisons", "options", "axis_max_months", "thresholds", "step_dates", "sources", "records_through"]
 # Why a combination has no range: a feature outside what the model learned from, or a lever's value it never saw.
 # no_plan_dates is step_dates' own coverage reason (ticket 27): a comparable package whose published plans dated
-# none of the family's steps.
-reasons = ["outside_training", "value_not_learned", "no_plan_dates"]
+# none of the family's steps. other_family is its other one (ticket 63): a comparable package planned in another STEP
+# table, whose steps differ, such as a firm beside an individual consultant hired by the same Method.
+reasons = ["outside_training", "value_not_learned", "no_plan_dates", "other_family"]
 # The closed list of why there is no time estimate (brief 40 adds view_public_active here). The first four come
 # from find_comparables for the same criteria.
 abstentions = ["unknown_package", "no_public_notice", "no_comparables", "none_measurable", "too_few_comparables",

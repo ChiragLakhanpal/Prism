@@ -298,6 +298,63 @@ def test_a_contract_from_an_award_notice_keeps_the_price_in_the_currency_the_not
                          "contract_currency": "INR"}]
 
 
+def test_a_method_name_as_written_keeps_its_spacing_and_single_source_selection_is_direct_selection(db):
+    """The awards since FY2020 write "Consultant Qualification  Selection" with two spaces for KE-MOALF-407832-CS-CQS,
+    and "as written" keeps them; the method is the current name. The FY2001 to FY2016 awards write "Single Source
+    Selection" for contract 1535566, which the current Regulations call Direct Selection (config/method_names.toml)."""
+    award = next(row for row in recorded("api/awards/P176758-P170941.json")["data"]
+                 if row["borrower_contract_reference_number"] == "KE-MOALF-407832-CS-CQS")
+    assert award["procurement_method"] == "Consultant Qualification  Selection"
+    old = next(row for row in recorded("api/awards/P124109-fy2001-2016.json")["data"] if row["contract_number"] == "1535566")
+    assert old["procurement_method"] == "Single Source Selection"
+
+    spaced = rows(db, "SELECT DISTINCT procurement_method, procurement_method_as_written FROM strata.silver.awards "
+                      "WHERE step_reference = :reference", reference="KE-MOALF-407832-CS-CQS")
+    single = rows(db, "SELECT procurement_method, procurement_method_as_written, market_approach "
+                      "FROM strata.gold.contract WHERE contract_id = :contract", contract="1535566")
+
+    assert spaced == [{"procurement_method": "Consultant Qualification Selection",
+                       "procurement_method_as_written": "Consultant Qualification  Selection"}]
+    assert single == [{"procurement_method": "Direct Selection", "procurement_method_as_written": "Single Source Selection",
+                       "market_approach": "Direct"}]
+
+
+def test_an_award_notice_that_writes_its_price_under_amount_with_the_currency_s_name_has_a_price_and_a_currency(db):
+    """values.toml, counts.gap_years.amount_layout. OP00074816 writes "Amount:" and then the currency's name, not
+    its code, so the price is read with the name's code; every award notice with that layout gets one."""
+    notice = next(row for row in recorded("api/notices/P156634.json")["procnotices"] if row["id"] == GAP["amount_layout"])
+    assert f"Kenya Shillings (Kenya Shillings)</div><div class='col-xs-4'>{GAP['amount_layout_price']}" in notice[
+        "notice_text"]
+
+    contract = rows(db, "SELECT contract_amount, contract_currency, amount_basis FROM strata.gold.contract "
+                        "WHERE contract_id = :notice", notice=GAP["amount_layout"])
+    assert contract == [{"contract_amount": decimal.Decimal(GAP["amount_layout_price"].replace(",", "")),
+                         "contract_currency": GAP["amount_layout_currency"],
+                         "amount_basis": "local currency, from award notices"}]
+    unpriced = rows(db, "SELECT notice_id FROM strata.silver.notices WHERE notice_type = 'Contract Award' "
+                        "AND (signed_contract_price IS NULL OR signed_contract_currency IS NULL)")
+    assert unpriced == []  # the 12 with this layout among them
+    priced = rows(db, "SELECT notice_id FROM strata.silver.notices WHERE notice_id IN (SELECT explode(:ids)) "
+                      "AND signed_contract_price IS NOT NULL", ids=GAP["amount_layout_notices"])
+    assert len(priced) == len(GAP["amount_layout_notices"])
+
+
+def test_a_gap_year_notice_with_no_price_has_no_label_saying_what_currency_it_is_in():
+    """A Contract Award notice that gives no price has no currency either, so gold writes no amount basis for it."""
+    notice = next(row for row in recorded("api/notices/P130164.json")["procnotices"] if row["id"] == GAP["in_inr"])
+    unpriced = dict(notice, notice_text=notice["notice_text"].replace(f"INR {GAP['in_inr_price']}", ""))
+
+    with DuckDBEngine.open() as engine:
+        catalog.build(engine)
+        run_one(engine, "notices", {"total": "1", "procnotices": [unpriced]}, dt.datetime(2026, 10, 23, tzinfo=dt.UTC))
+        gold.build(engine)
+        stored = rows(engine, "SELECT contract_id, contract_amount, contract_currency, amount_basis "
+                              "FROM strata.gold.contract")
+
+    assert stored == [{"contract_id": GAP["in_inr"], "contract_amount": None, "contract_currency": None,
+                       "amount_basis": None}]
+
+
 def test_a_gap_year_notice_priced_in_us_dollars_is_labeled_so_and_one_that_repeats_an_award_is_left_out():
     """Two pages written from recorded ones. OP00044090 (values.toml, award-7431-signed) priced in US
     dollars instead of rupees is labeled US dollars from award notices. And a prior-review award
@@ -430,6 +487,34 @@ def test_an_indicator_revised_in_place_keeps_both_versions_and_a_join_between_th
     assert before is None  # nothing from this page was public before its lastupdated date
 
 
+def test_a_value_revised_under_the_same_lastupdated_date_is_public_from_the_day_strata_first_fetched_it():
+    """Ticket 17's verify, F2. The API changed Kenya's 2025 estimate but kept the page's lastupdated date, so that
+    date cannot say when the new value came out. Gold keeps both versions: the earlier one from its lastupdated date,
+    and the new one from the day Strata first fetched it, so a query as of a day between the two fetches returns the
+    value Strata held then."""
+    from strata.lakehouse import governance
+
+    first = recorded("api/indicators/wgi-ge-KEN-IND.json")
+    earlier = [row["value"] for row in first[1] if (row["country"]["id"], row["date"]) == ("KE", "2025")][0]
+    later = revised(first, "KE", "2025", -0.5, first[0]["lastupdated"])
+    url = "https://api.worldbank.org/v2/country/KEN;IND/indicator/GOV_WGI_GE.EST?format=json&per_page=500&source=3"
+
+    with DuckDBEngine.open() as engine:
+        catalog.build(engine)
+        run_one(engine, "wgi", first, dt.datetime(2026, 10, 23, tzinfo=dt.UTC), url)
+        run_one(engine, "wgi", later, dt.datetime(2026, 11, 20, tzinfo=dt.UTC), url)
+        gold.build(engine)
+        versions = rows(engine, "SELECT value, public_from, superseded_on FROM strata.gold.governance_score "
+                                "WHERE country_code = 'KE' AND indicator_id = 'GOV_WGI_GE.EST' AND year = 2025 "
+                                "ORDER BY public_from")
+        between = governance.score_as_of(engine, "KE", "GOV_WGI_GE.EST", dt.date(2026, 11, 1))
+        after = governance.score_as_of(engine, "KE", "GOV_WGI_GE.EST", dt.date(2026, 11, 20))
+
+    assert [(row["value"], row["public_from"], row["superseded_on"]) for row in versions] == [
+        (earlier, dt.date(2026, 9, 25), dt.date(2026, 11, 20)), (-0.5, dt.date(2026, 11, 20), None)]
+    assert (between["value"], after["value"]) == (earlier, -0.5)
+
+
 def test_cpia_and_wgi_reach_gold_for_each_country_and_year_with_a_value(db):
     """CPIA covers IDA countries only: India has values only for the years it borrowed from IDA."""
     for file, indicator in (("api/indicators/cpia-irai-KEN-IND.json", "IQ.CPA.IRAI.XQ"),
@@ -486,7 +571,7 @@ def test_a_passage_takes_its_project_s_one_sector_so_search_and_the_slice_agree(
     projects = rows(db, "SELECT project_id, sector FROM strata.gold.project")
 
     assert projects
-    assert [(p["project_id"], passages.project(db, p["project_id"]).slice_sector) for p in projects] == [
+    assert [(p["project_id"], passages.project(db, p["project_id"]).sector) for p in projects] == [
         (p["project_id"], p["sector"]) for p in projects]
 
 

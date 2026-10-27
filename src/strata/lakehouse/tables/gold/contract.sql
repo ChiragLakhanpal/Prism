@@ -20,7 +20,11 @@
 -- contract_amount_usd    in US dollars; empty for a contract from a notice, never converted
 -- contract_amount, contract_currency   the amount in the currency the source gives it in
 -- amount_basis           US dollars; or, for a contract from a notice, US dollars from award notices
---                        when the notice prices it in USD, else local currency from award notices
+--                        when the notice prices it in USD, else local currency from award notices;
+--                        empty for a notice that gives no price. Ticket 63 let it be empty: a workspace
+--                        whose table is older runs
+--                        ALTER TABLE strata.gold.contract ALTER COLUMN amount_basis DROP NOT NULL
+--                        before the bundle deploy that brings ticket 63's gold/contract.sql
 -- supplier_id            the contract's supplier (gold.supplier): the member, or the joint venture
 --                        (JV- and its members' supplier IDs) when it has several members, which
 --                        gold.contract_supplier lists. For the FY2001 to FY2016 dataset, which has no
@@ -54,7 +58,7 @@ CREATE TABLE IF NOT EXISTS strata.gold.contract (
   contract_amount_usd DECIMAL(18, 2),
   contract_amount DECIMAL(20, 2),
   contract_currency STRING,
-  amount_basis STRING NOT NULL,
+  amount_basis STRING,
   supplier_id STRING,
   supplier_count INT NOT NULL,
   joint_venture BOOLEAN NOT NULL,

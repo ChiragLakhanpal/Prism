@@ -225,6 +225,22 @@ def test_four_throttled_answers_give_a_throttled_run_row_with_azure_s_message_an
     assert ops.run("SELECT run_id, period_key FROM strata.ops.budget_periods").rows == (("pull-3", "credit"),)
 
 
+def test_a_throttled_answer_that_names_the_subscription_keeps_no_id_in_the_run_row(ops):
+    """Ticket 107's review, follow-up 1. A 429 from Azure Resource Manager can name the subscription, and every account
+    user can read strata.ops, so the row keeps Azure's words with each id replaced. A made-up id."""
+    named = ('{"error":{"code":"SubscriptionRequestsThrottled","message":"Number of requests for subscription '
+             "'00000000-1111-2222-3333-444444444444' exceeded the limit.\"}}")
+    clock = FakeClock()
+    source, _ = azure([costs.CostError("throttled", f"Azure answered 429: {named}", headers={"Retry-After": "5"})] * 4,
+                      clock)
+
+    costs.pull(ops, source, "pull-4", lambda: PULLED_AT)
+
+    [(detail,)] = ops.run("SELECT detail FROM strata.ops.cost_pulls WHERE run_id = 'pull-4'").rows
+    assert detail == ('Azure answered 429: {"error":{"code":"SubscriptionRequestsThrottled","message":"Number of '
+                      "requests for subscription '[id removed]' exceeded the limit.\"}}")
+
+
 def test_the_transport_hands_azure_s_wait_headers_to_the_retries_and_a_403_still_raises_at_once(monkeypatch):
     """_http is the one transport. urllib's HTTPError carries the answer's headers, and a 429's reach the wait; a 401
     or 403 is never tried again."""

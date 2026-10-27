@@ -113,7 +113,8 @@ def test_a_reader_reads_no_one_s_email_or_user_id_in_the_reports_or_the_cited_so
     """Ticket 64, criterion 1. Everyone who can sign in may read strata.ops (bundle/catalog.yml), so who sent each
     report and who asked each question are masked for readers: the fixture's stand-in for the readers group, the
     engine every viewer reads through, gets NULL in every masked column, even in a filter, as the warehouse's column
-    masks give it. The app's own identity writes them and reads them back."""
+    masks give it. The app's own identity writes them and reads them back. The reader here is a passage reviewer, the
+    only reader whose rows the tables' row filter keeps (ticket 63)."""
     run = loop.ask(ANA)
     assert loop.report(ANA, run).status_code == 200
 
@@ -121,7 +122,7 @@ def test_a_reader_reads_no_one_s_email_or_user_id_in_the_reports_or_the_cited_so
     assert as_the_app == [{"viewer_id": "id-ana.example@worldbank.org", "viewer_email": "ana.example@worldbank.org"}]
     assert {row["viewer_id"] for row in loop.rows("SELECT viewer_id FROM strata.ops.answer_citations")} == {
         "id-ana.example@worldbank.org"}
-    reader = loop.reader()
+    reader = loop.reader(DANIEL["X-Forwarded-Email"])
     labels = reader.run("SELECT * FROM strata.ops.candidate_labels", {})
     [label] = [dict(zip(labels.columns, row)) for row in labels.rows]
     assert (label["viewer_id"], label["viewer_email"], label["viewer_role"], label["passage_id"]) == (
@@ -131,6 +132,25 @@ def test_a_reader_reads_no_one_s_email_or_user_id_in_the_reports_or_the_cited_so
     assert reader.run("SELECT count(*) FROM strata.ops.candidate_labels WHERE viewer_email = :email "
                       "OR viewer_id = :id", {"email": "ana.example@worldbank.org",
                                              "id": "id-ana.example@worldbank.org"}).rows == ((0,),)
+
+
+def test_only_the_app_and_passage_reviewers_read_the_reports_and_the_questions_people_asked(loop):
+    """Ticket 63. A report keeps the question and the reason its sender wrote, and an answer's sources keep each
+    question, so the readers group's SELECT on strata.ops would let any SQL editor read them. A row filter shows
+    these rows only to the app's principal, the owner and the passage reviewers' workspace group: anyone else reads
+    no row, even in a count, and a passage reviewer reads the rows with who sent them still masked."""
+    run = loop.ask(ANA)
+    assert loop.report(ANA, run, reason="Not about these contracts.").status_code == 200
+
+    for anyone in (loop.reader(), loop.reader(ANA["X-Forwarded-Email"]), loop.reader(LEELA["X-Forwarded-Email"])):
+        assert anyone.run("SELECT count(*) FROM strata.ops.candidate_labels", {}).rows == ((0,),)
+        assert anyone.run("SELECT count(*) FROM strata.ops.answer_citations AS c WHERE c.run_id = :run",
+                          {"run": run}).rows == ((0,),)
+    reviewer = loop.reader(DANIEL["X-Forwarded-Email"])
+    labels = reviewer.run("SELECT viewer_email, question, reason FROM strata.ops.candidate_labels", {})
+    assert labels.rows == ((None, QUESTION, "Not about these contracts."),)
+    [(cited,)] = reviewer.run("SELECT count(*) FROM strata.ops.answer_citations WHERE run_id = :run", {"run": run}).rows
+    assert cited > 0
 
 
 def test_a_person_cannot_report_a_passage_from_someone_else_s_answer(loop):

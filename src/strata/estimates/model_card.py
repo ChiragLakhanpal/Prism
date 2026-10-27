@@ -66,14 +66,19 @@ NO_CAUSE = "The stored results do not show the cause."
 def _middles(year: int, record: dict) -> str:
     return (f"half of the packages from {year} that Strata had not seen were signed within "
             f"{record['unseen_middle_months']:.1f} months, against {record['calibration_middle_months']:.1f} months "
-            f"for the {record['calibration_packages']} packages that sized the range")
+            f"for the {record['calibration_packages']} packages that sized the {year} model's range")
+
+
+def _above(record: dict, thresholds: Thresholds) -> bool:
+    """Whether a year's coverage is above the band, rather than short of it: worked out once, here."""
+    return record["coverage"] > float(thresholds.value("time_estimate.coverage_high"))
 
 
 def cause(year: int, record: dict, thresholds: Thresholds) -> str:
     """The likely cause of a year outside the coverage band, only when the year's stored results show it:
     its two Kaplan-Meier middles, in months as stored, or the share of the packages that sized the range
     that were still open at the cutoff. Otherwise it says the stored results do not show one."""
-    above = record["coverage"] > float(thresholds.value("time_estimate.coverage_high"))
+    above = _above(record, thresholds)
     unseen, sized = record.get("unseen_middle_months"), record.get("calibration_middle_months")
     if unseen is not None and sized is not None:
         if above and unseen < sized:
@@ -110,14 +115,17 @@ def coverage(years: dict[int, dict], thresholds: Thresholds) -> list[str]:
         if record.get("n", 0) < fewest:
             lines.append(f"- {year}: {_too_few(record.get('n', 0), fewest)}")
             continue
-        inside = (f"- {year}: {_words(record['m'])} of {record['n']} finished inside the 8-in-10 range "
-                  f"({record['coverage_percent']} percent)")
+        gap, above = record.get("band_gap_points"), _above(record, thresholds)
+        # A year less than a point outside the band rounds to the band's own end, so it is written from that end.
+        share = (f"{record['coverage_percent']} percent" if record["in_band"] or gap != 0 else
+                 f"just over {whole(100 * Fraction(str(high)))} percent" if above else
+                 f"just under {whole(100 * Fraction(str(low)))} percent")
+        inside = f"- {year}: {_words(record['m'])} of {record['n']} finished inside the 8-in-10 range ({share})"
         if record["in_band"]:
             lines.append(f"{inside}, inside the band.")
             continue
-        gap = record["band_gap_points"]
         points = "less than 1 percentage point" if gap == 0 else f"{gap} percentage point{'s' if gap != 1 else ''}"
-        side = "Above" if record["coverage"] > float(high) else "Short of"
+        side = "Above" if above else "Short of"
         lines.append(f"{inside}, outside the band. {side} the band by {points}. {cause(year, record, thresholds)}")
     return lines
 
@@ -147,8 +155,8 @@ def sentence(record: dict | None) -> str:
     if record["abstention"] is not None:
         return (f"Strata has fewer than {record['abstention']['min_unseen_packages']} packages from {record['year']} "
                 "that it had not seen, so it gives no track record yet.")
-    return (f"Of {record['n']} packages from {record['year']} that Strata had not seen, {record['m']} finished inside "
-            f"its 8-in-10 range, where a well-sized range catches about {record['expected']}.")
+    return (f"Of {record['n']} packages from {record['year']} that Strata had not seen, {_words(record['m'])} finished "
+            f"inside its 8-in-10 range, where a well-sized range catches about {_words(record['expected'])}.")
 
 
 def render(years: dict[int, dict], model, no_model, settings: TimeEstimateSettings, thresholds: Thresholds,
@@ -217,7 +225,8 @@ def render(years: dict[int, dict], model, no_model, settings: TimeEstimateSettin
         "- The plan's own planned duration: from the planned notice to the planned signed contract in the "
         "package's first listing.",
         "- Country and region.",
-        f"- Governance scores, as the Indicators API had published them that day: {', '.join(settings.governance_indicators)}.",
+        "- Governance scores, as the Indicators API had published them that day: "
+        + ", ".join(f"{settings.governance_names[code]} ({code})" for code in settings.governance_indicators) + ".",
         "- The implementing agency's history: how many of its packages were signed by that day, and their middle "
         "number of days.",
         "",

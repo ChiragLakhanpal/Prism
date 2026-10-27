@@ -311,8 +311,11 @@ PHONE = re.compile(r"\(?\+\d{1,3}\)?[ -]{0,3}\(?\d{2,4}\)?[ -]{0,3}\d{3,4}[ -]?\
 # phone label, whatever its shape (Tel 254 20 1234567, Tel.254412345678, Telephone Number: 254...,
 # Mob. No. 98123 45678). The other is any digit written after a removed number and a slash. That
 # digit may start a second mobile, or be the last digit of a second line (0722 123 456/7).
-LABELLED_PHONE = re.compile(r"\b(?:tel\w*|\w*phone|mobile|mob|cell\w*|fax)\b[^0-9\n]{0,15}?\+?\(?\d[\d ().-]{6,}\d", re.I)
+LABELLED_PHONE = re.compile(r"\b(?:tel\w*|\w*phone|mobile|mob|cell\w*|fax|ph|contact|whats\s?app)\b"
+                            r"[^0-9\n]{0,15}?\+?\(?\d[\d ().-]{6,}\d", re.I)
 AFTER_REMOVED = re.compile(r"\[contact removed\]\s*/\s*\d")
+# A person's name after "Attention" and a title (ATTENTION: Mr. Francis Kombe); a job title after it stays.
+ATTENTION_NAME = re.compile(r"(?i:attention)\s*:?\s*(?i:mr|mrs|ms|miss|dr|eng|prof)\b\.?\s+[A-Z]")
 # An email with spaces around its "@" (JDOE @ EXAMPLE.COM) or spelled out (jdoe [at] example [dot] com).
 # Its domain has a letter, so a rate a report's table writes after a year ("INR - 2013 @7.4%") is not one.
 SPACED_EMAIL = re.compile(r"\w\s*(?:@|[\[(]\s*at\s*[\])])\s*(?=[\w.]*[A-Za-z])\w+"
@@ -371,7 +374,8 @@ def test_no_email_address_or_phone_number_is_left_in_bronze_silver_or_gold(gold)
         if value not in searched:
             searched[value] = (
                 len(EMAIL.findall(value) + AT_SIGN.findall(value) + PHONE.findall(value)
-                    + LABELLED_PHONE.findall(value) + AFTER_REMOVED.findall(value) + SPACED_EMAIL.findall(value)),
+                    + LABELLED_PHONE.findall(value) + AFTER_REMOVED.findall(value) + SPACED_EMAIL.findall(value)
+                    + ([] if where.startswith(REPORT_TEXT) else ATTENTION_NAME.findall(value))),
                 [contact for contact in found if contact in value])
         numbers, contacts_in_value = searched[value]
         leaks += [(where, "an email or phone number")] * numbers
@@ -449,7 +453,8 @@ def test_stripping_removes_every_number_written_after_a_phone_label():
 
 def test_stripping_knows_every_common_phone_label_and_an_email_written_to_dodge_a_scan():
     """Notices label a number in many ways. A number with a country code and no plus goes after each
-    label, an Indian mobile with no trunk zero goes after Mob, Ph, M or Contact, and an email goes
+    label, a number of nine digits or more goes after Ph, M, Contact or WhatsApp (Ph: 98123 45678,
+    Contact: 254 722 123456), and an email goes
     when its "@" has spaces around it or is written [at] or (at). A phrase that only uses a label's
     word stays, and so does an extension. These values are made up."""
     page = {"procnotices": [{"id": "OP-made-up", "notice_text": (
@@ -470,6 +475,70 @@ def test_stripping_knows_every_common_phone_label_and_an_email_written_to_dodge_
         "Email [contact removed], [contact removed] or [contact removed]. "
         "Mobile 4x4 units, 3 Mobile cranes, Fax machine 2 units. Tel: [contact removed] Ext. 42335.")
     assert removed == 7 + 5 + 3 + 1
+
+
+def test_stripping_removes_any_phone_number_after_a_short_label_and_every_number_after_or():
+    """Kenya's numbers follow Ph, M, Contact and WhatsApp too, written with a country code and no
+    plus, or as a mobile with no trunk zero. A second number may follow a slash, a comma or "or".
+    A pH value and a count stay. These values are made up."""
+    page = {"procnotices": [{"id": "OP-made-up", "notice_text": (
+        "Ph: 254 20 1234567. Contact: 722 123 456. M: 254722123456. WhatsApp: 254722123456. "
+        "Ph: 9812345678 / 9876543210. Tel: 254722123456 or 254733123456. "
+        "pH: 6.5 to 8.5. M: 12 units.")}]}
+
+    stripped, removed = contacts.strip(page)
+
+    assert stripped["procnotices"][0]["notice_text"] == (
+        "Ph: [contact removed]. Contact: [contact removed]. M: [contact removed]. "
+        "WhatsApp: [contact removed]. Ph: [contact removed]. Tel: [contact removed]. "
+        "pH: 6.5 to 8.5. M: 12 units.")
+    assert removed == 6
+
+
+def test_stripping_removes_a_person_s_name_after_attention_and_keeps_a_job_title():
+    """Three P156634 notices write their contact as "ATTENTION: Mr." and a name, in bold, with no contact
+    field to name them (ticket 17's verify, F4). A name after a title goes; a job title after Attention, and
+    the phrase "Attention is drawn", stay. These values are made up."""
+    page = {"procnotices": [{"id": "OP-made-up", "notice_text": (
+        "<p><strong>ATTENTION: Mr. John Doe</strong></p><p>Attention: Mrs. Jane A. Roe, Procurement Officer</p>"
+        "<p>Attention: Chief Executive Officer, Water Sector Trust Fund.</p>"
+        "<p>Attention is drawn to the Procurement Regulations.</p>")}]}
+
+    stripped, removed = contacts.strip(page)
+
+    assert stripped["procnotices"][0]["notice_text"] == (
+        "<p><strong>ATTENTION: [contact removed]</strong></p><p>Attention: [contact removed], Procurement Officer</p>"
+        "<p>Attention: Chief Executive Officer, Water Sector Trust Fund.</p>"
+        "<p>Attention is drawn to the Procurement Regulations.</p>")
+    assert removed == 2
+
+
+def test_the_three_notices_that_name_their_contact_after_attention_keep_only_the_label(gold):
+    """values.toml, awkward.attention_names: each recorded notice writes "ATTENTION: Mr." and a name, and silver keeps
+    the label with the name removed."""
+    awkward = TRUTH["awkward"]["attention_names"]
+    recorded = {notice["id"]: notice.get("notice_text") or "" for notice in record(awkward["record"])["procnotices"]}
+    assert all("ATTENTION: Mr." in recorded[notice] for notice in awkward["notices"])
+
+    rows = gold.run("SELECT notice_id, notice_text FROM strata.silver.notices WHERE notice_id IN "
+                    "(:first, :second, :third)", dict(zip(("first", "second", "third"), awkward["notices"]))).rows
+
+    assert sorted(notice for notice, _ in rows) == awkward["notices"]
+    assert all("ATTENTION: [contact removed]" in text and "ATTENTION: Mr." not in text for _, text in rows)
+
+
+def test_stripping_keeps_a_rate_written_with_an_at_sign_and_still_removes_a_spaced_email():
+    """A rate is often written with "@" (Interest @ 12.5% per year). A spaced "@" is an email only when the
+    address ends in a dot and two letters or more (ticket 07's verify, O1). These values are made up."""
+    rates = "Interest @ 12.5% per year. Bid security @ 2,000.00 USD. rate @ KES 1,000,000."
+    page = {"procnotices": [{"id": "OP-made-up", "notice_text": (
+        rates + " Email JDOE @ EXAMPLE.COM, jdoe @example.co.ke or name@ gmail.com.")}]}
+
+    stripped, removed = contacts.strip(page)
+
+    assert stripped["procnotices"][0]["notice_text"] == (
+        rates + " Email [contact removed], [contact removed] or [contact removed].")
+    assert removed == 3
 
 
 def test_stripping_removes_emails_and_numbers_run_together_with_no_spaces():
@@ -645,6 +714,30 @@ def test_a_loan_number_in_each_of_its_forms_normalizes_to_one_value_and_joins_to
     assert loan["project_id"] == "P156634"
     for key in ("loan-form-bare", "loan-form-older", "loan-form-older-with-lender"):
         notice_loan(gold, VALUES[key])
+
+
+def test_a_lender_with_four_digits_and_no_country_code_keeps_only_its_digits():
+    """Made-up text. Without a country code, four digits may not be the older form, so clean.py
+    keeps only the digits, and gold matches them to the loans of the notice's own project. Two
+    letters followed by more letters are a word, not a country code (6030 AND 6029)."""
+    for written in ("IDA 6030", "IDA-6030 and 6029", "Credit IDA 6030 AND 6029"):
+        loan = clean.loan_number(written)
+        assert (loan.normalized, loan.digits) == (None, "6030")
+
+
+def test_a_project_record_keeps_a_loan_with_four_digits_as_its_lender_and_digits():
+    """Made-up record. The projects API is the source of a project's loans, and an IBRD loan has four digits
+    (IBRD-8956), so silver keeps it as its lender and digits, where a notice's four digits with no country code
+    keep only the digits (ticket 07's verify, O4)."""
+    from strata.lakehouse.silver import projects as silver_projects
+
+    body = {"projects": {"P000003": {"id": "P000003", "boardapprovaldate": "2018-06-15T00:00:00Z", "loan_transactions": [
+        {"financier_loan": "IBRD-8956"}, {"financier_loan": "IDA-60300"}, {"financier_loan": "TF0A1234"}]}}}
+
+    rows = silver_projects.parse(body, "page", dt.datetime(2026, 10, 23, tzinfo=dt.UTC))["strata.silver.project_loans"]
+
+    assert [(project, loan, written) for project, loan, written, *_ in rows] == [
+        ("P000003", "IBRD8956", "IBRD-8956"), ("P000003", "IDA60300", "IDA-60300")]
 
 
 @pytest.mark.parametrize("project", ["P156634", "P130164"])

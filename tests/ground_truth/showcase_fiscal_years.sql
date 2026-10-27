@@ -4,9 +4,9 @@
 -- parameter. Run it on the warehouse with: uv run --script ops/bundle/check.py same-rows --env-file .env
 -- engines: duckdb, databricks
 --
--- The dates are the showcase's (P130164), from the spec's Testing Decisions: the mid-term review
--- (May 16, 2016), ISR 7 (August 26, 2016), the restructuring (July 27, 2017), ISR 12 (April 10,
--- 2018) and the ICR (October 10, 2019). Fiscal years run July to June, so a date from July on
+-- The dates are the showcase's (P130164), each recorded with its quote and its test in
+-- tests/ground_truth/values.toml: mid-term-review (May 16, 2016), isr-7-date (August 26, 2016),
+-- restructuring (July 27, 2017), isr-12-date (April 10, 2018) and icr-date (October 10, 2019). Fiscal years run July to June, so a date from July on
 -- falls in the next year's FY. The day counts to the ICR were computed once with Python's datetime.
 -- The as-of date drops the ICR, which became public after it.
 -- param: as_of = 2018-12-31

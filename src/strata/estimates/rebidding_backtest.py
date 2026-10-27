@@ -24,8 +24,8 @@ holds that alias yet, else as challenger. Its registered_model segment stores ve
 
 score_packages() is the nightly job's score task: the champion's chance for every activity a Procurement Plan
 lists, as planned today, written to strata.ops.rebidding_scores. natural_frequency(), in strata.estimates.rebidding
-so the app's server never imports numpy or XGBoost, is what rebidding_risk returns: the champion's "about k in 10 packages like this one", shown only from past_range.min_comparables
-comparables and a champion that beat its baseline in its latest test year. Otherwise it says why not, by code:
+so the app's server never imports numpy or XGBoost, is what rebidding_risk returns: the champion's "about k in
+10 packages like this one", shown only from past_range.min_comparables comparables and a champion that beat its baseline in its latest test year. Otherwise it says why not, by code:
 too_few, no_results (no champion registered yet), not_better, or not_scored (no score for this package: the
 nightly job scores the activities in Procurement Plans, and a package planned from a sentence has none).
 """
@@ -59,10 +59,6 @@ def _four(value: float) -> float:
 
 def window(year: int, outcomes_through: dt.date) -> Window:
     return Window(dt.date(year, 1, 1), outcomes_through, TEST_YEAR, str(year))
-
-
-def rows_as_of(engine, as_of: dt.date) -> rebidding.Rows:
-    return rebidding.engine_rows(engine, as_of)
 
 
 # ── What the models read ─────────────────────────────────────────────────
@@ -216,7 +212,8 @@ def run(engine, tracker, *, years: tuple[int, ...] | None = None, outcomes_throu
         tracker.log_text(mlflow_run, model.state_json(), STATE)
         tracker.log_model(mlflow_run, model)
         year, record = latest_result(stored, best)
-        version = tracker.register(mlflow_run, settings.registered_model, card, track_sentence(year, record, best))
+        version = tracker.register(mlflow_run, settings.registered_model, card, track_sentence(year, record, best),
+                                   what="rebidding model (experimental)")
         alias = CHAMPION if tracker.alias_version(settings.registered_model, CHAMPION) is None else CHALLENGER
         tracker.set_alias(settings.registered_model, alias, version)
         rows = [Score("version", version), Score("alias", text=alias), Score("learner", text=best),
@@ -267,7 +264,7 @@ def render_card(years: dict[int, dict], best: str | None, model: RebiddingModel 
     """The model card, kept in MLflow beside the model. Every number comes from the stored results or the model."""
     wait = thresholds.value("rebidding.no_award_after_days")
     lines = [
-        "# Rebidding risk: model card",
+        "# Rebidding model (experimental): model card",
         "",
         "Experimental. No field in the World Bank's records says a package was advertised again, so Strata works the "
         "labels out from three sources, and they may miss or miscount some packages.",

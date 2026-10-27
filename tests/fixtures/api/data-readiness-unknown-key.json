@@ -1941,37 +1941,6 @@
       "run_ids": [
         "fixture"
       ]
-    },
-    {
-      "evidence_id": "strata.ops.data_readiness:awards/all/gap_years_contracts_in_local_currency",
-      "public_from": "2026-10-23",
-      "source": {
-        "table": "strata.ops.data_readiness",
-        "source_key": "awards",
-        "measure": "gap_years_contracts_in_local_currency",
-        "subjects": [
-          "all"
-        ],
-        "measured_on": "2026-10-23",
-        "counted_in": "strata.gold.contract"
-      },
-      "source_key": "awards",
-      "measure": "gap_years_contracts_in_local_currency",
-      "kind": "fix",
-      "subjects": [
-        "all"
-      ],
-      "count": 7,
-      "denominator": 7,
-      "share_percent": null,
-      "share_bound": null,
-      "in_ten": null,
-      "in_ten_exact": null,
-      "as_of": null,
-      "measured_on": "2026-10-23",
-      "run_ids": [
-        "fixture"
-      ]
     }
   ],
   "coverage": {
@@ -2043,18 +2012,86 @@
           "late_days": null
         }
       }
-    },
-    {
-      "type": "gap",
-      "id": "fy2017_2019",
-      "source_key": "awards",
-      "label": "Contract awards",
-      "first_fiscal_year": 2017,
-      "last_fiscal_year": 2019,
-      "note": "No World Bank dataset publishes contract awards for these years. Award notices cover most of them, in local currency."
     }
   ],
-  "kinds": [],
+  "kinds": [
+    {
+      "kind": "past_range",
+      "tool": "find_comparables",
+      "status": "partial",
+      "ready_for": 28,
+      "holds_back": [
+        [
+          {
+            "text": "Of "
+          },
+          {
+            "number": 603,
+            "row": 2,
+            "noun": "contracts",
+            "noun_one": "contract",
+            "role": null,
+            "lack": null
+          },
+          {
+            "text": " "
+          },
+          {
+            "text": "contracts"
+          },
+          {
+            "text": ", "
+          },
+          {
+            "number": 75,
+            "row": 2,
+            "noun": "contracts",
+            "noun_one": "contract",
+            "role": "missing",
+            "lack": "a reference from Systematic Tracking of Exchanges in Procurement (STEP)"
+          },
+          {
+            "text": " lack "
+          },
+          {
+            "text": "a reference from Systematic Tracking of Exchanges in Procurement (STEP)"
+          },
+          {
+            "text": "."
+          }
+        ],
+        [
+          {
+            "text": "None of the "
+          },
+          {
+            "number": 258,
+            "row": 47,
+            "noun": "activity entries in the latest plan versions",
+            "noun_one": "activity entry in the latest plan versions",
+            "role": "missing",
+            "lack": "a first listing I could confirm"
+          },
+          {
+            "text": " "
+          },
+          {
+            "text": "activity entries in the latest plan versions"
+          },
+          {
+            "text": " has "
+          },
+          {
+            "text": "a first listing I could confirm"
+          },
+          {
+            "text": "."
+          }
+        ]
+      ],
+      "spell_out": false
+    }
+  ],
   "gaps": [
     {
       "id": "awards/linked",
@@ -2100,38 +2137,6 @@
           "text": "a reference from Systematic Tracking of Exchanges in Procurement (STEP)"
         }
       ]
-    },
-    {
-      "id": "fy2017_2019",
-      "type": "published",
-      "status": "gap",
-      "row_id": "awards",
-      "source_key": "awards",
-      "column": null,
-      "projects": 2,
-      "phrase": [
-        {
-          "text": "the "
-        },
-        {
-          "text": "contract awards"
-        },
-        {
-          "text": " for fiscal "
-        },
-        {
-          "text": "2017"
-        },
-        {
-          "text": " to "
-        },
-        {
-          "text": "2019"
-        },
-        {
-          "text": ", which no World Bank dataset publishes"
-        }
-      ]
     }
   ],
   "fixes": [
@@ -2158,42 +2163,6 @@
           "text": " contracts that lack one, so each joins its package and its notices."
         }
       ]
-    },
-    {
-      "rank": 2,
-      "gap": "fy2017_2019",
-      "projects": 2,
-      "row": 61,
-      "projects_row": 60,
-      "projects_from": "measure",
-      "sentence": [
-        {
-          "text": "Convert the "
-        },
-        {
-          "number": 7,
-          "row": 61,
-          "noun": "contracts in local currency",
-          "noun_one": null,
-          "role": null,
-          "lack": null
-        },
-        {
-          "text": " contracts in award notices for fiscal "
-        },
-        {
-          "text": "2017"
-        },
-        {
-          "text": " to "
-        },
-        {
-          "text": "2019"
-        },
-        {
-          "text": " from local currency to US dollars, so they can be compared with the awards datasets."
-        }
-      ]
     }
   ],
   "routes": [],
@@ -2212,7 +2181,7 @@
         "text": " "
       },
       {
-        "text": "The biggest gaps are "
+        "text": "The biggest gap is "
       },
       {
         "text": "the "
@@ -2249,34 +2218,10 @@
         "text": "a reference from Systematic Tracking of Exchanges in Procurement (STEP)"
       },
       {
-        "text": " and "
-      },
-      {
-        "text": "the "
-      },
-      {
-        "text": "contract awards"
-      },
-      {
-        "text": " for fiscal "
-      },
-      {
-        "text": "2017"
-      },
-      {
-        "text": " to "
-      },
-      {
-        "text": "2019"
-      },
-      {
-        "text": ", which no World Bank dataset publishes"
-      },
-      {
         "text": "."
       }
     ],
-    "text": "One source is behind the past range. The biggest gaps are the 75 of 603 contracts that lack a reference from Systematic Tracking of Exchanges in Procurement (STEP) and the contract awards for fiscal 2017 to 2019, which no World Bank dataset publishes."
+    "text": "One source is behind the past range. The biggest gap is the 75 of 603 contracts that lack a reference from Systematic Tracking of Exchanges in Procurement (STEP)."
   },
   "headline_abstention": null,
   "parse_failures": null,

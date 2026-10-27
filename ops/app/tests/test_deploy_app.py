@@ -277,7 +277,7 @@ def test_without_the_foundry_keys_the_app_deploys_with_no_agent_and_says_so(tmp_
     assert "FOUNDRY_CLIENT_SECRET" in out and "there is no agent" in out
 
 
-def test_the_app_s_own_principal_may_write_usage_events_agent_runs_opened_sources_drafts_supplier_decisions_and_lesson_reviews_and_nothing_more(tmp_path, capsys):
+def test_the_app_s_own_principal_may_write_only_what_the_server_records(tmp_path, capsys):
     workspace = FakeWorkspace()
 
     deploy(workspace, tmp_path, capsys)
@@ -355,7 +355,7 @@ def test_after_its_grants_the_deploy_masks_who_sent_each_report_and_who_asked_ea
     deploy(workspace, tmp_path, capsys)
 
     grants = len(deploy_app.grants(PRINCIPAL))
-    function, *columns = workspace.statements[grants:]
+    function, *columns = workspace.statements[grants:-3]
     assert function.startswith("CREATE OR REPLACE FUNCTION strata.ops.mask_viewer(value STRING) RETURNS STRING")
     assert function.endswith(f"RETURN CASE WHEN current_user() IN ('{PRINCIPAL}', 'owner@example.org') THEN value END")
     assert columns == [
@@ -376,6 +376,37 @@ def test_after_its_grants_the_deploy_masks_who_sent_each_report_and_who_asked_ea
         "ALTER TABLE strata.ops.draft_lesson_choices ALTER COLUMN reason SET MASK strata.ops.mask_viewer",
         "ALTER TABLE strata.ops.draft_lesson_choices ALTER COLUMN rewrite SET MASK strata.ops.mask_viewer",
     ]
+
+
+def test_after_the_masks_the_deploy_shows_the_reports_rows_only_to_the_app_and_the_passage_reviewers(tmp_path, capsys):
+    """Ticket 63. Each passage report keeps its sender's question and reason, and each answer's sources keep the
+    question, so a row filter shows those two tables' rows only to the app's principal, the user who deploys and the
+    passage reviewers' workspace group, which config/roles.toml names; every other reader reads no row."""
+    workspace = FakeWorkspace()
+
+    deploy(workspace, tmp_path, capsys)
+
+    function, *tables = workspace.statements[-3:]
+    assert function == (
+        "CREATE OR REPLACE FUNCTION strata.ops.only_passage_reviewer() RETURNS BOOLEAN "
+        "COMMENT 'What people asked and reported: only the app, the owner and the passage reviewers read it.' "
+        f"RETURN current_user() IN ('{PRINCIPAL}', 'owner@example.org') "
+        "OR is_account_group_member('strata-passage-reviewers')")
+    assert tables == [
+        "ALTER TABLE strata.ops.candidate_labels SET ROW FILTER strata.ops.only_passage_reviewer ON ()",
+        "ALTER TABLE strata.ops.answer_citations SET ROW FILTER strata.ops.only_passage_reviewer ON ()"]
+
+
+def test_the_row_filter_names_only_a_workspace_group_the_deploy_could_check():
+    """The group's name is written into the filter's SQL, as the mask writes the owner, so it is checked first."""
+    from dataclasses import replace
+
+    from strata.config import load_roles
+    roles = load_roles()
+    group = replace(roles.groups["passage_reviewer"], workspace_group="reviewers') OR (1 = 1")
+    bad = replace(roles, groups={**roles.groups, "passage_reviewer": group})
+    with pytest.raises(ValueError, match="not a workspace group"):
+        deploy_app.masks(PRINCIPAL, "owner@example.org", bad)
 
 
 @pytest.mark.parametrize("owner", ["o'brien@example.org", "owner@example.org') OR (1 = 1", ""])

@@ -29,6 +29,7 @@ SELECT
   d.first_planned_on,
   d.first_planned_plan_date,
   d.delay_days,
+  d.first_listing_confirmed,
   d.public_from
 FROM latest AS l
 JOIN strata.silver.plan_step_delays AS d

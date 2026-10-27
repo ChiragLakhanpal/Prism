@@ -308,6 +308,15 @@ def test_a_prompt_shields_hit_is_kept_with_its_result_and_counted_in_data_readin
     assert hits == [{"count": 1, "denominator": report.passages}]
 
 
+def test_the_measures_name_the_offline_shield_in_words_a_reader_can_follow(db):
+    """The fixture's shield is a stand-in, and the measures' sentences name it as one (ticket 11's review, P6)."""
+    [detail] = {row["detail"] for row in rows(db, "SELECT detail FROM strata.ops.data_readiness "
+                                                  "WHERE measure = 'passages_prompt_shields_hit'")}
+
+    assert detail == ("This counts the passages in which the offline stand-in for Prompt Shields found a prompt attack, "
+                      "out of every passage read. They are kept, and search leaves them out.")
+
+
 def test_every_passage_sits_in_gold_with_a_vector_of_the_model_files_size_made_with_its_header(db):
     import hashlib
 
@@ -346,20 +355,28 @@ class CountingEmbedder:
 
 
 def test_a_second_run_fetches_parses_and_embeds_nothing_new(fresh):
+    """And its measure of the documents with contact details taken out reads what the first run's did: bronze
+    fetches a document once, so the measure counts the documents bronze holds, never only those this run fetched,
+    which read 0 of 0 on every run after the first (ticket 11's review, P1). P156634's PAD is the one of its four
+    newest documents whose text lost a contact detail."""
     from strata.config import load_thresholds
     from strata.lakehouse import passages
 
     limits = load_thresholds()
-    limits.values["ingestion"]["passage_documents"] = 2
+    limits.values["ingestion"]["passage_documents"] = 4
     first, second = CountingEmbedder(), CountingEmbedder()
-    passages.run_on_fixture(fresh, projects=["P130164"], thresholds=limits, embedder=first)
+    runs = [passages.run_on_fixture(fresh, projects=["P156634"], thresholds=limits, embedder=first)]
     held = rows(fresh, "SELECT (SELECT count(*) FROM strata.bronze.document_texts) AS texts, "
                        "(SELECT count(*) FROM strata.gold.passage) AS indexed")
-    passages.run_on_fixture(fresh, projects=["P130164"], thresholds=limits, embedder=second)
+    runs.append(passages.run_on_fixture(fresh, projects=["P156634"], thresholds=limits, embedder=second))
 
     assert first.embedded > 0 and second.embedded == 0
     assert rows(fresh, "SELECT (SELECT count(*) FROM strata.bronze.document_texts) AS texts, "
                        "(SELECT count(*) FROM strata.gold.passage) AS indexed") == held
+    stripped = [rows(fresh, "SELECT count, denominator FROM strata.ops.data_readiness WHERE run_id = :run_id AND "
+                            "source = 'documents' AND measure = 'contact_details_removed' AND subject = 'P156634'",
+                     run_id=report.run_id) for report in runs]
+    assert stripped == [[{"count": 1, "denominator": 4}]] * 2
 
 
 class UndatedReissue:

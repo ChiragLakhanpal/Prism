@@ -66,6 +66,16 @@ BREAKS = re.compile(r"<\s*(br|/p|/div|/h\d|/li|/tr)\s*/?\s*>", re.I)
 TAGS = re.compile(r"<[^>]+>")
 SIGNATURE_DATE = re.compile(r"Contract Signature Date\s*(?:\(YYYY/MM/DD\))?\s*:?\s*([0-9]{1,4}[-/][0-9A-Za-z]{2,3}[-/][0-9]{2,4})", re.I)
 SIGNED_PRICE = re.compile(r"(?:Signed Contract price|Contract Price)\s*:?\s*([A-Z]{3})\s*([0-9][0-9,]*(?:\.[0-9]+)?)", re.I)
+# The other layout, which 12 of the fixture's 231 award notices use: the currency's name, not its code, under
+# "Amount:", repeated in brackets ("Price: Currency: Amount: Kenya Shillings (Kenya Shillings) 39,535,680.75").
+AMOUNT_PRICE = re.compile(r"Amount:\s*(?P<name>[A-Za-z][A-Za-z .'-]*?)\s*(?:\([^)\n]*\))?\s*"
+                          r"(?P<amount>[0-9][0-9,]*(?:\.[0-9]+)?)", re.I)
+# Each currency name the "Amount:" layout writes, in capitals, with its code: the two the fixture's notices use and
+# those of the slice's other countries. A name not listed leaves the notice with no price, so it shows as a gap.
+CURRENCY_CODES = {"KENYA SHILLINGS": "KES", "KENYA SHILLING": "KES", "UNITED STATES DOLLARS": "USD",
+                  "UNITED STATES DOLLAR": "USD", "US DOLLARS": "USD", "INDIAN RUPEES": "INR", "INDIAN RUPEE": "INR",
+                  "BANGLADESH TAKA": "BDT", "PAKISTAN RUPEES": "PKR", "PAKISTAN RUPEE": "PKR", "VIETNAM DONG": "VND",
+                  "VIET NAM DONG": "VND", "EURO": "EUR", "EUROS": "EUR"}
 LOAN_FIELD = re.compile(r"(?:Loan|Credit)[^:\n]{0,25}:\s*([^\n]{0,40})", re.I)
 
 
@@ -80,9 +90,13 @@ def plain_text(markup) -> str:
 
 def _price(text: str) -> tuple[decimal.Decimal | None, str | None]:
     match = SIGNED_PRICE.search(text)
-    if not match:
+    if match:
+        return clean.amount(match[2].replace(",", "")), match[1].upper()
+    match = AMOUNT_PRICE.search(text)
+    code = CURRENCY_CODES.get(" ".join(match["name"].upper().split())) if match else None
+    if not code:
         return None, None
-    return clean.amount(match[2].replace(",", "")), match[1].upper()
+    return clean.amount(match["amount"].replace(",", "")), code
 
 
 def _loan(text: str) -> clean.LoanNumber | None:
@@ -130,7 +144,7 @@ def parse(body: dict, page_hash: str, fetched_at: dt.datetime) -> dict[str, list
             group,
             clean.CATEGORIES.get(group or ""),
             clean.text(record.get("procurement_method_code")),
-            clean.text(record.get("procurement_method_name")),
+            clean.as_written(record.get("procurement_method_name")),
             method.name if method else None,
             method.market_approach if method else None,
             clean.parse_date(record.get("submission_deadline_date")),

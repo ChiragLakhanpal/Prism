@@ -58,9 +58,11 @@ export type ReadinessTableState = { status: "ready"; rows: ReadinessRow[] } | { 
 // lead lines no longer made up for them. The page frame (ticket 94) set the margins by the window (32 px from 768 px,
 // 16 px below), so the rows below 1200 px and the cards were measured again: in a 1024 px page area the Sources
 // table's 15 rows were 68 px shorter and the hardest documents' five rows 81 px, and at 390 px the kinds' three
-// cards 20 px, the Sources' fifteen 95 px and the hardest documents' five 68 px.
+// cards 20 px, the Sources' fifteen 95 px and the hardest documents' five 68 px. The kinds' cards were measured
+// again once the past range joined them (ticket 63): at 390 px its card holds a longer line of what holds it back, so
+// the four real cards stood 52 px taller than four of the old height.
 const ROW_HEIGHT = { kinds: "h-[8.3rem] xl:h-[7.5rem]", sources: "h-[8.1958rem] xl:h-[7.3125rem]", shelf: "h-[8.5580rem] xl:h-[7.6707rem]" } as const;
-const CARD_HEIGHT = { kinds: "h-[16.373rem]", sources: "h-[16.084rem]", shelf: "h-[21.925rem]" } as const;
+const CARD_HEIGHT = { kinds: "h-[17.186rem]", sources: "h-[16.084rem]", shelf: "h-[21.925rem]" } as const;
 
 // Heads sit at the top, so their labels share one line however their short definitions wrap.
 const HEAD = "px-4 py-3 align-top font-semibold text-ink-heading";

@@ -81,8 +81,9 @@ def test_the_project_reports_count_the_projects_of_their_documents_and_the_pilot
     coverage = reports["cells"]["coverage"]
     projects, pilot = result["rows"][coverage["projects_row"]], result["rows"][coverage["slice_row"]]
 
-    assert (projects["count"], sorted(projects["subjects"])) == (3, ["P127203", "P130164", "P156634"])
-    assert (pilot["count"], pilot["denominator"]) == (1, SHELF["slice_projects"]["count"])
+    case = SHELF["slice_projects"]
+    assert (projects["count"], sorted(projects["subjects"])) == (len(case["document_projects"]), case["document_projects"])
+    assert (pilot["count"], pilot["denominator"]) == (case["pilot_projects_read"], case["count"])
     assert {projects["source"]["counted_in"], pilot["source"]["counted_in"]} == {"strata.silver.documents"}
     assert sorted(result["rows"][coverage["row"]]["subjects"]) == sorted(projects["subjects"])
 

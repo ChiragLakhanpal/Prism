@@ -3,9 +3,10 @@
 - review_list(engine) reads the review list as the viewer: each candidate pair that waits for a person
   (strata.ops.supplier_review_list), with both sides' names, countries and contracts, why it waits,
   and the model's judgement when it gave one.
-- labeling_list(engine, limit, labeled_pairs_target) reads the labeling tool's next pairs as the viewer: candidate pairs of
-  the latest run with no label yet, most likely first, without where Strata sent them, and how many
-  pairs are labeled of how many found, beside docs/PLAN.md section 5's aim of 1,000.
+- labeling_list(engine, limit, labeled_pairs_target) reads the labeling tool's next pairs as the
+  viewer: candidate pairs of the latest run with no label yet on their two names, most likely first,
+  without where Strata sent them, and how many pairs are labeled of how many found, beside
+  docs/PLAN.md section 5's aim of 1,000.
 - SupplierLog writes a person's decision (merge or no merge, with the reason) to
   strata.ops.supplier_review_decisions, and a label to strata.ops.supplier_pair_labels, as the app's
   own service principal, as OpenedLog does. The reviewer or labeler is the user id of the viewer the
@@ -99,12 +100,12 @@ class SupplierLog:
             _close(engine)
 
     def decide(self, pair_id: str, decision: str, reviewer: str, reason: str) -> None:
-        """Record a person's decision, with the two names they saw. Raises UnknownPair for a pair the latest
-        run did not find."""
+        """Record a person's decision, with the pair's two names in the latest run. Raises UnknownPair for a pair
+        the latest run did not find."""
         self._write("record_decision", pair_id, {"decision": decision, "reviewer": reviewer, "reason": reason},
                     "decided_at", ("left_key", "right_key", "left_name", "right_name"))
 
     def label(self, pair_id: str, label: str, labeler: str) -> None:
         """Record a person's label. Raises UnknownPair for a pair the latest run did not find."""
         self._write("record_label", pair_id, {"label": label, "labeler": labeler}, "labeled_at",
-                    ("left_key", "right_key"))
+                    ("left_key", "right_key", "left_name", "right_name"))

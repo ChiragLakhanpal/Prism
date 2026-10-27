@@ -11,11 +11,14 @@ Each supplier is one record across the contract awards and the award notices:
 3. config/thresholds.toml's [supplier_matching] routes each candidate pair by its match probability:
    auto-merge, the model (strata.knowledge.suppliers.judge), or kept apart. The model is asked about at
    most model_pairs_per_run new pairs a night, the likeliest first, and the rest wait for a person
-   until a later night. A pair the model is not sure enough of goes to a person, as does a pair whose merge would join two STEP supplier IDs by
-   name. A person's decision (strata.ops.supplier_review_decisions) outranks the thresholds and the
-   model, while both of the pair's names are still the ones the person saw. A pair is keyed by row
-   positions, so a revised notice that lists its bidders in a new order may give the same key to
-   another firm; the decision is then not applied, and the pair is routed as if no one had decided.
+   until a later night. A pair the model is not sure enough of goes to a person, as does a pair whose
+   merge would join two STEP supplier IDs by name. A person's decision
+   (strata.ops.supplier_review_decisions) outranks the thresholds and the model, while both of the
+   pair's names are still the ones the person saw. A person's no_merge keeps the two rows apart even
+   when other merges link them: every merge in their group goes to a person (person_kept_apart). A pair
+   is keyed by row positions, so a revised notice that lists its bidders in a new order may give the
+   same key to another firm; the decision is then not applied, and the pair is routed as if no one had
+   decided.
 4. A joint venture stays its own supplier, linked to its members: JV- and its members' supplier IDs,
    as strata.gold.contract keys the awards' joint ventures, so the joint venture an award notice
    lists is the same supplier as the one the awards hold. A row of the FY2001 to FY2016 awards that
@@ -26,7 +29,8 @@ resolve() does the work on plain rows and returns plain rows, so the nightly tas
 way on DuckDB and on Databricks (spec, "Data and the lakehouse run"). run() reads the rows and the
 decisions, calls resolve(), and writes strata.ops.supplier_pairs and strata.silver.supplier_resolution,
 keeping only this run's rows in each. When the judge cannot answer, run() logs it and resolves again
-with no judge, so the pairs in the middle wait for a person and the night's gold build goes on;
+asking the judge nothing new: each judgement it gave on an earlier night stays while the judge and both
+names are the same, the new pairs in the middle wait for a person, and the night's gold build goes on;
 resolve() itself stays strict, so ops/suppliers/judge_live.py still fails on a bad answer. No supplier
 score, rank or profile is computed.
 """
@@ -312,22 +316,42 @@ def _groups(pairs: list[RoutedPair]) -> _Groups:
     return groups
 
 
-def _apart_from_two_ids(pairs: list[RoutedPair]) -> list[RoutedPair]:
-    """Send to a person every merge that would join two STEP supplier IDs by name. First the merges the
-    thresholds or the model made in such a group; then, if a person's merges still join two IDs, those."""
+def _to_a_person(pairs: list[RoutedPair], crowded: Callable[[_Groups], set[str]], reason: str) -> list[RoutedPair]:
+    """Send to a person, with this review reason, every merge in a group crowded() names: first the merges the
+    thresholds or the model made in it; then, if a person's merges still crowd a group, those."""
     for movable in ({"threshold", "model"}, {"threshold", "model", "person"}):
         groups = _groups(pairs)
+        roots = crowded(groups)
+        pairs = [replace(pair, route="person", outcome="waiting", decided_by=None, review_reason=reason,
+                         reviewer=None, decision_reason=None)
+                 if pair.outcome == "merge" and pair.decided_by in movable and groups.find(pair.left.key) in roots
+                 else pair for pair in pairs]
+    return pairs
+
+
+def _apart_from_two_ids(pairs: list[RoutedPair]) -> list[RoutedPair]:
+    """Send to a person every merge that would join two STEP supplier IDs by name."""
+    def crowded(groups: _Groups) -> set[str]:
         ids: dict[str, set[str]] = defaultdict(set)
         for pair in pairs:
             for side in (pair.left, pair.right):
                 if side.has_id:
                     ids[groups.find(side.key)].add(side.key)
-        crowded = {root for root, held in ids.items() if len(held) > 1}
-        pairs = [replace(pair, route="person", outcome="waiting", decided_by=None,
-                         review_reason="two_step_supplier_ids", reviewer=None, decision_reason=None)
-                 if pair.outcome == "merge" and pair.decided_by in movable and groups.find(pair.left.key) in crowded
-                 else pair for pair in pairs]
-    return pairs
+        return {root for root, held in ids.items() if len(held) > 1}
+    return _to_a_person(pairs, crowded, "two_step_supplier_ids")
+
+
+def _apart_as_a_person_said(pairs: list[RoutedPair]) -> list[RoutedPair]:
+    """A person's no_merge keeps the pair's two sides apart, the way two STEP supplier IDs are kept apart: when other
+    merges link them into one group, every merge in that group goes to a person (ticket 19's verify, V1)."""
+    apart = [(pair.left.key, pair.right.key) for pair in pairs
+             if pair.decided_by == "person" and pair.outcome == "no_merge"]
+    if not apart:
+        return pairs
+
+    def crowded(groups: _Groups) -> set[str]:
+        return {groups.find(left) for left, right in apart if groups.find(left) == groups.find(right)}
+    return _to_a_person(pairs, crowded, "person_kept_apart")
 
 
 # ── Each row's supplier ──────────────────────────────────────────────────
@@ -392,7 +416,8 @@ def resolve(rows: list[SupplierRow], routing: Routing, model: SupplierMatching, 
     middle = sorted((pair for pair in found if routing.route(pair.probability) == "model"),
                     key=lambda pair: (-pair.probability, pair_id(pair.left, pair.right)))
     judged = _judged([_question(pair, sides) for pair in middle], judge, past or {}, routing.model_pairs_per_run)
-    pairs = _apart_from_two_ids([_routed(pair, sides, routing, judged, decisions or {}) for pair in found])
+    pairs = _apart_from_two_ids(_apart_as_a_person_said(
+        [_routed(pair, sides, routing, judged, decisions or {}) for pair in found]))
     return Resolution(pairs, _resolved(members, pairs))
 
 
@@ -462,9 +487,10 @@ def run(engine: Engine, run_id: str, judge: Judge | None,
     try:
         resolution = resolve(rows, routing, model, judge, decisions, past)
     except JudgeError as error:
-        log.warning("The judge %s could not answer (%s), so the pairs in the middle wait for a person.",
-                    judge.name, error)
-        resolution = resolve(rows, routing, model, None, decisions, past)
+        log.warning("The judge %s could not answer (%s), so I kept its earlier judgements and the new pairs in the "
+                    "middle wait for a person.", judge.name, error)
+        # A limit of 0 asks the judge nothing and keeps each earlier judgement whose judge and names are the same.
+        resolution = resolve(rows, replace(routing, model_pairs_per_run=0), model, judge, decisions, past)
     matched_at = clock()
     pairs = [_pair_row(run_id, matched_at, pair) for pair in resolution.pairs]
     resolved = [_resolution_row(run_id, item) for item in resolution.rows]

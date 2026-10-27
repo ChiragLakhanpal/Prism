@@ -42,6 +42,7 @@ from strata.dashboard import wording as dash_words
 from strata.lakehouse.engine import Engine
 
 LOG = logging.getLogger(__name__)
+GUID = re.compile(r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}")  # a subscription's id
 
 COSTS = "strata.ops.azure_costs"
 PULLS = "strata.ops.cost_pulls"
@@ -295,7 +296,9 @@ def pull(engine: Engine, source: CostSource, run_id: str, clock: Callable[[], dt
             engine.insert_rows(PULLS, PULL_COLUMNS, [(run_id, pulled_at, "failed", starts_on, None, 0, code, None,
                                                       today)])
             raise
-        status, detail = "throttled", str(error)
+        # A 429 from Azure Resource Manager can name the subscription, and every account user can read strata.ops,
+        # so each id in Azure's words is replaced before the row keeps them (ticket 107's review, follow-up 1).
+        status, detail = "throttled", GUID.sub("[id removed]", str(error))
         LOG.warning("Azure throttled every try of the cost pull, so I wrote no charge for this run: %s", detail)
     engine.insert_rows(COSTS, COST_COLUMNS, [
         (run_id, charge.charged_on, charge.service, charge.resource, round(charge.cost, 6), charge.currency, pulled_at,

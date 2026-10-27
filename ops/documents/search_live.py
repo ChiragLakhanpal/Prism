@@ -36,14 +36,31 @@ import yaml  # noqa: E402
 from strata.lakehouse.engine import EngineError, WarehouseEngine, http_transport  # noqa: E402
 from workspace_env import WorkspaceEnvError, load_workspace_env  # noqa: E402
 
-QUESTION = "search-passages-icr-rebidding"
+QUESTION = "search-passages-icr-rebidding"  # the one asked unless --question names another
 NEEDS = ("DATABRICKS_TOKEN", "AZURE_OPENAI_ENDPOINT", "AZURE_OPENAI_API_KEY")
+
+
+def question(question_id: str) -> dict | None:
+    """The search_passages question of evals/benchmark.yaml with this id, or None."""
+    questions = yaml.safe_load((REPO / "evals" / "benchmark.yaml").read_text())["questions"]
+    return next((q for q in questions if q["id"] == question_id and q["tool"] == "search_passages"), None)
+
+
+def ranked_line(result: dict) -> str:
+    """How the search ranked, in one sentence. The method sentence ends with its own full stop."""
+    return f"search_passages ranked with {result['search']['searcher']}: {result['search']['method']}"
 
 
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(prog="ops/documents/search_live.py", description=__doc__.split("\n\n")[0])
     parser.add_argument("--env-file", help="the env file with the workspace's address, warehouse, token and keys")
+    parser.add_argument("--question", default=QUESTION,
+                        help=f"the id of a search_passages question in evals/benchmark.yaml (default {QUESTION})")
     args = parser.parse_args(argv)
+    asked = question(args.question)
+    if asked is None:
+        print(f"evals/benchmark.yaml has no search_passages question {args.question}.")
+        return 2
     try:
         env = load_workspace_env(Path(args.env_file) if args.env_file else None)
     except WorkspaceEnvError as error:
@@ -58,9 +75,7 @@ def main(argv=None) -> int:
     from strata.dbx import Viewer
     from strata.tools import registry
 
-    questions = yaml.safe_load((REPO / "evals" / "benchmark.yaml").read_text())["questions"]
-    question = next(q for q in questions if q["id"] == QUESTION)
-    arguments = {name: given for name, given in question["arguments"].items() if name != "as_of"}
+    arguments = {name: given for name, given in asked["arguments"].items() if name != "as_of"}
     engine = WarehouseEngine(env["DATABRICKS_WAREHOUSE_ID"], http_transport(env["DATABRICKS_HOST"],
                                                                             env["DATABRICKS_TOKEN"]))
     context = registry.Context(engine=engine, viewer=Viewer(name="the env file's token",
@@ -68,15 +83,15 @@ def main(argv=None) -> int:
     for key in ("DATABRICKS_HOST", "AZURE_OPENAI_ENDPOINT", "AZURE_OPENAI_API_KEY"):
         os.environ.setdefault(key, env[key])  # the searcher reads them from the environment, as the app does
     try:
-        result = registry.call(question["tool"], arguments, context)
+        result = registry.call(asked["tool"], arguments, context)
     except (EngineError, LookupError, RuntimeError) as error:
         print(f"I could not ask search_passages: {error}")
         return 2
     top = [row["evidence_id"] for row in result["rows"][:3]]
-    print(f"search_passages ranked with {result['search']['searcher']}: {result['search']['method']}.")
+    print(ranked_line(result))
     for rank, row in enumerate(result["rows"][:3], 1):
         print(f"  {rank}. {row['evidence_id']}  {row['header']}")
-    expected = question["expected"]["top_three_include"]
+    expected = asked["expected"]["top_three_include"]
     found = [evidence for evidence in expected if evidence in top]
     print(f"{len(found)} of the {len(expected)} expected passages are in the top three.")
     return 0 if len(found) == len(expected) else 1

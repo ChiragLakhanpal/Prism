@@ -255,7 +255,7 @@ def run(engine, tracker, *, years: tuple[int, ...] | None = None, outcomes_throu
     if champion is not None:
         tracker.log_model(mlflow_run, champion)
         summary = model_card.sentence(model_card.track_record(years_stored, thresholds))
-        version = tracker.register(mlflow_run, settings.registered_model, card, summary)
+        version = tracker.register(mlflow_run, settings.registered_model, card, summary, what="time estimate")
         alias = CHAMPION if tracker.alias_version(settings.registered_model, CHAMPION) is None else CHALLENGER
         tracker.set_alias(settings.registered_model, alias, version)
         rows = [Score("version", version), Score("alias", text=alias), *_model_scores(champion)]

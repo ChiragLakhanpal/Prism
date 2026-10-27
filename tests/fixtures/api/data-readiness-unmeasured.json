@@ -2888,6 +2888,82 @@
         ]
       ],
       "spell_out": true
+    },
+    {
+      "kind": "past_range",
+      "tool": "find_comparables",
+      "status": "partial",
+      "ready_for": 28,
+      "holds_back": [
+        [
+          {
+            "text": "Of "
+          },
+          {
+            "number": 603,
+            "row": 2,
+            "noun": "contracts",
+            "noun_one": "contract",
+            "role": null,
+            "lack": null
+          },
+          {
+            "text": " "
+          },
+          {
+            "text": "contracts"
+          },
+          {
+            "text": ", "
+          },
+          {
+            "number": 75,
+            "row": 2,
+            "noun": "contracts",
+            "noun_one": "contract",
+            "role": "missing",
+            "lack": "a reference from Systematic Tracking of Exchanges in Procurement (STEP)"
+          },
+          {
+            "text": " lack "
+          },
+          {
+            "text": "a reference from Systematic Tracking of Exchanges in Procurement (STEP)"
+          },
+          {
+            "text": "."
+          }
+        ],
+        [
+          {
+            "text": "None of the "
+          },
+          {
+            "number": 258,
+            "row": 43,
+            "noun": "activity entries in the latest plan versions",
+            "noun_one": "activity entry in the latest plan versions",
+            "role": "missing",
+            "lack": "a first listing I could confirm"
+          },
+          {
+            "text": " "
+          },
+          {
+            "text": "activity entries in the latest plan versions"
+          },
+          {
+            "text": " has "
+          },
+          {
+            "text": "a first listing I could confirm"
+          },
+          {
+            "text": "."
+          }
+        ]
+      ],
+      "spell_out": true
     }
   ],
   "gaps": [

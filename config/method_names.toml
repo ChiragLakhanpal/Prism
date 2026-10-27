@@ -111,6 +111,15 @@ method = "Direct Selection"
 market_approach = "Direct"
 checked = false
 
+# The consultant method's name before the 2016 Regulations, which the FY2001 to FY2016 awards write for three
+# of P124109's contracts, such as 1535566; the current Regulations call it Direct Selection.
+[[name]]
+written = "Single Source Selection"
+language = "en"
+method = "Direct Selection"
+market_approach = "Direct"
+source = "api/awards/P124109-fy2001-2016.json"
+
 # STEP's French names, as the STEP tables of Cameroon's Procurement Plan of October 10, 2018 write them.
 [[name]]
 written = "Appel d'offres"

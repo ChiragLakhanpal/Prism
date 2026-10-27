@@ -1980,7 +1980,9 @@ export const copy = {
     changes: {
       // Two sentences with long dates, so neither is dense (DESIGN.md section 7 rule 13; unslop rule 28).
       lead: "The latest plan is the plan of {plan_date}. Compared with the plan of {prev_date}, it {change_list}.",
-      same: "The latest plan is the plan of {plan_date}. It lists the same activities, dates and estimates as the plan of {prev_date}.",
+      // A date or an estimate a version gives for the first time is no change (src/strata/server/changes.py), so the
+      // sentence says only what the comparison checks (ticket 21's verify, finding 4).
+      same: "The latest plan is the plan of {plan_date}. It lists the same activities as the plan of {prev_date}, with no planned date moved and no estimate changed.",
       link: "See what changed",
       earliest: "The only plan I have from this agency is the plan of {plan_date}, so I can't compare it with an earlier version.",
       prevUnread: "I haven't read the plan of {prev_date}, the version before the latest, so I can't say what changed.",
@@ -2459,7 +2461,7 @@ export const copy = {
       // When only the comparison failed: the line says so and links the section, whose alert has Try again.
       error: "I couldn't load what changed in this plan.",
       errorLink: "Go to that section",
-      same: "This version lists the same activities, dates and estimates as the plan of {prev_date}.",
+      same: "This version lists the same activities as the plan of {prev_date}, with no planned date moved and no estimate changed.",
       earliest: "This is the earliest plan I have from this agency, so I have no earlier version to compare it with.",
       prevUnread: "I haven't read the plan of {prev_date}, the version before this one, so I can't say what changed.",
     },
@@ -4598,6 +4600,11 @@ export const copy = {
     actualsOne: "STEP records an actual date for one of these steps. I suggest planned dates only and leave actual dates to STEP.",
     coverage: "Based on {used} of {total} comparable packages; {missing} had no dates for these steps in their published plans.",
     coverageAll: "Based on all {total} comparable packages.",
+    // A comparable planned in another STEP table, such as a firm beside an individual consultant hired by the same
+    // Method, has other steps, so it dates none of these (step_dates' reason other_family, ticket 63).
+    coverageOtherFamily: "Based on {used} of {total} comparable packages; {other} were planned in another STEP table, whose steps differ.",
+    coverageOtherFamilyAndMissing:
+      "Based on {used} of {total} comparable packages; {other} were planned in another STEP table, whose steps differ, and {missing} had no dates for these steps in their published plans.",
     coverageLink: "Data readiness for these sources",
     sourceLine: "{names}. Records run through {date}.",
     sourceLineAsOf: "{names}. Records as of {date}.",
@@ -5181,18 +5188,21 @@ export const copy = {
         plan_check: "Checking a plan against its own dates",
         document_search: "What project documents say",
         lessons: "Lessons from completion reports",
+        past_range: "How long comparable packages took",
       } as Record<string, string>,
       // The plan check's count words STEP's format as the Procurement Plans row does.
       counts: {
         plan_check: "activity entries in the latest plan versions with rows in STEP's format",
         document_search: "passages you can search",
         lessons: "proposed lessons with their quote found on the page they cite",
+        past_range: "procurement notices held",
       } as Record<string, string>,
       // The same, for a count of one.
       countsOne: {
         plan_check: "activity entry in the latest plan versions with rows in STEP's format",
         document_search: "passage you can search",
         lessons: "proposed lesson with its quote found on the page it cites",
+        past_range: "procurement notice held",
       } as Record<string, string>,
       // A count that names STEP first on its view spells it out, when the tool marks its kind
       // spell_out: the plan check's view, and a view whose headline it leaves out (DESIGN.md

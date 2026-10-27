@@ -107,7 +107,44 @@ def test_the_tool_counts_the_steps_it_dated_and_could_not_date_so_the_screen_cou
 
 def test_the_coverage_line_counts_the_comparable_packages_whose_plans_dated_these_steps(target):
     assert target["step_dates"]["coverage"] == {"total": KNOWN["comparables"], "used": KNOWN["comparables"], "missing": 0,
-                                                "reason": "no_plan_dates", "sources": ["notices", "awards", "documents", "projects"]}
+                                                "other_family": 0, "unconfirmed": 0, "reason": "no_plan_dates",
+                                                "sources": ["notices", "awards", "documents", "projects"]}
+
+
+def test_a_comparable_from_another_step_table_is_left_out_of_the_steps_and_counted_as_another_family():
+    """Ticket 27's review, follow-up 4. A firm and an individual consultant can both be hired by Direct Selection, but
+    STEP plans them in two tables with different steps, so an individual consultant's signed-contract delay never
+    counts a firm's package. The firm is counted as other_family; and a comparable whose first listing is not
+    confirmed is counted too, so section 2 can say so (ticket 27's verify, finding 2). Made-up plan rows."""
+    from strata.estimates import step_dates as steps
+
+    signed = "Signed Contract"
+
+    def row(reference, section, confirmed):
+        return {"activity_reference_no": reference, "section": section, "process_status": "Signed",
+                "plan_date": dt.date(2021, 1, 1), "step": signed, "step_order": 4, "planned_on": dt.date(2021, 3, 1),
+                "actual_on": dt.date(2021, 3, 20), "first_planned_on": dt.date(2021, 3, 1),
+                "first_planned_plan_date": dt.date(2021, 1, 1), "delay_days": 19, "first_listing_confirmed": confirmed,
+                "public_from": dt.date(2021, 1, 1)}
+
+    plan = {"KE-HAND-1-CS-CDS": row("KE-HAND-1-CS-CDS", "INDIVIDUAL CONSULTANTS", True),  # the package itself
+            "KE-HAND-2-CS-CDS": row("KE-HAND-2-CS-CDS", "INDIVIDUAL CONSULTANTS", False),
+            "KE-HAND-3-CS-CDS": row("KE-HAND-3-CS-CDS", "CONSULTING FIRMS", True)}
+
+    def rows(_sql, references):
+        return [plan[reference] for reference in references.split(",") if reference in plan]
+
+    dated = steps.step_dates(rows, category="Consultant Services", method="Direct Selection",
+                             package_reference="KE-HAND-1-CS-CDS", comparables=["KE-HAND-2-CS-CDS", "KE-HAND-3-CS-CDS"],
+                             as_of=dt.date(2022, 1, 1), start_date=None, settings=steps.Settings.read(load_thresholds()),
+                             track=None, sources=["documents"])
+
+    [contract] = [step for step in dated["steps"] if step["step_key"] == "contract_signed"]
+    assert dated["family"] == "individuals"
+    assert [found["step_reference"] for found in contract["comparables"]] == ["KE-HAND-2-CS-CDS"]
+    assert {key: dated["coverage"][key] for key in ("total", "used", "missing", "other_family", "unconfirmed")} == {
+        "total": 2, "used": 1, "missing": 0, "other_family": 1, "unconfirmed": 1}
+    assert dated["not_used"] == [{"step_reference": "KE-HAND-3-CS-CDS", "reason": "other_family"}]
 
 
 def test_strata_never_writes_an_actual_date_into_a_step(hand_made):

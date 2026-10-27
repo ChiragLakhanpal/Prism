@@ -8,7 +8,7 @@ with the showcase, the demo plan and the stress shelf's projects named first), a
    into bronze.document_lists, and each document of a type the reader has a template for
    (src/strata/reader/templates.py) into bronze.document_texts and bronze.document_pages, with the
    plan reader's fetcher (src/strata/lakehouse/plans.py), which takes out emails and labelled phone
-   numbers first. It takes each project's ICR Reviews, ICRs, PADs and ISRs in that order, newest first,
+   numbers first. It takes each project's documents of each type in TEMPLATES's order, newest first,
    up to ingestion.passage_documents documents whose published text divides into their PDF's pages
    (config/thresholds.toml). A document already in bronze is not fetched again. A scan, whose text
    does not divide, is kept and does not count.
@@ -76,7 +76,7 @@ from strata.lakehouse.clean import public_from  # ADR 0002's rule, defined once 
 from strata.lakehouse.engine import Engine
 from strata.reader import passages as route_a
 from strata.reader.documents import Documents, NotFetched, StopReading, list_url
-from strata.reader.layout import LayoutParser
+from strata.reader.layout import LayoutParser, https
 from strata.reader.templates import TEMPLATES, template
 
 SOURCE = "documents"  # the source registry's key for the documents API
@@ -147,7 +147,7 @@ def listed_documents(engine: Engine, project_id: str) -> list[Listed]:
                 project_id, str(document["id"]), document["docty"], document.get("repnb") or None,
                 _date(document["docdt"]), _date(document.get("disclosure_date")),
                 LANGUAGES.get(document.get("lang") or "", UNDETERMINED), document.get("display_title"),
-                document["txturl"], document["pdfurl"], fetched)
+                document["txturl"], https(document["pdfurl"]), fetched)  # the API gives http; the drawer links it
     order = list(TEMPLATES)
     return sorted(found.values(), key=lambda d: (order.index(d.document_type), -d.document_date.toordinal(),
                                                  d.document_id))
@@ -173,9 +173,6 @@ class Held:
 
 HELD_TEXT = """
 SELECT text, public_from FROM strata.bronze.document_texts WHERE document_id = :document_id ORDER BY fetched_at DESC
-"""
-HELD_PUBLIC_FROM = """
-SELECT public_from FROM strata.bronze.document_texts WHERE document_id = :document_id ORDER BY fetched_at DESC
 """
 
 
@@ -238,7 +235,7 @@ def _versioned(engine: Engine, held: Held, listed: list[Listed]) -> Held:
     replaced = None
     if at + 1 < len(issues):
         following = issues[at + 1]
-        kept = _rows(engine, HELD_PUBLIC_FROM, document_id=following.document_id)
+        kept = _rows(engine, HELD_TEXT, document_id=following.document_id)
         replaced = _date(kept[0]["public_from"]) if kept else following.public_from
     return Held(held.listed, held.text, held.pdf_pages, held.public_from, held.paged, at + 1, replaced, held.pages)
 
@@ -251,8 +248,8 @@ class Project:
 
     project_id: str
     country: str | None
-    sector: str | None  # the header's word, such as roads
-    slice_sector: str | None = None  # its one sector in strata.gold.project, such as water
+    word: str | None  # the header's word for its sector, such as roads
+    sector: str | None = None  # its one sector in strata.gold.project, such as water
 
 
 PROJECT = """
@@ -274,7 +271,7 @@ def project(engine: Engine, project_id: str) -> Project:
 
 def header(short_name: str, project: Project, passage: route_a.Passage) -> str:
     """The short header prepended before embedding: ICR, P130164, India, roads, III.B, ¶54, p.23."""
-    parts = [short_name, project.project_id, project.country, project.sector, passage.section_path,
+    parts = [short_name, project.project_id, project.country, project.word, passage.section_path,
              f"¶{passage.paragraph}" if passage.paragraph_numbered else None, f"p.{passage.pdf_page}"]
     return ", ".join(part for part in parts if part)
 
@@ -283,7 +280,7 @@ def table_header(short_name: str, project: Project, item: route_b.TablePassage) 
     """A table row's header names its table and row ("PAD, P130164, India, roads, Annex 4 - Operational
     Risk Assessment Framework (ORAF), row 2, p.65"), and a summary says it is one."""
     place = f"row {item.row.number}" if item.row else "summary"
-    parts = [short_name, project.project_id, project.country, project.sector, item.table.title or None, place,
+    parts = [short_name, project.project_id, project.country, project.word, item.table.title or None, place,
              f"p.{item.pdf_page}"]
     return ", ".join(part for part in parts if part)
 
@@ -387,7 +384,7 @@ def read_document(engine: Engine, held: Held, reading: route_a.Reading, max_toke
         rows.append(PassageRow(f"{listed.document_id}/v{held.version}/{key}", listed.document_id,
                                listed.project_id, listed.document_type, held.version, section, paragraph,
                                numbered, part, parts_, first, last, printed, listed.language, route, kind,
-                               scanned, title, row, cells, about.slice_sector, line, text, route_a.tokens(text),
+                               scanned, title, row, cells, about.sector, line, text, route_a.tokens(text),
                                route_a.text_hash(embedded_text(line, text)), held.public_from))
 
     for passage in reading.passages:
@@ -667,11 +664,11 @@ def read_notices(engine: Engine, projects: list[str], notice_types: tuple[str, .
         language = LANGUAGES.get(notice.language or "", UNDETERMINED)
         for section in notice_passages.sections(notice.text, max_tokens):
             line = ", ".join(part for part in (f"Notice {notice.notice_id}", notice.project_id, place.country,
-                                               place.sector, notice.notice_type, section.name) if part)
+                                               place.word, notice.notice_type, section.name) if part)
             rows.append(PassageRow(f"{notice.notice_id}/v1/{section.key}", notice.notice_id, notice.project_id,
                                    notice.notice_type, 1, section.name, section.key.split("/")[0], False, section.part,
                                    section.parts, None, None, None, language, route_a.ROUTE_A, route_a.NOTICE_TEXT,
-                                   False, None, None, None, place.slice_sector, line, section.text,
+                                   False, None, None, None, place.sector, line, section.text,
                                    route_a.tokens(section.text), route_a.text_hash(embedded_text(line, section.text)),
                                    _date(notice.public_from)))
     engine.insert_rows("strata.silver.passages", PASSAGE_COLUMNS, [astuple(row) for row in rows])
@@ -874,14 +871,16 @@ def documents_read(engine: Engine, run_id: str, found: list[Read], when: dt.date
     return engine.insert_rows("strata.ops.documents_read", DOCUMENTS_READ_COLUMNS, rows)
 
 
-def measure(engine: Engine, run_id: str, found: list[Read], with_contacts: dict[str, tuple[int, int]],
-            shield: str, when: dt.datetime, selection: Selection | None = None, chosen: Slice | None = None) -> int:
+def measure(engine: Engine, run_id: str, found: list[Read], shield: str, when: dt.datetime,
+            selection: Selection | None = None, chosen: Slice | None = None,
+            skipped: tuple[plans.Skipped, ...] | list[plans.Skipped] = ()) -> int:
     """The run's data readiness measures, each a count with its denominator, written to
     strata.ops.data_readiness. For each project: documents and pages per route, the pages each route
     read well, the pages whose paragraph numbering was found, the passages linked to a project,
     freshness, the contact details taken out, and what Prompt Shields found. For the slice: the
     projects its criteria selected, with each country's count in its detail sentence, and how many of them
-    the run read documents for."""
+    the run read documents for, naming in its detail sentence those whose listed documents the source did not give
+    (skipped, the documents the run skipped; ticket 18's verify, F3)."""
     linked = {str(row[0]) for row in engine.run("SELECT project_id FROM strata.gold.project").rows}
     indexed = {str(project): int(count) for project, count in engine.run(
         "SELECT project_id, count(*) AS n FROM strata.gold.passage GROUP BY project_id").rows}
@@ -895,6 +894,7 @@ def measure(engine: Engine, run_id: str, found: list[Read], with_contacts: dict[
     for row in _rows(engine, SCANNED, shield=shield):
         scanned.setdefault(row["project_id"], []).append(row["attack_detected"])
     cadence = load_sources()[SOURCE].cadence
+    with_contacts = with_contacts_held(engine, [item.held for item in found])
     rows = []
 
     def add(subject, name, kind, count, denominator, detail, as_of=None):
@@ -938,7 +938,7 @@ def measure(engine: Engine, run_id: str, found: list[Read], with_contacts: dict[
             "from, out of the pages the page router sent to it.")
         per("document_pages_paragraph_numbering_found", "read_well", sum(page.numbering_found for page in body),
             len(body), "This counts the body pages on which Route A found a paragraph the report numbers, out of "
-            "the body pages Route A read of the PADs, ICRs and ICR Reviews. An ISR numbers none of its "
+            "the body pages Route A read of the reports that number their paragraphs. An ISR numbers none of its "
             "paragraphs, so its pages are not counted.")
         per("passages_linked_to_project", "linked", reported if project_id in linked else 0, reported,
             "This counts the reports' passages whose project record is held, out of every passage read from them.")
@@ -964,10 +964,16 @@ def measure(engine: Engine, run_id: str, found: list[Read], with_contacts: dict[
     if selection is not None and chosen is not None:
         add("all", "slice_projects", "coverage", len(selection.selected), None, selection.detail(chosen))
         read = {item.held.listed.project_id for item in found}
+        detail = ("This counts the projects the slice criteria selected of which the run read at least one "
+                  "document, out of the projects they selected. A project whose documents wait for a later run under "
+                  "the daily page cap, or that lists no document of a type the reader knows, is not counted.")
+        unfetched = sorted({item.project_id for item in skipped if item.document_id and item.outcome == plans.SKIPPED}
+                           & set(selection.selected) - read)
+        if unfetched:
+            detail += (f" Of the projects not counted, {plans.count_words(len(unfetched))} listed documents the source "
+                       f"did not give, so the run could not read them: {', '.join(unfetched)}.")
         add("all", "slice_projects_read", "coverage", sum(project in read for project in selection.selected),
-            len(selection.selected), "This counts the projects the slice criteria selected of which the run read at "
-            "least one document, out of the projects they selected. A project whose documents wait for a later run "
-            "under the daily page cap, or that lists no document of a type the reader knows, is not counted.")
+            len(selection.selected), detail)
     engine.insert_rows("strata.ops.data_readiness", MEASURE_COLUMNS, rows)
     return len(rows)
 
@@ -1026,8 +1032,7 @@ def run(engine: Engine, documents: Documents, projects: list[str] | None = None,
     earliest(engine)
     synced = tally.synced + gold.sync(engine, "passage")
     when = clock()
-    measure(engine, run_id, found, with_contacts_held(engine, [item.held for item in found]), shield.name, when,
-            selection, chosen)
+    measure(engine, run_id, found, shield.name, when, selection, chosen, tally.skipped)
     language.check(engine, run_id, when, limits, detector)
     documents_read(engine, run_id, found, when)
     shelf = stress_shelf.record(engine, run_id, chosen, limits, layout.name if layout else None, when,

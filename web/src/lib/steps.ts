@@ -69,7 +69,9 @@ export type StepDates = {
   none_dated: boolean;
   actual_steps_count: number | null;
   track_record: Record<Choice, TrackRecord> | null;
-  coverage: { total: number; used: number; missing: number; reason: string; sources: string[] };
+  // other_family: comparables planned in another STEP table, whose steps differ; unconfirmed: comparables used whose
+  // first listing is not confirmed as the first published one (ticket 63). Older recordings may lack both.
+  coverage: { total: number; used: number; missing: number; other_family?: number; unconfirmed?: number; reason: string; sources: string[] };
 };
 
 export type StepsResult = {

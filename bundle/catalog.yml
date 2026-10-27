@@ -49,7 +49,10 @@ resources:
       # that says who sent a passage report or asked a question carries a column mask instead, so
       # readers read NULL there: src/strata/lakehouse/masks.py lists those columns, and
       # ops/app/deploy_app.py puts the masks on, because only it knows the app's principal (ticket 64).
-      # Add a new such column to that list, not a narrower grant here.
+      # A table that keeps what people asked or wrote, such as the passage reports and each answer's
+      # sources, carries a row filter, so only the app, the owner and one reviewer group read its rows:
+      # masks.py's FILTERED lists those tables, and the same deploy puts the filters on (ticket 63).
+      # Add a new such column or table to those lists, not a narrower grant here.
       grants:
         - principal: ${var.readers}
           privileges: [USE_SCHEMA, SELECT]

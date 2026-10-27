@@ -189,6 +189,20 @@ def test_a_view_definition_must_replace_the_view_its_file_names(tmp_path):
         catalog.build(engine, folder)
 
 
+def test_a_gold_view_that_reads_a_silver_view_builds_because_views_follow_the_bundle_s_schema_order(tmp_path):
+    """Views build in the order bundle/catalog.yml declares the schemas (bronze, silver, gold, ops), not in the
+    folders' alphabetical order, where gold comes before silver."""
+    folder = views(tmp_path, silver__run_days="CREATE OR REPLACE VIEW strata.{schema}.{view} AS "
+                                              "SELECT DISTINCT public_from FROM strata.ops.pipeline_runs\n",
+                   gold__run_day_count="CREATE OR REPLACE VIEW strata.{schema}.{view} AS "
+                                       "SELECT count(*) AS days FROM strata.silver.run_days\n")
+
+    with DuckDBEngine.open() as engine:
+        built = catalog.build(engine, folder)
+
+    assert built[-2:] == ["strata.silver.run_days", "strata.gold.run_day_count"]
+
+
 def test_a_view_in_a_folder_that_is_not_a_schema_is_refused(tmp_path):
     folder = views(tmp_path, platinum__scores="CREATE OR REPLACE VIEW strata.{schema}.{view} AS SELECT 1 AS one\n")
 

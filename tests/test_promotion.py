@@ -113,7 +113,7 @@ def registry():
     """Unity Catalog's stand-in with both versions registered, the champion alias on version 1."""
     tracker = OfflineTracker()
     for _ in (1, 2):
-        tracker.register(tracker.start_run("time_estimate model", {}), MODEL, "card", "summary")
+        tracker.register(tracker.start_run("time_estimate model", {}), MODEL, "card", "summary", what="time estimate")
     tracker.set_alias(MODEL, "champion", 1)
     tracker.set_alias(MODEL, "challenger", 2)
     return tracker

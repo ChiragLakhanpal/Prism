@@ -3567,3 +3567,53 @@ One thing to watch, from the verifier (`.notes/107-verify-r2.md`, follow-up 2): 
 ## Ticket 107, steps 1 to 3 of 3 ran: the column, the deploy, and a cost pull that succeeded
 
 **Ran on October 27, 2026 (orchestrator), 13:49 to 13:54 UTC, from a snapshot of 19eb82d8 (ticket 107's done commit).** Step 1: `ALTER TABLE strata.ops.cost_pulls ADD COLUMNS (detail STRING)` on the SQL warehouse, state SUCCEEDED; the table's columns are now run_id; pulled_at; status; from_day; through_day; charges; error_code; public_from; detail. Step 2: `uv run --script ops/bundle/deploy.py --env-file "<main checkout>/.env" --fairshare-catalog workspace` exited 0 at 13:52 UTC (step 3's report: "The job strata nightly changed"), and the Jobs API update put the nightly's window back to 18000 seconds (schedule 0 0 3 * * ? UNPAUSED). Step 3: `databricks jobs run-now --json '{"job_id": 528900661133114}' -p strata` started run 604871161430737 at 13:52 UTC; it ended TERMINATED SUCCESS at 13:54 UTC, and the newest run row (run_id, status, from_day, through_day, charges, error_code, detail) is: 604871161430737, succeeded, 2026-09-22, 2026-10-27, 9, None, None. Azure answered this time without a 429, so the row is succeeded with charges and the retry lines did not appear in the task log; criterion 3 holds (succeeded with charges). The two earlier runs of the day (679380286409718 at 09:40 UTC and 404010923973841 at 12:14 UTC) had failed on the 429.
+
+## Ticket 63, step 1 of 4: two table changes, before the deploys that bring ticket 63
+
+Parked on October 27, 2026 with ticket 63 (branch strata/63-data-warehouse-and-models). It needs the Databricks keys in `.env` and the SQL warehouse, and it runs before step 2, because the nightly job's `bronze_to_gold` and the App write the new columns' rows.
+
+On the SQL warehouse, run:
+
+    ALTER TABLE strata.gold.contract ALTER COLUMN amount_basis DROP NOT NULL
+    ALTER TABLE strata.ops.supplier_pair_labels ADD COLUMNS (left_name STRING, right_name STRING)
+
+It worked if both statements end SUCCEEDED, `DESCRIBE TABLE strata.gold.contract` shows `amount_basis` as nullable, and `DESCRIBE TABLE strata.ops.supplier_pair_labels` lists `left_name` and `right_name`. A gap-year contract whose award notice gives no price now has no amount basis, and a label keeps the two names it was given. Record the statements' states and the time here.
+
+## Ticket 63, step 2 of 4: the deploys, and the row filter on the passage reports and each answer's sources (criterion 4, live)
+
+Parked on October 27, 2026 with ticket 63, after step 1. It needs the Databricks keys in `.env`, the SQL warehouse, and the workspace group `strata-passage-reviewers` (config/roles.toml, `[groups.passage_reviewer]`); with no such group, the filter shows the rows to the App and you only. Run from a snapshot of the merge commit, as the header says:
+
+    uv run --script ops/bundle/deploy.py --env-file "<main checkout>/.env" --fairshare-catalog workspace
+    uv run --script ops/app/deploy_app.py --env-file "<main checkout>/.env" --keep-secrets
+
+Then, on the SQL warehouse:
+
+    DESCRIBE TABLE EXTENDED strata.ops.candidate_labels
+    DESCRIBE TABLE EXTENDED strata.ops.answer_citations
+
+It worked if both deploys exit 0, the App deploy's step 7 prints its one line, and each DESCRIBE shows the row filter `strata.ops.only_passage_reviewer` beside the column masks. Then, signed in as anyone in `account users` who is neither you nor in `strata-passage-reviewers`, such as a panel member, these must each return 0, even after people have sent reports on the App:
+
+    SELECT count(*) FROM strata.ops.candidate_labels
+    SELECT count(*) FROM strata.ops.answer_citations
+
+Record the deploys' exit codes, the DESCRIBE lines and the counts here.
+
+## Ticket 63, step 3 of 4: the orchestrator's new rule on results tables, synced to Foundry
+
+Parked on October 27, 2026 with ticket 63. It needs the Foundry keys in `.env`. Ticket 63 added one paragraph to `src/strata/agent/instructions/orchestrator.md`: a passage that runs a results table's columns together (Indicator Name, Unit of Measure, Baseline, Target) never backs a sentence that calls one of its numbers a baseline or a target. Run from the main checkout:
+
+    uv run --script ops/agent/sync.py --env-file .env
+    uv run --script ops/agent/sync.py --env-file .env --check
+
+It worked if the first prints the added paragraph in its diff and a new version of `strata-orchestrator`, and the second prints no difference. Record the version here.
+
+## Ticket 63, step 4 of 4: four-digit loans in project records, and the stripper on Kenya's live notices
+
+Parked on October 27, 2026 with ticket 63, after step 2 and the next nightly run. It needs the SQL warehouse. Ticket 63 keeps a project record's loan with four digits, such as IBRD-8956, in `strata.silver.project_loans` (ticket 07's verify, O4), and strips more contact details: numbers after Ph, M, Contact and WhatsApp, a second number after "or", and a name after "Attention" and a title. On the SQL warehouse:
+
+    SELECT count(*) FROM strata.silver.notices WHERE regexp_like(notice_text, '(?i)attention\\s*:?\\s*(mr|mrs|ms|dr|eng)\\.?\\s+[A-Z]')
+    SELECT measure, count, denominator FROM strata.ops.data_readiness WHERE source = 'notices' AND subject = 'KE' AND measure = 'contact_details_removed' ORDER BY measured_at DESC LIMIT 1
+
+and compare each project's loans in bronze with silver by hand: every `loan_transactions[].financier_loan` a project record in `strata.bronze.current_pages` (source `projects`) names is a row of `strata.silver.project_loans` for that project.
+
+It worked if the first query returns 0, the measure has a count and a denominator, and no project's loan is missing from `strata.silver.project_loans`. Record the counts here.

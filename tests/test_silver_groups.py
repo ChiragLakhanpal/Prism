@@ -25,7 +25,9 @@ from strata.lakehouse.engine import DuckDBEngine, EngineError
 from strata.lakehouse.silver import projects
 
 PROJECTS = load_sources()["projects"]
-NEEDED = {"strata.bronze.api_pages", "strata.ops.contact_removals", "strata.ops.silver_pages", *projects.TABLES}
+# bronze.store reads strata.bronze.current_pages, the view of each request's newest page, so it is built too.
+NEEDED = {"strata.bronze.api_pages", "strata.bronze.current_pages", "strata.ops.contact_removals",
+          "strata.ops.silver_pages", *projects.TABLES}
 P130164 = "https://search.worldbank.org/api/v3/projects?format=json&id=P130164&fl=*"
 
 
@@ -35,7 +37,7 @@ def a_database():
     with DuckDBEngine.open() as engine:
         for schema in ("bronze", "silver", "ops"):
             engine.run(f"CREATE SCHEMA IF NOT EXISTS strata.{schema}")
-        for definition in catalog.table_definitions():
+        for definition in catalog.table_definitions() + catalog.view_definitions():
             if definition.full_name in NEEDED:
                 engine.run(definition.sql)
         bronze.store(engine, PROJECTS, pages.recorded_pages(PROJECTS))

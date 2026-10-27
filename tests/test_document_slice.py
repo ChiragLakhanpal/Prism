@@ -384,19 +384,28 @@ for irrigation.
 \f2.2     The regulatory reforms lacked sufficient preparation, so the new agencies
 struggled to issue licenses.
 2.3     The measurement of water flow improved.
+2.4     The utility's billing reached most of its customers.
+2.5     Losses of water fell in the two cities the project served.
+2.6     The new meters were read every month.
+2.7     The agencies published their tariffs.
+2.8     Complaints were answered within a week.
+2.9     The staff were trained in the new procedures.
+2.10    The project's monitoring data were complete for every year.
 """
 
 
 def test_a_ppar_numbers_its_paragraphs_within_each_chapter_and_each_is_a_passage():
     """IEG's PPARs number paragraphs 1.1, 1.2, then 2.1 under each chapter's heading. No fixture project lists
-    a PPAR, so this reads a hand-written one of two pages, written the way a PPAR is set out."""
+    a PPAR, so this reads a hand-written one of two pages, written the way a PPAR is set out. Its last paragraph is
+    2.10, so a reader that read it as 2.1 would fail."""
     from strata.reader import passages as route_a
     from strata.reader.templates import TEMPLATES
 
     reading = route_a.read(PPAR_TEXT, 2, TEMPLATES["Project Performance Assessment Report"], 500)
 
     assert [(p.paragraph, p.section_path, p.pdf_page) for p in reading.passages] == [
-        ("1.1", "1", 1), ("1.2", "1", 1), ("2.1", "2", 1), ("2.2", "2", 2), ("2.3", "2", 2)]
+        ("1.1", "1", 1), ("1.2", "1", 1), ("2.1", "2", 1), ("2.2", "2", 2), ("2.3", "2", 2), ("2.4", "2", 2),
+        ("2.5", "2", 2), ("2.6", "2", 2), ("2.7", "2", 2), ("2.8", "2", 2), ("2.9", "2", 2), ("2.10", "2", 2)]
     assert reading.passages[3].text == ("2.2 The regulatory reforms lacked sufficient preparation, so the new agencies "
                                         "struggled to issue licenses.")
     assert all(p.paragraph_numbered for p in reading.passages)
@@ -457,3 +466,52 @@ def test_the_header_names_each_project_s_sector_in_the_projects_api_s_own_words(
     [header] = [row["header"] for row in rows(db, "SELECT header FROM strata.silver.passages "
                                                   "WHERE passage_id = '31525018/v1/54'")]
     assert header == "ICR, P130164, India, roads, III.B, ¶54, p.23"
+
+
+def test_the_pilot_projects_read_measure_names_a_project_whose_listed_documents_were_not_fetched(db):
+    """The fixture records P161305's document list but none of its documents, so the run lists them and skips each
+    one. The measure's sentence says so by the project's ID, so "1 of 17" has a true reason for that project
+    (ticket 18's verify, F3)."""
+    case = SHELF["slice_projects"]
+    [measure] = rows(db, "SELECT count, denominator, detail FROM strata.ops.data_readiness "
+                         "WHERE measure = 'slice_projects_read' AND subject = 'all'")
+    skipped = rows(db, "SELECT DISTINCT project_id FROM strata.ops.skipped_documents WHERE reader = 'passages' "
+                       "AND document_id IS NOT NULL AND project_id = :project", project="P161305")
+
+    assert (measure["count"], measure["denominator"]) == (case["pilot_projects_read"], case["count"])
+    assert skipped == [{"project_id": "P161305"}]
+    assert measure["detail"].endswith(" Of the projects not counted, one listed documents the source did not give, "
+                                      "so the run could not read them: P161305.")
+
+
+def test_every_stored_pdf_link_uses_https_though_the_documents_api_gives_http(db):
+    """The documents API gives pdfurl over http, and the drawer's PDF link is the stored one (ticket 14's verify,
+    observation 2). The readers store it over https, the way the World Bank's hosts answer."""
+    listed = json.loads((ROOT / "data" / "fixture" / "recorded" / "api" / "documents" / "P130164.json").read_text())
+    assert any(str(document.get("pdfurl", "")).startswith("http://")
+               for key, document in listed["response"]["documents"].items() if key != "facets")
+
+    links = rows(db, "SELECT pdf_url FROM strata.silver.documents UNION ALL "
+                     "SELECT pdf_url FROM strata.silver.plan_versions")
+
+    assert links and all(row["pdf_url"].startswith("https://") for row in links)
+
+
+def test_a_notice_passage_names_its_section_only_by_a_real_heading(db):
+    """A notice's sections start at each heading line, and a passage keeps its section's heading as its section
+    path. A long line that ends in a colon also starts a section, but it is a sentence, not a heading, so the passage
+    has no section path: the drawer's meta line would only repeat the words its text opens with (ticket 18's design
+    review, P5). OP00118817 writes "Selection Method" as a heading and "Specifically, the successful candidate shall
+    have the following qualifications:" as a sentence. The column is never NULL, so no name is an empty one."""
+    notice = {row["passage_id"]: row for row in rows(
+        db, "SELECT passage_id, section_path, header, text FROM strata.silver.passages WHERE document_id = :notice",
+        notice="OP00118817")}
+
+    qualifications = notice["OP00118817/v1/s5"]
+    assert qualifications["text"].startswith("Specifically, the successful candidate shall have the following")
+    assert qualifications["section_path"] == ""
+    assert qualifications["header"] == "Notice OP00118817, P156634, Kenya, sanitation, Request for Expression of Interest"
+    assert notice["OP00118817/v1/s7"]["section_path"] == "Selection Method"
+    long_names = rows(db, "SELECT section_path FROM strata.silver.passages WHERE kind = 'notice_text' AND "
+                          "(section_path LIKE '%,%' OR length(section_path) - length(replace(section_path, ' ', '')) > 5)")
+    assert long_names == []

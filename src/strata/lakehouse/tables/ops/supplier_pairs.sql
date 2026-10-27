@@ -28,7 +28,8 @@
 --                     starts_the_other, nearly_the_same, alike or different
 -- projects_level      shared, none_shared or unknown
 -- route               where the thresholds and the model sent it: auto_merge, model, person or kept_apart
--- review_reason       why a person must decide it: model_unsure, two_step_supplier_ids or no_model
+-- review_reason       why a person must decide it: model_unsure, two_step_supplier_ids, person_kept_apart
+--                     (it would join two rows a person said are not one supplier) or no_model
 -- model               the deployment, or the offline stand-in, that judged it
 -- model_decision      merge, no_merge or unsure
 -- model_confidence    how sure the model said it was, from 0 to 1

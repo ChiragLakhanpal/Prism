@@ -108,7 +108,11 @@ class Reader:
         if "public_from" not in result.columns:
             raise LeakageError(f"A query for a scorer frozen at {self.as_of} left out public_from, so its rows "
                                f"cannot be checked: {' '.join(sql.split())[:200]}")
-        return self.checked([dict(zip(result.columns, row)) for row in result.rows])
+        found = [dict(zip(result.columns, row)) for row in result.rows]
+        if any(row["public_from"] is None for row in found):
+            raise LeakageError(f"A query for a scorer frozen at {self.as_of} gave a row with no public_from, so it "
+                               f"cannot be checked: {' '.join(sql.split())[:200]}")
+        return self.checked(found)
 
     def checked(self, rows: list[dict]) -> list[dict]:
         """Rows read some other way, checked like the reader's own."""

@@ -513,6 +513,34 @@ def test_a_batch_an_earlier_run_left_running_is_waited_for_by_its_id_and_not_ask
         ("GET", "/batches/batch-not-a-real-id"), ("GET", "/files/file-not-a-real-output/content")]
 
 
+def test_a_finished_batch_s_error_file_gives_an_error_answer_for_each_request_it_failed():
+    """Ticket 20's review, F4. The Batch API writes the requests that failed to the batch's error file, not to its
+    output file, so a finished batch's error lines are read too, and each is an error answer, asked again later."""
+    from strata.knowledge.batch import Request
+
+    service = BatchService([recorded_lines()[0]], polls=0)
+    failed = {"id": "batch_req_not-a-real-id-2", "custom_id": "assertions:2/v1",
+              "response": {"status_code": 500, "body": {}}, "error": None}
+
+    def with_errors(method, url, headers, body, content_type):
+        if url.endswith("/batches/batch-not-a-real-id"):
+            service.requests.append((method, url, headers, body, content_type))
+            return json.dumps({"id": "batch-not-a-real-id", "status": "completed",
+                               "output_file_id": "file-not-a-real-output",
+                               "error_file_id": "file-not-a-real-errors"}).encode()
+        if url.endswith("/files/file-not-a-real-errors/content"):
+            return (json.dumps(failed) + "\n").encode()
+        return service(method, url, headers, body, content_type)
+
+    model, _ = live_batch(with_errors)
+    answers = model.answer([Request("assertions:31525018/v1", "the rules", {}), Request("assertions:2/v1", "the rules", {})],
+                           resume="batch-not-a-real-id")
+
+    by_id = {answer.custom_id: answer for answer in answers}
+    assert by_id["assertions:31525018/v1"].content
+    assert (by_id["assertions:2/v1"].content, by_id["assertions:2/v1"].error) == (None, "status 500")
+
+
 def test_a_held_batch_that_failed_is_asked_again():
     from strata.knowledge.batch import Request
 

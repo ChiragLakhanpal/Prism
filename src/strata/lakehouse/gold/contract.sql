@@ -166,7 +166,8 @@ from_notices AS (
     CAST(NULL AS DECIMAL(18, 2)) AS contract_amount_usd,
     signed_contract_price AS contract_amount,
     signed_contract_currency AS contract_currency,
-    CASE WHEN signed_contract_currency = 'USD' THEN 'US dollars, from award notices'
+    CASE WHEN signed_contract_price IS NULL THEN NULL
+         WHEN signed_contract_currency = 'USD' THEN 'US dollars, from award notices'
          ELSE 'local currency, from award notices' END AS amount_basis,
     r.supplier_id,
     CAST(coalesce(r.supplier_count, 0) AS INT) AS supplier_count,

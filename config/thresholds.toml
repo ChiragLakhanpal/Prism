@@ -39,10 +39,10 @@ parser_part_pages = 500
 page_match_shared_words = 0.5
 # The passage reader (src/strata/lakehouse/passages.py) reads at most this many documents whose
 # published text Route A can read: the slice file's named projects first (the showcase, the demo plan
-# and the stress shelf's), then the projects the slice criteria select, each project's ICR Reviews,
-# ICRs, PADs and ISRs in that order, newest first. Ticket 11 read the first 20; ticket 18 raises it to
-# cover the whole document slice: docs/PLAN.md section 3 plans 128 projects, and a project rarely has
-# more than 40 such reports. A value for the owner to confirm.
+# and the stress shelf's), then the projects the slice criteria select, each project's reports of each
+# type in the order of TEMPLATES in src/strata/reader/templates.py, newest first. Ticket 11 read the first
+# 20; ticket 18 raises it to cover the whole document slice: docs/PLAN.md section 3 plans 128 projects,
+# and a project rarely has more than 40 such reports. A value for the owner to confirm.
 passage_documents = 5000
 # The minutes the nightly job's parse_and_embed task may spend reading from the World Bank's document host each
 # night, from its first request (strata.lakehouse.readers.document_host). At 3 seconds a request
@@ -464,7 +464,8 @@ auto_merge_min_probability = 0.99
 model_confidence_min = 0.9
 # The model is asked about at most this many new pairs in one nightly run, the likeliest first. The
 # rest wait for a person (review_reason no_model) and are asked on a later night. It keeps the first
-# live night inside the job's time limit and its cost. Source: a starting value for the owner to confirm.
+# live night inside the job's time limit, and keeps its cost down. Source: a starting value for the owner to
+# confirm.
 model_pairs_per_run = 500
 # Auto-merge precision should be at least this on the labeled pairs, and that many pairs should be
 # labeled. Source: docs/PLAN.md section 5 ("auto-merge precision of at least 0.98 on 1,000 labeled

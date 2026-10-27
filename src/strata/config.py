@@ -928,6 +928,8 @@ class TimeEstimateSettings:
     governance_indicators: tuple[str, ...]  # CPIA and WGI indicator codes
     range_checked: tuple[str, ...]  # features a package must sit inside the training range of
     learner_settings: dict  # the learner's own settings, such as XGBoost's, from [time_estimate.<learner>]
+    # Each governance indicator's name, by its code, as the model card writes it (ticket 63).
+    governance_names: dict[str, str] = field(default_factory=dict)
 
 
 def load_time_estimate(path: Path = CONFIG_DIR / "models.toml") -> TimeEstimateSettings:
@@ -935,7 +937,7 @@ def load_time_estimate(path: Path = CONFIG_DIR / "models.toml") -> TimeEstimateS
     entry = _Entry(path, "time_estimate", _read(path).get("time_estimate"))
     learner = entry.text("learner")
     entry.only({"learner", "registered_model", "experiment", "test_years", "calibration_every",
-                "governance_indicators", "range_checked", learner})
+                "governance_indicators", "governance_names", "range_checked", learner})
     registered = entry.text("registered_model")
     if registered.count(".") != 2:
         entry._fail("registered_model", "must be a three-part Unity Catalog name, such as strata.gold.time_estimate")
@@ -947,8 +949,15 @@ def load_time_estimate(path: Path = CONFIG_DIR / "models.toml") -> TimeEstimateS
         entry._fail("calibration_every", "must be 2 or more, so the model learns from some packages")
     settings = entry.table.get(learner, {})
     _Entry(path, f"time_estimate.{learner}", settings)
+    indicators = entry.texts("governance_indicators")
+    names = entry.table.get("governance_names", {})
+    if not isinstance(names, dict) or any(not isinstance(names.get(code), str) or not names[code].strip()
+                                          for code in indicators):
+        entry._fail("governance_names", "must name every code in governance_indicators, such as "
+                                        "\"GOV_WGI_GE.EST\" = \"Government Effectiveness: Estimate\"")
     return TimeEstimateSettings(learner, registered, entry.text("experiment"), tuple(sorted(years)), every,
-                                entry.texts("governance_indicators"), entry.texts("range_checked"), dict(settings))
+                                indicators, entry.texts("range_checked"), dict(settings),
+                                {code: names[code] for code in indicators})
 
 
 @dataclass(frozen=True)
@@ -1119,6 +1128,9 @@ class ToolReadiness:
     ready_for_measure: str
     draws_on: tuple[str, ...]
     ready_for_counted_in: str | None = None
+    # The key in config/thresholds.toml of the day the tool's records start, when it reads only records from a
+    # period: a known gap that ended before that day holds none of its answers back (ticket 63).
+    period_from: str | None = None
 
 
 @dataclass(frozen=True)
@@ -1165,14 +1177,14 @@ def _tool_readiness(path: Path, name: str, table: dict) -> ToolReadiness | None:
     if "readiness" not in table:
         return None
     entry = _Entry(path, f"tools.{name}.readiness", table["readiness"])
-    entry.only({"kind", "ready_for", "draws_on"})
+    entry.only({"kind", "ready_for", "draws_on", "period_from"})
     ready_for = _Entry(path, f"tools.{name}.readiness.ready_for", entry.table.get("ready_for"))
     ready_for.only({"row", "measure", "counted_in"})
     draws_on = entry.texts("draws_on")
     if ready_for.text("row") not in draws_on:
         ready_for._fail("row", "must be one of the rows in draws_on")
     return ToolReadiness(entry.text("kind"), ready_for.text("row"), ready_for.text("measure"), draws_on,
-                         ready_for.text("counted_in", required=False))
+                         ready_for.text("counted_in", required=False), entry.text("period_from", required=False))
 
 
 def _tool_parameters(path: Path, name: str, table: dict) -> tuple[ToolParameter, ...]:
@@ -1787,7 +1799,7 @@ def load_views(path: Path = CONFIG_DIR / "roles.toml") -> Views:
 
 # ── The evidence ladder ──────────────────────────────────────────────────
 
-CLASSES = ("judgment", "moment")  # an outcome judgment, or a fact about a moment
+CLASSES = ("judgment", "moment")  # an outcome judgment, or a claim about one moment
 KINDS = ("rating", "date", "amount")
 TIES = ("tieSpecific", "tieRecent")  # the more specific source, then the more recent one
 # The forms an assertion takes, as the readers in strata.knowledge.assertions write them: a rating in its
@@ -2146,6 +2158,12 @@ def load_rebidding(path: Path = CONFIG_DIR / "models.toml") -> RebiddingSettings
     entry.only({"learners", "registered_model", "experiment", "test_years", "calibration_every", *learners})
     if len(learners) < 2:
         entry._fail("learners", "must name the two models the backtests compare")
+    from strata.estimates.rebidding_model import LEARNERS  # here, so loading other config files never imports numpy
+
+    unknown = [learner for learner in learners if learner not in LEARNERS]
+    if unknown:
+        entry._fail("learners", f"names {', '.join(unknown)}, which LEARNERS in src/strata/estimates/rebidding_model.py "
+                                f"does not have: it has {', '.join(sorted(LEARNERS))}")
     registered = entry.text("registered_model")
     if registered.count(".") != 2:
         entry._fail("registered_model", "must be a three-part Unity Catalog name, such as strata.gold.rebidding_risk")

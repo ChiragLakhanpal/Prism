@@ -18,7 +18,9 @@ made, its public date, its source document and passage, and its evidence tier. T
 
 The nightly job's detect_disagreements task runs run() for every project Strata holds documents or records
 for, and the fixture build runs it after the passage reader (gates/build_fixture.py). Every table it writes
-is rebuilt for each project of the run.
+is rebuilt for each project of the run. The run sends every project's reports to the batch model in one call,
+so the live run waits for one batch. A request a finished batch did not answer, or a batch that can no longer
+be read, is asked again (ask()).
 """
 
 from __future__ import annotations
@@ -35,7 +37,7 @@ from importlib import resources
 
 from strata.agent.verifier import find_quote  # ticket 13's word-for-word quote match, defined once
 from strata.config import SIDES, Ladder, Thresholds, load_ladder, load_sources, load_thresholds
-from strata.knowledge.batch import Answer, BatchModel, BatchPending, RecordedBatch, Request
+from strata.knowledge.batch import Answer, BatchError, BatchModel, BatchPending, RecordedBatch, Request
 from strata.lakehouse import rewrites
 from strata.lakehouse.engine import Engine
 from strata.reader.passages import TABLE_SUMMARY
@@ -192,12 +194,17 @@ def isr_assertions(engine: Engine, project_id: str, ladder: Ladder, rows: Projec
                 continue  # no rating ("--"), or no passage to cite for it
             evidence = f"{PASSAGES}:{row['passage_id']}"
             made.append(Assertion(
-                assertion_id(evidence, project_id, attribute.key), "project", project_id, project_id, attribute.key,
-                attribute.kind, name, rating, "rating", ladder.side(attribute.key, rating), REPORT_PERIOD, start, day,
-                day, _date(row["replaced_on"]), ladder.tier_of(row["document_type"]) or "isr", "rating_field",
-                "documents", str(row["document_id"]), row["document_type"], row["report_number"], _int(row["version"]),
-                _int(row["sequence"]), row["passage_id"], evidence, _int(row["pdf_page"]), None, ISR_READER,
-                _date(row["public_from"])))
+                assertion_id=assertion_id(evidence, project_id, attribute.key), subject_kind="project",
+                subject_id=project_id, project_id=project_id, attribute=attribute.key,
+                attribute_kind=attribute.kind, field_name=name, value=rating, value_form="rating",
+                judgment=ladder.side(attribute.key, rating), period_event=REPORT_PERIOD,
+                period_start=start, period_end=day, made_at=day, replaced_on=_date(row["replaced_on"]),
+                evidence_tier=ladder.tier_of(row["document_type"]) or "isr", form="rating_field",
+                source_key="documents", document_id=str(row["document_id"]),
+                document_type=row["document_type"], report_number=row["report_number"],
+                version=_int(row["version"]), sequence=_int(row["sequence"]),
+                passage_id=row["passage_id"], evidence_id=evidence, pdf_page=_int(row["pdf_page"]),
+                quote=None, read_by=ISR_READER, public_from=_date(row["public_from"])))
     return made
 
 
@@ -250,12 +257,17 @@ def record_assertions(engine: Engine, project_id: str, ladder: Ladder, rows: Pro
         for attribute_key, value in values.items():
             attribute = ladder.attribute(attribute_key)
             made.append(Assertion(
-                assertion_id(evidence, row["step_reference"], attribute.key), "package", row["step_reference"],
-                project_id, attribute.key, attribute.kind, RECORD_FIELDS[row["form"]][attribute.key], value,
-                attribute.kind, None, CONTRACT_SIGNING, signed, signed, _date(row["made_at"]), _date(row["replaced_on"]),
-                "record", row["form"], row["source_key"], str(row["document_id"]), row["document_type"], None, None,
-                None, key, evidence, _int(row["pdf_page"]), None, RECORD_TABLES[row["form"]],
-                _date(row["public_from"])))
+                assertion_id=assertion_id(evidence, row["step_reference"], attribute.key),
+                subject_kind="package", subject_id=row["step_reference"], project_id=project_id,
+                attribute=attribute.key, attribute_kind=attribute.kind,
+                field_name=RECORD_FIELDS[row["form"]][attribute.key], value=value,
+                value_form=attribute.kind, judgment=None, period_event=CONTRACT_SIGNING,
+                period_start=signed, period_end=signed, made_at=_date(row["made_at"]),
+                replaced_on=_date(row["replaced_on"]), evidence_tier="record", form=row["form"],
+                source_key=row["source_key"], document_id=str(row["document_id"]),
+                document_type=row["document_type"], report_number=None, version=None, sequence=None,
+                passage_id=key, evidence_id=evidence, pdf_page=_int(row["pdf_page"]), quote=None,
+                read_by=RECORD_TABLES[row["form"]], public_from=_date(row["public_from"])))
     return made
 
 
@@ -284,10 +296,15 @@ def ieg_assertions(engine: Engine, project_id: str, ladder: Ladder, dates: Perio
             if rating is None:
                 continue  # an attribute the ladder does not know, or no rating
             made.append(Assertion(
-                assertion_id(evidence, project_id, attribute.key), "project", project_id, project_id, attribute.key,
-                attribute.kind, column, rating, "rating", ladder.side(attribute.key, rating), WHOLE_PROJECT, start,
-                end, public, None, "ieg", "rating_field", "ieg_ratings", key, row["evaluation_type"], None, None, None,
-                key, evidence, None, None, IEG_READER, public))
+                assertion_id=assertion_id(evidence, project_id, attribute.key), subject_kind="project",
+                subject_id=project_id, project_id=project_id, attribute=attribute.key,
+                attribute_kind=attribute.kind, field_name=column, value=rating, value_form="rating",
+                judgment=ladder.side(attribute.key, rating), period_event=WHOLE_PROJECT,
+                period_start=start, period_end=end, made_at=public, replaced_on=None,
+                evidence_tier="ieg", form="rating_field", source_key="ieg_ratings", document_id=key,
+                document_type=row["evaluation_type"], report_number=None, version=None, sequence=None,
+                passage_id=key, evidence_id=evidence, pdf_page=None, quote=None, read_by=IEG_READER,
+                public_from=public))
     return made
 
 
@@ -387,21 +404,23 @@ class Periods:
 
     whole_project: tuple[dt.date, dt.date] | None
     moments: dict[str, dt.date]
+    # The document types written at appraisal: the ladder's pad tier (config/evidence_ladder.toml), defined there once.
+    appraisal_types: tuple[str, ...] = ()
 
     def dates(self, period: str, report: Report) -> tuple[dt.date, dt.date] | None:
         if period == WHOLE_PROJECT:
             return self.whole_project
         if period == APPRAISAL:
-            return (report.document_date, report.document_date) if report.document_type in APPRAISAL_TYPES else None
+            return ((report.document_date, report.document_date) if report.document_type in self.appraisal_types
+                    else None)
         day = self.moments.get(period)
         return (day, day) if day else None
 
 
-APPRAISAL_TYPES = ("Project Appraisal Document",)
-
 
 def periods(engine: Engine, project_id: str, rows: ProjectRows | None = None, ladder: Ladder | None = None) -> Periods:
-    held = _of(engine, rows, project_id, ladder or load_ladder())
+    ladder = ladder or load_ladder()
+    held = _of(engine, rows, project_id, ladder)
     project = held.dates.get(project_id, [])
     approved, closing = (_date(project[0]["approval_date"]), _date(project[0]["closing_date"])) if project else (None,
                                                                                                                  None)
@@ -412,7 +431,8 @@ def periods(engine: Engine, project_id: str, rows: ProjectRows | None = None, la
             if found:
                 moments[period] = dt.datetime.strptime(found.group(1), "%d-%b-%Y").date()
                 break
-    return Periods((approved, closing) if approved and closing and approved <= closing else None, moments)
+    return Periods((approved, closing) if approved and closing and approved <= closing else None, moments,
+                   ladder.tiers["pad"].document_types)
 
 
 PENDING = "pending:"  # how bronze holds a request in a batch still running: this, then the batch's id
@@ -450,15 +470,29 @@ def ask(engine: Engine, model: BatchModel, asked: list[tuple[Report, Request]], 
     pending = 0
     for resume, waiting in batches.items():
         public = {request.custom_id: report.public_from for report, request in waiting}
+        requests = [request for _, request in waiting]
         try:
-            new = [answer for answer in model.answer([request for _, request in waiting], resume=resume)
-                   if answer.custom_id in public]
+            try:
+                given = model.answer(requests, resume=resume)
+            except BatchError:
+                if resume is None:
+                    raise
+                # The batch an earlier run sent cannot be read, as when its files expired: send its requests again.
+                resume = None
+                given = model.answer(requests, resume=None)
+            new = [answer for answer in given if answer.custom_id in public]
         except BatchPending as running:
             pending += len(waiting)
             if running.batch_id and running.batch_id != resume:
                 _keep(engine, model, [Answer(custom_id, None, f"{PENDING}{running.batch_id}") for custom_id in public],
                       hashes, public, clock())
             continue
+        if resume is not None:
+            # A request the finished batch did not answer gets a row that says so, so the next run asks for it in a
+            # new batch rather than resuming this one for ever (ticket 20's review, F4).
+            answered = {answer.custom_id for answer in new}
+            new += [Answer(custom_id, None, f"no answer in batch {resume}") for custom_id in public
+                    if custom_id not in answered]
         _keep(engine, model, new, hashes, public, clock())
         answers |= {answer.custom_id: answer for answer in new}
     return answers, pending
@@ -518,28 +552,25 @@ def read_answer(report: Report, answer: Answer, ladder: Ladder, dates: Periods, 
         form = item.get("form") if item.get("form") in ("rating_field", "narrative") else "narrative"
         evidence = f"{PASSAGES}:{passage['passage_id']}"
         kept.append(Assertion(
-            assertion_id(evidence, report.project_id, attribute.key), "project", report.project_id, report.project_id,
-            attribute.key, attribute.kind, str(item.get("field_name") or attribute.names[0]), rating or side,
-            "rating" if rating else "judgment", ladder.side(attribute.key, rating) if rating else side,
-            str(item["period"]), period[0], period[1], report.document_date, report.replaced_on,
-            ladder.tier_of(report.document_type) or "record", form, "documents", report.document_id,
-            report.document_type, report.report_number, report.version, None, passage["passage_id"], evidence,
-            _int(item.get("pdf_page")), quote, read_by, report.public_from))
+            assertion_id=assertion_id(evidence, report.project_id, attribute.key),
+            subject_kind="project", subject_id=report.project_id, project_id=report.project_id,
+            attribute=attribute.key, attribute_kind=attribute.kind,
+            field_name=str(item.get("field_name") or attribute.names[0]), value=rating or side,
+            value_form="rating" if rating else "judgment",
+            judgment=ladder.side(attribute.key, rating) if rating else side,
+            period_event=str(item["period"]), period_start=period[0], period_end=period[1],
+            made_at=report.document_date, replaced_on=report.replaced_on,
+            evidence_tier=ladder.tier_of(report.document_type) or "record", form=form,
+            source_key="documents", document_id=report.document_id, document_type=report.document_type,
+            report_number=report.report_number, version=report.version, sequence=None,
+            passage_id=passage["passage_id"], evidence_id=evidence, pdf_page=_int(item.get("pdf_page")),
+            quote=quote, read_by=read_by, public_from=report.public_from))
     return kept, rejected
 
 
-def text_assertions(engine: Engine, project_id: str, ladder: Ladder, model: BatchModel, run_id: str,
-                    clock: Callable[[], dt.datetime], dates: Periods, rows: ProjectRows | None = None
-                    ) -> tuple[list[Assertion], list[Rejection], int]:
-    """The assertions the batch model read from the project's reports, each kept only when its quote is word
-    for word in the passage it cites, on the page it cites, the ones rejected, and how many reports wait on a
-    batch still running."""
-    found = reports(engine, project_id, ladder, rows)
-    if not found:
-        return [], [], 0
-    asked = [(report, request(report, ladder)) for report in found]
-    answers, pending = ask(engine, model, asked, clock)
-    when = clock()
+def read_answers(asked: list[tuple[Report, Request]], answers: dict[str, Answer], ladder: Ladder, dates: Periods,
+                 model: BatchModel, run_id: str, when: dt.datetime) -> tuple[list[Assertion], list[Rejection]]:
+    """The assertions in the answers to one project's requests, and the ones rejected."""
     kept, rejected = [], []
     for report, question in asked:
         answer = answers.get(question.custom_id)
@@ -549,7 +580,7 @@ def text_assertions(engine: Engine, project_id: str, ladder: Ladder, model: Batc
             rejected += less
     # One passage can state one attribute once: a second assertion of the same id is a repeat.
     unique = {assertion.assertion_id: assertion for assertion in reversed(kept)}
-    return [assertion for assertion in kept if unique[assertion.assertion_id] is assertion], rejected, pending
+    return [assertion for assertion in kept if unique[assertion.assertion_id] is assertion], rejected
 
 
 # ── Disagreements and the evidence ladder ────────────────────────────────
@@ -724,16 +755,21 @@ def run(engine: Engine, projects: list[str], *, model: BatchModel, ladder: Ladde
     between the rest decided by the ladder. A run with no live model passes HeldAnswers, so the assertions
     read from text come from the answers bronze holds."""
     ladder = ladder or load_ladder()
-    made, rejected, pending = [], [], 0
+    made, rejected = [], []
     rows = ProjectRows(engine, projects, ladder)  # each family read once for every project of the run
+    # Every project's requests go to the model in one call, so the live run waits for one batch, not one a project
+    # (ticket 20's review, F6).
+    asked = {project_id: [(report, request(report, ladder)) for report in reports(engine, project_id, ladder, rows)]
+             for project_id in projects}
+    answers, pending = ask(engine, model, [pair for pairs in asked.values() for pair in pairs], clock)
+    when = clock()
     for project_id in projects:
         dates = periods(engine, project_id, rows, ladder)
         made += isr_assertions(engine, project_id, ladder, rows) + record_assertions(engine, project_id, ladder, rows)
         made += ieg_assertions(engine, project_id, ladder, dates, rows)
-        more, less, waiting = text_assertions(engine, project_id, ladder, model, run_id, clock, dates, rows)
+        more, less = read_answers(asked[project_id], answers, ladder, dates, model, run_id, when)
         made += more
         rejected += less
-        pending += waiting
     found = detect(made, ladder, thresholds)
     changed = write(engine, projects, made, rejected, found)
     return RunReport(len(made), len(rejected), len(found), pending, changed)

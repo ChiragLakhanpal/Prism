@@ -266,11 +266,17 @@ class AzureOpenAIBatch:
             self.sleep(self.poll_seconds)
             waited += self.poll_seconds
             batch = self._json("GET", f"/batches/{batch['id']}")
-        if batch["status"] != "completed" or not batch.get("output_file_id"):
+        if batch["status"] != "completed" or not (batch.get("output_file_id") or batch.get("error_file_id")):
             raise BatchError(f"Batch {batch.get('id')} ended {batch['status']} with no output file.")
-        output = self.transport("GET", f"{self.base}/files/{batch['output_file_id']}/content", self.headers, None,
-                                None).decode()
-        return [json.loads(line) for line in output.splitlines() if line.strip()]
+        # The Batch API writes the requests that failed to the batch's error file, not to its output file, so both
+        # are read, and read_lines makes each failed request an error answer (ticket 20's review, F4).
+        lines = []
+        for file_id in (batch.get("output_file_id"), batch.get("error_file_id")):
+            if file_id:
+                content = self.transport("GET", f"{self.base}/files/{file_id}/content", self.headers, None,
+                                         None).decode()
+                lines += [json.loads(line) for line in content.splitlines() if line.strip()]
+        return lines
 
 
 def from_environment(environ: Mapping[str, str] = os.environ) -> AzureOpenAIBatch | None:

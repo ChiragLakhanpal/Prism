@@ -7,7 +7,8 @@ warehouse refuses a viewer with no MODIFY grant, and the app's own engine writes
 app's own identity writes every row. The viewer's engine is also the fixture's stand-in for the readers group: it
 reads every masked column (strata.lakehouse.masks) as NULL, as the warehouse's column masks give it to anyone but
 the app and the catalog's owner, so a test proves no page needs to know who sent a report or asked a question
-when it reads as the viewer (ticket 64). The scripted agent answers the showcase question (tests/fixtures/agent), and
+when it reads as the viewer (ticket 64). It also reads no row of a filtered table unless the viewer is in the reviewer
+group the filter names, as the warehouse's row filters give it (ticket 63). The scripted agent answers the showcase question (tests/fixtures/agent), and
 the answer cites ICR P130164 paragraph 54, which search_passages found.
 """
 
@@ -59,15 +60,17 @@ NOOR = headers("noor.example@worldbank.org")
 
 
 class ReadsOnly:
-    """A viewer's engine: a reader, who may not write and reads each masked column as NULL."""
+    """A viewer's engine: a reader, who may not write, reads each masked column as NULL, and reads a filtered table's
+    rows only when in one of the reviewer groups (the roles file's keys) the filter names."""
 
-    def __init__(self, engine):
+    def __init__(self, engine, groups: frozenset[str] = frozenset()):
         self.engine = engine
+        self.groups = groups
 
     def run(self, sql, params=None):
         if sql.lstrip().upper().startswith(("INSERT", "MERGE", "UPDATE", "DELETE", "CREATE", "DROP", "ALTER")):
             raise PermissionDenied("The viewer may not write the retrieval loop's tables.")
-        return self.engine.run(masks.as_a_reader(sql), params)
+        return self.engine.run(masks.as_a_reader(sql, self.groups), params)
 
     def insert_rows(self, table, columns, rows):
         raise PermissionDenied(f"The viewer may not write {table}.")
@@ -100,8 +103,8 @@ class Loop:
         case = load_cases()[case]
 
         @contextmanager
-        def engine_for(_viewer):
-            yield self.reader()
+        def engine_for(viewer):
+            yield self.reader(getattr(viewer, "email", None))
 
         def new_run_id():
             self.runs += 1
@@ -125,9 +128,11 @@ class Loop:
     def the_app(self):
         return self.database.cursor()
 
-    def reader(self):
-        """The engine every viewer reads through: the stand-in for the readers group."""
-        return ReadsOnly(self.database.cursor())
+    def reader(self, email: str | None = None):
+        """The engine a viewer reads through: the stand-in for the readers group, with the reviewer groups the roles
+        file puts the viewer with this email in."""
+        person = ROLES.person(email)
+        return ReadsOnly(self.database.cursor(), frozenset(person.groups) if person else frozenset())
 
     def later(self, **delta):
         self.at += dt.timedelta(**delta)

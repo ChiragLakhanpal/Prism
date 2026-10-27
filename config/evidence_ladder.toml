@@ -63,7 +63,7 @@ document_types = []
 
 # What an assertion can be about. Each attribute has:
 #   kind    rating, date or amount
-#   class   judgment (an outcome judgment, decided by the outcome rule) or moment (a fact about a
+#   class   judgment (an outcome judgment, decided by the outcome rule) or moment (a claim about one
 #           moment, decided by the moment rule)
 #   scale   for a rating, its scale in [scales]
 #   names   the field names that mean it, word for word, in the reports and records Strata reads

@@ -37,6 +37,7 @@ from strata.config import load_project_page, load_slice
 from strata.lakehouse.clean import public_from
 from strata.lakehouse.engine import Engine
 from strata.lakehouse.passages import select
+from strata.reader.layout import https
 from strata.server.projects import display_name
 from strata.tools.check_plan import agency_id
 
@@ -96,7 +97,9 @@ def _listed(engine: Engine, project_id: str) -> dict[str, dict]:
                 "document_id": str(document["id"]), "document_type": document.get("docty") or "",
                 "report_number": document.get("repnb") or None, "document_date": _day(document["docdt"]),
                 "disclosed_on": disclosed, "public_from": public_from(disclosed, fetched),
-                "pdf_url": document.get("pdfurl") or None, "language": LANGUAGES.get(document.get("lang") or "")}
+                # The list gives pdfurl over http; the readers store it over https, and so does this page (ticket 63).
+                "pdf_url": https(document["pdfurl"]) if document.get("pdfurl") else None,
+                "language": LANGUAGES.get(document.get("lang") or "")}
     return found
 
 

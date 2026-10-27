@@ -4,10 +4,28 @@
 // tests/test_answer_stream.py, so each number the page shows is checked against the row the server
 // returned. Fixed words come from the brief, copied here so the test checks the copy file against an
 // independent source.
+import { spawnSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
 import { scan } from "./axe";
 import type { Page, Route } from "@playwright/test";
 import { askFromTheBox, drawer, landed, open as openAnswerPage, panel } from "./answer-page";
 import { expect, mockShell, recorded, test } from "./mocked";
+
+const REPO = fileURLToPath(new URL("../../", import.meta.url));
+
+// tests/ground_truth/values.toml's [stress_shelf.slice_projects]: the pilot projects and the projects whose reports
+// the fixture records, each counted there from data/fixture/sources.toml, never from Strata's code.
+function sliceProjects(): { count: number; pilot_projects_read: number; document_projects: string[] } {
+  const read = spawnSync(
+    "python3",
+    ["-c", "import json, sys, tomllib; print(json.dumps(tomllib.load(open(sys.argv[1], 'rb'))['stress_shelf']['slice_projects'], default=str))",
+      `${REPO}tests/ground_truth/values.toml`],
+    { encoding: "utf8" },
+  );
+  return JSON.parse(read.stdout);
+}
+
+const WORDS = ["one", "two", "three", "four", "five", "six", "seven", "eight", "nine"]; // DESIGN.md section 7, rule 12
 
 async function violations(page: Page) {
   // The drawer fades in; contrast is checked once it has settled.
@@ -249,11 +267,12 @@ test("the project reports' row counts the projects its documents belong to, then
   const documents = answer.rows[reports.cells.coverage.row];
   const projects = answer.rows[reports.cells.coverage.projects_row];
   const pilot = answer.rows[reports.cells.coverage.slice_row];
+  const slice = sliceProjects();
   expect(projects.count).toBe(documents.subjects.length);
-  expect([pilot.count, pilot.denominator]).toEqual([1, 17]);
-  expect(projects.count).toBe(3);
-  await expect(cell("coverage")).toContainText("documents for three projects");
-  await expect(cell("coverage")).toContainText("1 of 17 pilot projects");
+  expect([pilot.count, pilot.denominator]).toEqual([slice.pilot_projects_read, slice.count]);
+  expect(projects.count).toBe(slice.document_projects.length);
+  await expect(cell("coverage")).toContainText(`documents for ${WORDS[slice.document_projects.length - 1]} projects`);
+  await expect(cell("coverage")).toContainText(`${slice.pilot_projects_read} of ${slice.count} pilot projects`);
   await cell("coverage").locator("[data-num]").nth(1).click();
   await expect(page.getByRole("dialog", { name: "Projects with documents read" })).toContainText("strata.silver.documents");
   await page.keyboard.press("Escape");

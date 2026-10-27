@@ -1129,6 +1129,8 @@
       "total": 25,
       "used": 25,
       "missing": 0,
+      "other_family": 0,
+      "unconfirmed": 0,
       "reason": "no_plan_dates",
       "sources": [
         "notices",
@@ -2287,6 +2289,8 @@
         "total": 25,
         "used": 25,
         "missing": 0,
+        "other_family": 0,
+        "unconfirmed": 0,
         "reason": "no_plan_dates",
         "sources": [
           "notices",
