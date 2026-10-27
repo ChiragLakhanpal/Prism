@@ -78,7 +78,7 @@ function ComponentList({ active, wide }: { active?: string; wide?: boolean }) {
       aria-label={galleryCopy.listLabel}
       className={cx("col-span-12", !wide && "lg:order-first lg:col-span-3", active ? "order-last" : "hidden lg:block")}
     >
-      <h2 className="text-label text-ink-muted uppercase">{galleryCopy.listLabel}</h2>
+      <h2 className="text-label text-ink-muted">{galleryCopy.listLabel}</h2>
       <ul className="mt-2 flex flex-wrap gap-x-4 lg:flex-col lg:gap-x-0">
         {PAGES.map((page) => (
           <li key={page.slug}>
@@ -133,7 +133,7 @@ function Index() {
       <ul className="mt-8 grid gap-4 md:grid-cols-2">
         {PAGES.map((page) => (
           <li key={page.slug} className="rounded-md border border-line bg-surface p-4">
-            <a href={`/gallery/${page.slug}`} className="text-title text-primary underline underline-offset-3 hover:text-link-hover">
+            <a href={`/gallery/${page.slug}`} className="text-h2 text-primary underline underline-offset-3 hover:text-link-hover">
               {galleryCopy.pages[page.slug].title}
             </a>
             <p className="mt-2 text-small text-ink">{galleryCopy.pages[page.slug].purpose}</p>

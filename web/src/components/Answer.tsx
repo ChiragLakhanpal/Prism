@@ -69,7 +69,7 @@ function withoutWordJoiners(event: ClipboardEvent<HTMLDivElement>) {
 function InShort({ children, wide = false }: { children: ReactNode; wide?: boolean }) {
   return (
     <>
-      <h3 className="text-label text-ink-muted uppercase">{copy.answer.inShort}</h3>
+      <h3 className="text-label text-ink-muted">{copy.answer.inShort}</h3>
       <div data-in-short onCopy={withoutWordJoiners} className={cx("mt-2 text-body text-ink", !wide && "max-w-prose")}>
         {children}
       </div>

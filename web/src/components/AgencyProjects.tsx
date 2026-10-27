@@ -59,7 +59,7 @@ export function AgencyProjectsView({ load, onRetry, asOf }: { load: Load<AgencyP
   const agency = data ? copy.view.agencyInSentence(data.agency.name, data.agency.short_name) : null;
   return (
     <section aria-labelledby={heading} className="mt-8" data-agency-projects={load.status === "ready" ? data!.state : load.status}>
-      <h2 id={heading} className="text-title text-ink-heading">
+      <h2 id={heading} className="text-h2 text-ink-heading">
         {words.heading}
       </h2>
       {agency && <p className="mt-2 max-w-prose text-body text-ink">{data!.state === "none" ? words.none(agency) : words.lead(agency)}</p>}

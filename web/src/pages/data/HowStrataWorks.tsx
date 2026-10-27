@@ -93,7 +93,7 @@ export function HowStrataWorks() {
           {words.next.after}
         </p>
         <nav aria-label={words.index} className="mt-2">
-          <p className="text-label text-ink-muted uppercase">{words.index}</p>
+          <p className="text-label text-ink-muted">{words.index}</p>
           <ul className="mt-2 gap-x-8 text-body md:columns-2" data-how-index>
             {PAGE_ORDER.map((id) => (
               <li key={id} className="py-1">

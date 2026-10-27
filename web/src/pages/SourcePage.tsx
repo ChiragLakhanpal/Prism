@@ -148,7 +148,7 @@ export function PageBar({
               max={pages ?? undefined}
               value={value}
               onChange={(event) => setValue(event.target.value)}
-              className="h-11 w-[6ch] min-w-16 rounded-md border border-line-strong bg-surface px-2 text-right text-body text-ink tabular-nums"
+              className="h-11 w-[6ch] min-w-16 rounded-sm border border-line-strong bg-surface px-2 text-right text-body text-ink tabular-nums"
             />
             <Button variant="secondary" type="submit">
               {words.pages.goButton}

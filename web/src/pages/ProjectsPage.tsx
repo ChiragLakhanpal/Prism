@@ -162,7 +162,7 @@ export function ProjectsPage() {
       )}
       <section aria-labelledby={headingId} className="col-span-12 mt-8 @lg/page:mt-8" data-projects-page={load.status}>
         {/* With the sub-tabs showing, the selected one already names the list, so its heading is for screen readers. */}
-        <h2 id={headingId} className={staff ? "sr-only" : "text-title text-ink-heading"}>
+        <h2 id={headingId} className={staff ? "sr-only" : "text-h2 text-ink-heading"}>
           {words.tableTitle}
         </h2>
         <div className="layout-grid mt-3">

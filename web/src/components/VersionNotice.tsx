@@ -390,7 +390,7 @@ export function VersionNotice({ notice, level = 3 }: { notice: NoticeBody & { ac
           {notice.example && <Tag>{copy.home.example}</Tag>}
         </div>
         {/* Home's "See a lesson change" lands on the notice and focuses its title (ticket 41). */}
-        {createElement(`h${level}`, { ref: heading, id: headingId, tabIndex: -1, className: "text-title text-balance text-ink-heading focus:outline-none" }, notice.statement_a)}
+        {createElement(`h${level}`, { ref: heading, id: headingId, tabIndex: -1, className: "text-h2 text-balance text-ink-heading focus:outline-none" }, notice.statement_a)}
         <WasNow notice={notice} onRow={false} />
         <Decided notice={notice} />
         <div>
@@ -558,7 +558,7 @@ export function VersionsView({ view }: { view: VersionsViewData }) {
           <Fill template={v.decidedOn} slots={{ date: <Num date={version.decided_on} /> }} />
           {later && version.version === view.current && <> {v.thisCurrent}</>}
         </p>
-        <p className="text-title text-ink-heading">
+        <p className="text-h2 text-ink-heading">
           <ChangeMarks text={version.statement} ranges={ranges} />
         </p>
         <ul className="flex flex-wrap gap-2">

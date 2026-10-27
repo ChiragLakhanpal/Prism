@@ -126,6 +126,10 @@ export function chartType(width: number): { s: number; m: number; l: number } {
   return { s: 14, m: 16, l: 20 };
 }
 
+// A chart's title is its finding (DESIGN.md section 6): l, but never smaller than the lead step, so the section's
+// name above it (h2, the same 18 px) never outranks it on a phone (ticket 91).
+export const titleSize = (type: { l: number }) => `max(${type.l}px, var(--text-lead))`;
+
 // About five ticks: every 3 months up to 12, every 6 up to 36, every 12 above that, stepping up to
 // 24 and 48 so there are at most six labels, or five when the chart is under 400 px wide.
 const STEPS = [3, 6, 12, 24, 48];
@@ -1042,10 +1046,8 @@ export function RangeChart({
           ref={ref("lane")}
           x={0}
           y={twoLanes ? 10 + type.s * 0.35 : textBaseline}
-          fontSize={type.s}
-          fontWeight={600}
           opacity={twoLanes || showLaneLabel ? 1 : 0}
-          className="fill-chart-text-subtle uppercase"
+          className="fill-chart-text-subtle text-chart-label uppercase"
         >
           {laneLabel}
         </text>
@@ -1272,7 +1274,7 @@ export function RangeChart({
             {keyDParts.map((_, index) => (
               <Knockout key={index} kind={`keyD${index}`} box={boxes[KEY_D[index]]} floor={axisY - 0.5} />
             ))}
-            <text ref={ref("lane2")} x={0} y={rowDTop + 10 + type.s * 0.35} fontSize={type.s} fontWeight={600} className="fill-chart-text-subtle uppercase">
+            <text ref={ref("lane2")} x={0} y={rowDTop + 10 + type.s * 0.35} className="fill-chart-text-subtle text-chart-label uppercase">
               {lane2Shown}
             </text>
             {keyDParts.map((part, index) => (
@@ -1341,7 +1343,7 @@ export function RangeChart({
           full label, so the chart knows whether it fits. */}
       <svg aria-hidden="true" width={0} height={0} className="pointer-events-none absolute top-0 left-0 overflow-hidden" style={{ visibility: "hidden" }}>
         {twoLanes && (
-          <text ref={ref("lane2Full")} fontSize={type.s} fontWeight={600} className="uppercase">
+          <text ref={ref("lane2Full")} className="text-chart-label uppercase">
             {lane2Label}
           </text>
         )}
@@ -1360,7 +1362,7 @@ export function RangeChart({
         <div
           aria-hidden="true"
           data-plan-knob-drawn
-          className="absolute flex h-6 w-3 items-center justify-center gap-0.5 rounded-pill bg-primary"
+          className="absolute flex h-6 w-3 items-center justify-center gap-0.5 rounded-sm bg-primary"
           style={{ left: knobLeft, top: rowA, transform: "translateX(-50%)" }}
         >
           <span className="h-3 w-px bg-surface" />
@@ -1386,7 +1388,7 @@ export function RangeChart({
           // The knob is the slider itself, 12 by 24 px, so its focus ring sits 2 px around it. An
           // ::after pads its hit area to 24 by 44 px, and to 44 by 44 px for a coarse pointer.
           className={cx(
-            "absolute flex h-6 w-3 cursor-ew-resize touch-none items-center justify-center gap-0.5 rounded-pill",
+            "absolute flex h-6 w-3 cursor-ew-resize touch-none items-center justify-center gap-0.5 rounded-sm",
             "after:absolute after:-inset-x-1.5 after:-inset-y-2.5 after:content-[''] pointer-coarse:after:-inset-x-4",
             drag ? "bg-primary-pressed" : knobHover ? "bg-primary-hover" : "bg-primary",
           )}

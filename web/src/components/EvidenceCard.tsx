@@ -195,10 +195,10 @@ export function EvidenceCard({ evidence, n, sentence, visited = false }: { evide
   return (
     <div data-evidence-card className="flex flex-col p-1">
       <div className="flex items-start justify-between gap-3">
-        <p className="text-label text-ink-muted uppercase">{eyebrow(evidence)}</p>
+        <p className="text-label text-ink-muted">{eyebrow(evidence)}</p>
         <SourceNumber n={n} />
       </div>
-      <p className="mt-1 text-title text-ink-heading">{sourceTitle(evidence)}</p>
+      <p className="mt-1 text-h2 text-ink-heading">{sourceTitle(evidence)}</p>
       {fields && shown && fields.kind === "notice_text" && (
         <Lang as="p" code={fields.lang} data-excerpt className="mt-2 text-small text-ink">
           {copy.evidence.quoteOpen}

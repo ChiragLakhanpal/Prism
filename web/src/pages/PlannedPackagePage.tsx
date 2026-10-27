@@ -291,7 +291,7 @@ function ReadingPage() {
           <CardTop sentence={current.sentence} guesses={null} headingId="what-i-understood" />
           {current.phase === "no_package" ? (
             <div className="mt-4" data-no-package>
-              <h3 tabIndex={-1} className="text-title text-ink-heading">
+              <h3 tabIndex={-1} className="text-h2 text-ink-heading">
                 {words.noPackageTitle}
               </h3>
               <p className="mt-2 max-w-prose text-body text-ink">{words.noPackageBody}</p>
@@ -458,7 +458,7 @@ function LoadingPackage() {
         </div>
         <p className="mt-4 max-w-prose text-body text-ink-muted">{words.purpose}</p>
         <section className="mt-6 rounded-md border border-line bg-surface p-4 @md/page:p-6">
-          <h2 className="text-title text-ink-heading">{words.card.heading}</h2>
+          <h2 className="text-h2 text-ink-heading">{words.card.heading}</h2>
           <div className="mt-4">
             <ChipSkeletons form={null} />
           </div>
@@ -1014,7 +1014,7 @@ export function PlanPrompt({
               }
             }}
             className={cx(
-              "h-11 w-[88px] rounded-md border bg-surface px-3 text-right text-body text-ink tabular-nums",
+              "h-11 w-[88px] rounded-sm border bg-surface px-3 text-right text-body text-ink tabular-nums",
               invalid ? "border-error-icon" : "border-line-strong",
             )}
           />

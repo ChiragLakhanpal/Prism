@@ -112,7 +112,7 @@ export function RebiddingView({
       className="mt-6 border-t border-line pt-6"
     >
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-        <h3 ref={headingRef} id={headingId} tabIndex={-1} className="text-title text-ink-heading focus:outline-none">
+        <h3 ref={headingRef} id={headingId} tabIndex={-1} className="text-h2 text-ink-heading focus:outline-none">
           {words.heading}
         </h3>
         <StatusBadge kind="experimental" />

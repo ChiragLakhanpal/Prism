@@ -43,11 +43,11 @@ const words = copy.dataReadiness;
 const SLOW_MS = 3000;
 // Until the registry answers, the skeleton holds this many rows in each table and fixes in the card.
 const ROWS_BEFORE_REGISTRY = 3;
-// The headline's skeleton: as many lines as the real headline runs, measured on the fixture's page
-// (four at the h3 size from 1280 px, five from 768 px, and nine at the title size below), so
+// The headline's skeleton: as many lines as the real headline runs in the lead size, measured on the
+// fixture's page at 1440, 1024 and 390 px (three from 1200 px, five from 768 px, and seven below), so
 // nothing moves when it arrives.
 const lines = (count: number) => [...Array.from({ length: count - 1 }, () => "w-full"), "w-3/5"];
-const HEADLINE_LINES = { widest: lines(4), wide: lines(5), narrow: lines(9) };
+const HEADLINE_LINES = { widest: lines(3), wide: lines(5), narrow: lines(7) };
 
 const plain = (count: number) => <Num count={count} />;
 const day = (iso: string, today: string, style: "sentence" | "table" = "sentence") => <Num date={iso} style={style} today={today} />;
@@ -480,7 +480,7 @@ function projectCount(fix: Fix, measures: Measures): ReactNode {
 function Fixes({ fixes, measures, shortfalls, shown }: { fixes: Fix[]; measures: Measures; shortfalls: boolean; shown: number }) {
   return (
     <section aria-labelledby="data-fixes" data-fixes className="rounded-md border border-line bg-surface p-4 md:p-6">
-      <h2 id="data-fixes" className="text-title text-ink-heading">
+      <h2 id="data-fixes" className="text-h2 text-ink-heading">
         {words.fixes.title}
       </h2>
       <p className="mt-1 text-caption text-ink-muted">{words.fixes.caption}</p>
@@ -518,7 +518,7 @@ function Failures({ result }: { result: Readiness }) {
   if (result.parse_failures === null) return null;
   return (
     <section aria-labelledby="data-failures" data-failures className="mt-12">
-      <h2 id="data-failures" className="text-title text-ink-heading">
+      <h2 id="data-failures" className="text-h2 text-ink-heading">
         {words.failures.title}
       </h2>
       {result.parse_failures.length === 0 ? (
@@ -694,9 +694,9 @@ function render(
       lead: (
         <>
           <span className="clip-visually">{copy.loading}</span>
-          <SkeletonText className="hidden text-h3 xl:flex" widths={HEADLINE_LINES.widest} />
-          <SkeletonText className="hidden text-h3 md:flex xl:hidden" widths={HEADLINE_LINES.wide} />
-          <SkeletonText className="text-title md:hidden" widths={HEADLINE_LINES.narrow} />
+          <SkeletonText className="hidden text-lead xl:flex" widths={HEADLINE_LINES.widest} />
+          <SkeletonText className="hidden text-lead md:flex xl:hidden" widths={HEADLINE_LINES.wide} />
+          <SkeletonText className="text-lead md:hidden" widths={HEADLINE_LINES.narrow} />
           {/* As tall as the caption it stands for: two lines below 768 px, one above. */}
           <div role="status" className="mt-2 min-h-[2lh] text-caption text-ink-muted md:min-h-lh">
             {slow ? words.loading.slow : null}
@@ -734,7 +734,7 @@ function render(
           {/* Every row is in view when no link filters the page, the plans' row with them. */}
           {!new URLSearchParams(search).has("sources") && (
             <section aria-labelledby="data-failures-loading" className="mt-12">
-              <h2 id="data-failures-loading" className="text-title text-ink-heading">
+              <h2 id="data-failures-loading" className="text-h2 text-ink-heading">
                 {words.failures.title}
               </h2>
               <SkeletonLine className="mt-3 hidden text-body md:flex" width="w-2/3" />
@@ -742,7 +742,7 @@ function render(
             </section>
           )}
           <div className="mt-12 rounded-md border border-line bg-surface p-4 md:p-6" aria-hidden="true">
-            <h2 className="text-title text-ink-heading">{words.fixes.title}</h2>
+            <h2 className="text-h2 text-ink-heading">{words.fixes.title}</h2>
             <SkeletonLine className="mt-1 text-caption" width="w-2/5" />
             <ol className="mt-3 flex flex-col gap-3">
               {Array.from({ length: fixes }, (_, index) => (
@@ -817,7 +817,7 @@ function render(
       name: "before-first",
       lead: (
         <>
-          <p className="text-h3 text-balance text-ink-heading">
+          <p className="text-lead text-balance text-ink-heading">
             <Template
               text={words.abstain.beforeFirst}
               values={{ asked: day(result.as_of, result.as_of), first: day(abstention.first_measured_on ?? result.as_of, result.as_of) }}
@@ -838,11 +838,11 @@ function render(
     lead: (
       <>
         {result.headline ? (
-          <p className="text-title text-pretty text-ink-heading md:text-h3" data-headline>
+          <p className="text-lead text-pretty text-ink-heading" data-headline>
             <Sentence segments={result.headline.segments} measures={measures} about={result.filter.sources ? words.number.sources : undefined} />
           </p>
         ) : result.headline_abstention ? (
-          <p className="text-title text-pretty text-ink-heading md:text-h3" data-headline>
+          <p className="text-lead text-pretty text-ink-heading" data-headline>
             <Abstention unmeasured={result.headline_abstention.unmeasured} sources={result.headline_abstention.sources} />
           </p>
         ) : null}

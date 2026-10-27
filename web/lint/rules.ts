@@ -21,74 +21,16 @@ export const RETIRED_CLASSES: Record<string, string> = { "text-title": "text-h2"
 export const CLASS_RULES_SKIP = ["src/deck/"];
 
 // The files, from web/, that used a retired class or `uppercase` when ticket 90 landed on October 27, 2026, each with
-// the ones it may keep until the class sweep (ticket 91) moves them. The sweep takes a file off as it fixes it, then
-// deletes the list. A use in a file not on it, or a class a listed file did not use then, fails the lint.
+// the ones it may keep. The class sweep (ticket 91) moved every other file's classes to their roles and took it off.
+// These three are left to the shell tickets that rewrite them: the box's band to the top bar ticket (93), the evidence
+// drawer's head to the page frame ticket (94), and the collapsed section's eyebrow to the workspace ticket (95), whose
+// Task zone takes over its look. A use in a file not on the list, a class a listed file did not use then, or a listed
+// class the file no longer uses fails the lint, so each ticket takes its file off as it moves the class, and the last
+// one deletes the list.
 export const FROZEN_CLASS_USES: Record<string, readonly string[]> = {
-  "src/components/AgencyProjects.tsx": ["text-title"],
-  "src/components/Answer.tsx": ["uppercase"],
-  "src/components/AnswerPanel.tsx": ["text-title"],
-  "src/components/ApproachOptions.tsx": ["text-title"],
   "src/components/BoxBand.tsx": ["rounded-box"],
-  "src/components/Card.tsx": ["text-title"],
-  "src/components/ChangeTables.tsx": ["text-title"],
   "src/components/CollapsedSection.tsx": ["uppercase"],
-  "src/components/ComparableRecords.tsx": ["text-title", "uppercase"],
-  "src/components/ContractTrail.tsx": ["text-title", "uppercase"],
-  "src/components/Criteria.tsx": ["text-title", "uppercase"],
-  "src/components/CriteriaDrawer.tsx": ["uppercase"],
-  "src/components/CriteriaParts.tsx": ["text-title", "uppercase"],
-  "src/components/DecisionForm.tsx": ["text-title"],
-  "src/components/DisagreementCard.tsx": ["text-title"],
-  "src/components/DraftBar.tsx": ["text-title"],
-  "src/components/DraftDisagreements.tsx": ["text-title"],
-  "src/components/EvidenceCard.tsx": ["text-title", "uppercase"],
   "src/components/EvidenceDrawer.tsx": ["text-title", "uppercase"],
-  "src/components/EvidenceTrail.tsx": ["uppercase"],
-  "src/components/FactTable.tsx": ["text-title"],
-  "src/components/LessonCard.tsx": ["text-title", "uppercase"],
-  "src/components/LessonReview.tsx": ["text-title"],
-  "src/components/MissionBriefParts.tsx": ["text-title"],
-  "src/components/PaperSheet.tsx": ["text-title"],
-  "src/components/PastRange.tsx": ["text-title", "uppercase"],
-  "src/components/PlanCheck.tsx": ["text-title"],
-  "src/components/PpsdSources.tsx": ["text-title"],
-  "src/components/ProjectPaperPanel.tsx": ["text-title"],
-  "src/components/RangeChart.tsx": ["uppercase"],
-  "src/components/ReadinessTable.tsx": ["text-title"],
-  "src/components/RebiddingBlock.tsx": ["text-title"],
-  "src/components/RisksSection.tsx": ["text-title", "uppercase"],
-  "src/components/SourcePill.tsx": ["text-title", "uppercase"],
-  "src/components/SourcesList.tsx": ["text-title"],
-  "src/components/StepRowsDraft.tsx": ["text-title"],
-  "src/components/StepsSection.tsx": ["text-title"],
-  "src/components/Table.tsx": ["text-title"],
-  "src/components/Term.tsx": ["text-title"],
-  "src/components/VersionNotice.tsx": ["text-title"],
-  "src/gallery/Gallery.tsx": ["text-title", "uppercase"],
-  "src/pages/CheckMyPlanPage.tsx": ["text-title"],
-  "src/pages/CheckPlanPage.tsx": ["text-title"],
-  "src/pages/DraftNewPage.tsx": ["text-title"],
-  "src/pages/DraftPage.tsx": ["text-title"],
-  "src/pages/DraftsPage.tsx": ["text-title"],
-  "src/pages/FollowingPage.tsx": ["text-title"],
-  "src/pages/HomePage.tsx": ["text-title", "uppercase"],
-  "src/pages/JudgingPages.tsx": ["text-title"],
-  "src/pages/LessonsPages.tsx": ["text-title"],
-  "src/pages/LessonsTab.tsx": ["text-title"],
-  "src/pages/PackagesPage.tsx": ["text-title"],
-  "src/pages/PassageReportsPages.tsx": ["text-title"],
-  "src/pages/PlannedPackagePage.tsx": ["text-title"],
-  "src/pages/ProjectsPage.tsx": ["text-title"],
-  "src/pages/ReviewPage.tsx": ["text-title", "uppercase"],
-  "src/pages/WritingDatesPage.tsx": ["text-title"],
-  "src/pages/data/DataReadiness.tsx": ["text-title"],
-  "src/pages/data/HowStrataWorks.tsx": ["uppercase"],
-  "src/pages/data/SourcesAndLicenses.tsx": ["text-title"],
-  "src/pages/project/ConnectionsTab.tsx": ["text-title"],
-  "src/pages/project/DocumentsTab.tsx": ["text-title"],
-  "src/pages/project/ProcurementTab.tsx": ["text-title"],
-  "src/pages/project/SummaryTab.tsx": ["text-title"],
-  "src/pages/project/TimelineTab.tsx": ["uppercase"],
 };
 
 // Sentences and terms the copy may use word for word, even though a rule would catch a word

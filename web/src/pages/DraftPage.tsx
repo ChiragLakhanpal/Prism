@@ -669,7 +669,7 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
           </ExampleNote>
         )}
         <div className="mt-6 max-w-[72ch]">
-          <h2 id={ledeId} tabIndex={-1} className="text-title text-pretty text-ink-heading focus:outline-none" data-lede>
+          <h2 id={ledeId} tabIndex={-1} className="text-h2 text-pretty text-ink-heading focus:outline-none" data-lede>
             {lede}
           </h2>
           <p className="mt-2 text-body text-ink">
@@ -847,7 +847,7 @@ function DraftSkeleton() {
           <SkeletonLine className="mt-2 text-small @lg/page:mt-4" width="w-[300px] max-w-full" />
         </div>
         <div className="mt-6 max-w-[72ch]">
-          {lines(["w-full", "w-full", "w-1/2"], ["w-full", "w-2/5"], "text-title")}
+          {lines(["w-full", "w-full", "w-1/2"], ["w-full", "w-2/5"], "text-h2")}
           {lines(["w-full", "w-full", "w-full", "w-3/5"], ["w-full", "w-4/5"], "mt-2 text-body")}
         </div>
         <div className="mt-4 flex max-w-prose flex-col gap-2">
@@ -902,7 +902,7 @@ function DraftSkeleton() {
           ))}
         </ul>
         <div className="mt-8">
-          <SkeletonLine className="text-title" width="w-24" />
+          <SkeletonLine className="text-h2" width="w-24" />
           {lines(["w-full", "w-3/5"], ["w-4/5 max-w-[72ch]"], "mt-2 text-caption")}
           <div className="mt-4 flex flex-col gap-4">
             {[0, 1, 2].map((index) => (
@@ -923,12 +923,12 @@ function DraftSkeleton() {
           </p>
           <div className={BAR_BUTTONS}>
             <div>
-              <Skeleton className="h-11 w-24" radius="rounded-pill" />
+              <Skeleton className="h-11 w-24" radius="rounded-sm" />
             </div>
             <div className={BAR_MAIN}>
               {/* Full width while stacked, and each button's width in a row. */}
-              <Skeleton className="h-11 w-full bar-sticks:w-36" radius="rounded-pill" />
-              <Skeleton className="h-11 w-full bar-sticks:w-40" radius="rounded-pill" />
+              <Skeleton className="h-11 w-full bar-sticks:w-36" radius="rounded-sm" />
+              <Skeleton className="h-11 w-full bar-sticks:w-40" radius="rounded-sm" />
             </div>
           </div>
         </section>

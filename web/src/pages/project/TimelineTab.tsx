@@ -312,7 +312,7 @@ function TimelineSkeleton({ wide }: { wide: boolean }) {
     <div aria-hidden="true" className="relative mt-4" style={{ height: HEIGHT }}>
       {LANES.map((lane, at) => (
         <div key={lane} className="absolute inset-x-2" style={{ top: [0, 104, 232][at] }}>
-          <p className="text-label text-chart-text-subtle uppercase">{words.lane[lane]}</p>
+          <p className="text-chart-label text-chart-text-subtle uppercase">{words.lane[lane]}</p>
           <Skeleton className={cx("mt-8 h-3", ["w-[90%]", "w-[60%]", "w-[40%]"][at])} />
           {lane === "how" && <Skeleton className="mt-10 h-6 w-full" />}
         </div>

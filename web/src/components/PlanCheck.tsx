@@ -711,7 +711,7 @@ export function PlanCheck({ result, findingRef, defaultOpen = false, afterMethod
   return (
     <section aria-labelledby={findingId} data-plan-check>
       <EightColumns prose className="mt-6">
-        <h2 ref={findingRef} id={findingId} tabIndex={-1} className="text-title text-pretty text-ink-heading focus:outline-none">
+        <h2 ref={findingRef} id={findingId} tabIndex={-1} className="text-h2 text-pretty text-ink-heading focus:outline-none">
           <Finding result={result} />
         </h2>
         <div className="mt-2">
@@ -856,8 +856,8 @@ export function PlanCheckSkeleton({ slow, baseline }: {
             one line at the full width from 768 px and from 1200 px. Its count words keep to the
             line's height (Num). The method sentence takes five lines below 768 px and three from it. */}
         <div>
-          <SkeletonText className="text-title @md/page:hidden @lg/page:flex @xl/page:hidden" widths={["w-full", "w-2/5"]} />
-          <SkeletonLine className="hidden text-title @md/page:flex @lg/page:hidden @xl/page:flex" width="w-[70%]" />
+          <SkeletonText className="text-h2 @md/page:hidden @lg/page:flex @xl/page:hidden" widths={["w-full", "w-2/5"]} />
+          <SkeletonLine className="hidden text-h2 @md/page:flex @lg/page:hidden @xl/page:flex" width="w-[70%]" />
         </div>
         {slow && <p className="mt-1 text-caption text-ink-muted">{words.stillChecking}</p>}
         <SkeletonText className="mt-2 text-body @md/page:hidden" widths={["w-full", "w-full", "w-full", "w-full", "w-2/5"]} />

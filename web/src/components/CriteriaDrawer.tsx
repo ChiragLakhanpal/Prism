@@ -168,7 +168,7 @@ function CostRecords({ evidence }: { evidence: EvidenceEvent }) {
         />
       </p>
       <section className="rounded-md border border-line p-4" aria-labelledby="cost-plan-row">
-        <p className="text-label text-ink-muted uppercase">{cost.eyebrow}</p>
+        <p className="text-label text-ink-muted">{cost.eyebrow}</p>
         <h3 id="cost-plan-row" className="mt-1 text-small font-bold text-ink-heading">
           <Fill template={cost.planRow} slots={{ ref: <MonoWords text={row.step_reference} /> }} />
         </h3>
@@ -189,7 +189,7 @@ function CostRecords({ evidence }: { evidence: EvidenceEvent }) {
       </section>
       {row.contracts.map((contract) => (
         <section key={contract.contract_id} className="rounded-md border border-line p-4" aria-label={cost.contract.replace("{id}", contract.contract_id)}>
-          <p className="text-label text-ink-muted uppercase">{copy.evidence.eyebrow.What}</p>
+          <p className="text-label text-ink-muted">{copy.evidence.eyebrow.What}</p>
           <h3 className="mt-1 text-small font-bold text-ink-heading">
             <Fill template={cost.contract} slots={{ id: <span className="font-mono">{contract.contract_id}</span> }} />
           </h3>

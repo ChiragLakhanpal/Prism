@@ -183,7 +183,7 @@ function Lead({ summary }: { summary: Summary }) {
     );
   }
   return (
-    <p className="max-w-[65ch] text-h3 text-ink-heading" data-summary-lead>
+    <p className="max-w-[65ch] text-lead text-ink-heading" data-summary-lead>
       {text}
     </p>
   );
@@ -284,8 +284,8 @@ export function SummarySkeleton() {
   return (
     <>
       <div aria-hidden="true">
-        <SkeletonLine className="text-h3" width="w-[65ch] max-w-full" />
-        <SkeletonLine className="text-h3" width="w-[45ch] max-w-[70%]" />
+        <SkeletonLine className="text-lead" width="w-[65ch] max-w-full" />
+        <SkeletonLine className="text-lead" width="w-[45ch] max-w-[70%]" />
         <SkeletonLine className="mt-2 text-caption" width="w-1/2" />
       </div>
       <p role="status" className="sr-only">
@@ -376,7 +376,7 @@ export function SummaryFacts({ summary }: { summary: Summary }) {
           />
         ) : (
           <section>
-            <h3 className="text-title text-ink-heading">{words.group.ratings}</h3>
+            <h3 className="text-h2 text-ink-heading">{words.group.ratings}</h3>
             <p className="mt-2 max-w-prose text-body text-ink">{words.noRatings}</p>
           </section>
         )}

@@ -38,7 +38,7 @@ export function DefinitionContent({
   return (
     <>
       <div className="flex items-start justify-between gap-2">
-        <h2 ref={heading} id={titleId} tabIndex={-1} className="pt-2 text-title text-ink-heading outline-none">
+        <h2 ref={heading} id={titleId} tabIndex={-1} className="pt-2 text-h2 text-ink-heading outline-none">
           {title}
         </h2>
         <RadixPopover.Close

@@ -116,7 +116,7 @@ function Group({ group, rows, count }: { group: DraftGroup; rows: Row[]; count: 
   }, [shown]);
   return (
     <section aria-labelledby={headingId} data-draft-group={group}>
-      <h2 id={headingId} className="text-title text-ink-heading">
+      <h2 id={headingId} className="text-h2 text-ink-heading">
         {words.groups[group]}
       </h2>
       {count > 0 ? (
@@ -192,7 +192,7 @@ function Loading() {
       </p>
       {GROUPS.map((group) => (
         <section key={group}>
-          <h2 className="text-title text-ink-heading">{words.groups[group]}</h2>
+          <h2 className="text-h2 text-ink-heading">{words.groups[group]}</h2>
           <SkeletonLine className="mt-1 text-caption" width="w-40" />
           {group === "to_check" && (
             <div className="mt-2 rounded-md border border-line bg-surface">

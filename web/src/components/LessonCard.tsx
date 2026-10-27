@@ -233,10 +233,10 @@ export function LessonCard({
       data-retired={retired?.as}
       className={cx("flex flex-col gap-3 rounded-md border border-line bg-surface p-4 @md/page:p-6", compact && "@md/page:p-4")}
     >
-      <p className="text-label text-ink-muted uppercase">{eyebrowOf(card)}</p>
+      <p className="text-label text-ink-muted">{eyebrowOf(card)}</p>
       {createElement(
         `h${level}`,
-        { id: headingId, ref: heading, tabIndex: focus ? -1 : undefined, className: "-mt-1 text-title text-balance text-ink-heading outline-none" },
+        { id: headingId, ref: heading, tabIndex: focus ? -1 : undefined, className: "-mt-1 text-h2 text-balance text-ink-heading outline-none" },
         card.statement,
       )}
       {children}

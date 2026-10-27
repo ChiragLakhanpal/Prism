@@ -31,7 +31,7 @@ export function DraftDisagreements({ draft, choosing, preview, onChange }: {
   const words = copy.disagreement;
   return (
     <section aria-labelledby={headingId} data-draft-disagreements>
-      <h2 id={headingId} className="text-title text-ink-heading">
+      <h2 id={headingId} className="text-h2 text-ink-heading">
         {copy.draft.disagreements.title}
       </h2>
       <p className="mt-2 max-w-[72ch] text-small text-ink">{copy.draft.disagreements.lede}</p>

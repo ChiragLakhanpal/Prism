@@ -716,7 +716,7 @@ function Caption({ dates, family, rows, choice, onOpen }: { dates: StepDates; fa
     );
   return (
     <span className="flex flex-col gap-1">
-      <span className="block text-title text-ink-heading" data-step-caption>
+      <span className="block text-h2 text-ink-heading" data-step-caption>
         {title}
       </span>
       <span className="block text-caption text-ink-muted">{words.count(formatCount(count))}</span>

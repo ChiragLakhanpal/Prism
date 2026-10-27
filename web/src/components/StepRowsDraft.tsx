@@ -134,7 +134,7 @@ export function StepRowsDraft({ view, lists, editable, onChoice, onOpen }: {
       )}
       <div className="overflow-hidden rounded-md border border-line bg-surface">
         <table className="w-full table-fixed border-collapse text-small" data-overview>
-          <caption id="activities" tabIndex={-1} className="px-3 pt-3 text-left text-title text-ink-heading">
+          <caption id="activities" tabIndex={-1} className="px-3 pt-3 text-left text-h2 text-ink-heading">
             {kind.tableCaption("", "")}
           </caption>
           <thead className="bg-surface-2">
@@ -171,7 +171,7 @@ export function StepRowsDraft({ view, lists, editable, onChoice, onOpen }: {
       </div>
       {view.activities.map((activity) => (
         <section key={activity.key} id={activity.key} aria-labelledby={`${activity.key}-heading`} className="border-t border-line pt-6" data-activity-section>
-          <h3 id={`${activity.key}-heading`} tabIndex={-1} className={activity.reference ? "font-mono text-title font-medium text-ink-heading" : "text-title text-ink-heading"}>
+          <h3 id={`${activity.key}-heading`} tabIndex={-1} className={activity.reference ? "font-mono text-h2 font-medium text-ink-heading" : "text-h2 text-ink-heading"}>
             {activity.reference ?? activity.description}
           </h3>
           {activity.reference ? <p className="mt-1 text-body text-ink">{activity.description}</p> : <p className="mt-1 text-caption text-ink-muted">{words.noRef}</p>}

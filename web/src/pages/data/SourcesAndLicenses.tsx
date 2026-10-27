@@ -35,7 +35,7 @@ export function SourcesAndLicenses() {
         </p>
       )}
       <section aria-labelledby="data-datasets">
-        <h2 id="data-datasets" className="text-title text-ink-heading">
+        <h2 id="data-datasets" className="text-h2 text-ink-heading">
           {words.datasets}
         </h2>
         {state.status === "loading" && (
@@ -82,7 +82,7 @@ export function SourcesAndLicenses() {
       </section>
       {state.status === "ready" && state.registry.collections.length > 0 && (
         <section aria-labelledby="data-documents" className="mt-12">
-          <h2 id="data-documents" className="text-title text-ink-heading">
+          <h2 id="data-documents" className="text-h2 text-ink-heading">
             {words.documents}
           </h2>
           {/* Set like the datasets above, so the two lists of sources read as one kind of list. */}

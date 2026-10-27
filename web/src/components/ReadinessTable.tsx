@@ -53,8 +53,11 @@ export type ReadinessTableState = { status: "ready"; rows: ReadinessRow[] } | { 
 // the hardest documents' rows once their Page cell gained the World Bank's PDF link (ticket 21). The cards
 // were measured again with the shell redesign's type scale (ticket 90), whose 20 px caption and 24 px
 // title lines made each real card 1 to 2 px taller; the rows moved by less than 1.5 px and kept theirs.
-const ROW_HEIGHT = { kinds: "h-[8.3rem] xl:h-[7.5rem]", sources: "h-[8.4rem] xl:h-[7.2675rem]", shelf: "h-[9.5705rem] xl:h-[7.6707rem]" } as const;
-const CARD_HEIGHT = { kinds: "h-[16.79rem]", sources: "h-[16.48rem]", shelf: "h-[22.725rem]" } as const;
+// The class sweep (ticket 91) measured the Sources rows again (1755 px for 15 rows at 1440, 2035 at 1024),
+// and the hardest documents' five cards at 390 px (4 px short with their source line), once the headline's
+// lead lines no longer made up for them.
+const ROW_HEIGHT = { kinds: "h-[8.3rem] xl:h-[7.5rem]", sources: "h-[8.4792rem] xl:h-[7.3125rem]", shelf: "h-[9.5705rem] xl:h-[7.6707rem]" } as const;
+const CARD_HEIGHT = { kinds: "h-[16.79rem]", sources: "h-[16.48rem]", shelf: "h-[22.775rem]" } as const;
 
 // Heads sit at the top, so their labels share one line however their short definitions wrap.
 const HEAD = "px-4 py-3 align-top font-semibold text-ink-heading";
@@ -117,7 +120,7 @@ export function ReadinessTable({
       <h2
         id={titleId}
         tabIndex={headingId ? -1 : undefined}
-        className={cx("text-title text-ink-heading", headingId && "scroll-mt-6")}
+        className={cx("text-h2 text-ink-heading", headingId && "scroll-mt-6")}
       >
         {title}
       </h2>
@@ -190,7 +193,7 @@ export function ReadinessTable({
       <ul aria-labelledby={titleId} data-table-view="cards" className="mt-3 flex flex-col gap-4 md:hidden">
         {placeholders.map((index) => (
           <li key={index} aria-hidden="true" className="rounded-md border border-line bg-surface p-4">
-            <SkeletonLine width="w-3/5" className="text-title" />
+            <SkeletonLine width="w-3/5" className="text-h2" />
             {skeletonRows === "sources" && <SkeletonLine width="w-2/5" className="text-caption" />}
             {/* The real card's shape: each column's label, its short definition, the number and what
                 it counts, in the same grid. */}
@@ -210,7 +213,7 @@ export function ReadinessTable({
           const spanAt = "span" in row ? (row.spanFrom ? columns.findIndex((column) => column.key === row.spanFrom) : 0) : columns.length;
           return (
             <li key={row.id} data-card={row.id} className="rounded-md border border-line bg-surface p-4">
-              <h3 lang={row.lang} className="text-title wrap-anywhere text-ink-heading">
+              <h3 lang={row.lang} className="text-h2 wrap-anywhere text-ink-heading">
                 {row.header}
               </h3>
               {row.caption && (
