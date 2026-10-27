@@ -33,7 +33,106 @@ def page(database, passage_id, viewer=scenario.ASHA, day=DAY) -> dict:
 def rewrite(database, day=DAY) -> int:
     with DuckDBEngine.open(database) as engine:
         return writer.run(engine, writer.recorded_agent_for(), lambda: dt.datetime.combine(day, dt.time(6), tzinfo=dt.UTC),
-                          3)
+                          3, judge_for=writer.recorded_judge_for())
+
+
+class Writes:
+    """A stand-in lesson review writer that answers with the summary claims it is given."""
+
+    name = "strata-lesson-review-writer"
+
+    def __init__(self, *claims):
+        self.claims = list(claims)
+
+    def respond(self, items, previous_response_id):
+        import json
+
+        return {"id": "resp_1", "output": [{"type": "message", "role": "assistant", "content": [
+            {"type": "output_text", "text": json.dumps({"summary": self.claims, "repeats": []})}]}]}
+
+
+class NothingFollows:
+    name = "nothing follows"
+
+    def judge(self, questions):
+        from strata.agent.judge import Judgement
+
+        return [Judgement(question.index, False, "It does not follow.") for question in questions]
+
+
+ICR_54 = "strata.gold.passage:31525018/v1/54"
+
+
+def write_note(database, agent, six_checks):
+    with DuckDBEngine.open(database) as engine:
+        store = writer.Store(engine)
+        item = store.items[scenario.item_of(engine, scenario.REBIDDING)]
+        subject = scenario.review_on(DAY).subject(store, item)
+        writer.write_one(engine, store, item, subject, agent, dt.datetime(2026, 10, 27, 6, tzinfo=dt.UTC), 3,
+                         six_checks=six_checks)
+    return page(database, scenario.REBIDDING)["summary"]
+
+
+def test_check_4_removes_a_summary_sentence_its_passage_does_not_support(database):
+    """Ticket 61: the writer's note runs all six checks through SixChecks, as a draft does. A summary that restates
+    nothing word for word goes to the judge, which says it does not follow, so it is removed with check 4's reason;
+    the quote checks 1 to 3 prove needs no model."""
+    from strata.agent.answer_check import SixChecks
+
+    agent = Writes({"sentence": "The contractors were to blame for the rebidding.", "kind": "summary",
+                    "evidence_ids": [ICR_54]},
+                   {"sentence": 'The ICR said that "108 of 328 cases had to go through rebidding."', "kind": "quote",
+                    "evidence_ids": [ICR_54], "quote": {"text": "108 of 328 cases had to go through rebidding.",
+                                                       "passage_id": ICR_54}})
+
+    summary = write_note(database, agent, SixChecks(None, NothingFollows()))
+
+    assert [(removed["sentence"], removed["reason"], removed["reasons"][0]["check"]) for removed in summary["removed"]] \
+        == [("The contractors were to blame for the rebidding.", "not_supported", 4)]
+    assert [sentence["text"] for sentence in summary["sentences"]] == [
+        'The ICR said that "108 of 328 cases had to go through rebidding."']
+    assert summary["checks"]["checks_run"] == [1, 2, 3, 4, 5, 6]
+
+
+def planted_disagreement(call, **arguments):
+    """get_disagreements, with one more disagreement about P130164 whose first side is ICR paragraph 54 quoting "108 of
+    328 cases had to go through rebidding" (values.toml icr-para-54), against ISR 7's side of the real one."""
+    from strata.tools.get_disagreements import get_disagreements
+
+    result = get_disagreements(call, **arguments)
+    if result["rows"]:
+        real = result["rows"][0]
+        side = {**real["sides"][1], "evidence_id": ICR_54, "passage_id": "31525018/v1/54",
+                "assertion_id": f"{ICR_54}#P130164/rebidding", "value": None, "value_form": None,
+                "quote": "108 of 328 cases had to go through rebidding"}
+        planted = {**real, "evidence_id": "strata.gold.disagreement:planted", "disagreement_id": "planted",
+                   "attribute": "rebidding", "sides": [side, real["sides"][0]], "lean_assertion_id": side["assertion_id"],
+                   "other_assertion_id": real["sides"][0]["assertion_id"]}
+        result["rows"] = [*result["rows"], planted]
+    return result
+
+
+def test_check_6_attaches_a_disagreement_whose_side_a_summary_sentence_quotes(database):
+    """Ticket 61: check 6 asks get_disagreements about P130164, the project of the passages the note cites, and a
+    disagreement whose side is the quoted ICR paragraph 54 comes with the note, both sides. It is planted at the
+    tool, beside the fixture's own disagreements."""
+    import dataclasses
+
+    from strata.agent.answer_check import SixChecks
+    from strata.config import load_tools
+
+    tools = load_tools()
+    tools["get_disagreements"] = dataclasses.replace(tools["get_disagreements"],
+                                                     adapter="test_lesson_writer:planted_disagreement")
+    agent = writer.recorded_agent_for()({}, {"evidence": [{"role": "source", "passage_id": scenario.REBIDDING}]})
+
+    summary = write_note(database, agent, SixChecks(None, None, tools))
+
+    [card] = summary["disagreements"]
+    assert (card["id"], [side["evidence_id"] for side in card["sides"]]) == (
+        "strata.gold.disagreement:planted", [ICR_54, "strata.gold.passage:26733307/v1/s4"])
+    assert summary["sentences"][card["after"]]["text"] == 'The ICR said that "108 of 328 cases had to go through rebidding."'
+    assert summary["checks"]["disagreements"]["shown"] == 1
 
 
 def test_the_summary_keeps_the_sentences_that_pass_the_checks_and_shows_the_one_the_verifier_removed(fixture_db):
@@ -104,7 +203,8 @@ def test_a_writer_that_gives_no_answer_leaves_a_failed_note_and_try_again_writes
                                                     {"role": "source", "passage_id": scenario.REBIDDING}]}), engine)
 
     assert failed["item"]["summary"] == {"status": "failed"} | {key: failed["item"]["summary"][key]
-                                                                for key in ("sentences", "evidence", "checks", "removed")}
+                                                                for key in ("sentences", "evidence", "checks", "removed",
+                                                                            "disagreements")}
     assert failed["item"]["summary"]["sentences"] == []
     assert again["item"]["summary"]["status"] == "ready"
 

@@ -632,13 +632,14 @@ class LessonReview:
     def summary(self, store: Store, item: dict) -> dict:
         """The writer's verified summary of the evidence (the 29 brief, section 5.7): writing until its note
         is stored; then ready, nothing_to_add, nothing_survived or failed, with the kept sentences, the
-        evidence they cite, the verifier's counts and the removed sentences."""
+        evidence they cite, the verifier's counts, the removed sentences, and the disagreements check 6 attached
+        (ticket 61), each under the sentence it concerns."""
         note = store.note(item)
         if note is None:
             return {"status": "writing"}
         return {"status": note["status"], "sentences": note.get("sentences", []), "evidence": note.get("evidence", {}),
                 "checks": note.get("checks"),
-                "removed": note.get("removed", [])}
+                "removed": note.get("removed", []), "disagreements": note.get("disagreements", [])}
 
     def likely_repeats(self, store: Store, item: dict) -> list[dict]:
         """Each current lesson the writer said the item may repeat, as a compact card with the writer's kept
@@ -1029,9 +1030,10 @@ class LessonReview:
                "public_from": now.date()}
         engine.insert_rows("strata.ops.lesson_review_items", ITEM_COLUMNS, [tuple(row[c] for c in ITEM_COLUMNS)])
 
-    def rewrite(self, engine: Engine, viewer: Viewer, wanted: str, agent, writer: Engine) -> dict:
+    def rewrite(self, engine: Engine, viewer: Viewer, wanted: str, agent, writer: Engine, six_checks=None) -> dict:
         """The review page's "Try again": the lesson review writer writes its note on one open item again,
-        stored through writer, and the page gets the item with the new note. Any lesson reviewer may ask."""
+        stored through writer, and the page gets the item with the new note. Any lesson reviewer may ask.
+        six_checks are the app's six checks, with its judge (ticket 61)."""
         from strata.knowledge.lessons import writer as notes
 
         person = self._require(viewer)
@@ -1042,7 +1044,7 @@ class LessonReview:
         if agent is None:
             raise Refused(503, "no_agent")
         notes.write_one(writer, store, item, self.subject(store, item), agent, self.now(),
-                        int(self.value("likely_repeats_max")))
+                        int(self.value("likely_repeats_max")), six_checks)
         store = self._load(engine)
         return {"item": self.detail(store, store.items[item["item_id"]], person)}
 

@@ -23,6 +23,7 @@ keeps its four steps and takes only the verdict.
 from __future__ import annotations
 
 import asyncio
+import concurrent.futures
 import copy
 import datetime as dt
 import logging
@@ -85,9 +86,10 @@ class SixChecks:
         return held
 
     def verdict_now(self, check: AnswerCheck, facts: Facts, asker: Asker) -> Verdict:
-        """finish()'s verdict, for a workflow step with no event loop of its own (the risk-table builder, the lesson
-        review writer): it runs in a route's worker thread, a draft's read step or a nightly task, never inside a
-        running loop. Its steps are not sent, as a draft's are not."""
+        """finish()'s verdict, for a workflow step that is not a coroutine (the risk-table builder, the lesson review
+        writer): it runs in a route's worker thread, a draft's read step or a nightly task. Called where a loop
+        already runs, such as a recording script's story, it runs on a thread of its own. Its steps are not sent, as
+        a draft's are not."""
         async def finished() -> Verdict:
             verdict = None
             async for item in self.finish(check, facts, asker):
@@ -95,7 +97,12 @@ class SixChecks:
                     verdict = item
             return verdict
 
-        return asyncio.run(finished())
+        try:
+            asyncio.get_running_loop()
+        except RuntimeError:
+            return asyncio.run(finished())
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+            return pool.submit(lambda: asyncio.run(finished())).result()
 
     def check(self, claims: Iterable[Claim], facts: Facts, language: str = "en") -> AnswerCheck:
         """Checks 1 to 3 and 5 on an answer's claims, written in language, against one turn's evidence."""

@@ -7,9 +7,11 @@ For each open item (a new lesson, a re-check or a cross-check) waiting in the qu
 1. reads the item's evidence (the quotes and the whole passages they are in) and the library's current
    lessons, the only lessons a lead may merge it into;
 2. sends the writer agent (config/agents.toml, lesson_review_writer) one message that carries data only;
-3. runs the verifier's checks 1 to 3 on every sentence it wrote (strata.agent.verifier), with the item's
-   passages and the current lessons as the only evidence it may cite, so a sentence that states a number
-   no passage quotes, cites something else or misquotes a page is removed and shown with its reason;
+3. runs all six checks on every sentence it wrote, through SixChecks as a draft does (ticket 61), with the item's
+   passages and the current lessons as the only evidence it may cite: a sentence that states a number no passage
+   quotes, cites something else or misquotes a page is removed and shown with its reason; one checks 1 to 3 cannot
+   prove goes to the judge (removed when the judge says it does not follow, or when no judge is connected); and a
+   disagreement whose side a sentence rests on comes with the note, both sides;
 4. keeps at most lesson_review.likely_repeats_max likely repeats, each a current lesson with at least one
    kept sentence, and stores the result in strata.ops.lesson_review_notes.
 
@@ -17,7 +19,8 @@ It writes again for an item when a decision has changed the library since its la
 writer gave no answer last time, so the likely repeats name only current lessons. The nightly job's
 propose_lessons task runs it after it queues new items; the review page's "Try again" runs it for one item.
 The writer is the Foundry agent on the workspace; offline, the scripted agent replays its recorded answers
-(tests/fixtures/agent/lesson_review.toml). This workflow is plain Python, as the draft runtime is: the
+(tests/fixtures/agent/lesson_review.toml), and the scripted judge its case's recorded judge answer
+(tests/fixtures/agent/judged). This workflow is plain Python, as the draft runtime is: the
 Microsoft Agent Framework package is not added (a parked decision).
 """
 
@@ -31,9 +34,11 @@ from functools import cache
 from importlib import resources
 from pathlib import Path
 
+from strata.agent.answer_check import Asker, SixChecks
 from strata.agent.claims import ClaimsError, claims_from
 from strata.agent.loop import AgentError, output_text
-from strata.agent.verifier import Verdict, answer_events, check
+from strata.agent.verifier import answer_events, check
+from strata.dbx import Viewer
 from strata.harness.facts import Facts
 from strata.knowledge.lessons.review import Store, _int, _iso, _json
 from strata.lakehouse.engine import Engine
@@ -46,6 +51,9 @@ NOTE_COLUMNS = ("item_id", "written_at", "status", "content", "library_versions"
                 "public_from")
 ROOT = Path(__file__).resolve().parents[4]
 RECORDED_CASES = ROOT / "tests" / "fixtures" / "agent" / "lesson_review.toml"
+# Whom check 6 asks get_disagreements as: the workflow itself, which reads public reports for every reviewer.
+WRITER = Viewer(email="lesson-review-writer@strata", name="Strata's lesson review writer",
+                user_id="lesson-review-writer@strata")
 
 
 @cache
@@ -137,9 +145,12 @@ def parse(text: str) -> tuple[list, list[tuple[str, list]]]:
     return claims_from(answer.get("summary") or []), repeats
 
 
-def compose(facts: Facts, library: list[dict], summary: list, repeats: list[tuple[str, list]], most: int) -> dict:
+def compose(facts: Facts, library: list[dict], summary: list, repeats: list[tuple[str, list]], most: int,
+            six_checks: SixChecks, asker: Asker) -> dict:
     """The note: the kept summary sentences, the likely repeats that kept a sentence, the evidence cited, the
-    verifier's counts and the removed sentences, each with its reasons."""
+    verifier's counts, the removed sentences, each with its reasons, and the disagreements check 6 attached, each
+    under the sentence it concerns (after) and the repeat that sentence belongs to (repeat_of). All six checks run,
+    through six_checks, asking as asker."""
     current = {lesson["lesson_id"]: lesson for lesson in library}
     # Only a current lesson can be a likely repeat: the writer's words about any other lesson are not checked or
     # shown, as a lead can merge into no other lesson (the 29 brief, section 4.2).
@@ -152,10 +163,10 @@ def compose(facts: Facts, library: list[dict], summary: list, repeats: list[tupl
         for claim in claims:
             checked.append(check(len(checked), claim, facts))
             owners.append(lesson_id)
-    verdict = Verdict(tuple(checked))
+    verdict = six_checks.verdict_now(six_checks.checked(checked, facts), facts, asker)
     kept: dict[str | None, list[dict]] = {}
-    evidence, counts, removed = {}, None, []
-    for event in answer_events(verdict, facts, [TOOL]):
+    evidence, counts, removed, disagreements = {}, None, [], []
+    for event in answer_events(verdict, facts, [TOOL], six_checks.cited_only):
         data = dict(event.data)
         if event.type == "sentence":
             kept.setdefault(owners[data["index"]], []).append(data)
@@ -165,16 +176,22 @@ def compose(facts: Facts, library: list[dict], summary: list, repeats: list[tupl
             counts = data
         elif event.type == "removed":
             removed.append({**data, "repeat_of": owners[data["index"]]})
+        elif event.type == "disagreement":
+            disagreements.append({**data, "repeat_of": owners[data["after"]]})
     found = [{"lesson_id": lesson_id, "version": current[lesson_id]["version"], "sentences": kept[lesson_id]}
              for lesson_id, _ in repeats if kept.get(lesson_id)][:most]
     status = ("nothing_to_add" if not summary and not repeats
               else "nothing_survived" if not verdict.kept else "ready")
     return {"status": status, "sentences": kept.get(None, []), "repeats": found, "evidence": evidence,
-            "checks": counts, "removed": removed}
+            "checks": counts, "removed": removed, "disagreements": disagreements}
 
 
-def write_one(engine: Engine, store: Store, item: dict, subject: dict, agent, now: dt.datetime, most: int) -> dict:
-    """The writer's note on one item, stored as a new row. A writer that gives no answer leaves a failed row."""
+def write_one(engine: Engine, store: Store, item: dict, subject: dict, agent, now: dt.datetime, most: int,
+              six_checks: SixChecks | None = None) -> dict:
+    """The writer's note on one item, stored as a new row. A writer that gives no answer leaves a failed row.
+    six_checks are the checks with their judge (the app's, or the nightly job's); without them the checks run with
+    no judge, and check 6 asks on this engine either way."""
+    six = (six_checks or SixChecks(None, None)).on(engine)
     facts, passages, library = facts_for(store, item, subject)
     row = {"item_id": item["item_id"], "written_at": now, "library_versions": library_versions(store),
            "agent": getattr(agent, "name", None), "agent_version": None, "error": None, "public_from": now.date()}
@@ -187,7 +204,8 @@ def write_one(engine: Engine, store: Store, item: dict, subject: dict, agent, no
         log.warning("The lesson review writer gave no answer for %s: %s", item["item_id"], error)
         row |= {"status": "failed", "content": None, "error": getattr(error, "code", None) or str(error)[:300]}
     else:
-        note = compose(facts, library, summary, repeats, most)
+        note = compose(facts, library, summary, repeats, most, six,
+                       Asker(WRITER, "staff", now.date(), f"lesson-review-{item['item_id']}"))
         row |= {"status": note["status"], "content": json.dumps(note, ensure_ascii=False, default=str)}
     engine.insert_rows("strata.ops.lesson_review_notes", NOTE_COLUMNS, [tuple(row[column] for column in NOTE_COLUMNS)])
     return row
@@ -201,10 +219,11 @@ def needs_a_note(store: Store, item: dict, note: dict | None) -> bool:
 
 
 def run(engine: Engine, agent_for: Callable[[dict, dict], object | None], clock: Callable[[], dt.datetime],
-        most: int, review=None) -> int:
+        most: int, review=None, judge_for: Callable[[dict, dict], object | None] | None = None) -> int:
     """A note for each open item (a new lesson, a re-check or a cross-check) that needs one. Returns the notes
     written. agent_for gives the writer for an
-    item and its subject, or None when there is none, and the item keeps waiting for its note."""
+    item and its subject, or None when there is none, and the item keeps waiting for its note. judge_for gives the
+    judge check 4 asks for an item, or None when there is none, and then a sentence that needs one is removed."""
     from strata.knowledge.lessons.review import LessonReview
 
     store = Store(engine)
@@ -218,7 +237,8 @@ def run(engine: Engine, agent_for: Callable[[dict, dict], object | None], clock:
         agent = agent_for(item, subject)
         if agent is None:
             continue
-        write_one(engine, store, item, subject, agent, clock(), most)
+        judge = judge_for(item, subject) if judge_for else None
+        write_one(engine, store, item, subject, agent, clock(), most, SixChecks(None, judge))
         written += 1
     return written
 
@@ -232,7 +252,24 @@ def recorded_agent_for(path: Path = RECORDED_CASES) -> Callable[[dict, dict], ob
     cases = load_cases(path)
 
     def agent_for(item: dict, subject: dict):
-        first = next((row for row in subject["evidence"] if row["role"] == "source"), None)
-        case = cases.get(f"lesson-review-{first['passage_id'].replace('/', '-')}") if first else None
+        case = _case_of(cases, subject)
         return ScriptedAgent(case) if case else None
     return agent_for
+
+
+def _case_of(cases: dict, subject: dict):
+    first = next((row for row in subject["evidence"] if row["role"] == "source"), None)
+    return cases.get(f"lesson-review-{first['passage_id'].replace('/', '-')}") if first else None
+
+
+def recorded_judge_for(path: Path = RECORDED_CASES) -> Callable[[dict, dict], object | None]:
+    """The scripted judge for each item whose cited passage has a recorded writer answer: it answers from the case's
+    recorded judge answer (tests/fixtures/agent/judged), as the live judge would."""
+    from strata.agent.scripted import ScriptedJudge, load_cases
+
+    cases = load_cases(path)
+
+    def judge_for(item: dict, subject: dict):
+        case = _case_of(cases, subject)
+        return ScriptedJudge(case) if case else None
+    return judge_for

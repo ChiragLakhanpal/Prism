@@ -1181,7 +1181,8 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
     @app.post("/api/lessons/review/{item_id}/summary")
     def rewrite_lesson_summary(item_id: str, viewer: Viewer = Depends(current_viewer)):
         return lesson_write(f"the summary of {item_id}", viewer,
-                            lambda engine, record: lessons.rewrite(engine, viewer, item_id, lesson_writer(), record))
+                            lambda engine, record: lessons.rewrite(engine, viewer, item_id, lesson_writer(), record,
+                                                                   six_checks))
 
     @app.post("/api/lessons/review/{item_id}/{verb}")
     def lesson_review_act(item_id: str, verb: Literal["recommend", "decide", "cross-check"], body: LessonActRequest,
