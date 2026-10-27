@@ -253,6 +253,11 @@ def test_the_app_s_own_principal_may_write_usage_events_agent_runs_opened_source
         f"GRANT USE SCHEMA ON SCHEMA strata.ops TO `{PRINCIPAL}`",
         f"GRANT SELECT, MODIFY ON TABLE strata.ops.usage_events TO `{PRINCIPAL}`",
         f"GRANT SELECT, MODIFY ON TABLE strata.ops.agent_runs TO `{PRINCIPAL}`",
+        # Ticket 84: each run's tool calls, the tables they read and its removed sentences (ticket 45's lineage),
+        # written beside the run row. Without them the paid workspace refused every run's lineage on October 26.
+        f"GRANT SELECT, MODIFY ON TABLE strata.ops.tool_calls TO `{PRINCIPAL}`",
+        f"GRANT SELECT, MODIFY ON TABLE strata.ops.tool_call_reads TO `{PRINCIPAL}`",
+        f"GRANT SELECT, MODIFY ON TABLE strata.ops.answer_removals TO `{PRINCIPAL}`",
         f"GRANT SELECT, MODIFY ON TABLE strata.ops.evidence_opened TO `{PRINCIPAL}`",
         # Ticket 35's drafts, their states, their exports and the exported files.
         f"GRANT SELECT, MODIFY ON TABLE strata.ops.drafts TO `{PRINCIPAL}`",
@@ -278,6 +283,8 @@ def test_the_app_s_own_principal_may_write_usage_events_agent_runs_opened_source
         f"GRANT SELECT, MODIFY ON TABLE strata.ops.start_here_choices TO `{PRINCIPAL}`",
         f"GRANT SELECT, MODIFY ON TABLE strata.ops.seeded_examples TO `{PRINCIPAL}`",
         f"GRANT SELECT, MODIFY ON TABLE strata.ops.example_lesson_versions TO `{PRINCIPAL}`",
+        # Ticket 42: the language of answers and drafts each viewer chose (found by ticket 84's test_app_grants.py).
+        f"GRANT SELECT, MODIFY ON TABLE strata.ops.viewer_settings TO `{PRINCIPAL}`",
         f"GRANT SELECT ON TABLE strata.ops.draft_fields_latest TO `{PRINCIPAL}`",
         f"GRANT SELECT ON TABLE strata.ops.supplier_pairs TO `{PRINCIPAL}`",
         f"GRANT SELECT, MODIFY ON TABLE strata.ops.supplier_review_decisions TO `{PRINCIPAL}`",
