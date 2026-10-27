@@ -5,13 +5,16 @@ On the paid workspace, the nightly job's score task ran alone for the job's whol
 parts, in nightly.SCORE_PARTS' order. Once the night's minutes for scoring are spent (config/thresholds.toml,
 nightly.score_minutes), it stops after the part it is in, records the parts it left in strata.ops.score_parts, and
 ends, so the tasks after it run; the next night runs the parts left first. The two replays of the signals run once a
-week (tests/test_nightly.py), and read each date's projects in batches instead of two statements for each project.
+week (tests/test_nightly.py), read each date's projects in batches instead of two statements for each project, and
+on their night check each active project once a date for both.
 
 The clocks here are fake: each test says when its night starts and how long its first part takes.
 """
 
 import datetime as dt
 import logging
+import shutil
+from importlib import resources
 
 import pytest
 
@@ -25,7 +28,7 @@ from strata.lakehouse.engine import DuckDBEngine
 RAN_AT = dt.datetime(2026, 10, 22, 6, 0, tzinfo=dt.UTC)
 
 OFFLINE_PARTS = ["time_estimates", "rebidding_labels", "challenger_in_shadow", "monthly_watch", "hazard_in_shadow",
-                 "hazard_replay"]
+                 "signals_replays"]
 
 
 @pytest.fixture
@@ -85,7 +88,7 @@ def test_the_score_task_stops_after_the_part_that_spends_its_minutes_and_the_nex
         [[("succeeded",)]] * 3
     assert hazard.stored(engine)["run_id"] == compared  # left for Monday
     assert "5 parts left for the next night: rebidding_labels, challenger_in_shadow, monthly_watch, " \
-        "hazard_in_shadow, hazard_replay" in caplog.text
+        "hazard_in_shadow, signals_replays" in caplog.text
 
     # Monday runs the five parts Sunday left first, the comparison among them though Monday is not its night.
     task(engine, "score", "monday", lambda: at(monday))
@@ -111,7 +114,7 @@ ORDER BY reported_on
 """
 
 
-def counted_one_by_one(frozen):
+def counted_one_by_one(frozen, checked=None):
     found = []
     for project in frozen.rows(signals_track.COHORT):
         result = frozen.call("project_signals", project_id=project["project_id"])
@@ -142,10 +145,13 @@ def with_batches_of(projects: int):
                                          "signals": {**held.values["signals"], "track_record_batch_projects": projects}})
 
 
-def replayed(engine, store, thresholds) -> list[tuple]:
-    """The rows both replays store for one run each, without the ids each run makes up for itself."""
-    run_ids = (signals_track.backtest(engine, OfflineTracker(), store=store, thresholds=thresholds, ran_at=RAN_AT),
-               hazard.compare(engine, OfflineTracker(), ran_at=RAN_AT, store=store, thresholds=thresholds))
+def replayed(engine, store, thresholds, checked=None) -> list[tuple]:
+    """The rows both replays store for one run each, without the ids each run makes up for itself; with checked, the
+    two share what project_signals found on each date, as on their night."""
+    run_ids = (signals_track.backtest(engine, OfflineTracker(), store=store, thresholds=thresholds, ran_at=RAN_AT,
+                                      checked=checked),
+               hazard.compare(engine, OfflineTracker(), ran_at=RAN_AT, store=store, thresholds=thresholds,
+                              checked=checked))
     return [tuple(value for key, value in row.items() if key not in ("run_id", "mlflow_run_id"))
             for run_id in run_ids for row in harness.run_rows(store, run_id)]
 
@@ -157,25 +163,27 @@ def test_the_replays_read_in_batches_store_the_same_rows_as_one_project_at_a_tim
     with DuckDBEngine.open(fixture_db, read_only=True) as engine, DuckDBEngine.open() as store:
         catalog.build(store)
         batched = replayed(engine, store, thresholds)
+        shared = replayed(engine, store, thresholds, checked={})
         one_at_a_time(monkeypatch)
         before = replayed(engine, store, thresholds)
 
-    assert batched == before
+    assert batched == shared == before
     assert {row[0] for row in batched} == {signals_track.SCORER, hazard.SCORER}
     assert ("replay", "signals", "status.watch.n", 1.0) in [row[2:6] for row in batched]
 
 
 class Watched:
-    """The fixture's engine, which keeps the project each statement it is sent names, if any."""
+    """The fixture's engine, which keeps each statement it is sent and the project the statement names, if any."""
 
     def __init__(self, engine):
-        self.engine, self.projects = engine, []
+        self.engine, self.projects, self.statements = engine, [], []
 
     def __getattr__(self, name):
         return getattr(self.engine, name)
 
     def run(self, sql, params=None):
         self.projects.append((params or {}).get("project_id"))
+        self.statements.append(sql)
         return self.engine.run(sql, params)
 
 
@@ -195,3 +203,23 @@ def test_a_project_the_replay_does_not_count_costs_it_no_statement_of_its_own(fi
         ["P130164"] * 6 + ["P164704"] * 6
     assert "P156634" in batched.projects and not uncounted & set(batched.projects)
     assert len(batched.projects) < len(before.projects)
+
+
+def test_on_their_night_the_two_replays_check_each_project_once_a_date_for_both(fixture_db, tmp_path, monkeypatch):
+    """Sunday, October 25, 2026, after the fixture's own run on Friday the 23rd: a live score task replays the signals
+    for their track record and compares the hazard model with them. Both replay June 30 of 2023, 2024 and 2025, so
+    P156634, the one project the record counts, is checked with project_signals once on each date, not twice."""
+    from strata.estimates import tracking
+
+    monkeypatch.setattr(tracking, "MlflowTracker", lambda experiment, mkdirs=None: OfflineTracker())
+    path = tmp_path / "fixture.duckdb"
+    shutil.copy(fixture_db, path)
+    checks = (resources.files("strata.tools") / "sql" / "project_signals" / "history.sql").read_text()
+    with DuckDBEngine.open(path) as engine:
+        watched = Watched(engine)
+        nightly.main(["--task", "score", "--run-id", "sunday", "--src", "src"], watched,
+                     clock=lambda: at(dt.date(2026, 10, 25)))  # as the job runs it: a live run
+        ran_on = (signals_track.stored(engine)["ran_on"], f"{hazard.stored(engine)['ran_at']:%Y-%m-%d}")
+
+    assert ran_on == ("2026-10-25", "2026-10-25")
+    assert [project for project, sql in zip(watched.projects, watched.statements) if sql == checks] == ["P156634"] * 3

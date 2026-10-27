@@ -57,14 +57,22 @@ ORDER BY project_id, reported_on
 """
 
 
-def counted(frozen: Reader) -> list[tuple[str, dict]]:
+# What counted() found on each replay date, kept by the caller for the replays of one night, which read the same
+# engine with the same thresholds.
+Checked = dict[dt.date, list[tuple[str, dict]]]
+
+
+def counted(frozen: Reader, checked: Checked | None = None) -> list[tuple[str, dict]]:
     """Each project of the cohort on the reader's date that the track record counts, with project_signals' result:
     a project the checks gave a status (STATUSES). The cohort is read signals.track_record_batch_projects projects
     at a time, with two statements for each batch (strata.tools.withheld.statuses_between), and only a project
     still active on the date is checked, since project_signals counts no other: it answers not_active for a closed,
     pipeline or dropped project and no_records for one with no record. Checked one at a time, each of the cohort's
     projects cost the SQL warehouse two statements on each date, about 110 minutes in all on the paid workspace's
-    cohort (ticket 89)."""
+    cohort (ticket 89). With checked, a date already in it is read from there, and a date read is kept there, so the
+    track record and the hazard model's comparison, which replay the same dates, check each project once a date."""
+    if checked is not None and frozen.as_of in checked:
+        return checked[frozen.as_of]
     cohort = [row["project_id"] for row in frozen.rows(COHORT)]
     size = int(frozen.thresholds.value("signals.track_record_batch_projects"))
     found = []
@@ -77,6 +85,8 @@ def counted(frozen: Reader) -> list[tuple[str, dict]]:
             result = frozen.call("project_signals", project_id=project_id)
             if result["status"] in STATUSES:
                 found.append((project_id, result))
+    if checked is not None:
+        checked[frozen.as_of] = found
     return found
 
 
@@ -93,8 +103,8 @@ class SignalsTrackRecord:
     name = SCORER
     model = MODEL
 
-    def __init__(self, dates: tuple[dt.date, ...], window_months: int):
-        self.dates, self.window_months = dates, window_months
+    def __init__(self, dates: tuple[dt.date, ...], window_months: int, checked: Checked | None = None):
+        self.dates, self.window_months, self.checked = dates, window_months, checked
 
     def score(self, replay: Replay) -> Scored:
         had: dict[str, set[str]] = {key: set() for key in (*STATUSES, *CHECKS)}
@@ -104,7 +114,7 @@ class SignalsTrackRecord:
         for date in (day for day in self.dates if day <= replay.window.cutoff):
             frozen = Reader(replay.inputs.engine, date, replay.thresholds)
             later = months_after(date, self.window_months)
-            for pid, result in counted(frozen):
+            for pid, result in counted(frozen, self.checked):
                 cohort.add(pid)
                 extended = any(date < moved_on <= later for moved_on in moves[pid])
                 for key in (result["status"], *(row["check"] for row in result["rows"])):
@@ -124,16 +134,18 @@ def settings(thresholds: Thresholds) -> tuple[tuple[dt.date, ...], int]:
 
 
 def backtest(engine, tracker, *, store=None, thresholds: Thresholds | None = None, ran_at: dt.datetime | None = None,
-             outcomes_through: dt.date | None = None) -> str:
+             outcomes_through: dt.date | None = None, checked: Checked | None = None) -> str:
     """Replay the checks on every track record date, store the counts and return the run's id. The outcomes are read
-    as of the last date plus the window, or the day it runs when that is earlier."""
+    as of the last date plus the window, or the day it runs when that is earlier. checked is what the night's other
+    replay found on each date, if any (counted)."""
     thresholds = thresholds or load_thresholds()
     ran_at = ran_at or dt.datetime.now(dt.UTC)
     dates, window = settings(thresholds)
     through = outcomes_through or min(months_after(dates[-1], window), ran_at.date())
     run_id = harness.new_run_id(SCORER, ran_at)
-    harness.replay(engine, SignalsTrackRecord(dates, window), Window(dates[-1], through, SEGMENT_KIND, SEGMENT),
-                   tracker, run_id, ran_at, store or engine, thresholds)
+    harness.replay(engine, SignalsTrackRecord(dates, window, checked),
+                   Window(dates[-1], through, SEGMENT_KIND, SEGMENT), tracker, run_id, ran_at, store or engine,
+                   thresholds)
     return run_id
 
 

@@ -292,7 +292,7 @@ def _replay_day() -> str:
     return str(load_thresholds().value("signals.track_record_day"))
 
 
-def _compare_hazard(run: Run) -> int:
+def _compare_hazard(run: Run, checked: dict) -> int:
     """The hazard model replayed against the fixed signals (strata.estimates.hazard.compare), on the signals' own
     night of the week (schedule.weekly_due). A live run logs it to MLflow, or skips it when MLflow is missing; any
     other run uses the offline tracker. Returns the rows stored in strata.ops.evaluation_result."""
@@ -308,7 +308,7 @@ def _compare_hazard(run: Run) -> int:
     tracker = _tracker(load_time_estimate().experiment) if run.fetch is fetch_live else OfflineTracker()
     if tracker is None:
         return 0
-    return len(harness.run_rows(run.engine, hazard.compare(run.engine, tracker, ran_at=now)))
+    return len(harness.run_rows(run.engine, hazard.compare(run.engine, tracker, ran_at=now, checked=checked)))
 
 
 def _retrain(run: Run) -> int:
@@ -347,13 +347,15 @@ def _score_packages(run: Run) -> int:
     return 0 if tracker is None else rebidding_backtest.score_packages(run.engine, tracker, run.run_id, run.clock)
 
 
-def _replay_signals(run: Run) -> int:
+def _replay_signals(run: Run, checked: dict) -> int:
     """The signals' checks replayed on their track record dates (strata.estimates.signals_track.backtest), for the
-    Following page, on their night of the week (schedule.weekly_due). Returns the rows the replay stored in
-    strata.ops.evaluation_result."""
+    Following page, on their night of the week (schedule.weekly_due), on a run that fetches from the live APIs.
+    Returns the rows the replay stored in strata.ops.evaluation_result."""
     from strata.config import load_time_estimate
     from strata.estimates import harness, signals_track
 
+    if run.fetch is not fetch_live:
+        return 0
     now = run.clock()
     held = signals_track.stored(run.engine)
     last = None if held is None else dt.date.fromisoformat(held["ran_on"])
@@ -362,7 +364,16 @@ def _replay_signals(run: Run) -> int:
     tracker = _tracker(load_time_estimate().experiment)
     if tracker is None:
         return 0
-    return len(harness.run_rows(run.engine, signals_track.backtest(run.engine, tracker, ran_at=now)))
+    return len(harness.run_rows(run.engine, signals_track.backtest(run.engine, tracker, ran_at=now, checked=checked)))
+
+
+def _signals_replays(run: Run) -> int:
+    """The two replays of the fixed signals on their track record dates, each on its night of the week: the signals'
+    track record for the Following page (ticket 37) and the hazard model's comparison with them (ticket 44). On a
+    night both run, each project is checked with project_signals once a date for both
+    (strata.estimates.signals_track.counted)."""
+    checked: dict = {}
+    return _replay_signals(run, checked) + _compare_hazard(run, checked)
 
 
 @dataclass(frozen=True)
@@ -381,11 +392,10 @@ SCORE_PARTS: dict[str, Part] = {
     "rebidding_labels": Part(_rebidding_labels),
     "challenger_in_shadow": Part(_challenger_in_shadow),
     "rebidding_scores": Part(_score_packages, live_only=True),
-    "signals_replay": Part(_replay_signals, live_only=True),
     "monthly_watch": Part(_monthly_watch),
     "retrain": Part(_retrain, live_only=True),
     "hazard_in_shadow": Part(_hazard_in_shadow),
-    "hazard_replay": Part(_compare_hazard),
+    "signals_replays": Part(_signals_replays),  # once a week, so after every part a night needs
 }
 PART_COLUMNS = ("run_id", "task_started", "position", "part", "state", "rows_changed", "started_at", "finished_at",
                 "public_from")
@@ -401,10 +411,10 @@ ORDER BY position
 def _score(run: Run) -> int:
     """The score task, in parts (SCORE_PARTS): the time estimates, the rebidding label counts and the challenger in
     shadow; on a run that fetches from the live APIs, the rebidding champion's chance for every activity a
-    Procurement Plan lists (ticket 28) and the signals' replay for their track record (ticket 37); the monthly watch;
-    on a live run, the retrain when one is due, quarterly or after a raised trigger, which registers a challenger; and
-    the hazard model in shadow and its replay against the signals. The two replays run once a week
-    (signals.track_record_day).
+    Procurement Plan lists (ticket 28); the monthly watch; on a live run, the retrain when one is due, quarterly or
+    after a raised trigger, which registers a challenger; the hazard model in shadow; and, once a week
+    (signals.track_record_day), the replays of the signals: on a live run their track record (ticket 37), and the
+    hazard model's comparison with them.
 
     The task may spend nightly.score_minutes from its start (config/thresholds.toml). Once they are spent, it stops
     after the part it is in, records each part it left in strata.ops.score_parts, says so in its log and ends, so
