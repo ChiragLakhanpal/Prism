@@ -9,7 +9,8 @@ projects API gives it with the code in major_sectors (the FY17 names, read for t
 October 23, 2026, with ticket 17's verification), and the key in config/sectors.toml of the sector it
 belongs to. The word comes from the project's first code in its one sector that is not a
 public-administration code, since those name who governs a sector rather than the work, or else from
-its first such code.
+its first such code in any sector, or else, when every code it lists is a public-administration one,
+from the first code this table knows.
 """
 
 from __future__ import annotations
@@ -47,7 +48,8 @@ SECTORS: dict[str, Sector] = {
 def main_sector(codes: str | None, sector: str | None = None) -> Sector | None:
     """The code whose word a passage's header uses, from a project's sector codes as the projects API
     lists them: the first code in the project's one sector that is not a public-administration code,
-    else the first such code in any sector."""
+    else the first such code in any sector, else the first code this table knows, a public-administration
+    one."""
     known = [SECTORS[code.strip()] for code in (codes or "").split(",") if code.strip() in SECTORS]
     work = [found for found in known if not found.administration]
     return next((found for found in work if found.sector == sector), next(iter(work), known[0] if known else None))

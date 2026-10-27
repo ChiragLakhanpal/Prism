@@ -109,11 +109,22 @@ class TableDefinition:
         return f"{CATALOG}.{self.schema}.{self.table}"
 
 
+def _in_schema_order(folder: Path, schemas: tuple[str, ...]) -> list[Path]:
+    """The definition files in folder, in the order bundle/catalog.yml declares their schemas (bronze, silver, gold,
+    ops), then by name, so a gold view may read a silver view. A file in a folder that is no schema comes last, for
+    the caller to refuse."""
+    def place(path: Path) -> tuple[int, str]:
+        schema = path.parent.name
+        return (schemas.index(schema) if schema in schemas else len(schemas), path.as_posix())
+
+    return sorted(Path(folder).glob("*/*.sql"), key=place)
+
+
 def table_definitions(folder: Path = TABLES, schemas: tuple[str, ...] | None = None) -> list[TableDefinition]:
     """Every table definition in folder, checked against its file's place, in schema then table order."""
     schemas = schemas or declared().schemas
     found = []
-    for path in sorted(Path(folder).glob("*/*.sql")):
+    for path in _in_schema_order(folder, schemas):
         schema, table = path.parent.name, path.stem
         if schema not in schemas:
             raise CatalogError(f"{path.name} sits in the folder {schema}, which is not one of the catalog's "
@@ -135,7 +146,7 @@ def view_definitions(folder: Path = TABLES.with_name(VIEWS),
     """Every view definition in folder, checked against its file's place, in schema then view order."""
     schemas = schemas or declared().schemas
     found = []
-    for path in sorted(Path(folder).glob("*/*.sql")):
+    for path in _in_schema_order(folder, schemas):
         schema, view = path.parent.name, path.stem
         if schema not in schemas:
             raise CatalogError(f"{path.name} sits in the folder {schema}, which is not one of the catalog's "

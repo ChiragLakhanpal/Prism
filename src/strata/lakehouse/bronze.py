@@ -4,8 +4,11 @@ store() is the fetch task's last step. It first takes the contact details out of
 counts them (strata.lakehouse.contacts), so bronze keeps each page as received except for those.
 It hashes each page with the source's ignore_keys left out (Finances One stamps every row with
 today's as_of_date) and its records in a fixed order (Finances One cannot sort, so the same
-records may come back in another order), and adds only pages whose hash bronze does not hold
-yet, so a second fetch with no source changes adds no rows.
+records may come back in another order), and adds a page only when its hash differs from the
+newest page bronze holds for the same request (strata.bronze.current_pages), so a second fetch with
+no source changes adds no rows, and a page that changes and then changes back (A, B, A) is kept
+again and is the request's current page once more. A page whose hash bronze held already counts its
+contact removals once, for its first copy.
 """
 
 from __future__ import annotations
@@ -24,6 +27,7 @@ TABLE = "strata.bronze.api_pages"
 COLUMNS = ("source", "country_code", "request", "page_hash", "body", "records", "reported_total",
            "newest_record_on", "contact_details_removed", "fetched_at", "public_from")
 HELD = "SELECT page_hash FROM strata.bronze.api_pages WHERE source = :source"
+NEWEST = "SELECT request, page_hash FROM strata.bronze.current_pages WHERE source = :source"
 # What stripping took out of each page, by kind (ticket 45), kept beside the page for the Governance page.
 REMOVALS = "strata.ops.contact_removals"
 REMOVAL_COLUMNS = ("source", "country_code", "page_hash", "kind", "removed", "records", "fetched_at", "public_from")
@@ -87,6 +91,7 @@ def store(engine: Engine, source: Source, pages: Iterable[source_pages.Page]) ->
     time, since on Databricks each write is a Delta commit, and what is left is written when the
     fetch ends or fails. Returns how many it added."""
     held = {row[0] for row in engine.run(HELD, {"source": source.key}).rows}
+    newest = dict(engine.run(NEWEST, {"source": source.key}).rows)
     waiting: list[tuple] = []
     removals: list[tuple] = []
     added = 0
@@ -103,8 +108,10 @@ def store(engine: Engine, source: Source, pages: Iterable[source_pages.Page]) ->
         for page in pages:
             body, kinds = contacts.strip_counted(page.body)  # before anything is kept (CLAUDE.md rule 8)
             page_hash = content_hash(source, body)
-            if page_hash in held:
+            if newest.get(page.request) == page_hash:
                 continue
+            newest[page.request] = page_hash
+            counted = page_hash in held  # its removals were counted with its first copy
             held.add(page_hash)
             day = page.fetched_at.astimezone(dt.UTC).date()
             waiting.append((
@@ -112,8 +119,9 @@ def store(engine: Engine, source: Source, pages: Iterable[source_pages.Page]) ->
                 len(source_pages.records(source, body)), source_pages.reported_total(source, body),
                 source_pages.newest_record(source, body), kinds[contacts.ANY].removed if kinds else 0,
                 page.fetched_at, day))
-            removals.extend((source.key, page.country_code, page_hash, kind, found.removed, found.records,
-                             page.fetched_at, day) for kind, found in kinds.items())
+            if not counted:
+                removals.extend((source.key, page.country_code, page_hash, kind, found.removed, found.records,
+                                 page.fetched_at, day) for kind, found in kinds.items())
             if len(waiting) >= GROUP:
                 added += write()
     finally:

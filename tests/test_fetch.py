@@ -66,9 +66,11 @@ def test_a_second_fetch_with_no_source_changes_adds_no_bronze_rows(fixture_copy)
     run_id = nightly.run_locally(fixture_copy, run_id="second", fetch=restamped)
 
     assert counts(fixture_copy) == before
-    fetched = fixture_copy.run("SELECT rows_changed FROM strata.ops.pipeline_runs "
-                               "WHERE run_id = :run_id AND task_key = 'fetch_by_watermark'", {"run_id": run_id}).rows
-    assert fetched == ((0,),)
+    changed = dict(fixture_copy.run("SELECT task_key, rows_changed FROM strata.ops.pipeline_runs WHERE run_id = :run_id "
+                                    "AND task_key IN ('fetch_by_watermark', 'bronze_to_gold')", {"run_id": run_id}).rows)
+    # Gold counts only the rows a MERGE would add, change or remove, so a night that changed nothing counts none
+    # (ticket 07's review, P3); before, it counted every row it matched, 2,732 of them.
+    assert changed == {"fetch_by_watermark": 0, "bronze_to_gold": 0}
 
 
 def test_the_same_records_in_another_order_add_no_bronze_rows():
@@ -89,6 +91,31 @@ def test_the_same_records_in_another_order_add_no_bronze_rows():
             later = bronze.store(engine, source, [pages.Page(key, url, reordered, dt.datetime(2026, 10, 24, tzinfo=dt.UTC))])
 
             assert (key, first, later) == (key, 1, 0)
+
+
+def test_a_page_that_changes_and_then_changes_back_is_kept_again_and_is_the_request_s_current_page():
+    """A request's page goes A, then B, then A again. Bronze keeps the third fetch, since it differs from the newest
+    page bronze holds for that request, so the request's current page is A again and silver reads its rows once,
+    not twice. Before, bronze skipped any page whose hash it held for any request, and the request stayed on B."""
+    from strata.lakehouse import bronze, catalog, silver
+
+    source = config.load_sources()["awards"]
+    rows = recorded("api/awards/P156634.json")["data"]
+    page_a, page_b = {"count": 2, "data": rows[:2]}, {"count": 3, "data": rows[:3]}
+    url = "https://example.org/awards?page=1"
+
+    with DuckDBEngine.open() as engine:
+        catalog.build(engine)
+        added = [bronze.store(engine, source, [pages.Page("awards", url, body, dt.datetime(2026, 10, day, tzinfo=dt.UTC))])
+                 for day, body in ((23, page_a), (24, page_b), (25, page_a))]
+        current = engine.run("SELECT records, fetched_at FROM strata.bronze.current_pages WHERE request = :url",
+                             {"url": url}).rows
+        silver.read(engine, [source])
+        held = engine.run("SELECT count(*) FROM strata.silver.awards").rows[0][0]
+
+    assert added == [1, 1, 1]
+    assert [(records, fetched.day) for records, fetched in current] == [(2, 25)]
+    assert held == 3 + 2  # page B's three rows and page A's two, A read once though bronze holds it twice
 
 
 def test_a_fetch_that_fails_partway_keeps_every_page_it_fetched_before_the_failure():

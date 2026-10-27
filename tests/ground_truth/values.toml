@@ -2921,6 +2921,13 @@ projects = [
   { project = "P176704", approved = 2021-12-07, largest = "WX" },
   { project = "P179012", approved = 2023-12-20, largest = "WX" },
 ]
+# Of those 17, the fixture records the documents of P156634 alone, so the run reads one pilot project: data/fixture/
+# sources.toml records P161305's document list but none of its documents, and no other one's list.
+pilot_projects_read = 1
+pilot_projects_read_counted = "P156634 is the one pilot project whose documents data/fixture/sources.toml records."
+# The projects whose reports the fixture records: the showcase, the French report's project and the demo plan's.
+document_projects = ["P127203", "P130164", "P156634"]
+document_projects_counted = "data/fixture/sources.toml records reports of P130164 (the showcase), P127203 (the French completion report) and P156634 (the demo plan), and of no other project."
 
 # The P130164 PAD's disclosure date, which puts it in fiscal 2014 (July 2013 to June 2014), from its
 # entry in the recorded document list.

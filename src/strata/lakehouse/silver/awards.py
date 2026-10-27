@@ -5,10 +5,12 @@ the fiscal year from the signing date, parses the STEP reference, maps an old me
 current one, and keeps the dataset's INDIVIDUAL CONSULTANT label out of the supplier's name: the
 label stands for many people, each with their own supplier ID, and no person is named (spec,
 user stories 59 and 115). For the same reason, a Consultant Services contract whose description
-gives a personal title and a name keeps no description. When its supplier names no firm or is the
-person the description names, or the supplier is written with a personal title and no word that
-names a firm, the row is a person's contract: it keeps no supplier name and no description, and
-counts as an individual consultant (strata.lakehouse.clean.hires_a_named_person).
+gives a personal title and a name keeps no description. The row is a person's contract when its
+supplier is written with a personal title and no word that names a firm, or when its description
+names a person and its supplier has no word that names a firm and either no two-letter legal form
+or is the person the description names: it keeps no supplier name and no description, and counts as
+an individual consultant (strata.lakehouse.clean.hires_a_named_person). A firm hired for a person's
+services keeps its name.
 """
 
 from __future__ import annotations

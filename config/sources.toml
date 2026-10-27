@@ -496,8 +496,8 @@ fresh = { measure = "fresh_fetched", counts = "last fetched", noun = "fetches", 
 # Procurement Plan versions and every document of the slice, from the documents API. The plan reader
 # (src/strata/lakehouse/plans.py) lists a project's documents here and fetches each plan's published
 # text and PDF. Ticket 08 added it. The passage reader (src/strata/lakehouse/passages.py, tickets 11
-# and 18) lists the same way and fetches the slice's PADs, ISRs, ICRs and ICR Reviews with the plan
-# reader's fetcher, and both send pages to the layout parser under one daily page cap.
+# and 18) lists the same way and fetches the slice's reports of the types it has a template for
+# (TEMPLATES in src/strata/reader/templates.py) with the plan reader's fetcher, and both send pages to the layout parser under one daily page cap.
 #
 # The nightly job's parse_and_embed task runs both readers (ticket 43). Each night it asks the documents
 # API for each project's list, newest first, and keeps the list in bronze only when it changed. The
@@ -544,8 +544,8 @@ routes = [
   { measure = "pages_read_route_b", label = "Plan pages, layout parser", noun = "plan table pages", counted_in = "strata.bronze.layout_pages" },
 ]
 
-# The passage reader's reports (tickets 11 and 18): the PADs, ISRs, ICRs, ICR Reviews, Project Papers and
-# PPARs of the slice's projects and the projects the slice file names, read through either route. One row
+# The passage reader's reports (tickets 11 and 18): the reports of each type TEMPLATES lists
+# (src/strata/reader/templates.py) of the slice's projects and the projects the slice file names, read through either route. One row
 # holds every type (a departure from the 18 brief's row per collection that design review r2 accepted;
 # strata.ops.documents_read and the dashboard's tile 5 count them by type). Coverage counts the documents
 # read and the projects they belong to, and on its own line the pilot projects read; Read well counts the

@@ -487,6 +487,34 @@ def test_an_indicator_revised_in_place_keeps_both_versions_and_a_join_between_th
     assert before is None  # nothing from this page was public before its lastupdated date
 
 
+def test_a_value_revised_under_the_same_lastupdated_date_is_public_from_the_day_strata_first_fetched_it():
+    """Ticket 17's verify, F2. The API changed Kenya's 2025 estimate but kept the page's lastupdated date, so that
+    date cannot say when the new value came out. Gold keeps both versions: the earlier one from its lastupdated date,
+    and the new one from the day Strata first fetched it, so a query as of a day between the two fetches returns the
+    value Strata held then."""
+    from strata.lakehouse import governance
+
+    first = recorded("api/indicators/wgi-ge-KEN-IND.json")
+    earlier = [row["value"] for row in first[1] if (row["country"]["id"], row["date"]) == ("KE", "2025")][0]
+    later = revised(first, "KE", "2025", -0.5, first[0]["lastupdated"])
+    url = "https://api.worldbank.org/v2/country/KEN;IND/indicator/GOV_WGI_GE.EST?format=json&per_page=500&source=3"
+
+    with DuckDBEngine.open() as engine:
+        catalog.build(engine)
+        run_one(engine, "wgi", first, dt.datetime(2026, 10, 23, tzinfo=dt.UTC), url)
+        run_one(engine, "wgi", later, dt.datetime(2026, 11, 20, tzinfo=dt.UTC), url)
+        gold.build(engine)
+        versions = rows(engine, "SELECT value, public_from, superseded_on FROM strata.gold.governance_score "
+                                "WHERE country_code = 'KE' AND indicator_id = 'GOV_WGI_GE.EST' AND year = 2025 "
+                                "ORDER BY public_from")
+        between = governance.score_as_of(engine, "KE", "GOV_WGI_GE.EST", dt.date(2026, 11, 1))
+        after = governance.score_as_of(engine, "KE", "GOV_WGI_GE.EST", dt.date(2026, 11, 20))
+
+    assert [(row["value"], row["public_from"], row["superseded_on"]) for row in versions] == [
+        (earlier, dt.date(2026, 9, 25), dt.date(2026, 11, 20)), (-0.5, dt.date(2026, 11, 20), None)]
+    assert (between["value"], after["value"]) == (earlier, -0.5)
+
+
 def test_cpia_and_wgi_reach_gold_for_each_country_and_year_with_a_value(db):
     """CPIA covers IDA countries only: India has values only for the years it borrowed from IDA."""
     for file, indicator in (("api/indicators/cpia-irai-KEN-IND.json", "IQ.CPA.IRAI.XQ"),
@@ -543,7 +571,7 @@ def test_a_passage_takes_its_project_s_one_sector_so_search_and_the_slice_agree(
     projects = rows(db, "SELECT project_id, sector FROM strata.gold.project")
 
     assert projects
-    assert [(p["project_id"], passages.project(db, p["project_id"]).slice_sector) for p in projects] == [
+    assert [(p["project_id"], passages.project(db, p["project_id"]).sector) for p in projects] == [
         (p["project_id"], p["sector"]) for p in projects]
 
 

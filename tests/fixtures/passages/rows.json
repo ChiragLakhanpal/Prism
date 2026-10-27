@@ -6,7 +6,7 @@
     ],
     "strata.bronze.document_pages": [
       701,
-      "737209f6cb4897a6c3e53fbdb8b9d1000514091bdaf9cbddd9c2c344cf4b105f"
+      "62b0789a88b1bd31cef50b9075d87907865b2daea794857256ea6c74fa12373c"
     ],
     "strata.bronze.document_texts": [
       51,
@@ -18,11 +18,11 @@
     ],
     "strata.gold.passage": [
       2198,
-      "ecc77c596abefc131d56677f91872d84d6dc2d26ccfb04b62ce53ab271b72d3c"
+      "68f73eaf116c0a596bf594901ff1bc9b410e8191c3ab98536e5b2fac6098f78e"
     ],
     "strata.ops.data_readiness": [
       66,
-      "fa6c5a22a21c6d643b3300ef2c288bdbff5b784badd87490804ac3e782165f88"
+      "35701d9f18efc6456cd2feb9b8893a7601e23aea3fc857a58634f67ee1aaec86"
     ],
     "strata.ops.documents_read": [
       20,
@@ -30,7 +30,7 @@
     ],
     "strata.ops.parse_failures": [
       25,
-      "05608422ed3f82f053b00a2767a937d0bbb00cf3adaeb8205abac3e8149acb6b"
+      "f293682cf20c8118e9ceb344fc0dffabc2b8530f01a51f834325c0a5aad59275"
     ],
     "strata.ops.parse_runs": [
       5,
@@ -42,7 +42,7 @@
     ],
     "strata.ops.stress_shelf": [
       5,
-      "264bf13f728f39279d9fd199d5fc4fae5a182ace6b382a006869a24df486ce47"
+      "2d5572d20b6bcb4800310b18a298eba1060a9e6e96cab3f864503cbb1d04d247"
     ],
     "strata.silver.document_page_routes": [
       650,
@@ -50,7 +50,7 @@
     ],
     "strata.silver.documents": [
       39,
-      "89254799af08f77917025d9a1e44b86b2d264d20a315020f0acfe79a7e38534d"
+      "fe4c2d0dc3ea7f19d628cd6259c13a70ccb9b2e07cff41087cfe2350960c8d42"
     ],
     "strata.silver.isr_ratings": [
       96,
@@ -62,7 +62,7 @@
     ],
     "strata.silver.passage_shields": [
       2022,
-      "ef3cadf48fe1510a9f637a527ba3539277f6df60ce63a6c20a4ca16cb9fb6310"
+      "e1cd510d0cbc1bca1fde5be1eed2c7f4fdcf38f8a218761d7926f001153412a3"
     ],
     "strata.silver.passages": [
       2198,
@@ -76,7 +76,7 @@
     ],
     "strata.bronze.document_pages": [
       701,
-      "737209f6cb4897a6c3e53fbdb8b9d1000514091bdaf9cbddd9c2c344cf4b105f"
+      "62b0789a88b1bd31cef50b9075d87907865b2daea794857256ea6c74fa12373c"
     ],
     "strata.bronze.document_texts": [
       51,
@@ -88,11 +88,11 @@
     ],
     "strata.gold.passage": [
       1400,
-      "309ce61b1b03fb876e9c6f1f8e005212205c9635755abd1088574e5ba955a32d"
+      "2d35f9de461dd31bfc899f024e28df2b549d2edfdbbc98067e1fee16713f9a48"
     ],
     "strata.ops.data_readiness": [
       124,
-      "e428b71eacdef1bd4368ff5dd07acf5ef708e74ea7ea8ca7491281ffc78d5e9f"
+      "06530314340ee127c7793cef013a7e2643b8cc95be7d59b753e1b2617f88ce52"
     ],
     "strata.ops.documents_read": [
       39,
@@ -100,7 +100,7 @@
     ],
     "strata.ops.parse_failures": [
       43,
-      "7ac8643a07be3e9f4bd9976db37ec3f06590e4bd3d69a7f6765d3f80236c9fe2"
+      "ca8b455dc1038b6aa5589b4de486dc167b6480e869245ce32c06054635f01891"
     ],
     "strata.ops.parse_runs": [
       10,
@@ -112,7 +112,7 @@
     ],
     "strata.ops.stress_shelf": [
       10,
-      "bc915084fda2901a154ee6167f5a223d6b1f6bc103b12f1f5ff5b7775a1efc51"
+      "33b9e2e9606b27cbfb35e5c273bf013b1e6abce50991f475595eb8bd77100cc6"
     ],
     "strata.silver.document_page_routes": [
       650,
@@ -120,7 +120,7 @@
     ],
     "strata.silver.documents": [
       39,
-      "89254799af08f77917025d9a1e44b86b2d264d20a315020f0acfe79a7e38534d"
+      "fe4c2d0dc3ea7f19d628cd6259c13a70ccb9b2e07cff41087cfe2350960c8d42"
     ],
     "strata.silver.isr_ratings": [
       96,
@@ -132,7 +132,7 @@
     ],
     "strata.silver.passage_shields": [
       1264,
-      "9a171e021a9b27f9d858916c51adfdc94ec166f72d0363833214a783ded67c35"
+      "8e88ef24fa3a9df07d49209a7913af1febf7ffc30a91b3576b85d5bb62db39c6"
     ],
     "strata.silver.passages": [
       1400,

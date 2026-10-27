@@ -459,6 +459,35 @@ def test_the_header_names_each_project_s_sector_in_the_projects_api_s_own_words(
     assert header == "ICR, P130164, India, roads, III.B, ¶54, p.23"
 
 
+def test_the_pilot_projects_read_measure_names_a_project_whose_listed_documents_were_not_fetched(db):
+    """The fixture records P161305's document list but none of its documents, so the run lists them and skips each
+    one. The measure's sentence says so by the project's ID, so "1 of 17" has a true reason for that project
+    (ticket 18's verify, F3)."""
+    case = SHELF["slice_projects"]
+    [measure] = rows(db, "SELECT count, denominator, detail FROM strata.ops.data_readiness "
+                         "WHERE measure = 'slice_projects_read' AND subject = 'all'")
+    skipped = rows(db, "SELECT DISTINCT project_id FROM strata.ops.skipped_documents WHERE reader = 'passages' "
+                       "AND document_id IS NOT NULL AND project_id = :project", project="P161305")
+
+    assert (measure["count"], measure["denominator"]) == (case["pilot_projects_read"], case["count"])
+    assert skipped == [{"project_id": "P161305"}]
+    assert measure["detail"].endswith(" Of the projects not counted, one listed documents the source did not give, "
+                                      "so the run could not read them: P161305.")
+
+
+def test_every_stored_pdf_link_uses_https_though_the_documents_api_gives_http(db):
+    """The documents API gives pdfurl over http, and the drawer's PDF link is the stored one (ticket 14's verify,
+    observation 2). The readers store it over https, the way the World Bank's hosts answer."""
+    listed = json.loads((ROOT / "data" / "fixture" / "recorded" / "api" / "documents" / "P130164.json").read_text())
+    assert any(str(document.get("pdfurl", "")).startswith("http://")
+               for key, document in listed["response"]["documents"].items() if key != "facets")
+
+    links = rows(db, "SELECT pdf_url FROM strata.silver.documents UNION ALL "
+                     "SELECT pdf_url FROM strata.silver.plan_versions")
+
+    assert links and all(row["pdf_url"].startswith("https://") for row in links)
+
+
 def test_a_notice_passage_names_its_section_only_by_a_real_heading(db):
     """A notice's sections start at each heading line, and a passage keeps its section's heading as its section
     path. A long line that ends in a colon also starts a section, but it is a sentence, not a heading, so the passage

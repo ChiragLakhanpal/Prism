@@ -77,7 +77,7 @@ ATTACKS = re.compile(
 class PatternShield:
     """The offline stand-in for Prompt Shields."""
 
-    name = "offline stand-in (attack phrasings)"
+    name = "the offline stand-in for Prompt Shields"  # the measures' sentences name it this way
 
     def scan(self, texts: list[str]) -> list[Scan]:
         results = []

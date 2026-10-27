@@ -14,7 +14,8 @@ hired one person, and in contract descriptions such as "the Consultancy Services
 is a contract with a person when its method is Individual Consultant Selection, when its supplier
 is INDIVIDUAL CONSULTANT, or when its supplier is written with a personal title and no word that
 names a firm, or when it is for Consultant Services, its description gives a personal title
-followed by a name, and its supplier names no firm or is that person. Such a row keeps no supplier
+followed by a name, and its supplier has no word that names a firm and either no two-letter legal
+form or is that person (strata.lakehouse.clean.hires_a_named_person). Such a row keeps no supplier
 and no description, and is marked individual_consultant, so no person is named (spec, user stories
 59 and 115). A firm hired for a person's services keeps its name, and its description is removed.
 """

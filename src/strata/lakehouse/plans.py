@@ -58,7 +58,7 @@ from strata.lakehouse.clean import public_from  # ADR 0002's rule, defined once 
 from strata.lakehouse.engine import Engine, RowTooLarge, WarehouseEngine
 from strata.reader import step
 from strata.reader.documents import Documents, NotFetched, StopReading, list_url
-from strata.reader.layout import LayoutParser, Page, ParseFailed, Table, tables_from_json, tables_to_json
+from strata.reader.layout import LayoutParser, Page, ParseFailed, Table, https, tables_from_json, tables_to_json
 
 log = logging.getLogger(__name__)
 
@@ -167,7 +167,7 @@ NUMBER_WORDS = ("one", "two", "three", "four", "five", "six", "seven", "eight", 
 def count_words(count: int) -> str:
     """A count as the readers' notes write it: one to nine in words, numerals for 10 and up (DESIGN.md section 7,
     rule 12)."""
-    return NUMBER_WORDS[count - 1] if 1 <= count <= len(NUMBER_WORDS) else str(count)
+    return NUMBER_WORDS[count - 1] if 1 <= count <= len(NUMBER_WORDS) else f"{count:,}"
 
 
 def left_words(documents: int, lists: int) -> str:
@@ -263,7 +263,7 @@ def listed_plans(engine: Engine, project_id: str) -> Listing:
             if document.get("txturl") and document.get("pdfurl") and document.get("docdt"):
                 entries[document["id"]] = Entry(document["id"], _date(document["docdt"]),
                                                 _date(document.get("disclosure_date")),
-                                                document["txturl"], document["pdfurl"])
+                                                document["txturl"], https(document["pdfurl"]))  # the API gives http
     return Listing(sorted(entries.values(), key=by_plan_date), dates)
 
 
@@ -278,7 +278,6 @@ def fetch_plans(engine: Engine, documents: Documents, project_id: str, entries: 
 @dataclass(frozen=True)
 class Fetching:
     fetched: int  # documents fetched into bronze
-    with_contacts: int  # of those, the documents whose published text had contact details taken out
     # Documents fetched but not kept, with the characters in each one's text: the SQL warehouse takes a
     # statement's parameters up to about 1 MB, so a text past that cannot be written through it. Such a
     # document counts as listed but not read, which leaves later first listings unconfirmed.
@@ -300,7 +299,7 @@ def fetch_documents(engine: Engine, documents: Documents, project_id: str, entri
     held = {str(row[0]) for row in engine.run(
         "SELECT DISTINCT document_id FROM strata.bronze.document_texts WHERE project_id = :project_id",
         {"project_id": project_id}).rows}
-    fetched = with_contacts = 0
+    fetched = 0
     not_kept: list[tuple[str, int]] = []
     not_fetched: list[tuple[str, str, str]] = []
     for entry in entries:
@@ -312,8 +311,8 @@ def fetch_documents(engine: Engine, documents: Documents, project_id: str, entri
             not_fetched.append((entry.document_id, error.url or entry.text_url, str(error)))
             continue  # a document listed but not read, which leaves later first listings unconfirmed
         except StopReading as stop:  # the documents fetched before this one stay in bronze
-            return Fetching(fetched, with_contacts, tuple(not_kept), tuple(not_fetched), stop)
-        body, count = contacts.strip_text(text.body)
+            return Fetching(fetched, tuple(not_kept), tuple(not_fetched), stop)
+        body, _ = contacts.strip_text(text.body)
         page_texts = [contacts.strip_text(page)[0] for page in pages.body]  # the same details again, counted once
         public = public_from(entry.disclosed_on, text.fetched_at.date())
         try:
@@ -328,8 +327,7 @@ def fetch_documents(engine: Engine, documents: Documents, project_id: str, entri
                [(entry.document_id, project_id, number, entry.pdf_url, _sha(page), page, pages.fetched_at, public)
                 for number, page in enumerate(page_texts, 1)])
         fetched += 1
-        with_contacts += count > 0
-    return Fetching(fetched, with_contacts, tuple(not_kept), tuple(not_fetched))
+    return Fetching(fetched, tuple(not_kept), tuple(not_fetched))
 
 
 # ── 2 and 3. Read every version's text, and choose the ones whose tables get read ───

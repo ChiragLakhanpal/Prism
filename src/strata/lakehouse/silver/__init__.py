@@ -61,6 +61,8 @@ SILVER_PAGES = "strata.ops.silver_pages"
 SILVER_PAGES_COLUMNS = ("source", "page_hash", "tables", "version", "written_at", "public_from")
 
 # The source's pages that silver has not read with the transform as it is now: one join on each page's newest record.
+# A page that changed and then changed back is in bronze twice with one hash (strata.lakehouse.bronze), and silver
+# reads it once, from its first fetch.
 PENDING = """
 WITH newest AS (
   SELECT page_hash, tables, version
@@ -68,12 +70,13 @@ WITH newest AS (
   WHERE source = :source
   QUALIFY row_number() OVER (PARTITION BY page_hash ORDER BY written_at DESC) = 1
 )
-SELECT p.page_hash
+SELECT p.page_hash, min(p.fetched_at) AS first_fetched
 FROM strata.bronze.api_pages AS p
 LEFT JOIN newest AS r ON r.page_hash = p.page_hash
 WHERE p.source = :source
   AND (r.page_hash IS NULL OR r.tables <> :tables OR r.version <> :version)
-ORDER BY p.fetched_at, p.page_hash
+GROUP BY p.page_hash
+ORDER BY first_fetched, p.page_hash
 """
 
 
@@ -95,7 +98,7 @@ def pending(engine: Engine, source: Source) -> list[str]:
     """The source's bronze pages that read() would read, oldest first."""
     module = transform(source)
     found = engine.run(PENDING, {"source": source.key, "tables": tables(module), "version": version(module)})
-    return [page_hash for (page_hash,) in found.rows]
+    return [page_hash for page_hash, _ in found.rows]
 
 
 @dataclass(frozen=True)
@@ -124,11 +127,12 @@ def _marks(page_hashes: list[str]) -> tuple[str, dict[str, str]]:
 
 
 def _bodies(engine: Engine, source: Source, page_hashes: list[str]) -> dict[str, tuple[str, dt.datetime]]:
-    """Each of the group's pages, by its hash: its body and when it was fetched, in one statement."""
+    """Each of the group's pages, by its hash: its body and when it was first fetched, in one statement."""
     marks, params = _marks(page_hashes)
     found = engine.run("SELECT page_hash, body, fetched_at FROM strata.bronze.api_pages "  # sql-lint: names only
-                       f"WHERE source = :source AND page_hash IN ({marks})", {"source": source.key, **params})
-    return {page_hash: (body, fetched_at) for page_hash, body, fetched_at in found.rows}
+                       f"WHERE source = :source AND page_hash IN ({marks}) ORDER BY fetched_at DESC",
+                       {"source": source.key, **params})
+    return {page_hash: (body, fetched_at) for page_hash, body, fetched_at in found.rows}  # the first fetch wins
 
 
 def _held(engine: Engine, names: list[str], page_hashes: list[str]) -> dict[str, list[str]]:
