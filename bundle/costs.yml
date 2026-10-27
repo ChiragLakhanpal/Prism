@@ -4,7 +4,7 @@
 # It is a job of its own, not an eleventh nightly task, because tests/test_nightly.py keeps the nightly job to
 # docs/PLAN.md section 11's ten tasks. It runs src/strata/lakehouse/cost_task.py on serverless compute at 05:40 in
 # Washington, after the nightly job stops at 05:30 and before fairshare's job starts at 07:00 there, and takes
-# seconds. It reads the service principal's sign-in and the subscription from the secret scope the variable
+# seconds, or up to the waits in config/thresholds.toml's [costs] when Azure throttles it (ticket 107). It reads the service principal's sign-in and the subscription from the secret scope the variable
 # secret_scope names (FOUNDRY_TENANT_ID, FOUNDRY_CLIENT_ID, FOUNDRY_CLIENT_SECRET and AZURE_SUBSCRIPTION_ID). The
 # service principal needs the Cost Management Reader role on the resource group (docs/workspace-catchup.md).
 

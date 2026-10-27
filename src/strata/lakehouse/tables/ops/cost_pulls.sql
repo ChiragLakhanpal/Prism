@@ -11,9 +11,11 @@
 -- through_day  the last day Azure gave charges for; empty when it failed, was throttled or Azure gave none
 -- charges      how many rows it wrote to strata.ops.azure_costs
 -- error_code   why a throttled or failed pull stopped: not_authorized, throttled, bad_answer or unreachable
--- detail       what Azure or the pull said when it stopped, such as Azure's answer to the last throttled try; empty
---              when it succeeded. Ticket 107 added it: a workspace whose table is older adds it with
+-- detail       Azure's answer to the last throttled try; empty when the pull succeeded or failed, since a refusal
+--              from Azure can name the service principal and the subscription, so its text reaches only the job
+--              run's output. Ticket 107 added it: a workspace whose table is older adds it with
 --              ALTER TABLE strata.ops.cost_pulls ADD COLUMNS (detail STRING)
+--              before the bundle deploy that brings ticket 107's cost_task.py, or every pull fails on the run row
 -- public_from  the day it ran, in UTC (ADR 0002)
 CREATE TABLE IF NOT EXISTS strata.ops.cost_pulls (
   run_id STRING NOT NULL,

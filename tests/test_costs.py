@@ -66,16 +66,19 @@ def test_a_pull_writes_each_day_s_charges_by_service_and_resource(ops):
 
 
 def test_a_pull_that_fails_is_recorded_with_why_and_writes_no_charges(ops):
+    """The row keeps only the code. Azure's refusal can name the service principal and the subscription, and every
+    account user may read strata.ops, so its text goes only to the job run's output, with the error raised again."""
     class Down:
         def charges(self, starts_on, ends_on):
-            raise costs.CostError("not_authorized", "The service principal has no Cost Management Reader role.")
+            raise costs.CostError("not_authorized", "Azure answered 403: The client 'client-id' does not have "
+                                  "authorization over scope '/subscriptions/sub-id/resourceGroups/WorldBank-demo'.")
 
-    with pytest.raises(costs.CostError):
+    with pytest.raises(costs.CostError, match="does not have authorization"):
         costs.pull(ops, Down(), "pull-2", lambda: PULLED_AT)
 
     assert ops.run("SELECT count(*) FROM strata.ops.azure_costs").rows == ((0,),)
-    assert ops.run("SELECT run_id, status, error_code FROM strata.ops.cost_pulls").rows == (
-        ("pull-2", "failed", "not_authorized"),)
+    assert ops.run("SELECT run_id, status, error_code, detail FROM strata.ops.cost_pulls").rows == (
+        ("pull-2", "failed", "not_authorized", None),)
 
 
 def test_a_pull_writes_the_budget_periods_the_governance_page_offers(ops):
@@ -219,6 +222,7 @@ def test_four_throttled_answers_give_a_throttled_run_row_with_azure_s_message_an
     assert ops.run("SELECT run_id, status, charges, error_code, detail FROM strata.ops.cost_pulls").rows == (
         ("pull-3", "throttled", 0, "throttled", f"Azure answered 429: {AZURE_429}"),)
     assert ops.run("SELECT count(*) FROM strata.ops.azure_costs").rows == ((0,),)
+    assert ops.run("SELECT run_id, period_key FROM strata.ops.budget_periods").rows == (("pull-3", "credit"),)
 
 
 def test_the_transport_hands_azure_s_wait_headers_to_the_retries_and_a_403_still_raises_at_once(monkeypatch):
@@ -273,6 +277,18 @@ def test_the_tries_and_the_waits_come_from_the_thresholds_file(tmp_path):
     assert clock.waits == [2, 50, 30, 30]
 
 
+@pytest.mark.parametrize("costs_section", [
+    "retries = -1\nretry_seconds = 30\nmin_retry_seconds = 2\nmax_retry_seconds = 50\n",
+    "retries = 3\nretry_seconds = 30\nmin_retry_seconds = 60\nmax_retry_seconds = 50\n"])
+def test_a_costs_section_with_negative_retries_or_a_shortest_wait_above_the_longest_is_refused(tmp_path, costs_section):
+    from strata.config import ConfigError, load_thresholds
+
+    (tmp_path / "thresholds.toml").write_text(f"[costs]\n{costs_section}")
+
+    with pytest.raises(ConfigError, match=r"\[costs\]"):
+        costs.Retries.from_thresholds(load_thresholds(tmp_path / "thresholds.toml"))
+
+
 def test_the_job_s_entry_point_ends_succeeded_when_azure_throttles_every_try_and_governance_says_why(ops):
     """cost_task.main returns, so the job's task ends succeeded; the spend sentence reads as on a day with no
     charges, then names the reason from the run row in its own word, throttled."""
@@ -296,8 +312,33 @@ def test_the_job_s_entry_point_ends_succeeded_when_azure_throttles_every_try_and
         "tries again.",),)
 
 
+def test_the_sign_in_and_every_page_of_the_answer_share_one_pull_s_tries():
+    """The tries are counted for the whole pull, not for each call, so the pull never waits longer than [costs]
+    allows: here the sign-in is throttled once and the second page three times, which is one try too many."""
+    answer = json.loads((FIXTURES / "query.json").read_text())
+    first = {"properties": {**answer["properties"], "nextLink": "https://management.azure.com/next-page"}}
+    answers = iter([throttled({"Retry-After": "4"}), {"access_token": "not-a-real-key"}, first,
+                    throttled({"Retry-After": "6"}), throttled({"Retry-After": "6"}), throttled({"Retry-After": "6"})])
+
+    def transport(method, url, body, headers):
+        found = next(answers)
+        if isinstance(found, Exception):
+            raise found
+        return found
+
+    clock = FakeClock()
+    source = costs.AzureCostManagement("sub-id", "WorldBank-demo", "tenant-id", "client-id", "not-a-real-key",
+                                       transport, sleep=clock.sleep)
+
+    with pytest.raises(costs.CostError) as stopped:
+        source.charges(dt.date(2026, 9, 18), dt.date(2026, 10, 23))
+
+    assert stopped.value.code == "throttled" and clock.waits == [4, 6, 6]
+
+
 def test_every_wait_the_pull_may_take_fits_inside_the_cost_job_s_timeout():
-    """The job's clock must never stop a pull that is waiting, or the task fails with no run row."""
+    """The job's clock must never stop a pull that is waiting, or the task fails with no run row. One pull waits at
+    most retries times max_retry_seconds in all, since its calls share the tries."""
     from strata.lakehouse import bundle
 
     retries = costs.Retries.from_thresholds()
