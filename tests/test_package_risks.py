@@ -140,49 +140,22 @@ def test_check_4_removes_a_row_whose_sentence_checks_1_to_3_cannot_prove(library
     assert payload["rows"]
 
 
-def planted_disagreement(call, **arguments):
-    """get_disagreements, with one more disagreement about P130164 whose first side is ICR paragraph 54 (values.toml
-    icr-para-54), saying the cost estimates were below market rates, against the second side of the real one."""
-    from strata.tools.get_disagreements import get_disagreements
-
-    result = get_disagreements(call, **arguments)
-    if result["rows"]:
-        real = result["rows"][0]
-        side = {**real["sides"][1], "evidence_id": "strata.gold.passage:31525018/v1/54",
-                "assertion_id": "strata.gold.passage:31525018/v1/54#P130164/cost_estimates", "value": "market rates",
-                "value_form": "judgment", "quote": None, "passage_id": "31525018/v1/54"}
-        planted = {**real, "evidence_id": "strata.gold.disagreement:planted", "disagreement_id": "planted",
-                   "attribute": "cost_estimates", "sides": [side, real["sides"][0]],
-                   "lean_assertion_id": side["assertion_id"], "other_assertion_id": real["sides"][0]["assertion_id"]}
-        result["rows"] = [*result["rows"], planted]
-    return result
-
-
 def test_check_6_attaches_a_disagreement_whose_side_is_a_row_s_source(library):
     """Ticket 61: check 6 asks get_disagreements about the project each row's sources belong to, and a disagreement
-    whose side is a passage the row's lesson rests on, and whose value the row states, is attached to that row with
-    both sides, which the payload carries. The disagreement is planted at the tool, beside the fixture's own."""
-    import dataclasses
+    whose side is a passage the row's lesson rests on, and whose value the row states ("market rates"), is attached
+    to that row with both sides, which the payload carries. It is planted at the tool, beside the fixture's own."""
+    import planted_disagreements as planted
 
     from strata.agent.answer_check import SixChecks
-    from strata.config import load_tools
 
-    tools = load_tools()
-    tools["get_disagreements"] = dataclasses.replace(tools["get_disagreements"],
-                                                     adapter="test_package_risks:planted_disagreement")
+    payload = build(library, INDIA_WORKS,
+                    six_checks=SixChecks(None, None, planted.with_adapter("on_market_rates"))).payload
 
-    payload = build(library, INDIA_WORKS, six_checks=SixChecks(None, None, tools)).payload
-
-    row = row_of(table_of(payload), "Cost estimates below market rates")
-    assert row["disagreement"]["id"] == "strata.gold.disagreement:planted"
-    assert [side["evidence_id"] for side in row["disagreement"]["sides"]] == [
-        "strata.gold.passage:31525018/v1/54", "strata.gold.passage:26733307/v1/s4"]
+    [row] = [row for row in payload["rows"] if row["risk_label"] == "Cost estimates below market rates"]
+    assert row["disagreement"]["id"] == planted.PLANTED
+    assert [side["evidence_id"] for side in row["disagreement"]["sides"]] == [planted.ICR_54, planted.ISR_7]
     assert payload["verifier"]["counts"]["disagreements"]["shown"] == 1
     assert [other["disagreement"] for other in payload["rows"] if other is not row] == [None] * (len(payload["rows"]) - 1)
-
-
-def table_of(payload):
-    return risks.RiskTable(payload, None, None)
 
 
 def test_a_count_that_differs_from_the_tool_s_summary_is_removed_before_the_verifier_runs(library, monkeypatch):

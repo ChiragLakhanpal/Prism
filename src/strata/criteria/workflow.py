@@ -227,15 +227,22 @@ def lesson_groups(call_tool: ToolCall, package: Package, per_group: int, factors
     return groups
 
 
-def _reason_claims(rejected: dict, facts: Facts) -> list[tuple[Claim, str]]:
+# What a claim of the section is (ticket 31's review round 3, F4), sent with each removed entry as source, so the
+# screen chooses its words by what the sentence was and never by the shape of its id: a reading of your words, a
+# reason quoted from an award notice (a record, with no pages) or a lesson's words quoted from its paragraph.
+READING, RECORD_QUOTE, PASSAGE_QUOTE = "reading", "record_quote", "passage_quote"
+
+
+def _reason_claims(rejected: dict, facts: Facts) -> list[tuple[Claim, str, str]]:
     claims = []
     for row in rejected["rows"]:
         facts.record(row["evidence_id"], row, tool="rejected_bids")
-        claims.append((Claim(f'"{row["reason"]["quote"]}"', "quote", (row["evidence_id"],)), row["evidence_id"]))
+        claims.append((Claim(f'"{row["reason"]["quote"]}"', "quote", (row["evidence_id"],)), row["evidence_id"],
+                       RECORD_QUOTE))
     return claims
 
 
-def _lesson_claims(groups: list[dict], read_passage: Callable[[str], dict | None], facts: Facts) -> list[tuple[Claim, str]]:
+def _lesson_claims(groups: list[dict], read_passage: Callable[[str], dict | None], facts: Facts) -> list[tuple[Claim, str, str]]:
     claims = []
     for group in groups:
         for lesson in group["lessons"]:
@@ -250,29 +257,50 @@ def _lesson_claims(groups: list[dict], read_passage: Callable[[str], dict | None
                 lesson["excerpt"] = {"text": passage["text"], "range": list(found) if found else None,
                                      "lang": passage["language"] or "en"}
             claims.append((Claim(f'"{lesson["quote"]}"', "quote", (lesson["evidence_id"], lesson["passage_evidence_id"]),
-                                 quote=Quote(lesson["quote"], lesson["passage_evidence_id"])), lesson["evidence_id"]))
+                                 quote=Quote(lesson["quote"], lesson["passage_evidence_id"])), lesson["evidence_id"],
+                           PASSAGE_QUOTE))
     return claims
 
 
-async def verdict_of(claims: list[tuple[Claim, str]], facts: Facts, tools: list[str], checking: Checking,
-                     run_id: str) -> tuple[dict, list[dict], set[str]]:
-    """The six checks on the claims: the verifier's counts, the removed sentences with their reasons, and the
-    evidence ids (or item keys) whose sentence it removed. A quote from a record, such as an award notice's reason,
-    has no page: the check line says such quotes are in their sources."""
-    answer = checking.six.check([claim for claim, _ in claims], facts)
+@dataclass(frozen=True)
+class Checked:
+    """The six checks' result on a run's claims: the verifier's counts; the removed sentences, each with what it was
+    about (an evidence id or an item key) and its source (READING, RECORD_QUOTE or PASSAGE_QUOTE); the abouts whose
+    sentence was removed; the disagreement cards check 6 attached, by the about of the sentence each follows; and the
+    evidence events of the cards' sides, so each side's marker opens."""
+
+    counts: dict
+    removed: list[dict]
+    removed_ids: set[str]
+    cards: dict[str, dict]
+    evidence: dict[str, dict]
+
+
+async def verdict_of(claims: list[tuple[Claim, str, str]], facts: Facts, tools: list[str], checking: Checking,
+                     run_id: str) -> Checked:
+    """The six checks on the claims. A quote from a record, such as an award notice's reason, has no page: the check
+    line says such quotes are in their sources. A card check 6 attached comes back with the claim it follows, where
+    the section shows it (ticket 31's review round 3, F2), and its count says so."""
+    answer = checking.six.check([claim for claim, *_ in claims], facts)
     verdict = None
     async for item in checking.six.finish(answer, facts, checking.asker(run_id)):
         if isinstance(item, Verdict):
             verdict = item
-    counts, removed = None, []
+    counts, removed, cards, evidence = None, [], {}, {}
+    sides = {side["evidence_id"] for found in verdict.attached for side in found.row.get("sides") or ()}
     for event in answer_events(verdict, facts, tools, checking.six.cited_only):
         if event.type == "checks":
             counts = dict(event.data)
         elif event.type == "removed":
-            removed.append({**event.data, "about": claims[event.data["index"]][1]})
+            _, about, source = claims[event.data["index"]]
+            removed.append({**event.data, "about": about, "source": source})
+        elif event.type == "disagreement":
+            cards.setdefault(claims[event.data["after"]][1], dict(event.data))
+        elif event.type == "evidence" and event.data["id"] in sides:
+            evidence[event.data["id"]] = dict(event.data)
     counts["quotes_without_pages"] = sum(1 for sentence in verdict.sentences
                                          if sentence.quoted and sentence.claim.quote is None)
-    return counts, removed, {entry["about"] for entry in removed}
+    return Checked(counts, removed, {entry["about"] for entry in removed}, cards, evidence)
 
 
 async def package_run(call_tool: ToolCall, read_passage: Callable[[str], dict | None], package: Package,
@@ -311,7 +339,8 @@ async def package_run(call_tool: ToolCall, read_passage: Callable[[str], dict | 
     yield step("checks", "running")
     facts = Facts()
     claims = _reason_claims(rejected, facts) + await asyncio.to_thread(_lesson_claims, groups, read_passage, facts)
-    counts, removed, removed_ids = await verdict_of(claims, facts, ["rejected_bids", "get_lessons"], checking, check_id)
+    checked = await verdict_of(claims, facts, ["rejected_bids", "get_lessons"], checking, check_id)
+    counts, removed, removed_ids, cards = checked.counts, checked.removed, checked.removed_ids, checked.cards
     yield step("checks", "done")
 
     signed = signature(refs, found.get("records_through"))
@@ -323,16 +352,20 @@ async def package_run(call_tool: ToolCall, read_passage: Callable[[str], dict | 
         "as_of": found["as_of"], "labels": names,
         "rejected": {"state": reject_state, "counts": rejected["summary"]["counts"],
                      "groups": [{**group, **names[group["item_key"]]} for group in rejected["summary"]["groups"]],
-                     "rows": [{**row, "removed": row["evidence_id"] in removed_ids} for row in rejected["rows"]],
+                     "rows": [{**row, "removed": row["evidence_id"] in removed_ids,
+                               "disagreement": cards.get(row["evidence_id"])} for row in rejected["rows"]],
                      "sources": rejected["sources"], "records_through": rejected["records_through"]},
         "cost": {key: cost[key] for key in ("rows", "coverage", "package", "counts", "band", "quartiles",
                                             "quantile_dots", "min_comparables", "sources", "records_through",
                                             "abstention", "as_of")},
         "lessons": {"state": "ok" if groups else "none",
                     "groups": [{"factor": group["factor"],
-                                "lessons": [{**lesson, "removed": lesson["evidence_id"] in removed_ids}
+                                "lessons": [{**lesson, "removed": lesson["evidence_id"] in removed_ids,
+                                             "disagreement": cards.get(lesson["evidence_id"])}
                                             for lesson in group["lessons"]]} for group in groups]},
         "checks": counts, "removed": removed,
+        # The evidence of each side of a card check 6 attached, so the card's markers open (ticket 31's review F2).
+        "evidence": checked.evidence,
     }
     if store is not None and owner_id:
         try:
@@ -586,8 +619,9 @@ async def _compare_saved(call_tool: ToolCall, reader_for: Callable[[], object | 
         evidence = f"paste:{check_id}/{item['item_key']}"
         facts.record(evidence, {"excerpt": item["excerpt"], "numbers": sorted(str(n) for n in _numbers_in(item["excerpt"]))},
                      tool=READER)
-        claims.append((Claim(item["reading"], "summary", (evidence,)), item["item_key"]))
-    counts, removed, removed_keys = await verdict_of(claims, facts, [READER], checking, check_id) if claims else \
+        claims.append((Claim(item["reading"], "summary", (evidence,)), item["item_key"], READING))
+    checked = await verdict_of(claims, facts, [READER], checking, check_id) if claims else None
+    counts, removed, removed_keys = (checked.counts, checked.removed, checked.removed_ids) if checked else \
         (None, [], set())
     for entry in shown:
         entry["reading_removed"] = entry["item_key"] in removed_keys

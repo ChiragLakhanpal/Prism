@@ -279,6 +279,23 @@ test("below 20 comparables the cost estimate abstains in the first person and li
   await expect(part.locator("[data-cost-table]")).toContainText(`\u2212${Math.abs(Math.min(...diffs))}%`);
 });
 
+test("a disagreement check 6 attached to a lesson's quote shows under it, as many cards as the check line counts", async ({ page }) => {
+  // Made up: a disagreement planted at get_disagreements whose first side is ICR P130164 paragraph 54 (ticket 61;
+  // tests/planted_disagreements.py), recorded through the server by tests/record_criteria_api.py.
+  const file = "criteria-run-ke-nwwda-541055-made-up-disagreement.sse";
+  const run = events(await recorded(file)).find((event) => event.type === "package_run")!.data;
+  await open(page, WORKS, { run: file });
+  await openSection(page);
+
+  const card = section(page).locator("[data-criteria-part=lessons] [data-lesson-card]").first();
+  await expect(card.locator("[data-criteria-disagreement]")).toHaveCount(1);
+  await expect(card.locator("[data-criteria-disagreement]")).toContainText("ICR");
+  // The card sits after the lesson's excerpt, beside the claim it concerns (DESIGN.md section 5).
+  expect(await card.locator("[data-lesson-excerpt] ~ [data-criteria-disagreement]").count()).toBe(1);
+  await expect(section(page).locator("[data-criteria-disagreement]")).toHaveCount(run.checks.disagreements.shown);
+  expect(await axe(page)).toEqual([]);
+});
+
 test("lessons on cost estimates appear with their citations, including ICR P130164 paragraph 54", async ({ page }) => {
   await open(page, WORKS);
   await openSection(page);

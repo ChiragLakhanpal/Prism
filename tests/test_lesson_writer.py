@@ -94,43 +94,20 @@ def test_check_4_removes_a_summary_sentence_its_passage_does_not_support(databas
     assert summary["checks"]["checks_run"] == [1, 2, 3, 4, 5, 6]
 
 
-def planted_disagreement(call, **arguments):
-    """get_disagreements, with one more disagreement about P130164 whose first side is ICR paragraph 54 quoting "108 of
-    328 cases had to go through rebidding" (values.toml icr-para-54), against ISR 7's side of the real one."""
-    from strata.tools.get_disagreements import get_disagreements
-
-    result = get_disagreements(call, **arguments)
-    if result["rows"]:
-        real = result["rows"][0]
-        side = {**real["sides"][1], "evidence_id": ICR_54, "passage_id": "31525018/v1/54",
-                "assertion_id": f"{ICR_54}#P130164/rebidding", "value": None, "value_form": None,
-                "quote": "108 of 328 cases had to go through rebidding"}
-        planted = {**real, "evidence_id": "strata.gold.disagreement:planted", "disagreement_id": "planted",
-                   "attribute": "rebidding", "sides": [side, real["sides"][0]], "lean_assertion_id": side["assertion_id"],
-                   "other_assertion_id": real["sides"][0]["assertion_id"]}
-        result["rows"] = [*result["rows"], planted]
-    return result
-
-
 def test_check_6_attaches_a_disagreement_whose_side_a_summary_sentence_quotes(database):
     """Ticket 61: check 6 asks get_disagreements about P130164, the project of the passages the note cites, and a
     disagreement whose side is the quoted ICR paragraph 54 comes with the note, both sides. It is planted at the
-    tool, beside the fixture's own disagreements."""
-    import dataclasses
+    tool, beside the fixture's own disagreements (tests/planted_disagreements.py)."""
+    import planted_disagreements as planted
 
     from strata.agent.answer_check import SixChecks
-    from strata.config import load_tools
 
-    tools = load_tools()
-    tools["get_disagreements"] = dataclasses.replace(tools["get_disagreements"],
-                                                     adapter="test_lesson_writer:planted_disagreement")
     agent = writer.recorded_agent_for()({}, {"evidence": [{"role": "source", "passage_id": scenario.REBIDDING}]})
 
-    summary = write_note(database, agent, SixChecks(None, None, tools))
+    summary = write_note(database, agent, SixChecks(None, None, planted.with_adapter("quoting_icr_54")))
 
     [card] = summary["disagreements"]
-    assert (card["id"], [side["evidence_id"] for side in card["sides"]]) == (
-        "strata.gold.disagreement:planted", [ICR_54, "strata.gold.passage:26733307/v1/s4"])
+    assert (card["id"], [side["evidence_id"] for side in card["sides"]]) == (planted.PLANTED, [ICR_54, planted.ISR_7])
     assert summary["sentences"][card["after"]]["text"] == 'The ICR said that "108 of 328 cases had to go through rebidding."'
     assert summary["checks"]["disagreements"]["shown"] == 1
 

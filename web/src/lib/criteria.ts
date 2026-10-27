@@ -11,7 +11,7 @@
 // (criteria-item:{check_id}:{item_key}) and a comparable package's cost records (package-cost:{step_ref}). The
 // section remembers them in the evidence store, as ticket 15's quantile dots do, and the drawer never asks the
 // server for them.
-import type { EvidenceEvent } from "./answer";
+import type { DisagreementEvent, EvidenceEvent } from "./answer";
 import { remember } from "./evidence";
 import { createStore } from "./store";
 
@@ -45,6 +45,10 @@ export type RemovedEntry = {
   reason: string;
   reasons: { check: number; code: string; text: string | null }[];
   about: string;
+  // What the sentence was (ticket 31's review round 3, F4): a reading of your words, a reason quoted from an award
+  // notice (a record, with no pages) or a lesson's words quoted from its paragraph. The server says so; the screen
+  // never works it out from the shape of an id.
+  source: "reading" | "record_quote" | "passage_quote";
 };
 export type Limits = {
   max_chars: number;
@@ -68,6 +72,8 @@ export type RejectedRow = {
   bids: number;
   rank: number;
   removed: boolean;
+  // A disagreement check 6 attached to this reason's sentence, with both sides (ticket 31's review round 3, F2).
+  disagreement?: DisagreementEvent | null;
 };
 export type RejectedGroup = { item_key: string; count: number; rows: number; label: string; phrase: string };
 export type Rejected = {
@@ -131,6 +137,8 @@ export type LessonEntry = {
   // null when the paragraph could not be read.
   excerpt: { text: string; range: number[] | null; lang: string } | null;
   removed: boolean;
+  // A disagreement check 6 attached to the lesson's quote, with both sides (ticket 31's review round 3, F2).
+  disagreement?: DisagreementEvent | null;
 };
 export type LessonGroup = { factor: string; lessons: LessonEntry[] };
 

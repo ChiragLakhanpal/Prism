@@ -7,7 +7,9 @@
 import { useEffect, useId, useRef, useState, type MouseEvent, type ReactNode, type Ref } from "react";
 import { CircleDashed } from "lucide-react";
 import { copy } from "../copy";
+import type { DisagreementEvent } from "../lib/answer";
 import { cx } from "../lib/cx";
+import { ruleSentence, sideFull, sideMeta, sideOpen, sideShort, subjectOf, whatChanges, type SideData } from "../lib/disagreement";
 import { evidenceHref, evidenceIn, openEvidence, visited } from "../lib/evidence";
 import { itemListId, type ComparedItem, type Comparison, type LessonEntry, type LessonGroup, type Rejected, type RejectedRow } from "../lib/criteria";
 import { formatCount, formatDate } from "../lib/format";
@@ -17,6 +19,7 @@ import { address } from "../lib/router";
 import { useStore } from "../lib/store";
 import { Button } from "./Button";
 import { CitationMarker } from "./CitationMarker";
+import { DisagreementCard, SideSaid, type CardSide } from "./DisagreementCard";
 import { highlighted } from "./Document";
 import { Fill, Joined } from "./Fill";
 import { Num } from "./Num";
@@ -363,6 +366,41 @@ export function markerNumbers(rejected: Rejected | null, lessons: LessonGroup[] 
   return numbers;
 }
 
+// A disagreement check 6 attached to a reason's or a lesson's quote, under it, with both sides (ticket 31's review
+// round 3, F2; DESIGN.md section 5, Disagreement card: shown only beside the claim it concerns). The section offers no
+// choice of side: it keeps no draft, so the card says what the reports say and lets you open each.
+function CheckCard({ found }: { found: DisagreementEvent | null | undefined }) {
+  if (!found || found.sides.length !== 2) return null;
+  const sides = found.sides as SideData[];
+  const cardSides = sides.map((side) => ({
+    title: sideFull(side),
+    titleText: sideFull(side),
+    meta: sideMeta(side),
+    leaned: side.leaned,
+    assertionId: side.assertion_id ?? undefined,
+    said: <SideSaid side={side} />,
+    open: {
+      label: sideOpen(side),
+      href: evidenceHref(side.evidence_id),
+      onOpen: (element: HTMLElement) => openFrom(side.evidence_id, element),
+    },
+  })) as [CardSide, CardSide];
+  const badge = found.changes_answer ? copy.badge.twoReportsDisagree : copy.badge.sourcesDiffer;
+  return (
+    <div className="mt-2" data-criteria-disagreement={found.id}>
+      <DisagreementCard
+        warning={found.changes_answer}
+        name={copy.disagreement.groupName(badge, sideShort(sides[0]), sideShort(sides[1]))}
+        subject={subjectOf(found.attribute, found.period_event ?? null)}
+        level={4}
+        sides={cardSides}
+        rule={ruleSentence(found.rule_id, sides)}
+        whatChanges={whatChanges(sides, found.if_you_keep)}
+      />
+    </div>
+  );
+}
+
 function markerLabel(row: RejectedRow): string {
   return row.notice_date ? words.rejected.markerSource(row.notice_id, formatDate(row.notice_date)) : words.rejected.markerSourceUndated(row.notice_id);
 }
@@ -402,6 +440,7 @@ function RejectedRowView({ row, n }: { row: RejectedRow; n: number }) {
           />
         </p>
       )}
+      {!row.removed && <CheckCard found={row.disagreement} />}
       <p className="text-caption text-ink-muted">
         <Fill
           template={words.rejected.notice}
@@ -563,6 +602,7 @@ function LessonCardView({ lesson, n, firstIcr, firstIeg }: { lesson: LessonEntry
       ) : (
         <p className="mt-2 text-small text-ink" lang={lesson.excerpt?.lang}>{lessonWords.quoted(lesson.quote)}</p>
       )}
+      {!lesson.removed && <CheckCard found={lesson.disagreement} />}
       <p className="mt-2 text-caption text-ink-muted" data-source>
         <span className="font-bold">{lessonWords.sourceLead}</span>{" "}
         <Fill

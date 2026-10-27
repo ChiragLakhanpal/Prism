@@ -177,7 +177,7 @@ const RUN_FRENCH: PackageRun = {
 const RUN_REMOVED: PackageRun = {
   ...WORKS_RUN,
   rejected: { ...WORKS_RUN.rejected, rows: WORKS_RUN.rejected.rows.map((row) => (row === firstReason ? { ...row, removed: true } : row)) },
-  removed: [{ index: 0, sentence: `"${firstReason.reason.quote}"`, reason: "quote_not_on_page", reasons: [], about: firstReason.evidence_id }],
+  removed: [{ index: 0, sentence: `"${firstReason.reason.quote}"`, reason: "quote_not_on_page", reasons: [], about: firstReason.evidence_id, source: "record_quote" }],
   checks: {
     ...WORKS_RUN.checks,
     sentences: { ...WORKS_RUN.checks.sentences, kept: WORKS_RUN.checks.sentences.kept - 1, removed: 1 },

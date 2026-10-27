@@ -165,15 +165,14 @@ function summaryKey(summary: CriteriaSummary): string {
   return summary.signature;
 }
 
-// An award notice is a record with no pages, so a quote not found in it is "not in the record it cites".
-const RECORD = "strata.gold.notice:";
-
+// The words for a removed sentence follow what the server says it was (entry.source): an award notice is a record
+// with no pages, so a reason quoted from it and not found is "not in the record it cites", and a reading is about
+// your own words.
 function toRemoved(entries: RemovedEntry[]): Removed[] {
   const reasons = copy.removed.reasons as Record<string, { item: string; joined: string }>;
   return entries.map((entry) => {
-    const onRecord = entry.reason === "quote_not_on_page" && entry.about.startsWith(RECORD);
-    // A reading is about an item of your text (its key), not a record or a passage.
-    const reading = entry.reason === "not_supported" && !entry.about.startsWith("strata.");
+    const onRecord = entry.reason === "quote_not_on_page" && entry.source === "record_quote";
+    const reading = entry.reason === "not_supported" && entry.source === "reading";
     const reason = onRecord ? words.quoteNotInSource : reading ? words.readingNotSupported : (reasons[entry.reason] ?? copy.removed.unknownReason);
     return { sentence: entry.sentence, reason: reason.item, reasonJoined: reason.joined };
   });
