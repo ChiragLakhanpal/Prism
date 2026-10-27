@@ -572,11 +572,18 @@ def find_quote(quote: str, text: str, language: str = ENGLISH) -> tuple[int, int
     "rebidding", "US$177" is not in "US$177.6" and "334 km" is not in "2,334 km". A number is read as
     mentions() reads one, so "45" is in "45-day" and "10" in "10-15", in the language of the text searched: "3" is not
     a quote from the French "3,5"."""
+    found = find_quotes(quote, text, language)
+    return found[0] if found else None
+
+
+def find_quotes(quote: str, text: str, language: str = ENGLISH) -> list[tuple[int, int]]:
+    """Every place the quote is in the text, word for word, as find_quote() finds the first."""
     wanted, _ = _normalized(quote)
     if not wanted:
-        return None
+        return []
     held, where = _normalized(text)
     numbers = [match.span() for match in _digits(languages.language(language).code).finditer(held)]
+    found = []
     start = held.find(wanted)
     while start >= 0:
         end = start + len(wanted)
@@ -584,9 +591,34 @@ def find_quote(quote: str, text: str, language: str = ENGLISH) -> tuple[int, int
         cut_at_end = wanted[-1].isalnum() and end < len(held) and held[end].isalnum()
         inside_a_number = any(left < start < right or left < end < right for left, right in numbers)
         if not (cut_at_start or cut_at_end or inside_a_number):
-            return where[start], where[end - 1] + 1
+            found.append((where[start], where[end - 1] + 1))
         start = held.find(wanted, start + 1)
-    return None
+    return found
+
+
+# An ISR's ratings table writes each row's previous rating, then its current one (ISR 7's section s4).
+RATING_COLUMNS = re.compile(r"Previous\s+Rating\s+Current\s+Rating", re.I)
+SHARED_WORD = re.compile(r"[^\W\d_]{3,}")
+
+
+def highlight_of(quote: str, text: str, about: str, language: str = ENGLISH) -> tuple[int, int] | None:
+    """Where to highlight a quote in its passage. When it occurs more than once, the match that follows the words the
+    sentence (about) shares with the passage: the one with the most of those words between it and the match before
+    it, the first on a tie. In an ISR's ratings table a row holds the previous rating, then the current one, with no
+    words between them, and a sentence about the report's rating means its own, the Current Rating (ticket 24's
+    critique rounds 2 and 3)."""
+    found = find_quotes(quote, text, language)
+    if len(found) < 2:
+        return found[0] if found else None
+    quoted = {word.lower() for word in SHARED_WORD.findall(quote)}
+    shared = {word.lower() for word in SHARED_WORD.findall(about)} - quoted
+    scores, previous = [], 0
+    for start, end in found:
+        scores.append(sum(1 for word in SHARED_WORD.findall(text[previous:start]) if word.lower() in shared))
+        previous = end
+    best = max(range(len(found)), key=lambda index: (scores[index], -index))
+    same_row = best + 1 < len(found) and not re.search(r"[^\W\d_]", text[found[best][1]:found[best + 1][0]])
+    return found[best + 1] if RATING_COLUMNS.search(text) and same_row else found[best]
 
 
 # ── The checks ───────────────────────────────────────────────────────────
@@ -810,6 +842,8 @@ def check(index: int, claim: Claim, facts: Facts, language: str = ENGLISH) -> Ch
         if _is_passage(passage):
             span = find_quote(quote.text, passage["text"], _language_of(passage))
             found_quote = span is not None
+            if found_quote:  # where the person reads it: the match the sentence means, when there are several
+                span = highlight_of(quote.text, passage["text"], claim.sentence, _language_of(passage))
             backs = found_quote and not _summary(passage)
         elif passage is not None:  # a quote from a record's own text, which has no page to highlight
             backs = found_quote = any(find_quote(quote.text, text) for text in _texts(passage))
@@ -1230,10 +1264,14 @@ def answer_events(verdict: Verdict, facts: Facts, tools: Iterable[str] = (), cit
             if not facts.came_back(evidence):
                 continue
             highlights = cited.setdefault(evidence, [])
-            # The side's quote, highlighted for the marker under the sentence the card follows, so its evidence
-            # card and the drawer open on the words the card shows, whether or not a sentence quoted them.
+            # The side's quote, or the rating a side gives with no quote, highlighted for the marker under the
+            # sentence the card follows, so its evidence card and the drawer open on the words the card shows,
+            # whether or not a sentence quoted them: in a ratings table, the rating on its row (highlight_of).
             row = facts.get(evidence)
-            span = find_quote(side["quote"], row["text"]) if side.get("quote") and _is_passage(row) else None
+            words = side.get("quote") or (str(side["value"]) if side.get("value_form") == "rating" and side.get("value")
+                                          else None)
+            span = highlight_of(words, row["text"], side.get("field_name") or "", _language_of(row)) \
+                if words and _is_passage(row) else None
             mark = None if span is None else {"sentence": found.after, "start": span[0], "end": span[1]}
             if mark is not None and mark not in highlights:
                 highlights.append(mark)

@@ -193,9 +193,29 @@ test("ICR paragraph 78 shows under ISR 7's sentence with both sides, though the 
   const openIsr = card.getByRole("link", { name: "Open ISR 7" });
   await openIsr.click();
   await expect(page.getByRole("dialog")).toContainText("ISR");
+  await expectCurrentRatingMarked(page);
   await page.keyboard.press("Escape");
   await expect(openIsr).toBeFocused();
+  // The sentence's own marker opens the same passage on the same words.
+  await panel(page).locator("[data-sentence-text='0'] [data-citation]").first().click();
+  await expectCurrentRatingMarked(page);
 });
+
+// ISR 7's ratings table writes each row's previous rating, then its current one: the drawer marks the second
+// "Satisfactory", ISR 7's own rating (values.toml isr-7-rating; ticket 24's critique rounds 2 and 3).
+async function expectCurrentRatingMarked(page: Page) {
+  const passage = page.getByRole("dialog").locator("[data-passage]");
+  await expect(passage.locator("mark")).toHaveCount(1);
+  await expect(passage.locator("mark")).toContainText("Satisfactory");
+  const before = await passage.evaluate((element) => {
+    const range = document.createRange();
+    range.setStart(element, 0);
+    range.setEndBefore(element.querySelector("mark")!);
+    return range.toString();
+  });
+  expect(before.split("Satisfactory").length - 1).toBe(1);
+  expect(before).toContain("Current Rating");
+}
 
 test("the disagreement card's sides sit side by side at 1440 px and stack when the card is under 560 px", async ({ page }) => {
   for (const [width, columns] of [[1440, 2], [1024, 1], [390, 1]] as const) {
@@ -213,6 +233,9 @@ test("a disagreement the draft already showed is the same card, as an info note"
 
   const card = panel(page).getByRole("group", { name: "Sources differ: ISR 7 and ICR paragraph 78" });
   await expect(card).toHaveAttribute("data-disagreement", "info");
+  // The ISR side gives a rating, not a quote, and its marker opens the table on that rating, the current one.
+  await card.getByRole("link", { name: "Open ISR 7" }).click();
+  await expectCurrentRatingMarked(page);
 });
 
 test("a refusal is a first-person answer from the copy file, with a link to What I don't do, and passes axe at three widths", async ({ page }) => {

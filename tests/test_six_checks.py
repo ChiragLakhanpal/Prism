@@ -298,6 +298,24 @@ def test_a_claim_resting_on_isr_7_s_rating_streams_with_the_icr_paragraph_78_dis
     assert kinds.index("evidence") < kinds.index("disagreement") < kinds.index("checks")
 
 
+def test_the_isr_s_own_rating_is_the_one_highlighted_the_current_rating_not_the_previous_one(fixture_db):
+    """Ticket 24's critique rounds 2 and 3: ISR 7's ratings table writes each row's previous rating, then its current
+    one, and "Satisfactory" appears twice after "Progress towards achievement of PDO" (values.toml isr-7-rating). The
+    sentence states ISR 7's own rating, so the highlight is the second, the Current Rating; and the card's ISR side,
+    which gives a rating and no quote, gets the same highlight, so its marker opens on the words the card shows."""
+    isr_7 = "strata.gold.passage:26733307/v1/s4"
+    for case in ("p130164-isr-7-rating", "p130164-both-sides"):
+        asked = ask(fixture_db, case)
+        source = {evidence["id"]: evidence for evidence in asked.of("evidence")}[isr_7]
+        text = source["row"]["text"]
+        first = text.index(TRUTH["isr-7-rating"]["value"])
+        second = text.index(TRUTH["isr-7-rating"]["value"], first + 1)
+
+        assert text.index("Previous Rating") < text.index("Current Rating") < first, case
+        assert [(mark["start"], mark["end"]) for mark in source["highlights"]] == [
+            (second, second + len(TRUTH["isr-7-rating"]["value"]))], case
+
+
 def test_a_sentence_citing_the_same_section_about_a_rating_no_report_disputes_gets_no_card(fixture_db):
     """Check 6 matches on the assertion, not the passage: ISR 7's section also rates the overall risk, which no
     report disagrees about, so a sentence quoting that rating does not rest on the disagreement."""
