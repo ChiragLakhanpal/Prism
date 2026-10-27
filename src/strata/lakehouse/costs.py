@@ -94,14 +94,12 @@ class Retries:
             "retry_seconds", "min_retry_seconds", "max_retry_seconds")))
 
     def wait(self, headers: dict) -> float:
-        """The seconds a throttled answer asks for: its Retry-After header, or else the longest of Azure's own
-        retry-after headers, since every limit they name must pass; retry_seconds when it names none. Always between
-        min_retry_seconds and max_retry_seconds."""
-        named = {str(name).lower(): value for name, value in headers.items()}
-        wait = _seconds(named[RETRY_AFTER]) if RETRY_AFTER in named else None
-        if wait is None:
-            wait = max((seconds for name, value in named.items() if AZURE_RETRY_AFTER.fullmatch(name)
-                        if (seconds := _seconds(value)) is not None), default=None)
+        """The seconds a throttled answer asks for: the longest of its Retry-After header and Azure's own
+        retry-after headers, since every limit they name must pass before the next try; retry_seconds when it names
+        none. Always between min_retry_seconds and max_retry_seconds."""
+        wait = max((seconds for name, value in headers.items()
+                    if (str(name).lower() == RETRY_AFTER or AZURE_RETRY_AFTER.fullmatch(str(name).lower()))
+                    and (seconds := _seconds(value)) is not None), default=None)
         wait = self.retry_seconds if wait is None else wait
         return min(max(wait, self.min_retry_seconds), self.max_retry_seconds)
 

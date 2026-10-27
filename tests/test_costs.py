@@ -197,6 +197,18 @@ def test_three_throttled_answers_then_a_good_one_give_the_charges_after_the_wait
     assert clock.waits == [7, 20, load_thresholds().value("costs.retry_seconds")]
 
 
+def test_when_retry_after_and_an_azure_header_both_name_a_wait_the_pull_waits_the_longest():
+    """Every limit Azure names must pass before the next try, or that try is throttled again and spends a try."""
+    clock = FakeClock()
+    source, _ = azure([throttled({"Retry-After": "5", "x-ms-ratelimit-microsoft.costmanagement-entity-retry-after": "60"}),
+                       throttled({"Retry-After": "45", "x-ms-ratelimit-microsoft.costmanagement-qpu-retry-after": "8"}),
+                       json.loads((FIXTURES / "query.json").read_text())], clock)
+
+    source.charges(dt.date(2026, 9, 18), dt.date(2026, 10, 23))
+
+    assert clock.waits == [60, 45]
+
+
 def test_four_throttled_answers_give_a_throttled_run_row_with_azure_s_message_and_no_charge(ops):
     clock = FakeClock()
     source, asked = azure([throttled({"Retry-After": "5"})] * 4, clock)
