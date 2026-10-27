@@ -1,0 +1,20 @@
+# 85: The silver pass batches its statements, and stops in time for gold, so a first full load fits the nightly window
+
+**What to build:** `src/strata/lakehouse/silver/__init__.py`'s `run` reads one bronze page at a time and, for each of the module's tables, runs a read (`_holds`), a DELETE with a WHERE and an insert, so a page costs about four warehouse statements per table. On the paid Azure workspace's 2X-Small serverless warehouse that was about 6.3 seconds a page: the first nightly run on October 26, 2026 (run 686994790675456) fetched 1,460 pages in 19 minutes, and `bronze_to_gold` then ran 7,585 statements from 21:33 to 23:43 UTC (about 58 a minute, the longest 28 seconds, no gap) and was cancelled by the job's 150-minute window after 1,231 pages; the gold step never started and the eight tasks after it were skipped, so every gold table and the dashboard's readiness tables stayed empty. Since ticket 75, `strata.ops.silver_pages` records what silver wrote for each page, so a page with no record is new and needs no read and no DELETE, only inserts. Change the pass in two ways. First, batch: parse pages in groups (a size in `config/thresholds.toml` under `[ingestion]`, such as 50), and for each table insert the group's rows in one statement and run one `DELETE ... WHERE page_hash IN (...)` for the group's pages that were read before, writing the group's `silver_pages` records last, so a stop between statements leaves the group pending and the rerun deletes and inserts it again; the rows stay the same byte for byte. Second, a cap: a `silver_minutes` value in the same section (60 to start) after which the pass stops at the end of the current group, writes its records, and lets the gold step run on what silver holds, with the count of pages left for the next night in the task's run record and the task's log. Prove it on the fixture: the silver tables hold the same rows as before the change (row counts and the ground-truth queries), a rerun writes nothing, a fake engine counts the statements and shows fewer than one per page per table for new pages, a stop between two groups leaves the group pending and the rerun writes it without duplicates, and a fake clock shows the cap stopping the pass after the current group with the waiting count recorded. The live proof is the second session's next full pass on the paid workspace: `bronze_to_gold` reads its pending pages inside the window, the gold step runs, and the statement count from the warehouse's query history is recorded in the catch-up file.
+
+Read first: `src/strata/lakehouse/silver/__init__.py` (`run`, `_holds`, `PAGE`, the pending query and the write order), `src/strata/lakehouse/engine.py` (`insert_rows`, what one statement costs), `src/strata/lakehouse/nightly.py` (`bronze_to_gold` and its run record), `config/thresholds.toml` [ingestion], `tests/test_nightly_delta.py` and the silver tests, ticket 75's file, the catch-up file's block of the first run on the paid workspace (October 26).
+
+**Blocked by:** None (can start immediately)
+
+**Status:** ready
+**Area:** data
+**Phase:** P4
+**Design review:** no
+
+- [ ] On the fixture, the silver tables hold the same rows after a run as before the change, a rerun writes nothing, and a fake engine counts fewer than one statement per page per table for new pages.
+- [ ] A stop between two groups leaves the group pending, and the rerun writes it with no duplicate rows; the cap stops the pass after the current group, the gold step runs, and the run record names the pages left (a fake clock test).
+- [ ] On the paid workspace, the second session's next full pass reads its pending pages inside the window and the gold step runs, with the statement count from the query history recorded in the catch-up file under this ticket.
+
+## Comments
+
+- October 26, 2026, orchestrator: opened at 17:10 PDT with the user's yes, from the second session's reading of run 686994790675456. Tonight the second session reruns the tasks one at a time, each in its own window, so the dashboard fills without this change; the change keeps a first full load, and any night with a large fetch, inside the window.
