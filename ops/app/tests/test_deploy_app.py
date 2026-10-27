@@ -4,6 +4,7 @@ requirements, gives it its resources and grants, deploys it and prints its addre
 A fake workspace stands in for Databricks. docs/workspace-catchup.md runs the real deploy.
 """
 
+import datetime as dt
 import sys
 from pathlib import Path
 from types import SimpleNamespace
@@ -30,12 +31,43 @@ JUDGE = {"AZURE_OPENAI_ENDPOINT": "https://wb-strata.openai.azure.com/openai/dep
 
 
 class FakeWorkspace:
-    def __init__(self, app=None, secrets=None):
+    def __init__(self, app=None, secrets=None, compute=None, warehouse="RUNNING", warehouse_answer=None,
+                 deployments=()):
         self.apps = {} if app is None else {"strata": dict(app)}
         self.uploaded, self.deployed, self.configured, self.statements, self.started = {}, [], [], [], []
         self.secrets = dict(secrets or {})  # the secret scope, by (scope, key)
         self.written = []  # each put_secret call's (scope, key)
         self.databases = []
+        # Ticket 81: the App's compute as apps get gives it, when a test sets it, and the env file's SQL warehouse, which
+        # answers a start with warehouse_answer when a test sets it.
+        self.compute = compute
+        self.warehouse = {"id": "wh-1", "state": warehouse, "message": ""}
+        self.warehouse_answer, self.warehouse_starts = warehouse_answer, 0
+        # The app's deployments, as apps list-deployments gives them. Each deploy registers one that succeeded, made at
+        # the workspace's clock.
+        self.registered = [dict(deployment) for deployment in deployments]
+        self.clock = lambda: dt.datetime.now(dt.UTC)
+
+    def deployments(self, name):
+        return [dict(deployment) for deployment in self.registered]
+
+    def app_compute(self, name):
+        if name not in self.apps:
+            return None
+        if self.compute:
+            return dict(self.compute)
+        running = self.apps[name]["running"]
+        return {"state": "ACTIVE" if running else "STOPPED",
+                "message": "App compute is running." if running else "App compute is stopped."}
+
+    def warehouse_state(self):
+        return dict(self.warehouse)
+
+    def start_warehouse(self):
+        self.warehouse_starts += 1
+        if self.warehouse_answer:
+            raise RuntimeError(self.warehouse_answer)
+        self.warehouse["state"] = "RUNNING"
 
     def app_state_database(self, instance):
         self.databases.append(instance)
@@ -64,6 +96,8 @@ class FakeWorkspace:
     def deploy(self, name, folder):
         self.deployed.append((name, folder))
         self.apps[name] |= {"source": folder, "url": "https://strata-1.aws.databricksapps.com"}
+        self.registered.append({"id": f"01f0b2deploy{len(self.registered):04d}", "state": "SUCCEEDED",
+                                "message": "App started successfully", "created": self.clock()})
         return self.apps[name]["url"]
 
     def run_sql(self, statement):
@@ -533,3 +567,190 @@ def test_the_live_workspace_lists_the_scope_s_keys_and_never_their_values():
     assert live.secret_keys("strata") == [APPINSIGHTS, "FOUNDRY_CLIENT_ID"]
     called = {name for name in vars(FakeWorkspace) if not name.startswith("_")}
     assert called <= {name for name in vars(app_live.LiveApps) if not name.startswith("_")}
+
+
+# Ticket 81: on October 26, 2026 at about 14:55 UTC a deploy ran while Free Edition's daily limit had stopped the SQL
+# warehouse (12:53 UTC) and the App's compute (12:57). It printed steps 1 to 5 as if they had passed, registered no
+# deployment, and failed in step 6 with TABLE_DOES_NOT_EXIST for a table that existed. So the deploy reads the
+# workspace's state first, checks after step 5 that a new deployment succeeded, and names the warehouse's state before
+# a refused statement's message.
+STRATA_APP = {"description": deploy_app.DESCRIPTION, "source": "/Workspace/Users/owner@example.org/strata-app",
+              "url": "https://strata-1.aws.databricksapps.com", "principal": PRINCIPAL, "running": False}
+# What apps get strata answered at 13:01 UTC on October 26, 2026 (docs/workspace-catchup.md, ticket 06).
+STOPPED_BY_THE_WORKSPACE = {"state": "STOPPED", "message": "App compute was stopped due to workspace or account status."}
+
+
+def test_an_app_whose_compute_the_workspace_stopped_stops_the_deploy_before_step_1_with_one_sentence(tmp_path, capsys):
+    workspace = FakeWorkspace(app=STRATA_APP, compute=STOPPED_BY_THE_WORKSPACE)
+
+    code, out = deploy(workspace, tmp_path, capsys)
+
+    assert code == 2
+    assert out.splitlines() == [
+        "I changed nothing, because the app strata's compute is STOPPED with the message \"App compute was stopped due "
+        "to workspace or account status.\", which on Free Edition usually means the workspace reached its daily compute "
+        "limit."]
+    assert workspace.uploaded == {} and workspace.configured == [] and workspace.deployed == []
+    assert workspace.statements == [] and workspace.written == [] and workspace.started == []
+
+
+# What databricks warehouses start answered at 10:33 UTC on October 25, 2026 (docs/workspace-catchup.md, ticket 11).
+FREE_DAILY_LIMIT = "Sorry, cannot run the resource because you have hit your free daily limit. Please come back again tomorrow."
+
+
+def test_a_stopped_warehouse_that_will_not_start_stops_the_deploy_before_step_1_with_one_sentence(tmp_path, capsys):
+    workspace = FakeWorkspace(app=STRATA_APP, warehouse="STOPPED", warehouse_answer=FREE_DAILY_LIMIT)
+
+    code, out = deploy(workspace, tmp_path, capsys)
+
+    assert code == 2
+    assert out.splitlines() == [
+        "I changed nothing, because the SQL warehouse wh-1 is STOPPED and would not start when I asked, saying \"Sorry, "
+        "cannot run the resource because you have hit your free daily limit. Please come back again tomorrow.\", which "
+        "on Free Edition usually means the workspace reached its daily compute limit."]
+    assert workspace.warehouse_starts == 1
+    assert workspace.uploaded == {} and workspace.configured == [] and workspace.deployed == []
+    assert workspace.statements == [] and workspace.written == [] and workspace.started == []
+
+
+def test_a_warehouse_that_stopped_when_it_sat_idle_starts_and_the_deploy_goes_on(tmp_path, capsys):
+    """A warehouse stops after it sits idle and starts again when asked, so only one that will not start stops the
+    deploy. A stopped App starts in step 5, as before."""
+    workspace = FakeWorkspace(app=STRATA_APP, warehouse="STOPPED")
+
+    code, out = deploy(workspace, tmp_path, capsys)
+
+    assert code == 0
+    assert workspace.warehouse_starts == 1 and workspace.started == ["strata"]
+    assert out.splitlines()[0] == "1. Building the web app."
+
+
+RUN_STARTED = dt.datetime(2026, 10, 26, 14, 55, 2, tzinfo=dt.UTC)
+# The newest deployment apps list-deployments showed at 15:00 UTC on October 26, 2026: none after 10:29 UTC.
+BEFORE_THE_RUN = {"id": "01f0b27c4e5d1a2b", "state": "SUCCEEDED", "message": "App started successfully",
+                  "created": dt.datetime(2026, 10, 26, 10, 29, 31, tzinfo=dt.UTC)}
+
+
+class RegistersNothing(FakeWorkspace):
+    """Step 5 on a stopped workspace: the deploy call came back, and the app lists no deployment made since."""
+
+    def deploy(self, name, folder):
+        self.deployed.append((name, folder))
+        return self.apps[name]["url"]
+
+
+def deploy_at(workspace, tmp_path, capsys, now):
+    code = deploy_app.deploy(workspace, ENV, build_web=built(tmp_path / "dist"), dist=tmp_path / "dist", now=now)
+    return code, capsys.readouterr().out
+
+
+def test_a_step_5_that_registers_no_new_deployment_fails_there_and_names_the_newest_deployment_it_found(
+        tmp_path, capsys):
+    workspace = RegistersNothing(app=STRATA_APP | {"running": True}, deployments=[BEFORE_THE_RUN])
+
+    code, out = deploy_at(workspace, tmp_path, capsys, now=lambda: RUN_STARTED)
+
+    assert code == 1
+    assert out.split("5. Deploying the app. This takes a few minutes.\n")[1].splitlines() == [
+        "The app strata has no deployment made since this run started at 14:55:02 UTC on October 26, 2026, so step 5 "
+        "registered nothing. Its newest deployment is 01f0b27c4e5d1a2b, made at 10:29:31 UTC on October 26, 2026, "
+        "with the state SUCCEEDED. I stopped here and granted nothing."]
+    assert workspace.deployed == [("strata", "/Workspace/Users/owner@example.org/strata-app")]
+    assert workspace.statements == []
+
+
+def test_after_step_5_the_deploy_names_the_new_deployment_that_succeeded(tmp_path, capsys):
+    workspace = FakeWorkspace(app=STRATA_APP | {"running": True}, deployments=[BEFORE_THE_RUN])
+    workspace.clock = lambda: RUN_STARTED + dt.timedelta(minutes=4, seconds=31)
+
+    code, out = deploy_at(workspace, tmp_path, capsys, now=lambda: RUN_STARTED)
+
+    assert code == 0
+    assert out.split("5. Deploying the app. This takes a few minutes.\n")[1].splitlines()[0] == (
+        "   The deployment 01f0b2deploy0001, made at 14:59:33 UTC on October 26, 2026, succeeded.")
+    assert out.rstrip().splitlines()[-1] == "Strata is running at https://strata-1.aws.databricksapps.com"
+
+
+def test_a_new_deployment_that_failed_stops_the_deploy_at_step_5_with_its_state_and_message(tmp_path, capsys):
+    """On October 26, 2026 two deployments failed with "Error installing packages" (docs/workspace-catchup.md)."""
+    class Fails(FakeWorkspace):
+        def deploy(self, name, folder):
+            self.deployed.append((name, folder))
+            self.registered.append({"id": "01f0b2a7f3c90e11", "state": "FAILED", "message": "Error installing packages",
+                                    "created": RUN_STARTED + dt.timedelta(minutes=3)})
+            return self.apps[name]["url"]
+
+    workspace = Fails(app=STRATA_APP | {"running": True}, deployments=[BEFORE_THE_RUN])
+
+    code, out = deploy_at(workspace, tmp_path, capsys, now=lambda: RUN_STARTED)
+
+    assert code == 1
+    assert out.split("5. Deploying the app. This takes a few minutes.\n")[1].splitlines() == [
+        "Step 5's deployment 01f0b2a7f3c90e11, made at 14:58:02 UTC on October 26, 2026, has the state FAILED with the "
+        "message \"Error installing packages\". I stopped here and granted nothing."]
+    assert workspace.statements == []
+
+
+# What the deploy of 14:55 UTC on October 26, 2026 printed in step 6, for a table that existed.
+NOT_A_MISSING_TABLE = ("The warehouse did not run the statement. Its state was FAILED: TABLE_DOES_NOT_EXIST: Table "
+                       "'strata.ops.exposures' does not exist")
+
+
+class StoppedByStep6(FakeWorkspace):
+    """The warehouse ran when the deploy started and stopped before step 6, as Free Edition's daily limit stops it
+    partway through a day (12:53 UTC on October 26, 2026). It then refuses every statement with an error."""
+
+    def run_sql(self, statement):
+        if "exposures" in statement:
+            self.warehouse |= {"state": "STOPPED", "message": "no longer eligible for Serverless Compute"}
+        if self.warehouse["state"] != "RUNNING":
+            raise RuntimeError(NOT_A_MISSING_TABLE)
+        self.statements.append(statement)
+
+
+def test_a_statement_the_warehouse_refuses_in_step_6_is_named_after_the_warehouse_s_state(tmp_path, capsys):
+    workspace = StoppedByStep6(app=STRATA_APP)
+
+    code, out = deploy(workspace, tmp_path, capsys)
+    step_6 = out.split("6. Letting the app's own service principal")[1].splitlines()[1:]
+
+    assert code == 1
+    assert step_6 == [
+        "   The SQL warehouse wh-1 was STOPPED when it refused this statement, with the message \"no longer eligible "
+        "for Serverless Compute\". A warehouse that is not running refuses every statement, so its answer below may not "
+        "mean what it says.",
+        f"   The statement: GRANT SELECT, MODIFY ON TABLE strata.ops.exposures TO `{PRINCIPAL}`",
+        f"   The warehouse said: {NOT_A_MISSING_TABLE}",
+        "I stopped at step 6, so the app's own service principal may lack some of its grants. Deploy again once the "
+        "SQL warehouse runs."]
+    assert out.index("was STOPPED") < out.index("TABLE_DOES_NOT_EXIST")
+    assert "7. Masking" not in out and "Strata is running at" not in out
+
+
+def test_a_statement_a_running_warehouse_refuses_is_named_as_the_statement_s_own_error(tmp_path, capsys):
+    """A running warehouse's answer is about the statement, such as a grant the deploy's identity may not give."""
+    class Refuses(FakeWorkspace):
+        def run_sql(self, statement):
+            if statement.startswith("CREATE OR REPLACE FUNCTION"):
+                raise RuntimeError("PERMISSION_DENIED: User does not have CREATE FUNCTION on Schema 'strata.ops'.")
+            self.statements.append(statement)
+
+    code, out = deploy(Refuses(app=STRATA_APP), tmp_path, capsys)
+    step_7 = out.split("7. Masking who sent each passage report")[1].splitlines()[1:]
+
+    assert code == 1
+    assert step_7[0] == ("   The SQL warehouse wh-1 was RUNNING when it refused this statement, so its answer below is "
+                         "about the statement.")
+    assert step_7[2] == ("   The warehouse said: PERMISSION_DENIED: User does not have CREATE FUNCTION on Schema "
+                         "'strata.ops'.")
+    assert step_7[3] == "I stopped at step 7, so some columns may lack their mask."
+
+
+def test_the_readme_s_deploy_section_says_what_the_deploy_checks_first_and_after_step_5():
+    section = (REPO / "README.md").read_text().split("## Deploy the app\n")[1].split("\n## ")[0]
+    first = " ".join(section.split("\n1. ")[0].split())
+    step_5 = " ".join(section.split("\n5. ")[1].split("\n6. ")[0].split())
+
+    assert "Before step 1, it reads the app's compute and the SQL warehouse's state through the SDK" in first
+    assert "uploads nothing and exits 2" in first and "daily compute limit" in first
+    assert "unless a deployment made since the run started has the state SUCCEEDED" in step_5

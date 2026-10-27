@@ -30,6 +30,7 @@ for folder in (REPO / "src", REPO / "ops" / "dayone", REPO / "ops" / "bundle", R
 
 import dayone  # noqa: E402
 import deploy as bundle_deploy  # noqa: E402  (ops/bundle/deploy.py)
+import workspace_state  # noqa: E402  (ops/bundle/workspace_state.py, ticket 81)
 from bundle_live import LiveWorkspace  # noqa: E402
 from fresh_workspace import SEED_MODULE  # noqa: E402
 from live import call_app  # noqa: E402  (ops/dayone/live.py)
@@ -128,6 +129,17 @@ class LiveDemo:
         return {"description": found.description or "",
                 "source": getattr(found.active_deployment, "source_code_path", None),
                 "url": found.url, "running": state == apps.ComputeState.ACTIVE, "started": last_start(found)}
+
+    # ── The workspace's state, read through the SDK before anything changes (ticket 81) ──
+
+    def app_compute(self, name: str) -> dict | None:
+        return workspace_state.app_compute(self.w, name)
+
+    def warehouse_state(self) -> dict:
+        return self.listing.warehouse_state()
+
+    def start_warehouse(self) -> None:
+        self.listing.start_warehouse()
 
     def stop_app(self, name: str) -> None:
         self.w.apps.stop_and_wait(name, timeout=dt.timedelta(minutes=MINUTES))
