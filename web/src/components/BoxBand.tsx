@@ -1,10 +1,10 @@
-// The white band under the navy bar (DESIGN.md section 5): the one box, which "/" focuses from
-// anywhere outside a text field, and the data-freshness stamp. From 768 px the box spans
-// columns 1 to 8 and the stamp columns 9 to 12, right-aligned; below that the stamp sits
-// under the box. Fixed slots keep the band from moving while the stamp loads.
+// The one box (DESIGN.md section 5, Top bar), which "/" focuses from anywhere outside a text field, and the
+// data-freshness stamp. The box sits in the navy bar (TopNav.tsx; ticket 93), white with 4 px corners: from 1024 px on
+// the bar's one row, up to 640 px wide, and below 1024 px on a row of its own. The stamp sits at the sidebar's foot,
+// under Data (Sidebar.tsx).
 //
 // The box is a combobox (WAI-ARIA's list autocomplete with automatic selection): as you type, a
-// list under it says what Enter will do, laid over the page so the band never grows. Its options
+// list under it says what Enter will do, laid over the page so the bar never grows. Its options
 // come from the intent rules (web/src/lib/intents.ts, through IntentBox.tsx); this file draws them.
 // On a project or package page the box holds a removable scope chip.
 import { useEffect, useId, useLayoutEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode, type RefObject } from "react";
@@ -40,26 +40,23 @@ export type BoxOption = {
 };
 
 // The scope chip inside the box, on a project or package page: "Within P130164" with a 24 px remove
-// button. Below 768 px it shows the ID only. A STEP reference is far longer than a P-code, so when the
-// chip and a text field you can type in do not fit on one line, the chip takes a row of its own above
-// the text (OneBox wraps). A reference wider than that row stays whole and readable as one ID
-// (MonoWords): each part between spaces moves to the next line whole when it fits there, and breaks
-// after a hyphen when it is wider than the line, as the package workspace's own references do. On
-// one line the chip is the 32 px pill it always was; on more it is a box with the same 16 px corners.
-// It keeps the pointer's own cursor (cursor-auto), so its ID shows the text cursor only where you
-// can select it, and a press on it does not put the cursor in the text field.
-//
-// Its -mr-3 and the text group's left margin (mx-3) cancel out on one line, leaving the box's 8 px
-// gap after the chip; when the text field wraps under the chip, that margin lines its text up with
-// the reference's.
+// button. It shows the ID only below 768 px, and whenever the box is narrower than 35rem. From 1024 px the box keeps
+// one row. Below 1024 px a STEP reference is far longer than a P-code, so when the chip and a text field you can type
+// in do not fit on one line, the chip takes a row of its own above the text (OneBox wraps). A reference wider than
+// that row stays whole and readable as one ID (MonoWords): each part between spaces moves to the next line whole when
+// it fits there, and breaks after a hyphen when it is wider than the line, as the package workspace's own references
+// do. In the bar from 1024 px the chip keeps its one line, and the text field gives way first (app.css). On one line
+// the chip is a 32 px pill; on more it is a box with 16 px corners. It keeps the pointer's own cursor
+// (cursor-auto), so its ID shows the text cursor only where you can select it, and a press on it does not put the
+// cursor in the text field.
 function ScopeChip({ scope, onRemove }: { scope: string; onRemove: () => void }) {
   return (
     <span
       data-scope-chip
-      className="my-1 -mr-3 flex min-h-8 max-w-full min-w-0 cursor-auto items-center gap-2 rounded-lg border border-line-strong bg-surface pr-1 pl-3"
+      className="flex min-h-8 max-w-full min-w-0 cursor-auto items-center gap-2 rounded-lg border border-line-strong bg-surface pr-1 pl-3"
     >
       <span className="min-w-0 py-1 text-small">
-        <span className="mr-2 hidden text-ink-muted md:inline">{copy.box.chipWithin}</span>
+        <span className="mr-2 hidden text-ink-muted md:@min-[35rem]/box:inline">{copy.box.chipWithin}</span>
         <MonoWords text={scope} className="align-top text-ink" />
       </span>
       {/* Its own focus ring, inside the box's, 4 px clear of the ID. */}
@@ -119,7 +116,7 @@ export function OneBox({
   // A click or a tap in the box, which asks for its list as clearly as Down does.
   onPointerDown?: () => void;
   inputRef?: RefObject<HTMLInputElement | null>;
-  // Only the band's box answers "/"; a second box, such as a gallery sample, sets false.
+  // Only the bar's box answers "/"; a second box, such as a gallery sample, sets false.
   shortcut?: boolean;
   // The gallery shows the hint as if the box had focus.
   focusedHint?: boolean;
@@ -160,7 +157,7 @@ export function OneBox({
   return (
     <form
       role="search"
-      className="relative"
+      className="@container/box relative"
       onSubmit={(event) => {
         event.preventDefault();
       }}
@@ -173,12 +170,13 @@ export function OneBox({
           {copy.box.scoped(scope)}
         </span>
       )}
-      {/* One row is a 44 px pill: its 22 px corners (rounded-box) are half its height. When a long scope chip
-          pushes the text field to a second row, the corners stay 22 px, so the chip's own corner stays clear
-          of them. With a chip the box keeps 4 px on each side, so a chip that fills its row sits 5 px from
-          both edges, and the text group's own 12 px margin keeps the text row's 16 px on the right.
-          The box shows the text cursor, so a press anywhere in it outside the field, a button or the chip,
-          such as the rest of the chip's row, the search icon or the "/" hint, acts as a press on the field. */}
+      {/* One row is 40 px: 4 px around a 32 px field and chip, 12 px before the first of them, with a control's 4 px
+          corners and no border, since its white edge is 16:1 on the navy bar (DESIGN.md section 2). In the bar from
+          1024 px it keeps one row (app.css). Otherwise, when a long scope chip pushes the text field to a second row,
+          the chip and the text share one left edge. While anything inside it has focus, its ring shows around it: focus-on-dark on the
+          bar (app.css), focus elsewhere. The box shows the text cursor, so a press anywhere in it outside the field, a
+          button or the chip, such as the rest of the chip's row, the search icon or the "/" hint, acts as a press on
+          the field. */}
       <div
         data-focus-ring
         onPointerDown={(event) => {
@@ -188,23 +186,19 @@ export function OneBox({
           onPointerDown?.();
         }}
         className={cx(
-          "flex min-h-11 cursor-text flex-wrap items-center gap-x-2 rounded-box border border-line-strong bg-surface transition-paint duration-150",
-          scope ? "px-1" : "px-4",
-          "hover:border-ink has-[input:focus-visible]:outline-2 has-[input:focus-visible]:outline-offset-2",
-          "has-[input:focus-visible]:outline-focus has-[input:focus-visible]:outline-solid",
+          "flex min-h-10 w-full cursor-text flex-wrap items-center gap-x-2 gap-y-1 rounded-sm bg-surface py-1 pr-1 pl-3",
+          "focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-focus focus-within:outline-solid",
         )}
       >
-        {scope ? (
-          <ScopeChip scope={scope} onRemove={() => onRemoveScope?.()} />
-        ) : (
-          <Search aria-hidden="true" className="size-4 shrink-0 text-ink-muted" />
-        )}
-        {/* The text field and its "/" hint wrap together, so the hint never takes a row of its own. The
-            field keeps room for about ten characters of a question beside a P-code's chip, and on a package
-            page for its whole placeholder (176 px), so "Ask about this package" is never cut; when there is
-            less, the field goes under the chip. */}
-        <div className={cx("flex flex-1 items-center gap-2", scope ? "mx-3" : "min-w-0")}>
-          <div className={cx("relative flex-1", !scope ? "min-w-0" : scopeKind === "package" ? "min-w-44" : "min-w-24")}>
+        {/* With a chip below 1024 px the icon hides, so the chip and the text share one left edge; below 360 px it
+            always hides, for the field's room. */}
+        <Search aria-hidden="true" className={cx("size-4 shrink-0 text-ink-muted", scope ? "max-lg:hidden" : "max-xs:hidden")} />
+        {scope && <ScopeChip scope={scope} onRemove={() => onRemoveScope?.()} />}
+        {/* The text field and its "/" hint wrap together, so the hint never takes a row of its own. Below 1024 px the
+            field goes under the chip when less than 176 px is left beside it, the width of a package page's whole
+            placeholder, so "Ask about this package" is never cut. */}
+        <div className="flex min-w-0 flex-[1_1_176px] items-center gap-2">
+          <div className="relative min-w-0 flex-1">
             <input
               ref={input}
               id={inputId}
@@ -231,7 +225,7 @@ export function OneBox({
               }}
               onKeyDown={onKeyDown}
               onPointerDown={onPointerDown}
-              className="peer h-10 w-full bg-transparent text-body text-ink focus-visible:outline-none"
+              className="peer h-8 w-full bg-transparent text-body text-ink focus-visible:outline-none"
             />
             <span
               aria-hidden="true"
@@ -242,18 +236,24 @@ export function OneBox({
                   {placeholder}
                 </span>
               ) : (
+                // Below 768 px the short form, so it is never cut; the field's name keeps the whole sentence.
                 <>
-                  <span className="truncate md:hidden">{copy.box.placeholderNarrow}</span>
-                  <span className="hidden truncate md:inline">{copy.box.placeholderWide}</span>
+                  <span className="truncate md:hidden" data-placeholder>
+                    {copy.box.placeholderShort}
+                  </span>
+                  <span className="hidden truncate md:inline" data-placeholder>
+                    {copy.box.placeholderWide}
+                  </span>
                 </>
               )}
             </span>
           </div>
+          {/* The "/" hint, from 768 px where a pointer can hover. */}
           <kbd
             aria-hidden="true"
             className={cx(
-              "hidden shrink-0 rounded-sm border border-line-strong px-1 font-mono text-caption text-ink-muted [@media(hover:none)]:hidden",
-              !focused && value.length === 0 && "lg:inline",
+              "mr-2 hidden shrink-0 rounded-sm border border-line-strong px-1 font-mono text-caption text-ink-muted [@media(hover:none)]:hidden",
+              !focused && value.length === 0 && "md:inline",
             )}
           >
             /
@@ -333,8 +333,17 @@ export type Freshness =
   | { status: "empty" }
   | { status: "error" };
 
+// The stamp's words in each state, for the Data item's tooltip when the sidebar is a rail (ticket 93). None while the
+// static bar holds the stamp's place in its first second.
+export function stampWords(freshness: Freshness): string | null {
+  if (freshness.status === "ready") return copy.stamp.ready(freshness.date);
+  if (freshness.status === "empty") return copy.stamp.empty;
+  if (freshness.status === "error") return copy.stamp.error;
+  return freshness.slow ? copy.stamp.loading : null;
+}
+
 // The data-freshness stamp: caption text, a link to the Data page with a dotted underline
-// (the mark of a value you can check), and five honest states. It is not a live region.
+// (the mark of a value you can check), and five honest states, in a 24 px line box. It is not a live region.
 export function FreshnessStamp({ freshness, href = "/data" }: { freshness: Freshness; href?: string }) {
   const descriptionId = useId();
   const link = (text: string) => (
@@ -369,19 +378,8 @@ export function FreshnessStamp({ freshness, href = "/data" }: { freshness: Fresh
       </span>
     );
   return (
-    <div data-stamp aria-busy={freshness.status === "loading" || undefined} className="flex min-h-6 items-center md:justify-end">
+    <div data-stamp aria-busy={freshness.status === "loading" || undefined} className="flex min-h-6 items-center">
       {body}
-    </div>
-  );
-}
-
-export function BoxBand({ box, stamp }: { box: ReactNode; stamp?: ReactNode }) {
-  return (
-    <div data-box-band className="border-b border-line bg-surface">
-      <div className="layout layout-grid min-h-[68px] items-center gap-y-2 py-3">
-        <div className="col-span-12 md:col-span-8">{box}</div>
-        <div className="col-span-12 md:col-span-4">{stamp}</div>
-      </div>
     </div>
   );
 }

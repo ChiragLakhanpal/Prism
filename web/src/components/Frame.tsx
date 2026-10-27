@@ -1,9 +1,9 @@
-// The frame every page shares: the navy bar, the box band, the sidebar, the page, and the independent-demo
-// footer (DESIGN.md sections 5 and 8). One header (the banner landmark) holds the bar and the band, so the
-// search landmark around the box and the stamp sit in it. The page grows, so the footer sits at the bottom of
-// short pages.
+// The frame every page shares: the navy bar, the sidebar, the page, and the independent-demo footer (DESIGN.md
+// sections 5 and 8). One header (the banner landmark) holds the bar, so the search landmark around the box sits in
+// it, and from 1024 px it sticks to the top of the window (ticket 93). The page grows, so the footer sits at the bottom
+// of short pages.
 //
-// Under the band, the sidebar, the page column and the evidence drawer sit side by side (tickets 14 and 92): the
+// Under the bar, the sidebar, the page column and the evidence drawer sit side by side (tickets 14 and 92): the
 // drawer narrows the page instead of covering it. The page column is a size container, so a page lays out by its
 // own width, not the window's. Below 768 px the drawer is a modal sheet, and below 1024 px the sidebar is the
 // Menu sheet; while either is open, everything else is inert behind it.
@@ -45,21 +45,20 @@ export function useMenuSheet(): MenuSheet {
 
 export function Frame({
   nav,
-  band,
   sidebar,
   children,
   aside,
   inertPage = false,
   menuOpen: menuOpenAtStart = false,
 }: {
+  // The top bar, with the box (TopNav.tsx).
   nav: ReactNode;
-  band: ReactNode;
   // The sidebar beside the page from 1024 px, and the Menu sheet below (Sidebar.tsx).
   sidebar?: ReactNode;
   children: ReactNode;
   // The evidence drawer, beside the page.
   aside?: ReactNode;
-  // A modal sheet is open: the bar, the band and the page take no focus and no clicks.
+  // A modal sheet is open: the bar and the page take no focus and no clicks.
   inertPage?: boolean;
   // For the gallery: open the Menu sheet on the first render.
   menuOpen?: boolean;
@@ -107,9 +106,9 @@ export function Frame({
   return (
     <MenuSheetContext.Provider value={sheet}>
       <div className="flex min-h-window flex-col bg-page">
-        <header inert={inert}>
+        {/* The header sticks from 1024 px, not the bar inside it, since a sticky part sticks only inside its parent. */}
+        <header inert={inert} className="top-bar">
           {nav}
-          {band}
         </header>
         <div className="flex flex-1 items-stretch">
           {sidebar}

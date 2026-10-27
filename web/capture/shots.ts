@@ -1873,8 +1873,9 @@ export const SHOTS: Shot[] = [
   { name: "index", path: "/gallery" },
   ...pages,
 
-  // The frame: bar, band, sidebar and footer. Ticket 92: the sidebar open and as the rail, a rail item's tooltip, an
-  // item's focus and hover, a section's own pages, the public view's sidebar, and the Menu sheet below 1024 px.
+  // The frame: the bar with the box, the sidebar and the footer. Ticket 92: the sidebar open and as the rail, a rail
+  // item's tooltip, an item's focus and hover, a section's own pages, the public view's sidebar, and the Menu sheet below
+  // 1024 px.
   { name: "navigation--hover-item", path: "/gallery/navigation", widths: WIDE, act: hover("[data-sidebar] [data-nav-item=lessons]") },
   { name: "navigation--focus-item", path: "/gallery/navigation", widths: WIDE, act: focus("[data-sidebar] [data-nav-item=projects]") },
   { name: "navigation--rail", path: "/gallery/navigation?sidebar=rail", widths: [1440] },
@@ -1894,10 +1895,13 @@ export const SHOTS: Shot[] = [
   { name: "navigation--menu-open", path: "/gallery/navigation?menu=open", widths: NARROW },
   { name: "navigation--menu-row-focus", path: "/gallery/navigation?menu=open", widths: NARROW, act: focus("[data-sidebar] [data-nav-item=lessons]") },
   { name: "navigation--menu-row-hover", path: "/gallery/navigation?menu=open", widths: NARROW, act: hover("[data-sidebar] [data-nav-item=drafts]") },
+  // Ticket 93: the box in the bar, the stamp at the sidebar's foot (the Menu sheet's below 1024 px), and the fixture's
+  // longest reference in the box's chip at 390 px.
   { name: "navigation--focus-box", path: "/gallery/navigation", act: focus("[data-box-band] input") },
   { name: "navigation--hover-box", path: "/gallery/navigation", act: hover("[data-box-band] [data-focus-ring]") },
-  { name: "navigation--focus-stamp", path: "/gallery/navigation", act: focus("[data-box-band] [data-stamp] a") },
-  { name: "navigation--hover-stamp", path: "/gallery/navigation", act: hover("[data-box-band] [data-stamp] a") },
+  { name: "navigation--focus-stamp", path: "/gallery/navigation?sidebar=open", widths: WIDE, act: focus("[data-sidebar] [data-stamp] a") },
+  { name: "navigation--hover-stamp", path: "/gallery/navigation?sidebar=open", widths: WIDE, act: hover("[data-sidebar] [data-stamp] a") },
+  { name: "navigation--long-chip", path: "/gallery/navigation?scope=KE-UASIN%20GISHU%20COUNTY-571338-CW-RFB", widths: [390] },
   { name: "navigation--320", path: "/gallery/navigation?menu=open", widths: [320] },
 
   // Buttons, links and tabs.

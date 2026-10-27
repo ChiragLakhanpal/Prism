@@ -105,10 +105,11 @@ test("a STEP reference opens its plan's check with that activity in view and foc
 });
 
 // The critique of ticket 14, round 2: a landing that cuts the title or the box at the top edge reads as
-// a scroll gone wrong. The whole row or card is in view, its badges included, and the band and the title
-// are each wholly in view or wholly scrolled away.
+// a scroll gone wrong. The whole row or card is in view, its badges included, and the bar and the title
+// are each wholly in view or wholly scrolled away. From 1024 px the bar sticks (ticket 93), so the row
+// lands under it.
 for (const width of [1440, 390, 320]) {
-  test(`at ${width} px landing on a STEP reference cuts neither the band nor the title at the top edge`, async ({ page }) => {
+  test(`at ${width} px landing on a STEP reference cuts neither the bar nor the title at the top edge`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
     await open(page);
     await typeInBox(page, "KE-NWWDA-541055-CW-RFB");
@@ -120,10 +121,14 @@ for (const width of [1440, 390, 320]) {
     await expect(row).toBeFocused();
     await expect(row.locator("xpath=ancestor-or-self::*[self::tr or self::li][1]")).toBeInViewport({ ratio: 1 });
     await page.waitForTimeout(100);
-    for (const part of ["[data-box-band]", "main h1"]) {
+    for (const part of ["[data-nav-bar]", "main h1"]) {
       const box = (await page.locator(part).boundingBox())!;
       expect(box.y >= 0 || box.y + box.height <= 0, `${part} at ${Math.round(box.y)} px, ${Math.round(box.height)} px tall`).toBe(true);
     }
+    // The row is not under the bar where the bar sticks.
+    const bar = (await page.locator("[data-nav-bar]").boundingBox())!;
+    const landed = (await row.locator("xpath=ancestor-or-self::*[self::tr or self::li][1]").boundingBox())!;
+    if (width >= 1024) expect(landed.y).toBeGreaterThanOrEqual(bar.y + bar.height);
     // No line of text above the row is left as a sliver at the top edge or under the sticky header: a
     // line counts as cut when a whole pixel of it sits on each side.
     const cut = await page.evaluate(() => {
@@ -281,9 +286,10 @@ test("/ focuses the box from anywhere outside a text field, and is not typed", a
 });
 
 // Tickets 12 and 14 together: on a package page the chip holds a STEP reference, which is far longer
-// than a P-code. When the chip and a box you can type in do not fit on one line, the chip takes a row
-// of its own above the text; a reference wider than that row breaks after a hyphen inside the chip.
-// The page never scrolls sideways, and what you type stays in view.
+// than a P-code. Below 1024 px, when the chip and a box you can type in do not fit on one line, the chip
+// takes a row of its own above the text; a reference wider than that row breaks after a hyphen inside the
+// chip. From 1024 px the box keeps one row in the bar (ticket 93): the chip keeps its reference whole on
+// one line, and the text field gives way. The page never scrolls sideways, and what you type stays in view.
 const LONG_REF = "KE-NWWDA-541055-CW-RFB-LOT-0001-2026-ABC";
 
 async function openPackage(page: Page, ref: string, width: number) {
@@ -313,11 +319,20 @@ for (const ref of ["KE-NWWDA-541055-CW-RFB", LONG_REF]) {
       const inner = await rect(page, "[data-box-band] [data-scope-chip]");
       expect(inner.x, `${width} px: the chip's left edge`).toBeGreaterThanOrEqual(outer.x);
       expect(inner.x + inner.width, `${width} px: the chip's right edge`).toBeLessThanOrEqual(outer.x + outer.width);
-      // Room for about ten characters of a question, and for the whole placeholder on a package page.
+      // Below 1024 px, room for about ten characters of a question, and for the whole placeholder on a package page.
+      // From 1024 px one row of 40 px, the chip's reference on one line, and room for about six characters; the
+      // placeholder of a reference this long gives way there (gallery-frame.spec.ts proves the real one's is whole).
       const field = await rect(page, "[data-box-band] input");
-      expect(field.width, `${width} px: the text field`).toBeGreaterThanOrEqual(96);
       const cut = await page.locator("[data-box-band] [data-placeholder]").evaluate((el) => el.scrollWidth > el.clientWidth);
-      expect(cut, `${width} px: the placeholder is cut`).toBe(false);
+      if (width < 1024) {
+        expect(field.width, `${width} px: the text field`).toBeGreaterThanOrEqual(96);
+        expect(cut, `${width} px: the placeholder is cut`).toBe(false);
+      } else {
+        expect(outer.height, `${width} px: one row`).toBe(40);
+        expect(inner.height, `${width} px: the reference on one line`).toBe(32);
+        expect(field.width, `${width} px: the text field`).toBeGreaterThanOrEqual(64);
+        if (ref.length === 22) expect(cut, `${width} px: the placeholder is cut`).toBe(false);
+      }
       // The "/" hint, where a keyboard is assumed, stays at the end of the text field's row.
       const hint = page.locator("[data-box-band] kbd");
       if (await hint.isVisible()) {
@@ -347,12 +362,13 @@ test("a reference wider than its row breaks after a hyphen inside the chip, and 
     // At 768 px "Within" comes first, and the reference fits on the chip's next line whole.
     if (!wider) expect(lines, `${width} px`).toEqual([LONG_REF]);
     else expect(lines.length, `${width} px: ${lines.join(" | ")}`).toBeGreaterThan(1);
-    // A chip that fills its row sits as far from the box's right edge as from its left.
+    // A chip that fills its row takes the box's whole row inside its padding: 12 px on the left, where the text under
+    // it starts too, and 4 px on the right, where the remove button sits (ticket 93).
     if (wider) {
       const outer = await rect(page, "[data-box-band] form > [data-focus-ring]");
       const chip = await rect(page, "[data-box-band] [data-scope-chip]");
-      expect(Math.round(chip.x - outer.x), `${width} px: the chip's left inset`).toBe(5);
-      expect(Math.round(outer.x + outer.width - (chip.x + chip.width)), `${width} px: the chip's right inset`).toBe(5);
+      expect(Math.round(chip.x - outer.x), `${width} px: the chip's left inset`).toBe(12);
+      expect(Math.round(outer.x + outer.width - (chip.x + chip.width)), `${width} px: the chip's right inset`).toBe(4);
     }
     for (const [index, line] of lines.entries()) {
       expect(line.startsWith("-"), `${width} px, line ${index + 1}: ${lines.join(" | ")}`).toBe(false);
@@ -389,20 +405,70 @@ test("a press on the box's / hint or its search icon puts the cursor in the text
   expect(await page.locator("[data-box-band] [data-scope-chip]").evaluate((el) => getComputedStyle(el).cursor)).toBe("auto");
 });
 
-test("a P-code's chip and a STEP reference's chip on a wide screen sit on one row with the text, in a 44 px box", async ({ page }) => {
-  await page.setViewportSize({ width: 320, height: 900 });
+test("a P-code's chip on a phone and a STEP reference's chip on a wide screen sit on one row with the text, in a 40 px box", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 900 });
   await open(page, "/projects/P130164");
   const single = async (label: string) => {
     const outer = await rect(page, "[data-box-band] form > [data-focus-ring]");
     const chip = await rect(page, "[data-box-band] [data-scope-chip]");
     const field = await rect(page, "[data-box-band] input");
-    expect(Math.round(outer.height), label).toBe(44);
+    expect(Math.round(outer.height), label).toBe(40);
     expect(Math.round(chip.height), label).toBe(32);
     expect(Math.round(chip.y + chip.height / 2), label).toBe(Math.round(field.y + field.height / 2));
     expect(Math.round(field.x - (chip.x + chip.width)), `${label}: the gap after the chip`).toBe(8);
   };
-  await single("P130164 at 320 px");
+  await single("P130164 at 390 px");
 
   await openPackage(page, "KE-NWWDA-541055-CW-RFB", 1440);
   await single("KE-NWWDA-541055-CW-RFB at 1440 px");
+});
+
+// Ticket 93 (DESIGN.md section 5, Top bar): below 1024 px the box takes a row of its own under the Menu button, the
+// logo and the wordmark. Below 768 px Home's placeholder takes its short form, so it is never cut, and the field's
+// name keeps the whole sentence; on a package page the placeholder sits under the chip. Below 360 px the search icon
+// hides, for the field's room.
+const PLACEHOLDER = async (page: Page) =>
+  page.evaluate(() => {
+    const shown = [...document.querySelectorAll<HTMLElement>("[data-box-band] [data-placeholder]")].find((el) => el.getClientRects().length > 0)!;
+    const field = document.querySelector<HTMLElement>("[data-box-band] input")!;
+    return { text: shown.textContent, width: shown.scrollWidth, field: field.getBoundingClientRect().width };
+  });
+
+for (const width of [390, 320]) {
+  test(`below 1024 px the box has its own row, and at ${width} px its placeholder is narrower than the field on Home and on a package page`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await open(page);
+    const outer = await rect(page, "[data-box-band] form > [data-focus-ring]");
+    const logo = await rect(page, "[data-nav-bar] img");
+    expect(outer.y, "the box's own row").toBeGreaterThanOrEqual(logo.y + logo.height);
+    expect([outer.x, outer.width]).toEqual([16, width - 32]);
+    await expect(page.locator("[data-box-band] form svg.lucide-search")).toBeVisible({ visible: width >= 360 });
+    const home = await PLACEHOLDER(page);
+    expect(home.text).toBe("Open a project or package, or ask");
+    expect(home.width, `Home at ${width} px`).toBeLessThan(home.field);
+    await expect(box(page)).toHaveAccessibleName("Open a project or package, or ask a question");
+
+    await openPackage(page, "KE-NWWDA-541055-CW-RFB", width);
+    const onPackage = await PLACEHOLDER(page);
+    expect(onPackage.text).toBe("Ask about this package");
+    expect(onPackage.width, `a package page at ${width} px`).toBeLessThan(onPackage.field);
+  });
+}
+
+// The fixture's longest reference, with spaces, one of the package's 49 comparables (the plan's section 7.10).
+test("at 390 px a chip with the fixture's longest reference takes its own row, with the text under it", async ({ page }) => {
+  const ref = "KE-UASIN GISHU COUNTY-571338-CW-RFB";
+  await openPackage(page, ref, 390);
+  const chip = page.locator("[data-box-band] [data-scope-chip]");
+  await expect(chip).toContainText("KE-UASIN GISHU COUNTY-571338-CW-RFB");
+  const [outer, inner, field] = [
+    await rect(page, "[data-box-band] form > [data-focus-ring]"),
+    await rect(page, "[data-box-band] [data-scope-chip]"),
+    await rect(page, "[data-box-band] input"),
+  ];
+  expect(Math.round(inner.x - outer.x), "the chip starts the box's first row").toBe(12);
+  expect(field.y, "the text under the chip").toBeGreaterThanOrEqual(inner.y + inner.height);
+  expect(Math.round(field.x), "the chip and the text share one left edge").toBe(Math.round(inner.x));
+  expect(inner.x + inner.width).toBeLessThanOrEqual(outer.x + outer.width);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
 });

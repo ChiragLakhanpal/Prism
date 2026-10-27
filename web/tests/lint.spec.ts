@@ -337,10 +337,11 @@ test("the class lint refuses spacing off DESIGN.md's scale and colors outside th
 
 // Ticket 90 (DESIGN.md section 3): capitals only in a chart label, and the retired text-title and rounded-box nowhere,
 // except in the deck's folder, which its own branch moves, and in the files on the frozen list, each for the classes it
-// used then. Ticket 91's class sweep moved every other file, so the list keeps only the three files the shell tickets
-// rewrite, and a class a listed file no longer uses fails until it comes off the list. The lint names a file by its
-// path from --root (web/ in the gate), so these tests lay out a throwaway web/ folder.
-const SHELL_TICKET_FILES = ["src/components/BoxBand.tsx", "src/components/CollapsedSection.tsx", "src/components/EvidenceDrawer.tsx"];
+// used then. Ticket 91's class sweep moved every other file, so the list keeps only the files the shell tickets
+// rewrite, and a class a listed file no longer uses fails until it comes off the list; the top bar ticket (93) moved
+// the box's corners and took BoxBand.tsx off. The lint names a file by its path from --root (web/ in the gate), so
+// these tests lay out a throwaway web/ folder.
+const SHELL_TICKET_FILES = ["src/components/CollapsedSection.tsx", "src/components/EvidenceDrawer.tsx"];
 
 function lintTree(files: Record<string, string>) {
   const root = mkdtempSync(join(tmpdir(), "strata-lint-"));

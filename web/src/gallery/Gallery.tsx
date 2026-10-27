@@ -8,7 +8,7 @@
 // takes all 12 columns at every width, as its screen does, and puts the list after it.
 import { useState, type ReactNode } from "react";
 import logo from "../assets/world-bank-logo.svg";
-import { BoxBand, FreshnessStamp, OneBox } from "../components/BoxBand";
+import { OneBox } from "../components/BoxBand";
 import { Frame } from "../components/Frame";
 import type { SubItems } from "../components/sections";
 import { Sidebar, type Rest } from "../components/Sidebar";
@@ -24,9 +24,11 @@ export function LogoSlot() {
   return <img data-logo src={logo} width={120} height={24} alt={copy.nav.logo} className="block h-6 w-[120px]" />;
 }
 
-function Box() {
+// The bar's box. With ?scope= it holds a package's scope chip, such as the longest reference in the fixture (ticket 93).
+function Box({ scope }: { scope?: string }) {
   const [value, setValue] = useState("");
-  return <OneBox value={value} onChange={setValue} />;
+  const [chip, setChip] = useState(scope ?? null);
+  return <OneBox value={value} onChange={setValue} scope={chip} scopeKind="package" onRemoveScope={() => setChip(null)} />;
 }
 
 // The bar's sample views (ticket 40): World Bank staff, an implementing agency officer in their own view, each preview.
@@ -72,6 +74,7 @@ export function GalleryFrame({
   mode = sampleMode(null),
   rest,
   subs = false,
+  scope,
   children,
 }: {
   current?: Section;
@@ -83,6 +86,8 @@ export function GalleryFrame({
   rest?: Rest;
   // Draw the sample sub-items, with All projects as the page (?sub=1).
   subs?: boolean;
+  // A package's scope chip in the box (?scope=).
+  scope?: string;
   children: ReactNode;
 }) {
   const date = formatDate(galleryCopy.sampleDate, { style: "short", today: galleryCopy.sampleDate });
@@ -91,8 +96,7 @@ export function GalleryFrame({
   return (
     <Frame
       menuOpen={menuOpen}
-      nav={<TopNav logo={<LogoSlot />} viewer={viewer} viewOpen={viewOpen} mode={mode} />}
-      band={<BoxBand box={<Box />} stamp={<FreshnessStamp freshness={{ status: "ready", date }} />} />}
+      nav={<TopNav logo={<LogoSlot />} box={<Box scope={scope} />} viewer={viewer} viewOpen={viewOpen} mode={mode} />}
       sidebar={
         <Sidebar
           mode={mode}
@@ -100,6 +104,7 @@ export function GalleryFrame({
           current={current}
           pathname={pathname}
           subItems={subs ? SAMPLE_SUB_ITEMS : undefined}
+          freshness={{ status: "ready", date }}
           rest={rest}
         />
       }
@@ -185,14 +190,16 @@ function Index() {
 // ?menu=open opens the Menu sheet, ?view=open the view popover, ?viewer=loading,
 // ?viewer=signed-out or ?viewer=error sets what the view lines say, ?pill=officer, ?pill=piu, ?pill=public or
 // ?pill=officer-public shows that view's pill and sections (ticket 40), and ?sidebar=open or ?sidebar=rail draws the
-// sidebar open or as the rail at any width from 1024 px, and ?sub=1 adds the sample sub-items (ticket 92).
-function frameState(search: string): { menuOpen: boolean; viewOpen: boolean; viewer: Viewer; mode: NavMode; rest?: Rest; subs: boolean } {
+// sidebar open or as the rail at any width from 1024 px, and ?sub=1 adds the sample sub-items (ticket 92). ?scope= puts
+// a package's scope chip in the box (ticket 93).
+function frameState(search: string): { menuOpen: boolean; viewOpen: boolean; viewer: Viewer; mode: NavMode; rest?: Rest; subs: boolean; scope?: string } {
   const params = new URLSearchParams(search);
   const viewer = params.get("viewer");
   const rest = params.get("sidebar");
   return {
     rest: rest === "open" || rest === "rail" ? rest : undefined,
     subs: params.get("sub") === "1",
+    scope: params.get("scope") ?? undefined,
     mode: sampleMode(params.get("pill")),
     menuOpen: params.get("menu") === "open",
     viewOpen: params.get("view") === "open",

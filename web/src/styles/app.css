@@ -169,20 +169,74 @@
    sits beside the page, open at 224 px or a 64 px rail of icons. Its width changes at once and never moves: width is a
    layout property, and the motion would add wait without news. A person's choice is the data-sidebar-rest attribute on the
    root, which web/index.html's first script writes from local storage before the first paint; with no choice it is
-   open from 1440 px (90rem) and a rail from 1024 to 1439 px. Until the bar ticket merges the band into the bar, the
-   bar (56 px) and the band (69 px) sit above the sidebar, so it is the window's height less theirs. */
+   open from 1440 px (90rem) and a rail from 1024 to 1439 px.
+
+   The bar is 56 px. From 1024 px it sticks (ticket 93), so the sticky parts under it stick at frame-top, 56 px, and the
+   sidebar is the window's height less the bar; below 1024 px the bar scrolls away with the page and frame-top is 0. The
+   window margin is 16, 32 and 40 px (below 768, from 768 and from 1200 px), set by the window: the bar places the box and
+   the skip link by it. */
 :root {
   --sidebar-width: 224px;
   --rail-width: 64px;
   --nav-width: 0px;
-  --header-height: 125px;
+  --bar-height: 56px;
+  --frame-top: 0px;
+  --window-margin: 16px;
+}
+@media (width >= 48rem) {
+  :root { --window-margin: 32px; }
 }
 @media (width >= 64rem) {
-  :root { --nav-width: var(--rail-width); }
+  /* Focused or linked-to elements land 8 px below the sticking bar (DESIGN.md section 10); a page whose header sticks
+     too sets its own padding on the root, which counts the bar (lib/useScrollPadding.ts). */
+  :root { --nav-width: var(--rail-width); --frame-top: var(--bar-height); scroll-padding-top: calc(var(--frame-top) + 8px); }
   :root[data-sidebar-rest="open"] { --nav-width: var(--sidebar-width); }
+}
+@media (width >= 75rem) {
+  :root { --window-margin: 40px; }
 }
 @media (width >= 90rem) {
   :root:not([data-sidebar-rest="rail"]) { --nav-width: var(--sidebar-width); }
+}
+
+/* The top bar (DESIGN.md section 5, Top bar; ticket 93). Below 1024 px it has two rows: the Menu button, the logo and
+   the wordmark, with the view switch at the right from 768 px, then the box across the window. From 1024 px it is one
+   56 px row that sticks: the brand; the box from the page's content edge beside the open sidebar (the sidebar plus the
+   window margin), and never before 244 px, 32 px after the wordmark, beside the rail; the box at most 640 px wide; then
+   at least 24 px of navy and the view switch, 24 px from the right edge. */
+@utility top-bar {
+  position: relative;
+  z-index: 40;
+  @media (width >= 64rem) {
+    position: sticky;
+    top: 0;
+  }
+}
+@utility bar-row {
+  display: grid;
+  align-items: center;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas: "brand . view" "box box box";
+  padding-right: var(--window-margin);
+  @media (width >= 64rem) {
+    height: var(--bar-height);
+    padding-right: calc(var(--spacing) * 6);
+    grid-template-columns: max(244px, calc(var(--nav-width) + var(--window-margin))) minmax(0, 640px) minmax(calc(var(--spacing) * 6), 1fr) auto;
+    grid-template-areas: "brand box . view";
+  }
+}
+@utility bar-brand {
+  grid-area: brand;
+}
+@utility bar-box {
+  grid-area: box;
+  padding: 0 0 calc(var(--spacing) * 3) var(--window-margin);
+  @media (width >= 64rem) {
+    padding: 0;
+  }
+}
+@utility bar-view {
+  grid-area: view;
 }
 /* Classes for the rail alone: its labels move into tooltips, and the sub-items hide. */
 @custom-variant rail {
@@ -447,10 +501,30 @@
   .on-navy:focus-visible {
     outline-color: var(--color-focus-on-dark);
   }
+  /* The box is white on the bar, so a control inside it, such as the scope chip's remove button, shows focus (ticket 93). */
+  .on-navy [data-box-band] :focus-visible {
+    outline-color: var(--color-focus);
+  }
 
   table,
   [data-numbers] {
     font-variant-numeric: tabular-nums;
+  }
+}
+
+/* The box on the navy bar (DESIGN.md section 2; ticket 93) has focus-on-dark around it while anything inside it has
+   focus. Outside the bar, as in the design gallery's samples on the page grey, its ring is focus (BoxBand.tsx). */
+.on-navy [data-box-band] form > [data-focus-ring]:focus-within {
+  outline-color: var(--color-focus-on-dark);
+}
+/* From 1024 px the bar's box keeps its one row: the scope chip keeps its reference whole on one line, and the text
+   field gives way first. A sample box elsewhere, such as the design gallery's narrow one, wraps as below 1024 px. */
+@media (width >= 64rem) {
+  [data-box-band] form > [data-focus-ring] {
+    flex-wrap: nowrap;
+  }
+  [data-box-band] [data-scope-chip] {
+    flex-shrink: 0;
   }
 }
 

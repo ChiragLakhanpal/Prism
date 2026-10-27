@@ -97,7 +97,7 @@ test("the preview banner reads as the blueprint's, never collapses, is reached b
   await expect(page.getByRole("region", { name: "Preview" })).toBeVisible();
   // The officer's view has every section, but Projects opens All projects, not Following, and no reviewer page is an
   // item (ticket 92; config/roles.toml's [views.piu] hidden).
-  await expect(main.getByRole("link")).toHaveText(["Home", "Packages", "Projects", "Lessons", "Drafts", "Data"]);
+  await expect(main.locator("[data-nav-item]")).toHaveText(["Home", "Packages", "Projects", "Lessons", "Drafts", "Data"]);
   await expect(main.getByRole("link", { name: "Projects" })).toHaveAttribute("href", "/projects?view=piu");
   await expect(main.locator('a[href^="/projects/following"], a[href^="/lessons/"]')).toHaveCount(0);
 
@@ -121,7 +121,7 @@ test("choosing a view in the popover opens the preview, with the filled pill and
   await expect(page.getByRole("region", { name: "Preview" })).toBeFocused();
   // The public view has only Home, Projects, Lessons and Data, and its own Home (ticket 41): how many projects Strata
   // holds, and the closed projects whose contracts it holds, latest to close first.
-  await expect(page.getByRole("navigation", { name: "Main" }).getByRole("link")).toHaveText(["Home", "Projects", "Lessons", "Data"]);
+  await expect(page.getByRole("navigation", { name: "Main" }).locator("[data-nav-item]")).toHaveText(["Home", "Projects", "Lessons", "Data"]);
   await expect(page.locator("main h1")).toContainText("I hold records for 93 World Bank-financed projects.");
   await expect(page).toHaveTitle("Home (public preview) | Strata");
   expect(await violations(page)).toEqual([]);
