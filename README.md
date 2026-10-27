@@ -189,7 +189,7 @@ It takes these steps, in order:
 2. It finds the app that `ops/dayone/dayone.toml` names, or makes it.
 3. It gives the app the SQL warehouse, the Application Insights secret and each viewer's SQL token. It saves the Foundry agent's and the judge's keys from `.env` in the secret scope `strata`, unless you pass `--keep-secrets`.
 4. It uploads the app with its lean requirements file (`ops/app/requirements.txt`) and `ops/app/app.yaml`.
-5. It deploys the app and waits for it. Then it reads the app's deployments and names the one this run made, with its time. It stops with exit 1 unless a deployment made since the run started has the state SUCCEEDED, because on a stopped workspace the deploy call can come back with no deployment registered.
+5. It deploys the app and waits for it. Then it reads the app's deployments and names the one this run made, with its time. It stops with exit 1 unless a deployment made since the run started has the state SUCCEEDED, because on a stopped workspace the deploy call can come back with no deployment registered. After the app's compute starts cold, the deployment can still show IN_PROGRESS when the deploy call comes back, so the deploy reads its state again every 10 seconds, for up to 20 minutes, before it stops.
 6. It lets the app's own service principal write usage events and agent runs. When the SQL warehouse refuses a statement here, it names the warehouse's state before the warehouse's answer and stops. A stopped warehouse refuses every statement with an error, such as `TABLE_DOES_NOT_EXIST` for a table that exists.
 7. It masks the columns that say who sent each passage report and who asked each question.
 8. It prints the app's address.
