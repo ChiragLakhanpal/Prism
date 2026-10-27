@@ -55,7 +55,9 @@ compute limit. Then it does these things, in order:
    (strata.lakehouse.masks; ticket 64): one mask function, strata.ops.mask_viewer, gives their values
    only to the app's own service principal and to you, who own the catalog and whose identity runs
    the weekly retrieval job. Every other reader reads NULL there, though the bundle lets them read
-   all of strata.ops.
+   all of strata.ops. Then it puts a row filter on the passage reports and on each answer's sources,
+   which keep what people asked and wrote (ticket 63): only the app, you and the passage reviewers'
+   workspace group in config/roles.toml read their rows, and every other reader reads none.
    When the SQL warehouse refuses a statement in step 6 or 7, it names the warehouse's state before the warehouse's
    answer and stops with exit 1, because a stopped warehouse refuses every statement with an error, such as
    TABLE_DOES_NOT_EXIST for a table that exists.
@@ -105,7 +107,8 @@ import dayone  # noqa: E402
 import workspace_state  # noqa: E402  (ops/bundle/workspace_state.py, ticket 81)
 from workspace_env import WorkspaceEnvError, load_workspace_env  # noqa: E402
 
-from strata.lakehouse.masks import MASK, MASKED  # noqa: E402
+from strata.config import Roles, load_roles  # noqa: E402
+from strata.lakehouse.masks import FILTERED, MASK, MASKED, row_filter  # noqa: E402
 
 DESCRIPTION = "Strata, procurement intelligence on World Bank open data"
 PROBE_DESCRIPTION = "Strata day-one probe app"  # ops/dayone/live.py's PROBE_APP_DESCRIPTION
@@ -125,6 +128,7 @@ FOUNDRY = {"FOUNDRY_PROJECT_ENDPOINT": "foundry-endpoint", "FOUNDRY_TENANT_ID": 
 JUDGE = {"AZURE_OPENAI_ENDPOINT": "azure-openai-endpoint", "AZURE_OPENAI_API_KEY": "azure-openai-key"}
 PRINCIPAL = re.compile(r"[0-9a-fA-F-]{36}")
 USER = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")  # a user name, which Databricks keeps as an email
+GROUP = re.compile(r"[A-Za-z0-9][A-Za-z0-9 ._-]*")  # a workspace group's name, as config/roles.toml writes it
 # The app state database's resource (ADR 0005). The platform sets PGHOST, PGPORT, PGDATABASE, PGUSER and
 # PGSSLMODE from it, which src/strata/server/settings.py reads; the database is the instance's own.
 APP_STATE = "app-state"
@@ -255,22 +259,40 @@ def grants(principal: str) -> list[str]:
             f"GRANT SELECT ON TABLE strata.ops.retrieval_feedback_viewers TO `{principal}`"]
 
 
-def masks(principal: str, owner: str) -> list[str]:
+def masks(principal: str, owner: str, roles: Roles | None = None) -> list[str]:
     """The column mask on each column of strata.ops that says who sent a passage report or asked a question
     (strata.lakehouse.masks, MASKED; ticket 64). The readers group may read every table in strata.ops
     (bundle/catalog.yml), so the mask gives each value only to the app's own service principal, which reads the
     reports back to tell a viewer's own, and to the owner, the user who deploys, whose identity runs the weekly
     retrieval job; everyone else reads NULL. A mask's SQL cannot take bound values, so both names are checked first,
-    as grants() checks the principal."""
+    as grants() checks the principal.
+
+    Then the row filter on each table whose rows only one reviewer group reads (FILTERED; ticket 63): the passage
+    reports and each answer's sources keep what people asked and wrote, so only the app, the owner and the members of
+    the group's workspace group in the roles file read their rows; everyone else reads none. The group's name is
+    checked the same way."""
     if not PRINCIPAL.fullmatch(principal):
         raise ValueError(f"{principal!r} is not a service principal's application id.")
     if not (USER.fullmatch(owner) or PRINCIPAL.fullmatch(owner)):
         raise ValueError(f"{owner!r} is not a user name or an application id I can write into a mask.")
+    roles = roles or load_roles()
     function = (f"CREATE OR REPLACE FUNCTION {MASK}(value STRING) RETURNS STRING "
                 "COMMENT 'Who sent a passage report or asked a question: only the app and the owner read it.' "
                 f"RETURN CASE WHEN current_user() IN ('{principal}', '{owner}') THEN value END")
-    return [function, *[f"ALTER TABLE {table} ALTER COLUMN {column} SET MASK {MASK}"
-                        for table, columns in MASKED.items() for column in columns]]
+    statements = [function, *[f"ALTER TABLE {table} ALTER COLUMN {column} SET MASK {MASK}"
+                              for table, columns in MASKED.items() for column in columns]]
+    for key in dict.fromkeys(FILTERED.values()):
+        group = roles.groups[key]
+        if not GROUP.fullmatch(group.workspace_group):
+            raise ValueError(f"{group.workspace_group!r} is not a workspace group name I can write into a row filter.")
+        statements.append(f"CREATE OR REPLACE FUNCTION {row_filter(key)}() RETURNS BOOLEAN "
+                          f"COMMENT 'What people asked and reported: only the app, the owner and the {group.role}s "
+                          "read it.' "
+                          f"RETURN current_user() IN ('{principal}', '{owner}') "
+                          f"OR is_account_group_member('{group.workspace_group}')")
+        statements += [f"ALTER TABLE {table} SET ROW FILTER {row_filter(key)} ON ()"
+                       for table, reader in FILTERED.items() if reader == key]
+    return statements
 
 
 def plan() -> list[tuple[str, str]]:
@@ -287,7 +309,9 @@ def plan() -> list[tuple[str, str]]:
             + [("The user authorization scope", name) for name in SCOPES]
             + [("The secret", f"{scope}/{key}") for key in (*FOUNDRY, *JUDGE)]
             + [("The grants to the app's service principal", f"{len(grants(example))} grants on strata.ops"),
-               ("The column mask", f"{MASK}, on {sum(len(columns) for columns in MASKED.values())} columns")])
+               ("The column mask", f"{MASK}, on {sum(len(columns) for columns in MASKED.values())} columns")]
+            + [("The row filter", f"{row_filter(key)}, on {', '.join(t for t, k in FILTERED.items() if k == key)}")
+               for key in dict.fromkeys(FILTERED.values())])
 
 
 def secret_names(env: dict, scope: str) -> list[str]:

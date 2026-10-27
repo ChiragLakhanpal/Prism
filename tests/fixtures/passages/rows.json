@@ -18,7 +18,7 @@
     ],
     "strata.gold.passage": [
       2198,
-      "471cb7c38b00d9a9c37c10817a97ffbb6b2abbbd2c8084d472b06e8eb4dd9742"
+      "d4b9840a7f284a4f8a8dc265196f5f34df0760e782db8be486ec93d5f9e94e74"
     ],
     "strata.ops.data_readiness": [
       66,
@@ -58,15 +58,15 @@
     ],
     "strata.silver.passage_embeddings": [
       2022,
-      "af9556a6d2b7e859287c1a15d0b0607e4694534b12417a6d0cff76d20158753f"
+      "8e2b3925129ff059d6acc2348074a9d18eb8680df6ddc044207d051abfa8d1b5"
     ],
     "strata.silver.passage_shields": [
       2022,
-      "e303984e673c08951c309945ff38a7390360d40d628841178f49d63aabe2e011"
+      "870161b2de7f20fc9fe6fc0193738a3f9269bac8f847306d7eb2dcfb158d1fd7"
     ],
     "strata.silver.passages": [
       2198,
-      "ee31a24596ba62b6d5911b4f27ac0a72abaa0ae59700218219b365022418c44d"
+      "6f4a160f4d2b8d11b38699c7b63b39056b6c224d16abd39d72ab9b5387a8ec63"
     ]
   },
   "nightly": {

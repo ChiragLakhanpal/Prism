@@ -1,4 +1,4 @@
-"""Column masks: the columns of strata.ops that say who did something, which a reader never reads (ticket 64).
+"""Column masks and row filters: what a reader of strata.ops never reads (tickets 64 and 63).
 
 The bundle lets the readers group, everyone who can sign in, read every table in strata.ops (bundle/catalog.yml),
 so the app can run each query as the viewer (ADR 0003). Two of those tables also say who: who sent each passage
@@ -12,9 +12,15 @@ Everyone else reads NULL, in what a query selects and in what it filters on alik
 mask and puts it on each column, because only it knows the app's principal. The app reads these two tables as itself
 (strata.knowledge.retrieval.reports), and the review pages still name each sender by role.
 
+Those two tables also keep what people wrote: each report's question and reason, and each question an answer
+answered. FILTERED lists them, each with the reviewer group (a key of config/roles.toml's [groups]) whose workspace
+group may read their rows. On the warehouse each carries that group's row filter, row_filter(key), which shows a row
+only to the app's principal, the owner and the group's members; everyone else reads no row at all (ticket 63).
+ops/app/deploy_app.py makes the filter and puts it on beside the masks, for the same reason.
+
 The fixture has no users, so the gate's stand-in for a reader (tests/retrieval_scenario.py) runs each statement a
 viewer runs through as_a_reader(), which reads each masked table through a subquery that gives NULL in its masked
-columns, as the mask does.
+columns, as the mask does, and keeps no row of a filtered table unless the viewer is in its reviewer group.
 """
 
 from __future__ import annotations
@@ -24,6 +30,16 @@ from pathlib import Path
 
 TABLES = Path(__file__).resolve().parent / "tables"
 MASK = "strata.ops.mask_viewer"  # the mask function, one for every masked column
+# The tables whose rows only the app, the owner and one reviewer group read, each with that group's key in the roles file.
+FILTERED: dict[str, str] = {
+    "strata.ops.candidate_labels": "passage_reviewer",  # each report's question and reason (ticket 32)
+    "strata.ops.answer_citations": "passage_reviewer",  # each question an answer answered (ticket 32)
+}
+
+
+def row_filter(group: str) -> str:
+    """The row filter function for the tables one reviewer group reads, by the group's key in the roles file."""
+    return f"strata.ops.only_{group}"
 MASKED: dict[str, tuple[str, ...]] = {
     "strata.ops.candidate_labels": ("viewer_id", "viewer_email"),  # who sent a passage report
     "strata.ops.answer_citations": ("viewer_id",),  # who asked the question an answer answered
@@ -55,10 +71,12 @@ def columns(table: str) -> tuple[tuple[str, str], ...]:
 
 
 @cache
-def as_a_reader(sql: str) -> str:
-    """The statement as a reader runs it with the masks on: each masked table it reads is read through a subquery that
-    gives NULL in each masked column. A statement that names no masked table comes back as it was."""
-    if not any(table in sql for table in MASKED):
+def as_a_reader(sql: str, groups: frozenset[str] = frozenset()) -> str:
+    """The statement as a reader in these reviewer groups (the roles file's keys) runs it with the masks and the row
+    filters on: each masked or filtered table it reads is read through a subquery that gives NULL in each masked
+    column and, when the reader is not in the table's reviewer group, no row. A statement that names neither comes
+    back as it was."""
+    if not any(table in sql for table in (*MASKED, *FILTERED)):
         return sql
     import sqlglot
     from sqlglot import exp
@@ -66,10 +84,12 @@ def as_a_reader(sql: str) -> str:
     tree = sqlglot.parse_one(sql, read="databricks")
     for table in list(tree.find_all(exp.Table)):
         name = ".".join(part for part in (table.catalog, table.db, table.name) if part)
-        if name not in MASKED:
+        if name not in MASKED and name not in FILTERED:
             continue
-        shown = ", ".join(f"CAST(NULL AS {kind}) AS {column}" if column in MASKED[name] else column
+        hidden = MASKED.get(name, ())
+        shown = ", ".join(f"CAST(NULL AS {kind}) AS {column}" if column in hidden else column
                           for column, kind in columns(name))
-        masked = sqlglot.parse_one(f"SELECT {shown} FROM {name}", read="databricks")  # sql-lint: names only
+        kept = " WHERE FALSE" if name in FILTERED and FILTERED[name] not in groups else ""
+        masked = sqlglot.parse_one(f"SELECT {shown} FROM {name}{kept}", read="databricks")  # sql-lint: names only
         table.replace(masked.subquery(table.alias_or_name))
     return tree.sql(dialect="databricks")

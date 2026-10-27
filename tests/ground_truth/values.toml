@@ -2695,6 +2695,11 @@ says = "Notice OP00146683, the Invitation for Bids for KE-NWWDA-229129-CW-RFB, c
 record = "api/notices/P156634.json"
 notice = "OP00146683"
 
+[awkward.attention_names]
+says = "Three Invitation for Bids notices on P156634 write their contact as \"ATTENTION: Mr.\" and a person's name, in bold, with no contact field that names the person. Ingestion strips the name and keeps the label (ticket 63), so the fixture's contact removals count 3 more names than before: 188 names in 1,527 removals, where they were 185 in 1,524. The Kenya measure stays 231 of 404 notices, since each of the three had other details removed already."
+record = "api/notices/P156634.json"
+notices = ["OP00060742", "OP00060745", "OP00061611"]
+
 [awkward.joint_venture]
 says = "Contract 1624689 for KE-KIMAWASCO-158691-CW-RFB went to two firms together. The awards dataset has one row per member with the contract amount split equally, and award notice OP00125855 lists both as awarded bidders."
 awards = "api/awards/P156634.json"
@@ -2783,7 +2788,14 @@ fy2018 = ["OP00054114"]
 fy2019 = ["OP00071741", "OP00074816", "OP00086370", "OP00154314"]
 in_inr = "OP00044090"
 in_inr_price = "69,826,127.64"
-no_price = "OP00074816"
+# OP00074816 writes its price under "Amount:" with the currency's name, not its code: "Price: Currency: Amount:
+# Kenya Shillings (Kenya Shillings) 39,535,680.75". Until ticket 63 it was read as having no price; 12 of the 231
+# award notices use this layout, and each now has a price and a currency.
+amount_layout = "OP00074816"
+amount_layout_price = "39,535,680.75"
+amount_layout_currency = "KES"
+amount_layout_notices = ["OP00074816", "OP00089629", "OP00092796", "OP00131058", "OP00133247", "OP00133251",
+                         "OP00143371", "OP00145902", "OP00146186", "OP00161667", "OP00169187", "OP00192577"]
 
 # The major sector codes the projects API listed for every project of the slice's four countries
 # (Kenya, Bangladesh, Vietnam and Pakistan) on October 23, 2026, read with

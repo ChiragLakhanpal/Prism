@@ -298,6 +298,42 @@ def test_a_contract_from_an_award_notice_keeps_the_price_in_the_currency_the_not
                          "contract_currency": "INR"}]
 
 
+def test_an_award_notice_that_writes_its_price_under_amount_with_the_currency_s_name_has_a_price_and_a_currency(db):
+    """values.toml, counts.gap_years.amount_layout. OP00074816 writes "Amount:" and then the currency's name, not
+    its code, so the price is read with the name's code; every award notice with that layout gets one."""
+    notice = next(row for row in recorded("api/notices/P156634.json")["procnotices"] if row["id"] == GAP["amount_layout"])
+    assert f"Kenya Shillings (Kenya Shillings)</div><div class='col-xs-4'>{GAP['amount_layout_price']}" in notice[
+        "notice_text"]
+
+    contract = rows(db, "SELECT contract_amount, contract_currency, amount_basis FROM strata.gold.contract "
+                        "WHERE contract_id = :notice", notice=GAP["amount_layout"])
+    assert contract == [{"contract_amount": decimal.Decimal(GAP["amount_layout_price"].replace(",", "")),
+                         "contract_currency": GAP["amount_layout_currency"],
+                         "amount_basis": "local currency, from award notices"}]
+    unpriced = rows(db, "SELECT notice_id FROM strata.silver.notices WHERE notice_type = 'Contract Award' "
+                        "AND (signed_contract_price IS NULL OR signed_contract_currency IS NULL)")
+    assert unpriced == []  # the 12 with this layout among them
+    priced = rows(db, "SELECT notice_id FROM strata.silver.notices WHERE notice_id IN (SELECT explode(:ids)) "
+                      "AND signed_contract_price IS NOT NULL", ids=GAP["amount_layout_notices"])
+    assert len(priced) == len(GAP["amount_layout_notices"])
+
+
+def test_a_gap_year_notice_with_no_price_has_no_label_saying_what_currency_it_is_in():
+    """A Contract Award notice that gives no price has no currency either, so gold writes no amount basis for it."""
+    notice = next(row for row in recorded("api/notices/P130164.json")["procnotices"] if row["id"] == GAP["in_inr"])
+    unpriced = dict(notice, notice_text=notice["notice_text"].replace(f"INR {GAP['in_inr_price']}", ""))
+
+    with DuckDBEngine.open() as engine:
+        catalog.build(engine)
+        run_one(engine, "notices", {"total": "1", "procnotices": [unpriced]}, dt.datetime(2026, 10, 23, tzinfo=dt.UTC))
+        gold.build(engine)
+        stored = rows(engine, "SELECT contract_id, contract_amount, contract_currency, amount_basis "
+                              "FROM strata.gold.contract")
+
+    assert stored == [{"contract_id": GAP["in_inr"], "contract_amount": None, "contract_currency": None,
+                       "amount_basis": None}]
+
+
 def test_a_gap_year_notice_priced_in_us_dollars_is_labeled_so_and_one_that_repeats_an_award_is_left_out():
     """Two pages written from recorded ones. OP00044090 (values.toml, award-7431-signed) priced in US
     dollars instead of rupees is labeled US dollars from award notices. And a prior-review award

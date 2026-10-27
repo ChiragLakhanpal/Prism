@@ -91,9 +91,13 @@ def parse(body: dict, page_hash: str, fetched_at: dt.datetime) -> dict[str, list
         written = sorted({transaction.get("financier_loan") for transaction in record.get("loan_transactions") or []
                           if transaction.get("financier_loan")})
         for as_written in written:
+            # The projects API is the source of a project's loans, so a loan with four digits and its lender, such as
+            # IBRD-8956, is kept as its lender and digits; clean.loan_number gives no normalized value for it, since
+            # in a notice four digits with no country code may be a credit's older form.
             loan = clean.loan_number(as_written)
-            if loan and loan.normalized:
-                loans.append((project_id, loan.normalized, as_written, page_hash, fetched_at, public))
+            kept = loan and (loan.normalized or (f"{loan.lender}{loan.digits}" if loan.lender else None))
+            if kept:
+                loans.append((project_id, kept, as_written, page_hash, fetched_at, public))
         ratings += _isr_ratings(project_id, record.get("isr_ratings"), page_hash, fetched_at, fetched)
         shares += [(project_id, *sector, page_hash, fetched_at, public) for sector in _sectors(record.get("major_sectors"))]
         category, risk = clean.text(record.get("envassesmentcategorycode")), clean.text(record.get(ESF_RISK))
