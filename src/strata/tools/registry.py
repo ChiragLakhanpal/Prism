@@ -32,7 +32,7 @@ from dataclasses import dataclass, field
 from typing import Any
 from urllib.parse import quote
 
-from strata.config import Thresholds, Tool, ToolParameter, load_thresholds, load_tools
+from strata.config import Thresholds, Tool, ToolParameter, load_slice, load_thresholds, load_tools
 from strata.dbx import Viewer
 from strata.lakehouse.engine import Engine
 
@@ -131,11 +131,18 @@ class Call:
 # ── The agent's tool list ────────────────────────────────────────────────
 
 THRESHOLD = re.compile(r"\{([a-z_]+(?:\.[a-z_]+)+)\}")  # a value of the thresholds file: {passages.results}
+# The values a description names from another registry than the thresholds file, such as the slice file's sectors
+# (config/slice.toml), written as a reader reads them: "water or transport" (ticket 11's review round 2, P3).
+FROM_SLICE = {"slice.sectors": lambda: " or ".join(load_slice().sectors)}
 
 
 def _filled(text: str, thresholds: Thresholds) -> str:
-    """A description with each threshold it names in braces filled in from the thresholds file."""
-    return THRESHOLD.sub(lambda match: str(thresholds.value(match.group(1))), text)
+    """A description with each value it names in braces filled in: from the slice file when FROM_SLICE names it,
+    else from the thresholds file."""
+    def value(match: re.Match) -> str:
+        name = match.group(1)
+        return FROM_SLICE[name]() if name in FROM_SLICE else str(thresholds.value(name))
+    return THRESHOLD.sub(value, text)
 
 
 def _schema(parameter: ToolParameter, thresholds: Thresholds) -> dict:

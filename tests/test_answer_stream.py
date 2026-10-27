@@ -992,6 +992,10 @@ def test_an_answer_can_quote_each_side_of_a_disagreement_and_state_the_trajector
                   kind="record", evidence_ids=[summary]),
             claim("I left out 1 assertion read from the project's reports.", kind="record", evidence_ids=[summary]),
             claim("ISRs 1 to 14 rated it Satisfactory.", kind="record", evidence_ids=[summary]),
+            # A side that rests on a passage backs only its dates and its quote, so ISR 7's sequence needs the row
+            # cited too, as get_disagreements' description says (ticket 20's review round 3, F2).
+            claim(f"ISR 7 rated progress towards the PDO Satisfactory on {isr_7_date:%B} {isr_7_date.day}, "
+                  f"{isr_7_date.year}.", kind="record", evidence_ids=[isr_7["evidence_id"]]),
         ]
 
     agent = CallsThenAnswers([("get_disagreements", {"subject_id": "P130164", "as_of": "2026-10-23"})], answer)
@@ -1000,7 +1004,7 @@ def test_an_answer_can_quote_each_side_of_a_disagreement_and_state_the_trajector
 
     assert [sentence["text"].split(" ")[:2] for sentence in of(parsed, "sentence")] == [
         ["The", "ICR"], ["ISR", "7"], ["ISRs", "1"], ["I", "left"]]
-    assert removed_reasons(parsed) == [[("number_not_in_records", "14")]]
+    assert removed_reasons(parsed) == [[("number_not_in_records", "14")], [("number_not_in_records", "7")]]
     evidence = {item["id"]: item for item in of(parsed, "evidence")}
     side = evidence["strata.gold.passage:31525018/v1/78"]
     assert (side["kind"], side["tool"]) == ("passage", "get_disagreements")

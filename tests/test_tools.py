@@ -129,6 +129,35 @@ def test_the_agents_limit_description_takes_its_numbers_from_the_thresholds_file
     assert [text for text in texts if "{" in text] == []
 
 
+def test_the_sector_parameter_names_the_slice_file_s_sectors():
+    """Ticket 11's review round 2, P3: the sector parameter's description named the slice's sectors by hand, so a
+    sector added to config/slice.toml never reached the agent's prompt. The tool list fills {slice.sectors} from the
+    slice file, the one place the sectors are listed (CLAUDE.md rules 4 and 9)."""
+    sectors = tomllib.loads((ROOT / "config" / "slice.toml").read_text())["sectors"]
+    [tool] = [tool for tool in registry.agent_tools() if tool["name"] == "search_passages"]
+
+    assert tool["parameters"]["properties"]["sector"]["description"] == (
+        f"Only passages of projects in this sector of the pilot slice: {' or '.join(sectors)}.")
+    assert any("{slice.sectors}" in parameter.description
+               for parameter in config.load_tools()["search_passages"].parameters)
+
+
+def test_the_descriptions_say_what_the_agent_needs_to_know_in_plain_sentences():
+    """The tools' descriptions are the agent's prompt (CLAUDE.md rule 4): check_plan's rule for which packages it
+    checks in two plain sentences (ticket 09's review round 2, R2-P6), every reason search_passages leaves a passage
+    out (ticket 11's review round 2, P2), and that a number on a side of a disagreement needs its row cited (ticket
+    20's review round 3, F2)."""
+    tools = {tool["name"]: tool["description"] for tool in registry.agent_tools()}
+
+    assert ("For a package with no signed contract, it checks whether the planned completion date has passed. It skips "
+            "a package estimated below the amount in the result's thresholds, and checks one that has no estimate."
+            ) in tools["check_plan"]
+    assert "the coverage line says how many. So is a passage that has no Prompt Shields result yet." in (
+        tools["search_passages"])
+    assert ("For a number on a side, such as ISR 7's sequence or the months after the mid-term review, cite the row as "
+            "well.") in tools["get_disagreements"]
+
+
 def never_written() -> list[str]:
     """DESIGN.md section 7, rule 19's list of words Strata never writes, read from the file, as the
     copy lint (web/lint/copy.ts) reads it."""

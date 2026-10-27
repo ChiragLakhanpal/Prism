@@ -3567,3 +3567,18 @@ One thing to watch, from the verifier (`.notes/107-verify-r2.md`, follow-up 2): 
 ## Ticket 107, steps 1 to 3 of 3 ran: the column, the deploy, and a cost pull that succeeded
 
 **Ran on October 27, 2026 (orchestrator), 13:49 to 13:54 UTC, from a snapshot of 19eb82d8 (ticket 107's done commit).** Step 1: `ALTER TABLE strata.ops.cost_pulls ADD COLUMNS (detail STRING)` on the SQL warehouse, state SUCCEEDED; the table's columns are now run_id; pulled_at; status; from_day; through_day; charges; error_code; public_from; detail. Step 2: `uv run --script ops/bundle/deploy.py --env-file "<main checkout>/.env" --fairshare-catalog workspace` exited 0 at 13:52 UTC (step 3's report: "The job strata nightly changed"), and the Jobs API update put the nightly's window back to 18000 seconds (schedule 0 0 3 * * ? UNPAUSED). Step 3: `databricks jobs run-now --json '{"job_id": 528900661133114}' -p strata` started run 604871161430737 at 13:52 UTC; it ended TERMINATED SUCCESS at 13:54 UTC, and the newest run row (run_id, status, from_day, through_day, charges, error_code, detail) is: 604871161430737, succeeded, 2026-09-22, 2026-10-27, 9, None, None. Azure answered this time without a 429, so the row is succeeded with charges and the retry lines did not appear in the task log; criterion 3 holds (succeeded with charges). The two earlier runs of the day (679380286409718 at 09:40 UTC and 404010923973841 at 12:14 UTC) had failed on the 429.
+
+## Ticket 61, step 1 of 1: sync the orchestrator and the review notes writer, since their instructions and three tool descriptions changed (criterion 4, live)
+
+The builder parked this step on October 27, 2026. It needs the four Foundry keys in `.env`. Ticket 61 changed two things the orchestrator in Foundry reads. First, `src/strata/agent/instructions/orchestrator.md`: its words rule now reads "Put no quote marks, double or single, around words you do not quote word for word.", so only one line says which quote marks to use. Second, the tool list, which the sync generates from `config/tools.toml`: check_plan's rule for which packages it checks is two plain sentences, search_passages says a passage with no Prompt Shields result is left out too, its sector parameter names the slice file's sectors, and get_disagreements says to cite the row for a number on a side. Ticket 61 also changed `src/strata/agent/instructions/review_notes_writer.md`: a note cites the records its row's reasons name, such as the project record for the closing date, and states no date of another plan version. The judge's instructions changed too (it now says whether a sentence advises), but they live in the App's code, so the App's next redeploy from the merge commit carries them, and no sync is needed for the judge.
+
+Run this from the main checkout:
+
+    uv run --script ops/agent/sync.py --env-file .env --check
+    uv run --script ops/agent/sync.py --env-file .env
+    uv run --script ops/agent/sync.py --env-file .env --check
+    uv run --script ops/agent/sync.py --env-file .env --agent review_notes_writer --check
+    uv run --script ops/agent/sync.py --env-file .env --agent review_notes_writer
+    uv run --script ops/agent/sync.py --env-file .env --agent review_notes_writer --check
+
+It worked if the first `--check` exits 1, lists "It has other values in its instructions." and "It has other values in its tools.", and its diff holds the new quote-marks line; each run without `--check` ends "I made version N of ..., which matches the repo."; and both last `--check` runs exit 0 with "matches the repo". One sync from the merge commit or later serves every earlier block that names the same command.

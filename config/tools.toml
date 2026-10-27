@@ -60,9 +60,9 @@
 
 [tools.check_plan]
 description = """Checks every activity in one implementing agency's Procurement Plan for a project. It \
-checks the latest version unless you name one by its date. The checks are fixed. A package with no signed \
-contract, estimated at or above the amount in the result's thresholds or with no estimate, is checked for a \
-planned completion date that has passed. \
+checks the latest version unless you name one by its date. The checks are fixed. For a package with no signed \
+contract, it checks whether the planned completion date has passed. It skips a package estimated below the amount \
+in the result's thresholds, and checks one that has no estimate. \
 A signed amount is compared with its estimate, and the result says how late the contract was signed, measured \
 from the first published planned date. A package still pending close to the project's closing date is marked. \
 Weak records get data notes. It returns one row per activity in STEP's columns, with its marks (needs_a_look, \
@@ -301,7 +301,8 @@ summary is Strata's own words and never backs a number: cite the table's rows. F
 document type, country, sector or the date a document became public. A report re-issued under the same \
 number replaces its earlier version, unless the as-of date comes before the re-issue. When Prompt Shields \
 found a prompt attack in a passage as it was read in, the passage is left out, and the coverage line says \
-how many. Quote a passage only word for word, from its text."""
+how many. So is a passage that has no Prompt Shields result yet. Quote a passage only word for word, from its \
+text."""
 adapter = "strata.tools.search_passages:search_passages"
 benchmark = "search-passages-icr-rebidding"
 sources = ["documents", "projects"]
@@ -340,7 +341,8 @@ description = "Only passages of projects in this country, by its two-letter ISO 
 name = "sector"
 type = "string"
 required = false
-description = "Only passages of projects in this sector of the pilot slice: water or transport."
+# {slice.sectors} is filled from config/slice.toml's sectors, the one place they are listed.
+description = "Only passages of projects in this sector of the pilot slice: {slice.sectors}."
 
 [[tools.search_passages.parameters]]
 name = "published_from"
@@ -834,7 +836,8 @@ a trajectory, not a disagreement, and come back under trajectories. A report re-
 replaces its earlier version, unless the as-of date comes before the re-issue. It also counts the assertions \
 read from the project's reports that were left out because their quote was not word for word on the cited page. \
 Cite a disagreement by its row's evidence id, and each side by the side's own evidence id: quote a side's words \
-from its text. When Prompt Shields found a prompt attack in a side's passage as it was read in, or never screened \
+from its text. A side that rests on a passage backs only its dates and its quote. For a number on a side, such as \
+ISR 7's sequence or the months after the mid-term review, cite the row as well. When Prompt Shields found a prompt attack in a side's passage as it was read in, or never screened \
 it, the side comes without its text and its quote, and the coverage line says how many passages. The trajectories and the count of left-out assertions come back in the result's summary, which \
 you cite for them. When an answer rests on one side of a disagreement, show both sides."""
 adapter = "strata.tools.get_disagreements:get_disagreements"
