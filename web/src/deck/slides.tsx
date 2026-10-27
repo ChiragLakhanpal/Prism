@@ -316,10 +316,20 @@ export function buildSlides(data: DeckData): Slide[] {
       chart: rows
         ? {
             source: "r:award-rows-by-year",
-            drawing: (_mode, labelledById) => (
+            // On the slide the chart fills its card, half the content box; in the reading view it keeps its size and
+            // its frame scrolls on a phone.
+            drawing: (mode, labelledById) => (
               <div className="flex flex-col gap-2">
                 <AwardKey result={rows} />
-                <AwardChart result={rows} gap={gap} width={500} height={240} labelledById={labelledById} describedById={ALT_ID} />
+                <AwardChart
+                  result={rows}
+                  gap={gap}
+                  width={mode === "present" ? 400 : 500}
+                  height={240}
+                  fluid={mode === "present"}
+                  labelledById={labelledById}
+                  describedById={ALT_ID}
+                />
                 <p id={ALT_ID} className="sr-only">
                   <Fill template={s.gap.chartAlt} slots={{ first: String(Math.min(...years)), last: String(Math.max(...years)) }} />{" "}
                   {gap && <Fill template={s.gap.chartGap} slots={{ start: String(gap.start), end: String(gap.end) }} />}
@@ -486,7 +496,7 @@ export function buildSlides(data: DeckData): Slide[] {
         ) : (
           <div className="flex flex-col gap-6">
             <p className="text-ink" style={mode === "present" ? { maxWidth: 780 } : undefined} {...type("body", mode)}>
-              <Fill template={s.hindsight.method} slots={{ coders: word("hindsight-coders") }} />
+              <Fill template={s.hindsight.methodPlanned} slots={{ coders: word("hindsight-coders") }} />
             </p>
             <NotMeasured n={1} at={at} mode={mode}>
               {s.hindsight.none}

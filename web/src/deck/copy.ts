@@ -241,7 +241,7 @@ export const deckCopy = {
       lines: [
         "Every sentence names its source: a record, or a numbered paragraph with its page.",
         "One click opens the completion report's paragraph 54, on page 23, beside the answer.",
-        "The Independent Evaluation Group's review restates the lesson, and the answer says so.",
+        "The verifier checks every quote against its page before the answer shows.",
       ],
       source: "Implementation Completion and Results Report, {project}, October 10, 2019, paragraph 54, page 23.",
       notes:
@@ -304,6 +304,8 @@ export const deckCopy = {
       chartAlt: "Bars show contract award rows for each fiscal year from {first} to {last}, by the dataset or the award notices they came from.",
       chartGap: "Neither awards dataset covers fiscal {start} to {end}.",
       gapLabel: "No awards dataset",
+      // The chart's key: a source's name and the first and last fiscal years the chart draws from it.
+      keyName: (source: string, first: string, last: string) => `${source}, ${first} to ${last}`,
       table: { year: "Fiscal year", rows: "Contract award rows", from: "From" },
       notes:
         "This is a gap Strata states instead of hiding. Neither contract awards dataset covers fiscal {start} to " +
@@ -380,6 +382,10 @@ export const deckCopy = {
       method:
         "The test froze Strata at each closed pilot project's approval date. Strata listed its top risks for each " +
         "main package, and {coders} people compared them with the risks the completion report blamed.",
+      // Before the test has run, the slide says what it does, in the present tense: nothing has happened yet.
+      methodPlanned:
+        "The test freezes Strata at each closed pilot project's approval date. Strata lists its top risks for each " +
+        "main package, and {coders} people compare them with the risks the completion report blamed.",
       checklist:
         "That was at {top} risks per package. A checklist of the sector's {checklist} most common risks showed " +
         "{ratio} of the same blamed risks.",

@@ -28,14 +28,22 @@ function ticks(top: number): number[] {
   return [0, top];
 }
 
+// A source's name in the key, with the fiscal years the chart draws for it, not the years its name claims: a dataset
+// named "Contract awards, FY2001–16" that the chart draws from FY12 reads "Contract awards, FY12 to FY16".
+function keyName(rows: Row[], group: string): string {
+  const own = rows.filter((row) => row.dataset === group);
+  return words.keyName(group.split(",")[0], own[0].fiscal_year_label, own[own.length - 1].fiscal_year_label);
+}
+
 export function AwardKey({ result }: { result: DeckResult }) {
-  const groups = [...new Set(rowsOf(result).map((row) => row.dataset))];
+  const rows = rowsOf(result);
+  const groups = [...new Set(rows.map((row) => row.dataset))];
   return (
     <ul className="flex flex-wrap gap-x-4 gap-y-1 text-caption text-chart-text" data-chart-key>
       {groups.map((group, index) => (
         <li key={group} className={`flex items-center gap-2 font-semibold ${INKS[index % INKS.length]}`}>
           <span aria-hidden="true" className={`inline-block size-3 ${SWATCHES[index % SWATCHES.length]}`} />
-          {group}
+          {keyName(rows, group)}
         </li>
       ))}
     </ul>
@@ -49,13 +57,17 @@ export function AwardChart({
   height,
   labelledById,
   describedById,
+  fluid = false,
 }: {
   result: DeckResult;
   gap: { start: number; end: number } | null;
+  // The drawing's size in its own units. A fluid chart scales to its card's width, keeping its shape, so it never
+  // runs out of its card; otherwise it is drawn at this size and its frame scrolls.
   width: number;
   height: number;
   labelledById: string;
   describedById: string;
+  fluid?: boolean;
 }) {
   const rows = rowsOf(result);
   const groups = [...new Set(rows.map((row) => row.dataset))];
@@ -71,7 +83,16 @@ export function AwardChart({
   const slot = (right - left) / (last - first + 1);
   const x = (year: number) => left + (year - first) * slot;
   return (
-    <svg role="img" aria-labelledby={labelledById} aria-describedby={describedById} width={width} height={height} className="block tabular-nums" data-award-chart>
+    <svg
+      role="img"
+      aria-labelledby={labelledById}
+      aria-describedby={describedById}
+      viewBox={`0 0 ${width} ${height}`}
+      width={fluid ? undefined : width}
+      height={fluid ? undefined : height}
+      className={fluid ? "block h-auto w-full tabular-nums" : "block tabular-nums"}
+      data-award-chart
+    >
       {marks.map((tick) => (
         <g key={tick}>
           {tick > 0 && <line x1={left} x2={right} y1={bottom - tick * scale} y2={bottom - tick * scale} className="stroke-chart-grey200" strokeDasharray="4 4" />}

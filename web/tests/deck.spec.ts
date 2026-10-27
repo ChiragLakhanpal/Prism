@@ -328,8 +328,34 @@ test("the deck the App serves says on each slide what is not measured yet, and p
     [!data.results["azure-spend"].measured, "spend", s.spend.noSpend],
   ];
   for (const [, id, sentence] of unmeasured.filter(([missing]) => missing)) await expect(text(id), id).toContainText(sentence);
+  // A test that has not run is described as planned, never in the past tense as if it had run.
+  if (!data.results["hindsight-caught"].measured) {
+    await expect(text("hindsight")).not.toContainText(s.hindsight.method.split("{coders}")[0]);
+    await expect(text("hindsight")).toContainText(s.hindsight.methodPlanned.split("{coders}")[0]);
+  }
   expect(numberCheck(pieces)).toEqual([]);
   expect(unknownKeys(sourceKeys(pieces), data)).toEqual([]);
+});
+
+test("the award gap chart sits whole inside its card, clear of the points beside it, and its key names only the years it draws", async ({ page }) => {
+  await present(page, 1);
+  const gap = await numberOf(page, "gap");
+  await page.goto(`/present/${gap}`);
+  const slide = slideById(page, "gap");
+  const card = (await slide.locator("figure[data-chart]").boundingBox())!;
+  const chart = (await slide.locator("[data-award-chart]").boundingBox())!;
+  expect(chart.x).toBeGreaterThanOrEqual(card.x);
+  expect(chart.x + chart.width).toBeLessThanOrEqual(card.x + card.width);
+  expect(chart.y + chart.height).toBeLessThanOrEqual(card.y + card.height);
+  // The points and the link beside the chart start right of the card.
+  for (const box of await slide.locator("[data-step], a").evaluateAll((items) => items.map((item) => item.getBoundingClientRect().left))) {
+    expect(box).toBeGreaterThanOrEqual(card.x + card.width);
+  }
+  // The key's names hold no fiscal years the chart does not draw.
+  const data = JSON.parse(await recorded("deck-data.json")) as DeckData;
+  const drawn = (data.results["award-rows-by-year"].series ?? []).map((row) => Number(row.fiscal_year));
+  const named = [...(await slide.locator("[data-chart-key]").innerText()).matchAll(/FY(\d{2,4})/g)].map((found) => Number(found[1]));
+  for (const year of named) expect(drawn.some((one) => one % 100 === year % 100), `FY${year}`).toBe(true);
 });
 
 test("the demo slides open Strata's own screens from the examples registry in a new tab, and the answer demo copies its question", async ({ page, context }) => {
@@ -368,7 +394,9 @@ test("below the size of the canvas the deck is a page that reflows, with every s
   expect((await scan(page)).violations.map((found) => found.id)).toEqual([]);
 });
 
-test("the ladder slide's showcase is the ground truth's: ISR 7's date and rating, and the ICR's date, paragraph and PDF page", async ({ page }) => {
+// The literal values a test may assert, by id, each with its source document and page (tests/ground_truth/values.toml).
+type Fact = { value: string; paragraph?: number; pdf_page?: number; date: string };
+function groundTruth(): Record<string, Fact> {
   const read = spawnSync(
     "python3",
     [
@@ -378,7 +406,11 @@ test("the ladder slide's showcase is the ground truth's: ISR 7's date and rating
     ],
     { encoding: "utf8", timeout: 30_000 },
   );
-  const facts = JSON.parse(read.stdout) as Record<string, { value: string; paragraph?: number; pdf_page?: number; date: string }>;
+  return JSON.parse(read.stdout) as Record<string, Fact>;
+}
+
+test("the ladder slide's showcase is the ground truth's: ISR 7's date and rating, and the ICR's date, paragraph and PDF page", async ({ page }) => {
+  const facts = groundTruth();
   await present(page, 1);
   await page.goto(`/present/${await numberOf(page, "ladder")}`);
   const slide = slideById(page, "ladder");
@@ -386,6 +418,44 @@ test("the ladder slide's showcase is the ground truth's: ISR 7's date and rating
   expect(text).toContain(`Report 7, P130164, ${formatDate(facts["isr-7-date"].value)};`);
   expect(text).toContain(`rated progress toward the objective ${facts["isr-7-rating"].value} in August 2016`);
   expect(text).toContain(`Report, P130164, ${formatDate(facts["icr-date"].value)}, paragraph ${facts["icr-para-78"].paragraph}, page ${facts["icr-para-78"].pdf_page}.`);
+});
+
+// The recorded answer to the answer demo's question (the smoke question), as the agent streamed it: its sentences, the
+// evidence they cite and the verifier's counts.
+async function recordedAnswer() {
+  const events = (await recorded("ask-p130164-rebidding.sse"))
+    .split("\n\n")
+    .map((block) => ({ event: /^event: (.*)$/m.exec(block)?.[1], data: /^data: (.*)$/m.exec(block)?.[1] }))
+    .filter((found) => found.event && found.data)
+    .map((found) => ({ event: found.event!, data: JSON.parse(found.data!) }));
+  const of = (name: string) => events.filter((found) => found.event === name).map((found) => found.data);
+  type Source = { document_type: string; paragraph: string; pdf_page: number; document_date: string };
+  return {
+    evidence: of("evidence").map((found) => found.row.source as Source),
+    checks: of("checks")[0] as { sentences: { removed: number }; quotes: { total: number; found: number } },
+  };
+}
+
+test("the answer demo claims only what the recorded answer shows: the paragraph it cites, on its page, and quotes the verifier found; its source line is the ground truth's", async ({ page }) => {
+  const facts = groundTruth();
+  const answer = await recordedAnswer();
+  await present(page, 1);
+  await page.goto(`/present/${await numberOf(page, "demo-answer")}`);
+  const slide = slideById(page, "demo-answer");
+  const text = (await slide.innerText()).replace(/\s+/g, " ");
+  // The source line: the completion report's date, and paragraph 54 on its PDF page, as values.toml records them.
+  const para = facts["icr-para-54"];
+  expect(text).toContain(`Report, P130164, ${formatDate(facts["icr-date"].value)}, paragraph ${para.paragraph}, page ${para.pdf_page}.`);
+  // The paragraph the slide says one click opens is the one the recorded answer cites first, on the same page.
+  expect(answer.evidence[0]).toMatchObject({ paragraph: String(para.paragraph), pdf_page: para.pdf_page });
+  expect(text).toContain(`paragraph ${answer.evidence[0].paragraph}, on page ${answer.evidence[0].pdf_page}`);
+  // The verifier found every quote on its page and removed no sentence, which the slide's last line says.
+  expect(answer.checks.quotes.total).toBeGreaterThan(0);
+  expect(answer.checks.quotes.found).toBe(answer.checks.quotes.total);
+  expect(answer.checks.sentences.removed).toBe(0);
+  // The slide names no document the recorded answer does not cite: every source it cites is the completion report.
+  expect(new Set(answer.evidence.map((source) => source.document_type))).toEqual(new Set(["Implementation Completion and Results Report"]));
+  expect(text).not.toContain("Independent Evaluation Group");
 });
 
 test("a deck that cannot load says so on the stage with a way to try again", async ({ page }) => {
