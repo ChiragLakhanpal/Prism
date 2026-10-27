@@ -700,6 +700,34 @@ def test_a_quote_with_straight_quote_marks_matches_a_page_with_curly_ones(fixtur
         "shall be subject to the World Bank\u2019s prior review")
 
 
+def test_a_quote_that_starts_a_sentence_with_a_capital_matches_a_page_that_has_a_small_letter_there(fixture_db):
+    """The ICR's paragraph 54 reads "...is that the works contract estimates should have been based on the market
+    rate..." (tests/ground_truth/values.toml, icr-para-54). A quote that starts the reader's sentence takes a capital,
+    as "[T]he" does in print, and the live agent wrote it so on October 27, 2026 (ticket 109): it is still word for
+    word, and its highlight covers the page's own words. Any other change of letters is not: "108 OF 328 CASES" is
+    removed."""
+    words = "The works contract estimates should have been based on the market rate"
+    shouted = "108 OF 328 CASES"
+    agent = CallsThenAnswers(
+        [("search_passages", {"query": "works contracts advertised again rebidding", "project_id": "P130164",
+                              "as_of": "2026-10-23"})],
+        lambda outputs: [claim(f'The ICR says "{words}".', kind="quote", evidence_ids=[ICR_54],
+                               quote={"text": words, "passage_id": ICR_54}),
+                         claim(f'The ICR says "{shouted}" had to go through rebidding.', kind="quote",
+                               evidence_ids=[ICR_54], numbers=["108", "328"],
+                               quote={"text": shouted, "passage_id": ICR_54})])
+
+    parsed = ask_with_tools(fixture_db, agent, load_tools())
+
+    assert [sentence["text"] for sentence in of(parsed, "sentence")] == [f'The ICR says "{words}".']
+    assert removed_reasons(parsed) == [[("quote_not_on_page", ICR_54)]]
+    [evidence] = of(parsed, "evidence")
+    [highlight] = evidence["highlights"]
+    assert (evidence["id"], evidence["row"]["paragraph"]) == (ICR_54, "54")
+    assert evidence["row"]["text"][highlight["start"]:highlight["end"]] == (
+        "the works contract estimates should have been based on the market rate")
+
+
 def test_a_number_word_inside_a_step_value_of_a_cited_row_is_part_of_its_name(fixture_db):
     """"Two" in STEP's market approach "Single Stage - Two Envelope" is a name, not a count, whether or not
     the sentence quotes it. A number word in lower case is a count even when a value holds it beside the
