@@ -6,6 +6,7 @@ import { readFile } from "node:fs/promises";
 import { scan } from "./axe";
 import type { Locator, Page } from "@playwright/test";
 import { expect, test, windowBeside } from "./mocked";
+import { fontsLoaded } from "./settled";
 
 async function axe(page: Page) {
   await page.waitForFunction(() =>
@@ -807,15 +808,17 @@ for (const [how, handle] of Object.entries(HANDLE)) {
 
 test("the Plan check page shows the plan check at the page's full width, so its columns fit as they do on Check a plan", async ({ page }) => {
   await page.goto("/gallery/plan-check");
-  await page.evaluate(() => document.fonts.ready);
   for (const width of [1024, 1440]) {
     // Each width is a page area: beside the sidebar (ticket 92) the window is wider.
     await page.setViewportSize({ width: windowBeside(width), height: 900 });
     const table = page.locator("[data-state-section=ready] [data-view=table]");
     await expect(table).toBeVisible();
+    // The cells are measured in Open Sans and Roboto Mono, once the page has laid out at the new width. fonts.ready
+    // alone resolved at once while the gallery had not asked for a font yet, and a busy computer drew a frame late.
+    await fontsLoaded(page);
     // The page's margin follows the window (ticket 94): 32 px in the 1088 px window, so the page's 12 columns are 960 px;
     // 40 px in the 1664 px window, which leaves 1360 px, and content stops at 1280 px.
-    expect(Math.round((await table.boundingBox())!.width), `${width} px`).toBe(width === 1024 ? 960 : 1280);
+    await expect.poll(async () => Math.round((await table.boundingBox())!.width), { message: `${width} px` }).toBe(width === 1024 ? 960 : 1280);
     // No cell's text runs past its content box.
     const overflow = await page.evaluate(() =>
       Array.from(document.querySelectorAll("[data-view=table] th, [data-view=table] td")).flatMap((cell) => {

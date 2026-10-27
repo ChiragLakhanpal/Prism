@@ -31,6 +31,12 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: true,
   retries: 0,
+  // The gate runs these tests beside other builds, at load averages of 20 to 40 and once near 140 (ticket 56).
+  // There a first page load took longer than the 30-second test timeout, and a heading longer than the 5 seconds an
+  // expect waited by default. So a test may take a minute and an expect waits 15 seconds. A test that passes
+  // takes no longer for it, and a check that fails still fails.
+  timeout: 60_000,
+  expect: { timeout: 15_000 },
   reporter: [["line"]],
   // vite preview gzips each file it sends to a browser that accepts gzip, which cost the server about
   // 30 ms of processor time on each load of the app's 1 MB script, and the browser more to unzip it.

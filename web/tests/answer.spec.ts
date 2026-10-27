@@ -9,6 +9,7 @@ import { readEvents } from "../src/lib/sse";
 import { askFromTheBox, box, drawer, ICR_54, landed, marker, open, panel, QUESTION } from "./answer-page";
 import type { Page } from "@playwright/test";
 import { expect, recorded, test } from "./mocked";
+import { animationsDone } from "./settled";
 
 const META =
   "Implementation Completion and Results Report · Rajasthan Road Sector Modernization (P130164) · October 10, 2019 · Section III.B · ¶54 · PDF page 23 of 66";
@@ -274,10 +275,11 @@ test("below 768 px the drawer is a full-screen sheet, and the page behind it is 
     .toEqual([0, 0, 390, 900]);
   await expect(page.locator("[data-page-column]")).toHaveAttribute("inert", "");
   await expect(drawer(page).getByRole("heading", { level: 2 })).toBeFocused();
-  // Rounded, as the sheet's place is above: the sheet may still be settling its last fraction of a pixel, and a
-  // box measured mid-slide comes back as 44.0000019 (ticket 90's sheet slides on a transition).
+  // Measured once the sheet's slide has ended (ticket 90's sheet slides on a transition), so the size is exact: a box
+  // measured mid-slide came back as 44.0000019, and rounding it would also pass a 43.6 px button (ticket 56).
+  await animationsDone(page);
   const close = (await drawer(page).getByRole("button", { name: "Close the source" }).boundingBox())!;
-  expect([close.width, close.height].map(Math.round)).toEqual([44, 44]);
+  expect([close.width, close.height]).toEqual([44, 44]);
 
   await page.keyboard.press("Escape");
   await expect(drawer(page)).toHaveCount(0);
@@ -695,7 +697,8 @@ test("a new question closes the drawer the old answer opened, and tints no sente
   await expect.poll(() => seen.asked.length).toBe(2);
   await landed(page);
   await expect(drawer(page)).toHaveCount(0);
-  expect(new URL(page.url()).searchParams.get("evidence")).toBeNull();
+  // The address drops the source once the drawer has closed, which a busy computer can draw a frame later.
+  await expect.poll(() => new URL(page.url()).searchParams.get("evidence")).toBeNull();
   await expect(panel(page).locator("[data-sentence-text].bg-tint")).toHaveCount(0);
   await expect(marker(page, 1)).toHaveAttribute("aria-expanded", "false");
 });
