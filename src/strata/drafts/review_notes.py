@@ -84,10 +84,37 @@ def message(facts: Facts, language: str = "en") -> dict:
             "activities": facts.rows}
 
 
+PROJECT_SOURCE = "projects_api"  # the source line a draft's footnote gives the project record (files.Say.source)
+
+
+def _project_record(facts: Facts) -> dict:
+    """check_plan's record of the project, with the source line its footnote names: the projects API's record of
+    the date the record gives, which holds the project's closing date."""
+    project = facts.result["project"]
+    return {**project, "source": {"source_key": PROJECT_SOURCE, "project_id": project["project_id"],
+                                  "document_date": project.get("record_date")}}
+
+
+def cited_rows(facts: Facts) -> list[tuple[dict, str]]:
+    """Every record a note may cite, with the tool that returned it: the rows with a signal, and the project record,
+    which the reasons about the closing date name beside the row (ticket 35's verify round 4, F1)."""
+    return [*((row, TOOL) for row in facts.rows), (_project_record(facts), TOOL)]
+
+
+def _reason_ids(row: dict) -> list[str]:
+    """The evidence ids a row's mark reasons name, the row's own first: the project record for its closing date."""
+    named = [evidence for mark in row["marks"] for reason in mark.get("reasons") or () for evidence in
+             reason.get("evidence_ids") or ()]
+    return list(dict.fromkeys([row["evidence_id"], *named]))
+
+
 def items(facts: Facts) -> list[dict]:
-    """One item per note, in order: its activity, the row a note may cite, and the row's signal."""
-    return [{"key": row[KEY], "evidence_id": row["evidence_id"], "description": row["description"],
-             "mark": _signal(row)} for row in facts.rows]
+    """One item per note, in order: its activity, the row a note may cite with the records its reasons name, each of
+    which a sentence may cite for the values it holds and which gets a footnote of its own, and the row's signal."""
+    held = {row["evidence_id"] for row, _ in cited_rows(facts)}
+    return [{"key": row[KEY], "evidence_id": row["evidence_id"],
+             "evidence_ids": [evidence for evidence in _reason_ids(row) if evidence in held],
+             "description": row["description"], "mark": _signal(row)} for row in facts.rows]
 
 
 def subject(facts: Facts) -> dict:

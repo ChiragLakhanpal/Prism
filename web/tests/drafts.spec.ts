@@ -322,9 +322,9 @@ test("the draft's notes cite their plan rows, and the bar says what exporting do
   const sentence = await draftBarSentence();
   expect(sentence.endsWith(CONSEQUENCE)).toBe(true);
   await expect(bar(page).locator("[data-bar-lead]")).toHaveText(
-    `${sentence} You opened 0 of 3 sources. Mark the notes as checked before you export them.`,
+    `${sentence} You opened 0 of 4 sources. Mark the notes as checked before you export them.`,
   );
-  await expect(page.locator("[data-sources-caption]")).toHaveText("You opened 0 of 3. In the Word file, each of the 6 citations becomes a footnote.");
+  await expect(page.locator("[data-sources-caption]")).toHaveText("You opened 0 of 4. In the Word file, each of the 7 citations becomes a footnote.");
   await expect(page).toHaveTitle("Review notes on the Northern Water Works Development Agency plan of Oct 9, 2026 | Strata");
 });
 
@@ -364,7 +364,7 @@ test("opening a source counts it in the bar and the Sources list at once, and th
   await notes(page).locator("[data-citation='2']").first().click();
 
   await expect(page.getByRole("dialog")).toBeVisible();
-  await expect(bar(page).locator("[data-opened-link]")).toHaveText("You opened 1 of 3 sources");
+  await expect(bar(page).locator("[data-opened-link]")).toHaveText("You opened 1 of 4 sources");
   await expect(page.locator("[data-source-item$='KE-NWWDA-229129-CW-RFB'] [data-opened]")).toHaveText("You opened this.");
   expect(asked).toContain("POST /api/evidence/opened");
   // Ticket 94: from a frame of 1200 px the column keeps to columns 1 to 7 of the frame (FRAME_COLUMN below), so the
@@ -547,13 +547,13 @@ test("Export downloads the Word file, ends on a success that names it and its fo
   await bar(page).getByRole("button", { name: "Export to Word" }).click();
 
   expect((await downloaded).suggestedFilename()).toBe(WORD);
-  const heading = page.getByRole("heading", { name: "Exported. I made a Word file with 6 footnotes and an evidence pack." });
+  const heading = page.getByRole("heading", { name: "Exported. I made a Word file with 7 footnotes and an evidence pack." });
   await expect(heading).toBeFocused();
   await expect(page.locator("[data-export-success]")).toContainText(
-    "The evidence pack lists all 3 sources and whether you opened each one. Your browser downloaded the Word file, and the " +
+    "The evidence pack lists all 4 sources and whether you opened each one. Your browser downloaded the Word file, and the " +
       "evidence pack's files are below. I keep all three with this draft for your team. I sent nothing to anyone.",
   );
-  await expect(page.getByRole("link", { name: `${WORD}, Word file, 6 footnotes` })).toHaveAttribute("download", WORD);
+  await expect(page.getByRole("link", { name: `${WORD}, Word file, 7 footnotes` })).toHaveAttribute("download", WORD);
   await expect(page.getByRole("link", { name: /evidence-pack\.pdf, Evidence pack, PDF$/ })).toBeVisible();
   await expect(page.getByRole("link", { name: /evidence-pack\.csv, Evidence pack, CSV$/ })).toBeVisible();
   await expect(page.locator("[aria-current=step]")).toHaveText("Exported");
@@ -879,8 +879,8 @@ test("the notes are a table on a wide column, and cards below 560 px of column, 
       return 0;
     }, words);
   expect(await lines("no-objection")).toBe(1);
-  await expect(bar(page).locator("[data-opened-link]")).toHaveText("You opened 1 of 3 sources");
-  expect(await lines("You opened 1 of 3 sources")).toBe(1);
+  await expect(bar(page).locator("[data-opened-link]")).toHaveText("You opened 1 of 4 sources");
+  expect(await lines("You opened 1 of 4 sources")).toBe(1);
 });
 
 test("the draft pages have no WCAG 2.2 AA violations at 1440, 1024 and 390 px", async ({ page }) => {

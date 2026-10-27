@@ -58,7 +58,7 @@
         },
         {
           "index": 1,
-          "text": "Its planned completion of July 31, 2026, first published in the plan of March 5, 2026, has passed with no signed contract.",
+          "text": "Its planned completion of July 31, 2026 has passed with no signed contract.",
           "kind": "record",
           "evidence_ids": [
             "strata.silver.plan_rows:40132287/KE-NWWDA-541055-CW-RFB"
@@ -67,10 +67,6 @@
           "dates": [
             {
               "text": "July 31, 2026",
-              "evidence_id": "strata.silver.plan_rows:40132287/KE-NWWDA-541055-CW-RFB"
-            },
-            {
-              "text": "March 5, 2026",
               "evidence_id": "strata.silver.plan_rows:40132287/KE-NWWDA-541055-CW-RFB"
             }
           ],
@@ -291,8 +287,8 @@
       "matched": 5
     },
     "dates": {
-      "total": 5,
-      "matched": 4
+      "total": 4,
+      "matched": 3
     },
     "quotes": {
       "total": 0,
@@ -303,8 +299,8 @@
       "returned": 3
     },
     "checked": {
-      "total": 11,
-      "matched": 9
+      "total": 10,
+      "matched": 8
     },
     "shown": {
       "numbers": {
@@ -312,8 +308,8 @@
         "matched": 5
       },
       "dates": {
-        "total": 4,
-        "matched": 4
+        "total": 3,
+        "matched": 3
       },
       "quotes": {
         "total": 0,
@@ -347,7 +343,9 @@
     "tools": [
       "check_plan"
     ],
-    "cited_only": []
+    "cited_only": [
+      "get_lessons"
+    ]
   },
   "checks_count": 6,
   "removed": [

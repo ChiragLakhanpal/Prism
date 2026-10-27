@@ -457,7 +457,9 @@
     "tools": [
       "check_plan"
     ],
-    "cited_only": []
+    "cited_only": [
+      "get_lessons"
+    ]
   },
   "checks_count": 6,
   "removed": [],

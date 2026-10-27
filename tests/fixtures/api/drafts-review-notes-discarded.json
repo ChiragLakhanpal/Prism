@@ -62,7 +62,7 @@
         },
         {
           "index": 1,
-          "text": "Its planned completion of July 31, 2026, first published in the plan of March 5, 2026, has passed with no signed contract.",
+          "text": "Its planned completion of July 31, 2026 has passed with no signed contract.",
           "kind": "record",
           "evidence_ids": [
             "strata.silver.plan_rows:40132287/KE-NWWDA-541055-CW-RFB"
@@ -71,10 +71,6 @@
           "dates": [
             {
               "text": "July 31, 2026",
-              "evidence_id": "strata.silver.plan_rows:40132287/KE-NWWDA-541055-CW-RFB"
-            },
-            {
-              "text": "March 5, 2026",
               "evidence_id": "strata.silver.plan_rows:40132287/KE-NWWDA-541055-CW-RFB"
             }
           ],
@@ -156,7 +152,8 @@
           "text": "The plan still lists this activity as Pending Implementation, with an Actual Amount of 0.00, and the project closes on October 31, 2026.",
           "kind": "record",
           "evidence_ids": [
-            "strata.silver.plan_rows:40132287/KE-NWWDA-541062-CW-RFQ"
+            "strata.silver.plan_rows:40132287/KE-NWWDA-541062-CW-RFQ",
+            "strata.gold.project:P156634"
           ],
           "numbers": [
             {
@@ -373,6 +370,29 @@
         "listed": null
       },
       "highlights": []
+    },
+    "strata.gold.project:P156634": {
+      "id": "strata.gold.project:P156634",
+      "kind": "record",
+      "tool": "check_plan",
+      "stratum": "What",
+      "short_name": null,
+      "row": {
+        "evidence_id": "strata.gold.project:P156634",
+        "public_from": "2024-04-24",
+        "project_id": "P156634",
+        "project_name": "Water and Sanitation Development Project",
+        "status": "Active",
+        "closing_date": "2026-10-31",
+        "record_date": "2024-04-24",
+        "days_to_close": 8,
+        "source": {
+          "source_key": "projects_api",
+          "project_id": "P156634",
+          "document_date": "2024-04-24"
+        }
+      },
+      "highlights": []
     }
   },
   "checks": {
@@ -394,20 +414,20 @@
       "matched": 6
     },
     "dates": {
-      "total": 7,
-      "matched": 7
+      "total": 6,
+      "matched": 6
     },
     "quotes": {
       "total": 0,
       "found": 0
     },
     "sources": {
-      "total": 3,
-      "returned": 3
+      "total": 4,
+      "returned": 4
     },
     "checked": {
-      "total": 13,
-      "matched": 13
+      "total": 12,
+      "matched": 12
     },
     "shown": {
       "numbers": {
@@ -415,8 +435,8 @@
         "matched": 6
       },
       "dates": {
-        "total": 7,
-        "matched": 7
+        "total": 6,
+        "matched": 6
       },
       "quotes": {
         "total": 0,
@@ -450,7 +470,9 @@
     "tools": [
       "check_plan"
     ],
-    "cited_only": []
+    "cited_only": [
+      "get_lessons"
+    ]
   },
   "checks_count": 6,
   "removed": [],
@@ -481,12 +503,21 @@
       ],
       "opened": false,
       "last_opened_at": null
+    },
+    {
+      "evidence_id": "strata.gold.project:P156634",
+      "number": 4,
+      "cited_in": [
+        "KE-NWWDA-541062-CW-RFQ"
+      ],
+      "opened": false,
+      "last_opened_at": null
     }
   ],
-  "citations": 6,
+  "citations": 7,
   "opened": {
     "count": 0,
-    "of": 3
+    "of": 4
   },
   "layout": {
     "columns": [

@@ -553,7 +553,9 @@
         "find_comparables",
         "get_lessons"
       ],
-      "cited_only": []
+      "cited_only": [
+        "get_lessons"
+      ]
     },
     "checks_count": 6,
     "removed": [],

@@ -159,10 +159,21 @@ def test_draft_review_notes_writes_a_note_on_each_activity_with_a_signal_each_ci
     assert draft_id is not None
     draft = call(app, "GET", f"/api/drafts/{draft_id}", ANA).json()
     assert [note["activity_reference_no"] for note in draft["notes"]] == MARKED
+    project = CHECKED["project"]["evidence_id"]
     for note in draft["notes"]:
         cited = {evidence for sentence in note["sentences"] for evidence in sentence["evidence_ids"]}
         assert note["state"] == "written" and note["sentences"]
-        assert cited == {ROW_OF[note["activity_reference_no"]]}
+        # Each note cites its own row, and the records its row's reasons name (ticket 61): the project record, for
+        # the closing date that KE-NWWDA-541062-CW-RFQ's reason states.
+        assert cited == {ROW_OF[note["activity_reference_no"]]} | (
+            {project} if note["activity_reference_no"] == "KE-NWWDA-541062-CW-RFQ" else set())
+    closing = next(sentence for note in draft["notes"] for sentence in note["sentences"]
+                   if "the project closes on October 31, 2026" in sentence["text"])
+    assert closing["evidence_ids"] == [ROW_OF["KE-NWWDA-541062-CW-RFQ"], project]
+    assert closing["dates"] == [{"text": "October 31, 2026", "evidence_id": ROW_OF["KE-NWWDA-541062-CW-RFQ"]}]
+    assert draft["evidence"][project]["row"]["closing_date"] == "2026-10-31"
+    # No sentence states the date of another plan version, which no footnote of this plan's could point at.
+    assert not [sentence for note in draft["notes"] for sentence in note["sentences"] if "March 5" in sentence["text"]]
     # Every sentence the writer wrote passed the checks the verifier runs, and none was removed.
     checks = draft["checks"]
     assert checks["sentences"]["kept"] == checks["sentences"]["written"] and checks["sentences"]["removed"] == 0
@@ -202,11 +213,27 @@ def test_a_note_sentence_its_row_does_not_support_and_advice_with_no_lesson_are_
     assert (checks["judge"]["called"], checks["judge"]["judged"], checks["judge"]["followed"]) == (True, 2, 1)
     # The evidence pack's check line, which the draft page writes word for word, says a model judged one sentence.
     assert files.check_line(checks, load_draft_kinds().kinds["review_notes"]) == (
-        "Checked: 6 of 6 numbers match records; 4 of 4 dates match records. "
+        "Checked: 6 of 6 numbers match records; 3 of 3 dates match records. "
         "Judged by a model: 1 of 1 sentence follows from its sources. "
         "The other five needed no model, because everything they stated matched a record or a page. "
         "Not checked: whether the plan's published records are complete, "
         "or whether these notes are what you would tell the borrower.")
+
+
+def test_the_draft_s_check_line_names_a_cited_only_tool_only_once_a_sentence_on_screen_cites_it(drafting):
+    """Ticket 24's review round 3, follow-up 7: a tool whose "Not checked" clause applies only once a sentence cites
+    it (config/tools.toml, not_checked_when = "cited", get_lessons) is named in the draft's checks as in an answer's,
+    and the evidence pack's check line follows the page's rule (notCheckedFor in web/src/components/Checks.tsx)."""
+    app = drafting()
+    _, draft_id = draft_review_notes(app)
+    checks = call(app, "GET", f"/api/drafts/{draft_id}", ANA).json()["checks"]
+    kind = load_draft_kinds().kinds["review_notes"]
+    clause = files.words()["checkLine"]["notCheckedClauses"]["get_lessons"]
+
+    assert checks["cited_only"] == ["get_lessons"]
+    ran = {**checks, "tools": [*checks["tools"], "get_lessons"]}
+    assert clause not in files.check_line(ran, kind)
+    assert clause in files.check_line({**ran, "cited_tools": [*checks["cited_tools"], "get_lessons"]}, kind)
 
 
 def test_a_note_sentence_that_cites_nothing_is_removed_and_never_saved(drafting):
@@ -507,9 +534,11 @@ def test_you_opened_counts_the_distinct_cited_sources_this_viewer_opened_since_t
     clock.move(minutes=1)
     _, draft_id = draft_review_notes(app)
     fresh = call(app, "GET", f"/api/drafts/{draft_id}", ANA).json()
-    # One source per note: each note cites its own plan row (check_plan's recorded answer).
-    assert fresh["opened"] == {"count": 0, "of": len(MARKED)}
-    assert [entry["evidence_id"] for entry in fresh["sources"]] == [ROW_OF[ref] for ref in MARKED]
+    # Each note cites its own plan row (check_plan's recorded answer), and the closing date's note also the project
+    # record its reason names (ticket 61).
+    assert fresh["opened"] == {"count": 0, "of": len(MARKED) + 1}
+    assert [entry["evidence_id"] for entry in fresh["sources"]] == [ROW_OF[ref] for ref in MARKED] + [
+        CHECKED["project"]["evidence_id"]]
 
     clock.move(minutes=1)
     open_source(app, ROW_OF[MARKED[1]])
@@ -517,12 +546,12 @@ def test_you_opened_counts_the_distinct_cited_sources_this_viewer_opened_since_t
     open_source(app, ROW_OF[MARKED[2]], headers=BEN)  # a teammate's open counts for the teammate only
 
     mine = call(app, "GET", f"/api/drafts/{draft_id}", ANA).json()
-    assert mine["opened"] == {"count": 1, "of": 3}
-    assert [entry["opened"] for entry in mine["sources"]] == [False, True, False]
-    assert call(app, "GET", f"/api/drafts/{draft_id}", BEN).json()["opened"] == {"count": 1, "of": 3}
+    assert mine["opened"] == {"count": 1, "of": 4}
+    assert [entry["opened"] for entry in mine["sources"]] == [False, True, False, False]
+    assert call(app, "GET", f"/api/drafts/{draft_id}", BEN).json()["opened"] == {"count": 1, "of": 4}
     # The Drafts tab gives the author the same count on their own draft to check.
     [row] = call(app, "GET", "/api/drafts", ANA).json()["groups"]["to_check"]
-    assert row["opened"] == {"count": 1, "of": 3}
+    assert row["opened"] == {"count": 1, "of": 4}
 
 
 # ── The Drafts tab ───────────────────────────────────────────────────────
@@ -550,7 +579,7 @@ def test_the_drafts_tab_lists_only_the_author_s_team_s_drafts_under_to_check_che
     assert teammate["counts"] == {"to_check": 1, "checked": 1, "exported": 1}
     # Only the author's own drafts to check carry the opened count, and only the author sees what they discarded.
     assert [row["opened"] for row in teammate["groups"]["to_check"]] == [None]
-    assert [row["opened"] for row in author["groups"]["to_check"]] == [{"count": 0, "of": 3}]
+    assert [row["opened"] for row in author["groups"]["to_check"]] == [{"count": 0, "of": 4}]
     assert ([row["draft_id"] for row in author["discarded"]], teammate["discarded"]) == ([fourth], [])
     assert (outsider["total"], outsider["groups"]) == (0, {"to_check": [], "checked": [], "exported": []})
     row = author["groups"]["checked"][0]
