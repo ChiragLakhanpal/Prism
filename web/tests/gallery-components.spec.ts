@@ -5,8 +5,7 @@
 import { readFile } from "node:fs/promises";
 import { scan } from "./axe";
 import type { Locator, Page } from "@playwright/test";
-import { expect, test } from "./mocked";
-
+import { expect, test, windowBeside } from "./mocked";
 
 async function axe(page: Page) {
   await page.waitForFunction(() =>
@@ -248,7 +247,8 @@ test("nothing in a table moves when its rows arrive: columns, rows and cards kee
     return { width: Math.round(found.width), height: Math.round(found.height) };
   };
 
-  await page.setViewportSize({ width: 1440, height: 900 });
+  // A 1440 px page area: beside the open sidebar (ticket 92) the window is wider.
+  await page.setViewportSize({ width: windowBeside(1440), height: 900 });
   await page.goto("/gallery/table");
   // The gallery loads through a dynamic import and evaluateAll does not wait, so wait for both
   // tables before measuring them.
@@ -329,7 +329,8 @@ test("a table turns into cards below 768 px, or below 1024 px with cardsBelow lg
   ];
   await expect(page.locator("[data-state-section=cards-below-lg] [data-table=ready]")).toBeVisible();
   for (const [width, md, lg] of expected) {
-    await page.setViewportSize({ width, height: 900 });
+    // Each width is a page area: beside the sidebar (ticket 92) the window is wider.
+    await page.setViewportSize({ width: windowBeside(width), height: 900 });
     expect(await shown("ready"), `default at ${width} px`).toEqual([md]);
     expect(await shown("cards-below-lg"), `lg at ${width} px`).toEqual([lg]);
   }
@@ -806,7 +807,8 @@ test("the Plan check page shows the plan check at the page's full width, so its 
   await page.goto("/gallery/plan-check");
   await page.evaluate(() => document.fonts.ready);
   for (const width of [1024, 1440]) {
-    await page.setViewportSize({ width, height: 900 });
+    // Each width is a page area: beside the sidebar (ticket 92) the window is wider.
+    await page.setViewportSize({ width: windowBeside(width), height: 900 });
     const table = page.locator("[data-state-section=ready] [data-view=table]");
     await expect(table).toBeVisible();
     // The frame's margin is 72 px from 1024 px, so the page's 12 columns are the width less 144 px.

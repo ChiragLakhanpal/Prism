@@ -10,6 +10,8 @@ import { useState, type ReactNode } from "react";
 import logo from "../assets/world-bank-logo.svg";
 import { BoxBand, FreshnessStamp, OneBox } from "../components/BoxBand";
 import { Frame } from "../components/Frame";
+import type { SubItems } from "../components/sections";
+import { Sidebar, type Rest } from "../components/Sidebar";
 import { STAFF_MODE, TopNav, type NavMode, type Section, type Viewer } from "../components/TopNav";
 import { copy } from "../copy";
 import { cx } from "../lib/cx";
@@ -28,8 +30,11 @@ function Box() {
 }
 
 // The bar's sample views (ticket 40): World Bank staff, an implementing agency officer in their own view, each preview.
-// The tabs here are a sample; in the app they come from the roles file through GET /api/me.
+// The sections and hidden pages here are a sample; in the app they come from the roles file through GET /api/me.
 const PUBLIC_TABS: Section[] = ["projects", "lessons", "data"];
+const REVIEWER_PAGES = ["lessonsQueue", "lessonReview", "lessonsReports", "passageReport", "lessonsJudging", "judgingQuery"];
+const PUBLIC_HIDDEN = ["packages", "drafts", "following", ...REVIEWER_PAGES];
+const OFFICER_HIDDEN = ["following", ...REVIEWER_PAGES];
 
 export function sampleMode(pill: string | null): NavMode {
   const agency = copy.view.agencyInSentence(galleryCopy.sampleAgency, galleryCopy.sampleAgencyShort);
@@ -42,9 +47,22 @@ export function sampleMode(pill: string | null): NavMode {
     offered: officer ? ["piu", "public"] : ["staff", "piu", "public"],
     agency,
     tabs: preview === "public" ? PUBLIC_TABS : STAFF_MODE.tabs,
+    hidden: preview === "public" ? PUBLIC_HIDDEN : preview === "piu" || officer ? OFFICER_HIDDEN : [],
     pathname: "/gallery/navigation",
   };
 }
+
+// A section's own pages under its item while it is current (ticket 92's slot): a sample of what the tab tickets add.
+const SAMPLE_SUB_ITEMS: SubItems = {
+  projects: [
+    { page: "following", label: copy.projectsTabs.following, href: "/projects/following" },
+    { page: "projects", label: copy.projectsTabs.all, href: "/projects" },
+  ],
+  lessons: [{ page: "lessonsQueue", label: copy.pages.lessonReview.title, href: "/lessons/review" }],
+};
+
+// Each section's own page, which the gallery's sample page stands for, so the current item reads as that page.
+const SECTION_PAGE: Record<Section, string> = { packages: "/packages", projects: "/projects", lessons: "/lessons", drafts: "/drafts", data: "/data" };
 
 export function GalleryFrame({
   current,
@@ -52,6 +70,8 @@ export function GalleryFrame({
   menuOpen,
   viewOpen,
   mode = sampleMode(null),
+  rest,
+  subs = false,
   children,
 }: {
   current?: Section;
@@ -59,13 +79,30 @@ export function GalleryFrame({
   menuOpen?: boolean;
   viewOpen?: boolean;
   mode?: NavMode;
+  // The sidebar's resting state, open or rail, whatever the width (?sidebar=open or ?sidebar=rail).
+  rest?: Rest;
+  // Draw the sample sub-items, with All projects as the page (?sub=1).
+  subs?: boolean;
   children: ReactNode;
 }) {
   const date = formatDate(galleryCopy.sampleDate, { style: "short", today: galleryCopy.sampleDate });
+  // The current section's own page, which the gallery's sample page stands for.
+  const pathname = current ? SECTION_PAGE[current] : mode.pathname;
   return (
     <Frame
-      nav={<TopNav logo={<LogoSlot />} current={current} viewer={viewer} menuOpen={menuOpen} viewOpen={viewOpen} mode={mode} />}
+      menuOpen={menuOpen}
+      nav={<TopNav logo={<LogoSlot />} viewer={viewer} viewOpen={viewOpen} mode={mode} />}
       band={<BoxBand box={<Box />} stamp={<FreshnessStamp freshness={{ status: "ready", date }} />} />}
+      sidebar={
+        <Sidebar
+          mode={mode}
+          viewer={viewer}
+          current={current}
+          pathname={pathname}
+          subItems={subs ? SAMPLE_SUB_ITEMS : undefined}
+          rest={rest}
+        />
+      }
     >
       {children}
     </Frame>
@@ -145,13 +182,17 @@ function Index() {
 }
 
 // The frame's own states come from the address, so the capture command can open each one:
-// ?menu=open opens the Menu panel, ?view=open the view popover, ?viewer=loading,
-// ?viewer=signed-out or ?viewer=error sets what the view lines say, and ?pill=officer, ?pill=piu, ?pill=public or
-// ?pill=officer-public shows that view's pill (ticket 40).
-function frameState(search: string): { menuOpen: boolean; viewOpen: boolean; viewer: Viewer; mode: NavMode } {
+// ?menu=open opens the Menu sheet, ?view=open the view popover, ?viewer=loading,
+// ?viewer=signed-out or ?viewer=error sets what the view lines say, ?pill=officer, ?pill=piu, ?pill=public or
+// ?pill=officer-public shows that view's pill and sections (ticket 40), and ?sidebar=open or ?sidebar=rail draws the
+// sidebar open or as the rail at any width from 1024 px, and ?sub=1 adds the sample sub-items (ticket 92).
+function frameState(search: string): { menuOpen: boolean; viewOpen: boolean; viewer: Viewer; mode: NavMode; rest?: Rest; subs: boolean } {
   const params = new URLSearchParams(search);
   const viewer = params.get("viewer");
+  const rest = params.get("sidebar");
   return {
+    rest: rest === "open" || rest === "rail" ? rest : undefined,
+    subs: params.get("sub") === "1",
     mode: sampleMode(params.get("pill")),
     menuOpen: params.get("menu") === "open",
     viewOpen: params.get("view") === "open",

@@ -90,10 +90,16 @@ test("the preview banner reads as the blueprint's, never collapses, is reached b
   }
   await expect(leave).toBeFocused();
 
-  // A tab keeps the view, and so does the page it opens.
-  await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Lessons" }).click();
+  // A sidebar item keeps the view, and so does the page it opens.
+  const main = page.getByRole("navigation", { name: "Main" });
+  await main.getByRole("link", { name: "Lessons" }).click();
   await expect(page).toHaveURL(/\/lessons\?view=piu$/);
   await expect(page.getByRole("region", { name: "Preview" })).toBeVisible();
+  // The officer's view has every section, but Projects opens All projects, not Following, and no reviewer page is an
+  // item (ticket 92; config/roles.toml's [views.piu] hidden).
+  await expect(main.getByRole("link")).toHaveText(["Home", "Packages", "Projects", "Lessons", "Drafts", "Data"]);
+  await expect(main.getByRole("link", { name: "Projects" })).toHaveAttribute("href", "/projects?view=piu");
+  await expect(main.locator('a[href^="/projects/following"], a[href^="/lessons/"]')).toHaveCount(0);
 
   // Leaving the preview drops ?view=, the banner goes, the h1 takes focus and the change is said.
   await page.getByRole("link", { name: "Leave the preview" }).click();
@@ -113,9 +119,9 @@ test("choosing a view in the popover opens the preview, with the filled pill and
   const pill = page.getByRole("button", { name: "Preview: Public" });
   await expect(pill).toHaveAttribute("data-preview", "public");
   await expect(page.getByRole("region", { name: "Preview" })).toBeFocused();
-  // The public view has only Projects, Lessons and Data, and its own Home (ticket 41): how many projects Strata holds,
-  // and the closed projects whose contracts it holds, latest to close first.
-  await expect(page.getByRole("navigation", { name: "Main" }).getByRole("link")).toHaveText(["Projects", "Lessons", "Data"]);
+  // The public view has only Home, Projects, Lessons and Data, and its own Home (ticket 41): how many projects Strata
+  // holds, and the closed projects whose contracts it holds, latest to close first.
+  await expect(page.getByRole("navigation", { name: "Main" }).getByRole("link")).toHaveText(["Home", "Projects", "Lessons", "Data"]);
   await expect(page.locator("main h1")).toContainText("I hold records for 93 World Bank-financed projects.");
   await expect(page).toHaveTitle("Home (public preview) | Strata");
   expect(await violations(page)).toEqual([]);

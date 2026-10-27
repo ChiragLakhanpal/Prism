@@ -1,7 +1,7 @@
 // The app: the frame every page shares (web/src/components/Frame.tsx), around the page the address
-// names (web/src/routes.ts). The navy bar carries the World Bank logo, the wordmark, the five tabs
-// and the view switch; the band, the box and the data-freshness stamp; the page, its alert slot,
-// title, purpose and empty state; and the footer.
+// names (web/src/routes.ts). The navy bar carries the World Bank logo, the wordmark and the view switch;
+// the band, the box and the data-freshness stamp; the sidebar beside the page, Home and the sections
+// (ticket 92); the page, its alert slot, title, purpose and empty state; and the footer.
 //
 // The app reads who is viewing (/api/me) and the stamp (/api/freshness) once per page load and
 // keeps both across route changes. A route change updates the browser tab's title, scrolls to the
@@ -20,6 +20,7 @@ import { EvidenceDrawer } from "./components/EvidenceDrawer";
 import { Frame } from "./components/Frame";
 import { IntentBox } from "./components/IntentBox";
 import { RETURNING } from "./components/Popover";
+import { Sidebar } from "./components/Sidebar";
 import { SECTIONS, TopNav, type NavMode, type Section, type Viewer } from "./components/TopNav";
 import { ViewBanner } from "./components/ViewBanner";
 import { copy } from "./copy";
@@ -227,6 +228,7 @@ export function App() {
     offered: applied?.views ?? [],
     agency: applied ? agencyInSentence(applied) : null,
     tabs: fresh ? (fresh.tabs as Section[]) : preview ? null : SECTIONS.map((section) => section.key),
+    hidden: fresh?.hidden ?? [],
     pathname: match.key === "notFound" || match.key === "notAProject" ? "/" : here.pathname,
     search: here.search,
     asOf,
@@ -379,16 +381,22 @@ export function App() {
       nav={
         <TopNav
           logo={<img src={logo} width={120} height={24} alt={copy.nav.logo} className="block h-6 w-[120px]" />}
-          current={match.section}
-          home={match.key === "home"}
           viewer={who}
-          // World Bank staff open Following from the Projects tab (ticket 37); a preview, and everyone else, All projects.
-          projectsHref={staff && !preview ? FOLLOWING_HREF : undefined}
           mode={navMode}
           modeLineId={MODE_LINE}
         />
       }
       band={<BoxBand box={<IntentBox scope={scope} scopeKind={kind} onAsk={onAsk} />} stamp={<FreshnessStamp freshness={freshness} />} />}
+      sidebar={
+        <Sidebar
+          mode={navMode}
+          viewer={who}
+          current={match.key === "home" ? "home" : match.section}
+          pathname={here.pathname}
+          // World Bank staff open Following from Projects (ticket 37); a preview, and everyone else, All projects.
+          projectsHref={staff && !preview ? FOLLOWING_HREF : undefined}
+        />
+      }
       inertPage={narrow && evidenceId !== null}
       aside={
         evidenceId && (

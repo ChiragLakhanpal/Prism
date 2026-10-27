@@ -21,7 +21,7 @@ export const galleryCopy = {
   pages: {
     navigation: {
       title: "Navigation, box band and footer",
-      purpose: "Every page shares this frame. This page shows Projects as the selected tab.",
+      purpose: "Every page shares this frame. This page shows Projects as the current section in the sidebar.",
     },
     pages: {
       title: "Page header and page alerts",
@@ -391,7 +391,7 @@ export const galleryCopy = {
 
   notes: {
     bar:
-      "The navy bar at the top of this page is the sample. Below 1024 px its tabs and the view switch move into the Menu. The box band under it is the sample of the box and the stamp, and the footer is the same on every page.",
+      "The navy bar at the top of this page is the sample, and the sidebar beside the page holds Home and the sections. Below 1024 px the sidebar's items and the view switch move into the Menu. The box band under the bar is the sample of the box and the stamp, and the footer is the same on every page.",
   },
 
   sections: {

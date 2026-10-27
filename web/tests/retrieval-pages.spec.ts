@@ -3,7 +3,7 @@
 // The words are the ticket's and the 32 design brief's, copied here so the test checks the copy file.
 import { scan } from "./axe";
 import type { Page } from "@playwright/test";
-import { expect, recorded, recordingFor, test } from "./mocked";
+import { expect, recorded, recordingFor, test, windowBeside } from "./mocked";
 
 type Answer = { status?: number; body: string };
 
@@ -252,8 +252,8 @@ async function clearsHeader(page: Page) {
 }
 
 for (const width of [1440, 1024]) {
-  test(`at ${width} px the next passage's heading lands below the stuck header, after a grade by pointer or by key`, async ({ page }) => {
-    await serve(page, { "/api/judging/queries/nq-rural-works-delays": await file("judging-query.json") }, width);
+  test(`in a ${width} px page area the next passage's heading lands below the stuck header, after a grade by pointer or by key`, async ({ page }) => {
+    await serve(page, { "/api/judging/queries/nq-rural-works-delays": await file("judging-query.json") }, windowBeside(width));
     const saved = await file("judging-grade-saved.json");
     await page.route("**/api/judging/queries/nq-rural-works-delays/passages/**", (route) => route.fulfill({ contentType: "application/json", body: saved.body }));
     await page.goto("/lessons/judging/nq-rural-works-delays");

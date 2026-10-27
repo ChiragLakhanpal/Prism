@@ -187,8 +187,8 @@ test("every P-code on every route is a link to its project page, with the drawer
   // Below 1024 px the tabs move into the Menu (DESIGN.md section 4): its items link nowhere near the deck either.
   await page.setViewportSize({ width: 1000, height: 900 });
   await page.goto("/");
-  await page.getByRole("button", { name: "Menu" }).click();
-  await expect(page.getByRole("button", { name: "Menu" })).toHaveAttribute("aria-expanded", "true");
+  await page.getByRole("button", { name: "Menu", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Menu", exact: true })).toHaveAttribute("aria-expanded", "true");
   toDeck.push(...(await deckLinks(page)).map((link) => `Menu: ${link}`));
 
   // The pages the P-code sweep does not open, each with its own recordings: no link to the deck there either.

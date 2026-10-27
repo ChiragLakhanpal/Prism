@@ -284,6 +284,10 @@ export const NON_COPY_PROPS = new Set([
   "capability",
   // DesignedNotBuilt's key in config/designed_not_built.toml (ticket 46), such as "hazard_model".
   "item",
+  // The sidebar (ticket 92): the item that holds the page ("home" or a section's key), and a sub-item's page key from
+  // routes.ts, such as "following". The copy file turns each into words.
+  "current",
+  "page",
 ]);
 
 // A prop or key that ends in one of these holds an address, an id or a class, such as pdfHref,

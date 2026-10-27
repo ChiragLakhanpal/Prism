@@ -46,40 +46,163 @@ test("the navy bar carries the official World Bank Group logo, unaltered, 24 px 
   expect(wordmark.x - (box.x + box.width)).toBeGreaterThanOrEqual(24);
 });
 
-test("one banner holds the Main navigation, the search landmark around the box and the stamp", async ({ page }) => {
+test("one banner holds the search landmark around the box and the stamp, and no section link", async ({ page }) => {
   await mockShell(page);
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/");
 
   const banner = page.getByRole("banner");
   await expect(banner).toHaveCount(1);
-  await expect(banner.getByRole("navigation", { name: "Main" })).toHaveCount(1);
   await expect(banner.getByRole("search")).toHaveCount(1);
   await expect(banner.locator("[data-stamp]").getByRole("link")).toBeVisible();
   // The stamp's description is read once, through aria-describedby, and never as page text.
   await expect(page.getByText("Open the Data page.")).toBeHidden();
+  // Ticket 92: the sections left the bar for the sidebar beside the page.
+  await expect(banner.getByRole("navigation")).toHaveCount(0);
+  await expect(banner.getByRole("link", { name: /^(Home|Packages|Projects|Lessons|Drafts|Data)$/ })).toHaveCount(0);
 });
 
-test("the first paint holds the bar, the band and the logo where the app puts them, before any script runs", async ({ browser, page }) => {
+// Ticket 92 (DESIGN.md section 5, Sidebar): from 1024 px the sections are a sidebar named "Main" beside the page, open
+// at 224 px from 1440 px and a 64 px rail of icons from 1024 to 1439 px by default, Home first and each section once.
+test("from 1024 px the sidebar named Main sits beside the page, 224 px wide from 1440 px and a 64 px rail below, Home first", async ({ page }) => {
+  await mockShell(page);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/");
+
+  const main = page.getByRole("navigation", { name: "Main" });
+  for (const [width, wide] of [[1440, 224], [1280, 64], [1024, 64]]) {
+    await page.setViewportSize({ width, height: 900 });
+    await expect(main.getByRole("link"), `${width} px`).toHaveText(["Home", "Packages", "Projects", "Lessons", "Drafts", "Data"]);
+    const sidebar = (await page.locator("[data-sidebar-column]").boundingBox())!;
+    const column = (await page.locator("[data-page-column]").boundingBox())!;
+    expect([sidebar.x, sidebar.width, column.x], `${width} px`).toEqual([0, wide, wide]);
+    await expect(main.getByRole("link", { name: "Home" }), `${width} px`).toHaveAttribute("aria-current", "page");
+    await expect(main.locator("[aria-current]"), `${width} px`).toHaveCount(1);
+  }
+});
+
+// The current item is matchRoute's section: "page" on the page the item opens, "true" on a page inside its section.
+test("the current item says page on the section's own page and true on a page inside it", async ({ page }) => {
+  await mockShell(page);
+  await noPlannedPackages(page);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  const main = page.getByRole("navigation", { name: "Main" });
+  for (const [path, item, current] of [
+    ["/packages", "Packages", "page"],
+    ["/lessons/review", "Lessons", "true"],
+    // Data sits at the sidebar's foot.
+    ["/data/sources", "Data", "true"],
+  ]) {
+    await page.goto(path);
+    await expect(main.getByRole("link", { name: item }), path).toHaveAttribute("aria-current", current);
+    await expect(main.locator("[aria-current]"), path).toHaveCount(1);
+  }
+});
+
+// "Collapse the sidebar" and "Expand the sidebar" are one button (DESIGN.md section 5, Sidebar). The width changes at
+// once: it is final in the same frame as the press, and nothing on the sidebar transitions its width.
+test("Collapse the sidebar turns it into the rail and Expand the sidebar back, at once, and the choice survives a reload", async ({ page }) => {
+  await mockShell(page);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/");
+  const column = page.locator("[data-sidebar-column]");
+  const toggle = page.locator("[data-sidebar-toggle]");
+  await expect(toggle).toHaveAccessibleName("Collapse the sidebar");
+  await expect(toggle).toHaveAttribute("aria-expanded", "true");
+
+  await toggle.focus();
+  const pressed = await column.evaluate((el) => {
+    const moves = [el, ...el.querySelectorAll<HTMLElement>("[data-sidebar], nav")].flatMap((part) => {
+      const style = getComputedStyle(part);
+      const names = style.transitionProperty.split(",").map((name) => name.trim());
+      const times = style.transitionDuration.split(",").map((time) => parseFloat(time));
+      return names.filter((name, index) => ["all", "width", "min-width", "max-width", "flex-basis"].includes(name) && (times[index] ?? times[0]) > 0);
+    });
+    el.querySelector<HTMLButtonElement>("[data-sidebar-toggle]")!.click();
+    return { moves, width: el.getBoundingClientRect().width };
+  });
+  expect(pressed).toEqual({ moves: [], width: 64 });
+  await expect(toggle).toHaveAccessibleName("Expand the sidebar");
+  await expect(toggle).toHaveAttribute("aria-expanded", "false");
+  await expect(toggle).toBeFocused();
+
+  await page.reload();
+  await expect(page.locator("main h1")).toBeVisible();
+  expect((await column.boundingBox())!.width).toBe(64);
+  await toggle.click();
+  expect((await column.boundingBox())!.width).toBe(224);
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.reload();
+  await expect(toggle).toHaveAccessibleName("Collapse the sidebar");
+  expect((await column.boundingBox())!.width).toBe(224);
+});
+
+// A rail item's label shows in a tooltip on hover and on keyboard focus; the name stays in the link, so the tooltip
+// is hidden from screen readers. The open sidebar shows its labels and no tooltip.
+test("each rail item's tooltip shows its label on hover and on keyboard focus", async ({ page }) => {
+  await mockShell(page);
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto("/");
+  const main = page.getByRole("navigation", { name: "Main" });
+  const tip = page.locator("[data-rail-tip]");
+
+  const lessons = main.getByRole("link", { name: "Lessons" });
+  await lessons.hover();
+  await expect(tip).toHaveText("Lessons");
+  await expect(tip).toHaveAttribute("aria-hidden", "true");
+  const [item, label] = [(await lessons.boundingBox())!, (await tip.boundingBox())!];
+  expect(label.x).toBeGreaterThan(item.x + item.width);
+  expect(Math.round(label.y + label.height / 2)).toBe(Math.round(item.y + item.height / 2));
+  await page.mouse.move(800, 600);
+  await expect(tip).toHaveCount(0);
+
+  await lessons.focus();
+  await page.keyboard.press("Tab");
+  await expect(main.getByRole("link", { name: "Drafts" })).toBeFocused();
+  await expect(tip).toHaveText("Drafts");
+  await page.keyboard.press("Tab");
+  await page.keyboard.press("Tab");
+  await expect(page.locator("[data-sidebar-toggle]")).toBeFocused();
+  await expect(tip).toHaveText("Expand the sidebar");
+
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await expect(tip).toHaveCount(0);
+  await lessons.hover();
+  await page.waitForTimeout(200);
+  await expect(tip).toHaveCount(0);
+});
+
+// Ticket 92: web/index.html's first script reads the stored choice, and its style paints the sidebar's frame at that
+// width, or the width's default, before the app's script runs. The app's bundle is held back here, so the page shows
+// only what index.html paints; below 1024 px no sidebar is painted and the closed Menu sheet is not shown.
+test("the first paint holds the bar, the band, the logo and the sidebar where the app puts them, before the app's script runs", async ({ browser, page }) => {
   const boxes = (selectors: string[]) =>
     selectors.map((selector) => {
-      const box = document.querySelector(selector)!.getBoundingClientRect();
+      const element = document.querySelector(selector);
+      if (!element?.checkVisibility({ visibilityProperty: true })) return null;
+      const box = element.getBoundingClientRect();
       return [Math.round(box.x), Math.round(box.y), Math.round(box.width), Math.round(box.height)];
     });
   await mockShell(page);
-  for (const width of [1440, 800, 390]) {
-    const first = await browser.newContext({ javaScriptEnabled: false, viewport: { width, height: 900 } });
+  await page.goto("/");
+  const cases: [number, string | null][] = [[1440, null], [1280, null], [1280, "open"], [1440, "rail"], [800, null], [390, null]];
+  for (const [width, stored] of cases) {
+    const first = await browser.newContext({ viewport: { width, height: 900 } });
+    if (stored) await first.addInitScript((rest) => window.localStorage.setItem("strata.sidebar", rest), stored);
+    await first.route(/\/assets\/.+\.js$/, (route) => route.abort());
     const before = await first.newPage();
     await before.goto(test.info().project.use.baseURL!);
-    const painted = await before.evaluate(boxes, ["[data-boot-bar]", "[data-boot-band]", "[data-boot-bar] img"]);
+    const painted = await before.evaluate(boxes, ["[data-boot-bar]", "[data-boot-band]", "[data-boot-bar] img", "[data-boot-sidebar]"]);
     await first.close();
 
+    await page.evaluate((rest) => (rest ? window.localStorage.setItem("strata.sidebar", rest) : window.localStorage.clear()), stored);
     await page.setViewportSize({ width, height: 900 });
     await page.goto("/");
     await expect(page.locator("[data-stamp]").getByRole("link")).toBeVisible();
-    const mounted = await page.evaluate(boxes, ["[data-nav-bar]", "[data-box-band]", "[data-nav-bar] img"]);
+    const mounted = await page.evaluate(boxes, ["[data-nav-bar]", "[data-box-band]", "[data-nav-bar] img", "[data-sidebar]"]);
 
-    expect(painted, `${width} px`).toEqual(mounted);
+    expect(painted, `${width} px, stored ${stored}`).toEqual(mounted);
+    expect(mounted[3] === null, `${width} px`).toBe(width < 1024);
   }
 });
 
@@ -298,27 +421,26 @@ test("error alerts come before the address's info alerts", async ({ page }) => {
   await expect(page.locator("[data-alert]").first()).toHaveAttribute("data-alert", "error");
 });
 
-test("a Menu row's focus ring ends 2 px inside the panel, so the panel edge never clips it", async ({ page }) => {
+// Ticket 92: the Menu sheet opened from the keyboard puts focus on the current page's item, whose focus ring stays
+// inside the sheet's scrolling list, so the list's edge never clips it.
+test("a Menu sheet item's focus ring stays inside the sheet, so its edge never clips it", async ({ page }) => {
   await mockShell(page);
+  await noPlannedPackages(page);
   await page.setViewportSize({ width: 390, height: 900 });
   await page.goto("/packages");
-  await page.getByRole("button", { name: "Menu" }).click();
-  await page.keyboard.press("Tab");
+  await page.getByRole("button", { name: "Menu", exact: true }).focus();
+  await page.keyboard.press("Enter");
 
   const row = page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Packages" });
   await expect(row).toBeFocused();
   const ring = await row.evaluate((el) => {
     const style = getComputedStyle(el);
     const box = el.getBoundingClientRect();
+    const list = el.closest("nav")!.getBoundingClientRect();
     const reach = parseFloat(style.outlineOffset) + parseFloat(style.outlineWidth);
-    return { left: box.left - reach, right: box.right + reach, style: style.outlineStyle };
+    return { inside: box.left - reach >= list.left && box.right + reach <= list.right, style: style.outlineStyle };
   });
-  expect(ring.style).toBe("solid");
-  expect(ring.left).toBe(2);
-  expect(ring.right).toBe(388);
-  // The row's text still starts on the grid margin, 28 px in at 390 px.
-  const text = await row.evaluate((el) => el.getBoundingClientRect().left + parseFloat(getComputedStyle(el).paddingLeft));
-  expect(text).toBe(28);
+  expect(ring).toEqual({ inside: true, style: "solid" });
 });
 
 // An element's last line of text: how wide it is, as a share of the widest line, and how many words it holds.
@@ -354,7 +476,7 @@ for (const width of [390, 320]) {
     expect((await title.evaluate(lastLine)).share).toBeGreaterThan(0.5);
 
     // The Menu's view rows wrap with text-pretty, so no description ends on one word (ticket 40).
-    await page.getByRole("button", { name: "Menu" }).click();
+    await page.getByRole("button", { name: "Menu", exact: true }).click();
     const view = page.locator("[data-menu-panel]").getByText("A preview of what a member of the public sees. It has projects, lessons and data only.");
     await expect(view).toBeVisible();
     expect((await view.evaluate(lastLine)).words).toBeGreaterThan(1);
@@ -365,11 +487,12 @@ test("/ closes an open Menu and focuses the box", async ({ page }) => {
   await mockShell(page);
   await page.setViewportSize({ width: 390, height: 900 });
   await page.goto("/");
-  await page.getByRole("button", { name: "Menu" }).click();
-  await page.getByRole("heading", { level: 1 }).click();
+  await page.getByRole("button", { name: "Menu", exact: true }).click();
+  // Focus is on the sheet's Home item, and the box behind the sheet is inert until the sheet closes.
+  await expect(page.getByRole("dialog", { name: "Menu" }).getByRole("link", { name: "Home" })).toBeFocused();
 
   await page.keyboard.press("/");
 
-  await expect(page.getByRole("button", { name: "Menu" })).toHaveAttribute("aria-expanded", "false");
+  await expect(page.getByRole("button", { name: "Menu", exact: true })).toHaveAttribute("aria-expanded", "false");
   await expect(page.locator("[data-box-band]").getByRole("combobox")).toBeFocused();
 });

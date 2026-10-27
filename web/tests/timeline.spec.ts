@@ -9,7 +9,7 @@ import type { Page, Request } from "@playwright/test";
 import { askFromTheBox, landed, open as openAnswer, panel } from "./answer-page";
 import { scan } from "./axe";
 import { hubApi } from "./hub-api";
-import { expect, mockApi, recorded, test } from "./mocked";
+import { expect, mockApi, recorded, test, windowBeside } from "./mocked";
 
 const PDO = "disagreement:437378890475ef48";
 // The ICR and the ICR Review on efficiency: the ICR's side is a paragraph, so the card names it two ways.
@@ -267,8 +267,9 @@ test("the chart is one tab stop with arrow keys between marks, and the dashed li
   await expect(second).not.toContainText("keep ICR paragraph");
 });
 
-test("at 1024 px the chart redraws beside the drawer at 524 px and keeps every label; a band and a report open their views", async ({ page }) => {
-  await open(page, "/projects/P130164/timeline", 1024);
+test("in a 1024 px page area the chart redraws beside the drawer at 524 px and keeps every label; a band and a report open their views", async ({ page }) => {
+  // Beside the rail (ticket 92) the window is 64 px wider than the page area.
+  await open(page, "/projects/P130164/timeline", windowBeside(1024));
   await expect(chart(page).locator("[data-mark-label]")).toHaveCount(9);
 
   await item(page, "ratings:P130164:pdo_progress:1-9").click();
@@ -348,8 +349,9 @@ test("a link whose date I can't read shows today's timeline and says so, as othe
 });
 
 test("as of a date after the ICR Review's re-issue, no dashed line or chip covers the as-of date, beside the drawer too", async ({ page }) => {
+  // Each width is a page area: beside the sidebar (ticket 92) the window is wider.
   for (const width of [1440, 1024]) {
-    await open(page, "/projects/P130164/timeline?asof=2024-01-01", width);
+    await open(page, "/projects/P130164/timeline?asof=2024-01-01", windowBeside(width));
     await expect(chart(page).locator("[data-as-of]")).toContainText("Jan 1, 2024");
     // Both disagreements are public by then, so the second line ends near the chart's right edge.
     await expect(chart(page).locator("[data-disagreement-line]")).toHaveCount(2);
@@ -366,10 +368,11 @@ test("as of a date after the ICR Review's re-issue, no dashed line or chip cover
 test("the skeleton title is sized to the title, so the chart does not move when the timeline arrives or runs slow", async ({ page }) => {
   // The page's clock runs fast through the two seconds before "Still loading the timeline.".
   await page.clock.install();
+  // Each width is a page area: beside the sidebar (ticket 92) the window is wider.
   for (const width of [1440, 1024, 390]) {
     let release = () => {};
     const held = new Promise<void>((resolve) => (release = resolve));
-    await page.setViewportSize({ width, height: 900 });
+    await page.setViewportSize({ width: windowBeside(width), height: 900 });
     await mockApi(page, await timelineApi());
     await page.route("**/api/projects/P130164/timeline", async (route) => {
       await held;
@@ -393,9 +396,10 @@ test("the skeleton title is sized to the title, so the chart does not move when 
 });
 
 test("two labels in one row keep 16 px apart at every chart width, beside the drawer too, and none is dropped", async ({ page }) => {
-  // 1246 and 830 px with the drawer closed; 718 and 524 px beside it.
+  // 1246 and 830 px with the drawer closed; 718 and 524 px beside it. Each width is a page area: beside the sidebar
+  // (ticket 92) the window is wider.
   for (const [width, evidence] of [[1440, ""], [1024, ""], [1440, "?evidence=ratings:P130164:pdo_progress:1-9"], [1024, "?evidence=ratings:P130164:pdo_progress:1-9"]] as const) {
-    await open(page, `/projects/P130164/timeline${evidence}`, width);
+    await open(page, `/projects/P130164/timeline${evidence}`, windowBeside(width));
     // In the 576 px drawer at 1440 px the band's nine ISRs are one table of three columns, not nine tall cards.
     if (evidence) await expect(drawer(page).getByRole("table")).toBeVisible({ visible: width === 1440 });
     // And it fits the drawer: a table never scrolls sideways inside its frame (DESIGN.md section 5, Tables).

@@ -5,7 +5,7 @@
 // here so the test checks the screen against an independent source.
 import { scan } from "./axe";
 import type { Locator, Page } from "@playwright/test";
-import { expect, mockApi, recorded, test } from "./mocked";
+import { expect, mockApi, recorded, test, windowBeside } from "./mocked";
 
 const REF = "KE-NWWDA-541055-CW-RFB";
 const PATH = `/packages/${REF}`;
@@ -459,7 +459,8 @@ test("below 768 px the table's cards say what Months counts once, on the count l
   // The definition is its own element beside the count, never run on into the count's sentence.
   await expect(page.locator("[data-comparables-table] p[data-numbers]").first()).toHaveText("Showing all 49 packages");
 
-  await page.setViewportSize({ width: 1440, height: 900 });
+  // A 1440 px page area: beside the open sidebar (ticket 92) the window is wider.
+  await page.setViewportSize({ width: windowBeside(1440), height: 900 });
   await expect(page.locator("[data-comparables-table]").getByText(definition, { exact: true })).toBeHidden();
   await expect(page.locator("[data-comparables-table] thead")).toContainText("From notice to signature, or so far if still open");
 });
@@ -1125,14 +1126,14 @@ test("below 768 px the section's sentence leads the chart in the page's order, s
 });
 
 // DESIGN.md section 4: under the band a page lays out by the page area's width, because the
-// evidence drawer narrows it. At 1024 px the drawer takes 410 px and leaves a 614 px page area, so
-// the workspace shows what a 614 px window shows: a header that does not stick, facts in two
+// evidence drawer narrows it. At 1024 px the rail takes 64 px and the drawer 400 px (ticket 92), which leaves a
+// 560 px page area, so the workspace shows what a 560 px window shows: a header that does not stick, facts in two
 // columns, the sentence before the chart, the reset button in the helper's place and the table as cards.
 test("at 1024 px with the evidence drawer open, the workspace lays out as its page area is wide, not the window", async ({ page }) => {
   await openPackage(page, { width: 1024, evidence: true });
   await ready(page);
   await expect(page.getByRole("dialog")).toBeVisible();
-  expect(Math.round((await page.locator("[data-page-column]").boundingBox())!.width)).toBe(614);
+  expect(Math.round((await page.locator("[data-page-column]").boundingBox())!.width)).toBe(560);
 
   const layout = await page.evaluate(() => {
     const summary = document.querySelector("[data-summary]")!;
@@ -1222,7 +1223,8 @@ test("the past range's table shows its rows where its frame has 49rem, every cel
     [834, false, "cards"],
   ] as const) {
     const where = `${width} px${evidence ? " beside the drawer" : ""}`;
-    await openPackage(page, { width, evidence });
+    // A page area of each width: beside the sidebar (ticket 92) the window is wider.
+    await openPackage(page, { width: windowBeside(width), evidence });
     await ready(page);
     await section(page).getByRole("button", { name: "Show the table" }).click();
     const table = section(page).locator("[data-table-view=table]");
@@ -1469,7 +1471,7 @@ test("a reference with a county's name breaks only at its spaces, in a dot's det
     [390, "cards", "li > :first-child"],
     [320, "cards", "li > :first-child"],
   ] as const) {
-    await openPackage(page, { width });
+    await openPackage(page, { width: windowBeside(width) });
     await ready(page);
     await section(page).getByRole("button", { name: "Show the table" }).click();
     await expect(section(page).locator(`[data-table-view=${view}]`)).toBeVisible();

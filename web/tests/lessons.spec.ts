@@ -4,7 +4,7 @@
 // and the 29 design brief's, copied here so the test checks the copy file against an independent source.
 import { scan } from "./axe";
 import type { Page } from "@playwright/test";
-import { expect, recorded, test } from "./mocked";
+import { expect, recorded, test, windowBeside } from "./mocked";
 
 const REBIDDING = "new-e903b07ad1";
 const PERMITS = "new-64ec0401e3";
@@ -324,7 +324,8 @@ test("a lesson reviewer can ask for a re-check from a card, with a reason", asyn
 // ── The evidence drawer ──────────────────────────────────────────────────
 
 test("an evidence card's marker opens the drawer at its source, and focus comes back to the marker", async ({ page }) => {
-  await page.setViewportSize({ width: 1440, height: 900 });
+  // A 1440 px page area: beside the open sidebar (ticket 92) the window is wider.
+  await page.setViewportSize({ width: windowBeside(1440), height: 900 });
   await reviewer(page, { [`/api/lessons/review/${REBIDDING}`]: await file("lessons-item-recommend.json") });
   await page.goto(`/lessons/review/${REBIDDING}`);
   const marker = page.locator("[data-lesson-evidence] [data-citation]").first();

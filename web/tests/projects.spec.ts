@@ -4,7 +4,7 @@
 // Procurement Plans; the words are the 10 design brief's.
 import { scan } from "./axe";
 import type { Page } from "@playwright/test";
-import { expect, mockApi, recorded, test } from "./mocked";
+import { expect, mockApi, recorded, test, windowBeside } from "./mocked";
 
 type Answer = { status?: number; body: string };
 
@@ -180,17 +180,18 @@ test("All projects' skeleton rows and cards are as tall as its rows and cards, s
 });
 
 test("All projects says when it holds no records, and when the data service didn't answer", async ({ page }) => {
-  await open(page, "/projects", { "/api/projects": { body: '{"as_of":"2026-10-23","total":0,"rows":[],"records_through":null}' } });
+  // A 1440 px page area: beside the open sidebar (ticket 92) the window is wider.
+  await open(page, "/projects", { "/api/projects": { body: '{"as_of":"2026-10-23","total":0,"rows":[],"records_through":null}' } }, windowBeside(1440));
   await expect(page.locator("[data-empty-state]")).toContainText("I don't have any project records yet.");
   await expect(page.locator("[data-empty-state]").getByRole("link", { name: "Data readiness" })).toHaveAttribute("href", "/data");
   expect(Math.round((await page.locator("[data-empty-state]").boundingBox())!.width)).toBe(853);
   await page.setViewportSize({ width: 390, height: 900 });
   expect(await axe(page), "empty at 390 px").toEqual([]);
 
-  await open(page, "/projects", { "/api/projects": { status: 503, body: '{"code":"data_service","trace_id":"0af7651916cd43dd8448eb211c80319c"}' } });
+  await open(page, "/projects", { "/api/projects": { status: 503, body: '{"code":"data_service","trace_id":"0af7651916cd43dd8448eb211c80319c"}' } }, windowBeside(1440));
   await expect(page.getByRole("alert")).toHaveText("I couldn't load the list of projects because the data service didn't answer.");
   await expect(page.getByRole("button", { name: "Try again" })).toBeVisible();
-  // At 1440 px the alert holds columns 1 to 8, as on every other page.
+  // In a 1440 px page area the alert holds columns 1 to 8, as on every other page.
   expect(Math.round((await page.getByRole("alert").boundingBox())!.width)).toBe(853);
   await page.setViewportSize({ width: 390, height: 900 });
   expect(await axe(page), "error at 390 px").toEqual([]);
@@ -208,7 +209,7 @@ test("a project's Procurement tab shows each agency's plan versions newest first
   const tabs = main.getByRole("navigation", { name: "Project sections" }).getByRole("link");
   await expect(tabs).toHaveText(["Summary", "Procurement", "Timeline", "Documents", "Connections"]);
   await expect(tabs.nth(1)).toHaveAttribute("aria-current", "page");
-  await expect(page.getByRole("navigation", { name: "Main" }).locator("[aria-current=page]")).toHaveText("Projects");
+  await expect(page.getByRole("navigation", { name: "Main" }).locator("[aria-current]")).toHaveText("Projects");
 
   const nwwda = main.locator("[data-agency=northern-water-works-development-agency]");
   await expect(nwwda.getByRole("heading", { level: 3 })).toHaveText("Northern Water Works Development Agency");
@@ -255,7 +256,8 @@ async function tabTops(page: Page, widths: number[]) {
   const tabs = page.getByRole("navigation", { name: "Project sections" });
   const tops: Record<number, number> = {};
   for (const width of widths) {
-    await page.setViewportSize({ width, height: 900 });
+    // A page area of each width: beside the sidebar (ticket 92) the window is wider.
+    await page.setViewportSize({ width: windowBeside(width), height: 900 });
     tops[width] = await tabs.evaluate((element) => element.getBoundingClientRect().top + window.scrollY);
   }
   return tops;
@@ -329,11 +331,11 @@ test("a long list of implementing agencies keeps to two lines until you show the
 
 test("a project's page says when the data service didn't answer, and when your account can't read Strata's tables", async ({ page }) => {
   const api = (answer: Answer) => ({ "/api/projects/P156634": answer });
-  await open(page, "/projects/P156634", api({ status: 503, body: '{"code":"data_service","trace_id":"0af7651916cd43dd8448eb211c80319c"}' }), 1100);
+  await open(page, "/projects/P156634", api({ status: 503, body: '{"code":"data_service","trace_id":"0af7651916cd43dd8448eb211c80319c"}' }), windowBeside(1100));
   await expect(page.getByRole("alert")).toHaveText("I couldn't load this project because the data service didn't answer.");
   await expect(page.getByRole("button", { name: "Try again" })).toBeVisible();
-  // From 1024 px the alert holds columns 1 to 8, as on every other page: at 1100 px, 8 columns of
-  // 50.33 px and 7 gutters of 32 px.
+  // From a 1024 px page area the alert holds columns 1 to 8, as on every other page: in a 1100 px page area (the
+  // window less the rail, ticket 92), 8 columns of 50.33 px and 7 gutters of 32 px.
   expect(Math.round((await page.getByRole("alert").boundingBox())!.width)).toBe(627);
   await page.setViewportSize({ width: 390, height: 900 });
   expect(await axe(page), "error at 390 px").toEqual([]);

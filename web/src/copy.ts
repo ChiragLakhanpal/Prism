@@ -421,6 +421,8 @@ export const copy = {
     // worldbank.org's white mark is the World Bank Group logo (web/src/assets/world-bank-logo.md).
     logo: "World Bank Group logo",
     label: "Main",
+    // The sidebar (ticket 92; DESIGN.md section 5, Sidebar): Home first, then the sections, Data at its foot.
+    home: "Home",
     tabs: {
       packages: "Packages",
       projects: "Projects",
@@ -428,7 +430,12 @@ export const copy = {
       drafts: "Drafts",
       data: "Data",
     },
+    // One button that turns the sidebar into the rail of icons and back.
+    collapse: "Collapse the sidebar",
+    expand: "Expand the sidebar",
+    // Below 1024 px the Menu button opens the sidebar's items as the Menu sheet.
     menu: "Menu",
+    menuClose: "Close the menu",
     view: {
       // The pill names the view the server applies (the 40 brief, 3.2): each label fits the bar at 1024 px.
       pill: {
