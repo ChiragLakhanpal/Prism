@@ -13,7 +13,7 @@ Read first: `src/strata/lakehouse/costs.py` (`_http`, `AzureCostManagement.charg
 
 - [ ] With a fake transport and a fake clock, three 429 answers followed by a good answer give the charges, with the waits taken from the `Retry-After` header and the config default when it is missing; four 429 answers give a run row with the outcome `throttled` and the Azure message, no charge, and a task that ends succeeded; a 403 still raises `CostError` with `not_authorized`.
 - [ ] The tries and the default wait live in `config/thresholds.toml` under `[costs]` and nowhere else; `GLOSSARY.md` or the dashboard's copy names the throttled day in the same words the run row uses.
-- [ ] On the paid workspace, the next cost pull after the merge and a bundle deploy ends succeeded, with its run row (charges, or throttled with the message) recorded in the catch-up file under this ticket.
+- [x] On the paid workspace, the next cost pull after the merge and a bundle deploy ends succeeded, with its run row (charges, or throttled with the message) recorded in the catch-up file under this ticket.
 
 ## Comments
 
@@ -27,3 +27,4 @@ Read first: `src/strata/lakehouse/costs.py` (`_http`, `AzureCostManagement.charg
   - Follow-ups (not blocking): (1) the throttled row's `detail` keeps up to 300 characters of Azure's answer, and a 429 from Azure Resource Manager instead of Cost Management can name the subscription id; replace each GUID with "[id removed]" at `costs.py:298` and test it (`.notes/107-review-r2.md`, follow-up 1). (2) three waits of 240 seconds take 720 of the job's 900 seconds, so watch the first throttled live run's duration (`.notes/107-verify-r2.md`, follow-up 2).
   - Decisions parked for the user (kept as built): `costs.retry_seconds = 60` (the wait when Azure names none) and `costs.max_retry_seconds = 240` (the longest single wait) have no source; the `[costs]` comment calls 60 "a starting value for the owner to confirm". Three waits of 240 seconds fit inside the job's 900-second timeout. Change them in `config/thresholds.toml` if you want other waits.
   - It unblocks no ticket.
+- October 27, 2026, orchestrator (06:55 PDT): the three workspace steps ran from 19eb82d8's snapshot (the catch-up block "Ticket 107, steps 1 to 3 of 3 ran"): the column added, the bundle deployed with the window put back, and the cost pull by hand (run 604871161430737) ended succeeded with 9 charges; criterion 3 ticked.
