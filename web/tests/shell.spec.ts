@@ -98,6 +98,11 @@ test("from 1024 px the bar is one 56 px navy row that sticks, with the box from 
   await page.evaluate(() => window.scrollTo(0, 600));
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(600);
   expect((await at("[data-nav-bar]")).y).toBe(0);
+  // Below 1024 px it scrolls away with the page, so a phone keeps its screen for the page.
+  await page.setViewportSize({ width: 800, height: 900 });
+  await page.evaluate(() => window.scrollTo(0, 600));
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(600);
+  expect((await at("[data-nav-bar]")).y).toBeLessThan(0);
 });
 
 // Ticket 93 (DESIGN.md section 10): the focused skip link shows below the bar, over the page, so it covers neither the
