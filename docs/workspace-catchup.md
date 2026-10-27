@@ -3451,3 +3451,54 @@ Record each task's minutes here under ticket 89. Then, after Sunday, November 1,
 ## Ticket 89, after the merge, step 1 of 2 ran: the bundle deployed with score_parts, and the window is 300 minutes again
 
 **Ran on October 27, 2026 (orchestrator), 06:20 to 06:33 UTC, from a snapshot of e2032ce1 (ticket 89's done commit).** `uv run --script ops/bundle/deploy.py --env-file "<main checkout>/.env" --fairshare-catalog workspace` exited 0 at 06:24 UTC; step 3's report: "The table strata.ops.score_parts is new. The job strata nightly changed." and the workspace's catalog lists the same before and after (two schemas, two tables and one volume). The deploy put the window back to 9000, so the Jobs API update ran again at once: `databricks jobs get 200833746315993 -p strata` shows timeout_seconds 18000 with the schedule 0 0 3 * * ? America/New_York, UNPAUSED. Then `measure_data_readiness` alone (run 512045898962596) ended SUCCESS, 06:24 to 06:33 UTC, as a check that the deploy left the readiness task whole. Step 2 of 2 is the scheduled run of 07:00 UTC on October 27 (its first night replays the signals, since none is stored on the paid workspace); a watcher logs each task's state and minutes when it ends, and the record goes under that block.
+
+## Ticket 86, step 1 of 1: deploy the bundle, then run `parse_and_embed` and `sync_index` alone, so the first passages land and P156634's newest plan is read first (criterion 3, live)
+
+Parked on October 27, 2026 with ticket 86, which merged into build/strata as f375b370. Run it from a snapshot of f375b370 or later (ticket 86's done commit follows it), as the header says. Every key is set, but the second session runs every workspace step from a snapshot of the commit, one at a time, so the merger ran none. It needs the Databricks keys in `.env`, the SQL warehouse and the Databricks CLI 0.287.0 or later.
+
+When: outside the nightly window, after the scheduled run of `strata nightly` (job 200833746315993) that started at 07:00 UTC on October 27 has ended. That run carries the code of e2032ce1, so its `parse_and_embed` reads the way runs 564462742591748 and 1471925021545 did. A deploy while it runs would change the job's files under it. Read that run under ticket 89's step 2 first.
+
+Why: on the paid workspace, runs 564462742591748 and 1471925021545 wrote no passage. The plan reader spent each night's 60 minutes on P156634's plans (first their fetch, then the scanned pages of one plan from August 2023, document 34147454), and the passage reader never started. Ticket 86 makes three changes. The plan reader stops when 30 of the night's 60 minutes are left for the passage reader (`ingestion.passage_reader_minutes` in `config/thresholds.toml`). The passage reader fetches, parses and writes one document at a time, so a stop keeps every document it finished. The plan reader fetches a project's newest plan first, by the documents API's date (docdt), so P156634's October 9, 2026 plan 40132287 comes before its older ones. A stop lists what it left in `strata.ops.skipped_documents` and counts it in the readiness note.
+
+1. Deploy the bundle from the snapshot, with `--env-file` pointing at the main checkout's `.env`:
+
+       uv run --script ops/bundle/deploy.py --env-file "<main checkout>/.env" --fairshare-catalog workspace
+
+   It worked if it exits 0. The deploy puts the job's window back to the bundle's 9000 seconds, so run ticket 89's update at once:
+
+       databricks jobs update --json '{"job_id": 200833746315993, "new_settings": {"timeout_seconds": 18000}}' -p strata
+       databricks jobs get 200833746315993 -p strata
+
+   It worked if the second command shows `timeout_seconds` 18000 with the schedule unchanged (0 0 3 * * ? America/New_York, UNPAUSED).
+
+2. Run `parse_and_embed` alone, as the orchestrator did for run 1471925021545:
+
+       databricks jobs run-now --json '{"job_id": 200833746315993, "only": ["parse_and_embed"]}' -p strata
+
+   The ops tables record the job run's id as `run_id`. With it, and the task's start time as `<started_at>`:
+
+       SELECT count(*) FROM strata.gold.passage
+       SELECT count(*) FROM strata.silver.documents
+       SELECT count(*) FROM strata.ops.documents_read WHERE run_id = '<run id>'
+       SELECT reader, outcome, count(*) FROM strata.ops.skipped_documents WHERE run_id = '<run id>' GROUP BY reader, outcome
+       SELECT reason FROM strata.ops.skipped_documents WHERE run_id = '<run id>' AND reader = 'plans' AND reason LIKE 'I spent 30 of the night%'
+       SELECT detail FROM strata.ops.data_readiness WHERE run_id = '<run id>' AND source = 'documents' AND subject = 'all'
+       SELECT document_id FROM strata.bronze.document_texts WHERE project_id = 'P156634' AND document_id = '40132287'
+       SELECT document_id, fetched_at FROM strata.bronze.document_texts WHERE project_id = 'P156634' AND fetched_at >= TIMESTAMP '<started_at>' ORDER BY fetched_at
+       SELECT d.document_id FROM strata.ops.skipped_documents d WHERE d.run_id = '<run id>' AND d.reader = 'plans' AND d.project_id = 'P156634' AND d.outcome = 'not_read'
+
+   It worked if:
+
+   - The task ends SUCCESS inside the job's window. Its reading stops at the night's 60 minutes (run 1471925021545 took 62 minutes in all).
+   - `strata.gold.passage` counts more than 0 (it held 0 after both of October 27's passes), `strata.silver.documents` counts more than 0, and `strata.ops.documents_read` has rows for the run.
+   - `strata.ops.skipped_documents` lists the stop's leftovers for the run. If the plan reader read past its share, a `plans` row's reason starts "I spent 30 of the night's 60 minutes for the document host and kept the rest for the passage reader". That is the plan reader's stop at minute 30 of 60.
+   - The readiness note counts the documents written and left, for example "I wrote the passages of two documents before the stop, and left 15 documents and one project's document list for the next night."
+   - The newest plan was read first. The `40132287` query returns one row, the October 9, 2026 demo plan. Every document the `not_read` query lists is older than every P156634 plan the run fetched (the fetched_at query). Check the dates in `strata.silver.plan_versions` (`plan_date`), or in the documents API's docdt in P156634's newest list in `strata.bronze.document_lists`.
+
+3. Then run `sync_index` alone, so the AI Search index takes the new passages:
+
+       databricks jobs run-now --json '{"job_id": 200833746315993, "only": ["sync_index"]}' -p strata
+
+   It worked if it ends SUCCESS. This also closes the second reading of ticket 72 (the index holding the slice's passages).
+
+Record here, under ticket 86, both run ids, each task's state and minutes, the counts and the note above, the order check's result and the time.
