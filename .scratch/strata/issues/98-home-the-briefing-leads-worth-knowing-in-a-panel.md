@@ -23,4 +23,7 @@ Read first: the prototype's Home at 1440, 1024 and 390 px with the Data switch o
 
 - October 27, 2026, design-lead: drafted from the shell redesign plan, round 3. The prototype draws Home from the tests' own recordings, since the local app answered GET /api/home with 404. Settles in part ticket 58's middle-dot titles (the shape here, the words with 58). Specs to update: home.spec.ts, mocked.ts's staff recording, capture.spec.ts. Gallery states: `home--populated`, `home--first-run`, `home--quiet-week` at three widths, and new `home--answered`, `home--officer` and `home--public` at 1440 and 390 px. First wave of the page tickets.
 
+- October 27, 2026, pm: routed from the reviews of ticket 91:
+  - Home's panel names ("Start here", "Worth knowing · fixed checks, no model" and "Waiting for you") are 13/600 labels; the prototype and the type table set a side panel's name in `h2`. (ticket 91, `.notes/91-critique.md`)
+
 ---

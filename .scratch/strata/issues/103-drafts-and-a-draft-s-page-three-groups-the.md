@@ -22,4 +22,7 @@ Read first: the prototype's Drafts and a draft at 1440, 1024 and 390 px, the Dra
 
 - October 27, 2026, design-lead: drafted from the shell redesign plan, round 3. Settles in full ticket 59's draft header state with no fixed place (line 87). Ticket 59's draft frame probe and skeleton items (lines 85 and 86) stay with 59. Specs to update: drafts.spec.ts, ppsd.spec.ts, capture.spec.ts (and uploads.spec.ts where it opens a draft). Gallery states: captures for the Drafts list (empty, grouped and error) and a draft in each state at three widths, with a new `draft--checked`. Second wave: it waits for the Home ticket because Home's Waiting for you lists the same drafts from the same copy block.
 
+- October 27, 2026, pm: routed from the reviews of ticket 93:
+  - On a draft page at 1440 by 640 the bar (56 px), the draft header (157 px) and the draft bar (141 px) leave the notes 286 px; stick the header only from 50rem of window height with a `head-sticks` variant in `app.css`, and check in `drafts.spec.ts` that it is static at 1440 by 640 and sticks at 56 px at 1440 by 900. The note names ticket 102 for this; Drafts is this ticket. (ticket 93, `.notes/93-design.md` follow-up 6)
+
 ---

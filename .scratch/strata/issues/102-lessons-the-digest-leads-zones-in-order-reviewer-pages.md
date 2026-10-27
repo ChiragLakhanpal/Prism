@@ -22,4 +22,9 @@ Read first: the prototype's Lessons at 1440, 1024 and 390 px, with the Data swit
 
 - October 27, 2026, design-lead: drafted from the shell redesign plan, round 3. Settles in full ticket 59's Lessons purpose above the sub-tab row (line 81) and ticket 60's shell captures with a load error on /lessons (line 72). Ticket 59's queue and review skeleton items (line 82) stay with 59. Specs to update: lessons.spec.ts, lessons-page.spec.ts, retrieval-pages.spec.ts, feedback.spec.ts, capture.spec.ts. Gallery states: captures for Lessons first visit, populated and error, a review page, Passage reports and Judging. Second wave: it waits for the Projects ticket because both fill the sidebar's sub-item slot.
 
+- October 27, 2026, pm: routed from the reviews of tickets 90 and 91:
+  - The library's filter select (`LessonsTab.tsx`, the `<select>` at line 286) sets `text-small`, and a field's own type step beats the base rule `font-size: max(1rem, 16px)` in `app.css`, so it draws at 14 px and a phone may zoom into it, where DESIGN.md's Phone baseline row asks for 16 px. Ticket 90's notes say no field does this today; this one does. (ticket 90, `.notes/90-verify.md` and its done comment follow-up 6)
+  - The judging page's grade buttons keep `rounded-pill` (`web/src/components/Judging.tsx` line 78); they act as chips, which keep the pill, so record that or move them to 4 px corners. (ticket 91, `.notes/91-verify.md`, deferred)
+  - On Waiting for review at 1440 px the lead runs about 80 characters a line, while the intro above it wraps at about 65; add `max-w-prose` to the lead in `LessonsPages.tsx` (line 320 at the review). (ticket 91, `.notes/91-critique.md`)
+
 ---

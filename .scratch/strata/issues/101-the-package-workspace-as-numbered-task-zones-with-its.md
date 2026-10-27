@@ -24,4 +24,8 @@ Read first: the prototype's package page at 1440, 1280, 1024 and 390 px, with th
 
 - October 27, 2026, design-lead: drafted from the shell redesign plan, round 3. The second critic found that pressing "2" in round 3's first prototype marked rows in the unfiltered table and left three still-open packages on screen; the filter puts the two counted rows under the count line. Settles in full ticket 59's planned package header (line 64) and finishes ticket 59's section name outranking the finding (line 61). Ticket 59's chart, skeleton and rebidding items (lines 54 to 77) stay with 59 and must be measured again on the new widths. Specs to update: the eight named above plus box.spec.ts. Gallery states: `past-range` at three widths, filtered and in the few state; captures for the package page in loading, ready, drawer open, few, error and the planned package's reading state. Second wave: it waits for the Packages ticket because both edit the What-record view of a plan row and the Packages copy blocks, and for the number tooltip because it adds action lines to its numbers.
 
+- October 27, 2026, pm: routed from the reviews of ticket 91:
+  - The package page mixes label case: sections 1 and 3 read in sentence case, while sections 2, 4 and 5 keep capitals through `CollapsedSection.tsx` line 85 (the critic's typography 3). When the eyebrows go and the PPSD sections become tags, check that no capitals are left. (ticket 91, `.notes/91-critique.md` and `.notes/91-verify.md`, deferred)
+  - Section 4's label reads "Planning, PPSD section 6" (`approachOptions.eyebrow` in `web/src/copy.ts`) and section 3's reads "Planning · PPSD section 3" (`packageRisks.eyebrow`); write the two PPSD tags the same way. (ticket 91, `.notes/91-critique.md`)
+
 ---

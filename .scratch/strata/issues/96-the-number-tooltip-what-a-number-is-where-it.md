@@ -23,4 +23,7 @@ Read first: the prototype's package page (hover "49", then "2", then "1.5"; focu
 
 - October 27, 2026, design-lead: the first half of round 3's citation chain ticket, split after the second critic's review. It no longer waits for the page tickets: it edits Num, MeasureNum, Popover and the dot tooltip, which they do not, and runs beside the shell. Settles in full ticket 59's tooltips that split a date (line 35) and numbers with an underline that open nothing (lines 36 and 39); ticket 60's dot tooltip after Escape or a click (lines 40 and 41) and the missing capture of a number's tooltip in an answer (line 71). Specs to update: num.spec.ts (new), answer.spec.ts, package.spec.ts, data.spec.ts (the measure tooltips), gallery-components.spec.ts, capture.spec.ts. Gallery states: `numbers--tooltip`, `numbers--tooltip-dot`, `numbers--tooltip-finding` at 1440 and 390 px.
 
+- October 27, 2026, pm: routed from the reviews of ticket 91:
+  - In a `lead` paragraph the Num button is 32 px tall (2 px padding, `inline-block`) inside a 28 px line, so each line that holds a number grows to 30 or 32 px; the Data readiness headline at 1440 px runs 32, then 30. Give the inline button negative block margins equal to its padding, as `Num.tsx` line 155 does for its other case. (ticket 91, `.notes/91-critique.md`)
+
 ---

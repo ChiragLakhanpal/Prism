@@ -23,4 +23,11 @@ Read first: the plan's sections 7.1, 7.4, 7.6, 7.10, 8.3 and 8.5; block 5 of `de
 
 - October 27, 2026, design-lead: drafted from the shell redesign plan, round 3, as the second half of round 1's frame ticket. Settles in part ticket 62's doubled class strings in Breadcrumb.tsx (line 71). Specs to update: gallery-components.spec.ts, gallery-a11y.spec.ts, capture.spec.ts; package-steps.spec.ts and criteria.spec.ts keep passing on the old look until the package ticket. Gallery states: the new `zones` page in each zone state and at its worst case, and `skeleton` with a loading zone.
 
+- October 27, 2026, pm: routed from the reviews of tickets 91 and 94:
+  - The frozen class list now holds only `src/components/CollapsedSection.tsx` (`uppercase`). When this ticket takes over that file's look, take it off `FROZEN_CLASS_USES` in `web/lint/rules.ts` and `SHELL_TICKET_FILES` in `web/tests/lint.spec.ts`, then delete the list, `unusedKeeps` and its check in `web/lint/run.ts`, and rewrite the frozen cases in the class-lint test, whose `find(...)!` lookups throw once the file leaves the list. (ticket 91, its done comment and `.notes/91-verify.md` decisions)
+  - If the list stays for any reason, `unusedKeeps` sees only files the lint reads, so a deleted listed file leaves its entry with no failure; add the `existsSync` check that `.notes/91-review.md` gives. (ticket 91, `.notes/91-review.md` follow-up 1 and `.notes/91-verify.md` follow-up 5)
+  - Once the list is gone, DESIGN.md section 3's sentence about the frozen list (line 164) goes, and "Uppercase appears only with `chart-label`, inside charts." becomes true; check both in the same change. (ticket 91, `.notes/91-review.md` follow-up 3)
+  - The page head: 8 px from the breadcrumb to the h1 on every page, as DESIGN.md section 4 and the prototype give it; today the plan check and a draft show 32 px and the project page 16. (ticket 94, `.notes/94-critique.md`)
+  - A draft's breadcrumb wraps in the 649 px column at 1440 and 1280 px, and its second line starts with a chevron; show the trail as the prototype does ("Drafts"), or collapse it to its back link when it would wrap. (ticket 94, `.notes/94-critique.md`)
+
 ---

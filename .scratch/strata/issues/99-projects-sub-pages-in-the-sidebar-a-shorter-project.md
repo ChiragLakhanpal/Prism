@@ -22,4 +22,12 @@ Read first: the prototype's All projects at 1440, 1024 and 390 px, with the Data
 
 - October 27, 2026, design-lead: drafted from the shell redesign plan, round 3. Settles in full ticket 62's project tab order in two lists (line 66) and ticket 59's Fact table widths at 1200 and 1280 px (line 47). Specs to update: projects.spec.ts, following.spec.ts, hub.spec.ts (and sweep.spec.ts where it lists the sub-tabs). Gallery states: captures for All projects (populated, no match, error), Following, and P156634's Summary and Procurement at three widths. First wave of the page tickets.
 
+- October 27, 2026, pm: routed from the reviews of tickets 90, 91, 92 and 94:
+  - On the Procurement tab, each agency heading is an `h3` that carries `text-h2`, so it draws at 18/600, the same as the zone's `h2` "Procurement Plans" above it. Move `ProcurementTab.tsx` lines 84, 123 and 172 and skeleton line 194 to `text-h3`, the same for `DocumentsTab.tsx` line 250 where it sits under an `h2`, and choose `text-h3` for `FactTable.tsx` line 64 when the table sits under an `h2`. (ticket 90, `.notes/90-critique.md`; ticket 91, `.notes/91-critique.md`)
+  - Connections keeps a hover rule outside the pointer media query: `has-[a[data-node-link]:hover]:bg-tint-hover` in `ConnectionsTab.tsx` lines 166 and 209. (ticket 90, `.notes/90-verify.md`, deferred)
+  - `EvidenceTrail.tsx` line 216 measures a lane label at `type.s` with no tracking, but the label draws in `text-chart-label` (12 px, +0.02em), so a disagreement chip could sit up to about 2 px into it; measure with the chart label's size and tracking. (ticket 91, `.notes/91-verify.md` follow-up 4)
+  - In the rail, the current section loses its tint and bar when one of its sub-items is the page, which breaks DESIGN.md section 2's one current mark and WCAG 1.4.1. It shows once this ticket fills the sidebar's sub-item slot (102 and 104 fill it after). The fix is the `RAIL_CURRENT` classes in `.notes/92-design.md` item 2, with a gallery-frame check. (ticket 92, `.notes/92-design.md` follow-up 2)
+  - The Summary lead at 390 px ends its first line after "The project closed on", because "December 31, 2018" never breaks; leave it unless this ticket changes the sentence. (ticket 91, `.notes/91-critique.md`)
+  - Beside the drawer at 1440 px the project h1 wraps to "Rajasthan Road Sector Modernization · P130164" and "· India · closed", so the second line starts with a middle dot; the shorter head this ticket builds rewrites that line. (ticket 94, `.notes/94-critique.md`)
+
 ---

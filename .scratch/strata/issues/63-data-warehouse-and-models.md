@@ -83,3 +83,18 @@ Fixtures, ground truth and their tests
 ## Comments
 
 - October 25, 2026, orchestrator: opened from the polish findings of the done tickets, under the done-first rule of October 24, 2026.
+- October 27, 2026, pm: routed from the reviews of tickets 86, 87, 89 and 107:
+  - When the plan reader's share runs out during the fetch, it reads none of the plans it fetched that night, because `plans.run` raises the stop before `read_versions`, `write_versions` and `parse_chosen`. The proposed fix: `plan_fetch_documents = 40` under `[ingestion]`, for the owner to confirm; fetch only that many of the newest plans bronze does not hold, list the rest `not_read` with a reason that names the cap, then read and parse as now, with one test that caps at 3. `docs/STATUS.md` proposes a small ticket of its own for this before October 31, decision 95. (ticket 86, `.notes/86-review-r3.md` F1)
+  - `plans.count_words` is a sixth copy of the number-word rule and writes "1234 documents"; change `str(count)` to `f"{count:,}"` to match the other helpers. (ticket 86, `.notes/86-review-r3.md` F2)
+  - The table check leaves out every `event_log_<uuid>` and `__<uuid>___online_index_view` table in the index's schema, not only the live index's; say so in `bundle/README.md` line 18, and add "of these two shapes" to the docstring of `src/strata/lakehouse/catalog.py`. (ticket 87, `.notes/87-review.md` follow-up 1)
+  - In `src/strata/lakehouse/catalog.py`, rename `index_object` to `is_index_object`, make its `index` argument required, and rename `INDEX_ID` to `INDEX_ID_PATTERN`. (ticket 87, `.notes/87-review.md` follow-up 3)
+  - Split the four-clause sentence in `bundle/README.md` line 18 into three. (ticket 87, `.notes/87-review.md` follow-up 4)
+  - Only if the November 1 measure shows the `signals_replays` part runs over about 60 minutes: make the replays resumable by date, one score part per replay date, with each date's result kept in a small ops table. (ticket 89, `.notes/89-review.md` F1 and `.notes/89-verify.md`)
+  - `tests/test_nightly.py` line 283: the weekly test cannot see whether the live October 26 night compared again; seed `seen` with the stored comparison's run id and assert `compared == ["Sunday November 1"]`. (ticket 89, `.notes/89-review.md` F2)
+  - `tests/test_nightly.py` line 293 pins the replay day to Sunday; assert it is in `schedule.WEEKDAYS`, and take the expected nights from `weekly_due`. (ticket 89, `.notes/89-review.md` F3)
+  - Annotate `checked` as `signals_track.Checked` in `nightly.py` and `hazard.py`. (ticket 89, `.notes/89-review.md` F4)
+  - Add one comment line to `project.sql` and `history.sql` under `src/strata/tools/sql/project_signals/` that points at their batched twins. (ticket 89, `.notes/89-review.md` F5)
+  - `bundle/README.md` line 8 runs the score task's cap into the list of tasks, so `measure_data_readiness` reads as part of `score`; end the score item, and put the cap in a sentence of its own after the list. (ticket 89, `.notes/89-review.md` F6)
+  - The score task's log line says "with 1 parts left" for one part (`src/strata/lakehouse/nightly.py` line 440). (ticket 89, `.notes/89-verify.md`)
+  - A throttled cost row's `detail` keeps up to 300 characters of Azure's answer, and a 429 from Azure Resource Manager can name the subscription id, which every account user can read in `strata.ops`; replace each GUID with "[id removed]" at `src/strata/lakehouse/costs.py:298` and test it. (ticket 107, `.notes/107-review-r2.md` follow-up 1 and `.notes/107-verify-r2.md` follow-up 1)
+  - Three waits of 240 seconds take 720 of the cost job's 900 seconds; watch the first throttled live run's duration. (ticket 107, `.notes/107-verify-r2.md` follow-up 2)
