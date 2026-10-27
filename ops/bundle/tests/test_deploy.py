@@ -39,7 +39,7 @@ class FakeWorkspace:
     """A workspace that holds fairshare's catalog and, once the bundle deploys, Strata's. With app, it also holds
     the app that ops/dayone/dayone.toml names, as apps get returns it."""
 
-    def __init__(self, deploy_fails=False, touch_fairshare=False, app=None):
+    def __init__(self, deploy_fails=False, touch_fairshare=False, app=None, warehouse="RUNNING", warehouse_answer=None):
         self.deploys = 0
         self.deploy_fails, self.touch_fairshare = deploy_fails, touch_fairshare
         self.deployed = None
@@ -50,6 +50,19 @@ class FakeWorkspace:
         self.granted = []  # each grant the deploy wrote after the bundle's
         self.dashboards = {}  # display name -> the file the bundle wrote and when it wrote it
         self.edit = ""  # a change to every dashboard file, as a new commit of src/strata/dashboard makes one
+        # The env file's SQL warehouse, as warehouses get gives it, which answers a start with warehouse_answer when a
+        # test sets it (ticket 81).
+        self.warehouse = {"id": "wh-1", "state": warehouse, "message": ""}
+        self.warehouse_answer, self.warehouse_starts = warehouse_answer, 0
+
+    def warehouse_state(self):
+        return dict(self.warehouse)
+
+    def start_warehouse(self):
+        self.warehouse_starts += 1
+        if self.warehouse_answer:
+            raise RuntimeError(self.warehouse_answer)
+        self.warehouse["state"] = "RUNNING"
 
     def deploy_bundle(self):
         self.deploys += 1
@@ -174,6 +187,34 @@ def test_with_an_app_the_deploy_gives_its_service_principal_back_use_catalog_and
     assert (f"   The bundle's grants replace every other grant on strata and its schemas, so I gave the app strata's "
             f"service principal {APP_PRINCIPAL} back USE CATALOG on strata and USE SCHEMA on strata.ops.\n") in out
     assert "No changes." in out
+
+
+# Ticket 81: what databricks warehouses start answered at 10:33 UTC on October 25, 2026, when Free Edition's daily limit
+# had stopped the warehouse (docs/workspace-catchup.md, ticket 11).
+FREE_DAILY_LIMIT = "Sorry, cannot run the resource because you have hit your free daily limit. Please come back again tomorrow."
+
+
+def test_a_stopped_warehouse_that_will_not_start_stops_the_deploy_before_it_changes_anything(capsys):
+    workspace = FakeWorkspace(warehouse="STOPPED", warehouse_answer=FREE_DAILY_LIMIT)
+
+    code, out = deploy_into(workspace, capsys)
+
+    assert code == 2
+    assert out.splitlines() == [
+        "I changed nothing, because the SQL warehouse wh-1 is STOPPED and would not start when I asked, saying \"Sorry, "
+        "cannot run the resource because you have hit your free daily limit. Please come back again tomorrow.\", which "
+        "on Free Edition usually means the workspace reached its daily compute limit."]
+    assert workspace.deploys == 0 and workspace.granted == []
+
+
+def test_a_warehouse_that_stopped_when_it_sat_idle_starts_and_the_deploy_prints_what_it_printed_before(capsys):
+    _, running = deploy_into(FakeWorkspace(), capsys)
+    workspace = FakeWorkspace(warehouse="STOPPED")
+
+    code, out = deploy_into(workspace, capsys)
+
+    assert code == 0 and workspace.warehouse_starts == 1
+    assert out == running
 
 
 def test_with_no_app_the_grants_are_the_bundle_s_own_and_the_deploy_says_no_app_exists(capsys):

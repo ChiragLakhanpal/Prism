@@ -127,7 +127,8 @@ class FakeWorkspace:
     by the live adapter's own code."""
 
     def __init__(self, live_db, running=False, started=EARLIER_THIS_MORNING, source=None, health_after=1,
-                 healthy=True, agent=None, seeded=(0, ""), listing_error=None, seed_writes=(), missing_tables=()):
+                 healthy=True, agent=None, seeded=(0, ""), listing_error=None, seed_writes=(), missing_tables=(),
+                 compute=None, warehouse="RUNNING", warehouse_answer=None):
         app = command().deploy_app
         self.apps = {"strata": {"description": app.DESCRIPTION, "running": running, "started": started,
                                 "source": source or f"/Workspace/Users/ana.example@worldbank.org/{app.FOLDER}",
@@ -142,6 +143,31 @@ class FakeWorkspace:
         self.seeded = seeded
         self.listing_error = listing_error
         self.seed_writes, self.missing_tables = seed_writes, set(missing_tables)
+        # Ticket 81: the App's compute as apps get gives it, when a test sets it, and the env file's SQL warehouse,
+        # which answers a start with warehouse_answer when a test sets it.
+        self.compute = compute
+        self.warehouse = {"id": ENV["DATABRICKS_WAREHOUSE_ID"], "state": warehouse, "message": ""}
+        self.warehouse_answer, self.warehouse_starts = warehouse_answer, 0
+
+    def app_compute(self, name):
+        if name not in self.apps:
+            return None
+        if self.compute:
+            return dict(self.compute)
+        running = self.apps[name]["running"]
+        return {"state": "ACTIVE" if running else "STOPPED",
+                "message": "App compute is running." if running else "App compute is stopped."}
+
+    def warehouse_state(self):
+        if isinstance(self.warehouse_answer, Exception):  # the warehouses API itself refused
+            raise self.warehouse_answer
+        return dict(self.warehouse)
+
+    def start_warehouse(self):
+        self.warehouse_starts += 1
+        if self.warehouse_answer:
+            raise RuntimeError(self.warehouse_answer)
+        self.warehouse["state"] = "RUNNING"
 
     def app(self, name):
         found = self.apps.get(name)
@@ -536,6 +562,61 @@ def test_two_runs_in_a_row_both_succeed_and_the_second_leaves_nothing_different(
     assert "less than a minute ago. That is less than the 12 hours in [demo_ready] restart_after_hours, so I left it running." in second
     assert "6. What changed on the workspace.\n   No changes." in second
     assert first.rstrip().splitlines()[-1] == second.rstrip().splitlines()[-1] == "Strata is ready for the demo."
+
+
+# ── The workspace's state, read first (ticket 81) ───────────────────────
+
+# What apps get strata answered at 13:01 UTC on October 26, 2026, after Free Edition's daily limit stopped the App.
+STOPPED_BY_THE_WORKSPACE = {"state": "STOPPED", "message": "App compute was stopped due to workspace or account status."}
+# What databricks warehouses start answered at 10:33 UTC on October 25, 2026 (docs/workspace-catchup.md, ticket 11).
+FREE_DAILY_LIMIT = "Sorry, cannot run the resource because you have hit your free daily limit. Please come back again tomorrow."
+DAILY_LIMIT = "which on Free Edition usually means the workspace reached its daily compute limit."
+
+
+@pytest.mark.parametrize(("stopped", "said"), [
+    ({"compute": STOPPED_BY_THE_WORKSPACE},
+     "I changed nothing, because the app strata's compute is STOPPED with the message \"App compute was stopped due to "
+     f"workspace or account status.\", {DAILY_LIMIT}"),
+    ({"warehouse": "STOPPED", "warehouse_answer": FREE_DAILY_LIMIT},
+     "I changed nothing, because the SQL warehouse abc123 is STOPPED and would not start when I asked, saying "
+     f"\"{FREE_DAILY_LIMIT}\", {DAILY_LIMIT}")], ids=["app compute", "warehouse"])
+def test_a_workspace_that_stopped_the_app_or_the_warehouse_stops_the_command_first_with_one_sentence(
+        tmp_path, fixture_db, stopped, said):
+    workspace = FakeWorkspace(fixture_db, **stopped)
+
+    code, out = run(workspace, write_env(tmp_path), fixture_db)
+
+    assert code == 2
+    assert out.splitlines() == [said]
+    assert workspace.calls == []
+
+
+def test_a_warehouse_that_stopped_when_it_sat_idle_starts_first_and_the_command_prints_what_it_printed_before(
+        two_runs, tmp_path, fixture_db):
+    workspace = FakeWorkspace(fixture_db, running=False, health_after=3, warehouse="STOPPED")
+
+    found = run(workspace, write_env(tmp_path), fixture_db)
+
+    assert workspace.warehouse_starts == 1
+    assert found == two_runs["first"]
+
+
+def test_a_workspace_state_the_command_cannot_read_is_said_once_and_the_steps_still_run(two_runs, tmp_path, fixture_db):
+    workspace = FakeWorkspace(fixture_db, running=False, health_after=3,
+                              warehouse_answer=RuntimeError("HTTP Error 503: Service Unavailable"))
+
+    code, out = run(workspace, write_env(tmp_path), fixture_db)
+
+    assert code == 0
+    assert out == ("I could not read the app's compute or the SQL warehouse's state first: RuntimeError: HTTP Error 503: "
+                   f"Service Unavailable\n{two_runs['first'][1]}")
+
+
+def test_the_live_adapter_reads_the_app_s_compute_and_the_warehouse_as_the_fake_does():
+    called = {name for name in ("app_compute", "warehouse_state", "start_warehouse") if name in vars(FakeWorkspace)}
+
+    assert called == {"app_compute", "warehouse_state", "start_warehouse"}
+    assert called <= set(vars(live_adapter().LiveDemo))
 
 
 def test_a_restart_is_listed_as_a_change_with_the_time_the_app_started_again():
