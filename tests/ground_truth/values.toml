@@ -2893,33 +2893,33 @@ notices = [
   { notice = "OP00128730", at = "procnotices[id=OP00128730].notice_text", quote = "Documented evidence and experience with similar successful assignments corroborated by recommendations of the clients;" },
 ]
 
-# The slice in the fixture (ticket 18, criterion 1): the Kenya projects approved in fiscal 2012 to 2025
+# The slice in the fixture (ticket 18, criterion 1): the Kenya projects with a Board date in fiscal 2012 to 2025
 # whose largest major sector share is water (WX) or transport (TX), read from the recorded projects file
 # by summing each major sector's sector shares. The fixture records no project of Bangladesh, Vietnam or
 # Pakistan, so the slice's count here is Kenya's. docs/PLAN.md section 3 planned 128.
 [stress_shelf.slice_projects]
-says = "The fixture's projects file lists 17 Kenya projects approved in fiscal 2012 to 2025 whose largest sector share is water or transport."
+says = "The fixture's projects file lists 17 Kenya projects with a Board date in fiscal 2012 to 2025 whose largest sector share is water or transport."
 record = "api/projects/kenya-fy2012-2025.json"
 planned = 128
 count = 17
 projects = [
-  { project = "P117635", approved = 2013-06-18, largest = "WX" },
-  { project = "P126321", approved = 2012-08-02, largest = "TX" },
-  { project = "P126637", approved = 2012-05-10, largest = "WX" },
-  { project = "P131512", approved = 2012-12-17, largest = "WX" },
-  { project = "P132979", approved = 2014-11-13, largest = "WX" },
-  { project = "P144966", approved = 2015-06-08, largest = "WX" },
-  { project = "P145559", approved = 2014-12-16, largest = "WX" },
-  { project = "P146630", approved = 2014-03-26, largest = "TX" },
-  { project = "P148853", approved = 2015-06-11, largest = "TX" },
-  { project = "P151660", approved = 2015-06-26, largest = "WX" },
-  { project = "P156634", approved = 2017-04-26, largest = "WX" },
-  { project = "P161305", approved = 2020-09-08, largest = "TX" },
-  { project = "P162248", approved = 2017-08-17, largest = "WX" },
-  { project = "P163035", approved = 2021-06-28, largest = "TX" },
-  { project = "P167814", approved = 2020-08-07, largest = "WX" },
-  { project = "P176704", approved = 2021-12-07, largest = "WX" },
-  { project = "P179012", approved = 2023-12-20, largest = "WX" },
+  { project = "P117635", board_date = 2013-06-18, largest = "WX" },
+  { project = "P126321", board_date = 2012-08-02, largest = "TX" },
+  { project = "P126637", board_date = 2012-05-10, largest = "WX" },
+  { project = "P131512", board_date = 2012-12-17, largest = "WX" },
+  { project = "P132979", board_date = 2014-11-13, largest = "WX" },
+  { project = "P144966", board_date = 2015-06-08, largest = "WX" },
+  { project = "P145559", board_date = 2014-12-16, largest = "WX" },
+  { project = "P146630", board_date = 2014-03-26, largest = "TX" },
+  { project = "P148853", board_date = 2015-06-11, largest = "TX" },
+  { project = "P151660", board_date = 2015-06-26, largest = "WX" },
+  { project = "P156634", board_date = 2017-04-26, largest = "WX" },
+  { project = "P161305", board_date = 2020-09-08, largest = "TX" },
+  { project = "P162248", board_date = 2017-08-17, largest = "WX" },
+  { project = "P163035", board_date = 2021-06-28, largest = "TX" },
+  { project = "P167814", board_date = 2020-08-07, largest = "WX" },
+  { project = "P176704", board_date = 2021-12-07, largest = "WX" },
+  { project = "P179012", board_date = 2023-12-20, largest = "WX" },
 ]
 # Of those 17, the fixture records the documents of P156634 alone, so the run reads one pilot project: data/fixture/
 # sources.toml records P161305's document list but none of its documents, and no other one's list.

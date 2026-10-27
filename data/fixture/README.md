@@ -82,7 +82,7 @@ The October 9, 2026 plan is the ground truth for the demo, and `values.toml` kee
 
 Refresh the fixture and recheck both rows' signals before the demo. Then decide whether the demo still leads with "no signed contract" for KE-NWWDA-541055-CW-RFB, or tells the story of the plan and the award row disagreeing. `values.toml` records the award rows as `award-541055-signed`, `award-541055-amount`, `award-notice-541055` and `award-541062-signed`.
 
-The four comparables still open may be signed or canceled after their bids are due in October and November 2026. A refresh then fails the comparable test for that package. Move it to signed (with `contract`, `signed` and `review_type`) or canceled in `values.toml`, and update the counts. If fewer than three stay open, record another Kenya works package under Request for Bids that was still open on the plan's date.
+The four comparables still open may be signed or canceled after their bids are due in October and November 2026. A refresh then fails the comparable test for that package. Move it to signed, with `contract`, `signed` and `review_type` from its award row, or to canceled, with `canceled_in`, `pdf_page` and `quote` from a recorded Procurement Plan whose row for it says Canceled. If only a notice says it was canceled, record its agency's latest plan first, and add the notice's words as `notice_says`. Then update the counts. If fewer than three stay open, record another Kenya works package under Request for Bids that was still open on the plan's date.
 
 ## Refresh it
 

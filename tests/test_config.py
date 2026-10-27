@@ -58,8 +58,8 @@ def test_the_slice_file_names_the_showcase_project_and_the_demo_plan():
 
 # The stress shelf (docs/PLAN.md section 3, and the 18 design brief, section 4.1): the P130164 PAD with its
 # two-column risk annex, the longest PAD, a long Procurement Plan, a completion report in French and a
-# document over the layout parser's limit, in that order. The hand count of the annex's risks is
-# tests/ground_truth/values.toml's.
+# document over the layout parser's limit, in that order. The count of the annex's risks is the text layer's,
+# which the fixture's builder counted and tests/ground_truth/values.toml records.
 SHELF_TRUTH = tomllib.loads((ROOT / "tests" / "ground_truth" / "values.toml").read_text())["stress_shelf"]
 
 

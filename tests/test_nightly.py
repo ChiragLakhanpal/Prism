@@ -280,8 +280,11 @@ def test_a_live_score_task_replays_the_signals_on_their_weekly_day_and_an_offlin
     nightly.main(["--task", "score", "--run-id", "offline", "--src", "src"], engine, no_pages, lambda: first)
     assert signals_track.stored(engine) is None and experiments == []
 
-    replayed, compared, seen = [], [], (None, None)
-    for night in (first + dt.timedelta(days=n) for n in range(8)):
+    # The offline run stored a comparison, so a live night that compares again shows as a new run id (ticket 89's
+    # review, F2).
+    nights = [first + dt.timedelta(days=n) for n in range(8)]
+    replayed, compared, seen = [], [], (None, hazard.stored(engine)["run_id"])
+    for night in nights:
         nightly.main(["--task", "score", "--run-id", f"{night:%m%d}", "--src", "src"], engine, clock=lambda: night)
         now = (signals_track.stored(engine)["run_id"], hazard.stored(engine)["run_id"])
         if now[0] != seen[0]:
@@ -290,8 +293,21 @@ def test_a_live_score_task_replays_the_signals_on_their_weekly_day_and_an_offlin
             compared.append(f"{night:%A %B} {night.day}")
         seen = now
 
-    assert config.load_thresholds().value("signals.track_record_day") == "Sunday"
-    assert replayed == compared == ["Monday October 26", "Sunday November 1"]
+    # The nights each replay is due, from the day the thresholds file names, so moving the day is one edit there
+    # (ticket 89's review, F3): the signals were never replayed, and the comparison last ran offline on the first night.
+    day = config.load_thresholds().value("signals.track_record_day")
+    assert day in schedule.WEEKDAYS
+
+    def due(last):
+        found = []
+        for night in nights:
+            if schedule.weekly_due(last, night.date(), day):
+                found.append(f"{night:%A %B} {night.day}")
+                last = night.date()
+        return found
+
+    assert replayed == due(None) and compared == due(first.date())
+    assert replayed[0] == "Monday October 26" and compared[0] != "Monday October 26"
     assert config.load_time_estimate().experiment in experiments
     assert signals_track.stored(engine)["ran_on"] == "2026-11-01"
     assert runs(engine, "1101")[0][2] > runs(engine, "1031")[0][2]  # the replays' rows count as rows changed

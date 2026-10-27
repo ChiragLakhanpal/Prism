@@ -1,3 +1,5 @@
+-- Change projects_between.sql with this file. strata.tools.withheld.statuses_between reads the same
+-- columns for the replay of the signals.
 -- project_signals: the project, from the projects API's newest record, with its country's name and the
 -- day the record was last updated. The API changes a status and a closing date in place, so they count as
 -- public from that day (check_plan's record_is_current); before it, the closing date comes from the loan

@@ -352,7 +352,8 @@ class Version:
     is_latest: bool = False
     reasons: list[str] = field(default_factory=list)
     first_listings: list[str] = field(default_factory=list)  # the activities no earlier version read lists
-    nothing_older_unread: bool = False  # every plan the list names that is dated on or before this one was read
+    # every plan the list names that is dated on or before this one, or that has no date, was read
+    nothing_older_unread: bool = False
 
     @property
     def document_id(self) -> str:

@@ -20,7 +20,7 @@ purpose = "Drafting, hard questions and the judge that checks each sentence foll
 deployment = "gpt-5.4-nano"
 purpose = "Bulk extraction on Global Batch, such as proposing lessons."
 
-# The embedding role also names the vector size it asks for. The file is refused without it.
+# The embedding role also names the vector size it asks for. load_models() refuses the file without it.
 [roles.embed]
 deployment = "text-embedding-3-large"
 purpose = "Embeddings for the passage index."

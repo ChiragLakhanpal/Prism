@@ -384,19 +384,28 @@ for irrigation.
 \f2.2     The regulatory reforms lacked sufficient preparation, so the new agencies
 struggled to issue licenses.
 2.3     The measurement of water flow improved.
+2.4     The utility's billing reached most of its customers.
+2.5     Losses of water fell in the two cities the project served.
+2.6     The new meters were read every month.
+2.7     The agencies published their tariffs.
+2.8     Complaints were answered within a week.
+2.9     The staff were trained in the new procedures.
+2.10    The project's monitoring data were complete for every year.
 """
 
 
 def test_a_ppar_numbers_its_paragraphs_within_each_chapter_and_each_is_a_passage():
     """IEG's PPARs number paragraphs 1.1, 1.2, then 2.1 under each chapter's heading. No fixture project lists
-    a PPAR, so this reads a hand-written one of two pages, written the way a PPAR is set out."""
+    a PPAR, so this reads a hand-written one of two pages, written the way a PPAR is set out. Its last paragraph is
+    2.10, so a reader that read it as 2.1 would fail."""
     from strata.reader import passages as route_a
     from strata.reader.templates import TEMPLATES
 
     reading = route_a.read(PPAR_TEXT, 2, TEMPLATES["Project Performance Assessment Report"], 500)
 
     assert [(p.paragraph, p.section_path, p.pdf_page) for p in reading.passages] == [
-        ("1.1", "1", 1), ("1.2", "1", 1), ("2.1", "2", 1), ("2.2", "2", 2), ("2.3", "2", 2)]
+        ("1.1", "1", 1), ("1.2", "1", 1), ("2.1", "2", 1), ("2.2", "2", 2), ("2.3", "2", 2), ("2.4", "2", 2),
+        ("2.5", "2", 2), ("2.6", "2", 2), ("2.7", "2", 2), ("2.8", "2", 2), ("2.9", "2", 2), ("2.10", "2", 2)]
     assert reading.passages[3].text == ("2.2 The regulatory reforms lacked sufficient preparation, so the new agencies "
                                         "struggled to issue licenses.")
     assert all(p.paragraph_numbered for p in reading.passages)

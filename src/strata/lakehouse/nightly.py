@@ -57,11 +57,15 @@ import sys
 from collections.abc import Callable, Iterable, MutableMapping
 from dataclasses import dataclass
 from importlib import resources
+from typing import TYPE_CHECKING
 
 from strata.config import Source, load_sources, load_thresholds
 from strata.lakehouse import bronze, gold, pages, quality, readers, readiness, silver, storage
 from strata.lakehouse.engine import Engine
 from strata.lakehouse.schedule import Window, as_utc, daily_start, weekly_due
+
+if TYPE_CHECKING:  # the score task imports the estimates lazily, so the other tasks never load them
+    from strata.estimates import signals_track
 
 LOG = logging.getLogger(__name__)
 
@@ -292,7 +296,7 @@ def _replay_day() -> str:
     return str(load_thresholds().value("signals.track_record_day"))
 
 
-def _compare_hazard(run: Run, checked: dict) -> int:
+def _compare_hazard(run: Run, checked: signals_track.Checked) -> int:
     """The hazard model replayed against the fixed signals (strata.estimates.hazard.compare), on the signals' own
     night of the week (schedule.weekly_due). A live run logs it to MLflow, or skips it when MLflow is missing; any
     other run uses the offline tracker. Returns the rows stored in strata.ops.evaluation_result."""
@@ -347,7 +351,7 @@ def _score_packages(run: Run) -> int:
     return 0 if tracker is None else rebidding_backtest.score_packages(run.engine, tracker, run.run_id, run.clock)
 
 
-def _replay_signals(run: Run, checked: dict) -> int:
+def _replay_signals(run: Run, checked: signals_track.Checked) -> int:
     """The signals' checks replayed on their track record dates (strata.estimates.signals_track.backtest), for the
     Following page, on their night of the week (schedule.weekly_due), on a run that fetches from the live APIs.
     Returns the rows the replay stored in strata.ops.evaluation_result."""
@@ -372,7 +376,7 @@ def _signals_replays(run: Run) -> int:
     track record for the Following page (ticket 37) and the hazard model's comparison with them (ticket 44). On a
     night both run, each project is checked with project_signals once a date for both
     (strata.estimates.signals_track.counted)."""
-    checked: dict = {}
+    checked: signals_track.Checked = {}
     return _replay_signals(run, checked) + _compare_hazard(run, checked)
 
 
@@ -437,8 +441,8 @@ def _score(run: Run) -> int:
             run.engine.insert_rows("strata.ops.score_parts", PART_COLUMNS, [
                 (run.run_id, started, number, part, "left", None, None, None, finished.astimezone(dt.UTC).date())
                 for number, part in enumerate(waiting, position + 1)])
-            LOG.warning("The score task stopped after its %g minutes with %d parts left for the next night: %s.",
-                        minutes, len(waiting), ", ".join(waiting))
+            LOG.warning("The score task stopped after its %g minutes with %s left for the next night: %s.",
+                        minutes, "one part" if len(waiting) == 1 else f"{len(waiting)} parts", ", ".join(waiting))
             break
         began = finished
     return changed

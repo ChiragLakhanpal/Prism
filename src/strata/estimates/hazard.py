@@ -33,12 +33,16 @@ import math
 from collections import defaultdict
 from dataclasses import dataclass
 from importlib import resources
+from typing import TYPE_CHECKING
 
 from strata.config import Thresholds, load_thresholds
 from strata.estimates import harness
 from strata.estimates.harness import Reader, Replay, Score, Scored, Window
 from strata.estimates.past_range import as_date
 from strata.lakehouse.engine import Engine
+
+if TYPE_CHECKING:  # signals_track reads this module's dates, so it is named here for the type alone
+    from strata.estimates import signals_track
 
 SCORER = "hazard_vs_signals"
 MODEL = "strata.estimates.hazard"
@@ -197,7 +201,7 @@ class HazardVsSignals:
     name = SCORER
     model = MODEL
 
-    def __init__(self, dates: tuple[dt.date, ...], settings: Settings, checked: dict | None = None):
+    def __init__(self, dates: tuple[dt.date, ...], settings: Settings, checked: signals_track.Checked | None = None):
         self.dates, self.settings, self.checked = dates, settings, checked
 
     def score(self, replay: Replay) -> Scored:
@@ -254,7 +258,8 @@ class HazardVsSignals:
 
 
 def compare(engine: Engine, tracker, *, ran_at: dt.datetime, dates: tuple[dt.date, ...] | None = None,
-            store: Engine | None = None, thresholds: Thresholds | None = None, checked: dict | None = None) -> str:
+            store: Engine | None = None, thresholds: Thresholds | None = None,
+            checked: signals_track.Checked | None = None) -> str:
     """Replay the hazard model against the fixed signals on the signals' track record dates (or the dates given),
     store the counts and return the run's id. Outcomes are read as of the last date plus the window, or the day it
     runs when that is earlier, as the signals' track record reads them. checked is what the night's signals' replay

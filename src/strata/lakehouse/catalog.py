@@ -17,8 +17,9 @@ the column or gives it another type. It reads the tables through listed_tables()
 table sizes measure reads too (strata.lakehouse.storage). Views hold no rows of their own, so the
 listing leaves out plain views and the metric views that Genie reads. It also leaves out the search
 index's own objects, which the AI Search service makes in the index's schema and Strata never defines:
-the index that config/models.toml names, and the event log and the view the index serves from, which
-carry the index's id in their names (ticket 87). Nothing else is left out. The fixture build skips its
+the index that config/models.toml names, and every table of these two shapes, the event log and the view
+an index serves from, which carry an index's id in their names, whichever index made them (ticket 87).
+Nothing else is left out. The fixture build skips its
 `recorded` schema, its copy of the sources, which is not a catalog layer.
 """
 
@@ -56,8 +57,9 @@ WHERE table_catalog = :catalog
 # the event log of the pipeline that syncs it and the view the index serves from. Each carries the index's id, a
 # UUID written with underscores, as strata.gold.event_log_cd8058ce_42aa_4722_ac9a_3ee310032e31 and
 # strata.gold.__cd8058ce_42aa_4722_ac9a_3ee310032e31___online_index_view did on the paid workspace (ticket 87).
-INDEX_ID = r"[0-9a-f]{8}(?:_[0-9a-f]{4}){3}_[0-9a-f]{12}"
-INDEX_SERVICE_TABLES = (re.compile(rf"event_log_{INDEX_ID}"), re.compile(rf"__{INDEX_ID}___online_index_view"))
+INDEX_ID_PATTERN = r"[0-9a-f]{8}(?:_[0-9a-f]{4}){3}_[0-9a-f]{12}"
+INDEX_SERVICE_TABLES = (re.compile(rf"event_log_{INDEX_ID_PATTERN}"),
+                        re.compile(rf"__{INDEX_ID_PATTERN}___online_index_view"))
 
 
 class CatalogError(ValueError):
@@ -172,11 +174,11 @@ def defined_names() -> frozenset[str]:
     return frozenset(f"{CATALOG}.{path.parent.name}.{path.stem}" for path in (*tables, *views, *metric_views))
 
 
-def index_object(schema: str, table: str, index: str | None = None) -> bool:
+def is_index_object(schema: str, table: str, index: str) -> bool:
     """Whether strata.<schema>.<table> is one of the search index's own objects: the index config/models.toml
     names, or a table the AI Search service made beside it in its schema with the index's id in its name. The
     service makes them and Strata never defines them, so none holds a public_from column (ticket 87)."""
-    index_catalog, index_schema, index_name = (index or load_search().index).split(".")
+    index_catalog, index_schema, index_name = index.split(".")
     if (index_catalog, index_schema) != (CATALOG, schema):
         return False
     return table == index_name or any(pattern.fullmatch(table) for pattern in INDEX_SERVICE_TABLES)
@@ -185,11 +187,11 @@ def index_object(schema: str, table: str, index: str | None = None) -> bool:
 def listed_tables(engine: Engine) -> list[tuple[str, str]]:
     """Every table in the catalog, as (schema, table) in schema then table order, whatever made it. Views and
     metric views hold no rows of their own, and the search index's own objects are the AI Search service's
-    (index_object), so the listing leaves them out. The public_from check and the nightly's table sizes measure
+    (is_index_object), so the listing leaves them out. The public_from check and the nightly's table sizes measure
     both read it, so neither reads the index's view, which has no columns."""
     index = load_search().index
     return [(schema, table) for schema, table in engine.run(LISTED_TABLES, {"catalog": CATALOG}).as_text()
-            if not index_object(schema, table, index)]
+            if not is_index_object(schema, table, index)]
 
 
 def check_public_from(engine: Engine, skip: tuple[str, ...] = ()) -> None:

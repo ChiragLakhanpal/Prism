@@ -134,11 +134,54 @@ def test_each_reading_is_a_value_in_the_ground_truth():
     assert READINGS <= set(BY_ID)
 
 
+def spaced(text):
+    """Whitespace made single, not removed, so "220,000.00 0.00" stays two numbers."""
+    return re.sub(r"\s+", " ", text).strip()
+
+
+def is_written_in(value, quote):
+    """A number or date counts only when no digit, comma or point sits right before it and no digit right after, so
+    "45,092.76" is not found inside "1,245,092.76" (ticket 05's review, P1)."""
+    for form in written_forms(value):
+        if isinstance(value, (int, float, datetime.date)) and not isinstance(value, bool):
+            if re.search(r"(?<![\d,.])" + re.escape(form) + r"(?!\d)", spaced(quote)):
+                return True
+        elif spaced(form) in spaced(quote):
+            return True
+    return False
+
+
+def test_a_number_is_never_found_as_the_tail_of_a_longer_one():
+    assert is_written_in(1245092.76, "at US$1,245,092.76 on")
+    assert not is_written_in(45092.76, "at US$1,245,092.76 on")
+    assert not is_written_in(287515.6, "1287515.6")
+
+
 @pytest.mark.parametrize("value", [v for v in VALUES if v["id"] not in READINGS], ids=lambda value: value["id"])
 def test_each_value_is_written_in_its_own_quote(value):
-    in_quote = any(squash(form) in squash(value["quote"]) for form in written_forms(value["value"]))
     the_plans_date = "first_lists" in value and value["value"] == value["date"]
-    assert in_quote or the_plans_date, f"{value['id']}: {value['value']!r} is not in its quote {value['quote']!r}"
+    assert is_written_in(value["value"], value["quote"]) or the_plans_date, (
+        f"{value['id']}: {value['value']!r} is not in its quote {value['quote']!r}")
+
+
+SOURCE_ABOUT = {source.file: source.about for source in fmt.load_manifest().sources}
+
+
+def documents_api_date(document, project):
+    """The docdt the recorded Documents API list gives for a document, by the id in its About line."""
+    api_id = re.search(r"Documents API id (\d+)", SOURCE_ABOUT[document]).group(1)
+    record = fmt.read(RECORDED / "api" / "documents" / f"{project}.json").body["documents"][f"D{api_id}"]
+    return datetime.date.fromisoformat(record["docdt"][:10])
+
+
+@pytest.mark.parametrize("value", [v for v in VALUES if "document" in v and v.get("project") and (
+    RECORDED / "api" / "documents" / f"{v['project']}.json").exists()], ids=lambda value: value["id"])
+def test_each_document_value_is_dated_as_the_documents_api_dates_its_document(value):
+    """Ticket 05's review, P2: a project document value's date is its document's, as the Documents API dates it, so
+    the first-listed values the quote check excuses by that date cannot drift with it. It reads the project's
+    recorded document list, so it leaves out the PPSD templates, which belong to no project, and the French plan
+    template, whose project's list the fixture does not record."""
+    assert value["date"] == documents_api_date(value["document"], value["project"])
 
 
 @pytest.mark.parametrize("value", [v for v in VALUES if "days_between" in v], ids=lambda value: value["id"])
@@ -484,7 +527,7 @@ def test_each_stress_shelf_quote_is_word_for_word_on_its_page(name, document, nu
     assert word_for_word(quote, page(document, number)), f"{name}: {quote!r} is not on page {number} of {document}"
 
 
-def test_the_risk_annex_hand_count_is_one_rated_risk_per_rating_row_and_its_pages_are_the_annex():
+def test_the_risk_annex_text_layer_count_is_one_rated_risk_per_rating_row_and_its_pages_are_the_annex():
     annex = SHELF["pad_risk_annex"]
     assert len(annex["ratings"]) == annex["risks"]
     assert {rating["pdf_page"] for rating in annex["ratings"]} <= set(range(annex["first_pdf_page"],
@@ -515,7 +558,7 @@ def test_each_similar_experience_quote_is_one_paragraph_of_its_notice():
         assert word_for_word(notice["quote"], str(resolve(case["record"], notice["at"]))), notice["notice"]
 
 
-def test_each_slice_project_is_in_the_recorded_file_with_its_approval_date_and_largest_sector():
+def test_each_slice_project_is_in_the_recorded_file_with_its_board_date_and_largest_sector():
     case = SHELF["slice_projects"]
     projects = resolve(case["record"], "projects")
     assert len(case["projects"]) == case["count"]
@@ -525,10 +568,10 @@ def test_each_slice_project_is_in_the_recorded_file_with_its_approval_date_and_l
         for major in project.get("major_sectors") or []:
             sector = major["major_sector"]
             shares[sector["major_sector_code"]] = sum(float(s["sector_percent"]) for s in sector.get("sectors") or [])
-        assert project["boardapprovaldate"][:10] == listed["approved"].isoformat(), listed["project"]
+        assert project["boardapprovaldate"][:10] == listed["board_date"].isoformat(), listed["project"]
         assert max(shares, key=shares.get) == listed["largest"], listed["project"]
-        approved = listed["approved"]
-        assert 2012 <= (approved.year + 1 if approved.month >= 7 else approved.year) <= 2025
+        board = listed["board_date"]
+        assert 2012 <= (board.year + 1 if board.month >= 7 else board.year) <= 2025
 
 
 def test_the_pad_disclosure_date_is_in_its_fiscal_year():
