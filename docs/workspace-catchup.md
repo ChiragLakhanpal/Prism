@@ -3156,6 +3156,55 @@ The builder's commands, from the "On the workspace" lines in `docs/change-drill.
 
 Record each command's exit code and proof line, and the commands that put the workspace back.
 
+## Ticket 85, step 1 of 1: a full pass of the nightly job reads silver's pending pages inside the window, and gold runs (criterion 3, live)
+
+Parked on October 26, 2026, by ticket 85's builder; run it from a snapshot of the merge commit or later. The second session runs it, one step at a time. It needs the Databricks keys in `.env` and the Databricks CLI 0.287.0 or later.
+
+Why: on the paid workspace's first nightly run (run 686994790675456, October 26), `bronze_to_gold` read one bronze page at a time and ran a read, a DELETE and an insert for each silver table of the page: 7,585 statements from 21:33 to 23:43 UTC, about 6.3 seconds a page. The job's 150-minute window cancelled it after 1,231 of 1,460 pages, so gold never ran and the eight tasks after it were skipped. Ticket 85 reads the pages in groups of 50 (config/thresholds.toml, `ingestion.silver_group_pages`): for each group, one read of its pages, one read of which of them the silver tables hold already, a DELETE with a WHERE only for a table that holds some, one insert per table and one insert of the group's records in `strata.ops.silver_pages`. Silver also stops after 60 minutes from the task's start (`ingestion.silver_minutes`), at the end of the group it is reading; gold then runs on what silver holds, and each source with pages left gets a row in `strata.ops.data_readiness` (measure `silver_pages_waiting`, count the pages left, denominator the pages that were waiting when the pass began) and the task's log says "Silver stopped after its 60 minutes with N pages left for the next night: ...". No table changes, so no `ALTER TABLE` is needed.
+
+First, deploy the bundle, so the job runs the new code:
+
+    uv run --script ops/bundle/deploy.py --env-file .env --fairshare-catalog workspace
+
+It worked if it exits 0 and changes no table that holds rows. Then make one full pass of the job, outside the nightly window (03:00 to 05:30 in Washington), with the job ID that the list prints (the paid workspace's deploy listed `strata nightly` as 200833746315993):
+
+    databricks jobs list --name "strata nightly" -p strata
+    databricks jobs run-now --json '{"job_id": <the job ID>}' --timeout 160m -p strata
+
+Or let the next scheduled night make the pass; record it the same way. Before the run, note how many pages silver has not read (from the session's own reruns tonight, silver may have caught up; then this pass reads only the night's new pages, and the record says so):
+
+    SELECT p.source, count(*) AS pages, count(r.page_hash) AS recorded
+    FROM strata.bronze.api_pages AS p
+    LEFT JOIN (SELECT DISTINCT source, page_hash FROM strata.ops.silver_pages) AS r
+      ON r.source = p.source AND r.page_hash = p.page_hash
+    GROUP BY p.source ORDER BY p.source
+
+(Notices pages read under the notices transform's version 1 count as recorded here, though silver reads them again for version 2; ticket 76's step 3 counts those.) After the run, with its run id:
+
+    SELECT task_key, status, rows_changed, started_at, finished_at,
+      timestampdiff(MINUTE, started_at, finished_at) AS minutes
+    FROM strata.ops.pipeline_runs WHERE run_id = '<the run id>' ORDER BY started_at
+
+    SELECT source, count AS pages_left, denominator AS pages_waiting_at_start, detail
+    FROM strata.ops.data_readiness
+    WHERE run_id = '<the run id>' AND measure = 'silver_pages_waiting'
+
+Then count the statements of the `bronze_to_gold` task run the same way the reading of run 686994790675456 counted its 7,585: the query history between the task's `started_at` and `finished_at` from the first query. Where the system tables read, this gives the count, the first and last statement and the longest:
+
+    SELECT count(*) AS statements, min(start_time) AS first, max(end_time) AS last,
+      max(total_duration_ms) / 1000 AS longest_seconds
+    FROM system.query.history
+    WHERE start_time >= TIMESTAMP '<started_at>' AND start_time <= TIMESTAMP '<finished_at>'
+      AND query_source.job_info.job_id = '<the job ID>'
+
+It worked if:
+
+- `bronze_to_gold` succeeded inside the window, and every task after it has a row (the gold step ran and the night went on).
+- The second query gives no row, so silver read every pending page; or it gives a row for each source with pages left, and the next night's run reads them and gives none.
+- The statement count is well under one per page per table: about four to eight statements for each group of 50 pages, plus one read per source, against 7,585 for 1,231 pages on October 26.
+
+Record the pages before, the minutes of `bronze_to_gold`, the pages left if any, and the statement count here. If the task fails on a group of notices pages for its size (the group's pages and rows are held in memory, and a notices page can be several megabytes), lower `ingestion.silver_group_pages` in `config/thresholds.toml`, for example to 20, redeploy and run it again; the records already written stay, and the rerun reads only the rest.
+
 ## Moving to the paid Azure workspace (docs/paid-workspace.md), October 26, 2026
 
 The user created a paid Azure Databricks workspace on October 26, 2026 (Serverless, Premium, eastus, https://adb-7405609289499029.9.azuredatabricks.net, workspace id 7405609289499029, Databricks account b62e687b-6091-4cb9-846e-dd50324a1534, user chirag.lakhanpal.cl@gmail.com) and asked a third session, strata-75, to carry out docs/paid-workspace.md on it. strata-75 did the workspace's setup (section 3), then a local error on its machine ("Operation not permitted" on every tool) stopped it, and it handed the deploy chain (section 5) to the catch-up session, staying on messages as the relay to the user. The Free Edition workspace dbc-b5ef314b-b0cd.cloud.databricks.com is history from here: every id in the "Ran on" notes above this block is that workspace's. Times are UTC.

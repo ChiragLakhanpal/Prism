@@ -51,6 +51,21 @@ passage_documents = 5000
 # the next night. Source: the ticket 43 review (B3), which named 90 minutes as an example; 60 leaves the rest of
 # the chain the time it took on the live runs. A value for the owner to confirm.
 document_host_minutes = 60
+# The bronze pages silver reads in one group (src/strata/lakehouse/silver/__init__.py, read). For each group it reads
+# the pages, checks once which of them its tables hold already, and writes each table once, so a group costs a few
+# statements where a page cost about four for each table. On the paid workspace's first nightly run, October 26,
+# 2026 (run 686994790675456), page by page took about 6.3 seconds a page on the 2X-Small warehouse: bronze_to_gold
+# ran 7,585 statements in its 150 minutes, read 1,231 of 1,460 pages and was cancelled before gold. The group's pages
+# and rows are held in memory together, which bounds the size. Source: the ticket's example; a value for the owner
+# to confirm.
+silver_group_pages = 50
+# The minutes silver may spend each night, from the start of bronze_to_gold. Once they are spent, silver finishes
+# the group it is reading, records it, and stops; gold then runs on what silver holds, and the pages left wait for
+# the next night, counted in strata.ops.data_readiness (measure silver_pages_waiting) and in the task's log. Source:
+# the October 26, 2026 run above, where silver used the whole window and gold and the eight tasks after it never
+# ran; 60 leaves the window's other 90 minutes to the fetch before it and the tasks after it. A value for the owner
+# to confirm.
+silver_minutes = 60
 
 # Structured data for every country stays under 0.5 GB (docs/PLAN.md section 3, "Scope"): every
 # table but the documents' text, layout, passages and vectors, as strata.ops.table_sizes records
