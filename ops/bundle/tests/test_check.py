@@ -176,9 +176,12 @@ def deployed_warehouse():
     each worker a few seconds once the passage run read the whole document slice (review r2 P14)."""
     if FIXTURE_DB.exists():
         return DuckDBEngine.open(FIXTURE_DB, read_only=True)
+    from strata.config import load_thresholds
+
     engine = DuckDBEngine.open()
     catalog.build(engine)
-    plans.run_on_fixture(engine)
+    # Every recorded plan version, as the fixture build reads them (ticket 108).
+    plans.run_on_fixture(engine, thresholds=plans.with_plan_versions(load_thresholds(), plans.EVERY_VERSION))
     nightly.run_locally(engine, readers_for=nightly.no_documents)  # the readers run around it, as in the build
     passages.run_on_fixture(engine)
     assertions.run_on_fixture(engine)

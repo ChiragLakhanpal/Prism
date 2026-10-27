@@ -11,7 +11,8 @@ It builds four things, with no network:
   `recorded.pages` (the text of each PDF page, numbered from 1). The `recorded` schema is the
   fixture's copy of the sources, not a catalog layer.
 - The Procurement Plans of the demo project and of the stress shelf's plan (config/slice.toml) as STEP
-  rows. The plan reader (src/strata/lakehouse/plans.py) runs over the recorded plans with the offline
+  rows. The plan reader (src/strata/lakehouse/plans.py) runs over every recorded plan, where the nightly
+  job reads only each project's newest (ingestion.plan_versions), with the offline
   document source and layout parser, and fills
   bronze, silver.plan_versions, plan_listings, plan_rows, plan_steps, plan_step_delays and
   plan_data_notes, and the ops tables, as the nightly job's parse_and_embed task runs it on the
@@ -47,7 +48,7 @@ import os
 import sys
 from pathlib import Path
 
-from strata.config import load_slice
+from strata.config import load_slice, load_thresholds
 from strata.dashboard import snapshot
 from strata.fixture import recorded as fmt
 from strata.knowledge import assertions, links
@@ -129,8 +130,11 @@ def build(out=FIXTURE_DB, manifest=None, tables=catalog.TABLES, plans_for=PLAN_P
         with DuckDBEngine.open(building) as engine:
             catalog.build(engine, tables)  # the catalog's schemas and tables, from the definitions the deploy uses
             load_recorded(engine.connection, manifest)
+            # Every recorded plan, though the nightly job reads only each project's newest (config/thresholds.toml,
+            # ingestion.plan_versions; ticket 108): the tests compare P156634's versions, first listings and delays.
+            every = plans.with_plan_versions(load_thresholds(), plans.EVERY_VERSION)
             for project_id in ((plans_for,) if isinstance(plans_for, str) else plans_for or ()):
-                plans.run_on_fixture(engine, project_id, manifest=manifest, clock=clock)
+                plans.run_on_fixture(engine, project_id, manifest=manifest, clock=clock, thresholds=every)
             if tables == catalog.TABLES:  # the lakehouse run needs the real table definitions
                 # The job's own parse_and_embed reads no documents here: the plan reader ran above, so gold's
                 # packages hold the plan rows from the first sync, and the passage reader runs below, as before.

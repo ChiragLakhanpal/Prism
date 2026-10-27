@@ -102,7 +102,7 @@ def test_the_fetch_stops_asking_once_the_night_s_reading_time_is_spent(tmp_path)
 def test_the_job_s_reading_budget_comes_from_the_thresholds_file(tmp_path):
     minutes = config.load_thresholds().value("ingestion.document_host_minutes")
 
-    assert minutes == 60
+    assert minutes == 120  # the user's call of October 27, 2026 (decision 95, ticket 108); 60 before
     assert readers.document_host(Host(), tmp_path).budget == minutes * 60
 
 
@@ -151,8 +151,10 @@ STOPS = {
 
 
 @pytest.mark.parametrize("measure", list(STOPS))
-def test_a_night_the_reading_stops_finishes_with_a_note_and_the_next_night_goes_on_from_there(measure, monkeypatch):
-    """The plan rows read before the stop reach strata.gold.package the same night (review r2 follow-up 2)."""
+def test_a_night_the_reading_stops_finishes_with_a_note_and_the_next_night_goes_on_from_there(measure, monkeypatch,
+                                                                                             every_plan_version):
+    """The plan rows read before the stop reach strata.gold.package the same night (review r2 follow-up 2). The
+    plan reader reads every version of P156634's plans here, so the stop falls between two of them."""
     from strata.fixture import recorded as fmt
     from strata.lakehouse import gold
 

@@ -320,7 +320,7 @@ class OnlyRecordedPlans:
         return Fetched(url, {**fetched.body, "documents": kept}, fetched.fetched_at)
 
 
-def test_when_every_listed_version_is_read_each_first_listing_is_confirmed(fresh):
+def test_when_every_listed_version_is_read_each_first_listing_is_confirmed(fresh, every_plan_version):
     from strata.fixture import recorded as fmt
     from strata.lakehouse import plans
     from strata.reader.layout import RecordedLayout
@@ -356,7 +356,7 @@ class OneTextTooLarge:
         return self.engine.insert_rows(table, columns, rows, **options)
 
 
-def test_a_plan_whose_text_the_warehouse_cannot_take_is_left_out_counted_and_named(fresh, capsys):
+def test_a_plan_whose_text_the_warehouse_cannot_take_is_left_out_counted_and_named(fresh, capsys, every_plan_version):
     from strata.fixture import recorded as fmt
     from strata.lakehouse import plans
     from strata.reader.layout import RecordedLayout
@@ -378,13 +378,16 @@ def test_a_plan_whose_text_the_warehouse_cannot_take_is_left_out_counted_and_nam
 
 
 def cap(tmp_path, pages: int):
+    """The thresholds with a lower daily page cap, and every plan version read (ingestion.plan_versions = "all"), so
+    the cap falls across several plans."""
     from strata.config import CONFIG_DIR, load_thresholds
+    from strata.lakehouse import plans
 
     text = (CONFIG_DIR / "thresholds.toml").read_text()
     assert "daily_page_cap = 500" in text
     path = tmp_path / "thresholds.toml"
     path.write_text(text.replace("daily_page_cap = 500", f"daily_page_cap = {pages}"))
-    return load_thresholds(path)
+    return plans.with_plan_versions(load_thresholds(path), plans.EVERY_VERSION)
 
 
 def test_a_lower_daily_page_cap_stops_the_run_at_the_cap_and_records_where_it_stopped(fresh, tmp_path):

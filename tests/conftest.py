@@ -50,3 +50,16 @@ def shield_finding_an_attack_in():
             return [Scan(self.words in text, "found by the test") for text in texts]
 
     return FindsAnAttack
+
+
+@pytest.fixture
+def every_plan_version(monkeypatch):
+    """The plan reader reads every plan a project's document list names, newest first, as it did before ticket 108
+    (config/thresholds.toml's ingestion.plan_versions = "all"), for a test of how it reads many plan versions. The
+    nightly job reads only each project's newest plan."""
+    from strata.config import load_thresholds
+    from strata.lakehouse import plans
+
+    every = plans.with_plan_versions(load_thresholds(), plans.EVERY_VERSION)
+    monkeypatch.setattr(plans, "load_thresholds", lambda: every)
+    return every

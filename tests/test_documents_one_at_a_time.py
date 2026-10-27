@@ -129,9 +129,9 @@ def night(engine, run_id, host, ticks, projects=("P130164", "P156634")):
 
 def test_each_document_is_written_before_the_next_is_fetched_and_the_time_is_checked_between_documents(
         fresh, three_documents, caplog):
-    """Each request takes a fifth of the night's 60 minutes: P130164's list, then each ICR Review's text and PDF. So
-    the time is spent once the second document is written. The ICR is already in bronze and needs no request, so only
-    the check between documents keeps the reader from reading it."""
+    """Each request takes a fifth of the night's minutes (120 since ticket 108): P130164's list, then each ICR Review's
+    text and PDF. So the time is spent once the second document is written. The ICR is already in bronze and needs no
+    request, so only the check between documents keeps the reader from reading it."""
     hold_in_bronze(fresh, "P130164", ICR)
     minutes = load_thresholds().value("ingestion.document_host_minutes")
     ticks = Ticks()
@@ -157,7 +157,7 @@ def test_each_document_is_written_before_the_next_is_fetched_and_the_time_is_che
     assert not set(ICR_REVIEWS) & set(documents)
     assert [(project_id, document_id) for _, project_id, document_id, _, _ in left if project_id != "P130164"] == [
         ("P156634", None)]
-    assert all("60 minutes" in reason for *_, reason in left)
+    assert all(f"the night's {minutes} minutes" in reason for *_, reason in left)
 
     # The task's record names what it wrote and what it left: strata.silver.documents holds the two documents it
     # finished, the stop's note counts both, and the task's log names each one. strata.ops.documents_read counts a
@@ -175,7 +175,7 @@ def test_each_document_is_written_before_the_next_is_fetched_and_the_time_is_che
     assert any(message.startswith("I stopped before I reached 15 documents and one project's document list. ")
                and ICR in message and "the list of P156634" in message for message in caplog.messages)
 
-    # The next night, with a fresh 60 minutes, asks the host for P130164's list only: the ICR Reviews and the ICR are
+    # The next night, with fresh minutes, asks the host for P130164's list only: the ICR Reviews and the ICR are
     # in bronze. It writes nothing twice: the ICR Reviews' rows stay as they were, no text is scanned or embedded a
     # second time, and the ICR, the third document, is written.
     kept = rows_of(fresh, ICR_REVIEWS)
@@ -286,11 +286,13 @@ class SlowParser:
             return Layout(text=f"The words on page {page.pdf_page}.")
 
 
-def test_the_plan_reader_leaves_the_passage_reader_its_minutes_of_the_night(fresh, three_documents, monkeypatch):
+def test_the_plan_reader_leaves_the_passage_reader_its_minutes_of_the_night(fresh, three_documents, monkeypatch,
+                                                                            every_plan_version):
     """On October 27, 2026 the plan reader used the whole night's reading time and the passage reader never started.
-    The plan reader reads first and stops once only the passage reader's minutes are left (config/thresholds.toml,
-    ingestion.passage_reader_minutes); its unfinished plan waits for the next night. The passage reader then writes
-    P130164's two ICR Reviews and stops inside the ICR when the night's 60 minutes are spent."""
+    The plan reader reads first, here every version of P156634's plans, and stops once only the passage reader's
+    minutes are left (config/thresholds.toml, ingestion.passage_reader_minutes); its unfinished plan waits for the next
+    night. The passage reader then writes P130164's two ICR Reviews and stops inside the ICR when the night's minutes
+    are spent."""
     from strata import config
     from strata.reader import layout
 
@@ -313,27 +315,30 @@ def test_the_plan_reader_leaves_the_passage_reader_its_minutes_of_the_night(fres
     nightly.main(["--task", "parse_and_embed", "--run-id", "night", "--src", "src"], fresh,
                  fetch=lambda source, _: (), clock=ticks.utc, readers_for=lambda _: found)
 
-    # 30 minutes for the plans at 7 a page: the fifth page starts at minute 28, and the sixth waits for the next night.
+    # 90 of the night's 120 minutes for the plans (ticket 108) at 7 a page: the 13th page starts at minute 84, and the
+    # 14th waits for the next night. The passage reader starts at minute 91 and stops inside the ICR at minute 120.
     plan_pages = [page for page in slow.read if page[0] != ICR]
-    assert (night_minutes, passage_minutes) == (60, 30)
-    assert len(plan_pages) == 5
+    assert (night_minutes, passage_minutes) == (120, 30)
+    assert len(plan_pages) == 13
     assert column(fresh, "SELECT DISTINCT document_id FROM strata.gold.passage") == set(ICR_REVIEWS)
     [(_, icr, passages_reason), (plans_project, _, plans_reason)] = fresh.run(
         "SELECT project_id, document_id, reason FROM strata.ops.skipped_documents WHERE run_id = 'night' "
         "AND outcome = 'unfinished' ORDER BY reader").rows  # passages, then plans
-    assert icr == ICR and "60 minutes" in passages_reason
+    assert icr == ICR and "the night's 120 minutes" in passages_reason
     assert plans_project == "P156634"
-    assert "30 of the night's 60 minutes" in plans_reason and "for the passage reader" in plans_reason
-    # One note for the night, when its 60 minutes were spent: the plans' share is not a stop for the night.
+    assert "90 of the night's 120 minutes" in plans_reason and "for the passage reader" in plans_reason
+    # One note for the night, when its minutes were spent: the plans' share is not a stop for the night.
     [(measure,)] = fresh.run("SELECT measure FROM strata.ops.data_readiness WHERE run_id = 'night' "
                              "AND source = 'documents' AND subject = 'all'").rows
     assert measure == "document_host_budget_spent"
 
 
-def test_a_plan_reader_stopped_at_its_share_while_it_fetches_lists_the_plans_it_left(fresh, three_documents):
+def test_a_plan_reader_stopped_at_its_share_while_it_fetches_lists_the_plans_it_left(fresh, three_documents,
+                                                                                     every_plan_version):
     """On October 27, 2026 the plan reader's time ran out while it fetched 163 of P156634's 240 Procurement Plans, and
-    the run's record was empty. Here each request takes three minutes, so the plan reader's 30 minutes end while it
-    fetches P156634's plans, most of which the fixture does not record (the host answers 404). The run's record
+    the run's record was empty. Here the plan reader reads every version, and each request takes three minutes, so its
+    90 minutes end while it fetches P156634's plans, most of which the fixture does not record (the host answers 404).
+    The run's record
     names each plan: the ones the host could not give before the stop as skipped, and every plan bronze does not hold
     and the stop left as not read, as is the fixture's other plan project's document list. Then the passage reader
     writes P130164's documents in the minutes left."""
@@ -361,7 +366,7 @@ def test_a_plan_reader_stopped_at_its_share_while_it_fetches_lists_the_plans_it_
     # Each listed plan is in bronze, skipped or not read, and only one of them.
     assert len(unread) == len({document_id for document_id, _ in unread})
     assert sorted([*held, *skipped, *(document_id for document_id, _ in unread)]) == sorted(listed)
-    assert all(reason.startswith("I stopped before I reached this plan. I spent 30 of the night's 60 minutes for "
+    assert all(reason.startswith("I stopped before I reached this plan. I spent 90 of the night's 120 minutes for "
                                  "the document host and kept the rest for the passage reader") for _, reason in unread)
     assert [(project_id, document_id, outcome) for project_id, document_id, outcome, _ in record
             if project_id != "P156634"] == [("P161305", None, "not_read")]
@@ -374,11 +379,12 @@ DEMO_PLANS = ("40132287", "40122770", "40119876")  # P156634's three newest Proc
 # and July 31, 2026 (config/slice.toml's demo plan is the first)
 
 
-def test_the_plan_reader_fetches_a_project_s_newest_plan_first(fresh):
+def test_the_plan_reader_fetches_a_project_s_newest_plan_first(fresh, every_plan_version):
     """On October 27, 2026 the plan reader fetched P156634's plans oldest first and spent the night's second pass on an
-    August 2023 plan, so the October 9, 2026 demo plan never reached bronze. It now asks for a project's plans newest
-    first, by the date the documents API gives. Each request takes a seventh of the plan reader's 30 minutes: the
-    project's document list, then the text and PDF of each of the three newest plans. The rest wait as not read."""
+    August 2023 plan, so the October 9, 2026 demo plan never reached bronze. When it reads every version, it asks for a
+    project's plans newest first, by the date the documents API gives. Each request takes a seventh of the plan
+    reader's share of the night: the project's document list, then the text and PDF of each of the three newest plans.
+    The rest wait as not read."""
     limits = load_thresholds()
     share = (limits.value("ingestion.document_host_minutes") - limits.value("ingestion.passage_reader_minutes")) * 60
     ticks = Ticks()
@@ -405,3 +411,35 @@ def test_the_plan_reader_fetches_a_project_s_newest_plan_first(fresh):
     assert {outcome for _, outcome in record} == {"not_read"}
     assert sorted(document_id for document_id, _ in record) == sorted(
         entry.document_id for entry in listed if entry.document_id not in DEMO_PLANS)
+
+
+def test_the_nightly_plan_reader_reads_only_the_demo_plan_of_p156634_s_240_and_lists_the_rest_superseded_once(fresh):
+    """Ticket 108: by default (config/thresholds.toml, ingestion.plan_versions = "newest") the nightly job's plan
+    reader reads only a project's newest Procurement Plan. P156634's recorded document list names 240 plans, as the
+    workspace's does, and the October 9, 2026 demo plan is the newest. The night asks the host for the list, then for
+    that plan's text and PDF only, parses its table page, and writes its plan rows; each older plan the list gives a
+    text, a PDF and a date gets one superseded row. The next night asks for the list alone and lists nothing again."""
+    ticks = Ticks()
+    host = Host(fresh, ticks, seconds=3)
+    fetch = readers.document_host(host, None, sleep=ticks.sleep, clock=ticks)
+    layout = SlowParser(ticks)
+    found = readers.Readers(FromTheHost(fetch, clock=ticks.utc), layout, PatternShield(), offline(),
+                            plan_projects=lambda _: ["P156634"], report_projects=lambda _: [], budget=fetch)
+
+    for run_id in ("night-1", "night-2"):
+        host.asked.clear()
+        nightly.main(["--task", "parse_and_embed", "--run-id", run_id, "--src", "src"], fresh,
+                     fetch=lambda source, _: (), clock=ticks.utc, readers_for=lambda _: found)
+        if run_id == "night-1":
+            listed = {entry.document_id: entry for entry in plans.listed_plans(fresh, "P156634").entries}
+            demo = listed[DEMO_PLANS[0]]
+            assert [url for url in host.asked if "proid=" not in url] == [https(demo.text_url), https(demo.pdf_url)]
+
+    assert [url for url in host.asked if "proid=" not in url] == []
+    assert layout.read == [(DEMO_PLANS[0], 3)]
+    assert column(fresh, "SELECT DISTINCT document_id FROM strata.silver.plan_rows") == {DEMO_PLANS[0]}
+    record = fresh.run("SELECT run_id, document_id, outcome FROM strata.ops.skipped_documents "
+                       "WHERE reader = 'plans'").rows
+    assert {(run_id, outcome) for run_id, _, outcome in record} == {("night-1", "superseded")}
+    assert sorted(document_id for _, document_id, _ in record) == sorted(set(listed) - {DEMO_PLANS[0]})
+    assert len(record) == len(listed) - 1 > 200

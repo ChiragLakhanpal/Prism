@@ -7,7 +7,9 @@ For one project, a run:
    bronze.document_lists, and each Procurement Plan's published text and the text of each PDF page
    into bronze.document_texts and bronze.document_pages, newest plan first by the date the list gives
    (ticket 86), so a stop during the fetch leaves the oldest plans for the next night. A plan already in
-   bronze is not fetched again.
+   bronze is not fetched again. Unless config/thresholds.toml's ingestion.plan_versions says "all", the
+   run reads only the newest plan, and every later step sees only it: each older plan is listed once in
+   strata.ops.skipped_documents as superseded (ticket 108).
 2. Reads every version cheaply (Route A): its Executing Agency(ies) line, which puts it in one
    series per implementing agency, and every Activity Reference No. its text lists. These become
    silver.plan_versions and silver.plan_listings.
@@ -52,7 +54,7 @@ from collections.abc import Callable
 from dataclasses import astuple, dataclass, field, fields
 from importlib import resources
 
-from strata.config import Thresholds, load_sources, load_thresholds
+from strata.config import ConfigError, Thresholds, load_sources, load_thresholds
 from strata.lakehouse import contacts
 from strata.lakehouse.clean import public_from  # ADR 0002's rule, defined once for every source
 from strata.lakehouse.engine import Engine, RowTooLarge, WarehouseEngine
@@ -265,6 +267,63 @@ def listed_plans(engine: Engine, project_id: str) -> Listing:
                                                 _date(document.get("disclosure_date")),
                                                 document["txturl"], https(document["pdfurl"]))  # the API gives http
     return Listing(sorted(entries.values(), key=by_plan_date), dates)
+
+
+# The values of config/thresholds.toml's ingestion.plan_versions: the reader reads each project's newest plan only,
+# or every plan the list names, as it did before ticket 108.
+NEWEST, EVERY_VERSION = "newest", "all"
+SUPERSEDED = "superseded"  # an older plan the newest one supersedes, which the reader does not read (ticket 108)
+
+
+def plan_versions(thresholds: Thresholds) -> str:
+    """Which of a project's plans the reader reads (config/thresholds.toml, ingestion.plan_versions)."""
+    chosen = thresholds.value("ingestion.plan_versions")
+    if chosen not in (NEWEST, EVERY_VERSION):
+        raise ConfigError(f"ingestion.plan_versions in {thresholds.path.name} is {chosen!r}. Write "
+                          f"{NEWEST!r} to read each project's newest Procurement Plan, or {EVERY_VERSION!r} to read "
+                          "every plan its document list names.")
+    return chosen
+
+
+def with_plan_versions(thresholds: Thresholds, chosen: str) -> Thresholds:
+    """The thresholds with ingestion.plan_versions set to chosen. The fixture build reads every recorded plan this way
+    (gates/build_fixture.py): the fixture records eleven of P156634's plans so the tests can check how versions
+    compare, first listings and delays."""
+    return Thresholds(thresholds.path, {**thresholds.values,
+                                        "ingestion": {**thresholds.values["ingestion"], "plan_versions": chosen}})
+
+
+def newest_only(listing: Listing, chosen: str) -> tuple[Listing, list[Entry]]:
+    """The plans the reader reads, and the older plans the newest supersedes when it reads the newest only. The newest
+    is the plan by_plan_date ranks first. Every plan the list names keeps its date, so an activity's first listing in
+    the newest plan stays unconfirmed while older plans are not read."""
+    if chosen == EVERY_VERSION or not listing.entries:
+        return listing, []
+    newest, *older = newest_first(listing.entries)
+    return Listing([newest], listing.dates), older
+
+
+def supersede(engine: Engine, run_id: str, project_id: str, newest: Entry, older: list[Entry],
+              when: dt.datetime) -> list[Skipped]:
+    """Each older plan the newest supersedes, listed in strata.ops.skipped_documents as superseded once: a plan an
+    earlier run listed is not listed again. One line in the log names them all. Returns what it listed."""
+    listed = {str(row[0]) for row in engine.run(
+        "SELECT document_id FROM strata.ops.skipped_documents "
+        "WHERE reader = :reader AND project_id = :project_id AND outcome = :outcome",
+        {"reader": "plans", "project_id": project_id, "outcome": SUPERSEDED}).rows}
+    day = f"{newest.plan_date:%B} {newest.plan_date.day}, {newest.plan_date.year}"
+    left = [Skipped(project_id, entry.document_id, entry.text_url,
+                    f"I read only each project's newest Procurement Plan, and document {newest.document_id} of {day} "
+                    "supersedes this one (config/thresholds.toml, ingestion.plan_versions).", SUPERSEDED)
+            for entry in older if entry.document_id not in listed]
+    if left:
+        log.warning("I read only the newest Procurement Plan of %s, document %s of %s. strata.ops.skipped_documents "
+                    "lists %s older plan%s as superseded.", project_id, newest.document_id, day,
+                    count_words(len(left)), "" if len(left) == 1 else "s")
+        insert(engine, "strata.ops.skipped_documents", SKIP_COLUMNS, [
+            (run_id, "plans", item.project_id, item.document_id, item.url, item.outcome, item.reason, when,
+             when.date()) for item in left])
+    return left
 
 
 def fetch_plans(engine: Engine, documents: Documents, project_id: str, entries: list[Entry]) -> int:
@@ -728,6 +787,7 @@ def run(engine: Engine, documents: Documents, layout: LayoutParser, project_id: 
     thresholds = thresholds or load_thresholds()
     cap = int(thresholds.value("ingestion.daily_page_cap"))
     misread_characters = int(thresholds.value("ingestion.reference_misread_characters"))
+    chosen = plan_versions(thresholds)
     endpoint = endpoint or load_sources()[SOURCE].endpoint
     started = clock()
     run_id = run_id or f"plans-{project_id}-{started:%Y%m%dT%H%M%S%f}"
@@ -737,7 +797,9 @@ def run(engine: Engine, documents: Documents, layout: LayoutParser, project_id: 
     except StopReading as stop:  # the run's record names the list the stop left (ticket 86)
         not_read(engine, run_id, "plans", [unreached(project_id, None, list_url(endpoint, project_id), stop)], clock())
         raise
-    listing = listed_plans(engine, project_id)
+    listing, older = newest_only(listed_plans(engine, project_id), chosen)
+    if older:
+        supersede(engine, run_id, project_id, listing.entries[0], older, started)
     fetching = fetch_documents(engine, documents, project_id, newest_first(listing.entries))
     # Each plan listed but not fetched, which the run goes on without (ticket 72), at the time the run started: the
     # fetches follow it at once, and the fixture's clock, which moves on each time it is read, keeps its times.

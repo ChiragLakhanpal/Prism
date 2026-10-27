@@ -157,11 +157,13 @@ def test_a_low_daily_page_cap_stops_the_layout_parser_and_the_shelf_says_where_r
 
 def test_a_plan_whose_own_reader_stopped_at_the_cap_shows_on_the_shelf_as_stopped_there(tmp_path):
     """The plan reader parses the shelf's Procurement Plan under its own run, so the shelf looks at any parse
-    run of the plan's project that day, not only the passage reader's (review r2 P13)."""
+    run of the plan's project that day, not only the passage reader's (review r2 P13). It reads every plan version
+    (ingestion.plan_versions = "all"), as the fixture build does: the fixture records the plan of September 24, 2026,
+    and not the project's newest, of September 28."""
     from strata.config import load_thresholds
     from strata.lakehouse import catalog, passages, plans
 
-    limits = load_thresholds()
+    limits = plans.with_plan_versions(load_thresholds(), plans.EVERY_VERSION)
     limits.values["ingestion"]["daily_page_cap"] = 5
     with DuckDBEngine.open(tmp_path / "capped-plan.duckdb") as engine:
         catalog.build(engine)
