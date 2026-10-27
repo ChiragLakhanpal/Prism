@@ -6,15 +6,23 @@ Read first: `ops/app/deploy_app.py` (`grants`, `tables`, `ACCESS`, `LESSON_REVIE
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready
+**Status:** done
 **Area:** ops
 **Phase:** P4
 **Design review:** no
 
-- [ ] `grants()` gives the App's principal SELECT and MODIFY on `strata.ops.tool_calls`, `strata.ops.tool_call_reads` and `strata.ops.answer_removals`, and the existing grants test names them.
-- [ ] A test reads the tables the App writes as itself from the code and fails when one of them is missing from the grant list.
+- [x] `grants()` gives the App's principal SELECT and MODIFY on `strata.ops.tool_calls`, `strata.ops.tool_call_reads` and `strata.ops.answer_removals`, and the existing grants test names them.
+- [x] A test reads the tables the App writes as itself from the code and fails when one of them is missing from the grant list.
 - [ ] After the second session's next App redeploy from the merge commit, `databricks grants get table` shows the App's principal with SELECT and MODIFY on the three tables (recorded in the catch-up file under this ticket).
 
 ## Comments
 
 - October 26, 2026, orchestrator: opened at 17:10 PDT with the user's yes, from the second session's reading of the paid workspace's query history. The user ran the three grants by hand the same evening, so the App records its answers there now; this ticket keeps the next workspace from losing them.
+- October 26, 2026, orchestrator (merger): built in `.claude/worktrees/wf_1e981083-4a9-1` (branch `strata/84-app-grants-every-ops-table-it-writes`, head 205443f9) and merged into build/strata as b71379bf, a merge with history (the branch's history holds no key-shaped line). The gate passed at the merge in 123.1 seconds and again by hand on build/strata at 17:41 PDT in 120.7 seconds, under the 150-second limit.
+  - **Evidence (`.notes/84-verify.md`, round 1, pass).** Criterion 1 passed: `grants()` now returns 40 statements, and the `tables` tuple grew from 18 to 22 tables; the three from `runs.py` (`tool_calls`, `tool_call_reads`, `answer_removals`) follow `agent_runs`, and the deploy test at `ops/app/tests/test_deploy_app.py` line 246 names them on the deploy path. Criterion 2 passed: `ops/app/tests/test_app_grants.py` (4 tests, slowest 0.07 seconds) reads 13 writer modules and the keywords `lesson_record` and `feedback_record` from the code, failed on build/strata's old `grants()` naming the four missing tables, and named the right table in 35 of 35 runs that each took one MODIFY grant out. Criterion 3 is parked. Review round 1 (`.notes/84-review.md`) approved with 0 blocking findings and 2 follow-ups.
+  - **The builder's departure.** The grant list also gives SELECT and MODIFY on `strata.ops.viewer_settings`, which the view popover's language choice writes as the App. The reviewer and the verifier both agreed it is in scope: without it the test the ticket asks for fails. It closes ticket 42's review follow-up 1 (the 503 on a language save).
+  - **Follow-ups (not blocking).** F1: `ENTRY_POINTS` in `ops/app/tests/test_app_grants.py` is kept by hand, so a third function that opens the App's engine would go unread; the review gives a test that finds every caller of `_the_app_s_engine()` from the code. F2: the docstring should say the test reads only each writer's own module and SQL folder, and that a new module handed `lesson_record` or `feedback_record` goes in `ENGINE_USERS`. The verifier's probes F and G confirmed both gaps; no writer is missed today.
+  - **Workspace results.** None run by the merger. Criterion 3 is parked in `docs/workspace-catchup.md` as "Ticket 84, step 1 of 1", and the second session (strata-58) runs it from a snapshot of b71379bf or later: the App redeploy with `--keep-secrets`, `databricks grants get table` on the four tables against the `service_principal_client_id` from `databricks apps get strata`, then one question and a `tool_calls` row count for its run id, and a language choice with no 503. On the paid workspace the user's hand grants make the first three GRANTs no-ops, so `viewer_settings` is the one this redeploy adds there. The same run clears the grant that "Ticket 45, step 4 of 6" waits on and the browser half of "Ticket 42, step 6 of 6".
+  - **Deferred to the design pass.** None; the ticket has no screen.
+  - **Decisions parked for the user.** None from the builder, the reviewer or the verifier.
+  - **Unblocks.** No ticket names 84 in its `Blocked by` line.
