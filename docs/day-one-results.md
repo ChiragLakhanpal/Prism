@@ -24,7 +24,7 @@ Each probe also runs alone, with the command under its test. Every probe writes 
 | 3 | ai_parse_document on a long PAD | passed | Default |
 | 4 | An AI Search endpoint and a hybrid index | passed | Default |
 | 5 | The Genie conversation API as the token's user | passed | Default |
-| 6 | An outside email joins the workspace and opens the app | failed | Gap fill |
+| 6 | An outside email joins the workspace and opens the app | partly | Gap fill |
 | 7 | A personal access token or a service principal | passed | Default |
 | 8 | The four models within the subscription's quota | passed | Default |
 | 9 | Foundry evaluations after an Entra sign-in | passed | Default |
@@ -177,12 +177,13 @@ An outside email can join the workspace and open the app.
 Command: `bash ops/wizard/strata-setup.sh`
 
 <!-- dayone:test-6 -->
-- Status: failed
-- Result: An outside email joined the workspace but could not open the app.
+- Status: partly
+- Result: On the paid workspace the owner's account opens the Databricks App; no outside email has been added yet (the panel's names arrive later, decision 94).
 - Evidence:
-  - App: https://strata-7474658003099155.aws.databricksapps.com
+  - App: https://strata-7405609289499029.9.azure.databricksapps.com
+  - GET /api/health answered 200 with the owner's token at 12:31 and 20:11 UTC on October 27, 2026 (the catch-up file's block on the App's stop)
 - Chosen path: Gap fill. A Container Apps copy of the app runs behind Entra sign-in for reviewers.
-- Last run: October 26, 2026
+- Last run: October 27, 2026
 <!-- /dayone:test-6 -->
 
 ### Test 7. A personal access token or a service principal
