@@ -20,4 +20,4 @@ Read first: the branch's commit 494a176b (`git show --stat`), `.notes/deck2/brie
 ## Comments
 
 - October 27, 2026, orchestrator: opened after wave 4q, so the deck session's branch has a review and a merge path; the branch waits for the user's look first. The deck session's notes on the navy slides and the tokens sweep (October 26, 23:32 PDT) are in the ticket text.
-- October 27, 2026, orchestrator (02:20 PDT): two wording fixes from the deck session (the logo file per slide background; the alias order against ticket 91).
+- October 27, 2026, orchestrator (02:17 PDT): two wording fixes from the deck session (the logo file per slide background; the alias order against ticket 91).
