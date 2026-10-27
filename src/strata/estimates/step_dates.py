@@ -57,6 +57,8 @@ CHOICES = ("middle", "cautious")
 FEW, EARLIER, NOT_REACHED, NOT_IN_PLAN = "few_comparables", "needs_earlier_step", "not_reached", "not_in_plan"
 CANCELED = "Canceled"
 NO_PLAN_DATES = "no_plan_dates"
+# A comparable package planned in another STEP table, whose steps differ, so it dates none of these (ticket 63).
+OTHER_FAMILY = "other_family"
 
 # A function that runs one of this module's queries as of a date: the engine's, or a replay reader's, which binds
 # its own date and refuses any row made public after it (strata.estimates.harness.Reader.rows).
@@ -134,6 +136,9 @@ class Activity:
     process_status: str | None
     plan_date: dt.date | None
     steps: dict[str, StepRow] = field(default_factory=dict)
+    # Whether its first listing is confirmed as the first published one (strata.silver.plan_step_delays): False when
+    # an earlier plan version of its agency was listed but not read.
+    first_listing_confirmed: bool | None = None
 
 
 def activities(rows: Rows, references: list[str]) -> dict[str, Activity]:
@@ -143,7 +148,8 @@ def activities(rows: Rows, references: list[str]) -> dict[str, Activity]:
     found: dict[str, Activity] = {}
     for row in rows(sql("steps.sql"), references=",".join(references)):
         activity = found.setdefault(row["activity_reference_no"], Activity(
-            row["activity_reference_no"], row["section"], row["process_status"], as_date(row["plan_date"])))
+            row["activity_reference_no"], row["section"], row["process_status"], as_date(row["plan_date"]),
+            first_listing_confirmed=row.get("first_listing_confirmed")))
         activity.steps.setdefault(row["step"], StepRow(
             as_date(row["planned_on"]), as_date(row["actual_on"]), as_date(row["first_planned_on"]),
             as_date(row["first_planned_plan_date"]), None if row["delay_days"] is None else int(row["delay_days"])))
@@ -310,7 +316,12 @@ def step_dates(rows: Rows, *, category: str | None, method: str | None, package_
                 "track_record": None, "coverage": _coverage(total, total, sources)}
     family = families()[family_key]
     names = [entry["step_name"] for entry in family["steps"]]
-    found = activities(rows, comparables)
+    # A comparable planned in another STEP table has other steps, even under the same Method (a firm and an
+    # individual consultant both hired by Direct Selection), so it dates none of this family's steps.
+    listed = activities(rows, comparables)
+    other = {reference for reference, found in listed.items()
+             if found.section is not None and found.section not in family["sections"]}
+    found = {reference: activity for reference, activity in listed.items() if reference not in other}
     basis = DELAY if own and any(name in own.steps and own.steps[name].first_planned_on for name in names) else DURATION
     fits = fit(found, family, basis, as_of, settings)
     abstain_all = {"n": total} if total < settings.min_comparables else None
@@ -330,6 +341,7 @@ def step_dates(rows: Rows, *, category: str | None, method: str | None, package_
             item |= _dated_step(entry, k, fitted, basis, own, previous, chain, start_date)
         steps.append(item)
     used = {reference for fitted in fits if fitted for reference, _, _ in fitted.observed}
+    unconfirmed = sum(1 for reference in used if found[reference].first_listing_confirmed is False)
     actual = None
     if own is not None:
         actual = sum(1 for name in names if name in own.steps and own.steps[name].actual_on is not None)
@@ -338,8 +350,9 @@ def step_dates(rows: Rows, *, category: str | None, method: str | None, package_
             "start_date": start_date.isoformat() if start_date and basis == DURATION else None,
             "steps": steps, "longest": None if abstain_all else longest(found, family), "abstain_all": abstain_all,
             "actual_steps_count": actual, "track_record": track if basis == DELAY else None,
-            "coverage": _coverage(total, len(used & set(comparables)), sources),
-            "not_used": sorted(set(comparables) - used)}
+            "coverage": _coverage(total, len(used & set(comparables)), sources, len(other), unconfirmed),
+            "not_used": [{"step_reference": reference, "reason": OTHER_FAMILY if reference in other else NO_PLAN_DATES}
+                         for reference in sorted(set(comparables) - used)]}
 
 
 def _counts(steps: list[dict]) -> dict:
@@ -356,8 +369,12 @@ def _counts(steps: list[dict]) -> dict:
                                   for step in later for choice in CHOICES)}
 
 
-def _coverage(total: int, used: int, sources: list[str]) -> dict:
-    return {"total": total, "used": used, "missing": total - used, "reason": NO_PLAN_DATES, "sources": sources}
+def _coverage(total: int, used: int, sources: list[str], other_family: int = 0, unconfirmed: int = 0) -> dict:
+    """The comparable packages behind the steps: how many, how many dated a step, how many had no dates for these
+    steps in their published plans (missing), how many were planned in another STEP table (other_family), and how many
+    of those used have a first listing that is not confirmed as the first published one (unconfirmed)."""
+    return {"total": total, "used": used, "missing": total - used - other_family, "other_family": other_family,
+            "unconfirmed": unconfirmed, "reason": NO_PLAN_DATES, "sources": sources}
 
 
 # ── The track record, from the stored backtests ──────────────────────────

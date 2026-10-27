@@ -768,7 +768,17 @@ function Notes({ dates, family, choice, kind, result, asOf }: { dates: StepDates
         {/* With no comparable package at all there is nothing to count, so only the link to Data readiness stays. */}
         {coverage.total > 0 && (
           <>
-            {coverage.missing > 0 ? (
+            {(coverage.other_family ?? 0) > 0 ? (
+              <Fill
+                template={coverage.missing > 0 ? words.coverageOtherFamilyAndMissing : words.coverageOtherFamily}
+                slots={{
+                  used: covered(coverage.used),
+                  total: covered(coverage.total),
+                  other: covered(coverage.other_family ?? 0),
+                  missing: covered(coverage.missing),
+                }}
+              />
+            ) : coverage.missing > 0 ? (
               <Fill template={words.coverage} slots={{ used: covered(coverage.used), total: covered(coverage.total), missing: covered(coverage.missing) }} />
             ) : (
               <Fill template={words.coverageAll} slots={{ total: covered(coverage.total) }} />

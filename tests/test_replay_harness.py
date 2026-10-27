@@ -256,6 +256,27 @@ class LeavesOutPublicFrom:
         return harness.Scored([])
 
 
+class SaysItsRowsHaveNoDate:
+    """A scorer whose query gives public_from as NULL, so every row would pass a check of its date."""
+
+    name, model = "undated_scorer", None
+
+    def score(self, replay):
+        replay.inputs.rows("SELECT contract_id, CAST(NULL AS DATE) AS public_from FROM strata.gold.contract")
+        return harness.Scored([])
+
+
+def test_the_harness_refuses_a_row_whose_public_from_is_null(hand_made_engine):
+    """Ticket 25's verify, F1. A row with no public_from cannot be checked against the cutoff, so it never reaches a
+    scorer: a query that gives NULL there could read rows from after the cutoff."""
+    window = harness.Window(KNOWN["cutoff"], KNOWN["outcomes_through"], "test_year", "2021")
+
+    with pytest.raises(harness.LeakageError, match="no public_from"):
+        harness.replay(hand_made_engine, SaysItsRowsHaveNoDate(), window, OfflineTracker(), "run-1",
+                       dt.datetime(2026, 10, 24, tzinfo=dt.UTC))
+    assert harness.latest_run(hand_made_engine, SaysItsRowsHaveNoDate.name) is None
+
+
 def test_the_harness_refuses_a_query_whose_rows_it_cannot_check(hand_made_engine):
     window = harness.Window(KNOWN["cutoff"], KNOWN["outcomes_through"], "test_year", "2021")
 
@@ -298,6 +319,7 @@ def test_the_model_is_registered_as_champion_with_a_card_from_the_stored_results
     card = tracker.models[MODEL][0].card
     assert card == run.card == tracker.runs[tracker.models[MODEL][0].run_id].texts["model_card.md"]
     # Unity Catalog's description gives the track-record sentence the card was written with.
+    assert tracker.models[MODEL][0].what == "time estimate"  # what Unity Catalog's description calls it
     assert tracker.models[MODEL][0].summary == backtest.track_record_sentence(engine) == (
         "Of 23 packages from 2021 that Strata had not seen, 14 finished inside its 8-in-10 range, where a "
         "well-sized range catches about 18.")
@@ -312,8 +334,11 @@ def test_the_model_is_registered_as_champion_with_a_card_from_the_stored_results
     # stored middles show, in months: the packages it had not seen took longer than those that sized the range.
     assert (f"- 2021: {KNOWN['m']} of {KNOWN['n']} finished inside the 8-in-10 range (61 percent), outside the band. "
             "Short of the band by 14 percentage points. A likely cause: half of the packages from 2021 that Strata "
-            "had not seen were signed within 6.6 months, against 4.4 months for the 20 packages that sized the "
-            "range. A range sized on earlier years is short when cycle times grow.") in card
+            "had not seen were signed within 6.6 months, against 4.4 months for the 20 packages that sized the 2021 "
+            "model's range. A range sized on earlier years is short when cycle times grow.") in card
+    # Each governance indicator is named, with its code (config/models.toml, time_estimate.governance_names).
+    assert ("Governance scores, as the Indicators API had published them that day: Government Effectiveness: Estimate "
+            "(GOV_WGI_GE.EST), IDA Resource Allocation Index (IQ.CPA.IRAI.XQ).") in card
     assert "Fewer than 20 comparable packages, subgroups included" in card
     assert "Signed amounts" in card and "ICR" in card and "Revised dates" in card and "Later ratings" in card
 
@@ -402,8 +427,33 @@ def test_a_year_outside_the_band_names_only_a_cause_its_stored_results_show(hand
         "signed quickly, so it came out short.",
         "- 2025: 19 of 20 finished inside the 8-in-10 range (95 percent), outside the band. Above the band by 10 "
         "percentage points. A likely cause: half of the packages from 2025 that Strata had not seen were signed "
-        "within 3.1 months, against 4.4 months for the 20 packages that sized the range, so the range was wider "
-        "than it needed to be."]
+        "within 3.1 months, against 4.4 months for the 20 packages that sized the 2025 model's range, so the range "
+        "was wider than it needed to be."]
+
+
+def test_a_year_just_outside_the_band_says_just_under_or_just_over_its_end_not_a_rounded_percent(hand_made_engine):
+    """Ticket 25's review, follow-up 2. 0.748 rounds to 75 percent, the band's own end, so the card writes "just under
+    75 percent" from the band's end in the thresholds file, never "(75 percent), outside the band"."""
+    engine = hand_made_engine
+    store_a_test_year(engine, 2024, n=40, m=30, in_band=0, band_gap_points=0, coverage=0.748, coverage_percent=75)
+    store_a_test_year(engine, 2025, n=40, m=34, in_band=0, band_gap_points=0, coverage=0.852, coverage_percent=85)
+
+    lines = model_card.coverage(backtest.stored_years(engine), backtest.load_thresholds())
+
+    assert lines[2:] == [
+        "- 2024: 30 of 40 finished inside the 8-in-10 range (just under 75 percent), outside the band. Short of the "
+        "band by less than 1 percentage point. The stored results do not show the cause.",
+        "- 2025: 34 of 40 finished inside the 8-in-10 range (just over 85 percent), outside the band. Above the band "
+        "by less than 1 percentage point. The stored results do not show the cause."]
+
+
+def test_the_track_record_writes_a_count_under_ten_in_words(hand_made_engine):
+    """Ticket 25's review, follow-up 1 (DESIGN.md section 7, rule 12)."""
+    store_a_test_year(hand_made_engine, 2025, n=20, m=7)
+
+    assert backtest.track_record_sentence(hand_made_engine) == (
+        "Of 20 packages from 2025 that Strata had not seen, seven finished inside its 8-in-10 range, where a "
+        "well-sized range catches about 16.")
 
 
 # ── When the time estimate abstains ──────────────────────────────────────
@@ -447,22 +497,23 @@ def test_the_time_estimate_abstains_before_its_training_date_and_outside_what_it
 def test_the_backtests_for_2021_to_2025_run_on_the_fixture_and_hold_back_its_track_record(fixture_db, tmp_path):
     shutil.copyfile(fixture_db, tmp_path / "fixture.duckdb")
     engine, tracker = DuckDBEngine.open(tmp_path / "fixture.duckdb"), OfflineTracker()
+    try:  # the engine closes whether or not an assertion fails
+        run = backtest.run(engine, tracker, outcomes_through=TRUTH["past_range"]["as_of"])
 
-    run = backtest.run(engine, tracker, outcomes_through=TRUTH["past_range"]["as_of"])
-
-    years = backtest.stored_years(engine)
-    assert sorted(years) == [2021, 2022, 2023, 2024, 2025]
-    assert len({record["mlflow_run_id"] for record in years.values()}) == 5
-    for year, record in years.items():
-        assert (record["cutoff"], record["training_through"]) == (dt.date(year, 1, 1), f"{year}-01-01")
-    # Each year's model learned from more packages than the year before: all those measurable by its cutoff.
-    learned = [years[year]["training_packages"] for year in sorted(years)]
-    assert learned == sorted(set(learned))
-    # The fixture holds a few plans, so no test year has 20 packages it had not seen: no track record.
-    assert all(record["n"] < 20 for record in years.values())
-    assert backtest.track_record(engine)["abstention"]["reason"] == "too_few_unseen_packages"
-    assert (run.version, run.alias) == (1, "champion")
-    engine.close()
+        years = backtest.stored_years(engine)
+        assert sorted(years) == [2021, 2022, 2023, 2024, 2025]
+        assert len({record["mlflow_run_id"] for record in years.values()}) == 5
+        for year, record in years.items():
+            assert (record["cutoff"], record["training_through"]) == (dt.date(year, 1, 1), f"{year}-01-01")
+        # Each year's model learned from more packages than the year before: all those measurable by its cutoff.
+        learned = [years[year]["training_packages"] for year in sorted(years)]
+        assert learned == sorted(set(learned))
+        # The fixture holds a few plans, so no test year has 20 packages it had not seen: no track record.
+        assert all(record["n"] < 20 for record in years.values())
+        assert backtest.track_record(engine)["abstention"]["reason"] == "too_few_unseen_packages"
+        assert (run.version, run.alias) == (1, "champion")
+    finally:
+        engine.close()
 
 
 def test_the_live_backtest_stops_with_one_sentence_when_there_is_no_env_file(tmp_path, capsys, monkeypatch):
@@ -476,3 +527,12 @@ def test_the_live_backtest_stops_with_one_sentence_when_there_is_no_env_file(tmp
 
     assert live.main(["--env-file", str(tmp_path / "missing.env")]) == 2
     assert "There is no env file" in capsys.readouterr().out
+    # Each year's line gives the stored percent, never a raw share, and no percent under 20 packages (DESIGN.md
+    # section 7, rule 6; ticket 25's review, follow-up 5).
+    thresholds = backtest.load_thresholds()
+    assert live.year_line(2021, {"m": 14, "n": 23, "coverage": 0.6087, "coverage_percent": 61,
+                                 "mlflow_run_id": "run-a"}, thresholds) == (
+        "2021: 14 of 23 packages it had not seen finished inside the 8-in-10 range (61 percent), MLflow run run-a.")
+    assert live.year_line(2022, {"m": 5, "n": 7, "coverage": 0.714, "coverage_percent": 71,
+                                 "mlflow_run_id": "run-b"}, thresholds) == (
+        "2022: 5 of 7 packages it had not seen finished inside the 8-in-10 range, MLflow run run-b.")

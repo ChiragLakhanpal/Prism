@@ -44,6 +44,20 @@ from strata.lakehouse.engine import EngineError  # noqa: E402
 from workspace_env import WorkspaceEnvError, load_workspace_env  # noqa: E402
 
 
+def year_line(year: int, record: dict, thresholds) -> str:
+    """One test year as the run prints it: the stored coverage as a percent, left out under
+    time_estimate.min_unseen_packages packages (DESIGN.md section 7, rule 6), never a raw share."""
+    from strata.estimates import model_card
+
+    if "abstention" in record:
+        return (f"{year}: no model, because {model_card.no_model_reason(record['abstention'], thresholds)}. "
+                f"MLflow run {record['mlflow_run_id']}.")
+    enough = record["n"] >= int(thresholds.value("time_estimate.min_unseen_packages"))
+    percent = f" ({record['coverage_percent']} percent)" if enough and record.get("coverage_percent") is not None else ""
+    return (f"{year}: {record['m']} of {record['n']} packages it had not seen finished inside the 8-in-10 range"
+            f"{percent}, MLflow run {record['mlflow_run_id']}.")
+
+
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(prog="ops/estimates/backtest_live.py", description=__doc__.split("\n\n")[0])
     parser.add_argument("--env-file", help="the env file with the workspace's address, warehouse and sign-in")
@@ -61,7 +75,7 @@ def main(argv=None) -> int:
     from bundle_live import LiveWorkspace, cli_env  # the Databricks SDK, which only the live run needs
 
     from strata.config import load_thresholds
-    from strata.estimates import backtest, model_card
+    from strata.estimates import backtest
     from strata.estimates.tracking import MlflowTracker
 
     # MLflow signs in to the workspace the way the Databricks CLI does, from this process's environment.
@@ -82,12 +96,7 @@ def main(argv=None) -> int:
         return 2
     thresholds = load_thresholds()
     for year, record in sorted(backtest.stored_years(engine, run.run_id).items()):
-        if "abstention" in record:
-            print(f"{year}: no model, because {model_card.no_model_reason(record['abstention'], thresholds)}. "
-                  f"MLflow run {record['mlflow_run_id']}.")
-        else:
-            print(f"{year}: {record['m']} of {record['n']} packages it had not seen finished inside the 8-in-10 range "
-                  f"(coverage {record.get('coverage')}), MLflow run {record['mlflow_run_id']}.")
+        print(year_line(year, record, thresholds))
     if run.version is None:
         print("No model was trained for today, so none was registered. The model card says why.")
     else:

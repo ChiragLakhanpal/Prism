@@ -809,8 +809,9 @@ fields = ["package", "comparables", "estimate", "difference", "track_record", "t
           "comparisons", "options", "axis_max_months", "thresholds", "step_dates", "sources", "records_through"]
 # Why a combination has no range: a feature outside what the model learned from, or a lever's value it never saw.
 # no_plan_dates is step_dates' own coverage reason (ticket 27): a comparable package whose published plans dated
-# none of the family's steps.
-reasons = ["outside_training", "value_not_learned", "no_plan_dates"]
+# none of the family's steps. other_family is its other one (ticket 63): a comparable package planned in another STEP
+# table, whose steps differ, such as a firm beside an individual consultant hired by the same Method.
+reasons = ["outside_training", "value_not_learned", "no_plan_dates", "other_family"]
 # The closed list of why there is no time estimate (brief 40 adds view_public_active here). The first four come
 # from find_comparables for the same criteria.
 abstentions = ["unknown_package", "no_public_notice", "no_comparables", "none_measurable", "too_few_comparables",

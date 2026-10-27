@@ -4598,6 +4598,11 @@ export const copy = {
     actualsOne: "STEP records an actual date for one of these steps. I suggest planned dates only and leave actual dates to STEP.",
     coverage: "Based on {used} of {total} comparable packages; {missing} had no dates for these steps in their published plans.",
     coverageAll: "Based on all {total} comparable packages.",
+    // A comparable planned in another STEP table, such as a firm beside an individual consultant hired by the same
+    // Method, has other steps, so it dates none of these (step_dates' reason other_family, ticket 63).
+    coverageOtherFamily: "Based on {used} of {total} comparable packages; {other} were planned in another STEP table, whose steps differ.",
+    coverageOtherFamilyAndMissing:
+      "Based on {used} of {total} comparable packages; {other} were planned in another STEP table, whose steps differ, and {missing} had no dates for these steps in their published plans.",
     coverageLink: "Data readiness for these sources",
     sourceLine: "{names}. Records run through {date}.",
     sourceLineAsOf: "{names}. Records as of {date}.",

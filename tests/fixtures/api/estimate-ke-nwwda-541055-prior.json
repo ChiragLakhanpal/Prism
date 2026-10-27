@@ -306,6 +306,8 @@
       "total": 7,
       "used": 3,
       "missing": 4,
+      "other_family": 0,
+      "unconfirmed": 3,
       "reason": "no_plan_dates",
       "sources": [
         "notices",
@@ -587,6 +589,8 @@
         "total": 7,
         "used": 3,
         "missing": 4,
+        "other_family": 0,
+        "unconfirmed": 3,
         "reason": "no_plan_dates",
         "sources": [
           "notices",

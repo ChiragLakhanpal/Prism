@@ -123,6 +123,8 @@ none_shared = { m = 0.5, u = 0.98 }
 #                         the ranges (the conformal step), and the model learns from the others
 # governance_indicators   the CPIA and WGI scores the model reads, each as published on the day the
 #                         package was advertised (strata.lakehouse.governance.score_as_of)
+# governance_names        each of those codes' names, which the model card writes beside the code, from
+#                         the Indicators API's names for them (a code alone is hard to read)
 # range_checked           the features whose values the model must have seen: a package outside their
 #                         training range gets no time estimate (outside_training)
 # Source: the spec's "Estimates"; each value is a starting value for the owner to confirm.
@@ -134,6 +136,7 @@ test_years = [2021, 2022, 2023, 2024, 2025]
 calibration_every = 4
 governance_indicators = ["GOV_WGI_GE.EST", "IQ.CPA.IRAI.XQ"]
 range_checked = ["estimated_amount_usd", "planned_days"]
+governance_names = { "GOV_WGI_GE.EST" = "Government Effectiveness: Estimate", "IQ.CPA.IRAI.XQ" = "IDA Resource Allocation Index" }
 
 # The settings of the learner above, under its name. seed and nthread = 1 make a fit repeat exactly.
 [time_estimate.xgboost_aft]

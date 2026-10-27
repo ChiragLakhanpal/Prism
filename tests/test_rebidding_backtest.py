@@ -19,6 +19,7 @@ import pytest
 from strata.config import load_rebidding
 from strata.dbx import Viewer
 from strata.estimates import harness, rebidding_backtest
+from strata.estimates.rebidding import engine_rows
 from strata.estimates.tracking import OfflineTracker
 from strata.lakehouse import catalog
 from strata.lakehouse.engine import DuckDBEngine
@@ -151,11 +152,30 @@ def test_the_champion_is_the_better_calibrated_model_on_those_results(ran_2021):
 
     assert run.champion == KNOWN["champion"] and run.alias == "champion"
     assert tracker.alias_version(name, "champion") == run.version
-    registered = rebidding_backtest.champion(rebidding_backtest.rows_as_of(engine, KNOWN["outcomes_through"] + 1 * DAY))
+    registered = rebidding_backtest.champion(engine_rows(engine, KNOWN["outcomes_through"] + 1 * DAY))
     assert (registered["learner"], registered["test_year"], registered["n_test"], registered["beat_baseline"]) == (
         KNOWN["champion"], 2021, KNOWN["test_packages"], 1)
     assert registered["training_packages"] == KNOWN["champion_training_packages"]
     assert "model_card.md" in tracker.runs[tracker.models[name][0].run_id].texts
+    # The registered model says what it is in its own words, and its card's heading never says "risk" (DESIGN.md
+    # section 7; ticket 28's review, follow-ups 8 and 11).
+    assert tracker.models[name][0].what == "rebidding model (experimental)"
+    assert tracker.models[name][0].card.startswith("# Rebidding model (experimental): model card\n")
+
+
+def test_the_model_file_may_name_only_a_learner_the_rebidding_model_has(tmp_path):
+    """config/models.toml's [rebidding] learners are names in LEARNERS (src/strata/estimates/rebidding_model.py), so
+    the file is refused when it names another (ticket 28's review, follow-up 7)."""
+    from strata.config import ConfigError
+    from strata.estimates.rebidding_model import LEARNERS
+
+    text = (Path(__file__).resolve().parents[1] / "config" / "models.toml").read_text()
+    path = tmp_path / "models.toml"
+    path.write_text(text.replace('learners = ["gbm", "logistic"]', 'learners = ["gbm", "forest"]'))
+
+    assert set(load_rebidding().learners) <= set(LEARNERS)
+    with pytest.raises(ConfigError, match="forest"):
+        load_rebidding(path)
 
 
 @pytest.fixture(scope="module")
@@ -258,7 +278,7 @@ def test_a_champion_that_did_not_beat_its_baseline_gives_no_natural_frequency(li
     engine, _, day = listed_the_other_way
     reference = advertised_in_2021()[0][0]
     later = dt.datetime.combine(day, dt.time(10), dt.UTC)
-    held = rebidding_backtest.champion(rebidding_backtest.rows_as_of(engine, day))
+    held = rebidding_backtest.champion(engine_rows(engine, day))
     segment = harness.Window(day, day, rebidding_backtest.REGISTERED, str(held["version"]))
     scorer = rebidding_backtest.RebiddingBacktest(load_rebidding())
     harness.write(engine, [harness.row("later-run", scorer, segment, score, None, later) for score in (
