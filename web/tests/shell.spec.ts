@@ -41,12 +41,13 @@ test("the navy bar carries the official World Bank Group logo, unaltered, 24 px 
   expect([box.width, box.height]).toEqual([120, 24]);
   expect(box.y - bar.y).toBeGreaterThanOrEqual(12);
   expect(bar.y + bar.height - (box.y + box.height)).toBeGreaterThanOrEqual(12);
-  expect(Math.round(box.x)).toBe(72);
+  // Ticket 93: the bar starts 16 px from the window's edge, beside the sidebar's icons.
+  expect(Math.round(box.x)).toBe(16);
   // 24 px to the wordmark, so the logo and "Strata" never read as one co-branded name.
   expect(wordmark.x - (box.x + box.width)).toBeGreaterThanOrEqual(24);
 });
 
-test("one banner holds the search landmark around the box and the stamp, and no section link", async ({ page }) => {
+test("one banner holds the search landmark around the box and the view switch, and no section link or stamp", async ({ page }) => {
   await mockShell(page);
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/");
@@ -54,12 +55,76 @@ test("one banner holds the search landmark around the box and the stamp, and no 
   const banner = page.getByRole("banner");
   await expect(banner).toHaveCount(1);
   await expect(banner.getByRole("search")).toHaveCount(1);
-  await expect(banner.locator("[data-stamp]").getByRole("link")).toBeVisible();
-  // The stamp's description is read once, through aria-describedby, and never as page text.
-  await expect(page.getByText("Open the Data page.")).toBeHidden();
+  await expect(banner.getByRole("button", { name: "View: World Bank staff" })).toBeVisible();
+  // Ticket 93: the stamp moved to the sidebar's foot.
+  await expect(banner.locator("[data-stamp]")).toHaveCount(0);
   // Ticket 92: the sections left the bar for the sidebar beside the page.
   await expect(banner.getByRole("navigation")).toHaveCount(0);
   await expect(banner.getByRole("link", { name: /^(Home|Packages|Projects|Lessons|Drafts|Data)$/ })).toHaveCount(0);
+});
+
+// Ticket 93 (DESIGN.md section 5, Top bar): from 1024 px one 56 px navy row that sticks: the logo, the wordmark, the
+// box from the page's content edge (224 + 40 px) beside the open sidebar, or from 244 px beside the rail, at most 640 px
+// wide, and the view switch ending 24 px from the right edge. No white band sits under it.
+test("from 1024 px the bar is one 56 px navy row that sticks, with the box from 264 px beside the open sidebar and 244 px beside the rail", async ({ page }) => {
+  await mockShell(page);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/");
+  const at = async (selector: string) => (await page.locator(selector).boundingBox())!;
+
+  for (const [width, left] of [[1440, 264], [1280, 244], [1024, 244]]) {
+    await page.setViewportSize({ width, height: 900 });
+    const bar = await at("[data-nav-bar]");
+    expect([bar.x, bar.y, bar.width, bar.height], `${width} px`).toEqual([0, 0, width, 56]);
+    expect(await page.locator("[data-nav-bar]").evaluate((el) => getComputedStyle(el).backgroundColor)).toBe("rgb(0, 34, 68)");
+    // The header is the bar alone.
+    expect((await at("header")).height, `${width} px`).toBe(56);
+    const logo = await at("[data-nav-bar] img");
+    expect([logo.width, logo.height], `${width} px`).toEqual([120, 24]);
+    const box = await at("[data-box-band] form > [data-focus-ring]");
+    expect(Math.round(box.x), `${width} px: the box's left edge`).toBe(left);
+    expect(box.width, `${width} px`).toBeLessThanOrEqual(640);
+    expect(Math.round(box.y + box.height / 2), `${width} px: the box sits on the bar's row`).toBe(28);
+    const pill = await at("[data-view-pill]");
+    expect(Math.round(width - (pill.x + pill.width)), `${width} px: the view switch's right edge`).toBe(24);
+    expect(pill.x, `${width} px`).toBeGreaterThanOrEqual(box.x + box.width + 24);
+  }
+  expect((await at("[data-box-band] form > [data-focus-ring]")).width).toBeLessThan(640);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  expect((await at("[data-box-band] form > [data-focus-ring]")).width).toBe(640);
+
+  // It sticks: scrolled down, the bar stays at the top of the window.
+  await page.addStyleTag({ content: "main { min-height: 3000px; }" });
+  await page.evaluate(() => window.scrollTo(0, 600));
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(600);
+  expect((await at("[data-nav-bar]")).y).toBe(0);
+  // Below 1024 px it scrolls away with the page, so a phone keeps its screen for the page.
+  await page.setViewportSize({ width: 800, height: 900 });
+  await page.evaluate(() => window.scrollTo(0, 600));
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(600);
+  expect((await at("[data-nav-bar]")).y).toBeLessThan(0);
+});
+
+// Ticket 93 (DESIGN.md section 10): the focused skip link shows below the bar, over the page, so it covers neither the
+// logo nor the wordmark.
+test("the focused skip link shows below the bar, over the page, and covers neither the logo nor the wordmark", async ({ page }) => {
+  await mockShell(page);
+  for (const width of [1440, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto("/");
+    await expect(page.locator("main h1")).toBeVisible();
+    await page.keyboard.press("Tab");
+    const skip = page.getByRole("link", { name: "Skip to main content", exact: true });
+    await expect(skip).toBeFocused();
+    const link = (await skip.boundingBox())!;
+    const bar = (await page.locator("[data-nav-bar]").boundingBox())!;
+    expect(link.y, `${width} px`).toBeGreaterThanOrEqual(bar.y + bar.height);
+    for (const part of [page.locator("[data-nav-bar] img"), page.getByRole("link", { name: "Strata", exact: true })]) {
+      const box = (await part.boundingBox())!;
+      const overlaps = link.x < box.x + box.width && box.x < link.x + link.width && link.y < box.y + box.height && box.y < link.y + link.height;
+      expect(overlaps, `${width} px`).toBe(false);
+    }
+  }
 });
 
 // Ticket 92 (DESIGN.md section 5, Sidebar): from 1024 px the sections are a sidebar named "Main" beside the page, open
@@ -72,7 +137,7 @@ test("from 1024 px the sidebar named Main sits beside the page, 224 px wide from
   const main = page.getByRole("navigation", { name: "Main" });
   for (const [width, wide] of [[1440, 224], [1280, 64], [1024, 64]]) {
     await page.setViewportSize({ width, height: 900 });
-    await expect(main.getByRole("link"), `${width} px`).toHaveText(["Home", "Packages", "Projects", "Lessons", "Drafts", "Data"]);
+    await expect(main.locator("[data-nav-item]"), `${width} px`).toHaveText(["Home", "Packages", "Projects", "Lessons", "Drafts", "Data"]);
     const sidebar = (await page.locator("[data-sidebar-column]").boundingBox())!;
     const column = (await page.locator("[data-page-column]").boundingBox())!;
     expect([sidebar.x, sidebar.width, column.x], `${width} px`).toEqual([0, wide, wide]);
@@ -94,7 +159,7 @@ test("the current item says page on the section's own page and true on a page in
     ["/data/sources", "Data", "true"],
   ]) {
     await page.goto(path);
-    await expect(main.getByRole("link", { name: item }), path).toHaveAttribute("aria-current", current);
+    await expect(main.getByRole("link", { name: item, exact: true }), path).toHaveAttribute("aria-current", current);
     await expect(main.locator("[aria-current]"), path).toHaveCount(1);
   }
 });
@@ -174,8 +239,9 @@ test("each rail item's tooltip shows its label on hover and on keyboard focus", 
 
 // Ticket 92: web/index.html's first script reads the stored choice, and its style paints the sidebar's frame at that
 // width, or the width's default, before the app's script runs. The app's bundle is held back here, so the page shows
-// only what index.html paints; below 1024 px no sidebar is painted and the closed Menu sheet is not shown.
-test("the first paint holds the bar, the band, the logo and the sidebar where the app puts them, before the app's script runs", async ({ browser, page }) => {
+// only what index.html paints; below 1024 px no sidebar is painted and the closed Menu sheet is not shown. Ticket 93:
+// the bar holds the box, one 56 px row from 1024 px and two rows below, with the logo after the Menu button.
+test("the first paint holds the bar, the logo and the sidebar where the app puts them, before the app's script runs", async ({ browser, page }) => {
   const boxes = (selectors: string[]) =>
     selectors.map((selector) => {
       const element = document.querySelector(selector);
@@ -192,23 +258,27 @@ test("the first paint holds the bar, the band, the logo and the sidebar where th
     await first.route(/\/assets\/.+\.js$/, (route) => route.abort());
     const before = await first.newPage();
     await before.goto(test.info().project.use.baseURL!);
-    const painted = await before.evaluate(boxes, ["[data-boot-bar]", "[data-boot-band]", "[data-boot-bar] img", "[data-boot-sidebar]"]);
+    const painted = await before.evaluate(boxes, ["[data-boot-bar]", "[data-boot-bar] img", "[data-boot-sidebar]"]);
     await first.close();
 
     await page.evaluate((rest) => (rest ? window.localStorage.setItem("strata.sidebar", rest) : window.localStorage.clear()), stored);
     await page.setViewportSize({ width, height: 900 });
     await page.goto("/");
-    await expect(page.locator("[data-stamp]").getByRole("link")).toBeVisible();
-    const mounted = await page.evaluate(boxes, ["[data-nav-bar]", "[data-box-band]", "[data-nav-bar] img", "[data-sidebar]"]);
+    await expect(page.locator("main h1")).toBeVisible();
+    const mounted = await page.evaluate(boxes, ["[data-nav-bar]", "[data-nav-bar] img", "[data-sidebar]"]);
 
     expect(painted, `${width} px, stored ${stored}`).toEqual(mounted);
-    expect(mounted[3] === null, `${width} px`).toBe(width < 1024);
+    expect(mounted[2] === null, `${width} px`).toBe(width < 1024);
+    expect(mounted[0]![3], `${width} px: the bar's height`).toBe(width < 1024 ? 108 : 56);
   }
 });
 
-test("the stamp shows the day the server returns, and links to the Data page", async ({ page }) => {
+// Ticket 93 (DESIGN.md section 5, Freshness stamp): the stamp sits at the sidebar's foot, under Data, on its label's
+// left edge, in a 24 px line box. The stamp's tests open the sidebar at 1440 px, where its five states show.
+test("the stamp sits at the sidebar's foot under Data, shows the day the server returns, and links to the Data page", async ({ page }) => {
   await page.clock.setFixedTime(TODAY);
   await mockShell(page);
+  await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/");
 
   const stamp = page.locator("[data-stamp]").getByRole("link");
@@ -216,11 +286,41 @@ test("the stamp shows the day the server returns, and links to the Data page", a
   await expect(stamp).toHaveAttribute("href", "/data");
   await expect(stamp).toHaveAccessibleDescription("Open the Data page.");
   await expect(page.locator("[data-stamp]")).not.toHaveAttribute("aria-busy");
+  // The stamp's description is read once, through aria-describedby, and never as page text.
+  await expect(page.getByText("Open the Data page.")).toBeHidden();
+
+  const main = page.getByRole("navigation", { name: "Main" });
+  await expect(main.locator("[data-stamp]")).toHaveCount(1);
+  const label = (await main.locator("[data-nav-item=data] span").boundingBox())!;
+  const line = (await page.locator("[data-stamp]").boundingBox())!;
+  const toggle = (await page.locator("[data-sidebar-toggle]").boundingBox())!;
+  expect(Math.round(line.x)).toBe(Math.round(label.x));
+  expect(line.y).toBeGreaterThanOrEqual(label.y + label.height);
+  expect(line.y + line.height).toBeLessThanOrEqual(toggle.y);
+  expect(line.height).toBe(24);
+});
+
+// As a rail, the sidebar hides the stamp, and the Data item's tooltip and its description say the stamp's words.
+test("as a rail, the sidebar hides the stamp, and the Data item's tooltip and description carry its words", async ({ page }) => {
+  await page.clock.setFixedTime(TODAY);
+  await mockShell(page);
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto("/");
+
+  await expect(page.locator("[data-stamp]")).toBeHidden();
+  const data = page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Data", exact: true });
+  await data.focus();
+  await expect(page.locator("[data-rail-tip]")).toHaveText("DataData through Oct 23");
+  await expect(data).toHaveAccessibleDescription("Data through Oct 23");
+  await page.locator("[data-sidebar-toggle]").click();
+  await expect(data).not.toHaveAttribute("aria-describedby");
+  await expect(page.locator("[data-stamp]").getByRole("link")).toBeVisible();
 });
 
 test("a data date from another year shows its year", async ({ page }) => {
   await page.clock.setFixedTime(TODAY);
   await mockShell(page, { freshness: { body: '{"data_through": "2025-12-30"}' } });
+  await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/");
 
   await expect(page.locator("[data-stamp]").getByRole("link")).toHaveText("Data through Dec 30, 2025");
@@ -228,6 +328,7 @@ test("a data date from another year shows its year", async ({ page }) => {
 
 test("before any daily source has loaded, the stamp says no data are loaded and still links to the Data page", async ({ page }) => {
   await mockShell(page, { freshness: { body: await recorded("freshness-empty.json") } });
+  await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/");
 
   await expect(page.locator("[data-stamp]").getByRole("link")).toHaveText("No data loaded yet");
@@ -242,6 +343,7 @@ test("while it loads, the stamp holds a static bar for the first second and then
     await answered;
     await route.fulfill({ status: 200, contentType: "application/json", body: await recorded("freshness.json") });
   });
+  await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/");
 
   const stamp = page.locator("[data-stamp]");
@@ -261,6 +363,7 @@ test("when the server fails, the stamp says it can't read the date, and tries ag
     if (reads === 1) return route.fulfill({ status: 502, contentType: "application/json", body: '{"code": "unreadable"}' });
     return route.fulfill({ status: 200, contentType: "application/json", body: await recorded("freshness.json") });
   });
+  await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/");
 
   const stamp = page.locator("[data-stamp]");
@@ -358,7 +461,7 @@ test("the view popover says who is signed in and offers each view as a link, wit
   await expect(dialog.getByRole("group")).toHaveAccessibleName("Language of answers and drafts");
 });
 
-test("Tab in the view popover closes it and moves on to the box; Shift+Tab closes it and returns to the pill", async ({ page }) => {
+test("Tab in the view popover closes it and moves on to the sidebar; Shift+Tab closes it and returns to the view switch", async ({ page }) => {
   await mockShell(page);
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/");
@@ -367,11 +470,12 @@ test("Tab in the view popover closes it and moves on to the box; Shift+Tab close
   await pill.click();
   await expect(page.getByRole("dialog", { name: "Your view" })).toBeVisible();
   // Tab moves through the view rows, the past date and the language group (tickets 40 and 42); past the last control
-  // it leaves the popover for the box.
+  // it leaves the popover for what follows the view switch in the page: the box comes before it in the bar since
+  // ticket 93, so that is the sidebar's first item.
   await expect(page.getByRole("link", { name: "World Bank staff" })).toBeFocused();
   for (let press = 0; press < 12 && (await page.getByRole("dialog").count()) > 0; press += 1) await page.keyboard.press("Tab");
 
-  await expect(page.locator("[data-box-band]").getByRole("combobox")).toBeFocused();
+  await expect(page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Home" })).toBeFocused();
   await expect(page.getByRole("dialog")).toHaveCount(0);
 
   await pill.click();

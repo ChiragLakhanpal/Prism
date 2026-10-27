@@ -475,7 +475,8 @@ export const copy = {
   box: {
     label: "Open a project or package, or ask a question",
     placeholderWide: "Open a project or package, or ask a question",
-    placeholderNarrow: "Open a project, or ask",
+    // Below 768 px (ticket 93), so it is never cut; the field's name stays label.
+    placeholderShort: "Open a project or package, or ask",
     placeholderProject: "Ask about this project",
     placeholderPackage: "Ask about this package",
     // {pid} is hintId, set in Roboto Mono.

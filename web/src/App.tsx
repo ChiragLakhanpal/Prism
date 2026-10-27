@@ -1,7 +1,7 @@
 // The app: the frame every page shares (web/src/components/Frame.tsx), around the page the address
-// names (web/src/routes.ts). The navy bar carries the World Bank logo, the wordmark and the view switch;
-// the band, the box and the data-freshness stamp; the sidebar beside the page, Home and the sections
-// (ticket 92); the page, its alert slot, title, purpose and empty state; and the footer.
+// names (web/src/routes.ts). The navy bar carries the World Bank logo, the wordmark, the box and the view switch
+// (ticket 93); the sidebar beside the page, Home, the sections and the data-freshness stamp under Data (ticket 92);
+// the page, its alert slot, title, purpose and empty state; and the footer.
 //
 // The app reads who is viewing (/api/me) and the stamp (/api/freshness) once per page load and
 // keeps both across route changes. A route change updates the browser tab's title, scrolls to the
@@ -15,7 +15,6 @@ import { createPortal } from "react-dom";
 import logo from "./assets/world-bank-logo.svg";
 import { Alert } from "./components/Alert";
 import { AnswerPanel } from "./components/AnswerPanel";
-import { BoxBand, FreshnessStamp } from "./components/BoxBand";
 import { EvidenceDrawer } from "./components/EvidenceDrawer";
 import { Frame } from "./components/Frame";
 import { IntentBox } from "./components/IntentBox";
@@ -381,18 +380,19 @@ export function App() {
       nav={
         <TopNav
           logo={<img src={logo} width={120} height={24} alt={copy.nav.logo} className="block h-6 w-[120px]" />}
+          box={<IntentBox scope={scope} scopeKind={kind} onAsk={onAsk} />}
           viewer={who}
           mode={navMode}
           modeLineId={MODE_LINE}
         />
       }
-      band={<BoxBand box={<IntentBox scope={scope} scopeKind={kind} onAsk={onAsk} />} stamp={<FreshnessStamp freshness={freshness} />} />}
       sidebar={
         <Sidebar
           mode={navMode}
           viewer={who}
           current={match.key === "home" ? "home" : match.section}
           pathname={here.pathname}
+          freshness={freshness}
           // World Bank staff open Following from Projects (ticket 37); a preview, and everyone else, All projects.
           projectsHref={staff && !preview ? FOLLOWING_HREF : undefined}
         />

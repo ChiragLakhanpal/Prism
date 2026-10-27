@@ -562,11 +562,12 @@ function blockAbove(element: Element): Element | null {
   return null;
 }
 
-// Brings a named activity into view without cutting the box band or the page's title at the top
+// Brings a named activity into view without cutting the navy bar or the page's title at the top
 // edge: the page from its top when the activity fits on the first screen, or else the activity just
-// under the sticky header. The activity is its whole row or card, badges included, not only the
-// reference that takes focus. The band and the title are each shown whole when the activity still
-// fits under them, and otherwise scrolled away whole.
+// under the sticky parts. The activity is its whole row or card, badges included, not only the
+// reference that takes focus. The bar, below 1024 px where it does not stick, and the title are each
+// shown whole when the activity still fits under them, and otherwise scrolled away whole. From 1024 px
+// the bar sticks (ticket 93), so the activity lands under it and the header both.
 function bringIntoView(target: HTMLElement) {
   const place = (element: Element) => {
     const rect = element.getBoundingClientRect();
@@ -574,8 +575,11 @@ function bringIntoView(target: HTMLElement) {
   };
   const activity = target.closest("tr, li") ?? target;
   const row = place(activity);
+  const sticks = (element: HTMLElement | null) => (element && getComputedStyle(element).position === "sticky" ? element.offsetHeight : 0);
+  const bar = document.querySelector<HTMLElement>("[data-nav-bar]")?.closest("header") ?? null;
+  const barStuck = sticks(bar);
   const header = document.querySelector<HTMLElement>("[data-plan-header]");
-  const stuck = header && getComputedStyle(header).position === "sticky" ? header.offsetHeight : 0;
+  const stuck = barStuck + sticks(header);
   const fits = (from: number) => row.bottom + LANDING_GAP - from <= window.innerHeight;
   let top = fits(0) ? 0 : row.top - stuck - LANDING_GAP;
   // A block that sits closer above the activity than the gap, as the count line's row sits 8 px above the
@@ -586,12 +590,14 @@ function bringIntoView(target: HTMLElement) {
     const { bottom } = place(above);
     if (bottom > top + stuck && bottom < row.top) top = bottom - stuck;
   }
-  // A title inside the sticky header stays in view whatever the page does.
-  const parts = [document.querySelector("[data-box-band]"), stuck ? null : document.querySelector("main h1")];
+  // A title inside the sticky header, and a bar that sticks, stay in view whatever the page does. The edge a part
+  // could be cut at is the sticking bar's foot, or the window's top.
+  const parts = [barStuck ? null : bar, stuck > barStuck ? null : document.querySelector("main h1")];
   for (const part of parts) {
     if (!part) continue;
     const { top: partTop, bottom: partBottom } = place(part);
-    if (top > partTop && top < partBottom) top = fits(partTop) ? partTop : partBottom;
+    const edge = top + barStuck;
+    if (edge > partTop && edge < partBottom) top = (fits(partTop - barStuck) ? partTop : partBottom) - barStuck;
   }
   window.scrollTo({ top: Math.max(0, top) });
 }
@@ -611,7 +617,7 @@ export function PlanCheckHeader({ agency, plan, pill, action, feedforward, heade
   sticky?: boolean;
 }) {
   return (
-    <div ref={headerRef} data-plan-header className={cx("border-b border-line bg-page py-4", sticky && "@lg/page:sticky @lg/page:top-0 @lg/page:z-10")}>
+    <div ref={headerRef} data-plan-header className={cx("border-b border-line bg-page py-4", sticky && "@lg/page:sticky @lg/page:top-(--frame-top) @lg/page:z-10")}>
       <div className="flex flex-col gap-3 @lg/page:flex-row @lg/page:items-start @lg/page:justify-between @lg/page:gap-6">
         {/* The name's column takes the row's free width, so a skeleton bar sized as a share of it
             is as wide as the name it stands for. */}

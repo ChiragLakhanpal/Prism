@@ -1,14 +1,18 @@
-// The gallery's navigation, box band and footer match the blueprint's Home wireframe and
-// DESIGN.md sections 5 and 8 (criteria 3 and 4 of ticket 02).
-import { expect, test } from "./mocked";
+// The gallery's navigation, the bar with its box, and the footer match the blueprint's Home wireframe and
+// DESIGN.md sections 5 and 8 (criteria 3 and 4 of ticket 02; ticket 93's top bar).
+import { expect, mockApi, recorded, test } from "./mocked";
 import { footerSentence } from "./design-md";
 import { galleryPaths } from "./gallery-pages";
 
 const NAVY = "rgb(0, 34, 68)";
 const TINT = "rgb(233, 247, 253)";
 const PRIMARY = "rgb(0, 67, 112)";
+// WCAG 1.4.12's text spacing, as a person's own style sheet sets it.
+const TEXT_SPACING =
+  "* { line-height: 1.5 !important; letter-spacing: 0.12em !important; word-spacing: 0.16em !important; } p { margin-bottom: 2em !important; }";
+const PACKAGE = "KE-NWWDA-541055-CW-RFB";
 
-test("the navy bar is 56 px tall with the logo slot, the wordmark and the view pill, and no section", async ({ page }) => {
+test("the navy bar is 56 px tall with the logo slot, the wordmark and the view switch, and no section", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/gallery/navigation");
 
@@ -29,15 +33,18 @@ test("the navy bar is 56 px tall with the logo slot, the wordmark and the view p
   expect(logo.x).toBeGreaterThanOrEqual(clear);
   expect(wordmark.x - (logo.x + logo.width)).toBeGreaterThanOrEqual(clear);
 
-  // Left to right: logo, wordmark, then the pill at the right edge of the grid (72 px margin).
+  // Left to right: logo, wordmark, the box, then the view switch 24 px from the right edge (ticket 93).
   const pill = page.getByRole("button", { name: "View: World Bank staff" });
   const pillBox = (await pill.boundingBox())!;
+  const search = (await page.locator("[data-box-band] form > [data-focus-ring]").boundingBox())!;
   expect(wordmark.x).toBeGreaterThan(logo.x);
-  expect(pillBox.x).toBeGreaterThan(wordmark.x + wordmark.width);
-  expect(Math.round(1440 - (pillBox.x + pillBox.width))).toBe(72);
+  expect(search.x).toBeGreaterThan(wordmark.x + wordmark.width);
+  expect(pillBox.x).toBeGreaterThan(search.x + search.width);
+  expect(Math.round(1440 - (pillBox.x + pillBox.width))).toBe(24);
   await expect(pill.locator("svg.lucide-chevron-down")).toHaveCount(1);
-  // DESIGN.md section 5: the view switch is a 32 px pill, like a chip, not a 44 px button.
+  // DESIGN.md section 5: the view switch is a 32 px control with a control's 4 px corners, not a 44 px button.
   expect(pillBox.height).toBe(32);
+  expect(await pill.evaluate((el) => getComputedStyle(el).borderRadius)).toBe("4px");
 });
 
 // Ticket 92 (DESIGN.md section 5, Sidebar): Home, the sections in order, Data at the foot; 224 px from 1440 px and a
@@ -50,6 +57,8 @@ test("from 1024 px the sidebar holds Home and the sections in order, 224 px wide
     await page.setViewportSize({ width, height: 900 });
     await expect(main.locator("[data-nav-item]"), `${width} px`).toHaveText(["Home", "Packages", "Projects", "Lessons", "Drafts", "Data"]);
     expect((await page.locator("[data-sidebar-column]").boundingBox())!.width, `${width} px`).toBe(wide);
+    // The stamp sits under Data while the sidebar is open, and hides in the rail (ticket 93).
+    await expect(main.locator("[data-stamp]"), `${width} px`).toBeVisible({ visible: wide === 224 });
     await expect(main.locator("[data-nav-item][aria-current]"), `${width} px`).toHaveText(["Projects"]);
     await expect(main.locator("[data-nav-item=projects]"), `${width} px`).toHaveAttribute("aria-current", "page");
   }
@@ -87,24 +96,51 @@ test("below 360 px the Menu button hides its word from sight and keeps its name,
   expect(await menu.locator("span").evaluate((el) => el.getBoundingClientRect().width)).toBeLessThanOrEqual(1);
 });
 
-test("the band holds the box over columns 1 to 8 and the stamp at the right, and / focuses the box", async ({ page }) => {
+// Ticket 93: the box sits in the bar from the page's content edge, 224 + 40 px beside the open sidebar, 640 px wide on a
+// white 4 px rectangle with no border, and the stamp sits at the sidebar's foot.
+test("the bar holds the box from the page's content edge, the stamp sits at the sidebar's foot, and / focuses the box", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/gallery/navigation");
 
-  const band = (await page.locator("[data-box-band]").boundingBox())!;
-  expect(band.height).toBeGreaterThanOrEqual(69);
-  const box = (await page.locator("[data-box-band] [data-focus-ring]").boundingBox())!;
-  const stamp = (await page.locator("[data-box-band] [data-stamp] a").boundingBox())!;
-  // Content is 1296 px wide: 12 columns and 11 gutters of 32 px. The box ends after column 8.
-  const column = (1296 - 11 * 32) / 12;
-  expect(Math.round(box.x)).toBe(72);
-  expect(Math.round(box.x + box.width)).toBe(Math.round(72 + 8 * column + 7 * 32));
-  expect(Math.round(stamp.x + stamp.width)).toBe(1440 - 72);
-  await expect(page.locator("[data-box-band] [data-stamp] a")).toHaveText("Data through Oct 21");
+  const box = page.locator("[data-box-band] form > [data-focus-ring]");
+  expect(Object.values((await box.boundingBox())!)).toEqual([264, 8, 640, 40]);
+  expect(await box.evaluate((el) => [getComputedStyle(el).backgroundColor, getComputedStyle(el).borderRadius, getComputedStyle(el).borderTopWidth])).toEqual([
+    "rgb(255, 255, 255)",
+    "4px",
+    "0px",
+  ]);
+  await expect(page.locator("[data-box-band] [data-stamp]")).toHaveCount(0);
+  await expect(page.locator("[data-sidebar] [data-stamp] a")).toHaveText("Data through Oct 21");
 
   await page.locator("h1").click();
   await page.keyboard.press("/");
   await expect(page.locator("[data-box-band]").getByRole("combobox", { name: /Open a project/ })).toBeFocused();
+  // While anything in it has focus, the box shows focus-on-dark around it on the navy bar.
+  expect(await box.evaluate((el) => [getComputedStyle(el).outlineStyle, getComputedStyle(el).outlineColor])).toEqual(["solid", "rgb(245, 146, 108)"]);
+});
+
+// Ticket 93: on a package page the box keeps one row from 1024 px, with the chip's reference and "Ask about this package"
+// uncut, and the page never scrolls sideways.
+test("on a package page the box keeps one row from 1024 px, with the chip's reference and its placeholder uncut", async ({ page }) => {
+  await mockApi(page, {
+    "/api/me": { body: await recorded("me.json") },
+    "/api/freshness": { body: await recorded("freshness.json") },
+    [`/api/packages/${PACKAGE}`]: { body: await recorded("package-ke-nwwda-541055.json") },
+    [`/api/packages/${PACKAGE}/comparables`]: { body: await recorded("comparables-ke-nwwda-541055.json") },
+  });
+  await page.goto(`/packages/${PACKAGE}`);
+  await expect(page.locator("main h1")).toBeVisible();
+  for (const width of [1440, 1280, 1024]) {
+    await page.setViewportSize({ width, height: 900 });
+    expect((await page.locator("[data-box-band] form > [data-focus-ring]").boundingBox())!.height, `${width} px`).toBe(40);
+    const chip = page.locator("[data-box-band] [data-scope-chip]");
+    await expect(chip, `${width} px`).toContainText(PACKAGE);
+    expect((await chip.boundingBox())!.height, `${width} px: the reference on one line`).toBe(32);
+    const placeholder = page.locator("[data-box-band] [data-placeholder]");
+    await expect(placeholder).toHaveText("Ask about this package");
+    expect(await placeholder.evaluate((el) => el.scrollWidth <= el.clientWidth), `${width} px: the placeholder is cut`).toBe(true);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth), `${width} px`).toBeLessThanOrEqual(width);
+  }
 });
 
 // Ticket 92 (DESIGN.md section 5, Menu sheet): below 1024 px the sidebar's items are the Menu sheet, a modal dialog from
@@ -112,7 +148,8 @@ test("the band holds the box over columns 1 to 8 and the stamp at the right, and
 test("below 1024 px the Menu button opens the Menu sheet, a modal dialog; Escape, Close the menu and the scrim close it", async ({ page }) => {
   await page.setViewportSize({ width: 1023, height: 900 });
   await page.goto("/gallery/navigation");
-  await expect(page.getByRole("button", { name: "View: World Bank staff" })).toBeHidden();
+  // From 768 px the view switch stays in the bar (ticket 93).
+  await expect(page.getByRole("button", { name: "View: World Bank staff" })).toBeVisible();
   await expect(page.getByRole("navigation", { name: "Main" })).toHaveCount(0);
 
   const menu = page.getByRole("button", { name: "Menu", exact: true });
@@ -123,10 +160,12 @@ test("below 1024 px the Menu button opens the Menu sheet, a modal dialog; Escape
   await expect(sheet).toHaveAttribute("aria-modal", "true");
   await expect(menu).toHaveAttribute("aria-controls", (await sheet.getAttribute("id"))!);
   const main = sheet.getByRole("navigation", { name: "Main" });
-  await expect(main.getByRole("link")).toHaveText(["Home", "Packages", "Projects", "Lessons", "Drafts", "Data"]);
-  // Focus moves to the current page's item, and the view lines sit at the sheet's foot.
+  await expect(main.locator("[data-nav-item]")).toHaveText(["Home", "Packages", "Projects", "Lessons", "Drafts", "Data"]);
+  // Focus moves to the current page's item. The stamp sits under Data; the view lines join the sheet's foot only below
+  // 768 px, where the view switch leaves the bar (ticket 93).
   await expect(main.getByRole("link", { name: "Projects" })).toBeFocused();
-  await expect(sheet.locator("[data-menu-panel]").getByRole("link", { name: "World Bank staff" })).toHaveAttribute("aria-current", "true");
+  await expect(main.locator("[data-stamp] a")).toHaveText("Data through Oct 21");
+  await expect(sheet.locator("[data-menu-panel]")).toBeHidden();
   expect(await page.evaluate(() => ["header", "[data-page-column]"].map((part) => document.querySelector<HTMLElement>(part)!.inert))).toEqual([true, true]);
   // It slides in from the left edge, 320 px wide and the window's height.
   await expect.poll(async () => Object.values((await sheet.boundingBox())!)).toEqual([0, 0, 320, 900]);
@@ -155,22 +194,34 @@ test("below 1024 px the Menu button opens the Menu sheet, a modal dialog; Escape
   await expect(menu).toBeHidden();
 });
 
-// Every pill label the view switch shows (ticket 40; the 40 brief, 3.2) fits the bar at 1024 px.
+// Every label the view switch shows (ticket 40; the 40 brief, 3.2) fits the bar at 1024 px beside a package's box, with
+// WCAG 1.4.12's text spacing too (ticket 93): the label is whole, the bar keeps its one row, and nothing scrolls sideways.
 const PILLS: [string, string][] = [
   ["", "View: World Bank staff"],
-  ["?pill=officer", "View: Agency officer"],
-  ["?pill=piu", "Preview: Agency officer"],
-  ["?pill=public", "Preview: Public"],
+  ["&pill=officer", "View: Agency officer"],
+  ["&pill=piu", "Preview: Agency officer"],
+  ["&pill=public", "Preview: Public"],
 ];
 
-test("at 1024 px the whole bar fits on one line, with no overflow, with every pill label", async ({ page }) => {
+test("at 1024 px the whole bar fits on one row beside a package's box, with every view label, with text spacing too", async ({ page }) => {
   await page.setViewportSize({ width: 1024, height: 900 });
-  for (const [query, label] of PILLS) {
-    await page.goto(`/gallery/navigation${query}`);
-    await expect(page.getByRole("button", { name: label })).toBeVisible();
-    const bar = page.locator("[data-nav-bar] > .layout");
-    expect(await bar.evaluate((el) => el.scrollWidth <= el.clientWidth), label).toBe(true);
-    expect((await page.locator("[data-nav-bar]").boundingBox())!.height, label).toBe(56);
+  for (const spacing of [false, true]) {
+    for (const [query, label] of PILLS) {
+      const named = `${label}${spacing ? ", with text spacing" : ""}`;
+      await page.goto(`/gallery/navigation?scope=${PACKAGE}${query}`);
+      if (spacing) await page.addStyleTag({ content: TEXT_SPACING });
+      const pill = page.getByRole("button", { name: label });
+      await expect(pill).toBeVisible();
+      expect(await pill.evaluate((el) => el.scrollWidth <= el.clientWidth), `${named}: the label is whole`).toBe(true);
+      const at = (await pill.boundingBox())!;
+      const box = (await page.locator("[data-box-band] form > [data-focus-ring]").boundingBox())!;
+      expect(at.x, named).toBeGreaterThanOrEqual(box.x + box.width + 24);
+      expect(Math.round(1024 - (at.x + at.width)), named).toBe(24);
+      expect(box.height, `${named}: the box keeps one row`).toBe(40);
+      expect(await page.locator("[data-bar-row]").evaluate((el) => el.scrollWidth <= el.clientWidth), named).toBe(true);
+      expect((await page.locator("[data-nav-bar]").boundingBox())!.height, named).toBe(56);
+      expect(await page.evaluate(() => document.documentElement.scrollWidth), named).toBeLessThanOrEqual(1024);
+    }
   }
 });
 
@@ -186,35 +237,42 @@ test("the view pill opens who is signed in and which view this is", async ({ pag
   await expect(page.getByRole("button", { name: "View: World Bank staff" })).toBeFocused();
 });
 
-// Turning a tablet to portrait hides the pill below 1024 px. The popover closes with it, as the
+// Narrowing the window below 768 px hides the view switch (ticket 93). The popover closes with it, as the
 // Menu closes when the window widens, rather than hang from nothing at the top of the page.
-test("narrowing the window below 1024 px closes the open view popover", async ({ page }) => {
+test("narrowing the window below 768 px closes the open view popover", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/gallery/navigation");
   await page.getByRole("button", { name: "View: World Bank staff" }).click();
   const dialog = page.getByRole("dialog", { name: "Your view" });
   await expect(dialog).toBeVisible();
   await page.setViewportSize({ width: 900, height: 900 });
+  await expect(dialog).toBeVisible();
+  await page.setViewportSize({ width: 700, height: 900 });
   await expect(dialog).toBeHidden();
   await expect(page.getByRole("button", { name: "Menu", exact: true })).toHaveAttribute("aria-expanded", "false");
 });
 
-// DESIGN.md section 10: a focus order people can follow. When the window crosses 1024 px, the
-// control that had focus can vanish with its half of the bar. Focus then moves to the control
+// DESIGN.md section 10: a focus order people can follow. When the window crosses 768 or 1024 px, the
+// control that had focus can vanish with its part of the bar. Focus then moves to the control
 // that now holds the same thing, so the next Tab starts from where the reader was.
-test("a resize across 1024 px moves focus to the control that now holds the same thing", async ({ page }) => {
+test("a resize across 768 or 1024 px moves focus to the control that now holds the same thing", async ({ page }) => {
   const pill = page.getByRole("button", { name: "View: World Bank staff" });
   const menu = page.getByRole("button", { name: "Menu", exact: true });
 
-  // The view popover, opened from the keyboard, closes when the window narrows, and focus goes
-  // to the Menu button, which holds the view lines below 1024 px.
+  // The view popover, opened from the keyboard, closes when the window narrows below 768 px, and focus goes
+  // to the Menu button, which holds the view lines there (ticket 93).
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/gallery/navigation");
   await pill.focus();
   await page.keyboard.press("Enter");
   await expect(page.getByRole("dialog", { name: "Your view" })).toBeVisible();
-  await page.setViewportSize({ width: 900, height: 900 });
+  await page.setViewportSize({ width: 700, height: 900 });
   await expect(page.getByRole("dialog", { name: "Your view" })).toBeHidden();
+  await expect(menu).toBeFocused();
+  // The view switch, focused at 900 px, goes to the Menu button below 768 px too.
+  await page.setViewportSize({ width: 900, height: 900 });
+  await pill.focus();
+  await page.setViewportSize({ width: 700, height: 900 });
   await expect(menu).toBeFocused();
 
   // An item in the open Menu sheet stays focused when the window widens: the sheet closes and the item is the

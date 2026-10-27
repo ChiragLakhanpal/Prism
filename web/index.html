@@ -21,29 +21,31 @@
       })();
     </script>
     <!--
-      The first paint (the 06 design brief, "App start"): the page background, the 56 px navy bar
-      with the logo at its size, the band (69 px, or 101 px below 768 px, where the stamp sits
-      under the box) and, from 1024 px, the sidebar's frame at its stored or default width (ticket 92)
-      show before the app's script runs, and React mounts into the same sizes, so nothing
-      moves. The colors are DESIGN.md's page, navy, surface and line tokens, and the margins its
-      grid's, written out because no stylesheet has loaded yet.
+      The first paint (the 06 design brief, "App start"; ticket 93): the page background and the navy bar with the
+      logo at its size and place show before the app's script runs, and React mounts into the same sizes, so nothing
+      moves. Below 1024 px the bar has two rows, 108 px in all: the Menu button (96 px wide, 44 px below 360 px), the
+      logo, then the white box across the window, on a page with no scope chip. From 1024 px it is one 56 px row, the
+      logo 16 px from the edge, and beside the page the sidebar's frame at its stored or default width (ticket 92). The
+      colors are DESIGN.md's page, navy, surface and line tokens, and the margins the window's, written out because no
+      stylesheet has loaded yet.
     -->
     <style>
       body { margin: 0; background: #f5f7f9; }
-      [data-boot-bar] { box-sizing: border-box; height: 56px; background: #002244; }
-      [data-boot-band] { box-sizing: border-box; height: 101px; background: #ffffff; border-bottom: 1px solid #dae3eb; }
-      [data-boot-row] { box-sizing: border-box; display: flex; align-items: center; height: 56px; max-width: calc(1456px + 56px); margin: 0 auto; padding: 0 28px; }
+      [data-boot-bar] { box-sizing: border-box; height: 108px; padding-bottom: 12px; background: #002244; }
+      [data-boot-row] { box-sizing: border-box; display: flex; align-items: center; height: 56px; padding-left: 12px; }
+      [data-boot-menu] { box-sizing: border-box; flex: none; width: 44px; height: 44px; margin-right: 12px; border: 1px solid #ffffff; border-radius: 4px; }
       [data-boot-row] img { display: block; width: 120px; height: 24px; }
+      [data-boot-box] { height: 40px; margin: 0 16px; background: #ffffff; border-radius: 4px; }
       [data-boot-sidebar-column] { display: none; }
-      @media (width >= 48rem) {
-        [data-boot-row] { max-width: calc(1456px + 96px); padding: 0 48px; }
-        [data-boot-band] { height: 69px; }
-      }
+      @media (width >= 22.5rem) { [data-boot-menu] { width: 6rem; } }
+      @media (width >= 48rem) { [data-boot-box] { margin: 0 32px; } }
       @media (width >= 64rem) {
-        [data-boot-row] { max-width: calc(1456px + 144px); padding: 0 72px; }
+        [data-boot-bar] { height: 56px; padding-bottom: 0; }
+        [data-boot-row] { padding-left: 16px; }
+        [data-boot-menu], [data-boot-box] { display: none; }
         [data-boot-sidebar-column] { display: block; box-sizing: border-box; width: 64px; border-right: 1px solid #dae3eb; }
         html[data-sidebar-rest="open"] [data-boot-sidebar-column] { width: 224px; }
-        [data-boot-sidebar] { height: calc(100vh - 125px); height: calc(100dvh - 125px); }
+        [data-boot-sidebar] { height: calc(100vh - 56px); height: calc(100dvh - 56px); }
       }
       @media (width >= 90rem) { html:not([data-sidebar-rest="rail"]) [data-boot-sidebar-column] { width: 224px; } }
     </style>
@@ -51,9 +53,9 @@
   <body>
     <div id="root">
       <div data-boot-bar>
-        <div data-boot-row><img src="/src/assets/world-bank-logo.svg" width="120" height="24" alt="" /></div>
+        <div data-boot-row><span data-boot-menu></span><img src="/src/assets/world-bank-logo.svg" width="120" height="24" alt="" /></div>
+        <div data-boot-box></div>
       </div>
-      <div data-boot-band></div>
       <div data-boot-sidebar-column><div data-boot-sidebar></div></div>
     </div>
     <script type="module" src="/src/main.tsx"></script>

@@ -14,7 +14,8 @@ export function useScrollPadding(header: RefObject<HTMLElement | null>, active: 
     if (!element || !active) return;
     const root = document.documentElement;
     const update = () => {
-      const padding = getComputedStyle(element).position === "sticky" ? `${element.offsetHeight + gap}px` : "";
+      // From 1024 px the header sticks under the navy bar, so the padding counts the bar too (frame-top, ticket 93).
+      const padding = getComputedStyle(element).position === "sticky" ? `calc(var(--frame-top) + ${element.offsetHeight + gap}px)` : "";
       root.style.scrollPaddingTop = padding;
       root.style.setProperty("--sticky-top", padding);
     };

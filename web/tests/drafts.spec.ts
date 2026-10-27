@@ -715,9 +715,10 @@ test("the header and the bar stick in a window at least 768 px wide and 640 px t
   // At the top of the page the bar already sits on the bottom edge of the window, over the notes.
   await page.evaluate(() => window.scrollTo(0, 0));
   expect(await bar(page).evaluate((element) => Math.round(element.getBoundingClientRect().bottom))).toBe(900);
-  // Scrolled, the header stays at the top of the window with the stepper in it.
+  // Scrolled, the header stays at the top of the window, under the navy bar that sticks from 1024 px (ticket 93), with
+  // the stepper in it.
   await page.evaluate(() => window.scrollTo(0, 900));
-  expect(await header.evaluate((element) => Math.round(element.getBoundingClientRect().top))).toBe(0);
+  expect(await header.evaluate((element) => Math.round(element.getBoundingClientRect().top))).toBe(56);
   await expect(header.locator("[aria-current=step]")).toBeInViewport();
   // Focus the last note's marker from the top of the page: scroll padding keeps it above the bar (WCAG 2.4.11).
   await page.evaluate(() => window.scrollTo(0, 0));

@@ -1,18 +1,22 @@
 // The sidebar (DESIGN.md section 5, Sidebar and Menu sheet; ticket 92): the navigation named "Main". From 1024 px it
-// sits beside the page on the page grey with a hairline edge: Home, then the applied view's sections, then at its foot
-// Data and "Collapse the sidebar". It is open at 224 px from 1440 px and a 64 px rail of icons from 1024 to 1439 px,
+// sits beside the page on the page grey with a hairline edge, sticky under the bar: Home, then the applied view's
+// sections, then at its foot Data, the data stamp (ticket 93) and "Collapse the sidebar". It is open at 224 px from
+// 1440 px and a 64 px rail of icons from 1024 to 1439 px,
 // unless the person chose otherwise; the choice is kept in local storage, and web/index.html reads it before the
 // first paint, so nothing moves when the app mounts. The width changes at once. A rail item shows its label in a
-// tooltip on hover and on keyboard focus; the tooltip is not the item's name, which stays in the link.
+// tooltip on hover and on keyboard focus; the tooltip is not the item's name, which stays in the link. In the rail the
+// stamp hides, and the Data item's tooltip and description carry its words.
 //
 // Below 1024 px the same element is the Menu sheet: a modal dialog named "Menu" that slides in from the left, with
-// the page and the bar inert behind it (Frame.tsx holds its state). It closes on Escape, on "Close the menu" and on
+// the page and the bar inert behind it (Frame.tsx holds its state), the stamp under Data and, below 768 px, the view
+// switch's lines at its foot. It closes on Escape, on "Close the menu" and on
 // the scrim, and focus goes back to the Menu button. When the window narrows past 1024 px, focus on an item moves
 // to the Menu button.
 import { useEffect, useId, useLayoutEffect, useRef, useState, type FocusEvent } from "react";
 import { PanelLeftClose, PanelLeftOpen, X, type LucideIcon } from "lucide-react";
 import { copy } from "../copy";
 import { cx } from "../lib/cx";
+import { FreshnessStamp, stampWords, type Freshness } from "./BoxBand";
 import { useMenuSheet, WIDE } from "./Frame";
 import { LanguageChoice } from "./LanguageChoice";
 import { FOOT_SECTION, HOME_ITEM, SECTIONS, type Section, type SubItem, type SubItems } from "./sections";
@@ -71,7 +75,8 @@ function useRest(forced?: Rest): [Rest, () => void] {
 
 const pathOf = (href: string) => href.split("?")[0];
 
-type Tip = { text: string; top: number; instant: boolean };
+// A tooltip's label, and a second line under it: the stamp's words on the Data item.
+type Tip = { text: string; line: string | null; top: number; instant: boolean };
 
 const ITEM = cx(
   "relative flex min-h-9 w-full items-center gap-3 rounded-sm px-3 py-2 text-left text-small transition-paint",
@@ -87,6 +92,7 @@ export function Sidebar({
   pathname,
   projectsHref,
   subItems,
+  freshness,
   rest: forced,
 }: {
   // The view the server applied: its sections, the pages it hides, and the address's mode, which every link keeps.
@@ -101,6 +107,8 @@ export function Sidebar({
   projectsHref?: string;
   // Each section's own pages, shown under it while it is current (the tab tickets fill these).
   subItems?: SubItems;
+  // The data stamp's state (lib/freshness.ts), shown under Data (ticket 93).
+  freshness?: Freshness;
   // For the gallery: the resting state to draw, whatever the width or the stored choice.
   rest?: Rest;
 }) {
@@ -108,6 +116,7 @@ export function Sidebar({
   const wide = useMedia(WIDE);
   const [rest, toggle] = useRest(forced);
   const titleId = useId();
+  const stampId = useId();
   const box = useRef<HTMLDivElement>(null);
   // An item a resize just hid: Chrome can take focus from it before it reports the media change.
   const hidden = useRef<HTMLElement | null>(null);
@@ -149,7 +158,7 @@ export function Sidebar({
     setTip(null);
   };
   // A rail item's tooltip: after 150 ms on the first hover, at once on focus or right after another closed.
-  const showTip = (target: HTMLElement, text: string, wait: boolean) => {
+  const showTip = (target: HTMLElement, text: string, line: string | null, wait: boolean) => {
     window.clearTimeout(tipTimer.current);
     if (!rail) return;
     const instant = tipOpen.current || performance.now() - tipClosedAt.current < TIP_RUN;
@@ -158,7 +167,7 @@ export function Sidebar({
       const item = target.getBoundingClientRect();
       if (!outer) return;
       tipOpen.current = true;
-      setTip({ text, top: item.top - outer.top + item.height / 2, instant });
+      setTip({ text, line, top: item.top - outer.top + item.height / 2, instant });
     };
     if (wait && !instant) tipTimer.current = window.setTimeout(place, TIP_DELAY);
     else place();
@@ -166,19 +175,21 @@ export function Sidebar({
   useEffect(() => {
     if (!rail) hideTip();
   }, [rail]);
-  const tipProps = (text: string) => ({
-    onPointerEnter: (event: { currentTarget: HTMLElement }) => showTip(event.currentTarget, text, true),
+  const tipProps = (text: string, line: string | null = null) => ({
+    onPointerEnter: (event: { currentTarget: HTMLElement }) => showTip(event.currentTarget, text, line, true),
     onPointerLeave: hideTip,
-    onFocus: (event: FocusEvent<HTMLElement>) => showTip(event.currentTarget, text, false),
+    onFocus: (event: FocusEvent<HTMLElement>) => showTip(event.currentTarget, text, line, false),
     onBlur: hideTip,
   });
+  // The stamp's words, which the Data item's tooltip shows in the rail, and its description says there.
+  const stampLine = freshness ? stampWords(freshness) : null;
 
   const sections = mode.tabs === null ? null : SECTIONS.filter((section) => mode.tabs!.includes(section.key));
   const hrefOf = (key: Section, href: string) => (key === "projects" && projectsHref ? projectsHref : href);
   const subsOf = (key: Section): SubItem[] =>
     current === key ? (subItems?.[key] ?? []).filter((item) => !mode.hidden.includes(item.page)) : [];
 
-  const item = (key: Section | "home", href: string, icon: LucideIcon, label: string) => {
+  const item = (key: Section | "home", href: string, icon: LucideIcon, label: string, line: string | null = null) => {
     const subs = key === "home" ? [] : subsOf(key);
     const subPage = subs.some((sub) => pathOf(sub.href) === pathname);
     const marked = current === key ? (pathOf(href) === pathname && !subPage ? "page" : "true") : undefined;
@@ -189,8 +200,9 @@ export function Sidebar({
           href={withModeOf(href, mode.search)}
           aria-current={marked}
           data-nav-item={key}
+          aria-describedby={line && rail ? stampId : undefined}
           className={cx(ITEM, marked && !subPage ? CURRENT : cx("text-ink hover:bg-surface-2", marked && "font-semibold text-ink-heading"))}
-          {...tipProps(label)}
+          {...tipProps(label, line)}
         >
           <Icon aria-hidden="true" className={cx("size-4 shrink-0", marked ? "text-primary" : "text-ink-muted")} />
           <span className="truncate rail:clip-visually">{label}</span>
@@ -251,7 +263,7 @@ export function Sidebar({
         onKeyDown={(event) => event.key === "Escape" && hideTip()}
         className={cx(
           "menu-sheet fixed inset-y-0 left-0 z-50 flex w-[min(20rem,calc(100vw-3rem))] flex-col overflow-y-auto overscroll-contain bg-surface shadow-popover",
-          "lg:sticky lg:top-0 lg:z-30 lg:h-[calc(100dvh-var(--header-height))] lg:w-full lg:overflow-visible lg:bg-page lg:shadow-none",
+          "lg:sticky lg:top-(--frame-top) lg:z-30 lg:h-[calc(100dvh-var(--frame-top))] lg:w-full lg:overflow-visible lg:bg-page lg:shadow-none",
         )}
       >
         <div className="flex items-center justify-between border-b border-line py-2 pr-2 pl-4 lg:hidden">
@@ -288,7 +300,18 @@ export function Sidebar({
                   .map((section) => item(section.key, hrefOf(section.key, section.href), section.icon, copy.nav.tabs[section.key]))}
               </ul>
               <div className="mt-auto flex flex-col gap-0.5 pt-6">
-                {foot && <ul className="flex flex-col gap-0.5">{item(foot.key, foot.href, foot.icon, copy.nav.tabs[foot.key])}</ul>}
+                {foot && <ul className="flex flex-col gap-0.5">{item(foot.key, foot.href, foot.icon, copy.nav.tabs[foot.key], stampLine)}</ul>}
+                {/* The stamp under Data, on its label's left edge (8 + 12 + 16 + 12 px in); the rail hides it. */}
+                {freshness && (
+                  <div data-sidebar-stamp className="mb-2 ml-10 rail:hidden">
+                    <FreshnessStamp freshness={freshness} href={withModeOf("/data", mode.search)} />
+                  </div>
+                )}
+                {stampLine && (
+                  <span id={stampId} hidden>
+                    {stampLine}
+                  </span>
+                )}
                 <button
                   type="button"
                   data-sidebar-toggle
@@ -308,8 +331,9 @@ export function Sidebar({
             </>
           )}
         </nav>
-        {/* Below 1024 px the view lines and the language of answers and drafts sit at the sheet's foot (tickets 40, 42). */}
-        <div data-menu-panel className="border-t border-line px-4 pt-4 pb-4 lg:hidden">
+        {/* Below 768 px the view lines and the language of answers and drafts sit at the sheet's foot (tickets 40, 42);
+            from 768 px the view switch is in the bar (ticket 93). */}
+        <div data-menu-panel className="border-t border-line px-4 pt-4 pb-4 md:hidden">
           <ViewPanel viewer={viewer} mode={mode} onDone={() => sheet.setOpen(false, false)} />
           {viewer.status !== "error" && (
             <div className="mt-4 border-t border-line pt-4">
@@ -326,6 +350,7 @@ export function Sidebar({
             className="rail-tip pointer-events-none absolute left-full z-10 ml-2 w-max max-w-(--tooltip-width) -translate-y-1/2 rounded-sm border border-line bg-surface px-3 py-2 text-small text-ink shadow-popover"
           >
             {tip.text}
+            {tip.line && <span className="block text-caption text-ink-muted">{tip.line}</span>}
           </span>
         )}
       </div>
