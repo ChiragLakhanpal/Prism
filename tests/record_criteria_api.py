@@ -142,9 +142,9 @@ def answers(folder: Path) -> dict[str, str]:
             found["criteria-run-planned-rural-roads.sse"] = await post("/api/planned-packages/pkg-000000000001/criteria/run", {})
         return found
 
-    # Made up (ticket 61): the works package's run with a disagreement planted at get_disagreements, whose first side
-    # is ICR P130164 paragraph 54 (tests/planted_disagreements.py), so check 6 attaches a card to the lesson. Its own
-    # app state and check ids, so the story above is unchanged.
+    # Made up (ticket 61): the works package's run with two disagreements planted at get_disagreements, each with ICR
+    # P130164 paragraph 54 as its first side (tests/planted_disagreements.py), so check 6 attaches two cards to the
+    # lesson. Its own app state and check ids, so the story above is unchanged.
     import planted_disagreements as planted
     from strata.server import app as app_module
 
@@ -152,7 +152,7 @@ def answers(folder: Path) -> dict[str, str]:
     with DuckDBEngine.open(made_up_state) as engine:
         appstate.build(engine)
     made_up_checks = iter(f"chk-made-up-{number:06d}" for number in range(1, 100))
-    with mock.patch.object(app_module, "load_tools", lambda: planted.with_adapter("quoting_icr_54")):
+    with mock.patch.object(app_module, "load_tools", lambda: planted.with_adapter("twice_quoting_icr_54")):
         made_up = create_app(engine_for=reading, criteria=CriteriaStore(lambda: DuckDBEngine.open(made_up_state)),
                              today=lambda: TODAY, now=now, new_check_id=lambda: next(made_up_checks), judge=CaseJudge())
 

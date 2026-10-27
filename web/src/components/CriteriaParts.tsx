@@ -10,7 +10,7 @@ import { copy } from "../copy";
 import type { DisagreementEvent } from "../lib/answer";
 import { cx } from "../lib/cx";
 import { ruleSentence, sideFull, sideMeta, sideOpen, sideShort, subjectOf, whatChanges, type SideData } from "../lib/disagreement";
-import { evidenceHref, evidenceIn, openEvidence, visited } from "../lib/evidence";
+import { evidenceHref, evidenceIn, known, openEvidence, visited } from "../lib/evidence";
 import { itemListId, type ComparedItem, type Comparison, type LessonEntry, type LessonGroup, type Rejected, type RejectedRow } from "../lib/criteria";
 import { formatCount, formatDate } from "../lib/format";
 import { LESSONS_HREF } from "../lib/lessons";
@@ -366,11 +366,24 @@ export function markerNumbers(rejected: Rejected | null, lessons: LessonGroup[] 
   return numbers;
 }
 
+// The words a card's side quotes, where the server marked them for the sentence the card follows, so the drawer
+// opens the side on them (ticket 61's review, F3). The section remembers each side's evidence (rememberSides).
+function sideHighlight(found: DisagreementEvent, id: string): [number, number] | null {
+  const mark = known.get()[id]?.highlights.find((one) => one.sentence === found.after);
+  return mark ? [mark.start, mark.end] : null;
+}
+
+// Every disagreement check 6 attached to a reason's or a lesson's quote, under it, one card each, so the section
+// shows as many cards as the check line counts (ticket 61's verify, F1).
+function CheckCards({ found }: { found: DisagreementEvent[] | undefined }) {
+  return <>{(found ?? []).map((one) => <CheckCard key={one.id} found={one} />)}</>;
+}
+
 // A disagreement check 6 attached to a reason's or a lesson's quote, under it, with both sides (ticket 31's review
 // round 3, F2; DESIGN.md section 5, Disagreement card: shown only beside the claim it concerns). The section offers no
 // choice of side: it keeps no draft, so the card says what the reports say and lets you open each.
-function CheckCard({ found }: { found: DisagreementEvent | null | undefined }) {
-  if (!found || found.sides.length !== 2) return null;
+function CheckCard({ found }: { found: DisagreementEvent }) {
+  if (found.sides.length !== 2) return null;
   const sides = found.sides as SideData[];
   const cardSides = sides.map((side) => ({
     title: sideFull(side),
@@ -382,7 +395,7 @@ function CheckCard({ found }: { found: DisagreementEvent | null | undefined }) {
     open: {
       label: sideOpen(side),
       href: evidenceHref(side.evidence_id),
-      onOpen: (element: HTMLElement) => openFrom(side.evidence_id, element),
+      onOpen: (element: HTMLElement) => openFrom(side.evidence_id, element, sideHighlight(found, side.evidence_id)),
     },
   })) as [CardSide, CardSide];
   const badge = found.changes_answer ? copy.badge.twoReportsDisagree : copy.badge.sourcesDiffer;
@@ -440,7 +453,7 @@ function RejectedRowView({ row, n }: { row: RejectedRow; n: number }) {
           />
         </p>
       )}
-      {!row.removed && <CheckCard found={row.disagreement} />}
+      {!row.removed && <CheckCards found={row.disagreements} />}
       <p className="text-caption text-ink-muted">
         <Fill
           template={words.rejected.notice}
@@ -602,7 +615,7 @@ function LessonCardView({ lesson, n, firstIcr, firstIeg }: { lesson: LessonEntry
       ) : (
         <p className="mt-2 text-small text-ink" lang={lesson.excerpt?.lang}>{lessonWords.quoted(lesson.quote)}</p>
       )}
-      {!lesson.removed && <CheckCard found={lesson.disagreement} />}
+      {!lesson.removed && <CheckCards found={lesson.disagreements} />}
       <p className="mt-2 text-caption text-ink-muted" data-source>
         <span className="font-bold">{lessonWords.sourceLead}</span>{" "}
         <Fill

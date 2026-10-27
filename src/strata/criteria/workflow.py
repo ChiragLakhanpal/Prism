@@ -266,21 +266,22 @@ def _lesson_claims(groups: list[dict], read_passage: Callable[[str], dict | None
 class Checked:
     """The six checks' result on a run's claims: the verifier's counts; the removed sentences, each with what it was
     about (an evidence id or an item key) and its source (READING, RECORD_QUOTE or PASSAGE_QUOTE); the abouts whose
-    sentence was removed; the disagreement cards check 6 attached, by the about of the sentence each follows; and the
-    evidence events of the cards' sides, so each side's marker opens."""
+    sentence was removed; every disagreement card check 6 attached, listed by the about of the sentence it follows
+    (one sentence can rest on a side of several); and the evidence events of the cards' sides, so each side's marker
+    opens."""
 
     counts: dict
     removed: list[dict]
     removed_ids: set[str]
-    cards: dict[str, dict]
+    cards: dict[str, list[dict]]
     evidence: dict[str, dict]
 
 
 async def verdict_of(claims: list[tuple[Claim, str, str]], facts: Facts, tools: list[str], checking: Checking,
                      run_id: str) -> Checked:
     """The six checks on the claims. A quote from a record, such as an award notice's reason, has no page: the check
-    line says such quotes are in their sources. A card check 6 attached comes back with the claim it follows, where
-    the section shows it (ticket 31's review round 3, F2), and its count says so."""
+    line says such quotes are in their sources. Every card check 6 attached comes back with the claim it follows,
+    where the section shows it (ticket 31's review round 3, F2; ticket 61's verify, F1), and its count says so."""
     answer = checking.six.check([claim for claim, *_ in claims], facts)
     verdict = None
     async for item in checking.six.finish(answer, facts, checking.asker(run_id)):
@@ -295,7 +296,7 @@ async def verdict_of(claims: list[tuple[Claim, str, str]], facts: Facts, tools: 
             _, about, source = claims[event.data["index"]]
             removed.append({**event.data, "about": about, "source": source})
         elif event.type == "disagreement":
-            cards.setdefault(claims[event.data["after"]][1], dict(event.data))
+            cards.setdefault(claims[event.data["after"]][1], []).append(dict(event.data))
         elif event.type == "evidence" and event.data["id"] in sides:
             evidence[event.data["id"]] = dict(event.data)
     counts["quotes_without_pages"] = sum(1 for sentence in verdict.sentences
@@ -353,7 +354,7 @@ async def package_run(call_tool: ToolCall, read_passage: Callable[[str], dict | 
         "rejected": {"state": reject_state, "counts": rejected["summary"]["counts"],
                      "groups": [{**group, **names[group["item_key"]]} for group in rejected["summary"]["groups"]],
                      "rows": [{**row, "removed": row["evidence_id"] in removed_ids,
-                               "disagreement": cards.get(row["evidence_id"])} for row in rejected["rows"]],
+                               "disagreements": cards.get(row["evidence_id"], [])} for row in rejected["rows"]],
                      "sources": rejected["sources"], "records_through": rejected["records_through"]},
         "cost": {key: cost[key] for key in ("rows", "coverage", "package", "counts", "band", "quartiles",
                                             "quantile_dots", "min_comparables", "sources", "records_through",
@@ -361,7 +362,7 @@ async def package_run(call_tool: ToolCall, read_passage: Callable[[str], dict | 
         "lessons": {"state": "ok" if groups else "none",
                     "groups": [{"factor": group["factor"],
                                 "lessons": [{**lesson, "removed": lesson["evidence_id"] in removed_ids,
-                                             "disagreement": cards.get(lesson["evidence_id"])}
+                                             "disagreements": cards.get(lesson["evidence_id"], [])}
                                             for lesson in group["lessons"]]} for group in groups]},
         "checks": counts, "removed": removed,
         # The evidence of each side of a card check 6 attached, so the card's markers open (ticket 31's review F2).

@@ -17,7 +17,7 @@ import { CircleX } from "lucide-react";
 import { copy } from "../copy";
 import { WHAT_I_DONT_DO, dataReadinessHref } from "../routes";
 import type { Checks, Comparison, CriteriaSummary, PackageRun, RemovedEntry } from "../lib/criteria";
-import { forgetLessons, publicListId, rememberCosts, rememberItems, rememberLessons, rememberPublic } from "../lib/criteria";
+import { forgetLessons, publicListId, rememberCosts, rememberItems, rememberLessons, rememberPublic, rememberSides } from "../lib/criteria";
 import { formatCount, formatNumber } from "../lib/format";
 import { useLoad } from "../lib/load";
 import { address } from "../lib/router";
@@ -503,6 +503,7 @@ export function CheckCriteria({ base, version, preview }: {
       setRun({ status: "ready", result: data.package_run });
       rememberCosts(data.package_run.cost);
       rememberLessons(data.package_run.lessons.groups);
+      rememberSides(data.package_run);
     } else {
       setRun((current) => (current.status === "ready" ? { status: "idle" } : current));
     }
@@ -547,6 +548,7 @@ export function CheckCriteria({ base, version, preview }: {
           const result = payload as PackageRun;
           rememberCosts(result.cost);
           rememberLessons(result.lessons.groups);
+          rememberSides(result);
           setRun({ status: "ready", result });
           if (result.section_checks) setChecks(result.section_checks);
           setAnnounce(words.runDone);

@@ -15,6 +15,7 @@ from strata.tools.get_disagreements import get_disagreements
 ICR_54 = "strata.gold.passage:31525018/v1/54"
 ISR_7 = "strata.gold.passage:26733307/v1/s4"
 PLANTED = "strata.gold.disagreement:planted"
+PLANTED_TOO = "strata.gold.disagreement:planted-too"
 QUOTE = next(entry["value"] for entry in tomllib.loads(
     (Path(__file__).parent / "ground_truth" / "values.toml").read_text())["value"] if entry["id"] == "icr-para-54")
 
@@ -34,6 +35,20 @@ def _plant(result: dict, **side) -> dict:
 def quoting_icr_54(call, **arguments):
     """The first side quotes paragraph 54's own words, "108 of 328 cases had to go through rebidding"."""
     return _plant(get_disagreements(call, **arguments), value=None, value_form=None, quote=QUOTE)
+
+
+def twice_quoting_icr_54(call, **arguments):
+    """Two disagreements whose first side quotes paragraph 54's own words: the one above, about rebidding, and a
+    second about the rebidding share, so check 6 attaches two cards to the same lesson quote (ticket 61's verify,
+    F1)."""
+    result = quoting_icr_54(call, **arguments)
+    if result["rows"]:
+        first = result["rows"][-1]
+        side = {**first["sides"][0], "assertion_id": f"{ICR_54}#P130164/rebidding_share"}
+        second = {**first, "evidence_id": PLANTED_TOO, "disagreement_id": "planted-too", "attribute": "rebidding_share",
+                  "sides": [side, first["sides"][1]], "lean_assertion_id": side["assertion_id"]}
+        result["rows"] = [*result["rows"], second]
+    return result
 
 
 def on_market_rates(call, **arguments):

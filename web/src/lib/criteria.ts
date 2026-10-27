@@ -72,8 +72,9 @@ export type RejectedRow = {
   bids: number;
   rank: number;
   removed: boolean;
-  // A disagreement check 6 attached to this reason's sentence, with both sides (ticket 31's review round 3, F2).
-  disagreement?: DisagreementEvent | null;
+  // Every disagreement check 6 attached to this reason's sentence, each with both sides (ticket 31's review round 3,
+  // F2; ticket 61's verify, F1). A run saved before ticket 61 has none.
+  disagreements?: DisagreementEvent[];
 };
 export type RejectedGroup = { item_key: string; count: number; rows: number; label: string; phrase: string };
 export type Rejected = {
@@ -137,8 +138,9 @@ export type LessonEntry = {
   // null when the paragraph could not be read.
   excerpt: { text: string; range: number[] | null; lang: string } | null;
   removed: boolean;
-  // A disagreement check 6 attached to the lesson's quote, with both sides (ticket 31's review round 3, F2).
-  disagreement?: DisagreementEvent | null;
+  // Every disagreement check 6 attached to the lesson's quote, each with both sides (ticket 31's review round 3, F2;
+  // ticket 61's verify, F1). A run saved before ticket 61 has none.
+  disagreements?: DisagreementEvent[];
 };
 export type LessonGroup = { factor: string; lessons: LessonEntry[] };
 
@@ -154,6 +156,9 @@ export type PackageRun = {
   checks: Checks;
   removed: RemovedEntry[];
   section_checks?: Checks | null;
+  // The evidence of each side of a card check 6 attached, by id, with its highlight, so a side's marker opens on its
+  // words (ticket 61's review, F3). A run saved before ticket 61 has none.
+  evidence?: Record<string, EvidenceEvent>;
 };
 
 export type Relation = "less" | "same" | "more" | "different";
@@ -272,6 +277,11 @@ export function rememberItems(comparison: Comparison) {
 
 export function rememberCosts(cost: Cost) {
   for (const row of cost.rows) remember(costRecordEvent(row));
+}
+
+// The sides of the cards check 6 attached, so the drawer opens each on its highlighted words.
+export function rememberSides(run: PackageRun) {
+  for (const event of Object.values(run.evidence ?? {})) remember(event);
 }
 
 // The lessons section 5 shows, so drawer view F, opened from a lesson's marker or from the address while the
