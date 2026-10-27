@@ -8,6 +8,7 @@ DuckDB, so the checks read real rows. docs/workspace-catchup.md runs each check 
 import contextlib
 import functools
 import re
+import shlex
 import shutil
 import sys
 from pathlib import Path
@@ -402,7 +403,16 @@ def test_a_wrong_option_still_exits_with_code_2(argv, capsys):
     assert "error:" in capsys.readouterr().err
 
 
-COMMAND = re.compile(r"uv run --script ops/bundle/check\.py ([^`\"\n)]*)")
+# A command ends at a backtick, a closing parenthesis, the end of its line, or a double quote that
+# closes nothing on that line, such as the end of the Python string that holds it. A double-quoted
+# argument, such as "<main checkout>/.env", is read whole (ticket 80).
+COMMAND = re.compile(r'uv run --script ops/bundle/check\.py ((?:[^`"\n)]|"[^`"\n]*")*)')
+
+
+def commands_in(text):
+    """Each check.py command in text, split into arguments the way the shell splits them."""
+    for match in COMMAND.finditer(text):
+        yield shlex.split(match.group(1))
 
 
 def written_commands():
@@ -414,8 +424,28 @@ def written_commands():
         text = path.read_text()
         if path.suffix == ".py":
             text = re.sub(r"\"\s*\n\s*f?\"", "", text)  # a message Python splits over two string literals
-        for match in COMMAND.finditer(text):
-            yield path.relative_to(REPO).as_posix(), match.group(1).split()
+        for argv in commands_in(text):
+            yield path.relative_to(REPO).as_posix(), argv
+
+
+# Joined here, so the scan above never reads these examples as commands this file writes.
+CHECK_PY = "uv run --script ops/bundle/" + "check.py"
+
+
+@pytest.mark.parametrize("text", [
+    f'    {CHECK_PY} same-rows --env-file "<main checkout>/.env"\n',
+    f'Run `{CHECK_PY} same-rows --env-file "<main checkout>/.env"` after the deploy.\n',
+], ids=["code-block", "backticks"])
+def test_a_double_quoted_argument_in_a_written_command_is_one_argument(text):
+    """Ticket 76's merge gate cut `--env-file "<main checkout>/.env"` at the quote; the shell reads it whole."""
+    assert list(commands_in(text)) == [["same-rows", "--env-file", "<main checkout>/.env"]]
+    assert check.parse(next(commands_in(text))).env_file == Path("<main checkout>/.env")
+
+
+def test_a_command_inside_a_python_string_ends_at_the_string_s_closing_quote():
+    text = f'print("When it ends, run {CHECK_PY} job-run --env-file .env")\n'
+
+    assert list(commands_in(text)) == [["job-run", "--env-file", ".env"]]
 
 
 def test_every_check_command_the_repo_writes_parses_as_written(capsys):

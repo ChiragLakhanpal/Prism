@@ -42,6 +42,19 @@ run = ["python3", "gates/secret_scan.py"]
 always = true
 git_env = true
 
+# The tests that read Markdown files the repo writes run even when only Markdown is staged (ticket 80):
+# the check.py commands written in the docs must parse, and docs/day-one-results.md must keep its
+# marked blocks. On October 26, 2026, two Markdown-only commits skipped them and broke the next code
+# commit's gate. They read no fixture database, which a Markdown-only commit never builds, and take
+# about two seconds. Both also run in their folder's step below, so this step names a test and a
+# file, never a folder (tests/test_gate.py checks that each folder still runs in one step).
+[[step]]
+name = "Run the tests that read Markdown: the check.py commands in the docs, and the day-one results document"
+run = ["uv", "run", "--frozen", "pytest", "--basetemp", ".gate-tmp/docs",
+       "ops/bundle/tests/test_check.py::test_every_check_command_the_repo_writes_parses_as_written",
+       "ops/dayone/tests/test_results_document.py"]
+always = true
+
 [[step]]
 name = "Test the guard hook"
 run = ["python3", ".claude/hooks/test_guard.py"]
