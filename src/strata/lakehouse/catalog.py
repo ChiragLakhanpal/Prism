@@ -13,9 +13,13 @@ after the tables, in schema then view order, so each deploy carries a changed vi
 
 Every table keeps the date it became public in a public_from DATE column (ADR 0002).
 check_public_from() looks at every table in the catalog, whatever made it, and stops when one lacks
-the column or gives it another type. Views hold no rows of their own, so it skips plain views and
-the metric views that Genie reads. The fixture build skips its `recorded` schema, its copy of the
-sources, which is not a catalog layer.
+the column or gives it another type. It reads the tables through listed_tables(), which the nightly's
+table sizes measure reads too (strata.lakehouse.storage). Views hold no rows of their own, so the
+listing leaves out plain views and the metric views that Genie reads. It also leaves out the search
+index's own objects, which the AI Search service makes in the index's schema and Strata never defines:
+the index that config/models.toml names, and the event log and the view the index serves from, which
+carry the index's id in their names (ticket 87). Nothing else is left out. The fixture build skips its
+`recorded` schema, its copy of the sources, which is not a catalog layer.
 """
 
 from __future__ import annotations
@@ -24,6 +28,7 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 
+from strata.config import load_search
 from strata.lakehouse import bundle as bundle_files
 from strata.lakehouse.engine import COLUMN_NAME, Engine
 
@@ -32,23 +37,27 @@ TABLES = Path(__file__).resolve().parent / "tables"
 VIEWS = "views"  # the folder beside the tables folder that holds the view definitions
 COMMENT_LINE = re.compile(r"^\s*--.*$", re.M)
 
-MISSING_PUBLIC_FROM = """
-SELECT t.table_schema, t.table_name
-FROM system.information_schema.tables AS t
-WHERE t.table_catalog = :catalog
-  AND t.table_schema <> 'information_schema'
-  AND t.table_type NOT IN ('VIEW', 'METRIC_VIEW')
-  AND NOT EXISTS (
-    SELECT 1
-    FROM system.information_schema.columns AS c
-    WHERE c.table_catalog = t.table_catalog
-      AND c.table_schema = t.table_schema
-      AND c.table_name = t.table_name
-      AND c.column_name = 'public_from'
-      AND c.data_type = 'DATE'
-  )
-ORDER BY t.table_schema, t.table_name
+LISTED_TABLES = """
+SELECT table_schema, table_name
+FROM system.information_schema.tables
+WHERE table_catalog = :catalog
+  AND table_schema <> 'information_schema'
+  AND table_type NOT IN ('VIEW', 'METRIC_VIEW')
+ORDER BY table_schema, table_name
 """
+DATED_TABLES = """
+SELECT table_schema, table_name
+FROM system.information_schema.columns
+WHERE table_catalog = :catalog
+  AND column_name = 'public_from'
+  AND data_type = 'DATE'
+"""
+# The names the AI Search service gives the two tables it makes beside a Delta Sync index, in the index's schema:
+# the event log of the pipeline that syncs it and the view the index serves from. Each carries the index's id, a
+# UUID written with underscores, as strata.gold.event_log_cd8058ce_42aa_4722_ac9a_3ee310032e31 and
+# strata.gold.__cd8058ce_42aa_4722_ac9a_3ee310032e31___online_index_view did on the paid workspace (ticket 87).
+INDEX_ID = r"[0-9a-f]{8}(?:_[0-9a-f]{4}){3}_[0-9a-f]{12}"
+INDEX_SERVICE_TABLES = (re.compile(rf"event_log_{INDEX_ID}"), re.compile(rf"__{INDEX_ID}___online_index_view"))
 
 
 class CatalogError(ValueError):
@@ -152,10 +161,31 @@ def defined_names() -> frozenset[str]:
     return frozenset(f"{CATALOG}.{path.parent.name}.{path.stem}" for path in (*tables, *views, *metric_views))
 
 
+def index_object(schema: str, table: str, index: str | None = None) -> bool:
+    """Whether strata.<schema>.<table> is one of the search index's own objects: the index config/models.toml
+    names, or a table the AI Search service made beside it in its schema with the index's id in its name. The
+    service makes them and Strata never defines them, so none holds a public_from column (ticket 87)."""
+    index_catalog, index_schema, index_name = (index or load_search().index).split(".")
+    if (index_catalog, index_schema) != (CATALOG, schema):
+        return False
+    return table == index_name or any(pattern.fullmatch(table) for pattern in INDEX_SERVICE_TABLES)
+
+
+def listed_tables(engine: Engine) -> list[tuple[str, str]]:
+    """Every table in the catalog, as (schema, table) in schema then table order, whatever made it. Views and
+    metric views hold no rows of their own, and the search index's own objects are the AI Search service's
+    (index_object), so the listing leaves them out. The public_from check and the nightly's table sizes measure
+    both read it, so neither reads the index's view, which has no columns."""
+    index = load_search().index
+    return [(schema, table) for schema, table in engine.run(LISTED_TABLES, {"catalog": CATALOG}).as_text()
+            if not index_object(schema, table, index)]
+
+
 def check_public_from(engine: Engine, skip: tuple[str, ...] = ()) -> None:
     """Stop when any table in the catalog, outside the schemas in skip, has no public_from DATE column (ADR 0002)."""
-    missing = [(schema, table) for schema, table in engine.run(MISSING_PUBLIC_FROM, {"catalog": CATALOG}).as_text()
-               if schema not in skip]
+    dated = set(engine.run(DATED_TABLES, {"catalog": CATALOG}).as_text())
+    missing = [(schema, table) for schema, table in listed_tables(engine)
+               if schema not in skip and (schema, table) not in dated]
     if missing:
         names = ", ".join(f"{CATALOG}.{schema}.{table}" for schema, table in missing)
         raise CatalogError(f"These tables have no public_from column of type DATE: {names}. Every table keeps "

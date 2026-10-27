@@ -8,7 +8,11 @@ Run it from the main checkout after the wizard and the bundle deploy (ops/bundle
 
     uv run --script ops/app/deploy_app.py --env-file .env
 
-It needs npm, which builds the web app. It does these things, in order:
+It needs npm, which builds the web app. Before step 1, it reads the app's compute and the SQL warehouse's state
+through the SDK, with no SQL (ops/bundle/workspace_state.py, ticket 81). When the workspace stopped the app's compute
+("due to workspace or account status"), or the warehouse is stopped and will not start when asked, it prints one
+sentence that names the state and exits 2 without uploading. On Free Edition the usual cause is the workspace's daily
+compute limit. Then it does these things, in order:
 
 1. It builds the web app into web/dist (npm --prefix web run build).
 2. It finds the app that ops/dayone/dayone.toml names (names.app), or makes it. It replaces the
@@ -29,7 +33,10 @@ It needs npm, which builds the web app. It does these things, in order:
    no secret (see below).
 4. It uploads the app, laid out as in the repo: app.yaml and the lean requirements.txt from
    ops/app, src/strata, config and web/dist, to the folder strata-app in your workspace folder.
-5. It deploys the app, starting it first if it is stopped, and waits for it.
+5. It deploys the app, starting it first if it is stopped, and waits for it. Then it reads the app's deployments
+   (apps list-deployments) and stops with exit 1 unless one made since the run started has the state SUCCEEDED,
+   naming the deployment and its time: on October 26, 2026 the deploy call came back on a stopped workspace with no
+   deployment registered.
 6. It grants the app's own service principal what the server needs to write usage events, agent
    runs, opened sources, drafts, decisions and labels on supplier pairs, and the lesson review record,
    and nothing more: USE CATALOG on strata, USE SCHEMA on strata.ops, SELECT and MODIFY on
@@ -49,6 +56,9 @@ It needs npm, which builds the web app. It does these things, in order:
    only to the app's own service principal and to you, who own the catalog and whose identity runs
    the weekly retrieval job. Every other reader reads NULL there, though the bundle lets them read
    all of strata.ops.
+   When the SQL warehouse refuses a statement in step 6 or 7, it names the warehouse's state before the warehouse's
+   answer and stops with exit 1, because a stopped warehouse refuses every statement with an error, such as
+   TABLE_DOES_NOT_EXIST for a table that exists.
 8. It prints the app's address.
 
 The grants in bundle/catalog.yml replace any other grants on the strata catalog and its schemas
@@ -76,6 +86,7 @@ because fairshare could not be read on the build machine.
 from __future__ import annotations
 
 import argparse
+import datetime as dt
 import re
 import subprocess
 import sys
@@ -91,6 +102,7 @@ for folder in (REPO / "src", REPO / "ops" / "dayone", REPO / "ops" / "bundle", H
         sys.path.insert(0, str(folder))
 
 import dayone  # noqa: E402
+import workspace_state  # noqa: E402  (ops/bundle/workspace_state.py, ticket 81)
 from workspace_env import WorkspaceEnvError, load_workspace_env  # noqa: E402
 
 from strata.lakehouse.masks import MASK, MASKED  # noqa: E402
@@ -290,10 +302,63 @@ def write_secrets(scope: str, keys: list[str]) -> str:
     return f"Write {'it' if len(keys) == 1 else 'them'} with {commands}, then deploy again."
 
 
+def at(moment: dt.datetime) -> str:
+    """A time as the deploy says it, such as "14:55:02 UTC on October 26, 2026"."""
+    moment = moment.astimezone(dt.UTC)
+    return f"{moment:%H:%M:%S} UTC on {dayone.long_date(moment.date())}"
+
+
+STOPPED_AT_STEP_5 = "I stopped here and granted nothing."
+
+
+def registered(name: str, found: list[dict], started: dt.datetime) -> tuple[bool, str]:
+    """Whether step 5 registered a deployment that succeeded, and the sentence that says so, from the app's
+    deployments as apps list-deployments gives them. Only a deployment made since the run started counts: on a stopped
+    workspace the deploy call came back with nothing registered (October 26, 2026, ticket 81)."""
+    dated = sorted((deployment for deployment in found if deployment.get("created")),
+                   key=lambda deployment: deployment["created"], reverse=True)
+    new = [deployment for deployment in dated if deployment["created"] >= started]
+    succeeded = [deployment for deployment in new if deployment["state"] == "SUCCEEDED"]
+    if succeeded:
+        return True, f"   The deployment {succeeded[0]['id']}, made at {at(succeeded[0]['created'])}, succeeded."
+    if new:
+        newest = new[0]
+        said = f" with the message \"{' '.join(newest['message'].split())}\"" if newest.get("message") else ""
+        return False, (f"Step 5's deployment {newest['id']}, made at {at(newest['created'])}, has the state "
+                       f"{newest['state']}{said}. {STOPPED_AT_STEP_5}")
+    if not dated:
+        return False, f"The app {name} lists no deployment at all, so step 5 registered nothing. {STOPPED_AT_STEP_5}"
+    newest = dated[0]
+    return False, (f"The app {name} has no deployment made since this run started at {at(started)}, so step 5 "
+                   f"registered nothing. Its newest deployment is {newest['id']}, made at {at(newest['created'])}, "
+                   f"with the state {newest['state']}. {STOPPED_AT_STEP_5}")
+
+
+def run_statements(workspace, statements: list[str], stopped: str) -> bool:
+    """Run each statement on the SQL warehouse, in order. When the warehouse refuses one, say the warehouse's state
+    before its answer (ticket 81), then what stopping here leaves undone, and run no more."""
+    for statement in statements:
+        try:
+            workspace.run_sql(statement)
+        except Exception as error:  # the warehouse refused the statement, or the workspace refused the call
+            lines, running = workspace_state.refused_statement(workspace, statement, error)
+            for line in lines:
+                print(line)
+            print(stopped if running else f"{stopped} Deploy again once the SQL warehouse runs.")
+            return False
+    return True
+
+
 def deploy(workspace, env: dict, build_web: Callable[[], tuple[int, str]] = build_web, dist: Path = DIST,
-           keep_secrets: bool = False) -> int:
+           keep_secrets: bool = False, now: Callable[[], dt.datetime] = lambda: dt.datetime.now(dt.UTC)) -> int:
+    started = now()
     names = dayone.load_config()["names"]
     name, scope = names["app"], names["secret_scope"]
+
+    stopped = workspace_state.refusal(workspace, app=name)
+    if stopped:
+        print(stopped)
+        return 2
 
     print("1. Building the web app.")
     code, output = build_web()
@@ -383,14 +448,20 @@ def deploy(workspace, env: dict, build_web: Callable[[], tuple[int, str]] = buil
     if not app["running"]:
         workspace.start(name)
     url = workspace.deploy(name, folder)
+    succeeded, said = registered(name, workspace.deployments(name), started)
+    print(said)
+    if not succeeded:
+        return 1
 
     print("6. Letting the app's own service principal write usage events, agent runs, opened sources and drafts to strata.ops.")
-    for statement in grants(app["principal"]):
-        workspace.run_sql(statement)
+    if not run_statements(workspace, grants(app["principal"]),
+                          "I stopped at step 6, so the app's own service principal may lack some of its grants."):
+        return 1
 
     print("7. Masking who sent each passage report and who asked each question from everyone but the app and you.")
-    for statement in masks(app["principal"], workspace.me()):
-        workspace.run_sql(statement)
+    if not run_statements(workspace, masks(app["principal"], workspace.me()),
+                          "I stopped at step 7, so some columns may lack their mask."):
+        return 1
 
     if existed:
         # A browser keeps the app session it opened before this deploy, with that session's token and scopes, until it

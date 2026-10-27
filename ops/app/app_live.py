@@ -17,10 +17,11 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[1]
-for folder in (REPO / "src", REPO / "ops" / "dayone"):
+for folder in (REPO / "src", REPO / "ops" / "dayone", REPO / "ops" / "bundle"):
     if str(folder) not in sys.path:
         sys.path.insert(0, str(folder))
 
+import workspace_state  # noqa: E402  (ops/bundle/workspace_state.py, ticket 81)
 from live import workspace as workspace_client  # noqa: E402  (ticket 03's client factory)
 from strata.lakehouse.engine import WarehouseEngine  # noqa: E402
 
@@ -48,6 +49,21 @@ class LiveApps:
                 "source": getattr(app.active_deployment, "source_code_path", None),
                 "url": app.url, "principal": app.service_principal_client_id,
                 "running": state == apps.ComputeState.ACTIVE}
+
+    # ── The workspace's state, read through the SDK before step 1 (ticket 81) ──
+
+    def app_compute(self, name: str) -> dict | None:
+        return workspace_state.app_compute(self.w, name)
+
+    def warehouse_state(self) -> dict:
+        return workspace_state.warehouse_state(self.w, self.env["DATABRICKS_WAREHOUSE_ID"])
+
+    def start_warehouse(self) -> None:
+        workspace_state.start_warehouse(self.w, self.env["DATABRICKS_WAREHOUSE_ID"])
+
+    def deployments(self, name: str) -> list[dict]:
+        """The app's deployments, which step 5 reads to check that its deployment registered and succeeded."""
+        return workspace_state.deployments(self.w, name)
 
     def create_app(self, name: str, description: str) -> None:
         from databricks.sdk.service import apps
