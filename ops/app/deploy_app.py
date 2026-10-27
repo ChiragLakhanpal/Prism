@@ -8,7 +8,11 @@ Run it from the main checkout after the wizard and the bundle deploy (ops/bundle
 
     uv run --script ops/app/deploy_app.py --env-file .env
 
-It needs npm, which builds the web app. It does these things, in order:
+It needs npm, which builds the web app. Before step 1, it reads the app's compute and the SQL warehouse's state
+through the SDK, with no SQL (ops/bundle/workspace_state.py, ticket 81). When the workspace stopped the app's compute
+("due to workspace or account status"), or the warehouse is stopped and will not start when asked, it prints one
+sentence that names the state and exits 2 without uploading. On Free Edition the usual cause is the workspace's daily
+compute limit. Then it does these things, in order:
 
 1. It builds the web app into web/dist (npm --prefix web run build).
 2. It finds the app that ops/dayone/dayone.toml names (names.app), or makes it. It replaces the
@@ -29,7 +33,10 @@ It needs npm, which builds the web app. It does these things, in order:
    no secret (see below).
 4. It uploads the app, laid out as in the repo: app.yaml and the lean requirements.txt from
    ops/app, src/strata, config and web/dist, to the folder strata-app in your workspace folder.
-5. It deploys the app, starting it first if it is stopped, and waits for it.
+5. It deploys the app, starting it first if it is stopped, and waits for it. Then it reads the app's deployments
+   (apps list-deployments) and stops with exit 1 unless one made since the run started has the state SUCCEEDED,
+   naming the deployment and its time: on October 26, 2026 the deploy call came back on a stopped workspace with no
+   deployment registered.
 6. It grants the app's own service principal what the server needs to write usage events, agent
    runs, opened sources, drafts, decisions and labels on supplier pairs, and the lesson review record,
    and nothing more: USE CATALOG on strata, USE SCHEMA on strata.ops, SELECT and MODIFY on
@@ -49,6 +56,9 @@ It needs npm, which builds the web app. It does these things, in order:
    only to the app's own service principal and to you, who own the catalog and whose identity runs
    the weekly retrieval job. Every other reader reads NULL there, though the bundle lets them read
    all of strata.ops.
+   When the SQL warehouse refuses a statement in step 6 or 7, it names the warehouse's state before the warehouse's
+   answer and stops with exit 1, because a stopped warehouse refuses every statement with an error, such as
+   TABLE_DOES_NOT_EXIST for a table that exists.
 8. It prints the app's address.
 
 The grants in bundle/catalog.yml replace any other grants on the strata catalog and its schemas

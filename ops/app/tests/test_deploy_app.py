@@ -744,3 +744,13 @@ def test_a_statement_a_running_warehouse_refuses_is_named_as_the_statement_s_own
     assert step_7[2] == ("   The warehouse said: PERMISSION_DENIED: User does not have CREATE FUNCTION on Schema "
                          "'strata.ops'.")
     assert step_7[3] == "I stopped at step 7, so some columns may lack their mask."
+
+
+def test_the_readme_s_deploy_section_says_what_the_deploy_checks_first_and_after_step_5():
+    section = (REPO / "README.md").read_text().split("## Deploy the app\n")[1].split("\n## ")[0]
+    first = " ".join(section.split("\n1. ")[0].split())
+    step_5 = " ".join(section.split("\n5. ")[1].split("\n6. ")[0].split())
+
+    assert "Before step 1, it reads the app's compute and the SQL warehouse's state through the SDK" in first
+    assert "uploads nothing and exits 2" in first and "daily compute limit" in first
+    assert "unless a deployment made since the run started has the state SUCCEEDED" in step_5

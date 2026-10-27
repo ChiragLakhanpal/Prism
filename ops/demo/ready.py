@@ -7,7 +7,10 @@ Run it from the main checkout before every demo (README, "Before a demo"):
 It needs DATABRICKS_HOST, DATABRICKS_TOKEN, DATABRICKS_WAREHOUSE_ID, GENIE_SPACE_ID, FOUNDRY_PROJECT_ENDPOINT,
 AZURE_OPENAI_ENDPOINT and AZURE_OPENAI_API_KEY in the env file, the az command line signed in for the Foundry agent,
 and the browser sign-in the wizard saved under the Databricks CLI profile that ops/dayone/dayone.toml names, which
-the app's health route needs. It lists the workspace first, then, in order:
+the app's health route needs. Before anything else, it reads the app's compute and the SQL warehouse's state through
+the SDK. When the workspace stopped the app's compute ("due to workspace or account status"), or the warehouse is
+stopped and will not start when asked, it says so in one sentence and exits 2 before it changes anything (ticket 81).
+Otherwise it lists the workspace, then takes these steps, in order:
 
 1. The app. It finds the app ops/dayone/dayone.toml names and leaves it alone unless it runs Strata's code from
    ops/app/deploy_app.py's folder. It starts a stopped app. An app stops 24 hours after each start or deploy
@@ -35,8 +38,8 @@ the app's health route needs. It lists the workspace first, then, in order:
 6. It lists the workspace again and prints what changed. A second run prints "No changes."
 
 Then it prints one line per step and exits 0 when no step failed, with the last line "Strata is ready for the
-demo.", 1 naming each step that failed, and 2 when the env file is not ready. A step that is not built yet is not
-a failure.
+demo.", 1 naming each step that failed, and 2 when the env file is not ready or the workspace stopped the app or the
+warehouse. A step that is not built yet is not a failure.
 
 With --fresh-workspace it changes nothing and needs no env file. It prints, from code alone, every resource a fresh
 workspace needs to reach the demo state, in order, with the command that makes each one: each deployer's own plan
@@ -68,6 +71,7 @@ import dayone  # noqa: E402
 import deploy as bundle_deploy  # noqa: E402  (ops/bundle/deploy.py)
 import deploy_app  # noqa: E402  (ops/app/deploy_app.py)
 import fresh_workspace  # noqa: E402  (ops/demo/fresh_workspace.py, the dry run)
+import workspace_state  # noqa: E402  (ops/bundle/workspace_state.py, read before anything changes; ticket 81)
 from workspace_env import WorkspaceEnvError, load_workspace_env  # noqa: E402
 
 from strata.agent.verifier import ALL_CHECKS  # noqa: E402
@@ -617,6 +621,15 @@ def listing(workspace, say, first: bool = False) -> dict | None:
 
 
 def ready(workspace, setup: Setup, say: Callable[[str], None] = print) -> int:
+    try:
+        stopped = workspace_state.refusal(workspace, app=dayone.load_config()["names"]["app"])
+    except Exception as error:  # the Apps or warehouses API refused: the steps still run, and each says what fails
+        say(f"I could not read the app's compute or the SQL warehouse's state first: {type(error).__name__}: "
+            f"{one_line(error)}")
+        stopped = None
+    if stopped:
+        say(stopped)
+        return 2
     before = listing(workspace, say, first=True)
     kept: dict = {}
     outcomes = []

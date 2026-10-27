@@ -8,7 +8,9 @@ Run it from the main checkout after the wizard:
 
     uv run --script ops/bundle/deploy.py --env-file .env
 
-It needs the Databricks CLI 0.287.0 or later on the path. It does these things, in order:
+It needs the Databricks CLI 0.287.0 or later on the path. First it reads the SQL warehouse's state through the SDK.
+When the warehouse is stopped and will not start when asked, it says so in one sentence and exits 2 before it
+changes anything (ticket 81). Then it does these things, in order:
 
 1. It lists what the workspace holds: the strata catalog, its schemas, the volume, the tables, the
    grants, the nightly job that bundle/nightly.yml names and both dashboards with the time each was
@@ -44,6 +46,7 @@ for folder in (REPO / "src", REPO / "ops" / "dayone", REPO / "ops" / "app", HERE
 
 import dayone  # noqa: E402
 import deploy_app  # noqa: E402  (ops/app/deploy_app.py, which says what the app's service principal holds)
+import workspace_state  # noqa: E402  (the SQL warehouse's state, read before anything changes; ticket 81)
 from strata.lakehouse import bundle, catalog, nightly  # noqa: E402
 from strata.lakehouse.catalog import CatalogError  # noqa: E402
 from strata.lakehouse.engine import EngineError  # noqa: E402
@@ -138,6 +141,10 @@ def summary(listing: dict) -> str:
 
 
 def deploy(workspace, fairshare: str = FAIRSHARE) -> int:
+    stopped = workspace_state.refusal(workspace)
+    if stopped:
+        print(stopped)
+        return 2
     job, boards = nightly.job_name(), dashboard_names()
     before = flatten(workspace.listing(catalog.CATALOG), workspace.job(job), [workspace.dashboard(b) for b in boards])
     neighbour_before = workspace.listing(fairshare)
