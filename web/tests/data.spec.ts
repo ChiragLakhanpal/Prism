@@ -11,6 +11,7 @@ import { readFile } from "node:fs/promises";
 import { dataReadinessHref } from "../src/routes";
 import { expect, mockShell, recorded, test, windowBeside } from "./mocked";
 import { placements } from "./registries";
+import { fontsLoaded } from "./settled";
 
 type Answer = { status?: number; file: string };
 
@@ -651,12 +652,13 @@ for (const width of [1440, 1024, 390]) {
     const titles = () =>
       page.locator("[data-readiness] h2").evaluateAll((found) => found.map((h) => [h.textContent, Math.round(h.getBoundingClientRect().top + window.scrollY)]));
     await expect.poll(async () => (await titles()).length).toBeGreaterThanOrEqual(3);
+    // Until a face arrives, the fallback face can wrap a line more at 390 px (ticket 94's 16 px margins), so both
+    // measures wait for every face. On a busy computer the skeleton's own faces came after its measure (ticket 56).
+    await fontsLoaded(page);
     const before = Object.fromEntries(await titles());
     release();
     await expect(page.locator("[data-readiness=ready]")).toBeVisible();
-    // A face the loaded page uses first can arrive a moment after the page draws; until it does, a fallback face can
-    // wrap a line more at 390 px (ticket 94's 16 px margins), so measure once every face is in.
-    await page.evaluate(() => document.fonts.ready);
+    await fontsLoaded(page);
     const after = Object.fromEntries(await titles());
     expect(Object.keys(after)).toEqual(Object.keys(before));
     for (const title of Object.keys(after)) {

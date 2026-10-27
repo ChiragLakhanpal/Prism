@@ -6,6 +6,7 @@
 import { scan } from "./axe";
 import type { Locator, Page } from "@playwright/test";
 import { expect, mockApi, recorded, test, windowBeside } from "./mocked";
+import { fontsLoaded } from "./settled";
 
 const REF = "KE-NWWDA-541055-CW-RFB";
 const PATH = `/packages/${REF}`;
@@ -63,9 +64,11 @@ async function openPackage(
 const section = (page: Page) => page.locator("[data-past-range]");
 // A page whose time estimate answers: ready waits for lane 2 too, so nothing moves after a test measures the chart.
 const answering = new WeakSet<Page>();
+// Fonts too: a face that came late on a busy computer broke a date onto two lines after the measure (ticket 56).
 const ready = async (page: Page) => {
   await expect(page.locator("[data-past-range]:not([data-past-range=loading])")).toBeVisible();
   if (answering.has(page)) await expect(page.locator("[data-lane2=loading]")).toHaveCount(0);
+  await fontsLoaded(page);
 };
 const readout = (page: Page) => page.locator("[data-readout]");
 
@@ -624,6 +627,16 @@ test("a dot's tooltip stays while the pointer moves onto it, so you can select i
   }
 });
 
+// Stops the page's clock once the chart is ready. A dot takes the tooltip once the pointer has rested on it for 100 ms
+// (RangeChart.tsx), so a test that moves the pointer every 16 ms advances the page's clock 16 ms between two moves,
+// with runFor, and a busy computer's pause between them never counts as a rest. With the time between moves left to
+// the computer, these tests failed gates at load averages of 26 to 51 and passed alone (ticket 56). The clock must be
+// installed before the page loads, so the page's timers are the clock's; clock.resume() lets a new page load.
+async function stopTheClock(page: Page) {
+  const now = await page.evaluate(() => Date.now());
+  await page.clock.pauseAt(now + 1000);
+}
+
 // The dots of the tallest column at this width, top first: the column where a dot's tooltip sits
 // furthest above it, past every dot stacked over it.
 async function tallestColumn(page: Page): Promise<number[]> {
@@ -640,10 +653,13 @@ async function tallestColumn(page: Page): Promise<number[]> {
 }
 
 test("the pointer can cross the dots above a dot to reach its tooltip, and a dot it rests on takes the tooltip", async ({ page }) => {
+  await page.clock.install();
   for (const width of [1440, 390]) {
+    await page.clock.resume();
     await openPackage(page, { width });
     await ready(page);
     await page.locator("[data-range-chart]").scrollIntoViewIfNeeded();
+    await stopTheClock(page);
     const column = await tallestColumn(page);
     expect(column.length, `${width} px`).toBeGreaterThanOrEqual(3);
     const bottom = column[column.length - 1];
@@ -660,19 +676,20 @@ test("the pointer can cross the dots above a dot to reach its tooltip, and a dot
     const steps = Math.ceil(Math.hypot(to.x - from.x, to.y - from.y) / 2);
     for (let step = 1; step <= steps; step++) {
       await page.mouse.move(from.x + ((to.x - from.x) * step) / steps, from.y + ((to.y - from.y) * step) / steps);
-      await page.waitForTimeout(16);
+      await page.clock.runFor(16);
     }
-    await page.waitForTimeout(400);
+    await page.clock.runFor(400);
     await expect(tip, `${width} px, on arrival`).toContainText(await name(bottom));
 
     // From the same dot onto the dot above it, resting there: that dot takes the tooltip.
     await page.mouse.move(2, from.y, { steps: 4 });
+    await page.clock.runFor(150);
     await expect(tip).toHaveCount(0);
     await page.mouse.move(from.x, from.y);
     await expect(tip).toContainText(await name(bottom));
     const above = await centre(page, `[data-dot-target='${column[column.length - 2]}']`);
     await page.mouse.move(above.x, above.y, { steps: 4 });
-    await page.waitForTimeout(150);
+    await page.clock.runFor(150);
     await expect(tip, `${width} px, resting on the dot above`).toContainText(await name(column[column.length - 2]));
 
     // Escape pressed before that rest is over hides the tooltip, and no dot takes it after.
@@ -680,7 +697,7 @@ test("the pointer can cross the dots above a dot to reach its tooltip, and a dot
     await expect(tip).toContainText(await name(bottom));
     await page.mouse.move(above.x, above.y, { steps: 4 });
     await page.keyboard.press("Escape");
-    await page.waitForTimeout(150);
+    await page.clock.runFor(150);
     await expect(tip, `${width} px, after Escape`).toHaveCount(0);
   }
 });
@@ -759,9 +776,11 @@ for (const width of [1440, 390]) {
 }
 
 test("a pointer that takes a dot from below its centre keeps it on the way up to its tooltip", async ({ page }) => {
+  await page.clock.install();
   await openPackage(page, { width: 1024 });
   await ready(page);
   await page.locator("[data-range-chart]").scrollIntoViewIfNeeded();
+  await stopTheClock(page);
   const { dots } = await swarmGeometry(page);
   const tip = page.locator("[data-dot-tooltip]");
   // Starts 3 px right of and 7 px below a dot, where the first 2 px up is nearer another dot.
@@ -777,6 +796,7 @@ test("a pointer that takes a dot from below its centre keeps it on the way up to
   for (const from of starts) {
     const taken = within12(dots, from.x, from.y)!.name;
     await page.mouse.move(2, from.y + 60);
+    await page.clock.runFor(150);
     await expect(tip).toHaveCount(0);
     await page.mouse.move(from.x, from.y);
     await expect(tip).toContainText(taken);
@@ -785,9 +805,9 @@ test("a pointer that takes a dot from below its centre keeps it on the way up to
     const steps = Math.ceil(Math.hypot(to.x - from.x, to.y - from.y) / 2);
     for (let step = 1; step <= steps; step++) {
       await page.mouse.move(from.x + ((to.x - from.x) * step) / steps, from.y + ((to.y - from.y) * step) / steps);
-      await page.waitForTimeout(16);
+      await page.clock.runFor(16);
     }
-    await page.waitForTimeout(200);
+    await page.clock.runFor(200);
     await expect(tip, `from below ${taken}`).toContainText(taken);
   }
 });

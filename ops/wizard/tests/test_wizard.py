@@ -322,7 +322,11 @@ def test_a_second_run_keeps_a_saved_value_with_a_single_quote_as_it_is(place):
 
 
 def test_a_second_run_after_the_app_is_deployed_finishes_test_six(place):
-    run_wizard(place, FIRST_RUN)
+    # The second run asks stage 10's questions only when the first run left test 9 unrecorded, so a first run
+    # that failed says so here, not as the second run's end of input at stage 10 (ticket 56).
+    first = run_wizard(place, FIRST_RUN)
+    assert first.returncode == 0, first.stdout[-3000:] + first.stderr[-3000:]
+    assert dayone.read_results(place / "results.md")["test-9"]["Status"] == "passed"
     (place / "state" / "app").touch()
     answers = SECOND_RUN[:STAGE_12_AT] + ["y"] + SECOND_RUN[STAGE_12_AT:]   # 11. the app opened
     done = run_wizard(place, answers)

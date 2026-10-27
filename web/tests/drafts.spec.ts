@@ -9,6 +9,7 @@ import { scan } from "./axe";
 import type { Page } from "@playwright/test";
 import { draftBarSentence } from "./design-md";
 import { expect, recorded, test, viewAnswers, windowBeside } from "./mocked";
+import { fontsLoaded } from "./settled";
 import { tabUnderStickyParts } from "./sticky";
 
 const PLAN = "/projects/P156634/procurement/northern-water-works-development-agency/2026-10-09";
@@ -51,6 +52,10 @@ async function openDraft(page: Page, { file = "drafts-review-notes-draft.json", 
   const asked = await serve(page, { [`GET /api${path.split("?")[0]}`]: { body: await recorded(file) }, ...answers });
   await page.goto(path);
   await expect(page.locator("[data-draft-page]:not([data-draft-page=loading])")).toBeVisible();
+  // Open Sans sets where each line breaks and so how tall the notes and the bar are, and the bar's height sets the
+  // scroll padding. On a busy computer the font came after a test's first measure and moved the page 20 to 22 px,
+  // so every test here starts once it is in (ticket 56).
+  await fontsLoaded(page);
   return asked;
 }
 
@@ -151,6 +156,8 @@ test("an open draft the lookup finds late is not put above a plan check already 
   await page.goto(PLAN);
   const action = page.getByRole("button", { name: "Draft review notes (3 rows)" });
   await expect(action).toBeVisible();
+  // Whatever moves the page from here is the lookup's doing, not a font that arrived late (ticket 56).
+  await fontsLoaded(page);
   const before = (await action.boundingBox())!.y;
 
   await page.waitForTimeout(1200);
@@ -168,6 +175,7 @@ test("an open draft the lookup finds before a slow plan check is drawn is named,
   const action = page.getByRole("button", { name: "Draft review notes (3 rows)" });
   await expect(action).toBeVisible({ timeout: 5000 });
   await expect(page.locator("[data-existing-draft]")).toHaveText("You started review notes on this plan on October 23, 2026.");
+  await fontsLoaded(page);
   const before = (await action.boundingBox())!.y;
   await page.waitForTimeout(1000);
   expect((await action.boundingBox())!.y).toBe(before);
@@ -191,6 +199,7 @@ test("on the agency's latest plan, with no version in the address, the lookup st
   await expect(action).toBeVisible({ timeout: 5000 });
   await expect(page.locator("[data-existing-draft]")).toHaveText("You started review notes on this plan on October 23, 2026.");
   expect(asked).toEqual(["?kind=review_notes&project_id=P156634&agency_id=northern-water-works-development-agency"]);
+  await fontsLoaded(page);
   const before = (await action.boundingBox())!.y;
   await page.waitForTimeout(1000);
   expect((await action.boundingBox())!.y).toBe(before);
@@ -607,9 +616,14 @@ test("Mark as checked, Discard and Restore the draft move focus into the sticky 
   const discarded = JSON.parse(await recorded("drafts-review-notes-discarded.json"));
   Object.assign(discarded, { draft_id: "draft-0001" });
   const scrollY = () => page.evaluate(() => window.scrollY);
+  // The scroll is tried again until it holds: once, the page was only 299 px taller than the window (ticket 56).
   const from300 = async () => {
-    await page.evaluate(() => window.scrollTo(0, 300));
-    await expect.poll(scrollY).toBe(300);
+    await expect
+      .poll(async () => {
+        await page.evaluate(() => window.scrollTo(0, 300));
+        return scrollY();
+      })
+      .toBe(300);
   };
   // A click where the button is, as a person makes it: Playwright's own click first scrolls the button out
   // of the page's scroll padding, which would hide what the page does.
@@ -837,10 +851,13 @@ test("the loading skeleton puts the notes and the bar where the loaded draft put
     const skeleton = page.locator("[data-draft-page=loading]");
     // The bar's consequence sentence is true before the draft loads, so it is there as text.
     await expect(bar(page)).toContainText(CONSEQUENCE);
+    // Both measures read Open Sans's line breaks: at 390 px the fallback face broke a line elsewhere, 22 px off.
+    await fontsLoaded(page);
     const [notesBefore, barBefore] = [await box(`[data-draft-page=loading] ${notesView}:visible`), await box("[data-draft-page=loading] section")];
     await expect(skeleton).toBeVisible();
     release();
     await expect(page.locator("[data-draft-page=draft]")).toBeVisible();
+    await fontsLoaded(page);
     const notesAfter = await box(`[data-draft-notes] [data-view]:visible`);
     const barAfter = await box("[data-draft-bar]");
     expect(Math.abs(notesAfter.top - notesBefore.top), where).toBeLessThanOrEqual(12);

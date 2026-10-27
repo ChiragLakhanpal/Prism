@@ -218,8 +218,11 @@ test("Connections draws at most 20 nodes, counts the rest by kind, and joins pac
 test("every node and chip is reachable by keyboard and opens its page or the drawer", async ({ page }) => {
   await open(page, "/projects/P130164/connections");
   const links = page.locator("[data-diagram] [data-node-link], [data-diagram] [data-node=project] a, [data-diagram] [data-node=document] [data-chip]");
+  // The diagram draws after the page's h1, once its answer is in and its frame measured, so wait for its links
+  // rather than count them at once (ticket 56).
+  await expect(page.locator("[data-connections=ready]")).toBeVisible();
+  await expect.poll(() => links.count()).toBeGreaterThan(10);
   const count = await links.count();
-  expect(count).toBeGreaterThan(10);
   for (let index = 0; index < count; index += 1) {
     const link = links.nth(index);
     if (!(await link.isVisible())) continue;

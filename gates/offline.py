@@ -317,6 +317,11 @@ def run_stage(stage, run):
     Thread.join, Python can report a lane that is still running as finished, and the gate
     would then exit before that lane stopped its step. The lanes start inside the `try`, so
     Ctrl-C between two starts still stops the lanes that started.
+
+    It waits in slices of POLL_SECONDS. macOS can hand Ctrl-C to a lane thread, and Python
+    runs the handler in this thread only when this thread wakes, so a wait with no timeout
+    would last until the lane ended (ticket 54's F1). The lanes must not block the signal
+    instead, because the steps they start would inherit the block.
     """
     lanes = [lane for lane in stage if lane is not None]
     if lanes:
@@ -327,15 +332,20 @@ def run_stage(stage, run):
             done = threading.Event()
             threading.Thread(target=run_lane, args=(steps, run, done)).start()
             finished.append(done)
-        for done in finished:
-            done.wait()
+        wait_for(finished)
     except BaseException:  # On Ctrl-C, stop every lane here, because each step runs in its own session.
         run.halt.set()
-        for done in finished:
-            done.wait()
+        wait_for(finished)
         raise
     if run.crashed:
         raise run.crashed[0]
+
+
+def wait_for(events):
+    """Wait until every event is set, waking each POLL_SECONDS so a Ctrl-C that landed on another thread runs."""
+    for event in events:
+        while not event.wait(POLL_SECONDS):
+            pass
 
 
 def indent(text):
