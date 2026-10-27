@@ -19,7 +19,7 @@ import httpx
 import pytest
 
 from strata.agent.judge import Judgement
-from strata.agent.loop import answer_runner
+from strata.agent.loop import AgentError, answer_runner
 from strata.agent.runs import RunLog
 from strata.agent.scripted import (RECORDED_STREAMS, ScriptedAgent, ScriptedJudge, failed_stream_text, load_cases,
                                    stream_text)
@@ -793,19 +793,25 @@ def test_with_rewrite_rounds_0_the_agent_is_asked_once_and_its_first_answer_is_c
     assert removed_reasons(parsed) == [[("quote_not_in_sentence", ICR_54)]]
 
 
-def test_a_rewrite_that_is_not_an_answer_leaves_the_first_answer_which_the_verifier_checks_in_full(fixture_db):
-    """An agent that answers the rewrite message with tool calls, or with text that is not claims as JSON, has not
-    rewritten anything: the first answer stands, checked as it would have been without the round."""
-    class AsksAgain(CallsThenAnswers):
+@pytest.mark.parametrize("instead", ["tool calls", "not claims", "content filter"])
+def test_a_rewrite_that_is_not_an_answer_leaves_the_first_answer_which_the_verifier_checks_in_full(fixture_db, instead):
+    """An agent that answers the rewrite message with tool calls or with text that is not claims as JSON, or that a
+    content filter stops on it, has not rewritten anything: the first answer stands, checked as it would have been
+    without the round, and the run does not fail."""
+    class NoRewrite(CallsThenAnswers):
         def respond(self, items, previous_response_id):
             if any(item.get("role") == "user" for item in items) and self.round:
                 self.round += 1
                 self.received.append(items)
-                return {"id": "resp_3", "output": [{"type": "function_call", "call_id": "call_9", "name": "search_passages",
-                                                    "arguments": "{}"}]}
+                if instead == "content filter":
+                    raise AgentError("content_filter", "A content filter stopped the agent's answer.")
+                return {"id": "resp_3", "output": [
+                    {"type": "function_call", "call_id": "call_9", "name": "search_passages", "arguments": "{}"}
+                    if instead == "tool calls" else
+                    {"type": "message", "content": [{"type": "output_text", "text": "I cannot rewrite it."}]}]}
             return super().respond(items, previous_response_id)
 
-    agent = AsksAgain(rewrite_case().calls, rewrite_case().answer)
+    agent = NoRewrite(rewrite_case().calls, rewrite_case().answer)
 
     parsed = ask_with_tools(fixture_db, agent, load_tools())
 

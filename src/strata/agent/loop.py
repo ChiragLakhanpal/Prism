@@ -15,8 +15,8 @@ answer_runner() makes the runner the server's /api/ask stream runs. For each que
    for after that is not run: the agent gets a result that says so, and must answer from what it has.
 4. One rewrite round (ticket 109): the loop runs the verifier's checks 1 to 3 on the agent's answer, offline, and
    when they would remove a sentence it sends the agent one data-only message, {"rewrite": [{"sentence", "reasons"}]},
-   and takes the next answer as final. A rewrite that is not an answer (tool calls, or no claims as JSON) leaves the
-   earlier answer. agent.rewrite_rounds (config/thresholds.toml) sets how many such rounds run; 0 turns them off.
+   and takes the next answer as final. A rewrite that is not an answer (tool calls, no claims as JSON, or an agent
+   that failed on the message) leaves the earlier answer. agent.rewrite_rounds (config/thresholds.toml) sets how many such rounds run; 0 turns them off.
    Nothing goes to the stream before this ends.
 5. The agent's claims go to the stream, which runs the verifier's six checks on them before anything is shown, with
    the refusal key when the agent turned the request down (ticket 24).
@@ -238,11 +238,19 @@ def answer_runner(agent_for: Callable[[Turn], Agent], engine_for: EngineFor, too
         items = [{"role": "user", "content": json.dumps(message, ensure_ascii=False)}]
         previous, refusals, step, answer, rewritten = None, 0, 0, None, 0
         while True:
-            response = await asyncio.to_thread(agent.respond, items, previous)
-            turn.notes.agent_version = agent.version or turn.notes.agent_version  # Foundry names it in a response
-            previous = response.get("id")
-            turn.notes.response_ids.append(previous)
-            calls = function_calls(response)
+            try:
+                response = await asyncio.to_thread(agent.respond, items, previous)
+            except AgentError as error:
+                if answer is None:
+                    raise
+                # The agent failed on the rewrite message, such as a content filter, so it wrote nothing new.
+                log.warning("Run %s: the agent did not answer the rewrite (%s).", turn.run_id, error.code)
+                response = None
+            if response is not None:
+                turn.notes.agent_version = agent.version or turn.notes.agent_version  # Foundry names it in a response
+                previous = response.get("id")
+                turn.notes.response_ids.append(previous)
+            calls = function_calls(response) if response is not None else []
             if answer is not None or not calls:
                 if answer is None:
                     yield Event("step", {"id": "write", "kind": "write", "status": "running"})
@@ -251,7 +259,7 @@ def answer_runner(agent_for: Callable[[Turn], Agent], engine_for: EngineFor, too
                     except ClaimsError as error:
                         raise AgentError("agent_output", str(error)) from error
                 else:  # the agent's rewrite, which replaces its answer only when it is one
-                    again = None if calls else _answer_or_none(output_text(response))
+                    again = None if response is None or calls else _answer_or_none(output_text(response))
                     if again is None:
                         log.info("Run %s: the agent's rewrite was not an answer, so its earlier answer stands.",
                                  turn.run_id)
