@@ -20,7 +20,8 @@ When the document host refuses a request (HostRefused), or the night's reading t
 task stops reading, writes a data readiness note and finishes, so the job goes on and the next night starts where
 this one stopped. The time is checked before each request and before each page the layout parser reads: the page
 being read finishes, its layout stays in strata.bronze.layout_pages, and the document is listed as unfinished in
-strata.ops.skipped_documents. A document, or a project's document list, that the source cannot give (NotFetched)
+strata.ops.skipped_documents, with each document and project's document list the stop left as not read (ticket 86).
+A document, or a project's document list, that the source cannot give (NotFetched)
 does not stop the reading: it is skipped with its reason in strata.ops.skipped_documents, and a later run tries it
 again. The passage reader writes each document's passages as soon as it has read it, so a stop keeps them
 (ticket 72).
@@ -29,6 +30,7 @@ again. The passage reader writes each document's passages as soon as it has read
 from __future__ import annotations
 
 import datetime as dt
+import logging
 import os
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
@@ -36,7 +38,9 @@ from dataclasses import dataclass
 from strata.config import load_slice, load_sources
 from strata.lakehouse import gold, passages, plans
 from strata.lakehouse.engine import Engine
-from strata.reader.documents import Documents, HostRefused, NotFetched, StopReading
+from strata.reader.documents import BudgetSpent, Documents, HostRefused, NotFetched, PoliteFetch, StopReading
+
+log = logging.getLogger("strata.lakehouse.readers")
 
 SOURCE = "documents"
 NOTE_COLUMNS = ("run_id", "source", "subject", "measure", "kind", "count", "denominator", "as_of", "detail",
@@ -55,6 +59,10 @@ class Readers:
     plan_projects: Callable[[Engine], list[str]]
     report_projects: Callable[[Engine], list[str]]
     index: Callable[[Engine], None] | None = None  # asks the search index to sync from strata.gold.passage
+    # The night's reading time (PoliteFetch, through document_host): the passage reader checks it before each
+    # document, which a document bronze already holds reads without a request (ticket 86). None reads without a limit,
+    # as the recorded fixture does.
+    budget: PoliteFetch | None = None
 
 
 def fixture_plan_projects() -> tuple[str, ...]:
@@ -149,7 +157,7 @@ def live(engine: Engine, environ: Mapping[str, str] | None = None, search_endpoi
     search = (search_endpoint or "").strip()
     return Readers(LiveDocuments(fetch), layout, shield, embedder,
                    plan_projects=passages.default_projects, report_projects=passages.default_projects,
-                   index=_index(search) if search else None)
+                   index=_index(search) if search else None, budget=fetch)
 
 
 def _write_to_volume(path: str, data: bytes) -> None:
@@ -223,9 +231,13 @@ def reading(engine: Engine, readers: Readers, run_id: str, clock: Callable[[], d
     the reading for the run and writes a data readiness note. tally, when given, counts the passage reader's
     documents as it goes, so a caller still has the counts when something else ends the run.
 
-    The nightly job reads the plans first and the passages with the time that is left. passages_first turns the
-    order round, as ops/documents/run_live.py does: on October 26, 2026 the plan reader's scanned pages filled the
-    whole reading time and the passage reader never started, so strata.gold.passage held no row after the run."""
+    The nightly job reads the plans first and the passages after them. The plan reader stops once only the passage
+    reader's minutes of the night are left (config/thresholds.toml, ingestion.passage_reader_minutes), so the passage
+    reader always has time: on October 27, 2026 the plan reader spent the whole night fetching P156634's Procurement
+    Plans, and strata.gold.passage held no row after the run (ticket 86). That stop is not the night's: the plan it was
+    parsing is listed as unfinished, each plan and project's document list it did not reach as not read, and the
+    passage reader reads on until the night's time is spent. passages_first turns the order round, as
+    ops/documents/run_live.py does, and the plans get the time that is left."""
     before = {table: _count(engine, table) for table in ADDED_TO}
     tally = tally if tally is not None else passages.Tally()
     report: passages.Report | None = None
@@ -234,16 +246,25 @@ def reading(engine: Engine, readers: Readers, run_id: str, clock: Callable[[], d
     def read_plans() -> StopReading | None:
         nonlocal synced
         stop = None
+        projects = readers.plan_projects(engine)
+        at = 0
         try:
-            for project_id in readers.plan_projects(engine):
-                try:
-                    plans.run(engine, readers.documents, readers.layout, project_id, clock=clock, run_id=run_id)
-                except NotFetched as error:  # its document list, or a PDF the layout parser needed
-                    plans.skip(engine, run_id, "plans",
-                               plans.Skipped(project_id, None, error.url or _list(project_id), str(error)), clock())
+            with _leaving_for_passages(readers, after=not passages_first):
+                for at, project_id in enumerate(projects):
+                    try:
+                        plans.run(engine, readers.documents, readers.layout, project_id, clock=clock, run_id=run_id)
+                    except NotFetched as error:  # its document list, or a PDF the layout parser needed
+                        plans.skip(engine, run_id, "plans",
+                                   plans.Skipped(project_id, None, error.url or _list(project_id), str(error)), clock())
         except StopReading as stopped:
             stop = stopped
+            # plans.run listed what the stop left of its project; each later project's document list waits too.
+            plans.not_read(engine, run_id, "plans", [plans.unreached(later, None, _list(later), stopped)
+                                                     for later in projects[at + 1:]], clock())
         synced += gold.sync(engine, "package")  # its query reads the plan rows read tonight, before any stop
+        if isinstance(stop, BudgetSpent) and stop.left_for is not None:  # its share of the night, not the night's end
+            log.warning("The plan reader stopped, and the passage reader reads next: %s", stop)
+            return None
         return stop
 
     def read_passages() -> StopReading | None:
@@ -253,7 +274,7 @@ def reading(engine: Engine, readers: Readers, run_id: str, clock: Callable[[], d
         try:
             report = passages.run(engine, readers.documents, readers.report_projects(engine), shield=readers.shield,
                                   embedder=readers.embedder, layout=readers.layout, clock=clock, run_id=run_id,
-                                  tally=tally)
+                                  tally=tally, budget=readers.budget.within_budget if readers.budget else None)
         except StopReading as stopped:
             synced += tally.synced  # the documents written before the stop stay in strata.gold.passage
             return stopped
@@ -264,10 +285,30 @@ def reading(engine: Engine, readers: Readers, run_id: str, clock: Callable[[], d
     for read_one in (read_passages, read_plans) if passages_first else (read_plans, read_passages):
         stop = read_one()
         if stop is not None:  # the reader after it waits for the next run
-            note_stop(engine, run_id, clock(), stop)
+            note_stop(engine, run_id, clock(), stop, tally)
+            if tally.parsed or tally.skipped:  # the task's log names what the passage reader wrote (ticket 86)
+                log.warning("I wrote the passages of %s before the stop%s", _documents(len(tally.written_ids)),
+                            f": {_joined(tally.written_ids)}." if tally.written_ids else ".")
             break
     changed = synced + sum(_count(engine, table) - count for table, count in before.items())
     return Reading(changed, report, tally, stop)
+
+
+PASSAGE_READER = "the passage reader"
+
+
+def _leaving_for_passages(readers: Readers, after: bool):
+    """While the plan reader reads, the night's time ends the passage reader's minutes early
+    (ingestion.passage_reader_minutes), when the passage reader reads after it and can run: it has a shield and an
+    embedder, and the night has a reading time."""
+    from contextlib import nullcontext
+
+    from strata.config import load_thresholds
+
+    if not after or readers.budget is None or readers.shield is None or readers.embedder is None:
+        return nullcontext()
+    minutes = float(load_thresholds().value("ingestion.passage_reader_minutes"))
+    return readers.budget.leaving(minutes * 60, PASSAGE_READER)
 
 
 def _list(project_id: str) -> str:
@@ -277,9 +318,28 @@ def _list(project_id: str) -> str:
     return list_url(load_sources()[SOURCE].endpoint, project_id)
 
 
-def note_stop(engine: Engine, run_id: str, when: dt.datetime, stopped: StopReading) -> None:
+def _documents(count: int) -> str:
+    return f"{plans.count_words(count)} document{'' if count == 1 else 's'}"
+
+
+def _joined(items: list[str]) -> str:
+    return items[0] if len(items) == 1 else f"{', '.join(items[:-1])} and {items[-1]}"
+
+
+def _passage_reading(tally: passages.Tally) -> str:
+    """What the passage reader wrote and left before a stop, as a sentence for the stop's note (ticket 86)."""
+    left = plans.left_words(*tally.left())
+    said = f"I wrote the passages of {_documents(tally.written)} before the stop"
+    if tally.unchanged:
+        said += f", found {_documents(tally.unchanged)} already written and unchanged"
+    return f"{said}, and left {left} for the next night." if left else f"{said}."
+
+
+def note_stop(engine: Engine, run_id: str, when: dt.datetime, stopped: StopReading,
+              tally: passages.Tally | None = None) -> None:
     """A data readiness note that the readers stopped for the night: the document host refused a request, or the
-    night's reading time was spent."""
+    night's reading time was spent. When the passage reader had started, the note also counts the documents it wrote
+    before the stop and those it left, which strata.ops.skipped_documents lists one by one (ticket 86)."""
     day = f"{when:%B} {when.day}, {when.year}"
     if isinstance(stopped, HostRefused):
         why = (f"The document host answered HTTP {stopped.status} on {day}, so I stopped reading documents "
@@ -288,9 +348,10 @@ def note_stop(engine: Engine, run_id: str, when: dt.datetime, stopped: StopReadi
         minutes = getattr(stopped, "minutes", None)
         why = (f"I stopped reading documents on {day}, after the night's {minutes} minutes for the document host, "
                "so the job's later tasks had time to run.")
+    reading = f" {_passage_reading(tally)}" if tally is not None and (tally.parsed or tally.skipped) else ""
     engine.insert_rows("strata.ops.data_readiness", NOTE_COLUMNS, [(
         run_id, SOURCE, "all", stopped.measure, "fresh", None, None, when.date(),
-        f"{why} The documents and pages read before it are kept, and the next night goes on from there.",
+        f"{why}{reading} The documents and pages read before it are kept, and the next night goes on from there.",
         when, when.date())])
 
 
