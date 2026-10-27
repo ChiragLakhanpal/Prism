@@ -5,7 +5,7 @@
 import { scan } from "./axe";
 import type { Page } from "@playwright/test";
 import { askFromTheBox, landed, open, panel } from "./answer-page";
-import { expect, test } from "./mocked";
+import { expect, test, windowBeside } from "./mocked";
 
 
 async function answered(page: Page, stream: string, width = 1440) {
@@ -198,7 +198,8 @@ test("ICR paragraph 78 shows under ISR 7's sentence with both sides, though the 
 
 test("the disagreement card's sides sit side by side at 1440 px and stack when the card is under 560 px", async ({ page }) => {
   for (const [width, columns] of [[1440, 2], [1024, 1], [390, 1]] as const) {
-    await answered(page, "ask-p130164-isr-7-rating.sse", width);
+    // A page area of each width: beside the sidebar (ticket 92) the window is wider.
+    await answered(page, "ask-p130164-isr-7-rating.sse", windowBeside(width));
     const sides = panel(page).locator("[data-disagreement] [data-side]");
     const [first, second] = [(await sides.nth(0).boundingBox())!, (await sides.nth(1).boundingBox())!];
     expect(first.y === second.y ? 2 : 1, `at ${width} px`).toBe(columns);

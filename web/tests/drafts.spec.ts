@@ -7,7 +7,7 @@
 import { scan } from "./axe";
 import type { Page } from "@playwright/test";
 import { draftBarSentence } from "./design-md";
-import { expect, recorded, test, viewAnswers } from "./mocked";
+import { expect, recorded, test, viewAnswers, windowBeside } from "./mocked";
 
 const PLAN = "/projects/P156634/procurement/northern-water-works-development-agency/2026-10-09";
 const DRAFT = "/drafts/draft-0001";
@@ -774,7 +774,8 @@ test("the loading skeleton puts the notes and the bar where the loaded draft put
   const body = await recorded("drafts-review-notes-draft.json");
   await serve(page, {});
   for (const [width, height, notesView] of [[1440, 900, "table"], [390, 844, "ul"]] as const) {
-    await page.setViewportSize({ width, height });
+    // A page area of each width: beside the sidebar (ticket 92) the window is wider.
+    await page.setViewportSize({ width: windowBeside(width), height });
     let release = () => {};
     const held = new Promise<void>((resolve) => (release = resolve));
     await page.route("**/api/drafts/draft-0001", async (route) => {

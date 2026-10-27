@@ -7,7 +7,7 @@
 // which has no signals, so the screen shows six marked activities and folds three.
 import { scan } from "./axe";
 import type { Page } from "@playwright/test";
-import { expect, mockApi, recorded, test } from "./mocked";
+import { expect, mockApi, recorded, test, windowBeside } from "./mocked";
 
 const PLAN = "/projects/P156634/procurement/northern-water-works-development-agency/2026-10-09";
 const API = `/api${PLAN}`;
@@ -21,14 +21,15 @@ const MARKED = [
 ];
 const FOLDED = ["KE-NWWDA-199471-GO-RFQ", "NWWDA-WSDP-03-2019-2020", "KE-NWWDA-207796-CS-INDV"];
 const FINDING = "One needs a look and two are worth watching; three have data notes.";
-// At 1440 px, columns 1 to 8 of the 12-column grid: 8 columns of 78.67 px and 7 gutters of 32 px.
+// Columns 1 to 8 of the 12-column grid in a 1440 px page area: 8 columns of 78.67 px and 7 gutters of 32 px.
 const EIGHT_COLUMNS = 853;
 const widthOf = async (page: Page, selector: string) => Math.round((await page.locator(selector).boundingBox())!.width);
 
 type Answer = { status?: number; body: string };
 
 async function openPlan(page: Page, width = 1440, answer?: Answer, path = PLAN) {
-  await page.setViewportSize({ width, height: 900 });
+  // width is the page area's: beside the sidebar (ticket 92) the window is that much wider.
+  await page.setViewportSize({ width: windowBeside(width), height: 900 });
   await mockApi(page, {
     "/api/me": { body: await recorded("me.json") },
     "/api/freshness": { body: await recorded("freshness.json") },
@@ -405,12 +406,12 @@ function measureTable() {
   return { splitRefs, splitApproaches, lineStarts, overflow };
 }
 
-test("from 1024 to 1440 px each column fits its values: references and Market Approaches stay whole, and no Method line starts with a dot or a dash", async ({ page }) => {
+test("in a page area from 1024 to 1440 px each column fits its values: references and Market Approaches stay whole, and no Method line starts with a dot or a dash", async ({ page }) => {
   await openPlan(page, 1440);
   await view(page, "table").getByRole("button", { name: "Show them" }).click();
   await page.evaluate(() => document.fonts.ready);
   for (const width of [1024, 1100, 1200, 1280, 1440]) {
-    await page.setViewportSize({ width, height: 900 });
+    await page.setViewportSize({ width: windowBeside(width), height: 900 });
     await expect(view(page, "table")).toBeVisible();
     const { splitApproaches, ...rest } = await page.evaluate(measureTable);
     expect(rest, `${width} px`).toEqual({ splitRefs: [], lineStarts: [], overflow: [] });
@@ -419,7 +420,7 @@ test("from 1024 to 1440 px each column fits its values: references and Market Ap
   }
 });
 
-test("at 1024 px the plan check is a table", async ({ page }) => {
+test("in a 1024 px page area the plan check is a table", async ({ page }) => {
   await openPlan(page, 1024);
 
   await expect(view(page, "table")).toBeVisible();
@@ -428,7 +429,7 @@ test("at 1024 px the plan check is a table", async ({ page }) => {
 });
 
 test("while the check loads, skeletons hold its places and a status says so", async ({ page }) => {
-  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.setViewportSize({ width: windowBeside(1440), height: 900 });
   await mockApi(page, { "/api/me": { body: await recorded("me.json") }, "/api/freshness": { body: await recorded("freshness.json") } });
   let release!: () => void;
   const held = new Promise<void>((resolve) => (release = resolve));
@@ -590,7 +591,7 @@ test("a version the agency never published names the latest one", async ({ page 
 });
 
 test("a service that didn't answer gives Try again and a reference; Try again that works moves focus to the finding", async ({ page }) => {
-  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.setViewportSize({ width: windowBeside(1440), height: 900 });
   await mockApi(page, { "/api/me": { body: await recorded("me.json") }, "/api/freshness": { body: await recorded("freshness.json") } });
   const good = await recorded("check-plan-p156634-nwwda-2026-10-09.json");
   let calls = 0;
@@ -668,8 +669,8 @@ test("axe finds no violations in the loading state at 1440, 1024 and 390 px, and
 });
 
 // The 14 brief, section 2.5: the page lays out by the page area's width, so the evidence drawer
-// narrows Check a plan without breaking it. At 1024 px the drawer takes 410 px and leaves a 614 px
-// page area, which shows the activity cards, as a 614 px window would.
+// narrows Check a plan without breaking it. At 1024 px the rail takes 64 px and the drawer 400 px (ticket 92),
+// which leaves a 560 px page area that shows the activity cards, as a 560 px window would.
 test("at 1024 px with the evidence drawer open, the plan check shows its cards and nothing scrolls sideways", async ({ page }) => {
   const ICR_54 = "strata.gold.passage:31525018/v1/54";
   await page.setViewportSize({ width: 1024, height: 900 });
@@ -684,7 +685,7 @@ test("at 1024 px with the evidence drawer open, the plan check shows its cards a
   await expect(page.locator("[data-check-plan-page]:not([data-check-plan-page=loading])")).toBeVisible();
   await expect(page.getByRole("dialog")).toBeVisible();
 
-  expect(await widthOf(page, "[data-page-column]")).toBe(614);
+  expect(await widthOf(page, "[data-page-column]")).toBe(560);
   await expect(view(page, "cards")).toBeVisible();
   await expect(view(page, "table")).toBeHidden();
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(1024);

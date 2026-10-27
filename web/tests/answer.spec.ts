@@ -58,8 +58,9 @@ test("the panel sits in the page under the band, on columns 1 to 8 from 1024 px,
   const title = (await page.locator("main h1").boundingBox())!;
   expect(card.y).toBeGreaterThanOrEqual(band.y + band.height);
   expect(card.y + card.height).toBeLessThan(title.y);
-  // At 1440 px, columns 1 to 8: 8 columns of 78.67 px and 7 gutters of 32 px.
-  expect(Math.round(card.width)).toBe(853);
+  // At 1440 px the page area is 1216 px beside the open sidebar (ticket 92), so columns 1 to 8 are 8 columns of 60 px
+  // and 7 gutters of 32 px.
+  expect(Math.round(card.width)).toBe(704);
 });
 
 test("the steps still to come are listed in muted text while the answer streams", async ({ page }) => {
@@ -143,10 +144,11 @@ test("clicking a marker opens the drawer beside the page at ICR paragraph 54, an
   await expect(marker(page, 1)).toHaveAttribute("aria-expanded", "true");
   await expect(panel(page).locator("[data-sentence-text='0']")).toHaveClass(/bg-tint/);
 
-  // The drawer is clamp(400px, 40vw, 600px) wide and the page beside it stays usable.
+  // The drawer is 40 percent of the frame, the window less the 224 px sidebar (ticket 92), from 400 to 600 px wide, and
+  // the page beside it stays usable.
   const width = Math.round((await drawer(page).boundingBox())!.width);
-  expect(width).toBe(576);
-  expect(Math.round((await page.locator("[data-page-column]").boundingBox())!.width)).toBe(1440 - 576);
+  expect(width).toBe(486);
+  expect(Math.round((await page.locator("[data-page-column]").boundingBox())!.width)).toBe(730);
   await box(page).click();
   await expect(box(page)).toBeFocused();
   await drawer(page).getByRole("heading", { level: 2 }).focus();
@@ -189,15 +191,16 @@ test("closing the drawer gives focus back to its marker without covering the ans
   await expect(page.getByRole("tooltip")).toBeVisible();
 });
 
-test("at 1024 px the drawer is 40 percent of the window, and the page beside it takes the rest", async ({ page }) => {
+test("at 1024 px the drawer takes its least width, 400 px, and the page beside the rail takes the rest", async ({ page }) => {
   await open(page, { width: 1024 });
   await askFromTheBox(page);
   await landed(page);
 
   await marker(page, 1).click();
 
-  expect(Math.round((await drawer(page).boundingBox())!.width)).toBe(410);
-  expect(Math.round((await page.locator("[data-page-column]").boundingBox())!.width)).toBe(1024 - 410);
+  // 40 percent of the 960 px frame beside the 64 px rail (ticket 92) is under the drawer's 400 px.
+  expect(Math.round((await drawer(page).boundingBox())!.width)).toBe(400);
+  expect(Math.round((await page.locator("[data-page-column]").boundingBox())!.width)).toBe(1024 - 64 - 400);
 });
 
 test("reloading with the evidence parameter reopens the drawer at that source, with no claim and no switcher", async ({ page }) => {

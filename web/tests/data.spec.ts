@@ -9,7 +9,7 @@ import { scan } from "./axe";
 import type { Page, Route } from "@playwright/test";
 import { readFile } from "node:fs/promises";
 import { dataReadinessHref } from "../src/routes";
-import { expect, mockShell, recorded, test } from "./mocked";
+import { expect, mockShell, recorded, test, windowBeside } from "./mocked";
 import { placements } from "./registries";
 
 type Answer = { status?: number; file: string };
@@ -634,7 +634,7 @@ test("while the measures load, skeletons hold each table's rows, and after three
 });
 
 for (const width of [1440, 1024, 390]) {
-  test(`at ${width} px the section titles land within 16 px of where the skeleton put them`, async ({ page }) => {
+  test(`in a ${width} px page area the section titles land within 16 px of where the skeleton put them`, async ({ page }) => {
     await mockShell(page);
     await page.route("**/api/data/sources", async (route) => route.fulfill({ contentType: "application/json", body: await recorded("data-sources.json") }));
     let release: () => void = () => {};
@@ -643,7 +643,7 @@ for (const width of [1440, 1024, 390]) {
       await held;
       await route.fulfill({ contentType: "application/json", body: await recorded("data-readiness.json") });
     });
-    await page.setViewportSize({ width, height: 900 });
+    await page.setViewportSize({ width: windowBeside(width), height: 900 });
     await page.goto("/data");
     await expect(table(page, "sources").or(page.locator("[data-readiness-table=sources] [data-table-view=cards]")).locator("[aria-hidden=true]").first()).toBeAttached();
     const titles = () =>

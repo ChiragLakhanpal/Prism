@@ -153,7 +153,7 @@ test("a lowercase p in a project ID is read as P, and the address is rewritten i
   expect(new URL(page.url()).pathname).toBe("/projects/P130164/packages/IN-RRSMP-7431-CW-RFB");
 });
 
-test("a tab opens its page without reloading, moves focus to the new title and updates the page title", async ({ page }) => {
+test("an item opens its page without reloading, moves focus to the new title and updates the page title", async ({ page }) => {
   await open(page, "/");
   await page.evaluate(() => ((window as unknown as { stillHere: boolean }).stillHere = true));
   await page.evaluate(() => window.scrollTo(0, 400));
@@ -171,7 +171,39 @@ test("a tab opens its page without reloading, moves focus to the new title and u
 
   await page.goBack();
   await expect(title).toContainText("Your briefing for");
-  await expect(page.getByRole("link", { name: "Strata", exact: true })).toHaveAttribute("aria-current", "page");
+  await expect(page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Home" })).toHaveAttribute("aria-current", "page");
+});
+
+// Ticket 92: every page in the sidebar opens from its item, in the open sidebar and in the rail, and focuses its h1.
+test("every sidebar item opens its page and focuses its h1, in the open sidebar and in the rail", async ({ page }) => {
+  await mockApi(page, {
+    "/api/me": { body: await recorded("me.json") },
+    "/api/freshness": { body: await recorded("freshness.json") },
+    "/api/home": { body: await recorded("home.json") },
+    "/api/planned-packages": { body: await recorded("planned-packages-empty.json") },
+    ...Object.fromEntries(ROUTES.flatMap((route) => Object.entries(route.api ?? {})).map(([path, body]) => [path, { body }])),
+  });
+  const main = page.getByRole("navigation", { name: "Main" });
+  const title = page.getByRole("heading", { level: 1 });
+  for (const width of [1440, 1280]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto("/drafts");
+    await expect(title).toHaveText("Drafts");
+    for (const [item, path, h1] of [
+      ["Home", "/", /^Your briefing for/],
+      ["Packages", "/packages", "Packages"],
+      ["Projects", "/projects", "Projects"],
+      ["Lessons", "/lessons", "Lessons"],
+      ["Drafts", "/drafts", "Drafts"],
+      ["Data", "/data", "Data"],
+    ] as const) {
+      await main.getByRole("link", { name: item }).click();
+      await expect(title, `${item} at ${width} px`).toHaveText(h1);
+      await expect(title, `${item} at ${width} px`).toBeFocused();
+      expect(new URL(page.url()).pathname).toBe(path);
+      await expect(main.locator("[aria-current=page]")).toHaveText(item);
+    }
+  }
 });
 
 test("the stamp is read once per page load and kept across route changes", async ({ page }) => {
@@ -192,14 +224,16 @@ test("the stamp is read once per page load and kept across route changes", async
   expect(reads).toBe(1);
 });
 
-test("below 768 px a labeled Menu holds the tabs; a row opens its page, closes the Menu and focuses the title", async ({ page }) => {
+test("below 768 px the Menu sheet holds the items; an item opens its page, closes the sheet and focuses the title", async ({ page }) => {
   await open(page, "/", 390);
-  const menu = page.getByRole("button", { name: "Menu" });
+  const menu = page.getByRole("button", { name: "Menu", exact: true });
   await expect(page.getByRole("navigation", { name: "Main" })).toHaveCount(0);
 
   await menu.click();
-  const nav = page.getByRole("navigation", { name: "Main" });
-  await expect(nav.getByRole("link")).toHaveText(["Packages", "Projects", "Lessons", "Drafts", "Data"]);
+  const nav = page.getByRole("dialog", { name: "Menu" }).getByRole("navigation", { name: "Main" });
+  await expect(nav.getByRole("link")).toHaveText(["Home", "Packages", "Projects", "Lessons", "Drafts", "Data"]);
+  // Every item shows in full in the sheet's first screen, above the view lines at its foot.
+  for (const link of await nav.getByRole("link").all()) await expect(link).toBeInViewport({ ratio: 1 });
   await nav.getByRole("link", { name: "Drafts" }).click();
 
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Drafts");
@@ -220,10 +254,12 @@ test("at 1024 px with a 15 px scrollbar the navy bar fits on one line", async ({
   const bar = page.locator("[data-nav-bar] > .layout");
   expect(await bar.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true);
   expect((await page.locator("[data-nav-bar]").boundingBox())!.height).toBe(56);
+  // The sidebar is the 64 px rail there, and each item keeps at least 36 px of height (DESIGN.md section 5, Sidebar).
+  expect((await page.locator("[data-sidebar-column]").boundingBox())!.width).toBe(64);
   const heights = await page.getByRole("navigation", { name: "Main" }).getByRole("link").evaluateAll((links) =>
     links.map((link) => link.getBoundingClientRect().height),
   );
-  expect(heights).toEqual([40, 40, 40, 40, 40]);
+  expect(heights).toEqual([36, 36, 36, 36, 36, 36]);
   await expect(page.getByRole("button", { name: "View: World Bank staff" })).toBeVisible();
 });
 

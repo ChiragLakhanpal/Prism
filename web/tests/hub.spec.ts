@@ -10,7 +10,7 @@ import type { Locator, Page, Request } from "@playwright/test";
 import { copy } from "../src/copy";
 import { askFromTheBox, landed, marker, panel } from "./answer-page";
 import { hubApi, KENHA_PLAN } from "./hub-api";
-import { expect, mockApi, recorded, test } from "./mocked";
+import { expect, mockApi, recorded, test, windowBeside } from "./mocked";
 
 type Answer = { status?: number; body: string };
 
@@ -124,7 +124,8 @@ test("arriving at a project page from All projects focuses its h1, as any route 
 test("P130164's Summary renders from records with no request to a route that calls a model, and every value has a source line", async ({ page }) => {
   const requests: Request[] = [];
   page.on("request", (request) => requests.push(request));
-  await open(page, "/projects/P130164");
+  // A 1440 px page area: beside the open sidebar (ticket 92) the window is wider.
+  await open(page, "/projects/P130164", windowBeside(1440));
   await expect(page.locator("[data-summary=ready]")).toBeVisible();
 
   // The routes the server tags as calling a model, recorded from the router (tests/test_project_hub.py

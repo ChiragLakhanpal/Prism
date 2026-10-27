@@ -9,7 +9,7 @@
 // on August 1, 2021 and the middle one on July 11, 2021), and the sentences from the 27 brief.
 import { scan } from "./axe";
 import type { Locator, Page, Request } from "@playwright/test";
-import { expect, recorded, test } from "./mocked";
+import { expect, recorded, test, windowBeside } from "./mocked";
 
 const REF = "KE-HAND-900000-CW-RFB";
 const API = `/api/packages/${REF}`;
@@ -173,7 +173,8 @@ test("Strata writes no actual date into a step: every date on screen is a planne
 });
 
 test("a count opens the evidence drawer at the step's comparable packages, and Escape gives focus back to it", async ({ page }) => {
-  await openPackage(page);
+  // A 1440 px page area, so the table stays a table beside the drawer: the open sidebar (ticket 92) widens the window.
+  await openPackage(page, { width: windowBeside(1440) });
   await disclosure(page).click();
 
   const count = row(page, "contract_signed").locator("td").last().getByRole("button");

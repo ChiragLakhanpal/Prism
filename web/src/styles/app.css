@@ -164,6 +164,69 @@
   }
 }
 
+/* The sidebar and the Menu sheet (DESIGN.md section 5, Sidebar and Menu sheet; ticket 92). From 1024 px the sidebar
+   sits beside the page, open at 224 px or a 64 px rail of icons. Its width changes at once and never moves: width is a
+   layout property, and the motion would add wait without news. A person's choice is the data-sidebar-rest attribute on the
+   root, which web/index.html's first script writes from local storage before the first paint; with no choice it is
+   open from 1440 px (90rem) and a rail from 1024 to 1439 px. Until the bar ticket merges the band into the bar, the
+   bar (56 px) and the band (69 px) sit above the sidebar, so it is the window's height less theirs. */
+:root {
+  --sidebar-width: 224px;
+  --rail-width: 64px;
+  --nav-width: 0px;
+  --header-height: 125px;
+}
+@media (width >= 64rem) {
+  :root { --nav-width: var(--rail-width); }
+  :root[data-sidebar-rest="open"] { --nav-width: var(--sidebar-width); }
+}
+@media (width >= 90rem) {
+  :root:not([data-sidebar-rest="rail"]) { --nav-width: var(--sidebar-width); }
+}
+/* Classes for the rail alone: its labels move into tooltips, and the sub-items hide. */
+@custom-variant rail {
+  @media (width >= 64rem) and (width < 90rem) {
+    :root:not([data-sidebar-rest="open"]) & {
+      @slot;
+    }
+  }
+  @media (width >= 90rem) {
+    :root[data-sidebar-rest="rail"] & {
+      @slot;
+    }
+  }
+}
+/* Below 1024 px the sidebar is the Menu sheet: it slides in from the left over 200 ms on ease-drawer and back out
+   over 120 ms, and is hidden once it is out, so nothing in it takes focus. From 1024 px it does not move. */
+@utility menu-sheet {
+  transform: translateX(-100%);
+  visibility: hidden;
+  transition: transform var(--motion-exit) var(--ease-out), visibility 0s linear var(--motion-exit);
+  &[data-open] {
+    transform: none;
+    visibility: visible;
+    transition: transform var(--motion-sheet) var(--ease-drawer);
+  }
+  @media (width >= 64rem) {
+    transform: none;
+    visibility: visible;
+    transition: none;
+  }
+}
+/* A rail item's tooltip (DESIGN.md section 4, Motion): it fades and grows from 0.97 out of the side that touches its
+   item over 160 ms, and one that opens less than 300 ms after another closed appears at once (data-instant). */
+@utility rail-tip {
+  transform-origin: left center;
+  transition: opacity var(--motion-popover) var(--ease-out), scale var(--motion-popover) var(--ease-out);
+  @starting-style {
+    opacity: 0;
+    scale: 0.97;
+  }
+  &[data-instant] {
+    transition: none;
+  }
+}
+
 /* A primary or secondary button pressed (DESIGN.md section 4, Motion): it eases to 0.98 over 120 ms. The
    transition is set only on :active, so the release snaps back at once, and a button that cannot act does
    not move. Under reduced motion it does not scale at all. */
@@ -226,17 +289,18 @@
 
 /* A draft's document column (the 35 brief, section 3.2; DESIGN.md section 4, Document column). From a
    1200 px window it spans columns 1 to 7 and keeps its place and width when the evidence drawer opens
-   beside it: the drawer narrows the page area, so the column is measured against the window instead,
-   with the window's margins and gutter, and the page keeps its left edge where it was. The window's width
-   is --window-inline, which DraftPage.tsx sets without a classic scroll bar; 100vw counts one. */
+   beside it: the drawer narrows the page area, so the column is measured against the frame instead (the
+   window less the sidebar, ticket 92), with the frame's margins and gutter, and the page keeps its left edge
+   where it was. The window's width is --window-inline, which DraftPage.tsx sets without a classic scroll
+   bar; 100vw counts one. */
 @media (width >= 75rem) {
   [data-page-column] > main:has([data-document-column]) { --layout-margin: 72px; --layout-gutter: 32px; }
   main:has([data-document-column]) > .layout {
-    margin-inline: max(0px, (var(--window-inline, 100vw) - var(--layout-max)) / 2 - var(--layout-margin)) 0;
+    margin-inline: max(0px, (var(--window-inline, 100vw) - var(--nav-width) - var(--layout-max)) / 2 - var(--layout-margin)) 0;
     padding-top: calc(var(--spacing) * 10);
   }
   [data-document-column] {
-    width: calc((min(var(--window-inline, 100vw) - 2 * var(--layout-margin), var(--layout-max)) - 11 * var(--layout-gutter)) * 7 / 12 + 6 * var(--layout-gutter));
+    width: calc((min(var(--window-inline, 100vw) - var(--nav-width) - 2 * var(--layout-margin), var(--layout-max)) - 11 * var(--layout-gutter)) * 7 / 12 + 6 * var(--layout-gutter));
   }
 }
 

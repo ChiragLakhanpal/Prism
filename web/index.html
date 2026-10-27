@@ -5,11 +5,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Strata</title>
     <!--
+      The sidebar's resting state (ticket 92; DESIGN.md section 5, Sidebar), read before any other script runs: a
+      person's choice of open or rail, kept in local storage under strata.sidebar, goes on the root as data-sidebar-rest.
+      The width is read by the media queries below and in app.css: with no choice, the sidebar is open from 1440 px
+      and a rail from 1024 to 1439 px. The page works without storage.
+    -->
+    <script>
+      (function () {
+        try {
+          var rest = window.localStorage.getItem("strata.sidebar");
+          if (rest === "open" || rest === "rail") document.documentElement.setAttribute("data-sidebar-rest", rest);
+        } catch (error) {
+          /* No stored choice: the width decides. */
+        }
+      })();
+    </script>
+    <!--
       The first paint (the 06 design brief, "App start"): the page background, the 56 px navy bar
-      with the logo at its size and the band (69 px, or 101 px below 768 px, where the stamp sits
-      under the box) show before any script runs, and React mounts into the same sizes, so nothing
-      moves. The colors are DESIGN.md's page, navy, surface and
-      line tokens, and the margins its grid's, written out because no stylesheet has loaded yet.
+      with the logo at its size, the band (69 px, or 101 px below 768 px, where the stamp sits
+      under the box) and, from 1024 px, the sidebar's frame at its stored or default width (ticket 92)
+      show before the app's script runs, and React mounts into the same sizes, so nothing
+      moves. The colors are DESIGN.md's page, navy, surface and line tokens, and the margins its
+      grid's, written out because no stylesheet has loaded yet.
     -->
     <style>
       body { margin: 0; background: #f5f7f9; }
@@ -17,11 +34,18 @@
       [data-boot-band] { box-sizing: border-box; height: 101px; background: #ffffff; border-bottom: 1px solid #dae3eb; }
       [data-boot-row] { box-sizing: border-box; display: flex; align-items: center; height: 56px; max-width: calc(1456px + 56px); margin: 0 auto; padding: 0 28px; }
       [data-boot-row] img { display: block; width: 120px; height: 24px; }
+      [data-boot-sidebar-column] { display: none; }
       @media (width >= 48rem) {
         [data-boot-row] { max-width: calc(1456px + 96px); padding: 0 48px; }
         [data-boot-band] { height: 69px; }
       }
-      @media (width >= 64rem) { [data-boot-row] { max-width: calc(1456px + 144px); padding: 0 72px; } }
+      @media (width >= 64rem) {
+        [data-boot-row] { max-width: calc(1456px + 144px); padding: 0 72px; }
+        [data-boot-sidebar-column] { display: block; box-sizing: border-box; width: 64px; border-right: 1px solid #dae3eb; }
+        html[data-sidebar-rest="open"] [data-boot-sidebar-column] { width: 224px; }
+        [data-boot-sidebar] { height: calc(100vh - 125px); height: calc(100dvh - 125px); }
+      }
+      @media (width >= 90rem) { html:not([data-sidebar-rest="rail"]) [data-boot-sidebar-column] { width: 224px; } }
     </style>
   </head>
   <body>
@@ -30,6 +54,7 @@
         <div data-boot-row><img src="/src/assets/world-bank-logo.svg" width="120" height="24" alt="" /></div>
       </div>
       <div data-boot-band></div>
+      <div data-boot-sidebar-column><div data-boot-sidebar></div></div>
     </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

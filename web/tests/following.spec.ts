@@ -4,7 +4,7 @@
 // the real one and saying so; they are used for layout and states only, never as findings.
 import { scan } from "./axe";
 import type { Page } from "@playwright/test";
-import { expect, recorded, test, viewAnswers } from "./mocked";
+import { expect, recorded, test, viewAnswers, windowBeside } from "./mocked";
 
 const FOLLOWING = "/projects/following";
 // The ticket's four lines, word for word (criterion 1).
@@ -208,13 +208,13 @@ test("a row's partial line names the plan window the thresholds file sets, never
     "no implementing agency has published a Procurement Plan for it in the last six months");
 });
 
-test("the Projects tab opens Following for World Bank staff, and All projects shows the sub-tabs", async ({ page }) => {
+test("the Projects item opens Following for World Bank staff, and All projects shows the sub-tabs", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await serve(page, { "/api/projects": { body: await recorded("projects.json") }, "/api/following": { body: await recorded("following-p156634.json") } });
   await page.goto("/projects");
   await expect(page.locator("[data-projects-page=ready]")).toBeVisible();
 
-  await expect(page.locator("[data-nav-bar] [data-nav-tab=projects]")).toHaveAttribute("href", FOLLOWING);
+  await expect(page.locator("[data-sidebar] [data-nav-item=projects]")).toHaveAttribute("href", FOLLOWING);
   await expect(page.getByRole("navigation", { name: "Projects pages" }).getByRole("link", { name: "All projects" })).toHaveAttribute("aria-current", "page");
 
   // Choosing a sub-tab keeps focus on it, and a polite status says which page opened (the 37 brief, section 11.2).
@@ -293,7 +293,8 @@ async function openBrief(page: Page, width: number, draft?: object) {
 }
 
 test("each source of the brief says which record it is, and the disbursement table says why it reads more than committed", async ({ page }) => {
-  await openBrief(page, 1440);
+  // A 1440 px page area: beside the open sidebar (ticket 92) the window is wider.
+  await openBrief(page, windowBeside(1440));
   const titles = page.locator("[data-source-title]");
 
   await expect(titles.nth(0)).toHaveText("Latest plan of Northern Water Works Development Agency");

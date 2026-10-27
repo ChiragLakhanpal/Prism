@@ -1,7 +1,7 @@
 // The evidence drawer (DESIGN.md section 5; the 14 brief, section 4.5): the whole numbered paragraph a
-// citation points to, beside the page and never over it. It is a column clamp(400px, 40vw, 600px) wide
-// whose panel stays in view while the page scrolls; the page narrows and stays usable, so it is a
-// non-modal dialog. Below 768 px it is a full-screen sheet: modal, with the page behind it inert.
+// citation points to, beside the page and never over it. It is a column 40 percent of the frame wide
+// (the window less the sidebar, ticket 92), from 400 to 600 px, whose panel stays in view while the page
+// scrolls; the page narrows and stays usable, so it is a non-modal dialog. Below 768 px it is a full-screen sheet: modal, with the page behind it inert.
 //
 // From top to bottom: the stratum eyebrow, the source as its heading, a 44 px close; the sentence it
 // was opened from and a switcher for that sentence's other sources; the paragraph with the matching
@@ -674,7 +674,7 @@ export function EvidenceDrawerView({
           ? "w-full"
           : narrow
             ? "fixed inset-0 z-50 animate-sheet-in"
-            : "w-[clamp(400px,40vw,600px)] shrink-0 self-stretch border-l border-line",
+            : "w-[clamp(400px,calc((100vw_-_var(--nav-width))_*_0.4),600px)] shrink-0 self-stretch border-l border-line",
       )}
     >
       <div
