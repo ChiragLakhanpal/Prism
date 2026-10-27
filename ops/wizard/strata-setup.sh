@@ -244,18 +244,36 @@ find_python() {
 # dayone runs ops/dayone/dayone.py on this run's results document.
 dayone() { "$PYTHON" "$ROOT/ops/dayone/dayone.py" --results "$RESULTS" "$@"; }
 
-# setting NAME prints one value from ops/dayone/dayone.toml.
-setting() { dayone get "$1"; }
+# The wizard reads its settings, the model names and the results document's statuses once, at its
+# start: `dayone state` prints them as bash assignments (ticket 56). Before, each value it showed
+# started Python on its own, about 78 times a run. The four lookups below read those variables, and
+# record_test keeps the statuses current. Each lookup is one line, so ops/dayone/tests can run it.
+
+# setting NAME prints one value from ops/dayone/dayone.toml, such as names.secret_scope.
+setting() { local name="SETTING_${1//./__}"; name="${name//-/_}"; [[ -n "${!name+x}" ]] || { printf 'dayone.toml has no setting named %s.\n' "$1" >&2; return 1; }; printf '%s\n' "${!name}"; }
 
 # model_value ROLE [FIELD] prints one role's deployment, or its dimensions, from config/models.toml,
 # the one place that names a model (spec, "Ten single places").
-model_value() { dayone model "$@"; }
+model_value() { local name="MODEL_${1}__${2:-deployment}"; [[ -n "${!name+x}" ]] || { printf 'config/models.toml gives the %s role no %s.\n' "$1" "${2:-deployment}" >&2; return 1; }; printf '%s\n' "${!name}"; }
+
+# test_status N prints the status the results document holds for test N.
+test_status() { local name="STATUS_test_$1"; printf '%s\n' "${!name-}"; }
+
+# payg_done succeeds when the results document records the move to pay-as-you-go as done.
+payg_done() { [[ "${PAYG_DONE:-0}" == 1 ]]; }
 
 # example_value KEY prints KEY's value in .env.example.
 example_value() { grep -E "^$1=" "$ROOT/.env.example" | head -n1 | cut -d= -f2-; }
 
-# with_commas 100000 prints 100,000.
-with_commas() { "$PYTHON" -c 'import sys; print(f"{int(sys.argv[1]):,}")' "$1"; }
+# with_commas 100000 prints 100,000. It works in bash, so a number on screen starts no process.
+with_commas() {
+  local digits="$1" grouped=""
+  while (( ${#digits} > 3 )); do
+    grouped=",${digits:${#digits}-3}$grouped"
+    digits="${digits:0:${#digits}-3}"
+  done
+  printf '%s\n' "$digits$grouped"
+}
 
 # json_get EXPR reads JSON on standard input and prints EXPR, where d is the parsed value.
 json_get() {
@@ -310,15 +328,13 @@ record_test_with_path() {
   [[ -n "$path" ]] && args+=(--path "$path")
   for item in ${@+"$@"}; do args+=(--evidence "$item"); done
   if dayone record "${args[@]}" >/dev/null; then
+    printf -v "STATUS_test_$number" '%s' "$status"
     note "I wrote the result of test $number in $RESULTS."
   else
     SKIPPED+=("Record the result of test $number in $RESULTS, because the wizard could not write it.")
     warn "I could not write the result of test $number in $RESULTS."
   fi
 }
-
-# test_status N prints the status the results document holds for test N.
-test_status() { dayone field "test-$1" Status 2>/dev/null || true; }
 
 # dbx runs the Databricks command line with the token or service principal from this run,
 # never with a profile from your own configuration. The subshell exports the values, so they
@@ -491,14 +507,16 @@ unset DATABRICKS_HOST DATABRICKS_TOKEN DATABRICKS_CLIENT_ID DATABRICKS_CLIENT_SE
   APPLICATIONINSIGHTS_CONNECTION_STRING 2>/dev/null || true
 
 preflight
+# Writes the results document if it is missing, as `dayone init` does, then reads everything in one run.
+# The assignment stops the wizard when dayone.py fails, which `eval "$(dayone state)"` would not.
+STATE=$(dayone state)
+eval "$STATE"
 SCOPE=$(setting names.secret_scope)
 PROFILE=$(setting names.oauth_profile)
 APP=$(setting names.app)
 RESOURCE_GROUP=$(setting names.resource_group)
 FOUNDRY_RESOURCE=$(setting names.foundry_resource)
-DEADLINE=$(setting payg.deadline)
-DEADLINE_LONG=$("$PYTHON" -c 'import datetime, sys; d = datetime.date.fromisoformat(sys.argv[1]); print(f"{d:%B} {d.day}, {d.year}")' "$DEADLINE")
-dayone init >/dev/null
+DEADLINE_LONG=$(setting payg.deadline_long)
 
 banner "Strata setup: credentials, Azure caps and the day-one tests"
 
@@ -771,7 +789,7 @@ fi
 
 # ── Stage 12 ──────────────────────────────────────────────────────────────
 stage "Pay-as-you-go before $DEADLINE_LONG"
-if dayone payg-done; then
+if payg_done; then
   say "The subscription already moved to pay-as-you-go, so this stage has nothing to do."
 else
   say "The free Azure credit ends on $DEADLINE_LONG. Before then, the subscription moves to"

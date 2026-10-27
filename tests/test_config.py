@@ -532,6 +532,37 @@ def test_a_threshold_added_to_the_file_is_read(tmp_path):
     assert config.load_thresholds(path).value("signals.example_threshold") == 30
 
 
+def test_a_config_file_is_parsed_once_until_it_changes_and_each_caller_gets_its_own_copy(tmp_path, monkeypatch):
+    """Ticket 56: the readers parsed a file on every call, about 3,970 times in seven of the slowest tests, which
+    was a tenth of their processor time. An edit still lands on the next read, and no caller sees another's change."""
+    path = copy("thresholds.toml", tmp_path)
+    parsed = []
+    parse = tomllib.load
+    monkeypatch.setattr(tomllib, "load", lambda handle: parsed.append(handle.name) or parse(handle))
+    first = config.load_thresholds(path)
+    first.values["plan_check"]["completion_passed_min_estimated_usd"] = 0  # a caller changes what it got
+
+    again = config.load_thresholds(path)
+
+    assert parsed == [str(path)]
+    assert again.value("plan_check.completion_passed_min_estimated_usd") == 1_000_000
+
+    path.write_text(path.read_text().replace("completion_passed_min_estimated_usd = 1_000_000",
+                                             "completion_passed_min_estimated_usd = 2_000_000"))
+
+    assert config.load_thresholds(path).value("plan_check.completion_passed_min_estimated_usd") == 2_000_000
+    assert parsed == [str(path), str(path)]
+
+
+def test_a_config_file_that_goes_missing_after_a_read_says_so(tmp_path):
+    path = copy("thresholds.toml", tmp_path)
+    config.load_thresholds(path)
+    path.unlink()
+
+    with pytest.raises(ConfigError, match="I could not find"):
+        config.load_thresholds(path)
+
+
 # ── The draft-kind registry and the roles file (ticket 35) ───────────────
 
 def test_review_notes_are_a_draft_kind_with_their_writer_columns_and_holds():

@@ -499,14 +499,27 @@ def run_gate(repo, steps, limit=120):
     return done, time.monotonic() - started
 
 
+def gate_seconds(done):
+    """The time the gate printed for its own run, from the moment it held the lock."""
+    return float(re.search(r"The gate passed in ([\d.]+) seconds\.", done.stdout)[1])
+
+
 def test_steps_in_different_lanes_run_side_by_side_and_steps_in_one_lane_take_turns(repo):
-    apart, apart_seconds = run_gate(repo, [wait("A", 2, lane="one"), wait("B", 2, lane="two")])
-    shared, shared_seconds = run_gate(repo, [wait("A", 2, lane="one"), wait("B", 2, lane="one")])
+    apart, _ = run_gate(repo, [wait("A", 2, lane="one"), wait("B", 2, lane="two")])
+    apart_log = logged(repo)
+    (repo / "log.txt").unlink()
+    shared, _ = run_gate(repo, [wait("A", 2, lane="one"), wait("B", 2, lane="one")])
 
     assert apart.returncode == 0, apart.stdout + apart.stderr
     assert shared.returncode == 0, shared.stdout + shared.stderr
-    assert apart_seconds < 3.5, apart.stdout
-    assert shared_seconds > 4, shared.stdout
+    # The gate's own clock, not the test's: on a busy computer, starting `python3 gates/offline.py` took
+    # 1.75 seconds on its own (ticket 55's F1), which says nothing about the lanes.
+    assert gate_seconds(apart) < 3.5, apart.stdout
+    assert gate_seconds(shared) > 4, shared.stdout
+    # Side by side, each step started before the other finished; in one lane, B started after A finished.
+    assert apart_log.index("B started") < apart_log.index("A finished"), apart_log
+    assert apart_log.index("A started") < apart_log.index("B finished"), apart_log
+    assert logged(repo) == ["A started", "A finished", "B started", "B finished"]
 
 
 def logged(repo):
@@ -570,10 +583,11 @@ def test_ctrl_c_stops_every_lane(repo):
     write(repo, "step.py", STEP)
     gate = subprocess.Popen([".githooks/pre-commit"], cwd=repo, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                             text=True, env=clean_env())
-    for _ in range(100):
-        if (repo / "log.txt").exists() and len(logged(repo)) == 2:
-            break
+    # Wait for both steps to start, however long a busy computer takes to start the gate and its steps.
+    deadline = time.monotonic() + 60
+    while not ((repo / "log.txt").exists() and len(logged(repo)) == 2) and time.monotonic() < deadline:
         time.sleep(0.05)
+    assert sorted(logged(repo)) == ["A started", "B started"]
     time.sleep(0.5)  # Ctrl-C lands while the gate waits on the lanes, as when a person presses it.
 
     gate.send_signal(signal.SIGINT)
@@ -584,6 +598,57 @@ def test_ctrl_c_stops_every_lane(repo):
     assert gate.returncode == 130, output
     assert '"A" was stopped' in output and '"B" was stopped' in output, output
     assert "The gate was stopped before it finished, so the commit did not go through." in output
+
+
+# macOS hands a signal sent to a process to any thread that does not block it, so Ctrl-C can land on a lane
+# thread. Python then runs the handler in the main thread only when that thread wakes, so a main thread that
+# waits on a lane with no timeout keeps waiting until the lane ends (ticket 54's F1, ticket 56). This driver
+# runs one stage of two lanes inside its own process, the way gates/offline.py does, sends SIGINT to one lane
+# thread with signal.pthread_kill, and prints how long the gate took to stop its lanes after the signal.
+LANE_SIGINT = """\
+    import importlib.util, json, signal, sys, threading, time
+    spec = importlib.util.spec_from_file_location("gate", sys.argv[1])
+    gate = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(gate)
+    step = lambda lane: {"name": lane, "lane": lane, "run": [sys.executable, "-c", "import time; time.sleep(10)"]}
+    run = gate.Run(limit=120)
+    seen = {}
+
+    def interrupt():
+        lanes = []
+        while len(lanes) < 2:
+            lanes = [thread for thread in threading.enumerate() if "run_lane" in thread.name]
+            time.sleep(0.01)
+        time.sleep(0.3)  # Both lanes are in their steps, and the main thread waits on them.
+        sent = time.monotonic()
+        signal.pthread_kill(lanes[0].ident, signal.SIGINT)
+        run.halt.wait(30)
+        seen["seconds"] = time.monotonic() - sent
+
+    helper = threading.Thread(target=interrupt)
+    helper.start()
+    try:
+        gate.run_stage({"one": [step("one")], "two": [step("two")]}, run)
+        seen["ended"] = "passed"
+    except KeyboardInterrupt:
+        seen["ended"] = "stopped"
+    helper.join()
+    print(json.dumps(seen | {"poll": gate.POLL_SECONDS}))
+    """
+
+
+def test_ctrl_c_that_lands_on_a_lane_thread_stops_the_gate_within_one_poll(tmp_path):
+    write(tmp_path, "driver.py", LANE_SIGINT)
+
+    done = subprocess.run(["python3", "driver.py", str(ROOT / "gates" / "offline.py")], cwd=tmp_path,
+                          capture_output=True, text=True, env=clean_env(), timeout=60)
+
+    assert done.returncode == 0, done.stdout + done.stderr
+    seen = json.loads(done.stdout.splitlines()[-1])  # after the lines the gate prints about its lanes
+    assert seen["ended"] == "stopped", done.stdout
+    # One poll after the signal, the main thread wakes and stops every lane. The second on top is room for a
+    # busy computer (docs/agents/areas/ops.md); a gate that waits for its lanes takes the steps' 10 seconds.
+    assert seen["seconds"] < seen["poll"] + 1, seen
 
 
 def test_a_lane_that_is_not_a_quoted_name_stops_the_gate_with_a_plain_message(repo):
@@ -606,7 +671,7 @@ HOLD = """\
         with open(log, "a") as handle:
             handle.write(f"{name} {word}\\n")
     note("started")
-    time.sleep(2)
+    time.sleep(3)
     note("finished")
     """
 
@@ -617,11 +682,11 @@ WAITING = "Another gate is running on this computer, so this gate waits for it t
 def test_two_gates_started_together_take_turns_and_each_limit_starts_when_its_gate_holds_the_lock(repo, tmp_path):
     shared_log = tmp_path / "steps.txt"
     trees = {"A": repo, "B": make_repo(tmp_path / "other")}
-    # Each step takes 2 seconds, so each gate fits in its 3.5-second limit once it holds the lock,
-    # but the gate that waits takes longer than that in all.
+    # Each step takes 3 seconds, so each gate fits in its 5.5-second limit once it holds the lock, with 2.5 seconds
+    # to spare for a busy computer, but the gate that waits takes longer than that in all: two steps in turn take 6.
     for name, tree in trees.items():
         hold = json.dumps(["python3", "hold.py", str(shared_log), name])
-        write(tree, "gates/steps.toml", steps_file(limit=3.5, steps=[("Hold", hold)]))
+        write(tree, "gates/steps.toml", steps_file(limit=5.5, steps=[("Hold", hold)]))
         write(tree, "hold.py", HOLD)
 
     started = time.monotonic()
@@ -640,9 +705,9 @@ def test_two_gates_started_together_take_turns_and_each_limit_starts_when_its_ga
     assert gates[second].returncode == 0, output[second]
     assert WAITING not in output[first]
     assert WAITING in output[second]
-    assert "Its 3.5-second limit starts now." in output[second]
+    assert "Its 5.5-second limit starts now." in output[second]
     # The waiting gate ran longer than its limit in all, and passed, so its limit started when it held the lock.
-    assert took[second] > 3.5, output[second]
+    assert took[second] > 5.5, output[second]
 
 
 def test_a_gate_that_cannot_get_the_lock_in_time_stops_with_one_sentence(repo, gate_lock):

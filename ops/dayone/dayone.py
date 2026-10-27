@@ -16,6 +16,8 @@ Commands:
   python3 ops/dayone/dayone.py model embed dimensions  The embedding size.
   python3 ops/dayone/dayone.py field test-6 Status
   python3 ops/dayone/dayone.py show      Print each test's status and chosen path.
+  python3 ops/dayone/dayone.py state     Write the results document if it is missing, then print, as bash
+                                         assignments, every setting, model and status the wizard reads.
 
 Each command takes --results PATH to work on a copy instead of the main checkout's document.
 """
@@ -26,6 +28,7 @@ import argparse
 import datetime as dt
 import os
 import re
+import shlex
 import subprocess
 import sys
 import tempfile
@@ -520,13 +523,67 @@ def run_probe(number: int, argv, doc: str | None, needs, live, canned, check, se
     return report_test(number, outcome, args, config)
 
 
+# ── The wizard's state ───────────────────────────────────────────────────
+
+def shown(value) -> str:
+    """A setting as `get` prints it: a table's keys or a list's items one to a line, anything else as it is."""
+    if isinstance(value, dict):
+        return "\n".join(value)
+    if isinstance(value, list):
+        return "\n".join(str(item) for item in value)
+    return str(value)
+
+
+def shell_name(prefix: str, dotted: str) -> str:
+    """The bash variable that holds one value: SETTING_names__secret_scope for names.secret_scope.
+
+    The wizard's lookups in ops/wizard/strata-setup.sh build the same names, with . as __ and - as _.
+    """
+    name = prefix + dotted.replace(".", "__").replace("-", "_")
+    if not re.fullmatch(r"[A-Za-z_]\w*", name):
+        raise DayOneError(f"{dotted} cannot be the name of a bash variable, so the wizard cannot read it.")
+    return name
+
+
+def settings_flat(value, dotted: str = ""):
+    """Every setting in dayone.toml, tables too, as (dotted name, value), as `get` finds them."""
+    if dotted:
+        yield dotted, value
+    if isinstance(value, dict):
+        for key, inner in value.items():
+            yield from settings_flat(inner, f"{dotted}.{key}" if dotted else key)
+
+
+def wizard_state(results: Path, config: dict) -> str:
+    """What the wizard reads, as bash assignments it runs once at its start (ticket 56).
+
+    Each value the wizard showed used to start Python on its own, about 78 starts a run. Here every
+    setting comes as SETTING_<name>, payg.deadline_long writes the credit's last day out as the wizard
+    says it, each model role's deployment and dimensions come as MODEL_<role>__<field>, each block's
+    status as STATUS_<block>, and PAYG_DONE is 1 when the move to pay-as-you-go is done. The wizard keeps
+    the statuses up to date as it records results. Like init, it writes the results document first when
+    it is missing.
+    """
+    ensure_document(results, config)
+    values = {shell_name("SETTING_", dotted): shown(value) for dotted, value in settings_flat(config)}
+    values[shell_name("SETTING_", "payg.deadline_long")] = long_date(parse_day(config["payg"]["deadline"]))
+    for role, model in models().items():
+        for name in ("deployment", "dimensions"):
+            if getattr(model, name) is not None:
+                values[shell_name("MODEL_", f"{role}.{name}")] = str(getattr(model, name))
+    for block_id, fields in read_results(results).items():
+        values[shell_name("STATUS_", block_id)] = shown(fields.get("Status", ""))
+    values["PAYG_DONE"] = "1" if payg_done(results) else "0"
+    return "".join(f"{name}={shlex.quote(value)}\n" for name, value in values.items())
+
+
 # ── Command line ─────────────────────────────────────────────────────────
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="dayone.py", description=__doc__.split("\n\n")[0])
     parser.add_argument("--results", type=Path, help="The results document. The default is this checkout's.")
     commands = parser.add_subparsers(dest="command", required=True)
-    for name in ("init", "show"):
+    for name in ("init", "show", "state"):
         commands.add_parser(name).add_argument("--results", type=Path, default=argparse.SUPPRESS)
     one = commands.add_parser("record", help="Record one test's result.")
     one.add_argument("--results", type=Path, default=argparse.SUPPRESS)
@@ -564,6 +621,8 @@ def main(argv: list[str] | None = None) -> int:
             else:
                 ensure_document(results, config)
                 print(f"I wrote {results}.")
+        elif args.command == "state":
+            print(wizard_state(results, config), end="")
         elif args.command == "show":
             for block_id, fields in read_results(results).items():
                 print(f"{block_id}: {fields.get('Status', '')}. {fields.get('Chosen path', '')}".rstrip(". "))
@@ -589,13 +648,7 @@ def main(argv: list[str] | None = None) -> int:
                 raise DayOneError(f"config/models.toml gives the {args.role} role no {args.field}.")
             print(value)
         elif args.command == "get":
-            value = config_value(config, args.key)
-            if isinstance(value, dict):
-                print("\n".join(value))
-            elif isinstance(value, list):
-                print("\n".join(str(item) for item in value))
-            else:
-                print(value)
+            print(shown(config_value(config, args.key)))
     except DayOneError as error:
         print(error, file=sys.stderr)
         return 1

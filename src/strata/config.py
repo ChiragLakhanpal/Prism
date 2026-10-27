@@ -52,6 +52,8 @@ file, the entry and the fix. It uses only the standard library, so the nightly j
 from __future__ import annotations
 
 import datetime as dt
+import os
+import pickle
 import re
 import tomllib
 from collections.abc import Iterable
@@ -66,14 +68,29 @@ class ConfigError(ValueError):
     """A config file that does not follow its shape, with what to change."""
 
 
+# Each file as parsed, pickled, by its path and the size, time and inode it had then (ticket 56). The readers
+# run on every call, and parsing TOML took about a tenth of the processor time of the slowest tests. A file
+# that changes is parsed again on its next read, and each caller gets its own copy, which a pickle gives at
+# about a hundredth of the cost of parsing.
+_PARSED: dict[str, tuple[tuple[int, int, int], bytes]] = {}
+
+
 def _read(path: Path) -> dict:
     try:
+        found = os.stat(path)
+        stamp = (found.st_mtime_ns, found.st_size, found.st_ino)
+        held = _PARSED.get(str(path))
+        if held and held[0] == stamp:
+            return pickle.loads(held[1])
         with open(path, "rb") as handle:
-            return tomllib.load(handle)
+            data = tomllib.load(handle)
     except FileNotFoundError as error:
         raise ConfigError(f"I could not find {path}.") from error
     except tomllib.TOMLDecodeError as error:
         raise ConfigError(f"{path.name} is not valid TOML: {error}.") from error
+    blob = pickle.dumps(data)
+    _PARSED[str(path)] = (stamp, blob)
+    return pickle.loads(blob)
 
 
 class _Entry:
