@@ -214,7 +214,7 @@ HALF_OF_A_TIME = re.compile(
 FREQUENCY_WORDS = {"about": "about", "fewer than": "fewer_than", "more than": "more_than"}
 FREQUENCY = re.compile(
     r"\b(?:(about|fewer than|more than)\s+)?(\d+|" + "|".join(word for word, value in SMALL.items() if value <= 10)
-    + r")[\s-]+in[\s-]+(?:10|ten)\b(?![-–]\d)(?!\s*-?\s*(?:months?|days?|weeks?|years?)\b)", re.I)
+    + r")[\s-]+in[\s-]+(?:10|ten)\b(?![-\u2013]\d)(?!\s*-?\s*(?:months?|days?|weeks?|years?)\b)", re.I)
 
 
 def _word_value(words: list[str]) -> Decimal:
