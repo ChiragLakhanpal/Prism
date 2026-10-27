@@ -83,7 +83,7 @@ export function WritingDatesPage({ current }: { current: Writing }) {
         )}
         {current.phase === "nothing" && (
           <div className="mt-6 max-w-[72ch]" data-nothing-dated>
-            <h2 className="text-title text-ink-heading">{kind.nothingTitle}</h2>
+            <h2 className="text-h2 text-ink-heading">{kind.nothingTitle}</h2>
             {current.removed.length > 0 ? (
               // My verifier removed what I worked out, so "too few comparable packages" may be untrue: say what it
               // removed and why instead (CLAUDE.md rule 2).

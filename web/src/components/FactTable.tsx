@@ -61,7 +61,7 @@ export function FactTable({
   const value = cx(CELL, "pb-3 text-body text-ink @md/page:pb-3", numeric && "@md/page:text-right @md/page:tabular-nums");
   return (
     <section data-fact-table data-loading={loading || undefined} aria-busy={loading || undefined} className="@container/facts">
-      {createElement(`h${level}`, { className: "text-title text-ink-heading" }, title)}
+      {createElement(`h${level}`, { className: "text-h2 text-ink-heading" }, title)}
       {loading && <LoadingLabel />}
       <div className="mt-2 overflow-hidden rounded-md border border-line bg-surface">
         <table role="table" className="block w-full border-collapse text-small @md/page:table @md/page:table-fixed">

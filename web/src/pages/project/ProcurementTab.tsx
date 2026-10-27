@@ -81,7 +81,7 @@ function AgencyPlans({ agency, pid, through }: { agency: Agency; pid: string; th
   if (agency.version_count === 0) {
     return (
       <section data-agency={agency.agency_id}>
-        <h3 className="text-title text-ink-heading">{agency.implementing_agency}</h3>
+        <h3 className="text-h2 text-ink-heading">{agency.implementing_agency}</h3>
         <p className="mt-2 text-small text-ink-muted">{plans.agencyEmpty}</p>
       </section>
     );
@@ -120,7 +120,7 @@ function AgencyPlans({ agency, pid, through }: { agency: Agency; pid: string; th
   const countText = folds && !open ? plans.versionsShowing(whole(shownCount), whole(agency.version_count)) : undefined;
   return (
     <section data-agency={agency.agency_id} className="flex flex-col gap-2">
-      <h3 id={headingId} className="text-title text-ink-heading">
+      <h3 id={headingId} className="text-h2 text-ink-heading">
         {agency.implementing_agency}
       </h3>
       <ChangesSentence agency={agency} pid={pid} />
@@ -169,7 +169,7 @@ function AgencyPlans({ agency, pid, through }: { agency: Agency; pid: string; th
 function OtherAgencies({ agencies }: { agencies: Agency[] }) {
   return (
     <section data-other-agencies>
-      <h3 className="text-title text-ink-heading">{plans.otherAgencies}</h3>
+      <h3 className="text-h2 text-ink-heading">{plans.otherAgencies}</h3>
       <p className="mt-2 text-small text-ink-muted">{plans.othersEmpty}</p>
       <ul className="mt-2 list-disc pl-6 text-small text-ink">
         {agencies.map((agency) => (
@@ -191,7 +191,7 @@ export function ProcurementTab({ pid, load, retry }: { pid: string; load: Load<P
     plansBody = (
       <EightColumns breakpoint="xl">
         <div className="flex flex-col gap-2" aria-hidden="true">
-          <SkeletonLine className="text-title" width="w-2/5" />
+          <SkeletonLine className="text-h2" width="w-2/5" />
           <SkeletonLine className="text-body" width="w-[70%]" />
         </div>
         <div className="mt-4">

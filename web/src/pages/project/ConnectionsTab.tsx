@@ -433,7 +433,7 @@ function Finding({ data }: { data: Neighbourhood }) {
 function ConnectionsSkeleton() {
   return (
     <div aria-hidden="true">
-      <SkeletonText className="text-title" widths={["w-full max-w-[640px]", "w-3/5"]} />
+      <SkeletonText className="text-h2" widths={["w-full max-w-[640px]", "w-3/5"]} />
       <SkeletonText className="mt-2 text-body" widths={["w-full max-w-[640px]", "w-2/5"]} />
       <SkeletonLine className="mt-4 text-caption" width="w-60" />
       <div className="mt-4 @md/page:flex @md/page:justify-center">
@@ -487,7 +487,7 @@ export function ConnectionsTab({ pid }: { pid: string }) {
         ) : (
           <>
             <div className="@lg/page:w-2/3">
-              <h2 id="connections-finding" className="text-title text-ink-heading">
+              <h2 id="connections-finding" className="text-h2 text-ink-heading">
                 <Finding data={data} />
               </h2>
               {/* The legend speaks of lines only where lines are drawn; the list says what its items mean instead. */}

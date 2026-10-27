@@ -417,7 +417,7 @@ export function DecisionForm({ item, onDone, onGaveWay, initial }: {
         onSubmit={(event) => event.preventDefault()}
         className="flex flex-col gap-4"
       >
-        <h2 id={headingId} className="text-title text-ink-heading">
+        <h2 id={headingId} className="text-h2 text-ink-heading">
           {title}
         </h2>
         {failure && (

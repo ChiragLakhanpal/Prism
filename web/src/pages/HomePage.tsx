@@ -192,7 +192,7 @@ function Briefing({ answer }: { answer: HomeAnswer | null }) {
       <span className="block text-small font-semibold text-ink-muted">{line}</span>
       <span className="sr-only">{words.dateLineEnd}</span>
       {answer ? (
-        <span className="mt-2 block text-title text-pretty text-ink-heading @md/page:text-h3">
+        <span className="mt-2 block text-lead text-pretty text-ink-heading">
           {answer.briefing.sentences.map((sentence, index) => (
             <Fragment key={index}>
               {index > 0 && " "}
@@ -256,7 +256,7 @@ function StartHere({ links }: { links: HomeAnswer["start_here"]["links"] }) {
   return (
     <section aria-labelledby={titleId} data-start-here="shown" className="rounded-md bg-surface-2 px-4 py-4 @md/page:px-6">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-        <h2 ref={title} id={titleId} tabIndex={-1} className="text-label text-ink-muted uppercase focus:outline-none">
+        <h2 ref={title} id={titleId} tabIndex={-1} className="text-label text-ink-muted focus:outline-none">
           {start.title}
         </h2>
         <span id={captionId} className="text-caption text-ink-muted @md/page:ml-auto">
@@ -389,7 +389,7 @@ function WorthKnowing({ answer }: { answer: HomeAnswer }) {
     worth.kind === "public" ? words.publicView.source(through) : worth.kind === "agency" ? words.worth.sourceAgency(through, checked) : words.worth.source(through, checked);
   return (
     <section aria-labelledby={titleId} data-worth={worth.kind} className="rounded-md border border-line bg-surface p-4 @md/page:p-6">
-      <h2 id={titleId} className="text-label text-ink-muted uppercase">
+      <h2 id={titleId} className="text-label text-ink-muted">
         {title}
       </h2>
       {worth.lines.length > 0 ? (
@@ -441,7 +441,7 @@ function WaitingForYou({ answer }: { answer: HomeAnswer }) {
   const reason = waiting.reason === "preview" ? w.preview : waiting.reason === "asof" ? w.asOf : null;
   return (
     <section aria-labelledby={titleId} data-waiting className="rounded-md border border-line bg-surface p-4 @md/page:p-6">
-      <h2 id={titleId} className="text-label text-ink-muted uppercase">
+      <h2 id={titleId} className="text-label text-ink-muted">
         {w.title}
       </h2>
       {reason ? (

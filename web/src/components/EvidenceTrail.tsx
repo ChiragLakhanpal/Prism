@@ -353,7 +353,7 @@ export function EvidenceTrail({
           const y = markY(lane);
           return (
             <g key={lane} data-lane={lane}>
-              <text x={PAD} y={rows.label + 16} className="fill-chart-text-subtle font-semibold uppercase">
+              <text x={PAD} y={rows.label + 16} className="fill-chart-text-subtle text-chart-label uppercase">
                 {words.lane[lane]}
               </text>
               <line x1={PAD} x2={width - PAD} y1={y} y2={y} className="stroke-chart-grey200" strokeWidth={1} />
@@ -398,7 +398,7 @@ export function EvidenceTrail({
         {asOf && (
           <g data-as-of>
             <line x1={width - PAD} x2={width - PAD} y1={0} y2={AXIS_Y} className="stroke-chart-grey300" strokeWidth={3} />
-            <text x={width - PAD - 6} y={ROWS.what.label + 16} textAnchor="end" className="fill-chart-text-subtle font-semibold uppercase">
+            <text x={width - PAD - 6} y={ROWS.what.label + 16} textAnchor="end" className="fill-chart-text-subtle text-chart-label uppercase">
               {words.asOf.replace("{date}", formatDate(asOf, { style: "table" }))}
             </text>
           </g>

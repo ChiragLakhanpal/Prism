@@ -306,7 +306,7 @@ export const ChangeTables = forwardRef<HTMLHeadingElement, { changes: PlanChange
   return (
     <section aria-labelledby="changes" data-changes>
       <EightColumns prose>
-        <h2 ref={ref} id="changes" tabIndex={-1} className="scroll-mt-4 text-title text-ink-heading focus:outline-none">
+        <h2 ref={ref} id="changes" tabIndex={-1} className="scroll-mt-4 text-h2 text-ink-heading focus:outline-none">
           <Fill template={words.title} slots={{ prev_date: <Num date={previous.plan_date} /> }} />
         </h2>
         <p className="mt-2 text-body text-ink">
@@ -326,7 +326,7 @@ export const ChangeTables = forwardRef<HTMLHeadingElement, { changes: PlanChange
       <div className="mt-6 flex flex-col gap-8">
         {shown.map((kind) => (
           <div key={kind} data-change-kind={kind}>
-            <h3 className="text-title text-ink-heading">
+            <h3 className="text-h2 text-ink-heading">
               <Unbroken text={title(kind)} />
             </h3>
             {kind === "added" && <ActivityTable kind="added" rows={changes.added} caption={words.caption.added(plan)} />}

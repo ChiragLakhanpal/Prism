@@ -44,7 +44,7 @@ export function SourcesList({
   const words = copy.draft.sources;
   return (
     <section aria-labelledby={SOURCES_ID} data-sources>
-      <h2 id={SOURCES_ID} tabIndex={-1} className="text-title text-ink-heading focus:outline-none">
+      <h2 id={SOURCES_ID} tabIndex={-1} className="text-h2 text-ink-heading focus:outline-none">
         {words.title}
       </h2>
       <p className="mt-2 max-w-[72ch] text-caption text-ink-muted" data-sources-caption data-numbers>

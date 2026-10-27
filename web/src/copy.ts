@@ -4325,7 +4325,7 @@ export const copy = {
   // never counts, ranks or picks the most common risk. Risk names are the closed list's labels
   // (config/lessons.toml), in straight double quotes inside a sentence.
   packageRisks: {
-    // The ticket's exact words; uppercase through CSS.
+    // The ticket's exact words, shown as written: capitals appear only in a chart's labels (DESIGN.md section 3).
     eyebrow: "Planning · PPSD section 3",
     // Hidden from screen readers, so the heading reads "Procurement risks and what helped".
     number: "3 ·",

@@ -16,7 +16,7 @@ import { Button } from "./Button";
 import { Fill } from "./Fill";
 import { MonoWords } from "./MonoWords";
 import { Num } from "./Num";
-import { chartType, swarm } from "./RangeChart";
+import { chartType, swarm, titleSize } from "./RangeChart";
 import { Source } from "./Source";
 import { Table } from "./Table";
 import { TextLink } from "./TextLink";
@@ -482,7 +482,7 @@ export function CostEstimate({ cost, readinessHref, asOf = null }: {
   return (
     <div ref={root} className="flex flex-col gap-2" data-cost={abstain ? "abstain" : "ranged"}>
       {intro}
-      <p id={titleId} className="mt-2 font-bold text-chart-text" style={{ fontSize: type.l }} data-cost-title>
+      <p id={titleId} className="mt-2 font-bold text-chart-text" style={{ fontSize: titleSize(type) }} data-cost-title>
         <CostTitle cost={cost} onCount={showTable} />
       </p>
       {abstain && (

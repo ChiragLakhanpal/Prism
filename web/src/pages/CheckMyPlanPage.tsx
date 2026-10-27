@@ -54,7 +54,7 @@ function ColumnLists({ form, open = false, headingLevel }: { form: UploadForm; o
   const panel = useId();
   const lists = (
     <div id={panel} className="mt-2 flex flex-col gap-2 text-small text-ink" data-column-lists>
-      {headingLevel && <h2 className="text-title text-ink-heading">{words.columnsHeading}</h2>}
+      {headingLevel && <h2 className="text-h2 text-ink-heading">{words.columnsHeading}</h2>}
       <p>{words.columnsIntro}</p>
       <p className="font-semibold">{words.columnsRequired}</p>
       <ul className="list-disc pl-4">
@@ -177,7 +177,7 @@ function UploadCard({ form, preview }: { form: UploadForm; preview: boolean }) {
   if (phase.state === "reading") {
     return (
       <section className="mt-6 max-w-[640px] rounded-md border border-line bg-surface p-4 @md/page:p-6" data-reading>
-        <h2 className="text-title text-ink-heading">{words.heading}</h2>
+        <h2 className="text-h2 text-ink-heading">{words.heading}</h2>
         <AccessLabel className="mt-2" />
         <p className="mt-3 text-small text-ink">{words.reading}</p>
         <div className="mt-3">
@@ -205,7 +205,7 @@ function UploadCard({ form, preview }: { form: UploadForm; preview: boolean }) {
         </div>
       )}
       <section aria-labelledby={`${id}-heading`} className="mt-6 max-w-[640px] rounded-md border border-line bg-surface p-4 @md/page:p-6" data-upload-card>
-        <h2 id={`${id}-heading`} className="text-title text-ink-heading">
+        <h2 id={`${id}-heading`} className="text-h2 text-ink-heading">
           {words.heading}
         </h2>
         <AccessLabel className="mt-2" />
@@ -227,7 +227,7 @@ function UploadCard({ form, preview }: { form: UploadForm; preview: boolean }) {
                   <p id={`${id}-project-hint`} className="text-caption text-ink-muted">{words.projectHint}</p>
                   <select id={`${id}-project`} ref={projectInput} value={project} onChange={(event) => setProject(event.target.value)}
                     aria-describedby={`${id}-project-hint${errors.project ? ` ${id}-project-error` : ""}`} aria-invalid={Boolean(errors.project) || undefined}
-                    className="h-11 rounded-md border border-line-strong bg-surface px-3 text-body text-ink">
+                    className="h-11 rounded-sm border border-line-strong bg-surface px-3 text-body text-ink">
                     <option value="">{words.projectPlaceholder}</option>
                     {form.projects.map((one) => (
                       <option key={one.project_id} value={one.project_id}>
@@ -255,7 +255,7 @@ function UploadCard({ form, preview }: { form: UploadForm; preview: boolean }) {
                   aria-describedby={describedBy} aria-invalid={Boolean(errors.file) || undefined}
                   onChange={(event) => choose(event.target.files?.[0] ?? null)} />
                 <span aria-hidden="true"
-                  className="inline-flex h-11 cursor-pointer items-center rounded-pill border-2 border-primary px-6 text-button text-primary peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-focus"
+                  className="inline-flex h-11 cursor-pointer items-center rounded-sm border-2 border-primary px-6 text-button text-primary peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-focus"
                   onClick={() => fileInput.current?.click()}>
                   {words.choose}
                 </span>
@@ -278,7 +278,7 @@ function UploadCard({ form, preview }: { form: UploadForm; preview: boolean }) {
         </form>
       </section>
       <section className="mt-8 max-w-[72ch]" aria-labelledby={`${id}-published`}>
-        <h2 id={`${id}-published`} className="text-title text-ink-heading">{words.publishedHeading}</h2>
+        <h2 id={`${id}-published`} className="text-h2 text-ink-heading">{words.publishedHeading}</h2>
         {form.projects.some((one) => one.latest_plan) ? (
           <>
             <p className="mt-2 text-body text-ink">{words.publishedIntro(agency)}</p>

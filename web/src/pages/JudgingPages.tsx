@@ -206,7 +206,7 @@ export function JudgingBody({ list, onShow, busy = false }: { list: JudgingList;
       <p className="max-w-prose text-body text-ink-muted">{w.purpose}</p>
       {list.total > 0 && (
         <>
-          <p tabIndex={-1} data-lead className="mt-6 text-title text-ink-heading outline-none @md/page:text-h3" data-judging-lead>
+          <p tabIndex={-1} data-lead className="mt-6 text-lead text-ink-heading outline-none" data-judging-lead>
             {lead}
           </p>
           <p className="mt-2 text-caption text-ink-muted">
@@ -269,9 +269,9 @@ export function JudgingSkeleton() {
         {w.loading}
       </p>
       <p className="max-w-prose text-body text-ink-muted">{w.purpose}</p>
-      <SkeletonLine className="mt-6 text-title @md/page:text-h3" width="w-[60%]" />
+      <SkeletonLine className="mt-6 text-lead" width="w-[60%]" />
       <SkeletonLine className="mt-2 text-caption" width="w-[40%]" />
-      <Skeleton className="mt-4 h-11 w-full @md/page:w-50" radius="rounded-pill" />
+      <Skeleton className="mt-4 h-11 w-full @md/page:w-50" radius="rounded-sm" />
       <SkeletonText className="mt-6 text-small @md/page:mt-8" widths={["w-full", "w-1/2"]} />
       <div className="mt-6 @md/page:mt-8" aria-hidden="true">
         <span className="block text-small text-ink-muted">{w.show}</span>
@@ -660,7 +660,7 @@ export function JudgingDesk({ query: loaded, initial, sample = false }: {
             className="flex flex-col gap-3 outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
             data-judging-panel
           >
-            <h2 id={panelId} ref={panelHeading} tabIndex={-1} className="text-title text-ink-heading focus:outline-none">
+            <h2 id={panelId} ref={panelHeading} tabIndex={-1} className="text-h2 text-ink-heading focus:outline-none">
               {fillText(w.panel, { i: at, pool })}
             </h2>
             {!wide && failedAlert}
@@ -751,7 +751,7 @@ export function JudgingQuerySkeleton({ n = 1, sample = false }: { n?: number; sa
         <SkeletonLine width="w-3/5" />
       </span>
       <Skeleton className="h-2 w-60" radius="rounded-pill" />
-      <SkeletonLine className="mt-3 text-title" width="w-30" />
+      <SkeletonLine className="mt-3 text-h2" width="w-30" />
       <div className="rounded-md border border-line">
         <Skeleton className="h-8 w-full rounded-b-none" />
         <SkeletonText className="max-w-prose p-4 text-body" widths={["w-full", "w-full", "w-full", "w-full", "w-full", "w-3/5"]} />

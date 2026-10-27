@@ -309,7 +309,7 @@ export function ExportSuccess({ draft, fresh, headingRef, date, className }: Suc
     >
       <Check aria-hidden="true" className="size-5 shrink-0 text-success" />
       <div className="min-w-0">
-        <h2 id={headingId} ref={headingRef} tabIndex={-1} className="text-title text-ink-heading focus:outline-none" data-numbers>
+        <h2 id={headingId} ref={headingRef} tabIndex={-1} className="text-h2 text-ink-heading focus:outline-none" data-numbers>
           {title}
         </h2>
         <p className="mt-2 max-w-[72ch] text-body text-ink">

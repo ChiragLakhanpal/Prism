@@ -143,7 +143,7 @@ export function ChangesError({
   return (
     <section aria-labelledby="changes" data-changes="error">
       <EightColumns prose>
-        <h2 ref={headingRef} id="changes" tabIndex={-1} className="scroll-mt-4 text-title text-ink-heading focus:outline-none">
+        <h2 ref={headingRef} id="changes" tabIndex={-1} className="scroll-mt-4 text-h2 text-ink-heading focus:outline-none">
           {copy.changes.titleUnknown}
         </h2>
         <div className="mt-2">
@@ -318,7 +318,7 @@ export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyI
           pill={<Skeleton className="h-[30px] w-[170px] rounded-pill" />}
           // The draft action's places, so the rows stay put when the check arrives (ticket 35). Its caption
           // takes two lines below 768 px.
-          action={slotShown ? <Skeleton className="h-11 w-56 rounded-pill" /> : undefined}
+          action={slotShown ? <Skeleton className="h-11 w-56 rounded-sm" /> : undefined}
           feedforward={
             slotShown ? (
               <>

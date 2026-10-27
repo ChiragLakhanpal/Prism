@@ -223,7 +223,7 @@ function DigestBlock({ page, isReviewer }: { page: LessonsPageAnswer; isReviewer
   const digest = page.digest!;
   return (
     <div data-digest={digest.kind}>
-      <p id="lessons-digest" className="max-w-prose text-title text-ink-heading @md/page:text-h3">
+      <p id="lessons-digest" className="max-w-prose text-lead text-ink-heading">
         <PageSentence segments={digest.segments} popover={digestPopover(digest, page.visit?.last_visit_on ?? null, isReviewer)} />
       </p>
       {digest.kind === "first" && <p className="mt-2 max-w-prose text-caption text-ink-muted">{w.firstCaption}</p>}
@@ -247,7 +247,7 @@ function Reports({ feedback }: { feedback: Feedback }) {
   };
   return (
     <section aria-labelledby="lessons-reports" data-reports={feedback.never ? "never" : "sentence"}>
-      <h2 id="lessons-reports" className="text-title text-ink-heading">
+      <h2 id="lessons-reports" className="text-h2 text-ink-heading">
         {w.reportsTitle}
       </h2>
       {feedback.never || !feedback.segments ? (
@@ -290,7 +290,7 @@ function FilterBar({ library, onChange, busy }: { library: LibraryAnswer; onChan
                   data-filter={key}
                   onChange={(event) => onChange({ ...chosen, [key]: event.target.value || null })}
                   className={cx(
-                    "h-11 w-full appearance-none rounded-md border border-line-strong pr-10 pl-3 text-small text-ink hover:bg-tint-hover",
+                    "h-11 w-full appearance-none rounded-sm border border-line-strong pr-10 pl-3 text-small text-ink hover:bg-tint-hover",
                     isSet ? "bg-tint shadow-[inset_0_0_0_2px_var(--color-primary)]" : "bg-surface",
                   )}
                 >
@@ -385,7 +385,7 @@ function LibrarySection({ initial, search, isReviewerWaiting }: { initial: Libra
   }
   return (
     <section aria-labelledby="library" data-library="ready" className="flex flex-col">
-      <h2 id="library" tabIndex={-1} className="text-title text-ink-heading outline-none">
+      <h2 id="library" tabIndex={-1} className="text-h2 text-ink-heading outline-none">
         {w.libraryTitle}
       </h2>
       {library.unknown_filter && (
@@ -473,7 +473,7 @@ function PageSkeleton() {
       <p role="status" className="clip-visually">
         {w.loading}
       </p>
-      <span className="flex max-w-prose flex-col text-title @md/page:text-h3">
+      <span className="flex max-w-prose flex-col text-lead">
         <SkeletonLine width="w-full" />
         <SkeletonLine width="w-[70%]" />
       </span>
@@ -500,7 +500,7 @@ export function LessonsBody({ page, search, isReviewer, isReviewerWaiting = fals
       )}
       {page.notices.length > 0 && (
         <section aria-labelledby="lessons-changed" data-changed>
-          <h2 id="lessons-changed" className="text-title text-ink-heading">
+          <h2 id="lessons-changed" className="text-h2 text-ink-heading">
             {w.changedTitle}
           </h2>
           <p className="mt-1 max-w-prose text-caption text-ink-muted">{w.changedCaption}</p>
@@ -513,7 +513,7 @@ export function LessonsBody({ page, search, isReviewer, isReviewerWaiting = fals
       )}
       {page.new_lessons && (
         <section aria-labelledby="lessons-new" data-new>
-          <h2 id="lessons-new" className="text-title text-ink-heading">
+          <h2 id="lessons-new" className="text-h2 text-ink-heading">
             {w.newTitle}
           </h2>
           <p className="mt-1 max-w-prose text-caption text-ink-muted">{w.newCaption}</p>

@@ -199,7 +199,7 @@ function GroupRows({ group, pid, open, onToggle, bodyId }: { group: Group; pid: 
     <tbody id={bodyId} data-group={group.type}>
       <tr className="border-t border-line bg-surface">
         <th colSpan={COLUMNS.length} scope="rowgroup" className="px-3 pt-6 pb-2 text-left font-normal">
-          <span className="text-title text-ink-heading">{words.group[group.type]}</span>
+          <span className="text-h2 text-ink-heading">{words.group[group.type]}</span>
           <GroupCount count={group.count} />
         </th>
       </tr>
@@ -247,7 +247,7 @@ function GroupCards({ group, pid, open, onToggle, listId }: { group: Group; pid:
   );
   return (
     <section data-group={group.type}>
-      <h3 className="text-title text-ink-heading">
+      <h3 className="text-h2 text-ink-heading">
         {words.group[group.type]}
         <GroupCount count={group.count} />
       </h3>

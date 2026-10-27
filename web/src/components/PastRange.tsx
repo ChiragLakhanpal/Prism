@@ -45,7 +45,7 @@ import { Fill, Joined } from "./Fill";
 import { LoadError } from "./LoadError";
 import { MonoWords } from "./MonoWords";
 import { Num, type NumCheck } from "./Num";
-import { axisFor, chartType, RangeChart, type PlanMove, type RangeMark } from "./RangeChart";
+import { axisFor, chartType, RangeChart, titleSize, type PlanMove, type RangeMark } from "./RangeChart";
 import { Skeleton, SkeletonLine, SkeletonText } from "./Skeleton";
 import { Source } from "./Source";
 import { Table, type Column, type Row } from "./Table";
@@ -226,7 +226,7 @@ export function PastRange({
       data-lane2={estimate ? estimate.status : undefined}
       className="rounded-md border border-line bg-surface p-4 @md/page:p-6"
     >
-      <p className="text-label text-ink-muted uppercase">{words.eyebrow}</p>
+      <p className="text-label text-ink-muted">{words.eyebrow}</p>
       {/* "Compare with" sits in the heading row, beside what it changes, and wraps under the heading when the row
           is too narrow (the 26 brief, section 3.1). */}
       <div className="mt-1 flex flex-wrap items-center justify-between gap-x-6 gap-y-3" data-heading-row>
@@ -387,7 +387,7 @@ function NoChart({ title, children }: { title: ReactNode; children: ReactNode })
     <div className="mt-4 flex gap-3" data-no-chart>
       <CircleDashed aria-hidden="true" className="size-6 shrink-0 text-line-strong" />
       <div className="min-w-0">
-        <h3 className="text-title text-balance text-ink-heading">{title}</h3>
+        <h3 className="text-h2 text-balance text-ink-heading">{title}</h3>
         {children}
       </div>
     </div>
@@ -931,7 +931,7 @@ function Populated({
 
   return (
     <div ref={measure} className="mt-4">
-      <h3 id={ids.title} className="font-bold text-pretty text-ink-heading" style={{ fontSize: type.l, lineHeight: 1.3 }} data-finding>
+      <h3 id={ids.title} className="font-bold text-pretty text-ink-heading" style={{ fontSize: titleSize(type), lineHeight: 1.3 }} data-finding>
         {title}
       </h3>
       {abstained && more}
@@ -1242,8 +1242,8 @@ function PastRangeSkeleton({ twoLanes = false }: { twoLanes?: boolean }) {
   // The title and the summary hold checkable numbers, whose buttons make each line a little taller: pb-2.
   return (
     <div ref={measure} aria-hidden="true" className="mt-4" data-past-range-skeleton>
-      <SkeletonText className="pb-2 @md/page:hidden" widths={lines(3)} style={{ fontSize: type.l, lineHeight: 1.3 }} />
-      <SkeletonText className="hidden pb-2 @md/page:flex" widths={lines(2)} style={{ fontSize: type.l, lineHeight: 1.3 }} />
+      <SkeletonText className="pb-2 @md/page:hidden" widths={lines(3)} style={{ fontSize: titleSize(type), lineHeight: 1.3 }} />
+      <SkeletonText className="hidden pb-2 @md/page:flex" widths={lines(2)} style={{ fontSize: titleSize(type), lineHeight: 1.3 }} />
       <SkeletonText className="mt-2 pb-2 text-body @md/page:hidden" widths={lines(7, "w-2/5")} />
       <SkeletonText className="mt-2 @md/page:hidden" widths={lines(3)} style={{ fontSize: type.m }} />
       <SkeletonLine className="mt-2 hidden @md/page:flex" width="w-4/5" style={{ fontSize: type.m }} />

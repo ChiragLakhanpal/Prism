@@ -53,7 +53,7 @@ export function PaperSheet({ draft, numbers, opened, open, under, after }: {
       <div className="flex flex-col gap-8">
         {draft.notes.map((note) => (
           <section key={note.key} aria-labelledby={`part-${note.key}`} data-paper-part={note.key}>
-            <h3 id={`part-${note.key}`} className="text-title text-ink-heading">
+            <h3 id={`part-${note.key}`} className="text-h2 text-ink-heading">
               {words.parts[note.key]}
             </h3>
             {note.key === "ppsd" && (note.drafts ?? []).length > 0 && (

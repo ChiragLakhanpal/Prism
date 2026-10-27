@@ -130,7 +130,7 @@ export function RisksView({
       className="rounded-md border border-line bg-surface p-4 @md/page:p-6"
     >
       <div className="@container/risks">
-        <p className="text-label text-ink-muted uppercase">{words.eyebrow}</p>
+        <p className="text-label text-ink-muted">{words.eyebrow}</p>
         <h2 ref={headingRef} id={headingId} tabIndex={-1} className="mt-2 text-h2 text-ink-heading focus:outline-none">
           <span aria-hidden="true">{words.number} </span>
           {words.heading}
@@ -204,7 +204,7 @@ function Ready({
   const ppar = rows.some((row) => row.sources.some((source) => source.doc_short === "PPAR"));
   return (
     <>
-      <h3 id={findingId} data-finding className="mt-6 max-w-prose text-title text-balance text-ink-heading">
+      <h3 id={findingId} data-finding className="mt-6 max-w-prose text-h2 text-balance text-ink-heading">
         <Finding result={result} onAll={handlers.onAll} onCount={handlers.onCount} />
       </h3>
       <div className="mt-2 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 text-small">
@@ -535,7 +535,7 @@ function EmptyCard({ title, children }: { title: ReactNode; children?: ReactNode
     <div className="mt-6 flex gap-3" data-no-risks>
       <CircleDashed aria-hidden="true" className="size-6 shrink-0 text-line-strong" />
       <div className="min-w-0">
-        <h3 className="max-w-prose text-title text-balance text-ink-heading">{title}</h3>
+        <h3 className="max-w-prose text-h2 text-balance text-ink-heading">{title}</h3>
         {children}
       </div>
     </div>
@@ -598,7 +598,7 @@ export function RisksSkeleton() {
   const c = words.columns;
   return (
     <div aria-hidden="true" data-risks-skeleton>
-      <SkeletonText className="mt-6 max-w-prose text-title" widths={["w-[90%]", "w-1/2"]} />
+      <SkeletonText className="mt-6 max-w-prose text-h2" widths={["w-[90%]", "w-1/2"]} />
       <SkeletonLine className="mt-2 text-caption" width="w-2/5" />
       <div className="mt-3 hidden rounded-md border border-line @min-[40rem]/risks:block">
         <table className="w-full table-fixed border-collapse text-small">

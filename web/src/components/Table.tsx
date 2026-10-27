@@ -207,12 +207,12 @@ export function Table({
         <>
           <LoadingLabel />
           {labelledBy ? null : state.shortTitle ? (
-            <SkeletonLine className="text-title" width="w-2/5" />
+            <SkeletonLine className="text-h2" width="w-2/5" />
           ) : (
             <>
-              <SkeletonText className="text-title @md/page:hidden" widths={["w-full", "w-3/5"]} />
+              <SkeletonText className="text-h2 @md/page:hidden" widths={["w-full", "w-3/5"]} />
               <div className="hidden @md/page:block">
-                <SkeletonLine className="text-title" width="w-3/5" />
+                <SkeletonLine className="text-h2" width="w-3/5" />
               </div>
             </>
           )}
@@ -220,7 +220,7 @@ export function Table({
         </>
       ) : (
         <>
-          {!labelledBy && createElement(`h${level}`, { id: titleId, className: "text-title text-ink-heading" }, title)}
+          {!labelledBy && createElement(`h${level}`, { id: titleId, className: "text-h2 text-ink-heading" }, title)}
           {count && (
             // The count, and the cards' note as its own element at the row's end, which wraps to a line
             // of its own when the two don't fit (DESIGN.md section 5, the Plan check table).

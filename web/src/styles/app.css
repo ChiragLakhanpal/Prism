@@ -52,7 +52,7 @@
      16 for a bottom sheet's top corners, 2 for skeleton bars. */
   --radius-xs: 2px;  --radius-sm: 4px;  --radius-md: 8px;  --radius-lg: 16px;  --radius-pill: 32px;
   /* Deprecated: the deck's last use (ticket 90). The class lint refuses rounded-box outside web/src/deck/
-     and the files that used it on October 27, 2026 (web/lint/rules.ts, FROZEN_CLASS_USES). */
+     and the box's band, which the bar ticket rewrites (web/lint/rules.ts, FROZEN_CLASS_USES). */
   --radius-box: 22px;
 
   /* DESIGN.md section 3: the type scale. Sizes are in rem, so they follow the reader's default font
@@ -73,7 +73,8 @@
   --text-chart-label--letter-spacing: 0.02em;
   --text-button: 0.875rem;   --text-button--line-height: 1.25rem;   --text-button--font-weight: 600;
   /* Deprecated: the deck's last uses (ticket 90). title is retired into h2, so this alias takes h2's
-     values, and every page that still says text-title draws as h2 until the class sweep moves it. */
+     values. Since the class sweep (ticket 91) only the deck and the evidence drawer's head, which the
+     frame ticket rewrites, still say text-title. */
   --text-title: 1.125rem;    --text-title--line-height: 1.5rem;     --text-title--font-weight: 600;
   --font-weight-light: 300;  --font-weight-normal: 400;  --font-weight-medium: 500;  --font-weight-semibold: 600;  --font-weight-bold: 700;
   --default-font-family: var(--font-sans);

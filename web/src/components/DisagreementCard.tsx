@@ -116,7 +116,7 @@ export function DisagreementCard({
       className={cx("@container/disagreement rounded-r-md border border-l-4 border-line bg-surface p-4", warning ? "border-l-warning-icon" : "border-l-info-icon")}
     >
       <StatusBadge kind={warning ? "two-reports-disagree" : "sources-differ"} />
-      {subject && createElement(`h${level}`, { className: "mt-2 text-title text-ink-heading", "data-card-subject": "" }, subject)}
+      {subject && createElement(`h${level}`, { className: "mt-2 text-h2 text-ink-heading", "data-card-subject": "" }, subject)}
       <ul aria-label={words.sides} data-disagreement-sides className="mt-4 grid grid-cols-1 gap-3 @min-[35rem]/disagreement:grid-cols-2">
         {sides.map((side, index) => {
           const keptThis = Boolean(kept && side.assertionId === kept);

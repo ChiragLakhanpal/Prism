@@ -110,7 +110,7 @@ function OptionsTable({ comparables, estimate }: { comparables: ComparablesResul
   return (
     <div className="@container/options flex flex-col gap-3" data-approach-table>
       <table className="w-full border-collapse text-small @max-[30rem]/options:hidden">
-        <caption className="pb-2 text-left text-title text-ink-heading">
+        <caption className="pb-2 text-left text-h2 text-ink-heading">
           <Fill template={title} slots={{ k1: <Num count={first.k} capital />, n: <Num value={options.n} options={{ compact: false }} />, option1: approachName(first, true) }} />
           <span className="mt-1 block text-caption font-normal text-ink-muted">{words.count(formatCount(options.approaches.length))}</span>
         </caption>
@@ -157,7 +157,7 @@ function OptionsTable({ comparables, estimate }: { comparables: ComparablesResul
       </table>
       {/* Below a 480 px frame: one card per approach. */}
       <div className="hidden flex-col gap-3 @max-[30rem]/options:flex">
-        <p className="text-title text-ink-heading">
+        <p className="text-h2 text-ink-heading">
           <Fill template={title} slots={{ k1: <Num count={first.k} capital />, n: <Num value={options.n} options={{ compact: false }} />, option1: approachName(first, true) }} />
         </p>
         <p className="text-caption text-ink-muted">{words.count(formatCount(options.approaches.length))}</p>

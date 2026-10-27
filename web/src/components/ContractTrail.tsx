@@ -118,7 +118,7 @@ function StageCard({ title, date, pill, active, children }: { title: ReactNode; 
       )}
     >
       <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-        <h2 className="text-title text-ink-heading">{title}</h2>
+        <h2 className="text-h2 text-ink-heading">{title}</h2>
         <p className="flex items-baseline gap-3 text-small text-ink-muted tabular-nums">
           {date && <span>{date}</span>}
           {pill}
@@ -132,7 +132,7 @@ function StageCard({ title, date, pill, active, children }: { title: ReactNode; 
 function MissingCard({ title, children }: { title: ReactNode; children: ReactNode }) {
   return (
     <section data-stage-card="missing" className="rounded-md border border-dashed border-line-strong bg-surface p-4">
-      <h2 className="text-title text-ink-heading">{title}</h2>
+      <h2 className="text-h2 text-ink-heading">{title}</h2>
       <div className="mt-2 flex flex-col gap-2 text-small text-ink">{children}</div>
     </section>
   );
@@ -564,8 +564,8 @@ function ParagraphCard({ record, n, many, focusRef }: { record: ParagraphRecord;
     <article data-paragraph-card={record.passage_id} className="flex flex-col gap-3 rounded-md border border-line bg-surface p-4 @md/page:p-6">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-label text-ink-muted uppercase">{copy.evidence.eyebrow[record.stratum]}</p>
-          <h4 className="mt-1 text-title text-ink-heading">{cardTitle(record)}</h4>
+          <p className="text-label text-ink-muted">{copy.evidence.eyebrow[record.stratum]}</p>
+          <h4 className="mt-1 text-h2 text-ink-heading">{cardTitle(record)}</h4>
         </div>
         <span ref={focusRef}>
           <Pill id={record.evidence_id} n={n} kind={record.short_name ?? doc} reference={numbered ? words.paraShort(record.paragraph) : record.section_path} date={date} />
@@ -653,7 +653,7 @@ function ReportGroup({ group, records, numbers, many }: { group: ParagraphGroup;
 function ParagraphsStage({ found, numbers, many }: { found: Extract<Stage, { stage: "paragraphs" }>; numbers: Map<string, number>; many: boolean }) {
   return (
     <section data-paragraphs aria-labelledby="trail-together">
-      <h2 id="trail-together" className="text-title text-ink-heading">{words.together.title}</h2>
+      <h2 id="trail-together" className="text-h2 text-ink-heading">{words.together.title}</h2>
       <p className="mt-2 max-w-prose text-body text-ink">{words.together.intro}</p>
       <ul className="mt-4 flex flex-col gap-6">
         {found.groups.map((group) => (

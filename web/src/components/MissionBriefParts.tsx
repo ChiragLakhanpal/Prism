@@ -277,7 +277,7 @@ export function MissionBriefParts({ notes, evidence, numbers, opened, open, subj
         const tableTitle = (words.tables[note.key] ?? "").replace("{date}", titleDate ? formatDate(titleDate) : "");
         return (
           <section key={note.key} aria-labelledby={`part-${note.key}`} data-brief-part={note.key}>
-            <h3 id={`part-${note.key}`} tabIndex={-1} className="text-title text-ink-heading focus:outline-none">
+            <h3 id={`part-${note.key}`} tabIndex={-1} className="text-h2 text-ink-heading focus:outline-none">
               {words.parts[note.key]}
             </h3>
             <div className="mt-2">
