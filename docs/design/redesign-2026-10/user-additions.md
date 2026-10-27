@@ -1,0 +1,6 @@
+# The user's additions to the redesign brief (October 26, 2026, 21:40 PDT)
+
+1. The Data tab loses "How Strata works": the deck at /present (ticket 47) covers it, and it makes no sense under Data.
+2. The principle, in the user's words: "what to show where to who; not blast them with info but have the information right where they logically need it, or would make it really easy for them to perform their job, and make it delightful." Said another way: each screen shows what the person needs for the step they are on, the rest is one click away where they would look for it, and the whole thing is pleasant to look at.
+3. The old app, fairshare (the repo at ../fairshare, read only; the deployed copy at https://fairshare-7474658003099155.aws.databricksapps.com/?region=All&month=2026-09 needs a sign-in to the old workspace), had a lot of this: tooltips, "notes" that work like citations, visual polish, a pleasant look. The lead should borrow the patterns (not the palette or the subject) where they fit Strata's rules: every number from a tool, every claim cited, the copy file as the only source of strings.
+4. The user waits for the pass to finish before tweaking; the prototype is what they judge in the morning.

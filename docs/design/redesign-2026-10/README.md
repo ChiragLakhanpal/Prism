@@ -1,0 +1,5 @@
+# The shell redesign of October 2026
+
+The design pass the user asked for on October 26, 2026: the tabs move into a sidebar with a rail, a real type hierarchy, the World Bank's design language, task panels in sequence with progressive disclosure, and the patterns of the user's earlier app, fairshare. Three rounds ran overnight: three studies, a design lead's plan and prototype, two independent critics, and the lead's revisions.
+
+Read in this order: `morning.md` (the note for the user: what to open, the ten-line plan, the decisions), `prototype.html` (open it in a browser; the controls at the bottom right switch pages, the rail at rest, the drawer's placement, the data state and the view), `plan.md`, `open.md` (the calls that are the user's), `tickets.md` (sixteen tickets in build order; opened as tickets 90 to 105 in `.scratch/strata/issues/`), `design-md.md` (the DESIGN.md text each ticket pastes). The critics' reviews are `critique-round1.md` and `critique-round3.md`; the inputs the lead folded in are `user-additions.md`, `fairshare-patterns.md` and `deck-notes.md`.
