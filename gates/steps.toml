@@ -86,7 +86,9 @@ lane = "python"
 # The wizard tests take about 60 seconds in one process, so six pytest-xdist workers share them.
 # Most of that time is in 16 tests that run the whole wizard, and they sit together at the top of
 # the file, so --dist worksteal spreads them out: about 13 seconds when nothing else runs, against
-# 25 seconds with xdist's default.
+# 25 seconds with xdist's default. Since ticket 56 the wizard reads its settings, models and statuses
+# in one Python start, so a run starts about 28 Python processes instead of 78, and the step takes 7
+# to 9 seconds in the gate.
 [[step]]
 name = "Run the Python tests for the wizard and the day-one probes"
 run = ["uv", "run", "--frozen", "pytest", "--basetemp", ".gate-tmp/ops", "--numprocesses", "6", "--dist", "worksteal", "ops/wizard/tests", "ops/dayone/tests"]
