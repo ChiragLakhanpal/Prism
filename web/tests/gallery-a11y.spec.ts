@@ -30,7 +30,6 @@ async function violations(page: Page) {
   );
 }
 
-// Each check reads the page as a fresh load at its width shows it.
 async function tabStops(page: Page) {
   const seen = new Set<string>();
   const problems: string[] = [];

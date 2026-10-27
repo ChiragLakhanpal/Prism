@@ -9,8 +9,8 @@ __pycache__/
 *.pyc
 .pytest_cache/
 
-# Web
-node_modules/
+# Web. No slash after node_modules, so a worktree's link to the main checkout's folder is ignored too.
+node_modules
 # The builds, in web/dist and web/dist-gallery, or in the folders STRATA_WEB_OUT names (web/out-dirs.ts)
 web/dist/
 web/dist-*/

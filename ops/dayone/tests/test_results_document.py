@@ -110,7 +110,7 @@ RECORDED = {
     "test": {"statuses": dayone.STATUSES, "filled": ("Result", "Chosen path"), "lines": "Evidence",
              "dated": "Last run"},
     "payg": {"statuses": None, "filled": ("Who",), "lines": None, "dated": "Last updated"},
-    "caps": {"statuses": ("capped", "not capped"), "filled": ("Budget", "Subscription offer"),
+    "caps": {"statuses": dayone.CAPS_STATUSES, "filled": ("Budget", "Subscription offer"),
              "lines": "Deployments", "dated": "Last checked"},
 }
 
@@ -144,8 +144,11 @@ def recorded_problems(block_id, fields, template):
         lines = fields[rule["lines"]] if isinstance(fields[rule["lines"]], list) else []
         if not [line for line in lines if line.strip() and line not in template[rule["lines"]]]:
             problems.append(f"it has no {rule['lines']} line.")
-    if not is_long_date(fields[rule["dated"]]):
-        problems.append(f"its {rule['dated']}, \"{fields[rule['dated']]}\", is not a date.")
+    dated = fields[rule["dated"]]
+    if not dated:
+        problems.append(f"its {rule['dated']} is blank, not a date.")
+    elif not is_long_date(dated):
+        problems.append(f"its {rule['dated']}, \"{dated}\", is not a date.")
     return problems
 
 
@@ -165,16 +168,23 @@ def document_problems(text, config):
     places = [f"Before block {block_id}" for block_id in ids] + [f"After block {ids[-1]}"]
     for place, mine, theirs in zip(places, between, template_between):
         if mine != theirs:
-            line = next(a for a, b in zip(mine.splitlines() + [""], theirs.splitlines() + [""]) if a != b)
-            problems.append(f"{place}, the text differs from what dayone.toml renders, at: {line!r}")
+            # Kept line endings make a difference of blank lines alone show as a differing line.
+            line = next(a for a, b in zip(mine.splitlines(keepends=True) + [""],
+                                          theirs.splitlines(keepends=True) + [""]) if a != b)
+            shown = repr(line.rstrip("\n")) if line.strip() else "a blank line"
+            problems.append(f"{place}, the text differs from what dayone.toml renders, at: {shown}")
     fields, template_fields = dayone.parse_blocks(text), dayone.parse_blocks(template)
     for (block_id, mine), (_, theirs) in zip(blocks, template_blocks):
-        if block_id == "summary":
-            if mine != dayone.block("summary", dayone.summary_table(config, fields)):
-                problems.append("Block summary: the table does not match the test blocks below it.")
-        elif mine != theirs:
+        if block_id != "summary" and mine != theirs:
+            # parse_blocks skips a line that is not a field, so a block must also read back as the fields it holds.
+            if mine != dayone.block(block_id, dayone.render_fields(list(fields[block_id].items()))):
+                problems.append(f"Block {block_id}: it holds lines that the wizard and the probes do not write.")
             found = recorded_problems(block_id, fields[block_id], template_fields[block_id])
             problems += [f"Block {block_id}: {problem}" for problem in found]
+    # The summary reads each test's Chosen path as text, so it is checked only when every one is (a blank field is []).
+    if all(isinstance(found.get("Chosen path", ""), str) for found in fields.values()):
+        if blocks[ids.index("summary")][1] != dayone.block("summary", dayone.summary_table(config, fields)):
+            problems.append("Block summary: the table does not match the test blocks below it.")
     return problems
 
 
@@ -235,8 +245,43 @@ def test_every_block_the_wizard_or_a_probe_records_passes_the_check(tmp_path):
     assert document_problems(results.read_text(), config) == []
 
 
+def recorded_test_7(tmp_path):
+    """A fresh template with test 7 recorded, as the wizard records it."""
+    results = fresh_template(tmp_path)
+    dayone.record_test(results, 7, dayone.Outcome("failed", "The CLI could not sign in with the token.",
+                                                  ["databricks current-user me exited 1."]), dt.date(2026, 10, 24))
+    return results.read_text()
+
+
+def test_a_difference_made_only_of_blank_lines_is_named_in_one_sentence(tmp_path):
+    config, text = dayone.load_config(), fresh_template(tmp_path).read_text()
+    padded = text.replace("<!-- dayone:test-3 -->", "\n<!-- dayone:test-3 -->", 1)
+
+    assert document_problems(padded, config) == [
+        "Before block test-3, the text differs from what dayone.toml renders, at: a blank line"]
+
+
+def test_stray_text_inside_a_recorded_block_is_named_in_one_sentence(tmp_path):
+    config, text = dayone.load_config(), recorded_test_7(tmp_path)
+    noted = text.replace("- Chosen path: Undecided.", "Hand note.\n- Chosen path: Undecided.", 1)
+    assert noted != text
+
+    assert document_problems(noted, config) == [
+        "Block test-7: it holds lines that the wizard and the probes do not write."]
+
+
+def test_a_blank_chosen_path_or_last_run_is_named_in_one_sentence(tmp_path):
+    config, text = dayone.load_config(), recorded_test_7(tmp_path)
+    chosen = next(line for line in text.splitlines() if line.startswith("- Chosen path: Undecided."))
+
+    assert document_problems(text.replace(chosen, "- Chosen path:", 1), config) == [
+        "Block test-7: its Chosen path is blank."]
+    assert document_problems(text.replace("- Last run: October 24, 2026", "- Last run:", 1), config) == [
+        "Block test-7: its Last run is blank, not a date."]
+
+
 def test_a_question_changed_in_a_copy_of_the_settings_file_fails_both_checks(tmp_path):
-    question = "`ai_parse_document` runs on a 120-page PAD."
+    question = dayone.load_config()["tests"]["3"]["question"]
     settings = dayone.CONFIG_PATH.read_text()
     assert settings.count(f'question = "{question}"') == 1
     changed = tmp_path / "dayone.toml"
@@ -354,6 +399,36 @@ def test_the_document_lists_what_the_probes_leave_in_the_workspace():
             "`APPLICATIONINSIGHTS_CONNECTION_STRING`, but Databricks grants access to the whole scope, which also "
             "holds `AZURE_OPENAI_API_KEY`.") in section
     assert "workspace.default" not in text
+
+
+def test_the_last_bullet_names_only_the_one_key_when_the_app_reads_only_that_key(tmp_path):
+    """docs/workspace-catchup.md, ticket 03's step 4 of 4: when Databricks gives the app only the one key, a setting
+    changes the bullet, and `dayone.py refresh` rewrites the text outside the blocks, never a hand edit."""
+    config = dayone.load_config()
+    assert config["probe_app"]["secret_read"] == "scope"  # what list-acls showed on October 26, 2026
+    one_key = config | {"probe_app": {"secret_read": "key"}}
+    results = tmp_path / "results.md"
+    shutil.copy(RESULTS, results)
+
+    dayone.refresh_document(results, one_key)
+
+    text = results.read_text()
+    assert ("- Read access for the app `strata` to the secret `APPLICATIONINSIGHTS_CONNECTION_STRING` in the secret "
+            "scope `strata`, and to no other secret there.") in text
+    assert "Databricks grants access to the whole scope" not in text
+    assert document_problems(text, one_key) == []
+    assert dayone.read_results(results) == dayone.read_results(RESULTS)
+
+
+def test_refreshing_the_committed_document_leaves_it_as_it_is(tmp_path):
+    results = tmp_path / "results.md"
+    shutil.copy(RESULTS, results)
+
+    done = subprocess.run([sys.executable, str(DAYONE_DIR / "dayone.py"), "refresh", "--results", str(results)],
+                          capture_output=True, text=True)
+
+    assert done.returncode == 0, done.stderr
+    assert results.read_text() == RESULTS.read_text()
 
 
 def payg_done(results):

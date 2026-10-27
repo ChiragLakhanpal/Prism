@@ -15,7 +15,6 @@ from dayone import ProbeError, SetupError  # noqa: E402
 from strata.config import load_models  # noqa: E402
 
 
-
 class FakeSearch:
     def __init__(self, state="ONLINE", ready=True, rows=None, refuse_at=None, setup_fails_at=None):
         self.state, self.ready, self.refuse_at, self.setup_fails_at = state, ready, refuse_at, setup_fails_at

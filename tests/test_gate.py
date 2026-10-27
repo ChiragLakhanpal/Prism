@@ -279,9 +279,9 @@ def test_a_commit_of_only_markdown_skips_the_tests(repo):
 
 
 def test_a_commit_of_only_markdown_also_waits_for_the_lock(repo, gate_lock):
-    write(repo, "gates/steps.toml", steps_file(lock_wait=1))
+    write(repo, "gates/steps.toml", steps_file(lock_wait=0.2))
     git(repo, "add", "-A")
-    git(repo, "commit", "-q", "--no-verify", "-m", "Wait one second for the lock")
+    git(repo, "commit", "-q", "--no-verify", "-m", "Wait a fifth of a second for the lock")
     write(repo, "docs/notes.md", "# Notes\n\nOnly words changed.\n")
     git(repo, "add", "-A")
 
@@ -291,7 +291,7 @@ def test_a_commit_of_only_markdown_also_waits_for_the_lock(repo, gate_lock):
 
     output = done.stdout + done.stderr
     assert done.returncode != 0, output
-    assert "The gate gave up after 1 second, the wait limit in gates/steps.toml" in output
+    assert "The gate gave up after 0.2 seconds, the wait limit in gates/steps.toml" in output
     assert "Only Markdown files are staged" not in output
 
 
@@ -1009,6 +1009,21 @@ def pytest_steps_without_a_scratch_folder_of_their_own(steps):
 def test_each_pytest_step_keeps_its_scratch_in_a_folder_of_its_own_under_gate_tmp():
     assert pytest_steps_without_a_scratch_folder_of_their_own(gate_steps()) == []
     assert ".gate-tmp/" in (ROOT / ".gitignore").read_text().splitlines()
+
+
+def test_a_worktree_s_web_node_modules_is_ignored_as_a_folder_or_as_a_link(tmp_path):
+    """A ticket worktree may link the main checkout's web/node_modules, and `git add -A` must not commit the link."""
+    tree = tmp_path / "tree"
+    tree.mkdir()
+    git(tree, "init", "-q")
+    shutil.copy(ROOT / ".gitignore", tree / ".gitignore")
+    (tmp_path / "packages").mkdir()
+    (tree / "web").mkdir()
+    (tree / "web" / "node_modules").symlink_to(tmp_path / "packages")
+    (tree / "app" / "node_modules").mkdir(parents=True)
+    (tree / "app" / "node_modules" / "package.json").write_text("{}\n")
+
+    assert git(tree, "status", "--porcelain", "--untracked-files=all").stdout.split() == ["??", ".gitignore"]
 
 
 def test_a_passing_test_keeps_no_temporary_folder():

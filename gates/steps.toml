@@ -83,7 +83,7 @@ lane = "python"
 # twelve workers gave about the same total gate time (80, 85 and 111 seconds on six; 75, 82, 71 and
 # 74 on eight; 70 and 70 on ten; 73 and 70 on twelve), so the lane keeps eight. When the lane gets
 # slow again, run `uv run --frozen pytest --durations=15 tests ops/bundle/tests` to find the slowest
-# tests, since one slow test sets a floor that no number of workers can lower. Then try more workers
+# tests, since the lane can never take less time than its slowest test. Then try more workers
 # and keep the number that gives the lower total gate time over three runs, because the lanes share
 # the processors. Each test must be safe beside the others: README's gate section says how.
 name = "Run the Python tests under tests/ and ops/bundle/tests/, which may read the fixture database"

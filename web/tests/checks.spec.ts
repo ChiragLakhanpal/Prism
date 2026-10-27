@@ -7,7 +7,6 @@ import type { Page } from "@playwright/test";
 import { askFromTheBox, landed, open, panel } from "./answer-page";
 import { expect, test, windowBeside } from "./mocked";
 
-
 async function answered(page: Page, stream: string, width = 1440) {
   const seen = await open(page, { stream, width });
   await askFromTheBox(page);

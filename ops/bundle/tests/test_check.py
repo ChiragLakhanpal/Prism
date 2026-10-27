@@ -334,12 +334,16 @@ def test_a_schedule_that_is_not_daily_is_named_rather_than_guessed(capsys):
 # docs/workspace-catchup.md, bundle/README.md, check.py's own messages and the ground-truth SQL
 # comments write --env-file after the subcommand. The top parser takes it before the subcommand.
 # Both orders must give the same arguments. Parsing reads no env file, so these paths need not exist.
+# Each subcommand's two forms: --env-file after the subcommand, and before it.
+FORMS = {
+    "job-run": (["job-run", "--env-file", "{env}"], ["--env-file", "{env}", "job-run"]),
+    "same-rows": (["same-rows", "--env-file", "{env}"], ["--env-file", "{env}", "same-rows"]),
+    "schedules": (["schedules", "--env-file", "{env}", "--write"], ["--env-file", "{env}", "schedules", "--write"]),
+}
+SIX_FORMS = [form for pair in FORMS.values() for form in pair]
 
-@pytest.mark.parametrize(("after", "before"), [
-    (["job-run", "--env-file", "{env}"], ["--env-file", "{env}", "job-run"]),
-    (["same-rows", "--env-file", "{env}"], ["--env-file", "{env}", "same-rows"]),
-    (["schedules", "--env-file", "{env}", "--write"], ["--env-file", "{env}", "schedules", "--write"]),
-], ids=["job-run", "same-rows", "schedules"])
+
+@pytest.mark.parametrize(("after", "before"), list(FORMS.values()), ids=list(FORMS))
 def test_the_env_file_may_come_before_or_after_the_subcommand(tmp_path, after, before):
     env = tmp_path / "strata.env"
 
@@ -369,14 +373,9 @@ def test_an_env_file_given_before_and_after_the_subcommand_uses_the_later_one(tm
     assert check.parse(["--env-file", str(first), "same-rows"]).env_file == first
 
 
-def test_without_an_env_file_the_check_reads_the_main_checkout_s():
+def test_with_no_env_file_given_the_option_stays_none_for_the_default():
     assert check.parse(["job-run"]).env_file is None
     assert check.parse(["schedules", "--write"]).env_file is None
-
-
-SIX_FORMS = [["job-run", "--env-file", "{env}"], ["--env-file", "{env}", "job-run"],
-             ["same-rows", "--env-file", "{env}"], ["--env-file", "{env}", "same-rows"],
-             ["schedules", "--env-file", "{env}", "--write"], ["--env-file", "{env}", "schedules", "--write"]]
 
 
 def test_each_form_stops_at_a_missing_env_file_with_the_same_sentence(tmp_path, capsys):
@@ -410,9 +409,14 @@ COMMAND = re.compile(r'uv run --script ops/bundle/check\.py ((?:[^`"\n)]|"[^`"\n
 
 
 def commands_in(text):
-    """Each check.py command in text, split into arguments the way the shell splits them."""
+    """Each check.py command in text, split into arguments the way the shell splits them. A command the shell cannot
+    split, such as one with an apostrophe in a comment after it, comes back whole with the reason, so check.parse
+    refuses it and the test names its place."""
     for match in COMMAND.finditer(text):
-        yield shlex.split(match.group(1))
+        try:
+            yield shlex.split(match.group(1))
+        except ValueError as error:
+            yield [match.group(1).strip(), f"(the shell cannot read it: {error})"]
 
 
 def written_commands():
@@ -423,7 +427,8 @@ def written_commands():
     for path in places:
         text = path.read_text()
         if path.suffix == ".py":
-            text = re.sub(r"\"\s*\n\s*f?\"", "", text)  # a message Python splits over two string literals
+            # a message written as two string literals on two lines, which Python joins into one
+            text = re.sub(r"\"\s*\n\s*f?\"", "", text)
         for argv in commands_in(text):
             yield path.relative_to(REPO).as_posix(), argv
 
@@ -440,6 +445,19 @@ def test_a_double_quoted_argument_in_a_written_command_is_one_argument(text):
     """Ticket 76's merge gate cut `--env-file "<main checkout>/.env"` at the quote; the shell reads it whole."""
     assert list(commands_in(text)) == [["same-rows", "--env-file", "<main checkout>/.env"]]
     assert check.parse(next(commands_in(text))).env_file == Path("<main checkout>/.env")
+
+
+@pytest.mark.parametrize("text", [
+    f"    {CHECK_PY} job-run --env-file .env   # it's safe to run it again\n",
+    f"    {CHECK_PY} job-run --env-file .env \\\n",
+], ids=["apostrophe", "trailing-backslash"])
+def test_a_written_command_the_shell_cannot_read_fails_to_parse_and_says_why(text):
+    """shlex.split raises on an open quote or a backslash at the end, which named no file (ticket 80's review)."""
+    [argv] = list(commands_in(text))
+
+    assert argv[-1].startswith("(the shell cannot read it: ")
+    with pytest.raises(SystemExit):
+        check.parse(argv)
 
 
 def test_a_command_inside_a_python_string_ends_at_the_string_s_closing_quote():
@@ -464,7 +482,8 @@ def test_every_check_command_the_repo_writes_parses_as_written(capsys):
     places = {place for place, _ in commands}
     assert {"docs/workspace-catchup.md", "ops/bundle/check.py", "bundle/README.md"} <= places
     assert any(place.startswith("tests/ground_truth/") for place in places)
-    assert ("ops/bundle/check.py", ["schedules", "--env-file", ".env", "--write"]) in commands
+    # the module docstring's command, and the schedules note's message written on two lines and joined
+    assert commands.count(("ops/bundle/check.py", ["schedules", "--env-file", ".env", "--write"])) == 2
 
 
 # ── readiness ────────────────────────────────────────────────────────────

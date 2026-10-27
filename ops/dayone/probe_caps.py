@@ -151,7 +151,7 @@ def check(azure, config: dict, models: dict):
         outcome = Outcome("passed", "Every deployment with a cap in dayone.toml exists and finished deploying.",
                           lines)
     caps = [
-        ("Status", "capped" if capped and budget_ok else "not capped"),
+        ("Status", dayone.CAPS_STATUSES[0] if capped and budget_ok else dayone.CAPS_STATUSES[1]),
         ("Deployments", lines),
         ("Budget", budget),
         ("Subscription offer", offer),
@@ -222,7 +222,7 @@ def main(argv: list[str] | None = None, service=None) -> int:
             who = dayone.read_results(results).get("payg", {}).get("Who") or config["payg"]["who"]
             dayone.record_payg(results, "shows pay-as-you-go", who, None, config=config)
             print("The subscription shows pay-as-you-go, so I marked that step done.")
-    return code if status.get("Status") == "capped" else 1
+    return code if status.get("Status") == dayone.CAPS_STATUSES[0] else 1
 
 
 if __name__ == "__main__":
