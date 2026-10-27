@@ -1128,6 +1128,9 @@ class ToolReadiness:
     ready_for_measure: str
     draws_on: tuple[str, ...]
     ready_for_counted_in: str | None = None
+    # The key in config/thresholds.toml of the day the tool's records start, when it reads only records from a
+    # period: a known gap that ended before that day holds none of its answers back (ticket 63).
+    period_from: str | None = None
 
 
 @dataclass(frozen=True)
@@ -1174,14 +1177,14 @@ def _tool_readiness(path: Path, name: str, table: dict) -> ToolReadiness | None:
     if "readiness" not in table:
         return None
     entry = _Entry(path, f"tools.{name}.readiness", table["readiness"])
-    entry.only({"kind", "ready_for", "draws_on"})
+    entry.only({"kind", "ready_for", "draws_on", "period_from"})
     ready_for = _Entry(path, f"tools.{name}.readiness.ready_for", entry.table.get("ready_for"))
     ready_for.only({"row", "measure", "counted_in"})
     draws_on = entry.texts("draws_on")
     if ready_for.text("row") not in draws_on:
         ready_for._fail("row", "must be one of the rows in draws_on")
     return ToolReadiness(entry.text("kind"), ready_for.text("row"), ready_for.text("measure"), draws_on,
-                         ready_for.text("counted_in", required=False))
+                         ready_for.text("counted_in", required=False), entry.text("period_from", required=False))
 
 
 def _tool_parameters(path: Path, name: str, table: dict) -> tuple[ToolParameter, ...]:

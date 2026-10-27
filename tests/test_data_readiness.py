@@ -157,14 +157,15 @@ def test_each_kind_of_question_is_partial_because_of_a_gap_in_the_rows_it_draws_
     """The plan check reads plans whose confirmed first listing was read for none of the activities of
     the latest versions: the demo plan project's 46 (ticket 08's verifier) and the 212 of the stress
     shelf's plan (values.toml, stress_shelf.long_plan); document search reads reports in which some body
-    pages show no paragraph numbers; lessons read the same reports (ticket 29)."""
+    pages show no paragraph numbers; lessons read the same reports (ticket 29); the past range reads contracts of
+    which some lack a STEP reference (ticket 63)."""
     long_plan = tomllib.loads((ROOT / "tests" / "ground_truth" / "values.toml").read_text())["stress_shelf"]["long_plan"]
     latest = 46 + long_plan["activity_references"]
     result = readiness(engine)
 
     kinds = {kind["kind"]: kind for kind in result["kinds"]}
     assert {name: kind["status"] for name, kind in kinds.items()} == {"plan_check": "partial", "document_search": "partial",
-                                                                         "lessons": "partial"}
+                                                                         "lessons": "partial", "past_range": "partial"}
     plan_check = kinds["plan_check"]
     assert result["rows"][plan_check["ready_for"]]["count"] == latest
     held = registry_text(plan_check["holds_back"][0])
@@ -194,7 +195,7 @@ def test_the_headline_counts_the_kinds_by_status_and_names_the_two_gaps_that_rea
 
     # Design r3 N1: one status for every kind reads as one clause, not "Of the two ..., two in part".
     assert result["headline"]["text"] == (
-        f"I can answer each of the three kinds of question below in part. The biggest gaps are the {pages - found} "
+        f"I can answer each of the four kinds of question below in part. The biggest gaps are the {pages - found} "
         f"of {pages} body pages that lack paragraph numbers I could find and the 75 of 603 contracts that lack a "
         "reference from Systematic Tracking of Exchanges in Procurement (STEP).")
     numbers = [segment["number"] for segment in result["headline"]["segments"] if "number" in segment][:1]
@@ -263,7 +264,10 @@ def test_every_row_behind_a_number_names_the_table_it_was_counted_in_on_every_vi
     """Review r7 B1: every number's window names the table it was counted in. The document search's
     Ready for row named none, because the tool used its measure with no table. The views are the full
     page, each kind's own view and each source alone, so a row a filtered view adds first is checked."""
-    views = [{}, *({"from_tool": name} for name, tool in config.load_tools().items() if tool.readiness),
+    # A kind's own view is the one its coverage line opens: its tool's sources, from that tool (ticket 16's review,
+    # P2), since from_tool narrows the page only when sources filter it.
+    views = [{}, *({"from_tool": name, "sources": ",".join(tool.sources)}
+                   for name, tool in config.load_tools().items() if tool.readiness),
              *({"sources": key} for key in config.load_sources())]
 
     for arguments in views:
@@ -273,6 +277,26 @@ def test_every_row_behind_a_number_names_the_table_it_was_counted_in_on_every_vi
     result = readiness(engine)
     [search] = [kind for kind in result["kinds"] if kind["kind"] == "document_search"]
     assert result["rows"][search["ready_for"]]["source"]["counted_in"] == "strata.gold.passage"
+
+
+def test_the_past_range_s_view_shows_only_the_rows_it_reads_and_the_gaps_its_period_overlaps(engine):
+    """Ticket 12's review: the page opened from the past range's coverage line lists only what find_comparables
+    reads (notices, awards, plans and projects, never the project reports), and no gap from before the range's
+    period, which starts on past_range.period_from (July 1, 2019): the awards' fiscal 2017 to 2019 gap ends June 30,
+    2019. The past range is one of the kinds under "What you can ask"."""
+    tool = config.load_tools()["find_comparables"]
+
+    result = readiness(engine, sources=",".join(tool.sources), from_tool="find_comparables")
+
+    assert {row["id"] for row in result["sources"]} == {"notices", "awards", "plans", "projects"}
+    assert [row["id"] for row in result["sources"] if row["type"] == "gap"] == []
+    assert "fy2017_2019" not in {found["id"] for found in result["gaps"]}
+    assert [kind["kind"] for kind in result["kinds"]] == ["past_range"]
+    # The full page still lists the gap, but not as one that holds the past range back.
+    full = readiness(engine)
+    assert "fy2017_2019" in {row["id"] for row in full["sources"] if row["type"] == "gap"}
+    [past] = [kind for kind in full["kinds"] if kind["kind"] == "past_range"]
+    assert not any("2017" in registry_text(held) for held in past["holds_back"])
 
 
 def test_each_measure_in_a_column_is_written_with_that_column_as_its_kind(engine):
@@ -328,11 +352,14 @@ def test_the_plan_pages_each_reading_route_read_well_are_tool_rows_with_their_sh
 def test_opened_from_a_coverage_line_it_shows_only_the_sources_behind_it(engine):
     result = readiness(engine, sources="awards,notices", from_tool="find_comparables")
 
-    assert [row["id"] for row in result["sources"]] == ["awards", "fy2017_2019", "notices"]
+    # The awards' fiscal 2017 to 2019 gap ended before the past range's period (ticket 63).
+    assert [row["id"] for row in result["sources"]] == ["awards", "notices"]
     assert result["filter"] == {"sources": ["awards", "notices"], "unknown": 0, "from": "find_comparables",
                                 "shown": 2, "total": ROWS}
-    assert result["kinds"] == []  # neither tool in the registry reads awards or notices yet
-    assert result["headline"]["text"].startswith("Two sources are behind the past range. The biggest gaps are ")
+    assert [kind["kind"] for kind in result["kinds"]] == ["past_range"]
+    assert result["headline"]["text"] == (
+        "Two sources are behind the past range. The biggest gap is the 75 of 603 contracts that lack a reference from "
+        "Systematic Tracking of Exchanges in Procurement (STEP).")
 
 
 def test_opened_from_the_plan_check_it_shows_only_the_rows_the_plan_check_draws_on(engine):
@@ -362,7 +389,7 @@ def test_a_kind_s_count_spells_step_out_only_where_the_headline_above_it_does_no
     names no STEP gap, so its count is the first STEP there."""
     full = readiness(engine)
     assert "Systematic Tracking of Exchanges in Procurement (STEP)" in full["headline"]["text"]
-    assert [kind["spell_out"] for kind in full["kinds"]] == [False, False, False]
+    assert [kind["spell_out"] for kind in full["kinds"]] == [False, False, False, False]
 
     plan_check = readiness(engine, sources="documents,projects", from_tool="check_plan")
     assert "(STEP)" not in plan_check["headline"]["text"]
@@ -371,12 +398,13 @@ def test_a_kind_s_count_spells_step_out_only_where_the_headline_above_it_does_no
 
 def test_a_filtered_view_counts_the_rows_it_shows(engine):
     """The count line, the alert and the headline count the Sources table's rows, never the keys
-    in the link: the documents source alone fills three rows (ticket 18 added its notices' text)."""
-    result = readiness(engine, sources="documents,projects", from_tool="find_comparables")
+    in the link: the documents source alone fills three rows (ticket 18 added its notices' text). The count of
+    rejected bids draws on no rows of its own, so its view shows every row of the sources its link names."""
+    result = readiness(engine, sources="documents,projects", from_tool="rejected_bids")
 
     assert [row["id"] for row in result["sources"]] == ["projects", "plans", "reports", "notice_text"]
     assert result["filter"]["shown"] == 4
-    assert result["headline"]["text"].startswith("Four sources are behind the past range.")
+    assert result["headline"]["text"].startswith("Four sources are behind the count of rejected bids.")
 
 
 def test_a_link_never_puts_its_own_words_in_the_headline_and_unknown_keys_are_only_counted(engine):

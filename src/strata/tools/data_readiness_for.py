@@ -44,7 +44,7 @@ from functools import cache
 from importlib import resources
 
 from strata.config import (AS_PUBLISHED, EVERY_COUNTRY, READINESS_COLUMNS, SLICE_COUNTRIES, Fix, ReadinessColumn,
-                           ReadinessRow, Source, load_sources, load_tools)
+                           ReadinessRow, Source, load_sources, load_thresholds, load_tools)
 from strata.tools.registry import Call, ToolContractError
 
 ALL = "all"  # the subject of a source's measure for every country
@@ -659,7 +659,10 @@ def _kinds(page: Page, ranked: list[Gap], in_view: set[str], from_tool: str | No
                                     f"counted_in in config/tools.toml, because no column or check of the row "
                                     f"{kind.ready_for_row!r} shows it.")
         ready_for = page.measures.use(source, kind.ready_for_measure, counted_in)
-        mine = [found for found in ranked if found.row_id in kind.draws_on]
+        # A known gap that ended before the tool's period holds none of its answers back (ticket 63).
+        before = _before_period(page.sources, tool.name)
+        mine = [found for found in ranked if found.row_id in kind.draws_on
+                and not (found.type == "published" and (found.source_key, found.id) in before)]
         if ready_for is None or not page.measures.rows[ready_for]["count"]:
             status = "gap"
         else:
@@ -735,6 +738,18 @@ def _in_view(sources: dict[str, Source], keys: list[str], from_tool: str | None)
     return rows & set(tool.readiness.draws_on) if tool and tool.readiness else rows
 
 
+def _before_period(sources: dict[str, Source], from_tool: str | None) -> set[tuple[str, str]]:
+    """The known gaps, as (source, gap), that ended before the period the tool reads its records from: a fiscal
+    year ends on June 30 (config/tools.toml's period_from, ticket 63). None for a tool with no period."""
+    tool = load_tools().get(from_tool) if from_tool else None
+    if tool is None or tool.readiness is None or tool.readiness.period_from is None:
+        return set()
+    starts = load_thresholds().value(tool.readiness.period_from)
+    starts = starts if isinstance(starts, dt.date) else dt.date.fromisoformat(str(starts))
+    return {(key, known.id) for key, source in sources.items() for known in source.known_gaps
+            if dt.date(known.last_fiscal_year, 6, 30) < starts}
+
+
 def _empty(filter_: dict, abstention: dict, matched: int) -> dict:
     return {"rows": [], "coverage": {"matched": matched, "used": 0, "not_used": []}, "abstention": abstention,
             "filter": filter_, "sources": [], "kinds": [], "gaps": [], "fixes": [], "routes": [], "headline": None,
@@ -773,6 +788,11 @@ def data_readiness_for(call: Call, sources: str | None = None, from_tool: str | 
     rows = [row for row in every_row
             if (first_rows[row["source_key"]] if row["type"] == "gap" else row["id"]) in in_view]
     ranked = [found for found in every_gap if found.row_id in in_view]
+    # Opened from a tool that reads only a period's records, a known gap that ended before the period is not one of
+    # its gaps, so its view leaves it out (ticket 63).
+    before = _before_period(registry_sources, from_tool if filtered else None)
+    rows = [row for row in rows if not (row["type"] == "gap" and (row["source_key"], row["id"]) in before)]
+    ranked = [found for found in ranked if not (found.type == "published" and (found.source_key, found.id) in before)]
     stress_shelf, shelf_gaps = shelf(page, in_view, filtered)
     # The readers also read the projects of the hardest documents, such as the showcase in India, so a row
     # that covers the slice names them whenever the section shows below it.

@@ -5186,18 +5186,21 @@ export const copy = {
         plan_check: "Checking a plan against its own dates",
         document_search: "What project documents say",
         lessons: "Lessons from completion reports",
+        past_range: "How long comparable packages took",
       } as Record<string, string>,
       // The plan check's count words STEP's format as the Procurement Plans row does.
       counts: {
         plan_check: "activity entries in the latest plan versions with rows in STEP's format",
         document_search: "passages you can search",
         lessons: "proposed lessons with their quote found on the page they cite",
+        past_range: "procurement notices held",
       } as Record<string, string>,
       // The same, for a count of one.
       countsOne: {
         plan_check: "activity entry in the latest plan versions with rows in STEP's format",
         document_search: "passage you can search",
         lessons: "proposed lesson with its quote found on the page it cites",
+        past_range: "procurement notice held",
       } as Record<string, string>,
       // A count that names STEP first on its view spells it out, when the tool marks its kind
       // spell_out: the plan check's view, and a view whose headline it leaves out (DESIGN.md

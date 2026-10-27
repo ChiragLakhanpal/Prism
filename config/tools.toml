@@ -57,6 +57,8 @@
 #                  Such a measure also needs its window's words in web/src/copy.ts's
 #                  dataReadiness.measureWindows (web/tests/lint.spec.ts checks both).
 #   draws_on       the readiness rows whose gaps hold its answers back
+#   period_from    optional: the key in config/thresholds.toml of the day the tool's records start, so a known gap
+#                  that ended before it is left out of its view and of what holds it back
 
 [tools.check_plan]
 description = """Checks every activity in one implementing agency's Procurement Plan for a project. It \
@@ -543,6 +545,15 @@ in 10" and more_than for "more than 9 in 10"."""
 adapter = "strata.tools.find_comparables:find_comparables"
 benchmark = "find-comparables-ke-nwwda-541055"
 sources = ["notices", "awards", "documents", "projects"]
+
+# The past range (ticket 63): it reads notices, awards, plan rows and project records, never the project reports,
+# and only packages advertised from past_range.period_from (July 1, 2019), so the awards' fiscal 2017 to 2019 gap
+# holds none of its answers back.
+[tools.find_comparables.readiness]
+kind = "past_range"
+ready_for = { row = "notices", measure = "coverage_rows" }
+draws_on = ["notices", "awards", "plans", "projects"]
+period_from = "past_range.period_from"
 
 [[tools.find_comparables.parameters]]
 name = "step_reference"

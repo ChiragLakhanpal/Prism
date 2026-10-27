@@ -3129,6 +3129,82 @@
         ]
       ],
       "spell_out": false
+    },
+    {
+      "kind": "past_range",
+      "tool": "find_comparables",
+      "status": "partial",
+      "ready_for": 28,
+      "holds_back": [
+        [
+          {
+            "text": "Of "
+          },
+          {
+            "number": 603,
+            "row": 2,
+            "noun": "contracts",
+            "noun_one": "contract",
+            "role": null,
+            "lack": null
+          },
+          {
+            "text": " "
+          },
+          {
+            "text": "contracts"
+          },
+          {
+            "text": ", "
+          },
+          {
+            "number": 75,
+            "row": 2,
+            "noun": "contracts",
+            "noun_one": "contract",
+            "role": "missing",
+            "lack": "a reference from Systematic Tracking of Exchanges in Procurement (STEP)"
+          },
+          {
+            "text": " lack "
+          },
+          {
+            "text": "a reference from Systematic Tracking of Exchanges in Procurement (STEP)"
+          },
+          {
+            "text": "."
+          }
+        ],
+        [
+          {
+            "text": "None of the "
+          },
+          {
+            "number": 258,
+            "row": 47,
+            "noun": "activity entries in the latest plan versions",
+            "noun_one": "activity entry in the latest plan versions",
+            "role": "missing",
+            "lack": "a first listing I could confirm"
+          },
+          {
+            "text": " "
+          },
+          {
+            "text": "activity entries in the latest plan versions"
+          },
+          {
+            "text": " has "
+          },
+          {
+            "text": "a first listing I could confirm"
+          },
+          {
+            "text": "."
+          }
+        ]
+      ],
+      "spell_out": false
     }
   ],
   "gaps": [
@@ -3590,7 +3666,7 @@
         "text": "I can answer each of the "
       },
       {
-        "number": 3,
+        "number": 4,
         "row": null,
         "noun": null,
         "noun_one": null,
@@ -3681,7 +3757,7 @@
         "text": "."
       }
     ],
-    "text": "I can answer each of the three kinds of question below in part. The biggest gaps are the 70 of 264 body pages that lack paragraph numbers I could find and the 75 of 603 contracts that lack a reference from Systematic Tracking of Exchanges in Procurement (STEP)."
+    "text": "I can answer each of the four kinds of question below in part. The biggest gaps are the 70 of 264 body pages that lack paragraph numbers I could find and the 75 of 603 contracts that lack a reference from Systematic Tracking of Exchanges in Procurement (STEP)."
   },
   "headline_abstention": null,
   "parse_failures": [],

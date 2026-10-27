@@ -178,7 +178,8 @@ def test_each_tool_that_answers_a_kind_of_question_names_it_and_the_readiness_ro
     tools = config.load_tools()
 
     kinds = {name: tool.readiness.kind for name, tool in tools.items() if tool.readiness}
-    assert kinds == {"check_plan": "plan_check", "search_passages": "document_search", "get_lessons": "lessons"}
+    assert kinds == {"check_plan": "plan_check", "search_passages": "document_search", "get_lessons": "lessons",
+                     "find_comparables": "past_range"}  # ticket 63 added the past range
     for name in kinds:
         readiness = tools[name].readiness
         assert set(readiness.draws_on) <= rows, name

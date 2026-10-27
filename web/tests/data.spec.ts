@@ -513,6 +513,7 @@ test("What you can ask shows each kind of question with what it is ready for and
     "Checking a plan against its own dates",
     "What project documents say",
     "Lessons from completion reports",
+    "How long comparable packages took",
   ]);
   await expect(kinds.locator("[data-cell='plan_check:holds']")).toContainText(
     "None of the 258 activity entries in the latest plan versions has a first listing I could confirm.",
@@ -565,8 +566,9 @@ test("opened from a coverage line, it shows only the sources behind it; Show all
     "I'm showing only the two sources behind the past range.",
   );
   await expect(page.locator("[data-headline]")).toContainText("Two sources are behind the past range.");
+  // The awards' fiscal 2017 to 2019 gap ended before the past range's period, so its row is left out (ticket 63).
   const rows = table(page, "sources").locator("tbody tr");
-  await expect(rows).toHaveCount(3);
+  await expect(rows).toHaveCount(2);
   const total = await sourceRows("data-readiness-filtered.json");
   expect(total).toBeGreaterThanOrEqual(14);
   await expect(page.locator("[data-readiness-table=sources] > p").first()).toHaveText(`Showing 2 of ${total} sources.`);
@@ -577,7 +579,7 @@ test("opened from a coverage line, it shows only the sources behind it; Show all
   await expect(page.locator("main [data-lead]")).toBeFocused();
   await expect(rows).toHaveCount((await json("data-readiness.json")).sources.length);
   await page.goBack();
-  await expect(rows).toHaveCount(3);
+  await expect(rows).toHaveCount(2);
 });
 
 test("a coverage line's link, built by dataReadinessHref, opens the page filtered to the sources behind it", async ({ page }) => {
