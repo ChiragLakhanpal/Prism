@@ -113,6 +113,13 @@ min_confidence = 0.9
 # Source: the spec's "The agent and the answer contract" ("this repeats for at most three rounds").
 [agent]
 tool_rounds = 3
+# How many times the loop sends the agent's answer back before the stream's verifier checks it: the loop runs checks
+# 1 to 3 on the answer, and when they would remove a sentence it sends the agent one data-only message that lists
+# each such sentence with its reasons, and takes the next answer as final. The verifier then checks that answer in
+# full, as it checks every answer. 0 turns the round off. Source: ticket 109; on October 27, 2026 the live agent found
+# the passage the smoke question needs and wrote its sentence in its own words, so the verifier removed it in both
+# runs (10:18 and 10:19 UTC).
+rewrite_rounds = 1
 
 # The app (ticket 06). Every warehouse query the server runs as a viewer, the plan check's included,
 # gives up after stamp_timeout_seconds. The data-freshness stamp then shows its error state, and the

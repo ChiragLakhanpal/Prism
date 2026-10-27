@@ -16,7 +16,7 @@ from pathlib import Path
 import pytest
 
 from strata.agent import record
-from strata.agent.loop import output_text
+from strata.agent.loop import output_text, rewrite_asked
 from strata.agent.scripted import ScriptedAgent, load_cases
 from strata.dbx import Viewer
 from strata.lakehouse.engine import DuckDBEngine
@@ -25,14 +25,21 @@ FIXTURES = Path(__file__).parent / "fixtures" / "agent"
 
 
 class LiveStandIn:
-    """Answers as the recordings do, except that the rebidding answer's first sentence is worded anew."""
+    """Answers as the recordings do, except that the rebidding answer's first sentence is worded anew. Asked to
+    rewrite an answer whose sentences checks 1 to 3 would remove (ticket 109), it sends the same answer again."""
 
     name, version = "strata-orchestrator", "7"
 
     def __init__(self, recordings):
-        self.recordings, self.answers = recordings, None
+        self.recordings, self.answers, self.last = recordings, None, None
 
     def respond(self, items, previous_response_id):
+        if not self.answers and rewrite_asked(items) is not None:
+            return {**self.last, "id": f"{self.last['id']}_again"}
+        self.last = self.respond_as_recorded(items)
+        return self.last
+
+    def respond_as_recorded(self, items):
         if self.answers is None:
             asked = json.loads(items[0]["content"])["question"]
             # The criteria reader's recordings sit beside the orchestrator's, and one asks the same question
