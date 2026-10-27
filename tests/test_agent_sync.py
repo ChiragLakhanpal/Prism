@@ -95,6 +95,12 @@ def test_the_instructions_give_the_agent_design_md_s_rules_for_the_words_a_perso
     for rule in ('"the Bank"', "no em dashes", "no exclamation marks", "past tense", "one to nine in words",
                  "10 and up in numerals"):
         assert rule in words
+    # One rule says which quote marks to use, straight double ones; the words rule only says where none go (ticket
+    # 13's review round 5, P3), so no line reads as leave to use single ones.
+    instructions = wanted["definition"]["instructions"]
+    assert "in straight double quotes in the sentence, in every language" in instructions
+    assert "Put no quote marks, double or single, around words you do not quote word for word." in words
+    assert "of any kind" not in instructions
 
 
 def test_the_guardrail_puts_content_filters_and_prompt_shields_on_the_question_and_the_tool_results():

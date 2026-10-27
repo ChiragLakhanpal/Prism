@@ -383,4 +383,4 @@ def run_on_fixture(engine: Engine, run_id: str, clock: Callable[[], dt.datetime]
 
     changed = run(engine, RecordedBatch(path), run_id, clock)
     most = int(load_thresholds().value("lesson_review.likely_repeats_max"))
-    return changed + writer.run(engine, writer.recorded_agent_for(), clock, most)
+    return changed + writer.run(engine, writer.recorded_agent_for(), clock, most, judge_for=writer.recorded_judge_for())

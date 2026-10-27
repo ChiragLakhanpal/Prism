@@ -263,8 +263,8 @@ export const galleryCopy = {
     sections: {
       checkLine: "Check line: matched, judged and not checked",
       sixChecks: "The six checks under the verifier's step",
-      pastRange: "Every sentence proven by its numbers and quotes, so no model judged them",
-      advice: "One sentence judged by a model, three proven",
+      pastRange: "Two sentences judged by a model, one proven by its numbers",
+      advice: "Three sentences judged by a model, one proven",
       summaries: "Every sentence judged by a model",
       unsupported: "One sentence removed by check 4",
       adviceWithout: "One sentence removed by check 5",
@@ -279,7 +279,7 @@ export const galleryCopy = {
       dontDo: "How Strata works: What I don't do",
     },
     labels: {
-      acceptance: "Numbers and quotes, find_comparables ran, no model needed",
+      acceptance: "Numbers and quotes, find_comparables ran, two sentences judged",
       judged: "With a model's part",
       allJudged: "Every sentence judged, nothing matched",
       numbersOnly: "Numbers only",
@@ -289,7 +289,7 @@ export const galleryCopy = {
       fallback: "No tool left a gap",
       sixAll: "Judged, with advice",
       sixAttached: "A disagreement attached",
-      sixNone: "No model needed",
+      sixNone: "Two judged, one needed no model",
       judging: "While it asks the model, its step inside the verifier's",
     },
     questions: {

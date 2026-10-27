@@ -30,6 +30,7 @@ from strata.lakehouse.engine import DuckDBEngine, EngineError
 from strata.reader.passages import TABLE_SUMMARY
 from strata.server.app import create_app
 from strata.tools.check_plan import check_plan
+from strata.tools.estimate_time import estimate_time
 from strata.tools.search_passages import search_passages
 
 RECORDED = Path(__file__).parent / "fixtures" / "api"
@@ -262,6 +263,30 @@ def test_a_quote_cut_from_inside_a_number_with_a_decimal_point_or_a_comma_is_not
     # Both passages came back from the searches, so each sentence is removed for its quote alone.
     assert checks["sources"] == {"total": 2, "returned": 2}
     assert checks["numbers"] == {"total": 2, "matched": 0}
+
+
+def in_lakhs(call, **arguments):
+    """search_passages, with the ICR Review's "2,334 km" written in lakhs, as "12,50,000 km"."""
+    result = search_passages(call, **arguments)
+    for row in result["rows"]:
+        row["text"] = row["text"].replace("2,334 km", "12,50,000 km")
+    return result
+
+
+def test_a_quote_cut_from_inside_a_number_grouped_in_lakhs_is_not_on_its_page(fixture_db):
+    """Ticket 13's review round 5, P2: "12,50,000" is one number, so "50,000 km of roads" starts inside it and is not
+    word for word, as "334 km of roads" is not in "2,334 km" (the test above)."""
+    agent = CallsThenAnswers(
+        [("search_passages", {"query": "project constructed km of roads", "project_id": "P130164",
+                              "as_of": "2026-10-23"})],
+        lambda outputs: [claim('The ICR Review said the project built "50,000 km of roads".', kind="quote",
+                               evidence_ids=[ICR_REVIEW_ROADS], numbers=["50,000"],
+                               quote={"text": "50,000 km of roads", "passage_id": ICR_REVIEW_ROADS})])
+
+    parsed = ask_with_tools(fixture_db, agent, with_adapter("search_passages", "in_lakhs"))
+
+    assert [[(reason["code"], reason["text"]) for reason in item["reasons"]] for item in of(parsed, "removed")] == [
+        [("quote_not_on_page", ICR_REVIEW_ROADS)]]
 
 
 def test_a_fourth_round_of_tool_calls_gets_no_results_and_the_answer_rests_on_the_first_three(ask_case):
@@ -506,7 +531,10 @@ def test_a_number_joined_to_a_unit_or_a_range_or_written_as_a_word_above_nine_is
     more, as STEP writes it, "IDA / 60300"), a STEP reference (three parts or more, joined by hyphens or
     slashes, "KE/TAVEVO/82755/GO/RFQ"), a passage or a section label, so Q3-2020 and "IBRD 45 contracts"
     are read. "45-day", "US$1.2M", "300k" and "3x" are read as their digits, "10-15" and
-    "2019/20" as two numbers each, and number words go past nine. "Half" and "a dozen" are numbers too."""
+    "2019/20" as two numbers each, and number words go past nine. "Half" and "a dozen" are numbers too. A token that
+    starts with FY, a quarter or a half is a period, so Q3/2020/21 and FY-2019-20 are read, not taken for ids;
+    "12,50,000", grouped in lakhs as Indian reports write it, is one number; and "doubled", "tripled" and "halved"
+    are amounts no row holds as written, as "double" is."""
     parsed = events(ask_with(create_app(runner=answer_runner(lambda turn: Answers(
         claim("Bids were opened within a 45-day period."),
         claim("The contracts totaled US$1.2M."),
@@ -525,6 +553,11 @@ def test_a_number_joined_to_a_unit_or_a_range_or_written_as_a_word_above_nine_is
         claim("The bid KE/TAVEVO/82755/GO/RFQ was signed, and so was KALRO/HQTS/053/23-24."),
         claim("IDA \u2013 6030 KE paid for CF/RRSMP/11-15."),
         claim("The IDA 2019 funds came late."),
+        claim("Most works were signed in Q3/2020/21."),
+        claim("It slipped to FY-2019-20."),
+        claim("The roads cost 12,50,000."),
+        claim("Costs doubled, and the bids were halved."),
+        claim("Its estimate tripled."),
     ), no_engine))))
 
     failed, passed = check_1(parsed)
@@ -541,6 +574,13 @@ def test_a_number_joined_to_a_unit_or_a_range_or_written_as_a_word_above_nine_is
         [("number_not_in_records", "3"), ("date_not_in_records", "2020")],
         [("number_not_in_records", "45")],
         [("date_not_in_records", "2019")],
+        # A period written in three parts is a period, not an id (ticket 13's review round 5, P1).
+        [("number_not_in_records", "3"), ("date_not_in_records", "2020"), ("number_not_in_records", "21")],
+        [("date_not_in_records", "2019"), ("number_not_in_records", "20")],
+        # Digits grouped in lakhs are one number (P2), and "doubled" is an amount as "double" is (verify round 5, F2).
+        [("number_not_in_records", "12,50,000")],
+        [("number_not_in_records", "doubled"), ("number_not_in_records", "halved")],
+        [("number_not_in_records", "tripled")],
     ]
     assert passed == [
         "The COVID-19 pause held up P130164, IDA-60290 and KE-NWWDA-541062-CW-RFQ under III.B and 10.b.",
@@ -593,6 +633,12 @@ def with_two_envelopes(call, **arguments):
             row["market_approach"] = "Single Stage - Two Envelope"
             row["description"] = "Supply of Two Airside Fire Tenders"
     return result
+
+
+def without_abstention(call, **arguments):
+    """estimate_time as it answers once a model gives a time estimate: no abstention, so the agent gets its summary.
+    The hand-made set trains no model, so the tool abstains with no rows, and the agent then gets no summary."""
+    return {**estimate_time(call, **arguments), "abstention": None}
 
 
 class EverySentenceFollows:
@@ -747,6 +793,181 @@ def test_a_number_that_equals_a_value_of_another_unit_or_rounding_is_not_backed_
         "The middle half took 3.3 to 7.9 months."]
 
 
+def test_a_natural_frequency_is_one_value_that_only_a_frequency_pair_backs(fixture_db):
+    """Ticket 12's review P3 and verify V1: find_comparables' summary holds the pairs [8, 10] and [1, 10] that "8 in
+    10 were signed within" and "fewer than 1 in 10" state, and they used to back any 8, 10 or 1 a sentence wrote.
+    "N in 10", with "about", "fewer than" or "more than" before it, is now one value, which only a pair with the same
+    words backs, and the pairs back nothing else. A count field backs no number written with a time unit. The truth
+    is tests/ground_truth/values.toml's past_range: 2 of 49 were signed within the plan's 1.5 months, fewer than 1 in
+    10, and 8 in 10 within 9.1 months."""
+    truth = TRUTH["past_range"]
+    within, total = len(truth["signed_within_plan"]), truth["comparables"]
+
+    def answer(outputs):
+        summary = outputs[0]["summary"]["evidence_id"]
+        return [claim(sentence, kind="record", evidence_ids=[summary]) for sentence in (
+            f"8 in 10 were signed within {truth['q80_months']} months.",
+            f"{within} of {total} comparable packages, fewer than 1 in 10, were signed within the plan's "
+            f"{truth['plan_months']} months.",
+            f"8 of {total} comparable packages were signed within the plan's {truth['plan_months']} months.",
+            f"About 1 in 10 were signed within the plan's {truth['plan_months']} months.",
+            f"More than 9 in 10 were signed within {truth['q80_months']} months.",
+            f"The plan allows {total} months.")]
+
+    agent = CallsThenAnswers([("find_comparables", {"step_reference": "KE-NWWDA-541055-CW-RFB", "as_of": "2026-10-22"})],
+                             answer)
+
+    parsed = ask_with_tools(fixture_db, agent, load_tools(), asof="2026-10-22")
+
+    assert [sentence["text"].split(" ")[:3] for sentence in of(parsed, "sentence")] == [
+        ["8", "in", "10"], [str(within), "of", str(total)]]
+    assert removed_reasons(parsed) == [[("number_not_in_records", "8")], [("number_not_in_records", "About 1 in 10")],
+                                       [("number_not_in_records", "More than 9 in 10")],
+                                       [("number_not_in_records", str(total))]]
+
+
+def test_a_model_s_frequency_needs_a_value_named_in10_and_none_is_held_when_the_model_is_not_shown(fixture_db):
+    """Ticket 28's verify F2: with rebidding_risk's model not shown (model.shown false, in10 null), the copy file's
+    sentence for a shown model (rebid.model) was kept, because 3 matched n and 10 a coverage count. "About 3 in 10"
+    is one value, which only a field named in10 can back."""
+    def answer(outputs):
+        assert outputs[0]["summary"]["model"]["shown"] is False
+        return [claim("My model estimates that about 3 in 10 packages like this one are advertised again.",
+                      kind="summary", evidence_ids=[outputs[0]["summary"]["evidence_id"]])]
+
+    agent = CallsThenAnswers([("rebidding_risk", {"step_reference": "KE-NWWDA-541055-CW-RFB", "as_of": "2026-10-22"})],
+                             answer)
+
+    parsed = ask_with_tools(fixture_db, agent, load_tools(), EverySentenceFollows(), asof="2026-10-22")
+
+    assert removed_reasons(parsed) == [[("number_not_in_records", "about 3 in 10")]]
+
+
+def test_a_reason_quoted_word_for_word_from_rebidding_risk_s_record_passes_checks_1_to_3(fixture_db):
+    """Ticket 28's verify F1: rebidding_risk's row keeps a notice's reason as quote.text, and the verifier skipped
+    every field named text, so a true quote of it was removed. A record's own text is quotable at any depth; only a
+    passage's text is its page. The judge is not connected, so a sentence stands only when checks 1 to 3 prove it. The
+    reason is KE-KIMAWASCO-149448-CW-RFB's cancellation notice OP00083890 (data/fixture/recorded/api)."""
+    notice = "strata.silver.notices:OP00083890"
+    said = "The Request for Bids has been cancelled."
+
+    def answer(outputs):
+        [row] = [row for row in outputs[0]["rows"] if row["evidence_id"] == notice]
+        assert row["quote"]["text"] == said
+        return [claim(f'KE-KIMAWASCO-149448-CW-RFB\'s notice said "{said}"', kind="quote", evidence_ids=[notice]),
+                claim(f'Its notice said "{said}"', kind="quote", evidence_ids=[notice],
+                      quote={"text": said, "passage_id": notice}),
+                claim('Its notice said "The Request for Bids has been delayed."', kind="quote", evidence_ids=[notice])]
+
+    agent = CallsThenAnswers([("rebidding_risk", {"step_reference": "KE-NWWDA-541055-CW-RFB", "as_of": "2026-10-22"})],
+                             answer)
+
+    parsed = ask_with_tools(fixture_db, agent, load_tools(), asof="2026-10-22")
+
+    assert [sentence["text"] for sentence in of(parsed, "sentence")] == [
+        f'KE-KIMAWASCO-149448-CW-RFB\'s notice said "{said}"', f'Its notice said "{said}"']
+    assert removed_reasons(parsed) == [[("quote_not_on_page", None)]]
+    checks = of(parsed, "checks")[0]
+    assert (checks["shown"]["proven"], checks["judge"]["called"]) == (2, False)
+
+
+class NothingFollows:
+    """A judge for check 4 that finds no sentence follows, and keeps every sentence it was asked about."""
+
+    name = "nothing follows"
+
+    def __init__(self):
+        self.asked = []
+
+    def judge(self, questions):
+        self.asked += [question.sentence for question in questions]
+        return [Judgement(question.index, False, "It does not follow.") for question in questions]
+
+
+def test_a_quote_of_only_an_identifier_goes_to_the_judge_as_a_quote_of_only_a_number_does(fixture_db):
+    """Ticket 24's review round 3, follow-up 9: a quoted STEP reference is on its record, so the sentence counted as
+    proven, though only the judge can check "still open". A quote that is a whole identifier of the cited row, or
+    reads as an id, proves nothing about the sentence around it. KE-ICTA-571738-CW-RFB is one of the comparable
+    packages still open (values.toml past_range)."""
+    package = "strata.gold.package:KE-ICTA-571738-CW-RFB"
+    judge = NothingFollows()
+
+    def answer(outputs):
+        assert package in [row["evidence_id"] for row in outputs[0]["rows"]]
+        return [claim('Another, "KE-ICTA-571738-CW-RFB", was still open too.', kind="record", evidence_ids=[package])]
+
+    agent = CallsThenAnswers([("find_comparables", {"step_reference": "KE-NWWDA-541055-CW-RFB", "as_of": "2026-10-22"})],
+                             answer)
+
+    parsed = ask_with_tools(fixture_db, agent, load_tools(), judge, asof="2026-10-22")
+
+    assert judge.asked == ['Another, "KE-ICTA-571738-CW-RFB", was still open too.']
+    assert [item["reason"] for item in of(parsed, "removed")] == ["not_supported"]
+
+
+class FindsAdvice:
+    """A judge for check 4 that finds every sentence follows, and that each sentence starting "You should" gives
+    advice."""
+
+    name = "finds advice"
+
+    def judge(self, questions):
+        return [Judgement(question.index, True, "It follows.", advises=question.sentence.startswith("You should"))
+                for question in questions]
+
+
+def test_advice_labelled_as_another_kind_is_held_to_check_5_when_the_judge_says_it_advises(fixture_db):
+    """Ticket 24's verify round 3, O1: advice labelled record or summary skipped check 5, since check 5 trusts the
+    kind the agent sets. The judge now says whether each sentence tells the reader what to do, in the same call, and
+    a sentence that advises without citing a lesson or a comparable is removed with check 5's reason. ICR paragraph
+    54 is a passage, which backs no advice (config/tools.toml, backs_advice)."""
+    def answer(outputs):
+        return [claim("You should base your works estimates on market rates.", kind=kind, evidence_ids=[ICR_54])
+                for kind in ("record", "summary")] + [
+            claim("The completion report discussed works estimates.", kind="summary", evidence_ids=[ICR_54])]
+
+    agent = CallsThenAnswers([("search_passages", {"query": "works contracts advertised again rebidding",
+                                                   "project_id": "P130164", "as_of": "2026-10-23"})], answer)
+
+    parsed = ask_with_tools(fixture_db, agent, load_tools(), FindsAdvice())
+
+    assert [(item["sentence"], item["kind"], item["reason"], item["reasons"][0]["check"])
+            for item in of(parsed, "removed")] == [
+        ("You should base your works estimates on market rates.", "record", "advice_without_lesson_or_comparable", 5),
+        ("You should base your works estimates on market rates.", "summary", "advice_without_lesson_or_comparable", 5)]
+    assert [sentence["text"] for sentence in of(parsed, "sentence")] == [
+        "The completion report discussed works estimates."]
+    assert of(parsed, "checks")[0]["advice"] == {"total": 2, "cited": 0}
+
+
+def test_a_count_of_packages_is_not_backed_by_one_comparable_s_days(tmp_path):
+    """Ticket 27's verify finding 1: estimate_time's summary holds every comparable's days at every step, so "ran
+    longest in 17 of 25" was kept on the hand-made set because one comparable's stage took 17 days; the tool says 15
+    of 25 (values.toml [step_dates], longest_n and longest_m). A value under a days field backs only a number written
+    in days."""
+    import step_set
+
+    step_set.build(tmp_path / "set.duckdb").close()
+    known = TRUTH["step_dates"]
+
+    def answer(outputs):
+        summary = outputs[0]["summary"]["evidence_id"]
+        days = [entry["days"] for step in outputs[0]["step_dates"]["steps"] for entry in step["comparables"]]
+        assert 17 in days and known["longest_n"] != 17
+        return [claim(f"Bid evaluation ran longest in {n} of {known['longest_m']} comparable packages.", kind="record",
+                      evidence_ids=[summary]) for n in (17, known["longest_n"])]
+
+    agent = CallsThenAnswers([("estimate_time", {"step_reference": known["target"],
+                                                 "as_of": known["as_of"].isoformat()})], answer)
+
+    parsed = ask_with_tools(tmp_path / "set.duckdb", agent, with_adapter("estimate_time", "without_abstention"),
+                            asof=known["as_of"].isoformat())
+
+    assert removed_reasons(parsed) == [[("number_not_in_records", "17")]]
+    assert [sentence["text"] for sentence in of(parsed, "sentence")] == [
+        f"Bid evaluation ran longest in {known['longest_n']} of {known['longest_m']} comparable packages."]
+
+
 def test_an_answer_can_quote_each_side_of_a_disagreement_and_state_the_trajectory_and_the_rejected_count(fixture_db):
     """get_disagreements returns each side of a disagreement as a record of its own, under the evidence id
     ticket 11 or 18 issued for it, and its trajectories and rejected count as one citable summary record
@@ -771,6 +992,10 @@ def test_an_answer_can_quote_each_side_of_a_disagreement_and_state_the_trajector
                   kind="record", evidence_ids=[summary]),
             claim("I left out 1 assertion read from the project's reports.", kind="record", evidence_ids=[summary]),
             claim("ISRs 1 to 14 rated it Satisfactory.", kind="record", evidence_ids=[summary]),
+            # A side that rests on a passage backs only its dates and its quote, so ISR 7's sequence needs the row
+            # cited too, as get_disagreements' description says (ticket 20's review round 3, F2).
+            claim(f"ISR 7 rated progress towards the PDO Satisfactory on {isr_7_date:%B} {isr_7_date.day}, "
+                  f"{isr_7_date.year}.", kind="record", evidence_ids=[isr_7["evidence_id"]]),
         ]
 
     agent = CallsThenAnswers([("get_disagreements", {"subject_id": "P130164", "as_of": "2026-10-23"})], answer)
@@ -779,13 +1004,36 @@ def test_an_answer_can_quote_each_side_of_a_disagreement_and_state_the_trajector
 
     assert [sentence["text"].split(" ")[:2] for sentence in of(parsed, "sentence")] == [
         ["The", "ICR"], ["ISR", "7"], ["ISRs", "1"], ["I", "left"]]
-    assert removed_reasons(parsed) == [[("number_not_in_records", "14")]]
+    assert removed_reasons(parsed) == [[("number_not_in_records", "14")], [("number_not_in_records", "7")]]
     evidence = {item["id"]: item for item in of(parsed, "evidence")}
     side = evidence["strata.gold.passage:31525018/v1/78"]
     assert (side["kind"], side["tool"]) == ("passage", "get_disagreements")
     [highlight] = side["highlights"]
     assert side["row"]["text"][highlight["start"]:highlight["end"]] == words
     assert of(parsed, "checks")[0]["quotes"] == {"total": 1, "found": 1}
+
+
+def test_a_search_after_get_disagreements_keeps_the_side_s_own_values_under_its_id(fixture_db):
+    """Ticket 20's review round 3, F7: a later search_passages row replaced the side get_disagreements returned under
+    the same id, so the side's own values, such as the mid-term review's date that ICR paragraph 78 is about (its
+    period), could no longer back a sentence citing it. Every record that came back under one id is kept."""
+    paragraph = "strata.gold.passage:31525018/v1/78"
+
+    def answer(outputs):
+        assert paragraph in [row["evidence_id"] for row in outputs[1]["rows"]]
+        return [claim("The ICR said the mid-term review of May 16, 2016 found part of the PDO compromised.",
+                      kind="record", evidence_ids=[paragraph])]
+
+    agent = CallsThenAnswers([
+        ("get_disagreements", {"subject_id": "P130164", "as_of": "2026-10-23"}),
+        ("search_passages", {"query": "clearly identified at the MTR that the achievement of part of the PDO was "
+                                      "compromised", "project_id": "P130164", "as_of": "2026-10-23"})], answer)
+
+    parsed = ask_with_tools(fixture_db, agent, load_tools())
+
+    assert removed_reasons(parsed) == []
+    [sentence] = of(parsed, "sentence")
+    assert sentence["dates"] == [{"text": "May 16, 2016", "evidence_id": paragraph}]
 
 
 def logged_runs(ops_db):

@@ -4,19 +4,25 @@ The app ran every tool the agent asked for, so it holds every row and passage th
 (ADR 0003, the turn's Facts). Each claim is checked against them:
 
 1. Every number and date the sentence states matches a value in a row the sentence cites, at the same
-   rounding, or sits inside the words it quotes from a cited passage that is not a table summary. A
-   number written with a unit (months, days, weeks or years, or a range ending in one, "3.3 to 7.9
-   months") never matches a value whose field names another unit, so "45 months" is not the plan's 45
-   days; and a number written with decimals never matches a whole number, so "8.0" is not the 8 of "8 in
-   10" (ticket 12's verify V1). A
+   rounding, or sits inside the words it quotes from a cited passage that is not a table summary. Each
+   number is checked against the field that holds it. A number written with a unit (months, days, weeks or
+   years, or a range ending in one, "3.3 to 7.9 months") never matches a value whose field names another unit
+   or a count, so "45 months" is not the plan's 45 days, nor the 49 comparables a coverage line used; a value
+   in days, months or weeks backs only a number written in its unit, so one comparable's 17 days never backs
+   "17 of 25 comparable packages" (ticket 27's verify finding 1); and a number written with decimals never
+   matches a whole number, so "8.0" is not an 8 (ticket 12's verify V1). Units are read in English sentences.
+   A natural frequency ("8 in 10", "about 3 in 10", "fewer than 1 in 10") is one value, which only a frequency
+   the record holds with the same words backs: a frequencies pair, a field named in10, or the q80 that "8 in
+   10" names (ticket 12's review P3, ticket 28's verify F2); those back no other number. A
    table's summary passage is Strata's own words about the table, so a number it alone holds, quoted
    or not, is removed with a reason of its own (number_only_in_table_summary): the table's rows back
    numbers, its summary never does.
    The numbers and dates are read from the sentence itself, so one the agent left off its list is
-   still checked. Every digit run is a number, as in "45-day" or "US$1.2M", unless its token is an id
-   (ID_SHAPES); so is a number written in words ("forty-five", "zero", or "one" unless it stands for a
-   thing named before), and an amount no row holds as written ("half", but not "the middle half", which
-   names a part of a past range). A passage backs only its
+   still checked. Every digit run is a number, as in "45-day", "US$1.2M" or "12,50,000" (grouped in lakhs),
+   unless its token is an id (ID_SHAPES; a token that starts with FY, a quarter or a half is a period); so is a
+   number written in words ("forty-five", "zero", or "one" unless it stands for a thing named before), and an
+   amount no row holds as written ("half" or "doubled", but not "the middle half", which names a part of a past
+   range). A passage backs only its
    dates, such as its report's date: its text is never a value, and its page, paragraph and version
    numbers say where it is, not what the report counted, so a number from a passage must be quoted.
 2. Every id the sentence cites came back from a tool in this turn. A record, quote or advice sentence
@@ -30,14 +36,17 @@ The app ran every tool the agent asked for, so it holds every row and passage th
    The quote checked is the one the person reads: the words in the sentence's quote marks must be in
    the claim's quote, and that quote on its passage. Quote marks with no quote, or with words that are
    not on the page, fail; so does a quote the sentence never shows in quote marks. Words quoted from a
-   cited record's text value, such as a STEP description, are on that record.
+   cited record's text value, at any depth, such as a STEP description or the reason rebidding_risk quotes
+   from a notice (quote.text), are on that record, with or without the claim's quote.
 
 4. Each sentence follows from the sources it cites, judged in one batched call to the judge
    (src/strata/agent/judge.py) and skipped where checks 1 to 3 already prove it. A record or quote sentence
    is proven when it states at least one number, date or quote, every one of them matched, and every run
-   of quoted words holds a word, not only a number: 'Only "108" works contracts were signed' quotes a
-   number that backs any meaning, so it goes to the judge. Advice and summary sentences always go to the
-   judge. A summary that cites nothing goes with the turn's abstentions as its only sources (each named
+   of quoted words holds a word, not only a number or an identifier: 'Only "108" works contracts were
+   signed' quotes a number that backs any meaning, and 'Another, "KE-ICTA-571738-CW-RFB", was still open'
+   quotes a reference, so both go to the judge. Advice and summary sentences always go to the
+   judge, which also says whether each sentence advises; one that does is held to check 5 whatever its kind.
+   A summary that cites nothing goes with the turn's abstentions as its only sources (each named
    "<tool>:abstention", as the agent read it, with no date after the as-of date), so it follows only when it
    says no more than what a tool could not answer. A sentence the judge says does not follow is removed
    (not_supported, or no_source when it cites nothing). When the judge does not respond, every sentence it
@@ -64,6 +73,7 @@ from __future__ import annotations
 import dataclasses
 import datetime as dt
 import decimal
+import json
 import re
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
@@ -72,7 +82,7 @@ from typing import Any
 
 from strata import languages
 from strata.agent.claims import Claim
-from strata.agent.judge import Judgement, Question, Source
+from strata.agent.judge import ABSTENTION, Judgement, Question, Source
 from strata.config import ENGLISH, load_project_page
 from strata.harness.facts import Facts
 from strata.harness.turn import Event
@@ -112,10 +122,20 @@ class When:
 
 
 @dataclass(frozen=True)
+class Frequency:
+    """A natural frequency a sentence states as one value, with the words before it: "8 in 10", "about 3 in 10",
+    "fewer than 1 in 10" or "more than 9 in 10". Only a frequency a cited record holds backs it (frequency_backs)."""
+
+    words: str | None  # "about", "fewer_than", "more_than", or None when the sentence writes none
+    k: Decimal
+    of: Decimal
+
+
+@dataclass(frozen=True)
 class Mention:
     kind: str  # "number" or "date"
     text: str
-    value: Decimal | When | str  # a str is an amount no row holds as written, such as "half"
+    value: Decimal | When | Frequency | str  # a str is an amount no row holds as written, such as "half"
     start: int | None = None
     end: int | None = None
 
@@ -143,16 +163,18 @@ ID_SHAPES = (
     # alone after it, as in "the IDA 2019 funds", is a year.
     r"\b(?:IDA|IBRD|TF)\s*[-/\u2013]?\s*(?!(?:19|20)\d\d\b)[A-Z0-9]{0,2}\d{4,}[A-Z]{0,2}\b",
     # A STEP reference has three parts or more: KE-NWWDA-541062-CW-RFQ, NWWDA-WSDP-03-2019-2020 or
-    # MWI-WSDP-001. Q3-2020 and FY-2019 have two, so their numbers are read.
-    r"\b[A-Z][A-Z0-9]*(?:-[A-Z0-9]+){2,}\b",
+    # MWI-WSDP-001. Q3-2020 and FY-2019 have two, so their numbers are read. A token that starts with FY, a
+    # quarter (Q1 to Q4) or a half (H1 or H2) is a period, so its numbers are read, as in Q3-2020-21 or FY/2019/20.
+    r"\b(?!(?:FY|Q[1-4]|H[12])[-/])[A-Z][A-Z0-9]*(?:-[A-Z0-9]+){2,}\b",
     # A bid or contract reference written with slashes, with three parts or more: KE/TAVEVO/82755/GO/RFQ or
     # KALRO/HQTS/053/23-24. It starts with a letter, so 2019/20 is two numbers.
-    r"\b[A-Z][A-Z0-9.]*(?:/[A-Z0-9.\-]+){2,}\b",
+    r"\b(?!(?:FY|Q[1-4]|H[12])[-/])[A-Z][A-Z0-9.]*(?:/[A-Z0-9.\-]+){2,}\b",
     r"\bCOVID-19\b",
     r"\b(?:[IVX]+|\d+)\.[A-Za-z]\b",  # a section label, III.B or 10.b
 )
 ID = re.compile("|".join(ID_SHAPES))
-DIGITS = re.compile(r"\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+(?:\.\d+)?")
+# Indian reports group digits in lakhs and crores, as in 12,50,000, which is one number.
+DIGITS = re.compile(r"\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d{1,2}(?:,\d{2})+,\d{3}(?:\.\d+)?|\d+(?:\.\d+)?")
 # A World Bank fiscal year, FY2019 or FY19: a number a row must hold, such as a fiscal_year column.
 FISCAL_YEAR = re.compile(r"\bFY ?(\d{4}|\d{2})\b")
 YEARS = range(1900, 2101)
@@ -169,7 +191,8 @@ SMALL |= {word: value for value, word in zip(range(20, 100, 10), (
     "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"), strict=True)}
 SCALES = {"hundred": 100, "thousand": 1000, "dozen": 12}
 # Amounts no row holds as written: a proportion or a vague count. A sentence that states one is removed.
-VAGUE = {"half", "twice", "double", "triple", "hundreds", "thousands", "dozens"}
+VAGUE = {"half", "twice", "double", "triple", "hundreds", "thousands", "dozens", "doubled", "tripled", "halved",
+         "quadrupled"}
 FRACTIONS = {"third", "quarter"}  # as "a third" or "a quarter"
 WORD = re.compile(r"[A-Za-z]+")
 COUNT_AFTER_ONE = re.compile(r" (?:of|in) (?:the )?(?:\d|(?:" + "|".join(SMALL) + r")\b)", re.I)
@@ -185,6 +208,13 @@ HALF_OF = re.compile(r" of\b", re.I)
 HALF_OF_A_TIME = re.compile(
     r" of (?:the )?(?:(?:fiscal |calendar )?year|month|week|quarter|period|decade|FY ?\d{2,4}|fiscal \d{4}|\d{4})\b",
     re.I)
+# A natural frequency, as DESIGN.md section 7 writes a share: "8 in 10", "about 3 in 10", "fewer than 1 in 10" or "more
+# than 9 in 10", in digits or in words. It is one value, not two numbers (ticket 12's review P3), so an 8 or a 10 held
+# elsewhere in a record never backs it, and the record's frequencies back nothing else. "5 in 10 days" is not one.
+FREQUENCY_WORDS = {"about": "about", "fewer than": "fewer_than", "more than": "more_than"}
+FREQUENCY = re.compile(
+    r"\b(?:(about|fewer than|more than)\s+)?(\d+|" + "|".join(word for word, value in SMALL.items() if value <= 10)
+    + r")[\s-]+in[\s-]+(?:10|ten)\b(?![-\u2013]\d)(?!\s*-?\s*(?:months?|days?|weeks?|years?)\b)", re.I)
 
 
 def _word_value(words: list[str]) -> Decimal:
@@ -261,6 +291,12 @@ def _number(written: str, language: str) -> Decimal:
     return Decimal(written.replace(",", "")) if language == ENGLISH else languages.parse_number(written, language)
 
 
+def _frequency(match: re.Match) -> Frequency:
+    k = match[2].lower()
+    return Frequency(FREQUENCY_WORDS[" ".join(match[1].lower().split())] if match[1] else None,
+                     Decimal(k) if k.isdigit() else Decimal(SMALL[k]), Decimal(10))
+
+
 def mentions(text: str, language: str = ENGLISH) -> list[Mention]:
     """The numbers and dates a text states, each with its place in the text, read in the text's language
     (config/languages.toml): "1 287 515,60" is one number in French and "22 juin 2026" one date. A four-digit
@@ -288,6 +324,10 @@ def mentions(text: str, language: str = ENGLISH) -> list[Mention]:
             year = int(match[1]) if len(match[1]) == 4 else 2000 + int(match[1])
             found.append(Mention("number", match.group(0), Decimal(year), *match.span()))
     ids += [match.span() for match in ID.finditer(text) if free(*match.span())]
+    if language == ENGLISH:
+        for match in FREQUENCY.finditer(text):
+            if free(*match.span()):
+                found.append(Mention("number", match.group(0), _frequency(match), *match.span()))
     words = _number_words(text) if language == ENGLISH else languages.number_words(text, language)
     for start, end, value in words:
         if free(start, end):
@@ -305,25 +345,34 @@ def mentions(text: str, language: str = ENGLISH) -> list[Mention]:
 
 def _declared(claim: Claim, stated: list[Mention], language: str = ENGLISH) -> list[Mention]:
     """The numbers and dates the claim lists but the sentence does not show: they are checked too, each as
-    what its text reads as, whichever list it came in."""
-    extra = []
+    what its text reads as, whichever list it came in. The two numbers of a frequency the sentence states, listed
+    alone ("8" and "10" for "8 in 10"), are that frequency."""
+    extra: list[Mention] = []
+    parts = {part for other in stated if isinstance(other.value, Frequency) for part in (other.value.k, other.value.of)}
     for text in claim.numbers + claim.dates:
         for mention in mentions(text, language):
-            if not any(mention.value == other.value for other in stated + extra):
+            if mention.value not in parts and not any(mention.value == other.value for other in stated + extra):
                 extra.append(Mention(mention.kind, mention.text, mention.value))
     return extra
 
 
 # ── Values in a row ──────────────────────────────────────────────────────
 
-NOT_VALUES = {"text", "header", "rank", "score", "public_from"}  # a passage's words, the search's own ranking, and
-# the day a record became public in Strata (ADR 0002), which says when a source could be read, not what it says
+NOT_VALUES = {"text", "header", "rank", "score", "public_from", "frequencies"}  # a passage's words, the search's own
+# ranking, the day a record became public in Strata (ADR 0002), which says when a source could be read, not what it
+# says, and the pairs a natural frequency states, which back only that frequency (frequency_backs)
 ISO_DAY = re.compile(r"^(\d{4})-(\d{2})-(\d{2})(?:[T ].*)?$")
 PLAIN_NUMBER = re.compile(r"^-?\d+(?:\.\d+)?$")
+IN10 = re.compile(r"(?:^|_)in10$")  # a field that gives a share as k in 10, such as a model's in10 or middle_in10
 
 
-# The units a field name can give its values. A count is never a time, so "45 months" is not 45 signed packages.
+# The units a field name can give its values. A count is never a time, so "45 months" is not 45 signed packages, nor
+# the 49 comparables a coverage line used; and a value in days, months or weeks backs only a number written with its
+# unit, so one comparable's 17 days never backs "17 of 25 comparable packages" (ticket 27's verify finding 1). A year
+# is left out of that rule, since a fiscal year is written with no unit after it.
 UNIT_STEMS = ("month", "day", "week", "year", "count")
+COUNT_WORDS = {"coverage", "matched", "used", "within", "total", "n", "m", "k"}
+TIMES = ("month", "day", "week")
 UNIT = r"(months?|days?|weeks?|years?)\b"
 UNIT_AFTER = re.compile(r"\s*-?\s*" + UNIT, re.I)
 RANGE_UNIT_AFTER = re.compile(r"\s*(?:-|\u2013|to|and)\s*" + DIGITS.pattern + r"\s*-?\s*" + UNIT, re.I)
@@ -351,7 +400,7 @@ def _whole(value: Any) -> bool:
 def row_numbers(row: Any, path: tuple[str, ...] = ()) -> list[tuple[Decimal, tuple[str, ...], bool]]:
     """Each number a row holds as a value, with the field names on the way to it and whether it is whole."""
     if isinstance(row, Mapping):
-        return [found for key, value in row.items() if key not in NOT_VALUES
+        return [found for key, value in row.items() if key not in NOT_VALUES and not IN10.search(str(key))
                 for found in row_numbers(value, (*path, str(key)))]
     if isinstance(row, list | tuple):
         return [found for value in row for found in row_numbers(value, path)]
@@ -359,9 +408,71 @@ def row_numbers(row: Any, path: tuple[str, ...] = ()) -> list[tuple[Decimal, tup
     return [(number, path, _whole(row)) for number in numbers]
 
 
-def _unit_conflict(path: tuple[str, ...], unit: str) -> bool:
+def frequency_backs(row: Any) -> list[tuple[str, str | None, Decimal, Decimal]]:
+    """The natural frequencies a record holds, at any depth, each as (kind, words, k, of): each pair under a field
+    named frequencies, [8, 10] or {"words": "fewer_than", "states": [1, 10]} (find_comparables); each value of a field
+    named in10, k in 10 (a model's share, or a step date's); and the 8 in 10 that a past range's or an estimate's q80
+    names, the months by which 8 in 10 were signed."""
+    found: list[tuple[str, str | None, Decimal, Decimal]] = []
+
+    def number(value: Any) -> Decimal | None:
+        if isinstance(value, bool) or not isinstance(value, int | float | Decimal):
+            return None
+        return Decimal(str(value))
+
+    def walk(value: Any) -> None:
+        if isinstance(value, list | tuple):
+            for inner in value:
+                walk(inner)
+        if not isinstance(value, Mapping):
+            return
+        for key, inner in value.items():
+            if key == "frequencies" and isinstance(inner, Mapping):
+                for pair in inner.values():
+                    words, states = (pair.get("words"), pair.get("states")) if isinstance(pair, Mapping) else (None, pair)
+                    if isinstance(states, list | tuple) and len(states) == 2 and None not in map(number, states):
+                        found.append(("pair", words, number(states[0]), number(states[1])))
+            elif IN10.search(str(key)) and number(inner) is not None:
+                found.append(("in10", None, number(inner), Decimal(10)))
+            elif key == "q80" and number(inner) is not None:
+                found.append(("q80", None, Decimal(8), Decimal(10)))
+            elif key not in NOT_VALUES:
+                walk(inner)
+
+    walk(row)
+    return found
+
+
+def _frequency_backed(frequency: Frequency, backs: list) -> bool:
+    """Whether a record's frequency backs the sentence's: the same k in 10, with the same words. "About" and no words
+    are one ("about 3 in 10" and "3 in 10"); "fewer than" and "more than" must be the record's own. A q80 names only
+    "8 in 10", with no words."""
+    loose = (None, "about")
+    for kind, words, k, of in backs:
+        if (k, of) != (frequency.k, frequency.of):
+            continue
+        if kind == "q80" and frequency.words is None:
+            return True
+        if kind == "in10" and frequency.words in loose:
+            return True
+        if kind == "pair" and (frequency.words == words or (frequency.words in loose and words in loose)):
+            return True
+    return False
+
+
+UNREAD = "unread"  # the unit of a number in a sentence whose units are not read: only English's are, so far
+
+
+def _unit_conflict(path: tuple[str, ...], unit: str | None) -> bool:
+    """Whether a value under these field names cannot back a number written in this unit (None: written with none;
+    UNREAD: in a language whose units are not read, where no field conflicts)."""
+    if unit == UNREAD:
+        return False
     words = [word for name in path for word in re.split(r"[_\W\d]+", name.lower()) if word]
-    return any(word.startswith(stem) for word in words for stem in UNIT_STEMS if stem != unit)
+    if unit is None:
+        return any(word.startswith(stem) for word in words for stem in TIMES)
+    return any(word.startswith(stem) for word in words for stem in UNIT_STEMS if stem != unit) or any(
+        word in COUNT_WORDS for word in words)
 
 
 def row_values(row: Any, numbers: set | None = None, days: set | None = None) -> tuple[set, set]:
@@ -394,10 +505,12 @@ def row_values(row: Any, numbers: set | None = None, days: set | None = None) ->
     return numbers, days
 
 
-def _supports(mention: Mention, numbers: list, days: set, unit: str | None = None) -> bool:
+def _supports(mention: Mention, numbers: list, days: set, unit: str | None = None, frequencies: list = ()) -> bool:
+    if isinstance(mention.value, Frequency):
+        return _frequency_backed(mention.value, list(frequencies))
     if mention.kind == "number":
         decimals = isinstance(mention.value, Decimal) and "." in mention.text
-        return any(value == mention.value and not (unit and _unit_conflict(path, unit)) and not (decimals and whole)
+        return any(value == mention.value and not _unit_conflict(path, unit) and not (decimals and whole)
                    for value, path, whole in numbers)
     return any(mention.value.covers(day) for day in days) or (
         mention.value.month is None and any(value == Decimal(mention.value.year) for value, _, _ in numbers))
@@ -459,11 +572,18 @@ def find_quote(quote: str, text: str, language: str = ENGLISH) -> tuple[int, int
     "rebidding", "US$177" is not in "US$177.6" and "334 km" is not in "2,334 km". A number is read as
     mentions() reads one, so "45" is in "45-day" and "10" in "10-15", in the language of the text searched: "3" is not
     a quote from the French "3,5"."""
+    found = find_quotes(quote, text, language)
+    return found[0] if found else None
+
+
+def find_quotes(quote: str, text: str, language: str = ENGLISH) -> list[tuple[int, int]]:
+    """Every place the quote is in the text, word for word, as find_quote() finds the first."""
     wanted, _ = _normalized(quote)
     if not wanted:
-        return None
+        return []
     held, where = _normalized(text)
     numbers = [match.span() for match in _digits(languages.language(language).code).finditer(held)]
+    found = []
     start = held.find(wanted)
     while start >= 0:
         end = start + len(wanted)
@@ -471,9 +591,34 @@ def find_quote(quote: str, text: str, language: str = ENGLISH) -> tuple[int, int
         cut_at_end = wanted[-1].isalnum() and end < len(held) and held[end].isalnum()
         inside_a_number = any(left < start < right or left < end < right for left, right in numbers)
         if not (cut_at_start or cut_at_end or inside_a_number):
-            return where[start], where[end - 1] + 1
+            found.append((where[start], where[end - 1] + 1))
         start = held.find(wanted, start + 1)
-    return None
+    return found
+
+
+# An ISR's ratings table writes each row's previous rating, then its current one (ISR 7's section s4).
+RATING_COLUMNS = re.compile(r"Previous\s+Rating\s+Current\s+Rating", re.I)
+SHARED_WORD = re.compile(r"[^\W\d_]{3,}")
+
+
+def highlight_of(quote: str, text: str, about: str, language: str = ENGLISH) -> tuple[int, int] | None:
+    """Where to highlight a quote in its passage. When it occurs more than once, the match that follows the words the
+    sentence (about) shares with the passage: the one with the most of those words between it and the match before
+    it, the first on a tie. In an ISR's ratings table a row holds the previous rating, then the current one, with no
+    words between them, and a sentence about the report's rating means its own, the Current Rating (ticket 24's
+    critique rounds 2 and 3)."""
+    found = find_quotes(quote, text, language)
+    if len(found) < 2:
+        return found[0] if found else None
+    quoted = {word.lower() for word in SHARED_WORD.findall(quote)}
+    shared = {word.lower() for word in SHARED_WORD.findall(about)} - quoted
+    scores, previous = [], 0
+    for start, end in found:
+        scores.append(sum(1 for word in SHARED_WORD.findall(text[previous:start]) if word.lower() in shared))
+        previous = end
+    best = max(range(len(found)), key=lambda index: (scores[index], -index))
+    same_row = best + 1 < len(found) and not re.search(r"[^\W\d_]", text[found[best][1]:found[best + 1][0]])
+    return found[best + 1] if RATING_COLUMNS.search(text) and same_row else found[best]
 
 
 # ── The checks ───────────────────────────────────────────────────────────
@@ -614,20 +759,44 @@ def _language_of(row: Mapping | None) -> str:
     return str((row or {}).get("language") or ENGLISH)
 
 
-def _values(row: Mapping | None) -> tuple[list, set]:
-    """The numbers and dates a cited row backs, each number with its field names. A passage backs its dates and
-    no number."""
+def _values(row: Mapping | None) -> tuple[list, set, list]:
+    """The numbers, dates and natural frequencies a cited row backs, each number with its field names. A passage
+    backs its dates and no number."""
     _, days = row_values(row)
-    return ([], days) if _is_passage(row) else (row_numbers(row), days)
+    return ([], days, []) if _is_passage(row) else (row_numbers(row), days, frequency_backs(row))
 
 
 def _texts(row: Any) -> list[str]:
-    """The text values a row holds at any depth, leaving out a passage's text."""
+    """The text values a row holds at any depth, leaving out a passage's text, which is its page, and the search's
+    header. A record's own text, such as the reason rebidding_risk quotes from a notice under quote.text, is one of
+    its values (ticket 28's verify F1)."""
     if isinstance(row, Mapping):
-        return [text for key, value in row.items() if key not in NOT_VALUES for text in _texts(value)]
+        skipped = NOT_VALUES if _is_passage(row) else NOT_VALUES - {"text"}
+        return [text for key, value in row.items() if key not in skipped for text in _texts(value)]
     if isinstance(row, list | tuple):
         return [text for value in row for text in _texts(value)]
     return [row] if isinstance(row, str) else []
+
+
+IDENTIFIER_FIELD = re.compile(r"(?:^|_)(?:id|reference|reference_no|no|number)$")
+
+
+def _identifiers(row: Any) -> set[str]:
+    """The identifiers a cited row holds at any depth, such as a step_reference, a notice_id or a contract id."""
+    if isinstance(row, list | tuple):
+        return {name for value in row for name in _identifiers(value)}
+    if not isinstance(row, Mapping):
+        return set()
+    found = {value.strip() for key, value in row.items() if isinstance(value, str) and IDENTIFIER_FIELD.search(str(key))}
+    return found | {name for key, value in row.items() if key not in NOT_VALUES for name in _identifiers(value)}
+
+
+def _names_only(run: str, identifiers: set[str]) -> bool:
+    """Whether quoted words are only an identifier: a whole identifier of a cited row, or a token that reads as an id.
+    Like a quote of only a number, it is on its record whatever the sentence around it says, so it proves nothing
+    and the sentence goes to the judge (ticket 24's review round 3, follow-up 9)."""
+    text = " ".join(run.split())
+    return text in identifiers or ID.fullmatch(text) is not None
 
 
 def _name_words(text: str) -> str:
@@ -667,23 +836,28 @@ def check(index: int, claim: Claim, facts: Facts, language: str = ENGLISH) -> Ch
     records = [(evidence, facts.get(evidence)) for evidence in returned if not _is_passage(facts.get(evidence))]
     # Check 3: the words in the sentence's quote marks are its quote, and its quote is on its page. Words
     # quoted from a cited record's text value, such as a STEP description, are on that record.
-    quote, span, backs = claim.quote, None, False
+    quote, span, backs, found_quote = claim.quote, None, False, False
     if quote is not None:
         passage = facts.get(quote.evidence_id)
         if _is_passage(passage):
             span = find_quote(quote.text, passage["text"], _language_of(passage))
-            backs = span is not None and not _summary(passage)
-        if span is None and facts.came_back(quote.evidence_id):
+            found_quote = span is not None
+            if found_quote:  # where the person reads it: the match the sentence means, when there are several
+                span = highlight_of(quote.text, passage["text"], claim.sentence, _language_of(passage))
+            backs = found_quote and not _summary(passage)
+        elif passage is not None:  # a quote from a record's own text, which has no page to highlight
+            backs = found_quote = any(find_quote(quote.text, text) for text in _texts(passage))
+        if not found_quote and facts.came_back(quote.evidence_id):
             reasons.append(Reason(3, NOT_ON_PAGE, quote.evidence_id))
     spans = []  # each run of quoted words: where it is in the sentence, and the evidence id that holds it
     for start, end in quoted_spans(claim.sentence):
         words = claim.sentence[start:end]
-        source = quote.evidence_id if quote is not None and span is not None and find_quote(
+        source = quote.evidence_id if quote is not None and found_quote and find_quote(
             words, quote.text, _language_of(facts.get(quote.evidence_id))) \
             else next((evidence for evidence, row in records if any(find_quote(words, text) for text in _texts(row))),
                       None)
         spans.append((start, end, source))
-    if quote is None or span is not None:
+    if quote is None or found_quote:
         if any(source is None for *_, source in spans):
             reasons.append(Reason(3, NOT_ON_PAGE, None if quote is None else quote.evidence_id))
         elif quote is not None and not any(source == quote.evidence_id for *_, source in spans):
@@ -698,9 +872,9 @@ def check(index: int, claim: Claim, facts: Facts, language: str = ENGLISH) -> Ch
               if not _in_a_value(mention, claim.sentence, texts)]
     checked: dict[str, list] = {"number": [], "date": []}
     for mention in stated + _declared(claim, stated, language):
-        unit = unit_of(claim.sentence, mention)
-        found = next((evidence for evidence, (numbers, days) in rows if _supports(mention, numbers, days, unit)),
-                     None)
+        unit = unit_of(claim.sentence, mention) if languages.language(language).code == ENGLISH else UNREAD
+        found = next((evidence for evidence, (numbers, days, frequencies) in rows
+                      if _supports(mention, numbers, days, unit, frequencies)), None)
         inside = next((source for start, end, source in spans
                        if mention.start is not None and start <= mention.start and mention.end <= end), False)
         if found is None and inside and (inside != getattr(quote, "evidence_id", None) or backs):
@@ -718,9 +892,10 @@ def check(index: int, claim: Claim, facts: Facts, language: str = ENGLISH) -> Ch
     quoted = bool(spans) or quote is not None
     # A quote counts as on its page only when its page was checked: a quote whose passage did not come
     # back this turn was compared with nothing, so the check line may not count it.
-    on_page = quoted and not quote_reasons and (quote is None or span is not None)
+    on_page = quoted and not quote_reasons and (quote is None or found_quote)
     runs = [claim.sentence[start:end] for start, end, _ in spans] + ([quote.text] if quote is not None else [])
-    words = bool(runs) and all(re.search(r"[^\W\d_]", run) for run in runs)
+    names = {name for evidence in returned for name in _identifiers(facts.get(evidence))}
+    words = bool(runs) and all(re.search(r"[^\W\d_]", run) and not _names_only(run, names) for run in runs)
     return Checked(index, claim, tuple(reasons), tuple(checked["number"]), tuple(checked["date"]), span,
                    quoted=quoted, quote_found=on_page, quoted_words=words)
 
@@ -734,7 +909,6 @@ def verify(claims: Iterable[Claim], facts: Facts, language: str = ENGLISH) -> Ve
 
 PROJECT = re.compile(r"^P\d{6}$")
 DISAGREEMENTS_TOOL = "get_disagreements"
-ABSTENTION = "abstention"  # what the judge calls a tool's abstention among a sentence's sources: check_plan:abstention
 
 
 def proven(sentence: Checked) -> bool:
@@ -773,7 +947,9 @@ def kept_counts(kept: Iterable[Mapping], removed: int, checks_run: Iterable[int]
         runs = [text[start:end] for start, end in quoted_spans(text)] + ([quote["text"]] if quote else [])
         says_quote = bool(runs)
         quoted += says_quote
-        words = says_quote and all(re.search(r"[^\W\d_]", run) for run in runs)
+        names = {name for cited in sentence.get("evidence_ids") or ()
+                 for name in _identifiers(((evidence or {}).get(cited) or {}).get("row"))}
+        words = says_quote and all(re.search(r"[^\W\d_]", run) and not _names_only(run, names) for run in runs)
         if _proves(sentence.get("kind") or "", bool(sentence.get("numbers") or sentence.get("dates")), says_quote,
                    says_quote, words):
             proven_count += 1
@@ -840,8 +1016,6 @@ def _project(row: Mapping | None) -> str | None:
 
 def _abstention_text(tool: str, abstention: Mapping, limit: int) -> str:
     """What the judge reads of one abstention: the tool and what it said it could not answer."""
-    import json
-
     return json.dumps(_plain({"tool": tool, "abstention": abstention}), ensure_ascii=False)[:limit]
 
 
@@ -851,8 +1025,6 @@ def _source_text(row: Mapping | None, limit: int) -> str:
     if _is_passage(row):
         text = f"{row.get('header') or ''}\n{row['text']}".strip()
     else:
-        import json
-
         text = json.dumps(_plain({key: value for key, value in (row or {}).items() if key != "also"}),
                           ensure_ascii=False)
     return text[:limit]
@@ -876,14 +1048,19 @@ class AnswerCheck:
             evidence: row for evidence, row in facts.returned_by(DISAGREEMENTS_TOOL) if row.get("sides")}
         self.fetched: set[str] = set()  # the ones only check 6's own question found
         self.judge_called, self.judge_responded = False, None
-        backing = set(backs_advice)
+        self.backing = set(backs_advice)
         advice = [sentence for sentence in self.sentences.values() if sentence.claim.kind == "advice"]
-        cited = [sentence for sentence in advice if any(
-            facts.came_back(evidence) and facts.tool(evidence) in backing for evidence in sentence.claim.evidence_ids)]
+        cited = [sentence for sentence in advice if self._backs_advice(sentence)]
         self.advice = (len(advice), len(cited))
         for sentence in advice:
             if sentence not in cited:
                 self._fail(sentence.index, Reason(5, ADVICE_UNBACKED))
+
+    def _backs_advice(self, sentence: Checked) -> bool:
+        """Check 5: the sentence cites a lesson or a comparable, evidence from a tool whose rows back advice. Any tool
+        that returned the id this turn counts, whichever came first (ticket 61's review, F4)."""
+        return any(self.facts.came_back(evidence) and not self.backing.isdisjoint(self.facts.tools(evidence))
+                   for evidence in sentence.claim.evidence_ids)
 
     @classmethod
     def from_checked(cls, checked: Iterable[Checked], facts: Facts, backs_advice: Iterable[str], *,
@@ -944,17 +1121,28 @@ class AnswerCheck:
     def judged(self, questions: list[Question], judgements: list[Judgement] | None) -> None:
         """The judge's answers to the questions, or None when it did not respond. A sentence that cites nothing
         and does not follow from what the tools could not answer is removed because it cited no source; the
-        judge's reason is kept with it for the run log."""
+        judge's reason is kept with it for the run log. A sentence the judge says advises, though the agent gave it
+        another kind, is held to check 5 as advice is (ticket 24's verify round 3, O1)."""
         self.judge_called, self.judge_responded = True, judgements is not None
         said = {judgement.index: judgement for judgement in judgements or []}
+        total, cited = self.advice
         for question in questions:
             self.sentences[question.index] = dataclasses.replace(self.sentences[question.index], judged=True)
+            sentence = self.sentences[question.index]
             if judgements is None:
                 self._fail(question.index, Reason(4, JUDGE_UNAVAILABLE))
-            elif not said[question.index].follows:
-                uncited = not self.sentences[question.index].claim.evidence_ids
-                self._fail(question.index, Reason(4, NO_SOURCE if uncited else NOT_SUPPORTED,
-                                                  said[question.index].reason))
+                continue
+            judgement = said[question.index]
+            if judgement.advises and sentence.claim.kind != "advice":
+                total += 1
+                if self._backs_advice(sentence):
+                    cited += 1
+                else:
+                    self._fail(question.index, Reason(5, ADVICE_UNBACKED))
+            if not judgement.follows:
+                uncited = not sentence.claim.evidence_ids
+                self._fail(question.index, Reason(4, NO_SOURCE if uncited else NOT_SUPPORTED, judgement.reason))
+        self.advice = (total, cited)
 
     def verdict(self) -> Verdict:
         sentences = tuple(self.sentences[index] for index in sorted(self.sentences))
@@ -1077,10 +1265,14 @@ def answer_events(verdict: Verdict, facts: Facts, tools: Iterable[str] = (), cit
             if not facts.came_back(evidence):
                 continue
             highlights = cited.setdefault(evidence, [])
-            # The side's quote, highlighted for the marker under the sentence the card follows, so its evidence
-            # card and the drawer open on the words the card shows, whether or not a sentence quoted them.
+            # The side's quote, or the rating a side gives with no quote, highlighted for the marker under the
+            # sentence the card follows, so its evidence card and the drawer open on the words the card shows,
+            # whether or not a sentence quoted them: in a ratings table, the rating on its row (highlight_of).
             row = facts.get(evidence)
-            span = find_quote(side["quote"], row["text"]) if side.get("quote") and _is_passage(row) else None
+            words = side.get("quote") or (str(side["value"]) if side.get("value_form") == "rating" and side.get("value")
+                                          else None)
+            span = highlight_of(words, row["text"], side.get("field_name") or "", _language_of(row)) \
+                if words and _is_passage(row) else None
             mark = None if span is None else {"sentence": found.after, "start": span[0], "end": span[1]}
             if mark is not None and mark not in highlights:
                 highlights.append(mark)

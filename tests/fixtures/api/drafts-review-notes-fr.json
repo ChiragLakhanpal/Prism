@@ -58,7 +58,7 @@
         },
         {
           "index": 1,
-          "text": "Son achèvement prévu le 31 juillet 2026, publié pour la première fois dans le plan du 5 mars 2026, est dépassé sans contrat signé.",
+          "text": "Son achèvement prévu le 31 juillet 2026 est dépassé sans contrat signé.",
           "kind": "record",
           "evidence_ids": [
             "strata.silver.plan_rows:40132287/KE-NWWDA-541055-CW-RFB"
@@ -67,10 +67,6 @@
           "dates": [
             {
               "text": "31 juillet 2026",
-              "evidence_id": "strata.silver.plan_rows:40132287/KE-NWWDA-541055-CW-RFB"
-            },
-            {
-              "text": "5 mars 2026",
               "evidence_id": "strata.silver.plan_rows:40132287/KE-NWWDA-541055-CW-RFB"
             }
           ],
@@ -163,7 +159,8 @@
           "text": "Le plan indique toujours cette activité comme Pending Implementation, avec un Actual Amount de 0,00, et le projet se termine le 31 octobre 2026.",
           "kind": "record",
           "evidence_ids": [
-            "strata.silver.plan_rows:40132287/KE-NWWDA-541062-CW-RFQ"
+            "strata.silver.plan_rows:40132287/KE-NWWDA-541062-CW-RFQ",
+            "strata.gold.project:P156634"
           ],
           "numbers": [
             {
@@ -174,7 +171,7 @@
           "dates": [
             {
               "text": "31 octobre 2026",
-              "evidence_id": "strata.silver.plan_rows:40132287/KE-NWWDA-541062-CW-RFQ"
+              "evidence_id": "strata.gold.project:P156634"
             }
           ],
           "quote": null
@@ -380,6 +377,29 @@
         "listed": null
       },
       "highlights": []
+    },
+    "strata.gold.project:P156634": {
+      "id": "strata.gold.project:P156634",
+      "kind": "record",
+      "tool": "check_plan",
+      "stratum": "What",
+      "short_name": null,
+      "row": {
+        "evidence_id": "strata.gold.project:P156634",
+        "public_from": "2024-04-24",
+        "project_id": "P156634",
+        "project_name": "Water and Sanitation Development Project",
+        "status": "Active",
+        "closing_date": "2026-10-31",
+        "record_date": "2024-04-24",
+        "days_to_close": 8,
+        "source": {
+          "source_key": "projects_api",
+          "project_id": "P156634",
+          "document_date": "2024-04-24"
+        }
+      },
+      "highlights": []
     }
   },
   "checks": {
@@ -401,20 +421,20 @@
       "matched": 6
     },
     "dates": {
-      "total": 7,
-      "matched": 7
+      "total": 6,
+      "matched": 6
     },
     "quotes": {
       "total": 1,
       "found": 1
     },
     "sources": {
-      "total": 3,
-      "returned": 3
+      "total": 4,
+      "returned": 4
     },
     "checked": {
-      "total": 13,
-      "matched": 13
+      "total": 12,
+      "matched": 12
     },
     "shown": {
       "numbers": {
@@ -422,8 +442,8 @@
         "matched": 6
       },
       "dates": {
-        "total": 7,
-        "matched": 7
+        "total": 6,
+        "matched": 6
       },
       "quotes": {
         "total": 1,
@@ -457,7 +477,9 @@
     "tools": [
       "check_plan"
     ],
-    "cited_only": []
+    "cited_only": [
+      "get_lessons"
+    ]
   },
   "checks_count": 6,
   "removed": [],
@@ -488,12 +510,21 @@
       ],
       "opened": false,
       "last_opened_at": null
+    },
+    {
+      "evidence_id": "strata.gold.project:P156634",
+      "number": 4,
+      "cited_in": [
+        "KE-NWWDA-541062-CW-RFQ"
+      ],
+      "opened": false,
+      "last_opened_at": null
     }
   ],
-  "citations": 7,
+  "citations": 8,
   "opened": {
     "count": 0,
-    "of": 3
+    "of": 4
   },
   "layout": {
     "columns": [

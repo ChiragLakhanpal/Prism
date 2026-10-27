@@ -10,6 +10,7 @@ page from tests/ground_truth/values.toml, and the plan's public address from che
 """
 
 import csv
+import datetime as dt
 import io
 import re
 import socket
@@ -66,9 +67,16 @@ def test_export_makes_a_word_file_with_one_footnote_per_citation_and_the_success
     references = [int(ref.get(f"{W}id")) for ref in document.iter(f"{W}footnoteReference")]
     notes = {int(note.get(f"{W}id")): "".join(text.text for text in note.iter(f"{W}t")).strip()
              for note in footnotes.iter(f"{W}footnote") if int(note.get(f"{W}id")) > 0}
-    # One footnote per citation, in order, each the source line of the row it cites and the plan's address.
+    # One footnote per citation, in order, each the source line of the record it cites: a plan row's is the plan's
+    # line and address, and the project record's, which the closing date's sentence cites beside its row (ticket 61;
+    # ticket 35's verify round 4, F1), names the projects API's record, the page that holds the closing date.
+    record_date = dt.date.fromisoformat(CHECKED["project"]["record_date"])
+    lines = {**{row: f"{SOURCE_LINE} {PDF_URL}" for row in ROW_OF.values()},
+             CHECKED["project"]["evidence_id"]: f"World Bank projects API, record of {record_date:%B} {record_date.day}, "
+                                                f"{record_date.year}."}
     assert references == list(range(1, len(citations) + 1)) == sorted(notes)
-    assert all(notes[number] == f"{SOURCE_LINE} {PDF_URL}" for number in references)
+    assert [notes[number] for number in references] == [lines[evidence] for evidence in citations]
+    assert CHECKED["project"]["evidence_id"] in citations
     # The success state names the file and its footnote count.
     assert draft["export"]["footnotes"] == len(citations) == draft["citations"]
     assert [file["name"] for file in draft["export"]["files"]] == [
@@ -100,18 +108,22 @@ def test_the_evidence_pack_lists_every_source_and_whether_its_author_opened_it_a
 
     text = " ".join(" ".join(page.extract_text().split()) for page in pdf.pages)
     assert text.startswith("Evidence pack")
-    assert "Ana Example opened 1 of 3 sources before exporting." in text
+    assert "Ana Example opened 1 of 4 sources before exporting." in text
     assert "Not checked:" in text and "The World Bank does not guarantee the accuracy of the data." in text
     fonts = {font.get_object()["/BaseFont"] for page in pdf.pages for font in page["/Resources"]["/Font"].values()}
     assert any(name.endswith("+OpenSans") for name in fonts)
     assert table[0] == ["Number", "Evidence ID", "Source", "Cited in", "Opened before export", "Last opened (UTC)",
                         "Kept another source", "Reason"]
+    record_date = dt.date.fromisoformat(CHECKED["project"]["record_date"])
     assert [(row[0], row[1], row[2], row[3], row[4]) for row in table[1:]] == [
         (str(number), ROW_OF[ref], CSV_SOURCE_LINE, ref, "Yes" if ref == MARKED[1] else "No")
-        for number, ref in enumerate(MARKED, 1)]
+        for number, ref in enumerate(MARKED, 1)] + [
+        ("4", CHECKED["project"]["evidence_id"],
+         f"World Bank projects API, record of {record_date:%B} {record_date.day}, {record_date.year}.",
+         "KE-NWWDA-541062-CW-RFQ", "No")]
     # The column heading says UTC, so each moment does not repeat it.
     assert table[2][5] == "October 23, 2026, 14:02" and table[1][5] == table[3][5] == ""
-    assert draft["export"]["opened"] == 1 and draft["export"]["sources"] == 3
+    assert draft["export"]["opened"] == 1 and draft["export"]["sources"] == 4
 
 
 def test_an_evidence_pack_row_with_a_comma_a_quote_and_a_line_break_reads_back_cell_for_cell():

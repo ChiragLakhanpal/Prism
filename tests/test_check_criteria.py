@@ -426,6 +426,67 @@ def test_the_package_run_finds_the_lessons_on_cost_estimates_with_icr_p130164_pa
     assert lesson["excerpt"]["text"][start:end] == lesson["quote"] and lesson["excerpt"]["lang"] == "en"
 
 
+def test_check_6_s_card_comes_with_the_lesson_whose_paragraph_is_one_side_of_a_disagreement(fixture_db, state_db,
+                                                                                            tmp_path, monkeypatch):
+    """Ticket 31's review round 3, F2: the section ran check 6 and dropped its cards, so a lesson quote that is one
+    side of a disagreement showed alone while the counts said a card was shown. The card now comes with the lesson
+    it concerns, with both sides' evidence so their markers open, and its count agrees. The disagreement is planted
+    at the tool, beside the fixture's own, with ICR P130164 paragraph 54 as its first side
+    (tests/planted_disagreements.py)."""
+    import lesson_scenario as scenario
+    import planted_disagreements as planted
+
+    tools = planted.with_adapter("quoting_icr_54")
+    monkeypatch.setattr("strata.server.app.load_tools", lambda: tools)
+    library = scenario.copy_of(fixture_db, tmp_path)
+    scenario.decide(library, scenario.REBIDDING, dt.date(2026, 10, 27))
+    app = app_on(library, state_db, today=dt.date(2026, 10, 28))
+
+    run = the("package_run", events(call(app, "POST", f"/api/packages/{WORKS}/criteria/run", ANA, json={}).text))
+
+    [lesson] = run["lessons"]["groups"][0]["lessons"]
+    [card] = lesson["disagreements"]
+    assert (card["id"], [side["evidence_id"] for side in card["sides"]]) == (
+        planted.PLANTED, [planted.ICR_54, planted.ISR_7])
+    assert run["checks"]["disagreements"]["shown"] == 1
+    assert {side["evidence_id"] for side in card["sides"]} <= set(run["evidence"])
+    assert [row["disagreements"] for row in run["rejected"]["rows"]] == [[] for _ in run["rejected"]["rows"]]
+
+
+def test_every_card_check_6_attaches_to_one_lesson_quote_comes_with_it(fixture_db, state_db, tmp_path, monkeypatch):
+    """Ticket 61's verify, F1: with two disagreements whose side is ICR P130164 paragraph 54, the counts said two
+    cards were shown while the run carried only the first. Every card comes with the lesson now, in the order check 6
+    attached them, so the cards the section carries number what the check line says it showed."""
+    import lesson_scenario as scenario
+    import planted_disagreements as planted
+
+    tools = planted.with_adapter("twice_quoting_icr_54")
+    monkeypatch.setattr("strata.server.app.load_tools", lambda: tools)
+    library = scenario.copy_of(fixture_db, tmp_path)
+    scenario.decide(library, scenario.REBIDDING, dt.date(2026, 10, 27))
+    app = app_on(library, state_db, today=dt.date(2026, 10, 28))
+
+    run = the("package_run", events(call(app, "POST", f"/api/packages/{WORKS}/criteria/run", ANA, json={}).text))
+
+    [lesson] = run["lessons"]["groups"][0]["lessons"]
+    assert [card["id"] for card in lesson["disagreements"]] == [planted.PLANTED, planted.PLANTED_TOO]
+    carried = [card for lesson in (one for group in run["lessons"]["groups"] for one in group["lessons"])
+               for card in lesson["disagreements"]] + [card for row in run["rejected"]["rows"]
+                                                       for card in row["disagreements"]]
+    assert len(carried) == run["checks"]["disagreements"]["shown"] == 2
+
+
+def test_each_removed_entry_says_whether_it_was_a_reading_a_record_s_quote_or_a_passage_s(fixture_db, state_db):
+    """Ticket 31's review round 3, F4: the screen worked out what a removed sentence was about from the shape of its
+    id. The server sends it with each removed entry: a reading of your words, a reason quoted from an award notice,
+    or a lesson's words quoted from its paragraph. With no judge connected, every reading is removed."""
+    app = app_on(fixture_db, state_db, judge=None)
+    _, sent = compare(app)
+
+    removed = the("comparison", sent)["removed"]
+    assert removed and {entry["source"] for entry in removed} == {"reading"}
+
+
 def test_a_rejected_bid_opens_its_award_notice_with_the_reason_highlighted_and_no_bidder_named(fixture_db, state_db):
     @contextmanager
     def reading(_viewer):

@@ -88,6 +88,95 @@ def test_the_rows_pass_the_checks_and_the_check_line_counts_them(library):
     assert payload["verifier"]["counts"]["numbers"] == {"total": 4, "matched": 4}
     assert payload["verifier"]["counts"]["sentences"] == {"written": 4, "kept": 4, "removed": 0}
     assert payload["verifier"]["tools"] == ["find_comparables", "get_lessons"]
+    # All six checks ran, as on an answer (ticket 61). Each sentence restates its records' own words, the risk's
+    # name and the lesson's, so checks 1 to 3 prove it and no model is needed; those words are names and lessons
+    # that match their records, not quotes from a page, which the screen's check line says.
+    counts = payload["verifier"]["counts"]
+    assert counts["checks_run"] == [1, 2, 3, 4, 5, 6]
+    assert (counts["judge"]["called"], counts["shown"]["proven"]) == (False, 4)
+    assert counts["quotes"] == {"total": 4, "found": 4}
+
+
+class NothingFollows:
+    """A judge for check 4 that finds no sentence follows."""
+
+    name = "nothing follows"
+
+    def __init__(self):
+        self.asked = []
+
+    def judge(self, questions):
+        from strata.agent.judge import Judgement
+
+        self.asked += [question.sentence for question in questions]
+        return [Judgement(question.index, False, "It does not follow.") for question in questions]
+
+
+def test_check_4_removes_a_row_whose_sentence_checks_1_to_3_cannot_prove(library, monkeypatch):
+    """Ticket 61: the table runs all six checks through SixChecks, as a draft does. A planted sentence on what helped
+    that restates nothing word for word goes to the judge, which says it does not follow, so its row is removed with
+    check 4's reason and the other row stands."""
+    from strata.agent.answer_check import SixChecks
+    from strata.agent.claims import Claim
+
+    written = risks._claims
+
+    def planted(row, m, counts_id):
+        count, helped = written(row, m, counts_id)
+        if row["risk_label"] == "Cost estimates below market rates":
+            helped = Claim("What helped was a stronger contractor.", "summary", helped.evidence_ids)
+        return count, helped
+
+    monkeypatch.setattr(risks, "_claims", planted)
+    judge = NothingFollows()
+
+    payload = build(library, INDIA_WORKS, six_checks=SixChecks(None, judge)).payload
+
+    assert judge.asked == ["What helped was a stronger contractor."]
+    assert [(row["risk_label"], row["claim_kind"], row["check"], row["reason_code"])
+            for row in payload["verifier"]["removed"]] == [
+        ("Cost estimates below market rates", "helped", 4, "not_supported")]
+    assert "Cost estimates below market rates" not in [row["risk_label"] for row in payload["rows"]]
+    assert payload["rows"]
+
+
+def test_check_6_attaches_a_disagreement_whose_side_is_a_row_s_source(library):
+    """Ticket 61: check 6 asks get_disagreements about the project each row's sources belong to, and a disagreement
+    whose side is a passage the row's lesson rests on, and whose value the row states ("market rates"), is attached
+    to that row with both sides, which the payload carries. Two are planted at the tool, beside the fixture's own,
+    with the same side, and the row carries both, as many as the counts say were shown (ticket 61's verify, F1)."""
+    import planted_disagreements as planted
+
+    from strata.agent.answer_check import SixChecks
+
+    payload = build(library, INDIA_WORKS,
+                    six_checks=SixChecks(None, None, planted.with_adapter("twice_on_market_rates"))).payload
+
+    [row] = [row for row in payload["rows"] if row["risk_label"] == "Cost estimates below market rates"]
+    assert [card["id"] for card in row["disagreements"]] == [planted.PLANTED, planted.PLANTED_TOO]
+    assert [side["evidence_id"] for side in row["disagreements"][0]["sides"]] == [planted.ICR_54, planted.ISR_7]
+    assert payload["verifier"]["counts"]["disagreements"]["shown"] == 2
+    assert [other["disagreements"] for other in payload["rows"] if other is not row] == [[]] * (len(payload["rows"]) - 1)
+
+
+def test_a_count_that_differs_from_the_tool_s_summary_is_removed_before_the_verifier_runs(library, monkeypatch):
+    """Ticket 30's verify O1: a count of 23 was kept ("came up in 23 of 1 completion reports"), because 23 is the
+    ICR's page number in the cited summary. The builder compares each row's count with the summary's own count for
+    its risk before the verifier runs, and removes a row that differs, as check 1 would."""
+    made = risks._row
+
+    def wrong(factor, lesson):
+        row = made(factor, lesson)
+        return {**row, "k": 23} if row["risk_label"] == "Cost estimates below market rates" else row
+
+    monkeypatch.setattr(risks, "_row", wrong)
+
+    payload = build(library, INDIA_WORKS).payload
+
+    assert [(row["risk_label"], row["claim_kind"], row["k"], row["check"], row["reason_code"])
+            for row in payload["verifier"]["removed"]] == [
+        ("Cost estimates below market rates", "count", 23, 1, "number_not_in_records")]
+    assert "Cost estimates below market rates" not in [row["risk_label"] for row in payload["rows"]]
 
 
 def test_the_rural_roads_package_in_kenya_reaches_no_completion_report_on_the_fixture(library):

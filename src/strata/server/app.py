@@ -889,7 +889,7 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                            reference=request_reference)
     risk_routes.add_routes(app, engine_for=engine_for, store=packages, form=package_form or load_package_form(),
                            thresholds=package_thresholds or thresholds, today=today, now=now,
-                           reference=request_reference)
+                           reference=request_reference, six_checks=six_checks)
     feedback_routes.add_routes(app, engine_for=engine_for, record=feedback_record, reports=passage_reports,
                                judging=judging, reference=request_reference)
 
@@ -1181,7 +1181,8 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
     @app.post("/api/lessons/review/{item_id}/summary")
     def rewrite_lesson_summary(item_id: str, viewer: Viewer = Depends(current_viewer)):
         return lesson_write(f"the summary of {item_id}", viewer,
-                            lambda engine, record: lessons.rewrite(engine, viewer, item_id, lesson_writer(), record))
+                            lambda engine, record: lessons.rewrite(engine, viewer, item_id, lesson_writer(), record,
+                                                                   six_checks))
 
     @app.post("/api/lessons/review/{item_id}/{verb}")
     def lesson_review_act(item_id: str, verb: Literal["recommend", "decide", "cross-check"], body: LessonActRequest,

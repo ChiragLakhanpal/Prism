@@ -29,6 +29,7 @@ from fastapi import Depends, FastAPI, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
+from strata.agent.answer_check import SixChecks
 from strata.config import PackageForm, Thresholds, load_lesson_lists
 from strata.dbx import Viewer, viewer_from_headers
 from strata.lakehouse.engine import EngineError, PermissionDenied
@@ -54,7 +55,8 @@ def refused(status: int, code: str, **details) -> JSONResponse:
 
 def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: PackageStore | None, form: PackageForm,
                thresholds: Thresholds, today: Callable[[], dt.date], now: Callable[[], dt.datetime],
-               reference: Callable[[], str]) -> None:
+               reference: Callable[[], str], six_checks: SixChecks | None = None) -> None:
+    """six_checks are the app's six checks, with its judge, which every risk table runs (ticket 61)."""
     lists = load_lesson_lists()
 
     def current_viewer(request: Request) -> Viewer:
@@ -78,7 +80,7 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: PackageStor
         try:
             with engine_for(viewer) as engine:
                 built = risks.build(engine, viewer, as_of=as_of, criteria=criteria, words=words, view=view,
-                                    selected=chosen, missing=missing, thresholds=thresholds)
+                                    selected=chosen, missing=missing, thresholds=thresholds, six_checks=six_checks)
         except registry.ToolError as error:
             return refused(422, "bad_request", detail=str(error))
         except PermissionDenied:

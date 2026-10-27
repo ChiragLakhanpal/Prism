@@ -668,7 +668,9 @@
       "agency_track_record",
       "check_plan"
     ],
-    "cited_only": []
+    "cited_only": [
+      "get_lessons"
+    ]
   },
   "checks_count": 6,
   "removed": [],
@@ -776,7 +778,7 @@
       {
         "name": "project-paper-summary-P156634-northern-water-works-development-agency-2026-10-09-evidence-pack.pdf",
         "media_type": "application/pdf",
-        "size": 22678
+        "size": 22694
       },
       {
         "name": "project-paper-summary-P156634-northern-water-works-development-agency-2026-10-09.docx",

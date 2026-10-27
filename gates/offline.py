@@ -9,9 +9,9 @@ The time limit in that file covers the whole run once the gate holds the lock: w
 the gate stops every lane. When every staged file is Markdown, it runs only the steps marked
 `always`, once it has checked that none of those files has changes that are not staged.
 Otherwise it first checks that no tracked file has changes that are not staged. Either way the
-tests see what the commit holds. Steps run with the network switched off for uv, npm and Playwright. They also
-run without git's hook variables, so a test that builds its own repo cannot touch the commit
-in progress.
+tests see what the commit holds. Steps run with the network switched off for uv, npm and
+Playwright. They also run without git's hook variables, so a test that builds its own repo
+cannot touch the commit in progress.
 A step that names the scratch folder .gate-tmp/, as the pytest steps do with --basetemp, finds
 it made, since pytest needs the folder's parent to exist; .gitignore leaves it out (ticket 73).
 

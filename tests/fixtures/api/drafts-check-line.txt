@@ -1,1 +1,1 @@
-Checked: 6 of 6 numbers match records; 7 of 7 dates match records. Not checked: whether the plan's published records are complete, or whether these notes are what you would tell the borrower.
+Checked: 6 of 6 numbers match records; 6 of 6 dates match records. Not checked: whether the plan's published records are complete, or whether these notes are what you would tell the borrower.

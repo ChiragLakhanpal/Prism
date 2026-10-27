@@ -26,7 +26,7 @@ Answer with one JSON object and nothing else, in this shape:
 - claims: the note's sentences, in order. Each claim has:
   - sentence: one sentence.
   - kind: record.
-  - evidence_ids: the activity's own evidence_id, copied from its row. Cite no other row.
+  - evidence_ids: the activity's own evidence_id, copied from its row. When the sentence states a value a reason holds that comes from another record, such as the project's closing date, also cite the evidence ids that reason names. Cite no other row.
   - numbers and dates: each number and each date the sentence states, written as the sentence writes it.
   - quote: null.
 - If you cannot write a note for an activity, give {"activity_reference_no": "...", "refusal": "out_of_scope"} instead of claims.
@@ -35,6 +35,7 @@ The app removes each sentence that breaks one of these rules, and it shows the s
 
 - Every number and date must be a value in the activity's row, written at the same rounding. Write amounts as STEP writes them, with their cents, such as 1,230,000.00. Never compute, round or convert a number. If a figure you need is not a value in the row, leave it out.
 - Cite only the evidence ids in the message.
+- Each citation becomes a footnote that points at the cited record's page, so state no date of another plan version, such as the date of the plan that first listed a planned date. That version is not on this plan's pages.
 - Do not write evidence ids or page numbers in a sentence. The citation shows them.
 
 ## Words

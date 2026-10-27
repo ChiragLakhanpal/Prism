@@ -100,16 +100,18 @@ def merge_heads():
     return heads
 
 
-def history_patch():
+def history_patch(heads=()):
+    """The history of HEAD, and of heads, the commits a merge in progress brings in."""
     if not is_commit("HEAD"):  # a repo with no commits yet
         return ""
     return git("log", "-p", "--no-color", "--no-ext-diff", "-U0", f"--format={COMMIT_MARK}%h \"%s\"", "HEAD",
-               *merge_heads(), "--")
+               *heads, "--")
 
 
 def main():
     try:
-        staged, history = staged_patch(), history_patch()
+        heads = merge_heads()
+        staged, history = staged_patch(), history_patch(heads)
     except subprocess.CalledProcessError as failed:
         print("The secret scan could not read the changes from git, so it cannot tell whether they hold a key. "
               f"Git said this: {failed.stderr.strip()}")
@@ -120,7 +122,7 @@ def main():
               for commit, path, _, shape in scan_patch(history)]
     if not found:
         print("The secret scan found no keys in the staged changes or the history"
-              f"{', or in the branch the merge brings in' if merge_heads() else ''}.")
+              f"{', or in the branch the merge brings in' if heads else ''}.")
         return 0
     print("The secret scan found what looks like a key. It does not print the key itself.")
     for line in found:

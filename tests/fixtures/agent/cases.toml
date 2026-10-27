@@ -516,9 +516,10 @@ judge = "no_response"
 
 [[cases]]
 id = "ke-nwwda-541055-past-range"
-says = """find_comparables runs and search_passages does not, and checks 1 to 3 prove every sentence: numbers from the \
-past range's summary and a STEP reference quoted from a comparable's row. The judge is not called, and the check \
-line reads exactly in the ticket's form."""
+says = """find_comparables runs and search_passages does not. Checks 1 to 3 prove the past range's sentence, whose \
+numbers come from its summary. The two sentences that quote only a comparable's STEP reference go to the judge in one \
+call (ticket 61: a quoted identifier proves nothing about "still open"), and it finds both follow. The check line \
+reads in the ticket's form, with the judge's part."""
 question = "How long did packages like KE-NWWDA-541055-CW-RFB take from notice to signed contract?"
 scope = "KE-NWWDA-541055-CW-RFB"
 as_of = 2026-10-22
@@ -527,7 +528,8 @@ recording = "ke-nwwda-541055-past-range"
 [[cases]]
 id = "ke-nwwda-541055-advice"
 says = """The same answer with a sentence of advice that cites the past range's summary: a comparable, so check 5 \
-passes, and the judge finds it follows. One sentence on screen was judged and two needed no model."""
+passes, and the judge finds it follows and advises. Three sentences on screen were judged, in one call, and one \
+needed no model."""
 question = "How long did packages like KE-NWWDA-541055-CW-RFB take from notice to signed contract?"
 scope = "KE-NWWDA-541055-CW-RFB"
 as_of = 2026-10-22

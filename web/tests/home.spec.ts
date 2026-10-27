@@ -192,7 +192,7 @@ test("Waiting for you lists the drafts to check with their progress, and shows i
   await expect(rows).toHaveCount(2);
   await expect(rows.nth(0)).toContainText("0 of 2 risk owners set.");
   await expect(rows.nth(0)).toContainText("Example");
-  await expect(rows.nth(1)).toContainText("You opened 0 of 3 sources.");
+  await expect(rows.nth(1)).toContainText("You opened 0 of 4 sources.");
   await expect(waiting).not.toContainText("approve");
 
   await open(page, "/", { "/api/home": await file("home-drafts-checked.json") });

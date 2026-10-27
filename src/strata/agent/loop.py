@@ -104,17 +104,31 @@ def _later(value: Any, as_of: dt.date) -> bool:
     return False
 
 
-def keep_nested(facts: Facts, record: Mapping, tool: str | None) -> None:
-    """Keep a record a row holds, such as one side of a disagreement, under its own evidence id. Two records
-    under one id come from one source, such as two ratings in one passage, or a passage search_passages also
-    returned: the record kept first keeps its fields, and the later ones are kept beside it under also, so
-    every value that came back under that id backs a claim that cites it."""
+def keep_nested(facts: Facts, record: Mapping, tool: str | None, kind: str | None = None) -> None:
+    """Keep a record a tool returned, a row or one a row holds (such as one side of a disagreement), under its own
+    evidence id. Two records under one id come from one source, such as two ratings in one passage, or a passage
+    search_passages also returned: the record kept first keeps its fields, and the later ones are kept beside it
+    under also, so every value that came back under that id backs a claim that cites it (ticket 20's review round 3,
+    F7). kind is the kind of question of the search that found it (Facts.record)."""
     held = facts.get(record["evidence_id"])
-    if held is None:
-        facts.record(record["evidence_id"], record, tool=tool)
+    if held is None or _ranked_again(held, record):
+        facts.record(record["evidence_id"], record, tool=tool, kind=kind)
     elif held != record and record not in held.get("also", ()):
         facts.record(record["evidence_id"], {**record, **held, "also": [*held.get("also", ()), record]},
-                     tool=facts.tool(record["evidence_id"]))
+                     tool=facts.tool(record["evidence_id"]), kind=kind)
+    # Every tool that returned the id is kept, so check 5 asks each of them (ticket 61's review, F4).
+    facts.returned(record["evidence_id"], tool)
+
+
+RANKING = ("rank", "score")  # a search's own order, which says nothing about the record
+
+
+def _ranked_again(held: Mapping, record: Mapping) -> bool:
+    """Whether a record is the one held, found again by another search at another rank: the later one is kept, as a
+    search's ranking is not a value."""
+    def plain(row: Mapping) -> dict:
+        return {key: value for key, value in row.items() if key not in RANKING}
+    return plain(held) == plain(record)
 
 
 def keep_result(facts: Facts, name: str, result: Mapping, tools: dict[str, Tool]) -> None:
@@ -126,7 +140,7 @@ def keep_result(facts: Facts, name: str, result: Mapping, tools: dict[str, Tool]
     # The kind of question of the search that found these rows, which a passage report on one of them takes (ticket 32).
     kind = (result.get("ranked_lower") or {}).get("query_kind")
     for row in result["rows"]:
-        facts.record(row["evidence_id"], row, tool=name, kind=kind)
+        keep_nested(facts, row, name, kind)
         for record in (inner for field in nested for inner in row.get(field) or ()):
             keep_nested(facts, record, name)
     if result.get("summary"):  # the tool's derived figures, such as a past range, as one citable record
