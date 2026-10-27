@@ -313,7 +313,7 @@ start_here = { kind = "record", staff = true, piu = false, public = false, reaso
 [[people]]
 email = "chirag.lakhanpal.cl@gmail.com"
 name = "Chirag Lakhanpal"
-groups = ["reviewing_panel"]
-regions = []
+groups = ["reviewing_panel", "accredited_procurement_specialist", "lead_procurement_specialist", "passage_reviewer", "query_judge", "model_owner"]
+regions = ["Eastern and Southern Africa", "South Asia"]
 projects = []
 user_id = "146827166867001"
