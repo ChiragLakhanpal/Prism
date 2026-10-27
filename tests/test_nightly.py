@@ -258,11 +258,14 @@ def test_sync_index_makes_a_missing_index_without_asking_it_to_sync_and_syncs_on
     assert statements == ["ALTER TABLE strata.gold.passage SET TBLPROPERTIES (delta.enableChangeDataFeed = true)"]
 
 
-def test_a_live_score_task_replays_the_signals_for_their_track_record_and_an_offline_one_does_not(engine, monkeypatch):
-    """Ticket 37 left the signals' track record to the score task (strata.estimates.signals_track). Its replay
-    dates are fixed past dates, so a second live night within signals.track_record_every_days keeps the stored
-    record instead of replaying it again inside the job's window (review B6)."""
-    from strata.estimates import signals_track, tracking
+def test_a_live_score_task_replays_the_signals_on_their_weekly_day_and_an_offline_one_does_not(engine, monkeypatch):
+    """Ticket 37 left the signals' track record to the score task (strata.estimates.signals_track), and the hazard
+    model's comparison with the signals shares its dates (strata.estimates.hazard). Both replay fixed past dates, so
+    their counts change only when a newly fetched record turns out public before one of them, and both run once a
+    week, on the night config/thresholds.toml names (signals.track_record_day), instead of filling the job's window
+    every night (ticket 89). A record never replayed is replayed the first live night. A fake clock walks the nights
+    from Monday, October 26, 2026 to Monday, November 2."""
+    from strata.estimates import hazard, signals_track, tracking
 
     experiments = []
 
@@ -272,25 +275,26 @@ def test_a_live_score_task_replays_the_signals_for_their_track_record_and_an_off
             experiments.append(experiment)
 
     monkeypatch.setattr(tracking, "MlflowTracker", Tracker)
-    night = dt.datetime(2026, 10, 24, 7, tzinfo=dt.UTC)
+    first = dt.datetime(2026, 10, 26, 7, tzinfo=dt.UTC)  # 03:00 in Washington, a Monday
 
-    nightly.main(["--task", "score", "--run-id", "offline", "--src", "src"], engine, no_pages, lambda: night)
+    nightly.main(["--task", "score", "--run-id", "offline", "--src", "src"], engine, no_pages, lambda: first)
     assert signals_track.stored(engine) is None and experiments == []
 
-    nightly.main(["--task", "score", "--run-id", "1", "--src", "src"], engine, clock=lambda: night)
-    first = signals_track.stored(engine)
-    assert first is not None and first["ran_on"] == "2026-10-24"
+    replayed, compared, seen = [], [], (None, None)
+    for night in (first + dt.timedelta(days=n) for n in range(8)):
+        nightly.main(["--task", "score", "--run-id", f"{night:%m%d}", "--src", "src"], engine, clock=lambda: night)
+        now = (signals_track.stored(engine)["run_id"], hazard.stored(engine)["run_id"])
+        if now[0] != seen[0]:
+            replayed.append(f"{night:%A %B} {night.day}")
+        if now[1] != seen[1]:
+            compared.append(f"{night:%A %B} {night.day}")
+        seen = now
+
+    assert config.load_thresholds().value("signals.track_record_day") == "Sunday"
+    assert replayed == compared == ["Monday October 26", "Sunday November 1"]
     assert config.load_time_estimate().experiment in experiments
-    assert runs(engine, "1")[0][2] > 0  # the replay's rows count as rows changed
-
-    days = config.load_thresholds().value("signals.track_record_every_days")
-    nightly.main(["--task", "score", "--run-id", "2", "--src", "src"], engine,
-                 clock=lambda: night + dt.timedelta(days=days - 1))
-    assert signals_track.stored(engine)["run_id"] == first["run_id"]
-
-    nightly.main(["--task", "score", "--run-id", "3", "--src", "src"], engine,
-                 clock=lambda: night + dt.timedelta(days=days))
-    assert signals_track.stored(engine)["run_id"] != first["run_id"]
+    assert signals_track.stored(engine)["ran_on"] == "2026-11-01"
+    assert runs(engine, "1101")[0][2] > runs(engine, "1031")[0][2]  # the replays' rows count as rows changed
 
 
 # ── Concurrency ──────────────────────────────────────────────────────────

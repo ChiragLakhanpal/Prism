@@ -11,10 +11,10 @@ Read first: `src/strata/lakehouse/catalog.py` (`check_public_from`, the skipped 
 **Phase:** P4
 **Design review:** no
 
-- [ ] With the fake workspace holding the index's three objects beside the catalog's tables, the check passes, and with one real table lacking `public_from` it still names that table; the existing bundle tests pass unchanged.
-- [ ] `bundle/README.md` says which objects the check leaves out and why.
-- [ ] `measure_data_readiness` (the table sizes measure and any other pass over every table of the catalog) skips the same three objects, proven on the fake workspace, so the nightly task no longer fails on the index's view.
-- [ ] The next bundle deploy from a snapshot on the paid workspace passes step 2 and prints step 3's report (recorded in the catch-up file under this ticket).
+- [x] With the fake workspace holding the index's three objects beside the catalog's tables, the check passes, and with one real table lacking `public_from` it still names that table; the existing bundle tests pass unchanged.
+- [x] `bundle/README.md` says which objects the check leaves out and why.
+- [x] `measure_data_readiness` (the table sizes measure and any other pass over every table of the catalog) skips the same three objects, proven on the fake workspace, so the nightly task no longer fails on the index's view.
+- [x] The next bundle deploy from a snapshot on the paid workspace passes step 2 and prints step 3's report (recorded in the catch-up file under this ticket).
 
 ## Comments
 
@@ -29,3 +29,4 @@ Read first: `src/strata/lakehouse/catalog.py` (`check_public_from`, the skipped 
   - Follow-ups for a new ticket, from the review, the verify notes and this merge: (1) Review polish 1: the skip leaves out every `event_log_<uuid>` and `__<uuid>___online_index_view` table in the index's schema, not only the live index's id; change `bundle/README.md` line 18 to say so, and add "of these two shapes" to `catalog.py`'s docstring. (2) Review polish 2: a two-part `[search] index` in `config/models.toml` fails with `ValueError: not enough values to unpack` in every `catalog.build`; check it in `strata.config.load_search` with a sentence, plus one test in `tests/test_config.py`. (3) Review polish 3: rename `index_object` to `is_index_object`, make its `index` argument required, and rename the module's `INDEX_ID` to `INDEX_ID_PATTERN`. (4) Review polish 4: split `bundle/README.md` line 18's four-clause sentence into three. (5) For ticket 56: `web/tests/package-risks.spec.ts:206` failed once under load in this merge's first gate.
   - Decisions parked for the user: the skip matches any UUID-shaped id in the two service table names, not only the live index's id, because reading the id from the workspace would need a live call in the deploy's check and in the nightly. The reviewer and the verifier kept the builder's choice as the simplest one that keeps the gate offline.
   - Coordination: ListAgents showed no session named strata-58, so I sent no busy or free message.
+- October 26, 2026, orchestrator (23:02 PDT): both live steps ran from a snapshot of d921976a (the catch-up block "Ticket 87, steps 1 and 2 ran"): the bundle deploy passed step 2 and printed step 3's report (exit 0, 05:52 UTC), and measure_data_readiness alone ended SUCCESS (run 999955026548349, 05:52 to 06:00 UTC). Criteria 1 to 3 were proven by the reviewer and the verifier before the merge (39b7c6d1); all four boxes ticked.

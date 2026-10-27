@@ -23,7 +23,8 @@ Every task has its work (tickets 07, 17, 19, 20, 22, 26, 28, 29 and 43), in docs
 8. score scores every package's time estimate and its what-ifs with the champion model (ticket 26;
    strata.estimates.scoring), counts the rebidding labels from each source and, on the workspace, scores every
    planned activity with the rebidding champion (strata.estimates.rebidding) and replays the signals for their
-   track record once a week (strata.estimates.signals_track).
+   track record once a week (strata.estimates.signals_track). It works in parts (SCORE_PARTS) and stops after the
+   part that spends its minutes, leaving the rest for the next night (ticket 89).
 9. measure_data_readiness writes the data readiness measures and each table's size to strata.ops.
 10. refresh_drafts marks each open draft row that cites a lesson at a version a lead has since changed or
     retired (strata.knowledge.lessons.notices). It never changes a draft.
@@ -60,7 +61,7 @@ from importlib import resources
 from strata.config import Source, load_sources, load_thresholds
 from strata.lakehouse import bronze, gold, pages, quality, readers, readiness, silver, storage
 from strata.lakehouse.engine import Engine
-from strata.lakehouse.schedule import Window, as_utc, daily_start
+from strata.lakehouse.schedule import Window, as_utc, daily_start, weekly_due
 
 LOG = logging.getLogger(__name__)
 
@@ -80,7 +81,9 @@ RUN_LOGS = ("strata.ops.pipeline_runs", "strata.ops.quality_checks", "strata.ops
             # The dashboard's "What the measures say" and each loop's indicators, written each night (ticket 45).
             "strata.ops.dashboard_findings", "strata.ops.loop_indicators",
             # Each document or document list a document run could not fetch or read, tried again each run (ticket 72).
-            "strata.ops.skipped_documents")
+            "strata.ops.skipped_documents",
+            # Each part the score task ran or left for the next night (ticket 89).
+            "strata.ops.score_parts")
 
 # Where a source's pages come from: the live API on the workspace, the recorded fixture here.
 Fetch = Callable[[Source, Engine], Iterable[pages.Page]]
@@ -242,56 +245,70 @@ def _propose_lessons(run: Run) -> int:
     return changed
 
 
-def _score(run: Run) -> int:
-    """The time estimate of every package Strata knows, and of every what-if combination, scored with the
-    champion model into strata.gold.time_estimate_score (ticket 26; strata.estimates.scoring). A run on the
-    recorded fixture has no workspace registry, so it runs ticket 25's backtest first and scores with the
-    champion that trains; a live run scores with the champion the live backtest registered, or with none.
+def _time_estimates(run: Run) -> int:
+    """The time estimate of every package Strata knows, and of every what-if combination, scored with the champion
+    model into strata.gold.time_estimate_score (ticket 26; strata.estimates.scoring). A run on the recorded fixture has
+    no workspace registry, so it runs ticket 25's backtest first and scores with the champion that trains; a live run
+    scores with the champion the live backtest registered, or with none."""
+    from strata.estimates import scoring
 
-    Then how many packages each rebidding label source names, in strata.ops.rebidding_labels, and, on a run that
-    fetches from the live APIs, the rebidding champion's chance for every activity a Procurement Plan lists, in
-    strata.ops.rebidding_scores (ticket 28), and the signals' track record (ticket 37).
-
-    Then the estimates loop (ticket 44): every package scored in shadow with the challenger, when one newer than the
-    champion is kept (strata.estimates.promotion, which no tool reads); the monthly watch of each whole month not
-    watched yet, which marks plan rows dated near a date Strata offered, measures plan accuracy and rolling coverage
-    and raises the retrains they call for (strata.estimates.watch); and, on a run that fetches from the live APIs,
-    the retrain itself when one is due, quarterly or after a raised trigger, which registers a challenger.
-
-    Last, the discrete-time hazard model for project delay early warning, in shadow beside the fixed signals: every
-    open project's score in strata.ops.hazard_scores, and, once a week, its replay against the signals
-    (strata.estimates.hazard). Nothing shows either."""
-    from strata.estimates import hazard, promotion, rebidding, scoring, watch
-
-    changed = scoring.run(run.engine, run.run_id, run.clock(), train_here=run.fetch is not fetch_live)
-    changed += rebidding.record_label_counts(run.engine, run.run_id, run.clock)
-    changed += promotion.score_in_shadow(run.engine, run.run_id, run.clock())
-    if run.fetch is fetch_live:
-        changed += _score_packages(run) + _replay_signals(run)
-    changed += watch.run(run.engine, run.run_id, run.clock())
-    if run.fetch is fetch_live:
-        changed += _retrain(run)
-    return changed + hazard.score_in_shadow(run.engine, run.run_id, run.clock()) + _compare_hazard(run)
+    return scoring.run(run.engine, run.run_id, run.clock(), train_here=run.fetch is not fetch_live)
 
 
-def _compare_hazard(run: Run) -> int:
-    """The hazard model replayed against the fixed signals (strata.estimates.hazard.compare), when the stored
-    comparison is signals.track_record_every_days old or there is none, on the signals' own cadence. A live run logs
-    it to MLflow, or skips it when MLflow is missing; any other run uses the offline tracker. Returns the rows stored
-    in strata.ops.evaluation_result."""
-    from strata.config import load_thresholds, load_time_estimate
+def _rebidding_labels(run: Run) -> int:
+    """How many packages each rebidding label source names, in strata.ops.rebidding_labels (ticket 28)."""
+    from strata.estimates import rebidding
+
+    return rebidding.record_label_counts(run.engine, run.run_id, run.clock)
+
+
+def _challenger_in_shadow(run: Run) -> int:
+    """Every package scored in shadow with the challenger, when one newer than the champion is kept (ticket 44;
+    strata.estimates.promotion, which no tool reads)."""
+    from strata.estimates import promotion
+
+    return promotion.score_in_shadow(run.engine, run.run_id, run.clock())
+
+
+def _monthly_watch(run: Run) -> int:
+    """The monthly watch of each whole month not watched yet, which marks plan rows dated near a date Strata offered,
+    measures plan accuracy and rolling coverage and raises the retrains they call for (ticket 44;
+    strata.estimates.watch)."""
+    from strata.estimates import watch
+
+    return watch.run(run.engine, run.run_id, run.clock())
+
+
+def _hazard_in_shadow(run: Run) -> int:
+    """The discrete-time hazard model for project delay early warning, in shadow beside the fixed signals: every open
+    project's score in strata.ops.hazard_scores (ticket 44; strata.estimates.hazard). Nothing shows it."""
+    from strata.estimates import hazard
+
+    return hazard.score_in_shadow(run.engine, run.run_id, run.clock())
+
+
+def _replay_day() -> str:
+    """The night of the week the signals' replays run (config/thresholds.toml, signals.track_record_day)."""
+    return str(load_thresholds().value("signals.track_record_day"))
+
+
+def _compare_hazard(run: Run, checked: dict) -> int:
+    """The hazard model replayed against the fixed signals (strata.estimates.hazard.compare), on the signals' own
+    night of the week (schedule.weekly_due). A live run logs it to MLflow, or skips it when MLflow is missing; any
+    other run uses the offline tracker. Returns the rows stored in strata.ops.evaluation_result."""
+    from strata.config import load_time_estimate
     from strata.estimates import harness, hazard
     from strata.estimates.tracking import OfflineTracker
 
     now = run.clock()
     held = hazard.stored(run.engine)
-    every = int(load_thresholds().value("signals.track_record_every_days"))
-    if held is not None and (now.astimezone(dt.UTC).date() - as_utc(held["ran_at"]).date()).days < every:
+    last = None if held is None else as_utc(held["ran_at"]).date()
+    if not weekly_due(last, now.astimezone(dt.UTC).date(), _replay_day()):
         return 0
     tracker = _tracker(load_time_estimate().experiment) if run.fetch is fetch_live else OfflineTracker()
     if tracker is None:
         return 0
-    return len(harness.run_rows(run.engine, hazard.compare(run.engine, tracker, ran_at=now)))
+    return len(harness.run_rows(run.engine, hazard.compare(run.engine, tracker, ran_at=now, checked=checked)))
 
 
 def _retrain(run: Run) -> int:
@@ -330,22 +347,101 @@ def _score_packages(run: Run) -> int:
     return 0 if tracker is None else rebidding_backtest.score_packages(run.engine, tracker, run.run_id, run.clock)
 
 
-def _replay_signals(run: Run) -> int:
+def _replay_signals(run: Run, checked: dict) -> int:
     """The signals' checks replayed on their track record dates (strata.estimates.signals_track.backtest), for the
-    Following page, when the stored record is signals.track_record_every_days old or there is none. Returns the
-    rows the replay stored in strata.ops.evaluation_result."""
-    from strata.config import load_thresholds, load_time_estimate
+    Following page, on their night of the week (schedule.weekly_due), on a run that fetches from the live APIs.
+    Returns the rows the replay stored in strata.ops.evaluation_result."""
+    from strata.config import load_time_estimate
     from strata.estimates import harness, signals_track
 
+    if run.fetch is not fetch_live:
+        return 0
     now = run.clock()
     held = signals_track.stored(run.engine)
-    every = int(load_thresholds().value("signals.track_record_every_days"))
-    if held is not None and (now.astimezone(dt.UTC).date() - dt.date.fromisoformat(held["ran_on"])).days < every:
+    last = None if held is None else dt.date.fromisoformat(held["ran_on"])
+    if not weekly_due(last, now.astimezone(dt.UTC).date(), _replay_day()):
         return 0
     tracker = _tracker(load_time_estimate().experiment)
     if tracker is None:
         return 0
-    return len(harness.run_rows(run.engine, signals_track.backtest(run.engine, tracker, ran_at=now)))
+    return len(harness.run_rows(run.engine, signals_track.backtest(run.engine, tracker, ran_at=now, checked=checked)))
+
+
+def _signals_replays(run: Run) -> int:
+    """The two replays of the fixed signals on their track record dates, each on its night of the week: the signals'
+    track record for the Following page (ticket 37) and the hazard model's comparison with them (ticket 44). On a
+    night both run, each project is checked with project_signals once a date for both
+    (strata.estimates.signals_track.counted)."""
+    checked: dict = {}
+    return _replay_signals(run, checked) + _compare_hazard(run, checked)
+
+
+@dataclass(frozen=True)
+class Part:
+    """One part of the score task: its work, which returns the rows it changed, and whether only a run that fetches
+    from the live APIs does it."""
+
+    work: Callable[[Run], int]
+    live_only: bool = False
+
+
+# The score task's parts, in the order a night runs them when the night before left none (ticket 89). A part is
+# never cut in the middle: the task's minutes are checked only after each part.
+SCORE_PARTS: dict[str, Part] = {
+    "time_estimates": Part(_time_estimates),
+    "rebidding_labels": Part(_rebidding_labels),
+    "challenger_in_shadow": Part(_challenger_in_shadow),
+    "rebidding_scores": Part(_score_packages, live_only=True),
+    "monthly_watch": Part(_monthly_watch),
+    "retrain": Part(_retrain, live_only=True),
+    "hazard_in_shadow": Part(_hazard_in_shadow),
+    "signals_replays": Part(_signals_replays),  # once a week, so after every part a night needs
+}
+PART_COLUMNS = ("run_id", "task_started", "position", "part", "state", "rows_changed", "started_at", "finished_at",
+                "public_from")
+# The parts the latest try of the score task left, in the order it would have run them.
+PARTS_LEFT = """
+SELECT part
+FROM strata.ops.score_parts
+WHERE state = 'left' AND task_started = (SELECT max(task_started) FROM strata.ops.score_parts)
+ORDER BY position
+"""
+
+
+def _score(run: Run) -> int:
+    """The score task, in parts (SCORE_PARTS): the time estimates, the rebidding label counts and the challenger in
+    shadow; on a run that fetches from the live APIs, the rebidding champion's chance for every activity a
+    Procurement Plan lists (ticket 28); the monthly watch; on a live run, the retrain when one is due, quarterly or
+    after a raised trigger, which registers a challenger; the hazard model in shadow; and, once a week
+    (signals.track_record_day), the replays of the signals: on a live run their track record (ticket 37), and the
+    hazard model's comparison with them.
+
+    The task may spend nightly.score_minutes from its start (config/thresholds.toml). Once they are spent, it stops
+    after the part it is in, records each part it left in strata.ops.score_parts, says so in its log and ends, so
+    the job's later tasks run inside its window (ticket 89). The next try runs the parts the latest try left first,
+    in their order, then the others. Every part that ran has its row too, with when it started and finished."""
+    minutes = float(load_thresholds().value("nightly.score_minutes"))
+    started = run.started or run.clock()
+    tonight = [name for name, part in SCORE_PARTS.items() if run.fetch is fetch_live or not part.live_only]
+    left = [part for (part,) in run.engine.run(PARTS_LEFT).rows if part in tonight]
+    order = left + [name for name in tonight if name not in left]
+    changed, began = 0, started
+    for position, name in enumerate(order, 1):
+        rows = SCORE_PARTS[name].work(run)
+        finished = run.clock()
+        changed += rows
+        run.engine.insert_rows("strata.ops.score_parts", PART_COLUMNS, [
+            (run.run_id, started, position, name, "ran", rows, began, finished, finished.astimezone(dt.UTC).date())])
+        waiting = order[position:]
+        if waiting and finished - started >= dt.timedelta(minutes=minutes):
+            run.engine.insert_rows("strata.ops.score_parts", PART_COLUMNS, [
+                (run.run_id, started, number, part, "left", None, None, None, finished.astimezone(dt.UTC).date())
+                for number, part in enumerate(waiting, position + 1)])
+            LOG.warning("The score task stopped after its %g minutes with %d parts left for the next night: %s.",
+                        minutes, len(waiting), ", ".join(waiting))
+            break
+        began = finished
+    return changed
 
 
 def _measure_data_readiness(run: Run) -> int:
