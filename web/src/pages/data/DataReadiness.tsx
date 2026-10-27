@@ -47,7 +47,7 @@ const ROWS_BEFORE_REGISTRY = 3;
 // fixture's page at 1440, 1024 and 390 px (three from 1200 px, five from 768 px, and seven below), so
 // nothing moves when it arrives.
 const lines = (count: number) => [...Array.from({ length: count - 1 }, () => "w-full"), "w-3/5"];
-const HEADLINE_LINES = { widest: lines(3), wide: lines(5), narrow: lines(7) };
+const HEADLINE_LINES = { widest: lines(3), wide: lines(4), narrow: lines(7) };
 
 const plain = (count: number) => <Num count={count} />;
 const day = (iso: string, today: string, style: "sentence" | "table" = "sentence") => <Num date={iso} style={style} today={today} />;

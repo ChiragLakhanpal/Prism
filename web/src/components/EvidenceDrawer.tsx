@@ -1,9 +1,10 @@
 // The evidence drawer (DESIGN.md section 5; the 14 brief, section 4.5): the whole numbered paragraph a
-// citation points to, beside the page and never over it. It is a column 40 percent of the frame wide
-// (the window less the sidebar, ticket 92), from 400 to 600 px, whose panel stays in view while the page
-// scrolls; the page narrows and stays usable, so it is a non-modal dialog. Below 768 px it is a full-screen sheet: modal, with the page behind it inert.
+// citation points to, beside the page and never over it. On a wide page it is clamp(384px, 40vw, 560px) wide and
+// the page narrows, keeping its left edge (ticket 94); beside a draft's document column it fills the space the column
+// leaves. Its panel stays in view while the page scrolls; the page narrows and stays usable, so it is a non-modal
+// dialog. Below 768 px it is a full-screen sheet: modal, with the page behind it inert.
 //
-// From top to bottom: the stratum eyebrow, the source as its heading, a 44 px close; the sentence it
+// From top to bottom: the source as its heading, a 44 px close; the sentence it
 // was opened from and a switcher for that sentence's other sources; the paragraph with the matching
 // words highlighted under its meta line; and a link to the page in the World Bank's PDF. A source the
 // stream sent opens at once; one opened from a link is read from GET /api/evidence.
@@ -40,7 +41,7 @@ import { sourcePageHref } from "../lib/documents";
 import { ExternalLink, pdfPageHref } from "./ExternalLink";
 import { linkProjectIds, ProjectId } from "./ProjectId";
 import { TextLink } from "./TextLink";
-import { eyebrow, RecordSourceLine, SourceNumber, sourceTitle } from "./EvidenceCard";
+import { RecordSourceLine, SourceNumber, sourceTitle } from "./EvidenceCard";
 import { Num } from "./Num";
 import { MethodText } from "./PlanCheck";
 import { ComparableDotList, ComparableRecords, dotRegion } from "./ComparableRecords";
@@ -51,13 +52,13 @@ import { isStepList } from "../lib/steps";
 import { LongestView, StepComparablesView } from "./StepsDrawer";
 import { CaseClaim, CaseSwitcher } from "./RebidDrawer";
 import { caseOf, pageCases } from "../lib/rebidding";
-import { LoadingLabel, Skeleton, SkeletonLine, SkeletonText } from "./Skeleton";
+import { LoadingLabel, Skeleton, SkeletonText } from "./Skeleton";
 import { FeedbackRow, type RowStart } from "./FeedbackRow";
 import { showsRow } from "../lib/retrieval";
 import { criteriaLessonOf, heldOnPage, pageLessons, type LessonEntry } from "../lib/criteria";
 import { routeStepRef, useWhy, WhyThisSource } from "./WhyThisSource";
-import { backLabel, criteriaClose, criteriaEyebrow, CriteriaDrawerBody, criteriaTitle, LessonClaim } from "./CriteriaDrawer";
-import { ClaimLine, isTimelineView, timelineClose, timelineEyebrow, timelineTitle, TimelineView, UnknownDisagreement } from "./TimelineDrawer";
+import { backLabel, criteriaClose, CriteriaDrawerBody, criteriaTitle, LessonClaim } from "./CriteriaDrawer";
+import { ClaimLine, isTimelineView, timelineClose, timelineTitle, TimelineView, UnknownDisagreement } from "./TimelineDrawer";
 import { sideShort, type SideData } from "../lib/disagreement";
 
 export type DrawerData =
@@ -674,7 +675,9 @@ export function EvidenceDrawerView({
           ? "w-full"
           : narrow
             ? "fixed inset-0 z-50 animate-sheet-in"
-            : "w-[clamp(400px,calc((100vw_-_var(--nav-width))_*_0.4),600px)] shrink-0 self-stretch border-l border-line",
+            : // On a wide page the page narrows beside it and keeps its left edge (ticket 94); beside a draft's
+              // document column it fills the free space instead (app.css, "A draft's document column").
+              "w-[clamp(384px,40vw,560px)] shrink-0 self-stretch border-l border-line",
       )}
     >
       <div
@@ -700,13 +703,9 @@ export function EvidenceDrawerView({
                       : copy.evidence.package.dot.back(formatCount(backTo.count))}
               </Button>
             )}
-            {evidence && (
-              <p className="text-label text-ink-muted uppercase">
-                {criteriaView ? criteriaEyebrow(evidence) : timelineView ? timelineEyebrow(evidence) : eyebrow(evidence)}
-              </p>
-            )}
-            {data.status === "loading" && <SkeletonLine className="text-label" width="w-1/3" />}
-            <h2 ref={headingRef} id={headingId} tabIndex={-1} className="mt-1 text-title wrap-break-word text-ink-heading focus:outline-none">
+            {/* The head is the title, with no eyebrow above it and no middle dots (ticket 94). The one caption sentence
+                under it, which says what the source is, takes the words ticket 58 writes. */}
+            <h2 ref={headingRef} id={headingId} tabIndex={-1} className="text-h2 wrap-break-word text-ink-heading focus:outline-none">
               {evidence ? (
                 criteriaView ? criteriaTitle(evidence) : timelineView ? timelineTitle(evidence) : sourceTitle(evidence)
               ) : data.status === "loading" ? (

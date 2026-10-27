@@ -55,9 +55,12 @@ export type ReadinessTableState = { status: "ready"; rows: ReadinessRow[] } | { 
 // title lines made each real card 1 to 2 px taller; the rows moved by less than 1.5 px and kept theirs.
 // The class sweep (ticket 91) measured the Sources rows again (1755 px for 15 rows at 1440, 2035 at 1024),
 // and the hardest documents' five cards at 390 px (4 px short with their source line), once the headline's
-// lead lines no longer made up for them.
-const ROW_HEIGHT = { kinds: "h-[8.3rem] xl:h-[7.5rem]", sources: "h-[8.4792rem] xl:h-[7.3125rem]", shelf: "h-[9.5705rem] xl:h-[7.6707rem]" } as const;
-const CARD_HEIGHT = { kinds: "h-[16.79rem]", sources: "h-[16.48rem]", shelf: "h-[22.775rem]" } as const;
+// lead lines no longer made up for them. The page frame (ticket 94) set the margins by the window (32 px from 768 px,
+// 16 px below), so the rows below 1200 px and the cards were measured again: in a 1024 px page area the Sources
+// table's 15 rows were 68 px shorter and the hardest documents' five rows 81 px, and at 390 px the kinds' three
+// cards 20 px, the Sources' fifteen 95 px and the hardest documents' five 68 px.
+const ROW_HEIGHT = { kinds: "h-[8.3rem] xl:h-[7.5rem]", sources: "h-[8.1958rem] xl:h-[7.3125rem]", shelf: "h-[8.5580rem] xl:h-[7.6707rem]" } as const;
+const CARD_HEIGHT = { kinds: "h-[16.373rem]", sources: "h-[16.084rem]", shelf: "h-[21.925rem]" } as const;
 
 // Heads sit at the top, so their labels share one line however their short definitions wrap.
 const HEAD = "px-4 py-3 align-top font-semibold text-ink-heading";

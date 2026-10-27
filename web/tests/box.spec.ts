@@ -4,6 +4,7 @@
 // and the 14 design brief's, copied here so the test checks the copy file against an independent source.
 import type { Page, Request } from "@playwright/test";
 import { expect, mockApi, recorded, test } from "./mocked";
+import { tabUnderStickyParts } from "./sticky";
 
 const PLAN = "/projects/P156634/procurement/northern-water-works-development-agency";
 
@@ -151,6 +152,20 @@ for (const width of [1440, 390, 320]) {
     expect(cut).toEqual([]);
   });
 }
+
+// Ticket 94: the frame's one hook keeps the scroll padding at the bar plus the plan check's sticky head, plus 8 px,
+// so Tab down the page and Shift+Tab back up never leave the focused element under either.
+test("tabbing through the plan check never leaves the focused element under the bar or its sticky head", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await open(page, PLAN);
+  const head = page.locator("[data-plan-header]");
+  await expect(head).toHaveAttribute("data-sticky", "top");
+  const height = await head.evaluate((element) => (element as HTMLElement).offsetHeight);
+  expect(await page.evaluate(() => document.documentElement.style.scrollPaddingTop)).toBe(`${56 + height + 8}px`);
+  const { checked, covered } = await tabUnderStickyParts(page, 30);
+  expect(checked).toBeGreaterThan(40);
+  expect(covered).toEqual([]);
+});
 
 // Ticket 15 gives free text a second option, "Plan a package from this sentence", which is never first
 // (the 15 brief, section 7.1); web/tests/planned-package.spec.ts tests what choosing it does.

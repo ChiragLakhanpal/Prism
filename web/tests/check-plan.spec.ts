@@ -21,8 +21,9 @@ const MARKED = [
 ];
 const FOLDED = ["KE-NWWDA-199471-GO-RFQ", "NWWDA-WSDP-03-2019-2020", "KE-NWWDA-207796-CS-INDV"];
 const FINDING = "One needs a look and two are worth watching; three have data notes.";
-// Columns 1 to 8 of the 12-column grid in a 1440 px page area: 8 columns of 78.67 px and 7 gutters of 32 px.
-const EIGHT_COLUMNS = 853;
+// Columns 1 to 8 of the 12-column grid in a 1440 px page area: the window's 40 px margins leave 1360 px, and content
+// stops at 1280 px (ticket 94), so 8 columns of 77.33 px and 7 gutters of 32 px.
+const EIGHT_COLUMNS = 843;
 const widthOf = async (page: Page, selector: string) => Math.round((await page.locator(selector).boundingBox())!.width);
 
 type Answer = { status?: number; body: string };
@@ -616,6 +617,11 @@ test("a service that didn't answer gives Try again and a reference; Try again th
   await expect(page.getByRole("main").getByText("Procurement Plan", { exact: false })).toHaveCount(1);
   await expect(page.getByRole("status").filter({ hasText: "Checking this plan." })).toHaveCount(0);
   expect(await widthOf(page, "[role=alert]")).toBe(EIGHT_COLUMNS);
+  // Ticket 94 (plan 8.5): the page's one read failed, so the alert sits in the page's alert slot, above the
+  // breadcrumb and the h1, which names the page.
+  await expect(page.locator("[data-alert-slot] [role=alert]")).toHaveCount(1);
+  const [alert, crumbs] = [(await page.getByRole("alert").boundingBox())!, (await page.locator("[data-breadcrumb]").boundingBox())!];
+  expect(alert.y + alert.height).toBeLessThan(crumbs.y);
   await page.getByRole("button", { name: "Try again" }).click();
 
   await expect(page.getByRole("heading", { level: 2, name: FINDING })).toBeFocused();
@@ -673,8 +679,9 @@ test("axe finds no violations in the loading state at 1440, 1024 and 390 px, and
 });
 
 // The 14 brief, section 2.5: the page lays out by the page area's width, so the evidence drawer
-// narrows Check a plan without breaking it. At 1024 px the rail takes 64 px and the drawer 400 px (ticket 92),
-// which leaves a 560 px page area that shows the activity cards, as a 560 px window would.
+// narrows Check a plan without breaking it. At 1024 px the rail takes 64 px (ticket 92) and the drawer 40 percent of
+// the window, 410 px (ticket 94),
+// which leaves a 550 px page area that shows the activity cards, as a 550 px window would.
 test("at 1024 px with the evidence drawer open, the plan check shows its cards and nothing scrolls sideways", async ({ page }) => {
   const ICR_54 = "strata.gold.passage:31525018/v1/54";
   await page.setViewportSize({ width: 1024, height: 900 });
@@ -689,7 +696,7 @@ test("at 1024 px with the evidence drawer open, the plan check shows its cards a
   await expect(page.locator("[data-check-plan-page]:not([data-check-plan-page=loading])")).toBeVisible();
   await expect(page.getByRole("dialog")).toBeVisible();
 
-  expect(await widthOf(page, "[data-page-column]")).toBe(560);
+  expect(await widthOf(page, "[data-page-column]")).toBe(550);
   await expect(view(page, "cards")).toBeVisible();
   await expect(view(page, "table")).toBeHidden();
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(1024);

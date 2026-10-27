@@ -18,6 +18,7 @@ import { AnswerPanel } from "./components/AnswerPanel";
 import { EvidenceDrawer } from "./components/EvidenceDrawer";
 import { Frame } from "./components/Frame";
 import { IntentBox } from "./components/IntentBox";
+import { AlertSlot } from "./components/PageAlert";
 import { RETURNING } from "./components/Popover";
 import { Sidebar } from "./components/Sidebar";
 import { SECTIONS, TopNav, type NavMode, type Section, type Viewer } from "./components/TopNav";
@@ -374,8 +375,10 @@ export function App() {
   const asOfLine = asOf ? `${copy.view.banner.asOf(formatDate(asOf))}${today ? ` ${today}` : ""}` : null;
   const hiddenIn = fresh?.applied.preview && fresh.hidden.includes(match.key) ? (fresh.applied.view as Preview) : null;
   const pending = Boolean(preview && !fresh && who.status !== "error");
-  const anySlot = slot.errors.length + slot.notes.length > 0 || previewText || asOfLine;
+  // The alert slot's element, which a page's own alert goes into (PageAlert.tsx).
+  const [alertSlot, setAlertSlot] = useState<HTMLDivElement | null>(null);
   return (
+    <AlertSlot.Provider value={alertSlot}>
     <Frame
       nav={
         <TopNav
@@ -420,7 +423,8 @@ export function App() {
         )
       }
     >
-      <div className="layout layout-grid pt-6 @md/page:pt-8 @lg/page:pt-10">
+      {/* The page's top space follows the window, as its margins do, so the drawer opening beside it moves nothing. */}
+      <div className="layout layout-grid pt-6 md:pt-8 lg:pt-10">
         {/* The alert slot frames everything on the page, the answer included (DESIGN.md section 5,
             Page header), so it sits above the answer panel. */}
         <p id={MODE_LINE} className="clip-visually">
@@ -433,32 +437,32 @@ export function App() {
           </p>,
           document.body,
         )}
-        {anySlot && (
-          <div className="col-span-12 mb-6 flex flex-col gap-2 @md/page:col-span-8">
-            {slot.errors.map((alert) => (
-              <Alert key={alert.text} state={alert.state} live="alert">
-                {alert.text}
-              </Alert>
-            ))}
-            {previewText && (
-              <ViewBanner ref={previewBanner} kind="preview" region={copy.view.banner.previewRegion} link={copy.view.banner.leave}
-                href={withMode(here.pathname, here.search, { view: null })}>
-                {previewText}
-              </ViewBanner>
-            )}
-            {asOfLine && (
-              <ViewBanner ref={asOfBanner} kind="asof" region={copy.view.banner.asOfRegion} link={copy.view.banner.back}
-                href={withMode(here.pathname, here.search, { asof: null })}>
-                {asOfLine}
-              </ViewBanner>
-            )}
-            {slot.notes.map((alert) => (
-              <Alert key={alert.text} state={alert.state}>
-                {alert.text}
-              </Alert>
-            ))}
-          </div>
-        )}
+        {/* The page's alert slot (ticket 94): always in the page, above the answer and the page's head, so a page whose
+            one read failed puts its error alert here (PageAlert.tsx); it takes no room while it is empty. */}
+        <div ref={setAlertSlot} data-alert-slot className="col-span-12 mb-6 flex flex-col gap-2 empty:hidden @md/page:col-span-8">
+          {slot.errors.map((alert) => (
+            <Alert key={alert.text} state={alert.state} live="alert">
+              {alert.text}
+            </Alert>
+          ))}
+          {previewText && (
+            <ViewBanner ref={previewBanner} kind="preview" region={copy.view.banner.previewRegion} link={copy.view.banner.leave}
+              href={withMode(here.pathname, here.search, { view: null })}>
+              {previewText}
+            </ViewBanner>
+          )}
+          {asOfLine && (
+            <ViewBanner ref={asOfBanner} kind="asof" region={copy.view.banner.asOfRegion} link={copy.view.banner.back}
+              href={withMode(here.pathname, here.search, { asof: null })}>
+              {asOfLine}
+            </ViewBanner>
+          )}
+          {slot.notes.map((alert) => (
+            <Alert key={alert.text} state={alert.state}>
+              {alert.text}
+            </Alert>
+          ))}
+        </div>
         {shown && (
           <div className="col-span-12 @lg/page:col-span-8">
             <AnswerPanel
@@ -477,5 +481,6 @@ export function App() {
         </div>
       </div>
     </Frame>
+    </AlertSlot.Provider>
   );
 }

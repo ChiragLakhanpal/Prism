@@ -37,7 +37,7 @@ export function PackageHeader({
 }) {
   const Heading = level === 1 ? "h1" : "h2";
   return (
-    <div ref={headerRef} data-package-header className={sticky ? "border-b border-line bg-page py-4 @md/page:sticky @md/page:top-(--frame-top) @md/page:z-10" : "border-b border-line bg-page py-4"}>
+    <div ref={headerRef} data-package-header data-sticky={sticky ? "top" : undefined} className={sticky ? "border-b border-line bg-page py-4 @md/page:sticky @md/page:top-(--frame-top) @md/page:z-10" : "border-b border-line bg-page py-4"}>
       <div className="flex items-start justify-between gap-x-6">
         <div className="min-w-0 flex-1">
           <Heading tabIndex={-1} className="text-h1 text-pretty wrap-anywhere text-ink-heading focus:outline-none">

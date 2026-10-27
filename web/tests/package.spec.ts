@@ -1126,14 +1126,15 @@ test("below 768 px the section's sentence leads the chart in the page's order, s
 });
 
 // DESIGN.md section 4: under the band a page lays out by the page area's width, because the
-// evidence drawer narrows it. At 1024 px the rail takes 64 px and the drawer 400 px (ticket 92), which leaves a
-// 560 px page area, so the workspace shows what a 560 px window shows: a header that does not stick, facts in two
-// columns, the sentence before the chart, the reset button in the helper's place and the table as cards.
+// evidence drawer narrows it. At 1024 px the rail takes 64 px (ticket 92) and the drawer 40 percent of the window,
+// 410 px (ticket 94), which leaves a 550 px page area, so the workspace shows what a 550 px window shows: a header
+// that does not stick, facts in two columns, the sentence before the chart, the reset button in the helper's place
+// and the table as cards.
 test("at 1024 px with the evidence drawer open, the workspace lays out as its page area is wide, not the window", async ({ page }) => {
   await openPackage(page, { width: 1024, evidence: true });
   await ready(page);
   await expect(page.getByRole("dialog")).toBeVisible();
-  expect(Math.round((await page.locator("[data-page-column]").boundingBox())!.width)).toBe(560);
+  expect(Math.round((await page.locator("[data-page-column]").boundingBox())!.width)).toBe(550);
 
   const layout = await page.evaluate(() => {
     const summary = document.querySelector("[data-summary]")!;
@@ -1149,7 +1150,8 @@ test("at 1024 px with the evidence drawer open, the workspace lays out as its pa
   });
   expect(layout.summaryFirst).toBe(true);
   expect(layout.header).not.toBe("sticky");
-  expect(layout.scrollPadding).toBe("");
+  // Only the bar sticks, so focus lands 8 px under its 56 px (ticket 94's one hook in the frame).
+  expect(layout.scrollPadding).toBe("64px");
   expect(layout.factColumns).toBe(2);
   // The input row's button is display: none; the helper's place keeps the other.
   expect(layout.resets).toEqual(["none", "block"]);
@@ -1217,8 +1219,10 @@ test("the past range's table shows its rows where its frame has 49rem, every cel
     [1600, false, "table"],
     [1200, false, "cards"],
     [1280, false, "cards"],
-    [1366, false, "cards"],
-    [1920, true, "cards"],
+    // From about 1360 px the page's content is its 1280 px most (ticket 94), so the frame is 793 px, beside the drawer
+    // too once the page area has that much.
+    [1366, false, "table"],
+    [1920, true, "table"],
     [1440, true, "cards"],
     [834, false, "cards"],
   ] as const) {

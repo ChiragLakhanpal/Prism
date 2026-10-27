@@ -33,10 +33,6 @@ export function criteriaTitle(evidence: EvidenceEvent): ReactNode {
   return <Fill template={cost.title} slots={{ ref: <MonoWords text={String(row.step_reference)} /> }} />;
 }
 
-export function criteriaEyebrow(evidence: EvidenceEvent): string {
-  return evidence.kind === "package_cost" ? cost.eyebrow : words.eyebrow;
-}
-
 export function criteriaClose(evidence: EvidenceEvent | null, id: string): string {
   if (id.startsWith("package-cost:")) return cost.close;
   return words.close;

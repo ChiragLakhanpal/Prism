@@ -11,8 +11,9 @@
 //   finish; locked, it shows the two grades and no longer sticks, so the finished panel's links are never under it.
 //   Below 1024 px it sits right under the passage, before the grade definitions, on the page with only its 1 px top
 //   line, its buttons stacked full width (the 32 brief, section 2.9). From 1024 px an alert about the grades sits at
-//   its top, so it sticks with it. The page's bottom scroll padding follows its height while it sticks (DESIGN.md section 10).
-import { useId, useLayoutEffect, useRef, type ReactNode } from "react";
+//   its top, so it sticks with it. The page's bottom scroll padding follows its height while it sticks (DESIGN.md
+//   section 10): the frame's one hook sets it from data-sticky="bottom" (lib/sticky.ts; ticket 94).
+import { useId, type ReactNode } from "react";
 import { Check, ChevronDown } from "lucide-react";
 import { copy } from "../copy";
 import { cx } from "../lib/cx";
@@ -107,33 +108,13 @@ export function GradeBar({ n, chosen, locked, onGrade, disabled = false, mine, t
   // An alert about the grades, such as a save that failed: at the top of the bar, so it sticks with it.
   notice?: ReactNode;
 }) {
-  const bar = useRef<HTMLDivElement>(null);
   const id = useId();
   const labelId = `${id}-label`;
   const noteId = `${id}-note`;
-  // While the bar sticks, the page's bottom scroll padding is its height, so a focused control is never under it.
-  useLayoutEffect(() => {
-    const element = bar.current;
-    if (!element || sample) return;
-    const root = document.documentElement;
-    const pad = () => {
-      const sticks = getComputedStyle(element).position === "sticky";
-      root.style.setProperty("--sticky-bottom", sticks ? `${element.offsetHeight + 8}px` : "0px");
-      root.style.scrollPaddingBottom = sticks ? `${element.offsetHeight + 8}px` : "";
-    };
-    pad();
-    const watch = new ResizeObserver(pad);
-    watch.observe(element);
-    return () => {
-      watch.disconnect();
-      root.style.removeProperty("--sticky-bottom");
-      root.style.scrollPaddingBottom = "";
-    };
-  }, [locked]);
   return (
     <div
-      ref={bar}
       data-grade-bar={locked ? "locked" : "ready"}
+      data-sticky={sample ? undefined : "bottom"}
       className={cx("border-t border-line py-4", sample ? "bg-surface" : "@lg/page:bg-surface", !sample && !locked && "@lg/page:sticky @lg/page:bottom-0 @lg/page:z-10")}
     >
       {notice && <div className="mb-4">{notice}</div>}

@@ -1,13 +1,13 @@
 // A draft's page (the 35 brief), at /drafts/:draftId: one document column, read top to bottom in the
 // argument's order. What I drafted and how I checked it (the lede, the method, the check line, the
 // removed box and the steps), then the notes, then the sources, then the action. The column spans
-// columns 1 to 7 from a page area of 1200 px, so the evidence drawer opens beside the notes; the notes are
-// a table when the column is at least 560 px wide, and cards below that.
+// columns 1 to 7 of the frame from a frame of 1200 px, so the evidence drawer opens beside the notes; the notes
+// are a table when the column is at least 560 px wide, and cards below that.
 //
 // The header sticks from 1024 px; the draft bar sticks to the bottom of a window at least 768 px wide and
-// 640 px tall. Scroll padding keeps a focused control clear of both (DESIGN.md section 10), measured as
-// their heights change. Only the draft's author acts; the server holds the state machine, and the page
-// changes state only when the server says so.
+// 640 px tall, while its column is at least 30rem wide. The frame's one hook keeps a focused control clear of
+// both (DESIGN.md section 10; lib/sticky.ts), measured as their heights change. Only the draft's author acts;
+// the server holds the state machine, and the page changes state only when the server says so.
 import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Alert } from "../components/Alert";
 import { StepsTaken } from "../components/Answer";
@@ -97,37 +97,6 @@ function useDraft(draftId: string): [Loaded, (draft: Draft) => void, () => void,
 // page like any other block on a phone, in a short window, or beside the open drawer below about 960 px.
 const sticks = (element: HTMLElement | null | undefined) => Boolean(element && getComputedStyle(element).position === "sticky");
 
-// Keeps focused elements 8 px clear of the sticky header and the sticky bar, as each one's height
-// changes (DESIGN.md section 10; WCAG 2.4.11). The same paddings go to --sticky-top and --sticky-bottom,
-// which shift the scroll margins of the controls inside those parts (app.css), so the Tab key does not
-// scroll the page to bring a control in the bar out of the bar's own padding.
-function useScrollPadding(header: HTMLElement | null, bar: HTMLElement | null) {
-  useLayoutEffect(() => {
-    const root = document.documentElement;
-    const update = () => {
-      // The header sticks under the navy bar from 1024 px, so the padding counts the bar too (frame-top, ticket 93).
-      const top = sticks(header) ? `calc(var(--frame-top) + ${header!.offsetHeight + 8}px)` : "";
-      const bottom = sticks(bar) ? `${bar!.offsetHeight + 8}px` : "";
-      root.style.scrollPaddingTop = top;
-      root.style.scrollPaddingBottom = bottom;
-      root.style.setProperty("--sticky-top", top);
-      root.style.setProperty("--sticky-bottom", bottom);
-    };
-    update();
-    const observer = new ResizeObserver(update);
-    for (const element of [header, bar]) if (element) observer.observe(element);
-    window.addEventListener("resize", update);
-    return () => {
-      observer.disconnect();
-      window.removeEventListener("resize", update);
-      root.style.scrollPaddingTop = "";
-      root.style.scrollPaddingBottom = "";
-      root.style.removeProperty("--sticky-top");
-      root.style.removeProperty("--sticky-bottom");
-    };
-  }, [header, bar]);
-}
-
 // What the removed box lists, for a saved draft or a writing that saved nothing (DraftNewPage, WritingDatesPage).
 export function removedItems(holder: { removed: RemovedEvent[] }, kind: KindWords): Removed[] {
   // The kind's own words for a reason first, then the answer's.
@@ -156,7 +125,7 @@ function stepsOf(draft: Draft, kind: KindWords): Step[] {
   ];
 }
 
-// The sticky header: it sticks from a page area of 1024 px, and in a window of 1200 px or more, where the
+// The sticky header: it sticks from a page area of 1024 px, and in a frame of 1200 px or more, where the
 // column keeps its place beside the evidence drawer. It must be a direct child of the tall page, with its
 // margin on itself (className), or sticky has no room to move. Its type sets a height such as 134.89 px, and
 // a stuck header whose bottom edge falls inside a pixel lets the notes under it show through that pixel, so
@@ -187,7 +156,8 @@ export function DraftHeader({ title, subtitle, state, headerRef, className }: {
     <div
       ref={ref}
       data-draft-header
-      className={cx("border-b border-line bg-page py-4 @lg/page:sticky @lg/page:top-(--frame-top) @lg/page:z-10 xl:sticky xl:top-(--frame-top) xl:z-10", className)}
+      data-sticky="top"
+      className={cx("border-b border-line bg-page py-4 @lg/page:sticky @lg/page:top-(--frame-top) @lg/page:z-10 @xl/frame:sticky @xl/frame:top-(--frame-top) @xl/frame:z-10", className)}
     >
       <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-2">
         <div className="min-w-0">
@@ -196,7 +166,7 @@ export function DraftHeader({ title, subtitle, state, headerRef, className }: {
           </h1>
           <p className="mt-2 text-body text-ink-muted">{subtitle}</p>
         </div>
-        <div className="min-w-0 @lg/page:mt-2 xl:mt-2">{state}</div>
+        <div className="min-w-0 @lg/page:mt-2 @xl/frame:mt-2">{state}</div>
       </div>
     </div>
   );
@@ -241,32 +211,13 @@ export function ppsdSubtitle(title: string, reference: string | null | undefined
   );
 }
 
-// The page's width without a classic scroll bar, which 100vw counts, for app.css's document column, so the
-// column lines up with the navy bar and the footer, which center in the same width.
-function useWindowInline() {
-  useLayoutEffect(() => {
-    const root = document.documentElement;
-    const update = () => root.style.setProperty("--window-inline", `${root.clientWidth}px`);
-    update();
-    const observer = new ResizeObserver(update);
-    observer.observe(root);
-    window.addEventListener("resize", update);
-    return () => {
-      observer.disconnect();
-      window.removeEventListener("resize", update);
-      root.style.removeProperty("--window-inline");
-    };
-  }, []);
-}
-
-// The column: columns 1 to 7 from a page area of 1200 px, all 12 below. It is the notes' size container.
-// In a window of 1200 px or more it keeps the same place and width when the evidence drawer narrows the
-// page area (the 35 brief, section 3.2; app.css, "A draft's document column").
+// The column: columns 1 to 7 of the frame from a frame of 1200 px, all 12 of the page area below. It is the notes'
+// size container. From that frame it keeps the same place and width when the evidence drawer narrows the page
+// area (the 35 brief, section 3.2; ticket 94; app.css, "A draft's document column").
 export function DocumentColumn({ children }: { children: ReactNode }) {
-  useWindowInline();
   return (
     <div className="layout-grid">
-      <div data-document-column className="@container/doc col-span-12 min-w-0 @xl/page:col-span-7">
+      <div data-document-column className="@container/doc col-span-12 min-w-0">
         {children}
       </div>
     </div>
@@ -304,8 +255,6 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
   const [status, setStatus] = useState("");
   const [conflict, setConflict] = useState(false);
   const [fresh, setFresh] = useState(false);
-  const [header, setHeader] = useState<HTMLDivElement | null>(null);
-  const [bar, setBar] = useState<HTMLElement | null>(null);
   const exportButton = useRef<HTMLButtonElement>(null);
   const checkButton = useRef<HTMLButtonElement>(null);
   const success = useRef<HTMLHeadingElement>(null);
@@ -317,7 +266,6 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
   const here = useStore(address);
   const opens = useStore(openedAt);
   const from = useStore(origin);
-  useScrollPadding(header, bar);
 
   const draft = loaded.status === "ready" ? loaded.draft : null;
 
@@ -604,7 +552,6 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
     end = (
       <DiscardedNotice
         className="mt-8"
-        ref={setBar}
         sentenceRef={discarded}
         sentence={kind.discarded}
         restoring={busy === "restore"}
@@ -617,7 +564,6 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
     end = (
       <DraftBar
         className="mt-8"
-        ref={setBar}
         draft={d}
         words={dates ? { ...kind, exportLabel: copy.draft.kinds.step_rows.dates.exportButton, openedLine: copy.draft.kinds.step_rows.dates.barOpened } : kind}
         notice={conflict ? words.conflict : null}
@@ -649,7 +595,6 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
         )}
         <DraftHeader
           className="mt-4"
-          headerRef={setHeader}
           title={kind.title}
           subtitle={brief ? (
             <Fill template={kind.subtitle} slots={{ name: subject.project_name, pid: <ProjectId pid={subject.project_id} />, country: subject.country ?? "" }} />
@@ -844,7 +789,7 @@ function DraftSkeleton() {
             <span className="sr-only">{copy.pages.draft.title}</span>
             <SkeletonLine width="w-[200px] max-w-full" />
           </h1>
-          {lines(["w-full", "w-full", "w-1/3"], ["w-[280px] max-w-full"], "mt-2 text-body")}
+          {lines(["w-full", "w-3/5"], ["w-[280px] max-w-full"], "mt-2 text-body")}
           <SkeletonLine className="mt-2 text-small @lg/page:mt-4" width="w-[300px] max-w-full" />
         </div>
         <div className="mt-6 max-w-[72ch]">
@@ -852,9 +797,9 @@ function DraftSkeleton() {
           {lines(["w-full", "w-full", "w-full", "w-3/5"], ["w-full", "w-4/5"], "mt-2 text-body")}
         </div>
         <div className="mt-4 flex max-w-prose flex-col gap-2">
-          {/* The check line, six lines of small text in its box below 48rem and three from it, and the
+          {/* The check line, five lines of small text in its box below 48rem and three from it, and the
               one-line removed box. */}
-          <Skeleton className="h-34 w-full md:h-19" radius="rounded-sm" />
+          <Skeleton className="h-29 w-full md:h-19" radius="rounded-sm" />
           <Skeleton className="h-11 w-full" radius="rounded-sm" />
         </div>
         <div className="mt-4 flex h-11 items-center">

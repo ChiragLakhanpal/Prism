@@ -180,6 +180,7 @@ export const DraftBar = forwardRef(function DraftBar(
       aria-label={bar.label}
       aria-busy={busy !== null}
       data-draft-bar={draft.state}
+      data-sticky="bottom"
       className={cx("z-10 border-t border-line bg-surface px-4 py-3 md:px-6", STICKY, className)}
     >
       <p className="max-w-[80ch] text-small text-ink" data-bar-lead>
@@ -373,7 +374,7 @@ export const DiscardedNotice = forwardRef(function DiscardedNotice(
   ref: Ref<HTMLElement>,
 ) {
   return (
-    <section ref={ref} aria-label={copy.draft.bar.label} aria-busy={restoring} data-discarded-notice className={cx("z-10 bg-page", STICKY, STICKY_FRAME, className)}>
+    <section ref={ref} aria-label={copy.draft.bar.label} aria-busy={restoring} data-discarded-notice data-sticky="bottom" className={cx("z-10 bg-page", STICKY, STICKY_FRAME, className)}>
       <Alert state="info">
         <span ref={sentenceRef} tabIndex={-1} className="focus:outline-none" data-discarded-sentence>
           {sentence}

@@ -1,11 +1,12 @@
 // The timeline chart's layout rules (ticket 23; the 23 brief, sections 4.4 to 4.6), checked on P130164's recorded
-// timeline at the three chart widths the screen draws: 1246 px (1440 px viewport), 830 px and 524 px (beside the
-// drawer at 1024 px). The page places what the payload holds; these rules decide where.
+// timeline at the chart widths the screen draws (ticket 94): 1230 px (a 1440 px page area), 986 px (1100 px), and
+// beside the drawer 750 px (1440 px) and 536 px (1100 px). The page places what the payload holds; these rules
+// decide where.
 import { expect, test } from "@playwright/test";
 import { axisFor, bandLabelFits, lineFor, markY, scaleFor, type DisagreementItem, type MarkItem, type Timeline } from "../src/lib/timeline";
 import { recorded } from "./mocked";
 
-const WIDTHS = [524, 830, 1246];
+const WIDTHS = [536, 750, 986, 1230];
 const CHIP = 150;
 
 test("a disagreement's dashed line keeps clear of every mark that is not one of its two reports", async () => {

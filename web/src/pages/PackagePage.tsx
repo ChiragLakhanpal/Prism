@@ -35,7 +35,6 @@ import { usePlanDateChoice } from "../lib/estimates";
 import { useLoad } from "../lib/load";
 import { useOpenComparable } from "../lib/packages";
 import { rebiddingPath } from "../lib/rebidding";
-import { useScrollPadding } from "../lib/useScrollPadding";
 import { address } from "../lib/router";
 import { useStore } from "../lib/store";
 import { staffRole } from "../lib/following";
@@ -61,10 +60,8 @@ export function PackagePage({ stepRef }: { stepRef: string }) {
     estimateLoad.status === "ready" ? estimateLoad.data.plan_date_choice : null,
     viewOf(here.search) !== "staff",
   );
-  const header = useRef<HTMLDivElement>(null);
   const sectionHeading = useRef<HTMLHeadingElement>(null);
   const pkg = load.status === "ready" ? load.data.package : null;
-  useScrollPadding(header, Boolean(pkg), { gap: 16 });
   // A dot or a row of section 1 opens its comparable package in the evidence drawer (ticket 15).
   const opening = useOpenComparable();
   // Section 3's selection, for "Suggest {n} PPSD risk rows" (ticket 36).
@@ -164,7 +161,6 @@ export function PackagePage({ stepRef }: { stepRef: string }) {
     body = (
       <>
         <PackageHeader
-          headerRef={header}
           title={facts.description ?? mono(facts.step_reference)}
           reference={mono(facts.step_reference)}
           action={staff ? <PpsdAction pkg={ppsdPackage} selection={selection} preview={preview} asOf={asOf} /> : undefined}

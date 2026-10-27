@@ -40,22 +40,6 @@ const reportLabel = (row: Record<string, any>) => {
   return row.replaced_by ? copy.timeline.replaced.replace("{label}", base) : row.reissued ? copy.timeline.reissued.replace("{label}", base) : base;
 };
 
-const strataOf = (sides: Record<string, any>[]) => {
-  const lanes = [...new Set(sides.map((side) => (side.type === "isr" ? "How" : side.type === "record" ? "What" : "Why")))];
-  const order = ["What", "How", "Why"];
-  lanes.sort((a, b) => order.indexOf(a) - order.indexOf(b));
-  return lanes.length === 2 ? words.strataJoin.replace("{first}", lanes[0]).replace("{second}", lanes[1]) : lanes[0];
-};
-
-// The eyebrow each view shows above its heading.
-export function timelineEyebrow(evidence: EvidenceEvent): string {
-  const row = evidence.row;
-  if (evidence.kind === "ratings") return words.ratings.eyebrow;
-  if (evidence.kind === "contracts") return words.contracts.eyebrow;
-  if (evidence.kind === "disagreement") return words.disagreement.eyebrow.replace("{strata}", strataOf(row.sides ?? []));
-  return copy.evidence.eyebrow[evidence.stratum ?? "Why"];
-}
-
 // The heading each view shows: "ISR 7, August 26, 2016", "ISRs 1–9, rated Satisfactory", "Contracts signed in 2019",
 // "ISR 7 and ICR paragraph 78".
 export function timelineTitle(evidence: EvidenceEvent): ReactNode {

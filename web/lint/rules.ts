@@ -22,14 +22,13 @@ export const CLASS_RULES_SKIP = ["src/deck/"];
 
 // The files, from web/, that used a retired class or `uppercase` when ticket 90 landed on October 27, 2026, each with
 // the ones it may keep. The class sweep (ticket 91) moved every other file's classes to their roles and took it off.
-// These two are left to the shell tickets that rewrite them: the evidence drawer's head to the page frame ticket (94),
-// and the collapsed section's eyebrow to the workspace ticket (95), whose Task zone takes over its look; the top bar
-// ticket (93) moved the box's corners and took BoxBand.tsx off. A use in a file not on the list, a class a listed file
-// did not use then, or a listed class the file no longer uses fails the lint, so each ticket takes its file off as it
-// moves the class, and the last one deletes the list.
+// The one left is the collapsed section's eyebrow, for the workspace ticket (95), whose Task zone takes over its look;
+// the top bar ticket (93) moved the box's corners and took BoxBand.tsx off, and the page frame ticket (94) rewrote the
+// evidence drawer's head and took EvidenceDrawer.tsx off. A use in a file not on the list, a class a listed file did
+// not use then, or a listed class the file no longer uses fails the lint, so each ticket takes its file off as it moves
+// the class, and the last one deletes the list.
 export const FROZEN_CLASS_USES: Record<string, readonly string[]> = {
   "src/components/CollapsedSection.tsx": ["uppercase"],
-  "src/components/EvidenceDrawer.tsx": ["text-title", "uppercase"],
 };
 
 // Sentences and terms the copy may use word for word, even though a rule would catch a word
