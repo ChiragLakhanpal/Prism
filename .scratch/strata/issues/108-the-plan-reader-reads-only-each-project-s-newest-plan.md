@@ -1,0 +1,20 @@
+# 108: The plan reader reads only each project's newest plan, newest first, so the demo plan lands tonight
+
+**What to build:** On the paid workspace the demo plan, P156634's Procurement Plan of October 9, 2026 (document 40132287, the newest of the project's 240 plan versions in the list `strata.bronze.document_lists` holds), is still unread after three reader passes, so `strata.ops.anchored_plan_rows` and `strata.ops.plan_baselines` are empty, and the package page's "In the plan" link and the plan check (the demo's first step) have nothing to show there. Ticket 86 made `plans.run` fetch a project's plans newest first (`newest_first` in `src/strata/lakehouse/plans.py`), but the parse step still takes the waiting pages `ORDER BY document_id, pdf_page` (line 387), so last night's 30 minutes went to document 34106903 of May 23, 2023 (stopped at page 329), and 7,872 pages are waiting across the project's plans. Two changes, both config-backed (rule 9): (1) the plan reader reads only each project's newest plan version (the one `by_plan_date` ranks first; the older versions are superseded, and the plan check compares plan versions through `strata.ops.plan_baselines`, which the newest plan feeds) unless `[ingestion] plan_versions = "all"` says otherwise, with the default `"newest"`; the older versions get a `skipped_documents` row with the outcome `superseded`, written once, not every night; (2) the pages waiting to parse are taken newest plan first (by the plan's date, then page), so a project's newest plan finishes before any older one starts, under the same minute and page budgets. And `ingestion.document_host_minutes` goes from 60 to 120 in `config/thresholds.toml` (the user's call of October 27, 2026, decision 95), so the two readers get 60 minutes each under ticket 86's split. Prove it on the fixture: with three plan versions, only the newest is fetched and parsed, the two older ones get `superseded` rows, and the plan rows are the newest plan's; with `plan_versions = "all"` the old behavior holds; the waiting pages' order is newest plan first. The live proof is the orchestrator's: a `parse_and_embed` run alone after the merge and a bundle deploy, in which `strata.ops.parse_runs` for P156634 names 40132287 as the document parsed and `strata.ops.anchored_plan_rows` holds that plan's rows, recorded in the catch-up file under this ticket, before the demo of October 28, 2026.
+
+Read first: `src/strata/lakehouse/plans.py` (`newest_first`, `by_plan_date`, the listing at line 255, the waiting pages at line 387, `parse_pages`, `run`), `src/strata/lakehouse/readers.py` (the budget split of ticket 86), `config/thresholds.toml` [ingestion], `tests/test_documents_one_at_a_time.py` and the plan reader's tests, the catch-up file's blocks "Ticket 86, step 1 of 1 ran" and "Ticket 86, the second document pass".
+
+**Blocked by:** None (can start immediately)
+
+**Status:** ready
+**Area:** data
+**Phase:** P4
+**Design review:** no
+
+- [ ] On the fixture with three plan versions of one project, the reader fetches and parses only the newest (the two older ones get one `superseded` row each in `skipped_documents`, written once), the plan rows are the newest plan's, and `plan_versions = "all"` restores the old behavior; the waiting pages are parsed newest plan first.
+- [ ] `plan_versions` (default `"newest"`) and `document_host_minutes` (120) live in `config/thresholds.toml` [ingestion] and nowhere else; `bundle/README.md` or the readers' doc names the rule in one sentence.
+- [ ] On the paid workspace, a `parse_and_embed` run alone after the merge and the deploy parses 40132287 first and leaves P156634's plan rows in `strata.ops.anchored_plan_rows` (recorded in the catch-up file under this ticket), before the demo of October 28, 2026.
+
+## Comments
+
+- October 27, 2026, orchestrator: opened at 12:50 PDT with the user's yes to decision 95 ("yes, use your judgement"): the demo's first step depends on this plan, the parser's page price is small, and the change is config-backed, so it is necessary rather than overkill.
