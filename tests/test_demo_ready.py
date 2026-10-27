@@ -507,7 +507,8 @@ def read_as_the_workspace_did(fixture_db, folder: Path, misread_characters: int)
     """A copy of the fixture with the demo plan's table pages parsed again by a layout parser that misreads the
     showcase reference, as ai_parse_document did on October 26, 2026, then its plan rows written with the plan
     reader's check against the plan's text set to misread_characters, and strata.gold.package synced, as the nightly
-    job's parse_and_embed task does (ticket 78)."""
+    job's parse_and_embed task does (ticket 78). The plan reader reads every plan version, as the fixture build does
+    (ingestion.plan_versions = "all"), so the fixture's other versions stay as they were."""
     from strata.fixture import recorded as fmt
     from strata.lakehouse import gold, plans
     from strata.reader.documents import RecordedDocuments
@@ -518,7 +519,8 @@ def read_as_the_workspace_did(fixture_db, folder: Path, misread_characters: int)
                    "strata.silver.plan_versions WHERE implementing_agency = :agency AND plan_date = :plan_date)",
                    {"agency": DEMO.implementing_agency, "plan_date": DEMO.plan_date})
         plans.run(engine, RecordedDocuments(manifest), misread_layout.MisreadsTheShowcaseReference(manifest),
-                  DEMO.project_id, thresholds=with_values(ingestion={"reference_misread_characters": misread_characters}))
+                  DEMO.project_id, thresholds=with_values(ingestion={"reference_misread_characters": misread_characters,
+                                                                     "plan_versions": plans.EVERY_VERSION}))
         gold.sync(engine, "package")
     return path
 

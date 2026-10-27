@@ -4,8 +4,10 @@ parse_and_embed runs the plan reader (strata.lakehouse.plans) for each project w
 then re-syncs strata.gold.package, which reads the plan rows, and then the passage reader
 (strata.lakehouse.passages) for the slice's projects. Both readers fetch only documents bronze does not hold, send
 only pages they have not parsed to the layout parser, and embed and screen only passage texts the model and the
-shield have not seen, so a night with no new document parses and embeds nothing. sync_index syncs
-strata.gold.passage and, on the workspace, asks the AI Search index to sync from it.
+shield have not seen, so a night with no new document parses and embeds nothing. The plan reader reads only each
+project's newest Procurement Plan and lists each older one once as superseded in strata.ops.skipped_documents, unless
+config/thresholds.toml's ingestion.plan_versions says "all" (ticket 108). sync_index syncs strata.gold.passage and, on
+the workspace, asks the AI Search index to sync from it.
 
 Readers holds what the readers need, which is the one thing that differs between the workspace and this computer:
 

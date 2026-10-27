@@ -53,7 +53,8 @@ def latest_measures(engine, run_id):
         "WHERE run_id = :run_id", {"run_id": run_id}).rows}
 
 
-def test_running_the_same_night_twice_changes_nothing(fixture_copy):
+def test_running_the_same_night_twice_changes_nothing(fixture_copy, every_plan_version):
+    # The plan reader reads every plan version, as the fixture build did (ticket 108), so this is the same night.
     before = snapshot(fixture_copy)
     first = {row[:3]: row[3:] for row in fixture_copy.run(
         "SELECT source, subject, measure, count, denominator, as_of FROM strata.ops.data_readiness "

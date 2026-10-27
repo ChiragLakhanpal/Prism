@@ -19,9 +19,10 @@ import pytest
 from lesson_scenario import ASHA, IEG_LESSON, OMAR, WANJIRU, decide, review_on
 from nightly_helpers import Unclosed, clock
 
+from strata.config import load_thresholds
 from strata.drafts.store import DraftStore, NewDraft
 from strata.fixture import recorded as fmt
-from strata.lakehouse import catalog, nightly, pages, readers
+from strata.lakehouse import catalog, nightly, pages, plans, readers
 from strata.lakehouse.engine import DuckDBEngine
 from strata.reader.documents import Fetched, RecordedDocuments
 
@@ -73,7 +74,20 @@ def nights(tmp_path_factory):
 @contextmanager
 def two_nights(path: Path):
     """Night one, the day's decisions and the draft, then night two, on one database at path. It gives the
-    database and what each step left, read between the steps. tests/passage_rows.py hashes the rows it leaves."""
+    database and what each step left, read between the steps. tests/passage_rows.py hashes the rows it leaves.
+
+    The plan reader reads every plan version here (ingestion.plan_versions = "all"), as before ticket 108: the plan
+    the second night finds, of August 17, 2026, is older than the October 9, 2026 demo plan, so the nightly job's
+    default, the newest plan only, would list it as superseded."""
+    every = plans.with_plan_versions(load_thresholds(), plans.EVERY_VERSION)
+    with pytest.MonkeyPatch.context() as patch:
+        patch.setattr(plans, "load_thresholds", lambda: every)
+        with _two_nights(path) as found:
+            yield found
+
+
+@contextmanager
+def _two_nights(path: Path):
     manifest = fmt.load_manifest()
     with DuckDBEngine.open(path) as engine:
         catalog.build(engine)

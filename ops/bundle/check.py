@@ -155,13 +155,16 @@ def _table(columns, rows) -> list[str]:
 
 def _local_engine() -> DuckDBEngine:
     """The fixture database the gate builds or, when it is missing, the same tables built in memory:
-    the demo plan's recorded Procurement Plans, then the nightly job's tasks over the recorded pages,
-    then the first documents read into passages, then their assertions and disagreements."""
+    the demo plan's recorded Procurement Plans, every version as the fixture build reads them (ticket 108), then the
+    nightly job's tasks over the recorded pages, then the first documents read into passages, then their assertions
+    and disagreements."""
+    from strata.config import load_thresholds
+
     if FIXTURE_DB.exists():
         return DuckDBEngine.open(FIXTURE_DB, read_only=True)
     engine = DuckDBEngine.open()
     catalog.build(engine)
-    plans.run_on_fixture(engine)
+    plans.run_on_fixture(engine, thresholds=plans.with_plan_versions(load_thresholds(), plans.EVERY_VERSION))
     nightly.run_locally(engine, run_id="fixture", readers_for=nightly.no_documents)  # the readers run around it
     passages.run_on_fixture(engine, run_id="fixture")
     assertions.run_on_fixture(engine, run_id="fixture")
