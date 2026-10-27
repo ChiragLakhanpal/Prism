@@ -889,7 +889,7 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                            reference=request_reference)
     risk_routes.add_routes(app, engine_for=engine_for, store=packages, form=package_form or load_package_form(),
                            thresholds=package_thresholds or thresholds, today=today, now=now,
-                           reference=request_reference)
+                           reference=request_reference, six_checks=six_checks)
     feedback_routes.add_routes(app, engine_for=engine_for, record=feedback_record, reports=passage_reports,
                                judging=judging, reference=request_reference)
 

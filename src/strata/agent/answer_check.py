@@ -1,6 +1,8 @@
 """The six checks on everything Strata writes for a person to read (CLAUDE.md rule 1; ticket 24): one
-implementation, shared by the answer stream (POST /api/ask, src/strata/server/app.py) and the draft runtime
-(src/strata/drafts/runtime.py), so no path can show a sentence that skipped a check.
+implementation, shared by the answer stream (POST /api/ask, src/strata/server/app.py), the draft runtime
+(src/strata/drafts/runtime.py), the check-your-criteria section (src/strata/criteria/workflow.py), the risk table
+(src/strata/packages/risks.py) and the lesson review writer (src/strata/knowledge/lessons/writer.py), so no path can
+show a sentence that skipped a check (ticket 61).
 
 The verifier (src/strata/agent/verifier.py) runs checks 1 to 3 and 5 at once, as AnswerCheck builds. SixChecks
 runs the two that need a service, in the order the verifier needs them:
@@ -21,9 +23,11 @@ keeps its four steps and takes only the verdict.
 from __future__ import annotations
 
 import asyncio
+import copy
 import datetime as dt
 import logging
 from collections.abc import AsyncIterator, Iterable, Mapping
+from contextlib import contextmanager
 from dataclasses import dataclass
 
 from strata.agent.claims import Claim
@@ -67,6 +71,31 @@ class SixChecks:
         # The tools whose "Not checked" clause applies only once a sentence on screen cites them.
         self.cited_only = [name for name, tool in self.tools.items() if tool.result.not_checked_when == "cited"]
         self.source_chars = int(self.thresholds.value("verifier.judge_source_chars"))
+
+    def on(self, engine) -> SixChecks:
+        """The same checks, with every question check 6 asks run on one engine a workflow already holds as the
+        viewer, such as the risk-table builder's or the lesson review writer's."""
+        held = copy.copy(self)
+
+        @contextmanager
+        def same(viewer):
+            yield engine
+
+        held.engine_for = same
+        return held
+
+    def verdict_now(self, check: AnswerCheck, facts: Facts, asker: Asker) -> Verdict:
+        """finish()'s verdict, for a workflow step with no event loop of its own (the risk-table builder, the lesson
+        review writer): it runs in a route's worker thread, a draft's read step or a nightly task, never inside a
+        running loop. Its steps are not sent, as a draft's are not."""
+        async def finished() -> Verdict:
+            verdict = None
+            async for item in self.finish(check, facts, asker):
+                if isinstance(item, Verdict):
+                    verdict = item
+            return verdict
+
+        return asyncio.run(finished())
 
     def check(self, claims: Iterable[Claim], facts: Facts, language: str = "en") -> AnswerCheck:
         """Checks 1 to 3 and 5 on an answer's claims, written in language, against one turn's evidence."""
