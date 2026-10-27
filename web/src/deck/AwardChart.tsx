@@ -9,7 +9,7 @@ import { formatNumber } from "../lib/format";
 import { deckCopy } from "./copy";
 import type { DeckResult } from "./data";
 
-const words = deckCopy.slides.s7;
+const words = deckCopy.slides.gap;
 // DESIGN.md section 6's categorical text variants, as the theme's chart tokens, in the order the series lists them.
 const FILLS = ["fill-chart-cat2-text", "fill-chart-cat3-text", "fill-chart-cat1-text"];
 const SWATCHES = ["bg-chart-cat2-text", "bg-chart-cat3-text", "bg-chart-cat1-text"];
@@ -83,7 +83,7 @@ export function AwardChart({
       {gap && (
         <g data-gap>
           <line x1={x(gap.start)} x2={x(gap.end + 1)} y1={top - 4} y2={top - 4} className="stroke-chart-grey300" strokeWidth={3} />
-          <text x={(x(gap.start) + x(gap.end + 1)) / 2} y={top - 12} textAnchor="middle" fontSize={13} fontWeight={600} className="fill-chart-text-subtle uppercase">
+          <text x={(x(gap.start) + x(gap.end + 1)) / 2} y={top - 12} textAnchor="middle" className="fill-chart-text-subtle text-chart-label uppercase">
             {words.gapLabel}
           </text>
         </g>

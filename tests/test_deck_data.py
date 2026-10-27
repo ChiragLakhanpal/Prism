@@ -43,12 +43,28 @@ def test_with_no_snapshot_every_result_is_not_measured_and_the_registries_still_
     # The verifier runs six checks on every sentence (GLOSSARY.md, "Six checks").
     assert data["settings"]["check-count"]["value"] == 6
     assert data["checks"] == [1, 2, 3, 4, 5, 6]
-    # config/slice.toml [demo_plan] and [showcase]: the demo package in NWWDA's plan, and P130164.
-    assert data["demo"] == {"step_reference": "KE-NWWDA-541055-CW-RFB", "project_id": "P156634",
-                            "agency": "Northern Water Works Development Agency",
-                            "plan_href": "/projects/P156634/procurement/northern-water-works-development-agency",
-                            "comparables": None, "estimate": None}
-    assert data["showcase"] == {"project_id": "P130164"}
+    # config/slice.toml [demo_plan] and [showcase]: the demo package in NWWDA's plan of October 9, 2026, and P130164.
+    demo = {key: value for key, value in data["demo"].items() if key not in ("links", "sentence", "question")}
+    assert demo == {"step_reference": "KE-NWWDA-541055-CW-RFB", "project_id": "P156634",
+                    "project_name": "Kenya Water and Sanitation Development Project",
+                    "agency": "Northern Water Works Development Agency", "plan_date": "2026-10-09",
+                    "plan_href": "/projects/P156634/procurement/northern-water-works-development-agency",
+                    "comparables": None, "estimate": None}
+    assert data["showcase"] == {"project_id": "P130164", "name": "India Rajasthan Road Sector Modernization"}
+
+
+def test_the_demo_slides_open_the_start_here_links_and_type_the_registrys_own_words():
+    demo = deck.build(None, None)["demo"]
+    # config/examples.toml [[start_here]], filled as Home fills them: the demo plan's check on its date, the package
+    # planned from a sentence, and the showcase project's timeline.
+    assert demo["links"] == {"checkPlan": "/projects/P156634/procurement/northern-water-works-development-agency/2026-10-09",
+                             "planPackage": "/packages?box=plan&example=rural_roads_kenya",
+                             "wholeStory": "/projects/P130164/timeline"}
+    # config/examples.toml [packages.rural_roads_kenya], the sentence that link fills into the box.
+    assert demo["sentence"] == "rural roads, Kenya, about US$15 million"
+    # config/slice.toml's smoke question, search-passages-icr-rebidding in evals/benchmark.yaml, on one line.
+    assert demo["question"] == ("In P130164, why did so many works contracts have to go through rebidding, and what does "
+                                "the completion report say about the estimates?")
 
 
 def test_a_result_carries_its_measured_values_and_what_the_register_says_it_counts(fixture_deck):
@@ -94,9 +110,10 @@ def test_the_rubric_points_are_the_assessments():
 
 
 def test_the_award_gap_is_the_known_gap_and_the_rows_by_year_must_agree(fixture_deck):
-    # docs/proposal/results.toml, gap-contracts: neither awards dataset covers fiscal 2017 to 2019.
+    # docs/proposal/results.toml, gap-contracts: neither awards dataset covers fiscal 2017 to 2019. The deck states the
+    # known gap from config/sources.toml before the rows are measured too, as the Data readiness page's Gap row does.
     assert fixture_deck["award_gap"] == {"start": 2017, "end": 2019}
-    assert deck.build(None, None)["award_gap"] is None
+    assert deck.build(None, None)["award_gap"] == {"start": 2017, "end": 2019}
     rows = fixture_deck["results"]["award-rows-by-year"]
     stray = {**rows, "series": [*rows["series"], {**rows["series"][-1], "fiscal_year": 2018}]}
     with pytest.raises(deck.DeckError, match="fy2017_2019"):

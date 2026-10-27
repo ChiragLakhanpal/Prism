@@ -1,35 +1,54 @@
-// The eight structural figures (ticket 47; the 47 brief, section 4), defined once for the deck at /present and How
-// Strata works. F1 is a hairline figure (hairline-create, web/src/figures/hairline); F2 to F8 are diagram-design
-// figures under the strata-wb profile, drawn as HTML in web/figures/ and exported as SVG beside this file with the
-// skill's export_svg.py --system-fonts, so they use the app's own Open Sans and Roboto Mono. Each SVG's viewBox is its
-// slot on the slide, drawn 1:1. The words people read about each figure (its title, text version and caption) are
+// The structural figures (ticket 47; the second draft's brief, section 5), defined once for the deck at /present and
+// How Strata works. core-sample is a hairline figure (hairline-create, web/src/figures/hairline); the rest are
+// diagram-design figures under the strata-wb profile, drawn as HTML in web/figures/ and exported as SVG beside this
+// file with the skill's export_svg.py --system-fonts, so they use the app's own Open Sans and Roboto Mono. Each SVG's
+// viewBox is its slot, drawn 1:1. The words people read about each figure (its title, text version and caption) are
 // in web/src/deck/copy.ts under figureCopy, and tests/test_deck_figures.py checks every export against its source.
 //
-// The keys of the figures that show what one of the proposal's figures shows are the proposal's own keys (ticket 46,
-// src/strata/proposal/figures.py): pipeline, reading, knowledge-model, retrieval and loops.
-import knowledgeModel from "./knowledge-model.svg?raw";
-import ladder from "./ladder.svg?raw";
-import loops from "./loops.svg?raw";
-import oneAnswer from "./one-answer.svg?raw";
-import pipeline from "./pipeline.svg?raw";
-import reading from "./reading.svg?raw";
-import retrieval from "./retrieval.svg?raw";
+// A figure marks the parts a press brings in with data-motion-item and data-step (the skill's step markup, in its
+// static "none" mode), so the deck can show it one step at a time; the source stays complete, and How Strata works
+// shows it whole.
 import { PAGE_ORDER, SLOTS, type FigureId, type Slot } from "./order";
 
 export { PAGE_ORDER, SLOTS, type FigureId, type Slot };
 
-export type Figure = { id: FigureId; slot: Slot; svg: string | null; slide: number };
+export type Figure = { id: FigureId; slot: Slot; svg: string | null; steps: number };
 
-export const FIGURES: Record<FigureId, Figure> = {
-  "core-sample": { id: "core-sample", slot: "hairline", svg: null, slide: 1 },
-  "one-answer": { id: "one-answer", slot: "narrow", svg: oneAnswer, slide: 2 },
-  pipeline: { id: "pipeline", slot: "wide", svg: pipeline, slide: 4 },
-  reading: { id: "reading", slot: "narrow", svg: reading, slide: 5 },
-  "knowledge-model": { id: "knowledge-model", slot: "wide", svg: knowledgeModel, slide: 6 },
-  retrieval: { id: "retrieval", slot: "wide", svg: retrieval, slide: 9 },
-  ladder: { id: "ladder", slot: "half", svg: ladder, slide: 11 },
-  loops: { id: "loops", slot: "wide", svg: loops, slide: 12 },
+// Every exported drawing beside this file, by its key. A key whose export is missing draws as its text version.
+const DRAWINGS: Record<string, string> = Object.fromEntries(
+  Object.entries(import.meta.glob<string>("./*.svg", { query: "?raw", import: "default", eager: true })).map(([path, svg]) => [
+    path.slice(2, -4),
+    svg,
+  ]),
+);
+
+// How many presses a drawing takes: its highest data-step.
+export function stepsIn(svg: string | null): number {
+  if (!svg) return 0;
+  return Math.max(0, ...[...svg.matchAll(/data-step="(\d+)"/g)].map((match) => Number(match[1])));
+}
+
+const SLOT_OF: Record<FigureId, Slot> = {
+  "core-sample": "hairline",
+  strata: "stage",
+  "one-answer": "stage",
+  layers: "stage",
+  pipeline: "stage",
+  reading: "stage",
+  "knowledge-model": "stage",
+  retrieval: "stage",
+  estimate: "stage",
+  checks: "stage",
+  ladder: "half",
+  loops: "stage",
 };
+
+export const FIGURES = Object.fromEntries(
+  PAGE_ORDER.map((id) => {
+    const svg = SLOT_OF[id] === "hairline" ? null : (DRAWINGS[id] ?? null);
+    return [id, { id, slot: SLOT_OF[id], svg, steps: stepsIn(svg) }];
+  }),
+) as Record<FigureId, Figure>;
 
 // An exported SVG as the page inlines it: without its XML declaration, and with the width and height of its
 // viewBox, so it draws 1:1.

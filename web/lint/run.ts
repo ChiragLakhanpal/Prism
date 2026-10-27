@@ -26,7 +26,7 @@ import { readFileSync, readdirSync } from "node:fs";
 import { join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { causalChecker, copyChecker, whatIfChecker } from "./copy.ts";
-import { CAUSAL_SCOPES, CLASS_RULES_SKIP, FROZEN_CLASS_USES, UPPERCASE_ONLY_WITH, WHAT_IF_SAYS, WHAT_IF_SCOPES } from "./rules.ts";
+import { CAUSAL_SCOPES, FROZEN_CLASS_USES, UPPERCASE_ONLY_WITH, WHAT_IF_SAYS, WHAT_IF_SCOPES } from "./rules.ts";
 import { copyStrings, lineOf, literalText, offTokenClasses, retiredClasses, scopedRanges, termLiterals, unusedKeeps } from "./source.ts";
 import { staleServerCopies } from "./server-copy.ts";
 import { definitions } from "../src/lib/definitions.ts";
@@ -155,9 +155,8 @@ function main(): number {
           "Use a color token, a type step or a space step from web/src/styles/app.css.",
       );
     }
-    // Ticket 90: capitals only in a chart label, and no retired class, but in the deck's folder and the frozen files.
+    // Ticket 90: capitals only in a chart label, and no retired class, but in the frozen files.
     const path = relative(root, file).split(sep).join("/");
-    if (CLASS_RULES_SKIP.some((folder) => path.startsWith(folder))) continue;
     for (const found of retiredClasses(source, file, FROZEN_CLASS_USES[path])) {
       const where = `${at(file, lineOf(source, found.offset))}: the class "${found.text}"`;
       problems.push(
