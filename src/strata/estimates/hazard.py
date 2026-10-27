@@ -197,30 +197,31 @@ class HazardVsSignals:
     name = SCORER
     model = MODEL
 
-    def __init__(self, dates: tuple[dt.date, ...], settings: Settings):
-        self.dates, self.settings = dates, settings
+    def __init__(self, dates: tuple[dt.date, ...], settings: Settings, checked: dict | None = None):
+        self.dates, self.settings, self.checked = dates, settings, checked
 
     def score(self, replay: Replay) -> Scored:
+        from strata.estimates import signals_track
         from strata.estimates.hindsight import mcnemar
-        from strata.estimates.signals_track import COHORT, EXTENSIONS, STATUSES
         from strata.tools.project_signals import months_after
 
         totals = defaultdict(int)
         used, without_model = [], []
+        moves = signals_track.later_moves(replay.outcomes)
         for day in (day for day in self.dates if day <= replay.window.cutoff):
             frozen = Reader(replay.inputs.engine, day, replay.thresholds)
             found = histories(frozen)
             model = fit(found, day, self.settings)
             later = months_after(day, self.settings.window_months)
             entries = []
-            for project in frozen.rows(COHORT):
-                pid = project["project_id"]
-                status = frozen.call("project_signals", project_id=pid)["status"]
+            # The projects the signals' track record counts on the day, read in batches as it reads them, or as the
+            # track record found them on a night both replays run.
+            for pid, result in signals_track.counted(frozen, self.checked):
+                status = result["status"]
                 values = features(found.get(pid, []), day)
-                if status not in STATUSES or values is None:
+                if values is None:
                     continue
-                moved = any(day < as_date(row["reported_on"]) <= later
-                            for row in replay.outcomes.rows(EXTENSIONS, project_id=pid))
+                moved = any(day < moved_on <= later for moved_on in moves[pid])
                 chance = model.chance(values) if isinstance(model, HazardModel) else None
                 entries.append({"project": pid, "picked": status in LOOK_STATUSES, "chance": chance, "extended": moved})
             used.append(day.isoformat())
@@ -253,10 +254,11 @@ class HazardVsSignals:
 
 
 def compare(engine: Engine, tracker, *, ran_at: dt.datetime, dates: tuple[dt.date, ...] | None = None,
-            store: Engine | None = None, thresholds: Thresholds | None = None) -> str:
+            store: Engine | None = None, thresholds: Thresholds | None = None, checked: dict | None = None) -> str:
     """Replay the hazard model against the fixed signals on the signals' track record dates (or the dates given),
     store the counts and return the run's id. Outcomes are read as of the last date plus the window, or the day it
-    runs when that is earlier, as the signals' track record reads them."""
+    runs when that is earlier, as the signals' track record reads them. checked is what the night's signals' replay
+    found on each date, if any (strata.estimates.signals_track.counted)."""
     from strata.tools.project_signals import months_after
 
     thresholds = thresholds or load_thresholds()
@@ -264,8 +266,9 @@ def compare(engine: Engine, tracker, *, ran_at: dt.datetime, dates: tuple[dt.dat
     dates = tuple(sorted(dates or (as_date(day) for day in thresholds.value("signals.track_record_dates"))))
     through = min(months_after(dates[-1], settings.window_months), ran_at.astimezone(dt.UTC).date())
     run_id = harness.new_run_id(SCORER, ran_at)
-    harness.replay(engine, HazardVsSignals(dates, settings), Window(dates[-1], through, SEGMENT_KIND, SEGMENT),
-                   tracker, run_id, ran_at, store or engine, thresholds)
+    harness.replay(engine, HazardVsSignals(dates, settings, checked),
+                   Window(dates[-1], through, SEGMENT_KIND, SEGMENT), tracker, run_id, ran_at, store or engine,
+                   thresholds)
     return run_id
 
 

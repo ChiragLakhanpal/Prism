@@ -312,12 +312,24 @@ disbursement_months = 12
 track_record_dates = [2023-06-30, 2024-06-30, 2025-06-30]
 track_record_window_months = 12
 track_record_min = 20
-# The nightly job's score task replays the checks again once the stored track record is this many days old
-# (strata.lakehouse.nightly). The replay reads Strata as it was on the dates above, so its counts change only when
-# a record newly fetched turns out public before one of them, and the replay calls the warehouse for every
-# project with a loan history, which is too long to repeat every night inside the job's 150 minutes. Source: the
-# ticket 43 review (B6); a starting value for the owner to confirm.
-track_record_every_days = 7
+# The night of the week, in UTC, on which the nightly job's score task replays the checks for the track record and
+# compares the hazard model with them (strata.lakehouse.nightly; strata.lakehouse.schedule.weekly_due). The replay
+# reads Strata as it was on the dates above, so its counts change only when a record newly fetched turns out public
+# before one of them, and it reads every project with a loan history on each date, which is too long to repeat
+# every night inside the job's window. A record never replayed is replayed the first night, and a replay whose
+# night passed without it, because the night failed or the score task's minutes ran out first, runs the next
+# night. Source: the ticket 43 review (B6), which made it weekly, and ticket 89, which named the day: on the paid
+# workspace the score task filled the whole 150-minute window on October 27, 2026 (run 1086916576670871). Sunday is
+# a starting value for the owner to confirm.
+track_record_day = "Sunday"
+# On each replay date, both replays read the cohort's projects this many at a time: one statement for the batch's
+# project records and one for their loan histories (strata.estimates.signals_track.counted). Only a project still
+# active on the date is then checked, once for both replays. Before, each replay checked every project of the cohort
+# on each date, and a closed one alone cost two statements: on the paid workspace's cohort of about 1,050 projects,
+# the track record's replay ran 104 minutes at about 57 statements a minute without finishing (ticket 37, step 5). A
+# batch's rows are held in memory together, which bounds the size. Source: ticket 89; a starting value for the owner
+# to confirm.
+track_record_batch_projects = 500
 
 # The review thresholds that compute review type (ticket 15). The package workspace computes a planned
 # package's Review Type from its category and its whole estimated amount, never per lot, so dividing a
@@ -787,6 +799,14 @@ stale_after_hours = 36
 # The workspace runs at most this many job tasks at once (docs/PLAN.md section 2, "Shared workspace limits":
 # five concurrent job tasks, shared with fairshare). tests/test_nightly.py checks the job's tasks against it.
 max_concurrent_tasks = 5
+# The minutes the score task may spend each night, from its start (strata.lakehouse.nightly, _score). The task does
+# its work in parts (nightly.SCORE_PARTS); once these minutes are spent it stops after the part it is in, records
+# the parts it left in strata.ops.score_parts and ends, so measure_data_readiness and refresh_drafts run inside the
+# job's window, and the next night runs the parts left first. A part is never cut in the middle. Source: ticket 89,
+# after the score task alone ran for the job's whole 150 minutes on the paid workspace on October 27, 2026 (run
+# 1086916576670871); 45 is the ticket's starting value for the owner to confirm against the first nights' minutes
+# for each part in strata.ops.score_parts.
+score_minutes = 45
 
 # The benchmark file and the full gate (ticket 33; docs/PLAN.md section 10). src/strata/evals reads these.
 [benchmark]

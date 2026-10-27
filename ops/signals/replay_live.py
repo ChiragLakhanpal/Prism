@@ -14,8 +14,8 @@ warehouse:
 It runs the same replay as the gate (strata.estimates.signals_track.backtest) with the live adapters: the SQL
 warehouse for every read and for the results, which it appends to strata.ops.evaluation_result, and MLflow for the
 run, in config/models.toml's experiment. It prints the counts for each status with the MLflow run id. It exits 0
-when the run finished and 2 when it could not run. The nightly job's score task runs it once the stored record is
-signals.track_record_every_days old (ticket 43).
+when the run finished and 2 when it could not run. The nightly job's score task runs it once a week, on the night
+signals.track_record_day names (tickets 43 and 89).
 """
 
 from __future__ import annotations

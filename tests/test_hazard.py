@@ -105,15 +105,16 @@ def test_the_nightly_score_task_stores_the_hazard_scores_and_the_comparison_on_t
 
     path = tmp_path / "fixture.duckdb"
     shutil.copy(fixture_db, path)
-    # A week after the fixture's own run, so the weekly comparison is due again (signals.track_record_every_days).
-    night = dt.datetime(2026, 10, 30, 9, tzinfo=dt.UTC)
+    # Sunday, October 25, the comparison's night of the week (signals.track_record_day), after the fixture's own run
+    # on Friday, October 23.
+    night = dt.datetime(2026, 10, 25, 9, tzinfo=dt.UTC)
     with DuckDBEngine.open(path) as engine:
         nightly.run_task(engine, "score", "night-2", nightly.fetch_recorded, clock=lambda: night)
         scored = engine.run("SELECT count(*), min(model) FROM strata.ops.hazard_scores WHERE run_id = 'night-2'").rows[0]
         compared = hazard.stored(engine)
 
     # Every open project with a loan history is scored, with the model trained that night or its abstention.
-    assert scored == (1, "hazard-2026-10-30")
+    assert scored == (1, "hazard-2026-10-25")
     assert compared["ran_at"].replace(tzinfo=dt.UTC) == night and compared["run_id"].startswith(hazard.SCORER)
 
 

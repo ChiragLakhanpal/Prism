@@ -10,12 +10,15 @@ projects API's record once it was public by then (its status and closing date ch
 day the record was last updated), and before then the closing date from the monthly loan history, the project
 counting as active while that date was still ahead. It reads only the as-of date, never the wall clock and never
 today's status alone, so a page as of 2016 calls P130164 active, and P156634 stays active on its page dated October
-23, 2026, whatever day the test runs.
+23, 2026, whatever day the test runs. statuses_between() applies the same rule (status_as_of) to many projects at
+once, for the signals' replay (ticket 89).
 """
 
 from __future__ import annotations
 
 import datetime as dt
+from collections import defaultdict
+from collections.abc import Callable
 from functools import cache
 from importlib import resources
 
@@ -63,6 +66,18 @@ def project_status(engine, project_id: str, as_of: dt.date) -> str | None:
         return None
     history = _rows(engine, "history.sql", project_id=found[0]["project_id"], as_of=as_of)
     return status_as_of(found[0], history, as_of)[0]
+
+
+def statuses_between(rows: Callable[..., list[dict]], first: str, last: str, as_of: dt.date) -> dict[str, str | None]:
+    """project_status on the as-of date of every project whose ID sorts from first to last that Strata held a
+    record of then, read with two statements in all, for a replay that asks about many projects on one date (ticket
+    89). rows runs a query with first and last bound and as_of bound to the same date, as the replay harness's frozen
+    reader does, which also checks each row's public date."""
+    histories: dict[str, list[dict]] = defaultdict(list)
+    for row in rows(_sql("histories_between.sql"), first=first, last=last):
+        histories[row["project_id"]].append(row)
+    return {row["project_id"]: status_as_of(row, histories[row["project_id"]], as_of)[0]
+            for row in rows(_sql("projects_between.sql"), first=first, last=last)}
 
 
 def lacks(view: str, capability: str) -> bool:
