@@ -18,3 +18,4 @@ Read first: `src/strata/lakehouse/nightly.py` (`_score`, `_score_packages`, `_re
 ## Comments
 
 - October 26, 2026, orchestrator: opened at 21:11 PDT from the score run that filled the window, after the side agent's note on tonight's scheduled run. On the demo path: the dashboard's readiness page and the drafts refresh need the tasks after score to run every night.
+- October 26, 2026, orchestrator (23:03 PDT): the bundle deploy of 05:52 UTC (ticket 87's live step) reset the window to 9000; the Jobs API update was run again at once and the job shows timeout_seconds 18000 with its schedule unchanged, so tonight's 07:00 UTC run keeps 300 minutes. The side run's reviewer approved round 1 at 22:58 PDT; verification follows; the merge waits for wave 4q's last merge.
