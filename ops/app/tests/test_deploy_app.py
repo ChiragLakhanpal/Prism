@@ -722,6 +722,106 @@ def test_a_new_deployment_that_failed_stops_the_deploy_at_step_5_with_its_state_
     assert workspace.statements == []
 
 
+# The redeploy of 12:19 UTC on October 27, 2026 came after a cold start of the App's compute. It made deployment
+# 01f1d20184b11f5b827aae9cfa5088b4 at 12:25:38 UTC and exited 1 at 12:31 UTC, because the app's deployments still
+# showed it IN_PROGRESS, so it granted nothing. By 12:31 UTC the deployment showed SUCCEEDED (docs/workspace-catchup.md,
+# "The App's stop of October 27, 2026"). So step 5 reads the deployments again while its deployment is in progress.
+COLD_START = "01f1d20184b11f5b827aae9cfa5088b4"
+
+
+class StillInProgress(FakeWorkspace):
+    """Step 5's deployment shows IN_PROGRESS for the first `reads` reads of the app's deployments, then SUCCEEDED."""
+
+    def __init__(self, reads, **kwargs):
+        super().__init__(**kwargs)
+        self.reads_left, self.reads = reads, 0
+
+    def deploy(self, name, folder):
+        self.deployed.append((name, folder))
+        self.registered.append({"id": COLD_START, "state": "IN_PROGRESS", "message": "Deploying the app.",
+                                "created": RUN_STARTED + dt.timedelta(minutes=6, seconds=36)})
+        return self.apps[name]["url"]
+
+    def deployments(self, name):
+        self.reads += 1
+        if self.reads > self.reads_left:
+            self.registered[-1] |= {"state": "SUCCEEDED", "message": "App started successfully"}
+        return super().deployments(name)
+
+
+def deploy_waiting(workspace, tmp_path, capsys):
+    """The deploy with a clock that never moves and a sleep that only counts, so a test of the wait takes no time."""
+    slept = []
+    code = deploy_app.deploy(workspace, ENV, build_web=built(tmp_path / "dist"), dist=tmp_path / "dist",
+                             now=lambda: RUN_STARTED, sleep=slept.append)
+    return code, capsys.readouterr().out, slept
+
+
+def test_a_deployment_still_in_progress_after_step_5_is_read_again_until_it_succeeds(tmp_path, capsys):
+    workspace = StillInProgress(reads=3, app=STRATA_APP | {"running": True}, deployments=[BEFORE_THE_RUN])
+
+    code, out, slept = deploy_waiting(workspace, tmp_path, capsys)
+
+    assert code == 0, out
+    assert out.split("5. Deploying the app. This takes a few minutes.\n")[1].splitlines()[:2] == [
+        f"   The deployment {COLD_START} is still IN_PROGRESS, as it may be after the app's compute starts cold, so I "
+        "read its state again every 10 seconds, for up to 20 minutes.",
+        f"   The deployment {COLD_START}, made at 15:01:38 UTC on October 26, 2026, succeeded."]
+    assert slept == [10, 10, 10] and workspace.reads == 4
+    assert workspace.statements and "Strata is running at" in out
+
+
+def test_a_deployment_still_in_progress_when_the_wait_ends_stops_at_step_5_and_says_how_to_check_it(tmp_path, capsys):
+    workspace = StillInProgress(reads=10_000, app=STRATA_APP | {"running": True}, deployments=[BEFORE_THE_RUN])
+
+    code, out, slept = deploy_waiting(workspace, tmp_path, capsys)
+
+    assert code == 1
+    assert out.split("5. Deploying the app. This takes a few minutes.\n")[1].splitlines()[1:] == [
+        f"Step 5's deployment {COLD_START}, made at 15:01:38 UTC on October 26, 2026, has the state IN_PROGRESS with "
+        "the message \"Deploying the app.\". I stopped here and granted nothing. It was still IN_PROGRESS after 20 "
+        "minutes. Run `databricks apps get strata`, and once its deployment shows SUCCEEDED, deploy again so steps 6 "
+        "and 7 run."]
+    assert sum(slept) == 20 * 60
+    assert workspace.statements == []
+
+
+class OperationFailed(RuntimeError):
+    """The SDK's error when a deployment it waits for reaches FAILED (databricks.sdk.errors)."""
+
+
+@pytest.mark.parametrize("stop", [TimeoutError("timed out after 0:20:00: Deploying the app."),
+                                  OperationFailed("failed to reach SUCCEEDED, got FAILED: Error installing packages")],
+                         ids=["timed-out", "failed"])
+def test_the_live_deploy_leaves_a_deployment_the_sdk_stopped_waiting_for_to_step_5(monkeypatch, stop):
+    """The SDK's own wait gives up after 20 minutes, or raises on FAILED. Step 5 then reads the app's deployments and
+    says what state the deployment is in, so the live adapter returns the address instead of a traceback."""
+    import types
+
+    import app_live
+
+    stand_ins = {"databricks": types.ModuleType("databricks"), "databricks.sdk": types.ModuleType("databricks.sdk"),
+                 "databricks.sdk.service": types.ModuleType("databricks.sdk.service"),
+                 "databricks.sdk.errors": types.ModuleType("databricks.sdk.errors")}
+    stand_ins["databricks.sdk.service"].apps = SimpleNamespace(AppDeployment=lambda source_code_path: source_code_path)
+    stand_ins["databricks.sdk.errors"].OperationFailed = OperationFailed
+    for name, module in stand_ins.items():
+        monkeypatch.setitem(sys.modules, name, module)
+
+    class Apps:
+        def deploy_and_wait(self, name, deployment, timeout):
+            raise stop
+
+        def get(self, name):
+            return SimpleNamespace(url="https://strata-1.aws.databricksapps.com")
+
+    live = object.__new__(app_live.LiveApps)
+    live.w = SimpleNamespace(apps=Apps())
+
+    assert live.deploy("strata", "/Workspace/Users/owner@example.org/strata-app") == \
+        "https://strata-1.aws.databricksapps.com"
+
+
 # What the deploy of 14:55 UTC on October 26, 2026 printed in step 6, for a table that existed.
 NOT_A_MISSING_TABLE = ("The warehouse did not run the statement. Its state was FAILED: TABLE_DOES_NOT_EXIST: Table "
                        "'strata.ops.exposures' does not exist")

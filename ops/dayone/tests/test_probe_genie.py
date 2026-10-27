@@ -13,7 +13,6 @@ import probe_genie  # noqa: E402
 from dayone import ProbeError, SetupError  # noqa: E402
 
 
-
 class FakeGenie:
     def __init__(self, me="1001", status="COMPLETED", asked_by="1001", answer="There are 21,932 trips.",
                  error=None, refuse=None, signed_out=False):

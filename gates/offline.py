@@ -5,24 +5,28 @@ It runs the steps listed in gates/steps.toml from the root of the tree it was st
 A step with no lane runs alone, after everything before it has finished. Neighbouring steps
 that have lanes run side by side, one thread per lane, and each lane runs its own steps in
 order. When a step fails, the gate stops every other lane and prints that step's output.
-The time limit in that file covers the whole run: when it passes, the gate stops every lane.
-When every staged file is Markdown, it runs only the steps marked `always`. Otherwise it
-first checks that no tracked file has changes that are not staged, so the tests see what the
-commit holds. Steps run with the network switched off for uv, npm and Playwright. They also
-run without git's hook variables, so a test that builds its own repo cannot touch the commit
-in progress.
+The time limit in that file covers the whole run once the gate holds the lock: when it passes,
+the gate stops every lane. When every staged file is Markdown, it runs only the steps marked
+`always`, once it has checked that none of those files has changes that are not staged.
+Otherwise it first checks that no tracked file has changes that are not staged. Either way the
+tests see what the commit holds. Steps run with the network switched off for uv, npm and
+Playwright. They also run without git's hook variables, so a test that builds its own repo
+cannot touch the commit in progress.
 A step that names the scratch folder .gate-tmp/, as the pytest steps do with --basetemp, finds
 it made, since pytest needs the folder's parent to exist; .gitignore leaves it out (ticket 73).
 
 One gate runs at a time on this computer. Before it starts its clock, the gate holds a lock on
-a file in the temporary folder, or on the file that STRATA_GATE_LOCK names. A second gate waits
-for that lock, up to lock_wait_seconds in gates/steps.toml, and then gives up.
+a file in the temporary folder, or on the file that STRATA_GATE_LOCK names, and writes its
+process id and the time into that file. A second gate waits for that lock, up to
+lock_wait_seconds in gates/steps.toml, says which process holds it, and then gives up.
 
 This file uses only the standard library, so it runs before anything is installed.
 """
 
 import fcntl
 import os
+import re
+import shutil
 import signal
 import subprocess
 import sys
@@ -69,29 +73,60 @@ def lock_path():
     return Path(os.environ.get(LOCK_VARIABLE) or LOCK_FILE)
 
 
+HOLDER = re.compile(r"process (\d+), since (.+)")
+
+
+def holder(path):
+    """The end of the waiting line that names the holder, such as ", which process 123 has held since
+    2026-10-27 05:12:03", or "" when the file holds no such line yet."""
+    try:
+        found = HOLDER.fullmatch(Path(path).read_text().strip())
+    except OSError:
+        return ""
+    return f", which process {found[1]} has held since {found[2]}" if found else ""
+
+
 def hold_lock(path, wait_limit, limit):
     """Wait until this gate holds the lock, and return the open file that holds it.
 
     The system lets go of the lock when the gate's process ends, however it ends. Return None
-    when another gate still holds the lock after wait_limit seconds.
+    when another gate still holds the lock after wait_limit seconds. Once it holds the lock, the
+    gate writes its process id and the time into the file. That keeps the file's time fresh, so
+    the system never removes it from the temporary folder as old while a gate holds it, and it
+    lets a waiting gate say which process holds the lock.
     """
-    handle = open(path, "a")  # "a" makes the file when it is missing and never empties it.
+    try:
+        handle = open(path, "a")  # "a" makes the file when it is missing and never empties the holder's line.
+    except OSError as error:
+        raise SystemExit(f"The gate could not open the lock {path}: {error.strerror}. "
+                         f"Set {LOCK_VARIABLE} to a file in a folder you can write, or unset it.") from None
     started = time.monotonic()
-    waiting = False
+    blocked = told = False
+
+    def tell(who=""):
+        print("Another gate is running on this computer, so this gate waits for it to finish. "
+              f"It waits up to {duration(wait_limit)} for the lock {path}{who}.", flush=True)
+
     while True:
         try:
             fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except BlockingIOError:
-            if not waiting:
-                print("Another gate is running on this computer, so this gate waits for it to finish. "
-                      f"It waits up to {wait_limit:g} seconds for the lock {path}.", flush=True)
-                waiting = True
-            if time.monotonic() - started >= wait_limit:
+            blocked, waited, who = True, time.monotonic() - started, holder(path)
+            # The holder writes its line just after it takes the lock, so give the line a second to appear.
+            if not told and (who or waited >= min(1, wait_limit)):
+                tell(who)
+                told = True
+            if waited >= wait_limit:
                 handle.close()
                 return None
             time.sleep(POLL_SECONDS)
             continue
-        if waiting:
+        if blocked and not told:
+            tell()
+        handle.truncate(0)
+        handle.write(f"process {os.getpid()}, since {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
+        handle.flush()
+        if blocked:
             print(f"This gate waited {seconds(time.monotonic() - started)} for the other gate. "
                   f"Its {limit:g}-second limit starts now.", flush=True)
         return handle
@@ -119,9 +154,10 @@ def staged_files():
     return [name for name in done.stdout.split("\0") if name]
 
 
-def unstaged_changes():
-    """True when a tracked file in the working tree differs from what the commit will hold."""
-    done = subprocess.run(["git", "diff", "--quiet"], capture_output=True, text=True)
+def unstaged_changes(paths=()):
+    """True when a tracked file in the working tree, or one of paths when it names some, differs from what the commit
+    will hold."""
+    done = subprocess.run(["git", "diff", "--quiet", "--", *paths], capture_output=True, text=True)
     if done.returncode not in (0, 1):
         raise SystemExit("The gate could not compare the working tree with the staged changes. "
                          f"Git said this: {done.stderr.strip()}")
@@ -174,6 +210,7 @@ class Run:
         self.failed = []  # (step, exit code) for each step that failed, in the order they finished
         self.over = []  # the steps the limit stopped
         self.crashed = []  # errors the gate itself hit inside a lane
+        self.missing = {}  # the program each step could not start, by the step's name
 
     def seconds_left(self):
         return self.limit - (time.monotonic() - self.started)
@@ -223,10 +260,30 @@ def run_step(step, run):
         raise
 
 
+def program(run):
+    """The program a step starts: its first word or, after `env`, the first word that is not NAME=value.
+
+    None when `env` takes an option, which this does not read, so the step starts and env reports what it lacks.
+    """
+    if os.path.basename(run[0]) != "env":
+        return run[0]
+    for arg in run[1:]:
+        if arg.startswith("-"):
+            return None
+        if "=" not in arg:
+            return arg
+    return run[0]
+
+
+# uv, npm and python3: scripts/install needs them and runs uv and npm itself, so it cannot be the first fix.
+INSTALL = "Install it as the Install section of README.md says, then run scripts/install"
+
+
 def run_lane(steps, run, done):
     """Run a lane's steps in order. Stop at the first one that does not pass, or when another lane stops.
 
-    Set `done` at the end, however the lane ends.
+    Set `done` at the end, however the lane ends. A step whose program is not on the PATH does not start, so its
+    message names that program, even when the step starts it through `env` as the web lanes do.
     """
     try:
         for step in steps:
@@ -235,10 +292,14 @@ def run_lane(steps, run, done):
             if step.get("lane") is None:
                 run.say(f"- {step['name']} ...\n")
             step_started = time.monotonic()
+            needed = program(step["run"])
             try:
+                if needed is not None and shutil.which(needed) is None:
+                    raise FileNotFoundError(2, "No such file or directory", needed)
                 code, output = run_step(step, run)
             except FileNotFoundError as missing:
-                code, output = 127, f"{missing.filename} is not installed. Run scripts/install first.\n"
+                run.missing[step["name"]] = missing.filename
+                code, output = 127, f"{missing.filename} is not installed. {INSTALL}.\n"
             run.finish(step, code, output, seconds(time.monotonic() - step_started))
             if code != 0:
                 return
@@ -285,6 +346,12 @@ def seconds(value):
     return f"{value:.1f} seconds"
 
 
+def duration(value):
+    """A setting in seconds as a person says it: "20 minutes" for 1200, "1 second" for 1, "90 seconds" for 90."""
+    count, unit = (value / 60, "minute") if value >= 60 and value % 60 == 0 else (value, "second")
+    return f"{count:g} {unit}" + ("" if count == 1 else "s")
+
+
 def listed(names):
     return names[0] if len(names) == 1 else f"{', '.join(names[:-1])} and {names[-1]}"
 
@@ -296,18 +363,20 @@ def main():
     path = lock_path()
     lock = hold_lock(path, lock_wait, limit)  # Held until this process ends. The limit starts once it is held.
     if lock is None:
-        print(f"The gate gave up after {lock_wait:g} seconds, the wait limit in {STEPS_FILE}, because another gate "
-              f"on this computer still holds the lock {path}.")
+        print(f"The gate gave up after {duration(lock_wait)}, the wait limit in {STEPS_FILE}, because another gate "
+              f"on this computer still holds the lock {path}, so commit again once that gate finishes.")
         return 1
     run = Run(limit)
     files = staged_files()
-    if only_markdown(files):
-        print("Only Markdown files are staged, so the gate runs only the steps marked always.")
-        steps = markdown_only_steps(steps)
-    elif files and unstaged_changes():
+    markdown = only_markdown(files)
+    # A Markdown-only commit checks only its own files, so a note commits beside unrelated work in progress.
+    if files and unstaged_changes(files if markdown else ()):
         print("Some changes to tracked files are not staged. Stage them or stash them, then commit again, "
               "so the gate tests what you commit.")
         return 1
+    if markdown:
+        print("Only Markdown files are staged, so the gate runs only the steps marked always.")
+        steps = markdown_only_steps(steps)
 
     for stage in stages(steps):
         run_stage(stage, run)
@@ -316,10 +385,14 @@ def main():
 
     if run.failed:
         step, code = run.failed[0]
+        took = seconds(time.monotonic() - run.started)
+        if step["name"] in run.missing:
+            print(f"The gate failed after {took}. The step \"{step['name']}\" could not start, because "
+                  f"{run.missing[step['name']]} is not installed. {INSTALL} and commit again.")
+            return 1
         advice = ("Code 127 means the step could not find a command. Run scripts/install, then commit again."
                   if code == 127 else "Fix what it reports and commit again.")
-        print(f"The gate failed after {seconds(time.monotonic() - run.started)}. The step \"{step['name']}\" "
-              f"exited with code {code}. {advice}")
+        print(f"The gate failed after {took}. The step \"{step['name']}\" exited with code {code}. {advice}")
         return 1
     if run.over:
         names = listed([f"\"{step['name']}\"" for step in sorted(run.over, key=steps.index)])

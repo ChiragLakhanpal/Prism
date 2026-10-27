@@ -12,6 +12,8 @@ import time
 import urllib.request
 from contextlib import contextmanager
 
+import pytest
+
 LISTENING = re.compile(r"http://(?:127\.0\.0\.1|\[::1\]):(\d+)")
 
 
@@ -19,7 +21,7 @@ LISTENING = re.compile(r"http://(?:127\.0\.0\.1|\[::1\]):(\d+)")
 def server(**env):
     process = subprocess.Popen([sys.executable, "-m", "strata.server"], stdout=subprocess.PIPE,
                                stderr=subprocess.STDOUT, text=True,
-                               # Clear the person's own settings, so only what the test gives counts.
+                               # Empty the person's own settings, so only what the test gives counts.
                                env={**os.environ, "STRATA_SERVER_PORT": "", "STRATA_SERVER_HOST": "",
                                     "DATABRICKS_APP_PORT": "", **env})
     try:
@@ -89,7 +91,34 @@ def test_on_the_databricks_app_the_server_listens_on_the_port_the_platform_names
         assert health(listening) == {"status": "ok"}
 
 
+def has_ipv6_loopback():
+    """Whether this computer has the IPv6 loopback address, ::1. A computer or container with IPv6 turned off has none."""
+    if not socket.has_ipv6:
+        return False
+    try:
+        with socket.socket(socket.AF_INET6) as probe:
+            probe.bind(("::1", 0))
+    except OSError:
+        return False
+    return True
+
+
+@pytest.mark.skipif(not has_ipv6_loopback(), reason="This computer has no IPv6 loopback address, ::1.")
 def test_the_server_prints_an_ipv6_address_in_brackets_so_it_can_be_opened():
     with server(STRATA_SERVER_HOST="::1") as listening:
         assert listening.startswith("http://[::1]:")
         assert health(listening) == {"status": "ok"}
+
+
+def test_a_computer_without_an_ipv6_loopback_address_skips_the_ipv6_test(monkeypatch):
+    """With IPv6 turned off, ::1 does not exist, and the test above would fail the gate for a reason no change made."""
+    monkeypatch.setattr(socket, "has_ipv6", False)
+    assert not has_ipv6_loopback()
+
+    class NoLoopback(socket.socket):
+        def bind(self, address):
+            raise OSError(49, "Can't assign requested address")
+
+    monkeypatch.setattr(socket, "has_ipv6", True)
+    monkeypatch.setattr(socket, "socket", NoLoopback)
+    assert not has_ipv6_loopback()

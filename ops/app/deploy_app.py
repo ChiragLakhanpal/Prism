@@ -36,7 +36,8 @@ compute limit. Then it does these things, in order:
 5. It deploys the app, starting it first if it is stopped, and waits for it. Then it reads the app's deployments
    (apps list-deployments) and stops with exit 1 unless one made since the run started has the state SUCCEEDED,
    naming the deployment and its time: on October 26, 2026 the deploy call came back on a stopped workspace with no
-   deployment registered.
+   deployment registered. While that deployment shows IN_PROGRESS, as it may after the app's compute starts cold, it
+   reads the deployments again every 10 seconds, for up to 20 minutes, before it stops (October 27, 2026).
 6. It grants the app's own service principal what the server needs to write usage events, agent
    runs, opened sources, drafts, decisions and labels on supplier pairs, and the lesson review record,
    and nothing more: USE CATALOG on strata, USE SCHEMA on strata.ops, SELECT and MODIFY on
@@ -92,6 +93,7 @@ import datetime as dt
 import re
 import subprocess
 import sys
+import time
 from collections.abc import Callable, Collection
 from pathlib import Path
 
@@ -333,6 +335,12 @@ def at(moment: dt.datetime) -> str:
 
 
 STOPPED_AT_STEP_5 = "I stopped here and granted nothing."
+# After a cold start of the app's compute, the app's deployments can still show step 5's deployment IN_PROGRESS when the
+# deploy call comes back: the redeploy of 12:19 UTC on October 27, 2026 stopped on that, and the deployment succeeded a
+# few minutes later. So step 5 reads them again every STEP_5_POLL_SECONDS, for up to STEP_5_WAIT_MINUTES, before it stops.
+IN_PROGRESS = "IN_PROGRESS"
+STEP_5_POLL_SECONDS = 10
+STEP_5_WAIT_MINUTES = 20
 
 
 def registered(name: str, found: list[dict], started: dt.datetime) -> tuple[bool, str]:
@@ -358,6 +366,37 @@ def registered(name: str, found: list[dict], started: dt.datetime) -> tuple[bool
                    f"with the state {newest['state']}. {STOPPED_AT_STEP_5}")
 
 
+def in_progress(found: list[dict], started: dt.datetime) -> dict | None:
+    """Step 5's newest deployment when it is still in progress and none made since the run started has succeeded."""
+    new = sorted((deployment for deployment in found if deployment.get("created") and deployment["created"] >= started),
+                 key=lambda deployment: deployment["created"], reverse=True)
+    if not new or new[0]["state"] != IN_PROGRESS or any(d["state"] == "SUCCEEDED" for d in new):
+        return None
+    return new[0]
+
+
+def step_5_result(workspace, name: str, started: dt.datetime, sleep: Callable[[float], None]) -> tuple[bool, str]:
+    """Whether step 5's deployment succeeded, and the sentence that says so. While the app's deployments show it in
+    progress, read them again every STEP_5_POLL_SECONDS, for up to STEP_5_WAIT_MINUTES."""
+    found = workspace.deployments(name)
+    waiting = in_progress(found, started)
+    if waiting:
+        print(f"   The deployment {waiting['id']} is still {IN_PROGRESS}, as it may be after the app's compute starts "
+              f"cold, so I read its state again every {STEP_5_POLL_SECONDS} seconds, for up to "
+              f"{dayone.count_words(STEP_5_WAIT_MINUTES, 'minute')}.")
+        for _ in range(STEP_5_WAIT_MINUTES * 60 // STEP_5_POLL_SECONDS):
+            sleep(STEP_5_POLL_SECONDS)
+            found = workspace.deployments(name)
+            if not in_progress(found, started):
+                break
+    succeeded, said = registered(name, found, started)
+    if in_progress(found, started):
+        said += (f" It was still {IN_PROGRESS} after {dayone.count_words(STEP_5_WAIT_MINUTES, 'minute')}. Run "
+                 f"`databricks apps get {name}`, and once its deployment shows SUCCEEDED, deploy again so steps 6 and 7 "
+                 "run.")
+    return succeeded, said
+
+
 def run_statements(workspace, statements: list[str], stopped: str) -> bool:
     """Run each statement on the SQL warehouse, in order. When the warehouse refuses one, say the warehouse's state
     before its answer (ticket 81), then what stopping here leaves undone, and run no more."""
@@ -374,7 +413,8 @@ def run_statements(workspace, statements: list[str], stopped: str) -> bool:
 
 
 def deploy(workspace, env: dict, build_web: Callable[[], tuple[int, str]] = build_web, dist: Path = DIST,
-           keep_secrets: bool = False, now: Callable[[], dt.datetime] = lambda: dt.datetime.now(dt.UTC)) -> int:
+           keep_secrets: bool = False, now: Callable[[], dt.datetime] = lambda: dt.datetime.now(dt.UTC),
+           sleep: Callable[[float], None] = time.sleep) -> int:
     started = now()
     names = dayone.load_config()["names"]
     name, scope = names["app"], names["secret_scope"]
@@ -472,7 +512,7 @@ def deploy(workspace, env: dict, build_web: Callable[[], tuple[int, str]] = buil
     if not app["running"]:
         workspace.start(name)
     url = workspace.deploy(name, folder)
-    succeeded, said = registered(name, workspace.deployments(name), started)
+    succeeded, said = step_5_result(workspace, name, started, sleep)
     print(said)
     if not succeeded:
         return 1

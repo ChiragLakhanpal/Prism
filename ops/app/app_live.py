@@ -93,10 +93,16 @@ class LiveApps:
             self.w.workspace.upload(f"{folder}/{path}", content, format=ws.ImportFormat.AUTO, overwrite=True)
 
     def deploy(self, name: str, folder: str) -> str:
+        from databricks.sdk.errors import OperationFailed
         from databricks.sdk.service import apps
 
-        self.w.apps.deploy_and_wait(name, apps.AppDeployment(source_code_path=folder),
-                                    timeout=dt.timedelta(minutes=MINUTES))
+        try:
+            self.w.apps.deploy_and_wait(name, apps.AppDeployment(source_code_path=folder),
+                                        timeout=dt.timedelta(minutes=MINUTES))
+        except (TimeoutError, OperationFailed):
+            # The deployment is still in progress after a cold start, or it failed. Step 5 reads the app's deployments
+            # next and says which, with the deployment's own message (deploy_app.step_5_result).
+            pass
         return self.w.apps.get(name).url
 
     def run_sql(self, statement: str) -> None:

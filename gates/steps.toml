@@ -11,7 +11,7 @@
 # and every step below it waits for it. Steps with lanes that sit next to each other in this
 # file run together: each lane runs its own steps from top to bottom, and the lanes run at the
 # same time. When a step fails, the gate stops the other lanes. The time limit covers the
-# whole run.
+# whole run once the gate holds the lock.
 #
 # To add a step to a lane, put it among the other steps with lanes and give it that lane's
 # name. It runs after the steps above it in the same lane. Give it a new lane's name if it
@@ -42,17 +42,24 @@ run = ["python3", "gates/secret_scan.py"]
 always = true
 git_env = true
 
-# The tests that read Markdown files the repo writes run even when only Markdown is staged (ticket 80):
-# the check.py commands written in the docs must parse, and docs/day-one-results.md must keep its
-# marked blocks. On October 26, 2026, two Markdown-only commits skipped them and broke the next code
-# commit's gate. They read no fixture database, which a Markdown-only commit never builds, and take
-# about two seconds. Both also run in their folder's step below, so this step names a test and a
-# file, never a folder (tests/test_gate.py checks that each folder still runs in one step).
+# A few tests that read the Markdown files the docs and the merges change run even when only
+# Markdown is staged (ticket 80): the check.py commands written in the docs must parse,
+# docs/day-one-results.md must keep its marked blocks and name commands that exist, and the
+# schedules check must still write its note into bundle/README.md. On October 26, 2026, two
+# Markdown-only commits skipped such tests and broke the next code commit's gate. They read no
+# fixture database, which a Markdown-only commit never builds, and take about two seconds. Each
+# also runs in its folder's step below, so this step names tests and files, never a folder
+# (tests/test_gate.py checks that each folder still runs in one step). Other tests that read
+# Markdown, such as those that read DESIGN.md or GLOSSARY.md, run only when code is staged.
 [[step]]
-name = "Run the tests that read Markdown: the check.py commands in the docs, and the day-one results document"
+name = "Run the tests that read the Markdown the docs write: check.py commands, the day-one results, the bundle's notes"
 run = ["uv", "run", "--frozen", "pytest", "--basetemp", ".gate-tmp/docs",
        "ops/bundle/tests/test_check.py::test_every_check_command_the_repo_writes_parses_as_written",
-       "ops/dayone/tests/test_results_document.py"]
+       "ops/bundle/tests/test_check.py::test_schedules_that_never_meet_pass_and_the_notes_record_both",
+       "ops/bundle/tests/test_check.py::test_a_job_with_one_finished_run_is_described_as_one_run",
+       "ops/bundle/tests/test_check.py::test_a_fairshare_job_with_no_schedule_cannot_overlap_and_the_notes_say_so",
+       "ops/dayone/tests/test_results_document.py",
+       "ops/dayone/tests/test_run_probes.py::test_every_command_in_the_results_document_names_a_file_that_exists"]
 always = true
 
 [[step]]
@@ -76,7 +83,7 @@ lane = "python"
 # twelve workers gave about the same total gate time (80, 85 and 111 seconds on six; 75, 82, 71 and
 # 74 on eight; 70 and 70 on ten; 73 and 70 on twelve), so the lane keeps eight. When the lane gets
 # slow again, run `uv run --frozen pytest --durations=15 tests ops/bundle/tests` to find the slowest
-# tests, since one slow test sets a floor that no number of workers can lower. Then try more workers
+# tests, since the lane can never take less time than its slowest test. Then try more workers
 # and keep the number that gives the lower total gate time over three runs, because the lanes share
 # the processors. Each test must be safe beside the others: README's gate section says how.
 name = "Run the Python tests under tests/ and ops/bundle/tests/, which may read the fixture database"

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """The gate's secret scan. It reads the staged changes and the full history of HEAD, with no network.
+During a merge it also reads the history of the branch the merge brings in.
 
 It checks every added line for the key shapes that Strata's .env.example holds. Those are a
 Databricks personal access token, an Azure OpenAI key and an Application Insights connection
@@ -15,9 +16,11 @@ Run it with this command:
     python3 gates/secret_scan.py
 """
 
+import os
 import re
 import subprocess
 import sys
+from pathlib import Path
 
 ALLOW = "strata-gate: not-a-secret"
 SECRET_NAME = r"[A-Z][A-Z0-9_]*(?:TOKEN|KEY|SECRET|PASSWORD|CONNECTION_STRING)"
@@ -76,15 +79,39 @@ def staged_patch():
     return git("diff", "--cached", "--no-color", "--no-ext-diff", "-U0")
 
 
-def history_patch():
-    if not git("rev-parse", "--verify", "-q", "HEAD", check=False).strip():  # a repo with no commits yet
+def is_commit(name):
+    return bool(git("rev-parse", "--verify", "-q", f"{name}^{{commit}}", check=False).strip())
+
+
+def merge_heads():
+    """The commits that a merge in progress brings in, so the scan reads their history as well as HEAD's.
+
+    `git commit` after `git merge --no-commit` finds them in MERGE_HEAD. A plain `git merge` runs
+    pre-merge-commit before it writes MERGE_HEAD, and names what it merges in GIT_REFLOG_ACTION,
+    such as "merge strata/57-gate-fixes" (ticket 01's verification, V1).
+    """
+    heads = []
+    merge_head = Path(git("rev-parse", "--git-path", "MERGE_HEAD").strip())
+    if merge_head.is_file():
+        heads += merge_head.read_text().split()
+    action = os.environ.get("GIT_REFLOG_ACTION", "").split()
+    if action[:1] == ["merge"]:
+        heads += [name for name in action[1:] if is_commit(name)]
+    return heads
+
+
+def history_patch(heads=()):
+    """The history of HEAD, and of heads, the commits a merge in progress brings in."""
+    if not is_commit("HEAD"):  # a repo with no commits yet
         return ""
-    return git("log", "-p", "--no-color", "--no-ext-diff", "-U0", f"--format={COMMIT_MARK}%h \"%s\"", "HEAD")
+    return git("log", "-p", "--no-color", "--no-ext-diff", "-U0", f"--format={COMMIT_MARK}%h \"%s\"", "HEAD",
+               *heads, "--")
 
 
 def main():
     try:
-        staged, history = staged_patch(), history_patch()
+        heads = merge_heads()
+        staged, history = staged_patch(), history_patch(heads)
     except subprocess.CalledProcessError as failed:
         print("The secret scan could not read the changes from git, so it cannot tell whether they hold a key. "
               f"Git said this: {failed.stderr.strip()}")
@@ -94,7 +121,8 @@ def main():
     found += [f"{path}, added by commit {commit}: {shape}"
               for commit, path, _, shape in scan_patch(history)]
     if not found:
-        print("The secret scan found no keys in the staged changes or the history.")
+        print("The secret scan found no keys in the staged changes or the history"
+              f"{', or in the branch the merge brings in' if heads else ''}.")
         return 0
     print("The secret scan found what looks like a key. It does not print the key itself.")
     for line in found:

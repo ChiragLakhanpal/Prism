@@ -8,6 +8,7 @@ config/models.toml, through strata.config.load_models(), which also uses only th
 
 Commands:
   python3 ops/dayone/dayone.py init      Write the results document if it is missing.
+  python3 ops/dayone/dayone.py refresh   Rewrite the text outside the marked blocks from dayone.toml, keeping each result.
   python3 ops/dayone/dayone.py record --test N --status STATUS --result TEXT [--evidence TEXT ...]
   python3 ops/dayone/dayone.py payg --status done|planned --who TEXT [--due YYYY-MM-DD]
   python3 ops/dayone/dayone.py payg-done Exit 0 when the subscription has moved to pay-as-you-go.
@@ -39,6 +40,8 @@ SRC = HERE.parents[1] / "src"
 
 # "waiting" means part of the test ran and the rest waits for something, such as the app.
 STATUSES = ("not run", "waiting", "passed", "partly", "failed")
+# The caps probe's two results (probe_caps.py): every cap and the budget hold, or not.
+CAPS_STATUSES = ("capped", "not capped")
 BLOCK = re.compile(r"<!-- dayone:(?P<id>[\w-]+) -->\n(?P<body>.*?)<!-- /dayone:(?P=id) -->", re.S)
 FIELD = re.compile(r"^- (?P<name>[^:]+):(?: (?P<value>.*))?$")
 
@@ -328,10 +331,20 @@ def left_in_workspace(config: dict) -> list[str]:
         f"- The AI Search endpoint `{names['ai_search_endpoint']}`, which Strata keeps for its own index.\n"
         "- One-time job runs whose names start with `strata-dayone`, in the workspace's job run history.\n"
         f"- A conversation in the Genie space that GENIE_SPACE_ID names, which asks \"{config['genie']['question']}\"\n"
-        f"- Read access for the app `{names['app']}` to the secret scope `{names['secret_scope']}`. The app reads "
-        "only `APPLICATIONINSIGHTS_CONNECTION_STRING`, but Databricks grants access to the whole scope, which also "
-        "holds `AZURE_OPENAI_API_KEY`.\n",
+        + secret_read_bullet(config),
     ]
+
+
+def secret_read_bullet(config: dict) -> str:
+    """The last bullet: what the probe app may read in the secret scope, as probe_app.secret_read in dayone.toml says
+    (docs/workspace-catchup.md, ticket 03's step 4 of 4, checks it with databricks secrets list-acls)."""
+    app, scope = config["names"]["app"], config["names"]["secret_scope"]
+    if config["probe_app"]["secret_read"] == "key":
+        return (f"- Read access for the app `{app}` to the secret `APPLICATIONINSIGHTS_CONNECTION_STRING` in the secret "
+                f"scope `{scope}`, and to no other secret there.\n")
+    return (f"- Read access for the app `{app}` to the secret scope `{scope}`. The app reads only "
+            "`APPLICATIONINSIGHTS_CONNECTION_STRING`, but Databricks grants access to the whole scope, which also holds "
+            "`AZURE_OPENAI_API_KEY`.\n")
 
 
 def read_results(path: Path) -> dict[str, dict]:
@@ -369,6 +382,15 @@ def ensure_document(path: Path, config: dict) -> None:
     if not Path(path).exists():
         Path(path).parent.mkdir(parents=True, exist_ok=True)
         write_atomically(path, render_document(config))
+
+
+def refresh_document(path: Path, config: dict) -> None:
+    """Rewrite the text outside the marked blocks from dayone.toml, and keep every block the wizard or a probe
+    recorded. After a change to dayone.toml, this brings the committed document in step without a hand edit."""
+    kept = {match["id"]: match[0] for match in BLOCK.finditer(Path(path).read_text())}
+    text = BLOCK.sub(lambda m: kept.get(m["id"], m[0]), render_document(config))
+    summary = summary_table(config, parse_blocks(text))
+    write_atomically(path, BLOCK.sub(lambda m: block("summary", summary) if m["id"] == "summary" else m[0], text))
 
 
 def record_block(path: Path, block_id: str, fields: list, config: dict | None = None) -> None:
@@ -526,7 +548,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="dayone.py", description=__doc__.split("\n\n")[0])
     parser.add_argument("--results", type=Path, help="The results document. The default is this checkout's.")
     commands = parser.add_subparsers(dest="command", required=True)
-    for name in ("init", "show"):
+    for name in ("init", "show", "refresh"):
         commands.add_parser(name).add_argument("--results", type=Path, default=argparse.SUPPRESS)
     one = commands.add_parser("record", help="Record one test's result.")
     one.add_argument("--results", type=Path, default=argparse.SUPPRESS)
@@ -564,6 +586,11 @@ def main(argv: list[str] | None = None) -> int:
             else:
                 ensure_document(results, config)
                 print(f"I wrote {results}.")
+        elif args.command == "refresh":
+            if not Path(results).exists():
+                raise DayOneError(f"There is no results document at {results}. Run `dayone.py init` first.")
+            refresh_document(results, config)
+            print(f"I rewrote the text outside the marked blocks of {results} from dayone.toml and kept every result.")
         elif args.command == "show":
             for block_id, fields in read_results(results).items():
                 print(f"{block_id}: {fields.get('Status', '')}. {fields.get('Chosen path', '')}".rstrip(". "))

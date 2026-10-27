@@ -9,4 +9,8 @@
 set -eu
 root=$(git rev-parse --show-toplevel)
 cd "$root"
+command -v python3 >/dev/null 2>&1 || {
+    echo "python3 is not installed. Install it as the Install section of README.md says, then run scripts/install."
+    exit 1
+}
 exec python3 gates/offline.py "$@"

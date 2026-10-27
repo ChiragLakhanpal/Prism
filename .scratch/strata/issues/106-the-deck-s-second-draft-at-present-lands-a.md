@@ -6,12 +6,12 @@ Read first: the branch's commit 494a176b (`git show --stat`), `.notes/deck2/brie
 
 **Blocked by:** None (the user's look comes first; the merge order against the tokens ticket is settled above)
 
-**Status:** ready-for-human
+**Status:** ready
 **Area:** app
 **Phase:** P4
 **Design review:** yes
 
-- [ ] The user has looked at the second draft served from the worktree and said yes to the navy openers or asked for the light ones; the answer is recorded here.
+- [x] The user has looked at the second draft served from the worktree and said yes to the navy openers or asked for the light ones; the answer is recorded here.
 - [ ] On the branch rebased onto `build/strata`, the gate passes, `web/tests/deck.spec.ts`, `tests/test_deck_data.py` and `tests/test_deck_figures.py` pass, and the number check passes with the one allow entry explained in its comment.
 - [ ] Every slide's number is bound to the snapshot (no number typed into a slide), every claim on a slide names its source, and the copy passes DESIGN.md section 7 and `docs/agents/unslop.md` (the reviewer reads every slide).
 - [ ] The demo slides open the app's routes from `config/examples.toml` in a new tab, and the reading view and the notes window work (the design critic looks at the deck at 1440 and 390 px).
@@ -22,3 +22,4 @@ Read first: the branch's commit 494a176b (`git show --stat`), `.notes/deck2/brie
 - October 27, 2026, orchestrator: opened after wave 4q, so the deck session's branch has a review and a merge path; the branch waits for the user's look first. The deck session's notes on the navy slides and the tokens sweep (October 26, 23:32 PDT) are in the ticket text.
 - October 27, 2026, orchestrator (02:17 PDT): two wording fixes from the deck session (the logo file per slide background; the alias order against ticket 91).
 - October 27, 2026, orchestrator (05:20 PDT): the alias rule corrected on the deck session's check of build/strata at 67af1637 (a trial merge of deck/second-draft onto it is clean).
+- October 27, 2026, orchestrator (13:46 PDT): the user looked at the second draft at http://127.0.0.1:57021/present and keeps the navy transition slides ("it adds breaks in the presentation"), so the human step is done and the ticket is ready: the deck session rebases onto the tip and runs its gate, then this ticket's run reviews (with the design critic), verifies and merges the branch, and the orchestrator redeploys the App tonight.

@@ -8,6 +8,8 @@ Check which keys are set first:
 
 The merger appends a block below each time it parks a step.
 
+**Before a park commit of Markdown alone.** A commit that stages only Markdown runs the secret scan and the few tests that read the Markdown the docs write (ticket 80). To see a failure before you commit, run `uv run --frozen pytest ops/bundle/tests/test_check.py -k every_check_command` after you write a `check.py` command here, and `uv run --frozen pytest ops/dayone/tests/test_results_document.py` after a change to `docs/day-one-results.md`. A staged Markdown file with changes you have not staged stops the commit, so stage the whole file.
+
 **Running a step from a snapshot (October 26, 2026).** Long or App-touching steps run from a snapshot of the commit (`git archive <sha> | tar -x -C <scratchpad>/snap-<sha>`), never from the shared checkout, so a merge cannot rewrite config under the process. A snapshot has no `web/node_modules`, so `ops/app/deploy_app.py` stops at step 1 with `sh: tsc: command not found`: run `npm ci --prefix web` in the snapshot, or link the main checkout's `web/node_modules` into it, before the App deploy. Point `--env-file` at the main checkout's `.env`; the snapshot holds no secrets.
 
 **The CLI's default profile never applies (October 26, 2026, ticket 82).** `ops/bundle/bundle_live.py`'s `cli_env` points the Databricks CLI's config file at nothing, so every bundle command the repo's scripts run signs in with the environment file's host and token alone. Before that, the CLI's bundle commands took the default profile in `~/.databrickscfg` over the environment, and the 20:24 UTC deploy meant for the paid workspace landed on the Free Edition one (its bundle state moved to serial 25; nothing was created). A session that runs the CLI by hand outside the scripts sets DATABRICKS_CONFIG_FILE=/dev/null itself, or passes the profile it means with -p.
@@ -48,11 +50,11 @@ Then, before the free credit ends on November 10, 2026, run the wizard's pay-as-
 
 The merger parked this step on October 23, 2026, after squash commit 43ed569. It needs the Azure sign-in.
 
-Run this from the main checkout:
+Run this from the main checkout. `python3 ops/dayone/dayone.py model batch` prints the batch role's deployment from `config/models.toml`, so the command names the current deployment after a model swap:
 
-    az cognitiveservices account deployment show -g WorldBank-demo -n wb-strata --deployment-name gpt-5.4-nano --query sku -o json
+    az cognitiveservices account deployment show -g WorldBank-demo -n wb-strata --deployment-name "$(python3 ops/dayone/dayone.py model batch)" --query sku -o json
 
-It worked if the capacity in the output, times 1,000, equals the enqueued-token limit that the Azure portal shows for gpt-5.4-nano. If the two differ, change `capacity_unit` in `ops/dayone/dayone.toml` to the portal's limit divided by the capacity.
+It worked if the capacity in the output, times 1,000, equals the enqueued-token limit that the Azure portal shows for that deployment. If the two differ, change `capacity_unit` in `ops/dayone/dayone.toml` to the portal's limit divided by the capacity.
 
 ## Ticket 03, step 2 of 4: bound names and paths on the warehouse
 
@@ -87,7 +89,7 @@ Run this from the main checkout:
 
     databricks secrets list-acls strata
 
-It worked if the app's service principal has READ on the scope `strata`. If it is not listed, Databricks granted the app only the one key. In that case, change the last bullet of `docs/day-one-results.md`, under "What the probes leave in the workspace", back to naming only `APPLICATIONINSIGHTS_CONNECTION_STRING`. As in step 3, add `-p strata` if the default profile points at a different workspace.
+It worked if the app's service principal has READ on the scope `strata`. If it is not listed, Databricks granted the app only the one key. In that case, set `secret_read = "key"` under `[probe_app]` in `ops/dayone/dayone.toml`, then run `python3 ops/dayone/dayone.py refresh`. The last bullet of `docs/day-one-results.md`, under "What the probes leave in the workspace", then names only `APPLICATIONINSIGHTS_CONNECTION_STRING`, and every recorded result stays as it was. Do not edit that bullet by hand: the gate checks that the text outside the marked blocks is what `dayone.toml` renders (ticket 57). As in step 3, add `-p strata` if the default profile points at a different workspace.
 
 **Ran on October 26, 2026 (orchestrator).** `databricks secrets list-acls strata` at 09:19 UTC lists MANAGE for chiraglakhanpal@gwu.edu and READ for e796c089-1500-4cf2-9c1f-8e6a8f5aba10, the service principal of the App `strata` (ticket 06's step 1), so the App reads the whole scope and the results document's last bullet stands. Passed.
 
@@ -1039,11 +1041,12 @@ It worked if:
 
 The merger parked this step on October 24, 2026, after merge commit d356ba7. All ten keys were set, but the header above holds workspace steps back while the user runs the backlog. It needs the four Foundry keys that ticket 14's step 1 names, and the `az` command line signed in to the subscription that holds the Foundry resource. Run it after ticket 13's step 1, which makes the guardrail `strata-guardrail`. Ticket 15 adds the agent `package_reader` to `config/agents.toml`, with its instructions in `package_reader.md`.
 
-Run this from the main checkout, twice:
+Run this from the main checkout, and then run it again with `--check`, as ticket 13's step 1 does. Without `--check`, the sync exits 0 even when it finds a difference:
 
     uv run --script ops/agent/sync.py --env-file .env --agent package_reader
+    uv run --script ops/agent/sync.py --env-file .env --agent package_reader --check
 
-It worked if both runs exit 0. The first run prints what differed and ends "I made version 1 of strata-package-reader, which matches the repo." The second run reports no difference: "Foundry's agent strata-package-reader, version 1, matches the repo: there is no difference in its model, instructions, tools, description or guardrail (strata-guardrail)."
+It worked if both runs exit 0. The first run prints what differed and ends "I made version 1 of strata-package-reader, which matches the repo." The `--check` run reports no difference: "Foundry's agent strata-package-reader, version 1, matches the repo: there is no difference in its model, instructions, tools, description or guardrail (strata-guardrail)."
 
 ## Ticket 15, step 2 of 4: re-record the package reader's cases from the live reader
 
@@ -3666,3 +3669,13 @@ Parked on October 27, 2026 with ticket 61 (merge commit 6e4e37a3), after step 2'
 Signed in to the App as a lesson reviewer (a member of `strata-accredited-procurement-specialists` or `strata-lead-procurement-specialists`, `config/roles.toml`), open `<App url>/lessons/review`, open an item in "Waiting for review" that cites P130164, and press "Try again" once.
 
 It worked if the note comes back with its sentences, and none of the sentences it lists as removed has the reason `disagreements_unavailable` (DevTools' Network tab shows the response of the "Try again" request). Record the item, the time, and the removed reasons, if any, here. If no item is waiting for review, record that, and run this step after the next nightly lesson pass leaves one.
+
+## Ticket 57, step 1 of 1: the App deploy waits out a deployment still in progress
+
+Parked on October 27, 2026 by ticket 57's builder. The orchestrator runs it at the next App deploy, from a snapshot of the commit that merges ticket 57, with `--env-file` pointing at the main checkout's `.env` and the main checkout's `web/node_modules` linked into the snapshot. Mergers run no workspace step. A deploy from that commit or a later one also serves ticket 61's step 2 and ticket 63's step 2, so one deploy covers all three.
+
+Why: the redeploy of 12:19 UTC on October 27, 2026 followed a cold start of the App's compute, and it exited 1 at 12:31 UTC because the App's deployments still showed deployment 01f1d20184b11f5b827aae9cfa5088b4 IN_PROGRESS when step 5's wait ended. The deployment succeeded minutes later, and steps 6 and 7 never ran. Step 5 now reads the deployments again every 10 seconds, for up to 20 minutes, while its deployment shows IN_PROGRESS (`ops/app/deploy_app.py`, `step_5_result`).
+
+    uv run --script ops/app/deploy_app.py --env-file .env --keep-secrets
+
+It worked if step 5 ends "The deployment <id>, made at <time>, succeeded.", steps 6 and 7 run, and the last line is "Strata is running at <address>", with exit 0. After a cold start, a line before it says the deployment "is still IN_PROGRESS ... so I read its state again every 10 seconds, for up to 20 minutes", and it still ends that way. If it ends "It was still IN_PROGRESS after 20 minutes", run `databricks apps get strata -p strata` and record what it shows here. Record the deployment's id and how long step 5 waited.

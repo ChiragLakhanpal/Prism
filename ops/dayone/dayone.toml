@@ -28,6 +28,13 @@ volume = "workspace.strata_dayone.files"
 search_table = "workspace.strata_dayone.passages"
 search_index = "workspace.strata_dayone.passages_index"
 
+# What Databricks lets the probe app read in the secret scope: "scope" when the app's service principal has READ on the
+# whole scope, as `databricks secrets list-acls strata` showed on October 26, 2026, or "key" when it reads the one key
+# alone (docs/workspace-catchup.md, ticket 03's step 4 of 4). The last bullet of the results document follows it; after
+# a change, run `python3 ops/dayone/dayone.py refresh`.
+[probe_app]
+secret_read = "scope"
+
 # The free credit, the day it ends and the monthly budget are in config/budget.toml, the budget's one home, which
 # the daily cost pull also reads (ticket 45). dayone.py reads them in as payg.deadline, payg.credit_usd,
 # caps.monthly_budget_usd, caps.budget_alert_percents and caps.budget_forecast_percent.

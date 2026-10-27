@@ -348,8 +348,9 @@ def schedules(workspace, fairshare_job: str | None, write: bool, notes: Path, to
 # ── Command line ─────────────────────────────────────────────────────────
 
 def parse(argv: list[str] | None = None) -> argparse.Namespace:
-    """The command line. --env-file may come before the subcommand or after it, as every command
-    in docs/workspace-catchup.md writes it. Given in both places, the later one wins."""
+    """Parse the command line. --env-file may come before the subcommand or after it.
+    docs/workspace-catchup.md, bundle/README.md, the ground-truth SQL comments and this file's own
+    messages write it after. Given in both places, the later one wins."""
     shared = argparse.ArgumentParser(add_help=False)
     # SUPPRESS keeps a subcommand that was not given --env-file from writing over the one given
     # before it. The namespace below starts with None, which means the main checkout's .env.
