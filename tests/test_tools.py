@@ -10,6 +10,7 @@ page and gives the mark the blueprint's Check a plan wireframe draws for each ro
 ticket. They are never computed the way the tool computes them.
 """
 
+import dataclasses
 import datetime as dt
 import re
 import shutil
@@ -129,17 +130,21 @@ def test_the_agents_limit_description_takes_its_numbers_from_the_thresholds_file
     assert [text for text in texts if "{" in text] == []
 
 
-def test_the_sector_parameter_names_the_slice_file_s_sectors():
+def test_the_sector_parameter_names_the_slice_file_s_sectors(monkeypatch):
     """Ticket 11's review round 2, P3: the sector parameter's description named the slice's sectors by hand, so a
     sector added to config/slice.toml never reached the agent's prompt. The tool list fills {slice.sectors} from the
-    slice file, the one place the sectors are listed (CLAUDE.md rules 4 and 9)."""
-    sectors = tomllib.loads((ROOT / "config" / "slice.toml").read_text())["sectors"]
-    [tool] = [tool for tool in registry.agent_tools() if tool["name"] == "search_passages"]
+    slice file, the one place the sectors are listed (CLAUDE.md rules 4 and 9), joined as a reader lists them: a
+    comma between each, and "or" before the last when there are three or more (ticket 61's review, F7)."""
+    def sector_line() -> str:
+        [tool] = [tool for tool in registry.agent_tools() if tool["name"] == "search_passages"]
+        return tool["parameters"]["properties"]["sector"]["description"]
 
-    assert tool["parameters"]["properties"]["sector"]["description"] == (
-        f"Only passages of projects in this sector of the pilot slice: {' or '.join(sectors)}.")
+    assert sector_line() == "Only passages of projects in this sector of the pilot slice: water or transport."
     assert any("{slice.sectors}" in parameter.description
                for parameter in config.load_tools()["search_passages"].parameters)
+    three = dataclasses.replace(config.load_slice(), sectors=("water", "transport", "energy"))
+    monkeypatch.setattr(registry, "load_slice", lambda: three)
+    assert sector_line() == "Only passages of projects in this sector of the pilot slice: water, transport, or energy."
 
 
 def test_the_descriptions_say_what_the_agent_needs_to_know_in_plain_sentences():

@@ -1057,8 +1057,9 @@ class AnswerCheck:
                 self._fail(sentence.index, Reason(5, ADVICE_UNBACKED))
 
     def _backs_advice(self, sentence: Checked) -> bool:
-        """Check 5: the sentence cites a lesson or a comparable, evidence from a tool whose rows back advice."""
-        return any(self.facts.came_back(evidence) and self.facts.tool(evidence) in self.backing
+        """Check 5: the sentence cites a lesson or a comparable, evidence from a tool whose rows back advice. Any tool
+        that returned the id this turn counts, whichever came first (ticket 61's review, F4)."""
+        return any(self.facts.came_back(evidence) and not self.backing.isdisjoint(self.facts.tools(evidence))
                    for evidence in sentence.claim.evidence_ids)
 
     @classmethod

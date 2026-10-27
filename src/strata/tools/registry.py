@@ -27,7 +27,7 @@ import datetime as dt
 import functools
 import importlib
 import re
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Any
 from urllib.parse import quote
@@ -131,9 +131,17 @@ class Call:
 # ── The agent's tool list ────────────────────────────────────────────────
 
 THRESHOLD = re.compile(r"\{([a-z_]+(?:\.[a-z_]+)+)\}")  # a value of the thresholds file: {passages.results}
+
+
+def listed(words: Sequence[str]) -> str:
+    """Words as a reader lists them, as the screen's Joined does: "water or transport", "water, transport, or
+    energy" (ticket 61's review, F7)."""
+    return " or ".join(words) if len(words) < 3 else f"{', '.join(words[:-1])}, or {words[-1]}"
+
+
 # The values a description names from another registry than the thresholds file, such as the slice file's sectors
-# (config/slice.toml), written as a reader reads them: "water or transport" (ticket 11's review round 2, P3).
-FROM_SLICE = {"slice.sectors": lambda: " or ".join(load_slice().sectors)}
+# (config/slice.toml), written as a reader reads them (ticket 11's review round 2, P3).
+FROM_SLICE = {"slice.sectors": lambda: listed(load_slice().sectors)}
 
 
 def _filled(text: str, thresholds: Thresholds) -> str:

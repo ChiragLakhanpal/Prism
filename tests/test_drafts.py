@@ -170,7 +170,8 @@ def test_draft_review_notes_writes_a_note_on_each_activity_with_a_signal_each_ci
     closing = next(sentence for note in draft["notes"] for sentence in note["sentences"]
                    if "the project closes on October 31, 2026" in sentence["text"])
     assert closing["evidence_ids"] == [ROW_OF["KE-NWWDA-541062-CW-RFQ"], project]
-    assert closing["dates"] == [{"text": "October 31, 2026", "evidence_id": ROW_OF["KE-NWWDA-541062-CW-RFQ"]}]
+    # The date is the project record's: checks 1 to 3 read the row without the closing date its reason repeats.
+    assert closing["dates"] == [{"text": "October 31, 2026", "evidence_id": project}]
     assert draft["evidence"][project]["row"]["closing_date"] == "2026-10-31"
     # No sentence states the date of another plan version, which no footnote of this plan's could point at.
     assert not [sentence for note in draft["notes"] for sentence in note["sentences"] if "March 5" in sentence["text"]]
@@ -253,6 +254,28 @@ def test_a_note_sentence_that_cites_nothing_is_removed_and_never_saved(drafting)
         "The plan lists this activity as Pending Implementation, with an Actual Amount of 0.00."]
     assert judge.calls == []
     assert draft["checks"]["checks_run"] == [1, 2, 3, 4, 5, 6]
+
+
+def test_a_note_sentence_stating_a_date_only_another_record_holds_is_removed_unless_it_cites_that_record(drafting):
+    """Ticket 61's verify F2 and review F1: check_plan's row repeats dates that other records hold, the plan version
+    that first published a planned date and, in a reason, the project's closing date. A sentence that stated one and
+    cited only the row was kept, and its only footnote pointed at this plan's page, which holds neither date. Checks
+    1 to 3 now read the row without them, so such a sentence is removed, and the closing date is kept where the
+    sentence also cites the project record, which holds it and gets its own footnote."""
+    project = CHECKED["project"]["evidence_id"]
+    app = drafting("review-notes-dates-of-other-records")
+
+    _, draft_id = draft_review_notes(app)
+
+    draft = call(app, "GET", f"/api/drafts/{draft_id}", ANA).json()
+    assert [(item["key"], item["sentence"], item["reason"]) for item in draft["removed"]] == [
+        ("KE-NWWDA-541055-CW-RFB", "Its planned completion of July 31, 2026, first published in the plan of March 5, "
+         "2026, has passed with no signed contract.", "date_not_in_records"),
+        ("KE-NWWDA-541062-CW-RFQ", "The project closes on October 31, 2026.", "date_not_in_records")]
+    [kept] = [sentence for note in draft["notes"] if note["activity_reference_no"] == "KE-NWWDA-541062-CW-RFQ"
+              for sentence in note["sentences"]]
+    assert kept["text"] == "The project's closing date is October 31, 2026."
+    assert kept["dates"] == [{"text": "October 31, 2026", "evidence_id": project}]
 
 
 def test_with_no_judge_connected_a_note_sentence_that_needs_one_is_removed_and_never_saved_unchecked(drafting):

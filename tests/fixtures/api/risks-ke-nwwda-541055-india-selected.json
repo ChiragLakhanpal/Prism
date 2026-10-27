@@ -76,7 +76,7 @@
         }
       ],
       "related_notices": null,
-      "disagreement": null
+      "disagreements": []
     },
     {
       "risk_key": "permits_before_award",
@@ -131,7 +131,7 @@
         }
       ],
       "related_notices": null,
-      "disagreement": null
+      "disagreements": []
     }
   ],
   "p": 1,

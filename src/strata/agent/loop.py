@@ -116,6 +116,8 @@ def keep_nested(facts: Facts, record: Mapping, tool: str | None, kind: str | Non
     elif held != record and record not in held.get("also", ()):
         facts.record(record["evidence_id"], {**record, **held, "also": [*held.get("also", ()), record]},
                      tool=facts.tool(record["evidence_id"]), kind=kind)
+    # Every tool that returned the id is kept, so check 5 asks each of them (ticket 61's review, F4).
+    facts.returned(record["evidence_id"], tool)
 
 
 RANKING = ("rank", "score")  # a search's own order, which says nothing about the record

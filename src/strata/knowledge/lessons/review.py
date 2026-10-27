@@ -1033,7 +1033,7 @@ class LessonReview:
     def rewrite(self, engine: Engine, viewer: Viewer, wanted: str, agent, writer: Engine, six_checks=None) -> dict:
         """The review page's "Try again": the lesson review writer writes its note on one open item again,
         stored through writer, and the page gets the item with the new note. Any lesson reviewer may ask.
-        six_checks are the app's six checks, with its judge (ticket 61)."""
+        six_checks are the app's six checks, with its judge (ticket 61), and check 6 asks as the reviewer."""
         from strata.knowledge.lessons import writer as notes
 
         person = self._require(viewer)
@@ -1044,7 +1044,7 @@ class LessonReview:
         if agent is None:
             raise Refused(503, "no_agent")
         notes.write_one(writer, store, item, self.subject(store, item), agent, self.now(),
-                        int(self.value("likely_repeats_max")), six_checks)
+                        int(self.value("likely_repeats_max")), six_checks, reading=engine)
         store = self._load(engine)
         return {"item": self.detail(store, store.items[item["item_id"]], person)}
 

@@ -106,8 +106,8 @@ def _row(factor: dict, lesson: dict) -> dict:
             "sources": [_source(evidence, name if evidence["project_id"] == lesson["project"]["project_id"] else None)
                         for evidence in lesson["evidence"]],
             "reports": factor["reports"],
-            # Ticket 22's edges and ticket 23's disagreements have not landed, so no row has either yet.
-            "related_notices": None, "disagreement": None}
+            # Ticket 22's edges have not landed, so no row has any yet. Check 6 fills the disagreements a row rests on.
+            "related_notices": None, "disagreements": []}
 
 
 def _claims(row: dict, m: int, counts_id: str) -> tuple[Claim, Claim]:
@@ -132,11 +132,11 @@ def _removed(row: dict, checked) -> dict:
             "lesson_text": row["lesson"]["text"], "check": reason.check, "reason_code": reason.code}
 
 
-def _count_differs(row: dict, m: int, reports: Mapping) -> dict | None:
-    """A row whose count is not the summary's own count for its risk, or whose table's m is not the summary's count
-    of reports read, as the removed box says it: check 1's reason, before the verifier runs (ticket 30's verify O1)."""
+def _count_differs(row: dict, reports: Mapping) -> dict | None:
+    """A row whose count is not the summary's own count for its risk, as the removed box says it: check 1's reason,
+    before the verifier runs (ticket 30's verify O1). The table's m is the summary's count of reports read itself."""
     counted = {factor["key"]: factor["k"] for factor in reports["risk_factors"]}
-    if row["k"] == counted.get(row["risk_key"]) and m == reports["read"]:
+    if row["k"] == counted.get(row["risk_key"]):
         return None
     return {"risk_key": row["risk_key"], "risk_label": row["risk_label"], "claim_kind": "count", "k": row["k"],
             "lesson_text": row["lesson"]["text"], "check": 1, "reason_code": NUMBER}
@@ -217,21 +217,23 @@ def build(engine: Engine, viewer: Viewer, *, as_of, criteria: Mapping | None, wo
         return finish(empty_reason="no_lessons")
 
     written = [_row(factor, lesson) for factor, lesson in sorted(candidates, key=rank)[:max_rows]]
-    removed = [found for found in (_count_differs(row, m, reports) for row in written) if found]
-    claimed = [row for row in written if not _count_differs(row, m, reports)]
+    differs = [_count_differs(row, reports) for row in written]
+    removed = [found for found in differs if found]
+    claimed = [row for row, found in zip(written, differs) if not found]
     claims = [claim for row in claimed for claim in _claims(row, m, payload["counts_evidence_id"])]
     six = (six_checks or SixChecks(None, None, held, limits)).on(engine)
     check = six.checked(verify(claims, facts).sentences, facts)
     verdict = six.verdict_now(check, facts, Asker(viewer, view, as_of or registry.today(), "package-risks"))
-    # A disagreement check 6 attached to a row's sentence comes with the row, both sides (DESIGN.md section 5).
-    cards = {}
+    # Every disagreement check 6 attached to a row's sentences comes with the row, both sides (DESIGN.md section 5;
+    # ticket 61's verify, F1: one sentence can rest on a side of several).
+    cards: dict[int, list[dict]] = {}
     for found in verdict.attached:
-        cards.setdefault(found.after // 2, disagreement_event(found).data)
+        cards.setdefault(found.after // 2, []).append(disagreement_event(found).data)
     kept = []
     for index, row in enumerate(claimed):
         checked = verdict.sentences[2 * index:2 * index + 2]
         if all(sentence.kept for sentence in checked):
-            kept.append({**row, "disagreement": cards.get(index)})
+            kept.append({**row, "disagreements": cards.get(index, [])})
         else:
             removed.append(_removed(row, checked))
     counts = verdict.counts()

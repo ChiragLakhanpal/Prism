@@ -265,6 +265,43 @@ def test_advice_that_cites_a_comparable_passes_check_5_and_goes_to_the_judge(fix
 
 # ── Check 6: a claim resting on one side of a disagreement shows both ─────
 
+def test_advice_citing_a_comparable_passes_check_5_whichever_tool_returned_it_first(fixture_db):
+    """Ticket 61's review, F4: when two tools return one evidence id, check 5 asked only the tool that returned it
+    first, so advice citing a comparable that a tool whose rows back no advice returned first was removed. Check 5
+    now asks every tool that returned the id this turn, so the order of the calls changes nothing. Made up: the
+    comparable's cost row is planted under the package's own id, as a tool returning the same record would give it."""
+    from strata.agent.answer_check import SixChecks
+    from strata.agent.claims import Claim
+    from strata.agent.loop import keep_result
+    from strata.config import load_tools
+    from strata.dbx import Viewer
+    from strata.harness.facts import Facts
+    from strata.lakehouse.engine import DuckDBEngine
+    from strata.tools import registry
+
+    works = "KE-NWWDA-541055-CW-RFB"
+    with DuckDBEngine.open(fixture_db, read_only=True) as engine:
+        context = registry.Context(engine=engine, viewer=Viewer(email="a@b.c", token="t"))
+        found = registry.call("find_comparables", {"as_of": "2026-10-22", "step_reference": works}, context)
+        joined = ",".join(row["step_reference"] for row in found["rows"])
+        cost = registry.call("compare_cost_estimates", {"as_of": "2026-10-22", "comparables": joined,
+                                                        "step_reference": works}, context)
+    row = cost["rows"][0]
+    comparable = row["evidence_id"].removesuffix("/cost")
+    assert comparable in {row["evidence_id"] for row in found["rows"]}
+    cost = {**cost, "rows": [{**row, "evidence_id": comparable}]}
+    advice = Claim(f"Base your works estimate on what {row['step_reference']} was estimated at.", "advice",
+                   (comparable,))
+    tools = load_tools()
+    assert tools["find_comparables"].result.backs_advice and not tools["compare_cost_estimates"].result.backs_advice
+    for order in ([("find_comparables", found), ("compare_cost_estimates", cost)],
+                  [("compare_cost_estimates", cost), ("find_comparables", found)]):
+        facts = Facts()
+        for name, result in order:
+            keep_result(facts, name, result, tools)
+        assert SixChecks(None, None, tools).check([advice], facts).advice == (1, 1), [name for name, _ in order]
+
+
 def test_a_claim_resting_on_isr_7_s_rating_streams_with_the_icr_paragraph_78_disagreement_attached(fixture_db):
     """The agent never asked get_disagreements, so its draft left the ICR out. ISR 7 (values.toml isr-7-date,
     isr-7-rating) and ICR paragraph 78 (icr-para-78, PDF page 27) both reach the screen, the ICR's paragraph as

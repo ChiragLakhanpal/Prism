@@ -101,6 +101,24 @@ def cited_rows(facts: Facts) -> list[tuple[dict, str]]:
     return [*((row, TOOL) for row in facts.rows), (_project_record(facts), TOOL)]
 
 
+def _from_this_plan(key: str) -> bool:
+    """Whether a row's field holds this plan's own value: not the plan version that first published a date
+    (planned_completion_plan_date), which an earlier plan states, nor a reason's closing_date, which the project
+    record states."""
+    return not key.endswith("_plan_date") and key != "closing_date"
+
+
+def checked_row(row: dict) -> dict:
+    """A record as checks 1 to 3 read it for a note: a plan row without the values other records hold, so a sentence
+    that states one must cite the record that holds it, which gets its own footnote, or it is removed (ticket 61's
+    verify F2, review F1). Any other record, such as the project record, is read whole."""
+    if "marks" not in row:
+        return row
+    return {**{key: value for key, value in row.items() if not key.endswith("_plan_date")},
+            "marks": [{**mark, "reasons": [{key: value for key, value in reason.items() if _from_this_plan(key)}
+                                           for reason in mark.get("reasons") or ()]} for mark in row["marks"]]}
+
+
 def _reason_ids(row: dict) -> list[str]:
     """The evidence ids a row's mark reasons name, the row's own first: the project record for its closing date."""
     named = [evidence for mark in row["marks"] for reason in mark.get("reasons") or () for evidence in

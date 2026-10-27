@@ -4,7 +4,7 @@
 //
 // The risk-table builder (src/strata/packages/risks.py) counts, ranks and checks everything. The page fills copy
 // templates, formats numbers and dates through Num, and keeps the person's own selection, nothing else.
-import type { EvidenceEvent } from "./answer";
+import type { DisagreementEvent, EvidenceEvent } from "./answer";
 import type { IegStatus } from "./lessons";
 import { copy } from "../copy";
 import { known, remember } from "./evidence";
@@ -67,9 +67,11 @@ export type RiskRow = {
   lesson: RiskLesson;
   sources: RiskSource[];
   reports: RiskReport[];
-  // Ticket 22's award notices and ticket 23's disagreements have not landed, so these are always null for now.
+  // Ticket 22's award notices have not landed, so this is always null for now.
   related_notices: { count: number; evidence_id: string } | null;
-  disagreement: { id: string; changes_claim: boolean } | null;
+  // Every disagreement check 6 attached to the row's sentences, each with both sides (ticket 61). The section does
+  // not show them yet (ticket 61's review, F2). A table cached before ticket 61 has none.
+  disagreements?: DisagreementEvent[];
 };
 
 export type RemovedRow = {

@@ -37,11 +37,9 @@ def quoting_icr_54(call, **arguments):
     return _plant(get_disagreements(call, **arguments), value=None, value_form=None, quote=QUOTE)
 
 
-def twice_quoting_icr_54(call, **arguments):
-    """Two disagreements whose first side quotes paragraph 54's own words: the one above, about rebidding, and a
-    second about the rebidding share, so check 6 attaches two cards to the same lesson quote (ticket 61's verify,
-    F1)."""
-    result = quoting_icr_54(call, **arguments)
+def _twice(result: dict) -> dict:
+    """The planted disagreement and a second one with the same first side, about the rebidding share, so check 6
+    attaches two cards to the same sentence (ticket 61's verify, F1)."""
     if result["rows"]:
         first = result["rows"][-1]
         side = {**first["sides"][0], "assertion_id": f"{ICR_54}#P130164/rebidding_share"}
@@ -51,9 +49,19 @@ def twice_quoting_icr_54(call, **arguments):
     return result
 
 
+def twice_quoting_icr_54(call, **arguments):
+    """Two disagreements whose first side quotes paragraph 54's own words."""
+    return _twice(quoting_icr_54(call, **arguments))
+
+
 def on_market_rates(call, **arguments):
     """The first side judges the works estimates by "market rates", words the risk table's lesson states."""
     return _plant(get_disagreements(call, **arguments), value="market rates", value_form="judgment", quote=None)
+
+
+def twice_on_market_rates(call, **arguments):
+    """Two disagreements whose first side judges the works estimates by "market rates"."""
+    return _twice(on_market_rates(call, **arguments))
 
 
 def with_adapter(name: str) -> dict:

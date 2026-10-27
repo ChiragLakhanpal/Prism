@@ -187,11 +187,13 @@ def compose(facts: Facts, library: list[dict], summary: list, repeats: list[tupl
 
 
 def write_one(engine: Engine, store: Store, item: dict, subject: dict, agent, now: dt.datetime, most: int,
-              six_checks: SixChecks | None = None) -> dict:
-    """The writer's note on one item, stored as a new row. A writer that gives no answer leaves a failed row.
-    six_checks are the checks with their judge (the app's, or the nightly job's); without them the checks run with
-    no judge, and check 6 asks on this engine either way."""
-    six = (six_checks or SixChecks(None, None)).on(engine)
+              six_checks: SixChecks | None = None, reading: Engine | None = None) -> dict:
+    """The writer's note on one item, stored through engine as a new row. A writer that gives no answer leaves a
+    failed row. six_checks are the checks with their judge (the app's, or the nightly job's); without them the checks
+    run with no judge. Check 6 asks on reading, the engine that reads as the reviewer on "Try again", since the app's
+    own identity that writes the note may not read strata.gold (ticket 61's review, F5); or on engine, as the nightly
+    job, which reads and writes as one identity."""
+    six = (six_checks or SixChecks(None, None)).on(reading or engine)
     facts, passages, library = facts_for(store, item, subject)
     row = {"item_id": item["item_id"], "written_at": now, "library_versions": library_versions(store),
            "agent": getattr(agent, "name", None), "agent_version": None, "error": None, "public_from": now.date()}

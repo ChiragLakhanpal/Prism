@@ -121,7 +121,10 @@ def note_check(module, facts, written: dict[str, dict], six_checks: SixChecks,
 
     Each note cites only its own item's row, so the verifier checks each note's sentences against that row
     alone: a sentence that cites another item's row is removed as a source the check did not return for this
-    note (id_not_returned), even though the tool returned that row for another note."""
+    note (id_not_returned), even though the tool returned that row for another note. A kind that names
+    checked_row reads each record through it for checks 1 to 3, such as a plan row without the dates other records
+    hold (src/strata/drafts/review_notes.py)."""
+    view = getattr(module, "checked_row", lambda row: row)
     seen = Facts()
     # A kind whose items cite several tools' rows, such as the mission brief's (ticket 37), names each row's tool.
     cited = module.cited_rows(facts) if hasattr(module, "cited_rows") else [(row, module.TOOL) for row in facts.rows]
@@ -131,7 +134,7 @@ def note_check(module, facts, written: dict[str, dict], six_checks: SixChecks,
     for item in module.items(facts):
         own = Facts()
         for evidence_id in item.get("evidence_ids") or [item["evidence_id"]]:
-            own.record(evidence_id, seen.get(evidence_id), tool=seen.tool(evidence_id))
+            own.record(evidence_id, view(seen.get(evidence_id)), tool=seen.tool(evidence_id))
         for claim in (written.get(item["key"]) or {}).get("claims") or []:
             checked.append(check(len(checked), claim, own, language))
             owners.append(item["key"])

@@ -143,19 +143,20 @@ def test_check_4_removes_a_row_whose_sentence_checks_1_to_3_cannot_prove(library
 def test_check_6_attaches_a_disagreement_whose_side_is_a_row_s_source(library):
     """Ticket 61: check 6 asks get_disagreements about the project each row's sources belong to, and a disagreement
     whose side is a passage the row's lesson rests on, and whose value the row states ("market rates"), is attached
-    to that row with both sides, which the payload carries. It is planted at the tool, beside the fixture's own."""
+    to that row with both sides, which the payload carries. Two are planted at the tool, beside the fixture's own,
+    with the same side, and the row carries both, as many as the counts say were shown (ticket 61's verify, F1)."""
     import planted_disagreements as planted
 
     from strata.agent.answer_check import SixChecks
 
     payload = build(library, INDIA_WORKS,
-                    six_checks=SixChecks(None, None, planted.with_adapter("on_market_rates"))).payload
+                    six_checks=SixChecks(None, None, planted.with_adapter("twice_on_market_rates"))).payload
 
     [row] = [row for row in payload["rows"] if row["risk_label"] == "Cost estimates below market rates"]
-    assert row["disagreement"]["id"] == planted.PLANTED
-    assert [side["evidence_id"] for side in row["disagreement"]["sides"]] == [planted.ICR_54, planted.ISR_7]
-    assert payload["verifier"]["counts"]["disagreements"]["shown"] == 1
-    assert [other["disagreement"] for other in payload["rows"] if other is not row] == [None] * (len(payload["rows"]) - 1)
+    assert [card["id"] for card in row["disagreements"]] == [planted.PLANTED, planted.PLANTED_TOO]
+    assert [side["evidence_id"] for side in row["disagreements"][0]["sides"]] == [planted.ICR_54, planted.ISR_7]
+    assert payload["verifier"]["counts"]["disagreements"]["shown"] == 2
+    assert [other["disagreements"] for other in payload["rows"] if other is not row] == [[]] * (len(payload["rows"]) - 1)
 
 
 def test_a_count_that_differs_from_the_tool_s_summary_is_removed_before_the_verifier_runs(library, monkeypatch):

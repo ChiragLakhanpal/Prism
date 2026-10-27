@@ -112,6 +112,45 @@ def test_check_6_attaches_a_disagreement_whose_side_a_summary_sentence_quotes(da
     assert summary["checks"]["disagreements"]["shown"] == 1
 
 
+class OpsOnly:
+    """The app's own identity on the workspace, which ops/app/deploy_app.py grants strata.ops alone: it writes the
+    note, and cannot read strata.gold."""
+
+    def __init__(self, engine):
+        self.engine = engine
+
+    def run(self, sql, params=None):
+        from strata.lakehouse.engine import PermissionDenied
+
+        if "strata.gold." in sql:
+            raise PermissionDenied("The app's identity cannot read strata.gold.")
+        return self.engine.run(sql, params)
+
+    def insert_rows(self, table, columns, rows):
+        return self.engine.insert_rows(table, columns, rows)
+
+
+def test_try_again_asks_check_6_as_the_reviewer_not_as_the_identity_that_writes_the_note(database):
+    """Ticket 61's review, F5: "Try again" wrote the note as the app's own identity and asked check 6 on that same
+    engine, which cannot read strata.gold on the workspace, so every sentence citing P130164 would be removed as
+    disagreements_unavailable. Check 6 now asks on the engine that reads as the reviewer, and the note keeps its
+    sentences."""
+    from strata.agent.answer_check import SixChecks
+
+    agent = writer.recorded_agent_for()({}, {"evidence": [{"role": "source", "passage_id": scenario.REBIDDING}]})
+    with DuckDBEngine.open(database) as engine:
+        store = writer.Store(engine)
+        item = store.items[scenario.item_of(engine, scenario.REBIDDING)]
+        subject = scenario.review_on(DAY).subject(store, item)
+        writer.write_one(OpsOnly(engine), store, item, subject, agent, dt.datetime(2026, 10, 27, 6, tzinfo=dt.UTC), 3,
+                         six_checks=SixChecks(None, None), reading=engine)
+    summary = page(database, scenario.REBIDDING)["summary"]
+
+    assert "disagreements_unavailable" not in [removed["reason"] for removed in summary["removed"]]
+    assert 'The ICR said that "108 of 328 cases had to go through rebidding."' in [
+        sentence["text"] for sentence in summary["sentences"]]
+
+
 def test_the_summary_keeps_the_sentences_that_pass_the_checks_and_shows_the_one_the_verifier_removed(fixture_db):
     """The recorded summary of ICR paragraph 54 quotes the ICR and the ICR Review, then states a two-year delay
     that neither passage holds."""
