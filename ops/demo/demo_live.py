@@ -83,6 +83,18 @@ def last_start(found) -> dt.datetime | None:
     return max(times).astimezone(dt.UTC) if times else None
 
 
+def deployed(found) -> bool:
+    """Whether the App has a deployment to run: an active one, or a pending one, as a deploy whose wait ended while its
+    deployment was IN_PROGRESS leaves it. The platform's stop on October 27, 2026 left neither (ticket 109)."""
+    return getattr(found, "active_deployment", None) is not None or getattr(found, "pending_deployment", None) is not None
+
+
+def redeploy_command(env_path: Path) -> list[str]:
+    """ops/app/deploy_app.py as the demo-ready command runs it, from this checkout, keeping the secrets the scope holds
+    (ticket 109)."""
+    return ["uv", "run", "--script", "ops/app/deploy_app.py", "--env-file", str(env_path), "--keep-secrets"]
+
+
 class LiveDemo:
     def __init__(self, env: dict, env_path: Path):
         from strata.agent import judge
@@ -128,7 +140,15 @@ class LiveDemo:
         state = found.compute_status.state if found.compute_status else None
         return {"description": found.description or "",
                 "source": getattr(found.active_deployment, "source_code_path", None),
-                "url": found.url, "running": state == apps.ComputeState.ACTIVE, "started": last_start(found)}
+                "url": found.url, "running": state == apps.ComputeState.ACTIVE, "started": last_start(found),
+                "deployed": deployed(found)}
+
+    def redeploy_app(self, name: str) -> tuple[int, str]:
+        """Deploy Strata again with ops/app/deploy_app.py --keep-secrets, from this checkout, after the platform dropped
+        the App's deployment (ticket 109), and give back its exit code and what it printed. The App's name is the one
+        ops/dayone/dayone.toml gives, which the deploy reads itself. It takes about 12 minutes after a cold start."""
+        done = subprocess.run(redeploy_command(self.env_path), cwd=REPO, capture_output=True, text=True, timeout=3600)
+        return done.returncode, (done.stdout + done.stderr).strip()
 
     # ── The workspace's state, read through the SDK before anything changes (ticket 81) ──
 
