@@ -395,17 +395,29 @@ def test_the_document_lists_what_the_probes_leave_in_the_workspace():
         assert name in section, name
     assert ("- A conversation in the Genie space that GENIE_SPACE_ID names, which asks "
             "\"How many contracts were signed in each fiscal year, and for how much in US dollars?\"") in section
-    assert ("- Read access for the app `strata` to the secret scope `strata`. The app reads only "
-            "`APPLICATIONINSIGHTS_CONNECTION_STRING`, but Databricks grants access to the whole scope, which also "
-            "holds `AZURE_OPENAI_API_KEY`.") in section
+    # The last bullet follows probe_app.secret_read in dayone.toml, which ticket 03's step 4 of 4 may change.
+    assert dayone.secret_read_bullet(dayone.load_config()).rstrip("\n") in section
     assert "workspace.default" not in text
+
+
+def test_the_last_bullet_says_what_the_app_may_read_for_each_setting():
+    config = dayone.load_config()
+    whole_scope = config | {"probe_app": {"secret_read": "scope"}}
+    one_key = config | {"probe_app": {"secret_read": "key"}}
+
+    assert dayone.secret_read_bullet(whole_scope) == (
+        "- Read access for the app `strata` to the secret scope `strata`. The app reads only "
+        "`APPLICATIONINSIGHTS_CONNECTION_STRING`, but Databricks grants access to the whole scope, which also "
+        "holds `AZURE_OPENAI_API_KEY`.\n")
+    assert dayone.secret_read_bullet(one_key) == (
+        "- Read access for the app `strata` to the secret `APPLICATIONINSIGHTS_CONNECTION_STRING` in the secret "
+        "scope `strata`, and to no other secret there.\n")
 
 
 def test_the_last_bullet_names_only_the_one_key_when_the_app_reads_only_that_key(tmp_path):
     """docs/workspace-catchup.md, ticket 03's step 4 of 4: when Databricks gives the app only the one key, a setting
     changes the bullet, and `dayone.py refresh` rewrites the text outside the blocks, never a hand edit."""
     config = dayone.load_config()
-    assert config["probe_app"]["secret_read"] == "scope"  # what list-acls showed on October 26, 2026
     one_key = config | {"probe_app": {"secret_read": "key"}}
     results = tmp_path / "results.md"
     shutil.copy(RESULTS, results)

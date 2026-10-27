@@ -26,6 +26,7 @@ This file uses only the standard library, so it runs before anything is installe
 import fcntl
 import os
 import re
+import shutil
 import signal
 import subprocess
 import sys
@@ -76,8 +77,8 @@ HOLDER = re.compile(r"process (\d+), since (.+)")
 
 
 def holder(path):
-    """", which process 123 has held since 2026-10-27 05:12:03", from the line the gate that holds the lock wrote, or
-    nothing when the file holds no such line yet."""
+    """The end of the waiting line that names the holder, such as ", which process 123 has held since
+    2026-10-27 05:12:03", or "" when the file holds no such line yet."""
     try:
         found = HOLDER.fullmatch(Path(path).read_text().strip())
     except OSError:
@@ -259,10 +260,30 @@ def run_step(step, run):
         raise
 
 
+def program(run):
+    """The program a step starts: its first word or, after `env`, the first word that is not NAME=value.
+
+    None when `env` takes an option, which this does not read, so the step starts and env reports what it lacks.
+    """
+    if os.path.basename(run[0]) != "env":
+        return run[0]
+    for arg in run[1:]:
+        if arg.startswith("-"):
+            return None
+        if "=" not in arg:
+            return arg
+    return run[0]
+
+
+# uv, npm and python3: scripts/install needs them and runs uv and npm itself, so it cannot be the first fix.
+INSTALL = "Install it as the Install section of README.md says, then run scripts/install"
+
+
 def run_lane(steps, run, done):
     """Run a lane's steps in order. Stop at the first one that does not pass, or when another lane stops.
 
-    Set `done` at the end, however the lane ends.
+    Set `done` at the end, however the lane ends. A step whose program is not on the PATH does not start, so its
+    message names that program, even when the step starts it through `env` as the web lanes do.
     """
     try:
         for step in steps:
@@ -271,12 +292,14 @@ def run_lane(steps, run, done):
             if step.get("lane") is None:
                 run.say(f"- {step['name']} ...\n")
             step_started = time.monotonic()
+            needed = program(step["run"])
             try:
+                if needed is not None and shutil.which(needed) is None:
+                    raise FileNotFoundError(2, "No such file or directory", needed)
                 code, output = run_step(step, run)
-            except FileNotFoundError as missing:  # uv, npm or python3, which scripts/install needs and cannot install
+            except FileNotFoundError as missing:
                 run.missing[step["name"]] = missing.filename
-                code, output = 127, (f"{missing.filename} is not installed. Install it as the Install section of "
-                                     "README.md says, then run scripts/install.\n")
+                code, output = 127, f"{missing.filename} is not installed. {INSTALL}.\n"
             run.finish(step, code, output, seconds(time.monotonic() - step_started))
             if code != 0:
                 return
@@ -365,8 +388,7 @@ def main():
         took = seconds(time.monotonic() - run.started)
         if step["name"] in run.missing:
             print(f"The gate failed after {took}. The step \"{step['name']}\" could not start, because "
-                  f"{run.missing[step['name']]} is not installed. Install it as the Install section of README.md says, "
-                  "then run scripts/install and commit again.")
+                  f"{run.missing[step['name']]} is not installed. {INSTALL} and commit again.")
             return 1
         advice = ("Code 127 means the step could not find a command. Run scripts/install, then commit again."
                   if code == 127 else "Fix what it reports and commit again.")

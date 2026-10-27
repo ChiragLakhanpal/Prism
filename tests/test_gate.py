@@ -157,12 +157,15 @@ def test_a_step_that_cannot_find_a_command_says_to_run_the_install(repo):
     assert "Run scripts/install, then commit again." in done.stdout + done.stderr
 
 
-def path_without_uv(tmp_path):
-    """A PATH that holds git and python3, the two programs the hook and the secret scan need, and no uv."""
+def bare_path(tmp_path, *programs, python=True):
+    """A PATH that holds git, python3 (unless python is False) and the given programs, and nothing else: no uv and
+    no npm. The hook needs git and python3, and so does the secret scan."""
     folder = tmp_path / "bin"
     folder.mkdir()
-    (folder / "git").symlink_to(shutil.which("git"))
-    (folder / "python3").symlink_to(sys.executable)
+    for name in ("git", *programs):
+        (folder / name).symlink_to(shutil.which(name))
+    if python:
+        (folder / "python3").symlink_to(sys.executable)
     return str(folder)
 
 
@@ -173,7 +176,7 @@ def test_a_step_whose_program_is_not_installed_points_to_readme_s_install_sectio
     git(repo, "add", "-A")
 
     done = subprocess.run([".githooks/pre-commit"], cwd=repo, capture_output=True, text=True,
-                          env=clean_env() | {"PATH": path_without_uv(tmp_path)})
+                          env=clean_env() | {"PATH": bare_path(tmp_path)})
 
     output = done.stdout + done.stderr
     assert done.returncode != 0, output
@@ -183,6 +186,38 @@ def test_a_step_whose_program_is_not_installed_points_to_readme_s_install_sectio
             "of README.md says, then run scripts/install and commit again.") in output
     assert "Run scripts/install first" not in output
     assert "Run scripts/install, then commit again" not in output
+
+
+def test_a_step_that_starts_npm_through_env_names_npm_when_it_is_not_installed(repo, tmp_path):
+    """The web lanes start npm as `env STRATA_WEB_OUT=dist-1 npm ...`, so env starts and npm is the missing program."""
+    step = ("Build the web app into web/dist-1", '["env", "STRATA_WEB_OUT=dist-1", "npm", "--version"]')
+    write(repo, "gates/steps.toml", steps_file(steps=[step]))
+    write(repo, "build.py", "print('ok')\n")
+    git(repo, "add", "-A")
+
+    done = subprocess.run([".githooks/pre-commit"], cwd=repo, capture_output=True, text=True,
+                          env=clean_env() | {"PATH": bare_path(tmp_path, "env")})
+
+    output = done.stdout + done.stderr
+    assert done.returncode != 0, output
+    assert "npm is not installed. Install it as the Install section of README.md says, then run scripts/install." \
+        in output
+    assert ('The step "Build the web app into web/dist-1" could not start, because npm is not installed. Install it '
+            "as the Install section of README.md says, then run scripts/install and commit again.") in output
+    assert "Run scripts/install, then commit again" not in output
+
+
+def test_a_hook_with_no_python3_names_readme_s_install_section(repo, tmp_path):
+    write(repo, "build.py", "print('ok')\n")
+    git(repo, "add", "-A")
+
+    done = subprocess.run([".githooks/pre-commit"], cwd=repo, capture_output=True, text=True,
+                          env=clean_env() | {"PATH": bare_path(tmp_path, python=False)})
+
+    output = done.stdout + done.stderr
+    assert done.returncode != 0, output
+    assert output.strip() == ("python3 is not installed. Install it as the Install section of README.md says, "
+                              "then run scripts/install.")
 
 
 def test_a_step_without_a_name_or_a_run_list_is_named_plainly(repo):
@@ -774,6 +809,32 @@ def test_the_gate_says_its_wait_limit_in_minutes_or_seconds_as_a_person_would():
 
     assert [duration(1200), duration(60), duration(1), duration(90), duration(0.5)] == \
         ["20 minutes", "1 minute", "1 second", "90 seconds", "0.5 seconds"]
+
+
+def test_the_gate_reads_the_program_a_step_starts_even_through_env():
+    program = gate_runner().program
+
+    assert program(["uv", "run", "--frozen", "pytest"]) == "uv"
+    assert program(["env", "STRATA_WEB_OUT=dist-1", "npm", "--prefix", "web", "run", "build"]) == "npm"
+    assert program(["/usr/bin/env", "A=1", "B=2", "node", "lint.ts"]) == "node"
+    assert program(["env", "-u", "A", "npm"]) is None  # an option of env's own, which the gate leaves to env
+
+
+def test_a_wait_limit_of_zero_reaches_the_steps_file_and_the_gate_gives_up_at_once(repo, gate_lock):
+    text = steps_file(lock_wait=0, steps=[CHECK])
+    assert "lock_wait_seconds = 0" in text.splitlines()  # without it, the gate below would wait 20 minutes
+    write(repo, "gates/steps.toml", text)
+    write(repo, "check.py", "raise SystemExit('The checks ran.')\n")
+
+    with open(gate_lock, "a") as held:
+        fcntl.flock(held, fcntl.LOCK_EX)
+        done = subprocess.run([".githooks/pre-commit"], cwd=repo, capture_output=True, text=True, env=clean_env(),
+                              timeout=30)
+
+    output = done.stdout + done.stderr
+    assert done.returncode != 0, output
+    assert "The gate gave up after 0 seconds, the wait limit in gates/steps.toml" in output
+    assert "The checks ran." not in output
 
 
 def test_the_gate_writes_its_process_and_the_time_into_the_lock_it_holds(repo, gate_lock):
