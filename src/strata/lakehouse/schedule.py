@@ -5,6 +5,8 @@ so their nightly jobs run at different hours (docs/PLAN.md section 2). A window 
 time in a time zone and how long the job may run. Two windows overlap on a day when their runs
 share any minute, with each run taken as [start, start + length). Time zones matter, because
 midnight UTC is 20:00 in Washington in summer and 19:00 in winter.
+
+It also says whether a part of the nightly job that runs once a week is due tonight (weekly_due).
 """
 
 from __future__ import annotations
@@ -67,3 +69,16 @@ def overlapping_days(window: Window, other: Window, days: Iterable[dt.date]) -> 
                 found.append(day)
                 break
     return found
+
+
+WEEKDAYS = ("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
+
+
+def weekly_due(last_ran: dt.date | None, today: dt.date, weekday: str) -> bool:
+    """Whether a part of the nightly job that runs once a week, on weekday, is due on today: it never ran, or it last
+    ran before the latest weekday on or before today. So it runs on its day, and on another night only when its day
+    passed without it, because that night failed or the score task's minutes ran out first (ticket 89)."""
+    if weekday not in WEEKDAYS:
+        raise ScheduleError(f"A weekly part runs on one of {', '.join(WEEKDAYS)}, and {weekday!r} is not one.")
+    latest = today - dt.timedelta(days=(today.weekday() - WEEKDAYS.index(weekday)) % 7)
+    return last_ran is None or last_ran < latest

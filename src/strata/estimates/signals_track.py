@@ -15,8 +15,8 @@ which counts are too few to read as a rate (signals.track_record_min), so the pa
 never counts anything itself. With no run stored, it returns None, and the page says the checks were never
 replayed.
 
-On the workspace, the nightly job's score task runs backtest() once the stored record is
-signals.track_record_every_days old (ticket 43); ops/signals/replay_live.py runs it by hand.
+On the workspace, the nightly job's score task runs backtest() once a week, on the night signals.track_record_day
+names (tickets 43 and 89); ops/signals/replay_live.py runs it by hand.
 """
 
 from __future__ import annotations
