@@ -267,6 +267,38 @@ function Panel({ children }: { children: ReactNode }) {
   return <div className="rounded-md border border-line bg-surface p-4 md:p-6">{children}</div>;
 }
 
+// DESIGN.md section 3's type scale (ticket 90): each step's class and color, as a page sets it. The finding keeps to
+// about 45 characters a line, in balanced lines; the chart label is the one step in capitals.
+const TYPE_STEP: Record<keyof typeof sample.typeScale, string> = {
+  display: "text-display text-ink-heading",
+  finding: "max-w-[22.5em] text-finding text-balance text-ink-heading",
+  h1: "text-h1 text-ink-heading",
+  h2: "text-h2 text-ink-heading",
+  h3: "text-h3 text-ink-heading",
+  lead: "text-lead text-ink",
+  body: "text-body text-ink",
+  small: "text-small text-ink",
+  caption: "text-caption text-ink-muted",
+  label: "text-label text-ink-muted",
+  "chart-label": "text-chart-label text-chart-text-subtle uppercase",
+  button: "text-button text-primary",
+};
+
+function TypeScale() {
+  return (
+    <Panel>
+      <dl className="flex flex-col gap-6">
+        {Object.entries(sample.typeScale).map(([step, line]) => (
+          <div key={step} className="flex flex-col gap-1">
+            <dt className="font-mono text-caption text-ink-muted">{step}</dt>
+            <dd className={TYPE_STEP[step as keyof typeof TYPE_STEP]}>{line}</dd>
+          </div>
+        ))}
+      </dl>
+    </Panel>
+  );
+}
+
 function SampleBox({ text }: { text: string }) {
   const [value, setValue] = useState(text);
   return <OneBox value={value} onChange={setValue} shortcut={false} />;
@@ -644,6 +676,7 @@ export const PAGES: GalleryPage[] = [
           </div>
         ),
       },
+      { id: "type-scale", title: t.typeScale, body: <TypeScale /> },
     ],
   },
   {

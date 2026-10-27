@@ -88,7 +88,7 @@ export function ListSearch({
             }
           }}
           className={cx(
-            "h-11 w-full rounded-pill border border-line-strong bg-surface pr-12 pl-10 text-body text-ink",
+            "h-11 w-full rounded-sm border border-line-strong bg-surface pr-12 pl-10 text-body text-ink",
             "[&::-webkit-search-cancel-button]:appearance-none",
           )}
         />
@@ -97,7 +97,7 @@ export function ListSearch({
             type="button"
             aria-label={copy.listSearch.empty}
             onClick={empty}
-            className="absolute top-1/2 right-1.5 flex size-8 -translate-y-1/2 items-center justify-center rounded-pill text-primary hover:bg-tint-hover"
+            className="absolute top-1/2 right-1.5 flex size-8 -translate-y-1/2 items-center justify-center rounded-sm text-primary hover:bg-tint-hover"
           >
             <X aria-hidden="true" className="size-4" />
           </button>

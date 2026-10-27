@@ -1,8 +1,17 @@
 // Reads TypeScript and TSX with Vite's own parser and finds three things: the strings in a
 // copy file, the strings a component renders without the copy file, and class names that
-// step outside DESIGN.md's tokens.
+// step outside DESIGN.md's tokens or that the shell redesign retired.
 import { parseAst } from "vite";
-import { ARIA_TEXT_PROPS, DOM_TEXT_PROPERTIES, NON_COPY_PROPS, NON_COPY_SUFFIXES, SPACE_STEPS, STYLE_PROPS } from "./rules.ts";
+import {
+  ARIA_TEXT_PROPS,
+  DOM_TEXT_PROPERTIES,
+  NON_COPY_PROPS,
+  NON_COPY_SUFFIXES,
+  RETIRED_CLASSES,
+  SPACE_STEPS,
+  STYLE_PROPS,
+  UPPERCASE_ONLY_WITH,
+} from "./rules.ts";
 
 type Node = { type: string; start: number; end: number; [key: string]: unknown };
 
@@ -310,6 +319,31 @@ export function offTokenClasses(source: string, file: string): Found[] {
       const arbitraryColor = /\[(?:#|rgb|hsl|oklch|color)/.test(utility);
       const arbitrarySize = /^text-\[\d/.test(utility);
       if (offScale || arbitraryColor || arbitrarySize) found.push({ offset: node.start, text: name });
+    }
+  });
+  return found;
+}
+
+// The classes the shell redesign retired (ticket 90; DESIGN.md section 3): `uppercase` in a class string that does not
+// also set the chart label's step, and the old title and box classes. `keeps` names those the file may still use, from
+// FROZEN_CLASS_USES. Each found class is reported with what to use instead in `where`.
+export function retiredClasses(source: string, file: string, keeps: readonly string[] = []): Found[] {
+  const found: Found[] = [];
+  walk(parse(source, file), (node) => {
+    const text = isString(node)
+      ? (node.value as string)
+      : node.type === "TemplateElement"
+        ? (node.value as { raw: string }).raw
+        : null;
+    if (text === null) return;
+    const names = text.split(/\s+/).filter(Boolean);
+    const utility = (name: string) => name.slice(name.lastIndexOf(":") + 1).replace(/^!/, "");
+    const chartLabel = names.some((name) => utility(name) === UPPERCASE_ONLY_WITH);
+    for (const name of names) {
+      const used = utility(name);
+      if (keeps.includes(used)) continue;
+      if (used === "uppercase" && !chartLabel) found.push({ offset: node.start, text: name, where: UPPERCASE_ONLY_WITH });
+      if (used in RETIRED_CLASSES) found.push({ offset: node.start, text: name, where: RETIRED_CLASSES[used] });
     }
   });
   return found;

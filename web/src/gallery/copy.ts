@@ -411,6 +411,8 @@ export const galleryCopy = {
     header: "A page with an ID in its title, and its empty state",
     notFound: "Not found",
     pageAlerts: "The alert slot, with every alert a page can show",
+    // Ticket 90: DESIGN.md section 3's type scale, one line in each step.
+    typeScale: "The type scale",
     bar: "Navy bar",
     box: "The one box",
     stamp: "Data-freshness stamp",
@@ -944,6 +946,23 @@ export const galleryCopy = {
   },
 
   sample: {
+    // Ticket 90: a line in each step of DESIGN.md section 3's type scale, named by its token, in the scale's order.
+    // The lines are the package workspace's and the plan check's own, as the shell redesign's prototype sets them.
+    typeScale: {
+      display: "Procurement intelligence on World Bank open data",
+      // No-break spaces keep "1 in 10" on one line, as the prototype sets it.
+      finding: "2 of 49 comparable packages, fewer than 1 in 10, were signed within the plan's 1.5 months.",
+      h1: "Water and Sanitation Development Project",
+      h2: "How long it took",
+      h3: "From the plan row",
+      lead: "Each dot is one package, placed by the months from its notice to its signed contract.",
+      body: "I checked every activity against its own dates, its estimate and the project's closing date.",
+      small: "Request for Bids, open national",
+      caption: "Source: Procurement Plan of October 9, 2026, from the World Bank documents API.",
+      label: "Planned months",
+      "chart-label": "What happened",
+      button: "Draft review notes",
+    },
     // The questions the recorded answer streams answer (tests/fixtures/agent/cases.toml).
     showcaseQuestion: "Why were works contracts in P130164 advertised again?",
     bridgesQuestion: "Which firms built the bridges in P130164?",

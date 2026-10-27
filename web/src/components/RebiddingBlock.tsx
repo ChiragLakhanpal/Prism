@@ -388,7 +388,7 @@ function RebidSkeleton() {
       <SkeletonLine className="text-body" width="w-[70%]" />
       <SkeletonLine className="text-body" width="w-[90%]" />
       <SkeletonLine className="text-caption" width="w-4/5" />
-      <Skeleton className="mt-2 h-11 w-60" radius="rounded-pill" />
+      <Skeleton className="mt-2 h-11 w-60" radius="rounded-sm" />
       <SkeletonLine className="mt-2 text-caption" width="w-1/2" />
     </div>
   );

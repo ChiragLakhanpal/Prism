@@ -133,5 +133,18 @@ for (const slug of SLUGS) {
         "animations under reduced motion at 1440",
       )
       .toBe(0);
+    if (slug === "buttons") {
+      // Ticket 90: under reduced motion a pressed button does not scale, and nothing on it transitions.
+      const primary = page.locator("[data-state-section=variants] [data-button=primary]");
+      await primary.hover();
+      await page.mouse.down();
+      await page.waitForTimeout(150);
+      const pressed = await primary.evaluate((el) => ({
+        transform: getComputedStyle(el).transform,
+        transitions: getComputedStyle(el).transitionDuration.split(",").filter((part) => parseFloat(part) > 0).length,
+      }));
+      await page.mouse.up();
+      expect.soft(pressed, "a pressed button under reduced motion").toEqual({ transform: "none", transitions: 0 });
+    }
   });
 }

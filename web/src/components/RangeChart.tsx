@@ -1469,7 +1469,7 @@ export function RangeChart({
                 const element = dotRefs.current[shown];
                 if (element) onOpen(dots[shown].key, element);
               }}
-              className="mt-2 inline-flex min-h-6 items-center rounded-pill border border-primary px-3 text-small font-bold text-primary hover:bg-tint"
+              className="mt-2 inline-flex min-h-6 items-center rounded-sm border border-primary px-3 text-small font-bold text-primary hover:bg-tint"
             >
               {openLabel}
             </button>

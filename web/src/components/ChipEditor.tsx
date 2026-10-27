@@ -167,7 +167,7 @@ export function EditorBody({
                 setError(null);
               }}
               onKeyDown={onTypeKey}
-              className="h-11 w-full rounded-md border border-line-strong bg-surface px-3 text-body text-ink"
+              className="h-11 w-full rounded-sm border border-line-strong bg-surface px-3 text-body text-ink"
             />
           )}
           {!computedHidden && choosing && (
@@ -253,7 +253,7 @@ export function EditorBody({
                   }}
                   onKeyDown={onTypeKey}
                   className={cx(
-                    "h-11 min-w-0 flex-1 rounded-md border bg-surface px-3 text-body text-ink",
+                    "h-11 min-w-0 flex-1 rounded-sm border bg-surface px-3 text-body text-ink",
                     field.kind === "months" || field.kind === "count" ? "max-w-[88px] text-right tabular-nums" : "",
                     error ? "border-error-icon" : "border-line-strong",
                   )}

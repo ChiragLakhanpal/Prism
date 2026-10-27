@@ -551,6 +551,17 @@ function visibleActivity(ref: string): HTMLElement | null {
 // above a card lands just past the edge instead of leaving a sliver of it in view.
 const LANDING_GAP = 12;
 
+// The block on screen just above an element in the page's order: the row or card before it, or for the
+// first card the count line's row, skipping the view this width hides.
+function blockAbove(element: Element): Element | null {
+  for (let at: Element | null = element; at && at.tagName !== "MAIN"; at = at.parentElement) {
+    let before = at.previousElementSibling;
+    while (before && before.getClientRects().length === 0) before = before.previousElementSibling;
+    if (before) return before;
+  }
+  return null;
+}
+
 // Brings a named activity into view without cutting the box band or the page's title at the top
 // edge: the page from its top when the activity fits on the first screen, or else the activity just
 // under the sticky header. The activity is its whole row or card, badges included, not only the
@@ -561,11 +572,20 @@ function bringIntoView(target: HTMLElement) {
     const rect = element.getBoundingClientRect();
     return { top: rect.top + window.scrollY, bottom: rect.bottom + window.scrollY };
   };
-  const row = place(target.closest("tr, li") ?? target);
+  const activity = target.closest("tr, li") ?? target;
+  const row = place(activity);
   const header = document.querySelector<HTMLElement>("[data-plan-header]");
   const stuck = header && getComputedStyle(header).position === "sticky" ? header.offsetHeight : 0;
   const fits = (from: number) => row.bottom + LANDING_GAP - from <= window.innerHeight;
   let top = fits(0) ? 0 : row.top - stuck - LANDING_GAP;
+  // A block that sits closer above the activity than the gap, as the count line's row sits 8 px above the
+  // first card, lands just past the edge too, so none of its lines is left as a sliver (ticket 90: the
+  // caption's 20 px line left one pixel of it in view).
+  const above = top > 0 ? blockAbove(activity) : null;
+  if (above) {
+    const { bottom } = place(above);
+    if (bottom > top + stuck && bottom < row.top) top = bottom - stuck;
+  }
   // A title inside the sticky header stays in view whatever the page does.
   const parts = [document.querySelector("[data-box-band]"), stuck ? null : document.querySelector("main h1")];
   for (const part of parts) {

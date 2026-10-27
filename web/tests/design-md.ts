@@ -22,7 +22,8 @@ export async function themeBlock(): Promise<Map<string, string>> {
 
 export function declarations(css: string): Map<string, string> {
   const tokens = new Map<string, string>();
-  for (const part of css.split(";")) {
+  // A comment, such as the one that marks an alias deprecated, is not part of any value.
+  for (const part of css.replace(/\/\*[\s\S]*?\*\//g, "").split(";")) {
     const colon = part.indexOf(":");
     if (colon === -1) continue;
     const name = part.slice(0, colon).trim();
@@ -35,16 +36,28 @@ export function normalize(value: string): string {
   return value.trim().replace(/\s+/g, " ").replace(/\s*,\s*/g, ", ");
 }
 
-export type TypeStep = { token: string; size: number; lineHeight: string; weight: number; tracking: string | null };
+// below: the size and line height a step takes below a page area of 48rem, such as the finding's 24 / 32.
+export type TypeStep = {
+  token: string;
+  size: number;
+  lineHeight: string;
+  weight: number;
+  tracking: string | null;
+  below: { size: number; lineHeight: string } | null;
+};
 
-// Section 3's type scale: one row per token, with the size in px and the line height as written.
+// Section 3's type scale: one row per token, with the size in px and the line height as written. A step
+// that steps down on a phone, such as "28 / 36; 24 / 32 below a page area of 48rem", gives its first pair
+// as its size and line height and the second as below.
 export async function typeScale(): Promise<TypeStep[]> {
   const text = await section(3);
-  const rows = text.split("\n").filter((line) => /^\| `[a-z0-9]+` \| \d+ \/ /.test(line));
+  const rows = text.split("\n").filter((line) => /^\| `[a-z0-9-]+` \| \d+ \/ /.test(line));
   return rows.map((line) => {
     const cells = line.split("|").map((cell) => cell.trim());
     const token = cells[1].replaceAll("`", "");
-    const [size, lineHeight] = cells[2].split("/").map((part) => part.trim());
+    const [first, second] = cells[2].split(";");
+    const [size, lineHeight] = first.split("/").map((part) => part.trim());
+    const smaller = second && /(\d+) \/ (\d+)/.exec(second);
     const weight = Number(/\d{3}/.exec(cells[3])![0]);
     const tracking = /([+-]?[\d.]+(?:em|px)) ?tracking|\+?(-?[\d.]+em)/.exec(cells[3]);
     return {
@@ -53,6 +66,7 @@ export async function typeScale(): Promise<TypeStep[]> {
       lineHeight,
       weight,
       tracking: tracking ? (tracking[1] ?? tracking[2]).replace(/^\+/, "") : null,
+      below: smaller ? { size: Number(smaller[1]), lineHeight: smaller[2] } : null,
     };
   });
 }

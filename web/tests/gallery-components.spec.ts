@@ -923,3 +923,84 @@ test("the drawer's meta line breaks only after a middle dot, and the switcher's 
   expect(gaps.every(([, gap]) => Number(gap) >= 3)).toBe(true);
   await expect(tabs.first()).toHaveAccessibleName("ICR paragraph 54");
 });
+
+// Ticket 90 (DESIGN.md section 4, Radius): corners by role, so a control and a fact never share a shape. Controls
+// take 4 px, data keeps the pill and containers take 8 px. Every element a selector finds on screen is measured.
+const CONTROL = "4px";
+const DATA = "32px";
+const CONTAINER = "8px";
+async function corners(page: Page, shapes: [string, string][]) {
+  return page.evaluate(
+    (all) =>
+      all.flatMap(([selector, radius]) => {
+        const shown = Array.from(document.querySelectorAll(selector)).filter((el) => el.getClientRects().length > 0);
+        const wrong = shown.map((el) => getComputedStyle(el).borderTopLeftRadius).filter((found) => found !== radius);
+        return shown.length === 0 ? [`${selector}: none on screen`] : wrong.map((found) => `${selector}: ${found}, not ${radius}`);
+      }),
+    shapes,
+  );
+}
+
+// The gallery draws its page after the load, so a measure waits for the page's title.
+async function openGallery(page: Page, slug: string) {
+  await page.goto(`/gallery/${slug}`);
+  await expect(page.locator("[data-gallery-root] h1")).toBeVisible();
+}
+
+const PAGE_CORNERS: [string, [string, string][]][] = [
+  ["buttons", [["[data-button]", CONTROL]]],
+  ["badges", [["[data-badge]", DATA]]],
+  ["cards", [["[data-state-section=card] > div > section", CONTAINER], ["[data-empty-state]", CONTAINER]]],
+  ["citations", [["[data-citation]", DATA]]],
+  ["table", [["[data-table-view=table]:not([aria-hidden]), [data-table-view=cards] > li", CONTAINER], ["[data-empty-state]", CONTAINER]]],
+];
+
+test("buttons have 4 px corners, badges and citation markers keep the pill, and cards, tables and the evidence card 8 px, at 1440, 1024 and 390 px; a press scales a button to 0.98 and its release snaps back", async ({
+  page,
+}) => {
+  for (const [slug, shapes] of PAGE_CORNERS) {
+    await openGallery(page, slug);
+    for (const width of [1440, 1024, 390]) {
+      await page.setViewportSize({ width, height: 900 });
+      expect(await corners(page, shapes), `${slug} at ${width} px`).toEqual([]);
+      if (slug === "citations") {
+        // The evidence card is a popover, a container.
+        const marker = page.locator("p").getByRole("link", { name: /^Source 1:/ });
+        await marker.hover();
+        await expect(page.getByRole("tooltip")).toBeVisible();
+        expect(await corners(page, [["[data-radix-popper-content-wrapper] > *", CONTAINER]]), `evidence card at ${width} px`).toEqual([]);
+        await page.mouse.move(5, 5);
+        await expect(page.getByRole("tooltip")).toBeHidden();
+      }
+    }
+    if (slug !== "buttons") continue;
+    // DESIGN.md section 4, Motion: pressed, a primary or secondary button eases to 0.98 over 120 ms. The transition is
+    // set only while it is pressed, so the release snaps back at once.
+    await page.setViewportSize({ width: 1440, height: 900 });
+    for (const variant of ["primary", "secondary"]) {
+      const button = page.locator(`[data-state-section=variants] [data-button=${variant}]`);
+      const look = () => button.evaluate((el) => ({ transform: getComputedStyle(el).transform, moves: getComputedStyle(el).transitionProperty.includes("transform") }));
+      await button.hover();
+      expect(await look(), `${variant} at rest`).toEqual({ transform: "none", moves: false });
+      await page.mouse.down();
+      await expect.poll(look, { message: `${variant} pressed` }).toEqual({ transform: "matrix(0.98, 0, 0, 0.98, 0, 0)", moves: true });
+      await page.mouse.up();
+      expect(await look(), `${variant} released`).toEqual({ transform: "none", moves: false });
+    }
+    // A ghost button and a disabled one do not scale.
+    for (const quiet of ["[data-state-section=variants] [data-button=ghost]", "[data-state-section=disabled] [data-button=primary]"]) {
+      await page.locator(quiet).hover();
+      await page.mouse.down();
+      await page.waitForTimeout(150);
+      expect(await page.locator(quiet).evaluate((el) => getComputedStyle(el).transform), quiet).toBe("none");
+      await page.mouse.up();
+    }
+  }
+});
+
+test("a list search, a key hint and a toggle button have a control's 4 px corners", async ({ page }) => {
+  await openGallery(page, "hub");
+  expect(await corners(page, [["[data-list-search] input", CONTROL]])).toEqual([]);
+  await openGallery(page, "retrieval");
+  expect(await corners(page, [["[data-key-hint]", CONTROL], ["[data-toggle]", CONTROL]])).toEqual([]);
+});

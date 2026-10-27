@@ -3,7 +3,8 @@
 // tint fill and a 2 px primary border; a secondary one takes the tint fill, an inset 2 px primary ring and lucide
 // check in its icon slot. The border is always 2 px and the icon slot is always kept, so pressing moves nothing.
 // It is never filled with primary, so a pressed toggle never reads as the page's one primary action. Disabled, it
-// takes the Held button look: a ghost is a bare ink-muted label, a secondary one a surface-2 pill. A ghost in a column
+// takes the Held button look: a ghost is a bare ink-muted label, a secondary one a surface-2 box with a
+// control's 4 px corners (DESIGN.md section 4, Radius). A ghost in a column
 // of text (inText), such as the drawer's "Wrong passage", has 16 px of padding, so the first of a row can be pulled
 // left onto the text's edge while its pressed border and focus ring stay inside the drawer's 24 px padding.
 import type { ComponentProps, ReactNode } from "react";
@@ -40,9 +41,9 @@ export function ToggleButton({
       data-pressed={pressed || undefined}
       onClick={disabled ? (event) => event.preventDefault() : onClick}
       className={cx(
-        "relative inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-pill border-2 text-button",
+        "relative inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-sm border-2 text-button",
         inText ? "px-4" : "px-6",
-        "transition-paint duration-150 select-none motion-reduce:transition-none",
+        "transition-paint select-none motion-reduce:transition-none",
         disabled
           ? variant === "ghost"
             ? "cursor-not-allowed border-transparent bg-transparent text-ink-muted"

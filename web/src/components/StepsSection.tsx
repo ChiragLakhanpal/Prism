@@ -223,7 +223,7 @@ function StartDate({
             onCommit();
           }}
           className={cx(
-            "h-11 w-full rounded-md border bg-surface px-3 text-body text-ink tabular-nums @md/page:w-48",
+            "h-11 w-full rounded-sm border bg-surface px-3 text-body text-ink tabular-nums @md/page:w-48",
             field.error ? "border-error" : "border-line-strong",
             preview && "bg-surface-2",
           )}
