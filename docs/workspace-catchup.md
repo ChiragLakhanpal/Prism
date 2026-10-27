@@ -3328,3 +3328,35 @@ It worked if:
 - The page lists the examples Strata set up, each labelled "Example", instead of "I couldn't load your packages and checked plans just now. Try again in a moment."
 
 If the page loads but lists no examples, the seed command has not run on the paid workspace yet. Run "Ticket 41, step 2 of 3" first (`uv run python -m strata.seed_examples --env-file "<main checkout>/.env"`), then reload. Record here the time, the status of `GET /api/planned-packages` and how many rows the page lists. This closes ticket 88's criterion 3.
+
+## Ticket 81, step 1 of 2: the next App deploy checks the workspace first and confirms its deployment registered (criterion 3, live)
+
+Parked on October 26, 2026 with ticket 81, which merged into build/strata as 974e1c37. Run it from a snapshot of 974e1c37 or later, as the header says, and link the main checkout's `web/node_modules` into the snapshot before the deploy. It needs the Databricks keys in `.env` and the Databricks CLI. It writes no secret, so the second session or the orchestrator runs it with `--keep-secrets` (ticket 70). It changes no table, job or dashboard. 974e1c37 holds ticket 88's merge (114ae456), so one deploy from it also serves "Ticket 88, step 1 of 2" above: run it once and record it under both tickets.
+
+Run these from the snapshot, with `--env-file` pointing at the main checkout's `.env`:
+
+    uv run --script ops/app/deploy_app.py --env-file "<main checkout>/.env" --keep-secrets
+    databricks apps list-deployments strata -p strata
+
+It worked if:
+
+- No line comes before "1. Building the web app.", because the pre-check found the App's compute and the SQL warehouse running.
+- Right after "5. Deploying the app. This takes a few minutes." the script prints "   The deployment <id>, made at HH:MM:SS UTC on <date>, succeeded."
+- That `<id>` is the newest SUCCEEDED entry in `databricks apps list-deployments strata`.
+- Steps 6 to 8 follow, the script exits 0, and its last line is "Strata is running at https://strata-7405609289499029.9.azure.databricksapps.com".
+
+If the script instead prints one line that starts "I changed nothing, because" and exits 2, the workspace has stopped the App's compute or the SQL warehouse: record the line under step 2 below. On the paid workspace a stop "due to workspace or account status" points to the account, not a daily limit, and the App may need `databricks apps start strata -p strata` before the next run (review follow-up 1 in `.notes/81-review.md`). If it stops after step 5 saying no deployment was made since the run started, compare this computer's clock with the workspace's before you read it as a failed deploy (review follow-up 3).
+
+Optional: `uv run --script ops/bundle/deploy.py --env-file "<main checkout>/.env"` prints the same lines as its last run, with no new first line. Two cautions: that last run stopped at step 2 on the vector index's own tables (ticket 85's deploy record above), which is not ticket 81's stop, and a bundle deploy resets the job's timeout to 9000 seconds, so rerun the `databricks jobs update` in ticket 89's block after it.
+
+Record here the deploy's exit code, the line after step 5's heading, the newest entry of `databricks apps list-deployments strata` and the time.
+
+## Ticket 81, step 2 of 2: the three stop sentences against a workspace that really stopped (when one next occurs)
+
+Nothing to run on purpose, and never stop the workspace to test this. When the workspace next stops the App's compute or the SQL warehouse (`databricks apps get strata -p strata` shows the compute STOPPED with "due to workspace or account status", or `databricks warehouses list -p strata` shows Strata's warehouse STOPPED and a start fails), run each of these once from a snapshot of 974e1c37 or later:
+
+    uv run --script ops/app/deploy_app.py --env-file "<main checkout>/.env" --keep-secrets
+    uv run --script ops/bundle/deploy.py --env-file "<main checkout>/.env"
+    uv run --with databricks-sdk==0.156.0 python ops/demo/ready.py --env-file "<main checkout>/.env"
+
+It worked if each prints exactly one line that starts "I changed nothing, because" and names the state, each exits 2, and `databricks apps list-deployments strata -p strata` shows no deployment newer than before the three runs. Record the three lines, the exit codes and the time here.
