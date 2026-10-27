@@ -10,7 +10,10 @@ service and resource (config/budget.toml), and appends:
 
 - its charges to strata.ops.azure_costs, under its run id. Azure revises recent days, so a reader takes each day from
   the newest pull that holds it;
-- one row to strata.ops.cost_pulls, succeeded or failed, with the last day Azure gave charges for, or why it stopped;
+- one row to strata.ops.cost_pulls, succeeded, throttled or failed, with the last day Azure gave charges for, or why
+  it stopped. Azure throttles its query API with 429 answers that name a wait; the pull waits and tries again, up to
+  config/thresholds.toml's [costs], and a pull still throttled after its last try is recorded as throttled and ends
+  succeeded (ticket 107);
 - the budget periods to strata.ops.budget_periods: the free credit up to the day it ends, then each month after it,
   newest first, with the words the Budget period filter shows (copy.dash.periods).
 
@@ -23,6 +26,10 @@ from __future__ import annotations
 
 import datetime as dt
 import json
+import logging
+import math
+import re
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -30,27 +37,73 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Protocol
 
-from strata.config import Budget, load_budget
+from strata.config import Budget, Thresholds, load_budget, load_thresholds
 from strata.dashboard import wording as dash_words
 from strata.lakehouse.engine import Engine
+
+LOG = logging.getLogger(__name__)
 
 COSTS = "strata.ops.azure_costs"
 PULLS = "strata.ops.cost_pulls"
 PERIODS = "strata.ops.budget_periods"
 COST_COLUMNS = ("run_id", "charged_on", "service", "resource", "cost_usd", "currency", "pulled_at", "public_from")
-PULL_COLUMNS = ("run_id", "pulled_at", "status", "from_day", "through_day", "charges", "error_code", "public_from")
+PULL_COLUMNS = ("run_id", "pulled_at", "status", "from_day", "through_day", "charges", "error_code", "detail",
+                "public_from")
 PERIOD_COLUMNS = ("run_id", "position", "period_key", "label", "name", "starts_on", "ends_on", "budget_usd",
                   "written_at", "public_from")
 ERROR_CODES = ("not_authorized", "throttled", "bad_answer", "unreachable")
 API_VERSION = "2023-11-01"
+# The headers a throttled answer names its wait in, in seconds: Retry-After, or else Azure Cost Management's own, one
+# for each limit it counts (qpu, entity, tenant, client and the like).
+RETRY_AFTER = "retry-after"
+AZURE_RETRY_AFTER = re.compile(r"x-ms-ratelimit-microsoft\.costmanagement-[a-z0-9-]+-retry-after")
 
 
 class CostError(Exception):
-    """A pull that could not read Azure's charges, with a code from ERROR_CODES."""
+    """A pull that could not read Azure's charges, with a code from ERROR_CODES. A throttled answer keeps its
+    headers, which name how long to wait."""
 
-    def __init__(self, code: str, detail: str = ""):
+    def __init__(self, code: str, detail: str = "", headers: dict | None = None):
         super().__init__(detail or code)
         self.code = code if code in ERROR_CODES else "bad_answer"
+        self.headers = dict(headers or {})
+
+
+def _seconds(value) -> float | None:
+    try:
+        seconds = float(str(value).strip())
+    except ValueError:
+        return None
+    return seconds if math.isfinite(seconds) else None
+
+
+@dataclass(frozen=True)
+class Retries:
+    """How the pull answers a throttled call, from config/thresholds.toml's [costs]: how many times it tries again
+    after the first try, the wait when Azure names none, and the shortest and longest wait."""
+
+    retries: int
+    retry_seconds: float
+    min_retry_seconds: float
+    max_retry_seconds: float
+
+    @classmethod
+    def from_thresholds(cls, thresholds: Thresholds | None = None) -> Retries:
+        thresholds = thresholds or load_thresholds()
+        return cls(int(thresholds.value("costs.retries")), *(float(thresholds.value(f"costs.{name}")) for name in (
+            "retry_seconds", "min_retry_seconds", "max_retry_seconds")))
+
+    def wait(self, headers: dict) -> float:
+        """The seconds a throttled answer asks for: its Retry-After header, or else the longest of Azure's own
+        retry-after headers, since every limit they name must pass; retry_seconds when it names none. Always between
+        min_retry_seconds and max_retry_seconds."""
+        named = {str(name).lower(): value for name, value in headers.items()}
+        wait = _seconds(named[RETRY_AFTER]) if RETRY_AFTER in named else None
+        if wait is None:
+            wait = max((seconds for name, value in named.items() if AZURE_RETRY_AFTER.fullmatch(name)
+                        if (seconds := _seconds(value)) is not None), default=None)
+        wait = self.retry_seconds if wait is None else wait
+        return min(max(wait, self.min_retry_seconds), self.max_retry_seconds)
 
 
 @dataclass(frozen=True)
@@ -110,23 +163,45 @@ def _http(method: str, url: str, body: dict | None, headers: dict) -> dict:
             return json.loads(response.read() or b"{}")
     except urllib.error.HTTPError as error:
         code = "not_authorized" if error.code in (401, 403) else "throttled" if error.code == 429 else "bad_answer"
-        raise CostError(code, f"Azure answered {error.code}: {error.read().decode(errors='replace')[:300]}") from error
+        raise CostError(code, f"Azure answered {error.code}: {error.read().decode(errors='replace')[:300]}",
+                        dict(error.headers.items()) if error.headers else None) from error
     except OSError as error:
         raise CostError("unreachable", f"I could not reach Azure: {error}") from error
 
 
 class AzureCostManagement:
     """Azure Cost Management's query API for one resource group, with a service principal's token. The token stays
-    inside this object and never reaches a log or a table."""
+    inside this object and never reaches a log or a table.
+
+    Every call goes through _ask, which tries a throttled call (429) again after the wait Azure named, up to the
+    retries in config/thresholds.toml's [costs]; sleep stands in for the waits in the tests."""
 
     def __init__(self, subscription_id: str, resource_group: str, tenant_id: str, client_id: str, credential: str,
-                 transport: Transport = _http):
+                 transport: Transport = _http, sleep: Callable[[float], None] | None = None,
+                 retries: Retries | None = None):
         self.scope = f"/subscriptions/{subscription_id}/resourceGroups/{resource_group}"
         self.tenant_id, self.client_id, self._credential = tenant_id, client_id, credential
-        self.transport = transport
+        self.transport, self.sleep = transport, sleep or time.sleep
+        self.retries = retries or Retries.from_thresholds()
+
+    def _ask(self, method: str, url: str, body: dict | None, headers: dict) -> dict:
+        """One call. A throttled answer is tried again after its wait; when the last try is throttled too, or the
+        call fails any other way, the error goes up as it came."""
+        retried = 0
+        while True:
+            try:
+                return self.transport(method, url, body, headers)
+            except CostError as error:
+                if error.code != "throttled" or retried == self.retries.retries:
+                    raise
+                retried += 1
+                wait = self.retries.wait(error.headers)
+                LOG.warning("Azure throttled the cost pull, so I am waiting %s seconds before try %s of %s.",
+                            f"{wait:g}", retried + 1, self.retries.retries + 1)
+                self.sleep(wait)
 
     def _token(self) -> str:
-        answer = self.transport("POST", f"https://login.microsoftonline.com/{self.tenant_id}/oauth2/v2.0/token", {
+        answer = self._ask("POST", f"https://login.microsoftonline.com/{self.tenant_id}/oauth2/v2.0/token", {
             "grant_type": "client_credentials", "client_id": self.client_id, "client_secret": self._credential,
             "scope": "https://management.azure.com/.default"}, {"Content-Type": "application/x-www-form-urlencoded"})
         if not answer.get("access_token"):
@@ -145,7 +220,7 @@ class AzureCostManagement:
                f"?api-version={API_VERSION}")
         found: list[Charge] = []
         while url:
-            answer = self.transport("POST", url, body, headers)
+            answer = self._ask("POST", url, body, headers)
             found += parse(answer)
             url = (answer.get("properties") or {}).get("nextLink")
         return found
@@ -194,22 +269,33 @@ def current_period(budget: Budget, today: dt.date) -> Period:
 def pull(engine: Engine, source: CostSource, run_id: str, clock: Callable[[], dt.datetime],
          budget: Budget | None = None) -> int:
     """Read the last pull_days days of charges and write them, the pull's row and the budget periods. Returns how
-    many charges it wrote. A pull that fails writes its row with why, and raises again."""
+    many charges it wrote.
+
+    A pull that Azure throttled on every try writes its row with the outcome throttled and Azure's message, no
+    charge, and the budget periods, and returns 0, so the job's task ends succeeded and the next day's pull tries
+    again. The Governance page shows that day as it shows a day with no charges, and names the reason from the row
+    (strata.dashboard.findings.spend). A pull that fails any other way writes its row with why, and raises again."""
     budget = budget or load_budget()
     pulled_at = clock()
     today = pulled_at.astimezone(dt.UTC).date()
     starts_on = today - dt.timedelta(days=budget.pull_days)
+    status, code, detail, found = "succeeded", None, None, []
     try:
         found = source.charges(starts_on, today)
     except Exception as error:
         code = error.code if isinstance(error, CostError) else "bad_answer"
-        engine.insert_rows(PULLS, PULL_COLUMNS, [(run_id, pulled_at, "failed", starts_on, None, 0, code, today)])
-        raise
+        detail = str(error)
+        if code != "throttled":
+            engine.insert_rows(PULLS, PULL_COLUMNS, [(run_id, pulled_at, "failed", starts_on, None, 0, code, detail,
+                                                      today)])
+            raise
+        status = "throttled"
+        LOG.warning("Azure throttled every try of the cost pull, so I wrote no charge for this run: %s", detail)
     engine.insert_rows(COSTS, COST_COLUMNS, [
         (run_id, charge.charged_on, charge.service, charge.resource, round(charge.cost, 6), charge.currency, pulled_at,
          today) for charge in found])
     through = max((charge.charged_on for charge in found), default=None)
-    engine.insert_rows(PULLS, PULL_COLUMNS, [(run_id, pulled_at, "succeeded", starts_on, through, len(found), None,
+    engine.insert_rows(PULLS, PULL_COLUMNS, [(run_id, pulled_at, status, starts_on, through, len(found), code, detail,
                                               today)])
     engine.insert_rows(PERIODS, PERIOD_COLUMNS, [
         (run_id, position, period.key, period.label, period.name, period.starts_on, period.ends_on,

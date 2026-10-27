@@ -950,3 +950,23 @@ window_days = 7
 # and then links to Drafts; the public Home lists this many closed projects. Source: DESIGN.md section 5, cards, at
 # most eight per group.
 lines_in_view = 8
+
+# The daily cost pull (ticket 107; src/strata/lakehouse/costs.py, bundle/costs.yml). Azure's Cost Management query API
+# answers 429, too many requests, when it throttles a subscription, as it did to the paid workspace's new subscription
+# on October 27, 2026 (runs 679380286409718 and 404010923973841). The answer names the seconds to wait in its
+# Retry-After header, or in its x-ms-ratelimit-microsoft.costmanagement-*-retry-after headers. The pull waits that
+# long, kept between min_retry_seconds and max_retry_seconds, and tries again. When Azure still throttles the last
+# try, the pull records the outcome throttled in strata.ops.cost_pulls and ends succeeded; the next day's pull tries
+# again.
+[costs]
+# How many times the pull tries a throttled call again after its first try, so four tries in all. Source: the
+# ticket.
+retries = 3
+# The wait when Azure's answer names none. Source: none; Azure's documentation says only to wait the time its headers
+# name. A starting value for the owner to confirm.
+retry_seconds = 60
+# The shortest wait, whatever the headers say. Source: the ticket.
+min_retry_seconds = 1
+# The longest single wait. retries times this stays inside the job's timeout_seconds of 900 in bundle/costs.yml, so
+# the job's clock never stops a pull that is waiting; tests/test_costs.py checks it.
+max_retry_seconds = 240

@@ -109,22 +109,26 @@ LIMIT 1
 
 
 def spend(engine: Engine, today: dt.date) -> tuple[str, dt.date | None]:
-    """Azure spend in the current budget period against its budget, and a pull that failed (section 6.3)."""
+    """Azure spend in the current budget period against its budget, and a pull that failed (section 6.3). A pull
+    Azure throttled wrote no charge, so its day reads as a day with no charges, and the sentence after it names the
+    reason from the run row (ticket 107)."""
+    pulls = engine.run(LATEST_PULL).rows
+    status, pulled_on = (pulls[0][0], _date(pulls[0][1])) if pulls else (None, None)
+    throttled = (" " + say.fill(say.at("dash.gov.find.spend.throttled"), pulledOn=say.day(pulled_on, today))
+                 if status == "throttled" else "")
     period = _rows(engine, "kpi_azure_spend", budget_period="")[0]
     latest = _date(period["latest_day"])
     if latest is None:
-        return say.at("dash.gov.find.spend.none"), None
+        return say.at("dash.gov.find.spend.none") + throttled, None
     slots = {"day": say.day(latest, today), "spent": say.money(period["numerator"]),
              "budget": say.money(period["denominator"]), "periodName": say.Unit(period["period_name"])}
     over = Decimal(str(period["over"] or 0))
     text = (say.fill(say.at("dash.gov.find.spend.over"), over=say.money(over), **slots) if over > 0
             else say.fill(say.at("dash.gov.find.spend.inside"), **slots))
-    pulls = engine.run(LATEST_PULL).rows
-    if pulls and pulls[0][0] == "failed":
-        failed_on = _date(pulls[0][1])
-        text += " " + say.fill(say.at("dash.gov.find.spend.pullFailed"), failedOn=say.day(failed_on, today),
+    if status == "failed":
+        text += " " + say.fill(say.at("dash.gov.find.spend.pullFailed"), failedOn=say.day(pulled_on, today),
                                day=slots["day"])
-    return text, latest
+    return text + throttled, latest
 
 
 NOTICES = "SELECT count(*) AS notices FROM strata.gold.notice"

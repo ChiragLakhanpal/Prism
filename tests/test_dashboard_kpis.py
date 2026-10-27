@@ -233,7 +233,8 @@ def test_a_spend_over_its_budget_says_by_how_much_and_a_failed_pull_says_where_t
         catalog.build(engine)
         costs.pull(engine, costs.RecordedCosts(json.loads(COSTS.read_text())), "pull-1", lambda: at(TODAY, 6), budget)
         engine.insert_rows(costs.PULLS, costs.PULL_COLUMNS, [("pull-2", at(TODAY, 8), "failed", TODAY, None, 0,
-                                                               "throttled", TODAY)])
+                                                               "unreachable", "I could not reach Azure: timed out",
+                                                               TODAY)])
         [row] = rows(engine, "kpi_azure_spend")
         text, measured = findings.spend(engine, TODAY)
 
@@ -241,4 +242,26 @@ def test_a_spend_over_its_budget_says_by_how_much_and_a_failed_pull_says_where_t
     assert text == ("By October 22, the latest day with cost data, my Azure resources had cost US$7.80. That is US$2.80 "
                     "more than the US$5.00 budget for the free credit, which ends November 10, 2026. I couldn't pull "
                     "Azure costs on October 23, so these figures stop at October 22.")
+    assert measured == dt.date(2026, 10, 22)
+
+
+def test_a_throttled_pull_reads_as_a_day_with_no_charges_and_names_why():
+    """Ticket 107: the throttled day adds no charge, so the counter and the latest day stay where they were."""
+    from strata.dashboard import findings
+
+    class Throttled:
+        def charges(self, starts_on, ends_on):
+            raise costs.CostError("throttled", "Azure answered 429: Too many requests. Please retry.")
+
+    with DuckDBEngine.open() as engine:
+        catalog.build(engine)
+        costs.pull(engine, costs.RecordedCosts(json.loads(COSTS.read_text())), "pull-1", lambda: at(TODAY, 6))
+        costs.pull(engine, Throttled(), "pull-2", lambda: at(TODAY, 8))
+        [row] = rows(engine, "kpi_azure_spend")
+        text, measured = findings.spend(engine, TODAY)
+
+    assert row["display"] == "US$8 of US$197"
+    assert text == ("By October 22, the latest day with cost data, my Azure resources had cost US$7.80 of the US$197.00 "
+                    "budget for the free credit, which ends November 10, 2026. Azure throttled the cost pull on October "
+                    "23: it had too many requests and asked me to wait. The next daily pull tries again.")
     assert measured == dt.date(2026, 10, 22)
