@@ -54,6 +54,7 @@ def main(argv=None) -> int:
         return 2
     from bundle_live import LiveWorkspace  # the Databricks SDK, which only the live run needs
 
+    from strata.agent import judge as judges
     from strata.agent.runner import lesson_writer_from_environment
 
     engine = LiveWorkspace(env).engine()
@@ -65,7 +66,10 @@ def main(argv=None) -> int:
         notes = 0
         if agent is not None:
             most = int(load_thresholds().value("lesson_review.likely_repeats_max"))
-            notes = writer.run(engine, lambda item, subject: agent, clock, most)
+            # The verifier's judge, for the sentences checks 1 to 3 cannot prove (ticket 61); without its keys they
+            # are removed, never shown unchecked.
+            judge = judges.from_environment(env)
+            notes = writer.run(engine, lambda item, subject: agent, clock, most, judge_for=lambda item, subject: judge)
     except (EngineError, batch.BatchError) as error:
         print(f"The run stopped: {error}")
         return 2

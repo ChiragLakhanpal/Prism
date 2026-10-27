@@ -244,8 +244,14 @@ def _propose_lessons(run: Run) -> int:
     # The review-proposed-lessons workflow, with the live lesson review writer when the job can reach Foundry.
     agent = lesson_writer_from_environment(os.environ)()
     if agent is not None:
+        from strata.agent import judge as judges
+
         most = int(load_thresholds().value("lesson_review.likely_repeats_max"))
-        changed += writer.run(run.engine, lambda item, subject: agent, run.clock, most)
+        # The verifier's judge, for the sentences checks 1 to 3 cannot prove (ticket 61); a job with no Azure OpenAI
+        # key removes them, never showing one unchecked.
+        judge = judges.from_environment(os.environ)
+        changed += writer.run(run.engine, lambda item, subject: agent, run.clock, most,
+                              judge_for=lambda item, subject: judge)
     return changed
 
 

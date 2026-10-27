@@ -98,7 +98,8 @@ def build(fixture_db: Path, folder: Path, first_visit=None) -> tuple[Path, Path]
                      reason="Current market rates is what the 2025 rules ask for.")
     with DuckDBEngine.open(database) as engine:
         writer.run(engine, writer.recorded_agent_for(),
-                   lambda: dt.datetime.combine(CHANGED, dt.time(10), tzinfo=dt.UTC), 3)
+                   lambda: dt.datetime.combine(CHANGED, dt.time(10), tzinfo=dt.UTC), 3,
+                   judge_for=writer.recorded_judge_for())
     scenario.decide(database, scenario.PERMITS, CHANGED, outcome="repeat", repeat_of=IEG_LESSON)
     return database, story.state_db
 

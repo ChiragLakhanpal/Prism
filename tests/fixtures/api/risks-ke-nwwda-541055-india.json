@@ -76,7 +76,7 @@
         }
       ],
       "related_notices": null,
-      "disagreement": null
+      "disagreements": []
     },
     {
       "risk_key": "permits_before_award",
@@ -131,7 +131,7 @@
         }
       ],
       "related_notices": null,
-      "disagreement": null
+      "disagreements": []
     }
   ],
   "p": 1,
@@ -171,7 +171,10 @@
       "checks_run": [
         1,
         2,
-        3
+        3,
+        4,
+        5,
+        6
       ],
       "sentences": {
         "written": 4,
@@ -193,7 +196,49 @@
       "sources": {
         "total": 6,
         "returned": 6
-      }
+      },
+      "checked": {
+        "total": 4,
+        "matched": 4
+      },
+      "shown": {
+        "numbers": {
+          "total": 4,
+          "matched": 4
+        },
+        "dates": {
+          "total": 0,
+          "matched": 0
+        },
+        "quotes": {
+          "total": 4,
+          "found": 4
+        },
+        "judged": 0,
+        "proven": 4
+      },
+      "judge": {
+        "called": false,
+        "responded": null,
+        "judged": 0,
+        "followed": 0,
+        "unjudged": 0,
+        "proven": 4
+      },
+      "advice": {
+        "total": 0,
+        "cited": 0
+      },
+      "disagreements": {
+        "disputed": 0,
+        "shown": 0,
+        "attached": 0,
+        "unasked": 0,
+        "warned": 0
+      },
+      "cited_tools": [
+        "get_lessons"
+      ]
     },
     "tools": [
       "find_comparables",

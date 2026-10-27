@@ -17,6 +17,7 @@ class Facts:
     def __init__(self) -> None:
         self._rows: dict[str, Mapping[str, Any]] = {}
         self._tools: dict[str, str | None] = {}
+        self._every: dict[str, list[str]] = {}  # every tool that returned each id, in the order they did
         self._kinds: dict[str, str] = {}
         self._abstentions: list[tuple[str, Mapping[str, Any]]] = []
 
@@ -26,6 +27,7 @@ class Facts:
         search that found it this turn keeps it."""
         self._rows[evidence_id] = row
         self._tools[evidence_id] = tool
+        self.returned(evidence_id, tool)
         if kind is not None:
             self._kinds.setdefault(evidence_id, kind)
 
@@ -37,9 +39,18 @@ class Facts:
         """Every abstention a tool returned this turn, with the tool's name, in the order kept."""
         return list(self._abstentions)
 
+    def returned(self, evidence_id: str, tool: str | None) -> None:
+        """Note that this tool, too, returned this evidence id this turn, as when two tools return one record."""
+        if tool is not None and tool not in self._every.setdefault(evidence_id, []):
+            self._every[evidence_id].append(tool)
+
     def tool(self, evidence_id: str) -> str | None:
         """The tool that returned this evidence id in this turn."""
         return self._tools.get(evidence_id)
+
+    def tools(self, evidence_id: str) -> tuple[str, ...]:
+        """Every tool that returned this evidence id in this turn, in the order they did (ticket 61's review, F4)."""
+        return tuple(self._every.get(evidence_id, ()))
 
     def kind(self, evidence_id: str) -> str | None:
         """The kind of question of the search that found this passage in this turn, or None for anything else. A

@@ -1,0 +1,27 @@
+{
+ "about": "The judge's answer for this lesson review case's sentences, through Azure OpenAI's chat completions, written by hand in the shape the API documents, because the gate's machine has no key. The judge is config/models.toml's draft role. It is asked about the likely repeat's sentence only once IEG's lesson is in the library. Replace it with a recording: uv run --script ops/agent/record.py --judge --env-file .env",
+ "recorded": false,
+ "recorded_on": null,
+ "case": "lesson-review-31525018-v1-55",
+ "judge": {
+  "deployment": "gpt-5.4"
+ },
+ "asked": [
+  "IEG's own lesson in its ICR Review said the same about permits before contracts are awarded."
+ ],
+ "response": {
+  "id": "chatcmpl-lesson-review-31525018-v1-55",
+  "object": "chat.completion",
+  "model": "gpt-5.4",
+  "choices": [
+   {
+    "index": 0,
+    "finish_reason": "stop",
+    "message": {
+     "role": "assistant",
+     "content": "{\"judgements\": [{\"index\": 1, \"follows\": true, \"advises\": false, \"reason\": \"IEG's lesson in section 12 of its ICR Review says to put permits in place before contracts are awarded.\"}]}"
+    }
+   }
+  ]
+ }
+}

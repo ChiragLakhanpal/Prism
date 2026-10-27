@@ -84,6 +84,10 @@ def test_a_summary_that_cites_nothing_is_judged_once_against_the_abstention_a_to
     assert [question.sentence for question in call] == [NOT_PUBLIC]
     [source] = call[0].sources
     assert source.evidence_id == "check_plan:abstention"
+    # The judge's instructions explain the name the verifier gives it, from one constant (ticket 24's review round
+    # 3, follow-up 4).
+    from strata.agent.judge import ABSTENTION, INSTRUCTIONS
+    assert source.evidence_id.endswith(f":{ABSTENTION}") and f'":{ABSTENTION}"' in INSTRUCTIONS
     # The judge reads the abstention the agent got, with no date after the as-of date (ADR 0002): the plan became
     # public on October 9, 2026 (values.toml, the demo plan's plan_date), after October 1.
     got = json.loads(asked.agent.received[1]["input"][0]["output"])["abstention"]
@@ -185,15 +189,21 @@ def test_when_the_judge_does_not_respond_and_every_sentence_needed_it_nothing_is
     assert [kind for kind, _ in asked.parsed if kind == "error"] == []
 
 
-def test_an_answer_that_checks_1_to_3_prove_after_find_comparables_counts_what_the_check_line_reads(fixture_db):
+def test_an_answer_after_find_comparables_counts_what_the_check_line_reads(fixture_db):
     """The ticket's check line: "Checked: N of N numbers match records; M of M quotes are on their pages. Not
-    checked: whether these are the right comparables." The screen reads every count from this event."""
+    checked: whether these are the right comparables." The screen reads every count from this event. A quote of
+    only a STEP reference proves nothing about "still open" (ticket 61), so the two sentences that quote one go to
+    the judge, in one call, and the past range's sentence needs no model."""
     asked = ask(fixture_db, "ke-nwwda-541055-past-range")
 
-    assert asked.judge.calls == [] and asked.of("removed") == []
+    assert asked.of("removed") == []
+    [call] = asked.judge.calls
+    assert [question.sentence for question in call] == [
+        'The newest, "KE-MIGORI COUNTY-532367-CW-RFB", was still open 13 days after its notice.',
+        'Another, "KE-ICTA-571738-CW-RFB", was still open too.']
     checks = asked.of("checks")[0]
     assert checks["shown"] == {"numbers": {"total": 5, "matched": 5}, "dates": {"total": 0, "matched": 0},
-                               "quotes": {"total": 2, "found": 2}, "judged": 0, "proven": 3}
+                               "quotes": {"total": 2, "found": 2}, "judged": 2, "proven": 1}
     # Check 1's item in the steps counts numbers and dates together; the verifier adds them, not the browser.
     assert checks["checked"] == {"total": 5, "matched": 5}
     assert checks["tools"] == ["find_comparables"]
@@ -244,14 +254,53 @@ def test_advice_that_cites_a_comparable_passes_check_5_and_goes_to_the_judge(fix
 
     assert asked.of("removed") == []
     assert [sentence["kind"] for sentence in asked.of("sentence")] == ["record", "record", "record", "advice"]
-    assert [[question.sentence for question in call] for call in asked.judge.calls] == [
-        ["Plan for longer than the 1.5 months the plan allows."]]
+    assert [[question.sentence for question in call] for call in asked.judge.calls] == [[
+        'The newest, "KE-MIGORI COUNTY-532367-CW-RFB", was still open 13 days after its notice.',
+        'Another, "KE-ICTA-571738-CW-RFB", was still open too.',
+        "Plan for longer than the 1.5 months the plan allows."]]
     checks = asked.of("checks")[0]
     assert checks["advice"] == {"total": 1, "cited": 1}
-    assert (checks["shown"]["judged"], checks["shown"]["proven"]) == (1, 3)
+    assert (checks["shown"]["judged"], checks["shown"]["proven"]) == (3, 1)
 
 
 # ── Check 6: a claim resting on one side of a disagreement shows both ─────
+
+def test_advice_citing_a_comparable_passes_check_5_whichever_tool_returned_it_first(fixture_db):
+    """Ticket 61's review, F4: when two tools return one evidence id, check 5 asked only the tool that returned it
+    first, so advice citing a comparable that a tool whose rows back no advice returned first was removed. Check 5
+    now asks every tool that returned the id this turn, so the order of the calls changes nothing. Made up: the
+    comparable's cost row is planted under the package's own id, as a tool returning the same record would give it."""
+    from strata.agent.answer_check import SixChecks
+    from strata.agent.claims import Claim
+    from strata.agent.loop import keep_result
+    from strata.config import load_tools
+    from strata.dbx import Viewer
+    from strata.harness.facts import Facts
+    from strata.lakehouse.engine import DuckDBEngine
+    from strata.tools import registry
+
+    works = "KE-NWWDA-541055-CW-RFB"
+    with DuckDBEngine.open(fixture_db, read_only=True) as engine:
+        context = registry.Context(engine=engine, viewer=Viewer(email="a@b.c", token="t"))
+        found = registry.call("find_comparables", {"as_of": "2026-10-22", "step_reference": works}, context)
+        joined = ",".join(row["step_reference"] for row in found["rows"])
+        cost = registry.call("compare_cost_estimates", {"as_of": "2026-10-22", "comparables": joined,
+                                                        "step_reference": works}, context)
+    row = cost["rows"][0]
+    comparable = row["evidence_id"].removesuffix("/cost")
+    assert comparable in {row["evidence_id"] for row in found["rows"]}
+    cost = {**cost, "rows": [{**row, "evidence_id": comparable}]}
+    advice = Claim(f"Base your works estimate on what {row['step_reference']} was estimated at.", "advice",
+                   (comparable,))
+    tools = load_tools()
+    assert tools["find_comparables"].result.backs_advice and not tools["compare_cost_estimates"].result.backs_advice
+    for order in ([("find_comparables", found), ("compare_cost_estimates", cost)],
+                  [("compare_cost_estimates", cost), ("find_comparables", found)]):
+        facts = Facts()
+        for name, result in order:
+            keep_result(facts, name, result, tools)
+        assert SixChecks(None, None, tools).check([advice], facts).advice == (1, 1), [name for name, _ in order]
+
 
 def test_a_claim_resting_on_isr_7_s_rating_streams_with_the_icr_paragraph_78_disagreement_attached(fixture_db):
     """The agent never asked get_disagreements, so its draft left the ICR out. ISR 7 (values.toml isr-7-date,
@@ -284,6 +333,24 @@ def test_a_claim_resting_on_isr_7_s_rating_streams_with_the_icr_paragraph_78_dis
     # The events come in the answer contract's order.
     kinds = [kind for kind, _ in asked.parsed]
     assert kinds.index("evidence") < kinds.index("disagreement") < kinds.index("checks")
+
+
+def test_the_isr_s_own_rating_is_the_one_highlighted_the_current_rating_not_the_previous_one(fixture_db):
+    """Ticket 24's critique rounds 2 and 3: ISR 7's ratings table writes each row's previous rating, then its current
+    one, and "Satisfactory" appears twice after "Progress towards achievement of PDO" (values.toml isr-7-rating). The
+    sentence states ISR 7's own rating, so the highlight is the second, the Current Rating; and the card's ISR side,
+    which gives a rating and no quote, gets the same highlight, so its marker opens on the words the card shows."""
+    isr_7 = "strata.gold.passage:26733307/v1/s4"
+    for case in ("p130164-isr-7-rating", "p130164-both-sides"):
+        asked = ask(fixture_db, case)
+        source = {evidence["id"]: evidence for evidence in asked.of("evidence")}[isr_7]
+        text = source["row"]["text"]
+        first = text.index(TRUTH["isr-7-rating"]["value"])
+        second = text.index(TRUTH["isr-7-rating"]["value"], first + 1)
+
+        assert text.index("Previous Rating") < text.index("Current Rating") < first, case
+        assert [(mark["start"], mark["end"]) for mark in source["highlights"]] == [
+            (second, second + len(TRUTH["isr-7-rating"]["value"]))], case
 
 
 def test_a_sentence_citing_the_same_section_about_a_rating_no_report_disputes_gets_no_card(fixture_db):

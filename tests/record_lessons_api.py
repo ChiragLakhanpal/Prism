@@ -87,7 +87,7 @@ def answers(folder: Path) -> dict[str, str]:
 
     def rewrite():
         with DuckDBEngine.open(database) as engine:
-            writer.run(engine, writer.recorded_agent_for(), lambda: at[0], 3)
+            writer.run(engine, writer.recorded_agent_for(), lambda: at[0], 3, judge_for=writer.recorded_judge_for())
 
     async def story() -> dict[str, str]:
         found = {}

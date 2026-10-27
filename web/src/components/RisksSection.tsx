@@ -462,7 +462,13 @@ function Checks({ result }: { result: RisksResult }) {
   const counts = checks.counts;
   return (
     <div className="mt-4 flex flex-col gap-2" data-risk-checks>
-      <CheckLine numbers={counts.numbers} dates={counts.dates} quotes={counts.quotes} notChecked={notCheckedFor({ checks_run: counts.checks_run, tools: checks.tools })} />
+      <CheckLine
+        numbers={counts.numbers}
+        dates={counts.dates}
+        quotes={counts.quotes}
+        quoteWords={words.quotesInRecords}
+        notChecked={notCheckedFor({ checks_run: counts.checks_run, tools: checks.tools })}
+      />
       <RemovedBox removed={removedOf(checks.removed, result.m ?? 0)} lead={words.removed} item={words.removed.item} />
     </div>
   );

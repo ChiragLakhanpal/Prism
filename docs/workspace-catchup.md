@@ -3631,3 +3631,18 @@ Parked on October 27, 2026 with ticket 63 (merge commit dab71bf2). Ticket 63 gav
     uv run --script ops/documents/search_live.py --env-file .env --question search-passages-similar-experience
 
 It worked if the output starts "search_passages ranked with AI Search", lists `strata.gold.passage:OP00118817/v1/s5` and `strata.gold.passage:OP00128730/v1/s6`, each with its notice id, and ends "2 of the 2 expected passages are in the top three." Exit 2 means it could not ask, and the line it prints says why. Record the output's last line here and under ticket 18's step 5.
+
+## Ticket 61, step 1 of 1: sync the orchestrator and the review notes writer, since their instructions and three tool descriptions changed (criterion 4, live)
+
+The builder parked this step on October 27, 2026. It needs the four Foundry keys in `.env`. Ticket 61 changed two things the orchestrator in Foundry reads. First, `src/strata/agent/instructions/orchestrator.md`: its words rule now reads "Put no quote marks, double or single, around words you do not quote word for word.", so only one line says which quote marks to use. Second, the tool list, which the sync generates from `config/tools.toml`: check_plan's rule for which packages it checks is two plain sentences, search_passages says a passage with no Prompt Shields result is left out too, its sector parameter names the slice file's sectors, and get_disagreements says to cite the row for a number on a side. Ticket 61 also changed `src/strata/agent/instructions/review_notes_writer.md`: a note cites the records its row's reasons name, such as the project record for the closing date, and states no date of another plan version. The judge's instructions changed too (it now says whether a sentence advises), but they live in the App's code, so the App's next redeploy from the merge commit carries them, and no sync is needed for the judge.
+
+Run this from the main checkout:
+
+    uv run --script ops/agent/sync.py --env-file .env --check
+    uv run --script ops/agent/sync.py --env-file .env
+    uv run --script ops/agent/sync.py --env-file .env --check
+    uv run --script ops/agent/sync.py --env-file .env --agent review_notes_writer --check
+    uv run --script ops/agent/sync.py --env-file .env --agent review_notes_writer
+    uv run --script ops/agent/sync.py --env-file .env --agent review_notes_writer --check
+
+It worked if the first `--check` exits 1, lists "It has other values in its instructions." and "It has other values in its tools.", and its diff holds the new quote-marks line; each run without `--check` ends "I made version N of ..., which matches the repo."; and both last `--check` runs exit 0 with "matches the repo". One sync from the merge commit or later serves every earlier block that names the same command.

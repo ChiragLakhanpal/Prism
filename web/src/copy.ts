@@ -4339,6 +4339,12 @@ export const copy = {
       "Select the risks that belong in section 3 of the borrower's Project Procurement Strategy for Development (PPSD). I save your choice with this package.",
     // The finding, the table's title: Fill templates whose {k} and {m} are Num values.
     finding: '"{risk}" came up most often, in {k} of the {m} completion reports for projects with comparable packages.',
+    // The check line's quotes clause for this section: each row's sentences restate the risk's name and the lesson's
+    // words from their records, which are not quotes from a page (ticket 30's review F3).
+    quotesInRecords: {
+      one: "{part} of {whole} name or lesson matches its record",
+      many: "{part} of {whole} names and lessons match their records",
+    },
     findingTwo: '"{a}" and "{b}" came up most often, each in {k} of the {m} completion reports for projects with comparable packages.',
     findingMany: "{tied} of these risks came up most often, each in {k} of the {m} completion reports for projects with comparable packages.",
     countOne: "Showing one risk.",

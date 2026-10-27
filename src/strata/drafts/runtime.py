@@ -121,7 +121,10 @@ def note_check(module, facts, written: dict[str, dict], six_checks: SixChecks,
 
     Each note cites only its own item's row, so the verifier checks each note's sentences against that row
     alone: a sentence that cites another item's row is removed as a source the check did not return for this
-    note (id_not_returned), even though the tool returned that row for another note."""
+    note (id_not_returned), even though the tool returned that row for another note. A kind that names
+    checked_row reads each record through it for checks 1 to 3, such as a plan row without the dates other records
+    hold (src/strata/drafts/review_notes.py)."""
+    view = getattr(module, "checked_row", lambda row: row)
     seen = Facts()
     # A kind whose items cite several tools' rows, such as the mission brief's (ticket 37), names each row's tool.
     cited = module.cited_rows(facts) if hasattr(module, "cited_rows") else [(row, module.TOOL) for row in facts.rows]
@@ -131,19 +134,21 @@ def note_check(module, facts, written: dict[str, dict], six_checks: SixChecks,
     for item in module.items(facts):
         own = Facts()
         for evidence_id in item.get("evidence_ids") or [item["evidence_id"]]:
-            own.record(evidence_id, seen.get(evidence_id), tool=seen.tool(evidence_id))
+            own.record(evidence_id, view(seen.get(evidence_id)), tool=seen.tool(evidence_id))
         for claim in (written.get(item["key"]) or {}).get("claims") or []:
             checked.append(check(len(checked), claim, own, language))
             owners.append(item["key"])
     return six_checks.checked(checked, seen), seen, owners
 
 
-def compose(module, facts, written: dict[str, dict], verdict: Verdict, seen: Facts, owners: list[str]) -> dict:
+def compose(module, facts, written: dict[str, dict], verdict: Verdict, seen: Facts, owners: list[str],
+            cited_only: tuple[str, ...] | list[str] = ()) -> dict:
     """The draft from what the writer wrote and what the six checks kept: one note per item, in order, each
     with its kept sentences, the evidence they cite, the verifier's counts, the removed sentences, and any
-    disagreement check 6 shows under a note's sentence."""
+    disagreement check 6 shows under a note's sentence. cited_only are the tools whose "Not checked" clause applies
+    only once a sentence on screen cites them (SixChecks.cited_only), as the answer stream's check line has them."""
     items = module.items(facts)
-    events = answer_events(verdict, seen, list(getattr(module, "TOOLS", (module.TOOL,))))
+    events = answer_events(verdict, seen, list(getattr(module, "TOOLS", (module.TOOL,))), cited_only)
     kept: dict[str, list[dict]] = {}
     evidence, checks, removed, disagreements = {}, None, [], []
     for event in events:
@@ -249,7 +254,7 @@ async def write(writing: Writing, engine_for: EngineFor, agent_for: Callable[[st
     async for item in six_checks.finish(check_notes, seen, Asker(writing.viewer, STAFF, today, writing.run_id)):
         if isinstance(item, Verdict):
             verdict = item
-    content = compose(module, facts, written, verdict, seen, owners)
+    content = compose(module, facts, written, verdict, seen, owners, six_checks.cited_only)
     if hasattr(module, "finish"):  # a kind that groups its notes, such as suggested PPSD rows' cells into rows
         content = module.finish(content, facts)
     writing.verdict = verdict
@@ -371,7 +376,7 @@ async def rewrite(saved: Saved, kind: DraftKind, row_key: str, lesson_id: str, v
     checked[:] = [verdict, plan.question(), getattr(agent, "name", None), getattr(agent, "version", None)]
     if verdict is None:  # the checks gave no verdict, so nothing can be shown as checked
         raise WriteError("internal")
-    content = compose(plan, plan.facts, written, verdict, seen, owners)
+    content = compose(plan, plan.facts, written, verdict, seen, owners, six_checks.cited_only)
     # The new sentences take numbers after every sentence the draft has had, removed ones and removed rows' included,
     # so a citation marker names one sentence on the page.
     start = saved.content.get("next_index", next_index(saved.content))

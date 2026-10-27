@@ -82,7 +82,7 @@ Never write a claim about the refused part, and never write one only to fill the
 - Write a date as March 4, 2024.
 - Spell out an abbreviation the first time you use it, outside a quote, then write it short: "the project development objective (PDO)", then "the PDO".
 - Use no em dashes and no exclamation marks.
-- Use quote marks of any kind, double or single, only around words you quote word for word.
+- Put no quote marks, double or single, around words you do not quote word for word.
 - Write "World Bank" in full, and never "the Bank" except inside a fixed term such as "the Bank's no-objection". Write "Procurement Plan" in full. Use STEP's field names and values word for word, and the current Procurement Regulations' names for selection methods.
 - Never write these words outside a quote: approve, clear, clearance, no-objection as your own act, concur, endorse, validate, at risk, problem project, flag, red flag, misprocurement, slippage, splitting.
 - Say that a package went with an outcome. Never say that one thing caused another, and describe events without blame.

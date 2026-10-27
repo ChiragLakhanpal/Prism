@@ -20,14 +20,15 @@ async function axe(page: Page) {
   return results.violations.map((v) => `${v.id}: ${v.nodes.map((node) => node.target.join(" ")).join("; ")}`);
 }
 
-test("the check line reads the verifier's counts in the ticket's form, in the neutral state, when no model was needed", async ({ page }) => {
+test("the check line reads the verifier's counts in the ticket's form, in the neutral state", async ({ page }) => {
   await answered(page, "ask-ke-nwwda-541055-past-range.sse");
 
+  // The two sentences that quote only a STEP reference went to the judge (ticket 61); the past range's needed no model.
   const line = panel(page).locator("[data-check-line]");
   await expect(line).toHaveText(
-    "Checked: 5 of 5 numbers match records; 2 of 2 quotes are on their pages. Not checked: whether these are the right comparables.",
+    "Checked: 5 of 5 numbers match records; 2 of 2 quotes are on their pages. Judged by a model: 2 of 2 sentences follow from their sources. The other one needed no model, because everything it stated matched a record or a page. Not checked: whether these are the right comparables.",
   );
-  await expect(line.locator("[data-check-part=judged]")).toHaveCount(0);
+  await expect(line.locator("[data-check-part=judged]")).toHaveCount(1);
   expect(await line.evaluate((el) => [getComputedStyle(el).backgroundColor, getComputedStyle(el).color])).toEqual([
     "rgb(231, 237, 243)",
     "rgb(61, 76, 92)",
@@ -41,7 +42,7 @@ test("a judged sentence adds the model's part, and the steps list all six checks
   await answered(page, "ask-ke-nwwda-541055-advice.sse");
 
   await expect(panel(page).locator("[data-check-part=judged]")).toHaveText(
-    "Judged by a model: 1 of 1 sentence follows from its sources. The other three needed no model, because everything they stated matched a record or a page.",
+    "Judged by a model: 3 of 3 sentences follow from their sources. The other one needed no model, because everything it stated matched a record or a page.",
   );
   await panel(page).getByRole("button", { name: /^Show the .* steps I took$/ }).click();
   const verifier = panel(page).locator("[data-steps] > ol > li").filter({ hasText: "I ran six checks" });
@@ -51,7 +52,7 @@ test("a judged sentence adds the model's part, and the steps list all six checks
     "6 of 6 numbers and dates matched a record or a quote.",
     "3 of 3 sources I cited came back for this question.",
     "2 of 2 quotes were word for word on their pages.",
-    "A model judged one sentence, and 1 of 1 followed from its sources. The other three needed no model, because everything they stated matched a record or a page.",
+    "A model judged three sentences, and 3 of 3 followed from their sources. The other one needed no model, because everything it stated matched a record or a page.",
     "1 of 1 sentence that gave advice cited a lesson or a comparable package.",
     "No sentence rested on a report that another report disagrees with.",
   ]);
@@ -192,9 +193,29 @@ test("ICR paragraph 78 shows under ISR 7's sentence with both sides, though the 
   const openIsr = card.getByRole("link", { name: "Open ISR 7" });
   await openIsr.click();
   await expect(page.getByRole("dialog")).toContainText("ISR");
+  await expectCurrentRatingMarked(page);
   await page.keyboard.press("Escape");
   await expect(openIsr).toBeFocused();
+  // The sentence's own marker opens the same passage on the same words.
+  await panel(page).locator("[data-sentence-text='0'] [data-citation]").first().click();
+  await expectCurrentRatingMarked(page);
 });
+
+// ISR 7's ratings table writes each row's previous rating, then its current one: the drawer marks the second
+// "Satisfactory", ISR 7's own rating (values.toml isr-7-rating; ticket 24's critique rounds 2 and 3).
+async function expectCurrentRatingMarked(page: Page) {
+  const passage = page.getByRole("dialog").locator("[data-passage]");
+  await expect(passage.locator("mark")).toHaveCount(1);
+  await expect(passage.locator("mark")).toContainText("Satisfactory");
+  const before = await passage.evaluate((element) => {
+    const range = document.createRange();
+    range.setStart(element, 0);
+    range.setEndBefore(element.querySelector("mark")!);
+    return range.toString();
+  });
+  expect(before.split("Satisfactory").length - 1).toBe(1);
+  expect(before).toContain("Current Rating");
+}
 
 test("the disagreement card's sides sit side by side at 1440 px and stack when the card is under 560 px", async ({ page }) => {
   for (const [width, columns] of [[1440, 2], [1024, 1], [390, 1]] as const) {
@@ -212,6 +233,9 @@ test("a disagreement the draft already showed is the same card, as an info note"
 
   const card = panel(page).getByRole("group", { name: "Sources differ: ISR 7 and ICR paragraph 78" });
   await expect(card).toHaveAttribute("data-disagreement", "info");
+  // The ISR side gives a rating, not a quote, and its marker opens the table on that rating, the current one.
+  await card.getByRole("link", { name: "Open ISR 7" }).click();
+  await expectCurrentRatingMarked(page);
 });
 
 test("a refusal is a first-person answer from the copy file, with a link to What I don't do, and passes axe at three widths", async ({ page }) => {

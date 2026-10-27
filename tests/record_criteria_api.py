@@ -142,8 +142,27 @@ def answers(folder: Path) -> dict[str, str]:
             found["criteria-run-planned-rural-roads.sse"] = await post("/api/planned-packages/pkg-000000000001/criteria/run", {})
         return found
 
+    # Made up (ticket 61): the works package's run with two disagreements planted at get_disagreements, each with ICR
+    # P130164 paragraph 54 as its first side (tests/planted_disagreements.py), so check 6 attaches two cards to the
+    # lesson. Its own app state and check ids, so the story above is unchanged.
+    import planted_disagreements as planted
+    from strata.server import app as app_module
+
+    made_up_state = folder / "made-up-state.duckdb"
+    with DuckDBEngine.open(made_up_state) as engine:
+        appstate.build(engine)
+    made_up_checks = iter(f"chk-made-up-{number:06d}" for number in range(1, 100))
+    with mock.patch.object(app_module, "load_tools", lambda: planted.with_adapter("twice_quoting_icr_54")):
+        made_up = create_app(engine_for=reading, criteria=CriteriaStore(lambda: DuckDBEngine.open(made_up_state)),
+                             today=lambda: TODAY, now=now, new_check_id=lambda: next(made_up_checks), judge=CaseJudge())
+
+    async def made_up_story() -> dict[str, str]:
+        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=made_up), base_url="http://strata.test") as client:
+            run = await client.post(f"/api/packages/{WORKS}/criteria/run", headers=ANA, json={})
+            return {"criteria-run-ke-nwwda-541055-made-up-disagreement.sse": run.text}
+
     with mock.patch.object(registry, "today", lambda: RECORDED_ON):
-        return asyncio.run(story())
+        return {**asyncio.run(story()), **asyncio.run(made_up_story())}
 
 
 def main() -> int:

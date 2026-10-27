@@ -95,6 +95,11 @@ test("the section carries its eyebrow and lists the cost estimates risk, what he
   const all = await text(section(page));
   expect(all).not.toMatch(/%|percent| in 10/);
   await expect(section(page).locator("[data-check-line]")).toContainText("Not checked:");
+  // The rows restate their records' names and lessons, which are not quotes from a page (ticket 30's review F3).
+  await expect(section(page).locator("[data-check-line] [data-check-part=checked]")).toHaveText(
+    "Checked: 4 of 4 numbers match records; 4 of 4 names and lessons match their records.",
+  );
+  await expect(section(page).locator("[data-check-line]")).not.toContainText("on their pages");
   await expect(section(page).locator("[data-removed-box]")).toHaveText("I removed no risks.");
 });
 

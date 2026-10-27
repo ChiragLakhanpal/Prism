@@ -117,9 +117,12 @@ class Say:
                      date=self.date(date) if date else evidence_id)
 
     def footnote(self, draft: dict, evidence_id: str) -> str:
-        """A footnote: the source line, then the public address of its document when the tool gave one."""
+        """A footnote: the source line, then the public address of its document when the tool gave one. The address
+        is the plan's, so only a record of that plan takes it: a project record's footnote names its own source."""
         url = draft["subject"].get("pdf_url")
-        return f"{self.source(draft, evidence_id)} {url}" if url else self.source(draft, evidence_id)
+        row = (draft["evidence"].get(evidence_id) or {}).get("row") or {}
+        own = (row.get("source") or {}).get("source_key") is None
+        return f"{self.source(draft, evidence_id)} {url}" if url and own else self.source(draft, evidence_id)
 
 
 # ── Word ─────────────────────────────────────────────────────────────────
@@ -383,7 +386,10 @@ def check_line(checks: dict, kind: DraftKind) -> str:
              if shown[name]["total"] > 0]
     # A draft no model wrote, such as planned dates (ticket 38), has no sentences to follow from their sources.
     clauses = [key for key in ([] if 4 in checks["checks_run"] or checks.get("computed") else ["sentences"])]
-    clauses += [key for key in line["notCheckedClauses"] if key in checks["tools"]]
+    # A tool whose clause applies only once a sentence on screen cites it, such as get_lessons, as notCheckedFor has it.
+    cited, cited_only = checks.get("cited_tools") or [], checks.get("cited_only") or []
+    clauses += [key for key in line["notCheckedClauses"]
+                if (key in cited if key in cited_only else key in checks["tools"])]
     clauses += [key for key in kind.not_checked if key in line["notCheckedClauses"]]
     said = [line["notCheckedClauses"][key] for key in clauses]
     joined = line["notCheckedJoin"].join(said) if len(said) <= 2 else \

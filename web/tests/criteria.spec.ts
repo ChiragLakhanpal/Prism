@@ -279,6 +279,32 @@ test("below 20 comparables the cost estimate abstains in the first person and li
   await expect(part.locator("[data-cost-table]")).toContainText(`\u2212${Math.abs(Math.min(...diffs))}%`);
 });
 
+test("every disagreement check 6 attached to a lesson's quote shows under it, as many cards as the check line counts", async ({ page }) => {
+  // Made up: two disagreements planted at get_disagreements, each with ICR P130164 paragraph 54 as its first side
+  // (ticket 61; tests/planted_disagreements.py), recorded through the server by tests/record_criteria_api.py. The
+  // section showed only the first card while the check line counted both (ticket 61's verify, F1).
+  const file = "criteria-run-ke-nwwda-541055-made-up-disagreement.sse";
+  const run = events(await recorded(file)).find((event) => event.type === "package_run")!.data;
+  expect(run.checks.disagreements.shown).toBe(2);
+  await open(page, WORKS, { run: file });
+  await openSection(page);
+
+  const card = section(page).locator("[data-criteria-part=lessons] [data-lesson-card]").first();
+  const cards = card.locator("[data-criteria-disagreement]");
+  await expect(cards).toHaveCount(2);
+  await expect(cards.first()).toContainText("ICR");
+  // The cards sit after the lesson's excerpt, beside the claim they concern (DESIGN.md section 5).
+  expect(await card.locator("[data-lesson-excerpt] ~ [data-criteria-disagreement]").count()).toBe(2);
+  await expect(section(page).locator("[data-criteria-disagreement]")).toHaveCount(run.checks.disagreements.shown);
+  expect(await axe(page)).toEqual([]);
+
+  // The ICR side opens its paragraph with the words it quotes highlighted (ticket 61's review, F3).
+  await cards.first().locator("[data-open-side]").first().click();
+  const passage = page.getByRole("dialog").locator("[data-passage]");
+  await expect(passage.locator("mark")).toHaveCount(1);
+  await expect(passage.locator("mark")).toContainText("108 of 328 cases had to go through rebidding");
+});
+
 test("lessons on cost estimates appear with their citations, including ICR P130164 paragraph 54", async ({ page }) => {
   await open(page, WORKS);
   await openSection(page);

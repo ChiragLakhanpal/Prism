@@ -274,7 +274,10 @@
         "checks_run": [
           1,
           2,
-          3
+          3,
+          4,
+          5,
+          6
         ],
         "sentences": {
           "written": 3,
@@ -297,8 +300,53 @@
           "total": 2,
           "returned": 2
         },
+        "checked": {
+          "total": 3,
+          "matched": 2
+        },
+        "shown": {
+          "numbers": {
+            "total": 2,
+            "matched": 2
+          },
+          "dates": {
+            "total": 0,
+            "matched": 0
+          },
+          "quotes": {
+            "total": 2,
+            "found": 2
+          },
+          "judged": 0,
+          "proven": 2
+        },
+        "judge": {
+          "called": false,
+          "responded": null,
+          "judged": 0,
+          "followed": 0,
+          "unjudged": 0,
+          "proven": 2
+        },
+        "advice": {
+          "total": 0,
+          "cited": 0
+        },
+        "disagreements": {
+          "disputed": 0,
+          "shown": 0,
+          "attached": 0,
+          "unasked": 0,
+          "warned": 0
+        },
+        "cited_tools": [
+          "lesson_review"
+        ],
         "tools": [
           "lesson_review"
+        ],
+        "cited_only": [
+          "get_lessons"
         ]
       },
       "removed": [
@@ -316,7 +364,8 @@
           ],
           "repeat_of": null
         }
-      ]
+      ],
+      "disagreements": []
     },
     "repeats": [],
     "history": [

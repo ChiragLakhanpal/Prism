@@ -141,6 +141,31 @@ claims = [
   { sentence = "The agency was to blame for the delay.", kind = "summary", evidence_ids = [], numbers = [], dates = [] },
 ]
 
+[[cases]]
+id = "review-notes-dates-of-other-records"
+says = """Two notes state a date their plan row repeats from another record and cite only the row (ticket 61's verify \
+F2 and review F1): the plan version that first published KE-NWWDA-541055-CW-RFB's planned completion, and the \
+project's closing date in KE-NWWDA-541062-CW-RFQ's reason. Checks 1 to 3 read the row without those dates, so both \
+sentences are removed, and the closing date that cites the project record as well is kept."""
+question = "Write review notes on the Northern Water Works Development Agency's Procurement Plan of October 9, 2026 for P156634."
+scope = "P156634"
+as_of = 2026-10-23
+recording = "review-notes-nwwda-2026-10-09"
+request = { kind = "review_notes", project_id = "P156634", agency_id = "northern-water-works-development-agency", plan_date = "2026-10-09" }
+
+[[cases.plant_notes]]
+activity_reference_no = "KE-NWWDA-541055-CW-RFB"
+claims = [
+  { sentence = "Its planned completion of July 31, 2026, first published in the plan of March 5, 2026, has passed with no signed contract.", kind = "record", evidence_ids = ["strata.silver.plan_rows:40132287/KE-NWWDA-541055-CW-RFB"], numbers = [], dates = ["July 31, 2026", "March 5, 2026"] },
+]
+
+[[cases.plant_notes]]
+activity_reference_no = "KE-NWWDA-541062-CW-RFQ"
+claims = [
+  { sentence = "The project closes on October 31, 2026.", kind = "record", evidence_ids = ["strata.silver.plan_rows:40132287/KE-NWWDA-541062-CW-RFQ"], numbers = [], dates = ["October 31, 2026"] },
+  { sentence = "The project's closing date is October 31, 2026.", kind = "record", evidence_ids = ["strata.silver.plan_rows:40132287/KE-NWWDA-541062-CW-RFQ", "strata.gold.project:P156634"], numbers = [], dates = ["October 31, 2026"] },
+]
+
 # The write-the-mission-brief workflow's writer (ticket 37).
 
 [[cases]]

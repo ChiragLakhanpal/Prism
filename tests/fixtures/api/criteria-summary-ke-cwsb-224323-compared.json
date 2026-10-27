@@ -657,7 +657,8 @@
                 ],
                 "lang": "en"
               },
-              "removed": false
+              "removed": false,
+              "disagreements": []
             }
           ]
         }
@@ -744,7 +745,8 @@
       ],
       "quotes_without_pages": 0
     },
-    "removed": []
+    "removed": [],
+    "evidence": {}
   },
   "section_checks": {
     "checks_run": [
