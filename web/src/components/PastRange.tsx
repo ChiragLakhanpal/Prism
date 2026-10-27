@@ -1087,7 +1087,7 @@ function PlanControl({
             aria-describedby={invalid ? `${ids.error} ${ids.helper}` : ids.helper}
             onChange={(event) => onType(event.target.value)}
             className={cx(
-              "h-11 w-[88px] rounded-md border bg-surface px-3 text-right text-body text-ink tabular-nums",
+              "h-11 w-[88px] rounded-sm border bg-surface px-3 text-right text-body text-ink tabular-nums",
               invalid ? "border-error-icon" : "border-line-strong",
             )}
           />
@@ -1096,7 +1096,7 @@ function PlanControl({
         {resetButton("hidden @md/page:inline", false)}
       </div>
       {/* One caption line is kept for the error, so it appears without moving the chart. */}
-      <p id={ids.error} className="mt-1 min-h-[1.5em] text-caption text-error">
+      <p id={ids.error} className="mt-1 min-h-lh text-caption text-error">
         {invalid && w.invalid(whole(maxMonths))}
       </p>
       <div className="grid @md/page:block">
@@ -1249,9 +1249,9 @@ function PastRangeSkeleton({ twoLanes = false }: { twoLanes?: boolean }) {
       <SkeletonLine className="mt-2 hidden @md/page:flex" width="w-4/5" style={{ fontSize: type.m }} />
       <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2">
         <SkeletonLine className="text-small" width="w-28" />
-        <Skeleton className="h-11 w-[88px] rounded-md" />
+        <Skeleton className="h-11 w-[88px] rounded-sm" />
       </div>
-      <span className="mt-1 block min-h-[1.5em] text-caption" />
+      <span className="mt-1 block min-h-lh text-caption" />
       {/* Below 768 px the helper's place holds the reset button too, so it is at least 44 px tall. */}
       <SkeletonText className="min-h-11 text-caption @md/page:hidden" widths={lines(2)} />
       <SkeletonLine className="hidden text-caption @md/page:flex" width="w-3/5" />

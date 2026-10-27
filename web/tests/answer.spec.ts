@@ -262,8 +262,10 @@ test("below 768 px the drawer is a full-screen sheet, and the page behind it is 
     .toEqual([0, 0, 390, 900]);
   await expect(page.locator("[data-page-column]")).toHaveAttribute("inert", "");
   await expect(drawer(page).getByRole("heading", { level: 2 })).toBeFocused();
+  // Rounded, as the sheet's place is above: the sheet may still be settling its last fraction of a pixel, and a
+  // box measured mid-slide comes back as 44.0000019 (ticket 90's sheet slides on a transition).
   const close = (await drawer(page).getByRole("button", { name: "Close the source" }).boundingBox())!;
-  expect([close.width, close.height]).toEqual([44, 44]);
+  expect([close.width, close.height].map(Math.round)).toEqual([44, 44]);
 
   await page.keyboard.press("Escape");
   await expect(drawer(page)).toHaveCount(0);

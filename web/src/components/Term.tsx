@@ -43,7 +43,7 @@ export function DefinitionContent({
         </h2>
         <RadixPopover.Close
           aria-label={copy.definition.close}
-          className="-mt-2 -mr-2 flex size-11 shrink-0 items-center justify-center rounded-pill text-ink-muted hover:bg-tint-hover hover:text-ink"
+          className="-mt-2 -mr-2 flex size-11 shrink-0 items-center justify-center rounded-sm text-ink-muted hover:bg-tint-hover hover:text-ink"
         >
           <X aria-hidden="true" className="size-4" />
         </RadixPopover.Close>

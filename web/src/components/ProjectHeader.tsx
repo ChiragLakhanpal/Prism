@@ -36,11 +36,12 @@ export function AgencyLine({ names }: { names: string[] }) {
         <Fill template={names.length > 1 ? words.agenciesLine : words.agencyLine} slots={{ agencies: names.join(words.agencyJoin) }} />
       </p>
       {(hides || open) && (
-        // The 44 px button centres its label 10 px inside its top edge, so it rises 6 px and the label's line
-        // sits 4 px under the agencies' last line, as a flush ghost button's label does beside text (the 21
-        // review, round 3, item 8): 8 px up, 2 px down, in the space steps. Its hover fill and focus ring then
-        // reach up over that gap.
-        <div className="-mt-2 pt-0.5">
+        // The 44 px button centres its 20 px label line 12 px inside its top edge, so it rises 8 px and the
+        // label's line sits 4 px under the agencies' last line, as a flush ghost button's label does beside
+        // text (the 21 review, round 3, item 8). Its hover fill and focus ring then reach up over that gap. It
+        // keeps 2 px under it, so the line stays as tall as the place the loading page holds for it (8 px up,
+        // 2 px down; ProjectPage.tsx) and the section tabs never move when the project arrives.
+        <div className="-mt-2 pb-0.5">
           <Button variant="ghost" flush onPage aria-expanded={open} aria-controls={id} onClick={() => setOpen(!open)}>
             {open ? words.fewerAgencies : words.allAgencies}
           </Button>

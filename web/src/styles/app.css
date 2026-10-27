@@ -1,7 +1,10 @@
-/* Strata's theme: DESIGN.md sections 2, 3 and 4 in Tailwind v4. Every color, size, space and
-   breakpoint a component uses comes from here. Change a value in DESIGN.md first; the token
-   test (web/tests/tokens.spec.ts) fails until this file matches it. */
+/* Strata's theme: DESIGN.md sections 2, 3 and 4 in Tailwind v4. Every color, size, space,
+   breakpoint, curve and duration a component uses comes from here. Change a value in DESIGN.md
+   first; the token test (web/tests/tokens.spec.ts) fails until this file matches it. */
 
+/* Open Sans Light is for the page's one finding only (DESIGN.md section 3; ticket 90). Like every
+   face here it is self-hosted from @fontsource (SIL OFL 1.1), so no page asks a font host. */
+@import "@fontsource/open-sans/300.css";
 @import "@fontsource/open-sans/400.css";
 @import "@fontsource/open-sans/400-italic.css";
 @import "@fontsource/open-sans/600.css";
@@ -45,25 +48,34 @@
   --color-chart-grey400: #666666;  --color-chart-grey500: #111111;
   --font-sans: "Open Sans", "Open Sans Fallback", "Helvetica Neue", Arial, sans-serif;
   --font-mono: "Roboto Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  /* DESIGN.md section 4, Radius: corners by role. 4 for controls, 8 for containers, the pill for data,
+     16 for a bottom sheet's top corners, 2 for skeleton bars. */
   --radius-xs: 2px;  --radius-sm: 4px;  --radius-md: 8px;  --radius-lg: 16px;  --radius-pill: 32px;
-  /* The one box: half its 44 px height, a pill on one row that keeps its corners when a chip wraps it to two. */
+  /* Deprecated: the deck's last use (ticket 90). The class lint refuses rounded-box outside web/src/deck/
+     and the files that used it on October 27, 2026 (web/lint/rules.ts, FROZEN_CLASS_USES). */
   --radius-box: 22px;
 
-  /* DESIGN.md section 3: the type scale. Sizes are in rem, so they follow the reader's
-     default font size; 1rem is 16 px. Color is set by the component, not the step. */
-  --text-display: 2rem;  --text-display--line-height: 1.2;  --text-display--font-weight: 700;
-  --text-h1: 1.75rem;  --text-h1--line-height: 1.2;  --text-h1--font-weight: 700;
-  --text-h2: 1.5rem;  --text-h2--line-height: 1.25;  --text-h2--font-weight: 700;
-  --text-h3: 1.25rem;  --text-h3--line-height: 1.3;  --text-h3--font-weight: 700;
-  --text-title: 1.125rem;  --text-title--line-height: 1.3;  --text-title--font-weight: 700;
-  --text-body: 1rem;  --text-body--line-height: 1.5;  --text-body--font-weight: 400;
-  --text-small: 0.875rem;  --text-small--line-height: 1.45;  --text-small--font-weight: 400;
-  --text-caption: 0.8125rem;  --text-caption--line-height: 1.5;  --text-caption--font-weight: 400;
-  --text-label: 0.75rem;  --text-label--line-height: 1.2;  --text-label--font-weight: 600;
-  --text-label--letter-spacing: 0.02em;
-  --text-button: 0.875rem;  --text-button--line-height: 1.5rem;  --text-button--font-weight: 700;
-  --text-button--letter-spacing: -0.5px;
-  --font-weight-normal: 400;  --font-weight-medium: 500;  --font-weight-semibold: 600;  --font-weight-bold: 700;
+  /* DESIGN.md section 3: the type scale. Sizes are in rem, so they follow the reader's default font
+     size; 1rem is 16 px. Color is set by the component, not the step. The finding and the h1 step down
+     below 48rem (below). */
+  --text-display: 2rem;      --text-display--line-height: 2.5rem;   --text-display--font-weight: 700;
+  --text-finding: 1.75rem;   --text-finding--line-height: 2.25rem;  --text-finding--font-weight: 300;
+  --text-finding--letter-spacing: -0.01em;
+  --text-h1: 1.5rem;         --text-h1--line-height: 2rem;          --text-h1--font-weight: 700;
+  --text-h2: 1.125rem;       --text-h2--line-height: 1.5rem;        --text-h2--font-weight: 600;
+  --text-h3: 1rem;           --text-h3--line-height: 1.5rem;        --text-h3--font-weight: 600;
+  --text-lead: 1.125rem;     --text-lead--line-height: 1.75rem;     --text-lead--font-weight: 400;
+  --text-body: 1rem;         --text-body--line-height: 1.5rem;      --text-body--font-weight: 400;
+  --text-small: 0.875rem;    --text-small--line-height: 1.25rem;    --text-small--font-weight: 400;
+  --text-caption: 0.8125rem; --text-caption--line-height: 1.25rem;  --text-caption--font-weight: 400;
+  --text-label: 0.8125rem;   --text-label--line-height: 1rem;       --text-label--font-weight: 600;
+  --text-chart-label: 0.75rem; --text-chart-label--line-height: 1rem; --text-chart-label--font-weight: 600;
+  --text-chart-label--letter-spacing: 0.02em;
+  --text-button: 0.875rem;   --text-button--line-height: 1.25rem;   --text-button--font-weight: 600;
+  /* Deprecated: the deck's last uses (ticket 90). title is retired into h2, so this alias takes h2's
+     values, and every page that still says text-title draws as h2 until the class sweep moves it. */
+  --text-title: 1.125rem;    --text-title--line-height: 1.5rem;     --text-title--font-weight: 600;
+  --font-weight-light: 300;  --font-weight-normal: 400;  --font-weight-medium: 500;  --font-weight-semibold: 600;  --font-weight-bold: 700;
   --default-font-family: var(--font-sans);
   --default-mono-font-family: var(--font-mono);
 
@@ -88,34 +100,93 @@
   --container-prose: 65ch;
   --shadow-popover: 0 5px 25px rgba(160,158,143,.25);
 
-  /* DESIGN.md section 10: motion runs 120 to 200 ms, and none under reduced motion. */
-  --default-transition-duration: 150ms;
-  --default-transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  /* DESIGN.md section 4, Motion: two curves and six times, all 120 to 200 ms, and nothing moves under
+     reduced motion. ease-out is for what enters and for a press; ease-drawer for a sheet that slides in;
+     a color change uses plain ease. Nothing uses ease-in. */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  --motion-press: 120ms;  --motion-color: 120ms;  --motion-popover: 160ms;  --motion-pane: 160ms;
+  --motion-sheet: 200ms;  --motion-exit: 120ms;
+  --default-transition-duration: var(--motion-color);
+  --default-transition-timing-function: ease;
+  /* The number tooltip's width, as Data readiness's tooltips are today. */
+  --tooltip-width: 20rem;
+  /* The steps' spinner turns until loading ends: constant motion, the one keyframe animation left. */
   --animate-spin: spin 1s linear infinite;
-  --animate-fade-in: fade-in 120ms ease-out;
-  /* A form or a fold that opens in place, such as the lesson editor and the re-check form (the 29 brief). */
-  --animate-open-in: fade-in 150ms ease-out;
-  --animate-menu-in: menu-in 150ms ease-out;
-  /* The evidence drawer (the 14 brief, section 8): its content fades in over 160 ms, the matching
-     words then settle into their highlight over 200 ms, and below 768 px the sheet slides up. */
-  --animate-drawer-in: fade-in 160ms ease-out;
-  --animate-settle: settle 200ms ease-out 160ms backwards;
-  --animate-sheet-in: sheet-in 200ms ease-out;
   @keyframes spin {
     to { transform: rotate(360deg); }
   }
-  @keyframes fade-in {
-    from { opacity: 0; }
+}
+
+/* Entrances (DESIGN.md section 4, Motion; ticket 90). Each is a transition from @starting-style, not a
+   keyframe animation, so something opened again before it ends turns back from where it is instead of
+   starting over, and a browser without @starting-style shows the element at once. They keep the names of
+   the keyframe animations they replaced, so no page changed. */
+@utility animate-fade-in {
+  transition: opacity var(--motion-popover) var(--ease-out);
+  @starting-style {
+    opacity: 0;
   }
-  @keyframes menu-in {
-    from { opacity: 0; transform: translateY(-4px); }
+}
+/* A form or a fold that opens in place, such as the lesson editor and the re-check form (the 29 brief). */
+@utility animate-open-in {
+  transition: opacity var(--motion-pane) var(--ease-out);
+  @starting-style {
+    opacity: 0;
   }
-  @keyframes settle {
-    from { background-color: transparent; }
+}
+@utility animate-menu-in {
+  transition: opacity var(--motion-popover) var(--ease-out), transform var(--motion-popover) var(--ease-out);
+  @starting-style {
+    opacity: 0;
+    transform: translateY(-4px);
   }
-  @keyframes sheet-in {
-    from { transform: translateY(2rem); opacity: 0; }
+}
+/* The evidence drawer (the 14 brief, section 8): its content fades in over 160 ms, the matching words then
+   settle into their highlight over 200 ms, and below 768 px the sheet slides up. */
+@utility animate-drawer-in {
+  transition: opacity var(--motion-pane) var(--ease-out);
+  @starting-style {
+    opacity: 0;
+  }
+}
+@utility animate-settle {
+  transition: background-color var(--motion-sheet) ease var(--motion-pane);
+  @starting-style {
+    background-color: transparent;
+  }
+}
+@utility animate-sheet-in {
+  transition: opacity var(--motion-sheet) var(--ease-drawer), transform var(--motion-sheet) var(--ease-drawer);
+  @starting-style {
+    opacity: 0;
+    transform: translateY(2rem);
+  }
+}
+
+/* A primary or secondary button pressed (DESIGN.md section 4, Motion): it eases to 0.98 over 120 ms. The
+   transition is set only on :active, so the release snaps back at once, and a button that cannot act does
+   not move. Under reduced motion it does not scale at all. */
+@utility press {
+  @media (prefers-reduced-motion: no-preference) {
+    &:active:not([aria-disabled="true"]) {
+      transform: scale(0.98);
+      transition:
+        color var(--motion-color) ease,
+        background-color var(--motion-color) ease,
+        border-color var(--motion-color) ease,
+        transform var(--motion-press) var(--ease-out);
+    }
+  }
+}
+
+/* Hover styles only where a pointer can hover (DESIGN.md section 4, Motion): a tap on a phone leaves no
+   hover fill behind. Every hover: class in the app, and group-hover: and peer-hover:, go through this. */
+@custom-variant hover {
+  @media (hover: hover) and (pointer: fine) {
+    &:hover {
+      @slot;
+    }
   }
 }
 
@@ -140,6 +211,17 @@
 }
 @container page (width >= 64rem) {
   [data-page-column] > * { --layout-margin: 72px; --layout-gutter: 32px; }
+}
+
+/* The finding and the h1 step down below 48rem (DESIGN.md section 3), so the longest title still leaves the
+   finding in a phone's first screen. By the window, as the redesign's prototype draws them, not by the page area:
+   the evidence drawer narrows the page area, and a title that shrank when the drawer opened would move everything
+   under it. */
+@media (width < 48rem) {
+  :root {
+    --text-finding: 1.5rem;  --text-finding--line-height: 2rem;
+    --text-h1: 1.25rem;  --text-h1--line-height: 1.75rem;
+  }
 }
 
 /* A draft's document column (the 35 brief, section 3.2; DESIGN.md section 4, Document column). From a
@@ -172,8 +254,16 @@
 }
 
 /* A device that can hover (DESIGN.md section 5, Key hint; the 32 brief, section 3.2): key hints show from 768 px
-   only there, since a phone or a tablet with no keyboard has no use for them. */
-@custom-variant can-hover (@media (hover: hover));
+   only there, since a phone or a tablet with no keyboard has no use for them. The same test as hover: above. */
+@custom-variant can-hover (@media (hover: hover) and (pointer: fine));
+
+/* The page's height (DESIGN.md section 4, Phone baseline): the dynamic viewport, so a phone's browser bar never
+   hides the footer, and the classic one where a browser lacks dvh. The build's minifier drops the fallback while
+   every browser it targets reads dvh, and keeps it if the targets ever reach back further. */
+@utility min-h-window {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
 
 /* A control inside a sticky part shifts its scroll margin by the part's scroll padding, so the Tab key does
    not scroll the page to bring it out of that padding (DESIGN.md section 10). The pages set --sticky-top
@@ -259,11 +349,28 @@
     font-size: 100%;
     line-height: 1.5;
     -webkit-text-size-adjust: 100%;
+    /* DESIGN.md section 4, Phone baseline: a tap shows the control's own pressed state, not the browser's flash. */
+    -webkit-tap-highlight-color: transparent;
   }
 
   body {
+    min-height: 100vh;
     min-height: 100dvh;
     background: var(--color-page);
+  }
+
+  /* DESIGN.md section 4, Phone baseline: a tap on a control acts at once, with no wait to see whether it was a
+     double tap, and a field's text is at least 16 px, so a phone never zooms into it. A field's own type step
+     comes after this layer and wins, so each field in a component sets text-body. */
+  button,
+  a,
+  [role="button"] {
+    touch-action: manipulation;
+  }
+  input,
+  select,
+  textarea {
+    font-size: max(1rem, 16px);
   }
 
   /* DESIGN.md section 10: a 2 px focus outline with a 2 px offset, never removed. */
@@ -287,10 +394,10 @@
    and resize over 120 ms. Nothing moves on load or on a rerun, since a new chart draws new elements, and the
    rule below stops it all under reduced motion. */
 [data-lane2-move] {
-  transition: x 160ms ease-out, width 160ms ease-out;
+  transition: x var(--motion-pane) var(--ease-out), width var(--motion-pane) var(--ease-out);
 }
 [data-dot-mark] {
-  transition: r 120ms ease-out, fill 120ms ease-out;
+  transition: r var(--motion-color) var(--ease-out), fill var(--motion-color) var(--ease-out);
 }
 
 @media (prefers-reduced-motion: reduce) {

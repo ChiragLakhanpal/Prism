@@ -310,7 +310,7 @@ function PasteField({ summary, text, onText, onCompare, fieldError, edited, comp
         aria-describedby={described}
         onChange={(event) => onText(event.target.value)}
         className={cx(
-          "mt-2 min-h-[10.5rem] w-full resize-y rounded-md border bg-surface p-3 text-body text-ink @md/page:min-h-[13.5rem]",
+          "mt-2 min-h-[10.5rem] w-full resize-y rounded-sm border bg-surface p-3 text-body text-ink @md/page:min-h-[13.5rem]",
           fieldError ? "border-error-icon" : "border-line-strong",
         )}
         data-criteria-text

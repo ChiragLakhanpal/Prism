@@ -35,6 +35,39 @@ test("Open Sans and Roboto Mono load from the app's own files, and nothing else 
   expect(outsideRequests).toEqual([]);
 });
 
+// Ticket 90: the page's one finding is set in Open Sans Light (DESIGN.md section 3), self-hosted from
+// @fontsource/open-sans/300.css like every other weight.
+test("text in the finding style draws in Open Sans at weight 300, from the app's own files", async ({ page, baseURL, outsideRequests }) => {
+  await mockApi(page, { "/api/me": { body: await recorded("me.json") } });
+  const fonts: string[] = [];
+  page.on("request", (request) => {
+    if (request.resourceType() === "font") fonts.push(request.url());
+  });
+  await page.goto("/");
+  const finding = await page.evaluate(async () => {
+    const line = document.createElement("p");
+    line.className = "text-finding";
+    line.textContent = "2 of 49";
+    document.querySelector("main")!.append(line);
+    // Laying the line out starts its face's download; ready waits for it.
+    line.getBoundingClientRect();
+    await document.fonts.ready;
+    const style = getComputedStyle(line);
+    return {
+      family: style.fontFamily.split(",")[0],
+      weight: style.fontWeight,
+      // The face the line draws in is loaded, and it is Open Sans's own 300, not a synthesized one.
+      loaded: document.fonts.check('300 28px "Open Sans"', "2 of 49"),
+      face: Array.from(document.fonts).some((face) => face.family.replaceAll('"', "") === "Open Sans" && face.weight === "300" && face.status === "loaded"),
+    };
+  });
+  expect(finding).toEqual({ family: '"Open Sans"', weight: "300", loaded: true, face: true });
+  const light = fonts.filter((url) => /open-sans-[\w-]*-300-normal/.test(url));
+  expect(light.length, fonts.join("\n")).toBeGreaterThanOrEqual(1);
+  for (const url of light) expect(url).toMatch(new RegExp(`^${baseURL}/assets/[\\w-]+\\.woff2$`));
+  expect(outsideRequests).toEqual([]);
+});
+
 test("the fallback face uses the size-adjust and override values in DESIGN.md section 3", async ({ page }) => {
   const design = await fallbackMetrics();
   await mockApi(page, { "/api/me": { body: await recorded("me.json") } });

@@ -50,9 +50,11 @@ export type ReadinessTableState = { status: "ready"; rows: ReadinessRow[] } | { 
 // line and its scope caption the hardest documents' projects (design review r2). Below 768 px a card
 // stands a little taller than a real one, so the cards also hold the place of the source line under
 // them, which wraps there. The kinds' rows were measured again once lessons joined them (ticket 29), and
-// the hardest documents' rows once their Page cell gained the World Bank's PDF link (ticket 21).
+// the hardest documents' rows once their Page cell gained the World Bank's PDF link (ticket 21). The cards
+// were measured again with the shell redesign's type scale (ticket 90), whose 20 px caption and 24 px
+// title lines made each real card 1 to 2 px taller; the rows moved by less than 1.5 px and kept theirs.
 const ROW_HEIGHT = { kinds: "h-[8.3rem] xl:h-[7.5rem]", sources: "h-[8.4rem] xl:h-[7.2675rem]", shelf: "h-[9.5705rem] xl:h-[7.6707rem]" } as const;
-const CARD_HEIGHT = { kinds: "h-[16.75rem]", sources: "h-[16.36rem]", shelf: "h-[22.615rem]" } as const;
+const CARD_HEIGHT = { kinds: "h-[16.79rem]", sources: "h-[16.48rem]", shelf: "h-[22.725rem]" } as const;
 
 // Heads sit at the top, so their labels share one line however their short definitions wrap.
 const HEAD = "px-4 py-3 align-top font-semibold text-ink-heading";

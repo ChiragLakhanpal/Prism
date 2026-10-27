@@ -142,7 +142,7 @@ function NoticeEntry({ notice, onOpen }: { notice: ItemNotice; onOpen: (element:
         type="button"
         data-entry={`${PASSAGE}${notice.passage_id}`}
         onClick={(event) => onOpen(event.currentTarget)}
-        className="mt-2 inline-flex min-h-11 items-center rounded-pill border-2 border-primary px-4 text-button font-bold text-primary hover:bg-tint"
+        className="mt-2 inline-flex min-h-11 items-center rounded-sm border border-primary px-4 text-button text-primary hover:bg-tint"
       >
         <Fill template={words.openNotice} slots={{ id: <span className="ml-1 font-mono">{notice.notice_id}</span> }} />
       </button>

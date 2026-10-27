@@ -42,7 +42,7 @@ export function Steps({
     <div data-steps>
       <ol
         className="flex flex-col gap-1 text-small"
-        style={reserveLines ? { minHeight: `calc(${reserveLines} * 1.45em + ${reserveLines - 1} * 0.25rem)` } : undefined}
+        style={reserveLines ? { minHeight: `calc(${reserveLines} * 1lh + ${reserveLines - 1} * 0.25rem)` } : undefined}
       >
         {steps.map((step) => (
           <li

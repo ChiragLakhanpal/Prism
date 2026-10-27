@@ -193,7 +193,7 @@ function DateForm({ mode, onDone }: { mode: NavMode; onDone: () => void }) {
         onChange={(event) => setValue(event.target.value)}
         aria-describedby={error ? `${hint} ${errorId}` : hint}
         aria-invalid={error ? "true" : undefined}
-        className="h-11 w-full rounded-md border border-line-strong bg-surface px-3 text-body text-ink"
+        className="h-11 w-full rounded-sm border border-line-strong bg-surface px-3 text-body text-ink"
       />
       <p id={hint} className="text-caption text-ink-muted">
         {words.hint}

@@ -34,7 +34,7 @@ export function Frame({
   inertPage?: boolean;
 }) {
   return (
-    <div className="flex min-h-dvh flex-col bg-page">
+    <div className="flex min-h-window flex-col bg-page">
       <header inert={inertPage}>
         {nav}
         {band}

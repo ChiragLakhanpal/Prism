@@ -1,6 +1,8 @@
-// Buttons (DESIGN.md section 5): a pill with a 2 px border and 14 px bold text, 44 px tall.
-// Primary is the one solid button on a screen; secondary is outlined; ghost is text only.
-// Buttons act; links navigate (use TextLink for those).
+// Buttons (DESIGN.md section 5): a control's 4 px corners, a 1 px border and 14 px 600 text, 44 px
+// tall. A control is never a pill, so it never shares a shape with a badge, a marker or a chip
+// (DESIGN.md section 4, Radius). Primary is the one solid button on a screen; secondary is
+// outlined; ghost is text only. Pressed, a primary or secondary button eases to 0.98 and snaps
+// back on release (press, in app.css). Buttons act; links navigate (use TextLink for those).
 import type { ComponentProps, ReactNode } from "react";
 import { LoaderCircle, type LucideIcon } from "lucide-react";
 import { cx } from "../lib/cx";
@@ -9,17 +11,17 @@ export type ButtonVariant = "primary" | "secondary" | "ghost";
 
 const VARIANTS: Record<ButtonVariant, string> = {
   primary:
-    "border-primary bg-primary text-surface hover:border-primary-hover hover:bg-primary-hover " +
+    "press border-primary bg-primary text-surface hover:border-primary-hover hover:bg-primary-hover " +
     "active:border-primary-pressed active:bg-primary-pressed",
   secondary:
-    "border-primary bg-surface text-primary hover:bg-tint active:border-primary-pressed active:bg-tint active:text-primary-pressed",
+    "press border-primary bg-surface text-primary hover:bg-tint active:border-primary-pressed active:bg-tint active:text-primary-pressed",
   // Its hover fill is added below: tint-hover on a surface, tint on the page background.
   ghost: "border-transparent bg-transparent text-primary active:bg-tint active:text-primary-pressed",
 };
 
 // Disabled: ink-muted text, which is 5.67:1 on surface-2 and 6.69:1 on surface. Primary and
-// secondary turn into a surface-2 pill with a line border; ghost stays a bare label, so no
-// button changes its shape when it is disabled.
+// secondary turn surface-2 with a line border; ghost stays a bare label, so no button changes
+// its shape when it is disabled, and none of them moves when pressed.
 const DISABLED: Record<ButtonVariant, string> = {
   primary:
     "data-disabled:cursor-not-allowed data-disabled:border-line data-disabled:bg-surface-2 data-disabled:text-ink-muted " +
@@ -45,7 +47,7 @@ const HELD_GHOST =
 // A link that looks like the primary button, such as Judging's "Judge the next query": it goes to another page, so
 // it stays an <a> (buttons act, links navigate), with the primary button's shape, fill, hover and press.
 export const PRIMARY_LINK = cx(
-  "inline-flex h-11 items-center justify-center rounded-pill border-2 px-6 text-button transition-paint duration-150",
+  "inline-flex h-11 items-center justify-center rounded-sm border px-6 text-button transition-paint",
   VARIANTS.primary,
 );
 
@@ -108,8 +110,8 @@ export function Button({
       data-held={held || undefined}
       onClick={inactive ? (event) => event.preventDefault() : onClick}
       className={cx(
-        "relative inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-pill border-2 text-button",
-        "transition-paint duration-150 select-none",
+        "relative inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-sm border text-button",
+        "transition-paint select-none",
         iconOnly ? "w-11" : flush ? "-ml-2 border-x-0 px-2 text-left" : loading && !Icon ? "px-3" : "px-6",
         held ? (variant === "ghost" ? HELD_GHOST : HELD) : VARIANTS[variant],
         !held && variant === "ghost" && (onPage ? "hover:bg-tint" : "hover:bg-tint-hover"),

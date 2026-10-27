@@ -302,7 +302,7 @@ function FillEditor({
               setError(null);
             }}
             onKeyDown={onKey}
-            className={cx("h-11 w-full rounded-md border bg-surface px-3 text-body text-ink", error ? "border-error-icon" : "border-line-strong")}
+            className={cx("h-11 w-full rounded-sm border bg-surface px-3 text-body text-ink", error ? "border-error-icon" : "border-line-strong")}
           />
           <p id={hintId} className="text-caption text-ink-muted">
             {column.key === "risk_owner" ? words.ownerHint : <Fill template={words.scoreHint} slots={{ definition: ppsd.score.definition }} />}

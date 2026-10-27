@@ -78,7 +78,7 @@ export function FollowControl({ pid, name, sample }: {
   return (
     <div className="mt-4" data-follow={state}>
       <div role="group" aria-label={words.label} aria-busy={busy || undefined} className="flex min-h-11 flex-wrap items-center gap-x-3 gap-y-2">
-        {state === "loading" && <Skeleton className="h-11 w-[184px]" radius="rounded-pill" />}
+        {state === "loading" && <Skeleton className="h-11 w-[184px]" radius="rounded-sm" />}
         {state === "unread" && (
           <>
             <p role="alert" className="flex items-start gap-1 text-small text-error" data-follow-unread>

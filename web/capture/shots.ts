@@ -57,6 +57,13 @@ const type = (selector: string, text: string) => async (page: Page) => {
   await page.waitForTimeout(250);
 };
 
+// Held down, as a pointer presses it, so the photo shows the pressed state (ticket 90: a button eases to 0.98).
+const press = (selector: string) => async (page: Page) => {
+  await hover(selector)(page);
+  await page.mouse.down();
+  await page.waitForTimeout(250);
+};
+
 const WIDE = [1440, 1024];
 const NARROW = [390];
 
@@ -1889,10 +1896,13 @@ export const SHOTS: Shot[] = [
   { name: "navigation--320", path: "/gallery/navigation?menu=open", widths: [320] },
 
   // Buttons, links and tabs.
-  { name: "buttons--hover-primary", path: "/gallery/buttons", act: hover("[data-button=primary]") },
-  { name: "buttons--hover-secondary", path: "/gallery/buttons", act: hover("[data-button=secondary]") },
-  { name: "buttons--hover-ghost", path: "/gallery/buttons", act: hover("[data-button=ghost]") },
-  { name: "buttons--focus-primary", path: "/gallery/buttons", act: focus("[data-button=primary]") },
+  // The variants' own buttons: the frame's view popover holds a secondary button too, out of sight until it opens.
+  { name: "buttons--hover-primary", path: "/gallery/buttons", act: hover("[data-state-section=variants] [data-button=primary]") },
+  { name: "buttons--hover-secondary", path: "/gallery/buttons", act: hover("[data-state-section=variants] [data-button=secondary]") },
+  { name: "buttons--hover-ghost", path: "/gallery/buttons", act: hover("[data-state-section=variants] [data-button=ghost]") },
+  { name: "buttons--focus-primary", path: "/gallery/buttons", act: focus("[data-state-section=variants] [data-button=primary]") },
+  { name: "buttons--pressed-primary", path: "/gallery/buttons", act: press("[data-state-section=variants] [data-button=primary]") },
+  { name: "buttons--pressed-secondary", path: "/gallery/buttons", act: press("[data-state-section=variants] [data-button=secondary]") },
   { name: "buttons--hover-flush", path: "/gallery/buttons", act: hover("[data-state-section=flush] button") },
   { name: "buttons--focus-flush", path: "/gallery/buttons", act: focus("[data-state-section=flush] button") },
   { name: "buttons--hover-on-page", path: "/gallery/buttons", act: hover("[data-state-section=on-page] button") },

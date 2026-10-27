@@ -1,7 +1,7 @@
 // The floating surfaces: a tooltip that opens on hover or focus, and a non-modal window that
 // opens on click (DefinitionWindow, the view popover). Both use DESIGN.md section 4's popover
 // look (surface, a 1 px line, radius 8, the section shadow), sit 8 px from what opened them,
-// fade in over 120 ms, and close on Escape. Radix places them and keeps them on screen.
+// fade in over 160 ms (DESIGN.md section 4, Motion), and close on Escape. Radix places them and keeps them on screen.
 //
 // The tooltip follows WCAG 1.4.13 and the ticket 14 brief: hover opens it after 150 ms and
 // focus at once; the pointer can move onto it; it closes 150 ms after the pointer leaves both;
@@ -42,7 +42,7 @@ export function releaseHoverCard(hide: () => void) {
 export function Tooltip({
   trigger,
   children,
-  width = "max-w-[20rem]",
+  width = "max-w-(--tooltip-width)",
   quiet = false,
   side = "bottom",
 }: {
