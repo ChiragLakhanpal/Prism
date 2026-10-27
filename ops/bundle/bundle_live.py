@@ -17,10 +17,11 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[1]
-for folder in (REPO / "src", REPO / "ops" / "dayone"):
+for folder in (REPO / "src", REPO / "ops" / "dayone", HERE):
     if str(folder) not in sys.path:
         sys.path.insert(0, str(folder))
 
+import workspace_state  # noqa: E402  (this folder's workspace_state.py, ticket 81)
 from live import workspace as workspace_client  # noqa: E402  (ticket 03's client factory)
 from strata.lakehouse.engine import WarehouseEngine  # noqa: E402
 
@@ -74,6 +75,13 @@ class LiveWorkspace:
         """The warehouse, called through the SDK's client so a token and a service principal both work."""
         return WarehouseEngine(self.env["DATABRICKS_WAREHOUSE_ID"],
                                lambda method, path, body: self.w.api_client.do(method, path, body=body))
+
+    def warehouse_state(self) -> dict:
+        """The warehouse's state, through the SDK and no SQL, which the deploy reads first (ticket 81)."""
+        return workspace_state.warehouse_state(self.w, self.env["DATABRICKS_WAREHOUSE_ID"])
+
+    def start_warehouse(self) -> None:
+        workspace_state.start_warehouse(self.w, self.env["DATABRICKS_WAREHOUSE_ID"])
 
     # ── Unity Catalog ──
 

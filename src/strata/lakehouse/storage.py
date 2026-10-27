@@ -16,13 +16,6 @@ from collections.abc import Callable
 from strata.lakehouse import catalog
 from strata.lakehouse.engine import Engine
 
-TABLES = """
-SELECT table_schema, table_name
-FROM system.information_schema.tables
-WHERE table_catalog = :catalog
-  AND table_type NOT IN ('VIEW', 'METRIC_VIEW')
-ORDER BY table_schema, table_name
-"""
 COLUMNS = ("run_id", "table_name", "structured", "row_count", "bytes", "measured_at", "public_from")
 # The tables that hold documents' text, layout, passages and the passages' vectors rather than
 # records. A new table of document text or vectors goes here, so it never counts as structured data.
@@ -32,11 +25,12 @@ DOCUMENT_TABLES = ("strata.bronze.document_pages", "strata.bronze.document_texts
 
 
 def measure(engine: Engine, run_id: str, clock: Callable[[], dt.datetime] = lambda: dt.datetime.now(dt.UTC)) -> int:
-    """Record each catalog table's rows and bytes under the run's id. Returns how many rows it wrote."""
+    """Record each catalog table's rows and bytes under the run's id, from the catalog's listing, which leaves out
+    views and the search index's own objects (catalog.listed_tables; ticket 87). Returns how many rows it wrote."""
     measured_at = clock()
     schemas = catalog.declared().schemas
     rows = []
-    for schema, name in engine.run(TABLES, {"catalog": catalog.CATALOG}).as_text():
+    for schema, name in catalog.listed_tables(engine):
         if schema not in schemas:
             continue  # the fixture database's own copy of the sources, for one
         table = f"{catalog.CATALOG}.{schema}.{name}"

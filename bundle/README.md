@@ -9,6 +9,14 @@ Strata's Declarative Automation Bundle is `databricks.yml` at the root of the re
 
 A bundle does not declare tables. Each table is defined once, in `src/strata/lakehouse/tables/<schema>/<table>.sql`, and each view in `src/strata/lakehouse/views/<schema>/<view>.sql`, and the deploy command creates them on the SQL warehouse. The gate builds the same definitions on DuckDB, and it fails when a table has no `public_from` column (ADR 0002).
 
+The deploy's `public_from` check and the nightly's table sizes measure read the same listing of the catalog's tables (`listed_tables` in `src/strata/lakehouse/catalog.py`). It leaves out views and metric views, which hold no rows of their own, and the search index's three objects in `strata.gold`:
+
+- `strata.gold.passage_index`, the index that `config/models.toml` names (`[search] index`), which the workspace lists as a FOREIGN table;
+- `strata.gold.event_log_<id>`, the event log of the pipeline that syncs the index;
+- `strata.gold.__<id>___online_index_view`, the view the index serves from, which has no columns.
+
+`<id>` is the index's id, a UUID written with underscores. The AI Search service makes these objects at the first `sync_index`, and Strata never defines them, so they have no `public_from` column, and a query cannot read the view at all. Before this, the deploy stopped at its table step and `measure_data_readiness` failed on the view (October 27, 2026, ticket 87). Nothing else is left out: a table in another schema, or with any other name, is still checked and measured.
+
 ## Quality checks and reruns
 
 When a task finishes, it checks the tables `config/quality_checks.toml` names for it: each table's row count against its range in `config/thresholds.toml` (`[quality_checks]`), rows missing a key, rows missing a Disclosed date (`public_from`), duplicate rows, and notices still carrying contact details. Every result goes to `strata.ops.quality_checks` with the night, the task, the check, the table and the count found, passed or failed, for the dashboard's Governance page. A failed check never stops the job.
@@ -22,6 +30,8 @@ You need the Databricks CLI 0.287.0 or later, because only the direct deployment
     uv run --script ops/bundle/deploy.py --env-file .env
 
 The command signs the Databricks CLI in with the host and token (or service principal) from the environment file alone: it points the CLI's config file at nothing, so the default profile in `~/.databrickscfg` never applies. On October 26, 2026 a deploy meant for the new paid workspace landed on the old one because the CLI's bundle commands took that default profile over the environment (ticket 82).
+
+Before it changes anything, it reads the SQL warehouse's state through the SDK. When the warehouse is stopped and will not start when asked, it prints one sentence that names the state and exits 2 (ticket 81). On Free Edition the usual cause is the workspace's daily compute limit.
 
 It lists what the workspace holds, deploys the bundle, gives the app back its way in to the catalog (below), creates the tables, and prints what changed, a dashboard the bundle rewrote among them. A second run prints "No changes." It also lists fairshare's catalog before and after, and fails if the two listings differ. If fairshare's catalog has another name, pass it with `--fairshare-catalog`.
 

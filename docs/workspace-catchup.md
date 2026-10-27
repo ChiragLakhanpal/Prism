@@ -3295,3 +3295,76 @@ Record the pages before, the minutes of `bronze_to_gold`, the pages left if any,
 ## Ticket 89, step 1 of 2: the paid workspace's nightly window is 300 minutes until the score task fits
 
 **Ran on October 27, 2026 (orchestrator), 04:26 UTC.** The score task run 1086916576670871 timed out at 150 minutes (01:47 to 04:17 UTC, 2h 30m 28s in the UI) without finishing, so the tasks after it were skipped. Stopgap, on the paid workspace's job only: `databricks jobs update --json '{"job_id": 200833746315993, "new_settings": {"timeout_seconds": 18000}}' -p strata`; `databricks jobs get 200833746315993 -p strata` then shows timeout_seconds 18000 with the schedule unchanged (0 0 3 * * ? America/New_York, UNPAUSED). Caution: the next `ops/bundle/deploy.py` run resets the job to the bundle's 9000 seconds; rerun the update after it until ticket 89's fix lands. The remaining tasks of the night (measure_data_readiness, refresh_drafts, parse_and_embed, sync_index) run one at a time by hand from 04:18 UTC, each recorded under its ticket when it ends.
+
+## Ticket 88, step 1 of 2: redeploy the App from the merge commit with `--keep-secrets`, so its install holds sqlglot (criterion 3, live)
+
+Parked on October 26, 2026 with ticket 88, which merged into build/strata as 114ae456. Run it from a snapshot of 114ae456 or later, as the header says, and link the main checkout's `web/node_modules` into the snapshot before the deploy. It needs the Databricks keys in `.env` and the Databricks CLI. It writes no secret, so the second session or the orchestrator runs it with `--keep-secrets` (ticket 70). It changes no table, job or dashboard.
+
+Why: since its first deploy, the App's Packages page has said "I couldn't load your packages and checked plans just now. Try again in a moment." `GET /api/planned-packages` answered 500 with the code `internal`, and Application Insights holds `ModuleNotFoundError: No module named 'sqlglot'` (references e12e0e3f32c043b75483cc9fcac419e0 and be101875624e4a5e7e18a9586b8d0cc8, October 27, 03:46 and 03:53 UTC). The error came from the transpile step that rewrites each statement for Lakebase (`src/strata/lakehouse/engine.py`, `src/strata/appstate/lakebase.py`). Ticket 88 adds `sqlglot==30.24.0` to `ops/app/requirements.txt`, and `ops/app/tests/test_app_imports.py` now fails the gate when the server can import a package the App's list lacks.
+
+Run these from the snapshot, with `--env-file` pointing at the main checkout's `.env`:
+
+    uv run --script ops/app/deploy_app.py --env-file "<main checkout>/.env" --keep-secrets
+    databricks apps get strata -p strata
+
+It worked if:
+
+- The deploy exits 0 and prints the App's address (https://strata-7405609289499029.9.azure.databricksapps.com).
+- `databricks apps get strata` shows the App RUNNING, with an active deployment created after the deploy started and in the state SUCCEEDED.
+- The App's install log (the App's Logs tab in the workspace) lists sqlglot 30.24.0 among the packages pip installed.
+- Application Insights records no new `ModuleNotFoundError` for sqlglot after the deploy.
+
+Record here the deploy's exit code, the active deployment's id and time, the sqlglot line from the install log and the time.
+
+## Ticket 88, step 2 of 2: the Packages page loads on the deployed App and lists the examples (criterion 3, live)
+
+Run it after step 1. It needs a person signed in to the App as a viewer (a member of the reviewing panel's group), so it is the user's or the orchestrator's browser step.
+
+Open https://strata-7405609289499029.9.azure.databricksapps.com, signed in as a viewer, and go to the Packages tab.
+
+It worked if:
+
+- `GET /api/planned-packages` answers 200, not 500 with the code `internal` (the browser's network panel shows it).
+- The page lists the examples Strata set up, each labelled "Example", instead of "I couldn't load your packages and checked plans just now. Try again in a moment."
+
+If the page loads but lists no examples, the seed command has not run on the paid workspace yet. Run "Ticket 41, step 2 of 3" first (`uv run python -m strata.seed_examples --env-file "<main checkout>/.env"`), then reload. Record here the time, the status of `GET /api/planned-packages` and how many rows the page lists. This closes ticket 88's criterion 3.
+
+## Ticket 81, step 1 of 2: the next App deploy checks the workspace first and confirms its deployment registered (criterion 3, live)
+
+Parked on October 26, 2026 with ticket 81, which merged into build/strata as 974e1c37. Run it from a snapshot of 974e1c37 or later, as the header says, and link the main checkout's `web/node_modules` into the snapshot before the deploy. It needs the Databricks keys in `.env` and the Databricks CLI. It writes no secret, so the second session or the orchestrator runs it with `--keep-secrets` (ticket 70). It changes no table, job or dashboard. 974e1c37 holds ticket 88's merge (114ae456), so one deploy from it also serves "Ticket 88, step 1 of 2" above: run it once and record it under both tickets.
+
+Run these from the snapshot, with `--env-file` pointing at the main checkout's `.env`:
+
+    uv run --script ops/app/deploy_app.py --env-file "<main checkout>/.env" --keep-secrets
+    databricks apps list-deployments strata -p strata
+
+It worked if:
+
+- No line comes before "1. Building the web app.", because the pre-check found the App's compute and the SQL warehouse running.
+- Right after "5. Deploying the app. This takes a few minutes." the script prints "   The deployment <id>, made at HH:MM:SS UTC on <date>, succeeded."
+- That `<id>` is the newest SUCCEEDED entry in `databricks apps list-deployments strata`.
+- Steps 6 to 8 follow, the script exits 0, and its last line is "Strata is running at https://strata-7405609289499029.9.azure.databricksapps.com".
+
+If the script instead prints one line that starts "I changed nothing, because" and exits 2, the workspace has stopped the App's compute or the SQL warehouse: record the line under step 2 below. On the paid workspace a stop "due to workspace or account status" points to the account, not a daily limit, and the App may need `databricks apps start strata -p strata` before the next run (review follow-up 1 in `.notes/81-review.md`). If it stops after step 5 saying no deployment was made since the run started, compare this computer's clock with the workspace's before you read it as a failed deploy (review follow-up 3).
+
+Optional: `uv run --script ops/bundle/deploy.py --env-file "<main checkout>/.env"` prints the same lines as its last run, with no new first line. Two cautions: that last run stopped at step 2 on the vector index's own tables (ticket 85's deploy record above), which is not ticket 81's stop, and a bundle deploy resets the job's timeout to 9000 seconds, so rerun the `databricks jobs update` in ticket 89's block after it.
+
+Record here the deploy's exit code, the line after step 5's heading, the newest entry of `databricks apps list-deployments strata` and the time.
+
+## Ticket 81, step 2 of 2: the three stop sentences against a workspace that really stopped (when one next occurs)
+
+Nothing to run on purpose, and never stop the workspace to test this. When the workspace next stops the App's compute or the SQL warehouse (`databricks apps get strata -p strata` shows the compute STOPPED with "due to workspace or account status", or `databricks warehouses list -p strata` shows Strata's warehouse STOPPED and a start fails), run each of these once from a snapshot of 974e1c37 or later:
+
+    uv run --script ops/app/deploy_app.py --env-file "<main checkout>/.env" --keep-secrets
+    uv run --script ops/bundle/deploy.py --env-file "<main checkout>/.env"
+    uv run --with databricks-sdk==0.156.0 python ops/demo/ready.py --env-file "<main checkout>/.env"
+
+It worked if each prints exactly one line that starts "I changed nothing, because" and names the state, each exits 2, and `databricks apps list-deployments strata -p strata` shows no deployment newer than before the three runs. Record the three lines, the exit codes and the time here.
+
+## Ticket 88, the live step: the App redeployed with sqlglot, and the Packages route answers
+
+**Ran on October 27, 2026 (orchestrator), 05:05 to 05:18 UTC.** From a snapshot of the merge commit 114ae456 (the main checkout's web/node_modules linked in), `uv run --script ops/app/deploy_app.py --env-file "<main checkout>/.env" --keep-secrets` exited 0 with the last line `Strata is running at https://strata-7405609289499029.9.azure.databricksapps.com`; step 7 printed ticket 83's warning that the app existed before this deploy (a viewer who opened it before it had the user authorization scopes signs out once). Then, with the CLI profile's OAuth token, `GET /api/planned-packages` answered 200 at 05:20 UTC with a JSON body of `rows` (0) and `counts` (`{"packages": 0, "plan_checks": 0, "total": 0}`), `GET /api/health` 200 and `GET /api/following` 200. Before this deploy the same route answered 500 with `ModuleNotFoundError: No module named 'sqlglot'` (App Insights e12e0e3f32c043b75483cc9fcac419e0), which is what the Packages page showed as "I couldn't load your packages and checked plans just now." The rows are 0 because the seed command (ticket 41, step 2 of 3, above) has not run on the paid workspace: it still needs the two things only the user can give, the panelists in `config/roles.toml`'s `reviewing_panel` group with their `user_id`, and the App's service principal's DATABRICKS_CLIENT_ID and DATABRICKS_CLIENT_SECRET in the env file (`python3 .claude/hooks/guard.py --env-keys` lists neither at 05:22 UTC). The three tables of ticket 41's step 1 exist on the paid workspace (`databricks tables exists` is true for strata.ops.start_here_choices, seeded_examples and example_lesson_versions). So criterion 3's first half holds (the route answers 200 for a signed-in viewer) and its second half (the page shows its examples) waits on the seed; the user's look at the Packages page in the morning closes it.
+
+## Ticket 86, the second document pass of the night on the paid workspace (before the ticket's fix)
+
+**Ran on October 27, 2026 (orchestrator), 04:29 to 05:31 UTC.** `parse_and_embed` alone (run 1471925021545, `run-now --only`) ended SUCCESS after 62 minutes and wrote no passage: `SELECT count(*) FROM strata.gold.passage` is 0, `strata.ops.documents_read` holds 0 rows, and `strata.ops.skipped_documents` holds one row for the run (reader plans, project P156634, document 34147454, outcome unfinished, reason "I spent the night's 60 minutes for the document host, so I did not read page 6 of ...", skipped at 05:30:16 UTC). So the plan reader spent the whole window on one Procurement Plan's scanned pages and the passage reader never started, as the ticket's first builder predicted from the first pass (run 564462742591748). After both passes: strata.ops.anchored_plan_rows 0 rows, strata.ops.plan_baselines 0, strata.silver.plan_data_notes 0, parse_runs rows for this run 2. The chain ran `sync_index` next (recorded under ticket 72 when it ends). The passages come from a `parse_and_embed` run alone after ticket 86 merges with the split of the reading minutes (decision 76) and the bundle deploys; that run is the ticket's live proof.
