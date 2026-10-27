@@ -1171,7 +1171,7 @@ def workers(step):
 
 
 def test_the_python_tests_that_read_the_fixture_database_run_on_pytest_xdist_workers():
-    """The python lane sets the gate's total, and every ticket adds tests under tests/."""
+    """Every ticket adds tests under tests/, so the python lane must stay well inside the gate's limit."""
     readers = [step for step in gate_steps() if reads_the_fixture_database(step)]
 
     assert readers and all(workers(step) > 1 for step in readers), [step["run"] for step in readers]
@@ -1273,14 +1273,25 @@ def web_build_problems(steps):
 
 # Playwright options that run only some of the tests, which a shard step must never pass.
 TEST_FILTERS = ("--grep", "-g", "--grep-invert", "--project")
+# Playwright options that take a value, which may come as the next argument, as in --workers 33%.
+TAKES_A_VALUE = ("--workers", "-j", "--reporter", "--shard", "--timeout", "--retries", "--repeat-each",
+                 "--max-failures", "--output", "--config", "-c")
 
 
 def filters(step):
-    """The arguments a Playwright step passes after "--" that run only some tests: a filter option, or a test file."""
+    """The arguments a Playwright step passes after "--" that run only some tests: a filter option with its value,
+    or a test file. The value of an option such as --workers is neither."""
     argv = step["run"]
     passed = argv[argv.index("--") + 1:] if "--" in argv else []
-    return [arg for arg in passed
-            if not arg.startswith("-") or arg in TEST_FILTERS or arg.split("=", 1)[0] in TEST_FILTERS]
+    found, value_next = [], False
+    for arg in passed:
+        if value_next:
+            value_next = False
+        elif arg in TAKES_A_VALUE:
+            value_next = True
+        elif not arg.startswith("-") or arg in TEST_FILTERS or arg.split("=", 1)[0] in TEST_FILTERS:
+            found.append(arg)
+    return found
 
 
 def shard_problems(steps):
@@ -1374,12 +1385,22 @@ def test_a_bad_edit_to_the_web_lanes_fails_its_check(bad, check):
     assert check(bad(gate_steps())) != []
 
 
+def test_the_value_of_an_option_such_as_workers_is_not_read_as_a_test_file():
+    def step(*args):
+        return {"run": ["npm", "--prefix", "web", "run", "test", "--", "--shard=2/2", *args]}
+
+    assert filters(step("--workers", "33%", "--reporter", "line")) == []
+    assert filters(step("--workers", "33%", "tests/checks.spec.ts")) == ["tests/checks.spec.ts"]
+    assert filters(step("--grep", "Summary")) == ["--grep", "Summary"]
+
+
 # The screen tests run axe only through web/tests/axe.ts, whose scans cost about half of axe's default
 # run and find the same violations (ticket 55). web/tests/axe.spec.ts compares the two, so it builds
 # axe's default run as well.
 AXE_RUNNERS = {"axe.ts", "axe.spec.ts"}
-# A file that imports axe's Playwright package can build a scan under any name, so the check looks for the import.
-IMPORTS_AXE = re.compile(r"""from\s+["']@axe-core/playwright["']""")
+# A file that imports axe's Playwright package can build a scan under any name, so the check looks for the import,
+# written as `from`, `import(...)` or `require(...)`.
+IMPORTS_AXE = re.compile(r"""(?:from\s+|import\s*\(\s*|require\s*\(\s*)["']@axe-core/playwright["']""")
 
 
 def own_axe_scans(web):
@@ -1402,9 +1423,14 @@ def test_the_axe_check_finds_a_spec_that_builds_its_own_scan(tmp_path):
                                              "const results = await new Axe({ page }).analyze();\n")
     write(tmp_path, "capture/named.ts", 'import { AxeBuilder as B } from "@axe-core/playwright";\n'
                                         "const results = await new B({ page }).analyze();\n")
+    write(tmp_path, "tests/dynamic.spec.ts", 'const { default: Axe } = await import("@axe-core/playwright");\n'
+                                             "const results = await new Axe({ page }).analyze();\n")
+    write(tmp_path, "capture/required.ts", "const Axe = require( '@axe-core/playwright' );\n"
+                                           "const results = await new Axe({ page }).analyze();\n")
     write(tmp_path, "tests/other.spec.ts", 'import { scan } from "./axe";\nconst results = await scan(page);\n')
 
-    assert own_axe_scans(tmp_path) == ["capture/named.ts", "tests/page.spec.ts", "tests/renamed.spec.ts"]
+    assert own_axe_scans(tmp_path) == ["capture/named.ts", "capture/required.ts", "tests/dynamic.spec.ts",
+                                       "tests/page.spec.ts", "tests/renamed.spec.ts"]
 
 
 if __name__ == "__main__":

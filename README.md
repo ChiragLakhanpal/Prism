@@ -85,7 +85,7 @@ Git runs the gate before every commit, as CLAUDE.md rule 6 requires. It also run
 
 It runs the steps in `gates/steps.toml`. Steps that do not depend on each other run side by side, in lanes. Today it has these steps:
 
-1. Scan the staged changes and the history of the branch for secrets. This step runs alone, before the lanes start.
+1. Scan the staged changes and the history of the branch for secrets. During a merge, the scan also reads the history of the branch the merge brings in. This step runs alone, before the lanes start.
 2. Run a few tests that read the Markdown files the docs write, alone, in about two seconds. `ops/bundle/tests/test_check.py::test_every_check_command_the_repo_writes_parses_as_written` parses each `ops/bundle/check.py` command the docs write, and three `schedules` tests in the same file write their note into a copy of `bundle/README.md`. `ops/dayone/tests/test_results_document.py` checks `docs/day-one-results.md` against its marked blocks, and a test in `ops/dayone/tests/test_run_probes.py` checks that each command in it names a file that exists. All of them also run in their own lanes below. Other tests that read Markdown, such as those that read DESIGN.md, GLOSSARY.md or README's demo section, still run only when code is staged.
 3. Run nine lanes side by side:
    - The guard lane tests the guard hook.
