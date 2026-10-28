@@ -3076,7 +3076,9 @@ It worked if:
 
 Record the exit code, the names after "so:", and the commit.
 
-## Ticket 47, step 2 of 3: record the demo package's answers on the workspace, so slide 8 draws its range chart (criterion 4, live)
+## Ticket 47, step 2 of 3: record the demo package's answers on the workspace (criterion 4, live; no slide draws them since ticket 106)
+
+Since the deck's second draft (ticket 106), no slide reads these answers: the package demo opens the live package workspace in a new tab. The step still records them into the deck's data, which checks them against the demo package. It cannot fail a slide, so run it only when the estimates loop has run.
 
 Parked with step 1, after merge commit bf9c7214. Run it after step 1, and after the nightly job and the estimates loop have run on the workspace (the script's docstring). It needs DATABRICKS_HOST, DATABRICKS_WAREHOUSE_ID and DATABRICKS_TOKEN from the env file. It runs the app's own routes in its own process, on the SQL warehouse, and asks `GET /api/packages/KE-NWWDA-541055-CW-RFB/comparables` and `/estimate`. That package is the demo package that `config/slice.toml` `[demo_plan]` names.
 
@@ -3092,12 +3094,11 @@ Commit `docs/proposal/demo-package.json` and `web/public/deck/data.json` togethe
 
 It worked if:
 
-- The recorder exits 0 and prints "Wrote .../docs/proposal/demo-package.json. Now run uv run python -m strata.proposal deck, which builds the deck's data from it." Exit 2 with "I could not record the demo package: ..." means a route answered with something other than 200, or the answers cannot fill slide 8. Record that line word for word and commit nothing.
+- The recorder exits 0 and prints "Wrote .../docs/proposal/demo-package.json. Now run uv run python -m strata.proposal deck, which builds the deck's data from it." Exit 2 with "I could not record the demo package: ..." means a route answered with something other than 200, or the answers are not for the demo package. Record that line word for word and commit nothing.
 - The deck command exits 0, and it does not print "There is no docs/proposal/demo-package.json".
-- The commit's gate passes. Its screen test of the committed deck (`web/tests/deck.spec.ts`) then runs the number check and axe over all 16 slides with these real numbers.
-- Check the comparables count in slide 8's title (step 3 opens it). If it reads 0, the recorded comparables answer abstained before counting (review round 2, follow-up 4). Record the answer's abstention reason, and leave the files uncommitted until the demo package changes.
+- The commit's gate passes. Its screen test of the committed deck (`web/tests/deck.spec.ts`) runs the number check and axe over every slide.
 
-Record both exit codes, the commit, and the comparables count.
+Record both exit codes and the commit.
 
 ## Ticket 47, step 3 of 3: /present on the deployed App, and How Strata works has no link to it (criteria 1 and 5, live)
 
@@ -3107,15 +3108,18 @@ Parked with step 1, after merge commit bf9c7214. Run it after step 2's commit, o
 
 Then, in a browser:
 
-1. Open `https://strata-7474658003099155.aws.databricksapps.com/present/1`. Press the right arrow 15 times and watch the address. Then open `/present/8`.
-2. Open `https://strata-7474658003099155.aws.databricksapps.com/data/how-strata-works`. In the DevTools console, run `document.querySelectorAll('a[href*="/present"]').length`.
+1. Open `/present/1` on the App's address, which the deploy's last line prints, in a window at least 1008 by 644 px. Press the right arrow through the "Three strata" slides and watch the slide and the address. Then press End.
+2. Open `/present/8`, `/present/9` and `/present/10`, the "Strata at work" demo slides, and click each one's blue button.
+3. Open `/present/16`.
+4. Open `/data/how-strata-works` on the same address. In the DevTools console, run `document.querySelectorAll('a[href*="/present"]').length`.
 
 It worked if:
 
 - The deploy exits 0, and its last line is `Strata is running at https://...`.
-- Each press moves one slide and the address follows it, ending at `/present/16`, and every slide shows the DESIGN.md section 8 footer.
-- `/present/8` draws the demo package's range chart, with a credit row that names both answers' days and has the World Bank logo at its right.
-- The console prints 0, and How Strata works shows its eight figures with their captions.
+- A press brings in one point or one figure step on the slide, and after a slide's last step the next press moves to the next slide and the address follows it. End reaches the last slide, "Thank you". Every slide shows the World Bank logo in its header and the DESIGN.md section 8 footer.
+- Each demo button opens its screen in a new tab and leaves the deck where it was: the plan check of P156634's plan of October 9, 2026, the package workspace with the rural roads sentence, and P130164's project page.
+- `/present/16`'s title reads "No dataset publishes contract awards for fiscal 2017 to 2019". Until the workspace pull measures the award rows, its grey note says the slide fills in once the job counts them.
+- The console prints 0, and How Strata works shows its figures with their captions.
 
 Record the deploy's exit code and last line, any slide that did not move or draw, and the console count.
 

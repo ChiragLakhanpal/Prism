@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg viewBox="0 0 568 268" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="reading-title reading-desc" id="reading-root">
+<svg viewBox="0 0 864 352" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="reading-title reading-desc" data-motion-root="" data-motion-mode="none" data-step-count="6" id="reading-root">
         <title id="reading-title">How a document becomes numbered passages</title>
-        <desc id="reading-desc">A document goes to a page router; clean pages use the World Bank&#x27;s published text and scanned pages and tables go through a layout parser, and both end in numbered passages, each with its paragraph and page, which go into the search index.</desc>
+        <desc id="reading-desc">A page router sends clean pages to the text the World Bank publishes and scanned pages and tables to a layout parser, and both roads end in numbered passages, each with its paragraph number and page, which go into the hybrid search index.</desc>
         <defs>
       <style>#reading-root { font-family: 'Open Sans', system-ui, sans-serif; color: #181f25; }
       #reading-root .diagram-container { width: 100%; overflow-x: auto; }
@@ -13,37 +13,56 @@
 <marker id="reading-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#01707e"/></marker>
         </defs>
         <rect width="100%" height="100%" fill="#f5f7f9"/>
-<path d="M100,134 H119" fill="none" stroke="#4b5e71" stroke-width="1.2" marker-end="url(#reading-arrow)"/>
-<path d="M172,102 V72 Q172,64 180,64 H251" fill="none" stroke="#4b5e71" stroke-width="1.2" marker-end="url(#reading-arrow)"/>
-<path d="M172,166 V196 Q172,204 180,204 H251" fill="none" stroke="#4b5e71" stroke-width="1.2" marker-end="url(#reading-arrow)"/>
-<path d="M372,52 H403" fill="none" stroke="#4b5e71" stroke-width="1.2" marker-end="url(#reading-arrow)"/>
-<path d="M372,204 H380 Q388,204 388,196 V84 Q388,76 396,76 H403" fill="none" stroke="#4b5e71" stroke-width="1.2" marker-end="url(#reading-arrow)"/>
-<path d="M474,88 V179" fill="none" stroke="#4b5e71" stroke-width="1.2" marker-end="url(#reading-arrow)"/>
-<rect x="198" y="46" width="36" height="12" rx="2" fill="#f5f7f9"/>
-<text x="216" y="55" fill="#586e84" font-size="8" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">CLEAN</text>
-<rect x="173" y="210" width="80" height="12" rx="2" fill="#f5f7f9"/>
-<text x="213" y="219" fill="#586e84" font-size="8" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">SCAN OR TABLE</text>
-<rect x="24" y="110" width="76" height="48" rx="6" fill="#f5f7f9"/>
-<rect x="24" y="110" width="76" height="48" rx="6" fill="#4b5e71" stroke="#586e84" stroke-width="1" fill-opacity="0.10"/>
-<text x="62" y="131" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Document</text>
-<text x="62" y="145" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">a report</text>
-<polygon points="172,102 224,134 172,166 120,134" fill="#f5f7f9"/>
-<polygon points="172,102 224,134 172,166 120,134" fill="#ffffff" stroke="#181f25" stroke-width="1"/>
-<text x="172" y="138" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Page router</text>
-<rect x="252" y="28" width="120" height="48" rx="6" fill="#f5f7f9"/>
-<rect x="252" y="28" width="120" height="48" rx="6" fill="#ffffff" stroke="#181f25" stroke-width="1"/>
-<text x="312" y="49" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Published text</text>
-<text x="312" y="63" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">World Bank text</text>
-<rect x="252" y="180" width="120" height="48" rx="6" fill="#f5f7f9"/>
-<rect x="252" y="180" width="120" height="48" rx="6" fill="#ffffff" stroke="#181f25" stroke-width="1"/>
-<text x="312" y="201" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Layout parser</text>
-<text x="312" y="215" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">ai_parse_document</text>
-<rect x="404" y="40" width="140" height="48" rx="6" fill="#f5f7f9"/>
-<rect x="404" y="40" width="140" height="48" rx="6" fill="#0071bc" stroke="#0071bc" stroke-width="1" fill-opacity="0.08"/>
-<text x="474" y="61" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Numbered passages</text>
-<text x="474" y="75" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">paragraph and page</text>
-<rect x="404" y="180" width="140" height="48" rx="6" fill="#f5f7f9"/>
-<rect x="404" y="180" width="140" height="48" rx="6" fill="#181f25" stroke="#4b5e71" stroke-width="1" fill-opacity="0.05"/>
-<text x="474" y="201" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Search index</text>
-<text x="474" y="215" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">hybrid, synced</text>
+<g data-motion-item="" data-step="1" aria-label="A document arrives">
+<path d="M 30 148 H 124 L 136 160 V 198 Q 136 204 130 204 H 30 Q 24 204 24 198 V 154 Q 24 148 30 148 Z" fill="#f5f7f9"/>
+<path d="M 30 148 H 124 L 136 160 V 198 Q 136 204 130 204 H 30 Q 24 204 24 198 V 154 Q 24 148 30 148 Z" fill="#4b5e71" stroke="#586e84" stroke-width="1" stroke-linejoin="round" fill-opacity="0.1"/>
+<path d="M 124 148 V 160 H 136" fill="none" stroke="#586e84" stroke-width="0.8"/>
+<text x="80" y="169" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Document</text>
+<text x="80" y="183" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">PAD, ISR, ICR or</text>
+<text x="80" y="194" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">Procurement Plan</text>
+</g>
+<g data-motion-item="" data-step="2" aria-label="The page router checks each page">
+<line x1="136" y1="176" x2="159" y2="176" stroke="#4b5e71" stroke-width="1.2" marker-end="url(#reading-arrow)"/>
+<polygon points="236 136, 312 176, 236 216, 160 176" fill="#f5f7f9"/>
+<polygon points="236 136, 312 176, 236 216, 160 176" fill="#ffffff" stroke="#181f25" stroke-width="1" stroke-linejoin="round"/>
+<text x="236" y="173" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Page router</text>
+<text x="236" y="187" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">checks each page</text>
+</g>
+<g data-motion-item="" data-step="3" aria-label="Clean pages: the published text">
+<path d="M 236 136 V 84 Q 236 76 244 76 H 339" fill="none" stroke="#4b5e71" stroke-width="1.2" marker-end="url(#reading-arrow)"/>
+<rect x="262" y="58" width="68" height="13" rx="2" fill="#f5f7f9"/>
+<text x="296" y="67" fill="#586e84" font-size="9" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Clean pages</text>
+<rect x="340" y="50" width="152" height="52" rx="6" fill="#f5f7f9"/>
+<rect x="340" y="50" width="152" height="52" rx="6" fill="#ffffff" stroke="#181f25" stroke-width="1"/>
+<text x="416" y="74" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Published text</text>
+<text x="416" y="88" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">the World Bank's own words</text>
+</g>
+<g data-motion-item="" data-step="4" aria-label="Scans and tables: the layout parser">
+<path d="M 236 216 V 268 Q 236 276 244 276 H 339" fill="none" stroke="#4b5e71" stroke-width="1.2" marker-end="url(#reading-arrow)"/>
+<rect x="256" y="258" width="80" height="13" rx="2" fill="#f5f7f9"/>
+<text x="296" y="267" fill="#586e84" font-size="9" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Scans, tables</text>
+<rect x="340" y="250" width="152" height="52" rx="6" fill="#f5f7f9"/>
+<rect x="340" y="250" width="152" height="52" rx="6" fill="#ffffff" stroke="#181f25" stroke-width="1"/>
+<text x="416" y="274" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Layout parser</text>
+<text x="416" y="288" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">scans and tables</text>
+</g>
+<g data-motion-item="" data-step="5" aria-label="Numbered passages, each with its paragraph number and page">
+<path d="M 492 76 H 504 Q 512 76 512 84 V 156 Q 512 164 520 164 H 531" fill="none" stroke="#4b5e71" stroke-width="1.2" marker-end="url(#reading-arrow)"/>
+<path d="M 492 276 H 504 Q 512 276 512 268 V 196 Q 512 188 520 188 H 531" fill="none" stroke="#4b5e71" stroke-width="1.2" marker-end="url(#reading-arrow)"/>
+<rect x="532" y="144" width="148" height="64" rx="6" fill="#f5f7f9"/>
+<rect x="532" y="144" width="148" height="64" rx="6" fill="#0071bc" stroke="#0071bc" stroke-width="1" fill-opacity="0.08"/>
+<text x="606" y="174" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Numbered passages</text>
+<text x="606" y="188" fill="#0071bc" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">paragraph number and page</text>
+<rect x="532" y="218" width="148" height="18" rx="9" fill="#ffffff" stroke="#181f25" stroke-width="0.8" stroke-opacity="0.3"/>
+<text x="606" y="230.5" fill="#181f25" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">ICR paragraph 54, page 23</text>
+</g>
+<g data-motion-item="" data-step="6" aria-label="The hybrid search index">
+<line x1="680" y1="176" x2="707" y2="176" stroke="#4b5e71" stroke-width="1.2" marker-end="url(#reading-arrow)"/>
+<rect x="708" y="148" width="132" height="56" rx="6" fill="#f5f7f9"/>
+<rect x="708" y="148" width="132" height="56" rx="6" fill="#181f25" stroke="#4b5e71" stroke-width="1" fill-opacity="0.05"/>
+<text x="774" y="174" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Hybrid search index</text>
+<text x="774" y="188" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">keywords and meaning</text>
+<text x="532" y="276" fill="#4b5e71" font-size="14" font-style="italic" font-family="'Open Sans', system-ui, sans-serif" text-anchor="start">A table's summary never backs a number.</text>
+<text x="532" y="295" fill="#4b5e71" font-size="14" font-style="italic" font-family="'Open Sans', system-ui, sans-serif" text-anchor="start">Its rows do.</text>
+</g>
       </svg>

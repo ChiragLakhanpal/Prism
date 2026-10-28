@@ -76,7 +76,7 @@ test("the app's theme has every token in DESIGN.md section 2's theme block, with
   expect(differences).toEqual([]);
 });
 
-test("the app's type scale has each step in DESIGN.md section 3, at its size, line height, weight and tracking, and the retired title draws as h2", async ({
+test("the app's type scale has each step in DESIGN.md section 3, at its size, line height, weight and tracking, and the retired title and box corners are gone", async ({
   page,
 }) => {
   const steps = await typeScale();
@@ -95,12 +95,11 @@ test("the app's type scale has each step in DESIGN.md section 3, at its size, li
     expect(tracking, `${name} tracking`).toBe(step.tracking);
   }
 
-  // `title` is retired into h2 (DESIGN.md section 3): its token stays only as an alias with h2's values, so a class
-  // the deck's branch still uses draws as h2 until that branch moves it.
-  for (const part of ["", "--line-height", "--font-weight"]) {
-    expect(app.get(`--text-title${part}`), `--text-title${part}`).toBe(app.get(`--text-h2${part}`));
+  // `title` is retired into h2 and the box's 22 px corners into a control's 4 px (DESIGN.md sections 3 and 4). The deck
+  // moved their last uses, so neither token is left on :root.
+  for (const name of ["--text-title", "--text-title--line-height", "--text-title--font-weight", "--radius-box"]) {
+    expect(app.has(name), name).toBe(false);
   }
-  expect(app.has("--text-title--letter-spacing")).toBe(false);
 
   // The finding and the h1 step down below 48rem, so the longest title still leaves the finding in a phone's first
   // screen (DESIGN.md section 3). Each is measured on a line inside the page.

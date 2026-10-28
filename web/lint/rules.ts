@@ -11,14 +11,9 @@ export const SPACE_STEPS = [0.5, 1, 2, 3, 4, 6, 8, 10, 12, 16];
 export const UPPERCASE_ONLY_WITH = "text-chart-label";
 
 // Classes the redesign retired, each with the class that replaced it: `title` (18 / 700) is now `h2`, and the one
-// box's 22 px corners are a control's 4 px. Their tokens stay in app.css as aliases until the deck's branch moves its
-// last uses.
+// box's 22 px corners are a control's 4 px. Their tokens left app.css when the deck's second draft moved its last uses,
+// so a class that names one would draw nothing; the lint names its replacement instead.
 export const RETIRED_CLASSES: Record<string, string> = { "text-title": "text-h2", "rounded-box": "rounded-sm" };
-
-// Folders, from web/, where the two rules above do not apply: the deck, whose own branch (deck/second-draft) moves its
-// classes, by the lines ticket 90's comments name. When that branch has moved them, this entry and the two aliases in
-// app.css and DESIGN.md go in the same change.
-export const CLASS_RULES_SKIP = ["src/deck/"];
 
 // The files, from web/, that used a retired class or `uppercase` when ticket 90 landed on October 27, 2026, each with
 // the ones it may keep. The class sweep (ticket 91) moved every other file's classes to their roles and took it off.
@@ -168,6 +163,8 @@ export const NON_COPY_PROPS = new Set([
   "htmlFor",
   // Table's breakpoint for cards: "md" or "lg".
   "cardsBelow",
+  // A deck slide's background, "light" or "navy", which picks its logo file (the deck's loading frame, ticket 106).
+  "theme",
   // The plan prompt's "Show the past range" weight, "primary" or "secondary" (ticket 15, brief 36).
   "showRangeVariant",
   // A readiness column's label in a card: "hidden" leaves it to screen readers (ticket 18).

@@ -1863,8 +1863,8 @@ const deck = (name: string, path: string, rest: Partial<Shot> = {}): Shot => ({
 });
 const DECK_SHOTS: Shot[] = [
   deck("title", "/present/1", { full: false }),
-  deck("range-chart", "/present/8", { full: false }),
-  deck("award-gap", "/present/7", { full: false }),
+  deck("opener", "/present/7", { full: false }),
+  deck("award-gap", "/present/16", { full: false }),
   deck("reading-view", "/present/page"),
   deck("speaker-notes", "/present/notes"),
 ];

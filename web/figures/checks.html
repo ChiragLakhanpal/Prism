@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The checks every sentence passes</title>
+  <!-- Strata deck figure, second draft: diagram-design, strata-wb profile, standard ramp, drawn 1:1 in its slot.
+       Font source: system. The app self-hosts Open Sans and Roboto Mono, so this file loads no web font.
+       Each group marked data-motion-item is one press on the deck; everything else is structure. -->
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Open Sans', system-ui, sans-serif; background: #f5f7f9; color: #181f25; min-height: 100vh; display: flex;
+           align-items: center; justify-content: center; padding: 3rem 2rem; }
+    .frame { max-width: 1200px; width: 100%; }
+    .diagram-container { width: 100%; overflow-x: auto; }
+    h1 { font-family: 'Open Sans', system-ui, sans-serif; font-size: 1.75rem; font-weight: 700; margin-bottom: 1.5rem; }
+    svg { width: 100%; min-width: 864px; max-width: 864px; display: block; }
+    @media print {
+      .diagram-container { overflow-x: visible; }
+      svg { min-width: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <h1>The checks every sentence passes</h1>
+    <div class="diagram-container">
+      <svg viewBox="0 0 864 352" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="checks-title checks-desc" data-motion-root="" data-motion-mode="none" data-step-count="5">
+        <title id="checks-title">The checks every sentence passes</title>
+        <desc id="checks-desc">Each sentence of a draft answer meets the verifier's checks in order: numbers, cited IDs, quotes, support from its passages, advice with evidence, and both sides of a disagreement, and a sentence that fails one is removed and listed with its reason.</desc>
+        <defs>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4b5e71"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0071bc"/></marker>
+<marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#01707e"/></marker>
+        </defs>
+        <rect width="100%" height="100%" fill="#f5f7f9"/>
+<text x="24" y="51" fill="#586e84" font-size="10" font-weight="600" font-family="'Open Sans', system-ui, sans-serif">Checks, in order</text>
+<line x1="24" y1="88" x2="840" y2="88" stroke="rgba(88,110,132,0.6)" stroke-width="1"/>
+<line x1="24" y1="120" x2="840" y2="120" stroke="rgba(88,110,132,0.35)" stroke-width="1"/>
+<line x1="24" y1="152" x2="840" y2="152" stroke="rgba(88,110,132,0.35)" stroke-width="1"/>
+<line x1="24" y1="184" x2="840" y2="184" stroke="rgba(88,110,132,0.35)" stroke-width="1"/>
+<line x1="24" y1="216" x2="840" y2="216" stroke="rgba(88,110,132,0.35)" stroke-width="1"/>
+<line x1="24" y1="248" x2="840" y2="248" stroke="rgba(88,110,132,0.35)" stroke-width="1"/>
+<line x1="24" y1="280" x2="840" y2="280" stroke="rgba(88,110,132,0.6)" stroke-width="1"/>
+<text x="24" y="313" fill="#586e84" font-size="10" font-weight="600" font-family="'Open Sans', system-ui, sans-serif">Outcome</text>
+<g data-motion-item="" data-step="1" aria-label="Sentence A cites a passage the tools returned">
+<rect x="360" y="24" width="232" height="48" rx="6" fill="#f5f7f9"/>
+<rect x="360" y="24" width="232" height="48" rx="6" fill="rgba(75,94,113,0.1)" stroke="#586e84" stroke-width="1"/>
+<text x="476" y="45.5" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Sentence A</text>
+<text x="476" y="59.5" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">cites a passage the tools returned</text>
+</g>
+<g data-motion-item="" data-step="1" aria-label="Sentence B has a number no tool returned">
+<rect x="608" y="24" width="232" height="48" rx="6" fill="#f5f7f9"/>
+<rect x="608" y="24" width="232" height="48" rx="6" fill="rgba(75,94,113,0.1)" stroke="#586e84" stroke-width="1"/>
+<text x="724" y="45.5" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Sentence B</text>
+<text x="724" y="59.5" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">has a number no tool returned</text>
+</g>
+<g data-motion-item="" data-step="2" aria-label="Every number matches a row a tool returned: sentence A passes, sentence B fails">
+<text x="24" y="108" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="start">Every number matches a row a tool returned</text>
+<rect x="416" y="92" width="120" height="24" rx="4" fill="rgba(75,94,113,0.07)" stroke="#586e84" stroke-width="1"/>
+<path d="M426.0,104.0 L428.8,106.8 L434.0,101.0" fill="none" stroke="#181f25" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="442" y="107.2" fill="#181f25" font-size="10" font-weight="600" font-family="'Open Sans', system-ui, sans-serif">Pass</text>
+<rect x="664" y="92" width="120" height="24" rx="4" fill="rgba(0,113,188,0.08)" stroke="#0071bc" stroke-width="1.2"/>
+<path d="M674.8,100.8 L681.2,107.2 M681.2,100.8 L674.8,107.2" fill="none" stroke="#0071bc" stroke-width="1.4" stroke-linecap="round"/>
+<text x="690" y="107.2" fill="#0071bc" font-size="10" font-weight="600" font-family="'Open Sans', system-ui, sans-serif">Fail</text>
+</g>
+<g data-motion-item="" data-step="2" aria-label="Every cited ID came back in this answer's tool calls: sentence A passes, sentence B is not reached">
+<text x="24" y="140" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="start">Every cited ID came back in this answer's tool calls</text>
+<rect x="416" y="124" width="120" height="24" rx="4" fill="rgba(75,94,113,0.07)" stroke="#586e84" stroke-width="1"/>
+<path d="M426.0,136.0 L428.8,138.8 L434.0,133.0" fill="none" stroke="#181f25" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="442" y="139.2" fill="#181f25" font-size="10" font-weight="600" font-family="'Open Sans', system-ui, sans-serif">Pass</text>
+<rect x="664" y="124" width="120" height="24" rx="4" fill="#f5f7f9" stroke="rgba(88,110,132,0.7)" stroke-width="1" stroke-dasharray="3,3"/>
+<circle cx="678" cy="136" r="3.5" fill="none" stroke="#586e84" stroke-width="1.2"/>
+<text x="690" y="139.2" fill="#586e84" font-size="10" font-weight="600" font-family="'Open Sans', system-ui, sans-serif">Not reached</text>
+</g>
+<g data-motion-item="" data-step="3" aria-label="Every quote is on the page it cites: sentence A passes, sentence B is not reached">
+<text x="24" y="172" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="start">Every quote is on the page it cites</text>
+<rect x="416" y="156" width="120" height="24" rx="4" fill="rgba(75,94,113,0.07)" stroke="#586e84" stroke-width="1"/>
+<path d="M426.0,168.0 L428.8,170.8 L434.0,165.0" fill="none" stroke="#181f25" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="442" y="171.2" fill="#181f25" font-size="10" font-weight="600" font-family="'Open Sans', system-ui, sans-serif">Pass</text>
+<rect x="664" y="156" width="120" height="24" rx="4" fill="#f5f7f9" stroke="rgba(88,110,132,0.7)" stroke-width="1" stroke-dasharray="3,3"/>
+<circle cx="678" cy="168" r="3.5" fill="none" stroke="#586e84" stroke-width="1.2"/>
+<text x="690" y="171.2" fill="#586e84" font-size="10" font-weight="600" font-family="'Open Sans', system-ui, sans-serif">Not reached</text>
+</g>
+<g data-motion-item="" data-step="3" aria-label="The sentence follows from its passages: sentence A passes, sentence B is not reached">
+<text x="24" y="197.5" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="start">The sentence follows from its passages</text>
+<text x="24" y="209.5" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">the one check a model judges</text>
+<rect x="416" y="188" width="120" height="24" rx="4" fill="rgba(75,94,113,0.07)" stroke="#586e84" stroke-width="1"/>
+<path d="M426.0,200.0 L428.8,202.8 L434.0,197.0" fill="none" stroke="#181f25" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="442" y="203.2" fill="#181f25" font-size="10" font-weight="600" font-family="'Open Sans', system-ui, sans-serif">Pass</text>
+<rect x="664" y="188" width="120" height="24" rx="4" fill="#f5f7f9" stroke="rgba(88,110,132,0.7)" stroke-width="1" stroke-dasharray="3,3"/>
+<circle cx="678" cy="200" r="3.5" fill="none" stroke="#586e84" stroke-width="1.2"/>
+<text x="690" y="203.2" fill="#586e84" font-size="10" font-weight="600" font-family="'Open Sans', system-ui, sans-serif">Not reached</text>
+</g>
+<g data-motion-item="" data-step="4" aria-label="Advice has a lesson or comparable packages behind it: sentence A passes, sentence B is not reached">
+<text x="24" y="236" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="start">Advice has a lesson or comparable packages behind it</text>
+<rect x="416" y="220" width="120" height="24" rx="4" fill="rgba(75,94,113,0.07)" stroke="#586e84" stroke-width="1"/>
+<path d="M426.0,232.0 L428.8,234.8 L434.0,229.0" fill="none" stroke="#181f25" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="442" y="235.2" fill="#181f25" font-size="10" font-weight="600" font-family="'Open Sans', system-ui, sans-serif">Pass</text>
+<rect x="664" y="220" width="120" height="24" rx="4" fill="#f5f7f9" stroke="rgba(88,110,132,0.7)" stroke-width="1" stroke-dasharray="3,3"/>
+<circle cx="678" cy="232" r="3.5" fill="none" stroke="#586e84" stroke-width="1.2"/>
+<text x="690" y="235.2" fill="#586e84" font-size="10" font-weight="600" font-family="'Open Sans', system-ui, sans-serif">Not reached</text>
+</g>
+<g data-motion-item="" data-step="4" aria-label="When sources disagree, both sides show: sentence A passes, sentence B is not reached">
+<text x="24" y="268" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="start">When sources disagree, both sides show</text>
+<rect x="416" y="252" width="120" height="24" rx="4" fill="rgba(75,94,113,0.07)" stroke="#586e84" stroke-width="1"/>
+<path d="M426.0,264.0 L428.8,266.8 L434.0,261.0" fill="none" stroke="#181f25" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="442" y="267.2" fill="#181f25" font-size="10" font-weight="600" font-family="'Open Sans', system-ui, sans-serif">Pass</text>
+<rect x="664" y="252" width="120" height="24" rx="4" fill="#f5f7f9" stroke="rgba(88,110,132,0.7)" stroke-width="1" stroke-dasharray="3,3"/>
+<circle cx="678" cy="264" r="3.5" fill="none" stroke="#586e84" stroke-width="1.2"/>
+<text x="690" y="267.2" fill="#586e84" font-size="10" font-weight="600" font-family="'Open Sans', system-ui, sans-serif">Not reached</text>
+</g>
+<g data-motion-item="" data-step="5" aria-label="Sentence A is shown">
+<rect x="360" y="292" width="232" height="36" rx="6" fill="#f5f7f9"/>
+<rect x="360" y="292" width="232" height="36" rx="6" fill="#ffffff" stroke="#586e84" stroke-width="1"/>
+<text x="476" y="314.5" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Shown</text>
+</g>
+<g data-motion-item="" data-step="5" aria-label="Sentence B is removed, and listed under the answer with its reason">
+<rect x="608" y="292" width="232" height="36" rx="6" fill="#f5f7f9"/>
+<rect x="608" y="292" width="232" height="36" rx="6" fill="rgba(0,113,188,0.08)" stroke="#0071bc" stroke-width="1.2"/>
+<text x="724" y="307.5" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Removed, and listed</text>
+<text x="724" y="321.5" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">under the answer with its reason</text>
+</g>
+      </svg>
+    </div>
+  </div>
+</body>
+</html>

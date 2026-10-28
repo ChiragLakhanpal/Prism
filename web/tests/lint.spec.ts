@@ -336,12 +336,12 @@ test("the class lint refuses spacing off DESIGN.md's scale and colors outside th
 });
 
 // Ticket 90 (DESIGN.md section 3): capitals only in a chart label, and the retired text-title and rounded-box nowhere,
-// except in the deck's folder, which its own branch moves, and in the files on the frozen list, each for the classes it
-// used then. Ticket 91's class sweep moved every other file, so the list keeps only the files the shell tickets
-// rewrite, and a class a listed file no longer uses fails until it comes off the list; the top bar ticket (93) moved
-// the box's corners and took BoxBand.tsx off, and the page frame ticket (94) rewrote the evidence drawer's head and
-// took EvidenceDrawer.tsx off. The lint names a file by its path from --root (web/ in the gate), so these tests lay
-// out a throwaway web/ folder.
+// except in the files on the frozen list, each for the classes it used then. The deck's second draft moved the deck's
+// own uses, so its folder has no exemption. Ticket 91's class sweep moved every other file, so the list keeps only the
+// files the shell tickets rewrite, and a class a listed file no longer uses fails until it comes off the list; the top
+// bar ticket (93) moved the box's corners and took BoxBand.tsx off, and the page frame ticket (94) rewrote the evidence
+// drawer's head and took EvidenceDrawer.tsx off. The lint names a file by its path from --root (web/ in the gate), so
+// these tests lay out a throwaway web/ folder.
 const SHELL_TICKET_FILES = ["src/components/CollapsedSection.tsx"];
 
 function lintTree(files: Record<string, string>) {
@@ -356,7 +356,7 @@ function lintTree(files: Record<string, string>) {
   return { code: done.status, output: done.stdout + done.stderr };
 }
 
-test("the class lint refuses uppercase outside a chart label, text-title and rounded-box, but not in the deck or the frozen files", () => {
+test("the class lint refuses uppercase outside a chart label, text-title and rounded-box, in the deck too, but not in the frozen files", () => {
   expect(Object.keys(FROZEN_CLASS_USES).sort()).toEqual(SHELL_TICKET_FILES);
   const div = (className: string) => `export const A = () => <div className="${className}" />;\n`;
   // The file on the frozen list, which used capitals and no title when ticket 90 landed; and the same file as its
@@ -375,6 +375,9 @@ test("the class lint refuses uppercase outside a chart label, text-title and rou
     "New.tsx:1 md:uppercase",
     "Old.tsx:1 text-title",
     "Old.tsx:2 rounded-box",
+    "Slide.tsx:1 uppercase",
+    "Slide.tsx:2 text-title",
+    "Slide.tsx:2 rounded-box",
     `${frozen.split("/").pop()}:2 text-title`,
   ]);
   expect(problems[0]).toContain("sentence case");

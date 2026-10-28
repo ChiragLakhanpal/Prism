@@ -4,8 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Which report Strata leans on</title>
-  <!-- Strata deck figure (ticket 47): diagram-design, strata-wb profile, standard ramp, drawn 1:1 in its slot.
-       Font source: system. The app self-hosts Open Sans and Roboto Mono, so this file loads no web font. -->
+  <!-- Strata deck figure, second draft: diagram-design, strata-wb profile, standard ramp, drawn 1:1 in its slot.
+       Font source: system. The app self-hosts Open Sans and Roboto Mono, so this file loads no web font.
+       Each group marked data-motion-item is one press on the deck; everything else is structure. -->
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Open Sans', system-ui, sans-serif; background: #f5f7f9; color: #181f25; min-height: 100vh; display: flex;
@@ -24,38 +25,54 @@
   <div class="frame">
     <h1>Which report Strata leans on</h1>
     <div class="diagram-container">
-      <svg viewBox="0 0 420 268" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ladder-title ladder-desc">
+      <svg viewBox="0 0 420 352" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ladder-title ladder-desc" data-motion-root="" data-motion-mode="none" data-step-count="5">
         <title id="ladder-title">Which report Strata leans on</title>
-        <desc id="ladder-desc">For how a project turned out, Strata leans on the highest report that speaks to it: an independent review, then the completion report, the last status report and the appraisal document; for a fact about a moment, the record made at that moment wins.</desc>
+        <desc id="ladder-desc">For how a project turned out, the highest report on the ladder that speaks to the question wins, from an IEG review down to the completion report, the last status report and the appraisal document, and for a fact about a moment, the record made at that moment wins.</desc>
         <defs>
 <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4b5e71"/></marker>
 <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0071bc"/></marker>
 <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#01707e"/></marker>
         </defs>
         <rect width="100%" height="100%" fill="#f5f7f9"/>
-<rect x="24" y="24" width="196" height="44" rx="6" fill="#f5f7f9"/>
-<rect x="24" y="24" width="196" height="44" rx="6" fill="rgba(0,113,188,0.08)" stroke="#0071bc" stroke-width="1"/>
-<text x="122" y="43" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Independent review</text>
-<text x="122" y="57" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">after closing</text>
-<rect x="24" y="68" width="196" height="44" rx="6" fill="#f5f7f9"/>
-<rect x="24" y="68" width="196" height="44" rx="6" fill="#ffffff" stroke="#181f25" stroke-width="1"/>
-<text x="122" y="87" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Completion report</text>
-<text x="122" y="101" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">after closing</text>
-<rect x="24" y="112" width="196" height="44" rx="6" fill="#f5f7f9"/>
-<rect x="24" y="112" width="196" height="44" rx="6" fill="#ffffff" stroke="#181f25" stroke-width="1"/>
-<text x="122" y="131" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Last status report</text>
-<text x="122" y="145" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">during the project</text>
-<rect x="24" y="156" width="196" height="44" rx="6" fill="#f5f7f9"/>
-<rect x="24" y="156" width="196" height="44" rx="6" fill="#ffffff" stroke="#181f25" stroke-width="1"/>
-<text x="122" y="175" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Appraisal document</text>
-<text x="122" y="189" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">before the project</text>
-<text x="244" y="44" fill="#181f25" font-size="14" font-weight="400" font-family="'Open Sans', system-ui, sans-serif" font-style="italic" text-anchor="start">For how a project</text>
-<text x="244" y="62" fill="#181f25" font-size="14" font-weight="400" font-family="'Open Sans', system-ui, sans-serif" font-style="italic" text-anchor="start">turned out, the</text>
-<text x="244" y="80" fill="#181f25" font-size="14" font-weight="400" font-family="'Open Sans', system-ui, sans-serif" font-style="italic" text-anchor="start">highest report</text>
-<text x="244" y="98" fill="#181f25" font-size="14" font-weight="400" font-family="'Open Sans', system-ui, sans-serif" font-style="italic" text-anchor="start">that speaks to it</text>
-<text x="244" y="116" fill="#181f25" font-size="14" font-weight="400" font-family="'Open Sans', system-ui, sans-serif" font-style="italic" text-anchor="start">wins.</text>
-<text x="24" y="226" fill="#181f25" font-size="14" font-weight="400" font-family="'Open Sans', system-ui, sans-serif" font-style="italic" text-anchor="start">For a fact about a moment, the record made</text>
-<text x="24" y="244" fill="#181f25" font-size="14" font-weight="400" font-family="'Open Sans', system-ui, sans-serif" font-style="italic" text-anchor="start">at that moment wins.</text>
+<line x1="40" y1="24" x2="40" y2="268" stroke="#586e84" stroke-width="1.5"/>
+<line x1="304" y1="24" x2="304" y2="268" stroke="#586e84" stroke-width="1.5"/>
+<line x1="40" y1="58" x2="304" y2="58" stroke="#586e84" stroke-width="1.5"/>
+<line x1="40" y1="114" x2="304" y2="114" stroke="#586e84" stroke-width="1.5"/>
+<line x1="40" y1="170" x2="304" y2="170" stroke="#586e84" stroke-width="1.5"/>
+<line x1="40" y1="226" x2="304" y2="226" stroke="#586e84" stroke-width="1.5"/>
+<g data-motion-item="" data-step="1" aria-label="At the bottom, the appraisal document, written before the project started">
+<rect x="40" y="204" width="264" height="44" rx="6" fill="#f5f7f9"/>
+<rect x="40" y="204" width="264" height="44" rx="6" fill="#ffffff" stroke="#586e84" stroke-width="1"/>
+<text x="172" y="223.5" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Appraisal document</text>
+<text x="172" y="237.5" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">before the project</text>
+</g>
+<g data-motion-item="" data-step="2" aria-label="Next, the last status report, written during the project">
+<rect x="40" y="148" width="264" height="44" rx="6" fill="#f5f7f9"/>
+<rect x="40" y="148" width="264" height="44" rx="6" fill="#ffffff" stroke="#586e84" stroke-width="1"/>
+<text x="172" y="167.5" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Last status report</text>
+<text x="172" y="181.5" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">during the project</text>
+</g>
+<g data-motion-item="" data-step="3" aria-label="Next, the completion report, written after the project closed">
+<rect x="40" y="92" width="264" height="44" rx="6" fill="#f5f7f9"/>
+<rect x="40" y="92" width="264" height="44" rx="6" fill="#ffffff" stroke="#586e84" stroke-width="1"/>
+<text x="172" y="111.5" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Completion report</text>
+<text x="172" y="125.5" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">after closing</text>
+</g>
+<g data-motion-item="" data-step="4" aria-label="At the top, a review by the Independent Evaluation Group, written after the project closed">
+<rect x="40" y="36" width="264" height="44" rx="6" fill="#f5f7f9"/>
+<rect x="40" y="36" width="264" height="44" rx="6" fill="rgba(0,113,188,0.08)" stroke="#0071bc" stroke-width="1.2"/>
+<text x="172" y="55.5" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">IEG review</text>
+<text x="172" y="69.5" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">after closing, independent</text>
+</g>
+<g data-motion-item="" data-step="4" aria-label="For how a project turned out, the highest report that speaks to the question wins">
+<path d="M340,226.0 V58.0" fill="none" stroke="#0071bc" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+<rect x="348" y="136" width="52" height="12" rx="2" fill="#f5f7f9"/>
+<text x="352" y="145" fill="#0071bc" font-size="9" font-family="'Open Sans', system-ui, sans-serif" text-anchor="start">Leans on</text>
+</g>
+<g data-motion-item="" data-step="5" aria-label="For a fact about a moment, the record made at that moment wins">
+<text x="24" y="298" fill="#181f25" font-size="14" font-style="italic" font-family="'Open Sans', system-ui, sans-serif">For a fact about a moment, the record</text>
+<text x="24" y="318" fill="#181f25" font-size="14" font-style="italic" font-family="'Open Sans', system-ui, sans-serif">made at that moment wins.</text>
+</g>
       </svg>
     </div>
   </div>
