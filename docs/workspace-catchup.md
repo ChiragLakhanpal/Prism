@@ -4207,3 +4207,21 @@ Record the exit code, the App's address and what the four pages showed here unde
 ## Tickets 96, 97, 98 and 99, the App redeploy ran: the App runs 7f42374f
 
 **Ran on October 28, 2026 (orchestrator), from a snapshot of 7f42374f.** `ops/app/deploy_app.py --keep-secrets` exited 0 at 22:24 UTC with the running line (the deploy began 22:12 UTC); the watchdog holds 7f42374f; the local copy moved to the same commit at 22:25 UTC and answers at http://127.0.0.1:54112 (`.notes/local-run.md`). The App carries 96 (every number's tooltip), 97 (How Strata works leaves Data), 98 (Home's briefing panel) and 99 (the project sub-pages in the sidebar), with 118 to 123 beneath them. The signed-in checks these tickets name (the pages by eye at the three widths) are the owner's on the App, or the specialist's path of ticket 49's step 2.
+
+## Ticket 100, step 1 of 1: redeploy the App, so the plan check sits under Packages and its rows open their records
+
+Parked on October 28, 2026 with ticket 100, which merged into build/strata as ef943a8f (branch `strata/100-packages-and-the-plan-check-the-plan-check-under` at 80e3dab0). Every key is set, but mergers run no workspace step: the orchestrator or the second session runs this one from a snapshot that includes this merge (ef943a8f, the done commit that follows it, or a later commit), as the header says (`git archive <sha> | tar -x -C <scratchpad>/snap-<sha>`). Run `npm ci --prefix web` in the snapshot, or link the main checkout's `web/node_modules` into it, before the deploy.
+
+What ticket 100 changes on the App: Packages leads with "Check a plan" and "Plan a package" at its head's right, and its list is one panel whose table runs edge to edge. The plan check sits in the Packages section (its address is the same), its breadcrumb starts at Packages, it opens on its finding, and a row's reference opens the row's records in the drawer. "What changed" is a closed row; opened, it is a panel and the page grows, so the footer stays below the baseline row. The frame's `main` no longer shrinks, which every page shares. Only the web app changed, so the bundle needs no deploy.
+
+The builder's step, in the builder's words: after the merge, redeploy the App from the merge commit with the orchestrator's usual redeploy (`ops/app/deploy_app.py` through the second session):
+
+    uv run --script ops/app/deploy_app.py --env-file "<main checkout>/.env" --keep-secrets
+
+It worked if:
+
+- It exits 0 with the running line, "Strata is running at https://...".
+- On the App as World Bank staff, `<App URL>/projects/P156634/procurement/northern-water-works-development-agency/2026-10-09` lights Packages in the sidebar, and "See what changed" opens What changed with the footer below the baseline row.
+- `<App URL>/packages` shows its table running edge to edge in its panel.
+
+Record the exit code, the App's address and what the two pages showed here under ticket 100. If step 3 of the deploy names a secret the scope lacks, record its name for the user, who writes it.
