@@ -3878,3 +3878,18 @@ Record the deploy's exit code, last line and deployment id, the `ask` row count,
 ## Ticket 49, step 1 of 3 ran again: the demo-ready command passed in full
 
 **Ran on October 28, 2026 (orchestrator), 02:55 to 03:01 UTC and 05:47 to 05:54 UTC.** The command exited 0 with "Strata is ready for the demo." three times in the night (once from 856ab249 with the examples seeded by the owner's new client secret, twice from 1c148f05): the App checked (the Databricks App, whatever day-one test 6 chose), Genie warm within 20 seconds, the smoke question passing its six checks, the P156634 recheck, Home's examples seeded, and the workspace listing. The runs that failed in between are above (the 20.8-million-character tool result, the small model's loose quotes, the judge's 429). The second run's step 6 printed "No changes." at 03:01 UTC (criterion 4's second half). The demo is postponed to a date to come, so the command is the standing check before it.
+
+## Ticket 114, step 1 of 1: redeploy the App, so Start here goes with the person and the empty Lessons card says whose lessons they are
+
+Parked on October 28, 2026 with ticket 114, which merged into build/strata as 8ee5af3c (branch `strata/114-start-here-goes-with-you-as-a-to-do` at c58e430b). Every key is set, but mergers run no workspace step: the orchestrator runs this step today, in the night's final App redeploy, from a snapshot that includes this merge (8ee5af3c, the done commit that follows it, or a later commit), as the header says (`git archive <sha> | tar -x -C <scratchpad>/snap-<sha>`, then link the main checkout's `web/node_modules` into the snapshot). It needs the Databricks keys in the env file and the Foundry and judge secrets in the scope `strata`. A deploy from this commit or a later one also serves ticket 112's redeploy block above, which has not run yet; ticket 117's ran at 05:47 UTC from 1c148f05, before this merge. This ticket changes only the web app; the server and the tables are unchanged.
+
+The builder's step, in the builder's words: carry ticket 114 to the App in the night's final redeploy, run from a snapshot that includes this merge:
+
+    uv run --script ops/app/deploy_app.py --env-file "<main checkout>/.env" --keep-secrets
+
+It worked if:
+
+- The last line is `Strata is running at https://strata-7405609289499029.9.azure.databricksapps.com` and /api/health answers 200.
+- Then, signed in as staff, Home's strip reads "0 of 6 done" and the sidebar shows Start here with "Next: Check a published plan (P156634)".
+
+Record the deploy's exit code, last line and deployment id, the /api/health status, and what Home's strip and the sidebar showed, here under ticket 114.
