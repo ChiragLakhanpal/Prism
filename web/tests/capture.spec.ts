@@ -29,6 +29,16 @@ test("the capture list photographs each Task zone state at 1440 and 390 px, and 
   expect(widths("closed")).toContain(1024);
 });
 
+// Ticket 98: Home on the workspace layout, with an answer asked from Home, and the officer's and the public's Home.
+test("the capture list photographs Home answered, the officer's Home and the public's Home at 1440 px", () => {
+  for (const name of ["home--populated", "home--first-run", "home--quiet-week", "home--answered", "home--officer", "home--public"]) {
+    const shot = SHOTS.find((candidate) => candidate.name === name);
+    expect(shot?.server, name).toBe("app");
+    expect(shot?.widths ?? WIDTHS, name).toContain(1440);
+  }
+  expect(SHOTS.find((shot) => shot.name === "home--answered")?.api?.["/api/ask"]?.recorded).toBe("ask-p130164-rebidding.sse");
+});
+
 test("the capture list has hover and keyboard-focus shots, and app shots against the recorded API", () => {
   expect(SHOTS.filter((shot) => shot.name.includes("--hover-")).length).toBeGreaterThan(5);
   expect(SHOTS.filter((shot) => shot.name.includes("--focus-")).length).toBeGreaterThan(5);

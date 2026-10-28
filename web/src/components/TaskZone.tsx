@@ -37,6 +37,8 @@ export function TaskZone({
   toggle,
   corner,
   headingRef,
+  headingId: namedId,
+  note,
   busy = false,
   sectionKey,
   live,
@@ -61,6 +63,11 @@ export function TaskZone({
   // sentence in the DOM, and the tag moves under the name.
   corner?: ReactNode;
   headingRef?: Ref<HTMLHeadingElement>;
+  // The h2's id when an address or another page names it, such as Start here's "start-here" (ticket 98).
+  headingId?: string;
+  // A short line right after the name, in caption ink-muted, which the zone's name includes, such as Start here's
+  // "2 of 6 done" (ticket 114; ticket 98).
+  note?: ReactNode;
   busy?: boolean;
   // The zone's key, as data-section, for tests and the design gallery.
   sectionKey?: string;
@@ -73,7 +80,9 @@ export function TaskZone({
   // With a toggle, what the zone holds once opened. Without one, the zone's blocks: ZoneBlocks.
   children?: ReactNode;
 }) {
-  const headingId = useId();
+  const ownId = useId();
+  const headingId = namedId ?? ownId;
+  const noteId = useId();
   const bodyId = useId();
   const open = toggle?.open ?? false;
   const form = (panel ?? open) ? "panel" : "row";
@@ -96,7 +105,7 @@ export function TaskZone({
   return (
     <section
       id={id}
-      aria-labelledby={headingId}
+      aria-labelledby={note != null ? `${headingId} ${noteId}` : headingId}
       aria-busy={busy || undefined}
       data-zone={form}
       data-zone-state={state === "ready" ? (toggle ? (open ? "open" : "closed") : "open") : state}
@@ -116,6 +125,11 @@ export function TaskZone({
           )}
           {name}
         </h2>
+        {note != null && (
+          <span id={noteId} data-zone-note className="text-caption text-ink-muted">
+            {note}
+          </span>
+        )}
         {tag != null && (
           <p data-zone-tag className="text-caption text-ink-muted">
             {tag}

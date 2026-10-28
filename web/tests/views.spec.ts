@@ -122,7 +122,9 @@ test("choosing a view in the popover opens the preview, with the filled pill and
   // The public view has only Home, Projects, Lessons and Data, and its own Home (ticket 41): how many projects Strata
   // holds, and the closed projects whose contracts it holds, latest to close first.
   await expect(page.getByRole("navigation", { name: "Main" }).locator("[data-nav-item]")).toHaveText(["Home", "Projects", "Lessons", "Data"]);
-  await expect(page.locator("main h1")).toContainText("I hold records for 93 World Bank-financed projects.");
+  // Ticket 98: its h1 is "Home", with that sentence in lead under it.
+  await expect(page.locator("main h1")).toHaveText("Home");
+  await expect(page.locator("main [data-status-lead]")).toContainText("I hold records for 93 World Bank-financed projects.");
   await expect(page).toHaveTitle("Home (public preview) | Strata");
   expect(await violations(page)).toEqual([]);
 });

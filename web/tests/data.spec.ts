@@ -395,6 +395,10 @@ test("every number's tooltip names what it counts, and its window shows the numb
       await expect(opened).toContainText("Counted instrata.gold.contract");
       await expect(opened).not.toContainText("Fixes that would unlock the most");
       await page.keyboard.press("Escape");
+      // Escape gives focus back to the number a frame later; wait for it, so the next number's hover is not raced by
+      // this one's tooltip opening on that focus (a flake under the gate's load, seen in ticket 98's gates).
+      await expect(opened).toHaveCount(0);
+      await expect(projects).toBeFocused();
     }
     await page.keyboard.press("Escape");
   }

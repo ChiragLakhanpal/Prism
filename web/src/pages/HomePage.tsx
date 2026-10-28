@@ -1,34 +1,40 @@
-// Home (ticket 41; the 41 design brief), at /: Home answers before anyone types. One request, GET /api/home, gives the
-// whole page, built on the server from fixed checks and no model:
+// Home (ticket 41; the 41 design brief; ticket 98 moves it onto the workspace layout), at /: Home answers before anyone
+// types. One request, GET /api/home, gives the whole page, built on the server from fixed checks and no model:
 //
 // - The h1 is the briefing: a date line, then sentences whose count words open what they count. Each count equals the
-//   lines of its kind below, folded lines included.
-// - The Start here strip, for World Bank staff in their own view today: one example per stage, which "Remove" hides
-//   for this viewer on every later visit (kept on the server), with an undo row for the visit. Ticket 114 makes it a
-//   to-do list: a tick on each example followed and a count, kept in this browser (lib/startHere.ts), and the sidebar
-//   shows the next one on every page.
-// - "Worth knowing · fixed checks, no model": one past-tense line per activity, project or lesson, each with its
-//   status, its source and one action. More than eight fold behind "Show them".
-// - "Waiting for you": the viewer's own drafts to check, with their progress, eight at most, then a link to Drafts.
+//   lines of its kind below, folded lines included. When an answer opens on Home, it folds to its first sentence.
+// - The Start here strip, a Task zone row for World Bank staff in their own view today: one example per stage, which
+//   "Remove" hides for this viewer on every later visit (kept on the server), with an undo row for the visit. Ticket
+//   114 makes it a to-do list: a tick on each example followed and a count, kept in this browser (lib/startHere.ts),
+//   and the sidebar shows the next one on every page.
+// - "Worth knowing", a panel tagged "Fixed checks, no model": one past-tense line per activity, project or lesson,
+//   each with its status, its source and one action. More than eight fold behind "Show them".
+// - "Waiting for you", the side panel: the viewer's own drafts to check, with their progress, eight at most, then a
+//   link to Drafts.
 //
 // An implementing agency officer, the agency preview and the public preview get their own content from the server
 // (the roles table); a past date leaves out the lesson lines, the drafts and the strip. The page counts nothing.
 import { Fragment, useEffect, useId, useRef, useState, type ReactNode } from "react";
-import { ChevronDown, Circle, CircleCheck, CircleX } from "lucide-react";
+import { ChevronDown, ChevronUp, Circle, CircleCheck, CircleX } from "lucide-react";
+import { useAnswerInPage } from "../components/AnswerSlot";
 import { Button } from "../components/Button";
 import { CitationMarker } from "../components/CitationMarker";
-import { EmptyState } from "../components/Card";
 import { Fill } from "../components/Fill";
+import { FootStrip } from "../components/FootStrip";
 import { Tag } from "../components/LessonParts";
 import { LoadError } from "../components/LoadError";
 import { MeasureNum } from "../components/MeasureNum";
 import { Num, type NumCheck } from "../components/Num";
 import { FromLine, homeFrom, planFrom } from "../components/NumFrom";
+import { PageAlert } from "../components/PageAlert";
 import { ProjectId } from "../components/ProjectId";
+import { SidePanel } from "../components/SidePanel";
 import { Skeleton, SkeletonLine } from "../components/Skeleton";
 import { Source } from "../components/Source";
 import { StatusBadge, type BadgeKind } from "../components/StatusBadge";
+import { TaskZone, ZoneBlock } from "../components/TaskZone";
 import { TextLink } from "../components/TextLink";
+import { Workspace } from "../components/Workspace";
 import { copy } from "../copy";
 import { postJson } from "../lib/api";
 import { draftHref } from "../lib/drafts";
@@ -38,7 +44,7 @@ import { formatDate, formatDayLine, formatNumber } from "../lib/format";
 import { HOME_PATH, START_HERE_PATH, startHereVisible, type HomeAnswer, type HomeLine, type HomeSegment } from "../lib/home";
 import { draftTitle } from "../lib/lessonsPage";
 import { keepLinks, markDone, START_HERE_ANCHOR, startHereList } from "../lib/startHere";
-import { useLoad } from "../lib/load";
+import { useLoad, type Load } from "../lib/load";
 import { useStore } from "../lib/store";
 import { CHECK_MY_PLAN } from "../lib/uploads";
 import { DraftRow } from "./DraftsPage";
@@ -217,34 +223,70 @@ function browserToday(): string {
   return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
 }
 
-function Briefing({ answer }: { answer: HomeAnswer | null }) {
+// How the briefing shows beside an answer asked from Home (ticket 98): not at all (no answer), folded to its first
+// sentence, or unfolded with "Show the briefing".
+type Fold = "none" | "folded" | "unfolded";
+
+// Home's h1 (DESIGN.md section 5, Briefing heading; ticket 98): the date line in label, then the briefing's sentences in
+// the finding style, or in lead when they report a state; beside an answer, in body, folded to the first sentence
+// until "Show the briefing" unfolds the rest in place. It names the page instead ("Home") in the public view and when
+// Home's one read failed. It is the same element in every state, so focus stays on it as the answer arrives or fails.
+function Briefing({ answer, named, fold, sentencesId }: { answer: HomeAnswer | null; named: boolean; fold: Fold; sentencesId: string }) {
+  if (named) {
+    return (
+      <h1 id="briefing" tabIndex={-1} className="text-h1 text-ink-heading focus:outline-none" data-briefing="named">
+        {words.title}
+      </h1>
+    );
+  }
   const day = answer ? answer.as_of ?? answer.today : null;
-  // The date line needs no data: while Home loads, or when it fails, it names today.
+  // The date line needs no data: while Home loads, it names today.
   const line = !answer || !day
     ? words.dateLine(formatDayLine(browserToday()))
     : answer.as_of
       ? words.dateLineAsOf(formatDayLine(day, { withYear: true }))
-      : answer.view === "public"
-        ? formatDayLine(day, { today: answer.today })
-        : words.dateLine(formatDayLine(day, { today: answer.today }));
+      : words.dateLine(formatDayLine(day, { today: answer.today }));
   const popover = answer ? countWindow(answer) : undefined;
+  const shown = answer ? (fold === "folded" ? answer.briefing.sentences.slice(0, 1) : answer.briefing.sentences) : [];
+  const sentences = shown.map((sentence, index) => (
+    <Fragment key={index}>
+      {index > 0 && " "}
+      <Segments segments={sentence} popover={popover} />
+    </Fragment>
+  ));
   return (
-    <h1 id="briefing" tabIndex={-1} className="max-w-[72ch] focus:outline-none" data-briefing={answer ? "ready" : "loading"}>
-      <span className="block text-small font-semibold text-ink-muted">{line}</span>
+    <h1 id="briefing" tabIndex={-1} className="focus:outline-none" data-briefing={answer ? "ready" : "loading"}>
+      <span data-date-line className="block text-label text-ink-muted">
+        {line}
+      </span>
       <span className="sr-only">{words.dateLineEnd}</span>
-      {answer ? (
-        // The page's finding: a count word's tooltip opens under all of it (DESIGN.md, Number tooltip).
-        <span className="mt-2 block text-lead text-pretty text-ink-heading" data-finding>
-          {answer.briefing.sentences.map((sentence, index) => (
-            <Fragment key={index}>
-              {index > 0 && " "}
-              <Segments segments={sentence} popover={popover} />
-            </Fragment>
-          ))}
-        </span>
-      ) : null}
+      {answer &&
+        (fold !== "none" ? (
+          // Beside an answer the answer leads, so the briefing steps down to body (fairshare's strip, plan 9, pattern 6).
+          <span id={sentencesId} className="mt-2 block max-w-prose text-body text-pretty text-ink" data-sentences data-fold={fold}>
+            {sentences}
+          </span>
+        ) : reportsAState(answer) ? (
+          // A first run or a quiet window reports a state, not a finding, so it takes lead (DESIGN.md section 1,
+          // principle 6).
+          <span id={sentencesId} className="mt-2 block max-w-prose text-lead text-pretty text-ink" data-sentences data-status-lead>
+            {sentences}
+          </span>
+        ) : (
+          // The page's finding: a count word's tooltip opens under all of it (DESIGN.md, Number tooltip).
+          <span id={sentencesId} className="mt-2 block max-w-[22.5em] text-finding text-pretty text-ink-heading" data-sentences data-finding>
+            {sentences}
+          </span>
+        ))}
     </h1>
   );
+}
+
+// Whether the briefing reports a state rather than a finding: a first run, a quiet window (which includes a past date
+// before any followed project was public), or an officer whose team has no published plan yet.
+function reportsAState(answer: HomeAnswer): boolean {
+  const empty = answer.worth.empty;
+  return empty === "first_run" || empty === "quiet" || empty === "no_plan";
 }
 
 // ── The Start here strip ─────────────────────────────────────────────────
@@ -253,8 +295,6 @@ type StripState = "shown" | "removing" | "removed" | "restoring" | "remove-faile
 
 function StartHere({ links }: { links: HomeAnswer["start_here"]["links"] }) {
   const [state, setState] = useState<StripState>("shown");
-  const countId = useId();
-  const captionId = useId();
   const sentence = useRef<HTMLParagraphElement>(null);
   const title = useRef<HTMLHeadingElement>(null);
   const start = words.start;
@@ -292,8 +332,9 @@ function StartHere({ links }: { links: HomeAnswer["start_here"]["links"] }) {
   };
 
   if (state === "removed" || state === "restoring" || state === "restore-failed") {
+    // The undo row, on the page grey where the strip's row was.
     return (
-      <section data-start-here="removed" className="rounded-md bg-surface-2 px-4 py-3 @md/page:px-6">
+      <section data-start-here="removed" className="border-y border-line py-4">
         <div className="flex flex-wrap items-center gap-3">
           <p ref={sentence} tabIndex={-1} className="text-small text-ink focus:outline-none">
             {start.removed}
@@ -306,43 +347,48 @@ function StartHere({ links }: { links: HomeAnswer["start_here"]["links"] }) {
       </section>
     );
   }
+  // A Task zone row under the briefing (ticket 98): "Start here" and its count, the tag under the name at every width,
+  // Remove at the row's right, then the six links in the ticket's order.
+  const count = copy.nav.startHere.count(formatNumber(doneCount, { compact: false }), formatNumber(links.length, { compact: false }));
   return (
-    <section aria-labelledby={`${START_HERE_ANCHOR} ${countId}`} data-start-here="shown" className="rounded-md bg-surface-2 px-4 py-4 @md/page:px-6">
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-        <h2 ref={title} id={START_HERE_ANCHOR} tabIndex={-1} className="text-label text-ink-muted focus:outline-none">
-          {start.title}
-        </h2>
-        <span id={countId} data-start-count className="text-caption text-ink-muted">
-          {copy.nav.startHere.count(formatNumber(doneCount, { compact: false }), formatNumber(links.length, { compact: false }))}
-        </span>
-        <span id={captionId} className="text-caption text-ink-muted @md/page:ml-auto">
-          {start.caption}
-        </span>
-        <Button variant="ghost" aria-label={start.removeName} loading={state === "removing"} busyLabel={start.removing} onClick={() => void choose(false)}>
+    <TaskZone
+      name={start.title}
+      headingId={START_HERE_ANCHOR}
+      headingRef={title}
+      note={<span data-start-count>{count}</span>}
+      tag={start.caption}
+      corner={
+        <Button variant="ghost" flush onPage aria-label={start.removeName} loading={state === "removing"} busyLabel={start.removing} onClick={() => void choose(false)}>
           {start.remove}
         </Button>
-      </div>
-      {state === "remove-failed" && <FailedLine>{start.removeFailed}</FailedLine>}
-      <ul aria-labelledby={captionId} className="mt-3 flex flex-col gap-1 @md/page:flex-row @md/page:flex-wrap @md/page:gap-x-8 @md/page:gap-y-2">
-        {links.map((link) => {
-          // Each link leads with its tick, which appears at once and never moves; its name ends with "done" only once
-          // the person followed it.
-          const done = followed.has(link.key);
-          const Tick = done ? CircleCheck : Circle;
-          return (
-            <li key={link.key} className="flex min-h-8 items-center">
-              <TextLink href={link.href} data-start-link={link.key} onClick={() => markDone(link.key)} className="inline-flex items-start gap-2 text-small font-semibold">
-                <Tick aria-hidden="true" data-start-tick={done ? "done" : "open"} className={cx("mt-0.5 size-4 shrink-0", done ? "text-primary" : "text-line-strong")} />
-                <span>
-                  <Fill template={start.links[link.key] ?? link.key} slots={{ pid: <span className="font-mono font-medium">{link.pid}</span> }} />
-                  {done && <span className="clip-visually">{copy.nav.startHere.doneHidden}</span>}
-                </span>
-              </TextLink>
-            </li>
-          );
-        })}
-      </ul>
-    </section>
+      }
+      summary={
+        <>
+          <ul className="flex flex-col gap-1 @md/page:flex-row @md/page:flex-wrap @md/page:gap-x-8 @md/page:gap-y-2">
+            {links.map((link) => {
+              // Each link leads with its tick, which appears at once and never moves; its name ends with "done" only
+              // once the person followed it.
+              const done = followed.has(link.key);
+              const Tick = done ? CircleCheck : Circle;
+              return (
+                <li key={link.key} className="flex min-h-8 items-center">
+                  <TextLink href={link.href} data-start-link={link.key} onClick={() => markDone(link.key)} className="inline-flex items-start gap-2 text-small font-semibold">
+                    <Tick aria-hidden="true" data-start-tick={done ? "done" : "open"} className={cx("mt-0.5 size-4 shrink-0", done ? "text-primary" : "text-line-strong")} />
+                    <span>
+                      <Fill template={start.links[link.key] ?? link.key} slots={{ pid: <span className="font-mono font-medium">{link.pid}</span> }} />
+                      {done && <span className="clip-visually">{copy.nav.startHere.doneHidden}</span>}
+                    </span>
+                  </TextLink>
+                </li>
+              );
+            })}
+          </ul>
+          {state === "remove-failed" && <FailedLine>{start.removeFailed}</FailedLine>}
+        </>
+      }
+      sectionKey="start-here"
+      marks={{ "data-start-here": "shown" }}
+    />
   );
 }
 
@@ -417,7 +463,7 @@ function Line({ line, n, hidden, checkedOn }: { line: HomeLine; n: number; hidde
       hidden={hidden}
       data-line-kind={line.kind}
       data-line-status={line.status}
-      className="border-t border-line py-4 focus:outline-none @container/line"
+      className="border-t border-line py-4 first:border-t-0 first:pt-1 focus:outline-none @container/line"
     >
       <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="flex flex-wrap items-center gap-2">
@@ -443,83 +489,121 @@ function Line({ line, n, hidden, checkedOn }: { line: HomeLine; n: number; hidde
   );
 }
 
+// A panel in columns 1 to 7 named "Worth knowing", its tag "Fixed checks, no model" at the panel's right (ticket 98):
+// each line a badge, its one verb at the first row's right, its sentence and its marker, then the foot strip's source.
+// The public view's is "Closed projects", tagged "Contracts traced from public records". With no lines it is a row
+// with its sentence and at most one link.
 function WorthKnowing({ answer }: { answer: HomeAnswer }) {
-  const titleId = useId();
   const worth = answer.worth;
   const [open, setOpen] = useState(false);
   const folded = Math.max(0, worth.lines.length - worth.fold_after);
-  const title = worth.kind === "public" ? words.publicView.title : words.worth.title;
+  const isPublic = worth.kind === "public";
+  const name = isPublic ? words.publicView.title : words.worth.title;
+  const tag = isPublic ? words.publicView.tag : words.worth.tag;
   const through = formatDate(worth.through, { style: "short" });
   const checked = formatDate(worth.checked_on, { style: "short" });
-  const source =
-    worth.kind === "public" ? words.publicView.source(through) : worth.kind === "agency" ? words.worth.sourceAgency(through, checked) : words.worth.source(through, checked);
+  const source = isPublic ? words.publicView.source(through) : worth.kind === "agency" ? words.worth.sourceAgency(through, checked) : words.worth.source(through, checked);
+  const marks = { "data-worth": worth.kind };
+  if (worth.lines.length === 0) {
+    return <TaskZone name={name} tag={tag} summary={<WorthEmpty answer={answer} source={source} />} sectionKey="worth" marks={marks} />;
+  }
   return (
-    <section aria-labelledby={titleId} data-worth={worth.kind} className="rounded-md border border-line bg-surface p-4 @md/page:p-6">
-      <h2 id={titleId} className="text-label text-ink-muted">
-        {title}
-      </h2>
-      {worth.lines.length > 0 ? (
-        <ul className="mt-4">
+    <TaskZone name={name} tag={tag} panel sectionKey="worth" marks={marks}>
+      <ZoneBlock
+        foot={
+          <FootStrip>
+            <Source>{source}</Source>
+            {isPublic && (
+              <p className="text-small">
+                <TextLink href="/projects">{words.publicView.more}</TextLink>
+              </p>
+            )}
+          </FootStrip>
+        }
+      >
+        <ul>
           {worth.lines.map((line, index) => (
             <Line key={line.id} line={line} n={index + 1} hidden={!open && index >= worth.fold_after} checkedOn={worth.checked_on} />
           ))}
         </ul>
-      ) : (
-        <WorthEmpty answer={answer} />
-      )}
-      {folded > 0 && (
-        <div className="border-t border-line pt-3">
-          <p className="text-small text-ink">{folded === 1 ? words.worth.foldOne : words.worth.fold(String(folded))}</p>
-          <Button variant="ghost" flush icon={ChevronDown} aria-expanded={open} onClick={() => setOpen(!open)}>
-            {open ? (folded === 1 ? words.worth.hideOne : words.worth.hide) : folded === 1 ? words.worth.showOne : words.worth.show}
-          </Button>
-        </div>
-      )}
-      <Source className="mt-4 border-t border-line pt-4">{source}</Source>
-    </section>
+        {folded > 0 && (
+          <div className="border-t border-line pt-3">
+            <p className="text-small text-ink">{folded === 1 ? words.worth.foldOne : words.worth.fold(String(folded))}</p>
+            <Button variant="ghost" flush icon={ChevronDown} aria-expanded={open} onClick={() => setOpen(!open)}>
+              {open ? (folded === 1 ? words.worth.hideOne : words.worth.hide) : folded === 1 ? words.worth.showOne : words.worth.show}
+            </Button>
+          </div>
+        )}
+      </ZoneBlock>
+    </TaskZone>
   );
 }
 
-function WorthEmpty({ answer }: { answer: HomeAnswer }) {
+// The row's sentence when Worth knowing has no lines, its one link, and the source of what it says. A first run says
+// what Home will hold, so it has no source.
+function WorthEmpty({ answer, source }: { answer: HomeAnswer; source: string }) {
   const worth = answer.worth;
   const w = words.worth;
   if (worth.empty === "first_run") {
-    return <EmptyState className="mt-4" level={3} title={w.firstRunTitle} body={w.firstRunBody} link={{ href: "/projects", text: w.firstRunLink }} />;
+    return (
+      <>
+        <p className="text-pretty">
+          {w.firstRunTitle} {w.firstRunBody}
+        </p>
+        <p className="mt-2">
+          <TextLink href="/projects">{w.firstRunLink}</TextLink>
+        </p>
+      </>
+    );
   }
-  if (worth.empty === "no_closed") return <p className="mt-4 text-small text-ink-muted">{words.publicView.empty}</p>;
-  if (worth.empty === "nothing_behind" || worth.empty === "no_plan") return <p className="mt-4 text-small text-ink-muted">{w.agencyNothing}</p>;
-  if (worth.empty === "nothing_marked") return <p className="mt-4 text-small text-ink-muted">{w.nothingMarked}</p>;
-  // The window's words are the server's (the page picks no count word).
+  const sentence =
+    worth.empty === "no_closed" ? (
+      words.publicView.empty
+    ) : worth.empty === "nothing_behind" || worth.empty === "no_plan" ? (
+      w.agencyNothing
+    ) : worth.empty === "nothing_marked" ? (
+      w.nothingMarked
+    ) : (
+      // The window's words are the server's (the page picks no count word).
+      <Fill template={w.quiet} slots={{ window: answer.window ? <Segments segments={answer.window.phrase} /> : "" }} />
+    );
   return (
-    <p className="mt-4 text-small text-ink-muted">
-      <Fill template={w.quiet} slots={{ window: answer.window ? <Segments segments={answer.window.phrase} /> : "" }} />{" "}
-      <TextLink href="/projects/following">{w.quietLink}</TextLink>
-    </p>
+    <>
+      <p className="text-pretty">{sentence}</p>
+      {worth.empty === "quiet" && (
+        <p className="mt-2">
+          <TextLink href="/projects/following">{w.quietLink}</TextLink>
+        </p>
+      )}
+      <Source className="mt-2">{source}</Source>
+    </>
   );
 }
 
 // ── Waiting for you ──────────────────────────────────────────────────────
 
+// The side panel in columns 9 to 12 from a frame of 75rem, after Worth knowing below it (ticket 98). With no drafts to
+// list it holds only a sentence, so it is a row in the side column.
 function WaitingForYou({ answer }: { answer: HomeAnswer }) {
-  const titleId = useId();
   const waiting = answer.waiting;
   const w = words.waiting;
   const reason = waiting.reason === "preview" ? w.preview : waiting.reason === "asof" ? w.asOf : null;
   return (
-    <section aria-labelledby={titleId} data-waiting className="rounded-md border border-line bg-surface p-4 @md/page:p-6">
-      <h2 id={titleId} className="text-label text-ink-muted">
-        {w.title}
-      </h2>
+    <div data-waiting>
       {reason ? (
-        <p className="mt-4 text-small text-ink-muted">{reason}</p>
+        <SidePanel title={w.title} sentence={reason} />
       ) : waiting.rows.length === 0 ? (
-        <p className="mt-4 text-small text-ink-muted" data-waiting-empty>
-          {answer.view === "piu" ? w.emptyAgency : w.empty}{" "}
-          <TextLink href="/packages">{w.emptyLink}</TextLink>
-        </p>
+        <SidePanel
+          title={w.title}
+          sentence={
+            <span data-waiting-empty>
+              {answer.view === "piu" ? w.emptyAgency : w.empty} <TextLink href="/packages">{w.emptyLink}</TextLink>
+            </span>
+          }
+        />
       ) : (
-        <>
-          <ul className="mt-4 -mx-4">
+        <SidePanel title={w.title}>
+          <ul className="-mx-4">
             {waiting.rows.map((row) => (
               <DraftRow key={row.draft_id} row={row} />
             ))}
@@ -527,29 +611,101 @@ function WaitingForYou({ answer }: { answer: HomeAnswer }) {
           <p className="mt-2 text-small">
             <TextLink href="/drafts">{waiting.more ? w.more(String(waiting.total)) : w.toDrafts}</TextLink>
           </p>
-        </>
+        </SidePanel>
       )}
-    </section>
+    </div>
   );
 }
 
 // ── The page ─────────────────────────────────────────────────────────────
 
-function Loading() {
-  const strip = useStore(startHereVisible);
+// While Home loads: the briefing's lines under the date line, and each zone's place.
+function LoadingLines() {
   return (
     <>
       <span role="status" className="sr-only">
         {words.loading}
       </span>
-      <div className="mt-2 flex max-w-[72ch] flex-col gap-2" aria-hidden="true">
+      <div className="mt-2 flex max-w-[22.5em] flex-col gap-2 text-finding" aria-hidden="true">
         <SkeletonLine width="w-full" />
         <SkeletonLine width="w-full" />
         <SkeletonLine width="w-3/5" />
       </div>
-      {strip && <Skeleton className="mt-8 h-28 w-full" />}
-      <Skeleton className="mt-8 h-64 w-full" />
     </>
+  );
+}
+
+function LoadingZones() {
+  const strip = useStore(startHereVisible);
+  return (
+    <div aria-hidden="true">
+      {strip && <Skeleton className="mb-4 h-28 w-full" />}
+      <Skeleton className="h-64 w-full" />
+    </div>
+  );
+}
+
+// Home's head: the h1, which is always the same element, so focus stays on it when the answer arrives or fails; under
+// it the public view's one sentence in lead, or the briefing's lines while they load.
+function HomeHead({
+  load,
+  answer,
+  retry,
+  answered,
+}: {
+  load: Load<HomeAnswer>;
+  answer: HomeAnswer | null;
+  retry: () => void;
+  // An answer asked from Home is open above the head.
+  answered: boolean;
+}) {
+  const isPublic = answer?.view === "public";
+  const named = load.status === "error" || isPublic;
+  const sentencesId = useId();
+  const [unfolded, setUnfolded] = useState(false);
+  // Closing the answer unfolds the briefing, and the next answer folds it again.
+  useEffect(() => {
+    if (!answered) setUnfolded(false);
+  }, [answered]);
+  const folds = answered && !named && (answer?.briefing.sentences.length ?? 0) > 1;
+  const fold: Fold = !answered || named ? "none" : unfolded || !folds ? "unfolded" : "folded";
+  return (
+    <div data-page-head>
+      {load.status === "error" && (
+        // The page's one read failed: its error alert sits in the page's alert slot, and the h1 names the page.
+        <PageAlert>
+          <LoadError error={load.error} message={words.error} permission={words.permission} onRetry={retry} retrying={load.retrying} attempt={load.attempt} />
+        </PageAlert>
+      )}
+      <Briefing answer={answer} named={named} fold={fold} sentencesId={sentencesId} />
+      {folds && (
+        <p className="mt-2">
+          <Button
+            variant="ghost"
+            flush
+            onPage
+            icon={unfolded ? ChevronUp : ChevronDown}
+            aria-expanded={unfolded}
+            aria-controls={sentencesId}
+            onClick={() => setUnfolded(!unfolded)}
+            data-briefing-toggle
+          >
+            {unfolded ? words.briefingHide : words.briefingShow}
+          </Button>
+        </p>
+      )}
+      {isPublic && (
+        <p className="mt-2 max-w-prose text-lead text-pretty text-ink" data-status-lead>
+          {answer.briefing.sentences.map((sentence, index) => (
+            <Fragment key={index}>
+              {index > 0 && " "}
+              <Segments segments={sentence} />
+            </Fragment>
+          ))}
+        </p>
+      )}
+      {load.status === "loading" && <LoadingLines />}
+    </div>
   );
 }
 
@@ -558,6 +714,8 @@ export function HomePage() {
   const [reading, setReading] = useState(0);
   const [load, retry] = useLoad<HomeAnswer>(HOME_PATH, String(reading));
   const answer = load.status === "ready" ? load.data : null;
+  // An answer asked from Home: in the work's columns above the head (ticket 98).
+  const asked = useAnswerInPage();
   useEffect(() => {
     if (load.status === "ready" && (load.afterRetry || reading > 0)) document.getElementById("briefing")?.focus();
   }, [load, reading]);
@@ -569,43 +727,31 @@ export function HomePage() {
   const strip = Boolean(answer?.start_here.visible && answer.start_here.links.length > 0);
   // A later visit after Remove: World Bank staff today, with the strip's links but not the strip.
   const restore = Boolean(answer && !strip && answer.view === "staff" && !answer.as_of && answer.start_here.links.length > 0);
+  // Waiting for you is the side panel; the public view has none, and a failed read draws only the head.
+  const side =
+    load.status === "loading" ? (
+      <Skeleton className="h-48 w-full" />
+    ) : answer && answer.view !== "public" ? (
+      <WaitingForYou answer={answer} />
+    ) : undefined;
   return (
-    <div className="layout-grid" data-home={load.status}>
-      <div className="col-span-12">
-        <Briefing answer={answer} />
-        {load.status === "loading" && <Loading />}
-        {load.status === "error" && (
-          <div className="mt-6">
-            <LoadError error={load.error} message={words.error} permission={words.permission} onRetry={retry} retrying={load.retrying} attempt={load.attempt} />
-          </div>
-        )}
+    <div data-home={load.status}>
+      <Workspace answer={asked} head={<HomeHead load={load} answer={answer} retry={retry} answered={asked != null} />} side={side}>
+        {load.status === "loading" && <LoadingZones />}
         {answer && (
           <>
-            {strip && (
-              <div className="mt-6 @md/page:mt-8">
-                <StartHere links={answer.start_here.links} />
-              </div>
-            )}
+            {strip && <StartHere links={answer.start_here.links} />}
             {/* An implementing agency officer's own Home: "Check my plan" takes the strip's place (the 41 brief, 5.8). */}
             {answer.view === "piu" && !answer.preview && !answer.as_of && (
-              <p className="mt-6 text-body @md/page:mt-8" data-check-my-plan>
+              <p className="mb-4 text-body" data-check-my-plan>
                 <TextLink href={CHECK_MY_PLAN}>{words.worth.agencyCheck}</TextLink>
               </p>
             )}
-            <div className="mt-6 grid grid-cols-1 gap-6 @md/page:mt-8 @[75rem]/page:grid-cols-12 @[75rem]/page:gap-8">
-              <div className="@[75rem]/page:col-span-7">
-                <WorthKnowing answer={answer} />
-              </div>
-              {answer.view !== "public" && (
-                <div className="@[75rem]/page:col-span-5">
-                  <WaitingForYou answer={answer} />
-                </div>
-              )}
-            </div>
+            <WorthKnowing answer={answer} />
             {restore && <RestoreLine onRestored={() => setReading((count) => count + 1)} />}
           </>
         )}
-      </div>
+      </Workspace>
     </div>
   );
 }

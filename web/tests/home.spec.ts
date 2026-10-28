@@ -2,7 +2,7 @@
 // (tests/record_home_api.py): Ana's Home with the examples the seed command set up for her, Ben's first run, a quiet
 // window, the agency and public previews, and Home once both drafts are checked. The expected words come from the
 // ticket, the wireframe and tests/ground_truth/values.toml, never from the copy file.
-import type { Page } from "@playwright/test";
+import type { Locator, Page } from "@playwright/test";
 import { scan } from "./axe";
 import { hubApi } from "./hub-api";
 import { trailApi } from "./trail-api";
@@ -25,8 +25,8 @@ async function homeApi(extra: Record<string, Answer> = {}): Promise<Record<strin
   };
 }
 
-async function open(page: Page, path = "/", extra: Record<string, Answer> = {}, width = 1440) {
-  await page.setViewportSize({ width, height: 900 });
+async function open(page: Page, path = "/", extra: Record<string, Answer> = {}, width = 1440, height = 900) {
+  await page.setViewportSize({ width, height });
   const unrecorded = await mockApi(page, await homeApi(extra));
   await page.goto(path);
   await expect(page.locator("[data-home=ready]")).toBeVisible();
@@ -56,12 +56,187 @@ test("the briefing's counts equal the lines below it, kind by kind, and Home ask
   expect(await counted("lessonsChanged")).toBe(await page.locator("li[data-line-kind=lesson][data-line-status=changed]").count());
   expect(await counted("drafts")).toBe(await page.locator("[data-waiting] [data-draft-row]").count());
   expect([await counted("look"), await counted("watch"), await counted("lessonsChanged"), await counted("drafts")]).toEqual([1, 2, 1, 2]);
-  await expect(page.getByRole("heading", { name: "Worth knowing · fixed checks, no model" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Worth knowing", exact: true })).toBeVisible();
 
   // Home's one read, beside the shell's: nothing that calls a model.
   const routes = models.map(({ method, path }) => new RegExp(`^${method} ${path.replace(/\{[^}]+\}/g, "[^/]+")}$`));
   expect(asked.filter((request) => routes.some((route) => route.test(request)))).toEqual([]);
   expect(asked.filter((request) => request.includes("/api/home"))).toEqual(["GET /api/home"]);
+});
+
+// Ticket 98 (DESIGN.md section 3's type scale and section 1, principle 6): the date line in label (13/16, 600), the
+// briefing's sentences in the finding style (28/36 Light, 24/32 below 48rem), and a first run's sentences, which report
+// a state, in lead (18/28, 400).
+const typeOf = (element: Locator) =>
+  element.evaluate((found) => {
+    const style = getComputedStyle(found);
+    return `${style.fontSize}/${style.lineHeight} ${style.fontWeight}`;
+  });
+
+// The bottom of the element, from the top of the page, and the top of the box floating at the window's foot.
+const bottomOf = (element: Locator) => element.evaluate((found) => found.getBoundingClientRect().bottom + window.scrollY);
+const boxTop = (page: Page) => page.locator("[data-box-band] form").evaluate((form) => form.getBoundingClientRect().top + window.scrollY);
+
+test("the h1 is the date line in label over the briefing in the finding style, inside the first screen at 390 by 844 and 1024 by 768, and a first run's sentences are in lead", async ({ page }) => {
+  for (const [width, height, finding] of [[390, 844, "24px/32px 300"], [1024, 768, "28px/36px 300"]] as const) {
+    await open(page, "/", {}, width, height);
+    const h1 = page.locator("main h1");
+    const at = `${width} by ${height}`;
+    await expect(h1.locator("[data-date-line]"), at).toHaveText("Your briefing for Wednesday, October 28");
+    expect(await typeOf(h1.locator("[data-date-line]")), at).toBe("13px/16px 600");
+    expect(await typeOf(h1.locator("[data-finding]")), at).toBe(finding);
+    await expect(h1.locator("[data-status-lead]"), at).toHaveCount(0);
+    const end = await bottomOf(h1);
+    expect(end, at).toBeLessThanOrEqual(height);
+    expect(end, `${at}: the box at the window's foot covers none of it`).toBeLessThanOrEqual(await boxTop(page));
+  }
+  // Each count word still opens its window.
+  await page.locator("[data-count-kind=watch] button").click();
+  await expect(page.getByRole("dialog", { name: "Activities worth watching" }).getByRole("link")).toHaveText(["KE-NWWDA-229129-CW-RFB", "KE-NWWDA-541062-CW-RFQ"]);
+
+  await open(page, "/", { "/api/home": await file("home-first-run.json") });
+  const lead = page.locator("main h1 [data-status-lead]");
+  await expect(lead).toHaveText("You don't follow any projects yet, so I have no plans to brief you on. No draft is waiting for you to check.");
+  expect(await typeOf(lead)).toBe("18px/28px 400");
+  await expect(page.locator("main h1 [data-finding]")).toHaveCount(0);
+});
+
+// What a person reaches with Tab in the page, in order: each stop's tag and its words.
+const tabStops = (page: Page) =>
+  page.locator("main").evaluate((main) =>
+    Array.from(main.querySelectorAll<HTMLElement>("a[href], button:not([disabled]), [tabindex='0']"))
+      .filter((stop) => stop.getClientRects().length > 0)
+      .map((stop) => `${stop.tagName.toLowerCase()} ${(stop.getAttribute("aria-label") ?? stop.innerText).trim()}`),
+  );
+const box = async (element: Locator) => (await element.boundingBox())!;
+
+test("Worth knowing is a panel with its tag, each line's verb at its first row's right; Start here's tag sits under its name; Waiting for you is the side panel from a frame of 75rem and follows Worth knowing, in one Tab order at every width", async ({ page }) => {
+  await open(page);
+  const worth = page.getByRole("region", { name: "Worth knowing", exact: true });
+  await expect(worth).toHaveAttribute("data-zone", "panel");
+  await expect(worth.locator("[data-zone-tag]")).toHaveText("Fixed checks, no model");
+  await expect(worth.getByRole("heading", { level: 2 })).toHaveText("Worth knowing");
+  await expect(page.locator("main")).not.toContainText("·");
+
+  // Each line: its badge, its one verb at the first row's right, then its sentence, which ends in its marker.
+  const lines = worth.locator("li[data-line-kind]");
+  await expect(lines).toHaveCount(4);
+  for (const line of await lines.all()) {
+    const [badge, verb, row] = [await box(line.locator("[data-badge]")), await box(line.locator("[data-line-action]")), await box(line)];
+    expect(Math.abs(verb.y + verb.height / 2 - (badge.y + badge.height / 2))).toBeLessThanOrEqual(4);
+    expect(Math.abs(verb.x + verb.width - (row.x + row.width))).toBeLessThanOrEqual(2);
+    expect(await line.locator("p").first().evaluate((p) => {
+      let last: Element | null = p;
+      while (last?.lastElementChild) last = last.lastElementChild;
+      return last?.closest("[data-citation]") !== null && p.textContent!.trim().endsWith(last!.closest("[data-citation]")!.textContent!.trim());
+    })).toBe(true);
+  }
+
+  const name = page.locator("[data-start-here=shown] [data-zone-name]");
+  const tag = page.locator("[data-start-here=shown] [data-zone-tag]");
+  await expect(tag).toHaveText("Examples Strata set up for you");
+  const waiting = page.getByRole("region", { name: "Waiting for you", exact: true });
+  await expect(waiting).toHaveAttribute("data-side-panel", "panel");
+  // Each zone's and the side panel's name is an h2 in h2 type, 18/24 600 (routed from ticket 91's critique).
+  for (const heading of [name, worth.getByRole("heading", { level: 2 }), waiting.getByRole("heading", { level: 2 })]) {
+    expect(await typeOf(heading)).toBe("18px/24px 600");
+  }
+
+  let order: string[] | null = null;
+  for (const width of [1440, 1280, 1024, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    const [w, s] = [await box(worth), await box(waiting)];
+    if (width >= 1280) {
+      // Beside the work, from the top of the page's head.
+      expect(s.x, `${width} px`).toBeGreaterThan(w.x + w.width);
+      expect(s.y, `${width} px`).toBeLessThan(w.y);
+    } else {
+      expect(s.y, `${width} px`).toBeGreaterThan(w.y + w.height);
+      expect(Math.round(s.x), `${width} px`).toBe(Math.round(w.x));
+    }
+    if (width === 1440 || width === 390) {
+      const [n, t] = [await box(name), await box(tag)];
+      expect(t.y, `${width} px: the tag under the name`).toBeGreaterThanOrEqual(n.y + n.height - 1);
+      expect(Math.round(t.x), `${width} px`).toBe(Math.round(n.x));
+    }
+    const stops = await tabStops(page);
+    if (order === null) order = stops;
+    else expect(stops, `${width} px`).toEqual(order);
+  }
+  // Tab from Worth knowing's last stop goes to Waiting for you's first.
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await worth.locator("a[href], button").last().focus();
+  await page.keyboard.press("Tab");
+  await expect(waiting.getByRole("link").first()).toBeFocused();
+});
+
+// Ticket 98 (fairshare's strip, the redesign plan's section 9, pattern 6): an answer asked from Home opens in columns 1
+// to 7 above the head, beside Waiting for you, and the briefing folds to its date line and first sentence in body.
+test("with an answer open on Home the briefing shows only its date line and first sentence, Show the briefing unfolds the rest in place, and closing the answer unfolds it", async ({ page }) => {
+  await open(page, "/", { "/api/ask": await file("ask-p130164-rebidding.sse"), "/api/evidence/opened": { body: '{"opened":[],"recorded":true}' } });
+  const h1 = page.locator("main h1");
+  const all =
+    "One plan changed in the past 15 days. One of its activities needs a look and two are worth watching. " +
+    "One lesson cited in your drafts changed. Two drafts are waiting for you to check.";
+  await page.keyboard.press("/");
+  await page.keyboard.type("Why were works contracts advertised again?");
+  await page.keyboard.press("Enter");
+  const answer = page.getByRole("region", { name: "Answer" });
+  await expect(answer.locator("[data-answer]:not([data-answer=streaming])")).toBeVisible();
+
+  // The answer takes the work's columns above the head, and Waiting for you stays beside it.
+  const [panel, head, worth, waiting] = [await box(answer), await box(h1), await box(page.locator("[data-worth]")), await box(page.locator("[data-waiting]"))];
+  expect(panel.y + panel.height).toBeLessThan(head.y);
+  expect(Math.round(panel.x)).toBe(Math.round(worth.x));
+  expect(Math.round(panel.width)).toBe(Math.round(worth.width));
+  expect(waiting.x).toBeGreaterThan(panel.x + panel.width);
+  expect(waiting.y).toBeLessThan(panel.y + panel.height);
+
+  await expect(h1).toHaveText("Your briefing for Wednesday, October 28. One plan changed in the past 15 days.");
+  expect(await typeOf(h1.locator("[data-sentences]"))).toBe("16px/24px 400");
+  const show = page.getByRole("button", { name: "Show the briefing" });
+  await expect(show).toHaveAttribute("aria-expanded", "false");
+  await show.click();
+  await expect(h1).toHaveText(`Your briefing for Wednesday, October 28. ${all}`);
+  const hide = page.getByRole("button", { name: "Hide the briefing" });
+  await expect(hide).toHaveAttribute("aria-expanded", "true");
+  await expect(hide).toBeFocused();
+  // The count words in the unfolded sentences still open their windows.
+  await h1.locator("[data-count-kind=drafts] button").click();
+  await expect(page.getByRole("dialog", { name: "Drafts waiting for you to check" }).getByRole("link")).toHaveCount(2);
+  await page.keyboard.press("Escape");
+  await hide.click();
+  await expect(h1).toHaveText("Your briefing for Wednesday, October 28. One plan changed in the past 15 days.");
+  expect((await scan(page, "[data-page-head]")).violations).toEqual([]);
+
+  // Closing the answer unfolds the briefing, in the finding style again.
+  await answer.getByRole("button", { name: "Close the answer" }).first().click();
+  await expect(answer).toHaveCount(0);
+  await expect(h1).toHaveText(`Your briefing for Wednesday, October 28. ${all}`);
+  expect(await typeOf(h1.locator("[data-finding]"))).toBe("28px/36px 300");
+  await expect(page.getByRole("button", { name: /the briefing$/ })).toHaveCount(0);
+});
+
+test("a failed load puts the error alert in the alert slot with Home as the h1, and Try again brings the briefing with focus on it", async ({ page }) => {
+  let fail = true;
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await mockApi(page, await homeApi());
+  await page.route("**/api/home", async (route) =>
+    fail
+      ? route.fulfill({ status: 503, contentType: "application/json", body: '{"code":"data_service","trace_id":"0af7651916cd43dd8448eb211c80319c"}' })
+      : route.fallback(),
+  );
+  await page.goto("/");
+  await expect(page.locator("[data-alert-slot]")).toContainText("I couldn't load your briefing because the data service didn't answer.");
+  await expect(page.locator("main h1")).toHaveText("Home");
+  await expect(page.locator("main [data-zone], main [data-side-slot]")).toHaveCount(0);
+
+  fail = false;
+  await page.locator("[data-alert-slot]").getByRole("button", { name: "Try again" }).click();
+  await expect(page.locator("[data-home=ready]")).toBeVisible();
+  await expect(page.locator("main h1")).toBeFocused();
+  await expect(page.locator("main h1 [data-date-line]")).toHaveText("Your briefing for Wednesday, October 28");
+  await expect(page.locator("[data-alert-slot]")).not.toContainText("I couldn't load your briefing");
 });
 
 test("a count word opens what it counts, each a link to its line", async ({ page }) => {
@@ -157,15 +332,27 @@ test("Remove hides the strip with an undo row, and a later visit ends Home with 
   await open(page);
   await page.route("**/api/home/start-here", async (route) => {
     asked = route.request().postDataJSON();
-    return route.fulfill({ status: 200, contentType: "application/json", body: await recorded("start-here-removed.json") });
+    const visible = (asked as { visible: boolean }).visible;
+    return route.fulfill({ status: 200, contentType: "application/json", body: await recorded(visible ? "start-here-shown.json" : "start-here-removed.json") });
   });
+  // Ticket 98: a Task zone row under the briefing, with Remove at the row's right.
+  const strip = page.locator("[data-start-here=shown]");
+  await expect(strip).toHaveAttribute("data-zone", "row");
+  const remove = page.getByRole("button", { name: "Remove the Start here examples" });
+  const [row, button] = [await box(strip), await box(remove)];
+  expect(row.x + row.width - (button.x + button.width)).toBeLessThanOrEqual(24);
+  expect(button.y - row.y).toBeLessThanOrEqual(16);
 
-  await page.getByRole("button", { name: "Remove the Start here examples" }).click();
+  await remove.click();
 
   expect(asked).toEqual({ visible: false, view: "staff" });
-  await expect(page.locator("[data-start-here=shown]")).toHaveCount(0);
+  await expect(strip).toHaveCount(0);
   await expect(page.getByText("You removed the examples Strata set up.")).toBeFocused();
-  await expect(page.getByRole("button", { name: "Show the examples again" })).toBeVisible();
+  // The undo row brings the strip back in place, with focus on its name.
+  await page.getByRole("button", { name: "Show the examples again" }).click();
+  expect(asked).toEqual({ visible: true, view: "staff" });
+  await expect(strip).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Start here", exact: true })).toBeFocused();
 
   // A later visit: the server says the strip stays hidden for this viewer.
   const home = JSON.parse(await recorded("home.json"));
@@ -204,10 +391,23 @@ test("Waiting for you lists the drafts to check with their progress, and shows i
 test("the agency preview and the public preview show the Home their column of the roles table describes", async ({ page }) => {
   await open(page, "/?view=piu");
   const h1 = page.getByRole("heading", { level: 1 });
-  await expect(h1).toContainText("I checked your team's latest Procurement Plan, the plan of October 9, 2026 for the Water and Sanitation Development Project (P156634).");
-  await expect(h1).toContainText("Two of its activities are behind their planned dates.");
-  await expect(page.locator("li[data-line-kind]")).toHaveCount(2);
-  await expect(page.locator("[data-waiting]")).toContainText("In a preview I don't show an implementing agency's drafts");
+  // The same shape as staff's Home (ticket 98): the date line, then the team's plan sentence in the finding style.
+  await expect(h1.locator("[data-date-line]")).toHaveText("Your briefing for Wednesday, October 28");
+  const finding = h1.locator("[data-finding]");
+  await expect(finding).toContainText("I checked your team's latest Procurement Plan, the plan of October 9, 2026 for the Water and Sanitation Development Project (P156634).");
+  await expect(finding).toContainText("Two of its activities are behind their planned dates.");
+  expect(await typeOf(finding)).toBe("28px/36px 300");
+  await page.locator("[data-count-kind=behind] button").click();
+  await expect(page.getByRole("dialog", { name: "Activities behind their planned dates" }).getByRole("link")).toHaveText(["KE-NWWDA-541055-CW-RFB", "KE-NWWDA-541062-CW-RFQ"]);
+  await page.keyboard.press("Escape");
+  const worth = page.getByRole("region", { name: "Worth knowing", exact: true });
+  await expect(worth.locator("[data-zone-tag]")).toHaveText("Fixed checks, no model");
+  await expect(worth.locator("li[data-line-kind]")).toHaveCount(2);
+  await expect(worth).toContainText("Your team's published Procurement Plans and project records from World Bank APIs");
+  // Waiting for you holds only a sentence in a preview, so it is a row in the side column, after Worth knowing.
+  const waiting = page.getByRole("region", { name: "Waiting for you", exact: true });
+  await expect(waiting).toHaveAttribute("data-side-panel", "row");
+  await expect(waiting).toContainText("In a preview I don't show an implementing agency's drafts");
   await expect(page.locator("[data-start-here]")).toHaveCount(0);
   await expect(page.locator("[data-check-my-plan]")).toHaveCount(0);
 
@@ -219,8 +419,23 @@ test("the agency preview and the public preview show the Home their column of th
   await expect(page.getByRole("link", { name: "Check my plan before you submit an update" })).toHaveAttribute("href", "/packages/check");
   await expect(page.locator("[data-start-here]")).toHaveCount(0);
 
+  // The public view (ticket 98): "Home" as the h1, its one sentence in lead, and "Closed projects" with its tag, no
+  // middle dot and no side panel.
   await open(page, "/?view=public");
-  await expect(page.getByRole("heading", { level: 1 })).toContainText("I hold records for 93 World Bank-financed projects.");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Home");
+  const lead = page.locator("main [data-status-lead]");
+  await expect(lead).toHaveCount(1);
+  await expect(lead).toHaveText(
+    "I hold records for 93 World Bank-financed projects. Search for one by name, project ID or country in the search box, " +
+      "or start from the closed project below, the latest to close among those whose contracts I hold.",
+  );
+  expect(await typeOf(lead)).toBe("18px/28px 400");
+  const projects = page.getByRole("region", { name: "Closed projects", exact: true });
+  await expect(projects.getByRole("heading", { level: 2 })).toHaveText("Closed projects");
+  await expect(projects.locator("[data-zone-tag]")).toHaveText("Contracts traced from public records");
+  await expect(page.locator("main")).not.toContainText("·");
+  await expect(page.locator("main [data-side-slot]")).toHaveCount(0);
+  await expect(projects.getByRole("link", { name: "Find more projects" })).toHaveAttribute("href", "/projects");
   // The fixture's one closed project with contracts, P130164 (values.toml, counts.p130164_trail).
   const closed = page.locator("li[data-line-kind=public]");
   await expect(closed).toHaveCount(1);
@@ -357,7 +572,8 @@ test("axe finds no WCAG 2.2 AA violations on Home populated, on its first run an
     await open(page, "/", { "/api/home": await file(home) });
     expect((await scan(page)).violations, home).toEqual([]);
   }
-  await expect(page.getByRole("heading", { level: 1 })).toContainText("Nothing changed in the plans of the one project you follow in the past 15 days.");
+  // A quiet window reports a state, so it takes lead too (ticket 98).
+  await expect(page.locator("main h1 [data-status-lead]")).toContainText("Nothing changed in the plans of the one project you follow in the past 15 days.");
   // The block below words the window as the server did: the page picks no count word.
   await expect(page.locator("[data-worth=staff]")).toContainText(
     "No plan changed and no new signal came up in the past 15 days for the projects you follow.",

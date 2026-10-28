@@ -659,15 +659,18 @@ const lastLine = (el: Element) => {
 };
 
 for (const width of [390, 320]) {
-  test(`at ${width} px the Home card's title wraps into even lines, and the Menu's view line never ends on one word`, async ({ page }) => {
-    // Home's first run (ticket 41): its empty-state card, as a viewer who follows nothing sees it.
+  test(`at ${width} px Home's first-run row never ends its sentence on one word, and the Menu's view line never ends on one word`, async ({ page }) => {
+    // Home's first run (ticket 41), as a viewer who follows nothing sees it: since ticket 98, Worth knowing is a Task
+    // zone row with its sentence and one link.
     await mockShell(page, { home: { body: await recorded("home-first-run.json") } });
     await page.setViewportSize({ width, height: 900 });
     await page.goto("/");
 
-    const title = page.locator("[data-empty-state]").getByRole("heading");
-    await expect(title).toHaveText("I brief you on the projects you follow.");
-    expect((await title.evaluate(lastLine)).share).toBeGreaterThan(0.5);
+    const sentence = page.locator("[data-worth] [data-section-summary] p").first();
+    await expect(sentence).toHaveText(
+      "I brief you on the projects you follow. Follow a project from its page, and each day I list its changed plans and new signals here.",
+    );
+    expect((await sentence.evaluate(lastLine)).words).toBeGreaterThan(1);
 
     // The Menu's view rows wrap with text-pretty, so no description ends on one word (ticket 40).
     await page.getByRole("button", { name: "Menu", exact: true }).click();
