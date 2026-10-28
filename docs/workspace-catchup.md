@@ -3723,3 +3723,48 @@ Notes from the review (`.notes/108-review.md`) and the verify (`.notes/108-verif
 - Criterion 3's text asks for P156634's rows in `strata.ops.anchored_plan_rows`. The builder says the score task's monthly watch is the only writer of that table, for whole months and for rows published after an exposure, so expect it to stay at 0 before the demo and check (c) instead. Whether (c) satisfies criterion 3 is a decision parked in ticket 108's done comment.
 - What else changes on the first night after the deploy, under `"newest"` (verify V1, V3, V4): P130164's 15 read plan versions in silver shrink to its newest; P161305's stress-shelf plan 40129238 (`config/slice.toml`'s `long_plan`) is listed as superseded by 40129959; and `ops/bundle/check.py same-rows` will fail on five ground-truth files marked for Databricks (`delay_from_first_published_planned_date`, `past_range_coverage_ke_works_rfb`, `past_range_criteria_ke_works_rfb`, `rebidding_ke_works_rfb`, `rebidding_label_counts`), because the comparables in other agencies' plans drop out. These follow from the rule, not from a failed step. The one line `plan_versions = "all"` reads every version again from bronze, with no new fetch for the plans bronze holds.
 - Ticket 08's live plan run above says it worked when `plan_versions_read` equals the number after "of". Under `"newest"`, `ops/plans/run_live.py` reads 1 of 240 for P156634 (review F2).
+
+## Ticket 109, step 1 of 4: sync the orchestrator, since its instructions show a worked quote claim and the rewrite round (criterion 4, live)
+
+Parked on October 27, 2026 with ticket 109, which merged into build/strata as 8f38b005. The orchestrator or the second session runs steps 1 to 4 tonight, in this order, before the demo of October 28, 2026. Every key is set, but mergers run no workspace step. This step needs the four Foundry keys in `.env`.
+
+Why: on October 27 at 10:18 and 10:19 UTC, the smoke question (`search-passages-icr-rebidding`, run by `ops/demo/ready.py` step 3) kept no sentence. The agent, strata-orchestrator version 9 on gpt-5.4-mini, found ICR ¶54 (`strata.gold.passage` 31525018/v1/54, ranked first) and then wrote its sentence in its own words, so the verifier removed it: run 1 with `quote_not_on_page` (the quote began "The works contract estimates", while the passage reads "that the works contract estimates"), run 2 with `quote_not_in_sentence`, and both with `number_not_in_records` for 108 and 328. Ticket 109 does four things, and the verifier still checks every answer. First, `src/strata/agent/instructions/orchestrator.md` shows one worked quote claim and says to copy the quote exactly. Second, the verifier matches a quote whose first letter is a capital where the page has a small letter. Third, the loop sends the agent its removed sentences back once before the verifier runs (`agent.rewrite_rounds = 1` in `config/thresholds.toml`; 0 turns it off). Fourth, `ops/demo/ready.py` prints each removed sentence with its quote and reasons, and its step 1 redeploys an App that the platform stopped with no active deployment.
+
+Run this from the main checkout at 8f38b005 or later:
+
+    uv run --script ops/agent/sync.py --env-file .env --agent orchestrator
+    uv run --script ops/agent/sync.py --env-file .env --agent orchestrator --check
+
+It worked if the first command's diff shows the worked quote claim, the sentence "Copy the quote exactly as the passage writes it, starting at a word, with its own first letter." and the rewrite paragraph ("The app may answer your claims with one message, ..."), and it ends "I made version N of strata-orchestrator, which matches the repo." with N after 9. The `--check` run must exit 0 with "matches the repo". Record the version here. A sync of the orchestrator from 8f38b005 or later also serves the orchestrator's part of ticket 61's step 1 and ticket 63's step 3.
+
+## Ticket 109, step 2 of 4: redeploy the App, so it runs the new loop, verifier and `agent.rewrite_rounds`
+
+Parked on October 27, 2026 with ticket 109 (merge commit 8f38b005). Run it after step 1, from a snapshot of the done commit that follows 8f38b005, as the header says (link the main checkout's `web/node_modules` into the snapshot). It needs the Databricks keys in `.env` and the Foundry and judge secrets in the scope `strata`.
+
+    uv run --script ops/app/deploy_app.py --env-file "<main checkout>/.env" --keep-secrets
+
+It worked if a deployment made in this run shows SUCCEEDED, the last line is "Strata is running at <address>" with exit 0, and `GET <address>/api/health` answers 200. If it exits 1 with the deployment still IN_PROGRESS, run `databricks apps get strata -p strata` first and record what it shows. A deploy from this commit or a later one also serves the deploy in ticket 57's step 1, ticket 61's step 2 and ticket 63's step 2, if those have not run yet. Record the deployment's id and the time here.
+
+## Ticket 109, step 3 of 4: the demo-ready command's smoke question keeps its sentence citing ICR ¶54 (criterion 4, live)
+
+Parked on October 27, 2026 with ticket 109 (merge commit 8f38b005). Run it after steps 1 and 2, from the main checkout. It needs the Databricks keys and the four Foundry keys in `.env`.
+
+    uv run --with databricks-sdk==0.156.0 python ops/demo/ready.py --env-file .env
+
+Its step 1 now redeploys the App itself, from the main checkout with `ops/app/deploy_app.py --keep-secrets`, when `databricks apps get` shows the compute stopped with no active deployment. That takes about 12 minutes after a cold start, and the command prints nothing while it runs.
+
+It worked if step 3 prints "The smoke question: passed", the answer keeps its sentence, and that sentence cites `strata.gold.passage:31525018/v1/54`. This is ticket 109's criterion 4. If it fails, the new "Removed:" lines give each removed sentence with its quote and reasons; record them here word for word. Record the time, the exit code and step 3's lines here under ticket 109.
+
+## Ticket 109, step 4 of 4: re-record the agent's cases, so p130164-rebidding keeps its sentence
+
+Parked on October 27, 2026 with ticket 109 (merge commit 8f38b005). Run it after step 1, from the main checkout, since it writes `tests/fixtures/agent`. It needs the four Foundry keys in `.env`. It re-records every case; it has no single-case option.
+
+    uv run --script ops/agent/record.py --env-file .env
+
+It worked if the p130164-rebidding answer's printed counts show no removed sentence. Then review `git diff tests/fixtures/agent`. If the showcase answer changed, rewrite the streams with `uv run --frozen python -m strata.agent.scripted --all`, check the screen tests that read `tests/fixtures/api/ask-p130164-rebidding.sse`, run the gate, and commit on build/strata.
+
+Notes from the review (`.notes/109-review.md`) and the verify (`.notes/109-verify.md`), for whoever runs steps 2 and 3:
+
+- `ops/demo/ready.py` step 1 says "I started its compute and deployed Strata again" before it knows whether the deploy worked (review P1). If the next line says the deploy exited 2, the App was not deployed; run step 2's command by hand.
+- Step 1 redeploys only an App that is stopped with no active and no pending deployment. A stopped App with a pending deployment (review P3, verify R2), or a running App with no deployment (verify R3, the state a manual `apps start` left at 12:15 UTC on October 27), is left alone with the sentence "The app strata runs nothing yet, not Strata's code ... so I left it alone". In both cases, run step 2's command by hand, then step 3 again.
+- A rewrite replaces the agent's whole first answer. If the agent leaves out a partial refusal in its rewrite, the stream sends no refusal event (review P5, verify R1). The instructions ask for the whole answer again, so this happens only if the model does not follow them.
