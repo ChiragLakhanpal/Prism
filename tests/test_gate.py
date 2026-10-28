@@ -36,11 +36,13 @@ def clean_env():
     return env
 
 
-def ctrl_c_on():
-    """Run in a child before it starts (preexec_fn): Ctrl-C works there again. A shell that starts a command with &
-    hands it Ctrl-C ignored, and every process it starts inherits that, so a gate started that way would never see
-    the Ctrl-C a test sends it."""
-    signal.signal(signal.SIGINT, signal.SIG_DFL)
+# Put this before a command, and the command starts with Ctrl-C working again. A shell that starts a command with &
+# hands it Ctrl-C ignored, and every process it starts inherits that, so a gate started that way would never see the
+# Ctrl-C a test sends it. The child turns Ctrl-C back on and then becomes the command (os.execvp keeps its process
+# id, so a signal sent to it reaches the command). preexec_fn would do the same in the forked child before exec, but
+# Python's documentation says it can deadlock in a process with threads, and each pytest-xdist worker has one.
+CTRL_C_ON = [sys.executable, "-c", "import os, signal, sys; signal.signal(signal.SIGINT, signal.SIG_DFL); "
+                                   "os.execvp(sys.argv[1], sys.argv[1:])"]
 
 
 def git(repo, *args, check=True):
@@ -728,8 +730,8 @@ def test_the_limit_covers_the_whole_run_and_stops_every_lane(repo):
 def test_ctrl_c_stops_every_lane(repo):
     write(repo, "gates/steps.toml", steps_file(steps=[wait("A", 30, lane="one"), wait("B", 30, lane="two")]))
     write(repo, "step.py", STEP)
-    gate = subprocess.Popen([".githooks/pre-commit"], cwd=repo, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                            text=True, env=clean_env(), preexec_fn=ctrl_c_on)
+    gate = subprocess.Popen([*CTRL_C_ON, ".githooks/pre-commit"], cwd=repo, stdout=subprocess.PIPE,
+                            stderr=subprocess.STDOUT, text=True, env=clean_env())
     # Wait for both steps to start, however long a busy computer takes to start the gate and its steps.
     deadline = time.monotonic() + 60
     while not ((repo / "log.txt").exists() and len(logged(repo)) == 2) and time.monotonic() < deadline:
@@ -787,8 +789,8 @@ LANE_SIGINT = """\
 def test_ctrl_c_that_lands_on_a_lane_thread_stops_the_gate_within_one_poll(tmp_path):
     write(tmp_path, "driver.py", LANE_SIGINT)
 
-    done = subprocess.run(["python3", "driver.py", str(ROOT / "gates" / "offline.py")], cwd=tmp_path,
-                          capture_output=True, text=True, env=clean_env(), timeout=60, preexec_fn=ctrl_c_on)
+    done = subprocess.run([*CTRL_C_ON, "python3", "driver.py", str(ROOT / "gates" / "offline.py")], cwd=tmp_path,
+                          capture_output=True, text=True, env=clean_env(), timeout=60)
 
     assert done.returncode == 0, done.stdout + done.stderr
     seen = json.loads(done.stdout.splitlines()[-1])  # after the lines the gate prints about its lanes
@@ -1271,7 +1273,7 @@ def environment(step):
 def test_the_python_tests_that_read_the_fixture_database_run_duckdb_on_one_thread_per_worker():
     """Eight workers in each of two lanes already keep every processor busy. With DuckDB's default of a thread for
     each processor in every worker, the second half took 96 seconds at a load of 25 against 36 on one thread, and
-    about 15% more processor time when the computer was quieter (ticket 119)."""
+    used about a third more processor time at a load of 13: 332 against 249 processor-seconds (ticket 119)."""
     readers = [step for step in gate_steps() if reads_the_fixture_database(step)]
 
     assert readers and all(environment(step).get("STRATA_DUCKDB_THREADS") == "1" for step in readers)
