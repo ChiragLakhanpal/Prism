@@ -939,6 +939,9 @@ for (const [width, height] of [[1440, 900], [1024, 768]] as const) {
     await expect.poll(async () => (await bottom("main")) - (await bottom("[data-baseline]"))).toBeGreaterThanOrEqual(0);
     expect(await top("footer")).toBeGreaterThanOrEqual(await bottom("[data-baseline]"));
     expect(await top("footer")).toBeGreaterThanOrEqual(await bottom("[data-changes]"));
+    // The baseline row's sentence keeps to the prose measure, as What changed's summary does (ticket 100's design
+    // review, item 8).
+    expect(await page.locator("[data-baseline] [role=status]").evaluate((element) => element.getBoundingClientRect().width)).toBeLessThan(700);
   });
 }
 

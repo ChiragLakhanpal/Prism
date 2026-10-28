@@ -25,28 +25,46 @@ const fields = copy.evidence.summaryRecordFields;
 type Records = { activity: Activity; result: CheckedPlan & { upload?: { uploaded_on: string; upload_id: string } } };
 
 // What each reason rests on, in the order the records list it (config/tools.toml, check_plan's reason codes). A row
-// with no reason lists what the checks read from it.
+// with no reason lists what the checks read from it, and so does a reason this list does not name, such as an
+// upload's reading notes (unread_date, unread_amount, duplicate_ref) or a code added to config/tools.toml later, so
+// "What I checked" never stands over nothing (ticket 100's review, F1).
 const CHECKED: Record<string, string[]> = {
-  completion_passed_no_contract: ["planned_completion_on", "signed_on", "closing_date", "as_of"],
+  completion_passed_no_contract: ["planned_completion_on", "planned_completion_plan_date", "signed_on", "closing_date", "as_of"],
   pending_near_closing: ["process_status", "closing_date", "days_to_close", "as_of"],
   pending_on_closing_day: ["process_status", "closing_date", "as_of"],
   pending_after_closing: ["process_status", "closing_date", "as_of"],
-  signed_late_over_estimate: ["planned_signing_on", "signed_on", "days_late", "actual_amount_usd", "estimated_amount_usd", "ratio"],
+  signed_late_over_estimate: ["planned_signing_on", "planned_signing_plan_date", "signed_on", "days_late", "actual_amount_usd", "estimated_amount_usd", "ratio"],
   signed_over_estimate: ["signed_on", "actual_amount_usd", "estimated_amount_usd", "ratio"],
   method_differs_from_reference: ["method", "reference_method_code"],
   actual_amount_zero: ["process_status", "actual_amount_usd"],
   no_planned_date: ["step"],
   no_estimate: ["estimated_amount_usd", "actual_amount_usd"],
+  no_method: ["method"],
 };
 const UNMARKED = ["process_status", "planned_completion_on", "signed_on", "as_of"];
+
+// A line's label: a check's own words, or the STEP field's one label (evidence.summaryRecordFields).
+const label = (key: string) => words.checkedFields[key] ?? fields[key] ?? key;
 
 const date = (iso: string) => <Num date={iso} style="table" />;
 const usd = (text: string) => <Num value={Number(text)} options={{ decimals: 2, compact: false }} />;
 
+// The plan a planned date came from: "Apr 21, 2021", or "your upload of Oct 20, 2026" on an upload's row that no
+// published plan lists, where check_plan measured from the upload's own date.
+function planOf(on: string | null | undefined, result: Records["result"]): ReactNode | null {
+  if (!on) return null;
+  const upload = result.upload;
+  return upload && on === upload.uploaded_on.slice(0, 10) ? <Fill template={words.yourUploadOf} slots={{ date: date(on) }} /> : date(on);
+}
+
 // One value of "What I checked", from the reason when it gives it and from the row otherwise; null leaves the line out.
-function checkedValue(key: string, reason: Reason | null, row: Activity, result: CheckedPlan): ReactNode | null {
+function checkedValue(key: string, reason: Reason | null, row: Activity, result: Records["result"]): ReactNode | null {
   const notInRow = <span className="text-ink-muted">{words.notInRow}</span>;
   switch (key) {
+    case "planned_signing_plan_date":
+      return planOf(reason?.planned_signing_plan_date, result);
+    case "planned_completion_plan_date":
+      return planOf(reason?.planned_completion_plan_date, result);
     case "planned_completion_on": {
       const on = reason?.planned_completion_on ?? row.planned_completion_on;
       return on ? date(on) : notInRow;
@@ -95,9 +113,9 @@ function checkedValue(key: string, reason: Reason | null, row: Activity, result:
 }
 
 // The lines of "What I checked": each reason's values in its order, once each.
-function checkedLines(row: Activity, result: CheckedPlan): { key: string; value: ReactNode }[] {
+function checkedLines(row: Activity, result: Records["result"]): { key: string; value: ReactNode }[] {
   const reasons = row.marks.flatMap((mark) => mark.reasons);
-  const wanted = reasons.length ? reasons.map((reason) => ({ reason, keys: CHECKED[reason.code] ?? [] })) : [{ reason: null, keys: UNMARKED }];
+  const wanted = reasons.length ? reasons.map((reason) => ({ reason, keys: CHECKED[reason.code] ?? UNMARKED })) : [{ reason: null, keys: UNMARKED }];
   const seen = new Set<string>();
   const lines: { key: string; value: ReactNode }[] = [];
   for (const { reason, keys } of wanted) {
@@ -131,10 +149,11 @@ export function planRowTitle(evidence: EvidenceEvent): ReactNode {
   return activity.activity_reference_no ? <MonoWords text={activity.activity_reference_no} medium /> : copy.uploadCheck.noRef;
 }
 
-// The caption under the title: "Activity in the Northern Water Works Development Agency plan of October 9, 2026".
-export function planRowCaption(evidence: EvidenceEvent): string {
+// The caption under the title: "Activity in the Northern Water Works Development Agency plan of October 9, 2026", its
+// date on one line, as every sentence date is.
+export function planRowCaption(evidence: EvidenceEvent): ReactNode {
   const { result } = evidence.row as Records;
-  return copy.evidence.planRowCaption(result.plan.implementing_agency, formatDate(result.plan.plan_date));
+  return <Fill template={copy.evidence.planRowCaption} slots={{ agency: result.plan.implementing_agency, date: <Num date={result.plan.plan_date} /> }} />;
 }
 
 export function PlanRowRecords({ evidence }: { evidence: EvidenceEvent }) {
@@ -151,6 +170,7 @@ export function PlanRowRecords({ evidence }: { evidence: EvidenceEvent }) {
     { label: fields.process_status, value: row.process_status ?? copy.notInPlan },
   ].filter((line) => line !== null);
   const upload = result.upload;
+  const checkedOn = checkedLines(row, result);
   return (
     <div data-plan-row-records className="flex flex-col gap-4">
       <div data-row-found className="flex flex-col gap-3">
@@ -165,14 +185,17 @@ export function PlanRowRecords({ evidence }: { evidence: EvidenceEvent }) {
           <p className="text-small text-ink-muted">{result.withheld ? words.noDataNotes : words.noSignals}</p>
         )}
       </div>
-      <section aria-labelledby={checkedId} className="flex flex-col gap-2">
-        <h3 id={checkedId} className="text-small font-semibold text-ink-heading">
-          {words.rowChecked}
-        </h3>
-        <Pairs kind="checked" lines={checkedLines(row, result).map((line) => ({ label: words.checkedFields[line.key] ?? line.key, value: line.value }))} />
-      </section>
+      {checkedOn.length > 0 && (
+        <section aria-labelledby={checkedId} className="flex flex-col gap-2">
+          {/* A group of facts in the drawer is an h3 (DESIGN.md section 3; ticket 100's design review, item 9). */}
+          <h3 id={checkedId} className="text-h3 text-ink-heading">
+            {words.rowChecked}
+          </h3>
+          <Pairs kind="checked" lines={checkedOn.map((line) => ({ label: label(line.key), value: line.value }))} />
+        </section>
+      )}
       <section aria-labelledby={planId} className="flex flex-col gap-2">
-        <h3 id={planId} className="text-small font-semibold text-ink-heading">
+        <h3 id={planId} className="text-h3 text-ink-heading">
           {words.rowPlan}
         </h3>
         <Pairs

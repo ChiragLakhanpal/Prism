@@ -101,9 +101,10 @@ export function CheckLine({
   const unchecked = [...notChecked.map((clause) => words.notCheckedClauses[clause]), ...notCheckedText];
   const checked = (clauses.length ? clauses : [words.sourcesOnly]).join(words.clauseJoin);
   return (
-    // The line's text starts on the text edge of the panel it sits in, with no indent, and its surface-2 block, padded
-    // 12 px, reaches 12 px past that edge (DESIGN.md section 5, Check line; ticket 100 settles ticket 59's indent item).
-    <p data-check-line data-numbers className="-mx-3 rounded-md bg-neutral-bg p-3 text-small text-neutral">
+    // The line's surface-2 block starts on the text edge of the panel it sits in, the removed box's edge, with no
+    // indent and 12 px padding, so the two stacked blocks share both edges (DESIGN.md section 5, Check line; ticket 100
+    // settles ticket 59's indent item, and its design review, item 3, puts the block on the edge).
+    <p data-check-line data-numbers className="rounded-md bg-neutral-bg p-3 text-small text-neutral">
       <span data-check-part="checked" className="block">
         {/* The tick (ticket 111): 16 px in ink-muted before "Checked", on the text edge. The line's words say
             "Checked", so a screen reader skips it, and the line stays neutral, never green. */}

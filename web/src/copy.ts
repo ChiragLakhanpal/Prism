@@ -1116,7 +1116,8 @@ export const copy = {
     openActivityFor: (ref: string) => ` ${ref}`,
     // The one caption sentence under a plan check row's reference in the drawer's head, saying what the records are
     // (ticket 100; DESIGN.md section 5, Evidence drawer: placement, head and motion).
-    planRowCaption: (agency: string, date: string) => `Activity in the ${agency} plan of ${date}`,
+    // The date keeps to one line (ticket 100's design review, item 6).
+    planRowCaption: "Activity in the {agency} plan of {date}",
     // The records a project's Summary cites (ticket 21), by the table their evidence id names. The
     // project ID or loan number follows in Roboto Mono.
     summaryRecordKinds: {
@@ -2572,22 +2573,25 @@ export const copy = {
     rowChecked: "What I checked",
     rowPlan: "From the plan row",
     // What I checked: each value a reason rests on, under its own name, as check_plan returned it.
+    // Only the labels a check adds; a STEP field keeps its one label in evidence.summaryRecordFields (CLAUDE.md
+    // rule 4; ticket 100's review, F4).
     checkedFields: {
-      planned_completion_on: "Planned completion",
-      planned_signing_on: "Planned signing, as first published",
+      planned_signing_on: "Planned signing",
+      // The plan a planned date came from: the first published plan that listed the activity, or your upload when no
+      // published plan lists it (check_plan's measured_from; ticket 100's review, F3).
+      planned_signing_plan_date: "In the plan of",
+      planned_completion_plan_date: "In the plan of",
       signed_on: "Contract signed",
-      days_late: "Days between them",
+      days_late: "Days late",
       closing_date: "Project closing date",
       days_to_close: "Days to the closing date",
       as_of: "Checked as of",
-      process_status: "Process Status",
-      actual_amount_usd: "Actual Amount (US$)",
-      estimated_amount_usd: "Estimated Amount (US$)",
       ratio: "Actual divided by estimated",
-      method: "Method",
       reference_method_code: "Reference ends in",
       step: "Step with no date",
     } as Record<string, string>,
+    // "In the plan of" when the date is your upload's own, since no published plan lists the activity.
+    yourUploadOf: "your upload of {date}",
     // A value the plan row does not give, such as no signed contract.
     notInRow: "Not in the plan row",
     ratioAbout: "about {ratio}",
@@ -2668,9 +2672,9 @@ export const copy = {
       counted: "The activities I counted: {refs}",
       // The finding's count words, by the mark each counts.
       countedBy: {
-        needs_a_look: "The activities that need a look: {refs}",
-        watch: "The activities worth watching: {refs}",
-        data_note: "The activities with data notes: {refs}",
+        needs_a_look: { one: "The activity that needs a look: {refs}", many: "The activities that need a look: {refs}" },
+        watch: { one: "The activity worth watching: {refs}", many: "The activities worth watching: {refs}" },
+        data_note: { one: "The activity with a data note: {refs}", many: "The activities with data notes: {refs}" },
       },
       countedEnd: ".",
     },
@@ -9043,8 +9047,9 @@ export const copy = {
       listOne: "Select to list it.",
       measure: "Select to see how I measured it.",
       // Rows: the plan check's finding marks the rows a count word counts in the table below it (ticket 100).
-      mark: "Select to mark them in the table.",
-      markOne: "Select to mark it in the table.",
+      // "below", since below a frame of 34rem the rows are cards (ticket 100's design review, item 14).
+      mark: "Select to mark them below.",
+      markOne: "Select to mark it below.",
     },
   },
 } as const;

@@ -100,6 +100,38 @@ test("Uploading the fixture plan opens its check: nine activities with the label
   expect(await violations(page)).toEqual([]);
 });
 
+// Ticket 100's review, F1 and F3: a row whose only mark is an upload's reading note still lists what I checked, and a
+// planned date that came from the upload itself, since no published plan lists the activity, says so.
+test("An upload row's records list what I checked for a reading note, and name your upload as the plan a planned date came from", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  const check = JSON.parse(await recorded("upload-check-nwwda.json"));
+  const late = check.rows.find((row: { position: number }) => row.position === 1);
+  Object.assign(late.marks[0].reasons[0], { planned_signing_plan_date: "2026-10-22" });
+  late.listed = false;
+  const unread = check.rows.find((row: { position: number }) => row.position === 7);
+  unread.marks = [{ mark: "data_note", reasons: [{ code: "unread_date", mark: "data_note", column: "Signed Contract", value: "31/02/2021", evidence_ids: [unread.evidence_id] }] }];
+  await serve(page, { "GET /api/uploads/upl-000000000001": { body: JSON.stringify(check) } });
+  await page.goto(UPLOAD);
+  const pairs = (kind: string) =>
+    page.getByRole("dialog").locator(`[data-records=${kind}] > div`).evaluateAll((lines) => lines.map((line) => [line.querySelector("dt")!.textContent, line.querySelector("dd")!.textContent]));
+
+  await page.locator("[data-view=table]").getByRole("button", { name: "KE-NWWDA-199471-GO-RFQ", exact: true }).click();
+  await expect(page.getByRole("dialog").getByRole("heading", { level: 3 })).toHaveText(["What I checked", "From the plan row"]);
+  expect(await pairs("checked")).toEqual([
+    ["Process Status", "Completed"],
+    ["Planned completion", "May 7, 2021"],
+    ["Contract signed", "Mar 19, 2021"],
+    ["Checked as of", "Oct 22, 2026"],
+  ]);
+  await page.keyboard.press("Escape");
+
+  await page.locator("[data-view=table]").getByRole("button", { name: "KE-NWWDA-229129-CW-RFB", exact: true }).click();
+  expect((await pairs("checked")).slice(0, 2)).toEqual([
+    ["Planned signing", "Jul 1, 2021"],
+    ["In the plan of", "your upload of Oct 22, 2026"],
+  ]);
+});
+
 test("A file with no Method column is refused with its name, I kept nothing, and the columns I read", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await serve(page, {

@@ -542,6 +542,11 @@
 [data-zone-head] + :is([data-table-panel], [data-zone-table]) {
   margin-top: calc(var(--spacing) * 4);
 }
+/* A zone's part that is not a body but keeps the body's sides, as the plan check's cards (ticket 100's design review,
+   item 13): one text edge runs through the name, the count line, the definition and the cards at every width. */
+[data-zone-inset] {
+  padding-inline: var(--zone-pad);
+}
 [data-table-panel] > [data-count-row] {
   padding: 0 var(--zone-pad) calc(var(--spacing) * 4) calc(var(--zone-pad) + var(--zone-indent));
 }
@@ -649,15 +654,16 @@
   }
 }
 
-/* The plan check's marked rows (DESIGN.md section 5, Plan check table and Evidence drawer; ticket 100): the row whose
-   records the drawer shows keeps the current mark, tint and a 3 px primary bar inset at its left edge, while they
-   show; the rows a count word in the finding counts, and a row a link's hash named, take the same mark. On a card
-   the bar is the card's own left edge. */
-tr[data-row-mark] {
+/* The plan check's marked rows (DESIGN.md section 5, Plan check table and Evidence drawer; ticket 100): the rows a
+   count word in the finding counts, and a row a link's hash named, take tint; the row whose records the drawer shows
+   keeps the current mark, tint and a 3 px primary bar inset at its left edge, while they show, so a counted row never
+   looks like the open one (ticket 100's design review, item 2). On a card the bar is the card's own left edge. */
+tr[data-row-mark],
+li[data-row-mark] {
   background-color: var(--color-tint);
 }
-tr[data-row-mark] > :first-child,
-li[data-row-mark] {
+tr[data-row-mark="open"] > :first-child,
+li[data-row-mark="open"] {
   box-shadow: inset 3px 0 0 var(--color-primary);
 }
 

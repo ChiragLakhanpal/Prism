@@ -40,16 +40,23 @@ test("the check line reads the verifier's counts in the ticket's form, in the ne
   expect(tops[1]).toBeGreaterThan(tops[0]);
 });
 
-// Ticket 100 (settling ticket 59's indent item; DESIGN.md section 5, Check line): the check line's text starts on the
-// text edge of the panel it sits in, the edge "In short" starts on, with no indent; its surface-2 block reaches 12 px
-// past that edge on each side.
+// Ticket 100 (settling ticket 59's indent item; DESIGN.md section 5, Check line): the check line starts on the text
+// edge of the panel it sits in, the edge "In short" starts on, with no indent; its words sit 12 px in, on its
+// surface-2 block's padding, and the removed box under it shares the block's edges (ticket 100's design review, item 3).
 for (const width of [1440, 390]) {
   test(`at ${width} px the check line starts on its panel's text edge`, async ({ page }) => {
     await answered(page, "ask-ke-nwwda-541055-past-range.sse", width);
-    const left = (selector: string) => panel(page).locator(selector).first().evaluate((element) => element.getBoundingClientRect().left);
-    const edge = await left("[data-in-short]");
-    expect(Math.abs((await left("[data-check-part=checked]")) - edge)).toBeLessThanOrEqual(0.5);
-    expect(Math.round(edge - (await left("[data-check-line]")))).toBe(12);
+    const box = (selector: string) => panel(page).locator(selector).first().evaluate((element) => {
+      const { left, right } = element.getBoundingClientRect();
+      return { left, right };
+    });
+    const edge = (await box("[data-in-short]")).left;
+    const line = await box("[data-check-line]");
+    expect(Math.abs(line.left - edge)).toBeLessThanOrEqual(0.5);
+    expect(Math.round((await box("[data-check-part=checked]")).left - edge)).toBe(12);
+    const under = await box("[data-removed-box]");
+    expect(Math.abs(under.left - line.left)).toBeLessThanOrEqual(0.5);
+    expect(Math.abs(under.right - line.right)).toBeLessThanOrEqual(0.5);
   });
 }
 

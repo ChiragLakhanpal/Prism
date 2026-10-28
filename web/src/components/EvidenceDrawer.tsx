@@ -47,7 +47,7 @@ import { RecordSourceLine, SourceNumber, sourceTitle } from "./EvidenceCard";
 import { Num } from "./Num";
 import { MethodText } from "./PlanCheck";
 import { planRowCaption, PlanRowRecords, planRowTitle } from "./PlanRowRecords";
-import { isPlanRowCheck, planRowSource } from "../lib/planRows";
+import { isPlanRowCheck, planRowsLoading, planRowSource } from "../lib/planRows";
 import { ComparableDotList, ComparableRecords, dotRegion } from "./ComparableRecords";
 import { COMPARABLE, DOT, type DotEntry } from "../lib/packages";
 import { isRiskList, pageRows, REPORTS, rowOf } from "../lib/risks";
@@ -77,6 +77,7 @@ const PASSAGE_TABLE = "strata.gold.passage:";
 // The source an evidence id names: from the stream if it sent it, or else from the server.
 export function useEvidence(id: string, asOf: string | null): DrawerData {
   const all = useStore(known);
+  const rowsLoading = useStore(planRowsLoading);
   const [fetched, setFetched] = useState<{ id: string; data: DrawerData } | null>(null);
   const [attempt, setAttempt] = useState(0);
   const held = all[id];
@@ -125,6 +126,9 @@ export function useEvidence(id: string, asOf: string | null): DrawerData {
     return () => controller.abort();
   }, [id, held, asOf, view, attempt, stepRef]);
   if (held) return { status: "ready", evidence: asksWhy && why?.id === id ? { ...held, why: why.why } : held };
+  // A row's records come only from a plan check on this page: while one loads they are on their way, and after that
+  // the page holds none for this id.
+  if (isPlanRowCheck(id)) return rowsLoading ? { status: "loading" } : { status: "missing" };
   return fetched?.id === id ? fetched.data : { status: "loading" };
 }
 

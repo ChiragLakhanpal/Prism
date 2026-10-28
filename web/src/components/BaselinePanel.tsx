@@ -197,7 +197,9 @@ export function BaselinePanel({
   return (
     <TaskZone name={words.label} sectionKey="baseline" marks={{ "data-baseline": mode.kind === "idle" ? (baseline ? (isThis ? "this" : "another") : "none") : mode.kind }}>
       <ZoneBlock>
-      <p ref={status} role="status" tabIndex={-1} className="text-body text-ink focus:outline-none">
+      {/* A sentence on a wide page keeps to the prose measure (DESIGN.md section 4, Page layouts; ticket 100's design
+          review, item 8). */}
+      <p ref={status} role="status" tabIndex={-1} className="max-w-prose text-body text-ink focus:outline-none">
         {message}
       </p>
       {mode.kind === "failed" && (
@@ -232,7 +234,7 @@ export function BaselinePanel({
             setMode({ kind: "idle" });
           }}
         >
-          <p ref={confirmText} tabIndex={-1} className="text-body font-semibold text-ink focus:outline-none" data-baseline-confirm>
+          <p ref={confirmText} tabIndex={-1} className="max-w-prose text-body font-semibold text-ink focus:outline-none" data-baseline-confirm>
             <Fill template={words.confirm} slots={{ baseline_date: date(baseline.plan_date), agency }} />
           </p>
           {/* Below 768 px the two buttons stack and the ghost one sits flush, its label on the text's edge

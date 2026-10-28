@@ -152,6 +152,8 @@ test("in the public preview the plan check is lit as Projects, its breadcrumb st
   await expect(page.locator("[data-finding]")).toHaveText(
     "I don't show signals on active projects in this view, so a procurement still under way isn't prejudged; three have data notes.",
   );
+  // The finding holds the signals back, so its byline says so (DESIGN.md section 5, Byline).
+  await expect(page.locator("[data-finding-block] [data-byline]")).toHaveText("Strata held back");
   const head = page.locator("[data-plan-header]");
   await expect(head.locator("[data-check-pill]")).toHaveText("9 activities checked");
   await expect(head.getByRole("button")).toHaveCount(0);
@@ -256,6 +258,11 @@ test("the table follows DESIGN.md: title sentence, count line, surface-2 header,
 
   const header = await table.locator("thead").evaluate((el) => getComputedStyle(el).backgroundColor);
   expect(header).toBe("rgb(231, 237, 243)");
+  // The header band sits 16 px under the panel's name and its count line, never touching them (the critique of
+  // ticket 100, round 1).
+  const bottom = (selector: string) => page.locator(selector).evaluate((el) => el.getBoundingClientRect().bottom);
+  const nameFoot = Math.max(await bottom("[data-section=activities] [data-zone-name]"), await bottom("[data-section=activities] [data-zone-tag]"));
+  expect(Math.round((await table.locator("thead").evaluate((el) => el.getBoundingClientRect().top)) - nameFoot)).toBeGreaterThanOrEqual(16);
   const amountHead = table.locator("thead th").nth(3);
   const amount = table.locator('tr[id="KE-NWWDA-541055-CW-RFB"] td').nth(2);
   for (const cell of [amountHead, amount]) {
@@ -343,7 +350,7 @@ test("tabbing onto a number opens its tooltip, which stays open while it has foc
   await page.keyboard.press("Tab");
 
   await expect(page.getByRole("heading", { level: 2 }).getByRole("button", { name: "One" })).toBeFocused();
-  await expect(page.getByRole("tooltip").locator("[data-num-what]")).toHaveText("The activities that need a look: KE-NWWDA-541055-CW-RFB.");
+  await expect(page.getByRole("tooltip").locator("[data-num-what]")).toHaveText("The activity that needs a look: KE-NWWDA-541055-CW-RFB.");
 });
 
 test("a link whose hash names a folded activity opens the fold and focuses that activity", async ({ page }) => {
@@ -569,6 +576,8 @@ test("a row's reference opens its records in the drawer, the row keeps the curre
   const reference = view(page, "table").getByRole("button", { name: ref, exact: true });
   const row = view(page, "table").locator(`tr[id="${ref}"]`);
   await expect(reference).toHaveAttribute("aria-expanded", "false");
+  // The reference reads as the text link it is: every part of it is underlined (DESIGN.md section 10).
+  for (const part of await reference.locator("span.inline-block").all()) await expect(part).toHaveCSS("text-decoration-line", "underline");
   const opened = page.waitForRequest((request) => request.method() === "POST" && new URL(request.url()).pathname === "/api/evidence/opened");
 
   await reference.click();
@@ -583,10 +592,14 @@ test("a row's reference opens its records in the drawer, the row keeps the curre
   const pairs = (kind: string) =>
     drawer.locator(`[data-records=${kind}] > div`).evaluateAll((lines) => lines.map((line) => [line.querySelector("dt")!.textContent, line.querySelector("dd")!.textContent]));
   await expect(drawer.getByRole("heading", { level: 3 })).toHaveText(["What I checked", "From the plan row"]);
+  // A group of facts in the drawer is an h3, 16 px 600 (DESIGN.md section 3).
+  await expect(drawer.getByRole("heading", { level: 3 }).first()).toHaveCSS("font-size", "16px");
+  // The planned date names the plan it came from, the one that first listed the activity (check_plan's reason).
   expect(await pairs("checked")).toEqual([
-    ["Planned signing, as first published", "Jul 1, 2021"],
+    ["Planned signing", "Jul 1, 2021"],
+    ["In the plan of", "Apr 21, 2021"],
     ["Contract signed", "Jan 3, 2022"],
-    ["Days between them", "186"],
+    ["Days late", "186"],
     ["Actual Amount (US$)", "1,245,092.76"],
     ["Estimated Amount (US$)", "300,000.00"],
     ["Actual divided by estimated", "about 4"],
@@ -612,6 +625,8 @@ test("a row's reference opens its records in the drawer, the row keeps the curre
   await expect(row.locator("th")).toHaveCSS("box-shadow", "rgb(0, 67, 112) 3px 0px 0px 0px inset");
   // At 1440 px with the sidebar open, the table keeps three columns beside the drawer.
   await expect(view(page, "table").locator("thead th:visible")).toHaveCount(3);
+  // There a 22-character reference keeps to one line (ticket 100's design review, item 12).
+  expect(await reference.locator("span.inline-block").evaluate((part) => part.getClientRects().length === 1 && part.getBoundingClientRect().height < 30)).toBe(true);
 
   await page.keyboard.press("Escape");
   await expect(drawer).toHaveCount(0);
@@ -622,7 +637,7 @@ test("a row's reference opens its records in the drawer, the row keeps the curre
   // "two" in the finding marks the two Watch rows and moves focus to the first one's reference.
   const two = page.locator("[data-finding]").getByRole("button", { name: "two" });
   await two.focus();
-  await expect(page.getByRole("tooltip").locator("[data-num-act]")).toHaveText("Select to mark them in the table.");
+  await expect(page.getByRole("tooltip").locator("[data-num-act]")).toHaveText("Select to mark them below.");
   await page.keyboard.press("Enter");
   await expect(reference).toBeFocused();
   await expect(view(page, "table").locator("tbody tr[data-row-mark=counted]")).toHaveCount(2);
@@ -630,6 +645,9 @@ test("a row's reference opens its records in the drawer, the row keeps the curre
     "KE-NWWDA-229129-CW-RFB",
     "KE-NWWDA-541062-CW-RFQ",
   ]);
+  // A counted row takes tint alone; only the row whose records are open keeps the bar, so the two never look alike.
+  await expect(row).toHaveCSS("background-color", "rgb(233, 247, 253)");
+  await expect(row.locator("th")).toHaveCSS("box-shadow", "none");
 });
 
 // Ticket 100 (ticket 59's landing item, with the bar's offset): a link that lands on any row brings it into view with
@@ -1042,6 +1060,8 @@ test("a service that didn't answer gives Try again and a reference; Try again th
   await expect(page.getByRole("main").getByRole("heading", { level: 1 })).toHaveText("Procurement Plan");
   await expect(page.getByRole("main").getByText("Procurement Plan", { exact: false })).toHaveCount(1);
   await expect(page.locator("[data-plan-header]")).toHaveCSS("border-bottom-width", "0px");
+  // With nothing to act on, the head does not stick (DESIGN.md section 5, Plan check table).
+  await expect(page.locator("[data-plan-header]")).toHaveCSS("position", "static");
   await expect(page.getByRole("status").filter({ hasText: "Checking this plan." })).toHaveCount(0);
   expect(await widthOf(page, "[role=alert]")).toBe(EIGHT_COLUMNS);
   // Ticket 94 (plan 8.5): the page's one read failed, so the alert sits in the page's alert slot, above the
@@ -1052,6 +1072,17 @@ test("a service that didn't answer gives Try again and a reference; Try again th
   await page.getByRole("button", { name: "Try again" }).click();
 
   await expect(page.getByRole("heading", { level: 2, name: FINDING })).toBeFocused();
+});
+
+// Ticket 100's review, F2: a row's records come only from the check on the page, so a link to them on a check that
+// failed says the drawer found nothing, never "Loading" for ever.
+test("a link to a row's records on a check that failed says I found nothing, and stops loading", async ({ page }) => {
+  await openPlan(page, 1440, { status: 503, body: '{"code": "data_service", "trace_id": "0af7651916cd43dd8448eb211c80319c"}' },
+    `${PLAN}?evidence=${encodeURIComponent("plan-row-check:strata.silver.plan_rows:40132287/KE-NWWDA-229129-CW-RFB")}`);
+  await expect(page.locator("[data-alert-slot] [role=alert]")).toBeVisible();
+  const drawer = page.getByRole("dialog");
+  await expect(drawer).toContainText("I have no source with this ID. The link may be incomplete.");
+  await expect(drawer.locator("[data-skeleton]")).toHaveCount(0);
 });
 
 test("an account that can't read Strata's tables is told what to ask for, with no retry", async ({ page }) => {
@@ -1127,4 +1158,12 @@ test("at 1024 px with the evidence drawer open, the plan check shows its cards a
   await expect(view(page, "cards")).toBeVisible();
   await expect(view(page, "table")).toBeHidden();
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(1024);
+  // One text edge runs through the panel's name, the definition over the cards and the cards (ticket 100's design
+  // review, item 13), and the card list is named by its panel, not by the finding (item 15).
+  const zone = page.locator("[data-section=activities]");
+  const left = (locator: import("@playwright/test").Locator) => locator.evaluate((element) => Math.round(element.getBoundingClientRect().left));
+  const edge = await left(zone.getByRole("heading", { level: 2 }));
+  expect(await left(view(page, "cards").locator("p").first())).toBe(edge);
+  expect(await left(view(page, "cards").locator("ul > li").first())).toBe(edge);
+  await expect(view(page, "cards").getByRole("list").first()).toHaveAccessibleName("Activities in this plan");
 });

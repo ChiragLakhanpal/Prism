@@ -40,6 +40,7 @@ import { useStore } from "../lib/store";
 import { setPageTitle } from "../lib/title";
 import { appliedView, previewOf, useShows, withReadParams } from "../lib/view";
 import { fill } from "../routes";
+import { useRowsLoading } from "../lib/planRows";
 
 const words = copy.checkPlan;
 const short = (iso: string) => formatDate(iso, { style: "table" });
@@ -216,6 +217,10 @@ export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyI
   // Ticket 111: the finding enters only when it replaces a narration that showed for at least 400 ms; a faster check,
   // and every later render, show it at once.
   const reveal = useRevealAfterWait(load.status === "loading" || waiting, path, REVEAL_AFTER_MS);
+  // A link that opens a row's records waits while the check loads, then says if the page holds none (ticket 100's
+  // review, F2).
+  const rowsLoading = load.status === "loading" || waiting;
+  useRowsLoading(rowsLoading);
   const { changes } = planChanges;
   const listed = changes !== null && changes.state === "compared" && changed(changes.counts);
 
@@ -331,7 +336,6 @@ export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyI
           sticky={false}
         />
         <PlanCheckSkeleton slow={load.status === "loading" && load.slow} />
-        <p className="mt-6 max-w-[72ch] text-small text-ink-muted">{words.notVisible}</p>
       </>
     );
   } else if (load.status === "error") {

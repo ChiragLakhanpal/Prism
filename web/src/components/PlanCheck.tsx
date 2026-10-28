@@ -238,7 +238,8 @@ function methodText(row: Activity): ReactNode {
 // The rows a mark's count word counts, for its tooltip: one sentence that says what it counts, by its mark, and lists
 // their references.
 function Counted({ rows, mark }: { rows: Activity[]; mark: Mark }) {
-  return <ListedRefs template={words.explain.countedBy[mark]} refs={rows.map((row) => row.activity_reference_no)} end={words.explain.countedEnd} />;
+  const template = words.explain.countedBy[mark];
+  return <ListedRefs template={rows.length === 1 ? template.one : template.many} refs={rows.map((row) => row.activity_reference_no)} end={words.explain.countedEnd} />;
 }
 
 // The finding. Each count word marks the rows it counts with tint and moves focus to the first one's reference (ticket
@@ -360,7 +361,9 @@ function FoldButton({ count, open, controls, describedBy, onToggle }: {
 // the fixture, so no word in a cell breaks inside itself (web/tests/check-plan.spec.ts).
 const SIX = "hidden @plan-six/plan:table-cell";
 const COLUMNS: { key: string; header: ReactNode; width: string; numeric?: boolean; six?: boolean }[] = [
-  { key: "activity", header: words.columns.activity, width: "@plan-six/plan:w-[26%]" },
+  // In three columns Activity takes 40 percent, so beside the drawer at 1440 px with the sidebar open (576 px) a
+  // 22-character reference keeps one line (ticket 100's design review, item 12).
+  { key: "activity", header: words.columns.activity, width: "w-[40%] @plan-six/plan:w-[26%]" },
   { key: "method", header: words.columns.method, width: "@plan-six/plan:w-[16%]", six: true },
   { key: "review", header: words.columns.review, width: "@plan-six/plan:w-[8%]", six: true },
   { key: "estimated", header: words.columns.estimated, width: "w-36", numeric: true },
@@ -460,7 +463,9 @@ function Reference({ row, open, onOpen }: { row: Activity; open: boolean; onOpen
         "transition-paint duration-150 hover:text-link-hover active:text-primary-pressed",
       )}
     >
-      <MonoWords text={ref} medium />
+      {/* A parent's underline never reaches inside the parts' inline blocks, so each part draws its own: the reference
+          is a text link to the row's records (DESIGN.md section 10; ticket 100's design review, item 1). */}
+      <MonoWords text={ref} medium className="underline decoration-1 underline-offset-3" />
     </button>
   );
 }
@@ -643,7 +648,7 @@ function bringIntoView(target: HTMLElement) {
   window.scrollTo({ top: Math.max(0, top) });
 }
 
-export function PlanCheckHeader({ agency, plan, pill, action, feedforward, headerRef, level = 1, sticky = true, rule = true }: {
+export function PlanCheckHeader({ agency, plan, pill, action, feedforward, headerRef, level = 1, sticky = false, rule = true }: {
   agency: ReactNode;
   // "Procurement Plan of October 9, 2026", when the plan is known.
   plan?: ReactNode;
@@ -656,7 +661,7 @@ export function PlanCheckHeader({ agency, plan, pill, action, feedforward, heade
   // The page's h1. The design gallery shows it one level down, under its own h1, and not sticky.
   level?: 1 | 2;
   // Whether it sticks under the bar where the window allows (app.css, head-sticks). It sticks only while it holds the
-  // page's one action (DESIGN.md section 5, Page head; ticket 100).
+  // page's one action (DESIGN.md section 5, Page head; ticket 100), so it does not unless a caller with an action asks.
   sticky?: boolean;
   // The hairline under the head. A failed check draws nothing under its head, so it has none (ticket 100).
   rule?: boolean;
@@ -666,7 +671,7 @@ export function PlanCheckHeader({ agency, plan, pill, action, feedforward, heade
       ref={headerRef}
       data-plan-header
       data-sticky={sticky ? "top" : undefined}
-      className={cx("bg-page pt-2 pb-4", rule && "border-b border-line", sticky && "head-sticks:sticky head-sticks:top-(--frame-top) head-sticks:z-10")}
+      className={cx("bg-page pt-2 pb-4", rule && "border-b border-line", sticky && "head-sticks:@head/page:sticky head-sticks:@head/page:top-(--frame-top) head-sticks:@head/page:z-10")}
     >
       {/* The title block sits beside the actions block from a page area of 46rem, so a page the drawer narrows stacks
           them (DESIGN.md section 4, Page layouts; ticket 94). Only those two blocks stack: the pill and the action keep
@@ -825,8 +830,9 @@ export function PlanCheck({ result, findingRef, defaultOpen = false, afterMethod
     <section aria-labelledby={findingId} data-plan-check>
       <EightColumns prose className="mt-6">
         <div data-finding-block className={cx(reveal && "animate-reveal")}>
-          {/* Strata's own words open with its byline, 8 px above them (ticket 111). */}
-          <Byline kind="found" />
+          {/* Strata's own words open with its byline, 8 px above them (ticket 111): "Strata held back" over the public
+              view's finding, which holds the signals back (DESIGN.md section 5, Byline). */}
+          <Byline kind={result.withheld ? "heldBack" : "found"} />
           {/* The page's finding, in the finding style (ticket 100): a count word's tooltip opens under all of it
               (DESIGN.md, Number tooltip), and a press marks the rows it counts. */}
           <h2 ref={findingRef} id={findingId} tabIndex={-1} className="mt-2 text-finding text-pretty text-ink-heading focus:outline-none" data-finding>
@@ -849,7 +855,7 @@ export function PlanCheck({ result, findingRef, defaultOpen = false, afterMethod
           }
         >
           {/* The table and the cards each read the plan container's width, which the evidence drawer narrows. */}
-          <div className="@container/plan">
+          <div data-zone-table className="@container/plan">
             {/* The frame keeps the row header's focus ring inside the panel. */}
             <div data-view="table" className="hidden overflow-hidden @plan-cards/plan:block">
               <table className="w-full table-fixed border-collapse text-small">
@@ -895,11 +901,11 @@ export function PlanCheck({ result, findingRef, defaultOpen = false, afterMethod
             </div>
 
             {/* Below a frame of 34rem the cards have no column heads, so the definition of the marks heads them. */}
-            <div data-view="cards" className="px-4 pb-4 @plan-cards/plan:hidden">
+            <div data-view="cards" data-zone-inset className="pb-4 @plan-cards/plan:hidden">
               <p className="flex text-caption">
                 <Definition result={result} triggerClassName="inline-flex min-h-6 items-center whitespace-nowrap" />
               </p>
-              <ul aria-labelledby={findingId} className="mt-2 flex flex-col gap-3">
+              <ul aria-labelledby={zoneId} className="mt-2 flex flex-col gap-3">
                 {ordered.map((row) => (
                   <ActivityCard key={rowKey(row)} {...rowProps(row)} />
                 ))}
@@ -912,7 +918,7 @@ export function PlanCheck({ result, findingRef, defaultOpen = false, afterMethod
                   </li>
                 )}
               </ul>
-              <ul id={foldCardsId} hidden={!open} aria-labelledby={findingId} className="mt-3 flex flex-col gap-3">
+              <ul id={foldCardsId} hidden={!open} aria-labelledby={zoneId} className="mt-3 flex flex-col gap-3">
                 {unmarkedRows.map((row) => (
                   <ActivityCard key={rowKey(row)} {...rowProps(row)} fresh={opened} />
                 ))}
@@ -1009,7 +1015,7 @@ export function PlanCheckSkeleton({ slow }: { slow?: boolean }) {
       </EightColumns>
       <div className="mt-8">
         <ActivitiesZone busy tag={<SkeletonLine className="text-caption" width="w-40" />}>
-          <div className="@container/plan">
+          <div data-zone-table className="@container/plan">
             {/* The real column heads are only places: a screen reader hears the narration's step, not an empty table. */}
             <div aria-hidden="true" className="hidden overflow-hidden @plan-cards/plan:block">
               <table className="w-full table-fixed border-collapse text-small">
@@ -1052,7 +1058,7 @@ export function PlanCheckSkeleton({ slow }: { slow?: boolean }) {
             {/* Each skeleton card has an activity card's places: the badge and the reference, two lines
                 of Description (one from a 768 px page area), two of reason, the hairline and the four STEP fields
                 under their labels. */}
-            <div aria-hidden="true" className="px-4 pb-4 @plan-cards/plan:hidden">
+            <div aria-hidden="true" data-zone-inset className="pb-4 @plan-cards/plan:hidden">
               <div>
                 <SkeletonLine className="min-h-6 text-caption" width="w-32" />
               </div>
@@ -1083,6 +1089,14 @@ export function PlanCheckSkeleton({ slow }: { slow?: boolean }) {
               </ul>
             </div>
           </div>
+          {/* The foot strip's places: the source line's bar, and what Strata cannot see, which reads the same before
+              the check arrives, so the panel ends as it will (ticket 100's design review, item 7). */}
+          <FootStrip>
+            <SkeletonLine className="text-caption" width="w-3/5" />
+            <p className="text-caption text-ink-muted" data-not-visible>
+              {words.notVisible}
+            </p>
+          </FootStrip>
         </ActivitiesZone>
       </div>
     </div>

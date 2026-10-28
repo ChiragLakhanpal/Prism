@@ -19,6 +19,7 @@ import { navigate } from "../lib/router";
 import { setPageTitle } from "../lib/title";
 import type { UploadCheck } from "../lib/uploads";
 import { viewOf } from "../lib/view";
+import { useRowsLoading } from "../lib/planRows";
 
 const words = copy.uploadCheck;
 const short = (iso: string) => formatDate(iso, { style: "table" });
@@ -68,6 +69,10 @@ export function UploadCheckPage({ uploadId, search }: { uploadId: string; search
   const slotId = useId();
   const result = load.status === "ready" ? load.data : null;
   const checked = result && !result.abstention && result.plan && result.project && result.counts ? (result as UploadCheck & CheckedPlan) : null;
+  // A link that opens a row's records waits while the check loads, then says if the page holds none (ticket 100's
+  // review, F2).
+  const rowsLoading = load.status === "loading";
+  useRowsLoading(rowsLoading);
   useEffect(() => {
     if (checked) setPageTitle(words.crumb(short(checked.upload.uploaded_on)));
   }, [checked]);
@@ -111,6 +116,8 @@ export function UploadCheckPage({ uploadId, search }: { uploadId: string; search
           plan={upload.uploader.you ? words.subtitleYou(formatDate(upload.uploaded_on))
             : words.subtitleTeammate(formatDate(upload.uploaded_on), upload.uploader.name ?? "")}
           pill={checkPill(checked)}
+          // The head sticks only while it holds the page's one action (DESIGN.md section 5, Page head; ticket 100).
+          sticky={!preview}
           action={preview ? undefined : (
             <Button variant="primary" onClick={start} aria-describedby={`${slotId}-description ${slotId}-feedforward`} data-dates-action>
               {/* A button's count is a numeral (DESIGN.md section 7). */}
