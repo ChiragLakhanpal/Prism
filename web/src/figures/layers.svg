@@ -1,0 +1,285 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 864 352" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="layers-title layers-desc" data-motion-root="" data-motion-mode="none" data-step-count="7" id="layers-root">
+        <title id="layers-title">Strata's layers and where each runs</title>
+        <desc id="layers-desc">From World Bank open data up to the screen: the data, the knowledge model, the tools, the agent, the verifier and the app, each marked by where it runs.</desc>
+        <defs>
+      <style>#layers-root { font-family: 'Open Sans', system-ui, sans-serif; color: #181f25; }
+      #layers-root .diagram-container { width: 100%; overflow-x: auto; }
+      @media print {
+#layers-root .diagram-container { overflow-x: visible; }
+}</style>
+<marker id="layers-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4b5e71"/></marker>
+<marker id="layers-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0071bc"/></marker>
+<marker id="layers-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#01707e"/></marker>
+        </defs>
+        <rect width="100%" height="100%" fill="#f5f7f9"/>
+<line x1="382.34" y1="282" x2="382.34" y2="70" stroke="#181f25" stroke-width="0.8" stroke-dasharray="4,3" data-role="trace" stroke-opacity="0.3"/>
+<line x1="521.66" y1="282" x2="521.66" y2="70" stroke="#181f25" stroke-width="0.8" stroke-dasharray="4,3" data-role="trace" stroke-opacity="0.3"/>
+<text x="24" y="32" fill="#586e84" font-size="10" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="start">Where it runs</text>
+<text x="84" y="52" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Databricks</text>
+<text x="236" y="52" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Microsoft Foundry</text>
+<g data-exploded="" data-origin="452 254" data-gap="44">
+<g data-part="data" data-name="Data" data-rect="0 0 72 72 4" data-z="0" data-t="8" data-level="0" data-motion-item="" data-step="1" aria-label="Data">
+<path data-role="silhouette" d="M 382.34 282 A 5.66 2.83 0 0 1 384 280 L 448 248 A 5.66 2.83 0 0 1 456 248 L 520 280 A 5.66 2.83 0 0 1 521.66 282 L 521.66 290 A 5.66 2.83 0 0 1 520 292 L 456 324 A 5.66 2.83 0 0 1 448 324 L 384 292 A 5.66 2.83 0 0 1 382.34 290 Z" fill="#ffffff"/>
+<path d="M 382.34 282 A 5.66 2.83 0 0 0 384 284 L 448 316 A 5.66 2.83 0 0 0 452 316.83 L 452 324.83 A 5.66 2.83 0 0 1 448 324 L 384 292 A 5.66 2.83 0 0 1 382.34 290 Z" fill="#181f25" fill-opacity="0.07"/>
+<path d="M 452 316.83 A 5.66 2.83 0 0 0 456 316 L 520 284 A 5.66 2.83 0 0 0 521.66 282 L 521.66 290 A 5.66 2.83 0 0 1 520 292 L 456 324 A 5.66 2.83 0 0 1 452 324.83 Z" fill="#181f25" fill-opacity="0.15"/>
+<path d="M 382.34 282 A 5.66 2.83 0 0 0 384 284 L 448 316 A 5.66 2.83 0 0 0 456 316 L 520 284 A 5.66 2.83 0 0 0 521.66 282" fill="none" stroke="#181f25" stroke-width="0.8" stroke-opacity="0.55"/>
+<path d="M 452 316.83 L 452 324.83" fill="none" stroke="#181f25" stroke-width="0.8" stroke-opacity="0.55"/>
+<path d="M 382.34 282 A 5.66 2.83 0 0 1 384 280 L 448 248 A 5.66 2.83 0 0 1 456 248 L 520 280 A 5.66 2.83 0 0 1 521.66 282 L 521.66 290 A 5.66 2.83 0 0 1 520 292 L 456 324 A 5.66 2.83 0 0 1 448 324 L 384 292 A 5.66 2.83 0 0 1 382.34 290 Z" fill="none" stroke="#181f25" stroke-width="1.2" stroke-linejoin="round"/>
+<path d="M 449 253.5 A 4.24 2.12 0 0 1 455 253.5 L 509 280.5 A 4.24 2.12 0 0 1 509 283.5 L 455 310.5 A 4.24 2.12 0 0 1 449 310.5 L 395 283.5 A 4.24 2.12 0 0 1 395 280.5 Z" fill="none" stroke="#181f25" stroke-width="0.8" stroke-opacity="0.3"/>
+<path d="M 442.1 255 A 9.9 4.95 0 0 1 445 251.5 L 445 251.5 A 9.9 4.95 0 0 1 459 251.5 L 459 251.5 A 9.9 4.95 0 0 1 461.9 255 L 461.9 262 A 9.9 4.95 0 0 1 459 265.5 L 459 265.5 A 9.9 4.95 0 0 1 445 265.5 L 445 265.5 A 9.9 4.95 0 0 1 442.1 262 Z" fill="#ffffff"/>
+<path d="M 442.1 255 A 9.9 4.95 0 0 0 445 258.5 L 445 258.5 A 9.9 4.95 0 0 0 452 259.95 L 452 266.95 A 9.9 4.95 0 0 1 445 265.5 L 445 265.5 A 9.9 4.95 0 0 1 442.1 262 Z" fill="#181f25" fill-opacity="0.07"/>
+<path d="M 452 259.95 A 9.9 4.95 0 0 0 459 258.5 L 459 258.5 A 9.9 4.95 0 0 0 461.9 255 L 461.9 262 A 9.9 4.95 0 0 1 459 265.5 L 459 265.5 A 9.9 4.95 0 0 1 452 266.95 Z" fill="#181f25" fill-opacity="0.15"/>
+<path d="M 442.1 255 A 9.9 4.95 0 0 0 445 258.5 L 445 258.5 A 9.9 4.95 0 0 0 459 258.5 L 459 258.5 A 9.9 4.95 0 0 0 461.9 255" fill="none" stroke="#181f25" stroke-width="0.6" stroke-opacity="0.45"/>
+<path d="M 442.1 255 A 9.9 4.95 0 0 1 445 251.5 L 445 251.5 A 9.9 4.95 0 0 1 459 251.5 L 459 251.5 A 9.9 4.95 0 0 1 461.9 255 L 461.9 262 A 9.9 4.95 0 0 1 459 265.5 L 459 265.5 A 9.9 4.95 0 0 1 445 265.5 L 445 265.5 A 9.9 4.95 0 0 1 442.1 262 Z" fill="none" stroke="#181f25" stroke-width="0.8" stroke-linejoin="round"/>
+<path d="M 422.1 265 A 9.9 4.95 0 0 1 425 261.5 L 425 261.5 A 9.9 4.95 0 0 1 439 261.5 L 439 261.5 A 9.9 4.95 0 0 1 441.9 265 L 441.9 272 A 9.9 4.95 0 0 1 439 275.5 L 439 275.5 A 9.9 4.95 0 0 1 425 275.5 L 425 275.5 A 9.9 4.95 0 0 1 422.1 272 Z" fill="#ffffff"/>
+<path d="M 422.1 265 A 9.9 4.95 0 0 0 425 268.5 L 425 268.5 A 9.9 4.95 0 0 0 432 269.95 L 432 276.95 A 9.9 4.95 0 0 1 425 275.5 L 425 275.5 A 9.9 4.95 0 0 1 422.1 272 Z" fill="#181f25" fill-opacity="0.07"/>
+<path d="M 432 269.95 A 9.9 4.95 0 0 0 439 268.5 L 439 268.5 A 9.9 4.95 0 0 0 441.9 265 L 441.9 272 A 9.9 4.95 0 0 1 439 275.5 L 439 275.5 A 9.9 4.95 0 0 1 432 276.95 Z" fill="#181f25" fill-opacity="0.15"/>
+<path d="M 422.1 265 A 9.9 4.95 0 0 0 425 268.5 L 425 268.5 A 9.9 4.95 0 0 0 439 268.5 L 439 268.5 A 9.9 4.95 0 0 0 441.9 265" fill="none" stroke="#181f25" stroke-width="0.6" stroke-opacity="0.45"/>
+<path d="M 422.1 265 A 9.9 4.95 0 0 1 425 261.5 L 425 261.5 A 9.9 4.95 0 0 1 439 261.5 L 439 261.5 A 9.9 4.95 0 0 1 441.9 265 L 441.9 272 A 9.9 4.95 0 0 1 439 275.5 L 439 275.5 A 9.9 4.95 0 0 1 425 275.5 L 425 275.5 A 9.9 4.95 0 0 1 422.1 272 Z" fill="none" stroke="#181f25" stroke-width="0.8" stroke-linejoin="round"/>
+<path d="M 462.1 265 A 9.9 4.95 0 0 1 465 261.5 L 465 261.5 A 9.9 4.95 0 0 1 479 261.5 L 479 261.5 A 9.9 4.95 0 0 1 481.9 265 L 481.9 272 A 9.9 4.95 0 0 1 479 275.5 L 479 275.5 A 9.9 4.95 0 0 1 465 275.5 L 465 275.5 A 9.9 4.95 0 0 1 462.1 272 Z" fill="#ffffff"/>
+<path d="M 462.1 265 A 9.9 4.95 0 0 0 465 268.5 L 465 268.5 A 9.9 4.95 0 0 0 472 269.95 L 472 276.95 A 9.9 4.95 0 0 1 465 275.5 L 465 275.5 A 9.9 4.95 0 0 1 462.1 272 Z" fill="#181f25" fill-opacity="0.07"/>
+<path d="M 472 269.95 A 9.9 4.95 0 0 0 479 268.5 L 479 268.5 A 9.9 4.95 0 0 0 481.9 265 L 481.9 272 A 9.9 4.95 0 0 1 479 275.5 L 479 275.5 A 9.9 4.95 0 0 1 472 276.95 Z" fill="#181f25" fill-opacity="0.15"/>
+<path d="M 462.1 265 A 9.9 4.95 0 0 0 465 268.5 L 465 268.5 A 9.9 4.95 0 0 0 479 268.5 L 479 268.5 A 9.9 4.95 0 0 0 481.9 265" fill="none" stroke="#181f25" stroke-width="0.6" stroke-opacity="0.45"/>
+<path d="M 462.1 265 A 9.9 4.95 0 0 1 465 261.5 L 465 261.5 A 9.9 4.95 0 0 1 479 261.5 L 479 261.5 A 9.9 4.95 0 0 1 481.9 265 L 481.9 272 A 9.9 4.95 0 0 1 479 275.5 L 479 275.5 A 9.9 4.95 0 0 1 465 275.5 L 465 275.5 A 9.9 4.95 0 0 1 462.1 272 Z" fill="none" stroke="#181f25" stroke-width="0.8" stroke-linejoin="round"/>
+<path d="M 402.1 275 A 9.9 4.95 0 0 1 405 271.5 L 405 271.5 A 9.9 4.95 0 0 1 419 271.5 L 419 271.5 A 9.9 4.95 0 0 1 421.9 275 L 421.9 282 A 9.9 4.95 0 0 1 419 285.5 L 419 285.5 A 9.9 4.95 0 0 1 405 285.5 L 405 285.5 A 9.9 4.95 0 0 1 402.1 282 Z" fill="#ffffff"/>
+<path d="M 402.1 275 A 9.9 4.95 0 0 0 405 278.5 L 405 278.5 A 9.9 4.95 0 0 0 412 279.95 L 412 286.95 A 9.9 4.95 0 0 1 405 285.5 L 405 285.5 A 9.9 4.95 0 0 1 402.1 282 Z" fill="#181f25" fill-opacity="0.07"/>
+<path d="M 412 279.95 A 9.9 4.95 0 0 0 419 278.5 L 419 278.5 A 9.9 4.95 0 0 0 421.9 275 L 421.9 282 A 9.9 4.95 0 0 1 419 285.5 L 419 285.5 A 9.9 4.95 0 0 1 412 286.95 Z" fill="#181f25" fill-opacity="0.15"/>
+<path d="M 402.1 275 A 9.9 4.95 0 0 0 405 278.5 L 405 278.5 A 9.9 4.95 0 0 0 419 278.5 L 419 278.5 A 9.9 4.95 0 0 0 421.9 275" fill="none" stroke="#181f25" stroke-width="0.6" stroke-opacity="0.45"/>
+<path d="M 402.1 275 A 9.9 4.95 0 0 1 405 271.5 L 405 271.5 A 9.9 4.95 0 0 1 419 271.5 L 419 271.5 A 9.9 4.95 0 0 1 421.9 275 L 421.9 282 A 9.9 4.95 0 0 1 419 285.5 L 419 285.5 A 9.9 4.95 0 0 1 405 285.5 L 405 285.5 A 9.9 4.95 0 0 1 402.1 282 Z" fill="none" stroke="#181f25" stroke-width="0.8" stroke-linejoin="round"/>
+<path d="M 442.1 275 A 9.9 4.95 0 0 1 445 271.5 L 445 271.5 A 9.9 4.95 0 0 1 459 271.5 L 459 271.5 A 9.9 4.95 0 0 1 461.9 275 L 461.9 282 A 9.9 4.95 0 0 1 459 285.5 L 459 285.5 A 9.9 4.95 0 0 1 445 285.5 L 445 285.5 A 9.9 4.95 0 0 1 442.1 282 Z" fill="#ffffff"/>
+<path d="M 442.1 275 A 9.9 4.95 0 0 0 445 278.5 L 445 278.5 A 9.9 4.95 0 0 0 452 279.95 L 452 286.95 A 9.9 4.95 0 0 1 445 285.5 L 445 285.5 A 9.9 4.95 0 0 1 442.1 282 Z" fill="#181f25" fill-opacity="0.07"/>
+<path d="M 452 279.95 A 9.9 4.95 0 0 0 459 278.5 L 459 278.5 A 9.9 4.95 0 0 0 461.9 275 L 461.9 282 A 9.9 4.95 0 0 1 459 285.5 L 459 285.5 A 9.9 4.95 0 0 1 452 286.95 Z" fill="#181f25" fill-opacity="0.15"/>
+<path d="M 442.1 275 A 9.9 4.95 0 0 0 445 278.5 L 445 278.5 A 9.9 4.95 0 0 0 459 278.5 L 459 278.5 A 9.9 4.95 0 0 0 461.9 275" fill="none" stroke="#181f25" stroke-width="0.6" stroke-opacity="0.45"/>
+<path d="M 442.1 275 A 9.9 4.95 0 0 1 445 271.5 L 445 271.5 A 9.9 4.95 0 0 1 459 271.5 L 459 271.5 A 9.9 4.95 0 0 1 461.9 275 L 461.9 282 A 9.9 4.95 0 0 1 459 285.5 L 459 285.5 A 9.9 4.95 0 0 1 445 285.5 L 445 285.5 A 9.9 4.95 0 0 1 442.1 282 Z" fill="none" stroke="#181f25" stroke-width="0.8" stroke-linejoin="round"/>
+<path d="M 482.1 275 A 9.9 4.95 0 0 1 485 271.5 L 485 271.5 A 9.9 4.95 0 0 1 499 271.5 L 499 271.5 A 9.9 4.95 0 0 1 501.9 275 L 501.9 282 A 9.9 4.95 0 0 1 499 285.5 L 499 285.5 A 9.9 4.95 0 0 1 485 285.5 L 485 285.5 A 9.9 4.95 0 0 1 482.1 282 Z" fill="#ffffff"/>
+<path d="M 482.1 275 A 9.9 4.95 0 0 0 485 278.5 L 485 278.5 A 9.9 4.95 0 0 0 492 279.95 L 492 286.95 A 9.9 4.95 0 0 1 485 285.5 L 485 285.5 A 9.9 4.95 0 0 1 482.1 282 Z" fill="#181f25" fill-opacity="0.07"/>
+<path d="M 492 279.95 A 9.9 4.95 0 0 0 499 278.5 L 499 278.5 A 9.9 4.95 0 0 0 501.9 275 L 501.9 282 A 9.9 4.95 0 0 1 499 285.5 L 499 285.5 A 9.9 4.95 0 0 1 492 286.95 Z" fill="#181f25" fill-opacity="0.15"/>
+<path d="M 482.1 275 A 9.9 4.95 0 0 0 485 278.5 L 485 278.5 A 9.9 4.95 0 0 0 499 278.5 L 499 278.5 A 9.9 4.95 0 0 0 501.9 275" fill="none" stroke="#181f25" stroke-width="0.6" stroke-opacity="0.45"/>
+<path d="M 482.1 275 A 9.9 4.95 0 0 1 485 271.5 L 485 271.5 A 9.9 4.95 0 0 1 499 271.5 L 499 271.5 A 9.9 4.95 0 0 1 501.9 275 L 501.9 282 A 9.9 4.95 0 0 1 499 285.5 L 499 285.5 A 9.9 4.95 0 0 1 485 285.5 L 485 285.5 A 9.9 4.95 0 0 1 482.1 282 Z" fill="none" stroke="#181f25" stroke-width="0.8" stroke-linejoin="round"/>
+<path d="M 422.1 285 A 9.9 4.95 0 0 1 425 281.5 L 425 281.5 A 9.9 4.95 0 0 1 439 281.5 L 439 281.5 A 9.9 4.95 0 0 1 441.9 285 L 441.9 292 A 9.9 4.95 0 0 1 439 295.5 L 439 295.5 A 9.9 4.95 0 0 1 425 295.5 L 425 295.5 A 9.9 4.95 0 0 1 422.1 292 Z" fill="#ffffff"/>
+<path d="M 422.1 285 A 9.9 4.95 0 0 0 425 288.5 L 425 288.5 A 9.9 4.95 0 0 0 432 289.95 L 432 296.95 A 9.9 4.95 0 0 1 425 295.5 L 425 295.5 A 9.9 4.95 0 0 1 422.1 292 Z" fill="#181f25" fill-opacity="0.07"/>
+<path d="M 432 289.95 A 9.9 4.95 0 0 0 439 288.5 L 439 288.5 A 9.9 4.95 0 0 0 441.9 285 L 441.9 292 A 9.9 4.95 0 0 1 439 295.5 L 439 295.5 A 9.9 4.95 0 0 1 432 296.95 Z" fill="#181f25" fill-opacity="0.15"/>
+<path d="M 422.1 285 A 9.9 4.95 0 0 0 425 288.5 L 425 288.5 A 9.9 4.95 0 0 0 439 288.5 L 439 288.5 A 9.9 4.95 0 0 0 441.9 285" fill="none" stroke="#181f25" stroke-width="0.6" stroke-opacity="0.45"/>
+<path d="M 422.1 285 A 9.9 4.95 0 0 1 425 281.5 L 425 281.5 A 9.9 4.95 0 0 1 439 281.5 L 439 281.5 A 9.9 4.95 0 0 1 441.9 285 L 441.9 292 A 9.9 4.95 0 0 1 439 295.5 L 439 295.5 A 9.9 4.95 0 0 1 425 295.5 L 425 295.5 A 9.9 4.95 0 0 1 422.1 292 Z" fill="none" stroke="#181f25" stroke-width="0.8" stroke-linejoin="round"/>
+<path d="M 462.1 285 A 9.9 4.95 0 0 1 465 281.5 L 465 281.5 A 9.9 4.95 0 0 1 479 281.5 L 479 281.5 A 9.9 4.95 0 0 1 481.9 285 L 481.9 292 A 9.9 4.95 0 0 1 479 295.5 L 479 295.5 A 9.9 4.95 0 0 1 465 295.5 L 465 295.5 A 9.9 4.95 0 0 1 462.1 292 Z" fill="#ffffff"/>
+<path d="M 462.1 285 A 9.9 4.95 0 0 0 465 288.5 L 465 288.5 A 9.9 4.95 0 0 0 472 289.95 L 472 296.95 A 9.9 4.95 0 0 1 465 295.5 L 465 295.5 A 9.9 4.95 0 0 1 462.1 292 Z" fill="#181f25" fill-opacity="0.07"/>
+<path d="M 472 289.95 A 9.9 4.95 0 0 0 479 288.5 L 479 288.5 A 9.9 4.95 0 0 0 481.9 285 L 481.9 292 A 9.9 4.95 0 0 1 479 295.5 L 479 295.5 A 9.9 4.95 0 0 1 472 296.95 Z" fill="#181f25" fill-opacity="0.15"/>
+<path d="M 462.1 285 A 9.9 4.95 0 0 0 465 288.5 L 465 288.5 A 9.9 4.95 0 0 0 479 288.5 L 479 288.5 A 9.9 4.95 0 0 0 481.9 285" fill="none" stroke="#181f25" stroke-width="0.6" stroke-opacity="0.45"/>
+<path d="M 462.1 285 A 9.9 4.95 0 0 1 465 281.5 L 465 281.5 A 9.9 4.95 0 0 1 479 281.5 L 479 281.5 A 9.9 4.95 0 0 1 481.9 285 L 481.9 292 A 9.9 4.95 0 0 1 479 295.5 L 479 295.5 A 9.9 4.95 0 0 1 465 295.5 L 465 295.5 A 9.9 4.95 0 0 1 462.1 292 Z" fill="none" stroke="#181f25" stroke-width="0.8" stroke-linejoin="round"/>
+<path d="M 442.1 295 A 9.9 4.95 0 0 1 445 291.5 L 445 291.5 A 9.9 4.95 0 0 1 459 291.5 L 459 291.5 A 9.9 4.95 0 0 1 461.9 295 L 461.9 302 A 9.9 4.95 0 0 1 459 305.5 L 459 305.5 A 9.9 4.95 0 0 1 445 305.5 L 445 305.5 A 9.9 4.95 0 0 1 442.1 302 Z" fill="#ffffff"/>
+<path d="M 442.1 295 A 9.9 4.95 0 0 0 445 298.5 L 445 298.5 A 9.9 4.95 0 0 0 452 299.95 L 452 306.95 A 9.9 4.95 0 0 1 445 305.5 L 445 305.5 A 9.9 4.95 0 0 1 442.1 302 Z" fill="#181f25" fill-opacity="0.07"/>
+<path d="M 452 299.95 A 9.9 4.95 0 0 0 459 298.5 L 459 298.5 A 9.9 4.95 0 0 0 461.9 295 L 461.9 302 A 9.9 4.95 0 0 1 459 305.5 L 459 305.5 A 9.9 4.95 0 0 1 452 306.95 Z" fill="#181f25" fill-opacity="0.15"/>
+<path d="M 442.1 295 A 9.9 4.95 0 0 0 445 298.5 L 445 298.5 A 9.9 4.95 0 0 0 459 298.5 L 459 298.5 A 9.9 4.95 0 0 0 461.9 295" fill="none" stroke="#181f25" stroke-width="0.6" stroke-opacity="0.45"/>
+<path d="M 442.1 295 A 9.9 4.95 0 0 1 445 291.5 L 445 291.5 A 9.9 4.95 0 0 1 459 291.5 L 459 291.5 A 9.9 4.95 0 0 1 461.9 295 L 461.9 302 A 9.9 4.95 0 0 1 459 305.5 L 459 305.5 A 9.9 4.95 0 0 1 445 305.5 L 445 305.5 A 9.9 4.95 0 0 1 442.1 302 Z" fill="none" stroke="#181f25" stroke-width="0.8" stroke-linejoin="round"/>
+<g data-role="label">
+<line x1="527.66" y1="286" x2="576" y2="286" stroke="#181f25" stroke-width="0.8" data-role="leader" stroke-opacity="0.4"/>
+<circle cx="521.66" cy="286" r="2" fill="#181f25"/>
+<text x="588" y="290" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="start" data-role="name">Data</text>
+<text x="588" y="304" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">World Bank open data, read every night</text>
+<text x="588" y="315" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">into bronze, silver and gold</text>
+</g>
+</g>
+<g data-part="knowledge" data-name="Knowledge model" data-rect="0 0 72 72 4" data-z="44" data-t="8" data-level="1" data-motion-item="" data-step="2" aria-label="Knowledge model">
+<path data-role="silhouette" d="M 382.34 238 A 5.66 2.83 0 0 1 384 236 L 448 204 A 5.66 2.83 0 0 1 456 204 L 520 236 A 5.66 2.83 0 0 1 521.66 238 L 521.66 246 A 5.66 2.83 0 0 1 520 248 L 456 280 A 5.66 2.83 0 0 1 448 280 L 384 248 A 5.66 2.83 0 0 1 382.34 246 Z" fill="#ffffff"/>
+<path d="M 382.34 238 A 5.66 2.83 0 0 0 384 240 L 448 272 A 5.66 2.83 0 0 0 452 272.83 L 452 280.83 A 5.66 2.83 0 0 1 448 280 L 384 248 A 5.66 2.83 0 0 1 382.34 246 Z" fill="#181f25" fill-opacity="0.07"/>
+<path d="M 452 272.83 A 5.66 2.83 0 0 0 456 272 L 520 240 A 5.66 2.83 0 0 0 521.66 238 L 521.66 246 A 5.66 2.83 0 0 1 520 248 L 456 280 A 5.66 2.83 0 0 1 452 280.83 Z" fill="#181f25" fill-opacity="0.15"/>
+<path d="M 382.34 238 A 5.66 2.83 0 0 0 384 240 L 448 272 A 5.66 2.83 0 0 0 456 272 L 520 240 A 5.66 2.83 0 0 0 521.66 238" fill="none" stroke="#181f25" stroke-width="0.8" stroke-opacity="0.55"/>
+<path d="M 452 272.83 L 452 280.83" fill="none" stroke="#181f25" stroke-width="0.8" stroke-opacity="0.55"/>
+<path d="M 382.34 238 A 5.66 2.83 0 0 1 384 236 L 448 204 A 5.66 2.83 0 0 1 456 204 L 520 236 A 5.66 2.83 0 0 1 521.66 238 L 521.66 246 A 5.66 2.83 0 0 1 520 248 L 456 280 A 5.66 2.83 0 0 1 448 280 L 384 248 A 5.66 2.83 0 0 1 382.34 246 Z" fill="none" stroke="#181f25" stroke-width="1.2" stroke-linejoin="round"/>
+<path d="M 449 209.5 A 4.24 2.12 0 0 1 455 209.5 L 509 236.5 A 4.24 2.12 0 0 1 509 239.5 L 455 266.5 A 4.24 2.12 0 0 1 449 266.5 L 395 239.5 A 4.24 2.12 0 0 1 395 236.5 Z" fill="none" stroke="#181f25" stroke-width="0.8" stroke-opacity="0.3"/>
+<path d="M 450 219 L 454 237" fill="none" stroke="#181f25" stroke-width="1" stroke-opacity="0.55"/>
+<path d="M 414 235 L 454 237" fill="none" stroke="#181f25" stroke-width="1" stroke-opacity="0.55"/>
+<path d="M 454 237 L 494 237" fill="none" stroke="#181f25" stroke-width="1" stroke-opacity="0.55"/>
+<path d="M 454 237 L 464 254" fill="none" stroke="#181f25" stroke-width="1" stroke-opacity="0.55"/>
+<path d="M 494 237 L 464 254" fill="none" stroke="#181f25" stroke-width="1" stroke-opacity="0.55"/>
+<path d="M 414 235 L 430 251" fill="none" stroke="#181f25" stroke-width="1" stroke-opacity="0.55"/>
+<path d="M 430 251 L 464 254" fill="none" stroke="#181f25" stroke-width="1" stroke-opacity="0.55"/>
+<path d="M 450 219 L 494 237" fill="none" stroke="#181f25" stroke-width="1" stroke-opacity="0.55"/>
+<path d="M 442.93 215 A 7.07 3.54 0 0 1 445 212.5 L 445 212.5 A 7.07 3.54 0 0 1 455 212.5 L 455 212.5 A 7.07 3.54 0 0 1 457.07 215 L 457.07 219 A 7.07 3.54 0 0 1 455 221.5 L 455 221.5 A 7.07 3.54 0 0 1 445 221.5 L 445 221.5 A 7.07 3.54 0 0 1 442.93 219 Z" fill="#ffffff"/>
+<path d="M 442.93 215 A 7.07 3.54 0 0 0 445 217.5 L 445 217.5 A 7.07 3.54 0 0 0 450 218.54 L 450 222.54 A 7.07 3.54 0 0 1 445 221.5 L 445 221.5 A 7.07 3.54 0 0 1 442.93 219 Z" fill="#181f25" fill-opacity="0.07"/>
+<path d="M 450 218.54 A 7.07 3.54 0 0 0 455 217.5 L 455 217.5 A 7.07 3.54 0 0 0 457.07 215 L 457.07 219 A 7.07 3.54 0 0 1 455 221.5 L 455 221.5 A 7.07 3.54 0 0 1 450 222.54 Z" fill="#181f25" fill-opacity="0.15"/>
+<path d="M 442.93 215 A 7.07 3.54 0 0 0 445 217.5 L 445 217.5 A 7.07 3.54 0 0 0 455 217.5 L 455 217.5 A 7.07 3.54 0 0 0 457.07 215" fill="none" stroke="#181f25" stroke-width="0.6" stroke-opacity="0.45"/>
+<path d="M 442.93 215 A 7.07 3.54 0 0 1 445 212.5 L 445 212.5 A 7.07 3.54 0 0 1 455 212.5 L 455 212.5 A 7.07 3.54 0 0 1 457.07 215 L 457.07 219 A 7.07 3.54 0 0 1 455 221.5 L 455 221.5 A 7.07 3.54 0 0 1 445 221.5 L 445 221.5 A 7.07 3.54 0 0 1 442.93 219 Z" fill="none" stroke="#181f25" stroke-width="0.8" stroke-linejoin="round"/>
+<path d="M 406.93 231 A 7.07 3.54 0 0 1 409 228.5 L 409 228.5 A 7.07 3.54 0 0 1 419 228.5 L 419 228.5 A 7.07 3.54 0 0 1 421.07 231 L 421.07 235 A 7.07 3.54 0 0 1 419 237.5 L 419 237.5 A 7.07 3.54 0 0 1 409 237.5 L 409 237.5 A 7.07 3.54 0 0 1 406.93 235 Z" fill="#ffffff"/>
+<path d="M 406.93 231 A 7.07 3.54 0 0 0 409 233.5 L 409 233.5 A 7.07 3.54 0 0 0 414 234.54 L 414 238.54 A 7.07 3.54 0 0 1 409 237.5 L 409 237.5 A 7.07 3.54 0 0 1 406.93 235 Z" fill="#181f25" fill-opacity="0.07"/>
+<path d="M 414 234.54 A 7.07 3.54 0 0 0 419 233.5 L 419 233.5 A 7.07 3.54 0 0 0 421.07 231 L 421.07 235 A 7.07 3.54 0 0 1 419 237.5 L 419 237.5 A 7.07 3.54 0 0 1 414 238.54 Z" fill="#181f25" fill-opacity="0.15"/>
+<path d="M 406.93 231 A 7.07 3.54 0 0 0 409 233.5 L 409 233.5 A 7.07 3.54 0 0 0 419 233.5 L 419 233.5 A 7.07 3.54 0 0 0 421.07 231" fill="none" stroke="#181f25" stroke-width="0.6" stroke-opacity="0.45"/>
+<path d="M 406.93 231 A 7.07 3.54 0 0 1 409 228.5 L 409 228.5 A 7.07 3.54 0 0 1 419 228.5 L 419 228.5 A 7.07 3.54 0 0 1 421.07 231 L 421.07 235 A 7.07 3.54 0 0 1 419 237.5 L 419 237.5 A 7.07 3.54 0 0 1 409 237.5 L 409 237.5 A 7.07 3.54 0 0 1 406.93 235 Z" fill="none" stroke="#181f25" stroke-width="0.8" stroke-linejoin="round"/>
+<path d="M 446.93 233 A 7.07 3.54 0 0 1 449 230.5 L 449 230.5 A 7.07 3.54 0 0 1 459 230.5 L 459 230.5 A 7.07 3.54 0 0 1 461.07 233 L 461.07 237 A 7.07 3.54 0 0 1 459 239.5 L 459 239.5 A 7.07 3.54 0 0 1 449 239.5 L 449 239.5 A 7.07 3.54 0 0 1 446.93 237 Z" fill="#ffffff"/>
+<path d="M 446.93 233 A 7.07 3.54 0 0 0 449 235.5 L 449 235.5 A 7.07 3.54 0 0 0 454 236.54 L 454 240.54 A 7.07 3.54 0 0 1 449 239.5 L 449 239.5 A 7.07 3.54 0 0 1 446.93 237 Z" fill="#181f25" fill-opacity="0.07"/>
+<path d="M 454 236.54 A 7.07 3.54 0 0 0 459 235.5 L 459 235.5 A 7.07 3.54 0 0 0 461.07 233 L 461.07 237 A 7.07 3.54 0 0 1 459 239.5 L 459 239.5 A 7.07 3.54 0 0 1 454 240.54 Z" fill="#181f25" fill-opacity="0.15"/>
+<path d="M 446.93 233 A 7.07 3.54 0 0 0 449 235.5 L 449 235.5 A 7.07 3.54 0 0 0 459 235.5 L 459 235.5 A 7.07 3.54 0 0 0 461.07 233" fill="none" stroke="#181f25" stroke-width="0.6" stroke-opacity="0.45"/>
+<path d="M 446.93 233 A 7.07 3.54 0 0 1 449 230.5 L 449 230.5 A 7.07 3.54 0 0 1 459 230.5 L 459 230.5 A 7.07 3.54 0 0 1 461.07 233 L 461.07 237 A 7.07 3.54 0 0 1 459 239.5 L 459 239.5 A 7.07 3.54 0 0 1 449 239.5 L 449 239.5 A 7.07 3.54 0 0 1 446.93 237 Z" fill="none" stroke="#181f25" stroke-width="0.8" stroke-linejoin="round"/>
+<path d="M 486.93 233 A 7.07 3.54 0 0 1 489 230.5 L 489 230.5 A 7.07 3.54 0 0 1 499 230.5 L 499 230.5 A 7.07 3.54 0 0 1 501.07 233 L 501.07 237 A 7.07 3.54 0 0 1 499 239.5 L 499 239.5 A 7.07 3.54 0 0 1 489 239.5 L 489 239.5 A 7.07 3.54 0 0 1 486.93 237 Z" fill="#ffffff"/>
+<path d="M 486.93 233 A 7.07 3.54 0 0 0 489 235.5 L 489 235.5 A 7.07 3.54 0 0 0 494 236.54 L 494 240.54 A 7.07 3.54 0 0 1 489 239.5 L 489 239.5 A 7.07 3.54 0 0 1 486.93 237 Z" fill="#181f25" fill-opacity="0.07"/>
+<path d="M 494 236.54 A 7.07 3.54 0 0 0 499 235.5 L 499 235.5 A 7.07 3.54 0 0 0 501.07 233 L 501.07 237 A 7.07 3.54 0 0 1 499 239.5 L 499 239.5 A 7.07 3.54 0 0 1 494 240.54 Z" fill="#181f25" fill-opacity="0.15"/>
+<path d="M 486.93 233 A 7.07 3.54 0 0 0 489 235.5 L 489 235.5 A 7.07 3.54 0 0 0 499 235.5 L 499 235.5 A 7.07 3.54 0 0 0 501.07 233" fill="none" stroke="#181f25" stroke-width="0.6" stroke-opacity="0.45"/>
+<path d="M 486.93 233 A 7.07 3.54 0 0 1 489 230.5 L 489 230.5 A 7.07 3.54 0 0 1 499 230.5 L 499 230.5 A 7.07 3.54 0 0 1 501.07 233 L 501.07 237 A 7.07 3.54 0 0 1 499 239.5 L 499 239.5 A 7.07 3.54 0 0 1 489 239.5 L 489 239.5 A 7.07 3.54 0 0 1 486.93 237 Z" fill="none" stroke="#181f25" stroke-width="0.8" stroke-linejoin="round"/>
+<path d="M 422.93 247 A 7.07 3.54 0 0 1 425 244.5 L 425 244.5 A 7.07 3.54 0 0 1 435 244.5 L 435 244.5 A 7.07 3.54 0 0 1 437.07 247 L 437.07 251 A 7.07 3.54 0 0 1 435 253.5 L 435 253.5 A 7.07 3.54 0 0 1 425 253.5 L 425 253.5 A 7.07 3.54 0 0 1 422.93 251 Z" fill="#ffffff"/>
+<path d="M 422.93 247 A 7.07 3.54 0 0 0 425 249.5 L 425 249.5 A 7.07 3.54 0 0 0 430 250.54 L 430 254.54 A 7.07 3.54 0 0 1 425 253.5 L 425 253.5 A 7.07 3.54 0 0 1 422.93 251 Z" fill="#181f25" fill-opacity="0.07"/>
+<path d="M 430 250.54 A 7.07 3.54 0 0 0 435 249.5 L 435 249.5 A 7.07 3.54 0 0 0 437.07 247 L 437.07 251 A 7.07 3.54 0 0 1 435 253.5 L 435 253.5 A 7.07 3.54 0 0 1 430 254.54 Z" fill="#181f25" fill-opacity="0.15"/>
+<path d="M 422.93 247 A 7.07 3.54 0 0 0 425 249.5 L 425 249.5 A 7.07 3.54 0 0 0 435 249.5 L 435 249.5 A 7.07 3.54 0 0 0 437.07 247" fill="none" stroke="#181f25" stroke-width="0.6" stroke-opacity="0.45"/>
+<path d="M 422.93 247 A 7.07 3.54 0 0 1 425 244.5 L 425 244.5 A 7.07 3.54 0 0 1 435 244.5 L 435 244.5 A 7.07 3.54 0 0 1 437.07 247 L 437.07 251 A 7.07 3.54 0 0 1 435 253.5 L 435 253.5 A 7.07 3.54 0 0 1 425 253.5 L 425 253.5 A 7.07 3.54 0 0 1 422.93 251 Z" fill="none" stroke="#181f25" stroke-width="0.8" stroke-linejoin="round"/>
+<path d="M 456.93 250 A 7.07 3.54 0 0 1 459 247.5 L 459 247.5 A 7.07 3.54 0 0 1 469 247.5 L 469 247.5 A 7.07 3.54 0 0 1 471.07 250 L 471.07 254 A 7.07 3.54 0 0 1 469 256.5 L 469 256.5 A 7.07 3.54 0 0 1 459 256.5 L 459 256.5 A 7.07 3.54 0 0 1 456.93 254 Z" fill="#ffffff"/>
+<path d="M 456.93 250 A 7.07 3.54 0 0 0 459 252.5 L 459 252.5 A 7.07 3.54 0 0 0 464 253.54 L 464 257.54 A 7.07 3.54 0 0 1 459 256.5 L 459 256.5 A 7.07 3.54 0 0 1 456.93 254 Z" fill="#181f25" fill-opacity="0.07"/>
+<path d="M 464 253.54 A 7.07 3.54 0 0 0 469 252.5 L 469 252.5 A 7.07 3.54 0 0 0 471.07 250 L 471.07 254 A 7.07 3.54 0 0 1 469 256.5 L 469 256.5 A 7.07 3.54 0 0 1 464 257.54 Z" fill="#181f25" fill-opacity="0.15"/>
+<path d="M 456.93 250 A 7.07 3.54 0 0 0 459 252.5 L 459 252.5 A 7.07 3.54 0 0 0 469 252.5 L 469 252.5 A 7.07 3.54 0 0 0 471.07 250" fill="none" stroke="#181f25" stroke-width="0.6" stroke-opacity="0.45"/>
+<path d="M 456.93 250 A 7.07 3.54 0 0 1 459 247.5 L 459 247.5 A 7.07 3.54 0 0 1 469 247.5 L 469 247.5 A 7.07 3.54 0 0 1 471.07 250 L 471.07 254 A 7.07 3.54 0 0 1 469 256.5 L 469 256.5 A 7.07 3.54 0 0 1 459 256.5 L 459 256.5 A 7.07 3.54 0 0 1 456.93 254 Z" fill="none" stroke="#181f25" stroke-width="0.8" stroke-linejoin="round"/>
+<g data-role="label">
+<line x1="527.66" y1="242" x2="576" y2="242" stroke="#181f25" stroke-width="0.8" data-role="leader" stroke-opacity="0.4"/>
+<circle cx="521.66" cy="242" r="2" fill="#181f25"/>
+<text x="588" y="246" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="start" data-role="name">Knowledge model</text>
+<text x="588" y="260" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">Unity Catalog tables, an edge table,</text>
+<text x="588" y="271" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">numbered passages, dated assertions</text>
+</g>
+</g>
+<g data-part="tools" data-name="Tools" data-rect="0 0 72 72 4" data-z="88" data-t="8" data-level="2" data-motion-item="" data-step="3" aria-label="Tools">
+<path data-role="silhouette" d="M 382.34 194 A 5.66 2.83 0 0 1 384 192 L 448 160 A 5.66 2.83 0 0 1 456 160 L 520 192 A 5.66 2.83 0 0 1 521.66 194 L 521.66 202 A 5.66 2.83 0 0 1 520 204 L 456 236 A 5.66 2.83 0 0 1 448 236 L 384 204 A 5.66 2.83 0 0 1 382.34 202 Z" fill="#ffffff"/>
+<path d="M 382.34 194 A 5.66 2.83 0 0 0 384 196 L 448 228 A 5.66 2.83 0 0 0 452 228.83 L 452 236.83 A 5.66 2.83 0 0 1 448 236 L 384 204 A 5.66 2.83 0 0 1 382.34 202 Z" fill="#181f25" fill-opacity="0.07"/>
+<path d="M 452 228.83 A 5.66 2.83 0 0 0 456 228 L 520 196 A 5.66 2.83 0 0 0 521.66 194 L 521.66 202 A 5.66 2.83 0 0 1 520 204 L 456 236 A 5.66 2.83 0 0 1 452 236.83 Z" fill="#181f25" fill-opacity="0.15"/>
+<path d="M 382.34 194 A 5.66 2.83 0 0 0 384 196 L 448 228 A 5.66 2.83 0 0 0 456 228 L 520 196 A 5.66 2.83 0 0 0 521.66 194" fill="none" stroke="#181f25" stroke-width="0.8" stroke-opacity="0.55"/>
+<path d="M 452 228.83 L 452 236.83" fill="none" stroke="#181f25" stroke-width="0.8" stroke-opacity="0.55"/>
+<path d="M 382.34 194 A 5.66 2.83 0 0 1 384 192 L 448 160 A 5.66 2.83 0 0 1 456 160 L 520 192 A 5.66 2.83 0 0 1 521.66 194 L 521.66 202 A 5.66 2.83 0 0 1 520 204 L 456 236 A 5.66 2.83 0 0 1 448 236 L 384 204 A 5.66 2.83 0 0 1 382.34 202 Z" fill="none" stroke="#181f25" stroke-width="1.2" stroke-linejoin="round"/>
+<path d="M 429.17 174 A 2.83 1.41 0 0 1 430 173 L 450 163 A 2.83 1.41 0 0 1 454 163 L 474 173 A 2.83 1.41 0 0 1 474.83 174 L 474.83 178 A 2.83 1.41 0 0 1 474 179 L 454 189 A 2.83 1.41 0 0 1 450 189 L 430 179 A 2.83 1.41 0 0 1 429.17 178 Z" fill="#ffffff"/>
+<path d="M 429.17 174 A 2.83 1.41 0 0 0 430 175 L 450 185 A 2.83 1.41 0 0 0 452 185.41 L 452 189.41 A 2.83 1.41 0 0 1 450 189 L 430 179 A 2.83 1.41 0 0 1 429.17 178 Z" fill="#181f25" fill-opacity="0.07"/>
+<path d="M 452 185.41 A 2.83 1.41 0 0 0 454 185 L 474 175 A 2.83 1.41 0 0 0 474.83 174 L 474.83 178 A 2.83 1.41 0 0 1 474 179 L 454 189 A 2.83 1.41 0 0 1 452 189.41 Z" fill="#181f25" fill-opacity="0.15"/>
+<path d="M 429.17 174 A 2.83 1.41 0 0 0 430 175 L 450 185 A 2.83 1.41 0 0 0 454 185 L 474 175 A 2.83 1.41 0 0 0 474.83 174" fill="none" stroke="#181f25" stroke-width="0.6" stroke-opacity="0.45"/>
+<path d="M 452 185.41 L 452 189.41" fill="none" stroke="#181f25" stroke-width="0.6" stroke-opacity="0.45"/>
+<path d="M 429.17 174 A 2.83 1.41 0 0 1 430 173 L 450 163 A 2.83 1.41 0 0 1 454 163 L 474 173 A 2.83 1.41 0 0 1 474.83 174 L 474.83 178 A 2.83 1.41 0 0 1 474 179 L 454 189 A 2.83 1.41 0 0 1 450 189 L 430 179 A 2.83 1.41 0 0 1 429.17 178 Z" fill="none" stroke="#181f25" stroke-width="0.8" stroke-linejoin="round"/>
+<path d="M 450 168 L 464 175" fill="none" stroke="#181f25" stroke-width="0.8" stroke-opacity="0.45"/>
+<path d="M 445 170.5 L 455 175.5" fill="none" stroke="#181f25" stroke-width="0.8" stroke-opacity="0.45"/>
+<path d="M 440 173 L 452 179" fill="none" stroke="#181f25" stroke-width="0.8" stroke-opacity="0.45"/>
+<path d="M 461.17 190 A 2.83 1.41 0 0 1 462 189 L 482 179 A 2.83 1.41 0 0 1 486 179 L 506 189 A 2.83 1.41 0 0 1 506.83 190 L 506.83 194 A 2.83 1.41 0 0 1 506 195 L 486 205 A 2.83 1.41 0 0 1 482 205 L 462 195 A 2.83 1.41 0 0 1 461.17 194 Z" fill="#ffffff"/>
+<path d="M 461.17 190 A 2.83 1.41 0 0 0 462 191 L 482 201 A 2.83 1.41 0 0 0 484 201.41 L 484 205.41 A 2.83 1.41 0 0 1 482 205 L 462 195 A 2.83 1.41 0 0 1 461.17 194 Z" fill="#181f25" fill-opacity="0.07"/>
+<path d="M 484 201.41 A 2.83 1.41 0 0 0 486 201 L 506 191 A 2.83 1.41 0 0 0 506.83 190 L 506.83 194 A 2.83 1.41 0 0 1 506 195 L 486 205 A 2.83 1.41 0 0 1 484 205.41 Z" fill="#181f25" fill-opacity="0.15"/>
+<path d="M 461.17 190 A 2.83 1.41 0 0 0 462 191 L 482 201 A 2.83 1.41 0 0 0 486 201 L 506 191 A 2.83 1.41 0 0 0 506.83 190" fill="none" stroke="#181f25" stroke-width="0.6" stroke-opacity="0.45"/>
+<path d="M 484 201.41 L 484 205.41" fill="none" stroke="#181f25" stroke-width="0.6" stroke-opacity="0.45"/>
+<path d="M 461.17 190 A 2.83 1.41 0 0 1 462 189 L 482 179 A 2.83 1.41 0 0 1 486 179 L 506 189 A 2.83 1.41 0 0 1 506.83 190 L 506.83 194 A 2.83 1.41 0 0 1 506 195 L 486 205 A 2.83 1.41 0 0 1 482 205 L 462 195 A 2.83 1.41 0 0 1 461.17 194 Z" fill="none" stroke="#181f25" stroke-width="0.8" stroke-linejoin="round"/>
+<path d="M 482 184 L 496 191" fill="none" stroke="#181f25" stroke-width="0.8" stroke-opacity="0.45"/>
+<path d="M 477 186.5 L 487 191.5" fill="none" stroke="#181f25" stroke-width="0.8" stroke-opacity="0.45"/>
+<path d="M 472 189 L 484 195" fill="none" stroke="#181f25" stroke-width="0.8" stroke-opacity="0.45"/>
+<path d="M 397.17 190 A 2.83 1.41 0 0 1 398 189 L 418 179 A 2.83 1.41 0 0 1 422 179 L 442 189 A 2.83 1.41 0 0 1 442.83 190 L 442.83 194 A 2.83 1.41 0 0 1 442 195 L 422 205 A 2.83 1.41 0 0 1 418 205 L 398 195 A 2.83 1.41 0 0 1 397.17 194 Z" fill="#ffffff"/>
+<path d="M 397.17 190 A 2.83 1.41 0 0 0 398 191 L 418 201 A 2.83 1.41 0 0 0 420 201.41 L 420 205.41 A 2.83 1.41 0 0 1 418 205 L 398 195 A 2.83 1.41 0 0 1 397.17 194 Z" fill="#181f25" fill-opacity="0.07"/>
+<path d="M 420 201.41 A 2.83 1.41 0 0 0 422 201 L 442 191 A 2.83 1.41 0 0 0 442.83 190 L 442.83 194 A 2.83 1.41 0 0 1 442 195 L 422 205 A 2.83 1.41 0 0 1 420 205.41 Z" fill="#181f25" fill-opacity="0.15"/>
+<path d="M 397.17 190 A 2.83 1.41 0 0 0 398 191 L 418 201 A 2.83 1.41 0 0 0 422 201 L 442 191 A 2.83 1.41 0 0 0 442.83 190" fill="none" stroke="#181f25" stroke-width="0.6" stroke-opacity="0.45"/>
+<path d="M 420 201.41 L 420 205.41" fill="none" stroke="#181f25" stroke-width="0.6" stroke-opacity="0.45"/>
+<path d="M 397.17 190 A 2.83 1.41 0 0 1 398 189 L 418 179 A 2.83 1.41 0 0 1 422 179 L 442 189 A 2.83 1.41 0 0 1 442.83 190 L 442.83 194 A 2.83 1.41 0 0 1 442 195 L 422 205 A 2.83 1.41 0 0 1 418 205 L 398 195 A 2.83 1.41 0 0 1 397.17 194 Z" fill="none" stroke="#181f25" stroke-width="0.8" stroke-linejoin="round"/>
+<path d="M 418 184 L 432 191" fill="none" stroke="#181f25" stroke-width="0.8" stroke-opacity="0.45"/>
+<path d="M 413 186.5 L 423 191.5" fill="none" stroke="#181f25" stroke-width="0.8" stroke-opacity="0.45"/>
+<path d="M 408 189 L 420 195" fill="none" stroke="#181f25" stroke-width="0.8" stroke-opacity="0.45"/>
+<path d="M 429.17 206 A 2.83 1.41 0 0 1 430 205 L 450 195 A 2.83 1.41 0 0 1 454 195 L 474 205 A 2.83 1.41 0 0 1 474.83 206 L 474.83 210 A 2.83 1.41 0 0 1 474 211 L 454 221 A 2.83 1.41 0 0 1 450 221 L 430 211 A 2.83 1.41 0 0 1 429.17 210 Z" fill="#ffffff"/>
+<path d="M 429.17 206 A 2.83 1.41 0 0 0 430 207 L 450 217 A 2.83 1.41 0 0 0 452 217.41 L 452 221.41 A 2.83 1.41 0 0 1 450 221 L 430 211 A 2.83 1.41 0 0 1 429.17 210 Z" fill="#181f25" fill-opacity="0.07"/>
+<path d="M 452 217.41 A 2.83 1.41 0 0 0 454 217 L 474 207 A 2.83 1.41 0 0 0 474.83 206 L 474.83 210 A 2.83 1.41 0 0 1 474 211 L 454 221 A 2.83 1.41 0 0 1 452 221.41 Z" fill="#181f25" fill-opacity="0.15"/>
+<path d="M 429.17 206 A 2.83 1.41 0 0 0 430 207 L 450 217 A 2.83 1.41 0 0 0 454 217 L 474 207 A 2.83 1.41 0 0 0 474.83 206" fill="none" stroke="#181f25" stroke-width="0.6" stroke-opacity="0.45"/>
+<path d="M 452 217.41 L 452 221.41" fill="none" stroke="#181f25" stroke-width="0.6" stroke-opacity="0.45"/>
+<path d="M 429.17 206 A 2.83 1.41 0 0 1 430 205 L 450 195 A 2.83 1.41 0 0 1 454 195 L 474 205 A 2.83 1.41 0 0 1 474.83 206 L 474.83 210 A 2.83 1.41 0 0 1 474 211 L 454 221 A 2.83 1.41 0 0 1 450 221 L 430 211 A 2.83 1.41 0 0 1 429.17 210 Z" fill="none" stroke="#181f25" stroke-width="0.8" stroke-linejoin="round"/>
+<path d="M 450 200 L 464 207" fill="none" stroke="#181f25" stroke-width="0.8" stroke-opacity="0.45"/>
+<path d="M 445 202.5 L 455 207.5" fill="none" stroke="#181f25" stroke-width="0.8" stroke-opacity="0.45"/>
+<path d="M 440 205 L 452 211" fill="none" stroke="#181f25" stroke-width="0.8" stroke-opacity="0.45"/>
+<g data-role="label">
+<line x1="527.66" y1="198" x2="576" y2="198" stroke="#181f25" stroke-width="0.8" data-role="leader" stroke-opacity="0.4"/>
+<circle cx="521.66" cy="198" r="2" fill="#181f25"/>
+<text x="588" y="202" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="start" data-role="name">Tools</text>
+<text x="588" y="216" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">SQL through the Genie Agent, hybrid search,</text>
+<text x="588" y="227" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">a graph walk, time estimates</text>
+</g>
+</g>
+<g data-part="agent" data-name="Strata agent" data-rect="0 0 72 72 4" data-z="132" data-t="8" data-level="3" data-motion-item="" data-step="4" aria-label="Strata agent">
+<path data-role="silhouette" d="M 382.34 150 A 5.66 2.83 0 0 1 384 148 L 448 116 A 5.66 2.83 0 0 1 456 116 L 520 148 A 5.66 2.83 0 0 1 521.66 150 L 521.66 158 A 5.66 2.83 0 0 1 520 160 L 456 192 A 5.66 2.83 0 0 1 448 192 L 384 160 A 5.66 2.83 0 0 1 382.34 158 Z" fill="#ffffff"/>
+<path d="M 382.34 150 A 5.66 2.83 0 0 0 384 152 L 448 184 A 5.66 2.83 0 0 0 452 184.83 L 452 192.83 A 5.66 2.83 0 0 1 448 192 L 384 160 A 5.66 2.83 0 0 1 382.34 158 Z" fill="#181f25" fill-opacity="0.07"/>
+<path d="M 452 184.83 A 5.66 2.83 0 0 0 456 184 L 520 152 A 5.66 2.83 0 0 0 521.66 150 L 521.66 158 A 5.66 2.83 0 0 1 520 160 L 456 192 A 5.66 2.83 0 0 1 452 192.83 Z" fill="#181f25" fill-opacity="0.15"/>
+<path d="M 382.34 150 A 5.66 2.83 0 0 0 384 152 L 448 184 A 5.66 2.83 0 0 0 456 184 L 520 152 A 5.66 2.83 0 0 0 521.66 150" fill="none" stroke="#181f25" stroke-width="0.8" stroke-opacity="0.55"/>
+<path d="M 452 184.83 L 452 192.83" fill="none" stroke="#181f25" stroke-width="0.8" stroke-opacity="0.55"/>
+<path d="M 382.34 150 A 5.66 2.83 0 0 1 384 148 L 448 116 A 5.66 2.83 0 0 1 456 116 L 520 148 A 5.66 2.83 0 0 1 521.66 150 L 521.66 158 A 5.66 2.83 0 0 1 520 160 L 456 192 A 5.66 2.83 0 0 1 448 192 L 384 160 A 5.66 2.83 0 0 1 382.34 158 Z" fill="none" stroke="#181f25" stroke-width="1.2" stroke-linejoin="round"/>
+<path d="M 449 121.5 A 4.24 2.12 0 0 1 455 121.5 L 509 148.5 A 4.24 2.12 0 0 1 509 151.5 L 455 178.5 A 4.24 2.12 0 0 1 449 178.5 L 395 151.5 A 4.24 2.12 0 0 1 395 148.5 Z" fill="none" stroke="#181f25" stroke-width="0.8" stroke-opacity="0.3"/>
+<path d="M 425.76 144 A 4.24 2.12 0 0 1 427 142.5 L 449 131.5 A 4.24 2.12 0 0 1 455 131.5 L 477 142.5 A 4.24 2.12 0 0 1 478.24 144 L 478.24 150 A 4.24 2.12 0 0 1 477 151.5 L 455 162.5 A 4.24 2.12 0 0 1 449 162.5 L 427 151.5 A 4.24 2.12 0 0 1 425.76 150 Z" fill="#ffffff"/>
+<path d="M 449 131.5 A 4.24 2.12 0 0 1 455 131.5 L 477 142.5 A 4.24 2.12 0 0 1 477 145.5 L 455 156.5 A 4.24 2.12 0 0 1 449 156.5 L 427 145.5 A 4.24 2.12 0 0 1 427 142.5 Z" fill="#4b5e71"/>
+<path d="M 425.76 144 A 4.24 2.12 0 0 0 427 145.5 L 449 156.5 A 4.24 2.12 0 0 0 452 157.12 L 452 163.12 A 4.24 2.12 0 0 1 449 162.5 L 427 151.5 A 4.24 2.12 0 0 1 425.76 150 Z" fill="#181f25" fill-opacity="0.07"/>
+<path d="M 452 157.12 A 4.24 2.12 0 0 0 455 156.5 L 477 145.5 A 4.24 2.12 0 0 0 478.24 144 L 478.24 150 A 4.24 2.12 0 0 1 477 151.5 L 455 162.5 A 4.24 2.12 0 0 1 452 163.12 Z" fill="#181f25" fill-opacity="0.15"/>
+<path d="M 425.76 144 A 4.24 2.12 0 0 0 427 145.5 L 449 156.5 A 4.24 2.12 0 0 0 455 156.5 L 477 145.5 A 4.24 2.12 0 0 0 478.24 144" fill="none" stroke="#181f25" stroke-width="0.6" stroke-opacity="0.45"/>
+<path d="M 452 157.12 L 452 163.12" fill="none" stroke="#181f25" stroke-width="0.6" stroke-opacity="0.45"/>
+<path d="M 425.76 144 A 4.24 2.12 0 0 1 427 142.5 L 449 131.5 A 4.24 2.12 0 0 1 455 131.5 L 477 142.5 A 4.24 2.12 0 0 1 478.24 144 L 478.24 150 A 4.24 2.12 0 0 1 477 151.5 L 455 162.5 A 4.24 2.12 0 0 1 449 162.5 L 427 151.5 A 4.24 2.12 0 0 1 425.76 150 Z" fill="none" stroke="#181f25" stroke-width="1" stroke-linejoin="round"/>
+<path d="M 450 138 A 2.83 1.41 0 0 1 454 138 L 464 143 A 2.83 1.41 0 0 1 464 145 L 454 150 A 2.83 1.41 0 0 1 450 150 L 440 145 A 2.83 1.41 0 0 1 440 143 Z" fill="none" stroke="#ffffff" stroke-width="0.8" stroke-opacity="0.55"/>
+<g data-role="label">
+<line x1="527.66" y1="154" x2="576" y2="154" stroke="#181f25" stroke-width="0.8" data-role="leader" stroke-opacity="0.4"/>
+<circle cx="521.66" cy="154" r="2" fill="#181f25"/>
+<text x="588" y="158" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="start" data-role="name">Strata agent</text>
+<text x="588" y="172" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">Microsoft Foundry: picks the tools,</text>
+<text x="588" y="183" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">writes claims with their evidence IDs</text>
+</g>
+</g>
+<g data-part="verifier" data-name="The verifier" data-rect="0 0 72 72 4" data-z="176" data-t="8" data-level="4" data-focal="" data-motion-item="" data-step="5" aria-label="The verifier">
+<path data-role="silhouette" d="M 382.34 106 A 5.66 2.83 0 0 1 384 104 L 448 72 A 5.66 2.83 0 0 1 456 72 L 520 104 A 5.66 2.83 0 0 1 521.66 106 L 521.66 114 A 5.66 2.83 0 0 1 520 116 L 456 148 A 5.66 2.83 0 0 1 448 148 L 384 116 A 5.66 2.83 0 0 1 382.34 114 Z" fill="#ffffff"/>
+<path d="M 448 72 A 5.66 2.83 0 0 1 456 72 L 520 104 A 5.66 2.83 0 0 1 520 108 L 456 140 A 5.66 2.83 0 0 1 448 140 L 384 108 A 5.66 2.83 0 0 1 384 104 Z" fill="#0071bc" fill-opacity="0.1"/>
+<path d="M 382.34 106 A 5.66 2.83 0 0 0 384 108 L 448 140 A 5.66 2.83 0 0 0 452 140.83 L 452 148.83 A 5.66 2.83 0 0 1 448 148 L 384 116 A 5.66 2.83 0 0 1 382.34 114 Z" fill="#0071bc" fill-opacity="0.2"/>
+<path d="M 452 140.83 A 5.66 2.83 0 0 0 456 140 L 520 108 A 5.66 2.83 0 0 0 521.66 106 L 521.66 114 A 5.66 2.83 0 0 1 520 116 L 456 148 A 5.66 2.83 0 0 1 452 148.83 Z" fill="#0071bc" fill-opacity="0.32"/>
+<path d="M 382.34 106 A 5.66 2.83 0 0 0 384 108 L 448 140 A 5.66 2.83 0 0 0 456 140 L 520 108 A 5.66 2.83 0 0 0 521.66 106" fill="none" stroke="#0071bc" stroke-width="0.8" stroke-opacity="0.6"/>
+<path d="M 452 140.83 L 452 148.83" fill="none" stroke="#0071bc" stroke-width="0.8" stroke-opacity="0.6"/>
+<path d="M 382.34 106 A 5.66 2.83 0 0 1 384 104 L 448 72 A 5.66 2.83 0 0 1 456 72 L 520 104 A 5.66 2.83 0 0 1 521.66 106 L 521.66 114 A 5.66 2.83 0 0 1 520 116 L 456 148 A 5.66 2.83 0 0 1 448 148 L 384 116 A 5.66 2.83 0 0 1 382.34 114 Z" fill="none" stroke="#0071bc" stroke-width="1.2" stroke-linejoin="round"/>
+<path d="M 449 77.5 A 4.24 2.12 0 0 1 455 77.5 L 509 104.5 A 4.24 2.12 0 0 1 509 107.5 L 455 134.5 A 4.24 2.12 0 0 1 449 134.5 L 395 107.5 A 4.24 2.12 0 0 1 395 104.5 Z" fill="none" stroke="#0071bc" stroke-width="0.8" stroke-opacity="0.35"/>
+<path d="M 448.5 84.5 L 451 87 L 456 82" fill="none" stroke="#0071bc" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 434.5 91.5 L 437 94 L 442 89" fill="none" stroke="#0071bc" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 420.5 98.5 L 423 101 L 428 96" fill="none" stroke="#0071bc" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 406.5 105.5 L 409 108 L 414 103" fill="none" stroke="#0071bc" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 462.5 91.5 L 465 94 L 470 89" fill="none" stroke="#0071bc" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 448.5 98.5 L 451 101 L 456 96" fill="none" stroke="#0071bc" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 434.5 105.5 L 437 108 L 442 103" fill="none" stroke="#0071bc" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 420.5 112.5 L 423 115 L 428 110" fill="none" stroke="#0071bc" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 476.5 98.5 L 479 101 L 484 96" fill="none" stroke="#0071bc" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 462.5 105.5 L 465 108 L 470 103" fill="none" stroke="#0071bc" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 448.5 112.5 L 451 115 L 456 110" fill="none" stroke="#0071bc" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 434.5 119.5 L 437 122 L 442 117" fill="none" stroke="#0071bc" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 490.5 105.5 L 493 108 L 498 103" fill="none" stroke="#0071bc" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 476.5 112.5 L 479 115 L 484 110" fill="none" stroke="#0071bc" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 462.5 119.5 L 465 122 L 470 117" fill="none" stroke="#0071bc" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 448.5 126.5 L 451 129 L 456 124" fill="none" stroke="#0071bc" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+<g data-role="label">
+<line x1="527.66" y1="110" x2="576" y2="110" stroke="#0071bc" stroke-width="0.8" data-role="leader" stroke-opacity="0.7"/>
+<circle cx="521.66" cy="110" r="2" fill="#0071bc"/>
+<text x="588" y="114" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="start" data-role="name">The verifier</text>
+<text x="588" y="128" fill="#0071bc" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">checks every sentence</text>
+<text x="588" y="139" fill="#0071bc" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">before anyone sees it</text>
+</g>
+</g>
+<g data-part="app" data-name="Strata app" data-rect="0 0 72 72 4" data-z="220" data-t="8" data-level="5" data-motion-item="" data-step="6" aria-label="Strata app">
+<path data-role="silhouette" d="M 382.34 62 A 5.66 2.83 0 0 1 384 60 L 448 28 A 5.66 2.83 0 0 1 456 28 L 520 60 A 5.66 2.83 0 0 1 521.66 62 L 521.66 70 A 5.66 2.83 0 0 1 520 72 L 456 104 A 5.66 2.83 0 0 1 448 104 L 384 72 A 5.66 2.83 0 0 1 382.34 70 Z" fill="#ffffff"/>
+<path d="M 382.34 62 A 5.66 2.83 0 0 0 384 64 L 448 96 A 5.66 2.83 0 0 0 452 96.83 L 452 104.83 A 5.66 2.83 0 0 1 448 104 L 384 72 A 5.66 2.83 0 0 1 382.34 70 Z" fill="#181f25" fill-opacity="0.07"/>
+<path d="M 452 96.83 A 5.66 2.83 0 0 0 456 96 L 520 64 A 5.66 2.83 0 0 0 521.66 62 L 521.66 70 A 5.66 2.83 0 0 1 520 72 L 456 104 A 5.66 2.83 0 0 1 452 104.83 Z" fill="#181f25" fill-opacity="0.15"/>
+<path d="M 382.34 62 A 5.66 2.83 0 0 0 384 64 L 448 96 A 5.66 2.83 0 0 0 456 96 L 520 64 A 5.66 2.83 0 0 0 521.66 62" fill="none" stroke="#181f25" stroke-width="0.8" stroke-opacity="0.55"/>
+<path d="M 452 96.83 L 452 104.83" fill="none" stroke="#181f25" stroke-width="0.8" stroke-opacity="0.55"/>
+<path d="M 382.34 62 A 5.66 2.83 0 0 1 384 60 L 448 28 A 5.66 2.83 0 0 1 456 28 L 520 60 A 5.66 2.83 0 0 1 521.66 62 L 521.66 70 A 5.66 2.83 0 0 1 520 72 L 456 104 A 5.66 2.83 0 0 1 448 104 L 384 72 A 5.66 2.83 0 0 1 382.34 70 Z" fill="none" stroke="#181f25" stroke-width="1.2" stroke-linejoin="round"/>
+<path d="M 449 34.5 A 4.24 2.12 0 0 1 455 34.5 L 507 60.5 A 4.24 2.12 0 0 1 507 63.5 L 455 89.5 A 4.24 2.12 0 0 1 449 89.5 L 397 63.5 A 4.24 2.12 0 0 1 397 60.5 Z" fill="#4b5e71" stroke="#181f25" stroke-width="0.8"/>
+<path d="M 450 41 A 2.83 1.41 0 0 1 454 41 L 494 61 A 2.83 1.41 0 0 1 494 63 L 488 66 A 2.83 1.41 0 0 1 484 66 L 444 46 A 2.83 1.41 0 0 1 444 44 Z" fill="#ffffff" fill-opacity="0.9"/>
+<path d="M 433 49.5 L 473 69.5" fill="none" stroke="#ffffff" stroke-width="1.2" stroke-linecap="round" stroke-opacity="0.7"/>
+<path d="M 427 52.5 L 459 68.5" fill="none" stroke="#ffffff" stroke-width="1.2" stroke-linecap="round" stroke-opacity="0.7"/>
+<path d="M 421 55.5 L 459 74.5" fill="none" stroke="#ffffff" stroke-width="1.2" stroke-linecap="round" stroke-opacity="0.7"/>
+<path d="M 415 58.5 L 441 71.5" fill="none" stroke="#ffffff" stroke-width="1.2" stroke-linecap="round" stroke-opacity="0.7"/>
+<path d="M 442 75 A 2.83 1.41 0 0 1 446 75 L 456 80 A 2.83 1.41 0 0 1 456 82 L 454 83 A 2.83 1.41 0 0 1 450 83 L 440 78 A 2.83 1.41 0 0 1 440 76 Z" fill="none" stroke="#ffffff" stroke-width="0.8" stroke-opacity="0.8"/>
+<g data-role="label">
+<line x1="527.66" y1="66" x2="576" y2="66" stroke="#181f25" stroke-width="0.8" data-role="leader" stroke-opacity="0.4"/>
+<circle cx="521.66" cy="66" r="2" fill="#181f25"/>
+<text x="588" y="70" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="start" data-role="name">Strata app</text>
+<text x="588" y="84" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">a Databricks App:</text>
+<text x="588" y="95" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">runs each tool as the viewer</text>
+</g>
+</g>
+</g>
+<g data-motion-item="" data-step="7" aria-label="Where each layer runs">
+<line x1="24" y1="286" x2="370" y2="286" stroke="#181f25" stroke-width="0.8" stroke-dasharray="1,3" stroke-opacity="0.22"/>
+<line x1="24" y1="242" x2="370" y2="242" stroke="#181f25" stroke-width="0.8" stroke-dasharray="1,3" stroke-opacity="0.22"/>
+<line x1="24" y1="198" x2="370" y2="198" stroke="#181f25" stroke-width="0.8" stroke-dasharray="1,3" stroke-opacity="0.22"/>
+<line x1="24" y1="154" x2="370" y2="154" stroke="#181f25" stroke-width="0.8" stroke-dasharray="1,3" stroke-opacity="0.22"/>
+<line x1="24" y1="110" x2="370" y2="110" stroke="#181f25" stroke-width="0.8" stroke-dasharray="1,3" stroke-opacity="0.22"/>
+<line x1="24" y1="66" x2="370" y2="66" stroke="#181f25" stroke-width="0.8" stroke-dasharray="1,3" stroke-opacity="0.22"/>
+<circle cx="84" cy="286" r="4.5" fill="#181f25"/>
+<circle cx="84" cy="242" r="4.5" fill="#181f25"/>
+<circle cx="84" cy="198" r="4.5" fill="#181f25"/>
+<circle cx="236" cy="154" r="4.5" fill="#181f25"/>
+<circle cx="84" cy="110" r="4.5" fill="#181f25"/>
+<circle cx="84" cy="66" r="4.5" fill="#181f25"/>
+<circle cx="28" cy="309" r="3.5" fill="#181f25"/>
+<text x="38" y="312" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">runs there</text>
+<text x="24" y="326" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">language models: Azure OpenAI, through Foundry</text>
+</g>
+      </svg>

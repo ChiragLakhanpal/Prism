@@ -364,7 +364,15 @@
   "step_reference": "KE-NWWDA-541055-CW-RFB",
   "project_id": "P156634",
   "agency": "Northern Water Works Development Agency",
+  "plan_date": "2026-10-09",
   "plan_href": "/projects/P156634/procurement/northern-water-works-development-agency",
+  "links": {
+   "checkPlan": "/projects/P156634/procurement/northern-water-works-development-agency/2026-10-09",
+   "planPackage": "/packages?box=plan&example=rural_roads_kenya",
+   "wholeStory": "/projects/P130164/timeline"
+  },
+  "sentence": "rural roads, Kenya, about US$15 million",
+  "question": "In P130164, why did so many works contracts have to go through rebidding, and what does the completion report say about the estimates?",
   "comparables": {
    "tool": "find_comparables",
    "as_of": "2026-10-22",

@@ -16,7 +16,8 @@ import type { DeckData, DeckResult } from "./data";
 
 const words = deckCopy.num;
 // Where the demo package's numbers came from: its recorded find_comparables answer, or its recorded estimate_time
-// answer for the time estimate's months, each with the date its tool ran.
+// answer for the time estimate's months, each with the date its tool ran. No slide of the second draft draws them yet;
+// ticket 116's recorded answer on the planning demo slide does.
 export const TOOL_KEY = "tool:find_comparables";
 export const ESTIMATE_KEY = "tool:estimate_time";
 export type ToolKey = typeof TOOL_KEY | typeof ESTIMATE_KEY;
