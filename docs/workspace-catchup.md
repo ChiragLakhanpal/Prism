@@ -3989,3 +3989,19 @@ It worked if:
 - On the App, `GET /api/packages/KE-NWWDA-541055-CW-RFB/steps` answers `step_dates.family` "goods", `family_reason` null, six steps, and `contract_signed` with `state` "done", `actual_date` "2026-06-22" and `actual_source` "contract_awards" (contract 1903781), as `tests/fixtures/api/steps-ke-nwwda-541055.json` does.
 
 Record the script's per-project lines and its last line, the job run id and its result, the section counts, and the steps route's family, family_reason, step count and contract_signed fields here under ticket 122. When all four hold, the orchestrator ticks criterion 3; when one fails, it opens a follow-up and names it here.
+
+## Ticket 118, step 1 of 1: the demo-ready command's smoke question passes three times in a row after the App redeploy (criterion 4, live)
+
+Parked on October 28, 2026 with ticket 118, which merged into build/strata as a969ba4d (branch `strata/118-the-judge-and-the-agent-retry-a-rate-limited-model-call` at 25c3d6dc). Every key is set, but mergers run no workspace step: the orchestrator runs this step today. It needs the Databricks keys and the four Foundry keys in the env file, and the Foundry and judge secrets in the scope `strata`. No agent sync is needed, because the instructions and the tool list did not change.
+
+Why: on October 28, 2026 at 05:54 UTC the third smoke run in a row lost its one sentence as `judge_unavailable`, because Azure OpenAI answered the judge 429 (the agent and the judge share the gpt-5.4 deployment's 30,000 tokens-per-minute cap). Since ticket 118 the judge (`src/strata/agent/judge.py`) and the agent's Foundry calls (`src/strata/agent/foundry.py`) retry a 429 or 503 up to `azure.retries` (3) times before `judge_unavailable` or `agent_unavailable`. Each wait is the `Retry-After` header's seconds or `azure.retry_seconds` (5), at most `azure.max_retry_seconds` (60), and one answer waits at most `azure.max_wait_seconds` (120) for each model. All four values are in `config/thresholds.toml` under `[azure]`.
+
+The builder's step, in the builder's words: after the merge and the App redeploy, run the demo-ready command three times in a row from the main checkout:
+
+    uv run --with databricks-sdk==0.156.0 python ops/demo/ready.py --env-file "<main checkout>/.env"
+
+The App redeploy it waits on is the header's deploy with `--keep-secrets`, from a snapshot of a969ba4d or of the done commit that follows it (`git archive <sha> | tar -x -C <scratchpad>/snap-<sha>`, then link the main checkout's `web/node_modules` into the snapshot):
+
+    uv run --script ops/app/deploy_app.py --env-file "<main checkout>/.env" --keep-secrets
+
+It worked if each run's smoke question passes every check with no judge_unavailable or agent_unavailable, and any 429 shows in stderr as a line like 'The judge on Azure OpenAI answered 429, so I am waiting N seconds before retry 1 of 3.' This is ticket 118's criterion 4. Record the three runs here under ticket 118: the time, the exit code, step 3's lines with any "Removed:" lines word for word, and every "... so I am waiting N seconds before retry K of 3." line from stderr.
