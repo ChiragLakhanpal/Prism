@@ -3963,3 +3963,53 @@ Record the deploy's exit code, last line and deployment id, the /api/health stat
 ## Tickets 112, 113, 114 and 115, the App redeploy ran: the App runs 4484310a
 
 **Ran on October 28, 2026 (orchestrator), 10:44 to 10:57 UTC, from a snapshot of 4484310a (the wave's tip, with every ticket through 115).** `ops/app/deploy_app.py --keep-secrets` exited 0 with the running line; the watchdog holds 4484310a; the local copy moved to the same commit (http://127.0.0.1:53759, `.notes/local-run.md`). Then the demo-ready command ran once from the snapshot (10:58 to 11:02 UTC): the App, Genie (19 seconds), the P156634 recheck, Home's examples and the workspace listing passed, and the smoke question lost two sentences to `judge_unavailable` (the judge's rate limit on the shared gpt-5.4 deployment, as at 05:54 UTC; ticket 118 and the capacity item on the morning list). The signed-in checks these tickets name (Home's strip "0 of 6 done" and "Next: Check a published plan (P156634)", the box's suggestions, the tracker on a live package, the floating box over a draft's foot bar) are the owner's by eye on the App, or the specialist's path of ticket 49's step 2.
+
+## Ticket 122, step 1 of 2: deploy the bundle, so the nightly's plan reader writes plain words
+
+Parked on October 28, 2026 with ticket 122, which merged into build/strata as f048d0c2 (branch `strata/122-the-plan-reader-keeps-a-row-s-section-as-plain-words` at a1d33427). Every key is set, but mergers run no workspace step: the orchestrator runs this step and the next one today, in this order, from a snapshot that includes this merge (f048d0c2, the done commit that follows it, or a later commit), as the header says (`git archive <sha> | tar -x -C <scratchpad>/snap-<sha>`). The ticket changes the plan reader (`src/strata/lakehouse/plans.py`, with the one markup rule `plain_text` moved into `src/strata/lakehouse/clean.py` from `src/strata/lakehouse/silver/notices.py`) and `ops/plans/run_live.py`, which gains `--rewrite`. No table, route or web file changed. Run it outside the nightly window, and before step 2, because a nightly `parse_and_embed` on the old code writes the tagged sections back.
+
+    uv run --script ops/bundle/deploy.py --env-file "<main checkout>/.env" --fairshare-catalog workspace
+
+It worked if it exits 0 and its "3. What changed:" names no table for this ticket.
+
+Record the exit code and the "3. What changed:" lines here under ticket 122.
+
+## Ticket 122, step 2 of 2: write every read plan's rows again with plain sections, rebuild gold, and check the demo package's steps (criterion 3)
+
+Run after step 1, from the same snapshot. This is criterion 3, the one the verifier parked (`.notes/122-verify.md`, "Criterion 3"). No App redeploy is needed, because the steps route reads `strata.silver.plan_rows`.
+
+    uv run --script ops/plans/run_live.py --env-file "<main checkout>/.env" --rewrite
+    databricks jobs run-now --json '{"job_id": <nightly job ID>, "only": ["bronze_to_gold"]}' --timeout 160m -p strata
+
+It worked if:
+
+- `run_live.py` exits 0, fetches and parses nothing, prints one "I wrote the N plan rows of <project> again, from ... plan versions bronze holds." line per project with plan rows, then a sections line with no tag, and ends "No section in strata.silver.plan_rows holds a tag." Its list of sections holds only STEP's table names (WORKS, GOODS, NON CONSULTING SERVICES, CONSULTING FIRMS, INDIVIDUAL CONSULTANTS).
+- `bronze_to_gold` ends SUCCESS.
+- `SELECT section, count(*) FROM strata.silver.plan_rows GROUP BY section` lists no `<u>`.
+- On the App, `GET /api/packages/KE-NWWDA-541055-CW-RFB/steps` answers `step_dates.family` "goods", `family_reason` null, six steps, and `contract_signed` with `state` "done", `actual_date` "2026-06-22" and `actual_source` "contract_awards" (contract 1903781), as `tests/fixtures/api/steps-ke-nwwda-541055.json` does.
+
+Record the script's per-project lines and its last line, the job run id and its result, the section counts, and the steps route's family, family_reason, step count and contract_signed fields here under ticket 122. When all four hold, the orchestrator ticks criterion 3; when one fails, it opens a follow-up and names it here.
+
+## Ticket 118, step 1 of 1: the demo-ready command's smoke question passes three times in a row after the App redeploy (criterion 4, live)
+
+Parked on October 28, 2026 with ticket 118, which merged into build/strata as a969ba4d (branch `strata/118-the-judge-and-the-agent-retry-a-rate-limited-model-call` at 25c3d6dc). Every key is set, but mergers run no workspace step: the orchestrator runs this step today. It needs the Databricks keys and the four Foundry keys in the env file, and the Foundry and judge secrets in the scope `strata`. No agent sync is needed, because the instructions and the tool list did not change.
+
+Why: on October 28, 2026 at 05:54 UTC the third smoke run in a row lost its one sentence as `judge_unavailable`, because Azure OpenAI answered the judge 429 (the agent and the judge share the gpt-5.4 deployment's 30,000 tokens-per-minute cap). Since ticket 118 the judge (`src/strata/agent/judge.py`) and the agent's Foundry calls (`src/strata/agent/foundry.py`) retry a 429 or 503 up to `azure.retries` (3) times before `judge_unavailable` or `agent_unavailable`. Each wait is the `Retry-After` header's seconds or `azure.retry_seconds` (5), at most `azure.max_retry_seconds` (60), and one answer waits at most `azure.max_wait_seconds` (120) for each model. All four values are in `config/thresholds.toml` under `[azure]`.
+
+The builder's step, in the builder's words: after the merge and the App redeploy, run the demo-ready command three times in a row from the main checkout:
+
+    uv run --with databricks-sdk==0.156.0 python ops/demo/ready.py --env-file "<main checkout>/.env"
+
+The App redeploy it waits on is the header's deploy with `--keep-secrets`, from a snapshot of a969ba4d or of the done commit that follows it (`git archive <sha> | tar -x -C <scratchpad>/snap-<sha>`, then link the main checkout's `web/node_modules` into the snapshot):
+
+    uv run --script ops/app/deploy_app.py --env-file "<main checkout>/.env" --keep-secrets
+
+It worked if each run's smoke question passes every check with no judge_unavailable or agent_unavailable, and any 429 shows in stderr as a line like 'The judge on Azure OpenAI answered 429, so I am waiting N seconds before retry 1 of 3.' This is ticket 118's criterion 4. Record the three runs here under ticket 118: the time, the exit code, step 3's lines with any "Removed:" lines word for word, and every "... so I am waiting N seconds before retry K of 3." line from stderr.
+
+## Ticket 122, steps 1 and 2 ran: the bundle deployed, the rewrite stopped at P156634 on the inline limit, the sections cleaned by hand, and the tracker shows on the App
+
+**Ran on October 28, 2026 (orchestrator), 14:33 to 15:09 UTC and after, from a snapshot of cf23cf05 (ticket 122's done commit).** Step 1: `ops/bundle/deploy.py --fairshare-catalog workspace` exited 0 at 14:38 UTC, naming no table for this ticket, and the nightly window was put back to 18000 seconds (schedule unchanged). Step 2: `ops/plans/run_live.py --rewrite` fetched and parsed nothing, wrote the plan rows of 13 projects again from bronze (P117635, P123828, P124942, P126321, P126507, P130164, P131324, P145559, P146464, P148853, P150220, P154036, P155350; in document 34337516 it wrote the plan's own PK-SID-296x-CW-RFP references over the layout parser's RFB) and exited 2 at the fourteenth, P156634: `The warehouse did not run the statement. Its state was FAILED: Inline byte limit exceeded. Statements executed with disposition=INLINE can have a result size of at most 26214400 bytes` (its 236 plan versions come back in one statement; ticket 123). The 12 projects after it kept 144 tagged sections, so at 15:08 UTC the orchestrator applied the reader's own rule to that one column by hand, `UPDATE strata.silver.plan_rows SET section = trim(regexp_replace(regexp_replace(section, '<[^>]+>', ' '), '\\s+', ' ')) WHERE section LIKE '%<%'` (144 rows; no other column held a tag), after which `SELECT section, count(*) ... GROUP BY section` lists WORKS 130, GOODS 95, CONSULTING FIRMS 28, an empty section 14 and INDIVIDUAL CONSULTANTS 1, and no tag. `bronze_to_gold` alone (run 1097310628498879, 14:46 to 15:08 UTC) ended SUCCESS, and a second `bronze_to_gold` run after the clean (run 317512833216820, 15:09 to 15:30 UTC) ended SUCCESS too; at 15:32 UTC the route answered the same, now with six dateable comparables. On the App (4484310a; no redeploy needed, the route reads silver), `GET /api/packages/KE-NWWDA-541055-CW-RFB/steps` answered 200 at 15:08 UTC with `step_dates.family` goods, `family_reason` null, basis delay and six steps: Bid Evaluation done on 2026-04-24 (actual_source plan) and Contract signed done on 2026-06-22 (actual_source contract_awards, contract 1903781), the other four unknown because the newest live plan (40132287) gives them no date (the fixture's older version gives Contract completed a planned July 31, 2026). Criterion 3 holds except for the P156634 rewrite itself, which is ticket 123's live proof.
+
+## Ticket 115, step 1 of 1 ran: the tracker shows for the demo package on the App
+
+**Ran on October 28, 2026 (orchestrator), 15:08 UTC.** With the App on 4484310a and the plan rows cleaned (the block above), the steps route answers `state` and `late_days` on every row of `step_dates.steps` (six rows), so `signed.sql` ran on the SQL warehouse, and the package page's "Where the steps stand" has its data: Contract signed done June 22, 2026. Before the clean (11:06 UTC) the same route answered `steps: []` with `family_reason` no_family, which is how ticket 122 was found.

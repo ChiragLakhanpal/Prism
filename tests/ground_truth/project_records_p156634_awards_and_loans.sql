@@ -6,7 +6,9 @@
 -- award-567630-signed and award-565568-signed).
 --
 -- disbursement: each loan or credit the loans data holds for the project, the two credits IDA60290 and IDA60300
--- that the loan history records (data/fixture/recorded/api/credits/P156634-P130164-history.json).
+-- that the loan history records (data/fixture/recorded/api/credits/P156634-P130164-history.json). A grant or
+-- trust fund the loans data holds counts here too, as GLOSSARY.md's loan number says (ticket 120); P156634's
+-- record names none.
 -- param: project_id = P156634
 -- param: as_of = 2026-10-22
 -- param: since = 2026-06-30

@@ -94,6 +94,9 @@
   /* A page head that sets its title beside its actions does so from a page area of 46rem, so a page the evidence
      drawer narrows stacks them (DESIGN.md section 4, Page layouts; ticket 94): @head/page:. */
   --container-head: 46rem;
+  /* A side panel's own frame (DESIGN.md section 5, Side panel; ticket 95): its facts take two columns once its content
+     is 18rem wide, @facts/side:. */
+  --container-facts: 18rem;
   --container-prose: 65ch;
   --shadow-popover: 0 5px 25px rgba(160,158,143,.25);
 
@@ -386,21 +389,154 @@
   }
 }
 
-/* A draft's document column (the 35 brief, section 3.2; DESIGN.md section 4, Document column). From a frame of
-   1200 px it spans columns 1 to 7 of the frame's grid and keeps its place and width when the evidence drawer opens
-   beside it: the drawer narrows the page area, not the frame, and the page's left edge never moves (ticket 94). The
-   drawer then fills from the column's end plus a gutter to the window's edge, 384 to 600 px, so it never covers the
-   column. Below that frame the column takes all 12 columns of the page area. */
+/* The workspace layout (DESIGN.md section 4, Page layouts, Workspace; ticket 95) and a draft's document column (the
+   35 brief, section 3.2), which is its first use. From a frame of 1200 px the work (an answer panel, the page head and
+   the zones, Workspace.tsx's data-workspace-work) spans columns 1 to 7 of the frame's grid and keeps its place and
+   width when the evidence drawer opens beside it: the drawer narrows the page area, not the frame, and the page's left
+   edge never moves (ticket 94). The drawer then fills from the work's end plus a gutter to the window's edge, 384 to
+   600 px, so it never covers the work, and the side panel in columns 9 to 12 hides, since the drawer opens in its
+   place. Below that frame the work takes all 12 columns of the page area. */
 [data-frame] > * {
-  --document-inline: calc((min(var(--frame-inline) - 2 * var(--layout-margin), var(--layout-max)) - 11 * var(--layout-gutter)) * 7 / 12 + 6 * var(--layout-gutter));
+  --work-inline: calc((min(var(--frame-inline) - 2 * var(--layout-margin), var(--layout-max)) - 11 * var(--layout-gutter)) * 7 / 12 + 6 * var(--layout-gutter));
 }
 @container frame (width >= 75rem) {
-  [data-document-column] {
-    width: var(--document-inline);
+  [data-document-column], [data-workspace-work] {
+    width: var(--work-inline);
   }
-  [data-frame]:has([data-document-column]) [data-evidence-drawer="drawer"] {
-    width: clamp(384px, calc(var(--frame-inline) - var(--layout-margin) - var(--document-inline) - var(--layout-gutter)), 600px);
+  [data-frame]:has([data-document-column], [data-workspace]) [data-evidence-drawer="drawer"] {
+    width: clamp(384px, calc(var(--frame-inline) - var(--layout-margin) - var(--work-inline) - var(--layout-gutter)), 600px);
   }
+  [data-frame]:has([data-evidence-drawer="drawer"]) [data-side-slot] {
+    display: none;
+  }
+  /* An object's facts are in the side panel here, so the page head's facts line, which stands in for it below this
+     frame, hides. */
+  [data-workspace]:has([data-side-slot][data-fold="head"]) [data-facts-line] {
+    display: none;
+  }
+}
+
+/* Task zones (DESIGN.md section 5, Task zone and Foot strip; ticket 95; TaskZone.tsx). A panel holds open work: white,
+   a 1 px line edge and 8 px corners. A row is on the page grey with a 1 px line under it, and over the first row of a
+   run, and a transparent 1 px edge, so its number and its name sit on the same x as a panel's. Zones are 16 px apart
+   and the rows of a run touch. The sides are 24 px in a window of 48rem or more and 16 px below it. A numbered zone's
+   name starts after its 24 px number and a 12 px gap, as its body and its foot strips do (16 and 8 px below 48rem,
+   where the body starts at the zone's edge). These follow the window, as the prototype's do, not the page area: on a
+   workspace page the zones keep their width beside the evidence drawer, so they keep their insides too. Opening a row
+   makes it a panel in place, at once: nothing here moves. */
+[data-zone] {
+  --zone-pad: calc(var(--spacing) * 4);
+  --zone-name: 0px;
+  --zone-indent: 0px;
+  position: relative;
+  border: 1px solid transparent;
+}
+[data-zone][data-numbered] {
+  --zone-name: calc(var(--spacing) * 6);
+}
+[data-zone="panel"] {
+  background-color: var(--color-surface);
+  border-color: var(--color-line);
+  border-radius: var(--radius-md);
+}
+[data-zone="row"] {
+  border-bottom-color: var(--color-line);
+}
+[data-zone="row"]:not([data-zone="row"] + [data-zone="row"]) {
+  border-top-color: var(--color-line);
+}
+[data-zone] + [data-zone] {
+  margin-top: calc(var(--spacing) * 4);
+}
+[data-zone="row"] + [data-zone="row"] {
+  margin-top: 0;
+}
+[data-zone-head] {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--spacing) calc(var(--spacing) * 2);
+  padding: calc(var(--spacing) * 4) var(--zone-pad) 0 calc(var(--zone-pad) + var(--zone-name));
+}
+[data-zone-name] {
+  flex: 1 1 12rem;
+  min-width: 0;
+}
+/* The number stays in the h2's text, so a heading still reads "2 · Planned date for each step" in the DOM while its
+   number is hidden from screen readers, and stands in its own column at the zone's edge. */
+[data-zone-number] {
+  position: absolute;
+  left: var(--zone-pad);
+}
+/* A tag sits at the header's right; under the name at every width when an action holds the header's right. */
+[data-tag-under] > [data-zone-head] > [data-zone-tag] {
+  flex-basis: 100%;
+  margin-top: calc(var(--spacing) * -1);
+}
+[data-zone-body] {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--spacing) * 4);
+  padding: calc(var(--spacing) * 3) var(--zone-pad) calc(var(--spacing) * 6) calc(var(--zone-pad) + var(--zone-indent));
+}
+[data-zone="row"] > [data-zone-body] {
+  gap: calc(var(--spacing) * 2);
+  padding-top: var(--spacing);
+  padding-bottom: calc(var(--spacing) * 4);
+}
+/* The foot strip ends a block of evidence: the panel's full width on the page grey, a 1 px line over it, its lines 8 px
+   apart. A line that holds a number you can check is 24 px tall, as section 10 keeps an inline number's line. */
+[data-foot-strip] {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--spacing) * 2);
+  padding: calc(var(--spacing) * 4) var(--zone-pad) calc(var(--spacing) * 4) calc(var(--zone-pad) + var(--zone-indent));
+  background-color: var(--color-page);
+  border-top: 1px solid var(--color-line);
+}
+[data-foot-strip] :has(button[data-num]) {
+  line-height: calc(var(--spacing) * 6);
+}
+[data-zone="panel"] > [data-foot-strip]:last-child {
+  border-radius: 0 0 calc(var(--radius-md) - 1px) calc(var(--radius-md) - 1px);
+}
+[data-foot-strip] + [data-zone-body] {
+  border-top: 1px solid var(--color-line);
+  padding-top: calc(var(--spacing) * 6);
+}
+@media (width >= 48rem) {
+  [data-zone] {
+    --zone-pad: calc(var(--spacing) * 6);
+  }
+  [data-zone][data-numbered] {
+    --zone-name: calc(var(--spacing) * 9);
+    --zone-indent: calc(var(--spacing) * 9);
+  }
+  [data-zone-head] {
+    gap: calc(var(--spacing) * 2) calc(var(--spacing) * 3);
+  }
+  /* The Show or Hide button, or the one action that holds the header's right, comes after the zone's sentence in the
+     DOM and stands at the header's right. Its 44 px sits 4 px from the top, and the sentence starts 16 px under the
+     name, so its focus ring never crosses the sentence. */
+  [data-zone][data-corner] > [data-zone-head] {
+    padding-right: 14.5rem;
+  }
+  [data-zone][data-corner] > [data-zone-lead] {
+    padding-top: calc(var(--spacing) * 4);
+  }
+  [data-zone-corner] {
+    position: absolute;
+    top: var(--spacing);
+    right: calc(var(--spacing) * 4);
+  }
+}
+
+/* The stage label (DESIGN.md section 5, Stage label): a 1 px line from 12 px after its word to the column's edge. */
+[data-stage-label]::after {
+  content: "";
+  flex: 1 1 0%;
+  height: 1px;
+  background-color: var(--color-line);
 }
 
 /* Where the draft bar sticks (the 35 brief, section 4.3; DESIGN.md section 5, Draft bar): in a window at

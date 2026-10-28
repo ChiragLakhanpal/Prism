@@ -15,7 +15,6 @@ from __future__ import annotations
 
 import datetime as dt
 import decimal
-import html
 import re
 from dataclasses import dataclass
 
@@ -70,8 +69,6 @@ def read_again() -> tuple[str, dict[str, str]]:
     return quality.CONTACTS_LEFT, quality.contacts_left_params()
 
 
-BREAKS = re.compile(r"<\s*(br|/p|/div|/h\d|/li|/tr)\s*/?\s*>", re.I)
-TAGS = re.compile(r"<[^>]+>")
 SIGNATURE_DATE = re.compile(r"Contract Signature Date\s*(?:\(YYYY/MM/DD\))?\s*:?\s*([0-9]{1,4}[-/][0-9A-Za-z]{2,3}[-/][0-9]{2,4})", re.I)
 SIGNED_PRICE = re.compile(r"(?:Signed Contract price|Contract Price)\s*:?\s*([A-Z]{3})\s*([0-9][0-9,]*(?:\.[0-9]+)?)", re.I)
 # The other layout, which 12 of the fixture's 231 award notices use: the currency's name, not its code, under
@@ -85,15 +82,6 @@ CURRENCY_CODES = {"KENYA SHILLINGS": "KES", "KENYA SHILLING": "KES", "UNITED STA
                   "BANGLADESH TAKA": "BDT", "PAKISTAN RUPEES": "PKR", "PAKISTAN RUPEE": "PKR", "VIETNAM DONG": "VND",
                   "VIET NAM DONG": "VND", "EURO": "EUR", "EUROS": "EUR"}
 LOAN_FIELD = re.compile(r"(?:Loan|Credit)[^:\n]{0,25}:\s*([^\n]{0,40})", re.I)
-
-
-def plain_text(markup) -> str:
-    """A notice's HTML as plain text, one line per paragraph or line break."""
-    if not markup:
-        return ""
-    text = html.unescape(TAGS.sub(" ", BREAKS.sub("\n", str(markup))))
-    lines = (" ".join(line.split()) for line in text.splitlines())
-    return "\n".join(line for line in lines if line)
 
 
 def _price(text: str) -> tuple[decimal.Decimal | None, str | None]:
@@ -124,7 +112,7 @@ def parse(body: dict, page_hash: str, fetched_at: dt.datetime) -> dict[str, list
         # Bronze kept the page after the removal as it was then, so silver runs it again: a fix to the patterns
         # reaches every page silver reads. Its last pass runs once more on the plain text, the text the nightly
         # check reads, where no HTML entity or tag sits between a label and its number (ticket 76).
-        text = contacts.strip_left(plain_text(contacts.strip_again(record.get("notice_text"))))
+        text = contacts.strip_left(clean.plain_text(contacts.strip_again(record.get("notice_text"))))
         description = contacts.strip_again(clean.text(record.get("bid_description")))
         reference = clean.step_reference(record.get("bid_reference_no"))
         method = clean.method(record.get("procurement_method_code"), record.get("procurement_method_name"))

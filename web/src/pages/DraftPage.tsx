@@ -158,7 +158,7 @@ export function DraftHeader({ title, subtitle, state, headerRef, className }: {
       ref={ref}
       data-draft-header
       data-sticky="top"
-      className={cx("border-b border-line bg-page py-4 @lg/page:sticky @lg/page:top-(--frame-top) @lg/page:z-10 @xl/frame:sticky @xl/frame:top-(--frame-top) @xl/frame:z-10", className)}
+      className={cx("border-b border-line bg-page pt-2 pb-4 @lg/page:sticky @lg/page:top-(--frame-top) @lg/page:z-10 @xl/frame:sticky @xl/frame:top-(--frame-top) @xl/frame:z-10", className)}
     >
       <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-2">
         <div className="min-w-0">
@@ -214,7 +214,7 @@ export function ppsdSubtitle(title: string, reference: string | null | undefined
 
 // The column: columns 1 to 7 of the frame from a frame of 1200 px, all 12 of the page area below. It is the notes'
 // size container. From that frame it keeps the same place and width when the evidence drawer narrows the page
-// area (the 35 brief, section 3.2; ticket 94; app.css, "A draft's document column"). What a page puts beside it (the
+// area (the 35 brief, section 3.2; ticket 94; app.css, "The workspace layout"). What a page puts beside it (the
 // space line, ticket 110) takes columns 9 to 12 from that frame, top-aligned with the column, and is not shown below
 // it; both sit in the grid's first row, so hiding it moves nothing.
 export function DocumentColumn({ children, beside }: { children: ReactNode; beside?: ReactNode }) {
@@ -598,7 +598,6 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
           <DraftCrumbs pid={subject.project_id} name={subject.project_name} last={brief ? kind.title : kind.crumb(short(subject.plan_date))} />
         )}
         <DraftHeader
-          className="mt-4"
           title={kind.title}
           subtitle={brief ? (
             <Fill template={kind.subtitle} slots={{ name: subject.project_name, pid: <ProjectId pid={subject.project_id} />, country: subject.country ?? "" }} />
@@ -788,7 +787,7 @@ function DraftSkeleton() {
           <Skeleton className="h-[1em] w-16 md:w-[200px] md:max-w-full" />
         </nav>
         {/* The h1, the subtitle and the stepper, which the subtitle's length puts on a line of its own. */}
-        <div className="mt-4 border-b border-line py-4">
+        <div className="border-b border-line pt-2 pb-4">
           <h1 tabIndex={-1} className="text-h1 focus:outline-none">
             <span className="sr-only">{copy.pages.draft.title}</span>
             <SkeletonLine width="w-[200px] max-w-full" />

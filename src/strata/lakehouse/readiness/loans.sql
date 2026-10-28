@@ -2,6 +2,8 @@
 -- The IDA credits and the IBRD loans share this file; :source is the one being measured.
 --   coverage_years   approval fiscal years with loans, of the fiscal years from the first to the last
 --   linked_project   loans whose project record is held, of all its loans
+-- Grants count as loans here: the IDA dataset lists grants beside credits, and every record a
+-- dataset lists counts, as GLOSSARY.md's loan number says (ticket 120).
 -- Its coverage_rows and freshness are written for every source at once (strata.lakehouse.readiness).
 WITH mine AS (
   SELECT DISTINCT s.loan_number

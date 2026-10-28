@@ -79,7 +79,7 @@ export function ProjectPage({ pid, tab }: { pid: string; tab: ProjectTab }) {
       <div className="layout-grid" data-project-page="not-found">
         <div className="col-span-12 @md/page:col-span-8">
           <Breadcrumb trail={[projectsCrumb, { text: <Fill template={copy.breadcrumb.projectId} slots={{ pid: idText }} /> }]} />
-          <h1 ref={title} tabIndex={-1} className="mt-4 text-h1 text-ink-heading focus:outline-none">
+          <h1 ref={title} tabIndex={-1} className="mt-2 text-h1 text-ink-heading focus:outline-none">
             <Fill template={words.notFoundTitle} slots={{ pid: idText }} />
           </h1>
           <p className="mt-2 max-w-prose text-body text-ink-muted">{words.notFoundBody}</p>
@@ -134,7 +134,7 @@ export function ProjectPage({ pid, tab }: { pid: string; tab: ProjectTab }) {
     <div className="layout-grid" data-project-page={load.status}>
       <div className="col-span-12">
         <Breadcrumb trail={[projectsCrumb, { text: current }]} />
-        <h1 ref={title} tabIndex={-1} data-project-header className="mt-4 text-h1 text-ink-heading focus:outline-none">
+        <h1 ref={title} tabIndex={-1} data-project-header className="mt-2 text-h1 text-ink-heading focus:outline-none">
           {data ? (
             <ProjectHeaderLine project={data.project} />
           ) : (

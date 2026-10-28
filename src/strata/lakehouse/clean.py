@@ -4,6 +4,9 @@ Each rule is defined once here, and every silver transform uses it:
 
 - Text has its spacing made single, and a list is joined with commas. An amount keeps two decimal
   places.
+- Text written with markup is kept as plain words: a notice's HTML, and the words of a Procurement
+  Plan's table that the layout parser wrote with their tags. On the workspace, ai_parse_document
+  wrote a section's name as <u>WORKS</u>, which is WORKS (ticket 122).
 - Dates come in mixed formats (09-Sep-2019, 2021-09-17T00:00:00Z, 2022/04/19). parse_date reads
   each one and returns None for anything else, never a guess.
 - World Bank fiscal years run July to June, so a date from July 1 on falls in the next year's FY.
@@ -18,6 +21,10 @@ Each rule is defined once here, and every silver transform uses it:
   written with no lender keeps only its digits, so gold resolves it against the loans of the
   notice's own project, and a lender with four digits and no country code is never a normalized
   value.
+- A project record's financing numbers are kept whole, each with its financier (financing_number):
+  a loan or credit as above, and an IDA grant, a trust fund, co-financing or a loan with a suffix
+  letter as its financier, one hyphen and the rest of the number (IDA-H8060, TF-C3892, COFN-00280,
+  IBRD-2075S).
 - Method names from before the 2016 Procurement Regulations map to the current names, with the
   market approach the old name implies. The old wording is kept in its own column.
 """
@@ -26,6 +33,7 @@ from __future__ import annotations
 
 import datetime as dt
 import decimal
+import html
 import re
 from dataclasses import dataclass
 
@@ -45,6 +53,23 @@ def text(value) -> str | None:
         value = ",".join(str(item) for item in value)
     written = " ".join(str(value).split()) if value is not None else ""
     return None if written.lower() in NOT_GIVEN else written or None
+
+
+# A tag that ends a line (a line break, or the end of a paragraph, a block, a heading, a list item or a table row),
+# and any tag.
+BREAKS = re.compile(r"<\s*(br|/p|/div|/h\d|/li|/tr)\s*/?\s*>", re.I)
+TAGS = re.compile(r"<[^>]+>")
+
+
+def plain_text(markup) -> str:
+    """Words written with markup as plain text, one line per paragraph or line break, each line's spacing made single,
+    and an entity such as &amp; read as the character it stands for. It reads a notice's HTML, and each word of a
+    Procurement Plan's table before the plan reader writes it, so <u>WORKS</u> is WORKS."""
+    if not markup:
+        return ""
+    written = html.unescape(TAGS.sub(" ", BREAKS.sub("\n", str(markup))))
+    lines = (" ".join(line.split()) for line in written.splitlines())
+    return "\n".join(line for line in lines if line)
 
 
 def as_written(value) -> str | None:
@@ -251,6 +276,40 @@ def loan_number(text) -> LoanNumber | None:
     if len(digits) == 4 and match["country"]:
         digits += "0"  # the older form: credit 6030-KE is IDA60300
     return LoanNumber(match.group(0).strip(), match["lender"], digits)
+
+
+# ── Financing numbers ────────────────────────────────────────────────────
+
+# A project record's financing number as the projects API writes it: the financier's letters, a hyphen, and the
+# rest of the number.
+FINANCING_NUMBER = re.compile(r"(?P<financier>[A-Z]+)(?:\s*[-/–]\s*|\s+)?(?P<rest>[A-Z0-9].*)")
+
+
+@dataclass(frozen=True)
+class FinancingNumber:
+    number: str  # IDA60300 for a loan or credit, IDA-H8060 for a grant, TF-C3892 for a trust fund
+    financier: str | None  # IBRD, IDA, TF, COFN or another the records name; None when none is written
+
+
+def financing_number(text) -> FinancingNumber | None:
+    """A financing number a project record names in its loan transactions, with its financier (ticket 120).
+
+    A loan or credit that loan_number reads whole is kept as its lender and digits, IDA60300. A lender with four
+    digits, such as IBRD-8956, is kept the same way, IBRD8956: the projects API is the source of a project's loans,
+    and an IBRD loan has four digits, where a notice's four digits may be a credit's older form. Every other number
+    is kept as its financier, one hyphen and the rest of the number as written, in upper case: an IDA grant
+    (IDA-H8060, IDA-D9910), a trust fund (TF-C3892), co-financing (COFN-00280) or a loan with a suffix letter
+    (IBRD-2075S). A number with no financier written is kept as written, with none."""
+    written = " ".join(str(text or "").split()).upper()
+    if not written:
+        return None
+    loan = loan_number(written)
+    if loan and loan.lender and loan.as_written == written:
+        return FinancingNumber(loan.normalized or f"{loan.lender}{loan.digits}", loan.lender)
+    parts = FINANCING_NUMBER.fullmatch(written)
+    if not parts:
+        return FinancingNumber(written, None)
+    return FinancingNumber(f"{parts['financier']}-{parts['rest']}", parts["financier"])
 
 
 # ── Selection methods ────────────────────────────────────────────────────

@@ -442,3 +442,55 @@ def test_the_live_document_run_s_reader_reads_the_fixture_s_plans_into_the_same_
     assert through_the_live_reader == read(recorded)
     assert through_the_live_reader[0] == 15 and len(through_the_live_reader[1][1]) > 0
     assert len(asked) == len(set(asked)) and waits  # each address asked once, with pauses between requests
+
+
+# ── ops/plans/run_live.py --rewrite (ticket 122) ──
+
+@pytest.fixture
+def plans_live(monkeypatch):
+    """ops/plans/run_live.py as a module, as uv runs it; sys.path goes back after."""
+    monkeypatch.setattr(sys, "path", list(sys.path))
+    spec = importlib.util.spec_from_file_location("strata_ops_plans_run_live", ROOT / "ops" / "plans" / "run_live.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+PLAN_TABLES = ("SELECT * FROM strata.silver.plan_rows ORDER BY ALL", "SELECT * FROM strata.silver.plan_steps ORDER BY ALL")
+
+
+def test_the_live_plan_run_rewrites_every_project_s_plan_rows_from_bronze_as_plain_words(plans_live, fixture_db,
+                                                                                          tmp_path, monkeypatch, capsys):
+    """The workspace on October 28, 2026: bronze held each table's title as ai_parse_document wrote it, <u>WORKS</u>,
+    and the plan reader had written it so to strata.silver.plan_rows. --rewrite writes every project's rows again
+    from what bronze holds, with no fetch and no parse, and they come out as the fixture's own run wrote them."""
+    import shutil
+    import types
+
+    from strata.reader import step
+
+    copy = tmp_path / "workspace.duckdb"
+    shutil.copy(fixture_db, copy)
+    env_file = tmp_path / "workspace.env"
+    env_file.write_text("".join(f"{key}={value}\n" for key, value in ENV.items()))
+    with DuckDBEngine.open(fixture_db, read_only=True) as fixture:
+        as_the_fixture_wrote_them = [fixture.run(sql).rows for sql in PLAN_TABLES]
+        projects = sorted({str(row[1]) for row in as_the_fixture_wrote_them[0]})
+
+    with DuckDBEngine.open(copy) as engine:
+        for section in step.SECTIONS:
+            engine.run("UPDATE strata.bronze.layout_pages SET tables = replace(tables, :plain, :tagged)",
+                       {"plain": f'"title": "{section}"', "tagged": f'"title": "<u>{section}</u>"'})
+        engine.run("UPDATE strata.silver.plan_rows SET section = '<u>' || section || '</u>'")
+        monkeypatch.setitem(sys.modules, "bundle_live", types.SimpleNamespace(
+            LiveWorkspace=lambda env: types.SimpleNamespace(engine=lambda: engine)))
+
+        code = plans_live.main(["--env-file", str(env_file), "--rewrite"])
+        tagged = engine.run("SELECT count(*) AS n FROM strata.bronze.layout_pages WHERE tables LIKE '%<u>WORKS</u>%'")
+        rewritten = [engine.run(sql).rows for sql in PLAN_TABLES]
+
+    printed = capsys.readouterr().out
+    assert code == 0 and tagged.rows[0][0] > 0 and len(projects) == 2
+    assert rewritten == as_the_fixture_wrote_them
+    assert all(f"plan rows of {project_id} again" in printed for project_id in projects), printed
+    assert "No section in strata.silver.plan_rows holds a tag." in printed

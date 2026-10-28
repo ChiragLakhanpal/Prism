@@ -66,7 +66,6 @@ export function WritingDatesPage({ current }: { current: Writing }) {
       <div data-draft-new={current.phase}>
         {plan && <DraftCrumbs pid={plan.project_id} name={plan.project_name} last={kind.crumb(formatDate(plan.date, { style: "table" }))} />}
         <DraftHeader
-          className="mt-4"
           title={kind.title}
           subtitle={<Fill template={kind.subtitle} slots={{ agency: plan?.implementing_agency ?? "", date: formatDate(plan?.date ?? "") }} />}
           state={null}

@@ -2,10 +2,12 @@
 
 On October 26, 2026 the nightly job's contacts_left check found a labelled phone number in the text of 1,256 of the
 workspace's 158,587 notices, because ingestion's removal used stricter patterns than the check. Now the two share one
-definition: the removal's last pass is the check's own patterns (contacts.LEFT_EMAIL and LEFT_PHONE), with the label
-and the words around it kept. These tests run the check as the nightly job runs it (quality.check_table, on DuckDB,
-with the patterns as bound parameters) over what the removal leaves. Silver runs the removal again on each notices
-page it reads, and the notices transform's VERSION is 2, so the pages bronze kept before the fix are read again.
+definition: the removal's last pass is the check's own patterns (contacts.LEFTOVERS, one for each rule it takes out:
+an email address, a labelled phone number, a number after a short label and a name after "Attention" and a title;
+ticket 121), with the label and the words around it kept. These tests run the check as the nightly job runs it
+(quality.check_table, on DuckDB, with the patterns as bound parameters) over what the removal leaves. Silver runs the
+removal again on each notices page it reads, and the notices transform's VERSION is 2, so the pages bronze kept
+before the fix are read again; since ticket 121 silver also reads again each page whose notices the check flags.
 
 SHAPES are the twenty the second session recorded (docs/workspace-catchup.md, "Ticket 76, before step 1"), with every
 digit written as 9 and thirty characters kept on each side of the label. Where those thirty characters cut through a
@@ -24,7 +26,7 @@ import pytest
 from nightly_helpers import clock
 
 from strata.config import load_quality_checks, load_sources
-from strata.lakehouse import bronze, contacts, nightly, quality, silver
+from strata.lakehouse import bronze, clean, contacts, nightly, quality, silver
 from strata.lakehouse.catalog import table_definitions
 from strata.lakehouse.engine import DuckDBEngine
 from strata.lakehouse.silver import notices as notices_module
@@ -153,7 +155,7 @@ def recorded_notice_texts() -> list[str]:
         for notice in json.loads(path.read_text())["response"]["procnotices"]:
             for field in contacts.FREE_TEXT:
                 if notice.get(field):
-                    texts += [notice[field], notices_module.plain_text(notice[field])]
+                    texts += [notice[field], clean.plain_text(notice[field])]
     return texts
 
 

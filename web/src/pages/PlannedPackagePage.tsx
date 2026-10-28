@@ -1,6 +1,6 @@
 // A package planned from a sentence (the 15 brief), at /packages/new while I read the sentence and at
 // /packages/:id once it is saved. One narrative column, columns 1 to 7 from a 1200 px window, so the evidence
-// drawer opens into the free space beside it (DESIGN.md section 4, Document column); all 12 below that.
+// drawer opens into the free space beside it (DESIGN.md section 4, Page layouts, Workspace); all 12 below that.
 //
 // Top to bottom: the breadcrumb; the header, sticky from a page area of 768 px, with the title, "No STEP
 // reference yet" and the saved stamp; the purpose; the "What I understood" card; and section 1, the past range

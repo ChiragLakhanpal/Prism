@@ -2,9 +2,11 @@
 strata.silver.project_loans, strata.silver.project_isr_ratings, strata.silver.project_sectors and
 strata.silver.project_environment.
 
-The projects API keys each page's records by project ID. Each project's loans and credits come
-from its loan transactions, written IDA-60300, and are normalized once (strata.lakehouse.clean),
-so a loan number in any of its forms joins to its project. The team leader's name is not kept.
+The projects API keys each page's records by project ID. Each project's financing numbers come from
+its loan transactions, written IDA-60300, and each one is kept with its financier: its loans and
+credits normalized once (strata.lakehouse.clean), so a loan number in any of its forms joins to its
+project, and its IDA grants, trust funds and the other numbers the records name as written
+(IDA-H8060, TF-C3892), so none is left out (ticket 120). The team leader's name is not kept.
 
 Each project gets one sector in Strata's taxonomy (config/sectors.toml): the sector of the major
 sector with the largest share, whichever of the API's two taxonomies its codes come from. The API
@@ -27,7 +29,7 @@ TABLES = {
         "major_sector_code", "sector", "sector_name", "total_commitment_usd", "public_disclosure_date",
         "last_updated_on", "page_hash", "fetched_at", "public_from"),
     "strata.silver.project_loans": (
-        "project_id", "loan_number", "loan_number_as_written", "page_hash", "fetched_at", "public_from"),
+        "project_id", "loan_number", "loan_number_as_written", "page_hash", "fetched_at", "public_from", "financier"),
     "strata.silver.project_isr_ratings": (
         "project_id", "rating_code", "rating_name", "isr_date", "value", "page_hash", "fetched_at", "public_from"),
     "strata.silver.project_sectors": (
@@ -49,6 +51,9 @@ ESF_RISK_WORDS = {"H": "High", "S": "Substantial", "M": "Moderate", "L": "Low"}
 RECORD_KEY = ("project_id",)
 # Each record's fiscal year, by which the dashboard splits coverage_rows (strata.lakehouse.readiness).
 FISCAL_YEAR = "approval_fiscal_year"
+# 2 since a project record's IDA grants, trust funds, co-financing and suffixed loans are kept beside its loans and
+# credits, each with its financier (ticket 120), so the next run reads every projects page again.
+VERSION = 2
 
 
 def parse(body: dict, page_hash: str, fetched_at: dt.datetime) -> dict[str, list[tuple]]:
@@ -91,13 +96,9 @@ def parse(body: dict, page_hash: str, fetched_at: dt.datetime) -> dict[str, list
         written = sorted({transaction.get("financier_loan") for transaction in record.get("loan_transactions") or []
                           if transaction.get("financier_loan")})
         for as_written in written:
-            # The projects API is the source of a project's loans, so a loan with four digits and its lender, such as
-            # IBRD-8956, is kept as its lender and digits; clean.loan_number gives no normalized value for it, since
-            # in a notice four digits with no country code may be a credit's older form.
-            loan = clean.loan_number(as_written)
-            kept = loan and (loan.normalized or (f"{loan.lender}{loan.digits}" if loan.lender else None))
+            kept = clean.financing_number(as_written)
             if kept:
-                loans.append((project_id, kept, as_written, page_hash, fetched_at, public))
+                loans.append((project_id, kept.number, as_written, page_hash, fetched_at, public, kept.financier))
         ratings += _isr_ratings(project_id, record.get("isr_ratings"), page_hash, fetched_at, fetched)
         shares += [(project_id, *sector, page_hash, fetched_at, public) for sector in _sectors(record.get("major_sectors"))]
         category, risk = clean.text(record.get("envassesmentcategorycode")), clean.text(record.get(ESF_RISK))

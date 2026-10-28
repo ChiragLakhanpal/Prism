@@ -2,6 +2,8 @@
 -- IDA and IBRD histories share this file; :source is the one being measured.
 --   coverage_years   fiscal years with a month of history, of the fiscal years from the first to the last
 --   linked_project   loans in the history whose project record is held, of all its loans
+-- Grants count as loans here: the IDA history lists grants beside credits, and every loan number a
+-- history lists counts, as GLOSSARY.md's loan number says (ticket 120).
 -- Its coverage_rows and freshness are written for every source at once (strata.lakehouse.readiness).
 WITH months AS (
   SELECT DISTINCT

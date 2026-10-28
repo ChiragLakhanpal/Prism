@@ -8,8 +8,7 @@
 // classes outside DESIGN.md's tokens, and for the classes the shell redesign retired (capitals
 // outside a chart label, text-title and rounded-box; ticket 90). It prints one line per problem
 // and exits with 1 when it finds any. Tests pass --copy, --component, --glossary, --registry and
-// --design to point it at other files, and --root for the folder a component's path is read
-// from (web/ by default); Term's words are always looked up in the repo's GLOSSARY.md.
+// --design to point it at other files; Term's words are always looked up in the repo's GLOSSARY.md.
 //
 // More files hold words people read. The source registry, config/sources.toml, holds each
 // source's words on the Data readiness and Sources and licenses pages (labels, notes, fix
@@ -23,11 +22,11 @@
 // (web/lint/server-copy.ts writes them), as src/strata/estimates/steps.json is of the step-label registry,
 // web/src/steps.ts (ticket 27).
 import { readFileSync, readdirSync } from "node:fs";
-import { join, relative, resolve, sep } from "node:path";
+import { join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { causalChecker, copyChecker, whatIfChecker } from "./copy.ts";
-import { CAUSAL_SCOPES, FROZEN_CLASS_USES, UPPERCASE_ONLY_WITH, WHAT_IF_SAYS, WHAT_IF_SCOPES } from "./rules.ts";
-import { copyStrings, lineOf, literalText, offTokenClasses, retiredClasses, scopedRanges, termLiterals, unusedKeeps } from "./source.ts";
+import { CAUSAL_SCOPES, UPPERCASE_ONLY_WITH, WHAT_IF_SAYS, WHAT_IF_SCOPES } from "./rules.ts";
+import { copyStrings, lineOf, literalText, offTokenClasses, retiredClasses, scopedRanges, termLiterals } from "./source.ts";
 import { staleServerCopies } from "./server-copy.ts";
 import { definitions } from "../src/lib/definitions.ts";
 
@@ -60,8 +59,6 @@ function options(argv: string[]) {
         ? []
         : ["sources.toml", "package_form.toml", "lessons.toml", "editions.toml", "roles.toml", "criteria_items.toml"].map((name) => join(REPO, "config", name))),
     design: given.design?.[0] ?? join(REPO, "DESIGN.md"),
-    // The folder a component's path is read from for the class rules' exemptions (ticket 90): web/, or a test's own.
-    root: given.root?.[0] ?? WEB,
     custom,
   };
 }
@@ -89,7 +86,7 @@ function glossaryDefinitions(text: string): { line: number; text: string }[] {
 }
 
 function main(): number {
-  const { copy, components, glossary, registry, design, root, custom } = options(process.argv.slice(2));
+  const { copy, components, glossary, registry, design, custom } = options(process.argv.slice(2));
   const check = copyChecker(design);
   const problems: string[] = [];
   const at = (file: string, line: number) => `${relative(process.cwd(), file) || file}:${line}`;
@@ -155,22 +152,14 @@ function main(): number {
           "Use a color token, a type step or a space step from web/src/styles/app.css.",
       );
     }
-    // Ticket 90: capitals only in a chart label, and no retired class, but in the frozen files.
-    const path = relative(root, file).split(sep).join("/");
-    for (const found of retiredClasses(source, file, FROZEN_CLASS_USES[path])) {
+    // Ticket 90: capitals only in a chart label, and no retired class, in any file (ticket 95 deleted the frozen list).
+    for (const found of retiredClasses(source, file)) {
       const where = `${at(file, lineOf(source, found.offset))}: the class "${found.text}"`;
       problems.push(
         found.where === UPPERCASE_ONLY_WITH
           ? `${where} sets capitals outside a chart label. Write the words in sentence case, or use "uppercase" ` +
               `with "${UPPERCASE_ONLY_WITH}" on a chart's lane or legend label (DESIGN.md section 3).`
           : `${where} is retired. Use "${found.where}" (DESIGN.md sections 3 and 4).`,
-      );
-    }
-    // Ticket 91: a class the frozen list keeps for a file that no longer uses it comes off the list.
-    for (const name of unusedKeeps(source, file, FROZEN_CLASS_USES[path])) {
-      problems.push(
-        `${at(file, 1)}: the class "${name}" is no longer used here, so take it off FROZEN_CLASS_USES in web/lint/rules.ts. ` +
-          "Delete the list when it is empty.",
       );
     }
   }

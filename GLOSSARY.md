@@ -131,6 +131,9 @@ _Avoid_: Criteria on its own (it means how comparable packages are chosen)
 The amount a Procurement Plan gives a package before it goes to market, STEP's Estimated Amount (US$).
 _Avoid_: Estimate on its own (it reads as a time estimate)
 
+**Loan number**:
+The number of one part of a project's financing, as the project's record in the projects API names it: an IBRD loan (IBRD-8956), an IDA credit (IDA-60300), an IDA grant (IDA-H8060), a trust fund (TF-C3892) or co-financing (COFN-00280). Strata keeps every number a project's record names, each with its financier, the letters before the number. A loan or credit is stored as its lender and digits (IDA60300). Any other number keeps its letter after one hyphen (IDA-H8060), so a grant never reads as a credit. A project's loan numbers include its grants and trust funds. The IDA dataset lists grants beside credits, so its counts on the Data readiness page include grants too. A notice that writes only digits (60300) is matched to a loan or credit, never to a grant.
+
 ### Analysis
 
 **Comparable**:

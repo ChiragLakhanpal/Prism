@@ -9,7 +9,6 @@ import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
 import { footerSentence } from "./design-md";
 import { placements, readRegistry, type SourceRegistry } from "./registries";
-import { FROZEN_CLASS_USES } from "../lint/rules";
 
 const RUN = fileURLToPath(new URL("../lint/run.ts", import.meta.url));
 
@@ -335,18 +334,14 @@ test("the class lint refuses spacing off DESIGN.md's scale and colors outside th
   ).toBe(0);
 });
 
-// Ticket 90 (DESIGN.md section 3): capitals only in a chart label, and the retired text-title and rounded-box nowhere,
-// except in the files on the frozen list, each for the classes it used then. The deck's second draft moved the deck's
-// own uses, so its folder has no exemption. Ticket 91's class sweep moved every other file, so the list keeps only the
-// files the shell tickets rewrite, and a class a listed file no longer uses fails until it comes off the list; the top
-// bar ticket (93) moved the box's corners and took BoxBand.tsx off, and the page frame ticket (94) rewrote the evidence
-// drawer's head and took EvidenceDrawer.tsx off. The lint names a file by its path from --root (web/ in the gate), so
-// these tests lay out a throwaway web/ folder.
-const SHELL_TICKET_FILES = ["src/components/CollapsedSection.tsx"];
-
+// Ticket 90 (DESIGN.md section 3): capitals only in a chart label, and the retired text-title and rounded-box nowhere.
+// The deck's second draft moved the deck's own uses, ticket 91's class sweep every page's, and the shell tickets the
+// files they rewrote; the workspace ticket (95) moved the collapsed section's eyebrow into the Task zone's tag and
+// deleted the frozen list that exempted those files, so no file is exempt, the collapsed section's included. These
+// tests lay out a throwaway web/ folder.
 function lintTree(files: Record<string, string>) {
   const root = mkdtempSync(join(tmpdir(), "strata-lint-"));
-  const args = [RUN, "--root", root];
+  const args = [RUN];
   for (const [path, text] of Object.entries(files)) {
     mkdirSync(dirname(join(root, path)), { recursive: true });
     writeFileSync(join(root, path), text);
@@ -356,18 +351,15 @@ function lintTree(files: Record<string, string>) {
   return { code: done.status, output: done.stdout + done.stderr };
 }
 
-test("the class lint refuses uppercase outside a chart label, text-title and rounded-box, in the deck too, but not in the frozen files", () => {
-  expect(Object.keys(FROZEN_CLASS_USES).sort()).toEqual(SHELL_TICKET_FILES);
+test("the class lint refuses uppercase outside a chart label, text-title and rounded-box in every file, the deck and the collapsed section included", () => {
   const div = (className: string) => `export const A = () => <div className="${className}" />;\n`;
-  // The file on the frozen list, which used capitals and no title when ticket 90 landed; and the same file as its
-  // shell ticket leaves it, with its classes moved, so it no longer belongs on the list.
-  const [frozen, frozenUses] = Object.entries(FROZEN_CLASS_USES).find(([, uses]) => uses.includes("uppercase") && !uses.includes("text-title"))!;
   const failed = lintTree({
     "src/components/New.tsx": div("text-label md:uppercase"),
     "src/components/Old.tsx": div("text-title text-ink-heading") + div("rounded-box border"),
     "src/components/Chart.tsx": div("text-chart-label uppercase"),
     "src/deck/Slide.tsx": div("text-label uppercase") + div("text-title rounded-box"),
-    [frozen]: div("text-label uppercase") + div("text-title"),
+    // The file the frozen list last exempted, with the eyebrow it used to keep.
+    "src/components/CollapsedSection.tsx": div("text-label text-ink-muted uppercase"),
   });
   expect(failed.code, failed.output).toBe(1);
   const problems = failed.output.trim().split("\n");
@@ -378,23 +370,17 @@ test("the class lint refuses uppercase outside a chart label, text-title and rou
     "Slide.tsx:1 uppercase",
     "Slide.tsx:2 text-title",
     "Slide.tsx:2 rounded-box",
-    `${frozen.split("/").pop()}:2 text-title`,
+    "CollapsedSection.tsx:1 uppercase",
   ]);
   expect(problems[0]).toContain("sentence case");
   expect(problems[1]).toContain('Use "text-h2"');
   expect(problems[2]).toContain('Use "rounded-sm"');
-  const moved = lintTree({ [frozen]: div("text-h2 rounded-sm text-label") });
-  expect(moved.code, moved.output).toBe(1);
-  const movedProblems = moved.output.trim().split("\n");
-  expect(movedProblems.map((line) => /([\w-]+\.tsx:\d+): the class "([^"]+)"/.exec(line)?.slice(1).join(" "))).toEqual(
-    frozenUses.map((use) => `${frozen.split("/").pop()}:1 ${use}`),
-  );
-  expect(movedProblems.at(-1)).toContain("take it off FROZEN_CLASS_USES");
 
   const passed = lintTree({
     "src/components/New.tsx": div("text-label"),
     "src/components/Old.tsx": div("text-h2 text-ink-heading") + div("rounded-sm border"),
-    [frozen]: div("text-label uppercase") + div("text-h2"),
+    "src/components/Chart.tsx": div("text-chart-label uppercase"),
+    "src/components/CollapsedSection.tsx": div("text-caption text-ink-muted"),
   });
   expect(passed.output).toBe("");
   expect(passed.code).toBe(0);
