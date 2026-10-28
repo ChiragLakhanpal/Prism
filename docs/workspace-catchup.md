@@ -2932,7 +2932,9 @@ Parked with step 1, after merge commit e8ee6cf6. Run this from the same snapshot
 
 Then print the shared phone pattern from the same snapshot's root:
 
-    python3 -c "import sys; sys.path.insert(0, 'src'); from strata.lakehouse import contacts; print(contacts.LEFT_PHONE)"
+    python3 -c "import sys; sys.path.insert(0, 'src'); from strata.lakehouse import quality; p = quality.contacts_left_params(); print(p.get('left_phone') or p['phone'])"
+
+(Since ticket 121, `contacts.LEFT_PHONE` is gone: the patterns live in `contacts.LEFTOVERS`, and the check binds the phone one as `left_phone`, where ticket 76 named it `phone`. This command prints it from a snapshot on either side of that merge.)
 
 Run these in the workspace's SQL editor, and paste the printed line as the value of the `phone` parameter. Bind it rather than write it into the query: Spark SQL changes the backslashes in a literal, which is why `quality.py` binds the patterns too.
 
@@ -4044,3 +4046,43 @@ After step 1, from a snapshot of the merge commit, with --env-file pointing at t
 It worked if unread is 0, the comparison returns missing 0 (pairs about 14,686, as the orchestrator's own query found on October 28), and gold's financiers include IDA, IBRD, TF and COFN, with IDA's kept_as_written counting its lettered grants (954 H grants among them). If unread is above 0, run bronze_to_gold again and repeat the queries. Record the counts, the run id and the time here under ticket 120.
 
 The merger's notes, from the verify notes (`.notes/120-verify.md`, findings 2 and 3): if a few pairs are missing, look first for a `financier_loan` of only spaces, which is named but gets no row. And after the run, count the notices whose `loan_number` changed between the run before and after, so a real loss shows: a suffixed loan (IBRD-2075S, IDA-60300A) is now kept as written, so a notice that writes its bare digits no longer finds it.
+
+## Ticket 121, step 1 of 3: deploy the bundle from the merge commit, so the nightly's check and re-read take every leftover pattern
+
+Parked on October 28, 2026 with ticket 121, which merged into build/strata as 1e4d6b47 (branch `strata/121-the-nightly-s-contacts-check-flags-every-pattern-the-stripper-removes-r2` at 39fe2ba1). Every key is set, but mergers run no workspace step: the orchestrator runs these three steps in order, from a snapshot that includes this merge (1e4d6b47, the done commit that follows it, or a later commit), as the header says (`git archive <sha> | tar -x -C <scratchpad>/snap-<sha>`).
+
+What ticket 121 changes: `strata.lakehouse.contacts` now holds one registry of leftover patterns, `LEFTOVERS`, one for each removal rule of the stripper's last pass: `email`, `phone`, `short_phone`, and `name` (a name after "Attention" and a title). `contacts.LEFT_EMAIL` and `contacts.LEFT_PHONE` are gone. The nightly's `contacts_left` check (`src/strata/lakehouse/quality.py`, which binds the patterns as `left_email`, `left_phone`, `left_short_phone` and `left_name`) and the notices transform's re-read (`read_again` in `src/strata/lakehouse/silver/notices.py`, used by `src/strata/lakehouse/silver/__init__.py`) both read that registry. So a notices page whose only leftover is a name after "Attention" is now counted and read again on the next `bronze_to_gold`. No table or column changed, so no ALTER TABLE line is needed. The definition of counter 7 changed in `bundle/dashboards/strata.lvdash.json`, which this deploy carries.
+
+    uv run --script ops/bundle/deploy.py --env-file "<main checkout>/.env" --fairshare-catalog workspace
+
+It worked if it exits 0 and its "3. What changed:" names no table for this ticket. Then put the nightly window back to 18000 seconds, as after ticket 122's deploy (ticket 108's step 2 has the command).
+
+Record the exit code and the "3. What changed:" lines here under ticket 121.
+
+## Ticket 121, step 2 of 3: count what the nightly check's patterns find, before the next nightly run
+
+Run after step 1 and before the next nightly run (or step 3's `bronze_to_gold` run), from the same snapshot:
+
+    uv run --script ops/notices/contacts_left_live.py --env-file "<main checkout>/.env"
+
+It worked if it exits 0 and prints "The nightly check's patterns find N notices on M pages of strata.silver.notices." It writes nothing. N now also counts names after "Attention" and a title, and numbers after a short label (the `name` and `short_phone` leftovers), so it may be above zero even though ticket 63's step 4 query returned 0 at 10:56 UTC. Exit 2 means it could not ask the SQL warehouse, and it prints why.
+
+Record N and M here under ticket 121.
+
+## Ticket 121, step 3 of 3: after the next nightly run, the check finds 0, ticket 63's step 4 query returns 0, and the night's contacts_left row reads 0 (criterion 3, live)
+
+Run after the next scheduled nightly run, or after `bronze_to_gold` alone, from the same snapshot. The paid workspace's nightly job was 200833746315993 in ticket 108's block.
+
+    databricks jobs run-now --json '{"job_id": <nightly job ID>, "only": ["bronze_to_gold"]}' --timeout 160m -p strata
+    uv run --script ops/notices/contacts_left_live.py --env-file "<main checkout>/.env" --check-zero
+
+Then on the SQL warehouse:
+
+    SELECT count(*) FROM strata.silver.notices WHERE regexp_like(notice_text, '(?i:attention)\\s*:?\\s*(?i:mr|mrs|ms|miss|dr|eng|prof)\\.?\\s+[A-Z]')
+    SELECT found, passed, checked_at FROM strata.ops.quality_checks WHERE check_kind = 'contacts_left' AND table_name = 'strata.silver.notices' ORDER BY checked_at DESC LIMIT 1
+
+The first query is the first query of "Ticket 63, step 4 of 5", word for word. The night's count is in `strata.ops.quality_checks`, not `strata.ops.data_quality` as the ticket's criterion 3 says (the builder and the reviewer both noted this).
+
+It worked if `contacts_left_live.py --check-zero` exits 0 and prints "The nightly check's patterns find 0 notices on 0 pages of strata.silver.notices.", the first query returns 0, and the second shows that night's row with found 0 and passed true. Record all three here under ticket 121, with the job run's id and result. When all three hold, the orchestrator ticks criterion 3.
+
+If the first query is not 0 while the check finds 0, look first for a label and a name on separate lines. The verifier found that a name on the line after "Attention" (`ATTENTION:<br/>Mr. John Doe`) is neither removed nor counted: `contacts.ATTENTION` and its leftover use `[ \t]*`, while the step 4 query's `\s` crosses a line break (`.notes/121-verify.md`, finding 1). The fix belongs to the ATTENTION rule, and the registry would take a widened rule with no other edit.
