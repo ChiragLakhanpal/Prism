@@ -8,8 +8,9 @@ dashboard's Governance page shows it. Five kinds of check, as the Governance pag
 - missing_key          the rows with no value in one of the table's key columns, one check per column
 - missing_public_from  the rows with no Disclosed date (public_from, ADR 0002)
 - duplicates           the rows that repeat a key, beyond the first row of each key
-- contacts_left        the notices whose text still carries an email address or a labelled phone number,
-                       which ingestion takes out (CLAUDE.md rule 8; strata.lakehouse.contacts)
+- contacts_left        the notices whose text still carries what ingestion takes out: an email address, a
+                       labelled phone number or a name after "Attention" and a title (CLAUDE.md rule 8;
+                       strata.lakehouse.contacts, LEFTOVERS)
 
 Each table costs two queries, or one when it has no key, so the checks run the same on DuckDB in the gate and on
 the SQL warehouse. Every value goes to the query as a bound parameter; only the checked table's and columns'
@@ -27,15 +28,16 @@ from strata.lakehouse.engine import Engine
 
 COLUMNS = ("run_id", "night", "task_key", "check_kind", "table_name", "key_name", "found", "expected_min",
            "expected_max", "passed", "checked_at", "public_from")
-# A notice that contacts_left counts: its text or its description holds what contacts.LEFT_EMAIL or LEFT_PHONE finds,
-# the patterns the removal's last pass takes out. Silver's notices transform finds the pages to read again with it.
-CONTACTS_LEFT = ("regexp_like(notice_text, :email) OR regexp_like(notice_text, :phone) "
-                 "OR regexp_like(bid_description, :email) OR regexp_like(bid_description, :phone)")
+# A notice that contacts_left counts: its text or its description holds what one of contacts.LEFTOVERS finds, the
+# patterns the removal's last pass takes out, one bound parameter each. Silver's notices transform reads again the
+# pages of the notices it counts (ticket 121).
+CONTACTS_LEFT = " OR ".join(f"regexp_like({column}, :{leftover.parameter})"
+                            for column in ("notice_text", "bid_description") for leftover in contacts.LEFTOVERS)
 
 
 def contacts_left_params() -> dict[str, str]:
     """The patterns CONTACTS_LEFT binds, as parameters: Spark SQL mangles the backslashes of a literal."""
-    return {"email": contacts.LEFT_EMAIL, "phone": contacts.LEFT_PHONE}
+    return {leftover.parameter: leftover.pattern for leftover in contacts.LEFTOVERS}
 
 
 @dataclass(frozen=True)

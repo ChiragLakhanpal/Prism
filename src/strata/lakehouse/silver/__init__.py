@@ -9,6 +9,9 @@ Each source in the registry names its silver transform, a module in this package
               which the dashboard's Data readiness page splits the records the measures count
 - VERSION     optional: a whole number, 1 unless the module sets one. Bump it when parse() changes
               the rows it gives, and the next run reads every page of the source again
+- read_again() optional: a condition on its first table's rows, with the values it binds. The next
+              run reads again each page whose rows the condition finds, whatever its record says
+              (ticket 121), so a fix reaches only the pages that need it
 - parse()     one page's records turned into rows for each of its tables
 
 Two sources may share a transform, as the IDA credits and the IBRD loans share loans, when their
@@ -25,7 +28,9 @@ page, the transform's tables and its version. read() reads a page when it has no
 newest record names other tables or another version than the transform has now. So a page is read once,
 and a transform that gains a table, or bumps its VERSION, reads every page of its source once more and
 fills the new table from the pages bronze already holds. The record is the mark, not the rows: a page
-whose rows were taken out of one table by hand is not read again until the transform changes. Gold
+whose rows were taken out of one table by hand is not read again until the transform changes, or
+until its rows meet the transform's read_again() condition, as the notices whose text still holds a
+contact detail do (ticket 121). Gold
 reads the newest row for each key, so a page fetched again after a change replaces the old values
 there, and silver keeps every version.
 
@@ -74,10 +79,22 @@ SELECT p.page_hash, min(p.fetched_at) AS first_fetched
 FROM strata.bronze.api_pages AS p
 LEFT JOIN newest AS r ON r.page_hash = p.page_hash
 WHERE p.source = :source
-  AND (r.page_hash IS NULL OR r.tables <> :tables OR r.version <> :version)
+  AND (r.page_hash IS NULL OR r.tables <> :tables OR r.version <> :version{again})
 GROUP BY p.page_hash
 ORDER BY first_fetched, p.page_hash
 """
+# The pages whose rows the transform's read_again() condition finds, read again whatever their record says.
+AGAIN = "\n       OR p.page_hash IN (SELECT page_hash FROM {table} WHERE {condition})"
+
+
+def _pending_query(module) -> tuple[str, dict]:
+    """PENDING for the transform, with its read_again() condition and the values that binds, when it has one."""
+    again = getattr(module, "read_again", None)
+    if again is None:
+        return PENDING.format(again=""), {}
+    condition, params = again()
+    first = next(iter(module.TABLES))
+    return PENDING.format(again=AGAIN.format(table=first, condition=condition)), params  # sql-lint: names only
 
 
 def tables(module) -> str:
@@ -97,7 +114,8 @@ def _now() -> dt.datetime:
 def pending(engine: Engine, source: Source) -> list[str]:
     """The source's bronze pages that read() would read, oldest first."""
     module = transform(source)
-    found = engine.run(PENDING, {"source": source.key, "tables": tables(module), "version": version(module)})
+    query, again = _pending_query(module)
+    found = engine.run(query, {**again, "source": source.key, "tables": tables(module), "version": version(module)})
     return [page_hash for page_hash, _ in found.rows]
 
 

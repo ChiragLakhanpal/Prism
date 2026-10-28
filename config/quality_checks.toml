@@ -16,7 +16,8 @@
 #             src/strata/lakehouse/gold/ takes the key its query's "-- key:" line names, so leave key out for
 #             it. A table that keeps every version of a record, as silver keeps every page, has no key.
 #   contacts  optional: true for a table of notices, whose notice_text and bid_description the job searches for
-#             an email address or a labelled phone number that ingestion missed (contacts_left)
+#             what ingestion missed of the contact details it takes out (contacts_left): an email address, a
+#             labelled phone number or a name after "Attention", by strata.lakehouse.contacts' LEFTOVERS
 #
 # Every table also gets a row count check against the range in config/thresholds.toml [quality_checks] and a
 # missing Disclosed date check (missing_public_from, ADR 0002).

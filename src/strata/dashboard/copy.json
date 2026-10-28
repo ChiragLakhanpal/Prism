@@ -67,7 +67,7 @@
         "lineage": "Lineage from an answer to its sources",
         "lineageText": "Leave Run ID empty to see the latest answer, or paste a run ID from Recent answer runs, at the end of this section. If the tables stay empty, no answer run has that ID."
       },
-      "removeWhy": "I remove the contact person's name, email address and phone number from every procurement notice as I take it in, before it reaches any table that answers or this dashboard can read. Strata never shows them and never answers questions about them. The counter above counts any email addresses and phone numbers that got through.",
+      "removeWhy": "I remove the contact person's name, email address and phone number from every procurement notice as I take it in, before it reaches any table that answers or this dashboard can read. Strata never shows them and never answers questions about them. The counter above counts any email addresses, phone numbers and names after \"Attention\" that got through.",
       "noHistory": "I can't show who queried what, because this workspace doesn't let me read its query history. I checked when this dashboard was deployed on {date}. If Free Edition adds it later, deploying the dashboard again adds the table here.",
       "tiles": {
         "checksChart": {
