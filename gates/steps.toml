@@ -93,14 +93,15 @@ lane = "guard"
 # processor-seconds). The fixture build keeps DuckDB's default, since it runs as one process.
 #
 # What the whole gate costs, measured on October 28, 2026, on this 16-processor computer. Sampled once a second,
-# the processors were 0% idle from about 10 to 110 seconds into a gate, and the gate's own processes used 1,400
-# to 1,800 processor-seconds: alone, the Playwright tests take about 810, the Python tests in these two lanes 400
-# to 470, and the other steps about 60. So the lanes' layout changes little; only tests that cost less make the
-# gate shorter. With the main checkout's tests running beside it, the gate took 149.1 seconds with one python
-# lane and 149.2 with two, both building the database, and 132.7 and 142.2 seconds with two lanes that kept it.
-# Started on an idle computer with the database kept, it took 129.5, 120.9 and (just after another gate) 118.1
-# seconds, and the limit stopped one run at 150. Eight, six or four workers per lane changed the tests'
-# processor time by about 5% and the gate's time by less than the runs differ, so the lanes keep eight.
+# the processors were 0% idle from about 10 to 110 seconds into a gate, and the gate's own processes used about
+# 1,500 processor-seconds: alone, the Playwright tests take about 810, the Python tests in these two lanes 400 to
+# 470, and the other steps about 60. So the lanes' layout changes little; tests that cost less make the gate shorter.
+# With no other session's tests beside it, the gate passed in 117.4, 119.0 and 120.1 seconds when it kept the
+# database, and in 127.6 seconds when it built it, against 140.4 seconds for the gate before ticket 119 (one python
+# lane, DuckDB on every processor), with another worktree's fixture build beside both. Gates run one after another,
+# some with other sessions' tests beside them, took 118 to 142 seconds with the database kept and 149 with it built,
+# and the limit stopped 6 of 18 at 150. Eight, six or four workers per lane changed the tests' processor time by
+# about 5% and the gate's time by less than the runs differ, so the lanes keep eight.
 # When a lane gets slow again, run `uv run --frozen pytest --durations=15 --shard=1/2 tests ops/bundle/tests` (or 2/2)
 # to find its slowest tests, since a lane can never take less time than its slowest test. Then try
 # more workers, or a third shard (1/3, 2/3 and 3/3 in three lanes), and keep what gives the lower total
