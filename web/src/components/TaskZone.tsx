@@ -46,6 +46,7 @@ export function TaskZone({
   live,
   marks,
   className,
+  foot,
   children,
 }: {
   id?: string;
@@ -83,6 +84,9 @@ export function TaskZone({
   // Data attributes a caller marks the section with, such as the collapsed section's state.
   marks?: Record<`data-${string}`, string | undefined>;
   className?: string;
+  // With a toggle, the Foot strip that ends the zone while it is open, such as What changed's source line (ticket 100):
+  // the opened row is a panel in place, so its evidence ends as a panel's does.
+  foot?: ReactNode;
   // With a toggle, what the zone holds once opened. Without one, the zone's blocks: ZoneBlocks.
   children?: ReactNode;
 }) {
@@ -170,6 +174,7 @@ export function TaskZone({
           )}
         </div>
       )}
+      {toggle && open && foot}
       {!toggle && children}
       {live}
     </section>

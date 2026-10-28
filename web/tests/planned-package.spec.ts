@@ -872,6 +872,16 @@ test("the Packages head holds its two buttons at its right or under the purpose,
     await expect(list.getByRole("heading", { level: 2 })).toHaveCSS("font-size", "18px");
     await expect(list.locator("[data-count-line]")).toHaveText("Showing all 4 packages and plans");
     await expect(list.locator("[data-foot-strip] [data-source]")).toHaveText("Source: your packages and plan checks, saved in Strata.");
+    // The panel is the table's frame, as All projects' is: no box inside it, and its rows start on the name's text
+    // edge, 16 px under the name and its count line (the critique of ticket 100, round 1).
+    const name = await box(list.getByRole("heading", { level: 2 }));
+    // The first row's name, its link, in the table at 1440 px and in its card row at 390 px.
+    const first = await box(list.locator("[data-table-panel] a").filter({ visible: true }).first());
+    expect(Math.abs(first.x - name.x), "the rows on the name's text edge").toBeLessThanOrEqual(1);
+    await expect(list.locator("[data-table-panel]")).toHaveCount(1);
+    const tag = await box(list.locator("[data-count-line]"));
+    const table = await box(list.locator("[data-table-panel]"));
+    expect(table.y - (tag.y + tag.height)).toBeGreaterThanOrEqual(16);
     const term = list.getByRole("button", { name: "Last worked on" }).filter({ visible: true }).first();
     await term.click();
     const definition = page.getByRole("dialog", { name: "Last worked on" });

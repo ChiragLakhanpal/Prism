@@ -13,7 +13,7 @@ import { PageHead } from "../components/PageHead";
 import { SkeletonLine } from "../components/Skeleton";
 import { Source } from "../components/Source";
 import { countText, Table, type Column, type Row } from "../components/Table";
-import { TaskZone, ZoneBlock } from "../components/TaskZone";
+import { TaskZone } from "../components/TaskZone";
 import { DefinitionWindow } from "../components/Term";
 import { TextLink } from "../components/TextLink";
 import { copy } from "../copy";
@@ -80,7 +80,7 @@ function rowOf(row: PlannedRow): Row {
         type: words.typePackage,
         country: row.country_name ?? words.noCountry,
         project: row.project_id ? <TextLink href={`/projects/${row.project_id}`}>{mono(row.project_id)}</TextLink> : words.noProject,
-        last: <Num date={row.last_worked_on.slice(0, 10)} style="table" />,
+        last: <LastDate on={row.last_worked_on} />,
       },
     };
   }
@@ -100,9 +100,18 @@ function rowOf(row: PlannedRow): Row {
       type: words.typePlan,
       country: row.country_name ?? copy.notInRecord,
       project: <TextLink href={`/projects/${row.project_id}`}>{mono(row.project_id)}</TextLink>,
-      last: <Num date={row.last_worked_on.slice(0, 10)} style="table" />,
+      last: <LastDate on={row.last_worked_on} />,
     },
   };
+}
+
+// A row's "Last worked on" date, which never breaks inside (plan 7.10), however narrow the column is beside the sidebar.
+function LastDate({ on }: { on: string }) {
+  return (
+    <span className="whitespace-nowrap">
+      <Num date={on.slice(0, 10)} style="table" />
+    </span>
+  );
 }
 
 // "Last worked on" opens its definition in a window from the column head, and from each card's field below 768 px,
@@ -118,7 +127,8 @@ function LastWorked() {
 // The list of packages and checked plans, in each of its states (ticket 100; DESIGN.md section 5, Task zone): one panel
 // with its title sentence in lead, the count line, the table and its source in the foot strip; while it loads, the same
 // panel over skeleton rows; with nothing yet, a Task zone row that says so; and when it failed, the error alert in the
-// list's place.
+// list's place. The panel is the table's frame (Table's inPanel), as All projects' is: its rows run the panel's width
+// on its text edge, and below 768 px they are rows with a line between them, not cards in a box.
 export function PackagesList({ load, onRetry }: { load: Load<PlannedList>; onRetry: () => void }) {
   const [page, setPage] = useState(0);
   const headingId = useId();
@@ -129,8 +139,8 @@ export function PackagesList({ load, onRetry }: { load: Load<PlannedList>; onRet
     { key: "project", header: words.columns.project, short: true, width: "w-[7rem]" },
     // While the rows load the table is hidden from screen readers, so its head holds the words alone, with no button.
     load.status === "loading"
-      ? { key: "last", header: words.columns.lastWorked, short: true }
-      : { key: "last", header: <LastWorked />, cardHeader: <LastWorked />, short: true },
+      ? { key: "last", header: words.columns.lastWorked, short: true, width: "w-[8.5rem]" }
+      : { key: "last", header: <LastWorked />, cardHeader: <LastWorked />, short: true, width: "w-[8.5rem]" },
   ];
 
   if (load.status === "error") {
@@ -142,9 +152,10 @@ export function PackagesList({ load, onRetry }: { load: Load<PlannedList>; onRet
   if (load.status === "loading") {
     return (
       <TaskZone panel leadName name={<SkeletonLine className="text-lead" width="w-3/5" />} tag={<SkeletonLine className="text-caption" width="w-40" />} busy sectionKey="packages-list">
-        <ZoneBlock>
-          <Table title={null} labelledBy={headingId} columns={columns} rowHeader="name" state={{ status: "loading", rows: 5 }} />
-        </ZoneBlock>
+        <Table title={null} labelledBy={headingId} columns={columns} rowHeader="name" inPanel state={{ status: "loading", rows: 5 }} />
+        <FootStrip>
+          <SkeletonLine className="text-caption" width="w-2/5" />
+        </FootStrip>
       </TaskZone>
     );
   }
@@ -165,25 +176,20 @@ export function PackagesList({ load, onRetry }: { load: Load<PlannedList>; onRet
       }
       sectionKey="packages-list"
     >
-      <ZoneBlock
-        foot={
-          <FootStrip>
-            <Source>{words.source}</Source>
-          </FootStrip>
-        }
-      >
-        <Table title={null} labelledBy={headingId} columns={columns} rowHeader="name" state={{ status: "ready", rows: shown.map(rowOf) }} />
-        {counts.total > PAGE && (
-          <div className="flex flex-wrap gap-3">
-            <Button variant="secondary" disabled={page === 0} onClick={() => setPage(page - 1)}>
-              {words.previous}
-            </Button>
-            <Button variant="secondary" disabled={from + PAGE >= counts.total} onClick={() => setPage(page + 1)}>
-              {words.next}
-            </Button>
-          </div>
-        )}
-      </ZoneBlock>
+      <Table title={null} labelledBy={headingId} columns={columns} rowHeader="name" inPanel state={{ status: "ready", rows: shown.map(rowOf) }} />
+      {counts.total > PAGE && (
+        <div data-zone-pager className="flex flex-wrap gap-3">
+          <Button variant="secondary" disabled={page === 0} onClick={() => setPage(page - 1)}>
+            {words.previous}
+          </Button>
+          <Button variant="secondary" disabled={from + PAGE >= counts.total} onClick={() => setPage(page + 1)}>
+            {words.next}
+          </Button>
+        </div>
+      )}
+      <FootStrip>
+        <Source>{words.source}</Source>
+      </FootStrip>
     </TaskZone>
   );
 }

@@ -16,6 +16,7 @@ import { formatCount, formatDate, formatNumber } from "../lib/format";
 import { CHANGE_KINDS as KINDS, changeList } from "../lib/changes";
 import { TaskZone, ZoneBlock } from "./TaskZone";
 import { Fill, Unbroken } from "./Fill";
+import { FootStrip } from "./FootStrip";
 import { Num } from "./Num";
 import { FromLine, plansFrom } from "./NumFrom";
 import { MethodText } from "./PlanCheck";
@@ -317,20 +318,26 @@ export const ChangeTables = forwardRef<
           </div>
         ))}
       </div>
+    </>
+  );
+  const foot = (
+    <FootStrip>
       <Source>
         <Fill template={words.source} slots={{ agency, prev_date: <Num date={previous.plan_date} />, plan_date: <Num date={changes.plan.plan_date} /> }} />
       </Source>
-    </>
+    </FootStrip>
   );
-  // A closed row's body sits in the zone's own body once opened; a panel with no toggle holds it as its one block.
-  const body = toggled ? <div className="flex flex-col gap-4 pt-2">{inner}</div> : <ZoneBlock>{inner}</ZoneBlock>;
+  // A closed row's body sits in the zone's own body once opened, and the source line ends it in a foot strip, as a
+  // panel's evidence ends; a panel with no toggle holds it as its one block.
+  const body = toggled ? <div className="flex flex-col gap-4 pt-2">{inner}</div> : <ZoneBlock foot={foot}>{inner}</ZoneBlock>;
   return (
     <TaskZone
       id="changes-zone"
       headingId="changes"
       headingRef={ref}
       name={<Fill template={words.title} slots={{ prev_date: <Num date={previous.plan_date} /> }} />}
-      panel={!toggled}
+      // Closed, a row; opened, a panel in place (TaskZone's panel follows the toggle when it is left out).
+      panel={toggled ? undefined : true}
       summary={
         <p data-changes-summary>
           <Fill template={words.lead} slots={{ change_list: <Unbroken text={changeList(counts)} /> }} />{" "}
@@ -339,6 +346,7 @@ export const ChangeTables = forwardRef<
       }
       toggle={toggled ? { open: Boolean(open), onToggle, show: copy.checkPlan.changes.show, hide: copy.checkPlan.changes.hide } : undefined}
       marks={{ "data-changes": "" }}
+      foot={toggled ? foot : undefined}
     >
       {body}
     </TaskZone>

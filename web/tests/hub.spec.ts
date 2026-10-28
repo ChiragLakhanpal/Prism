@@ -919,6 +919,29 @@ test("the NWWDA plan of October 9, 2026 lists what changed since the plan of Mar
   await expect(changes.locator("[data-source]")).toContainText("Procurement Plans of Northern Water Works Development Agency, versions of March 5, 2026 and October 9, 2026");
 });
 
+// The critique of ticket 100, round 1: opening the closed row once left main at its old height, so the footer
+// printed over the baseline row at 1440 px and over the re-estimated cards at 1024 px. Opened, the row is a panel in
+// place (DESIGN.md section 5, Task zone), and the page grows with it.
+for (const [width, height] of [[1440, 900], [1024, 768]] as const) {
+  test(`at ${width} by ${height} opening What changed makes it a panel and grows the page, so the footer starts below the baseline row`, async ({ page }) => {
+    await open(page, `${NWWDA}/2026-10-09`, width, await p156634());
+    await page.setViewportSize({ width, height });
+    await expect(page.locator("[data-check-plan-page=ready]")).toBeVisible();
+    const changes = page.locator("[data-changes]");
+    await expect(changes).toHaveAttribute("data-zone", "row");
+    await page.locator("[data-change-line]").getByRole("link", { name: "See what changed" }).click();
+    await expect(changes.locator("[data-change-kind]")).toHaveCount(1);
+    await expect(changes).toHaveAttribute("data-zone", "panel");
+    // Its evidence ends as a panel's does: the source line in a foot strip.
+    await expect(changes.locator(":scope > [data-foot-strip] [data-source]")).toContainText("Procurement Plans of Northern Water Works Development Agency");
+    const bottom = (selector: string) => page.locator(selector).evaluate((element) => Math.round(element.getBoundingClientRect().bottom + scrollY));
+    const top = (selector: string) => page.locator(selector).evaluate((element) => Math.round(element.getBoundingClientRect().top + scrollY));
+    await expect.poll(async () => (await bottom("main")) - (await bottom("[data-baseline]"))).toBeGreaterThanOrEqual(0);
+    expect(await top("footer")).toBeGreaterThanOrEqual(await bottom("[data-baseline]"));
+    expect(await top("footer")).toBeGreaterThanOrEqual(await bottom("[data-changes]"));
+  });
+}
+
 test("a version that added and re-dated activities lists each in its own table, with a step that lost its date as No date", async ({ page }) => {
   await open(page, "/projects/P156634/procurement/ministry-of-water-and-irrigation/2020-04-30", 1440, await p156634());
   const changes = page.locator("[data-changes]");

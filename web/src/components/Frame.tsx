@@ -131,7 +131,10 @@ export function Frame({
           {/* The frame: the window less the sidebar, which the drawer opening beside the page does not change. */}
           <div data-frame className="@container/frame flex min-w-0 flex-1 items-stretch">
             <div ref={page} data-page-column inert={inert} className="@container/page flex min-w-0 flex-1 flex-col">
-              <main id="main" tabIndex={-1} className="min-h-main flex-1 pb-12 focus-visible:outline-none @md/page:pb-16">
+              {/* main grows to push the footer down and never shrinks below its content (flex: 1 0 auto). With flex-1
+                  (1 1 0%), Chromium kept main's old height when a closed Task zone opened inside the page column, so
+                  the footer printed over the opened content (ticket 100's critique, round 1). */}
+              <main id="main" tabIndex={-1} className="min-h-main grow shrink-0 pb-12 focus-visible:outline-none @md/page:pb-16">
                 {children}
               </main>
               {box && (

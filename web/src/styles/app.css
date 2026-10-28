@@ -537,6 +537,11 @@
 [data-zone-body]:has(+ [data-table-panel]) {
   padding-bottom: calc(var(--spacing) * 4);
 }
+/* A table straight under the zone's name, with no body between, as the Packages list's and the plan check's
+   activities (ticket 100's critique): 16 px under the name and its tag, so the header band never touches them. */
+[data-zone-head] + :is([data-table-panel], [data-zone-table]) {
+  margin-top: calc(var(--spacing) * 4);
+}
 [data-table-panel] > [data-count-row] {
   padding: 0 var(--zone-pad) calc(var(--spacing) * 4) calc(var(--zone-pad) + var(--zone-indent));
 }
