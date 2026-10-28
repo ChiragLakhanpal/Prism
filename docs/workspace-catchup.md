@@ -4165,3 +4165,21 @@ Record the exit code, the App's address, the landing address and title, and the 
 ## Ticket 118, step 1 of 1 ran: the App redeployed from e66f4e56 and the smoke question three times
 
 **Ran on October 28, 2026 (orchestrator), from 20:17 UTC, from a snapshot of e66f4e56.** The App redeploy with `--keep-secrets` exited 0 at 20:30 UTC with the running line, and the watchdog holds e66f4e56. Then the demo-ready command three times from the snapshot: run 1 (20:30 UTC) failed the smoke question, the verifier removing one sentence as not_supported (the judge's verdict on substance, not a rate limit); runs 2 (20:33) and 3 (20:35) passed the six checks, citing strata.gold.passage:31525018/v1/54, and run 3 shows the retry at work: `The judge on Azure OpenAI answered 429, so I am waiting 30 seconds before retry 1 of 3.` Criterion 4 (three passes in a row) is not met yet, two of three, with the failure on substance; the retries are proven live. All three runs failed the Home step: the seed command, run as the App's service principal, ended with `EngineError: The workspace gave the app no token: HTTP Error 401: Unauthorized` (its first logged line, a tracing warning, is not the cause), although the same step passed at 10:58 UTC from 4484310a; the App's service principal secret in the environment file is refused now, which is on the morning list.
+
+## Ticket 98, step 1 of 1: redeploy the App, so Home leads with the briefing and Worth knowing is a panel
+
+Parked on October 28, 2026 with ticket 98, which merged into build/strata as 553fd785 (branch `strata/98-home-the-briefing-leads-worth-knowing-in-a-panel` at 8f73f599). Every key is set, but mergers run no workspace step: the orchestrator or the second session runs this one from a snapshot that includes this merge (553fd785, the done commit that follows it, or a later commit), as the header says (`git archive <sha> | tar -x -C <scratchpad>/snap-<sha>`). Run `npm ci --prefix web` in the snapshot, or link the main checkout's `web/node_modules` into it, before the deploy. One deploy from a commit at or after 553fd785 also serves ticket 96's and ticket 97's step 1, if they have not run yet.
+
+What ticket 98 changes on the App: Home moves onto the workspace layout. The h1 is the date line over the briefing, Worth knowing is a panel tagged "Fixed checks, no model", and Waiting for you is the side panel from a frame of 75rem. An answer asked from Home opens above the head, and the briefing folds to one sentence with "Show the briefing". Only the web app changed, so the bundle needs no deploy.
+
+The builder's step, in the builder's words:
+
+    uv run --script ops/app/deploy_app.py --env-file "<main checkout>/.env" --keep-secrets
+
+It worked if:
+
+- It exits 0 with the running line and prints the App's address.
+- From a 1440 px window, `<App URL>/` shows the h1's date line over the briefing, a "Worth knowing" panel tagged "Fixed checks, no model" with no middle dot, and "Waiting for you" at the right.
+- With a connected agent, a question asked from Home opens above the head, and the briefing shows one sentence with "Show the briefing". If the App says there is no agent, record that and check the first two points alone.
+
+Record the exit code, the App's address and what Home showed here under ticket 98. If step 3 of the deploy names a secret the scope lacks, record its name for the user, who writes it.
