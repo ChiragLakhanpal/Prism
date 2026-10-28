@@ -17,6 +17,7 @@ import sys
 import textwrap
 import time
 import tomllib
+from fractions import Fraction
 from pathlib import Path
 
 import pytest
@@ -33,6 +34,15 @@ def clean_env():
     env = {k: v for k, v in os.environ.items() if not k.startswith("GIT_")}
     env.update(GIT_CONFIG_GLOBAL=os.devnull, GIT_CONFIG_NOSYSTEM="1")
     return env
+
+
+# Put this before a command, and the command starts with Ctrl-C working again. A shell that starts a command with &
+# hands it Ctrl-C ignored, and every process it starts inherits that, so a gate started that way would never see the
+# Ctrl-C a test sends it. The child turns Ctrl-C back on and then becomes the command (os.execvp keeps its process
+# id, so a signal sent to it reaches the command). preexec_fn would do the same in the forked child before exec, but
+# Python's documentation says it can deadlock in a process with threads, and each pytest-xdist worker has one.
+CTRL_C_ON = [sys.executable, "-c", "import os, signal, sys; signal.signal(signal.SIGINT, signal.SIG_DFL); "
+                                   "os.execvp(sys.argv[1], sys.argv[1:])"]
 
 
 def git(repo, *args, check=True):
@@ -720,8 +730,8 @@ def test_the_limit_covers_the_whole_run_and_stops_every_lane(repo):
 def test_ctrl_c_stops_every_lane(repo):
     write(repo, "gates/steps.toml", steps_file(steps=[wait("A", 30, lane="one"), wait("B", 30, lane="two")]))
     write(repo, "step.py", STEP)
-    gate = subprocess.Popen([".githooks/pre-commit"], cwd=repo, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                            text=True, env=clean_env())
+    gate = subprocess.Popen([*CTRL_C_ON, ".githooks/pre-commit"], cwd=repo, stdout=subprocess.PIPE,
+                            stderr=subprocess.STDOUT, text=True, env=clean_env())
     # Wait for both steps to start, however long a busy computer takes to start the gate and its steps.
     deadline = time.monotonic() + 60
     while not ((repo / "log.txt").exists() and len(logged(repo)) == 2) and time.monotonic() < deadline:
@@ -779,7 +789,7 @@ LANE_SIGINT = """\
 def test_ctrl_c_that_lands_on_a_lane_thread_stops_the_gate_within_one_poll(tmp_path):
     write(tmp_path, "driver.py", LANE_SIGINT)
 
-    done = subprocess.run(["python3", "driver.py", str(ROOT / "gates" / "offline.py")], cwd=tmp_path,
+    done = subprocess.run([*CTRL_C_ON, "python3", "driver.py", str(ROOT / "gates" / "offline.py")], cwd=tmp_path,
                           capture_output=True, text=True, env=clean_env(), timeout=60)
 
     assert done.returncode == 0, done.stdout + done.stderr
@@ -796,7 +806,7 @@ def test_a_lane_that_is_not_a_quoted_name_stops_the_gate_with_a_plain_message(re
     done = subprocess.run([".githooks/pre-commit"], cwd=repo, capture_output=True, text=True, env=clean_env())
 
     assert done.returncode != 0
-    assert 'The lane of the step "Build" in gates/steps.toml must be a name in quotes, such as lane = "python".' \
+    assert 'The lane of the step "Build" in gates/steps.toml must be a name in quotes, such as lane = "python-1".' \
         in done.stdout + done.stderr
 
 
@@ -949,7 +959,7 @@ def folders_in_testpaths():
 
 
 # The pytest options the steps file uses that take a value, so a value is never read as a tested path.
-OPTIONS_WITH_A_VALUE = ("-n", "--numprocesses", "--dist", "--basetemp")
+OPTIONS_WITH_A_VALUE = ("-n", "--numprocesses", "--dist", "--basetemp", "--shard")
 
 
 def pytest_args(step):
@@ -1018,26 +1028,29 @@ def reads_the_fixture_database(step):
     return any(overlap(path, reader) for path in paths_tested(step) for reader in FIXTURE_READERS)
 
 
+def built_before(steps, build, i):
+    """Whether the fixture build at index build has finished before the step at index i starts: it sits above
+    that step in the same lane, or one of the two runs alone, or a step that runs alone sits between them."""
+    lanes = steps[build].get("lane"), steps[i].get("lane")
+    alone_between = any("lane" not in other for other in steps[build + 1:i])
+    return build < i and (None in lanes or lanes[0] == lanes[1] or alone_between)
+
+
 def steps_that_may_start_before_the_fixture_build(steps):
-    build = next(i for i, step in enumerate(steps) if "gates/build_fixture.py" in step["run"])
-    early = []
-    for i, step in enumerate(steps):
-        if not reads_the_fixture_database(step):
-            continue
-        lanes = steps[build].get("lane"), step.get("lane")
-        alone_between = any("lane" not in other for other in steps[build + 1:i])
-        if i < build or not (None in lanes or lanes[0] == lanes[1] or alone_between):
-            early.append(step["name"])
-    return early
+    """The steps that may read the fixture database before a build of it has finished. Each python lane starts
+    with the build, and the second build to start waits for the first and keeps what it made (ticket 119)."""
+    builds = [i for i, step in enumerate(steps) if "gates/build_fixture.py" in step["run"]]
+    return [step["name"] for i, step in enumerate(steps)
+            if reads_the_fixture_database(step) and not any(built_before(steps, build, i) for build in builds)]
 
 
 def gate_steps_per_test_folder(steps):
-    """For each folder in testpaths, how many steps run some or all of its tests.
+    """For each folder in testpaths, how many steps run some or all of its tests, a shard of N counting as 1/N.
 
     A step that reruns single tests is left out, since its tests also run in their folder's step.
     """
-    tested = [path for step in steps if not reruns(step) for path in paths_tested(step)]
-    return {folder: sum(overlap(folder, path) for path in tested) for folder in folders_in_testpaths()}
+    tested = [(path, Fraction(1, shard(step)[1])) for step in steps if not reruns(step) for path in paths_tested(step)]
+    return {folder: sum(share for path, share in tested if overlap(folder, path)) for folder in folders_in_testpaths()}
 
 
 def test_the_fixture_database_is_built_before_the_python_tests_that_read_it():
@@ -1166,7 +1179,8 @@ SCRATCH_EDITS = {
     "a folder outside .gate-tmp": ["uv", "run", "--frozen", "pytest", "--basetemp", "/tmp/strata", "ops/app/tests"],
     ".gate-tmp itself": ["uv", "run", "--frozen", "pytest", "--basetemp", ".gate-tmp", "ops/app/tests"],
     "--basetemp with no folder after it": ["uv", "run", "--frozen", "pytest", "ops/app/tests", "--basetemp"],
-    "the python lane's folder": ["uv", "run", "--frozen", "pytest", "--basetemp", ".gate-tmp/python", "ops/app/tests"],
+    "the python-1 lane's folder": ["uv", "run", "--frozen", "pytest", "--basetemp", ".gate-tmp/python-1",
+                                   "ops/app/tests"],
 }
 
 
@@ -1202,7 +1216,7 @@ def test_the_gate_makes_no_scratch_folder_when_no_step_names_it(repo):
 
 # Edits to the steps file that the two checks above must catch: each adds a second pytest step,
 # in a new lane named web, that runs tests a step in another lane already runs and that may read the
-# fixture database while the python lane is still building it.
+# fixture database while a python lane is still building it.
 SECOND_PYTEST_STEPS = {
     "every folder in testpaths": [],
     "a folder inside tests": ["tests/ground_truth"],
@@ -1236,10 +1250,33 @@ def workers(step):
 
 
 def test_the_python_tests_that_read_the_fixture_database_run_on_pytest_xdist_workers():
-    """Every ticket adds tests under tests/, so the python lane must stay well inside the gate's limit."""
+    """Every ticket adds tests under tests/, so the python lanes must stay well inside the gate's limit."""
     readers = [step for step in gate_steps() if reads_the_fixture_database(step)]
 
     assert readers and all(workers(step) > 1 for step in readers), [step["run"] for step in readers]
+
+
+def environment(step):
+    """The variables a step sets through `env NAME=value ...`, by name."""
+    run = step["run"]
+    if os.path.basename(run[0]) != "env":
+        return {}
+    named = {}
+    for arg in run[1:]:
+        if arg.startswith("-") or "=" not in arg:
+            break
+        name, _, value = arg.partition("=")
+        named[name] = value
+    return named
+
+
+def test_the_python_tests_that_read_the_fixture_database_run_duckdb_on_one_thread_per_worker():
+    """Eight workers in each of two lanes already keep every processor busy. With DuckDB's default of a thread for
+    each processor in every worker, the second half took 96 seconds at a load of 25 against 36 on one thread, and
+    used about a third more processor time at a load of 13: 332 against 249 processor-seconds (ticket 119)."""
+    readers = [step for step in gate_steps() if reads_the_fixture_database(step)]
+
+    assert readers and all(environment(step).get("STRATA_DUCKDB_THREADS") == "1" for step in readers)
 
 
 @pytest.mark.parametrize(("option", "counted"), [
@@ -1281,6 +1318,119 @@ def test_the_group_check_finds_a_group_mark_in_a_test_file(tmp_path, monkeypatch
     assert not marks_a_group({"run": ["pytest", "--dist", "worksteal", "other"]})
 
 
+# The python lanes (ticket 119). The Python tests that may read the fixture database run in two lanes, python-1
+# and python-2, side by side. Each passes --shard=1/2 or --shard=2/2, which the root conftest.py reads: pytest
+# sorts the test files under the folders the step names by their paths and runs the first or the second half,
+# so every computer and every run splits them the same way.
+
+PASSES = re.compile(r"PASSED (\S+\.py)::")
+
+
+def collected_files(tree, *args):
+    """The test files a pytest run in the throwaway tree runs, on two pytest-xdist workers."""
+    # The run below starts its own workers, so it must not look like one of this run's workers.
+    env = {key: value for key, value in os.environ.items() if not key.startswith("PYTEST_")}
+    done = subprocess.run([sys.executable, "-m", "pytest", "-v", "-p", "no:cacheprovider", "--numprocesses", "2",
+                           *args], cwd=tree, capture_output=True, text=True, env=env, timeout=120)
+    assert done.returncode == 0, done.stdout + done.stderr
+    return sorted(set(PASSES.findall(done.stdout)))
+
+
+def test_the_two_shards_run_the_first_and_second_half_of_the_test_files_by_name(tmp_path):
+    tree = tmp_path / "tree"
+    write(tree, "pytest.ini", "[pytest]\n")
+    shutil.copy(ROOT / "conftest.py", tree / "conftest.py")
+    names = ["tests/test_e.py", "tests/test_a.py", "tests/test_d.py", "tests/sub/test_f.py", "tests/test_b.py",
+             "ops/bundle/tests/test_check.py", "tests/test_c.py"]
+    for name in names:
+        write(tree, name, "def test_it():\n    pass\n")
+    write(tree, "tests/helpers.py", "VALUE = 1\n")
+
+    first = collected_files(tree, "--basetemp", str(tmp_path / "python-1"), "--shard=1/2", "tests", "ops/bundle/tests")
+    second = collected_files(tree, "--basetemp", str(tmp_path / "python-2"), "--shard", "2/2", "tests",
+                             "ops/bundle/tests")
+
+    assert first == ["ops/bundle/tests/test_check.py", "tests/sub/test_f.py", "tests/test_a.py"]
+    assert second == ["tests/test_b.py", "tests/test_c.py", "tests/test_d.py", "tests/test_e.py"]
+
+
+# pytest options that run only some of a step's tests, which a shard step must never pass.
+PYTEST_FILTERS = ("-k", "-m", "--deselect", "--ignore", "--ignore-glob", "--lf", "--last-failed", "--sw",
+                  "--stepwise", "-x", "--exitfirst", "--maxfail")
+
+
+def pytest_shard_problems(steps):
+    """What would leave a Python test file out or run it twice: shards of the same folders that do not count 1 to N
+    once each, two shards in one lane, where they would take turns, or a shard that runs only some of its tests."""
+    groups = {}
+    for step in steps:
+        if "pytest" in step["run"] and shard(step) != (1, 1):
+            groups.setdefault(tuple(pytest_targets(step)), []).append(step)
+    problems = []
+    for targets, found in groups.items():
+        shards = sorted(shard(step) for step in found)
+        if shards != [(current, shards[-1][1]) for current in range(1, shards[-1][1] + 1)]:
+            problems.append(f"the shards of {' '.join(targets)} are {', '.join(f'{c}/{t}' for c, t in shards)}")
+        if len({step.get("lane") for step in found}) < len(found):
+            problems.append(f"two shards of {' '.join(targets)} share a lane")
+        problems += [f"the {step.get('lane')} lane runs only some tests, with {arg}" for step in found
+                     for arg in pytest_args(step) if arg.split("=", 1)[0] in PYTEST_FILTERS]
+    return problems
+
+
+def test_the_python_tests_run_in_two_shards_side_by_side_each_after_a_build_of_the_fixture_database():
+    steps = gate_steps()
+    lanes = {step.get("lane") for step in steps if "pytest" in step["run"] and shard(step) != (1, 1)}
+
+    assert lanes == {"python-1", "python-2"}
+    assert pytest_shard_problems(steps) == []
+    assert all(any("gates/build_fixture.py" in step["run"] for step in steps if step.get("lane") == lane)
+               for lane in lanes)
+
+
+def in_python_2(build=False):
+    """Picks the python-2 lane's pytest step, or its fixture build."""
+    return lambda step: step.get("lane") == "python-2" and ("gates/build_fixture.py" in step["run"]) == build
+
+
+def without_args(*args):
+    return lambda step: step | {"run": [arg for arg in step["run"] if arg not in args]}
+
+
+# Edits to the python lanes that a check must catch, each with the check that catches it.
+BAD_PYTHON_EDITS = {
+    "a shard left out":
+        (lambda steps: without(steps, in_python_2()), pytest_shard_problems),
+    "a shard run twice":
+        (lambda steps: edit(steps, in_python_2(), resharded("--shard=1/2")), pytest_shard_problems),
+    "a third shard that runs nowhere":
+        (lambda steps: edit(steps, in_python_2(), resharded("--shard=2/3")), pytest_shard_problems),
+    "both shards in one lane":
+        (lambda steps: edit(steps, in_python_2(), lambda step: step | {"lane": "python-1"}), pytest_shard_problems),
+    "a shard that leaves out the bundle tests":
+        (lambda steps: edit(steps, in_python_2(), without_args("ops/bundle/tests")), pytest_shard_problems),
+    "a shard that runs only the tests -k picks":
+        (lambda steps: edit(steps, in_python_2(), added("-k", "fixture")), pytest_shard_problems),
+    "a shard that stops at the first failure":
+        (lambda steps: edit(steps, in_python_2(), added("--maxfail=1")), pytest_shard_problems),
+    "a python lane with no build of the fixture database":
+        (lambda steps: without(steps, in_python_2(build=True)), steps_that_may_start_before_the_fixture_build),
+}
+
+
+@pytest.mark.parametrize("bad, check", BAD_PYTHON_EDITS.values(), ids=BAD_PYTHON_EDITS.keys())
+def test_a_bad_edit_to_the_python_lanes_fails_its_check(bad, check):
+    assert check(bad(gate_steps())) != []
+
+
+def test_a_shard_written_as_two_words_counts_as_that_shard_and_never_as_a_tested_path():
+    step = {"run": ["uv", "run", "--frozen", "pytest", "--basetemp", ".gate-tmp/python-2", "--shard", "2/2", "tests",
+                    "ops/bundle/tests"], "lane": "python-2"}
+
+    assert shard(step) == (2, 2)
+    assert pytest_targets(step) == ["tests", "ops/bundle/tests"]
+
+
 # The web lanes. Each builds the app and the gallery into a folder of its own under web/, which
 # STRATA_WEB_OUT names (web/out-dirs.ts; web/dist when it is unset), and runs its share of the
 # Playwright tests against that build, so no lane serves files that another lane is rebuilding.
@@ -1300,11 +1450,18 @@ def web_folder(step):
 
 
 def shard(step):
-    """The share of the Playwright tests a step runs, as (current, total); (1, 1) is every test."""
-    for arg in step["run"]:
+    """The share of the tests a Playwright or pytest step runs, as (current, total); (1, 1) is every test. It reads
+    both --shard=K/N and --shard K/N, since the root conftest.py and Playwright accept both."""
+    run = step["run"]
+    for i, arg in enumerate(run):
         if arg.startswith("--shard="):
-            current, total = arg.removeprefix("--shard=").split("/")
-            return int(current), int(total)
+            value = arg.removeprefix("--shard=")
+        elif arg == "--shard" and i + 1 < len(run):
+            value = run[i + 1]
+        else:
+            continue
+        current, total = value.split("/")
+        return int(current), int(total)
     return 1, 1
 
 

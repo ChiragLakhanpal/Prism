@@ -130,6 +130,32 @@ def test_duckdb_takes_one_statement_per_call():
         engine.run("SELECT 1; SELECT 2")
 
 
+def threads(engine):
+    return engine.run("SELECT current_setting('threads') AS n").rows[0][0]
+
+
+def test_duckdb_runs_on_the_threads_strata_duckdb_threads_names_and_on_every_processor_without_it(monkeypatch):
+    """The gate's python lanes set it to 1 (ticket 119): 16 workers each running DuckDB on all 16 processors
+    took 96 seconds for the second half of the tests at a load of 25, and 36 seconds on one thread each."""
+    monkeypatch.delenv("STRATA_DUCKDB_THREADS", raising=False)
+    with DuckDBEngine.open() as engine:
+        every = threads(engine)
+    monkeypatch.setenv("STRATA_DUCKDB_THREADS", "1")
+    with DuckDBEngine.open() as engine, engine.cursor() as cursor:
+        one = threads(engine), threads(cursor)
+
+    assert every > 1
+    assert one == (1, 1)
+
+
+def test_a_thread_count_that_is_not_a_whole_number_stops_with_one_sentence(monkeypatch):
+    monkeypatch.setenv("STRATA_DUCKDB_THREADS", "one")
+
+    with pytest.raises(EngineError, match="STRATA_DUCKDB_THREADS must be a whole number of threads, such as 1, "
+                                          "not 'one'."):
+        DuckDBEngine.open()
+
+
 def test_the_transpile_step_refuses_what_duckdb_cannot_express_instead_of_dropping_it():
     with DuckDBEngine.open() as engine, pytest.raises(EngineError, match="transpile"):
         engine.run("CREATE TABLE strata.main.t (id STRING COMMENT 'the id', public_from DATE)")

@@ -18,9 +18,9 @@
 # needs nothing from the other steps. A step that needs another step's output goes in that
 # step's lane, below it, as the Python tests under tests/ do with the fixture database.
 # A new pytest step names the folders it tests, so each test folder runs in one step. A new
-# test folder whose tests read the fixture database goes in the python lane, and in
-# FIXTURE_READERS in tests/test_gate.py, which checks that each of those folders runs after
-# the build.
+# test folder whose tests read the fixture database goes in the python-1 and python-2 lanes'
+# pytest steps, and in FIXTURE_READERS in tests/test_gate.py, which checks that each of those
+# folders runs after a build.
 # Each pytest step also keeps its scratch in a folder of its own under .gate-tmp/ (--basetemp),
 # which pytest clears at the start of the step's next run and .gitignore leaves out. Without
 # one, a run the limit stopped left its folder, up to 7 GB, locked for three days in pytest's
@@ -67,28 +67,73 @@ name = "Test the guard hook"
 run = ["python3", ".claude/hooks/test_guard.py"]
 lane = "guard"
 
+# The Python tests under tests/ and ops/bundle/tests/ may read the fixture database, so they run after
+# its build. Since ticket 119 they run in two lanes side by side, python-1 and python-2, and each lane
+# starts with the build. The build keeps the database when nothing its last build read has changed
+# (gates/fixture_cache.py), in about a second instead of 15 to 30, and the lane that starts its build
+# second waits for the other lane's build and keeps what it made. Then each lane runs half of the test
+# files: --shard=1/2 and --shard=2/2, which the root conftest.py reads, sort the files by their paths
+# and give the first half to python-1, the bundle tests among them, and the second half to python-2.
+# So the split is the same on every computer and in every run. On October 27, 2026, the one python
+# lane took 139 to 152 seconds and the gate stopped at its limit there: the build 24 to 31 seconds,
+# then pytest 114 to 121 seconds over 3,443 tests, about 1,360 test-seconds at load averages near 25.
+# The two halves held about 635 and 728 of those test-seconds.
+#
+# Each lane gives its half to eight pytest-xdist workers. --dist worksteal lets a worker that runs out
+# of tests take some from a busy one; xdist's default hands each worker a run of neighbouring tests at
+# the start, so slow tests that sit together in one file land on one or two workers. Starting each
+# shard's slowest tests first, one on each worker, cost about 15% more processor time on October 28,
+# 2026 (282 against 244 user-seconds for the second half), since a moved test sets up its module's
+# fixtures again on another worker, and the half took 35 seconds either way.
+#
+# STRATA_DUCKDB_THREADS=1 runs each worker's DuckDB queries on one thread (src/strata/lakehouse/engine.py).
+# By default DuckDB starts a thread for each processor in every connection, so 16 workers ran 256
+# threads on 16 processors. On October 28, 2026, the second half took 96 seconds that way at a load
+# average of 25, and 36 seconds on one thread (40 against 36 at a load of 13, with 332 against 249
+# processor-seconds). The fixture build keeps DuckDB's default, since it runs as one process.
+#
+# What the whole gate costs, measured on October 28, 2026, on this 16-processor computer. Sampled once a second,
+# the processors were 0% idle from about 10 to 110 seconds into a gate, and the gate's own processes used about
+# 1,500 processor-seconds: alone, the Playwright tests take about 810, the Python tests in these two lanes 400 to
+# 470, and the other steps about 60. So the lanes' layout changes little; tests that cost less make the gate shorter.
+# With no other session's tests beside it, the gate passed in 117.4, 119.0, 120.1, 120.4 and 125.4 seconds when it
+# kept the database, and another failed after 113.5 seconds when a test in python-1 failed (the log kept no name).
+# That is about 15 seconds sooner than the merge gates of October 27, 2026, which took 134 to 137 seconds. It passed
+# in 127.6 seconds when it built the database, against 140.4 seconds for the gate before ticket 119 (one python lane,
+# DuckDB on every processor; its pytest step ran every test and failed only this ticket's checks of the two lanes),
+# with another worktree's fixture build beside both. With other sessions' tests beside it (another worktree's whole
+# pytest run, fixture build or screenshots), it passed three times, in 147.1, 144.9 and 137.1 seconds, and the limit
+# stopped it five times at 150: four times with the database kept and once when it built it. Earlier gates, run one
+# after another and perhaps with other sessions' tests beside them, took 118 to 142 seconds with the database kept
+# and 149 with it built, and the limit stopped 6 of 17 at 150. Eight, six or four workers per lane
+# changed the tests' processor time by about 5% and the gate's time by less than the runs differ, so the lanes
+# keep eight.
+# When a lane gets slow again, run `uv run --frozen pytest --durations=15 --shard=1/2 tests ops/bundle/tests` (or 2/2)
+# to find its slowest tests, since a lane can never take less time than its slowest test. Then try
+# more workers, or a third shard (1/3, 2/3 and 3/3 in three lanes), and keep what gives the lower total
+# gate time over three runs, because the lanes share the processors. Each test must be safe beside the
+# others: README's gate section says how.
 [[step]]
-name = "Build the fixture database"
+name = "Build the fixture database, or keep it when nothing it is built from has changed"
 run = ["uv", "run", "--frozen", "python", "gates/build_fixture.py"]
 show = true
-lane = "python"
+lane = "python-1"
 
 [[step]]
-# These tests may read the fixture database, so they run in its lane, after the build. They take
-# about 220 processor-seconds, so eight pytest-xdist workers share them, in about 30 seconds when
-# nothing else runs and about 55 in the gate beside the browsers. --dist worksteal lets a worker that
-# runs out of tests take some from a busy one; xdist's default hands each worker a run of neighbouring
-# tests at the start, so slow tests that sit together in one file land on one or two workers. On
-# October 25, 2026, with other sessions' tests holding the load average near 30, six, eight, ten and
-# twelve workers gave about the same total gate time (80, 85 and 111 seconds on six; 75, 82, 71 and
-# 74 on eight; 70 and 70 on ten; 73 and 70 on twelve), so the lane keeps eight. When the lane gets
-# slow again, run `uv run --frozen pytest --durations=15 tests ops/bundle/tests` to find the slowest
-# tests, since the lane can never take less time than its slowest test. Then try more workers
-# and keep the number that gives the lower total gate time over three runs, because the lanes share
-# the processors. Each test must be safe beside the others: README's gate section says how.
-name = "Run the Python tests under tests/ and ops/bundle/tests/, which may read the fixture database"
-run = ["uv", "run", "--frozen", "pytest", "--basetemp", ".gate-tmp/python", "--numprocesses", "8", "--dist", "worksteal", "tests", "ops/bundle/tests"]
-lane = "python"
+name = "Run the first half of the Python tests under tests/ and ops/bundle/tests/, which may read the fixture database"
+run = ["env", "STRATA_DUCKDB_THREADS=1", "uv", "run", "--frozen", "pytest", "--basetemp", ".gate-tmp/python-1", "--numprocesses", "8", "--dist", "worksteal", "--shard=1/2", "tests", "ops/bundle/tests"]
+lane = "python-1"
+
+[[step]]
+name = "Wait for the python-1 lane's build of the fixture database and keep it, or build it when this lane starts first"
+run = ["uv", "run", "--frozen", "python", "gates/build_fixture.py"]
+show = true
+lane = "python-2"
+
+[[step]]
+name = "Run the second half of the Python tests under tests/ and ops/bundle/tests/, which may read the fixture database"
+run = ["env", "STRATA_DUCKDB_THREADS=1", "uv", "run", "--frozen", "pytest", "--basetemp", ".gate-tmp/python-2", "--numprocesses", "8", "--dist", "worksteal", "--shard=2/2", "tests", "ops/bundle/tests"]
+lane = "python-2"
 
 # The wizard tests take about 60 seconds in one process, so six pytest-xdist workers share them.
 # Most of that time is in 16 tests that run the whole wizard, and they sit together at the top of

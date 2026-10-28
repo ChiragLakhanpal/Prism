@@ -65,7 +65,7 @@ def load_steps(path=STEPS_FILE):
                              f"It can use only these keys: {', '.join(sorted(STEP_KEYS))}.")
         if "lane" in step and not (isinstance(step["lane"], str) and step["lane"].strip()):
             raise SystemExit(f"The lane of the step \"{step['name']}\" in {path} must be a name in quotes, "
-                             "such as lane = \"python\".")
+                             "such as lane = \"python-1\".")
     return float(config.get("limit_seconds", 120)), float(config.get("lock_wait_seconds", 1200)), steps
 
 

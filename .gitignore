@@ -22,6 +22,10 @@ web/playwright-report/
 # Local data and caches
 data/out/*.duckdb
 data/out/*.duckdb.wal
+# The fixture database's key and the lock its builds take turns on (gates/fixture_cache.py; ticket 119)
+data/out/*.inputs.json
+data/out/*.inputs.json.writing
+data/out/*.lock
 .cache/
 # The gate's pytest scratch, one folder per lane (gates/steps.toml, --basetemp; ticket 73)
 .gate-tmp/

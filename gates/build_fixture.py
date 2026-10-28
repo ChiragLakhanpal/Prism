@@ -38,15 +38,31 @@ strata.silver.plan_rows. It builds into a new file and swaps it in, so a failed 
 never leaves a half-built database behind. Run it with this command:
 
     uv run --frozen python gates/build_fixture.py
+
+A run whose inputs have not changed since the last build keeps the database as it is, in about a
+second instead of 15 to 30 (ticket 119). The build writes the hash of every file and folder it read
+beside the database, in data/out/fixture.inputs.json, and gates/fixture_cache.py explains the key.
+Delete that file to build the database again anyway.
 """
+
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+FIXTURE_DB = ROOT / "data" / "out" / "fixture.duckdb"
+
+if __name__ == "__main__":
+    # Before the imports below, which read config files: the cache ends the run here when nothing the
+    # last build read has changed, and otherwise records every file the build reads from here on.
+    import fixture_cache
+
+    CACHE = fixture_cache.start(FIXTURE_DB, ROOT)
 
 import datetime as dt
 import itertools
 import json
 import logging
 import os
-import sys
-from pathlib import Path
 
 from strata.config import load_slice, load_thresholds
 from strata.dashboard import snapshot
@@ -59,9 +75,7 @@ from strata.lakehouse.catalog import CatalogError
 from strata.lakehouse.engine import DuckDBEngine, EngineError
 from strata.reader.documents import NotFetched
 
-ROOT = Path(__file__).resolve().parents[1]
 RUN_ID = "fixture"  # the run id the nightly job's pipeline runs and data readiness measures carry
-FIXTURE_DB = ROOT / "data" / "out" / "fixture.duckdb"
 DEMO = load_slice().demo_plan.project_id  # the project whose Procurement Plans the fixture holds
 # The projects whose Procurement Plans the plan reader reads in the fixture: the demo plan's, then the
 # stress shelf's plan's (ticket 18). The other projects' plans are not recorded. The nightly job's
@@ -166,12 +180,13 @@ def build(out=FIXTURE_DB, manifest=None, tables=catalog.TABLES, plans_for=PLAN_P
     return out
 
 
-def main():
+def main(cache):
     # The fixture's document lists name many documents it never recorded. The readers skip each one with its reason
     # in strata.ops.skipped_documents and a warning in the log (ticket 72); the build counts them in one line instead.
     logging.getLogger("strata.lakehouse.plans").setLevel(logging.ERROR)
     manifest = fmt.load_manifest()
     out = build(manifest=manifest)
+    cache.write()  # once the new database is in place, so a failed build leaves no key that matches
     files = manifest.files()
     recorded_mb = sum((manifest.recorded / name).stat().st_size for name in files) / 1_000_000
     with DuckDBEngine.open(out, read_only=True) as engine:
@@ -184,4 +199,4 @@ def main():
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(main(CACHE))
