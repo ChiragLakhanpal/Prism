@@ -4,6 +4,9 @@ Each rule is defined once here, and every silver transform uses it:
 
 - Text has its spacing made single, and a list is joined with commas. An amount keeps two decimal
   places.
+- Text written with markup is kept as plain words: a notice's HTML, and the words of a Procurement
+  Plan's table that the layout parser wrote with their tags. On the workspace, ai_parse_document
+  wrote a section's name as <u>WORKS</u>, which is WORKS (ticket 122).
 - Dates come in mixed formats (09-Sep-2019, 2021-09-17T00:00:00Z, 2022/04/19). parse_date reads
   each one and returns None for anything else, never a guess.
 - World Bank fiscal years run July to June, so a date from July 1 on falls in the next year's FY.
@@ -26,6 +29,7 @@ from __future__ import annotations
 
 import datetime as dt
 import decimal
+import html
 import re
 from dataclasses import dataclass
 
@@ -45,6 +49,23 @@ def text(value) -> str | None:
         value = ",".join(str(item) for item in value)
     written = " ".join(str(value).split()) if value is not None else ""
     return None if written.lower() in NOT_GIVEN else written or None
+
+
+# A tag that ends a line (a line break, or the end of a paragraph, a block, a heading, a list item or a table row),
+# and any tag.
+BREAKS = re.compile(r"<\s*(br|/p|/div|/h\d|/li|/tr)\s*/?\s*>", re.I)
+TAGS = re.compile(r"<[^>]+>")
+
+
+def plain_text(markup) -> str:
+    """Words written with markup as plain text, one line per paragraph or line break, each line's spacing made single,
+    and an entity such as &amp; read as the character it stands for. It reads a notice's HTML, and each word of a
+    Procurement Plan's table before the plan reader writes it, so <u>WORKS</u> is WORKS."""
+    if not markup:
+        return ""
+    written = html.unescape(TAGS.sub(" ", BREAKS.sub("\n", str(markup))))
+    lines = (" ".join(line.split()) for line in written.splitlines())
+    return "\n".join(line for line in lines if line)
 
 
 def as_written(value) -> str | None:

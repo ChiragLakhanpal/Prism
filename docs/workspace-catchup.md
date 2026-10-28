@@ -3963,3 +3963,29 @@ Record the deploy's exit code, last line and deployment id, the /api/health stat
 ## Tickets 112, 113, 114 and 115, the App redeploy ran: the App runs 4484310a
 
 **Ran on October 28, 2026 (orchestrator), 10:44 to 10:57 UTC, from a snapshot of 4484310a (the wave's tip, with every ticket through 115).** `ops/app/deploy_app.py --keep-secrets` exited 0 with the running line; the watchdog holds 4484310a; the local copy moved to the same commit (http://127.0.0.1:53759, `.notes/local-run.md`). Then the demo-ready command ran once from the snapshot (10:58 to 11:02 UTC): the App, Genie (19 seconds), the P156634 recheck, Home's examples and the workspace listing passed, and the smoke question lost two sentences to `judge_unavailable` (the judge's rate limit on the shared gpt-5.4 deployment, as at 05:54 UTC; ticket 118 and the capacity item on the morning list). The signed-in checks these tickets name (Home's strip "0 of 6 done" and "Next: Check a published plan (P156634)", the box's suggestions, the tracker on a live package, the floating box over a draft's foot bar) are the owner's by eye on the App, or the specialist's path of ticket 49's step 2.
+
+## Ticket 122, step 1 of 2: deploy the bundle, so the nightly's plan reader writes plain words
+
+Parked on October 28, 2026 with ticket 122, which merged into build/strata as f048d0c2 (branch `strata/122-the-plan-reader-keeps-a-row-s-section-as-plain-words` at a1d33427). Every key is set, but mergers run no workspace step: the orchestrator runs this step and the next one today, in this order, from a snapshot that includes this merge (f048d0c2, the done commit that follows it, or a later commit), as the header says (`git archive <sha> | tar -x -C <scratchpad>/snap-<sha>`). The ticket changes the plan reader (`src/strata/lakehouse/plans.py`, with the one markup rule `plain_text` moved into `src/strata/lakehouse/clean.py` from `src/strata/lakehouse/silver/notices.py`) and `ops/plans/run_live.py`, which gains `--rewrite`. No table, route or web file changed. Run it outside the nightly window, and before step 2, because a nightly `parse_and_embed` on the old code writes the tagged sections back.
+
+    uv run --script ops/bundle/deploy.py --env-file "<main checkout>/.env" --fairshare-catalog workspace
+
+It worked if it exits 0 and its "3. What changed:" names no table for this ticket.
+
+Record the exit code and the "3. What changed:" lines here under ticket 122.
+
+## Ticket 122, step 2 of 2: write every read plan's rows again with plain sections, rebuild gold, and check the demo package's steps (criterion 3)
+
+Run after step 1, from the same snapshot. This is criterion 3, the one the verifier parked (`.notes/122-verify.md`, "Criterion 3"). No App redeploy is needed, because the steps route reads `strata.silver.plan_rows`.
+
+    uv run --script ops/plans/run_live.py --env-file "<main checkout>/.env" --rewrite
+    databricks jobs run-now --json '{"job_id": <nightly job ID>, "only": ["bronze_to_gold"]}' --timeout 160m -p strata
+
+It worked if:
+
+- `run_live.py` exits 0, fetches and parses nothing, prints one "I wrote the N plan rows of <project> again, from ... plan versions bronze holds." line per project with plan rows, then a sections line with no tag, and ends "No section in strata.silver.plan_rows holds a tag." Its list of sections holds only STEP's table names (WORKS, GOODS, NON CONSULTING SERVICES, CONSULTING FIRMS, INDIVIDUAL CONSULTANTS).
+- `bronze_to_gold` ends SUCCESS.
+- `SELECT section, count(*) FROM strata.silver.plan_rows GROUP BY section` lists no `<u>`.
+- On the App, `GET /api/packages/KE-NWWDA-541055-CW-RFB/steps` answers `step_dates.family` "goods", `family_reason` null, six steps, and `contract_signed` with `state` "done", `actual_date` "2026-06-22" and `actual_source` "contract_awards" (contract 1903781), as `tests/fixtures/api/steps-ke-nwwda-541055.json` does.
+
+Record the script's per-project lines and its last line, the job run id and its result, the section counts, and the steps route's family, family_reason, step count and contract_signed fields here under ticket 122. When all four hold, the orchestrator ticks criterion 3; when one fails, it opens a follow-up and names it here.
