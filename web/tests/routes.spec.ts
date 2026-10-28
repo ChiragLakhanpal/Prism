@@ -19,8 +19,6 @@ type Route = {
   api?: Record<string, string>;
 };
 
-const DATA_LINK: [string, string] = ["Go to Data", "/data"];
-
 export const ROUTES: Route[] = [
   // Home is built in ticket 41; web/tests/home.spec.ts tests it.
   // All projects and a project's page are built in ticket 10; web/tests/projects.spec.ts tests them.
@@ -35,10 +33,15 @@ export const ROUTES: Route[] = [
     // Ticket 110: one sentence that says what the tab is for.
     purpose:
       "These are lessons quoted from completion reports on finished World Bank projects, and I also show them on a package's page where they apply.",
+    // Ticket 114: the card says whose lessons these are and who decides, and links where a package page's section 3
+    // links when no completion report was read.
     empty: {
-      title: "There are no lessons in the library yet.",
-      body: "A lesson appears here after I read a completion report and a lead procurement specialist decides it belongs.",
-      link: DATA_LINK,
+      title: "No lesson has entered the library yet.",
+      body:
+        "These are the World Bank's own lessons, quoted word for word from completion reports and IEG's reviews of them. " +
+        "I propose each one, and a lead procurement specialist decides whether it enters the library. Proposed lessons " +
+        "wait for that decision, and only lesson reviewers can read them.",
+      link: ["See which completion reports I have read", "/data?sources=notices,awards,documents,projects&from=package_risks"],
     },
     // Ticket 29: the library, empty, as anyone who is not a lesson reviewer reads it (tests/fixtures/api,
     // lessons-me-viewer.json), in ticket 39's page answer (lessons-page-empty.json).

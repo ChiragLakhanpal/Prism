@@ -31,6 +31,7 @@ import { draftScope } from "./lib/drafts";
 import { FOLLOWING_HREF, staffRole } from "./lib/following";
 import { officerAgency } from "./lib/uploads";
 import { startHereVisible } from "./lib/home";
+import { startHereList } from "./lib/startHere";
 import { drawerClosed, evidenceIn, origin, routeOf, visited } from "./lib/evidence";
 import { readStamp, retryStamp, stamp, type Problem } from "./lib/freshness";
 import { formatDate } from "./lib/format";
@@ -235,6 +236,11 @@ export function App() {
     unknown: !applied && !preview && who.status === "loading",
   };
   const mode = modeWords(preview, asOf);
+  // Start here in the sidebar (ticket 114): World Bank staff in their own view, today, while GET /api/me says the strip
+  // shows, once Home has kept its links in this browser. Remove takes it off every page at once.
+  const stripShows = useStore(startHereVisible);
+  const startHereKept = useStore(startHereList);
+  const startHere = stripShows && own === "staff" && !preview && !asOf ? startHereKept : null;
   // The answer shows on the history entry it was asked on: the current one, or the last one finished there.
   const shown = run && run.asked.key === here.key ? run : (kept[here.key] ?? null);
 
@@ -398,6 +404,7 @@ export function App() {
           freshness={freshness}
           // World Bank staff open Following from Projects (ticket 37); a preview, and everyone else, All projects.
           projectsHref={staff && !preview ? FOLLOWING_HREF : undefined}
+          startHere={startHere}
         />
       }
       inertPage={narrow && evidenceId !== null}
