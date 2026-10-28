@@ -29,3 +29,4 @@ Read first: `src/strata/lakehouse/silver/projects.py` (the loans block), `src/st
   - Decisions parked for the user: none. The task named no builder parkedDecisions, and the review and verify notes park none.
   - Coordination: ListAgents showed no session named strata-58 (only strata-e1 and 03-projects-b9), so I sent no index-busy or index-free message.
   - Unblocks: none. No ticket names 120 on its `Blocked by` line.
+- October 28, 2026, orchestrator (13:40 PDT): steps 1 and 2 ran (the catch-up block "Tickets 120, 121 and 123, the live steps ran"): the financier columns were added, every projects page was read again, and the comparison finds 0 of 14,686 pairs missing; criterion 3 holds.
