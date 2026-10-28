@@ -72,6 +72,14 @@ passage_reader_minutes = 30
 # (gates/build_fixture.py), so its tests keep each version. Source: the user's call of October 27, 2026 (decision
 # 95, ticket 108).
 plan_versions = "newest"
+# The most bytes one statement's result may hold when the plan reader reads a project's plan texts, their pages or
+# their parsed tables from bronze (src/strata/lakehouse/plans.py, read_plans). The SQL warehouse returns a result
+# inline, in the statement's reply, only up to this size. The reader measures what each plan version's rows hold
+# before it asks, reads the versions it needs in one statement when they fit together, and one version a statement
+# when they do not. Source: the warehouse's own limit, as its error gave it on October 28, 2026, when ops/plans/
+# run_live.py --rewrite read P156634's 236 plan versions in one statement and stopped: "Statements executed with
+# disposition=INLINE can have a result size of at most 26214400 bytes" (ticket 123).
+inline_result_bytes = 26_214_400
 # The bronze pages silver reads in one group (src/strata/lakehouse/silver/__init__.py, read). For each group it reads
 # the pages, checks once which of them its tables hold already, and writes each table once, so a group costs a few
 # statements where a page cost about four for each table. On the paid workspace's first nightly run, October 26,

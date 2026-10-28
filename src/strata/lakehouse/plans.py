@@ -12,7 +12,10 @@ For one project, a run:
    strata.ops.skipped_documents as superseded (ticket 108).
 2. Reads every version cheaply (Route A): its Executing Agency(ies) line, which puts it in one
    series per implementing agency, and every Activity Reference No. its text lists. These become
-   silver.plan_versions and silver.plan_listings.
+   silver.plan_versions and silver.plan_listings. It asks bronze for the texts of the versions it reads alone, by
+   document id, in statements whose results fit the SQL warehouse's inline limit (config/thresholds.toml,
+   ingestion.inline_result_bytes): one statement when they fit together, one version a statement when they do not
+   (ticket 123). The rewrite (rewrite) reads through the same place.
 3. Decides each activity's first listing, the earliest version read that lists it, which holds its
    first published planned dates. The first listing is confirmed only when every plan the list
    names that is dated on or before it, or that has no date, was read; otherwise an older version
@@ -433,20 +436,106 @@ def _published_order(version: Version) -> tuple:
     return (version.entry.plan_date, version.public_from, version.document_id)
 
 
-def read_versions(engine: Engine, project_id: str, listing: Listing) -> list[Version]:
+# ── Reading the plans' texts within the warehouse's inline limit (ticket 123) ──
+
+# What a row of a read holds beside its long text, in bytes: its document id, page number, hash and dates, and the
+# quotes and commas the warehouse's JSON_ARRAY result writes around them.
+ROW_BYTES = 256
+# The characters JSON writes with a backslash: the control characters, the quote mark and the backslash itself. Each
+# takes two to six bytes in the warehouse's result where the text holds one.
+ESCAPED = "".join(chr(code) for code in range(1, 32)) + '"\\'
+
+
+@dataclass(frozen=True)
+class TextRead:
+    """A read of a project's plans from one bronze table, by document id: the columns it returns, the column that
+    holds the long text, the order of its rows, and what a plan left out of the read misses, in words."""
+
+    table: str
+    columns: tuple[str, ...]
+    text: str
+    order: str
+    left_out: str
+
+
+NOT_READ_WORDS = "It counts as listed but not read."
+PLAN_TEXTS = TextRead("strata.bronze.document_texts", ("document_id", "text", "public_from"), "text", "document_id",
+                      NOT_READ_WORDS)
+PLAN_PAGES = TextRead("strata.bronze.document_pages", ("document_id", "pdf_page", "page_hash", "text"), "text",
+                      "document_id, pdf_page", NOT_READ_WORDS)
+# The tables the layout parser read on each page (Route B), in the order it read them, so a page read again wins.
+PARSED_PAGES = TextRead("strata.bronze.layout_pages",
+                        ("document_id", "pdf_page", "page_hash", "parser", "tables", "parsed_at"), "tables", "parsed_at",
+                        "Its text was read, and it has no STEP rows.")
+
+
+def inline_result_bytes(thresholds: Thresholds) -> int:
+    """The most bytes one statement's result may hold (config/thresholds.toml, ingestion.inline_result_bytes)."""
+    return int(thresholds.value("ingestion.inline_result_bytes"))
+
+
+def _document_marks(document_ids: list[str]) -> tuple[str, dict[str, str]]:
+    """The plans' document ids as bound parameters: the text :document_0, :document_1, ... and the values for it."""
+    names = [f"document_{number}" for number in range(len(document_ids))]
+    return ", ".join(f":{name}" for name in names), dict(zip(names, document_ids, strict=True))
+
+
+@dataclass(frozen=True)
+class PlansRead:
+    """What read_plans read: the rows, and the plans whose own rows pass the limit, which it left out."""
+
+    rows: list[tuple]
+    too_large: frozenset[str] = frozenset()
+
+
+def read_plans(engine: Engine, read: TextRead, project_id: str, document_ids: list[str], limit: int) -> PlansRead:
+    """The rows of one bronze table for the plans document_ids names, and no others, in statements whose results fit
+    the warehouse's inline limit (limit, in bytes). It measures each plan's rows before it asks for them, at the most
+    the warehouse's JSON can write them: six bytes for each character JSON may write as an escape (a quote mark, a
+    backslash, a control character such as a line break, or a letter outside ASCII, as \\u00e9), the text's own bytes
+    for the rest, and ROW_BYTES a row. When the plans fit together it asks for them in one statement; when they do
+    not, it asks for one plan a statement. A plan whose own rows pass the limit is left out, with a warning. On October
+    28, 2026 the read of P156634's 236 plan versions in one statement passed the limit (26,214,400 bytes), and the
+    warehouse refused it."""
+    text = read.text
+    sizes = {str(document_id): int(size) for document_id, size in engine.run(
+        f"SELECT document_id, sum(5 * octet_length(encode({text}, 'UTF-8')) - 4 * length({text}) "  # sql-lint: names only
+        f"+ 5 * (length({text}) - length(translate({text}, :escaped, ''))) + :row_bytes) AS bytes FROM {read.table} "
+        "WHERE project_id = :project_id GROUP BY document_id",
+        {"project_id": project_id, "escaped": ESCAPED, "row_bytes": ROW_BYTES}).rows}
+    held = [document_id for document_id in dict.fromkeys(document_ids) if document_id in sizes]
+    too_large = [document_id for document_id in held if sizes[document_id] > limit]
+    for document_id in too_large:
+        log.warning("I left document %s of %s out of my read of %s: its rows can take up to %s bytes, and the SQL "
+                    "warehouse returns at most %s in one statement (config/thresholds.toml, "
+                    "ingestion.inline_result_bytes). %s", document_id, project_id, read.table,
+                    f"{sizes[document_id]:,}", f"{limit:,}", read.left_out)
+    wanted = [document_id for document_id in held if document_id not in too_large]
+    parts = [wanted] if sum(sizes[document_id] for document_id in wanted) <= limit else [[one] for one in wanted]
+    rows: list[tuple] = []
+    for part in (part for part in parts if part):
+        marks, params = _document_marks(part)
+        rows += engine.run(f"SELECT {', '.join(read.columns)} FROM {read.table} "  # sql-lint: names only
+                           f"WHERE project_id = :project_id AND document_id IN ({marks}) ORDER BY {read.order}",
+                           {"project_id": project_id, **params}).rows
+    return PlansRead(rows, frozenset(too_large))
+
+
+def read_versions(engine: Engine, project_id: str, listing: Listing, limit: int) -> list[Version]:
     """Every listed plan bronze holds, read through its text (Route A), in series per implementing
-    agency, with each activity's first listing. This is the one place that decides first listings."""
-    texts = {str(d): (t, _date(p)) for d, t, p in engine.run(
-        "SELECT document_id, text, public_from FROM strata.bronze.document_texts WHERE project_id = :project_id",
-        {"project_id": project_id}).rows}
+    agency, with each activity's first listing. This is the one place that decides first listings.
+
+    It reads only the listed plans' texts and pages, by document id, within the warehouse's inline limit (read_plans):
+    the nightly run lists the newest plan alone (newest_only), and a rewrite the plans silver.plan_versions holds."""
+    wanted = [entry.document_id for entry in listing.entries]
+    texts = {str(d): (t, _date(p)) for d, t, p in read_plans(engine, PLAN_TEXTS, project_id, wanted, limit).rows}
+    page_rows = read_plans(engine, PLAN_PAGES, project_id, [d for d in wanted if d in texts], limit)
     pages: dict[str, list] = defaultdict(list)
-    for document_id, number, digest, text in engine.run(
-            "SELECT document_id, pdf_page, page_hash, text FROM strata.bronze.document_pages "
-            "WHERE project_id = :project_id ORDER BY document_id, pdf_page", {"project_id": project_id}).rows:
+    for document_id, number, digest, text in page_rows.rows:
         pages[str(document_id)].append((int(number), str(digest), text))
     versions = []
     for entry in listing.entries:
-        if entry.document_id not in texts:
+        if entry.document_id not in texts or entry.document_id in page_rows.too_large:
             continue
         text, public = texts[entry.document_id]
         page_texts = pages[entry.document_id]
@@ -684,18 +773,18 @@ def plain_words(table: Table) -> Table:
                  tuple(tuple(clean.plain_text(cell) for cell in row) for row in table.rows))
 
 
-def write_rows(engine: Engine, project_id: str, versions: list[Version], misread_characters: int) -> RowsRead:
+def write_rows(engine: Engine, project_id: str, versions: list[Version], misread_characters: int,
+               limit: int) -> RowsRead:
     """STEP rows and step dates for every version whose table pages are all parsed.
 
     Each version's references are checked against the ones its text lists (Route A): a reference the layout parser
     misread by at most misread_characters characters (config/thresholds.toml, ingestion.reference_misread_characters)
     is written as the text gives it, so its steps keep their first listing and their delay (ticket 78). Each word a
     row takes, its section, description, method and the rest, is written as plain words (plain_words). Bronze keeps
-    what the parser read."""
+    what the parser read. It reads only the versions' parsed pages, within the warehouse's inline limit (read_plans)."""
     parsed: dict[tuple[str, int], tuple[str, str, str]] = {}
-    for document_id, number, digest, parser, tables, _ in engine.run(
-            "SELECT document_id, pdf_page, page_hash, parser, tables, parsed_at FROM strata.bronze.layout_pages "
-            "WHERE project_id = :project_id ORDER BY parsed_at", {"project_id": project_id}).rows:
+    for document_id, number, digest, parser, tables, _ in read_plans(
+            engine, PARSED_PAGES, project_id, [version.document_id for version in versions], limit).rows:
         parsed[(str(document_id), int(number))] = (str(digest), str(parser), tables)
     for table in ("plan_rows", "plan_steps", "plan_step_delays", "plan_data_notes"):
         engine.run(f"DELETE FROM strata.silver.{table} WHERE project_id = :project_id",  # sql-lint: names only
@@ -747,13 +836,15 @@ def rewrite(engine: Engine, project_id: str, *, thresholds: Thresholds | None = 
     versions give the same plan_versions and plan_listings, so only the rows, steps, delays and data notes are
     written again (write_rows)."""
     thresholds = thresholds or load_thresholds()
+    limit = inline_result_bytes(thresholds)
     held = {str(row[0]) for row in engine.run(
         "SELECT document_id FROM strata.silver.plan_versions WHERE project_id = :project_id",
         {"project_id": project_id}).rows}
     listing = listed_plans(engine, project_id)
     versions = read_versions(engine, project_id, Listing(
-        [entry for entry in listing.entries if entry.document_id in held], listing.dates))
-    return write_rows(engine, project_id, versions, int(thresholds.value("ingestion.reference_misread_characters")))
+        [entry for entry in listing.entries if entry.document_id in held], listing.dates), limit)
+    return write_rows(engine, project_id, versions, int(thresholds.value("ingestion.reference_misread_characters")),
+                      limit)
 
 
 # ── 6. Data readiness ────────────────────────────────────────────────────
@@ -821,6 +912,7 @@ def run(engine: Engine, documents: Documents, layout: LayoutParser, project_id: 
     thresholds = thresholds or load_thresholds()
     cap = int(thresholds.value("ingestion.daily_page_cap"))
     misread_characters = int(thresholds.value("ingestion.reference_misread_characters"))
+    limit = inline_result_bytes(thresholds)
     chosen = plan_versions(thresholds)
     endpoint = endpoint or load_sources()[SOURCE].endpoint
     started = clock()
@@ -842,13 +934,13 @@ def run(engine: Engine, documents: Documents, layout: LayoutParser, project_id: 
     if fetching.stop is not None:  # the host refused, or the time is spent, before every plan was fetched
         leave_unfetched(engine, run_id, project_id, listing, fetching, clock())
         raise fetching.stop
-    versions = read_versions(engine, project_id, listing)
+    versions = read_versions(engine, project_id, listing, limit)
     write_versions(engine, project_id, versions)
     parsing = parse_chosen(engine, layout, project_id, versions, cap, clock, run_id)
     if parsing.stop is not None:  # the host refused, or the night's reading time is spent: the reading ends here
         record_stop(engine, run_id, "plans", project_id, parsing, started, clock())
         raise parsing.stop
-    read = write_rows(engine, project_id, versions, misread_characters)
+    read = write_rows(engine, project_id, versions, misread_characters, limit)
     finished = clock()
     record_parse_run(engine, run_id, project_id, parsing, started, finished)
     measures = measure(engine, project_id, run_id, versions, len(listing.dates), read, parsed_pages(engine, project_id),
