@@ -13,7 +13,12 @@ answer_runner() makes the runner the server's /api/ask stream runs. For each que
    can check the answer against it. The results go back to the agent.
 3. This repeats for at most agent.tool_rounds rounds (config/thresholds.toml). A call the agent asks
    for after that is not run: the agent gets a result that says so, and must answer from what it has.
-4. The agent's claims go to the stream, which runs the verifier on them before anything is shown, with
+4. One rewrite round (ticket 109): the loop runs the verifier's checks 1 to 3 on the agent's answer, offline, and
+   when they would remove a sentence it sends the agent one data-only message, {"rewrite": [{"sentence", "reasons"}]},
+   and takes the next answer as final. A rewrite that is not an answer (tool calls, no claims as JSON, or an agent
+   that failed on the message) leaves the earlier answer. agent.rewrite_rounds (config/thresholds.toml) sets how many such rounds run; 0 turns them off.
+   Nothing goes to the stream before this ends.
+5. The agent's claims go to the stream, which runs the verifier's six checks on them before anything is shown, with
    the refusal key when the agent turned the request down (ticket 24).
 
 Each tool call is a step, announced as it starts and when it is done. A tool the agent called with
@@ -31,7 +36,8 @@ import time
 from collections.abc import AsyncIterator, Callable, Mapping
 from typing import Any, Protocol
 
-from strata.agent.claims import ClaimsError, parse_answer
+from strata.agent.claims import Answer, Claim, ClaimsError, parse_answer
+from strata.agent.verifier import verify
 from strata.config import Thresholds, Tool, load_thresholds, load_tools
 from strata.harness.facts import Facts
 from strata.harness.turn import Event, RunError, Runner, Turn
@@ -170,6 +176,7 @@ def answer_runner(agent_for: Callable[[Turn], Agent], engine_for: EngineFor, too
     environment; without it, the process's environment (ticket 66)."""
     limits = thresholds or load_thresholds()
     rounds = int(limits.value("agent.tool_rounds"))
+    rewrites = int(limits.value("agent.rewrite_rounds"))
     tools_held = tools if tools is not None else load_tools()
 
     def run_tool(turn: Turn, as_of: dt.date, call: Mapping) -> tuple[dict, dict]:
@@ -229,19 +236,44 @@ def answer_runner(agent_for: Callable[[Turn], Agent], engine_for: EngineFor, too
         message = {"question": turn.question, "scope": turn.scope.chip, "as_of": as_of.isoformat(),
                    "view": turn.scope.view, "language": turn.scope.language}
         items = [{"role": "user", "content": json.dumps(message, ensure_ascii=False)}]
-        previous, refusals, step = None, 0, 0
+        previous, refusals, step, answer, rewritten = None, 0, 0, None, 0
         while True:
-            response = await asyncio.to_thread(agent.respond, items, previous)
-            turn.notes.agent_version = agent.version or turn.notes.agent_version  # Foundry names it in a response
-            previous = response.get("id")
-            turn.notes.response_ids.append(previous)
-            calls = function_calls(response)
-            if not calls:
-                yield Event("step", {"id": "write", "kind": "write", "status": "running"})
-                try:
-                    answer = parse_answer(output_text(response))
-                except ClaimsError as error:
-                    raise AgentError("agent_output", str(error)) from error
+            try:
+                response = await asyncio.to_thread(agent.respond, items, previous)
+            except AgentError as error:
+                if answer is None:
+                    raise
+                # The agent failed on the rewrite message, such as a content filter, so it wrote nothing new.
+                log.warning("Run %s: the agent did not answer the rewrite (%s).", turn.run_id, error.code)
+                response = None
+            if response is not None:
+                turn.notes.agent_version = agent.version or turn.notes.agent_version  # Foundry names it in a response
+                previous = response.get("id")
+                turn.notes.response_ids.append(previous)
+            calls = function_calls(response) if response is not None else []
+            if answer is not None or not calls:
+                if answer is None:
+                    yield Event("step", {"id": "write", "kind": "write", "status": "running"})
+                    try:
+                        answer = parse_answer(output_text(response))
+                    except ClaimsError as error:
+                        raise AgentError("agent_output", str(error)) from error
+                else:  # the agent's rewrite, which replaces its answer only when it is one
+                    again = None if response is None or calls else _answer_or_none(output_text(response))
+                    if again is None:
+                        log.info("Run %s: the agent's rewrite was not an answer, so its earlier answer stands.",
+                                 turn.run_id)
+                        rewritten = rewrites  # no further round: the earlier answer goes to the verifier as it is
+                    else:
+                        answer = again
+                flagged = would_remove(answer.claims, turn.facts, turn.scope.language) if rewritten < rewrites else []
+                if flagged:
+                    rewritten += 1
+                    log.info("Run %s: checks 1 to 3 would remove %d sentences, so the agent was asked to rewrite.",
+                             turn.run_id, len(flagged))
+                    items = [{"role": "user", "content": json.dumps({REWRITE: flagged}, ensure_ascii=False)}]
+                    continue
+                # Only now does the answer go to the stream, which runs the verifier's six checks on it.
                 yield Event("step", {"id": "write", "kind": "write", "status": "done", "count": len(answer.claims)})
                 yield Event("claims", {"claims": answer.claims, "refusal": answer.refusal})
                 return
@@ -268,6 +300,38 @@ def answer_runner(agent_for: Callable[[Turn], Agent], engine_for: EngineFor, too
                 items.append(call_output(call, output))
 
     return run
+
+
+REWRITE = "rewrite"  # the key of the one message the rewrite round sends
+
+
+def rewrite_asked(items: list[dict]) -> list[dict] | None:
+    """The sentences a request asks the agent to rewrite, when it is the rewrite round's message, or None."""
+    for item in items:
+        if item.get("role") == "user":
+            try:
+                message = json.loads(item.get("content") or "")
+            except (TypeError, ValueError):
+                continue
+            if isinstance(message, dict) and REWRITE in message:
+                return message[REWRITE]
+    return None
+
+
+def would_remove(claims: list[Claim], facts: Facts, language: str) -> list[dict]:
+    """Each sentence the verifier's checks 1 to 3 would remove, with its reasons, as the rewrite message lists them:
+    data only, the sentence and each reason's code with the number, date or evidence id it is about."""
+    return [{"sentence": sentence.claim.sentence,
+             "reasons": [{"code": reason.code, **({"text": reason.text} if reason.text is not None else {})}
+                         for reason in sentence.reasons]}
+            for sentence in verify(claims, facts, language).removed]
+
+
+def _answer_or_none(text: str) -> Answer | None:
+    try:
+        return parse_answer(text)
+    except ClaimsError:
+        return None
 
 
 def _arguments(call: Mapping) -> dict:

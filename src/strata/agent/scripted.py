@@ -8,7 +8,9 @@ added when the case is replayed and never written into the recording, so they su
 ScriptedAgent answers each request with the next response, as the live agent would. It also checks that
 the loop talks to it the way the Responses API needs: each request continues the previous response and
 answers every tool call that response asked for. A recording made for another question is refused, so a
-changed case is re-recorded rather than replayed against the wrong answers.
+changed case is re-recorded rather than replayed against the wrong answers. When the answer loop sends its rewrite
+message (ticket 109), it answers with the recording's next answer, or with the same answer again when the recording
+holds no more, as an agent that keeps its sentences would.
 
 ScriptedJudge stands in for the judge of the verifier's check 4 (src/strata/agent/judge.py) in the same way:
 it answers from the case's recorded judge answer (tests/fixtures/agent/judged/<case id>.json), made for the
@@ -28,7 +30,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from strata.agent.judge import JudgeError, Judgement, Question, judgements
-from strata.agent.loop import function_calls, output_text
+from strata.agent.loop import function_calls, output_text, rewrite_asked
 from strata.harness.turn import TraceIds
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -82,16 +84,19 @@ class Case:
 
     def responses(self) -> list[dict]:
         """The recording's responses with the case's plants: planted rounds of tool calls before the
-        answer, and planted claims at the end of it."""
+        answer, and planted claims at the end of it. A recording made with the rewrite round (ticket 109) holds
+        an answer after the first one; the plants go into each answer, as an agent that keeps them would write them."""
         responses = copy.deepcopy(self.recorded()["responses"])
-        *rounds, answer = responses
+        first = next((place for place, response in enumerate(responses) if not function_calls(response)),
+                     len(responses) - 1)
+        rounds, answers = responses[:first], responses[first:]
         planted = [{"id": f"resp_planted_{number}", "object": "response", "status": "completed",
                     "output": [{"type": "function_call", "id": f"fc_planted_{number}_{place}",
                                 "call_id": f"call_planted_{number}_{place}", "name": call["name"],
                                 "arguments": json.dumps(call.get("arguments", {})), "status": "completed"}
                                for place, call in enumerate(calls, 1)]}
                    for number, calls in enumerate(self.plant_rounds, 1)]
-        if self.plant_claims or self.plant_notes:
+        for answer in answers if self.plant_claims or self.plant_notes else ():
             written = json.loads(output_text(answer))
             if self.plant_claims:
                 written["claims"] += [copy.deepcopy(claim) for claim in self.plant_claims]
@@ -102,7 +107,7 @@ class Case:
             answer["output"] = [{"type": "message", "id": "msg_planted", "role": "assistant", "status": "completed",
                                  "content": [{"type": "output_text", "annotations": [],
                                               "text": json.dumps(written, ensure_ascii=False)}]}]
-        return [*rounds, *planted, answer]
+        return [*rounds, *planted, *answers]
 
 
 def load_cases(path: Path = CASES, recordings: Path | None = None) -> dict[str, Case]:
@@ -133,22 +138,31 @@ class ScriptedAgent:
         self.case = case
         self.responses = case.responses()
         self.received: list[dict] = []
+        self.last: dict | None = None  # the response it gave last
 
     def respond(self, items: list[dict], previous_response_id: str | None) -> dict:
         turn = len(self.received)
         self.received.append({"input": copy.deepcopy(items), "previous_response_id": previous_response_id})
-        if turn >= len(self.responses):
+        rewrite = rewrite_asked(items) is not None
+        if turn >= len(self.responses) and not rewrite:
             raise ScriptError(f"Case {self.case.id} was asked for answer {turn + 1}, and it has "
                               f"{len(self.responses)}.")
         if turn:
-            before = self.responses[turn - 1]
+            before = self.last
             if previous_response_id != before["id"]:
                 raise ScriptError(f"Request {turn + 1} continued {previous_response_id}, not {before['id']}.")
             asked = [call["call_id"] for call in function_calls(before)]
             answered = [item.get("call_id") for item in items if item.get("type") == "function_call_output"]
             if answered != asked:
                 raise ScriptError(f"Request {turn + 1} answered the tool calls {answered}, not {asked}.")
-        return copy.deepcopy(self.responses[turn])
+        if turn < len(self.responses):
+            self.last = copy.deepcopy(self.responses[turn])
+        else:
+            # A rewrite the recording does not hold (ticket 109) gets the same answer again, under an id of its own, as
+            # an agent that keeps its sentences would send it, so a case's planted sentences stay and are removed as
+            # before.
+            self.last = {**copy.deepcopy(self.responses[-1]), "id": f"{self.responses[-1]['id']}_again_{turn + 1}"}
+        return copy.deepcopy(self.last)
 
 
 class ScriptedJudge:

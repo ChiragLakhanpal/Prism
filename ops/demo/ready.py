@@ -8,17 +8,21 @@ It needs DATABRICKS_HOST, DATABRICKS_TOKEN, DATABRICKS_WAREHOUSE_ID, GENIE_SPACE
 AZURE_OPENAI_ENDPOINT and AZURE_OPENAI_API_KEY in the env file, the az command line signed in for the Foundry agent,
 and the browser sign-in the wizard saved under the Databricks CLI profile that ops/dayone/dayone.toml names, which
 the app's health route needs. Before anything else, it reads the app's compute and the SQL warehouse's state through
-the SDK. When the workspace stopped the app's compute ("due to workspace or account status"), or the warehouse is
-stopped and will not start when asked, it says so in one sentence and exits 2 before it changes anything (ticket 81).
-Otherwise it lists the workspace, then takes these steps, in order:
+the SDK. When the workspace stopped the app's compute ("due to workspace or account status") and the app kept its
+deployment, or the warehouse is stopped and will not start when asked, it says so in one sentence and exits 2 before
+it changes anything (ticket 81). Otherwise it lists the workspace, then takes these steps, in order:
 
 1. The app. It finds the app ops/dayone/dayone.toml names and leaves it alone unless it runs Strata's code from
-   ops/app/deploy_app.py's folder. It starts a stopped app. An app stops 24 hours after each start or deploy
+   ops/app/deploy_app.py's folder. When the app's compute is stopped and it has no active deployment, as the platform
+   left it twice on October 27, 2026 (11:35 and 18:48 UTC, "due to workspace or account status"), a start alone runs
+   nothing, so it starts the compute and deploys Strata again with ops/app/deploy_app.py --keep-secrets from this
+   checkout (ticket 109). It starts any other stopped app. An app stops 24 hours after each start or deploy
    (docs/PLAN.md section 16), so it restarts a running app whose last start or deploy, as the Apps API reports it,
    was [demo_ready] restart_after_hours ago or earlier, and leaves a more recent one running, since a restart takes
-   about eight and a half minutes (ticket 77). It says which of the three it did and why. Then it asks GET
+   about eight and a half minutes (ticket 77). It says which of these it did and why. Then it asks GET
    /api/health until the app answers, for at most [demo_ready] health_timeout_seconds in config/thresholds.toml.
-   When day-one test 6 chose the Container Apps copy for reviewers, it says that no command checks that copy yet.
+   It checks the Databricks App whatever day-one test 6 chose for reviewers, and when that test chose the Container
+   Apps copy, which no ticket built, its sentence says so.
 2. The SQL warehouse and Genie. It asks the ask_genie question that config/slice.toml's [demo_plan] names, through
    the tool registry as the env file's token, which starts a stopped warehouse first (ticket 33). Then it asks again,
    and that call must answer within [demo_ready] genie_first_call_seconds.
@@ -26,7 +30,8 @@ Otherwise it lists the workspace, then takes these steps, in order:
    this process as ticket 33's benchmark runner runs it (strata.evals.answer_benchmark), with the Foundry agent, the
    SQL warehouse and the live tools, and passes it only when the
    verifier's own events say so: all six checks ran, no sentence was removed, and the kept sentences cite what the
-   benchmark file expects.
+   benchmark file expects. When it fails, it prints each sentence the verifier removed, with the words the sentence
+   quoted and from which passage, and each reason with the number, date or evidence id it is about (ticket 109).
 4. The P156634 recheck. It runs project_signals for the demo plan's project twice through the tool registry, on the
    fixture database and on the workspace, prints each check's state and every difference between the two runs, and
    lists the activities whose plan row shows no signed contract while the awards dataset holds one. A closed project
@@ -74,6 +79,9 @@ import fresh_workspace  # noqa: E402  (ops/demo/fresh_workspace.py, the dry run)
 import workspace_state  # noqa: E402  (ops/bundle/workspace_state.py, read before anything changes; ticket 81)
 from workspace_env import WorkspaceEnvError, load_workspace_env  # noqa: E402
 
+from strata.agent.claims import ClaimsError, parse_answer  # noqa: E402
+from strata.agent.loop import function_calls, output_text  # noqa: E402
+from strata.agent.record import Keeper  # noqa: E402
 from strata.agent.verifier import ALL_CHECKS  # noqa: E402
 from strata.config import Thresholds, load_slice, load_thresholds  # noqa: E402
 from strata.evals import answer_benchmark, benchmark  # noqa: E402
@@ -201,6 +209,12 @@ def ago(span: dt.timedelta) -> str:
     return f"{' and '.join(parts)} ago"
 
 
+def dropped(app: dict | None) -> bool:
+    """Whether the platform stopped the app's compute and dropped its deployment, as apps get showed on October 27,
+    2026 at 11:35 and 18:48 UTC ("due to workspace or account status"): stopped, with no active deployment."""
+    return app is not None and not app.get("running") and not app.get("deployed", True)
+
+
 def app_step(workspace, setup: Setup, say) -> Outcome:
     step = "the app"
     name = dayone.load_config()["names"]["app"]
@@ -214,17 +228,37 @@ def app_step(workspace, setup: Setup, say) -> Outcome:
         return Outcome(step, FAILED, f"I found no app named {name}. Deploy Strata first: uv run --script "
                                      "ops/app/deploy_app.py --env-file .env")
     source = (app.get("source") or "").rstrip("/")
-    if app.get("description") != deploy_app.DESCRIPTION or not source.endswith(f"/{deploy_app.FOLDER}"):
+    lost = dropped(app)
+    if app.get("description") != deploy_app.DESCRIPTION or not (lost or source.endswith(f"/{deploy_app.FOLDER}")):
         return Outcome(step, FAILED, f"The app {name} runs {source or 'nothing yet'}, not Strata's code from the "
                                      f"{deploy_app.FOLDER} folder, so I left it alone. Deploy Strata with "
                                      "ops/app/deploy_app.py, or set names.app in ops/dayone/dayone.toml.")
-    # Which of three things to do, and why: start a stopped app, leave running one that started recently, or restart
-    # one that started restart_after_hours ago or earlier, or whose start the Apps API does not give.
+    # Which of four things to do, and why: deploy again an app whose deployment the platform dropped, start a stopped
+    # app, leave running one that started recently, or restart one that started restart_after_hours ago or earlier,
+    # or whose start the Apps API does not give.
     last_start = app.get("started")
     age = None if last_start is None else setup.now() - last_start
     since = "" if age is None else (f"   It was running, and it last started or was deployed at {at(last_start)}, "
                                     f"{ago(age)}. That is")
-    if not app.get("running"):
+    if lost:
+        # The platform stopped the compute and dropped the deployment twice on October 27, 2026 (ticket 109). A start
+        # brings the compute back with nothing to run, and the deploy refuses a compute the workspace stopped, so the
+        # start comes first.
+        workspace.start_app(name)
+        code, printed = workspace.redeploy_app(name)
+        last = (printed or "").strip().splitlines()[-1:] or ["nothing"]
+        say(f"   The app {name}'s compute was stopped and it had no active deployment, so a start alone would run "
+            "nothing. I started its compute and deployed Strata again with ops/app/deploy_app.py --keep-secrets.")
+        # The deploy exits 1 both when it never deployed (the web app did not build) and when its deployment was
+        # still IN_PROGRESS as its wait ended (October 27, 2026, 12:31 UTC), so the app itself says which.
+        if not (workspace.app(name) or {}).get("deployed", True):
+            return Outcome(step, FAILED, f"I started its compute, and the deploy exited {code} without deploying, "
+                                         f"saying: {last[0]}")
+        if code != 0:
+            say(f"   The deploy exited {code}, and its last line said: {last[0]} I waited for the health route anyway, "
+                "since a deployment after a cold start can outlast the deploy's own wait.")
+        done = "I deployed Strata again, since the platform had dropped its deployment"
+    elif not app.get("running"):
         workspace.start_app(name)
         say(f"   The app {name} was stopped, so I started it. It runs for 24 hours from now.")
         done = "I started it, since it was stopped"
@@ -258,11 +292,11 @@ def app_step(workspace, setup: Setup, say) -> Outcome:
         setup.sleep(poll)
     took = seconds(setup.clock() - started)
     say(f"   GET /api/health answered after {took}, within the {timeout}-second limit, at {app['url']}.")
-    if setup.reviewer_path() == "gap fill":
-        return Outcome(step, FAILED, "Day-one test 6 chose a Container Apps copy of the app for reviewers, and no "
-                                     "command deploys or checks that copy yet, so I could not check the address "
-                                     "reviewers open.")
-    return Outcome(step, PASSED, f"{done}. It answered its health route after {took}.")
+    # The step checks the Databricks App whatever day-one test 6 chose, and only its sentence names the choice: no
+    # ticket built the Container Apps copy, and the workspace holds the app (the orchestrator, October 27, 2026).
+    choice = (" Day-one test 6 chose a Container Apps copy for reviewers, which no command checks, so I checked the "
+              "Databricks App, which the workspace holds.") if setup.reviewer_path() == "gap fill" else ""
+    return Outcome(step, PASSED, f"{done}. It answered its health route after {took}.{choice}")
 
 
 # ── 2. The SQL warehouse and Genie ───────────────────────────────────────
@@ -315,15 +349,52 @@ def check_problems(events: list[tuple[str, dict]]) -> list[str]:
     return problems
 
 
+def final_claims(responses: list[dict]) -> list:
+    """The claims of the agent's answer the verifier checked: its last response with no tool calls whose text is claims
+    as JSON, as the answer loop takes it (a rewrite that is not an answer leaves the earlier one)."""
+    for response in reversed(responses):
+        if function_calls(response):
+            continue
+        try:
+            return list(parse_answer(output_text(response)).claims)
+        except ClaimsError:
+            continue
+    return []
+
+
+def removed_lines(events: list[tuple[str, dict]], claims: list) -> list[str]:
+    """Each sentence the verifier removed, with the words it quoted and from where, and each reason with the number,
+    date or evidence id it is about, so a failed run says what went wrong and not only its codes (ticket 109)."""
+    lines = []
+    for data in (data for kind, data in events if kind == "removed"):
+        index = data.get("index")
+        claim = claims[index] if isinstance(index, int) and 0 <= index < len(claims) else None
+        quote = claim.quote if claim is not None and claim.sentence == data.get("sentence") else None
+        quoted = f"It quoted \"{quote.text}\" from {quote.evidence_id}." if quote else "It quoted nothing."
+        reasons = ", ".join(f"{reason['code']} ({reason['text']})" if reason.get("text") else reason["code"]
+                            for reason in data.get("reasons") or ())
+        lines.append(f"Removed: \"{data.get('sentence')}\" {quoted} Reasons: "
+                     f"{reasons or data.get('reason') or 'none given'}.")
+    return lines
+
+
 def smoke_step(workspace, setup: Setup, say) -> Outcome:
     step = "the smoke question"
     question = questions()[load_slice().demo_plan.smoke_question]
     say(f"3. The smoke question, {question['id']} in evals/benchmark.yaml: \"{' '.join(question['question'].split())}\"")
-    [(asked, scored)] = answer_benchmark.run([question], workspace.agent_for, workspace.engine_for,
+    agents: list[Keeper] = []  # each agent the run asked, with the responses it gave, for the quotes it wrote
+
+    def agent_for(turn):
+        agents.append(Keeper(workspace.agent_for(turn)))
+        return agents[-1]
+
+    [(asked, scored)] = answer_benchmark.run([question], agent_for, workspace.engine_for,
                                              judge=workspace.judge, viewer=workspace.viewer,
                                              today=lambda: setup.day())
     problems = list(scored.problems) + check_problems(asked.events)
     if problems:
+        for line in removed_lines(asked.events, final_claims(agents[-1].responses) if agents else []):
+            say(f"      {line}")
         return Outcome(step, FAILED, f"The answer did not pass. {' '.join(problems)}")
     checks = next(data for kind, data in asked.events if kind == "checks")
     kept, numbers, quotes = checks["sentences"]["kept"], checks["numbers"], checks["quotes"]
@@ -596,7 +667,12 @@ def app_changes(before: dict, after: dict) -> list[str]:
         elif now.get("running") and was.get("started") != now.get("started"):
             lines.append(f"The app {name} started again at {at(now['started'])}." if now.get("started")
                          else f"The app {name} started again.")
-        lines += [f"The app {name}'s {field} changed." for field in sorted((set(was) | set(now)) - {"running", "started"})
+        said = {"running", "started"}
+        if was.get("deployed", True) != now.get("deployed", True):  # a deploy sets the source too (ticket 109)
+            lines.append(f"The app {name} was deployed again, after the platform dropped its deployment."
+                         if now.get("deployed", True) else f"The app {name} has no active deployment now.")
+            said |= {"deployed", "source"}
+        lines += [f"The app {name}'s {field} changed." for field in sorted((set(was) | set(now)) - said)
                   if was.get(field) != now.get(field)]
     return lines
 
@@ -622,7 +698,10 @@ def listing(workspace, say, first: bool = False) -> dict | None:
 
 def ready(workspace, setup: Setup, say: Callable[[str], None] = print) -> int:
     try:
-        stopped = workspace_state.refusal(workspace, app=dayone.load_config()["names"]["app"])
+        name = dayone.load_config()["names"]["app"]
+        # An app whose deployment the platform dropped is no refusal: step 1 starts it and deploys it again (ticket
+        # 109). The workspace stopped the compute of one that kept its deployment, so that one still is.
+        stopped = workspace_state.refusal(workspace, app=None if dropped(workspace.app(name)) else name)
     except Exception as error:  # the Apps or warehouses API refused: the steps still run, and each says what fails
         say(f"I could not read the app's compute or the SQL warehouse's state first: {type(error).__name__}: "
             f"{one_line(error)}")

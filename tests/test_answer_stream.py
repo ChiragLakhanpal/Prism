@@ -19,11 +19,11 @@ import httpx
 import pytest
 
 from strata.agent.judge import Judgement
-from strata.agent.loop import answer_runner
+from strata.agent.loop import AgentError, answer_runner
 from strata.agent.runs import RunLog
 from strata.agent.scripted import (RECORDED_STREAMS, ScriptedAgent, ScriptedJudge, failed_stream_text, load_cases,
                                    stream_text)
-from strata.config import load_tools
+from strata.config import load_thresholds, load_tools
 from strata.harness.turn import Event, RunError, TraceIds
 from strata.lakehouse import catalog
 from strata.lakehouse.engine import DuckDBEngine, EngineError
@@ -398,7 +398,10 @@ def test_every_run_is_logged_in_strata_ops_with_its_checks_and_trace(ask_case, o
     assert (run["numbers_total"], run["numbers_matched"], run["quotes_total"], run["quotes_found"]) == (3, 2, 2, 2)
     assert json.loads(run["removed"]) == [
         {"sentence": "Bids were usually opened within 45 days.", "reason": "number_not_in_records"}]
-    assert json.loads(run["response_ids"]) == ["resp_p130164_rebidding_1", "resp_p130164_rebidding_2"]
+    # The planted sentence fails check 1, so the loop asked the agent to rewrite once (ticket 109), and the scripted
+    # agent, whose recording holds no rewrite, sent its answer again.
+    assert json.loads(run["response_ids"]) == ["resp_p130164_rebidding_1", "resp_p130164_rebidding_2",
+                                               "resp_p130164_rebidding_2_again_3"]
     assert run["application_insights_trace_id"] == "4bf92f3577b34da6a3ce929d0e0e4736"
     assert "ana.example" not in json.dumps(run, default=str)
 
@@ -593,20 +596,29 @@ def test_a_number_joined_to_a_unit_or_a_range_or_written_as_a_word_above_nine_is
 
 class CallsThenAnswers:
     """An agent that makes one round of tool calls, then answers with the claims answer() writes from
-    the tool results it got back, as a list of each call's output."""
+    the tool results it got back, as a list of each call's output. When the app asks it to rewrite (ticket 109), it
+    answers with the claims rewrite() writes from the same outputs and the message's list, or with the same claims
+    again. It keeps every message the app sent it."""
 
     name, version = "strata-orchestrator", None
 
-    def __init__(self, calls, answer):
-        self.calls, self.answer, self.round = calls, answer, 0
+    def __init__(self, calls, answer, rewrite=None):
+        self.calls, self.answer, self.rewrite, self.round = calls, answer, rewrite, 0
+        self.outputs, self.received = None, []
 
     def respond(self, items, previous_response_id):
         self.round += 1
+        self.received.append(items)
         if self.round == 1:
             return {"id": "resp_1", "output": [
                 {"type": "function_call", "call_id": f"call_{number}", "name": name, "arguments": json.dumps(arguments)}
                 for number, (name, arguments) in enumerate(self.calls, 1)]}
-        claims = self.answer([json.loads(item["output"]) for item in items])
+        asked = [json.loads(item["content"])["rewrite"] for item in items if item.get("role") == "user"]
+        if asked:
+            claims = self.rewrite(self.outputs, asked[0]) if self.rewrite else self.answer(self.outputs)
+        else:
+            self.outputs = [json.loads(item["output"]) for item in items]
+            claims = self.answer(self.outputs)
         return Answers(*claims).respond(items, previous_response_id)
 
 
@@ -651,15 +663,15 @@ class EverySentenceFollows:
         return [Judgement(question.index, True, "It follows.") for question in questions]
 
 
-def ask_with_tools(fixture_db, agent, tools, judge=None, **body):
+def ask_with_tools(fixture_db, agent, tools, judge=None, thresholds=None, **body):
     @contextmanager
     def engine_for(viewer):
         with DuckDBEngine.open(fixture_db, read_only=True) as engine:
             yield engine
 
     return events(ask_with(create_app(runner=answer_runner(lambda turn: agent, engine_for, tools=tools,
-                                                           today=lambda: TODAY), engine_for=engine_for, judge=judge),
-                           **body))
+                                                           thresholds=thresholds, today=lambda: TODAY),
+                                      engine_for=engine_for, judge=judge), **body))
 
 
 def test_a_number_quoted_from_a_table_summary_is_not_backed_by_it(fixture_db):
@@ -698,6 +710,115 @@ def test_a_quote_with_straight_quote_marks_matches_a_page_with_curly_ones(fixtur
     [highlight] = evidence["highlights"]
     assert evidence["row"]["text"][highlight["start"]:highlight["end"]] == (
         "shall be subject to the World Bank\u2019s prior review")
+
+
+def test_a_quote_that_starts_a_sentence_with_a_capital_matches_a_page_that_has_a_small_letter_there(fixture_db):
+    """The ICR's paragraph 54 reads "...is that the works contract estimates should have been based on the market
+    rate..." (tests/ground_truth/values.toml, icr-para-54). A quote that starts the reader's sentence takes a capital,
+    as "[T]he" does in print, and the live agent wrote it so on October 27, 2026 (ticket 109): it is still word for
+    word, and its highlight covers the page's own words. Any other change of letters is not: "108 OF 328 CASES" is
+    removed."""
+    words = "The works contract estimates should have been based on the market rate"
+    shouted = "108 OF 328 CASES"
+    agent = CallsThenAnswers(
+        [("search_passages", {"query": "works contracts advertised again rebidding", "project_id": "P130164",
+                              "as_of": "2026-10-23"})],
+        lambda outputs: [claim(f'The ICR says "{words}".', kind="quote", evidence_ids=[ICR_54],
+                               quote={"text": words, "passage_id": ICR_54}),
+                         claim(f'The ICR says "{shouted}" had to go through rebidding.', kind="quote",
+                               evidence_ids=[ICR_54], numbers=["108", "328"],
+                               quote={"text": shouted, "passage_id": ICR_54})])
+
+    parsed = ask_with_tools(fixture_db, agent, load_tools())
+
+    assert [sentence["text"] for sentence in of(parsed, "sentence")] == [f'The ICR says "{words}".']
+    assert removed_reasons(parsed) == [[("quote_not_on_page", ICR_54)]]
+    [evidence] = of(parsed, "evidence")
+    [highlight] = evidence["highlights"]
+    assert (evidence["id"], evidence["row"]["paragraph"]) == (ICR_54, "54")
+    assert evidence["row"]["text"][highlight["start"]:highlight["end"]] == (
+        "the works contract estimates should have been based on the market rate")
+
+
+# Ticket 109: what the live agent wrote on October 27, 2026, in its own words, and what the passage says word for word.
+MARKET_RATE = "the works contract estimates should have been based on the market rate"
+PARAPHRASED = "The ICR said the works contract estimates should have been based on the market rate."
+QUOTED = f'The ICR said "{MARKET_RATE}".'
+
+
+def rewrite_case(rewrite=None):
+    """The agent searches P130164's passages, then writes ICR paragraph 54's words in its own sentence with no quote
+    marks, which check 3 removes (quote_not_in_sentence). Asked to rewrite, it answers with what rewrite() writes."""
+    return CallsThenAnswers(
+        [("search_passages", {"query": "works contracts advertised again rebidding", "project_id": "P130164",
+                              "as_of": "2026-10-23"})],
+        lambda outputs: [claim(PARAPHRASED, kind="quote", evidence_ids=[ICR_54],
+                               quote={"text": MARKET_RATE, "passage_id": ICR_54})],
+        rewrite)
+
+
+def test_a_sentence_checks_1_to_3_would_remove_goes_back_to_the_agent_once_and_the_rewrite_is_checked_in_full(
+        fixture_db):
+    """One rewrite round (ticket 109): the loop runs checks 1 to 3 on the first answer, sends the agent one data-only
+    message that lists each sentence they would remove with its reasons, and takes the next answer as final. The
+    stream's verifier then checks that answer in full, so a sentence it still fails is removed, and the first answer
+    never reaches the screen."""
+    agent = rewrite_case(lambda outputs, rewrite: [
+        claim(QUOTED, kind="quote", evidence_ids=[ICR_54], quote={"text": MARKET_RATE, "passage_id": ICR_54}),
+        claim("The ICR counted 99 cases of rebidding.", kind="record", evidence_ids=[ICR_54], numbers=["99"])])
+
+    parsed = ask_with_tools(fixture_db, agent, load_tools())
+
+    [_, _, rewrite] = agent.received
+    assert [json.loads(item["content"]) for item in rewrite] == [{"rewrite": [
+        {"sentence": PARAPHRASED, "reasons": [{"code": "quote_not_in_sentence", "text": ICR_54}]}]}]
+    assert [sentence["text"] for sentence in of(parsed, "sentence")] == [QUOTED]
+    assert removed_reasons(parsed) == [[("number_not_in_records", "99")]]
+    assert of(parsed, "checks")[0]["sentences"] == {"written": 2, "kept": 1, "removed": 1}
+    assert PARAPHRASED not in json.dumps(parsed)
+
+
+def test_with_rewrite_rounds_0_the_agent_is_asked_once_and_its_first_answer_is_checked_as_it_was(fixture_db):
+    """config/thresholds.toml's agent.rewrite_rounds is 1; 0 turns the round off."""
+    limits = load_thresholds()
+    off = dataclasses.replace(limits, values={**limits.values, "agent": {**limits.values["agent"], "rewrite_rounds": 0}})
+    agent = rewrite_case(lambda outputs, rewrite: [claim(QUOTED, kind="quote", evidence_ids=[ICR_54],
+                                                         quote={"text": MARKET_RATE, "passage_id": ICR_54})])
+
+    parsed = ask_with_tools(fixture_db, agent, load_tools(), thresholds=off)
+
+    assert limits.value("agent.rewrite_rounds") == 1
+    assert len(agent.received) == 2
+    assert of(parsed, "sentence") == []
+    assert removed_reasons(parsed) == [[("quote_not_in_sentence", ICR_54)]]
+
+
+@pytest.mark.parametrize("instead", ["tool calls", "not claims", "content filter"])
+def test_a_rewrite_that_is_not_an_answer_leaves_the_first_answer_which_the_verifier_checks_in_full(fixture_db, instead):
+    """An agent that answers the rewrite message with tool calls or with text that is not claims as JSON, or that a
+    content filter stops on it, has not rewritten anything: the first answer stands, checked as it would have been
+    without the round, and the run does not fail."""
+    class NoRewrite(CallsThenAnswers):
+        def respond(self, items, previous_response_id):
+            if any(item.get("role") == "user" for item in items) and self.round:
+                self.round += 1
+                self.received.append(items)
+                if instead == "content filter":
+                    raise AgentError("content_filter", "A content filter stopped the agent's answer.")
+                return {"id": "resp_3", "output": [
+                    {"type": "function_call", "call_id": "call_9", "name": "search_passages", "arguments": "{}"}
+                    if instead == "tool calls" else
+                    {"type": "message", "content": [{"type": "output_text", "text": "I cannot rewrite it."}]}]}
+            return super().respond(items, previous_response_id)
+
+    agent = NoRewrite(rewrite_case().calls, rewrite_case().answer)
+
+    parsed = ask_with_tools(fixture_db, agent, load_tools())
+
+    assert len(agent.received) == 3
+    assert of(parsed, "sentence") == []
+    assert removed_reasons(parsed) == [[("quote_not_in_sentence", ICR_54)]]
+    assert [kind for kind, _ in parsed][-1] == "done" and of(parsed, "error") == []
 
 
 def test_a_number_word_inside_a_step_value_of_a_cited_row_is_part_of_its_name(fixture_db):

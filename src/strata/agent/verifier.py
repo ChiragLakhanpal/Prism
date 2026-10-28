@@ -30,9 +30,11 @@ The app ran every tool the agent asked for, so it holds every row and passage th
    may only say what a tool could not answer ("That version of the plan was not yet public..."), and check 4
    judges it against those abstentions. Any other sentence that cites nothing is removed (no_source), since
    nothing could show it is true (ticket 24's verify F1).
-3. Every quote is word for word on the cited page, ignoring only whitespace, line-end hyphenation and
-   whether a quote mark is curly or straight, and starts and ends where the page's words and numbers
-   do: "10" is not a quote from "108 of 328", nor "334 km" from "2,334 km".
+3. Every quote is word for word on the cited page, ignoring only whitespace, line-end hyphenation,
+   whether a quote mark is curly or straight, and a capital first letter where the page has a small one, as
+   "[T]he" marks it in print ("The works contract estimates" from "...is that the works contract estimates",
+   ticket 109), and starts and ends where the page's words and numbers do: "10" is not a quote from "108 of
+   328", nor "334 km" from "2,334 km".
    The quote checked is the one the person reads: the words in the sentence's quote marks must be in
    the claim's quote, and that quote on its passage. Quote marks with no quote, or with words that are
    not on the page, fail; so does a quote the sentence never shows in quote marks. Words quoted from a
@@ -567,7 +569,11 @@ def quoted_spans(sentence: str) -> list[tuple[int, int]]:
 
 
 def find_quote(quote: str, text: str, language: str = ENGLISH) -> tuple[int, int] | None:
-    """Where the quote is in the text, word for word but for whitespace and line-end hyphenation. It must
+    """Where the quote is in the text, word for word but for whitespace, line-end hyphenation and a capital first
+    letter where the text has a small one: a quote that starts a sentence takes a capital, as "[T]he" marks it in
+    print, so "The works contract estimates" is in "...is that the works contract estimates" (ticket 109), when the
+    text never writes it with the capital. Every other letter keeps its case, so "108 OF 328 CASES" is not in "108 of
+    328 cases". It must
     start and end where the text's words or numbers do, so "10" is not in "108 of 328", "ding" is not in
     "rebidding", "US$177" is not in "US$177.6" and "334 km" is not in "2,334 km". A number is read as
     mentions() reads one, so "45" is in "45-day" and "10" in "10-15", in the language of the text searched: "3" is not
@@ -583,17 +589,24 @@ def find_quotes(quote: str, text: str, language: str = ENGLISH) -> list[tuple[in
         return []
     held, where = _normalized(text)
     numbers = [match.span() for match in _digits(languages.language(language).code).finditer(held)]
-    found = []
-    start = held.find(wanted)
-    while start >= 0:
-        end = start + len(wanted)
-        cut_at_start = wanted[0].isalnum() and start > 0 and held[start - 1].isalnum()
-        cut_at_end = wanted[-1].isalnum() and end < len(held) and held[end].isalnum()
-        inside_a_number = any(left < start < right or left < end < right for left, right in numbers)
-        if not (cut_at_start or cut_at_end or inside_a_number):
-            found.append((where[start], where[end - 1] + 1))
-        start = held.find(wanted, start + 1)
-    return found
+    # The quote as written, and, only when the text never writes it so, with its first letter small when it starts
+    # with a capital (the "[T]he" convention). A quote the text holds as written keeps only those places, so a
+    # rating quoted as "Low" is highlighted where the table writes Low, never at a "low" in the prose before it.
+    forms = [wanted] + ([wanted[0].lower() + wanted[1:]] if wanted[0].isupper() else [])
+    for form in forms:
+        found = []
+        start = held.find(form)
+        while start >= 0:
+            end = start + len(form)
+            cut_at_start = form[0].isalnum() and start > 0 and held[start - 1].isalnum()
+            cut_at_end = form[-1].isalnum() and end < len(held) and held[end].isalnum()
+            inside_a_number = any(left < start < right or left < end < right for left, right in numbers)
+            if not (cut_at_start or cut_at_end or inside_a_number):
+                found.append((where[start], where[end - 1] + 1))
+            start = held.find(form, start + 1)
+        if found:
+            return found
+    return []
 
 
 # An ISR's ratings table writes each row's previous rating, then its current one (ISR 7's section s4).
