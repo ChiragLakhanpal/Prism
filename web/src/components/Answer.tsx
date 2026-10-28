@@ -23,6 +23,7 @@ import { copy } from "../copy";
 import { cx } from "../lib/cx";
 import { Alert } from "./Alert";
 import { Button } from "./Button";
+import { Byline, type BylineKind } from "./Byline";
 import { CheckLine, RemovedBox, type NotChecked, type Removed } from "./Checks";
 import { WORD_JOINER } from "./CitationMarker";
 import { numText } from "./Num";
@@ -66,11 +67,13 @@ function withoutWordJoiners(event: ClipboardEvent<HTMLDivElement>) {
 
 // wide: the children are blocks that keep their own measure, so a disagreement card can take the
 // answer's full width while its paragraphs stay at about 65 characters a line.
-function InShort({ children, wide = false }: { children: ReactNode; wide?: boolean }) {
+// kind: the byline, "Strata, in short" over an answer and "Strata held back" over one that abstains (ticket 111).
+function InShort({ children, wide = false, kind = "inShort" }: { children: ReactNode; wide?: boolean; kind?: BylineKind }) {
   return (
     <>
-      {/* "In short" in label and its sentences in lead (DESIGN.md section 5, Answer panel; ticket 94). */}
-      <h3 className="text-label text-ink-muted">{copy.answer.inShort}</h3>
+      {/* The byline in label as the answer's h3, and its sentences in lead (DESIGN.md section 5, Answer panel and
+          Byline; tickets 94 and 111). */}
+      <Byline as="h3" kind={kind} />
       <div data-in-short onCopy={withoutWordJoiners} className={cx("mt-2 text-lead text-ink", !wide && "max-w-prose")}>
         {children}
       </div>
@@ -148,7 +151,7 @@ export function Answer({ state }: { state: AnswerState }) {
     case "abstained":
       return (
         <div data-answer="abstained">
-          <InShort>{state.sentence}</InShort>
+          <InShort kind="heldBack">{state.sentence}</InShort>
           <ChecksBlock checks={state.checks} />
           <div className="mt-6">{state.rows}</div>
           <StepsTaken steps={state.steps} runId={state.runId} />

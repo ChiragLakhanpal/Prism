@@ -241,12 +241,12 @@ export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyI
     if (checked) setPageTitle(fill(copy.pages.checkPlan.windowTitle, { agency: checked.plan.implementing_agency, date: short(checked.plan.plan_date) }));
   }, [checked]);
 
-  // The visually hidden status announces steps: checking, then how many activities were checked.
-  // Any other end has its own alert or heading, so the status then says nothing.
+  // The visually hidden status announces steps: the narration's step once (ticket 111), then how many activities were
+  // checked. Any other end has its own alert or heading, so the status then says nothing.
   const total = checked?.counts.activities;
   const statusText =
     load.status === "loading" || waiting
-      ? words.status.checking
+      ? copy.steps.tools.check_plan.running()
       : total === undefined
         ? ""
         : total === 1

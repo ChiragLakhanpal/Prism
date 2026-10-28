@@ -758,6 +758,9 @@ export const copy = {
       check_plan: {
         running: () => "I'm checking the plan.",
         done: (count: number, countText: string) => `I checked ${countText} ${count === 1 ? "activity" : "activities"} in the plan.`,
+        // Under the running step while the plan check page waits for its one request (ticket 111): the page's own
+        // method sentence, in the present tense.
+        how: "I'm comparing each activity with its own dates, its estimate and the project's closing date.",
       },
       find_comparables: {
         running: () => "I'm finding comparable packages.",
@@ -863,8 +866,19 @@ export const copy = {
       },
     },
   },
+  // Strata's byline (ticket 111; DESIGN.md section 1, principle 6): Strata's own words open with it, and a record's
+  // words end with their source. It names Strata in the third person, as the fixed label "Strata leans on this" does
+  // (section 7, rule 35), and never sits over a table, a quote, a STEP row, a Worth knowing line or a record.
+  byline: {
+    strata: "Strata",
+    // Over an answer, as its h3.
+    inShort: "{strata}, in short",
+    // Over the plan check's finding and the package page's section 1 finding.
+    found: "{strata} found",
+    // Over a held-back sentence: section 1's abstention, and an answer that abstains.
+    heldBack: "{strata} held back",
+  },
   answer: {
-    inShort: "In short",
     // Ticket 14's live region says this last, once the answer is on screen (its brief).
     ready: "The answer is ready.",
     readyRemoved: (count: number, countText: string) =>
@@ -2525,7 +2539,9 @@ export const copy = {
       checked: (count: string) => `Checked ${count} activities.`,
       checkedOne: "Checked 1 activity.",
     },
-    stillChecking: "Still checking this plan.",
+    // Under the narration's step once the check has taken two seconds (ticket 111). It gives no timer and no
+    // duration, since a duration on screen is a number no tool returned; Data readiness says the same of its measures.
+    databaseStarting: "The database may be starting up, so this can take longer.",
     // What each number in a reason or the finding is, in its tooltip.
     explain: {
       firstPlannedSigning: "Planned signing date, as first published",

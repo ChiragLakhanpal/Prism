@@ -32,7 +32,10 @@ test("Ask this streams the answer into the panel under the band: steps one at a 
   await expect(box(page)).toBeFocused();
   await expect(panel(page).getByRole("heading", { level: 2 })).toHaveText(QUESTION);
   await expect(panel(page).getByText("Asked within P130164.")).toBeVisible();
-  await expect(panel(page).getByRole("heading", { level: 3, name: "In short" })).toBeVisible();
+  // Ticket 111: Strata's own words open with its byline, which is the answer's h3. The project page's records, the
+  // steps, the check line and the removed box have none.
+  await expect(panel(page).getByRole("heading", { level: 3, name: "Strata, in short" })).toBeVisible();
+  await expect(page.locator("[data-byline]")).toHaveText(["Strata, in short"]);
   await expect(panel(page).locator("[data-in-short]")).toContainText("108 of 328 cases had to go through rebidding");
   await expect(marker(page, 1)).toHaveAccessibleName("Source 1: Implementation Completion and Results Report, October 10, 2019, paragraph 54");
   await expect(panel(page).locator("[data-check-line]")).toHaveText(CHECK_LINE);
@@ -66,10 +69,18 @@ test("the panel sits at the top of the page column under the bar, on columns 1 t
   // At 1440 px the page area is 1216 px beside the open sidebar (ticket 92). The window's 40 px margins leave 1136 px
   // (ticket 94), so columns 1 to 8 are 8 columns of 65.33 px and 7 gutters of 32 px.
   expect(Math.round(card.width)).toBe(747);
-  // "In short" in label (13/16, 600) and its sentences in lead (18/28, 400), DESIGN.md section 3.
+  // The byline in label (13/16, 600, ink-muted), with "Strata" in the wordmark's weight (700) in ink-heading, 8 px
+  // above its sentences in lead (18/28, 400), DESIGN.md sections 3 and 5 (ticket 111).
   const style = (element: Element) => [getComputedStyle(element).fontSize, getComputedStyle(element).lineHeight, getComputedStyle(element).fontWeight];
-  expect(await panel(page).getByRole("heading", { level: 3, name: "In short" }).evaluate(style)).toEqual(["13px", "16px", "600"]);
+  const byline = panel(page).getByRole("heading", { level: 3, name: "Strata, in short" });
+  expect(await byline.evaluate(style)).toEqual(["13px", "16px", "600"]);
+  expect(await byline.evaluate((element) => getComputedStyle(element).color)).toBe("rgb(75, 94, 113)");
+  const name = byline.getByText("Strata", { exact: true });
+  expect(await name.evaluate(style)).toEqual(["13px", "16px", "700"]);
+  expect(await name.evaluate((element) => getComputedStyle(element).color)).toBe("rgb(1, 39, 64)");
   expect(await panel(page).locator("[data-in-short]").evaluate(style)).toEqual(["18px", "28px", "400"]);
+  const [over, under] = [(await byline.boundingBox())!, (await panel(page).locator("[data-in-short]").boundingBox())!];
+  expect(Math.round(under.y - (over.y + over.height))).toBe(8);
 });
 
 test("the steps still to come are listed in muted text while the answer streams", async ({ page }) => {
