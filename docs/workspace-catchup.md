@@ -3936,3 +3936,18 @@ It worked if:
 - Section 2 still opens under "Show the steps".
 
 Record the deploy's exit code, last line and deployment id, the /api/health status, the steps route's status, and the six states and dates the tracker showed, here under ticket 115.
+
+## Ticket 113, step 1 of 1: redeploy the App, so the box floats at the bottom center of the page
+
+Parked on October 28, 2026 with ticket 113, which merged into build/strata as c419eadf (branch `strata/113-the-box-floats-at-the-bottom-center-of-the` at eac27738). Every key is set, but mergers run no workspace step: the orchestrator or the second session runs this from a snapshot that includes this merge (c419eadf, the done commit that follows it, or a later commit), as the header says (`git archive <sha> | tar -x -C <scratchpad>/snap-<sha>`, then link the main checkout's `web/node_modules` into the snapshot). It needs the Databricks keys in the env file and the Foundry and judge secrets in the scope `strata`. The ticket changes only the web app and DESIGN.md (24 files, all under `web/` except DESIGN.md). No server, table, job or Genie space changed, so no bundle deploy, nightly run or Genie update is needed. A deploy from this commit or a later one also serves ticket 115's redeploy block above if that has not run yet.
+
+    uv run --script ops/app/deploy_app.py --env-file "<main checkout>/.env" --keep-secrets
+
+It worked if:
+
+- The deploy exits 0, its last line is `Strata is running at https://strata-7405609289499029.9.azure.databricksapps.com`, and /api/health answers 200.
+- On the deployed App at 1440 by 900, the navy bar is one 56 px row with no box in it, and the box floats at the bottom center of the page column, 16 px above the window's bottom edge, on Home and on the package page KE-NWWDA-541055-CW-RFB.
+- On a draft (any one in Drafts) scrolled to its end, the box's bottom is 16 px above the draft bar's top, and the box covers neither the draft bar's buttons (Discard, Export to Word, Mark as checked, "You opened N of M sources") nor the draft's last line.
+- Pressing "/" on the package page focuses the box, and the list of what Enter will do opens above the box.
+
+Record the deploy's exit code, last line and deployment id, the /api/health status, and what the bar, the box on Home and the package page, and the box at a draft's end showed, here under ticket 113.
