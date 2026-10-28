@@ -6,7 +6,9 @@
 // recognize its kind in the whole input and inside free text, how to look it up, and where choosing it
 // goes. Ticket 15 adds "Plan a package from this sentence"; "Check this plan" comes later. Anything no
 // rule recognizes offers "Ask this", and nothing is sent until the person chooses.
+import { copy } from "../copy";
 import { ApiError, getJson } from "./api";
+import { createStore } from "./store";
 
 export type Found =
   // plans: each implementing agency's latest published plan that I read, for the box's check mode (ticket 15).
@@ -164,3 +166,33 @@ export async function lookUp(intent: Intent, signal: AbortSignal): Promise<Looku
 }
 
 export const hrefFor = (record: Found) => ruleFor(record.kind).href(record);
+
+// Ticket 112: the questions the box suggests while it is focused and empty. They are config/examples.toml's [[ask]]
+// rows, which GET /api/me sends (as ask) to World Bank staff in their own view, and to no one in a preview or as of a
+// date. Each is a question of evals/benchmark.yaml without its as-of date; the words are copy.box.suggest's.
+export type AskPage = "package" | "project" | "plan_check" | "home";
+export type AskRow = { key: string; page: AskPage; within: string | null };
+export const askRows = createStore<AskRow[]>([]);
+export const SUGGESTIONS_SHOWN = 3;
+
+// One suggestion as the box lists it: its words, the ID that fills {id}, and what it is asked within.
+export type Suggestion = { key: string; template: string; id: string | null; within: string | null };
+
+// The page's suggestions, at most three: its own rows with {id} its scope, asked within that scope; on Home, and on
+// any page with no scope (or whose scope chip was removed), Home's rows, each asked within its own example.
+export function suggestionsFor(rows: AskRow[], page: AskPage | null, scope: string | null): { page: AskPage; items: Suggestion[] } {
+  const shown: AskPage = scope && page ? page : "home";
+  const words = copy.box.suggest as unknown as Record<string, unknown>;
+  const items: Suggestion[] = [];
+  for (const row of rows) {
+    const template = words[row.key];
+    if (row.page !== shown || typeof template !== "string") continue;
+    const within = shown === "home" ? row.within : scope;
+    if (shown === "home" && !within) continue;
+    items.push({ key: row.key, template, id: within, within });
+  }
+  return { page: shown, items: items.slice(0, SUGGESTIONS_SHOWN) };
+}
+
+// The words a suggestion asks: its template with {id} filled.
+export const suggestionText = (suggestion: Suggestion) => suggestion.template.replaceAll("{id}", suggestion.id ?? "");

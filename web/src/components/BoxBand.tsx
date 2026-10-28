@@ -92,11 +92,19 @@ export function OneBox({
   focusedHint,
   modePlaceholder,
   modeHelp,
+  suggestions = null,
+  suggestionActive = -1,
+  onChooseSuggestion,
 }: {
   // A mode the Packages tab put the box in (ticket 15): its own placeholder, and a help line that describes
   // the box and takes the hint's place.
   modePlaceholder?: string;
   modeHelp?: string;
+  // Ticket 112: focused and empty, a group of questions for the page under the hint, named by the page, in the list's
+  // own option rows. None is chosen until Down or Up moves to one.
+  suggestions?: { name: ReactNode; options: BoxOption[] } | null;
+  suggestionActive?: number;
+  onChooseSuggestion?: (index: number) => void;
   value: string;
   onChange: (value: string) => void;
   // What Enter will do, best first. The list shows while open is true and there are options.
@@ -148,9 +156,41 @@ export function OneBox({
   const showHint = (focused || focusedHint) && value.length === 0;
   const showList = open && value.trim().length > 0 && options.length > 0;
   const showNotes = open && value.trim().length > 0 && notes.length > 0;
+  const showSuggestions = Boolean(showHint && suggestions && suggestions.options.length > 0);
   const described =
     [(showHint || modeHelp) && hintId, scope && scopedId, showNotes && notesId].filter(Boolean).join(" ") || undefined;
   const optionId = (index: number) => `${listId}-${index}`;
+  const suggestionId = (index: number) => `${listId}-s${index}`;
+  const activeId = showList ? optionId(active) : showSuggestions && suggestionActive >= 0 ? suggestionId(suggestionActive) : undefined;
+  // One option row: an icon, the label with any ID in mono, a second line where there is one, and the "Enter" key hint
+  // on the option Enter does.
+  const optionRow = (option: BoxOption, id: string, selected: boolean, choose: () => void) => (
+    <li
+      key={option.key}
+      id={id}
+      role="option"
+      aria-selected={selected}
+      aria-disabled={option.disabled || undefined}
+      data-box-option={option.key}
+      onClick={() => !option.disabled && choose()}
+      className={cx(
+        "flex min-h-11 items-center gap-3 px-4 py-2 text-body",
+        option.disabled ? "cursor-default text-ink-muted" : "cursor-pointer text-ink",
+        selected ? "bg-tint shadow-[inset_3px_0_0_var(--color-primary)]" : !option.disabled && "hover:bg-tint-hover",
+      )}
+    >
+      <option.icon aria-hidden="true" className="size-4 shrink-0 text-ink-muted" />
+      <span className="min-w-0 flex-1">
+        <span className="block wrap-anywhere">{option.label}</span>
+        {option.line && <span className="block text-caption wrap-anywhere text-ink-muted">{option.line}</span>}
+      </span>
+      {selected && !option.disabled && (
+        <kbd aria-hidden="true" className="shrink-0 rounded-sm border border-line-strong px-1 font-mono text-caption text-ink-muted">
+          {copy.box.enter}
+        </kbd>
+      )}
+    </li>
+  );
   const placeholder =
     modePlaceholder ?? (scope ? (scopeKind === "package" ? copy.box.placeholderPackage : copy.box.placeholderProject) : null);
 
@@ -209,9 +249,9 @@ export function OneBox({
               autoComplete="off"
               spellCheck={false}
               aria-autocomplete="list"
-              aria-expanded={showList}
+              aria-expanded={showList || showSuggestions}
               aria-controls={listId}
-              aria-activedescendant={showList ? optionId(active) : undefined}
+              aria-activedescendant={activeId}
               aria-keyshortcuts={shortcut ? "/" : undefined}
               aria-describedby={described}
               onChange={(event) => onChange(event.target.value)}
@@ -280,37 +320,20 @@ export function OneBox({
           )}
           {showList && (
             <ul id={listId} role="listbox" aria-label={copy.box.listName}>
-              {options.map((option, index) => {
-                const selected = index === active;
-                return (
-                  <li
-                    key={option.key}
-                    id={optionId(index)}
-                    role="option"
-                    aria-selected={selected}
-                    aria-disabled={option.disabled || undefined}
-                    data-box-option={option.key}
-                    onClick={() => !option.disabled && onChoose?.(index)}
-                    className={cx(
-                      "flex min-h-11 items-center gap-3 px-4 py-2 text-body",
-                      option.disabled ? "cursor-default text-ink-muted" : "cursor-pointer text-ink",
-                      selected ? "bg-tint shadow-[inset_3px_0_0_var(--color-primary)]" : !option.disabled && "hover:bg-tint-hover",
-                    )}
-                  >
-                    <option.icon aria-hidden="true" className="size-4 shrink-0 text-ink-muted" />
-                    <span className="min-w-0 flex-1">
-                      <span className="block wrap-anywhere">{option.label}</span>
-                      {option.line && <span className="block text-caption wrap-anywhere text-ink-muted">{option.line}</span>}
-                    </span>
-                    {selected && !option.disabled && (
-                      <kbd aria-hidden="true" className="shrink-0 rounded-sm border border-line-strong px-1 font-mono text-caption text-ink-muted">
-                        {copy.box.enter}
-                      </kbd>
-                    )}
-                  </li>
-                );
-              })}
+              {options.map((option, index) => optionRow(option, optionId(index), index === active, () => onChoose?.(index)))}
             </ul>
+          )}
+          {showSuggestions && suggestions && (
+            <div id={listId} role="listbox" aria-label={copy.box.listName} data-box-suggestions>
+              <ul role="group" aria-labelledby={`${listId}-group`}>
+                <li role="presentation" id={`${listId}-group`} className="px-4 pt-2 pb-1 text-label text-ink-muted">
+                  {suggestions.name}
+                </li>
+                {suggestions.options.map((option, index) =>
+                  optionRow(option, suggestionId(index), index === suggestionActive, () => onChooseSuggestion?.(index)),
+                )}
+              </ul>
+            </div>
           )}
           {showNotes && (
             <div id={notesId} className="flex flex-col gap-1 px-4 py-2">

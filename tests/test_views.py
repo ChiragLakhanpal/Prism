@@ -228,6 +228,24 @@ def test_who_is_viewing_says_which_view_and_date_the_server_applied():
     assert today["asof"] == {"applied": None, "problem": "not_past"}
 
 
+def test_who_is_viewing_lists_the_box_suggestions_for_staff_in_their_own_view_and_none_in_a_preview_or_as_of_a_date():
+    """Ticket 112: the box suggests config/examples.toml's [[ask]] rows only where no view holds back their answers."""
+    app = server()
+
+    own = call(app, "GET", "/api/me", STAFF).json()["ask"]
+    previews = [call(app, "GET", "/api/me", STAFF, params=params).json()["ask"]
+                for params in ({"view": "piu"}, {"view": "public"}, {"asof": "2016-08-26"})]
+    officer = call(app, "GET", "/api/me", OFFICER).json()["ask"]
+
+    assert own[:1] + own[-2:] == [{"key": "pastRange", "page": "package", "within": None},
+                                  {"key": "pastRange", "page": "home", "within": "KE-NWWDA-541055-CW-RFB"},
+                                  {"key": "worksRebidding", "page": "home", "within": "P130164"}]
+    assert [row["page"] for row in own] == ["package"] * 3 + ["project"] * 2 + ["plan_check"] + ["home"] * 2
+    assert previews == [[], [], []]
+    # An implementing agency officer's own view is not World Bank staff's.
+    assert officer == []
+
+
 def test_your_agencys_projects_lists_each_disclosed_plan_with_its_check(fixture_db):
     # The roles table's "Your agency's projects, with signals against your own plan" (the 40 brief, 3.8): the projects
     # where the agency has a disclosed Procurement Plan, each with check_plan's counts on the latest plan. In the

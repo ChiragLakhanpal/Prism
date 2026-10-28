@@ -28,6 +28,7 @@ import { answer, ask, earlier, removedScopes } from "./lib/answer";
 import { getJson, type Me } from "./lib/api";
 import { languageName, workingLanguage, type WorkingLanguage } from "./lib/lang";
 import { draftScope } from "./lib/drafts";
+import { askRows, type AskPage } from "./lib/intents";
 import { FOLLOWING_HREF, staffRole } from "./lib/following";
 import { officerAgency } from "./lib/uploads";
 import { startHereVisible } from "./lib/home";
@@ -71,6 +72,8 @@ async function readViewer(search: string = window.location.search) {
     workingLanguage.set(me.language ?? null);
     // Whether Home shows its Start here strip (ticket 41), so Home keeps its room while it loads.
     startHereVisible.set(Boolean(me.start_here_visible));
+    // The questions the box suggests while it is focused and empty (ticket 112).
+    askRows.set(me.ask ?? []);
     appliedView.set(me.applied && me.preview_agency ? ({
       own: me.own_view ?? "staff", views: me.views ?? [], applied: me.applied, preview_agency: me.preview_agency,
       tabs: me.tabs ?? [], hidden: me.hidden ?? [], capabilities: me.capabilities ?? [], reasons: me.reasons ?? {},
@@ -82,19 +85,22 @@ async function readViewer(search: string = window.location.search) {
     staffRole.set(false);
     officerAgency.set(null);
     appliedView.set(null);
+    askRows.set([]);
     answeredFor.set(asked);
   }
 }
 
 // The page's scope for the box's chip: a project's P-code on its pages, a package's STEP reference
-// (or its id until it has one) on a package's.
-function scopeOf(match: Match, draftProject: string | null): { scope: string | null; kind: "project" | "package" } {
+// (or its id until it has one) on a package's. page is which of the box's suggestions the page shows (ticket 112):
+// a plan check's are its own, and a page with no scope shows Home's.
+function scopeOf(match: Match, draftProject: string | null): { scope: string | null; kind: "project" | "package"; page: AskPage | null } {
   // A draft's page carries the draft's project once the draft has loaded (the 35 brief, section 11).
-  if (match.key === "draft" || match.key === "draftNew") return { scope: draftProject, kind: "project" };
-  if (match.key === "package") return { scope: match.values.id ?? null, kind: "package" };
-  if (match.key === "activity") return { scope: match.values.stepRef ?? null, kind: "package" };
-  if (match.key === "project" || match.key === "checkPlan" || match.key === "document") return { scope: match.values.pid ?? null, kind: "project" };
-  return { scope: null, kind: "project" };
+  if (match.key === "draft" || match.key === "draftNew") return { scope: draftProject, kind: "project", page: "project" };
+  if (match.key === "package") return { scope: match.values.id ?? null, kind: "package", page: "package" };
+  if (match.key === "activity") return { scope: match.values.stepRef ?? null, kind: "package", page: "package" };
+  if (match.key === "checkPlan") return { scope: match.values.pid ?? null, kind: "project", page: "plan_check" };
+  if (match.key === "project" || match.key === "document") return { scope: match.values.pid ?? null, kind: "project", page: "project" };
+  return { scope: null, kind: "project", page: null };
 }
 
 const NARROW = "(width < 48rem)";
@@ -200,7 +206,7 @@ export function App() {
   const narrow = useNarrow();
   const match = matchRoute(here.pathname);
   const draftProject = useStore(draftScope);
-  const { scope, kind } = scopeOf(match, draftProject);
+  const { scope, kind, page: askPage } = scopeOf(match, draftProject);
   const evidenceId = evidenceIn(here.search);
   const language = useStore(workingLanguage);
   // The language of answers and drafts (ticket 42), and the view and date (ticket 40), follow the address as it changes:
@@ -383,7 +389,7 @@ export function App() {
       nav={
         <TopNav
           logo={<img src={logo} width={120} height={24} alt={copy.nav.logo} className="block h-6 w-[120px]" />}
-          box={<IntentBox scope={scope} scopeKind={kind} onAsk={onAsk} />}
+          box={<IntentBox scope={scope} scopeKind={kind} page={askPage} onAsk={onAsk} />}
           viewer={who}
           mode={navMode}
           modeLineId={MODE_LINE}
