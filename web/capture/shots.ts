@@ -235,19 +235,24 @@ function app(name: string, path: string, answers: { me?: Answer; freshness?: Ans
 // Ticket 41: Home, from the server's answers on tests/home_story.py's story (tests/record_home_api.py): Ana's Home
 // with her seeded examples, the first run, a quiet window, both drafts checked, the strip removed, and the agency
 // preview. Under the function-first rule each is taken at 1440 px; the other widths wait for the design pass.
+// Ticket 98 moves Home onto the workspace layout and adds the officer's and the public's Home and an answer asked from
+// Home (home--answered, with the answer stream below).
 const homeApi = (home: string, me = "me-home.json"): Record<string, Answer> => ({
   "/api/me": { recorded: me },
   "/api/me?view=piu": { recorded: "me-preview-piu.json" },
+  "/api/me?view=public": { recorded: "me-preview-public.json" },
   "/api/freshness": { recorded: "freshness.json" },
   "/api/home": { recorded: home },
   "/api/home?view=piu": { recorded: "home-preview-piu.json" },
+  "/api/home?view=public": { recorded: "home-preview-public.json" },
 });
 const HOME_SHOTS: Shot[] = [
   app("home--populated", "/", {}, { widths: [1440], full: true, api: homeApi("home.json") }),
   app("home--first-run", "/", {}, { widths: [1440], full: true, api: homeApi("home-first-run.json") }),
   app("home--quiet-week", "/", {}, { widths: [1440], full: true, api: homeApi("home-quiet.json") }),
   app("home--drafts-checked", "/", {}, { widths: [1440], full: true, api: homeApi("home-drafts-checked.json") }),
-  app("home--agency-preview", "/?view=piu", {}, { widths: [1440], full: true, api: homeApi("home.json") }),
+  app("home--officer", "/?view=piu", {}, { widths: [1440], full: true, api: homeApi("home.json") }),
+  app("home--public", "/?view=public", {}, { widths: [1440], full: true, api: homeApi("home.json") }),
   app("home--loading", "/", {}, { widths: [1440], api: homeApi("home.json"), pending: ["/api/home"] }),
 ];
 
@@ -690,7 +695,16 @@ const answerShot = (name: string, stream: string, rest: Partial<Shot> = {}, path
 const ANSWER = "ask-p130164-removed-number.sse";
 const marker = "[data-answer-panel] [data-citation='1']";
 
+// Ticket 98: an answer asked from Home, in the work's columns above the head, with the briefing folded to one line.
+const HOME_ANSWERED: Shot = app("home--answered", "/", {}, {
+  widths: [1440],
+  full: true,
+  api: { ...homeApi("home.json"), ...BOX_API, "/api/ask": { recorded: "ask-p130164-rebidding.sse" } },
+  act: askInBox("Why were works contracts advertised again?"),
+});
+
 const ANSWER_SHOTS: Shot[] = [
+  HOME_ANSWERED,
   answerShot("box--hint", ANSWER, { full: false, act: (page) => page.keyboard.press("/") }, "/"),
   answerShot("box--project", ANSWER, { full: false, act: typeInBox("P130164") }, "/"),
   ...["IDA60290", "IDA-60290", "60290", "IDA / 60290"].map((loan, index) =>

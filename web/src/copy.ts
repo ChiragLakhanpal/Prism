@@ -8638,6 +8638,11 @@ export const copy = {
     // Read between the date line and the briefing by a screen reader, which hears the h1 as one heading.
     dateLineEnd: ". ",
     publicTitle: "Home",
+    // The h1 that names the page when Home's one read failed, and the public view's h1 (ticket 98).
+    title: "Home",
+    // With an answer open on Home, the briefing folds to its date line and first sentence (ticket 98).
+    briefingShow: "Show the briefing",
+    briefingHide: "Hide the briefing",
     loading: "Loading your briefing.",
     error: "I couldn't load your briefing because the data service didn't answer.",
     errorReference: (reference: string) => `If it fails again, send the data team this reference: ${reference}.`,
@@ -8671,7 +8676,9 @@ export const copy = {
       } as Record<string, string>,
     },
     worth: {
-      title: "Worth knowing · fixed checks, no model",
+      // The panel's name, and its tag at the panel's right (ticket 98, replacing the middle dot that joined them).
+      title: "Worth knowing",
+      tag: "Fixed checks, no model",
       sourceLead: "Source:",
       source: (through: string, checked: string) =>
         `Procurement Plans, project records and ISRs from World Bank APIs, through ${through}, and my lesson library. ` +
@@ -8754,7 +8761,8 @@ export const copy = {
       `I made this change as an example, so you can see how a changed lesson reaches your draft. No lead procurement ` +
       `specialist decided it, and the library still shows version ${version}.`,
     publicView: {
-      title: "Closed projects · contracts traced from public records",
+      title: "Closed projects",
+      tag: "Contracts traced from public records",
       action: "See its contracts",
       source: (through: string) => `Project records, notices and contract awards from World Bank APIs, through ${through}.`,
       more: "Find more projects",

@@ -36,6 +36,12 @@ export type Match = {
   frame?: string;
 };
 
+// The pages on the workspace layout that draw an answer asked on them in their own work columns, above their head and
+// beside their side panel (DESIGN.md section 4, Page layouts, Workspace; Workspace.tsx's answer slot, read through
+// AnswerSlot.tsx). Every other page shows the answer at the top of the page column. Home is the first (ticket 98);
+// each ticket that moves a page onto the workspace adds its key here.
+export const ANSWER_IN_PAGE: ReadonlySet<PageKey> = new Set<PageKey>(["home"]);
+
 // A project page's tabs, in the copy file's order (copy.projectPage.tab), and the ones built so far.
 // Ticket 23 added "timeline" and ticket 22 "connections", and the tab row shows each built tab.
 export type ProjectTab = "summary" | "procurement" | "timeline" | "documents" | "connections";

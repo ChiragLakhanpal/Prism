@@ -15,6 +15,7 @@ import { createPortal, flushSync } from "react-dom";
 import logo from "./assets/world-bank-logo.svg";
 import { Alert } from "./components/Alert";
 import { AnswerPanel, scrollToAnswer } from "./components/AnswerPanel";
+import { AnswerSlot } from "./components/AnswerSlot";
 import { EvidenceDrawer } from "./components/EvidenceDrawer";
 import { Frame } from "./components/Frame";
 import { IntentBox } from "./components/IntentBox";
@@ -41,7 +42,7 @@ import { address, navigate, startRouter } from "./lib/router";
 import { createStore, useStore } from "./lib/store";
 import { pageTitle } from "./lib/title";
 import { RoutePage } from "./RoutePage";
-import { fill, isDay, matchRoute, type Match, type PageKey } from "./routes";
+import { ANSWER_IN_PAGE, fill, isDay, matchRoute, type Match, type PageKey } from "./routes";
 
 const viewer = createStore<Viewer>({ status: "loading" });
 
@@ -394,6 +395,16 @@ export function App() {
   const asOfLine = asOf ? `${copy.view.banner.asOf(formatDate(asOf))}${today ? ` ${today}` : ""}` : null;
   const hiddenIn = fresh?.applied.preview && fresh.hidden.includes(match.key) ? (fresh.applied.view as Preview) : null;
   const pending = Boolean(preview && !fresh && who.status !== "error");
+  // The answer panel: at the top of the page column, or, on a workspace page that draws it (routes.ts, ANSWER_IN_PAGE),
+  // in that page's work columns above its head (ticket 98).
+  const answerPanel = shown && (
+    <AnswerPanel
+      run={shown}
+      opened={{ id: evidenceId, sentence: from && from.id === evidenceId && from.serial === shown.serial ? from.sentence : null }}
+      visited={seen}
+    />
+  );
+  const answerInPage = ANSWER_IN_PAGE.has(match.key) && !pending && !hiddenIn;
   // The alert slot's element, which a page's own alert goes into (PageAlert.tsx).
   const [alertSlot, setAlertSlot] = useState<HTMLDivElement | null>(null);
   return (
@@ -483,21 +494,15 @@ export function App() {
             </Alert>
           ))}
         </div>
-        {shown && (
-          <div className="col-span-12 @lg/page:col-span-8">
-            <AnswerPanel
-              run={shown}
-              opened={{ id: evidenceId, sentence: from && from.id === evidenceId && from.serial === shown.serial ? from.sentence : null }}
-              visited={seen}
-            />
-          </div>
-        )}
+        {answerPanel && !answerInPage && <div className="col-span-12 @lg/page:col-span-8">{answerPanel}</div>}
         {/* Each page lays itself out on the same 12 columns: most keep to columns 1 to 8, and a
             table that needs the width, such as the plan check or the Data tab, spans all 12. */}
         <div className="col-span-12">
           {/* A project's tabs share one page, so its header and tab row stay in place between them. */}
           {/* A new view or date is a new page: every read on it carries them (ticket 40). */}
-          <RoutePage key={`${match.frame ?? here.pathname}|${preview ?? ""}|${asOf ?? ""}`} match={match} search={here.search} hiddenIn={hiddenIn} pending={pending} />
+          <AnswerSlot.Provider value={answerInPage ? answerPanel : null}>
+            <RoutePage key={`${match.frame ?? here.pathname}|${preview ?? ""}|${asOf ?? ""}`} match={match} search={here.search} hiddenIn={hiddenIn} pending={pending} />
+          </AnswerSlot.Provider>
         </div>
       </div>
     </Frame>

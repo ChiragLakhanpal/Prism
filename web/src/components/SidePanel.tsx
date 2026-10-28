@@ -18,6 +18,7 @@ export function SidePanel({
   source,
   sentence,
   loading = false,
+  children,
 }: {
   title: ReactNode;
   facts?: SideFact[];
@@ -26,9 +27,11 @@ export function SidePanel({
   // All the panel holds: it is then a row, not a panel.
   sentence?: ReactNode;
   loading?: boolean;
+  // What the panel holds when it is not a list of facts, such as Waiting for you's drafts (ticket 98).
+  children?: ReactNode;
 }) {
   const headingId = useId();
-  if (sentence != null && !facts) {
+  if (sentence != null && !facts && children == null) {
     return (
       <section aria-labelledby={headingId} data-side-panel="row" className="border-y border-line py-4">
         <h2 id={headingId} className="text-h2 text-ink-heading">
@@ -57,6 +60,11 @@ export function SidePanel({
             </div>
           ))}
         </dl>
+      )}
+      {children != null && (
+        <div data-side-body className="mt-4">
+          {children}
+        </div>
       )}
       {source && (
         <div data-side-source className="mt-4 border-t border-line pt-4 text-caption text-ink-muted">

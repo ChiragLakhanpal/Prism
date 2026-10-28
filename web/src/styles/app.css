@@ -477,6 +477,11 @@
   flex: 1 1 12rem;
   min-width: 0;
 }
+/* A note right after the name, such as Start here's "2 of 6 done" (ticket 98): the name keeps its own width, so the
+   note follows it on its line. */
+[data-zone-head]:has(> [data-zone-note]) > [data-zone-name] {
+  flex: 0 1 auto;
+}
 /* The number stays in the h2's text, so a heading still reads "2 · Planned date for each step" in the DOM while its
    number is hidden from screen readers, and stands in its own column at the zone's edge. */
 [data-zone-number] {
