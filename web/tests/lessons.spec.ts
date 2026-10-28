@@ -74,8 +74,8 @@ test("someone who is not a lesson reviewer sees no sub-tab row, and the queue's 
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Lessons");
   await expect(subTabs(page)).toHaveCount(0);
   await expect(page.getByRole("link", { name: /Waiting for review/ })).toHaveCount(0);
-  // Brief 06's empty card, unchanged, for anyone who is not a reviewer.
-  await expect(page.locator("[data-empty-state] h2")).toHaveText("There are no lessons in the library yet.");
+  // The empty library's card for anyone who is not a reviewer (ticket 114's words).
+  await expect(page.locator("[data-empty-state] h2")).toHaveText("No lesson has entered the library yet.");
 
   await page.goto("/lessons/review");
   const card = page.locator("[data-empty-state]");
