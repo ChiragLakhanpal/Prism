@@ -38,11 +38,18 @@ test("P130164's header reads as the wireframe's one line with its implementing a
 
   const h1 = main(page).getByRole("heading", { level: 1 });
   await expect(h1).toHaveText("Rajasthan Road Sector Modernization · P130164 · India · closed");
-  // The P-code is a ProjectId link in Roboto Mono 500, marked as this page on Summary.
+  // The P-code is a ProjectId link in Roboto Mono, marked as this page on Summary. The name is the h1's 700; the ID, the
+  // country and the status in its line take 400 (ticket 99; DESIGN.md section 5, Project header).
   const pid = h1.getByRole("link", { name: "P130164" });
   await expect(pid).toHaveAttribute("href", "/projects/P130164");
   await expect(pid).toHaveAttribute("aria-current", "page");
-  expect(await pid.evaluate((el) => [getComputedStyle(el).fontFamily.split(",")[0], getComputedStyle(el).fontWeight])).toEqual(['"Roboto Mono"', "500"]);
+  expect(await pid.evaluate((el) => [getComputedStyle(el).fontFamily.split(",")[0], getComputedStyle(el).fontWeight])).toEqual(['"Roboto Mono"', "400"]);
+  expect(await h1.locator("[data-project-name]").evaluate((el) => getComputedStyle(el).fontWeight)).toBe("700");
+  expect(await h1.locator("[data-project-item]").evaluateAll((items) => items.map((item) => [item.textContent, getComputedStyle(item).fontWeight]))).toEqual([
+    ["P130164", "400"],
+    ["India", "400"],
+    ["closed", "400"],
+  ]);
   await expect(main(page).locator("[data-agency-line]")).toHaveText("Implementing agency: Rajasthan State Public Works Department");
   // Tables keep the projects API's own word; the header lowercases it from the copy file.
   expect(copy.projectPage.statusInline.Closed).toBe("closed");
@@ -59,6 +66,67 @@ test("P130164's header reads as the wireframe's one line with its implementing a
   await expect(crumb).toHaveText("Rajasthan Road Sector Modernization (P130164)");
   await expect(crumb.getByRole("link")).toHaveCount(0);
   expect(unrecorded).toEqual([]);
+});
+
+// Ticket 99: the project's head is shorter. The agency line keeps one line, with "Show all agencies" on it; the Follow
+// control sits at the head's right; and the tab row starts within 200 px of the head's top. The tabs take their order
+// from the copy file alone.
+test("on P156634 at 1440 px the head is short: one agency line, Follow at its right, and the tabs within 200 px of its top", async ({ page }) => {
+  await open(page, "/projects/P156634", 1440, {
+    ...(await p156634()),
+    "/api/me": { body: await recorded("me-staff.json") },
+    "/api/projects/P156634/follow": { body: await recorded("follow-off.json") },
+  });
+  await expect(page.locator("[data-summary=ready]")).toBeVisible();
+  const head = main(page).locator("[data-project-head]");
+  const follow = head.getByRole("button", { name: "Follow this project" });
+  await expect(follow).toBeVisible();
+  const box = async (locator: Locator) => (await locator.boundingBox())!;
+  const top = (await box(head)).y;
+  const tabRow = await box(main(page).getByRole("navigation", { name: "Project sections" }));
+  expect(tabRow.y - top, "the tab row under the head's top").toBeLessThanOrEqual(200);
+
+  // One line of agencies, "Show all agencies" on that line, and the rest a click away.
+  const agencies = head.locator("[data-agency-line] p");
+  const lineHeight = await agencies.evaluate((element) => parseFloat(getComputedStyle(element).lineHeight));
+  expect((await box(agencies)).height).toBeLessThanOrEqual(lineHeight + 1);
+  const more = head.getByRole("button", { name: "Show all agencies" });
+  const [line, button] = [await box(agencies), await box(more)];
+  expect(Math.abs(button.y + button.height / 2 - (line.y + line.height / 2)), "the button on the agencies' line").toBeLessThanOrEqual(2);
+  expect(button.x, "the button after the agencies").toBeGreaterThan(line.x);
+
+  // The Follow control at the head's right: its right edge on the content's right edge, level with the h1.
+  const h1 = await box(head.getByRole("heading", { level: 1 }));
+  const control = await box(head.locator("[data-follow]"));
+  const content = await box(head);
+  expect(Math.round(content.x + content.width - (control.x + control.width)), "Follow at the head's right").toBeLessThanOrEqual(1);
+  expect(control.x, "Follow beside the h1, not under it").toBeGreaterThanOrEqual(h1.x + h1.width);
+  expect(control.y, "Follow level with the h1").toBeLessThan(h1.y + h1.height);
+
+  // The five tabs, in the copy file's order and from nowhere else.
+  await expect(tabs(page)).toHaveText(Object.values(copy.projectPage.tab));
+  expect(await tabs(page).evaluateAll((links) => links.map((link) => new URL((link as HTMLAnchorElement).href).pathname))).toEqual(
+    Object.keys(copy.projectPage.tab).map((key) => (key === "summary" ? "/projects/P156634" : `/projects/P156634/${key}`)),
+  );
+
+  // Opening the agencies keeps them in the head, wrapping in full, and focus on the button.
+  await more.click();
+  await expect(head.getByRole("button", { name: "Show fewer agencies" })).toBeFocused();
+  expect((await box(agencies)).height).toBeGreaterThan(lineHeight + 1);
+});
+
+test("below a page area of 46rem the Follow control sits under the agency line", async ({ page }) => {
+  await open(page, "/projects/P156634", 390, {
+    ...(await p156634()),
+    "/api/me": { body: await recorded("me-staff.json") },
+    "/api/projects/P156634/follow": { body: await recorded("follow-off.json") },
+  });
+  const head = main(page).locator("[data-project-head]");
+  await expect(head.getByRole("button", { name: "Follow this project" })).toBeVisible();
+  const line = (await head.locator("[data-agency-line]").boundingBox())!;
+  const control = (await head.locator("[data-follow]").boundingBox())!;
+  expect(control.y).toBeGreaterThanOrEqual(line.y + line.height);
+  expect(Math.round(control.x)).toBe(Math.round(line.x));
 });
 
 test("switching tabs keeps the header in place and focus on the tab, says which tab shows, and names it in the page title", async ({ page }) => {
@@ -168,16 +236,6 @@ test("P130164's Summary renders from records with no request to a route that cal
   const icr = summary.locator("[data-fact=icr_outcome]");
   await expect(icr.getByRole("rowheader")).toHaveText("Outcome, in the Implementation Completion and Results Report (ICR)");
   await expect(icr.getByRole("cell").first()).toHaveText("Moderately Unsatisfactory");
-  // At 1440 px the value column holds the rating on one line, and the longest source cell keeps to one line
-  // too (the 21 critique, round 3, item 4). A cell is as tall as its row, so the words' own lines are counted.
-  const lines = (cell: Locator) =>
-    cell.evaluate((element) => {
-      const range = document.createRange();
-      range.selectNodeContents(element);
-      return Math.round(range.getBoundingClientRect().height / parseFloat(getComputedStyle(element).lineHeight));
-    });
-  expect(await lines(icr.getByRole("cell").first()), "the rating at 1440 px").toBe(1);
-  expect(await lines(summary.locator("[data-fact=procurement] [data-fact-source]")), "the source at 1440 px").toBe(1);
   await expect(icr.locator("[data-fact-source]")).toHaveText(/^ICR, Oct 10, 2019⁠\[\d\]$/);
   await expect(icr.locator("[data-citation]")).toHaveAccessibleName(/^Source \d: Implementation Completion and Results Report, October 10, 2019$/);
   const order = await summary.locator("[data-fact]").evaluateAll((rows) => rows.map((row) => row.getAttribute("data-fact")));
@@ -196,6 +254,68 @@ test("P130164's Summary renders from records with no request to a route that cal
   await expect(drawer.getByRole("heading", { level: 2 })).toHaveText("Loan or credit IDA53100");
   await expect(drawer.locator("[data-record]")).toContainText("Original principal (US$)160,000,000.00");
   await expect(drawer).toContainText("Source: World Bank loans and credits data, as of September 30, 2026.");
+});
+
+// Ticket 99: Summary opens on its finding, the page's one sentence in the finding style, then its fact tables: Dates
+// beside Money and Ratings beside Sectors and implementing agencies where the Summary is at least 75rem wide (1440 px
+// beside the rail), and one column below it (1280 px). A rating and the longest source keep one line at both.
+test("Summary opens on its finding in the finding style, then its fact tables, two side by side from 75rem and one column below", async ({ page }) => {
+  await open(page, "/projects/P130164", 1440);
+  const summary = page.locator("[data-summary=ready]");
+  await expect(summary).toBeVisible();
+  const finding = summary.locator("[data-summary-lead]");
+  // The finding is built from the records with no model, so it carries no byline (ticket 111), and its caption says so.
+  await expect(summary.locator("[data-byline]")).toHaveCount(0);
+  await expect(summary.locator("[data-made-by]")).toContainText("No model wrote it.");
+  expect(await finding.evaluate((element) => [getComputedStyle(element).fontSize, getComputedStyle(element).fontWeight])).toEqual(["28px", "300"]);
+  const tables = summary.locator("[data-fact-table]");
+  await expect(tables.locator("h3")).toHaveText(["Dates", "Money", "Ratings", "Sectors and implementing agencies"]);
+  const boxes = async () => {
+    const out: { x: number; y: number; width: number }[] = [];
+    for (const table of await tables.all()) {
+      const box = (await table.boundingBox())!;
+      out.push({ x: Math.round(box.x), y: Math.round(box.y), width: Math.round(box.width) });
+    }
+    return out;
+  };
+  // The finding comes first, inside the first screen.
+  const top = (await finding.boundingBox())!;
+  expect(top.y + top.height).toBeLessThan((await boxes())[0].y);
+  expect(top.y).toBeLessThan(900);
+
+  const lines = (cell: Locator) =>
+    cell.evaluate((element) => {
+      const range = document.createRange();
+      range.selectNodeContents(element);
+      return Math.round(range.getBoundingClientRect().height / parseFloat(getComputedStyle(element).lineHeight));
+    });
+  const rating = summary.locator("[data-fact=icr_outcome]").getByRole("cell").first();
+  const source = summary.locator("[data-fact=procurement] [data-fact-source]");
+  await expect(source).toHaveText(/^Projects API, ISR of Dec 28, 2018⁠\[\d+\]$/);
+
+  for (const width of [1440, 1280]) {
+    await page.setViewportSize({ width, height: 900 });
+    const [dates, money, ratings, who] = await boxes();
+    if (width === 1440) {
+      // Side by side: each pair shares a top, the second to the right of the first.
+      expect([money.y, who.y], `${width} px`).toEqual([dates.y, ratings.y]);
+      expect(money.x, `${width} px`).toBeGreaterThan(dates.x + dates.width);
+      expect(who.x, `${width} px`).toBeGreaterThan(ratings.x + ratings.width);
+    } else {
+      // One column: every table on the same left edge, each under the one before.
+      expect(new Set([dates.x, money.x, ratings.x, who.x]).size, `${width} px`).toBe(1);
+      expect(money.y > dates.y && ratings.y > money.y && who.y > ratings.y, `${width} px`).toBe(true);
+    }
+    expect(await lines(rating), `"Moderately Unsatisfactory" at ${width} px`).toBe(1);
+    expect(await lines(source), `the ISR's source at ${width} px`).toBe(1);
+  }
+
+  // The finding stays inside the first screen of a phone and of a 1024 by 768 window.
+  for (const [width, height] of [[1024, 768], [390, 844]]) {
+    await page.setViewportSize({ width, height });
+    await page.evaluate(() => window.scrollTo(0, 0));
+    expect((await finding.boundingBox())!.y, `${width} by ${height}`).toBeLessThan(height);
+  }
 });
 
 test("P156634's Summary gives every value a marker and lists its agencies and sectors one per line, 4 px apart", async ({ page }) => {

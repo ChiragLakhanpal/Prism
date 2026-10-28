@@ -88,9 +88,6 @@
   --container-table-fit: 49rem;
   /* Table's cardsBelow="narrow": a table of three short columns keeps its columns from a 480 px frame. */
   --container-table-narrow: 30rem;
-  /* A fact table's own frame (DESIGN.md section 5, Fact table): from 45rem, as the Summary's 7 columns are at
-     1440 px, its value column has room for "Moderately Unsatisfactory" on one line. */
-  --container-fact-wide: 45rem;
   /* A page head that sets its title beside its actions does so from a page area of 46rem, so a page the evidence
      drawer narrows stacks them (DESIGN.md section 4, Page layouts; ticket 94): @head/page:. */
   --container-head: 46rem;
@@ -543,6 +540,50 @@
 [data-zone-pager] {
   padding: calc(var(--spacing) * 3) var(--zone-pad) calc(var(--spacing) * 3) calc(var(--zone-pad) + var(--zone-indent));
   border-top: 1px solid var(--color-line);
+}
+
+/* Fact table (DESIGN.md section 5; FactTable.tsx; ticket 99). In a frame under 45rem from a page area of 48rem, as the
+   Summary's tables side by side are at 1440 px, three columns would break a rating or a source over two lines. So each
+   row is a grid: its label takes 40 percent and spans the row, and its source sits under its value, 4 px down, in the
+   value's column. The source's column head stays for screen readers, and the cells keep their explicit roles. Below a
+   page area of 48rem the rows stack, as FactTable.tsx draws them. */
+@container page (width >= 48rem) {
+  @container facts (width < 45rem) {
+    [data-fact-table] :is(table, thead, tbody) {
+      display: block;
+    }
+    [data-fact-table] tr {
+      display: grid;
+      grid-template-columns: 2fr 3fr;
+    }
+    [data-fact-table] tr > * {
+      width: auto;
+    }
+    [data-fact-table] tr > :first-child {
+      grid-row: span 2;
+    }
+    /* A number's source keeps to the number's right edge. */
+    [data-fact-table][data-numeric] tr > :nth-child(3) {
+      text-align: right;
+    }
+    [data-fact-table] tr > :nth-child(2) {
+      grid-column: 2;
+      padding-bottom: var(--spacing);
+    }
+    [data-fact-table] tr > :nth-child(3) {
+      grid-column: 2;
+      padding-top: 0;
+    }
+    [data-fact-table] thead th:nth-child(3) {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+  }
 }
 @media (width >= 48rem) {
   [data-zone] {

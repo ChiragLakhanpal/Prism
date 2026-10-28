@@ -1,14 +1,15 @@
 // A project's Summary tab (the 21 brief, section 3): what the project is and where it stands, from
 // precomputed records, before any model call. One request, GET /api/projects/{pid}/summary, gives every
 // value with its source and each source as the evidence drawer shows it, so a citation marker opens at
-// once. The lead sentence is a template filled with the route's values, and a caption says no model wrote
-// it. Four fact tables follow (Dates, with the closing date history under it; Money; Ratings; Sectors and
-// implementing agencies), each value with its source cell and citation marker. Markers are numbered in
-// reading order, and a source cited again keeps its number, like a footnote.
+// once. The lead sentence is a template filled with the route's values and is the page's finding (ticket 99): it
+// opens the Summary in the finding style, and a caption says no model wrote it. Four
+// fact tables follow (Dates, with the closing date history under it; Money; Ratings; Sectors and implementing
+// agencies), each value with its source cell and citation marker. Markers are numbered in reading order, and a source
+// cited again keeps its number, like a footnote.
 //
-// The page counts and sums nothing: the number of closing-date moves and each amount are the route's. It
-// takes up columns 1 to 7 from a page area of 1200 px, so the evidence drawer opens into the space beside
-// it and the column never moves.
+// The page counts and sums nothing: the number of closing-date moves and each amount are the route's. The Summary
+// takes the page's 12 columns, and its tables sit two side by side where it is at least 75rem wide and in one column
+// below; the evidence drawer narrows the page, so it puts them in one column and never moves the page's left edge.
 //
 // States: loading (the group titles and table heads are real, with skeleton rows as many as P130164's),
 // populated, a value missing from its record, a source not loaded for this project (the closing date
@@ -16,12 +17,13 @@
 // dropped, a service that didn't answer, and an account that can't read Strata's tables.
 import { useEffect, type ReactNode } from "react";
 import { CitationMarker } from "../../components/CitationMarker";
+import { EightColumns } from "../../components/EightColumns";
 import { EvidenceCard } from "../../components/EvidenceCard";
 import { FactTable, type FactRow } from "../../components/FactTable";
 import { Fill } from "../../components/Fill";
 import { LoadError } from "../../components/LoadError";
 import { Num } from "../../components/Num";
-import { SkeletonLine } from "../../components/Skeleton";
+import { SkeletonLine, SkeletonText } from "../../components/Skeleton";
 import { Source } from "../../components/Source";
 import { Table, type Column, type Row } from "../../components/Table";
 import { copy } from "../../copy";
@@ -182,8 +184,11 @@ function Lead({ summary }: { summary: Summary }) {
       </>
     );
   }
+  // The page's finding (DESIGN.md section 1, principle 7; ticket 99), in the finding style, about 45 characters a line in
+  // balanced lines. It is built from the records alone, with no model, so it carries no byline (ticket 111 kept the
+  // project page's records free of one), and its caption says so.
   return (
-    <p className="max-w-[65ch] text-lead text-ink-heading" data-summary-lead>
+    <p className="max-w-[22.5em] text-finding text-balance text-ink-heading" data-summary-lead data-finding>
       {text}
     </p>
   );
@@ -266,8 +271,13 @@ const LOADING_ROWS = { dates: 2, money: 3, ratings: 7, who: 4 };
 
 const head = (key: keyof typeof words.col) => words.col[key];
 
-// While the summary loads: two bars for the lead and one for the caption, then the four groups' real titles
-// and table heads over skeleton rows as many as P130164's, so nothing moves when the facts arrive.
+// The fact tables (ticket 99): one column, and two side by side where the Summary is at least 75rem wide (Dates beside
+// Money, Ratings beside Sectors and implementing agencies), with the layout grid's 32 px gutter between them. The
+// Summary is a size container of its own, so the evidence drawer, which narrows it, puts them back in one column.
+const TABLES = "mt-8 grid grid-cols-1 gap-12 @xl/summary:grid-cols-2 @xl/summary:gap-x-8";
+
+// While the summary loads: four bars for the finding and one for the caption, then the four groups' real
+// titles and table heads over skeleton rows as many as P130164's, so nothing moves when the facts arrive.
 export function SummarySkeleton() {
   const group = (key: keyof typeof LOADING_ROWS, value: keyof typeof words.col, numeric = false) => (
     <FactTable
@@ -283,15 +293,14 @@ export function SummarySkeleton() {
   );
   return (
     <>
-      <div aria-hidden="true">
-        <SkeletonLine className="text-lead" width="w-[65ch] max-w-full" />
-        <SkeletonLine className="text-lead" width="w-[45ch] max-w-[70%]" />
+      <div aria-hidden="true" className="max-w-[22.5em] text-finding">
+        <SkeletonText className="text-finding" widths={["w-full", "w-full", "w-full", "w-2/5"]} />
         <SkeletonLine className="mt-2 text-caption" width="w-1/2" />
       </div>
       <p role="status" className="sr-only">
         {words.loading}
       </p>
-      <div className="mt-8 flex flex-col gap-12">
+      <div className={TABLES}>
         <div>
           {group("dates", "date")}
           {/* The closing date history's title and its one sentence with its source, as P130164 has. */}
@@ -334,7 +343,7 @@ export function SummaryFacts({ summary }: { summary: Summary }) {
       <p className="mt-2 text-caption text-ink-muted" data-made-by>
         <Fill template={words.madeBy} slots={{ as_of_date: <Num date={data.as_of} /> }} />
       </p>
-      <div className="mt-8 flex flex-col gap-12">
+      <div className={TABLES}>
         <div>
           <FactTable
             title={words.group.dates}
@@ -404,17 +413,19 @@ export function SummaryTab({ pid }: { pid: string }) {
   }, [data]);
 
   return (
-    <div className="layout-grid" data-summary={load.status}>
-      <div className="col-span-12 @xl/page:col-span-7">
-        <h2 className="sr-only">{words.heading}</h2>
-        {load.status === "error" ? (
+    // The Summary takes the page's 12 columns (the wide layout) and is a size container of its own, by which its fact
+    // tables lay out (TABLES above).
+    <div className="@container/summary" data-summary={load.status}>
+      <h2 className="sr-only">{words.heading}</h2>
+      {load.status === "error" ? (
+        <EightColumns>
           <LoadError error={load.error} message={words.error} permission={words.permission} onRetry={retry} retrying={load.retrying} attempt={load.attempt} />
-        ) : data ? (
-          <SummaryFacts summary={data} />
-        ) : (
-          <SummarySkeleton />
-        )}
-      </div>
+        </EightColumns>
+      ) : data ? (
+        <SummaryFacts summary={data} />
+      ) : (
+        <SummarySkeleton />
+      )}
     </div>
   );
 }

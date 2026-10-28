@@ -370,7 +370,8 @@ test("a project whose agencies fit on one line moves its tabs up when it arrives
   for (const width of widths) expect(ready[width], `${width} px`).toBeLessThanOrEqual(loading[width] + 1);
 });
 
-test("a long list of implementing agencies keeps to two lines until you show them all", async ({ page }) => {
+test("a long list of implementing agencies keeps to one line until you show them all", async ({ page }) => {
+  // Ticket 99: one line, with "Show all agencies" after it on that line (DESIGN.md section 5, Project header).
   await open(page, "/projects/P156634", await p156634());
   const show = page.getByRole("button", { name: "Show all agencies" });
   await expect(show).toHaveAttribute("aria-expanded", "false");
@@ -380,23 +381,17 @@ test("a long list of implementing agencies keeps to two lines until you show the
   const agencies = page.locator(`[id="${await show.getAttribute("aria-controls")}"]`);
   await expect(agencies).toContainText("Ministry of Water, Sanitation and Irrigation; Mombasa Water and Sanitation Services Company");
   const lineHeight = await agencies.evaluate((element) => parseFloat(getComputedStyle(element).lineHeight));
-  expect(await agencies.evaluate((element) => element.clientHeight)).toBeLessThanOrEqual(2 * lineHeight + 1);
-  // The button's label line sits 4 px under the agencies' last line, as a flush ghost button's label does
-  // (the 21 review, round 3, item 8).
-  // The label's line box is centred in the 44 px button.
-  const labelTop = await show.evaluate((button) => {
-    const box = button.getBoundingClientRect();
-    return box.top + (box.height - parseFloat(getComputedStyle(button).lineHeight)) / 2;
-  });
-  const agenciesBottom = await agencies.evaluate((element) => element.getBoundingClientRect().bottom);
-  expect(Math.round(labelTop - agenciesBottom)).toBe(4);
+  expect(await agencies.evaluate((element) => element.clientHeight)).toBeLessThanOrEqual(lineHeight + 1);
 
   await show.click();
 
   const fewer = page.getByRole("button", { name: "Show fewer agencies" });
   await expect(fewer).toHaveAttribute("aria-expanded", "true");
   await expect(fewer).toBeFocused();
+  // Opened, every name shows, wrapping in full, and the button follows them.
   expect(await agencies.evaluate((element) => element.clientHeight)).toBeGreaterThan(2 * lineHeight + 1);
+  expect(await agencies.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(true);
+  expect((await fewer.boundingBox())!.y).toBeGreaterThanOrEqual((await agencies.boundingBox())!.y + (await agencies.boundingBox())!.height - 1);
 
   // One agency fits on a line, so there is nothing to show.
   await open(page, "/projects/P130164", { "/api/projects/P130164": { body: await recorded("project-p130164.json") } });
