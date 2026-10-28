@@ -1102,9 +1102,12 @@ test("the page barely moves when the package and then its comparables arrive, at
     await mockApi(page, { "/api/me": { body: await recorded("me.json") }, "/api/freshness": { body: await recorded("freshness.json") } });
     await page.route(`**${API}`, later(400, "package-ke-nwwda-541055.json"));
     await page.route(`**${API}/comparables`, later(800, "comparables-ke-nwwda-541055.json"));
+    // The tracker at the top of the page (ticket 115) holds its place until section 2's steps arrive.
+    await page.route(`**${API}/steps`, later(800, "steps-ke-nwwda-541055.json"));
 
     await page.goto(PATH);
     await ready(page);
+    await expect(page.locator("[data-step-tracker] li")).toHaveCount(6);
     await page.waitForTimeout(200);
 
     const shift = await page.evaluate(() => (window as unknown as { shifts: number[] }).shifts.reduce((a, b) => a + b, 0));

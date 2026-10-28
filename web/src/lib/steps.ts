@@ -39,7 +39,16 @@ export type StepDate = {
   plan_first_version_date: string | null;
   plan_latest_date: string | null;
   plan_latest_version_date: string | null;
+  // Where the step stands in the package's plan as of the page's date (ticket 115; src/strata/server/tracker.py): its
+  // actual date when the plan gives one, its state, and for a late step the days since its planned date, as the
+  // server counted them.
+  actual_date: string | null;
+  state: StepState;
+  late_days: number | null;
 };
+
+export type StepState = "done" | "next" | "planned" | "late" | "unknown";
+export const STEP_STATES: StepState[] = ["done", "next", "planned", "late", "unknown"];
 
 export type LongestEntry = { step_reference: string; evidence_id: string; stage_step_key: string; days: number };
 

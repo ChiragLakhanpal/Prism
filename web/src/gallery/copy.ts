@@ -539,6 +539,12 @@ export const galleryCopy = {
   // The steps page's sections (ticket 27).
   stepSections: {
     segmented: "The segmented control",
+    // The tracker at the top of the workspace (ticket 115).
+    trackerDone: "Tracker: five steps done, with a tick and the actual date, and the completion late",
+    trackerNext: "Tracker: before any step happened, the first is next and the rest are planned",
+    trackerLate: "Tracker: late steps and a step the plan never dated, as on the fixture's showcase package",
+    trackerNoDates: "Tracker: a package from a sentence, which has no plan dates",
+    trackerLoading: "Tracker: loading",
     collapsed: "Collapsed, with the steps dated",
     collapsedPartial: "Collapsed, when every step lacks comparables, as on the fixture",
     collapsedAbstain: "Collapsed, under 20 comparable packages in all",

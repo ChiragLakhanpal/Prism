@@ -166,6 +166,15 @@
     translate: 0 4px;
   }
 }
+/* The step tracker's next node (ticket 115): when the steps arrive, its fill grows from 0.6 and fades in over 160 ms,
+   so the eye finds the step the package is on. Never from scale 0, and nothing moves under reduced motion. */
+@utility animate-fill-in {
+  transition: opacity var(--motion-popover) var(--ease-out), scale var(--motion-popover) var(--ease-out);
+  @starting-style {
+    opacity: 0;
+    scale: 0.6;
+  }
+}
 /* The check line's tick, beside "Checked", draws left to right 120 ms after a streamed answer lands. It ends at
    inset(0), not at no clip, since a browser can only move between two insets. */
 @utility animate-tick-in {

@@ -152,6 +152,9 @@ const inOrder = (...acts: ((page: Page) => Promise<void>)[]) => async (page: Pag
   for (const act of acts) await act(page);
 };
 const STEP_SHOTS: Shot[] = [
+  // Ticket 115: the tracker at the top of the workspace, five steps done and the completion late, and the keyboard's
+  // tab stop on the late step. The fixture's showcase, with its late steps, is steps--fixture below.
+  stepShot("tracker-done", { recorded: "steps-ke-hand-900000-done.json" }, { full: false, widths: [1440], act: focus("[data-step-tracker] li[tabindex='0']") }),
   stepShot("collapsed", DATED_STEPS, { act: toSteps }),
   stepShot("cautious", DATED_STEPS, { act: openSteps }),
   stepShot("middle", DATED_STEPS, { act: inOrder(openSteps, click(`${SECTION_2} [data-segment=middle]`)) }),

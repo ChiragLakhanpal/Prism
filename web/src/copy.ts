@@ -4701,6 +4701,27 @@ export const copy = {
     },
   },
 
+  // The tracker at the top of the package workspace (ticket 115): where each of section 2's steps stands in the
+  // package's plan, as the steps routes mark it (src/strata/server/tracker.py). Each step reads its label, its state
+  // in words and its date, so a screen reader hears the same as the nodes show. {date} and {days} are Num values from
+  // the server; the browser counts no days.
+  stepTracker: {
+    heading: "Where the steps stand",
+    done: "Done on {date}",
+    next: "Next",
+    late: "Late by {days} days",
+    lateOne: "Late by 1 day",
+    unknown: "No date",
+    plannedFor: "Planned for {date}",
+    // An unknown step: the plan gives it no date, or a later step is done and the plan gives this one no actual date.
+    notInPlan: "Not in the plan",
+    noActual: "The plan gives no actual date",
+    // The source line: the plan version the dates come from, and the page's as-of date the days late count to.
+    source: "The Procurement Plan of {plan}. I count days late to {date}.",
+    // A package from a sentence, or a plan that dates none of the steps.
+    none: "No Procurement Plan gives dates for these steps yet.",
+  },
+
   // Section 1's "Advertised again" block (ticket 28; the 28 brief, section 7), at the end of section 1's card.
   // Every {name} is a value rebidding_risk returned, which Num writes. "N of M" counts stay in numerals; a lone
   // count from one to nine is spelled out. Evidence is in the past tense; my model's estimate in the present.
