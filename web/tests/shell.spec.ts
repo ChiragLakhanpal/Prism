@@ -4,7 +4,7 @@
 import { createHash } from "node:crypto";
 import type { Page } from "@playwright/test";
 import { hubApi } from "./hub-api";
-import { expect, mockApi, mockShell, recorded, test } from "./mocked";
+import { expect, mockApi, mockShell, openSidebar, recorded, test } from "./mocked";
 
 // web/src/assets/world-bank-logo.md: the official file's hash when it was downloaded.
 const LOGO_SHA256 = "c11d30bf69ad0f6f224b350e93ea976bbac438ff18c82786d1c11454a0317aff";
@@ -73,7 +73,14 @@ test("from 1024 px the bar is one 56 px navy row that sticks, with the box from 
   await page.goto("/");
   const at = async (selector: string) => (await page.locator(selector).boundingBox())!;
 
-  for (const [width, left] of [[1440, 264], [1280, 244], [1024, 244]]) {
+  // Ticket 110: the rail rests at every width, and the open sidebar is a person's choice.
+  for (const [width, left, open] of [[1440, 244, false], [1440, 264, true], [1280, 264, true], [1024, 244, false]] as const) {
+    const toggle = page.locator("[data-sidebar-toggle]");
+    if ((await toggle.getAttribute("aria-expanded")) !== String(open)) {
+      await toggle.click();
+      // Focus leaves the button, so narrowing the window below hands no focus to the Menu button, which would scroll.
+      await toggle.blur();
+    }
     await page.setViewportSize({ width, height: 900 });
     const bar = await at("[data-nav-bar]");
     expect([bar.x, bar.y, bar.width, bar.height], `${width} px`).toEqual([0, 0, width, 56]);
@@ -128,20 +135,23 @@ test("the focused skip link shows below the bar, over the page, and covers neith
   }
 });
 
-// Ticket 92 (DESIGN.md section 5, Sidebar): from 1024 px the sections are a sidebar named "Main" beside the page, open
-// at 224 px from 1440 px and a 64 px rail of icons from 1024 to 1439 px by default, Home first and each section once.
-test("from 1024 px the sidebar named Main sits beside the page, 224 px wide from 1440 px and a 64 px rail below, Home first", async ({ page }) => {
+// Ticket 92 (DESIGN.md section 5, Sidebar): from 1024 px the sections are a sidebar named "Main" beside the page, Home
+// first and each section once. Ticket 110: with no stored choice it rests as the 64 px rail of icons at every width
+// from 1024 px (the user's decision of October 27, 2026), and its order is the user's: Home, Projects, Packages,
+// Lessons, Drafts, then Data at the foot, since a project holds the plan and the plan holds the packages.
+test("with no stored choice, the sidebar named Main rests as the 64 px rail beside the page at every width from 1024 px, Home first", async ({ page }) => {
   await mockShell(page);
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/");
 
   const main = page.getByRole("navigation", { name: "Main" });
-  for (const [width, wide] of [[1440, 224], [1280, 64], [1024, 64]]) {
+  for (const width of [1920, 1440, 1280, 1024]) {
     await page.setViewportSize({ width, height: 900 });
-    await expect(main.locator("[data-nav-item]"), `${width} px`).toHaveText(["Home", "Packages", "Projects", "Lessons", "Drafts", "Data"]);
+    await expect(main.locator("[data-nav-item]"), `${width} px`).toHaveText(["Home", "Projects", "Packages", "Lessons", "Drafts", "Data"]);
     const sidebar = (await page.locator("[data-sidebar-column]").boundingBox())!;
     const column = (await page.locator("[data-page-column]").boundingBox())!;
-    expect([sidebar.x, sidebar.width, column.x], `${width} px`).toEqual([0, wide, wide]);
+    expect([sidebar.x, sidebar.width, column.x], `${width} px`).toEqual([0, 64, 64]);
+    await expect(page.locator("[data-sidebar-toggle]"), `${width} px`).toHaveAccessibleName("Expand the sidebar");
     await expect(main.getByRole("link", { name: "Home" }), `${width} px`).toHaveAttribute("aria-current", "page");
     await expect(main.locator("[aria-current]"), `${width} px`).toHaveCount(1);
   }
@@ -166,15 +176,17 @@ test("the current item says page on the section's own page and true on a page in
 });
 
 // "Collapse the sidebar" and "Expand the sidebar" are one button (DESIGN.md section 5, Sidebar). The width changes at
-// once: it is final in the same frame as the press, and nothing on the sidebar transitions its width.
-test("Collapse the sidebar turns it into the rail and Expand the sidebar back, at once, and the choice survives a reload", async ({ page }) => {
+// once: it is final in the same frame as the press, and nothing on the sidebar transitions its width. Ticket 110: the
+// rail is where it starts, so "Expand the sidebar" is the first press, and the choice outranks the default after a reload.
+test("Expand the sidebar opens the rail to 224 px at once, Collapse the sidebar turns it back, and the choice survives a reload", async ({ page }) => {
   await mockShell(page);
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/");
   const column = page.locator("[data-sidebar-column]");
   const toggle = page.locator("[data-sidebar-toggle]");
-  await expect(toggle).toHaveAccessibleName("Collapse the sidebar");
-  await expect(toggle).toHaveAttribute("aria-expanded", "true");
+  await expect(toggle).toHaveAccessibleName("Expand the sidebar");
+  await expect(toggle).toHaveAttribute("aria-expanded", "false");
+  expect((await column.boundingBox())!.width).toBe(64);
 
   await toggle.focus();
   const pressed = await column.evaluate((el) => {
@@ -187,20 +199,24 @@ test("Collapse the sidebar turns it into the rail and Expand the sidebar back, a
     el.querySelector<HTMLButtonElement>("[data-sidebar-toggle]")!.click();
     return { moves, width: el.getBoundingClientRect().width };
   });
-  expect(pressed).toEqual({ moves: [], width: 64 });
-  await expect(toggle).toHaveAccessibleName("Expand the sidebar");
-  await expect(toggle).toHaveAttribute("aria-expanded", "false");
+  expect(pressed).toEqual({ moves: [], width: 224 });
+  await expect(toggle).toHaveAccessibleName("Collapse the sidebar");
+  await expect(toggle).toHaveAttribute("aria-expanded", "true");
   await expect(toggle).toBeFocused();
 
   await page.reload();
   await expect(page.locator("main h1")).toBeVisible();
-  expect((await column.boundingBox())!.width).toBe(64);
-  await toggle.click();
   expect((await column.boundingBox())!.width).toBe(224);
-  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.setViewportSize({ width: 1024, height: 900 });
   await page.reload();
   await expect(toggle).toHaveAccessibleName("Collapse the sidebar");
   expect((await column.boundingBox())!.width).toBe(224);
+  await toggle.click();
+  expect((await column.boundingBox())!.width).toBe(64);
+  await page.setViewportSize({ width: 1920, height: 900 });
+  await page.reload();
+  await expect(toggle).toHaveAccessibleName("Expand the sidebar");
+  expect((await column.boundingBox())!.width).toBe(64);
 });
 
 // A rail item's label shows in a tooltip on hover and on keyboard focus; the name stays in the link, so the tooltip
@@ -231,7 +247,8 @@ test("each rail item's tooltip shows its label on hover and on keyboard focus", 
   await expect(page.locator("[data-sidebar-toggle]")).toBeFocused();
   await expect(tip).toHaveText("Expand the sidebar");
 
-  await page.setViewportSize({ width: 1440, height: 900 });
+  // Opened, the sidebar shows its labels and no tooltip.
+  await page.keyboard.press("Enter");
   await expect(tip).toHaveCount(0);
   await lessons.hover();
   await page.waitForTimeout(200);
@@ -252,14 +269,15 @@ test("the first paint holds the bar, the logo and the sidebar where the app puts
     });
   await mockShell(page);
   await page.goto("/");
-  const cases: [number, string | null][] = [[1440, null], [1280, null], [1280, "open"], [1440, "rail"], [800, null], [390, null]];
+  // Ticket 110: with no stored choice the rail rests at every width from 1024 px, in the first paint and after it.
+  const cases: [number, string | null][] = [[1920, null], [1440, null], [1024, null], [1280, "open"], [1920, "rail"], [800, null], [390, null]];
   for (const [width, stored] of cases) {
     const first = await browser.newContext({ viewport: { width, height: 900 } });
     if (stored) await first.addInitScript((rest) => window.localStorage.setItem("strata.sidebar", rest), stored);
     await first.route(/\/assets\/.+\.js$/, (route) => route.abort());
     const before = await first.newPage();
     await before.goto(test.info().project.use.baseURL!);
-    const painted = await before.evaluate(boxes, ["[data-boot-bar]", "[data-boot-bar] img", "[data-boot-sidebar]"]);
+    const painted = await before.evaluate(boxes, ["[data-boot-bar]", "[data-boot-bar] img", "[data-boot-sidebar]", "[data-boot-sidebar-column]"]);
     await first.close();
 
     await page.evaluate((rest) => (rest ? window.localStorage.setItem("strata.sidebar", rest) : window.localStorage.clear()), stored);
@@ -268,18 +286,24 @@ test("the first paint holds the bar, the logo and the sidebar where the app puts
     await expect(page.locator("main h1")).toBeVisible();
     const mounted = await page.evaluate(boxes, ["[data-nav-bar]", "[data-nav-bar] img", "[data-sidebar]"]);
 
-    expect(painted, `${width} px, stored ${stored}`).toEqual(mounted);
+    expect(painted.slice(0, 3), `${width} px, stored ${stored}`).toEqual(mounted);
     expect(mounted[2] === null, `${width} px`).toBe(width < 1024);
     expect(mounted[0]![3], `${width} px: the bar's height`).toBe(width < 1024 ? 108 : 56);
+    if (width < 1024) continue;
+    const wide = stored === "open" ? 224 : 64;
+    expect(painted[3]![2], `${width} px, stored ${stored}: the painted sidebar's width`).toBe(wide);
+    expect((await page.locator("[data-sidebar-column]").boundingBox())!.width, `${width} px, stored ${stored}`).toBe(wide);
   }
 });
 
 // Ticket 93 (DESIGN.md section 5, Freshness stamp): the stamp sits at the sidebar's foot, under Data, on its label's
-// left edge, in a 24 px line box. The stamp's tests open the sidebar at 1440 px, where its five states show.
+// left edge, in a 24 px line box. The stamp's tests open the sidebar at 1440 px, where its five states show; with no
+// stored choice the sidebar rests as the rail, which hides the stamp (ticket 110).
 test("the stamp sits at the sidebar's foot under Data, shows the day the server returns, and links to the Data page", async ({ page }) => {
   await page.clock.setFixedTime(TODAY);
   await mockShell(page);
   await page.setViewportSize({ width: 1440, height: 900 });
+  await openSidebar(page);
   await page.goto("/");
 
   const stamp = page.locator("[data-stamp]").getByRole("link");
@@ -322,6 +346,7 @@ test("a data date from another year shows its year", async ({ page }) => {
   await page.clock.setFixedTime(TODAY);
   await mockShell(page, { freshness: { body: '{"data_through": "2025-12-30"}' } });
   await page.setViewportSize({ width: 1440, height: 900 });
+  await openSidebar(page);
   await page.goto("/");
 
   await expect(page.locator("[data-stamp]").getByRole("link")).toHaveText("Data through Dec 30, 2025");
@@ -330,6 +355,7 @@ test("a data date from another year shows its year", async ({ page }) => {
 test("before any daily source has loaded, the stamp says no data are loaded and still links to the Data page", async ({ page }) => {
   await mockShell(page, { freshness: { body: await recorded("freshness-empty.json") } });
   await page.setViewportSize({ width: 1440, height: 900 });
+  await openSidebar(page);
   await page.goto("/");
 
   await expect(page.locator("[data-stamp]").getByRole("link")).toHaveText("No data loaded yet");
@@ -345,6 +371,7 @@ test("while it loads, the stamp holds a static bar for the first second and then
     await route.fulfill({ status: 200, contentType: "application/json", body: await recorded("freshness.json") });
   });
   await page.setViewportSize({ width: 1440, height: 900 });
+  await openSidebar(page);
   await page.goto("/");
 
   const stamp = page.locator("[data-stamp]");
@@ -365,6 +392,7 @@ test("when the server fails, the stamp says it can't read the date, and tries ag
     return route.fulfill({ status: 200, contentType: "application/json", body: await recorded("freshness.json") });
   });
   await page.setViewportSize({ width: 1440, height: 900 });
+  await openSidebar(page);
   await page.goto("/");
 
   const stamp = page.locator("[data-stamp]");
@@ -461,6 +489,41 @@ test("the view popover says who is signed in and offers each view as a link, wit
   await expect(dialog.getByRole("link", { name: "The public" })).toHaveAttribute("href", "/?view=public");
   await expect(dialog.getByRole("group")).toHaveAccessibleName("Language of answers and drafts");
 });
+
+// Ticket 110, from the user's review of October 27, 2026: "See Strata as" names the group in the label style (DESIGN.md
+// section 3: 13/16, 600, ink-muted), so it no longer reads as a fourth view. It sits 16 px under the signed-in line
+// (between blocks) and 8 px above the first view row (a heading to its first line; section 4). DESIGN.md keeps 700 for
+// the h1 and the wordmark, so nothing in the panel is bold. The Menu sheet shows the same panel below 768 px.
+for (const width of [1440, 390]) {
+  test(`at ${width} px "See Strata as" is a label 16 px under the signed-in line and 8 px over the first view, and nothing in the panel is bold`, async ({ page }) => {
+    await mockShell(page);
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto("/");
+    const sheet = width < 768;
+    await page.getByRole("button", { name: sheet ? "Menu" : "View: World Bank staff", exact: true }).click();
+    const panel = sheet ? page.locator("[data-menu-panel]") : page.getByRole("dialog", { name: "Your view" });
+    const label = panel.getByText("See Strata as", { exact: true });
+    await expect(label).toBeVisible();
+    const look = await label.evaluate((el) => {
+      const style = getComputedStyle(el);
+      return [style.fontSize, style.lineHeight, style.fontWeight, style.color];
+    });
+    expect(look).toEqual(["13px", "16px", "600", "rgb(75, 94, 113)"]);
+    const who = (await panel.getByText("Signed in as ana.example@worldbank.org", { exact: true }).boundingBox())!;
+    const group = (await label.boundingBox())!;
+    const row = (await panel.locator("[data-view-row]").first().boundingBox())!;
+    expect(Math.round(group.y - (who.y + who.height)), "from the signed-in line").toBe(16);
+    expect(Math.round(row.y - (group.y + group.height)), "to the first view row").toBe(8);
+
+    const bold = await panel.evaluate((root) =>
+      [...root.querySelectorAll("*")]
+        .filter((el) => [...el.childNodes].some((node) => node.nodeType === Node.TEXT_NODE && node.textContent!.trim()))
+        .filter((el) => getComputedStyle(el).fontWeight === "700")
+        .map((el) => el.textContent!.trim()),
+    );
+    expect(bold).toEqual([]);
+  });
+}
 
 test("Tab in the view popover closes it and moves on to the sidebar; Shift+Tab closes it and returns to the view switch", async ({ page }) => {
   await mockShell(page);
@@ -633,3 +696,115 @@ for (const width of [1440, 1024]) {
     }
   });
 }
+
+// Ticket 110, from the user's review of October 27, 2026: even margins. With the rail at rest, the gap from the
+// content's right edge to the window's edge is within 16 px of the gap from the rail to the content's left edge: wide
+// content may take 1440 px, and Lessons and the Drafts list use all 12 columns. The content is what the page paints:
+// a line of text as far as its words go, a table, or a box with a fill or a border, never an empty wrapper, as far as
+// a row that scrolls sideways shows it. At 390 px both gaps are the 16 px margin, and at 320 px nothing scrolls
+// sideways. One page load each; the widths change in place.
+const painted = (main: Element) => {
+  let [left, right] = [Infinity, -Infinity];
+  const add = (el: Element, from: number, to: number) => {
+    // A row that scrolls sideways, or a line cut short, shows only what is inside its own box.
+    for (let parent: Element | null = el; parent && parent !== main; parent = parent.parentElement) {
+      if (getComputedStyle(parent).overflowX === "visible") continue;
+      const frame = parent.getBoundingClientRect();
+      [from, to] = [Math.max(from, frame.left), Math.min(to, frame.right)];
+    }
+    if (to - from <= 1) return;
+    [left, right] = [Math.min(left, from), Math.max(right, to)];
+  };
+  for (const el of main.querySelectorAll<HTMLElement>("*")) {
+    const box = el.getBoundingClientRect();
+    if (box.width <= 1 || box.height <= 1 || !el.checkVisibility({ visibilityProperty: true, opacityProperty: true })) continue;
+    const style = getComputedStyle(el);
+    const words = [...el.childNodes].filter((node) => node.nodeType === Node.TEXT_NODE && node.textContent!.trim());
+    const fill = style.backgroundColor !== "rgba(0, 0, 0, 0)" || parseFloat(style.borderLeftWidth) > 0 || parseFloat(style.borderRightWidth) > 0;
+    if (fill || ["TABLE", "svg", "IMG"].includes(el.tagName)) add(el, box.left, box.right);
+    // The element's own words, line by line; a child's words count with the child, which may be hidden.
+    for (const node of words) {
+      const range = document.createRange();
+      range.selectNodeContents(node);
+      for (const line of range.getClientRects()) add(el, line.left, line.right);
+    }
+  }
+  return { left: Math.round(left), right: Math.round(right) };
+};
+const MARGIN_PAGES: [string, string, (page: Page) => Promise<unknown>][] = [
+  ["Home", "/", (page) => mockShell(page)],
+  ["Packages", "/packages", async (page) => mockApi(page, { ...(await hubApi()), "/api/planned-packages": { body: await recorded("planned-packages-list.json") } })],
+  ["the plan check", PLAN_CHECK, async (page) => mockApi(page, { ...(await hubApi()), [`/api${PLAN_CHECK}`]: { body: await recorded("check-plan-p156634-nwwda-2026-10-09.json") } })],
+  [
+    "Lessons",
+    "/lessons",
+    async (page) =>
+      mockApi(page, {
+        ...(await hubApi()),
+        "/api/lessons/me": { body: await recorded("lessons-me-viewer.json") },
+        "/api/lessons/page": { body: await recorded("lessons-page.json") },
+      }),
+  ],
+  ["the Drafts list", "/drafts", async (page) => mockApi(page, { ...(await hubApi()), "/api/drafts": { body: await recorded("drafts-list.json") } })],
+];
+for (const [name, path, serve] of MARGIN_PAGES) {
+  test(`with the rail at rest, ${name} has even margins at 1440 and 1512 px, 16 px margins at 390 px and no sideways scroll at 320 px`, async ({ page }) => {
+    await serve(page);
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto(path);
+    await expect(page.locator("main h1")).toBeVisible();
+    await page.evaluate(() => document.fonts.ready);
+    for (const [width, height] of [[1440, 900], [1512, 982], [390, 844]]) {
+      await page.setViewportSize({ width, height });
+      const rail = width < 1024 ? 0 : 64;
+      const gaps = async () => {
+        const { left, right } = await page.locator("main").evaluate(painted);
+        return [left - rail, width - right];
+      };
+      if (width < 1024) {
+        await expect.poll(gaps, { message: `${name} at ${width} px` }).toEqual([16, 16]);
+        continue;
+      }
+      await expect.poll(async () => {
+        const [left, right] = await gaps();
+        return { left, even: Math.abs(right - left) <= 16 };
+      }, { message: `${name} at ${width} px` }).toEqual({ left: 40, even: true });
+    }
+    await page.setViewportSize({ width: 320, height: 800 });
+    await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth), { message: `${name} at 320 px` }).toBeLessThanOrEqual(320);
+  });
+}
+
+// Ticket 110, for someone dropped into the app: each section's page says in one sentence what the tab is for and what
+// to do there, in at most two lines at 1440 px. Home has none, because its date line and briefing say what it is. The
+// sentences are the ticket's, copied here so the test checks the copy file against an independent source.
+const TAB_PURPOSES: [string, string, string][] = [
+  ["Packages", "/packages", "Check a published Procurement Plan or plan a new package, and find the ones you worked on here."],
+  ["Projects", "/projects", "Find a World Bank-financed project by name, project ID or country, then open it to see its plans and documents."],
+  // World Bank staff open Projects at Following, whose sentence also says what to do there.
+  ["Following, under Projects", "/projects/following", "Follow the projects you work on, or find any World Bank-financed project by its name, project ID or country."],
+  // The ticket's proposal, reordered so it keeps to two lines at 1440 px.
+  ["Lessons", "/lessons", "These are lessons quoted from completion reports on finished World Bank projects, and I also show them on a package's page where they apply."],
+  ["Drafts", "/drafts", "These are the drafts I wrote for you to check and export, and exporting sends nothing."],
+  ["Data", "/data", "See how far each source can support an answer and where each dataset comes from."],
+];
+test("Packages, Projects, Lessons, Drafts and Data each say what the tab is for in one sentence of at most two lines at 1440 px", async ({ page }) => {
+  await mockApi(page, {
+    ...(await hubApi()),
+    "/api/planned-packages": { body: await recorded("planned-packages-empty.json") },
+    "/api/projects": { body: await recorded("projects.json") },
+    "/api/following": { body: await recorded("following-examples.json") },
+    "/api/lessons/me": { body: await recorded("lessons-me-viewer.json") },
+    "/api/lessons/page": { body: await recorded("lessons-page-empty.json") },
+    "/api/drafts": { body: await recorded("drafts-list-empty.json") },
+  });
+  await page.setViewportSize({ width: 1440, height: 900 });
+  for (const [name, path, sentence] of TAB_PURPOSES) {
+    await page.goto(path);
+    const purpose = page.locator("main h1 + p");
+    await expect(purpose, name).toHaveText(sentence);
+    await page.evaluate(() => document.fonts.ready);
+    const lines = await purpose.evaluate((el) => Math.round(el.getBoundingClientRect().height / parseFloat(getComputedStyle(el).lineHeight)));
+    expect(lines, `${name}: lines at 1440 px`).toBeLessThanOrEqual(2);
+  }
+});

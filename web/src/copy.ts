@@ -12,10 +12,14 @@ const plural = (count: number, one: string, many: string) => (count === 1 ? one 
 // STEP spelled out, as a screen writes it the first time it names STEP (DESIGN.md section 7, rule 10).
 const STEP_SPELLED = "Systematic Tracking of Exchanges in Procurement (STEP)";
 
-// The Lessons tab's purpose, which the library and Waiting for review share under the same h1.
+// Each tab's purpose (ticket 110): one sentence that says what the tab is for and what to do there, for someone
+// dropped into the app. The Lessons tab's is shared by the library and the reviewer pages under the same h1, the
+// Packages tab's by its route and its page, and the Data tab's by its three pages.
 const LESSONS_PURPOSE =
-  "Each lesson comes from a completion report or its review, quoted word for word with its page. A lead " +
-  "procurement specialist decides which lessons enter the library.";
+  "These are lessons quoted from completion reports on finished World Bank projects, and I also show them on a " +
+  "package's page where they apply.";
+const PACKAGES_PURPOSE = "Check a published Procurement Plan or plan a new package, and find the ones you worked on here.";
+const DATA_PURPOSE = "See how far each source can support an answer and where each dataset comes from.";
 
 // The requests I turn down every time (ticket 24; the 24 brief, section 5.6), keyed by the refusal keys in
 // src/strata/agent/refusals.py. The agent answers such a request with its key and never with words of its
@@ -193,7 +197,7 @@ export const copy = {
     // The Packages tab has its own words below (the 15 brief, packagesTab); this title names the browser tab.
     packages: {
       title: "Packages",
-      purpose: "The packages you are planning and the plans you checked. Check a published plan, or plan a new package from one sentence.",
+      purpose: PACKAGES_PURPOSE,
     },
     // The package workspace has its own words below (the 12 brief); this title names the browser tab.
     package: {
@@ -214,9 +218,7 @@ export const copy = {
     // these titles name the browser tab, and the purposes are the pages' own.
     projects: {
       title: "Projects",
-      purpose:
-        "Find a World Bank-financed project by its name, project ID or country. Open a project ID to see the " +
-        "project's summary, Procurement Plans and documents.",
+      purpose: "Find a World Bank-financed project by name, project ID or country, then open it to see its plans and documents.",
     },
     // Following (ticket 37): the Projects tab's first sub-tab for World Bank staff, at /projects/following.
     following: {
@@ -291,10 +293,7 @@ export const copy = {
     },
     drafts: {
       title: "Drafts",
-      purpose:
-        "I write drafts for you to check, such as review notes and suggested rows for the borrower's Project " +
-        "Procurement Strategy for Development (PPSD). Only you can mark a draft as checked or export it, and " +
-        "exporting sends nothing.",
+      purpose: "These are the drafts I wrote for you to check and export, and exporting sends nothing.",
       emptyTitle: "You have no drafts to check.",
       emptyBody:
         "When you check a plan or plan a package, I can draft review notes or PPSD rows, and they wait here for you " +
@@ -326,17 +325,17 @@ export const copy = {
     data: {
       title: "Data",
       documentTitle: "Data readiness",
-      purpose: "See how far each source can support answers, where each dataset comes from, and how I read them.",
+      purpose: DATA_PURPOSE,
     },
     dataSources: {
       title: "Data",
       documentTitle: "Sources and licenses",
-      purpose: "See how far each source can support answers, where each dataset comes from, and how I read them.",
+      purpose: DATA_PURPOSE,
     },
     dataHow: {
       title: "Data",
       documentTitle: "How Strata works",
-      purpose: "See how far each source can support answers, where each dataset comes from, and how I read them.",
+      purpose: DATA_PURPOSE,
     },
     notFound: {
       title: "Page not found",
@@ -1019,6 +1018,12 @@ export const copy = {
   // The evidence card and the evidence drawer (the 14 brief, sections 5.11 to 5.13). Each source's
   // stratum and its document's short name come from the answer stream.
   evidence: {
+    // The space line (ticket 110): what columns 9 to 12 are for while no drawer is open, on the pages that keep them
+    // free for the drawer.
+    spaceHint: {
+      package: "Select a dot on the chart, an underlined number or a numbered source, and its records open here.",
+      draft: "Select a numbered source, and its record opens here.",
+    },
     eyebrow: { What: "What · record", How: "How · operations", Why: "Why · evaluation" },
     // The heading names the source, not the claim, so a drawer opened from a link still reads.
     title: "{project}, paragraph {para}",
@@ -5123,12 +5128,11 @@ export const copy = {
 
   // The Packages tab (the 15 brief, section 7.9).
   packagesTab: {
-    purpose: "The packages you are planning and the plans you checked. Check a published plan, or plan a new package from one sentence.",
+    purpose: PACKAGES_PURPOSE,
     checkPlan: "Check a plan",
     planPackage: "Plan a package",
     // An implementing agency officer's Packages tab (ticket 38; the 38 brief, 5.1): their uploads, and Check my plan.
-    purposeAgency:
-      "The plans you checked and the packages you are planning. Check your plan before you submit it, or plan a new package from one sentence.",
+    purposeAgency: "Check your plan before you submit it or plan a new package, and find the ones you worked on here.",
     checkMine: "Check my plan",
     uploadsTitle: "Your team's uploads",
     uploadName: (date: string) => `Your plan, uploaded ${date}`,

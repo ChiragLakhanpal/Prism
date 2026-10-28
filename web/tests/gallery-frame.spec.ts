@@ -47,15 +47,18 @@ test("the navy bar is 56 px tall with the logo slot, the wordmark and the view s
   expect(await pill.evaluate((el) => getComputedStyle(el).borderRadius)).toBe("4px");
 });
 
-// Ticket 92 (DESIGN.md section 5, Sidebar): Home, the sections in order, Data at the foot; 224 px from 1440 px and a
-// 64 px rail from 1024 to 1439 px; the current item in tint with a 3 px primary bar. The gallery draws Projects current.
-test("from 1024 px the sidebar holds Home and the sections in order, 224 px wide from 1440 px and a 64 px rail below", async ({ page }) => {
+// Ticket 92 (DESIGN.md section 5, Sidebar): Home, the sections in order, Data at the foot; the current item in tint with
+// a 3 px primary bar. Ticket 110: the rail of 64 px rests at every width from 1024 px, the order is Home, Projects,
+// Packages, Lessons, Drafts and Data, and the open sidebar (?sidebar=open in the gallery) is 224 px. The gallery draws
+// Projects current.
+test("from 1024 px the sidebar holds Home and the sections in order, a 64 px rail at rest and 224 px wide when opened", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/gallery/navigation");
   const main = page.getByRole("navigation", { name: "Main" });
-  for (const [width, wide] of [[1440, 224], [1280, 64], [1024, 64]]) {
+  for (const [width, wide, path] of [[1920, 64, ""], [1440, 64, ""], [1024, 64, ""], [1440, 224, "?sidebar=open"], [1024, 224, "?sidebar=open"]] as const) {
+    if (path) await page.goto(`/gallery/navigation${path}`);
     await page.setViewportSize({ width, height: 900 });
-    await expect(main.locator("[data-nav-item]"), `${width} px`).toHaveText(["Home", "Packages", "Projects", "Lessons", "Drafts", "Data"]);
+    await expect(main.locator("[data-nav-item]"), `${width} px`).toHaveText(["Home", "Projects", "Packages", "Lessons", "Drafts", "Data"]);
     expect((await page.locator("[data-sidebar-column]").boundingBox())!.width, `${width} px`).toBe(wide);
     // The stamp sits under Data while the sidebar is open, and hides in the rail (ticket 93).
     await expect(main.locator("[data-stamp]"), `${width} px`).toBeVisible({ visible: wide === 224 });
@@ -97,10 +100,11 @@ test("below 360 px the Menu button hides its word from sight and keeps its name,
 });
 
 // Ticket 93: the box sits in the bar from the page's content edge, 224 + 40 px beside the open sidebar, 640 px wide on a
-// white 4 px rectangle with no border, and the stamp sits at the sidebar's foot.
+// white 4 px rectangle with no border, and the stamp sits at the sidebar's foot. The sidebar rests as the rail (ticket
+// 110), so the gallery draws it open here.
 test("the bar holds the box from the page's content edge, the stamp sits at the sidebar's foot, and / focuses the box", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
-  await page.goto("/gallery/navigation");
+  await page.goto("/gallery/navigation?sidebar=open");
 
   const box = page.locator("[data-box-band] form > [data-focus-ring]");
   expect(Object.values((await box.boundingBox())!)).toEqual([264, 8, 640, 40]);
@@ -160,7 +164,7 @@ test("below 1024 px the Menu button opens the Menu sheet, a modal dialog; Escape
   await expect(sheet).toHaveAttribute("aria-modal", "true");
   await expect(menu).toHaveAttribute("aria-controls", (await sheet.getAttribute("id"))!);
   const main = sheet.getByRole("navigation", { name: "Main" });
-  await expect(main.locator("[data-nav-item]")).toHaveText(["Home", "Packages", "Projects", "Lessons", "Drafts", "Data"]);
+  await expect(main.locator("[data-nav-item]")).toHaveText(["Home", "Projects", "Packages", "Lessons", "Drafts", "Data"]);
   // Focus moves to the current page's item. The stamp sits under Data; the view lines join the sheet's foot only below
   // 768 px, where the view switch leaves the bar (ticket 93).
   await expect(main.getByRole("link", { name: "Projects" })).toBeFocused();

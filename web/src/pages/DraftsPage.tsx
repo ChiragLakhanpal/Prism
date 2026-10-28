@@ -210,11 +210,12 @@ function Loading() {
   );
 }
 
+// The Drafts list takes the wide layout (plan 8.3; ticket 110): all 12 columns, so the margins even out beside the rail.
 export function DraftsPage({ search }: { search: string }) {
   const view = new URLSearchParams(search).get("view");
   return (
     <div className="layout-grid">
-      <div className="col-span-12 min-w-0 @lg/page:col-span-8" data-drafts-page>
+      <div className="col-span-12 min-w-0" data-drafts-page>
         <PageHeader title={page.title} purpose={page.purpose} />
         <div className="mt-6 @lg/page:mt-8">
           {view === "piu" ? (

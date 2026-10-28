@@ -1,9 +1,9 @@
 // The sidebar (DESIGN.md section 5, Sidebar and Menu sheet; ticket 92): the navigation named "Main". From 1024 px it
 // sits beside the page on the page grey with a hairline edge, sticky under the bar: Home, then the applied view's
-// sections, then at its foot Data, the data stamp (ticket 93) and "Collapse the sidebar". It is open at 224 px from
-// 1440 px and a 64 px rail of icons from 1024 to 1439 px,
-// unless the person chose otherwise; the choice is kept in local storage, and web/index.html reads it before the
-// first paint, so nothing moves when the app mounts. The width changes at once. A rail item shows its label in a
+// sections, then at its foot Data, the data stamp (ticket 93) and "Collapse the sidebar". It rests as a 64 px rail of
+// icons at every width from 1024 px (ticket 110, the user's decision of October 27, 2026), and "Expand the sidebar"
+// opens it to 224 px; the choice is kept in local storage, and web/index.html reads it before the first paint, so
+// nothing moves when the app mounts. The width changes at once. A rail item shows its label in a
 // tooltip on hover and on keyboard focus; the tooltip is not the item's name, which stays in the link. In the rail the
 // stamp hides, and the Data item's tooltip and description carry its words.
 //
@@ -27,8 +27,8 @@ export type Rest = "open" | "rail";
 
 // The key web/index.html's first script reads, before any other script runs.
 export const SIDEBAR_KEY = "strata.sidebar";
-// With no choice, the sidebar is open from 1440 px.
-const ROOMY = "(min-width: 90rem)";
+// With no choice, the sidebar rests as the rail at every width (ticket 110).
+const AT_REST: Rest = "rail";
 // How long a hover waits before the first tooltip opens, and how soon after one closes the next opens at once.
 const TIP_DELAY = 150;
 const TIP_RUN = 300;
@@ -55,11 +55,10 @@ function chosenRest(): Rest | null {
 // on a press, so the width is final in the same frame; the stored choice survives a reload.
 function useRest(forced?: Rest): [Rest, () => void] {
   const [choice, setChoice] = useState<Rest | null>(() => forced ?? chosenRest());
-  const roomy = useMedia(ROOMY);
   useLayoutEffect(() => {
     if (forced) document.documentElement.dataset.sidebarRest = forced;
   }, [forced]);
-  const rest: Rest = choice ?? (roomy ? "open" : "rail");
+  const rest: Rest = choice ?? AT_REST;
   const toggle = () => {
     const next: Rest = rest === "open" ? "rail" : "open";
     document.documentElement.dataset.sidebarRest = next;

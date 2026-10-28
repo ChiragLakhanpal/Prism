@@ -71,7 +71,7 @@ export function LanguageChoice({ className }: { className?: string }) {
 
   return (
     <fieldset data-language-choice aria-describedby={hint} className={cx("min-w-0", className)}>
-      <legend id={legend} className="text-small font-bold text-ink">
+      <legend id={legend} className="text-small font-semibold text-ink">
         {copy.language.choice.legend}
       </legend>
       <p id={hint} className="mt-1 text-caption text-pretty text-ink-muted">

@@ -7,8 +7,9 @@
     <!--
       The sidebar's resting state (ticket 92; DESIGN.md section 5, Sidebar), read before any other script runs: a
       person's choice of open or rail, kept in local storage under strata.sidebar, goes on the root as data-sidebar-rest.
-      The width is read by the media queries below and in app.css: with no choice, the sidebar is open from 1440 px
-      and a rail from 1024 to 1439 px. The page works without storage.
+      The width is read by the media queries below and in app.css: with no choice, the sidebar rests as the 64 px rail
+      at every width from 1024 px (ticket 110, the user's decision of October 27, 2026), and opens to 224 px only when
+      the person chose it. The page works without storage.
     -->
     <script>
       (function () {
@@ -25,7 +26,7 @@
       logo at its size and place show before the app's script runs, and React mounts into the same sizes, so nothing
       moves. Below 1024 px the bar has two rows, 108 px in all: the Menu button (96 px wide, 44 px below 360 px), the
       logo, then the white box across the window, on a page with no scope chip. From 1024 px it is one 56 px row, the
-      logo 16 px from the edge, and beside the page the sidebar's frame at its stored or default width (ticket 92). The
+      logo 16 px from the edge, and beside the page the sidebar's frame at its stored width, or the rail's (ticket 92). The
       colors are DESIGN.md's page, navy, surface and line tokens, and the margins the window's, written out because no
       stylesheet has loaded yet.
     -->
@@ -47,7 +48,6 @@
         html[data-sidebar-rest="open"] [data-boot-sidebar-column] { width: 224px; }
         [data-boot-sidebar] { height: calc(100vh - 56px); height: calc(100dvh - 56px); }
       }
-      @media (width >= 90rem) { html:not([data-sidebar-rest="rail"]) [data-boot-sidebar-column] { width: 224px; } }
     </style>
   </head>
   <body>
