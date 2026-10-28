@@ -30,3 +30,4 @@ Read first: the diagnosis in the catch-up file's block "Ticket 109" when it land
   - Decisions parked for the user: none. The builder's report did not reach me, and the review and the verify parked none.
   - Coordination: ListAgents showed no session named strata-58 (only strata-e1), so I sent no index-busy or index-free message.
   - No ticket names 109 as a blocker, so no ticket's Status changed. In the wave's order, 110, 111 and 112 come next.
+- October 27, 2026, orchestrator (18:29 PDT): the bundle deployed from 9a8ae27b's snapshot (01:04 UTC) and the orchestrator agent synced to version 10, which matches the repo; the smoke question through the demo-ready command follows the night's final App deploy (the catch-up block "Tickets 108 and 109, the workspace steps, part 1").

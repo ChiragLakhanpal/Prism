@@ -3790,3 +3790,11 @@ It worked if:
 - On `/data/how-strata-works`, `document.querySelectorAll('a[href*="/present"]').length` prints 0, and the page shows its figures with their captions.
 
 A deploy from this commit or a later one also serves ticket 109's step 2, if it has not run yet. The measured slides with the workspace's numbers wait on ticket 47's steps 1 and 2 above. They are proven when `uv run python -m strata.proposal deck` writes a `data.json` with measured results, and the commit's gate passes `web/tests/deck.spec.ts`'s number check over it. Record the deploy's exit code, last line and deployment id, any slide that did not move or draw, and the console count here under ticket 106.
+
+## Ticket 106, step 1 of 1 ran: the App carries the deck's second draft
+
+**Ran on October 28, 2026 (orchestrator), 01:19 to 01:28 UTC, from a snapshot of 050365f9 (ticket 106's done commit).** `ops/app/deploy_app.py --keep-secrets` exited 0 with the last line `Strata is running at https://strata-7405609289499029.9.azure.databricksapps.com`; with the CLI profile's token `/api/health`, `/present` and `/present/1` answered 200 at 01:28 UTC. Ticket 47's step 3 (the /present walk and the demo buttons on the App) stays with the second session; the watchdog holds 050365f9.
+
+## Tickets 108 and 109, the workspace steps, part 1: the deploy and the agent's sync
+
+**Ran on October 28, 2026 (orchestrator), from a snapshot of 9a8ae27b (ticket 109's done commit, which holds 108).** Step 1: the bundle deploy exited 0 at 01:04 UTC and the Jobs API update put the nightly's window back to 18000 seconds (schedule unchanged). Step 2 (ticket 109): `ops/agent/sync.py --agent orchestrator` made version 10 of strata-orchestrator, and `--check` printed that version 10 matches the repo with no difference in its model, instructions, tools, description or guardrail. Step 3 (ticket 108): `parse_and_embed` alone started as run 260082096321553 at 01:04 UTC with the 120-minute budget; its result, the plan rows and the index sync are recorded in part 2 when it ends. The App's redeploy for ticket 109's smoke question comes with the night's final deploy, after the polish tickets.

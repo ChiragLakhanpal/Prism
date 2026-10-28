@@ -43,3 +43,4 @@ Read first: the branch's commit 494a176b (`git show --stat`), `.notes/deck2/brie
   - Decisions parked for the user: carried from the design critic's rounds 1 to 3, slide 28 is the rubric map, and no slide lists what is designed but not built (the brief's "limits" slide). Should a limits slide come back? The deck is kept as built. The builder's report did not reach me, and the review, design review and verify parked nothing new.
   - Coordination: ListAgents showed no session named strata-58 (only strata-e1), so I sent no index-busy or index-free message.
   - Ticket 116 names only 106 as its blocker, so it is unblocked; its Status was already ready, and it is not in this wave's list, so I left it as it was.
+- October 27, 2026, orchestrator (18:29 PDT): the App redeployed from 050365f9's snapshot at 01:28 UTC with /present answering 200 (the catch-up block "Ticket 106, step 1 of 1 ran").
