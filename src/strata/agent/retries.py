@@ -78,7 +78,7 @@ class Waits:
     through the same Waits shares max_wait_seconds."""
 
     def __init__(self, who: str, retries: Retries | None = None, sleep: Callable[[float], None] | None = None):
-        self.who, self.retries, self.sleep = who, retries or Retries.from_thresholds(), sleep or time.sleep
+        self.who, self.retries, self.sleep = who, retries or Retries.from_thresholds(), sleep
         self.waited = 0.0
 
     def call(self, ask: Callable[[], T], refused: type[Exception]) -> T:
@@ -102,4 +102,4 @@ class Waits:
                 self.waited += wait
                 log.warning("%s answered %s, so I am waiting %s seconds before retry %d of %d.", self.who, status,
                             f"{wait:g}", retried, self.retries.retries)
-                self.sleep(wait)
+                (self.sleep or time.sleep)(wait)  # time.sleep is looked up at each wait, so a test's guard reaches it
