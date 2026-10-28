@@ -46,6 +46,8 @@ import { TextLink } from "./TextLink";
 import { RecordSourceLine, SourceNumber, sourceTitle } from "./EvidenceCard";
 import { Num } from "./Num";
 import { MethodText } from "./PlanCheck";
+import { planRowCaption, PlanRowRecords, planRowTitle } from "./PlanRowRecords";
+import { isPlanRowCheck, planRowSource } from "../lib/planRows";
 import { ComparableDotList, ComparableRecords, dotRegion } from "./ComparableRecords";
 import { COMPARABLE, DOT, type DotEntry } from "../lib/packages";
 import { isRiskList, pageRows, REPORTS, rowOf } from "../lib/risks";
@@ -104,7 +106,8 @@ export function useEvidence(id: string, asOf: string | null): DrawerData {
     // A quantile dot's list is no source on the server: the page that draws the dots holds it (ticket 15). So are
     // section 5's lists and cost records (ticket 31), the risks section's lists of completion reports (ticket 30),
     // and section 2's steps' lists (ticket 27).
-    if (held || id.startsWith(DOT) || heldOnPage(id) || isRiskList(id) || isStepList(id)) return;
+    // A plan check row's records are held on the page too (ticket 100).
+    if (held || id.startsWith(DOT) || heldOnPage(id) || isRiskList(id) || isStepList(id) || isPlanRowCheck(id)) return;
     const controller = new AbortController();
     setFetched({ id, data: { status: "loading" } });
     const query =
@@ -728,7 +731,7 @@ export function EvidenceDrawerView({
                 under it, which says what the source is, takes the words ticket 58 writes. */}
             <h2 ref={headingRef} id={headingId} tabIndex={-1} className="text-h2 wrap-break-word text-ink-heading focus:outline-none">
               {evidence ? (
-                criteriaView ? criteriaTitle(evidence) : timelineView ? timelineTitle(evidence) : sourceTitle(evidence)
+                criteriaView ? criteriaTitle(evidence) : timelineView ? timelineTitle(evidence) : evidence.kind === "plan-row-check" ? planRowTitle(evidence) : sourceTitle(evidence)
               ) : data.status === "loading" ? (
                 <LoadingLabel />
               ) : comparableRef ? (
@@ -739,6 +742,12 @@ export function EvidenceDrawerView({
               )}
               {data.status === "loading" && <SkeletonText widths={["w-4/5"]} />}
             </h2>
+            {/* The one caption sentence that says what the records are (ticket 100). */}
+            {evidence?.kind === "plan-row-check" && (
+              <p data-drawer-caption className="mt-1 text-caption text-ink-muted">
+                {planRowCaption(evidence)}
+              </p>
+            )}
           </div>
           {/* Ticket 112: a source's copy key, before the close, on the heading's 24 px line. */}
           {(evidence?.kind === "passage" || evidence?.kind === "record") && !criteriaView && !timelineView && (
@@ -751,7 +760,9 @@ export function EvidenceDrawerView({
             onClick={onClose}
             className="-mt-2 -mr-2"
           >
-            {heldOnPage(id)
+            {isPlanRowCheck(id)
+              ? copy.checkPlan.closeRecords
+              : heldOnPage(id)
               ? criteriaClose(evidence, id)
               : dotList
                 ? copy.evidence.package.dot.close
@@ -846,6 +857,7 @@ export function EvidenceDrawerView({
             )}
             {evidence?.kind === "record" && <RecordView evidence={evidence} />}
             {evidence?.kind === "versions" && <VersionsView view={evidence.row as VersionsViewData} />}
+            {evidence?.kind === "plan-row-check" && <PlanRowRecords evidence={evidence} />}
             {evidence && timelineView && <TimelineView evidence={evidence} renderSide={(sideId) => <SidePassage id={sideId} asOf={asOf} />} />}
             {evidence?.kind === "package" && <ComparableRecords evidence={evidence} />}
             {evidence?.kind === "dot" && (
@@ -916,7 +928,11 @@ export function EvidenceDrawer({
   // Every source the drawer shows is marked visited and recorded for the viewer, once per opening.
   useEffect(() => {
     if (id.startsWith(DOT) || isRiskList(id) || isStepList(id)) return;
-    recordOpened(id, from?.runId ?? run?.runId ?? null);
+    // A plan check row's records stand on the plan row, which is what the viewer opened; an upload's row is no
+    // published record, so nothing is recorded for it (ticket 100).
+    const recorded = isPlanRowCheck(id) ? planRowSource(id) : id;
+    if (!recorded) return;
+    recordOpened(recorded, from?.runId ?? run?.runId ?? null);
     // The source is recorded when it changes, not when the answer does.
   }, [id]);
 

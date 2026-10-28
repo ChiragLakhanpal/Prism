@@ -94,6 +94,12 @@
   /* A page head that sets its title beside its actions does so from a page area of 46rem, so a page the evidence
      drawer narrows stacks them (DESIGN.md section 4, Page layouts; ticket 94): @head/page:. */
   --container-head: 46rem;
+  /* The plan check's table reads its own frame, the activities panel inside the window's margins (DESIGN.md section 5,
+     Plan check table; ticket 100): six columns from 60rem, which a 1280 or 1440 px window gives with the rail and a
+     1024 px one does not; three from 34rem, as beside the drawer at 1440 px with the sidebar open; cards below.
+     @plan-six/plan: and @plan-cards/plan:. */
+  --container-plan-six: 60rem;
+  --container-plan-cards: 34rem;
   /* A side panel's own frame (DESIGN.md section 5, Side panel; ticket 95): its facts take two columns once its content
      is 18rem wide, @facts/side:. */
   --container-facts: 18rem;
@@ -569,6 +575,28 @@
     @container doc (width >= 30rem) {
       @slot;
     }
+  }
+}
+
+/* The plan check's marked rows (DESIGN.md section 5, Plan check table and Evidence drawer; ticket 100): the row whose
+   records the drawer shows keeps the current mark, tint and a 3 px primary bar inset at its left edge, while they
+   show; the rows a count word in the finding counts, and a row a link's hash named, take the same mark. On a card
+   the bar is the card's own left edge. */
+tr[data-row-mark] {
+  background-color: var(--color-tint);
+}
+tr[data-row-mark] > :first-child,
+li[data-row-mark] {
+  box-shadow: inset 3px 0 0 var(--color-primary);
+}
+
+/* Where the plan check's head sticks under the bar (DESIGN.md section 5, Page head; ticket 100): from a 1024 px window,
+   where the bar sticks, and only in a window at least 50rem tall, so in a short window the bar and the head never
+   take a quarter of it (ticket 93's design review, item 6). By the window, not the page area: at 1024 px the rail
+   leaves a 960 px page area, and the head still sticks there. It sticks only while it holds the page's one action. */
+@custom-variant head-sticks {
+  @media (width >= 64rem) and (height >= 50rem) {
+    @slot;
   }
 }
 

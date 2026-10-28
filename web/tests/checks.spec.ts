@@ -40,6 +40,19 @@ test("the check line reads the verifier's counts in the ticket's form, in the ne
   expect(tops[1]).toBeGreaterThan(tops[0]);
 });
 
+// Ticket 100 (settling ticket 59's indent item; DESIGN.md section 5, Check line): the check line's text starts on the
+// text edge of the panel it sits in, the edge "In short" starts on, with no indent; its surface-2 block reaches 12 px
+// past that edge on each side.
+for (const width of [1440, 390]) {
+  test(`at ${width} px the check line starts on its panel's text edge`, async ({ page }) => {
+    await answered(page, "ask-ke-nwwda-541055-past-range.sse", width);
+    const left = (selector: string) => panel(page).locator(selector).first().evaluate((element) => element.getBoundingClientRect().left);
+    const edge = await left("[data-in-short]");
+    expect(Math.abs((await left("[data-check-part=checked]")) - edge)).toBeLessThanOrEqual(0.5);
+    expect(Math.round(edge - (await left("[data-check-line]")))).toBe(12);
+  });
+}
+
 test("a judged sentence adds the model's part, and the steps list all six checks under the verifier's step", async ({ page }) => {
   await answered(page, "ask-ke-nwwda-541055-advice.sse");
 

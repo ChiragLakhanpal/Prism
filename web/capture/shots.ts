@@ -381,6 +381,9 @@ const PLAN_SHOTS: Shot[] = [
   planShot("check-plan--focus-breadcrumb", plan, { widths: [1440, 390], act: focus("[data-breadcrumb] a:visible") }),
   planShot("check-plan--deep-link", plan, {}, `${PLAN}#KE-NWWDA-207796-CS-INDV`),
   planShot("check-plan--320", plan, { widths: [320] }),
+  // Ticket 100: a row's reference opens its records in the drawer, and a count word marks the rows it counts.
+  planShot("check-plan--row-records", plan, { widths: [1440], full: false, act: click("[data-view=table] [data-row-ref='KE-NWWDA-229129-CW-RFB']") }),
+  planShot("check-plan--counted", plan, { widths: [1440], act: click("[data-finding] button[data-num-click]") }),
 ];
 
 // Ticket 21's project hub, as the 21 brief's section 15 lists it: the project frame, Summary, Procurement,

@@ -239,7 +239,8 @@ export function draftsPage(plan: CheckedPlan): GalleryPage {
               })}
             </Labeled>
             <Labeled label={ds.actionNone}>
-              {actionHeader(plan, { feedforward: <p className="max-w-[40ch] text-caption text-ink-muted @lg/page:text-right">{action.none}</p> })}
+              {/* Ticket 100: with no signal to draft from, the head holds the check pill alone. */}
+              {actionHeader(plan, {})}
             </Labeled>
             <Labeled label={ds.actionAsOf}>
               {actionHeader(plan, { feedforward: <p className="text-caption text-ink-muted">{action.asof}</p> })}

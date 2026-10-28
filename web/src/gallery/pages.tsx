@@ -55,7 +55,7 @@ import { ExternalLink } from "../components/ExternalLink";
 import { Breadcrumb } from "../components/Breadcrumb";
 import { CheckPill } from "../components/CheckPill";
 import { Fill } from "../components/Fill";
-import { checkPill, PlanCheck, PlanCheckHeader, PlanCheckSkeleton, planSubtitle, type CheckedPlan } from "../components/PlanCheck";
+import { checkPill, PlanCheck, PlanCheckHeader, PlanCheckSkeleton, planSubtitle, rowRecords, type CheckedPlan } from "../components/PlanCheck";
 import { Alert } from "../components/Alert";
 import { ViewBanner } from "../components/ViewBanner";
 import { FreshnessStamp, OneBox, type Freshness } from "../components/BoxBand";
@@ -385,6 +385,8 @@ const partialSample: CheckedPlan = {
     row.activity_reference_no === pc.partialRef ? { ...row, marks: [pc.partialMark as unknown as CheckedPlan["rows"][number]["marks"][number]] } : row,
   ),
 };
+// Ticket 100: the records a row's reference opens, for the Watch row the recorded check signed late and over its estimate.
+const PLAN_ROW_RECORDS = rowRecords(planSample.rows.find((row) => row.activity_reference_no === "KE-NWWDA-229129-CW-RFB") ?? planSample.rows[0], planSample);
 const planTrail = [
   { text: copy.breadcrumb.projects, href: "#projects" },
   { text: <Fill template={copy.breadcrumb.project} slots={{ name: pc.crumbProject, pid: mono(planSample.plan.project_id) }} />, href: "#project" },
@@ -1258,6 +1260,7 @@ export const PAGES: GalleryPage[] = [
       { id: "section", title: s.section, body: <DrawerSample id={ISR_S4.id} data={{ status: "ready", evidence: ISR_S4 }} /> },
       { id: "record", title: s.record, body: <DrawerSample id={PLAN_RECORD.id} data={{ status: "ready", evidence: PLAN_RECORD }} /> },
       { id: "record-isr-rating", title: s.recordIsrRating, body: <DrawerSample id={ISR_RATING.id} data={{ status: "ready", evidence: ISR_RATING }} /> },
+      { id: "plan-row-check", title: s.planRowCheck, body: <DrawerSample id={PLAN_ROW_RECORDS.id} data={{ status: "ready", evidence: PLAN_ROW_RECORDS }} /> },
       { id: "loading", title: s.loading, body: <DrawerSample id={ICR_54_ID} data={{ status: "loading" }} /> },
       { id: "failed", title: s.error, body: <DrawerSample id={ICR_54_ID} data={{ status: "failed", onRetry: () => {} }} /> },
       { id: "unknown", title: s.unknown, body: <DrawerSample id={ICR_54_ID} data={{ status: "missing" }} /> },

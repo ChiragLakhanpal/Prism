@@ -343,6 +343,11 @@ export type Activity = {
   estimated_amount_usd: string | null;
   actual_amount_usd: string | null;
   process_status: string | null;
+  // The dates check_plan read from the row, for "What I checked" in the row's records (ticket 100). An upload's row,
+  // and a check recorded before these were sent, may lack them.
+  signed_on?: string | null;
+  planned_signing_on?: string | null;
+  planned_completion_on?: string | null;
   marks: { mark: Mark; reasons: Reason[] }[];
 };
 export type CheckPlanResult = {

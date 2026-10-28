@@ -101,12 +101,13 @@ export function CheckLine({
   const unchecked = [...notChecked.map((clause) => words.notCheckedClauses[clause]), ...notCheckedText];
   const checked = (clauses.length ? clauses : [words.sourcesOnly]).join(words.clauseJoin);
   return (
-    <p data-check-line data-numbers className="rounded-md bg-neutral-bg py-2 pr-4 pl-12 text-small text-neutral">
-      <span data-check-part="checked" className="relative block">
-        {/* The tick (ticket 111): 16 px in ink-muted in the 48 px indent beside "Checked", where the removed box has
-            its icon, 28 px before the text. The line's words say "Checked", so a screen reader skips it, and the
-            line stays neutral, never green. */}
-        <Check aria-hidden="true" data-check-tick className={cx("absolute top-0.5 -left-7 size-4 text-ink-muted", reveal && "animate-tick-in")} />
+    // The line's text starts on the text edge of the panel it sits in, with no indent, and its surface-2 block, padded
+    // 12 px, reaches 12 px past that edge (DESIGN.md section 5, Check line; ticket 100 settles ticket 59's indent item).
+    <p data-check-line data-numbers className="-mx-3 rounded-md bg-neutral-bg p-3 text-small text-neutral">
+      <span data-check-part="checked" className="block">
+        {/* The tick (ticket 111): 16 px in ink-muted before "Checked", on the text edge. The line's words say
+            "Checked", so a screen reader skips it, and the line stays neutral, never green. */}
+        <Check aria-hidden="true" data-check-tick className={cx("mr-1 inline-block size-4 align-[-3px] text-ink-muted", reveal && "animate-tick-in")} />
         <strong className="font-semibold">{words.checked}</strong> {checked}
         {words.end}
       </span>{" "}

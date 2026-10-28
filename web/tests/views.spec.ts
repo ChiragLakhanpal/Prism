@@ -139,7 +139,7 @@ test("in the public view a page it hides says why, and P156634's plan shows data
     "/api/projects/P156634": { body: await recorded("project-p156634.json") },
   });
   const check = page.locator("[data-plan-check]");
-  await expect(check.getByRole("heading", { level: 2 })).toHaveText(
+  await expect(check.locator("[data-finding]")).toHaveText(
     "I don't show signals on active projects in this view, so a procurement still under way isn't prejudged; three have data notes.",
   );
   await expect(page.locator("[data-badge=needs-a-look], [data-badge=watch]")).toHaveCount(0);

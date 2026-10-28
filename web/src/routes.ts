@@ -34,7 +34,17 @@ export type Match = {
   // The page a set of tabs shares, such as a project's Summary, Procurement and Documents: the app keeps
   // that page in place when you move between its tabs, so its header and tab row stay where they are.
   frame?: string;
+  // The section the page belongs to in a view that has no section of its own: the plan check belongs to Packages,
+  // and to Projects in the public view, which has no Packages (ticket 100; DESIGN.md section 5, Plan check table).
+  fallbackSection?: Section;
 };
+
+// The section the sidebar lights for a page, in a view that has these sections: the page's own, or its fallback when
+// the view lacks it (ticket 100). Until the view's sections are known, the page's own.
+export function litSection(match: Match, sections: readonly string[] | null): Section | undefined {
+  if (!match.section || !sections || sections.includes(match.section)) return match.section;
+  return match.fallbackSection ?? match.section;
+}
 
 // The pages on the workspace layout that draw an answer asked on them in their own work columns, above their head and
 // beside their side panel (DESIGN.md section 4, Page layouts, Workspace; Workspace.tsx's answer slot, read through
@@ -166,7 +176,9 @@ export function matchRoute(pathname: string): Match {
   } else if (third === "procurement" && rest.length <= 1) {
     const [version] = rest;
     if (version !== undefined && !isDay(version)) return page("notFound");
-    match = page("checkPlan", "projects", { pid, agencyId: fourth, ...(version ? { version } : {}) });
+    // Ticket 100: the plan check belongs to Packages, where a plan check is started and listed, though its address stays
+    // under its project; in a view with no Packages it belongs to Projects.
+    match = { ...page("checkPlan", "packages", { pid, agencyId: fourth, ...(version ? { version } : {}) }), fallbackSection: "projects" };
   } else if (third === "packages" && fourth && rest.length === 0) match = page("activity", "projects", { pid, stepRef: fourth });
   else if (third === "documents" && fourth && rest.length === 0) match = page("document", "projects", { pid, doc: fourth });
   else return page("notFound");

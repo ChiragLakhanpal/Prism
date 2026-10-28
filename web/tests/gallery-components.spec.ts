@@ -883,7 +883,8 @@ test("the Plan check page shows the plan check at the page's full width, so its 
     // The page's margin follows the window (ticket 94): 32 px in the 1088 px window, so the page's 12 columns are 960 px;
     // 40 px in the 1504 px window beside the rail, which leaves 1360 px, all of it content, which may take 1440 px since
     // ticket 110.
-    await expect.poll(async () => Math.round((await table.boundingBox())!.width), { message: `${width} px` }).toBe(width === 1024 ? 960 : 1360);
+    // ticket 110. Since ticket 100 the table sits inside the activities panel, within its 1 px edges.
+    await expect.poll(async () => Math.round((await table.boundingBox())!.width), { message: `${width} px` }).toBe(width === 1024 ? 958 : 1358);
     // No cell's text runs past its content box.
     const overflow = await page.evaluate(() =>
       Array.from(document.querySelectorAll("[data-view=table] th, [data-view=table] td")).flatMap((cell) => {
@@ -906,7 +907,8 @@ test("the drawer's head shows no eyebrow or middle dot on any of its views on th
   const heads = page.locator("[data-drawer-header]");
   await expect(heads.first()).toBeVisible();
   const found = await heads.evaluateAll((all) =>
-    all.map((head) => ({ text: head.textContent ?? "", eyebrows: head.querySelectorAll("p, .uppercase").length })),
+    // The one caption sentence under the title, which says what the source is, is no eyebrow (ticket 100).
+    all.map((head) => ({ text: head.textContent ?? "", eyebrows: head.querySelectorAll("p:not([data-drawer-caption]), .uppercase").length })),
   );
   expect(found.length).toBeGreaterThan(5);
   expect(found.filter((head) => head.text.includes("·") || head.eyebrows > 0)).toEqual([]);

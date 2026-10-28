@@ -698,6 +698,8 @@ test("See what changed lands on the change list when the comparison answers befo
     await checkLate(page);
     await page.locator("[data-agency=northern-water-works-development-agency] [data-changes-sentence]").getByRole("link", { name: "See what changed" }).click();
     await expect(heading).toBeFocused();
+    // Ticket 100: the link opens the closed row in place.
+    await expect(page.locator("[data-changes] [data-change-kind]")).toHaveCount(1);
     expect(await heading.evaluate((el) => Math.round(el.getBoundingClientRect().top)), `the heading is in view at ${width} px`).toBeLessThan(450);
   }
 
@@ -772,6 +774,18 @@ test("the NWWDA plan of October 9, 2026 lists what changed since the plan of Mar
   const changes = page.locator("[data-changes]");
   await expect(changes.getByRole("heading", { level: 2 })).toHaveText("What changed since the plan of March 5, 2026");
   await expect(changes).toContainText("This version re-estimated two activities. No activity was added, dropped or re-dated.");
+  // Ticket 100: "What changed" is a closed row with its sentence; Show the changes opens it in place, focus kept.
+  const show = changes.getByRole("button", { name: "Show the changes" });
+  await expect(show).toHaveAttribute("aria-expanded", "false");
+  await expect(changes.locator("[data-change-kind]")).toHaveCount(0);
+  await show.click();
+  await expect(changes.getByRole("button", { name: "Hide the changes" })).toBeFocused();
+  await expect(changes.locator("[data-change-kind]")).toHaveCount(1);
+  // Closed again, "See what changed" in the change line opens it in place and moves focus to its heading.
+  await changes.getByRole("button", { name: "Hide the changes" }).click();
+  await expect(changes.locator("[data-change-kind]")).toHaveCount(0);
+  await page.locator("[data-change-line]").getByRole("link", { name: "See what changed" }).click();
+  await expect(changes.getByRole("heading", { level: 2 })).toBeFocused();
   await expect(changes.locator("[data-change-kind]")).toHaveCount(1);
   const table = changes.locator("[data-change-kind=reestimated]");
   await expect(table.getByRole("heading", { level: 3 })).toHaveText("Two activities were re-estimated.");
@@ -788,6 +802,7 @@ test("the NWWDA plan of October 9, 2026 lists what changed since the plan of Mar
 test("a version that added and re-dated activities lists each in its own table, with a step that lost its date as No date", async ({ page }) => {
   await open(page, "/projects/P156634/procurement/ministry-of-water-and-irrigation/2020-04-30", 1440, await p156634());
   const changes = page.locator("[data-changes]");
+  await changes.getByRole("button", { name: "Show the changes" }).click();
   await expect(changes.locator("[data-change-kind]")).toHaveCount(2);
   await expect(changes.locator("[data-change-kind=added] h3")).toHaveText("One activity was added.");
   await expect(changes.locator("[data-change-kind=added] [data-view=table] tbody tr")).toContainText("MWSI-WSDP-04-2019-2020");
@@ -951,7 +966,7 @@ test("the implementing agency view reads the baseline without its saver and offe
   body.baseline.saved_by = null;
   await open(page, `${NWWDA}/2026-10-09?view=piu`, 1440, { ...(await p156634()), [`/api${NWWDA}/2026-10-09?view=piu`]: { body: JSON.stringify(body) } });
   const panel = page.getByRole("region", { name: "Baseline for delay" });
-  await expect(panel).toHaveText("The baseline is the plan of July 21, 2025, saved on October 23, 2026 as the plan agreed at negotiations. Only World Bank staff can change it.");
+  await expect(panel.getByRole("status")).toHaveText("The baseline is the plan of July 21, 2025, saved on October 23, 2026 as the plan agreed at negotiations. Only World Bank staff can change it.");
   await expect(panel.getByRole("button")).toHaveCount(0);
 
   const open_ = JSON.parse(await recorded("check-plan-p156634-nwwda-2026-10-09.json"));
@@ -1021,7 +1036,8 @@ test.describe(() => {
 test("axe finds no WCAG 2.2 AA violations on Check a plan's change list and baseline panel, and in the hub's loading and error states", async ({ page }) => {
   // Check a plan with the Ministry's change list (added and re-dated) and the baseline panel, at three widths.
   await open(page, "/projects/P156634/procurement/ministry-of-water-and-irrigation/2020-04-30", 1440, await p156634());
-  await expect(page.locator("[data-changes]")).toBeVisible();
+  await page.locator("[data-changes]").getByRole("button", { name: "Show the changes" }).click();
+  await expect(page.locator("[data-changes] [data-change-kind]").first()).toBeVisible();
   for (const width of [1440, 1024, 390]) {
     await page.setViewportSize({ width, height: 900 });
     expect(await axe(page), `change list at ${width} px`).toEqual([]);

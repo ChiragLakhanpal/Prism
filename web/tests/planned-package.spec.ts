@@ -840,6 +840,59 @@ test("the Packages tab's buttons put the one box into plan mode or check mode an
   await expect(page).toHaveURL("/projects/P156634/procurement/northern-water-works-development-agency");
 });
 
+// Ticket 100 (DESIGN.md section 5, Page head and Task zone): the head holds "Check a plan" and "Plan a package" at its
+// right when the page area allows and under the purpose otherwise; the list is one panel, its title sentence in lead,
+// the count line, the table and its source in the foot strip; "Last worked on" opens its definition from the column
+// head, which a card names too below 768 px.
+test("the Packages head holds its two buttons at its right or under the purpose, and Last worked on opens its definition at 1440 and 390 px", async ({ page }) => {
+  await serve(page, { "GET /api/planned-packages": { body: await recorded("planned-packages-list.json") } });
+  for (const width of [1440, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto("/packages");
+    await expect(page.locator("[data-packages-page=ready]")).toBeVisible();
+    const box = async (locator: import("@playwright/test").Locator) => (await locator.boundingBox())!;
+    const h1 = await box(page.locator("main h1"));
+    const purpose = await box(page.getByText("Check a published Procurement Plan or plan a new package, and find the ones you worked on here."));
+    const check = await box(page.getByRole("button", { name: "Check a plan" }));
+    const plan = await box(page.getByRole("button", { name: "Plan a package" }));
+    if (width === 1440) {
+      // At the head's right: beside the h1 and its purpose, the primary first.
+      expect(check.x, "Check a plan at the head's right").toBeGreaterThan(purpose.x + purpose.width);
+      expect(plan.x).toBeGreaterThan(check.x);
+      expect(Math.abs(check.y - h1.y)).toBeLessThan(h1.height);
+    } else {
+      // Under the purpose.
+      expect(check.y).toBeGreaterThan(purpose.y + purpose.height);
+      expect(plan.y).toBeGreaterThanOrEqual(check.y);
+    }
+    // One panel: its title sentence in lead, the count line, the rows, and the source in its foot strip.
+    const list = page.locator("[data-section=packages-list]");
+    await expect(list.getByRole("heading", { level: 2 })).toHaveText("You have three packages in progress and one checked plan.");
+    await expect(list).toHaveAttribute("data-zone", "panel");
+    await expect(list.getByRole("heading", { level: 2 })).toHaveCSS("font-size", "18px");
+    await expect(list.locator("[data-count-line]")).toHaveText("Showing all 4 packages and plans");
+    await expect(list.locator("[data-foot-strip] [data-source]")).toHaveText("Source: your packages and plan checks, saved in Strata.");
+    const term = list.getByRole("button", { name: "Last worked on" }).filter({ visible: true }).first();
+    await term.click();
+    const definition = page.getByRole("dialog", { name: "Last worked on" });
+    await expect(definition).toContainText("When you last saved the package or opened the plan check.");
+    await page.keyboard.press("Escape");
+    await expect(definition).toHaveCount(0);
+    await expect(term).toBeFocused();
+  }
+});
+
+test("with no packages or checked plans the list is a Task zone row that says so", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await serve(page, { "GET /api/planned-packages": { body: await recorded("planned-packages-empty.json") } });
+  await page.goto("/packages");
+  const row = page.locator("[data-section=packages-list]");
+  await expect(row.getByRole("heading", { level: 2 })).toHaveText("You have no packages or checked plans yet.");
+  await expect(row).toHaveAttribute("data-zone", "row");
+  await expect(row).toContainText("Use Check a plan or Plan a package above to start one.");
+  await expect(page.locator("main table")).toHaveCount(0);
+});
+
 test("the Packages tab says when it could not load, and a preview holds its buttons with the reason", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await serve(page, { "GET /api/planned-packages": { status: 503, body: '{"code":"data_service","trace_id":"t-1"}' } });

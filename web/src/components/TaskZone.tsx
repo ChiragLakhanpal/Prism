@@ -19,6 +19,7 @@ import { useId, type ReactNode, type Ref } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "./Button";
 import { SkeletonText } from "./Skeleton";
+import { cx } from "../lib/cx";
 
 export type ZoneState = "ready" | "loading" | "error" | "empty";
 
@@ -41,6 +42,7 @@ export function TaskZone({
   note,
   busy = false,
   sectionKey,
+  leadName = false,
   live,
   marks,
   className,
@@ -69,6 +71,9 @@ export function TaskZone({
   // "2 of 6 done" (ticket 114; ticket 98).
   note?: ReactNode;
   busy?: boolean;
+  // A name that is a sentence stating the finding, as a list's title is (DESIGN.md section 5, Tables), takes lead
+  // instead of h2 (ticket 100, the Packages list).
+  leadName?: boolean;
   // The zone's key, as data-section, for tests and the design gallery.
   sectionKey?: string;
   // A polite live region inside the zone and outside its body, present before any text changes, so it speaks whether
@@ -117,7 +122,7 @@ export function TaskZone({
       {...marks}
     >
       <div data-zone-head>
-        <h2 ref={headingRef} id={headingId} tabIndex={-1} data-zone-name className="text-h2 text-ink-heading focus:outline-none">
+        <h2 ref={headingRef} id={headingId} tabIndex={-1} data-zone-name className={cx(leadName ? "text-lead" : "text-h2", "text-ink-heading focus:outline-none")}>
           {number != null && (
             <span aria-hidden="true" data-zone-number className="text-ink-muted tabular-nums">
               {number}{" "}
