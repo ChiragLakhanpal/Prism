@@ -4183,3 +4183,23 @@ It worked if:
 - With a connected agent, a question asked from Home opens above the head, and the briefing shows one sentence with "Show the briefing". If the App says there is no agent, record that and check the first two points alone.
 
 Record the exit code, the App's address and what Home showed here under ticket 98. If step 3 of the deploy names a secret the scope lacks, record its name for the user, who writes it.
+
+## Ticket 99, step 1 of 1: redeploy the App, so Projects' pages are sidebar items and the project head is shorter
+
+Parked on October 28, 2026 with ticket 99, which merged into build/strata as 69029eaa (branch `strata/99-projects-sub-pages-in-the-sidebar-a-shorter-project` at 011c0a23). Every key is set, but mergers run no workspace step: the orchestrator or the second session runs this one from a snapshot that includes this merge (69029eaa, the done commit that follows it, or a later commit), as the header says (`git archive <sha> | tar -x -C <scratchpad>/snap-<sha>`). Run `npm ci --prefix web` in the snapshot, or link the main checkout's `web/node_modules` into it, before the deploy. One deploy from a commit at or after 69029eaa also serves ticket 98's step 1 (and 96's and 97's), if they have not run yet.
+
+What ticket 99 changes on the App: for World Bank staff, Following and All projects are sidebar items under Projects, and the sub-tab row is gone. All projects is one white panel with its search, count line, table, pages and source. A project's head keeps the agency line to one line with "Show all agencies", Follow sits at the head's right, and Summary opens on its finding in large light type. Only the web app changed, so the bundle needs no deploy.
+
+The builder's step, in the builder's words:
+
+    uv run --script ops/app/deploy_app.py --env-file "<main checkout>/.env" --keep-secrets
+
+It worked if:
+
+- It exits 0 with the running line, "Strata is running at https://...".
+- On the App as World Bank staff, with the sidebar expanded, `<App URL>/projects` shows Following and All projects under Projects, and no "Projects pages" row.
+- All projects is one white panel with the search, the count line, the table, the pages and a source foot strip.
+- `<App URL>/projects/P156634` keeps the agency line to one line with "Show all agencies", and Follow sits at the head's right.
+- Its Summary opens on the finding sentence in large light type.
+
+Record the exit code, the App's address and what the four pages showed here under ticket 99. If step 3 of the deploy names a secret the scope lacks, record its name for the user, who writes it.
