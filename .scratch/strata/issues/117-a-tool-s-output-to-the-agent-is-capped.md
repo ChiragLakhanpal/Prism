@@ -18,4 +18,4 @@ Read first: `src/strata/agent/loop.py` (`call_output`, the tool round, `turn.fac
 
 ## Comments
 
-- October 27, 2026, orchestrator: opened at 20:15 PDT on the orchestrator's judgment the night before the demo, from the demo-ready command's second run (the catch-up file's block "Ticket 49, step 1 of 3 ran" of October 28): the first run passed all six checks, the second died on a 20.8-million-character tool output. It builds as a side run beside the polish wave and merges before the night's final App deploy.
+- October 27, 2026, orchestrator: opened at 20:07 PDT on the orchestrator's judgment the night before the demo, from the demo-ready command's second run (the catch-up file's block "Ticket 49, step 1 of 3 ran" of October 28): the first run passed all six checks, the second died on a 20.8-million-character tool output. It builds as a side run beside the polish wave and merges before the night's final App deploy.
