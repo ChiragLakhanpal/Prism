@@ -18,9 +18,9 @@
 # needs nothing from the other steps. A step that needs another step's output goes in that
 # step's lane, below it, as the Python tests under tests/ do with the fixture database.
 # A new pytest step names the folders it tests, so each test folder runs in one step. A new
-# test folder whose tests read the fixture database goes in the python lane, and in
-# FIXTURE_READERS in tests/test_gate.py, which checks that each of those folders runs after
-# the build.
+# test folder whose tests read the fixture database goes in the python-1 and python-2 lanes'
+# pytest steps, and in FIXTURE_READERS in tests/test_gate.py, which checks that each of those
+# folders runs after a build.
 # Each pytest step also keeps its scratch in a folder of its own under .gate-tmp/ (--basetemp),
 # which pytest clears at the start of the step's next run and .gitignore leaves out. Without
 # one, a run the limit stopped left its folder, up to 7 GB, locked for three days in pytest's
@@ -81,7 +81,16 @@ lane = "guard"
 #
 # Each lane gives its half to eight pytest-xdist workers. --dist worksteal lets a worker that runs out
 # of tests take some from a busy one; xdist's default hands each worker a run of neighbouring tests at
-# the start, so slow tests that sit together in one file land on one or two workers. When a lane gets
+# the start, so slow tests that sit together in one file land on one or two workers. Starting each
+# shard's slowest tests first, one on each worker, cost about 15% more processor time on October 28,
+# 2026 (282 against 244 user-seconds for the second half), since a moved test sets up its module's
+# fixtures again on another worker, and the half took 35 seconds either way.
+#
+# STRATA_DUCKDB_THREADS=1 runs each worker's DuckDB queries on one thread (src/strata/lakehouse/engine.py).
+# By default DuckDB starts a thread for each processor in every connection, so 16 workers ran 256
+# threads on 16 processors. On October 28, 2026, the second half took 96 seconds that way at a load
+# average of 25, and 36 seconds on one thread (40 against 36 at a load of 13, with 332 against 249
+# processor-seconds). The fixture build keeps DuckDB's default, since it runs as one process. When a lane gets
 # slow again, run `uv run --frozen pytest --durations=15 --shard=1/2 tests ops/bundle/tests` (or 2/2)
 # to find its slowest tests, since a lane can never take less time than its slowest test. Then try
 # more workers, or a third shard (1/3, 2/3 and 3/3 in three lanes), and keep what gives the lower total
@@ -95,7 +104,7 @@ lane = "python-1"
 
 [[step]]
 name = "Run the first half of the Python tests under tests/ and ops/bundle/tests/, which may read the fixture database"
-run = ["uv", "run", "--frozen", "pytest", "--basetemp", ".gate-tmp/python-1", "--numprocesses", "8", "--dist", "worksteal", "--shard=1/2", "tests", "ops/bundle/tests"]
+run = ["env", "STRATA_DUCKDB_THREADS=1", "uv", "run", "--frozen", "pytest", "--basetemp", ".gate-tmp/python-1", "--numprocesses", "8", "--dist", "worksteal", "--shard=1/2", "tests", "ops/bundle/tests"]
 lane = "python-1"
 
 [[step]]
@@ -106,7 +115,7 @@ lane = "python-2"
 
 [[step]]
 name = "Run the second half of the Python tests under tests/ and ops/bundle/tests/, which may read the fixture database"
-run = ["uv", "run", "--frozen", "pytest", "--basetemp", ".gate-tmp/python-2", "--numprocesses", "8", "--dist", "worksteal", "--shard=2/2", "tests", "ops/bundle/tests"]
+run = ["env", "STRATA_DUCKDB_THREADS=1", "uv", "run", "--frozen", "pytest", "--basetemp", ".gate-tmp/python-2", "--numprocesses", "8", "--dist", "worksteal", "--shard=2/2", "tests", "ops/bundle/tests"]
 lane = "python-2"
 
 # The wizard tests take about 60 seconds in one process, so six pytest-xdist workers share them.

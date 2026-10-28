@@ -22,6 +22,7 @@ import decimal
 import functools
 import http.client
 import json
+import os
 import re
 import time
 import urllib.error
@@ -141,6 +142,19 @@ DUCKDB_MACROS = (
 )
 
 
+THREADS = "STRATA_DUCKDB_THREADS"
+
+
+def duckdb_config() -> dict[str, int]:
+    """DuckDB's settings for a new connection: the number of threads STRATA_DUCKDB_THREADS names, if any."""
+    threads = os.environ.get(THREADS, "").strip()
+    if not threads:
+        return {}
+    if not threads.isdigit() or int(threads) < 1:
+        raise EngineError(f"{THREADS} must be a whole number of threads, such as 1, not {threads!r}.")
+    return {"threads": int(threads)}
+
+
 def _session(connection) -> None:
     connection.execute("USE strata")
     connection.execute("SET TimeZone = 'UTC'")  # as on the warehouse, whatever this computer's zone
@@ -158,10 +172,14 @@ class DuckDBEngine:
 
     @classmethod
     def open(cls, path: Path | str | None = None, read_only: bool = False) -> DuckDBEngine:
-        """A database file attached as `strata`, or an empty one in memory when path is None."""
+        """A database file attached as `strata`, or an empty one in memory when path is None.
+
+        DuckDB runs each query on every processor unless STRATA_DUCKDB_THREADS names fewer threads. The gate's
+        python lanes set it to 1 (gates/steps.toml), since their 16 pytest-xdist workers already keep every
+        processor busy (ticket 119)."""
         import duckdb
 
-        connection = duckdb.connect()
+        connection = duckdb.connect(config=duckdb_config())
         connection.execute(f"ATTACH ? AS strata{' (READ_ONLY)' if read_only else ''}",  # sql-lint: names only
                            [str(path) if path else ":memory:"])  # the path is bound; only the keyword is built in
         _session(connection)

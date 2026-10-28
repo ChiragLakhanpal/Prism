@@ -1247,6 +1247,29 @@ def test_the_python_tests_that_read_the_fixture_database_run_on_pytest_xdist_wor
     assert readers and all(workers(step) > 1 for step in readers), [step["run"] for step in readers]
 
 
+def environment(step):
+    """The variables a step sets through `env NAME=value ...`, by name."""
+    run = step["run"]
+    if os.path.basename(run[0]) != "env":
+        return {}
+    named = {}
+    for arg in run[1:]:
+        if arg.startswith("-") or "=" not in arg:
+            break
+        name, _, value = arg.partition("=")
+        named[name] = value
+    return named
+
+
+def test_the_python_tests_that_read_the_fixture_database_run_duckdb_on_one_thread_per_worker():
+    """Eight workers in each of two lanes already keep every processor busy. With DuckDB's default of a thread for
+    each processor in every worker, the second half took 96 seconds at a load of 25 against 36 on one thread, and
+    about 15% more processor time when the computer was quieter (ticket 119)."""
+    readers = [step for step in gate_steps() if reads_the_fixture_database(step)]
+
+    assert readers and all(environment(step).get("STRATA_DUCKDB_THREADS") == "1" for step in readers)
+
+
 @pytest.mark.parametrize(("option", "counted"), [
     (["-n", "4"], 4), (["--numprocesses", "4"], 4), (["--numprocesses=4"], 4), (["-n", "auto"], 2),
     (["--numprocesses", "auto"], 2), ([], 1)], ids=["-n 4", "--numprocesses 4", "--numprocesses=4", "-n auto",
@@ -1294,13 +1317,12 @@ def test_the_group_check_finds_a_group_mark_in_a_test_file(tmp_path, monkeypatch
 PASSES = re.compile(r"PASSED (\S+\.py)::")
 
 
-def collected_files(tree, scratch, *args):
+def collected_files(tree, *args):
     """The test files a pytest run in the throwaway tree runs, on two pytest-xdist workers."""
     # The run below starts its own workers, so it must not look like one of this run's workers.
     env = {key: value for key, value in os.environ.items() if not key.startswith("PYTEST_")}
     done = subprocess.run([sys.executable, "-m", "pytest", "-v", "-p", "no:cacheprovider", "--numprocesses", "2",
-                           "--basetemp", str(tree.parent / scratch), *args],
-                          cwd=tree, capture_output=True, text=True, env=env, timeout=120)
+                           *args], cwd=tree, capture_output=True, text=True, env=env, timeout=120)
     assert done.returncode == 0, done.stdout + done.stderr
     return sorted(set(PASSES.findall(done.stdout)))
 
@@ -1315,8 +1337,9 @@ def test_the_two_shards_run_the_first_and_second_half_of_the_test_files_by_name(
         write(tree, name, "def test_it():\n    pass\n")
     write(tree, "tests/helpers.py", "VALUE = 1\n")
 
-    first = collected_files(tree, "python-1", "--shard=1/2", "tests", "ops/bundle/tests")
-    second = collected_files(tree, "python-2", "--shard", "2/2", "tests", "ops/bundle/tests")
+    first = collected_files(tree, "--basetemp", str(tmp_path / "python-1"), "--shard=1/2", "tests", "ops/bundle/tests")
+    second = collected_files(tree, "--basetemp", str(tmp_path / "python-2"), "--shard", "2/2", "tests",
+                             "ops/bundle/tests")
 
     assert first == ["ops/bundle/tests/test_check.py", "tests/sub/test_f.py", "tests/test_a.py"]
     assert second == ["tests/test_b.py", "tests/test_c.py", "tests/test_d.py", "tests/test_e.py"]
