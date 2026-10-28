@@ -753,6 +753,11 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
         """The page's as-of date, never later than today (ADR 0002), by the clock create_app was given."""
         return min(asof, today()) if asof else today()
 
+    def past_or_none(asof: dt.date | None) -> dt.date | None:
+        """A page's as-of date for a route that reads no date as today, as Home does (src/strata/server/home.py): a
+        date of today or later is no date, so it answers as today and never as a day that has not come (ADR 0002)."""
+        return asof if asof is not None and asof < today() else None
+
     @app.get("/api/lookup/loan")
     def look_up_loan(q: str = Query(min_length=1, max_length=64), asof: dt.date | None = None,
                      viewer: Viewer = Depends(current_viewer)):
@@ -795,7 +800,7 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
 
         def read(engine: Engine):
             found = evidence.read(engine, evidence_id, as_of_for(asof), step_ref, view=view,
-                                  extra_versions=home_versions(viewer) if asof is None else None)
+                                  extra_versions=home_versions(viewer) if past_or_none(asof) is None else None)
             return found if found is not None else JSONResponse({"code": "unknown_evidence"}, status_code=404)
         return read_for(f"evidence {evidence_id}", viewer, read)
 
@@ -1130,6 +1135,7 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
         """The whole Lessons tab in one answer, so the page renders once (the 39 brief, section 9). It records the
         visit and shows what is about the reader only where the view keeps them (the roles file's [views]:
         record_opened and personal_lessons, which no preview keeps), and never as of a past date."""
+        asof = past_or_none(asof)
         personal = view_routes.keeps(view_rules, view, "personal_lessons")
         preview = not personal
         recorded = view_routes.keeps(view_rules, view, "record_opened") and asof is None
@@ -1158,6 +1164,7 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                         viewer: Viewer = Depends(current_viewer)):
         """Two versions of a lesson, for the evidence drawer (the 39 brief, section 5.7), as of the page's date, with the
         viewer's own example version when the seed command set one up (ticket 41)."""
+        asof = past_or_none(asof)
         extra = example_versions(viewer) if asof is None else {}
         return lesson_read(f"versions of {lesson_id}", viewer, lambda engine: lessons_page.versions(
             engine, lesson_id, version_from, version_to, asof, extra))
@@ -1170,6 +1177,7 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                        asof: dt.date | None = None, viewer: Viewer = Depends(current_viewer)):
         """The library alone, for a filter or page change on the Lessons tab (the 39 brief, section 9), as of the same
         date as the page (ticket 40)."""
+        asof = past_or_none(asof)
         return lesson_read("the lesson library", viewer, lambda engine: lessons_page.library(
             engine, viewer, page, library_filters(stage, method, sector, status), show, as_of=asof))
 
