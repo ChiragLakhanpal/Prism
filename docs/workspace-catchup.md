@@ -4122,3 +4122,20 @@ Any "I left document ... out of my read of ..." warning names a plan version who
 Two things are untried offline (`.notes/123-verify.md` and `.notes/123-review.md`). First, the size query binds a string of control characters (code points 1 to 31, the quote mark and the backslash) as a STRING parameter through the Statement Execution API. If the first project fails with a parameter error, look there first. Second, when a project's versions fit in one statement, the read binds one parameter for each document id, which is a long IN list if `strata.silver.plan_versions` still holds many versions of one project. Since ticket 108, the rewrite usually reads one version a project.
 
 Record the per-project lines, the last line and the job run id here under ticket 123, with any "I left document" warning. When every line above holds, the orchestrator ticks criterion 3; when one fails, it opens a follow-up and names it here.
+
+## Ticket 96, step 1 of 1: redeploy the App, so Home's lines carry each number's value
+
+Parked on October 28, 2026 with ticket 96, which merged into build/strata as 729d6482 (branch `strata/96-the-number-tooltip-resumed` at 6a84c64d). Every key is set, but mergers run no workspace step: the orchestrator or the second session runs this one from a snapshot that includes this merge (729d6482, the done commit that follows it, or a later commit), as the header says (`git archive <sha> | tar -x -C <scratchpad>/snap-<sha>`). Run `npm ci --prefix web` in the snapshot, or link the main checkout's `web/node_modules` into it, before the deploy.
+
+What ticket 96 changes on the App: every number's tooltip says what the number is, where it came from with its date, and what a click opens. `src/strata/server/home.py` now adds `what` and `exact` to each number segment of a Home line, so the App must be redeployed before Home's tooltips can show the plan row's own value. No table, tool or job changed, so the bundle needs no deploy.
+
+The builder's step, in the builder's words:
+
+    uv run --script ops/app/deploy_app.py --env-file "<main checkout>/.env" --keep-secrets
+
+It worked if:
+
+- It exits 0 with the running line and prints the App's address.
+- On the App's Home, hovering 1.23 in the first Worth knowing line shows "The plan row's Estimated Amount (US$), 1,230,000.00, in millions.", its From line and "Select to see the plan row." The verifier read the offline wording as "The plan row's Estimated Amount (US$) is 1,230,000.00. This line gives it in millions."; either wording passes if it names 1,230,000.00 as the plan row's own value. That value appears only when the workspace's plan rows hold KE-NWWDA-541055-CW-RFB's row in the plan of October 9, 2026 (document 40132287). If Home's first line names another package, check that its tooltip gives that plan row's own Estimated Amount (US$) to the cent.
+
+Record the exit code, the App's address and the tooltip's three lines here under ticket 96. If step 3 of the deploy names a secret the scope lacks, record its name for the user, who writes it.
