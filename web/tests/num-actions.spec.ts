@@ -1,8 +1,9 @@
 // The number tooltip's gate test (ticket 96; DESIGN.md section 5, Number tooltip): on the package workspace, the plan
 // check, Home and a draft, one page load each, every number and every range chart dot whose tooltip has an action line
 // opens what that line names, no number without an action line opens anything, and no two numbers in one sentence share
-// a What sentence unless they share where they came from and what they open. Each later ticket that adds a click to a
-// number adds its action line, and this test keeps it honest.
+// a What sentence unless they share where they came from and what they open, and no tooltip names a number the page
+// does not show, save a rounded amount's own value. Each later ticket that adds a click to a number adds its action
+// line, and this test keeps it honest.
 import type { Locator, Page } from "@playwright/test";
 import { expect, mockApi, recorded, test, viewAnswers } from "./mocked";
 
@@ -119,12 +120,21 @@ async function opensWhatItNames(page: Page, number: Locator, seen: Seen) {
   }
 }
 
-async function checkPage(page: Page) {
+// The numbers a tooltip names that the page does not show. DESIGN.md's one exception, a rounded amount's own unrounded
+// value from its record (the Signal line), is the only one a test may expect here.
+async function unshown(page: Page, seen: Seen[]): Promise<string[]> {
+  const numbers = (text: string) => text.match(/\d[\d,]*(\.\d+)?/g) ?? [];
+  const shown = new Set(numbers(await page.locator("main").innerText()));
+  return seen.flatMap((one) => numbers(`${one.what} ${one.from}`).filter((n) => !shown.has(n)).map((n) => `${one.label}: ${n}`));
+}
+
+async function checkPage(page: Page, unrounded: string[] = []) {
   const numbers = await numbersOn(page);
   const seen = numbers.map((one) => one.seen);
   expect(seen.length).toBeGreaterThan(0);
   expect(sharedWhat(seen)).toEqual([]);
   expect(promises(seen)).toEqual([]);
+  expect(await unshown(page, seen), "numbers a tooltip names that the page does not show").toEqual(unrounded);
   for (const { number, seen: one } of numbers) if (one.act) await opensWhatItNames(page, number, one);
   return seen;
 }
@@ -198,7 +208,8 @@ test("on Home every number opens what its action line names, and 1.23 gives the 
   await serve(page, { "/api/me": { body: await recorded("me-home.json") }, "/api/home": { body: await recorded("home.json") } });
   await page.goto("/");
   await expect(page.locator("[data-home=ready]")).toBeVisible();
-  const seen = await checkPage(page);
+  // The one number a tooltip names that Home does not show: the plan row's own Estimated Amount behind "1.23".
+  const seen = await checkPage(page, ["1.23: 1,230,000.00"]);
   const millions = seen.find((one) => one.label === "1.23")!;
   expect(millions).toMatchObject({
     what: "The plan row's Estimated Amount (US$), 1,230,000.00, in millions.",
