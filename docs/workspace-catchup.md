@@ -3772,3 +3772,21 @@ Notes from the review (`.notes/109-review.md`) and the verify (`.notes/109-verif
 - `ops/demo/ready.py` step 1 says "I started its compute and deployed Strata again" before it knows whether the deploy worked (review P1). If the next line says the deploy exited 2, the App was not deployed; run step 2's command by hand.
 - Step 1 redeploys only an App that is stopped with no active and no pending deployment. A stopped App with a pending deployment (review P3, verify R2), or a running App with no deployment (verify R3, the state a manual `apps start` left at 12:15 UTC on October 27), is left alone with the sentence "The app strata runs nothing yet, not Strata's code ... so I left it alone". In both cases, run step 2's command by hand, then step 3 again.
 - A rewrite replaces the agent's whole first answer. If the agent leaves out a partial refusal in its rewrite, the stream sends no refusal event (review P5, verify R1). The instructions ask for the whole answer again, so this happens only if the model does not follow them.
+
+## Ticket 106, step 1 of 1: redeploy the App with the deck's second draft, then walk /present on it (ticket 47 step 3; criteria 2 and 4, live)
+
+Parked on October 27, 2026 with ticket 106 (merge commit eec53142, branch `deck/second-draft` at a13fcb0f). The orchestrator redeploys the App tonight, and then the second session runs the browser checks. Every key is set, but the merger ran no workspace step. Run the deploy from a snapshot of the done commit that follows eec53142, as the header says (`git archive <sha> | tar -x -C <scratchpad>/snap-<sha>`, then link the main checkout's `web/node_modules` into the snapshot). It needs the Databricks keys in `.env` and the Foundry and judge secrets in the scope `strata`.
+
+    uv run --script ops/app/deploy_app.py --env-file "<main checkout>/.env" --keep-secrets
+
+Then follow "Ticket 47, step 3 of 3" above, steps 1 to 4, on the address the deploy's last line prints.
+
+It worked if:
+
+- The deploy exits 0, a deployment made in this run shows SUCCEEDED, and its last line is "Strata is running at <address>". The host is the paid workspace's App, not the Free Edition address `strata-7474658003099155.aws.databricksapps.com`.
+- On `/present/1`, each press brings in one point or one figure step, the address follows the slide, and End reaches "Thank you". Every slide shows the World Bank logo in its header and the DESIGN.md section 8 footer.
+- The blue buttons on `/present/8`, `/present/9` and `/present/10` each open a new tab: the plan check of P156634's plan of October 9, 2026, the package workspace with the rural roads sentence, and P130164's project page.
+- `/present/16`'s title reads "No dataset publishes contract awards for fiscal 2017 to 2019". Until ticket 47's steps 1 and 2 measure the award rows, its grey note says the slide fills in once the job counts them.
+- On `/data/how-strata-works`, `document.querySelectorAll('a[href*="/present"]').length` prints 0, and the page shows its figures with their captions.
+
+A deploy from this commit or a later one also serves ticket 109's step 2, if it has not run yet. The measured slides with the workspace's numbers wait on ticket 47's steps 1 and 2 above. They are proven when `uv run python -m strata.proposal deck` writes a `data.json` with measured results, and the commit's gate passes `web/tests/deck.spec.ts`'s number check over it. Record the deploy's exit code, last line and deployment id, any slide that did not move or draw, and the console count here under ticket 106.
