@@ -542,9 +542,11 @@ export const galleryCopy = {
     // The tracker at the top of the workspace (ticket 115).
     trackerDone: "Tracker: five steps done, with a tick and the actual date, and the completion late",
     trackerNext: "Tracker: before any step happened, the first is next and the rest are planned",
-    trackerLate: "Tracker: late steps and a step the plan never dated, as on the fixture's showcase package",
+    trackerLate: "Tracker: the fixture's showcase package, signed by the contract awards data and late to complete, with steps the plan left without a date",
     trackerNoDates: "Tracker: a package from a sentence, which has no plan dates",
+    trackerEnded: "Tracker: an activity its plan gave as Canceled, so no step is late, as on the fixture",
     trackerLoading: "Tracker: loading",
+    trackerError: "Tracker: the steps failed to load, so it points to section 2",
     collapsed: "Collapsed, with the steps dated",
     collapsedPartial: "Collapsed, when every step lacks comparables, as on the fixture",
     collapsedAbstain: "Collapsed, under 20 comparable packages in all",

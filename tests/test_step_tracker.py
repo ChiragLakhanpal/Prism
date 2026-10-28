@@ -1,9 +1,10 @@
 """The package's steps as a tracker (ticket 115; spec, seam 3).
 
 GET /api/packages/{step_reference}/steps marks each step done, next, planned, late or unknown, from the package's
-plan in its newest version public on the page's as-of date, and gives a late step's days late and a done step's
-actual date, so the screen works out no date (CLAUDE.md rule 1). The expected values are worked out by hand in
-tests/ground_truth/values.toml's [step_tracker].
+plan in its newest version public on the page's as-of date, its contract's signing public by then, and the plan's
+Process Status, and gives a late step's days late and a done step's actual date and its record, so the screen works
+out no date (CLAUDE.md rule 1). The expected values are worked out by hand in tests/ground_truth/values.toml's
+[step_tracker].
 """
 
 import tomllib
@@ -55,6 +56,59 @@ def test_a_step_the_plan_left_blank_behind_a_done_step_is_unknown_and_never_late
     assert [step["late_days"] for step in steps] == [None] * 6
 
 
+@pytest.fixture(scope="module")
+def on_the_fixture(fixture_db, tmp_path_factory):
+    return make_app(fixture_db, tmp_path_factory.mktemp("tracker-fixture"))
+
+
+def test_a_signing_in_the_contract_awards_marks_the_signed_contract_done_once_it_is_public(on_the_fixture):
+    """The showcase's plan of October 9, 2026 gives no actual date, but World Bank contract awards data hold its
+    contract signed on June 22, 2026: the signing is done, and the steps before it are unknown, never late."""
+    reference = "KE-NWWDA-541055-CW-RFB"
+    after = tracked(on_the_fixture, reference, KNOWN["showcase_as_of"])
+    before = tracked(on_the_fixture, reference, KNOWN["showcase_before_signing_as_of"])
+
+    assert [step["state"] for step in after] == KNOWN["showcase_states"]
+    assert [step["late_days"] for step in after if step["state"] == "late"] == KNOWN["showcase_late_days"]
+    signed = after[4]
+    assert (signed["step_key"], signed["actual_date"], signed["actual_source"]) == (
+        "contract_signed", KNOWN["showcase_signed_on"].isoformat(), "contract_awards")
+    assert {step["actual_source"] for step in after if step["step_key"] != "contract_signed"} == {None}
+    # Before the contract was signed and public, the signing is late against the plan of March 5, 2026.
+    assert (before[4]["state"], before[4]["late_days"], before[4]["actual_date"]) == (
+        "late", KNOWN["showcase_before_signing_late_days"], None)
+
+
+@pytest.mark.parametrize("status", ["completed", "canceled"])
+def test_an_activity_the_plan_says_ended_has_no_late_step_and_says_why(on_the_fixture, status):
+    answer = call(on_the_fixture, "GET", f"/api/packages/{KNOWN[f'{status}_reference']}/steps"
+                  f"?asof={KNOWN['showcase_as_of'].isoformat()}", ANA).json()["step_dates"]
+
+    assert [step["state"] for step in answer["steps"]] == KNOWN[f"{status}_states"]
+    assert {step["late_days"] for step in answer["steps"]} == {None}
+    assert answer["status_reason"] == status.capitalize()
+
+
+def test_a_signed_contracts_steps_up_to_the_signing_are_unknown_without_a_date_and_its_completion_can_be_late():
+    """STEP's Process Status Signed says the steps up to the signing happened, so one the plan left without an
+    actual date is unknown; the completion is still owed, so its planned date can pass. Dates made up for the case:
+    June 30, 2026 to October 28, 2026 is 120 days."""
+    import datetime as dt
+
+    from strata.server import tracker
+
+    names = ["Specific Procurement Notice / Invitation", "Bidding Documents as Issued",
+             "Proposal Submission / Opening / Minutes", "Bid Evaluation Report and Recommendation for Award",
+             "Signed Contract", "Contract Completion"]
+    planned = [dt.date(2026, 3, day) for day in (1, 8, 15, 22)] + [dt.date(2026, 3, 31), dt.date(2026, 6, 30)]
+    steps = [(day, None, None) for day in planned]
+
+    marked = tracker.marks(steps, dt.date(2026, 10, 28), tracker.settled_through("Signed", names))
+
+    assert [mark["state"] for mark in marked] == ["unknown"] * 5 + ["late"]
+    assert marked[5]["late_days"] == 120
+
+
 def recorded(name: str) -> dict:
     """An answer tests/record_steps_api.py recorded from the routes, which tests/test_step_routes.py holds them to."""
     import json
@@ -62,13 +116,13 @@ def recorded(name: str) -> dict:
     return json.loads((ROOT / "tests" / "fixtures" / "api" / name).read_text())
 
 
-def test_on_the_fixture_the_showcase_packages_dated_steps_are_late_and_a_package_from_a_sentence_has_no_dates():
+def test_the_recorded_showcase_is_signed_and_late_to_complete_and_a_package_from_a_sentence_has_no_dates():
     showcase = recorded("steps-ke-nwwda-541055.json")
     steps = showcase["step_dates"]["steps"]
 
     assert showcase["as_of"] == KNOWN["showcase_as_of"].isoformat()
     assert [step["state"] for step in steps] == KNOWN["showcase_states"]
     assert [step["late_days"] for step in steps if step["state"] == "late"] == KNOWN["showcase_late_days"]
-    assert {step["actual_date"] for step in steps} == {None}
+    assert [step["actual_date"] for step in steps] == [None] * 4 + [KNOWN["showcase_signed_on"].isoformat(), None]
     sentence = recorded("steps-planned-rural-roads.json")["step_dates"]["steps"]
     assert [(step["state"], step["late_days"], step["actual_date"]) for step in sentence] == [("unknown", None, None)] * 6

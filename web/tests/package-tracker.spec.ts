@@ -4,8 +4,9 @@
 //
 // The literal values come from independent sources: the states and days late from tests/ground_truth/values.toml's
 // [step_tracker], worked out by hand; the showcase's planned dates from its plan-541055 values (the Procurement Plan
-// of October 9, 2026, page 3); the hand-made set's dates from tests/step_set.py; and the step labels from the
-// blueprint's "Step labels taken from STEP".
+// of October 9, 2026, page 3) and its signing from award-541055-signed (contract 1903781 in World Bank contract awards
+// data); the hand-made set's dates from tests/step_set.py; and the step labels from the blueprint's "Step labels taken
+// from STEP".
 import { scan } from "./axe";
 import type { Locator, Page } from "@playwright/test";
 import { expect, recorded, test } from "./mocked";
@@ -68,7 +69,7 @@ const FORM = {
   unknown: { tick: false, filled: false, border: "dotted", warning: false },
 };
 
-test("on the fixture's showcase package each dated step is late by the days the server counted, the step its plan never dated has no date, and a package from a sentence has none", async ({ page }) => {
+test("on the fixture's showcase package the signing is done on the contract awards' date, the completion is late by the days the server counted, the steps before the signing have no date, and a package from a sentence has none", async ({ page }) => {
   await openStepRow(page, "KE-NWWDA-541055-CW-RFB", {
     pkg: "package-ke-nwwda-541055.json",
     comparables: "comparables-ke-nwwda-541055.json",
@@ -77,18 +78,19 @@ test("on the fixture's showcase package each dated step is late by the days the 
 
   await expect(tracker(page).getByRole("heading", { level: 2 })).toHaveText("Where the steps stand");
   expect(await words(items(page))).toEqual([
-    "Bid invitation (SPN) Late by 232 days Planned for March 10, 2026",
+    "Bid invitation (SPN) No date The plan gives no actual date",
     "Bidding document issued No date Not in the plan",
-    "Bid opening Late by 210 days Planned for April 1, 2026",
-    "Bid evaluation report Late by 205 days Planned for April 6, 2026",
-    "Contract signed Late by 187 days Planned for April 24, 2026",
+    "Bid opening No date The plan gives no actual date",
+    "Bid evaluation report No date The plan gives no actual date",
+    "Contract signed Done June 22, 2026",
     "Contract completed Late by 89 days Planned for July 31, 2026",
   ]);
-  expect(await states(page)).toEqual(["late", "unknown", "late", "late", "late", "late"]);
-  expect(await forms(page)).toEqual([FORM.late, FORM.unknown, FORM.late, FORM.late, FORM.late, FORM.late]);
+  expect(await states(page)).toEqual(["unknown", "unknown", "unknown", "unknown", "done", "late"]);
+  expect(await forms(page)).toEqual([FORM.unknown, FORM.unknown, FORM.unknown, FORM.unknown, FORM.done, FORM.late]);
   await expect(tracker(page).locator("[data-source]")).toHaveText(
-    "Source: The Procurement Plan of October 9, 2026. I count days late to October 28, 2026.",
+    "Source: The Procurement Plan of October 9, 2026 and World Bank contract awards data. I count days late to October 28, 2026.",
   );
+  await expect(tracker(page).locator("[data-tracker-status]")).toHaveCount(0);
   // Section 2's list stays where it was, under "Show the steps".
   await expect(page.locator("section#planned-dates [data-section-toggle]")).toHaveText("Show the steps");
   await page.waitForFunction(() => document.getAnimations().every((animation) => animation.playState !== "running"));
@@ -105,7 +107,12 @@ test("on the fixture's showcase package each dated step is late by the days the 
   await expect(items(page)).toHaveCount(6);
   expect(await states(page)).toEqual(Array(6).fill("unknown"));
   expect(await forms(page)).toEqual(Array(6).fill(FORM.unknown));
-  expect((await words(items(page))).map((text) => text.split(" No date ")[1])).toEqual(Array(6).fill("Not in the plan"));
+  // Each step reads its label and "No date" once; the note under the list says why, once.
+  expect(await words(items(page))).toEqual(
+    ["Bid invitation (SPN)", "Bidding document issued", "Bid opening", "Bid evaluation report", "Contract signed", "Contract completed"].map(
+      (label) => `${label} No date`,
+    ),
+  );
   await expect(tracker(page).locator("[data-source]")).toHaveCount(0);
   await expect(tracker(page).locator("[data-tracker-note]")).toHaveText("No Procurement Plan gives dates for these steps yet.");
 });
@@ -115,11 +122,11 @@ test("done steps carry a tick and their actual dates, the next step is filled, a
   await openStepRow(page, "KE-HAND-900000-CW-RFB", { ...hand, steps: "steps-ke-hand-900000-done.json" });
 
   expect(await words(items(page))).toEqual([
-    "Bid invitation (SPN) Done on March 10, 2021",
-    "Bidding document issued Done on March 30, 2021",
-    "Bid opening Done on April 20, 2021",
-    "Bid evaluation report Done on May 20, 2021",
-    "Contract signed Done on July 20, 2021",
+    "Bid invitation (SPN) Done March 10, 2021",
+    "Bidding document issued Done March 30, 2021",
+    "Bid opening Done April 20, 2021",
+    "Bid evaluation report Done May 20, 2021",
+    "Contract signed Done July 20, 2021",
     "Contract completed Late by 21 days Planned for June 10, 2022",
   ]);
   expect(await forms(page)).toEqual([FORM.done, FORM.done, FORM.done, FORM.done, FORM.done, FORM.late]);

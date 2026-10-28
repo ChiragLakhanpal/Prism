@@ -381,6 +381,29 @@ test("the steps toggle lines up with the answer's text, and its fill and focus r
   }
 });
 
+// Ticket 115: the server's answer for KE-KURA-219079-CS-INDV on the fixture (tests/record_steps_api.py), whose plan
+// of September 24, 2026 gave its Process Status as Canceled (tests/ground_truth/values.toml, [step_tracker]).
+test("the step tracker marks no step of a canceled activity late and says why in one sentence, and keeps its card when the steps fail", async ({ page }) => {
+  await page.goto("/gallery/steps");
+  const ended = page.locator("[data-state-section=tracker-ended]");
+  await expect(ended.locator("[data-step-state]")).toHaveCount(5);
+  expect(await ended.locator("[data-step-state]").evaluateAll((all) => all.map((item) => item.getAttribute("data-step-state")))).toEqual([
+    "done",
+    "unknown",
+    "unknown",
+    "unknown",
+    "unknown",
+  ]);
+  await expect(ended.locator("[data-tracker-status]")).toHaveText("The plan gave its Process Status as Canceled.");
+
+  // When the steps fail to load, the card stays with its heading and one sentence that points to section 2.
+  const failed = page.locator("[data-state-section=tracker-error] [data-step-tracker]");
+  await expect(failed.getByRole("heading", { level: 2 })).toHaveText("Where the steps stand");
+  await expect(failed.locator("[data-tracker-error]")).toHaveText(
+    "I couldn't load where the steps stand. Section 2 below says why and lets you try again.",
+  );
+});
+
 test("the steps list starts its text under the toggle's text, on one inner edge", async ({ page }) => {
   for (const width of [390, 1440]) {
     await page.setViewportSize({ width, height: 900 });

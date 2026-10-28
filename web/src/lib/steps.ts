@@ -39,16 +39,18 @@ export type StepDate = {
   plan_first_version_date: string | null;
   plan_latest_date: string | null;
   plan_latest_version_date: string | null;
-  // Where the step stands in the package's plan as of the page's date (ticket 115; src/strata/server/tracker.py): its
-  // actual date when the plan gives one, its state, and for a late step the days since its planned date, as the
-  // server counted them.
+  // Where the step stands as of the page's date (ticket 115; src/strata/server/tracker.py): its actual date when a
+  // record gives one, and which record (the plan, or for the signing the contract awards data or an award notice), its
+  // state, and for a late step the days since its planned date, as the server counted them.
   actual_date: string | null;
+  actual_source: ActualSource | null;
   state: StepState;
   late_days: number | null;
 };
 
 export type StepState = "done" | "next" | "planned" | "late" | "unknown";
 export const STEP_STATES: StepState[] = ["done", "next", "planned", "late", "unknown"];
+export type ActualSource = "plan" | "contract_awards" | "award_notice";
 
 export type LongestEntry = { step_reference: string; evidence_id: string; stage_step_key: string; days: number };
 
@@ -63,6 +65,9 @@ export type StepDates = {
   start_date: string | null;
   start_range: { from: string; to: string };
   steps: StepDate[];
+  // The plan's Process Status when it left a step with no actual date unknown rather than late (ticket 115), such as
+  // Canceled; otherwise null.
+  status_reason?: string | null;
   longest: { step_key: string; n: number; m: number; entries: LongestEntry[] } | null;
   abstain_all: { n: number } | null;
   min_comparables: number;

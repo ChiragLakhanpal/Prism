@@ -230,6 +230,7 @@
           "in10": 2
         },
         "actual_date": null,
+        "actual_source": null,
         "state": "next",
         "late_days": null
       },
@@ -410,6 +411,7 @@
           "in10": 2
         },
         "actual_date": null,
+        "actual_source": null,
         "state": "planned",
         "late_days": null
       },
@@ -590,6 +592,7 @@
           "in10": 2
         },
         "actual_date": null,
+        "actual_source": null,
         "state": "planned",
         "late_days": null
       },
@@ -770,6 +773,7 @@
           "in10": 2
         },
         "actual_date": null,
+        "actual_source": null,
         "state": "planned",
         "late_days": null
       },
@@ -950,6 +954,7 @@
           "in10": 2
         },
         "actual_date": null,
+        "actual_source": null,
         "state": "planned",
         "late_days": null
       },
@@ -979,6 +984,7 @@
           "in10": null
         },
         "actual_date": null,
+        "actual_source": null,
         "state": "planned",
         "late_days": null
       }
@@ -1156,7 +1162,8 @@
         "documents",
         "projects"
       ]
-    }
+    },
+    "status_reason": null
   },
   "sources": [
     {
