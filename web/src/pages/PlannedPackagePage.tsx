@@ -34,7 +34,8 @@ import { RisksSection } from "../components/RisksSection";
 import { CheckCriteria } from "../components/CheckCriteria";
 import { ExistingPpsdNotice } from "../components/ExistingDraftNotice";
 import { PpsdAction, type RiskSelection } from "../components/PpsdAction";
-import { StepsSection } from "../components/StepsSection";
+import { StepTracker } from "../components/StepTracker";
+import { StepsSection, type StepsState } from "../components/StepsSection";
 import { POPOVER } from "../components/Popover";
 import { SkeletonLine } from "../components/Skeleton";
 import { Steps, type Step } from "../components/Steps";
@@ -515,6 +516,8 @@ function Workspace({ initial, preview, focusHeading }: { initial: PlannedPage; p
   // draft (config/drafts.toml, staff_only), so a viewer without the role gets no action. The server reads the
   // criteria and the selection from this saved package, so the action sends only its id.
   const [selection, setSelection] = useState<RiskSelection | null>(null);
+  // Section 2's answer, which the tracker under the criteria draws from (ticket 115).
+  const [steps, setSteps] = useState<StepsState>({ status: "loading" });
   const staff = useStore(staffRole) !== false;
   const asOf = new URLSearchParams(useStore(address).search).has("asof");
   const ppsdPackage = { id: pkg.package_id, title: String(valueOf(pkg, "description") ?? title), step_reference: null };
@@ -854,6 +857,10 @@ function Workspace({ initial, preview, focusHeading }: { initial: PlannedPage; p
           </div>
           <ComputedNote pkg={pkg} form={form} />
         </section>
+        {/* Where each step stands (ticket 115), from section 2's answer: a package from a sentence has no plan yet. */}
+        <div className="mt-6">
+          <StepTracker state={steps} />
+        </div>
         <div ref={sectionRoot} className="mt-6 @lg/page:mt-8">
           <PastRange
             state={state}
@@ -880,7 +887,7 @@ function Workspace({ initial, preview, focusHeading }: { initial: PlannedPage; p
         {/* Section 2, the planned date for each STEP step (ticket 27): it reruns when a criterion changes, since the
             method family and the comparables follow the criteria. */}
         <div className="mt-6 @lg/page:mt-8">
-          <StepsSection packageKey={pkg.package_id} kind="planned" rerunKey={`${queryKey(pkg)}|${pkg.missing.join(",")}`} />
+          <StepsSection packageKey={pkg.package_id} kind="planned" rerunKey={`${queryKey(pkg)}|${pkg.missing.join(",")}`} onState={setSteps} />
         </div>
         {/* Section 3, procurement risks and what helped (ticket 30): it reruns with section 1's criteria, and its
             selection saves with the package under the saved stamp and tells the page what is selected, for "Suggest

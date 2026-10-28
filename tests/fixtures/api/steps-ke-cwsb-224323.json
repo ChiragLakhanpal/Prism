@@ -1,0 +1,536 @@
+{
+  "tool": "estimate_time",
+  "as_of": "2026-10-28",
+  "view": "staff",
+  "rows": [],
+  "coverage": {
+    "matched": 0,
+    "used": 0,
+    "not_used": []
+  },
+  "package": {
+    "step_reference": "KE-CWSB-224323-CS-QCBS",
+    "described": null
+  },
+  "comparables": {
+    "n": 17,
+    "signed": 15,
+    "still_open": 2
+  },
+  "estimate": null,
+  "difference": null,
+  "track_record": {
+    "year": 2025,
+    "abstention": {
+      "reason": "too_few_unseen_packages",
+      "n": 0,
+      "min_unseen_packages": 20
+    }
+  },
+  "test_years": [
+    {
+      "year": 2021,
+      "n": 0,
+      "m": 0,
+      "expected": 0,
+      "error_estimate_months": null,
+      "error_past_range_months": null,
+      "error_plan_months": null,
+      "mlflow_run_id": "offline-run-0001",
+      "abstention": null
+    },
+    {
+      "year": 2022,
+      "n": 0,
+      "m": 0,
+      "expected": 0,
+      "error_estimate_months": null,
+      "error_past_range_months": null,
+      "error_plan_months": null,
+      "mlflow_run_id": "offline-run-0002",
+      "abstention": null
+    },
+    {
+      "year": 2023,
+      "n": 0,
+      "m": 0,
+      "expected": 0,
+      "error_estimate_months": null,
+      "error_past_range_months": null,
+      "error_plan_months": null,
+      "mlflow_run_id": "offline-run-0003",
+      "abstention": null
+    },
+    {
+      "year": 2024,
+      "n": 0,
+      "m": 0,
+      "expected": 0,
+      "error_estimate_months": null,
+      "error_past_range_months": null,
+      "error_plan_months": null,
+      "mlflow_run_id": "offline-run-0004",
+      "abstention": null
+    },
+    {
+      "year": 2025,
+      "n": 0,
+      "m": 0,
+      "expected": 0,
+      "error_estimate_months": null,
+      "error_past_range_months": null,
+      "error_plan_months": null,
+      "mlflow_run_id": "offline-run-0005",
+      "abstention": null
+    }
+  ],
+  "plan_dates": null,
+  "comparisons": [],
+  "options": null,
+  "axis_max_months": null,
+  "thresholds": {
+    "min_comparables": 20,
+    "min_subgroup": 20,
+    "min_unseen_packages": 20
+  },
+  "step_dates": {
+    "min_comparables": 20,
+    "middle_in10": 5,
+    "cautious_in10": 2,
+    "start_range": {
+      "from": "2025-10-28",
+      "to": "2031-10-28"
+    },
+    "method": "Quality And Cost-Based Selection",
+    "dateable_n": 9,
+    "dated_n": {
+      "middle": 0,
+      "cautious": 0
+    },
+    "undated_n": 0,
+    "few_n": 0,
+    "none_dated": true,
+    "family": "firms",
+    "family_reason": null,
+    "basis": "delay",
+    "needs_start_date": false,
+    "start_date": null,
+    "steps": [
+      {
+        "step_key": "terms_of_reference",
+        "is_anchor": false,
+        "comparables_n": 0,
+        "reached_n": 0,
+        "comparables": [],
+        "plan_first_date": "2021-04-15",
+        "plan_first_version_date": "2026-07-31",
+        "plan_latest_date": "2021-04-15",
+        "plan_latest_version_date": "2026-08-17",
+        "abstain_reason": null,
+        "middle": null,
+        "cautious": null,
+        "actual_date": "2021-04-16",
+        "actual_source": "plan",
+        "state": "done",
+        "late_days": null
+      },
+      {
+        "step_key": "eoi_notice",
+        "is_anchor": false,
+        "comparables_n": 0,
+        "reached_n": 0,
+        "comparables": [],
+        "plan_first_date": "2021-05-06",
+        "plan_first_version_date": "2026-07-31",
+        "plan_latest_date": "2021-05-06",
+        "plan_latest_version_date": "2026-08-17",
+        "abstain_reason": null,
+        "middle": null,
+        "cautious": null,
+        "actual_date": "2021-04-24",
+        "actual_source": "plan",
+        "state": "done",
+        "late_days": null
+      },
+      {
+        "step_key": "short_list_draft_rfp",
+        "is_anchor": false,
+        "comparables_n": 0,
+        "reached_n": 0,
+        "comparables": [],
+        "plan_first_date": "2021-06-10",
+        "plan_first_version_date": "2026-07-31",
+        "plan_latest_date": "2021-06-10",
+        "plan_latest_version_date": "2026-08-17",
+        "abstain_reason": null,
+        "middle": null,
+        "cautious": null,
+        "actual_date": "2022-06-24",
+        "actual_source": "plan",
+        "state": "done",
+        "late_days": null
+      },
+      {
+        "step_key": "rfp_issued",
+        "is_anchor": false,
+        "comparables_n": 0,
+        "reached_n": 0,
+        "comparables": [],
+        "plan_first_date": null,
+        "plan_first_version_date": null,
+        "plan_latest_date": null,
+        "plan_latest_version_date": null,
+        "abstain_reason": null,
+        "middle": null,
+        "cautious": null,
+        "actual_date": null,
+        "actual_source": null,
+        "state": "unknown",
+        "late_days": null
+      },
+      {
+        "step_key": "technical_proposals_opened",
+        "is_anchor": false,
+        "comparables_n": 0,
+        "reached_n": 0,
+        "comparables": [],
+        "plan_first_date": "2021-07-15",
+        "plan_first_version_date": "2026-07-31",
+        "plan_latest_date": "2021-07-15",
+        "plan_latest_version_date": "2026-08-17",
+        "abstain_reason": null,
+        "middle": null,
+        "cautious": null,
+        "actual_date": "2021-12-06",
+        "actual_source": "plan",
+        "state": "done",
+        "late_days": null
+      },
+      {
+        "step_key": "technical_evaluation",
+        "is_anchor": false,
+        "comparables_n": 0,
+        "reached_n": 0,
+        "comparables": [],
+        "plan_first_date": "2021-08-12",
+        "plan_first_version_date": "2026-07-31",
+        "plan_latest_date": "2021-08-12",
+        "plan_latest_version_date": "2026-08-17",
+        "abstain_reason": null,
+        "middle": null,
+        "cautious": null,
+        "actual_date": "2022-06-28",
+        "actual_source": "plan",
+        "state": "done",
+        "late_days": null
+      },
+      {
+        "step_key": "combined_evaluation_report",
+        "is_anchor": false,
+        "comparables_n": 0,
+        "reached_n": 0,
+        "comparables": [],
+        "plan_first_date": "2021-09-09",
+        "plan_first_version_date": "2026-07-31",
+        "plan_latest_date": "2021-09-09",
+        "plan_latest_version_date": "2026-08-17",
+        "abstain_reason": null,
+        "middle": null,
+        "cautious": null,
+        "actual_date": "2022-06-30",
+        "actual_source": "plan",
+        "state": "done",
+        "late_days": null
+      },
+      {
+        "step_key": "contract_signed",
+        "is_anchor": false,
+        "comparables_n": 0,
+        "reached_n": 0,
+        "comparables": [],
+        "plan_first_date": "2021-10-07",
+        "plan_first_version_date": "2026-07-31",
+        "plan_latest_date": "2021-10-07",
+        "plan_latest_version_date": "2026-08-17",
+        "abstain_reason": null,
+        "middle": null,
+        "cautious": null,
+        "actual_date": "2022-07-26",
+        "actual_source": "plan",
+        "state": "done",
+        "late_days": null
+      },
+      {
+        "step_key": "contract_completed",
+        "is_anchor": false,
+        "comparables_n": 0,
+        "reached_n": 0,
+        "comparables": [],
+        "plan_first_date": "2022-07-04",
+        "plan_first_version_date": "2026-07-31",
+        "plan_latest_date": "2022-07-04",
+        "plan_latest_version_date": "2026-08-17",
+        "abstain_reason": null,
+        "middle": null,
+        "cautious": null,
+        "actual_date": "2025-07-31",
+        "actual_source": "plan",
+        "state": "done",
+        "late_days": null
+      }
+    ],
+    "longest": null,
+    "abstain_all": {
+      "n": 17
+    },
+    "actual_steps_count": 8,
+    "track_record": null,
+    "coverage": {
+      "total": 17,
+      "used": 0,
+      "missing": 17,
+      "other_family": 0,
+      "unconfirmed": 0,
+      "reason": "no_plan_dates",
+      "sources": [
+        "notices",
+        "awards",
+        "documents",
+        "projects"
+      ]
+    },
+    "status_reason": "Completed"
+  },
+  "sources": [
+    {
+      "key": "notices",
+      "dataset_name": "Procurement Notices"
+    },
+    {
+      "key": "awards",
+      "dataset_name": "Contract Awards in Investment Project Financing (Since FY 2020)"
+    },
+    {
+      "key": "documents",
+      "dataset_name": "Documents & Reports: Documents API"
+    },
+    {
+      "key": "projects",
+      "dataset_name": "World Bank Projects & Operations"
+    }
+  ],
+  "records_through": "2026-10-13",
+  "abstention": {
+    "reason": "too_few_comparables",
+    "count": 17,
+    "min_comparables": 20
+  },
+  "summary": {
+    "evidence_id": "strata.tools.estimate_time:KE-CWSB-224323-CS-QCBS@2026-10-28",
+    "public_from": "2026-10-28",
+    "source": {
+      "tool": "estimate_time",
+      "sources": [
+        "notices",
+        "awards",
+        "documents",
+        "projects"
+      ]
+    },
+    "estimate": null,
+    "difference": null,
+    "track_record": {
+      "year": 2025,
+      "abstention": {
+        "reason": "too_few_unseen_packages",
+        "n": 0,
+        "min_unseen_packages": 20
+      }
+    },
+    "plan_dates": null,
+    "comparisons": [],
+    "options": null,
+    "comparables": {
+      "n": 17,
+      "signed": 15,
+      "still_open": 2
+    },
+    "coverage": {
+      "matched": 0,
+      "used": 0,
+      "not_used": []
+    },
+    "step_dates": {
+      "min_comparables": 20,
+      "middle_in10": 5,
+      "cautious_in10": 2,
+      "start_range": {
+        "from": "2025-10-28",
+        "to": "2031-10-28"
+      },
+      "method": "Quality And Cost-Based Selection",
+      "dateable_n": 9,
+      "dated_n": {
+        "middle": 0,
+        "cautious": 0
+      },
+      "undated_n": 0,
+      "few_n": 0,
+      "none_dated": true,
+      "family": "firms",
+      "family_reason": null,
+      "basis": "delay",
+      "needs_start_date": false,
+      "start_date": null,
+      "steps": [
+        {
+          "step_key": "terms_of_reference",
+          "is_anchor": false,
+          "comparables_n": 0,
+          "reached_n": 0,
+          "comparables": [],
+          "plan_first_date": "2021-04-15",
+          "plan_first_version_date": "2026-07-31",
+          "plan_latest_date": "2021-04-15",
+          "plan_latest_version_date": "2026-08-17",
+          "abstain_reason": null,
+          "middle": null,
+          "cautious": null
+        },
+        {
+          "step_key": "eoi_notice",
+          "is_anchor": false,
+          "comparables_n": 0,
+          "reached_n": 0,
+          "comparables": [],
+          "plan_first_date": "2021-05-06",
+          "plan_first_version_date": "2026-07-31",
+          "plan_latest_date": "2021-05-06",
+          "plan_latest_version_date": "2026-08-17",
+          "abstain_reason": null,
+          "middle": null,
+          "cautious": null
+        },
+        {
+          "step_key": "short_list_draft_rfp",
+          "is_anchor": false,
+          "comparables_n": 0,
+          "reached_n": 0,
+          "comparables": [],
+          "plan_first_date": "2021-06-10",
+          "plan_first_version_date": "2026-07-31",
+          "plan_latest_date": "2021-06-10",
+          "plan_latest_version_date": "2026-08-17",
+          "abstain_reason": null,
+          "middle": null,
+          "cautious": null
+        },
+        {
+          "step_key": "rfp_issued",
+          "is_anchor": false,
+          "comparables_n": 0,
+          "reached_n": 0,
+          "comparables": [],
+          "plan_first_date": null,
+          "plan_first_version_date": null,
+          "plan_latest_date": null,
+          "plan_latest_version_date": null,
+          "abstain_reason": null,
+          "middle": null,
+          "cautious": null
+        },
+        {
+          "step_key": "technical_proposals_opened",
+          "is_anchor": false,
+          "comparables_n": 0,
+          "reached_n": 0,
+          "comparables": [],
+          "plan_first_date": "2021-07-15",
+          "plan_first_version_date": "2026-07-31",
+          "plan_latest_date": "2021-07-15",
+          "plan_latest_version_date": "2026-08-17",
+          "abstain_reason": null,
+          "middle": null,
+          "cautious": null
+        },
+        {
+          "step_key": "technical_evaluation",
+          "is_anchor": false,
+          "comparables_n": 0,
+          "reached_n": 0,
+          "comparables": [],
+          "plan_first_date": "2021-08-12",
+          "plan_first_version_date": "2026-07-31",
+          "plan_latest_date": "2021-08-12",
+          "plan_latest_version_date": "2026-08-17",
+          "abstain_reason": null,
+          "middle": null,
+          "cautious": null
+        },
+        {
+          "step_key": "combined_evaluation_report",
+          "is_anchor": false,
+          "comparables_n": 0,
+          "reached_n": 0,
+          "comparables": [],
+          "plan_first_date": "2021-09-09",
+          "plan_first_version_date": "2026-07-31",
+          "plan_latest_date": "2021-09-09",
+          "plan_latest_version_date": "2026-08-17",
+          "abstain_reason": null,
+          "middle": null,
+          "cautious": null
+        },
+        {
+          "step_key": "contract_signed",
+          "is_anchor": false,
+          "comparables_n": 0,
+          "reached_n": 0,
+          "comparables": [],
+          "plan_first_date": "2021-10-07",
+          "plan_first_version_date": "2026-07-31",
+          "plan_latest_date": "2021-10-07",
+          "plan_latest_version_date": "2026-08-17",
+          "abstain_reason": null,
+          "middle": null,
+          "cautious": null
+        },
+        {
+          "step_key": "contract_completed",
+          "is_anchor": false,
+          "comparables_n": 0,
+          "reached_n": 0,
+          "comparables": [],
+          "plan_first_date": "2022-07-04",
+          "plan_first_version_date": "2026-07-31",
+          "plan_latest_date": "2022-07-04",
+          "plan_latest_version_date": "2026-08-17",
+          "abstain_reason": null,
+          "middle": null,
+          "cautious": null
+        }
+      ],
+      "longest": null,
+      "abstain_all": {
+        "n": 17
+      },
+      "actual_steps_count": 8,
+      "track_record": null,
+      "coverage": {
+        "total": 17,
+        "used": 0,
+        "missing": 17,
+        "other_family": 0,
+        "unconfirmed": 0,
+        "reason": "no_plan_dates",
+        "sources": [
+          "notices",
+          "awards",
+          "documents",
+          "projects"
+        ]
+      }
+    }
+  },
+  "plan_date_choice": null
+}

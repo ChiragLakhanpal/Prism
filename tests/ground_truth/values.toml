@@ -3404,3 +3404,67 @@ document_type = "Procurement Plan"
 project = "P161329"
 date = 2022-05-06
 pdf_page = 1
+
+# The step tracker (ticket 115): each step's state in the package's plan, in its newest version public on the
+# as-of date, and for a late step its days late, counted on a calendar from the plan's planned date to the as-of
+# date. A step is done when the plan gives its actual date, or, for the signed contract the plan gives no actual
+# date, when a contract for the package, public by the as-of date, was signed by then (strata.gold.contract);
+# unknown when the plan gives it no date, when a later step is done and this one has no actual date, or when the
+# plan's Process Status says the activity ended (Canceled, Terminated, Completed) or its contract was signed (Signed,
+# for the steps up to the signing) and the step has no actual date; late when its planned date is before the as-of
+# date; next for the first step after the last done one whose planned date has not passed, when no late step comes
+# before it; and planned for every step after that.
+#
+# The showcase, KE-NWWDA-541055-CW-RFB, as of October 28, 2026 (the recorded answers' day), from the plan of
+# October 9, 2026, which gives no actual date and no Bidding Documents as Issued date (the plan-541055 values):
+# World Bank contract awards data hold its contract signed on June 22, 2026 (award-541055-signed), so the signing is
+# done, the four steps before it are unknown, and the completion (July 31) is 89 days late. As of June 1, 2026, from
+# the plan of March 5, 2026 and before the contract was signed, the signing (April 24) is 38 days late. A package
+# from a sentence has no plan, so each of its steps is unknown.
+#
+# A consulting firm's package has nine steps (strata.estimates.step_dates.families()["firms"]). As of October 28,
+# 2026, the plan of August 17, 2026 (document 40122770, page 3) gives KE-CWSB-224323-CS-QCBS as Completed, with an
+# actual date for every step but Request for Proposals as Issued, which it leaves blank, so that step is unknown and
+# never late.
+#
+# Two activities whose plan of the as-of date gives an ended Process Status, as of October 28, 2026: the plan of
+# October 9, 2026 gives KE-NWWDA-541061-CW-RFQ as Completed, with actual dates for its bid invitation (April 15,
+# 2026) and signing (May 11, 2026) only, so no step is late; the plan of September 24, 2026 gives
+# KE-KURA-219079-CS-INDV, an individual consultant's five steps, as Canceled, with an actual date only for its Terms
+# of Reference (September 15, 2021).
+#
+# The hand-made set (tests/step_set.py): the target's plan of December 15, 2020 gives planned dates only, and the
+# plan of December 1, 2021 adds five actual dates. As of May 1, 2021, March 1 is 61 days back, March 8 is 54,
+# April 7 is 24 and April 30 is 1; the signing (June 10, 2021) and the completion (June 10, 2022) are still ahead
+# but come after a late step, so both are planned. As of January 1, 2022 the five are done and the completion is
+# next; as of July 1, 2022 it is 21 days late (June 10 to July 1). In the set whose plan of December 20, 2020 leaves
+# out the bidding document's actual date, the comparable KE-HAND-900001-CW-RFB, as of January 15, 2021, has every
+# other step's actual date but none for the completion, which its plan never dated.
+[step_tracker]
+showcase_as_of = 2026-10-28
+showcase_states = ["unknown", "unknown", "unknown", "unknown", "done", "late"]
+showcase_late_days = [89]
+showcase_signed_on = 2026-06-22
+showcase_before_signing_as_of = 2026-06-01
+showcase_before_signing_late_days = 38
+completed_reference = "KE-NWWDA-541061-CW-RFQ"
+completed_states = ["done", "unknown", "unknown", "unknown", "done", "unknown"]
+canceled_reference = "KE-KURA-219079-CS-INDV"
+canceled_states = ["done", "unknown", "unknown", "unknown", "unknown"]
+firms_reference = "KE-CWSB-224323-CS-QCBS"
+firms_states = ["done", "done", "done", "unknown", "done", "done", "done", "done", "done"]
+hand_made_before_as_of = 2021-01-15
+hand_made_before_states = ["next", "planned", "planned", "planned", "planned", "planned"]
+hand_made_before_late_days = []
+hand_made_late_as_of = 2021-05-01
+hand_made_late_states = ["late", "late", "late", "late", "planned", "planned"]
+hand_made_late_late_days = [61, 54, 24, 1]
+hand_made_signed_as_of = 2022-01-01
+hand_made_signed_states = ["done", "done", "done", "done", "done", "next"]
+hand_made_signed_late_days = []
+hand_made_overdue_as_of = 2022-07-01
+hand_made_overdue_states = ["done", "done", "done", "done", "done", "late"]
+hand_made_overdue_late_days = [21]
+gap_reference = "KE-HAND-900001-CW-RFB"
+gap_as_of = 2021-01-15
+gap_states = ["done", "unknown", "done", "done", "done", "unknown"]

@@ -1,4 +1,5 @@
--- strata.gold.contract: one row per contract, from three sources.
+-- strata.gold.contract: one row per contract, from three sources. A new source is also named in
+-- src/strata/server/tracker.py's CONTRACT_SOURCES, or the step tracker ignores its signing dates.
 --
 -- awards              contract awards since FY2020, in US dollars, from the rows of its suppliers
 --                     that the newest fetch holds (strata.silver.awards_current). A joint venture's

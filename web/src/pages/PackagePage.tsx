@@ -29,7 +29,8 @@ import { RisksSection } from "../components/RisksSection";
 import { CheckCriteria } from "../components/CheckCriteria";
 import { SkeletonLine, SkeletonText } from "../components/Skeleton";
 import { SpaceLine } from "../components/SpaceLine";
-import { StepsSection } from "../components/StepsSection";
+import { StepTracker, TrackerSkeleton } from "../components/StepTracker";
+import { StepsSection, type StepsState } from "../components/StepsSection";
 import { TextLink } from "../components/TextLink";
 import { copy } from "../copy";
 import type { ComparablesResult, EstimateResult, PackageResult } from "../lib/api";
@@ -68,6 +69,8 @@ export function PackagePage({ stepRef }: { stepRef: string }) {
   const opening = useOpenComparable();
   // Section 3's selection, for "Suggest {n} PPSD risk rows" (ticket 36).
   const [selection, setSelection] = useState<RiskSelection | null>(null);
+  // Section 2's answer, which the tracker at the top of the page draws from (ticket 115).
+  const [steps, setSteps] = useState<StepsState>({ status: "loading" });
   const preview = viewOf(here.search) !== "staff";
   // Suggested PPSD rows are a World Bank staff draft (config/drafts.toml, staff_only): a viewer without the role gets
   // no action, and ticket 38's agency variant gives the implementing agency its own.
@@ -109,6 +112,9 @@ export function PackagePage({ stepRef }: { stepRef: string }) {
         <p className="mt-4 max-w-prose text-body text-ink-muted">{copy.pages.package.purpose}</p>
         <div className="mt-4">
           <FactsSkeleton />
+        </div>
+        <div className="mt-6">
+          <TrackerSkeleton />
         </div>
         <div className="mt-8">
           <PastRange state={{ status: "loading" }} estimate={{ status: "loading" }} />
@@ -172,6 +178,10 @@ export function PackagePage({ stepRef }: { stepRef: string }) {
         <div className="mt-4">
           <PackageFactsList pkg={facts} />
         </div>
+        {/* Where each step stands in the plan (ticket 115), from section 2's answer. */}
+        <div className="mt-6">
+          <StepTracker state={steps} />
+        </div>
         <div className="mt-8">
           <PastRange
             state={sectionState}
@@ -186,7 +196,7 @@ export function PackagePage({ stepRef }: { stepRef: string }) {
         </div>
         {/* Section 2, the planned date for each STEP step (ticket 27), collapsed until opened. */}
         <div className="mt-6 @lg/page:mt-8">
-          <StepsSection packageKey={facts.step_reference} kind="step" />
+          <StepsSection packageKey={facts.step_reference} kind="step" onState={setSteps} />
         </div>
         {/* Section 3, procurement risks and what helped (ticket 30), with section 1's default criteria; it tells the
             page what is selected, for "Suggest {n} PPSD risk rows" (ticket 36). */}
