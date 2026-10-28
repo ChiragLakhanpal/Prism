@@ -110,7 +110,7 @@ export function Tiles({ tiles, closing, at, mode }: { tiles: { head: ReactNode; 
         ))}
       </div>
       {closing && (
-        <Step n={tiles.length + 1} at={at} as="p" className={cx("text-pretty text-ink", mode === "present" ? "mt-8" : "mt-6")}>
+        <Step n={tiles.length + 1} at={at} as="p" className={cx("text-balance text-ink", mode === "present" ? "mt-8" : "mt-6")}>
           <span {...type("body", mode)}>{closing}</span>
         </Step>
       )}
@@ -199,17 +199,20 @@ export function NotMeasured({ children, n, at, mode }: { children: ReactNode; n:
   );
 }
 
-// The rollout's phases, a press each, left to right, each with who uses Strata and what is measured before the next.
+// The rollout's phases, a press each, left to right, each with who uses Strata and what is measured before the next;
+// the last phase has no next, so its label says what is measured during it.
 export function Phases({
   phases,
   whoLabel,
   measuredLabel,
+  measuredLastLabel,
   at,
   mode,
 }: {
   phases: { name: ReactNode; who: ReactNode; measured: ReactNode }[];
   whoLabel: string;
   measuredLabel: string;
+  measuredLastLabel: string;
   at: number;
   mode: Mode;
 }) {
@@ -227,7 +230,7 @@ export function Phases({
             {phase.who}
           </p>
           <p className="mt-4 text-ink-muted" {...type("label", mode)}>
-            {measuredLabel}
+            {index === phases.length - 1 ? measuredLastLabel : measuredLabel}
           </p>
           <p className="mt-1 text-ink" {...type("note", mode)}>
             {phase.measured}

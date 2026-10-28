@@ -7,9 +7,10 @@
 // The deck shows a diagram a step at a time: every part marked data-motion-item whose data-step is above the step it
 // is given gets data-unreached, which the deck's stylesheet hides (styles/deck.css). With no step, it draws whole.
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type RefObject } from "react";
-import { deckCopy, figureCopy } from "../deck/copy";
+import { figureCopy, figureStates } from "../deck/copy";
 import { FIGURES, inline, type FigureId } from "./registry";
 import kernelSource from "./hairline/kernel.js?raw";
+import coreSampleSource from "./hairline/core-sample.js?raw";
 
 type HairlineApi = {
   inject: (root: Document) => void;
@@ -33,12 +34,15 @@ function hairlineKernel(): HairlineApi {
   return kernel;
 }
 
-// Every hairline figure file beside the kernel, by its name: core-sample, and the deck's openers.
-const HAIRLINE_SOURCES: Record<string, string> = Object.fromEntries(
-  Object.entries(import.meta.glob<string>("./hairline/*.js", { query: "?raw", import: "default", eager: true }))
-    .map(([path, source]) => [path.slice("./hairline/".length, -3), source] as const)
-    .filter(([name]) => name !== "kernel"),
-);
+// The hairline figure files beside the kernel, by name. How Strata works draws only core-sample; the deck adds its
+// openers' figures when it loads (registerHairlines), so they stay out of the app's first download, which a cold
+// load on the 3G budget pays for (home.spec.ts, hub.spec.ts).
+const HAIRLINE_SOURCES: Record<string, string> = { "core-sample": coreSampleSource };
+
+// Adds hairline figure files, by their paths, as import.meta.glob gives them: ".../hairline/filter.js" is "filter".
+export function registerHairlines(sources: Record<string, string>) {
+  for (const [path, source] of Object.entries(sources)) HAIRLINE_SOURCES[path.slice(path.lastIndexOf("/") + 1, -3)] = source;
+}
 
 // A figure file ends with hairline({ ... }), as the skill writes it; this is that call.
 function hairlineFigure(source: string): HairlineFigureDef {
@@ -202,7 +206,7 @@ export function FigureText({ id, listId, upTo }: { id: FigureId; listId?: string
 export function FigureFailed({ id }: { id: FigureId }) {
   return (
     <div data-figure-failed={id}>
-      <p className="text-caption text-ink-muted">{deckCopy.states.figureFailed}</p>
+      <p className="text-caption text-ink-muted">{figureStates.failed}</p>
       <div className="mt-2">
         <FigureText id={id} />
       </div>

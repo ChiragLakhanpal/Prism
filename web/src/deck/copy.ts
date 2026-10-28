@@ -10,6 +10,12 @@
 // bind it to its key in the measures snapshot, a setting or the rubric, so the number check can trace it. Nothing
 // here is a number Strata measured: the words "one" to "nine" that count something come from a setting.
 
+// What a figure says about itself wherever it draws, on a slide or on How Strata works. It sits apart from deckCopy,
+// so How Strata works, which is in the app's first download, carries no slide's words.
+export const figureStates = {
+  failed: "This figure didn't load, so here it is as text.",
+};
+
 export const deckCopy = {
   title: (n: string, total: string) => `Slide ${n} of ${total} | Strata deck`,
   readingTitle: "Strata deck",
@@ -48,7 +54,6 @@ export const deckCopy = {
     note: "Note:",
     loadError: "The deck didn't load. Check your connection, then reload the page.",
     reload: "Reload the page",
-    figureFailed: "This figure didn't load, so here it is as text.",
     notMeasured: "Not measured yet",
   },
 
@@ -125,7 +130,7 @@ export const deckCopy = {
     },
     answers: {
       name: "How it answers",
-      line: "The agent picks its tools, and the verifier checks every answer before anyone sees it.",
+      line: "The agent picks its tools, and the verifier checks every sentence before anyone sees it.",
     },
     grows: {
       name: "How it grows",
@@ -256,7 +261,7 @@ export const deckCopy = {
       notes: "Now how it's built, from the data up. Let it play a few seconds, then the layers one at a time.",
     },
     layers: {
-      title: "Everything but the agent runs on Databricks, and the verifier checks every sentence",
+      title: "The data, search and tools run on Databricks, and the agent and its models run in Microsoft Foundry",
       notes:
         "A press per layer, from the bottom. The data, the knowledge model and the tools stay on Databricks, under " +
         "Unity Catalog. The agent runs in Microsoft Foundry and only picks the tools. The app runs each tool with " +
@@ -275,7 +280,9 @@ export const deckCopy = {
       passages: "{passages} passages from {documents} documents, each with its paragraph number and page.",
       passagesNone: "Strata has not counted its passages yet.",
       pages: "Strata read {ratio} pages without errors.",
-      pagesNone: "Strata has not measured how well its pages were read yet.",
+      pagesNone: "Strata has not measured how well it read its pages yet.",
+      // Neither measured yet: one sentence, not two that start the same way.
+      bothNone: "Strata has not counted its passages or measured how well it read its pages yet.",
       source: "Strata's data readiness measures, taken {date}.",
       notes:
         "A press each. The page router sends each page down one of two roads. Clean pages use the text the World " +
@@ -295,7 +302,7 @@ export const deckCopy = {
       title: "No dataset publishes contract awards for fiscal {start} to {end}",
       titleNoGap: "Contract awards are published for every fiscal year Strata reads",
       titleNone: "Strata has not measured its contract award rows yet",
-      gapNote: "Award notices fill most of the gap, in local currency, so Strata keeps them apart from awards in US dollars.",
+      gapNote: "Award notices cover the gap years, in local currency, so Strata keeps them apart from awards in US dollars.",
       linked:
         "{ratio} contract award rows since fiscal 2020 share their Systematic Tracking of Exchanges in Procurement (STEP) " +
         "reference with a procurement notice. That reference is the key that joins an award to its notice.",
@@ -311,11 +318,11 @@ export const deckCopy = {
       table: { year: "Fiscal year", rows: "Contract award rows", from: "From" },
       notes:
         "This is a gap Strata states instead of hiding. Neither contract awards dataset covers fiscal {start} to " +
-        "{end}. Award notices fill most of those years, but in local currency, so Strata keeps them apart and says " +
+        "{end}. Award notices cover those years, but in local currency, so Strata keeps them apart and says " +
         "so whenever an answer leans on them. Only {ratio} recent award rows share their STEP reference with a notice.",
       notesGap:
         "This is a gap Strata states instead of hiding. Neither contract awards dataset covers fiscal {start} to " +
-        "{end}. Award notices fill most of those years, but in local currency, so Strata keeps them apart and says " +
+        "{end}. Award notices cover those years, but in local currency, so Strata keeps them apart and says " +
         "so whenever an answer leans on them. The workspace job counts the rows themselves.",
       notesNone:
         "This slide shows the contract award rows for each fiscal year, and the years no awards dataset covers. " +
@@ -432,6 +439,7 @@ export const deckCopy = {
       ],
       whoLabel: "Who uses Strata",
       measuredLabel: "Measured before the next phase",
+      measuredLastLabel: "Measured during this phase",
       notes:
         "The rollout follows who carries the risk of a wrong answer, a phase per press. World Bank staff come first, " +
         "in {countries} countries, because they can judge a wrong answer. Agencies come next, once the drafts hold " +
@@ -498,7 +506,7 @@ export const deckCopy = {
     },
     thanks: {
       title: "Thank you",
-      figure: "New reports settle on the core as new layers every night, and every layer is kept.",
+      figure: "Every night, new reports settle on the core as a new layer, and Strata keeps every layer.",
       ask: "What would you like to ask?",
       links: { app: "Open Strata", proposal: "Read the proposal", dashboard: "Open the dashboard", repo: "Read the code" },
       notes:
@@ -568,12 +576,12 @@ export const figureCopy = {
       "The Strata agent in Microsoft Foundry picks the tools and writes each claim with the IDs of its evidence.",
       "The verifier checks every sentence against the rows and passages before anyone sees it.",
       "The Strata app, a Databricks App, runs each tool with the viewer's own permissions.",
-      "Everything runs on Databricks except the agent, which runs in Microsoft Foundry.",
+      "The data, search and tools run on Databricks. The agent runs in Microsoft Foundry, and the language models are Azure OpenAI.",
     ],
     caption:
-      "The data, the search index and the models stay in Databricks. The agent that decides what to look up runs in " +
-      "Microsoft Foundry. I run every lookup with your own permissions, so you see only what your account may see, and " +
-      "I keep every row an answer used so that I can check it.",
+      "The data and the search index stay in Databricks. The agent that decides what to look up runs in Microsoft " +
+      "Foundry, and the language models are Azure OpenAI. I run every lookup with your own permissions, so you see " +
+      "only what your account may see, and I keep every row an answer used so that I can check it.",
     caption2:
       "Each time you open a page, I record who you are, which page and view you opened, and when. When you ask a " +
       "question, I also keep the steps I took, so the people who run Strata can check my work.",

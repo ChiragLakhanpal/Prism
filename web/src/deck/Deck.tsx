@@ -20,7 +20,7 @@ import { TextLink } from "../components/TextLink";
 import { copy } from "../copy";
 import { cx } from "../lib/cx";
 import { formatDate } from "../lib/format";
-import { Diagram, FigureFailed, FigureText, Hairline, hasHairline, useOverflow } from "../figures/Figure";
+import { Diagram, FigureFailed, FigureText, Hairline, hasHairline, registerHairlines, useOverflow } from "../figures/Figure";
 import { FIGURES, SLOTS } from "../figures/registry";
 import { deckCopy, figureCopy } from "./copy";
 import { loadDeck, type DeckData } from "./data";
@@ -32,6 +32,15 @@ import { buildSlides, figureStepText, TITLE_ID, type Slide } from "./slides";
 import { arrive, moved, moveFor, segments, TOPIC_ORDER, type Move, type Place } from "./talk";
 import { slideInAddress, type DeckView } from "./view";
 import "./deck.css";
+
+// The openers' and the close's hairline figures, which only the deck draws, so they load with the deck.
+registerHairlines(
+  import.meta.glob<string>(["../figures/hairline/*.js", "!../figures/hairline/kernel.js", "!../figures/hairline/core-sample.js"], {
+    query: "?raw",
+    import: "default",
+    eager: true,
+  }),
+);
 
 const CANVAS = { width: 960, height: 540 };
 const PRESENT = "(min-width: 63rem) and (min-height: 40.25rem)";
@@ -84,7 +93,7 @@ export function DeckApp({ view }: { view: DeckView }) {
       </main>
     );
   }
-  if (!data || !slides) return <Loading />;
+  if (!data || !slides) return view.kind === "slides" && big ? <Loading /> : <PageLoading />;
   if (view.kind === "notes") return <NotesView slides={slides} />;
   if (view.kind === "page" || !big) return <ReadingView slides={slides} data={data} page={view.kind === "page"} big={big} />;
   // The slide the address shows now, which presentation mode keeps current, so a window that shrinks to the reading
@@ -94,7 +103,7 @@ export function DeckApp({ view }: { view: DeckView }) {
 
 // While the deck's data arrive: the stage at the size it will have, as a light slide draws it, with the header strip
 // and its logo, a skeleton title and points where a slide's sit, and the footer sentence along its foot, so nothing
-// jumps when the first slide comes in. The reading view's sizes take over once the data say which view shows.
+// jumps when the first slide comes in. Only presentation mode shows it; a page shows PageLoading.
 function Loading() {
   const scale = useScale(false);
   return (
@@ -119,6 +128,23 @@ function Loading() {
       {/* The control bar's place, so the stage sits where it will once the deck is in. */}
       <div aria-hidden="true" className="mt-3 h-11 shrink-0" />
     </main>
+  );
+}
+
+// While the deck's data arrive for a page (the reading view, the notes window, or a window too small for the stage):
+// a title and three lines in the reading view's column, and the footer at the foot, as the page will have them.
+function PageLoading() {
+  return (
+    <div className="flex min-h-dvh flex-col bg-page" data-deck="loading" aria-busy="true">
+      <main className="layout flex-1 py-8">
+        <LoadingLabel />
+        <div className="flex max-w-prose flex-col gap-6">
+          <SkeletonText widths={["w-3/4", "w-1/2"]} className="text-h1" />
+          <SkeletonText widths={["w-full", "w-11/12", "w-2/3"]} className="text-body" />
+        </div>
+      </main>
+      <Footer />
+    </div>
   );
 }
 
@@ -509,7 +535,9 @@ function spokenText(item: Element): string {
     if (!(node instanceof Element) || node.getAttribute("aria-hidden") === "true") return;
     const display = getComputedStyle(node).display;
     if (display === "none") return;
-    const block = !display.startsWith("inline");
+    // An sr-only note, such as "(opens in a new tab)", computes as a block because it is positioned, but it belongs
+    // to the sentence around it.
+    const block = !display.startsWith("inline") && !node.classList.contains("sr-only");
     if (block) end();
     node.childNodes.forEach(walk);
     if (block) end();

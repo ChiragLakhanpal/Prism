@@ -3108,10 +3108,10 @@ Parked with step 1, after merge commit bf9c7214. Run it after step 2's commit, o
 
 Then, in a browser:
 
-1. Open `https://strata-7474658003099155.aws.databricksapps.com/present/1` in a window at least 1008 by 644 px. Press the right arrow through the "Three strata" slides and watch the slide and the address. Then press End.
+1. Open `/present/1` on the App's address, which the deploy's last line prints, in a window at least 1008 by 644 px. Press the right arrow through the "Three strata" slides and watch the slide and the address. Then press End.
 2. Open `/present/8`, `/present/9` and `/present/10`, the "Strata at work" demo slides, and click each one's blue button.
 3. Open `/present/16`.
-4. Open `https://strata-7474658003099155.aws.databricksapps.com/data/how-strata-works`. In the DevTools console, run `document.querySelectorAll('a[href*="/present"]').length`.
+4. Open `/data/how-strata-works` on the same address. In the DevTools console, run `document.querySelectorAll('a[href*="/present"]').length`.
 
 It worked if:
 

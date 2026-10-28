@@ -28,8 +28,8 @@ fetches. A result the snapshot has not measured is kept with "measured": false, 
 
 from __future__ import annotations
 
-import re
 from pathlib import Path
+from urllib.parse import parse_qs, urlsplit
 
 from strata import config
 from strata.proposal import register
@@ -103,17 +103,28 @@ def _smoke_question(key: str) -> str | None:
     answer demo asks: the question in evals/benchmark.yaml with that id."""
     from strata.evals import benchmark
 
-    return next((" ".join(question["question"].split()) for question in benchmark.load() if question.get("id") == key), None)
+    return next((" ".join(question["question"].split()) for question in benchmark.load() if question.get("id") == key),
+                None)
 
 
-def _demo_links(agency: str) -> dict:
+def _demo_links(agency: str, examples: config.Examples | None = None) -> dict:
     """The Start here links the demo slides open (config/examples.toml), filled as Home fills them, by key, and the
-    sentence the package demo types into the box, the example its link names."""
-    examples = config.load_examples()
+    sentence the package demo types into the box, the example its link names. The packages page reads that example
+    from the link's query, so a link that names no example in the registry stops the build instead of leaving the
+    package demo's box blank."""
+    examples = examples or config.load_examples()
     links = {link["key"]: link["href"] for link in examples.links(agency)}
-    example = re.search(r"[?&]example=(\w+)", links.get("planPackage", ""))
+    sentence = None
+    if "planPackage" in links:
+        named = parse_qs(urlsplit(links["planPackage"]).query).get("example", [""])[0]
+        if named not in examples.sentences:
+            raise DeckError(f"config/examples.toml's planPackage link, {links['planPackage']}, names "
+                            f"{f'the example {named}' if named else 'no example'}, but the package demo types the "
+                            f"sentence of one of {', '.join(sorted(examples.sentences)) or 'no examples'}. Name one "
+                            "of those in the link's example=, or add the example under [packages].")
+        sentence = examples.sentences[named]
     return {"links": {key: links[key] for key in ("checkPlan", "planPackage", "wholeStory") if key in links},
-            "sentence": examples.sentences.get(example.group(1)) if example else None}
+            "sentence": sentence}
 
 
 def _demo(answers: dict | None) -> dict:
@@ -122,9 +133,9 @@ def _demo(answers: dict | None) -> dict:
     plan = config.load_slice().demo_plan
     package = plan.package
     agency = agency_id(plan.implementing_agency)
-    where = {"step_reference": package, "project_id": plan.project_id, "agency": plan.implementing_agency, "plan_date": plan.plan_date.isoformat(),
-             "plan_href": f"/projects/{plan.project_id}/procurement/{agency}", **_demo_links(agency),
-             "question": _smoke_question(plan.smoke_question)}
+    where = {"step_reference": package, "project_id": plan.project_id, "agency": plan.implementing_agency,
+             "plan_date": plan.plan_date.isoformat(), "plan_href": f"/projects/{plan.project_id}/procurement/{agency}",
+             **_demo_links(agency), "question": _smoke_question(plan.smoke_question)}
     if answers is None:
         return {**where, "comparables": None, "estimate": None}
     for name in DEMO_ANSWERS:

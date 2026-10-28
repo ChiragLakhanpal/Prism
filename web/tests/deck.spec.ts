@@ -95,6 +95,9 @@ test("/present serves the talk outside the app's frame: the bookends, five topic
   for (const opener of OPENERS) expect(ids, opener).toContain(opener);
   // The openers come in the topics' order.
   expect(OPENERS.map((opener) => ids.indexOf(opener))).toEqual([...OPENERS.map((opener) => ids.indexOf(opener))].sort((a, b) => a - b));
+  // Each navy slide draws its own hairline figure, which loads with the deck, never the core sample in its place.
+  const drawn = await page.locator("section[data-slide] [data-deck-hairline]").evaluateAll((boxes) => boxes.map((box) => box.getAttribute("data-deck-hairline")));
+  expect(drawn).toEqual(["core-sample", "plan-rows", "passages", "filter", "sediment", "sediment"]);
   // No navy bar, no box: the deck is not an app page.
   await expect(page.locator("[data-nav-bar], [data-box-band]")).toHaveCount(0);
 });
@@ -128,7 +131,9 @@ test("every slide carries one World Bank logo, unaltered, at 24 px or more with 
   ] as const) {
     await page.goto(`/present/${n}`);
     const logo = page.locator(`section[data-slide='${n}']`).getByRole("img", { name: deckCopy.logo });
-    const file = await page.request.get(await logo.evaluate((img) => (img as HTMLImageElement).currentSrc));
+    // src, not currentSrc: currentSrc stays empty until the browser picks the source, and an empty address fetches the
+    // page itself. The logo has no srcset, so src is the file.
+    const file = await page.request.get(await logo.evaluate((img) => (img as HTMLImageElement).src));
     expect(createHash("sha256").update(await file.body()).digest("hex")).toBe(sha);
   }
   // No drawing holds a logo: the frame draws the one logo.
@@ -280,6 +285,8 @@ test("the speaker notes open in their own window, follow the deck press by press
 // Every slide whole, its reading view and its notes, as /present/page and presentation mode draw them.
 async function allPieces(page: Page): Promise<Record<string, string>> {
   await page.goto("/present/page");
+  // count() does not wait, and the loading frame shows until the deck's data arrive, so wait for the reading view first.
+  await expect(page.locator("[data-reading-slide]").first()).toBeVisible();
   const count = await page.locator("[data-reading-slide]").count();
   expect(count).toBeGreaterThan(20);
   const pieces: Record<string, string> = {};
@@ -344,7 +351,8 @@ test("the deck the App serves says on each slide what is not measured yet, and p
   const s = deckCopy.slides;
   const text = (id: string) => page.locator(`section[data-slide-id='${id}']`);
   const unmeasured: [boolean, string, string][] = [
-    [!data.results.passages.measured, "reading", s.reading.passagesNone],
+    // With the pages not measured either, one sentence says both.
+    [!data.results.passages.measured, "reading", data.results["pages-read-well"].measured ? s.reading.passagesNone : s.reading.bothNone],
     [!data.results["award-rows-by-year"].measured, "gap", s.gap.noneLine],
     [!data.results["benchmark-passed"].measured || !data.results["must-refuse"].measured, "checks", s.checks.none.split("{checks}")[0]],
     [!data.results["hindsight-caught"].measured, "hindsight", s.hindsight.titleNone],

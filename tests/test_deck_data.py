@@ -15,6 +15,7 @@ from pathlib import Path
 import pytest
 
 from proposal_seed import merged
+from strata import config
 from strata.proposal import deck, register, snapshot
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -64,6 +65,17 @@ def test_the_demo_slides_open_the_start_here_links_and_type_the_registrys_own_wo
     # config/slice.toml's smoke question, search-passages-icr-rebidding in evals/benchmark.yaml, on one line.
     assert demo["question"] == ("In P130164, why did so many works contracts have to go through rebidding, and what does "
                                 "the completion report say about the estimates?")
+
+
+@pytest.mark.parametrize("href", ["/packages?box=plan", "/packages?box=plan&example=no_such_example"])
+def test_a_package_link_that_names_no_registered_example_stops_the_build(tmp_path, href):
+    # Without this, the package demo's box would go blank with nothing to say why (the 106 review, round 2).
+    registry = (ROOT / "config" / "examples.toml").read_text()
+    edited = tmp_path / "examples.toml"
+    edited.write_text(registry.replace('href = "/packages?box=plan&example=rural_roads_kenya"', f'href = "{href}"'))
+    examples = config.load_examples(edited)
+    with pytest.raises(deck.DeckError, match="planPackage"):
+        deck._demo_links("northern-water-works-development-agency", examples)
 
 
 def test_a_result_carries_its_measured_values_and_what_the_register_says_it_counts(fixture_deck):

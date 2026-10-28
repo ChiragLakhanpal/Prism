@@ -56,6 +56,11 @@ const s = deckCopy.slides;
 const day = (iso: string | undefined | null) => (iso ? formatDate(iso) : "");
 const whole = (value: number) => formatNumber(value, { compact: false });
 const mono = (text: string) => <span className="font-mono">{text}</span>;
+// A sentence from the data with each project ID in it set in Roboto Mono, as the source lines set them.
+function MonoIds({ text }: { text: string }) {
+  const parts = text.split(/\b(P\d{6})\b/);
+  return <>{parts.map((part, index) => (index % 2 === 1 ? <span key={index} className="font-mono">{part}</span> : part))}</>;
+}
 
 function ratio(result: DeckResult, name: string) {
   return <ResultNum result={result} resultKey={name} value={{ part: result.n ?? 0, whole: result.d ?? 0, show: "count" }} />;
@@ -239,9 +244,9 @@ export function buildSlides(data: DeckData): Slide[] {
       steps: s.demoAnswer.lines.length,
       body: (at, mode) => (
         <Demo
-          box={demo.question ?? ""}
+          box={<MonoIds text={demo.question ?? ""} />}
           question={demo.question}
-          action={<Fill template={s.demoAnswer.action} slots={{ project: showcase }} />}
+          action={<Fill template={s.demoAnswer.action} slots={{ project: mono(showcase) }} />}
           href={`/projects/${showcase}`}
           lines={s.demoAnswer.lines}
           at={at}
@@ -284,8 +289,7 @@ export function buildSlides(data: DeckData): Slide[] {
       body: (at, mode) =>
         !(passages && documents) && !pages ? (
           <NotMeasured n={1} at={at} mode={mode}>
-            {s.reading.passagesNone}{" "}
-            {s.reading.pagesNone}
+            {s.reading.bothNone}
           </NotMeasured>
         ) : (
           <Step n={1} at={at} className="flex flex-col gap-1">
@@ -353,7 +357,13 @@ export function buildSlides(data: DeckData): Slide[] {
         return (
           <div className="flex flex-col gap-6">
             {lines.length > 0 && <Points lines={lines} at={at} mode={mode} />}
-            {rows ? (
+            {rows && lines.length > 0 ? (
+              <Step n={lines.length} at={at} as="p">
+                <span {...type("note", mode)}>
+                  <NewTabLink href="/data">{s.gap.link}</NewTabLink>
+                </span>
+              </Step>
+            ) : rows ? (
               <p {...type("note", mode)}>
                 <NewTabLink href="/data">{s.gap.link}</NewTabLink>
               </p>
@@ -557,6 +567,7 @@ export function buildSlides(data: DeckData): Slide[] {
           }))}
           whoLabel={s.rollout.whoLabel}
           measuredLabel={s.rollout.measuredLabel}
+          measuredLastLabel={s.rollout.measuredLastLabel}
           at={at}
           mode={mode}
         />

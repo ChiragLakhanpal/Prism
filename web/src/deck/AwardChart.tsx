@@ -141,7 +141,7 @@ export function AwardTable({ result, caption }: { result: DeckResult; caption: s
       <caption className="sr-only">{caption}</caption>
       <thead className="bg-surface-2 text-left">
         <tr>
-          <th scope="col" className="px-3 py-2 font-semibold">{t.year}</th>
+          <th scope="col" className="w-px whitespace-nowrap px-3 py-2 font-semibold">{t.year}</th>
           <th scope="col" className="px-3 py-2 text-right font-semibold">{t.rows}</th>
           <th scope="col" className="px-3 py-2 font-semibold">{t.from}</th>
         </tr>
@@ -151,7 +151,7 @@ export function AwardTable({ result, caption }: { result: DeckResult; caption: s
           <tr key={row.fiscal_year} className="border-t border-line">
             <th scope="row" className="px-3 py-1 text-left font-normal">{row.fiscal_year_label}</th>
             <td className="px-3 py-1 text-right">{formatNumber(row.award_rows, { compact: false })}</td>
-            <td className="px-3 py-1">{row.dataset}</td>
+            <td className="whitespace-nowrap px-3 py-1">{row.dataset}</td>
           </tr>
         ))}
       </tbody>
