@@ -185,9 +185,13 @@ def test_swapping_the_agents_model_is_one_line_and_the_next_sync_changes_only_it
     text = (config.CONFIG_DIR / "models.toml").read_text()
     current = load_models()["agent"].deployment
     line = f'deployment = "{current}"'
-    assert text.count(line) == 1, "the agent's deployment line is not one line of config/models.toml"
+    # The agent's line is the one under [roles.agent]; another role may name the same deployment (the drafting role
+    # does since October 27, 2026), so the swap finds the line by its section, not by its text alone.
+    assert text.count("[roles.agent]") == 1, "the agent's role is not one section of config/models.toml"
+    start = text.index(line, text.index("[roles.agent]"))
+    assert text[text.index("[roles.agent]"):start].count("[roles.") == 1, "the agent's deployment line is not the first after its section"
     swapped = tmp_path / "models.toml"
-    swapped.write_text(text.replace(line, f'deployment = "{current}-swapped"'))
+    swapped.write_text(text[:start] + f'deployment = "{current}-swapped"' + text[start + len(line):])
     monkeypatch.setattr(agent_file, "load_models", lambda: config.load_models(swapped))
 
     report = sync.run(foundry)
