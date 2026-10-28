@@ -1,5 +1,5 @@
 """The deck's figures (ticket 47; the second draft's brief, sections 4 to 6): eleven diagram-design figures under the
-strata-wb profile and the hairline-create figures, shared by the deck at /present and How Strata works.
+strata-wb profile and the hairline-create figures, which the deck at /present shows.
 
 Each diagram is drawn as HTML in web/figures/ and exported beside the registry, web/src/figures/<key>.svg, with the
 skill's own exporter and --system-fonts, so the app's self-hosted Open Sans and Roboto Mono draw its text and it loads

@@ -194,7 +194,8 @@ export function Answer({ state, reveal = false }: { state: AnswerState; reveal?:
       return (
         <div data-answer="refused">
           <InShort reveal={reveal}>{state.message}</InShort>
-          {state.note && <p className="mt-2 text-caption text-ink-muted">{state.note}</p>}
+          {/* The note under a refusal: "See everything I turn down", which opens the refusal window (ticket 97). */}
+          {state.note && <div className="mt-2">{state.note}</div>}
           <StepsTaken steps={state.steps} runId={state.runId} />
         </div>
       );

@@ -109,8 +109,6 @@ const ROUTES: [string, string][] = [
   ["/drafts/draft-0001", "[data-draft-page]:not([data-draft-page=loading])"],
   ["/data", "main h1"],
   ["/data/sources", "main h1"],
-  // Ticket 47: How Strata works shows the deck's figures, and like every other route it never links to the deck.
-  ["/data/how-strata-works", "[data-how-section]"],
   ["/projects/130164", "main h1"],
 ];
 

@@ -46,7 +46,7 @@ import { RETURNING } from "./Popover";
 import type { Step } from "./Steps";
 import { IdText, linkProjectIds } from "./ProjectId";
 import { TextLink } from "./TextLink";
-import { WHAT_I_DONT_DO } from "../routes";
+import { RefusalWindow } from "./WhatIDontDo";
 
 export const ANNOUNCE_GAP_MS = 500;
 const STILL_WORKING_MS = 30_000;
@@ -476,10 +476,8 @@ function names(run: Run): string[] {
   return [...found];
 }
 
-// "How Strata works lists what I don't do, and why.", under every refusal.
-const refusalNote = () => (
-  <Fill template={copy.answer.refusalNote} slots={{ link: <TextLink href={WHAT_I_DONT_DO.href}>{copy.answer.refusalLink}</TextLink> }} />
-);
+// The refusal keys' words: what I don't do, what I can do instead, and why (ticket 97).
+type RefusalWords = { lead: string; instead: string; why: string };
 
 function stateOf(run: Run, opened: Opened, visited: ReadonlySet<string>, stillWorking: boolean): AnswerState {
   const steps = stepsOf(run);
@@ -487,11 +485,21 @@ function stateOf(run: Run, opened: Opened, visited: ReadonlySet<string>, stillWo
   if (run.phase === "streaming") return { status: "streaming", steps, stillWorking, announce: false };
   const done = steps.filter((step) => step.state === "done");
   if (run.phase === "failed" && run.error === "content_filter") {
-    return { status: "refused", steps: done, runId, message: copy.answer.errors.content_filter, note: refusalNote() };
+    return { status: "refused", steps: done, runId, message: copy.answer.errors.content_filter, note: <RefusalWindow /> };
   }
-  const refusal = run.refusal ? (copy.refusals as Record<string, { lead: string; instead: string }>)[run.refusal.key] : undefined;
+  const refusal = run.refusal ? (copy.refusals as Record<string, RefusalWords>)[run.refusal.key] : undefined;
   if (run.phase === "done" && refusal && run.refusal && !run.refusal.partial) {
-    return { status: "refused", steps: done, runId, message: <>{refusal.lead} {refusal.instead}</>, note: refusalNote() };
+    return {
+      status: "refused",
+      steps: done,
+      runId,
+      message: (
+        <>
+          {refusal.lead} {refusal.instead} {refusal.why}
+        </>
+      ),
+      note: <RefusalWindow />,
+    };
   }
   if (run.phase !== "done" || !run.checks) {
     const errors = copy.answer.errors as Record<string, string>;
@@ -540,9 +548,11 @@ function stateOf(run: Run, opened: Opened, visited: ReadonlySet<string>, stillWo
     refusal && run.refusal?.partial ? (
       <>
         <p>
-          {refusal.lead} {copy.answer.refusalPartial}
+          {refusal.lead} {refusal.why} {copy.answer.refusalPartial}
         </p>
-        <p className="mt-2 text-caption text-ink-muted">{refusalNote()}</p>
+        <div className="mt-2">
+          <RefusalWindow />
+        </div>
       </>
     ) : undefined;
   if (checks.sentences.kept === 0 && outage.judge + outage.unasked > 0) {
