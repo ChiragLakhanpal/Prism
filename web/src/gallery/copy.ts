@@ -281,7 +281,6 @@ export const galleryCopy = {
       judgeSilentNoneKept: "The model that judges sentences did not respond, and nothing survived",
       refusals: "Every refusal",
       partial: "A partial refusal",
-      dontDo: "How Strata works: What I don't do",
     },
     labels: {
       acceptance: "Numbers and quotes, find_comparables ran, two sentences judged",
@@ -366,6 +365,7 @@ export const galleryCopy = {
     unsupported: "Every sentence failed a check",
     emptyScoped: "Nothing found, within a project",
     emptyUnscoped: "Nothing found, across all projects",
+    refusalWindow: "The refusal window, open: What I turn down",
     dropped: "The connection dropped",
     asOf: "Asked as of a date",
     preview: "Asked from a page whose address asks for the public view",
@@ -1108,9 +1108,8 @@ export const galleryCopy = {
     emptyLinkText: "Data readiness",
     emptyTail: " shows which sources and years I have read so far.",
     refusal:
-      "I don't score or rank suppliers. I can list the contracts a supplier signed on World Bank-financed projects, each with its award notice.",
-    refusalLinkText: "How Strata works",
-    refusalTail: " lists what I don't do, and why.",
+      "I don't score or rank suppliers. I can list the contracts a supplier signed on World Bank-financed projects, each with its award notice. " +
+      "The public records show which contracts a supplier signed. They don't show how well it did the work.",
     answerError:
       "I couldn't answer because the model that writes my answers did not respond, but your question is still in the box.",
     docType: "Implementation Completion and Results Report",

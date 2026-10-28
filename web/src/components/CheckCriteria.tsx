@@ -15,7 +15,7 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode, type Ref } from "react";
 import { CircleX } from "lucide-react";
 import { copy } from "../copy";
-import { WHAT_I_DONT_DO, dataReadinessHref } from "../routes";
+import { dataReadinessHref } from "../routes";
 import type { Checks, Comparison, CriteriaSummary, PackageRun, RemovedEntry } from "../lib/criteria";
 import { forgetLessons, publicListId, rememberCosts, rememberItems, rememberLessons, rememberPublic, rememberSides } from "../lib/criteria";
 import { formatCount, formatNumber } from "../lib/format";
@@ -36,6 +36,7 @@ import { Num } from "./Num";
 import { Skeleton, SkeletonLine } from "./Skeleton";
 import { Steps, type Step } from "./Steps";
 import { TextLink } from "./TextLink";
+import { RefusalWindow } from "./WhatIDontDo";
 import { SECTION_5, usePageNumbers } from "../lib/markers";
 
 const words = copy.criteria;
@@ -199,17 +200,26 @@ function SectionChecks({ checks, removed, compared }: { checks: Checks | null; r
   );
 }
 
+// As the answer panel writes a refusal (ticket 97): the key's lead, this section's own instead and the key's why; or,
+// for a partial refusal, the lead and the why before the sentence that says what I compared. Then the refusal window.
 function Refusal({ refusal }: { refusal: NonNullable<Comparison["refusal"]> }) {
-  const lead = copy.refusals[refusal.key].lead;
+  const { lead, why } = copy.refusals[refusal.key];
   return (
     <div className="flex flex-col gap-2" data-refusal={refusal.key}>
       <p className="max-w-prose text-body text-ink">
-        {lead} {refusal.partial ? words.refusal.partial : words.refusal.instead}
+        {refusal.partial ? (
+          <>
+            {lead} {why} {words.refusal.partial}
+          </>
+        ) : (
+          <>
+            {lead} {words.refusal.instead} {why}
+          </>
+        )}
       </p>
-      <p className="text-caption text-ink-muted">
-        {/* Ticket 24's note and its "What I don't do" heading on How Strata works, as the answer panel links them. */}
-        <Fill template={copy.answer.refusalNote} slots={{ link: <TextLink href={WHAT_I_DONT_DO.href}>{copy.answer.refusalLink}</TextLink> }} />
-      </p>
+      <div>
+        <RefusalWindow />
+      </div>
     </div>
   );
 }

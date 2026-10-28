@@ -1,10 +1,9 @@
-// The Data tab at seam 4 (ticket 16; the 16 design brief): Data readiness, Sources and licenses and
-// How Strata works, against the mocked API. The answers are the server's own on the fixture,
+// The Data tab at seam 4 (ticket 16; the 16 design brief): Data readiness and Sources and licenses,
+// against the mocked API, and the old How Strata works address, which opens Data readiness (ticket 97).
+// The answers are the server's own on the fixture,
 // recorded in tests/fixtures/api by tests/record_api.py, so every number the page shows is checked
 // against the measure the server returned. Fixed words come from the brief and DESIGN.md section 8,
 // copied here so the test checks the copy file against an independent source.
-import { figureCopy } from "../src/deck/copy";
-import { PAGE_ORDER } from "../src/figures/order";
 import { scan } from "./axe";
 import type { Page, Route } from "@playwright/test";
 import { readFile } from "node:fs/promises";
@@ -60,7 +59,7 @@ async function violations(page: Page) {
 
 // ── Data readiness ───────────────────────────────────────────────────────
 
-test("the Data tab has one header, and its three sub-tabs are links in a nav that change the address", async ({ page }) => {
+test("the Data tab has one header, and its two sub-tabs are links in a nav that change the address", async ({ page }) => {
   await mockData(page, FULL);
   await open(page);
 
@@ -70,17 +69,31 @@ test("the Data tab has one header, and its three sub-tabs are links in a nav tha
   );
   await expect(page).toHaveTitle("Data readiness | Strata");
   const tabs = page.getByRole("navigation", { name: "Data pages" }).getByRole("link");
-  await expect(tabs).toHaveText(["Data readiness", "Sources and licenses", "How Strata works"]);
+  await expect(tabs).toHaveText(["Data readiness", "Sources and licenses"]);
   await expect(tabs.first()).toHaveAttribute("aria-current", "page");
-  expect(await tabs.evaluateAll((links) => links.map((link) => Math.round(link.getBoundingClientRect().height)))).toEqual([44, 44, 44]);
+  expect(await tabs.evaluateAll((links) => links.map((link) => Math.round(link.getBoundingClientRect().height)))).toEqual([44, 44]);
 
   await tabs.nth(1).click();
   await expect(page).toHaveURL(/\/data\/sources$/);
   await expect(page).toHaveTitle("Sources and licenses | Strata");
   await expect(page.locator("main [data-lead]")).toBeFocused();
-  await tabs.nth(2).click();
-  await expect(page).toHaveTitle("How Strata works | Strata");
-  await expect(page.locator("main [data-lead]")).toBeFocused();
+  await tabs.first().click();
+  await expect(page).toHaveTitle("Data readiness | Strata");
+});
+
+// Ticket 97: How Strata works is no longer a page (the deck at /present shows its figures). An old link to it lands on
+// Data readiness, and the address is replaced, so Back goes to the page before it, never to the old address.
+test("the old How Strata works address opens Data readiness and replaces the address", async ({ page }) => {
+  await mockData(page, FULL);
+  await open(page, "/data/sources");
+  await page.goto("/data/how-strata-works#what-i-dont-do");
+
+  await expect(page).toHaveURL(/\/data$/);
+  await expect(page).toHaveTitle("Data readiness | Strata");
+  await expect(page.locator("[data-readiness=ready]")).toBeVisible();
+  await expect(page.getByRole("navigation", { name: "Data pages" }).getByRole("link", { name: "Data readiness" })).toHaveAttribute("aria-current", "page");
+  await page.goBack();
+  await expect(page).toHaveURL(/\/data\/sources$/);
 });
 
 test("every number in the Sources table is the measure the server returned for its cell", async ({ page }) => {
@@ -784,7 +797,7 @@ test("below 768 px each table becomes cards, each with the source's name as a he
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
 });
 
-// ── Sources and licenses, and How Strata works ──────────────────────────
+// ── Sources and licenses ─────────────────────────────────────────────────
 
 test("Sources and licenses credits every dataset in the World Bank's format, with DESIGN.md section 8's sentences word for word", async ({ page }) => {
   const sources = await json("data-sources.json");
@@ -815,30 +828,6 @@ test("Sources and licenses works while the warehouse is down, because it reads o
   await expect(page.locator("[data-dataset]")).toHaveCount((await json("data-sources.json")).datasets.length);
 });
 
-test("How Strata works shows the deck's figures with plain captions and their text, and nothing links to /present", async ({ page }) => {
-  await mockData(page, FULL);
-  await open(page, "/data/how-strata-works");
-
-  await expect(page.locator("main [data-lead]")).toHaveText(
-    "This page shows how I turn World Bank records and documents into answers you can check. Each section explains one part in a few sentences, then shows it as a figure.",
-  );
-  // Ticket 47: the same figures as the deck, from one registry, each under its first-person caption.
-  const sections = page.locator("main [data-how-section]");
-  await expect(sections).toHaveCount(PAGE_ORDER.length);
-  for (const [index, id] of PAGE_ORDER.entries()) {
-    const section = sections.nth(index);
-    await expect(section.getByRole("heading", { level: 2 })).toHaveText(figureCopy[id].heading);
-    await expect(section.getByText(figureCopy[id].caption, { exact: true })).toBeVisible();
-    if (id === "core-sample") await expect(section.locator("[data-hairline=core-sample] svg")).toHaveCount(1);
-    else await expect(section.getByRole("img", { name: figureCopy[id].title })).toHaveAttribute("aria-labelledby", `${id}-title ${id}-desc`);
-    await expect(section.locator("[data-figure-text]")).toHaveCount(1);
-  }
-  // No logo corner here: the navy bar carries the logo (DESIGN.md section 9), and "What I don't do" stays last.
-  await expect(page.locator("main img")).toHaveCount(0);
-  await expect(page.locator("main h2").last()).toHaveText("What I don't do");
-  await expect(page.locator('a[href*="/present"]')).toHaveCount(0);
-});
-
 // ── Accessibility in every state ─────────────────────────────────────────
 
 const STATES: [string, string, Answer | ((query: URLSearchParams) => Answer)][] = [
@@ -851,7 +840,6 @@ const STATES: [string, string, Answer | ((query: URLSearchParams) => Answer)][] 
   ["before the first measure", "/data?asof=2026-10-01", byQuery],
   ["error", "/data", { file: "data-readiness-error.json", status: 502 }],
   ["sources and licenses", "/data/sources", FULL],
-  ["how strata works", "/data/how-strata-works", FULL],
 ];
 
 for (const [name, path, answer] of STATES) {

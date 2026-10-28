@@ -240,23 +240,39 @@ test("a disagreement the draft already showed is the same card, as an info note"
   await expectCurrentRatingMarked(page);
 });
 
-test("a refusal is a first-person answer from the copy file, with a link to What I don't do, and passes axe at three widths", async ({ page }) => {
+// Ticket 97: the refusal says why in place, and "See everything I turn down" opens the window that lists every
+// refusal, which How Strata works' "What I don't do" did before. The words are the copy file's refusal keys, written
+// out here from the 24 brief so the test checks the copy file against its source.
+test("a refusal says what I don't do, what I can do instead and why, and See everything I turn down opens a window of every refusal", async ({ page }) => {
   for (const width of [1440, 1024, 390]) {
     await answered(page, "ask-refuses-supplier-scores.sse", width);
     await expect(panel(page).locator("[data-in-short]")).toHaveText(
-      "I don't score or rank suppliers. I can list the contracts a supplier signed on World Bank-financed projects, each with its award notice.",
+      "I don't score or rank suppliers. I can list the contracts a supplier signed on World Bank-financed projects, each with its award notice. " +
+        "The public records show which contracts a supplier signed. They don't show how well it did the work.",
     );
     await expect(panel(page).locator("[role=alert], [data-check-line], [data-removed-box]")).toHaveCount(0);
     expect(await axe(page)).toEqual([]);
   }
-  await panel(page).getByRole("link", { name: "How Strata works" }).click();
-  await expect(page).toHaveURL(/\/data\/how-strata-works#what-i-dont-do$/);
-  const heading = page.getByRole("heading", { level: 2, name: "What I don't do" });
-  await expect(heading).toBeFocused();
-  await expect(page.locator("[data-dont-do] dt")).toHaveCount(10);
-  // The heading lands with room above it, not flush against the window's top.
-  expect((await heading.boundingBox())!.y).toBeGreaterThanOrEqual(16);
-  await expect(page.locator("[data-dont-do] dt").first()).toHaveText("I don't score or rank suppliers.");
+  // At 390 px, the last width above: the window keeps to the screen and scrolls inside.
+  const all = panel(page).getByRole("button", { name: "See everything I turn down" });
+  await all.click();
+  const turnDown = page.getByRole("dialog", { name: "What I turn down" });
+  await expect(turnDown.getByRole("heading", { name: "What I turn down" })).toBeFocused();
+  await expect(turnDown.locator("dt")).toHaveCount(10);
+  await expect(turnDown.locator("dt").first()).toHaveText("I don't score or rank suppliers.");
+  await expect(turnDown.locator("dd").first()).toHaveText(
+    "The public records show which contracts a supplier signed. They don't show how well it did the work.",
+  );
+  await expect(turnDown.locator("dd").last()).toHaveText("An upload is a private draft. Only the team that uploaded it can open it.");
+  const box = (await turnDown.boundingBox())!;
+  expect(box.x).toBeGreaterThanOrEqual(0);
+  expect(box.x + box.width).toBeLessThanOrEqual(390);
+  expect(box.y + box.height).toBeLessThanOrEqual(900);
+  const results = await scan(page, "[role=dialog]");
+  expect(results.violations.map((v) => v.id)).toEqual([]);
+  await page.keyboard.press("Escape");
+  await expect(turnDown).toHaveCount(0);
+  await expect(all).toBeFocused();
 });
 
 test("a full refusal's steps say I turned the request down", async ({ page }) => {
@@ -270,7 +286,12 @@ test("a partial refusal opens In short, says the rest was answered, and the chec
   await answered(page, "ask-refuses-part-supplier-scores.sse");
 
   const inShort = panel(page).locator("[data-in-short]");
-  await expect(inShort.locator("p").first()).toHaveText("I don't score or rank suppliers. I answered the rest of your question.");
+  // Ticket 97: the reason follows the lead here too, before the answer.
+  await expect(inShort.locator("p").first()).toHaveText(
+    "I don't score or rank suppliers. The public records show which contracts a supplier signed. They don't show how well it did the work. " +
+      "I answered the rest of your question.",
+  );
+  await expect(panel(page).getByRole("button", { name: "See everything I turn down" })).toHaveAttribute("aria-haspopup", "dialog");
   await expect(inShort).toContainText("108 of 328 cases had to go through rebidding");
   await expect(panel(page).locator("[data-check-line]")).toBeVisible();
 });

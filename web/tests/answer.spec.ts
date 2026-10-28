@@ -446,8 +446,12 @@ test("a question a content filter stopped is a refusal, in plain words, with no 
   );
   await expect(panel(page).getByRole("alert")).toHaveCount(0);
   await expect(panel(page).locator("[data-check-line]")).toHaveCount(0);
-  // How Strata works' "What I don't do", the route the 16 brief settled (the 24 brief, section 4.5).
-  await expect(panel(page).getByRole("link", { name: "How Strata works" })).toHaveAttribute("href", "/data/how-strata-works#what-i-dont-do");
+  // Ticket 97: under it, the window of everything I turn down, which a content filter's refusal opens too.
+  const all = panel(page).getByRole("button", { name: "See everything I turn down" });
+  await all.click();
+  await expect(page.getByRole("dialog", { name: "What I turn down" }).locator("dt").first()).toHaveText("I don't score or rank suppliers.");
+  await page.keyboard.press("Escape");
+  await expect(all).toBeFocused();
 });
 
 test("an agent that found nothing to cite says so for the scope, and Ask across all projects asks again with no chip", async ({ page }) => {

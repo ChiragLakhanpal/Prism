@@ -192,6 +192,11 @@ test("a request to judge a live tender's bids is refused in the first person fro
   await expect(section(page).locator("[data-refusal=live_tenders]")).toContainText(
     `${copy.refusals.live_tenders.lead} ${copy.criteria.refusal.instead}`,
   );
+  // Ticket 97: its reason in place, in the 24 brief's words, and the window of everything I turn down under it.
+  await expect(section(page).locator("[data-refusal=live_tenders]")).toContainText(
+    `${copy.criteria.refusal.instead} A comment from me could affect a process that is still running.`,
+  );
+  await expect(section(page).locator("[data-refusal=live_tenders]").getByRole("button", { name: "See everything I turn down" })).toBeVisible();
   await expect(section(page).locator("[data-criteria-table]")).toHaveCount(0);
 });
 

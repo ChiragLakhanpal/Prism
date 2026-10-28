@@ -83,7 +83,7 @@ export function RoutePage({ match, search = "", hiddenIn = null, pending = false
   if (match.key === "activity") return <ActivityPage pid={pid} stepRef={match.values.stepRef} />;
   if (match.key === "document") return <SourcePage pid={pid} doc={match.values.doc} search={search} />;
   if (match.key === "checkPlan") return <CheckPlanPage pid={pid} agencyId={agencyId} version={version} />;
-  if (match.key === "data" || match.key === "dataSources" || match.key === "dataHow") return <DataPage match={match} search={search} />;
+  if (match.key === "data" || match.key === "dataSources") return <DataPage match={match} search={search} />;
   if (match.key === "drafts") return <DraftsPage search={search} />;
   if (match.key === "draftNew") return <DraftNewPage search={search} />;
   if (match.key === "draft") return <DraftPage draftId={match.values.id} search={search} />;

@@ -23,9 +23,9 @@ const DATA_PURPOSE = "See how far each source can support an answer and where ea
 
 // The requests I turn down every time (ticket 24; the 24 brief, section 5.6), keyed by the refusal keys in
 // src/strata/agent/refusals.py. The agent answers such a request with its key and never with words of its
-// own, and the answer panel writes lead (what I don't do), then instead (what I can do). How Strata works
-// lists each lead with its why ("What I don't do"). A test fails when a key lacks one of the three, or when
-// this list and the Python one differ.
+// own, and the answer panel writes lead (what I don't do), then instead (what I can do), then why (ticket 97).
+// The refusal window under it ("What I turn down") lists each lead with its why. A test fails when a key
+// lacks one of the three, or when this list and the Python one differ.
 const REFUSALS = {
   supplier_scores: {
     lead: "I don't score or rank suppliers.",
@@ -328,8 +328,8 @@ export const copy = {
       title: "Your plan",
       purpose: "I checked every activity in the Procurement Plan your team uploaded.",
     },
-    // The Data tab's three pages share one title and purpose, and each names itself in the browser
-    // tab (the 16 design brief, section 2).
+    // The Data tab's two pages share one title and purpose, and each names itself in the browser
+    // tab (the 16 design brief, section 2). How Strata works left the tab in ticket 97.
     data: {
       title: "Data",
       documentTitle: "Data readiness",
@@ -338,11 +338,6 @@ export const copy = {
     dataSources: {
       title: "Data",
       documentTitle: "Sources and licenses",
-      purpose: DATA_PURPOSE,
-    },
-    dataHow: {
-      title: "Data",
-      documentTitle: "How Strata works",
       purpose: DATA_PURPOSE,
     },
     notFound: {
@@ -992,10 +987,13 @@ export const copy = {
     emptyLink: "Data readiness",
     askAcross: "Ask across all projects",
     // A refusal is an answer, not an error (section 5.8): a content filter's is errors.content_filter
-    // below, shown as plain text. The refusal list's own lines are refusals, below (ticket 24). The link
-    // goes to How Strata works' "What I don't do".
-    refusalNote: "{link} lists what I don't do, and why.",
-    refusalLink: "How Strata works",
+    // below, shown as plain text. The refusal list's own lines are refusals, below (ticket 24). Under every
+    // refusal, refusalAll opens the refusal window (ticket 97; the redesign's plan, sections 8.4 and 8.6), titled
+    // refusalWindow, which lists each refusal's lead and its why after refusalWindowIntro.
+    refusalAll: "See everything I turn down",
+    refusalWindow: "What I turn down",
+    refusalWindowIntro:
+      "I turn these requests down every time, and I say what I can do instead. Each one is also a question in my test set that I must turn down.",
     // A partial refusal: after the refusal's lead, before the rest of the answer (the 24 brief, section 4.6).
     refusalPartial: "I answered the rest of your question.",
     // The stream ended before its done event (section 5.9).
@@ -5266,7 +5264,6 @@ export const copy = {
       label: "Data pages",
       readiness: "Data readiness",
       sources: "Sources and licenses",
-      how: "How Strata works",
     },
     // The info alert above the headline when a coverage line opened the page. The noun comes from
     // server.fromNouns, by the tool the link names, never from the link's own words.
@@ -5729,32 +5726,6 @@ export const copy = {
       empty: "I haven't been set up to read any datasets yet.",
       emptyBody: "Each dataset appears here, credited the way the World Bank asks, once I'm set up to read it.",
       failed: "I couldn't load the list of sources, because the server didn't answer. Try again.",
-    },
-    // Ticket 47 drew the figures (the 47 brief, section 8.2); each section's heading and caption are in
-    // web/src/deck/copy.ts under figureCopy, which the deck shares.
-    howPage: {
-      lead:
-        "This page shows how I turn World Bank records and documents into answers you can check. Each section explains " +
-        "one part in a few sentences, then shows it as a figure.",
-      next: {
-        before: "",
-        readiness: "Data readiness",
-        middle: " shows what each source covers, and ",
-        sources: "Sources and licenses",
-        after: " lists every dataset I use.",
-      },
-      index: "On this page",
-      showText: "Show the figure as text",
-      hideText: "Hide the text",
-      scrolls: (title: string) => `${title}, scrolls sideways`,
-      failed: "I couldn't draw this figure, so here it is as text.",
-      // The section the link under every refusal goes to (ticket 24; the 24 brief, section 5.7). Each
-      // refusal's lead and why follow, from refusals above.
-      dontDo: {
-        heading: "What I don't do",
-        intro:
-          "I turn these requests down every time, and I say what I can do instead. Each one is also a question in my test set that I must turn down.",
-      },
     },
     // The sentences the tool builds on the server: the headline, the gaps and what holds each kind
     // of question back. src/strata/tools/data_readiness_for.py fills each {slot} from the measures

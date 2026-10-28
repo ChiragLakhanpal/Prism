@@ -85,7 +85,8 @@ import type { Comparable, ComparablesResult, PackageFacts } from "../lib/api";
 import { formatDate } from "../lib/format";
 import { ReadinessView } from "../pages/data/DataReadiness";
 import { HardestDocuments } from "../pages/data/HardestDocuments";
-import { WhatIDontDo } from "../pages/data/HowStrataWorks";
+import { RefusalWindow, WhatIDontDo } from "../components/WhatIDontDo";
+import { DEFINITION_WINDOW } from "../components/Term";
 import { galleryCopy } from "./copy";
 import { draftsPage } from "./drafts";
 import { followingPage } from "./following";
@@ -1145,12 +1146,7 @@ export const PAGES: GalleryPage[] = [
                 steps: steps([ST.read]),
                 runId: sample.runId,
                 message: sample.refusal,
-                note: (
-                  <>
-                    <TextLink href="#how">{sample.refusalLinkText}</TextLink>
-                    {sample.refusalTail}
-                  </>
-                ),
+                note: <RefusalWindow />,
               }}
             />
           </Panel>
@@ -1201,6 +1197,19 @@ export const PAGES: GalleryPage[] = [
       { id: "empty-scoped", title: s.emptyScoped, body: <PanelSample run={RUNS.emptyScoped} /> },
       { id: "empty-unscoped", title: s.emptyUnscoped, body: <PanelSample run={RUNS.emptyUnscoped} /> },
       { id: "refused", title: s.refused, body: <PanelSample run={RUNS.refused} /> },
+      // Ticket 97: the window "See everything I turn down" opens under a refusal, drawn here open, in its own frame.
+      {
+        id: "what-i-dont-do",
+        title: s.refusalWindow,
+        body: (
+          <div className={DEFINITION_WINDOW} data-refusal-window-sample>
+            <h3 className="text-h2 text-ink-heading">{copy.answer.refusalWindow}</h3>
+            <div className="mt-2 text-small text-ink">
+              <WhatIDontDo />
+            </div>
+          </div>
+        ),
+      },
       { id: "error", title: s.error, body: <PanelSample run={RUNS.error} /> },
       { id: "dropped", title: s.dropped, body: <PanelSample run={RUNS.dropped} /> },
       { id: "as-of", title: s.asOf, body: <PanelSample run={RUNS.asOf} /> },
@@ -1558,7 +1567,6 @@ function sixChecksSections(): GalleryPage["sections"] {
       ),
     },
     { id: "partial", title: titles.partial, body: <PanelSample run={CHECK_RUNS.partial} /> },
-    { id: "what-i-dont-do", title: titles.dontDo, body: <WhatIDontDo /> },
   ];
 }
 
