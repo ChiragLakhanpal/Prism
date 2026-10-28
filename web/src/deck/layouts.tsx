@@ -2,12 +2,13 @@
 // measured result, the rollout's phases and the agenda. Each takes `at`, how many of its items a press has brought in,
 // and the mode: on the canvas they sit in the content box the frame leaves (x 48 to 912), and in the reading view they
 // flow in the page. Every word comes from copy.ts through the slides that call these.
-import { createContext, useContext, useState, type CSSProperties, type ReactNode } from "react";
+import { createContext, useContext, useId, useState, type CSSProperties, type ReactNode } from "react";
 import { ChevronRight, CircleDashed, Copy, ExternalLink as ExternalIcon } from "lucide-react";
 import { TextLink } from "../components/TextLink";
 import { cx } from "../lib/cx";
 import { deckCopy } from "./copy";
 import { SHOWN, STEP, type, UNREACHED, type Mode } from "./ramp";
+import { RecordedAnswer, RecordedButton, RecordedFigure, type Recording } from "./Recorded";
 
 // Inside the reading view every item shows whole and none recedes: there is no press to follow there.
 const Whole = createContext(false);
@@ -120,12 +121,15 @@ export function Tiles({ tiles, closing, at, mode }: { tiles: { head: ReactNode; 
 
 // A live demo: what it opens, in a box like Strata's own one box, with the link that opens that screen in a new tab in
 // the place of the box's button, and, for a question, a button that copies it. The box shows from the start; what to
-// watch for comes in a press a line.
+// watch for comes in a press a line. A demo with a recorded answer has a button that shows it, for when the App is
+// down (ticket 116): on the canvas the deck swaps it in for the box and the points, and in the reading view it opens
+// under the points.
 export function Demo({
   box,
   action,
   href,
   question,
+  recorded,
   lines,
   at,
   mode,
@@ -134,10 +138,15 @@ export function Demo({
   action: ReactNode;
   href: string;
   question?: string;
+  recorded?: Recording;
   lines: ReactNode[];
   at: number;
   mode: Mode;
 }) {
+  const deck = useContext(RecordedAnswer);
+  const canvas = mode === "present" ? deck : null;
+  const [open, setOpen] = useState(false);
+  const answerId = useId();
   return (
     <div className="flex flex-col">
       <div
@@ -149,6 +158,12 @@ export function Demo({
           {box}
         </span>
         {question && <CopyQuestion question={question} />}
+        {recorded &&
+          (canvas ? (
+            <RecordedButton onClick={() => canvas(true)} />
+          ) : (
+            <RecordedButton open={open} controls={answerId} onClick={() => setOpen((now) => !now)} />
+          ))}
         <a
           href={href}
           target="_blank"
@@ -164,6 +179,11 @@ export function Demo({
       <div className={mode === "present" ? "mt-8" : "mt-6"}>
         <Points lines={lines} at={at} mode={mode} />
       </div>
+      {recorded && !canvas && (
+        <div id={answerId} hidden={!open}>
+          {open && <RecordedFigure recording={recorded} />}
+        </div>
+      )}
     </div>
   );
 }

@@ -10,7 +10,7 @@
 // - /present/notes: the speaker notes, in their own window, kept in step with the deck through a BroadcastChannel.
 //
 // The deck reads its numbers from /deck/data.json (web/src/deck/data.ts), the measures snapshot the proposal cites.
-import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useContext, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, ExternalLink as ExternalIcon, Maximize, Minimize, Table2 } from "lucide-react";
 import { Alert } from "../components/Alert";
 import { Button } from "../components/Button";
@@ -28,6 +28,7 @@ import { Logo, SlideFrame, type Theme } from "./Frame";
 import { NewTabLink, SourceLine, Step, WholeSlides } from "./layouts";
 import { CHART_WIDTH } from "./AwardChart";
 import { FOOTER, type, type Mode } from "./ramp";
+import { RecordedAnswer, RecordedSlide } from "./Recorded";
 import { buildSlides, figureStepText, TITLE_ID, type Slide } from "./slides";
 import { arrive, moved, moveFor, segments, TOPIC_ORDER, type Move, type Place } from "./talk";
 import { slideInAddress, type DeckView } from "./view";
@@ -204,6 +205,7 @@ function SlideCanvas({
   current,
   step,
   twin,
+  recorded,
 }: {
   slide: Slide;
   data: DeckData;
@@ -213,7 +215,10 @@ function SlideCanvas({
   // How many presses the slide shows; a slide off screen is drawn whole.
   step: number;
   twin: boolean;
+  // Whether the slide shows its demo's recorded answer in place of its body (ticket 116).
+  recorded: boolean;
 }) {
+  const showRecorded = useContext(RecordedAnswer);
   const titleId = TITLE_ID(slide.n);
   const navy = slide.theme === "navy";
   const figureSteps = slide.figure?.steps ?? 0;
@@ -269,9 +274,12 @@ function SlideCanvas({
             )}
           </div>
         )}
+        {slide.kind === "text" && recorded && slide.recorded && (
+          <RecordedSlide recording={slide.recorded} title={slide.title} titleId={titleId} twin={twin} onHide={() => showRecorded?.(false)} />
+        )}
         {/* A text slide starts where a figure slide does, its title at y 64 under the header, so the title holds its
             place from slide to slide; the free space falls below the content (the brief: content from y 72). */}
-        {slide.kind === "text" && (
+        {slide.kind === "text" && !(recorded && slide.recorded) && (
           <div className="absolute flex flex-col" style={{ left: 48, top: 64, width: 864, bottom: 32 }}>
             <Fit live={current} className="flex min-h-0 flex-1 flex-col justify-start gap-8">
               <h1 id={titleId} tabIndex={-1} className="text-balance text-ink-heading outline-none" style={{ ...type("title", "present").style, maxWidth: 800 }}>
@@ -562,6 +570,7 @@ function Presentation({ slides, data, start }: { slides: Slide[]; data: DeckData
   const total = slides.length;
   const [place, setPlace] = useState<Place>(() => arrive(start, null, slides));
   const [twin, setTwin] = useState(false);
+  const [recorded, setRecorded] = useState(false);
   const [announce, setAnnounce] = useState("");
   const full = useFullScreen();
   const scale = useScale(full.on);
@@ -580,11 +589,31 @@ function Presentation({ slides, data, start }: { slides: Slide[]; data: DeckData
       const inside = stage.current?.contains(document.activeElement) ?? false;
       if (next.n !== at.current.n) {
         setTwin(false);
+        setRecorded(false);
         if (inside) requestAnimationFrame(() => document.getElementById(TITLE_ID(next.n))?.focus());
+      } else if (next.step < at.current.step && document.querySelector("[data-recorded-view]")) {
+        // A press back on a demo's recorded answer closes it, so the points show again from that press.
+        setTwin(false);
+        setRecorded(false);
+        if (inside) requestAnimationFrame(() => document.querySelector<HTMLElement>(`section[data-slide='${next.n}'] [data-recorded-toggle]`)?.focus());
       }
       setPlace(next);
     },
     [],
+  );
+
+  // A demo's recorded answer (ticket 116) takes the place of the slide's body, so the slide's last press comes in with
+  // it and the next press moves on; that press's words are not on the slide, so the live region stays quiet. Hiding
+  // it puts focus back on the button that showed it.
+  const showRecorded = useCallback(
+    (open: boolean) => {
+      const here = at.current;
+      setTwin(false);
+      setRecorded(open);
+      if (open) setPlace({ n: here.n, step: slides[here.n - 1].steps });
+      else requestAnimationFrame(() => document.querySelector<HTMLElement>(`section[data-slide='${here.n}'] [data-recorded-toggle]`)?.focus());
+    },
+    [slides],
   );
 
   // The address and the tab's title follow the slide; Back leaves the deck instead of walking through slides.
@@ -644,7 +673,7 @@ function Presentation({ slides, data, start }: { slides: Slide[]; data: DeckData
   const press = (move: Move) => go(moved(at.current, move, slides));
   const width = CANVAS.width * scale;
   const height = CANVAS.height * scale;
-  const charted = Boolean(slide.chart);
+  const charted = Boolean(slide.chart) || recorded;
   const showBar = !full.on || awake || barFocus;
   const atStart = place.n === 1 && place.step === 0;
   const atEnd = place.n === total && place.step >= slide.steps;
@@ -656,18 +685,21 @@ function Presentation({ slides, data, start }: { slides: Slide[]; data: DeckData
     >
       <div ref={stage} className={cx("relative shrink-0 overflow-hidden", !full.on && "border border-line")} style={{ width, height }} data-stage>
         <div style={{ width: CANVAS.width, height: CANVAS.height, transform: `scale(${scale})`, transformOrigin: "0 0" }} data-canvas>
-          {slides.map((one) => (
-            <SlideCanvas
-              key={one.n}
-              slide={one}
-              data={data}
-              slides={slides}
-              total={total}
-              current={one.n === place.n}
-              step={one.n === place.n ? place.step : one.steps}
-              twin={one.n === place.n && twin}
-            />
-          ))}
+          <RecordedAnswer.Provider value={showRecorded}>
+            {slides.map((one) => (
+              <SlideCanvas
+                key={one.n}
+                slide={one}
+                data={data}
+                slides={slides}
+                total={total}
+                current={one.n === place.n}
+                step={one.n === place.n ? place.step : one.steps}
+                twin={one.n === place.n && twin}
+                recorded={one.n === place.n && recorded}
+              />
+            ))}
+          </RecordedAnswer.Provider>
         </div>
       </div>
       <nav
