@@ -1,11 +1,13 @@
 // Where a number came from: the From line of its tooltip (DESIGN.md section 5, Number tooltip; ticket 96), one num.from
 // template per kind of number, filled with the tool's own values and the date its records run through. FromLine draws
 // it with its date kept on one line; fromText gives the same words as text, for a name such as a range chart dot's.
+import type { ReactNode } from "react";
 import { copy } from "../copy";
 import type { EvidenceEvent } from "../lib/answer";
 import { formatDate } from "../lib/format";
 import { passageFields } from "../lib/sources";
 import { Fill } from "./Fill";
+import { MonoWords } from "./MonoWords";
 
 export type FromWords = { template: string; slots: Record<string, string> };
 
@@ -28,6 +30,29 @@ export function sourceNames(sources: Source[], keys: string[] = MONTHS_SOURCES):
 export function recordsFrom(sources: Source[], through: string | null | undefined, keys?: string[]): FromWords | null {
   if (!through) return null;
   return { template: copy.num.from.records, slots: { sources: sourceNames(sources, keys), date: formatDate(through) } };
+}
+
+// Every record set the tool read, for a number counted from all of them: "From Documents & Reports, Contract Awards and
+// Procurement Notices, through October 13, 2026."
+export function toolFrom(result: { sources: Source[]; records_through: string | null }): FromWords | null {
+  return recordsFrom(result.sources, result.records_through, result.sources.map((source) => source.key));
+}
+
+// A From line drawn, or nothing when there is no date to give.
+export function fromLine(words: FromWords | null): ReactNode {
+  return words ? <FromLine words={words} /> : undefined;
+}
+
+// Every record set a tool read, as a list the drawer holds or a draft keeps names them: their dataset names, with their
+// keys in the same order where the list has them, so each goes by its short name.
+export function heldFrom(names: string[], keys: string[] | undefined, through: string | null | undefined): FromWords | null {
+  const sources = names.map((dataset_name, index) => ({ key: keys?.[index] ?? "", dataset_name }));
+  return recordsFrom(sources, through, sources.map((source) => source.key));
+}
+
+// The risks' counts: "From the completion reports I read, through October 13, 2026."
+export function reportsFrom(through: string | null | undefined): FromWords | null {
+  return through ? { template: copy.num.from.reports, slots: { date: formatDate(through) } } : null;
 }
 
 // A plan row's own value: "From the Northern Water Works Development Agency plan of October 9, 2026."
@@ -53,6 +78,16 @@ export function plansFrom(was: string, now: string): FromWords {
 // The time estimate: "From my model scored on October 1, 2026."
 export function modelFrom(scoredOn: string): FromWords {
   return { template: copy.num.from.model, slots: { date: formatDate(scoredOn) } };
+}
+
+// A count or difference the time estimate worked out: "From my time estimate, as of October 28, 2026."
+export function estimateFrom(asOf: string): FromWords {
+  return { template: copy.num.from.estimate, slots: { date: formatDate(asOf) } };
+}
+
+// The rebidding model's track record: "From my model's saved test results of October 1, 2026."
+export function testsFrom(runDate: string): FromWords {
+  return { template: copy.num.from.tests, slots: { date: formatDate(runDate) } };
 }
 
 // The time estimate's track record: "From my backtest for 2025."
@@ -88,6 +123,18 @@ export function fromText(words: FromWords, dateWhole = false): string {
   });
 }
 
+// One record by its kind and reference, as the activity page names it: "From the notice OP00123456, public since
+// April 14, 2021." The reference is set in Roboto Mono (FromLine).
+export function namedRecordFrom(kind: string, reference: string, since: string): FromWords {
+  return { template: copy.num.from.named, slots: { kind, reference, date: formatDate(since) } };
+}
+
+// The report paragraphs that appeared together with a contract: "From the links I scored between the contract and
+// the project's reports, through October 23, 2026."
+export function linksFrom(through: string): FromWords {
+  return { template: copy.num.from.links, slots: { date: formatDate(through) } };
+}
+
 // A data readiness measure's number, or a count of the rows the page shows from the measures: "From my measures on
 // October 23, 2026."
 export function measuresFrom(measuredOn: string): FromWords {
@@ -99,8 +146,10 @@ export function settingsFrom(usedOn: string): FromWords {
   return { template: copy.num.from.settings, slots: { date: formatDate(usedOn) } };
 }
 
-// A date never breaks inside a tooltip, so "October 13, 2026" stays on one line (ticket 59).
+// A date never breaks inside a tooltip, so "October 13, 2026" stays on one line (ticket 59). A P-code and a record's
+// reference are set in Roboto Mono, as everywhere (DESIGN.md section 5, ProjectId and Reference words).
 export function FromLine({ words }: { words: FromWords }) {
+  const { pid, reference } = words.slots;
   return (
     <Fill
       template={words.template}
@@ -111,6 +160,8 @@ export function FromLine({ words }: { words: FromWords }) {
             {words.slots.date}
           </span>
         ),
+        ...(pid !== undefined && { pid: <span className="font-mono">{pid}</span> }),
+        ...(reference !== undefined && { reference: <MonoWords text={reference} /> }),
       }}
     />
   );

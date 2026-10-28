@@ -336,7 +336,8 @@ function kindRows(kinds: Kind[], measures: Measures): ReadinessRow[] {
           <div className="flex flex-col gap-1">
             {kind.holds_back.map((sentence, index) => (
               <p key={index}>
-                <Sentence segments={sentence} measures={measures} about={words.number.moreGaps} />
+                {/* inText: a number keeps the line's own height, so a row's lines keep one pitch (ticket 96). */}
+                <Sentence segments={sentence} measures={measures} about={words.number.moreGaps} inText />
               </p>
             ))}
           </div>
@@ -497,7 +498,7 @@ function Fixes({ fixes, measures, shortfalls, shown }: { fixes: Fix[]; measures:
               </span>
               <div>
                 <p className="text-body">
-                  <Sentence segments={fix.sentence} measures={measures} />
+                  <Sentence segments={fix.sentence} measures={measures} inText />
                 </p>
                 <p className="text-small" data-numbers>
                   <Template
@@ -840,7 +841,9 @@ function render(
     lead: (
       <>
         {result.headline ? (
-          <p className="text-lead text-pretty text-ink-heading" data-headline>
+          // The headline is the page's finding, so a number's tooltip opens under the whole of it (DESIGN.md, Number
+          // tooltip; ticket 96).
+          <p className="text-lead text-pretty text-ink-heading" data-headline data-finding>
             <Sentence segments={result.headline.segments} measures={measures} about={result.filter.sources ? words.number.sources : undefined} inText />
           </p>
         ) : result.headline_abstention ? (

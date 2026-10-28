@@ -551,13 +551,14 @@ test("a sentence that quotes an ISR section names the section, never a paragraph
     "From the Implementation Status and Results Report for P130164 of February 22, 2014.",
   );
   await expect(page.getByRole("tooltip").locator("[data-num-act]")).toHaveCount(0);
-  // DESIGN.md section 3: Roboto Mono for IDs, in the tooltip as in the Asked line above it.
+  // DESIGN.md section 3: Roboto Mono for IDs, in the tooltip as in the Asked line above it: in its What line and in its
+  // From line (ticket 96).
   const tipFaces = await page.getByRole("tooltip").evaluate((tip) =>
     Array.from(tip.querySelectorAll("*"))
       .filter((child) => child.children.length === 0 && child.textContent === "P130164")
       .map((child) => getComputedStyle(child).fontFamily.split(",")[0].replaceAll('"', "")),
   );
-  expect(tipFaces).toEqual(["Roboto Mono"]);
+  expect(tipFaces).toEqual(["Roboto Mono", "Roboto Mono"]);
 
   await isrMarker.click();
   const tabs = drawer(page).getByRole("tab");

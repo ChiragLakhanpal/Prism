@@ -191,7 +191,8 @@ function countWindow(answer: HomeAnswer) {
 }
 
 // A line's amount or number: what it is, the plan it comes from, and a click that opens the plan row (ticket 96). An
-// amount in millions gives the plan row's own value; the days to closing were counted by my checks.
+// amount in millions gives the plan row's own value. The days to closing were counted by my checks from the project's
+// closing date, which the plan row does not hold, so they open nothing, as on the plan check.
 function lineCheck(line: HomeLine, checkedOn: string) {
   const source = line.source;
   if (source.kind !== "plan" || !source.agency || !source.date) return () => undefined;
@@ -202,8 +203,8 @@ function lineCheck(line: HomeLine, checkedOn: string) {
     const t = words.tips;
     const what =
       segment.what === "millions" && "exact" in segment && segment.exact ? t.millions(segment.exact) : segment.what === "millions" ? t.estimated : t[segment.what];
-    const from = segment.what === "daysToClose" ? <FromLine words={homeFrom(checkedOn)} /> : plan;
-    return { tooltip: what, from, act: copy.num.act.planRow, opens: "record", onOpen: open };
+    if (segment.what === "daysToClose") return { tooltip: what, from: <FromLine words={homeFrom(checkedOn)} /> };
+    return { tooltip: what, from: plan, act: copy.num.act.planRow, opens: "record", onOpen: open };
   };
 }
 

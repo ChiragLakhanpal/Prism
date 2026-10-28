@@ -71,7 +71,7 @@ export function releaseHoverCard(hide: () => void) {
 let pointer = { x: Number.NaN, y: Number.NaN };
 let moved: Event | null = null;
 let watching = false;
-function watchPointer() {
+export function watchPointer() {
   if (watching) return;
   watching = true;
   window.addEventListener(
@@ -84,6 +84,12 @@ function watchPointer() {
     { capture: true, passive: true },
   );
 }
+
+// The pointer entered a trigger at the point it last moved to: the page scrolled the trigger under a resting pointer.
+// A step label's hover window (Term.tsx) waits for a real move too, so it never closes a number's tooltip that way.
+export const scrolledUnder = (event: { clientX: number; clientY: number }) => event.clientX === pointer.x && event.clientY === pointer.y;
+// A move over the trigger that is a real one, to a new point.
+export const movedHere = (event: { nativeEvent: Event }) => event.nativeEvent === moved;
 
 // Where a tooltip is placed from: its trigger, or for a trigger inside the page's finding, the whole finding's height
 // at the trigger's left edge and width.
@@ -119,7 +125,9 @@ type TriggerProps = {
 export function Tooltip({
   trigger,
   children,
-  width = "max-w-(--tooltip-width)",
+  // At most the tooltip width, and never wider than the window less its 16 px edges, so at 320 px it stays whole on
+  // screen (WCAG 1.4.10).
+  width = "max-w-[min(var(--tooltip-width),calc(100vw-2rem))]",
   quiet = false,
   side = "bottom",
   pressKeepsOpen = false,
@@ -206,11 +214,11 @@ export function Tooltip({
     // The card opens again once the pointer or the focus leaves and comes back.
     onPointerEnter: both(own.onPointerEnter, (event) => {
       if (event.pointerType !== "mouse" || quiet || returning(event.currentTarget)) return;
-      if (event.clientX === pointer.x && event.clientY === pointer.y) waiting.current = true;
+      if (scrolledUnder(event)) waiting.current = true;
       else rest();
     }),
     onPointerMove: both(own.onPointerMove, (event) => {
-      if (event.pointerType !== "mouse" || !waiting.current || event.nativeEvent !== moved) return;
+      if (event.pointerType !== "mouse" || !waiting.current || !movedHere(event)) return;
       waiting.current = false;
       rest();
     }),

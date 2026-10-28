@@ -10,7 +10,7 @@ import { formatCount, formatDate, formatNumber } from "../lib/format";
 import { Button } from "./Button";
 import { Fill } from "./Fill";
 import { Num, type NumCheck } from "./Num";
-import { backtestFrom, FromLine, modelFrom } from "./NumFrom";
+import { backtestFrom, estimateFrom, FromLine, modelFrom } from "./NumFrom";
 import type { Lane2 } from "./RangeChart";
 import { SegmentedControl } from "./SegmentedControl";
 import { Skeleton, SkeletonLine } from "./Skeleton";
@@ -154,7 +154,7 @@ function months(value: number, check?: NumCheck) {
 }
 
 // A count that opens the drawer's list of the packages it names: the drawer gives focus back to it.
-function WentWithCount({ comparison, option, capital, onOpen }: { comparison: Comparison; option: string; capital?: boolean; onOpen: SummaryLinks["onWentWith"] }) {
+function WentWithCount({ comparison, option, capital, onOpen, from }: { comparison: Comparison; option: string; capital?: boolean; onOpen: SummaryLinks["onWentWith"]; from: ReactNode }) {
   const anchor = useRef<HTMLSpanElement>(null);
   return (
     <span ref={anchor}>
@@ -163,6 +163,7 @@ function WentWithCount({ comparison, option, capital, onOpen }: { comparison: Co
         capital={capital}
         check={{
           tooltip: what.explainCount(option, whole(comparison.n)),
+          from,
           act: what.explainCountAct,
           opens: "record",
           onOpen: () => {
@@ -189,6 +190,8 @@ export function EstimateSentences({ state, comparison, links }: { state: Estimat
   const model = { from: <FromLine words={modelFrom(e.scored_on)} />, act: words.explain.estimateAct, opens: "rows", onOpen: links.onTestYears } as const;
   const explainMiddle: NumCheck = { tooltip: words.explain.estimateMiddle, ...model };
   const explainIn10: NumCheck = { tooltip: words.explain.estimateIn10, ...model };
+  // The difference from the past range and the counts behind it, which the time estimate worked out for this package.
+  const worked = <FromLine words={estimateFrom(result.as_of)} />;
   const lane = (
     <Fill
       template={words.summary}
@@ -201,7 +204,7 @@ export function EstimateSentences({ state, comparison, links }: { state: Estimat
     if (difference.direction === "same") parts.push(words.why.same);
     else {
       const later = difference.direction === "later";
-      const diff = months(difference.middle_diff_months, { tooltip: words.explain.diff, act: words.explain.diffAct, opens: "rows", onOpen: links.onTwin });
+      const diff = months(difference.middle_diff_months, { tooltip: words.explain.diff, from: worked, act: words.explain.diffAct, opens: "rows", onOpen: links.onTwin });
       const reasons = difference.reasons.map((reason) => (
         <Fill
           key={reason.code}
@@ -210,7 +213,7 @@ export function EstimateSentences({ state, comparison, links }: { state: Estimat
             k: (
               <Num
                 count={reason.k}
-                check={{ tooltip: words.explain[reason.code](whole(reason.n)), act: words.explain.sizeAct, opens: "rows", onOpen: links.onTwin }}
+                check={{ tooltip: words.explain[reason.code](whole(reason.n)), from: worked, act: words.explain.sizeAct, opens: "rows", onOpen: links.onTwin }}
               />
             ),
             n: <Num value={reason.n} options={{ compact: false }} />,
@@ -228,7 +231,7 @@ export function EstimateSentences({ state, comparison, links }: { state: Estimat
   }
   if (comparison) {
     const option = optionWords(comparison.lever, comparison.value).inSentence;
-    const k = <WentWithCount comparison={comparison} option={option} capital onOpen={links.onWentWith} />;
+    const k = <WentWithCount comparison={comparison} option={option} capital onOpen={links.onWentWith} from={worked} />;
     const n = <Num value={comparison.n} options={{ compact: false }} />;
     if (comparison.estimate) {
       const w = comparison.estimate;

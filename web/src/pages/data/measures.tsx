@@ -94,7 +94,8 @@ export type TooltipKind = "ratio" | "count" | "day" | "missing";
 function tooltip(row: MeasureRow, noun: Noun | null, asOf: string, kind: TooltipKind, count?: number, lack?: string | null): string {
   const n = (value: number) => numText({ value, options: { compact: false } });
   // The date stays on one line in the tooltip (ticket 59).
-  if (kind === "day" && row.as_of) return words.number.day(wholeDate(numText({ date: row.as_of, style: "table", today: asOf })));
+  // A date in a sentence is written in full (DESIGN.md rule 13), as its From line writes it.
+  if (kind === "day" && row.as_of) return words.number.day(wholeDate(numText({ date: row.as_of })));
   // A shortfall names what its records lack: "75 of 603 contracts lack a STEP reference."
   if (kind === "missing" && lack && count !== undefined && row.denominator !== null) {
     const says = count === 1 ? words.number.missingOne : words.number.missing;

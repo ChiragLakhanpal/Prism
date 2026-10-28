@@ -39,6 +39,7 @@ import { DisagreementCard, SideSaid, type CardSide } from "./DisagreementCard";
 import { changesLine, ruleSentence, sideFull, sideInSentence, sideMeta, sideOpen, sideShort, subjectOf, whatChanges, type SideData } from "../lib/disagreement";
 import { EvidenceCard } from "./EvidenceCard";
 import { Fill } from "./Fill";
+import { MonoWords } from "./MonoWords";
 import { Num, type NumCheck } from "./Num";
 import { evidenceFrom, FromLine } from "./NumFrom";
 import { RETURNING } from "./Popover";
@@ -219,8 +220,10 @@ function numTooltip(evidence: EvidenceEvent | undefined, date: { sentence: numbe
   if (!evidence) return null;
   const words = copy.evidence;
   if (evidence.kind === "record") {
-    const reference = <span className="font-mono">{recordReference(evidence)}</span>;
-    return <Fill template={words.numTooltipRecord} slots={{ kind: recordKind(evidence), reference }} />;
+    // A reference moves to the next line whole when it fits there, and its full stop never starts a line.
+    const reference = <MonoWords text={recordReference(evidence)} after={words.numTooltipRecordEnd} />;
+    const kind = words.numTooltipKinds[evidence.id.split(":")[0]] ?? recordKind(evidence);
+    return <Fill template={words.numTooltipRecord} slots={{ kind, reference }} />;
   }
   const fields = passageFields(evidence);
   const kind = words.docKinds[evidence.short_name ?? ""] ?? fields.docType;

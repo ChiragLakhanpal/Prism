@@ -55,7 +55,8 @@ test("hovering 49 shows nothing at 60 ms and its three parts by 260 ms, and 2 th
   await page.clock.install();
   await openPackage(page);
   const all = num(finding(page), "49");
-  await all.scrollIntoViewIfNeeded();
+  // In the middle of the window, so its tooltip has room to open below the finding.
+  await all.evaluate((element) => element.scrollIntoView({ block: "center" }));
   await stopTheClock(page);
 
   await pointAt(page, all);
@@ -68,6 +69,13 @@ test("hovering 49 shows nothing at 60 ms and its three parts by 260 ms, and 2 th
   await expect(tooltip(page).locator("[data-num-what]")).toHaveText("All comparable packages in the past range, including the four still open.");
   await expect(tooltip(page).locator("[data-num-from]")).toHaveText(RECORDS);
   await expect(tooltip(page).locator("[data-num-act]")).toHaveText("Select to see all 49.");
+  // It enters over 160 ms, growing from the side that touches its number: under the finding, left aligned with it.
+  const motion = await tooltip(page).evaluate((tip) => {
+    const style = getComputedStyle(tip);
+    return { duration: style.transitionDuration, property: style.transitionProperty, origin: style.transformOrigin };
+  });
+  expect(motion).toEqual({ duration: "0.16s, 0.16s", property: "opacity, scale", origin: "0px 0px" });
+  await expect(tooltip(page)).toHaveAttribute("data-side", "bottom");
   // The tooltip is the number's description, never its name.
   await expect(all).toHaveAccessibleName("49");
   await expect(all).toHaveAccessibleDescription(/^All comparable packages in the past range/);
@@ -122,7 +130,16 @@ test("keyboard focus shows a tooltip at once, Escape hides it until the focus le
   expect(await tooltip(page).evaluate((tip) => [getComputedStyle(tip).transitionDuration, tip.getAnimations().length])).toEqual(["0s", 0]);
 });
 
-test("a number inside the finding opens its tooltip under the whole finding, left aligned with it, at 1440 and 390 px", async ({ page }) => {
+// The violations axe finds on the page as it is now.
+async function violations(page: Page) {
+  const results = await scan(page);
+  return results.violations.map((v) => `${v.id}: ${v.nodes.map((node) => node.target.join(" ")).join(", ")}`);
+}
+
+// One page load at each width: the finding's tooltips, then axe with a tooltip open. Each kind of tooltip is scanned
+// once and each width with one open, since a scan costs the gate time (docs/agents/areas/ops.md): a number's at 1440 px,
+// and at 390 px a dot's and a step count's in the narrow list, which opens above its row so it covers no other count.
+test("a number inside the finding opens its tooltip under the whole finding, left aligned with it, and axe finds no violation with a tooltip open, at 1440 and 390 px", async ({ page }) => {
   for (const width of [1440, 390]) {
     await openPackage(page, width);
     const whole = finding(page);
@@ -139,6 +156,21 @@ test("a number inside the finding opens its tooltip under the whole finding, lef
       expect(aligned, `${text} at ${width} px: left aligned with the number (${tip.x}, ${own.x})`).toBe(true);
       await page.mouse.move(2, 2);
       await expect(tooltip(page)).toHaveCount(0);
+    }
+
+    if (width === 1440) {
+      await num(finding(page), "49").focus();
+      await expect(tooltip(page).locator("[data-num-act]")).toHaveText("Select to see all 49.");
+      expect(await violations(page), "a number's tooltip at 1440 px").toEqual([]);
+    } else {
+      await page.locator("[data-dot-target='20']").focus();
+      await expect(page.locator("[data-dot-tooltip]")).toBeVisible();
+      expect(await violations(page), "a dot's tooltip at 390 px").toEqual([]);
+      await page.locator("section#planned-dates button[aria-expanded=false]").first().click();
+      const count = page.locator("section#planned-dates [data-step-list] button[data-num]").first();
+      await count.focus();
+      await expect(tooltip(page)).toHaveAttribute("data-side", "top");
+      expect(await violations(page), "a step count's tooltip at 390 px").toEqual([]);
     }
   }
 });
@@ -181,7 +213,7 @@ test("after a press scrolls the page, a number scrolled under the resting pointe
   await expect(tooltip(page).locator("[data-num-what]")).toHaveText(/^The middle package's months\./);
 });
 
-test("a dot's tooltip gives its reference, months, a sentence with full dates, the From line and its action, above or below every dot, hidden from screen readers", async ({ page }) => {
+test("a dot's tooltip gives its reference, months, a sentence with full dates, the From line and its action, above or below every dot, hidden from screen readers; a click that opens the drawer hides it, and after Escape the dot the pointer moves to shows its own", async ({ page }) => {
   await openPackage(page);
   const group = page.getByRole("group", { name: "49 comparable packages, one dot each" });
   // KE-NWWDA-229129-CW-RFB: its notice of September 17, 2021, signed January 3, 2022, after 3.5 months.
@@ -207,18 +239,15 @@ test("a dot's tooltip gives its reference, months, a sentence with full dates, t
     const box = (await tip.boundingBox())!;
     expect(box.y + box.height <= lane.top || box.y >= lane.bottom, `dot ${index + 1}`).toBe(true);
   }
-});
 
-test("a dot's tooltip hides when its click opens the drawer, and after Escape the dot the pointer moves to shows its own", async ({ page }) => {
-  await openPackage(page);
-  const tip = page.locator("[data-dot-tooltip]");
-  const dot = (index: number) => page.locator(`[data-dot-target='${index}']`);
-  const ref = async (index: number) => (await dot(index).getAttribute("aria-label"))!.split(",")[0];
+  // On the same page load, since each load costs the gate time: a click hides it, and so does Escape.
+  const dotAt = (index: number) => page.locator(`[data-dot-target='${index}']`);
+  const ref = async (index: number) => (await dotAt(index).getAttribute("aria-label"))!.split(",")[0];
 
   // Ticket 60: a click opens the package's records beside the page, and the tooltip under the resting pointer goes, so
   // it no longer covers the key while the drawer shows the same package.
   await page.locator("[data-range-chart]").evaluate((chart) => chart.scrollIntoView({ block: "center" }));
-  await pointAt(page, dot(30));
+  await pointAt(page, dotAt(30));
   await expect(tip.locator("p").first()).toHaveText(await ref(30));
   await page.mouse.down();
   await page.mouse.up();
@@ -230,45 +259,11 @@ test("a dot's tooltip hides when its click opens the drawer, and after Escape th
   // Ticket 60: Escape hides a focused dot's tooltip; the pointer then moving onto another dot shows that dot's, never
   // the focused one's again.
   await page.mouse.move(2, 2);
-  await dot(5).focus();
+  await dotAt(5).focus();
   await expect(tip.locator("p").first()).toHaveText(await ref(5));
   await page.keyboard.press("Escape");
   await expect(tip).toHaveCount(0);
-  await pointAt(page, dot(40));
+  await pointAt(page, dotAt(40));
   await expect(tip.locator("p").first()).toHaveText(await ref(40));
 });
 
-// The violations axe finds on the page as it is now.
-async function violations(page: Page) {
-  const results = await scan(page);
-  return results.violations.map((v) => `${v.id}: ${v.nodes.map((node) => node.target.join(" ")).join(", ")}`);
-}
-
-for (const width of [1440, 390]) {
-  test(`with a number's tooltip open, and then a dot's, axe finds no WCAG 2.2 AA violation at ${width} px`, async ({ page }) => {
-    await openPackage(page, width);
-    await num(finding(page), "49").focus();
-    await expect(tooltip(page).locator("[data-num-act]")).toHaveText("Select to see all 49.");
-    expect(await violations(page), "a number's tooltip").toEqual([]);
-    await page.locator("[data-dot-target='20']").focus();
-    await expect(page.locator("[data-dot-tooltip]")).toBeVisible();
-    expect(await violations(page), "a dot's tooltip").toEqual([]);
-  });
-}
-
-test("a tooltip opened by a resting pointer grows from the side that touches its number over 160 ms", async ({ page }) => {
-  await page.clock.install();
-  await openPackage(page);
-  const all = num(finding(page), "49");
-  await all.evaluate((element) => element.scrollIntoView({ block: "center" }));
-  await stopTheClock(page);
-  await pointAt(page, all);
-  await page.clock.runFor(200);
-  const motion = await tooltip(page).evaluate((tip) => {
-    const style = getComputedStyle(tip);
-    return { duration: style.transitionDuration, property: style.transitionProperty, origin: style.transformOrigin };
-  });
-  expect(motion).toEqual({ duration: "0.16s, 0.16s", property: "opacity, scale", origin: "0px 0px" });
-  // It grows from its top left: under the finding, left aligned with the number.
-  await expect(tooltip(page)).toHaveAttribute("data-side", "bottom");
-});

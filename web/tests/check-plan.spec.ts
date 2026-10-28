@@ -283,7 +283,7 @@ test("tabbing onto a number opens its tooltip, which stays open while it has foc
   await page.keyboard.press("Tab");
 
   await expect(page.getByRole("heading", { level: 2 }).getByRole("button", { name: "One" })).toBeFocused();
-  await expect(page.getByRole("tooltip").locator("[data-num-what]")).toHaveText("The activities that need a look:KE-NWWDA-541055-CW-RFB");
+  await expect(page.getByRole("tooltip").locator("[data-num-what]")).toHaveText("The activities that need a look: KE-NWWDA-541055-CW-RFB.");
 });
 
 test("a link whose hash names a folded activity opens the fold and focuses that activity", async ({ page }) => {

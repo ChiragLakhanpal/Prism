@@ -26,51 +26,62 @@ async function serve(page: Page, answers: Record<string, Answer>, width = 1440) 
   });
 }
 
-// The numbers a reader can reach on the page: each one's tooltip read by keyboard focus, which opens it at once.
+// The numbers a reader can reach on the page: each one's tooltip read by keyboard focus, which opens it at once. The
+// page reads them all itself, in one round trip, as the dot walk below does.
 async function numbersOn(page: Page): Promise<{ number: Locator; seen: Seen }[]> {
-  const found: { number: Locator; seen: Seen }[] = [];
   const all = page.locator("button[data-num]");
-  const blocks = await all.evaluateAll((numbers) => {
+  const read = await all.evaluateAll(async (numbers) => {
+    const until = async (ok: () => boolean) => {
+      const end = performance.now() + 5000;
+      while (!ok() && performance.now() < end) await new Promise((done) => setTimeout(done, 1));
+      return ok();
+    };
     const owners: Element[] = [];
-    return numbers.map((number) => {
+    const found: { index: number; seen: Seen | null; label: string }[] = [];
+    for (const [index, number] of numbers.entries()) {
       const owner = number.closest("p, li, td, th, dd, h1, h2, h3, [data-finding]") ?? number.parentElement!;
       if (!owners.includes(owner)) owners.push(owner);
-      return number.getClientRects().length > 0 ? owners.indexOf(owner) : -1;
-    });
+      if (number.getClientRects().length === 0) continue;
+      (number as HTMLElement).focus();
+      const tip = () => {
+        const id = number.getAttribute("aria-describedby");
+        return id ? document.getElementById(id) : null;
+      };
+      const label = (number as HTMLElement).innerText.trim();
+      if (!(await until(() => tip()?.querySelector("[data-num-what]") != null))) {
+        found.push({ index, seen: null, label });
+        continue;
+      }
+      const part = (name: string) => (tip()!.querySelector<HTMLElement>(`[data-num-${name}]`)?.innerText ?? "").trim();
+      found.push({
+        index,
+        label,
+        seen: {
+          label,
+          what: part("what"),
+          from: part("from"),
+          act: part("act"),
+          opens: number.getAttribute("data-num-opens"),
+          click: number.hasAttribute("data-num-click"),
+          block: owners.indexOf(owner),
+        },
+      });
+    }
+    return found;
   });
-  for (const [index, block] of blocks.entries()) {
-    if (block < 0) continue;
-    const number = all.nth(index);
-    await number.focus();
-    const id = await number.getAttribute("aria-describedby");
-    expect(id, `${await number.innerText()} has a tooltip as its description`).toBeTruthy();
-    const tip = page.locator(`[id="${id}"]`);
-    const part = async (name: string) => ((await tip.locator(`[data-num-${name}]`).count()) ? (await tip.locator(`[data-num-${name}]`).innerText()).trim() : "");
-    await expect(tip.locator("[data-num-what]")).toBeVisible();
-    found.push({
-      number,
-      seen: {
-        label: (await number.innerText()).trim(),
-        what: await part("what"),
-        from: await part("from"),
-        act: await part("act"),
-        opens: await number.getAttribute("data-num-opens"),
-        click: (await number.getAttribute("data-num-click")) !== null,
-        block,
-      },
-    });
-  }
   await page.keyboard.press("Escape");
-  return found;
+  expect(read.filter((one) => one.seen === null).map((one) => one.label), "numbers whose focus showed no tooltip").toEqual([]);
+  return read.map((one) => ({ number: all.nth(one.index), seen: one.seen! }));
 }
 
 // Two numbers in one sentence never share a What sentence unless they come from the same place and open the same thing.
+// Two that open nothing open no same thing, so they never share one ("7", "49" and "42" in a coverage line).
 function sharedWhat(seen: Seen[]): string[] {
   const clashes: string[] = [];
   for (const [i, one] of seen.entries()) {
     for (const other of seen.slice(i + 1)) {
       if (one.block !== other.block || one.what !== other.what) continue;
-      if (one.from !== other.from || one.act !== other.act || one.opens !== other.opens) clashes.push(`${one.label} and ${other.label}: ${one.what}`);
+      if (!one.opens || one.from !== other.from || one.act !== other.act || one.opens !== other.opens) clashes.push(`${one.label} and ${other.label}: ${one.what}`);
     }
   }
   return clashes;
@@ -120,12 +131,29 @@ async function opensWhatItNames(page: Page, number: Locator, seen: Seen) {
   }
 }
 
+// The numbers and dates in a text. A date is one token, written in full or short: "July 1, 2021" and "Jul 1, 2021"
+// are 2021-07-01, "Jul 2021" is 2021-07, and "Oct 9", which a page writes without the year in the current year, is
+// --10-09. So "July 1, 2021" never passes on a 1 and a 2021 found apart on the page.
+const MONTH = /\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s(?:(\d{1,2})(?:,\s(\d{4}))?|(\d{4}))\b/g;
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+function tokens(text: string): string[] {
+  const dates: string[] = [];
+  const two = (n: number | string) => String(n).padStart(2, "0");
+  const rest = text.replace(MONTH, (_, name: string, day?: string, year?: string, monthYear?: string) => {
+    const month = two(MONTHS.indexOf(name) + 1);
+    dates.push(monthYear ? `${monthYear}-${month}` : `${year ?? "-"}-${month}-${two(day!)}`);
+    return " ";
+  });
+  return [...dates, ...(rest.match(/\d[\d,]*(\.\d+)?/g) ?? [])];
+}
+
 // The numbers a tooltip names that the page does not show. DESIGN.md's one exception, a rounded amount's own unrounded
-// value from its record (the Signal line), is the only one a test may expect here.
-async function unshown(page: Page, seen: Seen[]): Promise<string[]> {
-  const numbers = (text: string) => text.match(/\d[\d,]*(\.\d+)?/g) ?? [];
-  const shown = new Set(numbers(await page.locator("main").innerText()));
-  return seen.flatMap((one) => numbers(`${one.what} ${one.from}`).filter((n) => !shown.has(n)).map((n) => `${one.label}: ${n}`));
+// value from its record (the Signal line), is the only one a test may expect here. A date the page writes without its
+// year shows that day of the current year.
+async function unshown(page: Page, said: { label: string; text: string }[]): Promise<string[]> {
+  const shown = new Set(tokens(await page.locator("main").innerText()));
+  const isShown = (token: string) => shown.has(token) || (/^\d{4}-\d{2}-\d{2}$/.test(token) && shown.has(`-${token.slice(4)}`));
+  return said.flatMap((one) => tokens(one.text).filter((token) => !isShown(token)).map((token) => `${one.label}: ${token}`));
 }
 
 async function checkPage(page: Page, unrounded: string[] = []) {
@@ -134,7 +162,8 @@ async function checkPage(page: Page, unrounded: string[] = []) {
   expect(seen.length).toBeGreaterThan(0);
   expect(sharedWhat(seen)).toEqual([]);
   expect(promises(seen)).toEqual([]);
-  expect(await unshown(page, seen), "numbers a tooltip names that the page does not show").toEqual(unrounded);
+  const said = seen.map((one) => ({ label: one.label, text: `${one.what} ${one.from}` }));
+  expect(await unshown(page, said), "numbers a tooltip names that the page does not show").toEqual(unrounded);
   for (const { number, seen: one } of numbers) if (one.act) await opensWhatItNames(page, number, one);
   return seen;
 }
@@ -153,9 +182,21 @@ test("on the package workspace every number and every dot opens what its action 
   await expect(page.locator("[data-past-range]:not([data-past-range=loading])")).toBeVisible();
   await expect(page.locator("[data-lane2=loading]")).toHaveCount(0);
   await expect(page.locator("[data-rebid-count]")).toBeVisible();
+  // Sections 2 to 5 rest closed. Open each, so the numbers inside them are read and opened too.
+  for (const show of await page.locator("main [data-zone] button[aria-expanded=false]").all()) {
+    if (await show.isVisible()) await show.click();
+  }
+  await expect(page.locator("section#planned-dates [data-step-caption]").first()).toBeVisible();
 
   const seen = await checkPage(page);
   expect(seen.filter((one) => one.act).map((one) => one.label)).toEqual(expect.arrayContaining(["2", "49", "3.3", "7.9", "4.4", "9.1", "3", "52"]));
+  // Advertised again counts plan rows canceled in the Procurement Plan too, so its From line names all three record sets.
+  for (const count of await page.locator("[data-rebid-count] button[data-num]").all()) {
+    await count.focus();
+    await expect(page.locator(`[id="${await count.getAttribute("aria-describedby")}"] [data-num-from]`)).toHaveText(
+      "From Procurement Notices, Contract Awards and Documents & Reports, through October 13, 2026.",
+    );
+  }
 
   // Every dot: its tooltip's action line, and Enter opens that package's records in the drawer. The drawer sits beside
   // the page, so focus goes back to the next dot while it is open, and that dot's Enter shows its own package instead;
@@ -170,13 +211,16 @@ test("on the package workspace every number and every dot opens what its action 
     const drawer = () => document.querySelector("[data-evidence-drawer]");
     const evidence = () => new URL(location.href).searchParams.get("evidence");
     const wrong: string[] = [];
+    const said: { label: string; text: string }[] = [];
     const dots = [...chart.querySelectorAll<HTMLElement>("[data-dot-target]")];
     for (const dot of dots) {
       const ref = dot.getAttribute("aria-label")!.split(",")[0];
       dot.focus();
-      const tip = () => document.querySelector("[data-dot-tooltip]");
+      const tip = () => document.querySelector<HTMLElement>("[data-dot-tooltip]");
       if (!(await until(() => tip()?.querySelector("p")?.textContent === ref))) wrong.push(`${ref}: no tooltip`);
       else if (tip()!.lastElementChild?.textContent !== "Select to see its records.") wrong.push(`${ref}: no action line`);
+      // What the tooltip says after the dot's reference, for the check that it names no number the page leaves out.
+      else said.push({ label: ref, text: [...tip()!.children].slice(1).map((part) => (part as HTMLElement).innerText).join(" ") });
       key(dot, "Enter");
       if (!(await until(() => evidence() === `strata.gold.package:${ref}` && drawer() !== null))) wrong.push(`${ref}: its records did not open`);
     }
@@ -184,9 +228,10 @@ test("on the package workspace every number and every dot opens what its action 
     last.focus();
     key(last, "Escape");
     if (!(await until(() => drawer() === null && document.activeElement === last))) wrong.push("Escape left the drawer open");
-    return { count: dots.length, wrong };
+    return { count: dots.length, wrong, said };
   });
-  expect(walked).toEqual({ count: 49, wrong: [] });
+  expect({ count: walked.count, wrong: walked.wrong }).toEqual({ count: 49, wrong: [] });
+  expect(await unshown(page, walked.said), "numbers a dot's tooltip names that the page does not show").toEqual([]);
 });
 
 test("on the plan check every number says what it is and where it came from, and none opens what it does not name", async ({ page }) => {
@@ -212,11 +257,13 @@ test("on Home every number opens what its action line names, and 1.23 gives the 
   const seen = await checkPage(page, ["1.23: 1,230,000.00"]);
   const millions = seen.find((one) => one.label === "1.23")!;
   expect(millions).toMatchObject({
-    what: "The plan row's Estimated Amount (US$), 1,230,000.00, in millions.",
+    what: "The plan row's Estimated Amount (US$) is 1,230,000.00. This line gives it in millions.",
     from: "From the Northern Water Works Development Agency plan of October 9, 2026.",
     act: "Select to see the plan row.",
   });
   expect(seen.filter((one) => one.opens === "window").map((one) => one.label)).toEqual(["One", "One", "two", "One", "Two"]);
+  // The days to closing come from the project's closing date, which the plan row does not hold, so they open nothing.
+  expect(seen.find((one) => one.what === "Days from my check to the project's closing date.")).toMatchObject({ act: "", opens: null });
 });
 
 test("on a draft every number opens what its action line names", async ({ page }) => {

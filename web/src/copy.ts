@@ -1078,7 +1078,7 @@ export const copy = {
     // The space line (ticket 110): what columns 9 to 12 are for while no drawer is open, on the pages that keep them
     // free for the drawer.
     spaceHint: {
-      package: "Select a dot on the chart, an underlined number or a numbered source, and its records open here.",
+      package: "Select a dot on the chart or a numbered source, and its records open here.",
       draft: "Select a numbered source, and its record opens here.",
     },
     eyebrow: { What: "What · record", How: "How · operations", Why: "Why · evaluation" },
@@ -1396,7 +1396,19 @@ export const copy = {
     // Templates for Fill, so the project ID or the reference is set in Roboto Mono.
     numTooltip: "Matches paragraph {para} of the {kind} for {pid}.",
     numTooltipSection: "Matches the section {section} of the {kind} for {pid}.",
-    numTooltipRecord: "Matches the {kind} record {reference}.",
+    // The reference ends the sentence, so its full stop stays in the reference's last box (MonoWords).
+    numTooltipRecord: "Matches the {kind} record {reference}",
+    numTooltipRecordEnd: ".",
+    // What a number's tooltip calls a record whose kind's own name already says "record" or reads as a heading
+    // ("Project record", "Loan history of"), by its table, so the sentence never says "record record" (ticket 96).
+    numTooltipKinds: {
+      "strata.gold.project": "Project",
+      "strata.gold.project_closing_date": "Loan history",
+      "strata.gold.ieg_rating": "IEG rating",
+      "strata.gold.project_isr_rating": "ISR rating",
+      "strata.silver.isr_ratings": "ISR rating",
+      "strata.ops.plan_baselines": "Baseline",
+    } as Record<string, string>,
     // A date a passage backs because it is its report's date, not because the paragraph holds it.
     numTooltipReportDate: "Matches the date of the {kind} for {pid}.",
     // What a number's tooltip calls each kind of document, by its short name.
@@ -2162,7 +2174,7 @@ export const copy = {
     movedDays: (days: string, later: boolean) => `${days} days ${later ? "later" : "earlier"}`,
     // What a change's number is, in its tooltip (ticket 96), which comes from the two plans (num.from.plans).
     explainMoved: "Days between the step's planned dates in the two plans.",
-    explainAmount: "Now minus was, from the two plans' Estimated Amount (US$).",
+    explainAmount: "The change in Estimated Amount (US$) from the earlier plan to this one.",
     cell: {
       added: "Added in this version",
       redated: "Re-dated in this version",
@@ -2614,14 +2626,16 @@ export const copy = {
       baselineSigningDays: "Days between its planned signing date in the baseline, the plan of {plan}, and Contract signed.",
       baselinePastSigning: "Days from its planned signing date in the baseline, the plan of {plan}, to my check's date.",
       baselinePastCompletion: "Days from its planned completion in the baseline, the plan of {plan}, to my check's date.",
-      // A draft's lede counts the activities it holds notes on.
-      counted: "The activities I counted:",
+      // A draft's lede counts the activities it holds notes on. Each count word's tooltip is one sentence that lists the
+      // STEP references it counts, its full stop kept with the last one (ticket 96).
+      counted: "The activities I counted: {refs}",
       // The finding's count words, by the mark each counts.
       countedBy: {
-        needs_a_look: "The activities that need a look:",
-        watch: "The activities worth watching:",
-        data_note: "The activities with data notes:",
+        needs_a_look: "The activities that need a look: {refs}",
+        watch: "The activities worth watching: {refs}",
+        data_note: "The activities with data notes: {refs}",
       },
+      countedEnd: ".",
     },
     // One sentence per reason code check_plan returns (config/tools.toml, [tools.check_plan.result]).
     reason: {
@@ -4508,7 +4522,9 @@ export const copy = {
       tie: (k: string) => `Each of these risks came up in ${k} completion reports.`,
       m: "Completion reports of projects with comparable packages that I read.",
       mAct: (m: string) => `Select to see all ${m}.`,
-      counted: "Counted from the records behind this section. Data readiness lists them by source.",
+      // The coverage line's two counts, each its own sentence (ticket 96). The counts of projects left out are plain.
+      coverageM: "Projects with comparable packages whose completion reports I read.",
+      coverageP: "All projects with comparable packages, whether or not I could read a completion report for them.",
     },
     removed: {
       none: "I removed no risks.",
@@ -4758,11 +4774,13 @@ export const copy = {
       // What a click on a date or a count opens: the comparable packages behind it, in the drawer (ticket 96).
       act: "Select to see the {n} packages.",
       listAct: "Select to list them.",
+      // The track record's count: what it counts, then the From line names the backtest (ticket 96).
       track:
-        "From the backtest for {year}: I dated the steps that plans published before {year} had planned for {year}, using only records public before {year}. Run {run}.",
-      trackNoRun:
-        "From the backtest for {year}: I dated the steps that plans published before {year} had planned for {year}, using only records public before {year}.",
-      counted: "Counted from the records behind this section. Data readiness lists them by source.",
+        "Steps planned for {year} that came on or before my date, when I dated them using only records public before {year}. Run {run}.",
+      trackNoRun: "Steps planned for {year} that came on or before my date, when I dated them using only records public before {year}.",
+      // The coverage line's two counts, each its own sentence (ticket 96). The counts left out are plain text.
+      used: "Comparable packages whose plans dated these steps.",
+      total: "All comparable packages for this package.",
     },
     // The evidence drawer's two lists (the 27 brief, section 7.6).
     drawer: {
@@ -4924,8 +4942,9 @@ export const copy = {
       // What a click on either count opens: the list below, by reason (ticket 96).
       nAct: "Select to see each one and its reason.",
       mAct: "Select to see the ones advertised again.",
-      k: "From my rebidding model, scored on {date} and rounded to the nearest 1 in 10.",
-      track: "From my model's saved test results of {date}.",
+      // What the model's numbers are; where each came from is its From line (ticket 96).
+      k: "How many in 10 packages like this one my model expects to be advertised again, rounded to the nearest 1 in 10.",
+      track: "The packages I tested my model on, which it had not seen.",
       min: "The smallest number of comparable packages I give an estimate from.",
     },
     // The evidence drawer opened from a row: the row's line as the claim, and its records as tabs.
@@ -5744,9 +5763,10 @@ export const copy = {
       // A Read well shortfall lacks nothing the registry names, so it says what went wrong, as the
       // gap's sentence does: "30 of 175 body pages I couldn't read without errors."
       unread: (part: string, whole: string, noun: string) => `${part} of ${whole} ${noun} I couldn't read without errors.`,
-      kinds: "Counted from the table of what you can ask, below.",
-      sources: "Counted from the rows of the Sources table below.",
-      moreGaps: "Counted from the gaps listed under Sources, below.",
+      // What a count in a sentence counts, when the page's own tables list it (ticket 96).
+      kinds: "The kinds of question in the table below.",
+      sources: "The sources in the Sources table below.",
+      moreGaps: "The gaps listed under Sources, below.",
       // A fix's project count that no measure counted: the projects whose rows fall short.
       projects: (count: string) => `The records behind this gap come from ${count} projects.`,
       projectsOne: (count: string) => `The records behind this gap come from ${count} project.`,
@@ -6755,11 +6775,18 @@ export const copy = {
       `In the project's reports, {count} ${one ? "paragraph" : "paragraphs"} appeared together with ${many ? "its contracts" : "the contract"}.`,
     leadNoParagraphs: "No paragraph from the project's reports appeared together with the contract.",
     leadNoParagraphsMany: "No paragraph from the project's reports appeared together with its contracts.",
-    // The tooltips on the lead's numbers: where each came from.
-    fromRecord: (kind: string, reference: string) => `From the ${kind} ${reference}.`,
-    fromAwardNotice: (id: string) => `From award notice ${id}.`,
-    fromParagraphs: "From the links I scored between the contract and the project's reports.",
-    recordKind: { estimated: "Procurement Plan row", advertised: "notice", signed: "contract", award_notice: "award notice" } as Record<string, string>,
+    // The tooltips on the lead's numbers: what each is (ticket 96). Where each came from is its From line, which names
+    // its record by num.from.named, or the plan by num.from.plan.
+    tips: {
+      estimated: "The activity's Estimated Amount in its Procurement Plan row.",
+      advertised: "The day its notice was published.",
+      signed: "The day its contract was signed.",
+      amount: "The amount of its signed contract.",
+      bids: "The bids its award notice listed.",
+      proposals: "The proposals its award notice listed.",
+      paragraphs: "Paragraphs in the project's reports that appeared together with the contract.",
+    },
+    recordKind: { advertised: "notice", signed: "contract", award_notice: "award notice" } as Record<string, string>,
     loading: "Loading this activity.",
     stillLoading: "Still loading this activity.",
     error: "I couldn't load this activity. The data service didn't answer.",
@@ -7554,9 +7581,10 @@ export const copy = {
       n === 1
         ? "I left out {n} rating or date that I read from this project's documents, because I couldn't find its words on the cited page."
         : "I left out {n} ratings or dates that I read from this project's documents, because I couldn't find their words on the cited pages.",
-    abstentionCheck: "Counted by the disagreement check for this project.",
-    // The title's count: where it came from, and that it opens the table.
-    findingCheck: "Counted by the disagreement check for this project.",
+    // What each count is; its From line names the project's documents (ticket 96).
+    abstentionCheck: "Ratings and dates from this project's documents that I left out.",
+    // The title's count: what it counts, and that it opens the table.
+    findingCheck: "Pairs of this project's reports that disagree.",
     findingCheckAct: "Select to see the table.",
     // Under the title, which already says what failed: what is missing until then, true of the chart and the list.
     // Without the check, no ISR is a side of a disagreement, so only the newest ISR keeps its own mark.
@@ -8789,7 +8817,7 @@ export const copy = {
         behind: "Activities behind their planned dates.",
       } as Record<string, string>,
       // A rounded amount gives the plan row's own value (DESIGN.md, Signal line).
-      millions: (exact: string) => `The plan row's Estimated Amount (US$), ${exact}, in millions.`,
+      millions: (exact: string) => `The plan row's Estimated Amount (US$) is ${exact}. This line gives it in millions.`,
       estimated: "The plan row's Estimated Amount (US$).",
       actual: "The plan row's Actual Amount (US$).",
       daysToClose: "Days from my check to the project's closing date.",
@@ -8961,18 +8989,29 @@ export const copy = {
       measures: "From my measures on {date}.",
       // One of my own settings, such as the layout parser's page limit, as the measured run used it.
       settings: "From the settings I used on {date}.",
+      // A record named by its kind and reference, such as a notice on the activity page.
+      named: "From the {kind} {reference}, public since {date}.",
+      // The report paragraphs that appeared together with a contract: the links I scored.
+      links: "From the links I scored between the contract and the project's reports, through {date}.",
       // The time estimate, and its track record.
       model: "From my model scored on {date}.",
       backtest: "From my backtest for {year}.",
       // A number a checked sentence quotes from a document, or matches in a record.
       document: "From the {doc} for {pid} of {date}.",
       record: "From its record, public since {date}.",
+      // The risks' counts: the completion reports of projects with comparable packages.
+      reports: "From the completion reports I read, through {date}.",
+      // The rebidding model's saved test results.
+      tests: "From my model's saved test results of {date}.",
+      // A count or difference the time estimate worked out for this package: the comparables it compared, as of the day.
+      estimate: "From my time estimate, as of {date}.",
     },
     // The record sets a From line names, by their key in config/sources.toml, in a short form; a source with none here
     // goes by its dataset name.
     sources: {
       notices: "Procurement Notices",
       awards: "Contract Awards",
+      documents: "Documents & Reports",
     } as Record<string, string>,
     act: {
       // Rows: the table of every comparable package.

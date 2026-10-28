@@ -16,6 +16,7 @@ import { Button } from "./Button";
 import { Fill } from "./Fill";
 import { MonoWords } from "./MonoWords";
 import { Num } from "./Num";
+import { fromLine, toolFrom } from "./NumFrom";
 import { chartType, swarm, titleSize } from "./RangeChart";
 import { Source } from "./Source";
 import { Table } from "./Table";
@@ -59,8 +60,10 @@ function dotName(row: CostRow): string {
 
 export function CostTitle({ cost, onCount }: { cost: Cost; onCount?: () => void }) {
   const { above, m } = cost.counts;
+  // Counted from every record set the tool read: the plan rows' cost estimates, the notices and the signed contracts.
+  const from = fromLine(toolFrom(cost));
   const num = (value: number) => (
-    <Num value={value} check={onCount ? { tooltip: words.countTooltip, act: words.countAct, opens: "rows", onOpen: onCount } : undefined} />
+    <Num value={value} check={onCount ? { tooltip: words.countTooltip, from, act: words.countAct, opens: "rows", onOpen: onCount } : undefined} />
   );
   if (above === 0) return <Fill template={words.titleNone} slots={{ m: num(m) }} />;
   if (above === m) return <Fill template={words.titleAll} slots={{ m: num(m) }} />;

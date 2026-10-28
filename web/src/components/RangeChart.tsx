@@ -1472,18 +1472,19 @@ export function RangeChart({
             const { px, py } = local(event);
             track(px, py);
           }}
-          // Its width is its content's, up to 240 px, so it never shrinks to the room left of the chart's edge.
-          className="absolute z-10 w-max max-w-[240px] animate-fade-in cursor-text select-text rounded-sm border-[0.5px] border-chart-grey200 bg-surface px-3 py-2 shadow-popover"
-          style={{ left: tipLeft, top: tipTop, fontSize: type.s }}
+          // The Number tooltip's own look and parts (DESIGN.md section 5, Dot tooltip; ticket 96): its width is its
+          // content's, up to the tooltip width or the chart's, so it never shrinks to the room left of the chart's edge.
+          className="absolute z-10 w-max max-w-[min(var(--tooltip-width),100%)] animate-fade-in cursor-text select-text rounded-sm border border-line bg-surface px-3 py-2 text-ink shadow-popover"
+          style={{ left: tipLeft, top: tipTop }}
         >
           {/* A STEP reference breaks at its spaces first, as everywhere on the page (MonoWords). */}
-          <p className="font-semibold text-chart-text">{tipFor.tip.mono ? <MonoWords text={tipFor.tip.header} /> : tipFor.tip.header}</p>
-          <p className="font-bold text-chart-text tabular-nums" style={{ fontSize: type.m }}>
-            {tipFor.tip.number}
+          <p className="text-caption font-medium text-ink">
+            {tipFor.tip.mono ? <MonoWords text={tipFor.tip.header} /> : tipFor.tip.header}
           </p>
-          <p className="text-chart-text">{tipFor.tip.line}</p>
-          {tipFor.tip.from && <p className="mt-1 text-chart-text-subtle">{tipFor.tip.from}</p>}
-          {onOpen && openHint && !tapped && <p className="mt-1 font-semibold text-chart-text">{openHint}</p>}
+          <p className="text-body font-bold text-ink tabular-nums">{tipFor.tip.number}</p>
+          <p className="text-small text-ink">{tipFor.tip.line}</p>
+          {tipFor.tip.from && <p className="mt-1 text-caption text-ink-muted">{tipFor.tip.from}</p>}
+          {onOpen && openHint && !tapped && <p className="mt-1 text-caption font-semibold text-ink-heading">{openHint}</p>}
           {/* The tooltip is hidden from screen readers, so its button leaves the tab order: a keyboard opens
               the focused dot with Enter, and the table twin's buttons are the full-size way in. */}
           {onOpen && openLabel && tapped && shown !== null && (

@@ -16,7 +16,7 @@ import { X } from "lucide-react";
 import { copy } from "../copy";
 import { terms } from "../glossary";
 import { cx } from "../lib/cx";
-import { claimHoverCard, DOTTED_UNDERLINE, HOVER_DELAY, POPOVER, releaseHoverCard, RETURNING, returning } from "./Popover";
+import { claimHoverCard, DOTTED_UNDERLINE, HOVER_DELAY, movedHere, POPOVER, releaseHoverCard, RETURNING, returning, scrolledUnder, watchPointer } from "./Popover";
 
 export type DefinitionRows = { label: ReactNode; value: ReactNode }[];
 
@@ -137,6 +137,9 @@ function HoverDefinitionWindow({ label, title, children, rows, triggerClassName,
   // Focus given back to the word after a pinned window closed, which must not open it again.
   const quiet = useRef(false);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  // The page scrolled the word under a resting pointer: it waits for the pointer to move, as a number's tooltip does.
+  const waiting = useRef(false);
+  useEffect(watchPointer, []);
 
   // Closes a peek; a pinned window stays until Escape, its close button or a click outside.
   const hide = useCallback(() => {
@@ -183,10 +186,18 @@ function HoverDefinitionWindow({ label, title, children, rows, triggerClassName,
             setShown((state) => (state === "pinned" ? "closed" : "pinned"));
           }}
           onPointerEnter={(event: PointerEvent<HTMLButtonElement>) => {
-            if (event.pointerType === "mouse" && !returning(event.currentTarget)) after(peek);
+            if (event.pointerType !== "mouse" || returning(event.currentTarget)) return;
+            if (scrolledUnder(event)) waiting.current = true;
+            else after(peek);
+          }}
+          onPointerMove={(event: PointerEvent<HTMLButtonElement>) => {
+            if (event.pointerType !== "mouse" || !waiting.current || !movedHere(event)) return;
+            waiting.current = false;
+            after(peek);
           }}
           onPointerLeave={(event: PointerEvent<HTMLButtonElement>) => {
             if (event.pointerType !== "mouse") return;
+            waiting.current = false;
             event.currentTarget.removeAttribute(RETURNING);
             after(hide);
           }}

@@ -33,6 +33,7 @@ import { CostEstimate } from "./CostLane";
 import { CriteriaLessons, CriteriaNotes, CriteriaTable, markerNumbers, openFrom, Part, RejectedBids } from "./CriteriaParts";
 import { Fill } from "./Fill";
 import { Num } from "./Num";
+import { fromLine, recordsFrom } from "./NumFrom";
 import { Skeleton, SkeletonLine } from "./Skeleton";
 import { Steps, type Step } from "./Steps";
 import { TextLink } from "./TextLink";
@@ -152,10 +153,12 @@ function Summary({ summary, compared }: { summary: CriteriaSummary; compared: Co
 // How many comparable packages published their criteria: a tab stop that opens their list in the drawer (view A),
 // in the summary and in the intro alike (the 31 brief, 7.1).
 function PublicCount({ summary }: { summary: CriteriaSummary }) {
+  // Counted from the notices and contract awards whose criteria are public, by their keys (ticket 96).
+  const sources = summary.public_sources.map((key) => ({ key, dataset_name: key }));
   return (
     <Num
       value={summary.public_criteria_count}
-      check={{ tooltip: words.nTooltip, act: words.listAct, opens: "record", onOpen: (element) => openFrom(publicListId(summaryKey(summary)), element) }}
+      check={{ tooltip: words.nTooltip, from: fromLine(recordsFrom(sources, summary.records_through, summary.public_sources)), act: words.listAct, opens: "record", onOpen: (element) => openFrom(publicListId(summaryKey(summary)), element) }}
     />
   );
 }

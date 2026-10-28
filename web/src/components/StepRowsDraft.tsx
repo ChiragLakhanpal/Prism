@@ -12,6 +12,7 @@ import type { StepDate, StepListRow, StepPoint } from "../lib/steps";
 import { familyStep, stepFamily, type StepFamily } from "../steps";
 import { Fill } from "./Fill";
 import { Num } from "./Num";
+import { FromLine, heldFrom } from "./NumFrom";
 import { SegmentedControl } from "./SegmentedControl";
 import { dateCheck, type Opener, type Row } from "./StepsSection";
 
@@ -51,7 +52,16 @@ function rowOf(activity: DatesActivity, index: number, lists: Record<string, Evi
   if (!held || held.kind !== "steps" || !family) return null;
   const fallback = { key: step.step_key, label: step.label ?? step.step_key, step_name: step.step_name ?? step.step_key, phrase: step.label ?? step.step_key, stage: null };
   const previous = index > 0 ? familyStep(family, activity.steps[index - 1].step_key) : null;
-  const row: Row = { step: (held.row as StepListRow).step as StepDate, entry: familyStep(family, step.step_key) ?? fallback, previous, listId: step.list_id };
+  const list = held.row as StepListRow & { source?: { sources?: string[] } };
+  // Where its date and count came from: the record sets the list names, through the date its records ran to (ticket 96).
+  const named = heldFrom(list.sources ?? [], list.source?.sources, list.records_through);
+  const row: Row = {
+    step: list.step as StepDate,
+    entry: familyStep(family, step.step_key) ?? fallback,
+    previous,
+    listId: step.list_id,
+    from: named ? <FromLine words={named} /> : undefined,
+  };
   return { row, family };
 }
 
@@ -88,6 +98,7 @@ function countCell(step: DatesStep, held: { row: Row; family: StepFamily } | nul
       className="-mx-3 px-3 text-small"
       check={{
         tooltip: copy.stepDates.tips.count(held.row.entry.phrase),
+        from: held.row.from,
         act: copy.stepDates.tips.listAct,
         opens: "record",
         name: copy.stepDates.countName(String(n), held.row.entry.label),

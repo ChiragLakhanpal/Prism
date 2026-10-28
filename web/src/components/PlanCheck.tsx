@@ -25,6 +25,7 @@ import { CheckPill } from "./CheckPill";
 import { EightColumns } from "./EightColumns";
 import { Fill, Joined, Unbroken } from "./Fill";
 import { useShows, type View } from "../lib/view";
+import { ListedRefs } from "./MonoWords";
 import { Num, type NumCheck } from "./Num";
 import { checkFrom, FromLine, planFrom } from "./NumFrom";
 import { ProjectId } from "./ProjectId";
@@ -222,18 +223,10 @@ function methodText(row: Activity): ReactNode {
   return <MethodText method={row.method} approach={row.market_approach} />;
 }
 
-// The rows a mark's count word counts, for its tooltip: what the count word counts, by its mark, and their references.
+// The rows a mark's count word counts, for its tooltip: one sentence that says what it counts, by its mark, and lists
+// their references.
 function Counted({ rows, mark }: { rows: Activity[]; mark: Mark }) {
-  return (
-    <div>
-      <p className="font-semibold">{words.explain.countedBy[mark]}</p>
-      <ul className="mt-1 font-mono">
-        {rows.map((row) => (
-          <li key={row.activity_reference_no}>{row.activity_reference_no}</li>
-        ))}
-      </ul>
-    </div>
-  );
+  return <ListedRefs template={words.explain.countedBy[mark]} refs={rows.map((row) => row.activity_reference_no)} end={words.explain.countedEnd} />;
 }
 
 function Finding({ result }: { result: CheckedPlan }) {

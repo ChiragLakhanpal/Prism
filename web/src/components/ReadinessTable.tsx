@@ -62,9 +62,11 @@ export type ReadinessTableState = { status: "ready"; rows: ReadinessRow[] } | { 
 // again once the past range joined them (ticket 63): at 390 px its card holds a longer line of what holds it back, so
 // the four real cards stood 52 px taller than four of the old height. Once a number in the headline kept its padding
 // inside the lead's 28 px lines (ticket 96), the headline no longer made up for the kinds either: its four rows were
-// 13 px shorter than their skeleton at 1440, 14 px at 1024, and its four cards 12 px at 390.
-const ROW_HEIGHT = { kinds: "h-[8.081rem] xl:h-[7.297rem]", sources: "h-[8.1958rem] xl:h-[7.3125rem]", shelf: "h-[8.5580rem] xl:h-[7.6707rem]" } as const;
-const CARD_HEIGHT = { kinds: "h-[16.998rem]", sources: "h-[16.084rem]", shelf: "h-[21.925rem]" } as const;
+// 13 px shorter than their skeleton at 1440, 14 px at 1024, and its four cards 12 px at 390. Once the numbers in what
+// holds each kind back kept inside their lines too (ticket 96's second round), the four rows stood 8 px shorter at
+// 1024 and the four cards 20 px at 390.
+const ROW_HEIGHT = { kinds: "h-[7.956rem] xl:h-[7.297rem]", sources: "h-[8.1958rem] xl:h-[7.3125rem]", shelf: "h-[8.5580rem] xl:h-[7.6707rem]" } as const;
+const CARD_HEIGHT = { kinds: "h-[16.6855rem]", sources: "h-[16.084rem]", shelf: "h-[21.925rem]" } as const;
 
 // Heads sit at the top, so their labels share one line however their short definitions wrap.
 const HEAD = "px-4 py-3 align-top font-semibold text-ink-heading";

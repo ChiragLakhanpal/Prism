@@ -18,6 +18,7 @@ import { EvidenceTrail, Glyph, type LineState } from "../../components/EvidenceT
 import { Fill, Joined } from "../../components/Fill";
 import { LoadError } from "../../components/LoadError";
 import { Num } from "../../components/Num";
+import { fromLine, recordsFrom } from "../../components/NumFrom";
 import { SegmentText } from "../../components/SegmentText";
 import { Skeleton, SkeletonLine } from "../../components/Skeleton";
 import { Source } from "../../components/Source";
@@ -132,10 +133,16 @@ function SourceLine({ data }: { data: Timeline }) {
   );
 }
 
-function Abstention({ count }: { count: number }) {
+// Where the timeline's counts came from: the record sets the timeline read, through the date its data run to (ticket
+// 96).
+function reportsFrom(data: Timeline): ReactNode {
+  return fromLine(recordsFrom(data.sources.map((key) => ({ key, dataset_name: words.sourceNames[key] ?? key })), data.data_through, data.sources));
+}
+
+function Abstention({ count, data }: { count: number; data: Timeline }) {
   return (
     <p data-timeline-abstention className="max-w-prose text-caption text-ink-muted">
-      <Fill template={words.abstention(count)} slots={{ n: <Num count={count} inCaption check={{ tooltip: words.abstentionCheck }} /> }} />
+      <Fill template={words.abstention(count)} slots={{ n: <Num count={count} inCaption check={{ tooltip: words.abstentionCheck, from: reportsFrom(data) }} /> }} />
     </p>
   );
 }
@@ -389,7 +396,7 @@ export function TimelineCard({
     <figure aria-labelledby={titleId} tabIndex={-1} data-timeline-card className="rounded-md border border-line bg-surface p-4 @md/page:p-6">
       <p id={titleId} data-timeline-finding className="text-pretty font-bold text-ink-heading" style={{ fontSize: titleSize(chart, width) }}>
         {/* The count's tooltip opens above it, so it never hides the finding's second line. */}
-        <SegmentText segments={data.finding} check={chart ? { tooltip: words.findingCheck, act: words.findingCheckAct, opens: "rows", onOpen: openTable, side: "top" } : undefined} />
+        <SegmentText segments={data.finding} check={chart ? { tooltip: words.findingCheck, from: reportsFrom(data), act: words.findingCheckAct, opens: "rows", onOpen: openTable, side: "top" } : undefined} />
       </p>
       <p data-timeline-subtitle className="mt-1 max-w-prose text-small text-chart-text-subtle">
         {chart ? (
@@ -433,7 +440,7 @@ export function TimelineCard({
       </div>
       <div className="mt-4 flex flex-col gap-2">
         <Note data={data} codes={chart ? codes : []} chart={chart} />
-        {data.rejected && data.rejected.count > 0 && <Abstention count={data.rejected.count} />}
+        {data.rejected && data.rejected.count > 0 && <Abstention count={data.rejected.count} data={data} />}
         <SourceLine data={data} />
       </div>
       {chart && (

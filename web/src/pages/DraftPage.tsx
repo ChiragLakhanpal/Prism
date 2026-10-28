@@ -21,6 +21,7 @@ import { ENGLISH, languageName, workingLanguage } from "../lib/lang";
 import { citedInParts, MissionBriefParts } from "../components/MissionBriefParts";
 import { Fill } from "../components/Fill";
 import { LoadError } from "../components/LoadError";
+import { ListedRefs } from "../components/MonoWords";
 import { Num, type NumCheck } from "../components/Num";
 import { checkFrom, FromLine } from "../components/NumFrom";
 import { PaperSheet } from "../components/PaperSheet";
@@ -454,16 +455,7 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
   const refs = d.notes.filter((note) => note.state === "written").map((note) => note.activity_reference_no);
   // The lede's count: the activities with a note, from my check of the plan the notes were written from (ticket 96).
   const counted: NumCheck = {
-    tooltip: (
-      <div>
-        <p className="font-semibold">{copy.checkPlan.explain.counted}</p>
-        <ul className="mt-1 font-mono">
-          {refs.map((ref) => (
-            <li key={ref}>{ref}</li>
-          ))}
-        </ul>
-      </div>
-    ),
+    tooltip: <ListedRefs template={copy.checkPlan.explain.counted} refs={refs} end={copy.checkPlan.explain.countedEnd} />,
     from: subject.as_of ? <FromLine words={checkFrom(subject.as_of)} /> : undefined,
   };
   // A mission brief (ticket 37): five parts, with the project's name, country and records' date.

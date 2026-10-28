@@ -20,6 +20,7 @@ import { ContractTrail } from "../components/ContractTrail";
 import { Fill, Joined } from "../components/Fill";
 import { LoadError } from "../components/LoadError";
 import { Num } from "../components/Num";
+import { FromLine, linksFrom, namedRecordFrom, planFrom } from "../components/NumFrom";
 import { ProjectId, ProjectIdText } from "../components/ProjectId";
 import { Skeleton, SkeletonLine, SkeletonText } from "../components/Skeleton";
 import { copy } from "../copy";
@@ -42,35 +43,44 @@ const open = (id: string) => ({
   onOpen: (element: HTMLElement) => openEvidence(id, { serial: null, sentence: null, marker: element, runId: null }),
 });
 
+// Where a lead number came from (ticket 96): a plan row's amount from its plan, and any other record by its kind and
+// reference, public since the day the trail's record gives.
+function fromRecord(trail: Trail, evidenceId: string, kind?: string, reference?: string): ReactNode {
+  for (const stage of trail.stages) {
+    for (const record of stage.records) {
+      if (record.evidence_id !== evidenceId) continue;
+      if (stage.stage === "plan" && "plan_date" in record && record.implementing_agency) {
+        return <FromLine words={planFrom(record.implementing_agency, record.plan_date)} />;
+      }
+      return kind && reference ? <FromLine words={namedRecordFrom(kind, reference, record.public_from)} /> : undefined;
+    }
+  }
+  return undefined;
+}
+
 // One part of the lead, with its values as Num: "estimated at US$300,000 in the plan".
 function leadPart(part: LeadPart, trail: Trail): ReactNode {
+  const t = words.tips;
   if (part.kind === "estimated") {
     const amount = amountText(part.amount, part.currency);
-    return (
-      <Fill
-        template={words.leadEstimated}
-        slots={{ estimate: <Num written={amount} check={{ tooltip: words.fromRecord(words.recordKind.estimated, trail.activity.step_reference), ...open(part.evidence_id) }} /> }}
-      />
-    );
+    const from = fromRecord(trail, part.evidence_id);
+    return <Fill template={words.leadEstimated} slots={{ estimate: <Num written={amount} check={{ tooltip: t.estimated, from, ...open(part.evidence_id) }} /> }} />;
   }
   if (part.kind === "advertised") {
-    return (
-      <Fill
-        template={words.leadAdvertised}
-        slots={{ notice_date: <Num date={part.date} check={{ tooltip: words.fromRecord(words.recordKind.advertised, part.reference), ...open(part.evidence_id) }} /> }}
-      />
-    );
+    const from = fromRecord(trail, part.evidence_id, words.recordKind.advertised, part.reference);
+    return <Fill template={words.leadAdvertised} slots={{ notice_date: <Num date={part.date} check={{ tooltip: t.advertised, from, ...open(part.evidence_id) }} /> }} />;
   }
   if (part.kind === "signed") {
     const kind = part.record_noun === "award notice" ? words.recordKind.award_notice : words.recordKind.signed;
-    const tooltip = words.fromRecord(kind, part.reference);
-    // A contract whose record gives no amount says only when it was signed.
+    const from = fromRecord(trail, part.evidence_id, kind, part.reference);
+    // A contract whose record gives no amount says only when it was signed. Its date and amount come from one record
+    // and open it, but each says what it is.
     return (
       <Fill
         template={part.amount ? words.leadSigned : words.leadSignedNoAmount}
         slots={{
-          signed_date: <Num date={part.date} check={{ tooltip, ...open(part.evidence_id) }} />,
-          amount: part.amount ? <Num written={amountText(part.amount, part.currency)} check={{ tooltip, ...open(part.evidence_id) }} /> : "",
+          signed_date: <Num date={part.date} check={{ tooltip: t.signed, from, ...open(part.evidence_id) }} />,
+          amount: part.amount ? <Num written={amountText(part.amount, part.currency)} check={{ tooltip: t.amount, from, ...open(part.evidence_id) }} /> : "",
         }}
       />
     );
@@ -116,7 +126,7 @@ function Lead({ trail }: { trail: Trail }) {
             (lead.paragraphs > 0 ? (
               <Fill
                 template={words.leadParagraphs(lead.paragraphs === 1, lead.many_contracts)}
-                slots={{ count: <Num count={lead.paragraphs} check={{ tooltip: words.fromParagraphs }} /> }}
+                slots={{ count: <Num count={lead.paragraphs} check={{ tooltip: words.tips.paragraphs, from: <FromLine words={linksFrom(through)} /> }} /> }}
               />
             ) : lead.many_contracts ? (
               words.leadNoParagraphsMany
@@ -136,7 +146,14 @@ function LeadBids({ trail }: { trail: Trail }) {
   const listed = trail.lead.bids;
   const proposals = listed[0].proposals;
   const count = (bids: (typeof listed)[number]) => (
-    <Num count={bids.count} check={{ tooltip: words.fromAwardNotice(bids.notice_id), ...open(bids.evidence_id) }} />
+    <Num
+      count={bids.count}
+      check={{
+        tooltip: proposals ? words.tips.proposals : words.tips.bids,
+        from: fromRecord(trail, bids.evidence_id, words.recordKind.award_notice, bids.notice_id),
+        ...open(bids.evidence_id),
+      }}
+    />
   );
   if (listed.length === 1) return <Fill template={words.leadBids(listed[0].count === 1, proposals)} slots={{ count: count(listed[0]) }} />;
   return <Fill template={words.leadBidsMany(proposals)} slots={{ counts: <Joined items={listed.map(count)} /> }} />;

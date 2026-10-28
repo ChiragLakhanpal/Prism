@@ -23,6 +23,7 @@ import { DisagreementCard, SideSaid, type CardSide } from "./DisagreementCard";
 import { highlighted } from "./Document";
 import { Fill, Joined } from "./Fill";
 import { Num } from "./Num";
+import { fromLine, toolFrom } from "./NumFrom";
 import { ProjectId } from "./ProjectId";
 import { ReasonGroup } from "./ReasonsList";
 import { Source } from "./Source";
@@ -89,8 +90,9 @@ function cellsOf(item: ComparedItem, comparison: Comparison): Cells {
   const list = itemListId(comparison.check_id, item.item_key);
   const total = comparison.coverage?.n ?? 0;
   const open = (element: HTMLElement) => openFrom(list, element);
-  // Each count opens the item's notices in the drawer, and its action line says so (ticket 96).
-  const opens = { act: words.items.listAct, opens: "record", onOpen: open } as const;
+  // Each count opens the item's notices in the drawer, and its action line says so; each was counted from the notices
+  // and contract awards the tool read (ticket 96).
+  const opens = { from: fromLine(toolFrom(comparison)), act: words.items.listAct, opens: "record", onOpen: open } as const;
   const asked = item.stated ? (
     <span className="text-small tabular-nums">
       <Num part={item.stated} whole={total} show="count" check={{ tooltip: words.items.statedTooltip(item.phrase), ...opens, act: words.items.statedAct }} />
@@ -506,7 +508,7 @@ export function RejectedBids({ rejected, numbers, yourItems, perGroup, readiness
     if (first) document.getElementById(`rejected-${first.item_key}`)?.focus();
   };
   const num = (value: number) => (
-    <Num value={value} check={{ tooltip: words.rejected.countTooltip, act: words.rejected.countAct, opens: "rows", onOpen: focusFirstGroup }} />
+    <Num value={value} check={{ tooltip: words.rejected.countTooltip, from: fromLine(toolFrom(rejected)), act: words.rejected.countAct, opens: "rows", onOpen: focusFirstGroup }} />
   );
   if (rejected.state === "no_award_notices" || rejected.state === "no_comparables") {
     return (

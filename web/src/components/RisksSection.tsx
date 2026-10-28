@@ -50,6 +50,7 @@ import { Checkbox } from "./Checkbox";
 import { CheckLine, notCheckedFor, RemovedBox, type Removed } from "./Checks";
 import { Fill, Joined } from "./Fill";
 import { Num } from "./Num";
+import { FromLine, reportsFrom } from "./NumFrom";
 import { Skeleton, SkeletonLine, SkeletonText } from "./Skeleton";
 import { Source } from "./Source";
 import { SourcePill } from "./SourcePill";
@@ -202,10 +203,11 @@ function Ready({
   const chosen = rows.filter((row) => selected.includes(row.risk_key)).length;
   const dropped = result.selected_not_shown.filter((entry) => selected.includes(entry.risk_key));
   const ppar = rows.some((row) => row.sources.some((source) => source.doc_short === "PPAR"));
+  const from = risksFrom(result);
   return (
     <>
       <h3 id={findingId} data-finding className="mt-6 max-w-prose text-h2 text-balance text-ink-heading">
-        <Finding result={result} onAll={handlers.onAll} onCount={handlers.onCount} />
+        <Finding result={result} onAll={handlers.onAll} onCount={handlers.onCount} from={from} />
       </h3>
       <div className="mt-2 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 text-small">
         <p id={countId} className="text-ink-muted" data-count-line>
@@ -243,13 +245,25 @@ function Ready({
         opened={opened}
         handlers={handlers}
         packageKey={packageKey}
+        from={from}
       />
-      <RiskList rows={rows} m={m} findingId={findingId} selected={selected} onToggle={onToggle} preview={preview} opened={opened} handlers={handlers} packageKey={packageKey} />
+      <RiskList rows={rows} m={m} findingId={findingId} selected={selected} onToggle={onToggle} preview={preview} opened={opened} handlers={handlers} packageKey={packageKey} from={from} />
       {action && <div className="mt-4 @md/page:hidden">{action}</div>}
       <Checks result={result} />
-      <Notes result={result} ppar={ppar} />
+      <Notes result={result} ppar={ppar} from={from} />
     </>
   );
+}
+
+// The records date the section's counts run to: the page's as-of date when it is the earlier, as the source line says.
+function recordsDate(result: RisksResult): string | null {
+  return result.as_of && result.data_through && result.as_of < result.data_through ? result.as_of : result.data_through;
+}
+
+// Where every count in the section came from: the completion reports I read, through the records date (ticket 96).
+function risksFrom(result: RisksResult): ReactNode {
+  const words = reportsFrom(recordsDate(result));
+  return words ? <FromLine words={words} /> : undefined;
 }
 
 // The finding names the most common risk among the rows shown, as the builder picked it.
@@ -257,10 +271,12 @@ function Finding({
   result,
   onAll,
   onCount,
+  from,
 }: {
   result: RisksResult;
   onAll: (element: HTMLElement) => void;
   onCount: (row: RiskRow, element: HTMLElement) => void;
+  from: ReactNode;
 }) {
   const most = result.most_common!;
   const m = result.m ?? 0;
@@ -274,19 +290,19 @@ function Finding({
       options={{ compact: false }}
       check={
         one
-          ? { tooltip: tips.k, act: tips.kAct(kText), opens: "record", onOpen: (element) => onCount(one, element) }
-          : { tooltip: tips.tie(kText) }
+          ? { tooltip: tips.k, from, act: tips.kAct(kText), opens: "record", onOpen: (element) => onCount(one, element) }
+          : { tooltip: tips.tie(kText), from }
       }
     />
   );
   const mText = formatNumber(m, { compact: false });
-  const all = <Num value={m} options={{ compact: false }} check={{ tooltip: tips.m, act: tips.mAct(mText), opens: "record", onOpen: onAll }} />;
+  const all = <Num value={m} options={{ compact: false }} check={{ tooltip: tips.m, from, act: tips.mAct(mText), opens: "record", onOpen: onAll }} />;
   if (one) return <Fill template={words.finding} slots={{ risk: one.risk_label, k, m: all }} />;
   if (tied.length === 2) return <Fill template={words.findingTwo} slots={{ a: tied[0].risk_label, b: tied[1].risk_label, k, m: all }} />;
   return <Fill template={words.findingMany} slots={{ tied: formatCount(tied.length, { capital: true }), k, m: all }} />;
 }
 
-function CountCell({ row, m, onCount }: { row: RiskRow; m: number; onCount: (row: RiskRow, element: HTMLElement) => void }) {
+function CountCell({ row, m, onCount, from }: { row: RiskRow; m: number; onCount: (row: RiskRow, element: HTMLElement) => void; from: ReactNode }) {
   const k = formatNumber(row.k, { compact: false });
   return (
     <span data-count={row.risk_key} className="inline-flex flex-col items-end text-right">
@@ -295,7 +311,7 @@ function CountCell({ row, m, onCount }: { row: RiskRow; m: number; onCount: (row
           part={row.k}
           whole={m}
           show="count"
-          check={{ tooltip: words.numTips.k, act: words.numTips.kAct(k), opens: "record", name: words.countName(k, formatNumber(m, { compact: false }), row.risk_label), onOpen: (element) => onCount(row, element) }}
+          check={{ tooltip: words.numTips.k, from, act: words.numTips.kAct(k), opens: "record", name: words.countName(k, formatNumber(m, { compact: false }), row.risk_label), onOpen: (element) => onCount(row, element) }}
         />
       </span>
       <span className="text-caption text-ink-muted">{words.reports}</span>
@@ -337,11 +353,13 @@ type TableProps = {
   opened: Opened;
   handlers: Handlers;
   packageKey: string;
+  // Where the counts came from (ticket 96).
+  from: ReactNode;
 };
 
 // At 640 px of card content and wider. table-layout: fixed, so nothing shifts when values change or a row is
 // selected: Select 48 px, then Risk, How often, What helped and Sources share the rest.
-function RiskTable({ rows, m, findingId, countId, selected, onToggle, preview, opened, handlers }: TableProps) {
+function RiskTable({ rows, m, findingId, countId, selected, onToggle, preview, opened, handlers, from }: TableProps) {
   const c = words.columns;
   return (
     <div data-risk-view="table" className="mt-3 hidden rounded-md border border-line @min-[40rem]/risks:block">
@@ -385,7 +403,7 @@ function RiskTable({ rows, m, findingId, countId, selected, onToggle, preview, o
                 {row.risk_label}
               </th>
               <td className="p-3 text-right">
-                <CountCell row={row} m={m} onCount={handlers.onCount} />
+                <CountCell row={row} m={m} onCount={handlers.onCount} from={from} />
               </td>
               <td className="p-3">
                 <p className="max-w-[65ch] text-body text-ink" data-helped>
@@ -404,7 +422,7 @@ function RiskTable({ rows, m, findingId, countId, selected, onToggle, preview, o
 }
 
 // Below 640 px of card content: an ordered list, each risk's name the checkbox's label.
-function RiskList({ rows, m, findingId, selected, onToggle, preview, opened, handlers }: TableProps) {
+function RiskList({ rows, m, findingId, selected, onToggle, preview, opened, handlers, from }: TableProps) {
   return (
     <ol aria-labelledby={findingId} data-risk-view="list" className="mt-3 border-t border-line @min-[40rem]/risks:hidden">
       {rows.map((row) => (
@@ -414,7 +432,7 @@ function RiskList({ rows, m, findingId, selected, onToggle, preview, opened, han
           </Checkbox>
           <div className="mt-1 flex flex-col gap-2 pl-8">
             <p className="text-small">
-              <ListCount row={row} m={m} onCount={handlers.onCount} />
+              <ListCount row={row} m={m} onCount={handlers.onCount} from={from} />
             </p>
             <div>
               <p className="text-caption text-ink-muted">{words.helpedLabel}</p>
@@ -431,7 +449,7 @@ function RiskList({ rows, m, findingId, selected, onToggle, preview, opened, han
 }
 
 // "{k} of {m}" in small 600, then " completion reports" in caption on the same line where it fits.
-function ListCount({ row, m, onCount }: { row: RiskRow; m: number; onCount: (row: RiskRow, element: HTMLElement) => void }) {
+function ListCount({ row, m, onCount, from }: { row: RiskRow; m: number; onCount: (row: RiskRow, element: HTMLElement) => void; from: ReactNode }) {
   const k = formatNumber(row.k, { compact: false });
   return (
     <span data-count={row.risk_key}>
@@ -440,7 +458,7 @@ function ListCount({ row, m, onCount }: { row: RiskRow; m: number; onCount: (row
           part={row.k}
           whole={m}
           show="count"
-          check={{ tooltip: words.numTips.k, act: words.numTips.kAct(k), opens: "record", name: words.countName(k, formatNumber(m, { compact: false }), row.risk_label), onOpen: (element) => onCount(row, element) }}
+          check={{ tooltip: words.numTips.k, from, act: words.numTips.kAct(k), opens: "record", name: words.countName(k, formatNumber(m, { compact: false }), row.risk_label), onOpen: (element) => onCount(row, element) }}
         />
       </span>{" "}
       <span className="text-caption text-ink-muted">{words.reports}</span>
@@ -479,7 +497,7 @@ function Checks({ result }: { result: RisksResult }) {
   );
 }
 
-function Notes({ result, ppar }: { result: RisksResult; ppar: boolean }) {
+function Notes({ result, ppar, from }: { result: RisksResult; ppar: boolean; from: ReactNode }) {
   return (
     <div className="mt-4 flex flex-col gap-2" data-risk-notes>
       <p className="max-w-prose text-caption text-ink-muted">
@@ -489,16 +507,17 @@ function Notes({ result, ppar }: { result: RisksResult; ppar: boolean }) {
         {words.abbr}
         {ppar && <> {words.abbrPpar}</>}
       </p>
-      <Coverage result={result} />
+      <Coverage result={result} from={from} />
       <SourceLine result={result} />
     </div>
   );
 }
 
-function Coverage({ result }: { result: RisksResult }) {
+// The projects whose reports I read and all the projects each say what they count (ticket 96); the counts of those I
+// could not read from are plain text, because the sentence already says what each counts.
+function Coverage({ result, from }: { result: RisksResult; from: ReactNode }) {
   const c = words.coverage;
-  const tip = { tooltip: words.numTips.counted };
-  const p = <Num value={result.p ?? 0} options={{ compact: false }} check={tip} inCaption />;
+  const p = <Num value={result.p ?? 0} options={{ compact: false }} check={{ tooltip: words.numTips.coverageP, from }} inCaption />;
   const missing = result.coverage.missing;
   const link = <TextLink href={dataReadinessHref(result.coverage.sources, "package_risks")}>{c.link}</TextLink>;
   if (missing.length === 0) {
@@ -511,11 +530,11 @@ function Coverage({ result }: { result: RisksResult }) {
   const reasons = missing.map((gap) => {
     const forms = c.reasons[gap.reason_code];
     const template = forms ? (gap.count === 1 ? forms.one : forms.many) : "";
-    return <Fill key={gap.reason_code} template={template} slots={{ n: <Num value={gap.count} options={{ compact: false }} check={tip} inCaption /> }} />;
+    return <Fill key={gap.reason_code} template={template} slots={{ n: <Num value={gap.count} options={{ compact: false }} /> }} />;
   });
   return (
     <p className="max-w-prose text-caption text-ink-muted" data-coverage-line>
-      <Fill template={c.some} slots={{ m: <Num value={result.m ?? 0} options={{ compact: false }} check={tip} inCaption />, p }} />
+      <Fill template={c.some} slots={{ m: <Num value={result.m ?? 0} options={{ compact: false }} check={{ tooltip: words.numTips.coverageM, from }} inCaption />, p }} />
       {c.join}
       {reasons.map((reason, index) => (
         <span key={index}>
@@ -529,7 +548,7 @@ function Coverage({ result }: { result: RisksResult }) {
 }
 
 function SourceLine({ result }: { result: RisksResult }) {
-  const date = result.as_of && result.data_through && result.as_of < result.data_through ? result.as_of : result.data_through;
+  const date = recordsDate(result);
   const asOf = Boolean(result.as_of && result.data_through && result.as_of < result.data_through);
   const names = <Joined items={result.source_names} />;
   return (
