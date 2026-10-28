@@ -19,7 +19,9 @@ export const WCAG_22_AA = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa
 // such target as too small (WCAG 2.5.8). For the scan, the ask bar rests in its own place at the page column's end,
 // above the footer, which it keeps as it sticks, so nothing else moves: the page's targets are checked as the page lays
 // them out, and the box, its list and its chip are checked as drawn, at that place. Where a focused element lands
-// against the box as the page scrolls is tested on its own, by Tab (tests/sticky.ts).
+// against the box as the page scrolls is tested on its own, by Tab (tests/sticky.ts). The override is there for
+// target-size alone: no other rule changed with where the box floats. A new part that floats over the page needs its own
+// Tab test, as tests/sticky.ts gives the box.
 const BOX_COVERS_NOTHING = "[data-box-band] { position: relative !important; bottom: auto !important; }";
 
 export async function scan(page: Page, within?: string) {

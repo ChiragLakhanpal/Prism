@@ -5,10 +5,11 @@
 import type { Page } from "@playwright/test";
 
 // Where the focused element sits against the parts that stick now, or null when focus is in the bar, the sidebar, a
-// sticky part itself or outside main.
+// sticky head or outside main. Focus in a page's own foot bar, such as the draft bar, is checked against the box alone,
+// which floats above that bar (ticket 113).
 function placeOfFocus() {
   const focused = document.activeElement as HTMLElement | null;
-  if (!focused || !focused.closest("main") || focused.closest("[data-sticky]")) return null;
+  if (!focused || !focused.closest("main") || focused.closest('[data-sticky="top"]')) return null;
   const box = focused.getBoundingClientRect();
   if (box.height === 0) return null;
   // A part that sticks covers the element where their boxes share a whole pixel of height; a sticky head that has
@@ -16,9 +17,12 @@ function placeOfFocus() {
   // shows through its margins.
   const sticking = (part: Element | null): part is Element => part !== null && getComputedStyle(part).position === "sticky";
   const ask = document.querySelector("[data-box-band]");
-  const parts = [document.querySelector("header.top-bar"), ...document.querySelectorAll("main [data-sticky]")]
-    .filter(sticking)
-    .map((part) => part.getBoundingClientRect());
+  const inFootBar = focused.closest('[data-sticky="bottom"]') !== null;
+  const parts = inFootBar
+    ? []
+    : [document.querySelector("header.top-bar"), ...document.querySelectorAll("main [data-sticky]")]
+        .filter(sticking)
+        .map((part) => part.getBoundingClientRect());
   if (sticking(ask)) parts.push(ask.querySelector("form > [data-focus-ring]")!.getBoundingClientRect());
   const covers = (part: DOMRect) => Math.min(box.bottom, part.bottom) - Math.max(box.top, part.top) >= 1;
   return {

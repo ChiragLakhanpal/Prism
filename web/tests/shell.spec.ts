@@ -4,6 +4,7 @@
 import { createHash } from "node:crypto";
 import type { Page } from "@playwright/test";
 import { hubApi } from "./hub-api";
+import { open as openAnswerPage } from "./answer-page";
 import { expect, mockApi, mockShell, openSidebar, recorded, test } from "./mocked";
 
 // web/src/assets/world-bank-logo.md: the official file's hash when it was downloaded.
@@ -841,4 +842,25 @@ test("Packages, Projects, Lessons, Drafts and Data each say what the tab is for 
     const lines = await purpose.evaluate((el) => Math.round(el.getBoundingClientRect().height / parseFloat(getComputedStyle(el).lineHeight)));
     expect(lines, `${name}: lines at 1440 px`).toBeLessThanOrEqual(2);
   }
+});
+
+// Round 1's design review: the page's bottom scroll padding counts the box only while focus is in main, so focus on
+// the sidebar's foot, or low in the evidence drawer, which both stick at the window's foot, never scrolls the page.
+test("Tab down the sidebar to its foot, or focus low in the evidence drawer, leaves the page where it was", async ({ page }) => {
+  await openAnswerPage(page);
+  await expect(page.locator("[data-box-band]")).toBeVisible();
+  await page.locator("a[href='/drafts']").first().focus();
+  const toggle = page.locator("[data-sidebar-toggle]");
+  for (let press = 0; press < 6 && !(await toggle.evaluate((el) => el === document.activeElement)); press++) {
+    await page.keyboard.press("Tab");
+  }
+  await expect(toggle).toBeFocused();
+  expect(await page.evaluate(() => window.scrollY), "the page after Tab to the sidebar's foot").toBe(0);
+
+  await openAnswerPage(page, { path: `/projects/P130164?evidence=${encodeURIComponent(ICR_54)}` });
+  await page.setViewportSize({ width: 1440, height: 640 });
+  const low = page.getByRole("dialog").getByRole("link", { name: /Open at page/ }).first();
+  await expect(low).toBeVisible();
+  await low.focus();
+  expect(await page.evaluate(() => window.scrollY), "the page after focus low in the drawer").toBe(0);
 });

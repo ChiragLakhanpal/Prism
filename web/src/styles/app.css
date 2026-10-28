@@ -252,7 +252,8 @@
    window's foot, so the box floats centered in the page column, at most 640 px wide and the window's margin from each
    side below that, and at the end of a page sits above the footer instead of over it. Its bottom is 16 px above the
    window's bottom edge and the phone's safe area; where a page's own bar sticks at the foot, such as the draft bar or
-   the grade bar, it floats 16 px above that bar, whose height the frame's hook writes as --sticky-foot (lib/sticky.ts).
+   the grade bar, it floats 16 px above that bar, and rides up with it where the bar lets go at its column's end: the
+   frame's hook writes how far the bar reaches up from the window's foot as --sticky-foot (lib/sticky.ts).
    Only the box takes the pointer, so the page under its margins stays usable. No translucency and no fade above it. */
 @utility ask-bar {
   position: sticky;
@@ -426,10 +427,11 @@
 
 /* A control inside a sticky part shifts its scroll margin by the part's scroll padding, so the Tab key does
    not scroll the page to bring it out of that padding (DESIGN.md section 10). A page marks a head that sticks
-   under the bar data-sticky="top" and a bar that sticks to the window's foot data-sticky="bottom", as the frame
-   marks its ask bar, whose box is a text field (ticket 113); the frame's one hook (lib/sticky.ts) sets
-   --sticky-top and --sticky-bottom on html only while such a part sticks. */
-[data-sticky="bottom"] :is(a, button, input) {
+   under the bar data-sticky="top" and a bar that sticks to the window's foot data-sticky="bottom"; the frame's
+   one hook (lib/sticky.ts) sets --sticky-top and --sticky-bottom on html only while such a part sticks. The
+   frame's ask bar is marked too, but its box needs no shift: the bottom padding leaves it out while it has focus,
+   and it always floats above a page's own foot bar (ticket 113). */
+[data-sticky="bottom"]:not([data-box-band]) :is(a, button) {
   scroll-margin-top: var(--sticky-bottom, 0px);
   scroll-margin-bottom: calc(-1 * var(--sticky-bottom, 0px));
 }

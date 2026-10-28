@@ -492,7 +492,7 @@ export const copy = {
     },
   },
 
-  // The white band under the bar: the one box and the data-freshness stamp.
+  // The Ask bar at the foot of the page column holds the one box (ticket 113); the data-freshness stamp is at the sidebar's foot.
   // The one box (the 14 brief, section 5.1). The placeholder names only what the box can do now;
   // ticket 15 adds "describe a package" back. {id}, {pcode}, {loan} and {step_ref} show in Roboto Mono.
   box: {

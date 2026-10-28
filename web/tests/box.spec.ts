@@ -173,6 +173,8 @@ test("tabbing through the plan check never leaves the focused element under the 
   await expect(head).toHaveAttribute("data-sticky", "top");
   const height = await head.evaluate((element) => (element as HTMLElement).offsetHeight);
   expect(await page.evaluate(() => document.documentElement.style.scrollPaddingTop)).toBe(`${56 + height + 8}px`);
+  // The bottom padding counts the box only while focus is in main (round 1's design review), as it is from the h1 on.
+  await page.locator("main h1").first().focus();
   expect(await page.evaluate(() => document.documentElement.style.scrollPaddingBottom)).toBe(`${16 + 40 + 8}px`);
   const { checked, covered } = await tabUnderStickyParts(page, 30);
   expect(checked).toBeGreaterThan(40);
